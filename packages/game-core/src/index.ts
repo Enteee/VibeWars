@@ -49,3 +49,5 @@ export {
   accessibleAttributeIds,
   validateCharacter,
 } from "./character.js";
+
+export * from "./skills/index.js";
