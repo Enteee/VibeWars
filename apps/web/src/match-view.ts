@@ -26,6 +26,11 @@ export interface MatchViewCallbacks {
   readonly onLeave: () => void;
 }
 
+export interface MatchViewOptions {
+  /** The arena to play; `undefined` means the server's default. */
+  readonly mapId?: string | undefined;
+}
+
 export interface MatchView {
   dispose(): Promise<void>;
 }
@@ -132,6 +137,7 @@ export async function startMatchView(
   viewport: HTMLElement,
   endpoint: string,
   callbacks: MatchViewCallbacks,
+  options: MatchViewOptions = {},
 ): Promise<MatchView> {
   const game = new Phaser.Game({
     type: Phaser.AUTO,
@@ -150,7 +156,7 @@ export async function startMatchView(
     });
   });
 
-  const connection = await connectToMatch(endpoint);
+  const connection = await connectToMatch(endpoint, options.mapId);
   const walls = connection.map.walls.map(toRenderableWall);
 
   const hud = createHud(viewport);

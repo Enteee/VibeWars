@@ -1,0 +1,15 @@
+{
+  "id": "arena-open",
+  "name": "Open Field",
+  "width": 900,
+  "height": 600,
+  "walls": [{ "kind": "rect", "x": 420, "y": 250, "width": 60, "height": 100 }],
+  "spawnPoints": [
+    { "team": 0, "position": { "x": 90, "y": 180 } },
+    { "team": 0, "position": { "x": 90, "y": 300 } },
+    { "team": 0, "position": { "x": 90, "y": 420 } },
+    { "team": 1, "position": { "x": 810, "y": 180 } },
+    { "team": 1, "position": { "x": 810, "y": 300 } },
+    { "team": 1, "position": { "x": 810, "y": 420 } }
+  ]
+}

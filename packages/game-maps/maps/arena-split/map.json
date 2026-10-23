@@ -1,0 +1,23 @@
+{
+  "id": "arena-split",
+  "name": "Split Paths",
+  "width": 1000,
+  "height": 700,
+  "walls": [
+    { "kind": "rect", "x": 300, "y": 0, "width": 30, "height": 260 },
+    { "kind": "rect", "x": 300, "y": 440, "width": 30, "height": 260 },
+    { "kind": "rect", "x": 670, "y": 0, "width": 30, "height": 260 },
+    { "kind": "rect", "x": 670, "y": 440, "width": 30, "height": 260 },
+    { "kind": "rect", "x": 440, "y": 300, "width": 120, "height": 100 }
+  ],
+  "spawnPoints": [
+    { "team": 0, "position": { "x": 100, "y": 200 } },
+    { "team": 0, "position": { "x": 100, "y": 350 } },
+    { "team": 0, "position": { "x": 100, "y": 500 } },
+    { "team": 0, "position": { "x": 180, "y": 350 } },
+    { "team": 1, "position": { "x": 900, "y": 200 } },
+    { "team": 1, "position": { "x": 900, "y": 350 } },
+    { "team": 1, "position": { "x": 900, "y": 500 } },
+    { "team": 1, "position": { "x": 820, "y": 350 } }
+  ]
+}

@@ -161,9 +161,11 @@ interface PlayerSim {
 export class MatchRoom extends Room {
   public override state = new MatchState();
 
-  readonly #map: MapData;
-  readonly #wallSegments: readonly Segment[];
-  readonly #mapDescriptor: MapDescriptor;
+  // Assigned in onCreate once the requested map id is known; a room is
+  // never ticked before onCreate runs.
+  #map: MapData;
+  #wallSegments: readonly Segment[];
+  #mapDescriptor: MapDescriptor;
   readonly #sims = new Map<string, PlayerSim>();
   /**
    * Seeded in `onCreate`, not in the constructor: Colyseus assigns
@@ -178,7 +180,25 @@ export class MatchRoom extends Room {
 
   public constructor() {
     super();
+    // The default is replaced in onCreate if the lobby chose another map.
     this.#map = loadMap(DEFAULT_MAP_ID);
+    this.#wallSegments = allWallSegments(this.#map.walls);
+    this.#mapDescriptor = toMapDescriptor(this.#map);
+  }
+
+  /**
+   * Switch the room to `mapId`, falling back to the default if it is
+   * unknown. An unknown id must not take the room down — a stale client
+   * asking for a map that was removed should still get a playable match
+   * rather than a crash (brief §32).
+   */
+  private useMap(mapId: string): void {
+    try {
+      this.#map = loadMap(mapId);
+    } catch {
+      console.warn(`[match] unknown map ${mapId}; falling back to ${DEFAULT_MAP_ID}`);
+      this.#map = loadMap(DEFAULT_MAP_ID);
+    }
     this.#wallSegments = allWallSegments(this.#map.walls);
     this.#mapDescriptor = toMapDescriptor(this.#map);
   }
@@ -200,8 +220,12 @@ export class MatchRoom extends Room {
     return spawn?.position ?? { x: 0, y: 0 };
   }
 
-  public override onCreate(): void {
+  public override onCreate(options?: { mapId?: string }): void {
     this.autoDispose = true;
+
+    if (typeof options?.mapId === "string") {
+      this.useMap(options.mapId);
+    }
 
     // Seeded from the room id so a match is reproducible from its seed
     // (brief §35, §36) rather than depending on Math.random.

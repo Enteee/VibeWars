@@ -65,6 +65,20 @@ async function main(): Promise<void> {
 
   const endpoint = endpointFromLocation(window.location);
 
+  // Fetched once: the server is the authority on which arenas exist.
+  let availableMaps: { id: string; name: string }[] = [];
+  try {
+    const response = await fetch("/api/maps");
+    if (response.ok) {
+      const body = (await response.json()) as { maps: { id: string; name: string }[] };
+      availableMaps = body.maps;
+    }
+  } catch (error) {
+    // A missing map list only costs the host their picker; the match
+    // still runs on the server's default arena.
+    console.warn("[web] could not load the map list", error);
+  }
+
   let lobby: LobbyConnection | undefined;
   let match: MatchView | undefined;
   let lobbyNotice: string | undefined;
@@ -293,6 +307,9 @@ async function main(): Promise<void> {
       screenRoot,
       lobby.getSnapshot(),
       {
+        onSelectMap: (mapId) => {
+          lobby?.selectMap(mapId);
+        },
         onChooseTeam: (team) => {
           lobby?.chooseTeam(team);
         },
@@ -314,6 +331,7 @@ async function main(): Promise<void> {
         },
       },
       lobbyNotice,
+      availableMaps,
     );
   };
 
@@ -338,33 +356,38 @@ async function main(): Promise<void> {
       lobbyNotice = message.reason;
       renderLobby();
     });
-    lobby.onMatchStarting(() => {
-      void enterMatch();
+    lobby.onMatchStarting((message) => {
+      void enterMatch(message.mapId);
     });
     renderLobby();
   };
 
-  const enterMatch = async (): Promise<void> => {
+  const enterMatch = async (mapId?: string): Promise<void> => {
     showViewport(true);
     setStatus("entering match…", "offline");
     try {
-      match = await startMatchView(viewport, endpoint, {
-        onLeave: () => {
-          void (async () => {
-            await match?.dispose();
-            match = undefined;
-            // Returning from a match puts the lobby back into its
-            // waiting phase so another match can be started immediately
-            // (brief §46).
-            lobby?.returnToLobby();
-            if (lobby !== undefined) {
-              renderLobby();
-            } else {
-              showMenu();
-            }
-          })();
+      match = await startMatchView(
+        viewport,
+        endpoint,
+        {
+          onLeave: () => {
+            void (async () => {
+              await match?.dispose();
+              match = undefined;
+              // Returning from a match puts the lobby back into its
+              // waiting phase so another match can be started
+              // immediately (brief §46).
+              lobby?.returnToLobby();
+              if (lobby !== undefined) {
+                renderLobby();
+              } else {
+                showMenu();
+              }
+            })();
+          },
         },
-      });
+        { mapId },
+      );
       setStatus("in match", "online");
     } catch (error) {
       console.error("[web] could not enter match", error);

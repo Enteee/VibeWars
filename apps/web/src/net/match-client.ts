@@ -158,9 +158,14 @@ function awaitMessage<T>(room: Room, type: string, timeoutMs: number): Promise<T
   });
 }
 
-export async function connectToMatch(endpoint: string): Promise<MatchConnection> {
+export async function connectToMatch(endpoint: string, mapId?: string): Promise<MatchConnection> {
   const client = new Client(endpoint);
-  const room = await client.joinOrCreate<DecodedMatchState>(ROOM_MATCH);
+  // The map id travels as a join option so the first client into a room
+  // decides the arena; later joiners land in the room that already exists.
+  const room = await client.joinOrCreate<DecodedMatchState>(
+    ROOM_MATCH,
+    mapId === undefined ? {} : { mapId },
+  );
 
   // Both arrive on join; waiting for them here means the caller gets a
   // fully-usable connection rather than one that is missing its map or

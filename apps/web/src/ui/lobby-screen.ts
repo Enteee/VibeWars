@@ -6,6 +6,7 @@ import type { LobbySnapshot } from "../net/lobby-client.js";
  */
 
 export interface LobbyScreenCallbacks {
+  readonly onSelectMap: (mapId: string) => void;
   readonly onChooseTeam: (team: number | null) => void;
   readonly onToggleReady: () => void;
   readonly onStart: () => void;
@@ -40,6 +41,7 @@ export function renderLobbyScreen(
   snapshot: LobbySnapshot,
   callbacks: LobbyScreenCallbacks,
   notice: string | undefined,
+  availableMaps: readonly { readonly id: string; readonly name: string }[] = [],
 ): void {
   root.replaceChildren();
   const panel = h("div", "screen screen-lobby");
@@ -51,7 +53,28 @@ export function renderLobbyScreen(
   header.appendChild(h("span", "lobby-code", snapshot.code));
   panel.appendChild(header);
 
-  panel.appendChild(h("div", "lobby-map", `map: ${snapshot.mapId}`));
+  // Only the host may change the map, so everyone else sees it as a
+  // label rather than a control they would be refused on clicking.
+  if (snapshot.isHost && availableMaps.length > 1) {
+    const mapRow = h("label", "lobby-map");
+    mapRow.appendChild(h("span", "field-label", "map"));
+    const select = document.createElement("select");
+    for (const map of availableMaps) {
+      const option = document.createElement("option");
+      option.value = map.id;
+      option.textContent = map.name;
+      select.appendChild(option);
+    }
+    select.value = snapshot.mapId;
+    select.addEventListener("change", () => {
+      callbacks.onSelectMap(select.value);
+    });
+    mapRow.appendChild(select);
+    panel.appendChild(mapRow);
+  } else {
+    const current = availableMaps.find((map) => map.id === snapshot.mapId);
+    panel.appendChild(h("div", "lobby-map", `map: ${current?.name ?? snapshot.mapId}`));
+  }
 
   if (notice !== undefined) {
     panel.appendChild(h("div", "screen-problem", notice));
