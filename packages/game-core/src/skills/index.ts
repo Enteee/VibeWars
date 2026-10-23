@@ -6,8 +6,13 @@ export { CastState } from "./cast-state.js";
 
 export { IMPLEMENTED_SKILLS, SKILLS_BY_ID, getSkill } from "./catalog.js";
 
-export type { SkillCoverage } from "./coverage.js";
-export { computeCoverage, formatCoverage } from "./coverage.js";
+export type { MissingMechanic, SkillCoverage, UnimplementedSkill } from "./coverage.js";
+export {
+  MISSING_MECHANIC_DESCRIPTIONS,
+  computeCoverage,
+  formatCoverage,
+  missingMechanics,
+} from "./coverage.js";
 
 export type { CombatEvent } from "./effects.js";
 export { applyEffect, applyEffects } from "./effects.js";

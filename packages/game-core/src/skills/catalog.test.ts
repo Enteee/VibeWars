@@ -49,8 +49,9 @@ describe("skill coverage reporting", () => {
     const coverage = computeCoverage(imported);
     expect(coverage.imported).toBe(3);
     expect(coverage.implemented).toBe(IMPLEMENTED_SKILLS.length);
-    expect(coverage.unimplemented).toContain("mesmer.echo");
-    expect(coverage.unimplemented).not.toContain("elementalist.fireball");
+    const ids = coverage.unimplemented.map((skill) => skill.id);
+    expect(ids).toContain("mesmer.echo");
+    expect(ids).not.toContain("elementalist.fireball");
   });
 
   it("flags implemented skills that are original design, not imports", () => {

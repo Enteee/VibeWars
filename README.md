@@ -1,46 +1,67 @@
 # vibewars
 
-A browser-based, minimalist, multiplayer PvP arena game mechanically inspired
-by Guild Wars 1 PvP — original implementation, original geometric visuals, no
-proprietary GW1 assets or code. Designed for LAN parties: one host runs the
-server, friends join from a browser with a short lobby code, no accounts and
-no database.
+A browser-based, minimalist, multiplayer PvP arena game mechanically
+inspired by Guild Wars 1 PvP — original implementation, original
+geometric visuals, no proprietary GW1 assets or code. Built for LAN
+parties: one host runs the server, friends open a URL and type a short
+lobby code. No accounts, no database, no cloud.
 
-See `docs/product/master-brief.md` for the full product brief and sprint
-roadmap, and `docs/adr/` for the architectural decisions behind this
-repository (start with [ADR-0001](docs/adr/0001-architecture.md)).
+See [`docs/product/master-brief.md`](docs/product/master-brief.md) for
+the full product brief and sprint roadmap, and [`docs/adr/`](docs/adr/)
+for the decisions behind this repository (start with
+[ADR-0001](docs/adr/0001-architecture.md)).
 
-## Status
-
-Early, actively developed. Sprint 0/1 (foundation) is in place: a working
-Colyseus server, a Phaser 4 browser shell, and the monorepo/tooling they run
-in. Gameplay (professions, attributes, skills, combat) has not been built
-yet — see `docs/product/master-brief.md` for the sprint-by-sprint plan.
-
-## Quick start
+## Play it
 
 ```sh
-devenv shell      # Node 24 + pnpm, installed automatically
-pnpm run build    # builds every package and app
-pnpm run test     # full test suite (unit + real Colyseus integration tests)
-```
-
-Then run the server:
-
-```sh
+devenv shell          # Node 24 + pnpm, dependencies installed for you
+pnpm run build
 node apps/server/dist/main.js
 ```
 
-It listens on `0.0.0.0:2567` by default and automatically serves the built
-web client if `apps/web/dist` exists next to it — no configuration needed for
-the common case. Open `http://<host-machine-lan-ip>:2567` from any browser on
-the LAN. See `docs/development/environment-variables.md` for the handful of
-overrides available (`PORT`, `HOST`, `VIBEWARS_WEB_ROOT`, `VIBEWARS_DEV`).
+The server listens on `0.0.0.0:2567` and serves the built client
+automatically — no configuration needed. Everyone on the LAN opens
+`http://<host-ip>:2567`, one person hosts a lobby, the rest type the
+code.
 
-If `devenv shell` is not available in your environment, every command above
-also has a plain `pnpm` equivalent — see `package.json`'s `scripts`. (This
-repository's own Sprint 0 work was verified that way; see
-[ADR-0007](docs/adr/0007-development-environment.md) for why.)
+| Key             | Action                              |
+| --------------- | ----------------------------------- |
+| `W` `A` `S` `D` | Move                                |
+| Left click      | Target (click empty space to clear) |
+| `1`–`9`, `0`    | Use the matching skill-bar slot     |
+| `Esc`           | Leave the match                     |
+
+If `devenv` is unavailable, any Node 24 with `pnpm@10` works — every
+command is a plain `pnpm` script (see `package.json`). This repository's
+own development was verified that way; see
+[ADR-0007](docs/adr/0007-development-environment.md) for why.
+
+## What works today
+
+- **Real-time authoritative combat** on a fixed 20 Hz server tick:
+  movement, collision, body blocking, line of sight, targeting, casting
+  with cast and recharge times, energy and adrenaline economies.
+- **Mechanics**: 8 conditions, hexes, enchantments, interrupts, health
+  degeneration and regeneration, death and respawn.
+- **12 implemented skills**: 9 of the 16 in a reference corpus imported
+  from public GW1 data, plus 3 of our own design. The other 7 need
+  mechanics that do not exist yet and are reported as a machine-readable
+  gap, with a reason each (`node packages/game-data/dist/run-cli.js coverage`).
+- **Four original arenas**: a chokepoint, an open field, split paths and
+  a pillar hall, selectable by the lobby host.
+- **Lobby** with shareable codes, team assignment, ready state and
+  repeatable matches.
+- **Character and team builders** with profession/attribute rules and
+  versioned browser-local persistence.
+- **Match rules**: score, clock, victory conditions.
+- **Robustness**: a dropped player keeps their slot for 30 seconds and
+  reconnects to the same character; hostile input cannot crash the
+  server (fuzz-tested).
+
+Honest limits: area-of-effect, projectile travel time, weapon
+auto-attacks, knockdowns and spirits/wards/traps are **not**
+implemented. Skills needing them are deliberately absent from the
+catalog rather than present with watered-down effects (brief §9).
 
 ## Repository layout
 
@@ -49,20 +70,45 @@ apps/
   server/   Authoritative Colyseus game server
   web/      Browser client (HTML/CSS shell + Phaser 4 viewport)
 packages/
-  game-core/      Pure game-domain primitives (deterministic, headlessly testable)
+  game-core/      Pure domain logic: combat, skills, geometry, rules
   game-protocol/  The client/server wire contract
+  game-maps/      Declarative arenas + loader/validator
+  game-data/      GW1 reference-skill import pipeline + dev CLI
 docs/
-  product/master-brief.md   The full product brief and sprint roadmap
-  adr/                       Architectural Decision Records
+  product/master-brief.md   Product brief and sprint roadmap
+  adr/                      Architectural Decision Records
 ```
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for how these pieces fit together, and
-[CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
+`game-core` depends on nothing else in the workspace and never touches a
+socket, a renderer or a clock — which is what makes combat testable
+headlessly. See [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Development
+
+```sh
+pnpm run ci       # format + lint + typecheck + test + build
+pnpm run test     # 539 tests: unit, integration, fuzz, headless simulation
+```
+
+`devenv test` runs the same sequence. See
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Dev tools
+
+```sh
+pnpm --filter @vibewars/game-data run build
+node packages/game-data/dist/run-cli.js skills      # inspect skills
+node packages/game-data/dist/run-cli.js statuses    # conditions/hexes/enchantments
+node packages/game-data/dist/run-cli.js coverage    # imported vs implemented
+node packages/game-data/dist/run-cli.js duel elementalist.fireball ranger.troll-unguent
+```
+
+The duel runner simulates real combat headlessly and deterministically
+from a seed — useful for balance questions and for reproducing bugs.
 
 ## License
 
-AGPL-3.0-or-later (see `package.json`). No proprietary Guild Wars assets,
-code, or map geometry are included or depended on; the GW1 skill corpus used
-for reference during development is treated as reference _data_, not a
-runtime dependency — see
-[ADR-0004](docs/adr/0004-skill-data.md).
+AGPL-3.0-or-later. No proprietary Guild Wars assets, code or map
+geometry are included or depended on; the GW1 skill corpus used for
+reference is treated as reference _data_ with recorded provenance, never
+a runtime dependency — see [ADR-0004](docs/adr/0004-skill-data.md).
