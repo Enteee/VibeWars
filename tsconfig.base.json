@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    /* Language / emit ------------------------------------------------------ */
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "moduleDetection": "force",
+
+    /* Strictness. See docs/adr/0008-monorepo-and-typescript.md.
+       These are deliberately stricter than `strict: true` alone. */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "useUnknownInCatchVariables": true,
+
+    /* Keep every file independently transpilable, and keep TS syntax a strict
+       subset of what runtimes can erase (no enums, namespaces, or parameter
+       properties). This is what lets Vite/esbuild and `node --strip-types`
+       consume our sources directly. */
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+
+    /* Project references ---------------------------------------------------- */
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  }
+}

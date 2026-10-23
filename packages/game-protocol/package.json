@@ -1,0 +1,22 @@
+{
+  "name": "@vibewars/game-protocol",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Wire contract shared by client and server: message names, payload shapes, protocol version.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  }
+}

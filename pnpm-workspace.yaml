@@ -1,0 +1,8 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Keep the store deterministic and surface accidental phantom dependencies.
+linkWorkspacePackages: true
+saveWorkspaceProtocol: rolling
+strictPeerDependencies: false

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "// ": "Root tooling project: the repo-level config files that belong to no package.",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "types": ["node"],
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": ["*.config.ts", "*.config.mjs", "*.config.js"]
+}

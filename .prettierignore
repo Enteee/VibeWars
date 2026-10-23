@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+.devenv/
+.direnv/
+pnpm-lock.yaml
+devenv.lock
+# Verbatim upstream brief: must not be reformatted.
+docs/product/master-brief.md
+# Generated skill/map data is written by the importer, not by hand.
+packages/game-data/generated/

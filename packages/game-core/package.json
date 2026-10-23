@@ -1,0 +1,22 @@
+{
+  "name": "@vibewars/game-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure, engine-agnostic game domain primitives. No I/O, no rendering, no network.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  }
+}
