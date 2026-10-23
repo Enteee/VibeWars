@@ -370,6 +370,17 @@ async function main(): Promise<void> {
         viewport,
         endpoint,
         {
+          onConnectionChange: (state) => {
+            // The server holds a dropped player's slot, so "reconnecting"
+            // is a recoverable state worth showing rather than an error.
+            if (state === "reconnecting") {
+              setStatus("connection lost — reconnecting…", "error");
+            } else if (state === "online") {
+              setStatus("in match", "online");
+            } else {
+              setStatus("disconnected", "error");
+            }
+          },
           onLeave: () => {
             void (async () => {
               await match?.dispose();

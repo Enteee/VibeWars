@@ -131,14 +131,8 @@ const DEFAULT_ATTRIBUTE_RANKS: ReadonlyMap<string, number> = new Map([
 
 const STARTING_HEALTH = 500;
 const STARTING_ENERGY = 50;
-/** Energy regenerated per second, the pacing lever for how often skills fire. */
-const ENERGY_REGEN_PER_SECOND = 2;
 /** Seconds a dead player waits before respawning at their spawn point. */
 const RESPAWN_SECONDS = 8;
-/** Adrenaline earned each time one of your skills damages an enemy. */
-const ADRENALINE_PER_HIT = 3;
-/** Adrenaline ceiling, so it cannot be banked indefinitely between fights. */
-const MAX_ADRENALINE = 25;
 /**
  * How long a dropped player keeps their slot, character and position.
  * Long enough to survive a wifi blip or a laptop lid, short enough that
@@ -378,8 +372,8 @@ export class MatchRoom extends Room {
     );
     if (dealtDamage) {
       sim.combatant.adrenaline = Math.min(
-        MAX_ADRENALINE,
-        sim.combatant.adrenaline + ADRENALINE_PER_HIT,
+        RULESET.resources.maxAdrenaline,
+        sim.combatant.adrenaline + RULESET.resources.adrenalinePerHit,
       );
     }
 
@@ -488,7 +482,7 @@ export class MatchRoom extends Room {
       // not by waiting, so it deliberately does not tick up here.
       sim.combatant.energy = Math.min(
         sim.combatant.maxEnergy,
-        sim.combatant.energy + ENERGY_REGEN_PER_SECOND * ctx.dt,
+        sim.combatant.energy + RULESET.resources.energyRegenPerSecond * ctx.dt,
       );
 
       const statusEvents = advanceStatuses(sim.combatant, ctx.dt);

@@ -26,6 +26,23 @@ export interface AttributeRules {
   readonly attributePointBudget: number;
 }
 
+/**
+ * Resource economy (brief §11's "resource rules").
+ *
+ * Lives in the ruleset rather than in the server, because the headless
+ * runner and the live match must agree: a balance answer from a runner
+ * that regenerates energy differently would be an answer about a
+ * different game.
+ */
+export interface ResourceRules {
+  /** Energy regained per second. The pacing lever for how often skills fire. */
+  readonly energyRegenPerSecond: number;
+  /** Adrenaline earned each time one of your skills damages an enemy. */
+  readonly adrenalinePerHit: number;
+  /** Adrenaline ceiling, so it cannot be banked indefinitely between fights. */
+  readonly maxAdrenaline: number;
+}
+
 export interface Ruleset {
   readonly id: string;
   /** Fixed server simulation tick rate, in Hz (ADR-0003). */
@@ -33,6 +50,7 @@ export interface Ruleset {
   readonly movement: MovementRules;
   readonly collision: CollisionRules;
   readonly attributes: AttributeRules;
+  readonly resources: ResourceRules;
 }
 
 export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
@@ -43,6 +61,11 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
   }),
   collision: Object.freeze({
     playerRadius: 14,
+  }),
+  resources: Object.freeze({
+    energyRegenPerSecond: 2,
+    adrenalinePerHit: 3,
+    maxAdrenaline: 25,
   }),
   attributes: Object.freeze({
     // Enough to max two attributes (12+12=24 ranks -> 2*78=156 points) with

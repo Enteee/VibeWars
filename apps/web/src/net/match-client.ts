@@ -69,6 +69,8 @@ export interface CombatMessage {
 
 export interface MatchConnection {
   readonly selfSessionId: string;
+  /** Notifies when the connection drops and when it comes back. */
+  onConnectionChange(handler: (state: "online" | "reconnecting" | "lost") => void): void;
   /** The match's static geometry, received once on join (brief §19). */
   readonly map: MapDescriptor;
   /** The server-assigned skill bar, received once on join. */
@@ -175,10 +177,43 @@ export async function connectToMatch(endpoint: string, mapId?: string): Promise<
     awaitMessage<{ slots: SkillSlot[] }>(room, "skill-bar", 5000),
   ]);
 
+  // A dropped connection is retried automatically: the server holds the
+  // player's slot for a window (see the match room's onLeave), so the
+  // right behaviour on a wifi blip is to walk back in, not to dump the
+  // player back to the menu having lost the match.
+  let notifyConnection: (state: "online" | "reconnecting" | "lost") => void = () => {
+    /* no handler yet */
+  };
+
+  room.onLeave((code) => {
+    if (code === 4000) {
+      // A deliberate leave; nothing to recover.
+      return;
+    }
+    notifyConnection("reconnecting");
+    void (async () => {
+      const token = room.reconnectionToken;
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 + attempt * 500));
+        try {
+          await client.reconnect(token);
+          notifyConnection("online");
+          return;
+        } catch {
+          // Keep trying until the server's window closes.
+        }
+      }
+      notifyConnection("lost");
+    })();
+  });
+
   return {
     selfSessionId: room.sessionId,
     map,
     skillBar: bar.slots,
+    onConnectionChange(handler) {
+      notifyConnection = handler;
+    },
     sendIntent(intent: ClientIntent): void {
       room.send("intent", intent);
     },

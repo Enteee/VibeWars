@@ -24,6 +24,8 @@ import { createHud, renderSkillBar, updateHud } from "./ui/hud.js";
 
 export interface MatchViewCallbacks {
   readonly onLeave: () => void;
+  /** Surfaces connection trouble so the shell can tell the player. */
+  readonly onConnectionChange?: (state: "online" | "reconnecting" | "lost") => void;
 }
 
 export interface MatchViewOptions {
@@ -190,6 +192,10 @@ export async function startMatchView(
 
   let latestMatch = connection.getSnapshot();
   let latestArena = toArenaSnapshot(latestMatch, walls, connection.skillBar);
+
+  if (callbacks.onConnectionChange !== undefined) {
+    connection.onConnectionChange(callbacks.onConnectionChange);
+  }
 
   connection.onCombat((message) => {
     showCombatFeedback(scene, message, latestMatch);

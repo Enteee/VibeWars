@@ -15,3 +15,4 @@ export { importSkills } from "./importer.js";
 
 export type { GenerateResult } from "./generate.js";
 export { generateSkillBundle, writeSkillBundle } from "./generate.js";
+export { runCli } from "./cli.js";

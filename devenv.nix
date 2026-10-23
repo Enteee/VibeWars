@@ -86,7 +86,15 @@
       # so a strict-JSON validator would reject every project's tsconfig.
       excludes = [ "tsconfig.*\\.json$" ];
     };
-    check-yaml.enable = true;
+    check-yaml = {
+      enable = true;
+      # pnpm-lock.yaml is machine-generated and validated by pnpm itself
+      # (`pnpm install --frozen-lockfile` accepts it). It contains keys
+      # like `uWebSockets.js@https://...` whose unquoted colons the
+      # strict PyYAML-based checker cannot parse — a false positive on a
+      # file no human edits.
+      excludes = [ "pnpm-lock\\.yaml$" ];
+    };
     markdownlint = {
       enable = true;
       excludes = [ "docs/product/master-brief\\.md$" ];

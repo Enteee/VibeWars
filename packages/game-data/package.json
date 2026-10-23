@@ -20,10 +20,12 @@
     "build": "tsc --build tsconfig.build.json",
     "import": "node dist/run-import.js",
     "generate": "node dist/generate.js",
-    "clean": "rm -rf dist *.tsbuildinfo"
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "tools": "node dist/run-cli.js"
   },
   "dependencies": {
     "cheerio": "1.2.0",
-    "zod": "4.6.7"
+    "zod": "4.6.7",
+    "@vibewars/game-core": "workspace:*"
   }
 }

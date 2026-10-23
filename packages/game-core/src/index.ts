@@ -28,7 +28,13 @@ export {
   segmentsIntersect,
 } from "./geometry.js";
 
-export type { AttributeRules, CollisionRules, MovementRules, Ruleset } from "./ruleset.js";
+export type {
+  AttributeRules,
+  CollisionRules,
+  MovementRules,
+  ResourceRules,
+  Ruleset,
+} from "./ruleset.js";
 export { MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
 
 export type { AttributeDefinition, ProfessionDefinition, ProfessionId } from "./professions.js";
@@ -61,3 +67,10 @@ export {
   emptyScore,
   evaluateMatch,
 } from "./match-rules.js";
+
+export type {
+  HeadlessFighter,
+  HeadlessMatchOptions,
+  HeadlessMatchResult,
+} from "./tools/headless-match.js";
+export { fighter, runHeadlessMatch } from "./tools/headless-match.js";
