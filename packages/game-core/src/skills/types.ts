@@ -1,5 +1,8 @@
 import type { SimulationRng } from "../rng.js";
 
+import type { CastState } from "./cast-state.js";
+import type { StatusCategory, StatusId, StatusSet } from "./status.js";
+
 /**
  * The composable skill/effect system (brief §6).
  *
@@ -67,7 +70,37 @@ export interface SacrificeHealthEffect {
   readonly percentOfMax: number;
 }
 
-export type SkillEffect = DamageEffect | HealEffect | EnergyGainEffect | SacrificeHealthEffect;
+/** Apply a condition/hex/enchantment to the effect's target. */
+export interface ApplyStatusEffect {
+  readonly kind: "apply-status";
+  readonly statusId: StatusId;
+  readonly durationSeconds: number;
+}
+
+/** Remove up to `count` statuses of a category from the target. */
+export interface RemoveStatusEffect {
+  readonly kind: "remove-status";
+  readonly category: StatusCategory;
+  readonly count: number;
+}
+
+/**
+ * Interrupt the target's in-progress cast (brief §14). Only lands if the
+ * target is actually casting — a mistimed interrupt is wasted, which is
+ * the entire skill-expression point of the mechanic.
+ */
+export interface InterruptEffect {
+  readonly kind: "interrupt";
+}
+
+export type SkillEffect =
+  | DamageEffect
+  | HealEffect
+  | EnergyGainEffect
+  | SacrificeHealthEffect
+  | ApplyStatusEffect
+  | RemoveStatusEffect
+  | InterruptEffect;
 
 /* -------------------------------------------------------------------------- */
 /* Skills                                                                      */
@@ -107,6 +140,10 @@ export interface Combatant {
   readonly team: number;
   /** Set once health reaches 0; a dead combatant is skipped by the simulation. */
   dead: boolean;
+  /** Active conditions, hexes and enchantments. */
+  readonly statuses: StatusSet;
+  /** In-progress cast and per-skill recharge; also the interrupt target. */
+  readonly cast: CastState;
 }
 
 export interface SkillContext {

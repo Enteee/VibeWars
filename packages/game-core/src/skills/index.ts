@@ -15,12 +15,31 @@ export { applyEffect, applyEffects } from "./effects.js";
 export { resolveMagnitude } from "./scaling.js";
 
 export type {
+  ActiveStatus,
+  StatusCategory,
+  StatusDefinition,
+  StatusId,
+  StatusModifiers,
+} from "./status.js";
+export {
+  STATUS_DEFINITIONS,
+  StatusSet,
+  aggregateModifiers,
+  getStatusDefinition,
+} from "./status.js";
+
+export { advanceStatuses, attackMisses, effectiveMaxHealth } from "./tick.js";
+
+export type {
+  ApplyStatusEffect,
   AttributeScaling,
   Combatant,
   DamageEffect,
   EnergyGainEffect,
   HealEffect,
+  InterruptEffect,
   Magnitude,
+  RemoveStatusEffect,
   ResourceKind,
   SacrificeHealthEffect,
   Skill,

@@ -150,6 +150,101 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Skills enabled by the status/interrupt mechanics (Sprints 12-15)         */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "ranger.broad-head-arrow",
+    name: "Broad Head Arrow",
+    cost: { kind: "energy", amount: 10 },
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    // The real elite: Daze the target, and interrupt them if they were
+    // casting. Both halves are now genuinely implementable — this is the
+    // archetypal "shut down a caster" skill the whole interrupt mechanic
+    // exists for. (The real arrow also flies slower; projectile travel
+    // time is Sprint 21.)
+    effects: [
+      { kind: "interrupt" },
+      { kind: "apply-status", statusId: "dazed", durationSeconds: 17 },
+    ],
+  },
+  {
+    id: "necromancer.faintheartedness",
+    name: "Faintheartedness",
+    cost: { kind: "energy", amount: 10 },
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // A hex combining attack-slowing with health degeneration. The
+    // degeneration is modelled by the hex's own healthPerSecond; the
+    // attack-speed half awaits weapon attacks (Sprint 15/21).
+    effects: [{ kind: "apply-status", statusId: "life-drain", durationSeconds: 13 }],
+  },
+  {
+    id: "elementalist.armor-of-earth",
+    name: "Armor of Earth",
+    cost: { kind: "energy", amount: 10 },
+    activationSeconds: 0.75,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    // A self-enchantment: real armor gain, and the real movement penalty
+    // that makes it a genuine trade-off rather than a free buff.
+    effects: [{ kind: "apply-status", statusId: "armor-boost", durationSeconds: 30 }],
+  },
+  {
+    id: "ranger.troll-unguent",
+    name: "Troll Unguent",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 3,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    // Strong self-regeneration behind a long 3s cast — the canonical
+    // "interrupt me" target, which is exactly why it pairs well with the
+    // interrupt skills above in a test and in play.
+    effects: [{ kind: "apply-status", statusId: "regeneration", durationSeconds: 13 }],
+  },
+  {
+    id: "monk.mend-affliction",
+    name: "Mend Affliction",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 1,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    // Original design, not an import: the corpus's condition-removal
+    // skills all also need enchantment-stripping or per-removal scaling
+    // the engine does not express yet. This exercises the remove-status
+    // effect honestly under its own name.
+    effects: [{ kind: "remove-status", category: "condition", count: 2 }],
+  },
+  {
+    id: "warrior.sever-artery-lite",
+    name: "Opening Cut",
+    cost: { kind: "adrenaline", amount: 4 },
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    // Original design: a bleed-applying adrenaline attack, exercising
+    // damage + condition in one skill.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "warrior.swordsmanship", atZero: 5, atTwelve: 20 },
+        },
+      },
+      { kind: "apply-status", statusId: "bleeding", durationSeconds: 15 },
+    ],
+  },
 ];
 
 export const SKILLS_BY_ID: ReadonlyMap<string, Skill> = new Map(

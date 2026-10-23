@@ -1,4 +1,5 @@
 import { resolveMagnitude } from "./scaling.js";
+import type { StatusId } from "./status.js";
 import type { Combatant, SkillContext, SkillEffect } from "./types.js";
 
 /**
@@ -19,7 +20,23 @@ export type CombatEvent =
   | { readonly kind: "heal"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "energy-gain"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "sacrifice"; readonly targetId: string; readonly amount: number }
-  | { readonly kind: "death"; readonly targetId: string };
+  | { readonly kind: "death"; readonly targetId: string }
+  | {
+      readonly kind: "status-applied";
+      readonly targetId: string;
+      readonly statusId: StatusId;
+      readonly durationSeconds: number;
+    }
+  | { readonly kind: "status-removed"; readonly targetId: string; readonly statusId: StatusId }
+  | { readonly kind: "status-expired"; readonly targetId: string; readonly statusId: StatusId }
+  | {
+      readonly kind: "interrupted";
+      readonly targetId: string;
+      /** The skill whose cast was cut short. */
+      readonly skillId: string;
+    }
+  /** An interrupt that found nothing to interrupt — a wasted cast. */
+  | { readonly kind: "interrupt-missed"; readonly targetId: string };
 
 /** Apply raw damage, clamping at 0 and flagging death exactly once. */
 function applyDamage(target: Combatant, amount: number, events: CombatEvent[]): void {
@@ -100,6 +117,47 @@ export function applyEffect(effect: SkillEffect, context: SkillContext): CombatE
         caster.dead = true;
         events.push({ kind: "death", targetId: caster.id });
       }
+      return events;
+    }
+
+    case "apply-status": {
+      if (target === undefined || target.dead) {
+        return events;
+      }
+      target.statuses.apply(effect.statusId, effect.durationSeconds, caster.id);
+      events.push({
+        kind: "status-applied",
+        targetId: target.id,
+        statusId: effect.statusId,
+        durationSeconds: effect.durationSeconds,
+      });
+      return events;
+    }
+
+    case "remove-status": {
+      if (target === undefined) {
+        return events;
+      }
+      for (const statusId of target.statuses.removeByCategory(effect.category, effect.count)) {
+        events.push({ kind: "status-removed", targetId: target.id, statusId });
+      }
+      return events;
+    }
+
+    case "interrupt": {
+      if (target === undefined || target.dead) {
+        return events;
+      }
+      const cancelled = target.cast.cancelCast();
+      if (cancelled === undefined) {
+        // Nothing was being cast: the interrupt is simply wasted. Emitted
+        // explicitly so a combat log can show the miss — landing an
+        // interrupt is a timing skill, and silently swallowing failures
+        // would hide exactly the feedback that teaches it.
+        events.push({ kind: "interrupt-missed", targetId: target.id });
+        return events;
+      }
+      events.push({ kind: "interrupted", targetId: target.id, skillId: cancelled.skillId });
       return events;
     }
   }

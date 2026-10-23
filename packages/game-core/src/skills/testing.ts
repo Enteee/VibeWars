@@ -1,3 +1,5 @@
+import { CastState } from "./cast-state.js";
+import { StatusSet } from "./status.js";
 import type { Combatant } from "./types.js";
 
 /**
@@ -15,6 +17,8 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     attributeRanks: new Map(),
     team: 0,
     dead: false,
+    statuses: new StatusSet(),
+    cast: new CastState(),
     ...overrides,
   };
 }

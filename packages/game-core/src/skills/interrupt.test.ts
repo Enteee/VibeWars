@@ -1,0 +1,240 @@
+import { describe, expect, it } from "vitest";
+
+import { createRng } from "../rng.js";
+import { vec2 } from "../vec2.js";
+import { canActivate, payCost } from "./activation.js";
+import { getSkill } from "./catalog.js";
+import { applyEffects } from "./effects.js";
+import { makeCombatant } from "./testing.js";
+import { advanceStatuses } from "./tick.js";
+import type { Combatant } from "./types.js";
+
+/**
+ * Interrupts (brief §14 — "a critical GW1-inspired mechanic").
+ *
+ * These tests encode the property that makes interrupting a *skill*
+ * rather than a button: it only works inside the target's cast window.
+ * Too early or too late and it is wasted.
+ */
+
+const TICK = 1 / 20;
+
+function cast(caster: Combatant, skillId: string, target: Combatant | undefined): void {
+  const skill = getSkill(skillId);
+  if (skill === undefined) {
+    throw new Error(`unknown skill ${skillId}`);
+  }
+  payCost(skill, caster);
+  caster.cast.beginCast(skill.id, target?.id, skill.activationSeconds);
+}
+
+function resolve(caster: Combatant, target: Combatant | undefined): void {
+  const completed = caster.cast.advance(TICK);
+  if (completed === undefined) {
+    return;
+  }
+  const skill = getSkill(completed.skillId);
+  if (skill === undefined) {
+    return;
+  }
+  applyEffects(skill.effects, { caster, target, rng: createRng(1) });
+  caster.cast.startRecharge(skill.id, skill.rechargeSeconds);
+}
+
+describe("interrupt mechanic", () => {
+  it("cancels a cast that is in progress, and the skill never fires", () => {
+    const ranger = makeCombatant({ id: "ranger", team: 0 });
+    const victim = makeCombatant({ id: "victim", team: 1, health: 100, maxHealth: 500 });
+
+    // Victim starts the slow 3s Troll Unguent self-heal.
+    cast(victim, "ranger.troll-unguent", victim);
+    for (let i = 0; i < 10; i += 1) {
+      resolve(victim, victim);
+    }
+    expect(victim.cast.isCasting).toBe(true);
+
+    // Ranger interrupts mid-cast.
+    const events = applyEffects(getSkill("ranger.broad-head-arrow")?.effects ?? [], {
+      caster: ranger,
+      target: victim,
+      rng: createRng(1),
+    });
+
+    expect(events).toContainEqual({
+      kind: "interrupted",
+      targetId: "victim",
+      skillId: "ranger.troll-unguent",
+    });
+    expect(victim.cast.isCasting).toBe(false);
+
+    // Let plenty of time pass: the interrupted heal must never land.
+    for (let i = 0; i < 100; i += 1) {
+      resolve(victim, victim);
+    }
+    expect(victim.statuses.has("regeneration")).toBe(false);
+  });
+
+  it("is wasted when the target is not casting — timing is the skill", () => {
+    const ranger = makeCombatant({ id: "ranger", team: 0 });
+    const victim = makeCombatant({ id: "victim", team: 1 });
+
+    const events = applyEffects(getSkill("ranger.broad-head-arrow")?.effects ?? [], {
+      caster: ranger,
+      target: victim,
+      rng: createRng(1),
+    });
+
+    expect(events).toContainEqual({ kind: "interrupt-missed", targetId: "victim" });
+  });
+
+  it("applies Dazed whether or not the interrupt itself landed", () => {
+    const ranger = makeCombatant({ id: "ranger", team: 0 });
+    const idle = makeCombatant({ id: "idle", team: 1 });
+
+    applyEffects(getSkill("ranger.broad-head-arrow")?.effects ?? [], {
+      caster: ranger,
+      target: idle,
+      rng: createRng(1),
+    });
+
+    expect(idle.statuses.has("dazed")).toBe(true);
+  });
+
+  it("a cast that completes before the interrupt arrives cannot be stopped", () => {
+    const ranger = makeCombatant({ id: "ranger", team: 0 });
+    const victim = makeCombatant({ id: "victim", team: 1, health: 100 });
+
+    cast(victim, "ranger.troll-unguent", victim);
+    // Let the full 3s cast finish (60 ticks at 20Hz).
+    for (let i = 0; i < 61; i += 1) {
+      resolve(victim, victim);
+    }
+    expect(victim.statuses.has("regeneration")).toBe(true);
+
+    const events = applyEffects(getSkill("ranger.broad-head-arrow")?.effects ?? [], {
+      caster: ranger,
+      target: victim,
+      rng: createRng(1),
+    });
+
+    // Too late: nothing to interrupt, and the heal is already running.
+    expect(events).toContainEqual({ kind: "interrupt-missed", targetId: "victim" });
+    expect(victim.statuses.has("regeneration")).toBe(true);
+  });
+
+  it("an interrupted caster has still paid the skill's energy cost", () => {
+    const victim = makeCombatant({ id: "victim", team: 1, energy: 50 });
+    const ranger = makeCombatant({ id: "ranger", team: 0 });
+
+    cast(victim, "ranger.troll-unguent", victim);
+    const energyAfterPaying = victim.energy;
+    expect(energyAfterPaying).toBe(45);
+
+    applyEffects(getSkill("ranger.broad-head-arrow")?.effects ?? [], {
+      caster: ranger,
+      target: victim,
+      rng: createRng(1),
+    });
+
+    // The energy is gone and the skill did nothing — that is the real
+    // cost of being interrupted, and why interrupts are so valuable.
+    expect(victim.energy).toBe(energyAfterPaying);
+    expect(victim.statuses.has("regeneration")).toBe(false);
+  });
+});
+
+describe("status-driven combat scenarios", () => {
+  it("bleeding from an attack genuinely degenerates the target over time", () => {
+    const warrior = makeCombatant({ id: "war", team: 0, adrenaline: 4 });
+    const victim = makeCombatant({ id: "victim", team: 1, health: 500 });
+
+    applyEffects(getSkill("warrior.sever-artery-lite")?.effects ?? [], {
+      caster: warrior,
+      target: victim,
+      rng: createRng(1),
+    });
+
+    const healthAfterHit = victim.health;
+    expect(victim.statuses.has("bleeding")).toBe(true);
+
+    for (let i = 0; i < 100; i += 1) {
+      advanceStatuses(victim, TICK);
+    }
+    // 5 seconds of -3/s bleed.
+    expect(victim.health).toBeCloseTo(healthAfterHit - 15, 5);
+  });
+
+  it("condition removal cures the bleed and stops the degeneration", () => {
+    const monk = makeCombatant({ id: "monk", team: 0 });
+    const ally = makeCombatant({ id: "ally", team: 0, health: 400 });
+    ally.statuses.apply("bleeding", 20, "enemy");
+    ally.statuses.apply("poison", 20, "enemy");
+
+    const events = applyEffects(getSkill("monk.mend-affliction")?.effects ?? [], {
+      caster: monk,
+      target: ally,
+      rng: createRng(1),
+    });
+
+    expect(events.filter((e) => e.kind === "status-removed")).toHaveLength(2);
+    expect(ally.statuses.countByCategory("condition")).toBe(0);
+
+    const healthAfterCure = ally.health;
+    for (let i = 0; i < 100; i += 1) {
+      advanceStatuses(ally, TICK);
+    }
+    expect(ally.health).toBe(healthAfterCure);
+  });
+
+  it("a self-enchantment is applied to the caster, not to a selected enemy", () => {
+    const ele = makeCombatant({ id: "ele", team: 0 });
+    const enemy = makeCombatant({ id: "enemy", team: 1 });
+
+    // A self-targeted skill resolves against the caster.
+    applyEffects(getSkill("elementalist.armor-of-earth")?.effects ?? [], {
+      caster: ele,
+      target: ele,
+      rng: createRng(1),
+    });
+
+    expect(ele.statuses.has("armor-boost")).toBe(true);
+    expect(enemy.statuses.has("armor-boost")).toBe(false);
+  });
+
+  it("a self-targeted skill passes activation checks with no target selected", () => {
+    const ele = makeCombatant({ id: "ele", team: 0 });
+    const skill = getSkill("elementalist.armor-of-earth");
+    expect(skill).toBeDefined();
+    if (skill === undefined) return;
+
+    const check = canActivate({
+      skill,
+      caster: ele,
+      casterPosition: vec2(0, 0),
+      target: undefined,
+      targetPosition: undefined,
+      rechargeRemaining: new Map(),
+      isCasting: false,
+      skillBar: [skill.id],
+      losBlockers: [],
+    });
+    expect(check.ok).toBe(true);
+  });
+
+  it("a hex applied by a skill drains the victim's health over its duration", () => {
+    const necro = makeCombatant({ id: "necro", team: 0 });
+    const victim = makeCombatant({ id: "victim", team: 1, health: 500 });
+
+    applyEffects(getSkill("necromancer.faintheartedness")?.effects ?? [], {
+      caster: necro,
+      target: victim,
+      rng: createRng(1),
+    });
+
+    expect(victim.statuses.countByCategory("hex")).toBe(1);
+    for (let i = 0; i < 100; i += 1) {
+      advanceStatuses(victim, TICK);
+    }
+    expect(victim.health).toBeLessThan(500);
+  });
+});
