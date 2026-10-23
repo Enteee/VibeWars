@@ -6,5 +6,5 @@
   "MD013": false,
   // Our docs use '#' headings liberally for structure, including in ADRs
   // that mirror the brief's own heading style.
-  "MD024": { "siblings_only": true },
+  "MD024": { "siblings_only": true }
 }

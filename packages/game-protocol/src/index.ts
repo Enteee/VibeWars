@@ -12,10 +12,17 @@
 
 export {
   PROTOCOL_VERSION,
-  ROOM_LOBBY,
+  ROOM_MATCH,
   isLobbyCode,
   normalizeLobbyCode,
+  parseClientIntent,
   LOBBY_CODE_LENGTH,
   LOBBY_CODE_ALPHABET,
 } from "./protocol.js";
-export type { ClientIntent, MoveIntent, StopIntent, ServerHello } from "./protocol.js";
+export type {
+  ClientIntent,
+  MoveIntent,
+  StopIntent,
+  TargetIntent,
+  ServerHello,
+} from "./protocol.js";

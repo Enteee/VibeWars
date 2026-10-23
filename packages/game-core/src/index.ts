@@ -11,4 +11,9 @@ export { createRng, seedFromString } from "./rng.js";
 
 export type { Vec2 } from "./vec2.js";
 export * as Vec from "./vec2.js";
-export { vec2 } from "./vec2.js";
+export { ZERO, length, normalize, vec2 } from "./vec2.js";
+
+export { clampInputDirection, integrateMovement } from "./movement.js";
+
+export type { MovementRules, Ruleset } from "./ruleset.js";
+export { MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";

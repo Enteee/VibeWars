@@ -4,9 +4,10 @@ import {
   LOBBY_CODE_ALPHABET,
   LOBBY_CODE_LENGTH,
   PROTOCOL_VERSION,
-  ROOM_LOBBY,
+  ROOM_MATCH,
   isLobbyCode,
   normalizeLobbyCode,
+  parseClientIntent,
 } from "./protocol.js";
 
 describe("protocol constants", () => {
@@ -14,8 +15,8 @@ describe("protocol constants", () => {
     expect(PROTOCOL_VERSION).toBe(1);
   });
 
-  it("names the lobby room", () => {
-    expect(ROOM_LOBBY).toBe("lobby");
+  it("names the match room", () => {
+    expect(ROOM_MATCH).toBe("match");
   });
 });
 
@@ -80,5 +81,83 @@ describe("isLobbyCode", () => {
   it("is not fooled by regex metacharacters or newlines", () => {
     expect(isLobbyCode("....")).toBe(false);
     expect(isLobbyCode("ACDE\nACDE")).toBe(false);
+  });
+});
+
+describe("parseClientIntent", () => {
+  it("accepts a well-formed stop intent", () => {
+    expect(parseClientIntent({ kind: "stop" })).toEqual({ kind: "stop" });
+  });
+
+  it("accepts a well-formed move intent", () => {
+    expect(parseClientIntent({ kind: "move", dirX: 1, dirY: -0.5 })).toEqual({
+      kind: "move",
+      dirX: 1,
+      dirY: -0.5,
+    });
+  });
+
+  it("ignores extra fields on an otherwise valid payload", () => {
+    expect(parseClientIntent({ kind: "stop", extra: "whatever" })).toEqual({ kind: "stop" });
+  });
+
+  it("rejects primitives and null", () => {
+    expect(parseClientIntent(null)).toBeUndefined();
+    expect(parseClientIntent(undefined)).toBeUndefined();
+    expect(parseClientIntent("move")).toBeUndefined();
+    expect(parseClientIntent(42)).toBeUndefined();
+    expect(parseClientIntent(true)).toBeUndefined();
+  });
+
+  it("rejects an unrecognized kind", () => {
+    expect(parseClientIntent({ kind: "teleport", x: 0, y: 0 })).toBeUndefined();
+    expect(parseClientIntent({})).toBeUndefined();
+  });
+
+  it("rejects a move intent with missing or wrong-typed fields", () => {
+    expect(parseClientIntent({ kind: "move" })).toBeUndefined();
+    expect(parseClientIntent({ kind: "move", dirX: 1 })).toBeUndefined();
+    expect(parseClientIntent({ kind: "move", dirX: "1", dirY: 0 })).toBeUndefined();
+    expect(parseClientIntent({ kind: "move", dirX: null, dirY: 0 })).toBeUndefined();
+  });
+
+  it("rejects non-finite move values a malicious client could send", () => {
+    expect(parseClientIntent({ kind: "move", dirX: Number.NaN, dirY: 0 })).toBeUndefined();
+    expect(
+      parseClientIntent({ kind: "move", dirX: Number.POSITIVE_INFINITY, dirY: 0 }),
+    ).toBeUndefined();
+    expect(
+      parseClientIntent({ kind: "move", dirX: Number.NEGATIVE_INFINITY, dirY: 0 }),
+    ).toBeUndefined();
+  });
+
+  it("does accept a very large but finite magnitude (clamping is movement's job, not parsing's)", () => {
+    expect(parseClientIntent({ kind: "move", dirX: 1e9, dirY: 0 })).toEqual({
+      kind: "move",
+      dirX: 1e9,
+      dirY: 0,
+    });
+  });
+});
+
+describe("parseClientIntent — target", () => {
+  it("accepts a target selection", () => {
+    expect(parseClientIntent({ kind: "target", targetSessionId: "abc123" })).toEqual({
+      kind: "target",
+      targetSessionId: "abc123",
+    });
+  });
+
+  it("accepts clearing the target with null", () => {
+    expect(parseClientIntent({ kind: "target", targetSessionId: null })).toEqual({
+      kind: "target",
+      targetSessionId: null,
+    });
+  });
+
+  it("rejects a target intent with a non-string, non-null id", () => {
+    expect(parseClientIntent({ kind: "target", targetSessionId: 123 })).toBeUndefined();
+    expect(parseClientIntent({ kind: "target", targetSessionId: undefined })).toBeUndefined();
+    expect(parseClientIntent({ kind: "target" })).toBeUndefined();
   });
 });

@@ -2,14 +2,16 @@ import Phaser from "phaser";
 
 import { vec2 } from "@vibewars/game-core";
 
-import { ArenaScene, type ArenaSnapshot } from "./render/arena-scene.js";
+import type { MatchSnapshot } from "./net/match-client.js";
+import { connectToMatch, endpointFromLocation } from "./net/match-client.js";
+import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
+import { ArenaScene, actorAtPoint, type ArenaSnapshot } from "./render/arena-scene.js";
 
 /**
- * Sprint 0/2 browser shell.
- *
- * Boots Phaser 4 into the `#viewport` element and renders a static geometric
- * scene. Networking is wired in Sprint 3; until then this proves the renderer,
- * the build pipeline and the HTML shell work together.
+ * Sprint 2-4 browser client: boots Phaser 4 into `#viewport`, connects to
+ * the match room, moves with WASD, and renders the server's authoritative
+ * state. There is no lobby/menu yet (Sprint 19) — the page connects
+ * directly to the match room on load.
  */
 
 function requireElement(selector: string): HTMLElement {
@@ -26,22 +28,26 @@ function setStatus(text: string, state: "offline" | "online" | "error"): void {
   status.dataset.state = state;
 }
 
-const DEMO_SNAPSHOT: ArenaSnapshot = {
-  walls: [
-    { x: 260, y: 140, width: 220, height: 24 },
-    { x: 260, y: 300, width: 24, height: 180 },
-    { x: 560, y: 260, width: 180, height: 24 },
-  ],
-  actors: [
-    { id: "self", position: vec2(180, 240), radius: 14, team: "self" },
-    { id: "ally-1", position: vec2(140, 310), radius: 14, team: "ally" },
-    { id: "enemy-1", position: vec2(620, 200), radius: 14, team: "enemy" },
-    { id: "enemy-2", position: vec2(680, 330), radius: 14, team: "enemy" },
-  ],
-  targetId: "enemy-1",
-};
+/** Project the wire-level snapshot onto the renderer's own shape (ADR-0001:
+ *  the renderer never depends on network/protocol types directly). */
+function toArenaSnapshot(match: MatchSnapshot): ArenaSnapshot {
+  const self = match.players.find((player) => player.sessionId === match.selfSessionId);
+  return {
+    walls: [],
+    // Render *my* current target, as the server has authoritatively
+    // confirmed it — not whatever was last clicked, which may have been
+    // rejected (brief §32: the client only sends intent).
+    targetId: self?.targetSessionId,
+    actors: match.players.map((player) => ({
+      id: player.sessionId,
+      position: { x: player.x, y: player.y },
+      radius: 14,
+      team: player.sessionId === match.selfSessionId ? "self" : "ally",
+    })),
+  };
+}
 
-function boot(): void {
+async function boot(): Promise<void> {
   const viewport = requireElement("#viewport");
 
   const game = new Phaser.Game({
@@ -55,18 +61,48 @@ function boot(): void {
     scene: [ArenaScene],
   });
 
-  game.events.once(Phaser.Core.Events.READY, () => {
-    const scene = game.scene.getScene(ArenaScene.KEY);
-    if (scene instanceof ArenaScene) {
-      scene.setSnapshot(DEMO_SNAPSHOT);
+  const scene = await new Promise<ArenaScene>((resolve) => {
+    game.events.once(Phaser.Core.Events.READY, () => {
+      const candidate = game.scene.getScene(ArenaScene.KEY);
+      if (candidate instanceof ArenaScene) {
+        resolve(candidate);
+      }
+    });
+  });
+
+  setStatus("connecting…", "offline");
+  const connection = await connectToMatch(endpointFromLocation(window.location));
+  setStatus(`online as ${connection.selfSessionId.slice(0, 6)}`, "online");
+
+  attachKeyboardMoveInput(window, (direction) => {
+    if (direction.x === 0 && direction.y === 0) {
+      connection.sendIntent({ kind: "stop" });
+    } else {
+      connection.sendIntent({ kind: "move", dirX: direction.x, dirY: direction.y });
     }
-    setStatus("renderer ready", "online");
+  });
+
+  // Rendering is driven by the scene's own Phaser update loop; push a fresh
+  // snapshot from the latest server state on every scene update rather than
+  // on a separate timer, so there is exactly one place "when do we redraw"
+  // is decided.
+  let latestSnapshot = toArenaSnapshot(connection.getSnapshot());
+  game.events.on(Phaser.Core.Events.STEP, () => {
+    latestSnapshot = toArenaSnapshot(connection.getSnapshot());
+    scene.setSnapshot(latestSnapshot);
+  });
+
+  // Click-to-target (brief §5): hit-test the clicked world point against
+  // the most recently rendered actors. Clicking empty space clears the
+  // target. The server is the one that decides whether a target id is
+  // actually valid (brief §32) — this only ever sends a request.
+  scene.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+    const hit = actorAtPoint(latestSnapshot, vec2(pointer.worldX, pointer.worldY));
+    connection.sendIntent({ kind: "target", targetSessionId: hit?.id ?? null });
   });
 }
 
-try {
-  boot();
-} catch (error: unknown) {
+boot().catch((error: unknown) => {
   setStatus("failed to start", "error");
   console.error("[web] boot failed", error);
-}
+});
