@@ -143,3 +143,56 @@ test("a saved character can be chosen and is taken into a match", async ({ page 
   // skill that was equipped — not the eight-slot house loadout.
   await expect(page.locator(".hud-skills .hud-skill")).toHaveCount(1);
 });
+
+test("a team supports every operation sprint 18 asks for", async ({ page }) => {
+  // reorder and duplicate were implemented and unit-tested in
+  // team-builder.ts, but no button ever called them.
+  await openCharacters(page);
+  for (const name of ["Alpha", "Bravo"]) {
+    await page.getByRole("button", { name: "new character" }).click();
+    await page.locator("input.editor-name").fill(name);
+    await page.getByRole("button", { name: "save", exact: true }).click();
+  }
+  await page.getByRole("button", { name: "back" }).click();
+
+  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "new team" }).click();
+  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
+
+  // rename
+  await page.locator("input.field-input").first().fill("GvG Practice");
+
+  // add two members
+  const picker = page.locator(".menu-row select");
+  await picker.selectOption({ label: "Alpha" });
+  await page.getByRole("button", { name: "add member" }).click();
+  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
+  await page.locator(".menu-row select").selectOption({ label: "Bravo" });
+  await page.getByRole("button", { name: "add member" }).click();
+  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
+
+  await expect(page.locator(".entity-list .entity-name").first()).toContainText("1. Alpha");
+
+  // reorder: Bravo moves to slot 1
+  await page.locator(".entity-list .entity-row").nth(1).getByRole("button", { name: "↑" }).click();
+  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
+  await expect(page.locator(".entity-list .entity-name").first()).toContainText("1. Bravo");
+
+  // duplicate
+  await page.getByRole("button", { name: "duplicate" }).click();
+  await expect(page.locator(".entity-name")).toHaveCount(2);
+
+  // remove a member
+  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
+  await page
+    .locator(".entity-list .entity-row")
+    .first()
+    .getByRole("button", { name: "remove" })
+    .click();
+  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
+  await expect(page.locator(".entity-list .entity-row")).toHaveCount(1);
+
+  // delete the team
+  await page.getByRole("button", { name: "delete" }).click();
+  await expect(page.locator(".entity-name")).toHaveCount(1);
+});

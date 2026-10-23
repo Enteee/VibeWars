@@ -51,20 +51,33 @@ own development was verified that way; see
   a pillar hall, selectable by the lobby host.
 - **Lobby** with shareable codes, team assignment, ready state and
   repeatable matches.
-- **Character and team builders** with profession/attribute rules and
-  versioned browser-local persistence. Pick a character on the menu and
-  you take that build into the match — the server validates it and falls
-  back to a default loadout if it is illegal, so a build is a request,
-  never a claim.
+- **Character builder** with profession/attribute rules and versioned
+  browser-local persistence. Pick a character on the menu and you take
+  that build into the match — the server validates it and falls back to a
+  default loadout if it is illegal, so a build is a request, never a
+  claim.
+- **Team builder** for planning a roster: create, rename, add, remove,
+  reorder, duplicate and delete, at any team size. A team is a local
+  planning tool — see the limits below.
 - **Match rules**: score, clock, victory conditions.
 - **Robustness**: a dropped player keeps their slot for 30 seconds and
   reconnects to the same character; hostile input cannot crash the
   server (fuzz-tested).
 
-Honest limits: area-of-effect, projectile travel time, weapon
-auto-attacks, knockdowns and spirits/wards/traps are **not**
-implemented. Skills needing them are deliberately absent from the
-catalog rather than present with watered-down effects (brief §9).
+Honest limits:
+
+- Area-of-effect, projectile travel time, weapon auto-attacks, knockdowns
+  and spirits/wards/traps are **not** implemented. Skills needing them
+  are deliberately absent from the catalog rather than present with
+  watered-down effects (brief §9).
+- A **saved team is not yet taken into a match**. You can build and
+  organise a roster, and each player picks their own character from it,
+  but the lobby does not assign a team's slots to the players in it.
+  Teams are first-class objects in storage (brief §4) and a planning tool
+  in practice.
+- Kills score for a **team**, not a player. Per-player credit needs
+  damage-source tracking that does not exist, and inventing an
+  attribution would put a plausible lie on the scoreboard.
 
 ## Repository layout
 
@@ -91,7 +104,7 @@ headlessly. See [ARCHITECTURE.md](ARCHITECTURE.md).
 ```sh
 pnpm run ci       # format + lint + typecheck + test + build
 pnpm run test     # 576 tests: unit, integration, fuzz, headless simulation
-pnpm run test:e2e # 18 browser tests in a real Chromium (needs one installed)
+pnpm run test:e2e # 19 browser tests in a real Chromium (needs one installed)
 pnpm run ci:full  # both of the above
 ```
 
