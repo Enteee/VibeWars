@@ -21,6 +21,16 @@ export interface PlayerSnapshot {
   readonly y: number;
   /** Who this player is targeting, or `undefined` for no target. */
   readonly targetSessionId: string | undefined;
+  readonly health: number;
+  readonly maxHealth: number;
+  readonly energy: number;
+  readonly maxEnergy: number;
+  readonly adrenaline: number;
+  readonly team: number;
+  readonly dead: boolean;
+  readonly castingSkillId: string | undefined;
+  readonly castRemaining: number;
+  readonly statuses: readonly string[];
 }
 
 export interface MatchSnapshot {
@@ -28,12 +38,35 @@ export interface MatchSnapshot {
   readonly players: readonly PlayerSnapshot[];
 }
 
+/** One slot of the server-assigned skill bar. */
+export interface SkillSlot {
+  readonly id: string;
+  readonly name: string;
+  readonly energyCost: number;
+  readonly adrenalineCost: number;
+  readonly activationSeconds: number;
+  readonly rechargeSeconds: number;
+}
+
+export interface CombatMessage {
+  readonly casterSessionId: string;
+  readonly skillId: string;
+  readonly events: readonly {
+    readonly kind: string;
+    readonly targetId?: string;
+    readonly amount?: number;
+  }[];
+}
+
 export interface MatchConnection {
   readonly selfSessionId: string;
   /** The match's static geometry, received once on join (brief §19). */
   readonly map: MapDescriptor;
+  /** The server-assigned skill bar, received once on join. */
+  readonly skillBar: readonly SkillSlot[];
   sendIntent(intent: ClientIntent): void;
   getSnapshot(): MatchSnapshot;
+  onCombat(handler: (message: CombatMessage) => void): void;
   disconnect(): Promise<void>;
 }
 
@@ -49,6 +82,16 @@ interface DecodedPlayer {
   readonly x: number;
   readonly y: number;
   readonly targetSessionId: string;
+  readonly health: number;
+  readonly maxHealth: number;
+  readonly energy: number;
+  readonly maxEnergy: number;
+  readonly adrenaline: number;
+  readonly team: number;
+  readonly dead: boolean;
+  readonly castingSkillId: string;
+  readonly castRemaining: number;
+  readonly statuses: Iterable<string>;
 }
 interface DecodedMatchState {
   readonly players: ReadonlyMap<string, DecodedPlayer> | Map<string, DecodedPlayer>;
@@ -62,6 +105,16 @@ function snapshotFrom(room: Room<unknown, DecodedMatchState>): MatchSnapshot {
       x: player.x,
       y: player.y,
       targetSessionId: player.targetSessionId === "" ? undefined : player.targetSessionId,
+      health: player.health,
+      maxHealth: player.maxHealth,
+      energy: player.energy,
+      maxEnergy: player.maxEnergy,
+      adrenaline: player.adrenaline,
+      team: player.team,
+      dead: player.dead,
+      castingSkillId: player.castingSkillId === "" ? undefined : player.castingSkillId,
+      castRemaining: player.castRemaining,
+      statuses: [...player.statuses],
     });
   }
   return { selfSessionId: room.sessionId, players };
@@ -83,16 +136,27 @@ function awaitMessage<T>(room: Room, type: string, timeoutMs: number): Promise<T
 export async function connectToMatch(endpoint: string): Promise<MatchConnection> {
   const client = new Client(endpoint);
   const room = await client.joinOrCreate<DecodedMatchState>(ROOM_MATCH);
-  const map = await awaitMessage<MapDescriptor>(room, "map", 5000);
+
+  // Both arrive on join; waiting for them here means the caller gets a
+  // fully-usable connection rather than one that is missing its map or
+  // skill bar for the first few frames.
+  const [map, bar] = await Promise.all([
+    awaitMessage<MapDescriptor>(room, "map", 5000),
+    awaitMessage<{ slots: SkillSlot[] }>(room, "skill-bar", 5000),
+  ]);
 
   return {
     selfSessionId: room.sessionId,
     map,
+    skillBar: bar.slots,
     sendIntent(intent: ClientIntent): void {
       room.send("intent", intent);
     },
     getSnapshot(): MatchSnapshot {
       return snapshotFrom(room);
+    },
+    onCombat(handler: (message: CombatMessage) => void): void {
+      room.onMessage("combat", handler);
     },
     async disconnect(): Promise<void> {
       await room.leave();

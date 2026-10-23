@@ -121,3 +121,25 @@ describe("attackMisses", () => {
     expect(attackMisses(c, 0.95)).toBe(false);
   });
 });
+
+describe("death by degeneration", () => {
+  it("emits a death event that a caller can react to, without re-reading the flag", () => {
+    // This is the exact shape the match room depends on: it keys its
+    // "cancel the cast and start the respawn timer" branch off this
+    // event, because TypeScript's narrowing would otherwise claim the
+    // branch is unreachable after an earlier `dead` check.
+    const c = makeCombatant({ id: "c", health: 2 });
+    c.statuses.apply("burning", 10, "a");
+
+    const events = advanceStatuses(c, 1);
+
+    expect(events.some((e) => e.kind === "death")).toBe(true);
+    expect(c.dead).toBe(true);
+  });
+
+  it("emits no death event on a tick that merely damages", () => {
+    const c = makeCombatant({ id: "c", health: 500 });
+    c.statuses.apply("burning", 10, "a");
+    expect(advanceStatuses(c, 1).some((e) => e.kind === "death")).toBe(false);
+  });
+});

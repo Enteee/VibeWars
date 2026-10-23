@@ -77,13 +77,25 @@ export interface TargetIntent {
 }
 
 /**
+ * Request to use the skill in slot `slot` of the caster's skill bar.
+ *
+ * The client sends a *slot index*, never a skill id: that way a client
+ * cannot ask to cast a skill it does not have equipped, and the server
+ * never has to trust a client-supplied skill identity (brief §32).
+ */
+export interface UseSkillIntent {
+  readonly kind: "use-skill";
+  readonly slot: number;
+}
+
+/**
  * Every message a client is allowed to send during a match.
  *
  * Deliberately a closed discriminated union: adding a new client capability
  * requires touching this type, which forces a protocol-version decision and a
  * server-side validator.
  */
-export type ClientIntent = MoveIntent | StopIntent | TargetIntent;
+export type ClientIntent = MoveIntent | StopIntent | TargetIntent | UseSkillIntent;
 
 /**
  * Validate an arbitrary network payload as a `ClientIntent`, or reject it.
@@ -120,6 +132,18 @@ export function parseClientIntent(value: unknown): ClientIntent | undefined {
     (record.targetSessionId === null || typeof record.targetSessionId === "string")
   ) {
     return { kind: "target", targetSessionId: record.targetSessionId };
+  }
+
+  if (
+    record.kind === "use-skill" &&
+    typeof record.slot === "number" &&
+    Number.isInteger(record.slot) &&
+    record.slot >= 0
+  ) {
+    // An out-of-bounds-but-non-negative slot is accepted here and
+    // rejected by the room against the caster's actual bar length —
+    // parsing validates shape, the simulation validates meaning.
+    return { kind: "use-skill", slot: record.slot };
   }
 
   return undefined;

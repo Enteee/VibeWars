@@ -69,3 +69,127 @@ body {
   width: 100%;
   height: 100%;
 }
+
+/* --------------------------------------------------------------------------
+   HUD — plain DOM over the canvas (brief §21). Pinned to the bottom so the
+   arena stays unobstructed; everything is geometry and text, no imagery.
+   -------------------------------------------------------------------------- */
+
+.hud {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem 0.9rem 0.9rem;
+  background: linear-gradient(to top, rgb(14 17 22 / 95%), rgb(14 17 22 / 0%));
+  pointer-events: none;
+  font-size: 0.78rem;
+}
+
+/* Only interactive children take pointer events, so clicks aimed at the
+   arena behind the HUD still reach the game. */
+.hud button {
+  pointer-events: auto;
+}
+
+.hud-target {
+  color: var(--ink-dim);
+  letter-spacing: 0.04em;
+  min-height: 1.1em;
+}
+
+.hud-bars {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hud-bar {
+  position: relative;
+  width: 220px;
+  height: 16px;
+  background: #11161d;
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.hud-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  transition: width 90ms linear;
+}
+
+.hud-bar-health .hud-bar-fill {
+  background: #7ee787;
+}
+
+.hud-bar-energy .hud-bar-fill {
+  background: #59c2ff;
+}
+
+.hud-bar-label {
+  position: relative;
+  display: block;
+  text-align: center;
+  line-height: 16px;
+  color: var(--ink);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
+}
+
+.hud-adrenaline,
+.hud-statuses {
+  color: var(--ink-dim);
+}
+
+.hud-skills {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.hud-skill {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 92px;
+  padding: 0.35rem 0.45rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hud-skill:hover {
+  border-color: var(--accent);
+}
+
+/* A hint, not a gate: the server still decides whether a cast is legal. */
+.hud-skill.is-unaffordable {
+  opacity: 0.45;
+}
+
+.hud-skill-key {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.hud-skill-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hud-skill-cost {
+  color: var(--ink-dim);
+}
+
+#app {
+  position: relative;
+}

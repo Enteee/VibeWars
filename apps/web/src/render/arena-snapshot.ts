@@ -6,9 +6,9 @@ import { Vec, type Vec2 } from "@vibewars/game-core";
  * actual drawing lives in `arena-scene.ts`, which imports Phaser and so
  * cannot be imported from a plain-Node test (Phaser probes for browser
  * globals at module load time and throws outside one). Keeping this file
- * Phaser-free is what lets `actorAtPoint`/`teamColour` be unit-tested
- * headlessly, consistent with ADR-0001's "the simulation/domain layer
- * never depends on the renderer" — the same separation, one layer over.
+ * Phaser-free is what lets these helpers be unit-tested headlessly,
+ * consistent with ADR-0001's "the domain never depends on the renderer" —
+ * the same separation, one layer over.
  */
 
 export interface RenderableActor {
@@ -16,6 +16,12 @@ export interface RenderableActor {
   readonly position: Vec2;
   readonly radius: number;
   readonly team: "ally" | "enemy" | "self";
+  readonly health: number;
+  readonly maxHealth: number;
+  readonly dead: boolean;
+  /** Fraction of the current cast still remaining, or `undefined`. */
+  readonly castProgress: number | undefined;
+  readonly statuses: readonly string[];
 }
 
 export interface RectRenderableWall {
@@ -32,6 +38,16 @@ export interface PolygonRenderableWall {
 }
 
 export type RenderableWall = RectRenderableWall | PolygonRenderableWall;
+
+/** A short-lived floating number or label above an actor. */
+export interface FloatingText {
+  readonly id: number;
+  readonly text: string;
+  readonly position: Vec2;
+  readonly colour: number;
+  /** Seconds of life remaining; the scene fades and removes it. */
+  remainingSeconds: number;
+}
 
 export interface ArenaSnapshot {
   readonly actors: readonly RenderableActor[];
@@ -56,11 +72,19 @@ export function teamColour(team: RenderableActor["team"]): number {
   return TEAM_COLOURS[team];
 }
 
-/** Hit-test a point against actors; used by click-to-target (Sprint 5). */
+/**
+ * Hit-test a point against actors; used by click-to-target (brief §5).
+ *
+ * Dead actors are skipped: clicking a corpse should select whoever is
+ * standing behind it, not the corpse.
+ */
 export function actorAtPoint(snapshot: ArenaSnapshot, point: Vec2): RenderableActor | undefined {
   let best: RenderableActor | undefined;
   let bestDistance = Number.POSITIVE_INFINITY;
   for (const actor of snapshot.actors) {
+    if (actor.dead) {
+      continue;
+    }
     const d = Vec.distance(actor.position, point);
     if (d <= actor.radius && d < bestDistance) {
       best = actor;
@@ -68,4 +92,12 @@ export function actorAtPoint(snapshot: ArenaSnapshot, point: Vec2): RenderableAc
     }
   }
   return best;
+}
+
+/** Health as a 0..1 fraction, clamped — the shape a health bar needs. */
+export function healthFraction(actor: RenderableActor): number {
+  if (actor.maxHealth <= 0) {
+    return 0;
+  }
+  return Math.max(0, Math.min(1, actor.health / actor.maxHealth));
 }

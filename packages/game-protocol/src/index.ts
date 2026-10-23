@@ -24,6 +24,7 @@ export type {
   MoveIntent,
   StopIntent,
   TargetIntent,
+  UseSkillIntent,
   ServerHello,
   MapDescriptor,
   WallDescriptor,

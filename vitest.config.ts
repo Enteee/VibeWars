@@ -13,6 +13,12 @@ export default defineConfig({
     environment: "node",
     include: ["{apps,packages}/*/src/**/*.test.ts"],
     reporters: ["default"],
+    // Networked combat tests drive a real server through multi-second
+    // cast and recharge timers, so the 5s default is too tight for them.
+    // Pure unit tests are unaffected — they finish in milliseconds either
+    // way, and a generous ceiling only changes how long a genuine hang
+    // takes to surface.
+    testTimeout: 20_000,
     coverage: {
       provider: "v8",
       reportsDirectory: "./coverage",

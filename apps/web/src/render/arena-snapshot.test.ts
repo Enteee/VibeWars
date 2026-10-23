@@ -4,6 +4,7 @@ import { vec2 } from "@vibewars/game-core";
 
 import {
   actorAtPoint,
+  healthFraction,
   teamColour,
   type ArenaSnapshot,
   type RenderableActor,
@@ -16,8 +17,25 @@ describe("teamColour", () => {
   });
 });
 
-function actor(id: string, x: number, y: number, radius = 14): RenderableActor {
-  return { id, position: vec2(x, y), radius, team: "ally" };
+function actor(
+  id: string,
+  x: number,
+  y: number,
+  radius = 14,
+  overrides: Partial<RenderableActor> = {},
+): RenderableActor {
+  return {
+    id,
+    position: vec2(x, y),
+    radius,
+    team: "ally",
+    health: 500,
+    maxHealth: 500,
+    dead: false,
+    castProgress: undefined,
+    statuses: [],
+    ...overrides,
+  };
 }
 
 describe("actorAtPoint", () => {
@@ -49,5 +67,44 @@ describe("actorAtPoint", () => {
     const far = actor("far", 110, 100, 20);
     const snapshot: ArenaSnapshot = { actors: [far, near], walls: [], targetId: undefined };
     expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("near");
+  });
+});
+
+describe("actorAtPoint and the dead", () => {
+  it("skips a dead actor so a click selects whoever is behind the corpse", () => {
+    const corpse = actor("corpse", 100, 100, 20, { dead: true });
+    const living = actor("living", 105, 100, 20);
+    const snapshot: ArenaSnapshot = {
+      actors: [corpse, living],
+      walls: [],
+      targetId: undefined,
+    };
+    expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("living");
+  });
+
+  it("returns undefined when the only actor under the point is dead", () => {
+    const corpse = actor("corpse", 100, 100, 20, { dead: true });
+    const snapshot: ArenaSnapshot = { actors: [corpse], walls: [], targetId: undefined };
+    expect(actorAtPoint(snapshot, vec2(100, 100))).toBeUndefined();
+  });
+});
+
+describe("healthFraction", () => {
+  it("is 1 at full health and 0 at none", () => {
+    expect(healthFraction(actor("a", 0, 0, 14, { health: 500, maxHealth: 500 }))).toBe(1);
+    expect(healthFraction(actor("a", 0, 0, 14, { health: 0, maxHealth: 500 }))).toBe(0);
+  });
+
+  it("is the ratio in between", () => {
+    expect(healthFraction(actor("a", 0, 0, 14, { health: 250, maxHealth: 500 }))).toBe(0.5);
+  });
+
+  it("clamps rather than returning a value outside 0..1", () => {
+    expect(healthFraction(actor("a", 0, 0, 14, { health: 900, maxHealth: 500 }))).toBe(1);
+    expect(healthFraction(actor("a", 0, 0, 14, { health: -50, maxHealth: 500 }))).toBe(0);
+  });
+
+  it("does not divide by zero when maxHealth is zero", () => {
+    expect(healthFraction(actor("a", 0, 0, 14, { health: 0, maxHealth: 0 }))).toBe(0);
   });
 });

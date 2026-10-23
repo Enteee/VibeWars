@@ -228,7 +228,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.sever-artery-lite",
     name: "Opening Cut",
-    cost: { kind: "adrenaline", amount: 4 },
+    // Costs exactly one hit's worth of adrenaline, so landing a skill
+    // immediately opens up the follow-up. Charging more than a hit grants
+    // would make it uncastable in practice — a real bug this catalog's
+    // own integration tests caught.
+    cost: { kind: "adrenaline", amount: 3 },
     activationSeconds: 0,
     rechargeSeconds: 0,
     range: RANGE_MELEE,

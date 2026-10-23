@@ -1,0 +1,388 @@
+import { Client } from "@colyseus/sdk";
+import { ROOM_MATCH } from "@vibewars/game-protocol";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
+import { DEFAULT_SKILL_BAR } from "./rooms/match-room.js";
+import { createGameServer, type GameServer } from "./server.js";
+import { findFreePort, waitFor } from "./testing/harness.js";
+
+/**
+ * End-to-end combat over a real WebSocket (brief §20's full loop, minus
+ * the lobby that arrives in Sprint 19).
+ *
+ * These are the tests that prove the skill engine is actually *wired in*
+ * rather than merely present in `game-core`: real clients, real intents,
+ * real authoritative state coming back.
+ */
+describe("networked combat", () => {
+  let server: GameServer;
+  let port: number;
+  let endpoint: string;
+
+  beforeAll(async () => {
+    port = await findFreePort();
+    endpoint = `ws://127.0.0.1:${String(port)}`;
+    server = createGameServer({ port, host: "127.0.0.1", webRoot: undefined, devMode: false });
+    await server.listen(port, "127.0.0.1");
+  });
+
+  afterAll(async () => {
+    await server.gracefullyShutdown(false);
+  });
+
+  /**
+   * Join two clients into the same room.
+   *
+   * Waits for *both specific sessions* rather than for a player count:
+   * `joinOrCreate` can land in a room left over from an earlier test that
+   * has not finished disposing, so an exact-count assertion here is
+   * flaky by construction.
+   */
+  async function joinPair() {
+    const clientA = new Client(endpoint);
+    const clientB = new Client(endpoint);
+    const roomA = await clientA.joinOrCreate(ROOM_MATCH);
+    const roomB = await clientB.joinById(roomA.roomId);
+    await waitFor(
+      () => roomA.state.players.has(roomA.sessionId) && roomA.state.players.has(roomB.sessionId),
+      { label: "both players" },
+    );
+    return { roomA, roomB };
+  }
+
+  /**
+   * `arena-alpha` is a chokepoint arena: a wall splits it at x≈440-464
+   * with a corridor between y=260 and y=380. Teams spawn on opposite
+   * sides, so walking straight at an enemy pins you against that wall —
+   * correct map behaviour, and exactly why a test cannot just aim at the
+   * target and hope.
+   *
+   * Routing via the corridor is what a player does, and keeping the
+   * tests on the same movement rules as real play is deliberate: a
+   * teleport-for-tests back door could let combat tests pass in
+   * positions the game would never actually allow.
+   */
+  const CORRIDOR = { x: 500, y: 320 };
+
+  /** Walk toward a point until within `tolerance`, or until `budgetMs` runs out. */
+  async function walkTo(
+    room: Awaited<ReturnType<typeof joinPair>>["roomA"],
+    point: { x: number; y: number },
+    tolerance: number,
+    budgetMs: number,
+  ): Promise<void> {
+    const deadline = Date.now() + budgetMs;
+    for (;;) {
+      const me = room.state.players.get(room.sessionId);
+      if (me === undefined) {
+        return;
+      }
+      const dx = point.x - me.x;
+      const dy = point.y - me.y;
+      const length = Math.hypot(dx, dy);
+      if (length <= tolerance || Date.now() > deadline) {
+        return;
+      }
+      room.send("intent", { kind: "move", dirX: dx / length, dirY: dy / length });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }
+
+  /** Move `room`'s player within `range` of `targetSessionId`, routing round walls. */
+  async function closeDistance(
+    room: Awaited<ReturnType<typeof joinPair>>["roomA"],
+    targetSessionId: string,
+    range: number,
+  ): Promise<void> {
+    const them = room.state.players.get(targetSessionId);
+    const me = room.state.players.get(room.sessionId);
+    if (me === undefined || them === undefined) {
+      return;
+    }
+
+    // Cross to the enemy's side of the chokepoint only if we are not
+    // already on it.
+    const onOppositeSides = me.x < CORRIDOR.x !== them.x < CORRIDOR.x;
+    if (onOppositeSides) {
+      await walkTo(room, CORRIDOR, 30, 8000);
+    }
+
+    const deadline = Date.now() + 10_000;
+    for (;;) {
+      const self = room.state.players.get(room.sessionId);
+      const target = room.state.players.get(targetSessionId);
+      if (self === undefined || target === undefined || Date.now() > deadline) {
+        break;
+      }
+      if (Math.hypot(self.x - target.x, self.y - target.y) <= range) {
+        break;
+      }
+      await walkTo(room, { x: target.x, y: target.y }, range * 0.8, 1000);
+    }
+
+    room.send("intent", { kind: "stop" });
+    await new Promise((resolve) => setTimeout(resolve, 60));
+  }
+
+  it("spawns players with full health and energy", async () => {
+    const client = new Client(endpoint);
+    const room = await client.joinOrCreate(ROOM_MATCH);
+    await waitFor(() => (room.state.players.get(room.sessionId)?.maxHealth ?? 0) > 0, {
+      label: "stats to sync",
+    });
+
+    const me = room.state.players.get(room.sessionId);
+    expect(me?.health).toBe(me?.maxHealth);
+    expect(me?.energy).toBe(me?.maxEnergy);
+    expect(me?.dead).toBe(false);
+
+    await room.leave();
+  });
+
+  it("sends the skill bar on join, so the client can render it", async () => {
+    const client = new Client(endpoint);
+    const room = await client.joinOrCreate(ROOM_MATCH);
+
+    const bar = await new Promise<{ slots: { id: string; name: string }[] }>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error("no skill-bar message"));
+      }, 4000);
+      room.onMessage("skill-bar", (message: { slots: { id: string; name: string }[] }) => {
+        clearTimeout(timer);
+        resolve(message);
+      });
+    });
+
+    expect(bar.slots).toHaveLength(DEFAULT_SKILL_BAR.length);
+    expect(bar.slots[0]?.id).toBe(DEFAULT_SKILL_BAR[0]);
+    expect(bar.slots[0]?.name.length).toBeGreaterThan(0);
+
+    await room.leave();
+  });
+
+  it("puts joining players on alternating teams so a 1v1 is adversarial", async () => {
+    const { roomA, roomB } = await joinPair();
+    const a = roomA.state.players.get(roomA.sessionId);
+    const b = roomA.state.players.get(roomB.sessionId);
+    expect(a?.team).not.toBe(b?.team);
+    await roomA.leave();
+    await roomB.leave();
+  });
+
+  it("damages an enemy when a damage skill is cast at them", async () => {
+    const { roomA, roomB } = await joinPair();
+
+    // Move A next to B so range cannot be the reason a cast fails.
+    await closeDistance(roomA, roomB.sessionId, 300);
+    roomA.send("intent", { kind: "target", targetSessionId: roomB.sessionId });
+    await waitFor(
+      () => roomA.state.players.get(roomA.sessionId)?.targetSessionId === roomB.sessionId,
+      { label: "target applied" },
+    );
+
+    const fireballSlot = DEFAULT_SKILL_BAR.indexOf("elementalist.fireball");
+    roomA.send("intent", { kind: "use-skill", slot: fireballSlot });
+
+    await waitFor(() => (roomA.state.players.get(roomB.sessionId)?.health ?? 500) < 500, {
+      timeoutMs: 6000,
+      label: "target to take damage",
+    });
+
+    const victim = roomA.state.players.get(roomB.sessionId);
+    expect(victim?.health).toBeLessThan(500);
+    // Fire Magic 12 -> 91 damage.
+    expect(victim?.health).toBe(500 - 91);
+
+    await roomA.leave();
+    await roomB.leave();
+  });
+
+  it("deducts energy when a skill is cast", async () => {
+    const { roomA, roomB } = await joinPair();
+    await closeDistance(roomA, roomB.sessionId, 300);
+    roomA.send("intent", { kind: "target", targetSessionId: roomB.sessionId });
+    await waitFor(
+      () => roomA.state.players.get(roomA.sessionId)?.targetSessionId === roomB.sessionId,
+      { label: "target applied" },
+    );
+
+    const before = roomA.state.players.get(roomA.sessionId)?.energy ?? 0;
+    roomA.send("intent", {
+      kind: "use-skill",
+      slot: DEFAULT_SKILL_BAR.indexOf("elementalist.fireball"),
+    });
+    await waitFor(() => (roomA.state.players.get(roomA.sessionId)?.energy ?? 0) < before, {
+      timeoutMs: 4000,
+      label: "energy to be spent",
+    });
+
+    expect(roomA.state.players.get(roomA.sessionId)?.energy).toBeLessThan(before);
+
+    await roomA.leave();
+    await roomB.leave();
+  });
+
+  it("exposes cast progress so a client can draw a cast bar", async () => {
+    const { roomA, roomB } = await joinPair();
+    await closeDistance(roomA, roomB.sessionId, 300);
+    roomA.send("intent", { kind: "target", targetSessionId: roomB.sessionId });
+    await waitFor(
+      () => roomA.state.players.get(roomA.sessionId)?.targetSessionId === roomB.sessionId,
+      { label: "target applied" },
+    );
+
+    // Troll Unguent has a 3s cast — long enough to observe mid-cast.
+    roomA.send("intent", {
+      kind: "use-skill",
+      slot: DEFAULT_SKILL_BAR.indexOf("ranger.troll-unguent"),
+    });
+
+    await waitFor(() => (roomA.state.players.get(roomA.sessionId)?.castingSkillId ?? "") !== "", {
+      timeoutMs: 4000,
+      label: "cast to start",
+    });
+
+    const me = roomA.state.players.get(roomA.sessionId);
+    expect(me?.castingSkillId).toBe("ranger.troll-unguent");
+    expect(me?.castRemaining).toBeGreaterThan(0);
+
+    await roomA.leave();
+    await roomB.leave();
+  });
+
+  it("syncs applied statuses so the client can show condition markers", async () => {
+    const { roomA, roomB } = await joinPair();
+    await closeDistance(roomA, roomB.sessionId, 300);
+    roomA.send("intent", { kind: "target", targetSessionId: roomB.sessionId });
+    await waitFor(
+      () => roomA.state.players.get(roomA.sessionId)?.targetSessionId === roomB.sessionId,
+      { label: "target applied" },
+    );
+
+    // Opening Cut costs adrenaline, which is earned by landing damage —
+    // so land a Fireball first. This is the adrenaline economy working
+    // as designed, not a workaround.
+    roomA.send("intent", {
+      kind: "use-skill",
+      slot: DEFAULT_SKILL_BAR.indexOf("elementalist.fireball"),
+    });
+    await waitFor(() => (roomA.state.players.get(roomA.sessionId)?.adrenaline ?? 0) > 0, {
+      timeoutMs: 6000,
+      label: "adrenaline from landing a hit",
+    });
+
+    await closeDistance(roomA, roomB.sessionId, 30);
+    roomA.send("intent", {
+      kind: "use-skill",
+      slot: DEFAULT_SKILL_BAR.indexOf("warrior.sever-artery-lite"),
+    });
+
+    await waitFor(() => (roomA.state.players.get(roomB.sessionId)?.statuses.length ?? 0) > 0, {
+      timeoutMs: 6000,
+      label: "status to appear",
+    });
+
+    const victim = roomA.state.players.get(roomB.sessionId);
+    expect([...(victim?.statuses ?? [])]).toContain("bleeding");
+
+    await roomA.leave();
+    await roomB.leave();
+  });
+
+  it("broadcasts combat events so clients can show floating numbers", async () => {
+    const { roomA, roomB } = await joinPair();
+    await closeDistance(roomA, roomB.sessionId, 300);
+    roomA.send("intent", { kind: "target", targetSessionId: roomB.sessionId });
+    await waitFor(
+      () => roomA.state.players.get(roomA.sessionId)?.targetSessionId === roomB.sessionId,
+      { label: "target applied" },
+    );
+
+    const combat = new Promise<{ events: { kind: string }[] }>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error("no combat event"));
+      }, 6000);
+      roomA.onMessage("combat", (message: { events: { kind: string }[] }) => {
+        if (message.events.some((e) => e.kind === "damage")) {
+          clearTimeout(timer);
+          resolve(message);
+        }
+      });
+    });
+
+    roomA.send("intent", {
+      kind: "use-skill",
+      slot: DEFAULT_SKILL_BAR.indexOf("elementalist.fireball"),
+    });
+    const message = await combat;
+    expect(message.events.some((e) => e.kind === "damage")).toBe(true);
+
+    await roomA.leave();
+    await roomB.leave();
+  });
+
+  it("rejects a skill-slot index outside the bar rather than crashing", async () => {
+    const { roomA, roomB } = await joinPair();
+    const before = roomA.state.players.get(roomA.sessionId)?.energy ?? 0;
+
+    roomA.send("intent", { kind: "use-skill", slot: 999 });
+    roomA.send("intent", { kind: "use-skill", slot: -1 });
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // Nothing was cast, nothing was spent, and the room is still alive.
+    expect(roomA.state.players.get(roomA.sessionId)?.energy).toBeGreaterThanOrEqual(before);
+    expect(roomA.state.players.has(roomB.sessionId)).toBe(true);
+
+    await roomA.leave();
+    await roomB.leave();
+  });
+
+  it("refuses to cast a damage skill with no target selected", async () => {
+    const client = new Client(endpoint);
+    const room = await client.joinOrCreate(ROOM_MATCH);
+    await waitFor(() => (room.state.players.get(room.sessionId)?.maxEnergy ?? 0) > 0, {
+      label: "stats to sync",
+    });
+
+    const before = room.state.players.get(room.sessionId)?.energy ?? 0;
+    room.send("intent", {
+      kind: "use-skill",
+      slot: DEFAULT_SKILL_BAR.indexOf("elementalist.fireball"),
+    });
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    // Energy regenerates, so assert it never *dropped* by the skill cost.
+    expect(room.state.players.get(room.sessionId)?.energy).toBeGreaterThanOrEqual(before);
+
+    await room.leave();
+  });
+
+  it("regenerates energy over time", async () => {
+    // Uses a self-targeted skill so this test exercises the energy
+    // economy without also depending on walking across the arena.
+    const client = new Client(endpoint);
+    const room = await client.joinOrCreate(ROOM_MATCH);
+    await waitFor(() => (room.state.players.get(room.sessionId)?.maxEnergy ?? 0) > 0, {
+      label: "stats to sync",
+    });
+
+    room.send("intent", {
+      kind: "use-skill",
+      slot: DEFAULT_SKILL_BAR.indexOf("elementalist.armor-of-earth"),
+    });
+    await waitFor(() => (room.state.players.get(room.sessionId)?.energy ?? 50) < 50, {
+      timeoutMs: 6000,
+      label: "energy spent",
+    });
+
+    const spent = room.state.players.get(room.sessionId)?.energy ?? 0;
+    await waitFor(() => (room.state.players.get(room.sessionId)?.energy ?? 0) > spent, {
+      timeoutMs: 6000,
+      label: "energy to regenerate",
+    });
+
+    expect(room.state.players.get(room.sessionId)?.energy).toBeGreaterThan(spent);
+
+    await room.leave();
+  });
+});
