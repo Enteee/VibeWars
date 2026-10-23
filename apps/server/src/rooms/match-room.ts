@@ -1,4 +1,4 @@
-import { Room, type Client } from "colyseus";
+import { CloseCode, Room, type Client } from "colyseus";
 import { ArraySchema, schema, t } from "@colyseus/schema";
 import {
   CastState,
@@ -139,6 +139,12 @@ const RESPAWN_SECONDS = 8;
 const ADRENALINE_PER_HIT = 3;
 /** Adrenaline ceiling, so it cannot be banked indefinitely between fights. */
 const MAX_ADRENALINE = 25;
+/**
+ * How long a dropped player keeps their slot, character and position.
+ * Long enough to survive a wifi blip or a laptop lid, short enough that
+ * a quit does not leave a ghost standing in the arena.
+ */
+const RECONNECT_WINDOW_SECONDS = 30;
 
 function toMapDescriptor(map: MapData): MapDescriptor {
   const walls: WallDescriptor[] = map.walls.map((wall) =>
@@ -649,19 +655,57 @@ export class MatchRoom extends Room {
     );
   }
 
-  public override onLeave(client: Client, code?: number): void {
-    this.state.players.delete(client.sessionId);
-    this.#sims.delete(client.sessionId);
+  /**
+   * Remove a player and everything that referenced them.
+   *
+   * Separated from `onLeave` because a *dropped* player is only removed
+   * after their reconnection window closes, while a player who
+   * deliberately left goes immediately.
+   */
+  private removePlayer(sessionId: string): void {
+    this.state.players.delete(sessionId);
+    this.#sims.delete(sessionId);
 
     for (const player of this.state.players.values()) {
-      if (player.targetSessionId === client.sessionId) {
+      if (player.targetSessionId === sessionId) {
         player.targetSessionId = "";
       }
     }
+  }
+
+  public override async onLeave(client: Client, code?: number): Promise<void> {
+    // A player who chose to leave is gone. Anyone else dropped — wifi
+    // blip, laptop lid, a switch hiccup — gets a window to come back to
+    // the same character rather than losing the match (brief §25).
+    //
+    // Colyseus reports WHY via the close code rather than a boolean:
+    // CONSENTED (4000) is a deliberate leave, anything else is a drop.
+    if (code === CloseCode.CONSENTED) {
+      this.removePlayer(client.sessionId);
+      console.info(`[match] leave sessionId=${client.sessionId} (left deliberately)`);
+      return;
+    }
+
+    const sim = this.#sims.get(client.sessionId);
+    if (sim !== undefined) {
+      // Freeze the dropped player rather than leaving them running into
+      // a wall while disconnected.
+      sim.inputDirection = ZERO;
+      sim.combatant.cast.cancelCast();
+    }
 
     console.info(
-      `[match] leave sessionId=${client.sessionId} code=${String(code ?? "none")} size=${String(this.state.players.size)}`,
+      `[match] ${client.sessionId} dropped; holding their slot for ${String(RECONNECT_WINDOW_SECONDS)}s`,
     );
+
+    try {
+      await this.allowReconnection(client, RECONNECT_WINDOW_SECONDS);
+      console.info(`[match] ${client.sessionId} reconnected`);
+    } catch {
+      // Window expired, or the room is shutting down.
+      this.removePlayer(client.sessionId);
+      console.info(`[match] ${client.sessionId} did not return; slot released`);
+    }
   }
 
   public override onDispose(): void {
