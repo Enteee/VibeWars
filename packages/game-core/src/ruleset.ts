@@ -21,12 +21,18 @@ export interface CollisionRules {
   readonly playerRadius: number;
 }
 
+export interface AttributeRules {
+  /** Total attribute points a character may spend (brief §5). */
+  readonly attributePointBudget: number;
+}
+
 export interface Ruleset {
   readonly id: string;
   /** Fixed server simulation tick rate, in Hz (ADR-0003). */
   readonly tickRateHz: number;
   readonly movement: MovementRules;
   readonly collision: CollisionRules;
+  readonly attributes: AttributeRules;
 }
 
 export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
@@ -37,5 +43,12 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
   }),
   collision: Object.freeze({
     playerRadius: 14,
+  }),
+  attributes: Object.freeze({
+    // Enough to max two attributes (12+12=24 ranks -> 2*78=156 points) with
+    // a little left for a third — an original budget, not a copied number
+    // (see attributes.ts's cost-curve comment for why exact fidelity to any
+    // specific game's table is not the goal).
+    attributePointBudget: 200,
   }),
 });

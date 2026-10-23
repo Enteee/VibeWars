@@ -82,6 +82,11 @@ export default defineConfig([
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-return": "off",
+      // `expect(() => fn()).toThrow()` is the idiomatic shape for "this
+      // call throws" across the whole test suite; the arrow is already as
+      // clear as it gets, so requiring braces here is pure noise repeated
+      // on every such assertion.
+      "@typescript-eslint/no-confusing-void-expression": "off",
     },
   },
 

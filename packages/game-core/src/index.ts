@@ -27,5 +27,25 @@ export {
   segmentsIntersect,
 } from "./geometry.js";
 
-export type { MovementRules, Ruleset } from "./ruleset.js";
+export type { AttributeRules, CollisionRules, MovementRules, Ruleset } from "./ruleset.js";
 export { MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
+
+export type { AttributeDefinition, ProfessionDefinition, ProfessionId } from "./professions.js";
+export { PROFESSIONS, getAttribute, getProfession, primaryAttributeOf } from "./professions.js";
+
+export type { AttributeAllocation, AttributeModifier } from "./attributes.js";
+export {
+  AttributeRankError,
+  MAX_ATTRIBUTE_RANK,
+  cumulativeCostForRank,
+  effectiveRank,
+  isAffordable,
+  totalCost,
+} from "./attributes.js";
+
+export type { Character } from "./character.js";
+export {
+  CharacterValidationError,
+  accessibleAttributeIds,
+  validateCharacter,
+} from "./character.js";
