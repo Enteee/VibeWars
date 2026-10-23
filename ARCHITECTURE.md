@@ -58,6 +58,11 @@ Everything that decides what happens in a fight.
 - `professions.ts`, `attributes.ts`, `character.ts` — 10 professions with
   4–5 attributes each, the attribute cost curve and point budget, and
   character validation.
+- `build.ts` — a character plus their skill bar, and the validation the
+  **server** applies when a client claims one at join time. It lives here
+  rather than in the web client precisely because the server is the thing
+  that must enforce it; a second copy of the rules in the client would be
+  the obvious way to get the two quietly disagreeing.
 - `skills/` — the composable skill system (see below).
 - `match-rules.ts` — score target, clock, and victory evaluation.
 - `tools/headless-match.ts` — runs real combat with no I/O at all.
@@ -161,7 +166,7 @@ would look better and be a lie.
 
 ## Testing shape
 
-566 headless tests in four layers, plus a browser suite:
+576 headless tests in four layers, plus a browser suite:
 
 - **Unit** (`packages/*/src/*.test.ts`) — pure functions, no I/O.
 - **Integration** (`apps/server/src/*.test.ts`) — a real Colyseus server on

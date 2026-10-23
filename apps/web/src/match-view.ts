@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 
-import { vec2 } from "@vibewars/game-core";
+import { vec2, type PlayerBuild } from "@vibewars/game-core";
 import type { WallDescriptor } from "@vibewars/game-protocol";
 
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
@@ -31,6 +31,11 @@ export interface MatchViewCallbacks {
 export interface MatchViewOptions {
   /** The arena to play; `undefined` means the server's default. */
   readonly mapId?: string | undefined;
+  /**
+   * The build to request. The server validates it and may refuse it, so
+   * this is what the player *asked* to play, never what they got.
+   */
+  readonly build?: PlayerBuild | undefined;
 }
 
 export interface MatchView {
@@ -158,7 +163,7 @@ export async function startMatchView(
     });
   });
 
-  const connection = await connectToMatch(endpoint, options.mapId);
+  const connection = await connectToMatch(endpoint, options.mapId, options.build);
   const walls = connection.map.walls.map(toRenderableWall);
 
   const hud = createHud(viewport);

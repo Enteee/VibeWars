@@ -51,6 +51,35 @@ export function loadPlayerName(): string {
   }
 }
 
+const CHARACTER_STORAGE_KEY = "vibewars.activeCharacterId";
+
+/**
+ * The character the player takes into their next match.
+ *
+ * Stored as an id rather than a copy of the build: the build has to be
+ * read fresh at join time, or editing a character would leave matches
+ * using whatever version happened to be cached when it was picked.
+ */
+export function loadActiveCharacterId(): string | undefined {
+  try {
+    return localStorage.getItem(CHARACTER_STORAGE_KEY) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function saveActiveCharacterId(id: string | undefined): void {
+  try {
+    if (id === undefined) {
+      localStorage.removeItem(CHARACTER_STORAGE_KEY);
+    } else {
+      localStorage.setItem(CHARACTER_STORAGE_KEY, id);
+    }
+  } catch {
+    // A convenience, not a requirement — same reasoning as the name.
+  }
+}
+
 export function savePlayerName(name: string): void {
   try {
     localStorage.setItem(NAME_STORAGE_KEY, name);
@@ -59,7 +88,11 @@ export function savePlayerName(name: string): void {
   }
 }
 
-export function renderMenu(root: HTMLElement, callbacks: MenuCallbacks): void {
+export function renderMenu(
+  root: HTMLElement,
+  callbacks: MenuCallbacks,
+  characters: readonly StoredCharacter[] = [],
+): void {
   root.replaceChildren();
   const panel = h("div", "screen screen-menu");
 
@@ -79,6 +112,42 @@ export function renderMenu(root: HTMLElement, callbacks: MenuCallbacks): void {
   });
   nameField.appendChild(nameInput);
   panel.appendChild(nameField);
+
+  // --- which character you play ----------------------------------------
+  // Without this the build editor is decoration: every player would join
+  // with the server's house loadout no matter what they had built.
+  const buildField = h("label", "field");
+  buildField.appendChild(h("span", "field-label", "play as"));
+  const buildSelect = document.createElement("select");
+  buildSelect.className = "field-input";
+
+  const houseOption = document.createElement("option");
+  houseOption.value = "";
+  houseOption.textContent =
+    characters.length === 0 ? "default loadout" : "default loadout (no build)";
+  buildSelect.appendChild(houseOption);
+
+  for (const character of characters) {
+    const option = document.createElement("option");
+    option.value = character.id;
+    const secondary = character.secondaryProfession;
+    option.textContent =
+      secondary === undefined
+        ? `${character.name} (${character.primaryProfession})`
+        : `${character.name} (${character.primaryProfession}/${secondary})`;
+    buildSelect.appendChild(option);
+  }
+
+  // A character deleted since it was chosen falls back to the house
+  // loadout rather than selecting nothing.
+  const active = loadActiveCharacterId();
+  buildSelect.value = characters.some((c) => c.id === active) ? (active ?? "") : "";
+
+  buildSelect.addEventListener("change", () => {
+    saveActiveCharacterId(buildSelect.value === "" ? undefined : buildSelect.value);
+  });
+  buildField.appendChild(buildSelect);
+  panel.appendChild(buildField);
 
   const hostRow = h("div", "menu-row");
   hostRow.appendChild(

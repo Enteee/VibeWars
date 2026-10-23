@@ -9,6 +9,7 @@ import {
   ZERO,
   addKill,
   advanceStatuses,
+  attributeRanksOf,
   applyEffects,
   canActivate,
   clampInputDirection,
@@ -17,13 +18,16 @@ import {
   evaluateMatch,
   getSkill,
   integrateMovement,
+  parsePlayerBuild,
   payCost,
+  validatePlayerBuild,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
   seedFromString,
   vec2,
   type CombatEvent,
   type MatchScore,
+  type PlayerBuild,
   type Combatant,
   type Segment,
   type SimulationRng,
@@ -38,6 +42,8 @@ import {
   type WallDescriptor,
 } from "@vibewars/game-protocol";
 import type { StepContext } from "colyseus";
+
+import { sanitizeName } from "./lobby-room.js";
 
 /**
  * The match simulation room: authoritative movement, targeting and combat
@@ -116,10 +122,17 @@ export interface TickMetrics {
 }
 
 /**
- * The skill bar every player gets until the build editor exists
- * (Sprint 17). Chosen to be immediately playable: damage, a heal, a
- * self-buff, an interrupt, a condition and a cure — enough that two
- * players can have a real fight with counterplay on the very first join.
+ * The skill bar a player gets when they bring no build of their own.
+ *
+ * Quick match and a first-time player both land here, so it is chosen to
+ * be immediately playable: damage, a heal, a self-buff, an interrupt, a
+ * condition and a cure — enough for a real fight with counterplay on the
+ * very first join, without visiting the editor.
+ *
+ * It is NOT a legal single-character build (no character has access to
+ * all six of these professions' attributes), which is deliberate: it is
+ * the house loadout, not a build anyone could make. A player who wants a
+ * legal, tuned build makes one and brings it.
  */
 const DEFAULT_SKILL_BAR: readonly string[] = [
   "elementalist.fireball",
@@ -132,7 +145,7 @@ const DEFAULT_SKILL_BAR: readonly string[] = [
   "ranger.troll-unguent",
 ];
 
-/** Attribute ranks granted to every player until builds exist (Sprint 17). */
+/** Attribute ranks that go with `DEFAULT_SKILL_BAR`. */
 const DEFAULT_ATTRIBUTE_RANKS: ReadonlyMap<string, number> = new Map([
   ["elementalist.fire-magic", 12],
   ["monk.healing-prayers", 12],
@@ -141,6 +154,73 @@ const DEFAULT_ATTRIBUTE_RANKS: ReadonlyMap<string, number> = new Map([
   ["necromancer.curses", 12],
   ["ranger.wilderness-survival", 12],
 ]);
+
+/** What a joining client claimed, after it has been checked. */
+interface ResolvedLoadout {
+  readonly skillBar: readonly string[];
+  readonly attributeRanks: ReadonlyMap<string, number>;
+  readonly buildName: string | undefined;
+}
+
+const HOUSE_LOADOUT: ResolvedLoadout = {
+  skillBar: DEFAULT_SKILL_BAR,
+  attributeRanks: DEFAULT_ATTRIBUTE_RANKS,
+  buildName: undefined,
+};
+
+/**
+ * Decide what a joining client actually gets to play (brief §32).
+ *
+ * The client sends a build; the server decides whether to honour it. An
+ * illegal or malformed build is refused and replaced with the house
+ * loadout rather than rejecting the join — being dropped at the door
+ * because of a stale saved character is a miserable way to find out
+ * something is wrong, and the player still gets a playable match.
+ *
+ * Nothing about the claimed build is trusted: not the attribute ranks
+ * (which scale every skill), not the skill bar (which decides what can be
+ * cast at all), and not the professions that gate both.
+ */
+function resolveLoadout(options: unknown): ResolvedLoadout {
+  if (typeof options !== "object" || options === null) {
+    return HOUSE_LOADOUT;
+  }
+  const claimed = (options as Record<string, unknown>).build;
+  if (claimed === undefined) {
+    return HOUSE_LOADOUT;
+  }
+
+  const build: PlayerBuild | undefined = parsePlayerBuild(claimed);
+  if (build === undefined) {
+    console.warn("[match] ignoring a malformed build; using the house loadout");
+    return HOUSE_LOADOUT;
+  }
+
+  const problems = validatePlayerBuild(build, RULESET.attributes);
+  if (problems.length > 0) {
+    // Every reason, not just the first: a client that sent a bad build
+    // deserves a log that says exactly what was wrong with it.
+    console.warn(
+      `[match] refusing build ${JSON.stringify(build.name)}: ` +
+        problems.map((p) => `${p.field}: ${p.message}`).join("; "),
+    );
+    return HOUSE_LOADOUT;
+  }
+
+  const skillBar = build.skillBar.filter((id): id is string => id !== null);
+  if (skillBar.length === 0) {
+    console.warn(
+      `[match] build ${JSON.stringify(build.name)} has an empty bar; using the house loadout`,
+    );
+    return HOUSE_LOADOUT;
+  }
+
+  return {
+    skillBar,
+    attributeRanks: attributeRanksOf(build),
+    buildName: build.name,
+  };
+}
 
 const STARTING_HEALTH = 500;
 const STARTING_ENERGY = 50;
@@ -643,10 +723,11 @@ export class MatchRoom extends Room {
     }
   }
 
-  public override onJoin(client: Client): void {
+  public override onJoin(client: Client, options?: unknown): void {
     // Alternate teams as players join so a 1v1 is adversarial by default.
     const team = this.#sims.size % 2;
     const spawn = this.nextSpawnPoint(team);
+    const loadout = resolveLoadout(options);
 
     const combatant: Combatant = {
       id: client.sessionId,
@@ -655,7 +736,7 @@ export class MatchRoom extends Room {
       energy: STARTING_ENERGY,
       maxEnergy: STARTING_ENERGY,
       adrenaline: 0,
-      attributeRanks: DEFAULT_ATTRIBUTE_RANKS,
+      attributeRanks: loadout.attributeRanks,
       team,
       dead: false,
       statuses: new StatusSet(),
@@ -664,7 +745,7 @@ export class MatchRoom extends Room {
 
     const sim: PlayerSim = {
       combatant,
-      skillBar: DEFAULT_SKILL_BAR,
+      skillBar: loadout.skillBar,
       inputDirection: ZERO,
       position: spawn,
       spawn,
@@ -674,7 +755,9 @@ export class MatchRoom extends Room {
 
     const player = new PlayerState({
       sessionId: client.sessionId,
-      name: `player-${client.sessionId.slice(0, 4)}`,
+      // A build name is client-supplied, so it goes through the same
+      // sanitiser the lobby uses before any other player ever sees it.
+      name: sanitizeName(loadout.buildName, `player-${client.sessionId.slice(0, 4)}`),
       x: spawn.x,
       y: spawn.y,
       team,

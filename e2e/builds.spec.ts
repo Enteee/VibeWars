@@ -115,3 +115,31 @@ test("a build from another game is refused", async ({ page }) => {
 
   await expect(page.locator(".editor-share-status")).toContainText("does not look like");
 });
+
+test("a saved character can be chosen and is taken into a match", async ({ page }) => {
+  // The whole point of the build editor: what you build is what you play.
+  await openCharacters(page);
+  await page.getByRole("button", { name: "new character" }).click();
+  await page.locator("input.editor-name").fill("Pyro");
+
+  await page.locator(".editor-row select").first().selectOption("elementalist");
+  await page.locator(".editor-attribute button", { hasText: "+" }).first().click();
+  await page.locator(".editor-skill-slot select").first().selectOption({ index: 1 });
+  await page.getByRole("button", { name: "save", exact: true }).click();
+  await expect(page.locator(".entity-name")).toContainText("Pyro");
+
+  await page.getByRole("button", { name: "back" }).click();
+  const picker = page.locator(".screen-menu select.field-input");
+  await expect(picker).toBeVisible();
+  // Pick by index: the option label carries the professions too, and the
+  // only non-default entry is the character just saved.
+  await picker.selectOption({ index: 1 });
+  await expect(picker).not.toHaveValue("");
+
+  await page.getByRole("button", { name: "quick match" }).click();
+  await expect(page.locator("#viewport canvas")).toBeVisible();
+
+  // The server grants the build's bar, so the HUD shows exactly the one
+  // skill that was equipped — not the eight-slot house loadout.
+  await expect(page.locator(".hud-skills .hud-skill")).toHaveCount(1);
+});

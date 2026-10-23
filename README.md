@@ -52,7 +52,10 @@ own development was verified that way; see
 - **Lobby** with shareable codes, team assignment, ready state and
   repeatable matches.
 - **Character and team builders** with profession/attribute rules and
-  versioned browser-local persistence.
+  versioned browser-local persistence. Pick a character on the menu and
+  you take that build into the match — the server validates it and falls
+  back to a default loadout if it is illegal, so a build is a request,
+  never a claim.
 - **Match rules**: score, clock, victory conditions.
 - **Robustness**: a dropped player keeps their slot for 30 seconds and
   reconnects to the same character; hostile input cannot crash the
@@ -87,8 +90,8 @@ headlessly. See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ```sh
 pnpm run ci       # format + lint + typecheck + test + build
-pnpm run test     # 566 tests: unit, integration, fuzz, headless simulation
-pnpm run test:e2e # 16 browser tests in a real Chromium (needs one installed)
+pnpm run test     # 576 tests: unit, integration, fuzz, headless simulation
+pnpm run test:e2e # 17 browser tests in a real Chromium (needs one installed)
 pnpm run ci:full  # both of the above
 ```
 

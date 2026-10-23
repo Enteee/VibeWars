@@ -57,6 +57,18 @@ export {
   validateCharacter,
 } from "./character.js";
 
+export type { BuildProblem, PlayerBuild } from "./build.js";
+export {
+  SKILL_BAR_SLOTS,
+  attributeRanksOf,
+  equippableSkills,
+  equippedSkillIds,
+  isProfessionId,
+  parsePlayerBuild,
+  toCharacter,
+  validatePlayerBuild,
+} from "./build.js";
+
 export * from "./skills/index.js";
 
 export type { MatchOutcome, MatchPhase, MatchRules, MatchScore } from "./match-rules.js";

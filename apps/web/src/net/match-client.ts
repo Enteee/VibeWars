@@ -1,4 +1,5 @@
 import { Client, type Room } from "@colyseus/sdk";
+import type { PlayerBuild } from "@vibewars/game-core";
 import {
   ROOM_MATCH,
   type ClientIntent,
@@ -160,14 +161,26 @@ function awaitMessage<T>(room: Room, type: string, timeoutMs: number): Promise<T
   });
 }
 
-export async function connectToMatch(endpoint: string, mapId?: string): Promise<MatchConnection> {
+export async function connectToMatch(
+  endpoint: string,
+  mapId?: string,
+  build?: PlayerBuild,
+): Promise<MatchConnection> {
   const client = new Client(endpoint);
   // The map id travels as a join option so the first client into a room
   // decides the arena; later joiners land in the room that already exists.
-  const room = await client.joinOrCreate<DecodedMatchState>(
-    ROOM_MATCH,
-    mapId === undefined ? {} : { mapId },
-  );
+  //
+  // The build travels the same way, but it is only a *request*: the
+  // server validates it and silently falls back to its house loadout if
+  // it is illegal (brief '32). Nothing here may assume it was honoured.
+  const joinOptions: Record<string, unknown> = {};
+  if (mapId !== undefined) {
+    joinOptions.mapId = mapId;
+  }
+  if (build !== undefined) {
+    joinOptions.build = build;
+  }
+  const room = await client.joinOrCreate<DecodedMatchState>(ROOM_MATCH, joinOptions);
 
   // Both arrive on join; waiting for them here means the caller gets a
   // fully-usable connection rather than one that is missing its map or

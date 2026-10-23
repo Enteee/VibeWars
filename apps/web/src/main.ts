@@ -16,8 +16,15 @@ import {
 import type { StoredCharacter, StoredTeam } from "./storage/schema.js";
 import { newCharacter, renderBuildEditor } from "./ui/build-editor.js";
 import { renderLobbyScreen } from "./ui/lobby-screen.js";
-import { renderCharacterList, renderMenu, renderTeamList } from "./ui/menu.js";
+import {
+  loadActiveCharacterId,
+  renderCharacterList,
+  renderMenu,
+  renderTeamList,
+} from "./ui/menu.js";
 import { newTeam } from "./ui/team-builder.js";
+import { toPlayerBuild } from "./storage/build-validation.js";
+import type { PlayerBuild } from "@vibewars/game-core";
 
 /**
  * Application shell: owns which screen is showing and the connections
@@ -96,27 +103,63 @@ async function main(): Promise<void> {
     screenRoot.style.display = visible ? "none" : "flex";
   };
 
+  /**
+   * The build to take into the next match, read fresh from storage.
+   *
+   * Read at join time rather than cached when the player picked it, so
+   * editing a character takes effect on the next match instead of the
+   * next time they happen to re-select it. An id pointing at a character
+   * that no longer exists, or one that no longer validates, resolves to
+   * `undefined` and the server's house loadout.
+   */
+  const activeBuild = async (): Promise<PlayerBuild | undefined> => {
+    const id = loadActiveCharacterId();
+    if (id === undefined) {
+      return undefined;
+    }
+    try {
+      const character = await characters.load(id);
+      return character === undefined ? undefined : toPlayerBuild(character);
+    } catch (error) {
+      // A build that cannot be read is not worth failing the match over;
+      // the server would refuse an invalid one anyway.
+      console.warn("[web] could not load the selected character", error);
+      return undefined;
+    }
+  };
+
   const showMenu = (): void => {
     showViewport(false);
-    renderMenu(screenRoot, {
-      onCreateLobby: (name) => {
-        void enterLobby(() => createLobby(endpoint, name));
+    void (async () => {
+      const { characters: list } = await characters.list();
+      renderMenuWith(list);
+    })();
+  };
+
+  const renderMenuWith = (list: readonly StoredCharacter[]): void => {
+    renderMenu(
+      screenRoot,
+      {
+        onCreateLobby: (name) => {
+          void enterLobby(() => createLobby(endpoint, name));
+        },
+        onJoinLobby: (code, name) => {
+          void enterLobby(() => joinLobbyByCode(endpoint, code, name));
+        },
+        onManageCharacters: () => {
+          void showCharacters();
+        },
+        onManageTeams: () => {
+          void showTeams();
+        },
+        // Straight into a match with no lobby — how the game worked before
+        // Sprint 19, kept because it is the fastest way to try the game.
+        onQuickMatch: () => {
+          void enterMatch();
+        },
       },
-      onJoinLobby: (code, name) => {
-        void enterLobby(() => joinLobbyByCode(endpoint, code, name));
-      },
-      onManageCharacters: () => {
-        void showCharacters();
-      },
-      onManageTeams: () => {
-        void showTeams();
-      },
-      // Straight into a match with no lobby — how the game worked before
-      // Sprint 19, kept because it is the fastest way to try the game.
-      onQuickMatch: () => {
-        void enterMatch();
-      },
-    });
+      list,
+    );
   };
 
   const showCharacters = async (): Promise<void> => {
@@ -385,6 +428,7 @@ async function main(): Promise<void> {
     showViewport(true);
     setStatus("entering match…", "offline");
     try {
+      const build = await activeBuild();
       match = await startMatchView(
         viewport,
         endpoint,
@@ -417,7 +461,7 @@ async function main(): Promise<void> {
             })();
           },
         },
-        { mapId },
+        { mapId, build },
       );
       setStatus("in match", "online");
     } catch (error) {
