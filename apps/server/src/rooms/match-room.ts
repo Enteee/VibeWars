@@ -102,6 +102,19 @@ export const TICK_INTERVAL_MS = 1000 / RULESET.tickRateHz;
 /** The one map Sprint 6 ships. Map *selection* arrives with the lobby (Sprint 19). */
 export const DEFAULT_MAP_ID = "arena-alpha";
 
+/** One minute of ticks at the configured rate — enough to see a p95, bounded. */
+const TICK_SAMPLE_LIMIT = RULESET.tickRateHz * 60;
+
+/** Tick-time statistics for one room (brief §26). */
+export interface TickMetrics {
+  readonly samples: number;
+  /** Milliseconds a tick is allowed to take at the configured tick rate. */
+  readonly budgetMs: number;
+  readonly p50Ms: number;
+  readonly p95Ms: number;
+  readonly maxMs: number;
+}
+
 /**
  * The skill bar every player gets until the build editor exists
  * (Sprint 17). Chosen to be immediately playable: damage, a heal, a
@@ -178,6 +191,17 @@ export class MatchRoom extends Room {
   #nextSpawnIndex = 0;
   #score: MatchScore = emptyScore([0, 1]);
   #elapsedSeconds = 0;
+
+  /**
+   * Rolling tick-duration samples in milliseconds (brief §26).
+   *
+   * Always on rather than behind a flag: the measurement is one
+   * `performance.now()` pair per tick against a 50 ms budget, and a
+   * benchmark you have to remember to enable is one that silently stops
+   * being run. Bounded to the last minute of ticks so a long match cannot
+   * grow this without limit.
+   */
+  readonly #tickSamples: number[] = [];
 
   public constructor() {
     super();
@@ -267,8 +291,44 @@ export class MatchRoom extends Room {
     });
 
     this.setFixedTimestep((ctx: StepContext) => {
+      const startedAt = performance.now();
       this.tick(ctx);
+      this.recordTickDuration(performance.now() - startedAt);
     }, RULESET.tickRateHz);
+  }
+
+  private recordTickDuration(ms: number): void {
+    this.#tickSamples.push(ms);
+    if (this.#tickSamples.length > TICK_SAMPLE_LIMIT) {
+      this.#tickSamples.shift();
+    }
+  }
+
+  /**
+   * Tick-time statistics over the retained samples (brief §26).
+   *
+   * Reports p50/p95/max rather than a mean: a mean hides the one tick in
+   * fifty that blew the budget, and that tick is exactly the one a player
+   * feels as a stutter. `budgetMs` is what a tick is actually allowed to
+   * take at the configured rate, so a reader does not have to know the
+   * tick rate to judge the numbers.
+   */
+  public tickMetrics(): TickMetrics {
+    const sorted = [...this.#tickSamples].sort((a, b) => a - b);
+    const quantile = (q: number): number => {
+      if (sorted.length === 0) {
+        return 0;
+      }
+      const index = Math.min(sorted.length - 1, Math.floor(q * sorted.length));
+      return sorted[index] ?? 0;
+    };
+    return {
+      samples: sorted.length,
+      budgetMs: TICK_INTERVAL_MS,
+      p50Ms: quantile(0.5),
+      p95Ms: quantile(0.95),
+      maxMs: sorted.length === 0 ? 0 : (sorted[sorted.length - 1] ?? 0),
+    };
   }
 
   /**
