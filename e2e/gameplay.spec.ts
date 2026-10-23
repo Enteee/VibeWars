@@ -12,6 +12,20 @@ import { expect, test, type Page, type Locator } from "@playwright/test";
  * result of a key press that went to the server and came back.
  */
 
+/**
+ * Screenshot just the arena.
+ *
+ * An element screenshot is a clip of the page, so anything overlapping the
+ * canvas — the HUD, and in particular the ticking match clock — lands in
+ * the image. Masking those out keeps "did the arena change?" an honest
+ * question about the arena.
+ */
+async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
+  return canvas.screenshot({
+    mask: [page.locator(".hud"), page.locator(".hud-scoreboard"), page.locator(".hud-result")],
+  });
+}
+
 async function startQuickMatch(page: Page): Promise<Locator> {
   await page.goto("/");
   await page.getByRole("button", { name: "quick match" }).click();
@@ -46,9 +60,9 @@ test("holding a movement key moves the player on screen", async ({ page }) => {
   // A still frame first. If the arena animated on its own, this control
   // would make the test below meaningless — so it is asserted, not
   // assumed.
-  const idleBefore = await canvas.screenshot();
+  const idleBefore = await arenaShot(page, canvas);
   await page.waitForTimeout(700);
-  const idleAfter = await canvas.screenshot();
+  const idleAfter = await arenaShot(page, canvas);
   expect(idleAfter.equals(idleBefore), "the idle arena should not animate").toBe(true);
 
   await page.keyboard.down("w");
@@ -56,7 +70,7 @@ test("holding a movement key moves the player on screen", async ({ page }) => {
   await page.keyboard.up("w");
   await page.waitForTimeout(300);
 
-  const moved = await canvas.screenshot();
+  const moved = await arenaShot(page, canvas);
   expect(moved.equals(idleAfter), "holding W should have moved the player").toBe(false);
 });
 
@@ -69,9 +83,9 @@ test("releasing the movement key stops the player", async ({ page }) => {
   // Give the stop intent time to reach the server and come back.
   await page.waitForTimeout(500);
 
-  const stopped = await canvas.screenshot();
+  const stopped = await arenaShot(page, canvas);
   await page.waitForTimeout(700);
-  const stillStopped = await canvas.screenshot();
+  const stillStopped = await arenaShot(page, canvas);
 
   expect(stillStopped.equals(stopped), "the player should stay put after key release").toBe(true);
 });

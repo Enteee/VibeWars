@@ -91,7 +91,7 @@ headlessly. See [ARCHITECTURE.md](ARCHITECTURE.md).
 ```sh
 pnpm run ci       # format + lint + typecheck + test + build
 pnpm run test     # 576 tests: unit, integration, fuzz, headless simulation
-pnpm run test:e2e # 17 browser tests in a real Chromium (needs one installed)
+pnpm run test:e2e # 18 browser tests in a real Chromium (needs one installed)
 pnpm run ci:full  # both of the above
 ```
 

@@ -123,3 +123,55 @@ test("the host starts a match and both players enter the arena", async ({ browse
     await guestContext.close();
   }
 });
+
+test("a lobby match shows the score, the clock and both fighters", async ({ browser }) => {
+  // The scoreboard was blank for a long time: the server tracked score and
+  // clock, the HUD could draw them, and the two were never connected.
+  const hostContext = await browser.newContext();
+  const guestContext = await browser.newContext();
+  const host = await hostContext.newPage();
+  const guest = await guestContext.newPage();
+
+  try {
+    const code = await hostLobby(host, "Host");
+
+    await openMenu(guest, "Guest");
+    await guest.locator("input.code-input").fill(code);
+    await guest.getByRole("button", { name: "join", exact: true }).click();
+    await expect(guest.locator(".screen-lobby")).toBeVisible();
+
+    await host.getByRole("button", { name: "join team 1" }).click();
+    await guest.getByRole("button", { name: "join team 2" }).click();
+    await host.getByRole("button", { name: "ready", exact: true }).click();
+    await guest.getByRole("button", { name: "ready", exact: true }).click();
+    await host.getByRole("button", { name: "start match" }).click();
+
+    await expect(host.locator("#viewport canvas")).toBeVisible();
+
+    const scoreboard = host.locator(".hud-scoreboard");
+    await expect(scoreboard).toContainText("0 — 0");
+
+    // The clock advances. Not "starts near zero": rooms are reused via
+    // joinOrCreate, so a match may already have been running a while.
+    await expect(scoreboard).toContainText(/\d+:\d\d/);
+    const firstReading = (await scoreboard.textContent()) ?? "";
+    await expect(scoreboard).not.toHaveText(firstReading, { timeout: 5000 });
+
+    // Both fighters are still in the match after moving — a player who
+    // walks must not vanish from anyone else's arena.
+    await host.keyboard.down("d");
+    await guest.keyboard.down("a");
+    await host.waitForTimeout(800);
+    await host.keyboard.up("d");
+    await guest.keyboard.up("a");
+    await host.waitForTimeout(400);
+
+    await expect(host.locator(".hud-scoreboard")).toBeVisible();
+    await expect(guest.locator(".hud-scoreboard")).toBeVisible();
+    await expect(host.locator(".hud-bar-health .hud-bar-label")).toContainText("500 / 500");
+    await expect(guest.locator(".hud-bar-health .hud-bar-label")).toContainText("500 / 500");
+  } finally {
+    await hostContext.close();
+    await guestContext.close();
+  }
+});

@@ -213,7 +213,11 @@ export async function startMatchView(
 
     const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
     const target = latestMatch.players.find((p) => p.sessionId === self?.targetSessionId);
-    updateHud(hud, self, target, connection.skillBar);
+    // `latestMatch` carries the score, clock and outcome. Omitting it
+    // here left the scoreboard, the match clock and the victory banner
+    // permanently blank: the server tracked all three and the HUD could
+    // draw all three, and nothing connected them.
+    updateHud(hud, self, target, connection.skillBar, latestMatch);
   };
   game.events.on(Phaser.Core.Events.STEP, onStep);
 
