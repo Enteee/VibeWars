@@ -6,6 +6,7 @@ import {
   distancePointToSegment,
   distanceWithinRange,
   hasLineOfSight,
+  resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
   segment,
   segmentsIntersect,
@@ -236,5 +237,68 @@ describe("distanceWithinRange", () => {
     const b = vec2(7, 11);
     expect(distanceWithinRange(a, b, distance(a, b))).toBe(true);
     expect(distanceWithinRange(a, b, distance(a, b) - 0.01)).toBe(false);
+  });
+});
+
+describe("resolveCircleCircleCollision (body blocking)", () => {
+  const R = 14;
+
+  it("leaves a circle untouched when the two do not overlap", () => {
+    const center = vec2(100, 0);
+    expect(resolveCircleCircleCollision(center, R, vec2(0, 0), R)).toBe(center);
+  });
+
+  it("leaves them untouched when exactly touching", () => {
+    const center = vec2(28, 0);
+    expect(resolveCircleCircleCollision(center, R, vec2(0, 0), R)).toBe(center);
+  });
+
+  it("pushes an overlapping circle out to exactly the combined radii", () => {
+    const resolved = resolveCircleCircleCollision(vec2(10, 0), R, vec2(0, 0), R);
+    expect(distance(resolved, vec2(0, 0))).toBeCloseTo(28, 10);
+  });
+
+  it("pushes along the line between centres, preserving direction", () => {
+    const resolved = resolveCircleCircleCollision(vec2(6, 8), R, vec2(0, 0), R);
+    // (6,8) is along the 3-4-5 direction; the push must stay on it.
+    expect(resolved.x / resolved.y).toBeCloseTo(6 / 8, 10);
+  });
+
+  it("handles differing radii", () => {
+    const resolved = resolveCircleCircleCollision(vec2(5, 0), 10, vec2(0, 0), 30);
+    expect(distance(resolved, vec2(0, 0))).toBeCloseTo(40, 10);
+  });
+
+  it("does not produce NaN for exactly coincident circles", () => {
+    const resolved = resolveCircleCircleCollision(vec2(0, 0), R, vec2(0, 0), R);
+    expect(Number.isFinite(resolved.x)).toBe(true);
+    expect(Number.isFinite(resolved.y)).toBe(true);
+    expect(distance(resolved, vec2(0, 0))).toBeCloseTo(28, 10);
+  });
+
+  it("moves only the first circle, so resolution is order-independent", () => {
+    // The blocker's position is an input, never mutated: two players
+    // walking into each other must not shove each other twice in a tick.
+    const blocker = vec2(0, 0);
+    resolveCircleCircleCollision(vec2(10, 0), R, blocker, R);
+    expect(blocker).toEqual(vec2(0, 0));
+  });
+
+  it("is idempotent once resolved", () => {
+    const once = resolveCircleCircleCollision(vec2(10, 0), R, vec2(0, 0), R);
+    const twice = resolveCircleCircleCollision(once, R, vec2(0, 0), R);
+    expect(equals(once, twice, 1e-9)).toBe(true);
+  });
+
+  it("genuinely blocks a path: walking into a blocker never gets past it", () => {
+    // The mechanic that matters — a front line can deny ground.
+    const blocker = vec2(100, 0);
+    let walker = vec2(0, 0);
+    for (let step = 0; step < 100; step += 1) {
+      walker = { x: walker.x + 5, y: walker.y };
+      walker = resolveCircleCircleCollision(walker, R, blocker, R);
+    }
+    expect(walker.x).toBeLessThan(blocker.x);
+    expect(distance(walker, blocker)).toBeGreaterThanOrEqual(28 - 1e-6);
   });
 });

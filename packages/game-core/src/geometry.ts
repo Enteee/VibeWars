@@ -143,3 +143,38 @@ export function hasLineOfSight(from: Vec2, to: Vec2, blockers: readonly Segment[
 export function distanceWithinRange(a: Vec2, b: Vec2, range: number): boolean {
   return distance(a, b) <= range;
 }
+
+/**
+ * Resolve a circle against another circle, pushing only the first one out
+ * (brief §21's body blocking).
+ *
+ * Body blocking is what makes positioning matter: a front line can
+ * physically deny a path, and a caster can be boxed in. Pushing only the
+ * moving circle keeps the simulation order-independent — each entity is
+ * resolved against the others' *current* positions within a tick, so two
+ * players walking into each other do not shove each other twice.
+ */
+export function resolveCircleCircleCollision(
+  center: Vec2,
+  radius: number,
+  otherCenter: Vec2,
+  otherRadius: number,
+): Vec2 {
+  const minimumDistance = radius + otherRadius;
+  const offset = sub(center, otherCenter);
+  const distanceBetween = distance(center, otherCenter);
+
+  if (distanceBetween >= minimumDistance) {
+    return center;
+  }
+
+  if (distanceBetween < 1e-9) {
+    // Exactly coincident: there is no meaningful direction to separate
+    // along, so nudge along +x rather than dividing by ~zero. Rare, but
+    // two players spawning on the same point would otherwise produce NaN.
+    return { x: otherCenter.x + minimumDistance, y: otherCenter.y };
+  }
+
+  const pushDirection = scale(offset, 1 / distanceBetween);
+  return add(otherCenter, scale(pushDirection, minimumDistance));
+}

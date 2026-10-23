@@ -18,6 +18,7 @@ import {
   getSkill,
   integrateMovement,
   payCost,
+  resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
   seedFromString,
   vec2,
@@ -475,7 +476,7 @@ export class MatchRoom extends Room {
         continue;
       }
 
-      this.advanceMovement(sim, ctx.dt);
+      this.advanceMovement(sessionId, sim, ctx.dt);
 
       // Energy regenerates continuously; adrenaline is earned by acting,
       // not by waiting, so it deliberately does not tick up here.
@@ -511,20 +512,34 @@ export class MatchRoom extends Room {
     }
   }
 
-  private advanceMovement(sim: PlayerSim, dt: number): void {
+  private advanceMovement(sessionId: string, sim: PlayerSim, dt: number): void {
+    const radius = RULESET.collision.playerRadius;
     let position = integrateMovement(
       sim.position,
       sim.inputDirection,
       RULESET.movement.maxSpeedUnitsPerSecond,
       dt,
     );
-    for (const wallSegment of this.#wallSegments) {
-      position = resolveCircleSegmentCollision(
-        position,
-        RULESET.collision.playerRadius,
-        wallSegment,
-      );
+
+    // Body blocking (brief §21): living players are solid, so a front
+    // line can physically deny ground and a caster can be boxed in.
+    // Corpses are not solid — standing on a dead player should never
+    // trap the living.
+    for (const [otherId, other] of this.#sims) {
+      if (otherId === sessionId || other.combatant.dead) {
+        continue;
+      }
+      position = resolveCircleCircleCollision(position, radius, other.position, radius);
     }
+
+    // Walls resolve last so a player squeezed between a blocker and a
+    // wall ends up outside the wall rather than inside it — being pushed
+    // through level geometry is far worse than overlapping a teammate
+    // for one tick.
+    for (const wallSegment of this.#wallSegments) {
+      position = resolveCircleSegmentCollision(position, radius, wallSegment);
+    }
+
     sim.position = position;
   }
 
