@@ -5,10 +5,19 @@ import {
   ZERO,
   clampInputDirection,
   integrateMovement,
+  resolveCircleSegmentCollision,
   vec2,
+  type Segment,
   type Vec2,
 } from "@vibewars/game-core";
-import { PROTOCOL_VERSION, parseClientIntent, type ServerHello } from "@vibewars/game-protocol";
+import { allWallSegments, loadMap, type MapData } from "@vibewars/game-maps";
+import {
+  PROTOCOL_VERSION,
+  parseClientIntent,
+  type MapDescriptor,
+  type ServerHello,
+  type WallDescriptor,
+} from "@vibewars/game-protocol";
 import type { StepContext } from "colyseus";
 
 /**
@@ -49,8 +58,27 @@ export const MatchState = schema(
 export const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
 export const TICK_INTERVAL_MS = 1000 / RULESET.tickRateHz;
 
+/** The one map Sprint 6 ships. Map *selection* arrives with the lobby (Sprint 19). */
+export const DEFAULT_MAP_ID = "arena-alpha";
+
+function toMapDescriptor(map: MapData): MapDescriptor {
+  const walls: WallDescriptor[] = map.walls.map((wall) =>
+    wall.kind === "rect"
+      ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
+      : { kind: "polygon", points: wall.points },
+  );
+  return { id: map.id, name: map.name, width: map.width, height: map.height, walls };
+}
+
 export class MatchRoom extends Room {
   public override state = new MatchState();
+
+  readonly #map: MapData;
+  readonly #wallSegments: readonly Segment[];
+  readonly #mapDescriptor: MapDescriptor;
+
+  /** Cycles through the map's spawn points as players join, regardless of team. */
+  #nextSpawnIndex = 0;
 
   /**
    * Each client's last-requested movement direction, clamped to a unit
@@ -59,6 +87,21 @@ export class MatchRoom extends Room {
    * also means a client cannot infer another player's raw input stream.
    */
   readonly #inputDirectionBySession = new Map<string, Vec2>();
+
+  public constructor() {
+    super();
+    this.#map = loadMap(DEFAULT_MAP_ID);
+    this.#wallSegments = allWallSegments(this.#map.walls);
+    this.#mapDescriptor = toMapDescriptor(this.#map);
+  }
+
+  private nextSpawnPoint(): Vec2 {
+    const spawns = this.#map.spawnPoints;
+    const spawn = spawns[this.#nextSpawnIndex % spawns.length];
+    this.#nextSpawnIndex += 1;
+    // `spawns` is non-empty (schema enforces `.min(1)`), so this is always defined.
+    return spawn?.position ?? { x: 0, y: 0 };
+  }
 
   public override onCreate(): void {
     this.autoDispose = true;
@@ -118,18 +161,32 @@ export class MatchRoom extends Room {
   private tick(ctx: StepContext): void {
     for (const [sessionId, player] of this.state.players) {
       const direction = this.#inputDirectionBySession.get(sessionId) ?? ZERO;
-      const next = integrateMovement(
+      let position = integrateMovement(
         vec2(player.x, player.y),
         direction,
         RULESET.movement.maxSpeedUnitsPerSecond,
         ctx.dt,
       );
-      player.x = next.x;
-      player.y = next.y;
+
+      // Resolve against every wall in one pass. Order doesn't matter at
+      // this entity-vs-static-geometry scale: once a wall has pushed the
+      // circle outside itself, a later wall only pushes it further away
+      // from whichever wall it is actually overlapping.
+      for (const wallSegment of this.#wallSegments) {
+        position = resolveCircleSegmentCollision(
+          position,
+          RULESET.collision.playerRadius,
+          wallSegment,
+        );
+      }
+
+      player.x = position.x;
+      player.y = position.y;
     }
   }
 
   public override onJoin(client: Client): void {
+    const spawn = this.nextSpawnPoint();
     this.state.players.set(
       client.sessionId,
       new PlayerState({
@@ -138,8 +195,8 @@ export class MatchRoom extends Room {
         // would be an unvalidated string rendered on every other player's
         // screen.
         name: `player-${client.sessionId.slice(0, 4)}`,
-        x: 0,
-        y: 0,
+        x: spawn.x,
+        y: spawn.y,
       }),
     );
     this.#inputDirectionBySession.set(client.sessionId, ZERO);
@@ -150,6 +207,7 @@ export class MatchRoom extends Room {
       tickIntervalMs: TICK_INTERVAL_MS,
     };
     client.send("hello", hello);
+    client.send("map", this.#mapDescriptor);
 
     console.info(
       `[match] join sessionId=${client.sessionId} size=${String(this.state.players.size)}`,

@@ -15,5 +15,17 @@ export { ZERO, length, normalize, vec2 } from "./vec2.js";
 
 export { clampInputDirection, integrateMovement } from "./movement.js";
 
+export type { Segment } from "./geometry.js";
+export {
+  circleIntersectsSegment,
+  closestPointOnSegment,
+  distancePointToSegment,
+  distanceWithinRange,
+  hasLineOfSight,
+  resolveCircleSegmentCollision,
+  segment,
+  segmentsIntersect,
+} from "./geometry.js";
+
 export type { MovementRules, Ruleset } from "./ruleset.js";
 export { MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";

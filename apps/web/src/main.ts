@@ -1,11 +1,17 @@
 import Phaser from "phaser";
 
 import { vec2 } from "@vibewars/game-core";
+import type { WallDescriptor } from "@vibewars/game-protocol";
 
 import type { MatchSnapshot } from "./net/match-client.js";
 import { connectToMatch, endpointFromLocation } from "./net/match-client.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
-import { ArenaScene, actorAtPoint, type ArenaSnapshot } from "./render/arena-scene.js";
+import {
+  ArenaScene,
+  actorAtPoint,
+  type ArenaSnapshot,
+  type RenderableWall,
+} from "./render/arena-scene.js";
 
 /**
  * Sprint 2-4 browser client: boots Phaser 4 into `#viewport`, connects to
@@ -28,12 +34,18 @@ function setStatus(text: string, state: "offline" | "online" | "error"): void {
   status.dataset.state = state;
 }
 
+function toRenderableWall(wall: WallDescriptor): RenderableWall {
+  return wall.kind === "rect"
+    ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
+    : { kind: "polygon", points: wall.points };
+}
+
 /** Project the wire-level snapshot onto the renderer's own shape (ADR-0001:
  *  the renderer never depends on network/protocol types directly). */
-function toArenaSnapshot(match: MatchSnapshot): ArenaSnapshot {
+function toArenaSnapshot(match: MatchSnapshot, walls: readonly RenderableWall[]): ArenaSnapshot {
   const self = match.players.find((player) => player.sessionId === match.selfSessionId);
   return {
-    walls: [],
+    walls,
     // Render *my* current target, as the server has authoritatively
     // confirmed it — not whatever was last clicked, which may have been
     // rejected (brief §32: the client only sends intent).
@@ -72,7 +84,12 @@ async function boot(): Promise<void> {
 
   setStatus("connecting…", "offline");
   const connection = await connectToMatch(endpointFromLocation(window.location));
-  setStatus(`online as ${connection.selfSessionId.slice(0, 6)}`, "online");
+  setStatus(
+    `online as ${connection.selfSessionId.slice(0, 6)} on ${connection.map.name}`,
+    "online",
+  );
+
+  const walls = connection.map.walls.map(toRenderableWall);
 
   attachKeyboardMoveInput(window, (direction) => {
     if (direction.x === 0 && direction.y === 0) {
@@ -86,9 +103,9 @@ async function boot(): Promise<void> {
   // snapshot from the latest server state on every scene update rather than
   // on a separate timer, so there is exactly one place "when do we redraw"
   // is decided.
-  let latestSnapshot = toArenaSnapshot(connection.getSnapshot());
+  let latestSnapshot = toArenaSnapshot(connection.getSnapshot(), walls);
   game.events.on(Phaser.Core.Events.STEP, () => {
-    latestSnapshot = toArenaSnapshot(connection.getSnapshot());
+    latestSnapshot = toArenaSnapshot(connection.getSnapshot(), walls);
     scene.setSnapshot(latestSnapshot);
   });
 

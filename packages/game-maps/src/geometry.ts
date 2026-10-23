@@ -1,0 +1,43 @@
+import { segment, type Segment, type Vec2 } from "@vibewars/game-core";
+
+import type { Wall } from "./schema.js";
+
+/**
+ * Reduce any wall shape to the segment list the collision/LOS engine in
+ * `@vibewars/game-core` actually consumes (see that package's
+ * `geometry.ts` for why segments are the one shared primitive).
+ */
+export function wallToSegments(wall: Wall): Segment[] {
+  if (wall.kind === "rect") {
+    const { x, y, width, height } = wall;
+    const topLeft: Vec2 = { x, y };
+    const topRight: Vec2 = { x: x + width, y };
+    const bottomRight: Vec2 = { x: x + width, y: y + height };
+    const bottomLeft: Vec2 = { x, y: y + height };
+    return [
+      segment(topLeft, topRight),
+      segment(topRight, bottomRight),
+      segment(bottomRight, bottomLeft),
+      segment(bottomLeft, topLeft),
+    ];
+  }
+
+  // Polygon: segments connecting each point to the next, closed back to
+  // the first point.
+  const segments: Segment[] = [];
+  for (let i = 0; i < wall.points.length; i += 1) {
+    const a = wall.points[i];
+    const b = wall.points[(i + 1) % wall.points.length];
+    if (a === undefined || b === undefined) {
+      // Unreachable given the schema's `.min(3)`, but keeps this function
+      // total under `noUncheckedIndexedAccess` without a non-null assertion.
+      continue;
+    }
+    segments.push(segment(a, b));
+  }
+  return segments;
+}
+
+export function allWallSegments(walls: readonly Wall[]): Segment[] {
+  return walls.flatMap(wallToSegments);
+}

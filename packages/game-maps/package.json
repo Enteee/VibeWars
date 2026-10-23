@@ -1,0 +1,27 @@
+{
+  "name": "@vibewars/game-maps",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Declarative map data and loader/validator (ADR-0006).",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "maps"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@vibewars/game-core": "workspace:*",
+    "zod": "4.6.7"
+  }
+}

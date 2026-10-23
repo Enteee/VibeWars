@@ -1,5 +1,10 @@
 import { Client, type Room } from "@colyseus/sdk";
-import { ROOM_MATCH, type ClientIntent, type ServerHello } from "@vibewars/game-protocol";
+import {
+  ROOM_MATCH,
+  type ClientIntent,
+  type MapDescriptor,
+  type ServerHello,
+} from "@vibewars/game-protocol";
 
 /**
  * Thin wrapper around the Colyseus browser SDK for the match room.
@@ -25,6 +30,8 @@ export interface MatchSnapshot {
 
 export interface MatchConnection {
   readonly selfSessionId: string;
+  /** The match's static geometry, received once on join (brief §19). */
+  readonly map: MapDescriptor;
   sendIntent(intent: ClientIntent): void;
   getSnapshot(): MatchSnapshot;
   disconnect(): Promise<void>;
@@ -60,12 +67,27 @@ function snapshotFrom(room: Room<unknown, DecodedMatchState>): MatchSnapshot {
   return { selfSessionId: room.sessionId, players };
 }
 
+/** Await exactly one message of `type` from `room`, or reject after `timeoutMs`. */
+function awaitMessage<T>(room: Room, type: string, timeoutMs: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`timed out waiting for a "${type}" message`));
+    }, timeoutMs);
+    room.onMessage(type, (message: T) => {
+      clearTimeout(timer);
+      resolve(message);
+    });
+  });
+}
+
 export async function connectToMatch(endpoint: string): Promise<MatchConnection> {
   const client = new Client(endpoint);
   const room = await client.joinOrCreate<DecodedMatchState>(ROOM_MATCH);
+  const map = await awaitMessage<MapDescriptor>(room, "map", 5000);
 
   return {
     selfSessionId: room.sessionId,
+    map,
     sendIntent(intent: ClientIntent): void {
       room.send("intent", intent);
     },

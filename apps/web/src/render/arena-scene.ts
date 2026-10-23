@@ -1,51 +1,28 @@
 import Phaser from "phaser";
 
-import { Vec, type Vec2 } from "@vibewars/game-core";
+import { EMPTY_SNAPSHOT } from "./arena-snapshot.js";
+import type { ArenaSnapshot, RenderableWall } from "./arena-snapshot.js";
 
 /**
  * Minimal geometric renderer.
  *
  * This scene is a *view*. It reads a snapshot and draws it; it never decides
  * anything about the game (brief §41). Keeping it dumb is what allows the
- * simulation to be tested headlessly.
+ * simulation to be tested headlessly. The snapshot shape and its pure
+ * helpers live in `arena-snapshot.ts`, which has no Phaser dependency — see
+ * that file for why that split exists.
  */
-
-export interface RenderableActor {
-  readonly id: string;
-  readonly position: Vec2;
-  readonly radius: number;
-  readonly team: "ally" | "enemy" | "self";
-}
-
-export interface RenderableWall {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
-
-export interface ArenaSnapshot {
-  readonly actors: readonly RenderableActor[];
-  readonly walls: readonly RenderableWall[];
-  readonly targetId: string | undefined;
-}
-
-const TEAM_COLOURS: Record<RenderableActor["team"], number> = {
-  self: 0x59c2ff,
-  ally: 0x7ee787,
-  enemy: 0xff7b72,
-};
 
 const WALL_FILL = 0x202836;
 const WALL_STROKE = 0x3b4759;
 const TARGET_RING = 0xffd866;
 const GRID = 0x1a212c;
 
-export const EMPTY_SNAPSHOT: ArenaSnapshot = {
-  actors: [],
-  walls: [],
-  targetId: undefined,
-};
+const TEAM_COLOURS = {
+  self: 0x59c2ff,
+  ally: 0x7ee787,
+  enemy: 0xff7b72,
+} as const;
 
 export class ArenaScene extends Phaser.Scene {
   public static readonly KEY = "arena";
@@ -74,10 +51,7 @@ export class ArenaScene extends Phaser.Scene {
     g.clear();
     this.drawGrid(g);
     for (const wall of this.snapshot.walls) {
-      g.fillStyle(WALL_FILL, 1);
-      g.fillRect(wall.x, wall.y, wall.width, wall.height);
-      g.lineStyle(1, WALL_STROKE, 1);
-      g.strokeRect(wall.x, wall.y, wall.width, wall.height);
+      this.drawWall(g, wall);
     }
     for (const actor of this.snapshot.actors) {
       g.fillStyle(TEAM_COLOURS[actor.team], 1);
@@ -87,6 +61,19 @@ export class ArenaScene extends Phaser.Scene {
         g.strokeCircle(actor.position.x, actor.position.y, actor.radius + 5);
       }
     }
+  }
+
+  private drawWall(g: Phaser.GameObjects.Graphics, wall: RenderableWall): void {
+    g.fillStyle(WALL_FILL, 1);
+    g.lineStyle(1, WALL_STROKE, 1);
+    if (wall.kind === "rect") {
+      g.fillRect(wall.x, wall.y, wall.width, wall.height);
+      g.strokeRect(wall.x, wall.y, wall.width, wall.height);
+      return;
+    }
+    const points = wall.points.map((p) => new Phaser.Math.Vector2(p.x, p.y));
+    g.fillPoints(points, true);
+    g.strokePoints(points, true);
   }
 
   private drawGrid(g: Phaser.GameObjects.Graphics): void {
@@ -102,21 +89,11 @@ export class ArenaScene extends Phaser.Scene {
   }
 }
 
-/** Exposed for tests: colour lookup must stay total over the team union. */
-export function teamColour(team: RenderableActor["team"]): number {
-  return TEAM_COLOURS[team];
-}
-
-/** Hit-test a point against actors; used by click-to-target (Sprint 5). */
-export function actorAtPoint(snapshot: ArenaSnapshot, point: Vec2): RenderableActor | undefined {
-  let best: RenderableActor | undefined;
-  let bestDistance = Number.POSITIVE_INFINITY;
-  for (const actor of snapshot.actors) {
-    const d = Vec.distance(actor.position, point);
-    if (d <= actor.radius && d < bestDistance) {
-      best = actor;
-      bestDistance = d;
-    }
-  }
-  return best;
-}
+export type {
+  ArenaSnapshot,
+  PolygonRenderableWall,
+  RectRenderableWall,
+  RenderableActor,
+  RenderableWall,
+} from "./arena-snapshot.js";
+export { EMPTY_SNAPSHOT, actorAtPoint, teamColour } from "./arena-snapshot.js";

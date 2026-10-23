@@ -136,3 +136,36 @@ export interface ServerHello {
   /** Fixed simulation step in milliseconds; clients interpolate against it. */
   readonly tickIntervalMs: number;
 }
+
+/**
+ * The wire shape of a map's static geometry, sent once on join (brief §19's
+ * "renderer turns the map description into minimalist graphics").
+ *
+ * Deliberately independent of `@vibewars/game-maps`'s own `MapData`/`Wall`
+ * types rather than importing them: `game-protocol` has zero dependencies
+ * (ADR-0001), and the wire format is allowed to diverge from the
+ * server-side domain representation over time without that being a
+ * protocol-version bump on its own.
+ */
+export interface RectWallDescriptor {
+  readonly kind: "rect";
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface PolygonWallDescriptor {
+  readonly kind: "polygon";
+  readonly points: readonly { readonly x: number; readonly y: number }[];
+}
+
+export type WallDescriptor = RectWallDescriptor | PolygonWallDescriptor;
+
+export interface MapDescriptor {
+  readonly id: string;
+  readonly name: string;
+  readonly width: number;
+  readonly height: number;
+  readonly walls: readonly WallDescriptor[];
+}

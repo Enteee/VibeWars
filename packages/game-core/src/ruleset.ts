@@ -16,11 +16,17 @@ export interface MovementRules {
   readonly maxSpeedUnitsPerSecond: number;
 }
 
+export interface CollisionRules {
+  /** Every player's collision (and rendering) radius, in world units. */
+  readonly playerRadius: number;
+}
+
 export interface Ruleset {
   readonly id: string;
   /** Fixed server simulation tick rate, in Hz (ADR-0003). */
   readonly tickRateHz: number;
   readonly movement: MovementRules;
+  readonly collision: CollisionRules;
 }
 
 export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
@@ -28,5 +34,8 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
   tickRateHz: 20,
   movement: Object.freeze({
     maxSpeedUnitsPerSecond: 180,
+  }),
+  collision: Object.freeze({
+    playerRadius: 14,
   }),
 });

@@ -1,10 +1,23 @@
 import { Client } from "@colyseus/sdk";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
+import { loadMap } from "@vibewars/game-maps";
 import { PROTOCOL_VERSION, ROOM_MATCH, type ServerHello } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { DEFAULT_MAP_ID } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
+
+/**
+ * The first client to join a fresh room always gets the map's first spawn
+ * point (`MatchRoom`'s spawn index starts at 0 per room instance). Deriving
+ * this from the real map rather than hardcoding a position keeps these
+ * tests correct if `arena-alpha`'s spawn points ever move.
+ */
+const FIRST_SPAWN = loadMap(DEFAULT_MAP_ID).spawnPoints[0]?.position;
+if (FIRST_SPAWN === undefined) {
+  throw new Error(`${DEFAULT_MAP_ID} has no spawn points — fix the map before running tests`);
+}
 
 /**
  * Real-transport tests for the match room: a real server on a real socket,
@@ -42,7 +55,7 @@ describe("match room", () => {
     await expect(response.json()).resolves.toEqual({ status: "ok" });
   });
 
-  it("accepts a client and syncs state, spawned at the origin", async () => {
+  it("accepts a client and syncs state, spawned at the map's first spawn point", async () => {
     const client = new Client(endpoint);
     const room = await client.joinOrCreate(ROOM_MATCH);
 
@@ -51,8 +64,8 @@ describe("match room", () => {
     const player = room.state.players.get(room.sessionId);
     expect(player).toBeDefined();
     expect(player?.sessionId).toBe(room.sessionId);
-    expect(player?.x).toBe(0);
-    expect(player?.y).toBe(0);
+    expect(player?.x).toBe(FIRST_SPAWN.x);
+    expect(player?.y).toBe(FIRST_SPAWN.y);
     expect(room.state.protocolVersion).toBe(PROTOCOL_VERSION);
 
     await room.leave();
@@ -108,15 +121,16 @@ describe("match room", () => {
 
     room.send("intent", { kind: "move", dirX: 1, dirY: 0 });
 
-    const expectedMinimumX = (MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond * 0.3) / 2;
+    const expectedMinimumX =
+      FIRST_SPAWN.x + (MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond * 0.3) / 2;
     await waitFor(() => (room.state.players.get(room.sessionId)?.x ?? 0) > expectedMinimumX, {
       timeoutMs: 2000,
       label: "player to have moved right",
     });
 
     const player = room.state.players.get(room.sessionId);
-    expect(player?.x).toBeGreaterThan(0);
-    expect(player?.y).toBeCloseTo(0, 1);
+    expect(player?.x).toBeGreaterThan(FIRST_SPAWN.x);
+    expect(player?.y).toBeCloseTo(FIRST_SPAWN.y, 1);
 
     await room.leave();
   });
@@ -127,7 +141,7 @@ describe("match room", () => {
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self to appear" });
 
     room.send("intent", { kind: "move", dirX: 0, dirY: 1 });
-    await waitFor(() => (room.state.players.get(room.sessionId)?.y ?? 0) > 0, {
+    await waitFor(() => (room.state.players.get(room.sessionId)?.y ?? 0) > FIRST_SPAWN.y + 5, {
       timeoutMs: 2000,
       label: "player to have moved down",
     });
@@ -154,8 +168,8 @@ describe("match room", () => {
     await new Promise((resolve) => setTimeout(resolve, 150));
 
     const player = room.state.players.get(room.sessionId);
-    expect(player?.x).toBe(0);
-    expect(player?.y).toBe(0);
+    expect(player?.x).toBe(FIRST_SPAWN.x);
+    expect(player?.y).toBe(FIRST_SPAWN.y);
 
     await room.leave();
   });

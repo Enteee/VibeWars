@@ -25,4 +25,8 @@ export type {
   StopIntent,
   TargetIntent,
   ServerHello,
+  MapDescriptor,
+  WallDescriptor,
+  RectWallDescriptor,
+  PolygonWallDescriptor,
 } from "./protocol.js";
