@@ -161,7 +161,7 @@ would look better and be a lie.
 
 ## Testing shape
 
-560 headless tests in four layers, plus a browser suite:
+566 headless tests in four layers, plus a browser suite:
 
 - **Unit** (`packages/*/src/*.test.ts`) — pure functions, no I/O.
 - **Integration** (`apps/server/src/*.test.ts`) — a real Colyseus server on
