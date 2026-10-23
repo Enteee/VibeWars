@@ -9,6 +9,7 @@ import type { Skill } from "./types.js";
 const SPELL: Skill = {
   id: "test.spell",
   name: "Test Spell",
+  attributeId: "elementalist.fire-magic",
   cost: { kind: "energy", amount: 10 },
   activationSeconds: 1,
   rechargeSeconds: 5,

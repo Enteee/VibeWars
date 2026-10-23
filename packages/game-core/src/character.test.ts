@@ -28,11 +28,12 @@ describe("accessibleAttributeIds", () => {
       expect.arrayContaining([
         "warrior.strength",
         "warrior.axe-mastery",
+        "warrior.hammer-mastery",
         "warrior.swordsmanship",
         "warrior.tactics",
       ]),
     );
-    expect(ids).toHaveLength(4);
+    expect(ids).toHaveLength(5);
   });
 
   it("adds only the secondary profession's non-primary attributes", () => {
@@ -42,7 +43,8 @@ describe("accessibleAttributeIds", () => {
     expect(ids).toContain("monk.smiting-prayers");
     // The secondary profession's PRIMARY attribute must never be accessible.
     expect(ids).not.toContain("monk.divine-favor");
-    expect(ids).toHaveLength(7);
+    // 5 warrior attributes + 3 non-primary monk attributes.
+    expect(ids).toHaveLength(8);
   });
 
   it("never grants a second profession's primary attribute even transitively", () => {

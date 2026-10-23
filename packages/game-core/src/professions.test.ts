@@ -9,9 +9,15 @@ describe("PROFESSIONS", () => {
     expect(ALL_PROFESSION_IDS).toHaveLength(10);
   });
 
-  it("gives every profession exactly 4 attributes", () => {
+  it("gives every profession 4 or 5 attributes", () => {
+    // Deliberately a range, not a fixed count: the weapon professions
+    // genuinely carry more attributes than the casters, and an
+    // exactly-four rule left real skills (hammer attacks, earth magic)
+    // with no attribute to belong to.
     for (const id of ALL_PROFESSION_IDS) {
-      expect(getProfession(id as never).attributes).toHaveLength(4);
+      const count = getProfession(id as never).attributes.length;
+      expect(count, `${id} has ${String(count)} attributes`).toBeGreaterThanOrEqual(4);
+      expect(count, `${id} has ${String(count)} attributes`).toBeLessThanOrEqual(5);
     }
   });
 

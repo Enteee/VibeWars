@@ -36,11 +36,20 @@ export interface ProfessionDefinition {
   readonly attributes: readonly AttributeDefinition[];
 }
 
+/**
+ * Build a profession from its primary attribute plus its secondaries.
+ *
+ * The secondary list is variable-length rather than a fixed triple: the
+ * weapon-oriented professions genuinely carry more attributes than the
+ * caster ones, and forcing every profession to exactly three secondaries
+ * meant skills had nowhere to belong (Hammer Mastery and Earth Magic had
+ * no home, which the catalog's own tests caught).
+ */
 function profession(
   id: ProfessionId,
   name: string,
   primaryAttributeName: string,
-  secondaryAttributeNames: readonly [string, string, string],
+  secondaryAttributeNames: readonly string[],
 ): ProfessionDefinition {
   const toAttr = (attrName: string, isPrimary: boolean): AttributeDefinition => ({
     id: `${id}.${attrName.toLowerCase().replace(/\s+/g, "-")}`,
@@ -53,9 +62,7 @@ function profession(
     name,
     attributes: [
       toAttr(primaryAttributeName, true),
-      toAttr(secondaryAttributeNames[0], false),
-      toAttr(secondaryAttributeNames[1], false),
-      toAttr(secondaryAttributeNames[2], false),
+      ...secondaryAttributeNames.map((attrName) => toAttr(attrName, false)),
     ],
   };
 }
@@ -71,6 +78,7 @@ function profession(
 export const PROFESSIONS: Readonly<Record<ProfessionId, ProfessionDefinition>> = {
   warrior: profession("warrior", "Warrior", "Strength", [
     "Axe Mastery",
+    "Hammer Mastery",
     "Swordsmanship",
     "Tactics",
   ]),
@@ -96,6 +104,7 @@ export const PROFESSIONS: Readonly<Record<ProfessionId, ProfessionDefinition>> =
   ]),
   elementalist: profession("elementalist", "Elementalist", "Energy Storage", [
     "Fire Magic",
+    "Earth Magic",
     "Water Magic",
     "Air Magic",
   ]),

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { getAttribute } from "../professions.js";
 import { createRng } from "../rng.js";
 import { vec2 } from "../vec2.js";
 import { canActivate, payCost } from "./activation.js";
@@ -278,5 +279,28 @@ describe("headless combat simulation", () => {
     ]);
     const far = actor(makeCombatant({ id: "far", team: 1 }), [], 300);
     expect(tryCast(warrior, "warrior.backbreaker", far)).toBe("out-of-range");
+  });
+});
+
+describe("skill attribute ownership", () => {
+  it("gives every skill an explicit attributeId", () => {
+    for (const skill of IMPLEMENTED_SKILLS) {
+      expect(skill.attributeId.length, `${skill.id} has no attributeId`).toBeGreaterThan(0);
+    }
+  });
+
+  it("points every attributeId at a real profession attribute", () => {
+    for (const skill of IMPLEMENTED_SKILLS) {
+      expect(getAttribute(skill.attributeId), `${skill.id} -> ${skill.attributeId}`).toBeDefined();
+    }
+  });
+
+  it("names the attribute explicitly rather than leaving it inferable", () => {
+    // Broad Head Arrow has no attribute-scaled effect at all, so an
+    // inference-based approach would have made it equippable by every
+    // profession. This pins the explicit field that replaced it.
+    const bha = getSkill("ranger.broad-head-arrow");
+    expect(bha?.attributeId).toBe("ranger.marksmanship");
+    expect(bha?.effects.some((e) => "amount" in e)).toBe(false);
   });
 });

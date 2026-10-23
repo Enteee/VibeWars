@@ -109,6 +109,16 @@ export type SkillEffect =
 export interface Skill {
   readonly id: string;
   readonly name: string;
+  /**
+   * The attribute this skill belongs to, and therefore which professions
+   * may equip it (brief §6's skill shape).
+   *
+   * Stated explicitly rather than inferred from the effect list: a skill
+   * whose effects are not attribute-scaled (a pure interrupt, say) still
+   * belongs to a profession, and inferring it would wrongly make such
+   * skills equippable by everyone — a real bug this field replaced.
+   */
+  readonly attributeId: string;
   readonly cost: SkillCost | undefined;
   /** Cast time in seconds. `0` is instant. */
   readonly activationSeconds: number;
