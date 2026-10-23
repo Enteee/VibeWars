@@ -1,0 +1,24 @@
+{
+  "id": "ranger.broad-head-arrow",
+  "name": "Broad Head Arrow",
+  "profession": "ranger",
+  "attribute": "Marksmanship",
+  "type": "Bow attack.",
+  "elite": true,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "activationSeconds": 0,
+  "rechargeSeconds": 10,
+  "description": "You shoot a Broad Head Arrow that moves slower than normal. If it hits, target foe\n                is\n                Dazed\n                for 5...17...20 seconds, and if target foe is casting\n                a spell, that spell is interrupted.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/501-Broad_Head_Arrow",
+    "fetchedAt": "2026-10-23T20:26:59.321Z"
+  },
+  "unmapped": {}
+}

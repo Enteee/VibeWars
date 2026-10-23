@@ -1,0 +1,24 @@
+{
+  "id": "monk.contemplation-of-purity",
+  "name": "Contemplation of Purity",
+  "profession": "monk",
+  "attribute": "Divine Favor",
+  "type": "Skill.",
+  "elite": false,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 0.25,
+  "rechargeSeconds": 10,
+  "description": "Lose all enchantments. For each one lost, you gain\n                0...64...80 health, lose one hex, and lose one\n                condition (maximum 1...7...8 hexes and conditions).",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Monk/154-Contemplation_of_Purity",
+    "fetchedAt": "2026-10-23T20:26:58.510Z"
+  },
+  "unmapped": {}
+}

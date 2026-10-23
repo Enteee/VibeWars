@@ -1,0 +1,24 @@
+{
+  "id": "elementalist.armor-of-earth",
+  "name": "Armor of Earth",
+  "profession": "elementalist",
+  "attribute": "Earth Magic",
+  "type": "Enchantment Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "activationSeconds": 0.75,
+  "rechargeSeconds": 15,
+  "description": "For 30 seconds, you gain 24...53...60 armor, but move\n                50...21...14% slower.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Elementalist/394-Armor_of_Earth",
+    "fetchedAt": "2026-10-23T20:26:58.924Z"
+  },
+  "unmapped": {}
+}

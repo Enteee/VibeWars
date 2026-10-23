@@ -1,0 +1,24 @@
+{
+  "id": "elementalist.fireball",
+  "name": "Fireball",
+  "profession": "elementalist",
+  "attribute": "Fire Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "activationSeconds": 1,
+  "rechargeSeconds": 7,
+  "description": "Send out a ball of fire that strikes target foe and all nearby foes for\n                7...91...112 fire damage.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Elementalist/416-Fireball",
+    "fetchedAt": "2026-10-23T20:26:58.724Z"
+  },
+  "unmapped": {}
+}

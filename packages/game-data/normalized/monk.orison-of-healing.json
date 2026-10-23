@@ -1,0 +1,24 @@
+{
+  "id": "monk.orison-of-healing",
+  "name": "Orison of Healing",
+  "profession": "monk",
+  "attribute": "Healing Prayers",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 1,
+  "rechargeSeconds": 2,
+  "description": "Heal target ally for 20...60...70 health.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Monk/175-Orison_of_Healing",
+    "fetchedAt": "2026-10-23T20:26:58.603Z"
+  },
+  "unmapped": {}
+}

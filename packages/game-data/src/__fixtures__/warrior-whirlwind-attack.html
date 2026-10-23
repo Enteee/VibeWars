@@ -1,0 +1,81 @@
+<!doctype html><html><body>
+        <div class="skill_prim_info skill_infoCurrent">
+            <div id="skill_img">
+                <div class="skillHD ">
+                                                                <img src="https://www.gw-memorial.net/img/skills-icon64/Whirlwind_Attack.jpg" width="64" height="64" border="0" class="img_skill">
+                                    </div>
+                <div class="clear"></div>
+            </div>
+
+                        <span class="typo_li_b">Whirlwind Attack</span>
+
+                    </div>
+
+        <div class="skill_info skill_infoCurrent">
+                            <b>6</b><span class="skillsDotsRevision adrenaline"></span>
+                            <b>1</b><span class="skillsDotsRevision recharge"></span>
+                    </div>
+
+        <div class="skill_info skill_infoCurrent">
+            <span class="typo_li_b">Attribute:</span> Sunspear rank            <span class="list-sep-global">&#183;</span>
+            <span class="typo_li_b">Campaign:</span> Nightfall.
+        </div>
+
+        <div class="historyDescription_prim">
+            <span class="skill-type">Melee attack.</span>
+            Attack target and adjacent foes. Each attack that hits deals +<span class="variable">13...20...20</span> damage.                            <span class="skillsPve">(PvE-only skill)</span>
+                    </div>
+
+        <!-- Tags -->
+        <div class="tags-row">
+                    </div>
+
+        <div class="historyChangments"><ul class="chngmnts"><li>New PvE-only skill</li></ul></div>        <table class="tableauPgr Warrior" border="0" cellspacing="0"><tr><td class="tableauPgr_tcell_pri ">Sunspear rank</td><td class="tableauPgr_cell_pri tableauPgr_intd">0</td><td class="tableauPgr_cell_pri">1</td><td class="tableauPgr_cell_pri">2</td><td class="tableauPgr_cell_pri">3</td><td class="tableauPgr_cell_pri">4</td><td class="tableauPgr_cell_pri tableauPgr_intd">5</td><td class="tableauPgr_cell_pri">6</td><td class="tableauPgr_cell_pri">7</td><td class="tableauPgr_cell_pri">8</td><td class="tableauPgr_cell_pri">9</td><td class="tableauPgr_cell_pri">10</td></tr><tr><td class="tableauPgr_tcell">+ Damage</td><td class="tableauPgr_cell tableauPgr_intd">13</td><td class="tableauPgr_cell">14</td><td class="tableauPgr_cell">16</td><td class="tableauPgr_cell">17</td><td class="tableauPgr_cell">19</td><td class="tableauPgr_cell tableauPgr_intd">20</td><td class="tableauPgr_cell">20</td><td class="tableauPgr_cell">20</td><td class="tableauPgr_cell">20</td><td class="tableauPgr_cell">20</td><td class="tableauPgr_cell">20</td></tr></table>
+        <!-- Historique des révisions -->
+        
+        
+        <br>
+    </div>
+</div></div>
+
+<footer>
+	<div class="footer-all">
+		<div class="footer-data">©2026 Guild Wars Memorial</div>
+	</div>
+</footer>
+
+</div>
+</div><!-- SCRIPT -->
+<script src="https://www.gw-memorial.net/assets/jquery-3.4.1.min.js" type="text/javascript"></script>
+<script src="https://www.gw-memorial.net/assets/semantic/semantic.min.js"></script>
+<script src="https://www.gw-memorial.net/assets/jquery.hoverIntent.minified.js" type="text/javascript"></script>
+<script src="https://www.gw-memorial.net/assets/gwm_menu.js" type="text/javascript"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+    lucide.createIcons();
+</script>
+<script src="https://www.gw-memorial.net/assets/magnific-popup/jquery.magnific-popup.min.js"></script>
+<script src="https://unpkg.com/@yaireo/tagify"></script>
+<script src="https://unpkg.com/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
+<script>
+$('.tooltipCondition').popup();
+$('.ui.selection.dropdown').dropdown({ clearable: true });
+$('.skillHD').magnificPopup({
+    delegate: 'a', type: 'image',
+    gallery: { enabled: true },
+    mainClass: 'mfp-img-mobile',
+    image: { verticalFit: true },
+    closeOnBgClick: true, fixedContentPos: false
+});
+$(document).on('click', 'div.item', function () {
+    window.location.href = $(this).data('tags');
+});
+function togglePlay(id, e) {
+    const audio = document.getElementById(id);
+    if (audio.paused) { audio.play(); e.className = 'far fa-pause-circle'; }
+    else { audio.pause(); e.className = 'far fa-play-circle'; }
+    audio.addEventListener('ended', () => { e.className = 'far fa-play-circle'; });
+}
+</script>
+</body>
+</body></html>

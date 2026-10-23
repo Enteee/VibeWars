@@ -1,0 +1,24 @@
+{
+  "id": "ranger.troll-unguent",
+  "name": "Troll Unguent",
+  "profession": "ranger",
+  "attribute": "Wilderness Survival",
+  "type": "Skill.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 3,
+  "rechargeSeconds": 10,
+  "description": "For 13 seconds, you gain health regeneration +3...9...10.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/143-Troll_Unguent",
+    "fetchedAt": "2026-10-23T20:26:59.518Z"
+  },
+  "unmapped": {}
+}

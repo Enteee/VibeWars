@@ -1,0 +1,29 @@
+{
+  "name": "@vibewars/game-data",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "GW1 reference skill data: importer pipeline + normalized output (ADR-0004).",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "generated"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "import": "node dist/run-import.js",
+    "generate": "node dist/generate.js",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "cheerio": "1.2.0",
+    "zod": "4.6.7"
+  }
+}

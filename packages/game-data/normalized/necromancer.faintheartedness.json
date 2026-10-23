@@ -1,0 +1,24 @@
+{
+  "id": "necromancer.faintheartedness",
+  "name": "Faintheartedness",
+  "profession": "necromancer",
+  "attribute": "Curses",
+  "type": "Hex Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "activationSeconds": 1,
+  "rechargeSeconds": 8,
+  "description": "For the next 3...13...16 seconds, target foe attacks\n                50% slower, and that foe suffers health degeneration of\n                0...2...3.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Necromancer/258-Faintheartedness",
+    "fetchedAt": "2026-10-23T20:26:59.127Z"
+  },
+  "unmapped": {}
+}

@@ -1,0 +1,139 @@
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { importSkills, type SkillSpec } from "./importer.js";
+import { writeSkillBundle } from "./generate.js";
+
+/**
+ * The curated skill list for this pass of the pipeline (brief §9: "do not
+ * attempt to implement all skills simultaneously"). Chosen to span
+ * distinct mechanics — attack damage, AoE, heal, condition removal,
+ * interrupt, hex, enchantment, skill-copy — so Sprint 10's engine has a
+ * genuinely varied set to prove itself against, not sixteen damage spells.
+ *
+ * Source: gw-memorial.net (brief §7). Expanding this list (or adding the
+ * Guild Wars Wiki as a second source once it is reachable — see
+ * ADR-0004) is just adding more entries here and re-running `pnpm run
+ * import`.
+ */
+const SKILL_SPECS: readonly SkillSpec[] = [
+  {
+    id: "warrior.swift-chop",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/10-Swift_Chop",
+  },
+  {
+    id: "warrior.whirlwind-attack",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/1247-Whirlwind_Attack",
+  },
+  {
+    id: "warrior.backbreaker",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/11-Backbreaker",
+  },
+  {
+    id: "monk.contemplation-of-purity",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/154-Contemplation_of_Purity",
+  },
+  {
+    id: "monk.orison-of-healing",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/175-Orison_of_Healing",
+  },
+  {
+    id: "elementalist.fireball",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/416-Fireball",
+  },
+  {
+    id: "elementalist.meteor-shower",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/425-Meteor_Shower",
+  },
+  {
+    id: "elementalist.armor-of-earth",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/394-Armor_of_Earth",
+  },
+  {
+    id: "necromancer.contagion",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/876-Contagion",
+  },
+  {
+    id: "necromancer.faintheartedness",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/258-Faintheartedness",
+  },
+  {
+    id: "necromancer.parasitic-bond",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/264-Parasitic_Bond",
+  },
+  {
+    id: "ranger.broad-head-arrow",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/501-Broad_Head_Arrow",
+  },
+  {
+    id: "ranger.barrage",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/109-Barrage",
+  },
+  {
+    id: "ranger.troll-unguent",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/143-Troll_Unguent",
+  },
+  {
+    id: "mesmer.arcane-echo",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/370-Arcane_Echo",
+  },
+  {
+    id: "mesmer.echo",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/372-Echo",
+  },
+];
+
+function packageRoot(): string {
+  return resolve(dirname(fileURLToPath(import.meta.url)), "..");
+}
+
+async function main(): Promise<void> {
+  const report = await importSkills(SKILL_SPECS, {
+    rawDir: resolve(packageRoot(), "raw/gw-memorial"),
+    normalizedDir: resolve(packageRoot(), "normalized"),
+  });
+
+  console.info(`imported:    ${String(report.imported)}`);
+  console.info(`normalized:  ${String(report.normalized)}`);
+  console.info(`unsupported: ${String(report.unsupported.length)}`);
+  for (const p of report.unsupported) {
+    console.info(`  - ${p.id} (${p.url}): ${p.reason}`);
+  }
+  console.info(`rejected:    ${String(report.rejected.length)}`);
+  for (const p of report.rejected) {
+    console.info(`  - ${p.id} (${p.url}): ${p.reason}`);
+  }
+
+  const generated = writeSkillBundle();
+  console.info(`generated bundle: ${String(generated.skills.length)} skills`);
+  if (generated.rejected.length > 0) {
+    console.error(
+      `generate step rejected ${String(generated.rejected.length)} normalized file(s):`,
+    );
+    for (const r of generated.rejected) {
+      console.error(`  - ${r.file}: ${r.reason}`);
+    }
+    process.exitCode = 1;
+  }
+}
+
+main().catch((error: unknown) => {
+  console.error("import failed:", error);
+  process.exitCode = 1;
+});

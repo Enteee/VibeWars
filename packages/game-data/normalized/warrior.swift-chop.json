@@ -1,0 +1,24 @@
+{
+  "id": "warrior.swift-chop",
+  "name": "Swift Chop",
+  "profession": "warrior",
+  "attribute": "Axe Mastery",
+  "type": "Axe attack.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 0,
+  "rechargeSeconds": 4,
+  "description": "If this attack hits you strike for +1...16...20\n                damage. If Swift Chop is blocked, target foe takes\n                1...16...20 damage and suffers a\n                Deep Wound\n                for 20 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Warrior/10-Swift_Chop",
+    "fetchedAt": "2026-10-23T20:26:58.084Z"
+  },
+  "unmapped": {}
+}

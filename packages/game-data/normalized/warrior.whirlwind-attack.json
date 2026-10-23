@@ -1,0 +1,24 @@
+{
+  "id": "warrior.whirlwind-attack",
+  "name": "Whirlwind Attack",
+  "profession": "warrior",
+  "attribute": "Sunspear rank",
+  "type": "Melee attack.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "adrenaline",
+    "amount": 6
+  },
+  "activationSeconds": 0,
+  "rechargeSeconds": 1,
+  "description": "Attack target and adjacent foes. Each attack that hits deals +13...20...20\n                damage. (PvE-only skill)",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Warrior/1247-Whirlwind_Attack",
+    "fetchedAt": "2026-10-23T20:26:58.340Z"
+  },
+  "unmapped": {}
+}

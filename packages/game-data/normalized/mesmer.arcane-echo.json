@@ -1,0 +1,24 @@
+{
+  "id": "mesmer.arcane-echo",
+  "name": "Arcane Echo",
+  "profession": "mesmer",
+  "attribute": "No Attribute",
+  "type": "Enchantment Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 15
+  },
+  "activationSeconds": 2,
+  "rechargeSeconds": 20,
+  "description": "If you cast a spell in the next 20 seconds, Arcane Echo is replaced with that spell\n                for 20 seconds. Arcane Echo ends prematurely if you use a non-spell skill.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Mesmer/370-Arcane_Echo",
+    "fetchedAt": "2026-10-23T20:26:59.609Z"
+  },
+  "unmapped": {}
+}

@@ -1,0 +1,24 @@
+{
+  "id": "necromancer.parasitic-bond",
+  "name": "Parasitic Bond",
+  "profession": "necromancer",
+  "attribute": "Curses",
+  "type": "Hex Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 1,
+  "rechargeSeconds": 2,
+  "description": "For 20 seconds, target foe suffers health degeneration of 1. The caster is healed\n                for 30...102...120 when Parasitic Bond ends.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Necromancer/264-Parasitic_Bond",
+    "fetchedAt": "2026-10-23T20:26:59.236Z"
+  },
+  "unmapped": {}
+}

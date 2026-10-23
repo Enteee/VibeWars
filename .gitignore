@@ -31,5 +31,7 @@ playwright-report/
 npm-debug.log*
 pnpm-debug.log*
 
-# Skill-importer working data (raw upstream snapshots are not committed)
-data/raw/**/*.cache
+# Skill-importer generated bundle: rebuilt from normalized/ by `pnpm run
+# generate`/`pnpm run import`, never hand-edited. raw/ and normalized/ ARE
+# committed (provenance + hand-auditable facts — see ADR-0004).
+packages/game-data/generated/

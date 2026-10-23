@@ -12,3 +12,9 @@ packages/game-data/generated/
 # markdownlint-cli's own config loader rejects a trailing comma (unlike
 # Prettier's JSONC formatting, which adds one under trailingComma: "all").
 .markdownlint.jsonc
+# Verbatim upstream HTML snapshots used as parser test fixtures. These are
+# real-world markup (with implied end tags Prettier rejects); reformatting
+# them would defeat their purpose as faithful captures of what the parser
+# must actually handle.
+packages/game-data/src/__fixtures__/
+packages/game-data/raw/

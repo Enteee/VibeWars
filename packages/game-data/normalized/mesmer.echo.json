@@ -1,0 +1,24 @@
+{
+  "id": "mesmer.echo",
+  "name": "Echo",
+  "profession": "mesmer",
+  "attribute": "No Attribute",
+  "type": "Enchantment Spell.",
+  "elite": true,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 1,
+  "rechargeSeconds": 10,
+  "description": "For 30 seconds, Echo is replaced with the next skill you use. Echo acts as this\n                skill for 20 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Mesmer/372-Echo",
+    "fetchedAt": "2026-10-23T20:26:59.701Z"
+  },
+  "unmapped": {}
+}
