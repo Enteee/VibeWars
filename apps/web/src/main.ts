@@ -81,6 +81,14 @@ async function main(): Promise<void> {
 
   let lobby: LobbyConnection | undefined;
   let match: MatchView | undefined;
+  /**
+   * Set synchronously the moment a match is requested.
+   *
+   * `match` itself is only assigned after `startMatchView` resolves, and
+   * a lobby state change arriving during that await would otherwise find
+   * `match === undefined` and pull the player back to the lobby screen.
+   */
+  let enteringMatch = false;
   let lobbyNotice: string | undefined;
 
   const showViewport = (visible: boolean): void => {
@@ -302,6 +310,16 @@ async function main(): Promise<void> {
     if (lobby === undefined) {
       return;
     }
+    // The lobby connection stays open for the whole match, so every lobby
+    // state change still fires this. Without this guard, the lobby's own
+    // "phase -> in-match" broadcast lands just after `enterMatch` showed
+    // the viewport and puts the player straight back on the lobby screen,
+    // with the match running unseen underneath. Found by the browser
+    // tests; nothing headless could have caught it, because the bug lives
+    // entirely in how the two screens are sequenced.
+    if (match !== undefined || enteringMatch) {
+      return;
+    }
     showViewport(false);
     renderLobbyScreen(
       screenRoot,
@@ -363,6 +381,7 @@ async function main(): Promise<void> {
   };
 
   const enterMatch = async (mapId?: string): Promise<void> => {
+    enteringMatch = true;
     showViewport(true);
     setStatus("entering match…", "offline");
     try {
@@ -385,6 +404,7 @@ async function main(): Promise<void> {
             void (async () => {
               await match?.dispose();
               match = undefined;
+              enteringMatch = false;
               // Returning from a match puts the lobby back into its
               // waiting phase so another match can be started
               // immediately (brief §46).
@@ -403,6 +423,7 @@ async function main(): Promise<void> {
     } catch (error) {
       console.error("[web] could not enter match", error);
       setStatus("match failed", "error");
+      enteringMatch = false;
       showMenu();
     }
   };

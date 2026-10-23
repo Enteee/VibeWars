@@ -14,7 +14,9 @@ command below is a plain `pnpm` script underneath (see `package.json`).
 
 ```sh
 pnpm run build         # build every package/app
-pnpm run test          # run the full test suite
+pnpm run test          # the headless suite
+pnpm run test:e2e      # browser tests (Playwright; needs a Chromium)
+pnpm run ci:full       # ci + browser tests
 pnpm run test:watch    # watch mode
 pnpm run lint          # ESLint (type-aware), zero warnings allowed
 pnpm run format        # Prettier, writes
@@ -43,6 +45,10 @@ Concretely:
   against a real Colyseus room (see `apps/server/src/server.test.ts`) — not
   a mock of Colyseus. A mocked transport would not have caught the
   dependency-duplication bug in ADR-0002; don't reintroduce that risk.
+- New behaviour in the application shell (`apps/web/src/main.ts`) — how
+  screens and connections are sequenced — gets a browser test in `e2e/`.
+  Both bugs ADR-0011 describes lived there, were invisible to every
+  headless test, and made the game unplayable through its main flow.
 - `any`, `as any`, and non-null assertions (`!`) are lint errors, not style
   preferences — see ADR-0008. If one is genuinely unavoidable, say why in a
   comment at the exact line, not in a blanket lint-rule override.

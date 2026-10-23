@@ -161,7 +161,7 @@ would look better and be a lie.
 
 ## Testing shape
 
-539 tests, in four layers:
+560 headless tests in four layers, plus a browser suite:
 
 - **Unit** (`packages/*/src/*.test.ts`) — pure functions, no I/O.
 - **Integration** (`apps/server/src/*.test.ts`) — a real Colyseus server on
@@ -175,6 +175,13 @@ would look better and be a lie.
   crash.
 - **Headless simulation** (`tools/headless-match.test.ts`) — whole fights,
   deterministically, with no server.
+- **Browser** (`e2e/*.spec.ts`, Playwright) — a real Chromium against the
+  real production server: host a lobby, join it from a second browser
+  context, start a match, move, cast. Movement is asserted by comparing
+  rendered frames rather than through a test-only hook, so the test
+  cannot pass against a code path players never run. This layer found two
+  bugs that made the lobby unplayable and that nothing headless could
+  have caught — see ADR-0011.
 
 Run everything with `pnpm run test`, or `pnpm run ci` / `devenv test` for
 the full format → lint → typecheck → test → build sequence.

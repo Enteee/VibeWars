@@ -16,3 +16,4 @@ rewriting history.
 | [0008](0008-monorepo-and-typescript.md) | Monorepo tooling and TypeScript configuration |
 | [0009](0009-production-deployment.md)   | Production deployment                         |
 | [0010](0010-rendering.md)               | Rendering (Phaser 4 / WebGL)                  |
+| [0011](0011-browser-testing.md)         | Browser testing (Playwright)                  |

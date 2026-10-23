@@ -27,9 +27,15 @@
     pkgs.git
     pkgs.shellcheck
     pkgs.actionlint
+    # Browser tests (brief §31 "Browser tests") drive this Chromium rather
+    # than one Playwright downloads: pinning it here makes the browser part
+    # of the reproducible environment like every other tool, instead of an
+    # unversioned binary fetched on first run.
+    pkgs.chromium
   ];
 
   env.VIBEWARS_ENV = "development";
+  env.VIBEWARS_CHROMIUM = "${pkgs.chromium}/bin/chromium";
 
   enterShell = ''
     echo "vibewars dev shell — node $(node --version), pnpm $(pnpm --version)"
@@ -48,6 +54,9 @@
     pnpm run typecheck
     pnpm run test
     pnpm run build
+    # Last, because it needs the built client and a real browser. The
+    # unit/integration suite failing first is the faster signal.
+    pnpm run test:e2e
   '';
 
   # ---------------------------------------------------------------------------

@@ -14,8 +14,8 @@ import {
 
 /**
  * The editor's *rules* are tested here; its DOM rendering is covered by
- * the browser tests. Keeping the rules as pure functions is what makes
- * that split possible.
+ * the Playwright suite in `e2e/`. Keeping the rules as pure functions is
+ * what makes that split possible.
  */
 
 describe("newCharacter", () => {

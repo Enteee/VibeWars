@@ -87,7 +87,9 @@ headlessly. See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ```sh
 pnpm run ci       # format + lint + typecheck + test + build
-pnpm run test     # 539 tests: unit, integration, fuzz, headless simulation
+pnpm run test     # 560 tests: unit, integration, fuzz, headless simulation
+pnpm run test:e2e # 16 browser tests in a real Chromium (needs one installed)
+pnpm run ci:full  # both of the above
 ```
 
 `devenv test` runs the same sequence. See

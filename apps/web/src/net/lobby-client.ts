@@ -59,9 +59,46 @@ interface DecodedLobbyState {
   readonly players: ReadonlyMap<string, DecodedLobbyPlayer> | Map<string, DecodedLobbyPlayer>;
 }
 
+function hasDecodedState(room: Room<unknown, DecodedLobbyState>): boolean {
+  // `room.state` itself is replaced when the first patch decodes, so both
+  // it and `players` have to be checked.
+  return (room.state as DecodedLobbyState | undefined)?.players !== undefined;
+}
+
+/**
+ * Wait until the room's state has actually decoded.
+ *
+ * `client.join()` resolves on the WebSocket handshake; the first state
+ * patch is a separate, slightly later message. Until it arrives
+ * `room.state.players` is genuinely `undefined` at runtime, whatever the
+ * decoded-state type says — reading it threw "Cannot read properties of
+ * undefined (reading 'values')" the first time this ran in a real
+ * browser. Returning a connection that is not yet readable is the bug;
+ * callers should never have to know about this window.
+ */
+async function awaitFirstPatch(room: Room<unknown, DecodedLobbyState>): Promise<void> {
+  if (hasDecodedState(room)) {
+    return;
+  }
+  await new Promise<void>((resolve) => {
+    // `onStateChange(cb)` returns the signal's emitter, not an
+    // unsubscribe function — removal goes through `.remove(cb)`.
+    const handler = (): void => {
+      if (hasDecodedState(room)) {
+        room.onStateChange.remove(handler);
+        resolve();
+      }
+    };
+    room.onStateChange(handler);
+  });
+}
+
 function snapshotFrom(room: Room<unknown, DecodedLobbyState>): LobbySnapshot {
   const players: LobbyPlayerSnapshot[] = [];
-  for (const player of room.state.players.values()) {
+  // Defensive as well as awaited: a reconnect re-enters this window, and
+  // an empty lobby render is recoverable where a thrown error is not.
+  const decoded = (room.state as DecodedLobbyState | undefined)?.players;
+  for (const player of (decoded as Map<string, DecodedLobbyPlayer> | undefined)?.values() ?? []) {
     players.push({
       sessionId: player.sessionId,
       name: player.name,
@@ -70,11 +107,12 @@ function snapshotFrom(room: Room<unknown, DecodedLobbyState>): LobbySnapshot {
       isHost: player.isHost,
     });
   }
+  const state = room.state as DecodedLobbyState | undefined;
   return {
     selfSessionId: room.sessionId,
-    code: room.state.code,
-    phase: room.state.phase,
-    mapId: room.state.mapId,
+    code: state?.code ?? "",
+    phase: state?.phase ?? "",
+    mapId: state?.mapId ?? "",
     players,
     isHost: players.find((p) => p.sessionId === room.sessionId)?.isHost ?? false,
   };
@@ -116,7 +154,9 @@ function wrap(room: Room<unknown, DecodedLobbyState>): LobbyConnection {
 
 export async function createLobby(endpoint: string, name: string): Promise<LobbyConnection> {
   const client = new Client(endpoint);
-  return wrap(await client.create<DecodedLobbyState>(ROOM_LOBBY, { name }));
+  const room = await client.create<DecodedLobbyState>(ROOM_LOBBY, { name });
+  await awaitFirstPatch(room);
+  return wrap(room);
 }
 
 export class LobbyNotFoundError extends Error {
@@ -138,7 +178,9 @@ export async function joinLobbyByCode(
   const normalized = normalizeLobbyCode(code);
   const client = new Client(endpoint);
   try {
-    return wrap(await client.join<DecodedLobbyState>(ROOM_LOBBY, { code: normalized, name }));
+    const room = await client.join<DecodedLobbyState>(ROOM_LOBBY, { code: normalized, name });
+    await awaitFirstPatch(room);
+    return wrap(room);
   } catch (error) {
     throw new LobbyNotFoundError(
       `no lobby with code ${normalized} (${error instanceof Error ? error.message : String(error)})`,
