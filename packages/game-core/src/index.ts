@@ -51,3 +51,12 @@ export {
 } from "./character.js";
 
 export * from "./skills/index.js";
+
+export type { MatchOutcome, MatchPhase, MatchRules, MatchScore } from "./match-rules.js";
+export {
+  DEFAULT_MATCH_RULES,
+  MATCH_IN_PROGRESS,
+  addKill,
+  emptyScore,
+  evaluateMatch,
+} from "./match-rules.js";

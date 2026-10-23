@@ -1,4 +1,4 @@
-import type { PlayerSnapshot, SkillSlot } from "../net/match-client.js";
+import type { MatchSnapshot, PlayerSnapshot, SkillSlot } from "../net/match-client.js";
 
 /**
  * The player's heads-up display: health/energy, skill bar, and status
@@ -20,6 +20,8 @@ export interface HudElements {
   readonly statusList: HTMLElement;
   readonly skillBar: HTMLElement;
   readonly targetPanel: HTMLElement;
+  readonly scoreboard: HTMLElement;
+  readonly result: HTMLElement;
 }
 
 function element(tag: string, className: string, parent: HTMLElement): HTMLElement {
@@ -31,6 +33,12 @@ function element(tag: string, className: string, parent: HTMLElement): HTMLEleme
 
 export function createHud(parent: HTMLElement): HudElements {
   const root = element("div", "hud", parent);
+
+  // Score and clock sit at the top, away from the skill bar, so a glance
+  // for "am I winning" never competes with a glance for "what can I cast".
+  const scoreboard = element("div", "hud-scoreboard", parent);
+  const result = element("div", "hud-result", parent);
+  result.style.display = "none";
 
   const targetPanel = element("div", "hud-target", root);
 
@@ -59,6 +67,8 @@ export function createHud(parent: HTMLElement): HudElements {
     statusList,
     skillBar,
     targetPanel,
+    scoreboard,
+    result,
   };
 }
 
@@ -108,12 +118,48 @@ function setBar(
 }
 
 /** Update the HUD from the latest authoritative snapshot of this player. */
+/** Format a match clock as m:ss. */
+export function formatClock(totalSeconds: number): string {
+  const clamped = Math.max(0, Math.floor(totalSeconds));
+  const minutes = Math.floor(clamped / 60);
+  const seconds = clamped % 60;
+  return `${String(minutes)}:${String(seconds).padStart(2, "0")}`;
+}
+
+/** The end-of-match line a player reads, from their own team's point of view. */
+export function describeOutcome(
+  winningTeam: number | undefined,
+  reason: string | undefined,
+  selfTeam: number | undefined,
+): string {
+  const why = reason === "time" ? " (time)" : "";
+  if (winningTeam === undefined) {
+    return `Draw${why}`;
+  }
+  if (selfTeam === undefined) {
+    return `Team ${String(winningTeam + 1)} wins${why}`;
+  }
+  return winningTeam === selfTeam ? `Victory${why}` : `Defeat${why}`;
+}
+
 export function updateHud(
   hud: HudElements,
   self: PlayerSnapshot | undefined,
   target: PlayerSnapshot | undefined,
   skillBar: readonly SkillSlot[],
+  match?: MatchSnapshot,
 ): void {
+  if (match !== undefined) {
+    hud.scoreboard.textContent = `${String(match.scoreTeam0)} — ${String(match.scoreTeam1)}  ·  ${formatClock(match.elapsedSeconds)}`;
+
+    if (match.phase === "finished") {
+      hud.result.style.display = "";
+      hud.result.textContent = describeOutcome(match.winningTeam, match.endReason, self?.team);
+    } else {
+      hud.result.style.display = "none";
+    }
+  }
+
   if (self === undefined) {
     return;
   }

@@ -454,3 +454,33 @@ body {
   color: var(--ink-dim);
   font-size: 0.85rem;
 }
+
+/* Score and clock: top-centre, away from the skill bar, so checking the
+   score never competes with checking what you can cast. */
+.hud-scoreboard {
+  position: absolute;
+  top: 0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.3rem 0.8rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  letter-spacing: 0.12em;
+  font-size: 0.95rem;
+  pointer-events: none;
+}
+
+.hud-result {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0.7rem 1.6rem;
+  background: rgb(14 17 22 / 92%);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 1.8rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  pointer-events: none;
+}

@@ -386,3 +386,33 @@ describe("networked combat", () => {
     await room.leave();
   });
 });
+
+describe("match rules over the network", () => {
+  let server: GameServer;
+  let port: number;
+  let endpoint: string;
+
+  beforeAll(async () => {
+    port = await findFreePort();
+    endpoint = `ws://127.0.0.1:${String(port)}`;
+    server = createGameServer({ port, host: "127.0.0.1", webRoot: undefined, devMode: false });
+    await server.listen(port, "127.0.0.1");
+  });
+
+  afterAll(async () => {
+    await server.gracefullyShutdown(false);
+  });
+
+  it("starts a match active, scoreless, with a running clock", async () => {
+    const client = new Client(endpoint);
+    const room = await client.joinOrCreate(ROOM_MATCH);
+    await waitFor(() => (room.state.elapsedSeconds ?? 0) > 0, { label: "clock to start" });
+
+    expect(room.state.phase).toBe("active");
+    expect(room.state.scoreTeam0).toBe(0);
+    expect(room.state.scoreTeam1).toBe(0);
+    expect(room.state.winningTeam).toBe(-1);
+
+    await room.leave();
+  });
+});

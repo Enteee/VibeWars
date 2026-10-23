@@ -36,6 +36,15 @@ export interface PlayerSnapshot {
 export interface MatchSnapshot {
   readonly selfSessionId: string;
   readonly players: readonly PlayerSnapshot[];
+  readonly scoreTeam0: number;
+  readonly scoreTeam1: number;
+  readonly elapsedSeconds: number;
+  /** "active" or "finished". */
+  readonly phase: string;
+  /** The winning team, or `undefined` while active or on a draw. */
+  readonly winningTeam: number | undefined;
+  /** "score", "time", or `undefined` while active. */
+  readonly endReason: string | undefined;
 }
 
 /** One slot of the server-assigned skill bar. */
@@ -95,6 +104,12 @@ interface DecodedPlayer {
 }
 interface DecodedMatchState {
   readonly players: ReadonlyMap<string, DecodedPlayer> | Map<string, DecodedPlayer>;
+  readonly scoreTeam0: number;
+  readonly scoreTeam1: number;
+  readonly elapsedSeconds: number;
+  readonly phase: string;
+  readonly winningTeam: number;
+  readonly endReason: string;
 }
 
 function snapshotFrom(room: Room<unknown, DecodedMatchState>): MatchSnapshot {
@@ -117,7 +132,17 @@ function snapshotFrom(room: Room<unknown, DecodedMatchState>): MatchSnapshot {
       statuses: [...player.statuses],
     });
   }
-  return { selfSessionId: room.sessionId, players };
+  return {
+    selfSessionId: room.sessionId,
+    players,
+    scoreTeam0: room.state.scoreTeam0,
+    scoreTeam1: room.state.scoreTeam1,
+    elapsedSeconds: room.state.elapsedSeconds,
+    phase: room.state.phase,
+    // -1 is the wire's "no winner"; the UI should not have to know that.
+    winningTeam: room.state.winningTeam < 0 ? undefined : room.state.winningTeam,
+    endReason: room.state.endReason === "" ? undefined : room.state.endReason,
+  };
 }
 
 /** Await exactly one message of `type` from `room`, or reject after `timeoutMs`. */

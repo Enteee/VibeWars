@@ -3,14 +3,18 @@ import { ArraySchema, schema, t } from "@colyseus/schema";
 import {
   CastState,
   IMPLEMENTED_SKILLS,
+  DEFAULT_MATCH_RULES,
   MINIMAL_GW_INSPIRED_PVP_V1,
   StatusSet,
   ZERO,
+  addKill,
   advanceStatuses,
   applyEffects,
   canActivate,
   clampInputDirection,
   createRng,
+  emptyScore,
+  evaluateMatch,
   getSkill,
   integrateMovement,
   payCost,
@@ -18,6 +22,7 @@ import {
   seedFromString,
   vec2,
   type CombatEvent,
+  type MatchScore,
   type Combatant,
   type Segment,
   type SimulationRng,
@@ -74,6 +79,18 @@ export const MatchState = schema(
   {
     protocolVersion: t.number().default(PROTOCOL_VERSION),
     players: t.map(PlayerState),
+
+    /** Kills scored by team 0 and team 1 (brief §22's match rules). */
+    scoreTeam0: t.number().default(0),
+    scoreTeam1: t.number().default(0),
+    /** Seconds elapsed; drives the match clock in the HUD. */
+    elapsedSeconds: t.number().default(0),
+    /** `"active"` or `"finished"`. */
+    phase: t.string().default("active"),
+    /** `-1` while active or on a draw; otherwise the winning team. */
+    winningTeam: t.number().default(-1),
+    /** `""`, `"score"` or `"time"` — why the match ended. */
+    endReason: t.string().default(""),
   },
   "MatchState",
 );
@@ -156,6 +173,8 @@ export class MatchRoom extends Room {
   #rng: SimulationRng = createRng(0);
 
   #nextSpawnIndex = 0;
+  #score: MatchScore = emptyScore([0, 1]);
+  #elapsedSeconds = 0;
 
   public constructor() {
     super();
@@ -327,6 +346,20 @@ export class MatchRoom extends Room {
       );
     }
 
+    // A skill that killed someone scores for the caster's side. Read
+    // from the emitted events so every death routes through one place,
+    // whether it came from a skill or from degeneration.
+    for (const event of events) {
+      if (event.kind !== "death") {
+        continue;
+      }
+      const victim = this.#sims.get(event.targetId);
+      if (victim !== undefined) {
+        victim.respawnInSeconds = RESPAWN_SECONDS;
+        this.recordDeath(victim.combatant.team);
+      }
+    }
+
     sim.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds);
     this.broadcastCombatEvents(sessionId, skill.id, events);
   }
@@ -348,7 +381,55 @@ export class MatchRoom extends Room {
     this.broadcast("combat", { casterSessionId, skillId, events });
   }
 
+  /**
+   * Credit a kill to the team that scored it and check for a winner.
+   *
+   * The victim's team is what is known at the point of death, so a kill
+   * is credited to "the other team" rather than to a specific killer.
+   * Attributing kills to individuals needs damage-source tracking, which
+   * is honest future work rather than something to fake here.
+   */
+  private recordDeath(victimTeam: number): void {
+    if (this.state.phase !== "active") {
+      return;
+    }
+    const scoringTeam = victimTeam === 0 ? 1 : 0;
+    this.#score = addKill(this.#score, scoringTeam);
+    this.state.scoreTeam0 = this.#score.byTeam.get(0) ?? 0;
+    this.state.scoreTeam1 = this.#score.byTeam.get(1) ?? 0;
+    this.checkMatchEnd();
+  }
+
+  private checkMatchEnd(): void {
+    const outcome = evaluateMatch(this.#score, this.#elapsedSeconds, DEFAULT_MATCH_RULES);
+    if (outcome.phase !== "finished") {
+      return;
+    }
+    this.state.phase = "finished";
+    this.state.winningTeam = outcome.winningTeam ?? -1;
+    this.state.endReason = outcome.reason ?? "";
+    this.broadcast("match-ended", {
+      winningTeam: outcome.winningTeam ?? null,
+      reason: outcome.reason,
+      scoreTeam0: this.state.scoreTeam0,
+      scoreTeam1: this.state.scoreTeam1,
+    });
+    console.info(
+      `[match] finished winner=${String(outcome.winningTeam ?? "draw")} reason=${String(outcome.reason)}`,
+    );
+  }
+
   private tick(ctx: StepContext): void {
+    // A finished match stops simulating but stays joinable, so everyone
+    // can read the result before heading back to the lobby.
+    if (this.state.phase !== "active") {
+      return;
+    }
+
+    this.#elapsedSeconds += ctx.dt;
+    this.state.elapsedSeconds = this.#elapsedSeconds;
+    this.checkMatchEnd();
+
     for (const [sessionId, sim] of this.#sims) {
       const player = this.state.players.get(sessionId);
       if (player === undefined) {
@@ -386,6 +467,7 @@ export class MatchRoom extends Room {
       if (statusEvents.some((event) => event.kind === "death")) {
         sim.combatant.cast.cancelCast();
         sim.respawnInSeconds = RESPAWN_SECONDS;
+        this.recordDeath(sim.combatant.team);
         this.syncPlayer(player, sim);
         continue;
       }
