@@ -68,17 +68,34 @@ export function validateBuild(stored: StoredCharacter): BuildProblem[] {
     });
   }
 
+  // Which skills this character's professions actually grant access to.
+  // The editor's skill picker already filters by this, but filtering a
+  // dropdown is a UI convenience, not a rule: a build can also arrive by
+  // import, from storage written by an older build, or from a character
+  // whose professions were changed after the bar was filled. The rule has
+  // to be enforced where builds are validated, not where they are picked.
+  const accessible = new Set(
+    accessibleAttributeIds(stored.primaryProfession, stored.secondaryProfession),
+  );
+
   const seen = new Set<string>();
   stored.skillBar.forEach((skillId, index) => {
     if (skillId === null) {
       return;
     }
-    if (getSkill(skillId) === undefined) {
+    const skill = getSkill(skillId);
+    if (skill === undefined) {
       problems.push({
         field: `skillBar[${String(index)}]`,
         message: `unknown or not-yet-implemented skill ${skillId}`,
       });
       return;
+    }
+    if (!accessible.has(skill.attributeId)) {
+      problems.push({
+        field: `skillBar[${String(index)}]`,
+        message: `${skill.name} needs ${skill.attributeId}, which this character cannot access`,
+      });
     }
     if (seen.has(skillId)) {
       problems.push({

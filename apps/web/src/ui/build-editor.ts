@@ -9,6 +9,7 @@ import {
   type ProfessionId,
 } from "@vibewars/game-core";
 
+import { exportBuild, importBuild } from "../storage/build-transfer.js";
 import { SKILL_BAR_SLOTS, equippableSkills, validateBuild } from "../storage/build-validation.js";
 import { CURRENT_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
 
@@ -322,4 +323,64 @@ export function renderBuildEditor(
 
   actions.append(save, duplicate, remove, close);
   panel.appendChild(actions);
+
+  // --- share -----------------------------------------------------------
+  // A textarea rather than a clipboard-only button: clipboard access is
+  // permission-gated and fails silently in some browsers, and a build you
+  // can see is one you can paste into chat by hand when it does.
+  const share = h("div", "editor-share");
+  share.appendChild(h("div", "editor-label", "share build"));
+
+  const transfer = document.createElement("textarea");
+  transfer.className = "editor-transfer";
+  transfer.rows = 6;
+  transfer.spellcheck = false;
+  transfer.placeholder = "Paste a build here to import it, or press export to share this one.";
+  share.appendChild(transfer);
+
+  const shareStatus = h("div", "editor-share-status");
+  share.appendChild(shareStatus);
+
+  const setStatus = (message: string, ok: boolean): void => {
+    shareStatus.replaceChildren();
+    shareStatus.className = ok ? "editor-share-status is-ok" : "editor-share-status is-error";
+    shareStatus.appendChild(h("div", undefined, message));
+  };
+
+  const shareActions = h("div", "editor-actions");
+
+  const exportButton = document.createElement("button");
+  exportButton.type = "button";
+  exportButton.textContent = "export";
+  exportButton.addEventListener("click", () => {
+    transfer.value = exportBuild({ ...character, name: nameInput.value });
+    transfer.select();
+    setStatus("Build copied into the box above — select it and copy.", true);
+  });
+
+  const importButton = document.createElement("button");
+  importButton.type = "button";
+  importButton.textContent = "import";
+  importButton.addEventListener("click", () => {
+    const result = importBuild(transfer.value, character.id, Date.now());
+    if (!result.ok) {
+      // Every problem at once. Someone fixing a pasted build should not
+      // have to discover its faults one round trip at a time.
+      shareStatus.replaceChildren();
+      shareStatus.className = "editor-share-status is-error";
+      shareStatus.appendChild(h("div", undefined, "Could not import this build:"));
+      for (const problem of result.problems) {
+        shareStatus.appendChild(h("div", "editor-problem", problem));
+      }
+      return;
+    }
+    // Loaded into the editor, not saved: the player sees exactly what
+    // arrived and chooses to keep it. An import that silently overwrote
+    // the open character would be a bad surprise.
+    rerender(result.character);
+  });
+
+  shareActions.append(exportButton, importButton);
+  share.appendChild(shareActions);
+  panel.appendChild(share);
 }

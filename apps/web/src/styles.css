@@ -484,3 +484,44 @@ body {
   text-transform: uppercase;
   pointer-events: none;
 }
+
+/* --- build sharing ------------------------------------------------------ */
+
+.editor-share {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #2a3350;
+}
+
+.editor-transfer {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  padding: 0.5rem;
+  border: 1px solid #2a3350;
+  border-radius: 4px;
+  background: #0d1220;
+  color: #d7def0;
+  font-family: ui-monospace, "SFMono-Regular", "Menlo", monospace;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.editor-share-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  min-height: 1.2em;
+}
+
+.editor-share-status.is-ok {
+  color: #9fe0a8;
+}
+
+.editor-share-status.is-error {
+  color: #ffb3ae;
+}
