@@ -14,6 +14,10 @@
     package = pkgs.nodejs_24;
     pnpm = {
       enable = true;
+      # Pinned to the 10.x line to match package.json's `packageManager`
+      # (CI installs that exact patch via pnpm/action-setup). Left to nixpkgs'
+      # default, devenv would hand us pnpm 12.x.
+      package = pkgs.pnpm_10;
       install.enable = true;
     };
   };
@@ -68,7 +72,7 @@
       ];
     };
 
-    nixfmt-rfc-style.enable = true;
+    nixfmt.enable = true;
     deadnix.enable = true;
     statix.enable = true;
 

@@ -220,11 +220,17 @@ export class MatchRoom extends Room {
     return spawn?.position ?? { x: 0, y: 0 };
   }
 
-  public override onCreate(options?: { mapId?: string }): void {
+  public override onCreate(options?: unknown): void {
     this.autoDispose = true;
 
-    if (typeof options?.mapId === "string") {
-      this.useMap(options.mapId);
+    // Join options are client-supplied; read them defensively rather
+    // than dereferencing whatever arrived (see lobby-room's `field`).
+    const requestedMap =
+      typeof options === "object" && options !== null
+        ? (options as Record<string, unknown>).mapId
+        : undefined;
+    if (typeof requestedMap === "string") {
+      this.useMap(requestedMap);
     }
 
     // Seeded from the room id so a match is reproducible from its seed

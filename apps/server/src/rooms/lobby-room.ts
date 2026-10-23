@@ -9,7 +9,6 @@ import {
   PROTOCOL_VERSION,
   isLobbyCode,
   normalizeLobbyCode,
-  type LobbyJoinOptions,
   type LobbyMatchStartingMessage,
 } from "@vibewars/game-protocol";
 
@@ -91,12 +90,28 @@ export function generateLobbyCode(rng: SimulationRng): string {
   return code;
 }
 
+/**
+ * Read one field from a client-supplied message, safely.
+ *
+ * A client can send literally anything — including `null`, `undefined`,
+ * a number or a string — and `(message as {x?: unknown}).x` THROWS on the
+ * nullish cases, which crashed the whole server process. Found by the
+ * fuzz tests in `fuzz.test.ts`; never dereference a client payload
+ * directly again (brief §27, §32).
+ */
+function field(message: unknown, name: string): unknown {
+  if (typeof message !== "object" || message === null) {
+    return undefined;
+  }
+  return (message as Record<string, unknown>)[name];
+}
+
 export class LobbyRoom extends Room {
   public override state = new LobbyState();
 
   #rng: SimulationRng = createRng(0);
 
-  public override onCreate(options: LobbyJoinOptions): void {
+  public override onCreate(options: unknown): void {
     this.autoDispose = true;
     this.maxClients = MAX_LOBBY_PLAYERS;
 
@@ -106,7 +121,10 @@ export class LobbyRoom extends Room {
     // onCreate when no lobby with that code existed, so honour the
     // requested code rather than inventing a different one and leaving
     // the player confused about which code to share.
-    const requested = typeof options.code === "string" ? normalizeLobbyCode(options.code) : "";
+    // Join options come from the client too, so they get the same
+    // treatment as any other payload.
+    const requestedCode = field(options, "code");
+    const requested = typeof requestedCode === "string" ? normalizeLobbyCode(requestedCode) : "";
     this.state.code = isLobbyCode(requested) ? requested : generateLobbyCode(this.#rng);
 
     // The code is the matchmaking key other clients filter on.
@@ -141,7 +159,7 @@ export class LobbyRoom extends Room {
     if (player === undefined || this.state.phase !== "waiting") {
       return;
     }
-    const team = (message as { team?: unknown }).team;
+    const team = field(message, "team");
     if (team === null) {
       player.team = -1;
       player.ready = false;
@@ -162,7 +180,7 @@ export class LobbyRoom extends Room {
     if (player === undefined || this.state.phase !== "waiting") {
       return;
     }
-    const ready = (message as { ready?: unknown }).ready;
+    const ready = field(message, "ready");
     if (typeof ready !== "boolean") {
       return;
     }
@@ -175,7 +193,7 @@ export class LobbyRoom extends Room {
     if (player === undefined || !player.isHost || this.state.phase !== "waiting") {
       return;
     }
-    const mapId = (message as { mapId?: unknown }).mapId;
+    const mapId = field(message, "mapId");
     if (typeof mapId !== "string" || !listMapIds().includes(mapId)) {
       // An unknown map id is ignored rather than accepted — the server
       // decides what maps exist (brief §32).
@@ -251,11 +269,11 @@ export class LobbyRoom extends Room {
     console.info(`[lobby] ${this.state.code} starting match on ${this.state.mapId}`);
   }
 
-  public override onJoin(client: Client, options: LobbyJoinOptions): void {
+  public override onJoin(client: Client, options: unknown): void {
     const isFirst = this.state.players.size === 0;
     const player = new LobbyPlayer({
       sessionId: client.sessionId,
-      name: sanitizeName(options.name, `player-${client.sessionId.slice(0, 4)}`),
+      name: sanitizeName(field(options, "name"), `player-${client.sessionId.slice(0, 4)}`),
       // The first player in is the host; if they leave, hosting passes on.
       isHost: isFirst,
     });
