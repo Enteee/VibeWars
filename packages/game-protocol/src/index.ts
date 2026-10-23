@@ -13,12 +13,15 @@
 export {
   PROTOCOL_VERSION,
   ROOM_MATCH,
+  ROOM_LOBBY,
+  MAX_LOBBY_PLAYERS,
   isLobbyCode,
   normalizeLobbyCode,
   parseClientIntent,
   LOBBY_CODE_LENGTH,
   LOBBY_CODE_ALPHABET,
 } from "./protocol.js";
+
 export type {
   ClientIntent,
   MoveIntent,
@@ -30,4 +33,10 @@ export type {
   WallDescriptor,
   RectWallDescriptor,
   PolygonWallDescriptor,
+  LobbyPhase,
+  LobbyJoinOptions,
+  LobbyChooseTeamMessage,
+  LobbyReadyMessage,
+  LobbySelectMapMessage,
+  LobbyMatchStartingMessage,
 } from "./protocol.js";

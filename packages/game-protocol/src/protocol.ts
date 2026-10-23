@@ -20,6 +20,19 @@ export const PROTOCOL_VERSION = 1 as const;
 export const ROOM_MATCH = "match" as const;
 
 /**
+ * Colyseus room name for the pre-match lobby (brief §25).
+ *
+ * The lobby is where a host creates a game, shares its code, and players
+ * gather, pick teams and ready up before the match starts. Lobby state is
+ * server-owned and volatile: when the server restarts, lobbies are gone,
+ * which is intentional (brief §3).
+ */
+export const ROOM_LOBBY = "lobby" as const;
+
+/** Lobby phases, in order. A lobby only ever moves forward through these. */
+export type LobbyPhase = "waiting" | "starting" | "in-match";
+
+/**
  * Lobby codes are read aloud across a room at a LAN party, so the alphabet
  * excludes characters that are easy to mishear or misread:
  * `0`/`O`, `1`/`I`/`L`, `2`/`Z`, `5`/`S`, `8`/`B`, `U`/`V`.
@@ -87,6 +100,43 @@ export interface UseSkillIntent {
   readonly kind: "use-skill";
   readonly slot: number;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Lobby messages                                                              */
+/* -------------------------------------------------------------------------- */
+
+/** Options a client passes when creating or joining a lobby. */
+export interface LobbyJoinOptions {
+  /** Omitted when creating; required (and validated) when joining. */
+  readonly code?: string;
+  /** Display name the player asks for; the server sanitises it. */
+  readonly name?: string;
+}
+
+/** Pick a team slot, or `null` to become a spectator. */
+export interface LobbyChooseTeamMessage {
+  readonly team: number | null;
+}
+
+/** Toggle this player's ready state. */
+export interface LobbyReadyMessage {
+  readonly ready: boolean;
+}
+
+/** Host-only: change which map the match will use. */
+export interface LobbySelectMapMessage {
+  readonly mapId: string;
+}
+
+/** Sent to every client when the host starts the match. */
+export interface LobbyMatchStartingMessage {
+  /** The match room to join. */
+  readonly roomId: string;
+  readonly mapId: string;
+}
+
+/** The maximum players a single lobby accepts (brief §4: not hardcoded to 8). */
+export const MAX_LOBBY_PLAYERS = 16;
 
 /**
  * Every message a client is allowed to send during a match.

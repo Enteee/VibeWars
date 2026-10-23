@@ -2,10 +2,11 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { defineRoom, defineServer } from "colyseus";
-import { ROOM_MATCH } from "@vibewars/game-protocol";
+import { ROOM_LOBBY, ROOM_MATCH } from "@vibewars/game-protocol";
 import express from "express";
 
 import type { ServerConfig } from "./config.js";
+import { LobbyRoom } from "./rooms/lobby-room.js";
 import { MatchRoom } from "./rooms/match-room.js";
 
 /**
@@ -21,6 +22,7 @@ export function createGameServer(config: ServerConfig) {
 
     rooms: {
       [ROOM_MATCH]: defineRoom(MatchRoom),
+      [ROOM_LOBBY]: defineRoom(LobbyRoom),
     },
 
     express: (app) => {
