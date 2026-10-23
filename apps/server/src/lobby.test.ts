@@ -5,6 +5,7 @@ import {
   LOBBY_CODE_LENGTH,
   ROOM_LOBBY,
   isLobbyCode,
+  normalizeLobbyCode,
 } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -392,6 +393,76 @@ describe("playing more than one match in a lobby", () => {
     await waitFor(() => host.state.phase === "in-match", { label: "second match to start" });
 
     expect(host.state.phase).toBe("in-match");
+    await guest.leave();
+    await host.leave();
+  });
+});
+
+describe("joining by code", () => {
+  let server: GameServer;
+  let port: number;
+  let endpoint: string;
+
+  beforeAll(async () => {
+    port = await findFreePort();
+    endpoint = `ws://127.0.0.1:${String(port)}`;
+    server = createGameServer({ port, host: "127.0.0.1", webRoot: undefined, devMode: false });
+    await server.listen(port, "127.0.0.1");
+  });
+
+  afterAll(async () => {
+    await server.gracefullyShutdown(false);
+  });
+
+  it("puts a player into the lobby whose code they typed", async () => {
+    const host = await new Client(endpoint).create(ROOM_LOBBY, { name: "Host" });
+    await waitFor(() => isLobbyCode(host.state.code), { label: "code" });
+
+    const guest = await new Client(endpoint).join(ROOM_LOBBY, {
+      code: host.state.code,
+      name: "Guest",
+    });
+    await waitFor(() => host.state.players.size === 2, { label: "guest to arrive" });
+
+    // Same room, not merely "a" lobby.
+    expect(guest.roomId).toBe(host.roomId);
+    expect(guest.state.code).toBe(host.state.code);
+
+    await guest.leave();
+    await host.leave();
+  });
+
+  it("does not drop a player into an unrelated lobby when two exist", async () => {
+    const first = await new Client(endpoint).create(ROOM_LOBBY, {});
+    const second = await new Client(endpoint).create(ROOM_LOBBY, {});
+    await waitFor(() => isLobbyCode(first.state.code) && isLobbyCode(second.state.code), {
+      label: "both codes",
+    });
+    expect(first.state.code).not.toBe(second.state.code);
+
+    const guest = await new Client(endpoint).join(ROOM_LOBBY, { code: second.state.code });
+    await waitFor(() => second.state.players.size === 2, { label: "guest in the right lobby" });
+
+    expect(guest.roomId).toBe(second.roomId);
+    expect(first.state.players.size).toBe(1);
+
+    await guest.leave();
+    await second.leave();
+    await first.leave();
+  });
+
+  it("accepts a lower-case or spaced code, because players mistype them", async () => {
+    const host = await new Client(endpoint).create(ROOM_LOBBY, {});
+    await waitFor(() => isLobbyCode(host.state.code), { label: "code" });
+
+    const code: string = host.state.code;
+    const messy = ` ${code.toLowerCase()} `;
+    const guest = await new Client(endpoint).join(ROOM_LOBBY, {
+      code: normalizeLobbyCode(messy),
+    });
+    await waitFor(() => host.state.players.size === 2, { label: "guest to arrive" });
+
+    expect(guest.roomId).toBe(host.roomId);
     await guest.leave();
     await host.leave();
   });

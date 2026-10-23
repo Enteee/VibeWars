@@ -22,7 +22,10 @@ export function createGameServer(config: ServerConfig) {
 
     rooms: {
       [ROOM_MATCH]: defineRoom(MatchRoom),
-      [ROOM_LOBBY]: defineRoom(LobbyRoom),
+      // `filterBy(["code"])` is what makes "join by code" actually mean
+      // "join *that* lobby": without it, matchmaking would hand a player
+      // any available lobby and quietly ignore the code they typed.
+      [ROOM_LOBBY]: defineRoom(LobbyRoom).filterBy(["code"]),
     },
 
     express: (app) => {

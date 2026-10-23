@@ -1,26 +1,31 @@
-import Phaser from "phaser";
-
-import { vec2 } from "@vibewars/game-core";
-import type { WallDescriptor } from "@vibewars/game-protocol";
-
-import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
-import type { CombatMessage, MatchSnapshot, SkillSlot } from "./net/match-client.js";
-import { connectToMatch, endpointFromLocation } from "./net/match-client.js";
+import { endpointFromLocation } from "./net/match-client.js";
 import {
-  ArenaScene,
-  actorAtPoint,
-  type ArenaSnapshot,
-  type RenderableWall,
-} from "./render/arena-scene.js";
-import { createHud, renderSkillBar, updateHud } from "./ui/hud.js";
+  LobbyNotFoundError,
+  createLobby,
+  joinLobbyByCode,
+  type LobbyConnection,
+} from "./net/lobby-client.js";
+import { startMatchView, type MatchView } from "./match-view.js";
+import {
+  CharacterRepository,
+  TeamRepository,
+  createMemoryStore,
+  openIndexedDbStore,
+  type KeyValueStore,
+} from "./storage/repository.js";
+import type { StoredCharacter, StoredTeam } from "./storage/schema.js";
+import { newCharacter, renderBuildEditor } from "./ui/build-editor.js";
+import { renderLobbyScreen } from "./ui/lobby-screen.js";
+import { renderCharacterList, renderMenu, renderTeamList } from "./ui/menu.js";
+import { newTeam } from "./ui/team-builder.js";
 
 /**
- * The browser client: Phaser 4 viewport for the arena, HTML/CSS for the
- * HUD, WASD to move, click to target, number keys to cast.
+ * Application shell: owns which screen is showing and the connections
+ * behind it.
  *
- * There is no lobby yet (Sprint 19) — the page joins the match room
- * directly on load, which is enough for two people on a LAN to open the
- * same URL and fight.
+ * Deliberately a small state machine rather than a framework — there are
+ * five screens and one connection at a time, and a router would be more
+ * machinery than the problem has (brief §30).
  */
 
 function requireElement(selector: string): HTMLElement {
@@ -37,181 +42,342 @@ function setStatus(text: string, state: "offline" | "online" | "error"): void {
   status.dataset.state = state;
 }
 
-function toRenderableWall(wall: WallDescriptor): RenderableWall {
-  return wall.kind === "rect"
-    ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
-    : { kind: "polygon", points: wall.points };
-}
-
-/** Project the wire snapshot onto the renderer's own shape (ADR-0001). */
-function toArenaSnapshot(
-  match: MatchSnapshot,
-  walls: readonly RenderableWall[],
-  skillBar: readonly SkillSlot[],
-): ArenaSnapshot {
-  const self = match.players.find((player) => player.sessionId === match.selfSessionId);
-  const activationById = new Map(skillBar.map((slot) => [slot.id, slot.activationSeconds]));
-
-  return {
-    walls,
-    // Render the target the *server* confirmed, not whatever was last
-    // clicked — a click is only a request (brief §32).
-    targetId: self?.targetSessionId,
-    actors: match.players.map((player) => {
-      const activation = activationById.get(player.castingSkillId ?? "") ?? 0;
-      return {
-        id: player.sessionId,
-        position: { x: player.x, y: player.y },
-        radius: 14,
-        team:
-          player.sessionId === match.selfSessionId
-            ? ("self" as const)
-            : player.team === self?.team
-              ? ("ally" as const)
-              : ("enemy" as const),
-        health: player.health,
-        maxHealth: player.maxHealth,
-        dead: player.dead,
-        castProgress:
-          player.castingSkillId !== undefined && activation > 0
-            ? Math.max(0, Math.min(1, 1 - player.castRemaining / activation))
-            : undefined,
-        statuses: player.statuses,
-      };
-    }),
-  };
-}
-
-const DAMAGE_COLOUR = 0xff7b72;
-const HEAL_COLOUR = 0x7ee787;
-const NEUTRAL_COLOUR = 0xffd866;
-
-let nextFloatingId = 0;
-
-/** Turn server combat events into floating numbers above the right actor. */
-function showCombatFeedback(
-  scene: ArenaScene,
-  message: CombatMessage,
-  snapshot: MatchSnapshot,
-): void {
-  for (const event of message.events) {
-    const subject = snapshot.players.find((p) => p.sessionId === event.targetId);
-    if (subject === undefined) {
-      continue;
-    }
-
-    let text: string | undefined;
-    let colour = NEUTRAL_COLOUR;
-    switch (event.kind) {
-      case "damage":
-        text = `-${String(Math.round(event.amount ?? 0))}`;
-        colour = DAMAGE_COLOUR;
-        break;
-      case "heal":
-        text = `+${String(Math.round(event.amount ?? 0))}`;
-        colour = HEAL_COLOUR;
-        break;
-      case "interrupted":
-        text = "interrupted!";
-        break;
-      case "death":
-        text = "defeated";
-        colour = DAMAGE_COLOUR;
-        break;
-      default:
-        // Status applications/removals are already visible as markers on
-        // the actor; adding text for them too would just be noise.
-        continue;
-    }
-
-    nextFloatingId += 1;
-    scene.addFloatingText({
-      id: nextFloatingId,
-      text,
-      position: vec2(subject.x, subject.y - 24),
-      colour,
-      remainingSeconds: 1.2,
-    });
+async function openStore(): Promise<KeyValueStore> {
+  try {
+    return await openIndexedDbStore();
+  } catch (error) {
+    // Private browsing and some locked-down configurations deny
+    // IndexedDB. Falling back to memory keeps the game playable for this
+    // session rather than failing at the menu; the player just will not
+    // keep their builds.
+    console.warn("[web] IndexedDB unavailable; builds will not persist this session", error);
+    return createMemoryStore();
   }
 }
 
-async function boot(): Promise<void> {
+async function main(): Promise<void> {
+  const screenRoot = requireElement("#screens");
   const viewport = requireElement("#viewport");
 
-  const game = new Phaser.Game({
-    type: Phaser.AUTO,
-    parent: viewport,
-    backgroundColor: "#0e1116",
-    scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
-    scene: [ArenaScene],
-  });
+  const store = await openStore();
+  const characters = new CharacterRepository(store);
+  const teams = new TeamRepository(store);
 
-  const scene = await new Promise<ArenaScene>((resolve) => {
-    game.events.once(Phaser.Core.Events.READY, () => {
-      const candidate = game.scene.getScene(ArenaScene.KEY);
-      if (candidate instanceof ArenaScene) {
-        resolve(candidate);
-      }
-    });
-  });
+  const endpoint = endpointFromLocation(window.location);
 
-  setStatus("connecting…", "offline");
-  const connection = await connectToMatch(endpointFromLocation(window.location));
-  setStatus(`online as ${connection.selfSessionId.slice(0, 6)} · ${connection.map.name}`, "online");
+  let lobby: LobbyConnection | undefined;
+  let match: MatchView | undefined;
+  let lobbyNotice: string | undefined;
 
-  const walls = connection.map.walls.map(toRenderableWall);
-  const hud = createHud(requireElement("#app"));
-  const useSkill = (slot: number): void => {
-    connection.sendIntent({ kind: "use-skill", slot });
+  const showViewport = (visible: boolean): void => {
+    viewport.style.display = visible ? "block" : "none";
+    screenRoot.style.display = visible ? "none" : "flex";
   };
-  renderSkillBar(hud, connection.skillBar, useSkill);
 
-  attachKeyboardMoveInput(window, (direction) => {
-    if (direction.x === 0 && direction.y === 0) {
-      connection.sendIntent({ kind: "stop" });
-    } else {
-      connection.sendIntent({ kind: "move", dirX: direction.x, dirY: direction.y });
+  const showMenu = (): void => {
+    showViewport(false);
+    renderMenu(screenRoot, {
+      onCreateLobby: (name) => {
+        void enterLobby(() => createLobby(endpoint, name));
+      },
+      onJoinLobby: (code, name) => {
+        void enterLobby(() => joinLobbyByCode(endpoint, code, name));
+      },
+      onManageCharacters: () => {
+        void showCharacters();
+      },
+      onManageTeams: () => {
+        void showTeams();
+      },
+      // Straight into a match with no lobby — how the game worked before
+      // Sprint 19, kept because it is the fastest way to try the game.
+      onQuickMatch: () => {
+        void enterMatch();
+      },
+    });
+  };
+
+  const showCharacters = async (): Promise<void> => {
+    const { characters: list, problems } = await characters.list();
+    renderCharacterList(screenRoot, list, problems, {
+      onNew: () => {
+        showCharacterEditor(newCharacter(crypto.randomUUID()));
+      },
+      onEdit: (id) => {
+        void (async () => {
+          const character = await characters.load(id);
+          if (character !== undefined) {
+            showCharacterEditor(character);
+          }
+        })();
+      },
+      onBack: showMenu,
+    });
+  };
+
+  const showCharacterEditor = (character: StoredCharacter): void => {
+    const rerender = (next: StoredCharacter): void => {
+      renderBuildEditor(screenRoot, next, editorCallbacks, rerender);
+    };
+    const editorCallbacks = {
+      onSave: (saved: StoredCharacter) => {
+        void (async () => {
+          await characters.save(saved);
+          await showCharacters();
+        })();
+      },
+      onDelete: (id: string) => {
+        void (async () => {
+          await characters.delete(id);
+          await showCharacters();
+        })();
+      },
+      onDuplicate: (source: StoredCharacter) => {
+        const copy: StoredCharacter = {
+          ...source,
+          id: crypto.randomUUID(),
+          name: `${source.name} (copy)`,
+          updatedAt: Date.now(),
+        };
+        void (async () => {
+          await characters.save(copy);
+          await showCharacters();
+        })();
+      },
+      onClose: () => {
+        void showCharacters();
+      },
+    };
+    rerender(character);
+  };
+
+  const showTeams = async (): Promise<void> => {
+    const [teamList, characterList] = await Promise.all([teams.list(), characters.list()]);
+    renderTeamList(screenRoot, teamList.teams, teamList.problems, {
+      onNew: () => {
+        void (async () => {
+          await teams.save(newTeam(crypto.randomUUID()));
+          await showTeams();
+        })();
+      },
+      onEdit: (id) => {
+        // The team editor UI is the same list screen for now; editing a
+        // team means adding/removing members, which needs characters to
+        // exist first.
+        void (async () => {
+          const team = await teams.load(id);
+          if (team !== undefined) {
+            showTeamEditor(team, characterList.characters);
+          }
+        })();
+      },
+      onBack: showMenu,
+    });
+  };
+
+  const showTeamEditor = (team: StoredTeam, available: readonly StoredCharacter[]): void => {
+    // Rendered inline rather than in its own module: the team editor is
+    // a list with add/remove buttons, and splitting it out would be more
+    // indirection than content.
+    screenRoot.replaceChildren();
+    const panel = document.createElement("div");
+    panel.className = "screen";
+
+    const title = document.createElement("h2");
+    title.className = "screen-title";
+    title.textContent = "edit team";
+    panel.appendChild(title);
+
+    const nameInput = document.createElement("input");
+    nameInput.className = "field-input";
+    nameInput.value = team.name;
+    panel.appendChild(nameInput);
+
+    const list = document.createElement("div");
+    list.className = "entity-list";
+    team.members.forEach((member, index) => {
+      const row = document.createElement("div");
+      row.className = "entity-row";
+      const named = available.find((c) => c.id === member.characterId);
+      const label = document.createElement("span");
+      label.className = "entity-name";
+      label.textContent = `${String(index + 1)}. ${named?.name ?? "(missing character)"}`;
+      row.appendChild(label);
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "remove";
+      remove.addEventListener("click", () => {
+        void (async () => {
+          await teams.save({
+            ...team,
+            members: team.members.filter((_m, i) => i !== index),
+            updatedAt: Date.now(),
+          });
+          await showTeams();
+        })();
+      });
+      row.appendChild(remove);
+      list.appendChild(row);
+    });
+    panel.appendChild(list);
+
+    const addRow = document.createElement("div");
+    addRow.className = "menu-row";
+    const select = document.createElement("select");
+    for (const character of available) {
+      const option = document.createElement("option");
+      option.value = character.id;
+      option.textContent = character.name;
+      select.appendChild(option);
     }
-  });
+    addRow.appendChild(select);
 
-  // Number keys 1-9 and 0 cast the matching skill-bar slot.
-  window.addEventListener("keydown", (event: KeyboardEvent) => {
-    if (!/^[0-9]$/.test(event.key)) {
+    const add = document.createElement("button");
+    add.type = "button";
+    add.textContent = "add member";
+    add.disabled = available.length === 0;
+    add.addEventListener("click", () => {
+      void (async () => {
+        await teams.save({
+          ...team,
+          name: nameInput.value,
+          members: [...team.members, { characterId: select.value }],
+          updatedAt: Date.now(),
+        });
+        await showTeams();
+      })();
+    });
+    addRow.appendChild(add);
+    panel.appendChild(addRow);
+
+    const actions = document.createElement("div");
+    actions.className = "menu-row";
+    const save = document.createElement("button");
+    save.type = "button";
+    save.className = "primary";
+    save.textContent = "save";
+    save.addEventListener("click", () => {
+      void (async () => {
+        await teams.save({ ...team, name: nameInput.value, updatedAt: Date.now() });
+        await showTeams();
+      })();
+    });
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.textContent = "delete";
+    remove.addEventListener("click", () => {
+      void (async () => {
+        await teams.delete(team.id);
+        await showTeams();
+      })();
+    });
+    const back = document.createElement("button");
+    back.type = "button";
+    back.textContent = "back";
+    back.addEventListener("click", () => {
+      void showTeams();
+    });
+    actions.append(save, remove, back);
+    panel.appendChild(actions);
+
+    screenRoot.appendChild(panel);
+  };
+
+  const renderLobby = (): void => {
+    if (lobby === undefined) {
       return;
     }
-    const slot = event.key === "0" ? 9 : Number.parseInt(event.key, 10) - 1;
-    if (slot < connection.skillBar.length) {
-      useSkill(slot);
+    showViewport(false);
+    renderLobbyScreen(
+      screenRoot,
+      lobby.getSnapshot(),
+      {
+        onChooseTeam: (team) => {
+          lobby?.chooseTeam(team);
+        },
+        onToggleReady: () => {
+          const self = lobby
+            ?.getSnapshot()
+            .players.find((p) => p.sessionId === lobby?.selfSessionId);
+          lobby?.setReady(!(self?.ready ?? false));
+        },
+        onStart: () => {
+          lobby?.startMatch();
+        },
+        onLeave: () => {
+          void (async () => {
+            await lobby?.disconnect();
+            lobby = undefined;
+            showMenu();
+          })();
+        },
+      },
+      lobbyNotice,
+    );
+  };
+
+  const enterLobby = async (connect: () => Promise<LobbyConnection>): Promise<void> => {
+    setStatus("connecting…", "offline");
+    try {
+      lobby = await connect();
+    } catch (error) {
+      setStatus("could not join", "error");
+      lobbyNotice =
+        error instanceof LobbyNotFoundError
+          ? "No lobby with that code. Check the code and try again."
+          : "Could not connect to the server.";
+      showMenu();
+      return;
     }
-  });
 
-  let latestMatch = connection.getSnapshot();
-  let latestArena = toArenaSnapshot(latestMatch, walls, connection.skillBar);
+    lobbyNotice = undefined;
+    setStatus(`lobby ${lobby.getSnapshot().code}`, "online");
+    lobby.onChange(renderLobby);
+    lobby.onStartRejected((message) => {
+      lobbyNotice = message.reason;
+      renderLobby();
+    });
+    lobby.onMatchStarting(() => {
+      void enterMatch();
+    });
+    renderLobby();
+  };
 
-  connection.onCombat((message) => {
-    showCombatFeedback(scene, message, latestMatch);
-  });
+  const enterMatch = async (): Promise<void> => {
+    showViewport(true);
+    setStatus("entering match…", "offline");
+    try {
+      match = await startMatchView(viewport, endpoint, {
+        onLeave: () => {
+          void (async () => {
+            await match?.dispose();
+            match = undefined;
+            // Returning from a match puts the lobby back into its
+            // waiting phase so another match can be started immediately
+            // (brief §46).
+            lobby?.returnToLobby();
+            if (lobby !== undefined) {
+              renderLobby();
+            } else {
+              showMenu();
+            }
+          })();
+        },
+      });
+      setStatus("in match", "online");
+    } catch (error) {
+      console.error("[web] could not enter match", error);
+      setStatus("match failed", "error");
+      showMenu();
+    }
+  };
 
-  // One place decides when to redraw: the Phaser step.
-  game.events.on(Phaser.Core.Events.STEP, () => {
-    latestMatch = connection.getSnapshot();
-    latestArena = toArenaSnapshot(latestMatch, walls, connection.skillBar);
-    scene.setSnapshot(latestArena);
-
-    const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
-    const target = latestMatch.players.find((p) => p.sessionId === self?.targetSessionId);
-    updateHud(hud, self, target, connection.skillBar);
-  });
-
-  // Click-to-target: hit-test the clicked world point. Clicking empty
-  // space clears the target.
-  scene.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-    const hit = actorAtPoint(latestArena, vec2(pointer.worldX, pointer.worldY));
-    connection.sendIntent({ kind: "target", targetSessionId: hit?.id ?? null });
-  });
+  showMenu();
+  setStatus("ready", "offline");
 }
 
-boot().catch((error: unknown) => {
+main().catch((error: unknown) => {
   setStatus("failed to start", "error");
   console.error("[web] boot failed", error);
 });
