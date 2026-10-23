@@ -1,3 +1,7 @@
+import { existsSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 /**
  * Server configuration, resolved once from the environment.
  *
@@ -57,12 +61,25 @@ export function parseBoolean(raw: string | undefined, fallback = false): boolean
   throw new ConfigError(`Expected a boolean-ish value, got ${JSON.stringify(raw)}`);
 }
 
+/**
+ * The web client build, if one happens to live where the monorepo layout
+ * puts it relative to this file (`apps/server/dist/config.js` ->
+ * `apps/web/dist`). True in both a local `pnpm run build` and the production
+ * container (`docs/adr/0009-production-deployment.md`), so a LAN host never
+ * has to set `VIBEWARS_WEB_ROOT` by hand for the common case.
+ */
+function conventionalWebRoot(): string | undefined {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const candidate = resolve(here, "../../web/dist");
+  return existsSync(candidate) ? candidate : undefined;
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   const webRoot = env.VIBEWARS_WEB_ROOT?.trim();
   return {
     port: parsePort(env.PORT),
     host: env.HOST?.trim() ?? "0.0.0.0",
-    webRoot: webRoot === undefined || webRoot === "" ? undefined : webRoot,
+    webRoot: webRoot !== undefined && webRoot !== "" ? webRoot : conventionalWebRoot(),
     devMode: parseBoolean(env.VIBEWARS_DEV, false),
   };
 }

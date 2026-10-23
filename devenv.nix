@@ -1,10 +1,13 @@
-{ pkgs, lib, config, ... }:
+{ pkgs, ... }:
 
 {
   name = "vibewars";
 
   # ---------------------------------------------------------------------------
   # Toolchain
+  #
+  # See docs/adr/0007-development-environment.md and
+  # docs/adr/0008-monorepo-and-typescript.md for why these exact versions.
   # ---------------------------------------------------------------------------
   languages.javascript = {
     enable = true;
@@ -18,6 +21,8 @@
   packages = [
     pkgs.jq
     pkgs.git
+    pkgs.shellcheck
+    pkgs.actionlint
   ];
 
   env.VIBEWARS_ENV = "development";
@@ -25,4 +30,114 @@
   enterShell = ''
     echo "vibewars dev shell — node $(node --version), pnpm $(pnpm --version)"
   '';
+
+  # ---------------------------------------------------------------------------
+  # `devenv test` — the single command the brief requires to pass at the end
+  # of every sprint (brief §37, §39). Mirrors the root package.json's `ci`
+  # script, which exists so the exact same checks can run in environments
+  # without a working devenv realization (see docs/adr/0007, which documents
+  # the sandbox this repository is currently authored in).
+  # ---------------------------------------------------------------------------
+  enterTest = ''
+    pnpm run format:check
+    pnpm run lint
+    pnpm run typecheck
+    pnpm run test
+    pnpm run build
+  '';
+
+  # ---------------------------------------------------------------------------
+  # Git hooks — fast, local checks on every commit. Deliberately a strict
+  # subset of `enterTest`: anything slow enough to make developers reach for
+  # `--no-verify` belongs in CI instead (brief §29).
+  # ---------------------------------------------------------------------------
+  git-hooks.hooks = {
+    prettier = {
+      enable = true;
+      excludes = [
+        "docs/product/master-brief\\.md$"
+        "pnpm-lock\\.yaml$"
+      ];
+    };
+    eslint = {
+      enable = true;
+      files = "\\.(ts|mts|cts|mjs|cjs)$";
+      excludes = [
+        "dist/"
+        "dist-types/"
+      ];
+    };
+
+    nixfmt-rfc-style.enable = true;
+    deadnix.enable = true;
+    statix.enable = true;
+
+    shellcheck.enable = true;
+    actionlint.enable = true;
+
+    check-json = {
+      enable = true;
+      # tsconfig*.json is JSONC by TypeScript's own convention (we rely on
+      # this for the "why" comments in tsconfig.base.json) — not strict JSON,
+      # so a strict-JSON validator would reject every project's tsconfig.
+      excludes = [ "tsconfig.*\\.json$" ];
+    };
+    check-yaml.enable = true;
+    markdownlint = {
+      enable = true;
+      excludes = [ "docs/product/master-brief\\.md$" ];
+    };
+
+    # Secret scanning: a LAN game still has no business committing tokens,
+    # keys, or .env files.
+    detect-private-keys.enable = true;
+    ripsecrets.enable = true;
+
+    # TypeScript project build is too slow for every keystroke-adjacent
+    # commit; it is covered by `enterTest`/CI instead. What IS cheap enough
+    # for a hook is making sure nobody commits a skill/map data file that
+    # fails schema validation once that validator exists (Sprint 6/9).
+  };
+
+  # ---------------------------------------------------------------------------
+  # Production container (brief §27, docs/adr/0009-production-deployment.md).
+  #
+  # One process serves both the built web client and the Colyseus game
+  # server. `copyToRoot` stages the build output next to a `node_modules`
+  # tree at the same relative depth the monorepo already has, so Node's
+  # normal upward node_modules resolution works unmodified.
+  #
+  # This intentionally ships the *whole* installed `node_modules` (including
+  # devDependencies), not a pruned `pnpm deploy` output. `pnpm deploy --legacy`
+  # was tried and produces a node_modules tree that **fails the exact same
+  # integration test this ADR's networking fix was verified against** — a
+  # fresh join reproducibly closes with "seat reservation expired" even
+  # though only one physical @colyseus/core copy is present, so the cause is
+  # some other difference in how `pnpm deploy` re-resolves the dependency
+  # graph, not (this time) the duplicate-module bug from ADR-0002. Shipping
+  # the already-tested root tree is slower to build and larger, but it is the
+  # one tree actually proven to work; pruning devDependencies out of the
+  # image is tracked as a Sprint 26/27 optimization, not attempted blind.
+  # ---------------------------------------------------------------------------
+  containers.prod = {
+    name = "vibewars";
+    startupCommand = [
+      "${pkgs.nodejs_24}/bin/node"
+      "/app/apps/server/dist/main.js"
+    ];
+    copyToRoot = pkgs.runCommand "vibewars-prod-root" { } ''
+      mkdir -p $out/app
+      cp -r ${./node_modules} $out/app/node_modules
+      cp ${./package.json} $out/app/package.json
+      mkdir -p $out/app/apps/server $out/app/apps/web
+      cp -r ${./apps/server/dist} $out/app/apps/server/dist
+      cp ${./apps/server/package.json} $out/app/apps/server/package.json
+      cp -r ${./apps/web/dist} $out/app/apps/web/dist
+      mkdir -p $out/app/packages/game-core $out/app/packages/game-protocol
+      cp -r ${./packages/game-core/dist} $out/app/packages/game-core/dist
+      cp ${./packages/game-core/package.json} $out/app/packages/game-core/package.json
+      cp -r ${./packages/game-protocol/dist} $out/app/packages/game-protocol/dist
+      cp ${./packages/game-protocol/package.json} $out/app/packages/game-protocol/package.json
+    '';
+  };
 }

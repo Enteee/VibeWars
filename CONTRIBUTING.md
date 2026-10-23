@@ -1,0 +1,69 @@
+# Contributing
+
+## Setup
+
+```sh
+devenv shell
+```
+
+This provides Node 24 and pnpm and installs dependencies automatically. If
+`devenv` is not available to you, any Node 24+ with `pnpm@10` works — every
+command below is a plain `pnpm` script underneath (see `package.json`).
+
+## Everyday commands
+
+```sh
+pnpm run build         # build every package/app
+pnpm run test          # run the full test suite
+pnpm run test:watch    # watch mode
+pnpm run lint          # ESLint (type-aware), zero warnings allowed
+pnpm run format        # Prettier, writes
+pnpm run format:check  # Prettier, checks only (what CI runs)
+pnpm run typecheck     # tsc --build across every project, plus tests/configs
+pnpm run ci            # format:check + lint + typecheck + test + build, in order
+```
+
+`devenv test` runs the same sequence as `pnpm run ci` via `enterTest` in
+`devenv.nix` — see ADR-0007 for why both exist.
+
+## Before opening a PR
+
+A sprint (or a PR within one) is not done until `pnpm run ci` passes
+end-to-end. This is not a suggestion — see `docs/product/master-brief.md`
+§37/§39 (Definition of Done): a feature without tests, without passing
+typecheck/lint, or that only works "if you don't look too closely" is not
+complete, regardless of how it behaves manually.
+
+Concretely:
+
+- New pure logic (domain math, protocol validation, config parsing) gets
+  unit tests in `packages/*/src/*.test.ts` or `apps/*/src/*.test.ts`,
+  colocated with the code.
+- New server behavior that touches the network gets a real integration test
+  against a real Colyseus room (see `apps/server/src/server.test.ts`) — not
+  a mock of Colyseus. A mocked transport would not have caught the
+  dependency-duplication bug in ADR-0002; don't reintroduce that risk.
+- `any`, `as any`, and non-null assertions (`!`) are lint errors, not style
+  preferences — see ADR-0008. If one is genuinely unavoidable, say why in a
+  comment at the exact line, not in a blanket lint-rule override.
+- A new architecturally significant decision (new major dependency, new
+  package, a changed data format) gets an ADR in `docs/adr/`, using
+  `docs/adr/0000-template.md`. "Architecturally significant" means: would a
+  new contributor need this explained to understand why the code looks the
+  way it does? If yes, write it down once instead of explaining it in every
+  future code review.
+
+## Commit style
+
+Small, focused commits. A commit message explains _why_, not just _what_ —
+the diff already shows what changed.
+
+## Project structure
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the current shape of the system
+and [docs/adr/](docs/adr/) for the reasoning behind it. The full product
+brief and sprint roadmap are in
+[docs/product/master-brief.md](docs/product/master-brief.md) — treat it as
+the source of truth for scope; if a sprint's acceptance criteria seem to
+conflict with something already built, that is worth a conversation (or an
+ADR), not a silent reinterpretation in either direction.

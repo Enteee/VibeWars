@@ -1,0 +1,10 @@
+{
+  "default": true,
+  // Headings/code fences in the ADRs and docs intentionally run long
+  // prose lines; wrapping at 80 chars would fight normal editor behavior
+  // more than it would help readability.
+  "MD013": false,
+  // Our docs use '#' headings liberally for structure, including in ADRs
+  // that mirror the brief's own heading style.
+  "MD024": { "siblings_only": true },
+}
