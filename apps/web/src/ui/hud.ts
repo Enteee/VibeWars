@@ -1,6 +1,7 @@
-import { getWeapon, type ActivationRejection } from "@vibewars/game-core";
+import { getSkill, getWeapon, type ActivationRejection } from "@vibewars/game-core";
 
 import type { MatchSnapshot, PlayerSnapshot, SkillSlot } from "../net/match-client.js";
+import { skillTypeBadgeHtml } from "./icons.js";
 
 /**
  * The player's heads-up display: health/energy, skill bar, and status
@@ -143,6 +144,24 @@ export function flashMessage(hud: HudElements, text: string): void {
 }
 
 /** Render the skill bar once; slots are stable for the match's lifetime. */
+/**
+ * The inside of one skill-bar button: hotkey, type badge, and empty name
+ * and cost spans for the caller to fill as text. The type comes from
+ * game-core's catalogue, so the wire needs no field for it; a skill this
+ * client does not know gets no badge.
+ */
+export function skillSlotHtml(slot: SkillSlot, index: number): string {
+  // 1-9 then 0, matching the hotkeys bound in main.ts.
+  const hotkey = index < 9 ? String(index + 1) : "0";
+  const type = getSkill(slot.id)?.type;
+  return (
+    `<span class="hud-skill-key">${hotkey}</span>` +
+    (type === undefined ? "" : skillTypeBadgeHtml(type)) +
+    `<span class="hud-skill-name"></span>` +
+    `<span class="hud-skill-cost"></span>`
+  );
+}
+
 export function renderSkillBar(
   hud: HudElements,
   slots: readonly SkillSlot[],
@@ -153,12 +172,7 @@ export function renderSkillBar(
     const button = document.createElement("button");
     button.className = "hud-skill";
     button.type = "button";
-    // 1-9 then 0, matching the hotkeys bound in main.ts.
-    const hotkey = index < 9 ? String(index + 1) : "0";
-    button.innerHTML =
-      `<span class="hud-skill-key">${hotkey}</span>` +
-      `<span class="hud-skill-name"></span>` +
-      `<span class="hud-skill-cost"></span>`;
+    button.innerHTML = skillSlotHtml(slot, index);
     const nameNode = button.querySelector(".hud-skill-name");
     const costNode = button.querySelector(".hud-skill-cost");
     if (nameNode !== null) {
