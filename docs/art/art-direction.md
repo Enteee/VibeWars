@@ -42,11 +42,23 @@ the code and `scripts/assets/icons.mjs` copy them.
 | `target`      | `#ffd866` | Your current target (ring, nothing else) |
 | `friend`      | `#59c2ff` | You and your team                        |
 | `foe`         | `#ff7b72` | The other team                           |
-| `heal`        | `#7ee787` | Health gained, health bar                |
+| `heal`        | `#7ee787` | Health gained, arena health bar          |
 | `damage`      | `#ff7b72` | Health lost                              |
 | `condition`   | `#ffa657` | Condition markers                        |
 | `hex`         | `#d2a8ff` | Hex markers                              |
 | `enchantment` | `#56d4dd` | Enchantment markers                      |
+
+### HUD bars
+
+The health and energy bars in the match HUD and the Training Ground carry
+their numbers in `ink` text, centred over a fill that may be full or nearly
+empty. The fill is therefore a dark shade of its signal colour, so the text
+reads on the fill and on the empty track alike.
+
+| Token        | Hex       | Use             | `ink` on it |
+| ------------ | --------- | --------------- | ----------- |
+| `hud-health` | `#3a6a3e` | Health bar fill | 4.7:1       |
+| `hud-energy` | `#2f6787` | Energy bar fill | 4.6:1       |
 
 ### Professions (menus only)
 
@@ -157,6 +169,10 @@ below ~20 is hard to tell apart, below ~10 is the same colour.
   glyph the status.
 - **Skill slots carry the type badge, and the editor the profession icon**
   (#78).
+- **HUD bar numbers used to be `ink` on `heal` and `friend`: 1.1:1 and
+  1.5:1**, which is unreadable. Dark text would vanish over the empty track
+  once health drops, so the fills are dark shades instead, at least 4.5:1
+  under `ink` (WCAG AA).
 
 ## Assets
 

@@ -2,7 +2,7 @@ import type { PlayerBuild } from "@vibewars/game-core";
 import type { WallDescriptor } from "@vibewars/game-protocol";
 
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
-import { connectToMatch } from "./net/match-client.js";
+import { connectToMatch, type MatchTarget } from "./net/match-client.js";
 import type { MatchConnection, MatchSnapshot, SkillSlot } from "./net/match-connection.js";
 import { actorAtPoint, type ArenaSnapshot, type RenderableWall } from "./render/arena-snapshot.js";
 import { createArenaViewport } from "./render/arena-viewport.js";
@@ -24,15 +24,15 @@ export interface MatchViewCallbacks {
 }
 
 export interface MatchViewOptions {
-  /** The arena to play; `undefined` means the server's default. */
-  readonly mapId?: string | undefined;
+  /** Which match on the game server: Quick Match unless a lobby says otherwise. */
+  readonly target?: MatchTarget | undefined;
   /**
    * The build to request. The server validates it and may refuse it, so
    * this is what the player *asked* to play, never what they got.
    */
   readonly build?: PlayerBuild | undefined;
   /**
-   * Where the match comes from. Defaults to the game server, with `mapId`
+   * Where the match comes from. Defaults to the game server, with `target`
    * and `build`; the Training Ground passes a local simulation instead.
    */
   readonly connect?: (() => Promise<MatchConnection>) | undefined;
@@ -96,7 +96,9 @@ export async function startMatchView(
   const viewport = await createArenaViewport(parent, { mode: "resize" });
   const { scene } = viewport;
 
-  const connect = options.connect ?? (() => connectToMatch(endpoint, options.mapId, options.build));
+  const connect =
+    options.connect ??
+    (() => connectToMatch(endpoint, options.target ?? { kind: "quick" }, options.build));
   const connection = await connect();
   const walls = connection.map.walls.map(toRenderableWall);
 

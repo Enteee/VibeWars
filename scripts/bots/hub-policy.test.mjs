@@ -697,3 +697,18 @@ describe("closing and reopening", () => {
     expect(refusal("manager", ["pr", "status"])).toContain("no role may");
   });
 });
+
+describe("board reads", () => {
+  it("lets every role read hubd's copy of the board, and nothing else through it", () => {
+    for (const role of ROLES) {
+      for (const argv of [["ls"], ["ls", "In Review"], ["show", "14"], ["changes"]]) {
+        expect(authorize(role, { kind: "board", argv }).allow, `${role} ${argv.join(" ")}`).toBe(
+          true,
+        );
+      }
+    }
+    expect(authorize("developer-1", { kind: "board", argv: ["move", "14", "Done"] }).allow).toBe(
+      false,
+    );
+  });
+});

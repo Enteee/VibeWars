@@ -125,11 +125,11 @@ body {
 }
 
 .hud-bar-health .hud-bar-fill {
-  background: #7ee787;
+  background: #3a6a3e;
 }
 
 .hud-bar-energy .hud-bar-fill {
-  background: #59c2ff;
+  background: #2f6787;
 }
 
 .hud-bar-label {
@@ -710,11 +710,11 @@ body {
 }
 
 .training-bar-health .training-bar-fill {
-  background: #7ee787;
+  background: #3a6a3e;
 }
 
 .training-bar-energy .training-bar-fill {
-  background: #59c2ff;
+  background: #2f6787;
 }
 
 .training-bar-label {

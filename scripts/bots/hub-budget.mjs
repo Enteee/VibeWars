@@ -29,7 +29,9 @@ const GRAPHQL_GROUPS = new Set(["issue", "pr", "project", "label", "repo", "rele
  * @returns {boolean}
  */
 export function usesGraphql(kind, argv) {
-  if (kind === "push" || kind === "reboot") {
+  // `board` is answered from hubd's copy of the board; keeping that copy
+  // fresh is hubd's own spending, not the request's.
+  if (kind === "push" || kind === "reboot" || kind === "board") {
     return false;
   }
   // A review is recorded locally and mirrored as a PR comment.

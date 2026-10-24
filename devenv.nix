@@ -80,7 +80,8 @@
     pnpm run test
     pnpm run build
     # Last, because it needs the built client and a real browser. The
-    # unit/integration suite failing first is the faster signal.
+    # unit/integration suite failing first is the faster signal. CI runs it
+    # as a job of its own, `e2e`, alongside the rest (#132).
     pnpm run test:e2e
   '';
 
