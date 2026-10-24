@@ -11,8 +11,9 @@
  *
  *   hub <gh command...>              e.g. hub issue list, hub pr create
  *   hub push <branch>                push your own branch
- *   hub approve <pr> [note]          reviewers only
- *   hub request-changes <pr> <note>  reviewers only
+ *   hub approve <pr> --sha <commit> [note]          reviewers only
+ *   hub request-changes <pr> --sha <commit> <note>  reviewers only
+ *     <commit> is the head you reviewed; a verdict on a moved head is refused
  *   hub whoami                       your role and what it may do
  *
  * `whoami` is answered locally, because the policy is pure and bundled in
@@ -26,6 +27,7 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import { inlineBodyFile } from "./hub-body.mjs";
 import { splitFilter } from "./hub-filter.mjs";
 import { ROLES, authorize } from "./hub-policy.mjs";
 
@@ -73,7 +75,11 @@ if (argv[0] === "whoami") {
   }
   const pushes = authorize(ROLE, { kind: "push", argv: [`bot/${ROLE}/x`] }, { acting: ACTING });
   console.log(`  ${pushes.allow ? "yes" : "no "}  push branches (bot/${ROLE}/*)`);
-  const reviews = authorize(ROLE, { kind: "review", argv: ["approve", "1"] }, { acting: ACTING });
+  const reviews = authorize(
+    ROLE,
+    { kind: "review", argv: ["approve", "1", "--sha", "0000000"] },
+    { acting: ACTING },
+  );
   console.log(`  ${reviews.allow ? "yes" : "no "}  record review verdicts`);
 
   // Borrowed hats are stated loudly: an agent covering the merge seat as well
@@ -84,8 +90,8 @@ if (argv[0] === "whoami") {
     console.log(`  TEMPORARILY ALSO COVERING: ${ACTING.join(", ")}`);
     console.log("  Those roles have no bot yet, so you hold their gates as well as");
     console.log("  your own. Sign off under a borrowed seat explicitly —");
-    console.log("  `hub approve 22 --as perf-sec-qa` — and actually do that role's");
-    console.log("  review rather than letting one glance count as two.");
+    console.log("  `hub approve 22 --sha <commit> --as perf-sec-qa` — and actually");
+    console.log("  do that role's review rather than letting one glance count as two.");
     console.log("  You are self-certifying while this lasts. Be stricter, not looser.");
   }
   console.log("");
@@ -108,6 +114,15 @@ if (argv[0] === "push") {
 /** @type {string | null} */
 let jqFilter = null;
 if (request.kind === "gh") {
+  // Read here, in the jail; gh on the host never sees a path (hub-body.mjs).
+  const inlined = inlineBodyFile(request.argv, (file) =>
+    fs.readFileSync(file === "-" ? 0 : file, "utf8"),
+  );
+  if ("error" in inlined) {
+    console.error(`hub: ${inlined.error}`);
+    process.exit(2);
+  }
+  request = { kind: "gh", argv: inlined.argv };
   const split = splitFilter(request.argv);
   if ("error" in split) {
     console.error(`hub: ${split.error}`);
