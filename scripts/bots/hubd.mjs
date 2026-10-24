@@ -477,7 +477,7 @@ function audit(entry) {
  *
  * @param {string} ref the pushed branch, as it is in the mirror
  * @param {ReturnType<typeof company>} cfg
- * @returns {Promise<string[]>}
+ * @returns {Promise<string[] | null>} `null` when they could not be worked out
  */
 async function changedPaths(ref, cfg) {
   const main = await git([
@@ -488,7 +488,7 @@ async function changedPaths(ref, cfg) {
     "+refs/heads/main:refs/heads/main",
   ]);
   if (main.code !== 0) {
-    return [];
+    return null;
   }
   // --no-ext-diff and --no-textconv: a `.gitattributes` on the branch can
   // name a diff driver, which is a command.
@@ -499,7 +499,7 @@ async function changedPaths(ref, cfg) {
     "--name-only",
     `main...${ref}`,
   ]);
-  return result.code === 0 ? result.stdout.split("\n").filter((line) => line !== "") : [];
+  return result.code === 0 ? result.stdout.split("\n").filter((line) => line !== "") : null;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -965,7 +965,15 @@ async function serve(request, verdict, acting) {
       return { allow: true, ...fetched };
     }
     const paths = await changedPaths(ref, cfg);
-    const gateChange = touchesGate(paths);
+    // Not knowing what a push changes is treated as a gate change: the tag
+    // exists so a weakened check is findable, and a failed diff must not
+    // be the way to hide one (#46).
+    const gate =
+      paths === null
+        ? { tag: "gate-change", paths: "unknown" }
+        : touchesGate(paths)
+          ? { tag: "gate-change", paths: paths.filter((p) => touchesGate([p])) }
+          : {};
     const result = await git(["push", remoteUrl(cfg), `${ref}:${ref}`]);
     audit({
       role,
@@ -973,7 +981,7 @@ async function serve(request, verdict, acting) {
       argv,
       decision: "allowed",
       code: result.code,
-      ...(gateChange ? { tag: "gate-change", paths: paths.filter((p) => touchesGate([p])) } : {}),
+      ...gate,
     });
     return { allow: true, ...result };
   }
