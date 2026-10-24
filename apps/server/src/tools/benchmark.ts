@@ -1,9 +1,13 @@
 import type { Client, Room } from "@colyseus/sdk";
 import { matchMaker } from "@colyseus/core";
 import { createRng, seedFromString } from "@vibewars/game-core";
-import { PROTOCOL_VERSION, ROOM_MATCH } from "@vibewars/game-protocol";
 
-import { MatchRoom, type TickMetrics } from "../rooms/match-room.js";
+import {
+  DEFAULT_MAP_ID,
+  MatchRoom,
+  openLobbyMatch,
+  type TickMetrics,
+} from "../rooms/match-room.js";
 import { createGameServer, type GameServer } from "../server.js";
 import { findFreePort, waitFor } from "../testing/harness.js";
 
@@ -194,16 +198,23 @@ async function runScenario(
   const playerCount = scenario.perTeam * 2;
   const participants: Participant[] = [];
 
-  const first = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
-    protocolVersion: PROTOCOL_VERSION,
-  });
-  participants.push({ room: first, sessionId: first.sessionId });
-
-  for (let i = 1; i < playerCount; i += 1) {
-    const room = await new Client(endpoint).joinById(first.roomId, {
-      protocolVersion: PROTOCOL_VERSION,
-    });
+  // A match this size comes from a lobby, so it is opened like one: a
+  // private room with a seat reserved for each player (#41).
+  const reservations = await openLobbyMatch(
+    DEFAULT_MAP_ID,
+    Array.from({ length: playerCount }, (_, i) => ({
+      team: i % 2 === 0 ? 0 : 1,
+      name: `bench-${String(i)}`,
+      build: undefined,
+    })),
+  );
+  for (const reservation of reservations) {
+    const room = await new Client(endpoint).consumeSeatReservation(reservation);
     participants.push({ room, sessionId: room.sessionId });
+  }
+  const first = participants[0]?.room;
+  if (first === undefined) {
+    throw new Error("A scenario needs at least one participant");
   }
 
   await waitFor(

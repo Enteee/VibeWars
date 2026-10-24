@@ -7,6 +7,7 @@ import {
   type ClientIntent,
   type MapDescriptor,
   type MatchJoinOptions,
+  type MatchSeatReservation,
   type ServerHello,
 } from "@vibewars/game-protocol";
 
@@ -145,26 +146,45 @@ function awaitMessage<T>(room: Room, type: string, timeoutMs: number): Promise<T
   });
 }
 
+/**
+ * Which match to enter: any Quick Match room with space, or the seat a
+ * lobby reserved for this player in its own match (#41).
+ */
+export type MatchTarget =
+  | {
+      readonly kind: "quick";
+      readonly mapId?: string | undefined;
+      /** The display name to ask for; the server sanitises it. */
+      readonly name?: string | undefined;
+    }
+  | { readonly kind: "lobby"; readonly reservation: MatchSeatReservation };
+
 export async function connectToMatch(
   endpoint: string,
-  mapId?: string,
+  target: MatchTarget,
   build?: PlayerBuild,
-  name?: string,
 ): Promise<MatchConnection> {
   const client = new Client(endpoint);
-  // The map id travels as a join option so the first client into a room
-  // decides the arena; later joiners land in the room that already exists.
-  //
-  // The build travels the same way, but it is only a *request*: the
-  // server validates it and silently falls back to its house loadout if
-  // it is illegal (brief '32). Nothing here may assume it was honoured.
-  const joinOptions: MatchJoinOptions = {
-    protocolVersion: PROTOCOL_VERSION,
-    ...(mapId === undefined ? {} : { mapId }),
-    ...(build === undefined ? {} : { build }),
-    ...(name === undefined ? {} : { name }),
-  };
-  const room = await client.joinOrCreate<DecodedMatchState>(ROOM_MATCH, joinOptions);
+  let room: Room<unknown, DecodedMatchState>;
+  if (target.kind === "lobby") {
+    // The lobby reserved this seat with the build the player joined it
+    // with, so there is nothing left to send.
+    room = await client.consumeSeatReservation<DecodedMatchState>(target.reservation);
+  } else {
+    // The build is only a *request*: the server validates it and silently
+    // falls back to its house loadout if it is illegal (brief §32).
+    // Nothing here may assume it was honoured.
+    //
+    // The map id travels as a join option so the first client into a room
+    // decides the arena; later joiners land in the room that already exists.
+    const joinOptions: MatchJoinOptions = {
+      protocolVersion: PROTOCOL_VERSION,
+      ...(target.mapId === undefined ? {} : { mapId: target.mapId }),
+      ...(build === undefined ? {} : { build }),
+      ...(target.name === undefined ? {} : { name: target.name }),
+    };
+    room = await client.joinOrCreate<DecodedMatchState>(ROOM_MATCH, joinOptions);
+  }
 
   // Both arrive on join; waiting for them here means the caller gets a
   // fully-usable connection rather than one that is missing its map or

@@ -1,6 +1,6 @@
 import { PROTOCOL_MISMATCH_MESSAGE } from "@vibewars/game-protocol";
 
-import { httpOriginFrom, resolveEndpoint } from "./net/match-client.js";
+import { httpOriginFrom, resolveEndpoint, type MatchTarget } from "./net/match-client.js";
 import { ONLINE_PLAY } from "./net/online.js";
 import {
   LobbyNotFoundError,
@@ -152,10 +152,10 @@ async function main(): Promise<void> {
       screenRoot,
       {
         onCreateLobby: (name) => {
-          void enterLobby(() => createLobby(endpoint, name));
+          void enterLobby(async () => createLobby(endpoint, name, await activeBuild()));
         },
         onJoinLobby: (code, name) => {
-          void enterLobby(() => joinLobbyByCode(endpoint, code, name));
+          void enterLobby(async () => joinLobbyByCode(endpoint, code, name, await activeBuild()));
         },
         onManageTeams: () => {
           void showTeams();
@@ -163,7 +163,7 @@ async function main(): Promise<void> {
         // Straight into a match with no lobby — how the game worked before
         // Sprint 19, kept because it is the fastest way to try the game.
         onQuickMatch: (name) => {
-          void enterMatch(undefined, name);
+          void enterMatch({ kind: "quick", name });
         },
         onNewCharacter: () => {
           showCharacterEditor(newCharacter(crypto.randomUUID()));
@@ -445,16 +445,13 @@ async function main(): Promise<void> {
       renderLobby();
     });
     lobby.onMatchStarting((message) => {
-      // The name the lobby already showed everyone, so a player is the
-      // same person on both screens.
-      const snapshot = lobby?.getSnapshot();
-      const self = snapshot?.players.find((p) => p.sessionId === snapshot.selfSessionId);
-      void enterMatch(message.mapId, self?.name ?? "");
+      // Only players on a team are sent this; a spectator stays here.
+      void enterMatch({ kind: "lobby", reservation: message.reservation });
     });
     renderLobby();
   };
 
-  const enterMatch = async (mapId: string | undefined, name: string): Promise<void> => {
+  const enterMatch = async (target: MatchTarget): Promise<void> => {
     enteringMatch = true;
     menuNotice = undefined;
     showViewport(true);
@@ -493,7 +490,7 @@ async function main(): Promise<void> {
             })();
           },
         },
-        { mapId, build, name },
+        { target, build },
       );
       setStatus("in match", "online");
     } catch (error) {

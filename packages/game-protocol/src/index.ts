@@ -16,6 +16,7 @@ export {
   ROOM_MATCH,
   ROOM_LOBBY,
   MAX_LOBBY_PLAYERS,
+  QUICK_MATCH_MAX_PLAYERS,
   isLobbyCode,
   normalizeLobbyCode,
   parseClientIntent,
@@ -42,4 +43,5 @@ export type {
   LobbyReadyMessage,
   LobbySelectMapMessage,
   LobbyMatchStartingMessage,
+  MatchSeatReservation,
 } from "./protocol.js";
