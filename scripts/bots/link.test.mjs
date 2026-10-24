@@ -529,6 +529,39 @@ describe("the company sidecar", () => {
     expect(co.inbox("support")).toEqual([]);
   }, 20_000);
 
+  it("caps all users together at 30 a minute, says so once in Support, and never caps the operator", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    const { exited, child } = co.start();
+
+    for (let id = 1000; id < 1032; id += 1) {
+      telegram.push(`from ${String(id)}`, 13, { id, is_bot: false, username: `u${String(id)}` });
+    }
+    telegram.push("support: the operator, still heard", 13);
+
+    await until(() => co.inbox("support").length === 31, "30 users and the operator");
+    await until(() => telegram.sent.length === 1, "the busy reply");
+    await sleep(300);
+    const texts = co.inbox("support").map((line) => line.text);
+    expect(texts.slice(0, 30)).toEqual(
+      Array.from({ length: 30 }, (_, i) => `from ${String(1000 + i)}`),
+    );
+    expect(texts[30]).toBe("support: the operator, still heard");
+    expect(co.inbox("support")[30]).toMatchObject({ kind: "human" });
+    expect(telegram.sent).toEqual([
+      {
+        chat_id: CHAT,
+        text: "Support is busy, try again in a minute.",
+        entities: [],
+        message_thread_id: 13,
+        reply_parameters: { message_id: 32 },
+      },
+    ]);
+    child.kill("SIGTERM");
+    const { stderr } = await exited;
+    expect(stderr.match(/over the cap for all users together/g)).toHaveLength(1);
+  }, 20_000);
+
   it("refuses 'tg reply' from anyone but support, telling the sender", async () => {
     const telegram = await fakeTelegram();
     const co = company(telegram.url);

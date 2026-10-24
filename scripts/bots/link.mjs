@@ -33,7 +33,9 @@ import { fileURLToPath } from "node:url";
 
 import { ROLES } from "./hub-policy.mjs";
 import {
+  SUPPORT_BUSY,
   TOPIC_TITLES,
+  admitAll,
   admitUser,
   deliverPeer,
   formatMirror,
@@ -472,8 +474,9 @@ class Company {
  *
  * Answers in the Operator topic go to `routeAnswer` first; everything else
  * to `routeInbound`. A user's message in the Support topic also has to get
- * past `admitUser`, per user, in memory: a restart forgets who was
- * flooding, which costs at most one more minute of their messages.
+ * past `admitUser`, its sender's own cap, and then `admitAll`, every
+ * user's together. Both are in memory: a restart forgets who was flooding,
+ * which costs at most one more minute of their messages.
  *
  * @param {Company} company
  * @param {Outgoing[]} mirror Operator-topic edits and hints, and "which role?" replies, go here
@@ -483,6 +486,8 @@ async function pollInbound(company, mirror) {
   let backoff = 1000;
   /** @type {Map<string, import("./protocol.mjs").UserFlood>} keyed by `user:<id>` */
   const floods = new Map();
+  /** @type {import("./protocol.mjs").SupportFlood | undefined} */
+  let flood;
   for (;;) {
     try {
       const updates = /** @type {unknown[]} */ (
@@ -522,8 +527,8 @@ async function pollInbound(company, mirror) {
           continue;
         }
         if (routed.line.kind === "user") {
-          const gate = admitUser(floods.get(routed.line.from), Date.now());
-          floods.set(routed.line.from, gate.state);
+          const now = Date.now();
+          const gate = admitUser(floods.get(routed.line.from), now);
           if (gate.warn) {
             // Quoted, though the id is a number Telegram gave us (#115).
             console.error(
@@ -532,8 +537,24 @@ async function pollInbound(company, mirror) {
             );
           }
           if (!gate.admit) {
+            floods.set(routed.line.from, gate.state);
             continue;
           }
+          // Only a message the global cap also lets through counts against
+          // its sender: one dropped for everyone's flood is not theirs.
+          const all = admitAll(flood, now);
+          flood = all.state;
+          if (all.busy !== null) {
+            console.error(
+              `[link] support: dropped ${String(all.busy)} user message(s) since the last ` +
+                "such line, over the cap for all users together",
+            );
+            mirror.push({ support: { text: SUPPORT_BUSY, replyTo: routed.line.messageId } });
+          }
+          if (!all.admit) {
+            continue;
+          }
+          floods.set(routed.line.from, gate.state);
         }
         for (const role of routed.to) {
           appendInbox(company.at.bus, role, routed.line);

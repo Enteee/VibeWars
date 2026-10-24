@@ -33,9 +33,13 @@ prefix from a user is just text: a user can never address another role. In
 every other topic, a non-operator is still dropped, exactly as before. The
 operator's own messages in Support stay `human`, with the mark.
 
-**At most six messages per user per minute reach the inbox.** Every user
-message costs an agent a turn, so the sidecar drops the rest silently,
-logging one line a minute per user.
+**At most six messages per user per minute reach the inbox, and thirty
+from all users together.** Every user message costs an agent a turn, so the
+sidecar drops the rest. Past a user's own cap that is silent, with one log
+line a minute per user. The global cap is there because many accounts get
+around a per-user one. Past it, the sidecar logs how many it dropped and
+replies "Support is busy, try again in a minute." in the topic, each at
+most once a minute. The operator is never counted.
 
 **Support's only way out to users is `tg reply`.** It posts plain text, as a
 Telegram reply, into Support and nowhere else. Only support may use it, and
