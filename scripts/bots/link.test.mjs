@@ -20,12 +20,15 @@ import { afterEach, describe, expect, it } from "vitest";
 const LINK = path.join(path.dirname(fileURLToPath(import.meta.url)), "link.mjs");
 const CHAT = "-1001";
 
-/** @type {(() => void)[]} */
+/** @type {(() => unknown)[]} */
 const cleanups = [];
 
-afterEach(() => {
-  for (const cleanup of cleanups.splice(0)) {
-    cleanup();
+// Last in, first out, and each awaited: a sidecar is stopped and gone before
+// the root it writes into is removed. Removing it first raced the sidecar's
+// last writes and failed with ENOTEMPTY under load (#45).
+afterEach(async () => {
+  for (const cleanup of cleanups.splice(0).reverse()) {
+    await cleanup();
   }
 });
 
@@ -151,7 +154,12 @@ function company(telegram, registry) {
         resolve({ code, stderr });
       });
     });
-    cleanups.push(() => child.kill("SIGTERM"));
+    cleanups.push(async () => {
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill("SIGTERM");
+      }
+      await exited;
+    });
     return { child, exited };
   };
 
