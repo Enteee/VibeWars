@@ -49,32 +49,17 @@ export function unmitigatedDamage(amount: number, source: DamageSource): DamageP
 }
 
 /**
- * Whether a conditional armor bonus is currently earning its keep.
- *
- * `while-attacking` is answered by the caller, because only the
- * simulation knows whether a swing is in progress; the other two are
+ * The defender's armor against this packet. Every conditional bonus is
  * answerable from the packet and the defender alone.
  */
-export interface ArmorContext {
-  readonly isAttacking: boolean;
-}
-
-const IDLE: ArmorContext = { isAttacking: false };
-
-export function effectiveArmor(
-  target: Combatant,
-  packet: DamagePacket,
-  context: ArmorContext = IDLE,
-): number {
+export function effectiveArmor(target: Combatant, packet: DamagePacket): number {
   let armor = target.equipment.baseArmor;
 
   for (const bonus of target.equipment.conditionalArmor) {
     const applies =
       bonus.condition === "vs-physical"
         ? isPhysicalDamage(packet.type)
-        : bonus.condition === "while-enchanted"
-          ? target.statuses.countByCategory("enchantment") > 0
-          : context.isAttacking;
+        : target.statuses.countByCategory("enchantment") > 0;
     if (applies) {
       armor += bonus.amount;
     }
@@ -116,12 +101,7 @@ export function armorMultiplier(armor: number, rules: CombatRules): number {
  * Rounded once, at the end. Rounding earlier would make a long fight
  * drift away from the arithmetic by a few points per hit.
  */
-export function mitigate(
-  packet: DamagePacket,
-  target: Combatant,
-  rules: CombatRules,
-  context: ArmorContext = IDLE,
-): number {
+export function mitigate(packet: DamagePacket, target: Combatant, rules: CombatRules): number {
   if (packet.amount <= 0) {
     return 0;
   }
@@ -129,7 +109,7 @@ export function mitigate(
     return packet.amount;
   }
 
-  const armor = effectiveArmor(target, packet, context);
+  const armor = effectiveArmor(target, packet);
   let dealt = packet.amount * armorMultiplier(armor, rules);
 
   // Rune of Absorption, last and only against physical hits. After

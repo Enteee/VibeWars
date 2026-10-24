@@ -87,6 +87,7 @@ interface DecodedPlayer {
   readonly dead: boolean;
   readonly castingSkillId: string;
   readonly castRemaining: number;
+  readonly castTotal: number;
   readonly statuses: Iterable<string>;
 }
 interface DecodedMatchState {
@@ -118,6 +119,7 @@ function snapshotFrom(room: Room<unknown, DecodedMatchState>): MatchSnapshot {
       dead: player.dead,
       castingSkillId: player.castingSkillId === "" ? undefined : player.castingSkillId,
       castRemaining: player.castRemaining,
+      castTotal: player.castTotal,
       statuses: [...player.statuses],
     });
   }

@@ -21,6 +21,7 @@ function player(sessionId: string): PlayerSnapshot {
     dead: false,
     castingSkillId: undefined,
     castRemaining: 0,
+    castTotal: 0,
     statuses: [],
   };
 }
@@ -55,6 +56,10 @@ describe("showCombatFeedback", () => {
         { kind: "heal", targetId: "me", amount: 40 },
       ]),
     ).toEqual(["−91", "+40"]);
+  });
+
+  it("floats a blinded attack's miss over its target", () => {
+    expect(floated([{ kind: "attack-missed", targetId: "them" }])).toEqual(["miss"]);
   });
 
   it("skips events about nobody it can see", () => {

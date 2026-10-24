@@ -1,6 +1,7 @@
 import { mitigate, spellDamage } from "./damage.js";
 import { resolveMagnitude } from "./scaling.js";
 import type { StatusId } from "./status.js";
+import { attackMissChanceOf } from "./tick.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import type { Combatant, Skill, SkillContext, SkillEffect } from "./types.js";
@@ -39,7 +40,9 @@ export type CombatEvent =
       readonly skillId: string;
     }
   /** An interrupt that found nothing to interrupt — a wasted cast. */
-  | { readonly kind: "interrupt-missed"; readonly targetId: string };
+  | { readonly kind: "interrupt-missed"; readonly targetId: string }
+  /** A blinded attack skill that swung and missed: paid for, no effect. */
+  | { readonly kind: "attack-missed"; readonly targetId: string };
 
 /**
  * Apply an already-mitigated amount, clamping at 0 and flagging death
@@ -219,9 +222,21 @@ export interface SkillResolution {
  * were. With one target this is `applyEffects` exactly. Calling
  * `applyEffects` once per target instead would pay `sacrifice-health`
  * and grant `energy-gain` once per foe caught in a splash.
+ *
+ * A blinded caster's attack skill misses as a whole, Barrage's volley
+ * included: one roll, at resolution, so the miss has already paid its
+ * cost and recharge. The draw happens only when there is a chance to
+ * miss, so no unblinded fight's random stream moves.
  */
 export function applySkillEffects(resolution: SkillResolution): CombatEvent[] {
   const { skill, caster, targets, rng, rules } = resolution;
+  const primary = targets[0];
+  if (skill.type === "attack" && primary !== undefined) {
+    const chance = attackMissChanceOf(caster);
+    if (chance > 0 && rng.nextFloat() < chance) {
+      return [{ kind: "attack-missed", targetId: primary.id }];
+    }
+  }
   return skill.effects.flatMap((effect) =>
     effectActsOnCaster(effect)
       ? applyEffect(effect, { caster, target: targets[0], rng, rules })

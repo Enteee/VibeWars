@@ -530,7 +530,7 @@ export function createTrainingPanel(): TrainingPanel {
       const { connection } = session;
       connection.advance(deltaSeconds);
       latestMatch = connection.getSnapshot();
-      latestArena = toArenaSnapshot(latestMatch, session.walls, connection.skillBar);
+      latestArena = toArenaSnapshot(latestMatch, session.walls);
       created.scene.setSnapshot(latestArena);
       paintVitals(latestMatch);
       sinceMeterPaint += deltaSeconds;

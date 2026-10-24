@@ -10,6 +10,8 @@
 export interface ActiveCast {
   readonly skillId: string;
   readonly targetId: string | undefined;
+  /** The whole cast, dazed included: what the cast bar fills towards. */
+  readonly totalSeconds: number;
   /** Seconds still remaining before the skill fires. */
   remainingSeconds: number;
 }
@@ -41,7 +43,12 @@ export class CastState {
   }
 
   public beginCast(skillId: string, targetId: string | undefined, activationSeconds: number): void {
-    this.#activeCast = { skillId, targetId, remainingSeconds: activationSeconds };
+    this.#activeCast = {
+      skillId,
+      targetId,
+      totalSeconds: activationSeconds,
+      remainingSeconds: activationSeconds,
+    };
   }
 
   /**
