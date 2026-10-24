@@ -213,6 +213,14 @@ export function createLocalConnection(options: {
     onCastRefused(handler) {
       refusalHandlers.push(handler);
     },
+    getRecharges() {
+      // Straight from the simulation: there is no wire to extrapolate over.
+      const cast = simulation.get(selfId)?.combatant.cast;
+      return skillBar.map((slot) => ({
+        remaining: cast?.rechargeRemaining.get(slot.id) ?? 0,
+        total: cast?.rechargeTotal.get(slot.id) ?? 0,
+      }));
+    },
     onStep(handler) {
       stepHandlers.push(handler);
     },

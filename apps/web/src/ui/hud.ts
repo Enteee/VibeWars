@@ -1,7 +1,13 @@
 import { getWeapon, type ActivationRejection } from "@vibewars/game-core";
 
-import type { MatchSnapshot, PlayerSnapshot, SkillSlot } from "../net/match-connection.js";
+import type {
+  MatchSnapshot,
+  PlayerSnapshot,
+  SkillSlot,
+  SlotRecharge,
+} from "../net/match-connection.js";
 import { skillBadgeHtml } from "./icons.js";
+import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 
 /**
  * The player's heads-up display: health/energy, skill bar, and status
@@ -185,6 +191,22 @@ export function renderSkillBar(
       onUse(index);
     });
     hud.skillBar.appendChild(button);
+  });
+}
+
+/** Paint each slot's recharge wipe, from the render loop (#152). */
+export function updateRecharges(
+  hud: HudElements,
+  skillBar: readonly SkillSlot[],
+  recharges: readonly SlotRecharge[],
+): void {
+  const buttons = hud.skillBar.querySelectorAll("button");
+  const reducedMotion = prefersReducedMotion();
+  skillBar.forEach((slot, index) => {
+    const button = buttons[index];
+    if (button !== undefined) {
+      paintRecharge(button, recharges[index], slot.name, reducedMotion);
+    }
   });
 }
 

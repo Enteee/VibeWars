@@ -7,7 +7,14 @@ import type { MatchConnection, MatchSnapshot, SkillSlot } from "./net/match-conn
 import { actorAtPoint, type ArenaSnapshot, type RenderableWall } from "./render/arena-snapshot.js";
 import { createArenaViewport } from "./render/arena-viewport.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
-import { createHud, describeRefusal, flashMessage, renderSkillBar, updateHud } from "./ui/hud.js";
+import {
+  createHud,
+  describeRefusal,
+  flashMessage,
+  renderSkillBar,
+  updateHud,
+  updateRecharges,
+} from "./ui/hud.js";
 
 /**
  * The in-match view: a Phaser viewport for the arena plus the DOM HUD,
@@ -158,6 +165,7 @@ export async function startMatchView(
     // permanently blank: the server tracked all three and the HUD could
     // draw all three, and nothing connected them.
     updateHud(hud, self, target, connection.skillBar, latestMatch);
+    updateRecharges(hud, connection.skillBar, connection.getRecharges());
   });
 
   const offPointer = viewport.onPointerDown((world) => {

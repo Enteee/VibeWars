@@ -36,6 +36,7 @@ import {
 } from "./combat-readouts.js";
 import { describeRefusal, MESSAGE_SECONDS } from "./hud.js";
 import { skillBadgeHtml } from "./icons.js";
+import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import {
   buildSignature,
   loadScenarioChoice,
@@ -310,6 +311,8 @@ export function createTrainingPanel(): TrainingPanel {
     energy.label.textContent = `${String(self.energy)} / ${String(self.maxEnergy)}`;
     adrenaline.textContent = `adrenaline ${String(self.adrenaline)}`;
     const slots = session?.connection.skillBar ?? [];
+    const recharges = session?.connection.getRecharges() ?? [];
+    const reducedMotion = prefersReducedMotion();
     skillButtons.forEach((button, index) => {
       const slot = slots[index];
       // A hint, not a gate: the simulation still decides.
@@ -317,6 +320,8 @@ export function createTrainingPanel(): TrainingPanel {
         slot !== undefined &&
         (self.energy < slot.energyCost || self.adrenaline < slot.adrenalineCost);
       button.classList.toggle("is-unaffordable", unaffordable);
+      // The same wipe as the match HUD (#152).
+      paintRecharge(button, recharges[index], slot?.name ?? "", reducedMotion);
     });
   };
 
