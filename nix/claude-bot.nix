@@ -70,6 +70,12 @@ let
   sandboxPath = "${corePath}:/etc/profiles/per-user/ente/bin:/run/current-system/sw/bin";
 
   claudeBot = ''
+        # devenv does not wrap scripts in `set -e`, so without this a failing
+        # provision step was simply ignored and the agent launched anyway —
+        # with no Telegram identity and a sidecar that could only crash-loop.
+        # Every command below either must succeed or handles failure itself.
+        set -euo pipefail
+
         # Files starting with "_" are shared fragments, not roles. _protocol.md is
         # the coordination contract every agent gets; the per-role file is what
         # distinguishes them.
@@ -239,8 +245,16 @@ let
         # ----------------------------------------------------------------------
         # Provision: blocks on human taps the first time a role is seen, returns
         # immediately on every run after that.
+        #
+        # A failure here is fatal by design. An agent with no Telegram identity
+        # cannot do the one thing that distinguishes it from plain `claude`,
+        # and starting it anyway gives you a sandbox whose sidecar crash-loops
+        # while the TUI looks perfectly healthy.
         # ----------------------------------------------------------------------
-        ${node} ${botScripts}/link.mjs provision "$role"
+        if ! ${node} ${botScripts}/link.mjs provision "$role"; then
+          echo "claude-bot: provisioning \"$role\" failed; not starting the agent." >&2
+          exit 1
+        fi
 
         # ----------------------------------------------------------------------
         # The worktree. The agent edits this, never your checkout.

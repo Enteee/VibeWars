@@ -214,6 +214,28 @@ export function outboundParams(raw, context) {
 }
 
 /**
+ * Has this role been provisioned all the way through?
+ *
+ * Checked BEFORE taking the provisioning lock. The lock is global on purpose
+ * — concurrent creations would fight over the manager bot's single getUpdates
+ * stream — but a role with nothing left to do must not queue behind one that
+ * is waiting on a human, which is what made `claude-bot architect` fail while
+ * `gameplay` sat waiting to be added to the group.
+ *
+ * @param {RoleEntry} entry
+ * @returns {boolean}
+ */
+export function isProvisioned(entry) {
+  return (
+    entry.token !== undefined &&
+    entry.id !== undefined &&
+    entry.username !== undefined &&
+    entry.promoted === true &&
+    entry.topicId !== undefined
+  );
+}
+
+/**
  * How long to wait before retrying a request that failed at the network
  * level, in milliseconds, or null to give up.
  *

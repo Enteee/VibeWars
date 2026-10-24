@@ -37,6 +37,7 @@ import {
   acceptsManagedBot,
   indexRoles,
   inboundLine,
+  isProvisioned,
   isReadyOutboxEntry,
   obj,
   outboundParams,
@@ -211,24 +212,29 @@ function writeRegistry(file, registry) {
  * `managed_bot` updates.
  *
  * @param {string} lock
+ * @param {string} role
  * @returns {void}
  */
-function acquireLock(lock) {
+function acquireLock(lock, role) {
+  const mine = `${String(process.pid)} ${role}\n`;
   try {
-    fs.writeFileSync(lock, `${String(process.pid)}\n`, { flag: "wx" });
+    fs.writeFileSync(lock, mine, { flag: "wx" });
     return;
   } catch {
-    const holder = Number.parseInt(fs.readFileSync(lock, "utf8").trim(), 10);
+    const [pid, heldFor] = fs.readFileSync(lock, "utf8").trim().split(" ");
+    const holder = Number.parseInt(pid ?? "", 10);
     try {
       process.kill(holder, 0);
     } catch {
       // The holder died without cleaning up; the lock is ours to take.
       fs.rmSync(lock, { force: true });
-      fs.writeFileSync(lock, `${String(process.pid)}\n`, { flag: "wx" });
+      fs.writeFileSync(lock, mine, { flag: "wx" });
       return;
     }
     throw new Error(
-      `another claude-bot (pid ${String(holder)}) is provisioning; wait for it to finish`,
+      `the "${heldFor ?? "?"}" role is still being provisioned (pid ${String(holder)}), ` +
+        `and creating two bots at once would make them fight over the manager ` +
+        `bot's update stream. Finish that one first, or stop it.`,
     );
   }
 }
@@ -483,7 +489,17 @@ async function reportAccess(token, username) {
 async function provision(role) {
   const env = environment();
   ensureBus(env.bus, role);
-  acquireLock(env.lock);
+
+  // Nothing to do is the common case — every run after the first — and it must
+  // not touch the lock. Otherwise starting one agent fails for as long as some
+  // other role is waiting on a human tap.
+  const existing = readRegistry(env.registry).roles[role] ?? {};
+  if (isProvisioned(existing)) {
+    console.log(`[link:${role}] ready as @${String(existing.username)}`);
+    return;
+  }
+
+  acquireLock(env.lock, role);
   try {
     const registry = readRegistry(env.registry);
     const entry = registry.roles[role] ?? {};
@@ -850,5 +866,22 @@ if (
   process.argv[1] !== undefined &&
   fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
-  await main();
+  try {
+    await main();
+  } catch (error) {
+    // A stack trace through the Bot API wrapper tells the operator nothing.
+    // The messages thrown here are deliberately actionable — which role holds
+    // the provisioning lock, which registry entry is inconsistent — so print
+    // the message and keep the trace for when it is actually a crash.
+    const [, role] = process.argv.slice(2);
+    console.error(
+      `[link:${role ?? "?"}] ${error instanceof Error ? error.message : String(error)}`,
+    );
+    if (process.env.VIBEWARS_BOT_DEBUG === "1" && error instanceof Error) {
+      console.error(error.stack);
+    } else {
+      console.error("[link] set VIBEWARS_BOT_DEBUG=1 for the stack trace");
+    }
+    process.exit(1);
+  }
 }

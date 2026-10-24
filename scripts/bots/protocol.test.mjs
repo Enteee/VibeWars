@@ -14,6 +14,7 @@ import {
   formatLine,
   inboundLine,
   indexRoles,
+  isProvisioned,
   isReadyOutboxEntry,
   outboundParams,
   readInbox,
@@ -378,5 +379,37 @@ describe("retryDelay", () => {
   it("gives up past the attempt limit", () => {
     expect(retryDelay(7)).toBeNull();
     expect(retryDelay(0)).toBeNull();
+  });
+});
+
+describe("isProvisioned", () => {
+  const complete = {
+    token: "t",
+    id: 1,
+    username: "vibewars_qa_bot",
+    promoted: true,
+    topicId: 7,
+  };
+
+  it("accepts a role that has been taken all the way through", () => {
+    expect(isProvisioned(complete)).toBe(true);
+  });
+
+  it("rejects a role stopped at any single step", () => {
+    // Each of these is a state a real interrupted provision left behind.
+    for (const missing of ["token", "id", "username", "promoted", "topicId"]) {
+      const partial = Object.fromEntries(
+        Object.entries(complete).filter(([key]) => key !== missing),
+      );
+      expect(isProvisioned(partial)).toBe(false);
+    }
+  });
+
+  it("rejects an empty entry", () => {
+    expect(isProvisioned({})).toBe(false);
+  });
+
+  it("treats a bot that is in the group but not yet admin as unfinished", () => {
+    expect(isProvisioned({ ...complete, promoted: false })).toBe(false);
   });
 });
