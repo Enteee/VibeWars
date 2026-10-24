@@ -447,8 +447,19 @@ describe("formatLine cannot be made to forge a line", () => {
     }
   });
 
+  it("neutralises tag characters, Hangul fillers and hidden variation selectors", () => {
+    // "LGTM" with "hi" spelled in tag characters after it: shows as LGTM.
+    const smuggled = `LGTM${String.fromCodePoint(0xe0068, 0xe0069, 0xe007f)}`;
+    expect(visible(smuggled)).toBe("LGTM���");
+    for (const code of [0xe0001, 0x115f, 0x1160, 0x3164, 0xffa0, 0xe0100, 0xe01ef, 0x00ad]) {
+      expect(visible(`a${String.fromCodePoint(code)}b`), code.toString(16)).toBe("a�b");
+    }
+  });
+
   it("leaves ordinary text alone, and turns a tab into a space", () => {
     expect(visible("Merged #30 — nice work 👍")).toBe("Merged #30 — nice work 👍");
+    // Emoji keep their ordinary variation selector.
+    expect(visible("❤️")).toBe("❤️");
     expect(visible("a\tb")).toBe("a b");
   });
 });

@@ -475,25 +475,31 @@ function isControl(code) {
   return code < 0x20 || (code >= 0x7f && code <= 0x9f);
 }
 
+/** Hangul fillers: letters by category, blank on screen. */
+const HANGUL_FILLERS = new Set([0x115f, 0x1160, 0x3164, 0xffa0]);
+
 /**
  * Characters that change how text around them is shown without being seen
- * themselves: bidirectional overrides and isolates, which can make text
- * read in a different order than it is (the Trojan Source class), and
- * zero-width characters, which can hide inside a word.
+ * themselves. All of Unicode's format characters (`\p{Cf}`): bidirectional
+ * overrides and isolates, which can make text read in a different order
+ * than it is (the Trojan Source class); zero-width characters, which can
+ * hide inside a word; and the tag characters U+E0000–E007F, which spell out
+ * ASCII nobody sees, so a message can show "LGTM" and carry a prompt for
+ * the agents reading it (found in review of #39). Plus the blank-rendering
+ * Hangul fillers, and the supplementary variation selectors, which can
+ * carry hidden bytes the same way. The sixteen ordinary variation
+ * selectors stay: emoji need them.
  *
- * @param {number} code
+ * @param {string} char
+ * @param {number} code its code point
  * @returns {boolean}
  */
-function isInvisibleFormat(code) {
+function isInvisible(char, code) {
   return (
-    (code >= 0x202a && code <= 0x202e) ||
-    (code >= 0x2066 && code <= 0x2069) ||
-    code === 0x200e ||
-    code === 0x200f ||
-    code === 0x061c ||
-    (code >= 0x200b && code <= 0x200d) ||
-    code === 0x2060 ||
-    code === 0xfeff
+    /\p{Cf}/u.test(char) ||
+    HANGUL_FILLERS.has(code) ||
+    (code >= 0xe0000 && code <= 0xe007f) ||
+    (code >= 0xe0100 && code <= 0xe01ef)
   );
 }
 
@@ -506,7 +512,7 @@ function isInvisibleFormat(code) {
  * the operator never wrote, and an ESC sequence could move the cursor up
  * and overwrite one (found in review of #28). So line breaks become `⏎`,
  * ESC becomes `␛`, a tab a space, and any other control, bidi override
- * or zero-width character `�`, in every message, from anyone.
+ * or other invisible character `�`, in every message, from anyone.
  *
  * @param {string} text
  * @returns {string}
@@ -521,7 +527,7 @@ export function visible(text) {
       out += "␛";
     } else if (code === 0x09) {
       out += " ";
-    } else if (isControl(code) || isInvisibleFormat(code)) {
+    } else if (isControl(code) || isInvisible(char, code)) {
       out += "�";
     } else {
       out += char;
