@@ -4,7 +4,8 @@ import { MAX_ATTRIBUTE_RANK, isAffordable } from "../attributes.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { getAttribute } from "../professions.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
-import { getSkill, RANGE_SPELL } from "../skills/catalog.js";
+import { RANGE_SPELL } from "../distances.js";
+import { getSkill } from "../skills/catalog.js";
 import { MISSING_MECHANIC_DESCRIPTIONS } from "../skills/coverage.js";
 import { armorMultiplier } from "../skills/damage.js";
 import { describeSkill } from "../skills/describe.js";
@@ -129,6 +130,19 @@ function arena(played: TrainingScenario, seed: string): MatchSimulation {
 
 describe("armor-ladder, headless", () => {
   const ladder = scenario("armor-ladder");
+
+  it("spaces its rungs wider than Fireball's splash", () => {
+    // A rung inside a neighbour's splash takes two hits, and the ladder
+    // stops being one hit per armor value.
+    const radius = getSkill(FIREBALL)?.area?.radius ?? Infinity;
+    for (const a of ladder.dummies) {
+      for (const b of ladder.dummies) {
+        if (a !== b) {
+          expect(distance(a.position, b.position), `${a.id}–${b.id}`).toBeGreaterThan(radius);
+        }
+      }
+    }
+  });
 
   /** One Fireball at each rung, waiting out the recharge in between. */
   function climb(seed: string): Record<string, number> {

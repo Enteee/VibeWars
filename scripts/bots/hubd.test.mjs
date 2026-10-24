@@ -598,18 +598,119 @@ describe("hubd pushing through its own mirror", () => {
     const hubd = await startHubd(5000);
     const { repo, remote } = hubd;
     // A remote with no main: fetching it fails, so there is nothing to diff
-    // against.
+    // against. cicd-engineer, because its pushes carry no guard: any other
+    // role's would be refused outright (#116).
     sh(["init", "--bare", "-q", remote], hubd.root);
-    sh(["init", "-q", "-b", "bot/developer-1/y", repo], hubd.root);
+    sh(["init", "-q", "-b", "bot/cicd-engineer/y", repo], hubd.root);
     fs.writeFileSync(path.join(repo, "README.md"), "x\n");
     sh(["add", "README.md"], repo);
     commit("only", repo);
 
-    const answer = await hubd.request("developer-1", "push", ["bot/developer-1/y"]);
+    const answer = await hubd.request("cicd-engineer", "push", ["bot/cicd-engineer/y"]);
 
     expect(answer.code, String(answer.stderr)).toBe(0);
     const audit = fs.readFileSync(path.join(hubd.hub, "audit.jsonl"), "utf8");
     expect(audit).toContain('"tag":"gate-change","paths":"unknown"');
+  }, 20_000);
+});
+
+describe("hubd and workflows (#116)", () => {
+  /** A remote whose main has CI's workflow and its local action. */
+  const withCi = async () => {
+    const hubd = await startHubd(5000);
+    const { repo, remote } = hubd;
+    sh(["init", "--bare", "-q", remote], hubd.root);
+    sh(["init", "-q", "-b", "main", repo], hubd.root);
+    for (const file of [".github/workflows/ci.yml", ".github/actions/devenv/action.yml"]) {
+      fs.mkdirSync(path.dirname(path.join(repo, file)), { recursive: true });
+      fs.writeFileSync(path.join(repo, file), "name: x\n");
+    }
+    sh(["add", "."], repo);
+    commit("main", repo);
+    sh(["push", "-q", remote, "main"], repo);
+    return hubd;
+  };
+  /**
+   * A branch off main with one change, pushed as `role`.
+   *
+   * @param {Awaited<ReturnType<typeof withCi>>} hubd
+   * @param {string} role
+   * @param {string} name
+   * @param {(repo: string) => void} change
+   */
+  const pushChange = (hubd, role, name, change) => {
+    sh(["checkout", "-q", "-b", `bot/${role}/${name}`, "main"], hubd.repo);
+    change(hubd.repo);
+    sh(["add", "-A"], hubd.repo);
+    commit(name, hubd.repo);
+    return hubd.request(role, "push", [`bot/${role}/${name}`]);
+  };
+  /** @param {string} file */
+  const add = (file) => (/** @type {string} */ repo) => {
+    fs.writeFileSync(path.join(repo, file), "on: push\npermissions:\n  checks: write\n");
+  };
+
+  it("refuses a new workflow from anyone but cicd-engineer", async () => {
+    const hubd = await withCi();
+
+    const refused = await pushChange(hubd, "developer-1", "wf", add(".github/workflows/x.yml"));
+    expect(refused.allow).toBe(false);
+    expect(String(refused.reason)).toBe(
+      "only cicd-engineer changes .github/workflows/ and .github/actions/; ask them on Telegram. This push changes: .github/workflows/x.yml",
+    );
+    expect(sh(["branch", "--list", "bot/developer-1/wf"], hubd.remote)).toBe("");
+
+    const allowed = await pushChange(hubd, "cicd-engineer", "wf", add(".github/workflows/x.yml"));
+    expect(allowed.code, String(allowed.stderr)).toBe(0);
+    expect(fs.readFileSync(path.join(hubd.hub, "audit.jsonl"), "utf8")).toContain(
+      '"tag":"gate-change"',
+    );
+  }, 30_000);
+
+  it("refuses a changed local action, and a workflow moved out", async () => {
+    const hubd = await withCi();
+
+    const action = await pushChange(
+      hubd,
+      "developer-2",
+      "action",
+      add(".github/actions/devenv/action.yml"),
+    );
+    expect(action.allow).toBe(false);
+    expect(String(action.reason)).toContain(".github/actions/devenv/action.yml");
+
+    const moved = await pushChange(hubd, "perf-sec-qa", "move", (repo) => {
+      sh(["mv", ".github/workflows/ci.yml", "ci.yml"], repo);
+    });
+    expect(moved.allow).toBe(false);
+    expect(String(moved.reason)).toContain(".github/workflows/ci.yml");
+
+    // Names git would C-quote without -z.
+    for (const [branch, file] of [
+      ["umlaut", ".github/workflows/ü.yml"],
+      ["quote", '.github/workflows/a"b.yml'],
+    ]) {
+      const quoted = await pushChange(hubd, "developer-1", branch, add(file));
+      expect(quoted.allow, file).toBe(false);
+      expect(String(quoted.reason)).toContain(file);
+    }
+
+    const elsewhere = await pushChange(hubd, "developer-1", "fine", add("README.md"));
+    expect(elsewhere.code, String(elsewhere.stderr)).toBe(0);
+  }, 30_000);
+
+  it("refuses when main cannot be fetched", async () => {
+    const hubd = await startHubd(5000);
+    sh(["init", "--bare", "-q", hubd.remote], hubd.root);
+    sh(["init", "-q", "-b", "bot/developer-1/y", hubd.repo], hubd.root);
+    fs.writeFileSync(path.join(hubd.repo, "README.md"), "x\n");
+    sh(["add", "README.md"], hubd.repo);
+    commit("only", hubd.repo);
+
+    const answer = await hubd.request("developer-1", "push", ["bot/developer-1/y"]);
+
+    expect(answer.allow).toBe(false);
+    expect(String(answer.reason)).toMatch(/could not compare this branch with main/);
   }, 20_000);
 });
 

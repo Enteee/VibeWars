@@ -49,6 +49,34 @@ export interface FloatingText {
   remainingSeconds: number;
 }
 
+/**
+ * Where an area skill landed (#5): a ring at its true radius in the
+ * caster's side's colour, fading out (docs/art/art-direction.md).
+ */
+export interface AreaFlash {
+  readonly id: number;
+  readonly position: Vec2;
+  readonly radius: number;
+  readonly colour: number;
+  /** Seconds of life remaining. */
+  readonly remainingSeconds: number;
+}
+
+/** How long a flash takes to fade from full to nothing. */
+export const AREA_FLASH_SECONDS = 0.4;
+
+/** Every flash `dt` seconds older, the faded ones gone. */
+export function decayAreaFlashes(flashes: readonly AreaFlash[], dt: number): AreaFlash[] {
+  return flashes
+    .map((flash) => ({ ...flash, remainingSeconds: flash.remainingSeconds - dt }))
+    .filter((flash) => flash.remainingSeconds > 0);
+}
+
+/** A flash's opacity: 1 when it lands, 0 when it is gone. */
+export function areaFlashAlpha(flash: AreaFlash): number {
+  return Math.max(0, Math.min(1, flash.remainingSeconds / AREA_FLASH_SECONDS));
+}
+
 export interface ArenaSnapshot {
   readonly actors: readonly RenderableActor[];
   readonly walls: readonly RenderableWall[];

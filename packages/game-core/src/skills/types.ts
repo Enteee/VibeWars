@@ -135,8 +135,26 @@ export interface Skill {
   readonly rechargeSeconds: number;
   /** Maximum distance to target, in world units. */
   readonly range: number;
+  /** What must be selected, and whether the cast is legal. */
   readonly target: TargetRule;
+  /** Who else is caught once it lands. `undefined`: only the target. */
+  readonly area: AreaRule | undefined;
   readonly effects: readonly SkillEffect[];
+}
+
+/**
+ * An area a skill also hits (ADR-0018). Orthogonal to `target`: Fireball
+ * is still a legal-single-enemy spell, with a splash.
+ */
+export interface AreaRule {
+  readonly radius: number;
+  /** Centred on the caster, or on the target it was cast at. */
+  readonly origin: "caster" | "target";
+  readonly affects: "enemies" | "allies" | "all";
+  /** At most this many hit, the primary target included. */
+  readonly maxTargets: number | undefined;
+  /** Whether the caster can be caught in its own area. */
+  readonly includesCaster: boolean;
 }
 
 /* -------------------------------------------------------------------------- */

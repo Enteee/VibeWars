@@ -2,7 +2,14 @@ import Phaser from "phaser";
 
 import { isStatusId, type StatusId } from "@vibewars/game-core";
 
-import { EMPTY_SNAPSHOT, healthFraction, teamColour } from "./arena-snapshot.js";
+import {
+  EMPTY_SNAPSHOT,
+  areaFlashAlpha,
+  decayAreaFlashes,
+  healthFraction,
+  teamColour,
+  type AreaFlash,
+} from "./arena-snapshot.js";
 import { STATUS_ICON, STATUS_ICON_SIZE, statusRowLayout } from "./status-icons.js";
 import type {
   ArenaSnapshot,
@@ -43,6 +50,7 @@ export class ArenaScene extends Phaser.Scene {
   private graphics: Phaser.GameObjects.Graphics | undefined;
   private snapshot: ArenaSnapshot = EMPTY_SNAPSHOT;
   private floatingTexts: FloatingText[] = [];
+  private areaFlashes: AreaFlash[] = [];
   private floatingTextObjects = new Map<number, Phaser.GameObjects.Text>();
   /**
    * Status icons per actor id, reused frame to frame: hidden when not
@@ -67,6 +75,11 @@ export class ArenaScene extends Phaser.Scene {
     this.floatingTexts.push(text);
   }
 
+  /** Flash where an area skill landed. */
+  public addAreaFlash(flash: AreaFlash): void {
+    this.areaFlashes.push(flash);
+  }
+
   public preload(): void {
     for (const [id, url] of Object.entries(STATUS_ICON)) {
       this.load.svg(statusTexture(id), url, {
@@ -89,6 +102,16 @@ export class ArenaScene extends Phaser.Scene {
     this.drawGrid(g);
     for (const wall of this.snapshot.walls) {
       this.drawWall(g, wall);
+    }
+    // Over the grid and walls, under the actors: a flash never hides a
+    // health bar, a status or the target ring.
+    this.areaFlashes = decayAreaFlashes(this.areaFlashes, deltaMs / 1000);
+    for (const flash of this.areaFlashes) {
+      const alpha = areaFlashAlpha(flash);
+      g.fillStyle(flash.colour, 0.12 * alpha);
+      g.fillCircle(flash.position.x, flash.position.y, flash.radius);
+      g.lineStyle(2, flash.colour, alpha);
+      g.strokeCircle(flash.position.x, flash.position.y, flash.radius);
     }
     for (const actor of this.snapshot.actors) {
       this.drawActor(g, actor);
@@ -288,6 +311,7 @@ function statusTexture(id: string): string {
 }
 
 export type {
+  AreaFlash,
   ArenaSnapshot,
   FloatingText,
   PolygonRenderableWall,

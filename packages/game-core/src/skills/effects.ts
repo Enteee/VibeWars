@@ -1,7 +1,9 @@
 import { mitigate, spellDamage } from "./damage.js";
 import { resolveMagnitude } from "./scaling.js";
 import type { StatusId } from "./status.js";
-import type { Combatant, SkillContext, SkillEffect } from "./types.js";
+import type { SimulationRng } from "../rng.js";
+import type { CombatRules } from "../ruleset.js";
+import type { Combatant, Skill, SkillContext, SkillEffect } from "./types.js";
 
 /**
  * Effect application (brief §6's composable effect list).
@@ -180,4 +182,49 @@ export function applyEffects(
   context: SkillContext,
 ): CombatEvent[] {
   return effects.flatMap((effect) => applyEffect(effect, context));
+}
+
+/**
+ * Whether an effect acts on its caster rather than on a target. Exhaustive,
+ * so a new effect kind is a compile error here until someone decides.
+ */
+function effectActsOnCaster(effect: SkillEffect): boolean {
+  switch (effect.kind) {
+    case "energy-gain":
+    case "sacrifice-health":
+      return true;
+    case "damage":
+    case "heal":
+    case "apply-status":
+    case "remove-status":
+    case "interrupt":
+      return false;
+  }
+}
+
+export interface SkillResolution {
+  readonly skill: Skill;
+  readonly caster: Combatant;
+  /** From `resolveTargets`: the primary first. */
+  readonly targets: readonly Combatant[];
+  readonly rng: SimulationRng;
+  readonly rules: CombatRules;
+}
+
+/**
+ * Apply a landed skill to every target it hit.
+ *
+ * Effects run in their listed order; one that acts on the caster fires
+ * exactly once however many targets were hit, and still fires when none
+ * were. With one target this is `applyEffects` exactly. Calling
+ * `applyEffects` once per target instead would pay `sacrifice-health`
+ * and grant `energy-gain` once per foe caught in a splash.
+ */
+export function applySkillEffects(resolution: SkillResolution): CombatEvent[] {
+  const { skill, caster, targets, rng, rules } = resolution;
+  return skill.effects.flatMap((effect) =>
+    effectActsOnCaster(effect)
+      ? applyEffect(effect, { caster, target: targets[0], rng, rules })
+      : targets.flatMap((target) => applyEffect(effect, { caster, target, rng, rules })),
+  );
 }

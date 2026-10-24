@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import { vec2 } from "@vibewars/game-core";
 
 import {
+  AREA_FLASH_SECONDS,
+  areaFlashAlpha,
+  decayAreaFlashes,
   actorAtPoint,
   healthFraction,
   teamColour,
@@ -106,5 +109,29 @@ describe("healthFraction", () => {
 
   it("does not divide by zero when maxHealth is zero", () => {
     expect(healthFraction(actor("a", 0, 0, 14, { health: 0, maxHealth: 0 }))).toBe(0);
+  });
+});
+
+describe("area flashes", () => {
+  const flash = {
+    id: 1,
+    position: vec2(0, 0),
+    radius: 81,
+    colour: 0,
+    remainingSeconds: AREA_FLASH_SECONDS,
+  };
+
+  it("fade from full to nothing over their lifetime, then are gone", () => {
+    expect(areaFlashAlpha(flash)).toBe(1);
+    const half = decayAreaFlashes([flash], AREA_FLASH_SECONDS / 2);
+    expect(half).toHaveLength(1);
+    expect(areaFlashAlpha(half[0] ?? flash)).toBeCloseTo(0.5);
+    expect(decayAreaFlashes(half, AREA_FLASH_SECONDS / 2)).toEqual([]);
+  });
+
+  it("never change their radius, and leave the input alone", () => {
+    const [older] = decayAreaFlashes([flash], 0.1);
+    expect(older?.radius).toBe(81);
+    expect(flash.remainingSeconds).toBe(AREA_FLASH_SECONDS);
   });
 });

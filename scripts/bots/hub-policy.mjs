@@ -71,6 +71,21 @@ const IMPLEMENTERS = [
  */
 export const PUSH_SCOPES = { manager: ".claude/bots/skills/" };
 
+/**
+ * Paths only some roles may change, and which (#116). A workflow, or a
+ * local action a workflow runs, executes as the same GitHub Actions app as
+ * real CI: pushed on a side branch nobody reviews, it could post a passing
+ * check run for another pull request's head. Every other role's pushes
+ * carry a `paths-outside:` guard that hubd checks against the branch's
+ * actual changes.
+ *
+ * @type {Readonly<Record<string, readonly string[]>>}
+ */
+export const RESTRICTED_PATHS = {
+  ".github/workflows/": ["cicd-engineer"],
+  ".github/actions/": ["cicd-engineer"],
+};
+
 /** Who may open and edit pull requests: whoever may push. */
 const PR_OPENERS = [...IMPLEMENTERS, ...Object.keys(PUSH_SCOPES)];
 
@@ -941,7 +956,14 @@ function authorizePush(role, argv) {
       return { allow: false, reason: `${flag} is never allowed` };
     }
   }
-  return scope === undefined ? { allow: true } : { allow: true, guards: [`paths-within:${scope}`] };
+  const guards = scope === undefined ? [] : [`paths-within:${scope}`];
+  const restricted = Object.keys(RESTRICTED_PATHS).filter(
+    (prefix) => RESTRICTED_PATHS[prefix]?.includes(role) !== true,
+  );
+  if (restricted.length > 0) {
+    guards.push(`paths-outside:${restricted.join(",")}`);
+  }
+  return guards.length === 0 ? { allow: true } : { allow: true, guards };
 }
 
 /**
