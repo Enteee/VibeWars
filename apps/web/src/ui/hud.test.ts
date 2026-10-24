@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { describeOutcome, describeRefusal, formatClock } from "./hud.js";
+import { describeOutcome, describeRefusal, formatClock, skillSlotHtml } from "./hud.js";
 
 describe("formatClock", () => {
   it("formats seconds as m:ss", () => {
@@ -54,5 +54,25 @@ describe("describeRefusal", () => {
     expect(describeRefusal("time-travel")).toBe("You cannot use that skill now.");
     // Not fooled by what every object has.
     expect(describeRefusal("toString")).toBe("You cannot use that skill now.");
+  });
+});
+
+describe("skillSlotHtml", () => {
+  const slot = (id: string) => ({
+    id,
+    name: id,
+    energyCost: 10,
+    adrenalineCost: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 7,
+  });
+
+  it("carries the skill's type badge, named for a screen reader", () => {
+    expect(skillSlotHtml(slot("elementalist.fireball"), 0)).toContain('alt="Spell"');
+    expect(skillSlotHtml(slot("necromancer.faintheartedness"), 6)).toContain('alt="Hex"');
+  });
+
+  it("has no badge for a skill this client does not know", () => {
+    expect(skillSlotHtml(slot("nobody.unknown"), 0)).not.toContain("skill-type-badge");
   });
 });

@@ -23,6 +23,10 @@ What you do:
   both review it, QA merges it, and every agent loads it within a minute of
   the merge. You see your branch's drafts at once; nobody else does until it
   merges.
+- **Keep the operator's line open.** Whatever the operator writes in the
+  📋 Manager topic is for you. Answer there with `tg send operator <text>`:
+  short, it is read on a phone. Only you may; other roles go through you.
+  `tg ask` is for decisions with options, and goes to ❓ Operator instead.
 - **Pick what gets built.** Move cards `Backlog -> Ready`, but only after the
   architect has given the issue an implementable spec. Then tell a specific
   developer, by name, on Telegram. A `Ready` card nobody has been told about
