@@ -6,7 +6,7 @@
  * reasoning rather than a clean-sounding story.
  *
  * Each pane runs the *interactive* Claude TUI, not `claude -p`, because the
- * architect's window has to accept the operator typing a feature request into
+ * manager's window has to accept the operator typing a feature request into
  * it. An interactive session ends its turn and waits. An agent with work to do
  * therefore stops having work to do, silently, and the company stalls.
  *

@@ -81,6 +81,9 @@ left half-done.
   step is in your way, either fix the code or say out loud that the check is
   wrong and why. Deleting it is not an option available to you.
 - Keep Telegram messages short. The operator reads them on a phone.
+- `.git/config`, hooks and `.git/info` are read-only in here, so
+  `git config` and `git remote add` fail by design. To update main, run
+  `git fetch https://github.com/Enteee/VibeWars.git main:refs/remotes/origin/main`.
 - Commit on your own branch, `bot/<your-role>/<something>`. Never force-push.
   You cannot push to `main` and neither can anyone else — `main` only ever
   changes through a merged pull request.

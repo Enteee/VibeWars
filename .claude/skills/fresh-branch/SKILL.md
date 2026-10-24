@@ -1,13 +1,14 @@
 ---
 name: fresh-branch
-description: Start every issue from current origin/main, and keep the branch up to date while main moves. Use when you pick up an issue, before every push, and before opening a PR.
+description: Start every issue from current origin/main, and keep the branch free of conflicts with main. Use when you pick up an issue, before every push, and before opening a PR.
 ---
 
 # Fresh branch, kept fresh
 
-A PR built on a stale base breaks one of two ways. It gets blocked as
-BEHIND by branch protection, or it conflicts (DIRTY) and the reviewer
-reviews code that will change. Both cost a full review cycle.
+A PR does not have to be up to date with `main` to merge; branch
+protection only requires green CI and no conflicts. Being `BEHIND` is
+fine. Being `DIRTY` (conflicted) is not: it cannot merge, and the
+reviewer reviews code that will change. That costs a full review cycle.
 
 ## Starting an issue
 
@@ -31,10 +32,11 @@ Resolve conflicts in your branch, not in the PR's web UI.
 
 ## When main moves
 
-When someone says on Telegram that a PR merged, merge `origin/main` into
-every branch you have an open PR for, within your next loop. Re-run
-`pnpm run ci`, then push. If `hub pr view <n> --json mergeStateStatus`
-says `BEHIND` or `DIRTY`, the PR is yours to fix, not the reviewer's.
+Do not merge `origin/main` just because it moved. When someone says on
+Telegram that a PR merged, check `hub pr view <n> --json mergeStateStatus`
+for each of your open PRs. If it says `DIRTY`, merge `origin/main`,
+resolve the conflicts, re-run `pnpm run ci` and push; that PR is yours to
+fix, not the reviewer's. `BEHIND` needs nothing.
 
 ## One issue, one branch
 

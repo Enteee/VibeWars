@@ -372,6 +372,8 @@ class Company {
     this.registry = readRegistry(at.registry);
     this.repo = readRepo(at.company);
     this.questions = readQuestions(at.questions);
+    /** The operator's Telegram user id; set by `findOperator` before serving. */
+    this.operatorId = 0;
   }
 
   saveQuestions() {
@@ -405,6 +407,31 @@ class Company {
       );
       return null;
     }
+  }
+
+  /**
+   * Who the operator is: the group's creator. Only their messages are
+   * delivered, and only they get the `*` mark (review of #28), so this is
+   * asked of Telegram rather than taken from config that could drift.
+   *
+   * @returns {Promise<void>}
+   */
+  async findOperator() {
+    const admins = /** @type {unknown[]} */ (
+      await api(this.token, "getChatAdministrators", { chat_id: this.chatId })
+    );
+    for (const raw of admins) {
+      const member = obj(raw);
+      const user = obj(member.user);
+      if (member.status === "creator" && typeof user.id === "number") {
+        this.operatorId = user.id;
+        return;
+      }
+    }
+    throw new Error(
+      "the company group has no creator Telegram will name, so there is nobody to " +
+        "treat as the operator. Nothing is delivered without one.",
+    );
   }
 
   save() {
@@ -480,6 +507,7 @@ async function pollInbound(company, mirror) {
         }
         const answer = routeAnswer(raw, company.questions, {
           chatId: company.chatId,
+          operatorId: company.operatorId,
           operatorTopicId,
           now: Date.now(),
         });
@@ -489,6 +517,7 @@ async function pollInbound(company, mirror) {
         }
         const routed = routeInbound(raw, {
           chatId: company.chatId,
+          operatorId: company.operatorId,
           topics: owners,
           roles: ROLES,
           ...(operatorTopicId === null ? {} : { operatorTopicId }),
@@ -771,6 +800,7 @@ async function serve() {
   process.on("SIGTERM", release);
 
   const company = new Company(at, token, chatId);
+  await company.findOperator();
   for (const role of ROLES) {
     ensureBus(at.bus, role);
   }

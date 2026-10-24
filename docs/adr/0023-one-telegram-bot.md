@@ -69,6 +69,12 @@ goes to everyone, so nothing is silently dropped. Messages from bots are
 ignored: the old per-role bots may still sit in the group, and a bot's
 message read as human would carry the operator's `*` mark.
 
+**Only the operator is heard.** The operator is the group's creator, as
+Telegram reports it (`getChatAdministrators`) when the sidecar starts.
+Messages from anyone else in the group are dropped, so the `*` mark cannot
+be had by joining the group. With no creator to name, the sidecar refuses
+to start.
+
 **The mirror is paced, agents are not.** One bot may post about 20
 messages a minute into one group, and the company now shares that. The
 sidecar queues the copies and sends 18 per rolling minute, at least 1.1 s
