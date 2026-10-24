@@ -38,6 +38,9 @@ async function fakeTelegram() {
   const updates = [];
   /** @type {Record<string, unknown>[]} */
   const sent = [];
+  /** Every call other than getUpdates and sendMessage, in order. */
+  /** @type {{ method: string, params: Record<string, unknown> }[]} */
+  const calls = [];
   let topics = 100;
   let nextUpdate = 1;
 
@@ -59,6 +62,9 @@ async function fakeTelegram() {
       } else if (method === "createForumTopic") {
         topics += 1;
         result = { message_thread_id: topics };
+        calls.push({ method, params });
+      } else {
+        calls.push({ method: method ?? "", params });
       }
       const reply = () => {
         res.setHeader("content-type", "application/json");
@@ -82,6 +88,15 @@ async function fakeTelegram() {
   return {
     url: `http://127.0.0.1:${String(port)}`,
     sent,
+    calls,
+    /**
+     * Queue a raw update, such as a button tap.
+     *
+     * @param {Record<string, unknown>} raw
+     */
+    pushUpdate(raw) {
+      updates.push({ update_id: (nextUpdate += 1), ...raw });
+    },
     /**
      * Queue one message from a human in the group.
      *
@@ -170,6 +185,40 @@ function company(telegram, registry, companyJson = JSON.stringify({ repo: "Entee
       const name = `${String(Date.now())}-${String(next).padStart(4, "0")}.json`;
       fs.writeFileSync(path.join(outbox, `.${name}`), JSON.stringify({ to, text }));
       fs.renameSync(path.join(outbox, `.${name}`), path.join(outbox, name));
+    },
+    /**
+     * `tg ask`'s outbox entry, as the agent in `from` would write it.
+     *
+     * @param {string} from
+     * @param {string} text
+     * @param {string[]} options
+     * @returns {string} the entry's name, which its receipt is named after
+     */
+    ask(from, text, options) {
+      const outbox = path.join(bus, from, "outbox");
+      fs.mkdirSync(outbox, { recursive: true });
+      next += 1;
+      const name = `${String(Date.now())}-${String(next).padStart(4, "0")}.json`;
+      fs.writeFileSync(
+        path.join(outbox, `.${name}`),
+        JSON.stringify({ kind: "ask", text, options }),
+      );
+      fs.renameSync(path.join(outbox, `.${name}`), path.join(outbox, name));
+      return name;
+    },
+    /**
+     * @param {string} role
+     * @param {string} name
+     * @returns {Record<string, unknown> | null}
+     */
+    receipt(role, name) {
+      try {
+        /** @type {unknown} */
+        const parsed = JSON.parse(fs.readFileSync(path.join(bus, role, "receipts", name), "utf8"));
+        return /** @type {Record<string, unknown>} */ (parsed);
+      } catch {
+        return null;
+      }
     },
     /**
      * @param {string} role
@@ -342,6 +391,112 @@ describe("the company sidecar", () => {
     await until(() => co.inbox("qa-tester").length === 1, "the delivery");
     await until(() => co.inbox("manager").length === 1, "the notice");
     expect(String(co.inbox("manager")[0]?.text)).toMatch(/not running right now/);
+  }, 20_000);
+
+  it("posts a question in the Operator topic and brings the tapped answer back to the asker", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    co.start();
+
+    const name = co.ask("architect", "Keep the slot?", ["Keep", "Free"]);
+
+    await until(() => co.receipt("architect", name) !== null, "the receipt");
+    expect(co.receipt("architect", name)).toEqual({ question: 1 });
+    await until(() => telegram.sent.length === 1, "the question");
+    const posted = telegram.sent[0] ?? {};
+    expect(telegram.calls[0]).toEqual({
+      method: "createForumTopic",
+      params: { chat_id: CHAT, name: "❓ Operator" },
+    });
+    expect(posted.message_thread_id).toBe(101);
+    expect(posted.reply_markup).toEqual({
+      inline_keyboard: [
+        [{ text: "Keep", callback_data: "q:1:0" }],
+        [{ text: "Free", callback_data: "q:1:1" }],
+      ],
+    });
+    await until(
+      () =>
+        fs
+          .readFileSync(path.join(co.root, "link", "questions.json"), "utf8")
+          .includes('"messageId": 1'),
+      "the question's message id",
+    );
+
+    telegram.pushUpdate({
+      callback_query: {
+        id: "cb1",
+        from: { id: 9, is_bot: false, username: "operator" },
+        data: "q:1:1",
+        message: { message_id: 1, chat: { id: Number(CHAT) } },
+      },
+    });
+
+    await until(() => co.inbox("architect").length === 1, "the answer");
+    expect(co.inbox("architect")[0]).toMatchObject({
+      kind: "human",
+      text: 'answer to Q1 ("Keep the slot?"): Free',
+    });
+    expect(co.inbox("manager")).toEqual([]);
+    await until(() => telegram.calls.some((c) => c.method === "editMessageText"), "the edit");
+    expect(telegram.calls.find((c) => c.method === "answerCallbackQuery")?.params).toEqual({
+      callback_query_id: "cb1",
+    });
+    const edit = telegram.calls.find((c) => c.method === "editMessageText")?.params ?? {};
+    expect(edit.message_id).toBe(1);
+    expect(String(edit.text)).toMatch(/✅ Answered: Free$/);
+    expect(edit.reply_markup).toBeUndefined();
+  }, 20_000);
+
+  it("refuses a question from a role that may not ask, with a receipt saying why", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    co.start();
+
+    const name = co.ask("developer-1", "May I?", []);
+
+    await until(() => co.receipt("developer-1", name) !== null, "the receipt");
+    expect(String(co.receipt("developer-1", name)?.error)).toMatch(/Ask the manager/);
+    expect(String(co.inbox("developer-1")[0]?.text)).toMatch(/NOT posted/);
+    expect(telegram.sent).toEqual([]);
+  }, 20_000);
+
+  it("still answers a question that was open across a restart", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(
+      telegram.url,
+      JSON.stringify({ offset: 0, roles: {}, operator: { topicId: 77 } }),
+    );
+    fs.mkdirSync(path.join(co.root, "link"), { recursive: true });
+    fs.writeFileSync(
+      path.join(co.root, "link", "questions.json"),
+      JSON.stringify({
+        next: 5,
+        questions: {
+          4: {
+            from: "lead-dev",
+            text: "Merge #49?",
+            options: ["Yes", "No"],
+            messageId: 321,
+            answered: false,
+          },
+        },
+      }),
+    );
+    co.start();
+
+    telegram.pushUpdate({
+      callback_query: {
+        id: "cb2",
+        from: { id: 9, is_bot: false, username: "operator" },
+        data: "q:4:0",
+        message: { message_id: 321, chat: { id: Number(CHAT) } },
+      },
+    });
+
+    await until(() => co.inbox("lead-dev").length === 1, "the answer");
+    expect(co.inbox("lead-dev")[0]?.text).toBe('answer to Q4 ("Merge #49?"): Yes');
+    await until(() => telegram.calls.some((c) => c.method === "editMessageText"), "the edit");
   }, 20_000);
 
   it("lets only one sidecar run per company", async () => {

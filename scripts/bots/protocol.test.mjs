@@ -14,10 +14,14 @@ import { describe, expect, it } from "vitest";
 
 import {
   MAX_MESSAGE_CHARS,
+  OPERATOR_HINT,
   ROLE_STYLE,
   deliverPeer,
   formatLine,
   formatMirror,
+  formatQuestion,
+  parseQuestions,
+  routeAnswer,
   isReadyOutboxEntry,
   parseRegistry,
   planSends,
@@ -53,6 +57,33 @@ function update(message) {
     },
   };
 }
+
+describe("parseRegistry and the Operator topic", () => {
+  it("reads the Operator topic, and treats a missing one as not created yet", () => {
+    const text = JSON.stringify({ offset: 1, roles: {}, operator: { topicId: 77 } });
+    expect(parseRegistry(text)).toEqual({
+      registry: { offset: 1, roles: {}, operator: { topicId: 77 } },
+    });
+    expect(parseRegistry(JSON.stringify({ offset: 1, roles: {} }))).toEqual({
+      registry: { offset: 1, roles: {} },
+    });
+  });
+
+  it("refuses a malformed Operator entry", () => {
+    expect(
+      "error" in parseRegistry(JSON.stringify({ offset: 1, roles: {}, operator: { id: 7 } })),
+    ).toBe(true);
+  });
+
+  it("still refuses the per-role-bot format", () => {
+    const old = JSON.stringify({
+      offset: 0,
+      roles: { architect: { topicId: 11, token: "x" } },
+      operator: { topicId: 77 },
+    });
+    expect("error" in parseRegistry(old)).toBe(true);
+  });
+});
 
 describe("parseRegistry", () => {
   it("starts a fresh company when there is no registry yet", () => {
@@ -330,6 +361,240 @@ describe("ROLE_STYLE", () => {
   });
 });
 
+describe("questions for the operator", () => {
+  const base = { roles: ROLES, present: new Set(ROLES), now: 1000 };
+  /**
+   * @param {string} from
+   * @param {unknown} entry
+   */
+  const ask = (from, entry) => deliverPeer({ kind: "ask", ...obj(entry) }, { ...base, from });
+  /** @param {unknown} value */
+  function obj(value) {
+    return /** @type {Record<string, unknown>} */ (value);
+  }
+
+  it("accepts a question from an asker, delivering it to nobody", () => {
+    const delivered = ask("architect", { text: "keep the slot?", options: ["Keep", "Free"] });
+    expect(delivered.question).toEqual({
+      from: "architect",
+      text: "keep the slot?",
+      options: ["Keep", "Free"],
+    });
+    expect(delivered.deliveries).toEqual([]);
+    expect(delivered.mirror).toBeNull();
+    expect(delivered.notice).toBeNull();
+  });
+
+  it("refuses a question from a role that is not an asker, telling it whom to ask", () => {
+    const delivered = ask("developer-1", { text: "can I?", options: [] });
+    expect(delivered.question).toBeNull();
+    expect(delivered.mirror).toBeNull();
+    expect(delivered.notice?.text).toMatch(/NOT posted.*Ask the manager/);
+  });
+
+  it.each([
+    ["seven options", { text: "q", options: ["1", "2", "3", "4", "5", "6", "7"] }, /at most 6/],
+    ["a 41-character option", { text: "q", options: ["x".repeat(41)] }, /1-40 characters/],
+    ["an empty question", { text: "  ", options: [] }, /empty/],
+    ["options that are not strings", { text: "q", options: [1] }, /list of strings/],
+  ])("refuses %s", (_, entry, reason) => {
+    const delivered = ask("manager", entry);
+    expect(delivered.question).toBeNull();
+    expect(delivered.notice?.text).toMatch(reason);
+  });
+
+  it("posts a question with one button per row, data within Telegram's 64 bytes", () => {
+    const question = {
+      from: "architect",
+      text: "Keep the slot for 30 s?",
+      options: ["Keep for 30 s", "Free it"],
+    };
+    const posted = formatQuestion(7, question);
+    expect(posted.text).toBe(
+      "❓ 🧭 Architect asks · Q7\nKeep the slot for 30 s?\nTap an option, or reply to this message to answer in your own words.",
+    );
+    expect(covered({ text: posted.text, entities: posted.entities })).toEqual([
+      "bold:Architect",
+      "blockquote:Keep the slot for 30 s?",
+    ]);
+    expect(posted.replyMarkup).toEqual({
+      inline_keyboard: [
+        [{ text: "Keep for 30 s", callback_data: "q:7:0" }],
+        [{ text: "Free it", callback_data: "q:7:1" }],
+      ],
+    });
+    const huge = formatQuestion(Number.MAX_SAFE_INTEGER, {
+      ...question,
+      options: ["1", "2", "3", "4", "5", "6"],
+    });
+    for (const [button] of huge.replyMarkup?.inline_keyboard ?? []) {
+      expect(Buffer.byteLength(button?.callback_data ?? "", "utf8")).toBeLessThanOrEqual(64);
+    }
+  });
+
+  it("shows an answered question without buttons", () => {
+    const answered = formatQuestion(
+      7,
+      { from: "lead-dev", text: "Merge?", options: ["Yes"] },
+      "Yes",
+    );
+    expect(answered.text.endsWith("\n✅ Answered: Yes")).toBe(true);
+    expect(answered.replyMarkup).toBeUndefined();
+  });
+
+  it("round-trips the question store, and refuses another shape", () => {
+    const store = {
+      next: 8,
+      questions: {
+        7: { from: "architect", text: "q", options: ["a"], messageId: 500, answered: false },
+      },
+    };
+    expect(parseQuestions(JSON.stringify(store))).toEqual({ store });
+    expect(parseQuestions(null)).toEqual({ store: { next: 1, questions: {} } });
+    expect(
+      "error" in parseQuestions(JSON.stringify({ next: 1, questions: { 1: { from: "x" } } })),
+    ).toBe(true);
+  });
+});
+
+describe("routeAnswer", () => {
+  const OPERATOR_TOPIC = 77;
+  const QUESTION_MESSAGE = 500;
+  const context = { chatId: CHAT, operatorTopicId: OPERATOR_TOPIC, now: 5000 };
+  /** @param {boolean} answered */
+  const store = (answered) => ({
+    next: 8,
+    questions: {
+      7: {
+        from: "architect",
+        text: "Should reconnects keep the slot?",
+        options: ["Keep for 30 s", "Free immediately"],
+        messageId: QUESTION_MESSAGE,
+        answered,
+      },
+    },
+  });
+  /**
+   * @param {string} data
+   * @param {Record<string, unknown>} [from]
+   */
+  const tap = (data, from = { id: 9, is_bot: false, username: "operator" }) => ({
+    update_id: 600,
+    callback_query: {
+      id: "cb1",
+      from,
+      data,
+      message: { message_id: QUESTION_MESSAGE, chat: { id: Number(CHAT) } },
+    },
+  });
+  /**
+   * @param {string} text
+   * @param {number | undefined} replyTo
+   */
+  const say = (text, replyTo) =>
+    update({
+      message_id: 900,
+      text,
+      message_thread_id: OPERATOR_TOPIC,
+      ...(replyTo === undefined ? {} : { reply_to_message: { message_id: replyTo } }),
+    });
+
+  it("delivers a tap to the asker only, acknowledges it, and closes the question", () => {
+    const routed = routeAnswer(tap("q:7:0"), store(false), context);
+    expect(routed?.deliveries).toEqual([
+      {
+        role: "architect",
+        line: {
+          ts: 5000,
+          from: "@operator",
+          kind: "human",
+          text: 'answer to Q7 ("Should reconnects keep the slot?"): Keep for 30 s',
+          topicId: OPERATOR_TOPIC,
+          messageId: 0,
+        },
+      },
+    ]);
+    expect(routed?.immediate).toEqual([
+      { method: "answerCallbackQuery", params: { callback_query_id: "cb1" } },
+    ]);
+    expect(routed?.paced).toHaveLength(1);
+    expect(routed?.paced[0]?.edit).toBe(QUESTION_MESSAGE);
+    expect(routed?.paced[0]?.text.endsWith("✅ Answered: Keep for 30 s")).toBe(true);
+    expect(routed?.paced[0]?.replyMarkup).toBeUndefined();
+    expect(routed?.answered?.question.answered).toBe(true);
+  });
+
+  it("delivers a reply to the asker only, and shows an excerpt on the question", () => {
+    const routed = routeAnswer(
+      say("Keep it,\nbut only for 10 s", QUESTION_MESSAGE),
+      store(false),
+      context,
+    );
+    expect(routed?.deliveries.map((d) => d.role)).toEqual(["architect"]);
+    expect(routed?.deliveries[0]?.line.text).toBe(
+      'answer to Q7 ("Should reconnects keep the slot?"): Keep it,\nbut only for 10 s',
+    );
+    expect(routed?.paced[0]?.text.endsWith("✅ Answered: Keep it, but only for 10 s")).toBe(true);
+    expect(routed?.answered?.n).toBe(7);
+  });
+
+  it("makes a second reply a follow-up to the same asker", () => {
+    const routed = routeAnswer(say("and log it", QUESTION_MESSAGE), store(true), context);
+    expect(routed?.deliveries.map((d) => d.role)).toEqual(["architect"]);
+    expect(routed?.deliveries[0]?.line.text).toMatch(/^follow-up to Q7/);
+    expect(routed?.paced).toEqual([]);
+    expect(routed?.answered).toBeNull();
+  });
+
+  it("hints once, and delivers to nobody, for a message that answers nothing", () => {
+    // In a forum, a plain message replies to the topic's first message.
+    for (const replyTo of [undefined, OPERATOR_TOPIC]) {
+      const routed = routeAnswer(say("hello?", replyTo), store(false), context);
+      expect(routed?.deliveries).toEqual([]);
+      expect(routed?.paced).toEqual([{ text: OPERATOR_HINT, entities: [], replyTo: 900 }]);
+    }
+  });
+
+  it("only toasts on a second tap", () => {
+    const routed = routeAnswer(tap("q:7:1"), store(true), context);
+    expect(routed?.deliveries).toEqual([]);
+    expect(routed?.paced).toEqual([]);
+    expect(routed?.answered).toBeNull();
+    expect(routed?.immediate).toEqual([
+      {
+        method: "answerCallbackQuery",
+        params: { callback_query_id: "cb1", text: "Q7 is already answered" },
+      },
+    ]);
+  });
+
+  it.each([["q:8:0"], ["q:7:2"], ["q:abc:9"], ["q:7:-1"], ["7:0"], [""]])(
+    "changes nothing for button data %j",
+    (data) => {
+      const routed = routeAnswer(tap(data), store(false), context);
+      expect(routed?.deliveries).toEqual([]);
+      expect(routed?.paced).toEqual([]);
+      expect(routed?.answered).toBeNull();
+    },
+  );
+
+  it("ignores a tap that a bot made", () => {
+    const routed = routeAnswer(tap("q:7:0", { id: 1, is_bot: true }), store(false), context);
+    expect(routed).toEqual({ deliveries: [], immediate: [], paced: [], answered: null });
+  });
+
+  it("leaves everything outside the Operator topic to routeInbound", () => {
+    expect(routeAnswer(update({ message_thread_id: 11 }), store(false), context)).toBeNull();
+    expect(routeAnswer(update({}), store(false), context)).toBeNull();
+  });
+
+  it("is never routed to everyone by routeInbound", () => {
+    expect(
+      routeInbound(say("x", undefined), { ...CONTEXT, operatorTopicId: OPERATOR_TOPIC }),
+    ).toBeNull();
+  });
+});
+
 describe("planSends", () => {
   const NOW = 1_000_000;
   /**
@@ -372,6 +637,22 @@ describe("planSends", () => {
     const big = "x".repeat(MAX_MESSAGE_CHARS - 10);
     const plan = planSends([q(1, big), q(1, "this does not fit")], sent, NOW);
     expect(plan.batch?.count).toBe(1);
+  });
+
+  it("never joins a question, an edit or a reply with anything", () => {
+    const sent = Array.from({ length: 17 }, (_, i) => NOW - 40_000 + i * 1000);
+    const markup = { inline_keyboard: [[{ text: "Yes", callback_data: "q:1:0" }]] };
+    const question = { ...q(1, "question"), replyMarkup: markup, question: 1 };
+    const edit = { ...q(1, "edited"), edit: 500 };
+
+    const first = planSends([q(1, "a"), question, q(1, "b")], sent, NOW);
+    expect(first.batch).toMatchObject({ text: "a", count: 1 });
+
+    const second = planSends([question, q(1, "b"), q(1, "c")], sent, NOW);
+    expect(second.batch).toEqual({ ...question, count: 1 });
+
+    const third = planSends([edit, q(1, "b")], sent, NOW);
+    expect(third.batch).toEqual({ ...edit, count: 1 });
   });
 
   it("shifts every entity when it coalesces formatted messages", () => {

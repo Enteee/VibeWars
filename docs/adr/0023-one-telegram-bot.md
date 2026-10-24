@@ -77,10 +77,32 @@ one, a blank line apart, up to 4,096 characters, moving each message's
 entities with it. It never merges different topics, never
 reorders, and honours `retry_after`.
 
+**An Operator topic for questions** (added by issue #47). Agents that need
+a decision had nowhere to ask: a question got lost in peer chatter, and in
+General the answer reached every role. `tg ask` posts a question in a
+**❓ Operator** topic, created on first use, with each option as a button.
+The operator taps one or replies to the question. Only questions are posted
+there.
+
+- **Only `ASKERS` may ask:** manager, architect and lead-dev. It is a
+  permission, so it changes by pull request, and everyone else goes through
+  the manager.
+- **The answer is delivered only to the asker,** as an operator line (`*`).
+  A decision is for the role that asked. Broadcast, every role would read
+  it and some would act on it.
+- A tap counts only if a human pressed it, the same rule as for messages.
+  The question is then edited to show the answer, with the buttons removed.
+- A message in the topic that answers no question goes to no one and gets a
+  one-line hint back. One silently handed to an agent would be worse than
+  one that bounces.
+- Questions are numbered from `link/questions.json`, which survives a
+  restart, so an open question can still be answered after one.
+  `registry.json` gains `operator: { topicId }`, absent until created.
+
 **No provisioning.** The Managed Bots flow, per-role tokens, username
 suggestions and the at-mention that got around privacy mode are deleted,
 not kept alongside ([ADR-0016](0016-no-backwards-compatibility.md)).
-`registry.json` is now `{ offset, roles: { <role>: { topicId } } }`. Any
+`registry.json` is now `{ offset, roles: { <role>: { topicId } }, operator? }`. Any
 other shape is refused with a one-line `jq` command that keeps the
 existing topics. A role's topic is created the first time it is needed.
 

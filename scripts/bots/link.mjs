@@ -35,13 +35,24 @@ import { ROLES } from "./hub-policy.mjs";
 import {
   deliverPeer,
   formatMirror,
+  formatQuestion,
   isReadyOutboxEntry,
   obj,
+  parseQuestions,
   parseRegistry,
   planSends,
   retryDelay,
+  routeAnswer,
   routeInbound,
 } from "./protocol.mjs";
+
+/**
+ * Something for the mirror to send: a peer message still to be formatted, or
+ * an item for the Operator topic (a question, an edit of one, a hint).
+ *
+ * @typedef {{ peer: import("./protocol.mjs").Mirrored }
+ *   | { operator: Omit<import("./protocol.mjs").Queued, "topicId"> }} Outgoing
+ */
 
 /** Overridable so link.test.mjs can stand a fake Telegram in for the real one. */
 const API = process.env.VIBEWARS_TELEGRAM_API ?? "https://api.telegram.org";
@@ -72,7 +83,7 @@ function required(name) {
  * Resolved lazily so that `presence`, which needs no token, does not demand
  * one.
  *
- * @returns {{ root: string, bus: string, link: string, registry: string, company: string }}
+ * @returns {{ root: string, bus: string, link: string, registry: string, company: string, questions: string }}
  */
 function paths() {
   const root = required("VIBEWARS_BOT_ROOT");
@@ -82,6 +93,7 @@ function paths() {
     link: path.join(root, "link"),
     registry: path.join(root, "registry.json"),
     company: path.join(root, "company.json"),
+    questions: path.join(root, "link", "questions.json"),
   };
 }
 
@@ -205,19 +217,31 @@ function readRepo(file) {
 
 /**
  * @param {string} file
- * @param {import("./protocol.mjs").Registry} registry
+ * @param {unknown} value
  * @returns {void}
  */
-function writeRegistry(file, registry) {
+function writeAtomically(file, value) {
   const tmp = `${file}.tmp`;
-  fs.writeFileSync(tmp, `${JSON.stringify(registry, null, 2)}\n`, { mode: 0o600 });
+  fs.writeFileSync(tmp, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600 });
   fs.renameSync(tmp, file);
+}
+
+/**
+ * @param {string} file
+ * @returns {import("./protocol.mjs").QuestionStore}
+ */
+function readQuestions(file) {
+  const parsed = parseQuestions(fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null);
+  if ("error" in parsed) {
+    throw new Error(`${file}: ${parsed.error}`);
+  }
+  return parsed.store;
 }
 
 /**
  * @param {string} bus
  * @param {string} role
- * @returns {{ dir: string, inbox: string, outbox: string, roster: string }}
+ * @returns {{ dir: string, inbox: string, outbox: string, receipts: string, roster: string }}
  */
 function busPaths(bus, role) {
   const dir = path.join(bus, role);
@@ -225,6 +249,8 @@ function busPaths(bus, role) {
     dir,
     inbox: path.join(dir, "inbox.jsonl"),
     outbox: path.join(dir, "outbox"),
+    // The sidecar's answer to each `tg ask`, named after its outbox entry.
+    receipts: path.join(dir, "receipts"),
     roster: path.join(bus, "roster", `${role}.json`),
   };
 }
@@ -345,10 +371,44 @@ class Company {
     this.chatId = chatId;
     this.registry = readRegistry(at.registry);
     this.repo = readRepo(at.company);
+    this.questions = readQuestions(at.questions);
+  }
+
+  saveQuestions() {
+    writeAtomically(this.at.questions, this.questions);
+  }
+
+  /**
+   * The Operator topic, created on first use like a role's.
+   *
+   * @returns {Promise<number | null>} `null` if Telegram would not create it
+   */
+  async operatorTopic() {
+    const known = this.registry.operator?.topicId;
+    if (known !== undefined) {
+      return known;
+    }
+    try {
+      const created = obj(
+        await api(this.token, "createForumTopic", { chat_id: this.chatId, name: "❓ Operator" }),
+      );
+      if (typeof created.message_thread_id !== "number") {
+        return null;
+      }
+      this.registry.operator = { topicId: created.message_thread_id };
+      this.save();
+      console.error("[link] created the Operator topic");
+      return created.message_thread_id;
+    } catch (error) {
+      console.error(
+        `[link] could not create the Operator topic: ${error instanceof Error ? error.message : ""}`,
+      );
+      return null;
+    }
   }
 
   save() {
-    writeRegistry(this.at.registry, this.registry);
+    writeAtomically(this.at.registry, this.registry);
   }
 
   /** @returns {Map<number, string>} topic id to the role that owns it */
@@ -393,10 +453,14 @@ class Company {
 /**
  * Operator messages, from Telegram into the inboxes they are for.
  *
+ * Answers in the Operator topic go to `routeAnswer` first; everything else
+ * to `routeInbound`.
+ *
  * @param {Company} company
+ * @param {Outgoing[]} mirror edits and hints for the Operator topic go here
  * @returns {Promise<never>}
  */
-async function pollInbound(company) {
+async function pollInbound(company, mirror) {
   let backoff = 1000;
   for (;;) {
     try {
@@ -404,16 +468,31 @@ async function pollInbound(company) {
         await api(company.token, "getUpdates", {
           offset: company.registry.offset,
           timeout: LONG_POLL_SECONDS,
-          allowed_updates: ["message"],
+          allowed_updates: ["message", "callback_query"],
         })
       );
       const owners = company.topicOwners();
+      const operatorTopicId = company.registry.operator?.topicId ?? null;
       for (const raw of updates) {
         const update = obj(raw);
         if (typeof update.update_id === "number") {
           company.registry.offset = update.update_id + 1;
         }
-        const routed = routeInbound(raw, { chatId: company.chatId, topics: owners, roles: ROLES });
+        const answer = routeAnswer(raw, company.questions, {
+          chatId: company.chatId,
+          operatorTopicId,
+          now: Date.now(),
+        });
+        if (answer !== null) {
+          await answerOperator(company, mirror, answer);
+          continue;
+        }
+        const routed = routeInbound(raw, {
+          chatId: company.chatId,
+          topics: owners,
+          roles: ROLES,
+          ...(operatorTopicId === null ? {} : { operatorTopicId }),
+        });
         for (const role of routed?.to ?? []) {
           if (routed !== null) {
             appendInbox(company.at.bus, role, routed.line);
@@ -435,10 +514,42 @@ async function pollInbound(company) {
 }
 
 /**
+ * Carry out what `routeAnswer` decided. The answered state is saved before
+ * anything is sent, so a crash cannot deliver one answer twice.
+ *
+ * @param {Company} company
+ * @param {Outgoing[]} mirror
+ * @param {NonNullable<ReturnType<typeof routeAnswer>>} answer
+ * @returns {Promise<void>}
+ */
+async function answerOperator(company, mirror, answer) {
+  if (answer.answered !== null) {
+    company.questions.questions[String(answer.answered.n)] = answer.answered.question;
+    company.saveQuestions();
+  }
+  for (const { role, line } of answer.deliveries) {
+    appendInbox(company.at.bus, role, line);
+  }
+  for (const { method, params } of answer.immediate) {
+    try {
+      await api(company.token, method, params);
+    } catch (error) {
+      console.error(`[link] ${error instanceof Error ? error.message : method}`);
+    }
+  }
+  for (const item of answer.paced) {
+    mirror.push({ operator: item });
+  }
+}
+
+/**
  * Every role's outbox: delivered locally at once, then queued for Telegram.
  *
  * @param {Company} company
- * @param {import("./protocol.mjs").Mirrored[]} mirror filled here, emptied by `mirrorOut`
+ * A question (`tg ask`) is numbered here, saved, and answered with a
+ * receipt that `tg ask` prints: the Q number, or why it was refused.
+ *
+ * @param {Outgoing[]} mirror filled here, emptied by `mirrorOut`
  * @returns {Promise<never>}
  */
 async function drainOutboxes(company, mirror) {
@@ -476,7 +587,26 @@ async function drainOutboxes(company, mirror) {
           appendInbox(company.at.bus, role, delivered.notice);
         }
         if (delivered.mirror !== null) {
-          mirror.push(delivered.mirror);
+          mirror.push({ peer: delivered.mirror });
+        }
+        if (obj(payload).kind === "ask") {
+          /** @type {Record<string, unknown>} */
+          let receipt = { error: delivered.notice?.text ?? "refused" };
+          if (delivered.question !== null) {
+            const n = company.questions.next;
+            company.questions.next += 1;
+            company.questions.questions[String(n)] = {
+              ...delivered.question,
+              messageId: null,
+              answered: false,
+            };
+            company.saveQuestions();
+            mirror.push({ operator: { ...formatQuestion(n, delivered.question), question: n } });
+            receipt = { question: n };
+          }
+          const { receipts } = busPaths(company.at.bus, role);
+          fs.mkdirSync(receipts, { recursive: true });
+          writeAtomically(path.join(receipts, name), receipt);
         }
         fs.rmSync(file, { force: true });
         moved = true;
@@ -494,7 +624,10 @@ async function drainOutboxes(company, mirror) {
  * already in the recipient's inbox.
  *
  * @param {Company} company
- * @param {import("./protocol.mjs").Mirrored[]} mirror
+ * Questions, edits and hints go only to the Operator topic: one that cannot
+ * be created holds them back rather than posting them in General.
+ *
+ * @param {Outgoing[]} mirror
  * @returns {Promise<never>}
  */
 async function mirrorOut(company, mirror) {
@@ -507,11 +640,21 @@ async function mirrorOut(company, mirror) {
   for (;;) {
     // Resolve destinations to topics in arrival order, so a role whose topic
     // has to be created first does not jump the queue.
-    for (const message of mirror.splice(0)) {
-      queue.push({
-        topicId: message.to === "all" ? null : await company.topicFor(message.to),
-        ...formatMirror(message, { repo: company.repo }),
-      });
+    for (const outgoing of mirror.splice(0)) {
+      if ("peer" in outgoing) {
+        const message = outgoing.peer;
+        queue.push({
+          topicId: message.to === "all" ? null : await company.topicFor(message.to),
+          ...formatMirror(message, { repo: company.repo }),
+        });
+        continue;
+      }
+      const topicId = await company.operatorTopic();
+      if (topicId === null) {
+        console.error("[link] no Operator topic; holding back a question or its update");
+        continue;
+      }
+      queue.push({ topicId, ...outgoing.operator });
     }
 
     const now = Date.now();
@@ -523,12 +666,36 @@ async function mirrorOut(company, mirror) {
     }
     const { batch } = plan;
     try {
-      await api(company.token, "sendMessage", {
-        chat_id: company.chatId,
-        text: batch.text,
-        entities: batch.entities,
-        ...(batch.topicId === null ? {} : { message_thread_id: batch.topicId }),
-      });
+      if (batch.edit === undefined) {
+        const result = obj(
+          await api(company.token, "sendMessage", {
+            chat_id: company.chatId,
+            text: batch.text,
+            entities: batch.entities,
+            ...(batch.topicId === null ? {} : { message_thread_id: batch.topicId }),
+            ...(batch.replyMarkup === undefined ? {} : { reply_markup: batch.replyMarkup }),
+            ...(batch.replyTo === undefined
+              ? {}
+              : { reply_parameters: { message_id: batch.replyTo } }),
+          }),
+        );
+        const question =
+          batch.question === undefined
+            ? undefined
+            : company.questions.questions[String(batch.question)];
+        if (question !== undefined && typeof result.message_id === "number") {
+          question.messageId = result.message_id;
+          company.saveQuestions();
+        }
+      } else {
+        // No reply_markup: editing without one is what removes the buttons.
+        await api(company.token, "editMessageText", {
+          chat_id: company.chatId,
+          message_id: batch.edit,
+          text: batch.text,
+          entities: batch.entities,
+        });
+      }
       sent.push(Date.now());
       queue = plan.rest;
     } catch (error) {
@@ -574,10 +741,16 @@ async function serve() {
     await company.topicFor(role);
   }
 
-  /** @type {import("./protocol.mjs").Mirrored[]} */
+  /** @type {Outgoing[]} */
   const mirror = [];
+  // A question saved but never posted, because the sidecar stopped first.
+  for (const [n, question] of Object.entries(company.questions.questions)) {
+    if (question.messageId === null && !question.answered) {
+      mirror.push({ operator: { ...formatQuestion(Number(n), question), question: Number(n) } });
+    }
+  }
   await Promise.race([
-    pollInbound(company),
+    pollInbound(company, mirror),
     drainOutboxes(company, mirror),
     mirrorOut(company, mirror),
   ]);
