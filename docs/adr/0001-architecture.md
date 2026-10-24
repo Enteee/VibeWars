@@ -38,11 +38,17 @@ The dependency direction is one-way:
 
 ```text
 game-core  <--  game-protocol  <--  apps/server
-                                <--  apps/web
+    ^                           <--  apps/web
+    |
+    +--  game-maps  <--  apps/server
+                    <--  apps/web   (schema, geometry and map JSON only)
 ```
 
-`game-core` depends on nothing else in the workspace. `apps/server` and
-`apps/web` depend on `game-core`/`game-protocol` but never on each other.
+`game-core` depends on nothing else in the workspace, and `game-maps` on
+`game-core` only. `apps/server` and `apps/web` depend on these packages but
+never on each other. The browser reaches `game-maps` only through its fs-free
+subpaths (`./schema`, `./geometry`, `./maps/*`, `./training/*`); `loader.ts`
+reads the disk and stays behind `"."`.
 
 The simulation (inside `game-core`, driven by `apps/server`) is the
 authoritative source of truth. Phaser is a _renderer_: it reads a snapshot and

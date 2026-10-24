@@ -319,9 +319,60 @@ describe("pushing", () => {
   });
 
   it("refuses roles that have no business pushing", () => {
-    for (const role of ["manager", "architect", "lead-dev", "qa-tester"]) {
+    for (const role of ["architect", "lead-dev", "qa-tester"]) {
       expect(push(role, [`bot/${role}/x`]), role).toMatchObject({ allow: false });
     }
+  });
+
+  it("lets the manager push its own branches, only ever with the skills guard", () => {
+    expect(push("manager", ["bot/manager/skill-x"])).toEqual({
+      allow: true,
+      guards: ["paths-within:.claude/bots/skills/"],
+    });
+    expect(push("manager", ["bot/developer-1/x"])).toMatchObject({ allow: false });
+    expect(push("manager", ["main"])).toMatchObject({ allow: false });
+    expect(push("manager", ["bot/manager/x", "--force"])).toMatchObject({ allow: false });
+  });
+
+  it("lets the manager open pull requests for its own branches only", () => {
+    const create = (/** @type {string[]} */ rest) =>
+      authorize("manager", { kind: "gh", argv: ["pr", "create", ...rest] });
+    expect(create(["--head", "bot/manager/skill-x", "--title", "t", "--body", "b"])).toEqual({
+      allow: true,
+    });
+    expect(create(["--head=bot/manager/skill-x"]).allow).toBe(true);
+    expect(create(["-Hbot/manager/skill-x"]).allow).toBe(true);
+    expect(create(["-H=bot/manager/skill-x", "-t", "t", "-d", "-l", "skills"]).allow).toBe(true);
+    expect(create(["--head", "bot/developer-1/x"])).toMatchObject({ allow: false });
+    expect(create(["--title", "no head"])).toMatchObject({ allow: false });
+  });
+
+  it("reads a scoped role's --head the way gh does, and refuses what it cannot", () => {
+    const create = (/** @type {string[]} */ rest) =>
+      authorize("manager", { kind: "gh", argv: ["pr", "create", ...rest] }).allow;
+    // gh takes the last of several, so any second --head is refused.
+    expect(create(["--head", "bot/manager/x", "--head", "bot/developer-1/x"])).toBe(false);
+    expect(create(["--head", "bot/manager/x", "-H", "bot/manager/y"])).toBe(false);
+    expect(create(["-Hbot/manager/x", "--head=bot/developer-1/x"])).toBe(false);
+    // A value is consumed whatever it looks like: this title names no head.
+    expect(create(["--title", "--head=bot/manager/x"])).toBe(false);
+    expect(create(["--title", "--head=bot/manager/x", "-dH", "bot/developer-1/x"])).toBe(false);
+    // Clusters, unknown flags, positionals and a missing value are refused.
+    expect(create(["--head", "bot/manager/x", "-dH", "bot/developer-1/x"])).toBe(false);
+    expect(create(["--head", "bot/manager/x", "--repo", "evil/repo"])).toBe(false);
+    expect(create(["--head", "bot/manager/x", "stray"])).toBe(false);
+    expect(create(["--head", "bot/manager/x", "--", "-H", "x"])).toBe(false);
+    expect(create(["--head", "bot/manager/x", "--title"])).toBe(false);
+    expect(create(["--head", "bot/manager/x", "--draft=false"])).toBe(false);
+    // Developers are not scoped, as before.
+    expect(
+      authorize("developer-1", { kind: "gh", argv: ["pr", "create", "--title", "t"] }).allow,
+    ).toBe(true);
+  });
+
+  it("treats the briefings and skills as gate code", () => {
+    expect(touchesGate([".claude/bots/skills/fresh-branch/SKILL.md"])).toBe(true);
+    expect(touchesGate([".claude/bots/_protocol.md"])).toBe(true);
   });
 
   it("refuses an empty branch", () => {

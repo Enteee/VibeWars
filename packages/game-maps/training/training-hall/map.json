@@ -1,0 +1,15 @@
+{
+  "id": "training-hall",
+  "name": "Training Hall",
+  "width": 560,
+  "height": 420,
+  "walls": [],
+  "spawnPoints": [
+    { "team": 0, "position": { "x": 100, "y": 210 } },
+    { "team": 1, "position": { "x": 380, "y": 130 } },
+    { "team": 1, "position": { "x": 380, "y": 210 } },
+    { "team": 1, "position": { "x": 380, "y": 290 } },
+    { "team": 1, "position": { "x": 460, "y": 170 } },
+    { "team": 1, "position": { "x": 460, "y": 250 } }
+  ]
+}
