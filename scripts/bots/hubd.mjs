@@ -20,7 +20,18 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { isBoardRead, limitedMessage, parseRateLimit, usesGraphql } from "./hub-budget.mjs";
+import { hasFilter } from "./hub-filter.mjs";
 import { approvalsSatisfied, checksSatisfied, explainGuard } from "./hub-guards.mjs";
+import {
+  ghIssue,
+  ghPull,
+  listPath,
+  listRows,
+  pickJson,
+  planList,
+  planView,
+  renderView,
+} from "./hub-rest.mjs";
 import { obj } from "./protocol.mjs";
 import { ROLES, authorize, touchesGate } from "./hub-policy.mjs";
 import {
@@ -126,6 +137,83 @@ function run(file, args, cwd, extraEnv = {}) {
  */
 function gh(args) {
   return run("gh", args, REPO_DIR);
+}
+
+/**
+ * One REST read, relative to the company's repository. Costs nothing from
+ * the GraphQL budget (see hub-rest.mjs).
+ *
+ * @param {string} rel e.g. `issues/17`
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<unknown>} the parsed answer, or `undefined` on any failure
+ */
+async function rest(rel, cfg) {
+  const result = await gh(["api", `repos/${cfg.repo}/${rel}`]);
+  if (result.code !== 0) {
+    return undefined;
+  }
+  try {
+    /** @type {unknown} */
+    const parsed = JSON.parse(result.stdout);
+    return parsed;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Answer `gh issue|pr view` from REST, or `null` to let gh answer it.
+ *
+ * @param {import("./hub-rest.mjs").ViewPlan} plan
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ code: number, stdout: string, stderr: string } | null>}
+ */
+async function restView(plan, cfg) {
+  const path_ = `${plan.group === "issue" ? "issues" : "pulls"}/${String(plan.number)}`;
+  const raw = await rest(path_, cfg);
+  if (raw === undefined) {
+    return null;
+  }
+  // `issues/{n}` also answers for a pull request; gh's `issue view` does
+  // too, so that is not an error.
+  /** @type {unknown[] | undefined} */
+  let comments;
+  if (plan.comments) {
+    const page = await rest(`issues/${String(plan.number)}/comments?per_page=100`, cfg);
+    // A full page may not be all of them. gh pages through; let it.
+    if (!Array.isArray(page) || page.length >= 100) {
+      return null;
+    }
+    comments = page;
+  }
+  const item = plan.group === "issue" ? ghIssue(raw, comments) : ghPull(raw, comments);
+  if (plan.fields === null) {
+    return { code: 0, stdout: renderView(plan.group, item, plan.comments), stderr: "" };
+  }
+  return { code: 0, stdout: pickJson(item, plan.fields), stderr: "" };
+}
+
+/**
+ * Whether a request is a read hubd answers from REST, and so spends no
+ * GraphQL budget even though its command is a GraphQL one.
+ *
+ * @param {string} kind
+ * @param {string[]} argv
+ * @returns {boolean}
+ */
+function servedByRest(kind, argv) {
+  if (kind !== "gh") {
+    return false;
+  }
+  if (planView(argv) !== null) {
+    return true;
+  }
+  const prepared = argv[1] === "list" ? prepareList(argv) : null;
+  return (
+    prepared !== null &&
+    "argv" in prepared &&
+    planList(prepared.argv, prepared.fields ?? []) !== null
+  );
 }
 
 /**
@@ -257,6 +345,10 @@ function readApprovals() {
  * @returns {Promise<string | null>}
  */
 async function headSha(pr) {
+  if (/^\d+$/.test(pr)) {
+    const head = obj(obj(await rest(`pulls/${pr}`, company())).head);
+    return typeof head.sha === "string" ? head.sha : null;
+  }
   const result = await gh(["pr", "view", pr, "--repo", company().repo, "--json", "headRefOid"]);
   if (result.code !== 0) {
     return null;
@@ -435,7 +527,10 @@ async function boardSnapshot(cfg) {
       "1000",
     ]);
     if (result.code !== 0) {
-      return null;
+      // Board membership changes rarely. A snapshot a little out of date
+      // serves visibility checks better than refusing every read while
+      // GitHub is unreachable or the GraphQL budget is gone.
+      return boardCache?.stdout ?? null;
     }
     try {
       /** @type {unknown} */
@@ -508,6 +603,19 @@ async function viewer(cfg) {
  * @returns {Promise<import("./hub-visibility.mjs").Item | null>}
  */
 async function resolve(group, selector, cfg) {
+  if (/^\d+$/.test(selector)) {
+    // REST, so a visibility check costs no GraphQL. `issues/{n}` answers
+    // for pull requests too, with the pull request's own URL.
+    const raw = obj(await rest(`issues/${selector}`, cfg));
+    const user = obj(raw.user);
+    return typeof raw.number === "number" && typeof raw.html_url === "string"
+      ? {
+          number: raw.number,
+          url: raw.html_url,
+          author: { login: typeof user.login === "string" ? user.login : "" },
+        }
+      : null;
+  }
   const result = await gh([
     group,
     "view",
@@ -615,18 +723,26 @@ async function filteredList(argv, cfg) {
       stderr: "hub: could not read the board or the collaborator list to filter the list\n",
     };
   }
-  const result = await gh(pinRepo(prepared.argv, cfg));
-  if (result.code !== 0) {
-    return result;
-  }
   /** @type {Record<string, unknown>[]} */
   let rows;
-  try {
-    /** @type {unknown} */
-    const raw = JSON.parse(result.stdout);
-    rows = Array.isArray(raw) ? raw.map((row) => obj(row)) : [];
-  } catch {
-    return { code: 1, stdout: "", stderr: "hub: gh returned a list hub could not read\n" };
+  let stderr = "";
+  const plan = planList(prepared.argv, prepared.fields ?? []);
+  const page = plan === null ? undefined : await rest(listPath(plan), cfg);
+  if (plan !== null && Array.isArray(page)) {
+    rows = listRows(plan, page);
+  } else {
+    const result = await gh(pinRepo(prepared.argv, cfg));
+    if (result.code !== 0) {
+      return result;
+    }
+    stderr = result.stderr;
+    try {
+      /** @type {unknown} */
+      const raw = JSON.parse(result.stdout);
+      rows = Array.isArray(raw) ? raw.map((row) => obj(row)) : [];
+    } catch {
+      return { code: 1, stdout: "", stderr: "hub: gh returned a list hub could not read\n" };
+    }
   }
   const visible = rows.filter((row) =>
     isVisible(
@@ -641,7 +757,7 @@ async function filteredList(argv, cfg) {
   return {
     code: 0,
     stdout: renderList(argv[0] === "pr" ? "pr" : "issue", visible, prepared.fields),
-    stderr: result.stderr,
+    stderr,
   };
 }
 
@@ -683,7 +799,7 @@ async function handle(request) {
     audit({ role, kind, argv, decision: "refused", reason: verdict.reason, acting });
     return { allow: false, reason: verdict.reason, code: 77 };
   }
-  const spendsGraphql = usesGraphql(kind, argv);
+  const spendsGraphql = usesGraphql(kind, argv) && !servedByRest(kind, argv);
   if (spendsGraphql && Date.now() < limitedUntil) {
     audit({ role, kind, argv, decision: "rate-limited" });
     return limitedResponse();
@@ -714,6 +830,16 @@ async function serve(request, verdict, acting) {
   const { role, kind, argv } = request;
   // The hat this request is being served under, if it is not the role's own.
   const as = typeof verdict.as === "string" ? verdict.as : role;
+
+  if (kind === "gh" && hasFilter(argv)) {
+    // hub strips output filters and applies them in the jail; one arriving
+    // here did not come through hub. Run on the host, by gh's jq or anyone
+    // else's, it could read hubd's environment and files (hub-filter.mjs).
+    const reason =
+      "output filters (--jq, --template) are applied inside the sandbox by hub, never here";
+    audit({ role, kind, argv, decision: "refused", reason });
+    return { allow: false, reason, code: 77 };
+  }
 
   const cfg = company();
 
@@ -793,6 +919,15 @@ async function serve(request, verdict, acting) {
     const listed = await filteredList(argv, cfg);
     audit({ role, kind, argv, decision: "allowed", code: listed.code, filtered: true });
     return { allow: true, ...listed };
+  }
+
+  const view = planView(argv);
+  if (view !== null) {
+    const answered = await restView(view, cfg);
+    if (answered !== null) {
+      audit({ role, kind, argv, decision: "allowed", code: answered.code, rest: true });
+      return { allow: true, ...answered };
+    }
   }
 
   if (isBoardRead(argv, cfg.project)) {
