@@ -198,6 +198,25 @@ describe("chase", () => {
     expect(gap).toBeLessThanOrEqual(100 + STEP);
     expect(sim.get("dummy")?.targetId).toBe("p");
   });
+
+  it("plans with the step it really takes: a crippled chaser stops within half a step", () => {
+    const sim = new MatchSimulation({
+      seed: "chase",
+      participants: [
+        spec("dummy", 1, vec2(0, 0), {
+          kind: "chase",
+          targeting: { kind: "nearest-enemy" },
+          standOffUnits: 100,
+        }),
+        spec("p", 0, vec2(500, 0)),
+      ],
+    });
+    sim.get("dummy")?.combatant.statuses.apply("crippled", 30, "p");
+    run(sim, 8);
+    const gap = distance(at(sim, "dummy"), at(sim, "p"));
+    expect(gap).toBeGreaterThanOrEqual(100);
+    expect(gap).toBeLessThanOrEqual(100 + STEP / 2);
+  });
 });
 
 describe("keep-away", () => {

@@ -301,10 +301,51 @@ describe("networked combat", () => {
     const me = roomA.state.players.get(roomA.sessionId);
     expect(me?.castingSkillId).toBe("ranger.troll-unguent");
     expect(me?.castRemaining).toBeGreaterThan(0);
+    expect(me?.castTotal).toBe(3);
 
     await roomA.leave();
     await roomB.leave();
   });
+
+  it("doubles a dazed player's cast, and syncs the doubled total for the cast bar", async () => {
+    const { roomA, roomB } = await joinPair();
+    await closeDistance(roomA, roomB.sessionId, 300);
+    roomA.send("intent", { kind: "target", targetSessionId: roomB.sessionId });
+    await waitFor(
+      () => roomA.state.players.get(roomA.sessionId)?.targetSessionId === roomB.sessionId,
+      { label: "target applied" },
+    );
+
+    // Broad Head Arrow dazes whoever it hits.
+    roomA.send("intent", {
+      kind: "use-skill",
+      slot: DEFAULT_SKILL_BAR.indexOf("ranger.broad-head-arrow"),
+    });
+    await waitFor(
+      () => [...(roomB.state.players.get(roomB.sessionId)?.statuses ?? [])].includes("dazed"),
+      {
+        timeoutMs: 6000,
+        label: "b dazed",
+      },
+    );
+
+    roomB.send("intent", {
+      kind: "use-skill",
+      slot: DEFAULT_SKILL_BAR.indexOf("ranger.troll-unguent"),
+    });
+    await waitFor(() => (roomB.state.players.get(roomB.sessionId)?.castingSkillId ?? "") !== "", {
+      timeoutMs: 4000,
+      label: "b's cast to start",
+    });
+
+    const me = roomB.state.players.get(roomB.sessionId);
+    expect(me?.castingSkillId).toBe("ranger.troll-unguent");
+    expect(me?.castTotal).toBe(6);
+    expect(me?.castRemaining).toBeGreaterThan(3);
+
+    await roomA.leave();
+    await roomB.leave();
+  }, 20_000);
 
   it("syncs applied statuses so the client can show condition markers", async () => {
     const { roomA, roomB } = await joinPair();
