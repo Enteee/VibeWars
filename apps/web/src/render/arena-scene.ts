@@ -24,7 +24,10 @@ const GRID = 0x1a212c;
 const HEALTH_BAR_BG = 0x11161d;
 const HEALTH_BAR_FILL = 0x7ee787;
 const HEALTH_BAR_LOW = 0xff7b72;
-const CAST_BAR_FILL = 0x59c2ff;
+// Ink, not blue: a blue bar over an enemy would read as "an ally".
+const CAST_BAR_FILL = 0xd7dee8;
+/** Marks the actor you control, inside its circle, in any team colour. */
+const SELF_RIM = 0xd7dee8;
 const DEAD_COLOUR = 0x4a5464;
 const STATUS_MARKER = 0xffa657;
 
@@ -85,6 +88,11 @@ export class ArenaScene extends Phaser.Scene {
 
     g.fillStyle(teamColour(actor.team), 1);
     g.fillCircle(x, y, actor.radius);
+
+    if (actor.team === "self") {
+      g.lineStyle(2, SELF_RIM, 1);
+      g.strokeCircle(x, y, actor.radius - 2);
+    }
 
     if (actor.id === this.snapshot.targetId) {
       g.lineStyle(2, TARGET_RING, 1);
