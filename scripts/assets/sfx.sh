@@ -105,6 +105,18 @@ synth re-a.wav synth 0.07 square 440 gain -6 lowpass 3000 fade q 0.003 0.07 0.04
 synth re-b.wav synth 0.08 square 330 gain -6 lowpass 3000 fade q 0.003 0.08 0.05 pad 0.08 0
 finish refused -12 re-a.wav re-b.wav
 
+# weapon-swing: your weapon attack missed (#161). A dry, airy whoosh: band-
+# passed noise that swells and dies, with no pitch, because swings repeat.
+synth ws-a.wav synth 0.16 whitenoise gain -6 bandpass 1400 1.2q fade h 0.06 0.16 0.09
+synth ws-b.wav synth 0.16 pinknoise gain -6 lowpass 700 fade h 0.07 0.16 0.08 gain -6
+finish weapon-swing -14 ws-a.wav ws-b.wav
+
+# bow-release: you fire a ranged weapon (#161). A soft low pluck with a tiny
+# snap: a string, not a hit, so it never sounds like hit-dealt.
+synth br-a.wav synth 0.18 pluck 147 fade q 0.001 0.18 0.14
+synth br-b.wav synth 0.012 whitenoise gain -6 highpass 2500 fade q 0.0005 0.012 0.01 gain -8 pad 0 0.168
+finish bow-release -13 br-a.wav br-b.wav
+
 total=0
 for f in "$out"/*.mp3; do
   bytes="$(wc -c <"$f")"

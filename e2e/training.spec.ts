@@ -231,3 +231,37 @@ test("(11) every skill button shows its skill-type badge, as the HUD does", asyn
     await expect(badges).toHaveAttribute("alt", type);
   }
 });
+
+/** WCAG relative luminance of a computed `rgb(r, g, b)` colour. */
+function luminance(css: string): number {
+  const match = /rgba?\((\d+), (\d+), (\d+)/.exec(css);
+  expect(match, css).not.toBeNull();
+  const linear = (channel: string | undefined): number => {
+    const s = Number(channel) / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * linear(match?.[1]) + 0.7152 * linear(match?.[2]) + 0.0722 * linear(match?.[3]);
+}
+
+function contrast(a: string, b: string): number {
+  const [la, lb] = [luminance(a), luminance(b)];
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+test("(12) the health and energy numbers read at 4.5:1 on the fill and the track", async ({
+  page,
+}) => {
+  await openTraining(page);
+  for (const kind of ["health", "energy"]) {
+    const bar = page.locator(`.training-bar-${kind}`);
+    const ink = await bar
+      .locator(".training-bar-label")
+      .evaluate((node) => getComputedStyle(node).color);
+    const fill = await bar
+      .locator(".training-bar-fill")
+      .evaluate((node) => getComputedStyle(node).backgroundColor);
+    const track = await bar.evaluate((node) => getComputedStyle(node).backgroundColor);
+    expect(contrast(ink, fill), `${kind} fill`).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(ink, track), `${kind} track`).toBeGreaterThanOrEqual(4.5);
+  }
+});

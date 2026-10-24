@@ -21,6 +21,7 @@ const outDir = join(root, "apps", "web", "public", "icons");
 
 /** The palette. Mirrors the tokens table in docs/art/art-direction.md. */
 const C = {
+  bg: "#0e1116",
   plate: "#161b22",
   line: "#2b3440",
   ink: "#d7dee8",
@@ -204,12 +205,36 @@ const ui = {
 };
 
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Projectiles: ranged weapon shots in flight (#161). Not icons: sprites on a
+// 32x12 grid, pointing along +x, so the scene rotates them to the heading.
+// White under a `bg` outline, because the scene tints each one to the
+// shooter's team colour: the tint gives the team, the silhouette the weapon.
+// One path each, outline painted under the fill, so overlapping parts merge.
+// ---------------------------------------------------------------------------
+
+/** @param {string} d */
+const projectileSprite = (d) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 12" width="32" height="12">` +
+  `<path d="${d}" fill="#fff" stroke="${C.bg}" stroke-width="1.5" stroke-linejoin="round" paint-order="stroke"/></svg>\n`;
+
+const projectile = {
+  // Arrow (bows): thin shaft, triangular head, chevron fletching.
+  arrow: "M6 5h17v2H6zM22 2l8 4-8 4zM2 2h3l4 4-4 4H2l3-4z",
+  // Spear: thicker shaft, a long leaf blade, no fletching.
+  spear: "M2 4.75h18v2.5H2zM17 6l5-4L31 6l-9 4z",
+  // Bolt (wand and staff): a bright orb with a tapering comet tail.
+  bolt: "M2 6l20-3.5v7zM24.5 6m-4.5 0a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0-9 0",
+};
 
 /** @type {Record<string, Record<string, string>>} */
 const families = {
   profession: Object.fromEntries(Object.entries(profession).map(([k, f]) => [k, svg(f())])),
   "skill-type": Object.fromEntries(Object.entries(skillType).map(([k, f]) => [k, svg(f())])),
   ui: Object.fromEntries(Object.entries(ui).map(([k, f]) => [k, svg(f())])),
+  projectile: Object.fromEntries(
+    Object.entries(projectile).map(([k, d]) => [k, projectileSprite(d)]),
+  ),
   status: Object.fromEntries(
     Object.entries(status).map(([k, [category, glyph]]) => [k, svg(plates[category](glyph))]),
   ),

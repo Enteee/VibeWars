@@ -94,16 +94,26 @@ condition cannot out-last one well-timed long one.
 Each condition has a distinct mechanical identity, not just a different
 number:
 
-| Condition  | Effect                   |
-| ---------- | ------------------------ |
-| Bleeding   | −3 health/second         |
-| Burning    | −7 health/second         |
-| Poison     | −4 health/second         |
-| Crippled   | Half movement speed      |
-| Blind      | 90% of your attacks miss |
-| Weakness   | −20 armor                |
-| Deep Wound | −20% maximum health      |
-| Dazed      | Double cast time         |
+| Condition  | Effect                         |
+| ---------- | ------------------------------ |
+| Bleeding   | −3 health/second               |
+| Burning    | −7 health/second               |
+| Poison     | −4 health/second               |
+| Crippled   | Half movement speed            |
+| Blind      | 90% of your attack skills miss |
+| Weakness   | −20 armor                      |
+| Deep Wound | −20% maximum health            |
+| Dazed      | Double cast time               |
+
+**Dazed doubles cast time; it does not make you easier to interrupt.**
+That is the reference's dazed, and here it would do nothing: every cast
+is already interruptible. An instant skill stays instant. See
+[ADR-0019](../adr/0019-status-modifiers.md).
+
+**Blind makes attack skills miss** (Swift Chop, Backbreaker, Opening Cut,
+Barrage, Broad Head Arrow). The miss is rolled when the attack lands, so
+it still costs energy or adrenaline and starts the recharge. Spells are
+unaffected, and there are no auto-attacks for blind to deny.
 
 **Dazed doubles cast time; it does not make you easier to interrupt.**
 That is the reference's dazed, and here it would do nothing: every cast
