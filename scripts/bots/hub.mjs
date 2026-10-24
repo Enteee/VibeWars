@@ -1,0 +1,151 @@
+#!/usr/bin/env node
+/**
+ * `hub` — GitHub, from inside a sandbox, with no credential.
+ *
+ * This runs INSIDE the bubblewrap jail. It has no token, no SSH key and no
+ * network client: it writes a request into its role's spool directory, waits
+ * for the daemon outside to answer, and prints the answer. Same split as `tg`,
+ * for the same reason — an agent that could read the token could use it for
+ * anything, and nine autonomous agents with unrestricted repository write and
+ * no branch protection is not a system, it is an accident waiting.
+ *
+ *   hub <gh command...>              e.g. hub issue list, hub pr create
+ *   hub push <branch>                push your own branch
+ *   hub approve <pr> [note]          reviewers only
+ *   hub request-changes <pr> <note>  reviewers only
+ *   hub whoami                       your role and what it may do
+ *
+ * `whoami` is answered locally, because the policy is pure and bundled in
+ * here too: an agent should be able to find out what it is allowed to do
+ * without spending a round trip, and more importantly without having to
+ * discover it by being refused.
+ */
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { setTimeout as sleep } from "node:timers/promises";
+
+import { ROLES, authorize } from "./hub-policy.mjs";
+
+const ROLE = process.env.VIBEWARS_BOT_ROLE;
+const SPOOL = process.env.VIBEWARS_HUB;
+
+if (ROLE === undefined || SPOOL === undefined) {
+  console.error("hub: not running inside a claude-bot sandbox");
+  process.exit(1);
+}
+
+/** How long to wait for the daemon. `gh` can be slow; a hung daemon is not. */
+const TIMEOUT_MS = 300_000;
+
+const argv = process.argv.slice(2);
+if (argv.length === 0) {
+  console.error("hub: usage: hub <gh command...> | push <branch> | approve <pr> | whoami");
+  process.exit(2);
+}
+
+/* -------------------------------------------------------------------------- */
+
+if (argv[0] === "whoami") {
+  console.log(`role: ${ROLE}`);
+  console.log("");
+  // Probed rather than hard-coded, so this can never drift from the policy
+  // that is actually enforced.
+  /** @type {[string, string[]][]} */
+  const probes = [
+    ["read issues and pull requests", ["issue", "list"]],
+    ["comment on issues and pull requests", ["issue", "comment", "1"]],
+    ["create and edit issues", ["issue", "create"]],
+    ["open pull requests", ["pr", "create"]],
+    ["move cards on the board", ["project", "item-edit"]],
+    ["restructure the board", ["project", "item-add"]],
+    ["operate the pipeline", ["workflow", "run", "ci.yml"]],
+    ["cut releases", ["release", "create", "v1"]],
+    ["merge pull requests", ["pr", "merge", "1"]],
+  ];
+  for (const [label, probe] of probes) {
+    const verdict = authorize(ROLE, { kind: "gh", argv: probe });
+    console.log(`  ${verdict.allow ? "yes" : "no "}  ${label}`);
+  }
+  const pushes = authorize(ROLE, { kind: "push", argv: [`bot/${ROLE}/x`] });
+  console.log(`  ${pushes.allow ? "yes" : "no "}  push branches (bot/${ROLE}/*)`);
+  const reviews = authorize(ROLE, { kind: "review", argv: ["approve", "1"] });
+  console.log(`  ${reviews.allow ? "yes" : "no "}  record review verdicts`);
+  console.log("");
+  console.log(`colleagues: ${ROLES.filter((r) => r !== ROLE).join(", ")}`);
+  process.exit(0);
+}
+
+/** @type {{ kind: string, argv: string[] }} */
+let request;
+if (argv[0] === "push") {
+  request = { kind: "push", argv: argv.slice(1) };
+} else if (argv[0] === "approve" || argv[0] === "request-changes") {
+  request = { kind: "review", argv };
+} else {
+  request = { kind: "gh", argv };
+}
+
+// Refused locally where possible. The daemon checks again — it must, since it
+// is the only side that is trustworthy — but failing here gives the agent an
+// immediate, specific reason instead of a round trip ending in "denied".
+const local = authorize(ROLE, request);
+if (!local.allow) {
+  console.error(`hub: refused — ${local.reason ?? "not allowed"}`);
+  console.error("hub: this is someone else's job; ask them on Telegram.");
+  process.exit(77);
+}
+
+/* -------------------------------------------------------------------------- */
+
+const id = `${String(Date.now()).padStart(14, "0")}-${String(process.pid)}`;
+const reqDir = path.join(SPOOL, "req");
+const resFile = path.join(SPOOL, "res", `${id}.json`);
+fs.mkdirSync(reqDir, { recursive: true });
+fs.mkdirSync(path.dirname(resFile), { recursive: true });
+
+// Written under a name the daemon ignores, then renamed, so it can never read
+// a half-written request.
+const tmp = path.join(reqDir, `.${id}.json.part`);
+fs.writeFileSync(tmp, JSON.stringify({ id, role: ROLE, ...request }));
+fs.renameSync(tmp, path.join(reqDir, `${id}.json`));
+
+const deadline = Date.now() + TIMEOUT_MS;
+for (;;) {
+  let raw;
+  try {
+    raw = fs.readFileSync(resFile, "utf8");
+  } catch {
+    if (Date.now() > deadline) {
+      console.error("hub: no answer from the hub daemon. Is claude-llc still running?");
+      process.exit(75);
+    }
+    await sleep(200);
+    continue;
+  }
+
+  /** @type {unknown} */
+  let response;
+  try {
+    response = JSON.parse(raw);
+  } catch {
+    // Mid-write; the daemon renames into place, but be forgiving anyway.
+    await sleep(100);
+    continue;
+  }
+
+  fs.rmSync(resFile, { force: true });
+  const result = /** @type {Record<string, unknown>} */ (response);
+
+  if (typeof result.stdout === "string" && result.stdout !== "") {
+    process.stdout.write(result.stdout);
+  }
+  if (typeof result.stderr === "string" && result.stderr !== "") {
+    process.stderr.write(result.stderr);
+  }
+  if (result.allow === false) {
+    console.error(`hub: refused — ${typeof result.reason === "string" ? result.reason : "?"}`);
+    process.exit(77);
+  }
+  process.exit(typeof result.code === "number" ? result.code : 0);
+}
