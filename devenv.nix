@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 
 {
   name = "vibewars";
@@ -99,6 +99,22 @@
         "dist/"
         "dist-types/"
       ];
+      # Builds the declarations first, as `pnpm run lint` does. Type-aware
+      # rules resolve cross-package imports through each package's `types`
+      # entry, which points into the gitignored dist/: without them every
+      # cross-package symbol is `error`-typed and the hook reports hundreds
+      # of bogus `no-unsafe-*` errors on a fresh checkout, while passing
+      # wherever an earlier build left dist/ behind. Serial, so concurrent
+      # batches of files never race one `tsc --build` against another.
+      entry = toString (
+        pkgs.writeShellScript "eslint-with-declarations" ''
+          set -euo pipefail
+          export PATH=${pkgs.nodejs_24}/bin:$PATH
+          ${pkgs.pnpm_10}/bin/pnpm exec tsc --build tsconfig.build.json
+          exec ${config.git-hooks.hooks.eslint.package}/bin/eslint --fix "$@"
+        ''
+      );
+      require_serial = true;
     };
 
     nixfmt.enable = true;
