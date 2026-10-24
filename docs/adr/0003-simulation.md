@@ -4,6 +4,10 @@
 
 Accepted (2026-10-23); tick rate to be re-benchmarked in Sprint 26 (brief §26).
 
+Amended by [ADR-0017](0017-shared-match-simulation.md): the tick now lives
+in `game-core` as the steppable `MatchSimulation`. The server drives it from
+`setFixedTimestep`, and the stage order within a tick is written down there.
+
 ## Context
 
 The brief requires a fixed-tick authoritative simulation, independent of
