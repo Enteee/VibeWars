@@ -266,6 +266,13 @@ let
             "$(git -C "$DEVENV_ROOT" rev-parse HEAD)" "$(date +%s%3N)" \
             >"$VIBEWARS_BOT_ROOT/boot.json"
         fi
+        # devenv's evaluation cache does not track scripts/bots (ADR-0014), so
+        # this shell may run an older checkout's scripts than the one it is
+        # in. If so, boot.json's note says it, loudly, instead of what the
+        # boot claims to have loaded.
+        if ! ${node} ${llcScripts}/boot-check.mjs ${llcScripts}; then
+          echo "claude-llc: warning: could not compare the running scripts with scripts/bots" >&2
+        fi
         # The manager's first prompt says what a reboot loaded, so the
         # manager can tell everyone.
         note="$(${lib.getExe pkgs.jq} -r '.note // empty' "$VIBEWARS_BOT_ROOT/boot.json")"

@@ -80,6 +80,24 @@ if (group === "api" && sub === "graphql" && argv.some((word) => word.includes("n
   } }));
   process.exit(0);
 }
+// What hubd asks of an issue named by URL, to see who raised it.
+if (group === "issue" && sub === "view" && argv[2] === issue7.html_url) {
+  console.log(JSON.stringify({ number: 7, url: issue7.html_url, author: { login: "Enteee" } }));
+  process.exit(0);
+}
+// One issue's items, as hubd re-reads them: every issue is in Backlog.
+if (group === "api" && sub === "graphql" && argv.some((word) => word.includes("issueOrPullRequest"))) {
+  const number = Number((argv.find((word) => word.startsWith("number=")) ?? "").slice(7));
+  const resetAt = new Date(Number(fs.readFileSync(path.join(state, "reset"), "utf8")) * 1000).toISOString();
+  console.log(JSON.stringify({ data: {
+    rateLimit: { cost: 1, remaining: remaining - 1, resetAt },
+    repository: { issueOrPullRequest: { number, projectItems: { nodes: [{
+      id: "PVTI_" + number, isArchived: false, project: { id: "PVT_2" }, status: { name: "Backlog" },
+      content: { __typename: "Issue", number, title: "item " + number, url: "https://github.com/Enteee/VibeWars/issues/" + number, repository: { nameWithOwner: "Enteee/VibeWars" } },
+    }] } } },
+  } }));
+  process.exit(0);
+}
 console.log("ok");
 `;
 
@@ -142,6 +160,10 @@ async function startHubd(remaining, before) {
       repo: "Enteee/VibeWars",
       project: 2,
       projectId: "PVT_2",
+      statusField: {
+        id: "F_status",
+        options: { Backlog: "o_backlog", Ready: "o_ready", Done: "o_done" },
+      },
       columns: [],
       expectedChecks: [],
     }),
@@ -259,6 +281,20 @@ function readJson(file) {
 }
 
 /**
+ * What hubd printed: `board`'s JSON answer, or a board listing.
+ *
+ * @param {Record<string, unknown>} response
+ * @returns {{ token: string, reset: boolean, totalCount: number, card: unknown, cards: { number: number }[] }}
+ */
+function printed(response) {
+  /** @type {unknown} */
+  const parsed = JSON.parse(String(response.stdout));
+  return /** @type {{ token: string, reset: boolean, totalCount: number, card: unknown, cards: { number: number }[] }} */ (
+    parsed
+  );
+}
+
+/**
  * @param {() => boolean} condition
  * @param {string} label
  */
@@ -284,6 +320,19 @@ const JQ = (() => {
 })();
 
 const BOARD_READ = ["project", "item-list", "2", "--format", "json", "--limit", "200"];
+/** What `board move 8 Done` sends. */
+const MOVE_8_TO_DONE = [
+  "project",
+  "item-edit",
+  "--id",
+  "PVTI_8",
+  "--project-id",
+  "PVT_2",
+  "--field-id",
+  "F_status",
+  "--single-select-option-id",
+  "o_done",
+];
 
 describe("hubd and the GraphQL budget", () => {
   it("serves every agent's board read from one snapshot", async () => {
@@ -315,18 +364,116 @@ describe("hubd and the GraphQL budget", () => {
     // ...and writes it where the dashboard reads it, instead of the
     // dashboard polling GitHub itself.
     const snapshot = readJson(path.join(hubd.hub, "board.json"));
-    expect(JSON.stringify(snapshot.board)).toContain('"number":10');
+    expect(JSON.stringify(snapshot.cards)).toContain('"number":10');
   }, 20_000);
 
-  it("drops the snapshot when a card moves, so the move shows at once", async () => {
+  it("applies a move it ran to its copy, so the move shows at once and costs no re-read", async () => {
     const hubd = await startHubd(5000);
 
     await hubd.request("developer-1", "gh", BOARD_READ);
-    await hubd.request("developer-1", "gh", ["project", "item-edit", "--id", "PVTI_8"]);
-    await hubd.request("developer-1", "gh", BOARD_READ);
+    await hubd.request("developer-1", "gh", MOVE_8_TO_DONE);
+    const after = await hubd.request("developer-1", "board", ["show", "8"]);
 
-    // Two pages, twice.
-    expect(hubd.calls("api graphql")).toBe(4);
+    expect(hubd.calls("api graphql")).toBe(2);
+    expect(printed(after).card).toMatchObject({ number: 8, status: "Done" });
+  }, 20_000);
+
+  it("re-reads only the one issue an item-add put on the board", async () => {
+    const hubd = await startHubd(5000);
+
+    await hubd.request("developer-1", "board", ["ls"]);
+    const added = await hubd.request("manager", "gh", [
+      "project",
+      "item-add",
+      "2",
+      "--url",
+      "https://github.com/Enteee/VibeWars/issues/7",
+    ]);
+    expect(added.code).toBe(0);
+    const backlog = await hubd.request("developer-1", "board", ["ls", "Backlog"]);
+
+    // Two pages for the board, one small query for the new card.
+    expect(hubd.calls("api graphql")).toBe(3);
+    expect(printed(backlog).cards).toEqual([
+      { id: "PVTI_7", number: 7, title: "item 7", status: "Backlog", type: "Issue" },
+    ]);
+    const spend = /** @type {Record<string, unknown>[]} */ (
+      readJson(path.join(hubd.hub, "ratelimit.json")).spend
+    );
+    expect(spend.at(-1)).toMatchObject({ role: "manager", cmd: "board item", cost: 1 });
+  }, 20_000);
+
+  it("answers board ls with one column, and changes with only what moved", async () => {
+    const hubd = await startHubd(5000);
+
+    const ready = printed(await hubd.request("qa-tester", "board", ["ls", "Ready"]));
+    expect(ready.cards.map((card) => card.number)).toEqual([8, 10]);
+    const done = printed(await hubd.request("qa-tester", "board", ["ls", "Done"]));
+    expect(done.cards).toEqual([]);
+
+    await hubd.request("developer-1", "gh", MOVE_8_TO_DONE);
+    const changes = printed(
+      await hubd.request("qa-tester", "board", ["changes", "--since", ready.token]),
+    );
+
+    expect(changes.reset).toBe(false);
+    expect(changes.cards).toEqual([
+      { id: "PVTI_8", number: 8, title: "item 8", status: "Done", type: "Issue" },
+    ]);
+    expect(hubd.calls("api graphql")).toBe(2);
+  }, 20_000);
+
+  it("starts from the board.json it left, without reading the board again", async () => {
+    const first = await startHubd(5000);
+    await first.request("developer-1", "board", ["ls"]);
+    const saved = fs.readFileSync(path.join(first.hub, "board.json"), "utf8");
+
+    const second = await startHubd(5000, ({ root }) => {
+      fs.mkdirSync(path.join(root, "hub"), { recursive: true });
+      fs.writeFileSync(path.join(root, "hub", "board.json"), saved);
+    });
+    const answer = await second.request("developer-1", "gh", BOARD_READ);
+
+    expect(printed(answer).totalCount).toBe(2);
+    expect(second.calls("api graphql")).toBe(0);
+  }, 20_000);
+
+  it("discards a board.json in another shape and reads the board afresh", async () => {
+    const hubd = await startHubd(5000, ({ root }) => {
+      fs.mkdirSync(path.join(root, "hub"), { recursive: true });
+      // What an earlier build wrote.
+      fs.writeFileSync(
+        path.join(root, "hub", "board.json"),
+        JSON.stringify({ at: Date.now(), board: { items: [], totalCount: 0 } }),
+      );
+    });
+
+    const answer = await hubd.request("developer-1", "gh", BOARD_READ);
+
+    expect(printed(answer).totalCount).toBe(2);
+    expect(hubd.calls("api graphql")).toBe(2);
+    expect(readJson(path.join(hubd.hub, "board.json")).format).toBe(1);
+  }, 20_000);
+
+  it("keeps answering board reads from its copy while the budget is gone", async () => {
+    const first = await startHubd(5000);
+    await first.request("developer-1", "board", ["ls"]);
+    const saved = readJson(path.join(first.hub, "board.json"));
+
+    const hubd = await startHubd(0, ({ root }) => {
+      fs.mkdirSync(path.join(root, "hub"), { recursive: true });
+      // Due for a sweep, which cannot happen until the budget is back.
+      fs.writeFileSync(
+        path.join(root, "hub", "board.json"),
+        JSON.stringify({ ...saved, sweptAt: 0 }),
+      );
+    });
+    const listed = await hubd.request("developer-1", "gh", BOARD_READ);
+    const shown = await hubd.request("developer-1", "board", ["show", "10"]);
+
+    expect(listed.code).toBe(0);
+    expect(printed(shown).card).toMatchObject({ number: 10 });
+    expect(hubd.calls("api graphql")).toBe(0);
   }, 20_000);
 
   it("writes down what every GraphQL call cost, and whose it was (#97)", async () => {

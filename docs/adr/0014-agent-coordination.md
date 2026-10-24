@@ -134,7 +134,15 @@ clone` would close the remaining gap at the cost of a full checkout each.
   keys on `.nix` files, so a changed `.mjs` is not noticed on its own.
   `claude-bot` compares the checkout against the staged copy on startup and
   warns when they differ, because the failure mode otherwise is an edit that
-  appears to do nothing.
+  appears to do nothing. The company reboot (#21), written later, hit the
+  same cache: it came back up on the old scripts after a merge that changed
+  only `.mjs` files, and reported the new commit as loaded. Its restarter now
+  runs `devenv shell --refresh-eval-cache` (making the scripts a tracked
+  input does not work: devenv 2.1.2 records neither a path literal, nor
+  `builtins.path`, nor `builtins.hashFile` as an input), and every
+  `claude-llc` boot compares the staged scripts with the checkout's
+  (`boot-check.mjs`) and, if they differ, says so in the note the manager
+  is given in place of what the boot claims to have loaded.
 - `devenv.yaml` gained `permittedUnfreePackages: [claude-code]`. devenv
   evaluates its own nixpkgs, so the host system's `allowUnfree` does not
   apply, and `claude-code` is unfree.

@@ -200,3 +200,71 @@ export function parseReboot(value) {
   }
   return { requestedAt, reason, by, deadline, bootSha, ready: ready.map(String) };
 }
+
+/**
+ * Is this file in `scripts/bots` one nix stages into the company's store
+ * copy, and so one the company runs? The same rule as the `case` in
+ * nix/claude-llc.nix and nix/claude-bot.nix.
+ *
+ * @param {string} name a file name, no directory
+ * @returns {boolean}
+ */
+export function isStagedScript(name) {
+  return name.endsWith(".mjs") && !name.endsWith(".test.mjs");
+}
+
+/**
+ * The staged scripts that differ between the checkout and the copy the
+ * company is running: changed, added or removed.
+ *
+ * devenv's evaluation cache does not track `scripts/bots` (ADR-0014), so a
+ * shell can hand claude-llc the store copy of an older checkout. A reboot
+ * that loaded nothing would otherwise report the new commit as loaded.
+ *
+ * @param {Record<string, string>} checkout file name to contents, from `scripts/bots`
+ * @param {Record<string, string>} running file name to contents, from the store copy
+ * @returns {string[]} file names, sorted
+ */
+export function scriptDrift(checkout, running) {
+  const names = new Set([...Object.keys(checkout), ...Object.keys(running)]);
+  return [...names]
+    .filter(isStagedScript)
+    .filter((name) => checkout[name] !== running[name])
+    .sort();
+}
+
+/** How many differing scripts a boot note names before it says "and N more". */
+const DRIFT_NAMED = 5;
+
+/**
+ * The boot note, corrected for scripts that did not load.
+ *
+ * With no drift the note is left as it is. With drift it says, first and
+ * plainly, that the company runs older code than the checkout, and a
+ * restarter's "Rebooted onto <sha>" is withdrawn: that commit's company code
+ * is exactly what did not load.
+ *
+ * @param {{ note: string | null, sha: string, drift: string[], running: string }} boot
+ *   `sha` is the checkout's HEAD, `running` the store path of the copy running
+ * @returns {string | null}
+ */
+export function bootNote({ note, sha, drift, running }) {
+  if (drift.length === 0) {
+    return note;
+  }
+  const named = drift.slice(0, DRIFT_NAMED).join(", ");
+  const more = drift.length > DRIFT_NAMED ? ` and ${String(drift.length - DRIFT_NAMED)} more` : "";
+  const differ = drift.length === 1 ? "differs" : "differ";
+  const warning =
+    `WARNING: the company is NOT running the checkout's scripts (${sha.slice(0, 8)}): ` +
+    `${named}${more} ${differ} from scripts/bots in ${running}. devenv served a stale ` +
+    "evaluation; the operator must restart the company: `claude-llc stop`, then " +
+    "`devenv shell --refresh-eval-cache -- claude-llc`.";
+  if (note === null) {
+    return warning;
+  }
+  if (note.startsWith("Rebooted onto ")) {
+    return `Rebooted, but its company code did NOT load. ${warning}`;
+  }
+  return `${note} ${warning}`;
+}
