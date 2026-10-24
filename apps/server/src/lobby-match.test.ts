@@ -298,6 +298,34 @@ describe("a lobby's own match", () => {
     await seated.leave();
   });
 
+  it("names a seated player by their lobby name, whatever they join with (#53)", async () => {
+    const [came, renamed] = await openLobbyMatch(
+      DEFAULT_MAP_ID,
+      [
+        { team: 0, name: "Hostess", build: undefined },
+        { team: 1, name: "Guesty", build: undefined },
+      ],
+      1,
+    );
+    if (came === undefined || renamed === undefined) {
+      throw new Error("no seats");
+    }
+    const seated = await new Client(endpoint).consumeSeatReservation<MatchView>(came);
+    // Let the second seat's own reservation lapse, then join that seat's
+    // session asking for another player's name.
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const impostor = await new Client(endpoint).consumeSeatReservation<MatchView>(
+      await matchMaker.reserveSeatFor(
+        await matchMaker.getRoomById(came.roomId),
+        { protocolVersion: PROTOCOL_VERSION, name: "Impostor" },
+        { sessionId: renamed.sessionId },
+      ),
+    );
+    await waitFor(() => seated.state.players.size === 2, { label: "both in the match" });
+    expect(seated.state.players.get(impostor.sessionId)?.name).toBe("Guesty");
+    await leaveAll([seated, impostor]);
+  });
+
   it("refuses a client that tries to open a seated match of its own", async () => {
     const before = (await matchMaker.query({ name: ROOM_MATCH })).length;
     await expect(

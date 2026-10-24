@@ -303,13 +303,9 @@ export async function openLobbyMatch(
     .createRoom(ROOM_MATCH, { mapId, seating })
     .finally(() => pendingSeatings.delete(seating));
   return Promise.all(
-    pending.map(({ sessionId, build, name }) =>
+    pending.map(({ sessionId, build }) =>
       // Colyseus takes the session id from the auth data when there is one.
-      matchMaker.reserveSeatFor(
-        room,
-        { protocolVersion: PROTOCOL_VERSION, build, name },
-        { sessionId },
-      ),
+      matchMaker.reserveSeatFor(room, { protocolVersion: PROTOCOL_VERSION, build }, { sessionId }),
     ),
   );
 }
@@ -341,10 +337,11 @@ export class MatchRoom extends Room {
   #nextSpawnIndex = 0;
 
   /**
-   * A lobby's match: each seat's team, and whether it was taken. Absent
-   * for Quick Match, which alternates teams as players arrive.
+   * A lobby's match: each seat's team, its player's lobby name, and
+   * whether it was taken. Absent for Quick Match, which alternates teams
+   * as players arrive.
    */
-  #seats: Map<string, { readonly team: 0 | 1; used: boolean }> | undefined;
+  #seats: Map<string, { readonly team: 0 | 1; readonly name: string; used: boolean }> | undefined;
 
   /**
    * Rolling tick-duration samples in milliseconds (brief §26).
@@ -418,7 +415,10 @@ export class MatchRoom extends Room {
       this.maxClients = pending.seats.length;
       this.seatReservationTimeout = pending.joinDeadlineSeconds;
       this.#seats = new Map(
-        pending.seats.map((seat) => [seat.sessionId, { team: seat.team, used: false }]),
+        pending.seats.map((seat) => [
+          seat.sessionId,
+          { team: seat.team, name: seat.name, used: false },
+        ]),
       );
     }
 
@@ -646,30 +646,37 @@ export class MatchRoom extends Room {
   }
 
   /**
-   * The team a joining player plays on. In a lobby's match that is the
-   * team of the seat the lobby reserved for their session, and the seat
-   * is spent. Only the session id counts, which the server chose, never
+   * The team and name a joining player plays under. In a lobby's match
+   * those are the team and lobby name of the seat the lobby reserved for
+   * their session, and the seat is spent. Only the session id counts, which the server chose, never
    * the join options, which a client did: a seat that lapsed or that a
    * dropped player gave up is free again, and a stranger joining into it
    * is refused.
    * In Quick Match, teams alternate as players join so a 1v1 is
    * adversarial by default.
    */
-  private claimTeam(sessionId: string): number {
+  private claimSeat(sessionId: string, options: unknown): { team: number; name: string } {
     if (this.#seats === undefined) {
-      return [...this.#sim.participants()].length % 2;
+      return {
+        team: [...this.#sim.participants()].length % 2,
+        // The player's chosen name is client-supplied, so it goes through
+        // the same sanitiser the lobby uses before anyone else sees it.
+        name: sanitizeName(field(options, "name"), `player-${sessionId.slice(0, 4)}`),
+      };
     }
     const seat = this.#seats.get(sessionId);
     if (seat === undefined || seat.used) {
       throw new Error("This match is for its lobby's players only.");
     }
     seat.used = true;
-    return seat.team;
+    // The lobby already sanitised and showed this name; a seated player
+    // cannot rename themselves on the way in.
+    return { team: seat.team, name: seat.name };
   }
 
   public override onJoin(client: Client, options?: unknown): void {
     assertProtocolVersion(options);
-    const team = this.claimTeam(client.sessionId);
+    const { team, name } = this.claimSeat(client.sessionId, options);
     const spawn = this.nextSpawnPoint(team);
     const loadout = resolveLoadout(options);
 
@@ -699,9 +706,7 @@ export class MatchRoom extends Room {
 
     const player = new PlayerState({
       sessionId: client.sessionId,
-      // The player's chosen name is client-supplied, so it goes through
-      // the same sanitiser the lobby uses before anyone else sees it.
-      name: sanitizeName(field(options, "name"), `player-${client.sessionId.slice(0, 4)}`),
+      name,
       x: spawn.x,
       y: spawn.y,
       team,

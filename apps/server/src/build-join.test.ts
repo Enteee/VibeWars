@@ -8,6 +8,7 @@ import {
 import { PROTOCOL_VERSION, ROOM_MATCH } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { DEFAULT_SKILL_BAR } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
 
@@ -144,7 +145,7 @@ describe("joining with a build", () => {
   it("falls back to the house loadout when no build is sent", async () => {
     const { room, slots } = await joinWith(undefined);
 
-    expect(slots).toHaveLength(8);
+    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
     expect(slots.map((s) => s.id)).toContain("elementalist.fireball");
 
     await room.leave(true);
@@ -156,7 +157,7 @@ describe("joining with a build", () => {
     const { equipment: _dropped, ...withoutGear } = LEGAL_BUILD;
     const { room, slots } = await joinWith(withoutGear);
 
-    expect(slots).toHaveLength(8);
+    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
 
     await room.leave(true);
   });
@@ -173,7 +174,7 @@ describe("joining with a build", () => {
     const { room, slots } = await joinWith(cheat);
 
     expect(slots.map((s) => s.id)).not.toEqual(["elementalist.fireball"]);
-    expect(slots).toHaveLength(8);
+    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
 
     await room.leave(true);
   });
@@ -193,7 +194,7 @@ describe("joining with a build", () => {
     const { room, slots } = await joinWith(cheat);
 
     // Refused: the house loadout's full bar, not the build's.
-    expect(slots).toHaveLength(8);
+    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
 
     await room.leave(true);
   });
@@ -209,7 +210,7 @@ describe("joining with a build", () => {
     const { room, slots } = await joinWith(cheat);
 
     // Refused: the house loadout's full bar, not the build's.
-    expect(slots).toHaveLength(8);
+    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
 
     await room.leave(true);
   });
@@ -223,7 +224,7 @@ describe("joining with a build", () => {
     const { room, slots } = await joinWith(cheat);
 
     // Refused: the house loadout's full bar, not the build's.
-    expect(slots).toHaveLength(8);
+    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
 
     await room.leave(true);
   });
