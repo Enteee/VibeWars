@@ -20,6 +20,7 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { approvalsSatisfied, checksSatisfied, explainGuard } from "./hub-guards.mjs";
+import { obj } from "./protocol.mjs";
 import { ROLES, authorize, touchesGate } from "./hub-policy.mjs";
 
 /**
@@ -49,7 +50,10 @@ const COMPANY = path.join(ROOT, "company.json");
 const REPO_SCOPED = new Set(["issue", "pr", "label", "run", "workflow", "release"]);
 
 /**
- * @returns {{ repo: string, owner: string, project: number, expectedChecks: string[], columns: string[] }}
+ * @returns {{
+ *   repo: string, owner: string, project: number, expectedChecks: string[],
+ *   columns: string[], acting: Record<string, string[] | undefined>,
+ * }}
  */
 function company() {
   /** @type {unknown} */
@@ -63,6 +67,7 @@ function company() {
     owner: repo.split("/")[0] ?? "",
     project: typeof cfg.project === "number" ? cfg.project : 0,
     expectedChecks: Array.isArray(cfg.expectedChecks) ? cfg.expectedChecks.map(String) : [],
+    acting: /** @type {Record<string, string[] | undefined>} */ (obj(cfg.acting)),
     columns: Array.isArray(cfg.columns) ? cfg.columns.map(String) : [],
   };
 }
@@ -236,6 +241,23 @@ async function evaluateGuards(guards, argv) {
 /* -------------------------------------------------------------------------- */
 
 /**
+ * Which reviewer seat is this verdict being cast for?
+ *
+ * `hub approve 22` uses the agent's own seat; `hub approve 22 --as
+ * perf-sec-qa` names a borrowed one. Explicit on purpose — one glance must
+ * not silently count as two different reviews.
+ *
+ * @param {string[]} argv
+ * @param {string} fallback
+ * @returns {string}
+ */
+function reviewSeat(argv, fallback) {
+  const flag = argv.indexOf("--as");
+  const named = flag === -1 ? undefined : argv[flag + 1];
+  return named ?? fallback;
+}
+
+/**
  * @param {Record<string, unknown>} entry
  * @returns {void}
  */
@@ -263,17 +285,41 @@ async function changedPaths(worktree) {
 /* -------------------------------------------------------------------------- */
 
 /**
+ * Which hats is this role covering for?
+ *
+ * Straight from `company.json`, with no cleverness: the operator decides when
+ * a role stops wearing a borrowed hat and edits `acting` to say so. An
+ * earlier version revoked a hat automatically as soon as its real wearer was
+ * hired, which sounds tidy but changes the company's permissions underneath
+ * it without anyone asking — and a delegation that vanishes on its own is
+ * harder to reason about than one that is written down.
+ *
+ * It stays visible rather than silent: `hub whoami` prints the borrowed hats,
+ * every sign-off records which seat it was cast for, and the audit log
+ * carries both the agent and the seat.
+ *
+ * @param {string} role
+ * @returns {string[]}
+ */
+function actingFor(role) {
+  return company().acting[role] ?? [];
+}
+
+/**
  * @param {{ role: string, kind: string, argv: string[] }} request
  * @returns {Promise<Record<string, unknown>>}
  */
 async function handle(request) {
   const { role, kind, argv } = request;
-  const verdict = authorize(role, { kind, argv });
+  const acting = actingFor(role);
+  const verdict = authorize(role, { kind, argv }, { acting });
 
   if (!verdict.allow) {
-    audit({ role, kind, argv, decision: "refused", reason: verdict.reason });
+    audit({ role, kind, argv, decision: "refused", reason: verdict.reason, acting });
     return { allow: false, reason: verdict.reason, code: 77 };
   }
+  // The hat this request is being served under, if it is not the role's own.
+  const as = typeof verdict.as === "string" ? verdict.as : role;
 
   if (verdict.guards !== undefined) {
     const guarded = await evaluateGuards(verdict.guards, argv);
@@ -295,7 +341,11 @@ async function handle(request) {
       APPROVALS,
       `${JSON.stringify({
         pr: Number(pr),
-        role,
+        // The seat, not the agent: the merge guard asks "has perf-sec-qa
+        // signed off", and while lead-dev is covering that seat its sign-off
+        // has to answer that question. `by` keeps who actually did it.
+        role: reviewSeat(argv, as),
+        by: role,
         verdict: promptVerb === "approve" ? "approve" : "request-changes",
         sha,
         ts: Date.now(),
@@ -306,14 +356,16 @@ async function handle(request) {
     // It has to be a comment, not a review: all nine agents share one GitHub
     // identity, which cannot approve its own pull request or cast two
     // distinguishable reviews.
+    const seat = reviewSeat(argv, as);
     const mark = promptVerb === "approve" ? "APPROVED" : "CHANGES REQUESTED";
-    const body = `**${mark}** by \`${role}\`\n\n${note.join(" ") || "(no note)"}\n\n<sub>recorded by hub against ${sha.slice(0, 8)}</sub>`;
+    const wearing = seat === role ? `\`${role}\`` : `\`${role}\` acting as \`${seat}\``;
+    const body = `**${mark}** by ${wearing}\n\n${note.join(" ") || "(no note)"}\n\n<sub>recorded by hub against ${sha.slice(0, 8)}</sub>`;
     const posted = await gh(["pr", "comment", String(pr), "--repo", cfg.repo, "--body", body]);
-    audit({ role, kind, argv, decision: "allowed", sha });
+    audit({ role, kind, argv, decision: "allowed", sha, seat, acting });
     return {
       allow: true,
       code: 0,
-      stdout: `${mark} recorded for #${String(pr)} against ${sha.slice(0, 8)}\n`,
+      stdout: `${mark} recorded for #${String(pr)} as ${seat} against ${sha.slice(0, 8)}\n`,
       stderr: posted.code === 0 ? "" : posted.stderr,
     };
   }

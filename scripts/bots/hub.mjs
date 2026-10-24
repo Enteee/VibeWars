@@ -46,6 +46,8 @@ if (argv.length === 0) {
 
 /* -------------------------------------------------------------------------- */
 
+const ACTING = (process.env.VIBEWARS_ACTING ?? "").split(",").filter((hat) => hat !== "");
+
 if (argv[0] === "whoami") {
   console.log(`role: ${ROLE}`);
   console.log("");
@@ -64,13 +66,26 @@ if (argv[0] === "whoami") {
     ["merge pull requests", ["pr", "merge", "1"]],
   ];
   for (const [label, probe] of probes) {
-    const verdict = authorize(ROLE, { kind: "gh", argv: probe });
+    const verdict = authorize(ROLE, { kind: "gh", argv: probe }, { acting: ACTING });
     console.log(`  ${verdict.allow ? "yes" : "no "}  ${label}`);
   }
-  const pushes = authorize(ROLE, { kind: "push", argv: [`bot/${ROLE}/x`] });
+  const pushes = authorize(ROLE, { kind: "push", argv: [`bot/${ROLE}/x`] }, { acting: ACTING });
   console.log(`  ${pushes.allow ? "yes" : "no "}  push branches (bot/${ROLE}/*)`);
-  const reviews = authorize(ROLE, { kind: "review", argv: ["approve", "1"] });
+  const reviews = authorize(ROLE, { kind: "review", argv: ["approve", "1"] }, { acting: ACTING });
   console.log(`  ${reviews.allow ? "yes" : "no "}  record review verdicts`);
+
+  // Borrowed hats are stated loudly: an agent covering the merge seat as well
+  // as both reviewer seats is self-certifying, and that should never be a
+  // surprise to whoever reads this.
+  if (ACTING.length > 0) {
+    console.log("");
+    console.log(`  TEMPORARILY ALSO COVERING: ${ACTING.join(", ")}`);
+    console.log("  Those roles have no bot yet, so you hold their gates as well as");
+    console.log("  your own. Sign off under a borrowed seat explicitly —");
+    console.log("  `hub approve 22 --as perf-sec-qa` — and actually do that role's");
+    console.log("  review rather than letting one glance count as two.");
+    console.log("  You are self-certifying while this lasts. Be stricter, not looser.");
+  }
   console.log("");
   console.log(`colleagues: ${ROLES.filter((r) => r !== ROLE).join(", ")}`);
   process.exit(0);
@@ -89,7 +104,7 @@ if (argv[0] === "push") {
 // Refused locally where possible. The daemon checks again — it must, since it
 // is the only side that is trustworthy — but failing here gives the agent an
 // immediate, specific reason instead of a round trip ending in "denied".
-const local = authorize(ROLE, request);
+const local = authorize(ROLE, request, { acting: ACTING });
 if (!local.allow) {
   console.error(`hub: refused — ${local.reason ?? "not allowed"}`);
   console.error("hub: this is someone else's job; ask them on Telegram.");

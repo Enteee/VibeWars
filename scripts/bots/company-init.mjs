@@ -273,7 +273,28 @@ if (already) {
 /* 6. company.json ---------------------------------------------------------- */
 
 fs.mkdirSync(ROOT, { recursive: true });
+/**
+ * Hats a role may borrow while the real wearer has not been hired.
+ *
+ * Preserved across re-runs rather than reset, since this is an operator
+ * decision and `claude-llc-init` is re-run whenever something looks off.
+ * hubd only honours a hat whose wearer is genuinely absent, so these entries
+ * are inert once the proper bots exist and need no cleanup.
+ */
+let acting = { "lead-dev": ["perf-sec-qa", "qa-tester"] };
+try {
+  /** @type {unknown} */
+  const previous = JSON.parse(fs.readFileSync(path.join(ROOT, "company.json"), "utf8"));
+  const existing = obj(previous).acting;
+  if (typeof existing === "object" && existing !== null) {
+    acting = /** @type {typeof acting} */ (existing);
+  }
+} catch {
+  /* first run */
+}
+
 const config = {
+  acting,
   repo: REPO,
   owner: OWNER,
   name: NAME,

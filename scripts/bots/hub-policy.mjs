@@ -222,13 +222,51 @@ function permits(roles, role) {
 }
 
 /**
- * Decide whether `role` may run this request.
+ * Roles one role is temporarily covering for.
+ *
+ * A company short of bots can have one agent wear several hats. This is a
+ * real loss and worth naming: the three approval gates exist so that the role
+ * holding the merge button cannot manufacture the approvals that unlock it,
+ * and an agent covering both reviewer seats and the merge seat is
+ * self-certifying. It is the operator's call to make, not ours to refuse, but
+ * it must be visible rather than quietly folded into the policy.
+ *
+ * Two things keep it honest. The delegation is data, not a change to the
+ * table below — so the base policy stays the thing we test. And hubd only
+ * honours a hat whose real wearer is **not hired yet**, so the override
+ * expires on its own the moment the proper bot comes online; nobody has to
+ * remember to take it back.
+ *
+ * Sign-off under a borrowed hat has to be explicit — `hub approve 22 --as
+ * perf-sec-qa` — so the ledger still records two distinct reviews and the
+ * agent has to actually do both passes rather than one glance counting twice.
  *
  * @param {string} role
  * @param {{ kind: string, argv: string[] }} request
- * @returns {{ allow: boolean, reason?: string, guards?: string[], gateChange?: boolean }}
+ * @param {{ acting?: string[] }} [options]
+ * @returns {{ allow: boolean, reason?: string, guards?: string[], as?: string }}
  */
-export function authorize(role, request) {
+export function authorize(role, request, options = {}) {
+  const direct = authorizeAs(role, request);
+  if (direct.allow) {
+    return direct;
+  }
+
+  for (const hat of options.acting ?? []) {
+    const borrowed = authorizeAs(hat, request);
+    if (borrowed.allow) {
+      return { ...borrowed, as: hat };
+    }
+  }
+  return direct;
+}
+
+/**
+ * @param {string} role
+ * @param {{ kind: string, argv: string[] }} request
+ * @returns {{ allow: boolean, reason?: string, guards?: string[] }}
+ */
+function authorizeAs(role, request) {
   if (!ROLES.includes(role)) {
     return { allow: false, reason: `unknown role "${role}"` };
   }
@@ -324,7 +362,7 @@ function authorizeReview(role, argv) {
   if (!REVIEWERS.includes(role)) {
     return { allow: false, reason: `role "${role}" does not record review verdicts` };
   }
-  const [verb, pr] = argv;
+  const [verb, pr] = argv.filter((word) => word !== "--as" && !REVIEWERS.includes(word));
   if (verb !== "approve" && verb !== "request-changes") {
     return { allow: false, reason: `unknown review verdict "${String(verb)}"` };
   }

@@ -284,3 +284,71 @@ describe("touchesGate", () => {
     expect(touchesGate([])).toBe(false);
   });
 });
+
+describe("borrowed hats", () => {
+  const acting = { acting: ["perf-sec-qa", "qa-tester"] };
+
+  it("lets a covering role do the absent role's job", () => {
+    // The company is short of bots, so one agent holds several gates.
+    expect(
+      authorize("lead-dev", { kind: "gh", argv: ["pr", "merge", "22"] }, acting),
+    ).toMatchObject({ allow: true, as: "qa-tester" });
+    expect(
+      authorize("lead-dev", { kind: "push", argv: ["bot/perf-sec-qa/x"] }, acting),
+    ).toMatchObject({ allow: true, as: "perf-sec-qa" });
+  });
+
+  it("names which hat it allowed, so the audit log can record it", () => {
+    const verdict = authorize("lead-dev", { kind: "gh", argv: ["pr", "merge", "22"] }, acting);
+
+    // Without `as`, a merge by lead-dev would be indistinguishable from a
+    // policy bug that let the wrong role merge.
+    expect(verdict.as).toBe("qa-tester");
+  });
+
+  it("still carries the merge guards when merging under a borrowed hat", () => {
+    // The gates are not what is being relaxed — only who may stand at them.
+    const verdict = authorize("lead-dev", { kind: "gh", argv: ["pr", "merge", "22"] }, acting);
+
+    expect(verdict.guards).toStrictEqual([
+      "checks-green",
+      "approved-by:lead-dev",
+      "approved-by:perf-sec-qa",
+    ]);
+  });
+
+  it("grants nothing when no hat permits it either", () => {
+    expect(
+      authorize("lead-dev", { kind: "gh", argv: ["workflow", "disable", "ci.yml"] }, acting),
+    ).toMatchObject({ allow: false });
+    expect(authorize("lead-dev", { kind: "gh", argv: ["repo", "delete"] }, acting)).toMatchObject({
+      allow: false,
+    });
+  });
+
+  it("changes nothing for a role that has been given no hats", () => {
+    // hubd looks `acting` up by role in company.json, so a role with no entry
+    // is called with an empty list and must be unaffected. Handing
+    // developer-1 lead-dev's hats WOULD let it merge — that is the whole
+    // mechanism, and it is exactly why the list comes from configuration on
+    // the host and never from the request.
+    expect(
+      authorize("developer-1", { kind: "gh", argv: ["pr", "merge", "22"] }, { acting: [] }),
+    ).toMatchObject({ allow: false });
+    expect(authorize("lead-dev", { kind: "gh", argv: ["pr", "merge", "22"] })).toMatchObject({
+      allow: false,
+    });
+  });
+
+  it("does not let a hat be invented by the requester", () => {
+    // `acting` comes from company.json via hubd, never from the agent. This
+    // asserts the shape that matters: an unknown hat grants nothing.
+    expect(
+      authorize(
+        "developer-1",
+        { kind: "gh", argv: ["pr", "merge", "22"] },
+        { acting: ["nonsense"] },
+      ),
+    ).toMatchObject({ allow: false });
+  });
+});

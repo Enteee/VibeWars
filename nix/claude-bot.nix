@@ -306,6 +306,13 @@ let
         # say so if an agent tries to use it.
         projectNumber="$(${pkgs.jq}/bin/jq -r '.project // ""' "$VIBEWARS_BOT_ROOT/company.json" 2>/dev/null || true)"
 
+        # Roles this one is covering for while they have no bot. Passed in so
+        # `hub whoami` can say so out loud — an agent holding both reviewer
+        # seats and the merge seat is self-certifying, and that should never
+        # be something it has to infer.
+        acting="$(${pkgs.jq}/bin/jq -r --arg r "$role" \
+          '(.acting[$r] // []) | join(",")' "$VIBEWARS_BOT_ROOT/company.json" 2>/dev/null || true)"
+
         # ----------------------------------------------------------------------
         # Claude's own credential, handled exactly as claude-box does: it is the
         # one real secret the jail gets, bound read-write because Claude rewrites
@@ -314,6 +321,30 @@ let
         boxDir="$HOME/.claude-bot/$role"
         mkdir -p "$boxDir/config"
         [ -e "$boxDir/claude.json" ] || printf '{}' > "$boxDir/claude.json"
+
+        # An autonomous agent cannot answer a question, so every first-run
+        # prompt has to be pre-answered or it sits at a menu forever. Three
+        # separate prompts from three different mechanisms: the theme picker
+        # (gated on hasCompletedOnboarding), "is this a project you trust?"
+        # (per project path, set below once the worktree exists), and the
+        # confirmation for --dangerously-skip-permissions itself.
+        #
+        # None of this grants an agent anything it would not have had after
+        # the operator clicked through. It only removes the clicking.
+        #
+        # MERGED, not written-if-absent: a box that was once started
+        # interactively already has a settings.json holding the theme the
+        # operator picked, and a create-if-absent guard silently skips it —
+        # which is exactly how the bypass-permissions prompt survived the
+        # first attempt at this.
+        [ -e "$boxDir/config/settings.json" ] || printf '{}' > "$boxDir/config/settings.json"
+        if merged="$(${pkgs.jq}/bin/jq \
+             '.theme //= "dark"
+              | .skipDangerousModePermissionPrompt = true
+              | .skipWorkflowUsageWarning = true' \
+             "$boxDir/config/settings.json" 2>/dev/null)"; then
+          printf '%s\n' "$merged" > "$boxDir/config/settings.json"
+        fi
 
         creds="$HOME/.claude/.credentials.json"
         if [ ! -e "$creds" ]; then
@@ -347,6 +378,21 @@ let
           fi
         fi
 
+        # Marks onboarding done and this worktree trusted. Merged rather than
+        # overwritten, so an agent's accumulated state survives.
+        claudeVersion="$(claude --version 2>/dev/null | ${pkgs.gawk}/bin/awk '{print $1}')"
+        if seeded="$(${pkgs.jq}/bin/jq \
+             --arg v "$claudeVersion" --arg wt "$worktree" \
+             '.hasCompletedOnboarding = true
+              | .lastOnboardingVersion = $v
+              | .projects[$wt].hasTrustDialogAccepted = true' \
+             "$boxDir/claude.json" 2>/dev/null)"; then
+          printf '%s\n' "$seeded" > "$boxDir/claude.json"
+        else
+          echo "claude-bot: warning: could not pre-accept the first-run prompts;" >&2
+          echo "claude-bot: warning: $role may stop and wait for input." >&2
+        fi
+
         # ----------------------------------------------------------------------
         # The sidecar. Owns the role's bot token, which is why it stays out here.
         # ----------------------------------------------------------------------
@@ -356,8 +402,24 @@ let
         VIBEWARS_BOT_LAUNCHER_PID="$$"
         export VIBEWARS_BOT_LAUNCHER_PID
 
+        # Only one process may long-poll a given bot token: a second one gets
+        # "409 Conflict: terminated by other getUpdates request" and the role
+        # goes deaf. Restarting a role is normal — claude-llc does it on every
+        # start — so the old sidecar is cleared rather than left to fight.
+        if [ -e "$VIBEWARS_BOT_ROOT/link/$role.pid" ]; then
+          stale="$(cat "$VIBEWARS_BOT_ROOT/link/$role.pid")"
+          if kill -0 "$stale" 2>/dev/null; then
+            echo "claude-bot: replacing the existing $role sidecar (pid $stale)"
+            kill "$stale" 2>/dev/null || true
+            # Give it a moment to drop its Telegram connection, or the new one
+            # inherits the conflict it was meant to resolve.
+            sleep 2
+          fi
+        fi
+
         ${node} ${botScripts}/link.mjs serve "$role" &
         linkPid=$!
+        printf '%s\n' "$linkPid" > "$VIBEWARS_BOT_ROOT/link/$role.pid"
         # This trap covers only the gap between here and the exec below: once exec
         # replaces this shell with bwrap, no trap of ours can ever run. What ends
         # the sidecar at the end of a real session is its own watchLauncher, which
@@ -426,8 +488,12 @@ let
           --setenv VIBEWARS_BOT_BUS "$VIBEWARS_BOT_BUS" \
           --setenv VIBEWARS_HUB "$VIBEWARS_BOT_ROOT/hub/$role" \
           --setenv VIBEWARS_PROJECT "$projectNumber" \
+          --setenv VIBEWARS_ACTING "$acting" \
           --setenv VIBEWARS_ENV "development" \
-          -- claude --append-system-prompt "$briefing" "$@"
+          -- claude \
+            --dangerously-skip-permissions \
+            --append-system-prompt "$briefing" \
+            "$@"
   '';
 in
 {
