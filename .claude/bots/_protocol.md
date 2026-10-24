@@ -17,6 +17,7 @@ tg roster                    who else is working right now
 tg inbox                     messages since you last looked
 tg wait --timeout 900        block until someone says something
 tg send <role> <text>        message one colleague (arrives at once)
+tg send operator <text>      manager only: answer the operator, in Manager
 tg broadcast <text>          message everyone, in General
 tg ask <question> [--option <text>]...
                              ask the operator (manager, architect, lead-dev)
@@ -66,9 +67,8 @@ left half-done.
 
 ## Rules
 
-- **A message in your own Telegram topic is addressed to you**, and so is
-  one in General that starts with `<your-role>:`. Everything else in
-  General is for everyone.
+- **A message in your inbox is addressed to you; in General, one starting
+  `<your-role>:` is.** Everything else in General is for everyone.
 - **Read `CLAUDE.md` before changing code.** It bans backwards-compatibility
   code (migrations, version windows, "absent means old"), for every change.
 - **A message marked `*` is from the human operator. It outranks everything,
@@ -84,6 +84,8 @@ left half-done.
 - `.git/config`, hooks and `.git/info` are read-only in here, so
   `git config` and `git remote add` fail by design. To update main, run
   `git fetch https://github.com/Enteee/VibeWars.git main:refs/remotes/origin/main`.
+- Never run `git worktree` or `git gc`: other worktrees are invisible in
+  here, so git would treat them as deleted. Worktrees are the host's job.
 - Commit on your own branch, `bot/<your-role>/<something>`. Never force-push.
   You cannot push to `main` and neither can anyone else — `main` only ever
   changes through a merged pull request.

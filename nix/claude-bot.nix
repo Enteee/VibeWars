@@ -171,8 +171,10 @@ let
     fi
 
     # Issue #61: what the host executes out of .git is read-only in here,
-    # and everyday git still works. The commit happens in a throwaway
-    # worktree, so the agent's own checkout is never touched.
+    # and everyday git still works. Issue #69: so are the other worktrees'
+    # admin dirs, but not this one's. The commit is made with plumbing onto
+    # a throwaway branch, so the agent's own checkout is never touched, and
+    # nothing here would destroy anything if a check failed.
     refused() {
       if "$SHELL" -c "$2" >/dev/null 2>&1; then
         echo "FAIL  $1: it was allowed"
@@ -185,14 +187,24 @@ let
     refused "git config --local" 'git config --local vibewars.smoke 1'
     refused "writing a hook" "echo x > '$common/hooks/post-checkout'"
     refused "writing info/attributes" "touch '$common/info/attributes'"
-    scratch="$(mktemp -d)"
+    refused "adding a worktree" "mkdir '$common/worktrees/smoke-$$'"
+    for other in "$common"/worktrees/*/; do
+      other="''${other%/}"
+      [ "$other" = "$common/worktrees/$VIBEWARS_BOT_ROLE" ] && continue
+      refused "writing another worktree's HEAD" "touch '$other/HEAD'"
+      break
+    done
+    check "auto-gc never prunes worktrees" "$(git config gc.worktreePruneExpire)" "never"
+    own="$(git rev-parse --absolute-git-dir)"
+    check "this worktree's admin dir is writable" \
+      "$("$SHELL" -c "touch '$own/smoke-$$' && rm '$own/smoke-$$' && echo writable" 2>&1)" \
+      "writable"
     branch="smoke-$$"
-    check "checkout -b from origin/main, and commit" \
-      "$("$SHELL" -c "git worktree add -q -b '$branch' '$scratch/wt' origin/main &&
-        git -C '$scratch/wt' commit -q --allow-empty -m smoke && echo committed" 2>&1)" \
+    check "commit onto a new branch" \
+      "$("$SHELL" -c "c=\$(git commit-tree -m smoke 'HEAD^{tree}' -p HEAD) &&
+        git update-ref 'refs/heads/$branch' \"\$c\" && echo committed" 2>&1)" \
       "committed"
-    git worktree remove --force "$scratch/wt" >/dev/null 2>&1 || true
-    git branch -q -D "$branch" >/dev/null 2>&1 || true
+    git update-ref -d "refs/heads/$branch" >/dev/null 2>&1 || true
     exit "$failed"
   '';
 
@@ -290,9 +302,9 @@ let
       claude-bot --help
 
     Each role runs in its own bubblewrap sandbox, on its own git worktree
-    (branch bot/<role>), and talks to its peers through its own Telegram topic.
-    Your checkout is not mounted inside the sandbox. Any extra arguments are
-    passed straight through to `claude`.
+    (detached at main), and talks to its peers through its inbox; Telegram
+    carries the operator's copy. Your checkout is not mounted inside the
+    sandbox. Any extra arguments are passed straight through to `claude`.
 
     roles:
     USAGE
@@ -300,15 +312,16 @@ let
           cat <<'USAGE'
 
     The company has one Telegram bot. Hiring a role needs no Telegram step:
-    its forum topic is created the first time someone messages it. Add a role
-    by writing .claude/bots/<name>.md — the file is that agent's charter, and
-    is appended to its system prompt.
+    it has no topic of its own, and the operator addresses it as
+    "<role>: ...". Add a role by writing .claude/bots/<name>.md — the file is
+    that agent's charter, and is appended to its system prompt.
 
     inside the sandbox:
       tg roster                  who else is working right now
       tg inbox                   messages since you last looked
       tg wait --timeout 300      block until someone says something
-      tg send <role> <text>      message one agent (mirrored into its topic)
+      tg send <role> <text>      message one agent (mirrored into 🤖 Bots)
+      tg send operator <text>    manager only: answer the operator in 📋 Manager
       tg broadcast <text>        message everyone, in General
 
     first-time setup:
@@ -316,7 +329,8 @@ let
           Verifies the manager bot, waits for the group, writes devenv.local.nix.
 
     state (all gitignored, 0600):
-      .bots/registry.json        each role's forum topic, and the update offset
+      .bots/registry.json        the Bots, Manager and Operator topics, and the
+                                 update offset
       .bots/bus/<role>/          that role's inbox and outbox
       .bots/wt/<role>/           that role's git worktree
 
@@ -533,18 +547,10 @@ let
         # ----------------------------------------------------------------------
         # The worktree. The agent edits this, never your checkout.
         # ----------------------------------------------------------------------
+        # Created, or repaired if its admin dir is gone, here on the host: the
+        # jail cannot write .git/worktrees (#69, see the binds below).
         worktree="$VIBEWARS_BOT_ROOT/wt/$role"
-        if [ ! -e "$worktree" ]; then
-          if git -C "$DEVENV_ROOT" show-ref --verify --quiet "refs/heads/bot/$role"; then
-            git -C "$DEVENV_ROOT" worktree add "$worktree" "bot/$role"
-          else
-            # Detached, not `-b bot/$role`: agents work on bot/<role>/issue-N
-            # branches, and while any of those exist git cannot create a
-            # branch named bot/<role>. Every issue starts from origin/main
-            # anyway (the fresh-branch skill).
-            git -C "$DEVENV_ROOT" worktree add --detach "$worktree" origin/main
-          fi
-        fi
+        ${node} ${botScripts}/worktree.mjs "$DEVENV_ROOT" "$role"
 
         # Marks onboarding done and this worktree trusted. Merged rather than
         # overwritten, so an agent's accumulated state survives.
@@ -633,6 +639,15 @@ let
         # the start rather than leaving a hole, so they are made here first.
         # Branches therefore never write tracking config: autoSetupMerge is
         # off for every git in the jail, through the environment.
+        #
+        # .git/worktrees is read-only too, except this role's own admin dir
+        # (#69). A jail sees only its own worktree, so to git every other one
+        # looks deleted, and one `git worktree prune` in a jail once removed
+        # the admin dir of every other agent's worktree. Now that fails with
+        # EROFS, and so does writing another worktree's HEAD or index. The
+        # order matters: bwrap applies binds in sequence, so the rw bind of
+        # the role's own dir goes after the ro one. gc.worktreePruneExpire
+        # keeps an auto-gc from even trying.
         # ----------------------------------------------------------------------
         mkdir -p "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/info"
 
@@ -671,6 +686,8 @@ let
           --ro-bind "$DEVENV_ROOT/.git/config" "$DEVENV_ROOT/.git/config" \
           --ro-bind "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/hooks" \
           --ro-bind "$DEVENV_ROOT/.git/info" "$DEVENV_ROOT/.git/info" \
+          --ro-bind "$DEVENV_ROOT/.git/worktrees" "$DEVENV_ROOT/.git/worktrees" \
+          --bind "$DEVENV_ROOT/.git/worktrees/$role" "$DEVENV_ROOT/.git/worktrees/$role" \
           --ro-bind "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_BUS" \
           --bind "$VIBEWARS_BOT_BUS/$role" "$VIBEWARS_BOT_BUS/$role" \
           --ro-bind "$VIBEWARS_BOT_ROOT/hub" "$VIBEWARS_BOT_ROOT/hub" \
@@ -693,14 +710,28 @@ let
           --setenv VIBEWARS_BOARD "$boardIds" \
           --setenv VIBEWARS_ACTING "$acting" \
           --setenv VIBEWARS_ENV "development" \
-          --setenv GIT_CONFIG_COUNT 1 \
+          --setenv GIT_CONFIG_COUNT 2 \
           --setenv GIT_CONFIG_KEY_0 branch.autoSetupMerge \
           --setenv GIT_CONFIG_VALUE_0 false \
+          --setenv GIT_CONFIG_KEY_1 gc.worktreePruneExpire \
+          --setenv GIT_CONFIG_VALUE_1 never \
           "''${chromiumEnv[@]}" \
           -- "''${jailCommand[@]}"
   '';
 in
 {
+  # Off in CI: the checks need the toolchain, not the agent tooling, and
+  # claude-code alone is a large unfree download. CI writes a
+  # devenv.local.nix that sets this to false; see .github/actions/devenv.
+  options.vibewars.claudeBot.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = true;
+    description = ''
+      Whether to put claude-bot, claude-llc and their tools (claude-code,
+      bubblewrap, tg, hub, board, tmux) into the shell.
+    '';
+  };
+
   options.vibewars.telegram = {
     managerTokenFile = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
@@ -734,7 +765,7 @@ in
 
   };
 
-  config = {
+  config = lib.mkIf config.vibewars.claudeBot.enable {
     packages = [
       pkgs.bubblewrap
       pkgs.claude-code
