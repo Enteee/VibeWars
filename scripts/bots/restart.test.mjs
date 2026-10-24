@@ -157,9 +157,13 @@ describe("the restarter", () => {
     expect(result.calls).toContain("tmux kill-session -t restart-test");
     expect(result.calls).toContain("pkill -f hubd.mjs");
     expect(
-      result.calls.some((c) => c.endsWith("reboot-check shell -- claude-llc --help rebooted=1")),
+      result.calls.some((c) =>
+        c.endsWith("reboot-check shell --refresh-eval-cache -- claude-llc --help rebooted=1"),
+      ),
     ).toBe(true);
-    expect(result.calls).toContain(`devenv ${company.repo} shell -- claude-llc up rebooted=1`);
+    expect(result.calls).toContain(
+      `devenv ${company.repo} shell --refresh-eval-cache -- claude-llc up rebooted=1`,
+    );
     expect(result.boot).toMatchObject({
       sha: company.target,
       previousSha: company.boot,
@@ -178,7 +182,9 @@ describe("the restarter", () => {
 
     expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
     expect(String(result.boot.note)).toMatch(/NOT updated: checkout is on branch mine/);
-    expect(result.calls).toContain(`devenv ${company.repo} shell -- claude-llc up rebooted=1`);
+    expect(result.calls).toContain(
+      `devenv ${company.repo} shell --refresh-eval-cache -- claude-llc up rebooted=1`,
+    );
   });
 
   it("never moves a checkout with local changes", () => {
@@ -202,7 +208,9 @@ describe("the restarter", () => {
         `main ${company.target.slice(0, 8)} failed to build; running ${company.boot.slice(0, 8)}`,
       ),
     );
-    expect(result.calls).toContain(`devenv ${company.repo} shell -- claude-llc up rebooted=1`);
+    expect(result.calls).toContain(
+      `devenv ${company.repo} shell --refresh-eval-cache -- claude-llc up rebooted=1`,
+    );
   });
 });
 

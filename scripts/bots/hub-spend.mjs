@@ -159,8 +159,8 @@ export function formatSpend(window) {
 /**
  * The board, one page at a time, selecting only what `board`, the
  * visibility filter and the dashboard read. `gh project item-list` fetches
- * every field value of every item instead, and the snapshot is taken every
- * minute while anyone reads the board.
+ * every field value of every item instead. How seldom hubd needs it is
+ * hub-board.mjs's business.
  */
 export const BOARD_QUERY = `query($project: ID!, $cursor: String) {
   rateLimit { cost remaining resetAt }
@@ -230,12 +230,24 @@ export function parseBoardPage(json) {
     return null;
   }
   const info = obj(page.pageInfo);
-  const limit = obj(data.rateLimit);
-  const resetAt = Date.parse(str(limit.resetAt));
   return {
     items: page.nodes.map((node) => boardItem(obj(node))),
     totalCount: page.totalCount,
     next: info.hasNextPage === true && typeof info.endCursor === "string" ? info.endCursor : null,
+    ...parseBudget(data.rateLimit),
+  };
+}
+
+/**
+ * What a hand-written query's `rateLimit { cost remaining resetAt }` says.
+ *
+ * @param {unknown} rateLimit
+ * @returns {{ cost: number | null, budget: Budget | null }}
+ */
+export function parseBudget(rateLimit) {
+  const limit = obj(rateLimit);
+  const resetAt = Date.parse(str(limit.resetAt));
+  return {
     cost: typeof limit.cost === "number" ? limit.cost : null,
     budget:
       typeof limit.remaining === "number" && Number.isFinite(resetAt)
@@ -253,7 +265,7 @@ export function parseBoardPage(json) {
  * @param {Record<string, unknown>} node
  * @returns {Record<string, unknown>}
  */
-function boardItem(node) {
+export function boardItem(node) {
   const raw = obj(node.content);
   /** @type {Record<string, unknown>} */
   const content = { type: str(raw.__typename) };

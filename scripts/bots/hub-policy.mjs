@@ -579,6 +579,9 @@ function authorizeAs(role, request, acting) {
   if (request.kind === "reboot") {
     return authorizeReboot(role, argv);
   }
+  if (request.kind === "board") {
+    return authorizeBoard(argv);
+  }
   if (request.kind !== "gh") {
     return { allow: false, reason: `unknown request kind "${request.kind}"` };
   }
@@ -830,6 +833,20 @@ function authorizeReboot(role, argv) {
     return { allow: true };
   }
   return { allow: false, reason: 'usage: company reboot "<reason>" | company reboot --abort' };
+}
+
+/**
+ * A read of hubd's copy of the board: `ls`, `show` or `changes`. Everyone
+ * may, as everyone may list the project; it changes nothing. Moving a card
+ * stays a `gh project item-edit`, under its own rule.
+ *
+ * @param {string[]} argv
+ * @returns {{ allow: boolean, reason?: string }}
+ */
+function authorizeBoard(argv) {
+  return ["ls", "show", "changes"].includes(argv[0] ?? "")
+    ? { allow: true }
+    : { allow: false, reason: "usage: board ls [column] | board show <issue> | board changes" };
 }
 
 /**
