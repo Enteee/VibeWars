@@ -159,3 +159,20 @@ describe("hub writing a large answer to a pipe", () => {
     expect(result.stdout === stdout).toBe(true);
   }, 30_000);
 });
+
+describe("hub whoami", () => {
+  /**
+   * @param {string} role
+   * @returns {string}
+   */
+  const whoami = (role) =>
+    spawnSync(process.execPath, [HUB, "whoami"], {
+      env: { PATH: process.env.PATH ?? "", VIBEWARS_BOT_ROLE: role, VIBEWARS_HUB: "/nonexistent" },
+      encoding: "utf8",
+    }).stdout;
+
+  it("says only the manager may close and reopen", () => {
+    expect(whoami("manager")).toContain("yes  close and reopen issues and pull requests");
+    expect(whoami("lead-dev")).toContain("no   close and reopen issues and pull requests");
+  });
+});

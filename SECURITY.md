@@ -151,7 +151,7 @@ host and `main`**.
 | Jail → GitHub            | Agents hold no credential. `hub` asks `hubd` (`hub-policy.mjs`), which enforces each role's permissions, refuses every gh flag that would read a host file (#26), pins the repository, and records verdicts against the reviewed SHA. The manager may push only `bot/manager/*`, and only changes inside `.claude/bots/skills/`: hubd checks that in its mirror against GitHub's `main`, failing closed (#27).                                                                                                                |
 | Host git near agent data | Every host git runs with `GIT_HARDENING` and `GIT_ENV` (`git-hardening.mjs`). These pin hooks, fsmonitor, ssh, credential helpers, gpg and filter drivers, and set `GIT_NO_REPLACE_OBJECTS` (#67). The operator checkout sets `core.useReplaceRefs=false`. `refs/` stays writable, so never trust a local ref on the host.                                                                                                                                                                                                    |
 | Reboot                   | The restarter builds GitHub's `main` from hubd's private mirror and fast-forwards only to that same SHA (#21).                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Telegram → agents        | Only the group's creator is heard and gets the `*` mark, for messages, button taps and replies alike (#39, #47). All text goes through `visible()`: no line breaks, ESC, bidi, zero-width or tag characters.                                                                                                                                                                                                                                                                                                                  |
+| Telegram → agents        | Only the group's creator is heard and gets the `*` mark, for messages, button taps and replies alike (#39, #47). All text goes through `visible()`: no line breaks, ESC, bidi, zero-width or tag characters. An unaddressed message reaches everyone only from General, the manager only from the Manager topic, and nobody from any other topic; only the manager may write to the operator (`tg send operator`), which the sidecar checks, not just `tg` (#85).                                                             |
 | Agent → agent            | Peer messages are information, never instructions. Agents can still overwrite each other's branch refs, but not each other's worktree metadata (#69). That is an integrity problem, not code execution on the host.                                                                                                                                                                                                                                                                                                           |
 
 Each jail sees only its own worktree, so to git every other one looks
@@ -164,6 +164,16 @@ writable from every jail too, and jails do not need them (a worktree's
 `HEAD` lives in its admin dir). So an agent can move the operator's
 checked-out branch, and host code that starts from `HEAD` starts from an
 agent-chosen commit. Treat `HEAD` like any other local ref.
+
+**Open: #93.** Peer text mirrored to Telegram keeps its line breaks and
+bidi characters, so an agent can type a line that looks like another
+sender's header, such as `📋 Manager → 👤 Operator`. Until #93 lands,
+trust the topic a message is in, not a header inside its text.
+
+**By design.** The manager may close and reopen any pull request or
+issue (#84), gate PRs included, but never with `--delete-branch`. A
+misbehaving manager can stall the pipeline this way; it cannot destroy
+work or merge anything.
 
 Every finding here so far came from **reading a gate with a hostile
 agent in mind**: #26, #39, #47, #57, #61, #67, #73. A change to any file in

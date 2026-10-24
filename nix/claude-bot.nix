@@ -302,9 +302,9 @@ let
       claude-bot --help
 
     Each role runs in its own bubblewrap sandbox, on its own git worktree
-    (detached at main), and talks to its peers through its own Telegram topic.
-    Your checkout is not mounted inside the sandbox. Any extra arguments are
-    passed straight through to `claude`.
+    (detached at main), and talks to its peers through its inbox; Telegram
+    carries the operator's copy. Your checkout is not mounted inside the
+    sandbox. Any extra arguments are passed straight through to `claude`.
 
     roles:
     USAGE
@@ -312,15 +312,16 @@ let
           cat <<'USAGE'
 
     The company has one Telegram bot. Hiring a role needs no Telegram step:
-    its forum topic is created the first time someone messages it. Add a role
-    by writing .claude/bots/<name>.md — the file is that agent's charter, and
-    is appended to its system prompt.
+    it has no topic of its own, and the operator addresses it as
+    "<role>: ...". Add a role by writing .claude/bots/<name>.md — the file is
+    that agent's charter, and is appended to its system prompt.
 
     inside the sandbox:
       tg roster                  who else is working right now
       tg inbox                   messages since you last looked
       tg wait --timeout 300      block until someone says something
-      tg send <role> <text>      message one agent (mirrored into its topic)
+      tg send <role> <text>      message one agent (mirrored into 🤖 Bots)
+      tg send operator <text>    manager only: answer the operator in 📋 Manager
       tg broadcast <text>        message everyone, in General
 
     first-time setup:
@@ -328,7 +329,8 @@ let
           Verifies the manager bot, waits for the group, writes devenv.local.nix.
 
     state (all gitignored, 0600):
-      .bots/registry.json        each role's forum topic, and the update offset
+      .bots/registry.json        the Bots, Manager and Operator topics, and the
+                                 update offset
       .bots/bus/<role>/          that role's inbox and outbox
       .bots/wt/<role>/           that role's git worktree
 

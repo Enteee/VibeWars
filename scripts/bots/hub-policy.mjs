@@ -154,6 +154,10 @@ const RULES = [
   { argv: ["issue", "edit"], roles: ["manager", "architect"] },
   { argv: ["issue", "close"], roles: ["manager"] },
   { argv: ["issue", "reopen"], roles: ["manager"] },
+  // Superseded pull requests: closed with a comment naming the replacement,
+  // never with --delete-branch (see `deletesBranch`).
+  { argv: ["pr", "close"], roles: ["manager"] },
+  { argv: ["pr", "reopen"], roles: ["manager"] },
   { argv: ["issue", "pin"], roles: ["manager"] },
   { argv: ["issue", "transfer"], roles: [] },
   { argv: ["issue", "delete"], roles: [] },
@@ -410,6 +414,36 @@ export function parseMerge(argv) {
 }
 
 /**
+ * Whether a `pr close` would also delete the branch. A branch is a
+ * developer's work, and closing a pull request is not a decision to throw
+ * it away. Read as gh reads flags: `--delete-branch` in any spelling, and
+ * `d` anywhere in a short cluster (`-cd`), erring on the side of refusing.
+ *
+ * @param {string[]} argv `["pr", "close", ...]`
+ * @returns {boolean}
+ */
+function deletesBranch(argv) {
+  return argv
+    .slice(2)
+    .some((word) =>
+      word.startsWith("--")
+        ? word === "--delete-branch" || word.startsWith("--delete-branch=")
+        : shortFlag(word, (letter) => letter === "d") !== null,
+    );
+}
+
+/**
+ * Who to ask instead, for a refusal: a refused agent should not have to
+ * guess whose job the thing it tried is.
+ *
+ * @param {string[]} roles
+ * @returns {string}
+ */
+function whoMay(roles) {
+  return roles.length === 0 ? "no role may" : `ask the ${roles.join(" or the ")}`;
+}
+
+/**
  * The words of a review verdict: `<verb> <pr> --sha <commit> [--as <seat>]
  * [note...]`.
  *
@@ -573,10 +607,16 @@ function authorizeAs(role, request, acting) {
       reason: `"gh ${argv.slice(0, 2).join(" ")}" is not on any role's allowlist`,
     };
   }
-  if (!permits(best.roles, role)) {
+  if (best.roles !== "*" && !permits(best.roles, role)) {
     return {
       allow: false,
-      reason: `role "${role}" may not run "gh ${best.argv.join(" ")}"`,
+      reason: `role "${role}" may not run "gh ${best.argv.join(" ")}"; ${whoMay(best.roles)}`,
+    };
+  }
+  if (best.argv.join(" ") === "pr close" && deletesBranch(argv)) {
+    return {
+      allow: false,
+      reason: "--delete-branch is not allowed: close the pull request and leave its branch",
     };
   }
   if (best.argv.join(" ") === "pr merge") {

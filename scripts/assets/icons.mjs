@@ -33,6 +33,10 @@ const C = {
   necromancer: "#3fb68b",
   mesmer: "#e87fd0",
   elementalist: "#ff6e5a",
+  assassin: "#c0405e",
+  ritualist: "#a9e5e0",
+  paragon: "#f0883e",
+  dervish: "#c9a27e",
 };
 
 /** @param {string} body */
@@ -70,6 +74,25 @@ const profession = {
   elementalist: () =>
     `<path d="M12 2l10 10-10 10L2 12z" fill="${C.elementalist}"/>` +
     `<path d="M12 6v12M6 12h12" ${stroke(C.plate, 2)}/>`,
+  // Crescent moon: strikes from the shadows.
+  assassin: () =>
+    `<path d="M11.4 2.5A9.5 9.5 0 1 0 21.3 13.7 7.5 7.5 0 0 1 11.4 2.5z" fill="${C.assassin}"/>`,
+  // Spirit urn: a flared rim, a narrow neck, a round body.
+  ritualist: () =>
+    `<path d="M8 3h8v2l-2 2.5c3.5 1.2 5.5 4 5.5 7.5 0 4-3.3 6-7.5 6s-7.5-2-7.5-6c0-3.5 2-6.3 5.5-7.5L8 5z" fill="${C.ritualist}"/>`,
+  // Two rank chevrons: the one who leads.
+  paragon: () =>
+    `<path d="M3 11l9-8 9 8v4.5l-9-8-9 8zM3 18.5l9-8 9 8V23l-9-8-9 8z" fill="${C.paragon}"/>`,
+  // Three curved blades turning: the whirling scythe.
+  dervish: () =>
+    `<g fill="${C.dervish}">` +
+    [0, 120, 240]
+      .map(
+        (deg) =>
+          `<path d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z" transform="rotate(${String(deg)} 12 12)"/>`,
+      )
+      .join("") +
+    `<circle cx="12" cy="12" r="2.5"/></g>`,
 };
 
 // ---------------------------------------------------------------------------
@@ -116,11 +139,12 @@ const status = {
     "condition",
     (c) => `<path d="M12 4c3 4.5 5 7 5 9.5a5 5 0 0 1-10 0C7 11 9 8.5 12 4z" fill="${c}"/>`,
   ],
-  // Flame: three points, so it never reads as the bleeding drop.
+  // Flame: one tall tip leaning right and a side tongue, so it never reads
+  // as the symmetric bleeding drop.
   burning: [
     "condition",
     (c) =>
-      `<path d="M12 5l1.8 3.8 2.7-1.8c.9 2.6 1.5 4.3 1.5 6a6 6 0 0 1-12 0c0-1.7.6-3.4 1.5-6l2.7 1.8z" fill="${c}"/>`,
+      `<path d="M14 3.5c.5 3.5 4 5.5 4 10a6 6 0 0 1-12 0c0-2.5 1-4.5 2.5-5.5 0 2 .5 3 1.5 3.5-.5-3 1-6 4-8z" fill="${c}"/>`,
   ],
   // Three bubbles.
   poison: [
@@ -152,7 +176,7 @@ const status = {
   // Hex: a heart, because the hex is on your life.
   "life-drain": [
     "hex",
-    (c) => `<path d="M12 17.5l-4.8-4.8a2.8 2.8 0 0 1 4.8-3.8 2.8 2.8 0 0 1 4.8 3.8z" fill="${c}"/>`,
+    (c) => `<path d="M12 16l-3.6-3.6a2.1 2.1 0 0 1 3.6-3 2.1 2.1 0 0 1 3.6 3z" fill="${c}"/>`,
   ],
   // Enchantment: plus, health coming back.
   regeneration: ["enchantment", (c) => `<path d="M12 6v12M6 12h12" ${stroke(c, 3)}/>`],

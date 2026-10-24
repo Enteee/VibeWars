@@ -60,8 +60,14 @@ Never used in the arena: there, colour means team.
 | Necromancer  | `#3fb68b` | Downward triangle, eye   |
 | Mesmer       | `#e87fd0` | Hourglass                |
 | Elementalist | `#ff6e5a` | Diamond, quartered       |
+| Assassin     | `#c0405e` | Crescent moon            |
+| Ritualist    | `#a9e5e0` | Spirit urn               |
+| Paragon      | `#f0883e` | Two rank chevrons        |
+| Dervish      | `#c9a27e` | Three whirling blades    |
 
-The six silhouettes stay distinct with the colour removed.
+The ten silhouettes stay distinct with the colour removed. Ten hues on a dark
+field cannot all be far apart (closest pair: elementalist and paragon, ΔE ≈ 26),
+so the silhouette identifies the profession and the colour only supports it.
 
 ## Shapes
 
@@ -96,26 +102,31 @@ marker on someone, which carry that marker's colour.
 ## Sizes
 
 - Icons are drawn on a 24×24 grid with strokes of at least 2 units.
-- **16 px** is the smallest size anything renders at. At 16 px the status
-  _category_ (plate) must read; the _glyph_ must read from 24 px.
-- Status markers in the arena should be at least 16 px. The current 5 px dots
-  carry neither category nor status.
+- **16 px** is the smallest size anything renders at, and it is the size
+  status icons are drawn at in the arena (`STATUS_ICON_SIZE`, no camera
+  zoom). So every status glyph, not just its plate, must read at 16 px.
+  Check it at true scale, under an actor of radius 14, not enlarged on its
+  own.
+- A glyph must leave most of its plate showing: if the glyph fills the
+  plate, the plate's outline is all that is left and the category stops
+  reading.
 
-## Fixes the client needs
+## Why the arena looks the way it does
 
-These are code changes, so they are for the developers. Measured with the
-Machado (2009) colour-blindness simulation, CIE76 ΔE; below ~20 is hard to
-tell apart, below ~10 is the same colour.
+Measured with the Machado (2009) colour-blindness simulation, CIE76 ΔE;
+below ~20 is hard to tell apart, below ~10 is the same colour.
 
-1. **Allies are green, enemies red: ΔE 11 for a deuteranope.** Make allies
-   `friend` blue, and mark "you" with the `ink` rim instead of a separate hue.
-   Blue against red is ΔE 77 for a deuteranope and 56 for a protanope.
-2. **Heal and damage numbers differ only by red and green (ΔE 11).** Prefix
-   heals with `+` and damage with `−`, so the sign carries the meaning.
-3. **Every status is the same orange dot.** Draw the status icons from
-   `apps/web/public/icons/status/` under the actor instead.
-4. **Skill slots are text only.** Put the skill type badge in the slot's
-   corner and the profession icon in the build editor.
+- **Both teams used to be green against red: ΔE 11 for a deuteranope**, which
+  is the same colour. Allies are now `friend` blue and "you" get the `ink`
+  rim (#76). Blue against red is ΔE 77 for a deuteranope and 56 for a
+  protanope. Blue therefore means friend and nothing else: the cast bar is
+  `ink`, not blue.
+- **Heal and damage numbers differ by red and green (ΔE 11)**, so they carry
+  a `+` or `−` sign, which means the same thing to everyone (#76).
+- **Statuses are icons, not dots** (#77): the plate gives the category and the
+  glyph the status.
+- **Skill slots carry the type badge, and the editor the profession icon**
+  (#78).
 
 ## Assets
 
