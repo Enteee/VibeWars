@@ -12,6 +12,8 @@
  * Pure functions only, so the decisions are tested without a network.
  */
 
+import { hasFilter } from "./hub-filter.mjs";
+
 /**
  * `gh` command groups that talk GraphQL. `run`, `workflow` and `api <rest
  * path>` use REST and keep working while GraphQL is exhausted, so they are
@@ -100,9 +102,6 @@ export function limitedMessage(resetAt) {
   );
 }
 
-/** gh's output filters, in their long and short spellings. */
-const FILTER_FLAGS = new Set(["--jq", "-q", "--template", "-t"]);
-
 /**
  * Whether a request is a board read the shared snapshot can answer: the JSON
  * item list of the company's own project. A table-format list, one of
@@ -119,7 +118,8 @@ export function isBoardRead(argv, project) {
   if (group !== "project" || sub !== "item-list" || number !== String(project)) {
     return false;
   }
-  const filtered = argv.some((word) => FILTER_FLAGS.has(word.split("=")[0] ?? word));
+  // The same parser hub and hubd use, so a glued `-q.foo` counts too.
+  const filtered = hasFilter(argv);
   const format = argv.indexOf("--format");
   return !filtered && format !== -1 && argv[format + 1] === "json";
 }

@@ -20,11 +20,13 @@
  * without spending a round trip, and more importantly without having to
  * discover it by being refused.
  */
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import { splitFilter } from "./hub-filter.mjs";
 import { ROLES, authorize } from "./hub-policy.mjs";
 
 const ROLE = process.env.VIBEWARS_BOT_ROLE;
@@ -99,6 +101,32 @@ if (argv[0] === "push") {
   request = { kind: "review", argv };
 } else {
   request = { kind: "gh", argv };
+}
+
+// An output filter is run here, in the jail, never by the daemon. See
+// hub-filter.mjs for why.
+/** @type {string | null} */
+let jqFilter = null;
+if (request.kind === "gh") {
+  const split = splitFilter(request.argv);
+  if ("error" in split) {
+    console.error(`hub: ${split.error}`);
+    process.exit(2);
+  }
+  if (split.template !== null) {
+    console.error("hub: --template/-t is not available here. Use --json with --jq instead.");
+    process.exit(2);
+  }
+  if (
+    split.jq !== null &&
+    request.argv[0] !== "api" &&
+    !split.argv.some((w) => w.startsWith("--json"))
+  ) {
+    console.error("hub: --jq needs --json <fields>, as with gh.");
+    process.exit(2);
+  }
+  jqFilter = split.jq;
+  request = { kind: "gh", argv: split.argv };
 }
 
 // Refused locally where possible. The daemon checks again — it must, since it
@@ -176,9 +204,8 @@ for (;;) {
   fs.rmSync(resFile, { force: true });
   const result = /** @type {Record<string, unknown>} */ (response);
 
-  if (typeof result.stdout === "string" && result.stdout !== "") {
-    process.stdout.write(result.stdout);
-  }
+  const code = typeof result.code === "number" ? result.code : 0;
+  const stdout = typeof result.stdout === "string" ? result.stdout : "";
   if (typeof result.stderr === "string" && result.stderr !== "") {
     process.stderr.write(result.stderr);
   }
@@ -186,5 +213,13 @@ for (;;) {
     console.error(`hub: refused — ${typeof result.reason === "string" ? result.reason : "?"}`);
     process.exit(77);
   }
-  process.exit(typeof result.code === "number" ? result.code : 0);
+  if (jqFilter !== null && code === 0) {
+    // `-r` because gh's --jq prints strings raw.
+    const filtered = spawnSync("jq", ["-r", jqFilter], { input: stdout, encoding: "utf8" });
+    process.stdout.write(typeof filtered.stdout === "string" ? filtered.stdout : "");
+    process.stderr.write(typeof filtered.stderr === "string" ? filtered.stderr : "");
+    process.exit(filtered.status ?? 1);
+  }
+  process.stdout.write(stdout);
+  process.exit(code);
 }
