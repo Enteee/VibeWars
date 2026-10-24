@@ -192,6 +192,21 @@ const tmp = path.join(reqDir, `.${id}.json.part`);
 fs.writeFileSync(tmp, JSON.stringify({ id, role: ROLE, ...request }));
 fs.renameSync(tmp, path.join(reqDir, `${id}.json`));
 
+// The answer goes out through process.stdout, which is asynchronous when it is
+// a pipe: process.exit() straight after the write drops whatever the reader has
+// not taken yet, so `hub … | jq` saw truncated JSON (issue #37). From here on
+// the exit status is set and the loop left, and Node exits once it has flushed.
+//
+// Waiting for the flush means a reader that stops early, `hub … | head -1`,
+// now gets an EPIPE to us rather than being outrun by the exit. That is the
+// reader's choice, not a failure: stop quietly, with the status already set.
+process.stdout.on("error", (error) => {
+  if ("code" in error && error.code === "EPIPE") {
+    process.exit();
+  }
+  throw error;
+});
+
 const deadline = Date.now() + TIMEOUT_MS;
 for (;;) {
   let raw;
@@ -226,15 +241,28 @@ for (;;) {
   }
   if (result.allow === false) {
     console.error(`hub: refused — ${typeof result.reason === "string" ? result.reason : "?"}`);
-    process.exit(77);
+    process.exitCode = 77;
+    break;
   }
   if (jqFilter !== null && code === 0) {
-    // `-r` because gh's --jq prints strings raw.
-    const filtered = spawnSync("jq", ["-r", jqFilter], { input: stdout, encoding: "utf8" });
-    process.stdout.write(typeof filtered.stdout === "string" ? filtered.stdout : "");
-    process.stderr.write(typeof filtered.stderr === "string" ? filtered.stderr : "");
-    process.exit(filtered.status ?? 1);
+    // `-r` because gh's --jq prints strings raw. No maxBuffer: the default
+    // 1 MiB fails a large board outright.
+    const filtered = spawnSync("jq", ["-r", jqFilter], {
+      input: stdout,
+      encoding: "utf8",
+      maxBuffer: Infinity,
+    });
+    if (filtered.error !== undefined) {
+      console.error(`hub: jq failed: ${filtered.error.message}`);
+      process.exitCode = 1;
+      break;
+    }
+    process.stdout.write(filtered.stdout);
+    process.stderr.write(filtered.stderr);
+    process.exitCode = filtered.status ?? 1;
+    break;
   }
   process.stdout.write(stdout);
-  process.exit(code);
+  process.exitCode = code;
+  break;
 }

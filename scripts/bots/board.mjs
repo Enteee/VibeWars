@@ -35,7 +35,9 @@ const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
  * @returns {{ code: number, stdout: string, stderr: string }}
  */
 function hub(args) {
-  const result = spawnSync("hub", args, { encoding: "utf8" });
+  // No maxBuffer: the default 1 MiB is about 200 cards with their bodies, and
+  // past it spawnSync fails instead of returning the board.
+  const result = spawnSync("hub", args, { encoding: "utf8", maxBuffer: Infinity });
   return {
     code: result.status ?? 1,
     // Typed as string because `encoding` is set, but absent if the process
