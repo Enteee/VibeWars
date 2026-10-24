@@ -76,10 +76,10 @@ long-polls `getUpdates` into `inbox.jsonl` and drains an `outbox/` directory
 via `sendMessage`. Inside the jail, `tg` (`scripts/bots/tg.mjs`) only reads and
 writes those two directories — it has no HTTP client and no credential.
 
-**Isolation.** Each role works in a `git worktree` on branch `bot/<role>`.
-`$DEVENV_ROOT` inside the jail is a tmpfs with only the worktree, the role's
-bus directory, and `.git` bound into it; the operator's checkout is not
-mounted at all.
+**Isolation.** Each role works in a `git worktree` detached at `main`; work
+happens on `bot/<role>/<topic>` branches. `$DEVENV_ROOT` inside the jail is a
+tmpfs with only the worktree, the role's bus directory, and `.git` bound into
+it; the operator's checkout is not mounted at all.
 
 **Interactive, not a daemon.** `claude-bot` opens the Claude TUI. An agent
 parks on a peer with `tg wait` rather than being driven by an event loop.

@@ -22,7 +22,13 @@ import { STATUS_DEFINITIONS, StatusSet } from "../skills/status.js";
 import { advanceStatuses } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
 import { ZERO, type Vec2 } from "../vec2.js";
-import { createCursor, decide, type Behaviour, type BehaviourCursor } from "./behaviour.js";
+import {
+  createCursor,
+  decide,
+  type Behaviour,
+  type BehaviourCursor,
+  type ResetPolicy,
+} from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
 
 /**
@@ -36,7 +42,7 @@ import type { CombatLogEntry } from "./combat-log.js";
  * drifted while it existed twice.
  *
  * Order within a tick, per participant, in the order they were added:
- * respawn countdown (if dead), movement, energy regeneration, statuses,
+ * reset policy, respawn countdown (if dead), movement, energy regeneration, statuses,
  * cast resolution, then the participant's behaviour, if it has one.
  * Player-driven participants have none: their intents arrive between
  * steps, through `setInputDirection`, `setTarget` and `requestSkill`.
@@ -57,6 +63,8 @@ export interface ParticipantSpec {
   readonly startHealthFraction?: number;
   /** Omitted: driven from outside, like a player. */
   readonly behaviour?: Behaviour | undefined;
+  /** Omitted: `never`. Death then follows the match rules' respawn. */
+  readonly reset?: ResetPolicy | undefined;
 }
 
 export interface Participant {
@@ -105,6 +113,8 @@ interface ParticipantRecord extends Participant {
   readonly spec: ParticipantSpec;
   readonly behaviour: Behaviour | undefined;
   readonly cursor: BehaviourCursor;
+  /** `on-interval`: seconds since the last reset. */
+  sinceReset: number;
 }
 
 /**
@@ -208,6 +218,7 @@ export class MatchSimulation {
       spec,
       behaviour: spec.behaviour,
       cursor: createCursor(),
+      sinceReset: 0,
     };
     this.#participants.set(spec.id, record);
     return record;
@@ -243,18 +254,12 @@ export class MatchSimulation {
     record.skillBar = skillBar;
   }
 
-  /**
-   * Put a participant back as they started: what a respawn does, at their
-   * starting health, with any cast in progress dropped.
-   */
+  /** Put a participant back as they started, exactly as a respawn does. */
   public resetParticipant(id: string): void {
     const record = this.#participants.get(id);
-    if (record === undefined) {
-      return;
+    if (record !== undefined) {
+      this.#reset(record);
     }
-    this.respawn(record);
-    record.combatant.cast.cancelCast();
-    record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);
   }
 
   public setInputDirection(id: string, direction: Vec2): void {
@@ -341,10 +346,14 @@ export class MatchSimulation {
     this.checkMatchEnd();
 
     for (const record of this.#participants.values()) {
+      if (this.#resetDue(record, dt)) {
+        this.#reset(record);
+      }
+
       if (record.combatant.dead) {
         record.respawnInSeconds -= dt;
         if (record.respawnInSeconds <= 0) {
-          this.respawn(record);
+          this.#reset(record);
         }
         continue;
       }
@@ -379,7 +388,7 @@ export class MatchSimulation {
       // corpse mid-cast that never respawns.
       if (statusEvents.some((event) => event.kind === "death")) {
         record.combatant.cast.cancelCast();
-        record.respawnInSeconds = this.#respawnSeconds();
+        record.respawnInSeconds = this.#respawnSeconds(record);
         this.recordDeath(record.combatant.team);
         continue;
       }
@@ -425,6 +434,7 @@ export class MatchSimulation {
       self: record,
       participants: [...this.#participants.values()],
       dt,
+      stepUnits: this.#ruleset.movement.maxSpeedUnitsPerSecond * dt,
       canUse: (skillId, targetId) => {
         const skill = getSkill(skillId);
         return skill !== undefined && this.#check(record, skill, targetId).ok;
@@ -436,6 +446,18 @@ export class MatchSimulation {
       const slot = record.skillBar.indexOf(intent.useSkillId);
       if (slot !== -1) {
         this.requestSkill(record.id, slot);
+      }
+    }
+    // As a skill effect applies it: the dummy is the source, so the
+    // degeneration it causes is attributed to the dummy.
+    for (const application of intent.applyStatuses) {
+      const target = this.#participants.get(application.targetId);
+      if (target !== undefined && !target.combatant.dead) {
+        target.combatant.statuses.apply(
+          application.statusId,
+          application.durationSeconds,
+          record.id,
+        );
       }
     }
   }
@@ -482,7 +504,7 @@ export class MatchSimulation {
       }
       const victim = this.#participants.get(event.targetId);
       if (victim !== undefined) {
-        victim.respawnInSeconds = this.#respawnSeconds();
+        victim.respawnInSeconds = this.#respawnSeconds(victim);
         this.recordDeath(victim.combatant.team);
       }
     }
@@ -498,9 +520,32 @@ export class MatchSimulation {
     });
   }
 
-  /** Without match rules nobody respawns: infinity never counts down to 0. */
-  #respawnSeconds(): number {
+  /**
+   * How long `record` stays dead: its own `on-death` reset if it has one,
+   * else the match rules'. Without match rules nobody respawns: infinity
+   * never counts down to 0.
+   */
+  #respawnSeconds(record: ParticipantRecord): number {
+    if (record.spec.reset?.kind === "on-death") {
+      return record.spec.reset.afterSeconds;
+    }
     return this.#matchRules?.respawnSeconds ?? Number.POSITIVE_INFINITY;
+  }
+
+  /** Whether `record`'s reset policy, other than `on-death`, calls for a reset now. */
+  #resetDue(record: ParticipantRecord, dt: number): boolean {
+    const policy = record.spec.reset;
+    record.sinceReset += dt;
+    switch (policy?.kind) {
+      case "on-interval":
+        return record.sinceReset >= policy.everySeconds;
+      case "below-health":
+        return record.combatant.health < record.combatant.maxHealth * policy.fraction;
+      case "on-death":
+      case "never":
+      case undefined:
+        return false;
+    }
   }
 
   /**
@@ -562,9 +607,14 @@ export class MatchSimulation {
     record.position = position;
   }
 
-  private respawn(record: ParticipantRecord): void {
+  /**
+   * Respawn, and every reset policy: the one way back to the start. At
+   * the starting health, full energy, no adrenaline, nothing active, any
+   * cast dropped, at spawn. Recharges carry on, as they would in a match.
+   */
+  #reset(record: ParticipantRecord): void {
     record.combatant.dead = false;
-    record.combatant.health = record.combatant.maxHealth;
+    record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);
     record.combatant.energy = record.combatant.maxEnergy;
     record.combatant.adrenaline = 0;
     record.combatant.statuses.removeByCategory("condition");
@@ -573,6 +623,8 @@ export class MatchSimulation {
     record.position = record.spawn;
     record.inputDirection = ZERO;
     record.respawnInSeconds = 0;
+    record.combatant.cast.cancelCast();
+    record.sinceReset = 0;
   }
 
   #combatant(spec: ParticipantSpec): Combatant {

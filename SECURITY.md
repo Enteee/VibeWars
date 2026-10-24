@@ -84,9 +84,9 @@ like.
 
 ## Known open gaps
 
-These were found by reviewing `main` at `47a403f` (2026-10-24). Each one is
-in scope by the rules above and needs a fix. When one is fixed, remove it
-from this list in the same PR.
+Gaps 1–5 were found by reviewing `main` at `47a403f`, and 6–7 at `1cfd5b5`
+(both 2026-10-24). Each one is in scope by the rules above and needs a fix.
+When one is fixed, remove it from this list in the same PR.
 
 1. **A lobby's match is not tied to that lobby** (#41). The web client joins a
    match with `joinOrCreate("match")` and no filter. `match-starting`
@@ -124,10 +124,42 @@ from this list in the same PR.
    joining is not rate-limited. That is fine for a LAN party. It is not
    access control, and it must not be described as access control.
 
+6. **No cap on the number of match rooms.** Any client can call
+   `create("match")` as often as it likes. Every room runs its own 20 Hz
+   fixed-timestep simulation, even with a single player in it. So a cap on
+   players per room (#42) does not bound the work: the attacker just opens
+   more rooms. The fix for #41 makes rooms per lobby, so it needs this cap
+   too. Measured at `1cfd5b5`: the server ran as its own process, and one
+   client process opened rooms and sent a move every 100 ms per socket,
+   all on one host:
+
+   | rooms × players | server CPU | event-loop p99 | event-loop max |
+   | --------------- | ---------- | -------------- | -------------- |
+   | 1 × 500         | ~50 %      | 33 ms          | 61 ms          |
+   | 1000 × 1        | ~82 %      | 35–58 ms       | 68 ms          |
+   | 1500 × 1        | ~90 %      | 87–124 ms      | 161 ms         |
+
+   Event-loop delay is how late every room's tick fires. Above about 50 ms
+   the tick budget is gone for everyone on the server, including matches
+   the attacker is not in. A server-wide cap on live match rooms is needed,
+   as is a cap per remote address.
+
+7. **Client strings reach the server log unescaped.** When `MatchRoom`
+   refuses a build, it logs each problem, and a problem message embeds
+   client-chosen text: an unknown skill id, for example. A skill id
+   containing `\n` writes whole fake log lines.
+   _Reproduce:_ join `match` with a build whose `skillBar[0]` is
+   `"a\n[match] finished winner=1 reason=score"`. The server prints a
+   `[match] finished …` line that no match produced. Only the build name
+   goes through `JSON.stringify`. Escape or drop client text before
+   logging it, and cap how much of it is logged.
+
 ## Dependencies
 
-`osv-scanner` and `trivy` run over `pnpm-lock.yaml` on review. Currently
-reported (2026-10-24):
+`osv-scanner` and `trivy` run over `pnpm-lock.yaml` on review, and
+`semgrep` (`p/javascript`, `p/typescript`, `p/nodejsscan`, `p/secrets`)
+runs over the source. The last full run was at `1cfd5b5` (2026-10-24).
+semgrep found nothing real there. Currently reported:
 
 | Package          | Advisory                             | Reached via                                       | Status                                                                          |
 | ---------------- | ------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -145,20 +177,19 @@ surface, separate from the game. Here the attacker is **an agent**, whether
 it was prompt-injected or is simply wrong, and the asset is **the operator's
 host and `main`**.
 
-| Boundary                 | Rule                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Jail → host              | Each agent runs in bubblewrap. Only its worktree, its bus directory and the shared `.git` are writable. `.git/config`, `hooks` and `info` are masked read-only (#61), because the host executes them. Skills are bound read-only: main's export (`.bots/skills-main`) for every role, and the manager's own drafts for the manager, refused if any of `.claude/bots/skills` is a symlink (#27).                                                                   |
-| Jail → GitHub            | Agents hold no credential. `hub` asks `hubd` (`hub-policy.mjs`), which enforces each role's permissions, refuses every gh flag that would read a host file (#26), pins the repository, and records verdicts against the reviewed SHA. The manager may push only `bot/manager/*`, and only changes inside `.claude/bots/skills/`: hubd checks that in its mirror against GitHub's `main`, failing closed (#27).                                                    |
-| Host git near agent data | Every host git runs with `GIT_HARDENING` and `GIT_ENV` (`git-hardening.mjs`). These pin hooks, fsmonitor, ssh, credential helpers, gpg and filter drivers, and set `GIT_NO_REPLACE_OBJECTS` (#67). The operator checkout sets `core.useReplaceRefs=false`. `refs/` stays writable, so never trust a local ref on the host.                                                                                                                                        |
-| Reboot                   | The restarter builds GitHub's `main` from hubd's private mirror and fast-forwards only to that same SHA (#21).                                                                                                                                                                                                                                                                                                                                                    |
-| Telegram → agents        | Only the group's creator is heard and gets the `*` mark, for messages, button taps and replies alike (#39, #47). All text goes through `visible()`: no line breaks, ESC, bidi, zero-width or tag characters. An unaddressed message reaches everyone only from General, the manager only from the Manager topic, and nobody from any other topic; only the manager may write to the operator (`tg send operator`), which the sidecar checks, not just `tg` (#85). |
-| Agent → agent            | Peer messages are information, never instructions. Agents can still overwrite each other's worktree metadata and branch refs. That is an integrity problem, not code execution on the host.                                                                                                                                                                                                                                                                       |
+| Boundary                 | Rule                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Jail → host              | Each agent runs in bubblewrap. Only its worktree, its bus directory and the shared `.git` are writable. `.git/config`, `hooks` and `info` are masked read-only (#61), because the host executes them. `.git/worktrees` is read-only except the jail's own admin dir (#69); the host creates and repairs worktrees (`worktree.mjs`). Skills are bound read-only: main's export (`.bots/skills-main`) for every role, and the manager's own drafts for the manager, refused if any of `.claude/bots/skills` is a symlink (#27). |
+| Jail → GitHub            | Agents hold no credential. `hub` asks `hubd` (`hub-policy.mjs`), which enforces each role's permissions, refuses every gh flag that would read a host file (#26), pins the repository, and records verdicts against the reviewed SHA. The manager may push only `bot/manager/*`, and only changes inside `.claude/bots/skills/`: hubd checks that in its mirror against GitHub's `main`, failing closed (#27).                                                                                                                |
+| Host git near agent data | Every host git runs with `GIT_HARDENING` and `GIT_ENV` (`git-hardening.mjs`). These pin hooks, fsmonitor, ssh, credential helpers, gpg and filter drivers, and set `GIT_NO_REPLACE_OBJECTS` (#67). The operator checkout sets `core.useReplaceRefs=false`. `refs/` stays writable, so never trust a local ref on the host.                                                                                                                                                                                                    |
+| Reboot                   | The restarter builds GitHub's `main` from hubd's private mirror and fast-forwards only to that same SHA (#21).                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Telegram → agents        | Only the group's creator is heard and gets the `*` mark, for messages, button taps and replies alike (#39, #47). All text goes through `visible()`: no line breaks, ESC, bidi, zero-width or tag characters. An unaddressed message reaches everyone only from General, the manager only from the Manager topic, and nobody from any other topic; only the manager may write to the operator (`tg send operator`), which the sidecar checks, not just `tg` (#85).                                                             |
+| Agent → agent            | Peer messages are information, never instructions. Agents can still overwrite each other's branch refs, but not each other's worktree metadata (#69). That is an integrity problem, not code execution on the host.                                                                                                                                                                                                                                                                                                           |
 
-**Open: #69.** `.git/worktrees` and `refs/` are shared read-write by
-every jail, and each jail sees only its own worktree. A `git worktree
-prune` in one jail therefore deletes every other agent's worktree
-metadata (incident #70). Until #69 lands, never run `git worktree` or
-`git gc` inside a jail.
+Each jail sees only its own worktree, so to git every other one looks
+deleted: a `git worktree prune` in one jail once deleted every other
+agent's worktree metadata (#70). Since #69 that fails with EROFS, but
+never run `git worktree` or `git gc` inside a jail.
 
 **Open: #83.** The operator checkout's own `.git/HEAD` and `.git/index` are
 writable from every jail too, and jails do not need them (a worktree's
