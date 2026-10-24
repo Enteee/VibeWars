@@ -176,7 +176,7 @@ let
     refused "writing a hook" "echo x > '$common/hooks/post-checkout'"
     refused "writing info/attributes" "touch '$common/info/attributes'"
     scratch="$(mktemp -d)"
-    branch="smoke-$"
+    branch="smoke-$$"
     check "checkout -b from origin/main, and commit" \
       "$("$SHELL" -c "git worktree add -q -b '$branch' '$scratch/wt' origin/main &&
         git -C '$scratch/wt' commit -q --allow-empty -m smoke && echo committed" 2>&1)" \
