@@ -9,8 +9,6 @@ import { createCharacterDot, equippedCount, professionLabel } from "./character-
  * screens with no deep linking do not need one.
  */
 
-export type ScreenName = "menu" | "characters" | "teams" | "lobby" | "match";
-
 export interface MenuCallbacks {
   readonly onCreateLobby: (name: string) => void;
   readonly onJoinLobby: (code: string, name: string) => void;
@@ -98,6 +96,7 @@ export function renderMenu(
   callbacks: MenuCallbacks,
   characters: readonly StoredCharacter[] = [],
   characterProblems: readonly string[] = [],
+  connectionNotice?: string,
 ): void {
   root.replaceChildren();
   const panel = h("div", "screen screen-menu");
@@ -106,6 +105,9 @@ export function renderMenu(
   panel.appendChild(
     h("p", "screen-subtitle", "A minimalist tactical PvP arena. Built for LAN parties."),
   );
+  if (connectionNotice !== undefined) {
+    panel.appendChild(h("div", "screen-problem screen-connection-problem", connectionNotice));
+  }
 
   const nameField = h("label", "field");
   nameField.appendChild(h("span", "field-label", "your name"));

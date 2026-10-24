@@ -6,6 +6,9 @@ Accepted (2026-10-24). Data model and build format land in this change;
 the damage pipeline, auto-attacks, projectiles and area of effect follow
 in later phases of the same work.
 
+The "a missing `equipment` key is not an error" clause is superseded by
+[ADR-0016](0016-no-backwards-compatibility.md). The rest stands.
+
 ## Context
 
 The game shipped without any weapon system at all. Not a partial one —

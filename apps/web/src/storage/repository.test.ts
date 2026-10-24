@@ -1,7 +1,13 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { CharacterRepository, TeamRepository, createMemoryStore } from "./repository.js";
+import {
+  CharacterRepository,
+  TeamRepository,
+  createMemoryStore,
+  discardedCharactersNotice,
+  discardedTeamsNotice,
+} from "./repository.js";
 import {
   CHARACTER_SCHEMA_VERSION,
   PersistenceError,
@@ -80,23 +86,54 @@ describe("CharacterRepository", () => {
     await expect(repo.save(character({ schemaVersion: 99 }))).rejects.toThrow(PersistenceError);
   });
 
-  it("rejects a malformed stored record rather than returning garbage", async () => {
+  it("discards a malformed stored record on load rather than returning garbage", async () => {
     const store = createMemoryStore();
     await store.put("characters", "broken", { not: "a character" });
     const repo = new CharacterRepository(store);
-    await expect(repo.load("broken")).rejects.toThrow(PersistenceError);
+    expect(await repo.load("broken")).toBeUndefined();
+    expect(await store.get("characters", "broken")).toBeUndefined();
   });
 
-  it("reports a future-version record as a problem instead of dropping it silently", async () => {
+  it("discards a record at another schema version, and says so", async () => {
     const store = createMemoryStore();
-    await store.put("characters", "future", character({ id: "future", schemaVersion: 99 }));
+    await store.put("characters", "stale", character({ id: "stale", schemaVersion: 99 }));
     await store.put("characters", "char-1", character());
     const repo = new CharacterRepository(store);
 
     const { characters, problems } = await repo.list();
     expect(characters.map((c) => c.id)).toEqual(["char-1"]);
-    expect(problems).toHaveLength(1);
-    expect(problems[0]).toContain("newer version");
+    expect(problems).toEqual([discardedCharactersNotice(1)]);
+  });
+
+  it("does not bring a discarded record back on the next list", async () => {
+    // The notice is shown once. A stale record that survived its own
+    // discard would nag on every visit to the menu.
+    const store = createMemoryStore();
+    await store.put("characters", "stale", character({ id: "stale", schemaVersion: 99 }));
+    const repo = new CharacterRepository(store);
+
+    await repo.list();
+    expect(await store.get("characters", "stale")).toBeUndefined();
+    expect(await repo.list()).toEqual({ characters: [], problems: [] });
+  });
+
+  it("reports several discards in one line, not one line each", async () => {
+    const store = createMemoryStore();
+    for (const id of ["a", "b", "c"]) {
+      await store.put("characters", id, character({ id, schemaVersion: 99 }));
+    }
+    const { problems } = await new CharacterRepository(store).list();
+    expect(problems).toEqual([discardedCharactersNotice(3)]);
+    expect(problems[0]).toMatch(/^3 saved characters/);
+  });
+
+  it("discards a record that has no id at all", async () => {
+    // Deleted by the key it is stored under, not by a field it may lack.
+    const store = createMemoryStore();
+    await store.put("characters", "junk", 42);
+    const { problems } = await new CharacterRepository(store).list();
+    expect(problems).toEqual([discardedCharactersNotice(1)]);
+    expect(await store.list("characters")).toEqual([]);
   });
 
   it("isolates stored data from later mutation of the object that was saved", async () => {
@@ -140,74 +177,23 @@ describe("TeamRepository", () => {
     expect(await repo.load("team-1")).toBeUndefined();
   });
 
-  it("rejects a malformed stored team", async () => {
+  it("discards a malformed stored team on load", async () => {
     const store = createMemoryStore();
     await store.put("teams", "broken", { nope: true });
     const repo = new TeamRepository(store);
-    await expect(repo.load("broken")).rejects.toThrow(PersistenceError);
-  });
-});
-
-/**
- * A character saved before equipment existed, exactly as it sat on
- * disk. Frozen on purpose — rebuilding it from the current types would
- * stop it being a v1 record, which is the only thing it is here to be.
- */
-const V1_ON_DISK = {
-  schemaVersion: 1,
-  id: "legacy-1",
-  name: "Legacy Warrior",
-  primaryProfession: "warrior",
-  secondaryProfession: undefined,
-  attributes: [{ attributeId: "warrior.swordsmanship", rank: 12 }],
-  skillBar: ["warrior.sever-artery-lite", null, null, null, null, null, null, null],
-  updatedAt: 500,
-};
-
-describe("loading data saved by an older version", () => {
-  it("migrates a schema 1 character on load rather than calling it malformed", async () => {
-    const store = createMemoryStore();
-    await store.put("characters", "legacy-1", V1_ON_DISK);
-    const loaded = await new CharacterRepository(store).load("legacy-1");
-
-    expect(loaded?.name).toBe("Legacy Warrior");
-    expect(loaded?.schemaVersion).toBe(CHARACTER_SCHEMA_VERSION);
-    expect(loaded?.equipment.mainHand.weaponId).toBe("sword");
+    expect(await repo.load("broken")).toBeUndefined();
+    expect(await store.get("teams", "broken")).toBeUndefined();
   });
 
-  it("migrates on list too, so the roster is not silently short", async () => {
+  it("discards a team at another schema version, and says so", async () => {
     const store = createMemoryStore();
-    await store.put("characters", "legacy-1", V1_ON_DISK);
-    const { characters, problems } = await new CharacterRepository(store).list();
+    await store.put("teams", "stale", team({ id: "stale", schemaVersion: 99 }));
+    await store.put("teams", "team-1", team());
+    const repo = new TeamRepository(store);
 
-    expect(problems).toEqual([]);
-    expect(characters).toHaveLength(1);
-    expect(characters[0]?.equipment.mainHand.weaponId).toBe("sword");
-  });
-
-  it("can save a migrated record straight back", async () => {
-    // The round trip that matters: load an old build, change nothing,
-    // save it. If the migrated version could not be saved, every edit a
-    // returning player made would fail.
-    const store = createMemoryStore();
-    await store.put("characters", "legacy-1", V1_ON_DISK);
-    const repo = new CharacterRepository(store);
-    const loaded = await repo.load("legacy-1");
-    expect(loaded).toBeDefined();
-    if (loaded === undefined) {
-      return;
-    }
-    await expect(repo.save(loaded)).resolves.toBeUndefined();
-  });
-
-  it("keeps the good records when one of them cannot be migrated", async () => {
-    const store = createMemoryStore();
-    await store.put("characters", "legacy-1", V1_ON_DISK);
-    await store.put("characters", "future", { ...V1_ON_DISK, id: "future", schemaVersion: 99 });
-    const { characters, problems } = await new CharacterRepository(store).list();
-
-    expect(characters.map((c) => c.id)).toEqual(["legacy-1"]);
-    expect(problems).toHaveLength(1);
-    expect(problems[0]).toMatch(/newer version of the game/);
+    const { teams, problems } = await repo.list();
+    expect(teams.map((t) => t.id)).toEqual(["team-1"]);
+    expect(problems).toEqual([discardedTeamsNotice(1)]);
+    expect(await store.get("teams", "stale")).toBeUndefined();
   });
 });

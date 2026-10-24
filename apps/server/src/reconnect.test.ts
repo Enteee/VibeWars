@@ -1,5 +1,5 @@
 import { Client } from "@colyseus/sdk";
-import { ROOM_MATCH } from "@vibewars/game-protocol";
+import { PROTOCOL_VERSION, ROOM_MATCH } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createGameServer, type GameServer } from "./server.js";
@@ -30,8 +30,12 @@ describe("reconnection", () => {
   });
 
   it("holds a dropped player's slot instead of deleting them immediately", async () => {
-    const watcher = await new Client(endpoint).joinOrCreate(ROOM_MATCH);
-    const dropper = await new Client(endpoint).joinById(watcher.roomId);
+    const watcher = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    const dropper = await new Client(endpoint).joinById(watcher.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => watcher.state.players.has(dropper.sessionId), {
       label: "both players",
     });
@@ -47,9 +51,11 @@ describe("reconnection", () => {
   });
 
   it("lets a dropped player reconnect to the same character and position", async () => {
-    const watcher = await new Client(endpoint).joinOrCreate(ROOM_MATCH);
+    const watcher = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     const client = new Client(endpoint);
-    const dropper = await client.joinById(watcher.roomId);
+    const dropper = await client.joinById(watcher.roomId, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => watcher.state.players.has(dropper.sessionId), { label: "both" });
 
     // Move so the restored position is distinguishable from a fresh spawn.
@@ -78,9 +84,11 @@ describe("reconnection", () => {
   });
 
   it("freezes a dropped player rather than leaving them running into a wall", async () => {
-    const watcher = await new Client(endpoint).joinOrCreate(ROOM_MATCH);
+    const watcher = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     const client = new Client(endpoint);
-    const dropper = await client.joinById(watcher.roomId);
+    const dropper = await client.joinById(watcher.roomId, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => watcher.state.players.has(dropper.sessionId), { label: "both" });
 
     dropper.send("intent", { kind: "move", dirX: 1, dirY: 0 });
@@ -100,8 +108,12 @@ describe("reconnection", () => {
   });
 
   it("removes a player who leaves deliberately, without holding their slot", async () => {
-    const watcher = await new Client(endpoint).joinOrCreate(ROOM_MATCH);
-    const quitter = await new Client(endpoint).joinById(watcher.roomId);
+    const watcher = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    const quitter = await new Client(endpoint).joinById(watcher.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => watcher.state.players.has(quitter.sessionId), { label: "both" });
 
     // A normal leave() is consented: no reason to hold the slot.
@@ -116,8 +128,12 @@ describe("reconnection", () => {
   });
 
   it("clears a stale target when the targeted player leaves deliberately", async () => {
-    const watcher = await new Client(endpoint).joinOrCreate(ROOM_MATCH);
-    const quitter = await new Client(endpoint).joinById(watcher.roomId);
+    const watcher = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    const quitter = await new Client(endpoint).joinById(watcher.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => watcher.state.players.has(quitter.sessionId), { label: "both" });
 
     watcher.send("intent", { kind: "target", targetSessionId: quitter.sessionId });
@@ -137,8 +153,12 @@ describe("reconnection", () => {
   });
 
   it("keeps the match running for everyone else while someone is away", async () => {
-    const stayer = await new Client(endpoint).joinOrCreate(ROOM_MATCH);
-    const dropper = await new Client(endpoint).joinById(stayer.roomId);
+    const stayer = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    const dropper = await new Client(endpoint).joinById(stayer.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => stayer.state.players.has(dropper.sessionId), { label: "both" });
 
     await dropper.leave(false);

@@ -1,6 +1,11 @@
 import { Client } from "@colyseus/sdk";
 import { createRng, seedFromString } from "@vibewars/game-core";
-import { ROOM_LOBBY, ROOM_MATCH, parseClientIntent } from "@vibewars/game-protocol";
+import {
+  PROTOCOL_VERSION,
+  ROOM_LOBBY,
+  ROOM_MATCH,
+  parseClientIntent,
+} from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createGameServer, type GameServer } from "./server.js";
@@ -144,7 +149,9 @@ describe("server survives hostile clients", () => {
   }
 
   it("ignores every hostile match intent and keeps the player connected and sane", async () => {
-    const room = await new Client(endpoint).joinOrCreate(ROOM_MATCH);
+    const room = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => (room.state.players.get(room.sessionId)?.maxHealth ?? 0) > 0, {
       label: "stats to sync",
     });
@@ -171,7 +178,9 @@ describe("server survives hostile clients", () => {
   });
 
   it("ignores every hostile lobby message and keeps the lobby healthy", async () => {
-    const room = await new Client(endpoint).create(ROOM_LOBBY, {});
+    const room = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self" });
 
     for (const value of hostileValues()) {
@@ -197,6 +206,7 @@ describe("server survives hostile clients", () => {
 
   it("sanitises a hostile display name without dropping the connection", async () => {
     const room = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
       name: `\u0000\u001b[31m${"x".repeat(5000)}`,
     });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self" });
@@ -217,7 +227,9 @@ describe("server survives hostile clients", () => {
    * than tucked in alongside tests that keep using their connection.
    */
   it("disconnects a client that sends an unregistered message type, server unharmed", async () => {
-    const victim = await new Client(endpoint).joinOrCreate(ROOM_MATCH);
+    const victim = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => (victim.state.players.get(victim.sessionId)?.maxHealth ?? 0) > 0, {
       label: "stats",
     });
@@ -228,7 +240,9 @@ describe("server survives hostile clients", () => {
     expect(await serverIsHealthy()).toBe(true);
 
     // And another client can still join and play normally.
-    const fresh = await new Client(endpoint).joinOrCreate(ROOM_MATCH);
+    const fresh = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => (fresh.state.players.get(fresh.sessionId)?.maxHealth ?? 0) > 0, {
       label: "a fresh client to join",
     });
@@ -237,7 +251,9 @@ describe("server survives hostile clients", () => {
   });
 
   it("survives a client that floods messages", async () => {
-    const room = await new Client(endpoint).joinOrCreate(ROOM_MATCH);
+    const room = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => (room.state.players.get(room.sessionId)?.maxHealth ?? 0) > 0, {
       label: "stats",
     });

@@ -71,6 +71,9 @@ Concretely:
 - `any`, `as any`, and non-null assertions (`!`) are lint errors, not style
   preferences — see ADR-0008. If one is genuinely unavoidable, say why in a
   comment at the exact line, not in a blanket lint-rule override.
+- No backwards-compatibility code: no migrations, no version windows, no
+  "absent means old" defaults. A changed stored shape discards old data.
+  See `CLAUDE.md` and ADR-0016.
 - A new architecturally significant decision (new major dependency, new
   package, a changed data format) gets an ADR in `docs/adr/`, using
   `docs/adr/0000-template.md`. "Architecturally significant" means: would a

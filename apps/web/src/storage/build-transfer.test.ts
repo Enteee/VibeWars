@@ -99,12 +99,13 @@ describe("build import rejects bad input", () => {
   const emptyBar = Array.from({ length: SKILL_BAR_SLOTS }, () => null);
   const base = {
     format: BUILD_FORMAT,
-    formatVersion: 1,
+    formatVersion: BUILD_FORMAT_VERSION,
     name: "Test",
     primaryProfession: "warrior",
     secondaryProfession: null,
     attributes: [],
     skillBar: emptyBar,
+    equipment: defaultBuildEquipment("warrior"),
   };
 
   const reject = (payload: unknown): readonly string[] => {
@@ -136,7 +137,7 @@ describe("build import rejects bad input", () => {
   });
 
   it("refuses a future format version rather than guessing", () => {
-    expect(reject({ ...base, formatVersion: 99 })[0]).toContain("Update the game");
+    expect(reject({ ...base, formatVersion: 99 })[0]).toContain("reads only version");
   });
 
   it("rejects an unknown profession", () => {
@@ -235,42 +236,26 @@ describe("build import rejects bad input", () => {
   });
 });
 
-describe("builds shared by an older version", () => {
-  /**
-   * A format 1 payload, frozen. These strings live in people's chat
-   * history; a version bump that refuses them has broken the sharing
-   * feature for everyone who used it.
-   */
-  const V1_PAYLOAD = {
+describe("build format version", () => {
+  const CURRENT_PAYLOAD = {
     format: BUILD_FORMAT,
-    formatVersion: 1,
-    name: "Old Share",
+    formatVersion: BUILD_FORMAT_VERSION,
+    name: "Fresh Share",
     primaryProfession: "warrior",
     secondaryProfession: null,
     attributes: [{ attributeId: "warrior.swordsmanship", rank: 12 }],
     skillBar: ["warrior.sever-artery-lite", null, null, null, null, null, null, null],
+    equipment: defaultBuildEquipment("warrior"),
   };
 
-  it("still imports a format 1 build", () => {
-    const result = importBuild(JSON.stringify(V1_PAYLOAD), "new-id", 7);
+  it("imports a build in the current format", () => {
+    const result = importBuild(JSON.stringify(CURRENT_PAYLOAD), "new-id", 7);
     expect(result.ok).toBe(true);
     if (!result.ok) {
       return;
     }
-    expect(result.character.name).toBe("Old Share");
+    expect(result.character.name).toBe("Fresh Share");
     expect(result.character.schemaVersion).toBe(CHARACTER_SCHEMA_VERSION);
-  });
-
-  it("gives a format 1 build the same gear the storage migration would", () => {
-    const result = importBuild(JSON.stringify(V1_PAYLOAD), "new-id", 7);
-    expect(result.ok).toBe(true);
-    if (!result.ok) {
-      return;
-    }
-    // One set of upgrade rules, two entry points. If these two ever
-    // disagree, a build imported from text differs from the same build
-    // loaded from disk.
-    expect(result.character.equipment).toEqual(defaultBuildEquipment("warrior"));
   });
 
   it("writes the current format version on export", () => {
@@ -287,21 +272,35 @@ describe("builds shared by an older version", () => {
     expect(result.character.equipment).toEqual(VALID.equipment);
   });
 
-  it("still refuses a build from a future version", () => {
-    const result = importBuild(
-      JSON.stringify({ ...V1_PAYLOAD, formatVersion: BUILD_FORMAT_VERSION + 1 }),
-      "id",
-      0,
-    );
+  it("refuses a build from any other format version, older or newer", () => {
+    // A version only ever rejects; there is no path that adapts an old
+    // build string (ADR-0016).
+    for (const formatVersion of [BUILD_FORMAT_VERSION - 1, BUILD_FORMAT_VERSION + 1]) {
+      const result = importBuild(JSON.stringify({ ...CURRENT_PAYLOAD, formatVersion }), "id", 0);
+      expect(result.ok, String(formatVersion)).toBe(false);
+      if (result.ok) {
+        return;
+      }
+      expect(result.problems[0]).toMatch(/reads only version/);
+    }
+  });
+
+  it("refuses a build with no equipment instead of filling it in", () => {
+    const { equipment: _dropped, ...withoutGear } = CURRENT_PAYLOAD;
+    const result = importBuild(JSON.stringify(withoutGear), "id", 0);
     expect(result.ok).toBe(false);
     if (result.ok) {
       return;
     }
-    expect(result.problems[0]).toMatch(/Update the game/);
+    expect(result.problems[0]).toMatch(/equipment is missing/);
   });
 
   it("refuses a build with no usable format version", () => {
-    const result = importBuild(JSON.stringify({ ...V1_PAYLOAD, formatVersion: "one" }), "id", 0);
+    const result = importBuild(
+      JSON.stringify({ ...CURRENT_PAYLOAD, formatVersion: "one" }),
+      "id",
+      0,
+    );
     expect(result.ok).toBe(false);
   });
 });

@@ -1,5 +1,5 @@
 import { Client } from "@colyseus/sdk";
-import { ROOM_MATCH } from "@vibewars/game-protocol";
+import { PROTOCOL_VERSION, ROOM_MATCH } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { DEFAULT_SKILL_BAR } from "./rooms/match-room.js";
@@ -41,8 +41,8 @@ describe("networked combat", () => {
   async function joinPair() {
     const clientA = new Client(endpoint);
     const clientB = new Client(endpoint);
-    const roomA = await clientA.joinOrCreate(ROOM_MATCH);
-    const roomB = await clientB.joinById(roomA.roomId);
+    const roomA = await clientA.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
+    const roomB = await clientB.joinById(roomA.roomId, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(
       () => roomA.state.players.has(roomA.sessionId) && roomA.state.players.has(roomB.sessionId),
       { label: "both players" },
@@ -126,7 +126,7 @@ describe("networked combat", () => {
 
   it("spawns players with full health and energy", async () => {
     const client = new Client(endpoint);
-    const room = await client.joinOrCreate(ROOM_MATCH);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => (room.state.players.get(room.sessionId)?.maxHealth ?? 0) > 0, {
       label: "stats to sync",
     });
@@ -141,7 +141,7 @@ describe("networked combat", () => {
 
   it("sends the skill bar on join, so the client can render it", async () => {
     const client = new Client(endpoint);
-    const room = await client.joinOrCreate(ROOM_MATCH);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
 
     const bar = await new Promise<{ slots: { id: string; name: string }[] }>((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -347,7 +347,7 @@ describe("networked combat", () => {
 
   it("refuses to cast a damage skill with no target selected", async () => {
     const client = new Client(endpoint);
-    const room = await client.joinOrCreate(ROOM_MATCH);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => (room.state.players.get(room.sessionId)?.maxEnergy ?? 0) > 0, {
       label: "stats to sync",
     });
@@ -369,7 +369,7 @@ describe("networked combat", () => {
     // Uses a self-targeted skill so this test exercises the energy
     // economy without also depending on walking across the arena.
     const client = new Client(endpoint);
-    const room = await client.joinOrCreate(ROOM_MATCH);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => (room.state.players.get(room.sessionId)?.maxEnergy ?? 0) > 0, {
       label: "stats to sync",
     });
@@ -413,7 +413,7 @@ describe("match rules over the network", () => {
 
   it("starts a match active, scoreless, with a running clock", async () => {
     const client = new Client(endpoint);
-    const room = await client.joinOrCreate(ROOM_MATCH);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => (room.state.elapsedSeconds ?? 0) > 0, { label: "clock to start" });
 
     expect(room.state.phase).toBe("active");

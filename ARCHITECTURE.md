@@ -145,8 +145,10 @@ and _did_ crash the server during fuzzing.
 - `render/arena-scene.ts` — the Phaser scene that draws a snapshot. It knows
   nothing about networks or rules (ADR-0010).
 - `ui/` — HUD, character builder, team builder, menu, lobby screen.
-- `storage/` — versioned IndexedDB persistence with a migration registry
-  (ADR-0005). Browser-local only: no accounts, no database, no cloud.
+- `storage/` — IndexedDB persistence (ADR-0005). A stored record in any
+  shape but the current one is discarded and the player told, never
+  migrated (ADR-0016). Browser-local only: no accounts, no database, no
+  cloud.
 
 ## Two rules worth stating plainly
 

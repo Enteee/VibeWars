@@ -51,6 +51,7 @@ import {
 import type { StepContext } from "colyseus";
 
 import { sanitizeName } from "./lobby-room.js";
+import { assertProtocolVersion, field } from "./options.js";
 
 /**
  * The match simulation room: authoritative movement, targeting and combat
@@ -206,10 +207,7 @@ const HOUSE_LOADOUT: ResolvedJoinLoadout = {
  * cast at all), and not the professions that gate both.
  */
 function resolveLoadout(options: unknown): ResolvedJoinLoadout {
-  if (typeof options !== "object" || options === null) {
-    return HOUSE_LOADOUT;
-  }
-  const claimed = (options as Record<string, unknown>).build;
+  const claimed = field(options, "build");
   if (claimed === undefined) {
     return HOUSE_LOADOUT;
   }
@@ -356,11 +354,8 @@ export class MatchRoom extends Room {
     this.autoDispose = true;
 
     // Join options are client-supplied; read them defensively rather
-    // than dereferencing whatever arrived (see lobby-room's `field`).
-    const requestedMap =
-      typeof options === "object" && options !== null
-        ? (options as Record<string, unknown>).mapId
-        : undefined;
+    // than dereferencing whatever arrived.
+    const requestedMap = field(options, "mapId");
     if (typeof requestedMap === "string") {
       this.useMap(requestedMap);
     }
@@ -754,6 +749,7 @@ export class MatchRoom extends Room {
   }
 
   public override onJoin(client: Client, options?: unknown): void {
+    assertProtocolVersion(options);
     // Alternate teams as players join so a 1v1 is adversarial by default.
     const team = this.#sims.size % 2;
     const spawn = this.nextSpawnPoint(team);

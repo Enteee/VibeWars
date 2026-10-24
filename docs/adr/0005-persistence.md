@@ -5,7 +5,14 @@
 Accepted (2026-10-23); implementation begins Sprint 17 (characters/builds) and
 Sprint 18 (teams). The migration-registry half is superseded by
 [ADR-0013](0013-schema-migration-registry.md), which builds the registry this
-ADR promised but that was never implemented; everything else here stands.
+ADR promised but that was never implemented. That migration clause is in
+turn overturned by [ADR-0016](0016-no-backwards-compatibility.md): the
+"versioned migration registry runs on load" bullet under Decision, and the
+"dead code until the first schema change" bullet under Consequences, no
+longer apply, and a stale record is discarded and reported instead.
+**Everything else here still stands:** IndexedDB over `localStorage`, the
+typed repository layer, `schemaVersion` on every record, validating twice,
+and ruleset-driven limits.
 
 ## Context
 

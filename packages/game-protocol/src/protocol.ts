@@ -3,19 +3,27 @@
  */
 
 /**
- * Bumped whenever the wire format changes incompatibly. The server refuses
- * clients that do not match, so a stale browser tab fails loudly at join time
- * instead of desynchronising mid-match.
+ * Bumped whenever the wire format changes incompatibly. Every client sends
+ * it as `protocolVersion` on every create and join, and both rooms refuse a
+ * join whose value is absent or different (`PROTOCOL_MISMATCH_MESSAGE`), so
+ * a stale browser tab fails loudly at join time instead of desynchronising
+ * mid-match. It only ever rejects; there is no code path per version
+ * (ADR-0016).
  */
 export const PROTOCOL_VERSION = 1 as const;
+
+/** What a client is told when its `protocolVersion` does not match. */
+export const PROTOCOL_MISMATCH_MESSAGE =
+  "This tab is running an outdated version of VibeWars. Reload the page.";
 
 /**
  * Colyseus room name for the match simulation room.
  *
- * A genuine pre-match lobby (lobby codes, team assignment, ready state —
- * brief §25) is a distinct room arriving in Sprint 19; until then, joining
- * `ROOM_MATCH` directly is the whole flow, which is why it starts moving
- * players immediately rather than waiting in a staging state.
+ * Players normally arrive here from a lobby (`ROOM_LOBBY`), but joining
+ * `ROOM_MATCH` directly is also a supported path: it is Quick Match, a
+ * deliberate product feature for jumping straight into an arena. That is
+ * why the room starts moving players immediately rather than waiting in a
+ * staging state.
  */
 export const ROOM_MATCH = "match" as const;
 
@@ -101,12 +109,28 @@ export interface UseSkillIntent {
   readonly slot: number;
 }
 
+/** Options a client passes when creating or joining a match room. */
+export interface MatchJoinOptions {
+  /** Must equal `PROTOCOL_VERSION`, or the join is refused. */
+  readonly protocolVersion: number;
+  /** The arena the first joiner asks for; later joiners get the room's. */
+  readonly mapId?: string;
+  /**
+   * The build the player asks to play. Untyped on purpose: this package has
+   * no game-core dependency, and the server parses and validates whatever
+   * arrives before trusting any of it (brief §32).
+   */
+  readonly build?: unknown;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Lobby messages                                                              */
 /* -------------------------------------------------------------------------- */
 
 /** Options a client passes when creating or joining a lobby. */
 export interface LobbyJoinOptions {
+  /** Must equal `PROTOCOL_VERSION`, or the join is refused. */
+  readonly protocolVersion: number;
   /** Omitted when creating; required (and validated) when joining. */
   readonly code?: string;
   /** Display name the player asks for; the server sanitises it. */

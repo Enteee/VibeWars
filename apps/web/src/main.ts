@@ -1,7 +1,10 @@
+import { PROTOCOL_MISMATCH_MESSAGE } from "@vibewars/game-protocol";
+
 import { httpOriginFrom, resolveEndpoint } from "./net/match-client.js";
 import {
   LobbyNotFoundError,
   createLobby,
+  isProtocolMismatch,
   joinLobbyByCode,
   type LobbyConnection,
 } from "./net/lobby-client.js";
@@ -92,6 +95,11 @@ async function main(): Promise<void> {
    */
   let enteringMatch = false;
   let lobbyNotice: string | undefined;
+  /**
+   * Why the last attempt to reach the server failed, shown on the menu
+   * the player lands back on. Cleared when they try again.
+   */
+  let menuNotice: string | undefined;
 
   const showViewport = (visible: boolean): void => {
     viewport.style.display = visible ? "block" : "none";
@@ -173,6 +181,7 @@ async function main(): Promise<void> {
       },
       list,
       problems,
+      menuNotice,
     );
   };
 
@@ -409,12 +418,14 @@ async function main(): Promise<void> {
 
   const enterLobby = async (connect: () => Promise<LobbyConnection>): Promise<void> => {
     setStatus("connecting…", "offline");
+    menuNotice = undefined;
     try {
       lobby = await connect();
     } catch (error) {
       setStatus("could not join", "error");
-      lobbyNotice =
-        error instanceof LobbyNotFoundError
+      menuNotice = isProtocolMismatch(error)
+        ? PROTOCOL_MISMATCH_MESSAGE
+        : error instanceof LobbyNotFoundError
           ? "No lobby with that code. Check the code and try again."
           : "Could not connect to the server.";
       showMenu();
@@ -436,6 +447,7 @@ async function main(): Promise<void> {
 
   const enterMatch = async (mapId?: string): Promise<void> => {
     enteringMatch = true;
+    menuNotice = undefined;
     showViewport(true);
     setStatus("entering match…", "offline");
     try {
@@ -478,6 +490,9 @@ async function main(): Promise<void> {
     } catch (error) {
       console.error("[web] could not enter match", error);
       setStatus("match failed", "error");
+      if (isProtocolMismatch(error)) {
+        menuNotice = PROTOCOL_MISMATCH_MESSAGE;
+      }
       enteringMatch = false;
       showMenu();
     }

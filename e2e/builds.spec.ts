@@ -314,19 +314,15 @@ test("the in-match skill bar is not draggable", async ({ page }) => {
 });
 
 /**
- * A character saved by the version before equipment existed, written
- * straight into IndexedDB the way that version would have written it.
- *
- * This is the only test that exercises the migration registry against a
- * real browser store — `repository.test.ts` runs against an in-memory
- * one, and the two differ in exactly the ways that bite (structured
- * clone, key paths, transaction lifetimes). Frozen on purpose: rebuilt
- * from current types it would stop being a schema 1 record, which is
- * the only thing it is here to be.
+ * A character record in a shape this build does not read: no equipment,
+ * and a schema version that is not the current one. Written straight
+ * into the real browser store, because `repository.test.ts` runs against
+ * an in-memory one and the two differ in exactly the ways that bite
+ * (structured clone, keys, transaction lifetimes).
  */
-const V1_CHARACTER_ON_DISK = {
-  schemaVersion: 1,
-  id: "legacy-e2e-1",
+const STALE_CHARACTER = {
+  schemaVersion: 99,
+  id: "stale-e2e-1",
   name: "Veteran",
   primaryProfession: "warrior",
   attributes: [{ attributeId: "warrior.swordsmanship", rank: 12 }],
@@ -334,39 +330,58 @@ const V1_CHARACTER_ON_DISK = {
   updatedAt: 1_700_000_000_000,
 };
 
-async function seedLegacyCharacter(page: Page): Promise<void> {
-  // Passed as source text rather than a function: this runs in the page,
-  // where `indexedDB` lives, and the e2e tsconfig deliberately has no DOM
-  // lib — typing it here would mean either a lie or a pile of casts.
-  await page.addInitScript({
-    content: `
-      (() => {
-        const record = ${JSON.stringify(V1_CHARACTER_ON_DISK)};
-        const open = indexedDB.open("vibewars", 1);
-        open.onupgradeneeded = () => {
-          const db = open.result;
-          if (!db.objectStoreNames.contains("characters")) db.createObjectStore("characters");
-          if (!db.objectStoreNames.contains("teams")) db.createObjectStore("teams");
-        };
-        open.onsuccess = () => {
-          const tx = open.result.transaction("characters", "readwrite");
-          tx.objectStore("characters").put(record, record.id);
-        };
-      })();
-    `,
-  });
+/**
+ * Run IndexedDB code in the page and wait for it to finish.
+ *
+ * Passed as source text rather than a function: this runs in the page,
+ * where `indexedDB` lives, and the e2e tsconfig deliberately has no DOM
+ * lib — typing it here would mean either a lie or a pile of casts. Once
+ * per call, not an init script, so a reload does not quietly re-seed it.
+ */
+async function inCharacterStore(page: Page, body: string): Promise<unknown> {
+  return page.evaluate(`
+    new Promise((resolve, reject) => {
+      const open = indexedDB.open("vibewars", 1);
+      open.onerror = () => reject(open.error);
+      open.onsuccess = () => {
+        const store = open.result
+          .transaction("characters", "readwrite")
+          .objectStore("characters");
+        const request = (${body})(store);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result ?? null);
+      };
+    })
+  `);
 }
 
-test("a character saved before weapons existed still loads, and is armed", async ({ page }) => {
-  await seedLegacyCharacter(page);
+test("a stale saved character is discarded, the player is told once, and it stays gone", async ({
+  page,
+}) => {
   await page.goto("/");
+  await expect(page.locator(".roster")).toBeVisible();
+  const record = JSON.stringify(STALE_CHARACTER);
+  await inCharacterStore(
+    page,
+    `(store) => store.put(${record}, ${JSON.stringify(STALE_CHARACTER.id)})`,
+  );
 
+  await page.reload();
   const roster = page.locator(".roster");
   await expect(roster).toBeVisible();
-  // If the migration were wrong, this would be absent and the roster
-  // would instead be showing a "malformed record" problem.
-  await expect(roster).toContainText("Veteran");
-  await expect(roster).not.toContainText("malformed");
+  await expect(roster.locator(".screen-problem")).toHaveText(
+    "A saved character from an older build of the game could not be read and was discarded.",
+  );
+  await expect(roster).not.toContainText("Veteran");
+
+  // Deleted, not hidden: the record is gone from the real store, and the
+  // notice does not come back on the next visit.
+  expect(
+    await inCharacterStore(page, `(store) => store.get(${JSON.stringify(STALE_CHARACTER.id)})`),
+  ).toBeNull();
+  await page.reload();
+  await expect(page.locator(".roster")).toBeVisible();
+  await expect(page.locator(".roster .screen-problem")).toHaveCount(0);
 });
 
 /* --- gear ----------------------------------------------------------------- */

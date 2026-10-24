@@ -211,11 +211,7 @@ export function parsePlayerBuild(value: unknown): PlayerBuild | undefined {
     skillBar.push(entry);
   }
 
-  // A build with no `equipment` key predates weapons; it is old, not
-  // malformed, and gets its profession's default loadout rather than
-  // being refused at the door. Gear that is *present* and wrong is a
-  // different matter and fails the whole parse.
-  const equipment = parseBuildEquipment(record.equipment, record.primaryProfession);
+  const equipment = parseBuildEquipment(record.equipment);
   if (equipment === undefined) {
     return undefined;
   }

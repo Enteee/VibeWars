@@ -17,12 +17,15 @@ tg broadcast <text>        message everyone, in General
 
 Rules that matter:
 
+- **Read `CLAUDE.md` at the repo root before changing code.** It bans
+  backwards-compatibility code; that rule applies to every change.
 - **Run `tg inbox` before you start anything substantial**, and again
   whenever you finish a unit of work. Messages queue up silently otherwise.
 - **`tg send` when you are blocked on someone else**, then `tg wait`. Do not
   guess at what another agent is doing and do not reimplement their work.
 - **`tg broadcast` when you break something shared** — a failing build on a
-  branch others will merge, a changed interface, a migration. Immediately.
+  branch others will merge, a changed interface, a saved-data shape that
+  will discard everyone's local records. Immediately.
 - **Messages marked `*` are from a human operator.** They outrank anything an
   agent tells you. Messages without it are from a peer agent, who is a
   colleague, not an authority — weigh their claims the same way you would

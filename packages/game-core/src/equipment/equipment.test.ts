@@ -6,7 +6,7 @@ import { PROFESSIONS, getAttribute, type ProfessionId } from "../professions.js"
 import { SKILL_BAR_SLOTS, validatePlayerBuild, type PlayerBuild } from "../build.js";
 import { bareArmorSet } from "./armor.js";
 import { GEAR_OMISSIONS, gearOmission, openGearGaps } from "./coverage.js";
-import { defaultEquipmentFor, defaultWeaponFor, unarmedEquipment } from "./loadout.js";
+import { defaultEquipmentFor, defaultWeaponFor } from "./loadout.js";
 import { parseBuildEquipment } from "./parse.js";
 import { reconcileEquipment } from "./reconcile.js";
 import { validateEquipment } from "./validate.js";
@@ -181,9 +181,9 @@ describe("the rune catalog", () => {
 
 describe("default loadouts", () => {
   it.each(PROFESSION_IDS)("gives %s a legal build straight out of the box", (profession) => {
-    // The load-bearing test of this whole phase. A character migrated
-    // from before weapons existed receives exactly this, and a migration
-    // that produces an invalid build has destroyed it.
+    // The build editor hands exactly this to every new character and on
+    // every profession change, so a default that is not a legal build
+    // would make the editor's first screen an error.
     const problems = validatePlayerBuild(
       buildFor(profession),
       MINIMAL_GW_INSPIRED_PVP_V1.attributes,
@@ -377,16 +377,16 @@ describe("validateEquipment", () => {
 });
 
 describe("parseBuildEquipment", () => {
-  it("treats absent gear as old rather than broken", () => {
-    // A build saved before weapons existed must stay playable. This is
-    // the parser half of the same promise the storage migration makes.
-    expect(parseBuildEquipment(undefined, "ranger")).toEqual(defaultEquipmentFor("ranger"));
-    expect(parseBuildEquipment(null, "ranger")).toEqual(defaultEquipmentFor("ranger"));
+  it("rejects absent gear like any other missing field", () => {
+    // Gear is not optional, and a build without it is malformed, not old
+    // (ADR-0016). Nothing fills it in.
+    expect(parseBuildEquipment(undefined)).toBeUndefined();
+    expect(parseBuildEquipment(null)).toBeUndefined();
   });
 
   it("round-trips gear through JSON unchanged", () => {
     const original = defaultEquipmentFor("warrior");
-    const parsed = parseBuildEquipment(JSON.parse(JSON.stringify(original)), "warrior");
+    const parsed = parseBuildEquipment(JSON.parse(JSON.stringify(original)));
     expect(parsed).toEqual(original);
   });
 
@@ -406,15 +406,16 @@ describe("parseBuildEquipment", () => {
       },
     ];
     for (const value of cases) {
-      expect(parseBuildEquipment(value, "warrior"), JSON.stringify(value)).toBeUndefined();
+      expect(parseBuildEquipment(value), JSON.stringify(value)).toBeUndefined();
     }
   });
 
   it("fills in missing armor slots rather than failing on a sparse record", () => {
-    const parsed = parseBuildEquipment(
-      { mainHand: { weaponId: "sword" }, offHand: null, armor: {} },
-      "warrior",
-    );
+    const parsed = parseBuildEquipment({
+      mainHand: { weaponId: "sword" },
+      offHand: null,
+      armor: {},
+    });
     expect(parsed).toBeDefined();
     for (const slot of ARMOR_SLOTS) {
       expect(parsed?.armor[slot]).toEqual({ insigniaId: null, rune: null });
@@ -539,14 +540,6 @@ describe("reconcileEquipment", () => {
       const context = contextFor(primary);
       const problems = validateEquipment(reconcileEquipment(warriorKit, context), context);
       expect(problems, primary).toEqual([]);
-    }
-  });
-});
-
-describe("unarmedEquipment", () => {
-  it("is legal for anyone, since it is the universal fallback", () => {
-    for (const primary of PROFESSION_IDS) {
-      expect(validateEquipment(unarmedEquipment(), contextFor(primary)), primary).toEqual([]);
     }
   });
 });
