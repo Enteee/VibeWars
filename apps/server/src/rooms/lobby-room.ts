@@ -1,4 +1,6 @@
-import { Room, type Client } from "colyseus";
+import { randomUUID } from "node:crypto";
+
+import { Room, matchMaker, type Client } from "colyseus";
 import { schema, t } from "@colyseus/schema";
 import { createRng, seedFromString, type SimulationRng } from "@vibewars/game-core";
 import { listMapIds } from "@vibewars/game-maps";
@@ -7,12 +9,13 @@ import {
   LOBBY_CODE_LENGTH,
   MAX_LOBBY_PLAYERS,
   PROTOCOL_VERSION,
+  ROOM_MATCH,
   isLobbyCode,
   normalizeLobbyCode,
   type LobbyMatchStartingMessage,
 } from "@vibewars/game-protocol";
 
-import { DEFAULT_MAP_ID } from "./match-room.js";
+import { DEFAULT_MAP_ID, type Seat } from "./match-room.js";
 import { assertProtocolVersion, field } from "./options.js";
 
 /**
@@ -130,7 +133,7 @@ export class LobbyRoom extends Room {
       this.handleSelectMap(client, message);
     });
     this.onMessage("start-match", (client) => {
-      this.handleStartMatch(client);
+      void this.handleStartMatch(client);
     });
     this.onMessage("return-to-lobby", () => {
       this.returnToLobby();
@@ -228,7 +231,14 @@ export class LobbyRoom extends Room {
     return { ok: true };
   }
 
-  private handleStartMatch(client: Client): void {
+  /**
+   * Start the lobby's own match (#41): a private room seated with exactly
+   * this lobby's team players, each sent a ticket for their own seat. A
+   * ticket is a seat, so it goes to its holder alone and is never
+   * broadcast; spectators get nothing and stay here. Tickets never touch
+   * the simulation, so they come from `randomUUID`, not the seeded RNG.
+   */
+  private async handleStartMatch(client: Client): Promise<void> {
     const player = this.state.players.get(client.sessionId);
     if (player === undefined || !player.isHost || this.state.phase !== "waiting") {
       return;
@@ -239,19 +249,32 @@ export class LobbyRoom extends Room {
       return;
     }
 
+    // Leaves "waiting" before the await, so a second start cannot race in.
     this.state.phase = "starting";
-    // Clients create/join the match room themselves; the lobby only says
-    // which map to play. Keeping room creation client-side means a lobby
-    // cannot leak an empty match room if everyone disconnects between
-    // "start" and "join".
-    const message: LobbyMatchStartingMessage = {
-      roomId: this.state.matchRoomId,
-      mapId: this.state.mapId,
-    };
-    this.broadcast("match-starting", message);
-    this.state.phase = "in-match";
+    const mapId = this.state.mapId;
+    const seated = [...this.state.players.values()]
+      .filter((other) => other.team === 0 || other.team === 1)
+      .map((other) => ({ sessionId: other.sessionId, ticket: randomUUID(), team: other.team }));
+    const seats: Seat[] = seated.map(({ ticket, team }) => ({ ticket, team: team === 0 ? 0 : 1 }));
 
-    console.info(`[lobby] ${this.state.code} starting match on ${this.state.mapId}`);
+    let roomId: string;
+    try {
+      ({ roomId } = await matchMaker.createRoom(ROOM_MATCH, { mapId, seats }));
+    } catch (error: unknown) {
+      console.error(`[lobby] ${this.state.code} could not create its match`, error);
+      this.state.phase = "waiting";
+      client.send("start-rejected", { reason: "the server could not create the match" });
+      return;
+    }
+
+    this.state.matchRoomId = roomId;
+    this.state.phase = "in-match";
+    for (const { sessionId, ticket } of seated) {
+      const message: LobbyMatchStartingMessage = { roomId, mapId, ticket };
+      this.clients.get(sessionId)?.send("match-starting", message);
+    }
+
+    console.info(`[lobby] ${this.state.code} starting match ${roomId} on ${mapId}`);
   }
 
   public override onJoin(client: Client, options: unknown): void {

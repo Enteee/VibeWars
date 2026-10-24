@@ -143,24 +143,42 @@ function awaitMessage<T>(room: Room, type: string, timeoutMs: number): Promise<T
   });
 }
 
+/**
+ * Which match to enter: any Quick Match room with space, or the room a
+ * lobby created, with the ticket it handed this player (#41).
+ */
+export type MatchTarget =
+  | { readonly kind: "quick"; readonly mapId?: string | undefined }
+  | { readonly kind: "lobby"; readonly roomId: string; readonly ticket: string };
+
 export async function connectToMatch(
   endpoint: string,
-  mapId?: string,
+  target: MatchTarget,
   build?: PlayerBuild,
 ): Promise<MatchConnection> {
   const client = new Client(endpoint);
-  // The map id travels as a join option so the first client into a room
-  // decides the arena; later joiners land in the room that already exists.
-  //
-  // The build travels the same way, but it is only a *request*: the
-  // server validates it and silently falls back to its house loadout if
-  // it is illegal (brief '32). Nothing here may assume it was honoured.
-  const joinOptions: MatchJoinOptions = {
-    protocolVersion: PROTOCOL_VERSION,
-    ...(mapId === undefined ? {} : { mapId }),
-    ...(build === undefined ? {} : { build }),
-  };
-  const room = await client.joinOrCreate<DecodedMatchState>(ROOM_MATCH, joinOptions);
+  // The build is only a *request*: the server validates it and silently
+  // falls back to its house loadout if it is illegal (brief §32).
+  // Nothing here may assume it was honoured.
+  const withBuild = build === undefined ? {} : { build };
+  let room: Room<unknown, DecodedMatchState>;
+  if (target.kind === "lobby") {
+    const joinOptions: MatchJoinOptions = {
+      protocolVersion: PROTOCOL_VERSION,
+      ticket: target.ticket,
+      ...withBuild,
+    };
+    room = await client.joinById<DecodedMatchState>(target.roomId, joinOptions);
+  } else {
+    // The map id travels as a join option so the first client into a room
+    // decides the arena; later joiners land in the room that already exists.
+    const joinOptions: MatchJoinOptions = {
+      protocolVersion: PROTOCOL_VERSION,
+      ...(target.mapId === undefined ? {} : { mapId: target.mapId }),
+      ...withBuild,
+    };
+    room = await client.joinOrCreate<DecodedMatchState>(ROOM_MATCH, joinOptions);
+  }
 
   // Both arrive on join; waiting for them here means the caller gets a
   // fully-usable connection rather than one that is missing its map or

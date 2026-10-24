@@ -27,7 +27,9 @@ import {
 } from "@vibewars/game-core";
 import { allWallSegments, loadMap, type MapData } from "@vibewars/game-maps";
 import {
+  MAX_LOBBY_PLAYERS,
   PROTOCOL_VERSION,
+  QUICK_MATCH_MAX_PLAYERS,
   parseClientIntent,
   type CastRefusedMessage,
   type MapDescriptor,
@@ -242,6 +244,50 @@ function resolveLoadout(options: unknown): ResolvedJoinLoadout {
  */
 const RECONNECT_WINDOW_SECONDS = 30;
 
+/**
+ * How long a lobby's match waits for its first player. A lobby creates
+ * its match before anyone is in it, so a lobby that empties between
+ * "start" and "join" would otherwise leave a room nobody can ever enter.
+ */
+export const LOBBY_MATCH_JOIN_DEADLINE_SECONDS = 30;
+
+/** One player's place in a lobby's match: the ticket that claims it, and their team. */
+export interface Seat {
+  readonly ticket: string;
+  readonly team: 0 | 1;
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The seats a lobby's match is created with, or `undefined` for Quick
+ * Match. Anything else is refused outright: `create` is open to clients
+ * too, so this is a client payload like any other (brief §32). A client
+ * that creates its own seated room gains a private room joinable only
+ * with tickets it invented, which is no more than hosting a lobby gives.
+ */
+export function parseSeats(options: unknown): readonly Seat[] | undefined {
+  const raw = field(options, "seats");
+  if (raw === undefined) {
+    return undefined;
+  }
+  if (!Array.isArray(raw) || raw.length < 1 || raw.length > MAX_LOBBY_PLAYERS) {
+    throw new Error("seats must list 1 to MAX_LOBBY_PLAYERS players");
+  }
+  const seats = raw.map((entry: unknown): Seat => {
+    const ticket = field(entry, "ticket");
+    const team = field(entry, "team");
+    if (typeof ticket !== "string" || !UUID.test(ticket) || (team !== 0 && team !== 1)) {
+      throw new Error("a seat is a UUID ticket and team 0 or 1");
+    }
+    return { ticket, team };
+  });
+  if (new Set(seats.map((seat) => seat.ticket)).size !== seats.length) {
+    throw new Error("a ticket names one seat");
+  }
+  return seats;
+}
+
 function toMapDescriptor(map: MapData): MapDescriptor {
   const walls: WallDescriptor[] = map.walls.map((wall) =>
     wall.kind === "rect"
@@ -267,6 +313,12 @@ export class MatchRoom extends Room {
   #sim = new MatchSimulation({ seed: 0 });
 
   #nextSpawnIndex = 0;
+
+  /**
+   * A lobby's match: each ticket's team, and whether it was used. Absent
+   * for Quick Match, which alternates teams as players arrive.
+   */
+  #seats: Map<string, { readonly team: 0 | 1; used: boolean }> | undefined;
 
   /**
    * Rolling tick-duration samples in milliseconds (brief §26).
@@ -321,8 +373,30 @@ export class MatchRoom extends Room {
     return spawn?.position ?? { x: 0, y: 0 };
   }
 
-  public override onCreate(options?: unknown): void {
+  public override async onCreate(options?: unknown): Promise<void> {
     this.autoDispose = true;
+
+    const seats = parseSeats(options);
+    if (seats === undefined) {
+      this.maxClients = QUICK_MATCH_MAX_PLAYERS;
+    } else {
+      // Only `joinById` reaches a private room, so no Quick Match player
+      // can land in a lobby's match, and a full lobby fills it exactly.
+      await this.setPrivate(true);
+      this.maxClients = seats.length;
+      // Empty until its players arrive, and a refused join on an empty
+      // room would otherwise dispose it: a stranger's bad ticket must not
+      // close a lobby's match. The deadline below disposes it instead;
+      // the first good join turns auto-dispose back on.
+      this.autoDispose = false;
+      this.#seats = new Map(seats.map((seat) => [seat.ticket, { team: seat.team, used: false }]));
+      this.clock.setTimeout(() => {
+        if (this.clients.length === 0) {
+          console.info("[match] nobody came from the lobby; disposing");
+          void this.disconnect();
+        }
+      }, LOBBY_MATCH_JOIN_DEADLINE_SECONDS * 1000);
+    }
 
     // Join options are client-supplied; read them defensively rather
     // than dereferencing whatever arrived.
@@ -547,10 +621,29 @@ export class MatchRoom extends Room {
     }
   }
 
+  /**
+   * The team a joining player plays on. In a lobby's match that is the
+   * team their ticket was issued for, and the ticket is spent; a join
+   * without a good ticket is refused. In Quick Match, teams alternate as
+   * players join so a 1v1 is adversarial by default.
+   */
+  private claimTeam(options: unknown): number {
+    if (this.#seats === undefined) {
+      return [...this.#sim.participants()].length % 2;
+    }
+    const ticket = field(options, "ticket");
+    const seat = typeof ticket === "string" ? this.#seats.get(ticket) : undefined;
+    if (seat === undefined || seat.used) {
+      throw new Error("This match is for its lobby's players only.");
+    }
+    seat.used = true;
+    this.autoDispose = true;
+    return seat.team;
+  }
+
   public override onJoin(client: Client, options?: unknown): void {
     assertProtocolVersion(options);
-    // Alternate teams as players join so a 1v1 is adversarial by default.
-    const team = [...this.#sim.participants()].length % 2;
+    const team = this.claimTeam(options);
     const spawn = this.nextSpawnPoint(team);
     const loadout = resolveLoadout(options);
 

@@ -1,6 +1,6 @@
 import { PROTOCOL_MISMATCH_MESSAGE } from "@vibewars/game-protocol";
 
-import { httpOriginFrom, resolveEndpoint } from "./net/match-client.js";
+import { httpOriginFrom, resolveEndpoint, type MatchTarget } from "./net/match-client.js";
 import { ONLINE_PLAY } from "./net/online.js";
 import {
   LobbyNotFoundError,
@@ -163,7 +163,7 @@ async function main(): Promise<void> {
         // Straight into a match with no lobby — how the game worked before
         // Sprint 19, kept because it is the fastest way to try the game.
         onQuickMatch: () => {
-          void enterMatch();
+          void enterMatch({ kind: "quick" });
         },
         onNewCharacter: () => {
           showCharacterEditor(newCharacter(crypto.randomUUID()));
@@ -445,12 +445,13 @@ async function main(): Promise<void> {
       renderLobby();
     });
     lobby.onMatchStarting((message) => {
-      void enterMatch(message.mapId);
+      // Only players on a team are sent this; a spectator stays here.
+      void enterMatch({ kind: "lobby", roomId: message.roomId, ticket: message.ticket });
     });
     renderLobby();
   };
 
-  const enterMatch = async (mapId?: string): Promise<void> => {
+  const enterMatch = async (target: MatchTarget): Promise<void> => {
     enteringMatch = true;
     menuNotice = undefined;
     showViewport(true);
@@ -489,7 +490,7 @@ async function main(): Promise<void> {
             })();
           },
         },
-        { mapId, build },
+        { target, build },
       );
       setStatus("in match", "online");
     } catch (error) {

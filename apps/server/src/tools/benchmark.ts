@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import type { Client, Room } from "@colyseus/sdk";
 import { matchMaker } from "@colyseus/core";
 import { createRng, seedFromString } from "@vibewars/game-core";
@@ -194,16 +196,23 @@ async function runScenario(
   const playerCount = scenario.perTeam * 2;
   const participants: Participant[] = [];
 
-  const first = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
-    protocolVersion: PROTOCOL_VERSION,
-  });
-  participants.push({ room: first, sessionId: first.sessionId });
-
-  for (let i = 1; i < playerCount; i += 1) {
-    const room = await new Client(endpoint).joinById(first.roomId, {
+  // A match this size comes from a lobby, so it is seated like one: a
+  // private room, each player holding a ticket for their team (#41).
+  const seats = Array.from({ length: playerCount }, (_, i) => ({
+    ticket: randomUUID(),
+    team: i % 2,
+  }));
+  const { roomId } = await matchMaker.createRoom(ROOM_MATCH, { seats });
+  for (const { ticket } of seats) {
+    const room = await new Client(endpoint).joinById(roomId, {
       protocolVersion: PROTOCOL_VERSION,
+      ticket,
     });
     participants.push({ room, sessionId: room.sessionId });
+  }
+  const first = participants[0]?.room;
+  if (first === undefined) {
+    throw new Error("A scenario needs at least one participant");
   }
 
   await waitFor(

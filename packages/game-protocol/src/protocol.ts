@@ -10,7 +10,7 @@
  * mid-match. It only ever rejects; there is no code path per version
  * (ADR-0016).
  */
-export const PROTOCOL_VERSION = 1 as const;
+export const PROTOCOL_VERSION = 2 as const;
 
 /** What a client is told when its `protocolVersion` does not match. */
 export const PROTOCOL_MISMATCH_MESSAGE =
@@ -130,6 +130,12 @@ export interface MatchJoinOptions {
   /** The arena the first joiner asks for; later joiners get the room's. */
   readonly mapId?: string;
   /**
+   * The single-use seat a lobby handed this player in its
+   * `match-starting` message. A lobby's match refuses a join without one;
+   * Quick Match ignores it.
+   */
+  readonly ticket?: string;
+  /**
    * The build the player asks to play. Untyped on purpose: this package has
    * no game-core dependency, and the server parses and validates whatever
    * arrives before trusting any of it (brief §32).
@@ -166,15 +172,23 @@ export interface LobbySelectMapMessage {
   readonly mapId: string;
 }
 
-/** Sent to every client when the host starts the match. */
+/**
+ * Sent to each player on a team, and only to them, when the host starts
+ * the match. Spectators get nothing and stay in the lobby.
+ */
 export interface LobbyMatchStartingMessage {
-  /** The match room to join. */
+  /** The lobby's own match room, which only a ticket gets into. */
   readonly roomId: string;
   readonly mapId: string;
+  /** This player's seat, good for one join. Never shared with anyone else. */
+  readonly ticket: string;
 }
 
 /** The maximum players a single lobby accepts (brief §4: not hardcoded to 8). */
 export const MAX_LOBBY_PLAYERS = 16;
+
+/** How many players one Quick Match room holds before a new one opens. */
+export const QUICK_MATCH_MAX_PLAYERS = 8;
 
 /**
  * Every message a client is allowed to send during a match.
