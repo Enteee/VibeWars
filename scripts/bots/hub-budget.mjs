@@ -100,10 +100,15 @@ export function limitedMessage(resetAt) {
   );
 }
 
+/** gh's output filters, in their long and short spellings. */
+const FILTER_FLAGS = new Set(["--jq", "-q", "--template", "-t"]);
+
 /**
  * Whether a request is a board read the shared snapshot can answer: the JSON
- * item list of the company's own project. A table-format list, or one of
- * another project, goes to GitHub as asked.
+ * item list of the company's own project. A table-format list, one of
+ * another project, or one with a `--jq`/`--template` filter goes to GitHub
+ * as asked: the snapshot is the unfiltered list, so serving it would quietly
+ * drop the filter the agent asked for.
  *
  * @param {string[]} argv
  * @param {number} project
@@ -114,8 +119,9 @@ export function isBoardRead(argv, project) {
   if (group !== "project" || sub !== "item-list" || number !== String(project)) {
     return false;
   }
+  const filtered = argv.some((word) => FILTER_FLAGS.has(word.split("=")[0] ?? word));
   const format = argv.indexOf("--format");
-  return format !== -1 && argv[format + 1] === "json";
+  return !filtered && format !== -1 && argv[format + 1] === "json";
 }
 
 /**
