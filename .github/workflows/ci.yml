@@ -8,47 +8,117 @@ on:
 permissions:
   contents: read
 
+# Every check runs inside the dev shell devenv.nix defines, with the toolchain
+# devenv.lock pins: there is no second toolchain setup to drift from it. See
+# docs/adr/0021-ci-in-devenv.md.
 jobs:
+  # The hook list is read from the .pre-commit-config.yaml the shell
+  # generates, so adding a hook to `git-hooks.hooks` in devenv.nix adds a CI
+  # job for it with no edit here.
+  hook-list:
+    name: list git hooks
+    runs-on: ubuntu-latest
+    outputs:
+      hooks: ${{ steps.list.outputs.hooks }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # The one job that saves the Nix store cache. The hook jobs wait for
+      # it, so they restore the store this one realised.
+      - uses: ./.github/actions/devenv
+        with:
+          save-cache: "true"
+
+      - id: list
+        name: List enabled hooks
+        run: |
+          hooks=$(jq -c '[.repos[].hooks[].id]' .pre-commit-config.yaml)
+          echo "Hooks: $hooks"
+          if [ "$(jq length <<<"$hooks")" -eq 0 ]; then
+            echo "::error::.pre-commit-config.yaml lists no hooks"
+            exit 1
+          fi
+          echo "hooks=$hooks" >> "$GITHUB_OUTPUT"
+
+  hook:
+    name: hook (${{ matrix.hook }})
+    needs: hook-list
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        hook: ${{ fromJSON(needs.hook-list.outputs.hooks) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/devenv
+
+      # Against the whole tree, not only changed files: a commit made with
+      # --no-verify, or outside the shell, is caught here.
+      - name: Run ${{ matrix.hook }} on every file
+        run: >-
+          devenv shell --
+          prek run "${{ matrix.hook }}"
+          --all-files --show-diff-on-failure
+          -c .pre-commit-config.yaml
+
+  # One check that is green only if every hook job was. A matrix has no fixed
+  # job names to require, so this is the name branch protection can require.
+  hooks:
+    name: git hooks
+    needs: [hook-list, hook]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every hook passed
+        env:
+          LIST: ${{ needs.hook-list.result }}
+          HOOKS: ${{ needs.hook.result }}
+        run: |
+          echo "hook-list: $LIST, hook: $HOOKS"
+          [ "$LIST" = success ] && [ "$HOOKS" = success ]
+
+  # The job name is the required status check (scripts/bots/company-init.mjs
+  # EXPECTED_CHECKS), so it stays as it is although e2e now runs here too.
+  # No `needs:` on purpose: a required check whose dependency failed is
+  # reported as skipped, and a skipped required check counts as passing.
   ci:
     name: format + lint + typecheck + test + build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/devenv
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.34.7
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      # Run as discrete steps, not one `pnpm run ci`, so a failure's exact
-      # stage is visible directly in the GitHub Actions UI rather than buried
-      # in one combined log.
+      # Mirrors `enterTest` in devenv.nix; keep the two lists in step. They
+      # run as discrete steps, not one `devenv test`, so a failure's exact
+      # stage is visible directly in the Actions UI. The order is enterTest's:
+      # `pnpm run lint` builds the declarations type-aware linting needs
+      # itself, and e2e needs the built client, so it goes last.
       - name: Format check
-        run: pnpm run format:check
+        run: devenv shell -- pnpm run format:check
+
+      - name: Lint
+        run: devenv shell -- pnpm run lint
 
       - name: Typecheck
-        run: pnpm run typecheck
-
-      # After Typecheck, not before, and this order is load-bearing rather
-      # than cosmetic. Type-aware linting resolves cross-package imports
-      # through each package's `types` entry, which points into `dist/` —
-      # gitignored, so a fresh checkout has none. Linting first made every
-      # cross-package symbol `error`-typed and produced ~966 bogus
-      # `no-unsafe-*` errors, while passing on any machine where an earlier
-      # build had left `dist/` behind. `tsc --build` in Typecheck emits those
-      # declarations.
-      - name: Lint
-        run: pnpm run lint
+        run: devenv shell -- pnpm run typecheck
 
       - name: Test
-        run: pnpm run test
+        run: devenv shell -- pnpm run test
 
       - name: Build
-        run: pnpm run build
+        run: devenv shell -- pnpm run build
+
+      # Drives the Chromium the shell pins (VIBEWARS_CHROMIUM), so there is
+      # no `playwright install`.
+      - name: End-to-end tests
+        run: devenv shell -- pnpm run test:e2e
+
+      - name: Upload Playwright output
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-output
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

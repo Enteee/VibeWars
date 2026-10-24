@@ -687,6 +687,18 @@ let
   '';
 in
 {
+  # Off in CI: the checks need the toolchain, not the agent tooling, and
+  # claude-code alone is a large unfree download. CI writes a
+  # devenv.local.nix that sets this to false; see .github/actions/devenv.
+  options.vibewars.claudeBot.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = true;
+    description = ''
+      Whether to put claude-bot, claude-llc and their tools (claude-code,
+      bubblewrap, tg, hub, board, tmux) into the shell.
+    '';
+  };
+
   options.vibewars.telegram = {
     managerTokenFile = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
@@ -720,7 +732,7 @@ in
 
   };
 
-  config = {
+  config = lib.mkIf config.vibewars.claudeBot.enable {
     packages = [
       pkgs.bubblewrap
       pkgs.claude-code

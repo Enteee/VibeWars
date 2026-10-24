@@ -22,4 +22,5 @@ rewriting history.
 | [0014](0014-agent-coordination.md)         | Multi-agent coordination over Telegram        |
 | [0015](0015-agent-company.md)              | The agent company's GitHub boundary           |
 | [0016](0016-no-backwards-compatibility.md) | No backwards compatibility before 1.0         |
+| [0021](0021-ci-in-devenv.md)               | CI in the devenv shell, every git hook        |
 | [0023](0023-one-telegram-bot.md)           | One Telegram bot for the whole company        |

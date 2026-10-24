@@ -26,8 +26,8 @@
     pnpm = {
       enable = true;
       # Pinned to the 10.x line to match package.json's `packageManager`
-      # (CI installs that exact patch via pnpm/action-setup). Left to nixpkgs'
-      # default, devenv would hand us pnpm 12.x.
+      # (CI runs inside this shell, so it gets this same pnpm). Left to
+      # nixpkgs' default, devenv would hand us pnpm 12.x.
       package = pkgs.pnpm_10;
       install.enable = true;
     };
@@ -63,6 +63,10 @@
   # script, which exists so the exact same checks can run in environments
   # without a working devenv realization (see docs/adr/0007, which documents
   # the sandbox this repository is currently authored in).
+  #
+  # CI mirrors this list, step for step, in .github/workflows/ci.yml; keep
+  # the two in step. The git hooks below need no such mirror: CI reads them
+  # from the generated .pre-commit-config.yaml (docs/adr/0021).
   # ---------------------------------------------------------------------------
   enterTest = ''
     pnpm run format:check
