@@ -97,15 +97,30 @@ export function createHud(parent: HTMLElement): HudElements {
  * Show whether the sound is on. The icon is the current state, not what a
  * click does (art-direction §UI controls), and the label says both.
  */
+export function muteButtonState(muted: boolean): {
+  readonly label: string;
+  readonly pressed: "true" | "false";
+  readonly title: string;
+  readonly icon: string;
+} {
+  return {
+    // A toggle keeps one name; whether it is on is what aria-pressed says.
+    label: "Mute sounds",
+    pressed: muted ? "true" : "false",
+    title: muted ? "Sound off. Press M to turn it on." : "Sound on. Press M to mute.",
+    icon: soundIcon(muted),
+  };
+}
+
 export function renderMute(hud: HudElements, muted: boolean): void {
+  const state = muteButtonState(muted);
   const icon = hud.mute.querySelector("img");
   if (icon !== null) {
-    icon.src = soundIcon(muted);
+    icon.src = state.icon;
   }
-  // A toggle keeps one name; whether it is on is what aria-pressed says.
-  hud.mute.setAttribute("aria-label", "Mute (M)");
-  hud.mute.setAttribute("aria-pressed", String(muted));
-  hud.mute.title = muted ? "Sound off. Press M to turn it on." : "Sound on. Press M to mute.";
+  hud.mute.setAttribute("aria-label", state.label);
+  hud.mute.setAttribute("aria-pressed", state.pressed);
+  hud.mute.title = state.title;
 }
 
 /**

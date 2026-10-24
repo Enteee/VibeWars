@@ -1,94 +1,153 @@
-import { STORAGE_NAMESPACE } from "../storage/namespace.js";
+import { loadMuted } from "./mute-preference.js";
 import { SOUND_IDS, type SoundId } from "./sound-ids.js";
 
 /**
- * Plays the combat sounds (#112) through Web Audio, each buffer decoded
- * once, so a hit starts within a frame of its damage number rather than
- * whenever an `<audio>` element gets round to it (art-direction §Sound).
+ * Plays the combat sounds (#104, #112) through Web Audio, each buffer
+ * decoded once, so a hit starts within a frame of its damage number rather
+ * than whenever an `<audio>` element gets round to it (art-direction §Sound).
  *
- * One per page, like the skill tooltip: the context and the decoded
- * buffers outlive any one match, so entering a second match neither
- * decodes everything again nor opens a second AudioContext, of which a
- * browser allows only a few.
+ * The page has one, `soundPlayer()`: the context and the decoded buffers
+ * outlive any one match, so a second match neither decodes everything
+ * again nor opens a second AudioContext, of which a browser allows only a
+ * few. It is never closed.
  */
 
 export interface SoundPlayer {
-  /** Play one sound now, unless muted. Silent until its buffer has loaded. */
+  /** Play one sound now. Silent while muted, and until its buffer has decoded. */
   play(id: SoundId): void;
-  isMuted(): boolean;
-  /** Mute or unmute, remembered for this deploy. */
   setMuted(muted: boolean): void;
+  readonly muted: boolean;
 }
 
-const MUTED_KEY = `${STORAGE_NAMESPACE}.soundMuted`;
+/** One id plays at most this often, so a Barrage hitting five is one thwack (#54). */
+export const SOUND_THROTTLE_MS = 60;
 
-/** Whether the player muted the game last time. Unreadable storage means not muted. */
-function loadMuted(): boolean {
-  try {
-    return localStorage.getItem(MUTED_KEY) === "1";
-  } catch {
-    return false;
-  }
+const MASTER_GAIN = 0.5;
+
+/** Anything a node can be connected to. */
+export type SoundSink = object;
+
+/** The slice of Web Audio the player uses, so a test can hand it a fake. */
+export interface SoundContext {
+  readonly destination: SoundSink;
+  createGain(): { readonly gain: { value: number }; connect(sink: SoundSink): unknown };
+  createBufferSource(): {
+    buffer: AudioBuffer | null;
+    connect(sink: SoundSink): unknown;
+    start(): void;
+  };
+  decodeAudioData(bytes: ArrayBuffer): Promise<AudioBuffer>;
 }
 
-function saveMuted(muted: boolean): void {
-  try {
-    localStorage.setItem(MUTED_KEY, muted ? "1" : "0");
-  } catch {
-    // A convenience: the toggle still works for this session.
-  }
+export interface SoundPlayerDeps {
+  /** Called once, on the first user gesture: autoplay policy blocks a context made earlier. */
+  readonly createContext: () => SoundContext;
+  readonly fetch: (url: string) => Promise<{ ok: boolean; arrayBuffer(): Promise<ArrayBuffer> }>;
+  /** Milliseconds, for the throttle. */
+  readonly now: () => number;
+  /** Where the first gesture is heard: `window`. */
+  readonly gestures: Pick<EventTarget, "addEventListener" | "removeEventListener">;
+  /** Whether a gesture already happened before this player existed. */
+  readonly hasBeenActive: boolean;
+  /** Where the sfx live, `import.meta.env.BASE_URL`, so a Pages subpath works (#103). */
+  readonly baseUrl: string;
+  readonly muted: boolean;
 }
 
-function createSoundPlayer(): SoundPlayer {
-  let muted = loadMuted();
+export function createWebAudioPlayer(deps: SoundPlayerDeps): SoundPlayer {
+  let muted = deps.muted;
+  let broken = false;
+  let output: { context: SoundContext; sink: SoundSink } | undefined;
   const buffers = new Map<SoundId, AudioBuffer>();
-  // A browser without Web Audio still plays the game, in silence.
-  const context = typeof AudioContext === "undefined" ? undefined : new AudioContext();
+  const lastPlayed = new Map<SoundId, number>();
 
-  if (context !== undefined) {
-    for (const id of SOUND_IDS) {
-      void fetch(`${import.meta.env.BASE_URL}sfx/${id}.mp3`)
-        .then((response) => response.arrayBuffer())
-        .then((bytes) => context.decodeAudioData(bytes))
-        .then((buffer) => {
-          buffers.set(id, buffer);
-        })
-        .catch((error: unknown) => {
-          console.warn(`[sound] ${id} did not load:`, error);
-        });
+  // Sound is a nicety: the first thing to go wrong says so once, and the
+  // game carries on in silence rather than warning on every hit.
+  const fail = (error: unknown): void => {
+    if (!broken) {
+      broken = true;
+      console.warn("[sound] combat sounds are off:", error);
     }
+  };
+
+  const open = (): void => {
+    deps.gestures.removeEventListener("pointerdown", open);
+    deps.gestures.removeEventListener("keydown", open);
+    if (output !== undefined || broken) {
+      return;
+    }
+    try {
+      const context = deps.createContext();
+      const gain = context.createGain();
+      gain.gain.value = MASTER_GAIN;
+      gain.connect(context.destination);
+      output = { context, sink: gain };
+      for (const id of SOUND_IDS) {
+        void load(context, id).catch(fail);
+      }
+    } catch (error) {
+      fail(error);
+    }
+  };
+
+  const load = async (context: SoundContext, id: SoundId): Promise<void> => {
+    const response = await deps.fetch(`${deps.baseUrl}sfx/${id}.mp3`);
+    if (!response.ok) {
+      throw new Error(`sfx/${id}.mp3 did not load`);
+    }
+    buffers.set(id, await context.decodeAudioData(await response.arrayBuffer()));
+  };
+
+  if (deps.hasBeenActive) {
+    open();
+  } else {
+    deps.gestures.addEventListener("pointerdown", open);
+    deps.gestures.addEventListener("keydown", open);
   }
 
   return {
     play(id) {
       const buffer = buffers.get(id);
-      if (muted || context === undefined || buffer === undefined) {
+      if (muted || broken || output === undefined || buffer === undefined) {
         return;
       }
-      // Created before the player clicked anything, a context starts
-      // suspended; by the time a match plays a sound, they have.
-      if (context.state === "suspended") {
-        void context.resume();
+      const now = deps.now();
+      const last = lastPlayed.get(id);
+      if (last !== undefined && now - last < SOUND_THROTTLE_MS) {
+        return;
       }
-      const source = context.createBufferSource();
-      source.buffer = buffer;
-      source.connect(context.destination);
-      source.start();
-    },
-    isMuted() {
-      return muted;
+      lastPlayed.set(id, now);
+      try {
+        const source = output.context.createBufferSource();
+        source.buffer = buffer;
+        source.connect(output.sink);
+        source.start();
+      } catch (error) {
+        fail(error);
+      }
     },
     setMuted(next) {
       muted = next;
-      saveMuted(next);
+    },
+    get muted() {
+      return muted;
     },
   };
 }
 
 let shared: SoundPlayer | undefined;
 
-/** The page's one sound player, created on first use. */
+/** The page's one sound player, with the muting the player chose last time. */
 export function soundPlayer(): SoundPlayer {
-  shared ??= createSoundPlayer();
+  shared ??= createWebAudioPlayer({
+    createContext: () => new AudioContext(),
+    fetch: (url) => fetch(url),
+    now: () => performance.now(),
+    gestures: window,
+    // Joining a match is a click, usually made before this first runs.
+    hasBeenActive: "userActivation" in navigator && navigator.userActivation.hasBeenActive,
+    baseUrl: import.meta.env.BASE_URL,
+    muted: loadMuted(),
+  });
   return shared;
 }

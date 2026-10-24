@@ -59,6 +59,16 @@ test("a quick match renders the arena and a populated HUD", async ({ page }) => 
   expect(await readEnergy(page)).toBeGreaterThan(0);
 });
 
+test("M mutes and unmutes the combat sounds", async ({ page }) => {
+  await startQuickMatch(page);
+  const mute = page.getByRole("button", { name: "Mute sounds" });
+  await expect(mute).toHaveAttribute("aria-pressed", "false");
+  await page.keyboard.press("m");
+  await expect(mute).toHaveAttribute("aria-pressed", "true");
+  await page.keyboard.press("m");
+  await expect(mute).toHaveAttribute("aria-pressed", "false");
+});
+
 test("holding a movement key moves the player on screen", async ({ page }) => {
   const canvas = await startQuickMatch(page);
 
