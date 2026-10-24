@@ -22,7 +22,13 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { GIT_ENV, GIT_HARDENING } from "./git-hardening.mjs";
 import { isBoardRead, limitedMessage, parseRateLimit, usesGraphql } from "./hub-budget.mjs";
 import { hasFilter } from "./hub-filter.mjs";
-import { approvalsSatisfied, checksSatisfied, explainGuard, pathsWithin } from "./hub-guards.mjs";
+import {
+  approvalsSatisfied,
+  checksSatisfied,
+  explainGuard,
+  pathsOutside,
+  pathsWithin,
+} from "./hub-guards.mjs";
 import {
   ghIssue,
   ghPull,
@@ -43,7 +49,14 @@ import {
   rebootAllowed,
 } from "./reboot.mjs";
 import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
-import { ROLES, authorize, parseMerge, parseReview, touchesGate } from "./hub-policy.mjs";
+import {
+  RESTRICTED_PATHS,
+  ROLES,
+  authorize,
+  parseMerge,
+  parseReview,
+  touchesGate,
+} from "./hub-policy.mjs";
 import {
   boardNumbers,
   isInternal,
@@ -479,10 +492,11 @@ function audit(entry) {
 }
 
 /**
- * Which files would this push change, relative to main? Used only to tag the
- * audit log, so that a change to the definition of a quality gate is findable
- * afterwards with one `grep` instead of being indistinguishable from ordinary
- * work.
+ * Which files would this push change, relative to main? Both sides of a
+ * rename (--no-renames), so a file moved out of a directory is a change
+ * to it. The push guards refuse on it (`refusePush`), and the audit log
+ * is tagged with it, so that a change to the definition of a quality gate
+ * is findable afterwards with one `grep`.
  *
  * Compared in the mirror, against `main` as GitHub has it: not against
  * whatever an agent's repository calls `origin/main`.
@@ -508,6 +522,7 @@ async function changedPaths(ref, cfg) {
     "diff",
     "--no-ext-diff",
     "--no-textconv",
+    "--no-renames",
     "--name-only",
     `main...${ref}`,
   ]);
@@ -517,10 +532,8 @@ async function changedPaths(ref, cfg) {
 /**
  * Why a push must not go through under `guard`, or null if it may.
  *
- * Unlike `changedPaths`, which only tags the audit log, this refuses, so it
- * fails closed: a main it cannot fetch, or a diff it cannot take, is a
- * refusal. --no-renames lists both sides of a move, so a file moved out of
- * the allowed directory counts as a change outside it.
+ * It fails closed: a main it cannot fetch, or a diff it cannot take, is a
+ * refusal.
  *
  * @param {string} guard
  * @param {string} ref the pushed branch, already fetched into the mirror
@@ -528,38 +541,27 @@ async function changedPaths(ref, cfg) {
  * @returns {Promise<string | null>}
  */
 async function refusePush(guard, ref, cfg) {
-  if (!guard.startsWith("paths-within:")) {
+  const [kind, list] = guard.split(/:(.*)/s);
+  if ((kind !== "paths-within" && kind !== "paths-outside") || list === undefined) {
     return `unknown guard "${guard}"; refusing rather than guessing`;
   }
-  const prefix = guard.slice("paths-within:".length);
-  const main = await git([
-    "fetch",
-    "-q",
-    "--no-tags",
-    remoteUrl(cfg),
-    "+refs/heads/main:refs/heads/main",
-  ]);
-  const diff =
-    main.code === 0
-      ? await git([
-          "diff",
-          "--no-ext-diff",
-          "--no-textconv",
-          "--no-renames",
-          "--name-only",
-          `main...${ref}`,
-        ])
-      : main;
-  if (diff.code !== 0) {
+  const paths = await changedPaths(ref, cfg);
+  if (paths === null) {
     return "could not compare this branch with main, so its changes cannot be checked; try again";
   }
-  const verdict = pathsWithin(
-    prefix,
-    diff.stdout.split("\n").filter((line) => line !== ""),
-  );
-  return verdict.ok
-    ? null
-    : `this role may only change ${prefix}; this push also changes: ${verdict.outside.join(", ")}`;
+  if (kind === "paths-within") {
+    const verdict = pathsWithin(list, paths);
+    return verdict.ok
+      ? null
+      : `this role may only change ${list}; this push also changes: ${verdict.outside.join(", ")}`;
+  }
+  const prefixes = list.split(",");
+  const verdict = pathsOutside(prefixes, paths);
+  if (verdict.ok) {
+    return null;
+  }
+  const owners = [...new Set(prefixes.flatMap((prefix) => RESTRICTED_PATHS[prefix] ?? []))];
+  return `only ${owners.join(", ")} changes ${prefixes.join(" and ")}; ask them on Telegram. This push changes: ${verdict.offending.join(", ")}`;
 }
 
 /* -------------------------------------------------------------------------- */
