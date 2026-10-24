@@ -290,8 +290,9 @@ function readsHostFile(argv) {
       }
     }
   }
-  if (key === "api") {
-    // `-F key=@file` and `--field key=@file` read the file as the value.
+  if (key === "api" || key === "workflow run") {
+    // `-F key=@file` and `--field key=@file` read the file as the value, on
+    // both commands that take typed fields.
     for (let i = 0; i < argv.length; i += 1) {
       const word = argv[i] ?? "";
       const short = word.startsWith("--") ? null : shortFlag(word, (letter) => letter === "F");

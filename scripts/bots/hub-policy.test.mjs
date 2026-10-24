@@ -155,6 +155,20 @@ describe("reading host files through gh", () => {
     expect(gh("cicd-engineer", ["api", env, "-iFk=v"])).toMatchObject({ allow: true });
   });
 
+  it("refuses @file field values on workflow run, which reads them the same way", () => {
+    for (const argv of [
+      ["workflow", "run", "ci.yml", "-F", "x=@/etc/passwd"],
+      ["workflow", "run", "ci.yml", "-Fx=@/etc/passwd"],
+      ["workflow", "run", "ci.yml", "--field", "x=@x"],
+      ["workflow", "run", "ci.yml", "--field=x=@x"],
+    ]) {
+      expect(gh("cicd-engineer", argv), argv.join(" ")).toMatchObject({ allow: false });
+    }
+    expect(gh("cicd-engineer", ["workflow", "run", "ci.yml", "-F", "x=v"])).toMatchObject({
+      allow: true,
+    });
+  });
+
   it("still allows --body, which is what hub turns --body-file into", () => {
     expect(gh("developer-1", ["issue", "comment", "1", "--body", "hello"])).toMatchObject({
       allow: true,
