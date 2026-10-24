@@ -62,8 +62,8 @@ function update(message) {
 }
 
 describe("parseRegistry", () => {
-  it("starts a fresh company, from the newest update, when there is no registry yet", () => {
-    expect(parseRegistry(null)).toEqual({ registry: { offset: null }, discarded: null });
+  it("starts a fresh company when there is no registry yet", () => {
+    expect(parseRegistry(null)).toEqual({ registry: { offset: 0 }, dropped: [] });
   });
 
   it("reads the current shape, with any of its three topics", () => {
@@ -73,29 +73,30 @@ describe("parseRegistry", () => {
       manager: { topicId: 22 },
       operator: { topicId: 23 },
     };
-    expect(parseRegistry(JSON.stringify(full))).toEqual({ registry: full, discarded: null });
+    expect(parseRegistry(JSON.stringify(full))).toEqual({ registry: full, dropped: [] });
     expect(parseRegistry(JSON.stringify({ offset: 9 }))).toEqual({
       registry: { offset: 9 },
-      discarded: null,
+      dropped: [],
     });
   });
 
-  it("discards, rather than repairs, anything else, saying why", () => {
-    for (const text of [
-      // Per-role topics (before #85), and per-role bots (before ADR-0023).
-      JSON.stringify({ offset: 4, roles: { architect: { topicId: 11 } } }),
-      JSON.stringify({ managerOffset: 7, roles: {} }),
-      JSON.stringify({ offset: 4, operator: { id: 7 } }),
-      JSON.stringify({ offset: "4" }),
-      JSON.stringify({ bots: { topicId: 21 } }),
-      JSON.stringify([1]),
-      "{",
-    ]) {
-      const parsed = parseRegistry(text);
-      expect(parsed.registry, text).toEqual({ offset: null });
-      expect(parsed.discarded, text).toMatch(/registry\.json/);
-    }
-    expect(parseRegistry(JSON.stringify({ offset: 4, roles: {} })).discarded).toContain('"roles"');
+  it("keeps the offset of a registry in another shape, so nothing is replayed", () => {
+    // Per-role topics, from before #85.
+    const old = { offset: 4, roles: { architect: { topicId: 11 } }, operator: { topicId: 23 } };
+    expect(parseRegistry(JSON.stringify(old))).toEqual({
+      registry: { offset: 4, operator: { topicId: 23 } },
+      dropped: ['"roles"'],
+    });
+  });
+
+  it("drops, rather than repairs, every field not in the current shape", () => {
+    expect(
+      parseRegistry(
+        JSON.stringify({ offset: "4", bots: { id: 7 }, manager: { topicId: 22, x: 1 } }),
+      ),
+    ).toEqual({ registry: { offset: 0 }, dropped: ['"offset"', '"bots"', '"manager"'] });
+    expect(parseRegistry("{").registry).toEqual({ offset: 0 });
+    expect(parseRegistry("{").dropped).toHaveLength(1);
   });
 });
 

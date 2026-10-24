@@ -2,10 +2,10 @@
 
 ## Status
 
-Accepted (2026-10-24, #85). Supersedes the "Topics are routing" part of
-[ADR-0023](0023-one-telegram-bot.md), and its registry shape. The rest of
-ADR-0023 stands: one bot, local peer delivery, a paced mirror, and the
-Operator topic for `tg ask`.
+Accepted (2026-10-24, #85). Amends [ADR-0023](0023-one-telegram-bot.md):
+replaces its per-role topics, their routing ("Topics are routing") and its
+registry shape. The rest of ADR-0023 stands: one bot, local peer delivery,
+a paced mirror, and the Operator topic for `tg ask`.
 
 ## Context
 
@@ -60,12 +60,12 @@ everything behind it, and Telegram is asked again after a minute. It is
 never posted to General instead.
 
 **`registry.json` is `{ offset, bots?, manager?, operator? }`**, each topic
-`{ topicId }`. A registry of any other shape, including the per-role one,
-is discarded and the sidecar says so once
-([ADR-0016](0016-no-backwards-compatibility.md)); it is not migrated. A
-fresh or discarded registry starts reading after the newest update
-Telegram holds, so it does not hand every agent the last day of the group
-again.
+`{ topicId }`. It is read field by field: a field in this shape is kept and
+any other is dropped, not migrated, with one log line
+([ADR-0016](0016-no-backwards-compatibility.md)). So the per-role `roles`
+is gone on the next write, but a numeric `offset` survives: dropping it
+would make `getUpdates` replay up to a day of operator messages into the
+inboxes.
 
 ## Consequences
 
@@ -76,7 +76,7 @@ again.
   stay until the operator deletes them by hand; no code cleans them up.
 - The manager can report to the operator without broadcasting to the
   company, and the operator can talk to the manager without a prefix.
-- Discarding the registry loses its topic ids, so the first start after
+- Dropping `roles` loses the old topic ids, so the first start after
   this change creates Bots and Manager anew.
 
 ## Alternatives Considered

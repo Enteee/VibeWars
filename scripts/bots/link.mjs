@@ -194,11 +194,11 @@ async function api(token, method, params = {}) {
  */
 function readRegistry(file) {
   const parsed = parseRegistry(fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null);
-  if (parsed.discarded !== null) {
-    fs.rmSync(file, { force: true });
+  if (parsed.dropped.length > 0) {
     console.error(
-      `[link] discarded registry.json (${parsed.discarded}); topics are created again as ` +
-        "they are needed, and old per-role topics are left for you to delete",
+      `[link] registry.json: dropped ${parsed.dropped.join(", ")}, which is not the current ` +
+        "shape; topics are created again as they are needed, and old per-role topics are " +
+        "left for you to delete",
     );
   }
   return parsed.registry;
@@ -435,26 +435,6 @@ class Company {
   }
 
   /**
-   * Where getUpdates starts. A fresh registry has no offset, and starts
-   * after the newest update Telegram holds, so a new or discarded registry
-   * does not hand every agent the last day of the group again.
-   *
-   * @returns {Promise<number>}
-   */
-  async offset() {
-    if (this.registry.offset !== null) {
-      return this.registry.offset;
-    }
-    const latest = /** @type {unknown[]} */ (
-      await api(this.token, "getUpdates", { offset: -1, timeout: 0 })
-    );
-    const id = obj(latest[latest.length - 1]).update_id;
-    this.registry.offset = typeof id === "number" ? id + 1 : 0;
-    this.save();
-    return this.registry.offset;
-  }
-
-  /**
    * Who the operator is: the group's creator. Only their messages are
    * delivered, and only they get the `*` mark (review of #28), so this is
    * asked of Telegram rather than taken from config that could drift.
@@ -479,11 +459,8 @@ class Company {
     );
   }
 
-  /** Saved only once it has an offset: a file without one is not the current shape. */
   save() {
-    if (this.registry.offset !== null) {
-      writeAtomically(this.at.registry, this.registry);
-    }
+    writeAtomically(this.at.registry, this.registry);
   }
 }
 
@@ -503,7 +480,7 @@ async function pollInbound(company, mirror) {
     try {
       const updates = /** @type {unknown[]} */ (
         await api(company.token, "getUpdates", {
-          offset: await company.offset(),
+          offset: company.registry.offset,
           timeout: LONG_POLL_SECONDS,
           allowed_updates: ["message", "callback_query"],
         })
@@ -830,9 +807,6 @@ async function serve() {
     ensureBus(at.bus, role);
   }
   console.error(`[link] serving ${String(ROLES.length)} roles on one bot`);
-  // The offset first: the registry is only saved once it has one, and
-  // creating a topic saves it.
-  await company.offset();
   // The operator writes to the manager in the Manager topic, so it has to
   // exist before the manager has said anything.
   await company.topic("manager");

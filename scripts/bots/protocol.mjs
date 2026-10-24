@@ -37,9 +37,7 @@ export const TOPIC_TITLES = {
 
 /**
  * @typedef {object} Registry
- * @property {number | null} offset getUpdates offset, so a restart does not
- *   replay; `null` for a fresh registry, which starts from the newest update
- *   rather than delivering whatever Telegram still holds from before it
+ * @property {number} offset getUpdates offset, so a restart does not replay.
  * @property {{ topicId: number }} [bots] every peer message's mirror
  * @property {{ topicId: number }} [manager] the operator and the manager
  * @property {{ topicId: number }} [operator] `tg ask` questions and answers
@@ -74,53 +72,50 @@ export function obj(value) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Read `registry.json`. A missing file is a fresh company. Anything not in
- * the current shape is discarded, not repaired (ADR-0016), and the reason
- * comes back for the sidecar to say once; the topics are created again on
- * first use.
+ * Read `registry.json`, field by field. A missing file is a fresh company.
+ * A field in the current shape is kept, so a numeric `offset` survives
+ * whatever else is wrong with the file: dropping it would make getUpdates
+ * replay up to a day of operator messages into the inboxes. Every other
+ * field is dropped, not repaired (ADR-0016), and gone on the next write;
+ * its topic is created again on first use. What was dropped comes back for
+ * the sidecar to say once.
  *
  * @param {string | null} text the file's contents, or `null` if it does not exist
- * @returns {{ registry: Registry, discarded: string | null }}
+ * @returns {{ registry: Registry, dropped: string[] }}
  */
 export function parseRegistry(text) {
-  /** @type {(reason: string) => { registry: Registry, discarded: string }} */
-  const discard = (reason) => ({ registry: { offset: null }, discarded: reason });
+  /** @type {Registry} */
+  const registry = { offset: 0 };
   if (text === null) {
-    return { registry: { offset: null }, discarded: null };
+    return { registry, dropped: [] };
   }
   /** @type {unknown} */
   let parsed;
   try {
     parsed = JSON.parse(text);
   } catch {
-    return discard("registry.json is not valid JSON");
+    return { registry, dropped: ["the whole file, which is not JSON"] };
   }
   const record = obj(parsed);
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    return discard("registry.json is not an object");
-  }
-  const extra = Object.keys(record).filter(
-    (key) => key !== "offset" && !Object.hasOwn(TOPIC_TITLES, key),
-  );
-  if (extra.length > 0) {
-    return discard(`registry.json has ${extra.map((key) => `"${key}"`).join(", ")}`);
-  }
-  if (typeof record.offset !== "number" || !Number.isInteger(record.offset)) {
-    return discard('registry.json\'s "offset" must be an integer');
-  }
-  /** @type {Registry} */
-  const registry = { offset: record.offset };
-  for (const name of /** @type {TopicName[]} */ (Object.keys(TOPIC_TITLES))) {
-    if (!(name in record)) {
+  /** @type {string[]} */
+  const dropped = [];
+  for (const [key, value] of Object.entries(record)) {
+    if (key === "offset" && typeof value === "number" && Number.isInteger(value)) {
+      registry.offset = value;
       continue;
     }
-    const topic = obj(record[name]);
-    if (typeof topic.topicId !== "number" || Object.keys(topic).length !== 1) {
-      return discard(`registry.json's "${name}" must be { "topicId": <number> }`);
+    const topic = obj(value);
+    if (
+      Object.hasOwn(TOPIC_TITLES, key) &&
+      typeof topic.topicId === "number" &&
+      Object.keys(topic).length === 1
+    ) {
+      registry[/** @type {TopicName} */ (key)] = { topicId: topic.topicId };
+      continue;
     }
-    registry[name] = { topicId: topic.topicId };
+    dropped.push(`"${key}"`);
   }
-  return { registry, discarded: null };
+  return { registry, dropped };
 }
 
 /* -------------------------------------------------------------------------- */

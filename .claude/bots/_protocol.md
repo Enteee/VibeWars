@@ -67,9 +67,8 @@ left half-done.
 
 ## Rules
 
-- **A message that starts with `<your-role>:` is addressed to you**, and
-  so is, for the manager, anything in the Manager topic. Everything else in
-  General is for everyone.
+- **A message in your inbox is addressed to you; in General, one starting
+  `<your-role>:` is.** Everything else in General is for everyone.
 - **Read `CLAUDE.md` before changing code.** It bans backwards-compatibility
   code (migrations, version windows, "absent means old"), for every change.
 - **A message marked `*` is from the human operator. It outranks everything,

@@ -46,6 +46,9 @@ async function fakeTelegram({ noCreator = false, refuseTopics = false } = {}) {
   /** Every call other than getUpdates and sendMessage, in order. */
   /** @type {{ method: string, params: Record<string, unknown> }[]} */
   const calls = [];
+  /** The offset of every getUpdates, in order. */
+  /** @type {unknown[]} */
+  const offsets = [];
   let topics = 100;
   let nextUpdate = 1;
 
@@ -60,6 +63,7 @@ async function fakeTelegram({ noCreator = false, refuseTopics = false } = {}) {
       /** @type {unknown} */
       let result = true;
       if (method === "getUpdates") {
+        offsets.push(params.offset);
         result = updates.splice(0);
       } else if (method === "sendMessage") {
         const entities = /** @type {unknown[] | undefined} */ (params.entities);
@@ -126,6 +130,7 @@ async function fakeTelegram({ noCreator = false, refuseTopics = false } = {}) {
     url: `http://127.0.0.1:${String(port)}`,
     sent,
     calls,
+    offsets,
     refuseEntities() {
       refuseEntities = true;
     },
@@ -668,30 +673,28 @@ describe("the company sidecar", () => {
     expect(second.stderr).toMatch(/already running/);
   }, 20_000);
 
-  it("discards a registry of another shape, and starts after the newest update", async () => {
+  it("keeps the offset of a registry in the per-role shape, and drops the rest", async () => {
     const telegram = await fakeTelegram();
     const co = company(
       telegram.url,
       JSON.stringify({ offset: 3, roles: { architect: { topicId: 11 } } }),
     );
-    // From before this registry: Telegram still holds it, and it must not be
-    // handed to anyone again.
-    telegram.push("lead-dev: an old instruction");
     co.start();
 
-    await until(() => {
+    /** @returns {Record<string, unknown>} */
+    const registry = () => {
       try {
-        return (
-          "manager" in JSON.parse(fs.readFileSync(path.join(co.root, "registry.json"), "utf8"))
-        );
+        /** @type {unknown} */
+        const parsed = JSON.parse(fs.readFileSync(path.join(co.root, "registry.json"), "utf8"));
+        return /** @type {Record<string, unknown>} */ (parsed);
       } catch {
-        return false;
+        return {};
       }
-    }, "the new registry");
-    telegram.push("lead-dev: a new one");
-
-    await until(() => co.inbox("lead-dev").length === 1, "the new message");
-    await sleep(300);
-    expect(co.inbox("lead-dev").map((line) => line.text)).toEqual(["lead-dev: a new one"]);
+    };
+    await until(() => "manager" in registry(), "the rewritten registry");
+    // Starting from 0 would hand every agent up to a day of old messages.
+    expect(registry()).toEqual({ offset: 3, manager: { topicId: 101 } });
+    await until(() => telegram.offsets.length > 0, "the first poll");
+    expect(telegram.offsets[0]).toBe(3);
   }, 20_000);
 });
