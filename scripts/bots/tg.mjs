@@ -8,7 +8,9 @@
  * Telegram. An agent cannot leak the bot token because it never has it, and
  * cannot call deleteChat because it has no API client.
  *
- *   tg send <role> <text>   queue a message into that role's topic
+ *   tg send <role> <text>   message one colleague (mirrored to the Bots topic)
+ *   tg send operator <text> the manager only: reply to the operator, in the
+ *                           Manager topic
  *   tg broadcast <text>     queue a message into General
  *   tg ask <question> [--option <text>]...
  *                           ask the operator (manager, architect, lead-dev);
@@ -28,7 +30,15 @@ import { setTimeout as sleep } from "node:timers/promises";
 // The full roster, so an absent colleague can be reported as "not hired
 // yet" rather than silently omitted.
 import { ROLES } from "./hub-policy.mjs";
-import { ASKERS, MAX_OPTION_CHARS, MAX_OPTIONS, formatLine, readInbox } from "./protocol.mjs";
+import {
+  ASKERS,
+  MAX_OPTION_CHARS,
+  MAX_OPTIONS,
+  OPERATOR_LINE,
+  TO_OPERATOR,
+  formatLine,
+  readInbox,
+} from "./protocol.mjs";
 
 const ROLE = process.env.VIBEWARS_BOT_ROLE;
 const BUS = process.env.VIBEWARS_BOT_BUS;
@@ -235,6 +245,13 @@ switch (command) {
     const [to, ...words] = rest;
     if (to === undefined || words.length === 0) {
       console.error("tg: usage: tg send <role> <text...>");
+      process.exit(2);
+    }
+    // The sidecar refuses this too; saying so here saves a round trip.
+    if (to === TO_OPERATOR && ROLE !== OPERATOR_LINE) {
+      console.error(
+        `tg: only the ${OPERATOR_LINE} writes to the operator. Tell the ${OPERATOR_LINE} instead.`,
+      );
       process.exit(2);
     }
     queue({ to, text: words.join(" ") });

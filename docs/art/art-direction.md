@@ -60,8 +60,14 @@ Never used in the arena: there, colour means team.
 | Necromancer  | `#3fb68b` | Downward triangle, eye   |
 | Mesmer       | `#e87fd0` | Hourglass                |
 | Elementalist | `#ff6e5a` | Diamond, quartered       |
+| Assassin     | `#c0405e` | Crescent moon            |
+| Ritualist    | `#a9e5e0` | Spirit urn               |
+| Paragon      | `#f0883e` | Two rank chevrons        |
+| Dervish      | `#c9a27e` | Three whirling blades    |
 
-The six silhouettes stay distinct with the colour removed.
+The ten silhouettes stay distinct with the colour removed. Ten hues on a dark
+field cannot all be far apart (closest pair: elementalist and paragon, ΔE ≈ 26),
+so the silhouette identifies the profession and the colour only supports it.
 
 ## Shapes
 

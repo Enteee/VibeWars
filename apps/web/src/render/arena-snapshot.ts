@@ -61,9 +61,15 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   targetId: undefined,
 };
 
+/**
+ * Two hues, for two sides (docs/art/art-direction.md): `friend` blue and
+ * `foe` red, which stay apart under every common colour-vision deficiency,
+ * where the old green allies did not. You are drawn in your team's blue;
+ * what marks you out is the ink rim the scene adds, not a hue of your own.
+ */
 const TEAM_COLOURS: Record<RenderableActor["team"], number> = {
   self: 0x59c2ff,
-  ally: 0x7ee787,
+  ally: 0x59c2ff,
   enemy: 0xff7b72,
 };
 
