@@ -160,7 +160,7 @@ prune` in one jail therefore deletes every other agent's worktree
 metadata (incident #70). Until #69 lands, never run `git worktree` or
 `git gc` inside a jail.
 
-**Open.** The operator checkout's own `.git/HEAD` and `.git/index` are
+**Open: #83.** The operator checkout's own `.git/HEAD` and `.git/index` are
 writable from every jail too, and jails do not need them (a worktree's
 `HEAD` lives in its admin dir). So an agent can move the operator's
 checked-out branch, and host code that starts from `HEAD` starts from an
