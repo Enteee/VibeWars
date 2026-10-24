@@ -302,7 +302,7 @@ let
       claude-bot --help
 
     Each role runs in its own bubblewrap sandbox, on its own git worktree
-    (branches bot/<role>/*), and talks to its peers through its own Telegram topic.
+    (detached at main), and talks to its peers through its own Telegram topic.
     Your checkout is not mounted inside the sandbox. Any extra arguments are
     passed straight through to `claude`.
 

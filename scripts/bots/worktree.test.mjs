@@ -67,24 +67,92 @@ function setup() {
 describe("ensureWorktree", () => {
   it("creates a missing worktree, detached at origin/main, then leaves it alone", () => {
     const { repo, worktree } = setup();
-    expect(ensureWorktree(repo, "dev")).toEqual([`created ${worktree}`]);
-    expect(sh(["rev-parse", "HEAD"], worktree)).toBe(sh(["rev-parse", "origin/main"], repo));
+    const main = sh(["rev-parse", "origin/main"], repo);
+    expect(ensureWorktree(repo, "dev")).toEqual([`created ${worktree} at ${main.slice(0, 7)}`]);
+    expect(sh(["rev-parse", "HEAD"], worktree)).toBe(main);
     expect(sh(["branch", "--show-current"], worktree)).toBe("");
     expect(ensureWorktree(repo, "dev")).toEqual([]);
   });
 
-  it("creates it on bot/<role> when that branch exists", () => {
+  it("never checks out bot/<role>, which would block bot/<role>/<topic>", () => {
     const { repo, worktree } = setup();
     sh(["branch", "bot/dev"], repo);
     ensureWorktree(repo, "dev");
-    expect(sh(["branch", "--show-current"], worktree)).toBe("bot/dev");
+    expect(sh(["branch", "--show-current"], worktree)).toBe("");
+  });
+
+  it("starts from main as fetched, not from a local origin/main someone moved", () => {
+    const { repo, worktree } = setup();
+    const remote = path.join(repo, ".bots", "remote.git");
+    sh(["init", "-q", "--bare", "-b", "main", remote], repo);
+    sh(["push", "-q", remote, "HEAD:refs/heads/main"], repo);
+    const github = sh(["rev-parse", "HEAD"], repo);
+    // A jail can write refs: point origin/main at a commit of its choosing.
+    fs.writeFileSync(path.join(repo, "planted.txt"), "x\n");
+    sh(["add", "planted.txt"], repo);
+    commit("planted", repo);
+    sh(["update-ref", "refs/remotes/origin/main", "HEAD"], repo);
+
+    expect(ensureWorktree(repo, "dev", { remote })).toEqual([
+      `created ${worktree} at ${github.slice(0, 7)}`,
+    ]);
+    expect(sh(["rev-parse", "HEAD"], worktree)).toBe(github);
+  });
+
+  it("falls back to the existing origin/main, saying so, when the fetch fails", () => {
+    const { repo, worktree } = setup();
+    const main = sh(["rev-parse", "origin/main"], repo);
+    const remote = path.join(repo, "no-such-remote.git");
+    expect(ensureWorktree(repo, "dev", { remote })).toEqual([
+      `could not fetch main from ${remote}; using the existing origin/main`,
+      `created ${worktree} at ${main.slice(0, 7)}`,
+    ]);
+  });
+
+  it("refuses to start with no main at all", () => {
+    const { repo } = setup();
+    sh(["update-ref", "-d", "refs/remotes/origin/main"], repo);
+    expect(() => ensureWorktree(repo, "dev")).toThrow("no origin/main");
+  });
+
+  it("never runs a filter driver the shared config names, on checkout or on reset", () => {
+    const { repo, worktree, admin } = setup();
+    const ran = path.join(repo, "filter-ran");
+    // The operator's config names a driver, and a tree an agent chose
+    // selects it for every file.
+    sh(["config", "filter.planted.smudge", `touch ${ran}; cat`], repo);
+    sh(["config", "filter.planted.clean", `touch ${ran}; cat`], repo);
+    fs.writeFileSync(path.join(repo, ".gitattributes"), "* filter=planted\n");
+    sh(["-c", "filter.planted.clean=cat", "add", ".gitattributes"], repo);
+    sh(
+      [
+        "-c",
+        "filter.planted.clean=cat",
+        "-c",
+        "user.name=t",
+        "-c",
+        "user.email=t@t",
+        "commit",
+        "-q",
+        "-m",
+        "attrs",
+      ],
+      repo,
+    );
+    sh(["update-ref", "refs/remotes/origin/main", "HEAD"], repo);
+
+    ensureWorktree(repo, "dev");
+    expect(fs.existsSync(path.join(worktree, "tracked.txt"))).toBe(true);
+    fs.rmSync(admin, { recursive: true });
+    ensureWorktree(repo, "dev");
+    expect(fs.existsSync(ran)).toBe(false);
   });
 
   it("re-adds a deleted worktree whose admin dir is still registered", () => {
     const { repo, worktree } = setup();
     ensureWorktree(repo, "dev");
     fs.rmSync(worktree, { recursive: true });
-    expect(ensureWorktree(repo, "dev")).toEqual([`created ${worktree}`]);
+    expect(ensureWorktree(repo, "dev")[0]).toMatch(/^created /);
     expect(sh(["worktree", "list", "--porcelain"], repo)).toContain(`worktree ${worktree}\n`);
   });
 
