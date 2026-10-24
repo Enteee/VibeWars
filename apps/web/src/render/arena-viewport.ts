@@ -1,8 +1,8 @@
-import Phaser from "phaser";
+import type Phaser from "phaser";
 
 import { vec2, type Vec2 } from "@vibewars/game-core";
 
-import { ArenaScene } from "./arena-scene.js";
+import type { ArenaScene } from "./arena-scene.js";
 
 /**
  * How the arena fills its parent element.
@@ -25,6 +25,12 @@ export interface ArenaViewport {
   onPointerDown(handler: (world: Vec2) => void): () => void;
   /** Re-measure the parent, after the layout around it changed. */
   refreshScale(): void;
+  /**
+   * A new world size for a `fit` viewport, e.g. another training map.
+   * Resizes the game rather than replacing it: recreating a Phaser game
+   * is the leak-prone thing this whole module exists to avoid.
+   */
+  setWorldSize(width: number, height: number): void;
   destroy(): void;
 }
 
@@ -37,6 +43,13 @@ export async function createArenaViewport(
   parent: HTMLElement,
   scale: ArenaScaleMode,
 ): Promise<ArenaViewport> {
+  // Loaded on first use, not at import: the build editor imports this
+  // module through the training panel, and its pure functions are tested
+  // in node, where Phaser cannot even be imported.
+  const [{ default: Phaser }, { ArenaScene }] = await Promise.all([
+    import("phaser"),
+    import("./arena-scene.js"),
+  ]);
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
@@ -85,6 +98,9 @@ export async function createArenaViewport(
     },
     refreshScale() {
       game.scale.refresh();
+    },
+    setWorldSize(width, height) {
+      game.scale.setGameSize(width, height);
     },
     destroy() {
       game.destroy(true);

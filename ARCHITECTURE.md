@@ -151,7 +151,18 @@ and _did_ crash the server during fuzzing.
   crashes it.
 - `render/arena-scene.ts` — the Phaser scene that draws a snapshot. It knows
   nothing about networks or rules (ADR-0010).
-- `ui/` — HUD, character builder, team builder, menu, lobby screen.
+- `render/arena-viewport.ts` — the Phaser host for one `ArenaScene`, shared by
+  the match view (`resize`) and the Training Ground (`fit`). Loads Phaser on
+  first use, so the modules that import it stay importable in node.
+- `training/` — the Training Ground's local match (ADR-0020):
+  `local-connection.ts` is a `MatchConnection` over a `MatchSimulation` in the
+  tab, pumped by Phaser's frame clock. `scenario-setup.ts` turns a
+  `game-core` scenario and the character being edited into that simulation.
+  `maps.ts` holds the training arenas.
+- `ui/` — HUD, character builder, team builder, menu, lobby screen. The
+  build editor's left column is `training-panel.ts`: created once per editor
+  visit and moved into every re-render, never recreated. Its pure logic is in
+  `training-state.ts` and `combat-readouts.ts`.
 - `storage/` — IndexedDB persistence (ADR-0005). A stored record in any
   shape but the current one is discarded and the player told, never
   migrated (ADR-0016). Browser-local only: no accounts, no database, no
@@ -162,6 +173,13 @@ and _did_ crash the server during fuzzing.
 **The client sends intent, never outcomes** (brief §12, §32, §33). It may
 say "I want to use skill 3 on that player". It may never say "I hit for 91
 damage". Damage, health, position, cooldowns and energy are server-owned.
+
+**The Training Ground measures; it never decides** (ADR-0020). The
+character editor runs the real `MatchSimulation` in the browser, against
+dummies, so a player can see what a build does. Nothing it computes is sent
+anywhere, and a networked match is decided only on the server. It is
+trustworthy only because it is the identical code, so a game rule belongs in
+`MatchSimulation`, never in `MatchRoom`.
 
 **Honest coverage** (brief §9). The catalog holds 12 skills: 9 of the 16
 in the imported reference corpus, plus 3 of this project's own design. The

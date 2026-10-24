@@ -353,6 +353,43 @@ describe("reset policies", () => {
   });
 });
 
+describe("rearm", () => {
+  const loadout = (maxHealth: number) => ({
+    attributeRanks: new Map([["elementalist.fire-magic", 9]]),
+    equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+    maxHealth,
+    maxEnergy: 30,
+  });
+
+  it("keeps the health fraction, not the health: more max health is no free heal", () => {
+    const sim = duel();
+    const a = participant(sim, "a");
+    a.combatant.health = a.combatant.maxHealth / 2;
+    a.position = vec2(40, 0);
+
+    sim.rearm("a", loadout(600), []);
+
+    const after = participant(sim, "a");
+    expect(after.combatant.maxHealth).toBe(600);
+    expect(after.combatant.health).toBe(300);
+    expect(after.combatant.attributeRanks.get("elementalist.fire-magic")).toBe(9);
+    expect(after.skillBar).toEqual([]);
+    expect(after.position).toEqual(vec2(40, 0));
+  });
+
+  it("leaves a corpse dead", () => {
+    const sim = duel();
+    const a = participant(sim, "a");
+    a.combatant.health = 0;
+    a.combatant.dead = true;
+
+    sim.rearm("a", loadout(600), [FIREBALL]);
+
+    expect(participant(sim, "a").combatant.dead).toBe(true);
+    expect(participant(sim, "a").combatant.health).toBe(0);
+  });
+});
+
 describe("determinism", () => {
   it("two sims with the same seed and the same inputs write the same log", () => {
     const run = (): { log: CombatLogEntry[]; positions: Vec2[] } => {
