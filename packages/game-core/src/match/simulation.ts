@@ -514,7 +514,9 @@ export class MatchSimulation {
         caster: record.combatant,
         casterPosition: record.position,
         primary,
-        candidates: [...this.#participants.values()],
+        // Only an area looks past the primary: skip the copy every other
+        // cast would make for nothing.
+        candidates: skill.area === undefined ? [] : [...this.#participants.values()],
         losBlockers: this.#walls,
       }),
       rng: this.#rng,

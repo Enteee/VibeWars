@@ -1,3 +1,4 @@
+import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
 import { createCharacterDot, equippedCount, professionLabel } from "./character-preview.js";
 
@@ -41,7 +42,7 @@ function button(label: string, className: string, onClick: () => void): HTMLButt
   return node;
 }
 
-const NAME_STORAGE_KEY = "vibewars.playerName";
+const NAME_STORAGE_KEY = `${STORAGE_NAMESPACE}.playerName`;
 
 /** Remember the player's chosen name so they do not retype it every session. */
 export function loadPlayerName(): string {
@@ -54,7 +55,7 @@ export function loadPlayerName(): string {
   }
 }
 
-const CHARACTER_STORAGE_KEY = "vibewars.activeCharacterId";
+const CHARACTER_STORAGE_KEY = `${STORAGE_NAMESPACE}.activeCharacterId`;
 
 /**
  * The character the player takes into their next match.
@@ -91,9 +92,21 @@ export function savePlayerName(name: string): void {
   }
 }
 
+/** Shown under the online controls of a build with no server behind it. */
+export const OFFLINE_HINT = "Online play isn't available in this build yet.";
+
+/**
+ * Render the main menu.
+ *
+ * `onlinePlay` is `ONLINE_PLAY` from `net/online.ts`, passed in rather
+ * than imported so the offline menu can be exercised without stubbing the
+ * build environment. When it is false, every control that would open a
+ * connection (host, join, Quick Match) is rendered disabled.
+ */
 export function renderMenu(
   root: HTMLElement,
   callbacks: MenuCallbacks,
+  onlinePlay: boolean,
   characters: readonly StoredCharacter[] = [],
   characterProblems: readonly string[] = [],
   connectionNotice?: string,
@@ -197,11 +210,11 @@ export function renderMenu(
   panel.appendChild(roster);
 
   const hostRow = h("div", "menu-row");
-  hostRow.appendChild(
-    button("host a lobby", "primary", () => {
-      callbacks.onCreateLobby(nameInput.value);
-    }),
-  );
+  const host = button("host a lobby", "primary", () => {
+    callbacks.onCreateLobby(nameInput.value);
+  });
+  host.disabled = !onlinePlay;
+  hostRow.appendChild(host);
   panel.appendChild(hostRow);
 
   const joinRow = h("div", "menu-row");
@@ -222,14 +235,24 @@ export function renderMenu(
       join();
     }
   });
+  const joinButton = button("join", "primary", join);
+  // The code field too: Enter in it calls `join` without the button.
+  codeInput.disabled = !onlinePlay;
+  joinButton.disabled = !onlinePlay;
   joinRow.appendChild(codeInput);
-  joinRow.appendChild(button("join", "primary", join));
+  joinRow.appendChild(joinButton);
   panel.appendChild(joinRow);
 
   const manageRow = h("div", "menu-row");
   manageRow.appendChild(button("teams", "", callbacks.onManageTeams));
-  manageRow.appendChild(button("quick match", "", callbacks.onQuickMatch));
+  const quickMatch = button("quick match", "", callbacks.onQuickMatch);
+  quickMatch.disabled = !onlinePlay;
+  manageRow.appendChild(quickMatch);
   panel.appendChild(manageRow);
+
+  if (!onlinePlay) {
+    panel.appendChild(h("p", "screen-empty menu-offline-hint", OFFLINE_HINT));
+  }
 
   root.appendChild(panel);
 }

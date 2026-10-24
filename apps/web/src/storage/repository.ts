@@ -7,6 +7,7 @@ import {
   type StoredCharacter,
   type StoredTeam,
 } from "./schema.js";
+import { STORAGE_NAMESPACE } from "./namespace.js";
 
 /**
  * Typed repositories over IndexedDB (ADR-0005).
@@ -17,7 +18,7 @@ import {
  * "do not over-engineer simple things").
  */
 
-const DB_NAME = "vibewars";
+const DB_NAME = STORAGE_NAMESPACE;
 const DB_VERSION = 1;
 const CHARACTER_STORE = "characters";
 const TEAM_STORE = "teams";
