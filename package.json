@@ -14,7 +14,7 @@
     "typecheck": "tsc --build tsconfig.build.json && tsc -p tsconfig.json --noEmit && pnpm -r exec tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint .",
+    "lint": "tsc --build tsconfig.build.json && eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
