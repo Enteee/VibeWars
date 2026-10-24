@@ -98,6 +98,8 @@ describe("isBoardRead", () => {
       ["--template", "{{.}}"],
       ["-t", "{{.}}"],
       ["--template={{.}}"],
+      ["-q.items"], // glued, found in review
+      ["-t{{.}}"],
     ]) {
       expect(isBoardRead([...list, ...filter], 2), filter.join(" ")).toBe(false);
     }
