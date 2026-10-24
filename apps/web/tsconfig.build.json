@@ -6,12 +6,14 @@
     "outDir": "./dist-types",
     "tsBuildInfoFile": "./dist-types/.tsbuildinfo",
     "emitDeclarationOnly": true,
+    "resolveJsonModule": true,
     "types": []
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"],
   "references": [
     { "path": "../../packages/game-protocol/tsconfig.build.json" },
-    { "path": "../../packages/game-core/tsconfig.build.json" }
+    { "path": "../../packages/game-core/tsconfig.build.json" },
+    { "path": "../../packages/game-maps/tsconfig.build.json" }
   ]
 }

@@ -34,6 +34,22 @@ blockers — brief §17–§19).
   map authored once is correct everywhere by construction rather than by
   convention.
 
+### Amendment (2026-10-24, #8): the client consumes the parsed map
+
+Until now the client only had the lossy `MapDescriptor` projection, because
+nothing in the browser needed real geometry. The Training Ground (#2 §4.4)
+runs the simulation in the browser, so `apps/web` now imports map JSON
+through `@vibewars/game-maps`' fs-free subpaths and runs `validateMapData` at
+module load: the third consumer named above, parsing the same file the
+server does. A test asserts the fs-loaded and directly imported maps agree.
+The cost is `zod` in the web bundle; if it bites, `validateMapData` can
+become a zod-free type guard behind the same export.
+
+Training arenas live in `packages/game-maps/training/<map-id>/map.json`, a
+sibling of `maps/`. The loader scans only `maps/`, so they never appear in
+`listMapIds()`, `/api/maps` or the lobby's map check, with no schema field
+and no filtering.
+
 ## Consequences
 
 - Map authoring is JSON-editing, not code; a new arena (Sprint 23) is a new
