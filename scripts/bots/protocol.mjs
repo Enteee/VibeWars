@@ -18,7 +18,7 @@
  */
 
 /**
- * @typedef {"bots" | "manager" | "operator"} TopicName
+ * @typedef {"bots" | "manager" | "operator" | "support"} TopicName
  */
 
 /**
@@ -33,6 +33,7 @@ export const TOPIC_TITLES = {
   bots: "🤖 Bots",
   manager: "📋 Manager",
   operator: "❓ Operator",
+  support: "🛟 Support",
 };
 
 /**
@@ -41,13 +42,15 @@ export const TOPIC_TITLES = {
  * @property {{ topicId: number }} [bots] every peer message's mirror
  * @property {{ topicId: number }} [manager] the operator and the manager
  * @property {{ topicId: number }} [operator] `tg ask` questions and answers
+ * @property {{ topicId: number }} [support] people outside the company, and support's replies
  */
 
 /**
  * @typedef {object} InboxLine
  * @property {number} ts
  * @property {string} from
- * @property {"peer" | "human" | "link"} kind
+ * @property {"peer" | "human" | "link" | "user"} kind `human` is the operator;
+ *   `user` is anyone else in the group, heard only in the Support topic
  * @property {string} text
  * @property {number | null} topicId
  * @property {number} messageId
@@ -140,9 +143,14 @@ export function parseRegistry(text) {
  * a message there that fell through to "everyone" would hand every agent
  * an answer meant for one.
  *
- * Only the operator is heard. The `*` mark is the operator's authority, so
- * a message from any other member of the group is dropped rather than
- * delivered with it.
+ * Only the operator is heard, with one exception. The `*` mark is the
+ * operator's authority, so a message from any other member of the group is
+ * dropped rather than delivered with it. In the Support topic, and only
+ * there, another member is a user (#131): their message goes to SUPPORT
+ * alone, as a `user` line that never carries the mark, and a `<role>:`
+ * prefix in it is just text. Users can never address another role. The
+ * operator's own messages in Support are theirs as anywhere else, and an
+ * unaddressed one is support's.
  *
  * @param {unknown} raw one getUpdates entry
  * @param {{
@@ -151,6 +159,7 @@ export function parseRegistry(text) {
  *   roles: readonly string[],
  *   managerTopicId?: number,
  *   operatorTopicId?: number,
+ *   supportTopicId?: number,
  * }} context `operatorId` is the operator's Telegram user id
  * @returns {{ to: string[], line: InboxLine, whichRole: string | null } | null}
  */
@@ -168,7 +177,7 @@ export function routeInbound(raw, context) {
   if (typeof message.text !== "string" || message.text === "") {
     return null;
   }
-  if (typeof from.id !== "number" || from.is_bot === true || from.id !== context.operatorId) {
+  if (typeof from.id !== "number" || from.is_bot === true) {
     return null;
   }
   if (typeof message.message_id !== "number") {
@@ -176,6 +185,23 @@ export function routeInbound(raw, context) {
   }
 
   const topicId = typeof message.message_thread_id === "number" ? message.message_thread_id : null;
+  const inSupport = topicId !== null && topicId === context.supportTopicId;
+  if (from.id !== context.operatorId) {
+    return inSupport
+      ? {
+          to: [SUPPORT],
+          line: {
+            ts: typeof message.date === "number" ? message.date * 1000 : 0,
+            from: `user:${String(from.id)}`,
+            kind: "user",
+            text: visible(cut(message.text, MAX_USER_CHARS)),
+            topicId,
+            messageId: message.message_id,
+          },
+          whichRole: null,
+        }
+      : null;
+  }
   if (topicId !== null && topicId === context.operatorTopicId) {
     return null;
   }
@@ -213,6 +239,9 @@ export function routeInbound(raw, context) {
   if (topicId !== null && topicId === context.managerTopicId) {
     return { to: ["manager"], line, whichRole: null };
   }
+  if (inSupport) {
+    return { to: [SUPPORT], line, whichRole: null };
+  }
   // A reply in a forum's General topic carries no thread id; every other
   // topic's message does.
   if (topicId === null) {
@@ -238,6 +267,23 @@ export const TO_OPERATOR = "operator";
 export const OPERATOR_LINE = "manager";
 
 /**
+ * The one role that hears users in the Support topic and may `tg reply`
+ * there (#131). Everyone else's way out stays the Bots topic and General.
+ */
+export const SUPPORT = "support";
+
+/** The longest user message support reads; the rest is cut off. */
+export const MAX_USER_CHARS = 2000;
+
+/**
+ * Support's answer to a user, posted in the Support topic.
+ *
+ * @typedef {object} SupportReply
+ * @property {string} text
+ * @property {number | null} replyTo the user's message it answers, if any
+ */
+
+/**
  * Deliver one outbox entry from `from` straight into the recipients'
  * inboxes.
  *
@@ -255,6 +301,11 @@ export const OPERATOR_LINE = "manager";
  * delivered to nobody and only mirrored, into the Manager topic. Any other
  * sender is refused here too, not only by `tg`, which runs in the jail.
  *
+ * A reply (`kind: "reply"`, from `tg reply`) is SUPPORT answering a user:
+ * delivered to nobody, it comes back as `reply` for the Support topic. It is
+ * the only way an agent posts outside Bots, General and the Manager topic,
+ * so any other sender is refused here, the way TO_OPERATOR is.
+ *
  * @param {unknown} raw the outbox file's contents
  * @param {{ from: string, roles: readonly string[], present: ReadonlySet<string>, now: number }} context
  * @returns {{
@@ -262,12 +313,14 @@ export const OPERATOR_LINE = "manager";
  *   notice: InboxLine | null,
  *   mirror: Mirrored | null,
  *   question: Ask | null,
+ *   reply: SupportReply | null,
  * }}
  */
 export function deliverPeer(raw, context) {
   const message = obj(raw);
   const to = typeof message.to === "string" ? message.to : "all";
   const text = typeof message.text === "string" ? message.text : "";
+  const none = { deliveries: [], notice: null, mirror: null, question: null, reply: null };
   /** @type {(body: string) => InboxLine} */
   const fromLink = (body) => ({
     ts: context.now,
@@ -281,52 +334,51 @@ export function deliverPeer(raw, context) {
   if (message.kind === "ask") {
     const refused = refuseQuestion(context.from, text, message.options);
     if (refused !== null) {
-      return {
-        deliveries: [],
-        notice: fromLink(`your question was NOT posted: ${refused}`),
-        mirror: null,
-        question: null,
-      };
+      return { ...none, notice: fromLink(`your question was NOT posted: ${refused}`) };
     }
     const options = /** @type {string[]} */ (message.options);
-    return {
-      deliveries: [],
-      notice: null,
-      mirror: null,
-      question: { from: context.from, text, options },
-    };
+    return { ...none, question: { from: context.from, text, options } };
+  }
+
+  // Support's answer to a user: no inbox, only the Support topic.
+  if (message.kind === "reply") {
+    if (context.from !== SUPPORT) {
+      return {
+        ...none,
+        notice: fromLink(`your reply was NOT posted: only ${SUPPORT} posts in the Support topic.`),
+      };
+    }
+    if (text.trim() === "") {
+      return { ...none, notice: fromLink("your reply was NOT posted: it is empty.") };
+    }
+    const replyTo =
+      typeof message.replyTo === "number" && Number.isInteger(message.replyTo)
+        ? message.replyTo
+        : null;
+    return { ...none, reply: { text, replyTo } };
   }
 
   // The manager's reply to the operator: no inbox, only the Manager topic.
   if (to === TO_OPERATOR) {
     if (context.from !== OPERATOR_LINE) {
       return {
-        deliveries: [],
+        ...none,
         notice: fromLink(
           `your last message was NOT delivered: only the ${OPERATOR_LINE} writes to the ` +
             `operator. Tell the ${OPERATOR_LINE}, or ask with tg ask if you may.`,
         ),
-        mirror: null,
-        question: null,
       };
     }
-    return {
-      deliveries: [],
-      notice: null,
-      mirror: { from: context.from, to, text },
-      question: null,
-    };
+    return { ...none, mirror: { from: context.from, to, text } };
   }
 
   if (to !== "all" && !context.roles.includes(to)) {
     return {
-      deliveries: [],
+      ...none,
       notice: fromLink(
         `your last message was NOT delivered: "${to}" is not one of this company's roles. ` +
           `Roles: ${context.roles.join(", ")}`,
       ),
-      mirror: null,
-      question: null,
     };
   }
 
@@ -342,6 +394,7 @@ export function deliverPeer(raw, context) {
   const recipients = to === "all" ? context.roles.filter((role) => role !== context.from) : [to];
   const absent = to !== "all" && !context.present.has(to);
   return {
+    ...none,
     deliveries: recipients.map((role) => ({ role, line })),
     notice: absent
       ? fromLink(
@@ -350,8 +403,79 @@ export function deliverPeer(raw, context) {
         )
       : null,
     mirror: { from: context.from, to, text },
-    question: null,
   };
+}
+
+/**
+ * How one user's messages are let through to support's inbox (#131).
+ *
+ * @typedef {object} UserFlood
+ * @property {number[]} admitted epoch ms of their messages admitted in the last minute
+ * @property {number | null} warnedAt epoch ms of the last log line about dropping them, if any
+ */
+
+/** The most messages one user gets into support's inbox per minute. */
+export const USER_MESSAGES_PER_MINUTE = 6;
+
+/**
+ * Whether one more message from a user reaches support, and whether the
+ * sidecar should say it dropped one. A user is a stranger, and every
+ * message they send costs an agent a turn, so beyond the cap a message is
+ * dropped without a word to the user, and the log gets at most one line a
+ * minute about each user rather than one per message.
+ *
+ * @param {UserFlood | undefined} state this user's so far; `undefined` for a first message
+ * @param {number} now
+ * @returns {{ admit: boolean, warn: boolean, state: UserFlood }}
+ */
+export function admitUser(state, now) {
+  const admitted = (state?.admitted ?? []).filter((at) => now - at < 60_000);
+  const warnedAt = state?.warnedAt ?? null;
+  if (admitted.length < USER_MESSAGES_PER_MINUTE) {
+    return { admit: true, warn: false, state: { admitted: [...admitted, now], warnedAt } };
+  }
+  const warn = warnedAt === null || now - warnedAt >= 60_000;
+  return { admit: false, warn, state: { admitted, warnedAt: warn ? now : warnedAt } };
+}
+
+/**
+ * How all users' messages together are let through to support's inbox.
+ *
+ * @typedef {object} SupportFlood
+ * @property {number[]} admitted epoch ms of every user message admitted in the last minute
+ * @property {number | null} busyAt epoch ms of the last "busy" line and reply, if any
+ * @property {number} dropped messages dropped by this cap since then
+ */
+
+/** The most messages all users together get into support's inbox per minute. */
+export const USERS_MESSAGES_PER_MINUTE = 30;
+
+/** What support's topic is told, at most once a minute, while the global cap drops. */
+export const SUPPORT_BUSY = "Support is busy, try again in a minute.";
+
+/**
+ * Whether one more user message, already past its sender's own cap, reaches
+ * support. The per-user cap alone does not hold against many accounts, so
+ * all users share this one too (#131 review). The operator is never counted:
+ * their lines are `human`, not `user`. Past the cap a message is dropped,
+ * and at most once a minute `busy` says how many were since the last time,
+ * for the sidecar to log and to tell the Support topic.
+ *
+ * @param {SupportFlood | undefined} state `undefined` before the first user message
+ * @param {number} now
+ * @returns {{ admit: boolean, busy: number | null, state: SupportFlood }}
+ */
+export function admitAll(state, now) {
+  const admitted = (state?.admitted ?? []).filter((at) => now - at < 60_000);
+  const busyAt = state?.busyAt ?? null;
+  const dropped = state?.dropped ?? 0;
+  if (admitted.length < USERS_MESSAGES_PER_MINUTE) {
+    return { admit: true, busy: null, state: { admitted: [...admitted, now], busyAt, dropped } };
+  }
+  if (busyAt === null || now - busyAt >= 60_000) {
+    return { admit: false, busy: dropped + 1, state: { admitted, busyAt: now, dropped: 0 } };
+  }
+  return { admit: false, busy: null, state: { admitted, busyAt, dropped: dropped + 1 } };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1063,7 +1187,10 @@ function toInboxLine(value) {
   return {
     ts: typeof record.ts === "number" ? record.ts : 0,
     from: record.from,
-    kind: record.kind === "human" || record.kind === "link" ? record.kind : "peer",
+    kind:
+      record.kind === "human" || record.kind === "link" || record.kind === "user"
+        ? record.kind
+        : "peer",
     text: record.text,
     topicId: typeof record.topicId === "number" ? record.topicId : null,
     messageId: typeof record.messageId === "number" ? record.messageId : 0,
@@ -1120,6 +1247,9 @@ export function readInbox(contents, cursor) {
 /**
  * Render one inbox line for a terminal.
  *
+ * A user's line also shows the Telegram message id, which is what
+ * `tg reply --to` answers: `21:02:11 user:4711 (msg 932): <text>`.
+ *
  * @param {InboxLine} line
  * @returns {string}
  */
@@ -1127,7 +1257,8 @@ export function formatLine(line) {
   const when = line.ts === 0 ? "--:--:--" : new Date(line.ts).toISOString().slice(11, 19);
   // The mark comes from `kind` alone, never from anything in the text.
   const mark = line.kind === "human" ? "*" : " ";
-  return `${when}${mark}${visible(line.from)}: ${visible(line.text)}`;
+  const msg = line.kind === "user" ? ` (msg ${String(line.messageId)})` : "";
+  return `${when}${mark}${visible(line.from)}${msg}: ${visible(line.text)}`;
 }
 
 /** Everything that ends a line in some renderer. */

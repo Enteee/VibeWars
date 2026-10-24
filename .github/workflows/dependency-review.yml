@@ -1,0 +1,28 @@
+name: Dependency review
+
+# Blocks a pull request that adds or changes a dependency with a known
+# high or critical advisory (#133). It judges only what the pull request
+# changes, so a new advisory against something already on main cannot turn
+# an unrelated pull request red; audit.yml watches main for those.
+#
+# A workflow of its own with no `push` trigger, so the check exists on
+# every pull request and nowhere else: a skipped check would count as
+# passing. Required: `dependency review` is in EXPECTED_CHECKS in
+# scripts/bots/company-init.mjs.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    name: dependency review
+    runs-on: ubuntu-latest
+    steps:
+      # Reads the dependency graph's diff between the base and head commits
+      # through the API; nothing from the pull request is executed.
+      - uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
+        with:
+          fail-on-severity: high

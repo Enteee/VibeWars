@@ -194,6 +194,11 @@ semgrep found nothing real there. Currently reported:
 "Not reachable" is a claim about our code today. If anyone ever wires up
 `@colyseus/auth`, both of these become live and must be fixed first.
 
+Two checks in CI (#133):
+
+- **`dependency review`** runs on every pull request, and the merge guard requires it. It fails the pull request if the change adds or bumps a dependency that has a high or critical advisory. It looks only at what the pull request changes.
+- **`pnpm audit`** (`audit.yml`) covers advisories against code already on main: new ones published later, and ones in dependencies no pull request touches. It runs on every push to main, daily, and by hand, at `--audit-level high`, with dev dependencies included. It is not a pull request check, because one new advisory would otherwise block every pull request. When it goes red, `perf-sec-qa` opens one issue per advisory. The issue resolves it in one of three ways: a bump, an override, or an accept recorded in the table above and in `pnpm.auditConfig.ignoreCves`, linking that issue. Blanket ignores are not allowed.
+
 ## The agent company
 
 The repository is built by nine autonomous agents (`scripts/bots/`,

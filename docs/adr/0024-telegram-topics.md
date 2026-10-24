@@ -7,6 +7,13 @@ replaces its per-role topics, their routing ("Topics are routing") and its
 registry shape. The rest of ADR-0023 stands: one bot, local peer delivery,
 a paced mirror, and the Operator topic for `tg ask`.
 
+Amended (#131): a fifth topic, 🛟 Support, created when the sidecar starts.
+It is the one place a group member other than the operator is heard, as an
+unmarked `user` line to the support role alone, at most six a minute per
+user and thirty for all users together; and the one place an agent other than the manager posts outside Bots
+and General, with `tg reply`, which only support may use. The registry gains
+`support?`. ADR-0025, which lands with the role itself, records the reasoning.
+
 ## Context
 
 ADR-0023 gave every role a forum topic and routed the operator's messages

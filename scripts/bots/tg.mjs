@@ -15,6 +15,9 @@
  *   tg ask <question> [--option <text>]...
  *                           ask the operator (manager, architect, lead-dev);
  *                           the answer arrives in your inbox
+ *   tg reply [--to <msg>] <text>
+ *                           support only: answer a user in the Support
+ *                           topic, as a reply to their message <msg>
  *   tg inbox [--all]        print unread messages, advancing the read cursor
  *   tg wait [--timeout N]   block until something new arrives, then print it
  *   tg roster               who is online
@@ -35,6 +38,7 @@ import {
   MAX_OPTION_CHARS,
   MAX_OPTIONS,
   OPERATOR_LINE,
+  SUPPORT,
   TO_OPERATOR,
   formatLine,
   readInbox,
@@ -295,6 +299,32 @@ switch (command) {
     break;
   }
 
+  case "reply": {
+    // The sidecar refuses this too; saying so here saves a round trip.
+    if (ROLE !== SUPPORT) {
+      console.error(`tg: only ${SUPPORT} posts in the Support topic.`);
+      process.exit(2);
+    }
+    /** @type {number | undefined} */
+    let replyTo;
+    let words = rest;
+    if (rest[0] === "--to") {
+      replyTo = Number(rest[1]);
+      if (!Number.isInteger(replyTo) || replyTo <= 0) {
+        console.error("tg: --to takes the message number shown as (msg N) in your inbox");
+        process.exit(2);
+      }
+      words = rest.slice(2);
+    }
+    if (words.length === 0) {
+      console.error("tg: usage: tg reply [--to <msg>] <text...>");
+      process.exit(2);
+    }
+    queue({ kind: "reply", text: words.join(" "), ...(replyTo === undefined ? {} : { replyTo }) });
+    console.log("queued to Support");
+    break;
+  }
+
   case "inbox": {
     const all = rest.includes("--all");
     if (drain(all, !all) === 0) {
@@ -320,6 +350,6 @@ switch (command) {
     break;
 
   default:
-    console.error("tg: usage: tg <send|broadcast|ask|inbox|wait|roster> ...");
+    console.error("tg: usage: tg <send|broadcast|ask|reply|inbox|wait|roster> ...");
     process.exit(2);
 }
