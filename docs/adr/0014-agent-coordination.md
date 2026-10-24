@@ -1,4 +1,4 @@
-# ADR-0012: Multi-Agent Coordination over Telegram
+# ADR-0014: Multi-Agent Coordination over Telegram
 
 ## Status
 
@@ -83,20 +83,41 @@ parks on a peer with `tg wait` rather than being driven by an event loop.
 ## Consequences
 
 - Per new role, a human does exactly two taps, once ever: confirm the creation
-  link, then add the new bot to the group. Everything else — token retrieval,
-  promotion to admin, access settings, topic creation, the worktree — is
-  automatic, and `provision` is resumable, so an interrupted setup continues
-  where it stopped rather than restarting.
+  button, then add the new bot to the group. Everything else — token
+  retrieval, promotion to admin, topic creation, the worktree — is automatic,
+  and `provision` is resumable, so an interrupted setup continues where it
+  stopped rather than restarting.
+- The `t.me/newbot/...` link resolves to a `tg://` URL and so does nothing on a
+  desktop with no native client registered for that scheme. The primary route
+  is therefore a `request_managed_bot` keyboard button, which works in every
+  client including the web one. Telegram permits that button _in private chats
+  only_, so it cannot be posted to the swarm group; the operator's private
+  chat id is remembered on first contact so later roles get the button without
+  having to start a new conversation. Its prefill fields are
+  `suggested_username` and `suggested_name` — Telegram silently ignores
+  unknown fields in that object, so a wrong spelling prefills nothing and
+  reports no error.
+- The managed-bot methods take `user_id`, not `bot_id`. Same trap: an unknown
+  parameter is ignored rather than rejected, and the resulting error names the
+  parameter that is now missing rather than the one that was wrong.
 - Admin rights are granted to every role bot because that is what Bot API 10.0
   requires for peer visibility. The side effect is that each agent can delete
   messages and manage topics in the group. Acceptable for a development swarm;
   it would not be for a public group.
-- `getManagedBotAccessSettings` / `setManagedBotAccessSettings` exist as of
-  10.0 but the `BotAccessSettings` field names are not in the public
-  reference. `configureAccess` therefore reads the settings back and flips the
-  keys that match, and on any failure prints the BotFather fallback rather
-  than reporting success it cannot verify. Admin rights already cover the
-  functional need, so this is an optimisation, not a dependency.
+- **Group privacy mode cannot be changed over the API, and this ADR originally
+  claimed otherwise.** The claim was that `setManagedBotAccessSettings` (Bot
+  API 10.0) could disable privacy mode and enable bot-to-bot mode on a managed
+  bot. It cannot: `getManagedBotAccessSettings` returns
+  `{is_access_restricted: false}`, which is about who may _use_ the bot and has
+  nothing to do with which messages it receives. The privacy toggle is
+  BotFather-only, with no API at all. Every role bot therefore has
+  `can_read_all_group_messages: false`, and provisioning now reports that
+  position and names the manual toggle instead of pretending to have handled
+  it. The design survives because admin rights are the other half of Bot API
+  10.0's condition for peer visibility, and because directed messages
+  at-mention their recipient, which privacy mode never filters. Whether
+  messages from _humans_ in a topic reach an agent is the one claim still
+  unproven; if they do not, it is one BotFather toggle per bot.
 - Committing from a worktree needs the shared `.git` bound read-write, so an
   agent could in principle delete a branch. It cannot touch the operator's
   working tree, which is the property that actually matters. A per-role `git
@@ -118,6 +139,36 @@ clone` would close the remaining gap at the cost of a full checkout each.
   into the agent's own inbox and dropped rather than retried forever, because
   an agent that is never told its message failed will wait on a reply that
   cannot come.
+
+## What running it actually taught us
+
+Six defects in the implementation were found by provisioning against a real
+account, and none of them by reading the code. Three were API shapes inferred
+from the changelog rather than probed — the `user_id` parameter, the
+`suggested_*` prefill fields, and the access-settings claim above — and
+Telegram's habit of ignoring unknown fields meant all three failed silently or
+with a misleading message. The lesson recorded here for next time: probe an
+undocumented method before building on its shape, because a wrong guess does
+not announce itself.
+
+The other three are worth naming because they are design-level, not typos:
+
+- **A destructive read with a late write.** `getUpdates` confirms updates and
+  Telegram will not reliably replay them. Provisioning discovered a new bot's
+  id and then stored it only _after_ fetching its token, so a failure in
+  between left a real bot in the operator's account that nothing could name
+  again. The id is now written the instant it arrives.
+- **A recovery mechanism that corrupted what it was meant to protect.** The
+  fix for the above was to rewind the getUpdates offset. A rewind replays
+  _every_ retained update, including the one that created a different role's
+  bot — so the second role was provisioned as the first bot, two roles sharing
+  one identity and one token, and it reported success. The rewind is now
+  scoped to the case where there is something to recover, and a bot already
+  claimed by another role is refused outright (`acceptsManagedBot`, tested).
+- **No transport-level retry.** Provisioning long-polls for as long as a human
+  takes to tap a button, so a dropped connection is routine rather than
+  exceptional; an `ECONNRESET` killed the process. Network failures now retry
+  with backoff while Telegram-level errors still propagate.
 
 ## Alternatives Considered
 
