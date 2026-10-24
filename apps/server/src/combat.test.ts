@@ -1,5 +1,5 @@
 import { Client } from "@colyseus/sdk";
-import { PROTOCOL_VERSION, ROOM_MATCH } from "@vibewars/game-protocol";
+import { PROTOCOL_VERSION, ROOM_MATCH, type CastRefusedMessage } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { DEFAULT_SKILL_BAR } from "./rooms/match-room.js";
@@ -165,6 +165,49 @@ describe("networked combat", () => {
     const a = roomA.state.players.get(roomA.sessionId);
     const b = roomA.state.players.get(roomB.sessionId);
     expect(a?.team).not.toBe(b?.team);
+    await roomA.leave();
+    await roomB.leave();
+  });
+
+  /** Collect every "cast-refused" message `room` receives. */
+  function refusals(room: Awaited<ReturnType<typeof joinPair>>["roomA"]): CastRefusedMessage[] {
+    const seen: CastRefusedMessage[] = [];
+    room.onMessage("cast-refused", (message: CastRefusedMessage) => {
+      seen.push(message);
+    });
+    return seen;
+  }
+
+  it("tells only the caster why a cast was refused", async () => {
+    const { roomA, roomB } = await joinPair();
+    const toA = refusals(roomA);
+    const toB = refusals(roomB);
+    const fireballSlot = DEFAULT_SKILL_BAR.indexOf("elementalist.fireball");
+
+    // Nobody targeted yet.
+    roomA.send("intent", { kind: "use-skill", slot: fireballSlot });
+    await waitFor(() => toA.length === 1, { label: "the first refusal" });
+    expect(toA[0]).toEqual({
+      slot: fireballSlot,
+      skillId: "elementalist.fireball",
+      reason: "no-target",
+    });
+
+    // Fireball at yourself.
+    roomA.send("intent", { kind: "target", targetSessionId: roomA.sessionId });
+    await waitFor(
+      () => roomA.state.players.get(roomA.sessionId)?.targetSessionId === roomA.sessionId,
+      { label: "the self-target" },
+    );
+    roomA.send("intent", { kind: "use-skill", slot: fireballSlot });
+    await waitFor(() => toA.length === 2, { label: "the second refusal" });
+    expect(toA[1]?.reason).toBe("invalid-target-self");
+
+    // Nothing was cast, and the opponent heard nothing.
+    expect(roomA.state.players.get(roomA.sessionId)?.castingSkillId).toBe("");
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(toB).toEqual([]);
+
     await roomA.leave();
     await roomB.leave();
   });

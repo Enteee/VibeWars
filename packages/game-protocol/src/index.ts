@@ -29,6 +29,7 @@ export type {
   StopIntent,
   TargetIntent,
   UseSkillIntent,
+  CastRefusedMessage,
   ServerHello,
   MapDescriptor,
   WallDescriptor,
