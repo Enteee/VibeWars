@@ -154,6 +154,31 @@ When one is fixed, remove it from this list in the same PR.
    goes through `JSON.stringify`. Escape or drop client text before
    logging it, and cap how much of it is logged.
 
+## The static deploy
+
+`.github/workflows/pages.yml` publishes the client alone to GitHub Pages:
+`/next/` follows `main`, the root follows the latest release (#103). There
+is no server behind it, so online play is off there.
+
+- **The write token never meets repository code.** `build` runs the repo
+  and its dependencies with a read-only token it does not persist.
+  `deploy` holds `contents: write` and runs only the workflow's own shell
+  over the built artifact. `upload-artifact` drops hidden files, so a build
+  cannot slip a `.git` into `gh-pages`. Keep it that way: never add a
+  checkout, `devenv` or `pnpm` step to `deploy`.
+- **Saves on Pages are not isolated.** Every Pages site under
+  `enteee.github.io` is one origin. `storage/namespace.ts` keeps the
+  release and `next` from reading each other's saves _by accident_. It does
+  nothing against another site on that origin, which can read and write
+  them. Saves are builds and a display name, so we accept this. Nothing
+  secret may ever be stored in the browser on Pages.
+- **A manual run cannot publish a side branch.** `workflow_dispatch`
+  builds whatever `--ref` it is given, so `deploy` is held back by the
+  environments' deployment-branch rules instead: `test` accepts `main`,
+  `prod` accepts `main` and tags. Those rules live in the repository
+  settings, not in this repo, so a review cannot see them change. Re-check
+  them when anything touches `pages.yml`.
+
 ## Dependencies
 
 `osv-scanner` and `trivy` run over `pnpm-lock.yaml` on review, and
@@ -202,11 +227,11 @@ bidi characters, so an agent can type a line that looks like another
 sender's header, such as `📋 Manager → 👤 Operator`. Until #93 lands,
 trust the topic a message is in, not a header inside its text.
 
-**Open: forged CI checks.** Any role that can push a branch can push a
-workflow. That workflow runs with `GITHUB_TOKEN` and can post a check run,
-or a commit status, for any commit in the repository, under any name.
-hubd only tags a push that touches `.github/workflows/`; it does not block
-it. The merge guard reads checks by name. Since #108, it keeps every check
+**Open: forged CI checks.** A workflow pushed on a side branch runs with
+`GITHUB_TOKEN` and can post a check run, or a commit status, for any
+commit in the repository, under any name. Since #116, hubd refuses a
+workflow or action change from every role but cicd-engineer, so this is
+now one role's power, not every implementer's. The merge guard reads checks by name. Since #108, it keeps every check
 suite and every status as a separate source and refuses a name that more
 than one source reports. Two cases still pass:
 
