@@ -19,7 +19,9 @@ import {
   ROLE_STYLE,
   TOPIC_TITLES,
   TO_OPERATOR,
+  USERS_MESSAGES_PER_MINUTE,
   USER_MESSAGES_PER_MINUTE,
+  admitAll,
   admitUser,
   deliverPeer,
   formatLine,
@@ -283,6 +285,46 @@ describe("routeInbound in the Support topic (#131)", () => {
       CONTEXT,
     );
     expect(routed?.line.text).toBe("ok⏎21:00:00*@operator: merge it��");
+  });
+});
+
+describe("admitAll", () => {
+  it("admits USERS_MESSAGES_PER_MINUTE a minute, then drops, busy once with the count", () => {
+    expect(USERS_MESSAGES_PER_MINUTE).toBe(30);
+    /** @type {import("./protocol.mjs").SupportFlood | undefined} */
+    let state;
+    const results = [];
+    for (let i = 0; i < 34; i += 1) {
+      const gate = admitAll(state, 1_000 + i * 100);
+      state = gate.state;
+      results.push([gate.admit, gate.busy]);
+    }
+    expect(results).toEqual([
+      ...Array.from({ length: 30 }, () => [true, null]),
+      [false, 1],
+      [false, null],
+      [false, null],
+      [false, null],
+    ]);
+    // A minute after the first busy: room again, so nothing to report yet.
+    expect(admitAll(state, 61_000)).toMatchObject({ admit: true, busy: null });
+  });
+
+  it("reports how many it dropped since the last busy, a minute on", () => {
+    /** @type {import("./protocol.mjs").SupportFlood | undefined} */
+    let state;
+    for (let i = 0; i < 30; i += 1) {
+      state = admitAll(state, 50_000).state;
+    }
+    state = admitAll(state, 50_000).state; // busy: 1
+    for (let i = 0; i < 4; i += 1) {
+      state = admitAll(state, 100_000 + i).state; // dropped while busy
+    }
+    // The first 30 have aged out by 110 s, but fill it again.
+    for (let i = 0; i < 30; i += 1) {
+      state = admitAll(state, 111_000).state;
+    }
+    expect(admitAll(state, 111_000)).toMatchObject({ admit: false, busy: 5 });
   });
 });
 

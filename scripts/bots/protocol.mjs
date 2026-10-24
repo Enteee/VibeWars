@@ -438,6 +438,46 @@ export function admitUser(state, now) {
   return { admit: false, warn, state: { admitted, warnedAt: warn ? now : warnedAt } };
 }
 
+/**
+ * How all users' messages together are let through to support's inbox.
+ *
+ * @typedef {object} SupportFlood
+ * @property {number[]} admitted epoch ms of every user message admitted in the last minute
+ * @property {number | null} busyAt epoch ms of the last "busy" line and reply, if any
+ * @property {number} dropped messages dropped by this cap since then
+ */
+
+/** The most messages all users together get into support's inbox per minute. */
+export const USERS_MESSAGES_PER_MINUTE = 30;
+
+/** What support's topic is told, at most once a minute, while the global cap drops. */
+export const SUPPORT_BUSY = "Support is busy, try again in a minute.";
+
+/**
+ * Whether one more user message, already past its sender's own cap, reaches
+ * support. The per-user cap alone does not hold against many accounts, so
+ * all users share this one too (#131 review). The operator is never counted:
+ * their lines are `human`, not `user`. Past the cap a message is dropped,
+ * and at most once a minute `busy` says how many were since the last time,
+ * for the sidecar to log and to tell the Support topic.
+ *
+ * @param {SupportFlood | undefined} state `undefined` before the first user message
+ * @param {number} now
+ * @returns {{ admit: boolean, busy: number | null, state: SupportFlood }}
+ */
+export function admitAll(state, now) {
+  const admitted = (state?.admitted ?? []).filter((at) => now - at < 60_000);
+  const busyAt = state?.busyAt ?? null;
+  const dropped = state?.dropped ?? 0;
+  if (admitted.length < USERS_MESSAGES_PER_MINUTE) {
+    return { admit: true, busy: null, state: { admitted: [...admitted, now], busyAt, dropped } };
+  }
+  if (busyAt === null || now - busyAt >= 60_000) {
+    return { admit: false, busy: dropped + 1, state: { admitted, busyAt: now, dropped: 0 } };
+  }
+  return { admit: false, busy: null, state: { admitted, busyAt, dropped: dropped + 1 } };
+}
+
 /* -------------------------------------------------------------------------- */
 /* The mirror's format                                                        */
 /* -------------------------------------------------------------------------- */
