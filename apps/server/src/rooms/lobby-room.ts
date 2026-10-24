@@ -56,27 +56,48 @@ export const LobbyState = schema(
 const MAX_NAME_LENGTH = 16;
 
 /**
- * Matches ASCII control characters, which have no place in a display
- * name — they can corrupt terminal output in server logs and render as
- * invisible junk in other players' client UIs.
+ * Characters that draw nothing of their own or rearrange what is drawn
+ * around them: every control (C0 and C1), every format character (bidi
+ * overrides, zero-width joiners and spaces, the BOM, the soft hyphen),
+ * the line and paragraph separators, and lone surrogate halves, which
+ * draw as a replacement box. In a log they corrupt the terminal; over a
+ * player's head they make a name invisible, or reverse it and whatever
+ * is drawn after it (#174).
  */
-// eslint-disable-next-line no-control-regex -- matching control characters is this pattern's entire purpose
-const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/g;
+const INVISIBLE_CHARACTERS = /[\p{Cc}\p{Cf}\p{Cs}\p{Zl}\p{Zp}]/gu;
+
+/** Leading whitespace, and combining marks before any base letter: they have nothing to sit on. */
+const LEADING_MARKS = /^[\s\p{M}]+/u;
+
+/**
+ * Combining marks past the second on one letter. Two covers every real
+ * accent; a stack of fifteen draws far above and below the line, over
+ * other players' health bars.
+ */
+const STACKED_MARKS = /(\p{M}{2})\p{M}+/gu;
 
 /**
  * Sanitise a client-supplied display name (brief §32: never trust the
- * client). Control characters are stripped, length is clamped, and an
- * empty result falls back to a server-generated name.
+ * client). Invisible characters are stripped, mark stacks and whitespace
+ * runs collapsed, the length clamped in code points, so an emoji is never
+ * cut in half, and an empty result falls back to a server-generated name.
  */
 export function sanitizeName(raw: unknown, fallback: string): string {
   if (typeof raw !== "string") {
     return fallback;
   }
-  const cleaned = raw.replace(CONTROL_CHARACTERS, "").trim();
+  const cleaned = raw
+    .normalize("NFC")
+    .replace(INVISIBLE_CHARACTERS, "")
+    .replace(/\s+/gu, " ")
+    .replace(LEADING_MARKS, "")
+    .replace(STACKED_MARKS, "$1")
+    .trim();
   if (cleaned === "") {
     return fallback;
   }
-  return cleaned.slice(0, MAX_NAME_LENGTH);
+  // The cut can leave a space at the end.
+  return Array.from(cleaned).slice(0, MAX_NAME_LENGTH).join("").trim();
 }
 
 /** Generate a lobby code from the injected RNG (never `Math.random`). */

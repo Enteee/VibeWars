@@ -40,6 +40,61 @@ describe("sanitizeName", () => {
   it("clamps a very long name so one player cannot flood the screen", () => {
     expect(sanitizeName("x".repeat(500), "fallback")).toHaveLength(16);
   });
+
+  // #174: names are drawn over every player's head, so anything that
+  // draws nothing, rearranges the line, or draws outside it goes.
+  it("strips bidi controls, so a name cannot reverse itself or what follows", () => {
+    expect(sanitizeName("\u202enimda", "fallback")).toBe("nimda");
+    const bidi = [
+      ...["\u202a", "\u202b", "\u202c", "\u202d", "\u202e"],
+      ...["\u2066", "\u2067", "\u2068", "\u2069"],
+      ...["\u200e", "\u200f", "\u061c"],
+    ];
+    for (const control of bidi) {
+      expect(sanitizeName(`a${control}b`, "fallback")).toBe("ab");
+    }
+  });
+
+  it("strips zero-width and other invisible characters", () => {
+    expect(sanitizeName("a\u200bb\u200dc\ufeff\u2060\u00ad", "fallback")).toBe("abc");
+    expect(sanitizeName("\u200b\u200c\u200d\u2060", "fallback")).toBe("fallback");
+    expect(sanitizeName("a\u2028b\u2029c", "fallback")).toBe("abc");
+  });
+
+  it("strips C1 controls", () => {
+    expect(sanitizeName("\u0085x\u009f", "fallback")).toBe("x");
+  });
+
+  it("keeps at most two combining marks on a letter, and none with nothing to sit on", () => {
+    // NFC first folds one mark into the letter: é, then two more.
+    expect(sanitizeName(`e${"\u0301".repeat(15)}`, "fallback")).toBe("\u00e9\u0301\u0301");
+    expect(sanitizeName("\u0301abc", "fallback")).toBe("abc");
+    expect(sanitizeName(" \u0301 \u0301abc", "fallback")).toBe("abc");
+  });
+
+  it("normalises to NFC, so an accented letter is one character", () => {
+    expect(sanitizeName("e\u0301", "fallback")).toBe("\u00e9");
+  });
+
+  it("collapses runs of whitespace", () => {
+    expect(sanitizeName("a    b", "fallback")).toBe("a b");
+    expect(sanitizeName("a\t\n b", "fallback")).toBe("a b");
+  });
+
+  it("clamps in code points, so an emoji is never cut in half", () => {
+    const name = sanitizeName(`${"x".repeat(15)}\u{1f600}\u{1f600}`, "fallback");
+    expect(name).toBe(`${"x".repeat(15)}\u{1f600}`);
+    expect(Array.from(name)).toHaveLength(16);
+    expect(name).not.toMatch(/\p{Cs}/u);
+  });
+
+  it("drops a lone surrogate the client sent", () => {
+    expect(sanitizeName("a\ud800b", "fallback")).toBe("ab");
+  });
+
+  it("does not end on a space the clamp exposed", () => {
+    expect(sanitizeName(`${"x".repeat(15)} y`, "fallback")).toBe("x".repeat(15));
+  });
 });
 
 describe("generateLobbyCode", () => {
