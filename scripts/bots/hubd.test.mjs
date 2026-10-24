@@ -35,7 +35,7 @@ const remaining = Number(fs.readFileSync(path.join(state, "remaining"), "utf8"))
 const [group, sub] = argv;
 if (group === "auth") { console.log("token"); process.exit(0); }
 if (group === "api" && sub === "rate_limit") {
-  const reset = Math.floor(Date.now() / 1000) + 3600;
+  const reset = Number(fs.readFileSync(path.join(state, "reset"), "utf8"));
   console.log(JSON.stringify({ resources: { core: {}, graphql: { limit: 5000, remaining, reset } } }));
   process.exit(0);
 }
@@ -55,8 +55,20 @@ if (group === "api" && sub !== "graphql") {
 }
 if (group === "run") { console.log("rest ok"); process.exit(0); }
 if (remaining === 0) { console.error("unknown owner type"); process.exit(1); }
-if (group === "project" && sub === "item-list") {
-  console.log(JSON.stringify({ items: [{ id: "PVTI_1", status: "Ready", content: { number: 8, title: "eight", repository: "Enteee/VibeWars" } }] }));
+// Every GraphQL call costs a point, so hubd's measuring has something to see.
+fs.writeFileSync(path.join(state, "remaining"), String(remaining - 1));
+if (group === "api" && sub === "graphql" && argv.some((word) => word.includes("node(id: $project)"))) {
+  const later = argv.includes("cursor=c1");
+  const issue = later ? 10 : 8;
+  const resetAt = new Date(Number(fs.readFileSync(path.join(state, "reset"), "utf8")) * 1000).toISOString();
+  console.log(JSON.stringify({ data: {
+    rateLimit: { cost: 1, remaining: remaining - 1, resetAt },
+    node: { items: {
+      totalCount: 2,
+      pageInfo: { hasNextPage: !later, endCursor: later ? null : "c1" },
+      nodes: [{ id: "PVTI_" + issue, status: { name: "Ready" }, content: { __typename: "Issue", number: issue, title: "item " + issue, url: "https://github.com/Enteee/VibeWars/issues/" + issue, repository: { nameWithOwner: "Enteee/VibeWars" } } }],
+    } },
+  } }));
   process.exit(0);
 }
 console.log("ok");
@@ -113,10 +125,17 @@ async function startHubd(remaining, before) {
   }
   fs.writeFileSync(path.join(bin, "gh"), FAKE_GH, { mode: 0o755 });
   fs.writeFileSync(path.join(state, "remaining"), String(remaining));
+  fs.writeFileSync(path.join(state, "reset"), String(Math.floor(Date.now() / 1000) + 3600));
   fs.writeFileSync(path.join(state, "calls.log"), "");
   fs.writeFileSync(
     path.join(root, "company.json"),
-    JSON.stringify({ repo: "Enteee/VibeWars", project: 2, columns: [], expectedChecks: [] }),
+    JSON.stringify({
+      repo: "Enteee/VibeWars",
+      project: 2,
+      projectId: "PVT_2",
+      columns: [],
+      expectedChecks: [],
+    }),
   );
 
   before?.({ root, repo, remote: path.join(dir, "remote.git") });
@@ -230,23 +249,61 @@ describe("hubd and the GraphQL budget", () => {
     const second = await hubd.request("lead-dev", "gh", BOARD_READ);
 
     expect(first.code).toBe(0);
-    expect(String(first.stdout)).toContain('"number":8');
     expect(second.stdout).toBe(first.stdout);
-    expect(hubd.calls("project item-list")).toBe(1);
+    // Both pages of the hand-written query, never gh's every-field item-list.
+    expect(hubd.calls("api graphql")).toBe(2);
+    expect(hubd.calls("project item-list")).toBe(0);
+    expect(JSON.parse(String(first.stdout))).toEqual({
+      items: [8, 10].map((n) => ({
+        id: `PVTI_${String(n)}`,
+        title: `item ${String(n)}`,
+        status: "Ready",
+        content: {
+          type: "Issue",
+          number: n,
+          title: `item ${String(n)}`,
+          url: `https://github.com/Enteee/VibeWars/issues/${String(n)}`,
+          repository: "Enteee/VibeWars",
+        },
+      })),
+      totalCount: 2,
+    });
     // ...and writes it where the dashboard reads it, instead of the
     // dashboard polling GitHub itself.
     const snapshot = readJson(path.join(hubd.hub, "board.json"));
-    expect(JSON.stringify(snapshot.board)).toContain('"number":8');
+    expect(JSON.stringify(snapshot.board)).toContain('"number":10');
   }, 20_000);
 
   it("drops the snapshot when a card moves, so the move shows at once", async () => {
     const hubd = await startHubd(5000);
 
     await hubd.request("developer-1", "gh", BOARD_READ);
-    await hubd.request("developer-1", "gh", ["project", "item-edit", "--id", "PVTI_1"]);
+    await hubd.request("developer-1", "gh", ["project", "item-edit", "--id", "PVTI_8"]);
     await hubd.request("developer-1", "gh", BOARD_READ);
 
-    expect(hubd.calls("project item-list")).toBe(2);
+    // Two pages, twice.
+    expect(hubd.calls("api graphql")).toBe(4);
+  }, 20_000);
+
+  it("writes down what every GraphQL call cost, and whose it was (#97)", async () => {
+    const hubd = await startHubd(5000);
+
+    await hubd.request("developer-1", "gh", BOARD_READ);
+    await hubd.request("lead-dev", "gh", ["pr", "view", "9", "--json", "reviewDecision"]);
+    // REST: free, so not written down.
+    await hubd.request("lead-dev", "gh", ["issue", "view", "7", "--json", "title"]);
+
+    const spend = /** @type {Record<string, unknown>[]} */ (
+      readJson(path.join(hubd.hub, "ratelimit.json")).spend
+    );
+    expect(spend.map(({ role, cmd, cost }) => ({ role, cmd, cost }))).toEqual([
+      // From the query's own rateLimit { cost }.
+      { role: "hubd", cmd: "board snapshot", cost: 1 },
+      { role: "hubd", cmd: "board snapshot", cost: 1 },
+      // From the budget's drop across the call.
+      { role: "lead-dev", cmd: "pr view", cost: 1 },
+    ]);
+    expect(readJson(path.join(hubd.hub, "ratelimit.json")).remaining).toBe(4997);
   }, 20_000);
 
   it("says the budget is gone instead of GitHub's 'unknown owner type'", async () => {
@@ -280,7 +337,7 @@ describe("hubd and the GraphQL budget", () => {
     expect(String(answer.stderr)).toMatch(/rate-limited until/);
     expect(hubd.calls("pr view")).toBe(before);
     expect(board.code).toBe(75);
-    expect(hubd.calls("project item-list")).toBe(0);
+    expect(hubd.calls("api graphql")).toBe(0);
   }, 20_000);
 
   it("keeps serving REST commands while GraphQL is exhausted", async () => {
