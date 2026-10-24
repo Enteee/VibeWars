@@ -1,6 +1,7 @@
 import { vec2 } from "@vibewars/game-core";
 
 import type { CombatMessage, MatchSnapshot } from "../net/match-connection.js";
+import { floatingCueFor, type FloatingCue } from "../ui/combat-readouts.js";
 import {
   AREA_FLASH_SECONDS,
   teamColour,
@@ -19,9 +20,11 @@ export interface FloatingTextSink {
   addAreaFlash(flash: AreaFlash): void;
 }
 
-const DAMAGE_COLOUR = 0xff7b72;
-const HEAL_COLOUR = 0x7ee787;
-const NEUTRAL_COLOUR = 0xffd866;
+const COLOURS: Record<FloatingCue["tone"], number> = {
+  damage: 0xff7b72,
+  heal: 0x7ee787,
+  neutral: 0xffd866,
+};
 
 let nextFloatingId = 0;
 let nextFlashId = 0;
@@ -53,39 +56,17 @@ export function showCombatFeedback(
       continue;
     }
 
-    let text: string | undefined;
-    let colour = NEUTRAL_COLOUR;
-    switch (event.kind) {
-      case "damage":
-        // The sign says damage or heal; the colour only backs it up, so a
-        // player who cannot tell the two colours apart loses nothing.
-        // U+2212, a real minus, as wide as the plus.
-        text = `\u2212${String(Math.round(event.amount ?? 0))}`;
-        colour = DAMAGE_COLOUR;
-        break;
-      case "heal":
-        text = `+${String(Math.round(event.amount ?? 0))}`;
-        colour = HEAL_COLOUR;
-        break;
-      case "interrupted":
-        text = "interrupted!";
-        break;
-      case "death":
-        text = "defeated";
-        colour = DAMAGE_COLOUR;
-        break;
-      default:
-        // Status applications/removals already show as markers on the
-        // actor; adding text for them too would just be noise.
-        continue;
+    const cue = floatingCueFor(event.kind, event.amount);
+    if (cue === undefined) {
+      continue;
     }
 
     nextFloatingId += 1;
     scene.addFloatingText({
       id: nextFloatingId,
-      text,
+      text: cue.text,
       position: vec2(subject.x, subject.y - 24),
-      colour,
+      colour: COLOURS[cue.tone],
       remainingSeconds: 1.2,
     });
   }
