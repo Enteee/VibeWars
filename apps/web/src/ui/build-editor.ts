@@ -50,6 +50,7 @@ import {
 import { professionIcon, skillTypeBadgeHtml } from "./icons.js";
 import { filterSkillsByName, groupSkillsByAttribute } from "./skill-library.js";
 import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
+import { createTrainingPanel, type TrainingPanel } from "./training-panel.js";
 
 /**
  * The character/build editor (brief §17).
@@ -281,10 +282,39 @@ let librarySearch = "";
  */
 let activeLibrary: "skills" | "gear" = "skills";
 
-/** Drops the shared tooltip; call when leaving the editor. */
+/**
+ * The Training Ground arena, created once and moved into every render,
+ * for the same reason as the tooltip: a Phaser game rebuilt on every `+`
+ * click would lose its WebGL context and leak (#2 §6.2).
+ *
+ * `disposeBuildEditor` is the one place it is torn down. That is enough
+ * because every way out of the editor (save, delete, duplicate, close)
+ * goes through `main.ts`'s `showMenu()`, which calls it.
+ */
+let sharedTraining: TrainingPanel | undefined;
+
+/** Set once the arena could not be created, so it is not retried on every render. */
+let trainingUnavailable = false;
+
+function trainingInstance(): TrainingPanel | undefined {
+  if (sharedTraining === undefined && !trainingUnavailable) {
+    try {
+      sharedTraining = createTrainingPanel();
+    } catch (error) {
+      // No WebGL: the editor stays the two-column screen it always was.
+      trainingUnavailable = true;
+      console.info("[web] training ground unavailable", error);
+    }
+  }
+  return sharedTraining;
+}
+
+/** Drops the shared tooltip and the training arena; call when leaving the editor. */
 export function disposeBuildEditor(): void {
   sharedTooltip?.dispose();
   sharedTooltip = undefined;
+  sharedTraining?.dispose();
+  sharedTraining = undefined;
   librarySearch = "";
   // Re-entering the editor should land on the skill library, not on
   // whichever tab happened to be open when it was last closed.
@@ -303,6 +333,15 @@ export function renderBuildEditor(
   root.replaceChildren();
   const layout = h("div", "editor-layout");
   root.appendChild(layout);
+  // Moving the existing panel in, in the same task as the re-render, so
+  // the canvas is never detached across a paint.
+  const training = trainingInstance();
+  if (training !== undefined) {
+    layout.classList.add("has-training");
+    training.attach(layout);
+    training.setBuild(character);
+    training.setDisplayName(character.name);
+  }
   const panel = h("div", "editor");
   layout.appendChild(panel);
 
@@ -312,6 +351,9 @@ export function renderBuildEditor(
   nameInput.value = character.name;
   nameInput.addEventListener("input", () => {
     character = { ...character, name: nameInput.value };
+    // The name field never re-renders (it would drop the caret), so the
+    // arena hears about a new name directly.
+    training?.setDisplayName(nameInput.value);
   });
   header.appendChild(nameInput);
   panel.appendChild(header);

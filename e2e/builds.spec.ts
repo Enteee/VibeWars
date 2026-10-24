@@ -586,3 +586,49 @@ test("the library remembers which tab you were on while you build", async ({ pag
   await equipFromLibrary(page, "Axe");
   await expect(page.locator(".library-tab.is-active")).toHaveText("gear");
 });
+
+/* --- beside the Training Ground arena (#10) ------------------------------- */
+
+test("the editor still works beside a live arena, which none of it recreates", async ({ page }) => {
+  await page.setViewportSize({ width: 1500, height: 950 });
+  await openElementalist(page);
+  const arena = page.locator(".training canvas");
+  await expect(arena).toBeVisible();
+  const original = await arena.elementHandle();
+
+  const fireRow = page.locator(".editor-attribute", { hasText: "Fire Magic" });
+  await fireRow.getByRole("button", { name: "+" }).click();
+  await expect(fireRow).toContainText("1");
+
+  await page.locator("input.skill-search").fill("fire");
+  await expect(page.locator(".skill-library .skill-box")).toHaveCount(1);
+
+  await page
+    .locator(".skill-box", { hasText: "Fireball" })
+    .dragTo(page.locator(".skill-slot").nth(2));
+  await expect(page.locator(".skill-slot").nth(2)).toContainText("Fireball");
+
+  await page.locator(".skill-box", { hasText: "Fireball" }).hover();
+  await expect(page.locator(".skill-tip")).toBeVisible();
+
+  // Every one of those re-rendered the editor. The arena is the same one.
+  await expect(page.locator("canvas")).toHaveCount(1);
+  expect(await original.evaluate((node) => node.isConnected)).toBe(true);
+});
+
+test("the arena survives the editor collapsing to one column", async ({ page }) => {
+  await page.setViewportSize({ width: 1500, height: 950 });
+  await newCharacter(page);
+  const arena = page.locator(".training canvas");
+  await expect(arena).toBeVisible();
+  const original = await arena.elementHandle();
+
+  await page.setViewportSize({ width: 600, height: 900 });
+  const training = await page.locator(".training").boundingBox();
+  const editor = await page.locator(".editor").boundingBox();
+  expect(training?.x).toBe(editor?.x);
+
+  await expect(page.locator("canvas")).toHaveCount(1);
+  expect(await original.evaluate((node) => node.isConnected)).toBe(true);
+  await expect(arena).toBeVisible();
+});
