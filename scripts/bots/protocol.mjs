@@ -373,7 +373,8 @@ const ISSUE_REF = /(?<![\w/&])#(\d+)/g;
 
 /**
  * Entities cut to the first `end` code units. One that would run past the
- * end is shortened, or dropped when nothing of it is left.
+ * end is shortened, or dropped when nothing of it is left. A cut link is
+ * always dropped: shortened, it would show #12 while linking #123.
  *
  * @param {readonly MessageEntity[]} entities
  * @param {number} end
@@ -381,7 +382,11 @@ const ISSUE_REF = /(?<![\w/&])#(\d+)/g;
  */
 function fitEntities(entities, end) {
   return entities
-    .filter((entity) => entity.offset < end)
+    .filter(
+      (entity) =>
+        entity.offset < end &&
+        (entity.type !== "text_link" || entity.offset + entity.length <= end),
+    )
     .map((entity) => ({ ...entity, length: Math.min(entity.length, end - entity.offset) }));
 }
 

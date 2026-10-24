@@ -695,6 +695,18 @@ describe("planSends", () => {
     ]);
   });
 
+  it("drops a link the clip would cut, rather than leave it pointing elsewhere", () => {
+    const long = `${"y".repeat(MAX_MESSAGE_CHARS - 3)}#123 tail`;
+    const link = {
+      type: /** @type {const} */ ("text_link"),
+      offset: MAX_MESSAGE_CHARS - 3,
+      length: 4,
+      url: "u",
+    };
+    const plan = planSends([q(1, long, [link])], [], NOW);
+    expect(plan.batch?.entities).toEqual([]);
+  });
+
   it("waits out a retry_after", () => {
     const plan = planSends([q(1, "a")], [], NOW, { blockedUntil: NOW + 7000 });
     expect(plan.batch).toBeNull();

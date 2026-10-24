@@ -665,49 +665,89 @@ async function mirrorOut(company, mirror) {
       continue;
     }
     const { batch } = plan;
+    /** @type {unknown} */
+    let failure;
     try {
-      if (batch.edit === undefined) {
-        const result = obj(
-          await api(company.token, "sendMessage", {
-            chat_id: company.chatId,
-            text: batch.text,
-            entities: batch.entities,
-            ...(batch.topicId === null ? {} : { message_thread_id: batch.topicId }),
-            ...(batch.replyMarkup === undefined ? {} : { reply_markup: batch.replyMarkup }),
-            ...(batch.replyTo === undefined
-              ? {}
-              : { reply_parameters: { message_id: batch.replyTo } }),
-          }),
-        );
-        const question =
-          batch.question === undefined
-            ? undefined
-            : company.questions.questions[String(batch.question)];
-        if (question !== undefined && typeof result.message_id === "number") {
-          question.messageId = result.message_id;
-          company.saveQuestions();
-        }
-      } else {
-        // No reply_markup: editing without one is what removes the buttons.
-        await api(company.token, "editMessageText", {
-          chat_id: company.chatId,
-          message_id: batch.edit,
-          text: batch.text,
-          entities: batch.entities,
-        });
+      await sendBatch(company, batch);
+    } catch (error) {
+      failure = error;
+    }
+    // Entities are a new way to be refused (a bad offset, too many of them
+    // in a coalesced batch). A message plain text would have delivered must
+    // not be lost to its formatting, so retry once without it.
+    if (failure !== undefined && !isRetryAfter(failure) && batch.entities.length > 0) {
+      console.error(`[link] mirror: ${describe(failure)}; resending without formatting`);
+      failure = undefined;
+      try {
+        await sendBatch(company, { ...batch, entities: [] });
+      } catch (error) {
+        failure = error;
       }
+    }
+    if (failure === undefined) {
       sent.push(Date.now());
       queue = plan.rest;
-    } catch (error) {
-      if (error instanceof TelegramError && error.retryAfter !== undefined) {
-        blockedUntil = Date.now() + error.retryAfter * 1000;
-        continue;
-      }
+    } else if (failure instanceof TelegramError && failure.retryAfter !== undefined) {
+      blockedUntil = Date.now() + failure.retryAfter * 1000;
+    } else {
       console.error(
-        `[link] mirror dropped ${String(batch.count)} message(s): ${error instanceof Error ? error.message : ""}`,
+        `[link] mirror dropped ${String(batch.count)} message(s): ${describe(failure)}`,
       );
       queue = plan.rest;
     }
+  }
+}
+
+/**
+ * @param {unknown} error
+ * @returns {boolean} whether Telegram asked us to wait and try again
+ */
+function isRetryAfter(error) {
+  return error instanceof TelegramError && error.retryAfter !== undefined;
+}
+
+/**
+ * @param {unknown} error
+ * @returns {string}
+ */
+function describe(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+/**
+ * Send one planned batch: a new message, or an edit of a posted question.
+ * A posted question's message id is recorded, so its buttons can be matched.
+ *
+ * @param {Company} company
+ * @param {import("./protocol.mjs").Queued} batch
+ * @returns {Promise<void>}
+ */
+async function sendBatch(company, batch) {
+  if (batch.edit !== undefined) {
+    // No reply_markup: editing without one is what removes the buttons.
+    await api(company.token, "editMessageText", {
+      chat_id: company.chatId,
+      message_id: batch.edit,
+      text: batch.text,
+      entities: batch.entities,
+    });
+    return;
+  }
+  const result = obj(
+    await api(company.token, "sendMessage", {
+      chat_id: company.chatId,
+      text: batch.text,
+      entities: batch.entities,
+      ...(batch.topicId === null ? {} : { message_thread_id: batch.topicId }),
+      ...(batch.replyMarkup === undefined ? {} : { reply_markup: batch.replyMarkup }),
+      ...(batch.replyTo === undefined ? {} : { reply_parameters: { message_id: batch.replyTo } }),
+    }),
+  );
+  const question =
+    batch.question === undefined ? undefined : company.questions.questions[String(batch.question)];
+  if (question !== undefined && typeof result.message_id === "number") {
+    question.messageId = result.message_id;
+    company.saveQuestions();
   }
 }
 

@@ -34,6 +34,8 @@ afterEach(() => {
  * returns empty quickly instead of parking for fifty seconds.
  */
 async function fakeTelegram() {
+  /** Set to refuse every message that carries entities, as a bad offset would. */
+  let refuseEntities = false;
   /** @type {unknown[]} */
   const updates = [];
   /** @type {Record<string, unknown>[]} */
@@ -57,6 +59,19 @@ async function fakeTelegram() {
       if (method === "getUpdates") {
         result = updates.splice(0);
       } else if (method === "sendMessage") {
+        const entities = /** @type {unknown[] | undefined} */ (params.entities);
+        if (refuseEntities && entities !== undefined && entities.length > 0) {
+          res.setHeader("content-type", "application/json");
+          res.statusCode = 400;
+          res.end(
+            JSON.stringify({
+              ok: false,
+              error_code: 400,
+              description: "Bad Request: can't parse entities",
+            }),
+          );
+          return;
+        }
         sent.push(params);
         result = { message_id: sent.length };
       } else if (method === "createForumTopic") {
@@ -89,6 +104,9 @@ async function fakeTelegram() {
     url: `http://127.0.0.1:${String(port)}`,
     sent,
     calls,
+    refuseEntities() {
+      refuseEntities = true;
+    },
     /**
      * Queue a raw update, such as a button tap.
      *
@@ -296,6 +314,23 @@ describe("the company sidecar", () => {
           url: "https://github.com/Enteee/VibeWars/issues/28",
         },
       ],
+      message_thread_id: 11,
+    });
+  }, 20_000);
+
+  it("resends a message Telegram refuses for its entities as plain text", async () => {
+    const telegram = await fakeTelegram();
+    telegram.refuseEntities();
+    const co = company(telegram.url);
+    co.present("architect");
+    co.start();
+
+    co.send("manager", "architect", "spec #28 please");
+
+    await until(() => telegram.sent.length === 1, "the plain resend");
+    expect(telegram.sent[0]).toMatchObject({
+      text: "📋 Manager → 🧭 Architect\nspec #28 please",
+      entities: [],
       message_thread_id: 11,
     });
   }, 20_000);
