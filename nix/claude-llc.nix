@@ -164,7 +164,7 @@ let
           if ! pgrep -f hubd.mjs >/dev/null 2>&1; then
             echo "claude-llc: hubd was not running; restarting it."
             mkdir -p "$VIBEWARS_BOT_ROOT/hub"
-            VIBEWARS_JQ=${pkgs.jq}/bin/jq ${node} ${llcScripts}/hubd.mjs >>"$VIBEWARS_BOT_ROOT/hub/hubd.log" 2>&1 &
+            ${node} ${llcScripts}/hubd.mjs >>"$VIBEWARS_BOT_ROOT/hub/hubd.log" 2>&1 &
           fi
           if ! pgrep -f supervisor.mjs >/dev/null 2>&1; then
             echo "claude-llc: supervisor was not running; restarting it."
@@ -222,7 +222,7 @@ let
         pkill -f supervisor.mjs 2>/dev/null || true
 
         mkdir -p "$VIBEWARS_BOT_ROOT/hub"
-        VIBEWARS_JQ=${pkgs.jq}/bin/jq ${node} ${llcScripts}/hubd.mjs >>"$VIBEWARS_BOT_ROOT/hub/hubd.log" 2>&1 &
+        ${node} ${llcScripts}/hubd.mjs >>"$VIBEWARS_BOT_ROOT/hub/hubd.log" 2>&1 &
         echo "claude-llc: hubd started (log: .bots/hub/hubd.log)"
 
         # ------------------------------------------------------------------------

@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 const HUBD = path.join(path.dirname(fileURLToPath(import.meta.url)), "hubd.mjs");
+const HUB = path.join(path.dirname(fileURLToPath(import.meta.url)), "hub.mjs");
 
 /**
  * The stand-in `gh`. GraphQL-bound commands fail the way the real one does
@@ -39,7 +40,7 @@ if (group === "api" && sub === "rate_limit") {
   process.exit(0);
 }
 const REPO = "repos/Enteee/VibeWars/";
-const issue7 = { number: 7, title: "seven", body: "the body", state: "open", html_url: "https://github.com/Enteee/VibeWars/issues/7", user: { login: "Enteee" }, labels: [{ name: "bug" }], assignees: [], created_at: "2026-10-24T10:00:00Z", updated_at: "2026-10-24T11:00:00Z", closed_at: null };
+const issue7 = { number: 7, title: "seven", body: "the body", state: "open", html_url: "https://github.com/Enteee/VibeWars/issues/7", user: { login: "Enteee" }, labels: [{ node_id: "LA_bug", name: "bug" }], assignees: [], created_at: "2026-10-24T10:00:00Z", updated_at: "2026-10-24T11:00:00Z", closed_at: null };
 const pull9 = { number: 9, title: "nine", body: "", state: "open", html_url: "https://github.com/Enteee/VibeWars/pull/9", user: { login: "Enteee" }, labels: [], assignees: [], created_at: "x", updated_at: "y", closed_at: null, merged_at: null, draft: false, head: { ref: "bot/x", sha: "abc123" }, base: { ref: "main" }, additions: 1, deletions: 2, changed_files: 3, mergeable: true, mergeable_state: "clean" };
 if (group === "api" && sub !== "graphql") {
   const target = argv.find((word) => word.startsWith(REPO)) ?? "";
@@ -100,7 +101,9 @@ async function startHubd(remaining) {
       VIBEWARS_BOT_ROOT: root,
       DEVENV_ROOT: repo,
       FAKE_GH_STATE: state,
-      VIBEWARS_JQ: JQ,
+      // Something only hubd's environment holds, to prove a filter cannot
+      // reach it.
+      HUBD_SECRET: "leaked",
     },
     stdio: "ignore",
   });
@@ -176,7 +179,7 @@ async function until(condition, label) {
   }
 }
 
-/** A real jq, as claude-llc gives hubd one. */
+/** A real jq, as the jail has one. */
 const JQ = (() => {
   for (const dir of (process.env.PATH ?? "").split(path.delimiter)) {
     const candidate = path.join(dir, "jq");
@@ -271,7 +274,7 @@ describe("hubd and the GraphQL budget", () => {
 });
 
 describe("hubd answering issue and PR reads from REST", () => {
-  it("serves issue view, with comments, without a GraphQL call", async () => {
+  it("serves issue view as gh's exact JSON, without a GraphQL call", async () => {
     const hubd = await startHubd(5000);
 
     const answer = await hubd.request("developer-1", "gh", [
@@ -279,25 +282,27 @@ describe("hubd answering issue and PR reads from REST", () => {
       "view",
       "7",
       "--json",
-      "title,body,labels,comments",
+      "title,body,state,labels",
     ]);
 
     expect(answer.code).toBe(0);
     expect(JSON.parse(String(answer.stdout))).toEqual({
       title: "seven",
       body: "the body",
-      labels: [{ name: "bug", description: "", color: "" }],
-      comments: [
-        {
-          author: { login: "Enteee" },
-          authorAssociation: "OWNER",
-          body: "first comment",
-          createdAt: "z",
-          url: "u",
-        },
-      ],
+      state: "OPEN",
+      labels: [{ id: "LA_bug", name: "bug", description: "", color: "" }],
     });
     // The visibility lookup went to REST too.
+    expect(hubd.calls("issue ")).toBe(0);
+  }, 20_000);
+
+  it("serves the plain comments view from REST", async () => {
+    const hubd = await startHubd(5000);
+
+    const answer = await hubd.request("developer-1", "gh", ["issue", "view", "7", "--comments"]);
+
+    expect(String(answer.stdout)).toContain("author:\tEnteee\nassociation:\towner");
+    expect(String(answer.stdout)).toContain("first comment");
     expect(hubd.calls("issue ")).toBe(0);
   }, 20_000);
 
@@ -321,22 +326,52 @@ describe("hubd answering issue and PR reads from REST", () => {
     expect(hubd.calls("pr ")).toBe(0);
   }, 20_000);
 
+  it("refuses a request carrying an output filter, and never runs it", async () => {
+    // hub strips filters; this request did not come through hub.
+    const hubd = await startHubd(5000);
+
+    const answer = await hubd.request("developer-1", "gh", [
+      "issue",
+      "view",
+      "7",
+      "--json",
+      "title",
+      "--jq",
+      "$ENV",
+    ]);
+
+    expect(answer.allow).toBe(false);
+    expect(String(answer.reason)).toMatch(/inside the sandbox/);
+    expect(hubd.calls("api repos/Enteee/VibeWars/issues/7")).toBe(0);
+  }, 20_000);
+
   it.skipIf(JQ === "")(
-    "applies --jq itself, as gh would",
+    "lets hub apply --jq in the jail, where hubd's environment is out of reach",
     async () => {
       const hubd = await startHubd(5000);
+      /** @param {string} filter */
+      const hub = (filter) =>
+        new Promise((resolve) => {
+          const child = spawn(
+            process.execPath,
+            [HUB, "issue", "view", "7", "--json", "title", "--jq", filter],
+            {
+              env: {
+                PATH: process.env.PATH ?? "",
+                VIBEWARS_BOT_ROLE: "developer-1",
+                VIBEWARS_HUB: path.join(hubd.hub, "developer-1"),
+              },
+            },
+          );
+          let out = "";
+          child.stdout.on("data", (/** @type {Buffer} */ chunk) => (out += chunk.toString()));
+          child.on("exit", () => {
+            resolve(out);
+          });
+        });
 
-      const answer = await hubd.request("developer-1", "gh", [
-        "issue",
-        "view",
-        "7",
-        "--json",
-        "title",
-        "--jq",
-        ".title",
-      ]);
-
-      expect(answer.stdout).toBe("seven\n");
+      expect(await hub(".title")).toBe("seven\n");
+      expect(await hub("$ENV.HUBD_SECRET")).toBe("null\n");
     },
     20_000,
   );

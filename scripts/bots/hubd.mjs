@@ -20,6 +20,7 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { isBoardRead, limitedMessage, parseRateLimit, usesGraphql } from "./hub-budget.mjs";
+import { hasFilter } from "./hub-filter.mjs";
 import { approvalsSatisfied, checksSatisfied, explainGuard } from "./hub-guards.mjs";
 import {
   ghIssue,
@@ -105,19 +106,15 @@ function company() {
  * @param {string} file
  * @param {string[]} args
  * @param {string} cwd
- * @param {string} [input] written to the child's stdin
  * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
  */
-function run(file, args, cwd, input) {
+function run(file, args, cwd) {
   return new Promise((resolve) => {
     const child = spawn(file, args, {
       cwd,
       env: { ...process.env, GH_PROMPT_DISABLED: "1", GIT_TERMINAL_PROMPT: "0" },
-      stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
+      stdio: ["ignore", "pipe", "pipe"],
     });
-    if (input !== undefined) {
-      child.stdin?.end(input);
-    }
     let stdout = "";
     let stderr = "";
     child.stdout.setEncoding("utf8");
@@ -140,12 +137,6 @@ function run(file, args, cwd, input) {
 function gh(args) {
   return run("gh", args, REPO_DIR);
 }
-
-/**
- * `jq`, for applying an agent's `--jq` filter to an answer hubd built from
- * REST. Without it those requests simply stay on GraphQL.
- */
-const JQ = process.env.VIBEWARS_JQ ?? "";
 
 /**
  * One REST read, relative to the company's repository. Costs nothing from
@@ -198,12 +189,7 @@ async function restView(plan, cfg) {
   if (plan.fields === null) {
     return { code: 0, stdout: renderView(plan.group, item, plan.comments), stderr: "" };
   }
-  const json = pickJson(item, plan.fields);
-  if (plan.jq === null) {
-    return { code: 0, stdout: json, stderr: "" };
-  }
-  // `-r` because gh's --jq prints strings raw.
-  return run(JQ, ["-r", plan.jq], REPO_DIR, json);
+  return { code: 0, stdout: pickJson(item, plan.fields), stderr: "" };
 }
 
 /**
@@ -218,11 +204,15 @@ function servedByRest(kind, argv) {
   if (kind !== "gh") {
     return false;
   }
-  if (planView(argv, JQ !== "") !== null) {
+  if (planView(argv) !== null) {
     return true;
   }
   const prepared = argv[1] === "list" ? prepareList(argv) : null;
-  return prepared !== null && "argv" in prepared && planList(prepared.argv) !== null;
+  return (
+    prepared !== null &&
+    "argv" in prepared &&
+    planList(prepared.argv, prepared.fields ?? []) !== null
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -684,7 +674,7 @@ async function filteredList(argv, cfg) {
   /** @type {Record<string, unknown>[]} */
   let rows;
   let stderr = "";
-  const plan = planList(prepared.argv);
+  const plan = planList(prepared.argv, prepared.fields ?? []);
   const page = plan === null ? undefined : await rest(listPath(plan), cfg);
   if (plan !== null && Array.isArray(page)) {
     rows = listRows(plan, page);
@@ -789,6 +779,16 @@ async function serve(request, verdict, acting) {
   // The hat this request is being served under, if it is not the role's own.
   const as = typeof verdict.as === "string" ? verdict.as : role;
 
+  if (kind === "gh" && hasFilter(argv)) {
+    // hub strips output filters and applies them in the jail; one arriving
+    // here did not come through hub. Run on the host, by gh's jq or anyone
+    // else's, it could read hubd's environment and files (hub-filter.mjs).
+    const reason =
+      "output filters (--jq, --template) are applied inside the sandbox by hub, never here";
+    audit({ role, kind, argv, decision: "refused", reason });
+    return { allow: false, reason, code: 77 };
+  }
+
   const cfg = company();
 
   // Before the guards, whose refusals would otherwise describe a pull request
@@ -869,7 +869,7 @@ async function serve(request, verdict, acting) {
     return { allow: true, ...listed };
   }
 
-  const view = planView(argv, JQ !== "");
+  const view = planView(argv);
   if (view !== null) {
     const answered = await restView(view, cfg);
     if (answered !== null) {

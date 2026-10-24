@@ -51,7 +51,12 @@ function login(user) {
 function labelsOf(labels) {
   return arr(labels).map((raw) => {
     const label = rec(raw);
-    return { name: str(label.name), description: str(label.description), color: str(label.color) };
+    return {
+      id: str(label.node_id),
+      name: str(label.name),
+      description: str(label.description),
+      color: str(label.color),
+    };
   });
 }
 
@@ -84,8 +89,15 @@ export function commentsOf(comments) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * The gh fields REST can answer exactly, per command. `comments` needs a
- * second request, so a plan says whether it was asked for.
+ * The gh fields REST can answer exactly, per command: the same names, the
+ * same nesting, the same values, because agents' scripts parse them.
+ *
+ * Deliberately absent, so they stay on GraphQL: `author` and `assignees`
+ * (gh adds `id`, `is_bot` and `name`, and REST has no name without a
+ * lookup per user) and `comments` (gh's comment objects carry reactions,
+ * minimisation and edit flags REST does not give). hubd still uses the
+ * author internally, for visibility; it is only never handed to an agent as
+ * gh's answer. Plain-text output, which no script parses, does use them.
  */
 export const VIEW_FIELDS = {
   issue: new Set([
@@ -94,13 +106,10 @@ export const VIEW_FIELDS = {
     "body",
     "state",
     "url",
-    "author",
     "labels",
-    "assignees",
     "createdAt",
     "updatedAt",
     "closedAt",
-    "comments",
   ]),
   pr: new Set([
     "number",
@@ -108,9 +117,7 @@ export const VIEW_FIELDS = {
     "body",
     "state",
     "url",
-    "author",
     "labels",
-    "assignees",
     "createdAt",
     "updatedAt",
     "closedAt",
@@ -124,14 +131,13 @@ export const VIEW_FIELDS = {
     "changedFiles",
     "mergeable",
     "mergeStateStatus",
-    "comments",
   ]),
 };
 
 /**
- * What a list row can carry. A REST list item is thinner than a single
- * fetch (no diff stats, no mergeability), and its `comments` is a count where
- * gh gives the comments themselves, so those fall back to GraphQL.
+ * What a list row can carry, exactly. A REST list item is thinner than a
+ * single fetch (no diff stats, no mergeability), and `author`/`assignees`
+ * are out for the same reason as in `VIEW_FIELDS`.
  */
 export const LIST_FIELDS = {
   issue: new Set([
@@ -140,9 +146,7 @@ export const LIST_FIELDS = {
     "body",
     "state",
     "url",
-    "author",
     "labels",
-    "assignees",
     "createdAt",
     "updatedAt",
     "closedAt",
@@ -153,9 +157,7 @@ export const LIST_FIELDS = {
     "body",
     "state",
     "url",
-    "author",
     "labels",
-    "assignees",
     "createdAt",
     "updatedAt",
     "closedAt",
@@ -248,12 +250,11 @@ export function ghPull(raw, comments) {
  *   number: number,
  *   fields: string[] | null,
  *   comments: boolean,
- *   jq: string | null,
  * }} ViewPlan
  */
 
 /**
- * Read `--json`/`--jq` style flags off an argument list.
+ * Read `--json` style flags off an argument list.
  *
  * @param {string[]} words everything after the subcommand
  * @param {Set<string>} booleans flags that take no value
@@ -310,16 +311,18 @@ function last(flags, names) {
  * How to answer `gh issue view` / `gh pr view` from REST, or `null` to send
  * it to gh unchanged.
  *
+ * Output filters never reach here: `hub` applies them in the jail
+ * (hub-filter.mjs), and hubd refuses a request that still has one.
+ *
  * @param {string[]} argv
- * @param {boolean} haveJq whether hubd can apply a `--jq` filter itself
  * @returns {ViewPlan | null}
  */
-export function planView(argv, haveJq) {
+export function planView(argv) {
   const [group, sub, ...rest] = argv;
   if ((group !== "issue" && group !== "pr") || sub !== "view") {
     return null;
   }
-  const parsed = parseFlags(rest, new Set(["--comments", "-c"]), new Set(["--json", "--jq", "-q"]));
+  const parsed = parseFlags(rest, new Set(["--comments", "-c"]), new Set(["--json"]));
   if (parsed?.positional.length !== 1) {
     return null;
   }
@@ -330,13 +333,8 @@ export function planView(argv, haveJq) {
     return null;
   }
   const json = last(parsed.flags, ["--json"]);
-  const jq = last(parsed.flags, ["--jq", "-q"]) ?? null;
   const fields = json === undefined ? null : json.split(",").filter((field) => field !== "");
   if (fields !== null && (fields.length === 0 || fields.some((f) => !VIEW_FIELDS[group].has(f)))) {
-    return null;
-  }
-  // gh only accepts --jq together with --json.
-  if (jq !== null && (fields === null || !haveJq)) {
     return null;
   }
   return {
@@ -345,7 +343,6 @@ export function planView(argv, haveJq) {
     fields,
     comments:
       parsed.flags.has("--comments") || parsed.flags.has("-c") || !!fields?.includes("comments"),
-    jq,
   };
 }
 
@@ -363,14 +360,16 @@ export function planView(argv, haveJq) {
  * How to fetch the rows of `gh issue list` / `gh pr list` from REST, or
  * `null` to send it to gh unchanged.
  *
- * Takes the argv after `prepareList`, which has already refused output flags
- * hub cannot filter and added the fields visibility needs; so `--json` is
- * always present, and the rows are rendered by hub, not here.
+ * Takes the argv after `prepareList`, which has added the fields visibility
+ * needs; so `--json` is always present, and the rows are rendered by hub,
+ * not here. Only the fields the agent asked for must be exact: the ones
+ * added for visibility never reach it.
  *
  * @param {string[]} argv
+ * @param {string[]} requested the agent's own `--json` fields, `[]` for gh's defaults
  * @returns {ListPlan | null}
  */
-export function planList(argv) {
+export function planList(argv, requested) {
   const [group, sub, ...rest] = argv;
   if ((group !== "issue" && group !== "pr") || sub !== "list") {
     return null;
@@ -383,9 +382,7 @@ export function planList(argv) {
   if (parsed?.positional.length !== 0) {
     return null;
   }
-  const json = last(parsed.flags, ["--json"]) ?? "";
-  const fields = json.split(",").filter((field) => field !== "");
-  if (fields.some((field) => !LIST_FIELDS[group].has(field))) {
+  if (requested.some((field) => !LIST_FIELDS[group].has(field))) {
     return null;
   }
 

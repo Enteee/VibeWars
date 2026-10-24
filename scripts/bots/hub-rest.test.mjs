@@ -5,6 +5,8 @@
  * gh: gh's answer is always right, only more expensive. So most of these
  * check that anything not understood exactly falls back.
  */
+import fs from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -13,30 +15,38 @@ import {
   listPath,
   listRows,
   planList,
+  pickJson,
   planView,
   renderView,
 } from "./hub-rest.mjs";
 
 describe("planView", () => {
   it("plans the reads agents make all day", () => {
-    expect(planView(["issue", "view", "17"], false)).toEqual({
+    expect(planView(["issue", "view", "17"])).toEqual({
       group: "issue",
       number: 17,
       fields: null,
       comments: false,
-      jq: null,
     });
-    expect(planView(["issue", "view", "17", "--comments"], false)?.comments).toBe(true);
-    expect(
-      planView(["pr", "view", "25", "--json", "body,mergeStateStatus"], false)?.fields,
-    ).toEqual(["body", "mergeStateStatus"]);
-    expect(planView(["issue", "view", "1", "--json=comments"], false)?.comments).toBe(true);
+    expect(planView(["issue", "view", "17", "--comments"])?.comments).toBe(true);
+    expect(planView(["pr", "view", "25", "--json", "body,mergeStateStatus"])?.fields).toEqual([
+      "body",
+      "mergeStateStatus",
+    ]);
   });
 
-  it("takes --jq only when hubd has a jq to run it with", () => {
-    const argv = ["issue", "view", "1", "--json", "body", "--jq", ".body"];
-    expect(planView(argv, true)?.jq).toBe(".body");
-    expect(planView(argv, false)).toBeNull();
+  it("leaves fields gh shapes differently from REST to gh", () => {
+    // gh's author has id, is_bot and name; its comments carry reactions and
+    // flags REST lacks. Approximating them would break a script that parses
+    // them, so those requests stay on GraphQL.
+    for (const fields of ["author", "assignees", "comments", "title,author"]) {
+      expect(planView(["issue", "view", "1", "--json", fields]), fields).toBeNull();
+    }
+  });
+
+  it("never plans a request that carries an output filter", () => {
+    // hub applies filters in the jail; one that reaches hubd is refused.
+    expect(planView(["issue", "view", "1", "--json", "body", "--jq", ".body"])).toBeNull();
   });
 
   it("leaves to gh what it cannot answer exactly", () => {
@@ -49,17 +59,18 @@ describe("planView", () => {
       ["issue", "view", "1", "--template", "{{.title}}"],
       ["issue", "view"],
       ["issue", "view", "1", "2"],
-      ["issue", "view", "1", "--jq", ".x"], // gh needs --json with --jq
+      ["issue", "view", "1", "--jq", ".x"],
       ["issue", "edit", "1"],
     ]) {
-      expect(planView(argv, true), argv.join(" ")).toBeNull();
+      expect(planView(argv), argv.join(" ")).toBeNull();
     }
   });
 });
 
 describe("planList", () => {
   it("plans the common lists", () => {
-    expect(planList(["issue", "list", "--json", "number,title,author,url"])).toEqual({
+    // author and url are what hub adds for visibility; only title was asked.
+    expect(planList(["issue", "list", "--json", "number,title,author,url"], ["title"])).toEqual({
       group: "issue",
       state: "open",
       mergedOnly: false,
@@ -67,18 +78,10 @@ describe("planList", () => {
       labels: [],
     });
     expect(
-      planList([
-        "issue",
-        "list",
-        "--state",
-        "all",
-        "-L",
-        "5",
-        "--label",
-        "bug",
-        "--json",
-        "number",
-      ]),
+      planList(
+        ["issue", "list", "--state", "all", "-L", "5", "--label", "bug", "--json", "number"],
+        ["number"],
+      ),
     ).toMatchObject({ state: "all", limit: 5, labels: ["bug"] });
   });
 
@@ -87,13 +90,16 @@ describe("planList", () => {
       ["issue", "list", "--search", "rate limit", "--json", "number"],
       ["issue", "list", "--author", "x", "--json", "number"],
       ["issue", "list", "--json", "number,comments"], // a count in REST, a list in gh
+      ["issue", "list", "--json", "number,author"], // gh's author has more in it
       ["pr", "list", "--json", "number,reviewDecision"],
       ["pr", "list", "--label", "bug", "--json", "number"], // pulls cannot filter labels
       ["pr", "list", "--state", "merged", "--json", "number"],
       ["issue", "list", "--limit", "500", "--json", "number"],
       ["issue", "list", "--state", "sideways", "--json", "number"],
     ]) {
-      expect(planList(argv), argv.join(" ")).toBeNull();
+      const at = argv.indexOf("--json");
+      const requested = (argv[at + 1] ?? "").split(",");
+      expect(planList(argv, requested), argv.join(" ")).toBeNull();
     }
   });
 });
@@ -132,7 +138,7 @@ describe("REST answers in gh's shape", () => {
   });
 
   it("drops pull requests from an issue list, as gh's issue list does", () => {
-    const plan = planList(["issue", "list", "--json", "number"]);
+    const plan = planList(["issue", "list", "--json", "number"], ["number"]);
     expect(plan).not.toBeNull();
     if (plan === null) {
       return;
@@ -150,5 +156,57 @@ describe("REST answers in gh's shape", () => {
     );
     expect(text).toMatch(/^title:\tT\nstate:\tOPEN\n/);
     expect(text.endsWith("--\nB\n")).toBe(true);
+  });
+});
+
+describe("golden: real REST answers against what gh said for the same items", () => {
+  /**
+   * GitHub's own REST answers for issue #1 and pull request #25, captured
+   * from api.github.com (bodies trimmed). The expected values are what gh
+   * itself reported for these items on 2026-10-24: `gh issue view 1 --json
+   * state` said CLOSED, and hubd's approval of #25 was recorded against the
+   * head gh gave, b02a5cc7. The rest follows gh's documented shapes.
+   * Replace with a straight `gh … --json` capture when someone can run gh.
+   *
+   * @param {string} name
+   * @returns {unknown}
+   */
+  const fixture = (name) =>
+    JSON.parse(fs.readFileSync(new URL(`./fixtures/${name}.json`, import.meta.url), "utf8"));
+
+  it("maps issue #1 to gh's fields and values", () => {
+    expect(
+      JSON.parse(
+        pickJson(ghIssue(fixture("rest-issue-1")), ["number", "title", "state", "url", "closedAt"]),
+      ),
+    ).toEqual({
+      number: 1,
+      title: "Remove all backwards compatibility, and instruct the agents never to add it",
+      state: "CLOSED",
+      url: "https://github.com/Enteee/VibeWars/issues/1",
+      closedAt: "2026-10-24T14:47:27Z",
+    });
+  });
+
+  it("maps pull request #25 to gh's fields and values, merged as MERGED", () => {
+    expect(
+      JSON.parse(
+        pickJson(ghPull(fixture("rest-pull-25")), [
+          "state",
+          "headRefOid",
+          "headRefName",
+          "baseRefName",
+          "isDraft",
+          "mergedAt",
+        ]),
+      ),
+    ).toEqual({
+      state: "MERGED",
+      headRefOid: "b02a5cc7c46c2eef027087626112d130e0e48e20",
+      headRefName: "bot/developer-1/issue-1",
+      baseRefName: "main",
+      isDraft: false,
+      mergedAt: "2026-10-24T14:47:26Z",
+    });
   });
 });
