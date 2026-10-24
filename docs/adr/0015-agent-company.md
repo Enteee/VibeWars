@@ -55,7 +55,8 @@ particular:
   fetches and builds main in hubd's mirror (built from `git archive`, never
   a checkout), and fast-forwards the checkout only to a fetched commit equal
   to the mirror's. Every git it runs there pins the settings that run
-  commands (hooks, fsmonitor, ssh, gpg and signature checks, submodules)
+  commands (hooks, fsmonitor, ssh, gpg and signature checks, submodules,
+  replace refs)
   and every filter driver the config names. The residual is a setting git
   adds in future that runs a command and is not pinned; read-only binds
   (#63) close that class instead of chasing it key by key.

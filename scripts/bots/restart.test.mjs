@@ -298,3 +298,28 @@ describe("the restarter, against a checkout an agent has tampered with", () => {
     ).toBe(true);
   });
 });
+
+describe("the restarter, against replace refs in the checkout", () => {
+  it("checks out main's own tree, not one a replace ref swaps in under its sha", () => {
+    const company = setup();
+    // An agent's commit, and a replace ref claiming it is main.
+    sh(["checkout", "-q", "-b", "agent"], company.repo);
+    fs.writeFileSync(path.join(company.repo, "evil.txt"), "x\n");
+    sh(["add", "evil.txt"], company.repo);
+    commit("unreviewed", company.repo);
+    const evil = sh(["rev-parse", "HEAD"], company.repo);
+    sh(["checkout", "-q", "main"], company.repo);
+    sh(["branch", "-q", "-D", "agent"], company.repo);
+    fs.mkdirSync(path.join(company.repo, ".git", "refs", "replace"), { recursive: true });
+    fs.writeFileSync(
+      path.join(company.repo, ".git", "refs", "replace", company.target),
+      `${evil}\n`,
+    );
+
+    const result = company.restart();
+
+    expect(result.boot).toMatchObject({ updated: true });
+    expect(fs.existsSync(path.join(company.repo, "evil.txt"))).toBe(false);
+    expect(fs.existsSync(path.join(company.repo, "scripts", "bots", "new.mjs"))).toBe(true);
+  });
+});

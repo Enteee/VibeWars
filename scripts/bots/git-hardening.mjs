@@ -46,8 +46,18 @@ export const GIT_HARDENING = [
   "submodule.recurse=false",
 ];
 
-/** No system or global config either, so nothing outside the repository changes what runs. */
-export const GIT_ENV = { GIT_CONFIG_NOSYSTEM: "1", GIT_CONFIG_GLOBAL: "/dev/null" };
+/**
+ * No system or global config either, so nothing outside the repository
+ * changes what runs. And no replace refs: `refs/replace/<sha>` is a file any
+ * agent can write in the shared repository, and it makes git read a
+ * different object under a reviewed sha, so a fast-forward to main would
+ * check out an agent's tree (#67).
+ */
+export const GIT_ENV = {
+  GIT_CONFIG_NOSYSTEM: "1",
+  GIT_CONFIG_GLOBAL: "/dev/null",
+  GIT_NO_REPLACE_OBJECTS: "1",
+};
 
 /** For `git config --get-regexp`: every setting that names a filter driver's command. */
 export const FILTER_KEYS = "^filter\\..*\\.(smudge|clean|process|required)$";
