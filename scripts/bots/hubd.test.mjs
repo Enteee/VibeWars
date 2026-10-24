@@ -8,7 +8,7 @@
  * `gh project` gives when the budget is empty. Requests go through the same
  * spool files `hub` writes.
  */
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -96,6 +96,7 @@ async function startHubd(remaining) {
 
   let next = 0;
   return {
+    root,
     hub,
     /** @param {number} left */
     setRemaining(left) {
@@ -234,5 +235,59 @@ describe("hubd and the GraphQL budget", () => {
     const budget = readJson(path.join(hubd.hub, "ratelimit.json"));
     expect(budget.remaining).toBe(1234);
     expect(budget.limit).toBe(5000);
+  }, 20_000);
+});
+
+describe("hubd running git in an agent's worktree", () => {
+  /**
+   * @param {string[]} args
+   * @param {string} cwd
+   */
+  const sh = (args, cwd) => {
+    // The test's own git ignores this machine's config (signing, hooks).
+    const result = spawnSync("git", args, {
+      cwd,
+      encoding: "utf8",
+      env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
+    });
+    if (result.status !== 0) {
+      throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
+    }
+    return result.stdout;
+  };
+
+  it("does not run a hook the agent planted, and still pushes", async () => {
+    const hubd = await startHubd(5000);
+    const remote = path.join(hubd.root, "remote.git");
+    const worktree = path.join(hubd.root, "wt", "developer-1");
+    sh(["init", "--bare", "-q", remote], hubd.root);
+    sh(["init", "-q", "-b", "main", worktree], hubd.root);
+    sh(
+      ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "x"],
+      worktree,
+    );
+    sh(["remote", "add", "origin", remote], worktree);
+
+    // Planted both ways an agent could: in .git/hooks, and through a
+    // hooksPath of its choosing.
+    const marker = path.join(hubd.root, "hook-ran");
+    const hook = `#!/bin/sh\ntouch ${marker}\n`;
+    fs.writeFileSync(path.join(worktree, ".git", "hooks", "pre-push"), hook, { mode: 0o755 });
+    const planted = path.join(worktree, "planted-hooks");
+    fs.mkdirSync(planted);
+    fs.writeFileSync(path.join(planted, "pre-push"), hook, { mode: 0o755 });
+    sh(["config", "core.hooksPath", planted], worktree);
+
+    // The hook is real: a plain git push runs it.
+    sh(["push", "-q", "origin", "HEAD:refs/heads/plain"], worktree);
+    expect(fs.existsSync(marker)).toBe(true);
+    fs.rmSync(marker);
+
+    sh(["branch", "bot/developer-1/x"], worktree);
+    const answer = await hubd.request("developer-1", "push", ["bot/developer-1/x"]);
+
+    expect(answer.code).toBe(0);
+    expect(fs.existsSync(marker)).toBe(false);
+    expect(sh(["branch", "--list", "bot/developer-1/x"], remote)).toContain("bot/developer-1/x");
   }, 20_000);
 });

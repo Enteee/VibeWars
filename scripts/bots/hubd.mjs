@@ -95,13 +95,14 @@ function company() {
  * @param {string} file
  * @param {string[]} args
  * @param {string} cwd
+ * @param {Record<string, string>} [extraEnv]
  * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
  */
-function run(file, args, cwd) {
+function run(file, args, cwd, extraEnv = {}) {
   return new Promise((resolve) => {
     const child = spawn(file, args, {
       cwd,
-      env: { ...process.env, GH_PROMPT_DISABLED: "1", GIT_TERMINAL_PROMPT: "0" },
+      env: { ...process.env, GH_PROMPT_DISABLED: "1", GIT_TERMINAL_PROMPT: "0", ...extraEnv },
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
@@ -125,6 +126,52 @@ function run(file, args, cwd) {
  */
 function gh(args) {
   return run("gh", args, REPO_DIR);
+}
+
+/**
+ * Settings an agent could plant in its worktree's `.git/config` to make
+ * hubd, which runs unjailed, execute its code: hooks, an fsmonitor, an SSH
+ * or proxy command, a credential or askpass helper, an external diff, and
+ * the `ext::` transport. `-c` beats the repository's own config, so these
+ * pin each to something inert (issue #26, stopgap).
+ *
+ * This does not stop `remote.origin.url` pointing somewhere else; that is
+ * #26's mirror fix.
+ */
+const GIT_HARDENING = [
+  "-c",
+  "core.hooksPath=/dev/null",
+  "-c",
+  "core.fsmonitor=false",
+  "-c",
+  "core.sshCommand=ssh",
+  "-c",
+  "core.gitProxy=",
+  "-c",
+  "core.askPass=",
+  "-c",
+  "credential.helper=",
+  "-c",
+  "diff.external=",
+  "-c",
+  "protocol.ext.allow=never",
+];
+
+/**
+ * git in an agent's worktree, with the repository's dangerous settings
+ * neutralised and no system or global config, so nothing outside the
+ * worktree changes what runs either. The remote is SSH, so no credential
+ * helper is needed.
+ *
+ * @param {string[]} args
+ * @param {string} worktree
+ * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
+ */
+function git(args, worktree) {
+  return run("git", [...GIT_HARDENING, ...args], worktree, {
+    GIT_CONFIG_NOSYSTEM: "1",
+    GIT_CONFIG_GLOBAL: "/dev/null",
+  });
 }
 
 /* -------------------------------------------------------------------------- */
@@ -332,7 +379,12 @@ function audit(entry) {
  * @returns {Promise<string[]>}
  */
 async function changedPaths(worktree) {
-  const result = await run("git", ["diff", "--name-only", "origin/main...HEAD"], worktree);
+  // --no-ext-diff and --no-textconv: a `.gitattributes` in the worktree
+  // can name a diff driver, which is a command.
+  const result = await git(
+    ["diff", "--no-ext-diff", "--no-textconv", "--name-only", "origin/main...HEAD"],
+    worktree,
+  );
   return result.code === 0 ? result.stdout.split("\n").filter((line) => line !== "") : [];
 }
 
@@ -725,7 +777,7 @@ async function serve(request, verdict, acting) {
     const worktree = path.join(ROOT, "wt", role);
     const paths = await changedPaths(worktree);
     const gateChange = touchesGate(paths);
-    const result = await run("git", ["push", "--set-upstream", "origin", String(branch)], worktree);
+    const result = await git(["push", "--set-upstream", "origin", String(branch)], worktree);
     audit({
       role,
       kind,
