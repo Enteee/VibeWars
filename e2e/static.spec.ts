@@ -65,6 +65,22 @@ test("online play is shown disabled, and nothing reaches for a server", async ({
   expect(traffic.online).toEqual([]);
 });
 
+test("a disabled primary button looks as disabled as any other (#137)", async ({ page }) => {
+  await page.goto("./");
+  const host = page.getByRole("button", { name: "host a lobby" });
+  const quick = page.getByRole("button", { name: "quick match" });
+  await expect(host).toBeDisabled();
+  await expect(quick).toBeDisabled();
+  await expect(host).toHaveClass(/\bprimary\b/);
+  await expect(quick).not.toHaveClass(/\bprimary\b/);
+
+  const look = (el: Element) => {
+    const style = getComputedStyle(el);
+    return { color: style.color, border: style.borderTopColor, opacity: style.opacity };
+  };
+  expect(await host.evaluate(look)).toEqual(await quick.evaluate(look));
+});
+
 test("a character saved under the sub-path survives a reload", async ({ page }) => {
   await page.goto("./");
   await page.getByRole("button", { name: "new character" }).click();
