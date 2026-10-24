@@ -489,6 +489,24 @@ describe("hubd pushing through its own mirror", () => {
     expect(audit).toContain('"tag":"gate-change"');
     expect(audit).toContain('"paths":["scripts/bots/hubd.mjs"]');
   }, 20_000);
+
+  it("tags a push as a gate change when it cannot tell what changed", async () => {
+    const hubd = await startHubd(5000);
+    const { repo, remote } = hubd;
+    // A remote with no main: fetching it fails, so there is nothing to diff
+    // against.
+    sh(["init", "--bare", "-q", remote], hubd.root);
+    sh(["init", "-q", "-b", "bot/developer-1/y", repo], hubd.root);
+    fs.writeFileSync(path.join(repo, "README.md"), "x\n");
+    sh(["add", "README.md"], repo);
+    commit("only", repo);
+
+    const answer = await hubd.request("developer-1", "push", ["bot/developer-1/y"]);
+
+    expect(answer.code, String(answer.stderr)).toBe(0);
+    const audit = fs.readFileSync(path.join(hubd.hub, "audit.jsonl"), "utf8");
+    expect(audit).toContain('"tag":"gate-change","paths":"unknown"');
+  }, 20_000);
 });
 
 describe("hubd recording verdicts and merging", () => {
