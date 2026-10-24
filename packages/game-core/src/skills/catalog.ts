@@ -33,6 +33,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.orison-of-healing",
     name: "Orison of Healing",
+    type: "spell",
     attributeId: "monk.healing-prayers",
     cost: { kind: "energy", amount: 5 },
     activationSeconds: 1,
@@ -51,6 +52,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.fireball",
     name: "Fireball",
+    type: "spell",
     attributeId: "elementalist.fire-magic",
     cost: { kind: "energy", amount: 10 },
     activationSeconds: 1,
@@ -72,6 +74,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.swift-chop",
     name: "Swift Chop",
+    type: "attack",
     attributeId: "warrior.axe-mastery",
     cost: { kind: "energy", amount: 5 },
     activationSeconds: 0,
@@ -93,6 +96,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.barrage",
     name: "Barrage",
+    type: "attack",
     attributeId: "ranger.marksmanship",
     cost: { kind: "energy", amount: 5 },
     activationSeconds: 0,
@@ -113,6 +117,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.backbreaker",
     name: "Backbreaker",
+    type: "attack",
     attributeId: "warrior.hammer-mastery",
     cost: { kind: "adrenaline", amount: 9 },
     activationSeconds: 0,
@@ -134,6 +139,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.blood-renewal-lite",
     name: "Vital Transfer",
+    type: "spell",
     attributeId: "necromancer.blood-magic",
     cost: { kind: "energy", amount: 5 },
     activationSeconds: 1,
@@ -164,6 +170,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.broad-head-arrow",
     name: "Broad Head Arrow",
+    type: "attack",
     attributeId: "ranger.marksmanship",
     cost: { kind: "energy", amount: 10 },
     activationSeconds: 0,
@@ -183,6 +190,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "necromancer.faintheartedness",
     name: "Faintheartedness",
+    type: "hex",
     attributeId: "necromancer.curses",
     cost: { kind: "energy", amount: 10 },
     activationSeconds: 1,
@@ -197,6 +205,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.armor-of-earth",
     name: "Armor of Earth",
+    type: "enchantment",
     attributeId: "elementalist.earth-magic",
     cost: { kind: "energy", amount: 10 },
     activationSeconds: 0.75,
@@ -210,6 +219,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "ranger.troll-unguent",
     name: "Troll Unguent",
+    type: "skill",
     attributeId: "ranger.wilderness-survival",
     cost: { kind: "energy", amount: 5 },
     activationSeconds: 3,
@@ -224,6 +234,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "monk.mend-affliction",
     name: "Mend Affliction",
+    type: "spell",
     attributeId: "monk.protection-prayers",
     cost: { kind: "energy", amount: 5 },
     activationSeconds: 1,
@@ -239,6 +250,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   {
     id: "warrior.sever-artery-lite",
     name: "Opening Cut",
+    type: "attack",
     attributeId: "warrior.swordsmanship",
     // Costs exactly one hit's worth of adrenaline, so landing a skill
     // immediately opens up the follow-up. Charging more than a hit grants
