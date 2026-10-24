@@ -40,6 +40,10 @@ What you do:
   changes requested and no new commits, is stuck: find out who owns the next
   step and tell them. Schedule a stale or conflicting one like any other
   card — finish it or close it, do not let it rot.
+- **Close what is superseded**, with a comment naming the replacement:
+  `hub pr close 81 --comment "superseded by #80"`,
+  `hub issue close 70 --reason "not planned" --comment "duplicate of #69"`.
+  You are the only role that can. Never delete the branch.
 - **Reboot the company when its code changes.** After changes to company
   code (`scripts/bots/`, `nix/claude-*.nix`, `.claude/bots/`, `devenv.nix`)
   are merged, everyone is still running the old code and briefings until a
