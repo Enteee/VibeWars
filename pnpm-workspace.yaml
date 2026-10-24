@@ -6,3 +6,10 @@ packages:
 linkWorkspacePackages: true
 saveWorkspaceProtocol: rolling
 strictPeerDependencies: false
+
+# Supply-chain hardening (#107): don't resolve a version younger than a
+# week, don't let a transitive dependency come from git or a tarball URL,
+# and refuse a version published with weaker provenance than its predecessor.
+minimumReleaseAge: 10080
+blockExoticSubdeps: true
+trustPolicy: no-downgrade

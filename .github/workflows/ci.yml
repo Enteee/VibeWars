@@ -21,7 +21,7 @@ jobs:
     outputs:
       hooks: ${{ steps.list.outputs.hooks }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # The one job that saves the Nix store cache. The hook jobs wait for
       # it, so they restore the store this one realised.
@@ -54,7 +54,7 @@ jobs:
       matrix:
         hook: ${{ fromJSON(needs.hook-list.outputs.hooks) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: ./.github/actions/devenv
 
       # Against the whole tree, not only changed files: a commit made with
@@ -91,7 +91,7 @@ jobs:
     name: format + lint + typecheck + test + build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: ./.github/actions/devenv
 
       # Mirrors `enterTest` in devenv.nix; keep the two lists in step. They
@@ -121,7 +121,7 @@ jobs:
 
       - name: Upload Playwright output
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-output
           path: |

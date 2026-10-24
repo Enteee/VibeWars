@@ -81,10 +81,30 @@ so the silhouette identifies the profession and the colour only supports it.
 | Condition   | Circle plate, glyph inside                            |
 | Hex         | Diamond plate, glyph inside                           |
 | Enchantment | Rounded-square plate, glyph inside                    |
+| Area flash  | Caster's team colour ring at the area's true radius   |
 
 The status plates differ in outline as well as colour. Hex purple and
 enchantment teal are close for a deuteranope (simulated ΔE ≈ 18); diamond
 against square is not.
+
+### Area flash
+
+Where an area skill lands (#5), the scene flashes the area it hit:
+
+- **Colour is the caster's team**: `friend` for your side's splash, `foe`
+  for theirs. Never `target` yellow, which means "your target" and nothing
+  else.
+- **A 2 px ring at the area's true radius**, over a fill of the same colour
+  at 12 % alpha. The ring shows exactly who could be hit. It does not grow or
+  shrink, because an animated radius would misstate the area.
+- **It fades from full to zero alpha over 0.4 s**, then is removed, so a
+  Barrage volley never stacks into a solid disc.
+- **It is drawn under the actors** and over the grid and walls, so it never
+  hides a health bar, a status plate or a target ring.
+
+It cannot be confused with the target ring. The target ring is yellow and
+hugs one actor (5 px outside a radius of 14). The flash is team-coloured,
+at least 40 units in radius, and gone in under half a second.
 
 ### Skill type badges
 

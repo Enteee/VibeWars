@@ -202,6 +202,25 @@ bidi characters, so an agent can type a line that looks like another
 sender's header, such as `📋 Manager → 👤 Operator`. Until #93 lands,
 trust the topic a message is in, not a header inside its text.
 
+**Open: forged CI checks.** Any role that can push a branch can push a
+workflow. That workflow runs with `GITHUB_TOKEN` and can post a check run,
+or a commit status, for any commit in the repository, under any name.
+hubd only tags a push that touches `.github/workflows/`; it does not block
+it. The merge guard reads checks by name. Since #108, it keeps every check
+suite and every status as a separate source and refuses a name that more
+than one source reports. Two cases still pass:
+
+- a forged check is the only one with its name, because CI has not created
+  its own run yet;
+- a forged run lands in the real run's own check suite and is newer. This
+  depends on GitHub behaviour we have not verified.
+
+The fix is to read the conclusions from the jobs of the `ci.yml`
+`pull_request` workflow run for that commit, never from check runs or
+statuses. Jobs exist only because a workflow executed, so the API cannot
+create them. That run still uses the PR head's own `ci.yml`, so reviewing
+gate files stays load-bearing either way.
+
 **By design.** The manager may close and reopen any pull request or
 issue (#84), gate PRs included, but never with `--delete-branch`. A
 misbehaving manager can stall the pipeline this way; it cannot destroy

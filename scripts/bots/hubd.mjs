@@ -24,6 +24,7 @@ import { isBoardRead, limitedMessage, parseRateLimit, usesGraphql } from "./hub-
 import { hasFilter } from "./hub-filter.mjs";
 import { approvalsSatisfied, checksSatisfied, explainGuard, pathsWithin } from "./hub-guards.mjs";
 import {
+  checksFromRest,
   ghIssue,
   ghPull,
   listPath,
@@ -185,6 +186,39 @@ async function rest(rel, cfg) {
   } catch {
     return undefined;
   }
+}
+
+/**
+ * The checks on one commit, read from REST for exactly that commit (#96).
+ *
+ * `gh pr checks` was GraphQL, so an exhausted budget read as "no checks"
+ * and a merge was refused as "checks missing" while CI was green. It also
+ * read the pull request's head *now*, not the commit the guards pinned.
+ * This reads the pinned SHA and costs no GraphQL; when it cannot read, it
+ * says why, and never answers "none".
+ *
+ * @param {string} sha
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ checks: { name: string, conclusion: string }[] } | { error: string }>}
+ */
+async function restChecks(sha, cfg) {
+  /** @type {unknown[]} */
+  const answers = [];
+  for (const rel of [
+    `commits/${sha}/check-runs?per_page=100`,
+    `commits/${sha}/status?per_page=100`,
+  ]) {
+    const result = await gh(["api", `repos/${cfg.repo}/${rel}`]);
+    if (result.code !== 0) {
+      return { error: result.stderr.trim().split("\n")[0] ?? "" };
+    }
+    try {
+      answers.push(JSON.parse(result.stdout));
+    } catch {
+      return { error: `${rel.replace(/\?.*/, "")} did not answer JSON` };
+    }
+  }
+  return checksFromRest(answers[0], answers[1]);
 }
 
 /**
@@ -424,23 +458,16 @@ async function evaluateGuards(guards, argv) {
 
   for (const guard of guards) {
     if (guard === "checks-green") {
-      const result = await gh(["pr", "checks", pr, "--repo", cfg.repo, "--json", "name,bucket"]);
-      /** @type {{ name: string, conclusion: string }[]} */
-      let checks = [];
-      if (result.code === 0 || result.stdout !== "") {
-        try {
-          /** @type {unknown} */
-          const raw = JSON.parse(result.stdout);
-          const rows = /** @type {Record<string, unknown>[]} */ (Array.isArray(raw) ? raw : []);
-          checks = rows.map((row) => ({
-            name: String(row.name),
-            conclusion: String(row.bucket),
-          }));
-        } catch {
-          checks = [];
-        }
+      const read = await restChecks(sha, cfg);
+      if ("error" in read) {
+        // An unreadable answer is never an empty one (#46). If the budget
+        // is what ran out, handle() answers with the limit and its reset.
+        return {
+          ok: false,
+          reason: `could not read checks for #${pr} at ${sha.slice(0, 7)}: ${read.error}`,
+        };
       }
-      const verdict = checksSatisfied(checks, cfg.expectedChecks);
+      const verdict = checksSatisfied(read.checks, cfg.expectedChecks);
       if (!verdict.ok) {
         return { ok: false, reason: explainGuard("checks", verdict) };
       }
