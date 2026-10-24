@@ -26,6 +26,9 @@ const WORKFLOWS = path.join(
   "workflows",
 );
 
+/** A `checks` or `statuses` write grant, either side quoted or not. */
+const GRANT = /["']?\b(checks|statuses)["']?\s*:\s*["']?write\b/;
+
 const files = fs
   .readdirSync(WORKFLOWS)
   .filter((name) => name.endsWith(".yml") || name.endsWith(".yaml"));
@@ -35,11 +38,26 @@ describe("workflow permissions", () => {
     expect(files).toContain("ci.yml");
   });
 
+  it.each([
+    "checks: write",
+    'checks: "write"',
+    "checks: 'write'",
+    '"checks": write',
+    "'statuses': 'write'",
+    "{ contents: read, checks: write }",
+  ])("sees the grant in %s", (line) => {
+    expect(line).toMatch(GRANT);
+  });
+
+  it.each(["checks: read", 'statuses: "read"', "contents: write"])("lets %s through", (line) => {
+    expect(line).not.toMatch(GRANT);
+  });
+
   it.each(files)("%s declares its permissions and cannot write checks", (name) => {
     const text = fs.readFileSync(path.join(WORKFLOWS, name), "utf8");
 
     expect(text, "a top-level permissions: block").toMatch(/^permissions:/m);
-    expect(text).not.toMatch(/\b(checks|statuses)\s*:\s*write\b/);
+    expect(text).not.toMatch(GRANT);
     expect(text).not.toMatch(/\bwrite-all\b/);
   });
 });
