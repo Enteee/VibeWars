@@ -33,11 +33,19 @@ jobs:
       - name: Format check
         run: pnpm run format:check
 
-      - name: Lint
-        run: pnpm run lint
-
       - name: Typecheck
         run: pnpm run typecheck
+
+      # After Typecheck, not before, and this order is load-bearing rather
+      # than cosmetic. Type-aware linting resolves cross-package imports
+      # through each package's `types` entry, which points into `dist/` —
+      # gitignored, so a fresh checkout has none. Linting first made every
+      # cross-package symbol `error`-typed and produced ~966 bogus
+      # `no-unsafe-*` errors, while passing on any machine where an earlier
+      # build had left `dist/` behind. `tsc --build` in Typecheck emits those
+      # declarations.
+      - name: Lint
+        run: pnpm run lint
 
       - name: Test
         run: pnpm run test
