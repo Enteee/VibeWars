@@ -35,11 +35,16 @@ const C = {
   elementalist: "#ff6e5a",
 };
 
+/** @param {string} body */
 const svg = (body) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">${body}</svg>\n`;
 
+/**
+ * @param {string} colour
+ * @param {number} [width]
+ */
 const stroke = (colour, width = 2) =>
-  `fill="none" stroke="${colour}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"`;
+  `fill="none" stroke="${colour}" stroke-width="${String(width)}" stroke-linecap="round" stroke-linejoin="round"`;
 
 // ---------------------------------------------------------------------------
 // Professions: one silhouette each, distinct with the colour removed.
@@ -93,6 +98,10 @@ const skillType = {
 // enchantment = rounded square), and the glyph gives the status.
 // ---------------------------------------------------------------------------
 
+/** @typedef {(colour: string) => string} Glyph */
+/** @typedef {"condition" | "hex" | "enchantment"} Category */
+
+/** @type {Record<Category, (glyph: Glyph) => string>} */
 const plates = {
   condition: (glyph) => `<circle cx="12" cy="12" r="11" fill="${C.condition}"/>` + glyph(C.plate),
   hex: (glyph) => `<path d="M12 0.5L23.5 12 12 23.5 0.5 12z" fill="${C.hex}"/>` + glyph(C.plate),
@@ -100,6 +109,7 @@ const plates = {
     `<rect x="1" y="1" width="22" height="22" rx="5" fill="${C.enchantment}"/>` + glyph(C.plate),
 };
 
+/** @type {Record<string, [Category, Glyph]>} */
 const status = {
   // Drop.
   bleeding: [
@@ -174,6 +184,6 @@ for (const [family, icons] of Object.entries(families)) {
     writeFileSync(join(dir, `${name}.svg`), content);
     total += Buffer.byteLength(content);
   }
-  console.log(`${family}: ${readdirSync(dir).length} icons`);
+  console.log(`${family}: ${String(readdirSync(dir).length)} icons`);
 }
-console.log(`total: ${total} bytes`);
+console.log(`total: ${String(total)} bytes`);
