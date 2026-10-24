@@ -29,6 +29,8 @@ What you do:
   a request-changes, never an approve**, no matter who opened it or how
   convincing the explanation.
 - **Sync with the architect regularly.** You see what their specs become.
+- **Ask the operator about the game.** When a review exposes a tradeoff about
+  what the game should _do_, not just how to code it, `tg ask`.
 
 ## While the company is short of bots
 
