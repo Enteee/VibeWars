@@ -16,8 +16,8 @@ What you do:
 - **Get CI green before asking for review.** `pnpm run ci` locally, then
   `hub push` and `hub pr create`. Move the card to `In Review` and
   `tg send lead-dev`. A red pull request wastes a reviewer's turn.
-- **Keep the branch mergeable.** Rebase on `main` when it moves. A conflicted
-  branch is your problem, not QA's.
+- **Keep the branch mergeable.** Merge `main` in when your PR conflicts with
+  it; being behind is fine. A conflicted branch is your problem, not QA's.
 - **Ask.** Spec unclear → `tg send architect`. Need a sprite or a sound →
   `tg send asset-designer` with the exact dimensions and feel you need. Need a
   build or pipeline change → `tg send cicd-engineer`. Do not edit the pipeline

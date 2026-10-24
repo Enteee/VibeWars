@@ -94,6 +94,98 @@ let
     ]
   );
 
+  # The shell the Bash tool runs, and so the parent of every command an agent
+  # types. nixpkgs wraps `claude` with LD_LIBRARY_PATH=<alsa-lib>/lib (for
+  # voice input), and that reaches every child: an alsa-lib built against one
+  # glibc forced into a binary built against another kills it on load, which
+  # is how Chromium died in every jail (issue #29). claude keeps the variable;
+  # its children do not. Named `bash` because Claude Code picks its shell
+  # dialect from the name.
+  jailShell = pkgs.writeShellScriptBin "bash" ''
+    unset LD_LIBRARY_PATH
+    exec ${lib.getExe pkgs.bashInteractive} "$@"
+  '';
+
+  # The jail's entrypoint. Worktrees are created bare, and a worktree with no
+  # node_modules cannot build or test anything. Run inside the jail rather
+  # than by claude-bot on the host, so dependency install scripts never run
+  # unsandboxed. A frozen install on an up-to-date tree takes about a second,
+  # so this runs on every start and also catches a branch that changed the
+  # lockfile while the agent was away. A failure is reported, not fatal: an
+  # agent on a branch with a broken lockfile can still fix it. pnpm asks before
+  # it rebuilds a stale node_modules, and nobody is there to answer.
+  jailInit = pkgs.writeShellScript "vibewars-jail-init" ''
+    if ! pnpm install --frozen-lockfile --config.confirmModulesPurge=false; then
+      echo "claude-bot: warning: pnpm install failed; this worktree has no usable node_modules." >&2
+    fi
+    exec "$@"
+  '';
+
+  # Every role that builds or tests the game. They get the Chromium devenv.nix
+  # pins, from the same `pkgs`, on PATH and as VIBEWARS_CHROMIUM, which
+  # playwright.config.ts prefers. A case pattern, because the developers are
+  # numbered.
+  testRoles = "developer-* | asset-designer | cicd-engineer | lead-dev | perf-sec-qa | qa-tester";
+  chromium = lib.getExe pkgs.chromium;
+
+  # `claude-bot --smoke <role>` runs this inside the role's jail instead of
+  # claude, as the regression check for issue #29. LD_LIBRARY_PATH is set by
+  # hand, to what claude's own wrapper sets it to, because the smoke test has
+  # no claude in between. /dev/shm is checked in the mount table: `stat -f`
+  # says tmpfs either way, since /dev is one.
+  jailSmoke = pkgs.writeShellScript "vibewars-jail-smoke" ''
+    # Single-quoted commands throughout: the inner $SHELL is the one under test.
+    # shellcheck disable=SC2016
+    failed=0
+    check() {
+      if [ "$2" = "$3" ]; then
+        echo "ok    $1"
+      else
+        echo "FAIL  $1: expected '$3', got '$2'"
+        failed=1
+      fi
+    }
+
+    check "the shell drops LD_LIBRARY_PATH" \
+      "$(LD_LIBRARY_PATH=${lib.getLib pkgs.alsa-lib}/lib "$SHELL" -c 'printenv LD_LIBRARY_PATH || true')" ""
+    check "no per-user host profile on PATH" \
+      "$(case ":$PATH:" in (*:/etc/profiles/per-user/*) echo present ;; esac)" ""
+    check "/dev/shm is its own mount" "$(awk '$5 == "/dev/shm" { print $9 }' /proc/self/mountinfo)" "tmpfs"
+    if [ -n "''${VIBEWARS_CHROMIUM-}" ]; then
+      check "chromium on PATH is VIBEWARS_CHROMIUM" "$(command -v chromium)" "$VIBEWARS_CHROMIUM"
+      check "VIBEWARS_CHROMIUM renders a page" \
+        "$("$SHELL" -c '"$VIBEWARS_CHROMIUM" --headless=new --no-sandbox --dump-dom "data:text/html,<p>ok</p>" 2>/dev/null')" \
+        "<html><head></head><body><p>ok</p></body></html>"
+    else
+      echo "skip  chromium: $VIBEWARS_BOT_ROLE does not run tests"
+    fi
+
+    # Issue #61: what the host executes out of .git is read-only in here,
+    # and everyday git still works. The commit happens in a throwaway
+    # worktree, so the agent's own checkout is never touched.
+    refused() {
+      if "$SHELL" -c "$2" >/dev/null 2>&1; then
+        echo "FAIL  $1: it was allowed"
+        failed=1
+      else
+        echo "ok    $1 is refused"
+      fi
+    }
+    common="$(git rev-parse --path-format=absolute --git-common-dir)"
+    refused "git config --local" 'git config --local vibewars.smoke 1'
+    refused "writing a hook" "echo x > '$common/hooks/post-checkout'"
+    refused "writing info/attributes" "touch '$common/info/attributes'"
+    scratch="$(mktemp -d)"
+    branch="smoke-$$"
+    check "checkout -b from origin/main, and commit" \
+      "$("$SHELL" -c "git worktree add -q -b '$branch' '$scratch/wt' origin/main &&
+        git -C '$scratch/wt' commit -q --allow-empty -m smoke && echo committed" 2>&1)" \
+      "committed"
+    git worktree remove --force "$scratch/wt" >/dev/null 2>&1 || true
+    git branch -q -D "$branch" >/dev/null 2>&1 || true
+    exit "$failed"
+  '';
+
   # Tools only one role needs. Everything here is reachable from inside the
   # jail only because /nix/store is bind-mounted, so adding a role's tools
   # costs nothing for the other eight.
@@ -119,13 +211,13 @@ let
       gitleaks
       osv-scanner
       hyperfine
-      chromium
     ];
-    # Has to actually play the game to judge whether it is fun.
-    qa-tester = [ pkgs.chromium ];
   };
 
-  basePath = "${corePath}:/etc/profiles/per-user/ente/bin:/run/current-system/sw/bin";
+  # No per-user profile: it named the operator's account, and it put the
+  # host's Chromium ahead of the pinned one. A host tool an agent genuinely
+  # needs belongs in corePath or roleTools, from nixpkgs.
+  basePath = "${corePath}:/run/current-system/sw/bin";
 
   # The role is a runtime shell value, not a Nix one, so the per-role PATHs are
   # emitted as a `case` and selected inside the script.
@@ -137,6 +229,13 @@ let
       ) roleTools
     )}
       *) sandboxPath="${basePath}" ;;
+    esac
+    chromiumEnv=()
+    case "$role" in
+      ${testRoles})
+        sandboxPath="${lib.makeBinPath [ pkgs.chromium ]}:$sandboxPath"
+        chromiumEnv=(--setenv VIBEWARS_CHROMIUM "${chromium}")
+        ;;
     esac
   '';
 
@@ -177,6 +276,7 @@ let
 
     usage:
       claude-bot <role> [claude args...]
+      claude-bot --smoke <role>  check that role's jail can run the browser tests
       claude-bot --help
 
     Each role runs in its own bubblewrap sandbox, on its own git worktree
@@ -230,6 +330,14 @@ let
         resume=0
         if [ "''${1-}" = "--continue" ]; then
           resume=1
+          shift
+        fi
+
+        # --smoke runs the jail checks instead of claude: the regression test
+        # for issue #29, and the quickest way to see what an agent's shell sees.
+        smoke=0
+        if [ "''${1-}" = "--smoke" ]; then
+          smoke=1
           shift
         fi
 
@@ -326,13 +434,13 @@ let
         # waits, which would leave a restarted agent exactly as idle as an
         # unprompted one. The flag and a turn have to go together.
         if [ "$resume" = "1" ]; then
-          continueFlag="--continue"
+          continueFlag=(--continue)
           prompt="You were interrupted and have just been restarted. Check \`tg inbox\`
         and \`board ls\` in case something changed while you were gone, then carry on
         with the most valuable thing you can finish. If you were mid-task, finish
         that first."
         else
-          continueFlag=""
+          continueFlag=()
           prompt="$kickoff"
         fi
 
@@ -438,22 +546,24 @@ let
         # second one finds the lock and exits, so whichever claude-bot comes
         # first brings it up. setsid, so it outlives this role's pane.
         # ----------------------------------------------------------------------
-        ${pkgs.util-linux}/bin/setsid ${node} ${botScripts}/link.mjs serve \
-          >>"$VIBEWARS_BOT_ROOT/link/serve.log" 2>&1 </dev/null &
+        if [ "$smoke" = "0" ]; then
+          ${pkgs.util-linux}/bin/setsid ${node} ${botScripts}/link.mjs serve \
+            >>"$VIBEWARS_BOT_ROOT/link/serve.log" 2>&1 </dev/null &
 
-        # This role's presence: its roster entry, which `tg roster` reads. $$ is
-        # this shell's PID, which `exec` below hands to bwrap, so it stays alive
-        # exactly as long as the session; presence exits when it goes. See
-        # `presence` in link.mjs.
-        VIBEWARS_BOT_LAUNCHER_PID="$$"
-        export VIBEWARS_BOT_LAUNCHER_PID
-        ${node} ${botScripts}/link.mjs presence "$role" &
-        presencePid=$!
-        # Covers only the gap until exec; after that, presence watches the PID.
-        #
-        # shellcheck disable=SC2064
-        # Expanded now on purpose: $presencePid must be captured at trap-setting time.
-        trap "kill $presencePid 2>/dev/null || true" EXIT INT TERM
+          # This role's presence: its roster entry, which `tg roster` reads. $$ is
+          # this shell's PID, which `exec` below hands to bwrap, so it stays alive
+          # exactly as long as the session; presence exits when it goes. See
+          # `presence` in link.mjs.
+          VIBEWARS_BOT_LAUNCHER_PID="$$"
+          export VIBEWARS_BOT_LAUNCHER_PID
+          ${node} ${botScripts}/link.mjs presence "$role" &
+          presencePid=$!
+          # Covers only the gap until exec; after that, presence watches the PID.
+          #
+          # shellcheck disable=SC2064
+          # Expanded now on purpose: $presencePid must be captured at trap-setting time.
+          trap "kill $presencePid 2>/dev/null || true" EXIT INT TERM
+        fi
 
         ${selectPath}
 
@@ -474,7 +584,35 @@ let
         # network only through the sidecar above. $DEVENV_ROOT is a tmpfs too, so
         # the only paths that survive back to the host are the worktree, this
         # role's bus directory, and the git object store.
+        #
+        # /dev/shm gets a real tmpfs: --dev leaves it a bare directory, and
+        # Chromium keeps its shared memory there. Chromium's own sandbox cannot
+        # work in here, which is why playwright.config.ts passes --no-sandbox;
+        # this jail is the sandbox.
+        #
+        # The operator's .git is bound read-write, because a worktree commits
+        # into it, but the parts of it the host EXECUTES are masked read-only on
+        # top (issue #61): config (fsmonitor, hooksPath, filter and diff
+        # drivers, insteadOf, sshCommand), hooks, and info (attributes, which
+        # select those drivers). Every git command the operator, claude-llc or
+        # hubd runs in the checkout reads them, so a jail that could write them
+        # could run code on the host. --ro-bind, not -try: a missing one fails
+        # the start rather than leaving a hole, so they are made here first.
+        # Branches therefore never write tracking config: autoSetupMerge is
+        # off for every git in the jail, through the environment.
         # ----------------------------------------------------------------------
+        mkdir -p "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/info"
+
+        if [ "$smoke" = "1" ]; then
+          jailCommand=(${jailSmoke})
+        else
+          jailCommand=(${jailInit} claude
+            --dangerously-skip-permissions
+            --append-system-prompt "$briefing"
+            "''${continueFlag[@]}"
+            "''${@:-$prompt}")
+        fi
+
         exec ${bwrap} \
           --die-with-parent \
           --unshare-all \
@@ -487,6 +625,7 @@ let
           --ro-bind /run/current-system /run/current-system \
           --proc /proc \
           --dev /dev \
+          --tmpfs /dev/shm \
           --tmpfs /tmp \
           --tmpfs "/run/user/$(id -u)" \
           --tmpfs "$HOME" \
@@ -496,6 +635,9 @@ let
           --bind "$creds" "$HOME/.claude/.credentials.json" \
           --ro-bind-try "$HOME/.config/git" "$HOME/.config/git" \
           --bind "$DEVENV_ROOT/.git" "$DEVENV_ROOT/.git" \
+          --ro-bind "$DEVENV_ROOT/.git/config" "$DEVENV_ROOT/.git/config" \
+          --ro-bind "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/hooks" \
+          --ro-bind "$DEVENV_ROOT/.git/info" "$DEVENV_ROOT/.git/info" \
           --ro-bind "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_BUS" \
           --bind "$VIBEWARS_BOT_BUS/$role" "$VIBEWARS_BOT_BUS/$role" \
           --ro-bind "$VIBEWARS_BOT_ROOT/hub" "$VIBEWARS_BOT_ROOT/hub" \
@@ -505,7 +647,7 @@ let
           --chdir "$worktree" \
           --setenv HOME "$HOME" \
           --setenv USER "$USER" \
-          --setenv SHELL "${lib.getExe pkgs.bashInteractive}" \
+          --setenv SHELL "${jailShell}/bin/bash" \
           --setenv PATH "$sandboxPath" \
           --setenv TERM "''${TERM:-xterm-256color}" \
           --setenv LANG "''${LANG:-C.UTF-8}" \
@@ -518,11 +660,11 @@ let
           --setenv VIBEWARS_BOARD "$boardIds" \
           --setenv VIBEWARS_ACTING "$acting" \
           --setenv VIBEWARS_ENV "development" \
-          -- claude \
-            --dangerously-skip-permissions \
-            --append-system-prompt "$briefing" \
-            $continueFlag \
-            "''${@:-$prompt}"
+          --setenv GIT_CONFIG_COUNT 1 \
+          --setenv GIT_CONFIG_KEY_0 branch.autoSetupMerge \
+          --setenv GIT_CONFIG_VALUE_0 false \
+          "''${chromiumEnv[@]}" \
+          -- "''${jailCommand[@]}"
   '';
 in
 {

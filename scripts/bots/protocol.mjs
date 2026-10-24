@@ -121,7 +121,16 @@ export function parseRegistry(text) {
  * read as human would carry the operator's `*` mark.
  *
  * @param {unknown} raw one getUpdates entry
- * @param {{ chatId: string, topics: Map<number, string>, roles: readonly string[] }} context
+ * Only the operator is heard. The `*` mark is the operator's authority, so
+ * a message from any other member of the group is dropped rather than
+ * delivered with it.
+ *
+ * @param {{
+ *   chatId: string,
+ *   operatorId: number,
+ *   topics: Map<number, string>,
+ *   roles: readonly string[],
+ * }} context `operatorId` is the operator's Telegram user id
  *   `topics` maps a topic id to the role that owns it
  * @returns {{ to: string[], line: InboxLine } | null}
  */
@@ -139,7 +148,7 @@ export function routeInbound(raw, context) {
   if (typeof message.text !== "string" || message.text === "") {
     return null;
   }
-  if (typeof from.id !== "number" || from.is_bot === true) {
+  if (typeof from.id !== "number" || from.is_bot === true || from.id !== context.operatorId) {
     return null;
   }
   if (typeof message.message_id !== "number") {
@@ -466,6 +475,34 @@ function isControl(code) {
   return code < 0x20 || (code >= 0x7f && code <= 0x9f);
 }
 
+/** Hangul fillers: letters by category, blank on screen. */
+const HANGUL_FILLERS = new Set([0x115f, 0x1160, 0x3164, 0xffa0]);
+
+/**
+ * Characters that change how text around them is shown without being seen
+ * themselves. All of Unicode's format characters (`\p{Cf}`): bidirectional
+ * overrides and isolates, which can make text read in a different order
+ * than it is (the Trojan Source class); zero-width characters, which can
+ * hide inside a word; and the tag characters U+E0000–E007F, which spell out
+ * ASCII nobody sees, so a message can show "LGTM" and carry a prompt for
+ * the agents reading it (found in review of #39). Plus the blank-rendering
+ * Hangul fillers, and the supplementary variation selectors, which can
+ * carry hidden bytes the same way. The sixteen ordinary variation
+ * selectors stay: emoji need them.
+ *
+ * @param {string} char
+ * @param {number} code its code point
+ * @returns {boolean}
+ */
+function isInvisible(char, code) {
+  return (
+    /\p{Cf}/u.test(char) ||
+    HANGUL_FILLERS.has(code) ||
+    (code >= 0xe0000 && code <= 0xe007f) ||
+    (code >= 0xe0100 && code <= 0xe01ef)
+  );
+}
+
 /**
  * Text with nothing in it that can fake a line or move the cursor.
  *
@@ -474,8 +511,8 @@ function isControl(code) {
  * newline and `HH:MM:SS*Ente: …` would otherwise print as a second line
  * the operator never wrote, and an ESC sequence could move the cursor up
  * and overwrite one (found in review of #28). So line breaks become `⏎`,
- * ESC becomes `␛`, a tab a space, and any other control `�`, in every
- * message, from anyone.
+ * ESC becomes `␛`, a tab a space, and any other control, bidi override
+ * or other invisible character `�`, in every message, from anyone.
  *
  * @param {string} text
  * @returns {string}
@@ -490,7 +527,7 @@ export function visible(text) {
       out += "␛";
     } else if (code === 0x09) {
       out += " ";
-    } else if (isControl(code)) {
+    } else if (isControl(code) || isInvisible(char, code)) {
       out += "�";
     } else {
       out += char;
