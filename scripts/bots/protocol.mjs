@@ -653,8 +653,10 @@ export const OPERATOR_HINT = "Reply to a question to answer it.";
  *
  * The answer goes to the asker only, as an operator line (`*`): answers are
  * decisions for the role that asked, and in General every role would read
- * and act on one. A tap counts only if a human pressed it, the rule
- * `routeInbound` applies to messages. A second tap on an answered question
+ * and act on one. Only the operator is heard, the rule `routeInbound`
+ * applies to messages: an answer carries the `*` mark, so a tap or a reply
+ * from anyone else in the group changes nothing, and gets no hint either,
+ * so a stranger cannot spend the mirror's budget. A second tap on an answered question
  * only gets a toast; a second reply is a follow-up to the same asker. A
  * message in the topic that answers nothing goes to no one and gets one hint
  * back, because one silently handed to an agent would be worse than one that
@@ -666,7 +668,8 @@ export const OPERATOR_HINT = "Reply to a question to answer it.";
  *
  * @param {unknown} raw one getUpdates entry
  * @param {QuestionStore} store
- * @param {{ chatId: string, operatorTopicId: number | null, now: number }} context
+ * @param {{ chatId: string, operatorId: number, operatorTopicId: number | null, now: number }} context
+ *   `operatorId` is the operator's Telegram user id
  * @returns {{
  *   deliveries: { role: string, line: InboxLine }[],
  *   immediate: { method: string, params: Record<string, unknown> }[],
@@ -724,12 +727,23 @@ export function routeAnswer(raw, store, context) {
       method: "answerCallbackQuery",
       params: { callback_query_id: query.id, ...(toast === undefined ? {} : { text: toast }) },
     });
+    // Someone else's tap: stop their spinner, nothing more.
+    if (from.id !== context.operatorId) {
+      return { ...none, immediate: [ack(undefined)] };
+    }
     const data = typeof query.data === "string" ? /^q:(\d+):(\d+)$/.exec(query.data) : null;
     const n = Number(data?.[1]);
     const question = data === null ? undefined : store.questions[String(n)];
     const option = question?.options[Number(data?.[2])];
-    // Forged or stale data: stop the button's spinner, change nothing.
-    if (question === undefined || option === undefined || question.messageId === null) {
+    // Forged or stale data: stop the button's spinner, change nothing. A
+    // client can send any callback_data, so the tap must also be on this
+    // question's own message.
+    if (
+      question === undefined ||
+      option === undefined ||
+      question.messageId === null ||
+      message.message_id !== question.messageId
+    ) {
       return { ...none, immediate: [ack(undefined)] };
     }
     if (question.answered) {
@@ -757,7 +771,12 @@ export function routeAnswer(raw, store, context) {
   ) {
     return null;
   }
-  if (from.is_bot !== false || typeof message.text !== "string" || message.text === "") {
+  if (
+    from.is_bot !== false ||
+    from.id !== context.operatorId ||
+    typeof message.text !== "string" ||
+    message.text === ""
+  ) {
     return none;
   }
   // In a forum every message replies to the topic's first message, so only a

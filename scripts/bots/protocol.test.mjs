@@ -458,9 +458,17 @@ describe("questions for the operator", () => {
 });
 
 describe("routeAnswer", () => {
+  /** @param {unknown} value */
+  const obj = (value) => /** @type {Record<string, unknown>} */ (value);
   const OPERATOR_TOPIC = 77;
   const QUESTION_MESSAGE = 500;
-  const context = { chatId: CHAT, operatorTopicId: OPERATOR_TOPIC, now: 5000 };
+  const OPERATOR = 9;
+  const context = {
+    chatId: CHAT,
+    operatorId: OPERATOR,
+    operatorTopicId: OPERATOR_TOPIC,
+    now: 5000,
+  };
   /** @param {boolean} answered */
   const store = (answered) => ({
     next: 8,
@@ -577,6 +585,45 @@ describe("routeAnswer", () => {
       expect(routed?.answered).toBeNull();
     },
   );
+
+  it("only acknowledges a tap by anyone but the operator", () => {
+    const routed = routeAnswer(
+      tap("q:7:0", { id: 77, is_bot: false, username: "stranger" }),
+      store(false),
+      context,
+    );
+    expect(routed).toEqual({
+      deliveries: [],
+      immediate: [{ method: "answerCallbackQuery", params: { callback_query_id: "cb1" } }],
+      paced: [],
+      answered: null,
+    });
+  });
+
+  it("ignores a reply, or any message, by anyone but the operator", () => {
+    const stranger = { id: 77, is_bot: false, username: "stranger" };
+    for (const replyTo of [QUESTION_MESSAGE, undefined]) {
+      const raw = obj(say("Free it", replyTo));
+      const routed = routeAnswer(
+        { ...raw, message: { ...obj(raw.message), from: stranger } },
+        store(false),
+        context,
+      );
+      expect(routed).toEqual({ deliveries: [], immediate: [], paced: [], answered: null });
+    }
+  });
+
+  it("ignores button data aimed at a different message than the question's", () => {
+    const raw = obj(tap("q:7:0"));
+    const query = obj(raw.callback_query);
+    const routed = routeAnswer(
+      { ...raw, callback_query: { ...query, message: { ...obj(query.message), message_id: 999 } } },
+      store(false),
+      context,
+    );
+    expect(routed?.deliveries).toEqual([]);
+    expect(routed?.answered).toBeNull();
+  });
 
   it("ignores a tap that a bot made", () => {
     const routed = routeAnswer(tap("q:7:0", { id: 1, is_bot: true }), store(false), context);
