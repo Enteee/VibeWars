@@ -47,6 +47,7 @@ import {
   type GearDragSource,
   type GearDropTarget,
 } from "./gear-editor.js";
+import { professionIcon, skillTypeBadgeHtml } from "./icons.js";
 import { filterSkillsByName, groupSkillsByAttribute } from "./skill-library.js";
 import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
 
@@ -327,6 +328,16 @@ export function renderBuildEditor(
   ): HTMLElement => {
     const wrapper = h("label", "editor-field");
     wrapper.appendChild(h("span", "editor-label", label));
+    // An <option> cannot hold an image, so the chosen profession's icon
+    // sits beside the picker. Menus only: in the arena, colour means team.
+    const picker = h("span", "editor-profession");
+    if (selected !== undefined) {
+      const icon = document.createElement("img");
+      icon.className = "profession-icon";
+      icon.src = professionIcon(selected);
+      icon.alt = "";
+      picker.appendChild(icon);
+    }
     const select = document.createElement("select");
     if (includeNone) {
       const none = document.createElement("option");
@@ -344,7 +355,8 @@ export function renderBuildEditor(
     select.addEventListener("change", () => {
       onChange(select.value === "" ? undefined : (select.value as ProfessionId));
     });
-    wrapper.appendChild(select);
+    picker.appendChild(select);
+    wrapper.appendChild(picker);
     return wrapper;
   };
 
@@ -432,6 +444,7 @@ export function renderBuildEditor(
     } else {
       const description = describeSkill(skill, ranks);
       cell.appendChild(h("span", "skill-slot-name", skill.name));
+      cell.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
       cell.appendChild(h("span", "skill-slot-cost", description.cost));
       cell.draggable = true;
       cell.addEventListener("dragstart", (event: DragEvent) => {
@@ -672,6 +685,7 @@ export function renderBuildEditor(
           box.classList.add("is-equipped");
         }
         box.appendChild(h("span", "skill-box-name", skill.name));
+        box.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
         box.appendChild(h("span", "skill-box-cost", description.cost));
 
         box.addEventListener("dragstart", (event: DragEvent) => {

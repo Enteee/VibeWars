@@ -220,9 +220,111 @@ describe("match end", () => {
   });
 });
 
+describe("reset policies", () => {
+  /** A dummy on `reset` at 400/500, 200 units from a, who can burn it. */
+  function dummy(reset: ParticipantSpec["reset"], matchRules?: MatchRules) {
+    const sim = new MatchSimulation({
+      seed: "reset",
+      matchRules,
+      participants: [
+        spec("a", 0, vec2(0, 0)),
+        spec("d", 1, vec2(200, 0), { maxHealth: 500, startHealthFraction: 0.8, reset }),
+      ],
+    });
+    return { sim, d: participant(sim, "d") };
+  }
+
+  /** Dirty everything a reset must put back, and move the dummy off spawn. */
+  function dirty(d: ReturnType<typeof participant>): void {
+    d.combatant.statuses.apply("burning", 60, "a");
+    d.combatant.statuses.apply("armor-boost", 60, "d");
+    d.combatant.energy = 0;
+    d.combatant.adrenaline = 3;
+    d.position = vec2(250, 50);
+  }
+
+  function expectReset(d: ReturnType<typeof participant>): void {
+    expect(d.combatant.dead).toBe(false);
+    expect(d.combatant.health).toBe(400);
+    expect(d.combatant.energy).toBe(d.combatant.maxEnergy);
+    expect(d.combatant.adrenaline).toBe(0);
+    expect(d.combatant.statuses.active).toEqual([]);
+    expect(d.combatant.cast.isCasting).toBe(false);
+    expect(d.position).toEqual(vec2(200, 0));
+  }
+
+  it("starts at startHealthFraction", () => {
+    expect(dummy(undefined).d.combatant.health).toBe(400);
+  });
+
+  it("never: the dead stay dead without match rules, and the damaged stay damaged", () => {
+    const { sim, d } = dummy({ kind: "never" });
+    d.combatant.health = 10;
+    stepFor(sim, 30);
+    expect(d.combatant.health).toBe(10);
+    d.combatant.health = 1;
+    dirty(d);
+    stepFor(sim, 30);
+    expect(d.combatant.dead).toBe(true);
+  });
+
+  it("on-death: back afterSeconds after dying, even with no match rules", () => {
+    const { sim, d } = dummy({ kind: "on-death", afterSeconds: 2 });
+    dirty(d);
+    d.combatant.health = 1;
+    // Burning kills it in its third tick, at 0.15 s.
+    stepFor(sim, 1);
+    expect(d.combatant.dead).toBe(true);
+    stepFor(sim, 1.1);
+    expect(d.combatant.dead).toBe(true);
+    stepFor(sim, 0.1);
+    expectReset(d);
+  });
+
+  it("on-death overrides the match rules' respawn time", () => {
+    const { sim, d } = dummy({ kind: "on-death", afterSeconds: 2 }, MATCH);
+    d.combatant.health = 1;
+    stepFor(sim, 3.2);
+    expect(d.combatant.dead).toBe(false);
+  });
+
+  it("on-interval: every everySeconds, alive or not", () => {
+    const { sim, d } = dummy({ kind: "on-interval", everySeconds: 5 });
+    stepFor(sim, 1);
+    dirty(d);
+    d.combatant.health = 100;
+    stepFor(sim, 3.9);
+    expect(d.combatant.health).toBeLessThan(100);
+    stepFor(sim, 0.2);
+    expectReset(d);
+  });
+
+  it("below-health: the tick it drops under the fraction, and from death too", () => {
+    const { sim, d } = dummy({ kind: "below-health", fraction: 0.5 });
+    d.combatant.health = 260;
+    sim.setTarget("a", "d");
+    sim.requestSkill("a", 0);
+    stepFor(sim, 1.05);
+    expectReset(d);
+
+    d.combatant.health = 0;
+    d.combatant.dead = true;
+    stepFor(sim, DT);
+    expectReset(d);
+  });
+
+  it("resetParticipant is the same reset", () => {
+    const { sim, d } = dummy(undefined);
+    dirty(d);
+    d.combatant.health = 3;
+    sim.resetParticipant("d");
+    expectReset(d);
+  });
+});
+
 describe("determinism", () => {
   it("two sims with the same seed and the same inputs write the same log", () => {
-    const run = (): CombatLogEntry[] => {
+    const run = (): { log: CombatLogEntry[]; positions: Vec2[] } => {
       const sim = new MatchSimulation({
         seed: "repeat",
         matchRules: MATCH,
@@ -230,12 +332,29 @@ describe("determinism", () => {
           spec("a", 0, vec2(0, 0), { skillBar: [FIREBALL, "monk.orison-of-healing"] }),
           spec("b", 1, vec2(300, 0), {
             behaviour: {
-              kind: "cast-loop",
-              skillIds: [FIREBALL],
-              targeting: { kind: "nearest-enemy" },
-              gapSeconds: 0.5,
-              firstLegal: true,
+              kind: "parallel",
+              behaviours: [
+                { kind: "keep-away", targeting: { kind: "nearest-enemy" }, distanceUnits: 250 },
+                {
+                  kind: "cast-loop",
+                  skillIds: [FIREBALL],
+                  targeting: { kind: "nearest-enemy" },
+                  gapSeconds: 0.5,
+                  firstLegal: true,
+                },
+                {
+                  kind: "apply-status-cadence",
+                  statusId: "burning",
+                  durationSeconds: 3,
+                  everySeconds: 7,
+                  targeting: { kind: "nearest-enemy" },
+                },
+              ],
             },
+            reset: { kind: "below-health", fraction: 0.5 },
+          }),
+          spec("c", 1, vec2(300, 200), {
+            behaviour: { kind: "patrol", waypoints: [vec2(0, 200), vec2(300, 200)], loop: true },
           }),
         ],
       });
@@ -254,10 +373,10 @@ describe("determinism", () => {
         }
         log.push(...sim.step(DT).log);
       }
-      return log;
+      return { log, positions: [...sim.participants()].map((p) => p.position) };
     };
     const first = run();
-    expect(first.length).toBeGreaterThan(10);
+    expect(first.log.length).toBeGreaterThan(10);
     expect(run()).toEqual(first);
   });
 });

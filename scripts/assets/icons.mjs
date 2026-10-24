@@ -139,11 +139,12 @@ const status = {
     "condition",
     (c) => `<path d="M12 4c3 4.5 5 7 5 9.5a5 5 0 0 1-10 0C7 11 9 8.5 12 4z" fill="${c}"/>`,
   ],
-  // Flame: three points, so it never reads as the bleeding drop.
+  // Flame: one tall tip leaning right and a side tongue, so it never reads
+  // as the symmetric bleeding drop.
   burning: [
     "condition",
     (c) =>
-      `<path d="M12 5l1.8 3.8 2.7-1.8c.9 2.6 1.5 4.3 1.5 6a6 6 0 0 1-12 0c0-1.7.6-3.4 1.5-6l2.7 1.8z" fill="${c}"/>`,
+      `<path d="M14 3.5c.5 3.5 4 5.5 4 10a6 6 0 0 1-12 0c0-2.5 1-4.5 2.5-5.5 0 2 .5 3 1.5 3.5-.5-3 1-6 4-8z" fill="${c}"/>`,
   ],
   // Three bubbles.
   poison: [
@@ -175,7 +176,7 @@ const status = {
   // Hex: a heart, because the hex is on your life.
   "life-drain": [
     "hex",
-    (c) => `<path d="M12 17.5l-4.8-4.8a2.8 2.8 0 0 1 4.8-3.8 2.8 2.8 0 0 1 4.8 3.8z" fill="${c}"/>`,
+    (c) => `<path d="M12 16l-3.6-3.6a2.1 2.1 0 0 1 3.6-3 2.1 2.1 0 0 1 3.6 3z" fill="${c}"/>`,
   ],
   // Enchantment: plus, health coming back.
   regeneration: ["enchantment", (c) => `<path d="M12 6v12M6 12h12" ${stroke(c, 3)}/>`],

@@ -307,3 +307,14 @@ describe("skill attribute ownership", () => {
     expect(bha?.effects.some((e) => "amount" in e)).toBe(false);
   });
 });
+
+describe("skill types", () => {
+  it("names each skill's kind the way GW1 does, one of each", () => {
+    const typeOf = (id: string) => getSkill(id)?.type;
+    expect(typeOf("ranger.broad-head-arrow")).toBe("attack");
+    expect(typeOf("elementalist.fireball")).toBe("spell");
+    expect(typeOf("elementalist.armor-of-earth")).toBe("enchantment");
+    expect(typeOf("necromancer.faintheartedness")).toBe("hex");
+    expect(typeOf("ranger.troll-unguent")).toBe("skill");
+  });
+});

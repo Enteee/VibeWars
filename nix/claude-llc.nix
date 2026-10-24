@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  config,
   ...
 }:
 
@@ -335,7 +336,8 @@ let
   '';
 in
 {
-  config = {
+  # Shares claude-bot's switch: the company is nothing without its agents.
+  config = lib.mkIf config.vibewars.claudeBot.enable {
     packages = [ pkgs.tmux ];
 
     scripts = {
