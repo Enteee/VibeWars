@@ -124,6 +124,8 @@ export function renderMenu(
   // The AGPL's network clause: whoever plays it is offered the source.
   const source = h("a", "screen-source", "source");
   source.setAttribute("href", SOURCE_URL);
+  // A new tab, so reading the source never leaves the game.
+  source.setAttribute("target", "_blank");
   source.setAttribute("rel", "noopener");
   subtitle.appendChild(source);
   panel.appendChild(subtitle);
