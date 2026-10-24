@@ -41,7 +41,7 @@ if (group === "api" && sub === "rate_limit") {
 }
 const REPO = "repos/Enteee/VibeWars/";
 const issue7 = { number: 7, title: "seven", body: "the body", state: "open", html_url: "https://github.com/Enteee/VibeWars/issues/7", user: { login: "Enteee" }, labels: [{ node_id: "LA_bug", name: "bug" }], assignees: [], created_at: "2026-10-24T10:00:00Z", updated_at: "2026-10-24T11:00:00Z", closed_at: null };
-const pull9 = { number: 9, title: "nine", body: "", state: "open", html_url: "https://github.com/Enteee/VibeWars/pull/9", user: { login: "Enteee" }, labels: [], assignees: [], created_at: "x", updated_at: "y", closed_at: null, merged_at: null, draft: false, head: { ref: "bot/x", sha: "abc123" }, base: { ref: "main" }, additions: 1, deletions: 2, changed_files: 3, mergeable: true, mergeable_state: "clean" };
+const pull9 = { number: 9, title: "nine", body: "", state: "open", html_url: "https://github.com/Enteee/VibeWars/pull/9", user: { login: "Enteee" }, labels: [], assignees: [], created_at: "x", updated_at: "y", closed_at: null, merged_at: null, draft: false, head: { ref: "bot/x", sha: "abc1234def" }, base: { ref: "main" }, additions: 1, deletions: 2, changed_files: 3, mergeable: true, mergeable_state: "clean" };
 if (group === "api" && sub !== "graphql") {
   const target = argv.find((word) => word.startsWith(REPO)) ?? "";
   const rel = target.slice(REPO.length);
@@ -322,7 +322,7 @@ describe("hubd answering issue and PR reads from REST", () => {
       state: "OPEN",
       mergeable: "MERGEABLE",
       mergeStateStatus: "CLEAN",
-      headRefOid: "abc123",
+      headRefOid: "abc1234def",
     });
     expect(hubd.calls("pr ")).toBe(0);
   }, 20_000);
@@ -465,5 +465,49 @@ describe("hubd running git in an agent's worktree", () => {
     expect(answer.code).toBe(0);
     expect(fs.existsSync(marker)).toBe(false);
     expect(sh(["branch", "--list", "bot/developer-1/x"], remote)).toContain("bot/developer-1/x");
+  }, 20_000);
+});
+
+describe("hubd recording verdicts and merging", () => {
+  it("records a verdict only for the commit that was reviewed, if it is still the head", async () => {
+    const hubd = await startHubd(5000);
+    const ledger = path.join(hubd.hub, "approvals.jsonl");
+
+    const stale = await hubd.request("lead-dev", "review", ["approve", "9", "--sha", "def4567"]);
+    expect(stale.allow).toBe(false);
+    expect(String(stale.reason)).toMatch(/moved to abc1234d since you reviewed def4567; re-review/);
+    expect(fs.existsSync(ledger) ? fs.readFileSync(ledger, "utf8") : "").toBe("");
+
+    const current = await hubd.request("lead-dev", "review", [
+      "approve",
+      "9",
+      "--sha",
+      "abc1234def",
+    ]);
+    expect(current.allow, String(current.reason)).toBe(true);
+    const recorded = readJson(ledger);
+    expect(recorded).toMatchObject({
+      pr: 9,
+      role: "lead-dev",
+      verdict: "approve",
+      sha: "abc1234def",
+    });
+  }, 20_000);
+
+  it("merges exactly the pull request the guards checked, squashed, pinned to its head", async () => {
+    const hubd = await startHubd(5000);
+    // Both sign-offs on the current head; the fake reports no checks and
+    // company.json expects none, so the gate is open.
+    for (const role of ["lead-dev", "perf-sec-qa"]) {
+      fs.appendFileSync(
+        path.join(hubd.hub, "approvals.jsonl"),
+        `${JSON.stringify({ pr: 9, role, verdict: "approve", sha: "abc1234def", ts: 1 })}\n`,
+      );
+    }
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(answer.code).toBe(0);
+    expect(hubd.calls("pr merge 9 --squash --match-head-commit abc1234def")).toBe(1);
   }, 20_000);
 });

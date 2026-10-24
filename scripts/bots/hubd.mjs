@@ -33,7 +33,7 @@ import {
   renderView,
 } from "./hub-rest.mjs";
 import { obj } from "./protocol.mjs";
-import { ROLES, authorize, touchesGate } from "./hub-policy.mjs";
+import { ROLES, authorize, parseMerge, parseReview, touchesGate } from "./hub-policy.mjs";
 import {
   boardNumbers,
   isInternal,
@@ -371,17 +371,21 @@ async function headSha(pr) {
  * An unrecognised guard is a refusal, never a pass. Adding a guard name in
  * the policy must not be able to silently widen what is permitted.
  *
+ * The pull request is read with the policy's own parser, the one that also
+ * decided the request was allowed, and the head the guards validated is
+ * returned so the merge can be pinned to it (#26).
+ *
  * @param {string[]} guards
  * @param {string[]} argv
- * @returns {Promise<{ ok: boolean, reason?: string }>}
+ * @returns {Promise<{ ok: true, pr: number, sha: string } | { ok: false, reason: string }>}
  */
 async function evaluateGuards(guards, argv) {
   const cfg = company();
-  // `pr merge <n>` — the number is the first argument that looks like one.
-  const pr = argv.find((word) => /^[0-9]+$/.test(word));
-  if (pr === undefined) {
-    return { ok: false, reason: "could not tell which pull request this is about" };
+  const merge = parseMerge(argv);
+  if ("error" in merge) {
+    return { ok: false, reason: merge.error };
   }
+  const pr = String(merge.pr);
 
   const sha = await headSha(pr);
   if (sha === null) {
@@ -428,29 +432,12 @@ async function evaluateGuards(guards, argv) {
 
     return { ok: false, reason: `unknown guard "${guard}"; refusing rather than guessing` };
   }
-  return { ok: true };
+  return { ok: true, pr: merge.pr, sha };
 }
 
 /* -------------------------------------------------------------------------- */
 /* Audit                                                                      */
 /* -------------------------------------------------------------------------- */
-
-/**
- * Which reviewer seat is this verdict being cast for?
- *
- * `hub approve 22` uses the agent's own seat; `hub approve 22 --as
- * perf-sec-qa` names a borrowed one. Explicit on purpose — one glance must
- * not silently count as two different reviews.
- *
- * @param {string[]} argv
- * @param {string} fallback
- * @returns {string}
- */
-function reviewSeat(argv, fallback) {
-  const flag = argv.indexOf("--as");
-  const named = flag === -1 ? undefined : argv[flag + 1];
-  return named ?? fallback;
-}
 
 /**
  * @param {Record<string, unknown>} entry
@@ -857,14 +844,40 @@ async function serve(request, verdict, acting) {
       audit({ role, kind, argv, decision: "refused-by-guard", reason: guarded.reason });
       return { allow: false, reason: guarded.reason, code: 77 };
     }
+    // The merge gh runs is the one the guards checked: that pull request,
+    // squashed, and only if its head is still the commit the approvals and
+    // checks were validated against. A push in between fails the merge.
+    const merge = parseMerge(argv);
+    if (!("error" in merge)) {
+      const flags = merge.flags.includes("--squash") ? merge.flags : ["--squash", ...merge.flags];
+      const pinned = [
+        "pr",
+        "merge",
+        String(guarded.pr),
+        ...flags,
+        "--match-head-commit",
+        guarded.sha,
+      ];
+      const result = await gh(pinRepo(pinned, cfg));
+      audit({ role, kind, argv, decision: "allowed", code: result.code, sha: guarded.sha });
+      return { allow: true, ...result };
+    }
   }
 
   if (kind === "review") {
-    const [promptVerb, pr, ...note] = argv;
-    const sha = await headSha(String(pr));
+    const { verb: promptVerb, pr, sha: reviewed, seat: named, note } = parseReview(argv);
+    const sha = await headSha(pr);
     if (sha === null) {
-      return { allow: false, reason: `could not read pull request #${String(pr)}`, code: 77 };
+      return { allow: false, reason: `could not read pull request #${pr}`, code: 77 };
     }
+    // A verdict is for the commit the reviewer read. If the head has moved
+    // since, it describes code nobody has reviewed (#26, item 6).
+    if (reviewed === null || !sha.startsWith(reviewed)) {
+      const reason = `the head of #${pr} moved to ${sha.slice(0, 8)} since you reviewed ${String(reviewed)}; re-review`;
+      audit({ role, kind, argv, decision: "refused", reason });
+      return { allow: false, reason, code: 77 };
+    }
+    const seat = named ?? as;
     fs.appendFileSync(
       APPROVALS,
       `${JSON.stringify({
@@ -872,7 +885,7 @@ async function serve(request, verdict, acting) {
         // The seat, not the agent: the merge guard asks "has perf-sec-qa
         // signed off", and while lead-dev is covering that seat its sign-off
         // has to answer that question. `by` keeps who actually did it.
-        role: reviewSeat(argv, as),
+        role: seat,
         by: role,
         verdict: promptVerb === "approve" ? "approve" : "request-changes",
         sha,
@@ -884,16 +897,15 @@ async function serve(request, verdict, acting) {
     // It has to be a comment, not a review: all nine agents share one GitHub
     // identity, which cannot approve its own pull request or cast two
     // distinguishable reviews.
-    const seat = reviewSeat(argv, as);
     const mark = promptVerb === "approve" ? "APPROVED" : "CHANGES REQUESTED";
     const wearing = seat === role ? `\`${role}\`` : `\`${role}\` acting as \`${seat}\``;
     const body = `**${mark}** by ${wearing}\n\n${note.join(" ") || "(no note)"}\n\n<sub>recorded by hub against ${sha.slice(0, 8)}</sub>`;
-    const posted = await gh(["pr", "comment", String(pr), "--repo", cfg.repo, "--body", body]);
+    const posted = await gh(["pr", "comment", pr, "--repo", cfg.repo, "--body", body]);
     audit({ role, kind, argv, decision: "allowed", sha, seat, acting });
     return {
       allow: true,
       code: 0,
-      stdout: `${mark} recorded for #${String(pr)} as ${seat} against ${sha.slice(0, 8)}\n`,
+      stdout: `${mark} recorded for #${pr} as ${seat} against ${sha.slice(0, 8)}\n`,
       stderr: posted.code === 0 ? "" : posted.stderr,
     };
   }
