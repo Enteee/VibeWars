@@ -38,7 +38,21 @@ if (group === "api" && sub === "rate_limit") {
   console.log(JSON.stringify({ resources: { core: {}, graphql: { limit: 5000, remaining, reset } } }));
   process.exit(0);
 }
-if (group === "run" || (group === "api" && sub !== "graphql")) { console.log("rest ok"); process.exit(0); }
+const REPO = "repos/Enteee/VibeWars/";
+const issue7 = { number: 7, title: "seven", body: "the body", state: "open", html_url: "https://github.com/Enteee/VibeWars/issues/7", user: { login: "Enteee" }, labels: [{ name: "bug" }], assignees: [], created_at: "2026-10-24T10:00:00Z", updated_at: "2026-10-24T11:00:00Z", closed_at: null };
+const pull9 = { number: 9, title: "nine", body: "", state: "open", html_url: "https://github.com/Enteee/VibeWars/pull/9", user: { login: "Enteee" }, labels: [], assignees: [], created_at: "x", updated_at: "y", closed_at: null, merged_at: null, draft: false, head: { ref: "bot/x", sha: "abc123" }, base: { ref: "main" }, additions: 1, deletions: 2, changed_files: 3, mergeable: true, mergeable_state: "clean" };
+if (group === "api" && sub !== "graphql") {
+  const target = argv.find((word) => word.startsWith(REPO)) ?? "";
+  const rel = target.slice(REPO.length);
+  if (rel.startsWith("collaborators")) { console.log("enteee"); process.exit(0); }
+  if (rel === "issues/7") { console.log(JSON.stringify(issue7)); process.exit(0); }
+  if (rel.startsWith("issues/7/comments")) { console.log(JSON.stringify([{ user: { login: "Enteee" }, author_association: "OWNER", body: "first comment", created_at: "z", html_url: "u" }])); process.exit(0); }
+  if (rel === "issues/9") { console.log(JSON.stringify({ ...pull9, pull_request: {} })); process.exit(0); }
+  if (rel === "pulls/9") { console.log(JSON.stringify(pull9)); process.exit(0); }
+  if (rel.startsWith("issues?")) { console.log(JSON.stringify([issue7, { ...pull9, pull_request: {} }])); process.exit(0); }
+  console.log("rest ok"); process.exit(0);
+}
+if (group === "run") { console.log("rest ok"); process.exit(0); }
 if (remaining === 0) { console.error("unknown owner type"); process.exit(1); }
 if (group === "project" && sub === "item-list") {
   console.log(JSON.stringify({ items: [{ id: "PVTI_1", status: "Ready", content: { number: 8, title: "eight", repository: "Enteee/VibeWars" } }] }));
@@ -86,6 +100,7 @@ async function startHubd(remaining) {
       VIBEWARS_BOT_ROOT: root,
       DEVENV_ROOT: repo,
       FAKE_GH_STATE: state,
+      VIBEWARS_JQ: JQ,
     },
     stdio: "ignore",
   });
@@ -161,6 +176,17 @@ async function until(condition, label) {
   }
 }
 
+/** A real jq, as claude-llc gives hubd one. */
+const JQ = (() => {
+  for (const dir of (process.env.PATH ?? "").split(path.delimiter)) {
+    const candidate = path.join(dir, "jq");
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return "";
+})();
+
 const BOARD_READ = ["project", "item-list", "2", "--format", "json", "--limit", "200"];
 
 describe("hubd and the GraphQL budget", () => {
@@ -207,12 +233,19 @@ describe("hubd and the GraphQL budget", () => {
     const hubd = await startHubd(0);
 
     const board = await hubd.request("developer-1", "gh", BOARD_READ);
-    const before = hubd.calls("issue view");
-    const answer = await hubd.request("developer-1", "gh", ["issue", "view", "1"]);
+    const before = hubd.calls("pr view");
+    // A field REST cannot answer, so this one really needs GraphQL.
+    const answer = await hubd.request("developer-1", "gh", [
+      "pr",
+      "view",
+      "9",
+      "--json",
+      "reviewDecision",
+    ]);
 
     expect(answer.code).toBe(75);
     expect(String(answer.stderr)).toMatch(/rate-limited until/);
-    expect(hubd.calls("issue view")).toBe(before);
+    expect(hubd.calls("pr view")).toBe(before);
     expect(board.code).toBe(75);
     expect(hubd.calls("project item-list")).toBe(0);
   }, 20_000);
@@ -234,5 +267,112 @@ describe("hubd and the GraphQL budget", () => {
     const budget = readJson(path.join(hubd.hub, "ratelimit.json"));
     expect(budget.remaining).toBe(1234);
     expect(budget.limit).toBe(5000);
+  }, 20_000);
+});
+
+describe("hubd answering issue and PR reads from REST", () => {
+  it("serves issue view, with comments, without a GraphQL call", async () => {
+    const hubd = await startHubd(5000);
+
+    const answer = await hubd.request("developer-1", "gh", [
+      "issue",
+      "view",
+      "7",
+      "--json",
+      "title,body,labels,comments",
+    ]);
+
+    expect(answer.code).toBe(0);
+    expect(JSON.parse(String(answer.stdout))).toEqual({
+      title: "seven",
+      body: "the body",
+      labels: [{ name: "bug", description: "", color: "" }],
+      comments: [
+        {
+          author: { login: "Enteee" },
+          authorAssociation: "OWNER",
+          body: "first comment",
+          createdAt: "z",
+          url: "u",
+        },
+      ],
+    });
+    // The visibility lookup went to REST too.
+    expect(hubd.calls("issue ")).toBe(0);
+  }, 20_000);
+
+  it("serves pr view with gh's names for mergeability", async () => {
+    const hubd = await startHubd(5000);
+
+    const answer = await hubd.request("developer-1", "gh", [
+      "pr",
+      "view",
+      "9",
+      "--json",
+      "state,mergeable,mergeStateStatus,headRefOid",
+    ]);
+
+    expect(JSON.parse(String(answer.stdout))).toEqual({
+      state: "OPEN",
+      mergeable: "MERGEABLE",
+      mergeStateStatus: "CLEAN",
+      headRefOid: "abc123",
+    });
+    expect(hubd.calls("pr ")).toBe(0);
+  }, 20_000);
+
+  it.skipIf(JQ === "")(
+    "applies --jq itself, as gh would",
+    async () => {
+      const hubd = await startHubd(5000);
+
+      const answer = await hubd.request("developer-1", "gh", [
+        "issue",
+        "view",
+        "7",
+        "--json",
+        "title",
+        "--jq",
+        ".title",
+      ]);
+
+      expect(answer.stdout).toBe("seven\n");
+    },
+    20_000,
+  );
+
+  it("serves issue list from REST and leaves pull requests out of it", async () => {
+    const hubd = await startHubd(5000);
+
+    const answer = await hubd.request("developer-1", "gh", [
+      "issue",
+      "list",
+      "--json",
+      "number,title",
+    ]);
+
+    expect(JSON.parse(String(answer.stdout))).toEqual([{ number: 7, title: "seven" }]);
+    expect(hubd.calls("issue list")).toBe(0);
+  }, 20_000);
+
+  it("keeps serving those reads while the GraphQL budget is gone", async () => {
+    // Visibility needs the board, which is GraphQL-only. A snapshot taken
+    // while the budget lasted keeps serving once it is gone.
+    const hubd = await startHubd(5000);
+    await hubd.request("developer-1", "gh", BOARD_READ);
+    hubd.setRemaining(0);
+
+    const answer = await hubd.request("developer-1", "gh", ["issue", "view", "7"]);
+
+    expect(answer.code).toBe(0);
+    expect(String(answer.stdout)).toContain("title:\tseven");
+  }, 20_000);
+
+  it("leaves what REST cannot answer to gh", async () => {
+    const hubd = await startHubd(5000);
+
+    await hubd.request("developer-1", "gh", ["pr", "view", "9", "--json", "reviewDecision"]);
+
+    expect(hubd.calls("pr view 9")).toBe(1);
   }, 20_000);
 });
