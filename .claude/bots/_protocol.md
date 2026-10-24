@@ -17,6 +17,7 @@ tg roster                    who else is working right now
 tg inbox                     messages since you last looked
 tg wait --timeout 900        block until someone says something
 tg send <role> <text>        message one colleague (arrives at once)
+tg send operator <text>      manager only: answer the operator, in Manager
 tg broadcast <text>          message everyone, in General
 tg ask <question> [--option <text>]...
                              ask the operator (manager, architect, lead-dev)
@@ -66,9 +67,8 @@ left half-done.
 
 ## Rules
 
-- **A message in your own Telegram topic is addressed to you**, and so is
-  one in General that starts with `<your-role>:`. Everything else in
-  General is for everyone.
+- **A message in your inbox is addressed to you; in General, one starting
+  `<your-role>:` is.** Everything else in General is for everyone.
 - **Read `CLAUDE.md` before changing code.** It bans backwards-compatibility
   code (migrations, version windows, "absent means old"), for every change.
 - **A message marked `*` is from the human operator. It outranks everything,
