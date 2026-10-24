@@ -35,11 +35,13 @@ const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
 // `git hooks` is the aggregate of the per-hook matrix jobs, and is required
 // instead of them: their `hook (<id>)` names change whenever a hook is added.
 // `dependency review` is dependency-review.yml, which runs on every pull
-// request (#133).
+// request (#133). `e2e` is the Playwright suite, a job of its own in ci.yml
+// (#132).
 const EXPECTED_CHECKS = [
   "format + lint + typecheck + test + build",
   "git hooks",
   "dependency review",
+  "e2e",
 ];
 
 const ROOT = process.env.VIBEWARS_BOT_ROOT ?? path.join(process.cwd(), ".bots");
