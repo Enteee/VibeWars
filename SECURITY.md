@@ -88,7 +88,7 @@ These were found by reviewing `main` at `47a403f` (2026-10-24). Each one is
 in scope by the rules above and needs a fix. When one is fixed, remove it
 from this list in the same PR.
 
-1. **A lobby's match is not tied to that lobby.** The web client joins a
+1. **A lobby's match is not tied to that lobby** (#41). The web client joins a
    match with `joinOrCreate("match")` and no filter. `match-starting`
    carries an empty `roomId`, because `matchRoomId` is never set. Every
    lobby, and every Quick Match player, therefore lands in the same match
@@ -97,7 +97,7 @@ from this list in the same PR.
    choices are ignored.
    _Reproduce:_ start a lobby match in one browser, then press Quick Match
    in another. Both players are in the same room.
-2. **There is no cap on players per match.** `LobbyRoom` sets
+2. **There is no cap on players per match** (#42). `LobbyRoom` sets
    `maxClients = 16` but `MatchRoom` sets none. Body-blocking collision is
    O(n²) per tick. Measured with `tools/benchmark.ts` (server and clients in
    one process, 5 s per scenario):
@@ -113,12 +113,13 @@ from this list in the same PR.
    into the shared match room (see gap 1) makes the game unplayable for
    everyone in it.
 
-3. **No per-client message rate limit.** Colyseus's `maxMessagesPerSecond`
+3. **No per-client message rate limit** (#43). Colyseus's `maxMessagesPerSecond`
    defaults to `Infinity`, and neither room sets it. Every `intent` runs its
    handler right away, outside the tick.
-4. **Any lobby member can send `return-to-lobby`, at any time.** It has no
-   `isHost` or phase check. A non-host can reset a lobby that is in a match
-   back to `waiting` and clear everyone's ready state.
+4. **Any lobby member can send `return-to-lobby`** (#44). It has no
+   `isHost` check. Its only phase guard is a no-op while already `waiting`,
+   so a non-host can reset a lobby that is in a match back to `waiting` and
+   clear everyone's ready state.
 5. **Lobby codes can be enumerated.** There are 23⁴ = 279,841 codes, and
    joining is not rate-limited. That is fine for a LAN party. It is not
    access control, and it must not be described as access control.
