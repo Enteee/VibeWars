@@ -220,6 +220,18 @@ test("(10) on a narrow screen the columns stack: training, editor, library", asy
   await expect(page.locator("canvas")).toHaveCount(1);
 });
 
+test("(11) every skill button shows its skill-type badge, as the HUD does", async ({ page }) => {
+  await openTraining(page);
+  await page.locator(".skill-box", { hasText: "Armor of Earth" }).click();
+  const buttons = page.locator(".training-skill");
+  await expect(buttons).toHaveText(["1Fireball", "2Armor of Earth"]);
+  for (const [index, type] of ["Spell", "Enchantment"].entries()) {
+    const badges = buttons.nth(index).locator(".skill-type-badge");
+    await expect(badges).toHaveCount(1);
+    await expect(badges).toHaveAttribute("alt", type);
+  }
+});
+
 /** WCAG relative luminance of a computed `rgb(r, g, b)` colour. */
 function luminance(css: string): number {
   const match = /rgba?\((\d+), (\d+), (\d+)/.exec(css);
