@@ -134,10 +134,12 @@ saying so in the same PR. Keep the numbers: issues cite them.
    logging it, and cap how much of it is logged.
 
 8. **Display names can carry invisible and direction-changing characters**
-   (#174). `sanitizeName` strips only C0 control characters and DEL. Bidi
-   overrides and isolates (U+202A–202E, U+2066–2069), zero-width characters
-   (U+200B–200D, U+2060) and unbounded combining marks pass through, and
-   `trim()` does not remove them. Names are drawn above every player in the
+   (#174). `sanitizeName` strips only C0 control characters and DEL. C1
+   controls (U+0080–009F), bidi overrides and isolates (U+202A–202E,
+   U+2066–2069), zero-width characters (U+200B–200D, U+2060) and unbounded
+   combining marks pass through, and `trim()` does not remove them. The
+   16-character clamp counts UTF-16 units, so it can split a surrogate pair
+   and leave half an emoji. Names are drawn above every player in the
    arena (#172) and shown in the lobby and the target panel. A name can
    therefore look like a different name, render as nothing, or stack marks
    far above its line. This is not identity (there is none, see above), but
