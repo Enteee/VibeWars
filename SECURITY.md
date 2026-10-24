@@ -160,8 +160,14 @@ prune` in one jail therefore deletes every other agent's worktree
 metadata (incident #70). Until #69 lands, never run `git worktree` or
 `git gc` inside a jail.
 
+**Open: #83.** The operator checkout's own `.git/HEAD` and `.git/index` are
+writable from every jail too, and jails do not need them (a worktree's
+`HEAD` lives in its admin dir). So an agent can move the operator's
+checked-out branch, and host code that starts from `HEAD` starts from an
+agent-chosen commit. Treat `HEAD` like any other local ref.
+
 Every finding here so far came from **reading a gate with a hostile
-agent in mind**: #26, #39, #47, #57, #61, #67. A change to any file in
+agent in mind**: #26, #39, #47, #57, #61, #67, #73. A change to any file in
 `GATE_PATHS` gets that review, from `perf-sec-qa` and `lead-dev` both.
 
 ## If the architecture changes
