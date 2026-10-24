@@ -30,12 +30,12 @@ saves it; the others restore it. The pnpm store is cached on
 `pnpm-lock.yaml`.
 
 **D3. One job per hook, from a generated matrix.** The `list git hooks` job
-enters the shell, which writes `.pre-commit-config.yaml`, and emits the
-enabled hook ids as a JSON matrix. The `hook (<id>)` jobs run
-`prek run <id> --all-files` (`prek` is devenv's default `git-hooks.package`).
-Adding a hook to `devenv.nix` adds a CI job for it with no workflow edit. The
-`git hooks` job is green only if every hook job was, which gives branch
-protection one fixed name to require.
+enters the shell, which writes `.pre-commit-config.yaml`, asks `prek list`
+for the enabled hook ids and emits them as a JSON matrix. The `hook (<id>)`
+jobs run `prek run <id> --all-files` (`prek` is devenv's default
+`git-hooks.package`). Adding a hook to `devenv.nix` adds a CI job for it
+with no workflow edit. The `git hooks` job is green only if every hook job
+was, which gives branch protection one fixed name to require.
 
 **D4. The `enterTest` checks run as separate steps** of the
 `format + lint + typecheck + test + build` job, in `enterTest`'s order,

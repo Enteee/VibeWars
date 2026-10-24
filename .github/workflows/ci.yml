@@ -31,8 +31,13 @@ jobs:
 
       - id: list
         name: List enabled hooks
+        # Asks prek, the runner the hook jobs use, rather than parsing the
+        # file: it reads the config exactly as `prek run` will. Written to a
+        # file because the shell's own greeting also goes to stdout.
         run: |
-          hooks=$(jq -c '[.repos[].hooks[].id]' .pre-commit-config.yaml)
+          devenv shell -- bash -c \
+            "prek list -c .pre-commit-config.yaml --output-format json > '$RUNNER_TEMP/hooks.json'"
+          hooks=$(jq -c '[.[].id]' "$RUNNER_TEMP/hooks.json")
           echo "Hooks: $hooks"
           if [ "$(jq length <<<"$hooks")" -eq 0 ]; then
             echo "::error::.pre-commit-config.yaml lists no hooks"
