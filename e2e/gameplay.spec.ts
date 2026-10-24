@@ -22,7 +22,12 @@ import { expect, test, type Page, type Locator } from "@playwright/test";
  */
 async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
   return canvas.screenshot({
-    mask: [page.locator(".hud"), page.locator(".hud-scoreboard"), page.locator(".hud-result")],
+    mask: [
+      page.locator(".hud"),
+      page.locator(".hud-scoreboard"),
+      page.locator(".hud-result"),
+      page.locator(".hud-mute"),
+    ],
   });
 }
 

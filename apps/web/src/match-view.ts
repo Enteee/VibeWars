@@ -1,13 +1,22 @@
 import type { PlayerBuild } from "@vibewars/game-core";
 import type { WallDescriptor } from "@vibewars/game-protocol";
 
+import { castSounds, combatSounds } from "./audio/sound-cues.js";
+import { soundPlayer } from "./audio/sound-player.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { connectToMatch } from "./net/match-client.js";
 import type { MatchConnection, MatchSnapshot, SkillSlot } from "./net/match-connection.js";
 import { actorAtPoint, type ArenaSnapshot, type RenderableWall } from "./render/arena-scene.js";
 import { createArenaViewport } from "./render/arena-viewport.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
-import { createHud, describeRefusal, flashMessage, renderSkillBar, updateHud } from "./ui/hud.js";
+import {
+  createHud,
+  describeRefusal,
+  flashMessage,
+  renderMute,
+  renderSkillBar,
+  updateHud,
+} from "./ui/hud.js";
 
 /**
  * The in-match view: a Phaser viewport for the arena plus the DOM HUD,
@@ -106,6 +115,14 @@ export async function startMatchView(
   };
   renderSkillBar(hud, connection.skillBar, useSkill);
 
+  const sounds = soundPlayer();
+  const toggleMute = (): void => {
+    sounds.setMuted(!sounds.isMuted());
+    renderMute(hud, sounds.isMuted());
+  };
+  renderMute(hud, sounds.isMuted());
+  hud.mute.addEventListener("click", toggleMute);
+
   const detachMovement = attachKeyboardMoveInput(window, (direction) => {
     if (direction.x === 0 && direction.y === 0) {
       connection.sendIntent({ kind: "stop" });
@@ -117,6 +134,12 @@ export async function startMatchView(
   const handleKeyDown = (event: KeyboardEvent): void => {
     if (event.key === "Escape") {
       callbacks.onLeave();
+      return;
+    }
+    if (event.key === "m" || event.key === "M") {
+      if (!event.repeat) {
+        toggleMute();
+      }
       return;
     }
     if (!/^[0-9]$/.test(event.key)) {
@@ -138,14 +161,22 @@ export async function startMatchView(
 
   connection.onCombat((message) => {
     showCombatFeedback(scene, message, latestMatch);
+    for (const id of combatSounds(message, connection.selfSessionId)) {
+      sounds.play(id);
+    }
   });
   // A key that does nothing reads as a broken game; say why (issue #51).
   connection.onCastRefused((message) => {
     flashMessage(hud, describeRefusal(message.reason));
+    sounds.play("refused");
   });
 
   const offFrame = viewport.onFrame(() => {
+    const previous = latestMatch;
     latestMatch = connection.getSnapshot();
+    for (const id of castSounds(previous, latestMatch)) {
+      sounds.play(id);
+    }
     latestArena = toArenaSnapshot(latestMatch, walls, connection.skillBar);
     scene.setSnapshot(latestArena);
 
@@ -171,7 +202,12 @@ export async function startMatchView(
       offPointer();
       window.removeEventListener("keydown", handleKeyDown);
       detachMovement();
+      // The scoreboard, result and mute button sit beside the HUD root, in
+      // the shared viewport, so they go one by one or pile up per match.
       hud.root.remove();
+      hud.scoreboard.remove();
+      hud.result.remove();
+      hud.mute.remove();
       viewport.destroy();
       await connection.disconnect();
     },
