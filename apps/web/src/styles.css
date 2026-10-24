@@ -578,6 +578,275 @@ body {
   }
 }
 
+/* --- the Training Ground (#2 §6.1) --------------------------------------
+   A third, left-hand column, opted into by .has-training so that without
+   WebGL the editor is exactly the two columns above. Stacking order comes
+   from the template areas alone, never from source order. */
+
+.editor-layout.has-training {
+  grid-template-columns: minmax(20rem, 26rem) minmax(0, 1fr) minmax(16rem, 22rem);
+  grid-template-areas: "training editor library";
+  max-width: 92rem;
+}
+
+.editor-layout.has-training > .training {
+  grid-area: training;
+}
+
+.editor-layout.has-training > .editor {
+  grid-area: editor;
+}
+
+.editor-layout.has-training > .skill-library {
+  grid-area: library;
+}
+
+/* The editor is far taller than the arena; at three columns the arena
+   stays in view while you scroll to the gear. */
+.editor-layout.has-training > .training {
+  position: sticky;
+  top: 0.5rem;
+  max-height: calc(100vh - 5rem);
+}
+
+@media (width <= 78rem) {
+  .editor-layout.has-training {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+    grid-template-areas:
+      "training training"
+      "editor library";
+  }
+
+  /* Stacked, sticky would cover what it should sit above. */
+  .editor-layout.has-training > .training {
+    position: static;
+    max-height: none;
+  }
+}
+
+@media (width <= 52rem) {
+  .editor-layout.has-training {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "training"
+      "editor"
+      "library";
+  }
+}
+
+.training {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: rgb(22 27 34 / 60%);
+  font-variant-numeric: tabular-nums;
+}
+
+.training-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.training-scenario {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.training-teaches,
+.training-hint,
+.training-message {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+
+.training-message {
+  min-height: 1.1em;
+  color: var(--ink);
+}
+
+/* Sized from the scenario's world, and capped so the readouts below stay
+   on screen. The canvas inside is Phaser's, scaled to fit. */
+.training-stage {
+  position: relative;
+  width: 100%;
+  max-height: 40vh;
+  aspect-ratio: var(--training-aspect, 4 / 3);
+  border: 1px solid var(--line);
+  outline: none;
+  cursor: crosshair;
+}
+
+.training.is-armed .training-stage {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.training.is-armed .training-hint {
+  color: var(--accent);
+}
+
+.training-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(14 17 22 / 78%);
+  color: var(--ink);
+  text-align: center;
+  pointer-events: none;
+}
+
+.training-overlay[hidden] {
+  display: none;
+}
+
+.training-vitals {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.training-bar {
+  position: relative;
+  flex: 1 1 8rem;
+  height: 16px;
+  background: #11161d;
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.training-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+}
+
+.training-bar-health .training-bar-fill {
+  background: #7ee787;
+}
+
+.training-bar-energy .training-bar-fill {
+  background: #59c2ff;
+}
+
+.training-bar-label {
+  position: relative;
+  display: block;
+  text-align: center;
+  line-height: 16px;
+  font-size: 0.75rem;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
+}
+
+.training-adrenaline {
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+}
+
+.training-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.training-skill {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.25rem 0.4rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.training-skill:hover {
+  border-color: var(--accent);
+}
+
+/* A hint, not a gate: the simulation still decides whether a cast is legal. */
+.training-skill.is-unaffordable {
+  opacity: 0.45;
+}
+
+.training-skill-key {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.training-meter {
+  display: grid;
+  grid-template-columns: repeat(3, auto 1fr);
+  gap: 0.15rem 0.5rem;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.training-meter-label {
+  color: var(--ink-dim);
+}
+
+.training-meter-value {
+  margin: 0;
+  text-align: right;
+}
+
+.training-log {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 6rem;
+  flex: 1 1 auto;
+}
+
+/* The only scroller inside the panel. */
+.training-log-rows {
+  flex: 1 1 auto;
+  min-height: 6rem;
+  max-height: 14rem;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  padding: 0.3rem;
+  font-size: 0.75rem;
+}
+
+.training-log-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.training-log-time {
+  color: var(--ink-dim);
+}
+
+.training-log-row[data-tone="damage"] .training-log-text {
+  color: #ff7b72;
+}
+
+.training-log-row[data-tone="heal"] .training-log-text {
+  color: #7ee787;
+}
+
+.training-log-row[data-tone="divider"] .training-log-text {
+  color: var(--ink-dim);
+}
+
+.training-log-newest {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  font-size: 0.75rem;
+}
+
 .editor-hint {
   color: var(--ink-dim);
   font-size: 0.8rem;
