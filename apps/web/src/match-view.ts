@@ -1,17 +1,21 @@
-import Phaser from "phaser";
-
 import { vec2, type PlayerBuild } from "@vibewars/game-core";
 import type { WallDescriptor } from "@vibewars/game-protocol";
 
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
-import type { CombatMessage, MatchSnapshot, SkillSlot } from "./net/match-client.js";
 import { connectToMatch } from "./net/match-client.js";
+import type {
+  CombatMessage,
+  MatchConnection,
+  MatchSnapshot,
+  SkillSlot,
+} from "./net/match-connection.js";
 import {
-  ArenaScene,
   actorAtPoint,
+  type ArenaScene,
   type ArenaSnapshot,
   type RenderableWall,
 } from "./render/arena-scene.js";
+import { createArenaViewport } from "./render/arena-viewport.js";
 import { createHud, describeRefusal, flashMessage, renderSkillBar, updateHud } from "./ui/hud.js";
 
 /**
@@ -36,6 +40,11 @@ export interface MatchViewOptions {
    * this is what the player *asked* to play, never what they got.
    */
   readonly build?: PlayerBuild | undefined;
+  /**
+   * Where the match comes from. Defaults to the game server, with `mapId`
+   * and `build`; the Training Ground passes a local simulation instead.
+   */
+  readonly connect?: (() => Promise<MatchConnection>) | undefined;
 }
 
 export interface MatchView {
@@ -141,32 +150,19 @@ export function showCombatFeedback(
 }
 
 export async function startMatchView(
-  viewport: HTMLElement,
+  parent: HTMLElement,
   endpoint: string,
   callbacks: MatchViewCallbacks,
   options: MatchViewOptions = {},
 ): Promise<MatchView> {
-  const game = new Phaser.Game({
-    type: Phaser.AUTO,
-    parent: viewport,
-    backgroundColor: "#0e1116",
-    scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
-    scene: [ArenaScene],
-  });
+  const viewport = await createArenaViewport(parent, { mode: "resize" });
+  const { scene } = viewport;
 
-  const scene = await new Promise<ArenaScene>((resolve) => {
-    game.events.once(Phaser.Core.Events.READY, () => {
-      const candidate = game.scene.getScene(ArenaScene.KEY);
-      if (candidate instanceof ArenaScene) {
-        resolve(candidate);
-      }
-    });
-  });
-
-  const connection = await connectToMatch(endpoint, options.mapId, options.build);
+  const connect = options.connect ?? (() => connectToMatch(endpoint, options.mapId, options.build));
+  const connection = await connect();
   const walls = connection.map.walls.map(toRenderableWall);
 
-  const hud = createHud(viewport);
+  const hud = createHud(parent);
   const useSkill = (slot: number): void => {
     connection.sendIntent({ kind: "use-skill", slot });
   };
@@ -210,7 +206,7 @@ export async function startMatchView(
     flashMessage(hud, describeRefusal(message.reason));
   });
 
-  const onStep = (): void => {
+  const offFrame = viewport.onFrame(() => {
     latestMatch = connection.getSnapshot();
     latestArena = toArenaSnapshot(latestMatch, walls, connection.skillBar);
     scene.setSnapshot(latestArena);
@@ -222,11 +218,10 @@ export async function startMatchView(
     // permanently blank: the server tracked all three and the HUD could
     // draw all three, and nothing connected them.
     updateHud(hud, self, target, connection.skillBar, latestMatch);
-  };
-  game.events.on(Phaser.Core.Events.STEP, onStep);
+  });
 
-  scene.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-    const hit = actorAtPoint(latestArena, vec2(pointer.worldX, pointer.worldY));
+  const offPointer = viewport.onPointerDown((world) => {
+    const hit = actorAtPoint(latestArena, world);
     connection.sendIntent({ kind: "target", targetSessionId: hit?.id ?? null });
   });
 
@@ -234,11 +229,12 @@ export async function startMatchView(
     async dispose(): Promise<void> {
       // Order matters: stop listening before tearing down, so a late
       // event cannot touch a destroyed scene.
-      game.events.off(Phaser.Core.Events.STEP, onStep);
+      offFrame();
+      offPointer();
       window.removeEventListener("keydown", handleKeyDown);
       detachMovement();
       hud.root.remove();
-      game.destroy(true);
+      viewport.destroy();
       await connection.disconnect();
     },
   };
