@@ -253,14 +253,21 @@ export class MatchSimulation {
 
   /**
    * Swap a participant's gear and skills in place: same id, team and
-   * position, at their starting health and full energy, with nothing
-   * active and nothing recharging. The loadout carries no skill bar, so it comes separately.
+   * position, at the same fraction of their health and full energy, with
+   * nothing active and nothing recharging. The loadout carries no skill
+   * bar, so it comes separately.
+   *
+   * The health *fraction* carries over, not the starting health: a build
+   * change that moves max health must not be a free heal, and a corpse
+   * stays a corpse until its respawn.
    */
   public rearm(id: string, loadout: ResolvedLoadout, skillBar: readonly string[]): void {
     const record = this.#participants.get(id);
     if (record === undefined) {
       return;
     }
+    const before = record.combatant;
+    const fraction = before.maxHealth > 0 ? before.health / before.maxHealth : 0;
     record.combatant = this.#combatant({
       ...record.spec,
       attributeRanks: loadout.attributeRanks,
@@ -268,6 +275,8 @@ export class MatchSimulation {
       maxHealth: loadout.maxHealth,
       maxEnergy: loadout.maxEnergy,
     });
+    record.combatant.health = record.combatant.maxHealth * fraction;
+    record.combatant.dead = before.dead;
     record.skillBar = skillBar;
   }
 

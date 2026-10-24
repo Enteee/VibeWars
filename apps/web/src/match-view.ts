@@ -4,7 +4,7 @@ import type { WallDescriptor } from "@vibewars/game-protocol";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { connectToMatch } from "./net/match-client.js";
 import type { MatchConnection, MatchSnapshot } from "./net/match-connection.js";
-import { actorAtPoint, type ArenaSnapshot, type RenderableWall } from "./render/arena-scene.js";
+import { actorAtPoint, type ArenaSnapshot, type RenderableWall } from "./render/arena-snapshot.js";
 import { createArenaViewport } from "./render/arena-viewport.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
 import { createHud, describeRefusal, flashMessage, renderSkillBar, updateHud } from "./ui/hud.js";
@@ -42,7 +42,7 @@ export interface MatchView {
   dispose(): Promise<void>;
 }
 
-function toRenderableWall(wall: WallDescriptor): RenderableWall {
+export function toRenderableWall(wall: WallDescriptor): RenderableWall {
   return wall.kind === "rect"
     ? { kind: "rect", x: wall.x, y: wall.y, width: wall.width, height: wall.height }
     : { kind: "polygon", points: wall.points };

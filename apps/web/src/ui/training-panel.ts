@@ -1,0 +1,596 @@
+import {
+  TRAINING_SCENARIOS,
+  getTrainingScenario,
+  type StepResult,
+  type TrainingScenario,
+} from "@vibewars/game-core";
+
+import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
+import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
+import type { MatchSnapshot, SkillSlot } from "../net/match-connection.js";
+import {
+  actorAtPoint,
+  EMPTY_SNAPSHOT,
+  type ArenaSnapshot,
+  type RenderableWall,
+} from "../render/arena-snapshot.js";
+import { createArenaViewport, type ArenaViewport } from "../render/arena-viewport.js";
+import { showCombatFeedback } from "../render/combat-feedback.js";
+import type { StoredCharacter } from "../storage/schema.js";
+import {
+  createLocalConnection,
+  TICK_SECONDS,
+  type LocalMatchConnection,
+} from "../training/local-connection.js";
+import { playerArming, setupScenario, SELF_ID, trainingMap } from "../training/scenario-setup.js";
+import {
+  EMPTY_TOTALS,
+  accumulate,
+  appendRows,
+  combatEventToRow,
+  dividerRow,
+  meterRows,
+  shouldStickToBottom,
+  type LogRow,
+  type MeterTotals,
+} from "./combat-readouts.js";
+import { describeRefusal, MESSAGE_SECONDS } from "./hud.js";
+import {
+  buildSignature,
+  loadScenarioChoice,
+  overlayMessage,
+  resolveScenarioId,
+  saveScenarioChoice,
+  shouldRestoreFocus,
+  slotForKey,
+} from "./training-state.js";
+
+/**
+ * The Training Ground: a live arena beside the build editor (#2 §6).
+ *
+ * The editor re-renders its whole subtree on every change, so this panel
+ * is created once and *moved* into each new render with `attach`. The
+ * Phaser game inside it lives as long as the editor does: switching
+ * scenarios swaps the simulation and resizes the game, and editing the
+ * build re-arms the player in place. Nothing here ever recreates it.
+ */
+
+export interface TrainingPanel {
+  readonly root: HTMLElement;
+  /** Re-parent after a re-render. */
+  attach(parent: HTMLElement): void;
+  setBuild(character: StoredCharacter): void;
+  setDisplayName(name: string): void;
+  dispose(): void;
+}
+
+/** The newest rows the log keeps; older ones come off the front. */
+const LOG_CAP = 200;
+
+/** The meter is summed every step, but repainted at most this often. */
+const METER_PAINT_SECONDS = 0.2;
+
+const HINT_IDLE = "click the arena to take control";
+const HINT_ARMED = "wasd move · 1–8 cast · click to target · esc to release";
+
+/**
+ * Clicking one of these takes the keyboard, so it takes arena control
+ * away. Clicking anything else outside the panel (an attribute `+`, a
+ * skill box) re-renders the editor and hands control back.
+ */
+const TAKES_KEYBOARD = "input, textarea, select, [contenteditable]:not([contenteditable='false'])";
+
+/** Thrown when the arena cannot run here; the editor then stays two columns. */
+export class TrainingUnavailableError extends Error {}
+
+function hasWebGl(): boolean {
+  try {
+    const canvas = document.createElement("canvas");
+    return (canvas.getContext("webgl2") ?? canvas.getContext("webgl")) !== null;
+  } catch {
+    return false;
+  }
+}
+
+function h(tag: string, className?: string, text?: string): HTMLElement {
+  const node = document.createElement(tag);
+  if (className !== undefined) {
+    node.className = className;
+  }
+  if (text !== undefined) {
+    node.textContent = text;
+  }
+  return node;
+}
+
+function vitalBar(kind: string): { root: HTMLElement; fill: HTMLElement; label: HTMLElement } {
+  const root = h("div", `training-bar training-bar-${kind}`);
+  const fill = h("div", "training-bar-fill");
+  const label = h("span", "training-bar-label");
+  root.append(fill, label);
+  return { root, fill, label };
+}
+
+interface Session {
+  readonly scenario: TrainingScenario;
+  readonly connection: LocalMatchConnection;
+  readonly names: ReadonlyMap<string, string>;
+  readonly walls: readonly RenderableWall[];
+  parked: boolean;
+}
+
+export function createTrainingPanel(): TrainingPanel {
+  if (!hasWebGl()) {
+    throw new TrainingUnavailableError("no WebGL");
+  }
+
+  const storage = (): Storage => window.localStorage;
+
+  /* --- DOM ------------------------------------------------------------- */
+
+  const root = h("section", "training");
+  root.setAttribute("aria-label", "training ground");
+
+  const controls = h("div", "training-controls");
+  const picker = document.createElement("select");
+  picker.className = "training-scenario";
+  picker.setAttribute("aria-label", "scenario");
+  for (const scenario of TRAINING_SCENARIOS) {
+    const option = document.createElement("option");
+    option.value = scenario.id;
+    option.textContent = scenario.label;
+    picker.appendChild(option);
+  }
+  const resetButton = document.createElement("button");
+  resetButton.type = "button";
+  resetButton.className = "training-reset";
+  resetButton.textContent = "reset";
+  controls.append(picker, resetButton);
+
+  const teaches = h("p", "training-teaches");
+
+  const stage = h("div", "training-stage");
+  stage.tabIndex = 0;
+  stage.setAttribute("role", "application");
+  stage.setAttribute("aria-label", "training arena");
+  const overlay = h("div", "training-overlay");
+  overlay.hidden = true;
+  stage.appendChild(overlay);
+
+  const hint = h("p", "training-hint", HINT_IDLE);
+  const message = h("p", "training-message");
+
+  const health = vitalBar("health");
+  const energy = vitalBar("energy");
+  const adrenaline = h("span", "training-adrenaline");
+  const vitals = h("div", "training-vitals");
+  vitals.append(health.root, energy.root, adrenaline);
+
+  const skills = h("div", "training-skills");
+
+  const meter = h("dl", "training-meter");
+
+  const log = h("div", "training-log");
+  const logRowsEl = h("div", "training-log-rows");
+  logRowsEl.setAttribute("role", "log");
+  const newest = document.createElement("button");
+  newest.type = "button";
+  newest.className = "training-log-newest";
+  newest.textContent = "↓ newest";
+  newest.hidden = true;
+  log.append(logRowsEl, newest);
+
+  root.append(controls, teaches, stage, hint, message, vitals, skills, meter, log);
+
+  /* --- state ----------------------------------------------------------- */
+
+  let disposed = false;
+  let viewport: ArenaViewport | undefined;
+  let session: Session | undefined;
+  let character: StoredCharacter | undefined;
+  let signature: string | undefined;
+  let displayName = "";
+  let armed = false;
+  let logRows: readonly LogRow[] = [];
+  let totals: MeterTotals = EMPTY_TOTALS;
+  let sinceMeterPaint = 0;
+  let latestMatch: MatchSnapshot | undefined;
+  let latestArena: ArenaSnapshot = EMPTY_SNAPSHOT;
+  let messageTimer: ReturnType<typeof setTimeout> | undefined;
+  let skillButtons: HTMLButtonElement[] = [];
+
+  const nameOf = (id: string): string =>
+    id === SELF_ID ? displayName.trim() || "You" : (session?.names.get(id) ?? id);
+
+  /* --- painting -------------------------------------------------------- */
+
+  const appendLog = (incoming: readonly LogRow[]): void => {
+    if (incoming.length === 0) {
+      return;
+    }
+    // Measured before appending, so a reader scrolled up stays put.
+    const stick = shouldStickToBottom(
+      logRowsEl.scrollTop,
+      logRowsEl.scrollHeight,
+      logRowsEl.clientHeight,
+    );
+    logRows = appendRows(logRows, incoming, LOG_CAP).rows;
+    for (const row of incoming) {
+      const line = h("div", "training-log-row");
+      line.dataset.tone = row.tone;
+      line.append(
+        h("span", "training-log-time", row.time),
+        h("span", "training-log-text", row.text),
+      );
+      logRowsEl.appendChild(line);
+    }
+    while (logRowsEl.childElementCount > LOG_CAP) {
+      logRowsEl.firstElementChild?.remove();
+    }
+    if (stick) {
+      logRowsEl.scrollTop = logRowsEl.scrollHeight;
+    } else {
+      newest.hidden = false;
+    }
+  };
+
+  const paintMeter = (): void => {
+    meter.replaceChildren(
+      ...meterRows(totals).flatMap((row) => {
+        const value = h("dd", "training-meter-value", row.value);
+        value.dataset.meter = row.label;
+        return [h("dt", "training-meter-label", row.label), value];
+      }),
+    );
+  };
+
+  const restartMeter = (label: string): void => {
+    totals = EMPTY_TOTALS;
+    sinceMeterPaint = 0;
+    paintMeter();
+    appendLog([dividerRow(label, session?.connection.simulation.elapsedSeconds ?? 0)]);
+  };
+
+  const flash = (text: string): void => {
+    message.textContent = text;
+    if (messageTimer !== undefined) {
+      clearTimeout(messageTimer);
+    }
+    messageTimer = setTimeout(() => {
+      message.textContent = "";
+    }, MESSAGE_SECONDS * 1000);
+  };
+
+  const cast = (slot: number): void => {
+    if (session === undefined || session.parked) {
+      return;
+    }
+    session.connection.sendIntent({ kind: "use-skill", slot });
+  };
+
+  const paintSkills = (slots: readonly SkillSlot[]): void => {
+    skillButtons = slots.map((slot, index) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "training-skill";
+      // Not focusable, and pressing it does not move focus: casting from
+      // the bar must not take the keyboard away from the arena.
+      button.tabIndex = -1;
+      button.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+      });
+      button.addEventListener("click", () => {
+        cast(index);
+      });
+      button.append(
+        h("span", "training-skill-key", String(index + 1)),
+        h("span", "training-skill-name", slot.name),
+      );
+      return button;
+    });
+    skills.replaceChildren(...skillButtons);
+  };
+
+  const paintOverlay = (problem: string | undefined, skillBar: readonly string[]): void => {
+    const text = overlayMessage(problem, skillBar);
+    overlay.hidden = text === undefined;
+    overlay.textContent = text ?? "";
+  };
+
+  const paintVitals = (match: MatchSnapshot): void => {
+    const self = match.players.find((player) => player.sessionId === SELF_ID);
+    if (self === undefined) {
+      return;
+    }
+    const fraction = (value: number, max: number): string =>
+      `${String(max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0)}%`;
+    health.fill.style.width = fraction(self.health, self.maxHealth);
+    health.label.textContent = `${String(self.health)} / ${String(self.maxHealth)}`;
+    energy.fill.style.width = fraction(self.energy, self.maxEnergy);
+    energy.label.textContent = `${String(self.energy)} / ${String(self.maxEnergy)}`;
+    adrenaline.textContent = `adrenaline ${String(self.adrenaline)}`;
+    const slots = session?.connection.skillBar ?? [];
+    skillButtons.forEach((button, index) => {
+      const slot = slots[index];
+      // A hint, not a gate: the simulation still decides.
+      const unaffordable =
+        slot !== undefined &&
+        (self.energy < slot.energyCost || self.adrenaline < slot.adrenalineCost);
+      button.classList.toggle("is-unaffordable", unaffordable);
+    });
+  };
+
+  /* --- the session ------------------------------------------------------ */
+
+  const onStep = (result: StepResult): void => {
+    totals = accumulate(totals, result.log, SELF_ID, TICK_SECONDS);
+    const rows: LogRow[] = [];
+    for (const entry of result.log) {
+      for (const event of entry.events) {
+        rows.push(combatEventToRow(entry, event, nameOf));
+      }
+    }
+    appendLog(rows);
+  };
+
+  const startSession = (scenario: TrainingScenario, build: StoredCharacter): void => {
+    void session?.connection.disconnect();
+    const setup = setupScenario(scenario, build);
+    const connection = createLocalConnection({
+      simulation: setup.simulation,
+      selfId: SELF_ID,
+      map: setup.map,
+    });
+    session = {
+      scenario,
+      connection,
+      names: setup.names,
+      walls: setup.map.walls.map(toRenderableWall),
+      parked: setup.arming.problem !== undefined,
+    };
+    connection.onStep(onStep);
+    connection.onCombat((combat) => {
+      if (viewport !== undefined && latestMatch !== undefined) {
+        showCombatFeedback(viewport.scene, combat, latestMatch);
+      }
+    });
+    connection.onCastRefused((refusal) => {
+      flash(describeRefusal(refusal.reason));
+    });
+
+    picker.value = scenario.id;
+    teaches.textContent = scenario.teaches;
+    const map = trainingMap(scenario);
+    stage.style.setProperty("--training-aspect", `${String(map.width)} / ${String(map.height)}`);
+    viewport?.setWorldSize(map.width, map.height);
+    paintSkills(connection.skillBar);
+    paintOverlay(setup.arming.problem, setup.arming.skillBar);
+    restartMeter(scenario.label);
+  };
+
+  const rearm = (build: StoredCharacter): void => {
+    if (session === undefined) {
+      return;
+    }
+    const arming = playerArming(build);
+    const parked = arming.problem !== undefined;
+    if (parked) {
+      session.connection.sendIntent({ kind: "stop" });
+    }
+    session.connection.rearm(arming.loadout, arming.skillBar);
+    session.parked = parked;
+    paintSkills(session.connection.skillBar);
+    paintOverlay(arming.problem, arming.skillBar);
+    // A meter averaging two builds is a lie; the log keeps the history.
+    restartMeter("re-armed");
+  };
+
+  /* --- input ------------------------------------------------------------- */
+
+  const onMove = (direction: { x: number; y: number }): void => {
+    if (session === undefined || session.parked) {
+      return;
+    }
+    session.connection.sendIntent(
+      direction.x === 0 && direction.y === 0
+        ? { kind: "stop" }
+        : { kind: "move", dirX: direction.x, dirY: direction.y },
+    );
+  };
+  // On the stage, never on `window`: typing in the name field or the
+  // library search bubbles up past the stage and can never move anyone.
+  let detachMovement = attachKeyboardMoveInput(stage, onMove);
+
+  const onStageKeyDown = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") {
+      // Releases control; never navigates away from the editor.
+      event.preventDefault();
+      armed = false;
+      stage.blur();
+      return;
+    }
+    const slot = slotForKey(event.key, session?.connection.skillBar.length ?? 0);
+    if (slot !== undefined) {
+      event.preventDefault();
+      cast(slot);
+    }
+  };
+
+  const onStagePointerDown = (): void => {
+    armed = true;
+    stage.focus({ preventScroll: true });
+  };
+
+  const onDocumentPointerDown = (event: PointerEvent): void => {
+    const target = event.target;
+    if (!(target instanceof Element) || root.contains(target)) {
+      return;
+    }
+    if (target.closest(TAKES_KEYBOARD) !== null) {
+      armed = false;
+    }
+  };
+
+  const onStageFocus = (): void => {
+    root.classList.add("is-armed");
+    hint.textContent = HINT_ARMED;
+  };
+
+  const onStageBlur = (): void => {
+    root.classList.remove("is-armed");
+    hint.textContent = HINT_IDLE;
+    // A key held while focus left will never send its keyup here: let go
+    // of everything, rather than walk on forever.
+    detachMovement();
+    detachMovement = attachKeyboardMoveInput(stage, onMove);
+    onMove({ x: 0, y: 0 });
+  };
+
+  stage.addEventListener("keydown", onStageKeyDown);
+  stage.addEventListener("pointerdown", onStagePointerDown, { capture: true });
+  stage.addEventListener("focus", onStageFocus);
+  stage.addEventListener("blur", onStageBlur);
+  document.addEventListener("pointerdown", onDocumentPointerDown, { capture: true });
+
+  const onPickScenario = (): void => {
+    const scenario = getTrainingScenario(picker.value);
+    if (scenario === undefined || character === undefined) {
+      return;
+    }
+    saveScenarioChoice(storage, scenario.id);
+    startSession(scenario, character);
+  };
+  picker.addEventListener("change", onPickScenario);
+
+  const onReset = (): void => {
+    if (session === undefined) {
+      return;
+    }
+    const { simulation } = session.connection;
+    for (const participant of [...simulation.participants()]) {
+      simulation.resetParticipant(participant.id);
+    }
+    restartMeter("reset");
+  };
+  resetButton.addEventListener("click", onReset);
+
+  const onLogScroll = (): void => {
+    if (shouldStickToBottom(logRowsEl.scrollTop, logRowsEl.scrollHeight, logRowsEl.clientHeight)) {
+      newest.hidden = true;
+    }
+  };
+  logRowsEl.addEventListener("scroll", onLogScroll);
+  newest.addEventListener("click", () => {
+    logRowsEl.scrollTop = logRowsEl.scrollHeight;
+    newest.hidden = true;
+  });
+
+  /* --- the arena --------------------------------------------------------- */
+
+  const firstScenario =
+    getTrainingScenario(resolveScenarioId(loadScenarioChoice(storage), TRAINING_SCENARIOS) ?? "") ??
+    TRAINING_SCENARIOS[0];
+  if (firstScenario === undefined) {
+    throw new TrainingUnavailableError("no training scenarios");
+  }
+  const firstMap = trainingMap(firstScenario);
+  stage.style.setProperty(
+    "--training-aspect",
+    `${String(firstMap.width)} / ${String(firstMap.height)}`,
+  );
+
+  let offFrame: (() => void) | undefined;
+  let offPointer: (() => void) | undefined;
+
+  void createArenaViewport(stage, {
+    mode: "fit",
+    width: firstMap.width,
+    height: firstMap.height,
+  }).then((created) => {
+    if (disposed) {
+      created.destroy();
+      return;
+    }
+    viewport = created;
+    if (session !== undefined) {
+      const map = trainingMap(session.scenario);
+      created.setWorldSize(map.width, map.height);
+    }
+    // The one clock: Phaser's STEP. It stops when the game is
+    // destroyed, so teardown cannot leave an orphan loop behind.
+    offFrame = created.onFrame((deltaSeconds) => {
+      if (disposed || session === undefined) {
+        return;
+      }
+      const { connection } = session;
+      connection.advance(deltaSeconds);
+      latestMatch = connection.getSnapshot();
+      latestArena = toArenaSnapshot(latestMatch, session.walls);
+      created.scene.setSnapshot(latestArena);
+      paintVitals(latestMatch);
+      sinceMeterPaint += deltaSeconds;
+      if (sinceMeterPaint >= METER_PAINT_SECONDS) {
+        sinceMeterPaint = 0;
+        paintMeter();
+      }
+    });
+    offPointer = created.onPointerDown((world) => {
+      if (session === undefined) {
+        return;
+      }
+      const hit = actorAtPoint(latestArena, world);
+      session.connection.sendIntent({ kind: "target", targetSessionId: hit?.id ?? null });
+    });
+  });
+
+  return {
+    root,
+    attach(parent) {
+      parent.appendChild(root);
+      const active = document.activeElement;
+      if (shouldRestoreFocus(armed, active === null || active === document.body)) {
+        stage.focus({ preventScroll: true });
+      }
+    },
+    setBuild(next) {
+      character = next;
+      const nextSignature = buildSignature(next);
+      if (session === undefined) {
+        signature = nextSignature;
+        startSession(firstScenario, next);
+        return;
+      }
+      if (nextSignature !== signature) {
+        signature = nextSignature;
+        rearm(next);
+      }
+    },
+    setDisplayName(name) {
+      displayName = name;
+    },
+    dispose() {
+      if (disposed) {
+        return;
+      }
+      disposed = true;
+      // Mirrors MatchView.dispose(): stop listening before tearing down,
+      // so a late event cannot touch a destroyed scene.
+      offFrame?.();
+      offPointer?.();
+      detachMovement();
+      stage.removeEventListener("keydown", onStageKeyDown);
+      stage.removeEventListener("pointerdown", onStagePointerDown, { capture: true });
+      stage.removeEventListener("focus", onStageFocus);
+      stage.removeEventListener("blur", onStageBlur);
+      document.removeEventListener("pointerdown", onDocumentPointerDown, { capture: true });
+      if (messageTimer !== undefined) {
+        clearTimeout(messageTimer);
+      }
+      void session?.connection.disconnect();
+      session = undefined;
+      root.remove();
+      viewport?.destroy();
+      viewport = undefined;
+    },
+  };
+}

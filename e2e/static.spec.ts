@@ -48,6 +48,13 @@ test("the menu loads under the sub-path, with every asset found", async ({ page 
   expect(traffic.online).toEqual([]);
 });
 
+test("the menu links to the source, as the AGPL asks of a networked game", async ({ page }) => {
+  await page.goto("./");
+  const source = page.getByRole("link", { name: "source" });
+  await expect(source).toHaveAttribute("href", "https://github.com/Enteee/VibeWars");
+  await expect(source).toHaveAttribute("target", "_blank");
+});
+
 test("online play is shown disabled, and nothing reaches for a server", async ({ page }) => {
   const traffic = watchTraffic(page);
   await page.goto("./");
