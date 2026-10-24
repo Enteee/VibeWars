@@ -287,7 +287,7 @@ let
           if [ -e "$DEVENV_ROOT/scripts/bots/$f" ] &&
              ! ${pkgs.diffutils}/bin/cmp -s "$DEVENV_ROOT/scripts/bots/$f" "${botScripts}/$f"; then
             echo "claude-bot: warning: scripts/bots/$f differs from the staged copy being run." >&2
-            echo "claude-bot: warning: rm .devenv/nix-eval-cache.db and re-enter the shell to pick it up." >&2
+            echo "claude-bot: warning: re-enter the shell with devenv shell --refresh-eval-cache to pick it up." >&2
             break
           fi
         done
