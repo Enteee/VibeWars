@@ -255,6 +255,32 @@ function git(args) {
 }
 
 /**
+ * `git` for output that need not be text, such as a blob: stdout as bytes,
+ * never decoded, so a binary file in a skill is exported intact.
+ *
+ * @param {string[]} args
+ * @returns {Promise<{ code: number, stdout: Buffer }>}
+ */
+function gitBytes(args) {
+  return new Promise((resolve) => {
+    const child = spawn("git", [...GIT_HARDENING, `--git-dir=${MIRROR}`, ...args], {
+      cwd: HUB,
+      env: { ...process.env, GIT_TERMINAL_PROMPT: "0", ...GIT_ENV },
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    /** @type {Buffer[]} */
+    const chunks = [];
+    child.stdout.on("data", (/** @type {Buffer} */ chunk) => chunks.push(chunk));
+    child.on("error", () => {
+      resolve({ code: 127, stdout: Buffer.alloc(0) });
+    });
+    child.on("close", (code) => {
+      resolve({ code: code ?? 0, stdout: Buffer.concat(chunks) });
+    });
+  });
+}
+
+/**
  * Where pushes go and where `main` comes from: the company's repository,
  * never a remote an agent configured. VIBEWARS_GIT_REMOTE is the host's to
  * set, for a test to point at a local bare repository.
@@ -571,19 +597,28 @@ async function syncSkills(cfg) {
   if (listing.code !== 0) {
     return;
   }
-  /** @type {Map<string, Map<string, string>>} */
+  /** @type {Map<string, Map<string, Uint8Array>>} */
   const skills = new Map();
   for (const { skill, file, oid } of skillFiles(listing.stdout, SKILLS_PREFIX)) {
-    const blob = await git(["cat-file", "blob", oid]);
+    const blob = await gitBytes(["cat-file", "blob", oid]);
     if (blob.code !== 0) {
       return;
     }
-    /** @type {Map<string, string>} */
+    /** @type {Map<string, Uint8Array>} */
     const files = skills.get(skill) ?? new Map();
     files.set(file, blob.stdout);
     skills.set(skill, files);
   }
-  installSkills(SKILLS_MAIN, skills);
+  // A full disk or a permission error must not take hub down for every
+  // role: the agents keep the previous export, and the next sync retries.
+  try {
+    installSkills(SKILLS_MAIN, skills);
+  } catch (error) {
+    console.error(
+      `hubd: skills from main ${sha.slice(0, 7)} not exported: ${error instanceof Error ? error.message : "failed"}`,
+    );
+    return;
+  }
   skillsSha = sha;
   console.error(
     `hubd: skills from main ${sha.slice(0, 7)}: ${[...skills.keys()].join(", ") || "none"}`,

@@ -67,7 +67,7 @@ export function skillFiles(listing, prefix) {
  * own scratch space.
  *
  * @param {string} dir the bound directory, which is never itself replaced
- * @param {ReadonlyMap<string, ReadonlyMap<string, string>>} skills name to (file to contents)
+ * @param {ReadonlyMap<string, ReadonlyMap<string, Uint8Array>>} skills name to (file to bytes)
  * @returns {void}
  */
 export function installSkills(dir, skills) {
@@ -94,4 +94,38 @@ export function installSkills(dir, skills) {
       fs.rmSync(path.join(dir, entry), { recursive: true, force: true });
     }
   }
+}
+
+/**
+ * The manager's draft skills, `<worktree>/.claude/bots/skills`, made if
+ * missing and returned as a real path for claude-bot to bind into the
+ * manager's jail. The manager controls everything in its worktree, so any
+ * of `.claude`, `bots` or `skills` could be a symlink to somewhere on the
+ * host, and bwrap would follow it and mount that instead: the operator's
+ * home, say. So no component may be a symlink, and the result must resolve
+ * to inside the worktree.
+ *
+ * @param {string} worktree
+ * @returns {string} the directory to bind
+ * @throws {Error} when a component is a symlink or not a directory
+ */
+export function draftsDir(worktree) {
+  const root = fs.realpathSync(worktree);
+  let dir = root;
+  for (const part of SKILLS_PREFIX.split("/").filter((p) => p !== "")) {
+    dir = path.join(dir, part);
+    const stat = fs.lstatSync(dir, { throwIfNoEntry: false });
+    if (stat === undefined) {
+      fs.mkdirSync(dir);
+    } else if (stat.isSymbolicLink()) {
+      throw new Error(`${dir} is a symlink`);
+    } else if (!stat.isDirectory()) {
+      throw new Error(`${dir} is not a directory`);
+    }
+  }
+  const real = fs.realpathSync(dir);
+  if (!real.startsWith(`${root}${path.sep}`)) {
+    throw new Error(`${dir} resolves outside ${root}`);
+  }
+  return real;
 }

@@ -593,10 +593,16 @@ let
         # worktree's .claude/skills (#27): every agent gets main's merged copy,
         # live, with nothing in its worktree changing. The manager, who writes
         # them, gets its own branch's drafts instead, read-only like everyone
-        # else's: they change by commit, through review.
+        # else's: they change by commit, through review. The manager controls
+        # its worktree, so the drafts directory is checked first: a symlink
+        # anywhere in .claude/bots/skills would make bwrap bind whatever it
+        # points at on the host, such as the operator's home.
         if [ "$role" = "manager" ]; then
-          mkdir -p "$worktree/.claude/bots/skills"
-          skillsBind=(--ro-bind "$worktree/.claude/bots/skills" "$HOME/.claude/skills")
+          if ! drafts="$(${node} ${botScripts}/skills-drafts.mjs "$worktree")"; then
+            echo "claude-bot: refusing to start $role: its draft skills are not a plain directory in its worktree" >&2
+            exit 1
+          fi
+          skillsBind=(--ro-bind "$drafts" "$HOME/.claude/skills")
         else
           skillsBind=(--ro-bind "$VIBEWARS_BOT_ROOT/skills-main" "$HOME/.claude/skills")
         fi

@@ -19,9 +19,10 @@ What you do:
   twice. Ship it like code: commit it on `bot/manager/<something>`,
   `hub push` it, and `hub pr create --head bot/manager/<something>` saying
   what behaviour it changes. Your pushes may touch nothing outside
-  `.claude/bots/skills/`. Lead-dev reviews it, QA merges it, and every agent
-  loads it within a minute of the merge. You see your branch's drafts at
-  once; nobody else does until it merges.
+  `.claude/bots/skills/`. Skills are gate code, so lead-dev and perf-sec-qa
+  both review it, QA merges it, and every agent loads it within a minute of
+  the merge. You see your branch's drafts at once; nobody else does until it
+  merges.
 - **Pick what gets built.** Move cards `Backlog -> Ready`, but only after the
   architect has given the issue an implementable spec. Then tell a specific
   developer, by name, on Telegram. A `Ready` card nobody has been told about
