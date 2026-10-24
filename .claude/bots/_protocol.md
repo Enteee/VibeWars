@@ -23,7 +23,10 @@ tg ask <question> [--option <text>]...
                              ask the operator (manager, architect, lead-dev)
 
 board ls [column]            what is on the board
+board show <issue> [--fresh] one card; --fresh if someone moved it in GitHub
 board move <issue> <column>  move a card
+board wait <column> [--timeout 900]
+                             block until a card arrives in that column
 
 hub <gh command...>          GitHub, e.g. `hub issue list`, `hub pr create`
 hub push <branch>            push your branch
@@ -53,6 +56,9 @@ An issue's column is the single source of truth for what should happen to it
 next. Move a card the moment its state changes, not in a batch later: your
 colleagues poll the board to find their work, and a stale column means someone
 sits idle or two people do the same thing.
+
+`board` reads cost no GitHub budget; a move shows at once. Use `board ls
+<column>` or `board show <issue>`, never `hub project item-list`.
 
 ## Your loop
 
