@@ -1,6 +1,7 @@
 {
   "name": "@vibewars/game-data",
   "version": "0.0.0",
+  "license": "AGPL-3.0-or-later",
   "private": true,
   "type": "module",
   "description": "GW1 reference skill data: importer pipeline + normalized output (ADR-0004).",

@@ -162,7 +162,7 @@ each new role costs, and why it is built this way:
 
 ## License
 
-AGPL-3.0-or-later. No proprietary Guild Wars assets, code or map
+AGPL-3.0-or-later; the full text is in [`LICENSE`](LICENSE). No proprietary Guild Wars assets, code or map
 geometry are included or depended on; the GW1 skill corpus used for
 reference is treated as reference _data_ with recorded provenance, never
 a runtime dependency — see [ADR-0004](docs/adr/0004-skill-data.md).

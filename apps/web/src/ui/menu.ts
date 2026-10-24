@@ -1,3 +1,4 @@
+import { SOURCE_URL } from "../source.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
 import { createCharacterDot, equippedCount, professionLabel } from "./character-preview.js";
@@ -115,9 +116,19 @@ export function renderMenu(
   const panel = h("div", "screen screen-menu");
 
   panel.appendChild(h("h1", "screen-title", "vibewars"));
-  panel.appendChild(
-    h("p", "screen-subtitle", "A minimalist tactical PvP arena. Built for LAN parties."),
+  const subtitle = h(
+    "p",
+    "screen-subtitle",
+    "A minimalist tactical PvP arena. Built for LAN parties. ",
   );
+  // The AGPL's network clause: whoever plays it is offered the source.
+  const source = h("a", "screen-source", "source");
+  source.setAttribute("href", SOURCE_URL);
+  // A new tab, so reading the source never leaves the game.
+  source.setAttribute("target", "_blank");
+  source.setAttribute("rel", "noopener");
+  subtitle.appendChild(source);
+  panel.appendChild(subtitle);
   if (connectionNotice !== undefined) {
     panel.appendChild(h("div", "screen-problem screen-connection-problem", connectionNotice));
   }
