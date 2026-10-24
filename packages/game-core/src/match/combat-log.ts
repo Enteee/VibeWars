@@ -10,18 +10,20 @@ import type { CombatEvent } from "../skills/effects.js";
  * this type formalises it and adds the tick, the time and the cause.
  */
 
-export type CombatCause = "skill" | "degeneration";
+/** A cast, one participant's status tick, or one landed weapon swing. */
+export type CombatCause = "skill" | "degeneration" | "weapon";
 
-/** One *resolution*: a cast, or one participant's status tick. */
+/** One *resolution*: a cast, one participant's status tick, or one swing. */
 export interface CombatLogEntry {
   readonly tick: number;
   readonly atSeconds: number;
   readonly cause: CombatCause;
   /**
-   * Who is responsible. The caster for a skill. For degeneration, whoever
-   * applied the statuses behind it when there is exactly one such source,
-   * and `undefined` when several statuses from different sources summed
-   * into one number: that is genuinely shared, and is not guessed at.
+   * Who is responsible. The caster for a skill, the attacker for a swing.
+   * For degeneration, whoever applied the statuses behind it when there is
+   * exactly one such source, and `undefined` when several statuses from
+   * different sources summed into one number: that is genuinely shared,
+   * and is not guessed at.
    */
   readonly sourceId: string | undefined;
   readonly skillId: string | undefined;

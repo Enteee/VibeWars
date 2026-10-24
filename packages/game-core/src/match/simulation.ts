@@ -1,5 +1,9 @@
 import type { ResolvedEquipment, ResolvedLoadout } from "../equipment/resolve.js";
-import { resolveCircleCircleCollision, resolveCircleSegmentCollision } from "../geometry.js";
+import {
+  distanceWithinRange,
+  resolveCircleCircleCollision,
+  resolveCircleSegmentCollision,
+} from "../geometry.js";
 import type { Segment } from "../geometry.js";
 import {
   addKill,
@@ -17,7 +21,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { canActivate, payCost, type ActivationCheck } from "../skills/activation.js";
 import { CastState } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
-import { applySkillEffects } from "../skills/effects.js";
+import { applySkillEffects, type CombatEvent } from "../skills/effects.js";
 import { STATUS_DEFINITIONS, StatusSet } from "../skills/status.js";
 import { resolveTargets } from "../skills/targeting.js";
 import {
@@ -26,7 +30,8 @@ import {
   moveSpeedMultiplier,
 } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
-import { ZERO, type Vec2 } from "../vec2.js";
+import { resolveSwing } from "../skills/weapon-attack.js";
+import { sub, ZERO, type Vec2 } from "../vec2.js";
 import {
   createCursor,
   decide,
@@ -49,9 +54,10 @@ import type { CombatLogEntry } from "./combat-log.js";
  *
  * Order within a tick, per participant, in the order they were added:
  * reset policy, respawn countdown (if dead), movement, energy regeneration, statuses,
- * cast resolution, then the participant's behaviour, if it has one.
- * Player-driven participants have none: their intents arrive between
- * steps, through `setInputDirection`, `setTarget` and `requestSkill`.
+ * cast resolution, the weapon attack (approach or swing), then the
+ * participant's behaviour, if it has one. Player-driven participants have
+ * none: their intents arrive between steps, through `setInputDirection`,
+ * `setTarget`, `requestSkill`, `requestAttack` and `cancelAttack`.
  */
 
 export interface ParticipantSpec {
@@ -152,6 +158,9 @@ function degenerationSources(combatant: Combatant): {
     sources.size === 1 ? [...sources][0] : undefined;
   return { draining: only(draining), healing: only(healing) };
 }
+
+/** How far short of its interval a swing may be and still land; see `#advanceAttack`. */
+const SWING_EPSILON = 1e-9;
 
 export class MatchSimulation {
   readonly #ruleset: Ruleset;
@@ -288,10 +297,44 @@ export class MatchSimulation {
     }
   }
 
+  /** Walk. Any direction but none cancels the attack: in GW1, moving does. */
   public setInputDirection(id: string, direction: Vec2): void {
     const record = this.#participants.get(id);
     if (record !== undefined) {
       record.inputDirection = clampInputDirection(direction);
+      if (record.inputDirection.x !== 0 || record.inputDirection.y !== 0) {
+        record.combatant.attack = undefined;
+      }
+    }
+  }
+
+  /**
+   * Attack `targetId` with the equipped weapon until told otherwise
+   * (ADR-0026): walk into reach, then swing at the weapon's rate.
+   *
+   * Asking again for the same target keeps the swing in progress; a new
+   * target starts a fresh one. Refused, with the reason a cast at it
+   * would get, unless the target is a living enemy and the attacker is
+   * alive. Range and line of sight are not checked: approach closes the
+   * one, and the other is out of scope, as it is for a skill after
+   * activation.
+   */
+  public requestAttack(id: string, targetId: string): ActivationCheck | undefined {
+    const record = this.#participants.get(id);
+    if (record === undefined) {
+      return undefined;
+    }
+    const check = this.#attackCheck(record, targetId);
+    if (check.ok && record.combatant.attack?.targetId !== targetId) {
+      record.combatant.attack = { targetId, swingElapsed: 0 };
+    }
+    return check;
+  }
+
+  public cancelAttack(id: string): void {
+    const record = this.#participants.get(id);
+    if (record !== undefined) {
+      record.combatant.attack = undefined;
     }
   }
 
@@ -365,6 +408,11 @@ export class MatchSimulation {
     }
 
     payCost(skill, record.combatant);
+    // The swing in progress is lost, as in GW1; the attack itself resumes
+    // once the skill is done.
+    if (record.combatant.attack !== undefined) {
+      record.combatant.attack.swingElapsed = 0;
+    }
     record.combatant.cast.beginCast(
       skill.id,
       skill.target === "self" ? id : record.targetId,
@@ -397,7 +445,7 @@ export class MatchSimulation {
         continue;
       }
 
-      this.advanceMovement(record, dt);
+      this.advanceMovement(record, record.inputDirection, dt);
 
       // Energy regenerates continuously; adrenaline is earned by acting,
       // not by waiting, so it deliberately does not tick up here.
@@ -428,8 +476,7 @@ export class MatchSimulation {
       // corpse mid-cast that never respawns.
       if (statusEvents.some((event) => event.kind === "death")) {
         record.combatant.cast.cancelCast();
-        record.respawnInSeconds = this.#respawnSeconds(record);
-        this.recordDeath(record.combatant.team);
+        this.#recordDeaths(statusEvents);
         continue;
       }
 
@@ -437,6 +484,8 @@ export class MatchSimulation {
       if (completed !== undefined) {
         this.resolveCast(record, completed.skillId, completed.targetId);
       }
+
+      this.#advanceAttack(record, dt);
 
       // Behaviours act after their own cast resolves, so a dummy can
       // finish one cast and begin the next within the same tick.
@@ -542,32 +591,26 @@ export class MatchSimulation {
         ? undefined
         : { x: origin.x, y: origin.y, radius: skill.area.radius };
 
-    // Adrenaline is earned by landing damage, never by waiting — which is
-    // what makes adrenaline skills a reward for staying in the fight
-    // rather than a second energy pool. Weapon auto-attacks (the other
-    // classic source) arrive with Sprint 21.
-    const dealtDamage = events.some(
-      (event) => event.kind === "damage" && event.targetId !== record.combatant.id,
-    );
-    if (dealtDamage) {
-      record.combatant.adrenaline = Math.min(
-        this.#ruleset.resources.maxAdrenaline,
-        record.combatant.adrenaline + this.#ruleset.resources.adrenalinePerHit,
-      );
+    // Adrenaline comes from attacks only, weapon hits and attack skills
+    // (Q19): a Fireball no longer charges a warrior's next Backbreaker.
+    if (skill.type === "attack") {
+      this.#gainAdrenaline(record, events);
     }
+    this.#recordDeaths(events);
 
-    // A skill that killed someone scores for the caster's side. Read
-    // from the emitted events so every death routes through one place,
-    // whether it came from a skill or from degeneration.
-    for (const event of events) {
-      if (event.kind !== "death") {
-        continue;
-      }
-      const victim = this.#participants.get(event.targetId);
-      if (victim !== undefined) {
-        victim.respawnInSeconds = this.#respawnSeconds(victim);
-        this.recordDeath(victim.combatant.team);
-      }
+    // Cast at an enemy, the caster goes on to attack it, as in GW1 (Q17).
+    // Anything else leaves the attack it had, which resumes now. Not for
+    // a behaviour: a dummy attacks only when its behaviour says so (#162),
+    // or every caster dummy would walk up and punch its target.
+    const enemy = targetRecord?.combatant;
+    if (
+      record.behaviour === undefined &&
+      skill.target !== "self" &&
+      enemy !== undefined &&
+      !enemy.dead &&
+      enemy.team !== record.combatant.team
+    ) {
+      record.combatant.attack = { targetId: enemy.id, swingElapsed: 0 };
     }
 
     record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds);
@@ -580,6 +623,124 @@ export class MatchSimulation {
       area,
       events,
     });
+  }
+
+  /**
+   * The attack step (ADR-0026): drop an attack whose target is no longer
+   * a living enemy, pause while casting, walk into reach, then swing.
+   *
+   * The swing timer keeps the remainder past each interval rather than
+   * zeroing, so the rate stays exact at 20 Hz. A target that steps out of
+   * reach mid-swing keeps the swing's progress for when it is caught.
+   */
+  #advanceAttack(record: ParticipantRecord, dt: number): void {
+    const attack = record.combatant.attack;
+    if (attack === undefined) {
+      return;
+    }
+    const check = this.#attackCheck(record, attack.targetId);
+    const target = this.#participants.get(attack.targetId);
+    if (!check.ok || target === undefined) {
+      record.combatant.attack = undefined;
+      return;
+    }
+    if (record.combatant.cast.isCasting) {
+      return;
+    }
+
+    const { weapon } = record.combatant.equipment.mainHand;
+    if (!distanceWithinRange(record.position, target.position, weapon.range)) {
+      // Approach: the only movement the simulation chooses. Never while a
+      // direction is held, because holding one cancelled the attack.
+      this.advanceMovement(record, sub(target.position, record.position), dt);
+      return;
+    }
+
+    attack.swingElapsed += dt;
+    // Within a hair: twenty-odd additions of 0.05 fall just short of
+    // 1.75, and a swing a whole tick late would make the rate drift.
+    if (attack.swingElapsed < weapon.attackIntervalSeconds - SWING_EPSILON) {
+      return;
+    }
+    attack.swingElapsed = Math.max(0, attack.swingElapsed - weapon.attackIntervalSeconds);
+
+    // Ranged weapons land at once until projectiles exist (#159).
+    const events = resolveSwing({
+      attacker: record.combatant,
+      target,
+      candidates: weapon.cleaveTargets === 0 ? [] : [...this.#participants.values()],
+      rng: this.#rng,
+      rules: this.#ruleset.combat,
+    });
+    this.#gainAdrenaline(record, events);
+    this.#recordDeaths(events);
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "weapon",
+      sourceId: record.id,
+      skillId: undefined,
+      area: undefined,
+      events,
+    });
+  }
+
+  /** Why `record` may not attack `targetId`, as a cast at it would be told. */
+  #attackCheck(record: ParticipantRecord, targetId: string): ActivationCheck {
+    const target = this.#participants.get(targetId)?.combatant;
+    if (record.combatant.dead) {
+      return { ok: false, reason: "caster-dead" };
+    }
+    if (target === undefined) {
+      return { ok: false, reason: "no-target" };
+    }
+    if (target.dead) {
+      return { ok: false, reason: "invalid-target-dead" };
+    }
+    if (target.id === record.id) {
+      return { ok: false, reason: "invalid-target-self" };
+    }
+    if (target.team === record.combatant.team) {
+      return { ok: false, reason: "invalid-target-ally" };
+    }
+    return { ok: true };
+  }
+
+  /**
+   * Adrenaline is earned by landing damage on someone else, never by
+   * waiting, which makes adrenaline skills a reward for staying in the
+   * fight rather than a second energy pool. Once per resolution, however
+   * many it hit.
+   */
+  #gainAdrenaline(record: ParticipantRecord, events: readonly CombatEvent[]): void {
+    const dealtDamage = events.some(
+      (event) => event.kind === "damage" && event.targetId !== record.combatant.id,
+    );
+    if (dealtDamage) {
+      record.combatant.adrenaline = Math.min(
+        this.#ruleset.resources.maxAdrenaline,
+        record.combatant.adrenaline + this.#ruleset.resources.adrenalinePerHit,
+      );
+    }
+  }
+
+  /**
+   * Every death in `events` scores for the other side and starts its
+   * respawn. Read from the emitted events so every death routes through
+   * one place, whether a skill, a swing or degeneration caused it.
+   */
+  #recordDeaths(events: readonly CombatEvent[]): void {
+    for (const event of events) {
+      if (event.kind !== "death") {
+        continue;
+      }
+      const victim = this.#participants.get(event.targetId);
+      if (victim !== undefined) {
+        victim.combatant.attack = undefined;
+        victim.respawnInSeconds = this.#respawnSeconds(victim);
+        this.recordDeath(victim.combatant.team);
+      }
+    }
   }
 
   /**
@@ -638,11 +799,11 @@ export class MatchSimulation {
     this.#outcome = outcome;
   }
 
-  private advanceMovement(record: ParticipantRecord, dt: number): void {
+  private advanceMovement(record: ParticipantRecord, direction: Vec2, dt: number): void {
     const radius = this.#ruleset.collision.playerRadius;
     let position = integrateMovement(
       record.position,
-      record.inputDirection,
+      direction,
       this.#ruleset.movement.maxSpeedUnitsPerSecond * moveSpeedMultiplier(record.combatant),
       dt,
     );
@@ -686,6 +847,7 @@ export class MatchSimulation {
     record.inputDirection = ZERO;
     record.respawnInSeconds = 0;
     record.combatant.cast.cancelCast();
+    record.combatant.attack = undefined;
     record.sinceReset = 0;
   }
 
@@ -703,6 +865,7 @@ export class MatchSimulation {
       dead: false,
       statuses: new StatusSet(),
       cast: new CastState(),
+      attack: undefined,
       equipment: spec.equipment,
     };
   }
