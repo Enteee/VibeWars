@@ -43,7 +43,6 @@ describe("status definitions", () => {
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
         def.maxHealthMultiplier !== 1 ||
-        def.preventsSpellCasting ||
         def.castTimeMultiplier !== 1;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }

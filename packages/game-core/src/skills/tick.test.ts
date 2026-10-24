@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { advanceStatuses, attackMisses, effectiveMaxHealth } from "./tick.js";
+import { getSkill } from "./catalog.js";
+import {
+  advanceStatuses,
+  attackMissChanceOf,
+  clampMoveSpeed,
+  effectiveActivationSeconds,
+  effectiveMaxHealth,
+  moveSpeedMultiplier,
+} from "./tick.js";
 import { makeCombatant } from "./testing.js";
 
 describe("advanceStatuses health change", () => {
@@ -107,18 +115,60 @@ describe("effectiveMaxHealth", () => {
   });
 });
 
-describe("attackMisses", () => {
-  it("never misses with no blinding status", () => {
+describe("moveSpeedMultiplier", () => {
+  it("is full speed with no status, and half while crippled", () => {
     const c = makeCombatant({ id: "c" });
-    expect(attackMisses(c, 0)).toBe(false);
-    expect(attackMisses(c, 0.99)).toBe(false);
+    expect(moveSpeedMultiplier(c)).toBe(1);
+    c.statuses.apply("crippled", 10, "a");
+    expect(moveSpeedMultiplier(c)).toBe(0.5);
   });
 
-  it("misses on a low roll while blind, and connects on a high one", () => {
+  it("multiplies crippled with Armor of Earth's slow", () => {
     const c = makeCombatant({ id: "c" });
-    c.statuses.apply("blind", 10, "a"); // 0.9 miss chance
-    expect(attackMisses(c, 0.1)).toBe(true);
-    expect(attackMisses(c, 0.95)).toBe(false);
+    c.statuses.apply("crippled", 10, "a");
+    c.statuses.apply("armor-boost", 10, "c");
+    expect(moveSpeedMultiplier(c)).toBe(0.375);
+  });
+
+  it("clamps to [0.25, 1.33]", () => {
+    expect(clampMoveSpeed(0.1)).toBe(0.25);
+    expect(clampMoveSpeed(0.25)).toBe(0.25);
+    expect(clampMoveSpeed(0.8)).toBe(0.8);
+    expect(clampMoveSpeed(2)).toBe(1.33);
+  });
+});
+
+describe("effectiveActivationSeconds", () => {
+  const fireball = getSkill("elementalist.fireball");
+  const swiftChop = getSkill("warrior.swift-chop");
+
+  it("is the skill's own cast time when not dazed", () => {
+    const c = makeCombatant({ id: "c" });
+    expect(fireball && effectiveActivationSeconds(fireball, c)).toBe(fireball?.activationSeconds);
+  });
+
+  it("doubles while dazed", () => {
+    const c = makeCombatant({ id: "c" });
+    c.statuses.apply("dazed", 10, "a");
+    expect(fireball && effectiveActivationSeconds(fireball, c)).toBe(
+      (fireball?.activationSeconds ?? 0) * 2,
+    );
+  });
+
+  it("leaves an instant skill instant while dazed", () => {
+    const c = makeCombatant({ id: "c" });
+    c.statuses.apply("dazed", 10, "a");
+    expect(swiftChop?.activationSeconds).toBe(0);
+    expect(swiftChop && effectiveActivationSeconds(swiftChop, c)).toBe(0);
+  });
+});
+
+describe("attackMissChanceOf", () => {
+  it("is 0 unblinded and 0.9 blind", () => {
+    const c = makeCombatant({ id: "c" });
+    expect(attackMissChanceOf(c)).toBe(0);
+    c.statuses.apply("blind", 10, "a");
+    expect(attackMissChanceOf(c)).toBe(0.9);
   });
 });
 

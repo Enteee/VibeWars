@@ -24,6 +24,7 @@ rewriting history.
 | [0016](0016-no-backwards-compatibility.md) | No backwards compatibility before 1.0                  |
 | [0017](0017-shared-match-simulation.md)    | One steppable match simulation in `game-core`          |
 | [0018](0018-area-of-effect.md)             | Area of effect as an `area` modifier on the skill      |
+| [0019](0019-status-modifiers.md)           | Crippled, dazed and blind reach the match              |
 | [0021](0021-ci-in-devenv.md)               | CI in the devenv shell, every git hook                 |
 | [0023](0023-one-telegram-bot.md)           | One Telegram bot for the whole company                 |
 | [0024](0024-telegram-topics.md)            | Four Telegram topics: General, Bots, Manager, Operator |

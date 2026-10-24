@@ -20,7 +20,11 @@ import { getSkill } from "../skills/catalog.js";
 import { applySkillEffects } from "../skills/effects.js";
 import { STATUS_DEFINITIONS, StatusSet } from "../skills/status.js";
 import { resolveTargets } from "../skills/targeting.js";
-import { advanceStatuses } from "../skills/tick.js";
+import {
+  advanceStatuses,
+  effectiveActivationSeconds,
+  moveSpeedMultiplier,
+} from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
 import { ZERO, type Vec2 } from "../vec2.js";
 import {
@@ -355,7 +359,7 @@ export class MatchSimulation {
     record.combatant.cast.beginCast(
       skill.id,
       skill.target === "self" ? id : record.targetId,
-      skill.activationSeconds,
+      effectiveActivationSeconds(skill, record.combatant),
     );
     return { skillId: skill.id, check };
   }
@@ -625,7 +629,7 @@ export class MatchSimulation {
     let position = integrateMovement(
       record.position,
       record.inputDirection,
-      this.#ruleset.movement.maxSpeedUnitsPerSecond,
+      this.#ruleset.movement.maxSpeedUnitsPerSecond * moveSpeedMultiplier(record.combatant),
       dt,
     );
 

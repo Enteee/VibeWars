@@ -38,7 +38,13 @@ export {
   isStatusId,
 } from "./status.js";
 
-export { advanceStatuses, attackMisses, effectiveMaxHealth } from "./tick.js";
+export {
+  advanceStatuses,
+  attackMissChanceOf,
+  effectiveActivationSeconds,
+  effectiveMaxHealth,
+  moveSpeedMultiplier,
+} from "./tick.js";
 
 export type {
   ApplyStatusEffect,
@@ -62,7 +68,7 @@ export type {
 
 export { makeCombatant } from "./testing.js";
 
-export type { ArmorContext, DamagePacket, DamageSource } from "./damage.js";
+export type { DamagePacket, DamageSource } from "./damage.js";
 export {
   armorMultiplier,
   effectiveArmor,

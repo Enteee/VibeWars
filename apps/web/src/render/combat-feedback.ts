@@ -70,6 +70,11 @@ export function showCombatFeedback(
       case "interrupted":
         text = "interrupted!";
         break;
+      case "attack-missed":
+        // A blinded swing paid for and wasted: over the target, so the
+        // attacker sees where it went (#6).
+        text = "miss";
+        break;
       case "death":
         text = "defeated";
         colour = DAMAGE_COLOUR;

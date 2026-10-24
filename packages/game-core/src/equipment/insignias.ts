@@ -9,19 +9,20 @@ import type { ArmorSlot } from "./types.js";
  * different kind of choice from a rune.
  */
 
-export type InsigniaId = "survivor" | "radiant" | "stalwart" | "brawlers" | "blessed";
+export type InsigniaId = "survivor" | "radiant" | "stalwart" | "blessed";
 
 /**
  * When a conditional armor bonus applies.
  *
  * Every member of this union must be answerable from state the
- * simulation already has. The reference data also has a "while in a
- * stance" insignia; this game has no stances, so that insignia is
- * absent from the catalog entirely and recorded as a gap in
- * `coverage.ts` (`"stances"`). A number that is always zero is a lie
- * with a tooltip.
+ * simulation already has. The reference data also has "while in a
+ * stance" and "while attacking" insignias; this game has neither stances
+ * nor an attack in progress, so both are absent from the catalog
+ * entirely and recorded as gaps in `coverage.ts` (`"stances"`,
+ * `"attack-state"`). A number that is always zero is a lie with a
+ * tooltip.
  */
-export type ArmorCondition = "vs-physical" | "while-attacking" | "while-enchanted";
+export type ArmorCondition = "vs-physical" | "while-enchanted";
 
 export type InsigniaEffect =
   /** Per-piece amounts: chest is worth most, legs next, the rest equal. */
@@ -66,12 +67,6 @@ export const INSIGNIAS: Readonly<Record<InsigniaId, Insignia>> = Object.freeze({
     id: "stalwart",
     name: "Stalwart Insignia",
     effect: Object.freeze({ kind: "conditional-armor", amount: 10, condition: "vs-physical" }),
-  } satisfies Insignia),
-
-  brawlers: Object.freeze({
-    id: "brawlers",
-    name: "Brawler's Insignia",
-    effect: Object.freeze({ kind: "conditional-armor", amount: 10, condition: "while-attacking" }),
   } satisfies Insignia),
 
   blessed: Object.freeze({

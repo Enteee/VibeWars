@@ -198,6 +198,43 @@ describe("previously uncovered branches", () => {
   });
 });
 
+describe("status modifiers in the match", () => {
+  /** Two walkers on the same team, far from each other and from anyone. */
+  function walkers(): MatchSimulation {
+    return new MatchSimulation({
+      seed: "walkers",
+      participants: [spec("fast", 0, vec2(0, 0)), spec("slow", 0, vec2(0, 500))],
+    });
+  }
+
+  it("a crippled player covers half the ground in the same time", () => {
+    const sim = walkers();
+    participant(sim, "slow").combatant.statuses.apply("crippled", 10, "foe");
+    for (const id of ["fast", "slow"]) {
+      sim.setInputDirection(id, vec2(1, 0));
+    }
+    stepFor(sim, 1);
+    expect(participant(sim, "fast").position.x).toBeCloseTo(
+      RULES.movement.maxSpeedUnitsPerSecond,
+      6,
+    );
+    expect(participant(sim, "slow").position.x).toBeCloseTo(
+      RULES.movement.maxSpeedUnitsPerSecond / 2,
+      6,
+    );
+  });
+
+  it("a dazed Fireball takes twice as long to land", () => {
+    const sim = duel();
+    participant(sim, "a").combatant.statuses.apply("dazed", 10, "b");
+    sim.setTarget("a", "b");
+    sim.requestSkill("a", 0);
+    expect(participant(sim, "a").combatant.cast.activeCast?.totalSeconds).toBe(2);
+    expect(stepFor(sim, 1.5)).toEqual([]);
+    expect(stepFor(sim, 0.5).map((entry) => entry.skillId)).toEqual([FIREBALL]);
+  });
+});
+
 describe("walls", () => {
   it("stop movement and block line of sight", () => {
     const sim = new MatchSimulation({

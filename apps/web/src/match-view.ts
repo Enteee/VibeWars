@@ -3,7 +3,7 @@ import type { WallDescriptor } from "@vibewars/game-protocol";
 
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { connectToMatch } from "./net/match-client.js";
-import type { MatchConnection, MatchSnapshot, SkillSlot } from "./net/match-connection.js";
+import type { MatchConnection, MatchSnapshot } from "./net/match-connection.js";
 import { actorAtPoint, type ArenaSnapshot, type RenderableWall } from "./render/arena-scene.js";
 import { createArenaViewport } from "./render/arena-viewport.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
@@ -52,10 +52,8 @@ function toRenderableWall(wall: WallDescriptor): RenderableWall {
 export function toArenaSnapshot(
   match: MatchSnapshot,
   walls: readonly RenderableWall[],
-  skillBar: readonly SkillSlot[],
 ): ArenaSnapshot {
   const self = match.players.find((player) => player.sessionId === match.selfSessionId);
-  const activationById = new Map(skillBar.map((slot) => [slot.id, slot.activationSeconds]));
 
   return {
     walls,
@@ -63,7 +61,6 @@ export function toArenaSnapshot(
     // clicked — a click is only a request (brief §32).
     targetId: self?.targetSessionId,
     actors: match.players.map((player) => {
-      const activation = activationById.get(player.castingSkillId ?? "") ?? 0;
       return {
         id: player.sessionId,
         position: { x: player.x, y: player.y },
@@ -78,8 +75,10 @@ export function toArenaSnapshot(
         maxHealth: player.maxHealth,
         dead: player.dead,
         castProgress:
-          player.castingSkillId !== undefined && activation > 0
-            ? Math.max(0, Math.min(1, 1 - player.castRemaining / activation))
+          // The server's total, not the skill's activation time: dazed
+          // doubles a cast, and the bar must fill over the real one.
+          player.castingSkillId !== undefined && player.castTotal > 0
+            ? Math.max(0, Math.min(1, 1 - player.castRemaining / player.castTotal))
             : undefined,
         statuses: player.statuses,
       };
@@ -130,7 +129,7 @@ export async function startMatchView(
   window.addEventListener("keydown", handleKeyDown);
 
   let latestMatch = connection.getSnapshot();
-  let latestArena = toArenaSnapshot(latestMatch, walls, connection.skillBar);
+  let latestArena = toArenaSnapshot(latestMatch, walls);
 
   if (callbacks.onConnectionChange !== undefined) {
     connection.onConnectionChange(callbacks.onConnectionChange);
@@ -146,7 +145,7 @@ export async function startMatchView(
 
   const offFrame = viewport.onFrame(() => {
     latestMatch = connection.getSnapshot();
-    latestArena = toArenaSnapshot(latestMatch, walls, connection.skillBar);
+    latestArena = toArenaSnapshot(latestMatch, walls);
     scene.setSnapshot(latestArena);
 
     const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
