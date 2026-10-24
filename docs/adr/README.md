@@ -21,3 +21,4 @@ rewriting history.
 | [0013](0013-schema-migration-registry.md)  | The schema migration registry                 |
 | [0014](0014-agent-coordination.md)         | Multi-agent coordination over Telegram        |
 | [0016](0016-no-backwards-compatibility.md) | No backwards compatibility before 1.0         |
+| [0023](0023-one-telegram-bot.md)           | One Telegram bot for the whole company        |

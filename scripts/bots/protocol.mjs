@@ -1,30 +1,26 @@
 /**
- * The wire contract between a sandboxed agent and Telegram.
+ * The wire contract between the sandboxed agents and Telegram.
  *
- * Everything in here is pure. That is deliberate: the two directions of the
- * bridge — a Telegram update becoming a line in an agent's inbox, and an
- * outbox file becoming sendMessage parameters — are the parts that are easy
- * to get subtly wrong and impossible to check against the live API in CI. So
- * they live apart from link.mjs, which owns the token, the sockets and the
- * environment, and they are covered by protocol.test.mjs.
+ * Everything in here is pure. That is deliberate: routing a Telegram update
+ * to the right inboxes, delivering a peer message, and pacing the mirror to
+ * Telegram are the parts that are easy to get subtly wrong and impossible to
+ * check against the live API in CI. So they live apart from link.mjs, which
+ * owns the token, the sockets and the environment, and they are covered by
+ * protocol.test.mjs.
+ *
+ * The company has one Telegram bot (ADR-0023). Agents never talk through
+ * Telegram to each other: a bot does not receive its own messages, so peer
+ * messages are delivered straight into the recipient's inbox, and Telegram
+ * only gets a copy for the operator to read.
  *
  * Typed with JSDoc because `scripts/` is linted with the same type-aware
  * rules as the rest of the repo, and ADR-0008 bans `any`.
  */
 
 /**
- * @typedef {object} RoleEntry
- * @property {string} [token]     The role bot's own token.
- * @property {number} [id]        Its numeric user id.
- * @property {string} [username]  Its Telegram username, with no leading at-sign.
- * @property {number} [topicId]   message_thread_id of its forum topic.
- * @property {boolean} [promoted] Admin rights granted in the group.
- */
-
-/**
  * @typedef {object} Registry
- * @property {number} managerOffset getUpdates offset for the manager bot.
- * @property {Record<string, RoleEntry>} roles
+ * @property {number} offset getUpdates offset, so a restart does not replay.
+ * @property {Record<string, { topicId: number }>} roles each role's forum topic
  */
 
 /**
@@ -51,89 +47,91 @@ export function obj(value) {
     : {};
 }
 
-/**
- * The username to suggest for a role's bot.
- *
- * Suggested, not imposed: whatever the operator confirms is what gets
- * created, and provisioning reads the real username back out of the
- * `managed_bot` update. So this aims for the clean name and lets Telegram
- * object if it is taken, rather than pre-emptively uglifying it with a random
- * suffix — `vibewars_architect_bot` was free on the first real run, and the
- * operator edited the suffix out by hand, which settles the question.
- *
- * Telegram requires 5-32 characters, ending in `bot`, with no hyphens, so the
- * stem is truncated such that `_bot` always survives.
- *
- * @param {string} prefix
- * @param {string} role
- * @returns {string}
- */
-export function suggestUsername(prefix, role) {
-  const stem = `${prefix}_${role.replace(/-/g, "_")}`;
-  return `${stem.slice(0, 28)}_bot`;
-}
+/* -------------------------------------------------------------------------- */
+/* The registry                                                               */
+/* -------------------------------------------------------------------------- */
 
 /**
- * The display name to suggest for a role's bot.
- *
- * @param {string} role
- * @returns {string}
+ * How to turn a per-role-bot registry into this one, for the error message.
+ * A one-off command for the operator, not a code path (CLAUDE.md).
  */
-export function suggestName(role) {
-  const titled = role
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join("-");
-  return `VibeWars-${titled}-Bot`;
-}
+const REGISTRY_FIX =
+  "Keep the topics and drop the per-role bots: " +
+  "mv .bots/registry.json .bots/registry.json.old && " +
+  "jq '{offset: 0, roles: (.roles | map_values({topicId}) | with_entries(select(.value.topicId != null)))}' " +
+  ".bots/registry.json.old > .bots/registry.json";
 
 /**
- * Flatten the registry into the three lookups both directions need.
+ * Read `registry.json`. A missing file is a fresh company; anything not in
+ * the current shape is refused, saying how to fix it.
  *
- * @param {Registry} registry
- * @returns {{
- *   byId: Map<number, string>,
- *   topics: Map<string, number>,
- *   usernames: Map<string, string>,
- * }}
+ * @param {string | null} text the file's contents, or `null` if it does not exist
+ * @returns {{ registry: Registry } | { error: string }}
  */
-export function indexRoles(registry) {
-  /** @type {Map<number, string>} */
-  const byId = new Map();
-  /** @type {Map<string, number>} */
-  const topics = new Map();
-  /** @type {Map<string, string>} */
-  const usernames = new Map();
-
-  for (const [role, entry] of Object.entries(registry.roles)) {
-    if (entry.id !== undefined) {
-      byId.set(entry.id, role);
-    }
-    if (entry.topicId !== undefined) {
-      topics.set(role, entry.topicId);
-    }
-    if (entry.username !== undefined) {
-      usernames.set(role, entry.username);
-    }
+export function parseRegistry(text) {
+  if (text === null) {
+    return { registry: { offset: 0, roles: {} } };
   }
-  return { byId, topics, usernames };
+  /** @type {unknown} */
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return { error: "registry.json is not valid JSON." };
+  }
+  const record = obj(parsed);
+  const roles = obj(record.roles);
+  /** @type {Record<string, { topicId: number }>} */
+  const topics = {};
+  for (const [role, raw] of Object.entries(roles)) {
+    const entry = obj(raw);
+    const keys = Object.keys(entry);
+    if (typeof entry.topicId !== "number" || keys.some((key) => key !== "topicId")) {
+      return {
+        error:
+          `registry.json is from before the company had one bot (its "${role}" entry is ` +
+          `${JSON.stringify(keys)}). ${REGISTRY_FIX}`,
+      };
+    }
+    topics[role] = { topicId: entry.topicId };
+  }
+  if ("managerOffset" in record) {
+    return { error: `registry.json is from before the company had one bot. ${REGISTRY_FIX}` };
+  }
+  return {
+    registry: { offset: typeof record.offset === "number" ? record.offset : 0, roles: topics },
+  };
 }
 
+/* -------------------------------------------------------------------------- */
+/* Inbound: Telegram to inboxes                                               */
+/* -------------------------------------------------------------------------- */
+
 /**
- * Turn one getUpdates entry into the line an agent reads, or null if it is
- * not something the agent should see.
+ * Who a message from the operator is for, and what they read.
  *
- * @param {unknown} raw
- * @param {{ chatId: string, selfId: number, byId: Map<number, string> }} context
- * @returns {InboxLine | null}
+ * Topics are real routing. A message in a role's topic is for that role
+ * only. A message in General is for everyone, unless it starts with
+ * `<role>:` or `@<role>`, which is how the operator talks to one role
+ * without opening its topic. An unknown topic, or a prefix that is not a
+ * role, goes to everyone: a message must never be silently black-holed.
+ *
+ * Messages from bots are dropped. This bot never receives its own, and the
+ * per-role bots of the old design may still sit in the group; a bot message
+ * read as human would carry the operator's `*` mark.
+ *
+ * @param {unknown} raw one getUpdates entry
+ * @param {{ chatId: string, topics: Map<number, string>, roles: readonly string[] }} context
+ *   `topics` maps a topic id to the role that owns it
+ * @returns {{ to: string[], line: InboxLine } | null}
  */
-export function inboundLine(raw, context) {
+export function routeInbound(raw, context) {
   const update = obj(raw);
   const message = obj(update.message);
   const chat = obj(message.chat);
   const from = obj(message.from);
 
-  // Anything outside the swarm group is somebody DMing the bot directly.
+  // Anything outside the company's group is somebody DMing the bot.
   if (String(chat.id) !== context.chatId) {
     return null;
   }
@@ -141,108 +139,197 @@ export function inboundLine(raw, context) {
   if (typeof message.text !== "string" || message.text === "") {
     return null;
   }
-  // getUpdates does not echo a bot's own sends, but a forwarded or edited copy
-  // can still carry our id, and an agent reading its own words back would loop.
-  if (typeof from.id !== "number" || from.id === context.selfId) {
+  if (typeof from.id !== "number" || from.is_bot === true) {
     return null;
   }
   if (typeof message.message_id !== "number") {
     return null;
   }
 
-  const role = context.byId.get(from.id);
+  const topicId = typeof message.message_thread_id === "number" ? message.message_thread_id : null;
+  /** @type {string} */
   let name;
-  if (role !== undefined) {
-    name = role;
-  } else if (typeof from.username === "string") {
+  if (typeof from.username === "string") {
     name = `@${from.username}`;
   } else if (typeof from.first_name === "string") {
     name = from.first_name;
   } else {
     name = "someone";
   }
-
-  return {
+  const line = /** @type {InboxLine} */ ({
     ts: typeof message.date === "number" ? message.date * 1000 : 0,
     from: name,
-    kind: role === undefined ? "human" : "peer",
+    kind: "human",
     text: message.text,
-    topicId: typeof message.message_thread_id === "number" ? message.message_thread_id : null,
+    topicId,
     messageId: message.message_id,
-  };
+  });
+
+  // A reply in a forum's General topic carries no thread id, but a message
+  // in a role's topic always does.
+  const owner = topicId === null ? undefined : context.topics.get(topicId);
+  if (owner !== undefined) {
+    return { to: [owner], line };
+  }
+  // "developer-1: do X" or "@developer-1 do X". The name must be a role,
+  // and must be followed by a colon (spaces before it are fine: the
+  // operator types "manager : ..."), or for an at-mention by a space.
+  const prefix = /^(@?)([a-z0-9-]+)\s*(:|\s|$)/i.exec(message.text);
+  const named = prefix?.[2]?.toLowerCase();
+  if (
+    prefix !== null &&
+    named !== undefined &&
+    context.roles.includes(named) &&
+    (prefix[3] === ":" || prefix[1] === "@")
+  ) {
+    return { to: [named], line };
+  }
+  return { to: [...context.roles], line };
 }
 
+/* -------------------------------------------------------------------------- */
+/* Peer delivery                                                              */
+/* -------------------------------------------------------------------------- */
+
 /**
- * Turn one outbox file's contents into sendMessage parameters.
+ * Deliver one outbox entry from `from` straight into the recipients'
+ * inboxes.
  *
- * The at-mention on a directed message is not decoration: if the
- * recipient's group privacy mode is still on, the mention is what makes
- * Telegram deliver the update to it at all.
+ * A colleague who is a real role but not running right now still gets the
+ * message, in the inbox they will read when they start; the sender is told,
+ * so it does not wait on them. A name that is not a role at all is a mistake
+ * to correct, and only the sender hears about it.
  *
- * @param {unknown} raw
- * @param {{
- *   chatId: string,
- *   from: string,
- *   topics: Map<string, number>,
- *   usernames: Map<string, string>,
- *   roster?: string[],
- * }} context
- * @returns {Record<string, unknown>}
+ * @param {unknown} raw the outbox file's contents
+ * @param {{ from: string, roles: readonly string[], present: ReadonlySet<string>, now: number }} context
+ * @returns {{
+ *   deliveries: { role: string, line: InboxLine }[],
+ *   notice: InboxLine | null,
+ *   mirror: { to: string, text: string } | null,
+ * }}
  */
-export function outboundParams(raw, context) {
+export function deliverPeer(raw, context) {
   const message = obj(raw);
   const to = typeof message.to === "string" ? message.to : "all";
   const text = typeof message.text === "string" ? message.text : "";
+  /** @type {(body: string) => InboxLine} */
+  const fromLink = (body) => ({
+    ts: context.now,
+    from: "link",
+    kind: "link",
+    text: body,
+    topicId: null,
+    messageId: 0,
+  });
 
-  /** @type {Record<string, unknown>} */
-  const params = { chat_id: context.chatId };
-
-  if (to === "all") {
-    // General, i.e. no message_thread_id.
-    params.text = `[${context.from}] ${text}`;
-    return params;
+  if (to !== "all" && !context.roles.includes(to)) {
+    return {
+      deliveries: [],
+      notice: fromLink(
+        `your last message was NOT delivered: "${to}" is not one of this company's roles. ` +
+          `Roles: ${context.roles.join(", ")}`,
+      ),
+      mirror: null,
+    };
   }
 
-  const topicId = context.topics.get(to);
-  if (topicId === undefined) {
-    const hired = [...context.topics.keys()].sort().join(", ");
-    // Two different problems, and an agent needs to tell them apart: a
-    // colleague who has not been hired yet will exist later and the work
-    // should be parked, whereas a name that is not a role at all is a
-    // mistake to correct now.
-    throw new Error(
-      (context.roster ?? []).includes(to)
-        ? `"${to}" is a real role but has not been hired yet, so it cannot be messaged. ` +
-            `Hired: ${hired === "" ? "(nobody)" : hired}`
-        : `"${to}" is not one of this company's roles. Hired: ${hired === "" ? "(nobody)" : hired}`,
-    );
-  }
-  params.message_thread_id = topicId;
-  const mention = context.usernames.get(to);
-  params.text = `${mention === undefined ? "" : `@${mention} `}[${context.from}] ${text}`;
-  return params;
+  /** @type {InboxLine} */
+  const line = {
+    ts: context.now,
+    from: context.from,
+    kind: "peer",
+    text,
+    topicId: null,
+    messageId: 0,
+  };
+  const recipients = to === "all" ? context.roles.filter((role) => role !== context.from) : [to];
+  const absent = to !== "all" && !context.present.has(to);
+  return {
+    deliveries: recipients.map((role) => ({ role, line })),
+    notice: absent
+      ? fromLink(
+          `delivered to ${to}'s inbox, but ${to} is not running right now; ` +
+            "they will read it when they start. Do not wait on them.",
+        )
+      : null,
+    mirror: { to, text: `[${context.from}] ${text}` },
+  };
 }
 
+/* -------------------------------------------------------------------------- */
+/* Outbound pacing                                                            */
+/* -------------------------------------------------------------------------- */
+
 /**
- * Has this role been provisioned all the way through?
- *
- * Checked BEFORE taking the provisioning lock. The lock is global on purpose
- * — concurrent creations would fight over the manager bot's single getUpdates
- * stream — but a role with nothing left to do must not queue behind one that
- * is waiting on a human, which is what made `claude-bot architect` fail while
- * `gameplay` sat waiting to be added to the group.
- *
- * @param {RoleEntry} entry
- * @returns {boolean}
+ * @typedef {object} Queued
+ * @property {number | null} topicId where it goes in the group; `null` is General
+ * @property {string} text
  */
-export function isProvisioned(entry) {
-  return (
-    entry.token !== undefined &&
-    entry.id !== undefined &&
-    entry.username !== undefined &&
-    entry.promoted === true &&
-    entry.topicId !== undefined
-  );
+
+/** Telegram's limit on one message. */
+export const MAX_MESSAGE_CHARS = 4096;
+
+/**
+ * What the Telegram mirror should send next.
+ *
+ * One bot may post about 20 messages a minute into one group, and the whole
+ * company now shares that. So: a budget of `limit` per rolling `windowMs`,
+ * at most one message per `minGapMs`, and when more is queued than the
+ * budget allows, consecutive messages to the same topic are joined into one,
+ * up to Telegram's 4,096 characters. Messages to different topics are never
+ * merged, and nothing is reordered. Agents never wait on this: their inboxes
+ * were already written.
+ *
+ * @param {readonly Queued[]} queue
+ * @param {readonly number[]} sent epoch ms of recent sends
+ * @param {number} now
+ * @param {{ limit?: number, windowMs?: number, minGapMs?: number, blockedUntil?: number }} [options]
+ * @returns {{ batch: Queued & { count: number } | null, rest: Queued[], waitMs: number }}
+ */
+export function planSends(queue, sent, now, options = {}) {
+  const limit = options.limit ?? 18;
+  const windowMs = options.windowMs ?? 60_000;
+  const minGapMs = options.minGapMs ?? 1100;
+  const blockedUntil = options.blockedUntil ?? 0;
+
+  if (queue.length === 0) {
+    return { batch: null, rest: [], waitMs: 0 };
+  }
+  if (now < blockedUntil) {
+    return { batch: null, rest: [...queue], waitMs: blockedUntil - now };
+  }
+  const recent = sent.filter((at) => now - at < windowMs).sort((a, b) => a - b);
+  const last = recent[recent.length - 1];
+  if (last !== undefined && now - last < minGapMs) {
+    return { batch: null, rest: [...queue], waitMs: minGapMs - (now - last) };
+  }
+  const budget = limit - recent.length;
+  if (budget <= 0) {
+    const oldest = recent[0] ?? now;
+    return { batch: null, rest: [...queue], waitMs: oldest + windowMs - now };
+  }
+
+  const [first, ...others] = queue;
+  if (first === undefined) {
+    return { batch: null, rest: [], waitMs: 0 };
+  }
+  const clip = (/** @type {string} */ text) =>
+    text.length <= MAX_MESSAGE_CHARS ? text : `${text.slice(0, MAX_MESSAGE_CHARS - 1)}…`;
+
+  let text = clip(first.text);
+  let count = 1;
+  // Only coalesce when backlogged; otherwise each message goes out as sent.
+  if (queue.length > budget) {
+    for (const next of others) {
+      const joined = `${text}\n${next.text}`;
+      if (next.topicId !== first.topicId || joined.length > MAX_MESSAGE_CHARS) {
+        break;
+      }
+      text = joined;
+      count += 1;
+    }
+  }
+  return { batch: { topicId: first.topicId, text, count }, rest: queue.slice(count), waitMs: 0 };
 }
 
 /**
@@ -265,33 +352,6 @@ export function retryDelay(attempt, maxAttempts = 6) {
   // 1s, 2s, 4s, 8s, 16s, 30s — capped, because a long-poll that drops is
   // usually immediately re-establishable and waiting longer just adds latency.
   return Math.min(1000 * 2 ** (attempt - 1), 30_000);
-}
-
-/**
- * Should this `managed_bot` update be accepted as the bot for `role`?
- *
- * Provisioning rewinds the getUpdates offset to recover a bot it discovered
- * and then lost to a crash. The hazard is that a rewind replays every retained
- * update, including the one that created a different role's bot — which is
- * exactly how `gameplay` once ended up provisioned as the architect's bot,
- * two roles sharing one identity and one token.
- *
- * @param {number} botId Id from the replayed or fresh update.
- * @param {{
- *   claimed: Set<number>,
- *   recoverableId: number | null,
- * }} context `claimed` holds ids already belonging to OTHER roles;
- *   `recoverableId` is this role's own id if we are recovering one.
- * @returns {boolean}
- */
-export function acceptsManagedBot(botId, context) {
-  if (context.claimed.has(botId)) {
-    return false;
-  }
-  if (context.recoverableId !== null) {
-    return botId === context.recoverableId;
-  }
-  return true;
 }
 
 /**
@@ -390,6 +450,51 @@ export function readInbox(contents, cursor) {
  */
 export function formatLine(line) {
   const when = line.ts === 0 ? "--:--:--" : new Date(line.ts).toISOString().slice(11, 19);
+  // The mark comes from `kind` alone, never from anything in the text.
   const mark = line.kind === "human" ? "*" : " ";
-  return `${when}${mark}${line.from}: ${line.text}`;
+  return `${when}${mark}${visible(line.from)}: ${visible(line.text)}`;
+}
+
+/** Everything that ends a line in some renderer. */
+const LINE_BREAKS = new Set([0x0a, 0x0d, 0x0b, 0x0c, 0x85, 0x2028, 0x2029]);
+
+/**
+ * @param {number} code
+ * @returns {boolean} whether it is a C0 or C1 control, or DEL
+ */
+function isControl(code) {
+  return code < 0x20 || (code >= 0x7f && code <= 0x9f);
+}
+
+/**
+ * Text with nothing in it that can fake a line or move the cursor.
+ *
+ * An inbox line is one line on an agent's terminal, and its first
+ * characters say who spoke: `*` is the operator. A message containing a
+ * newline and `HH:MM:SS*Ente: …` would otherwise print as a second line
+ * the operator never wrote, and an ESC sequence could move the cursor up
+ * and overwrite one (found in review of #28). So line breaks become `⏎`,
+ * ESC becomes `␛`, a tab a space, and any other control `�`, in every
+ * message, from anyone.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function visible(text) {
+  let out = "";
+  for (const char of text) {
+    const code = char.codePointAt(0) ?? 0;
+    if (LINE_BREAKS.has(code)) {
+      out += "⏎";
+    } else if (code === 0x1b) {
+      out += "␛";
+    } else if (code === 0x09) {
+      out += " ";
+    } else if (isControl(code)) {
+      out += "�";
+    } else {
+      out += char;
+    }
+  }
+  return out;
 }

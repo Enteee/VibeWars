@@ -142,9 +142,8 @@ let
 
   claudeBot = ''
         # devenv does not wrap scripts in `set -e`, so without this a failing
-        # provision step was simply ignored and the agent launched anyway —
-        # with no Telegram identity and a sidecar that could only crash-loop.
-        # Every command below either must succeed or handles failure itself.
+        # step was simply ignored and the agent launched anyway. Every command
+        # below either must succeed or handles failure itself.
         set -euo pipefail
 
         # Files starting with "_" are shared fragments, not roles. _protocol.md is
@@ -190,28 +189,29 @@ let
           listRoles
           cat <<'USAGE'
 
-    A role whose Telegram bot does not exist yet is provisioned on first run:
-    you confirm a creation button in Telegram, then add the new bot to the
-    group. Add a role by writing .claude/bots/<name>.md — the file is that
-    agent's charter, and is appended to its system prompt.
+    The company has one Telegram bot. Hiring a role needs no Telegram step:
+    its forum topic is created the first time someone messages it. Add a role
+    by writing .claude/bots/<name>.md — the file is that agent's charter, and
+    is appended to its system prompt.
 
     inside the sandbox:
       tg roster                  who else is working right now
       tg inbox                   messages since you last looked
       tg wait --timeout 300      block until someone says something
-      tg send <role> <text>      message one agent, in its own topic
+      tg send <role> <text>      message one agent (mirrored into its topic)
       tg broadcast <text>        message everyone, in General
 
     first-time setup:
       claude-bot-setup <token-file>
           Verifies the manager bot, waits for the group, writes devenv.local.nix.
 
-    state (all gitignored, tokens are 0600):
-      .bots/registry.json        role bots and their tokens
+    state (all gitignored, 0600):
+      .bots/registry.json        each role's forum topic, and the update offset
       .bots/bus/<role>/          that role's inbox and outbox
       .bots/wt/<role>/           that role's git worktree
 
-    See docs/adr/0014-agent-coordination.md for why it is built this way.
+    See docs/adr/0014-agent-coordination.md and docs/adr/0023-one-telegram-bot.md
+    for why it is built this way.
     USAGE
         }
 
@@ -282,15 +282,14 @@ let
           echo "" >&2
           echo "  { vibewars.telegram = {" >&2
           echo "      managerTokenFile = \"/path/to/secret\";" >&2
-          echo "      managerUsername  = \"your_manager_bot\";" >&2
           echo "      chatId           = \"-1001234567890\";" >&2
           echo "    }; }" >&2
           exit 1
         fi
         export TELEGRAM_MANAGER_TOKEN
 
-        if [ -z "${cfg.managerUsername}" ] || [ -z "${cfg.chatId}" ]; then
-          echo "claude-bot: vibewars.telegram.managerUsername and .chatId must both be set in devenv.local.nix" >&2
+        if [ -z "${cfg.chatId}" ]; then
+          echo "claude-bot: vibewars.telegram.chatId must be set in devenv.local.nix" >&2
           exit 1
         fi
 
@@ -340,9 +339,7 @@ let
         export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
         export VIBEWARS_BOT_ROLE="$role"
         export VIBEWARS_BOT_BUS="$DEVENV_ROOT/.bots/bus"
-        export TELEGRAM_MANAGER_USERNAME="${cfg.managerUsername}"
         export TELEGRAM_CHAT_ID="${cfg.chatId}"
-        export VIBEWARS_BOT_USERNAME_PREFIX="${cfg.usernamePrefix}"
 
         mkdir -p "$VIBEWARS_BOT_ROOT" "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_ROOT/link" "$VIBEWARS_BOT_ROOT/wt"
         mkdir -p "$VIBEWARS_BOT_ROOT/hub/$role/req" "$VIBEWARS_BOT_ROOT/hub/$role/res"
@@ -409,20 +406,6 @@ let
         fi
 
         # ----------------------------------------------------------------------
-        # Provision: blocks on human taps the first time a role is seen, returns
-        # immediately on every run after that.
-        #
-        # A failure here is fatal by design. An agent with no Telegram identity
-        # cannot do the one thing that distinguishes it from plain `claude`,
-        # and starting it anyway gives you a sandbox whose sidecar crash-loops
-        # while the TUI looks perfectly healthy.
-        # ----------------------------------------------------------------------
-        if ! ${node} ${botScripts}/link.mjs provision "$role"; then
-          echo "claude-bot: provisioning \"$role\" failed; not starting the agent." >&2
-          exit 1
-        fi
-
-        # ----------------------------------------------------------------------
         # The worktree. The agent edits this, never your checkout.
         # ----------------------------------------------------------------------
         worktree="$VIBEWARS_BOT_ROOT/wt/$role"
@@ -450,40 +433,27 @@ let
         fi
 
         # ----------------------------------------------------------------------
-        # The sidecar. Owns the role's bot token, which is why it stays out here.
+        # Telegram. One sidecar for the whole company holds the one bot token
+        # (docs/adr/0023-one-telegram-bot.md). Starting it is always safe: a
+        # second one finds the lock and exits, so whichever claude-bot comes
+        # first brings it up. setsid, so it outlives this role's pane.
         # ----------------------------------------------------------------------
-        # $$ is this shell's PID, which `exec` below hands to bwrap — so it stays
-        # alive for exactly the length of the session, and is what the sidecar
-        # watches to know when to exit. See watchLauncher in link.mjs.
+        ${pkgs.util-linux}/bin/setsid ${node} ${botScripts}/link.mjs serve \
+          >>"$VIBEWARS_BOT_ROOT/link/serve.log" 2>&1 </dev/null &
+
+        # This role's presence: its roster entry, which `tg roster` reads. $$ is
+        # this shell's PID, which `exec` below hands to bwrap, so it stays alive
+        # exactly as long as the session; presence exits when it goes. See
+        # `presence` in link.mjs.
         VIBEWARS_BOT_LAUNCHER_PID="$$"
         export VIBEWARS_BOT_LAUNCHER_PID
-
-        # Only one process may long-poll a given bot token: a second one gets
-        # "409 Conflict: terminated by other getUpdates request" and the role
-        # goes deaf. Restarting a role is normal — claude-llc does it on every
-        # start — so the old sidecar is cleared rather than left to fight.
-        if [ -e "$VIBEWARS_BOT_ROOT/link/$role.pid" ]; then
-          stale="$(cat "$VIBEWARS_BOT_ROOT/link/$role.pid")"
-          if kill -0 "$stale" 2>/dev/null; then
-            echo "claude-bot: replacing the existing $role sidecar (pid $stale)"
-            kill "$stale" 2>/dev/null || true
-            # Give it a moment to drop its Telegram connection, or the new one
-            # inherits the conflict it was meant to resolve.
-            sleep 2
-          fi
-        fi
-
-        ${node} ${botScripts}/link.mjs serve "$role" &
-        linkPid=$!
-        printf '%s\n' "$linkPid" > "$VIBEWARS_BOT_ROOT/link/$role.pid"
-        # This trap covers only the gap between here and the exec below: once exec
-        # replaces this shell with bwrap, no trap of ours can ever run. What ends
-        # the sidecar at the end of a real session is its own watchLauncher, which
-        # watches $VIBEWARS_BOT_LAUNCHER_PID above.
+        ${node} ${botScripts}/link.mjs presence "$role" &
+        presencePid=$!
+        # Covers only the gap until exec; after that, presence watches the PID.
         #
         # shellcheck disable=SC2064
-        # Expanded now on purpose: $linkPid must be captured at trap-setting time.
-        trap "kill $linkPid 2>/dev/null || true" EXIT INT TERM
+        # Expanded now on purpose: $presencePid must be captured at trap-setting time.
+        trap "kill $presencePid 2>/dev/null || true" EXIT INT TERM
 
         ${selectPath}
 
@@ -576,40 +546,17 @@ in
       '';
     };
 
-    managerUsername = lib.mkOption {
-      type = lib.types.str;
-      default = "";
-      example = "vibewars_manager_bot";
-      description = ''
-        Username of the manager bot, without the leading `@`. Used to build
-        the `t.me/newbot/<manager>/<suggested>` provisioning links.
-      '';
-    };
-
     chatId = lib.mkOption {
       type = lib.types.str;
       default = "";
       example = "-1001234567890";
       description = ''
-        Numeric id of the forum supergroup the swarm lives in. Topics must be
-        enabled on it, and the manager bot must be an admin there with
-        `can_promote_members` and `can_manage_topics`.
+        Numeric id of the forum supergroup the company lives in. Topics must
+        be enabled on it, and the bot must be an admin there with
+        `can_manage_topics`.
       '';
     };
 
-    usernamePrefix = lib.mkOption {
-      type = lib.types.str;
-      default = "vw";
-      description = ''
-        Prefix for suggested usernames of newly provisioned role bots, as in
-        `vw_qa_tester_bot`.
-
-        Deliberately not "vibewars": `vibewars_manager_bot` is already taken by
-        the manager bot that provisions these, so the `manager` employee could
-        never have had the obvious name. A short shared prefix keeps all nine
-        employees consistent instead of giving one of them an exception.
-      '';
-    };
   };
 
   config = {
