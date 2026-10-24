@@ -248,9 +248,11 @@ const RECONNECT_WINDOW_SECONDS = 30;
 
 /**
  * How long a lobby's players have to take the seats it reserved for
- * them. A seat nobody takes frees itself after this, and a match nobody
- * came to disposes itself, so a lobby that empties between "start" and
- * "join" leaves nothing behind.
+ * them: twice Colyseus's default, for a slow phone on a bad network. A
+ * seat nobody takes in time lapses and is gone for good: its player
+ * gets "match failed" and finds their lobby again, and the rest play on.
+ * A match nobody came to disposes itself, so a lobby that empties
+ * between "start" and "join" leaves nothing behind.
  */
 export const LOBBY_MATCH_JOIN_DEADLINE_SECONDS = 30;
 
@@ -262,8 +264,13 @@ export interface LobbySeat {
 }
 
 interface PendingSeat extends LobbySeat {
-  /** Names the seat in the reservation's join options; never chosen by a client. */
-  readonly seatId: string;
+  /** Chosen here, before the reservation, so the room knows whose seat is whose. */
+  readonly sessionId: string;
+}
+
+interface Seating {
+  readonly seats: readonly PendingSeat[];
+  readonly joinDeadlineSeconds: number;
 }
 
 /**
@@ -272,7 +279,7 @@ interface PendingSeat extends LobbySeat {
  * room's create options: `create` is open to clients, and a client must
  * not be able to open a seated room of its own (#41).
  */
-const pendingSeatings = new Map<string, readonly PendingSeat[]>();
+const pendingSeatings = new Map<string, Seating>();
 
 /**
  * Open a lobby's own match and reserve every seat in it, server-side
@@ -288,16 +295,18 @@ const pendingSeatings = new Map<string, readonly PendingSeat[]>();
 export async function openLobbyMatch(
   mapId: string,
   seats: readonly LobbySeat[],
+  joinDeadlineSeconds = LOBBY_MATCH_JOIN_DEADLINE_SECONDS,
 ): Promise<matchMaker.ISeatReservation[]> {
   const seating = randomUUID();
-  const pending = seats.map((seat) => ({ ...seat, seatId: randomUUID() }));
-  pendingSeatings.set(seating, pending);
+  const pending = seats.map((seat) => ({ ...seat, sessionId: randomUUID() }));
+  pendingSeatings.set(seating, { seats: pending, joinDeadlineSeconds });
   const room = await matchMaker
     .createRoom(ROOM_MATCH, { mapId, seating })
     .finally(() => pendingSeatings.delete(seating));
   return Promise.all(
-    pending.map(({ seatId, build }) =>
-      matchMaker.reserveSeatFor(room, { protocolVersion: PROTOCOL_VERSION, seatId, build }),
+    pending.map(({ sessionId, build }) =>
+      // Colyseus takes the session id from the auth data when there is one.
+      matchMaker.reserveSeatFor(room, { protocolVersion: PROTOCOL_VERSION, build }, { sessionId }),
     ),
   );
 }
@@ -396,16 +405,18 @@ export class MatchRoom extends Room {
     } else {
       // Only the lobby that put the seating there can name it, so a
       // client's own `create` with one is refused here (#41).
-      const seats = typeof seating === "string" ? pendingSeatings.get(seating) : undefined;
-      if (seats === undefined) {
+      const pending = typeof seating === "string" ? pendingSeatings.get(seating) : undefined;
+      if (pending === undefined) {
         throw new Error("A lobby's match is opened by its lobby.");
       }
       // Private, so Quick Match never finds it; exactly as many seats as
       // the lobby reserves, so it is full before any client could ask.
       await this.setPrivate(true);
-      this.maxClients = seats.length;
-      this.seatReservationTimeout = LOBBY_MATCH_JOIN_DEADLINE_SECONDS;
-      this.#seats = new Map(seats.map((seat) => [seat.seatId, { team: seat.team, used: false }]));
+      this.maxClients = pending.seats.length;
+      this.seatReservationTimeout = pending.joinDeadlineSeconds;
+      this.#seats = new Map(
+        pending.seats.map((seat) => [seat.sessionId, { team: seat.team, used: false }]),
+      );
     }
 
     // Join options are client-supplied; read them defensively rather
@@ -633,18 +644,19 @@ export class MatchRoom extends Room {
 
   /**
    * The team a joining player plays on. In a lobby's match that is the
-   * team of the seat the lobby reserved for them, and the seat is spent.
-   * A join that names no unspent seat is refused: a seat a dropped player
-   * gave up is free again, and a stranger must not be able to take it.
+   * team of the seat the lobby reserved for their session, and the seat
+   * is spent. Only the session id counts, which the server chose, never
+   * the join options, which a client did: a seat that lapsed or that a
+   * dropped player gave up is free again, and a stranger joining into it
+   * is refused.
    * In Quick Match, teams alternate as players join so a 1v1 is
    * adversarial by default.
    */
-  private claimTeam(options: unknown): number {
+  private claimTeam(sessionId: string): number {
     if (this.#seats === undefined) {
       return [...this.#sim.participants()].length % 2;
     }
-    const seatId = field(options, "seatId");
-    const seat = typeof seatId === "string" ? this.#seats.get(seatId) : undefined;
+    const seat = this.#seats.get(sessionId);
     if (seat === undefined || seat.used) {
       throw new Error("This match is for its lobby's players only.");
     }
@@ -654,7 +666,7 @@ export class MatchRoom extends Room {
 
   public override onJoin(client: Client, options?: unknown): void {
     assertProtocolVersion(options);
-    const team = this.claimTeam(options);
+    const team = this.claimTeam(client.sessionId);
     const spawn = this.nextSpawnPoint(team);
     const loadout = resolveLoadout(options);
 

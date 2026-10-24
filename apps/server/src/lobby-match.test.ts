@@ -12,7 +12,12 @@ import {
 } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { LOBBY_MATCH_JOIN_DEADLINE_SECONDS, MatchRoom } from "./rooms/match-room.js";
+import {
+  DEFAULT_MAP_ID,
+  LOBBY_MATCH_JOIN_DEADLINE_SECONDS,
+  MatchRoom,
+  openLobbyMatch,
+} from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
 
@@ -223,7 +228,7 @@ describe("a lobby's own match", () => {
     // granted, the lobby's own players below could not all get in.
     for (let i = 0; i < 5; i += 1) {
       await expect(
-        matchMaker.joinById(roomId, { protocolVersion: PROTOCOL_VERSION, seatId: randomUUID() }),
+        matchMaker.joinById(roomId, { protocolVersion: PROTOCOL_VERSION }),
       ).rejects.toThrow();
     }
     const matches = await Promise.all(seats.map(take));
@@ -236,11 +241,42 @@ describe("a lobby's own match", () => {
     const seats = await start(members);
     const [stays, goes] = await Promise.all(seats.map(take));
     const roomId = seats[0]?.reservation.roomId ?? "";
+    const gaveUp = goes?.sessionId;
     await goes?.leave(true);
     await waitFor(() => stays?.state.players.size === 1, { label: "the leaver gone" });
     await expect(intrude(roomId)).rejects.toThrow(/lobby's players only/);
-    await expect(intrude(roomId, { seatId: randomUUID() })).rejects.toThrow(/lobby's players only/);
+    // Naming the seat in the options claims nothing: only the session id
+    // the server chose does.
+    await expect(intrude(roomId, { sessionId: gaveUp })).rejects.toThrow(/lobby's players only/);
     await leaveAll([...(stays === undefined ? [] : [stays]), ...members.map(({ room }) => room)]);
+  });
+
+  it("refuses a stranger into a seat whose player never came, once it lapsed", async () => {
+    // A one-second deadline instead of the real one; the lapse is the same.
+    const [came, neverCame] = await openLobbyMatch(
+      DEFAULT_MAP_ID,
+      [
+        { team: 0, build: undefined },
+        { team: 1, build: undefined },
+      ],
+      1,
+    );
+    if (came === undefined || neverCame === undefined) {
+      throw new Error("no seats");
+    }
+    const seated = await new Client(endpoint).consumeSeatReservation<MatchView>(came);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    await expect(intrude(came.roomId)).rejects.toThrow(/lobby's players only/);
+    await expect(intrude(came.roomId, { sessionId: neverCame.sessionId })).rejects.toThrow(
+      /lobby's players only/,
+    );
+    // Too late for its own player as well.
+    await expect(
+      new Client(endpoint).consumeSeatReservation<MatchView>(neverCame),
+    ).rejects.toThrow();
+    expect(seated.state.players.size).toBe(1);
+    await seated.leave();
   });
 
   it("refuses a client that tries to open a seated match of its own", async () => {
