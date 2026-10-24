@@ -588,11 +588,14 @@ function authorizeAs(role, request, acting) {
   // A role scoped to one kind of file opens pull requests for its own
   // branches only, which are the only ones its guard has checked.
   if (best.argv.join(" ") === "pr create" && PUSH_SCOPES[role] !== undefined) {
-    const head = headOf(argv);
-    if (head?.startsWith(`bot/${role}/`) !== true) {
+    // Exactly one: gh takes the last of several, so checking any one of
+    // them would let a second --head name a branch nobody checked.
+    const heads = headsOf(argv.slice(best.argv.length));
+    if (heads?.length !== 1 || heads[0]?.startsWith(`bot/${role}/`) !== true) {
+      const flags = [...SCOPED_CREATE_FLAGS.keys()].join(", ");
       return {
         allow: false,
-        reason: `role "${role}" opens pull requests only with --head bot/${role}/<branch>`,
+        reason: `role "${role}" opens pull requests only with one --head bot/${role}/<branch>, and only these flags, unclustered: ${flags}`,
       };
     }
   }
@@ -600,25 +603,71 @@ function authorizeAs(role, request, acting) {
 }
 
 /**
- * The branch a `gh pr create` names with --head / -H, or null.
- *
- * @param {string[]} argv
- * @returns {string | null}
+ * The `gh pr create` flags a scoped role may pass, by long name: their
+ * shorthand, and whether they take a value.
  */
-function headOf(argv) {
+const SCOPED_CREATE_FLAGS = new Map([
+  ["--head", { short: "H", value: true }],
+  ["--title", { short: "t", value: true }],
+  ["--body", { short: "b", value: true }],
+  ["--base", { short: "B", value: true }],
+  ["--label", { short: "l", value: true }],
+  ["--draft", { short: "d", value: false }],
+]);
+
+/**
+ * Every branch a scoped role's `gh pr create` names with --head / -H, read
+ * the way gh's flag parser reads them, or null for anything this cannot
+ * read exactly that way. Scanning for --head is not enough: gh takes the
+ * last of several, a flag's value is consumed whatever it looks like (so
+ * `--title --head=x` names no head), and `-dH x` is a head in a cluster.
+ * So every word must be a known flag or its value, and clusters of
+ * shorthands are refused rather than parsed.
+ *
+ * @param {string[]} argv the words after `pr create`
+ * @returns {string[] | null}
+ */
+function headsOf(argv) {
+  /** @type {string[]} */
+  const heads = [];
   for (let i = 0; i < argv.length; i += 1) {
     const word = argv[i] ?? "";
-    if (word === "--head" || word === "-H") {
-      return argv[i + 1] ?? null;
+    /** @type {string | undefined} */
+    let name;
+    /** @type {string | undefined} */
+    let inline;
+    if (word.startsWith("--")) {
+      const eq = word.indexOf("=");
+      name = eq === -1 ? word : word.slice(0, eq);
+      inline = eq === -1 ? undefined : word.slice(eq + 1);
+    } else if (word.startsWith("-") && word.length >= 2) {
+      const letter = word.slice(1, 2);
+      name = [...SCOPED_CREATE_FLAGS].find(([, flag]) => flag.short === letter)?.[0];
+      // gh reads `-Hx` and `-H=x` alike.
+      inline = word.length > 2 ? word.slice(2).replace(/^=/, "") : undefined;
     }
-    if (word.startsWith("--head=")) {
-      return word.slice("--head=".length);
+    const flag = name === undefined ? undefined : SCOPED_CREATE_FLAGS.get(name);
+    if (flag === undefined) {
+      return null;
     }
-    if (word.startsWith("-H") && word.length > 2) {
-      return word.slice(2);
+    /** @type {string | undefined} */
+    let value;
+    if (flag.value) {
+      value = inline ?? argv[i + 1];
+      if (inline === undefined) {
+        i += 1;
+      }
+      if (value === undefined) {
+        return null;
+      }
+    } else if (inline !== undefined) {
+      return null;
+    }
+    if (name === "--head" && value !== undefined) {
+      heads.push(value);
     }
   }
-  return null;
+  return heads;
 }
 
 /**
