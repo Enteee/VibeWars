@@ -237,6 +237,11 @@ let
           esac
         done
 
+        # Replace refs live under .git/refs, which every jail can write, and
+        # make git read another object under a reviewed sha (#67). Our own
+        # scripts set GIT_NO_REPLACE_OBJECTS; this covers the operator's git.
+        git -C "$DEVENV_ROOT" config core.useReplaceRefs false
+
         # ------------------------------------------------------------------------
         # A restore point, taken before nine agents with push rights start work.
         # This repository was corrupted by an interrupted write once already; a
