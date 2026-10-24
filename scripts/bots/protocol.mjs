@@ -205,7 +205,7 @@ export function routeInbound(raw, context) {
  * @returns {{
  *   deliveries: { role: string, line: InboxLine }[],
  *   notice: InboxLine | null,
- *   mirror: { to: string, text: string } | null,
+ *   mirror: Mirrored | null,
  * }}
  */
 export function deliverPeer(raw, context) {
@@ -252,8 +252,163 @@ export function deliverPeer(raw, context) {
             "they will read it when they start. Do not wait on them.",
         )
       : null,
-    mirror: { to, text: `[${context.from}] ${text}` },
+    mirror: { from: context.from, to, text },
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/* The mirror's format                                                        */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A peer message as delivered, before it is formatted for Telegram.
+ *
+ * @typedef {object} Mirrored
+ * @property {string} from the sending role
+ * @property {string} to a role, or "all"
+ * @property {string} text the body exactly as the sender wrote it
+ */
+
+/**
+ * A Bot API `MessageEntity`. Offsets and lengths are UTF-16 code units, which
+ * is what `String.length` counts.
+ *
+ * @typedef {object} MessageEntity
+ * @property {"bold" | "expandable_blockquote" | "text_link"} type
+ * @property {number} offset
+ * @property {number} length
+ * @property {string} [url] for `text_link` only
+ */
+
+/** Telegram's limit on one message. */
+export const MAX_MESSAGE_CHARS = 4096;
+
+/**
+ * How each role is shown in the mirror. Exactly the company's roles, with no
+ * entry for anything else: `deliverPeer` refuses an unknown role before a
+ * message gets this far. Single code points, or one plus a variation
+ * selector, never ZWJ sequences, which render as several glyphs on some
+ * clients.
+ *
+ * @type {Readonly<Record<string, { emoji: string, name: string }>>}
+ */
+export const ROLE_STYLE = {
+  architect: { emoji: "🧭", name: "Architect" },
+  manager: { emoji: "📋", name: "Manager" },
+  "developer-1": { emoji: "🛠", name: "Developer 1" },
+  "developer-2": { emoji: "🔧", name: "Developer 2" },
+  "asset-designer": { emoji: "🎨", name: "Asset Designer" },
+  "cicd-engineer": { emoji: "⚙️", name: "CI/CD Engineer" },
+  "lead-dev": { emoji: "🔍", name: "Lead Dev" },
+  "perf-sec-qa": { emoji: "🛡", name: "Perf/Sec/QA" },
+  "qa-tester": { emoji: "🧪", name: "QA Tester" },
+};
+
+/** How a broadcast's recipient is shown. */
+const EVERYONE = { emoji: "📢", name: "Everyone" };
+
+/**
+ * @param {string} role
+ * @returns {{ emoji: string, name: string }}
+ */
+function styleOf(role) {
+  const style = ROLE_STYLE[role];
+  if (style === undefined) {
+    // deliverPeer refuses unknown roles, so reaching this is a bug, not data.
+    throw new Error(`no ROLE_STYLE for "${role}"`);
+  }
+  return style;
+}
+
+/**
+ * `#34`, but not `foo#34`, a URL fragment `/#34` or an HTML entity `&#34;`.
+ */
+const ISSUE_REF = /(?<![\w/&])#(\d+)/g;
+
+/**
+ * Entities cut to the first `end` code units. One that would run past the
+ * end is shortened, or dropped when nothing of it is left.
+ *
+ * @param {readonly MessageEntity[]} entities
+ * @param {number} end
+ * @returns {MessageEntity[]}
+ */
+function fitEntities(entities, end) {
+  return entities
+    .filter((entity) => entity.offset < end)
+    .map((entity) => ({ ...entity, length: Math.min(entity.length, end - entity.offset) }));
+}
+
+/**
+ * The first `max` code units of `text`, one fewer if that would split a
+ * surrogate pair.
+ *
+ * @param {string} text
+ * @param {number} max
+ * @returns {string}
+ */
+function cut(text, max) {
+  if (text.length <= max) {
+    return text;
+  }
+  const last = text.charCodeAt(max - 1);
+  return text.slice(0, last >= 0xd800 && last <= 0xdbff ? max - 1 : max);
+}
+
+/**
+ * One mirrored peer message as Telegram shows it:
+ *
+ *     🧭 Architect → 🛠 Developer 1
+ *     ┃ the body, in an expandable blockquote
+ *
+ * All styling is entities built from `from` and `to`. The body is never
+ * parsed as Markdown or HTML and `parse_mode` is never set, so nothing a peer
+ * writes can forge a header or the operator's mark (the guarantee `visible`
+ * gives the terminal, #28). The only thing read out of the body is `#<n>`,
+ * which links to that issue; GitHub redirects it when `<n>` is a PR.
+ *
+ * The body is cut, ending in `…`, so the whole message fits in
+ * MAX_MESSAGE_CHARS. A link cut by that is dropped rather than left pointing
+ * at a different number than it shows.
+ *
+ * @param {Mirrored} message
+ * @param {{ repo: string }} context `owner/name` on GitHub
+ * @returns {{ text: string, entities: MessageEntity[] }}
+ */
+export function formatMirror(message, context) {
+  const sender = styleOf(message.from);
+  const recipient = message.to === "all" ? EVERYONE : styleOf(message.to);
+
+  /** @type {MessageEntity[]} */
+  const entities = [];
+  let header = `${sender.emoji} `;
+  entities.push({ type: "bold", offset: header.length, length: sender.name.length });
+  header += `${sender.name} → ${recipient.emoji} `;
+  entities.push({ type: "bold", offset: header.length, length: recipient.name.length });
+  header += recipient.name;
+
+  if (message.text === "") {
+    return { text: header, entities };
+  }
+
+  const start = header.length + 1;
+  const room = MAX_MESSAGE_CHARS - start;
+  const body = message.text.length <= room ? message.text : `${cut(message.text, room - 1)}…`;
+  const kept = body === message.text ? body.length : body.length - 1;
+
+  entities.push({ type: "expandable_blockquote", offset: start, length: body.length });
+  for (const match of message.text.matchAll(ISSUE_REF)) {
+    if (match.index + match[0].length > kept) {
+      break;
+    }
+    entities.push({
+      type: "text_link",
+      offset: start + match.index,
+      length: match[0].length,
+      url: `https://github.com/${context.repo}/issues/${match[1] ?? ""}`,
+    });
+  }
+  return { text: `${header}\n${body}`, entities };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -264,10 +419,8 @@ export function deliverPeer(raw, context) {
  * @typedef {object} Queued
  * @property {number | null} topicId where it goes in the group; `null` is General
  * @property {string} text
+ * @property {MessageEntity[]} entities
  */
-
-/** Telegram's limit on one message. */
-export const MAX_MESSAGE_CHARS = 4096;
 
 /**
  * What the Telegram mirror should send next.
@@ -276,7 +429,8 @@ export const MAX_MESSAGE_CHARS = 4096;
  * company now shares that. So: a budget of `limit` per rolling `windowMs`,
  * at most one message per `minGapMs`, and when more is queued than the
  * budget allows, consecutive messages to the same topic are joined into one,
- * up to Telegram's 4,096 characters. Messages to different topics are never
+ * a blank line apart, up to Telegram's 4,096 characters, each message's
+ * entities moved along with it. Messages to different topics are never
  * merged, and nothing is reordered. Agents never wait on this: their inboxes
  * were already written.
  *
@@ -313,23 +467,36 @@ export function planSends(queue, sent, now, options = {}) {
   if (first === undefined) {
     return { batch: null, rest: [], waitMs: 0 };
   }
-  const clip = (/** @type {string} */ text) =>
-    text.length <= MAX_MESSAGE_CHARS ? text : `${text.slice(0, MAX_MESSAGE_CHARS - 1)}…`;
-
-  let text = clip(first.text);
+  // formatMirror already keeps a message within the limit, so this is only a
+  // backstop; whatever it cuts, it cuts out of the entities too.
+  let text = first.text;
+  let entities = first.entities;
+  if (text.length > MAX_MESSAGE_CHARS) {
+    text = `${cut(text, MAX_MESSAGE_CHARS - 1)}…`;
+    entities = fitEntities(entities, text.length - 1);
+  }
   let count = 1;
   // Only coalesce when backlogged; otherwise each message goes out as sent.
   if (queue.length > budget) {
     for (const next of others) {
-      const joined = `${text}\n${next.text}`;
+      const joined = `${text}\n\n${next.text}`;
       if (next.topicId !== first.topicId || joined.length > MAX_MESSAGE_CHARS) {
         break;
       }
+      const shift = text.length + 2;
+      entities = [
+        ...entities,
+        ...next.entities.map((entity) => ({ ...entity, offset: entity.offset + shift })),
+      ];
       text = joined;
       count += 1;
     }
   }
-  return { batch: { topicId: first.topicId, text, count }, rest: queue.slice(count), waitMs: 0 };
+  return {
+    batch: { topicId: first.topicId, text, entities, count },
+    rest: queue.slice(count),
+    waitMs: 0,
+  };
 }
 
 /**

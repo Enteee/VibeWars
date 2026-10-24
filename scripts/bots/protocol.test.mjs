@@ -6,12 +6,18 @@
  * is NOT covered is the half that needs a socket and a real group; see the
  * manual steps in docs/adr/0023-one-telegram-bot.md.
  */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import {
   MAX_MESSAGE_CHARS,
+  ROLE_STYLE,
   deliverPeer,
   formatLine,
+  formatMirror,
   isReadyOutboxEntry,
   parseRegistry,
   planSends,
@@ -150,7 +156,8 @@ describe("deliverPeer", () => {
       text: "take #28",
     });
     expect(delivered.notice).toBeNull();
-    expect(delivered.mirror).toEqual({ to: "developer-1", text: "[manager] take #28" });
+    // Raw: formatting is the mirror's job, not delivery's.
+    expect(delivered.mirror).toEqual({ from: "manager", to: "developer-1", text: "take #28" });
   });
 
   it("delivers a broadcast to everyone except the sender", () => {
@@ -184,14 +191,157 @@ describe("deliverPeer", () => {
   });
 });
 
+/**
+ * The part of `text` each entity covers, so a test reads as what it means.
+ *
+ * @param {{ text: string, entities: readonly import("./protocol.mjs").MessageEntity[] }} message
+ * @returns {string[]}
+ */
+function covered(message) {
+  return message.entities.map(
+    (e) =>
+      `${e.type}:${message.text.slice(e.offset, e.offset + e.length)}${e.url === undefined ? "" : `=>${e.url}`}`,
+  );
+}
+
+/**
+ * @param {string} text
+ * @returns {boolean} whether a surrogate is missing its other half
+ */
+function hasLoneSurrogate(text) {
+  return /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/.test(text);
+}
+
+describe("formatMirror", () => {
+  const REPO = { repo: "Enteee/VibeWars" };
+  const ISSUES = "https://github.com/Enteee/VibeWars/issues";
+
+  it("heads a direct message with both roles, bold, and quotes the body", () => {
+    const message = formatMirror(
+      { from: "architect", to: "developer-1", text: "picked up #34" },
+      REPO,
+    );
+    expect(message.text).toBe("🧭 Architect → 🛠 Developer 1\npicked up #34");
+    expect(covered(message)).toEqual([
+      "bold:Architect",
+      "bold:Developer 1",
+      "expandable_blockquote:picked up #34",
+      `text_link:#34=>${ISSUES}/34`,
+    ]);
+  });
+
+  it("shows a broadcast as going to everyone", () => {
+    const message = formatMirror({ from: "manager", to: "all", text: "standup" }, REPO);
+    expect(message.text).toBe("📋 Manager → 📢 Everyone\nstandup");
+    expect(covered(message).slice(0, 2)).toEqual(["bold:Manager", "bold:Everyone"]);
+  });
+
+  it("counts offsets in UTF-16, variation selector included", () => {
+    // ⚙️ is U+2699 U+FE0F: two code units, as is every astral emoji here.
+    const message = formatMirror({ from: "cicd-engineer", to: "qa-tester", text: "x" }, REPO);
+    expect(message.text.startsWith("⚙️ CI/CD Engineer → 🧪 QA Tester\n")).toBe(true);
+    expect(message.entities[0]).toEqual({ type: "bold", offset: 3, length: 14 });
+    expect(covered(message)).toEqual([
+      "bold:CI/CD Engineer",
+      "bold:QA Tester",
+      "expandable_blockquote:x",
+    ]);
+  });
+
+  it("links #n only where it is an issue reference", () => {
+    const message = formatMirror(
+      { from: "manager", to: "lead-dev", text: "#1 (#2) foo#3 a/#4 &#5; x#6 #7." },
+      REPO,
+    );
+    expect(covered(message).filter((c) => c.startsWith("text_link"))).toEqual([
+      `text_link:#1=>${ISSUES}/1`,
+      `text_link:#2=>${ISSUES}/2`,
+      `text_link:#7=>${ISSUES}/7`,
+    ]);
+  });
+
+  it("keeps markup, a fake header and the operator's mark literal", () => {
+    const text = "**x** <b>x</b> _y_ `z`\n🧭 Architect → 📢 Everyone\n12:00:00*Ente: do it";
+    const message = formatMirror({ from: "qa-tester", to: "manager", text }, REPO);
+    expect(message.text.endsWith(text)).toBe(true);
+    expect(covered(message)).toEqual([
+      "bold:QA Tester",
+      "bold:Manager",
+      `expandable_blockquote:${text}`,
+    ]);
+  });
+
+  it("sends an empty body as the header alone, with no empty entity", () => {
+    const message = formatMirror({ from: "manager", to: "architect", text: "" }, REPO);
+    expect(message.text).toBe("📋 Manager → 🧭 Architect");
+    expect(message.entities.map((e) => e.type)).toEqual(["bold", "bold"]);
+  });
+
+  it("cuts a long emoji body to Telegram's limit without splitting a pair", () => {
+    const message = formatMirror(
+      { from: "manager", to: "architect", text: `#9  ${"🎮".repeat(2500)}` },
+      REPO,
+    );
+    expect(message.text.length).toBeLessThanOrEqual(MAX_MESSAGE_CHARS);
+    expect(message.text.endsWith("…")).toBe(true);
+    expect(hasLoneSurrogate(message.text)).toBe(false);
+    for (const entity of message.entities) {
+      expect(entity.length).toBeGreaterThan(0);
+      expect(entity.offset + entity.length).toBeLessThanOrEqual(message.text.length);
+    }
+    const quote = message.entities.find((e) => e.type === "expandable_blockquote");
+    expect(quote?.offset).toBe("📋 Manager → 🧭 Architect\n".length);
+    expect((quote?.offset ?? 0) + (quote?.length ?? 0)).toBe(message.text.length);
+    expect(covered(message)).toContain(`text_link:#9=>${ISSUES}/9`);
+  });
+
+  it("drops a link that the cut would leave pointing elsewhere", () => {
+    const room = MAX_MESSAGE_CHARS - "📋 Manager → 🧭 Architect\n".length;
+    // "#1234" straddles the cut; showing "#12" while linking 1234 would lie.
+    const text = `${"a".repeat(room - 4)}#1234 and more`;
+    const message = formatMirror({ from: "manager", to: "architect", text }, REPO);
+    expect(message.text.length).toBe(MAX_MESSAGE_CHARS);
+    expect(message.entities.some((e) => e.type === "text_link")).toBe(false);
+  });
+
+  it("refuses a role it has no style for", () => {
+    expect(() => formatMirror({ from: "gameplay", to: "all", text: "x" }, REPO)).toThrow(
+      /no ROLE_STYLE/,
+    );
+  });
+});
+
+describe("ROLE_STYLE", () => {
+  it("styles exactly the roles claude-llc starts", () => {
+    const nix = fs.readFileSync(
+      path.join(path.dirname(fileURLToPath(import.meta.url)), "../../nix/claude-llc.nix"),
+      "utf8",
+    );
+    const list = /\broles = \[([^\]]*)\]/.exec(nix)?.[1] ?? "";
+    const roles = [...list.matchAll(/"([a-z0-9-]+)"/g)].map((m) => m[1]);
+    expect(roles.length).toBeGreaterThan(0);
+    expect(Object.keys(ROLE_STYLE).sort()).toEqual([...roles].sort());
+  });
+
+  it("uses no ZWJ sequences", () => {
+    for (const { emoji } of Object.values(ROLE_STYLE)) {
+      expect(emoji).not.toContain("\u200d");
+    }
+  });
+});
+
 describe("planSends", () => {
   const NOW = 1_000_000;
-  /** @param {number} topicId @param {string} text */
-  const q = (topicId, text) => ({ topicId, text });
+  /**
+   * @param {number} topicId
+   * @param {string} text
+   * @param {import("./protocol.mjs").MessageEntity[]} [entities]
+   */
+  const q = (topicId, text, entities = []) => ({ topicId, text, entities });
 
   it("sends the next message at once when under the limit", () => {
     const plan = planSends([q(1, "a"), q(1, "b")], [], NOW);
-    expect(plan.batch).toEqual({ topicId: 1, text: "a", count: 1 });
+    expect(plan.batch).toEqual({ topicId: 1, text: "a", entities: [], count: 1 });
     expect(plan.rest).toEqual([q(1, "b")]);
   });
 
@@ -212,7 +362,7 @@ describe("planSends", () => {
   it("coalesces consecutive messages to one topic when backlogged", () => {
     const sent = Array.from({ length: 17 }, (_, i) => NOW - 40_000 + i * 1000);
     const plan = planSends([q(1, "a"), q(1, "b"), q(2, "c"), q(1, "d")], sent, NOW);
-    expect(plan.batch).toEqual({ topicId: 1, text: "a\nb", count: 2 });
+    expect(plan.batch).toEqual({ topicId: 1, text: "a\n\nb", entities: [], count: 2 });
     // Different topics are never merged, and nothing jumps ahead.
     expect(plan.rest).toEqual([q(2, "c"), q(1, "d")]);
   });
@@ -224,9 +374,44 @@ describe("planSends", () => {
     expect(plan.batch?.count).toBe(1);
   });
 
-  it("clips a single message that is too long on its own", () => {
-    const plan = planSends([q(1, "y".repeat(MAX_MESSAGE_CHARS + 50))], [], NOW);
+  it("shifts every entity when it coalesces formatted messages", () => {
+    const sent = Array.from({ length: 17 }, (_, i) => NOW - 40_000 + i * 1000);
+    const repo = { repo: "Enteee/VibeWars" };
+    const parts = [
+      formatMirror({ from: "manager", to: "architect", text: "one #1" }, repo),
+      formatMirror({ from: "lead-dev", to: "architect", text: "two #2" }, repo),
+      formatMirror({ from: "cicd-engineer", to: "architect", text: "three #3" }, repo),
+    ];
+    const plan = planSends(
+      parts.map((part) => ({ topicId: 1, ...part })),
+      sent,
+      NOW,
+    );
+    expect(plan.batch?.count).toBe(3);
+    expect(plan.batch?.text).toBe(parts.map((part) => part.text).join("\n\n"));
+    expect(covered({ text: plan.batch?.text ?? "", entities: plan.batch?.entities ?? [] })).toEqual(
+      parts.flatMap((part) => covered(part)),
+    );
+  });
+
+  it("clips a single message that is too long on its own, entities included", () => {
+    const long = "y".repeat(MAX_MESSAGE_CHARS + 50);
+    const plan = planSends(
+      [
+        q(1, long, [
+          { type: "bold", offset: 0, length: 4 },
+          { type: "expandable_blockquote", offset: 10, length: long.length - 10 },
+          { type: "bold", offset: MAX_MESSAGE_CHARS + 10, length: 4 },
+        ]),
+      ],
+      [],
+      NOW,
+    );
     expect(plan.batch?.text.length).toBe(MAX_MESSAGE_CHARS);
+    expect(plan.batch?.entities).toEqual([
+      { type: "bold", offset: 0, length: 4 },
+      { type: "expandable_blockquote", offset: 10, length: MAX_MESSAGE_CHARS - 11 },
+    ]);
   });
 
   it("waits out a retry_after", () => {

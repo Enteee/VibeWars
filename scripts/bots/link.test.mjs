@@ -109,8 +109,9 @@ async function fakeTelegram() {
  *
  * @param {string} telegram base URL of the fake
  * @param {string} [registry] registry.json contents
+ * @param {string | null} [companyJson] company.json contents; `null` for none
  */
-function company(telegram, registry) {
+function company(telegram, registry, companyJson = JSON.stringify({ repo: "Enteee/VibeWars" })) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "link-test-"));
   const bus = path.join(root, "bus");
   fs.mkdirSync(bus, { recursive: true });
@@ -118,6 +119,9 @@ function company(telegram, registry) {
     path.join(root, "registry.json"),
     registry ?? JSON.stringify({ offset: 0, roles: { architect: { topicId: 11 } } }),
   );
+  if (companyJson !== null) {
+    fs.writeFileSync(path.join(root, "company.json"), companyJson);
+  }
   const env = {
     ...process.env,
     VIBEWARS_BOT_ROOT: root,
@@ -228,11 +232,33 @@ describe("the company sidecar", () => {
       text: "spec #28 please",
     });
     await until(() => telegram.sent.length === 1, "the mirror");
+    const header = "📋 Manager → 🧭 Architect";
     expect(telegram.sent[0]).toEqual({
       chat_id: CHAT,
-      text: "[manager] spec #28 please",
+      text: `${header}\nspec #28 please`,
+      entities: [
+        { type: "bold", offset: 3, length: 7 },
+        { type: "bold", offset: 16, length: 9 },
+        { type: "expandable_blockquote", offset: header.length + 1, length: 15 },
+        {
+          type: "text_link",
+          offset: header.length + 1 + 5,
+          length: 3,
+          url: "https://github.com/Enteee/VibeWars/issues/28",
+        },
+      ],
       message_thread_id: 11,
     });
+  }, 20_000);
+
+  it("refuses to start without the repository to link issues to", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url, undefined, JSON.stringify({ project: 2 }));
+
+    const { code, stderr } = await co.start().exited;
+
+    expect(code).toBe(1);
+    expect(stderr).toMatch(/company\.json has no "repo"/);
   }, 20_000);
 
   it("routes operator messages by topic, by 'role:' prefix, and to everyone otherwise", async () => {
@@ -274,9 +300,20 @@ describe("the company sidecar", () => {
     const mirrored = () => telegram.sent.map((m) => String(m.text)).join("\n");
     await until(() => mirrored().includes("burst 29"), "the last message in the mirror");
     for (let i = 0; i < 30; i += 1) {
-      expect(mirrored()).toContain(`[manager] burst ${String(i)}`);
+      expect(mirrored()).toContain(`burst ${String(i)}`);
     }
     expect(telegram.sent.length).toBeLessThan(30);
+    // Coalescing moved every entity along with its message.
+    for (const message of telegram.sent) {
+      const text = String(message.text);
+      const entities = /** @type {{ offset: number, length: number }[]} */ (message.entities);
+      for (const entity of entities) {
+        expect(entity.offset + entity.length).toBeLessThanOrEqual(text.length);
+      }
+      expect(
+        entities.filter((e) => text.slice(e.offset, e.offset + e.length) === "Manager"),
+      ).toHaveLength(text.split("📋 Manager →").length - 1);
+    }
   }, 20_000);
 
   it("creates a role's topic the first time it is messaged, and remembers it", async () => {

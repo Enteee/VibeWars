@@ -34,6 +34,7 @@ import { fileURLToPath } from "node:url";
 import { ROLES } from "./hub-policy.mjs";
 import {
   deliverPeer,
+  formatMirror,
   isReadyOutboxEntry,
   obj,
   parseRegistry,
@@ -71,7 +72,7 @@ function required(name) {
  * Resolved lazily so that `presence`, which needs no token, does not demand
  * one.
  *
- * @returns {{ root: string, bus: string, link: string, registry: string }}
+ * @returns {{ root: string, bus: string, link: string, registry: string, company: string }}
  */
 function paths() {
   const root = required("VIBEWARS_BOT_ROOT");
@@ -80,6 +81,7 @@ function paths() {
     bus: required("VIBEWARS_BOT_BUS"),
     link: path.join(root, "link"),
     registry: path.join(root, "registry.json"),
+    company: path.join(root, "company.json"),
   };
 }
 
@@ -176,6 +178,29 @@ function readRegistry(file) {
     throw new Error(parsed.error);
   }
   return parsed.registry;
+}
+
+/**
+ * The repository the mirror links `#<n>` to, from the company.json that
+ * claude-llc-init writes and hubd reads. There is no default: a sidecar that
+ * guessed would link every issue to the wrong place (ADR-0016).
+ *
+ * @param {string} file
+ * @returns {string} `owner/name`
+ */
+function readRepo(file) {
+  /** @type {unknown} */
+  let parsed;
+  try {
+    parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch {
+    throw new Error(`${file} is missing or not JSON; run claude-llc-init, which writes it.`);
+  }
+  const repo = obj(parsed).repo;
+  if (typeof repo !== "string" || !/^[\w.-]+\/[\w.-]+$/.test(repo)) {
+    throw new Error(`${file} has no "repo": "owner/name"; run claude-llc-init, which writes it.`);
+  }
+  return repo;
 }
 
 /**
@@ -319,6 +344,7 @@ class Company {
     this.token = token;
     this.chatId = chatId;
     this.registry = readRegistry(at.registry);
+    this.repo = readRepo(at.company);
   }
 
   save() {
@@ -412,7 +438,7 @@ async function pollInbound(company) {
  * Every role's outbox: delivered locally at once, then queued for Telegram.
  *
  * @param {Company} company
- * @param {{ to: string, text: string }[]} mirror filled here, emptied by `mirrorOut`
+ * @param {import("./protocol.mjs").Mirrored[]} mirror filled here, emptied by `mirrorOut`
  * @returns {Promise<never>}
  */
 async function drainOutboxes(company, mirror) {
@@ -468,7 +494,7 @@ async function drainOutboxes(company, mirror) {
  * already in the recipient's inbox.
  *
  * @param {Company} company
- * @param {{ to: string, text: string }[]} mirror
+ * @param {import("./protocol.mjs").Mirrored[]} mirror
  * @returns {Promise<never>}
  */
 async function mirrorOut(company, mirror) {
@@ -481,8 +507,11 @@ async function mirrorOut(company, mirror) {
   for (;;) {
     // Resolve destinations to topics in arrival order, so a role whose topic
     // has to be created first does not jump the queue.
-    for (const { to, text } of mirror.splice(0)) {
-      queue.push({ topicId: to === "all" ? null : await company.topicFor(to), text });
+    for (const message of mirror.splice(0)) {
+      queue.push({
+        topicId: message.to === "all" ? null : await company.topicFor(message.to),
+        ...formatMirror(message, { repo: company.repo }),
+      });
     }
 
     const now = Date.now();
@@ -497,6 +526,7 @@ async function mirrorOut(company, mirror) {
       await api(company.token, "sendMessage", {
         chat_id: company.chatId,
         text: batch.text,
+        entities: batch.entities,
         ...(batch.topicId === null ? {} : { message_thread_id: batch.topicId }),
       });
       sent.push(Date.now());
@@ -544,7 +574,7 @@ async function serve() {
     await company.topicFor(role);
   }
 
-  /** @type {{ to: string, text: string }[]} */
+  /** @type {import("./protocol.mjs").Mirrored[]} */
   const mirror = [];
   await Promise.race([
     pollInbound(company),
