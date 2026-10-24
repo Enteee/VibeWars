@@ -332,6 +332,15 @@ let
         block until a colleague or the operator says something, then continue.
         Do not stop and wait for a prompt; nobody is going to send you one."
 
+        # After a company reboot, claude-llc hands the manager what it loaded
+        # (scripts/bots/restart.mjs), for the manager to pass on.
+        if [ -n "''${VIBEWARS_KICKOFF_NOTE-}" ]; then
+          kickoff="$kickoff
+
+        The company was just rebooted: $VIBEWARS_KICKOFF_NOTE
+        Tell everyone with \`tg broadcast\` first, word for word."
+        fi
+
         # `claude --continue` on its own reopens the conversation and then
         # waits, which would leave a restarted agent exactly as idle as an
         # unprompted one. The flag and a turn have to go together.

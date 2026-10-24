@@ -16,6 +16,7 @@
  *     <commit> is the head you reviewed; a verdict on a moved head is refused
  *   hub whoami                       your role and what it may do
  *   company reboot "<reason>"        manager only; also: company reboot --abort
+ *   company ready                    your work is saved; the reboot may go ahead
  *     (`company` is this script with `company` as its first word)
  *
  * `whoami` is answered locally, because the policy is pure and bundled in
@@ -110,16 +111,22 @@ if (argv[0] === "push") {
 } else if (argv[0] === "approve" || argv[0] === "request-changes") {
   request = { kind: "review", argv };
 } else if (argv[0] === "company") {
-  // `company reboot "<reason>"` and `company reboot --abort` (#21).
+  // `company reboot "<reason>"`, `company reboot --abort` and
+  // `company ready` (#21).
   const [, verb, ...rest] = argv;
-  if (verb !== "reboot" || rest.length === 0) {
-    console.error('company: usage: company reboot "<reason>" | company reboot --abort');
+  if (verb === "ready" && rest.length === 0) {
+    request = { kind: "reboot", argv: ["ready"] };
+  } else if (verb === "reboot" && rest.length > 0) {
+    request = {
+      kind: "reboot",
+      argv: rest.length === 1 && rest[0] === "--abort" ? ["abort"] : ["request", rest.join(" ")],
+    };
+  } else {
+    console.error(
+      'company: usage: company reboot "<reason>" | company reboot --abort | company ready',
+    );
     process.exit(2);
   }
-  request = {
-    kind: "reboot",
-    argv: rest.length === 1 && rest[0] === "--abort" ? ["abort"] : ["request", rest.join(" ")],
-  };
 } else {
   request = { kind: "gh", argv };
 }
@@ -182,8 +189,11 @@ const HEARTBEAT_MAX_AGE_MS = 60_000;
 const beatFile = path.join(SPOOL, "..", "hubd.alive");
 let daemonAlive = false;
 try {
-  const beat = Number.parseInt(fs.readFileSync(beatFile, "utf8").trim(), 10);
-  daemonAlive = Number.isFinite(beat) && Date.now() - beat < HEARTBEAT_MAX_AGE_MS;
+  // `{ ts, inFlight }`, written by hubd (#21).
+  /** @type {unknown} */
+  const beat = JSON.parse(fs.readFileSync(beatFile, "utf8"));
+  const ts = typeof beat === "object" && beat !== null && "ts" in beat ? beat.ts : null;
+  daemonAlive = typeof ts === "number" && Date.now() - ts < HEARTBEAT_MAX_AGE_MS;
 } catch {
   /* never started, or its directory is not visible from here */
 }
@@ -279,5 +289,14 @@ for (;;) {
   }
   process.stdout.write(stdout);
   process.exitCode = code;
+  if (request.kind === "reboot" && request.argv[0] !== "ready" && code === 0) {
+    // What hubd answers a scheduled or aborted reboot is the announcement:
+    // it goes to everyone, the operator included, as an ordinary broadcast.
+    const told = spawnSync("tg", ["broadcast", stdout.trim()], { stdio: "inherit" });
+    if (told.status !== 0) {
+      console.error("company: could not broadcast this; tell everyone with tg broadcast");
+      process.exitCode = 1;
+    }
+  }
   break;
 }

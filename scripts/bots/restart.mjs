@@ -11,9 +11,11 @@
  *   2. checks that GitHub's `main` builds, in a scratch worktree;
  *   3. fast-forwards the operator's checkout to it, only if that is safe
  *      (reboot.mjs, `fastForwardDecision`) and it built;
- *   4. starts the company again with `devenv shell -- claude-llc up`, so nix
- *      rebuilds every script and briefing from the code now checked out;
- *   5. tells everyone what it loaded, or plainly why it did not.
+ *   4. records what it loaded, or plainly why it did not, in
+ *      `.bots/boot.json`, whose note claude-llc puts in the manager's first
+ *      prompt so the manager can tell everyone;
+ *   5. starts the company again with `devenv shell -- claude-llc up`, so nix
+ *      rebuilds every script and briefing from the code now checked out.
  *
  * A main that does not build is never checked out: the company comes back on
  * the code it had, and the operator is told. The company must not stay down
@@ -30,7 +32,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 import { GIT_ENV, GIT_HARDENING } from "./git-hardening.mjs";
 import { obj } from "./protocol.mjs";
-import { COMPANY_PATHS, fastForwardDecision } from "./reboot.mjs";
+import { COMPANY_PATHSPECS, fastForwardDecision } from "./reboot.mjs";
 
 /**
  * @param {string} name
@@ -102,11 +104,15 @@ function devenv(args, cwd) {
   try {
     const result = spawnSync("devenv", ["shell", "--", ...args], {
       cwd,
-      env: Object.fromEntries(
-        Object.entries(process.env).filter(
-          ([name]) => !name.startsWith("DEVENV_") && name !== "IN_NIX_SHELL",
+      env: {
+        ...Object.fromEntries(
+          Object.entries(process.env).filter(
+            ([name]) => !name.startsWith("DEVENV_") && name !== "IN_NIX_SHELL",
+          ),
         ),
-      ),
+        // The boot record is already written; claude-llc must not replace it.
+        VIBEWARS_REBOOTED: "1",
+      },
       stdio: ["ignore", out, out],
     });
     return result.status ?? 1;
@@ -121,23 +127,6 @@ function devenv(args, cwd) {
  */
 function git(args) {
   return run("git", [...GIT_HARDENING, "-C", REPO, ...args], { env: GIT_ENV });
-}
-
-/**
- * Into the manager's outbox, as the supervisor does: the sidecar of the
- * restarted company delivers it to everyone and mirrors it to Telegram.
- *
- * @param {string} text
- * @returns {void}
- */
-function say(text) {
-  const outbox = path.join(ROOT, "bus", "manager", "outbox");
-  fs.mkdirSync(outbox, { recursive: true });
-  const name = `${String(Date.now()).padStart(14, "0")}-restart.json`;
-  const tmp = path.join(outbox, `.${name}.part`);
-  fs.writeFileSync(tmp, JSON.stringify({ to: "all", text: `[reboot] ${text}` }));
-  fs.renameSync(tmp, path.join(outbox, name));
-  log(text);
 }
 
 /**
@@ -213,6 +202,7 @@ async function main() {
 
   /** @type {string} */
   let outcome;
+  let updated = false;
   if (target === null) {
     outcome = "Rebooted, but did NOT update: could not fetch main from GitHub.";
   } else if (!builds(target)) {
@@ -229,13 +219,8 @@ async function main() {
     } else if (git(["merge", "--ff-only", "-q", target]).code !== 0) {
       outcome = `Rebooted, but did NOT update: the fast-forward to ${short(target)} failed.`;
     } else {
-      const subjects = git([
-        "log",
-        "--format=%s",
-        `${bootSha}..HEAD`,
-        "--",
-        ...COMPANY_PATHS.map((p) => (p.endsWith("/") ? p : `${p}*`)),
-      ])
+      updated = true;
+      const subjects = git(["log", "--format=%s", `${bootSha}..HEAD`, "--", ...COMPANY_PATHSPECS])
         .stdout.trim()
         .split("\n")
         .filter((line) => line !== "");
@@ -243,14 +228,27 @@ async function main() {
     }
   }
 
-  const started = devenv(["claude-llc", "up"], REPO);
+  // What this boot loaded. claude-llc puts the note in the manager's first
+  // prompt, and the manager tells everyone; hubd reads sha and at for the
+  // next reboot.
+  log(outcome);
+  fs.writeFileSync(
+    path.join(ROOT, "boot.json"),
+    `${JSON.stringify({
+      sha: git(["rev-parse", "HEAD"]).stdout.trim(),
+      at: Date.now(),
+      previousSha: bootSha,
+      updated,
+      note: outcome,
+    })}\n`,
+  );
   fs.rmSync(REBOOTING, { force: true });
+
+  const started = devenv(["claude-llc", "up"], REPO);
   if (started !== 0) {
-    say(`The company did not come back up (exit ${String(started)}). Log: ${LOG}`);
+    log(`the company did not come back up (exit ${String(started)})`);
     process.exitCode = 1;
-    return;
   }
-  say(`${outcome} Operator: reattach with \`claude-llc\`.`);
 }
 
 try {

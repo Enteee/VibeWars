@@ -78,6 +78,6 @@ left half-done.
   changes through a merged pull request.
 - If you are stuck or genuinely blocked, say so on Telegram and move to other
   work. Do not spin.
-- **On a `[reboot]` announcement**, commit or WIP-commit your work, push it if
-  it is ready, then `tg send manager ready` and wait. You come back in a fresh
-  session; your work survives in git, on the board and in Telegram.
+- **On a company reboot announcement**, WIP-commit your work, push it, then
+  run `company ready` and wait. You come back in a fresh session; your work
+  survives in git, on the board and in Telegram.

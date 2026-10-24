@@ -171,3 +171,32 @@ export function announcement(reboot, subjects) {
     "`claude-llc reboot --abort` (operator)."
   );
 }
+
+/** `COMPANY_PATHS` as git pathspecs, for `git log -- ...`. */
+export const COMPANY_PATHSPECS = COMPANY_PATHS.map((p) => (p.endsWith("/") ? p : `${p}*`));
+
+/**
+ * `.bots/reboot.json`, or `null` if it is not a reboot record.
+ *
+ * @param {unknown} value
+ * @returns {Reboot | null}
+ */
+export function parseReboot(value) {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const raw = /** @type {Record<string, unknown>} */ (value);
+  const { requestedAt, reason, by, deadline, bootSha, ready } = raw;
+  if (
+    typeof requestedAt !== "number" ||
+    typeof reason !== "string" ||
+    typeof by !== "string" ||
+    typeof deadline !== "number" ||
+    typeof bootSha !== "string" ||
+    !Array.isArray(ready) ||
+    !ready.every((role) => typeof role === "string")
+  ) {
+    return null;
+  }
+  return { requestedAt, reason, by, deadline, bootSha, ready: ready.map(String) };
+}

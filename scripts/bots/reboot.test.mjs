@@ -6,6 +6,7 @@ import {
   INFLIGHT_GRACE_MS,
   drainStep,
   fastForwardDecision,
+  parseReboot,
   isCompanyPath,
   rebootAllowed,
 } from "./reboot.mjs";
@@ -152,5 +153,22 @@ describe("fastForwardDecision", () => {
     expect(fastForwardDecision({ branch: "main", dirty: false, fastForward: false })).toMatchObject(
       { update: false },
     );
+  });
+});
+
+describe("parseReboot", () => {
+  it("reads a record, and rejects anything else", () => {
+    const record = {
+      requestedAt: 1,
+      reason: "x",
+      by: "manager",
+      deadline: 2,
+      bootSha: "abc",
+      ready: ["qa-tester"],
+    };
+    expect(parseReboot(record)).toEqual(record);
+    expect(parseReboot({ ...record, ready: [1] })).toBeNull();
+    expect(parseReboot({ ...record, deadline: "2" })).toBeNull();
+    expect(parseReboot(null)).toBeNull();
   });
 });

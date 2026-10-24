@@ -64,7 +64,7 @@ let
       claude-llc status       what is running, without attaching
       claude-llc stop         stop everything
       claude-llc up           bring the company up without attaching (a reboot uses this)
-      claude-llc reboot-abort cancel a reboot the manager scheduled
+      claude-llc reboot --abort  cancel a reboot the manager scheduled
       claude-llc --help
 
     One tmux window per employee plus a dashboard. The session opens on the
@@ -79,8 +79,9 @@ let
 
     After company code changes land on main, the manager can reboot the
     company onto it (`company reboot "<reason>"`): everyone is told, gets up
-    to ten minutes to commit and say ready, and the company comes back on the
-    new main, if your checkout is a clean main that fast-forwards to it.
+    to ten minutes to commit and run `company ready`, and the company comes
+    back on the new main, if your checkout is a clean main that
+    fast-forwards to it. `claude-llc reboot --abort` cancels it.
 
     Employees coordinate over the Telegram group and take their work from the
     GitHub Projects board. Inside each sandbox: `tg` for colleagues, `board`
@@ -150,10 +151,22 @@ let
           up)
             attach=0
             ;;
-          reboot-abort)
+          reboot)
+            if [ "''${2-}" != "--abort" ]; then
+              echo "claude-llc: usage: claude-llc reboot --abort (the manager schedules reboots)" >&2
+              exit 2
+            fi
             if [ -e "$VIBEWARS_BOT_ROOT/reboot.json" ]; then
+              # Removing the record is the abort; the supervisor stops
+              # draining. Everyone is told the way the manager would tell
+              # them: a broadcast from the manager's outbox.
               rm -f "$VIBEWARS_BOT_ROOT/reboot.json"
-              echo "reboot aborted; the supervisor tells everyone within 30s"
+              outbox="$VIBEWARS_BOT_ROOT/bus/manager/outbox"
+              name="$(date +%s%3N)-operator-abort.json"
+              mkdir -p "$outbox"
+              echo '{"to":"all","text":"The company reboot is aborted (operator). Carry on."}' >"$outbox/.$name.part"
+              mv "$outbox/.$name.part" "$outbox/$name"
+              echo "reboot aborted; everyone is told"
             else
               echo "no reboot is scheduled"
             fi
@@ -239,10 +252,16 @@ let
 
         # What this boot loaded, and when. hubd reads it to decide whether a
         # reboot has new company code to load, and to keep reboots 30 minutes
-        # apart (scripts/bots/reboot.mjs).
-        printf '{"sha":"%s","at":%s}\n' \
-          "$(git -C "$DEVENV_ROOT" rev-parse HEAD)" "$(date +%s%3N)" \
-          >"$VIBEWARS_BOT_ROOT/boot.json"
+        # apart (scripts/bots/reboot.mjs). After a reboot the restarter has
+        # already written it, with a note on what it loaded.
+        if [ -z "''${VIBEWARS_REBOOTED-}" ]; then
+          printf '{"sha":"%s","at":%s,"previousSha":null,"updated":false,"note":null}\n' \
+            "$(git -C "$DEVENV_ROOT" rev-parse HEAD)" "$(date +%s%3N)" \
+            >"$VIBEWARS_BOT_ROOT/boot.json"
+        fi
+        # The manager's first prompt says what a reboot loaded, so the
+        # manager can tell everyone.
+        note="$(${lib.getExe pkgs.jq} -r '.note // empty' "$VIBEWARS_BOT_ROOT/boot.json")"
 
         # ------------------------------------------------------------------------
         # The daemons. hubd holds the only GitHub credential in the system.
@@ -266,8 +285,13 @@ let
           "${node} ${llcScripts}/dashboard.mjs"
 
         for role in $ready; do
-          ${tmux} new-window -t "$SESSION" -n "$role" -c "$DEVENV_ROOT" \
-            "claude-llc-agent $role"
+          if [ "$role" = manager ] && [ -n "$note" ]; then
+            ${tmux} new-window -t "$SESSION" -n "$role" -c "$DEVENV_ROOT" \
+              -e "VIBEWARS_KICKOFF_NOTE=$note" "claude-llc-agent $role"
+          else
+            ${tmux} new-window -t "$SESSION" -n "$role" -c "$DEVENV_ROOT" \
+              "claude-llc-agent $role"
+          fi
         done
 
         VIBEWARS_LLC_RESTART=${restarter} ${node} ${llcScripts}/supervisor.mjs >>"$VIBEWARS_BOT_ROOT/hub/supervisor.log" 2>&1 &

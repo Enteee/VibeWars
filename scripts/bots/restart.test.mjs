@@ -103,13 +103,13 @@ function setup(options = {}) {
   };
   fake(
     "devenv",
-    `echo "devenv $PWD $*" >>${calls}\n${options.failBuild === true ? 'case "$*" in *--help*) exit 1 ;; esac' : ""}`,
+    `echo "devenv $PWD $* rebooted=$VIBEWARS_REBOOTED" >>${calls}\n${options.failBuild === true ? 'case "$*" in *--help*) exit 1 ;; esac' : ""}`,
   );
   fake("tmux", `echo "tmux $*" >>${calls}`);
   fake("pkill", `echo "pkill $*" >>${calls}`);
   fake("pgrep", "exit 1");
 
-  /** @returns {{ code: number | null, said: string[], calls: string[] }} */
+  /** @returns {{ code: number | null, boot: Record<string, unknown>, calls: string[] }} */
   const restart = () => {
     const result = spawnSync(process.execPath, [RESTART], {
       env: {
@@ -123,18 +123,13 @@ function setup(options = {}) {
       },
       encoding: "utf8",
     });
-    const outbox = path.join(root, "bus", "manager", "outbox");
-    const said = fs.existsSync(outbox)
-      ? fs
-          .readdirSync(outbox)
-          .sort()
-          .map((name) => {
-            /** @type {unknown} */
-            const message = JSON.parse(fs.readFileSync(path.join(outbox, name), "utf8"));
-            return String(obj(message).text);
-          })
-      : [];
-    return { code: result.status, said, calls: fs.readFileSync(calls, "utf8").split("\n") };
+    /** @type {unknown} */
+    const boot = JSON.parse(fs.readFileSync(path.join(root, "boot.json"), "utf8"));
+    return {
+      code: result.status,
+      boot: obj(boot),
+      calls: fs.readFileSync(calls, "utf8").split("\n"),
+    };
   };
 
   return { repo, root, boot, target, restart };
@@ -150,14 +145,16 @@ describe("the restarter", () => {
     expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.target);
     expect(result.calls).toContain("tmux kill-session -t restart-test");
     expect(result.calls).toContain("pkill -f hubd.mjs");
-    expect(result.calls.some((c) => c.endsWith("reboot-check shell -- claude-llc --help"))).toBe(
-      true,
-    );
-    expect(result.calls).toContain(`devenv ${company.repo} shell -- claude-llc up`);
-    expect(result.said).toEqual([
-      `[reboot] Rebooted onto ${company.target.slice(0, 8)}: company: a new thing. ` +
-        "Operator: reattach with `claude-llc`.",
-    ]);
+    expect(
+      result.calls.some((c) => c.endsWith("reboot-check shell -- claude-llc --help rebooted=1")),
+    ).toBe(true);
+    expect(result.calls).toContain(`devenv ${company.repo} shell -- claude-llc up rebooted=1`);
+    expect(result.boot).toMatchObject({
+      sha: company.target,
+      previousSha: company.boot,
+      updated: true,
+      note: `Rebooted onto ${company.target.slice(0, 8)}: company: a new thing.`,
+    });
     expect(fs.existsSync(path.join(company.root, "rebooting.json"))).toBe(false);
     expect(fs.existsSync(path.join(company.root, "reboot-check"))).toBe(false);
   });
@@ -169,8 +166,8 @@ describe("the restarter", () => {
     const result = company.restart();
 
     expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
-    expect(result.said[0]).toMatch(/did NOT update: checkout is on branch mine/);
-    expect(result.calls).toContain(`devenv ${company.repo} shell -- claude-llc up`);
+    expect(String(result.boot.note)).toMatch(/did NOT update: checkout is on branch mine/);
+    expect(result.calls).toContain(`devenv ${company.repo} shell -- claude-llc up rebooted=1`);
   });
 
   it("never moves a checkout with local changes", () => {
@@ -180,7 +177,7 @@ describe("the restarter", () => {
     const result = company.restart();
 
     expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
-    expect(result.said[0]).toMatch(/did NOT update: checkout has local changes/);
+    expect(String(result.boot.note)).toMatch(/did NOT update: checkout has local changes/);
   });
 
   it("keeps the old code when the new main does not build", () => {
@@ -189,11 +186,11 @@ describe("the restarter", () => {
     const result = company.restart();
 
     expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
-    expect(result.said[0]).toMatch(
+    expect(String(result.boot.note)).toMatch(
       new RegExp(
         `onto ${company.target.slice(0, 8)} failed to build; running ${company.boot.slice(0, 8)}`,
       ),
     );
-    expect(result.calls).toContain(`devenv ${company.repo} shell -- claude-llc up`);
+    expect(result.calls).toContain(`devenv ${company.repo} shell -- claude-llc up rebooted=1`);
   });
 });

@@ -572,9 +572,20 @@ describe("hubd scheduling a company reboot", () => {
 
     const asked = await hubd.request("manager", "reboot", ["request", "load #21"]);
     expect(asked.code, String(asked.reason)).toBe(0);
+    // The announcement company broadcasts, with what the reboot loads.
+    expect(String(asked.stdout)).toMatch(/load #21\. It loads: change\./);
     expect(JSON.parse(fs.readFileSync(record, "utf8"))).toMatchObject({
       reason: "load #21",
       by: "manager",
+      ready: [],
+    });
+
+    for (const role of ["qa-tester", "qa-tester", "developer-1"]) {
+      const ready = await hubd.request(role, "reboot", ["ready"]);
+      expect(ready.code, role).toBe(0);
+    }
+    expect(JSON.parse(fs.readFileSync(record, "utf8"))).toMatchObject({
+      ready: ["qa-tester", "developer-1"],
     });
 
     const again = await hubd.request("manager", "reboot", ["request", "again"]);
@@ -582,7 +593,11 @@ describe("hubd scheduling a company reboot", () => {
 
     const aborted = await hubd.request("manager", "reboot", ["abort"]);
     expect(aborted.code).toBe(0);
+    expect(String(aborted.stdout)).toMatch(/aborted/);
     expect(fs.existsSync(record)).toBe(false);
+
+    const late = await hubd.request("developer-1", "reboot", ["ready"]);
+    expect(late.code).toBe(1);
   }, 20_000);
 
   it("refuses when main changed no company code, or inside the cooldown", async () => {
