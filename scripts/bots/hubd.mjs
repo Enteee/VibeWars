@@ -462,6 +462,29 @@ async function main() {
     `hubd: serving ${String(ROLES.length)} roles on ${cfg.repo} (project ${String(cfg.project)})`,
   );
 
+  // A heartbeat, so `hub` can distinguish "the daemon is busy" from "the
+  // daemon was never started". Without it, every call inside a sandbox blocks
+  // for the full request timeout and the agent looks hung.
+  //
+  // A timestamp rather than a pid, because the sandboxes run with
+  // --unshare-all, which includes a PID namespace: a pid written here is
+  // meaningless inside a jail, where `process.kill(pid, 0)` would report
+  // every live daemon as dead. That is exactly how the first version of this
+  // made every agent announce that the hub was down.
+  const alive = path.join(HUB, "hubd.alive");
+  fs.mkdirSync(HUB, { recursive: true });
+  const beat = () => {
+    fs.writeFileSync(alive, `${String(Date.now())}\n`);
+  };
+  beat();
+  let lastBeat = Date.now();
+  const stop = () => {
+    fs.rmSync(alive, { force: true });
+    process.exit(0);
+  };
+  process.on("SIGINT", stop);
+  process.on("SIGTERM", stop);
+
   for (;;) {
     for (const role of ROLES) {
       try {
@@ -469,6 +492,12 @@ async function main() {
       } catch (error) {
         console.error(`hubd: ${role}: ${error instanceof Error ? error.message : "failed"}`);
       }
+    }
+    // Cheap enough at this interval, and far below the staleness window hub
+    // allows, so a busy daemon is never mistaken for a dead one.
+    if (Date.now() - lastBeat > 5000) {
+      beat();
+      lastBeat = Date.now();
     }
     await sleep(300);
   }

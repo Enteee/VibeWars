@@ -75,20 +75,18 @@ export function looksIdle(previous, current) {
   }
   const tail = current.trimEnd().split("\n").slice(-6).join("\n");
 
-  // Claude Code prints a spinner line and an "esc to interrupt" hint while a
-  // turn is in flight. Either means it is working, however still the pane is.
-  if (/esc to interrupt|Thinking|tokens|·\s*$/i.test(tail)) {
+  // The footer carries "esc to interrupt" for exactly as long as a turn is in
+  // flight, which makes it a far better busy signal than looking for a
+  // spinner: it is also present while a long tool call produces no output, so
+  // a blocking `tg wait` is correctly seen as working rather than stuck.
+  if (/esc to interrupt/i.test(tail)) {
     return false;
   }
 
-  // A blocking `tg wait` is the agent idling on purpose, which is exactly the
-  // behaviour we asked for. Leave it alone; it will come back by itself.
-  if (/tg wait|waiting for|\(nothing new in/i.test(tail)) {
-    return false;
-  }
-
-  // The input box is the positive signal that it is our turn to speak.
-  return /│\s*>|^\s*>\s*$|Try "/m.test(tail);
+  // The input box. Claude Code draws "❯", not ">" — an earlier version of
+  // this function looked for the ASCII form and therefore never fired, which
+  // is why interrupted agents sat idle instead of being nudged.
+  return /❯|Try "|What should Claude do instead/.test(tail);
 }
 
 /* -------------------------------------------------------------------------- */

@@ -113,6 +113,30 @@ if (!local.allow) {
 
 /* -------------------------------------------------------------------------- */
 
+// Checked before spooling anything. A request to a daemon that is not running
+// would otherwise sit here for the full timeout, and an agent that appears
+// hung for five minutes is worse than one told plainly what is wrong.
+//
+// Liveness is a heartbeat age, not a pid. The sandbox runs with
+// --unshare-all, so it has its own PID namespace and cannot see the host
+// process at all: checking a pid here reported every running daemon as dead.
+const HEARTBEAT_MAX_AGE_MS = 60_000;
+const beatFile = path.join(SPOOL, "..", "hubd.alive");
+let daemonAlive = false;
+try {
+  const beat = Number.parseInt(fs.readFileSync(beatFile, "utf8").trim(), 10);
+  daemonAlive = Number.isFinite(beat) && Date.now() - beat < HEARTBEAT_MAX_AGE_MS;
+} catch {
+  /* never started, or its directory is not visible from here */
+}
+if (!daemonAlive) {
+  console.error("hub: the hub daemon is not answering, so GitHub is unreachable from here.");
+  console.error("hub: it is started by `claude-llc`. If you started this agent by hand");
+  console.error("hub: with `claude-bot`, GitHub will not work until claude-llc is up.");
+  console.error("hub: everything else — tg, the repo, the tests — works as normal.");
+  process.exit(75);
+}
+
 const id = `${String(Date.now()).padStart(14, "0")}-${String(process.pid)}`;
 const reqDir = path.join(SPOOL, "req");
 const resFile = path.join(SPOOL, "res", `${id}.json`);

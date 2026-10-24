@@ -12,14 +12,21 @@ let
   # cannot change what the orchestrator and the daemon holding the credential
   # actually run. The duplication is deliberate — these two modules are
   # independent, and claude-bot works on its own without the company.
+  # Every script, staged as one directory.
+  #
+  # This was a hand-written list of `cp` lines, and it went wrong twice: once
+  # when a lone file was staged without the module it imports, and again when
+  # `hubd.mjs` gained an import of protocol.mjs that the list did not mention —
+  # which made hubd die on startup and every agent correctly report that the
+  # hub was unreachable. A list that has to be kept in step with the imports is
+  # a list that will drift, so the whole directory goes in and the tests are
+  # filtered out.
   llcScripts = pkgs.runCommand "vibewars-llc-scripts" { } ''
     mkdir -p $out
-    cp ${../scripts/bots/hub-policy.mjs} $out/hub-policy.mjs
-    cp ${../scripts/bots/hub-guards.mjs} $out/hub-guards.mjs
-    cp ${../scripts/bots/hubd.mjs} $out/hubd.mjs
-    cp ${../scripts/bots/supervisor.mjs} $out/supervisor.mjs
-    cp ${../scripts/bots/company-init.mjs} $out/company-init.mjs
-    cp ${../scripts/bots/dashboard.mjs} $out/dashboard.mjs
+    for f in ${../scripts/bots}/*.mjs; do
+      case "$f" in *.test.mjs) continue ;; esac
+      cp "$f" "$out/$(basename "$f")"
+    done
   '';
 
   # The org chart, in the order the windows are created. The architect is
@@ -39,15 +46,17 @@ let
 
   session = "vibewars-llc";
 
-  claudeLlc = ''
-        set -euo pipefail
-
-        SESSION="${session}"
-        export VIBEWARS_LLC_SESSION="$SESSION"
-        export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
-
-        usage() {
-          cat <<'USAGE'
+  # `range=user|X` marks a clickable span and puts X in mouse_status_range.
+  # Every such click arrives on the same `Status` mouse key, so this dispatches
+  # on the value — and it has to handle "window" too, because overriding
+  # MouseDown1Status otherwise breaks clicking a window name to switch to it,
+  # which is how you move between employees.
+  # Kept in a file rather than a heredoc inside the script. A heredoc in a Nix
+  # `''` string is a trap: Nix strips the minimum indentation found across the
+  # whole string, so a single under-indented line anywhere leaves the `USAGE`
+  # terminator indented, the heredoc never ends, and the script dies with a
+  # syntax error at its last line. Which is exactly what happened.
+  llcUsage = pkgs.writeText "claude-llc-usage.txt" ''
     claude-llc — a company of nine Claude agents building VibeWars
 
     usage:
@@ -61,18 +70,49 @@ let
     say it to the architect and it becomes issues, which the board carries to
     main without you.
 
+    Running it again attaches to the company already running rather than
+    starting a second one. Bottom-right of the status bar has clickable
+    "detach" (leave it running) and "stop" (shut every agent down). Ctrl-C in
+    an employee's window restarts just that employee, keeping its memory.
+
     Employees coordinate over the Telegram group and take their work from the
-    GitHub Projects board. Inside each sandbox: `tg` for colleagues, `board` for
-    the kanban, `hub` for GitHub. The GitHub credential is NOT in the sandboxes —
-    `hubd` holds it out here and enforces what each role may do.
+    GitHub Projects board. Inside each sandbox: `tg` for colleagues, `board`
+    for the kanban, `hub` for GitHub. The GitHub credential is NOT in the
+    sandboxes — `hubd` holds it out here and enforces what each role may do.
 
     first time:
       claude-llc-init         create the board, protect main, write company.json
-      claude-bot <role>       provision each role's Telegram bot (two taps each)
+      claude-bot <role>       provision a role's Telegram bot (two taps each)
 
     See docs/adr/0015-agent-company.md.
-    USAGE
+  '';
+
+  llcTmuxConf = pkgs.writeText "claude-llc.tmux" ''
+    bind-key -n MouseDown1Status {
+      if-shell -F "#{==:#{mouse_status_range},detach}" {
+        detach-client
+      }
+      if-shell -F "#{==:#{mouse_status_range},stop}" {
+        confirm-before -p "Shut the company down? All agents stop. (y/n) " {
+          run-shell -b "claude-llc stop"
         }
+      }
+      if-shell -F "#{==:#{mouse_status_range},window}" {
+        select-window -t=
+      }
+    }
+  '';
+
+  claudeLlc = ''
+        set -euo pipefail
+
+        SESSION="${session}"
+        export VIBEWARS_LLC_SESSION="$SESSION"
+        export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
+
+        usage() {
+      cat ${llcUsage}
+    }
 
         case "''${1-}" in
           -h | --help)
@@ -111,8 +151,26 @@ let
           exit 1
         fi
 
+        # Starting the company twice would build a second set of sandboxes and
+        # a second sidecar per role — and two sidecars on one bot token means
+        # 409 Conflict and a deaf agent. So a running session is joined, never
+        # duplicated.
         if ${tmux} has-session -t "$SESSION" 2>/dev/null; then
-          echo "claude-llc: $SESSION is already up; attaching."
+          echo "claude-llc: $SESSION is already running; attaching to it."
+
+          # A session can outlive its daemons: the machine slept, something
+          # was killed, hubd crashed. Bring back whichever is missing, or you
+          # attach to a company whose GitHub access silently does not work.
+          if ! pgrep -f hubd.mjs >/dev/null 2>&1; then
+            echo "claude-llc: hubd was not running; restarting it."
+            mkdir -p "$VIBEWARS_BOT_ROOT/hub"
+            ${node} ${llcScripts}/hubd.mjs >>"$VIBEWARS_BOT_ROOT/hub/hubd.log" 2>&1 &
+          fi
+          if ! pgrep -f supervisor.mjs >/dev/null 2>&1; then
+            echo "claude-llc: supervisor was not running; restarting it."
+            ${node} ${llcScripts}/supervisor.mjs >>"$VIBEWARS_BOT_ROOT/hub/supervisor.log" 2>&1 &
+          fi
+
           exec ${tmux} attach-session -t "$SESSION"
         fi
 
@@ -176,11 +234,27 @@ let
 
         for role in $ready; do
           ${tmux} new-window -t "$SESSION" -n "$role" -c "$DEVENV_ROOT" \
-            "claude-bot $role"
+            "claude-llc-agent $role"
         done
 
         ${node} ${llcScripts}/supervisor.mjs >>"$VIBEWARS_BOT_ROOT/hub/supervisor.log" 2>&1 &
         echo "claude-llc: supervisor started (log: .bots/hub/supervisor.log)"
+
+        # ----------------------------------------------------------------------
+        # A clickable status bar: leave the company running and walk away,
+        # or stop the whole thing, without hunting for the command.
+        #
+        # The key binding lives in a tmux config file rather than inline.
+        # tmux command blocks use braces, and bash passes a bare `{` to
+        # tmux as a literal argument while trying to run the following
+        # lines as shell commands — which parses cleanly and does nothing.
+        # ----------------------------------------------------------------------
+        ${tmux} set-option -t "$SESSION" mouse on
+        ${tmux} set-option -t "$SESSION" status-interval 5
+        ${tmux} set-option -t "$SESSION" status-left "#[bold] VibeWars LLC #[default]"
+        ${tmux} set-option -t "$SESSION" status-right \
+          "#[range=user|detach] detach #[norange]|#[range=user|stop] stop #[norange] "
+        ${tmux} source-file ${llcTmuxConf}
 
         # Opens on the architect, which is where you type.
         if ${tmux} select-window -t "$SESSION:architect" 2>/dev/null; then
@@ -208,6 +282,69 @@ in
           set -euo pipefail
           export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
           exec ${node} ${llcScripts}/company-init.mjs "$@"
+        '';
+      };
+
+      # One employee's window: claude-bot, restarted when it exits.
+      #
+      # Without this the pane dies with the agent. Ctrl-C in Claude Code
+      # exits the process, tmux closes the window whose command returned,
+      # and the employee is gone for the rest of the day — which is a harsh
+      # penalty for interrupting a turn.
+      #
+      # So Ctrl-C now means "restart this agent": the pane stays, the agent
+      # comes back in ten seconds with its kickoff prompt, and a second
+      # Ctrl-C during that pause stops it for good. A crash loop is capped,
+      # because an agent that cannot start at all should say so rather than
+      # flicker forever.
+      claude-llc-agent = {
+        description = "Run one employee in a restart loop (used by claude-llc)";
+        exec = ''
+          set -uo pipefail
+
+          role="''${1-}"
+          if [ -z "$role" ]; then
+            echo "claude-llc-agent: usage: claude-llc-agent <role>" >&2
+            exit 2
+          fi
+          shift || true
+
+          quick=0
+          first=1
+          while true; do
+            started=$SECONDS
+            if [ "$first" = "1" ]; then
+              first=0
+              claude-bot "$role" "$@" || true
+            else
+              # Keep the agent's memory across a restart. An employee that
+              # forgets its half-finished branch whenever someone presses
+              # Ctrl-C is worse than useless, because it starts over.
+              claude-bot --continue "$role" "$@" || true
+            fi
+            ran=$(( SECONDS - started ))
+
+            if [ "$ran" -lt 20 ]; then
+              quick=$(( quick + 1 ))
+            else
+              quick=0
+            fi
+
+            echo ""
+            if [ "$quick" -ge 5 ]; then
+              echo "claude-llc-agent: $role exited immediately five times running."
+              echo "claude-llc-agent: not restarting. Fix the cause, then:"
+              echo "claude-llc-agent:   claude-llc-agent $role"
+              exit 1
+            fi
+
+            echo "claude-llc-agent: $role stopped after ''${ran}s."
+            echo "claude-llc-agent: restarting in 10s — Ctrl-C now to stop for good."
+            if ! sleep 10; then
+              echo "claude-llc-agent: stopped $role."
+              exit 0
+            fi
+          done
         '';
       };
 

@@ -20,18 +20,21 @@ let
   # Staged as one directory rather than three loose files: each `${./x.mjs}`
   # would land at its own store path, and `tg.mjs`'s `import "./protocol.mjs"`
   # would then resolve to /nix/store/protocol.mjs, which does not exist.
+  # Every script, staged as one directory.
+  #
+  # This was a hand-written list of `cp` lines, and it went wrong twice: once
+  # when a lone file was staged without the module it imports, and again when
+  # `hubd.mjs` gained an import of protocol.mjs that the list did not mention —
+  # which made hubd die on startup and every agent correctly report that the
+  # hub was unreachable. A list that has to be kept in step with the imports is
+  # a list that will drift, so the whole directory goes in and the tests are
+  # filtered out.
   botScripts = pkgs.runCommand "vibewars-bot-scripts" { } ''
     mkdir -p $out
-    cp ${../scripts/bots/protocol.mjs} $out/protocol.mjs
-    cp ${../scripts/bots/tg.mjs} $out/tg.mjs
-    cp ${../scripts/bots/link.mjs} $out/link.mjs
-    cp ${../scripts/bots/setup.mjs} $out/setup.mjs
-    cp ${../scripts/bots/hub-policy.mjs} $out/hub-policy.mjs
-    cp ${../scripts/bots/hub-guards.mjs} $out/hub-guards.mjs
-    cp ${../scripts/bots/hub.mjs} $out/hub.mjs
-    cp ${../scripts/bots/hubd.mjs} $out/hubd.mjs
-    cp ${../scripts/bots/board.mjs} $out/board.mjs
-    cp ${../scripts/bots/company-init.mjs} $out/company-init.mjs
+    for f in ${../scripts/bots}/*.mjs; do
+      case "$f" in *.test.mjs) continue ;; esac
+      cp "$f" "$out/$(basename "$f")"
+    done
   '';
 
   node = "${pkgs.nodejs_24}/bin/node";
@@ -221,6 +224,15 @@ let
             ;;
         esac
 
+        # On a restart we want the agent to pick up where it left off rather
+        # than re-reading the whole world, so claude-llc-agent passes
+        # --continue on every iteration after the first.
+        resume=0
+        if [ "''${1-}" = "--continue" ]; then
+          resume=1
+          shift
+        fi
+
         role="''${1-}"
         if [ -z "$role" ]; then
           usage >&2
@@ -284,6 +296,46 @@ let
 
         # Every agent gets the shared coordination contract plus its own charter.
         briefing="$(cat "$DEVENV_ROOT/.claude/bots/_protocol.md" "$brief")"
+
+        # A system prompt gives an agent a role; it does not give it a turn.
+        # Claude Code starts interactive and waits, so nine agents with
+        # perfect briefings and nobody speaking to them do precisely nothing —
+        # which is exactly what happened the first time the company was
+        # started. The positional prompt argument is the ignition: it runs as
+        # the first user turn and the session stays interactive afterwards, so
+        # the operator can still type into the pane.
+        #
+        # Overridable: `claude-bot architect "look at issue 14"` wins, so the
+        # command is still useful by hand.
+        kickoff="You are the $role. Start work now, on your own, without waiting to be asked.
+
+        First, orient yourself:
+          1. \`hub whoami\` — what you are allowed to do
+          2. \`tg roster\` — who else is working, and who has not been hired yet
+          3. \`tg inbox\` — anything already waiting for you
+          4. \`board ls\` — the state of the work
+
+        Then do your job as described in your role briefing: pick the single
+        most valuable thing you can finish end to end, do it, move the card,
+        and tell whoever is next in the chain on Telegram.
+
+        When you genuinely have nothing to do, run \`tg wait --timeout 900\` to
+        block until a colleague or the operator says something, then continue.
+        Do not stop and wait for a prompt; nobody is going to send you one."
+
+        # `claude --continue` on its own reopens the conversation and then
+        # waits, which would leave a restarted agent exactly as idle as an
+        # unprompted one. The flag and a turn have to go together.
+        if [ "$resume" = "1" ]; then
+          continueFlag="--continue"
+          prompt="You were interrupted and have just been restarted. Check \`tg inbox\`
+        and \`board ls\` in case something changed while you were gone, then carry on
+        with the most valuable thing you can finish. If you were mid-task, finish
+        that first."
+        else
+          continueFlag=""
+          prompt="$kickoff"
+        fi
 
         export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
         export VIBEWARS_BOT_ROLE="$role"
@@ -472,6 +524,7 @@ let
           --bind "$DEVENV_ROOT/.git" "$DEVENV_ROOT/.git" \
           --ro-bind "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_BUS" \
           --bind "$VIBEWARS_BOT_BUS/$role" "$VIBEWARS_BOT_BUS/$role" \
+          --ro-bind "$VIBEWARS_BOT_ROOT/hub" "$VIBEWARS_BOT_ROOT/hub" \
           --bind "$VIBEWARS_BOT_ROOT/hub/$role" "$VIBEWARS_BOT_ROOT/hub/$role" \
           --bind "$worktree" "$worktree" \
           $skillsBind \
@@ -493,7 +546,8 @@ let
           -- claude \
             --dangerously-skip-permissions \
             --append-system-prompt "$briefing" \
-            "$@"
+            $continueFlag \
+            "''${@:-$prompt}"
   '';
 in
 {
