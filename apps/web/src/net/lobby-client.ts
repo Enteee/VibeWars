@@ -1,4 +1,5 @@
 import { Client, type Room } from "@colyseus/sdk";
+import type { PlayerBuild } from "@vibewars/game-core";
 import {
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
@@ -155,11 +156,20 @@ function wrap(room: Room<unknown, DecodedLobbyState>): LobbyConnection {
   };
 }
 
-export async function createLobby(endpoint: string, name: string): Promise<LobbyConnection> {
+/**
+ * Host a new lobby. `build` is what this player will ask to play when the
+ * match starts: the lobby takes their seat for them (#41).
+ */
+export async function createLobby(
+  endpoint: string,
+  name: string,
+  build: PlayerBuild | undefined,
+): Promise<LobbyConnection> {
   const client = new Client(endpoint);
   const room = await client.create<DecodedLobbyState>(ROOM_LOBBY, {
     protocolVersion: PROTOCOL_VERSION,
     name,
+    ...(build === undefined ? {} : { build }),
   } satisfies LobbyJoinOptions);
   await awaitFirstPatch(room);
   return wrap(room);
@@ -189,6 +199,7 @@ export async function joinLobbyByCode(
   endpoint: string,
   code: string,
   name: string,
+  build: PlayerBuild | undefined,
 ): Promise<LobbyConnection> {
   const normalized = normalizeLobbyCode(code);
   const client = new Client(endpoint);
@@ -197,6 +208,7 @@ export async function joinLobbyByCode(
       protocolVersion: PROTOCOL_VERSION,
       code: normalized,
       name,
+      ...(build === undefined ? {} : { build }),
     } satisfies LobbyJoinOptions);
     await awaitFirstPatch(room);
     return wrap(room);
