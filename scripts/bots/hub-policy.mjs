@@ -165,7 +165,9 @@ const RULES = [
   { argv: ["pr", "comment"], roles: "*" },
 
   /* ---- the manager runs the backlog and the board. --------------------- */
-  { argv: ["issue", "create"], roles: ["manager", "architect"] },
+  // The CI/CD engineer files the bug when main goes red (#164): it is the
+  // one watching, and the failing run is evidence nobody else has to hand.
+  { argv: ["issue", "create"], roles: ["manager", "architect", "cicd-engineer"] },
   { argv: ["issue", "edit"], roles: ["manager", "architect"] },
   { argv: ["issue", "close"], roles: ["manager"] },
   { argv: ["issue", "reopen"], roles: ["manager"] },
