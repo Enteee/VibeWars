@@ -48,6 +48,11 @@
     # of the reproducible environment like every other tool, instead of an
     # unversioned binary fetched on first run.
     pkgs.chromium
+    # scripts/assets/sfx.sh synthesises the sound effects with sox and
+    # encodes them to MP3 with ffmpeg (#104). Pinned here so anyone can
+    # re-run it and get the committed bytes.
+    pkgs.sox
+    pkgs.ffmpeg-headless
   ];
 
   env.VIBEWARS_ENV = "development";
