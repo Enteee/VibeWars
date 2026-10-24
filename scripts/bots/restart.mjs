@@ -15,8 +15,9 @@
  *   4. records what it loaded, or plainly why it did not, in
  *      `.bots/boot.json`, whose note claude-llc puts in the manager's first
  *      prompt so the manager can tell everyone;
- *   5. starts the company again with `devenv shell -- claude-llc up`, so nix
- *      rebuilds every script and briefing from the code now checked out.
+ *   5. starts the company again with
+ *      `devenv shell --refresh-eval-cache -- claude-llc up`, so nix rebuilds
+ *      every script and briefing from the code now checked out.
  *
  * A main that does not build is never checked out: the company comes back on
  * the code it had, and the operator is told. The company must not stay down
@@ -99,6 +100,12 @@ function run(file, args, options = {}) {
  * without the variables of the devenv shell this process inherited, so the
  * new shell is built from the checkout it runs in and nothing else.
  *
+ * Always with `--refresh-eval-cache`. devenv's evaluation cache only tracks
+ * the .nix and devenv files, not `scripts/bots`, which enters the store as a
+ * path literal (ADR-0014): a merge that changed only .mjs files would
+ * otherwise come back up on the cached evaluation, running the old scripts.
+ * Refreshing also leaves the cache right for the operator's next shell.
+ *
  * Its output goes straight to the log, not through a pipe: `claude-llc up`
  * leaves daemons running, and a pipe they inherited would never close.
  *
@@ -107,10 +114,10 @@ function run(file, args, options = {}) {
  * @returns {number} its exit code
  */
 function devenv(args, cwd) {
-  log(`devenv shell -- ${args.join(" ")}`);
+  log(`devenv shell --refresh-eval-cache -- ${args.join(" ")}`);
   const out = fs.openSync(LOG, "a");
   try {
-    const result = spawnSync("devenv", ["shell", "--", ...args], {
+    const result = spawnSync("devenv", ["shell", "--refresh-eval-cache", "--", ...args], {
       cwd,
       env: {
         ...Object.fromEntries(

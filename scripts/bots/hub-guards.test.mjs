@@ -89,26 +89,32 @@ describe("checksSatisfied", () => {
 
 describe("checksSatisfied, with the company's required checks", () => {
   // company-init.mjs EXPECTED_CHECKS: the enterTest job, the aggregate of
-  // the per-hook jobs (#99), and dependency review (#133).
-  const REQUIRED = ["format + lint + typecheck + test + build", "git hooks", "dependency review"];
+  // the per-hook jobs (#99), dependency review (#133) and e2e (#132).
+  const REQUIRED = [
+    "format + lint + typecheck + test + build",
+    "git hooks",
+    "dependency review",
+    "e2e",
+  ];
   const build = check(REQUIRED[0], "pass");
   const review = check("dependency review", "pass");
+  const e2e = check("e2e", "pass");
 
-  it("passes when all three ran and passed", () => {
-    expect(checksSatisfied([build, check("git hooks", "pass"), review], REQUIRED)).toMatchObject({
-      ok: true,
-    });
+  it("passes when all four ran and passed", () => {
+    expect(
+      checksSatisfied([build, check("git hooks", "pass"), review, e2e], REQUIRED),
+    ).toMatchObject({ ok: true });
   });
 
   it("refuses a pull request with no git hooks check", () => {
-    const verdict = checksSatisfied([build, check("hook (eslint)", "pass"), review], REQUIRED);
+    const verdict = checksSatisfied([build, check("hook (eslint)", "pass"), review, e2e], REQUIRED);
 
     expect(verdict).toMatchObject({ ok: false, missing: ["git hooks"] });
   });
 
   it("refuses a pull request whose git hooks check failed", () => {
     const verdict = checksSatisfied(
-      [build, check("hook (eslint)", "fail"), check("git hooks", "fail"), review],
+      [build, check("hook (eslint)", "fail"), check("git hooks", "fail"), review, e2e],
       REQUIRED,
     );
 
@@ -116,18 +122,33 @@ describe("checksSatisfied, with the company's required checks", () => {
   });
 
   it("refuses a pull request with no dependency review check", () => {
-    const verdict = checksSatisfied([build, check("git hooks", "pass")], REQUIRED);
+    const verdict = checksSatisfied([build, check("git hooks", "pass"), e2e], REQUIRED);
 
     expect(verdict).toMatchObject({ ok: false, missing: ["dependency review"] });
   });
 
   it("refuses a pull request whose dependency review failed", () => {
     const verdict = checksSatisfied(
-      [build, check("git hooks", "pass"), check("dependency review", "fail")],
+      [build, check("git hooks", "pass"), check("dependency review", "fail"), e2e],
       REQUIRED,
     );
 
     expect(verdict).toMatchObject({ ok: false, failing: ["dependency review"] });
+  });
+
+  it("refuses a pull request with no e2e check", () => {
+    const verdict = checksSatisfied([build, check("git hooks", "pass"), review], REQUIRED);
+
+    expect(verdict).toMatchObject({ ok: false, missing: ["e2e"] });
+  });
+
+  it("refuses a pull request whose e2e check failed", () => {
+    const verdict = checksSatisfied(
+      [build, check("git hooks", "pass"), review, check("e2e", "fail")],
+      REQUIRED,
+    );
+
+    expect(verdict).toMatchObject({ ok: false, failing: ["e2e"] });
   });
 });
 

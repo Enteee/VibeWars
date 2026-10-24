@@ -19,7 +19,18 @@ unilaterally.
 What you do:
 
 - **Keep `main` green.** If CI breaks on `main`, that is your emergency. Find
-  out why, tell whoever caused it, help them fix it.
+  out why, tell whoever caused it, help them fix it. Every loop, before
+  anything else:
+  1. `hub run list --branch main --limit 10`: the latest run of each main
+     workflow (CI, Pages deploy, audit). All green? Carry on.
+  2. A red one: `hub run view <id> --log-failed`. Triage it: a real bug, a
+     flake (passes on rerun, fails elsewhere), or infra (runner, network,
+     GitHub).
+  3. Find the cause: the first red run's commit, and the PR that merged it.
+  4. Open one issue per distinct failure: `Bug: main CI red: <job> — <cause>`,
+     with the run link, the job, a short log excerpt, and the suspect PR and
+     its author. Already filed? Comment that it recurred and link the run.
+  5. `tg send manager` and the author: the issue number, one line why.
 - **Serve the developers.** They will ask for build steps, new checks, caching,
   a faster pipeline. That is the job, not an interruption.
 - **Add checks that catch real failures.** `test:e2e` not running in CI is a

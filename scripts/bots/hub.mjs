@@ -15,6 +15,8 @@
  *   hub request-changes <pr> --sha <commit> <note>  reviewers only
  *     <commit> is the head you reviewed; a verdict on a moved head is refused
  *   hub whoami                       your role and what it may do
+ *   hub board ls|show|changes ...    hubd's copy of the board, as JSON (what
+ *                                    `board` reads; see hub-board.mjs)
  *   company reboot "<reason>"        manager only; also: company reboot --abort
  *   company ready                    your work is saved; the reboot may go ahead
  *     (`company` is this script with `company` as its first word)
@@ -111,6 +113,9 @@ if (argv[0] === "push") {
   request = { kind: "push", argv: argv.slice(1) };
 } else if (argv[0] === "approve" || argv[0] === "request-changes") {
   request = { kind: "review", argv };
+} else if (argv[0] === "board") {
+  // Reads of hubd's copy of the board, for `board` (board.mjs).
+  request = { kind: "board", argv: argv.slice(1) };
 } else if (argv[0] === "company") {
   // `company reboot "<reason>"`, `company reboot --abort` and
   // `company ready` (#21).

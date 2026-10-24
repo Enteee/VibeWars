@@ -4,11 +4,14 @@ import {
   COOLDOWN_MS,
   DRAIN_MS,
   INFLIGHT_GRACE_MS,
+  bootNote,
   drainStep,
   fastForwardDecision,
   parseReboot,
   isCompanyPath,
+  isStagedScript,
   rebootAllowed,
+  scriptDrift,
 } from "./reboot.mjs";
 
 const NOW = 1_800_000_000_000;
@@ -170,5 +173,82 @@ describe("parseReboot", () => {
     expect(parseReboot({ ...record, ready: [1] })).toBeNull();
     expect(parseReboot({ ...record, deadline: "2" })).toBeNull();
     expect(parseReboot(null)).toBeNull();
+  });
+});
+
+describe("isStagedScript", () => {
+  it("is what nix copies into the store: .mjs files, not their tests", () => {
+    expect(isStagedScript("hubd.mjs")).toBe(true);
+    expect(isStagedScript("hubd.test.mjs")).toBe(false);
+    expect(isStagedScript("README.md")).toBe(false);
+  });
+});
+
+describe("scriptDrift", () => {
+  it("is empty when the running copy is the checkout's", () => {
+    const scripts = { "hubd.mjs": "a", "reboot.mjs": "b" };
+    expect(scriptDrift(scripts, { ...scripts })).toEqual([]);
+  });
+
+  it("names changed, added and removed scripts, sorted", () => {
+    expect(
+      scriptDrift(
+        { "hubd.mjs": "new", "hub-spend.mjs": "x", "same.mjs": "s" },
+        { "hubd.mjs": "old", "gone.mjs": "y", "same.mjs": "s" },
+      ),
+    ).toEqual(["gone.mjs", "hub-spend.mjs", "hubd.mjs"]);
+  });
+
+  it("ignores tests and other files, which never run", () => {
+    expect(
+      scriptDrift({ "hubd.test.mjs": "new", "notes.md": "a" }, { "hubd.test.mjs": "old" }),
+    ).toEqual([]);
+  });
+});
+
+describe("bootNote", () => {
+  const sha = "0123456789abcdef0123456789abcdef01234567";
+  const running = "/nix/store/x-vibewars-llc-scripts";
+
+  it("leaves the note alone when the scripts are the checkout's", () => {
+    expect(bootNote({ note: "Rebooted onto 01234567: x.", sha, drift: [], running })).toBe(
+      "Rebooted onto 01234567: x.",
+    );
+    expect(bootNote({ note: null, sha, drift: [], running })).toBeNull();
+  });
+
+  it("withdraws a reboot's claim to have loaded the new commit", () => {
+    const note = bootNote({
+      note: "Rebooted onto 01234567: company: a new thing.",
+      sha,
+      drift: ["hubd.mjs"],
+      running,
+    });
+    expect(note).not.toMatch(/Rebooted onto/);
+    expect(note).toMatch(/^Rebooted, but its company code did NOT load\. WARNING/);
+    expect(note).toMatch(/NOT running the checkout's scripts \(01234567\): hubd\.mjs differs from/);
+    expect(note).toContain(running);
+    expect(note).toContain("devenv shell --refresh-eval-cache -- claude-llc");
+  });
+
+  it("keeps a reboot's own reason for not updating, and adds the warning", () => {
+    const note = bootNote({
+      note: "Rebooted, but NOT updated: checkout has local changes.",
+      sha,
+      drift: ["hubd.mjs"],
+      running,
+    });
+    expect(note).toMatch(/^Rebooted, but NOT updated: checkout has local changes\. WARNING/);
+  });
+
+  it("warns on a plain start too, which has no note of its own", () => {
+    expect(bootNote({ note: null, sha, drift: ["hubd.mjs"], running })).toMatch(/^WARNING/);
+  });
+
+  it("names a few scripts and counts the rest", () => {
+    const drift = ["a.mjs", "b.mjs", "c.mjs", "d.mjs", "e.mjs", "f.mjs", "g.mjs"];
+    expect(bootNote({ note: null, sha, drift, running })).toContain(
+      "a.mjs, b.mjs, c.mjs, d.mjs, e.mjs and 2 more differ",
+    );
   });
 });
