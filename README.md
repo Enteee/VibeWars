@@ -31,6 +31,14 @@ code.
 | `1`–`9`, `0`    | Use the matching skill-bar slot     |
 | `Esc`           | Leave the match                     |
 
+To try the character editor and the roster without hosting anything,
+open the static build on GitHub Pages:
+[the latest release](https://enteee.github.io/VibeWars/) or
+[the latest `main`](https://enteee.github.io/VibeWars/next/). Online play
+is disabled there, because it needs the server above (or `pnpm run dev`)
+until peer-to-peer play lands (#15). The two keep separate saved
+characters.
+
 If `devenv` is unavailable, any Node 24 with `pnpm@10` works — every
 command is a plain `pnpm` script (see `package.json`). This repository's
 own development was verified that way; see

@@ -25,8 +25,9 @@ import { IMPLEMENTED_SKILLS } from "./catalog.js";
  * grouping skills by what they are waiting on is the whole point.
  */
 export type MissingMechanic =
-  | "area-of-effect"
   | "knockdown"
+  | "ground-targeting"
+  | "persistent-ground-area"
   | "skill-bar-mutation"
   | "enchantment-sacrifice"
   | "reactive-triggers"
@@ -36,8 +37,9 @@ export type MissingMechanic =
 /** What each missing mechanic would mean to build, in one line. */
 export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, string>> =
   Object.freeze({
-    "area-of-effect": "effects that hit every target in a radius, or a ground location",
     knockdown: "a control state that interrupts and immobilises for a duration",
+    "ground-targeting": "casting at a point on the ground rather than at a target",
+    "persistent-ground-area": "an area that stays on the ground and acts on whoever is in it",
     "skill-bar-mutation": "a skill that replaces itself with a different skill at runtime",
     "enchantment-sacrifice": "removing your own enchantments as a cost, scaled by how many",
     "reactive-triggers": "effects that fire in response to something happening to you",
@@ -49,12 +51,13 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
  * Why each imported-but-unimplemented skill is not in the catalog.
  *
  * Keyed by skill id; several mechanics per skill where the skill genuinely
- * needs all of them (Meteor Shower is not blocked on area-of-effect alone,
+ * needs all of them (Meteor Shower is not blocked on knockdown alone,
  * and saying so would understate the work).
  */
 const UNIMPLEMENTED_REASONS: Readonly<Record<string, readonly MissingMechanic[]>> = Object.freeze({
   // "...foes adjacent to that location are struck... and knocked down every 3 seconds."
-  "elementalist.meteor-shower": ["area-of-effect", "knockdown"],
+  // A ground-targeted area that keeps striking: three missing mechanics, not one.
+  "elementalist.meteor-shower": ["knockdown", "ground-targeting", "persistent-ground-area"],
   // "...Arcane Echo is replaced with that spell for 20 seconds."
   "mesmer.arcane-echo": ["skill-bar-mutation"],
   // "...Echo is replaced with the next skill you use."
@@ -62,11 +65,11 @@ const UNIMPLEMENTED_REASONS: Readonly<Record<string, readonly MissingMechanic[]>
   // "Lose all enchantments. For each one lost, you gain health, lose one hex..."
   "monk.contemplation-of-purity": ["enchantment-sacrifice"],
   // "...whenever you suffer from a new Condition, all foes in the area suffer..."
-  "necromancer.contagion": ["reactive-triggers", "area-of-effect"],
+  "necromancer.contagion": ["reactive-triggers"],
   // "The caster is healed for 30...120 when Parasitic Bond ends."
   "necromancer.parasitic-bond": ["expiry-triggers"],
   // "Attack target and adjacent foes."
-  "warrior.whirlwind-attack": ["weapon-attacks", "area-of-effect"],
+  "warrior.whirlwind-attack": ["weapon-attacks"],
 });
 
 export interface UnimplementedSkill {

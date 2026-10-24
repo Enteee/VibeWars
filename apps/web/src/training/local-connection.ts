@@ -138,13 +138,15 @@ export function createLocalConnection(options: {
         continue;
       }
       // The same envelope the server broadcasts: a status tick goes out
-      // as its bearer's, with no skill.
-      const message: CombatMessage = {
-        casterSessionId:
-          (entry.cause === "skill" ? entry.sourceId : entry.events[0]?.targetId) ?? "",
-        skillId: entry.skillId ?? "",
-        events: entry.events,
-      };
+      // as its bearer's, with no skill, and an area skill says where it
+      // landed, for the flash (#5).
+      const casterSessionId =
+        (entry.cause === "skill" ? entry.sourceId : entry.events[0]?.targetId) ?? "";
+      const skillId = entry.skillId ?? "";
+      const message: CombatMessage =
+        entry.area === undefined
+          ? { casterSessionId, skillId, events: entry.events }
+          : { casterSessionId, skillId, events: entry.events, area: entry.area };
       for (const handler of combatHandlers) {
         handler(message);
       }

@@ -73,6 +73,8 @@ describe("MatchSimulation step", () => {
         cause: "skill",
         sourceId: "a",
         skillId: FIREBALL,
+        // Fireball's splash, centred on b, who stands alone in it.
+        area: { x: 200, y: 0, radius: 81 },
         events: [{ kind: "damage", targetId: "b", amount: 91 }],
       },
     ]);

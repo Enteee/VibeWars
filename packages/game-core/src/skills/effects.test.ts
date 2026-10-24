@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
-import { applyEffect, applyEffects, type CombatEvent } from "./effects.js";
+import { applyEffect, applyEffects, applySkillEffects, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
-import type { SkillContext } from "./types.js";
+import type { Combatant, Skill, SkillContext } from "./types.js";
 
 function context(
   caster = makeCombatant({ id: "caster" }),
@@ -172,5 +172,72 @@ describe("applyEffects", () => {
 
   it("returns an empty list for no effects", () => {
     expect(applyEffects([], context())).toEqual([]);
+  });
+});
+
+describe("applySkillEffects", () => {
+  const rules = MINIMAL_GW_INSPIRED_PVP_V1.combat;
+  const skill: Skill = {
+    id: "test.blood-splash",
+    name: "Blood Splash",
+    type: "spell",
+    attributeId: "necromancer.blood-magic",
+    cost: undefined,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: 420,
+    target: "single-enemy",
+    area: {
+      radius: 81,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 10 },
+      { kind: "damage", amount: { flat: 30 } },
+      { kind: "energy-gain", amount: { flat: 5 } },
+    ],
+  };
+
+  it("fires caster effects once however many are hit, the rest once per target", () => {
+    const caster = makeCombatant({ id: "caster", energy: 10 });
+    const targets = ["a", "b", "c"].map((id) => makeCombatant({ id, team: 1 }));
+
+    const events = applySkillEffects({ skill, caster, targets, rng: createRng(1), rules });
+
+    expect(events).toEqual([
+      { kind: "sacrifice", targetId: "caster", amount: 50 },
+      { kind: "damage", targetId: "a", amount: 30 },
+      { kind: "damage", targetId: "b", amount: 30 },
+      { kind: "damage", targetId: "c", amount: 30 },
+      { kind: "energy-gain", targetId: "caster", amount: 5 },
+    ]);
+    expect(caster.health).toBe(450);
+    expect(caster.energy).toBe(15);
+  });
+
+  it("still fires caster effects with nobody hit", () => {
+    const caster = makeCombatant({ id: "caster", energy: 10 });
+    const events = applySkillEffects({ skill, caster, targets: [], rng: createRng(1), rules });
+    expect(events.map((event) => event.kind)).toEqual(["sacrifice", "energy-gain"]);
+  });
+
+  it("is applyEffects exactly, for one target", () => {
+    const run = (apply: (caster: Combatant, target: Combatant) => CombatEvent[]) => {
+      const caster = makeCombatant({ id: "caster", energy: 10 });
+      const target = makeCombatant({ id: "t", team: 1 });
+      return { events: apply(caster, target), caster, target };
+    };
+    expect(
+      run((caster, target) =>
+        applySkillEffects({ skill, caster, targets: [target], rng: createRng(1), rules }),
+      ),
+    ).toEqual(
+      run((caster, target) =>
+        applyEffects(skill.effects, { caster, target, rng: createRng(1), rules }),
+      ),
+    );
   });
 });

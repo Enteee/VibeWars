@@ -299,6 +299,13 @@ body {
   color: var(--accent);
 }
 
+/* After .primary, which would otherwise repaint a disabled primary button
+   in the accent and leave it looking clickable (#137). */
+.screen button.primary:disabled {
+  border-color: var(--line);
+  color: var(--ink);
+}
+
 .entity-list {
   display: flex;
   flex-direction: column;

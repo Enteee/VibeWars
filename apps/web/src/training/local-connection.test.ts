@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { getTrainingScenario } from "@vibewars/game-core";
 
+import type { CombatMessage } from "../net/match-connection.js";
 import { setProfessions, setRank, setSkill, newCharacter } from "../ui/build-editor.js";
 import {
   MAX_CATCHUP_SECONDS,
@@ -74,9 +75,11 @@ describe("createLocalConnection", () => {
   it("casts on a use-skill intent, and reports the hit through onCombat and onStep", () => {
     const { connection } = targetDummy();
     const combat: string[] = [];
+    const areas: CombatMessage["area"][] = [];
     let steps = 0;
     connection.onCombat((message) => {
       combat.push(...message.events.map((event) => event.kind));
+      areas.push(message.area);
     });
     connection.onStep(() => {
       steps += 1;
@@ -92,6 +95,9 @@ describe("createLocalConnection", () => {
     expect(combat).toContain("damage");
     const dummy = connection.getSnapshot().players.find((p) => p.sessionId === "dummy");
     expect(dummy?.health).toBeLessThan(dummy?.maxHealth ?? 0);
+    // Fireball splashes, so the hit carries where it landed, as the
+    // server's does: without it training would draw no flash.
+    expect(areas).toEqual([{ x: dummy?.x, y: dummy?.y, radius: 81 }]);
   });
 
   it("says why a cast was refused", () => {

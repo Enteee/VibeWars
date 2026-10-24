@@ -103,7 +103,15 @@ describe("skill coverage regression gate", () => {
     const grouped = missingMechanics(computeCoverage(CORPUS));
 
     expect(grouped.get("skill-bar-mutation")).toEqual(["mesmer.arcane-echo", "mesmer.echo"]);
-    expect(grouped.get("area-of-effect")).toContain("elementalist.meteor-shower");
+    expect(grouped.get("ground-targeting")).toEqual(["elementalist.meteor-shower"]);
+  });
+
+  it("does not blame a mechanic that now exists", () => {
+    // Areas shipped (#5). Fireball and Barrage use them; the three skills
+    // that waited on them still wait, on something else.
+    for (const skill of computeCoverage(CORPUS).unimplemented) {
+      expect(skill.missing, skill.id).not.toContain("area-of-effect");
+    }
   });
 
   it("counts a duplicated import once", () => {

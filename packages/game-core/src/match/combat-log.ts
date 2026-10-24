@@ -25,6 +25,8 @@ export interface CombatLogEntry {
    */
   readonly sourceId: string | undefined;
   readonly skillId: string | undefined;
+  /** Where an area skill landed, and how far it reached. */
+  readonly area: { readonly x: number; readonly y: number; readonly radius: number } | undefined;
   readonly events: readonly CombatEvent[];
 }
 

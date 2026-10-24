@@ -20,6 +20,7 @@ export default defineConfig([
   globalIgnores([
     "**/dist/**",
     "**/dist-types/**",
+    "**/dist-static/**",
     "**/node_modules/**",
     "**/coverage/**",
     ".pnpm-store/**",

@@ -1,3 +1,4 @@
+import { AREA_ADJACENT, AREA_NEARBY, RANGE_MELEE, RANGE_SPELL } from "../distances.js";
 import type { Skill } from "./types.js";
 
 /**
@@ -8,7 +9,7 @@ import type { Skill } from "./types.js";
  * same activation/recharge, same attribute scaling endpoints. What is
  * *implemented* here is only what the current effect system can honestly
  * express; a skill whose real behaviour needs a mechanic that does not
- * exist yet (hexes, enchantments, conditions, AoE, regeneration over
+ * exist yet (hexes, enchantments, conditions, regeneration over
  * time) is deliberately **absent from this catalog**, not present with a
  * watered-down effect list.
  *
@@ -22,10 +23,6 @@ import type { Skill } from "./types.js";
  * geometry.
  */
 
-/** Touch/melee-ish range: must be adjacent. */
-const RANGE_MELEE = 40;
-/** Normal spell range. */
-export const RANGE_SPELL = 420;
 /** Longbow-ish range. */
 const RANGE_LONG = 520;
 
@@ -40,6 +37,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     rechargeSeconds: 2,
     range: RANGE_SPELL,
     target: "single-ally",
+    area: undefined,
     effects: [
       {
         kind: "heal",
@@ -59,9 +57,14 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     rechargeSeconds: 7,
     range: RANGE_SPELL,
     target: "single-enemy",
-    // The real skill also damages foes *near* the target; area-of-effect
-    // is Sprint 21 work, so only the single-target component is
-    // implemented. Noted here rather than silently approximated.
+    // "...and all nearby foes": the same hit on every enemy near the target.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
     effects: [
       {
         kind: "damage",
@@ -81,6 +84,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     rechargeSeconds: 4,
     range: RANGE_MELEE,
     target: "single-enemy",
+    area: undefined,
     // The real skill's block-interaction and Deep Wound rider need
     // blocking and conditions (Sprint 12); the bonus damage is
     // implemented faithfully.
@@ -103,8 +107,16 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     rechargeSeconds: 1,
     range: RANGE_LONG,
     target: "single-enemy",
-    // Barrage's multi-target volley is AoE (Sprint 21); its single-target
-    // bow attack is implemented.
+    // The volley: up to six foes adjacent to the target. Each hit is still
+    // spell damage, because Barrage really rides on a bow attack, and
+    // weapon attacks do not exist yet.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: 6,
+      includesCaster: false,
+    },
     effects: [
       {
         kind: "damage",
@@ -124,6 +136,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     rechargeSeconds: 0,
     range: RANGE_MELEE,
     target: "single-enemy",
+    area: undefined,
     // Knockdown is Sprint 15; the elite's bonus damage is implemented, and
     // this is the catalog's one adrenaline-cost skill, which is what makes
     // it worth including now.
@@ -146,6 +159,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     rechargeSeconds: 4,
     range: RANGE_SPELL,
     target: "single-ally",
+    area: undefined,
     // An *original* skill, not an import: the corpus's sacrifice skills
     // all also need hexes or regeneration, so none of them could be
     // implemented honestly yet. This one exists to exercise the
@@ -177,6 +191,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     rechargeSeconds: 10,
     range: RANGE_LONG,
     target: "single-enemy",
+    area: undefined,
     // The real elite: Daze the target, and interrupt them if they were
     // casting. Both halves are now genuinely implementable — this is the
     // archetypal "shut down a caster" skill the whole interrupt mechanic
@@ -197,6 +212,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     rechargeSeconds: 8,
     range: RANGE_SPELL,
     target: "single-enemy",
+    area: undefined,
     // A hex combining attack-slowing with health degeneration. The
     // degeneration is modelled by the hex's own healthPerSecond; the
     // attack-speed half awaits weapon attacks (Sprint 15/21).
@@ -212,6 +228,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     rechargeSeconds: 15,
     range: RANGE_SPELL,
     target: "self",
+    area: undefined,
     // A self-enchantment: real armor gain, and the real movement penalty
     // that makes it a genuine trade-off rather than a free buff.
     effects: [{ kind: "apply-status", statusId: "armor-boost", durationSeconds: 30 }],
@@ -226,6 +243,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     rechargeSeconds: 10,
     range: RANGE_SPELL,
     target: "self",
+    area: undefined,
     // Strong self-regeneration behind a long 3s cast — the canonical
     // "interrupt me" target, which is exactly why it pairs well with the
     // interrupt skills above in a test and in play.
@@ -241,6 +259,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     rechargeSeconds: 4,
     range: RANGE_SPELL,
     target: "single-ally",
+    area: undefined,
     // Original design, not an import: the corpus's condition-removal
     // skills all also need enchantment-stripping or per-removal scaling
     // the engine does not express yet. This exercises the remove-status
@@ -261,6 +280,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     rechargeSeconds: 0,
     range: RANGE_MELEE,
     target: "single-enemy",
+    area: undefined,
     // Original design: a bleed-applying adrenaline attack, exercising
     // damage + condition in one skill.
     effects: [

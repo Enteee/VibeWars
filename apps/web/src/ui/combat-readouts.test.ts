@@ -33,6 +33,7 @@ function entry(events: CombatEvent[], extra: Partial<CombatLogEntry> = {}): Comb
     cause: "skill",
     sourceId: "you",
     skillId: "elementalist.fireball",
+    area: undefined,
     events,
     ...extra,
   };

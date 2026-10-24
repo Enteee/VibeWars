@@ -8,7 +8,13 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { approvalsSatisfied, checksSatisfied, explainGuard, pathsWithin } from "./hub-guards.mjs";
+import {
+  approvalsSatisfied,
+  checksSatisfied,
+  explainGuard,
+  pathsOutside,
+  pathsWithin,
+} from "./hub-guards.mjs";
 
 const EXPECTED = ["format + lint + typecheck + test + build"];
 
@@ -235,6 +241,30 @@ describe("explainGuard", () => {
 
   it("falls back to the bare guard name when there is nothing to add", () => {
     expect(explainGuard("checks-green", { ok: true })).toBe("checks-green");
+  });
+});
+
+describe("pathsOutside", () => {
+  const CI = [".github/workflows/", ".github/actions/"];
+
+  it("allows a push that leaves every prefix alone", () => {
+    expect(pathsOutside(CI, ["README.md", ".github/CODEOWNERS", ".githubx/workflows/a"])).toEqual({
+      ok: true,
+      offending: [],
+    });
+  });
+
+  it("refuses any change under any prefix, a deletion included", () => {
+    expect(
+      pathsOutside(CI, [
+        "src/a.ts",
+        ".github/workflows/ci.yml",
+        ".github/actions/devenv/action.yml",
+      ]),
+    ).toEqual({
+      ok: false,
+      offending: [".github/workflows/ci.yml", ".github/actions/devenv/action.yml"],
+    });
   });
 });
 

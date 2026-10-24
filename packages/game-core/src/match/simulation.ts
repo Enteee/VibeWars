@@ -17,8 +17,9 @@ import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { canActivate, payCost, type ActivationCheck } from "../skills/activation.js";
 import { CastState } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
-import { applyEffects } from "../skills/effects.js";
+import { applySkillEffects } from "../skills/effects.js";
 import { STATUS_DEFINITIONS, StatusSet } from "../skills/status.js";
+import { resolveTargets } from "../skills/targeting.js";
 import { advanceStatuses } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
 import { ZERO, type Vec2 } from "../vec2.js";
@@ -411,6 +412,7 @@ export class MatchSimulation {
           cause: "degeneration",
           sourceId: drained ? sources.draining : sources.healing,
           skillId: undefined,
+          area: undefined,
           events: statusEvents,
         });
       }
@@ -508,12 +510,28 @@ export class MatchSimulation {
     }
 
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
-    const events = applyEffects(skill.effects, {
+    const primary = skill.target === "self" ? record : targetRecord;
+    const events = applySkillEffects({
+      skill,
       caster: record.combatant,
-      target: skill.target === "self" ? record.combatant : targetRecord?.combatant,
+      targets: resolveTargets({
+        skill,
+        caster: record.combatant,
+        casterPosition: record.position,
+        primary,
+        candidates: [...this.#participants.values()],
+        losBlockers: this.#walls,
+      }),
       rng: this.#rng,
       rules: this.#ruleset.combat,
     });
+    // Where an area landed, for whoever draws it: nowhere, when an area
+    // centred on a target had no target to centre on.
+    const origin = skill.area?.origin === "caster" ? record.position : primary?.position;
+    const area =
+      skill.area === undefined || origin === undefined
+        ? undefined
+        : { x: origin.x, y: origin.y, radius: skill.area.radius };
 
     // Adrenaline is earned by landing damage, never by waiting — which is
     // what makes adrenaline skills a reward for staying in the fight
@@ -550,6 +568,7 @@ export class MatchSimulation {
       cause: "skill",
       sourceId: record.id,
       skillId: skill.id,
+      area,
       events,
     });
   }
