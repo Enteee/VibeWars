@@ -8,13 +8,24 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./schema": {
+      "types": "./dist/schema.d.ts",
+      "default": "./dist/schema.js"
+    },
+    "./geometry": {
+      "types": "./dist/geometry.d.ts",
+      "default": "./dist/geometry.js"
+    },
+    "./maps/*": "./maps/*",
+    "./training/*": "./training/*"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
-    "maps"
+    "maps",
+    "training"
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",

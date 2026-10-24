@@ -1,4 +1,6 @@
 // @ts-check
+import { builtinModules } from "node:module";
+
 import eslint from "@eslint/js";
 import { defineConfig, globalIgnores } from "eslint/config";
 import prettier from "eslint-config-prettier/flat";
@@ -85,6 +87,26 @@ export default defineConfig([
   {
     files: ["apps/web/src/**/*.ts"],
     languageOptions: { globals: globals.browser },
+  },
+
+  // The browser imports these through `@vibewars/game-maps/schema` and
+  // `/geometry` (#8), so they must stay free of Node built-ins; `loader.ts`,
+  // which reads `maps/` from disk, is behind `"."` only.
+  {
+    files: ["packages/game-maps/src/schema.ts", "packages/game-maps/src/geometry.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["node:*", ...builtinModules],
+              message: "schema.ts and geometry.ts are imported by the browser; keep Node out.",
+            },
+          ],
+        },
+      ],
+    },
   },
 
   // Tests deliberately feed wrong-typed values to validators to prove they are
