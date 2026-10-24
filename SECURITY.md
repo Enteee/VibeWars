@@ -166,6 +166,16 @@ writable from every jail too, and jails do not need them (a worktree's
 checked-out branch, and host code that starts from `HEAD` starts from an
 agent-chosen commit. Treat `HEAD` like any other local ref.
 
+**Open: #93.** Peer text mirrored to Telegram keeps its line breaks and
+bidi characters, so an agent can type a line that looks like another
+sender's header, such as `📋 Manager → 👤 Operator`. Until #93 lands,
+trust the topic a message is in, not a header inside its text.
+
+**By design.** The manager may close and reopen any pull request or
+issue (#84), gate PRs included, but never with `--delete-branch`. A
+misbehaving manager can stall the pipeline this way; it cannot destroy
+work or merge anything.
+
 Every finding here so far came from **reading a gate with a hostile
 agent in mind**: #26, #39, #47, #57, #61, #67, #73. A change to any file in
 `GATE_PATHS` gets that review, from `perf-sec-qa` and `lead-dev` both.
