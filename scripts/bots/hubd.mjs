@@ -19,6 +19,7 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import { isBoardRead, limitedMessage, parseRateLimit, usesGraphql } from "./hub-budget.mjs";
 import { approvalsSatisfied, checksSatisfied, explainGuard } from "./hub-guards.mjs";
 import { obj } from "./protocol.mjs";
 import { ROLES, authorize, touchesGate } from "./hub-policy.mjs";
@@ -51,6 +52,10 @@ const HUB = path.join(ROOT, "hub");
 const AUDIT = path.join(HUB, "audit.jsonl");
 const APPROVALS = path.join(HUB, "approvals.jsonl");
 const COMPANY = path.join(ROOT, "company.json");
+/** The board as hubd last read it, for the dashboard. Never read by agents. */
+const BOARD_SNAPSHOT = path.join(HUB, "board.json");
+/** GraphQL budget as of hubd's last check, for the dashboard. */
+const RATE_LIMIT = path.join(HUB, "ratelimit.json");
 
 /**
  * Commands that accept `--repo`. The repository is pinned by us rather than
@@ -120,6 +125,47 @@ function run(file, args, cwd) {
  */
 function gh(args) {
   return run("gh", args, REPO_DIR);
+}
+
+/* -------------------------------------------------------------------------- */
+/* The GraphQL budget                                                          */
+/* -------------------------------------------------------------------------- */
+
+/** Until when GitHub has told us the GraphQL budget is gone, epoch ms. */
+let limitedUntil = 0;
+
+/**
+ * Ask GitHub how much GraphQL budget is left, and remember an empty one.
+ *
+ * `rate_limit` is free: GitHub does not count it against either bucket, so
+ * asking after every failure costs nothing.
+ *
+ * @returns {Promise<boolean>} whether the budget is exhausted right now
+ */
+async function budgetExhausted() {
+  const result = await gh(["api", "rate_limit"]);
+  const graphql = result.code === 0 ? parseRateLimit(result.stdout) : null;
+  if (graphql === null) {
+    return false;
+  }
+  writeAtomic(RATE_LIMIT, JSON.stringify({ checkedAt: Date.now(), ...graphql }));
+  if (graphql.remaining > 0) {
+    limitedUntil = 0;
+    return false;
+  }
+  limitedUntil = graphql.resetAt;
+  return true;
+}
+
+/**
+ * The answer every GraphQL-bound request gets while the budget is gone.
+ * `allow: true` because the policy allowed it: this is GitHub refusing, not
+ * the company, and the agent should wait rather than ask someone else.
+ *
+ * @returns {Record<string, unknown>}
+ */
+function limitedResponse() {
+  return { allow: true, code: 75, stdout: "", stderr: limitedMessage(limitedUntil) };
 }
 
 /**
@@ -294,10 +340,63 @@ async function changedPaths(worktree) {
 /* Visibility                                                                 */
 /* -------------------------------------------------------------------------- */
 
-/** The board changes rarely and is read on every list, so it is cached. */
-const BOARD_TTL_MS = 15_000;
-/** @type {{ at: number, numbers: Set<number> } | null} */
+/**
+ * The board changes rarely and is read constantly: by every visibility check,
+ * by every agent's `board ls`, and by the dashboard. One snapshot serves all
+ * three, so the whole company costs at most one board query a minute. Any
+ * board mutation through hubd drops it, so a move shows up on the next read.
+ */
+const BOARD_TTL_MS = 60_000;
+/** @type {{ at: number, stdout: string, numbers: Set<number> } | null} */
 let boardCache = null;
+
+/**
+ * Write a file whole or not at all, so the dashboard never reads half of one.
+ *
+ * @param {string} file
+ * @param {string} contents
+ */
+function writeAtomic(file, contents) {
+  const tmp = `${file}.part`;
+  fs.writeFileSync(tmp, contents);
+  fs.renameSync(tmp, file);
+}
+
+/**
+ * The project's item list as JSON, fresh within `BOARD_TTL_MS`, or `null`
+ * when GitHub cannot be asked.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string | null>}
+ */
+async function boardSnapshot(cfg) {
+  if (boardCache === null || Date.now() - boardCache.at > BOARD_TTL_MS) {
+    const result = await gh([
+      "project",
+      "item-list",
+      String(cfg.project),
+      "--owner",
+      cfg.owner,
+      "--format",
+      "json",
+      "--limit",
+      "1000",
+    ]);
+    if (result.code !== 0) {
+      return null;
+    }
+    try {
+      /** @type {unknown} */
+      const items = JSON.parse(result.stdout);
+      const at = Date.now();
+      boardCache = { at, stdout: result.stdout, numbers: boardNumbers(items, cfg.repo) };
+      writeAtomic(BOARD_SNAPSHOT, JSON.stringify({ at, board: items }));
+    } catch {
+      return null;
+    }
+  }
+  return boardCache.stdout;
+}
 
 /** Who counts as a member changes more rarely still. */
 const MEMBERS_TTL_MS = 300_000;
@@ -339,32 +438,15 @@ async function members(cfg) {
  * @returns {Promise<import("./hub-visibility.mjs").Viewer | null>}
  */
 async function viewer(cfg) {
-  if (boardCache === null || Date.now() - boardCache.at > BOARD_TTL_MS) {
-    const result = await gh([
-      "project",
-      "item-list",
-      String(cfg.project),
-      "--owner",
-      cfg.owner,
-      "--format",
-      "json",
-      "--limit",
-      "1000",
-    ]);
-    if (result.code !== 0) {
-      return null;
-    }
-    try {
-      boardCache = { at: Date.now(), numbers: boardNumbers(JSON.parse(result.stdout), cfg.repo) };
-    } catch {
-      return null;
-    }
+  if ((await boardSnapshot(cfg)) === null || boardCache === null) {
+    return null;
   }
+  const { numbers } = boardCache;
   const logins = await members(cfg);
   if (logins === null) {
     return null;
   }
-  return { members: logins, repo: cfg.repo, board: boardCache.numbers };
+  return { members: logins, repo: cfg.repo, board: numbers };
 }
 
 /**
@@ -549,6 +631,35 @@ async function handle(request) {
     audit({ role, kind, argv, decision: "refused", reason: verdict.reason, acting });
     return { allow: false, reason: verdict.reason, code: 77 };
   }
+  const spendsGraphql = usesGraphql(kind, argv);
+  if (spendsGraphql && Date.now() < limitedUntil) {
+    audit({ role, kind, argv, decision: "rate-limited" });
+    return limitedResponse();
+  }
+
+  const response = await serve(request, verdict, acting);
+
+  // GitHub's own error for an exhausted budget is often something else
+  // entirely ("unknown owner type"), and a visibility or guard check that
+  // could not reach GitHub fails as a refusal. Either way, if the budget is
+  // what ran out, say that instead.
+  if (spendsGraphql && response.code !== 0 && (await budgetExhausted())) {
+    audit({ role, kind, argv, decision: "rate-limited" });
+    return limitedResponse();
+  }
+  return response;
+}
+
+/**
+ * Serve a request the policy has already allowed.
+ *
+ * @param {{ role: string, kind: string, argv: string[] }} request
+ * @param {ReturnType<typeof authorize>} verdict
+ * @param {string[]} acting
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function serve(request, verdict, acting) {
+  const { role, kind, argv } = request;
   // The hat this request is being served under, if it is not the role's own.
   const as = typeof verdict.as === "string" ? verdict.as : role;
 
@@ -632,10 +743,21 @@ async function handle(request) {
     return { allow: true, ...listed };
   }
 
+  if (isBoardRead(argv, cfg.project)) {
+    const snapshot = await boardSnapshot(cfg);
+    if (snapshot !== null) {
+      audit({ role, kind, argv, decision: "allowed", code: 0, cached: true });
+      return { allow: true, code: 0, stdout: snapshot, stderr: "" };
+    }
+  }
+
   const result = await gh(pinRepo(argv, cfg));
-  if (argv[0] === "project") {
-    // An item just added or archived must show up on the next list, not in
-    // fifteen seconds.
+  if (
+    argv[0] === "project" &&
+    !["item-list", "field-list", "list", "view"].includes(argv[1] ?? "")
+  ) {
+    // An item just added, moved or archived must show up on the next list,
+    // not when the snapshot happens to expire.
     boardCache = null;
   }
   audit({ role, kind, argv, decision: "allowed", code: result.code });
@@ -728,6 +850,11 @@ async function main() {
   };
   beat();
   let lastBeat = Date.now();
+  // The dashboard's budget line. Free to ask (see `budgetExhausted`), and
+  // it is also what lifts `limitedUntil` once GitHub resets the budget.
+  const BUDGET_CHECK_MS = 60_000;
+  await budgetExhausted();
+  let lastBudgetCheck = Date.now();
   const stop = () => {
     fs.rmSync(alive, { force: true });
     process.exit(0);
@@ -748,6 +875,10 @@ async function main() {
     if (Date.now() - lastBeat > 5000) {
       beat();
       lastBeat = Date.now();
+    }
+    if (Date.now() - lastBudgetCheck > BUDGET_CHECK_MS) {
+      await budgetExhausted();
+      lastBudgetCheck = Date.now();
     }
     await sleep(300);
   }

@@ -2,12 +2,16 @@
 /**
  * `board` — the kanban board, from inside a sandbox.
  *
- * Moving a card on a Projects v2 board means resolving a project node id, an
- * item id, a field id and a single-select option id, then calling
- * `gh project item-edit` with all four. That is four lookups and a GraphQL
- * shape no agent should have to hold in its head on every hand-off, and an
- * agent that finds it awkward will quietly stop updating the board — which
- * breaks the one thing every other role polls to find its work.
+ * Moving a card on a Projects v2 board means a project node id, an item id, a
+ * field id and a single-select option id, passed to `gh project item-edit`.
+ * That is a GraphQL shape no agent should have to hold in its head on every
+ * hand-off, and an agent that finds it awkward will quietly stop updating the
+ * board — which breaks the one thing every other role polls to find its work.
+ *
+ * The project, field and option ids never change, so `claude-llc-init`
+ * records them and they arrive here in `VIBEWARS_BOARD`. Only the item id is
+ * looked up, from the board snapshot hubd already holds, which makes a move
+ * one GraphQL mutation (issue #17).
  *
  * So: `board move 14 "In Review"`.
  *
@@ -21,6 +25,8 @@
  */
 import { spawnSync } from "node:child_process";
 import process from "node:process";
+
+import { parseBoardIds } from "./hub-budget.mjs";
 
 const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
 
@@ -87,25 +93,15 @@ const PROJECT = process.env.VIBEWARS_PROJECT ?? "2";
  * @returns {{ projectId: string, fieldId: string, options: Map<string, string> }}
  */
 function statusField() {
-  const data = obj(
-    hubJson(["project", "field-list", PROJECT, "--format", "json", "--limit", "50"]),
-  );
-  const fields = Array.isArray(data.fields) ? data.fields : [];
-  for (const raw of fields) {
-    const field = obj(raw);
-    if (field.name !== "Status") {
-      continue;
-    }
-    /** @type {Map<string, string>} */
-    const options = new Map();
-    for (const rawOption of Array.isArray(field.options) ? field.options : []) {
-      const option = obj(rawOption);
-      options.set(str(option.name), str(option.id));
-    }
-    return { projectId: str(field.projectId), fieldId: str(field.id), options };
+  const ids = parseBoardIds(process.env.VIBEWARS_BOARD);
+  if (ids === null) {
+    process.stderr.write(
+      "board: this sandbox has no board ids. Ask the operator to re-run " +
+        "claude-llc-init, which records them, and restart the company.\n",
+    );
+    process.exit(1);
   }
-  process.stderr.write("board: this project has no Status field; run claude-llc-init\n");
-  process.exit(1);
+  return ids;
 }
 
 /**

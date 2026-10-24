@@ -357,6 +357,10 @@ let
         # so a missing company.json is not an error here — `board` will simply
         # say so if an agent tries to use it.
         projectNumber="$(${pkgs.jq}/bin/jq -r '.project // ""' "$VIBEWARS_BOT_ROOT/company.json" 2>/dev/null || true)"
+        # The board's node ids, so `board move` is a single mutation rather
+        # than four lookups and a mutation (issue #17). Empty until
+        # claude-llc-init has recorded them; `board move` says so then.
+        boardIds="$(${pkgs.jq}/bin/jq -c '{projectId, statusField}' "$VIBEWARS_BOT_ROOT/company.json" 2>/dev/null || true)"
 
         # Roles this one is covering for while they have no bot. Passed in so
         # `hub whoami` can say so out loud — an agent holding both reviewer
@@ -541,6 +545,7 @@ let
           --setenv VIBEWARS_BOT_BUS "$VIBEWARS_BOT_BUS" \
           --setenv VIBEWARS_HUB "$VIBEWARS_BOT_ROOT/hub/$role" \
           --setenv VIBEWARS_PROJECT "$projectNumber" \
+          --setenv VIBEWARS_BOARD "$boardIds" \
           --setenv VIBEWARS_ACTING "$acting" \
           --setenv VIBEWARS_ENV "development" \
           -- claude \

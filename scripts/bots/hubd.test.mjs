@@ -1,0 +1,238 @@
+/**
+ * hubd against a fake `gh`: what it costs GitHub, and what it says when the
+ * GraphQL budget is gone (issue #17).
+ *
+ * The real daemon runs as a child process exactly as claude-llc starts it,
+ * with a stand-in `gh` first on PATH. The stand-in logs every call and plays
+ * GitHub's rate limit, including the misleading "unknown owner type" that
+ * `gh project` gives when the budget is empty. Requests go through the same
+ * spool files `hub` writes.
+ */
+import { spawn } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import process from "node:process";
+import { setTimeout as sleep } from "node:timers/promises";
+import { fileURLToPath } from "node:url";
+
+import { afterEach, describe, expect, it } from "vitest";
+
+const HUBD = path.join(path.dirname(fileURLToPath(import.meta.url)), "hubd.mjs");
+
+/**
+ * The stand-in `gh`. GraphQL-bound commands fail the way the real one does
+ * once `remaining` is 0; REST ones keep working, as on GitHub.
+ */
+const FAKE_GH = `#!${process.execPath}
+const fs = require("node:fs");
+const path = require("node:path");
+const state = process.env.FAKE_GH_STATE;
+const argv = process.argv.slice(2);
+fs.appendFileSync(path.join(state, "calls.log"), argv.join(" ") + "\\n");
+const remaining = Number(fs.readFileSync(path.join(state, "remaining"), "utf8"));
+const [group, sub] = argv;
+if (group === "auth") { console.log("token"); process.exit(0); }
+if (group === "api" && sub === "rate_limit") {
+  const reset = Math.floor(Date.now() / 1000) + 3600;
+  console.log(JSON.stringify({ resources: { core: {}, graphql: { limit: 5000, remaining, reset } } }));
+  process.exit(0);
+}
+if (group === "run" || (group === "api" && sub !== "graphql")) { console.log("rest ok"); process.exit(0); }
+if (remaining === 0) { console.error("unknown owner type"); process.exit(1); }
+if (group === "project" && sub === "item-list") {
+  console.log(JSON.stringify({ items: [{ id: "PVTI_1", status: "Ready", content: { number: 8, title: "eight", repository: "Enteee/VibeWars" } }] }));
+  process.exit(0);
+}
+console.log("ok");
+`;
+
+/** @type {{ child: import("node:child_process").ChildProcess, dir: string }[]} */
+const running = [];
+
+afterEach(() => {
+  for (const { child, dir } of running.splice(0)) {
+    child.kill("SIGTERM");
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+/**
+ * Start a daemon with its own root and fake GitHub.
+ *
+ * @param {number} remaining the GraphQL budget GitHub claims to have left
+ */
+async function startHubd(remaining) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hubd-test-"));
+  const root = path.join(dir, "root");
+  const bin = path.join(dir, "bin");
+  const state = path.join(dir, "state");
+  const repo = path.join(dir, "repo");
+  for (const d of [root, bin, state, repo]) {
+    fs.mkdirSync(d, { recursive: true });
+  }
+  fs.writeFileSync(path.join(bin, "gh"), FAKE_GH, { mode: 0o755 });
+  fs.writeFileSync(path.join(state, "remaining"), String(remaining));
+  fs.writeFileSync(path.join(state, "calls.log"), "");
+  fs.writeFileSync(
+    path.join(root, "company.json"),
+    JSON.stringify({ repo: "Enteee/VibeWars", project: 2, columns: [], expectedChecks: [] }),
+  );
+
+  const child = spawn(process.execPath, [HUBD], {
+    env: {
+      ...process.env,
+      PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
+      VIBEWARS_BOT_ROOT: root,
+      DEVENV_ROOT: repo,
+      FAKE_GH_STATE: state,
+    },
+    stdio: "ignore",
+  });
+  running.push({ child, dir });
+
+  const hub = path.join(root, "hub");
+  await until(() => fs.existsSync(path.join(hub, "hubd.alive")), "hubd to start");
+
+  let next = 0;
+  return {
+    hub,
+    /** @param {number} left */
+    setRemaining(left) {
+      fs.writeFileSync(path.join(state, "remaining"), String(left));
+    },
+    /** @param {string} prefix */
+    calls(prefix) {
+      return fs
+        .readFileSync(path.join(state, "calls.log"), "utf8")
+        .split("\n")
+        .filter((line) => line.startsWith(prefix)).length;
+    },
+    /**
+     * Send one request as `hub` would, and wait for the answer.
+     *
+     * @param {string} role
+     * @param {string} kind
+     * @param {string[]} argv
+     * @returns {Promise<Record<string, unknown>>}
+     */
+    async request(role, kind, argv) {
+      next += 1;
+      const id = `${String(Date.now())}-${String(next)}`;
+      const req = path.join(hub, role, "req");
+      const res = path.join(hub, role, "res", `${id}.json`);
+      await until(() => fs.existsSync(req), "the spool to exist");
+      fs.writeFileSync(
+        path.join(req, `.${id}.json.part`),
+        JSON.stringify({ id, role, kind, argv }),
+      );
+      fs.renameSync(path.join(req, `.${id}.json.part`), path.join(req, `${id}.json`));
+      await until(() => fs.existsSync(res), `an answer to ${argv.join(" ")}`);
+      return readJson(res);
+    },
+  };
+}
+
+/**
+ * A JSON file hubd wrote, as a plain record.
+ *
+ * @param {string} file
+ * @returns {Record<string, unknown>}
+ */
+function readJson(file) {
+  /** @type {unknown} */
+  const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+  return typeof parsed === "object" && parsed !== null
+    ? /** @type {Record<string, unknown>} */ (parsed)
+    : {};
+}
+
+/**
+ * @param {() => boolean} condition
+ * @param {string} label
+ */
+async function until(condition, label) {
+  const deadline = Date.now() + 8000;
+  while (!condition()) {
+    if (Date.now() > deadline) {
+      throw new Error(`timed out waiting for ${label}`);
+    }
+    await sleep(50);
+  }
+}
+
+const BOARD_READ = ["project", "item-list", "2", "--format", "json", "--limit", "200"];
+
+describe("hubd and the GraphQL budget", () => {
+  it("serves every agent's board read from one snapshot", async () => {
+    const hubd = await startHubd(5000);
+
+    const first = await hubd.request("developer-1", "gh", BOARD_READ);
+    const second = await hubd.request("lead-dev", "gh", BOARD_READ);
+
+    expect(first.code).toBe(0);
+    expect(String(first.stdout)).toContain('"number":8');
+    expect(second.stdout).toBe(first.stdout);
+    expect(hubd.calls("project item-list")).toBe(1);
+    // ...and writes it where the dashboard reads it, instead of the
+    // dashboard polling GitHub itself.
+    const snapshot = readJson(path.join(hubd.hub, "board.json"));
+    expect(JSON.stringify(snapshot.board)).toContain('"number":8');
+  }, 20_000);
+
+  it("drops the snapshot when a card moves, so the move shows at once", async () => {
+    const hubd = await startHubd(5000);
+
+    await hubd.request("developer-1", "gh", BOARD_READ);
+    await hubd.request("developer-1", "gh", ["project", "item-edit", "--id", "PVTI_1"]);
+    await hubd.request("developer-1", "gh", BOARD_READ);
+
+    expect(hubd.calls("project item-list")).toBe(2);
+  }, 20_000);
+
+  it("says the budget is gone instead of GitHub's 'unknown owner type'", async () => {
+    const hubd = await startHubd(5000);
+    hubd.setRemaining(0);
+
+    const answer = await hubd.request("developer-1", "gh", BOARD_READ);
+
+    expect(answer.code).toBe(75);
+    expect(String(answer.stderr)).toMatch(/rate-limited until \d\d:\d\d/);
+    expect(String(answer.stderr)).not.toContain("unknown owner type");
+  }, 20_000);
+
+  it("answers GraphQL requests at once while the budget is gone, without asking GitHub", async () => {
+    // hubd checks the budget when it starts, so it knows before the first
+    // request and never spends a call finding out.
+    const hubd = await startHubd(0);
+
+    const board = await hubd.request("developer-1", "gh", BOARD_READ);
+    const before = hubd.calls("issue view");
+    const answer = await hubd.request("developer-1", "gh", ["issue", "view", "1"]);
+
+    expect(answer.code).toBe(75);
+    expect(String(answer.stderr)).toMatch(/rate-limited until/);
+    expect(hubd.calls("issue view")).toBe(before);
+    expect(board.code).toBe(75);
+    expect(hubd.calls("project item-list")).toBe(0);
+  }, 20_000);
+
+  it("keeps serving REST commands while GraphQL is exhausted", async () => {
+    const hubd = await startHubd(0);
+    await hubd.request("developer-1", "gh", BOARD_READ);
+
+    const answer = await hubd.request("developer-1", "gh", ["run", "list", "--limit", "1"]);
+
+    expect(answer.code).toBe(0);
+    expect(String(answer.stdout)).toContain("rest ok");
+  }, 20_000);
+
+  it("records the budget for the dashboard", async () => {
+    const hubd = await startHubd(1234);
+
+    await until(() => fs.existsSync(path.join(hubd.hub, "ratelimit.json")), "ratelimit.json");
+    const budget = readJson(path.join(hubd.hub, "ratelimit.json"));
+    expect(budget.remaining).toBe(1234);
+    expect(budget.limit).toBe(5000);
+  }, 20_000);
+});
