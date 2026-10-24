@@ -47,6 +47,18 @@ const IMPLEMENTERS = [
   "perf-sec-qa",
 ];
 
+/**
+ * Roles that push only one kind of file, and where. The manager writes the
+ * company's skills and nothing else (#27): its pushes carry a guard that
+ * hubd checks against the branch's actual changes.
+ *
+ * @type {Readonly<Record<string, string | undefined>>}
+ */
+export const PUSH_SCOPES = { manager: ".claude/bots/skills/" };
+
+/** Who may open and edit pull requests: whoever may push. */
+const PR_OPENERS = [...IMPLEMENTERS, ...Object.keys(PUSH_SCOPES)];
+
 /** Roles that review code. Note: neither may merge. */
 const REVIEWERS = ["lead-dev", "perf-sec-qa"];
 
@@ -75,6 +87,9 @@ export const GATE_PATHS = [
   "nix/claude-bot.nix",
   "nix/claude-llc.nix",
   ".github/CODEOWNERS",
+  // The briefings and skills: instructions to every agent, so a bad one can
+  // tell them to skip a gate (#27).
+  ".claude/bots/",
 ];
 
 /**
@@ -167,8 +182,8 @@ const RULES = [
   },
 
   /* ---- opening work. --------------------------------------------------- */
-  { argv: ["pr", "create"], roles: IMPLEMENTERS },
-  { argv: ["pr", "edit"], roles: IMPLEMENTERS },
+  { argv: ["pr", "create"], roles: PR_OPENERS },
+  { argv: ["pr", "edit"], roles: PR_OPENERS },
   { argv: ["pr", "ready"], roles: IMPLEMENTERS },
 
   /* ---- reviewing. ------------------------------------------------------
@@ -563,7 +578,40 @@ function authorizeAs(role, request, acting) {
       return { allow: false, reason: merge.error };
     }
   }
+  // A role scoped to one kind of file opens pull requests for its own
+  // branches only, which are the only ones its guard has checked.
+  if (best.argv.join(" ") === "pr create" && PUSH_SCOPES[role] !== undefined) {
+    const head = headOf(argv);
+    if (head?.startsWith(`bot/${role}/`) !== true) {
+      return {
+        allow: false,
+        reason: `role "${role}" opens pull requests only with --head bot/${role}/<branch>`,
+      };
+    }
+  }
   return best.guards === undefined ? { allow: true } : { allow: true, guards: best.guards };
+}
+
+/**
+ * The branch a `gh pr create` names with --head / -H, or null.
+ *
+ * @param {string[]} argv
+ * @returns {string | null}
+ */
+function headOf(argv) {
+  for (let i = 0; i < argv.length; i += 1) {
+    const word = argv[i] ?? "";
+    if (word === "--head" || word === "-H") {
+      return argv[i + 1] ?? null;
+    }
+    if (word.startsWith("--head=")) {
+      return word.slice("--head=".length);
+    }
+    if (word.startsWith("-H") && word.length > 2) {
+      return word.slice(2);
+    }
+  }
+  return null;
 }
 
 /**
@@ -642,10 +690,11 @@ function authorizeReview(role, argv, acting) {
  *
  * @param {string} role
  * @param {string[]} argv `[branch, ...flags]`
- * @returns {{ allow: boolean, reason?: string }}
+ * @returns {{ allow: boolean, reason?: string, guards?: string[] }}
  */
 function authorizePush(role, argv) {
-  if (!IMPLEMENTERS.includes(role)) {
+  const scope = PUSH_SCOPES[role];
+  if (!IMPLEMENTERS.includes(role) && scope === undefined) {
     return { allow: false, reason: `role "${role}" does not push branches` };
   }
 
@@ -680,7 +729,7 @@ function authorizePush(role, argv) {
       return { allow: false, reason: `${flag} is never allowed` };
     }
   }
-  return { allow: true };
+  return scope === undefined ? { allow: true } : { allow: true, guards: [`paths-within:${scope}`] };
 }
 
 /**

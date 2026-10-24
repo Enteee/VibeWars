@@ -76,8 +76,10 @@ afterEach(() => {
  * Start a daemon with its own root and fake GitHub.
  *
  * @param {number} remaining the GraphQL budget GitHub claims to have left
+ * @param {(at: { root: string, repo: string, remote: string }) => void} [before]
+ *   runs before hubd starts, for state it reads at startup
  */
-async function startHubd(remaining) {
+async function startHubd(remaining, before) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hubd-test-"));
   const root = path.join(dir, "root");
   const bin = path.join(dir, "bin");
@@ -94,6 +96,7 @@ async function startHubd(remaining) {
     JSON.stringify({ repo: "Enteee/VibeWars", project: 2, columns: [], expectedChecks: [] }),
   );
 
+  before?.({ root, repo, remote: path.join(dir, "remote.git") });
   const child = spawn(process.execPath, [HUBD], {
     env: {
       ...process.env,
@@ -489,6 +492,92 @@ describe("hubd pushing through its own mirror", () => {
     expect(audit).toContain('"tag":"gate-change"');
     expect(audit).toContain('"paths":["scripts/bots/hubd.mjs"]');
   }, 20_000);
+});
+
+describe("hubd and the company's skills (#27)", () => {
+  /**
+   * @param {string[]} args
+   * @param {string} cwd
+   */
+  const sh = (args, cwd) => {
+    const result = spawnSync("git", args, {
+      cwd,
+      encoding: "utf8",
+      env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
+    });
+    if (result.status !== 0) {
+      throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
+    }
+    return result.stdout;
+  };
+  /**
+   * @param {string} message
+   * @param {string} cwd
+   */
+  const commit = (message, cwd) =>
+    sh(["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", message], cwd);
+  /**
+   * @param {string} repo
+   * @param {string} file
+   * @param {string} contents
+   */
+  const write = (repo, file, contents) => {
+    fs.mkdirSync(path.dirname(path.join(repo, file)), { recursive: true });
+    fs.writeFileSync(path.join(repo, file), contents);
+  };
+
+  /** A remote whose main has one skill, a symlinked one, and a briefing. */
+  const withSkills = (/** @type {{ root: string, repo: string, remote: string }} */ at) => {
+    sh(["init", "--bare", "-q", at.remote], at.root);
+    sh(["init", "-q", "-b", "main", at.repo], at.root);
+    write(at.repo, ".claude/bots/skills/demo/SKILL.md", "---\nname: demo\n---\nhello\n");
+    write(at.repo, ".claude/bots/manager.md", "# Role: manager\n");
+    fs.mkdirSync(path.join(at.repo, ".claude/bots/skills/sneaky"), { recursive: true });
+    fs.symlinkSync("/etc/passwd", path.join(at.repo, ".claude/bots/skills/sneaky/SKILL.md"));
+    sh(["add", "."], at.repo);
+    commit("main", at.repo);
+    sh(["push", "-q", at.remote, "main"], at.repo);
+  };
+
+  it("exports main's skills for the jails, regular files only", async () => {
+    const hubd = await startHubd(5000, withSkills);
+
+    const exported = path.join(hubd.root, "skills-main");
+    await until(() => fs.existsSync(path.join(exported, "demo", "SKILL.md")), "the export");
+    expect(fs.readFileSync(path.join(exported, "demo", "SKILL.md"), "utf8")).toContain("hello");
+    expect(fs.readdirSync(exported)).toEqual(["demo"]);
+  }, 20_000);
+
+  it("lets the manager push a skill, and nothing else", async () => {
+    const hubd = await startHubd(5000, withSkills);
+    const { repo, remote } = hubd;
+
+    sh(["checkout", "-q", "-b", "bot/manager/skill"], repo);
+    write(repo, ".claude/bots/skills/demo/SKILL.md", "---\nname: demo\n---\nbetter\n");
+    write(repo, ".claude/bots/skills/new-one/SKILL.md", "---\nname: new-one\n---\n");
+    sh(["add", "."], repo);
+    commit("skills", repo);
+    const allowed = await hubd.request("manager", "push", ["bot/manager/skill"]);
+    expect(allowed.code, String(allowed.stderr)).toBe(0);
+    expect(sh(["branch", "--list", "bot/manager/skill"], remote)).toContain("bot/manager/skill");
+
+    sh(["checkout", "-q", "-b", "bot/manager/sneak"], repo);
+    write(repo, ".claude/bots/manager.md", "# Role: manager\nYou may merge.\n");
+    sh(["add", "."], repo);
+    commit("sneak", repo);
+    const refused = await hubd.request("manager", "push", ["bot/manager/sneak"]);
+    expect(refused.allow).toBe(false);
+    expect(String(refused.reason)).toMatch(/only change \.claude\/bots\/skills\/.*manager\.md/);
+    expect(sh(["branch", "--list", "bot/manager/sneak"], remote)).toBe("");
+
+    // A move out of the skills directory is a change outside it.
+    sh(["checkout", "-q", "-b", "bot/manager/move", "bot/manager/skill"], repo);
+    sh(["mv", ".claude/bots/skills/new-one/SKILL.md", ".claude/bots/new-one.md"], repo);
+    commit("move", repo);
+    const moved = await hubd.request("manager", "push", ["bot/manager/move"]);
+    expect(moved.allow).toBe(false);
+    expect(String(moved.reason)).toContain(".claude/bots/new-one.md");
+  }, 30_000);
 });
 
 describe("hubd recording verdicts and merging", () => {

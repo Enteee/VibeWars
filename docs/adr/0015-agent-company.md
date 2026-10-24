@@ -44,6 +44,15 @@ particular:
   head has moved, and is cast only for the role's own seat or one it is
   covering.
 
+- **Skills are code** (#27). They live in `.claude/bots/skills/` and change
+  by pull request, reviewed as gate paths, because a skill is an
+  instruction to every agent. The manager is the one role that may push
+  them, and hubd refuses any manager push that changes a path outside that
+  directory, judged against `main` fetched by URL, with renames counted on
+  both sides. hubd exports `main`'s copy to `.bots/skills-main/` after
+  each fetch. Every jail binds that directory read-only as its user-level
+  `~/.claude/skills`, so no worktree carries a copy that drifts.
+
 ## Consequences
 
 - **The parts of the shared `.git` that git executes are read-only in

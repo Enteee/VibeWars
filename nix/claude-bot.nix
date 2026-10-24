@@ -451,11 +451,9 @@ let
 
         mkdir -p "$VIBEWARS_BOT_ROOT" "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_ROOT/link" "$VIBEWARS_BOT_ROOT/wt"
         mkdir -p "$VIBEWARS_BOT_ROOT/hub/$role/req" "$VIBEWARS_BOT_ROOT/hub/$role/res"
-        # Skills are shared and live outside every worktree on purpose: they
-        # are the manager's instrument for steering the company, and if they
-        # sat in the manager's worktree nobody would see a new one until it
-        # was merged.
-        mkdir -p "$VIBEWARS_BOT_ROOT/skills"
+        # Main's skills, which hubd exports here after each fetch (#27). Made
+        # now so the bind below has something to bind before hubd's first run.
+        mkdir -p "$VIBEWARS_BOT_ROOT/skills-main"
         chmod 700 "$VIBEWARS_BOT_ROOT"
 
         # claude-bot works standalone, without the company having been set up,
@@ -567,11 +565,17 @@ let
 
         ${selectPath}
 
-        # One role writes the skills; the other eight read them.
+        # Skills are versioned in the repository, in .claude/bots/skills/, and
+        # loaded as the jail's user-level ~/.claude/skills, never from a
+        # worktree's .claude/skills (#27): every agent gets main's merged copy,
+        # live, with nothing in its worktree changing. The manager, who writes
+        # them, gets its own branch's drafts instead, read-only like everyone
+        # else's: they change by commit, through review.
         if [ "$role" = "manager" ]; then
-          skillsBind="--bind $VIBEWARS_BOT_ROOT/skills $worktree/.claude/skills"
+          mkdir -p "$worktree/.claude/bots/skills"
+          skillsBind=(--ro-bind "$worktree/.claude/bots/skills" "$HOME/.claude/skills")
         else
-          skillsBind="--ro-bind $VIBEWARS_BOT_ROOT/skills $worktree/.claude/skills"
+          skillsBind=(--ro-bind "$VIBEWARS_BOT_ROOT/skills-main" "$HOME/.claude/skills")
         fi
 
         # ----------------------------------------------------------------------
@@ -643,7 +647,7 @@ let
           --ro-bind "$VIBEWARS_BOT_ROOT/hub" "$VIBEWARS_BOT_ROOT/hub" \
           --bind "$VIBEWARS_BOT_ROOT/hub/$role" "$VIBEWARS_BOT_ROOT/hub/$role" \
           --bind "$worktree" "$worktree" \
-          $skillsBind \
+          "''${skillsBind[@]}" \
           --chdir "$worktree" \
           --setenv HOME "$HOME" \
           --setenv USER "$USER" \
