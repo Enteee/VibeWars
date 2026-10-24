@@ -31,7 +31,10 @@ const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
  * which is what you get by deleting a job from the workflow. This is the list
  * hubd compares against. Keep it in step with `.github/workflows/`.
  */
-const EXPECTED_CHECKS = ["format + lint + typecheck + test + build"];
+//
+// `git hooks` is the aggregate of the per-hook matrix jobs, and is required
+// instead of them: their `hook (<id>)` names change whenever a hook is added.
+const EXPECTED_CHECKS = ["format + lint + typecheck + test + build", "git hooks"];
 
 const ROOT = process.env.VIBEWARS_BOT_ROOT ?? path.join(process.cwd(), ".bots");
 const REPO = process.env.VIBEWARS_REPO ?? "Enteee/VibeWars";
@@ -222,57 +225,69 @@ if (rulesets.code === 0) {
   const parsed = parse(rulesets.stdout);
   existingRulesets = Array.isArray(parsed) ? parsed : [];
 }
-const already = existingRulesets.some((entry) => obj(entry).name === "main");
+const mainRuleset = existingRulesets.map(obj).find((entry) => entry.name === "main");
 
-if (already) {
-  say("ruleset on main", "already present");
-} else {
-  // Deliberately requires a pull request but ZERO approving reviews. All nine
-  // agents share one GitHub identity, which GitHub will not let approve its
-  // own pull request — so any non-zero requirement here would deadlock the
-  // company permanently. Our own review gates live in hub's ledger instead.
-  // What this ruleset does enforce is the part that does not depend on
-  // identity, and that our code cannot be talked out of: no direct push to
-  // main, no force-push, no deletion, and CI must pass.
-  const ruleset = {
-    name: "main",
-    target: "branch",
-    enforcement: "active",
-    conditions: { ref_name: { include: ["refs/heads/main"], exclude: [] } },
-    rules: [
-      { type: "deletion" },
-      { type: "non_fast_forward" },
-      {
-        type: "pull_request",
-        parameters: {
-          required_approving_review_count: 0,
-          dismiss_stale_reviews_on_push: true,
-          require_code_owner_review: false,
-          require_last_push_approval: false,
-          required_review_thread_resolution: false,
-        },
+// Deliberately requires a pull request but ZERO approving reviews. All nine
+// agents share one GitHub identity, which GitHub will not let approve its
+// own pull request — so any non-zero requirement here would deadlock the
+// company permanently. Our own review gates live in hub's ledger instead.
+// What this ruleset does enforce is the part that does not depend on
+// identity, and that our code cannot be talked out of: no direct push to
+// main, no force-push, no deletion, and CI must pass.
+const ruleset = {
+  name: "main",
+  target: "branch",
+  enforcement: "active",
+  conditions: { ref_name: { include: ["refs/heads/main"], exclude: [] } },
+  rules: [
+    { type: "deletion" },
+    { type: "non_fast_forward" },
+    {
+      type: "pull_request",
+      parameters: {
+        required_approving_review_count: 0,
+        dismiss_stale_reviews_on_push: true,
+        require_code_owner_review: false,
+        require_last_push_approval: false,
+        required_review_thread_resolution: false,
       },
-      {
-        type: "required_status_checks",
-        parameters: {
-          strict_required_status_checks_policy: true,
-          required_status_checks: EXPECTED_CHECKS.map((context) => ({ context })),
-        },
+    },
+    {
+      type: "required_status_checks",
+      parameters: {
+        // A branch behind main may merge as long as it does not conflict:
+        // the operator dropped "must be up to date" (#64), because every
+        // merge otherwise sent every open PR round CI and re-review again.
+        strict_required_status_checks_policy: false,
+        required_status_checks: EXPECTED_CHECKS.map((context) => ({ context })),
       },
-    ],
-  };
-  const created = gh(
-    ["api", `repos/${REPO}/rulesets`, "--method", "POST", "--input", "-"],
-    JSON.stringify(ruleset),
+    },
+  ],
+};
+
+// Written every run, not only when missing, so that re-running init brings
+// GitHub in line with this file — the required checks above included.
+const rulesetId = typeof mainRuleset?.id === "number" ? String(mainRuleset.id) : undefined;
+const written =
+  rulesetId === undefined
+    ? gh(
+        ["api", `repos/${REPO}/rulesets`, "--method", "POST", "--input", "-"],
+        JSON.stringify(ruleset),
+      )
+    : gh(
+        ["api", `repos/${REPO}/rulesets/${rulesetId}`, "--method", "PUT", "--input", "-"],
+        JSON.stringify(ruleset),
+      );
+if (written.code === 0) {
+  say(
+    "ruleset on main",
+    `${rulesetId === undefined ? "created" : "updated"} (no direct push, no force-push, CI required)`,
   );
-  if (created.code === 0) {
-    say("ruleset on main", "created (no direct push, no force-push, CI required)");
-  } else {
-    say("ruleset on main", "FAILED");
-    console.error(created.stderr.trim().split("\n").slice(0, 3).join("\n"));
-    console.error("  The company still works — hub enforces the role rules — but main");
-    console.error("  is not protected by GitHub itself. Worth fixing.");
-  }
+} else {
+  say("ruleset on main", "FAILED");
+  console.error(written.stderr.trim().split("\n").slice(0, 3).join("\n"));
+  console.error("  The company still works — hub enforces the role rules — but main");
+  console.error("  is not protected by GitHub itself. Worth fixing.");
 }
 
 /* 6. company.json ---------------------------------------------------------- */
