@@ -171,8 +171,10 @@ let
     fi
 
     # Issue #61: what the host executes out of .git is read-only in here,
-    # and everyday git still works. The commit happens in a throwaway
-    # worktree, so the agent's own checkout is never touched.
+    # and everyday git still works. Issue #69: so are the other worktrees'
+    # admin dirs, but not this one's. The commit is made with plumbing onto
+    # a throwaway branch, so the agent's own checkout is never touched, and
+    # nothing here would destroy anything if a check failed.
     refused() {
       if "$SHELL" -c "$2" >/dev/null 2>&1; then
         echo "FAIL  $1: it was allowed"
@@ -185,14 +187,24 @@ let
     refused "git config --local" 'git config --local vibewars.smoke 1'
     refused "writing a hook" "echo x > '$common/hooks/post-checkout'"
     refused "writing info/attributes" "touch '$common/info/attributes'"
-    scratch="$(mktemp -d)"
+    refused "adding a worktree" "mkdir '$common/worktrees/smoke-$$'"
+    for other in "$common"/worktrees/*/; do
+      other="''${other%/}"
+      [ "$other" = "$common/worktrees/$VIBEWARS_BOT_ROLE" ] && continue
+      refused "writing another worktree's HEAD" "touch '$other/HEAD'"
+      break
+    done
+    check "auto-gc never prunes worktrees" "$(git config gc.worktreePruneExpire)" "never"
+    own="$(git rev-parse --absolute-git-dir)"
+    check "this worktree's admin dir is writable" \
+      "$("$SHELL" -c "touch '$own/smoke-$$' && rm '$own/smoke-$$' && echo writable" 2>&1)" \
+      "writable"
     branch="smoke-$$"
-    check "checkout -b from origin/main, and commit" \
-      "$("$SHELL" -c "git worktree add -q -b '$branch' '$scratch/wt' origin/main &&
-        git -C '$scratch/wt' commit -q --allow-empty -m smoke && echo committed" 2>&1)" \
+    check "commit onto a new branch" \
+      "$("$SHELL" -c "c=\$(git commit-tree -m smoke 'HEAD^{tree}' -p HEAD) &&
+        git update-ref 'refs/heads/$branch' \"\$c\" && echo committed" 2>&1)" \
       "committed"
-    git worktree remove --force "$scratch/wt" >/dev/null 2>&1 || true
-    git branch -q -D "$branch" >/dev/null 2>&1 || true
+    git update-ref -d "refs/heads/$branch" >/dev/null 2>&1 || true
     exit "$failed"
   '';
 
@@ -290,7 +302,7 @@ let
       claude-bot --help
 
     Each role runs in its own bubblewrap sandbox, on its own git worktree
-    (branch bot/<role>), and talks to its peers through its own Telegram topic.
+    (branches bot/<role>/*), and talks to its peers through its own Telegram topic.
     Your checkout is not mounted inside the sandbox. Any extra arguments are
     passed straight through to `claude`.
 
@@ -535,14 +547,10 @@ let
         # ----------------------------------------------------------------------
         # The worktree. The agent edits this, never your checkout.
         # ----------------------------------------------------------------------
+        # Created, or repaired if its admin dir is gone, here on the host: the
+        # jail cannot write .git/worktrees (#69, see the binds below).
         worktree="$VIBEWARS_BOT_ROOT/wt/$role"
-        if [ ! -e "$worktree" ]; then
-          if git -C "$DEVENV_ROOT" show-ref --verify --quiet "refs/heads/bot/$role"; then
-            git -C "$DEVENV_ROOT" worktree add "$worktree" "bot/$role"
-          else
-            git -C "$DEVENV_ROOT" worktree add -b "bot/$role" "$worktree"
-          fi
-        fi
+        ${node} ${botScripts}/worktree.mjs "$DEVENV_ROOT" "$role"
 
         # Marks onboarding done and this worktree trusted. Merged rather than
         # overwritten, so an agent's accumulated state survives.
@@ -619,6 +627,15 @@ let
         # the start rather than leaving a hole, so they are made here first.
         # Branches therefore never write tracking config: autoSetupMerge is
         # off for every git in the jail, through the environment.
+        #
+        # .git/worktrees is read-only too, except this role's own admin dir
+        # (#69). A jail sees only its own worktree, so to git every other one
+        # looks deleted, and one `git worktree prune` in a jail once removed
+        # the admin dir of every other agent's worktree. Now that fails with
+        # EROFS, and so does writing another worktree's HEAD or index. The
+        # order matters: bwrap applies binds in sequence, so the rw bind of
+        # the role's own dir goes after the ro one. gc.worktreePruneExpire
+        # keeps an auto-gc from even trying.
         # ----------------------------------------------------------------------
         mkdir -p "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/info"
 
@@ -657,6 +674,8 @@ let
           --ro-bind "$DEVENV_ROOT/.git/config" "$DEVENV_ROOT/.git/config" \
           --ro-bind "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/hooks" \
           --ro-bind "$DEVENV_ROOT/.git/info" "$DEVENV_ROOT/.git/info" \
+          --ro-bind "$DEVENV_ROOT/.git/worktrees" "$DEVENV_ROOT/.git/worktrees" \
+          --bind "$DEVENV_ROOT/.git/worktrees/$role" "$DEVENV_ROOT/.git/worktrees/$role" \
           --ro-bind "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_BUS" \
           --bind "$VIBEWARS_BOT_BUS/$role" "$VIBEWARS_BOT_BUS/$role" \
           --ro-bind "$VIBEWARS_BOT_ROOT/hub" "$VIBEWARS_BOT_ROOT/hub" \
@@ -679,9 +698,11 @@ let
           --setenv VIBEWARS_BOARD "$boardIds" \
           --setenv VIBEWARS_ACTING "$acting" \
           --setenv VIBEWARS_ENV "development" \
-          --setenv GIT_CONFIG_COUNT 1 \
+          --setenv GIT_CONFIG_COUNT 2 \
           --setenv GIT_CONFIG_KEY_0 branch.autoSetupMerge \
           --setenv GIT_CONFIG_VALUE_0 false \
+          --setenv GIT_CONFIG_KEY_1 gc.worktreePruneExpire \
+          --setenv GIT_CONFIG_VALUE_1 never \
           "''${chromiumEnv[@]}" \
           -- "''${jailCommand[@]}"
   '';

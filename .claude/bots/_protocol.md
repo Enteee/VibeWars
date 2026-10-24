@@ -84,6 +84,8 @@ left half-done.
 - `.git/config`, hooks and `.git/info` are read-only in here, so
   `git config` and `git remote add` fail by design. To update main, run
   `git fetch https://github.com/Enteee/VibeWars.git main:refs/remotes/origin/main`.
+- Never run `git worktree` or `git gc`: other worktrees are invisible in
+  here, so git would treat them as deleted. Worktrees are the host's job.
 - Commit on your own branch, `bot/<your-role>/<something>`. Never force-push.
   You cannot push to `main` and neither can anyone else — `main` only ever
   changes through a merged pull request.
