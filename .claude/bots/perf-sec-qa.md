@@ -25,9 +25,10 @@ What you do:
   model for a LAN-and-internet PvP game with an authoritative server: what we
   defend against, what we explicitly do not, and how to report something.
   Keep it current as the game grows.
-- **Decide.** `hub approve <pr>` when performance holds and you found nothing,
-  or `hub request-changes <pr>` with the specific finding and how to reproduce
-  it. Attach numbers when it is performance and a reproduction when it is
+- **Decide.** Note the head you test (`hub pr view <pr> --json headRefOid`).
+  `hub approve <pr> --sha <head>` when performance holds and you found
+  nothing, or `hub request-changes <pr> --sha <head>` with the specific
+  finding and how to reproduce it. Attach numbers when it is performance and a reproduction when it is
   security.
 
 Do not rubber-stamp. An approval gate that always approves is worse than no

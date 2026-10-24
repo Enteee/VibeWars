@@ -11,8 +11,9 @@
  *
  *   hub <gh command...>              e.g. hub issue list, hub pr create
  *   hub push <branch>                push your own branch
- *   hub approve <pr> [note]          reviewers only
- *   hub request-changes <pr> <note>  reviewers only
+ *   hub approve <pr> --sha <commit> [note]          reviewers only
+ *   hub request-changes <pr> --sha <commit> <note>  reviewers only
+ *     <commit> is the head you reviewed; a verdict on a moved head is refused
  *   hub whoami                       your role and what it may do
  *
  * `whoami` is answered locally, because the policy is pure and bundled in
@@ -89,8 +90,8 @@ if (argv[0] === "whoami") {
     console.log(`  TEMPORARILY ALSO COVERING: ${ACTING.join(", ")}`);
     console.log("  Those roles have no bot yet, so you hold their gates as well as");
     console.log("  your own. Sign off under a borrowed seat explicitly —");
-    console.log("  `hub approve 22 --as perf-sec-qa` — and actually do that role's");
-    console.log("  review rather than letting one glance count as two.");
+    console.log("  `hub approve 22 --sha <commit> --as perf-sec-qa` — and actually");
+    console.log("  do that role's review rather than letting one glance count as two.");
     console.log("  You are self-certifying while this lasts. Be stricter, not looser.");
   }
   console.log("");

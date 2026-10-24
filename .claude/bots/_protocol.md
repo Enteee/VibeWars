@@ -24,8 +24,8 @@ board move <issue> <column>  move a card
 
 hub <gh command...>          GitHub, e.g. `hub issue list`, `hub pr create`
 hub push <branch>            push your branch
-hub approve <pr> [note]      reviewers only
-hub request-changes <pr> <note>
+hub approve <pr> --sha <commit> [note]          reviewers only; <commit> is
+hub request-changes <pr> --sha <commit> <note>  the head you reviewed
 hub whoami                   your role, and what you are allowed to do
 ```
 

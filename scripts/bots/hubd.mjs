@@ -377,7 +377,7 @@ async function headSha(pr) {
  *
  * @param {string[]} guards
  * @param {string[]} argv
- * @returns {Promise<{ ok: true, pr: number, sha: string } | { ok: false, reason: string }>}
+ * @returns {Promise<{ ok: true, pr: number, flags: string[], sha: string } | { ok: false, reason: string }>}
  */
 async function evaluateGuards(guards, argv) {
   const cfg = company();
@@ -432,7 +432,7 @@ async function evaluateGuards(guards, argv) {
 
     return { ok: false, reason: `unknown guard "${guard}"; refusing rather than guessing` };
   }
-  return { ok: true, pr: merge.pr, sha };
+  return { ok: true, pr: merge.pr, flags: merge.flags, sha };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -847,21 +847,22 @@ async function serve(request, verdict, acting) {
     // The merge gh runs is the one the guards checked: that pull request,
     // squashed, and only if its head is still the commit the approvals and
     // checks were validated against. A push in between fails the merge.
-    const merge = parseMerge(argv);
-    if (!("error" in merge)) {
-      const flags = merge.flags.includes("--squash") ? merge.flags : ["--squash", ...merge.flags];
-      const pinned = [
-        "pr",
-        "merge",
-        String(guarded.pr),
-        ...flags,
-        "--match-head-commit",
-        guarded.sha,
-      ];
-      const result = await gh(pinRepo(pinned, cfg));
-      audit({ role, kind, argv, decision: "allowed", code: result.code, sha: guarded.sha });
-      return { allow: true, ...result };
-    }
+    // Every guarded request is a merge, and it never reaches the unpinned
+    // call below.
+    const flags = guarded.flags.includes("--squash")
+      ? guarded.flags
+      : ["--squash", ...guarded.flags];
+    const pinned = [
+      "pr",
+      "merge",
+      String(guarded.pr),
+      ...flags,
+      "--match-head-commit",
+      guarded.sha,
+    ];
+    const result = await gh(pinRepo(pinned, cfg));
+    audit({ role, kind, argv, decision: "allowed", code: result.code, sha: guarded.sha });
+    return { allow: true, ...result };
   }
 
   if (kind === "review") {

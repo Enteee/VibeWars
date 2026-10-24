@@ -119,6 +119,13 @@ describe("reading host files through gh", () => {
       ["pr", "create", "-T", "x"],
       ["pr", "create", "--recover", "x"],
       ["pr", "edit", "1", "-F", "x"],
+      // Boolean short flags clustered in front, as gh's parser reads them.
+      ["issue", "comment", "5", "-eF/etc/passwd"],
+      ["issue", "comment", "5", "-eF", "/etc/passwd"],
+      ["issue", "comment", "5", "-eF=/etc/passwd"],
+      ["pr", "create", "-dF", "~/.ssh/id_ed25519"],
+      ["pr", "create", "-dT", "x"],
+      ["pr", "comment", "5", "-wF", "x"],
     ]) {
       expect(gh("developer-1", argv), argv.join(" ")).toMatchObject({ allow: false });
     }
@@ -139,10 +146,13 @@ describe("reading host files through gh", () => {
       ["api", env, "--field", "k=@x"],
       ["api", env, "--field=k=@x"],
       ["api", env, "--input", "x"],
+      ["api", env, "-iFpayload=@~/.ssh/id_ed25519"],
+      ["api", env, "-iF", "payload=@x"],
     ]) {
       expect(gh("cicd-engineer", argv), argv.join(" ")).toMatchObject({ allow: false });
     }
     expect(gh("cicd-engineer", ["api", env, "-F", "k=v"])).toMatchObject({ allow: true });
+    expect(gh("cicd-engineer", ["api", env, "-iFk=v"])).toMatchObject({ allow: true });
   });
 
   it("still allows --body, which is what hub turns --body-file into", () => {
@@ -413,6 +423,20 @@ describe("the pipeline", () => {
     expect(gh("cicd-engineer", ["workflow", "run", "ci.yml"])).toMatchObject({ allow: true });
     expect(gh("cicd-engineer", ["run", "rerun", "123"])).toMatchObject({ allow: true });
     expect(gh("cicd-engineer", ["release", "create", "v1"])).toMatchObject({ allow: true });
+    for (const argv of [
+      ["release", "create", "v1", "--title", "v1", "--notes", "x"],
+      ["release", "create", "--title", "v1", "v1", "-n", "x", "--target", "main"],
+      ["release", "create", "v1", "-dt", "v1", "--notes=x", "-p"],
+    ]) {
+      expect(gh("cicd-engineer", argv), argv.join(" ")).toMatchObject({ allow: true });
+    }
+    for (const argv of [
+      ["release", "create", "v1", "--title", "v1", "dist.tgz"],
+      ["release", "create", "v1", "-d", "dist.tgz"],
+      ["release", "create", "v1", "--draft", "dist.tgz"],
+    ]) {
+      expect(gh("cicd-engineer", argv), argv.join(" ")).toMatchObject({ allow: false });
+    }
     expect(gh("developer-1", ["workflow", "disable", "ci.yml"])).toMatchObject({ allow: false });
     expect(gh("developer-1", ["run", "rerun", "123"])).toMatchObject({ allow: false });
     expect(gh("qa-tester", ["workflow", "disable", "ci.yml"])).toMatchObject({ allow: false });

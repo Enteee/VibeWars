@@ -23,6 +23,8 @@
  * guard here can never silently widen what is permitted.
  */
 
+import { shortFlag } from "./hub-filter.mjs";
+
 /** The nine employees. Order is the org chart, roughly. */
 export const ROLES = [
   "manager",
@@ -64,6 +66,11 @@ export const GATE_PATHS = [
   "scripts/bots/hub-policy.mjs",
   "scripts/bots/hubd.mjs",
   "scripts/bots/hub-guards.mjs",
+  "scripts/bots/hub-filter.mjs",
+  "scripts/bots/hub-budget.mjs",
+  "scripts/bots/hub-rest.mjs",
+  "scripts/bots/hub-visibility.mjs",
+  "scripts/bots/protocol.mjs",
   "scripts/bots/hub.mjs",
   "nix/claude-bot.nix",
   "nix/claude-llc.nix",
@@ -226,21 +233,39 @@ function isRepoFlag(word) {
  * keep the convenience; anything that still names a file is refused.
  *
  * Keyed by `<group> <subcommand>`; long flags match exactly or with `=`,
- * short ones also with the value glued on.
+ * short ones are letters, found anywhere in a cluster as gh would find them
+ * (`-eF/etc/passwd` is `-e -F /etc/passwd`).
  *
- * @type {Record<string, { long: string[], short: string[] } | undefined>}
+ * @type {Record<string, { long: string[], short: string } | undefined>}
  */
 const FILE_FLAGS = {
-  "issue create": { long: ["--body-file", "--recover"], short: ["-F"] },
-  "issue comment": { long: ["--body-file"], short: ["-F"] },
-  "issue edit": { long: ["--body-file"], short: ["-F"] },
-  "pr create": { long: ["--body-file", "--template", "--recover"], short: ["-F", "-T"] },
-  "pr comment": { long: ["--body-file"], short: ["-F"] },
-  "pr edit": { long: ["--body-file"], short: ["-F"] },
-  "pr merge": { long: ["--body-file"], short: ["-F"] },
-  "release create": { long: ["--notes-file"], short: ["-F"] },
-  "release edit": { long: ["--notes-file"], short: ["-F"] },
-  api: { long: ["--input"], short: [] },
+  "issue create": { long: ["--body-file", "--recover"], short: "F" },
+  "issue comment": { long: ["--body-file"], short: "F" },
+  "issue edit": { long: ["--body-file"], short: "F" },
+  "pr create": { long: ["--body-file", "--template", "--recover"], short: "FT" },
+  "pr comment": { long: ["--body-file"], short: "F" },
+  "pr edit": { long: ["--body-file"], short: "F" },
+  "pr merge": { long: ["--body-file"], short: "F" },
+  "release create": { long: ["--notes-file"], short: "F" },
+  "release edit": { long: ["--notes-file"], short: "F" },
+  api: { long: ["--input"], short: "" },
+};
+
+/**
+ * The flags of `release create` that take a value, so that the value is not
+ * mistaken for an asset. Missing one here refuses a release; it can never
+ * let an asset through.
+ */
+const RELEASE_VALUE_FLAGS = {
+  long: [
+    "--title",
+    "--notes",
+    "--notes-file",
+    "--target",
+    "--discussion-category",
+    "--notes-start-tag",
+  ],
+  short: "tnF",
 };
 
 /**
@@ -250,12 +275,15 @@ const FILE_FLAGS = {
 function readsHostFile(argv) {
   const key = argv[0] === "api" ? "api" : `${argv[0] ?? ""} ${argv[1] ?? ""}`;
   const flags = FILE_FLAGS[key];
-  for (const word of argv) {
-    if (flags !== undefined) {
+  if (flags !== undefined) {
+    for (const word of argv) {
       const long = flags.long.find((flag) => word === flag || word.startsWith(`${flag}=`));
-      const short = flags.short.find((flag) => word.startsWith(flag));
-      if (long !== undefined || short !== undefined) {
-        return `${long ?? short ?? word} reads a file on the host, outside your sandbox. Use --body (hub turns --body-file into it for you).`;
+      const short = word.startsWith("--")
+        ? null
+        : shortFlag(word, (letter) => flags.short.includes(letter));
+      if (long !== undefined || short !== null) {
+        const flag = long ?? `-${short?.letter ?? ""}`;
+        return `${flag} reads a file on the host, outside your sandbox. Use --body (hub turns --body-file into it for you).`;
       }
     }
   }
@@ -263,27 +291,49 @@ function readsHostFile(argv) {
     // `-F key=@file` and `--field key=@file` read the file as the value.
     for (let i = 0; i < argv.length; i += 1) {
       const word = argv[i] ?? "";
+      const short = word.startsWith("--") ? null : shortFlag(word, (letter) => letter === "F");
       const value =
-        word === "-F" || word === "--field"
+        word === "--field"
           ? argv[i + 1]
           : word.startsWith("--field=")
             ? word.slice("--field=".length)
-            : word.startsWith("-F")
-              ? word.slice(2)
+            : short !== null
+              ? (short.glued ?? argv[i + 1])
               : undefined;
       if (value?.includes("=@") === true) {
         return "a field value of @file reads a file on the host, outside your sandbox";
       }
     }
   }
-  if (
-    key === "release create" &&
-    argv.slice(2).filter((word) => !word.startsWith("-")).length > 1
-  ) {
+  if (key === "release create" && releasePositionals(argv.slice(2)) > 1) {
     // Positionals after the tag are asset files to upload, from the host.
     return "release assets are files on the host; upload them from CI instead";
   }
   return null;
+}
+
+/**
+ * @param {string[]} words the words after `release create`
+ * @returns {number} how many of them gh reads as positionals: the tag, then assets
+ */
+function releasePositionals(words) {
+  let count = 0;
+  for (let i = 0; i < words.length; i += 1) {
+    const word = words[i] ?? "";
+    if (word.startsWith("--")) {
+      if (!word.includes("=") && RELEASE_VALUE_FLAGS.long.includes(word)) {
+        i += 1;
+      }
+    } else if (/^-./.test(word)) {
+      const short = shortFlag(word, (letter) => RELEASE_VALUE_FLAGS.short.includes(letter));
+      if (short !== null && short.glued === null) {
+        i += 1;
+      }
+    } else {
+      count += 1;
+    }
+  }
+  return count;
 }
 
 /**
@@ -409,9 +459,10 @@ function permits(roles, role) {
  * expires on its own the moment the proper bot comes online; nobody has to
  * remember to take it back.
  *
- * Sign-off under a borrowed hat has to be explicit — `hub approve 22 --as
- * perf-sec-qa` — so the ledger still records two distinct reviews and the
- * agent has to actually do both passes rather than one glance counting twice.
+ * Sign-off under a borrowed hat has to be explicit — `hub approve 22 --sha
+ * <commit> --as perf-sec-qa` — so the ledger still records two distinct
+ * reviews and the agent has to actually do both passes rather than one
+ * glance counting twice.
  *
  * @param {string} role
  * @param {{ kind: string, argv: string[] }} request

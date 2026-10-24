@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { hasFilter, splitFilter } from "./hub-filter.mjs";
+import { hasFilter, shortFlag, splitFilter } from "./hub-filter.mjs";
 
 describe("splitFilter", () => {
   it("takes --jq and -q off, in both spellings", () => {
@@ -90,5 +90,23 @@ describe("splitFilter", () => {
     expect(hasFilter(["issue", "edit", "1", "-t", "x"])).toBe(false);
     // ...but -q is a filter everywhere.
     expect(hasFilter(["pr", "create", "-q.url"])).toBe(true);
+  });
+});
+
+describe("shortFlag", () => {
+  it("reads a cluster the way gh's flag parser does", () => {
+    const wanted = (/** @type {string} */ letter) => letter === "F";
+    expect(shortFlag("-F", wanted)).toEqual({ letter: "F", glued: null, at: 1 });
+    expect(shortFlag("-Fx", wanted)).toEqual({ letter: "F", glued: "x", at: 1 });
+    expect(shortFlag("-eF/etc/passwd", wanted)).toEqual({
+      letter: "F",
+      glued: "/etc/passwd",
+      at: 2,
+    });
+    expect(shortFlag("-eF=x", wanted)).toEqual({ letter: "F", glued: "x", at: 2 });
+    expect(shortFlag("-e", wanted)).toBeNull();
+    // After a non-letter the rest is a glued value, not more flags.
+    expect(shortFlag("-e1F", wanted)).toBeNull();
+    expect(shortFlag("--F", wanted)).toBeNull();
   });
 });
