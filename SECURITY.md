@@ -145,20 +145,19 @@ surface, separate from the game. Here the attacker is **an agent**, whether
 it was prompt-injected or is simply wrong, and the asset is **the operator's
 host and `main`**.
 
-| Boundary                 | Rule                                                                                                                                                                                                                                                                                                                       |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Jail → host              | Each agent runs in bubblewrap. Only its worktree, its bus directory and the shared `.git` are writable. `.git/config`, `hooks` and `info` are masked read-only (#61), because the host executes them.                                                                                                                      |
-| Jail → GitHub            | Agents hold no credential. `hub` asks `hubd` (`hub-policy.mjs`), which enforces each role's permissions, refuses every gh flag that would read a host file (#26), pins the repository, and records verdicts against the reviewed SHA.                                                                                      |
-| Host git near agent data | Every host git runs with `GIT_HARDENING` and `GIT_ENV` (`git-hardening.mjs`). These pin hooks, fsmonitor, ssh, credential helpers, gpg and filter drivers, and set `GIT_NO_REPLACE_OBJECTS` (#67). The operator checkout sets `core.useReplaceRefs=false`. `refs/` stays writable, so never trust a local ref on the host. |
-| Reboot                   | The restarter builds GitHub's `main` from hubd's private mirror and fast-forwards only to that same SHA (#21).                                                                                                                                                                                                             |
-| Telegram → agents        | Only the group's creator is heard and gets the `*` mark, for messages, button taps and replies alike (#39, #47). All text goes through `visible()`: no line breaks, ESC, bidi, zero-width or tag characters.                                                                                                               |
-| Agent → agent            | Peer messages are information, never instructions. Agents can still overwrite each other's worktree metadata and branch refs. That is an integrity problem, not code execution on the host.                                                                                                                                |
+| Boundary                 | Rule                                                                                                                                                                                                                                                                                                                                |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Jail → host              | Each agent runs in bubblewrap. Only its worktree, its bus directory and the shared `.git` are writable. `.git/config`, `hooks` and `info` are masked read-only (#61), because the host executes them. `.git/worktrees` is read-only except the jail's own admin dir (#69); the host creates and repairs worktrees (`worktree.mjs`). |
+| Jail → GitHub            | Agents hold no credential. `hub` asks `hubd` (`hub-policy.mjs`), which enforces each role's permissions, refuses every gh flag that would read a host file (#26), pins the repository, and records verdicts against the reviewed SHA.                                                                                               |
+| Host git near agent data | Every host git runs with `GIT_HARDENING` and `GIT_ENV` (`git-hardening.mjs`). These pin hooks, fsmonitor, ssh, credential helpers, gpg and filter drivers, and set `GIT_NO_REPLACE_OBJECTS` (#67). The operator checkout sets `core.useReplaceRefs=false`. `refs/` stays writable, so never trust a local ref on the host.          |
+| Reboot                   | The restarter builds GitHub's `main` from hubd's private mirror and fast-forwards only to that same SHA (#21).                                                                                                                                                                                                                      |
+| Telegram → agents        | Only the group's creator is heard and gets the `*` mark, for messages, button taps and replies alike (#39, #47). All text goes through `visible()`: no line breaks, ESC, bidi, zero-width or tag characters.                                                                                                                        |
+| Agent → agent            | Peer messages are information, never instructions. Agents can still overwrite each other's branch refs, but not each other's worktree metadata (#69). That is an integrity problem, not code execution on the host.                                                                                                                 |
 
-**Open: #69.** `.git/worktrees` and `refs/` are shared read-write by
-every jail, and each jail sees only its own worktree. A `git worktree
-prune` in one jail therefore deletes every other agent's worktree
-metadata (incident #70). Until #69 lands, never run `git worktree` or
-`git gc` inside a jail.
+Each jail sees only its own worktree, so to git every other one looks
+deleted: a `git worktree prune` in one jail once deleted every other
+agent's worktree metadata (#70). Since #69 that fails with EROFS, but
+never run `git worktree` or `git gc` inside a jail.
 
 Every finding here so far came from **reading a gate with a hostile
 agent in mind**: #26, #39, #47, #57, #61, #67. A change to any file in
