@@ -65,6 +65,7 @@ if (argv[0] === "whoami") {
     ["read issues and pull requests", ["issue", "list"]],
     ["comment on issues and pull requests", ["issue", "comment", "1"]],
     ["create and edit issues", ["issue", "create"]],
+    ["close and reopen issues and pull requests", ["pr", "close", "1"]],
     ["open pull requests", ["pr", "create"]],
     ["move cards on the board", ["project", "item-edit"]],
     ["restructure the board", ["project", "item-add"]],
