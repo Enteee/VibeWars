@@ -16,6 +16,8 @@ import {
   MAX_MESSAGE_CHARS,
   OPERATOR_HINT,
   ROLE_STYLE,
+  TOPIC_TITLES,
+  TO_OPERATOR,
   deliverPeer,
   formatLine,
   formatMirror,
@@ -23,6 +25,7 @@ import {
   parseQuestions,
   routeAnswer,
   isReadyOutboxEntry,
+  mirrorTopic,
   parseRegistry,
   planSends,
   readInbox,
@@ -33,14 +36,12 @@ import {
 
 const CHAT = "-1001234567890";
 const ROLES = ["architect", "manager", "developer-1", "lead-dev"];
-/** Topic id to role, as the sidecar builds it from the registry. */
-const TOPICS = new Map([
-  [11, "architect"],
-  [12, "developer-1"],
-]);
+/** The Bots and Manager topics, as the sidecar reads them from the registry. */
+const BOTS_TOPIC = 21;
+const MANAGER_TOPIC = 22;
 /** The operator's Telegram user id, as the sidecar learns it. */
 const OPERATOR = 9;
-const CONTEXT = { chatId: CHAT, operatorId: OPERATOR, topics: TOPICS, roles: ROLES };
+const CONTEXT = { chatId: CHAT, operatorId: OPERATOR, roles: ROLES, managerTopicId: MANAGER_TOPIC };
 
 /**
  * @param {Record<string, unknown>} message
@@ -60,105 +61,100 @@ function update(message) {
   };
 }
 
-describe("parseRegistry and the Operator topic", () => {
-  it("reads the Operator topic, and treats a missing one as not created yet", () => {
-    const text = JSON.stringify({ offset: 1, roles: {}, operator: { topicId: 77 } });
-    expect(parseRegistry(text)).toEqual({
-      registry: { offset: 1, roles: {}, operator: { topicId: 77 } },
-    });
-    expect(parseRegistry(JSON.stringify({ offset: 1, roles: {} }))).toEqual({
-      registry: { offset: 1, roles: {} },
-    });
-  });
-
-  it("refuses a malformed Operator entry", () => {
-    expect(
-      "error" in parseRegistry(JSON.stringify({ offset: 1, roles: {}, operator: { id: 7 } })),
-    ).toBe(true);
-  });
-
-  it("still refuses the per-role-bot format", () => {
-    const old = JSON.stringify({
-      offset: 0,
-      roles: { architect: { topicId: 11, token: "x" } },
-      operator: { topicId: 77 },
-    });
-    expect("error" in parseRegistry(old)).toBe(true);
-  });
-});
-
 describe("parseRegistry", () => {
   it("starts a fresh company when there is no registry yet", () => {
-    expect(parseRegistry(null)).toEqual({ registry: { offset: 0, roles: {} } });
+    expect(parseRegistry(null)).toEqual({ registry: { offset: 0 }, dropped: [] });
   });
 
-  it("reads the current shape", () => {
-    const text = JSON.stringify({ offset: 9, roles: { architect: { topicId: 11 } } });
-    expect(parseRegistry(text)).toEqual({
-      registry: { offset: 9, roles: { architect: { topicId: 11 } } },
+  it("reads the current shape, with any of its three topics", () => {
+    const full = {
+      offset: 9,
+      bots: { topicId: 21 },
+      manager: { topicId: 22 },
+      operator: { topicId: 23 },
+    };
+    expect(parseRegistry(JSON.stringify(full))).toEqual({ registry: full, dropped: [] });
+    expect(parseRegistry(JSON.stringify({ offset: 9 }))).toEqual({
+      registry: { offset: 9 },
+      dropped: [],
     });
   });
 
-  it("refuses the per-role-bot shape, saying how to fix it", () => {
-    const old = JSON.stringify({
-      managerOffset: 7,
-      roles: { architect: { id: 1, username: "vw_architect_bot", topicId: 11, token: "t" } },
+  it("keeps the offset of a registry in another shape, so nothing is replayed", () => {
+    // Per-role topics, from before #85.
+    const old = { offset: 4, roles: { architect: { topicId: 11 } }, operator: { topicId: 23 } };
+    expect(parseRegistry(JSON.stringify(old))).toEqual({
+      registry: { offset: 4, operator: { topicId: 23 } },
+      dropped: ['"roles"'],
     });
-    const parsed = parseRegistry(old);
-    expect("error" in parsed).toBe(true);
-    if ("error" in parsed) {
-      expect(parsed.error).toMatch(/before the company had one bot/);
-      // The fix keeps the topics, so the operator's group is not refilled.
-      expect(parsed.error).toContain("map_values({topicId})");
-    }
   });
 
-  it("refuses a registry that is not JSON", () => {
-    expect("error" in parseRegistry("{")).toBe(true);
+  it("drops, rather than repairs, every field not in the current shape", () => {
+    expect(
+      parseRegistry(
+        JSON.stringify({ offset: "4", bots: { id: 7 }, manager: { topicId: 22, x: 1 } }),
+      ),
+    ).toEqual({ registry: { offset: 0 }, dropped: ['"offset"', '"bots"', '"manager"'] });
+    expect(parseRegistry("{").registry).toEqual({ offset: 0 });
+    expect(parseRegistry("{").dropped).toHaveLength(1);
   });
 });
 
 describe("routeInbound", () => {
-  it("delivers a message in a role's topic to that role only", () => {
-    expect(routeInbound(update({ message_thread_id: 12 }), CONTEXT)?.to).toEqual(["developer-1"]);
-  });
-
   it("delivers a message in General to everyone", () => {
-    expect(routeInbound(update({}), CONTEXT)?.to).toEqual(ROLES);
+    expect(routeInbound(update({}), CONTEXT)).toMatchObject({ to: ROLES, whichRole: null });
   });
 
-  it("delivers 'role: ...' in General to that role only", () => {
-    for (const text of ["lead-dev: pick up some work", "Lead-Dev: hi", "lead-dev : spaced"]) {
-      expect(routeInbound(update({ text }), CONTEXT)?.to, text).toEqual(["lead-dev"]);
+  it("delivers 'role: ...' to that role only, in any topic", () => {
+    for (const topic of [
+      {},
+      { message_thread_id: BOTS_TOPIC },
+      { message_thread_id: MANAGER_TOPIC },
+    ]) {
+      for (const text of ["lead-dev: pick up some work", "Lead-Dev: hi", "lead-dev : spaced"]) {
+        expect(routeInbound(update({ text, ...topic }), CONTEXT)?.to, text).toEqual(["lead-dev"]);
+      }
     }
   });
 
-  it("delivers '@role ...' in General to that role only", () => {
+  it("delivers '@role ...' to that role only", () => {
     expect(routeInbound(update({ text: "@manager make your people work" }), CONTEXT)?.to).toEqual([
       "manager",
     ]);
+  });
+
+  it("delivers anything unaddressed in the Manager topic to the manager", () => {
+    expect(
+      routeInbound(update({ message_thread_id: MANAGER_TOPIC, text: "how is it going?" }), CONTEXT),
+    ).toMatchObject({ to: ["manager"], whichRole: null });
+  });
+
+  it("delivers an unaddressed message in Bots, or any other topic, to nobody, and asks which role", () => {
+    for (const topicId of [BOTS_TOPIC, 99]) {
+      const routed = routeInbound(update({ message_thread_id: topicId }), CONTEXT);
+      expect(routed?.to).toEqual([]);
+      expect(routed?.whichRole).toMatch(/which role\?.*architect, manager, developer-1, lead-dev/);
+    }
+    // Without a Manager topic yet, its id is nobody's either.
+    const { managerTopicId: _, ...noManager } = CONTEXT;
+    expect(routeInbound(update({ message_thread_id: MANAGER_TOPIC }), noManager)?.to).toEqual([]);
   });
 
   it("does not treat a role name that merely starts a sentence as an address", () => {
     expect(routeInbound(update({ text: "manager is the board up to date?" }), CONTEXT)?.to).toEqual(
       ROLES,
     );
-  });
-
-  it("sends an unknown topic, or a prefix that is not a role, to everyone", () => {
-    // Never silently black-holed.
-    expect(routeInbound(update({ message_thread_id: 99 }), CONTEXT)?.to).toEqual(ROLES);
     expect(routeInbound(update({ text: "gameplay: hi" }), CONTEXT)?.to).toEqual(ROLES);
   });
 
   it("marks the message human, from the operator's name", () => {
-    const routed = routeInbound(update({ message_thread_id: 11 }), CONTEXT);
+    const routed = routeInbound(update({ message_thread_id: MANAGER_TOPIC }), CONTEXT);
     expect(routed?.line).toEqual({
       ts: 1_767_225_600_000,
       from: "@operator",
       kind: "human",
       text: "hello",
-      topicId: 11,
+      topicId: MANAGER_TOPIC,
       messageId: 42,
     });
   });
@@ -227,6 +223,35 @@ describe("deliverPeer", () => {
     expect(delivered.mirror).toBeNull();
     expect(delivered.notice?.text).toMatch(/NOT delivered.*not one of this company's roles/);
   });
+
+  it("delivers the manager's message to the operator to no inbox, and mirrors it", () => {
+    const delivered = deliverPeer({ to: TO_OPERATOR, text: "#8 is in review" }, base);
+    expect(delivered.deliveries).toEqual([]);
+    expect(delivered.notice).toBeNull();
+    expect(delivered.mirror).toEqual({ from: "manager", to: "operator", text: "#8 is in review" });
+  });
+
+  it("refuses a message to the operator from anyone but the manager", () => {
+    for (const from of ["architect", "lead-dev", "developer-1"]) {
+      const delivered = deliverPeer({ to: TO_OPERATOR, text: "hi" }, { ...base, from });
+      expect(delivered.deliveries, from).toEqual([]);
+      expect(delivered.mirror, from).toBeNull();
+      expect(delivered.notice?.text, from).toMatch(/NOT delivered: only the manager/);
+    }
+  });
+});
+
+describe("mirrorTopic", () => {
+  it("puts every peer message in Bots, a broadcast in General, and the operator's in Manager", () => {
+    expect(mirrorTopic({ from: "architect", to: "developer-1", text: "" })).toBe("bots");
+    expect(mirrorTopic({ from: "lead-dev", to: "manager", text: "" })).toBe("bots");
+    expect(mirrorTopic({ from: "manager", to: "all", text: "" })).toBeNull();
+    expect(mirrorTopic({ from: "manager", to: TO_OPERATOR, text: "" })).toBe("manager");
+  });
+
+  it("creates no per-role topic: Bots, Manager and Operator are the only names", () => {
+    expect(Object.keys(TOPIC_TITLES).sort()).toEqual(["bots", "manager", "operator"]);
+  });
 });
 
 /**
@@ -272,6 +297,11 @@ describe("formatMirror", () => {
     const message = formatMirror({ from: "manager", to: "all", text: "standup" }, REPO);
     expect(message.text).toBe("📋 Manager → 📢 Everyone\nstandup");
     expect(covered(message).slice(0, 2)).toEqual(["bold:Manager", "bold:Everyone"]);
+  });
+
+  it("shows the manager's reply as going to the operator", () => {
+    const message = formatMirror({ from: "manager", to: TO_OPERATOR, text: "done" }, REPO);
+    expect(message.text).toBe("📋 Manager → 👤 Operator\ndone");
   });
 
   it("counts offsets in UTF-16, variation selector included", () => {
@@ -684,6 +714,24 @@ describe("planSends", () => {
     expect(plan.batch).toEqual({ topicId: 1, text: "a\n\nb", entities: [], count: 2 });
     // Different topics are never merged, and nothing jumps ahead.
     expect(plan.rest).toEqual([q(2, "c"), q(1, "d")]);
+  });
+
+  it("joins peer messages to different recipients, now that they share Bots (#85)", () => {
+    const BOTS = 21;
+    const peers = [
+      { from: "architect", to: "developer-1", text: "spec is up" },
+      { from: "lead-dev", to: "manager", text: "#73 approved" },
+    ];
+    const queue = peers.map((message) => {
+      expect(mirrorTopic(message)).toBe("bots");
+      return { topicId: BOTS, ...formatMirror(message, { repo: "Enteee/VibeWars" }) };
+    });
+    const sent = Array.from({ length: 17 }, (_, i) => NOW - 40_000 + i * 1000);
+    const plan = planSends(queue, sent, NOW);
+    expect(plan.batch?.count).toBe(2);
+    expect(plan.batch?.text).toBe(
+      "🧭 Architect → 🛠 Developer 1\nspec is up\n\n🔍 Lead Dev → 📋 Manager\n#73 approved",
+    );
   });
 
   it("never coalesces past Telegram's message size", () => {

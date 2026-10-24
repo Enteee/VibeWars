@@ -7,6 +7,9 @@ instead of one per role, peer messages delivered locally, and a paced send
 queue. ADR-0014's sandbox split (the token lives outside the jail; agents
 only touch their inbox and outbox) stands.
 
+Amended by [ADR-0024](0024-telegram-topics.md): this ADR's per-role topics,
+their routing and its `registry.json` shape are replaced by four topics.
+
 ## Context
 
 ADR-0014 gave every role its own Telegram bot, created through the Managed
@@ -62,7 +65,8 @@ role` to that inbox, `to: all` to everyone else's. Telegram gets a copy for
 the operator to read. An agent waiting in `tg wait` wakes as soon as the
 file is written, not when Telegram gets round to it.
 
-**Topics are routing.** An operator message in a role's topic goes to that
+**Topics are routing** (amended by [ADR-0024](0024-telegram-topics.md):
+there are no per-role topics any more). An operator message in a role's topic goes to that
 role only. In General it goes to everyone, unless it starts with
 `<role>:` or `@<role>`. An unknown topic, or a prefix that is not a role,
 goes to everyone, so nothing is silently dropped. Messages from bots are

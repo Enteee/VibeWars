@@ -33,10 +33,12 @@ import { fileURLToPath } from "node:url";
 
 import { ROLES } from "./hub-policy.mjs";
 import {
+  TOPIC_TITLES,
   deliverPeer,
   formatMirror,
   formatQuestion,
   isReadyOutboxEntry,
+  mirrorTopic,
   obj,
   parseQuestions,
   parseRegistry,
@@ -47,12 +49,18 @@ import {
 } from "./protocol.mjs";
 
 /**
- * Something for the mirror to send: a peer message still to be formatted, or
- * an item for the Operator topic (a question, an edit of one, a hint).
+ * Something for the mirror to send: a peer message still to be formatted,
+ * an item for the Operator topic (a question, an edit of one, a hint), or
+ * a reply already bound for a topic (the "which role?" under a message
+ * addressed to nobody).
  *
  * @typedef {{ peer: import("./protocol.mjs").Mirrored }
- *   | { operator: Omit<import("./protocol.mjs").Queued, "topicId"> }} Outgoing
+ *   | { operator: Omit<import("./protocol.mjs").Queued, "topicId"> }
+ *   | { reply: import("./protocol.mjs").Queued }} Outgoing
  */
+
+/** How long to leave a topic Telegram would not create before asking again. */
+const TOPIC_RETRY_MS = 60_000;
 
 /** Overridable so link.test.mjs can stand a fake Telegram in for the real one. */
 const API = process.env.VIBEWARS_TELEGRAM_API ?? "https://api.telegram.org";
@@ -186,8 +194,12 @@ async function api(token, method, params = {}) {
  */
 function readRegistry(file) {
   const parsed = parseRegistry(fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null);
-  if ("error" in parsed) {
-    throw new Error(parsed.error);
+  if (parsed.dropped.length > 0) {
+    console.error(
+      `[link] registry.json: dropped ${parsed.dropped.join(", ")}, which is not the current ` +
+        "shape; topics are created again as they are needed, and old per-role topics are " +
+        "left for you to delete",
+    );
   }
   return parsed.registry;
 }
@@ -356,8 +368,8 @@ function takeLock(lock) {
 }
 
 /**
- * The company's state as the sidecar holds it. Topic ids are added as roles
- * need them; the getUpdates offset advances with every batch.
+ * The company's state as the sidecar holds it. Topic ids are added as the
+ * topics are first needed; the getUpdates offset advances with every batch.
  */
 class Company {
   /**
@@ -374,6 +386,8 @@ class Company {
     this.questions = readQuestions(at.questions);
     /** The operator's Telegram user id; set by `findOperator` before serving. */
     this.operatorId = 0;
+    /** @type {Map<import("./protocol.mjs").TopicName, number>} when to ask for a topic again */
+    this.topicRetryAt = new Map();
   }
 
   saveQuestions() {
@@ -381,29 +395,40 @@ class Company {
   }
 
   /**
-   * The Operator topic, created on first use like a role's.
+   * One of the company's topics, created on first use. The bot must be an
+   * admin with `can_manage_topics`, which the company bot already is. One
+   * Telegram would not create is not asked for again for TOPIC_RETRY_MS, so
+   * what waits on it is held back without hammering the API.
    *
-   * @returns {Promise<number | null>} `null` if Telegram would not create it
+   * @param {import("./protocol.mjs").TopicName} name
+   * @returns {Promise<number | null>} `null` if the topic does not exist yet
    */
-  async operatorTopic() {
-    const known = this.registry.operator?.topicId;
+  async topic(name) {
+    const known = this.registry[name]?.topicId;
     if (known !== undefined) {
       return known;
     }
+    if (Date.now() < (this.topicRetryAt.get(name) ?? 0)) {
+      return null;
+    }
     try {
       const created = obj(
-        await api(this.token, "createForumTopic", { chat_id: this.chatId, name: "❓ Operator" }),
+        await api(this.token, "createForumTopic", {
+          chat_id: this.chatId,
+          name: TOPIC_TITLES[name],
+        }),
       );
       if (typeof created.message_thread_id !== "number") {
-        return null;
+        throw new Error("no message_thread_id in the reply");
       }
-      this.registry.operator = { topicId: created.message_thread_id };
+      this.registry[name] = { topicId: created.message_thread_id };
       this.save();
-      console.error("[link] created the Operator topic");
+      console.error(`[link] created the ${TOPIC_TITLES[name]} topic`);
       return created.message_thread_id;
     } catch (error) {
+      this.topicRetryAt.set(name, Date.now() + TOPIC_RETRY_MS);
       console.error(
-        `[link] could not create the Operator topic: ${error instanceof Error ? error.message : ""}`,
+        `[link] could not create the ${TOPIC_TITLES[name]} topic: ${error instanceof Error ? error.message : ""}`,
       );
       return null;
     }
@@ -437,44 +462,6 @@ class Company {
   save() {
     writeAtomically(this.at.registry, this.registry);
   }
-
-  /** @returns {Map<number, string>} topic id to the role that owns it */
-  topicOwners() {
-    return new Map(
-      Object.entries(this.registry.roles).map(([role, { topicId }]) => [topicId, role]),
-    );
-  }
-
-  /**
-   * The role's forum topic, created on first use. The bot must be an admin
-   * with `can_manage_topics`, which the company bot already is.
-   *
-   * @param {string} role
-   * @returns {Promise<number | null>} `null` if Telegram would not create it
-   */
-  async topicFor(role) {
-    const known = this.registry.roles[role]?.topicId;
-    if (known !== undefined) {
-      return known;
-    }
-    try {
-      const created = obj(
-        await api(this.token, "createForumTopic", { chat_id: this.chatId, name: role }),
-      );
-      if (typeof created.message_thread_id !== "number") {
-        return null;
-      }
-      this.registry.roles[role] = { topicId: created.message_thread_id };
-      this.save();
-      console.error(`[link] created the ${role} topic`);
-      return created.message_thread_id;
-    } catch (error) {
-      console.error(
-        `[link] could not create the ${role} topic: ${error instanceof Error ? error.message : ""}`,
-      );
-      return null;
-    }
-  }
 }
 
 /**
@@ -484,7 +471,7 @@ class Company {
  * to `routeInbound`.
  *
  * @param {Company} company
- * @param {Outgoing[]} mirror edits and hints for the Operator topic go here
+ * @param {Outgoing[]} mirror Operator-topic edits and hints, and "which role?" replies, go here
  * @returns {Promise<never>}
  */
 async function pollInbound(company, mirror) {
@@ -498,8 +485,8 @@ async function pollInbound(company, mirror) {
           allowed_updates: ["message", "callback_query"],
         })
       );
-      const owners = company.topicOwners();
       const operatorTopicId = company.registry.operator?.topicId ?? null;
+      const managerTopicId = company.registry.manager?.topicId;
       for (const raw of updates) {
         const update = obj(raw);
         if (typeof update.update_id === "number") {
@@ -518,14 +505,25 @@ async function pollInbound(company, mirror) {
         const routed = routeInbound(raw, {
           chatId: company.chatId,
           operatorId: company.operatorId,
-          topics: owners,
           roles: ROLES,
+          ...(managerTopicId === undefined ? {} : { managerTopicId }),
           ...(operatorTopicId === null ? {} : { operatorTopicId }),
         });
-        for (const role of routed?.to ?? []) {
-          if (routed !== null) {
-            appendInbox(company.at.bus, role, routed.line);
-          }
+        if (routed === null) {
+          continue;
+        }
+        for (const role of routed.to) {
+          appendInbox(company.at.bus, role, routed.line);
+        }
+        if (routed.whichRole !== null && routed.line.topicId !== null) {
+          mirror.push({
+            reply: {
+              topicId: routed.line.topicId,
+              text: routed.whichRole,
+              entities: [],
+              replyTo: routed.line.messageId,
+            },
+          });
         }
       }
       if (updates.length > 0) {
@@ -667,23 +665,27 @@ async function mirrorOut(company, mirror) {
   let blockedUntil = 0;
 
   for (;;) {
-    // Resolve destinations to topics in arrival order, so a role whose topic
-    // has to be created first does not jump the queue.
-    for (const outgoing of mirror.splice(0)) {
-      if ("peer" in outgoing) {
-        const message = outgoing.peer;
-        queue.push({
-          topicId: message.to === "all" ? null : await company.topicFor(message.to),
-          ...formatMirror(message, { repo: company.repo }),
-        });
+    // Resolve destinations to topics in arrival order. One whose topic does
+    // not exist yet, and cannot be created now, is held back with everything
+    // behind it, never posted to General instead: nothing jumps the queue.
+    while (mirror.length > 0) {
+      const outgoing = /** @type {Outgoing} */ (mirror[0]);
+      if ("reply" in outgoing) {
+        queue.push(outgoing.reply);
+        mirror.shift();
         continue;
       }
-      const topicId = await company.operatorTopic();
-      if (topicId === null) {
-        console.error("[link] no Operator topic; holding back a question or its update");
-        continue;
+      const name = "peer" in outgoing ? mirrorTopic(outgoing.peer) : "operator";
+      const topicId = name === null ? null : await company.topic(name);
+      if (name !== null && topicId === null) {
+        break;
       }
-      queue.push({ topicId, ...outgoing.operator });
+      queue.push(
+        "peer" in outgoing
+          ? { topicId, ...formatMirror(outgoing.peer, { repo: company.repo }) }
+          : { topicId, ...outgoing.operator },
+      );
+      mirror.shift();
     }
 
     const now = Date.now();
@@ -805,11 +807,9 @@ async function serve() {
     ensureBus(at.bus, role);
   }
   console.error(`[link] serving ${String(ROLES.length)} roles on one bot`);
-  // Topics for whoever is already running, so a message the operator
-  // writes in a role's topic routes to it from the start.
-  for (const role of present(at.bus)) {
-    await company.topicFor(role);
-  }
+  // The operator writes to the manager in the Manager topic, so it has to
+  // exist before the manager has said anything.
+  await company.topic("manager");
 
   /** @type {Outgoing[]} */
   const mirror = [];
