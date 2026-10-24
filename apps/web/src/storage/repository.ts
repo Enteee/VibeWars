@@ -60,6 +60,25 @@ function promisify<T>(request: IDBRequest<T>): Promise<T> {
   });
 }
 
+/**
+ * Resolves once a write transaction has committed. A request's success
+ * fires before the commit, and a page unloaded in between aborts the
+ * write, so "saved" has to mean this, not the request.
+ */
+function committed(tx: IDBTransaction): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    tx.oncomplete = () => {
+      resolve();
+    };
+    tx.onerror = () => {
+      reject(tx.error ?? new PersistenceError("IndexedDB transaction failed"));
+    };
+    tx.onabort = () => {
+      reject(tx.error ?? new PersistenceError("IndexedDB transaction aborted"));
+    };
+  });
+}
+
 export function openIndexedDbStore(): Promise<KeyValueStore> {
   return new Promise<KeyValueStore>((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -87,11 +106,13 @@ export function openIndexedDbStore(): Promise<KeyValueStore> {
         },
         async put(store: string, key: string, value: unknown): Promise<void> {
           const tx = db.transaction(store, "readwrite");
-          await promisify(tx.objectStore(store).put(value, key));
+          tx.objectStore(store).put(value, key);
+          await committed(tx);
         },
         async delete(store: string, key: string): Promise<void> {
           const tx = db.transaction(store, "readwrite");
-          await promisify(tx.objectStore(store).delete(key));
+          tx.objectStore(store).delete(key);
+          await committed(tx);
         },
         async list(store: string): Promise<{ key: string; value: unknown }[]> {
           // One transaction, so the two arrays describe the same snapshot

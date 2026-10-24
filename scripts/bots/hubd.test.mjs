@@ -50,6 +50,15 @@ if (group === "api" && sub !== "graphql") {
   if (rel.startsWith("issues/7/comments")) { console.log(JSON.stringify([{ user: { login: "Enteee" }, author_association: "OWNER", body: "first comment", created_at: "z", html_url: "u" }])); process.exit(0); }
   if (rel === "issues/9") { console.log(JSON.stringify({ ...pull9, pull_request: {} })); process.exit(0); }
   if (rel === "pulls/9") { console.log(JSON.stringify(pull9)); process.exit(0); }
+  // A commit's checks: what the test planted for that SHA, or none.
+  const commit = /^commits\\/([0-9a-f]+)\\/(check-runs|status)/.exec(rel);
+  if (commit !== null) {
+    if (fs.existsSync(path.join(state, "rest-fails"))) { console.error("HTTP 500: Server Error"); process.exit(1); }
+    const planted = path.join(state, commit[2] + "-" + commit[1] + ".json");
+    if (fs.existsSync(planted)) { console.log(fs.readFileSync(planted, "utf8")); process.exit(0); }
+    console.log(JSON.stringify(commit[2] === "status" ? { state: "pending", total_count: 0, statuses: [] } : { total_count: 0, check_runs: [] }));
+    process.exit(0);
+  }
   if (rel.startsWith("issues?")) { console.log(JSON.stringify([issue7, { ...pull9, pull_request: {} }])); process.exit(0); }
   console.log("rest ok"); process.exit(0);
 }
@@ -145,6 +154,41 @@ async function startHubd(remaining, before) {
     hub,
     repo,
     remote: path.join(dir, "remote.git"),
+    /**
+     * What GitHub answers about one commit's checks.
+     *
+     * @param {string} sha
+     * @param {{ runs?: Record<string, unknown>[], statuses?: Record<string, unknown>[] }} checks
+     */
+    setChecks(sha, checks) {
+      const runs = checks.runs ?? [];
+      fs.writeFileSync(
+        path.join(state, `check-runs-${sha}.json`),
+        JSON.stringify({
+          total_count: runs.length,
+          check_runs: runs.map((run) => ({ check_suite: { id: 1 }, ...run })),
+        }),
+      );
+      fs.writeFileSync(
+        path.join(state, `status-${sha}.json`),
+        JSON.stringify({
+          state: "pending",
+          total_count: (checks.statuses ?? []).length,
+          statuses: checks.statuses ?? [],
+        }),
+      );
+    },
+    /** Every REST read of a commit's checks fails, as on a GitHub outage. */
+    failRest() {
+      fs.writeFileSync(path.join(state, "rest-fails"), "");
+    },
+    /** @param {string[]} expectedChecks */
+    expectChecks(expectedChecks) {
+      fs.writeFileSync(
+        path.join(root, "company.json"),
+        JSON.stringify({ repo: "Enteee/VibeWars", project: 2, columns: [], expectedChecks }),
+      );
+    },
     /** @param {number} left */
     setRemaining(left) {
       fs.writeFileSync(path.join(state, "remaining"), String(left));
@@ -639,6 +683,101 @@ describe("hubd recording verdicts and merging", () => {
 
     expect(answer.code).toBe(0);
     expect(hubd.calls("pr merge 9 --squash --match-head-commit abc1234def")).toBe(1);
+  }, 20_000);
+
+  /**
+   * A daemon where #9 carries both sign-offs, so only the checks decide.
+   *
+   * @param {number} remaining
+   */
+  const approved = async (remaining) => {
+    const hubd = await startHubd(remaining);
+    for (const role of ["lead-dev", "perf-sec-qa"]) {
+      fs.appendFileSync(
+        path.join(hubd.hub, "approvals.jsonl"),
+        `${JSON.stringify({ pr: 9, role, verdict: "approve", sha: "abc1234def", ts: 1 })}\n`,
+      );
+    }
+    hubd.expectChecks(["ci", "legacy"]);
+    return hubd;
+  };
+  const GREEN = {
+    runs: [{ id: 1, name: "ci", status: "completed", conclusion: "success" }],
+    statuses: [{ context: "legacy", state: "success" }],
+  };
+
+  it("reads the checks of the commit it pinned, from REST, never gh pr checks", async () => {
+    const hubd = await approved(5000);
+    hubd.setChecks("abc1234def", GREEN);
+    // Whatever a newer head says must not matter: only the pinned SHA is read.
+    hubd.setChecks("fffffff000", {
+      runs: [{ id: 2, name: "ci", status: "completed", conclusion: "failure" }],
+    });
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(answer.code, String(answer.reason)).toBe(0);
+    expect(hubd.calls("api repos/Enteee/VibeWars/commits/abc1234def/check-runs")).toBe(1);
+    expect(hubd.calls("api repos/Enteee/VibeWars/commits/fffffff000")).toBe(0);
+    expect(hubd.calls("pr checks")).toBe(0);
+  }, 20_000);
+
+  it("refuses a check still running, from a mix of check runs and legacy statuses", async () => {
+    const hubd = await approved(5000);
+    hubd.setChecks("abc1234def", {
+      runs: [{ id: 1, name: "ci", status: "in_progress", conclusion: null }],
+      statuses: [{ context: "legacy", state: "success" }],
+    });
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(answer.allow).toBe(false);
+    expect(String(answer.reason)).toMatch(/still running: ci/);
+    expect(hubd.calls("pr merge")).toBe(0);
+  }, 20_000);
+
+  it("refuses a failing run that a passing status of the same name would shadow", async () => {
+    const hubd = await approved(5000);
+    hubd.setChecks("abc1234def", {
+      runs: [{ id: 1, name: "ci", status: "completed", conclusion: "failure" }],
+      statuses: [
+        { context: "ci", state: "success" },
+        { context: "legacy", state: "success" },
+      ],
+    });
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(answer.allow).toBe(false);
+    expect(String(answer.reason)).toMatch(/reported by more than one source: ci/);
+    expect(hubd.calls("pr merge")).toBe(0);
+  }, 20_000);
+
+  it("says GitHub is rate-limited, and until when, rather than that checks are missing", async () => {
+    // The budget was fine when the merge was let through, and ran out
+    // while the guard read the checks: the case pre-flight cannot catch.
+    const hubd = await approved(5000);
+    hubd.failRest();
+    hubd.setRemaining(0);
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(answer.code).toBe(75);
+    expect(String(answer.stderr)).toMatch(/rate-limited until \d\d:\d\d/);
+    expect(String(answer.stderr)).not.toMatch(/missing/);
+    expect(hubd.calls("pr merge")).toBe(0);
+  }, 20_000);
+
+  it("says it could not read the checks when GitHub fails for another reason", async () => {
+    const hubd = await approved(5000);
+    hubd.failRest();
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(answer.allow).toBe(false);
+    expect(String(answer.reason)).toBe(
+      "could not read checks for #9 at abc1234: HTTP 500: Server Error",
+    );
   }, 20_000);
 });
 

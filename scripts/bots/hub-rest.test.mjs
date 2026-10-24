@@ -10,6 +10,7 @@ import fs from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import {
+  checksFromRest,
   ghIssue,
   ghPull,
   listPath,
@@ -208,5 +209,116 @@ describe("golden: real REST answers against what gh said for the same items", ()
       isDraft: false,
       mergedAt: "2026-10-24T14:47:26Z",
     });
+  });
+});
+
+describe("checksFromRest", () => {
+  /** @param {Record<string, unknown>[]} statuses */
+  const status = (statuses = []) => ({ state: "pending", total_count: statuses.length, statuses });
+  /** Runs in check suite 1, unless they say otherwise. @param {Record<string, unknown>[]} list */
+  const runs = (list) => ({
+    total_count: list.length,
+    check_runs: list.map((run) => ({ check_suite: { id: 1 }, ...run })),
+  });
+
+  it("puts check runs and legacy statuses into gh's buckets", () => {
+    expect(
+      checksFromRest(
+        runs([
+          { id: 1, name: "ci", status: "completed", conclusion: "success" },
+          { id: 2, name: "lint", status: "queued", conclusion: null },
+          { id: 3, name: "docs", status: "completed", conclusion: "skipped" },
+          { id: 4, name: "e2e", status: "completed", conclusion: "cancelled" },
+          { id: 5, name: "nix", status: "completed", conclusion: "timed_out" },
+        ]),
+        status([
+          { context: "legacy", state: "success" },
+          { context: "slow", state: "pending" },
+          { context: "broken", state: "error" },
+        ]),
+      ),
+    ).toEqual({
+      checks: [
+        { name: "ci", conclusion: "pass" },
+        { name: "lint", conclusion: "pending" },
+        { name: "docs", conclusion: "skipping" },
+        { name: "e2e", conclusion: "cancel" },
+        { name: "nix", conclusion: "fail" },
+        { name: "legacy", conclusion: "pass" },
+        { name: "slow", conclusion: "pending" },
+        { name: "broken", conclusion: "fail" },
+      ],
+    });
+  });
+
+  it("counts only the newest run of a re-run check, within its check suite", () => {
+    expect(
+      checksFromRest(
+        runs([
+          { id: 9, name: "ci", status: "completed", conclusion: "success" },
+          { id: 4, name: "ci", status: "completed", conclusion: "failure" },
+        ]),
+        status(),
+      ),
+    ).toEqual({ checks: [{ name: "ci", conclusion: "pass" }] });
+  });
+
+  it("keeps the same name from two check suites, or a run and a status, apart", () => {
+    // A newer passing run some other workflow posted must not replace the
+    // failing real one: both stay, and checksSatisfied refuses the name.
+    expect(
+      checksFromRest(
+        runs([
+          { id: 4, name: "ci", status: "completed", conclusion: "failure" },
+          {
+            id: 9,
+            name: "ci",
+            status: "completed",
+            conclusion: "success",
+            check_suite: { id: 2 },
+          },
+        ]),
+        status([{ context: "ci", state: "success" }]),
+      ),
+    ).toEqual({
+      checks: [
+        { name: "ci", conclusion: "fail" },
+        { name: "ci", conclusion: "pass" },
+        { name: "ci", conclusion: "pass" },
+      ],
+    });
+  });
+
+  it("refuses a first page that does not hold every run or status", () => {
+    const one = runs([{ id: 1, name: "ci", status: "completed", conclusion: "success" }]);
+    expect(checksFromRest({ ...one, total_count: 101 }, status())).toEqual({
+      error: "101 check runs, more than one page",
+    });
+    expect(
+      checksFromRest(runs([]), {
+        ...status([{ context: "a", state: "success" }]),
+        total_count: 31,
+      }),
+    ).toEqual({
+      error: "31 statuses, more than one page",
+    });
+  });
+
+  it("refuses a run with no check suite to tell its source", () => {
+    expect(
+      checksFromRest(
+        {
+          total_count: 1,
+          check_runs: [{ id: 1, name: "ci", status: "completed", conclusion: "success" }],
+        },
+        status(),
+      ),
+    ).toHaveProperty("error");
+  });
+
+  it("never reads an answer of the wrong shape as no checks", () => {
+    expect(checksFromRest({ message: "Not Found" }, status())).toHaveProperty("error");
+    expect(checksFromRest(runs([]), { message: "Not Found" })).toHaveProperty("error");
+    expect(checksFromRest(null, null)).toHaveProperty("error");
   });
 });

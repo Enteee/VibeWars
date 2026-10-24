@@ -45,6 +45,34 @@ test("a saved character survives a page reload", async ({ page }) => {
   await expect(page.locator(".roster")).toContainText("Persistent");
 });
 
+test("a character shown in the roster survives leaving the page at once, even on a slow disk", async ({
+  page,
+}) => {
+  // Every other test waits on the roster before navigating, trusting that
+  // the roster only shows a save once it has committed. Hold each write
+  // transaction open ~500 ms, as a loaded CI runner can (#100), and check
+  // that trust holds: leaving straight away must not lose the character.
+  await page.addInitScript(`
+    const put = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function (...args) {
+      const request = put.apply(this, args);
+      const until = Date.now() + 500;
+      const keepOpen = () => {
+        if (Date.now() < until) this.count().onsuccess = keepOpen;
+      };
+      keepOpen();
+      return request;
+    };
+  `);
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Slow Disk");
+  await page.getByRole("button", { name: "save", exact: true }).click();
+  await expect(page.locator(".roster")).toContainText("Slow Disk");
+
+  await page.goto("/");
+  await expect(page.locator(".roster")).toContainText("Slow Disk");
+});
+
 test("spending attribute points updates the remaining budget", async ({ page }) => {
   await newCharacter(page);
 
@@ -143,6 +171,10 @@ test("a team supports every operation sprint 18 asks for", async ({ page }) => {
     await newCharacter(page);
     await page.locator("input.editor-name").fill(name);
     await page.getByRole("button", { name: "save", exact: true }).click();
+    // The roster re-renders only once the save has committed. Without
+    // this wait, the next newCharacter's page.goto unloads the page
+    // mid-write, Alpha is lost, and selectOption below waits forever.
+    await expect(page.locator(".roster")).toContainText(name);
   }
 
   await page.getByRole("button", { name: "teams" }).click();
@@ -168,9 +200,10 @@ test("a team supports every operation sprint 18 asks for", async ({ page }) => {
   await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
   await expect(page.locator(".entity-list .entity-name").first()).toContainText("1. Bravo");
 
-  // duplicate
+  // duplicate. The team list says "(n members)"; the editor's rows do
+  // not, so these assertions cannot pass on the editor still on screen.
   await page.getByRole("button", { name: "duplicate" }).click();
-  await expect(page.locator(".entity-name")).toHaveCount(2);
+  await expect(page.locator(".entity-name")).toHaveText([/2 members/, /2 members/]);
 
   // remove a member
   await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
@@ -184,7 +217,7 @@ test("a team supports every operation sprint 18 asks for", async ({ page }) => {
 
   // delete the team
   await page.getByRole("button", { name: "delete" }).click();
-  await expect(page.locator(".entity-name")).toHaveCount(1);
+  await expect(page.locator(".entity-name")).toHaveText([/members\)$/]);
 });
 
 /**
@@ -344,12 +377,13 @@ async function inCharacterStore(page: Page, body: string): Promise<unknown> {
       const open = indexedDB.open("vibewars", 1);
       open.onerror = () => reject(open.error);
       open.onsuccess = () => {
-        const store = open.result
-          .transaction("characters", "readwrite")
-          .objectStore("characters");
-        const request = (${body})(store);
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve(request.result ?? null);
+        // Resolve on the commit, not the request: the caller reloads
+        // next, and an uncommitted write does not survive that.
+        const tx = open.result.transaction("characters", "readwrite");
+        const request = (${body})(tx.objectStore("characters"));
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+        tx.oncomplete = () => resolve(request.result ?? null);
       };
     })
   `);
