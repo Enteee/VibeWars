@@ -561,6 +561,13 @@ describe("company reboot", () => {
     }
   });
 
+  it("lets every role say it is ready, and nothing more", () => {
+    for (const role of ROLES) {
+      expect(reboot(role, ["ready"]), role).toMatchObject({ allow: true });
+      expect(reboot(role, ["ready", "x"]), role).toMatchObject({ allow: false });
+    }
+  });
+
   it("needs a reason, and nothing else", () => {
     for (const argv of [["request"], ["request", " "], ["request", "a", "b"], ["abort", "x"], []]) {
       expect(reboot("manager", argv), argv.join(" ")).toMatchObject({ allow: false });

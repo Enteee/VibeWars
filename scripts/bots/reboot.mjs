@@ -19,7 +19,7 @@ export const COMPANY_PATHS = ["scripts/bots/", "nix/claude-", ".claude/bots/", "
 /** The shortest gap between two boots of the company. */
 export const COOLDOWN_MS = 30 * 60_000;
 
-/** How long agents get to commit and say `ready` before the company stops anyway. */
+/** How long agents get to commit and run `company ready` before the company stops. */
 export const DRAIN_MS = 10 * 60_000;
 
 /** How long a stop waits for a `hub` request still being served. */
@@ -29,7 +29,12 @@ export const INFLIGHT_GRACE_MS = 60_000;
 export const IDLE_SAMPLES_READY = 2;
 
 /**
- * @typedef {{ requestedAt: number, reason: string, by: string, deadline: number, bootSha: string }} Reboot
+ * @typedef {{
+ *   requestedAt: number, reason: string, by: string, deadline: number, bootSha: string,
+ *   ready: string[],
+ * }} Reboot
+ *
+ * `ready` lists the roles that ran `company ready`.
  */
 
 /**
@@ -95,57 +100,26 @@ export function rebootAllowed({ bootSha, changedPaths, lastRebootAt, now, pendin
 }
 
 /**
- * The roles that replied `ready` to the manager since the reboot was asked
- * for, from the manager's inbox.
- *
- * @param {unknown[]} lines the manager's inbox, one parsed line each
- * @param {number} since
- * @returns {Set<string>}
- */
-export function readyReplies(lines, since) {
-  /** @type {Set<string>} */
-  const ready = new Set();
-  for (const raw of lines) {
-    if (typeof raw !== "object" || raw === null) {
-      continue;
-    }
-    const line = /** @type {Record<string, unknown>} */ (raw);
-    if (
-      line.kind === "peer" &&
-      typeof line.from === "string" &&
-      typeof line.ts === "number" &&
-      line.ts >= since &&
-      typeof line.text === "string" &&
-      /^\s*ready\b/i.test(line.text)
-    ) {
-      ready.add(line.from);
-    }
-  }
-  return ready;
-}
-
-/**
  * One step of the drain: stop the company now, or keep waiting?
  *
- * The company is drained once every running agent has said `ready` or sat
- * idle at its prompt, or once the deadline passes. Then it stops as soon as
- * no `hub` request is in flight, or after a grace period, so a merge or a
- * push is not cut off halfway.
+ * The company is drained once every running agent has run `company ready`
+ * or sat idle at its prompt, or once the deadline passes. Then it stops as
+ * soon as no `hub` request is in flight, or after a grace period, so a merge
+ * or a push is not cut off halfway.
  *
  * @param {{
  *   now: number,
  *   reboot: Reboot,
  *   running: string[],
- *   ready: Set<string>,
  *   idle: Record<string, number | undefined>,
  *   inflight: number,
  *   drainedAt: number | null,
  * }} state
  * @returns {{ stop: boolean, drainedAt: number | null }}
  */
-export function drainStep({ now, reboot, running, ready, idle, inflight, drainedAt }) {
+export function drainStep({ now, reboot, running, idle, inflight, drainedAt }) {
   const everyone = running.every(
-    (role) => ready.has(role) || (idle[role] ?? 0) >= IDLE_SAMPLES_READY,
+    (role) => reboot.ready.includes(role) || (idle[role] ?? 0) >= IDLE_SAMPLES_READY,
   );
   const drained = drainedAt ?? (everyone || now >= reboot.deadline ? now : null);
   if (drained === null) {
@@ -182,13 +156,18 @@ export function fastForwardDecision({ branch, dirty, fastForward }) {
 }
 
 /**
+ * What the manager's `company reboot` broadcasts to everyone, operator
+ * included, when hubd accepts it.
+ *
  * @param {Reboot} reboot
- * @returns {string} what every agent and the operator are told when the drain starts
+ * @param {string[]} subjects the company commits on main since the boot
+ * @returns {string}
  */
-export function announcement(reboot) {
+export function announcement(reboot, subjects) {
   return (
-    `Company reboot by ${clock(reboot.deadline)} (${reboot.reason}). Commit or WIP-commit ` +
-    "your work, push if it is ready, then reply `tg send manager ready`. " +
-    "Operator: abort with `claude-llc reboot-abort`; manager: `company reboot --abort`."
+    `Company reboot by ${clock(reboot.deadline)}: ${reboot.reason}. It loads: ` +
+    `${subjects.join("; ")}. Commit or WIP-commit your work, push it, then run ` +
+    "`company ready`. Abort: `company reboot --abort` (manager), " +
+    "`claude-llc reboot --abort` (operator)."
   );
 }

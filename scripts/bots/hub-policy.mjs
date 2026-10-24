@@ -644,9 +644,10 @@ function authorizeReview(role, argv, acting) {
 }
 
 /**
- * A company reboot (#21): `["request", reason]` or `["abort"]`. Only the
- * manager, who decides when the company is quiet enough to stop; the
+ * A company reboot (#21): `["request", reason]` and `["abort"]` are the
+ * manager's, who decides when the company is quiet enough to stop; the
  * operator acts on the host directly and needs no permission from here.
+ * `["ready"]` is everyone's: it is how an agent says its work is saved.
  * Whether a reboot is warranted right now is hubd's to decide: that needs
  * the network.
  *
@@ -655,10 +656,19 @@ function authorizeReview(role, argv, acting) {
  * @returns {{ allow: boolean, reason?: string }}
  */
 function authorizeReboot(role, argv) {
+  const [verb, reason, ...rest] = argv;
+  if (verb === "ready" && reason === undefined) {
+    return { allow: true };
+  }
+  if (verb !== "request" && verb !== "abort") {
+    return {
+      allow: false,
+      reason: 'usage: company reboot "<reason>" | company reboot --abort | company ready',
+    };
+  }
   if (role !== "manager") {
     return { allow: false, reason: "only the manager reboots the company" };
   }
-  const [verb, reason, ...rest] = argv;
   if (verb === "abort" && reason === undefined) {
     return { allow: true };
   }

@@ -7,7 +7,6 @@ import {
   drainStep,
   fastForwardDecision,
   isCompanyPath,
-  readyReplies,
   rebootAllowed,
 } from "./reboot.mjs";
 
@@ -62,6 +61,7 @@ describe("rebootAllowed", () => {
       by: "manager",
       deadline: NOW + DRAIN_MS,
       bootSha: "abc",
+      ready: [],
     };
     const answer = rebootAllowed({ ...base, pending });
     expect("reason" in answer ? answer.reason : "").toMatch(/already scheduled for \d\d:\d\d/);
@@ -74,21 +74,6 @@ describe("rebootAllowed", () => {
   });
 });
 
-describe("readyReplies", () => {
-  it("counts a peer's ready sent after the request, and nothing else", () => {
-    const lines = [
-      { ts: NOW - 1, from: "developer-1", kind: "peer", text: "ready" },
-      { ts: NOW + 1, from: "developer-2", kind: "peer", text: "Ready, branch pushed" },
-      { ts: NOW + 2, from: "lead-dev", kind: "peer", text: "not ready yet" },
-      { ts: NOW + 3, from: "Ente", kind: "operator", text: "ready" },
-      { ts: NOW + 4, from: "qa-tester", kind: "peer", text: "  ready" },
-      "garbage",
-      null,
-    ];
-    expect([...readyReplies(lines, NOW)].sort()).toEqual(["developer-2", "qa-tester"]);
-  });
-});
-
 describe("drainStep", () => {
   const reboot = {
     requestedAt: NOW,
@@ -96,12 +81,12 @@ describe("drainStep", () => {
     by: "manager",
     deadline: NOW + DRAIN_MS,
     bootSha: "abc",
+    ready: ["manager"],
   };
   const base = {
     now: NOW + 60_000,
     reboot,
     running: ["manager", "developer-1"],
-    ready: new Set(["manager"]),
     idle: {},
     inflight: 0,
     drainedAt: null,
@@ -112,7 +97,9 @@ describe("drainStep", () => {
   });
 
   it("stops once everyone is ready", () => {
-    expect(drainStep({ ...base, ready: new Set(["manager", "developer-1"]) })).toEqual({
+    expect(
+      drainStep({ ...base, reboot: { ...reboot, ready: ["manager", "developer-1"] } }),
+    ).toEqual({
       stop: true,
       drainedAt: base.now,
     });
@@ -128,7 +115,11 @@ describe("drainStep", () => {
   });
 
   it("waits for a request in flight, but only for the grace period", () => {
-    const drained = { ...base, ready: new Set(["manager", "developer-1"]), inflight: 1 };
+    const drained = {
+      ...base,
+      reboot: { ...reboot, ready: ["manager", "developer-1"] },
+      inflight: 1,
+    };
     expect(drainStep(drained)).toEqual({ stop: false, drainedAt: base.now });
     expect(drainStep({ ...drained, drainedAt: base.now, now: base.now + 1000 }).stop).toBe(false);
     expect(
