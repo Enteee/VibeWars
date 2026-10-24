@@ -32,6 +32,14 @@ export interface AttributeDefinition {
 export interface ProfessionDefinition {
   readonly id: ProfessionId;
   readonly name: string;
+  /**
+   * Short label for dense UI, e.g. "Mo" for Monk.
+   *
+   * Stated rather than derived from the name: first letters collide
+   * (Monk/Mesmer, Ranger/Ritualist, Dervish/…), so deriving them would
+   * silently label two different professions identically.
+   */
+  readonly abbreviation: string;
   /** Exactly 4 attributes; exactly one has `isPrimary: true`. Enforced by tests. */
   readonly attributes: readonly AttributeDefinition[];
 }
@@ -48,6 +56,7 @@ export interface ProfessionDefinition {
 function profession(
   id: ProfessionId,
   name: string,
+  abbreviation: string,
   primaryAttributeName: string,
   secondaryAttributeNames: readonly string[],
 ): ProfessionDefinition {
@@ -60,6 +69,7 @@ function profession(
   return {
     id,
     name,
+    abbreviation,
     attributes: [
       toAttr(primaryAttributeName, true),
       ...secondaryAttributeNames.map((attrName) => toAttr(attrName, false)),
@@ -76,54 +86,54 @@ function profession(
  * copied proprietary content.
  */
 export const PROFESSIONS: Readonly<Record<ProfessionId, ProfessionDefinition>> = {
-  warrior: profession("warrior", "Warrior", "Strength", [
+  warrior: profession("warrior", "Warrior", "W", "Strength", [
     "Axe Mastery",
     "Hammer Mastery",
     "Swordsmanship",
     "Tactics",
   ]),
-  ranger: profession("ranger", "Ranger", "Expertise", [
+  ranger: profession("ranger", "Ranger", "R", "Expertise", [
     "Marksmanship",
     "Wilderness Survival",
     "Beast Mastery",
   ]),
-  monk: profession("monk", "Monk", "Divine Favor", [
+  monk: profession("monk", "Monk", "Mo", "Divine Favor", [
     "Healing Prayers",
     "Protection Prayers",
     "Smiting Prayers",
   ]),
-  necromancer: profession("necromancer", "Necromancer", "Soul Reaping", [
+  necromancer: profession("necromancer", "Necromancer", "N", "Soul Reaping", [
     "Blood Magic",
     "Curses",
     "Death Magic",
   ]),
-  mesmer: profession("mesmer", "Mesmer", "Fast Casting", [
+  mesmer: profession("mesmer", "Mesmer", "Me", "Fast Casting", [
     "Domination Magic",
     "Illusion Magic",
     "Inspiration Magic",
   ]),
-  elementalist: profession("elementalist", "Elementalist", "Energy Storage", [
+  elementalist: profession("elementalist", "Elementalist", "E", "Energy Storage", [
     "Fire Magic",
     "Earth Magic",
     "Water Magic",
     "Air Magic",
   ]),
-  assassin: profession("assassin", "Assassin", "Critical Strikes", [
+  assassin: profession("assassin", "Assassin", "A", "Critical Strikes", [
     "Dagger Mastery",
     "Deadly Arts",
     "Shadow Arts",
   ]),
-  ritualist: profession("ritualist", "Ritualist", "Spawning Power", [
+  ritualist: profession("ritualist", "Ritualist", "Rt", "Spawning Power", [
     "Channeling Magic",
     "Restoration Magic",
     "Communing",
   ]),
-  paragon: profession("paragon", "Paragon", "Leadership", [
+  paragon: profession("paragon", "Paragon", "P", "Leadership", [
     "Spear Mastery",
     "Command",
     "Motivation",
   ]),
-  dervish: profession("dervish", "Dervish", "Mysticism", [
+  dervish: profession("dervish", "Dervish", "D", "Mysticism", [
     "Scythe Mastery",
     "Wind Prayers",
     "Earth Prayers",

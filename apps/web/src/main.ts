@@ -14,14 +14,9 @@ import {
   type KeyValueStore,
 } from "./storage/repository.js";
 import type { StoredCharacter, StoredTeam } from "./storage/schema.js";
-import { newCharacter, renderBuildEditor } from "./ui/build-editor.js";
+import { disposeBuildEditor, newCharacter, renderBuildEditor } from "./ui/build-editor.js";
 import { renderLobbyScreen } from "./ui/lobby-screen.js";
-import {
-  loadActiveCharacterId,
-  renderCharacterList,
-  renderMenu,
-  renderTeamList,
-} from "./ui/menu.js";
+import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
 import { addMember, duplicateTeam, moveMember, newTeam, removeMember } from "./ui/team-builder.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
 import type { PlayerBuild } from "@vibewars/game-core";
@@ -129,14 +124,18 @@ async function main(): Promise<void> {
   };
 
   const showMenu = (): void => {
+    disposeBuildEditor();
     showViewport(false);
     void (async () => {
-      const { characters: list } = await characters.list();
-      renderMenuWith(list);
+      const { characters: list, problems } = await characters.list();
+      renderMenuWith(list, problems);
     })();
   };
 
-  const renderMenuWith = (list: readonly StoredCharacter[]): void => {
+  const renderMenuWith = (
+    list: readonly StoredCharacter[],
+    problems: readonly string[] = [],
+  ): void => {
     renderMenu(
       screenRoot,
       {
@@ -146,9 +145,6 @@ async function main(): Promise<void> {
         onJoinLobby: (code, name) => {
           void enterLobby(() => joinLobbyByCode(endpoint, code, name));
         },
-        onManageCharacters: () => {
-          void showCharacters();
-        },
         onManageTeams: () => {
           void showTeams();
         },
@@ -157,27 +153,27 @@ async function main(): Promise<void> {
         onQuickMatch: () => {
           void enterMatch();
         },
+        onNewCharacter: () => {
+          showCharacterEditor(newCharacter(crypto.randomUUID()));
+        },
+        onEditCharacter: (id) => {
+          void (async () => {
+            const character = await characters.load(id);
+            if (character !== undefined) {
+              showCharacterEditor(character);
+            }
+          })();
+        },
+        // The menu persists the choice itself; re-render so the
+        // highlighted row matches what was just picked, without a round
+        // trip to storage for a list we already hold.
+        onSelectCharacter: () => {
+          renderMenuWith(list, problems);
+        },
       },
       list,
+      problems,
     );
-  };
-
-  const showCharacters = async (): Promise<void> => {
-    const { characters: list, problems } = await characters.list();
-    renderCharacterList(screenRoot, list, problems, {
-      onNew: () => {
-        showCharacterEditor(newCharacter(crypto.randomUUID()));
-      },
-      onEdit: (id) => {
-        void (async () => {
-          const character = await characters.load(id);
-          if (character !== undefined) {
-            showCharacterEditor(character);
-          }
-        })();
-      },
-      onBack: showMenu,
-    });
   };
 
   const showCharacterEditor = (character: StoredCharacter): void => {
@@ -188,13 +184,13 @@ async function main(): Promise<void> {
       onSave: (saved: StoredCharacter) => {
         void (async () => {
           await characters.save(saved);
-          await showCharacters();
+          showMenu();
         })();
       },
       onDelete: (id: string) => {
         void (async () => {
           await characters.delete(id);
-          await showCharacters();
+          showMenu();
         })();
       },
       onDuplicate: (source: StoredCharacter) => {
@@ -206,11 +202,11 @@ async function main(): Promise<void> {
         };
         void (async () => {
           await characters.save(copy);
-          await showCharacters();
+          showMenu();
         })();
       },
       onClose: () => {
-        void showCharacters();
+        showMenu();
       },
     };
     rerender(character);

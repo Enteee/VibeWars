@@ -1,4 +1,5 @@
 import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
+import { createCharacterDot, equippedCount, professionLabel } from "./character-preview.js";
 
 /**
  * The main menu and lobby screens (brief §21).
@@ -13,9 +14,13 @@ export type ScreenName = "menu" | "characters" | "teams" | "lobby" | "match";
 export interface MenuCallbacks {
   readonly onCreateLobby: (name: string) => void;
   readonly onJoinLobby: (code: string, name: string) => void;
-  readonly onManageCharacters: () => void;
   readonly onManageTeams: () => void;
   readonly onQuickMatch: () => void;
+  /** Open the build editor on a new character. */
+  readonly onNewCharacter: () => void;
+  readonly onEditCharacter: (id: string) => void;
+  /** Called when the player picks who to play; re-renders the list. */
+  readonly onSelectCharacter: (id: string | undefined) => void;
 }
 
 function h(tag: string, className?: string, text?: string): HTMLElement {
@@ -92,6 +97,7 @@ export function renderMenu(
   root: HTMLElement,
   callbacks: MenuCallbacks,
   characters: readonly StoredCharacter[] = [],
+  characterProblems: readonly string[] = [],
 ): void {
   root.replaceChildren();
   const panel = h("div", "screen screen-menu");
@@ -113,41 +119,80 @@ export function renderMenu(
   nameField.appendChild(nameInput);
   panel.appendChild(nameField);
 
-  // --- which character you play ----------------------------------------
-  // Without this the build editor is decoration: every player would join
-  // with the server's house loadout no matter what they had built.
-  const buildField = h("label", "field");
-  buildField.appendChild(h("span", "field-label", "play as"));
-  const buildSelect = document.createElement("select");
-  buildSelect.className = "field-input";
+  // --- your characters --------------------------------------------------
+  // The roster lives here rather than behind a "characters" button: it is
+  // the thing you pick before every match, so hiding it one click away
+  // made the build editor feel optional when it is not.
+  const roster = h("div", "roster");
+  roster.appendChild(h("span", "field-label", "play as"));
 
-  const houseOption = document.createElement("option");
-  houseOption.value = "";
-  houseOption.textContent =
-    characters.length === 0 ? "default loadout" : "default loadout (no build)";
-  buildSelect.appendChild(houseOption);
-
-  for (const character of characters) {
-    const option = document.createElement("option");
-    option.value = character.id;
-    const secondary = character.secondaryProfession;
-    option.textContent =
-      secondary === undefined
-        ? `${character.name} (${character.primaryProfession})`
-        : `${character.name} (${character.primaryProfession}/${secondary})`;
-    buildSelect.appendChild(option);
+  for (const problem of characterProblems) {
+    roster.appendChild(h("div", "screen-problem", problem));
   }
 
-  // A character deleted since it was chosen falls back to the house
-  // loadout rather than selecting nothing.
   const active = loadActiveCharacterId();
-  buildSelect.value = characters.some((c) => c.id === active) ? (active ?? "") : "";
+  const activeExists = characters.some((c) => c.id === active);
 
-  buildSelect.addEventListener("change", () => {
-    saveActiveCharacterId(buildSelect.value === "" ? undefined : buildSelect.value);
+  const list = h("div", "roster-list");
+
+  // The house loadout is a roster entry too, so "what am I playing?" has
+  // exactly one answer visible in one place.
+  const houseRow = h("div", "roster-row");
+  if (!activeExists) {
+    houseRow.classList.add("is-active");
+  }
+  const houseDot = h("span", "character-dot is-house", "?");
+  houseRow.appendChild(houseDot);
+  const houseText = h("div", "roster-text");
+  houseText.appendChild(h("span", "roster-name", "Default loadout"));
+  houseText.appendChild(h("span", "roster-sub", "Eight ready-made skills, no build needed"));
+  houseRow.appendChild(houseText);
+  houseRow.addEventListener("click", () => {
+    saveActiveCharacterId(undefined);
+    callbacks.onSelectCharacter(undefined);
   });
-  buildField.appendChild(buildSelect);
-  panel.appendChild(buildField);
+  list.appendChild(houseRow);
+
+  for (const character of characters) {
+    const row = h("div", "roster-row");
+    if (character.id === active) {
+      row.classList.add("is-active");
+    }
+    row.appendChild(createCharacterDot(character));
+
+    const text = h("div", "roster-text");
+    text.appendChild(h("span", "roster-name", character.name));
+    const equipped = equippedCount(character);
+    text.appendChild(
+      h(
+        "span",
+        "roster-sub",
+        `${professionLabel(character.primaryProfession, character.secondaryProfession)} · ` +
+          `${String(equipped)}/${String(character.skillBar.length)} skills`,
+      ),
+    );
+    row.appendChild(text);
+
+    row.addEventListener("click", () => {
+      saveActiveCharacterId(character.id);
+      callbacks.onSelectCharacter(character.id);
+    });
+
+    const edit = button("edit", "roster-edit", () => {
+      callbacks.onEditCharacter(character.id);
+    });
+    // Editing must not also select; the row's own click would otherwise
+    // fire and change who you are playing as a side effect.
+    edit.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+    row.appendChild(edit);
+
+    list.appendChild(row);
+  }
+  roster.appendChild(list);
+  roster.appendChild(button("new character", "", callbacks.onNewCharacter));
+  panel.appendChild(roster);
 
   const hostRow = h("div", "menu-row");
   hostRow.appendChild(
@@ -180,7 +225,6 @@ export function renderMenu(
   panel.appendChild(joinRow);
 
   const manageRow = h("div", "menu-row");
-  manageRow.appendChild(button("characters", "", callbacks.onManageCharacters));
   manageRow.appendChild(button("teams", "", callbacks.onManageTeams));
   manageRow.appendChild(button("quick match", "", callbacks.onQuickMatch));
   panel.appendChild(manageRow);
@@ -191,61 +235,6 @@ export function renderMenu(
 /* -------------------------------------------------------------------------- */
 /* Character / team list screens                                               */
 /* -------------------------------------------------------------------------- */
-
-export interface CharacterListCallbacks {
-  readonly onNew: () => void;
-  readonly onEdit: (id: string) => void;
-  readonly onBack: () => void;
-}
-
-export function renderCharacterList(
-  root: HTMLElement,
-  characters: readonly StoredCharacter[],
-  problems: readonly string[],
-  callbacks: CharacterListCallbacks,
-): void {
-  root.replaceChildren();
-  const panel = h("div", "screen");
-  panel.appendChild(h("h2", "screen-title", "characters"));
-
-  // Storage problems are shown rather than swallowed: a user whose saved
-  // build failed to load needs to know, not silently see it missing.
-  for (const problem of problems) {
-    panel.appendChild(h("div", "screen-problem", problem));
-  }
-
-  if (characters.length === 0) {
-    panel.appendChild(h("p", "screen-empty", "No characters yet."));
-  }
-
-  const list = h("div", "entity-list");
-  for (const character of characters) {
-    const row = h("div", "entity-row");
-    row.appendChild(
-      h(
-        "span",
-        "entity-name",
-        `${character.name} — ${character.primaryProfession}${
-          character.secondaryProfession !== undefined ? `/${character.secondaryProfession}` : ""
-        }`,
-      ),
-    );
-    row.appendChild(
-      button("edit", "", () => {
-        callbacks.onEdit(character.id);
-      }),
-    );
-    list.appendChild(row);
-  }
-  panel.appendChild(list);
-
-  const actions = h("div", "menu-row");
-  actions.appendChild(button("new character", "primary", callbacks.onNew));
-  actions.appendChild(button("back", "", callbacks.onBack));
-  panel.appendChild(actions);
-
-  root.appendChild(panel);
-}
 
 export interface TeamListCallbacks {
   readonly onNew: () => void;
