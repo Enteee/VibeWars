@@ -31,6 +31,11 @@
   packages = [
     pkgs.jq
     pkgs.git
+    # Issues, PRs and release work against github.com/Enteee/Vibewars. Pinned
+    # here rather than installed ad hoc so that anything scripted against it
+    # (and any agent doing repository chores) gets the same version everyone
+    # else has.
+    pkgs.gh
     pkgs.shellcheck
     pkgs.actionlint
     # Browser tests (brief §31 "Browser tests") drive this Chromium rather
