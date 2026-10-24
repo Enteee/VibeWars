@@ -13,6 +13,14 @@ build/
 devenv.local.nix
 .direnv/
 
+# claude-bot: per-role bot tokens, message bus and git worktrees.
+/.bots/
+
+# A literal "undefined" directory is what you get when a script
+# interpolates an unset variable into an output path. Never intentional,
+# and easy to commit by accident.
+/undefined/
+
 # Test / coverage
 coverage/
 .vitest/

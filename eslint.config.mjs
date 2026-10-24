@@ -63,7 +63,17 @@ export default defineConfig([
   },
 
   {
-    files: ["apps/server/**/*.ts", "packages/**/*.ts", "*.config.ts", "*.config.mjs"],
+    files: [
+      "apps/server/**/*.ts",
+      "packages/**/*.ts",
+      "*.config.ts",
+      "*.config.mjs",
+      // Everything under scripts/ is a Node program. scripts/dev.mjs predates
+      // this entry and still imports process/setTimeout explicitly, which is
+      // harmless; the bot bridge needs `fetch` and `Buffer`, which have no
+      // import form.
+      "scripts/**/*.mjs",
+    ],
     languageOptions: { globals: globals.node },
   },
 

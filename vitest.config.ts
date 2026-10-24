@@ -11,7 +11,11 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
-    include: ["{apps,packages}/*/src/**/*.test.ts"],
+    // `scripts/` is plain JSDoc-typed .mjs rather than a workspace package,
+    // so it needs its own entry: the claude-bot Telegram bridge keeps its
+    // wire contract there (scripts/bots/protocol.mjs) precisely so it can be
+    // tested without a live bot token.
+    include: ["{apps,packages}/*/src/**/*.test.ts", "scripts/**/*.test.mjs"],
     reporters: ["default"],
     // Networked combat tests drive a real server through multi-second
     // cast and recharge timers, so the 5s default is too tight for them.

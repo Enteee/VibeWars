@@ -1,3 +1,11 @@
+# Claude Code is unfree, and devenv evaluates its own nixpkgs rather than the
+# host system's, so the allowance has to be granted here too. Scoped to the one
+# package rather than `allowUnfree: true`, which would silently permit any
+# unfree dependency anything else in this file pulls in.
+nixpkgs:
+  permittedUnfreePackages:
+    - claude-code
+
 inputs:
   git-hooks:
     url: github:cachix/git-hooks.nix

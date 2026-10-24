@@ -136,6 +136,22 @@ node packages/game-data/dist/run-cli.js duel elementalist.fireball ranger.troll-
 The duel runner simulates real combat headlessly and deterministically
 from a seed — useful for balance questions and for reproducing bugs.
 
+### Agent swarm
+
+```sh
+claude-bot architect   # a sandboxed Claude agent, in a role, on Telegram
+```
+
+Each role runs in its own bubblewrap jail on its own `git worktree`, and
+coordinates with the others through a Telegram supergroup — one topic per
+role — which doubles as a log and a remote control you can read on a
+phone. Inside the jail, `tg send`/`tg inbox`/`tg wait`/`tg roster` are the
+agent's only way out; the bot token stays outside it.
+
+Needs one manager-bot token in `devenv.local.nix`. Setup, the two taps
+each new role costs, and why it is built this way:
+[ADR-0014](docs/adr/0014-agent-coordination.md).
+
 ## License
 
 AGPL-3.0-or-later. No proprietary Guild Wars assets, code or map

@@ -3,6 +3,12 @@
 {
   name = "vibewars";
 
+  # `claude-bot <role>` — a sandboxed Claude agent that coordinates with its
+  # peers over Telegram. Kept in its own module because it is orthogonal to
+  # the build toolchain below and carries its own options, which you set in
+  # devenv.local.nix. See docs/adr/0014-agent-coordination.md.
+  imports = [ ./nix/claude-bot.nix ];
+
   # ---------------------------------------------------------------------------
   # Toolchain
   #
