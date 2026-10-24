@@ -24,17 +24,16 @@ may be hours old.
 ```sh
 git fetch origin
 git merge origin/main      # merge, never rebase: no force-push here
+pnpm run ci                # what you tested must be what you push
 ```
 
-Resolve conflicts in your branch, not in the PR's web UI. Do not run
-the test suite: the pipeline does that, and QA does the root-cause
-analysis when it fails.
+Resolve conflicts in your branch, not in the PR's web UI.
 
 ## When main moves
 
 When someone says on Telegram that a PR merged, merge `origin/main` into
-every branch you have an open PR for, within your next loop, then push and let the
-pipeline run. If `hub pr view <n> --json mergeStateStatus`
+every branch you have an open PR for, within your next loop. Re-run
+`pnpm run ci`, then push. If `hub pr view <n> --json mergeStateStatus`
 says `BEHIND` or `DIRTY`, the PR is yours to fix, not the reviewer's.
 
 ## One issue, one branch
