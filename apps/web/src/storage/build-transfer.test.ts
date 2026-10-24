@@ -295,6 +295,27 @@ describe("build format version", () => {
     expect(result.problems[0]).toMatch(/equipment is missing/);
   });
 
+  it("refuses a pre-equipment build string even though its formatVersion is 1", () => {
+    // Exactly what the game exported before gear existed. Its version
+    // number matches the reset constant, so the missing gear is what
+    // refuses it.
+    const preEquipment = {
+      format: BUILD_FORMAT,
+      formatVersion: 1,
+      name: "Old Share",
+      primaryProfession: "warrior",
+      secondaryProfession: null,
+      attributes: [{ attributeId: "warrior.swordsmanship", rank: 12 }],
+      skillBar: ["warrior.sever-artery-lite", null, null, null, null, null, null, null],
+    };
+    const result = importBuild(JSON.stringify(preEquipment), "id", 0);
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      return;
+    }
+    expect(result.problems).toEqual(["This build's equipment is missing or malformed."]);
+  });
+
   it("refuses a build with no usable format version", () => {
     const result = importBuild(
       JSON.stringify({ ...CURRENT_PAYLOAD, formatVersion: "one" }),
