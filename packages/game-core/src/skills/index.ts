@@ -56,6 +56,7 @@ export type {
   SkillContext,
   SkillCost,
   SkillEffect,
+  SkillType,
   TargetRule,
 } from "./types.js";
 

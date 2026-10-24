@@ -108,9 +108,17 @@ export type SkillEffect =
 /* Skills                                                                      */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * What kind of skill this is, as GW1 names it. Shown to the player as a
+ * badge, so a skill's nature reads by shape rather than by colour (#75).
+ * Nothing in the rules keys on it yet.
+ */
+export type SkillType = "attack" | "spell" | "enchantment" | "hex" | "skill";
+
 export interface Skill {
   readonly id: string;
   readonly name: string;
+  readonly type: SkillType;
   /**
    * The attribute this skill belongs to, and therefore which professions
    * may equip it (brief §6's skill shape).
