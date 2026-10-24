@@ -16,7 +16,8 @@ actionlint, the secret scanners and the rest unnoticed. `enterTest` ran
 
 ## Decision
 
-**D1. CI uses devenv itself.** `cachix/install-nix-action` installs Nix, the
+**D1. CI uses devenv itself.** `nixbuild/nix-quick-install-action` installs
+Nix (single-user, so the store cache can be restored into it), the
 devenv CLI is installed from the nixpkgs revision `devenv.lock` pins, and
 every check runs as `devenv shell -- <cmd>`. The setup is the composite
 action `.github/actions/devenv`. The agent tooling is left out of CI's shell

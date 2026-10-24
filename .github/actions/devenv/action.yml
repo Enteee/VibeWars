@@ -14,7 +14,10 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: cachix/install-nix-action@v31
+    # Single-user Nix with a store the runner owns: cache-nix-action restores
+    # the store with tar as the runner user, and cannot write into the
+    # root-owned store a multi-user install (cachix/install-nix-action) makes.
+    - uses: nixbuild/nix-quick-install-action@v30
 
     - uses: nix-community/cache-nix-action@v6
       with:
