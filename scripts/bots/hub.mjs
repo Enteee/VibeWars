@@ -196,6 +196,17 @@ fs.renameSync(tmp, path.join(reqDir, `${id}.json`));
 // a pipe: process.exit() straight after the write drops whatever the reader has
 // not taken yet, so `hub … | jq` saw truncated JSON (issue #37). From here on
 // the exit status is set and the loop left, and Node exits once it has flushed.
+//
+// Waiting for the flush means a reader that stops early, `hub … | head -1`,
+// now gets an EPIPE to us rather than being outrun by the exit. That is the
+// reader's choice, not a failure: stop quietly, with the status already set.
+process.stdout.on("error", (error) => {
+  if ("code" in error && error.code === "EPIPE") {
+    process.exit();
+  }
+  throw error;
+});
+
 const deadline = Date.now() + TIMEOUT_MS;
 for (;;) {
   let raw;
@@ -241,8 +252,13 @@ for (;;) {
       encoding: "utf8",
       maxBuffer: Infinity,
     });
-    process.stdout.write(typeof filtered.stdout === "string" ? filtered.stdout : "");
-    process.stderr.write(typeof filtered.stderr === "string" ? filtered.stderr : "");
+    if (filtered.error !== undefined) {
+      console.error(`hub: jq failed: ${filtered.error.message}`);
+      process.exitCode = 1;
+      break;
+    }
+    process.stdout.write(filtered.stdout);
+    process.stderr.write(filtered.stderr);
     process.exitCode = filtered.status ?? 1;
     break;
   }
