@@ -457,11 +457,8 @@ async function evaluateGuards(guards, argv) {
     if (guard === "checks-green") {
       const read = await restChecks(sha, cfg);
       if ("error" in read) {
-        // An unreadable answer is never an empty one (#46). Say which it
-        // was: GitHub's limit, with when it lifts, or whatever else failed.
-        if (Date.now() < limitedUntil || (await budgetExhausted())) {
-          return { ok: false, reason: limitedMessage(limitedUntil).trim() };
-        }
+        // An unreadable answer is never an empty one (#46). If the budget
+        // is what ran out, handle() answers with the limit and its reset.
         return {
           ok: false,
           reason: `could not read checks for #${pr} at ${sha.slice(0, 7)}: ${read.error}`,

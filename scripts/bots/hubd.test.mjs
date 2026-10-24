@@ -51,7 +51,7 @@ if (group === "api" && sub !== "graphql") {
   if (rel === "issues/9") { console.log(JSON.stringify({ ...pull9, pull_request: {} })); process.exit(0); }
   if (rel === "pulls/9") { console.log(JSON.stringify(pull9)); process.exit(0); }
   // A commit's checks: what the test planted for that SHA, or none.
-  const commit = /^commits\/([0-9a-f]+)\/(check-runs|status)/.exec(rel);
+  const commit = /^commits\\/([0-9a-f]+)\\/(check-runs|status)/.exec(rel);
   if (commit !== null) {
     if (fs.existsSync(path.join(state, "rest-fails"))) { console.error("HTTP 500: Server Error"); process.exit(1); }
     const planted = path.join(state, commit[2] + "-" + commit[1] + ".json");
@@ -730,14 +730,18 @@ describe("hubd recording verdicts and merging", () => {
   }, 20_000);
 
   it("says GitHub is rate-limited, and until when, rather than that checks are missing", async () => {
-    const hubd = await approved(0);
+    // The budget was fine when the merge was let through, and ran out
+    // while the guard read the checks: the case pre-flight cannot catch.
+    const hubd = await approved(5000);
     hubd.failRest();
+    hubd.setRemaining(0);
 
     const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
 
-    expect(answer.allow).toBe(false);
-    expect(String(answer.reason)).toMatch(/rate-limited until \d\d:\d\d/);
-    expect(String(answer.reason)).not.toMatch(/missing/);
+    expect(answer.code).toBe(75);
+    expect(String(answer.stderr)).toMatch(/rate-limited until \d\d:\d\d/);
+    expect(String(answer.stderr)).not.toMatch(/missing/);
+    expect(hubd.calls("pr merge")).toBe(0);
   }, 20_000);
 
   it("says it could not read the checks when GitHub fails for another reason", async () => {
