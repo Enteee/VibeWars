@@ -1,6 +1,6 @@
 import { getSkill, getWeapon, type ActivationRejection } from "@vibewars/game-core";
 
-import type { MatchSnapshot, PlayerSnapshot, SkillSlot } from "../net/match-client.js";
+import type { MatchSnapshot, PlayerSnapshot, SkillSlot } from "../net/match-connection.js";
 import { skillTypeBadgeHtml } from "./icons.js";
 
 /**

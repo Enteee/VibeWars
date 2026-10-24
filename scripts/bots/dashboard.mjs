@@ -16,6 +16,7 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { ROLES } from "./hub-policy.mjs";
+import { formatSpend, readSpend } from "./hub-spend.mjs";
 import { visible } from "./protocol.mjs";
 
 const ROOT = process.env.VIBEWARS_BOT_ROOT ?? path.join(process.cwd(), ".bots");
@@ -221,6 +222,8 @@ function render() {
       `GITHUB  GraphQL ${String(budget.remaining)}/${String(budget.limit)} left, ` +
         `resets ${hhmm(budget.resetAt)}${empty ? "  <- RATE-LIMITED, agents are waiting" : ""}`,
     );
+    // Where it went, measured by hubd (#97).
+    console.log(formatSpend(readSpend(budget.spend)));
   }
 
   /* the roster ------------------------------------------------------------ */

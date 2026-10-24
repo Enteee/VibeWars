@@ -81,10 +81,30 @@ so the silhouette identifies the profession and the colour only supports it.
 | Condition   | Circle plate, glyph inside                            |
 | Hex         | Diamond plate, glyph inside                           |
 | Enchantment | Rounded-square plate, glyph inside                    |
+| Area flash  | Caster's team colour ring at the area's true radius   |
 
 The status plates differ in outline as well as colour. Hex purple and
 enchantment teal are close for a deuteranope (simulated ΔE ≈ 18); diamond
 against square is not.
+
+### Area flash
+
+Where an area skill lands (#5), the scene flashes the area it hit:
+
+- **Colour is the caster's team**: `friend` for your side's splash, `foe`
+  for theirs. Never `target` yellow, which means "your target" and nothing
+  else.
+- **A 2 px ring at the area's true radius**, over a fill of the same colour
+  at 12 % alpha. The ring shows exactly who could be hit. It does not grow or
+  shrink, because an animated radius would misstate the area.
+- **It fades from full to zero alpha over 0.4 s**, then is removed, so a
+  Barrage volley never stacks into a solid disc.
+- **It is drawn under the actors** and over the grid and walls, so it never
+  hides a health bar, a status plate or a target ring.
+
+It cannot be confused with the target ring. The target ring is yellow and
+hugs one actor (5 px outside a radius of 14). The flash is team-coloured,
+at least 40 units in radius, and gone in under half a second.
 
 ### Skill type badges
 
@@ -98,6 +118,16 @@ marker on someone, which carry that marker's colour.
 | Enchantment | Solid teal ring    |
 | Hex         | Broken purple ring |
 | Skill       | Square             |
+
+### UI controls
+
+Buttons in the HUD and menus. Ink on the panel. The states of one control
+differ by shape, so the icon shows the current state at a glance.
+
+| Icon        | Means          | Shape              |
+| ----------- | -------------- | ------------------ |
+| `sound-on`  | Sound is on    | Speaker, two waves |
+| `sound-off` | Sound is muted | Speaker, a cross   |
 
 ## Sizes
 
@@ -138,14 +168,15 @@ generator. Never hand-edit an output file; change the script and re-run.
 | Profession | `apps/web/public/icons/profession/` |
 | Skill type | `apps/web/public/icons/skill-type/` |
 | Status     | `apps/web/public/icons/status/`     |
+| UI         | `apps/web/public/icons/ui/`         |
 
 Each file is a flat SVG of 150–450 bytes with colours baked in, because Phaser
 rasterises SVG textures without CSS. Load it in Phaser with
 `this.load.svg(key, url, { width, height })` at the size you draw it, and in
 HTML with a plain `<img>`.
 
-Adding a status, profession or skill type: add one entry to the matching table
-in the generator, re-run it, and add a row to this page.
+Adding a status, profession, skill type or UI control: add one entry to the
+matching table in the generator, re-run it, and add a row to this page.
 
 ## Sound
 

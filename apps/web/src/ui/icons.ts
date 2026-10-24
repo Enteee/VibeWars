@@ -51,3 +51,8 @@ export function skillTypeBadgeHtml(type: SkillType): string {
   const name = SKILL_TYPE_NAME[type];
   return `<img class="skill-type-badge" src="${skillTypeIcon(type)}" alt="${name}" title="${name}">`;
 }
+
+/** The HUD's mute button (#112): what the sound is now, not what a click does. */
+export function soundIcon(muted: boolean): string {
+  return iconUrl("ui", muted ? "sound-off" : "sound-on");
+}

@@ -63,6 +63,18 @@ describe("checksSatisfied", () => {
     expect(verdict).toMatchObject({ ok: false, failing: ["e2e"] });
   });
 
+  it("refuses a name more than one source reports, rather than letting one win", () => {
+    const verdict = checksSatisfied(
+      [check(EXPECTED[0], "fail"), check(EXPECTED[0], "pass")],
+      EXPECTED,
+    );
+
+    expect(verdict).toMatchObject({ ok: false, ambiguous: EXPECTED, missing: [], failing: [] });
+    expect(explainGuard("checks", verdict)).toBe(
+      `checks — reported by more than one source: ${String(EXPECTED[0])}`,
+    );
+  });
+
   it("tolerates a skipped check", () => {
     expect(
       checksSatisfied([check(EXPECTED[0], "pass"), check("deploy", "skipping")], EXPECTED),

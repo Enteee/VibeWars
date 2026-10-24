@@ -188,11 +188,28 @@ const status = {
 };
 
 // ---------------------------------------------------------------------------
+// UI: controls in the HUD and menus. Ink on the panel. The two states of one
+// control differ by shape, never by colour alone.
+// ---------------------------------------------------------------------------
+
+/** The speaker both sound icons share: a box and a flared cone. */
+const speaker = `<path d="M3 9h4l5-5v16l-5-5H3z" fill="${C.ink}"/>`;
+
+const ui = {
+  // Speaker with two sound waves: sound is on (#112).
+  "sound-on": () =>
+    speaker + `<path d="M15.5 9a4 4 0 0 1 0 6M18.5 6a8 8 0 0 1 0 12" ${stroke(C.ink, 2)}/>`,
+  // Speaker with a cross where the waves were: muted (#112).
+  "sound-off": () => speaker + `<path d="M15.5 9l6 6M21.5 9l-6 6" ${stroke(C.ink, 2)}/>`,
+};
+
+// ---------------------------------------------------------------------------
 
 /** @type {Record<string, Record<string, string>>} */
 const families = {
   profession: Object.fromEntries(Object.entries(profession).map(([k, f]) => [k, svg(f())])),
   "skill-type": Object.fromEntries(Object.entries(skillType).map(([k, f]) => [k, svg(f())])),
+  ui: Object.fromEntries(Object.entries(ui).map(([k, f]) => [k, svg(f())])),
   status: Object.fromEntries(
     Object.entries(status).map(([k, [category, glyph]]) => [k, svg(plates[category](glyph))]),
   ),

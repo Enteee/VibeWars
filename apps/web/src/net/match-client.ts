@@ -10,86 +10,22 @@ import {
   type ServerHello,
 } from "@vibewars/game-protocol";
 
+import type {
+  CombatMessage,
+  MatchConnection,
+  MatchSnapshot,
+  PlayerSnapshot,
+  SkillSlot,
+} from "./match-connection.js";
+
 /**
  * Thin wrapper around the Colyseus browser SDK for the match room.
  *
  * This module is the *only* place in `apps/web` allowed to import
  * `@colyseus/sdk` — everything else (the renderer, the input handler) talks
- * to a plain snapshot/intent interface so the networking layer can change
- * without touching rendering code (ADR-0001).
+ * to the plain snapshot/intent interface in `match-connection.ts`, so the
+ * networking layer can change without touching rendering code (ADR-0001).
  */
-
-export interface PlayerSnapshot {
-  readonly sessionId: string;
-  readonly x: number;
-  readonly y: number;
-  /** Who this player is targeting, or `undefined` for no target. */
-  readonly targetSessionId: string | undefined;
-  readonly health: number;
-  readonly maxHealth: number;
-  readonly energy: number;
-  readonly maxEnergy: number;
-  readonly adrenaline: number;
-  /** Base armor including the off-hand, before statuses. */
-  readonly armor: number;
-  /** Equipped weapon class id, or `undefined` if the server sent none. */
-  readonly weaponId: string | undefined;
-  readonly team: number;
-  readonly dead: boolean;
-  readonly castingSkillId: string | undefined;
-  readonly castRemaining: number;
-  readonly statuses: readonly string[];
-}
-
-export interface MatchSnapshot {
-  readonly selfSessionId: string;
-  readonly players: readonly PlayerSnapshot[];
-  readonly scoreTeam0: number;
-  readonly scoreTeam1: number;
-  readonly elapsedSeconds: number;
-  /** "active" or "finished". */
-  readonly phase: string;
-  /** The winning team, or `undefined` while active or on a draw. */
-  readonly winningTeam: number | undefined;
-  /** "score", "time", or `undefined` while active. */
-  readonly endReason: string | undefined;
-}
-
-/** One slot of the server-assigned skill bar. */
-export interface SkillSlot {
-  readonly id: string;
-  readonly name: string;
-  readonly energyCost: number;
-  readonly adrenalineCost: number;
-  readonly activationSeconds: number;
-  readonly rechargeSeconds: number;
-}
-
-export interface CombatMessage {
-  readonly casterSessionId: string;
-  readonly skillId: string;
-  readonly events: readonly {
-    readonly kind: string;
-    readonly targetId?: string;
-    readonly amount?: number;
-  }[];
-}
-
-export interface MatchConnection {
-  readonly selfSessionId: string;
-  /** Notifies when the connection drops and when it comes back. */
-  onConnectionChange(handler: (state: "online" | "reconnecting" | "lost") => void): void;
-  /** The match's static geometry, received once on join (brief §19). */
-  readonly map: MapDescriptor;
-  /** The server-assigned skill bar, received once on join. */
-  readonly skillBar: readonly SkillSlot[];
-  sendIntent(intent: ClientIntent): void;
-  getSnapshot(): MatchSnapshot;
-  onCombat(handler: (message: CombatMessage) => void): void;
-  /** Why the server refused one of this player's casts, sent to them alone. */
-  onCastRefused(handler: (message: CastRefusedMessage) => void): void;
-  disconnect(): Promise<void>;
-}
 
 /** Build the Colyseus endpoint from the page's own origin, over the right protocol. */
 export function endpointFromLocation(location: Pick<Location, "protocol" | "host">): string {

@@ -25,7 +25,7 @@ import type { Skill } from "./types.js";
 /** Touch/melee-ish range: must be adjacent. */
 const RANGE_MELEE = 40;
 /** Normal spell range. */
-const RANGE_SPELL = 420;
+export const RANGE_SPELL = 420;
 /** Longbow-ish range. */
 const RANGE_LONG = 520;
 

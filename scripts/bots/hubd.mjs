@@ -30,6 +30,7 @@ import {
   pathsWithin,
 } from "./hub-guards.mjs";
 import {
+  checksFromRest,
   ghIssue,
   ghPull,
   listPath,
@@ -39,6 +40,7 @@ import {
   planView,
   renderView,
 } from "./hub-rest.mjs";
+import { BOARD_QUERY, costBetween, parseBoardPage, recordSpend } from "./hub-spend.mjs";
 import { obj } from "./protocol.mjs";
 import {
   COMPANY_PATHSPECS,
@@ -114,7 +116,7 @@ const REPO_SCOPED = new Set(["issue", "pr", "label", "run", "workflow", "release
 
 /**
  * @returns {{
- *   repo: string, owner: string, project: number, expectedChecks: string[],
+ *   repo: string, owner: string, project: number, projectId: string, expectedChecks: string[],
  *   columns: string[], acting: Record<string, string[] | undefined>,
  * }}
  */
@@ -129,6 +131,7 @@ function company() {
     repo,
     owner: repo.split("/")[0] ?? "",
     project: typeof cfg.project === "number" ? cfg.project : 0,
+    projectId: typeof cfg.projectId === "string" ? cfg.projectId : "",
     expectedChecks: Array.isArray(cfg.expectedChecks) ? cfg.expectedChecks.map(String) : [],
     acting: /** @type {Record<string, string[] | undefined>} */ (obj(cfg.acting)),
     columns: Array.isArray(cfg.columns) ? cfg.columns.map(String) : [],
@@ -172,7 +175,7 @@ function run(file, args, cwd, extraEnv = {}) {
  * @param {string[]} args
  * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
  */
-function gh(args) {
+function ghRaw(args) {
   // GH_REPO answers gh api's `{owner}/{repo}` placeholders, which gh would
   // otherwise take from the git remote of the directory it runs in.
   return run("gh", args, GH_CWD, { GH_REPO: company().repo });
@@ -198,6 +201,39 @@ async function rest(rel, cfg) {
   } catch {
     return undefined;
   }
+}
+
+/**
+ * The checks on one commit, read from REST for exactly that commit (#96).
+ *
+ * `gh pr checks` was GraphQL, so an exhausted budget read as "no checks"
+ * and a merge was refused as "checks missing" while CI was green. It also
+ * read the pull request's head *now*, not the commit the guards pinned.
+ * This reads the pinned SHA and costs no GraphQL; when it cannot read, it
+ * says why, and never answers "none".
+ *
+ * @param {string} sha
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ checks: { name: string, conclusion: string }[] } | { error: string }>}
+ */
+async function restChecks(sha, cfg) {
+  /** @type {unknown[]} */
+  const answers = [];
+  for (const rel of [
+    `commits/${sha}/check-runs?per_page=100`,
+    `commits/${sha}/status?per_page=100`,
+  ]) {
+    const result = await gh(["api", `repos/${cfg.repo}/${rel}`]);
+    if (result.code !== 0) {
+      return { error: result.stderr.trim().split("\n")[0] ?? "" };
+    }
+    try {
+      answers.push(JSON.parse(result.stdout));
+    } catch {
+      return { error: `${rel.replace(/\?.*/, "")} did not answer JSON` };
+    }
+  }
+  return checksFromRest(answers[0], answers[1]);
 }
 
 /**
@@ -313,20 +349,71 @@ function remoteUrl(cfg) {
 let limitedUntil = 0;
 
 /**
- * Ask GitHub how much GraphQL budget is left, and remember an empty one.
+ * The budget as last read, and when. A reading this recent stands in for
+ * the "before" of the next call, since hubd itself is the only spender.
  *
- * `rate_limit` is free: GitHub does not count it against either bucket, so
- * asking after every failure costs nothing.
+ * @type {{ limit: number, remaining: number, resetAt: number, at: number } | null}
+ */
+let lastBudget = null;
+const BUDGET_FRESH_MS = 60_000;
+
+/**
+ * The last hour of GraphQL-bound calls, for the dashboard (#97).
+ *
+ * @type {import("./hub-spend.mjs").Spend[]}
+ */
+let spendWindow = [];
+
+/** Whose request is being served, so its calls are written down as theirs. */
+let servingRole = "hubd";
+
+/** `ratelimit.json`: the budget, and where the last hour of it went. */
+function writeBudget() {
+  if (lastBudget !== null) {
+    const { at, ...budget } = lastBudget;
+    writeAtomic(RATE_LIMIT, JSON.stringify({ checkedAt: at, ...budget, spend: spendWindow }));
+  }
+}
+
+/**
+ * @param {string} role
+ * @param {string} cmd
+ * @param {number} ms
+ * @param {number | null} cost
+ */
+function noteSpend(role, cmd, ms, cost) {
+  const at = Date.now();
+  spendWindow = recordSpend(spendWindow, { at, role, cmd, ms, cost }, at);
+  writeBudget();
+}
+
+/**
+ * Read the GraphQL budget. `rate_limit` is free: GitHub does not count it
+ * against either bucket, so asking around every call costs nothing.
+ *
+ * @returns {Promise<{ limit: number, remaining: number, resetAt: number, at: number } | null>}
+ */
+async function readBudget() {
+  const result = await ghRaw(["api", "rate_limit"]);
+  const graphql = result.code === 0 ? parseRateLimit(result.stdout) : null;
+  if (graphql === null) {
+    return null;
+  }
+  lastBudget = { ...graphql, at: Date.now() };
+  writeBudget();
+  return lastBudget;
+}
+
+/**
+ * Ask GitHub how much GraphQL budget is left, and remember an empty one.
  *
  * @returns {Promise<boolean>} whether the budget is exhausted right now
  */
 async function budgetExhausted() {
-  const result = await gh(["api", "rate_limit"]);
-  const graphql = result.code === 0 ? parseRateLimit(result.stdout) : null;
+  const graphql = await readBudget();
   if (graphql === null) {
     return false;
   }
-  writeAtomic(RATE_LIMIT, JSON.stringify({ checkedAt: Date.now(), ...graphql }));
   if (graphql.remaining > 0) {
     limitedUntil = 0;
     return false;
@@ -344,6 +431,34 @@ async function budgetExhausted() {
  */
 function limitedResponse() {
   return { allow: true, code: 75, stdout: "", stderr: limitedMessage(limitedUntil) };
+}
+
+/**
+ * gh, with every GraphQL-bound call written down (#97): its cost is the
+ * drop in the budget across it, which is exact because hubd runs one call
+ * at a time.
+ *
+ * @param {string[]} args
+ * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
+ */
+async function gh(args) {
+  if (!usesGraphql("gh", args)) {
+    return ghRaw(args);
+  }
+  const before =
+    lastBudget !== null && Date.now() - lastBudget.at < BUDGET_FRESH_MS
+      ? lastBudget
+      : await readBudget();
+  const started = Date.now();
+  const result = await ghRaw(args);
+  const ms = Date.now() - started;
+  noteSpend(
+    servingRole,
+    `${args[0] ?? ""} ${args[1] ?? ""}`,
+    ms,
+    costBetween(before, await readBudget()),
+  );
+  return result;
 }
 
 /**
@@ -437,23 +552,16 @@ async function evaluateGuards(guards, argv) {
 
   for (const guard of guards) {
     if (guard === "checks-green") {
-      const result = await gh(["pr", "checks", pr, "--repo", cfg.repo, "--json", "name,bucket"]);
-      /** @type {{ name: string, conclusion: string }[]} */
-      let checks = [];
-      if (result.code === 0 || result.stdout !== "") {
-        try {
-          /** @type {unknown} */
-          const raw = JSON.parse(result.stdout);
-          const rows = /** @type {Record<string, unknown>[]} */ (Array.isArray(raw) ? raw : []);
-          checks = rows.map((row) => ({
-            name: String(row.name),
-            conclusion: String(row.bucket),
-          }));
-        } catch {
-          checks = [];
-        }
+      const read = await restChecks(sha, cfg);
+      if ("error" in read) {
+        // An unreadable answer is never an empty one (#46). If the budget
+        // is what ran out, handle() answers with the limit and its reset.
+        return {
+          ok: false,
+          reason: `could not read checks for #${pr} at ${sha.slice(0, 7)}: ${read.error}`,
+        };
       }
-      const verdict = checksSatisfied(checks, cfg.expectedChecks);
+      const verdict = checksSatisfied(read.checks, cfg.expectedChecks);
       if (!verdict.ok) {
         return { ok: false, reason: explainGuard("checks", verdict) };
       }
@@ -665,34 +773,59 @@ function writeAtomic(file, contents) {
  */
 async function boardSnapshot(cfg) {
   if (boardCache === null || Date.now() - boardCache.at > BOARD_TTL_MS) {
-    const result = await gh([
-      "project",
-      "item-list",
-      String(cfg.project),
-      "--owner",
-      cfg.owner,
-      "--format",
-      "json",
-      "--limit",
-      "1000",
-    ]);
-    if (result.code !== 0) {
+    const listing = await boardListing(cfg);
+    if (listing === null) {
       // Board membership changes rarely. A snapshot a little out of date
       // serves visibility checks better than refusing every read while
       // GitHub is unreachable or the GraphQL budget is gone.
       return boardCache?.stdout ?? null;
     }
-    try {
-      /** @type {unknown} */
-      const items = JSON.parse(result.stdout);
-      const at = Date.now();
-      boardCache = { at, stdout: result.stdout, numbers: boardNumbers(items, cfg.repo) };
-      writeAtomic(BOARD_SNAPSHOT, JSON.stringify({ at, board: items }));
-    } catch {
-      return null;
-    }
+    const at = Date.now();
+    const stdout = `${JSON.stringify(listing)}\n`;
+    boardCache = { at, stdout, numbers: boardNumbers(listing, cfg.repo) };
+    writeAtomic(BOARD_SNAPSHOT, JSON.stringify({ at, board: listing }));
   }
   return boardCache.stdout;
+}
+
+/**
+ * The board as `gh project item-list --format json` lists it, cut down to
+ * what is read, from BOARD_QUERY a page at a time (#97). Its cost comes
+ * back with the answer, so it is written down exactly.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ items: Record<string, unknown>[], totalCount: number } | null>}
+ */
+async function boardListing(cfg) {
+  /** @type {Record<string, unknown>[]} */
+  const items = [];
+  /** @type {string | null} */
+  let cursor = null;
+  for (;;) {
+    const started = Date.now();
+    const result = await ghRaw([
+      "api",
+      "graphql",
+      "-f",
+      `query=${BOARD_QUERY}`,
+      "-f",
+      `project=${cfg.projectId}`,
+      ...(cursor === null ? [] : ["-f", `cursor=${cursor}`]),
+    ]);
+    const page = result.code === 0 ? parseBoardPage(result.stdout) : null;
+    noteSpend("hubd", "board snapshot", Date.now() - started, page?.cost ?? null);
+    if (page === null) {
+      return null;
+    }
+    if (page.budget !== null && lastBudget !== null) {
+      lastBudget = { ...lastBudget, ...page.budget, at: Date.now() };
+    }
+    items.push(...page.items);
+    if (page.next === null) {
+      return { items, totalCount: page.totalCount };
+    }
+    cursor = page.next;
+  }
 }
 
 /** Who counts as a member changes more rarely still. */
@@ -955,7 +1088,14 @@ async function handle(request) {
     return limitedResponse();
   }
 
-  const response = await serve(request, verdict, acting);
+  servingRole = role;
+  /** @type {Record<string, unknown>} */
+  let response;
+  try {
+    response = await serve(request, verdict, acting);
+  } finally {
+    servingRole = "hubd";
+  }
 
   // GitHub's own error for an exhausted budget is often something else
   // entirely ("unknown owner type"), and a visibility or guard check that
