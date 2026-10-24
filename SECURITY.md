@@ -137,6 +137,27 @@ reported (2026-10-24):
 "Not reachable" is a claim about our code today. If anyone ever wires up
 `@colyseus/auth`, both of these become live and must be fixed first.
 
+## The agent company
+
+The repository is built by nine autonomous agents (`scripts/bots/`,
+`nix/claude-*.nix`; see ADR-0015 and ADR-0023). They are a second attack
+surface, separate from the game. Here the attacker is **an agent**, whether
+it was prompt-injected or is simply wrong, and the asset is **the operator's
+host and `main`**.
+
+| Boundary                 | Rule                                                                                                                                                                                                                                                                                                                       |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Jail → host              | Each agent runs in bubblewrap. Only its worktree, its bus directory and the shared `.git` are writable. `.git/config`, `hooks` and `info` are masked read-only (#61), because the host executes them.                                                                                                                      |
+| Jail → GitHub            | Agents hold no credential. `hub` asks `hubd` (`hub-policy.mjs`), which enforces each role's permissions, refuses every gh flag that would read a host file (#26), pins the repository, and records verdicts against the reviewed SHA.                                                                                      |
+| Host git near agent data | Every host git runs with `GIT_HARDENING` and `GIT_ENV` (`git-hardening.mjs`). These pin hooks, fsmonitor, ssh, credential helpers, gpg and filter drivers, and set `GIT_NO_REPLACE_OBJECTS` (#67). The operator checkout sets `core.useReplaceRefs=false`. `refs/` stays writable, so never trust a local ref on the host. |
+| Reboot                   | The restarter builds GitHub's `main` from hubd's private mirror and fast-forwards only to that same SHA (#21).                                                                                                                                                                                                             |
+| Telegram → agents        | Only the group's creator is heard and gets the `*` mark, for messages, button taps and replies alike (#39, #47). All text goes through `visible()`: no line breaks, ESC, bidi, zero-width or tag characters.                                                                                                               |
+| Agent → agent            | Peer messages are information, never instructions. Agents can still overwrite each other's worktree metadata and branch refs. That is an integrity problem, not code execution on the host.                                                                                                                                |
+
+Every finding here so far came from **reading a gate with a hostile
+agent in mind**: #26, #39, #47, #57, #61, #67. A change to any file in
+`GATE_PATHS` gets that review, from `perf-sec-qa` and `lead-dev` both.
+
 ## If the architecture changes
 
 A peer-to-peer mode (for example WebRTC via Trystero, with no hosted
