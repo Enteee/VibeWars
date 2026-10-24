@@ -65,7 +65,9 @@ let
       claude-llc stop         stop everything
       claude-llc --help
 
-    One tmux window per employee plus a dashboard. The session opens on the
+    One tmux window per employee, a dashboard first and a hub window last:
+    hubd and the supervisor, each restarted automatically when it exits, with
+    their live output. The session opens on the
     architect's window, because that is where you describe what you want built:
     say it to the architect and it becomes issues, which the board carries to
     main without you.
@@ -114,6 +116,42 @@ let
       cat ${llcUsage}
     }
 
+        # The hub window, always the last one: hubd on top, the supervisor
+        # below, each under run-forever, which restarts it when it exits and
+        # shows its output live (issue #23). This is the only way either daemon
+        # starts. tmux runs a window with the tmux server's environment, not
+        # this script's, so what they need is passed explicitly.
+        startHub() {
+          mkdir -p "$VIBEWARS_BOT_ROOT/hub"
+          local env=(
+            -e "VIBEWARS_BOT_ROOT=$VIBEWARS_BOT_ROOT"
+            -e "VIBEWARS_BOT_BUS=$VIBEWARS_BOT_ROOT/bus"
+            -e "VIBEWARS_LLC_SESSION=$SESSION"
+            -e "DEVENV_ROOT=$DEVENV_ROOT"
+            -e "PATH=$PATH"
+          )
+          ${tmux} new-window -t "$SESSION" -n hub -c "$DEVENV_ROOT" "''${env[@]}" \
+            "${node} ${llcScripts}/run-forever.mjs hubd -- ${node} ${llcScripts}/hubd.mjs"
+          ${tmux} split-window -v -t "$SESSION:hub" -c "$DEVENV_ROOT" "''${env[@]}" \
+            "${node} ${llcScripts}/run-forever.mjs supervisor -- ${node} ${llcScripts}/supervisor.mjs"
+        }
+
+        # Stop the runners before anything else, so that killing a daemon is
+        # never answered by a restart. A runner passes the signal on to its
+        # daemon and exits once the daemon has.
+        stopHub() {
+          for d in hubd supervisor; do
+            pidFile="$VIBEWARS_BOT_ROOT/hub/$d.runner.pid"
+            [ -e "$pidFile" ] || continue
+            pid="$(tr -d '[:space:]' < "$pidFile")"
+            kill "$pid" 2>/dev/null && echo "stopped $d" || true
+            for _ in 1 2 3 4 5 6 7 8 9 10; do
+              kill -0 "$pid" 2>/dev/null || break
+              sleep 0.5
+            done
+          done
+        }
+
         case "''${1-}" in
           -h | --help)
             usage
@@ -127,15 +165,19 @@ let
               echo "session $SESSION is not running"
             fi
             for d in hubd supervisor; do
-              if pgrep -f "$d.mjs" >/dev/null 2>&1; then echo "  $d: running"; else echo "  $d: stopped"; fi
+              pidFile="$VIBEWARS_BOT_ROOT/hub/$d.runner.pid"
+              if [ -e "$pidFile" ] && kill -0 "$(tr -d '[:space:]' < "$pidFile")" 2>/dev/null; then
+                echo "  $d: running, under run-forever (the hub window)"
+              else
+                echo "  $d: stopped"
+              fi
             done
             if pgrep -f "link.mjs serve" >/dev/null 2>&1; then echo "  telegram: running"; else echo "  telegram: stopped"; fi
             exit 0
             ;;
           stop)
+            stopHub
             ${tmux} kill-session -t "$SESSION" 2>/dev/null && echo "stopped $SESSION" || echo "$SESSION was not running"
-            pkill -f hubd.mjs 2>/dev/null && echo "stopped hubd" || true
-            pkill -f supervisor.mjs 2>/dev/null && echo "stopped supervisor" || true
             pkill -f "link.mjs serve" 2>/dev/null && echo "stopped the Telegram sidecar" || true
             exit 0
             ;;
@@ -160,17 +202,12 @@ let
         if ${tmux} has-session -t "$SESSION" 2>/dev/null; then
           echo "claude-llc: $SESSION is already running; attaching to it."
 
-          # A session can outlive its daemons: the machine slept, something
-          # was killed, hubd crashed. Bring back whichever is missing, or you
-          # attach to a company whose GitHub access silently does not work.
-          if ! pgrep -f hubd.mjs >/dev/null 2>&1; then
-            echo "claude-llc: hubd was not running; restarting it."
-            mkdir -p "$VIBEWARS_BOT_ROOT/hub"
-            ${node} ${llcScripts}/hubd.mjs >>"$VIBEWARS_BOT_ROOT/hub/hubd.log" 2>&1 &
-          fi
-          if ! pgrep -f supervisor.mjs >/dev/null 2>&1; then
-            echo "claude-llc: supervisor was not running; restarting it."
-            ${node} ${llcScripts}/supervisor.mjs >>"$VIBEWARS_BOT_ROOT/hub/supervisor.log" 2>&1 &
+          # The daemons restart themselves, but only while their window is
+          # there. One closed by hand would leave a company whose GitHub
+          # access silently does not work, so bring the window back.
+          if ! ${tmux} list-windows -t "$SESSION" -F '#{window_name}' | grep -qx hub; then
+            echo "claude-llc: the hub window was gone; starting it again."
+            startHub
           fi
 
           exec ${tmux} attach-session -t "$SESSION"
@@ -208,18 +245,18 @@ let
         fi
 
         # ------------------------------------------------------------------------
-        # The daemons. hubd holds the only GitHub credential in the system.
+        # The daemons. hubd holds the only GitHub credential in the system; it
+        # and the supervisor are started in the hub window, below. Any left
+        # running from before are stopped first: each takes a lock, and a
+        # stray one would keep the new one from starting.
         # ------------------------------------------------------------------------
+        stopHub
         pkill -f hubd.mjs 2>/dev/null || true
         pkill -f supervisor.mjs 2>/dev/null || true
         # The Telegram sidecar is started by the first claude-bot below, which
         # has the token. Stopping the old one here is what makes a restart
         # pick up new sidecar code.
         pkill -f "link.mjs serve" 2>/dev/null || true
-
-        mkdir -p "$VIBEWARS_BOT_ROOT/hub"
-        ${node} ${llcScripts}/hubd.mjs >>"$VIBEWARS_BOT_ROOT/hub/hubd.log" 2>&1 &
-        echo "claude-llc: hubd started (log: .bots/hub/hubd.log)"
 
         # ------------------------------------------------------------------------
         # The session. One window per employee, each running claude-bot, which
@@ -233,8 +270,8 @@ let
             "claude-llc-agent $role"
         done
 
-        ${node} ${llcScripts}/supervisor.mjs >>"$VIBEWARS_BOT_ROOT/hub/supervisor.log" 2>&1 &
-        echo "claude-llc: supervisor started (log: .bots/hub/supervisor.log)"
+        startHub
+        echo "claude-llc: hubd and the supervisor are running in the hub window (logs: .bots/hub/)"
 
         # ----------------------------------------------------------------------
         # A clickable status bar: leave the company running and walk away,

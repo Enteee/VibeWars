@@ -18,6 +18,8 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { parseAlive } from "./hub-health.mjs";
+
 const HUBD = path.join(path.dirname(fileURLToPath(import.meta.url)), "hubd.mjs");
 const HUB = path.join(path.dirname(fileURLToPath(import.meta.url)), "hub.mjs");
 
@@ -94,20 +96,18 @@ async function startHubd(remaining) {
     JSON.stringify({ repo: "Enteee/VibeWars", project: 2, columns: [], expectedChecks: [] }),
   );
 
-  const child = spawn(process.execPath, [HUBD], {
-    env: {
-      ...process.env,
-      PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
-      VIBEWARS_BOT_ROOT: root,
-      DEVENV_ROOT: repo,
-      VIBEWARS_GIT_REMOTE: path.join(dir, "remote.git"),
-      FAKE_GH_STATE: state,
-      // Something only hubd's environment holds, to prove a filter cannot
-      // reach it.
-      HUBD_SECRET: "leaked",
-    },
-    stdio: "ignore",
-  });
+  const env = {
+    ...process.env,
+    PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
+    VIBEWARS_BOT_ROOT: root,
+    DEVENV_ROOT: repo,
+    VIBEWARS_GIT_REMOTE: path.join(dir, "remote.git"),
+    FAKE_GH_STATE: state,
+    // Something only hubd's environment holds, to prove a filter cannot
+    // reach it.
+    HUBD_SECRET: "leaked",
+  };
+  const child = spawn(process.execPath, [HUBD], { env, stdio: "ignore" });
   running.push({ child, dir });
 
   const hub = path.join(root, "hub");
@@ -117,6 +117,24 @@ async function startHubd(remaining) {
   return {
     root,
     hub,
+    /**
+     * Start a second hubd on the same company, and wait for it to exit.
+     *
+     * @returns {Promise<{ code: number | null, stderr: string }>}
+     */
+    another() {
+      return new Promise((resolve) => {
+        const second = spawn(process.execPath, [HUBD], {
+          env,
+          stdio: ["ignore", "ignore", "pipe"],
+        });
+        let stderr = "";
+        second.stderr.on("data", (/** @type {Buffer} */ chunk) => (stderr += chunk.toString()));
+        second.on("exit", (code) => {
+          resolve({ code, stderr });
+        });
+      });
+    },
     repo,
     remote: path.join(dir, "remote.git"),
     /** @param {number} left */
@@ -195,6 +213,42 @@ const JQ = (() => {
 })();
 
 const BOARD_READ = ["project", "item-list", "2", "--format", "json", "--limit", "200"];
+
+describe("hubd's heartbeat and lock", () => {
+  it("writes a heartbeat the dashboard can read", async () => {
+    const hubd = await startHubd(1234);
+
+    await until(
+      () =>
+        parseAlive(fs.readFileSync(path.join(hubd.hub, "hubd.alive"), "utf8"))?.rateLimit !== null,
+      "a heartbeat with the budget in it",
+    );
+    const beat = parseAlive(fs.readFileSync(path.join(hubd.hub, "hubd.alive"), "utf8"));
+    expect(beat).toMatchObject({ served: 0, refused: 0, lastError: null });
+    expect(beat?.rateLimit).toMatchObject({ graphqlRemaining: 1234, graphqlLimit: 5000 });
+
+    await hubd.request("developer-1", "gh", ["issue", "view", "7"]);
+    await hubd.request("developer-1", "gh", ["repo", "delete"]);
+    await until(
+      () =>
+        (parseAlive(fs.readFileSync(path.join(hubd.hub, "hubd.alive"), "utf8"))?.refused ?? 0) > 0,
+      "the counters in the heartbeat",
+    );
+    expect(parseAlive(fs.readFileSync(path.join(hubd.hub, "hubd.alive"), "utf8"))).toMatchObject({
+      served: 1,
+      refused: 1,
+    });
+  }, 20_000);
+
+  it("refuses to start a second hubd on the same spool", async () => {
+    const hubd = await startHubd(1234);
+
+    const second = await hubd.another();
+
+    expect(second.code).toBe(1);
+    expect(second.stderr).toMatch(/another hubd holds/);
+  }, 20_000);
+});
 
 describe("hubd and the GraphQL budget", () => {
   it("serves every agent's board read from one snapshot", async () => {

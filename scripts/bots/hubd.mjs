@@ -22,6 +22,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { isBoardRead, limitedMessage, parseRateLimit, usesGraphql } from "./hub-budget.mjs";
 import { hasFilter } from "./hub-filter.mjs";
 import { approvalsSatisfied, checksSatisfied, explainGuard } from "./hub-guards.mjs";
+import { HEARTBEAT_MS } from "./hub-health.mjs";
 import {
   ghIssue,
   ghPull,
@@ -34,6 +35,7 @@ import {
 } from "./hub-rest.mjs";
 import { obj } from "./protocol.mjs";
 import { ROLES, authorize, parseMerge, parseReview, touchesGate } from "./hub-policy.mjs";
+import { takeLock } from "./lock.mjs";
 import {
   boardNumbers,
   isInternal,
@@ -288,6 +290,13 @@ function remoteUrl(cfg) {
 let limitedUntil = 0;
 
 /**
+ * What the heartbeat reports, kept as hubd runs.
+ *
+ * @type {{ served: number, refused: number, lastError: string | null, rateLimit: import("./hub-health.mjs").RateLimit | null }}
+ */
+const stats = { served: 0, refused: 0, lastError: null, rateLimit: null };
+
+/**
  * Ask GitHub how much GraphQL budget is left, and remember an empty one.
  *
  * `rate_limit` is free: GitHub does not count it against either bucket, so
@@ -302,6 +311,11 @@ async function budgetExhausted() {
     return false;
   }
   writeAtomic(RATE_LIMIT, JSON.stringify({ checkedAt: Date.now(), ...graphql }));
+  stats.rateLimit = {
+    graphqlRemaining: graphql.remaining,
+    graphqlLimit: graphql.limit,
+    graphqlResetAt: graphql.resetAt,
+  };
   if (graphql.remaining > 0) {
     limitedUntil = 0;
     return false;
@@ -1055,11 +1069,17 @@ async function drain(role) {
         argv: Array.isArray(raw.argv) ? raw.argv.map(String) : [],
       });
     } catch (error) {
+      stats.lastError = error instanceof Error ? error.message : "failed";
       response = {
         allow: true,
         code: 1,
-        stderr: `hubd: ${error instanceof Error ? error.message : "failed"}\n`,
+        stderr: `hubd: ${stats.lastError}\n`,
       };
+    }
+    if (response.allow === false) {
+      stats.refused += 1;
+    } else {
+      stats.served += 1;
     }
 
     const id = name.replace(/\.json$/, "");
@@ -1072,6 +1092,13 @@ async function drain(role) {
 async function main() {
   if (!fs.existsSync(COMPANY)) {
     console.error(`hubd: ${COMPANY} not found; run claude-llc-init first`);
+    process.exit(1);
+  }
+  // Two hubds draining one spool would carry out every request twice.
+  fs.mkdirSync(HUB, { recursive: true });
+  const lock = path.join(HUB, "hubd.lock");
+  if (!takeLock(lock)) {
+    console.error(`hubd: another hubd holds ${lock}; not starting a second`);
     process.exit(1);
   }
   const cfg = company();
@@ -1097,17 +1124,40 @@ async function main() {
 
   // A heartbeat, so `hub` can distinguish "the daemon is busy" from "the
   // daemon was never started". Without it, every call inside a sandbox blocks
-  // for the full request timeout and the agent looks hung.
+  // for the full request timeout and the agent looks hung. It also carries
+  // what the dashboard's hub line shows (hub-health.mjs), so that line costs
+  // no GitHub call.
   //
-  // A timestamp rather than a pid, because the sandboxes run with
-  // --unshare-all, which includes a PID namespace: a pid written here is
-  // meaningless inside a jail, where `process.kill(pid, 0)` would report
-  // every live daemon as dead. That is exactly how the first version of this
-  // made every agent announce that the hub was down.
+  // Liveness is `heartbeatAt`, never `pid`: the sandboxes run with
+  // --unshare-all, which includes a PID namespace, so a pid is meaningless
+  // inside a jail, where `process.kill(pid, 0)` would report every live
+  // daemon as dead. That is exactly how the first version of this made every
+  // agent announce that the hub was down. The pid is for the host.
   const alive = path.join(HUB, "hubd.alive");
-  fs.mkdirSync(HUB, { recursive: true });
+  const startedAt = Date.now();
+  const sha = (await run("git", ["rev-parse", "--short", "HEAD"], REPO_DIR)).stdout.trim();
   const beat = () => {
-    fs.writeFileSync(alive, `${String(Date.now())}\n`);
+    const inflight = ROLES.reduce((sum, role) => {
+      try {
+        return (
+          sum +
+          fs.readdirSync(path.join(HUB, role, "req")).filter((name) => name.endsWith(".json"))
+            .length
+        );
+      } catch {
+        return sum;
+      }
+    }, 0);
+    /** @type {import("./hub-health.mjs").Alive} */
+    const heartbeat = {
+      pid: process.pid,
+      startedAt,
+      heartbeatAt: Date.now(),
+      sha,
+      inflight,
+      ...stats,
+    };
+    writeAtomic(alive, JSON.stringify(heartbeat));
   };
   beat();
   let lastBeat = Date.now();
@@ -1118,6 +1168,7 @@ async function main() {
   let lastBudgetCheck = Date.now();
   const stop = () => {
     fs.rmSync(alive, { force: true });
+    fs.rmSync(lock, { force: true });
     process.exit(0);
   };
   process.on("SIGINT", stop);
@@ -1133,7 +1184,7 @@ async function main() {
     }
     // Cheap enough at this interval, and far below the staleness window hub
     // allows, so a busy daemon is never mistaken for a dead one.
-    if (Date.now() - lastBeat > 5000) {
+    if (Date.now() - lastBeat > HEARTBEAT_MS) {
       beat();
       lastBeat = Date.now();
     }

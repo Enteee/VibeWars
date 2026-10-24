@@ -23,10 +23,13 @@
  * cannot land in the middle of something you are typing.
  */
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { ROLES } from "./hub-policy.mjs";
+import { takeLock } from "./lock.mjs";
 
 const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
 
@@ -107,6 +110,25 @@ function focusedWindow() {
 }
 
 async function main() {
+  // Two supervisors would nudge every pane twice.
+  const root = process.env.VIBEWARS_BOT_ROOT;
+  if (root === undefined || root === "") {
+    console.error("supervisor: VIBEWARS_BOT_ROOT is not set; run this through claude-llc");
+    process.exit(1);
+  }
+  fs.mkdirSync(path.join(root, "hub"), { recursive: true });
+  const lock = path.join(root, "hub", "supervisor.lock");
+  if (!takeLock(lock)) {
+    console.error(`supervisor: another supervisor holds ${lock}; not starting a second`);
+    process.exit(1);
+  }
+  const release = () => {
+    fs.rmSync(lock, { force: true });
+    process.exit(0);
+  };
+  process.on("SIGINT", release);
+  process.on("SIGTERM", release);
+
   console.error(`supervisor: watching ${String(ROLES.length)} panes in ${SESSION}`);
 
   for (;;) {

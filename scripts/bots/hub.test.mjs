@@ -25,6 +25,21 @@ afterEach(() => {
   }
 });
 
+/** @returns {string} a `hubd.alive` written just now */
+function heartbeat() {
+  return JSON.stringify({
+    pid: 1,
+    startedAt: Date.now(),
+    heartbeatAt: Date.now(),
+    sha: "abc1234",
+    inflight: 0,
+    served: 0,
+    refused: 0,
+    lastError: null,
+    rateLimit: null,
+  });
+}
+
 /**
  * A spool with a live heartbeat, and a stub daemon answering every request
  * on it with `answer`.
@@ -39,7 +54,7 @@ function stubHubd(answer) {
   const res = path.join(spool, "res");
   fs.mkdirSync(req, { recursive: true });
   fs.mkdirSync(res, { recursive: true });
-  fs.writeFileSync(path.join(dir, "hubd.alive"), `${String(Date.now())}\n`);
+  fs.writeFileSync(path.join(dir, "hubd.alive"), heartbeat());
 
   const timer = setInterval(() => {
     for (const name of fs.readdirSync(req).filter((n) => n.endsWith(".json"))) {
@@ -147,6 +162,15 @@ describe("hub writing a large answer to a pipe", () => {
 
     expect(result.stderr).toBe("");
     expect(result.code).toBe(0);
+  }, 30_000);
+
+  it("calls a heartbeat in any other format no heartbeat at all", async () => {
+    const spool = stubHubd({ code: 0, stdout: "x" });
+    fs.writeFileSync(path.join(spool, "..", "hubd.alive"), `${String(Date.now())}\n`);
+
+    const result = await hub(spool, ["issue", "list"]);
+
+    expect(result.code).toBe(75);
   }, 30_000);
 
   it("still exits with the daemon's code", async () => {

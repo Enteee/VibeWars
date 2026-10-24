@@ -29,6 +29,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 import { inlineBodyFile } from "./hub-body.mjs";
 import { splitFilter } from "./hub-filter.mjs";
+import { parseAlive } from "./hub-health.mjs";
 import { ROLES, authorize } from "./hub-policy.mjs";
 
 const ROLE = process.env.VIBEWARS_BOT_ROLE;
@@ -163,15 +164,20 @@ if (!local.allow) {
 // Liveness is a heartbeat age, not a pid. The sandbox runs with
 // --unshare-all, so it has its own PID namespace and cannot see the host
 // process at all: checking a pid here reported every running daemon as dead.
+// More lenient than the dashboard's "stale": one slow gh call holds up the
+// heartbeat, and an agent should wait that out rather than be told the hub
+// is gone.
 const HEARTBEAT_MAX_AGE_MS = 60_000;
 const beatFile = path.join(SPOOL, "..", "hubd.alive");
-let daemonAlive = false;
+/** @type {string | null} */
+let beatText = null;
 try {
-  const beat = Number.parseInt(fs.readFileSync(beatFile, "utf8").trim(), 10);
-  daemonAlive = Number.isFinite(beat) && Date.now() - beat < HEARTBEAT_MAX_AGE_MS;
+  beatText = fs.readFileSync(beatFile, "utf8");
 } catch {
   /* never started, or its directory is not visible from here */
 }
+const beat = parseAlive(beatText);
+const daemonAlive = beat !== null && Date.now() - beat.heartbeatAt < HEARTBEAT_MAX_AGE_MS;
 if (!daemonAlive) {
   console.error("hub: the hub daemon is not answering, so GitHub is unreachable from here.");
   console.error("hub: it is started by `claude-llc`. If you started this agent by hand");

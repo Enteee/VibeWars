@@ -32,6 +32,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import { ROLES } from "./hub-policy.mjs";
+import { takeLock } from "./lock.mjs";
 import {
   deliverPeer,
   isReadyOutboxEntry,
@@ -256,55 +257,6 @@ function present(bus) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Become the company's only sidecar, or say there already is one.
- *
- * Telegram allows one getUpdates consumer per token; a second gets
- * "409 Conflict" and the company goes deaf. `wx` makes taking the lock
- * atomic, and a lock whose holder has died is taken over by renaming it. This runs on the
- * host, so a pid is meaningful here, unlike inside the jails.
- *
- * @param {string} lock
- * @returns {boolean} whether this process now holds it
- */
-function takeLock(lock) {
-  const mine = `${String(process.pid)}\n`;
-  try {
-    fs.writeFileSync(lock, mine, { flag: "wx" });
-    return true;
-  } catch {
-    /* held, or left behind; see below */
-  }
-  const seen = fs.readFileSync(lock, "utf8");
-  try {
-    process.kill(Number.parseInt(seen.trim(), 10), 0);
-    return false;
-  } catch {
-    /* the holder is dead */
-  }
-  // Take over a dead holder's lock by renaming it away. Only one rename of
-  // that file can succeed, so two sidecars racing here cannot both win, and
-  // checking the contents makes sure the file renamed is the stale one we
-  // looked at, not a lock a faster sidecar has just written.
-  const stale = `${lock}.stale-${String(process.pid)}`;
-  try {
-    fs.renameSync(lock, stale);
-  } catch {
-    return false;
-  }
-  if (fs.readFileSync(stale, "utf8") !== seen) {
-    fs.renameSync(stale, lock);
-    return false;
-  }
-  fs.rmSync(stale, { force: true });
-  try {
-    fs.writeFileSync(lock, mine, { flag: "wx" });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * The company's state as the sidecar holds it. Topic ids are added as roles
  * need them; the getUpdates offset advances with every batch.
  */
@@ -521,6 +473,8 @@ async function serve() {
   const chatId = required("TELEGRAM_CHAT_ID");
   fs.mkdirSync(at.link, { recursive: true });
 
+  // Telegram allows one getUpdates consumer per token; a second gets
+  // "409 Conflict" and the company goes deaf.
   const lock = path.join(at.link, "serve.pid");
   if (!takeLock(lock)) {
     console.error("[link] the company sidecar is already running");

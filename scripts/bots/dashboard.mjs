@@ -15,6 +15,7 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import { hubHealth, parseAlive, parseExits } from "./hub-health.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { visible } from "./protocol.mjs";
 
@@ -222,6 +223,26 @@ function render() {
         `resets ${hhmm(budget.resetAt)}${empty ? "  <- RATE-LIMITED, agents are waiting" : ""}`,
     );
   }
+
+  /* the hub -------------------------------------------------------------- */
+  // From the heartbeat and the runner's exit log: no GitHub call (#23).
+  /** @param {string} name */
+  const text = (name) => {
+    try {
+      return fs.readFileSync(path.join(HUB, name), "utf8");
+    } catch {
+      return null;
+    }
+  };
+  const health = hubHealth(
+    parseAlive(text("hubd.alive")),
+    parseExits(text("hubd.restarts")),
+    Date.now(),
+  );
+  // Red unless it is up: a dead hub is every agent without GitHub.
+  console.log(
+    health.state === "up" ? `HUB     ${health.line}` : `\u001B[31mHUB     ${health.line}\u001B[0m`,
+  );
 
   /* the roster ------------------------------------------------------------ */
   console.log("");
