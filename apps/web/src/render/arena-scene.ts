@@ -1,6 +1,9 @@
 import Phaser from "phaser";
 
+import { isStatusId, type StatusId } from "@vibewars/game-core";
+
 import { EMPTY_SNAPSHOT, healthFraction, teamColour } from "./arena-snapshot.js";
+import { STATUS_ICON, STATUS_ICON_SIZE, statusRowLayout } from "./status-icons.js";
 import type {
   ArenaSnapshot,
   FloatingText,
@@ -26,7 +29,7 @@ const HEALTH_BAR_FILL = 0x7ee787;
 const HEALTH_BAR_LOW = 0xff7b72;
 const CAST_BAR_FILL = 0x59c2ff;
 const DEAD_COLOUR = 0x4a5464;
-const STATUS_MARKER = 0xffa657;
+const INK = "#d7dee8";
 
 const HEALTH_BAR_WIDTH = 34;
 const HEALTH_BAR_HEIGHT = 4;
@@ -38,6 +41,14 @@ export class ArenaScene extends Phaser.Scene {
   private snapshot: ArenaSnapshot = EMPTY_SNAPSHOT;
   private floatingTexts: FloatingText[] = [];
   private floatingTextObjects = new Map<number, Phaser.GameObjects.Text>();
+  /**
+   * Status icons per actor id, reused frame to frame: hidden when not
+   * needed, created only when an actor shows more than it ever has.
+   */
+  private statusIcons = new Map<string, Phaser.GameObjects.Image[]>();
+  private statusOverflow = new Map<string, Phaser.GameObjects.Text>();
+  /** Status ids the server sent that this client has no icon for. */
+  private readonly unknownStatuses = new Set<string>();
 
   public constructor() {
     super(ArenaScene.KEY);
@@ -51,6 +62,15 @@ export class ArenaScene extends Phaser.Scene {
   /** Queue a floating number/label above a world position. */
   public addFloatingText(text: FloatingText): void {
     this.floatingTexts.push(text);
+  }
+
+  public preload(): void {
+    for (const [id, url] of Object.entries(STATUS_ICON)) {
+      this.load.svg(statusTexture(id), url, {
+        width: STATUS_ICON_SIZE,
+        height: STATUS_ICON_SIZE,
+      });
+    }
   }
 
   public create(): void {
@@ -70,6 +90,7 @@ export class ArenaScene extends Phaser.Scene {
     for (const actor of this.snapshot.actors) {
       this.drawActor(g, actor);
     }
+    this.updateStatusIcons();
     this.updateFloatingTexts(deltaMs / 1000);
   }
 
@@ -96,17 +117,82 @@ export class ArenaScene extends Phaser.Scene {
     if (actor.castProgress !== undefined) {
       this.drawCastBar(g, actor, actor.castProgress);
     }
+  }
 
-    if (actor.statuses.length > 0) {
-      // One small marker per active status, in a row under the actor.
-      // Deliberately unlabelled geometry: at a glance a player needs
-      // "something is on them and how much", not a legend to read.
-      g.fillStyle(STATUS_MARKER, 1);
-      const startX = x - (actor.statuses.length - 1) * 4;
-      for (let i = 0; i < actor.statuses.length; i += 1) {
-        g.fillCircle(startX + i * 8, y + actor.radius + 8, 2.5);
+  /** One icon per status under every living actor; none under the dead. */
+  private updateStatusIcons(): void {
+    const seen = new Set<string>();
+    for (const actor of this.snapshot.actors) {
+      seen.add(actor.id);
+      const statuses = actor.dead ? [] : this.knownStatuses(actor.statuses);
+      const row = statusRowLayout(
+        statuses.length,
+        actor.position.x,
+        actor.position.y,
+        actor.radius,
+      );
+
+      const pool = this.statusIcons.get(actor.id) ?? [];
+      this.statusIcons.set(actor.id, pool);
+      row.icons.forEach((position, index) => {
+        const texture = statusTexture(statuses[index] ?? "");
+        let image = pool[index];
+        if (image === undefined) {
+          image = this.add.image(position.x, position.y, texture);
+          pool.push(image);
+        }
+        image.setTexture(texture).setPosition(position.x, position.y).setVisible(true);
+      });
+      for (const unused of pool.slice(row.icons.length)) {
+        unused.setVisible(false);
+      }
+
+      let more = this.statusOverflow.get(actor.id);
+      if (row.overflow === undefined) {
+        more?.setVisible(false);
+        continue;
+      }
+      if (more === undefined) {
+        more = this.add
+          .text(0, 0, "", { fontSize: "11px", fontFamily: "ui-monospace, monospace", color: INK })
+          .setOrigin(0.5, 0.5);
+        this.statusOverflow.set(actor.id, more);
+      }
+      more
+        .setText(`+${String(row.overflow.count)}`)
+        .setPosition(row.overflow.position.x, row.overflow.position.y)
+        .setVisible(true);
+    }
+
+    // An actor that left takes its icons with it.
+    for (const [id, pool] of this.statusIcons) {
+      if (!seen.has(id)) {
+        for (const image of pool) {
+          image.destroy();
+        }
+        this.statusIcons.delete(id);
+        this.statusOverflow.get(id)?.destroy();
+        this.statusOverflow.delete(id);
       }
     }
+  }
+
+  /**
+   * The statuses there is an icon for. A wire string this client does not
+   * know (a newer server, say) is skipped and reported once, never thrown
+   * on: the render loop must keep running.
+   */
+  private knownStatuses(ids: readonly string[]): StatusId[] {
+    const known: StatusId[] = [];
+    for (const id of ids) {
+      if (isStatusId(id)) {
+        known.push(id);
+      } else if (!this.unknownStatuses.has(id)) {
+        this.unknownStatuses.add(id);
+        console.warn(`[arena] no icon for status "${id}"; not drawing it`);
+      }
+    }
+    return known;
   }
 
   private drawHealthBar(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
@@ -187,6 +273,10 @@ export class ArenaScene extends Phaser.Scene {
       g.lineBetween(0, y, width, y);
     }
   }
+}
+
+function statusTexture(id: string): string {
+  return `status:${id}`;
 }
 
 export type {
