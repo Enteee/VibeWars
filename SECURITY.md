@@ -154,6 +154,31 @@ When one is fixed, remove it from this list in the same PR.
    goes through `JSON.stringify`. Escape or drop client text before
    logging it, and cap how much of it is logged.
 
+## The static deploy
+
+`.github/workflows/pages.yml` publishes the client alone to GitHub Pages:
+`/next/` follows `main`, the root follows the latest release (#103). There
+is no server behind it, so online play is off there.
+
+- **The write token never meets repository code.** `build` runs the repo
+  and its dependencies with a read-only token it does not persist.
+  `deploy` holds `contents: write` and runs only the workflow's own shell
+  over the built artifact. `upload-artifact` drops hidden files, so a build
+  cannot slip a `.git` into `gh-pages`. Keep it that way: never add a
+  checkout, `devenv` or `pnpm` step to `deploy`.
+- **Saves on Pages are not isolated.** Every Pages site under
+  `enteee.github.io` is one origin. `storage/namespace.ts` keeps the
+  release and `next` from reading each other's saves _by accident_. It does
+  nothing against another site on that origin, which can read and write
+  them. Saves are builds and a display name, so we accept this. Nothing
+  secret may ever be stored in the browser on Pages.
+- **Open: a manual run publishes any branch.** `workflow_dispatch` with
+  `target: next` builds whatever `--ref` it is given. Only cicd-engineer
+  may run workflows, but `gh workflow run pages.yml --ref bot/x` puts an
+  unreviewed branch on the public `/next/`. The fix is to run `deploy`
+  only for a release or for `refs/heads/main`, and to limit the `test` and
+  `prod` environments to `main` and tags.
+
 ## Dependencies
 
 `osv-scanner` and `trivy` run over `pnpm-lock.yaml` on review, and
