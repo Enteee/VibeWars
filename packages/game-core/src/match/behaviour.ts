@@ -129,18 +129,21 @@ export function createCursor(): BehaviourCursor {
 }
 
 /**
- * The nearest living participant `accept` lets through. Ties go to the
- * first in simulation order, so the choice is deterministic.
+ * The nearest living participant other than `self` that `accept` lets
+ * through. Ties go to the first in simulation order, so the choice is
+ * deterministic. Behaviours target with it, and so does a player's
+ * auto-target.
  */
-function nearest(
-  context: BehaviourContext,
+export function nearestLiving(
+  self: Participant,
+  participants: Iterable<Participant>,
   accept: (other: Participant) => boolean,
 ): string | undefined {
-  const from = context.self.position;
+  const from = self.position;
   let best: string | undefined;
   let bestDistance = Number.POSITIVE_INFINITY;
-  for (const other of context.participants) {
-    if (other.id === context.self.id || other.combatant.dead || !accept(other)) {
+  for (const other of participants) {
+    if (other.id === self.id || other.combatant.dead || !accept(other)) {
       continue;
     }
     const d = distance(other.position, from);
@@ -159,9 +162,17 @@ export function resolveTargeting(
   const team = context.self.combatant.team;
   switch (targeting.kind) {
     case "nearest-enemy":
-      return nearest(context, (other) => other.combatant.team !== team);
+      return nearestLiving(
+        context.self,
+        context.participants,
+        (other) => other.combatant.team !== team,
+      );
     case "nearest-ally":
-      return nearest(context, (other) => other.combatant.team === team);
+      return nearestLiving(
+        context.self,
+        context.participants,
+        (other) => other.combatant.team === team,
+      );
     case "self":
       return context.self.id;
     case "fixed":
