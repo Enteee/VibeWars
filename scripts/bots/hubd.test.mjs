@@ -584,6 +584,16 @@ describe("hubd and workflows (#116)", () => {
     expect(moved.allow).toBe(false);
     expect(String(moved.reason)).toContain(".github/workflows/ci.yml");
 
+    // Names git would C-quote without -z.
+    for (const [branch, file] of [
+      ["umlaut", ".github/workflows/ü.yml"],
+      ["quote", '.github/workflows/a"b.yml'],
+    ]) {
+      const quoted = await pushChange(hubd, "developer-1", branch, add(file));
+      expect(quoted.allow, file).toBe(false);
+      expect(String(quoted.reason)).toContain(file);
+    }
+
     const elsewhere = await pushChange(hubd, "developer-1", "fine", add("README.md"));
     expect(elsewhere.code, String(elsewhere.stderr)).toBe(0);
   }, 30_000);

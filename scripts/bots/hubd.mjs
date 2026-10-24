@@ -524,9 +524,12 @@ async function changedPaths(ref, cfg) {
     "--no-textconv",
     "--no-renames",
     "--name-only",
+    "-z",
     `main...${ref}`,
   ]);
-  return result.code === 0 ? result.stdout.split("\n").filter((line) => line !== "") : null;
+  // -z: without it git C-quotes any name with a non-ASCII byte or a
+  // quote, and "\".github/workflows/\303\274.yml\"" starts with no prefix.
+  return result.code === 0 ? result.stdout.split("\0").filter((name) => name !== "") : null;
 }
 
 /**
