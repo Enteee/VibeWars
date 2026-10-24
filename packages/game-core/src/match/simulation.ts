@@ -465,7 +465,10 @@ export class MatchSimulation {
       self: record,
       participants: [...this.#participants.values()],
       dt,
-      stepUnits: this.#ruleset.movement.maxSpeedUnitsPerSecond * dt,
+      // The same slowed speed advanceMovement will move it at, so a
+      // crippled dummy plans with the step it will really take.
+      stepUnits:
+        this.#ruleset.movement.maxSpeedUnitsPerSecond * moveSpeedMultiplier(record.combatant) * dt,
       canUse: (skillId, targetId) => {
         const skill = getSkill(skillId);
         return skill !== undefined && this.#check(record, skill, targetId).ok;
