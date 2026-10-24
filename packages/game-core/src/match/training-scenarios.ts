@@ -1,0 +1,158 @@
+import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import type { MissingMechanic } from "../skills/coverage.js";
+import { vec2, type Vec2 } from "../vec2.js";
+import type { Behaviour } from "./behaviour.js";
+import type { ParticipantSpec } from "./simulation.js";
+
+/**
+ * The training scenarios (#2 Phase 5), as data.
+ *
+ * Each one sets up a fight that teaches one thing, against dummies that
+ * play by exactly the player's rules (`behaviour.ts`). The editor lists
+ * them, and the training arena builds them with `scenarioParticipants`.
+ *
+ * `mapId` is a string on purpose: `game-core` never imports `game-maps`.
+ * Whoever runs a scenario resolves the geometry and the player's spawn.
+ *
+ * Only scenarios the simulation can run honestly exist. A scenario that
+ * would teach a mechanic `coverage.ts` still lists as missing would teach
+ * something false, and `training-scenarios.test.ts` refuses it.
+ */
+
+/**
+ * What a scenario exercises. Every missing mechanic is in the union too:
+ * claiming one compiles, and the gate test then fails and says why.
+ */
+export type TrainingMechanic = "spell-damage" | "armor" | "interrupts" | MissingMechanic;
+
+/** One setting a scenario offers, generated into the editor's sub-controls. */
+export interface TrainingKnob {
+  readonly id: string;
+  readonly label: string;
+  readonly kind: "count" | "toggle" | "rank";
+  readonly min: number;
+  readonly max: number;
+  readonly default: number;
+}
+
+export interface TrainingDummy {
+  readonly id: string;
+  readonly label: string;
+  readonly team: number;
+  readonly position: Vec2;
+  /** Base armor, before any status. */
+  readonly armor: number;
+  /** 10000 is "immortal": there is no invulnerable flag. */
+  readonly maxHealth: number;
+  readonly skillBar: readonly string[];
+  readonly attributeRanks: Readonly<Record<string, number>>;
+  readonly behaviour: Behaviour;
+}
+
+export interface TrainingScenario {
+  readonly id: string;
+  readonly label: string;
+  /** One sentence: what the player should come away knowing. */
+  readonly teaches: string;
+  readonly mapId: string;
+  readonly exercises: readonly TrainingMechanic[];
+  readonly knobs: readonly TrainingKnob[];
+  readonly dummies: readonly TrainingDummy[];
+}
+
+/** The player's team. Dummies on any other team are enemies. */
+export const PLAYER_TEAM = 0;
+
+const IMMORTAL = 10000;
+const IDLE: Behaviour = { kind: "idle" };
+
+/** An idle, immortal enemy with nothing on its bar. */
+function target(id: string, label: string, position: Vec2, armor: number): TrainingDummy {
+  return {
+    id,
+    label,
+    team: 1,
+    position,
+    armor,
+    maxHealth: IMMORTAL,
+    skillBar: [],
+    attributeRanks: {},
+    behaviour: IDLE,
+  };
+}
+
+export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
+  {
+    id: "target-dummy",
+    label: "Target dummy",
+    teaches: "What one cast actually does: at 60 armor, the tooltip's number exactly.",
+    mapId: "training-hall",
+    exercises: ["spell-damage"],
+    knobs: [],
+    dummies: [target("dummy", "Caster dummy (60 armor)", vec2(380, 210), 60)],
+  },
+  {
+    id: "armor-ladder",
+    label: "Armor ladder",
+    teaches: "The mitigation curve: the same hit against 40 to 104 armor, side by side.",
+    mapId: "training-hall",
+    exercises: ["spell-damage", "armor"],
+    knobs: [],
+    // A column 60 units apart, every one inside spell range of the
+    // player's spawn at (100, 210). The armor is set directly: the ladder
+    // measures the curve, not the weakness and wards that reach it.
+    dummies: [
+      target("armor-40", "Weakened caster (40)", vec2(400, 60), 40),
+      target("armor-60", "Caster (60)", vec2(400, 120), 60),
+      target("armor-70", "Ranger (70)", vec2(400, 180), 70),
+      target("armor-80", "Warrior (80)", vec2(400, 240), 80),
+      target("armor-84", "Warded caster (84)", vec2(400, 300), 84),
+      target("armor-104", "Warded warrior (104)", vec2(400, 360), 104),
+    ],
+  },
+  {
+    id: "interrupt-timing",
+    label: "Interrupt timing",
+    teaches: "That an interrupt is a timing skill: catch a 3 second cast before it lands.",
+    mapId: "training-hall",
+    exercises: ["interrupts"],
+    knobs: [],
+    dummies: [
+      {
+        id: "unguent",
+        label: "Troll Unguent dummy",
+        team: 1,
+        position: vec2(380, 210),
+        armor: 60,
+        maxHealth: IMMORTAL,
+        skillBar: ["ranger.troll-unguent"],
+        attributeRanks: { "ranger.wilderness-survival": 12 },
+        behaviour: {
+          kind: "cast-loop",
+          skillIds: ["ranger.troll-unguent"],
+          targeting: { kind: "self" },
+          gapSeconds: 0,
+          firstLegal: true,
+        },
+      },
+    ],
+  },
+];
+
+export function getTrainingScenario(id: string): TrainingScenario | undefined {
+  return TRAINING_SCENARIOS.find((scenario) => scenario.id === id);
+}
+
+/** A scenario's dummies, ready to add to a `MatchSimulation`. */
+export function scenarioParticipants(scenario: TrainingScenario): ParticipantSpec[] {
+  return scenario.dummies.map((dummy) => ({
+    id: dummy.id,
+    team: dummy.team,
+    skillBar: dummy.skillBar,
+    attributeRanks: new Map(Object.entries(dummy.attributeRanks)),
+    equipment: unarmedResolvedEquipment(dummy.armor),
+    spawn: dummy.position,
+    maxHealth: dummy.maxHealth,
+    behaviour: dummy.behaviour,
+  }));
+}

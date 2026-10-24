@@ -22,7 +22,13 @@ import { STATUS_DEFINITIONS, StatusSet } from "../skills/status.js";
 import { advanceStatuses } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
 import { ZERO, type Vec2 } from "../vec2.js";
-import { createCursor, decide, type Behaviour, type BehaviourCursor } from "./behaviour.js";
+import {
+  createCursor,
+  decide,
+  nearestLiving,
+  type Behaviour,
+  type BehaviourCursor,
+} from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
 
 /**
@@ -299,6 +305,10 @@ export class MatchSimulation {
    * A slot with no skill in it returns nothing to say: the client draws
    * only the slots it was sent, so asking for another one is not a player
    * pressing a key.
+   *
+   * With no target, an enemy-targeted skill targets the nearest living
+   * enemy first, picked exactly as a behaviour picks one. That target
+   * stays selected, whether or not the cast is then allowed.
    */
   public requestSkill(id: string, slot: number): SkillRequest | undefined {
     const record = this.#participants.get(id);
@@ -313,6 +323,15 @@ export class MatchSimulation {
     const skill = getSkill(skillId);
     if (skill === undefined) {
       return undefined;
+    }
+
+    if (skill.target === "single-enemy" && record.targetId === undefined) {
+      const team = record.combatant.team;
+      record.targetId = nearestLiving(
+        record,
+        this.#participants.values(),
+        (other) => other.combatant.team !== team,
+      );
     }
 
     const check = this.#check(record, skill, record.targetId);

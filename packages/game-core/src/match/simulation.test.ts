@@ -82,12 +82,36 @@ describe("MatchSimulation step", () => {
 
   it("says why a cast was refused, and nothing for an empty slot", () => {
     const sim = duel();
+    participant(sim, "b").combatant.dead = true;
     expect(sim.requestSkill("a", 0)).toEqual({
       skillId: FIREBALL,
       check: { ok: false, reason: "no-target" },
     });
     expect(sim.requestSkill("a", 5)).toBeUndefined();
     expect(sim.requestSkill("nobody", 0)).toBeUndefined();
+  });
+
+  it("with no target, an enemy skill targets the nearest living enemy, and keeps it", () => {
+    const sim = new MatchSimulation({
+      seed: "auto",
+      participants: [
+        spec("a", 0, vec2(0, 0)),
+        spec("ally", 0, vec2(50, 0)),
+        spec("dead", 1, vec2(100, 0)),
+        spec("far", 1, vec2(400, 0)),
+        spec("near", 1, vec2(0, 300)),
+        spec("tie", 1, vec2(300, 0)),
+      ],
+    });
+    participant(sim, "dead").combatant.dead = true;
+    expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
+    // 300 away both ways: the tie goes to the first added.
+    expect(participant(sim, "a").targetId).toBe("near");
+
+    // A target already chosen is never replaced, even a farther one.
+    sim.setTarget("ally", "far");
+    sim.requestSkill("ally", 0);
+    expect(participant(sim, "ally").targetId).toBe("far");
   });
 
   it("removing a participant clears every target that pointed at them", () => {
