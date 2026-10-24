@@ -228,10 +228,13 @@ export class ArenaScene extends Phaser.Scene {
           .setOrigin(0.5, 1);
         this.nameLabels.set(actor.id, label);
       }
-      label
-        .setText(actor.name)
-        .setColor(actor.dead ? DEAD_INK : INK)
-        .setPosition(actor.position.x, nameLabelBottom(actor));
+      // setText skips an unchanged string, but setColor redraws and
+      // re-uploads the label's texture every call, so only on a change.
+      const color = actor.dead ? DEAD_INK : INK;
+      if (label.style.color !== color) {
+        label.setColor(color);
+      }
+      label.setText(actor.name).setPosition(actor.position.x, nameLabelBottom(actor));
     }
     for (const [id, label] of this.nameLabels) {
       if (!seen.has(id)) {
