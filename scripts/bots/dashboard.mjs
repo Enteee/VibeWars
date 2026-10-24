@@ -15,6 +15,7 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import { readBoardState } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { formatSpend, readSpend } from "./hub-spend.mjs";
 import { visible } from "./protocol.mjs";
@@ -166,11 +167,12 @@ function render() {
   if (cfg === null) {
     console.log("board: not set up yet — run claude-llc-init");
   } else {
-    const snapshot = hubFile("board.json");
+    // hubd's copy of the board (hub-board.mjs); one in another shape is
+    // hubd's to discard, and shows here as no snapshot.
+    const snapshot = readBoardState(hubFile("board.json"));
     /** @type {Record<string, { number: number, title: string }[]>} */
     const byColumn = {};
-    const items = obj(snapshot?.board).items;
-    for (const item of Array.isArray(items) ? items : []) {
+    for (const { item } of snapshot?.cards ?? []) {
       const row = obj(item);
       const content = obj(row.content);
       const column = typeof row.status === "string" && row.status !== "" ? row.status : "(none)";
@@ -181,13 +183,12 @@ function render() {
       });
     }
 
-    const at = snapshot?.at;
-    // The snapshot is only refreshed when someone reads the board, so an old
-    // one means a quiet company, not a broken dashboard.
+    // The copy is only swept when someone reads the board, so an old sweep
+    // means a quiet company, not a broken dashboard.
     console.log(
-      typeof at === "number"
-        ? `BOARD  as of ${hhmm(at)}`
-        : "BOARD  (no snapshot yet — hubd writes one on the first board read)",
+      snapshot === null
+        ? "BOARD  (no snapshot yet — hubd writes one on the first board read)"
+        : `BOARD  as of ${hhmm(snapshot.at)}, read whole ${hhmm(snapshot.sweptAt)}`,
     );
     let total = 0;
     for (const column of cfg.columns) {
