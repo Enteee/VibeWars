@@ -218,7 +218,8 @@ than one source reports. Two cases still pass:
 The fix is to read the conclusions from the jobs of the `ci.yml`
 `pull_request` workflow run for that commit, never from check runs or
 statuses. Jobs exist only because a workflow executed, so the API cannot
-create them.
+create them. That run still uses the PR head's own `ci.yml`, so reviewing
+gate files stays load-bearing either way.
 
 **By design.** The manager may close and reopen any pull request or
 issue (#84), gate PRs included, but never with `--delete-branch`. A
