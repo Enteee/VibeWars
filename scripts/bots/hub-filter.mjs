@@ -25,40 +25,56 @@ const AUTHORING = new Set(["create", "edit"]);
  */
 
 /**
- * The filter a single-dash word carries, if any, as gh's flag parser would
- * read it.
+ * The first of some short flags a single-dash word sets, as gh's flag
+ * parser would read it.
  *
  * gh (cobra/pflag) accepts a short flag's value glued on (`-q.body`,
  * `-q$ENV`, `-q=.x`) and boolean short flags clustered in front of it
- * (`-cq.body` is `-c -q .body`). Missing either form is the whole hole
- * this module exists to close (review of #32), so every single-dash word is
- * read letter by letter: a filter letter takes the rest of the word as its
- * value, or the next word if it is last.
+ * (`-cq.body` is `-c -q .body`). Missing either form is a whole class of
+ * hole (reviews of #32 and #26), so every single-dash word is read letter
+ * by letter: a wanted letter takes the rest of the word as its value, or
+ * the next word if it is last.
+ *
+ * Shared with the policy, so that a cluster has one reading, not two.
  *
  * @param {string} word
- * @param {boolean} authoring
- * @returns {{ kind: "jq" | "template", glued: string | null, at: number } | null}
+ * @param {(letter: string) => boolean} wanted
+ * @returns {{ letter: string, glued: string | null, at: number } | null}
  *   `glued` is `null` when the value is the next word; `at` is where in the
- *   word the filter letter is, so the flags before it can be kept
+ *   word the letter is, so the flags before it can be kept
  */
-function shortFilter(word, authoring) {
+export function shortFlag(word, wanted) {
   if (!/^-[A-Za-z]/.test(word)) {
     return null;
   }
   for (let i = 1; i < word.length; i += 1) {
     const letter = word[i] ?? "";
-    const kind = letter === "q" ? "jq" : letter === "t" && !authoring ? "template" : null;
-    if (kind !== null) {
+    if (wanted(letter)) {
       const rest = word.slice(i + 1);
-      return { kind, glued: rest === "" ? null : rest.replace(/^=/, ""), at: i };
+      return { letter, glued: rest === "" ? null : rest.replace(/^=/, ""), at: i };
     }
-    // A letter that is not a filter: another short flag in the cluster. A
+    // A letter that is not wanted: another short flag in the cluster. A
     // non-letter means the rest is that flag's glued value, not more flags.
     if (!/[A-Za-z]/.test(letter)) {
       return null;
     }
   }
   return null;
+}
+
+/**
+ * The output filter a single-dash word carries, if any.
+ *
+ * @param {string} word
+ * @param {boolean} authoring
+ * @returns {{ kind: "jq" | "template", glued: string | null, at: number } | null}
+ */
+function shortFilter(word, authoring) {
+  const short = shortFlag(word, (letter) => letter === "q" || (letter === "t" && !authoring));
+  if (short === null) {
+    return null;
+  }
+  return { kind: short.letter === "q" ? "jq" : "template", glued: short.glued, at: short.at };
 }
 
 /**

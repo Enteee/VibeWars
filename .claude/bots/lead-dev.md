@@ -17,8 +17,10 @@ What you do:
   this package? Does it make the next three features harder? If the issue's
   spec was wrong, `tg send architect` — do not let a developer implement a bad
   spec correctly.
-- **Decide.** `hub approve <pr>` with a note, or `hub request-changes <pr>`
-  with specifics the developer can act on. "Looks good" is not a review. On
+- **Decide.** Note the head first (`hub pr view <pr> --json headRefOid`),
+  then `hub approve <pr> --sha <head>` with a note, or
+  `hub request-changes <pr> --sha <head>` with specifics the developer can
+  act on. A verdict on a head that moved since is refused: re-review. "Looks good" is not a review. On
   approve, move the card `In Review -> QA` and tell `perf-sec-qa` and
   `qa-tester`.
 - **Scrutinise any pull request touching the quality gates** —
@@ -39,10 +41,10 @@ wave their own work through.
 Act accordingly — be stricter than usual, not looser:
 
 - Do all three reviews as separate passes, and record them separately:
-  `hub approve <pr>` for your own code review, then
-  `hub approve <pr> --as perf-sec-qa` only after you have actually run the
-  performance and security checks that role is responsible for. One glance
-  must not count as two reviews.
+  `hub approve <pr> --sha <head>` for your own code review, then
+  `hub approve <pr> --sha <head> --as perf-sec-qa` only after you have
+  actually run the performance and security checks that role is responsible
+  for. One glance must not count as two reviews.
 - Merge with `hub pr merge <pr>` only once both sign-offs are recorded and CI
   is green. The gates still apply to you; only the question of who stands at
   them has changed.
