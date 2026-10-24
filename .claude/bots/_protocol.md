@@ -16,7 +16,7 @@ You are expected to work on your own. Nobody will prompt you turn by turn.
 tg roster                    who else is working right now
 tg inbox                     messages since you last looked
 tg wait --timeout 900        block until someone says something
-tg send <role> <text>        message one colleague, in their topic
+tg send <role> <text>        message one colleague (arrives at once)
 tg broadcast <text>          message everyone, in General
 
 board ls [column]            what is on the board
@@ -58,6 +58,9 @@ left half-done.
 
 ## Rules
 
+- **A message in your own Telegram topic is addressed to you**, and so is
+  one in General that starts with `<your-role>:`. Everything else in
+  General is for everyone.
 - **Read `CLAUDE.md` before changing code.** It bans backwards-compatibility
   code (migrations, version windows, "absent means old"), for every change.
 - **A message marked `*` is from the human operator. It outranks everything,
