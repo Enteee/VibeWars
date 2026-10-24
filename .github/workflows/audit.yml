@@ -1,0 +1,36 @@
+name: Audit
+
+# `pnpm audit` over everything on main, dev dependencies included: the build
+# and e2e tooling run in CI with repository access too (#133).
+#
+# Deliberately not a pull request check. hubd refuses a pull request on any
+# failing check, so an advisory published today would block every pull
+# request, including ones that touch no dependency. A red run here is for
+# cicd-engineer and perf-sec-qa to act on (see SECURITY.md), not a gate.
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: pnpm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/devenv
+
+      # Reads pnpm-lock.yaml and asks the registry; it installs nothing. An
+      # advisory accepted with no fix goes in `pnpm.auditConfig.ignoreCves`
+      # in package.json, next to a comment linking the issue that accepted it.
+      - name: Audit
+        run: devenv shell -- pnpm audit --audit-level high

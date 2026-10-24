@@ -82,30 +82,46 @@ describe("checksSatisfied", () => {
 });
 
 describe("checksSatisfied, with the company's required checks", () => {
-  // company-init.mjs EXPECTED_CHECKS: the enterTest job and the aggregate of
-  // the per-hook jobs (#99).
-  const REQUIRED = ["format + lint + typecheck + test + build", "git hooks"];
+  // company-init.mjs EXPECTED_CHECKS: the enterTest job, the aggregate of
+  // the per-hook jobs (#99), and dependency review (#133).
+  const REQUIRED = ["format + lint + typecheck + test + build", "git hooks", "dependency review"];
   const build = check(REQUIRED[0], "pass");
+  const review = check("dependency review", "pass");
 
-  it("passes when both ran and passed", () => {
-    expect(checksSatisfied([build, check("git hooks", "pass")], REQUIRED)).toMatchObject({
+  it("passes when all three ran and passed", () => {
+    expect(checksSatisfied([build, check("git hooks", "pass"), review], REQUIRED)).toMatchObject({
       ok: true,
     });
   });
 
   it("refuses a pull request with no git hooks check", () => {
-    const verdict = checksSatisfied([build, check("hook (eslint)", "pass")], REQUIRED);
+    const verdict = checksSatisfied([build, check("hook (eslint)", "pass"), review], REQUIRED);
 
     expect(verdict).toMatchObject({ ok: false, missing: ["git hooks"] });
   });
 
   it("refuses a pull request whose git hooks check failed", () => {
     const verdict = checksSatisfied(
-      [build, check("hook (eslint)", "fail"), check("git hooks", "fail")],
+      [build, check("hook (eslint)", "fail"), check("git hooks", "fail"), review],
       REQUIRED,
     );
 
     expect(verdict).toMatchObject({ ok: false, failing: ["git hooks", "hook (eslint)"] });
+  });
+
+  it("refuses a pull request with no dependency review check", () => {
+    const verdict = checksSatisfied([build, check("git hooks", "pass")], REQUIRED);
+
+    expect(verdict).toMatchObject({ ok: false, missing: ["dependency review"] });
+  });
+
+  it("refuses a pull request whose dependency review failed", () => {
+    const verdict = checksSatisfied(
+      [build, check("git hooks", "pass"), check("dependency review", "fail")],
+      REQUIRED,
+    );
+
+    expect(verdict).toMatchObject({ ok: false, failing: ["dependency review"] });
   });
 });
 
