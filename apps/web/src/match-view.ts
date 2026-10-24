@@ -4,7 +4,7 @@ import { vec2, type PlayerBuild } from "@vibewars/game-core";
 import type { WallDescriptor } from "@vibewars/game-protocol";
 
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
-import type { CombatMessage, MatchSnapshot, SkillSlot } from "./net/match-client.js";
+import type { MatchSnapshot, SkillSlot } from "./net/match-client.js";
 import { connectToMatch } from "./net/match-client.js";
 import {
   ArenaScene,
@@ -12,6 +12,7 @@ import {
   type ArenaSnapshot,
   type RenderableWall,
 } from "./render/arena-scene.js";
+import { showCombatFeedback } from "./render/combat-feedback.js";
 import { createHud, describeRefusal, flashMessage, renderSkillBar, updateHud } from "./ui/hud.js";
 
 /**
@@ -85,59 +86,6 @@ export function toArenaSnapshot(
       };
     }),
   };
-}
-
-const DAMAGE_COLOUR = 0xff7b72;
-const HEAL_COLOUR = 0x7ee787;
-const NEUTRAL_COLOUR = 0xffd866;
-
-let nextFloatingId = 0;
-
-/** Turn server combat events into floating numbers above the right actor. */
-export function showCombatFeedback(
-  scene: ArenaScene,
-  message: CombatMessage,
-  snapshot: MatchSnapshot,
-): void {
-  for (const event of message.events) {
-    const subject = snapshot.players.find((p) => p.sessionId === event.targetId);
-    if (subject === undefined) {
-      continue;
-    }
-
-    let text: string | undefined;
-    let colour = NEUTRAL_COLOUR;
-    switch (event.kind) {
-      case "damage":
-        text = `-${String(Math.round(event.amount ?? 0))}`;
-        colour = DAMAGE_COLOUR;
-        break;
-      case "heal":
-        text = `+${String(Math.round(event.amount ?? 0))}`;
-        colour = HEAL_COLOUR;
-        break;
-      case "interrupted":
-        text = "interrupted!";
-        break;
-      case "death":
-        text = "defeated";
-        colour = DAMAGE_COLOUR;
-        break;
-      default:
-        // Status applications/removals already show as markers on the
-        // actor; adding text for them too would just be noise.
-        continue;
-    }
-
-    nextFloatingId += 1;
-    scene.addFloatingText({
-      id: nextFloatingId,
-      text,
-      position: vec2(subject.x, subject.y - 24),
-      colour,
-      remainingSeconds: 1.2,
-    });
-  }
 }
 
 export async function startMatchView(
