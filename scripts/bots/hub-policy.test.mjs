@@ -625,3 +625,62 @@ describe("company reboot", () => {
     }
   });
 });
+
+describe("closing and reopening", () => {
+  /**
+   * The reason a refused command gives; fails if it was allowed.
+   *
+   * @param {string} role
+   * @param {string[]} argv
+   * @returns {string}
+   */
+  const refusal = (role, argv) => {
+    const verdict = gh(role, argv);
+    expect(verdict.allow, `${role} ${argv.join(" ")}`).toBe(false);
+    return verdict.reason ?? "";
+  };
+
+  it("is the manager's, for pull requests and issues, with a comment or a reason", () => {
+    for (const argv of [
+      ["pr", "close", "81"],
+      ["pr", "close", "81", "--comment", "superseded by #80"],
+      ["pr", "close", "81", "-c", "superseded by #80"],
+      ["pr", "reopen", "81"],
+      ["issue", "close", "70", "--reason", "not planned"],
+      ["issue", "reopen", "70"],
+    ]) {
+      expect(gh("manager", argv), argv.join(" ")).toStrictEqual({ allow: true });
+    }
+  });
+
+  it("never deletes the branch, in any spelling", () => {
+    for (const argv of [
+      ["pr", "close", "81", "--delete-branch"],
+      ["pr", "close", "81", "--delete-branch=true"],
+      ["pr", "close", "81", "-d"],
+      ["pr", "close", "81", "-cd", "x"],
+    ]) {
+      expect(refusal("manager", argv)).toContain("--delete-branch");
+    }
+  });
+
+  it("is refused for every other role, which is told to ask the manager", () => {
+    for (const role of ROLES.filter((r) => r !== "manager")) {
+      for (const argv of [
+        ["pr", "close", "1"],
+        ["pr", "reopen", "1"],
+        ["issue", "close", "1"],
+      ]) {
+        expect(refusal(role, argv)).toContain("ask the manager");
+      }
+    }
+  });
+
+  it("does not let the manager merge", () => {
+    expect(refusal("manager", ["pr", "merge", "81", "--squash"])).toContain("ask the qa-tester");
+  });
+
+  it("names nobody when nobody may", () => {
+    expect(refusal("manager", ["pr", "status"])).toContain("no role may");
+  });
+});

@@ -11,9 +11,9 @@ import {
 } from "./arena-snapshot.js";
 
 describe("teamColour", () => {
-  it("returns a distinct colour for every team", () => {
-    const colours = new Set((["self", "ally", "enemy"] as const).map((team) => teamColour(team)));
-    expect(colours.size).toBe(3);
+  it("draws you in your team's colour, and the two sides apart", () => {
+    expect(teamColour("self")).toBe(teamColour("ally"));
+    expect(teamColour("ally")).not.toBe(teamColour("enemy"));
   });
 });
 

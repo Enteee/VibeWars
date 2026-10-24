@@ -65,7 +65,14 @@ Everything that decides what happens in a fight.
   the obvious way to get the two quietly disagreeing.
 - `skills/` — the composable skill system (see below).
 - `match-rules.ts` — score target, clock, and victory evaluation.
-- `tools/headless-match.ts` — runs real combat with no I/O at all.
+- `match/` — the one copy of the per-tick pipeline (ADR-0017).
+  `simulation.ts` is `MatchSimulation`: movement, collision, casting,
+  effects, statuses, death, respawn and scoring, stepped by whoever owns
+  the clock. `combat-log.ts` records each resolution with its source and
+  time. `behaviour.ts` turns behaviours (data) into the same intents a
+  player sends.
+- `tools/headless-match.ts` — runs real combat with no I/O at all, on
+  `MatchSimulation`.
 
 ### `packages/game-core/src/skills` — the composable skill system
 
@@ -122,9 +129,9 @@ both are legitimately in scope.
   (ADR-0002).
 - `rooms/lobby-room.ts` — lobby codes, team assignment, ready state, map
   selection, and the handoff into a match.
-- `rooms/match-room.ts` — the authoritative simulation: a fixed 20 Hz tick
-  driving movement, collision, casting, effects, statuses, death, respawn
-  and scoring.
+- `rooms/match-room.ts` — the authoritative match: a fixed 20 Hz tick that
+  steps game-core's `MatchSimulation`, feeds it the players' intents, and
+  syncs the result to the schema and the `combat` broadcast.
 - `testing/harness.ts` — boots a real server on a real port for integration
   tests.
 

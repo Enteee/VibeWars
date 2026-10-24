@@ -1,44 +1,27 @@
 import { CloseCode, Room, type Client } from "colyseus";
 import { ArraySchema, schema, t } from "@colyseus/schema";
 import {
-  CastState,
   IMPLEMENTED_SKILLS,
   DEFAULT_MATCH_RULES,
   MINIMAL_GW_INSPIRED_PVP_V1,
-  StatusSet,
+  MatchSimulation,
   ZERO,
-  addKill,
-  advanceStatuses,
   attributeRanksOf,
-  applyEffects,
-  canActivate,
-  clampInputDirection,
-  createRng,
   defaultBuildEquipment,
-  emptyScore,
-  evaluateMatch,
   getSkill,
-  integrateMovement,
   parsePlayerBuild,
-  payCost,
   // Named apart from this module's own join-time `resolveLoadout`, which
   // decides *whether* to honour a build; this one turns the gear in an
   // already-accepted build into numbers.
   resolveLoadout as resolveLoadout_,
   validatePlayerBuild,
-  resolveCircleCircleCollision,
-  resolveCircleSegmentCollision,
-  seedFromString,
   vec2,
-  type ActivationRejection,
   type CombatEvent,
-  type MatchScore,
   type BuildEquipment,
+  type Participant,
   type PlayerBuild,
   type ProfessionId,
-  type Combatant,
   type Segment,
-  type SimulationRng,
   type Vec2,
 } from "@vibewars/game-core";
 import { allWallSegments, loadMap, type MapData } from "@vibewars/game-maps";
@@ -60,9 +43,9 @@ import { assertProtocolVersion, field } from "./options.js";
  * (brief §12-§15, §32 "never trust the client").
  *
  * The room owns *transport and state sync*. Every actual game rule lives
- * in `@vibewars/game-core` and is reached through its pure functions, so
- * the same combat can be (and is) tested headlessly with no socket
- * involved (ADR-0001).
+ * in `@vibewars/game-core`, and the tick itself is its `MatchSimulation`
+ * (ADR-0017), so the same combat can be (and is) tested headlessly with
+ * no socket involved (ADR-0001).
  */
 
 export const PlayerState = schema(
@@ -250,9 +233,7 @@ function resolveLoadout(options: unknown): ResolvedJoinLoadout {
 
 // Starting health and energy now come from the ruleset's combat rules,
 // via `resolveLoadout` — runes move both, so a fixed constant here
-// would quietly override them.
-/** Seconds a dead player waits before respawning at their spawn point. */
-const RESPAWN_SECONDS = 8;
+// would quietly override them. Respawn time comes from the match rules.
 /**
  * How long a dropped player keeps their slot, character and position.
  * Long enough to survive a wifi blip or a laptop lid, short enough that
@@ -269,16 +250,6 @@ function toMapDescriptor(map: MapData): MapDescriptor {
   return { id: map.id, name: map.name, width: map.width, height: map.height, walls };
 }
 
-/** Everything the simulation tracks about a player that is not wire state. */
-interface PlayerSim {
-  readonly combatant: Combatant;
-  readonly skillBar: readonly string[];
-  inputDirection: Vec2;
-  position: Vec2;
-  readonly spawn: Vec2;
-  respawnInSeconds: number;
-}
-
 export class MatchRoom extends Room {
   public override state = new MatchState();
 
@@ -287,17 +258,14 @@ export class MatchRoom extends Room {
   #map: MapData;
   #wallSegments: readonly Segment[];
   #mapDescriptor: MapDescriptor;
-  readonly #sims = new Map<string, PlayerSim>();
   /**
-   * Seeded in `onCreate`, not in the constructor: Colyseus assigns
-   * `roomId` after construction, so seeding here would hash `undefined`
-   * and throw. Non-null by the time any tick runs.
+   * Created in `onCreate`, not in the constructor: Colyseus assigns
+   * `roomId` after construction, and the match is seeded from it. This
+   * placeholder is replaced before anyone can join.
    */
-  #rng: SimulationRng = createRng(0);
+  #sim = new MatchSimulation({ seed: 0 });
 
   #nextSpawnIndex = 0;
-  #score: MatchScore = emptyScore([0, 1]);
-  #elapsedSeconds = 0;
 
   /**
    * Rolling tick-duration samples in milliseconds (brief §26).
@@ -364,7 +332,12 @@ export class MatchRoom extends Room {
 
     // Seeded from the room id so a match is reproducible from its seed
     // (brief §35, §36) rather than depending on Math.random.
-    this.#rng = createRng(seedFromString(this.roomId));
+    this.#sim = new MatchSimulation({
+      seed: this.roomId,
+      ruleset: RULESET,
+      matchRules: DEFAULT_MATCH_RULES,
+      walls: this.#wallSegments,
+    });
 
     this.onMessage("intent", (client, message: unknown) => {
       const intent = parseClientIntent(message);
@@ -373,27 +346,30 @@ export class MatchRoom extends Room {
         // sender gets nothing back (brief §32).
         return;
       }
-      const sim = this.#sims.get(client.sessionId);
-      if (sim === undefined) {
+      if (this.#sim.get(client.sessionId) === undefined) {
         return;
       }
 
       switch (intent.kind) {
         case "stop":
-          sim.inputDirection = ZERO;
+          this.#sim.setInputDirection(client.sessionId, ZERO);
           return;
         case "move":
-          sim.inputDirection = clampInputDirection(vec2(intent.dirX, intent.dirY));
+          this.#sim.setInputDirection(client.sessionId, vec2(intent.dirX, intent.dirY));
           return;
         case "target":
           this.applyTarget(client.sessionId, intent.targetSessionId);
           return;
         case "use-skill": {
-          const refused = this.tryUseSkill(client.sessionId, intent.slot);
+          const request = this.#sim.requestSkill(client.sessionId, intent.slot);
           // Only the caster hears it: a key that does nothing reads as a
           // broken game, and why it did nothing is nobody else's business.
-          if (refused !== undefined) {
-            const message: CastRefusedMessage = { slot: intent.slot, ...refused };
+          if (request !== undefined && !request.check.ok) {
+            const message: CastRefusedMessage = {
+              slot: intent.slot,
+              skillId: request.skillId,
+              reason: request.check.reason,
+            };
             client.send("cast-refused", message);
           }
           return;
@@ -443,136 +419,18 @@ export class MatchRoom extends Room {
   }
 
   /**
-   * Validate and apply a target selection (brief §5).
-   *
-   * Only existence is required here; range and line of sight are checked
-   * at *cast* time, since this genre lets you target anything you can see
-   * regardless of whether you can currently reach it.
+   * Apply a target selection; the simulation decides whether it is valid
+   * (brief §5). Mirrored onto the schema at once rather than at the next
+   * tick, so a click is answered by the very next patch.
    */
   private applyTarget(sessionId: string, targetSessionId: string | null): void {
     const player = this.state.players.get(sessionId);
     if (player === undefined) {
       return;
     }
-    if (targetSessionId === null) {
-      player.targetSessionId = "";
-      return;
+    if (this.#sim.setTarget(sessionId, targetSessionId ?? undefined)) {
+      player.targetSessionId = targetSessionId ?? "";
     }
-    if (!this.state.players.has(targetSessionId)) {
-      return;
-    }
-    player.targetSessionId = targetSessionId;
-  }
-
-  /**
-   * Begin casting the skill in `slot`, if every activation rule passes.
-   *
-   * The whole validation gate lives in `game-core`'s `canActivate`; this
-   * method only gathers the inputs it needs. A client that asks for an
-   * illegal cast does not get one, and is told why: the named rejection
-   * is returned for the caller to send back to that client alone.
-   *
-   * A slot with no skill in it returns nothing to say: the client draws
-   * only the slots it was sent, so asking for another one is not a player
-   * pressing a key.
-   */
-  private tryUseSkill(
-    sessionId: string,
-    slot: number,
-  ): { skillId: string; reason: ActivationRejection } | undefined {
-    const sim = this.#sims.get(sessionId);
-    const player = this.state.players.get(sessionId);
-    if (sim === undefined || player === undefined) {
-      return undefined;
-    }
-
-    const skillId = sim.skillBar[slot];
-    if (skillId === undefined) {
-      return undefined;
-    }
-    const skill = getSkill(skillId);
-    if (skill === undefined) {
-      return undefined;
-    }
-
-    const targetSim =
-      player.targetSessionId === "" ? undefined : this.#sims.get(player.targetSessionId);
-
-    const check = canActivate({
-      skill,
-      caster: sim.combatant,
-      casterPosition: sim.position,
-      target: skill.target === "self" ? sim.combatant : targetSim?.combatant,
-      targetPosition: skill.target === "self" ? sim.position : targetSim?.position,
-      rechargeRemaining: sim.combatant.cast.rechargeRemaining,
-      isCasting: sim.combatant.cast.isCasting,
-      skillBar: sim.skillBar,
-      losBlockers: this.#wallSegments,
-    });
-
-    if (!check.ok) {
-      return { skillId: skill.id, reason: check.reason };
-    }
-
-    payCost(skill, sim.combatant);
-    sim.combatant.cast.beginCast(
-      skill.id,
-      skill.target === "self" ? sessionId : player.targetSessionId,
-      skill.activationSeconds,
-    );
-    return undefined;
-  }
-
-  /** Resolve a cast that has finished its activation time. */
-  private resolveCast(
-    sessionId: string,
-    sim: PlayerSim,
-    skillId: string,
-    targetId: string | undefined,
-  ): void {
-    const skill = getSkill(skillId);
-    if (skill === undefined) {
-      return;
-    }
-
-    const targetSim = targetId === undefined ? undefined : this.#sims.get(targetId);
-    const events = applyEffects(skill.effects, {
-      caster: sim.combatant,
-      target: skill.target === "self" ? sim.combatant : targetSim?.combatant,
-      rng: this.#rng,
-      rules: RULESET.combat,
-    });
-
-    // Adrenaline is earned by landing damage, never by waiting — which is
-    // what makes adrenaline skills a reward for staying in the fight
-    // rather than a second energy pool. Weapon auto-attacks (the other
-    // classic source) arrive with Sprint 21.
-    const dealtDamage = events.some(
-      (event) => event.kind === "damage" && event.targetId !== sim.combatant.id,
-    );
-    if (dealtDamage) {
-      sim.combatant.adrenaline = Math.min(
-        RULESET.resources.maxAdrenaline,
-        sim.combatant.adrenaline + RULESET.resources.adrenalinePerHit,
-      );
-    }
-
-    // A skill that killed someone scores for the caster's side. Read
-    // from the emitted events so every death routes through one place,
-    // whether it came from a skill or from degeneration.
-    for (const event of events) {
-      if (event.kind !== "death") {
-        continue;
-      }
-      const victim = this.#sims.get(event.targetId);
-      if (victim !== undefined) {
-        victim.respawnInSeconds = RESPAWN_SECONDS;
-        this.recordDeath(victim.combatant.team);
-      }
-    }
-
-    sim.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds);
-    this.broadcastCombatEvents(sessionId, skill.id, events);
   }
 
   /**
@@ -592,30 +450,40 @@ export class MatchRoom extends Room {
     this.broadcast("combat", { casterSessionId, skillId, events });
   }
 
-  /**
-   * Credit a kill to the team that scored it and check for a winner.
-   *
-   * The victim's team is what is known at the point of death, so a kill
-   * is credited to "the other team" rather than to a specific killer.
-   * Attributing kills to individuals needs damage-source tracking, which
-   * is honest future work rather than something to fake here.
-   */
-  private recordDeath(victimTeam: number): void {
+  private tick(ctx: StepContext): void {
+    // A finished match stops simulating but stays joinable, so everyone
+    // can read the result before heading back to the lobby.
     if (this.state.phase !== "active") {
       return;
     }
-    const scoringTeam = victimTeam === 0 ? 1 : 0;
-    this.#score = addKill(this.#score, scoringTeam);
-    this.state.scoreTeam0 = this.#score.byTeam.get(0) ?? 0;
-    this.state.scoreTeam1 = this.#score.byTeam.get(1) ?? 0;
-    this.checkMatchEnd();
+
+    const result = this.#sim.step(ctx.dt);
+    this.state.elapsedSeconds = result.elapsedSeconds;
+    this.state.scoreTeam0 = this.#sim.score.byTeam.get(0) ?? 0;
+    this.state.scoreTeam1 = this.#sim.score.byTeam.get(1) ?? 0;
+
+    for (const entry of result.log) {
+      // On the wire, a status tick is sent as its bearer's, with no
+      // skill: who applied the statuses is the combat log's business.
+      const casterSessionId = entry.cause === "skill" ? entry.sourceId : entry.events[0]?.targetId;
+      this.broadcastCombatEvents(casterSessionId ?? "", entry.skillId ?? "", entry.events);
+    }
+
+    for (const [sessionId, player] of this.state.players) {
+      const participant = this.#sim.get(sessionId);
+      if (participant !== undefined) {
+        this.syncPlayer(player, participant);
+      }
+    }
+
+    if (result.phase === "finished") {
+      this.endMatch();
+    }
   }
 
-  private checkMatchEnd(): void {
-    const outcome = evaluateMatch(this.#score, this.#elapsedSeconds, DEFAULT_MATCH_RULES);
-    if (outcome.phase !== "finished") {
-      return;
-    }
+  /** The match just finished: say so, once, to everyone. */
+  private endMatch(): void {
+    const outcome = this.#sim.outcome;
     this.state.phase = "finished";
     this.state.winningTeam = outcome.winningTeam ?? -1;
     this.state.endReason = outcome.reason ?? "";
@@ -630,114 +498,8 @@ export class MatchRoom extends Room {
     );
   }
 
-  private tick(ctx: StepContext): void {
-    // A finished match stops simulating but stays joinable, so everyone
-    // can read the result before heading back to the lobby.
-    if (this.state.phase !== "active") {
-      return;
-    }
-
-    this.#elapsedSeconds += ctx.dt;
-    this.state.elapsedSeconds = this.#elapsedSeconds;
-    this.checkMatchEnd();
-
-    for (const [sessionId, sim] of this.#sims) {
-      const player = this.state.players.get(sessionId);
-      if (player === undefined) {
-        continue;
-      }
-
-      if (sim.combatant.dead) {
-        sim.respawnInSeconds -= ctx.dt;
-        if (sim.respawnInSeconds <= 0) {
-          this.respawn(sim);
-        }
-        this.syncPlayer(player, sim);
-        continue;
-      }
-
-      this.advanceMovement(sessionId, sim, ctx.dt);
-
-      // Energy regenerates continuously; adrenaline is earned by acting,
-      // not by waiting, so it deliberately does not tick up here.
-      sim.combatant.energy = Math.min(
-        sim.combatant.maxEnergy,
-        sim.combatant.energy + RULESET.resources.energyRegenPerSecond * ctx.dt,
-      );
-
-      const statusEvents = advanceStatuses(sim.combatant, ctx.dt);
-      if (statusEvents.length > 0) {
-        this.broadcastCombatEvents(sessionId, "", statusEvents);
-      }
-
-      // Degeneration (bleeding, burning, a hex) can kill between ticks.
-      // Keyed off the emitted death event rather than re-reading
-      // `combatant.dead`: the flag was checked above, so narrowing would
-      // claim this is unreachable, and losing this branch would leave a
-      // corpse mid-cast that never respawns.
-      if (statusEvents.some((event) => event.kind === "death")) {
-        sim.combatant.cast.cancelCast();
-        sim.respawnInSeconds = RESPAWN_SECONDS;
-        this.recordDeath(sim.combatant.team);
-        this.syncPlayer(player, sim);
-        continue;
-      }
-
-      const completed = sim.combatant.cast.advance(ctx.dt);
-      if (completed !== undefined) {
-        this.resolveCast(sessionId, sim, completed.skillId, completed.targetId);
-      }
-
-      this.syncPlayer(player, sim);
-    }
-  }
-
-  private advanceMovement(sessionId: string, sim: PlayerSim, dt: number): void {
-    const radius = RULESET.collision.playerRadius;
-    let position = integrateMovement(
-      sim.position,
-      sim.inputDirection,
-      RULESET.movement.maxSpeedUnitsPerSecond,
-      dt,
-    );
-
-    // Body blocking (brief §21): living players are solid, so a front
-    // line can physically deny ground and a caster can be boxed in.
-    // Corpses are not solid — standing on a dead player should never
-    // trap the living.
-    for (const [otherId, other] of this.#sims) {
-      if (otherId === sessionId || other.combatant.dead) {
-        continue;
-      }
-      position = resolveCircleCircleCollision(position, radius, other.position, radius);
-    }
-
-    // Walls resolve last so a player squeezed between a blocker and a
-    // wall ends up outside the wall rather than inside it — being pushed
-    // through level geometry is far worse than overlapping a teammate
-    // for one tick.
-    for (const wallSegment of this.#wallSegments) {
-      position = resolveCircleSegmentCollision(position, radius, wallSegment);
-    }
-
-    sim.position = position;
-  }
-
-  private respawn(sim: PlayerSim): void {
-    sim.combatant.dead = false;
-    sim.combatant.health = sim.combatant.maxHealth;
-    sim.combatant.energy = sim.combatant.maxEnergy;
-    sim.combatant.adrenaline = 0;
-    sim.combatant.statuses.removeByCategory("condition");
-    sim.combatant.statuses.removeByCategory("hex");
-    sim.combatant.statuses.removeByCategory("enchantment");
-    sim.position = sim.spawn;
-    sim.inputDirection = ZERO;
-    sim.respawnInSeconds = 0;
-  }
-
   /** Copy simulation state onto the synchronized schema object. */
-  private syncPlayer(player: InstanceType<typeof PlayerState>, sim: PlayerSim): void {
+  private syncPlayer(player: InstanceType<typeof PlayerState>, sim: Participant): void {
     player.x = sim.position.x;
     player.y = sim.position.y;
     player.health = Math.round(sim.combatant.health);
@@ -768,7 +530,7 @@ export class MatchRoom extends Room {
   public override onJoin(client: Client, options?: unknown): void {
     assertProtocolVersion(options);
     // Alternate teams as players join so a 1v1 is adversarial by default.
-    const team = this.#sims.size % 2;
+    const team = [...this.#sim.participants()].length % 2;
     const spawn = this.nextSpawnPoint(team);
     const loadout = resolveLoadout(options);
 
@@ -785,30 +547,16 @@ export class MatchRoom extends Room {
       RULESET.combat,
     );
 
-    const combatant: Combatant = {
+    const sim = this.#sim.add({
       id: client.sessionId,
-      health: resolved.maxHealth,
-      maxHealth: resolved.maxHealth,
-      energy: resolved.maxEnergy,
-      maxEnergy: resolved.maxEnergy,
-      adrenaline: 0,
-      attributeRanks: resolved.attributeRanks,
       team,
-      dead: false,
-      statuses: new StatusSet(),
-      cast: new CastState(),
-      equipment: resolved.equipment,
-    };
-
-    const sim: PlayerSim = {
-      combatant,
       skillBar: loadout.skillBar,
-      inputDirection: ZERO,
-      position: spawn,
+      attributeRanks: resolved.attributeRanks,
+      equipment: resolved.equipment,
       spawn,
-      respawnInSeconds: 0,
-    };
-    this.#sims.set(client.sessionId, sim);
+      maxHealth: resolved.maxHealth,
+      maxEnergy: resolved.maxEnergy,
+    });
 
     const player = new PlayerState({
       sessionId: client.sessionId,
@@ -858,7 +606,7 @@ export class MatchRoom extends Room {
    */
   private removePlayer(sessionId: string): void {
     this.state.players.delete(sessionId);
-    this.#sims.delete(sessionId);
+    this.#sim.remove(sessionId);
 
     for (const player of this.state.players.values()) {
       if (player.targetSessionId === sessionId) {
@@ -880,11 +628,11 @@ export class MatchRoom extends Room {
       return;
     }
 
-    const sim = this.#sims.get(client.sessionId);
+    const sim = this.#sim.get(client.sessionId);
     if (sim !== undefined) {
       // Freeze the dropped player rather than leaving them running into
       // a wall while disconnected.
-      sim.inputDirection = ZERO;
+      this.#sim.setInputDirection(client.sessionId, ZERO);
       sim.combatant.cast.cancelCast();
     }
 
