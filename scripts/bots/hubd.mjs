@@ -22,6 +22,16 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { approvalsSatisfied, checksSatisfied, explainGuard } from "./hub-guards.mjs";
 import { obj } from "./protocol.mjs";
 import { ROLES, authorize, touchesGate } from "./hub-policy.mjs";
+import {
+  boardNumbers,
+  isInternal,
+  isVisible,
+  itemAddUrl,
+  namesItem,
+  prepareList,
+  renderList,
+  selectorsOf,
+} from "./hub-visibility.mjs";
 
 /**
  * @param {string} name
@@ -281,6 +291,227 @@ async function changedPaths(worktree) {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Visibility                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/** The board changes rarely and is read on every list, so it is cached. */
+const BOARD_TTL_MS = 15_000;
+/** @type {{ at: number, numbers: Set<number> } | null} */
+let boardCache = null;
+
+/** Who counts as a member changes more rarely still. */
+const MEMBERS_TTL_MS = 300_000;
+/** @type {{ at: number, logins: Set<string> } | null} */
+let membersCache = null;
+
+/**
+ * Collaborator logins, lowercased. `null` when GitHub cannot be asked, which
+ * callers turn into a loud refusal rather than an empty set: an empty set
+ * would quietly hide the company's own work, which is the one thing this
+ * filter must never do.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<Set<string> | null>}
+ */
+async function members(cfg) {
+  if (membersCache === null || Date.now() - membersCache.at > MEMBERS_TTL_MS) {
+    const result = await gh([
+      "api",
+      "--paginate",
+      `repos/${cfg.repo}/collaborators?per_page=100`,
+      "--jq",
+      ".[].login",
+    ]);
+    const logins = result.stdout
+      .split("\n")
+      .map((login) => login.trim().toLowerCase())
+      .filter((login) => login !== "");
+    if (result.code !== 0 || logins.length === 0) {
+      return null;
+    }
+    membersCache = { at: Date.now(), logins: new Set(logins) };
+  }
+  return membersCache.logins;
+}
+
+/**
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<import("./hub-visibility.mjs").Viewer | null>}
+ */
+async function viewer(cfg) {
+  if (boardCache === null || Date.now() - boardCache.at > BOARD_TTL_MS) {
+    const result = await gh([
+      "project",
+      "item-list",
+      String(cfg.project),
+      "--owner",
+      cfg.owner,
+      "--format",
+      "json",
+      "--limit",
+      "1000",
+    ]);
+    if (result.code !== 0) {
+      return null;
+    }
+    try {
+      boardCache = { at: Date.now(), numbers: boardNumbers(JSON.parse(result.stdout), cfg.repo) };
+    } catch {
+      return null;
+    }
+  }
+  const logins = await members(cfg);
+  if (logins === null) {
+    return null;
+  }
+  return { members: logins, repo: cfg.repo, board: boardCache.numbers };
+}
+
+/**
+ * @param {"issue" | "pr"} group
+ * @param {string} selector A number, a URL, or for a pull request a branch.
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<import("./hub-visibility.mjs").Item | null>}
+ */
+async function resolve(group, selector, cfg) {
+  const result = await gh([
+    group,
+    "view",
+    selector,
+    "--repo",
+    cfg.repo,
+    "--json",
+    "number,author,url",
+  ]);
+  if (result.code !== 0) {
+    return null;
+  }
+  try {
+    const parsed = obj(/** @type {unknown} */ (JSON.parse(result.stdout)));
+    return typeof parsed.number === "number" && typeof parsed.url === "string"
+      ? {
+          number: parsed.number,
+          url: parsed.url,
+          author: /** @type {{ login?: string }} */ (obj(parsed.author)),
+        }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Refuse a request that names an issue or pull request the company may not
+ * see. The refusal reads the same as for one that does not exist: an agent
+ * has no use for knowing which, and a stranger's title has no business in its
+ * context.
+ *
+ * @param {string} kind
+ * @param {string[]} argv
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ ok: true } | { ok: false, reason: string }>}
+ */
+async function checkVisibility(kind, argv, cfg) {
+  /** @type {{ group: "issue" | "pr", selector: string }[]} */
+  let named;
+  /** @type {((item: import("./hub-visibility.mjs").Item, seen: import("./hub-visibility.mjs").Viewer) => boolean)} */
+  let allowed = isVisible;
+
+  if (kind === "review") {
+    named = [{ group: "pr", selector: String(argv[1]) }];
+  } else if (kind === "gh" && namesItem(argv)) {
+    const parsed = selectorsOf(argv);
+    if ("error" in parsed) {
+      return { ok: false, reason: parsed.error };
+    }
+    const group = argv[0] === "pr" ? "pr" : "issue";
+    named = parsed.selectors.map((selector) => ({ group, selector }));
+  } else if (kind === "gh" && argv[0] === "project" && argv[1] === "item-add") {
+    // Putting an item on the board is what makes outside work visible, so for
+    // that work the step belongs to a human project member.
+    const url = itemAddUrl(argv);
+    if (url === null) {
+      return { ok: false, reason: "project item-add needs --url" };
+    }
+    named = [{ group: url.includes("/pull/") ? "pr" : "issue", selector: url }];
+    allowed = isInternal;
+  } else {
+    return { ok: true };
+  }
+
+  const seen = await viewer(cfg);
+  if (seen === null) {
+    return {
+      ok: false,
+      reason: "could not read the board or the collaborator list to check what is visible",
+    };
+  }
+  for (const { group, selector } of named) {
+    const item = await resolve(group, selector, cfg);
+    if (item === null || !allowed(item, seen)) {
+      return {
+        ok: false,
+        reason:
+          allowed === isInternal
+            ? `${selector} was raised outside the project; only a project member can put it on the board`
+            : `${selector} does not exist or is not on the board yet`,
+      };
+    }
+  }
+  return { ok: true };
+}
+
+/**
+ * Run an `issue list` / `pr list` and drop every row the company may not see.
+ *
+ * @param {string[]} argv
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
+ */
+async function filteredList(argv, cfg) {
+  const prepared = prepareList(argv);
+  if ("error" in prepared) {
+    return { code: 1, stdout: "", stderr: `hub: ${prepared.error}\n` };
+  }
+  const seen = await viewer(cfg);
+  if (seen === null) {
+    return {
+      code: 1,
+      stdout: "",
+      stderr: "hub: could not read the board or the collaborator list to filter the list\n",
+    };
+  }
+  const result = await gh(pinRepo(prepared.argv, cfg));
+  if (result.code !== 0) {
+    return result;
+  }
+  /** @type {Record<string, unknown>[]} */
+  let rows;
+  try {
+    /** @type {unknown} */
+    const raw = JSON.parse(result.stdout);
+    rows = Array.isArray(raw) ? raw.map((row) => obj(row)) : [];
+  } catch {
+    return { code: 1, stdout: "", stderr: "hub: gh returned a list hub could not read\n" };
+  }
+  const visible = rows.filter((row) =>
+    isVisible(
+      {
+        number: typeof row.number === "number" ? row.number : -1,
+        url: typeof row.url === "string" ? row.url : "",
+        author: /** @type {{ login?: string }} */ (obj(row.author)),
+      },
+      seen,
+    ),
+  );
+  return {
+    code: 0,
+    stdout: renderList(argv[0] === "pr" ? "pr" : "issue", visible, prepared.fields),
+    stderr: result.stderr,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
 /* Handling                                                                   */
 /* -------------------------------------------------------------------------- */
 
@@ -321,6 +552,16 @@ async function handle(request) {
   // The hat this request is being served under, if it is not the role's own.
   const as = typeof verdict.as === "string" ? verdict.as : role;
 
+  const cfg = company();
+
+  // Before the guards, whose refusals would otherwise describe a pull request
+  // the company is not supposed to know about.
+  const visibility = await checkVisibility(kind, argv, cfg);
+  if (!visibility.ok) {
+    audit({ role, kind, argv, decision: "hidden", reason: visibility.reason });
+    return { allow: false, reason: visibility.reason, code: 77 };
+  }
+
   if (verdict.guards !== undefined) {
     const guarded = await evaluateGuards(verdict.guards, argv);
     if (!guarded.ok) {
@@ -328,8 +569,6 @@ async function handle(request) {
       return { allow: false, reason: guarded.reason, code: 77 };
     }
   }
-
-  const cfg = company();
 
   if (kind === "review") {
     const [promptVerb, pr, ...note] = argv;
@@ -387,7 +626,18 @@ async function handle(request) {
     return { allow: true, ...result };
   }
 
+  if ((argv[0] === "issue" || argv[0] === "pr") && argv[1] === "list") {
+    const listed = await filteredList(argv, cfg);
+    audit({ role, kind, argv, decision: "allowed", code: listed.code, filtered: true });
+    return { allow: true, ...listed };
+  }
+
   const result = await gh(pinRepo(argv, cfg));
+  if (argv[0] === "project") {
+    // An item just added or archived must show up on the next list, not in
+    // fifteen seconds.
+    boardCache = null;
+  }
   audit({ role, kind, argv, decision: "allowed", code: result.code });
   return { allow: true, ...result };
 }

@@ -96,7 +96,10 @@ const RULES = [
   { argv: ["pr", "list"], roles: "*" },
   { argv: ["pr", "diff"], roles: "*" },
   { argv: ["pr", "checks"], roles: "*" },
-  { argv: ["pr", "status"], roles: "*" },
+  // Not `pr status`: it prints free text that includes pull requests from
+  // strangers asking this account for review, which hubd cannot filter. See
+  // hub-visibility.mjs; `pr list --author @me` covers the same need.
+  { argv: ["pr", "status"], roles: [] },
   { argv: ["project", "view"], roles: "*" },
   { argv: ["project", "list"], roles: "*" },
   { argv: ["project", "item-list"], roles: "*" },
