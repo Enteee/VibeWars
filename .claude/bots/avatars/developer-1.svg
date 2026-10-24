@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
+  <defs><radialGradient id="bg" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#23A26B"/><stop offset="1" stop-color="#137046"/></radialGradient></defs>
+  <rect width="640" height="640" fill="url(#bg)"/>
+    <path d="M245 225 L165 315 L245 405 M395 225 L475 315 L395 405" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M350 205 L290 425" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="455" cy="170" r="50" fill="#fff"/>
+    <text x="455" y="191" text-anchor="middle" font-family="Inter, DejaVu Sans, sans-serif" font-weight="800" font-size="60" fill="#137046">1</text>
+  <text x="320" y="530" text-anchor="middle" font-family="Inter, DejaVu Sans, sans-serif" font-weight="700" font-size="40" letter-spacing="4" fill="#fff" fill-opacity="0.92">DEVELOPER 1</text>
+</svg>

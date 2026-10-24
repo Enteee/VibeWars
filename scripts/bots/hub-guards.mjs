@@ -1,0 +1,147 @@
+/**
+ * The dynamic half of the merge gate.
+ *
+ * `hub-policy.mjs` decides whether a role may *attempt* something. These
+ * functions decide whether the world is in a state where the attempt should
+ * succeed — are the checks green, do the required sign-offs exist. They need
+ * data from GitHub, so the daemon fetches it and passes it in; the decisions
+ * themselves stay pure and tested, because both of them have a failure mode
+ * that is invisible until it matters.
+ *
+ * See docs/adr/0015-agent-company.md.
+ */
+
+/**
+ * @typedef {object} Approval
+ * @property {number} pr
+ * @property {string} role
+ * @property {"approve" | "request-changes"} verdict
+ * @property {string} sha   Head commit the verdict was cast against.
+ * @property {number} ts
+ */
+
+/**
+ * Were the checks we expect to exist actually run, and did they pass?
+ *
+ * Asking "did everything pass" is not enough, and this is the whole reason
+ * the function exists. The CI/CD engineer can edit `.github/workflows/`, so an
+ * agent under pressure to turn a red pull request green can do it by deleting
+ * the check instead of fixing the code — and a pull request with no checks at
+ * all reports no failures. So the expected set is named in
+ * `.bots/company.json` and a missing check is treated exactly like a failing
+ * one.
+ *
+ * @param {{ name: string, conclusion: string }[]} checks As reported by
+ *   `gh pr checks --json name,state,bucket`, normalised to a conclusion.
+ * @param {string[]} expected Check names that must be present and passing.
+ * @returns {{ ok: boolean, missing: string[], failing: string[], pending: string[] }}
+ */
+export function checksSatisfied(checks, expected) {
+  const seen = new Map(checks.map((check) => [check.name, check.conclusion]));
+
+  const missing = expected.filter((name) => !seen.has(name));
+  const failing = [];
+  const pending = [];
+
+  for (const [name, conclusion] of seen) {
+    if (conclusion === "pass" || conclusion === "skipping") {
+      continue;
+    }
+    if (conclusion === "pending") {
+      pending.push(name);
+    } else {
+      failing.push(name);
+    }
+  }
+
+  return {
+    ok: missing.length === 0 && failing.length === 0 && pending.length === 0,
+    missing,
+    failing: failing.sort(),
+    pending: pending.sort(),
+  };
+}
+
+/**
+ * Does this pull request carry a current sign-off from every required role?
+ *
+ * "Current" is the subtle part. An approval is cast against a specific commit;
+ * if the author then pushes more commits, that approval no longer describes
+ * the code being merged. GitHub's own review system has a setting for this
+ * ("dismiss stale reviews") precisely because the naive behaviour is a way to
+ * merge unreviewed code: get approved, then push whatever you like. Our
+ * ledger records the head SHA so the same trick does not work here.
+ *
+ * A `request-changes` verdict overrides an earlier `approve` from the same
+ * role, so a reviewer can withdraw a sign-off it has already given.
+ *
+ * @param {Approval[]} ledger Every verdict ever recorded, any order.
+ * @param {{ pr: number, sha: string, required: string[] }} target
+ * @returns {{ ok: boolean, missing: string[], stale: string[], changesRequested: string[] }}
+ */
+export function approvalsSatisfied(ledger, target) {
+  /** @type {Map<string, Approval>} */
+  const latest = new Map();
+  for (const entry of ledger) {
+    if (entry.pr !== target.pr) {
+      continue;
+    }
+    const previous = latest.get(entry.role);
+    if (previous === undefined || entry.ts >= previous.ts) {
+      latest.set(entry.role, entry);
+    }
+  }
+
+  const missing = [];
+  const stale = [];
+  const changesRequested = [];
+
+  for (const role of target.required) {
+    const verdict = latest.get(role);
+    if (verdict === undefined) {
+      missing.push(role);
+    } else if (verdict.verdict === "request-changes") {
+      changesRequested.push(role);
+    } else if (verdict.sha !== target.sha) {
+      stale.push(role);
+    }
+  }
+
+  return {
+    ok: missing.length === 0 && stale.length === 0 && changesRequested.length === 0,
+    missing,
+    stale,
+    changesRequested,
+  };
+}
+
+/**
+ * Turn a guard name from the policy into a human sentence, for the refusal
+ * the agent actually reads.
+ *
+ * An agent told only "refused" will retry; one told "perf-sec-qa has not
+ * signed off" will go and ask for a review, which is the behaviour we want.
+ *
+ * @param {string} guard
+ * @param {{ ok: boolean, missing?: string[], failing?: string[], pending?: string[], stale?: string[], changesRequested?: string[] }} result
+ * @returns {string}
+ */
+export function explainGuard(guard, result) {
+  const parts = [];
+  if (result.missing !== undefined && result.missing.length > 0) {
+    parts.push(`missing: ${result.missing.join(", ")}`);
+  }
+  if (result.failing !== undefined && result.failing.length > 0) {
+    parts.push(`failing: ${result.failing.join(", ")}`);
+  }
+  if (result.pending !== undefined && result.pending.length > 0) {
+    parts.push(`still running: ${result.pending.join(", ")}`);
+  }
+  if (result.stale !== undefined && result.stale.length > 0) {
+    parts.push(`stale, cast against an older commit: ${result.stale.join(", ")}`);
+  }
+  if (result.changesRequested !== undefined && result.changesRequested.length > 0) {
+    parts.push(`changes requested by: ${result.changesRequested.join(", ")}`);
+  }
+  return parts.length === 0 ? guard : `${guard} — ${parts.join("; ")}`;
+}

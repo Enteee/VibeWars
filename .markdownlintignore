@@ -4,3 +4,4 @@ dist/
 docs/product/master-brief.md
 pnpm-lock.yaml
 packages/game-data/raw/
+.bots/
