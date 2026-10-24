@@ -42,6 +42,9 @@ if (ROLE === undefined || SPOOL === undefined) {
 /** How long to wait for the daemon. `gh` can be slow; a hung daemon is not. */
 const TIMEOUT_MS = 300_000;
 
+/** The most `--jq` output hub will hold; far above any real answer. */
+const MAX_OUTPUT = 64 * 1024 * 1024;
+
 const argv = process.argv.slice(2);
 if (argv.length === 0) {
   console.error("hub: usage: hub <gh command...> | push <branch> | approve <pr> | whoami");
@@ -224,17 +227,35 @@ for (;;) {
   if (typeof result.stderr === "string" && result.stderr !== "") {
     process.stderr.write(result.stderr);
   }
+  // From here on, never `process.exit`: on a pipe, stdout is written
+  // asynchronously, and exiting drops whatever has not drained yet, which
+  // cut `hub ... | jq` off mid-answer (#37). Setting the exit code and
+  // leaving the loop lets Node finish writing first; nothing else keeps it
+  // alive, since the daemon is reached through files, not a connection.
   if (result.allow === false) {
     console.error(`hub: refused — ${typeof result.reason === "string" ? result.reason : "?"}`);
-    process.exit(77);
+    process.exitCode = 77;
+    break;
   }
   if (jqFilter !== null && code === 0) {
-    // `-r` because gh's --jq prints strings raw.
-    const filtered = spawnSync("jq", ["-r", jqFilter], { input: stdout, encoding: "utf8" });
-    process.stdout.write(typeof filtered.stdout === "string" ? filtered.stdout : "");
-    process.stderr.write(typeof filtered.stderr === "string" ? filtered.stderr : "");
-    process.exit(filtered.status ?? 1);
+    // `-r` because gh's --jq prints strings raw. spawnSync cuts output off
+    // at 1 MiB by default, and a cut answer is worse than none.
+    const filtered = spawnSync("jq", ["-r", jqFilter], {
+      input: stdout,
+      encoding: "utf8",
+      maxBuffer: MAX_OUTPUT,
+    });
+    if (filtered.error !== undefined) {
+      console.error(`hub: jq failed: ${filtered.error.message}`);
+      process.exitCode = 1;
+      break;
+    }
+    process.stdout.write(filtered.stdout);
+    process.stderr.write(filtered.stderr);
+    process.exitCode = filtered.status ?? 1;
+    break;
   }
   process.stdout.write(stdout);
-  process.exit(code);
+  process.exitCode = code;
+  break;
 }
