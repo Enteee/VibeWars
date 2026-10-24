@@ -33,6 +33,9 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
+// The company's roster, so that messaging a colleague who has not been hired
+// yet can say so, rather than reporting an unknown role.
+import { ROLES as COMPANY_ROLES } from "./hub-policy.mjs";
 import {
   acceptsManagedBot,
   indexRoles,
@@ -701,6 +704,7 @@ async function drainOutbound(env, role, reload) {
           from: role,
           topics,
           usernames,
+          roster: COMPANY_ROLES,
         });
         const since = Date.now() - lastSend;
         if (since < MIN_SEND_INTERVAL_MS) {

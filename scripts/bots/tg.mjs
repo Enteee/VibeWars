@@ -22,6 +22,9 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
+// The full roster, so an absent colleague can be reported as "not hired
+// yet" rather than silently omitted.
+import { ROLES } from "./hub-policy.mjs";
 import { formatLine, readInbox } from "./protocol.mjs";
 
 const ROLE = process.env.VIBEWARS_BOT_ROLE;
@@ -131,12 +134,9 @@ function roster() {
     // No roster directory yet: nobody has ever started a sidecar here.
     files = [];
   }
-  if (files.length === 0) {
-    console.log("(nobody online)");
-    return;
-  }
-
-  for (const name of files.sort()) {
+  /** @type {Map<string, number>} */
+  const seen = new Map();
+  for (const name of files) {
     /** @type {unknown} */
     let entry;
     try {
@@ -145,15 +145,29 @@ function roster() {
       continue;
     }
     const record = /** @type {Record<string, unknown>} */ (entry);
-    const seen = typeof record.lastSeen === "number" ? record.lastSeen : 0;
-    const ageSeconds = Math.round((Date.now() - seen) / 1000);
+    if (typeof record.role === "string" && typeof record.lastSeen === "number") {
+      seen.set(record.role, record.lastSeen);
+    }
+  }
+
+  // Every role is listed, hired or not. The company runs with a partial
+  // roster, and an agent that cannot tell "nobody has reviewed my pull
+  // request yet" from "there is no reviewer" waits forever for a colleague
+  // who was never hired.
+  for (const role of ROLES) {
+    const self = role === ROLE ? " (you)" : "";
+    const last = seen.get(role);
+    if (last === undefined) {
+      console.log(`${role.padEnd(16)} not hired yet${self}`);
+      continue;
+    }
+    const ageSeconds = Math.round((Date.now() - last) / 1000);
     // The sidecar heartbeats every 15s and removes its own entry on a clean
     // exit, so anything past a minute died without cleaning up. Its age is
-    // then meaningless — a leftover file can claim to be decades old — so say
-    // "stale" and stop there rather than printing a number nobody can use.
-    const self = record.role === ROLE ? " (you)" : "";
-    const state = ageSeconds > 60 ? "stale" : `online, ${String(ageSeconds)}s ago`;
-    console.log(`${String(record.role).padEnd(14)} ${state}${self}`);
+    // then meaningless, so say "stale" and stop there.
+    console.log(
+      `${role.padEnd(16)} ${ageSeconds > 60 ? "stale" : `online, ${String(ageSeconds)}s ago`}${self}`,
+    );
   }
 }
 
