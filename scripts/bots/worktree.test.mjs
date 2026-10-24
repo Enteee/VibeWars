@@ -56,6 +56,7 @@ function setup() {
   fs.writeFileSync(path.join(repo, "tracked.txt"), "main\n");
   sh(["add", "."], repo);
   commit("boot", repo);
+  sh(["update-ref", "refs/remotes/origin/main", "HEAD"], repo);
   return {
     repo,
     worktree: path.join(repo, ".bots", "wt", "dev"),
@@ -64,12 +65,19 @@ function setup() {
 }
 
 describe("ensureWorktree", () => {
-  it("creates a missing worktree, detached at HEAD, then leaves it alone", () => {
+  it("creates a missing worktree, detached at origin/main, then leaves it alone", () => {
     const { repo, worktree } = setup();
     expect(ensureWorktree(repo, "dev")).toEqual([`created ${worktree}`]);
-    expect(sh(["rev-parse", "HEAD"], worktree)).toBe(sh(["rev-parse", "HEAD"], repo));
+    expect(sh(["rev-parse", "HEAD"], worktree)).toBe(sh(["rev-parse", "origin/main"], repo));
     expect(sh(["branch", "--show-current"], worktree)).toBe("");
     expect(ensureWorktree(repo, "dev")).toEqual([]);
+  });
+
+  it("creates it on bot/<role> when that branch exists", () => {
+    const { repo, worktree } = setup();
+    sh(["branch", "bot/dev"], repo);
+    ensureWorktree(repo, "dev");
+    expect(sh(["branch", "--show-current"], worktree)).toBe("bot/dev");
   });
 
   it("re-adds a deleted worktree whose admin dir is still registered", () => {

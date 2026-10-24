@@ -10,9 +10,9 @@
  * creating or repairing a worktree is the host's job, done here by
  * claude-bot before it starts bwrap:
  *
- *   - no worktree: `git worktree add` it, detached at the checkout's HEAD.
- *     Not on `bot/<role>`: that branch would block every
- *     `bot/<role>/issue-<n>` the agent creates;
+ *   - no worktree: `git worktree add` it, on `bot/<role>` if that exists,
+ *     otherwise detached at origin/main. Never `-b bot/<role>`: while any
+ *     `bot/<role>/issue-<n>` exists git cannot create it (#71);
  *   - a worktree whose admin dir is gone: recreate `gitdir`, `commondir` and
  *     `HEAD`, then rebuild the index with a mixed `git reset`. Never
  *     `--hard`: the agent's uncommitted files are the point of keeping the
@@ -112,7 +112,9 @@ export function ensureWorktree(repo, role) {
     // An admin dir whose worktree is gone is a registered-but-missing
     // worktree, which `add` refuses without -f. -f reuses the name.
     const force = fs.existsSync(admin) ? ["-f"] : [];
-    git(repo, ["worktree", "add", "-q", ...force, "--detach", worktree, "HEAD"]);
+    const own = run(repo, ["show-ref", "--verify", "--quiet", `refs/heads/bot/${role}`]).code === 0;
+    const at = own ? [worktree, `bot/${role}`] : ["--detach", worktree, "origin/main"];
+    git(repo, ["worktree", "add", "-q", ...force, ...at]);
     return [`created ${worktree}`];
   }
 
@@ -125,7 +127,7 @@ export function ensureWorktree(repo, role) {
   if (adminStat === undefined) {
     // HEAD went with the admin dir. The role's newest branch is the best
     // guess at what it had checked out, and the agent can switch from there.
-    // With none, the checkout's HEAD, detached, as for a new worktree.
+    // With none, origin/main, detached, as for a new worktree.
     const newest = git(repo, [
       "for-each-ref",
       "--sort=-committerdate",
@@ -133,7 +135,7 @@ export function ensureWorktree(repo, role) {
       "--format=%(refname)",
       `refs/heads/bot/${role}`,
     ]).trim();
-    const head = newest === "" ? git(repo, ["rev-parse", "HEAD"]).trim() : `ref: ${newest}`;
+    const head = newest === "" ? git(repo, ["rev-parse", "origin/main"]).trim() : `ref: ${newest}`;
     fs.mkdirSync(admin);
     writeFresh(path.join(admin, "commondir"), "../..\n");
     writeFresh(path.join(admin, "HEAD"), `${head}\n`);
