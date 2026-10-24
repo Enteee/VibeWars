@@ -88,6 +88,20 @@ describe("isBoardRead", () => {
     expect(isBoardRead(["project", "field-list", "2", "--format", "json"], 2)).toBe(false);
     expect(isBoardRead(["issue", "list", "--format", "json"], 2)).toBe(false);
   });
+
+  it("passes through a list with a --jq or --template filter, which the snapshot would drop", () => {
+    const list = ["project", "item-list", "2", "--format", "json"];
+    for (const filter of [
+      ["--jq", ".items[].id"],
+      ["-q", ".items[].id"],
+      ["--jq=.items[].id"],
+      ["--template", "{{.}}"],
+      ["-t", "{{.}}"],
+      ["--template={{.}}"],
+    ]) {
+      expect(isBoardRead([...list, ...filter], 2), filter.join(" ")).toBe(false);
+    }
+  });
 });
 
 describe("parseBoardIds", () => {
