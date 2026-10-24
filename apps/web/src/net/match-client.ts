@@ -68,6 +68,8 @@ export interface SkillSlot {
 export interface CombatMessage {
   readonly casterSessionId: string;
   readonly skillId: string;
+  /** Where an area skill landed, and how far it reached (#5). */
+  readonly area?: { readonly x: number; readonly y: number; readonly radius: number };
   readonly events: readonly {
     readonly kind: string;
     readonly targetId?: string;

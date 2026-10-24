@@ -105,7 +105,8 @@ describe("runHeadlessMatch", () => {
         fighter("victim", 1, [], { position: vec2(100, 0) }),
         fighter("healer", 1, HEAL_BAR, {
           attributeRanks: new Map([["monk.healing-prayers", 12]]),
-          position: vec2(120, 0),
+          // Out of Fireball's 81-unit splash, or every cast burns both.
+          position: vec2(100, 100),
         }),
       ],
       maxSeconds: 300,
@@ -124,5 +125,30 @@ describe("runHeadlessMatch", () => {
     });
     expect(result.seconds).toBeCloseTo(5, 1);
     expect(result.survivors).toHaveLength(2);
+  });
+
+  it("splashes a cluster the same way twice from one seed", () => {
+    const run = () =>
+      runHeadlessMatch({
+        seed: "splash",
+        fighters: [
+          fighter("dps", 0, DAMAGE_BAR, {
+            attributeRanks: new Map([["elementalist.fire-magic", 12]]),
+          }),
+          // Three within 81 of the nearest, one well outside it.
+          fighter("near", 1, [], { position: vec2(200, 0) }),
+          fighter("left", 1, [], { position: vec2(200, 40) }),
+          fighter("right", 1, [], { position: vec2(200, -60) }),
+          fighter("far", 1, [], { position: vec2(200, 300) }),
+        ],
+        maxSeconds: 10,
+      });
+    const first = run();
+    expect(run()).toEqual(first);
+    // The first cast: one Fireball, the cluster, never the straggler.
+    expect(first.events.slice(0, 3)).toEqual(
+      ["near", "left", "right"].map((targetId) => ({ kind: "damage", targetId, amount: 91 })),
+    );
+    expect(first.events.some((event) => event.targetId === "far")).toBe(false);
   });
 });

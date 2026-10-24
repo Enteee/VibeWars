@@ -17,6 +17,7 @@ import {
   validatePlayerBuild,
   vec2,
   type CombatEvent,
+  type CombatLogEntry,
   type BuildEquipment,
   type Participant,
   type PlayerBuild,
@@ -437,17 +438,25 @@ export class MatchRoom extends Room {
    * Push combat events to every client. The client uses these for
    * floating numbers and a combat log; authoritative *state* still
    * arrives via schema sync, so a dropped event can never desync the
-   * simulation — it only costs a visual flourish.
+   * simulation — it only costs a visual flourish. An area skill also says
+   * where it landed and how far it reached, for the flash (#5). This is
+   * not part of `game-protocol`, so the field is additive.
    */
   private broadcastCombatEvents(
     casterSessionId: string,
     skillId: string,
     events: readonly CombatEvent[],
+    area: CombatLogEntry["area"],
   ): void {
     if (events.length === 0) {
       return;
     }
-    this.broadcast("combat", { casterSessionId, skillId, events });
+    this.broadcast(
+      "combat",
+      area === undefined
+        ? { casterSessionId, skillId, events }
+        : { casterSessionId, skillId, events, area },
+    );
   }
 
   private tick(ctx: StepContext): void {
@@ -466,7 +475,12 @@ export class MatchRoom extends Room {
       // On the wire, a status tick is sent as its bearer's, with no
       // skill: who applied the statuses is the combat log's business.
       const casterSessionId = entry.cause === "skill" ? entry.sourceId : entry.events[0]?.targetId;
-      this.broadcastCombatEvents(casterSessionId ?? "", entry.skillId ?? "", entry.events);
+      this.broadcastCombatEvents(
+        casterSessionId ?? "",
+        entry.skillId ?? "",
+        entry.events,
+        entry.area,
+      );
     }
 
     for (const [sessionId, player] of this.state.players) {

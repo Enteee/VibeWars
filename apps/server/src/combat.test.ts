@@ -372,6 +372,74 @@ describe("networked combat", () => {
     await roomB.leave();
   });
 
+  it("splashes a Fireball over a clustered trio: three damage events from one cast", async () => {
+    // Teams alternate by join order: a, b, then an idle ally of a and c,
+    // then another and d. b, c and d are the enemy trio.
+    const { roomA: a, roomB: b } = await joinPair();
+    const others = [];
+    for (let i = 0; i < 4; i += 1) {
+      const room = await new Client(endpoint).joinById(a.roomId, {
+        protocolVersion: PROTOCOL_VERSION,
+      });
+      others.push(room);
+    }
+    const [, c, , d] = others;
+    if (c === undefined || d === undefined) {
+      throw new Error("no trio");
+    }
+    await waitFor(() => [c, d].every((room) => a.state.players.has(room.sessionId)), {
+      label: "the trio",
+    });
+    expect([b, c, d].map((room) => a.state.players.get(room.sessionId)?.team)).toEqual([1, 1, 1]);
+
+    // Spawns are 120 apart, wider than the 81-unit splash: huddle on b.
+    const huddle = a.state.players.get(b.sessionId);
+    await Promise.all(
+      [c, d].map((room) => walkTo(room, { x: huddle?.x ?? 0, y: huddle?.y ?? 0 }, 45, 6000)),
+    );
+    for (const room of [c, d]) {
+      room.send("intent", { kind: "stop" });
+    }
+
+    await closeDistance(a, b.sessionId, 300);
+    a.send("intent", { kind: "target", targetSessionId: b.sessionId });
+    await waitFor(() => a.state.players.get(a.sessionId)?.targetSessionId === b.sessionId, {
+      label: "target applied",
+    });
+
+    const splash = new Promise<{
+      events: { kind: string; targetId?: string }[];
+      area?: { radius: number };
+    }>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error("no Fireball"));
+      }, 6000);
+      a.onMessage(
+        "combat",
+        (message: { skillId: string; events: { kind: string }[]; area?: { radius: number } }) => {
+          if (message.skillId === "elementalist.fireball") {
+            clearTimeout(timer);
+            resolve(message);
+          }
+        },
+      );
+    });
+    a.send("intent", {
+      kind: "use-skill",
+      slot: DEFAULT_SKILL_BAR.indexOf("elementalist.fireball"),
+    });
+    const message = await splash;
+
+    const hit = message.events.filter((event) => event.kind === "damage").map((e) => e.targetId);
+    expect(new Set(hit)).toEqual(new Set([b.sessionId, c.sessionId, d.sessionId]));
+    expect(hit[0]).toBe(b.sessionId);
+    expect(message.area?.radius).toBe(81);
+
+    for (const room of [a, b, ...others]) {
+      await room.leave();
+    }
+  }, 40_000);
+
   it("rejects a skill-slot index outside the bar rather than crashing", async () => {
     const { roomA, roomB } = await joinPair();
     const before = roomA.state.players.get(roomA.sessionId)?.energy ?? 0;

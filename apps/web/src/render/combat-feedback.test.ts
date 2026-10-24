@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { MatchSnapshot, PlayerSnapshot } from "../net/match-client.js";
-import type { FloatingText } from "./arena-snapshot.js";
+import { teamColour, type AreaFlash, type FloatingText } from "./arena-snapshot.js";
 import { showCombatFeedback } from "./combat-feedback.js";
 
 function player(sessionId: string): PlayerSnapshot {
@@ -40,7 +40,7 @@ const SNAPSHOT: MatchSnapshot = {
 function floated(events: { kind: string; targetId?: string; amount?: number }[]): string[] {
   const texts: FloatingText[] = [];
   showCombatFeedback(
-    { addFloatingText: (text) => texts.push(text) },
+    { addFloatingText: (text) => texts.push(text), addAreaFlash: () => undefined },
     { casterSessionId: "me", skillId: "elementalist.fireball", events },
     SNAPSHOT,
   );
@@ -59,5 +59,35 @@ describe("showCombatFeedback", () => {
 
   it("skips events about nobody it can see", () => {
     expect(floated([{ kind: "damage", targetId: "gone", amount: 5 }])).toEqual([]);
+  });
+});
+
+describe("showCombatFeedback and areas", () => {
+  const snapshot: MatchSnapshot = {
+    ...SNAPSHOT,
+    players: [player("me"), player("friend"), { ...player("them"), team: 1 }],
+  };
+  /** The flashes a scene would have been asked to draw. */
+  function flashed(casterSessionId: string, area?: { x: number; y: number; radius: number }) {
+    const flashes: AreaFlash[] = [];
+    showCombatFeedback(
+      { addFloatingText: () => undefined, addAreaFlash: (flash) => flashes.push(flash) },
+      { casterSessionId, skillId: "elementalist.fireball", events: [], ...(area && { area }) },
+      snapshot,
+    );
+    return flashes;
+  }
+
+  it("flashes where the area landed, at its radius, in the caster's side's colour", () => {
+    const area = { x: 300, y: 120, radius: 81 };
+    expect(flashed("friend", area)).toMatchObject([
+      { position: { x: 300, y: 120 }, radius: 81, colour: teamColour("ally") },
+    ]);
+    expect(flashed("me", area)[0]?.colour).toBe(teamColour("ally"));
+    expect(flashed("them", area)[0]?.colour).toBe(teamColour("enemy"));
+  });
+
+  it("flashes nothing for a skill with no area", () => {
+    expect(flashed("them")).toEqual([]);
   });
 });
