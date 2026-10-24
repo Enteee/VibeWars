@@ -121,7 +121,16 @@ export function parseRegistry(text) {
  * read as human would carry the operator's `*` mark.
  *
  * @param {unknown} raw one getUpdates entry
- * @param {{ chatId: string, topics: Map<number, string>, roles: readonly string[] }} context
+ * Only the operator is heard. The `*` mark is the operator's authority, so
+ * a message from any other member of the group is dropped rather than
+ * delivered with it.
+ *
+ * @param {{
+ *   chatId: string,
+ *   operatorId: number,
+ *   topics: Map<number, string>,
+ *   roles: readonly string[],
+ * }} context `operatorId` is the operator's Telegram user id
  *   `topics` maps a topic id to the role that owns it
  * @returns {{ to: string[], line: InboxLine } | null}
  */
@@ -139,7 +148,7 @@ export function routeInbound(raw, context) {
   if (typeof message.text !== "string" || message.text === "") {
     return null;
   }
-  if (typeof from.id !== "number" || from.is_bot === true) {
+  if (typeof from.id !== "number" || from.is_bot === true || from.id !== context.operatorId) {
     return null;
   }
   if (typeof message.message_id !== "number") {
@@ -467,6 +476,28 @@ function isControl(code) {
 }
 
 /**
+ * Characters that change how text around them is shown without being seen
+ * themselves: bidirectional overrides and isolates, which can make text
+ * read in a different order than it is (the Trojan Source class), and
+ * zero-width characters, which can hide inside a word.
+ *
+ * @param {number} code
+ * @returns {boolean}
+ */
+function isInvisibleFormat(code) {
+  return (
+    (code >= 0x202a && code <= 0x202e) ||
+    (code >= 0x2066 && code <= 0x2069) ||
+    code === 0x200e ||
+    code === 0x200f ||
+    code === 0x061c ||
+    (code >= 0x200b && code <= 0x200d) ||
+    code === 0x2060 ||
+    code === 0xfeff
+  );
+}
+
+/**
  * Text with nothing in it that can fake a line or move the cursor.
  *
  * An inbox line is one line on an agent's terminal, and its first
@@ -474,8 +505,8 @@ function isControl(code) {
  * newline and `HH:MM:SS*Ente: …` would otherwise print as a second line
  * the operator never wrote, and an ESC sequence could move the cursor up
  * and overwrite one (found in review of #28). So line breaks become `⏎`,
- * ESC becomes `␛`, a tab a space, and any other control `�`, in every
- * message, from anyone.
+ * ESC becomes `␛`, a tab a space, and any other control, bidi override
+ * or zero-width character `�`, in every message, from anyone.
  *
  * @param {string} text
  * @returns {string}
@@ -490,7 +521,7 @@ export function visible(text) {
       out += "␛";
     } else if (code === 0x09) {
       out += " ";
-    } else if (isControl(code)) {
+    } else if (isControl(code) || isInvisibleFormat(code)) {
       out += "�";
     } else {
       out += char;

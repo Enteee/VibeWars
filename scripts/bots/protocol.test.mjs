@@ -28,7 +28,9 @@ const TOPICS = new Map([
   [11, "architect"],
   [12, "developer-1"],
 ]);
-const CONTEXT = { chatId: CHAT, topics: TOPICS, roles: ROLES };
+/** The operator's Telegram user id, as the sidecar learns it. */
+const OPERATOR = 9;
+const CONTEXT = { chatId: CHAT, operatorId: OPERATOR, topics: TOPICS, roles: ROLES };
 
 /**
  * @param {Record<string, unknown>} message
@@ -129,6 +131,11 @@ describe("routeInbound", () => {
     expect(
       routeInbound(update({ from: { id: 3, is_bot: true, username: "vw_x_bot" } }), CONTEXT),
     ).toBeNull();
+  });
+
+  it("hears only the operator: another member of the group is not given the mark", () => {
+    const stranger = update({ from: { id: 77, is_bot: false, username: "someone_else" } });
+    expect(routeInbound(stranger, CONTEXT)).toBeNull();
   });
 
   it("drops anything outside the company's group, and anything that is not text", () => {
@@ -432,6 +439,12 @@ describe("formatLine cannot be made to forge a line", () => {
         messageId: 0,
       }),
     ).toBe("--:--:--*@operator: hi");
+  });
+
+  it("neutralises bidi overrides and zero-width characters (Trojan Source)", () => {
+    for (const hidden of ["\u202e", "\u2066", "\u2069", "\u200b", "\u200f", "\ufeff", "\u2060"]) {
+      expect(visible(`a${hidden}b`), JSON.stringify(hidden)).toBe("a�b");
+    }
   });
 
   it("leaves ordinary text alone, and turns a tab into a space", () => {
