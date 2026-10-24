@@ -7,6 +7,7 @@ import {
   type ClientIntent,
   type MapDescriptor,
   type MatchJoinOptions,
+  type MatchSeatReservation,
   type ServerHello,
 } from "@vibewars/game-protocol";
 
@@ -144,12 +145,12 @@ function awaitMessage<T>(room: Room, type: string, timeoutMs: number): Promise<T
 }
 
 /**
- * Which match to enter: any Quick Match room with space, or the room a
- * lobby created, with the ticket it handed this player (#41).
+ * Which match to enter: any Quick Match room with space, or the seat a
+ * lobby reserved for this player in its own match (#41).
  */
 export type MatchTarget =
   | { readonly kind: "quick"; readonly mapId?: string | undefined }
-  | { readonly kind: "lobby"; readonly roomId: string; readonly ticket: string };
+  | { readonly kind: "lobby"; readonly reservation: MatchSeatReservation };
 
 export async function connectToMatch(
   endpoint: string,
@@ -157,25 +158,22 @@ export async function connectToMatch(
   build?: PlayerBuild,
 ): Promise<MatchConnection> {
   const client = new Client(endpoint);
-  // The build is only a *request*: the server validates it and silently
-  // falls back to its house loadout if it is illegal (brief §32).
-  // Nothing here may assume it was honoured.
-  const withBuild = build === undefined ? {} : { build };
   let room: Room<unknown, DecodedMatchState>;
   if (target.kind === "lobby") {
-    const joinOptions: MatchJoinOptions = {
-      protocolVersion: PROTOCOL_VERSION,
-      ticket: target.ticket,
-      ...withBuild,
-    };
-    room = await client.joinById<DecodedMatchState>(target.roomId, joinOptions);
+    // The lobby reserved this seat with the build the player joined it
+    // with, so there is nothing left to send.
+    room = await client.consumeSeatReservation<DecodedMatchState>(target.reservation);
   } else {
+    // The build is only a *request*: the server validates it and silently
+    // falls back to its house loadout if it is illegal (brief §32).
+    // Nothing here may assume it was honoured.
+    //
     // The map id travels as a join option so the first client into a room
     // decides the arena; later joiners land in the room that already exists.
     const joinOptions: MatchJoinOptions = {
       protocolVersion: PROTOCOL_VERSION,
       ...(target.mapId === undefined ? {} : { mapId: target.mapId }),
-      ...withBuild,
+      ...(build === undefined ? {} : { build }),
     };
     room = await client.joinOrCreate<DecodedMatchState>(ROOM_MATCH, joinOptions);
   }

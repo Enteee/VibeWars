@@ -43,4 +43,5 @@ export type {
   LobbyReadyMessage,
   LobbySelectMapMessage,
   LobbyMatchStartingMessage,
+  MatchSeatReservation,
 } from "./protocol.js";

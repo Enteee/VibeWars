@@ -1,5 +1,8 @@
+import { randomUUID } from "node:crypto";
+
 import { Client, type Room } from "@colyseus/sdk";
 import { matchMaker, type Room as ServerRoom } from "@colyseus/core";
+import { defaultBuildEquipment, type PlayerBuild } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   QUICK_MATCH_MAX_PLAYERS,
@@ -15,7 +18,7 @@ import { findFreePort, waitFor } from "./testing/harness.js";
 
 /** What a test reads of a match room's decoded state. */
 interface MatchView {
-  readonly players: ReadonlyMap<string, { readonly team: number }>;
+  readonly players: ReadonlyMap<string, { readonly team: number; readonly name: string }>;
 }
 
 /** What a test reads of a lobby's decoded state. */
@@ -23,6 +26,16 @@ interface LobbyView {
   readonly phase: string;
   readonly players: ReadonlyMap<string, { readonly team: number; readonly ready: boolean }>;
 }
+
+/** A legal build whose name shows up in the match, so a test can see it arrived. */
+const pyro = (name: string): PlayerBuild => ({
+  name,
+  primaryProfession: "elementalist",
+  secondaryProfession: undefined,
+  attributes: [{ attributeId: "elementalist.fire-magic", rank: 9 }],
+  skillBar: ["elementalist.fireball", null, null, null, null, null, null, null],
+  equipment: defaultBuildEquipment("elementalist"),
+});
 
 /**
  * Each lobby plays in its own match room, with its own teams (#41). Real
@@ -54,20 +67,25 @@ describe("a lobby's own match", () => {
 
   /**
    * A lobby whose members pick `teams` (`null` spectates) and ready up.
-   * The first member hosts.
+   * The first member hosts. `builds[i]`, when given, is what member `i`
+   * joins the lobby with.
    */
-  async function lobby(teams: readonly (number | null)[]): Promise<Member[]> {
+  async function lobby(
+    teams: readonly (number | null)[],
+    builds: readonly (PlayerBuild | undefined)[] = [],
+  ): Promise<Member[]> {
     const members: Member[] = [];
-    for (const team of teams) {
+    for (const [i, team] of teams.entries()) {
       const host = members[0];
+      const build = builds[i];
+      const options = {
+        protocolVersion: PROTOCOL_VERSION,
+        ...(build === undefined ? {} : { build }),
+      };
       const room =
         host === undefined
-          ? await new Client(endpoint).create<LobbyView>(ROOM_LOBBY, {
-              protocolVersion: PROTOCOL_VERSION,
-            })
-          : await new Client(endpoint).joinById<LobbyView>(host.room.roomId, {
-              protocolVersion: PROTOCOL_VERSION,
-            });
+          ? await new Client(endpoint).create<LobbyView>(ROOM_LOBBY, options)
+          : await new Client(endpoint).joinById<LobbyView>(host.room.roomId, options);
       const member: Member = {
         room,
         team,
@@ -112,16 +130,20 @@ describe("a lobby's own match", () => {
     return members;
   }
 
-  /** Start it, and wait for every team member's ticket. */
+  /** Start it, and wait for every team member's seat. */
   async function start(members: readonly Member[]): Promise<LobbyMatchStartingMessage[]> {
     members[0]?.room.send("start-match", {});
     return Promise.all(members.filter(({ team }) => team !== null).map(({ starting }) => starting));
   }
 
-  const join = (message: LobbyMatchStartingMessage, ticket: string | null = message.ticket) =>
-    new Client(endpoint).joinById<MatchView>(message.roomId, {
+  const take = (message: LobbyMatchStartingMessage) =>
+    new Client(endpoint).consumeSeatReservation<MatchView>(message.reservation);
+
+  /** A client that knows the room's id, and nothing else. */
+  const intrude = (roomId: string, options: Record<string, unknown> = {}) =>
+    new Client(endpoint).joinById<MatchView>(roomId, {
       protocolVersion: PROTOCOL_VERSION,
-      ...(ticket === null ? {} : { ticket }),
+      ...options,
     });
 
   /** The room in this process, or `undefined` once it is gone. */
@@ -142,16 +164,16 @@ describe("a lobby's own match", () => {
     const second = await lobby([1, 0]);
     const [a, b] = await Promise.all([start(first), start(second)]);
 
-    const roomIds = new Set([...a, ...b].map((message) => message.roomId));
+    const roomIds = new Set([...a, ...b].map((message) => message.reservation.roomId));
     expect(roomIds.size).toBe(2);
 
     for (const members of [first, second]) {
       const matches = await Promise.all(
         members.map(({ received }) => {
           if (received === undefined) {
-            throw new Error("a team member got no ticket");
+            throw new Error("a team member got no seat");
           }
-          return join(received);
+          return take(received);
         }),
       );
       const watcher = matches[0];
@@ -167,7 +189,21 @@ describe("a lobby's own match", () => {
     }
   });
 
-  it("sends a spectator no ticket, and leaves them in the lobby", async () => {
+  it("plays each member with the build they joined the lobby with", async () => {
+    const members = await lobby([0, 1], [pyro("Lobby Pyro"), undefined]);
+    const [mine] = await start(members);
+    if (mine === undefined) {
+      throw new Error("no seat");
+    }
+    const match = await take(mine);
+    await waitFor(() => match.state.players.get(match.sessionId) !== undefined, {
+      label: "own player in state",
+    });
+    expect(match.state.players.get(match.sessionId)?.name).toBe("Lobby Pyro");
+    await leaveAll([match, ...members.map(({ room }) => room)]);
+  });
+
+  it("sends a spectator no seat, and leaves them in the lobby", async () => {
     const members = await lobby([0, null]);
     await start(members);
     const spectator = members[1];
@@ -177,51 +213,72 @@ describe("a lobby's own match", () => {
     await leaveAll(members.map(({ room }) => room));
   });
 
-  it("refuses a join with no ticket, a spent ticket, or another lobby's ticket, and stays open", async () => {
-    // The bad joins come first, into the empty room: they must not close it.
-    const [mine] = await start(await lobby([0, 1]));
-    const [theirs] = await start(await lobby([0]));
-    if (mine === undefined || theirs === undefined) {
-      throw new Error("no tickets");
+  it("is full before anyone arrives, so a stranger cannot take or hold a seat", async () => {
+    const members = await lobby([0, 1]);
+    const seats = await start(members);
+    const roomId = seats[0]?.reservation.roomId ?? "";
+    // A reservation is all an attacker needs to hold a seat: one never
+    // consumed blocks it until it lapses. This asks for one the way the
+    // HTTP matchmaking route does, and never connects. Were any of them
+    // granted, the lobby's own players below could not all get in.
+    for (let i = 0; i < 5; i += 1) {
+      await expect(
+        matchMaker.joinById(roomId, { protocolVersion: PROTOCOL_VERSION, seatId: randomUUID() }),
+      ).rejects.toThrow();
     }
-    await expect(join(mine, null)).rejects.toThrow(/lobby's players only/);
-    await expect(join(mine, theirs.ticket)).rejects.toThrow(/lobby's players only/);
-    const seated = await join(mine);
-    await expect(join(mine)).rejects.toThrow(/lobby's players only/);
-    await seated.leave();
+    const matches = await Promise.all(seats.map(take));
+    expect(matches).toHaveLength(2);
+    await leaveAll([...matches, ...members.map(({ room }) => room)]);
+  });
+
+  it("does not hand a seat its player gave up to a stranger", async () => {
+    const members = await lobby([0, 1]);
+    const seats = await start(members);
+    const [stays, goes] = await Promise.all(seats.map(take));
+    const roomId = seats[0]?.reservation.roomId ?? "";
+    await goes?.leave(true);
+    await waitFor(() => stays?.state.players.size === 1, { label: "the leaver gone" });
+    await expect(intrude(roomId)).rejects.toThrow(/lobby's players only/);
+    await expect(intrude(roomId, { seatId: randomUUID() })).rejects.toThrow(/lobby's players only/);
+    await leaveAll([...(stays === undefined ? [] : [stays]), ...members.map(({ room }) => room)]);
+  });
+
+  it("refuses a client that tries to open a seated match of its own", async () => {
+    const before = (await matchMaker.query({ name: ROOM_MATCH })).length;
+    await expect(
+      new Client(endpoint).create(ROOM_MATCH, {
+        protocolVersion: PROTOCOL_VERSION,
+        seating: randomUUID(),
+      }),
+    ).rejects.toThrow(/opened by its lobby/);
+    expect((await matchMaker.query({ name: ROOM_MATCH })).length).toBe(before);
   });
 
   it("never puts a Quick Match player into a lobby's match", async () => {
-    const [ticket] = await start(await lobby([0, 1]));
-    if (ticket === undefined) {
-      throw new Error("no ticket");
+    const members = await lobby([0, 1]);
+    const [seat] = await start(members);
+    if (seat === undefined) {
+      throw new Error("no seat");
     }
-    const seated = await join(ticket);
+    const seated = await take(seat);
     const quick = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
       protocolVersion: PROTOCOL_VERSION,
     });
-    expect(quick.roomId).not.toBe(ticket.roomId);
-    await leaveAll([quick, seated]);
+    expect(quick.roomId).not.toBe(seat.reservation.roomId);
+    await leaveAll([quick, seated, ...members.map(({ room }) => room)]);
   });
 
-  it("disposes a lobby's match nobody came to, once the join deadline passes", async () => {
-    const [ticket] = await start(await lobby([0]));
-    if (ticket === undefined) {
-      throw new Error("no ticket");
-    }
-    const room = localRoom(ticket.roomId);
+  it("lets an unclaimed seat lapse at the join deadline, and then disposes the empty match", async () => {
+    const members = await lobby([0]);
+    const [seat] = await start(members);
+    const room = localRoom(seat?.reservation.roomId ?? "");
     expect(room).toBeInstanceOf(MatchRoom);
-    // Advance only the deadline, by exactly the deadline.
-    const deadline = LOBBY_MATCH_JOIN_DEADLINE_SECONDS * 1000;
-    for (const delayed of room?.clock.delayed ?? []) {
-      if (delayed.time === deadline) {
-        delayed.tick(deadline);
-      }
-    }
-    await waitFor(() => localRoom(ticket.roomId) === undefined, {
-      label: "the empty match to go",
-    });
-    await expect(join(ticket)).rejects.toThrow();
+    // Colyseus frees a reserved seat after `seatReservationTimeout`, and
+    // disposes an auto-disposing room with nobody in it once its last
+    // reservation lapses. Waiting the real 30 s is not worth it here.
+    expect(room?.seatReservationTimeout).toBe(LOBBY_MATCH_JOIN_DEADLINE_SECONDS);
+    expect(room?.autoDispose).toBe(true);
+    await leaveAll(members.map(({ room: lobbyRoom }) => lobbyRoom));
   });
 });
 

@@ -152,10 +152,10 @@ async function main(): Promise<void> {
       screenRoot,
       {
         onCreateLobby: (name) => {
-          void enterLobby(() => createLobby(endpoint, name));
+          void enterLobby(async () => createLobby(endpoint, name, await activeBuild()));
         },
         onJoinLobby: (code, name) => {
-          void enterLobby(() => joinLobbyByCode(endpoint, code, name));
+          void enterLobby(async () => joinLobbyByCode(endpoint, code, name, await activeBuild()));
         },
         onManageTeams: () => {
           void showTeams();
@@ -446,7 +446,7 @@ async function main(): Promise<void> {
     });
     lobby.onMatchStarting((message) => {
       // Only players on a team are sent this; a spectator stays here.
-      void enterMatch({ kind: "lobby", roomId: message.roomId, ticket: message.ticket });
+      void enterMatch({ kind: "lobby", reservation: message.reservation });
     });
     renderLobby();
   };

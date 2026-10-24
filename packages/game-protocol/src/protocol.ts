@@ -130,12 +130,6 @@ export interface MatchJoinOptions {
   /** The arena the first joiner asks for; later joiners get the room's. */
   readonly mapId?: string;
   /**
-   * The single-use seat a lobby handed this player in its
-   * `match-starting` message. A lobby's match refuses a join without one;
-   * Quick Match ignores it.
-   */
-  readonly ticket?: string;
-  /**
    * The build the player asks to play. Untyped on purpose: this package has
    * no game-core dependency, and the server parses and validates whatever
    * arrives before trusting any of it (brief §32).
@@ -155,6 +149,13 @@ export interface LobbyJoinOptions {
   readonly code?: string;
   /** Display name the player asks for; the server sanitises it. */
   readonly name?: string;
+  /**
+   * The build this player will ask to play when the lobby's match starts.
+   * The lobby joins the match on the player's behalf, so the build
+   * travels with them here, untyped for the same reason as in
+   * `MatchJoinOptions`.
+   */
+  readonly build?: unknown;
 }
 
 /** Pick a team slot, or `null` to become a spectator. */
@@ -177,11 +178,22 @@ export interface LobbySelectMapMessage {
  * the match. Spectators get nothing and stay in the lobby.
  */
 export interface LobbyMatchStartingMessage {
-  /** The lobby's own match room, which only a ticket gets into. */
-  readonly roomId: string;
   readonly mapId: string;
-  /** This player's seat, good for one join. Never shared with anyone else. */
-  readonly ticket: string;
+  /** This player's seat, reserved by the lobby. Never shared with anyone else. */
+  readonly reservation: MatchSeatReservation;
+}
+
+/**
+ * A seat the server reserved in a match room, as Colyseus describes it;
+ * a client takes it with `consumeSeatReservation`. Opaque to the game.
+ */
+export interface MatchSeatReservation {
+  readonly name: string;
+  readonly roomId: string;
+  readonly sessionId: string;
+  readonly processId?: string;
+  readonly publicAddress?: string;
+  readonly devMode?: boolean;
 }
 
 /** The maximum players a single lobby accepts (brief §4: not hardcoded to 8). */

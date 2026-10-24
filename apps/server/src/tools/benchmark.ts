@@ -1,11 +1,13 @@
-import { randomUUID } from "node:crypto";
-
 import type { Client, Room } from "@colyseus/sdk";
 import { matchMaker } from "@colyseus/core";
 import { createRng, seedFromString } from "@vibewars/game-core";
-import { PROTOCOL_VERSION, ROOM_MATCH } from "@vibewars/game-protocol";
 
-import { MatchRoom, type TickMetrics } from "../rooms/match-room.js";
+import {
+  DEFAULT_MAP_ID,
+  MatchRoom,
+  openLobbyMatch,
+  type TickMetrics,
+} from "../rooms/match-room.js";
 import { createGameServer, type GameServer } from "../server.js";
 import { findFreePort, waitFor } from "../testing/harness.js";
 
@@ -196,18 +198,17 @@ async function runScenario(
   const playerCount = scenario.perTeam * 2;
   const participants: Participant[] = [];
 
-  // A match this size comes from a lobby, so it is seated like one: a
-  // private room, each player holding a ticket for their team (#41).
-  const seats = Array.from({ length: playerCount }, (_, i) => ({
-    ticket: randomUUID(),
-    team: i % 2,
-  }));
-  const { roomId } = await matchMaker.createRoom(ROOM_MATCH, { seats });
-  for (const { ticket } of seats) {
-    const room = await new Client(endpoint).joinById(roomId, {
-      protocolVersion: PROTOCOL_VERSION,
-      ticket,
-    });
+  // A match this size comes from a lobby, so it is opened like one: a
+  // private room with a seat reserved for each player (#41).
+  const reservations = await openLobbyMatch(
+    DEFAULT_MAP_ID,
+    Array.from({ length: playerCount }, (_, i) => ({
+      team: i % 2 === 0 ? 0 : 1,
+      build: undefined,
+    })),
+  );
+  for (const reservation of reservations) {
+    const room = await new Client(endpoint).consumeSeatReservation(reservation);
     participants.push({ room, sessionId: room.sessionId });
   }
   const first = participants[0]?.room;
