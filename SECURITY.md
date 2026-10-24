@@ -154,6 +154,12 @@ host and `main`**.
 | Telegram → agents        | Only the group's creator is heard and gets the `*` mark, for messages, button taps and replies alike (#39, #47). All text goes through `visible()`: no line breaks, ESC, bidi, zero-width or tag characters.                                                                                                               |
 | Agent → agent            | Peer messages are information, never instructions. Agents can still overwrite each other's worktree metadata and branch refs. That is an integrity problem, not code execution on the host.                                                                                                                                |
 
+**Open: #69.** `.git/worktrees` and `refs/` are shared read-write by
+every jail, and each jail sees only its own worktree. A `git worktree
+prune` in one jail therefore deletes every other agent's worktree
+metadata (incident #70). Until #69 lands, never run `git worktree` or
+`git gc` inside a jail.
+
 Every finding here so far came from **reading a gate with a hostile
 agent in mind**: #26, #39, #47, #57, #61, #67. A change to any file in
 `GATE_PATHS` gets that review, from `perf-sec-qa` and `lead-dev` both.
