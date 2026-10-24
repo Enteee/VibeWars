@@ -46,20 +46,39 @@ particular:
 
 ## Consequences
 
-- An agent can write the shared repository's `.git`, including its config,
-  hooks and `info/`. hubd no longer runs anything there with authority, but
-  the operator's own git in the main checkout reads the same config, which
-  is #61; #63 binds those paths read-only into the jails.
+- **The parts of the shared `.git` that git executes are read-only in
+  every jail** (#61): `config`, `hooks/` and `info/`. The rest of `.git`
+  stays writable, because worktrees commit into it. The mirror keeps hubd
+  safe, but the operator's own git, `claude-llc`'s backup bundle and the
+  restarter all run in the operator's checkout. They read that config
+  (`core.fsmonitor`, `core.hooksPath`, filter and diff drivers,
+  `insteadOf`, `sshCommand`) and those hooks, so an agent that could write
+  them could run code on the host. The masks are bind mounts inside the
+  jail only, so devenv still installs its pre-commit hook on the host. Two
+  side effects:
+  - A jail sees `config` as it was when it started. git replaces the file
+    rather than writing into it, so a later change on the host reaches an
+    agent at its next restart.
+  - Agents cannot `git config` or `git remote add`. Branches are created
+    without tracking (`branch.autoSetupMerge=false`, set through the
+    jail's environment), so ordinary git never needs to write config.
+- **Refs are still writable from a jail**, including `refs/heads/main` and
+  `refs/remotes/origin/main`, so **on the host, never trust a local ref**.
+  In the operator checkout, fetch before you trust `origin/main`, and
+  never merge or fast-forward to a ref you did not just fetch. The
+  restarter fast-forwards to `main` fetched by URL, not to a local ref, and
+  hubd's push path already compares against main fetched by URL (#26).
+  Agents writing each other's worktree state is a lower-severity follow-up
+  to #61.
 - A company reboot (#21) runs host git in the operator's checkout,
   unattended. So it takes nothing about `main` from that checkout: it
   fetches and builds main in hubd's mirror (built from `git archive`, never
   a checkout), and fast-forwards the checkout only to a fetched commit equal
   to the mirror's. Every git it runs there pins the settings that run
   commands (hooks, fsmonitor, ssh, gpg and signature checks, submodules,
-  replace refs)
-  and every filter driver the config names. The residual is a setting git
-  adds in future that runs a command and is not pinned; read-only binds
-  (#63) close that class instead of chasing it key by key.
+  replace refs) and every filter driver the config names. The residual is
+  a setting git adds in future that runs a command and is not pinned; the
+  read-only masks above close that class instead of chasing it key by key.
 - hubd no longer sets an upstream in the agent's repository on push, and the
   agent's `origin/<branch>` does not move. Agents compare against the branch
   on GitHub when they need to.

@@ -169,6 +169,30 @@ let
     else
       echo "skip  chromium: $VIBEWARS_BOT_ROLE does not run tests"
     fi
+
+    # Issue #61: what the host executes out of .git is read-only in here,
+    # and everyday git still works. The commit happens in a throwaway
+    # worktree, so the agent's own checkout is never touched.
+    refused() {
+      if "$SHELL" -c "$2" >/dev/null 2>&1; then
+        echo "FAIL  $1: it was allowed"
+        failed=1
+      else
+        echo "ok    $1 is refused"
+      fi
+    }
+    common="$(git rev-parse --path-format=absolute --git-common-dir)"
+    refused "git config --local" 'git config --local vibewars.smoke 1'
+    refused "writing a hook" "echo x > '$common/hooks/post-checkout'"
+    refused "writing info/attributes" "touch '$common/info/attributes'"
+    scratch="$(mktemp -d)"
+    branch="smoke-$$"
+    check "checkout -b from origin/main, and commit" \
+      "$("$SHELL" -c "git worktree add -q -b '$branch' '$scratch/wt' origin/main &&
+        git -C '$scratch/wt' commit -q --allow-empty -m smoke && echo committed" 2>&1)" \
+      "committed"
+    git worktree remove --force "$scratch/wt" >/dev/null 2>&1 || true
+    git branch -q -D "$branch" >/dev/null 2>&1 || true
     exit "$failed"
   '';
 
@@ -584,7 +608,20 @@ let
         # Chromium keeps its shared memory there. Chromium's own sandbox cannot
         # work in here, which is why playwright.config.ts passes --no-sandbox;
         # this jail is the sandbox.
+        #
+        # The operator's .git is bound read-write, because a worktree commits
+        # into it, but the parts of it the host EXECUTES are masked read-only on
+        # top (issue #61): config (fsmonitor, hooksPath, filter and diff
+        # drivers, insteadOf, sshCommand), hooks, and info (attributes, which
+        # select those drivers). Every git command the operator, claude-llc or
+        # hubd runs in the checkout reads them, so a jail that could write them
+        # could run code on the host. --ro-bind, not -try: a missing one fails
+        # the start rather than leaving a hole, so they are made here first.
+        # Branches therefore never write tracking config: autoSetupMerge is
+        # off for every git in the jail, through the environment.
         # ----------------------------------------------------------------------
+        mkdir -p "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/info"
+
         if [ "$smoke" = "1" ]; then
           jailCommand=(${jailSmoke})
         else
@@ -617,6 +654,9 @@ let
           --bind "$creds" "$HOME/.claude/.credentials.json" \
           --ro-bind-try "$HOME/.config/git" "$HOME/.config/git" \
           --bind "$DEVENV_ROOT/.git" "$DEVENV_ROOT/.git" \
+          --ro-bind "$DEVENV_ROOT/.git/config" "$DEVENV_ROOT/.git/config" \
+          --ro-bind "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/hooks" \
+          --ro-bind "$DEVENV_ROOT/.git/info" "$DEVENV_ROOT/.git/info" \
           --ro-bind "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_BUS" \
           --bind "$VIBEWARS_BOT_BUS/$role" "$VIBEWARS_BOT_BUS/$role" \
           --ro-bind "$VIBEWARS_BOT_ROOT/hub" "$VIBEWARS_BOT_ROOT/hub" \
@@ -639,6 +679,9 @@ let
           --setenv VIBEWARS_BOARD "$boardIds" \
           --setenv VIBEWARS_ACTING "$acting" \
           --setenv VIBEWARS_ENV "development" \
+          --setenv GIT_CONFIG_COUNT 1 \
+          --setenv GIT_CONFIG_KEY_0 branch.autoSetupMerge \
+          --setenv GIT_CONFIG_VALUE_0 false \
           "''${chromiumEnv[@]}" \
           -- "''${jailCommand[@]}"
   '';

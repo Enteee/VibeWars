@@ -29,12 +29,13 @@ let
     done
   '';
 
-  # The org chart, in the order the windows are created. The architect is
-  # listed first after the dashboard because that is the window the session
-  # opens on: it is where the operator describes new features.
+  # The org chart, in the order the windows are created: dashboard 0, then
+  # the manager 1 and the architect 2. The session opens on the manager,
+  # because the operator hands feature requests to the manager, who files
+  # them; the architect then specs them.
   roles = [
-    "architect"
     "manager"
+    "architect"
     "developer-1"
     "developer-2"
     "asset-designer"
@@ -68,9 +69,9 @@ let
       claude-llc --help
 
     One tmux window per employee plus a dashboard. The session opens on the
-    architect's window, because that is where you describe what you want built:
-    say it to the architect and it becomes issues, which the board carries to
-    main without you.
+    manager's window, because that is where you describe what you want built:
+    say it to the manager and it becomes issues, which the architect specs and
+    the board carries to main without you.
 
     Running it again attaches to the company already running rather than
     starting a second one. Bottom-right of the status bar has clickable
@@ -318,8 +319,8 @@ let
           exit 0
         fi
 
-        # Opens on the architect, which is where you type.
-        if ${tmux} select-window -t "$SESSION:architect" 2>/dev/null; then
+        # Opens on the manager, which is where you type.
+        if ${tmux} select-window -t "$SESSION:manager" 2>/dev/null; then
           :
         else
           ${tmux} select-window -t "$SESSION:dashboard"
