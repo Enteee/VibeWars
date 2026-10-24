@@ -69,6 +69,34 @@ describe("checksSatisfied", () => {
   });
 });
 
+describe("checksSatisfied, with the company's required checks", () => {
+  // company-init.mjs EXPECTED_CHECKS: the enterTest job and the aggregate of
+  // the per-hook jobs (#99).
+  const REQUIRED = ["format + lint + typecheck + test + build", "git hooks"];
+  const build = check(REQUIRED[0], "pass");
+
+  it("passes when both ran and passed", () => {
+    expect(checksSatisfied([build, check("git hooks", "pass")], REQUIRED)).toMatchObject({
+      ok: true,
+    });
+  });
+
+  it("refuses a pull request with no git hooks check", () => {
+    const verdict = checksSatisfied([build, check("hook (eslint)", "pass")], REQUIRED);
+
+    expect(verdict).toMatchObject({ ok: false, missing: ["git hooks"] });
+  });
+
+  it("refuses a pull request whose git hooks check failed", () => {
+    const verdict = checksSatisfied(
+      [build, check("hook (eslint)", "fail"), check("git hooks", "fail")],
+      REQUIRED,
+    );
+
+    expect(verdict).toMatchObject({ ok: false, failing: ["git hooks", "hook (eslint)"] });
+  });
+});
+
 describe("approvalsSatisfied", () => {
   const SHA = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
   const OLDER = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";

@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 
 {
   name = "vibewars";
@@ -26,8 +26,8 @@
     pnpm = {
       enable = true;
       # Pinned to the 10.x line to match package.json's `packageManager`
-      # (CI installs that exact patch via pnpm/action-setup). Left to nixpkgs'
-      # default, devenv would hand us pnpm 12.x.
+      # (CI runs inside this shell, so it gets this same pnpm). Left to
+      # nixpkgs' default, devenv would hand us pnpm 12.x.
       package = pkgs.pnpm_10;
       install.enable = true;
     };
@@ -68,6 +68,10 @@
   # script, which exists so the exact same checks can run in environments
   # without a working devenv realization (see docs/adr/0007, which documents
   # the sandbox this repository is currently authored in).
+  #
+  # CI mirrors this list, step for step, in .github/workflows/ci.yml; keep
+  # the two in step. The git hooks below need no such mirror: CI reads them
+  # from the generated .pre-commit-config.yaml (docs/adr/0021).
   # ---------------------------------------------------------------------------
   enterTest = ''
     pnpm run format:check
@@ -100,6 +104,22 @@
         "dist/"
         "dist-types/"
       ];
+      # Builds the declarations first, as `pnpm run lint` does. Type-aware
+      # rules resolve cross-package imports through each package's `types`
+      # entry, which points into the gitignored dist/: without them every
+      # cross-package symbol is `error`-typed and the hook reports hundreds
+      # of bogus `no-unsafe-*` errors on a fresh checkout, while passing
+      # wherever an earlier build left dist/ behind. Serial, so concurrent
+      # batches of files never race one `tsc --build` against another.
+      entry = toString (
+        pkgs.writeShellScript "eslint-with-declarations" ''
+          set -euo pipefail
+          export PATH=${pkgs.nodejs_24}/bin:$PATH
+          ${pkgs.pnpm_10}/bin/pnpm exec tsc --build tsconfig.build.json
+          exec ${config.git-hooks.hooks.eslint.package}/bin/eslint --fix "$@"
+        ''
+      );
+      require_serial = true;
     };
 
     nixfmt.enable = true;
