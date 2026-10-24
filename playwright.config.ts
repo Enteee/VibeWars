@@ -19,6 +19,14 @@ import { defineConfig, devices } from "@playwright/test";
  */
 
 const PORT = Number(process.env.VIBEWARS_E2E_PORT ?? 2577);
+/**
+ * The static GitHub Pages build (#103), served by `vite preview` under the
+ * same sub-path and flags `pages.yml` deploys `next` with. It builds into
+ * its own directory so the server-served `apps/web/dist` stays untouched.
+ */
+const STATIC_PORT = PORT + 1;
+const STATIC_BASE = "/VibeWars/next/";
+const STATIC_URL = `http://127.0.0.1:${String(STATIC_PORT)}${STATIC_BASE}`;
 function resolveChromium(): string {
   const override = process.env.VIBEWARS_CHROMIUM;
   if (override !== undefined && override !== "") {
@@ -58,14 +66,38 @@ export default defineConfig({
     // own. Acceptable here: the only page ever loaded is our own client.
     launchOptions: { executablePath, args: ["--no-sandbox"] },
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  webServer: {
-    // The real production entry point serving the real built client, so
-    // these tests cannot pass against a dev-only code path.
-    command: `node apps/server/dist/main.js`,
-    url: `http://127.0.0.1:${String(PORT)}/healthz`,
-    env: { PORT: String(PORT), HOST: "127.0.0.1" },
-    reuseExistingServer: false,
-    timeout: 60_000,
-  },
+  projects: [
+    {
+      name: "chromium",
+      testIgnore: "static.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "static",
+      testMatch: "static.spec.ts",
+      use: { ...devices["Desktop Chrome"], baseURL: STATIC_URL },
+    },
+  ],
+  webServer: [
+    {
+      // The real production entry point serving the real built client, so
+      // these tests cannot pass against a dev-only code path.
+      command: `node apps/server/dist/main.js`,
+      url: `http://127.0.0.1:${String(PORT)}/healthz`,
+      env: { PORT: String(PORT), HOST: "127.0.0.1" },
+      reuseExistingServer: false,
+      timeout: 60_000,
+    },
+    {
+      command:
+        "pnpm --filter @vibewars/web exec vite build --outDir dist-static && " +
+        `pnpm --filter @vibewars/web exec vite preview --outDir dist-static ` +
+        `--host 127.0.0.1 --port ${String(STATIC_PORT)} --strictPort`,
+      url: STATIC_URL,
+      env: { VIBEWARS_BASE: STATIC_BASE, VITE_VIBEWARS_ONLINE: "off" },
+      reuseExistingServer: false,
+      // It builds the client first, which takes far longer than a start.
+      timeout: 180_000,
+    },
+  ],
 });

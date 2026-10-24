@@ -157,6 +157,20 @@ and _did_ crash the server during fuzzing.
   migrated (ADR-0016). Browser-local only: no accounts, no database, no
   cloud.
 
+## Deploy targets
+
+- **The container** (`containers.prod`, ADR-0009): one process serves the
+  built client and the game server. This is how online play is hosted.
+- **GitHub Pages** (`.github/workflows/pages.yml`, #103): the client alone,
+  as a static site, built with `VIBEWARS_BASE` (a sub-path) and
+  `VITE_VIBEWARS_ONLINE=off`. `/next/` follows `main`, and the root follows
+  the latest release. With no server behind it, online play is disabled.
+  Each base path gets its own storage namespace (`storage/namespace.ts`), so
+  the two builds on one origin never read each other's saves.
+
+ADR-0009 is not superseded by this; #15 does that once online play itself
+becomes static.
+
 ## Two rules worth stating plainly
 
 **The client sends intent, never outcomes** (brief §12, §32, §33). It may

@@ -1,6 +1,7 @@
 import { PROTOCOL_MISMATCH_MESSAGE } from "@vibewars/game-protocol";
 
 import { httpOriginFrom, resolveEndpoint } from "./net/match-client.js";
+import { ONLINE_PLAY } from "./net/online.js";
 import {
   LobbyNotFoundError,
   createLobby,
@@ -70,18 +71,21 @@ async function main(): Promise<void> {
 
   const endpoint = resolveEndpoint(window.location);
 
-  // Fetched once: the server is the authority on which arenas exist.
+  // Fetched once: the server is the authority on which arenas exist. A
+  // build without online play has no server to ask, and no lobby to host.
   let availableMaps: { id: string; name: string }[] = [];
-  try {
-    const response = await fetch(`${httpOriginFrom(endpoint)}/api/maps`);
-    if (response.ok) {
-      const body = (await response.json()) as { maps: { id: string; name: string }[] };
-      availableMaps = body.maps;
+  if (ONLINE_PLAY) {
+    try {
+      const response = await fetch(`${httpOriginFrom(endpoint)}/api/maps`);
+      if (response.ok) {
+        const body = (await response.json()) as { maps: { id: string; name: string }[] };
+        availableMaps = body.maps;
+      }
+    } catch (error) {
+      // A missing map list only costs the host their picker; the match
+      // still runs on the server's default arena.
+      console.warn("[web] could not load the map list", error);
     }
-  } catch (error) {
-    // A missing map list only costs the host their picker; the match
-    // still runs on the server's default arena.
-    console.warn("[web] could not load the map list", error);
   }
 
   let lobby: LobbyConnection | undefined;
@@ -179,6 +183,7 @@ async function main(): Promise<void> {
           renderMenuWith(list, problems);
         },
       },
+      ONLINE_PLAY,
       list,
       problems,
       menuNotice,

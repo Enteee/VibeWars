@@ -1,0 +1,121 @@
+name: Pages
+
+# Publishes the web client as a static site on GitHub Pages (#103):
+#   next     every merge to main   -> https://<owner>.github.io/<repo>/next/
+#   release  a published release   -> https://<owner>.github.io/<repo>/
+# Both are built with online play off: there is no game server behind
+# Pages until #15. The Colyseus server and containers.prod are untouched.
+#
+# Both targets write the one gh-pages branch, with plain git rather than a
+# deploy action, because the release must replace everything except next/.
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Which deploy to redo. `release` rebuilds the latest release tag.
+        type: choice
+        options: [next, release]
+        default: next
+
+permissions:
+  contents: read
+
+# Deploys are serialised, never cancelled: two quick merges queue, and the
+# later one, the newer main, lands last.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    # Pushes the gh-pages branch. The only job in the repository that writes.
+    permissions:
+      contents: write
+    environment:
+      name: ${{ (github.event_name == 'release' || inputs.target == 'release') && 'prod' || 'test' }}
+      # `cond && '' || x` would always give x ('' is falsy), so the
+      # condition is the one that yields the non-empty string.
+      url: >-
+        https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{
+        (github.event_name != 'release' && inputs.target != 'release') && 'next/' || '' }}
+    env:
+      TARGET: ${{ (github.event_name == 'release' || inputs.target == 'release') && 'release' || 'next' }}
+    steps:
+      # A release event already runs on its tag. A hand-run release has to
+      # find the latest one; everything else builds the commit it ran for.
+      - name: Resolve what to build
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$TARGET" = release ] && [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            ref=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          else
+            ref=$GITHUB_SHA
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ steps.source.outputs.ref }}
+
+      - uses: ./.github/actions/devenv
+
+      # The base comes from the repository name, not a literal, so a fork or
+      # a rename deploys to its own path.
+      - name: Build
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+          VITE_VIBEWARS_ONLINE: "off"
+        run: |
+          base="/$REPO_NAME/"
+          if [ "$TARGET" = next ]; then
+            base="${base}next/"
+          fi
+          VIBEWARS_BASE="$base" devenv shell -- pnpm --filter "@vibewars/web..." run build
+          touch apps/web/dist/.nojekyll
+
+      - name: Publish to gh-pages
+        run: |
+          site="$RUNNER_TEMP/site"
+          git worktree add --detach "$site"
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null; then
+            git fetch -q --depth 1 origin gh-pages:refs/remotes/origin/gh-pages
+            git -C "$site" checkout -q -B gh-pages origin/gh-pages
+          else
+            git -C "$site" checkout -q --orphan gh-pages
+            git -C "$site" rm -rfq --ignore-unmatch .
+          fi
+
+          if [ "$TARGET" = next ]; then
+            # Replace next/ entirely; leave the release around it alone.
+            mkdir -p "$site/next"
+            rsync -a --checksum --delete apps/web/dist/ "$site/next/"
+            # Pages must not run Jekyll over the site even before a release
+            # has put one at the root.
+            touch "$site/.nojekyll"
+          else
+            # Replace everything but next/, so stale hashed assets from older
+            # releases don't pile up. A release before any next deploy must
+            # not create next/; rsync leaves an absent excluded path absent.
+            # /.git is the worktree's link to the repository.
+            rsync -a --checksum --delete --exclude /next/ --exclude /.git apps/web/dist/ "$site/"
+          fi
+
+          git -C "$site" add -A
+          if git -C "$site" diff --cached --quiet; then
+            echo "gh-pages already holds this build."
+            exit 0
+          fi
+          git -C "$site" \
+            -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "deploy $TARGET $(git rev-parse HEAD)"
+          git -C "$site" push origin HEAD:gh-pages

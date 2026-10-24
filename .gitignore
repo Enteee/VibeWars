@@ -5,6 +5,8 @@ node_modules/
 # Build output
 dist/
 dist-types/
+# The static Pages build the e2e suite previews (#103).
+dist-static/
 build/
 *.tsbuildinfo
 
