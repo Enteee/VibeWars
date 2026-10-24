@@ -16,6 +16,7 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { ROLES } from "./hub-policy.mjs";
+import { visible } from "./protocol.mjs";
 
 const ROOT = process.env.VIBEWARS_BOT_ROOT ?? path.join(process.cwd(), ".bots");
 const BUS = path.join(ROOT, "bus");
@@ -247,7 +248,10 @@ function render() {
   }
   for (const line of recent) {
     const when = line.ts === 0 ? "--:--" : new Date(line.ts).toISOString().slice(11, 16);
-    console.log(`  ${when} ${line.from} -> ${line.to}: ${line.text.slice(0, 44)}`);
+    // Agent-written text, printed into the operator's tmux; see `visible`.
+    console.log(
+      `  ${when} ${visible(line.from)} -> ${visible(line.to)}: ${visible(line.text).slice(0, 44)}`,
+    );
   }
 
   console.log("");

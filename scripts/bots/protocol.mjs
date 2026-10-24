@@ -450,6 +450,51 @@ export function readInbox(contents, cursor) {
  */
 export function formatLine(line) {
   const when = line.ts === 0 ? "--:--:--" : new Date(line.ts).toISOString().slice(11, 19);
+  // The mark comes from `kind` alone, never from anything in the text.
   const mark = line.kind === "human" ? "*" : " ";
-  return `${when}${mark}${line.from}: ${line.text}`;
+  return `${when}${mark}${visible(line.from)}: ${visible(line.text)}`;
+}
+
+/** Everything that ends a line in some renderer. */
+const LINE_BREAKS = new Set([0x0a, 0x0d, 0x0b, 0x0c, 0x85, 0x2028, 0x2029]);
+
+/**
+ * @param {number} code
+ * @returns {boolean} whether it is a C0 or C1 control, or DEL
+ */
+function isControl(code) {
+  return code < 0x20 || (code >= 0x7f && code <= 0x9f);
+}
+
+/**
+ * Text with nothing in it that can fake a line or move the cursor.
+ *
+ * An inbox line is one line on an agent's terminal, and its first
+ * characters say who spoke: `*` is the operator. A message containing a
+ * newline and `HH:MM:SS*Ente: …` would otherwise print as a second line
+ * the operator never wrote, and an ESC sequence could move the cursor up
+ * and overwrite one (found in review of #28). So line breaks become `⏎`,
+ * ESC becomes `␛`, a tab a space, and any other control `�`, in every
+ * message, from anyone.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function visible(text) {
+  let out = "";
+  for (const char of text) {
+    const code = char.codePointAt(0) ?? 0;
+    if (LINE_BREAKS.has(code)) {
+      out += "⏎";
+    } else if (code === 0x1b) {
+      out += "␛";
+    } else if (code === 0x09) {
+      out += " ";
+    } else if (isControl(code)) {
+      out += "�";
+    } else {
+      out += char;
+    }
+  }
+  return out;
 }

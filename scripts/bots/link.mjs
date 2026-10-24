@@ -260,7 +260,7 @@ function present(bus) {
  *
  * Telegram allows one getUpdates consumer per token; a second gets
  * "409 Conflict" and the company goes deaf. `wx` makes taking the lock
- * atomic, and a lock whose holder has died is taken over. This runs on the
+ * atomic, and a lock whose holder has died is taken over by renaming it. This runs on the
  * host, so a pid is meaningful here, unlike inside the jails.
  *
  * @param {string} lock
@@ -272,20 +272,35 @@ function takeLock(lock) {
     fs.writeFileSync(lock, mine, { flag: "wx" });
     return true;
   } catch {
-    const holder = Number.parseInt(fs.readFileSync(lock, "utf8").trim(), 10);
-    try {
-      process.kill(holder, 0);
-      return false;
-    } catch {
-      fs.rmSync(lock, { force: true });
-      try {
-        fs.writeFileSync(lock, mine, { flag: "wx" });
-        return true;
-      } catch {
-        // Another sidecar took it in the same instant.
-        return false;
-      }
-    }
+    /* held, or left behind; see below */
+  }
+  const seen = fs.readFileSync(lock, "utf8");
+  try {
+    process.kill(Number.parseInt(seen.trim(), 10), 0);
+    return false;
+  } catch {
+    /* the holder is dead */
+  }
+  // Take over a dead holder's lock by renaming it away. Only one rename of
+  // that file can succeed, so two sidecars racing here cannot both win, and
+  // checking the contents makes sure the file renamed is the stale one we
+  // looked at, not a lock a faster sidecar has just written.
+  const stale = `${lock}.stale-${String(process.pid)}`;
+  try {
+    fs.renameSync(lock, stale);
+  } catch {
+    return false;
+  }
+  if (fs.readFileSync(stale, "utf8") !== seen) {
+    fs.renameSync(stale, lock);
+    return false;
+  }
+  fs.rmSync(stale, { force: true });
+  try {
+    fs.writeFileSync(lock, mine, { flag: "wx" });
+    return true;
+  } catch {
+    return false;
   }
 }
 
