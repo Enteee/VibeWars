@@ -17,6 +17,12 @@ interface ImportMetaEnv {
    * and same-origin is correct.
    */
   readonly VITE_VIBEWARS_SERVER?: string;
+  /**
+   * `off` for a build with no game server behind it (the GitHub Pages
+   * deploy). Anything else, including unset, means online play is on.
+   * Read only by `net/online.ts`.
+   */
+  readonly VITE_VIBEWARS_ONLINE?: string;
 }
 
 interface ImportMeta {

@@ -5,6 +5,10 @@ import { defineConfig } from "vite";
  * and build editors; Phaser owns only the game viewport (brief §21).
  */
 export default defineConfig({
+  // The GitHub Pages deploy (#103) serves the client under a sub-path
+  // (`/VibeWars/`, `/VibeWars/next/`). Read at config time, so it is not a
+  // `VITE_` variable. Dev and the server-served build stay at the root.
+  base: process.env.VIBEWARS_BASE ?? "/",
   build: {
     outDir: "dist",
     emptyOutDir: true,

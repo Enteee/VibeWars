@@ -1,0 +1,160 @@
+name: Pages
+
+# Publishes the web client as a static site on GitHub Pages (#103):
+#   next     every merge to main   -> https://<owner>.github.io/<repo>/next/
+#   release  a published release   -> https://<owner>.github.io/<repo>/
+# Both are built with online play off: there is no game server behind
+# Pages until #15. The Colyseus server and containers.prod are untouched.
+#
+# Both targets write the one gh-pages branch, with plain git rather than a
+# deploy action, because the release must replace everything except next/.
+#
+# Two jobs, so the write token never meets repository code: `build` runs
+# the repo's and its dependencies' build code with a read-only token that
+# is not persisted; `deploy` holds contents: write and runs nothing but
+# this file's shell over the built artifact.
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Which deploy to redo. `release` rebuilds the latest release tag.
+        type: choice
+        options: [next, release]
+        default: next
+
+permissions:
+  contents: read
+
+env:
+  TARGET: ${{ (github.event_name == 'release' || inputs.target == 'release') && 'release' || 'next' }}
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.built.outputs.sha }}
+    steps:
+      # A release event already runs on its tag. A hand-run release has to
+      # find the latest one; everything else builds the commit it ran for.
+      - name: Resolve what to build
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$TARGET" = release ] && [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            ref=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          else
+            ref=$GITHUB_SHA
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ steps.source.outputs.ref }}
+          persist-credentials: false
+
+      - uses: ./.github/actions/devenv
+
+      # The base comes from the repository name, not a literal, so a fork or
+      # a rename deploys to its own path.
+      - name: Build
+        id: built
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+          VITE_VIBEWARS_ONLINE: "off"
+        run: |
+          base="/$REPO_NAME/"
+          if [ "$TARGET" = next ]; then
+            base="${base}next/"
+          fi
+          VIBEWARS_BASE="$base" devenv shell -- pnpm --filter "@vibewars/web..." run build
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: site
+          path: apps/web/dist/
+          if-no-files-found: error
+          retention-days: 1
+
+  deploy:
+    name: deploy
+    needs: build
+    runs-on: ubuntu-latest
+    # Pushes the gh-pages branch: the only job in the repository that
+    # writes. It runs no repository code (no checkout of the source, no
+    # devenv, no pnpm), so nothing the build pulls in ever sees the token.
+    permissions:
+      contents: write
+    environment:
+      name: ${{ (github.event_name == 'release' || inputs.target == 'release') && 'prod' || 'test' }}
+      # `cond && '' || x` would always give x ('' is falsy), so the
+      # condition is the one that yields the non-empty string.
+      url: >-
+        https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{
+        (github.event_name != 'release' && inputs.target != 'release') && 'next/' || '' }}
+    # Deploys are serialised, never cancelled: two quick merges queue, and
+    # the later one, the newer main, lands last.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: site
+          path: ${{ runner.temp }}/dist
+
+      # The token reaches git as an environment-scoped header, never a
+      # config file on disk.
+      - name: Publish to gh-pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ needs.build.outputs.sha }}
+        run: |
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          echo "::add-mask::$auth"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth"
+
+          dist="$RUNNER_TEMP/dist"
+          remote="https://github.com/$GITHUB_REPOSITORY.git"
+          site="$RUNNER_TEMP/site"
+          git init -q "$site"
+          cd "$site"
+          if git ls-remote --exit-code --heads "$remote" gh-pages >/dev/null; then
+            git fetch -q --depth 1 "$remote" gh-pages
+            git checkout -q -B gh-pages FETCH_HEAD
+          else
+            git checkout -q --orphan gh-pages
+          fi
+
+          if [ "$TARGET" = next ]; then
+            # Replace next/ entirely; leave the release around it alone.
+            mkdir -p next
+            rsync -a --checksum --delete "$dist/" next/
+          else
+            # Replace everything but next/, so stale hashed assets from older
+            # releases don't pile up. A release before any next deploy must
+            # not create next/; rsync leaves an absent excluded path absent.
+            rsync -a --checksum --delete --exclude /next/ --exclude /.git "$dist/" ./
+          fi
+          # Pages must not run Jekyll over the site, even before a release
+          # has put one at the root.
+          touch .nojekyll
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "gh-pages already holds this build."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "deploy $TARGET $SOURCE_SHA"
+          git push -q "$remote" HEAD:gh-pages
