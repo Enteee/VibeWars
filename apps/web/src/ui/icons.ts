@@ -1,4 +1,4 @@
-import type { ProfessionId, SkillType } from "@vibewars/game-core";
+import { getSkill, type ProfessionId, type SkillType } from "@vibewars/game-core";
 
 /**
  * Icon URLs for menus and the HUD (#75, docs/art/art-direction.md).
@@ -50,6 +50,15 @@ export function professionIcon(profession: ProfessionId): string {
 export function skillTypeBadgeHtml(type: SkillType): string {
   const name = SKILL_TYPE_NAME[type];
   return `<img class="skill-type-badge" src="${skillTypeIcon(type)}" alt="${name}" title="${name}">`;
+}
+
+/**
+ * The badge for a skill on a bar, by id: the HUD and the Training Ground
+ * both show it (#150). A skill this client does not know gets none.
+ */
+export function skillBadgeHtml(skillId: string): string {
+  const type = getSkill(skillId)?.type;
+  return type === undefined ? "" : skillTypeBadgeHtml(type);
 }
 
 /** The HUD's mute button (#112): what the sound is now, not what a click does. */
