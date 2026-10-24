@@ -23,6 +23,9 @@ const PORT = Number(process.env.VIBEWARS_E2E_PORT ?? 2577);
  * The static GitHub Pages build (#103), served by `vite preview` under the
  * same sub-path and flags `pages.yml` deploys `next` with. It builds into
  * its own directory so the server-served `apps/web/dist` stays untouched.
+ *
+ * Playwright starts every webServer whatever `--project` selects, so even
+ * a chromium-only run pays for this build (about 2s of vite today).
  */
 const STATIC_PORT = PORT + 1;
 const STATIC_BASE = "/VibeWars/next/";
