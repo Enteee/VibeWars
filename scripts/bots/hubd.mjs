@@ -996,8 +996,10 @@ async function afterProjectCommand(argv, result, cfg) {
 
 /**
  * Remember to re-read an issue hubd just closed, merged or renamed, once
- * GitHub's workflows have moved its card. Only one on the board, or a pull
- * request, whose merge closes issues that are.
+ * GitHub's workflows have moved its card. Only one that is on the board:
+ * a merged pull request that is not would cost a point per merge (~16 an
+ * hour) to learn about the issues it closes, which the agents move to Done
+ * themselves and the next sweep catches anyway.
  *
  * @param {string[]} argv
  * @param {number} code
@@ -1005,7 +1007,7 @@ async function afterProjectCommand(argv, result, cfg) {
  */
 function noteHint(argv, code, cfg) {
   const number = planHint(argv, code, cfg.repo);
-  if (number !== null && (argv[0] === "pr" || boardSet.has(number))) {
+  if (number !== null && boardSet.has(number)) {
     hints.set(number, Date.now() + HINT_DELAY_MS);
   }
 }
