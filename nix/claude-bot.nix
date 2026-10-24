@@ -57,6 +57,15 @@ let
     '';
   };
 
+  # `company reboot "<reason>"`: the manager reboots the company onto new
+  # main (#21). A hub request like any other; the policy says who may.
+  company = pkgs.writeShellApplication {
+    name = "company";
+    text = ''
+      exec ${node} ${botScripts}/hub.mjs company "$@"
+    '';
+  };
+
   tg = pkgs.writeShellApplication {
     name = "tg";
     text = ''
@@ -91,6 +100,7 @@ let
       tg
       hub
       board
+      company
     ]
   );
 
@@ -429,6 +439,15 @@ let
         When you genuinely have nothing to do, run \`tg wait --timeout 900\` to
         block until a colleague or the operator says something, then continue.
         Do not stop and wait for a prompt; nobody is going to send you one."
+
+        # After a company reboot, claude-llc hands the manager what it loaded
+        # (scripts/bots/restart.mjs), for the manager to pass on.
+        if [ -n "''${VIBEWARS_KICKOFF_NOTE-}" ]; then
+          kickoff="$kickoff
+
+        The company was just rebooted: $VIBEWARS_KICKOFF_NOTE
+        Tell everyone with \`tg broadcast\` first, word for word."
+        fi
 
         # `claude --continue` on its own reopens the conversation and then
         # waits, which would leave a restarted agent exactly as idle as an

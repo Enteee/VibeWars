@@ -544,3 +544,33 @@ describe("borrowed hats", () => {
     ).toMatchObject({ allow: false });
   });
 });
+
+describe("company reboot", () => {
+  /**
+   * @param {string} role
+   * @param {string[]} argv
+   */
+  const reboot = (role, argv) => authorize(role, { kind: "reboot", argv });
+
+  it("is requested and aborted by the manager only", () => {
+    expect(reboot("manager", ["request", "load #21"])).toMatchObject({ allow: true });
+    expect(reboot("manager", ["abort"])).toMatchObject({ allow: true });
+    for (const role of ROLES.filter((r) => r !== "manager")) {
+      expect(reboot(role, ["request", "x"]), role).toMatchObject({ allow: false });
+      expect(reboot(role, ["abort"]), role).toMatchObject({ allow: false });
+    }
+  });
+
+  it("lets every role say it is ready, and nothing more", () => {
+    for (const role of ROLES) {
+      expect(reboot(role, ["ready"]), role).toMatchObject({ allow: true });
+      expect(reboot(role, ["ready", "x"]), role).toMatchObject({ allow: false });
+    }
+  });
+
+  it("needs a reason, and nothing else", () => {
+    for (const argv of [["request"], ["request", " "], ["request", "a", "b"], ["abort", "x"], []]) {
+      expect(reboot("manager", argv), argv.join(" ")).toMatchObject({ allow: false });
+    }
+  });
+});

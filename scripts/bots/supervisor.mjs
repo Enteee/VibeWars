@@ -22,13 +22,27 @@
  * and that it never touches the pane the operator is looking at, so a nudge
  * cannot land in the middle of something you are typing.
  */
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { ROLES } from "./hub-policy.mjs";
+import { obj } from "./protocol.mjs";
+import { drainStep, parseReboot } from "./reboot.mjs";
 
 const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
+
+/** The company's state directory; the test imports this module without one. */
+const ROOT = process.env.VIBEWARS_BOT_ROOT ?? "";
+const HUB = path.join(ROOT, "hub");
+/** A reboot hubd accepted (see hubd.mjs and reboot.mjs). */
+const REBOOT = path.join(ROOT, "reboot.json");
+/** The same record, once handed to the restarter. */
+const REBOOTING = path.join(ROOT, "rebooting.json");
+/** `claude-llc-restart`, which claude-llc passes in. */
+const RESTARTER = process.env.VIBEWARS_LLC_RESTART;
 
 /** How often to sample each pane. */
 const SAMPLE_MS = 30_000;
@@ -106,11 +120,83 @@ function focusedWindow() {
   return active === "" ? null : active;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Company reboot (#21)                                                       */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The supervisor already watches every pane, so it is what drains the
+ * company for a reboot hubd has accepted: it waits for each agent to run
+ * `company ready` or go idle, then for any `hub` request in flight, and
+ * then starts the restarter, detached, because nothing inside the tmux
+ * session survives the session being killed. Everything it needs is in
+ * `.bots/reboot.json` and hubd's heartbeat; the announcements are the
+ * manager's `company` broadcasts.
+ */
+
+/**
+ * @param {string} file
+ * @returns {unknown}
+ */
+function readJson(file) {
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+/** @returns {number} `hub` requests queued or being served, from hubd's heartbeat */
+function inFlight() {
+  const beat = obj(readJson(path.join(HUB, "hubd.alive")));
+  return typeof beat.inFlight === "number" ? beat.inFlight : 0;
+}
+
+/**
+ * Hand over to the restarter and stop supervising: the session it watches is
+ * about to go. The record moves to `rebooting.json` first, so the supervisor
+ * of the restarted company cannot mistake it for a new request.
+ *
+ * @returns {void}
+ */
+function restart() {
+  try {
+    fs.renameSync(REBOOT, REBOOTING);
+  } catch {
+    console.error("supervisor: the reboot was aborted just before it started");
+    return;
+  }
+  if (RESTARTER === undefined) {
+    console.error("supervisor: no restarter configured; restart claude-llc by hand");
+    return;
+  }
+  // setsid: its own session, so killing the tmux session and everything in
+  // it leaves the restarter running.
+  spawn("setsid", ["-f", RESTARTER], { detached: true, stdio: "ignore" }).unref();
+  console.error("supervisor: handed over to the restarter");
+  process.exit(0);
+}
+
+/* -------------------------------------------------------------------------- */
+
 async function main() {
   console.error(`supervisor: watching ${String(ROLES.length)} panes in ${SESSION}`);
 
+  /** @type {{ requestedAt: number, idle: Record<string, number>, drainedAt: number | null } | null} */
+  let drain = null;
+
   for (;;) {
+    // Vanishing mid-drain is an abort; a new record is a new drain.
+    const reboot = parseReboot(readJson(REBOOT));
+    if (reboot === null) {
+      drain = null;
+    } else if (drain?.requestedAt !== reboot.requestedAt) {
+      drain = { requestedAt: reboot.requestedAt, idle: {}, drainedAt: null };
+    }
+
     const focused = focusedWindow();
+    /** @type {string[]} */
+    const running = [];
 
     for (const role of ROLES) {
       const target = `${SESSION}:${role}`;
@@ -119,13 +205,23 @@ async function main() {
         // No such window — the company may be partly up, which is fine.
         continue;
       }
+      running.push(role);
 
       const previous = state.get(role) ?? { snapshot: "", idle: 0, nudgedAt: 0 };
-      const idle = looksIdle(previous.snapshot, snapshot) ? previous.idle + 1 : 0;
+      const isIdle = looksIdle(previous.snapshot, snapshot);
+      const idle = isIdle ? previous.idle + 1 : 0;
       let nudgedAt = previous.nudgedAt;
 
+      if (drain !== null) {
+        drain.idle[role] = isIdle ? (drain.idle[role] ?? 0) + 1 : 0;
+      }
+
+      // No nudges during a drain: an agent that said `ready` is meant to sit.
       const dueANudge =
-        idle >= IDLE_SAMPLES && Date.now() - nudgedAt > NUDGE_COOLDOWN_MS && role !== focused;
+        drain === null &&
+        idle >= IDLE_SAMPLES &&
+        Date.now() - nudgedAt > NUDGE_COOLDOWN_MS &&
+        role !== focused;
 
       if (dueANudge) {
         // Typed as text then Enter separately, so a pane that is NOT actually
@@ -138,6 +234,22 @@ async function main() {
       }
 
       state.set(role, { snapshot, idle: dueANudge ? 0 : idle, nudgedAt });
+    }
+
+    if (drain !== null && reboot !== null) {
+      const step = drainStep({
+        now: Date.now(),
+        reboot,
+        running,
+        idle: drain.idle,
+        inflight: inFlight(),
+        drainedAt: drain.drainedAt,
+      });
+      drain.drainedAt = step.drainedAt;
+      if (step.stop) {
+        restart();
+        drain = null;
+      }
     }
 
     await sleep(SAMPLE_MS);

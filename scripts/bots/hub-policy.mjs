@@ -71,6 +71,10 @@ export const GATE_PATHS = [
   "scripts/bots/hub-rest.mjs",
   "scripts/bots/hub-visibility.mjs",
   "scripts/bots/protocol.mjs",
+  "scripts/bots/git-hardening.mjs",
+  "scripts/bots/reboot.mjs",
+  "scripts/bots/restart.mjs",
+  "scripts/bots/supervisor.mjs",
   "scripts/bots/hub.mjs",
   "nix/claude-bot.nix",
   "nix/claude-llc.nix",
@@ -506,6 +510,9 @@ function authorizeAs(role, request, acting) {
   if (request.kind === "review") {
     return authorizeReview(role, argv, acting);
   }
+  if (request.kind === "reboot") {
+    return authorizeReboot(role, argv);
+  }
   if (request.kind !== "gh") {
     return { allow: false, reason: `unknown request kind "${request.kind}"` };
   }
@@ -634,6 +641,41 @@ function authorizeReview(role, argv, acting) {
     return { allow: false, reason: `you do not hold the "${seat}" seat` };
   }
   return { allow: true };
+}
+
+/**
+ * A company reboot (#21): `["request", reason]` and `["abort"]` are the
+ * manager's, who decides when the company is quiet enough to stop; the
+ * operator acts on the host directly and needs no permission from here.
+ * `["ready"]` is everyone's: it is how an agent says its work is saved.
+ * Whether a reboot is warranted right now is hubd's to decide: that needs
+ * the network.
+ *
+ * @param {string} role
+ * @param {string[]} argv
+ * @returns {{ allow: boolean, reason?: string }}
+ */
+function authorizeReboot(role, argv) {
+  const [verb, reason, ...rest] = argv;
+  if (verb === "ready" && reason === undefined) {
+    return { allow: true };
+  }
+  if (verb !== "request" && verb !== "abort") {
+    return {
+      allow: false,
+      reason: 'usage: company reboot "<reason>" | company reboot --abort | company ready',
+    };
+  }
+  if (role !== "manager") {
+    return { allow: false, reason: "only the manager reboots the company" };
+  }
+  if (verb === "abort" && reason === undefined) {
+    return { allow: true };
+  }
+  if (verb === "request" && reason !== undefined && reason.trim() !== "" && rest.length === 0) {
+    return { allow: true };
+  }
+  return { allow: false, reason: 'usage: company reboot "<reason>" | company reboot --abort' };
 }
 
 /**
