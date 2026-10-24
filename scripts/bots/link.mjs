@@ -319,6 +319,33 @@ class Company {
     this.token = token;
     this.chatId = chatId;
     this.registry = readRegistry(at.registry);
+    /** The operator's Telegram user id; set by `findOperator` before serving. */
+    this.operatorId = 0;
+  }
+
+  /**
+   * Who the operator is: the group's creator. Only their messages are
+   * delivered, and only they get the `*` mark (review of #28), so this is
+   * asked of Telegram rather than taken from config that could drift.
+   *
+   * @returns {Promise<void>}
+   */
+  async findOperator() {
+    const admins = /** @type {unknown[]} */ (
+      await api(this.token, "getChatAdministrators", { chat_id: this.chatId })
+    );
+    for (const raw of admins) {
+      const member = obj(raw);
+      const user = obj(member.user);
+      if (member.status === "creator" && typeof user.id === "number") {
+        this.operatorId = user.id;
+        return;
+      }
+    }
+    throw new Error(
+      "the company group has no creator Telegram will name, so there is nobody to " +
+        "treat as the operator. Nothing is delivered without one.",
+    );
   }
 
   save() {
@@ -387,7 +414,12 @@ async function pollInbound(company) {
         if (typeof update.update_id === "number") {
           company.registry.offset = update.update_id + 1;
         }
-        const routed = routeInbound(raw, { chatId: company.chatId, topics: owners, roles: ROLES });
+        const routed = routeInbound(raw, {
+          chatId: company.chatId,
+          operatorId: company.operatorId,
+          topics: owners,
+          roles: ROLES,
+        });
         for (const role of routed?.to ?? []) {
           if (routed !== null) {
             appendInbox(company.at.bus, role, routed.line);
@@ -534,6 +566,7 @@ async function serve() {
   process.on("SIGTERM", release);
 
   const company = new Company(at, token, chatId);
+  await company.findOperator();
   for (const role of ROLES) {
     ensureBus(at.bus, role);
   }

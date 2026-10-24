@@ -28,7 +28,9 @@ const TOPICS = new Map([
   [11, "architect"],
   [12, "developer-1"],
 ]);
-const CONTEXT = { chatId: CHAT, topics: TOPICS, roles: ROLES };
+/** The operator's Telegram user id, as the sidecar learns it. */
+const OPERATOR = 9;
+const CONTEXT = { chatId: CHAT, operatorId: OPERATOR, topics: TOPICS, roles: ROLES };
 
 /**
  * @param {Record<string, unknown>} message
@@ -129,6 +131,11 @@ describe("routeInbound", () => {
     expect(
       routeInbound(update({ from: { id: 3, is_bot: true, username: "vw_x_bot" } }), CONTEXT),
     ).toBeNull();
+  });
+
+  it("hears only the operator: another member of the group is not given the mark", () => {
+    const stranger = update({ from: { id: 77, is_bot: false, username: "someone_else" } });
+    expect(routeInbound(stranger, CONTEXT)).toBeNull();
   });
 
   it("drops anything outside the company's group, and anything that is not text", () => {
@@ -434,8 +441,25 @@ describe("formatLine cannot be made to forge a line", () => {
     ).toBe("--:--:--*@operator: hi");
   });
 
+  it("neutralises bidi overrides and zero-width characters (Trojan Source)", () => {
+    for (const hidden of ["\u202e", "\u2066", "\u2069", "\u200b", "\u200f", "\ufeff", "\u2060"]) {
+      expect(visible(`a${hidden}b`), JSON.stringify(hidden)).toBe("a�b");
+    }
+  });
+
+  it("neutralises tag characters, Hangul fillers and hidden variation selectors", () => {
+    // "LGTM" with "hi" spelled in tag characters after it: shows as LGTM.
+    const smuggled = `LGTM${String.fromCodePoint(0xe0068, 0xe0069, 0xe007f)}`;
+    expect(visible(smuggled)).toBe("LGTM���");
+    for (const code of [0xe0001, 0x115f, 0x1160, 0x3164, 0xffa0, 0xe0100, 0xe01ef, 0x00ad]) {
+      expect(visible(`a${String.fromCodePoint(code)}b`), code.toString(16)).toBe("a�b");
+    }
+  });
+
   it("leaves ordinary text alone, and turns a tab into a space", () => {
     expect(visible("Merged #30 — nice work 👍")).toBe("Merged #30 — nice work 👍");
+    // Emoji keep their ordinary variation selector.
+    expect(visible("❤️")).toBe("❤️");
     expect(visible("a\tb")).toBe("a b");
   });
 });
