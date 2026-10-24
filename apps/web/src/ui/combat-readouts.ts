@@ -64,11 +64,13 @@ export function describeCombatEvent(
   const target = nameOf(event.targetId);
   const skill = skillName(entry.skillId);
   const source = entry.sourceId === undefined ? undefined : nameOf(entry.sourceId);
-  // "Fireball (You)", or, for a status tick, the statuses behind it.
+  // "Fireball (You)", "Attack (You)" for a weapon swing, or, for a
+  // status tick, the statuses behind it.
+  const what = entry.cause === "weapon" ? "Attack" : (skill ?? "a skill");
   const by =
     entry.cause === "degeneration"
       ? "degeneration"
-      : `${skill ?? "a skill"}${source === undefined ? "" : ` (${source})`}`;
+      : `${what}${source === undefined ? "" : ` (${source})`}`;
   switch (event.kind) {
     case "damage":
       return `${by} hits ${target} for ${formatAmount(event.amount)}`;

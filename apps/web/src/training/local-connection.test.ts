@@ -79,7 +79,10 @@ describe("createLocalConnection", () => {
     let steps = 0;
     connection.onCombat((message) => {
       combat.push(...message.events.map((event) => event.kind));
-      areas.push(message.area);
+      // The Fireball only, not the punches that follow it (Q17).
+      if (message.skillId === "elementalist.fireball") {
+        areas.push(message.area);
+      }
     });
     connection.onStep(() => {
       steps += 1;
@@ -98,6 +101,23 @@ describe("createLocalConnection", () => {
     // Fireball splashes, so the hit carries where it landed, as the
     // server's does: without it training would draw no flash.
     expect(areas).toEqual([{ x: dummy?.x, y: dummy?.y, radius: 81 }]);
+  });
+
+  it("reports a swing as its attacker's, with no skill", () => {
+    const { connection } = targetDummy();
+    const swings: CombatMessage[] = [];
+    connection.onCombat((message) => {
+      if (message.skillId === "") {
+        swings.push(message);
+      }
+    });
+    // Having cast at it, the player walks over and punches it (Q17).
+    connection.sendIntent({ kind: "use-skill", slot: 0 });
+    for (let i = 0; i < 400 && swings.length === 0; i += 1) {
+      connection.advance(TICK_SECONDS);
+    }
+    expect(swings[0]?.casterSessionId).toBe(SELF_ID);
+    expect(swings[0]?.events[0]?.targetId).toBe("dummy");
   });
 
   it("reports a cast's real total, as the server does, so the bar fills over it", () => {
