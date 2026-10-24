@@ -47,6 +47,18 @@ const IMPLEMENTERS = [
   "perf-sec-qa",
 ];
 
+/**
+ * Roles that push only one kind of file, and where. The manager writes the
+ * company's skills and nothing else (#27): its pushes carry a guard that
+ * hubd checks against the branch's actual changes.
+ *
+ * @type {Readonly<Record<string, string | undefined>>}
+ */
+export const PUSH_SCOPES = { manager: ".claude/bots/skills/" };
+
+/** Who may open and edit pull requests: whoever may push. */
+const PR_OPENERS = [...IMPLEMENTERS, ...Object.keys(PUSH_SCOPES)];
+
 /** Roles that review code. Note: neither may merge. */
 const REVIEWERS = ["lead-dev", "perf-sec-qa"];
 
@@ -79,6 +91,9 @@ export const GATE_PATHS = [
   "nix/claude-bot.nix",
   "nix/claude-llc.nix",
   ".github/CODEOWNERS",
+  // The briefings and skills: instructions to every agent, so a bad one can
+  // tell them to skip a gate (#27).
+  ".claude/bots/",
 ];
 
 /**
@@ -139,6 +154,10 @@ const RULES = [
   { argv: ["issue", "edit"], roles: ["manager", "architect"] },
   { argv: ["issue", "close"], roles: ["manager"] },
   { argv: ["issue", "reopen"], roles: ["manager"] },
+  // Superseded pull requests: closed with a comment naming the replacement,
+  // never with --delete-branch (see `deletesBranch`).
+  { argv: ["pr", "close"], roles: ["manager"] },
+  { argv: ["pr", "reopen"], roles: ["manager"] },
   { argv: ["issue", "pin"], roles: ["manager"] },
   { argv: ["issue", "transfer"], roles: [] },
   { argv: ["issue", "delete"], roles: [] },
@@ -171,8 +190,8 @@ const RULES = [
   },
 
   /* ---- opening work. --------------------------------------------------- */
-  { argv: ["pr", "create"], roles: IMPLEMENTERS },
-  { argv: ["pr", "edit"], roles: IMPLEMENTERS },
+  { argv: ["pr", "create"], roles: PR_OPENERS },
+  { argv: ["pr", "edit"], roles: PR_OPENERS },
   { argv: ["pr", "ready"], roles: IMPLEMENTERS },
 
   /* ---- reviewing. ------------------------------------------------------
@@ -395,6 +414,36 @@ export function parseMerge(argv) {
 }
 
 /**
+ * Whether a `pr close` would also delete the branch. A branch is a
+ * developer's work, and closing a pull request is not a decision to throw
+ * it away. Read as gh reads flags: `--delete-branch` in any spelling, and
+ * `d` anywhere in a short cluster (`-cd`), erring on the side of refusing.
+ *
+ * @param {string[]} argv `["pr", "close", ...]`
+ * @returns {boolean}
+ */
+function deletesBranch(argv) {
+  return argv
+    .slice(2)
+    .some((word) =>
+      word.startsWith("--")
+        ? word === "--delete-branch" || word.startsWith("--delete-branch=")
+        : shortFlag(word, (letter) => letter === "d") !== null,
+    );
+}
+
+/**
+ * Who to ask instead, for a refusal: a refused agent should not have to
+ * guess whose job the thing it tried is.
+ *
+ * @param {string[]} roles
+ * @returns {string}
+ */
+function whoMay(roles) {
+  return roles.length === 0 ? "no role may" : `ask the ${roles.join(" or the ")}`;
+}
+
+/**
  * The words of a review verdict: `<verb> <pr> --sha <commit> [--as <seat>]
  * [note...]`.
  *
@@ -558,10 +607,16 @@ function authorizeAs(role, request, acting) {
       reason: `"gh ${argv.slice(0, 2).join(" ")}" is not on any role's allowlist`,
     };
   }
-  if (!permits(best.roles, role)) {
+  if (best.roles !== "*" && !permits(best.roles, role)) {
     return {
       allow: false,
-      reason: `role "${role}" may not run "gh ${best.argv.join(" ")}"`,
+      reason: `role "${role}" may not run "gh ${best.argv.join(" ")}"; ${whoMay(best.roles)}`,
+    };
+  }
+  if (best.argv.join(" ") === "pr close" && deletesBranch(argv)) {
+    return {
+      allow: false,
+      reason: "--delete-branch is not allowed: close the pull request and leave its branch",
     };
   }
   if (best.argv.join(" ") === "pr merge") {
@@ -570,7 +625,89 @@ function authorizeAs(role, request, acting) {
       return { allow: false, reason: merge.error };
     }
   }
+  // A role scoped to one kind of file opens pull requests for its own
+  // branches only, which are the only ones its guard has checked.
+  if (best.argv.join(" ") === "pr create" && PUSH_SCOPES[role] !== undefined) {
+    // Exactly one: gh takes the last of several, so checking any one of
+    // them would let a second --head name a branch nobody checked.
+    const heads = headsOf(argv.slice(best.argv.length));
+    if (heads?.length !== 1 || heads[0]?.startsWith(`bot/${role}/`) !== true) {
+      const flags = [...SCOPED_CREATE_FLAGS.keys()].join(", ");
+      return {
+        allow: false,
+        reason: `role "${role}" opens pull requests only with one --head bot/${role}/<branch>, and only these flags, unclustered: ${flags}`,
+      };
+    }
+  }
   return best.guards === undefined ? { allow: true } : { allow: true, guards: best.guards };
+}
+
+/**
+ * The `gh pr create` flags a scoped role may pass, by long name: their
+ * shorthand, and whether they take a value.
+ */
+const SCOPED_CREATE_FLAGS = new Map([
+  ["--head", { short: "H", value: true }],
+  ["--title", { short: "t", value: true }],
+  ["--body", { short: "b", value: true }],
+  ["--base", { short: "B", value: true }],
+  ["--label", { short: "l", value: true }],
+  ["--draft", { short: "d", value: false }],
+]);
+
+/**
+ * Every branch a scoped role's `gh pr create` names with --head / -H, read
+ * the way gh's flag parser reads them, or null for anything this cannot
+ * read exactly that way. Scanning for --head is not enough: gh takes the
+ * last of several, a flag's value is consumed whatever it looks like (so
+ * `--title --head=x` names no head), and `-dH x` is a head in a cluster.
+ * So every word must be a known flag or its value, and clusters of
+ * shorthands are refused rather than parsed.
+ *
+ * @param {string[]} argv the words after `pr create`
+ * @returns {string[] | null}
+ */
+function headsOf(argv) {
+  /** @type {string[]} */
+  const heads = [];
+  for (let i = 0; i < argv.length; i += 1) {
+    const word = argv[i] ?? "";
+    /** @type {string | undefined} */
+    let name;
+    /** @type {string | undefined} */
+    let inline;
+    if (word.startsWith("--")) {
+      const eq = word.indexOf("=");
+      name = eq === -1 ? word : word.slice(0, eq);
+      inline = eq === -1 ? undefined : word.slice(eq + 1);
+    } else if (word.startsWith("-") && word.length >= 2) {
+      const letter = word.slice(1, 2);
+      name = [...SCOPED_CREATE_FLAGS].find(([, flag]) => flag.short === letter)?.[0];
+      // gh reads `-Hx` and `-H=x` alike.
+      inline = word.length > 2 ? word.slice(2).replace(/^=/, "") : undefined;
+    }
+    const flag = name === undefined ? undefined : SCOPED_CREATE_FLAGS.get(name);
+    if (flag === undefined) {
+      return null;
+    }
+    /** @type {string | undefined} */
+    let value;
+    if (flag.value) {
+      value = inline ?? argv[i + 1];
+      if (inline === undefined) {
+        i += 1;
+      }
+      if (value === undefined) {
+        return null;
+      }
+    } else if (inline !== undefined) {
+      return null;
+    }
+    if (name === "--head" && value !== undefined) {
+      heads.push(value);
+    }
+  }
+  return heads;
 }
 
 /**
@@ -684,10 +821,11 @@ function authorizeReboot(role, argv) {
  *
  * @param {string} role
  * @param {string[]} argv `[branch, ...flags]`
- * @returns {{ allow: boolean, reason?: string }}
+ * @returns {{ allow: boolean, reason?: string, guards?: string[] }}
  */
 function authorizePush(role, argv) {
-  if (!IMPLEMENTERS.includes(role)) {
+  const scope = PUSH_SCOPES[role];
+  if (!IMPLEMENTERS.includes(role) && scope === undefined) {
     return { allow: false, reason: `role "${role}" does not push branches` };
   }
 
@@ -722,7 +860,7 @@ function authorizePush(role, argv) {
       return { allow: false, reason: `${flag} is never allowed` };
     }
   }
-  return { allow: true };
+  return scope === undefined ? { allow: true } : { allow: true, guards: [`paths-within:${scope}`] };
 }
 
 /**

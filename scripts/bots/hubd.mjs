@@ -22,7 +22,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { GIT_ENV, GIT_HARDENING } from "./git-hardening.mjs";
 import { isBoardRead, limitedMessage, parseRateLimit, usesGraphql } from "./hub-budget.mjs";
 import { hasFilter } from "./hub-filter.mjs";
-import { approvalsSatisfied, checksSatisfied, explainGuard } from "./hub-guards.mjs";
+import { approvalsSatisfied, checksSatisfied, explainGuard, pathsWithin } from "./hub-guards.mjs";
 import {
   ghIssue,
   ghPull,
@@ -42,6 +42,7 @@ import {
   parseReboot,
   rebootAllowed,
 } from "./reboot.mjs";
+import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
 import { ROLES, authorize, parseMerge, parseReview, touchesGate } from "./hub-policy.mjs";
 import {
   boardNumbers,
@@ -251,6 +252,32 @@ function servedByRest(kind, argv) {
  */
 function git(args) {
   return run("git", [...GIT_HARDENING, `--git-dir=${MIRROR}`, ...args], HUB, GIT_ENV);
+}
+
+/**
+ * `git` for output that need not be text, such as a blob: stdout as bytes,
+ * never decoded, so a binary file in a skill is exported intact.
+ *
+ * @param {string[]} args
+ * @returns {Promise<{ code: number, stdout: Buffer }>}
+ */
+function gitBytes(args) {
+  return new Promise((resolve) => {
+    const child = spawn("git", [...GIT_HARDENING, `--git-dir=${MIRROR}`, ...args], {
+      cwd: HUB,
+      env: { ...process.env, GIT_TERMINAL_PROMPT: "0", ...GIT_ENV },
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    /** @type {Buffer[]} */
+    const chunks = [];
+    child.stdout.on("data", (/** @type {Buffer} */ chunk) => chunks.push(chunk));
+    child.on("error", () => {
+      resolve({ code: 127, stdout: Buffer.alloc(0) });
+    });
+    child.on("close", (code) => {
+      resolve({ code: code ?? 0, stdout: Buffer.concat(chunks) });
+    });
+  });
 }
 
 /**
@@ -485,6 +512,117 @@ async function changedPaths(ref, cfg) {
     `main...${ref}`,
   ]);
   return result.code === 0 ? result.stdout.split("\n").filter((line) => line !== "") : null;
+}
+
+/**
+ * Why a push must not go through under `guard`, or null if it may.
+ *
+ * Unlike `changedPaths`, which only tags the audit log, this refuses, so it
+ * fails closed: a main it cannot fetch, or a diff it cannot take, is a
+ * refusal. --no-renames lists both sides of a move, so a file moved out of
+ * the allowed directory counts as a change outside it.
+ *
+ * @param {string} guard
+ * @param {string} ref the pushed branch, already fetched into the mirror
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string | null>}
+ */
+async function refusePush(guard, ref, cfg) {
+  if (!guard.startsWith("paths-within:")) {
+    return `unknown guard "${guard}"; refusing rather than guessing`;
+  }
+  const prefix = guard.slice("paths-within:".length);
+  const main = await git([
+    "fetch",
+    "-q",
+    "--no-tags",
+    remoteUrl(cfg),
+    "+refs/heads/main:refs/heads/main",
+  ]);
+  const diff =
+    main.code === 0
+      ? await git([
+          "diff",
+          "--no-ext-diff",
+          "--no-textconv",
+          "--no-renames",
+          "--name-only",
+          `main...${ref}`,
+        ])
+      : main;
+  if (diff.code !== 0) {
+    return "could not compare this branch with main, so its changes cannot be checked; try again";
+  }
+  const verdict = pathsWithin(
+    prefix,
+    diff.stdout.split("\n").filter((line) => line !== ""),
+  );
+  return verdict.ok
+    ? null
+    : `this role may only change ${prefix}; this push also changes: ${verdict.outside.join(", ")}`;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Skills                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/** Main's skills, bound read-only into every jail but the manager's (#27). */
+const SKILLS_MAIN = path.join(ROOT, "skills-main");
+
+/** The main commit the exported skills came from, so an unchanged main costs nothing. */
+let skillsSha = "";
+
+/**
+ * Export main's `.claude/bots/skills/` into SKILLS_MAIN. main is fetched by
+ * URL into the mirror, never read from the shared repository's refs, which
+ * any jail can write (#61). Blobs are read with `cat-file`, so no checkout
+ * and no attribute-selected filter ever runs.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<void>}
+ */
+async function syncSkills(cfg) {
+  const fetched = await git([
+    "fetch",
+    "-q",
+    "--no-tags",
+    remoteUrl(cfg),
+    "+refs/heads/main:refs/heads/main",
+  ]);
+  const sha = fetched.code === 0 ? (await git(["rev-parse", "main"])).stdout.trim() : "";
+  if (sha === "" || sha === skillsSha) {
+    return;
+  }
+  const listing = await git(["ls-tree", "-r", "-z", "main", "--", SKILLS_PREFIX]);
+  if (listing.code !== 0) {
+    return;
+  }
+  /** @type {Map<string, Map<string, Uint8Array>>} */
+  const skills = new Map();
+  for (const { skill, file, oid } of skillFiles(listing.stdout, SKILLS_PREFIX)) {
+    const blob = await gitBytes(["cat-file", "blob", oid]);
+    if (blob.code !== 0) {
+      return;
+    }
+    /** @type {Map<string, Uint8Array>} */
+    const files = skills.get(skill) ?? new Map();
+    files.set(file, blob.stdout);
+    skills.set(skill, files);
+  }
+  // A full disk or a permission error must not take hub down for every
+  // role: the agents keep the previous export, and the next sync retries.
+  try {
+    installSkills(SKILLS_MAIN, skills);
+  } catch (error) {
+    console.error(
+      `hubd: skills from main ${sha.slice(0, 7)} not exported: ${error instanceof Error ? error.message : "failed"}`,
+    );
+    return;
+  }
+  skillsSha = sha;
+  console.error(
+    `hubd: skills from main ${sha.slice(0, 7)}: ${[...skills.keys()].join(", ") || "none"}`,
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1003,7 +1141,9 @@ async function serve(request, verdict, acting) {
     return { allow: false, reason: visibility.reason, code: 77 };
   }
 
-  if (verdict.guards !== undefined) {
+  // A push's guard is about what it changes, and is checked on the push
+  // path below, once the branch is in the mirror.
+  if (kind === "gh" && verdict.guards !== undefined) {
     const guarded = await evaluateGuards(verdict.guards, argv);
     if (!guarded.ok) {
       audit({ role, kind, argv, decision: "refused-by-guard", reason: guarded.reason });
@@ -1012,7 +1152,7 @@ async function serve(request, verdict, acting) {
     // The merge gh runs is the one the guards checked: that pull request,
     // squashed, and only if its head is still the commit the approvals and
     // checks were validated against. A push in between fails the merge.
-    // Every guarded request is a merge, and it never reaches the unpinned
+    // Every guarded gh request is a merge, and it never reaches the unpinned
     // call below.
     const flags = guarded.flags.includes("--squash")
       ? guarded.flags
@@ -1093,6 +1233,13 @@ async function serve(request, verdict, acting) {
     if (fetched.code !== 0) {
       audit({ role, kind, argv, decision: "allowed", code: fetched.code });
       return { allow: true, ...fetched };
+    }
+    for (const guard of verdict.guards ?? []) {
+      const refused = await refusePush(guard, ref, cfg);
+      if (refused !== null) {
+        audit({ role, kind, argv, decision: "refused-by-guard", reason: refused });
+        return { allow: false, reason: refused, code: 77 };
+      }
     }
     const paths = await changedPaths(ref, cfg);
     // Not knowing what a push changes is treated as a gate change: the tag
@@ -1273,6 +1420,7 @@ async function main() {
   // it is also what lifts `limitedUntil` once GitHub resets the budget.
   const BUDGET_CHECK_MS = 60_000;
   await budgetExhausted();
+  await syncSkills(cfg);
   let lastBudgetCheck = Date.now();
   const stop = () => {
     fs.rmSync(ALIVE, { force: true });
@@ -1297,6 +1445,8 @@ async function main() {
     }
     if (Date.now() - lastBudgetCheck > BUDGET_CHECK_MS) {
       await budgetExhausted();
+      // A merged skill reaches every running agent within this interval.
+      await syncSkills(cfg);
       lastBudgetCheck = Date.now();
     }
     await sleep(300);

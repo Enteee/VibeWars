@@ -8,7 +8,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { approvalsSatisfied, checksSatisfied, explainGuard } from "./hub-guards.mjs";
+import { approvalsSatisfied, checksSatisfied, explainGuard, pathsWithin } from "./hub-guards.mjs";
 
 const EXPECTED = ["format + lint + typecheck + test + build"];
 
@@ -195,5 +195,40 @@ describe("explainGuard", () => {
 
   it("falls back to the bare guard name when there is nothing to add", () => {
     expect(explainGuard("checks-green", { ok: true })).toBe("checks-green");
+  });
+});
+
+describe("pathsWithin", () => {
+  const SKILLS = ".claude/bots/skills/";
+
+  it("allows changes, additions and deletions inside the directory", () => {
+    expect(
+      pathsWithin(SKILLS, [
+        ".claude/bots/skills/fresh-branch/SKILL.md",
+        ".claude/bots/skills/new-one/SKILL.md",
+      ]),
+    ).toEqual({ ok: true, outside: [] });
+  });
+
+  it("refuses a file outside it", () => {
+    expect(
+      pathsWithin(SKILLS, [".claude/bots/skills/a/SKILL.md", "scripts/bots/hubd.mjs"]),
+    ).toEqual({ ok: false, outside: ["scripts/bots/hubd.mjs"] });
+  });
+
+  it("refuses a rename out of the directory, seen as a delete and an add", () => {
+    // hubd diffs with --no-renames, so a move lists both of its sides.
+    expect(
+      pathsWithin(SKILLS, [".claude/bots/skills/a/SKILL.md", ".claude/bots/manager.md"]).outside,
+    ).toEqual([".claude/bots/manager.md"]);
+  });
+
+  it("is not fooled by a sibling whose name starts the same", () => {
+    expect(pathsWithin(SKILLS, [".claude/bots/skills-evil/x"]).ok).toBe(false);
+    expect(pathsWithin(SKILLS, [".claude/bots/skills/../manager.md"]).ok).toBe(false);
+  });
+
+  it("allows a push that changes nothing", () => {
+    expect(pathsWithin(SKILLS, [])).toEqual({ ok: true, outside: [] });
   });
 });

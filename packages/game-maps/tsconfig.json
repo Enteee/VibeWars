@@ -5,7 +5,8 @@
     "composite": false,
     "declaration": false,
     "declarationMap": false,
-    "rootDir": "."
+    "rootDir": ".",
+    "resolveJsonModule": true
   },
   "include": ["src/**/*.ts"],
   "exclude": []

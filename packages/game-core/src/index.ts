@@ -91,3 +91,24 @@ export type {
   HeadlessMatchResult,
 } from "./tools/headless-match.js";
 export { fighter, runHeadlessMatch } from "./tools/headless-match.js";
+
+export type {
+  MatchSimulationOptions,
+  Participant,
+  ParticipantSpec,
+  SkillRequest,
+  StepResult,
+} from "./match/simulation.js";
+export { MatchSimulation } from "./match/simulation.js";
+
+export type { CombatCause, CombatLogEntry, CombatTally } from "./match/combat-log.js";
+export { CombatMeter, tallyCombat } from "./match/combat-log.js";
+
+export type {
+  Behaviour,
+  BehaviourContext,
+  BehaviourCursor,
+  BehaviourIntent,
+  Targeting,
+} from "./match/behaviour.js";
+export { createCursor, decide, resolveTargeting } from "./match/behaviour.js";

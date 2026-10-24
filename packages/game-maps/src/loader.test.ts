@@ -2,12 +2,37 @@ import { describe, expect, it } from "vitest";
 
 import { circleIntersectsSegment } from "@vibewars/game-core";
 
+import arenaAlpha from "../maps/arena-alpha/map.json" with { type: "json" };
+import arenaOpen from "../maps/arena-open/map.json" with { type: "json" };
+import arenaPillars from "../maps/arena-pillars/map.json" with { type: "json" };
+import arenaSplit from "../maps/arena-split/map.json" with { type: "json" };
 import { allWallSegments } from "./geometry.js";
 import { MapNotFoundError, listMapIds, loadAllMaps, loadMap } from "./loader.js";
+import { validateMapData } from "./schema.js";
 
 describe("listMapIds", () => {
   it("includes the bundled arena-alpha map", () => {
     expect(listMapIds()).toContain("arena-alpha");
+  });
+
+  it("never lists a training map: they live in training/, outside maps/", () => {
+    expect(listMapIds()).not.toContain("training-hall");
+    expect(listMapIds()).not.toContain("training-pillars");
+  });
+});
+
+describe("the maps the browser imports", () => {
+  it("are the maps the server loads from disk", () => {
+    // The browser imports map JSON directly (#8); the server reads it with
+    // fs. One file, so this only fails if the two ever stop being the same
+    // data, which is the drift to catch.
+    const imported = [arenaAlpha, arenaOpen, arenaPillars, arenaSplit].map((raw) =>
+      validateMapData(raw),
+    );
+    expect(imported.map((map) => map.id)).toEqual(listMapIds());
+    for (const map of imported) {
+      expect(loadMap(map.id)).toEqual(map);
+    }
   });
 });
 
