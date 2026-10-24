@@ -522,3 +522,77 @@ export function renderView(group, item, comments) {
   }
   return `${lines.join("\n")}\n--\n${str(item.body)}\n`;
 }
+
+/**
+ * gh's bucket for a check run, from REST's status and conclusion: what
+ * `gh pr checks --json bucket` would say, so the merge guard reads one
+ * vocabulary whichever API answered.
+ *
+ * @param {Json} run
+ * @returns {string}
+ */
+function runBucket(run) {
+  if (run.status !== "completed") {
+    return "pending";
+  }
+  switch (run.conclusion) {
+    case "success":
+      return "pass";
+    case "neutral":
+    case "skipped":
+      return "skipping";
+    case "cancelled":
+      return "cancel";
+    default:
+      return "fail";
+  }
+}
+
+/** @type {Record<string, string>} */
+const STATUS_BUCKET = { success: "pass", pending: "pending", failure: "fail", error: "fail" };
+
+/**
+ * The checks on one commit, from `commits/{sha}/check-runs` and
+ * `commits/{sha}/status`, as `{ name, conclusion }` in gh's buckets.
+ *
+ * A re-run is a new check run under the same name; the newest (highest
+ * id) is the one that counts, as in gh. Anything that is not the shape
+ * GitHub sends, or a first page that does not hold every run, is an
+ * error: an answer that cannot be read must never pass as "no checks".
+ *
+ * @param {unknown} checkRuns the parsed check-runs answer
+ * @param {unknown} status the parsed combined-status answer
+ * @returns {{ checks: { name: string, conclusion: string }[] } | { error: string }}
+ */
+export function checksFromRest(checkRuns, status) {
+  const runs = rec(checkRuns);
+  const statuses = rec(status);
+  if (!Array.isArray(runs.check_runs) || typeof runs.total_count !== "number") {
+    return { error: "the check-runs answer is not one" };
+  }
+  if (!Array.isArray(statuses.statuses)) {
+    return { error: "the status answer is not one" };
+  }
+  if (runs.total_count > runs.check_runs.length) {
+    return { error: `${String(runs.total_count)} check runs, more than one page` };
+  }
+
+  /** @type {Map<string, { id: number, conclusion: string }>} */
+  const latest = new Map();
+  for (const run of runs.check_runs.map(rec)) {
+    const name = str(run.name);
+    const id = typeof run.id === "number" ? run.id : 0;
+    const seen = latest.get(name);
+    if (seen === undefined || id > seen.id) {
+      latest.set(name, { id, conclusion: runBucket(run) });
+    }
+  }
+  const checks = [...latest].map(([name, run]) => ({ name, conclusion: run.conclusion }));
+  for (const entry of statuses.statuses.map(rec)) {
+    checks.push({
+      name: str(entry.context),
+      conclusion: STATUS_BUCKET[str(entry.state)] ?? "fail",
+    });
+  }
+  return { checks };
+}
