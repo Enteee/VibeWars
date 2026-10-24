@@ -18,11 +18,31 @@
  */
 
 /**
+ * @typedef {"bots" | "manager" | "operator"} TopicName
+ */
+
+/**
+ * The forum topics the sidecar creates, each on first use (#85). Peer
+ * messages are mirrored into one Bots topic, not a topic per role: agents
+ * read their inboxes, not Telegram, so the copy is for the operator and
+ * reads best as one conversation.
+ *
+ * @type {Readonly<Record<TopicName, string>>}
+ */
+export const TOPIC_TITLES = {
+  bots: "🤖 Bots",
+  manager: "📋 Manager",
+  operator: "❓ Operator",
+};
+
+/**
  * @typedef {object} Registry
- * @property {number} offset getUpdates offset, so a restart does not replay.
- * @property {Record<string, { topicId: number }>} roles each role's forum topic
- * @property {{ topicId: number }} [operator] the Operator topic; absent until
- *   the first question creates it, exactly as for a role's topic
+ * @property {number | null} offset getUpdates offset, so a restart does not
+ *   replay; `null` for a fresh registry, which starts from the newest update
+ *   rather than delivering whatever Telegram still holds from before it
+ * @property {{ topicId: number }} [bots] every peer message's mirror
+ * @property {{ topicId: number }} [manager] the operator and the manager
+ * @property {{ topicId: number }} [operator] `tg ask` questions and answers
  */
 
 /**
@@ -54,65 +74,53 @@ export function obj(value) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * How to turn a per-role-bot registry into this one, for the error message.
- * A one-off command for the operator, not a code path (CLAUDE.md).
- */
-const REGISTRY_FIX =
-  "Keep the topics and drop the per-role bots: " +
-  "mv .bots/registry.json .bots/registry.json.old && " +
-  "jq '{offset: 0, roles: (.roles | map_values({topicId}) | with_entries(select(.value.topicId != null)))}' " +
-  ".bots/registry.json.old > .bots/registry.json";
-
-/**
- * Read `registry.json`. A missing file is a fresh company; anything not in
- * the current shape is refused, saying how to fix it.
+ * Read `registry.json`. A missing file is a fresh company. Anything not in
+ * the current shape is discarded, not repaired (ADR-0016), and the reason
+ * comes back for the sidecar to say once; the topics are created again on
+ * first use.
  *
  * @param {string | null} text the file's contents, or `null` if it does not exist
- * @returns {{ registry: Registry } | { error: string }}
+ * @returns {{ registry: Registry, discarded: string | null }}
  */
 export function parseRegistry(text) {
+  /** @type {(reason: string) => { registry: Registry, discarded: string }} */
+  const discard = (reason) => ({ registry: { offset: null }, discarded: reason });
   if (text === null) {
-    return { registry: { offset: 0, roles: {} } };
+    return { registry: { offset: null }, discarded: null };
   }
   /** @type {unknown} */
   let parsed;
   try {
     parsed = JSON.parse(text);
   } catch {
-    return { error: "registry.json is not valid JSON." };
+    return discard("registry.json is not valid JSON");
   }
   const record = obj(parsed);
-  const roles = obj(record.roles);
-  /** @type {Record<string, { topicId: number }>} */
-  const topics = {};
-  for (const [role, raw] of Object.entries(roles)) {
-    const entry = obj(raw);
-    const keys = Object.keys(entry);
-    if (typeof entry.topicId !== "number" || keys.some((key) => key !== "topicId")) {
-      return {
-        error:
-          `registry.json is from before the company had one bot (its "${role}" entry is ` +
-          `${JSON.stringify(keys)}). ${REGISTRY_FIX}`,
-      };
-    }
-    topics[role] = { topicId: entry.topicId };
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    return discard("registry.json is not an object");
   }
-  if ("managerOffset" in record) {
-    return { error: `registry.json is from before the company had one bot. ${REGISTRY_FIX}` };
+  const extra = Object.keys(record).filter(
+    (key) => key !== "offset" && !Object.hasOwn(TOPIC_TITLES, key),
+  );
+  if (extra.length > 0) {
+    return discard(`registry.json has ${extra.map((key) => `"${key}"`).join(", ")}`);
+  }
+  if (typeof record.offset !== "number" || !Number.isInteger(record.offset)) {
+    return discard('registry.json\'s "offset" must be an integer');
   }
   /** @type {Registry} */
-  const registry = {
-    offset: typeof record.offset === "number" ? record.offset : 0,
-    roles: topics,
-  };
-  if ("operator" in record) {
-    const operator = obj(record.operator);
-    if (typeof operator.topicId !== "number" || Object.keys(operator).length !== 1) {
-      return { error: 'registry.json\'s "operator" must be { "topicId": <number> }.' };
+  const registry = { offset: record.offset };
+  for (const name of /** @type {TopicName[]} */ (Object.keys(TOPIC_TITLES))) {
+    if (!(name in record)) {
+      continue;
     }
-    registry.operator = { topicId: operator.topicId };
+    const topic = obj(record[name]);
+    if (typeof topic.topicId !== "number" || Object.keys(topic).length !== 1) {
+      return discard(`registry.json's "${name}" must be { "topicId": <number> }`);
+    }
+    registry[name] = { topicId: topic.topicId };
   }
-  return { registry };
+  return { registry, discarded: null };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -122,11 +130,12 @@ export function parseRegistry(text) {
 /**
  * Who a message from the operator is for, and what they read.
  *
- * Topics are real routing. A message in a role's topic is for that role
- * only. A message in General is for everyone, unless it starts with
- * `<role>:` or `@<role>`, which is how the operator talks to one role
- * without opening its topic. An unknown topic, or a prefix that is not a
- * role, goes to everyone: a message must never be silently black-holed.
+ * A message that starts with `<role>:` or `@<role>` is for that role, in
+ * any topic. Otherwise the topic decides (#85): General is for everyone,
+ * and the Manager topic is the operator's line to the manager, so an
+ * unaddressed message there is the manager's. Anywhere else, Bots
+ * included, an unaddressed message is for nobody, and `whichRole` is the
+ * reply to post under it, so it is never silently black-holed.
  *
  * Messages from bots are dropped. This bot never receives its own, and the
  * per-role bots of the old design may still sit in the group; a bot message
@@ -144,12 +153,11 @@ export function parseRegistry(text) {
  * @param {{
  *   chatId: string,
  *   operatorId: number,
- *   topics: Map<number, string>,
  *   roles: readonly string[],
+ *   managerTopicId?: number,
  *   operatorTopicId?: number,
  * }} context `operatorId` is the operator's Telegram user id
- *   `topics` maps a topic id to the role that owns it
- * @returns {{ to: string[], line: InboxLine } | null}
+ * @returns {{ to: string[], line: InboxLine, whichRole: string | null } | null}
  */
 export function routeInbound(raw, context) {
   const update = obj(raw);
@@ -194,12 +202,6 @@ export function routeInbound(raw, context) {
     messageId: message.message_id,
   });
 
-  // A reply in a forum's General topic carries no thread id, but a message
-  // in a role's topic always does.
-  const owner = topicId === null ? undefined : context.topics.get(topicId);
-  if (owner !== undefined) {
-    return { to: [owner], line };
-  }
   // "developer-1: do X" or "@developer-1 do X". The name must be a role,
   // and must be followed by a colon (spaces before it are fine: the
   // operator types "manager : ..."), or for an at-mention by a space.
@@ -211,14 +213,34 @@ export function routeInbound(raw, context) {
     context.roles.includes(named) &&
     (prefix[3] === ":" || prefix[1] === "@")
   ) {
-    return { to: [named], line };
+    return { to: [named], line, whichRole: null };
   }
-  return { to: [...context.roles], line };
+  if (topicId !== null && topicId === context.managerTopicId) {
+    return { to: ["manager"], line, whichRole: null };
+  }
+  // A reply in a forum's General topic carries no thread id; every other
+  // topic's message does.
+  if (topicId === null) {
+    return { to: [...context.roles], line, whichRole: null };
+  }
+  return {
+    to: [],
+    line,
+    whichRole:
+      `Delivered to nobody: which role? Start with "<role>:", or post in General for everyone. ` +
+      `Roles: ${context.roles.join(", ")}`,
+  };
 }
 
 /* -------------------------------------------------------------------------- */
 /* Peer delivery                                                              */
 /* -------------------------------------------------------------------------- */
+
+/** `tg send operator`: the recipient that is the operator, in the Manager topic. */
+export const TO_OPERATOR = "operator";
+
+/** The one role that may `tg send operator` (#85); everyone else goes through it. */
+export const OPERATOR_LINE = "manager";
 
 /**
  * Deliver one outbox entry from `from` straight into the recipients'
@@ -233,6 +255,10 @@ export function routeInbound(raw, context) {
  * nobody: it comes back as `question` for the sidecar to number and post.
  * Only ASKERS may ask, and a malformed one is refused with a notice to the
  * sender, before anything reaches Telegram.
+ *
+ * A message to TO_OPERATOR is the manager writing to the operator: it is
+ * delivered to nobody and only mirrored, into the Manager topic. Any other
+ * sender is refused here too, not only by `tg`, which runs in the jail.
  *
  * @param {unknown} raw the outbox file's contents
  * @param {{ from: string, roles: readonly string[], present: ReadonlySet<string>, now: number }} context
@@ -273,6 +299,27 @@ export function deliverPeer(raw, context) {
       notice: null,
       mirror: null,
       question: { from: context.from, text, options },
+    };
+  }
+
+  // The manager's reply to the operator: no inbox, only the Manager topic.
+  if (to === TO_OPERATOR) {
+    if (context.from !== OPERATOR_LINE) {
+      return {
+        deliveries: [],
+        notice: fromLink(
+          `your last message was NOT delivered: only the ${OPERATOR_LINE} writes to the ` +
+            `operator. Tell the ${OPERATOR_LINE}, or ask with tg ask if you may.`,
+        ),
+        mirror: null,
+        question: null,
+      };
+    }
+    return {
+      deliveries: [],
+      notice: null,
+      mirror: { from: context.from, to, text },
+      question: null,
     };
   }
 
@@ -321,7 +368,7 @@ export function deliverPeer(raw, context) {
  *
  * @typedef {object} Mirrored
  * @property {string} from the sending role
- * @property {string} to a role, or "all"
+ * @property {string} to a role, "all", or TO_OPERATOR
  * @property {string} text the body exactly as the sender wrote it
  */
 
@@ -362,6 +409,24 @@ export const ROLE_STYLE = {
 
 /** How a broadcast's recipient is shown. */
 const EVERYONE = { emoji: "📢", name: "Everyone" };
+
+/** How the operator is shown, as the recipient of the manager's replies. */
+const OPERATOR = { emoji: "👤", name: "Operator" };
+
+/**
+ * Which topic a mirrored peer message goes to: a broadcast to General
+ * (`null`), the manager's reply to the operator to the Manager topic, and
+ * every other peer message to Bots, whoever it is for (#85).
+ *
+ * @param {Mirrored} message
+ * @returns {TopicName | null}
+ */
+export function mirrorTopic(message) {
+  if (message.to === "all") {
+    return null;
+  }
+  return message.to === TO_OPERATOR ? "manager" : "bots";
+}
 
 /**
  * @param {string} role
@@ -438,7 +503,12 @@ function cut(text, max) {
  */
 export function formatMirror(message, context) {
   const sender = styleOf(message.from);
-  const recipient = message.to === "all" ? EVERYONE : styleOf(message.to);
+  let recipient = EVERYONE;
+  if (message.to === TO_OPERATOR) {
+    recipient = OPERATOR;
+  } else if (message.to !== "all") {
+    recipient = styleOf(message.to);
+  }
 
   /** @type {MessageEntity[]} */
   const entities = [];

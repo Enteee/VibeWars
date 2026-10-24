@@ -36,7 +36,7 @@ afterEach(async () => {
  * A Bot API stand-in. `getUpdates` hands out whatever `push` queued, then
  * returns empty quickly instead of parking for fifty seconds.
  */
-async function fakeTelegram({ noCreator = false } = {}) {
+async function fakeTelegram({ noCreator = false, refuseTopics = false } = {}) {
   /** Set to refuse every message that carries entities, as a bad offset would. */
   let refuseEntities = false;
   /** @type {unknown[]} */
@@ -84,6 +84,18 @@ async function fakeTelegram({ noCreator = false } = {}) {
               { status: "administrator", user: { id: 1, is_bot: true } },
               { status: "creator", user: { id: 9, is_bot: false } },
             ];
+      } else if (method === "createForumTopic" && refuseTopics) {
+        calls.push({ method, params });
+        res.setHeader("content-type", "application/json");
+        res.statusCode = 400;
+        res.end(
+          JSON.stringify({
+            ok: false,
+            error_code: 400,
+            description: "Bad Request: not enough rights",
+          }),
+        );
+        return;
       } else if (method === "createForumTopic") {
         topics += 1;
         result = { message_thread_id: topics };
@@ -160,7 +172,7 @@ function company(telegram, registry, companyJson = JSON.stringify({ repo: "Entee
   fs.mkdirSync(bus, { recursive: true });
   fs.writeFileSync(
     path.join(root, "registry.json"),
-    registry ?? JSON.stringify({ offset: 0, roles: { architect: { topicId: 11 } } }),
+    registry ?? JSON.stringify({ offset: 0, bots: { topicId: 11 }, manager: { topicId: 12 } }),
   );
   if (companyJson !== null) {
     fs.writeFileSync(path.join(root, "company.json"), companyJson);
@@ -299,7 +311,7 @@ async function until(condition, label, ms = 8000) {
 }
 
 describe("the company sidecar", () => {
-  it("delivers a peer message straight into the inbox, then mirrors it to the topic", async () => {
+  it("delivers a peer message straight into the inbox, then mirrors it to Bots", async () => {
     const telegram = await fakeTelegram();
     const co = company(telegram.url);
     co.present("architect");
@@ -360,26 +372,46 @@ describe("the company sidecar", () => {
     expect(stderr).toMatch(/company\.json has no "repo"/);
   }, 20_000);
 
-  it("routes operator messages by topic, by 'role:' prefix, and to everyone otherwise", async () => {
+  it("routes operator messages by 'role:' prefix, the Manager topic, and General", async () => {
     const telegram = await fakeTelegram();
     const co = company(telegram.url);
     co.start();
 
-    telegram.push("only for you", 11);
-    telegram.push("lead-dev: pick up #26");
+    telegram.push("lead-dev: pick up #26", 11);
+    telegram.push("how is it going?", 12);
     telegram.push("everyone, standup");
 
-    await until(() => co.inbox("manager").length === 1, "the broadcast");
+    await until(() => co.inbox("architect").length === 1, "the broadcast");
     await until(() => co.inbox("lead-dev").length === 2, "lead-dev's two messages");
-    expect(co.inbox("architect").map((line) => line.text)).toEqual([
-      "only for you",
-      "everyone, standup",
-    ]);
+    await until(() => co.inbox("manager").length === 2, "the manager's two messages");
     expect(co.inbox("lead-dev").map((line) => line.text)).toEqual([
       "lead-dev: pick up #26",
       "everyone, standup",
     ]);
+    expect(co.inbox("manager").map((line) => line.text)).toEqual([
+      "how is it going?",
+      "everyone, standup",
+    ]);
+    expect(co.inbox("architect").map((line) => line.text)).toEqual(["everyone, standup"]);
     expect(co.inbox("manager")[0]).toMatchObject({ kind: "human", from: "@operator" });
+  }, 20_000);
+
+  it("delivers an unaddressed message in Bots to nobody, and asks which role under it", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    co.start();
+
+    telegram.push("who broke CI?", 11);
+
+    await until(() => telegram.sent.length === 1, "the reply");
+    expect(telegram.sent[0]).toMatchObject({
+      message_thread_id: 11,
+      reply_parameters: { message_id: 2 },
+    });
+    expect(String(telegram.sent[0]?.text)).toMatch(/Delivered to nobody: which role\?/);
+    for (const role of ["manager", "architect", "lead-dev"]) {
+      expect(co.inbox(role), role).toEqual([]);
+    }
   }, 20_000);
 
   it("delivers only the operator's messages: the group's creator", async () => {
@@ -442,19 +474,67 @@ describe("the company sidecar", () => {
     }
   }, 20_000);
 
-  it("creates a role's topic the first time it is messaged, and remembers it", async () => {
+  it("creates Manager at start and Bots on first use, remembers them, and no per-role topic", async () => {
     const telegram = await fakeTelegram();
-    const co = company(telegram.url);
+    const co = company(telegram.url, JSON.stringify({ offset: 0 }));
     co.present("developer-1");
+    co.present("lead-dev");
     co.start();
 
     co.send("manager", "developer-1", "welcome");
+    co.send("architect", "lead-dev", "review #85");
 
-    await until(() => telegram.sent.length === 1, "the mirror");
-    expect(telegram.sent[0]?.message_thread_id).toBe(101);
+    await until(() => telegram.sent.length === 2, "both mirrors");
+    expect(telegram.sent.map((m) => m.message_thread_id)).toEqual([102, 102]);
+    expect(telegram.calls.map((c) => c.params.name)).toEqual(["📋 Manager", "🤖 Bots"]);
     /** @type {unknown} */
     const registry = JSON.parse(fs.readFileSync(path.join(co.root, "registry.json"), "utf8"));
-    expect(registry).toMatchObject({ roles: { "developer-1": { topicId: 101 } } });
+    expect(registry).toEqual({ offset: 0, manager: { topicId: 101 }, bots: { topicId: 102 } });
+  }, 20_000);
+
+  it("posts the manager's 'tg send operator' in the Manager topic, and no inbox", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    co.start();
+
+    co.send("manager", "operator", "#8 is in review");
+
+    await until(() => telegram.sent.length === 1, "the mirror");
+    expect(telegram.sent[0]).toMatchObject({
+      message_thread_id: 12,
+      text: "📋 Manager → 👤 Operator\n#8 is in review",
+    });
+    expect(co.inbox("manager")).toEqual([]);
+  }, 20_000);
+
+  it("refuses 'tg send operator' from anyone but the manager, telling the sender", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    co.start();
+
+    co.send("developer-1", "operator", "merge my PR please");
+
+    await until(() => co.inbox("developer-1").length === 1, "the notice");
+    expect(String(co.inbox("developer-1")[0]?.text)).toMatch(/NOT delivered: only the manager/);
+    await sleep(500);
+    expect(telegram.sent).toEqual([]);
+  }, 20_000);
+
+  it("holds a peer message back when Bots cannot be created, never posting it to General", async () => {
+    const telegram = await fakeTelegram({ refuseTopics: true });
+    const co = company(telegram.url, JSON.stringify({ offset: 0 }));
+    co.present("architect");
+    co.start();
+
+    co.send("manager", "architect", "spec #85");
+    co.send("manager", "all", "standup");
+
+    await until(() => co.inbox("architect").length === 2, "both deliveries");
+    await sleep(1500);
+    // Held back, and the broadcast behind it too: nothing jumps the queue.
+    expect(telegram.sent).toEqual([]);
+    // Asked once each, not on every pass.
+    expect(telegram.calls.map((c) => c.params.name)).toEqual(["📋 Manager", "🤖 Bots"]);
   }, 20_000);
 
   it("tells the sender when the recipient is not running, and still delivers", async () => {
@@ -542,7 +622,7 @@ describe("the company sidecar", () => {
     const telegram = await fakeTelegram();
     const co = company(
       telegram.url,
-      JSON.stringify({ offset: 0, roles: {}, operator: { topicId: 77 } }),
+      JSON.stringify({ offset: 0, manager: { topicId: 12 }, operator: { topicId: 77 } }),
     );
     fs.mkdirSync(path.join(co.root, "link"), { recursive: true });
     fs.writeFileSync(
@@ -588,16 +668,30 @@ describe("the company sidecar", () => {
     expect(second.stderr).toMatch(/already running/);
   }, 20_000);
 
-  it("refuses a per-role-bot registry, saying how to fix it", async () => {
+  it("discards a registry of another shape, and starts after the newest update", async () => {
     const telegram = await fakeTelegram();
     const co = company(
       telegram.url,
-      JSON.stringify({ managerOffset: 3, roles: { architect: { token: "t", topicId: 11 } } }),
+      JSON.stringify({ offset: 3, roles: { architect: { topicId: 11 } } }),
     );
+    // From before this registry: Telegram still holds it, and it must not be
+    // handed to anyone again.
+    telegram.push("lead-dev: an old instruction");
+    co.start();
 
-    const run = await co.start().exited;
+    await until(() => {
+      try {
+        return (
+          "manager" in JSON.parse(fs.readFileSync(path.join(co.root, "registry.json"), "utf8"))
+        );
+      } catch {
+        return false;
+      }
+    }, "the new registry");
+    telegram.push("lead-dev: a new one");
 
-    expect(run.code).toBe(1);
-    expect(run.stderr).toMatch(/before the company had one bot/);
+    await until(() => co.inbox("lead-dev").length === 1, "the new message");
+    await sleep(300);
+    expect(co.inbox("lead-dev").map((line) => line.text)).toEqual(["lead-dev: a new one"]);
   }, 20_000);
 });
