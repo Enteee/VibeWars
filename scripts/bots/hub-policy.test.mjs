@@ -283,6 +283,14 @@ describe("pushing", () => {
     expect(push("asset-designer", ["bot/asset-designer/sprites"])).toMatchObject({ allow: true });
   });
 
+  it("keeps every role but cicd-engineer out of workflows and actions (#116)", () => {
+    const guard = "paths-outside:.github/workflows/,.github/actions/";
+    for (const role of ["developer-1", "developer-2", "asset-designer", "perf-sec-qa"]) {
+      expect(push(role, [`bot/${role}/x`]), role).toEqual({ allow: true, guards: [guard] });
+    }
+    expect(push("cicd-engineer", ["bot/cicd-engineer/x"])).toEqual({ allow: true });
+  });
+
   it("refuses main for everyone, including the role that merges", () => {
     for (const role of ROLES) {
       expect(push(role, ["main"]), role).toMatchObject({ allow: false });
@@ -325,9 +333,14 @@ describe("pushing", () => {
   });
 
   it("lets the manager push its own branches, only ever with the skills guard", () => {
+    // The skills guard alone already keeps it out of workflows; the
+    // second guard is the same rule every other role gets.
     expect(push("manager", ["bot/manager/skill-x"])).toEqual({
       allow: true,
-      guards: ["paths-within:.claude/bots/skills/"],
+      guards: [
+        "paths-within:.claude/bots/skills/",
+        "paths-outside:.github/workflows/,.github/actions/",
+      ],
     });
     expect(push("manager", ["bot/developer-1/x"])).toMatchObject({ allow: false });
     expect(push("manager", ["main"])).toMatchObject({ allow: false });

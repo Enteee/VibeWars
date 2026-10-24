@@ -148,6 +148,23 @@ export function pathsWithin(prefix, paths) {
 }
 
 /**
+ * Does a push leave every path under `prefixes` alone?
+ *
+ * The guard on every role but the one that owns those paths: workflows
+ * and actions belong to cicd-engineer (#116). As with `pathsWithin`,
+ * `paths` lists both sides of a rename, so moving a file out of a
+ * prefix is a change to it.
+ *
+ * @param {readonly string[]} prefixes directories, each ending in "/"
+ * @param {readonly string[]} paths every path the push changes, relative to main
+ * @returns {{ ok: boolean, offending: string[] }}
+ */
+export function pathsOutside(prefixes, paths) {
+  const offending = paths.filter((path) => prefixes.some((prefix) => path.startsWith(prefix)));
+  return { ok: offending.length === 0, offending };
+}
+
+/**
  * Turn a guard name from the policy into a human sentence, for the refusal
  * the agent actually reads.
  *
