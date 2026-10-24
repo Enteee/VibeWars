@@ -231,6 +231,10 @@ body {
   color: var(--ink-dim);
 }
 
+.screen-source {
+  color: inherit;
+}
+
 .screen-problem {
   padding: 0.5rem 0.7rem;
   border-left: 3px solid #ff7b72;
