@@ -45,4 +45,50 @@ describe("splitFilter", () => {
   it("treats a filter flag with no value as a filter, so hubd refuses it", () => {
     expect(hasFilter(["issue", "view", "1", "--jq"])).toBe(true);
   });
+
+  it("catches a filter glued to its short flag, as gh's parser accepts it", () => {
+    // Found in review of #32: each of these ran on the host as a filter.
+    for (const [word, value] of [
+      ["-q$ENV", "$ENV"],
+      ["-q.[0]", ".[0]"],
+      ["-q=.x", ".x"],
+    ]) {
+      const split = splitFilter(["issue", "view", "1", "--json", "title", word]);
+      expect(split, word).toEqual({
+        argv: ["issue", "view", "1", "--json", "title"],
+        jq: value,
+        template: null,
+      });
+    }
+    expect(splitFilter(["pr", "view", "1", "-t{{.title}}"])).toMatchObject({
+      template: "{{.title}}",
+    });
+  });
+
+  it("catches a filter at the end of a cluster of short flags, keeping the others", () => {
+    expect(splitFilter(["issue", "view", "1", "-cq.body"])).toEqual({
+      argv: ["issue", "view", "1", "-c"],
+      jq: ".body",
+      template: null,
+    });
+    expect(splitFilter(["issue", "view", "1", "-cq", ".body"])).toEqual({
+      argv: ["issue", "view", "1", "-c"],
+      jq: ".body",
+      template: null,
+    });
+  });
+
+  it("leaves short flags that are not filters, and their glued values, alone", () => {
+    expect(hasFilter(["issue", "list", "-L5"])).toBe(false);
+    expect(hasFilter(["issue", "list", "-s", "closed"])).toBe(false);
+    // Not a letter after the dash: a value, not flags.
+    expect(hasFilter(["issue", "comment", "1", "--body", "-1, not convinced"])).toBe(false);
+  });
+
+  it("still reads -t as a title on create and edit, glued or not", () => {
+    expect(hasFilter(["pr", "create", "-tFix it"])).toBe(false);
+    expect(hasFilter(["issue", "edit", "1", "-t", "x"])).toBe(false);
+    // ...but -q is a filter everywhere.
+    expect(hasFilter(["pr", "create", "-q.url"])).toBe(true);
+  });
 });

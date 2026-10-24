@@ -328,21 +328,22 @@ describe("hubd answering issue and PR reads from REST", () => {
   }, 20_000);
 
   it("refuses a request carrying an output filter, and never runs it", async () => {
-    // hub strips filters; this request did not come through hub.
+    // hub strips filters; these did not come through hub. The glued form is
+    // the one found in review of #32.
     const hubd = await startHubd(5000);
 
-    const answer = await hubd.request("developer-1", "gh", [
-      "issue",
-      "view",
-      "7",
-      "--json",
-      "title",
-      "--jq",
-      "$ENV",
-    ]);
-
-    expect(answer.allow).toBe(false);
-    expect(String(answer.reason)).toMatch(/inside the sandbox/);
+    for (const filter of [["--jq", "$ENV"], ["-q$ENV"], ["-cq$ENV"]]) {
+      const answer = await hubd.request("developer-1", "gh", [
+        "issue",
+        "view",
+        "7",
+        "--json",
+        "title",
+        ...filter,
+      ]);
+      expect(answer.allow, filter.join(" ")).toBe(false);
+      expect(String(answer.reason)).toMatch(/inside the sandbox/);
+    }
     expect(hubd.calls("api repos/Enteee/VibeWars/issues/7")).toBe(0);
   }, 20_000);
 
