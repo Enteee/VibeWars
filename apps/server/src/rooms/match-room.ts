@@ -363,6 +363,12 @@ export class MatchRoom extends Room {
           return;
         case "use-skill": {
           const request = this.#sim.requestSkill(client.sessionId, intent.slot);
+          // An enemy skill cast at nobody targets the nearest enemy, so
+          // mirror the simulation's target back, as `applyTarget` does.
+          const player = this.state.players.get(client.sessionId);
+          if (player !== undefined) {
+            player.targetSessionId = this.#sim.get(client.sessionId)?.targetId ?? "";
+          }
           // Only the caster hears it: a key that does nothing reads as a
           // broken game, and why it did nothing is nobody else's business.
           if (request !== undefined && !request.check.ok) {

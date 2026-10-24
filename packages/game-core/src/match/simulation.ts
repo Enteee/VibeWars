@@ -26,6 +26,7 @@ import { ZERO, type Vec2 } from "../vec2.js";
 import {
   createCursor,
   decide,
+  nearestLiving,
   type Behaviour,
   type BehaviourCursor,
   type ResetPolicy,
@@ -207,6 +208,17 @@ export class MatchSimulation {
     if (this.#participants.has(spec.id)) {
       throw new Error(`participant ${spec.id} is already in the match`);
     }
+    // Either of these resets every tick, which pins the participant at
+    // spawn without a word. Refuse it here instead.
+    const reset = spec.reset;
+    if (reset?.kind === "below-health" && reset.fraction >= (spec.startHealthFraction ?? 1)) {
+      throw new Error(
+        `participant ${spec.id}: below-health ${String(reset.fraction)} would reset every tick from its start health`,
+      );
+    }
+    if (reset?.kind === "on-interval" && !(reset.everySeconds > 0)) {
+      throw new Error(`participant ${spec.id}: on-interval needs everySeconds above 0`);
+    }
     const record: ParticipantRecord = {
       id: spec.id,
       combatant: this.#combatant(spec),
@@ -305,6 +317,10 @@ export class MatchSimulation {
    * A slot with no skill in it returns nothing to say: the client draws
    * only the slots it was sent, so asking for another one is not a player
    * pressing a key.
+   *
+   * With no target, an enemy-targeted skill targets the nearest living
+   * enemy first, picked exactly as a behaviour picks one. That target
+   * stays selected, whether or not the cast is then allowed.
    */
   public requestSkill(id: string, slot: number): SkillRequest | undefined {
     const record = this.#participants.get(id);
@@ -319,6 +335,15 @@ export class MatchSimulation {
     const skill = getSkill(skillId);
     if (skill === undefined) {
       return undefined;
+    }
+
+    if (skill.target === "single-enemy" && record.targetId === undefined) {
+      const team = record.combatant.team;
+      record.targetId = nearestLiving(
+        record,
+        this.#participants.values(),
+        (other) => other.combatant.team !== team,
+      );
     }
 
     const check = this.#check(record, skill, record.targetId);
