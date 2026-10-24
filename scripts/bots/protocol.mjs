@@ -484,6 +484,7 @@ export const ROLE_STYLE = {
   "lead-dev": { emoji: "🔍", name: "Lead Dev" },
   "perf-sec-qa": { emoji: "🛡", name: "Perf/Sec/QA" },
   "qa-tester": { emoji: "🧪", name: "QA Tester" },
+  support: { emoji: "🛟", name: "Support" },
 };
 
 /** How a broadcast's recipient is shown. */

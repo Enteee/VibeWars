@@ -511,6 +511,24 @@ describe("the company sidecar", () => {
     expect(stderr.match(/dropping messages from "user:666"/g)).toHaveLength(1);
   }, 20_000);
 
+  it("posts support's 'tg reply' in the Support topic, as a reply, plain, and no inbox", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    co.start();
+
+    co.reply("support", "Press 1 to cast. *bold* stays as written.", 932);
+
+    await until(() => telegram.sent.length === 1, "the reply");
+    expect(telegram.sent[0]).toEqual({
+      chat_id: CHAT,
+      text: "Press 1 to cast. *bold* stays as written.",
+      entities: [],
+      message_thread_id: 13,
+      reply_parameters: { message_id: 932 },
+    });
+    expect(co.inbox("support")).toEqual([]);
+  }, 20_000);
+
   it("refuses 'tg reply' from anyone but support, telling the sender", async () => {
     const telegram = await fakeTelegram();
     const co = company(telegram.url);

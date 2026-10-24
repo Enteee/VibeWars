@@ -7,7 +7,7 @@ which covers how agents talk; this covers how they reach GitHub.
 
 ## Context
 
-Nine agents run in bubblewrap jails on one machine and share one GitHub
+Ten agents run in bubblewrap jails on one machine and share one GitHub
 identity. GitHub cannot tell them apart, so it cannot enforce who merges,
 who approves or who restructures the board. Whatever enforces that has to
 sit between the agents and the credential.
@@ -97,7 +97,7 @@ particular:
 ## Alternatives Considered
 
 - **One GitHub identity per role.** Would let GitHub's own branch rules do
-  most of this, but means nine accounts and tokens to keep, and it still
+  most of this, but means ten accounts and tokens to keep, and it still
   would not stop host file reads through `gh`.
 - **Hardening git in the agents' repository instead of a mirror.** The
   stopgap that shipped first. It cannot stop a remote pointing elsewhere,

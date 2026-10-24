@@ -172,3 +172,33 @@ export function parseBoardIds(json) {
   }
   return { projectId: record.projectId, fieldId: field.id, options: byName };
 }
+
+/** The most issues support may file in any rolling hour (#131). */
+export const SUPPORT_ISSUES_PER_HOUR = 10;
+
+/**
+ * Whether support may file one more issue now. Support is the one role
+ * strangers can talk to, so a user who talks it into filing is capped here,
+ * outside the jail: past the cap the request is refused with when to try
+ * again, and support tells the user it will file later.
+ *
+ * @param {readonly number[]} filed epoch ms of the issues support has filed
+ * @param {number} now
+ * @returns {{ allow: boolean, reason?: string, filed: number[] }} `filed` is the
+ *   last hour of it, to keep
+ */
+export function supportCreate(filed, now) {
+  const recent = filed.filter((at) => now - at < 3_600_000).sort((a, b) => a - b);
+  if (recent.length < SUPPORT_ISSUES_PER_HOUR) {
+    return { allow: true, filed: recent };
+  }
+  const oldest = recent[0] ?? now;
+  return {
+    allow: false,
+    reason:
+      `support has filed ${String(SUPPORT_ISSUES_PER_HOUR)} issues in the last hour, the most ` +
+      `it may; the next one can be filed at ${clock(oldest + 3_600_000)}. Tell the user it is ` +
+      "noted and will be filed later, and tell the manager.",
+    filed: recent,
+  };
+}

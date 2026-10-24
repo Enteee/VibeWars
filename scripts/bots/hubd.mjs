@@ -20,7 +20,13 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { GIT_ENV, GIT_HARDENING } from "./git-hardening.mjs";
-import { isBoardRead, limitedMessage, parseRateLimit, usesGraphql } from "./hub-budget.mjs";
+import {
+  isBoardRead,
+  limitedMessage,
+  parseRateLimit,
+  supportCreate,
+  usesGraphql,
+} from "./hub-budget.mjs";
 import { hasFilter } from "./hub-filter.mjs";
 import { approvalsSatisfied, checksSatisfied, explainGuard, pathsWithin } from "./hub-guards.mjs";
 import {
@@ -35,7 +41,7 @@ import {
   renderView,
 } from "./hub-rest.mjs";
 import { BOARD_QUERY, costBetween, parseBoardPage, recordSpend } from "./hub-spend.mjs";
-import { obj } from "./protocol.mjs";
+import { SUPPORT, obj } from "./protocol.mjs";
 import {
   COMPANY_PATHSPECS,
   DRAIN_MS,
@@ -334,6 +340,16 @@ function remoteUrl(cfg) {
 
 /** Until when GitHub has told us the GraphQL budget is gone, epoch ms. */
 let limitedUntil = 0;
+
+/**
+ * When support filed its issues, epoch ms, for `supportCreate`'s hourly
+ * cap. In memory: a hubd restart forgets them, and so allows at most one
+ * more hour's worth. Restarts are the operator's and the manager's, not
+ * something a user can cause.
+ *
+ * @type {number[]}
+ */
+let supportFiled = [];
 
 /**
  * The budget as last read, and when. A reading this recent stands in for
@@ -1082,6 +1098,15 @@ async function handle(request) {
     audit({ role, kind, argv, decision: "rate-limited" });
     return limitedResponse();
   }
+  const files = role === SUPPORT && kind === "gh" && argv[0] === "issue" && argv[1] === "create";
+  if (files) {
+    const cap = supportCreate(supportFiled, Date.now());
+    supportFiled = cap.filed;
+    if (!cap.allow) {
+      audit({ role, kind, argv, decision: "refused", reason: cap.reason });
+      return { allow: false, reason: cap.reason, code: 77 };
+    }
+  }
 
   servingRole = role;
   /** @type {Record<string, unknown>} */
@@ -1090,6 +1115,9 @@ async function handle(request) {
     response = await serve(request, verdict, acting);
   } finally {
     servingRole = "hubd";
+  }
+  if (files && response.code === 0) {
+    supportFiled.push(Date.now());
   }
 
   // GitHub's own error for an exhausted budget is often something else

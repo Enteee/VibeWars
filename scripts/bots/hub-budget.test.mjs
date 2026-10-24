@@ -13,8 +13,37 @@ import {
   limitedMessage,
   parseBoardIds,
   parseRateLimit,
+  SUPPORT_ISSUES_PER_HOUR,
+  supportCreate,
   usesGraphql,
 } from "./hub-budget.mjs";
+
+describe("supportCreate (#131)", () => {
+  const HOUR = 3_600_000;
+
+  it("allows ten issues in a rolling hour and refuses the eleventh, saying why", () => {
+    expect(SUPPORT_ISSUES_PER_HOUR).toBe(10);
+    /** @type {number[]} */
+    let filed = [];
+    for (let i = 0; i < 10; i += 1) {
+      const now = 1_000_000 + i * 60_000;
+      const cap = supportCreate(filed, now);
+      expect(cap.allow, String(i + 1)).toBe(true);
+      filed = [...cap.filed, now];
+    }
+    const eleventh = supportCreate(filed, 1_000_000 + 10 * 60_000);
+    expect(eleventh.allow).toBe(false);
+    expect(eleventh.reason).toMatch(/filed 10 issues in the last hour.*tell the manager/);
+  });
+
+  it("allows one more once the oldest is an hour old", () => {
+    const filed = Array.from({ length: 10 }, (_, i) => 1_000_000 + i * 60_000);
+    expect(supportCreate(filed, 1_000_000 + HOUR - 1).allow).toBe(false);
+    const later = supportCreate(filed, 1_000_000 + HOUR);
+    expect(later.allow).toBe(true);
+    expect(later.filed).toHaveLength(9);
+  });
+});
 
 describe("usesGraphql", () => {
   it("counts the commands every agent uses all day", () => {

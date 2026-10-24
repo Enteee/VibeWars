@@ -2,7 +2,7 @@
  * What each employee of the company is allowed to do on GitHub.
  *
  * GitHub's ruleset on `main` covers the mechanical invariants (no direct
- * push, CI must pass), but all nine agents share one GitHub identity, so it
+ * push, CI must pass), but all ten agents share one GitHub identity, so it
  * cannot tell them apart. The kanban rules — only QA merges, only the
  * reviewers approve, only the manager restructures the board — are
  * therefore not conventions that agents are asked to respect. They are
@@ -24,8 +24,12 @@
  */
 
 import { shortFlag } from "./hub-filter.mjs";
+import { SUPPORT } from "./protocol.mjs";
 
-/** The nine employees. Order is the org chart, roughly. */
+/**
+ * The ten employees. Order is the org chart, roughly; support, the one
+ * that talks to people outside the company (#131), comes last.
+ */
 export const ROLES = [
   "manager",
   "architect",
@@ -36,7 +40,18 @@ export const ROLES = [
   "lead-dev",
   "perf-sec-qa",
   "qa-tester",
+  SUPPORT,
 ];
+
+/**
+ * Everyone but support. Support reads what everyone reads, but its only
+ * write is a new, labelled issue: it is the one role driven by strangers,
+ * so it gets no voice on existing work (#131).
+ */
+const STAFF = ROLES.filter((role) => role !== SUPPORT);
+
+/** The label every issue support files must carry, so each is visibly a user's. */
+export const SUPPORT_LABEL = "support";
 
 /** Roles that implement and therefore push branches and open pull requests. */
 const IMPLEMENTERS = [
@@ -145,12 +160,13 @@ const RULES = [
   { argv: ["workflow", "list"], roles: "*" },
   { argv: ["workflow", "view"], roles: "*" },
 
-  /* ---- commenting. Everyone can talk on an issue or a PR. -------------- */
-  { argv: ["issue", "comment"], roles: "*" },
-  { argv: ["pr", "comment"], roles: "*" },
+  /* ---- commenting. Everyone on staff can talk on an issue or a PR. ----- */
+  { argv: ["issue", "comment"], roles: STAFF },
+  { argv: ["pr", "comment"], roles: STAFF },
 
   /* ---- the manager runs the backlog and the board. --------------------- */
-  { argv: ["issue", "create"], roles: ["manager", "architect"] },
+  // Support files users' reports, labelled (see `supportCreate`).
+  { argv: ["issue", "create"], roles: ["manager", "architect", SUPPORT] },
   { argv: ["issue", "edit"], roles: ["manager", "architect"] },
   { argv: ["issue", "close"], roles: ["manager"] },
   { argv: ["issue", "reopen"], roles: ["manager"] },
@@ -639,7 +655,72 @@ function authorizeAs(role, request, acting) {
       };
     }
   }
+  if (best.argv.join(" ") === "issue create" && role === SUPPORT) {
+    const refused = refuseSupportCreate(argv.slice(best.argv.length));
+    if (refused !== null) {
+      return { allow: false, reason: refused };
+    }
+  }
   return best.guards === undefined ? { allow: true } : { allow: true, guards: best.guards };
+}
+
+/**
+ * The `gh issue create` flags support may pass, by long name, and their
+ * shorthand. All take a value. `--body-file` is not among them because hub
+ * has already turned it into `--body` by the time a request gets here.
+ */
+const SUPPORT_CREATE_FLAGS = new Map([
+  ["--title", "t"],
+  ["--body", "b"],
+  ["--label", "l"],
+]);
+
+/**
+ * Why support may not file this issue, or `null` if it may. Every issue
+ * support files carries SUPPORT_LABEL, so one a user talked it into is
+ * plainly marked as a user's. Read the way `headsOf` reads a scoped pull
+ * request: every word must be one of SUPPORT_CREATE_FLAGS or its value,
+ * and clusters are refused, because a parser that disagrees with gh's about
+ * which word is a label is a way to file one unlabelled.
+ *
+ * @param {string[]} argv the words after `issue create`
+ * @returns {string | null}
+ */
+function refuseSupportCreate(argv) {
+  const usage =
+    `support files issues with only --title, --body and --label, unclustered, ` +
+    `and always --label ${SUPPORT_LABEL}`;
+  /** @type {string[]} */
+  const labels = [];
+  for (let i = 0; i < argv.length; i += 1) {
+    const word = argv[i] ?? "";
+    /** @type {string | undefined} */
+    let name;
+    /** @type {string | undefined} */
+    let inline;
+    if (word.startsWith("--")) {
+      const eq = word.indexOf("=");
+      name = eq === -1 ? word : word.slice(0, eq);
+      inline = eq === -1 ? undefined : word.slice(eq + 1);
+    } else if (word.startsWith("-") && word.length >= 2) {
+      const letter = word.slice(1, 2);
+      name = [...SUPPORT_CREATE_FLAGS].find(([, short]) => short === letter)?.[0];
+      // gh reads `-lx` and `-l=x` alike.
+      inline = word.length > 2 ? word.slice(2).replace(/^=/, "") : undefined;
+    }
+    if (name === undefined || !SUPPORT_CREATE_FLAGS.has(name)) {
+      return usage;
+    }
+    const value = inline ?? argv[(i += 1)];
+    if (value === undefined) {
+      return usage;
+    }
+    if (name === "--label") {
+      // gh splits a label list on commas: `--label bug,support` is two.
+      labels.push(...value.split(",").map((label) => label.trim()));
+    }
+  }
+  return labels.includes(SUPPORT_LABEL) ? null : usage;
 }
 
 /**

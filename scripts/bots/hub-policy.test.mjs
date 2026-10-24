@@ -32,10 +32,85 @@ const push = (role, argv) => authorize(role, { kind: "push", argv });
 const review = (role, argv) => authorize(role, { kind: "review", argv });
 
 describe("the roster", () => {
-  it("is the nine employees, and nothing else is a role", () => {
-    expect(ROLES).toHaveLength(9);
+  it("is the ten employees, and nothing else is a role", () => {
+    expect(ROLES).toHaveLength(10);
     expect(gh("intern", ["issue", "list"])).toMatchObject({ allow: false });
     expect(gh("", ["issue", "list"])).toMatchObject({ allow: false });
+  });
+});
+
+describe("support (#131)", () => {
+  it("files an issue only with --label support, in any spelling gh reads", () => {
+    for (const argv of [
+      ["--title", "x", "--body", "y", "--label", "support"],
+      ["--title=x", "--label=support"],
+      ["-t", "x", "-l", "support"],
+      ["-tx", "-lsupport"],
+      ["-l=support", "-b", "y"],
+      ["--label", "bug,support"],
+      ["--label", "bug", "--label", "support"],
+    ]) {
+      expect(gh("support", ["issue", "create", ...argv]), argv.join(" ")).toEqual({ allow: true });
+    }
+  });
+
+  it("is refused an issue without the label, or with a flag it does not need", () => {
+    for (const argv of [
+      [],
+      ["--title", "x", "--body", "y"],
+      ["--label", "bug"],
+      ["--label", "supportive"],
+      // A flag's value is consumed whatever it looks like: no label here.
+      ["--title", "--label", "support"],
+      ["--label", "support", "--assignee", "@me"],
+      ["--label", "support", "--project", "VibeWars"],
+      ["--label", "support", "--web"],
+      ["-tl", "support"],
+      ["--label"],
+    ]) {
+      const verdict = gh("support", ["issue", "create", ...argv]);
+      expect(verdict.allow, argv.join(" ")).toBe(false);
+      expect(verdict.reason, argv.join(" ")).toMatch(/always --label support/);
+    }
+  });
+
+  it("is refused every other write: comments, edits, cards, pushes and reviews", () => {
+    for (const argv of [
+      ["issue", "comment", "1", "--body", "x"],
+      ["pr", "comment", "1", "--body", "x"],
+      ["issue", "edit", "1", "--add-label", "bug"],
+      ["issue", "close", "1"],
+      ["pr", "create", "--title", "x"],
+      ["project", "item-edit", "--id", "x"],
+      ["label", "create", "support"],
+    ]) {
+      expect(gh("support", argv), argv.join(" ")).toMatchObject({ allow: false });
+    }
+    expect(push("support", ["bot/support/x"])).toMatchObject({ allow: false });
+    expect(review("support", ["approve", "1", "--sha", "abcdef0"])).toMatchObject({
+      allow: false,
+    });
+  });
+
+  it("reads what everyone reads", () => {
+    for (const argv of [
+      ["issue", "list"],
+      ["issue", "view", "1"],
+      ["pr", "list"],
+    ]) {
+      expect(gh("support", argv), argv.join(" ")).toEqual({ allow: true });
+    }
+  });
+
+  it("leaves comments to every other role, and issue creation unlabelled to theirs", () => {
+    for (const role of ROLES.filter((r) => r !== "support")) {
+      expect(gh(role, ["issue", "comment", "1", "--body", "x"]), role).toEqual({ allow: true });
+      expect(gh(role, ["pr", "comment", "1", "--body", "x"]), role).toEqual({ allow: true });
+    }
+    expect(gh("manager", ["issue", "create", "--title", "x"])).toEqual({ allow: true });
+    expect(gh("architect", ["issue", "create", "--title", "x", "--assignee", "@me"])).toEqual({
+      allow: true,
+    });
   });
 });
 

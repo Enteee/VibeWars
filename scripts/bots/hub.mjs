@@ -64,7 +64,9 @@ if (argv[0] === "whoami") {
   const probes = [
     ["read issues and pull requests", ["issue", "list"]],
     ["comment on issues and pull requests", ["issue", "comment", "1"]],
-    ["create and edit issues", ["issue", "create"]],
+    // With the label support needs, so the line says what it may do.
+    ["create issues", ["issue", "create", "--title", "x", "--label", "support"]],
+    ["edit issues", ["issue", "edit", "1"]],
     ["close and reopen issues and pull requests", ["pr", "close", "1"]],
     ["open pull requests", ["pr", "create"]],
     ["move cards on the board", ["project", "item-edit"]],

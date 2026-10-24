@@ -454,6 +454,18 @@ let
         block until a colleague or the operator says something, then continue.
         Do not stop and wait for a prompt; nobody is going to send you one."
 
+        # Support has no card to move and nothing to push (#131): its work
+        # arrives as people's messages in the Support topic.
+        if [ "$role" = "support" ]; then
+          kickoff="You are support. Start work now, on your own, without waiting to be asked.
+
+        1. \`tg inbox\` — read every message waiting for you
+        2. Answer each user as your briefing says, with \`tg reply --to <msg>\`
+        3. Then \`tg wait --timeout 900\`, and start again at 1
+
+        Do not stop and wait for a prompt; nobody is going to send you one."
+        fi
+
         # After a company reboot, claude-llc hands the manager what it loaded
         # (scripts/bots/restart.mjs), for the manager to pass on.
         if [ -n "''${VIBEWARS_KICKOFF_NOTE-}" ]; then

@@ -44,6 +44,7 @@ let
     "lead-dev"
     "perf-sec-qa"
     "qa-tester"
+    "support"
   ];
 
   session = "vibewars-llc";

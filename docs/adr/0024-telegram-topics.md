@@ -12,7 +12,7 @@ It is the one place a group member other than the operator is heard, as an
 unmarked `user` line to the support role alone, at most six a minute per
 user; and the one place an agent other than the manager posts outside Bots
 and General, with `tg reply`, which only support may use. The registry gains
-`support?`. ADR-0025, which lands with the role itself, records the reasoning.
+`support?`. [ADR-0025](0025-an-agent-that-talks-to-strangers.md) records the reasoning.
 
 ## Context
 
