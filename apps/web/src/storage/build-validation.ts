@@ -35,6 +35,10 @@ export function toPlayerBuild(stored: StoredCharacter): PlayerBuild {
     secondaryProfession: stored.secondaryProfession,
     attributes: stored.attributes.map((a) => ({ attributeId: a.attributeId, rank: a.rank })),
     skillBar: stored.skillBar,
+    // The bridge that carries gear from the browser to the server. If
+    // this line went missing the weapon would validate locally, save
+    // locally, and then simply never arrive at the match.
+    equipment: stored.equipment,
   };
 }
 

@@ -1,5 +1,7 @@
 import type { SimulationRng } from "../rng.js";
+import type { CombatRules } from "../ruleset.js";
 
+import type { ResolvedEquipment } from "../equipment/resolve.js";
 import type { CastState } from "./cast-state.js";
 import type { StatusCategory, StatusId, StatusSet } from "./status.js";
 
@@ -154,10 +156,27 @@ export interface Combatant {
   readonly statuses: StatusSet;
   /** In-progress cast and per-skill recharge; also the interrupt target. */
   readonly cast: CastState;
+  /**
+   * Weapon, armor and rune effects, already resolved (ADR-0012).
+   *
+   * Readonly, and resolved once before this combatant was built. Gear is
+   * fixed at join, so nothing in the simulation ever needs to change it —
+   * and making it immutable is what guarantees a rune cannot be applied
+   * twice.
+   */
+  readonly equipment: ResolvedEquipment;
 }
 
 export interface SkillContext {
   readonly caster: Combatant;
   readonly target: Combatant | undefined;
   readonly rng: SimulationRng;
+  /**
+   * Combat numbers, threaded rather than imported.
+   *
+   * `game-core` must not pick a ruleset on the caller's behalf — the
+   * whole point of the abstraction (brief §11) is that a balance
+   * experiment is a different object, not a different build.
+   */
+  readonly rules: CombatRules;
 }

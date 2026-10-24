@@ -1,8 +1,13 @@
-import { PROFESSIONS, type ProfessionId } from "@vibewars/game-core";
+import {
+  PROFESSIONS,
+  parseBuildEquipment,
+  type BuildEquipment,
+  type ProfessionId,
+} from "@vibewars/game-core";
 
 import { validateBuild, SKILL_BAR_SLOTS } from "./build-validation.js";
 import {
-  CURRENT_SCHEMA_VERSION,
+  CHARACTER_SCHEMA_VERSION,
   isStoredCharacter,
   type StoredAttribute,
   type StoredCharacter,
@@ -27,7 +32,19 @@ import {
 
 /** Marks a blob as ours, so a stray paste fails with a useful message. */
 export const BUILD_FORMAT = "vibewars.character";
-export const BUILD_FORMAT_VERSION = 1;
+/** What `exportBuild` writes. Bumped to 2 when gear joined a build. */
+export const BUILD_FORMAT_VERSION = 2;
+/**
+ * The oldest format `importBuild` still reads.
+ *
+ * A bounded backward window rather than strict equality, because a build
+ * string lives in someone's chat history: the moment a version bump
+ * refuses every previously shared build, the sharing feature has broken
+ * for everyone who used it. Older-but-supported builds are brought
+ * forward with the same defaults the storage migration applies, so there
+ * is exactly one set of upgrade rules rather than one per entry point.
+ */
+export const MIN_SUPPORTED_BUILD_FORMAT_VERSION = 1;
 
 export interface ExportedBuild {
   readonly format: typeof BUILD_FORMAT;
@@ -37,6 +54,8 @@ export interface ExportedBuild {
   readonly secondaryProfession: string | null;
   readonly attributes: readonly StoredAttribute[];
   readonly skillBar: readonly (string | null)[];
+  /** Added in format version 2. Absent in a version 1 payload. */
+  readonly equipment: BuildEquipment;
 }
 
 export type ImportResult =
@@ -63,6 +82,7 @@ export function exportBuild(character: StoredCharacter): string {
       rank: attribute.rank,
     })),
     skillBar: [...character.skillBar],
+    equipment: character.equipment,
   };
   return JSON.stringify(payload, null, 2);
 }
@@ -152,14 +172,29 @@ export function importBuild(text: string, id: string, now: number): ImportResult
       problems: [`This does not look like a vibewars build (expected format "${BUILD_FORMAT}").`],
     };
   }
+  const formatVersion = record.formatVersion;
+  if (typeof formatVersion !== "number" || !Number.isInteger(formatVersion)) {
+    return { ok: false, problems: ["This build has no usable format version."] };
+  }
   // A newer format may carry fields this build would drop on save, so a
-  // forward version is refused rather than best-effort imported.
-  if (record.formatVersion !== BUILD_FORMAT_VERSION) {
+  // forward version is refused rather than best-effort imported. This
+  // direction stays strict: importing-then-saving a v3 build on a v2
+  // client would be silent data loss dressed up as success.
+  if (formatVersion > BUILD_FORMAT_VERSION) {
     return {
       ok: false,
       problems: [
-        `This build uses format version ${String(record.formatVersion)}, but this game ` +
+        `This build uses format version ${String(formatVersion)}, but this game ` +
           `understands version ${String(BUILD_FORMAT_VERSION)}. Update the game.`,
+      ],
+    };
+  }
+  if (formatVersion < MIN_SUPPORTED_BUILD_FORMAT_VERSION) {
+    return {
+      ok: false,
+      problems: [
+        `This build uses format version ${String(formatVersion)}, which this game no ` +
+          `longer reads (the oldest supported is ${String(MIN_SUPPORTED_BUILD_FORMAT_VERSION)}).`,
       ],
     };
   }
@@ -191,14 +226,23 @@ export function importBuild(text: string, id: string, now: number): ImportResult
     return { ok: false, problems: ["Unknown primary profession."] };
   }
 
+  // A version 1 payload has no `equipment` key at all; `parseBuildEquipment`
+  // treats that as "old, not broken" and hands back the profession's
+  // default loadout — the same answer the storage migration gives.
+  const equipment = parseBuildEquipment(record.equipment, record.primaryProfession);
+  if (equipment === undefined) {
+    return { ok: false, problems: ["This build's equipment is malformed."] };
+  }
+
   const character: StoredCharacter = {
-    schemaVersion: CURRENT_SCHEMA_VERSION,
+    schemaVersion: CHARACTER_SCHEMA_VERSION,
     id,
     name,
     primaryProfession: record.primaryProfession,
     secondaryProfession: isProfessionId(secondaryRaw) ? secondaryRaw : undefined,
     attributes,
     skillBar,
+    equipment,
     updatedAt: now,
   };
 

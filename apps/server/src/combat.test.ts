@@ -190,8 +190,16 @@ describe("networked combat", () => {
 
     const victim = roomA.state.players.get(roomB.sessionId);
     expect(victim?.health).toBeLessThan(500);
-    // Fire Magic 12 -> 91 damage.
-    expect(victim?.health).toBe(500 - 91);
+    // Fire Magic 12 -> 91 before mitigation. The house loadout is a
+    // warrior (80 base armor) carrying a shield whose Strength
+    // requirement it does not meet (+8, not +16), so armor is 88 and the
+    // curve gives 91 * 2^((60 - 88) / 40) = 56.
+    //
+    // Spelled out rather than computed from the ruleset here on purpose:
+    // deriving it would test the formula against itself, while a number
+    // with its derivation written next to it fails loudly if either the
+    // curve or the house loadout changes.
+    expect(victim?.health).toBe(500 - 56);
 
     await roomA.leave();
     await roomB.leave();

@@ -1,6 +1,7 @@
+import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { CURRENT_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
+import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
 import {
   MAX_TEAM_SIZE,
   addMember,
@@ -13,13 +14,14 @@ import {
 
 function character(id: string): StoredCharacter {
   return {
-    schemaVersion: CURRENT_SCHEMA_VERSION,
+    schemaVersion: CHARACTER_SCHEMA_VERSION,
     id,
     name: id,
     primaryProfession: "warrior",
     secondaryProfession: undefined,
     attributes: [],
     skillBar: Array.from({ length: 8 }, () => null),
+    equipment: defaultBuildEquipment("warrior"),
     updatedAt: 1,
   };
 }

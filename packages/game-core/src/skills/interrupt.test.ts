@@ -1,3 +1,4 @@
+import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { describe, expect, it } from "vitest";
 
 import { createRng } from "../rng.js";
@@ -37,7 +38,12 @@ function resolve(caster: Combatant, target: Combatant | undefined): void {
   if (skill === undefined) {
     return;
   }
-  applyEffects(skill.effects, { caster, target, rng: createRng(1) });
+  applyEffects(skill.effects, {
+    caster,
+    target,
+    rng: createRng(1),
+    rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
+  });
   caster.cast.startRecharge(skill.id, skill.rechargeSeconds);
 }
 
@@ -58,6 +64,7 @@ describe("interrupt mechanic", () => {
       caster: ranger,
       target: victim,
       rng: createRng(1),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
     });
 
     expect(events).toContainEqual({
@@ -82,6 +89,7 @@ describe("interrupt mechanic", () => {
       caster: ranger,
       target: victim,
       rng: createRng(1),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
     });
 
     expect(events).toContainEqual({ kind: "interrupt-missed", targetId: "victim" });
@@ -95,6 +103,7 @@ describe("interrupt mechanic", () => {
       caster: ranger,
       target: idle,
       rng: createRng(1),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
     });
 
     expect(idle.statuses.has("dazed")).toBe(true);
@@ -115,6 +124,7 @@ describe("interrupt mechanic", () => {
       caster: ranger,
       target: victim,
       rng: createRng(1),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
     });
 
     // Too late: nothing to interrupt, and the heal is already running.
@@ -134,6 +144,7 @@ describe("interrupt mechanic", () => {
       caster: ranger,
       target: victim,
       rng: createRng(1),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
     });
 
     // The energy is gone and the skill did nothing — that is the real
@@ -152,6 +163,7 @@ describe("status-driven combat scenarios", () => {
       caster: warrior,
       target: victim,
       rng: createRng(1),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
     });
 
     const healthAfterHit = victim.health;
@@ -174,6 +186,7 @@ describe("status-driven combat scenarios", () => {
       caster: monk,
       target: ally,
       rng: createRng(1),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
     });
 
     expect(events.filter((e) => e.kind === "status-removed")).toHaveLength(2);
@@ -195,6 +208,7 @@ describe("status-driven combat scenarios", () => {
       caster: ele,
       target: ele,
       rng: createRng(1),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
     });
 
     expect(ele.statuses.has("armor-boost")).toBe(true);
@@ -229,6 +243,7 @@ describe("status-driven combat scenarios", () => {
       caster: necro,
       target: victim,
       rng: createRng(1),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
     });
 
     expect(victim.statuses.countByCategory("hex")).toBe(1);

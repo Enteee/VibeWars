@@ -1,9 +1,9 @@
 import {
-  CURRENT_SCHEMA_VERSION,
+  CHARACTER_SCHEMA_VERSION,
+  TEAM_SCHEMA_VERSION,
   PersistenceError,
-  isStoredCharacter,
-  isStoredTeam,
-  migrate,
+  migrateCharacter,
+  migrateTeam,
   type StoredCharacter,
   type StoredTeam,
 } from "./schema.js";
@@ -128,7 +128,7 @@ export class CharacterRepository {
   }
 
   public async save(character: StoredCharacter): Promise<void> {
-    if (character.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+    if (character.schemaVersion !== CHARACTER_SCHEMA_VERSION) {
       throw new PersistenceError(
         `refusing to save a record with schema ${String(character.schemaVersion)}`,
       );
@@ -141,10 +141,16 @@ export class CharacterRepository {
     if (raw === undefined) {
       return undefined;
     }
-    if (!isStoredCharacter(raw)) {
-      throw new PersistenceError(`stored character ${id} is malformed`);
+    // Migrate first: an older record is *old*, not malformed, and the
+    // current structural guard would reject it. `migrateCharacter`
+    // validates the result on the way out.
+    try {
+      return migrateCharacter(raw);
+    } catch (error) {
+      throw error instanceof PersistenceError
+        ? new PersistenceError(`stored character ${id}: ${error.message}`)
+        : error;
     }
-    return migrate(raw);
   }
 
   /**
@@ -157,12 +163,8 @@ export class CharacterRepository {
     const characters: StoredCharacter[] = [];
     const problems: string[] = [];
     for (const record of raw) {
-      if (!isStoredCharacter(record)) {
-        problems.push("a stored character is malformed and was not loaded");
-        continue;
-      }
       try {
-        characters.push(migrate(record));
+        characters.push(migrateCharacter(record));
       } catch (error) {
         problems.push(error instanceof Error ? error.message : String(error));
       }
@@ -184,7 +186,7 @@ export class TeamRepository {
   }
 
   public async save(team: StoredTeam): Promise<void> {
-    if (team.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+    if (team.schemaVersion !== TEAM_SCHEMA_VERSION) {
       throw new PersistenceError(
         `refusing to save a record with schema ${String(team.schemaVersion)}`,
       );
@@ -197,10 +199,13 @@ export class TeamRepository {
     if (raw === undefined) {
       return undefined;
     }
-    if (!isStoredTeam(raw)) {
-      throw new PersistenceError(`stored team ${id} is malformed`);
+    try {
+      return migrateTeam(raw);
+    } catch (error) {
+      throw error instanceof PersistenceError
+        ? new PersistenceError(`stored team ${id}: ${error.message}`)
+        : error;
     }
-    return migrate(raw);
   }
 
   public async list(): Promise<{ teams: StoredTeam[]; problems: string[] }> {
@@ -208,12 +213,8 @@ export class TeamRepository {
     const teams: StoredTeam[] = [];
     const problems: string[] = [];
     for (const record of raw) {
-      if (!isStoredTeam(record)) {
-        problems.push("a stored team is malformed and was not loaded");
-        continue;
-      }
       try {
-        teams.push(migrate(record));
+        teams.push(migrateTeam(record));
       } catch (error) {
         problems.push(error instanceof Error ? error.message : String(error));
       }

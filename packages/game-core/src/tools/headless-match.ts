@@ -171,6 +171,7 @@ export function runHeadlessMatch(options: HeadlessMatchOptions): HeadlessMatchRe
             caster: state.combatant,
             target: skill.target === "self" ? state.combatant : resolvedTarget?.combatant,
             rng,
+            rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
           });
           for (const event of produced) {
             if (event.kind === "damage" && event.targetId !== state.combatant.id) {

@@ -1,3 +1,5 @@
+import { getWeapon } from "@vibewars/game-core";
+
 import type { MatchSnapshot, PlayerSnapshot, SkillSlot } from "../net/match-client.js";
 
 /**
@@ -9,6 +11,11 @@ import type { MatchSnapshot, PlayerSnapshot, SkillSlot } from "../net/match-clie
  * keeping them out of the canvas means they stay crisp, accessible, and
  * styleable without touching the renderer.
  */
+
+/** A weapon's display name, falling back to its raw id if unknown. */
+function describeWeaponName(weaponId: string): string {
+  return getWeapon(weaponId)?.name ?? weaponId;
+}
 
 export interface HudElements {
   readonly root: HTMLElement;
@@ -166,7 +173,12 @@ export function updateHud(
 
   setBar(hud.healthFill, hud.healthText, self.health, self.maxHealth, "hp");
   setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, "en");
-  hud.adrenalineText.textContent = `adrenaline ${String(self.adrenaline)}`;
+  // Armor and weapon alongside adrenaline: both are now numbers that
+  // change what a fight does, so hiding them would be the HUD lying by
+  // omission.
+  hud.adrenalineText.textContent =
+    `adrenaline ${String(self.adrenaline)} · armor ${String(self.armor)}` +
+    (self.weaponId === undefined ? "" : ` · ${describeWeaponName(self.weaponId)}`);
 
   hud.statusList.textContent =
     self.statuses.length > 0 ? self.statuses.join(" · ") : "no active effects";
@@ -176,7 +188,9 @@ export function updateHud(
       ? "no target"
       : `target: ${target.sessionId.slice(0, 6)} — ${String(Math.round(target.health))}/${String(
           Math.round(target.maxHealth),
-        )} hp${target.dead ? " (dead)" : ""}`;
+        )} hp · armor ${String(target.armor)}${
+          target.weaponId === undefined ? "" : ` · ${describeWeaponName(target.weaponId)}`
+        }${target.dead ? " (dead)" : ""}`;
 
   // Grey out skills the player cannot currently afford. The server is
   // still the authority on whether a cast is legal — this is a hint, not

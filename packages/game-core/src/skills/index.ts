@@ -6,6 +6,9 @@ export { CastState } from "./cast-state.js";
 
 export { IMPLEMENTED_SKILLS, SKILLS_BY_ID, getSkill } from "./catalog.js";
 
+export type { EffectDescription, MagnitudeDescription, SkillDescription } from "./describe.js";
+export { describeSkill, describeStatus, formatScalingRange } from "./describe.js";
+
 export type { MissingMechanic, SkillCoverage, UnimplementedSkill } from "./coverage.js";
 export {
   MISSING_MECHANIC_DESCRIPTIONS,
@@ -17,7 +20,7 @@ export {
 export type { CombatEvent } from "./effects.js";
 export { applyEffect, applyEffects } from "./effects.js";
 
-export { resolveMagnitude } from "./scaling.js";
+export { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";
 
 export type {
   ActiveStatus,
@@ -30,7 +33,9 @@ export {
   STATUS_DEFINITIONS,
   StatusSet,
   aggregateModifiers,
+  findStatusDefinition,
   getStatusDefinition,
+  isStatusId,
 } from "./status.js";
 
 export { advanceStatuses, attackMisses, effectiveMaxHealth } from "./tick.js";
@@ -55,3 +60,14 @@ export type {
 } from "./types.js";
 
 export { makeCombatant } from "./testing.js";
+
+export type { ArmorContext, DamagePacket, DamageSource } from "./damage.js";
+export {
+  armorMultiplier,
+  effectiveArmor,
+  mitigate,
+  respectsArmor,
+  spellDamage,
+  unmitigatedDamage,
+  weaponAttributeMultiplier,
+} from "./damage.js";

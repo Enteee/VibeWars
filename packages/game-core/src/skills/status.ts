@@ -111,6 +111,15 @@ export interface ActiveStatus {
   readonly sourceId: string;
 }
 
+export function isStatusId(value: unknown): value is StatusId {
+  return typeof value === "string" && Object.hasOwn(STATUS_DEFINITIONS, value);
+}
+
+/** Look up a status from an id of unknown provenance (a wire string, a tooltip). */
+export function findStatusDefinition(id: string): StatusDefinition | undefined {
+  return isStatusId(id) ? STATUS_DEFINITIONS[id] : undefined;
+}
+
 export function getStatusDefinition(id: StatusId): StatusDefinition {
   return STATUS_DEFINITIONS[id];
 }

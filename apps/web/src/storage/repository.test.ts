@@ -1,22 +1,25 @@
+import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { CharacterRepository, TeamRepository, createMemoryStore } from "./repository.js";
 import {
-  CURRENT_SCHEMA_VERSION,
+  CHARACTER_SCHEMA_VERSION,
   PersistenceError,
+  TEAM_SCHEMA_VERSION,
   type StoredCharacter,
   type StoredTeam,
 } from "./schema.js";
 
 function character(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
   return {
-    schemaVersion: CURRENT_SCHEMA_VERSION,
+    schemaVersion: CHARACTER_SCHEMA_VERSION,
     id: "char-1",
     name: "Test Character",
     primaryProfession: "warrior",
     secondaryProfession: "monk",
     attributes: [{ attributeId: "warrior.strength", rank: 10 }],
     skillBar: ["elementalist.fireball", null, null, null, null, null, null, null],
+    equipment: defaultBuildEquipment("warrior"),
     updatedAt: 1000,
     ...overrides,
   };
@@ -24,7 +27,7 @@ function character(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
 
 function team(overrides: Partial<StoredTeam> = {}): StoredTeam {
   return {
-    schemaVersion: CURRENT_SCHEMA_VERSION,
+    schemaVersion: TEAM_SCHEMA_VERSION,
     id: "team-1",
     name: "Test Team",
     members: [{ characterId: "char-1" }],
@@ -142,5 +145,69 @@ describe("TeamRepository", () => {
     await store.put("teams", "broken", { nope: true });
     const repo = new TeamRepository(store);
     await expect(repo.load("broken")).rejects.toThrow(PersistenceError);
+  });
+});
+
+/**
+ * A character saved before equipment existed, exactly as it sat on
+ * disk. Frozen on purpose — rebuilding it from the current types would
+ * stop it being a v1 record, which is the only thing it is here to be.
+ */
+const V1_ON_DISK = {
+  schemaVersion: 1,
+  id: "legacy-1",
+  name: "Legacy Warrior",
+  primaryProfession: "warrior",
+  secondaryProfession: undefined,
+  attributes: [{ attributeId: "warrior.swordsmanship", rank: 12 }],
+  skillBar: ["warrior.sever-artery-lite", null, null, null, null, null, null, null],
+  updatedAt: 500,
+};
+
+describe("loading data saved by an older version", () => {
+  it("migrates a schema 1 character on load rather than calling it malformed", async () => {
+    const store = createMemoryStore();
+    await store.put("characters", "legacy-1", V1_ON_DISK);
+    const loaded = await new CharacterRepository(store).load("legacy-1");
+
+    expect(loaded?.name).toBe("Legacy Warrior");
+    expect(loaded?.schemaVersion).toBe(CHARACTER_SCHEMA_VERSION);
+    expect(loaded?.equipment.mainHand.weaponId).toBe("sword");
+  });
+
+  it("migrates on list too, so the roster is not silently short", async () => {
+    const store = createMemoryStore();
+    await store.put("characters", "legacy-1", V1_ON_DISK);
+    const { characters, problems } = await new CharacterRepository(store).list();
+
+    expect(problems).toEqual([]);
+    expect(characters).toHaveLength(1);
+    expect(characters[0]?.equipment.mainHand.weaponId).toBe("sword");
+  });
+
+  it("can save a migrated record straight back", async () => {
+    // The round trip that matters: load an old build, change nothing,
+    // save it. If the migrated version could not be saved, every edit a
+    // returning player made would fail.
+    const store = createMemoryStore();
+    await store.put("characters", "legacy-1", V1_ON_DISK);
+    const repo = new CharacterRepository(store);
+    const loaded = await repo.load("legacy-1");
+    expect(loaded).toBeDefined();
+    if (loaded === undefined) {
+      return;
+    }
+    await expect(repo.save(loaded)).resolves.toBeUndefined();
+  });
+
+  it("keeps the good records when one of them cannot be migrated", async () => {
+    const store = createMemoryStore();
+    await store.put("characters", "legacy-1", V1_ON_DISK);
+    await store.put("characters", "future", { ...V1_ON_DISK, id: "future", schemaVersion: 99 });
+    const { characters, problems } = await new CharacterRepository(store).list();
+
+    expect(characters.map((c) => c.id)).toEqual(["legacy-1"]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toMatch(/newer version of the game/);
   });
 });

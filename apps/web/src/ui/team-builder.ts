@@ -1,8 +1,4 @@
-import {
-  CURRENT_SCHEMA_VERSION,
-  type StoredCharacter,
-  type StoredTeam,
-} from "../storage/schema.js";
+import { TEAM_SCHEMA_VERSION, type StoredCharacter, type StoredTeam } from "../storage/schema.js";
 
 /**
  * The team builder (brief §18, §4).
@@ -17,7 +13,7 @@ export const MAX_TEAM_SIZE = 16;
 
 export function newTeam(id: string): StoredTeam {
   return {
-    schemaVersion: CURRENT_SCHEMA_VERSION,
+    schemaVersion: TEAM_SCHEMA_VERSION,
     id,
     name: "New Team",
     members: [],

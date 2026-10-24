@@ -1,3 +1,4 @@
+import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -6,17 +7,18 @@ import {
   toCharacter,
   validateBuild,
 } from "./build-validation.js";
-import { CURRENT_SCHEMA_VERSION, type StoredCharacter } from "./schema.js";
+import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "./schema.js";
 
 function stored(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
   return {
-    schemaVersion: CURRENT_SCHEMA_VERSION,
+    schemaVersion: CHARACTER_SCHEMA_VERSION,
     id: "c1",
     name: "Valid Character",
     primaryProfession: "elementalist",
     secondaryProfession: "monk",
     attributes: [{ attributeId: "elementalist.fire-magic", rank: 12 }],
     skillBar: Array.from({ length: SKILL_BAR_SLOTS }, () => null),
+    equipment: defaultBuildEquipment("elementalist"),
     updatedAt: 1,
     ...overrides,
   };

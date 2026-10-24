@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createRng } from "../rng.js";
+import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { applyEffect, applyEffects, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import type { SkillContext } from "./types.js";
@@ -9,7 +10,7 @@ function context(
   caster = makeCombatant({ id: "caster" }),
   target = makeCombatant({ id: "target", team: 1 }),
 ): SkillContext {
-  return { caster, target, rng: createRng(1) };
+  return { caster, target, rng: createRng(1), rules: MINIMAL_GW_INSPIRED_PVP_V1.combat };
 }
 
 describe("damage effect", () => {
@@ -75,6 +76,7 @@ describe("damage effect", () => {
       caster: makeCombatant({ id: "c" }),
       target: undefined,
       rng: createRng(1),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
     };
     expect(applyEffect({ kind: "damage", amount: { flat: 100 } }, ctx)).toEqual([]);
   });

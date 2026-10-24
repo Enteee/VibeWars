@@ -1,3 +1,4 @@
+import { mitigate, spellDamage } from "./damage.js";
 import { resolveMagnitude } from "./scaling.js";
 import type { StatusId } from "./status.js";
 import type { Combatant, SkillContext, SkillEffect } from "./types.js";
@@ -38,8 +39,16 @@ export type CombatEvent =
   /** An interrupt that found nothing to interrupt — a wasted cast. */
   | { readonly kind: "interrupt-missed"; readonly targetId: string };
 
-/** Apply raw damage, clamping at 0 and flagging death exactly once. */
-function applyDamage(target: Combatant, amount: number, events: CombatEvent[]): void {
+/**
+ * Apply an already-mitigated amount, clamping at 0 and flagging death
+ * exactly once.
+ *
+ * Mitigation happens in `damage.ts` and is deliberately *not* done here:
+ * degeneration reaches this function too, and armor must not apply to
+ * it. Callers state what kind of damage they are dealing; this function
+ * only does the bookkeeping.
+ */
+export function applyDamage(target: Combatant, amount: number, events: CombatEvent[]): void {
   if (amount <= 0 || target.dead) {
     return;
   }
@@ -76,7 +85,10 @@ export function applyEffect(effect: SkillEffect, context: SkillContext): CombatE
       if (target === undefined) {
         return events;
       }
-      applyDamage(target, resolveMagnitude(effect.amount, caster), events);
+      // Spell damage respects armor. Before this, it did not — which is
+      // why a warrior and a monk took identical Fireballs.
+      const packet = spellDamage(resolveMagnitude(effect.amount, caster));
+      applyDamage(target, mitigate(packet, target, context.rules), events);
       return events;
     }
 

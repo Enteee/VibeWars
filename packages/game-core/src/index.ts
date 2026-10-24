@@ -30,6 +30,7 @@ export {
 
 export type {
   AttributeRules,
+  CombatRules,
   CollisionRules,
   MovementRules,
   ResourceRules,
@@ -44,6 +45,7 @@ export type { AttributeAllocation, AttributeModifier } from "./attributes.js";
 export {
   AttributeRankError,
   MAX_ATTRIBUTE_RANK,
+  MAX_EFFECTIVE_RANK,
   cumulativeCostForRank,
   effectiveRank,
   isAffordable,
@@ -57,10 +59,13 @@ export {
   validateCharacter,
 } from "./character.js";
 
+export * from "./equipment/index.js";
+
 export type { BuildProblem, PlayerBuild } from "./build.js";
 export {
   SKILL_BAR_SLOTS,
   attributeRanksOf,
+  defaultBuildEquipment,
   equippableSkills,
   equippedSkillIds,
   isProfessionId,

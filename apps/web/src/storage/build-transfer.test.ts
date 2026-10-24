@@ -1,8 +1,9 @@
+import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { BUILD_FORMAT, exportBuild, importBuild } from "./build-transfer.js";
+import { BUILD_FORMAT, BUILD_FORMAT_VERSION, exportBuild, importBuild } from "./build-transfer.js";
 import { SKILL_BAR_SLOTS } from "./build-validation.js";
-import { CURRENT_SCHEMA_VERSION, type StoredCharacter } from "./schema.js";
+import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "./schema.js";
 
 /**
  * A shared build is untrusted input: it arrives by copy-paste through a
@@ -12,7 +13,7 @@ import { CURRENT_SCHEMA_VERSION, type StoredCharacter } from "./schema.js";
  */
 
 const VALID: StoredCharacter = {
-  schemaVersion: CURRENT_SCHEMA_VERSION,
+  schemaVersion: CHARACTER_SCHEMA_VERSION,
   id: "local-1",
   name: "Flame Caller",
   primaryProfession: "elementalist",
@@ -22,6 +23,7 @@ const VALID: StoredCharacter = {
     { attributeId: "elementalist.energy-storage", rank: 8 },
   ],
   skillBar: ["elementalist.fireball", "monk.orison-of-healing", null, null, null, null, null, null],
+  equipment: defaultBuildEquipment("elementalist"),
   updatedAt: 1_700_000_000_000,
 };
 
@@ -230,5 +232,76 @@ describe("build import rejects bad input", () => {
     const problems = reject({ ...base, name: "", primaryProfession: "nope" });
 
     expect(problems.length).toBeGreaterThan(1);
+  });
+});
+
+describe("builds shared by an older version", () => {
+  /**
+   * A format 1 payload, frozen. These strings live in people's chat
+   * history; a version bump that refuses them has broken the sharing
+   * feature for everyone who used it.
+   */
+  const V1_PAYLOAD = {
+    format: BUILD_FORMAT,
+    formatVersion: 1,
+    name: "Old Share",
+    primaryProfession: "warrior",
+    secondaryProfession: null,
+    attributes: [{ attributeId: "warrior.swordsmanship", rank: 12 }],
+    skillBar: ["warrior.sever-artery-lite", null, null, null, null, null, null, null],
+  };
+
+  it("still imports a format 1 build", () => {
+    const result = importBuild(JSON.stringify(V1_PAYLOAD), "new-id", 7);
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.character.name).toBe("Old Share");
+    expect(result.character.schemaVersion).toBe(CHARACTER_SCHEMA_VERSION);
+  });
+
+  it("gives a format 1 build the same gear the storage migration would", () => {
+    const result = importBuild(JSON.stringify(V1_PAYLOAD), "new-id", 7);
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    // One set of upgrade rules, two entry points. If these two ever
+    // disagree, a build imported from text differs from the same build
+    // loaded from disk.
+    expect(result.character.equipment).toEqual(defaultBuildEquipment("warrior"));
+  });
+
+  it("writes the current format version on export", () => {
+    const payload: unknown = JSON.parse(exportBuild(VALID));
+    expect((payload as { formatVersion: number }).formatVersion).toBe(BUILD_FORMAT_VERSION);
+  });
+
+  it("carries gear through an export and back", () => {
+    const result = importBuild(exportBuild(VALID), "new-id", 7);
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+    expect(result.character.equipment).toEqual(VALID.equipment);
+  });
+
+  it("still refuses a build from a future version", () => {
+    const result = importBuild(
+      JSON.stringify({ ...V1_PAYLOAD, formatVersion: BUILD_FORMAT_VERSION + 1 }),
+      "id",
+      0,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      return;
+    }
+    expect(result.problems[0]).toMatch(/Update the game/);
+  });
+
+  it("refuses a build with no usable format version", () => {
+    const result = importBuild(JSON.stringify({ ...V1_PAYLOAD, formatVersion: "one" }), "id", 0);
+    expect(result.ok).toBe(false);
   });
 });

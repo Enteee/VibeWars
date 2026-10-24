@@ -1,6 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "// ": "Root tooling project: the repo-level config files that belong to no package.",
+  "// lib": "Browser tests run code inside a real page via page.evaluate, so this project needs DOM types. Without them every in-page callback degrades to an unresolved type and the rules forbidding `any` fire on correct code.",
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
@@ -8,6 +9,7 @@
     "declaration": false,
     "declarationMap": false,
     "types": ["node"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "allowJs": true,
     "checkJs": false
   },

@@ -27,6 +27,10 @@ export interface PlayerSnapshot {
   readonly energy: number;
   readonly maxEnergy: number;
   readonly adrenaline: number;
+  /** Base armor including the off-hand, before statuses. */
+  readonly armor: number;
+  /** Equipped weapon class id, or `undefined` if the server sent none. */
+  readonly weaponId: string | undefined;
   readonly team: number;
   readonly dead: boolean;
   readonly castingSkillId: string | undefined;
@@ -132,6 +136,8 @@ interface DecodedPlayer {
   readonly energy: number;
   readonly maxEnergy: number;
   readonly adrenaline: number;
+  readonly armor: number;
+  readonly weaponId: string;
   readonly team: number;
   readonly dead: boolean;
   readonly castingSkillId: string;
@@ -161,6 +167,8 @@ function snapshotFrom(room: Room<unknown, DecodedMatchState>): MatchSnapshot {
       energy: player.energy,
       maxEnergy: player.maxEnergy,
       adrenaline: player.adrenaline,
+      armor: player.armor,
+      weaponId: player.weaponId === "" ? undefined : player.weaponId,
       team: player.team,
       dead: player.dead,
       castingSkillId: player.castingSkillId === "" ? undefined : player.castingSkillId,

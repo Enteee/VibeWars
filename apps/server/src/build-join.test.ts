@@ -1,6 +1,7 @@
 import { Client, type Room } from "@colyseus/sdk";
 import {
   MINIMAL_GW_INSPIRED_PVP_V1,
+  defaultBuildEquipment,
   validatePlayerBuild,
   type PlayerBuild,
 } from "@vibewars/game-core";
@@ -57,6 +58,7 @@ const LEGAL_BUILD: PlayerBuild = {
     null,
     null,
   ],
+  equipment: defaultBuildEquipment("elementalist"),
 };
 
 describe("joining with a build", () => {
@@ -240,6 +242,7 @@ describe("joining with a build", () => {
       secondaryProfession: undefined,
       attributes: [{ attributeId: "elementalist.fire-magic", rank }],
       skillBar: ["elementalist.fireball", null, null, null, null, null, null, null],
+      equipment: defaultBuildEquipment("elementalist"),
     });
 
     const damageAtRank = async (rank: number): Promise<number> => {

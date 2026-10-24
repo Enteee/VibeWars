@@ -5,6 +5,12 @@ import {
   validateCharacter,
   type Character,
 } from "./character.js";
+import {
+  defaultEquipmentFor,
+  parseBuildEquipment,
+  validateEquipment,
+  type BuildEquipment,
+} from "./equipment/index.js";
 import { PROFESSIONS, type ProfessionId } from "./professions.js";
 import type { AttributeRules } from "./ruleset.js";
 import { IMPLEMENTED_SKILLS, getSkill } from "./skills/catalog.js";
@@ -30,6 +36,8 @@ export interface PlayerBuild {
   readonly attributes: readonly AttributeAllocation[];
   /** Skill ids by slot; `null` is an empty slot. Always `SKILL_BAR_SLOTS` long. */
   readonly skillBar: readonly (string | null)[];
+  /** Weapon, off-hand and armor (ADR-0012). */
+  readonly equipment: BuildEquipment;
 }
 
 export interface BuildProblem {
@@ -99,6 +107,13 @@ export function validatePlayerBuild(build: PlayerBuild, rules: AttributeRules): 
 
   const accessible = new Set(
     accessibleAttributeIds(build.primaryProfession, build.secondaryProfession),
+  );
+
+  problems.push(
+    ...validateEquipment(build.equipment, {
+      primaryProfession: build.primaryProfession,
+      accessibleAttributeIds: accessible,
+    }),
   );
 
   const seen = new Set<string>();
@@ -196,11 +211,29 @@ export function parsePlayerBuild(value: unknown): PlayerBuild | undefined {
     skillBar.push(entry);
   }
 
+  // A build with no `equipment` key predates weapons; it is old, not
+  // malformed, and gets its profession's default loadout rather than
+  // being refused at the door. Gear that is *present* and wrong is a
+  // different matter and fails the whole parse.
+  const equipment = parseBuildEquipment(record.equipment, record.primaryProfession);
+  if (equipment === undefined) {
+    return undefined;
+  }
+
   return {
     name: record.name,
     primaryProfession: record.primaryProfession,
     secondaryProfession: isProfessionId(secondaryRaw) ? secondaryRaw : undefined,
     attributes,
     skillBar,
+    equipment,
   };
+}
+
+/**
+ * The gear a profession starts with, re-exported here so callers that
+ * only know about builds do not have to reach into `equipment/`.
+ */
+export function defaultBuildEquipment(profession: ProfessionId): BuildEquipment {
+  return defaultEquipmentFor(profession);
 }

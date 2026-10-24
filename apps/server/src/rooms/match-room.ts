@@ -14,12 +14,17 @@ import {
   canActivate,
   clampInputDirection,
   createRng,
+  defaultBuildEquipment,
   emptyScore,
   evaluateMatch,
   getSkill,
   integrateMovement,
   parsePlayerBuild,
   payCost,
+  // Named apart from this module's own join-time `resolveLoadout`, which
+  // decides *whether* to honour a build; this one turns the gear in an
+  // already-accepted build into numbers.
+  resolveLoadout as resolveLoadout_,
   validatePlayerBuild,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
@@ -27,7 +32,9 @@ import {
   vec2,
   type CombatEvent,
   type MatchScore,
+  type BuildEquipment,
   type PlayerBuild,
+  type ProfessionId,
   type Combatant,
   type Segment,
   type SimulationRng,
@@ -69,6 +76,10 @@ export const PlayerState = schema(
     energy: t.number().default(0),
     maxEnergy: t.number().default(0),
     adrenaline: t.number().default(0),
+    /** Base armor including the off-hand, before statuses. Shown in the HUD. */
+    armor: t.number().default(0),
+    /** Equipped weapon class id, so a target panel can name it. */
+    weaponId: t.string().default(""),
     team: t.number().default(0),
     dead: t.boolean().default(false),
 
@@ -155,17 +166,30 @@ const DEFAULT_ATTRIBUTE_RANKS: ReadonlyMap<string, number> = new Map([
   ["ranger.wilderness-survival", 12],
 ]);
 
+/**
+ * The gear that goes with `DEFAULT_SKILL_BAR`.
+ *
+ * A warrior's kit, because the house bar is melee-capable and handing a
+ * first-time player a wand to go with a sword skill would be a worse
+ * first five seconds than any argument for neutrality.
+ */
+const DEFAULT_EQUIPMENT: BuildEquipment = defaultBuildEquipment("warrior");
+
 /** What a joining client claimed, after it has been checked. */
-interface ResolvedLoadout {
+interface ResolvedJoinLoadout {
   readonly skillBar: readonly string[];
   readonly attributeRanks: ReadonlyMap<string, number>;
   readonly buildName: string | undefined;
+  readonly primaryProfession: ProfessionId;
+  readonly equipment: BuildEquipment;
 }
 
-const HOUSE_LOADOUT: ResolvedLoadout = {
+const HOUSE_LOADOUT: ResolvedJoinLoadout = {
   skillBar: DEFAULT_SKILL_BAR,
   attributeRanks: DEFAULT_ATTRIBUTE_RANKS,
   buildName: undefined,
+  primaryProfession: "warrior",
+  equipment: DEFAULT_EQUIPMENT,
 };
 
 /**
@@ -181,7 +205,7 @@ const HOUSE_LOADOUT: ResolvedLoadout = {
  * (which scale every skill), not the skill bar (which decides what can be
  * cast at all), and not the professions that gate both.
  */
-function resolveLoadout(options: unknown): ResolvedLoadout {
+function resolveLoadout(options: unknown): ResolvedJoinLoadout {
   if (typeof options !== "object" || options === null) {
     return HOUSE_LOADOUT;
   }
@@ -219,11 +243,14 @@ function resolveLoadout(options: unknown): ResolvedLoadout {
     skillBar,
     attributeRanks: attributeRanksOf(build),
     buildName: build.name,
+    primaryProfession: build.primaryProfession,
+    equipment: build.equipment,
   };
 }
 
-const STARTING_HEALTH = 500;
-const STARTING_ENERGY = 50;
+// Starting health and energy now come from the ruleset's combat rules,
+// via `resolveLoadout` — runes move both, so a fixed constant here
+// would quietly override them.
 /** Seconds a dead player waits before respawning at their spawn point. */
 const RESPAWN_SECONDS = 8;
 /**
@@ -501,6 +528,7 @@ export class MatchRoom extends Room {
       caster: sim.combatant,
       target: skill.target === "self" ? sim.combatant : targetSim?.combatant,
       rng: this.#rng,
+      rules: RULESET.combat,
     });
 
     // Adrenaline is earned by landing damage, never by waiting — which is
@@ -706,6 +734,8 @@ export class MatchRoom extends Room {
     player.maxEnergy = sim.combatant.maxEnergy;
     player.adrenaline = sim.combatant.adrenaline;
     player.dead = sim.combatant.dead;
+    player.armor = sim.combatant.equipment.baseArmor;
+    player.weaponId = sim.combatant.equipment.mainHand.weapon.id;
 
     const activeCast = sim.combatant.cast.activeCast;
     player.castingSkillId = activeCast?.skillId ?? "";
@@ -729,18 +759,32 @@ export class MatchRoom extends Room {
     const spawn = this.nextSpawnPoint(team);
     const loadout = resolveLoadout(options);
 
+    // Gear becomes numbers exactly once, here, before the combatant
+    // exists (ADR-0012). Health, energy and attribute ranks all arrive
+    // already including rune and insignia effects, which is why they can
+    // stay readonly on `Combatant`.
+    const resolved = resolveLoadout_(
+      {
+        primaryProfession: loadout.primaryProfession,
+        allocatedRanks: loadout.attributeRanks,
+        equipment: loadout.equipment,
+      },
+      RULESET.combat,
+    );
+
     const combatant: Combatant = {
       id: client.sessionId,
-      health: STARTING_HEALTH,
-      maxHealth: STARTING_HEALTH,
-      energy: STARTING_ENERGY,
-      maxEnergy: STARTING_ENERGY,
+      health: resolved.maxHealth,
+      maxHealth: resolved.maxHealth,
+      energy: resolved.maxEnergy,
+      maxEnergy: resolved.maxEnergy,
       adrenaline: 0,
-      attributeRanks: loadout.attributeRanks,
+      attributeRanks: resolved.attributeRanks,
       team,
       dead: false,
       statuses: new StatusSet(),
       cast: new CastState(),
+      equipment: resolved.equipment,
     };
 
     const sim: PlayerSim = {

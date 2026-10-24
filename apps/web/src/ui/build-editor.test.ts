@@ -2,14 +2,19 @@ import { describe, expect, it } from "vitest";
 
 import { MAX_ATTRIBUTE_RANK, MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
 
-import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
+import { SKILL_BAR_SLOTS, validateBuild } from "../storage/build-validation.js";
+import type { StoredCharacter } from "../storage/schema.js";
 import {
+  applySkillDrop,
   canRaise,
+  decodeDragSource,
+  encodeDragSource,
   newCharacter,
   remainingPoints,
   setProfessions,
   setRank,
   setSkill,
+  swapSkillSlots,
 } from "./build-editor.js";
 
 /**
@@ -128,6 +133,35 @@ describe("setProfessions", () => {
     const cleared = setProfessions(withSecondary, "warrior", undefined);
     expect(cleared.secondaryProfession).toBeUndefined();
   });
+
+  it("keeps the weapon, because a weapon is a choice and not a permission", () => {
+    // Attributes and skills are gated by profession; weapons are gated
+    // by requirement. Someone who deliberately took a hammer onto a
+    // mesmer has made a bad build, and the editor should not overrule it.
+    const warrior = setProfessions(newCharacter("c1"), "warrior", undefined);
+    const switched = setProfessions(warrior, "mesmer", undefined);
+    expect(switched.equipment.mainHand.weaponId).toBe(warrior.equipment.mainHand.weaponId);
+  });
+
+  it("drops an off-hand the new professions cannot link", () => {
+    const warrior = setProfessions(newCharacter("c1"), "warrior", undefined);
+    expect(warrior.equipment.offHand).not.toBeNull();
+
+    const switched = setProfessions(warrior, "mesmer", undefined);
+    expect(switched.equipment.offHand).toBeNull();
+  });
+
+  it("leaves a build that still validates after any profession change", () => {
+    // The practical consequence of the reconcile rule: toggling
+    // professions in the editor must never produce a build you cannot
+    // save.
+    let character = setProfessions(newCharacter("c1"), "warrior", "monk");
+    character = setRank(character, "warrior.strength", 8);
+    for (const next of ["monk", "ranger", "elementalist", "warrior"] as const) {
+      character = setProfessions(character, next, undefined);
+      expect(validateBuild(character), next).toEqual([]);
+    }
+  });
 });
 
 describe("setSkill", () => {
@@ -154,5 +188,75 @@ describe("setSkill", () => {
     character = setSkill(character, 1, "warrior.backbreaker");
     expect(character.skillBar[0]).toBe("warrior.swift-chop");
     expect(character.skillBar[1]).toBe("warrior.backbreaker");
+  });
+});
+
+describe("skill bar drag and drop", () => {
+  const warrior = (): StoredCharacter => ({
+    ...newCharacter("c1"),
+    skillBar: ["a", "b", null, null, null, null, null, null],
+  });
+
+  it("swaps two occupied slots rather than destroying one", () => {
+    // `setSkill` moves and clears the origin, which would delete a skill
+    // when a player drags one slot onto another to reorder.
+    const swapped = swapSkillSlots(warrior(), 0, 1);
+
+    expect(swapped.skillBar.slice(0, 2)).toEqual(["b", "a"]);
+  });
+
+  it("swaps an occupied slot with an empty one", () => {
+    const swapped = swapSkillSlots(warrior(), 0, 3);
+
+    expect(swapped.skillBar[0]).toBeNull();
+    expect(swapped.skillBar[3]).toBe("a");
+  });
+
+  it("is a no-op when a slot is dropped on itself", () => {
+    const before = warrior();
+
+    expect(swapSkillSlots(before, 2, 2)).toBe(before);
+  });
+
+  it("round-trips a drag payload", () => {
+    expect(decodeDragSource(encodeDragSource({ from: "library", skillId: "x.y" }))).toEqual({
+      from: "library",
+      skillId: "x.y",
+    });
+    expect(decodeDragSource(encodeDragSource({ from: "slot", slot: 3 }))).toEqual({
+      from: "slot",
+      slot: 3,
+    });
+  });
+
+  it("refuses a payload dragged in from anywhere else", () => {
+    // A drop can carry text from any application on the desktop. It must
+    // do nothing rather than throw or equip something invented.
+    for (const raw of ["", "nonsense", "slot:", "slot:abc", "slot:-1", "slot:99", "library:"]) {
+      expect(decodeDragSource(raw), `${JSON.stringify(raw)} was accepted`).toBeUndefined();
+    }
+  });
+
+  it("equips from the library on drop", () => {
+    const after = applySkillDrop(
+      newCharacter("c1"),
+      { from: "library", skillId: "elementalist.fireball" },
+      2,
+    );
+
+    expect(after.skillBar[2]).toBe("elementalist.fireball");
+  });
+
+  it("moves rather than duplicates when dragging a library skill already on the bar", () => {
+    const after = applySkillDrop(warrior(), { from: "library", skillId: "a" }, 4);
+
+    expect(after.skillBar[4]).toBe("a");
+    expect(after.skillBar.filter((id) => id === "a")).toHaveLength(1);
+  });
+
+  it("swaps when the drag came from another slot", () => {
+    const after = applySkillDrop(warrior(), { from: "slot", slot: 0 }, 1);
+
+    expect(after.skillBar.slice(0, 2)).toEqual(["b", "a"]);
   });
 });

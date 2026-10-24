@@ -14,11 +14,26 @@ import type { Combatant, Magnitude } from "./types.js";
  * every call site.
  */
 export function resolveMagnitude(magnitude: Magnitude, caster: Combatant): number {
+  return resolveMagnitudeAtRanks(magnitude, caster.attributeRanks);
+}
+
+/**
+ * The same resolution, from attribute ranks alone.
+ *
+ * The build editor needs to show what a skill will actually do at the
+ * ranks the player has allocated, and it has no `Combatant` to hand. It
+ * must not reimplement the curve: a second copy is how an editor comes to
+ * promise 91 damage while the simulation deals 78.
+ */
+export function resolveMagnitudeAtRanks(
+  magnitude: Magnitude,
+  attributeRanks: ReadonlyMap<string, number>,
+): number {
   if ("flat" in magnitude) {
     return magnitude.flat;
   }
   const { attributeId, atZero, atTwelve } = magnitude.scaling;
-  const rank = caster.attributeRanks.get(attributeId) ?? 0;
+  const rank = attributeRanks.get(attributeId) ?? 0;
   const slope = (atTwelve - atZero) / MAX_ATTRIBUTE_RANK;
   return Math.round(atZero + slope * rank);
 }

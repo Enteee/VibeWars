@@ -4,6 +4,7 @@ import {
   AttributeRankError,
   MAX_ATTRIBUTE_RANK,
   cumulativeCostForRank,
+  MAX_EFFECTIVE_RANK,
   effectiveRank,
   isAffordable,
   totalCost,
@@ -88,7 +89,16 @@ describe("effectiveRank", () => {
     expect(effectiveRank(2, [{ delta: -10 }])).toBe(0);
   });
 
-  it("clamps to MAX_ATTRIBUTE_RANK rather than exceeding it", () => {
-    expect(effectiveRank(MAX_ATTRIBUTE_RANK, [{ delta: 10 }])).toBe(MAX_ATTRIBUTE_RANK);
+  it("clamps to MAX_EFFECTIVE_RANK, above what points alone can buy", () => {
+    // Deliberately higher than MAX_ATTRIBUTE_RANK: clamping effective
+    // rank at the allocation cap would make every attribute rune in the
+    // game worthless, since a superior rune's +3 would evaporate against
+    // the ceiling after the player had already paid 75 health for it.
+    expect(effectiveRank(MAX_ATTRIBUTE_RANK, [{ delta: 10 }])).toBe(MAX_EFFECTIVE_RANK);
+    expect(MAX_EFFECTIVE_RANK).toBeGreaterThan(MAX_ATTRIBUTE_RANK);
+  });
+
+  it("still refuses to go negative, however heavy the penalty", () => {
+    expect(effectiveRank(2, [{ delta: -50 }])).toBe(0);
   });
 });

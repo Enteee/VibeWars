@@ -3,7 +3,9 @@
 ## Status
 
 Accepted (2026-10-23); implementation begins Sprint 17 (characters/builds) and
-Sprint 18 (teams).
+Sprint 18 (teams). The migration-registry half is superseded by
+[ADR-0013](0013-schema-migration-registry.md), which builds the registry this
+ADR promised but that was never implemented; everything else here stands.
 
 ## Context
 

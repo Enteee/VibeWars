@@ -525,3 +525,531 @@ body {
 .editor-share-status.is-error {
   color: #ffb3ae;
 }
+
+/* --- build editor: two columns + skill library ------------------------- */
+
+.editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+  gap: 1.5rem;
+  align-items: start;
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+/* One column on narrow screens: the library below the character rather
+   than squeezed beside it. */
+@media (width <= 52rem) {
+  .editor-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.editor-hint {
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+
+/* --- the bar itself ---------------------------------------------------- */
+
+.skill-bar-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.skill-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-height: 4.2rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  cursor: grab;
+}
+
+.skill-slot.is-empty {
+  border-style: dashed;
+  background: transparent;
+  cursor: default;
+}
+
+/* A drop target has to be unmistakable mid-drag, when the cursor is
+   carrying something and the pointer is the only feedback available. */
+.skill-slot.is-drop-target {
+  border-color: var(--accent);
+  border-style: solid;
+  background: rgb(89 194 255 / 12%);
+}
+
+.skill-slot-index {
+  color: var(--accent);
+  font-size: 0.7rem;
+}
+
+.skill-slot-name {
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.skill-slot-cost,
+.skill-box-cost {
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+}
+
+.skill-slot-empty {
+  color: var(--ink-dim);
+  font-size: 0.78rem;
+}
+
+.skill-slot-clear {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.2rem;
+  padding: 0 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.skill-slot-clear:hover {
+  color: #ffb3ae;
+}
+
+/* --- the library ------------------------------------------------------- */
+
+.skill-library {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: rgb(22 27 34 / 60%);
+  /* Bounded so a long catalog scrolls inside the panel instead of
+     stretching the page past the character being edited. */
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.skill-search {
+  width: 100%;
+}
+
+.skill-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.skill-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.skill-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.skill-group-name {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.skill-group-rank {
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+}
+
+.skill-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  cursor: grab;
+}
+
+.skill-box:hover {
+  border-color: var(--accent);
+}
+
+/* Already on the bar: still draggable (to move it), but visibly spent. */
+.skill-box.is-equipped {
+  opacity: 0.45;
+}
+
+.skill-box-name {
+  font-size: 0.82rem;
+}
+
+.skill-library-empty {
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+/* --- hover tooltip ----------------------------------------------------- */
+
+.skill-tip {
+  position: fixed;
+  z-index: 50;
+  width: 20rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: rgb(14 17 22 / 97%);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 45%);
+  /* The tooltip must never eat the drag the player is performing. */
+  pointer-events: none;
+}
+
+.tip-title {
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.tip-attribute {
+  margin-bottom: 0.4rem;
+  color: var(--accent);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tip-effects {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-bottom: 0.45rem;
+  margin-bottom: 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.tip-effect {
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.tip-scale {
+  color: var(--ink-dim);
+}
+
+.tip-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.tip-stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.75rem;
+}
+
+.tip-stat-label {
+  color: var(--ink-dim);
+}
+
+/* --- character roster on the entry screen ------------------------------ */
+
+.roster {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.roster-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  cursor: pointer;
+}
+
+.roster-row:hover {
+  border-color: var(--ink-dim);
+}
+
+/* Which character you take into the next match. */
+.roster-row.is-active {
+  border-color: var(--accent);
+  background: rgb(89 194 255 / 10%);
+}
+
+.roster-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.roster-name {
+  font-size: 0.9rem;
+}
+
+.roster-sub {
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+}
+
+.roster-edit {
+  flex: 0 0 auto;
+}
+
+/* The preview circle: the same shape and colour the arena draws for you. */
+.character-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--dot-colour, var(--accent));
+  color: #07111c;
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+/* The default loadout is not a character, so it reads as a placeholder
+   rather than pretending to be one. */
+.character-dot.is-house {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px dashed var(--line);
+  color: var(--ink-dim);
+}
+
+/* --- gear: weapon, off-hand, armor, runes -------------------------------- */
+
+.editor-gear {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.editor-subheader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.editor-clear-armor {
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--ink-dim);
+  cursor: pointer;
+  font-size: 0.72rem;
+  padding: 0.15rem 0.45rem;
+}
+
+.editor-clear-armor:hover {
+  color: var(--ink);
+}
+
+/* Same box as .skill-slot, so the two halves of the sheet read as one
+   thing to assemble rather than two unrelated widgets. */
+.gear-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-height: 3.4rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  cursor: grab;
+}
+
+.gear-slot.is-empty,
+.gear-slot.is-disabled {
+  border-style: dashed;
+  cursor: default;
+}
+
+.gear-slot.is-disabled {
+  opacity: 0.5;
+}
+
+.gear-slot.is-drop-target {
+  border-color: var(--accent);
+  border-style: solid;
+}
+
+.gear-slot-label {
+  color: var(--ink-dim);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gear-slot-name {
+  font-size: 0.85rem;
+  /* Rune names are long; truncate rather than reflow the whole grid. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gear-slot.is-empty .gear-slot-name,
+.gear-slot.is-disabled .gear-slot-name {
+  color: var(--ink-dim);
+}
+
+.gear-slot-detail {
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+}
+
+.gear-slot-clear {
+  position: absolute;
+  top: 0.1rem;
+  right: 0.2rem;
+  padding: 0 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gear-slot-clear:hover {
+  color: #ffb3ae;
+}
+
+.gear-hands {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.armor-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Fixed first column so the five rows line up; the two slots share what
+   is left rather than sizing to their contents. */
+.armor-row {
+  display: grid;
+  grid-template-columns: 4rem 1fr 1fr;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.armor-slot-name {
+  color: var(--ink-dim);
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gear-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.5rem;
+  padding: 0.6rem 0.7rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.gear-stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.85rem;
+}
+
+.gear-stat-label {
+  color: var(--ink-dim);
+}
+
+.gear-stat-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.gear-stat-note {
+  color: var(--ink-dim);
+  font-size: 0.78rem;
+}
+
+/* Loud on purpose: an unmet weapon requirement costs two thirds of your
+   damage, and a player should not have to discover that by losing. */
+.gear-warning {
+  color: #ff7b72;
+  font-size: 0.8rem;
+}
+
+/* --- library tabs --------------------------------------------------------- */
+
+.library-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.library-tab {
+  flex: 1;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink-dim);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.library-tab.is-active {
+  background: var(--panel);
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.gear-box .skill-box-name {
+  /* Rune labels carry their whole trade-off, so they get two lines
+     rather than being cut off at the interesting part. */
+  white-space: normal;
+}

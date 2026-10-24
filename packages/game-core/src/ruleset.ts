@@ -43,6 +43,37 @@ export interface ResourceRules {
   readonly maxAdrenaline: number;
 }
 
+/**
+ * Combat numbers (brief §11's "combat rules").
+ *
+ * The armor curve is the load-bearing part. `armorReferenceLevel` is the
+ * armor at which mitigation is exactly 1.0 — set to the caster
+ * professions' base, so the damage every existing skill already deals is
+ * unchanged against them, and only *armored* targets see a difference.
+ * Without that reference point, switching armor on would silently rescale
+ * every skill in the catalog overnight.
+ */
+export interface CombatRules {
+  /** Armor at which a hit lands for exactly its stated amount. */
+  readonly armorReferenceLevel: number;
+  /** Damage halves for each this many points of armor above the reference. */
+  readonly armorHalvingPoints: number;
+  /** Attribute rank at which a weapon deals exactly its stated damage. */
+  readonly damageRankPivot: number;
+  /** Damage-exponent slope per rank below the pivot. */
+  readonly damageRankSlopeUnder: number;
+  /** Slope per rank above it — flatter, so runes are a bonus, not a doubling. */
+  readonly damageRankSlopeOver: number;
+  /** What base damage is multiplied by when a weapon's requirement is unmet. */
+  readonly unmetRequirementMultiplier: number;
+  /** Health a character has before runes and insignias. */
+  readonly baseHealth: number;
+  /** Energy a character has before runes and insignias. */
+  readonly baseEnergy: number;
+  /** Floor on maximum health, so stacked rune penalties cannot reach zero. */
+  readonly minimumMaxHealth: number;
+}
+
 export interface Ruleset {
   readonly id: string;
   /** Fixed server simulation tick rate, in Hz (ADR-0003). */
@@ -51,6 +82,7 @@ export interface Ruleset {
   readonly collision: CollisionRules;
   readonly attributes: AttributeRules;
   readonly resources: ResourceRules;
+  readonly combat: CombatRules;
 }
 
 export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
@@ -66,6 +98,23 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
     energyRegenPerSecond: 2,
     adrenalinePerHit: 3,
     maxAdrenaline: 25,
+  }),
+  combat: Object.freeze({
+    // 60 is every caster profession's base armor. Anchoring here is what
+    // keeps the twelve shipped skills dealing exactly what they dealt
+    // before armor existed, against the targets they were tuned on.
+    armorReferenceLevel: 60,
+    armorHalvingPoints: 40,
+    damageRankPivot: 12,
+    damageRankSlopeUnder: 5,
+    damageRankSlopeOver: 2,
+    // A weapon you have not trained for still swings — badly. Severe
+    // enough that nobody carries a hammer "for fun" on a caster, mild
+    // enough that it is a trade-off rather than a lockout.
+    unmetRequirementMultiplier: 1 / 3,
+    baseHealth: 500,
+    baseEnergy: 50,
+    minimumMaxHealth: 100,
   }),
   attributes: Object.freeze({
     // Enough to max two attributes (12+12=24 ranks -> 2*78=156 points) with

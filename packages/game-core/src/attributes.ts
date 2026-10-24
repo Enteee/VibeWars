@@ -11,7 +11,19 @@
  * specific proprietary numeric table.
  */
 
+/** The highest rank attribute *points* can buy. Enforced by `validateCharacter`. */
 export const MAX_ATTRIBUTE_RANK = 12;
+
+/**
+ * The highest rank anything can reach once runes and temporary bonuses
+ * are counted.
+ *
+ * Separate from the allocation cap on purpose. Clamping effective rank at
+ * 12 would make every attribute rune in the game worthless — a superior
+ * rune's +3 would evaporate against the ceiling, and the player would
+ * have paid 75 health for nothing.
+ */
+export const MAX_EFFECTIVE_RANK = 15;
 
 /**
  * Point cost to go from rank `n-1` to rank `n`. Rank 0 is free (everyone
@@ -88,5 +100,5 @@ export interface AttributeModifier {
  */
 export function effectiveRank(baseRank: number, modifiers: readonly AttributeModifier[]): number {
   const total = baseRank + modifiers.reduce((sum, modifier) => sum + modifier.delta, 0);
-  return Math.max(0, Math.min(MAX_ATTRIBUTE_RANK, total));
+  return Math.max(0, Math.min(MAX_EFFECTIVE_RANK, total));
 }

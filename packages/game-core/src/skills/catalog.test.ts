@@ -1,3 +1,4 @@
+import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { describe, expect, it } from "vitest";
 
 import { getAttribute } from "../professions.js";
@@ -130,6 +131,7 @@ describe("headless combat simulation", () => {
       caster: caster.combatant,
       target: target?.combatant,
       rng: createRng(1),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
     });
     caster.cast.startRecharge(skill.id, skill.rechargeSeconds);
   }

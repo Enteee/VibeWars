@@ -1,3 +1,5 @@
+import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { CastState } from "./cast-state.js";
 import { StatusSet } from "./status.js";
 import type { Combatant } from "./types.js";
@@ -19,6 +21,10 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     dead: false,
     statuses: new StatusSet(),
     cast: new CastState(),
+    // Armor at the reference level, so an unconfigured test combatant
+    // takes damage for exactly its stated amount. A test that wants to
+    // exercise mitigation says so explicitly.
+    equipment: unarmedResolvedEquipment(MINIMAL_GW_INSPIRED_PVP_V1.combat.armorReferenceLevel),
     ...overrides,
   };
 }
