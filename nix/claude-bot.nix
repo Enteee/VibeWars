@@ -290,7 +290,7 @@ let
       claude-bot --help
 
     Each role runs in its own bubblewrap sandbox, on its own git worktree
-    (branch bot/<role>), and talks to its peers through its own Telegram topic.
+    (detached at main), and talks to its peers through its own Telegram topic.
     Your checkout is not mounted inside the sandbox. Any extra arguments are
     passed straight through to `claude`.
 
@@ -536,16 +536,27 @@ let
         # The worktree. The agent edits this, never your checkout.
         # ----------------------------------------------------------------------
         worktree="$VIBEWARS_BOT_ROOT/wt/$role"
+        # Always detached at main, never on a plain bot/<role> branch (#72):
+        # agents work on bot/<role>/<topic>, and while any of those exist git
+        # cannot create a branch named bot/<role>. Main is fetched by URL
+        # first, so a new worktree does not start stale; that is a starting
+        # point, not a gate (the fresh-branch skill re-syncs on pickup), so a
+        # failed fetch is one line and the existing ref is used.
         if [ ! -e "$worktree" ]; then
-          if git -C "$DEVENV_ROOT" show-ref --verify --quiet "refs/heads/bot/$role"; then
-            git -C "$DEVENV_ROOT" worktree add "$worktree" "bot/$role"
-          else
-            # Detached, not `-b bot/$role`: agents work on bot/<role>/issue-N
-            # branches, and while any of those exist git cannot create a
-            # branch named bot/<role>. Every issue starts from origin/main
-            # anyway (the fresh-branch skill).
-            git -C "$DEVENV_ROOT" worktree add --detach "$worktree" origin/main
+          repo="$(${pkgs.jq}/bin/jq -r '.repo // ""' "$VIBEWARS_BOT_ROOT/company.json" 2>/dev/null || true)"
+          remote="''${VIBEWARS_GIT_REMOTE:-}"
+          if [ -z "$remote" ] && [ -n "$repo" ]; then
+            remote="git@github.com:$repo.git"
           fi
+          if [ -z "$remote" ] || ! GIT_NO_REPLACE_OBJECTS=1 git -C "$DEVENV_ROOT" fetch -q --no-tags \
+               "$remote" "+refs/heads/main:refs/remotes/origin/main"; then
+            echo "claude-bot: could not fetch main for $role; using the existing origin/main" >&2
+          fi
+          if ! git -C "$DEVENV_ROOT" rev-parse --verify --quiet "refs/remotes/origin/main^{commit}" >/dev/null; then
+            echo "claude-bot: no origin/main to start $role's worktree from" >&2
+            exit 1
+          fi
+          GIT_NO_REPLACE_OBJECTS=1 git -C "$DEVENV_ROOT" worktree add --detach "$worktree" origin/main
         fi
 
         # Marks onboarding done and this worktree trusted. Merged rather than
