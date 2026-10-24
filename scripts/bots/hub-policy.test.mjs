@@ -10,7 +10,10 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { ROLES, authorize, touchesGate } from "./hub-policy.mjs";
+import { ROLES, authorize, parseMerge, parseReview, touchesGate } from "./hub-policy.mjs";
+
+/** A reviewed commit, as `--sha` names it. */
+const SHA = "b02a5cc7";
 
 /**
  * @param {string} role
@@ -66,24 +69,171 @@ describe("merging", () => {
       allow: false,
     });
   });
+
+  it("names exactly one pull request, by number, so the guard and gh agree on it", () => {
+    for (const argv of [
+      ["pr", "merge", "https://github.com/Enteee/VibeWars/pull/22"],
+      ["pr", "merge", "bot/developer-1/issue-1"],
+      ["pr", "merge", "22", "23"],
+      ["pr", "merge"],
+    ]) {
+      expect(gh("qa-tester", argv), argv.join(" ")).toMatchObject({ allow: false });
+    }
+  });
+
+  it("refuses flags that merge later, bypass the ruleset, or are not a squash", () => {
+    for (const flag of [
+      "--auto",
+      "--admin",
+      "--merge",
+      "--rebase",
+      "--delete-branch",
+      "--match-head-commit",
+    ]) {
+      expect(gh("qa-tester", ["pr", "merge", "22", flag]), flag).toMatchObject({ allow: false });
+    }
+    expect(
+      gh("qa-tester", ["pr", "merge", "22", "--squash", "--subject", "x", "--body=y"]),
+    ).toMatchObject({
+      allow: true,
+    });
+  });
+
+  it("parses into the pull request and the flags hubd passes on", () => {
+    expect(parseMerge(["pr", "merge", "22", "-s", "-t", "Subject"])).toEqual({
+      pr: 22,
+      flags: ["--squash", "--subject", "Subject"],
+    });
+  });
+});
+
+describe("reading host files through gh", () => {
+  it("is refused in every spelling, since gh runs on the host", () => {
+    for (const argv of [
+      ["issue", "comment", "1", "--body-file", "/etc/passwd"],
+      ["issue", "comment", "1", "--body-file=/etc/passwd"],
+      ["issue", "comment", "1", "-F", "x"],
+      ["issue", "comment", "1", "-Fx"],
+      ["pr", "create", "--body-file", "x"],
+      ["pr", "create", "--template", "x"],
+      ["pr", "create", "-T", "x"],
+      ["pr", "create", "--recover", "x"],
+      ["pr", "edit", "1", "-F", "x"],
+    ]) {
+      expect(gh("developer-1", argv), argv.join(" ")).toMatchObject({ allow: false });
+    }
+    expect(gh("manager", ["issue", "create", "--body-file", "x"])).toMatchObject({ allow: false });
+    expect(gh("cicd-engineer", ["release", "create", "v1", "--notes-file", "x"])).toMatchObject({
+      allow: false,
+    });
+    expect(gh("cicd-engineer", ["release", "create", "v1", "dist.tgz"])).toMatchObject({
+      allow: false,
+    });
+  });
+
+  it("refuses @file field values and --input on the raw API", () => {
+    const env = "repos/{owner}/{repo}/environments/x";
+    for (const argv of [
+      ["api", env, "-F", "k=@/etc/passwd"],
+      ["api", env, "-Fk=@/etc/passwd"],
+      ["api", env, "--field", "k=@x"],
+      ["api", env, "--field=k=@x"],
+      ["api", env, "--input", "x"],
+    ]) {
+      expect(gh("cicd-engineer", argv), argv.join(" ")).toMatchObject({ allow: false });
+    }
+    expect(gh("cicd-engineer", ["api", env, "-F", "k=v"])).toMatchObject({ allow: true });
+  });
+
+  it("still allows --body, which is what hub turns --body-file into", () => {
+    expect(gh("developer-1", ["issue", "comment", "1", "--body", "hello"])).toMatchObject({
+      allow: true,
+    });
+  });
+});
+
+describe("retargeting and parser tricks", () => {
+  it("refuses the repository flag in every spelling, and a bare --", () => {
+    for (const argv of [
+      ["issue", "list", "--repo=other/repo"],
+      ["issue", "list", "-Rother/repo"],
+      ["issue", "list", "-R", "other/repo"],
+      ["issue", "comment", "1", "--", "--body-file", "x"],
+    ]) {
+      expect(gh("developer-1", argv), argv.join(" ")).toMatchObject({ allow: false });
+    }
+  });
+
+  it("refuses an API path that climbs out of its allowed prefix", () => {
+    for (const path of [
+      "repos/{owner}/{repo}/environments/../merges",
+      "repos/{owner}/{repo}/environments/%2e%2e/merges",
+      "repos/{owner}/{repo}/environments/%2E%2E/merges",
+    ]) {
+      expect(gh("cicd-engineer", ["api", path]), path).toMatchObject({ allow: false });
+    }
+  });
+});
+
+describe("parseReview", () => {
+  it("separates the verdict, the commit, the seat and the note", () => {
+    expect(
+      parseReview(["approve", "22", "--sha", SHA, "--as", "perf-sec-qa", "looks", "good"]),
+    ).toEqual({
+      verb: "approve",
+      pr: "22",
+      sha: SHA,
+      seat: "perf-sec-qa",
+      note: ["looks", "good"],
+    });
+  });
 });
 
 describe("review verdicts", () => {
   it("are recorded by the two reviewers", () => {
-    expect(review("lead-dev", ["approve", "22"])).toMatchObject({ allow: true });
-    expect(review("perf-sec-qa", ["approve", "22"])).toMatchObject({ allow: true });
-    expect(review("lead-dev", ["request-changes", "22"])).toMatchObject({ allow: true });
+    expect(review("lead-dev", ["approve", "22", "--sha", SHA])).toMatchObject({ allow: true });
+    expect(review("perf-sec-qa", ["approve", "22", "--sha", SHA])).toMatchObject({ allow: true });
+    expect(review("lead-dev", ["request-changes", "22", "--sha", SHA, "fix", "it"])).toMatchObject({
+      allow: true,
+    });
+  });
+
+  it("must name the commit that was reviewed", () => {
+    // Otherwise a commit pushed between reading and approving is approved
+    // unseen (#26, item 6). hubd then checks it is still the head.
+    expect(review("lead-dev", ["approve", "22"])).toMatchObject({ allow: false });
+    expect(review("lead-dev", ["approve", "22", "--sha", "not-a-sha"])).toMatchObject({
+      allow: false,
+    });
+    expect(review("lead-dev", ["approve", "22", "--sha=" + SHA])).toMatchObject({ allow: true });
+  });
+
+  it("can only be cast for a seat the role holds", () => {
+    const covering = { acting: ["perf-sec-qa", "qa-tester"] };
+    const as = (/** @type {string} */ role, /** @type {string} */ seat, acting = { acting: [] }) =>
+      authorize(
+        role,
+        { kind: "review", argv: ["approve", "22", "--sha", SHA, "--as", seat] },
+        acting,
+      );
+
+    expect(as("perf-sec-qa", "lead-dev")).toMatchObject({ allow: false });
+    expect(as("lead-dev", "perf-sec-qa")).toMatchObject({ allow: false });
+    expect(as("lead-dev", "perf-sec-qa", covering)).toMatchObject({ allow: true });
+    // qa-tester is a seat lead-dev covers, but not a reviewer's seat.
+    expect(as("lead-dev", "qa-tester", covering)).toMatchObject({ allow: false });
+    expect(as("lead-dev", "lead-dev")).toMatchObject({ allow: true });
   });
 
   it("cannot be recorded by the role that merges", () => {
     // Otherwise qa-tester could manufacture the approvals that unlock its own
     // merge button, and the three gates collapse into one.
-    expect(review("qa-tester", ["approve", "22"])).toMatchObject({ allow: false });
+    expect(review("qa-tester", ["approve", "22", "--sha", SHA])).toMatchObject({ allow: false });
   });
 
   it("cannot be recorded by the author roles", () => {
-    expect(review("developer-1", ["approve", "22"])).toMatchObject({ allow: false });
-    expect(review("manager", ["approve", "22"])).toMatchObject({ allow: false });
+    expect(review("developer-1", ["approve", "22", "--sha", SHA])).toMatchObject({ allow: false });
+    expect(review("manager", ["approve", "22", "--sha", SHA])).toMatchObject({ allow: false });
   });
 
   it("reject a malformed verdict or pull request number", () => {

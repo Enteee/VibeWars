@@ -73,7 +73,11 @@ if (argv[0] === "whoami") {
   }
   const pushes = authorize(ROLE, { kind: "push", argv: [`bot/${ROLE}/x`] }, { acting: ACTING });
   console.log(`  ${pushes.allow ? "yes" : "no "}  push branches (bot/${ROLE}/*)`);
-  const reviews = authorize(ROLE, { kind: "review", argv: ["approve", "1"] }, { acting: ACTING });
+  const reviews = authorize(
+    ROLE,
+    { kind: "review", argv: ["approve", "1", "--sha", "0000000"] },
+    { acting: ACTING },
+  );
   console.log(`  ${reviews.allow ? "yes" : "no "}  record review verdicts`);
 
   // Borrowed hats are stated loudly: an agent covering the merge seat as well

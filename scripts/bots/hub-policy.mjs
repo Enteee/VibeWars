@@ -1,14 +1,12 @@
 /**
  * What each employee of the company is allowed to do on GitHub.
  *
- * This file is the only thing standing between an autonomous agent and
- * `main`. Branch protection is unavailable on this repository's plan
- * ("Upgrade to GitHub Pro or make this repository public"), so GitHub will
- * happily let any token with `repo` push to `main`, merge an unreviewed pull
- * request, or delete a branch. The kanban rules — only QA merges, only the
- * reviewers approve, only the manager restructures the board — are therefore
- * not conventions that agents are asked to respect. They are enforced here,
- * before any credential is touched.
+ * GitHub's ruleset on `main` covers the mechanical invariants (no direct
+ * push, CI must pass), but all nine agents share one GitHub identity, so it
+ * cannot tell them apart. The kanban rules — only QA merges, only the
+ * reviewers approve, only the manager restructures the board — are
+ * therefore not conventions that agents are asked to respect. They are
+ * enforced here, before any credential is touched.
  *
  * Which is why it is a pure function with tests rather than a pile of `if`s
  * inside the daemon: every rule below is a failure mode somebody can assert
@@ -64,6 +62,12 @@ export const GATE_PATHS = [
   "devenv.nix",
   "playwright.config.ts",
   "scripts/bots/hub-policy.mjs",
+  "scripts/bots/hubd.mjs",
+  "scripts/bots/hub-guards.mjs",
+  "scripts/bots/hub.mjs",
+  "nix/claude-bot.nix",
+  "nix/claude-llc.nix",
+  ".github/CODEOWNERS",
 ];
 
 /**
@@ -207,6 +211,171 @@ const RULES = [
 const REPO_FLAGS = new Set(["-R", "--repo"]);
 
 /**
+ * @param {string} word
+ * @returns {boolean} whether it retargets the repository, in any spelling
+ */
+function isRepoFlag(word) {
+  return REPO_FLAGS.has(word) || word.startsWith("--repo=") || /^-R./.test(word);
+}
+
+/**
+ * Flags with which gh reads a file. gh runs on the host, outside every jail,
+ * so a path here is a path on the host: `--body-file ~/.ssh/id_ed25519`
+ * would post a private key as a public comment (#26). `hub` reads
+ * `--body-file` inside the sandbox and sends `--body` instead, so agents
+ * keep the convenience; anything that still names a file is refused.
+ *
+ * Keyed by `<group> <subcommand>`; long flags match exactly or with `=`,
+ * short ones also with the value glued on.
+ *
+ * @type {Record<string, { long: string[], short: string[] } | undefined>}
+ */
+const FILE_FLAGS = {
+  "issue create": { long: ["--body-file", "--recover"], short: ["-F"] },
+  "issue comment": { long: ["--body-file"], short: ["-F"] },
+  "issue edit": { long: ["--body-file"], short: ["-F"] },
+  "pr create": { long: ["--body-file", "--template", "--recover"], short: ["-F", "-T"] },
+  "pr comment": { long: ["--body-file"], short: ["-F"] },
+  "pr edit": { long: ["--body-file"], short: ["-F"] },
+  "pr merge": { long: ["--body-file"], short: ["-F"] },
+  "release create": { long: ["--notes-file"], short: ["-F"] },
+  "release edit": { long: ["--notes-file"], short: ["-F"] },
+  api: { long: ["--input"], short: [] },
+};
+
+/**
+ * @param {string[]} argv
+ * @returns {string | null} why the command would read a host file, if it would
+ */
+function readsHostFile(argv) {
+  const key = argv[0] === "api" ? "api" : `${argv[0] ?? ""} ${argv[1] ?? ""}`;
+  const flags = FILE_FLAGS[key];
+  for (const word of argv) {
+    if (flags !== undefined) {
+      const long = flags.long.find((flag) => word === flag || word.startsWith(`${flag}=`));
+      const short = flags.short.find((flag) => word.startsWith(flag));
+      if (long !== undefined || short !== undefined) {
+        return `${long ?? short ?? word} reads a file on the host, outside your sandbox. Use --body (hub turns --body-file into it for you).`;
+      }
+    }
+  }
+  if (key === "api") {
+    // `-F key=@file` and `--field key=@file` read the file as the value.
+    for (let i = 0; i < argv.length; i += 1) {
+      const word = argv[i] ?? "";
+      const value =
+        word === "-F" || word === "--field"
+          ? argv[i + 1]
+          : word.startsWith("--field=")
+            ? word.slice("--field=".length)
+            : word.startsWith("-F")
+              ? word.slice(2)
+              : undefined;
+      if (value?.includes("=@") === true) {
+        return "a field value of @file reads a file on the host, outside your sandbox";
+      }
+    }
+  }
+  if (
+    key === "release create" &&
+    argv.slice(2).filter((word) => !word.startsWith("-")).length > 1
+  ) {
+    // Positionals after the tag are asset files to upload, from the host.
+    return "release assets are files on the host; upload them from CI instead";
+  }
+  return null;
+}
+
+/**
+ * The words of a `pr merge` request, or why they are not acceptable.
+ *
+ * The merge guard and gh must agree on which pull request is being merged,
+ * so the target is exactly one positional, a number: no URL, no branch,
+ * nothing a second parser could read differently (#26). And only the flags
+ * a squash merge needs are allowed: `--auto` would merge later, after the
+ * guards stopped looking; `--admin` would bypass the ruleset.
+ *
+ * @param {string[]} argv `["pr", "merge", ...]`
+ * @returns {{ pr: number, flags: string[] } | { error: string }}
+ */
+export function parseMerge(argv) {
+  const words = argv.slice(2);
+  /** @type {string[]} */
+  const positional = [];
+  /** @type {string[]} */
+  const flags = [];
+  for (let i = 0; i < words.length; i += 1) {
+    const word = words[i] ?? "";
+    if (!word.startsWith("-")) {
+      positional.push(word);
+      continue;
+    }
+    const name = word.includes("=") ? word.slice(0, word.indexOf("=")) : word;
+    if (name === "--squash" || name === "-s") {
+      if (word !== name) {
+        return { error: `${word}: --squash takes no value` };
+      }
+      flags.push("--squash");
+      continue;
+    }
+    if (["--subject", "-t", "--body", "-b"].includes(name)) {
+      const value = word === name ? words[(i += 1)] : word.slice(name.length + 1);
+      if (value === undefined) {
+        return { error: `${name} needs a value` };
+      }
+      flags.push(name.startsWith("--") ? name : name === "-t" ? "--subject" : "--body", value);
+      continue;
+    }
+    return {
+      error: `${word} is not allowed on a merge; only --squash, --subject and --body are`,
+    };
+  }
+  if (positional.length !== 1 || !/^[0-9]+$/.test(positional[0] ?? "")) {
+    return { error: "a merge names exactly one pull request, by number" };
+  }
+  return { pr: Number(positional[0]), flags };
+}
+
+/**
+ * The words of a review verdict: `<verb> <pr> --sha <commit> [--as <seat>]
+ * [note...]`.
+ *
+ * `--sha` is the commit the reviewer read. hubd records it and refuses the
+ * verdict unless it is still the pull request's head, so a commit pushed
+ * between reading and approving is never approved unseen (#26, item 6).
+ *
+ * @param {string[]} argv
+ * @returns {{ verb: string, pr: string, sha: string | null, seat: string | null, note: string[] }}
+ */
+export function parseReview(argv) {
+  const [verb = "", pr = "", ...rest] = argv;
+  /** @type {string | null} */
+  let sha = null;
+  /** @type {string | null} */
+  let seat = null;
+  /** @type {string[]} */
+  const note = [];
+  for (let i = 0; i < rest.length; i += 1) {
+    const word = rest[i] ?? "";
+    if (word === "--sha" || word === "--as") {
+      const value = rest[(i += 1)] ?? null;
+      if (word === "--sha") {
+        sha = value;
+      } else {
+        seat = value;
+      }
+    } else if (word.startsWith("--sha=")) {
+      sha = word.slice("--sha=".length);
+    } else if (word.startsWith("--as=")) {
+      seat = word.slice("--as=".length);
+    } else {
+      note.push(word);
+    }
+  }
+  return { verb, pr, sha, seat, note };
+}
+
+/**
  * @param {string[]} argv
  * @param {string[]} prefix
  * @returns {boolean}
@@ -250,13 +419,14 @@ function permits(roles, role) {
  * @returns {{ allow: boolean, reason?: string, guards?: string[], as?: string }}
  */
 export function authorize(role, request, options = {}) {
-  const direct = authorizeAs(role, request);
+  const acting = options.acting ?? [];
+  const direct = authorizeAs(role, request, acting);
   if (direct.allow) {
     return direct;
   }
 
-  for (const hat of options.acting ?? []) {
-    const borrowed = authorizeAs(hat, request);
+  for (const hat of acting) {
+    const borrowed = authorizeAs(hat, request, acting);
     if (borrowed.allow) {
       return { ...borrowed, as: hat };
     }
@@ -267,9 +437,10 @@ export function authorize(role, request, options = {}) {
 /**
  * @param {string} role
  * @param {{ kind: string, argv: string[] }} request
+ * @param {string[]} acting the hats the requesting role holds
  * @returns {{ allow: boolean, reason?: string, guards?: string[] }}
  */
-function authorizeAs(role, request) {
+function authorizeAs(role, request, acting) {
   if (!ROLES.includes(role)) {
     return { allow: false, reason: `unknown role "${role}"` };
   }
@@ -279,7 +450,7 @@ function authorizeAs(role, request) {
     return authorizePush(role, argv);
   }
   if (request.kind === "review") {
-    return authorizeReview(role, argv);
+    return authorizeReview(role, argv, acting);
   }
   if (request.kind !== "gh") {
     return { allow: false, reason: `unknown request kind "${request.kind}"` };
@@ -289,12 +460,21 @@ function authorizeAs(role, request) {
   }
 
   for (const word of argv) {
-    if (REPO_FLAGS.has(word)) {
+    if (isRepoFlag(word)) {
       return {
         allow: false,
         reason: `${word} is not yours to set; hub always targets the company repository`,
       };
     }
+    // After `--`, gh stops reading flags, so a word hub checked as a value
+    // could be read by gh as something else.
+    if (word === "--") {
+      return { allow: false, reason: '"--" is not allowed; hub reads every word as gh would' };
+    }
+  }
+  const fileRead = readsHostFile(argv);
+  if (fileRead !== null) {
+    return { allow: false, reason: fileRead };
   }
 
   if (argv[0] === "api") {
@@ -323,6 +503,12 @@ function authorizeAs(role, request) {
       reason: `role "${role}" may not run "gh ${best.argv.join(" ")}"`,
     };
   }
+  if (best.argv.join(" ") === "pr merge") {
+    const merge = parseMerge(argv);
+    if ("error" in merge) {
+      return { allow: false, reason: merge.error };
+    }
+  }
   return best.guards === undefined ? { allow: true } : { allow: true, guards: best.guards };
 }
 
@@ -339,6 +525,10 @@ function authorizeApi(role, argv) {
   const path = argv[1];
   if (path === undefined) {
     return { allow: false, reason: "gh api with no path" };
+  }
+  // A prefix check means nothing if the path can climb back out of it.
+  if (/\.\.|%2e/i.test(path)) {
+    return { allow: false, reason: `"gh api ${path}": no ".." in an API path` };
   }
   if (!allowed.some((prefix) => path.startsWith(prefix))) {
     return {
@@ -357,20 +547,37 @@ function authorizeApi(role, argv) {
  * that merges — deliberately cannot, so that the role holding the merge
  * button cannot also manufacture the approvals that unlock it.
  *
+ * A verdict may be cast for a seat other than the role's own only when that
+ * seat is a reviewer's and the role is covering for it (`acting`), so a
+ * self-review stays visible in the ledger as "lead-dev acting as
+ * perf-sec-qa" and can never be cast for a seat nobody handed over (#26).
+ *
  * @param {string} role
- * @param {string[]} argv `[verb, pr]`
+ * @param {string[]} argv see `parseReview`
+ * @param {string[]} acting
  * @returns {{ allow: boolean, reason?: string }}
  */
-function authorizeReview(role, argv) {
+function authorizeReview(role, argv, acting) {
   if (!REVIEWERS.includes(role)) {
     return { allow: false, reason: `role "${role}" does not record review verdicts` };
   }
-  const [verb, pr] = argv.filter((word) => word !== "--as" && !REVIEWERS.includes(word));
+  const { verb, pr, sha, seat } = parseReview(argv);
   if (verb !== "approve" && verb !== "request-changes") {
-    return { allow: false, reason: `unknown review verdict "${String(verb)}"` };
+    return { allow: false, reason: `unknown review verdict "${verb}"` };
   }
-  if (pr === undefined || !/^[0-9]+$/.test(pr)) {
+  if (!/^[0-9]+$/.test(pr)) {
     return { allow: false, reason: "a review needs a pull request number" };
+  }
+  if (sha === null || !/^[0-9a-f]{7,40}$/.test(sha)) {
+    return {
+      allow: false,
+      reason:
+        "a verdict names the commit you reviewed: --sha <sha> " +
+        "(hub pr view <pr> --json headRefOid when you start reading)",
+    };
+  }
+  if (seat !== null && seat !== role && !(acting.includes(seat) && REVIEWERS.includes(seat))) {
+    return { allow: false, reason: `you do not hold the "${seat}" seat` };
   }
   return { allow: true };
 }
