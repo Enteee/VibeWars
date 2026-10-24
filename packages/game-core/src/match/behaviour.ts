@@ -1,4 +1,5 @@
-import { ZERO, type Vec2 } from "../vec2.js";
+import type { StatusId } from "../skills/status.js";
+import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
 import type { Participant } from "./simulation.js";
 
 /**
@@ -6,12 +7,18 @@ import type { Participant } from "./simulation.js";
  *
  * A behaviour only ever *asks*. `decide` returns an intent, and the
  * simulation puts that intent through exactly the path a player's
- * messages take: `setTarget`, then `requestSkill`, which is
- * `canActivate` → `payCost` → `beginCast`. No behaviour can bypass a rule,
- * which is what makes a fight against one an honest measurement.
+ * messages take: `setInputDirection`, `setTarget`, then `requestSkill`,
+ * which is `canActivate` → `payCost` → `beginCast`. No behaviour can
+ * bypass a rule, which is what makes a fight against one an honest
+ * measurement.
  *
- * Only `idle` and `cast-loop` exist yet; the rest arrive with the training
- * dummies that need them (#4).
+ * The one intent with no player equivalent is `apply-status-cadence`: the
+ * training ground's stand-in for "someone keeps hexing your ally". It
+ * applies a status the way a skill effect does, with the dummy as its
+ * source, so degeneration is attributed to it like any other.
+ *
+ * Only the kinds a training scenario uses exist (#2 Phase 5). There is
+ * deliberately no `sequence`.
  */
 
 export type Targeting =
@@ -34,21 +41,70 @@ export type Behaviour =
        * may be cast.
        */
       readonly firstLegal: boolean;
-    };
+    }
+  | {
+      readonly kind: "patrol";
+      readonly waypoints: readonly Vec2[];
+      /** True: back to the first waypoint after the last. False: stop there. */
+      readonly loop: boolean;
+    }
+  | {
+      readonly kind: "chase";
+      readonly targeting: Targeting;
+      /** Stop once this close to the target. */
+      readonly standOffUnits: number;
+    }
+  | {
+      readonly kind: "keep-away";
+      readonly targeting: Targeting;
+      /** Back off while the target is closer than this. */
+      readonly distanceUnits: number;
+    }
+  | {
+      readonly kind: "apply-status-cadence";
+      readonly statusId: StatusId;
+      readonly durationSeconds: number;
+      /** From one application to the next. The first is immediate. */
+      readonly everySeconds: number;
+      readonly targeting: Targeting;
+    }
+  | { readonly kind: "parallel"; readonly behaviours: readonly Behaviour[] };
+
+/**
+ * When a participant is put back as it started: the respawn path, at its
+ * starting health. Omitted on a spec, it is `never`.
+ */
+export type ResetPolicy =
+  | { readonly kind: "never" }
+  | { readonly kind: "on-death"; readonly afterSeconds: number }
+  | { readonly kind: "on-interval"; readonly everySeconds: number }
+  | { readonly kind: "below-health"; readonly fraction: number };
+
+/** A status a behaviour applies, with itself as the source. */
+export interface StatusApplication {
+  readonly statusId: StatusId;
+  readonly durationSeconds: number;
+  readonly targetId: string;
+}
 
 /** What a behaviour *asks* for. Never what happens. */
 export interface BehaviourIntent {
   readonly moveDirection: Vec2;
   readonly targetId: string | undefined;
   readonly useSkillId: string | undefined;
+  readonly applyStatuses: readonly StatusApplication[];
 }
 
 /** A behaviour's own memory between ticks. One per participant. */
 export interface BehaviourCursor {
   /** `cast-loop` without `firstLegal`: index of the next skill to cast. */
   nextSkill: number;
-  /** Seconds left before the next cast may be attempted. */
+  /** Seconds left before the next cast or status may be attempted. */
   waitSeconds: number;
+  /** `patrol`: index of the waypoint being walked to. */
+  waypoint: number;
+  /** `parallel`: one cursor per child, in the same order. */
+  readonly children: BehaviourCursor[];
 }
 
 export interface BehaviourContext {
@@ -57,6 +113,11 @@ export interface BehaviourContext {
   readonly participants: readonly Participant[];
   readonly dt: number;
   /**
+   * How far one tick of movement carries `self`. Movement is always at
+   * full speed, so "arrived" means "within one step".
+   */
+  readonly stepUnits: number;
+  /**
    * Whether `self` may cast `skillId` at `targetId` right now. The same
    * `canActivate` check `requestSkill` makes, asked without casting.
    */
@@ -64,7 +125,7 @@ export interface BehaviourContext {
 }
 
 export function createCursor(): BehaviourCursor {
-  return { nextSkill: 0, waitSeconds: 0 };
+  return { nextSkill: 0, waitSeconds: 0, waypoint: 0, children: [] };
 }
 
 /**
@@ -82,7 +143,7 @@ function nearest(
     if (other.id === context.self.id || other.combatant.dead || !accept(other)) {
       continue;
     }
-    const d = Math.hypot(other.position.x - from.x, other.position.y - from.y);
+    const d = distance(other.position, from);
     if (d < bestDistance) {
       bestDistance = d;
       best = other.id;
@@ -112,6 +173,7 @@ const STAND_STILL: BehaviourIntent = {
   moveDirection: ZERO,
   targetId: undefined,
   useSkillId: undefined,
+  applyStatuses: [],
 };
 
 export function decide(
@@ -124,6 +186,16 @@ export function decide(
       return STAND_STILL;
     case "cast-loop":
       return castLoop(behaviour, cursor, context);
+    case "patrol":
+      return patrol(behaviour, cursor, context);
+    case "chase":
+      return keepRange(behaviour.targeting, context, (d) => d > behaviour.standOffUnits, 1);
+    case "keep-away":
+      return keepRange(behaviour.targeting, context, (d) => d < behaviour.distanceUnits, -1);
+    case "apply-status-cadence":
+      return statusCadence(behaviour, cursor, context);
+    case "parallel":
+      return parallel(behaviour, cursor, context);
   }
 }
 
@@ -133,7 +205,7 @@ function castLoop(
   context: BehaviourContext,
 ): BehaviourIntent {
   const targetId = resolveTargeting(behaviour.targeting, context);
-  const waiting = { moveDirection: ZERO, targetId, useSkillId: undefined };
+  const waiting = { ...STAND_STILL, targetId };
 
   cursor.waitSeconds = Math.max(0, cursor.waitSeconds - context.dt);
   if (cursor.waitSeconds > 0 || context.self.combatant.cast.isCasting) {
@@ -154,5 +226,113 @@ function castLoop(
     return waiting;
   }
   cursor.waitSeconds = behaviour.gapSeconds;
-  return { moveDirection: ZERO, targetId, useSkillId };
+  return { ...waiting, useSkillId };
+}
+
+function patrol(
+  behaviour: Extract<Behaviour, { kind: "patrol" }>,
+  cursor: BehaviourCursor,
+  context: BehaviourContext,
+): BehaviourIntent {
+  const count = behaviour.waypoints.length;
+  // Arriving at one waypoint turns toward the next in the same tick, so a
+  // patrol never pauses at a corner.
+  for (let tries = 0; tries < count; tries += 1) {
+    const waypoint = behaviour.waypoints[cursor.waypoint];
+    if (waypoint === undefined) {
+      return STAND_STILL;
+    }
+    if (distance(waypoint, context.self.position) > context.stepUnits) {
+      return { ...STAND_STILL, moveDirection: normalize(sub(waypoint, context.self.position)) };
+    }
+    cursor.waypoint += 1;
+    if (cursor.waypoint >= count) {
+      if (!behaviour.loop) {
+        return STAND_STILL;
+      }
+      cursor.waypoint = 0;
+    }
+  }
+  return STAND_STILL;
+}
+
+/**
+ * Walk toward (`sign` 1) or away from (`sign` -1) the target while
+ * `shouldMove` says so, and stop a step early rather than overshoot and
+ * turn back the next tick.
+ */
+function keepRange(
+  targeting: Targeting,
+  context: BehaviourContext,
+  shouldMove: (distanceUnits: number) => boolean,
+  sign: 1 | -1,
+): BehaviourIntent {
+  const targetId = resolveTargeting(targeting, context);
+  const target = context.participants.find((other) => other.id === targetId);
+  if (target === undefined || target.combatant.dead || target.id === context.self.id) {
+    return { ...STAND_STILL, targetId };
+  }
+  const here = context.self.position;
+  const d = distance(target.position, here);
+  const afterStep = d + -sign * context.stepUnits;
+  if (!shouldMove(d) || !shouldMove(afterStep)) {
+    return { ...STAND_STILL, targetId };
+  }
+  // On top of the target there is no "away": back off along +x, so the
+  // choice is deterministic.
+  const toward = d < 1e-9 ? { x: -1, y: 0 } : normalize(sub(target.position, here));
+  return {
+    ...STAND_STILL,
+    targetId,
+    moveDirection: { x: sign * toward.x, y: sign * toward.y },
+  };
+}
+
+function statusCadence(
+  behaviour: Extract<Behaviour, { kind: "apply-status-cadence" }>,
+  cursor: BehaviourCursor,
+  context: BehaviourContext,
+): BehaviourIntent {
+  cursor.waitSeconds = Math.max(0, cursor.waitSeconds - context.dt);
+  const targetId = resolveTargeting(behaviour.targeting, context);
+  const target = context.participants.find((other) => other.id === targetId);
+  if (cursor.waitSeconds > 0 || target === undefined || target.combatant.dead) {
+    return STAND_STILL;
+  }
+  cursor.waitSeconds = behaviour.everySeconds;
+  return {
+    ...STAND_STILL,
+    applyStatuses: [
+      {
+        statusId: behaviour.statusId,
+        durationSeconds: behaviour.durationSeconds,
+        targetId: target.id,
+      },
+    ],
+  };
+}
+
+/**
+ * Every child decides, each with its own cursor. The first child that
+ * moves steers; the first that casts picks the skill and its target,
+ * and otherwise the first that targets anything does. Every status is
+ * applied.
+ */
+function parallel(
+  behaviour: Extract<Behaviour, { kind: "parallel" }>,
+  cursor: BehaviourCursor,
+  context: BehaviourContext,
+): BehaviourIntent {
+  const intents = behaviour.behaviours.map((child, index) => {
+    const childCursor = cursor.children[index] ?? createCursor();
+    cursor.children[index] = childCursor;
+    return decide(child, childCursor, context);
+  });
+  const casting = intents.find((intent) => intent.useSkillId !== undefined);
+  return {
+    moveDirection: intents.find((intent) => intent.moveDirection !== ZERO)?.moveDirection ?? ZERO,
+    targetId: (casting ?? intents.find((intent) => intent.targetId !== undefined))?.targetId,
+    useSkillId: casting?.useSkillId,
+    applyStatuses: intents.flatMap((intent) => intent.applyStatuses),
+  };
 }
