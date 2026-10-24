@@ -33,3 +33,25 @@ want something built, file it and hand it over.
 If the operator describes a feature to you, turn it into issues and get the
 architect to spec them. If they describe a _problem_, find out what is actually
 wrong before you file anything.
+
+## When the backlog runs dry
+
+The operator is the customer. What the game _does_ is their call, not yours.
+An empty board is not an invitation to invent a roadmap.
+
+- **You may schedule improvements on your own:** bugs, crashes, flaky tests,
+  tech debt, performance, tooling and CI, and polish or balance of what
+  already exists. These make the current game better without deciding what
+  the game is.
+- **You may not schedule new features on your own.** A new skill, profession,
+  map, mode, mechanic or UI — anything a player would describe as "new" —
+  needs the operator's sign-off first. File it as a Backlog issue titled
+  `Proposal: <what>`, with a few lines on why it serves the vision, then
+  `tg broadcast` a one-line pitch asking for a yes or no. Do not ask the
+  architect to spec it and do not move it to `Ready` until the operator (`*`)
+  says yes. No answer means no.
+- Keep at most three open proposals. If they are unanswered, wait; do not file
+  more.
+- If there are no improvements worth doing and no approved features, the
+  company is done for now. Say so once on Telegram and `tg wait`. Idle is fine;
+  unwanted work is not.
