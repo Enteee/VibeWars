@@ -62,7 +62,10 @@ export function recordSpend(window, spend, now) {
  * @returns {number | null}
  */
 export function costBetween(before, after) {
-  if (before === null || after === null || before.resetAt !== after.resetAt) {
+  if (before === null || after === null) {
+    return null;
+  }
+  if (before.resetAt !== after.resetAt) {
     return null;
   }
   const cost = before.remaining - after.remaining;
