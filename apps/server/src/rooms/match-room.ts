@@ -166,7 +166,6 @@ const DEFAULT_EQUIPMENT: BuildEquipment = defaultBuildEquipment("warrior");
 interface ResolvedJoinLoadout {
   readonly skillBar: readonly string[];
   readonly attributeRanks: ReadonlyMap<string, number>;
-  readonly buildName: string | undefined;
   readonly primaryProfession: ProfessionId;
   readonly equipment: BuildEquipment;
 }
@@ -174,7 +173,6 @@ interface ResolvedJoinLoadout {
 const HOUSE_LOADOUT: ResolvedJoinLoadout = {
   skillBar: DEFAULT_SKILL_BAR,
   attributeRanks: DEFAULT_ATTRIBUTE_RANKS,
-  buildName: undefined,
   primaryProfession: "warrior",
   equipment: DEFAULT_EQUIPMENT,
 };
@@ -226,7 +224,6 @@ function resolveLoadout(options: unknown): ResolvedJoinLoadout {
   return {
     skillBar,
     attributeRanks: attributeRanksOf(build),
-    buildName: build.name,
     primaryProfession: build.primaryProfession,
     equipment: build.equipment,
   };
@@ -580,9 +577,9 @@ export class MatchRoom extends Room {
 
     const player = new PlayerState({
       sessionId: client.sessionId,
-      // A build name is client-supplied, so it goes through the same
-      // sanitiser the lobby uses before any other player ever sees it.
-      name: sanitizeName(loadout.buildName, `player-${client.sessionId.slice(0, 4)}`),
+      // The player's chosen name is client-supplied, so it goes through
+      // the same sanitiser the lobby uses before anyone else sees it.
+      name: sanitizeName(field(options, "name"), `player-${client.sessionId.slice(0, 4)}`),
       x: spawn.x,
       y: spawn.y,
       team,

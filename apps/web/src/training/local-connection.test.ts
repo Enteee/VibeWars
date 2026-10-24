@@ -58,6 +58,7 @@ function targetDummy() {
       simulation: setup.simulation,
       selfId: SELF_ID,
       map: setup.map,
+      nameOf: (id) => (id === SELF_ID ? "Tester" : (setup.names.get(id) ?? id)),
     }),
   };
 }

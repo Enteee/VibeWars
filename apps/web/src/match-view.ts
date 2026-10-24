@@ -31,6 +31,8 @@ export interface MatchViewOptions {
    * this is what the player *asked* to play, never what they got.
    */
   readonly build?: PlayerBuild | undefined;
+  /** The display name to ask for; the server sanitises it. */
+  readonly name?: string | undefined;
   /**
    * Where the match comes from. Defaults to the game server, with `mapId`
    * and `build`; the Training Ground passes a local simulation instead.
@@ -66,6 +68,7 @@ export function toArenaSnapshot(
       const activation = activationById.get(player.castingSkillId ?? "") ?? 0;
       return {
         id: player.sessionId,
+        name: player.name,
         position: { x: player.x, y: player.y },
         radius: 14,
         team:
@@ -96,7 +99,8 @@ export async function startMatchView(
   const viewport = await createArenaViewport(parent, { mode: "resize" });
   const { scene } = viewport;
 
-  const connect = options.connect ?? (() => connectToMatch(endpoint, options.mapId, options.build));
+  const connect =
+    options.connect ?? (() => connectToMatch(endpoint, options.mapId, options.build, options.name));
   const connection = await connect();
   const walls = connection.map.walls.map(toRenderableWall);
 

@@ -162,8 +162,8 @@ async function main(): Promise<void> {
         },
         // Straight into a match with no lobby — how the game worked before
         // Sprint 19, kept because it is the fastest way to try the game.
-        onQuickMatch: () => {
-          void enterMatch();
+        onQuickMatch: (name) => {
+          void enterMatch(undefined, name);
         },
         onNewCharacter: () => {
           showCharacterEditor(newCharacter(crypto.randomUUID()));
@@ -445,12 +445,16 @@ async function main(): Promise<void> {
       renderLobby();
     });
     lobby.onMatchStarting((message) => {
-      void enterMatch(message.mapId);
+      // The name the lobby already showed everyone, so a player is the
+      // same person on both screens.
+      const snapshot = lobby?.getSnapshot();
+      const self = snapshot?.players.find((p) => p.sessionId === snapshot.selfSessionId);
+      void enterMatch(message.mapId, self?.name ?? "");
     });
     renderLobby();
   };
 
-  const enterMatch = async (mapId?: string): Promise<void> => {
+  const enterMatch = async (mapId: string | undefined, name: string): Promise<void> => {
     enteringMatch = true;
     menuNotice = undefined;
     showViewport(true);
@@ -489,7 +493,7 @@ async function main(): Promise<void> {
             })();
           },
         },
-        { mapId, build },
+        { mapId, build, name },
       );
       setStatus("in match", "online");
     } catch (error) {

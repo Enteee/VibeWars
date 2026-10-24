@@ -69,6 +69,7 @@ export function httpOriginFrom(endpoint: string): string {
 /** Room state as the Colyseus client actually decodes it — a minimal, local shape. */
 interface DecodedPlayer {
   readonly sessionId: string;
+  readonly name: string;
   readonly x: number;
   readonly y: number;
   readonly targetSessionId: string;
@@ -100,6 +101,7 @@ function snapshotFrom(room: Room<unknown, DecodedMatchState>): MatchSnapshot {
   for (const player of room.state.players.values()) {
     players.push({
       sessionId: player.sessionId,
+      name: player.name,
       x: player.x,
       y: player.y,
       targetSessionId: player.targetSessionId === "" ? undefined : player.targetSessionId,
@@ -147,6 +149,7 @@ export async function connectToMatch(
   endpoint: string,
   mapId?: string,
   build?: PlayerBuild,
+  name?: string,
 ): Promise<MatchConnection> {
   const client = new Client(endpoint);
   // The map id travels as a join option so the first client into a room
@@ -159,6 +162,7 @@ export async function connectToMatch(
     protocolVersion: PROTOCOL_VERSION,
     ...(mapId === undefined ? {} : { mapId }),
     ...(build === undefined ? {} : { build }),
+    ...(name === undefined ? {} : { name }),
   };
   const room = await client.joinOrCreate<DecodedMatchState>(ROOM_MATCH, joinOptions);
 
