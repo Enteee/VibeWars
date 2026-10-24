@@ -56,7 +56,7 @@ if (group === "api" && sub !== "graphql") {
     if (fs.existsSync(path.join(state, "rest-fails"))) { console.error("HTTP 500: Server Error"); process.exit(1); }
     const planted = path.join(state, commit[2] + "-" + commit[1] + ".json");
     if (fs.existsSync(planted)) { console.log(fs.readFileSync(planted, "utf8")); process.exit(0); }
-    console.log(JSON.stringify(commit[2] === "status" ? { state: "pending", statuses: [] } : { total_count: 0, check_runs: [] }));
+    console.log(JSON.stringify(commit[2] === "status" ? { state: "pending", total_count: 0, statuses: [] } : { total_count: 0, check_runs: [] }));
     process.exit(0);
   }
   if (rel.startsWith("issues?")) { console.log(JSON.stringify([issue7, { ...pull9, pull_request: {} }])); process.exit(0); }
@@ -164,11 +164,18 @@ async function startHubd(remaining, before) {
       const runs = checks.runs ?? [];
       fs.writeFileSync(
         path.join(state, `check-runs-${sha}.json`),
-        JSON.stringify({ total_count: runs.length, check_runs: runs }),
+        JSON.stringify({
+          total_count: runs.length,
+          check_runs: runs.map((run) => ({ check_suite: { id: 1 }, ...run })),
+        }),
       );
       fs.writeFileSync(
         path.join(state, `status-${sha}.json`),
-        JSON.stringify({ state: "pending", statuses: checks.statuses ?? [] }),
+        JSON.stringify({
+          state: "pending",
+          total_count: (checks.statuses ?? []).length,
+          statuses: checks.statuses ?? [],
+        }),
       );
     },
     /** Every REST read of a commit's checks fails, as on a GitHub outage. */
@@ -726,6 +733,23 @@ describe("hubd recording verdicts and merging", () => {
 
     expect(answer.allow).toBe(false);
     expect(String(answer.reason)).toMatch(/still running: ci/);
+    expect(hubd.calls("pr merge")).toBe(0);
+  }, 20_000);
+
+  it("refuses a failing run that a passing status of the same name would shadow", async () => {
+    const hubd = await approved(5000);
+    hubd.setChecks("abc1234def", {
+      runs: [{ id: 1, name: "ci", status: "completed", conclusion: "failure" }],
+      statuses: [
+        { context: "ci", state: "success" },
+        { context: "legacy", state: "success" },
+      ],
+    });
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(answer.allow).toBe(false);
+    expect(String(answer.reason)).toMatch(/reported by more than one source: ci/);
     expect(hubd.calls("pr merge")).toBe(0);
   }, 20_000);
 

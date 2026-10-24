@@ -31,15 +31,25 @@
  * `.bots/company.json` and a missing check is treated exactly like a failing
  * one.
  *
- * @param {{ name: string, conclusion: string }[]} checks As reported by
- *   `gh pr checks --json name,state,bucket`, normalised to a conclusion.
+ * A name more than one source reports is refused as ambiguous rather
+ * than letting one entry win: a passing run some other workflow posted,
+ * or a commit status, must never shadow a failing real one (#96).
+ *
+ * @param {{ name: string, conclusion: string }[]} checks One entry per
+ *   source, as `checksFromRest` reads them, in gh's buckets.
  * @param {string[]} expected Check names that must be present and passing.
- * @returns {{ ok: boolean, missing: string[], failing: string[], pending: string[] }}
+ * @returns {{ ok: boolean, missing: string[], failing: string[], pending: string[], ambiguous: string[] }}
  */
 export function checksSatisfied(checks, expected) {
   const seen = new Map(checks.map((check) => [check.name, check.conclusion]));
+  const ambiguous = [...seen.keys()]
+    .filter((name) => checks.filter((check) => check.name === name).length > 1)
+    .sort();
+  for (const name of ambiguous) {
+    seen.delete(name);
+  }
 
-  const missing = expected.filter((name) => !seen.has(name));
+  const missing = expected.filter((name) => !seen.has(name) && !ambiguous.includes(name));
   const failing = [];
   const pending = [];
 
@@ -55,10 +65,15 @@ export function checksSatisfied(checks, expected) {
   }
 
   return {
-    ok: missing.length === 0 && failing.length === 0 && pending.length === 0,
+    ok:
+      missing.length === 0 &&
+      failing.length === 0 &&
+      pending.length === 0 &&
+      ambiguous.length === 0,
     missing,
     failing: failing.sort(),
     pending: pending.sort(),
+    ambiguous,
   };
 }
 
@@ -140,7 +155,7 @@ export function pathsWithin(prefix, paths) {
  * signed off" will go and ask for a review, which is the behaviour we want.
  *
  * @param {string} guard
- * @param {{ ok: boolean, missing?: string[], failing?: string[], pending?: string[], stale?: string[], changesRequested?: string[] }} result
+ * @param {{ ok: boolean, missing?: string[], failing?: string[], pending?: string[], ambiguous?: string[], stale?: string[], changesRequested?: string[] }} result
  * @returns {string}
  */
 export function explainGuard(guard, result) {
@@ -153,6 +168,9 @@ export function explainGuard(guard, result) {
   }
   if (result.pending !== undefined && result.pending.length > 0) {
     parts.push(`still running: ${result.pending.join(", ")}`);
+  }
+  if (result.ambiguous !== undefined && result.ambiguous.length > 0) {
+    parts.push(`reported by more than one source: ${result.ambiguous.join(", ")}`);
   }
   if (result.stale !== undefined && result.stale.length > 0) {
     parts.push(`stale, cast against an older commit: ${result.stale.join(", ")}`);

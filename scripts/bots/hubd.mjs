@@ -204,7 +204,10 @@ async function rest(rel, cfg) {
 async function restChecks(sha, cfg) {
   /** @type {unknown[]} */
   const answers = [];
-  for (const rel of [`commits/${sha}/check-runs?per_page=100`, `commits/${sha}/status`]) {
+  for (const rel of [
+    `commits/${sha}/check-runs?per_page=100`,
+    `commits/${sha}/status?per_page=100`,
+  ]) {
     const result = await gh(["api", `repos/${cfg.repo}/${rel}`]);
     if (result.code !== 0) {
       return { error: result.stderr.trim().split("\n")[0] ?? "" };
