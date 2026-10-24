@@ -16,6 +16,7 @@ const SPELL: Skill = {
   rechargeSeconds: 5,
   range: 400,
   target: "single-enemy",
+  area: undefined,
   effects: [{ kind: "damage", amount: { flat: 50 } }],
 };
 

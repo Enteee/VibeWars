@@ -1,3 +1,4 @@
+import { RANGE_MELEE, RANGE_SPELL } from "../distances.js";
 import { EQUIPMENT_REQUIREMENT_RANK, type DamageType, type EquipmentRequirement } from "./types.js";
 
 /**
@@ -24,20 +25,20 @@ import { EQUIPMENT_REQUIREMENT_RANK, type DamageType, type EquipmentRequirement 
  *
  * The reference game measures in its own unit; this one has shipped,
  * playtested constants (`RANGE_MELEE = 40`, `RANGE_SPELL = 420` in
- * `skills/catalog.ts`) and arenas roughly 900 units across. Copying the
+ * `distances.ts`) and arenas roughly 900 units across. Copying the
  * reference numbers would break every map, so the *ratios* are adopted
  * and anchored on spellcasting range, which is the one value both
  * systems already agree on.
  */
-const UNITS_PER_REFERENCE_UNIT = 420 / 1248;
+const UNITS_PER_REFERENCE_UNIT = RANGE_SPELL / 1248;
 
 function rescale(referenceUnits: number): number {
   return Math.round(referenceUnits * UNITS_PER_REFERENCE_UNIT);
 }
 
-/**
- * Melee reach, pinned to the existing `RANGE_MELEE` rather than to its
- * arithmetic rescaling of 48.
+/*
+ * Melee reach is `RANGE_MELEE`, not its arithmetic rescaling of 48, and
+ * casting reach is `RANGE_SPELL`, the anchor the rescaling uses.
  *
  * Deliberate: weapon range must equal melee-skill range. If a sword
  * swing reached 48 and Swift Chop reached 40 there would be an eight-unit
@@ -45,10 +46,6 @@ function rescale(referenceUnits: number): number {
  * the kind of discrepancy a player experiences as the game being broken
  * rather than as a rule.
  */
-const MELEE_RANGE = 40;
-
-/** Casting reach, equal to `RANGE_SPELL`. The anchor the rescaling uses. */
-const CASTER_RANGE = 420;
 
 const SPEAR_RANGE = rescale(1000);
 const SHORTBOW_RANGE = rescale(1050);
@@ -202,7 +199,7 @@ const UNARMED: Weapon = Object.freeze({
   damageMax: 5,
   damageType: "blunt",
   attackIntervalSeconds: 1.33,
-  range: MELEE_RANGE,
+  range: RANGE_MELEE,
   projectileSpeed: undefined,
   armorPenetration: 0,
   cleaveTargets: 0,
@@ -234,7 +231,7 @@ export const WEAPONS: Readonly<Record<WeaponId, Weapon>> = Object.freeze({
     22,
     "slashing",
     1.33,
-    MELEE_RANGE,
+    RANGE_MELEE,
   ),
   axe: martial(
     "axe",
@@ -245,7 +242,7 @@ export const WEAPONS: Readonly<Record<WeaponId, Weapon>> = Object.freeze({
     28,
     "slashing",
     1.33,
-    MELEE_RANGE,
+    RANGE_MELEE,
   ),
   hammer: martial(
     "hammer",
@@ -256,7 +253,7 @@ export const WEAPONS: Readonly<Record<WeaponId, Weapon>> = Object.freeze({
     35,
     "blunt",
     1.75,
-    MELEE_RANGE,
+    RANGE_MELEE,
   ),
 
   daggers: martial(
@@ -268,7 +265,7 @@ export const WEAPONS: Readonly<Record<WeaponId, Weapon>> = Object.freeze({
     17,
     "piercing",
     1.33,
-    MELEE_RANGE,
+    RANGE_MELEE,
     {
       doubleStrike: Object.freeze({
         attributeId: "assassin.dagger-mastery",
@@ -287,7 +284,7 @@ export const WEAPONS: Readonly<Record<WeaponId, Weapon>> = Object.freeze({
     41,
     "slashing",
     1.75,
-    MELEE_RANGE,
+    RANGE_MELEE,
     {
       cleaveTargets: 2,
       // A lower critical multiplier than everything else, because a
@@ -321,7 +318,7 @@ export const WEAPONS: Readonly<Record<WeaponId, Weapon>> = Object.freeze({
     damageMax: 22,
     damageType: "untyped",
     attackIntervalSeconds: 1.75,
-    range: CASTER_RANGE,
+    range: RANGE_SPELL,
     projectileSpeed: 900,
     armorPenetration: 0,
     cleaveTargets: 0,
@@ -338,7 +335,7 @@ export const WEAPONS: Readonly<Record<WeaponId, Weapon>> = Object.freeze({
     damageMax: 22,
     damageType: "untyped",
     attackIntervalSeconds: 1.75,
-    range: CASTER_RANGE,
+    range: RANGE_SPELL,
     projectileSpeed: 900,
     armorPenetration: 0,
     cleaveTargets: 0,
