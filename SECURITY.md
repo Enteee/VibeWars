@@ -84,9 +84,9 @@ like.
 
 ## Known open gaps
 
-These were found by reviewing `main` at `47a403f` (2026-10-24). Each one is
-in scope by the rules above and needs a fix. When one is fixed, remove it
-from this list in the same PR.
+Gaps 1–5 were found by reviewing `main` at `47a403f`, and 6–7 at `1cfd5b5`
+(both 2026-10-24). Each one is in scope by the rules above and needs a fix.
+When one is fixed, remove it from this list in the same PR.
 
 1. **A lobby's match is not tied to that lobby** (#41). The web client joins a
    match with `joinOrCreate("match")` and no filter. `match-starting`
@@ -124,10 +124,42 @@ from this list in the same PR.
    joining is not rate-limited. That is fine for a LAN party. It is not
    access control, and it must not be described as access control.
 
+6. **No cap on the number of match rooms.** Any client can call
+   `create("match")` as often as it likes. Every room runs its own 20 Hz
+   fixed-timestep simulation, even with a single player in it. So a cap on
+   players per room (#42) does not bound the work: the attacker just opens
+   more rooms. The fix for #41 makes rooms per lobby, so it needs this cap
+   too. Measured at `1cfd5b5`: the server ran as its own process, and one
+   client process opened rooms and sent a move every 100 ms per socket,
+   all on one host:
+
+   | rooms × players | server CPU | event-loop p99 | event-loop max |
+   | --------------- | ---------- | -------------- | -------------- |
+   | 1 × 500         | ~50 %      | 33 ms          | 61 ms          |
+   | 1000 × 1        | ~82 %      | 35–58 ms       | 68 ms          |
+   | 1500 × 1        | ~90 %      | 87–124 ms      | 161 ms         |
+
+   Event-loop delay is how late every room's tick fires. Above about 50 ms
+   the tick budget is gone for everyone on the server, including matches
+   the attacker is not in. A server-wide cap on live match rooms is needed,
+   as is a cap per remote address.
+
+7. **Client strings reach the server log unescaped.** When `MatchRoom`
+   refuses a build, it logs each problem, and a problem message embeds
+   client-chosen text: an unknown skill id, for example. A skill id
+   containing `\n` writes whole fake log lines.
+   _Reproduce:_ join `match` with a build whose `skillBar[0]` is
+   `"a\n[match] finished winner=1 reason=score"`. The server prints a
+   `[match] finished …` line that no match produced. Only the build name
+   goes through `JSON.stringify`. Escape or drop client text before
+   logging it, and cap how much of it is logged.
+
 ## Dependencies
 
-`osv-scanner` and `trivy` run over `pnpm-lock.yaml` on review. Currently
-reported (2026-10-24):
+`osv-scanner` and `trivy` run over `pnpm-lock.yaml` on review, and
+`semgrep` (`p/javascript`, `p/typescript`, `p/nodejsscan`, `p/secrets`)
+runs over the source. The last full run was at `1cfd5b5` (2026-10-24).
+semgrep found nothing real there. Currently reported:
 
 | Package          | Advisory                             | Reached via                                       | Status                                                                          |
 | ---------------- | ------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------- |
