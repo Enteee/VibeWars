@@ -172,12 +172,12 @@ is no server behind it, so online play is off there.
   nothing against another site on that origin, which can read and write
   them. Saves are builds and a display name, so we accept this. Nothing
   secret may ever be stored in the browser on Pages.
-- **Open: a manual run publishes any branch.** `workflow_dispatch` with
-  `target: next` builds whatever `--ref` it is given. Only cicd-engineer
-  may run workflows, but `gh workflow run pages.yml --ref bot/x` puts an
-  unreviewed branch on the public `/next/`. The fix is to run `deploy`
-  only for a release or for `refs/heads/main`, and to limit the `test` and
-  `prod` environments to `main` and tags.
+- **A manual run cannot publish a side branch.** `workflow_dispatch`
+  builds whatever `--ref` it is given, so `deploy` is held back by the
+  environments' deployment-branch rules instead: `test` accepts `main`,
+  `prod` accepts `main` and tags. Those rules live in the repository
+  settings, not in this repo, so a review cannot see them change. Re-check
+  them when anything touches `pages.yml`.
 
 ## Dependencies
 
@@ -227,11 +227,11 @@ bidi characters, so an agent can type a line that looks like another
 sender's header, such as `📋 Manager → 👤 Operator`. Until #93 lands,
 trust the topic a message is in, not a header inside its text.
 
-**Open: forged CI checks.** Any role that can push a branch can push a
-workflow. That workflow runs with `GITHUB_TOKEN` and can post a check run,
-or a commit status, for any commit in the repository, under any name.
-hubd only tags a push that touches `.github/workflows/`; it does not block
-it. The merge guard reads checks by name. Since #108, it keeps every check
+**Open: forged CI checks.** A workflow pushed on a side branch runs with
+`GITHUB_TOKEN` and can post a check run, or a commit status, for any
+commit in the repository, under any name. Since #116, hubd refuses a
+workflow or action change from every role but cicd-engineer, so this is
+now one role's power, not every implementer's. The merge guard reads checks by name. Since #108, it keeps every check
 suite and every status as a separate source and refuses a name that more
 than one source reports. Two cases still pass:
 
