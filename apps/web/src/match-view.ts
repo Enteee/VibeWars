@@ -12,7 +12,7 @@ import {
   type ArenaSnapshot,
   type RenderableWall,
 } from "./render/arena-scene.js";
-import { createHud, renderSkillBar, updateHud } from "./ui/hud.js";
+import { createHud, describeRefusal, flashMessage, renderSkillBar, updateHud } from "./ui/hud.js";
 
 /**
  * The in-match view: a Phaser viewport for the arena plus the DOM HUD,
@@ -204,6 +204,10 @@ export async function startMatchView(
 
   connection.onCombat((message) => {
     showCombatFeedback(scene, message, latestMatch);
+  });
+  // A key that does nothing reads as a broken game; say why (issue #51).
+  connection.onCastRefused((message) => {
+    flashMessage(hud, describeRefusal(message.reason));
   });
 
   const onStep = (): void => {

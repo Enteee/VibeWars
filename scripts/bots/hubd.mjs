@@ -19,6 +19,7 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import { GIT_ENV, GIT_HARDENING } from "./git-hardening.mjs";
 import { isBoardRead, limitedMessage, parseRateLimit, usesGraphql } from "./hub-budget.mjs";
 import { hasFilter } from "./hub-filter.mjs";
 import { approvalsSatisfied, checksSatisfied, explainGuard, pathsWithin } from "./hub-guards.mjs";
@@ -33,6 +34,14 @@ import {
   renderView,
 } from "./hub-rest.mjs";
 import { obj } from "./protocol.mjs";
+import {
+  COMPANY_PATHSPECS,
+  DRAIN_MS,
+  announcement,
+  clock,
+  parseReboot,
+  rebootAllowed,
+} from "./reboot.mjs";
 import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
 import { ROLES, authorize, parseMerge, parseReview, touchesGate } from "./hub-policy.mjs";
 import {
@@ -76,6 +85,12 @@ const RATE_LIMIT = path.join(HUB, "ratelimit.json");
 const MIRROR = path.join(HUB, ".git-mirror");
 /** An empty directory hubd owns, where gh runs, so gh reads no checkout. */
 const GH_CWD = path.join(HUB, ".gh-cwd");
+/** The commit and time the company last started from (claude-llc writes it). */
+const BOOT = path.join(ROOT, "boot.json");
+/** A reboot hubd has accepted and the supervisor has not yet carried out. */
+const REBOOT = path.join(ROOT, "reboot.json");
+/** The heartbeat, `{ ts, inFlight }`: see `heartbeat`. */
+const ALIVE = path.join(HUB, "hubd.alive");
 
 /**
  * Commands that accept `--repo`. The repository is pinned by us rather than
@@ -228,33 +243,6 @@ function servedByRest(kind, argv) {
 }
 
 /**
- * Settings that make git run a command: hooks, an fsmonitor, an SSH or proxy
- * command, a credential or askpass helper, an external diff, and the `ext::`
- * transport. hubd runs git only in its mirror, but it fetches from the
- * company's shared repository, which every agent can write, and git hands
- * `-c` on to the upload-pack it runs there. `-c` beats that repository's
- * own config, so these pin each to something inert (#26).
- */
-const GIT_HARDENING = [
-  "-c",
-  "core.hooksPath=/dev/null",
-  "-c",
-  "core.fsmonitor=false",
-  "-c",
-  "core.sshCommand=ssh",
-  "-c",
-  "core.gitProxy=",
-  "-c",
-  "core.askPass=",
-  "-c",
-  "credential.helper=",
-  "-c",
-  "diff.external=",
-  "-c",
-  "protocol.ext.allow=never",
-];
-
-/**
  * git in hubd's mirror, hardened, with no system or global config, so
  * nothing outside hubd changes what runs. The remote is SSH, so no
  * credential helper is needed.
@@ -263,10 +251,7 @@ const GIT_HARDENING = [
  * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
  */
 function git(args) {
-  return run("git", [...GIT_HARDENING, `--git-dir=${MIRROR}`, ...args], HUB, {
-    GIT_CONFIG_NOSYSTEM: "1",
-    GIT_CONFIG_GLOBAL: "/dev/null",
-  });
+  return run("git", [...GIT_HARDENING, `--git-dir=${MIRROR}`, ...args], HUB, GIT_ENV);
 }
 
 /**
@@ -478,7 +463,7 @@ function audit(entry) {
  *
  * @param {string} ref the pushed branch, as it is in the mirror
  * @param {ReturnType<typeof company>} cfg
- * @returns {Promise<string[]>}
+ * @returns {Promise<string[] | null>} `null` when they could not be worked out
  */
 async function changedPaths(ref, cfg) {
   const main = await git([
@@ -489,7 +474,7 @@ async function changedPaths(ref, cfg) {
     "+refs/heads/main:refs/heads/main",
   ]);
   if (main.code !== 0) {
-    return [];
+    return null;
   }
   // --no-ext-diff and --no-textconv: a `.gitattributes` on the branch can
   // name a diff driver, which is a command.
@@ -500,7 +485,7 @@ async function changedPaths(ref, cfg) {
     "--name-only",
     `main...${ref}`,
   ]);
-  return result.code === 0 ? result.stdout.split("\n").filter((line) => line !== "") : [];
+  return result.code === 0 ? result.stdout.split("\n").filter((line) => line !== "") : null;
 }
 
 /**
@@ -943,6 +928,147 @@ async function handle(request) {
   return response;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Company reboot                                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The commit the company was started from, and when: written by claude-llc
+ * on every start, read here to decide whether a reboot has anything to load.
+ *
+ * @returns {{ sha: string, at: number } | null}
+ */
+function readBoot() {
+  try {
+    const raw = obj(JSON.parse(fs.readFileSync(BOOT, "utf8")));
+    return typeof raw.sha === "string" &&
+      /^[0-9a-f]{40}$/.test(raw.sha) &&
+      typeof raw.at === "number"
+      ? { sha: raw.sha, at: raw.at }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The reboot waiting for the supervisor to carry it out, if any.
+ *
+ * @returns {import("./reboot.mjs").Reboot | null}
+ */
+function readReboot() {
+  try {
+    return parseReboot(JSON.parse(fs.readFileSync(REBOOT, "utf8")));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * What `main` on GitHub changed since `sha`, read in the mirror: the files,
+ * and the subjects of the commits that touched company code.
+ *
+ * @param {string} sha
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ paths: string[], subjects: string[] } | null>} `null`
+ *   when that could not be worked out
+ */
+async function changedSince(sha, cfg) {
+  const main = await git([
+    "fetch",
+    "-q",
+    "--no-tags",
+    remoteUrl(cfg),
+    "+refs/heads/main:refs/heads/main",
+  ]);
+  if (main.code !== 0) {
+    return null;
+  }
+  const paths = await git(["log", "--format=", "--name-only", `${sha}..main`]);
+  const subjects = await git(["log", "--format=%s", `${sha}..main`, "--", ...COMPANY_PATHSPECS]);
+  if (paths.code !== 0 || subjects.code !== 0) {
+    return null;
+  }
+  /** @param {string} text */
+  const lines = (text) => text.split("\n").filter((line) => line !== "");
+  return { paths: lines(paths.stdout), subjects: lines(subjects.stdout) };
+}
+
+/**
+ * A company reboot (#21): schedule it, abort it, or mark a role ready for
+ * it. hubd only checks and records it, in `.bots/reboot.json`; the
+ * supervisor, which watches every pane, drains the company and starts the
+ * restarter. What a schedule or an abort answers is the announcement, which
+ * `company` broadcasts.
+ *
+ * @param {string} role
+ * @param {string[]} argv `["request", reason]`, `["abort"]` or `["ready"]`
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function reboot(role, argv, cfg) {
+  const kind = "reboot";
+  const pending = readReboot();
+  if (argv[0] === "ready" || argv[0] === "abort") {
+    if (pending === null) {
+      return { allow: true, code: 1, stdout: "", stderr: "company: no reboot is scheduled\n" };
+    }
+    audit({ role, kind, argv, decision: "allowed" });
+    if (argv[0] === "abort") {
+      fs.rmSync(REBOOT, { force: true });
+      return {
+        allow: true,
+        code: 0,
+        stdout: `The company reboot is aborted (${role}). Carry on.\n`,
+        stderr: "",
+      };
+    }
+    if (!pending.ready.includes(role)) {
+      writeAtomic(REBOOT, JSON.stringify({ ...pending, ready: [...pending.ready, role] }));
+    }
+    return {
+      allow: true,
+      code: 0,
+      stdout: `Noted. The company stops by ${clock(pending.deadline)} at the latest.\n`,
+      stderr: "",
+    };
+  }
+
+  const boot = readBoot();
+  const now = Date.now();
+  const changed = boot === null ? null : await changedSince(boot.sha, cfg);
+  const allowed = rebootAllowed({
+    bootSha: boot?.sha ?? null,
+    changedPaths: changed?.paths ?? null,
+    lastRebootAt: boot?.at ?? null,
+    now,
+    pending,
+  });
+  if (!allowed.ok || boot === null || changed === null) {
+    const reason = allowed.ok ? "the company's boot was not recorded" : allowed.reason;
+    audit({ role, kind, argv, decision: "refused", reason });
+    return { allow: false, reason, code: 77 };
+  }
+
+  /** @type {import("./reboot.mjs").Reboot} */
+  const scheduled = {
+    requestedAt: now,
+    reason: argv[1] ?? "",
+    by: role,
+    deadline: now + DRAIN_MS,
+    bootSha: boot.sha,
+    ready: [],
+  };
+  writeAtomic(REBOOT, JSON.stringify(scheduled));
+  audit({ role, kind, argv, decision: "allowed" });
+  return {
+    allow: true,
+    code: 0,
+    stdout: `${announcement(scheduled, changed.subjects)}\n`,
+    stderr: "",
+  };
+}
+
 /**
  * Serve a request the policy has already allowed.
  *
@@ -967,6 +1093,10 @@ async function serve(request, verdict, acting) {
   }
 
   const cfg = company();
+
+  if (kind === "reboot") {
+    return reboot(role, argv, cfg);
+  }
 
   // Before the guards, whose refusals would otherwise describe a pull request
   // the company is not supposed to know about.
@@ -1077,7 +1207,15 @@ async function serve(request, verdict, acting) {
       }
     }
     const paths = await changedPaths(ref, cfg);
-    const gateChange = touchesGate(paths);
+    // Not knowing what a push changes is treated as a gate change: the tag
+    // exists so a weakened check is findable, and a failed diff must not
+    // be the way to hide one (#46).
+    const gate =
+      paths === null
+        ? { tag: "gate-change", paths: "unknown" }
+        : touchesGate(paths)
+          ? { tag: "gate-change", paths: paths.filter((p) => touchesGate([p])) }
+          : {};
     const result = await git(["push", remoteUrl(cfg), `${ref}:${ref}`]);
     audit({
       role,
@@ -1085,7 +1223,7 @@ async function serve(request, verdict, acting) {
       argv,
       decision: "allowed",
       code: result.code,
-      ...(gateChange ? { tag: "gate-change", paths: paths.filter((p) => touchesGate([p])) } : {}),
+      ...gate,
     });
     return { allow: true, ...result };
   }
@@ -1129,6 +1267,37 @@ async function serve(request, verdict, acting) {
 /* -------------------------------------------------------------------------- */
 
 /**
+ * The heartbeat, `{ ts, inFlight }`.
+ *
+ * `ts` lets `hub` tell "the daemon is busy" from "the daemon was never
+ * started"; without it, every call inside a sandbox blocks for the full
+ * request timeout and the agent looks hung. A timestamp rather than a pid,
+ * because the sandboxes run in their own PID namespace, where a pid written
+ * here is meaningless: that is how the first version of this made every
+ * agent announce that the hub was down.
+ *
+ * `inFlight` counts the requests queued or being served. A reboot waits for
+ * it to reach 0, so a merge or a push is not cut off by the company stopping
+ * underneath it (#21).
+ *
+ * @param {boolean} serving whether a request is being served right now
+ * @returns {void}
+ */
+function heartbeat(serving) {
+  let queued = 0;
+  for (const role of ROLES) {
+    try {
+      queued += fs
+        .readdirSync(path.join(HUB, role, "req"))
+        .filter((name) => name.endsWith(".json") && !name.startsWith(".")).length;
+    } catch {
+      // This role has never spoken to hubd.
+    }
+  }
+  writeAtomic(ALIVE, JSON.stringify({ ts: Date.now(), inFlight: (serving ? 1 : 0) + queued }));
+}
+
+/**
  * @param {string} role
  * @returns {Promise<void>}
  */
@@ -1152,6 +1321,9 @@ async function drain(role) {
     } catch {
       continue;
     }
+    // Before the request leaves the spool, so a reboot waiting for hubd to
+    // go quiet never sees it as neither queued nor in flight.
+    heartbeat(true);
     fs.rmSync(file, { force: true });
 
     const raw = /** @type {Record<string, unknown>} */ (parsed);
@@ -1172,6 +1344,8 @@ async function drain(role) {
         code: 1,
         stderr: `hubd: ${error instanceof Error ? error.message : "failed"}\n`,
       };
+    } finally {
+      heartbeat(false);
     }
 
     const id = name.replace(/\.json$/, "");
@@ -1189,10 +1363,7 @@ async function main() {
   const cfg = company();
   fs.mkdirSync(GH_CWD, { recursive: true });
   if (!fs.existsSync(MIRROR)) {
-    const init = await run("git", ["init", "--bare", "-q", MIRROR], HUB, {
-      GIT_CONFIG_NOSYSTEM: "1",
-      GIT_CONFIG_GLOBAL: "/dev/null",
-    });
+    const init = await run("git", ["init", "--bare", "-q", MIRROR], HUB, GIT_ENV);
     if (init.code !== 0) {
       console.error(`hubd: could not create ${MIRROR}: ${init.stderr}`);
       process.exit(1);
@@ -1207,21 +1378,8 @@ async function main() {
     `hubd: serving ${String(ROLES.length)} roles on ${cfg.repo} (project ${String(cfg.project)})`,
   );
 
-  // A heartbeat, so `hub` can distinguish "the daemon is busy" from "the
-  // daemon was never started". Without it, every call inside a sandbox blocks
-  // for the full request timeout and the agent looks hung.
-  //
-  // A timestamp rather than a pid, because the sandboxes run with
-  // --unshare-all, which includes a PID namespace: a pid written here is
-  // meaningless inside a jail, where `process.kill(pid, 0)` would report
-  // every live daemon as dead. That is exactly how the first version of this
-  // made every agent announce that the hub was down.
-  const alive = path.join(HUB, "hubd.alive");
   fs.mkdirSync(HUB, { recursive: true });
-  const beat = () => {
-    fs.writeFileSync(alive, `${String(Date.now())}\n`);
-  };
-  beat();
+  heartbeat(false);
   let lastBeat = Date.now();
   // The dashboard's budget line. Free to ask (see `budgetExhausted`), and
   // it is also what lifts `limitedUntil` once GitHub resets the budget.
@@ -1230,7 +1388,7 @@ async function main() {
   await syncSkills(cfg);
   let lastBudgetCheck = Date.now();
   const stop = () => {
-    fs.rmSync(alive, { force: true });
+    fs.rmSync(ALIVE, { force: true });
     process.exit(0);
   };
   process.on("SIGINT", stop);
@@ -1247,7 +1405,7 @@ async function main() {
     // Cheap enough at this interval, and far below the staleness window hub
     // allows, so a busy daemon is never mistaken for a dead one.
     if (Date.now() - lastBeat > 5000) {
-      beat();
+      heartbeat(false);
       lastBeat = Date.now();
     }
     if (Date.now() - lastBudgetCheck > BUDGET_CHECK_MS) {

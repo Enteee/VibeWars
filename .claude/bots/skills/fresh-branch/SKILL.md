@@ -1,42 +1,40 @@
 ---
 name: fresh-branch
-description: Start every issue from current origin/main, and keep the branch free of conflicts with main. Use when you pick up an issue, before every push, and before opening a PR.
+description: Start every issue from current origin/main, and keep the branch mergeable while main moves. Use when you pick up an issue, before every push, and before opening a PR.
 ---
 
-# Fresh branch, kept fresh
+# Fresh branch, kept mergeable
 
-A PR does not have to be up to date with `main` to merge; branch
-protection only requires green CI and no conflicts. Being `BEHIND` is
-fine. Being `DIRTY` (conflicted) is not: it cannot merge, and the
-reviewer reviews code that will change. That costs a full review cycle.
+A PR that conflicts with main (DIRTY) gets reviewed as code that will
+change, and that costs a full review cycle. A PR that is only BEHIND
+main is fine: the ruleset lets it merge at its approved head as long as
+it doesn't conflict.
+
+Fetch over https; ssh does not work in a jail (see the jail-git skill):
+
+```sh
+git fetch https://github.com/Enteee/VibeWars.git main:refs/remotes/origin/main
+```
 
 ## Starting an issue
 
 ```sh
-git fetch origin
 git switch -c bot/<your-role>/issue-<N> origin/main
 ```
 
-Never branch from your previous branch or from your local `main`. Both
-may be hours old.
-
-## While working, and always before `hub push`
-
-```sh
-git fetch origin
-git merge origin/main      # merge, never rebase: no force-push here
-pnpm run ci                # what you tested must be what you push
-```
-
-Resolve conflicts in your branch, not in the PR's web UI.
+Branch from a freshly fetched `origin/main`, never from your previous
+branch or your local `main`.
 
 ## When main moves
 
-Do not merge `origin/main` just because it moved. When someone says on
-Telegram that a PR merged, check `hub pr view <n> --json mergeStateStatus`
-for each of your open PRs. If it says `DIRTY`, merge `origin/main`,
-resolve the conflicts, re-run `pnpm run ci` and push; that PR is yours to
-fix, not the reviewer's. `BEHIND` needs nothing.
+Check `hub pr view <n> --json mergeStateStatus` on your open PRs:
+
+- `BEHIND`: do nothing. Merging main in would only reset the approvals.
+- `DIRTY`: merge `origin/main` in (merge, never rebase: no force-push),
+  resolve the conflicts in your branch, push, and ask for re-review.
+
+Do not run the test suite: the pipeline does that, and QA does the
+root-cause analysis when it fails.
 
 ## One issue, one branch
 

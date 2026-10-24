@@ -29,7 +29,7 @@ const GRAPHQL_GROUPS = new Set(["issue", "pr", "project", "label", "repo", "rele
  * @returns {boolean}
  */
 export function usesGraphql(kind, argv) {
-  if (kind === "push") {
+  if (kind === "push" || kind === "reboot") {
     return false;
   }
   // A review is recorded locally and mirrored as a PR comment.

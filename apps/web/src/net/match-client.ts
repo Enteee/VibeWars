@@ -3,6 +3,7 @@ import type { PlayerBuild } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   ROOM_MATCH,
+  type CastRefusedMessage,
   type ClientIntent,
   type MapDescriptor,
   type MatchJoinOptions,
@@ -85,6 +86,8 @@ export interface MatchConnection {
   sendIntent(intent: ClientIntent): void;
   getSnapshot(): MatchSnapshot;
   onCombat(handler: (message: CombatMessage) => void): void;
+  /** Why the server refused one of this player's casts, sent to them alone. */
+  onCastRefused(handler: (message: CastRefusedMessage) => void): void;
   disconnect(): Promise<void>;
 }
 
@@ -276,6 +279,9 @@ export async function connectToMatch(
     },
     onCombat(handler: (message: CombatMessage) => void): void {
       room.onMessage("combat", handler);
+    },
+    onCastRefused(handler: (message: CastRefusedMessage) => void): void {
+      room.onMessage("cast-refused", handler);
     },
     async disconnect(): Promise<void> {
       await room.leave();

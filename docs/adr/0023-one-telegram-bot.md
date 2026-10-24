@@ -27,8 +27,27 @@ That cost more than it looked:
 
 ## Decision
 
-**One bot, the existing manager bot, for every role.** Each message stays
-prefixed `[role]`.
+**One bot, the existing manager bot, for every role.** Each mirrored message
+opens with a header naming both ends, then quotes the body. This was
+amended by issue #47; it used to be a plain `[role]` prefix.
+
+```text
+🧭 Architect → 🛠 Developer 1
+┃ Picked up #34. Drafting the ADR amendment now…
+```
+
+With one bot posting for nine roles, and a direct message landing in the
+_recipient's_ topic, the header is the only place the sender shows. Names
+come from `ROLE_STYLE` in `protocol.mjs`, which has exactly the roles in
+`claude-llc.nix`. The body is an expandable blockquote, so long ones
+collapse, and every `#<n>` in it links to that issue on GitHub.
+
+The styling is Bot API **entities** built from the sender and recipient
+only, never `parse_mode`. With Markdown or HTML parsing, a peer could write
+`**🧭 Architect →**` or a `*` into its body and forge a header or the
+operator's mark in the operator's own view, which is the forgery #28's
+`visible()` closed on the terminal side. With entities, a body is always
+literal text.
 
 **One sidecar, not nine.** Telegram allows exactly one `getUpdates`
 consumer per token; a second gets `409 Conflict`. So `link.mjs serve` is a
@@ -60,13 +79,36 @@ to start.
 messages a minute into one group, and the company now shares that. The
 sidecar queues the copies and sends 18 per rolling minute, at least 1.1 s
 apart. When backlogged it joins consecutive messages to the same topic into
-one, up to 4,096 characters. It never merges different topics, never
+one, a blank line apart, up to 4,096 characters, moving each message's
+entities with it. It never merges different topics, never
 reorders, and honours `retry_after`.
+
+**An Operator topic for questions** (added by issue #47). Agents that need
+a decision had nowhere to ask: a question got lost in peer chatter, and in
+General the answer reached every role. `tg ask` posts a question in a
+**❓ Operator** topic, created on first use, with each option as a button.
+The operator taps one or replies to the question. Only questions are posted
+there.
+
+- **Only `ASKERS` may ask:** manager, architect and lead-dev. It is a
+  permission, so it changes by pull request, and everyone else goes through
+  the manager.
+- **The answer is delivered only to the asker,** as an operator line (`*`).
+  A decision is for the role that asked. Broadcast, every role would read
+  it and some would act on it.
+- A tap counts only if a human pressed it, the same rule as for messages.
+  The question is then edited to show the answer, with the buttons removed.
+- A message in the topic that answers no question goes to no one and gets a
+  one-line hint back. One silently handed to an agent would be worse than
+  one that bounces.
+- Questions are numbered from `link/questions.json`, which survives a
+  restart, so an open question can still be answered after one.
+  `registry.json` gains `operator: { topicId }`, absent until created.
 
 **No provisioning.** The Managed Bots flow, per-role tokens, username
 suggestions and the at-mention that got around privacy mode are deleted,
 not kept alongside ([ADR-0016](0016-no-backwards-compatibility.md)).
-`registry.json` is now `{ offset, roles: { <role>: { topicId } } }`. Any
+`registry.json` is now `{ offset, roles: { <role>: { topicId } }, operator? }`. Any
 other shape is refused with a one-line `jq` command that keeps the
 existing topics. A role's topic is created the first time it is needed.
 

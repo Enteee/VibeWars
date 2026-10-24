@@ -79,6 +79,15 @@ particular:
   hubd's push path already compares against main fetched by URL (#26).
   Agents writing each other's worktree state is a lower-severity follow-up
   to #61.
+- A company reboot (#21) runs host git in the operator's checkout,
+  unattended. So it takes nothing about `main` from that checkout: it
+  fetches and builds main in hubd's mirror (built from `git archive`, never
+  a checkout), and fast-forwards the checkout only to a fetched commit equal
+  to the mirror's. Every git it runs there pins the settings that run
+  commands (hooks, fsmonitor, ssh, gpg and signature checks, submodules,
+  replace refs) and every filter driver the config names. The residual is
+  a setting git adds in future that runs a command and is not pinned; the
+  read-only masks above close that class instead of chasing it key by key.
 - hubd no longer sets an upstream in the agent's repository on push, and the
   agent's `origin/<branch>` does not move. Agents compare against the branch
   on GitHub when they need to.

@@ -57,6 +57,15 @@ let
     '';
   };
 
+  # `company reboot "<reason>"`: the manager reboots the company onto new
+  # main (#21). A hub request like any other; the policy says who may.
+  company = pkgs.writeShellApplication {
+    name = "company";
+    text = ''
+      exec ${node} ${botScripts}/hub.mjs company "$@"
+    '';
+  };
+
   tg = pkgs.writeShellApplication {
     name = "tg";
     text = ''
@@ -91,6 +100,7 @@ let
       tg
       hub
       board
+      company
     ]
   );
 
@@ -430,6 +440,15 @@ let
         block until a colleague or the operator says something, then continue.
         Do not stop and wait for a prompt; nobody is going to send you one."
 
+        # After a company reboot, claude-llc hands the manager what it loaded
+        # (scripts/bots/restart.mjs), for the manager to pass on.
+        if [ -n "''${VIBEWARS_KICKOFF_NOTE-}" ]; then
+          kickoff="$kickoff
+
+        The company was just rebooted: $VIBEWARS_KICKOFF_NOTE
+        Tell everyone with \`tg broadcast\` first, word for word."
+        fi
+
         # `claude --continue` on its own reopens the conversation and then
         # waits, which would leave a restarted agent exactly as idle as an
         # unprompted one. The flag and a turn have to go together.
@@ -519,7 +538,11 @@ let
           if git -C "$DEVENV_ROOT" show-ref --verify --quiet "refs/heads/bot/$role"; then
             git -C "$DEVENV_ROOT" worktree add "$worktree" "bot/$role"
           else
-            git -C "$DEVENV_ROOT" worktree add -b "bot/$role" "$worktree"
+            # Detached, not `-b bot/$role`: agents work on bot/<role>/issue-N
+            # branches, and while any of those exist git cannot create a
+            # branch named bot/<role>. Every issue starts from origin/main
+            # anyway (the fresh-branch skill).
+            git -C "$DEVENV_ROOT" worktree add --detach "$worktree" origin/main
           fi
         fi
 

@@ -10,6 +10,9 @@
  *
  *   tg send <role> <text>   queue a message into that role's topic
  *   tg broadcast <text>     queue a message into General
+ *   tg ask <question> [--option <text>]...
+ *                           ask the operator (manager, architect, lead-dev);
+ *                           the answer arrives in your inbox
  *   tg inbox [--all]        print unread messages, advancing the read cursor
  *   tg wait [--timeout N]   block until something new arrives, then print it
  *   tg roster               who is online
@@ -25,7 +28,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 // The full roster, so an absent colleague can be reported as "not hired
 // yet" rather than silently omitted.
 import { ROLES } from "./hub-policy.mjs";
-import { formatLine, readInbox } from "./protocol.mjs";
+import { ASKERS, MAX_OPTION_CHARS, MAX_OPTIONS, formatLine, readInbox } from "./protocol.mjs";
 
 const ROLE = process.env.VIBEWARS_BOT_ROLE;
 const BUS = process.env.VIBEWARS_BOT_BUS;
@@ -38,6 +41,7 @@ if (ROLE === undefined || BUS === undefined) {
 const DIR = path.join(BUS, ROLE);
 const INBOX = path.join(DIR, "inbox.jsonl");
 const OUTBOX = path.join(DIR, "outbox");
+const RECEIPTS = path.join(DIR, "receipts");
 const CURSOR = path.join(DIR, "cursor");
 const ROSTER = path.join(BUS, "roster");
 
@@ -50,12 +54,11 @@ const ROSTER = path.join(BUS, "roster");
  * polls this directory, can never read a half-written file. The name is
  * ordered by time so messages leave in the order they were written.
  *
- * @param {string} to Role name, or "all" for General.
- * @param {string} text
- * @returns {void}
+ * @param {Record<string, unknown> & { text: string }} entry
+ * @returns {string} the entry's file name
  */
-function queue(to, text) {
-  if (text.trim() === "") {
+function queue(entry) {
+  if (entry.text.trim() === "") {
     console.error("tg: refusing to send an empty message");
     process.exit(2);
   }
@@ -64,8 +67,60 @@ function queue(to, text) {
   // Dotted AND without the final .json, so the sidecar cannot mistake a file
   // still being written for one ready to send.
   const tmp = path.join(OUTBOX, `.${name}.part`);
-  fs.writeFileSync(tmp, JSON.stringify({ to, text }));
+  fs.writeFileSync(tmp, JSON.stringify(entry));
   fs.renameSync(tmp, path.join(OUTBOX, name));
+  return name;
+}
+
+/**
+ * Post a question for the operator and print its Q number. Does not wait for
+ * the answer: that arrives in the inbox like anything else, so `tg wait` is
+ * still how an agent waits. It only waits for the sidecar to accept it.
+ *
+ * @param {string} text
+ * @param {string[]} options
+ * @returns {Promise<void>}
+ */
+async function ask(text, options) {
+  // Checked here for a fast, specific answer; the sidecar checks again.
+  if (!ASKERS.includes(ROLE ?? "")) {
+    console.error(`tg: only ${ASKERS.join(", ")} may ask the operator. Ask the manager instead.`);
+    process.exit(2);
+  }
+  if (
+    options.length > MAX_OPTIONS ||
+    options.some((o) => o === "" || o.length > MAX_OPTION_CHARS)
+  ) {
+    console.error(
+      `tg: at most ${String(MAX_OPTIONS)} options, each 1-${String(MAX_OPTION_CHARS)} characters`,
+    );
+    process.exit(2);
+  }
+  const name = queue({ kind: "ask", text, options });
+  const receipt = path.join(RECEIPTS, name);
+  const deadline = Date.now() + 30_000;
+  while (Date.now() < deadline) {
+    /** @type {Record<string, unknown>} */
+    let answer;
+    try {
+      /** @type {unknown} */
+      const parsed = JSON.parse(fs.readFileSync(receipt, "utf8"));
+      answer = /** @type {Record<string, unknown>} */ (parsed);
+    } catch {
+      await sleep(250);
+      continue;
+    }
+    fs.rmSync(receipt, { force: true });
+    if (typeof answer.question === "number") {
+      console.log(
+        `Q${String(answer.question)}: posted to the operator. The answer will arrive in your inbox.`,
+      );
+      return;
+    }
+    console.error(`tg: ${typeof answer.error === "string" ? answer.error : "refused"}`);
+    process.exit(2);
+  }
+  console.log("queued for the operator; the sidecar has not confirmed it yet (is it running?)");
 }
 
 /** @returns {number} */
@@ -182,7 +237,7 @@ switch (command) {
       console.error("tg: usage: tg send <role> <text...>");
       process.exit(2);
     }
-    queue(to, words.join(" "));
+    queue({ to, text: words.join(" ") });
     console.log(`queued to ${to}`);
     break;
   }
@@ -192,8 +247,34 @@ switch (command) {
       console.error("tg: usage: tg broadcast <text...>");
       process.exit(2);
     }
-    queue("all", rest.join(" "));
+    queue({ to: "all", text: rest.join(" ") });
     console.log("queued to General");
+    break;
+  }
+  case "ask": {
+    /** @type {string[]} */
+    const words = [];
+    /** @type {string[]} */
+    const options = [];
+    for (let i = 0; i < rest.length; i += 1) {
+      const word = rest[i] ?? "";
+      if (word === "--option") {
+        const option = rest[i + 1];
+        if (option === undefined) {
+          console.error("tg: --option needs the option's text");
+          process.exit(2);
+        }
+        options.push(option);
+        i += 1;
+      } else {
+        words.push(word);
+      }
+    }
+    if (words.length === 0) {
+      console.error('tg: usage: tg ask "<question>" [--option "<text>"]...');
+      process.exit(2);
+    }
+    await ask(words.join(" "), options);
     break;
   }
 
@@ -222,6 +303,6 @@ switch (command) {
     break;
 
   default:
-    console.error("tg: usage: tg <send|broadcast|inbox|wait|roster> ...");
+    console.error("tg: usage: tg <send|broadcast|ask|inbox|wait|roster> ...");
     process.exit(2);
 }

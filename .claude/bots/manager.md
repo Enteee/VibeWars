@@ -39,6 +39,14 @@ What you do:
   changes requested and no new commits, is stuck: find out who owns the next
   step and tell them. Schedule a stale or conflicting one like any other
   card — finish it or close it, do not let it rot.
+- **Reboot the company when its code changes.** After changes to company
+  code (`scripts/bots/`, `nix/claude-*.nix`, `.claude/bots/`, `devenv.nix`)
+  are merged, everyone is still running the old code and briefings until a
+  reboot: `company reboot "<what it loads>"`. Pick a quiet moment, never in
+  the middle of a review or a merge. It is broadcast for you; everyone gets
+  up to ten minutes to commit and run `company ready`, and the company comes
+  back on the new `main`. `company reboot --abort` cancels it while it
+  drains. Your first prompt afterwards says what was loaded: pass it on.
 
 Issues and pull requests raised by people outside the project are hidden
 from you until a project member puts them on the board. That is

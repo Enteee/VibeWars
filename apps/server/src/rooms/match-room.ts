@@ -30,6 +30,7 @@ import {
   resolveCircleSegmentCollision,
   seedFromString,
   vec2,
+  type ActivationRejection,
   type CombatEvent,
   type MatchScore,
   type BuildEquipment,
@@ -44,6 +45,7 @@ import { allWallSegments, loadMap, type MapData } from "@vibewars/game-maps";
 import {
   PROTOCOL_VERSION,
   parseClientIntent,
+  type CastRefusedMessage,
   type MapDescriptor,
   type ServerHello,
   type WallDescriptor,
@@ -386,9 +388,16 @@ export class MatchRoom extends Room {
         case "target":
           this.applyTarget(client.sessionId, intent.targetSessionId);
           return;
-        case "use-skill":
-          this.tryUseSkill(client.sessionId, intent.slot);
+        case "use-skill": {
+          const refused = this.tryUseSkill(client.sessionId, intent.slot);
+          // Only the caster hears it: a key that does nothing reads as a
+          // broken game, and why it did nothing is nobody else's business.
+          if (refused !== undefined) {
+            const message: CastRefusedMessage = { slot: intent.slot, ...refused };
+            client.send("cast-refused", message);
+          }
           return;
+        }
       }
     });
 
@@ -459,24 +468,31 @@ export class MatchRoom extends Room {
    * Begin casting the skill in `slot`, if every activation rule passes.
    *
    * The whole validation gate lives in `game-core`'s `canActivate`; this
-   * method only gathers the inputs it needs. A rejection is logged in dev
-   * and otherwise silently ignored — a client that asks for an illegal
-   * cast simply does not get one.
+   * method only gathers the inputs it needs. A client that asks for an
+   * illegal cast does not get one, and is told why: the named rejection
+   * is returned for the caller to send back to that client alone.
+   *
+   * A slot with no skill in it returns nothing to say: the client draws
+   * only the slots it was sent, so asking for another one is not a player
+   * pressing a key.
    */
-  private tryUseSkill(sessionId: string, slot: number): void {
+  private tryUseSkill(
+    sessionId: string,
+    slot: number,
+  ): { skillId: string; reason: ActivationRejection } | undefined {
     const sim = this.#sims.get(sessionId);
     const player = this.state.players.get(sessionId);
     if (sim === undefined || player === undefined) {
-      return;
+      return undefined;
     }
 
     const skillId = sim.skillBar[slot];
     if (skillId === undefined) {
-      return;
+      return undefined;
     }
     const skill = getSkill(skillId);
     if (skill === undefined) {
-      return;
+      return undefined;
     }
 
     const targetSim =
@@ -495,7 +511,7 @@ export class MatchRoom extends Room {
     });
 
     if (!check.ok) {
-      return;
+      return { skillId: skill.id, reason: check.reason };
     }
 
     payCost(skill, sim.combatant);
@@ -504,6 +520,7 @@ export class MatchRoom extends Room {
       skill.target === "self" ? sessionId : player.targetSessionId,
       skill.activationSeconds,
     );
+    return undefined;
   }
 
   /** Resolve a cast that has finished its activation time. */

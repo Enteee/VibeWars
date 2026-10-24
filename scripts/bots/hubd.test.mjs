@@ -73,6 +73,29 @@ afterEach(() => {
 });
 
 /**
+ * @param {string[]} args
+ * @param {string} cwd
+ */
+const sh = (args, cwd) => {
+  // The test's own git ignores this machine's config (signing, hooks).
+  const result = spawnSync("git", args, {
+    cwd,
+    encoding: "utf8",
+    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
+  });
+  if (result.status !== 0) {
+    throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
+  }
+  return result.stdout;
+};
+/**
+ * @param {string} message
+ * @param {string} cwd
+ */
+const commit = (message, cwd) =>
+  sh(["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", message], cwd);
+
+/**
  * Start a daemon with its own root and fake GitHub.
  *
  * @param {number} remaining the GraphQL budget GitHub claims to have left
@@ -421,29 +444,6 @@ describe("hubd answering issue and PR reads from REST", () => {
 });
 
 describe("hubd pushing through its own mirror", () => {
-  /**
-   * @param {string[]} args
-   * @param {string} cwd
-   */
-  const sh = (args, cwd) => {
-    // The test's own git ignores this machine's config (signing, hooks).
-    const result = spawnSync("git", args, {
-      cwd,
-      encoding: "utf8",
-      env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
-    });
-    if (result.status !== 0) {
-      throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
-    }
-    return result.stdout;
-  };
-  /**
-   * @param {string} message
-   * @param {string} cwd
-   */
-  const commit = (message, cwd) =>
-    sh(["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", message], cwd);
-
   it("runs nothing the agent planted, ignores its remote, and still pushes", async () => {
     const hubd = await startHubd(5000);
     const { repo, remote } = hubd;
@@ -491,6 +491,24 @@ describe("hubd pushing through its own mirror", () => {
     const audit = fs.readFileSync(path.join(hubd.hub, "audit.jsonl"), "utf8");
     expect(audit).toContain('"tag":"gate-change"');
     expect(audit).toContain('"paths":["scripts/bots/hubd.mjs"]');
+  }, 20_000);
+
+  it("tags a push as a gate change when it cannot tell what changed", async () => {
+    const hubd = await startHubd(5000);
+    const { repo, remote } = hubd;
+    // A remote with no main: fetching it fails, so there is nothing to diff
+    // against.
+    sh(["init", "--bare", "-q", remote], hubd.root);
+    sh(["init", "-q", "-b", "bot/developer-1/y", repo], hubd.root);
+    fs.writeFileSync(path.join(repo, "README.md"), "x\n");
+    sh(["add", "README.md"], repo);
+    commit("only", repo);
+
+    const answer = await hubd.request("developer-1", "push", ["bot/developer-1/y"]);
+
+    expect(answer.code, String(answer.stderr)).toBe(0);
+    const audit = fs.readFileSync(path.join(hubd.hub, "audit.jsonl"), "utf8");
+    expect(audit).toContain('"tag":"gate-change","paths":"unknown"');
   }, 20_000);
 });
 
@@ -621,5 +639,91 @@ describe("hubd recording verdicts and merging", () => {
 
     expect(answer.code).toBe(0);
     expect(hubd.calls("pr merge 9 --squash --match-head-commit abc1234def")).toBe(1);
+  }, 20_000);
+});
+
+describe("hubd scheduling a company reboot", () => {
+  /**
+   * A remote whose main has a boot commit and then `changed` on top of it,
+   * and a boot record pointing at the boot commit `bootedAgo` ago.
+   *
+   * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+   * @param {string} changed
+   * @param {number} bootedAgo
+   */
+  const company = (hubd, changed, bootedAgo) => {
+    const { repo, remote } = hubd;
+    sh(["init", "--bare", "-q", remote], hubd.root);
+    sh(["init", "-q", "-b", "main", repo], hubd.root);
+    fs.writeFileSync(path.join(repo, "README.md"), "x\n");
+    sh(["add", "README.md"], repo);
+    commit("boot", repo);
+    const boot = sh(["rev-parse", "HEAD"], repo).trim();
+    fs.mkdirSync(path.dirname(path.join(repo, changed)), { recursive: true });
+    fs.writeFileSync(path.join(repo, changed), "new\n");
+    sh(["add", changed], repo);
+    commit("change", repo);
+    sh(["push", "-q", remote, "main"], repo);
+    fs.writeFileSync(
+      path.join(hubd.root, "boot.json"),
+      JSON.stringify({ sha: boot, at: Date.now() - bootedAgo }),
+    );
+  };
+  const reboots = "reboot.json";
+  const HOUR = 3_600_000;
+
+  it("records a reboot that loads new company code, once, and aborts it", async () => {
+    const hubd = await startHubd(5000);
+    company(hubd, "scripts/bots/new.mjs", HOUR);
+    const record = path.join(hubd.root, reboots);
+
+    const asked = await hubd.request("manager", "reboot", ["request", "load #21"]);
+    expect(asked.code, String(asked.reason)).toBe(0);
+    // The announcement company broadcasts, with what the reboot loads.
+    expect(String(asked.stdout)).toMatch(/load #21\. It loads: change\./);
+    expect(JSON.parse(fs.readFileSync(record, "utf8"))).toMatchObject({
+      reason: "load #21",
+      by: "manager",
+      ready: [],
+    });
+
+    for (const role of ["qa-tester", "qa-tester", "developer-1"]) {
+      const ready = await hubd.request(role, "reboot", ["ready"]);
+      expect(ready.code, role).toBe(0);
+    }
+    expect(JSON.parse(fs.readFileSync(record, "utf8"))).toMatchObject({
+      ready: ["qa-tester", "developer-1"],
+    });
+
+    const again = await hubd.request("manager", "reboot", ["request", "again"]);
+    expect(String(again.reason)).toMatch(/already scheduled/);
+
+    const aborted = await hubd.request("manager", "reboot", ["abort"]);
+    expect(aborted.code).toBe(0);
+    expect(String(aborted.stdout)).toMatch(/aborted/);
+    expect(fs.existsSync(record)).toBe(false);
+
+    const late = await hubd.request("developer-1", "reboot", ["ready"]);
+    expect(late.code).toBe(1);
+  }, 20_000);
+
+  it("refuses when main changed no company code, or inside the cooldown", async () => {
+    const hubd = await startHubd(5000);
+    company(hubd, "apps/web/src/new.ts", HOUR);
+    const game = await hubd.request("manager", "reboot", ["request", "x"]);
+    expect(String(game.reason)).toMatch(/no company code changes/);
+
+    const recent = await startHubd(5000);
+    company(recent, "scripts/bots/new.mjs", 60_000);
+    const early = await recent.request("manager", "reboot", ["request", "x"]);
+    expect(String(early.reason)).toMatch(/next reboot is possible at/);
+    expect(fs.existsSync(path.join(recent.root, reboots))).toBe(false);
+  }, 20_000);
+
+  it("refuses anyone but the manager", async () => {
+    const hubd = await startHubd(5000);
+    company(hubd, "scripts/bots/new.mjs", HOUR);
+    const answer = await hubd.request("developer-1", "reboot", ["request", "x"]);
+    expect(answer.allow).toBe(false);
   }, 20_000);
 });
