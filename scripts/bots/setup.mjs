@@ -260,7 +260,6 @@ const contents = `# Written by \`claude-bot-setup\`. Gitignored; this machine on
 {
   vibewars.telegram = {
     managerTokenFile = "${tokenFile}";
-    managerUsername = "${username}";
     chatId = "${ready}";
   };
 }

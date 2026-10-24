@@ -2,7 +2,11 @@
 
 ## Status
 
-Accepted (2026-10-24).
+Accepted (2026-10-24). Amended by
+[ADR-0023](0023-one-telegram-bot.md): one bot for the whole company instead
+of one per role, peer messages delivered locally, and a paced send queue.
+The Managed Bots provisioning and bot-to-bot delivery described below are
+gone; the sandbox split stands.
 
 ## Context
 

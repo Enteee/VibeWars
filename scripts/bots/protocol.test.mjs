@@ -1,42 +1,33 @@
 /**
- * Covers the wire contract between a sandboxed agent and Telegram.
+ * Covers the wire contract between the sandboxed agents and Telegram.
  *
  * These are the parts of the bridge that cannot be checked against the live
- * API in CI — doing so would need a real bot token, a real supergroup and two
- * real human taps — so they are isolated as pure functions and checked here
- * instead. What is NOT covered is the half that needs a socket: that is what
- * the end-to-end steps in docs/adr/0014-agent-coordination.md are for.
+ * API in CI, so they are isolated as pure functions and checked here. What
+ * is NOT covered is the half that needs a socket and a real group; see the
+ * manual steps in docs/adr/0023-one-telegram-bot.md.
  */
 import { describe, expect, it } from "vitest";
 
 import {
-  acceptsManagedBot,
+  MAX_MESSAGE_CHARS,
+  deliverPeer,
   formatLine,
-  inboundLine,
-  indexRoles,
-  isProvisioned,
   isReadyOutboxEntry,
-  outboundParams,
+  parseRegistry,
+  planSends,
   readInbox,
   retryDelay,
-  suggestName,
-  suggestUsername,
+  routeInbound,
 } from "./protocol.mjs";
 
 const CHAT = "-1001234567890";
-
-/** @type {import("./protocol.mjs").Registry} */
-const REGISTRY = {
-  managerOffset: 7,
-  roles: {
-    architect: { id: 1001, username: "vibewars_architect_7f3a_bot", topicId: 11, token: "a" },
-    gameplay: { id: 1002, username: "vibewars_gameplay_2b91_bot", topicId: 12, token: "b" },
-    // Provisioning got as far as creating the bot but not its topic.
-    qa: { id: 1003, username: "vibewars_qa_c40e_bot", token: "c" },
-  },
-};
-
-const { byId, topics, usernames } = indexRoles(REGISTRY);
+const ROLES = ["architect", "manager", "developer-1", "lead-dev"];
+/** Topic id to role, as the sidecar builds it from the registry. */
+const TOPICS = new Map([
+  [11, "architect"],
+  [12, "developer-1"],
+]);
+const CONTEXT = { chatId: CHAT, topics: TOPICS, roles: ROLES };
 
 /**
  * @param {Record<string, unknown>} message
@@ -49,159 +40,198 @@ function update(message) {
       message_id: 42,
       date: 1_767_225_600,
       chat: { id: Number(CHAT) },
+      from: { id: 9, is_bot: false, username: "operator" },
+      text: "hello",
       ...message,
     },
   };
 }
 
-describe("indexRoles", () => {
-  it("indexes only the roles that have reached each stage", () => {
-    expect(byId.get(1001)).toBe("architect");
-    expect([...topics.keys()].sort()).toStrictEqual(["architect", "gameplay"]);
-    expect([...usernames.keys()].sort()).toStrictEqual(["architect", "gameplay", "qa"]);
+describe("parseRegistry", () => {
+  it("starts a fresh company when there is no registry yet", () => {
+    expect(parseRegistry(null)).toEqual({ registry: { offset: 0, roles: {} } });
+  });
+
+  it("reads the current shape", () => {
+    const text = JSON.stringify({ offset: 9, roles: { architect: { topicId: 11 } } });
+    expect(parseRegistry(text)).toEqual({
+      registry: { offset: 9, roles: { architect: { topicId: 11 } } },
+    });
+  });
+
+  it("refuses the per-role-bot shape, saying how to fix it", () => {
+    const old = JSON.stringify({
+      managerOffset: 7,
+      roles: { architect: { id: 1, username: "vw_architect_bot", topicId: 11, token: "t" } },
+    });
+    const parsed = parseRegistry(old);
+    expect("error" in parsed).toBe(true);
+    if ("error" in parsed) {
+      expect(parsed.error).toMatch(/before the company had one bot/);
+      // The fix keeps the topics, so the operator's group is not refilled.
+      expect(parsed.error).toContain("map_values({topicId})");
+    }
+  });
+
+  it("refuses a registry that is not JSON", () => {
+    expect("error" in parseRegistry("{")).toBe(true);
   });
 });
 
-describe("inboundLine", () => {
-  it("labels a message from a known role bot as a peer, by role name", () => {
-    const line = inboundLine(
-      update({ from: { id: 1001, is_bot: true }, text: "ADR drafted", message_thread_id: 12 }),
-      { chatId: CHAT, selfId: 1002, byId },
-    );
+describe("routeInbound", () => {
+  it("delivers a message in a role's topic to that role only", () => {
+    expect(routeInbound(update({ message_thread_id: 12 }), CONTEXT)?.to).toEqual(["developer-1"]);
+  });
 
-    expect(line).toStrictEqual({
+  it("delivers a message in General to everyone", () => {
+    expect(routeInbound(update({}), CONTEXT)?.to).toEqual(ROLES);
+  });
+
+  it("delivers 'role: ...' in General to that role only", () => {
+    for (const text of ["lead-dev: pick up some work", "Lead-Dev: hi", "lead-dev : spaced"]) {
+      expect(routeInbound(update({ text }), CONTEXT)?.to, text).toEqual(["lead-dev"]);
+    }
+  });
+
+  it("delivers '@role ...' in General to that role only", () => {
+    expect(routeInbound(update({ text: "@manager make your people work" }), CONTEXT)?.to).toEqual([
+      "manager",
+    ]);
+  });
+
+  it("does not treat a role name that merely starts a sentence as an address", () => {
+    expect(routeInbound(update({ text: "manager is the board up to date?" }), CONTEXT)?.to).toEqual(
+      ROLES,
+    );
+  });
+
+  it("sends an unknown topic, or a prefix that is not a role, to everyone", () => {
+    // Never silently black-holed.
+    expect(routeInbound(update({ message_thread_id: 99 }), CONTEXT)?.to).toEqual(ROLES);
+    expect(routeInbound(update({ text: "gameplay: hi" }), CONTEXT)?.to).toEqual(ROLES);
+  });
+
+  it("marks the message human, from the operator's name", () => {
+    const routed = routeInbound(update({ message_thread_id: 11 }), CONTEXT);
+    expect(routed?.line).toEqual({
       ts: 1_767_225_600_000,
-      from: "architect",
-      kind: "peer",
-      text: "ADR drafted",
-      topicId: 12,
+      from: "@operator",
+      kind: "human",
+      text: "hello",
+      topicId: 11,
       messageId: 42,
     });
   });
 
-  it("labels a message from an unknown sender as human", () => {
-    const line = inboundLine(update({ from: { id: 99, username: "ente" }, text: "ship it" }), {
-      chatId: CHAT,
-      selfId: 1002,
-      byId,
-    });
-
-    expect(line?.kind).toBe("human");
-    expect(line?.from).toBe("@ente");
-    expect(line?.topicId).toBeNull();
+  it("drops messages from bots, which would otherwise carry the operator's mark", () => {
+    // The old per-role bots may still be in the group.
+    expect(
+      routeInbound(update({ from: { id: 3, is_bot: true, username: "vw_x_bot" } }), CONTEXT),
+    ).toBeNull();
   });
 
-  it("falls back to a first name when a human has no username", () => {
-    const line = inboundLine(update({ from: { id: 99, first_name: "Ente" }, text: "hi" }), {
-      chatId: CHAT,
-      selfId: 1002,
-      byId,
-    });
-
-    expect(line?.from).toBe("Ente");
-  });
-
-  it("drops the bot's own messages so an agent cannot read itself back", () => {
-    const line = inboundLine(update({ from: { id: 1002, is_bot: true }, text: "mine" }), {
-      chatId: CHAT,
-      selfId: 1002,
-      byId,
-    });
-
-    expect(line).toBeNull();
-  });
-
-  it("drops anything from outside the swarm group", () => {
-    const line = inboundLine(
-      {
-        update_id: 1,
-        message: {
-          message_id: 42,
-          date: 1,
-          chat: { id: -100999 },
-          from: { id: 99 },
-          text: "dm",
-        },
-      },
-      { chatId: CHAT, selfId: 1002, byId },
-    );
-
-    expect(line).toBeNull();
-  });
-
-  it("drops non-text updates an agent could not read anyway", () => {
-    for (const payload of [
-      update({ from: { id: 99 }, sticker: { file_id: "x" } }),
-      update({ from: { id: 99 }, text: "" }),
-      update({ from: { id: 99 }, text: "ok", message_id: "not a number" }),
-      { update_id: 1, edited_message: { text: "ok" } },
-      {},
-    ]) {
-      expect(inboundLine(payload, { chatId: CHAT, selfId: 1002, byId })).toBeNull();
-    }
+  it("drops anything outside the company's group, and anything that is not text", () => {
+    expect(routeInbound(update({ chat: { id: 5 } }), CONTEXT)).toBeNull();
+    expect(routeInbound(update({ text: undefined, sticker: {} }), CONTEXT)).toBeNull();
+    expect(routeInbound({ update_id: 1 }, CONTEXT)).toBeNull();
   });
 });
 
-describe("outboundParams", () => {
-  it("routes a directed message into the recipient's topic and mentions it", () => {
-    const params = outboundParams(
-      { to: "gameplay", text: "server is red" },
-      { chatId: CHAT, from: "architect", topics, usernames },
-    );
+describe("deliverPeer", () => {
+  const base = { from: "manager", roles: ROLES, present: new Set(ROLES), now: 1000 };
 
-    expect(params).toStrictEqual({
-      chat_id: CHAT,
-      message_thread_id: 12,
-      text: "@vibewars_gameplay_2b91_bot [architect] server is red",
+  it("delivers a directed message to that inbox only, and mirrors it", () => {
+    const delivered = deliverPeer({ to: "developer-1", text: "take #28" }, base);
+    expect(delivered.deliveries.map((d) => d.role)).toEqual(["developer-1"]);
+    expect(delivered.deliveries[0]?.line).toMatchObject({
+      from: "manager",
+      kind: "peer",
+      text: "take #28",
     });
+    expect(delivered.notice).toBeNull();
+    expect(delivered.mirror).toEqual({ to: "developer-1", text: "[manager] take #28" });
   });
 
-  it("sends a broadcast to General, with no thread id", () => {
-    const params = outboundParams(
-      { to: "all", text: "main is broken" },
-      { chatId: CHAT, from: "qa", topics, usernames },
-    );
-
-    expect(params).toStrictEqual({ chat_id: CHAT, text: "[qa] main is broken" });
+  it("delivers a broadcast to everyone except the sender", () => {
+    const delivered = deliverPeer({ to: "all", text: "standup" }, base);
+    expect(delivered.deliveries.map((d) => d.role)).toEqual([
+      "architect",
+      "developer-1",
+      "lead-dev",
+    ]);
+    expect(delivered.mirror?.to).toBe("all");
   });
 
   it("treats a missing recipient as a broadcast", () => {
-    const params = outboundParams(
-      { text: "anyone there" },
-      { chatId: CHAT, from: "qa", topics, usernames },
+    expect(deliverPeer({ text: "x" }, base).deliveries).toHaveLength(3);
+  });
+
+  it("still delivers to a real role that is not running, and says so to the sender", () => {
+    const delivered = deliverPeer(
+      { to: "lead-dev", text: "review #30" },
+      { ...base, present: new Set(["manager"]) },
     );
-
-    expect(params.message_thread_id).toBeUndefined();
+    expect(delivered.deliveries.map((d) => d.role)).toEqual(["lead-dev"]);
+    expect(delivered.notice?.text).toMatch(/not running right now/);
   });
 
-  it("says a real colleague is not hired yet, which is a different problem", () => {
-    // The company runs with a partial roster. An agent that cannot tell
-    // "nobody has reviewed this yet" from "there is no reviewer" waits
-    // forever for someone who was never hired.
-    expect(() =>
-      outboundParams(
-        { to: "qa", text: "hi" },
-        { chatId: CHAT, from: "architect", topics, usernames, roster: ["qa", "architect"] },
-      ),
-    ).toThrow(/"qa" is a real role but has not been hired yet/);
+  it("refuses a name that is not a role, telling only the sender", () => {
+    const delivered = deliverPeer({ to: "gameplay", text: "x" }, base);
+    expect(delivered.deliveries).toEqual([]);
+    expect(delivered.mirror).toBeNull();
+    expect(delivered.notice?.text).toMatch(/NOT delivered.*not one of this company's roles/);
+  });
+});
+
+describe("planSends", () => {
+  const NOW = 1_000_000;
+  /** @param {number} topicId @param {string} text */
+  const q = (topicId, text) => ({ topicId, text });
+
+  it("sends the next message at once when under the limit", () => {
+    const plan = planSends([q(1, "a"), q(1, "b")], [], NOW);
+    expect(plan.batch).toEqual({ topicId: 1, text: "a", count: 1 });
+    expect(plan.rest).toEqual([q(1, "b")]);
   });
 
-  it("says a name that is not a role at all is a mistake to correct", () => {
-    expect(() =>
-      outboundParams(
-        { to: "intern", text: "hi" },
-        { chatId: CHAT, from: "architect", topics, usernames, roster: ["qa", "architect"] },
-      ),
-    ).toThrow(/"intern" is not one of this company's roles/);
+  it("holds everything once the minute's budget is spent", () => {
+    const sent = Array.from({ length: 18 }, (_, i) => NOW - 50_000 + i * 1000);
+    const plan = planSends([q(1, "a")], sent, NOW);
+    expect(plan.batch).toBeNull();
+    // Until the oldest send leaves the window.
+    expect(plan.waitMs).toBe(10_000);
   });
 
-  it("still names who IS hired, so the agent knows who it can reach", () => {
-    expect(() =>
-      outboundParams(
-        { to: "qa", text: "hi" },
-        { chatId: CHAT, from: "architect", topics, usernames, roster: ["qa"] },
-      ),
-    ).toThrow(/architect, gameplay/);
+  it("keeps a gap between two sends", () => {
+    const plan = planSends([q(1, "a")], [NOW - 200], NOW);
+    expect(plan.batch).toBeNull();
+    expect(plan.waitMs).toBe(900);
+  });
+
+  it("coalesces consecutive messages to one topic when backlogged", () => {
+    const sent = Array.from({ length: 17 }, (_, i) => NOW - 40_000 + i * 1000);
+    const plan = planSends([q(1, "a"), q(1, "b"), q(2, "c"), q(1, "d")], sent, NOW);
+    expect(plan.batch).toEqual({ topicId: 1, text: "a\nb", count: 2 });
+    // Different topics are never merged, and nothing jumps ahead.
+    expect(plan.rest).toEqual([q(2, "c"), q(1, "d")]);
+  });
+
+  it("never coalesces past Telegram's message size", () => {
+    const sent = Array.from({ length: 17 }, (_, i) => NOW - 40_000 + i * 1000);
+    const big = "x".repeat(MAX_MESSAGE_CHARS - 10);
+    const plan = planSends([q(1, big), q(1, "this does not fit")], sent, NOW);
+    expect(plan.batch?.count).toBe(1);
+  });
+
+  it("clips a single message that is too long on its own", () => {
+    const plan = planSends([q(1, "y".repeat(MAX_MESSAGE_CHARS + 50))], [], NOW);
+    expect(plan.batch?.text.length).toBe(MAX_MESSAGE_CHARS);
+  });
+
+  it("waits out a retry_after", () => {
+    const plan = planSends([q(1, "a")], [], NOW, { blockedUntil: NOW + 7000 });
+    expect(plan.batch).toBeNull();
+    expect(plan.waitMs).toBe(7000);
   });
 });
 
@@ -295,33 +325,6 @@ describe("readInbox", () => {
   });
 });
 
-describe("suggestUsername", () => {
-  it("suggests the clean username for a role", () => {
-    expect(suggestUsername("vibewars", "qa")).toBe("vibewars_qa_bot");
-  });
-
-  it("replaces hyphens, which Telegram usernames do not allow", () => {
-    expect(suggestUsername("vibewars", "net-code")).toBe("vibewars_net_code_bot");
-  });
-
-  it("keeps the 32-character limit and the required bot ending", () => {
-    const name = suggestUsername("vibewars", "an-extremely-long-role-name");
-
-    expect(name.length).toBeLessThanOrEqual(32);
-    expect(name.endsWith("_bot")).toBe(true);
-  });
-});
-
-describe("suggestName", () => {
-  it("builds a display name in the convention the operator picked by hand", () => {
-    expect(suggestName("architect")).toBe("VibeWars-Architect-Bot");
-  });
-
-  it("title-cases every hyphenated part", () => {
-    expect(suggestName("net-code")).toBe("VibeWars-Net-Code-Bot");
-  });
-});
-
 describe("formatLine", () => {
   it("marks human messages so an agent can tell an operator from a peer", () => {
     const human = formatLine({
@@ -364,30 +367,6 @@ describe("isReadyOutboxEntry", () => {
   });
 });
 
-describe("acceptsManagedBot", () => {
-  const claimed = new Set([8924738395]);
-
-  it("accepts a genuinely new bot during a fresh provision", () => {
-    expect(acceptsManagedBot(999, { claimed, recoverableId: null })).toBe(true);
-  });
-
-  it("refuses a bot another role already owns", () => {
-    // The regression: a rewound offset replays the update that created the
-    // architect's bot, and the gameplay role accepts it — two roles, one
-    // identity, one token.
-    expect(acceptsManagedBot(8924738395, { claimed, recoverableId: null })).toBe(false);
-  });
-
-  it("accepts only the specific bot being recovered", () => {
-    expect(acceptsManagedBot(555, { claimed, recoverableId: 555 })).toBe(true);
-    expect(acceptsManagedBot(777, { claimed, recoverableId: 555 })).toBe(false);
-  });
-
-  it("still refuses a claimed bot while recovering", () => {
-    expect(acceptsManagedBot(8924738395, { claimed, recoverableId: 8924738395 })).toBe(false);
-  });
-});
-
 describe("retryDelay", () => {
   it("backs off exponentially from one second", () => {
     expect([1, 2, 3, 4].map((n) => retryDelay(n))).toStrictEqual([1000, 2000, 4000, 8000]);
@@ -400,37 +379,5 @@ describe("retryDelay", () => {
   it("gives up past the attempt limit", () => {
     expect(retryDelay(7)).toBeNull();
     expect(retryDelay(0)).toBeNull();
-  });
-});
-
-describe("isProvisioned", () => {
-  const complete = {
-    token: "t",
-    id: 1,
-    username: "vibewars_qa_bot",
-    promoted: true,
-    topicId: 7,
-  };
-
-  it("accepts a role that has been taken all the way through", () => {
-    expect(isProvisioned(complete)).toBe(true);
-  });
-
-  it("rejects a role stopped at any single step", () => {
-    // Each of these is a state a real interrupted provision left behind.
-    for (const missing of ["token", "id", "username", "promoted", "topicId"]) {
-      const partial = Object.fromEntries(
-        Object.entries(complete).filter(([key]) => key !== missing),
-      );
-      expect(isProvisioned(partial)).toBe(false);
-    }
-  });
-
-  it("rejects an empty entry", () => {
-    expect(isProvisioned({})).toBe(false);
-  });
-
-  it("treats a bot that is in the group but not yet admin as unfinished", () => {
-    expect(isProvisioned({ ...complete, promoted: false })).toBe(false);
   });
 });

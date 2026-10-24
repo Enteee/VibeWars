@@ -1,31 +1,29 @@
 #!/usr/bin/env node
 /**
- * The Telegram sidecar for one `claude-bot` role.
+ * The company's Telegram sidecar, and each agent's presence.
  *
- * Runs OUTSIDE the bubblewrap jail, and is the only process that holds the
- * role's bot token. The agent inside the jail talks to Telegram by dropping
- * JSON files into its outbox and reading lines out of its inbox; this process
- * is what turns those into real API calls. That split is the whole point: an
- * agent that could read the token out of its own environment could be
- * prompt-injected into deleting the group.
+ * Runs OUTSIDE every bubblewrap jail, and is the only process that holds the
+ * bot token. Agents inside the jails talk to Telegram by dropping JSON files
+ * into their outbox and reading lines out of their inbox; this process turns
+ * those into real API calls. That split is the whole point: an agent that
+ * could read the token out of its own environment could be prompt-injected
+ * into deleting the group.
  *
- * Two subcommands:
+ * The company has ONE bot (docs/adr/0023-one-telegram-bot.md):
  *
- *   provision <role>   one-time setup. Blocks on two human taps (confirm the
- *                      bot-creation link, add the new bot to the group) and is
- *                      resumable — rerunning it picks up at the first step
- *                      that has not completed.
- *   serve <role>       the steady-state loop: long-poll getUpdates into
- *                      inbox.jsonl, drain outbox/ via sendMessage, heartbeat.
+ *   serve             one per company. Long-polls the single token and routes
+ *                     each operator message to the inboxes it is for. Drains
+ *                     every role's outbox: a peer message goes straight into
+ *                     its recipients' inboxes, then a copy goes to Telegram
+ *                     for the operator, paced so one bot stays under
+ *                     Telegram's group rate limit. A second `serve` exits at
+ *                     once, so any `claude-bot` may try to start it.
+ *   presence <role>   one per running agent. Keeps the role's roster entry
+ *                     fresh, which is what `tg roster` reads, and removes it
+ *                     when the agent's session ends. Holds no token.
  *
- * Relies on two 2026 additions to the Bot API, both explained in
- * docs/adr/0014-agent-coordination.md:
- *   - Managed Bots (9.6)         — getManagedBotToken, t.me/newbot links
- *   - bot-to-bot messages (10.0) — a bot sees another bot's group messages
- *                                  when it is an admin there
- *
- * The pure half of this file lives in protocol.mjs and is unit-tested; what
- * is left here is the part that needs a token, a socket or a clock.
+ * The pure half of this lives in protocol.mjs and is unit-tested; what is
+ * left here is the part that needs a token, a socket or a clock.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -33,29 +31,25 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
-// The company's roster, so that messaging a colleague who has not been hired
-// yet can say so, rather than reporting an unknown role.
-import { ROLES as COMPANY_ROLES } from "./hub-policy.mjs";
+import { ROLES } from "./hub-policy.mjs";
 import {
-  acceptsManagedBot,
-  indexRoles,
-  inboundLine,
-  isProvisioned,
+  deliverPeer,
   isReadyOutboxEntry,
   obj,
-  outboundParams,
+  parseRegistry,
+  planSends,
   retryDelay,
-  suggestName,
-  suggestUsername,
+  routeInbound,
 } from "./protocol.mjs";
 
-const API = "https://api.telegram.org";
+/** Overridable so link.test.mjs can stand a fake Telegram in for the real one. */
+const API = process.env.VIBEWARS_TELEGRAM_API ?? "https://api.telegram.org";
 
 /** How long getUpdates parks server-side. Telegram's documented maximum. */
 const LONG_POLL_SECONDS = 50;
 
-/** Telegram tolerates ~20 messages/minute into one group. Stay under it. */
-const MIN_SEND_INTERVAL_MS = 3100;
+/** A roster entry older than this belongs to an agent that is gone. */
+const PRESENCE_STALE_MS = 60_000;
 
 /* -------------------------------------------------------------------------- */
 /* Environment                                                                */
@@ -71,6 +65,22 @@ function required(name) {
     throw new Error(`${name} is not set; run this through the claude-bot command`);
   }
   return value;
+}
+
+/**
+ * Resolved lazily so that `presence`, which needs no token, does not demand
+ * one.
+ *
+ * @returns {{ root: string, bus: string, link: string, registry: string }}
+ */
+function paths() {
+  const root = required("VIBEWARS_BOT_ROOT");
+  return {
+    root,
+    bus: required("VIBEWARS_BOT_BUS"),
+    link: path.join(root, "link"),
+    registry: path.join(root, "registry.json"),
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -153,49 +163,19 @@ async function api(token, method, params = {}) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Paths and registry                                                         */
+/* Files                                                                      */
 /* -------------------------------------------------------------------------- */
-
-/**
- * Resolved lazily rather than at import time so that importing this module
- * (as the tests do, transitively) does not require the whole environment.
- *
- * @returns {{
- *   root: string, bus: string, registry: string, lock: string,
- *   managerToken: string, managerUsername: string, chatId: string, prefix: string,
- * }}
- */
-function environment() {
-  const root = required("VIBEWARS_BOT_ROOT");
-  return {
-    root,
-    bus: required("VIBEWARS_BOT_BUS"),
-    registry: path.join(root, "registry.json"),
-    lock: path.join(root, "registry.lock"),
-    managerToken: required("TELEGRAM_MANAGER_TOKEN"),
-    managerUsername: required("TELEGRAM_MANAGER_USERNAME"),
-    chatId: required("TELEGRAM_CHAT_ID"),
-    prefix: process.env.VIBEWARS_BOT_USERNAME_PREFIX ?? "vibewars",
-  };
-}
 
 /**
  * @param {string} file
  * @returns {import("./protocol.mjs").Registry}
  */
 function readRegistry(file) {
-  if (!fs.existsSync(file)) {
-    return { managerOffset: 0, roles: {} };
+  const parsed = parseRegistry(fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null);
+  if ("error" in parsed) {
+    throw new Error(parsed.error);
   }
-  const parsed = obj(JSON.parse(fs.readFileSync(file, "utf8")));
-  return {
-    managerOffset: typeof parsed.managerOffset === "number" ? parsed.managerOffset : 0,
-    // Remembered so that provisioning the second and third role can offer the
-    // creation button immediately, instead of making the operator start a new
-    // conversation with the manager bot every single time.
-    operatorChatId: typeof parsed.operatorChatId === "number" ? parsed.operatorChatId : null,
-    roles: /** @type {Record<string, import("./protocol.mjs").RoleEntry>} */ (obj(parsed.roles)),
-  };
+  return parsed.registry;
 }
 
 /**
@@ -207,39 +187,6 @@ function writeRegistry(file, registry) {
   const tmp = `${file}.tmp`;
   fs.writeFileSync(tmp, `${JSON.stringify(registry, null, 2)}\n`, { mode: 0o600 });
   fs.renameSync(tmp, file);
-}
-
-/**
- * Exclusive lock around provisioning. Two roles provisioning at once would
- * race on the manager bot's single getUpdates stream and steal each other's
- * `managed_bot` updates.
- *
- * @param {string} lock
- * @param {string} role
- * @returns {void}
- */
-function acquireLock(lock, role) {
-  const mine = `${String(process.pid)} ${role}\n`;
-  try {
-    fs.writeFileSync(lock, mine, { flag: "wx" });
-    return;
-  } catch {
-    const [pid, heldFor] = fs.readFileSync(lock, "utf8").trim().split(" ");
-    const holder = Number.parseInt(pid ?? "", 10);
-    try {
-      process.kill(holder, 0);
-    } catch {
-      // The holder died without cleaning up; the lock is ours to take.
-      fs.rmSync(lock, { force: true });
-      fs.writeFileSync(lock, mine, { flag: "wx" });
-      return;
-    }
-    throw new Error(
-      `the "${heldFor ?? "?"}" role is still being provisioned (pid ${String(holder)}), ` +
-        `and creating two bots at once would make them fight over the manager ` +
-        `bot's update stream. Finish that one first, or stop it.`,
-    );
-  }
 }
 
 /**
@@ -263,461 +210,183 @@ function busPaths(bus, role) {
  * @returns {void}
  */
 function ensureBus(bus, role) {
-  const paths = busPaths(bus, role);
-  fs.mkdirSync(paths.outbox, { recursive: true });
-  fs.mkdirSync(path.dirname(paths.roster), { recursive: true });
-  if (!fs.existsSync(paths.inbox)) {
-    fs.writeFileSync(paths.inbox, "");
+  const at = busPaths(bus, role);
+  fs.mkdirSync(at.outbox, { recursive: true });
+  fs.mkdirSync(path.dirname(at.roster), { recursive: true });
+  if (!fs.existsSync(at.inbox)) {
+    fs.writeFileSync(at.inbox, "");
   }
 }
 
+/**
+ * @param {string} bus
+ * @param {string} role
+ * @param {import("./protocol.mjs").InboxLine} line
+ * @returns {void}
+ */
+function appendInbox(bus, role, line) {
+  ensureBus(bus, role);
+  fs.appendFileSync(busPaths(bus, role).inbox, `${JSON.stringify(line)}\n`);
+}
+
+/**
+ * Roles with a running agent right now, from their presence heartbeats.
+ *
+ * @param {string} bus
+ * @returns {Set<string>}
+ */
+function present(bus) {
+  /** @type {Set<string>} */
+  const live = new Set();
+  for (const role of ROLES) {
+    try {
+      const record = obj(JSON.parse(fs.readFileSync(busPaths(bus, role).roster, "utf8")));
+      if (typeof record.lastSeen === "number" && Date.now() - record.lastSeen < PRESENCE_STALE_MS) {
+        live.add(role);
+      }
+    } catch {
+      /* not running */
+    }
+  }
+  return live;
+}
+
 /* -------------------------------------------------------------------------- */
-/* Provisioning                                                               */
+/* serve                                                                      */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Wait for the manager bot to be told that a new managed bot exists.
+ * Become the company's only sidecar, or say there already is one.
  *
- * Two routes lead here, because the obvious one does not work everywhere:
+ * Telegram allows one getUpdates consumer per token; a second gets
+ * "409 Conflict" and the company goes deaf. `wx` makes taking the lock
+ * atomic, and a lock whose holder has died is taken over. This runs on the
+ * host, so a pid is meaningful here, unlike inside the jails.
  *
- *  - The `t.me/newbot/...` link, which resolves to a `tg://` URL. Fine on a
- *    phone; useless on a desktop with no native client registered for that
- *    scheme, where the "Create bot" button simply does nothing.
- *  - A `request_managed_bot` keyboard button, which lives entirely inside
- *    Telegram and therefore works in every client, including the web one.
- *    Telegram only permits it in private chats ("managed bots can be
- *    requested in private chats only"), so it cannot be posted to the swarm
- *    group — instead, any private message to the manager bot gets the button
- *    back as a reply.
- *
- * So this watches for both, and offers the button to whoever says hello.
- *
- * @param {ReturnType<typeof environment>} env
- * @param {import("./protocol.mjs").Registry} registry
- * @param {string} role
- * @param {string} suggested
- * @param {number | null} recoverableId Id already on record for this role, if
- *   a previous run discovered the bot but died before storing its token.
- * @returns {Promise<{ id: number, username: string }>}
+ * @param {string} lock
+ * @returns {boolean} whether this process now holds it
  */
-async function awaitManagedBot(env, registry, role, suggested, recoverableId) {
-  /** @type {Set<string>} */
-  const offered = new Set();
+function takeLock(lock) {
+  const mine = `${String(process.pid)}\n`;
+  try {
+    fs.writeFileSync(lock, mine, { flag: "wx" });
+    return true;
+  } catch {
+    const holder = Number.parseInt(fs.readFileSync(lock, "utf8").trim(), 10);
+    try {
+      process.kill(holder, 0);
+      return false;
+    } catch {
+      fs.rmSync(lock, { force: true });
+      try {
+        fs.writeFileSync(lock, mine, { flag: "wx" });
+        return true;
+      } catch {
+        // Another sidecar took it in the same instant.
+        return false;
+      }
+    }
+  }
+}
+
+/**
+ * The company's state as the sidecar holds it. Topic ids are added as roles
+ * need them; the getUpdates offset advances with every batch.
+ */
+class Company {
+  /**
+   * @param {ReturnType<typeof paths>} at
+   * @param {string} token
+   * @param {string} chatId
+   */
+  constructor(at, token, chatId) {
+    this.at = at;
+    this.token = token;
+    this.chatId = chatId;
+    this.registry = readRegistry(at.registry);
+  }
+
+  save() {
+    writeRegistry(this.at.registry, this.registry);
+  }
+
+  /** @returns {Map<number, string>} topic id to the role that owns it */
+  topicOwners() {
+    return new Map(
+      Object.entries(this.registry.roles).map(([role, { topicId }]) => [topicId, role]),
+    );
+  }
 
   /**
-   * @param {string} chatId
-   * @returns {Promise<void>}
+   * The role's forum topic, created on first use. The bot must be an admin
+   * with `can_manage_topics`, which the company bot already is.
+   *
+   * @param {string} role
+   * @returns {Promise<number | null>} `null` if Telegram would not create it
    */
-  const offerButton = async (chatId) => {
-    if (offered.has(chatId)) {
-      return;
+  async topicFor(role) {
+    const known = this.registry.roles[role]?.topicId;
+    if (known !== undefined) {
+      return known;
     }
-    offered.add(chatId);
     try {
-      await api(env.managerToken, "sendMessage", {
-        chat_id: chatId,
-        text:
-          `Tap below to create the bot for the "${role}" role.\n\n` +
-          `Suggested username: @${suggested} — edit it on the confirmation ` +
-          `screen if Telegram says it is taken.`,
-        reply_markup: {
-          keyboard: [
-            [
-              {
-                text: `Create the ${role} bot`,
-                // `suggested_username` / `suggested_name`, NOT username/name:
-                // Telegram silently ignores unknown fields here, so the wrong
-                // spelling prefills nothing and gives no error to notice.
-                request_managed_bot: {
-                  request_id: hashRequestId(role),
-                  suggested_username: suggested,
-                  suggested_name: suggestName(role),
-                },
-              },
-            ],
-          ],
-          resize_keyboard: true,
-          one_time_keyboard: true,
-        },
-      });
-      console.log(
-        `  sent a "Create the ${role} bot" button to your chat with @${env.managerUsername}`,
+      const created = obj(
+        await api(this.token, "createForumTopic", { chat_id: this.chatId, name: role }),
       );
+      if (typeof created.message_thread_id !== "number") {
+        return null;
+      }
+      this.registry.roles[role] = { topicId: created.message_thread_id };
+      this.save();
+      console.error(`[link] created the ${role} topic`);
+      return created.message_thread_id;
     } catch (error) {
-      console.log(
-        `  could not send the button: ${error instanceof Error ? error.message : "unknown"}`,
+      console.error(
+        `[link] could not create the ${role} topic: ${error instanceof Error ? error.message : ""}`,
       );
-    }
-  };
-
-  if (registry.operatorChatId !== null && registry.operatorChatId !== undefined) {
-    await offerButton(String(registry.operatorChatId));
-  }
-
-  // Rewinding the offset recovers a `managed_bot` update that was confirmed
-  // and then lost to a crash — without it, the bot exists in the operator's
-  // account and nothing can name it again.
-  //
-  // But a rewind replays EVERY retained update, including the one that
-  // created a different role's bot, which is how `gameplay` once got
-  // provisioned as `@vibewars_architect_bot`. So it is only done when there is
-  // something to recover (an id on record with no token beside it), and a
-  // bot already claimed by another role is refused outright.
-  const recovering = recoverableId !== null;
-  let offset = recovering ? Math.max(0, registry.managerOffset - 16) : registry.managerOffset;
-  let rewound = recovering;
-
-  /** @type {Set<number>} */
-  const claimed = new Set(
-    Object.entries(registry.roles)
-      .filter(([other]) => other !== role)
-      .map(([, entry]) => entry.id)
-      .filter((id) => id !== undefined),
-  );
-
-  for (;;) {
-    const updates = /** @type {unknown[]} */ (
-      await api(env.managerToken, "getUpdates", {
-        offset,
-        timeout: rewound ? 0 : LONG_POLL_SECONDS,
-        // "message" is here only to notice someone opening a private chat, so
-        // the button can be offered to them.
-        allowed_updates: ["managed_bot", "message"],
-      })
-    );
-    rewound = false;
-
-    /** @type {{ id: number, username: string } | null} */
-    let found = null;
-    /** @type {Set<string>} */
-    const greeted = new Set();
-
-    for (const raw of updates) {
-      const update = obj(raw);
-      if (typeof update.update_id === "number") {
-        offset = update.update_id + 1;
-        registry.managerOffset = offset;
-      }
-
-      const bot = obj(obj(update.managed_bot).bot);
-      if (typeof bot.id === "number" && typeof bot.username === "string") {
-        if (acceptsManagedBot(bot.id, { claimed, recoverableId })) {
-          found = { id: bot.id, username: bot.username };
-        } else {
-          // A replayed update from some other role's creation. Skipping it is
-          // the safety net: accepting it hands two roles one identity.
-          console.log(`  ignoring @${bot.username}, not this role's bot`);
-        }
-      }
-
-      const chat = obj(obj(update.message).chat);
-      if (chat.type === "private" && typeof chat.id === "number") {
-        greeted.add(String(chat.id));
-        registry.operatorChatId = chat.id;
-      }
-    }
-
-    // Persist the advanced offset either way: a crash here must not replay
-    // updates we have already consumed.
-    writeRegistry(env.registry, registry);
-    if (found !== null) {
-      return found;
-    }
-
-    for (const chatId of greeted) {
-      await offerButton(chatId);
+      return null;
     }
   }
 }
 
 /**
- * A small stable positive integer per role, for the button's request_id.
- * Telegram only uses it to correlate the reply with the request, so it needs
- * to be stable within one conversation, not globally unique.
+ * Operator messages, from Telegram into the inboxes they are for.
  *
- * @param {string} role
- * @returns {number}
- */
-function hashRequestId(role) {
-  let hash = 0;
-  for (const char of role) {
-    hash = (hash * 31 + char.charCodeAt(0)) % 2_000_000_000;
-  }
-  return hash === 0 ? 1 : hash;
-}
-
-/**
- * Report what the new bot can actually see in the group.
- *
- * This used to try to disable group privacy mode through
- * `setManagedBotAccessSettings`, on the assumption that the `BotAccessSettings`
- * class added beside it in Bot API 10.0 covered the BotFather privacy
- * toggles. It does not: the object is `{is_access_restricted: boolean}`, about
- * who may use the bot, and has nothing to do with which messages it receives.
- * The privacy toggle has no API at all — it is BotFather-only.
- *
- * Survivable, because Bot API 10.0 delivers another bot's group messages to a
- * bot that *either* has privacy disabled *or* has admin rights, and
- * provisioning grants admin rights. Directed messages also at-mention their
- * recipient, which privacy mode never filters. So this states the position and
- * names the manual toggle instead of quietly assuming it away.
- *
- * @param {string} token The role bot's own token.
- * @param {string} username
- * @returns {Promise<void>}
- */
-async function reportAccess(token, username) {
-  try {
-    const me = obj(await api(token, "getMe"));
-    if (me.can_read_all_group_messages === true) {
-      console.log("  group privacy is off: it sees every message in the group");
-      return;
-    }
-    console.log("  group privacy is on (the default, and not settable over the API).");
-    console.log("  Admin rights cover peer traffic and directed messages at-mention");
-    console.log("  their recipient, so this is usually fine. If messages from humans");
-    console.log(`  do not reach \`tg inbox\`, open @BotFather -> /mybots -> @${username}`);
-    console.log("  -> Bot Settings -> Group Privacy -> Turn off.");
-  } catch (error) {
-    console.log(
-      `  could not read the bot's own settings: ${error instanceof Error ? error.message : ""}`,
-    );
-  }
-}
-
-/**
- * Give an existing managed bot a role.
- *
- * Creating a bot is the rate-limited, human-tapping part of hiring; the rest
- * is bookkeeping. When a bot already exists — a retired role, or one created
- * for a role that got renamed — there is no reason to burn a creation on it.
- * `adopt` writes the registry entry from a bot id and then hands over to
- * `provision`, which picks up at the first step that has not been done.
- *
- * The display name is reset to match the new role, because a bot called
- * "VibeWars-Gameplay-Bot" reviewing pull requests as `lead-dev` is the kind
- * of mismatch that wastes a minute every time someone reads the chat. The
- * @username cannot be changed over the API — that is BotFather only — so it
- * stays wrong, and that is the honest cost of repurposing.
- *
- * @param {string} role
- * @param {string} botId
- * @returns {Promise<void>}
- */
-async function adopt(role, botId) {
-  const env = environment();
-  ensureBus(env.bus, role);
-
-  const registry = readRegistry(env.registry);
-  const claimed = Object.entries(registry.roles).find(
-    ([other, entry]) => other !== role && entry.id === Number(botId),
-  );
-  if (claimed !== undefined) {
-    throw new Error(`bot ${botId} is already the "${claimed[0]}" role; pick another`);
-  }
-
-  const me = obj(
-    await api(
-      String(await api(env.managerToken, "getManagedBotToken", { user_id: Number(botId) })),
-      "getMe",
-    ),
-  );
-  if (typeof me.id !== "number" || typeof me.username !== "string") {
-    throw new Error(`could not read bot ${botId}; is it managed by @${env.managerUsername}?`);
-  }
-
-  const token = String(
-    await api(env.managerToken, "getManagedBotToken", { user_id: Number(botId) }),
-  );
-  const entry = registry.roles[role] ?? {};
-  entry.token = token;
-  entry.id = me.id;
-  entry.username = me.username;
-  registry.roles[role] = entry;
-  writeRegistry(env.registry, registry);
-  console.log(`  adopted @${me.username} as "${role}"`);
-
-  try {
-    await api(token, "setMyName", { name: suggestName(role) });
-    console.log(`  renamed it to ${suggestName(role)}`);
-  } catch (error) {
-    console.log(`  could not rename it: ${error instanceof Error ? error.message : "?"}`);
-  }
-
-  await provision(role);
-}
-
-/**
- * @param {string} role
- * @returns {Promise<void>}
- */
-async function provision(role) {
-  const env = environment();
-  ensureBus(env.bus, role);
-
-  // Nothing to do is the common case — every run after the first — and it must
-  // not touch the lock. Otherwise starting one agent fails for as long as some
-  // other role is waiting on a human tap.
-  const existing = readRegistry(env.registry).roles[role] ?? {};
-  if (isProvisioned(existing)) {
-    console.log(`[link:${role}] ready as @${String(existing.username)}`);
-    return;
-  }
-
-  acquireLock(env.lock, role);
-  try {
-    const registry = readRegistry(env.registry);
-    const entry = registry.roles[role] ?? {};
-    registry.roles[role] = entry;
-
-    /* 1. The bot itself. --------------------------------------------------- */
-    if (entry.token === undefined) {
-      const suggested = suggestUsername(env.prefix, role);
-      const link =
-        `https://t.me/newbot/${env.managerUsername}/${suggested}` +
-        `?name=${encodeURIComponent(suggestName(role))}`;
-
-      console.log("");
-      console.log(`  No Telegram bot exists for the role "${role}" yet.`);
-      console.log("  Either open this link and confirm, once:");
-      console.log("");
-      console.log(`      ${link}`);
-      console.log("");
-      console.log(`  ...or, if that link does nothing (it needs a native client`);
-      console.log(`  registered for tg:// URLs), send any message to`);
-      console.log(`  @${env.managerUsername} in a private chat and tap the button`);
-      console.log("  it replies with.");
-      console.log("");
-      console.log("  waiting...");
-
-      const bot = await awaitManagedBot(env, registry, role, suggested, entry.id ?? null);
-      // Persisted BEFORE fetching the token, because the `managed_bot` update
-      // that carried this id has already been confirmed and Telegram will not
-      // reliably hand it back. Losing it here leaves a bot in your account
-      // that nothing can name again.
-      entry.id = bot.id;
-      entry.username = bot.username;
-      writeRegistry(env.registry, registry);
-      console.log(`  created @${bot.username} (${String(bot.id)})`);
-
-      // `user_id`, not `bot_id`: the managed-bot methods address the bot by
-      // its user id, like any other account.
-      entry.token = String(await api(env.managerToken, "getManagedBotToken", { user_id: bot.id }));
-      writeRegistry(env.registry, registry);
-    }
-
-    // `token` is narrowed to a string by the branch above; `id` and
-    // `username` are not, because a registry hand-edited into an inconsistent
-    // state can still reach here with the token set and the rest missing.
-    const { token, id: botId, username } = entry;
-    if (botId === undefined || username === undefined) {
-      throw new Error(
-        `registry entry for "${role}" is incomplete; remove it from ${env.registry} and retry`,
-      );
-    }
-
-    /* 2. Membership. There is no Bot API method to add a bot to a group, so
-          this is the one step that genuinely cannot be automated. ---------- */
-    if (entry.promoted !== true) {
-      let announced = false;
-      for (;;) {
-        const status = obj(
-          await api(env.managerToken, "getChatMember", { chat_id: env.chatId, user_id: botId }),
-        ).status;
-        if (status !== "left" && status !== "kicked") {
-          break;
-        }
-        if (!announced) {
-          console.log("");
-          console.log(`  Now add @${username} to the swarm group, once.`);
-          console.log("  (group -> Members -> Add Member -> search the username)");
-          console.log("");
-          console.log("  waiting...");
-          announced = true;
-        }
-        await sleep(3000);
-      }
-
-      /* 3. Admin rights: what lets it manage topics and, per Bot API 10.0,
-            see the messages the other role bots send. --------------------- */
-      await api(env.managerToken, "promoteChatMember", {
-        chat_id: env.chatId,
-        user_id: botId,
-        can_manage_topics: true,
-        can_delete_messages: true,
-        can_pin_messages: true,
-        can_invite_users: true,
-      });
-      entry.promoted = true;
-      writeRegistry(env.registry, registry);
-      console.log(`  @${username} is an admin in the group`);
-
-      await reportAccess(token, username);
-    }
-
-    /* 4. Its subchannel. --------------------------------------------------- */
-    if (entry.topicId === undefined) {
-      const topic = obj(await api(token, "createForumTopic", { chat_id: env.chatId, name: role }));
-      if (typeof topic.message_thread_id !== "number") {
-        throw new Error("createForumTopic returned no message_thread_id");
-      }
-      entry.topicId = topic.message_thread_id;
-      writeRegistry(env.registry, registry);
-      console.log(`  topic "${role}" created`);
-    }
-
-    console.log(`[link:${role}] provisioned as @${username}`);
-  } finally {
-    fs.rmSync(env.lock, { force: true });
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/* Serving                                                                    */
-/* -------------------------------------------------------------------------- */
-
-/**
- * @param {ReturnType<typeof environment>} env
- * @param {string} role
- * @param {() => import("./protocol.mjs").Registry} reload
+ * @param {Company} company
  * @returns {Promise<never>}
  */
-async function pollInbound(env, role, reload) {
-  const paths = busPaths(env.bus, role);
-  let offset = 0;
+async function pollInbound(company) {
   let backoff = 1000;
-
   for (;;) {
     try {
-      const registry = reload();
-      const entry = registry.roles[role] ?? {};
-      if (entry.token === undefined || entry.id === undefined) {
-        throw new Error(`role "${role}" is not provisioned`);
-      }
-      const { byId } = indexRoles(registry);
-
       const updates = /** @type {unknown[]} */ (
-        await api(entry.token, "getUpdates", {
-          offset,
+        await api(company.token, "getUpdates", {
+          offset: company.registry.offset,
           timeout: LONG_POLL_SECONDS,
           allowed_updates: ["message"],
         })
       );
-
+      const owners = company.topicOwners();
       for (const raw of updates) {
         const update = obj(raw);
         if (typeof update.update_id === "number") {
-          offset = update.update_id + 1;
+          company.registry.offset = update.update_id + 1;
         }
-        const line = inboundLine(raw, { chatId: env.chatId, selfId: entry.id, byId });
-        if (line !== null) {
-          fs.appendFileSync(paths.inbox, `${JSON.stringify(line)}\n`);
+        const routed = routeInbound(raw, { chatId: company.chatId, topics: owners, roles: ROLES });
+        for (const role of routed?.to ?? []) {
+          if (routed !== null) {
+            appendInbox(company.at.bus, role, routed.line);
+          }
         }
+      }
+      if (updates.length > 0) {
+        // So a restart does not hand everyone the same messages again.
+        company.save();
       }
       backoff = 1000;
     } catch (error) {
       const retryAfter = error instanceof TelegramError ? error.retryAfter : undefined;
-      console.error(`[link:${role}] inbound: ${error instanceof Error ? error.message : ""}`);
+      console.error(`[link] inbound: ${error instanceof Error ? error.message : ""}`);
       await sleep(retryAfter === undefined ? backoff : retryAfter * 1000);
       backoff = Math.min(backoff * 2, 60_000);
     }
@@ -725,187 +394,193 @@ async function pollInbound(env, role, reload) {
 }
 
 /**
- * @param {ReturnType<typeof environment>} env
- * @param {string} role
- * @param {() => import("./protocol.mjs").Registry} reload
+ * Every role's outbox: delivered locally at once, then queued for Telegram.
+ *
+ * @param {Company} company
+ * @param {{ to: string, text: string }[]} mirror filled here, emptied by `mirrorOut`
  * @returns {Promise<never>}
  */
-async function drainOutbound(env, role, reload) {
-  const paths = busPaths(env.bus, role);
-  let lastSend = 0;
-
+async function drainOutboxes(company, mirror) {
   for (;;) {
-    const pending = fs.readdirSync(paths.outbox).filter(isReadyOutboxEntry).sort();
-
-    if (pending.length === 0) {
-      await sleep(250);
-      continue;
-    }
-
-    const registry = reload();
-    const entry = registry.roles[role] ?? {};
-    const { topics, usernames } = indexRoles(registry);
-
-    for (const name of pending) {
-      const file = path.join(paths.outbox, name);
-      /** @type {unknown} */
-      let payload;
+    let moved = false;
+    for (const role of ROLES) {
+      const { outbox } = busPaths(company.at.bus, role);
+      /** @type {string[]} */
+      let pending;
       try {
-        payload = JSON.parse(fs.readFileSync(file, "utf8"));
+        pending = fs.readdirSync(outbox).filter(isReadyOutboxEntry).sort();
       } catch {
-        // A half-written file from a `tg send` still in flight; next pass.
         continue;
       }
-
-      try {
-        if (entry.token === undefined) {
-          throw new Error(`role "${role}" is not provisioned`);
-        }
-        const params = outboundParams(payload, {
-          chatId: env.chatId,
-          from: role,
-          topics,
-          usernames,
-          roster: COMPANY_ROLES,
-        });
-        const since = Date.now() - lastSend;
-        if (since < MIN_SEND_INTERVAL_MS) {
-          await sleep(MIN_SEND_INTERVAL_MS - since);
-        }
-        await api(entry.token, "sendMessage", params);
-        lastSend = Date.now();
-        fs.rmSync(file, { force: true });
-      } catch (error) {
-        if (error instanceof TelegramError && error.retryAfter !== undefined) {
-          await sleep(error.retryAfter * 1000);
+      for (const name of pending) {
+        const file = path.join(outbox, name);
+        /** @type {unknown} */
+        let payload;
+        try {
+          payload = JSON.parse(fs.readFileSync(file, "utf8"));
+        } catch {
+          // A half-written file from a `tg send` still in flight; next pass.
           continue;
         }
-        // Undeliverable rather than transient. Tell the agent in its own
-        // inbox — it is the only channel it reads — and drop the message
-        // rather than retrying it forever.
-        const reason = error instanceof Error ? error.message : String(error);
-        console.error(`[link:${role}] outbound: ${reason}`);
-        fs.appendFileSync(
-          paths.inbox,
-          `${JSON.stringify({
-            ts: Date.now(),
-            from: "link",
-            kind: "link",
-            text: `your last message was NOT delivered: ${reason}`,
-            topicId: null,
-            messageId: 0,
-          })}\n`,
-        );
+        const delivered = deliverPeer(payload, {
+          from: role,
+          roles: ROLES,
+          present: present(company.at.bus),
+          now: Date.now(),
+        });
+        for (const { role: recipient, line } of delivered.deliveries) {
+          appendInbox(company.at.bus, recipient, line);
+        }
+        if (delivered.notice !== null) {
+          appendInbox(company.at.bus, role, delivered.notice);
+        }
+        if (delivered.mirror !== null) {
+          mirror.push(delivered.mirror);
+        }
         fs.rmSync(file, { force: true });
+        moved = true;
       }
     }
+    if (!moved) {
+      await sleep(250);
+    }
   }
 }
 
 /**
- * Exit when the claude-bot that started us goes away.
+ * The copy of every peer message the operator reads in Telegram, paced by
+ * `planSends`. Losing one of these loses nothing an agent needed: it is
+ * already in the recipient's inbox.
  *
- * claude-bot `exec`s into bwrap, so its EXIT trap never runs and cannot kill
- * us, and bwrap's --die-with-parent does not reach us because we are outside
- * the jail. Watching our own ppid is not enough either: reparenting lands us
- * on whatever subreaper is in play, and `process.ppid` does not reliably
- * reflect it. So claude-bot tells us its PID — which `exec` hands to bwrap,
- * so it stays alive exactly as long as the session does — and we watch for
- * that process to disappear. Without this, every session leaves a sidecar
- * long-polling Telegram forever.
- *
- * @param {() => void} cleanup
+ * @param {Company} company
+ * @param {{ to: string, text: string }[]} mirror
  * @returns {Promise<never>}
  */
-async function watchLauncher(cleanup) {
-  const raw = process.env.VIBEWARS_BOT_LAUNCHER_PID;
-  const launcher = raw === undefined ? Number.NaN : Number.parseInt(raw, 10);
+async function mirrorOut(company, mirror) {
+  /** @type {import("./protocol.mjs").Queued[]} */
+  let queue = [];
+  /** @type {number[]} */
+  let sent = [];
+  let blockedUntil = 0;
+
   for (;;) {
-    await sleep(5000);
-    if (!Number.isFinite(launcher)) {
+    // Resolve destinations to topics in arrival order, so a role whose topic
+    // has to be created first does not jump the queue.
+    for (const { to, text } of mirror.splice(0)) {
+      queue.push({ topicId: to === "all" ? null : await company.topicFor(to), text });
+    }
+
+    const now = Date.now();
+    sent = sent.filter((at) => now - at < 60_000);
+    const plan = planSends(queue, sent, now, { blockedUntil });
+    if (plan.batch === null) {
+      await sleep(Math.min(Math.max(plan.waitMs, 100), 5000));
       continue;
     }
+    const { batch } = plan;
     try {
-      process.kill(launcher, 0);
-    } catch {
-      cleanup();
-      process.exit(0);
+      await api(company.token, "sendMessage", {
+        chat_id: company.chatId,
+        text: batch.text,
+        ...(batch.topicId === null ? {} : { message_thread_id: batch.topicId }),
+      });
+      sent.push(Date.now());
+      queue = plan.rest;
+    } catch (error) {
+      if (error instanceof TelegramError && error.retryAfter !== undefined) {
+        blockedUntil = Date.now() + error.retryAfter * 1000;
+        continue;
+      }
+      console.error(
+        `[link] mirror dropped ${String(batch.count)} message(s): ${error instanceof Error ? error.message : ""}`,
+      );
+      queue = plan.rest;
     }
   }
 }
 
-/**
- * @param {ReturnType<typeof environment>} env
- * @param {string} role
- * @param {() => import("./protocol.mjs").Registry} reload
- * @returns {Promise<never>}
- */
-async function heartbeat(env, role, reload) {
-  const paths = busPaths(env.bus, role);
-  for (;;) {
-    const entry = reload().roles[role] ?? {};
-    fs.writeFileSync(
-      paths.roster,
-      `${JSON.stringify(
-        {
-          role,
-          username: entry.username ?? null,
-          topicId: entry.topicId ?? null,
-          pid: process.pid,
-          lastSeen: Date.now(),
-        },
-        null,
-        2,
-      )}\n`,
-    );
-    await sleep(15_000);
+/** @returns {Promise<void>} */
+async function serve() {
+  const at = paths();
+  const token = required("TELEGRAM_MANAGER_TOKEN");
+  const chatId = required("TELEGRAM_CHAT_ID");
+  fs.mkdirSync(at.link, { recursive: true });
+
+  const lock = path.join(at.link, "serve.pid");
+  if (!takeLock(lock)) {
+    console.error("[link] the company sidecar is already running");
+    return;
   }
+  const release = () => {
+    fs.rmSync(lock, { force: true });
+    process.exit(0);
+  };
+  process.on("SIGINT", release);
+  process.on("SIGTERM", release);
+
+  const company = new Company(at, token, chatId);
+  for (const role of ROLES) {
+    ensureBus(at.bus, role);
+  }
+  console.error(`[link] serving ${String(ROLES.length)} roles on one bot`);
+  // Topics for whoever is already running, so a message the operator
+  // writes in a role's topic routes to it from the start.
+  for (const role of present(at.bus)) {
+    await company.topicFor(role);
+  }
+
+  /** @type {{ to: string, text: string }[]} */
+  const mirror = [];
+  await Promise.race([
+    pollInbound(company),
+    drainOutboxes(company, mirror),
+    mirrorOut(company, mirror),
+  ]);
 }
 
+/* -------------------------------------------------------------------------- */
+/* presence                                                                   */
+/* -------------------------------------------------------------------------- */
+
 /**
+ * Keep `role`'s roster entry fresh while its agent runs.
+ *
+ * claude-bot `exec`s into bwrap, so its EXIT trap never runs, and bwrap's
+ * --die-with-parent does not reach us because we are outside the jail. So
+ * claude-bot tells us its PID — which `exec` hands to bwrap, so it stays
+ * alive exactly as long as the session does — and we exit when it goes.
+ *
  * @param {string} role
  * @returns {Promise<void>}
  */
-async function serve(role) {
-  const env = environment();
-  ensureBus(env.bus, role);
-  const paths = busPaths(env.bus, role);
+async function presence(role) {
+  const at = paths();
+  ensureBus(at.bus, role);
+  const { roster } = busPaths(at.bus, role);
+  const raw = process.env.VIBEWARS_BOT_LAUNCHER_PID;
+  const launcher = raw === undefined ? Number.NaN : Number.parseInt(raw, 10);
 
-  /** @type {{ mtime: number, value: import("./protocol.mjs").Registry } | null} */
-  let cached = null;
-  const reload = () => {
-    const mtime = fs.statSync(env.registry).mtimeMs;
-    if (cached?.mtime !== mtime) {
-      cached = { mtime, value: readRegistry(env.registry) };
-    }
-    return cached.value;
-  };
-
-  // Leftovers from a previous session would be sent out of order and out of
-  // context, so each run starts with an empty outbox.
-  for (const name of fs.readdirSync(paths.outbox)) {
-    fs.rmSync(path.join(paths.outbox, name), { force: true });
-  }
-
-  const entry = reload().roles[role] ?? {};
-  console.error(`[link:${role}] online as @${entry.username ?? "?"}`);
-
-  const cleanup = () => {
-    fs.rmSync(paths.roster, { force: true });
-  };
-  const stop = () => {
-    cleanup();
+  const leave = () => {
+    fs.rmSync(roster, { force: true });
     process.exit(0);
   };
-  process.on("SIGINT", stop);
-  process.on("SIGTERM", stop);
+  process.on("SIGINT", leave);
+  process.on("SIGTERM", leave);
 
-  await Promise.race([
-    pollInbound(env, role, reload),
-    drainOutbound(env, role, reload),
-    heartbeat(env, role, reload),
-    watchLauncher(cleanup),
-  ]);
+  for (;;) {
+    fs.writeFileSync(
+      roster,
+      `${JSON.stringify({ role, pid: process.pid, lastSeen: Date.now() }, null, 2)}\n`,
+    );
+    await sleep(15_000);
+    if (Number.isFinite(launcher)) {
+      try {
+        process.kill(launcher, 0);
+      } catch {
+        leave();
+      }
+    }
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -913,24 +588,12 @@ async function serve(role) {
 /** @returns {Promise<void>} */
 async function main() {
   const [command, role] = process.argv.slice(2);
-  if (command === undefined || role === undefined) {
-    console.error("usage: link.mjs <provision|serve|adopt> <role> [bot-user-id]");
-    process.exit(2);
-  }
-
-  if (command === "provision") {
-    await provision(role);
-  } else if (command === "adopt") {
-    const botId = process.argv[4];
-    if (botId === undefined || !/^[0-9]+$/.test(botId)) {
-      console.error("usage: link.mjs adopt <role> <bot-user-id>");
-      process.exit(2);
-    }
-    await adopt(role, botId);
-  } else if (command === "serve") {
-    await serve(role);
+  if (command === "serve") {
+    await serve();
+  } else if (command === "presence" && role !== undefined && ROLES.includes(role)) {
+    await presence(role);
   } else {
-    console.error(`link.mjs: unknown command "${command}"`);
+    console.error("usage: link.mjs serve | link.mjs presence <role>");
     process.exit(2);
   }
 }
@@ -942,18 +605,12 @@ if (
   try {
     await main();
   } catch (error) {
-    // A stack trace through the Bot API wrapper tells the operator nothing.
-    // The messages thrown here are deliberately actionable — which role holds
-    // the provisioning lock, which registry entry is inconsistent — so print
-    // the message and keep the trace for when it is actually a crash.
-    const [, role] = process.argv.slice(2);
-    console.error(
-      `[link:${role ?? "?"}] ${error instanceof Error ? error.message : String(error)}`,
-    );
+    // The messages thrown here are deliberately actionable — a registry in
+    // the old shape says exactly how to fix it — so print the message and
+    // keep the trace for when it is actually a crash.
+    console.error(`[link] ${error instanceof Error ? error.message : String(error)}`);
     if (process.env.VIBEWARS_BOT_DEBUG === "1" && error instanceof Error) {
       console.error(error.stack);
-    } else {
-      console.error("[link] set VIBEWARS_BOT_DEBUG=1 for the stack trace");
     }
     process.exit(1);
   }

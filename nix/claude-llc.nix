@@ -82,7 +82,7 @@ let
 
     first time:
       claude-llc-init         create the board, protect main, write company.json
-      claude-bot <role>       provision a role's Telegram bot (two taps each)
+      CLAUDE_LLC_ROLES="..."  start only these roles (default: all of them)
 
     See docs/adr/0015-agent-company.md.
   '';
@@ -129,12 +129,14 @@ let
             for d in hubd supervisor; do
               if pgrep -f "$d.mjs" >/dev/null 2>&1; then echo "  $d: running"; else echo "  $d: stopped"; fi
             done
+            if pgrep -f "link.mjs serve" >/dev/null 2>&1; then echo "  telegram: running"; else echo "  telegram: stopped"; fi
             exit 0
             ;;
           stop)
             ${tmux} kill-session -t "$SESSION" 2>/dev/null && echo "stopped $SESSION" || echo "$SESSION was not running"
             pkill -f hubd.mjs 2>/dev/null && echo "stopped hubd" || true
             pkill -f supervisor.mjs 2>/dev/null && echo "stopped supervisor" || true
+            pkill -f "link.mjs serve" 2>/dev/null && echo "stopped the Telegram sidecar" || true
             exit 0
             ;;
           "") ;;
@@ -175,31 +177,21 @@ let
         fi
 
         # ------------------------------------------------------------------------
-        # Which roles can actually start? A role whose Telegram bot has not been
-        # provisioned would fail in its pane, so it is reported here instead,
-        # where the message is readable.
+        # Which roles to start. With one Telegram bot for the company
+        # (docs/adr/0023-one-telegram-bot.md) hiring needs no setup, so every
+        # role can start. Nine agents is a real cost, so CLAUDE_LLC_ROLES can
+        # name a subset, e.g. CLAUDE_LLC_ROLES="manager architect developer-1".
         # ------------------------------------------------------------------------
-        ready=""
-        missing=""
-        for role in ${lib.concatStringsSep " " roles}; do
-          if ${pkgs.jq}/bin/jq -e --arg r "$role" \
-               '.roles[$r] | (.token and .promoted and .topicId)' \
-               "$VIBEWARS_BOT_ROOT/registry.json" >/dev/null 2>&1; then
-            ready="$ready $role"
-          else
-            missing="$missing $role"
-          fi
+        ready="''${CLAUDE_LLC_ROLES:-${lib.concatStringsSep " " roles}}"
+        for role in $ready; do
+          case " ${lib.concatStringsSep " " roles} " in
+            *" $role "*) ;;
+            *)
+              echo "claude-llc: CLAUDE_LLC_ROLES names \"$role\", which is not a role" >&2
+              exit 1
+              ;;
+          esac
         done
-
-        if [ -n "$missing" ]; then
-          echo "claude-llc: not provisioned yet:$missing" >&2
-          echo "claude-llc: run 'claude-bot <role>' for each, or let it provision on first start." >&2
-          echo "" >&2
-        fi
-        if [ -z "$ready" ]; then
-          echo "claude-llc: no roles are ready. Nothing to start." >&2
-          exit 1
-        fi
 
         # ------------------------------------------------------------------------
         # A restore point, taken before nine agents with push rights start work.
@@ -220,6 +212,10 @@ let
         # ------------------------------------------------------------------------
         pkill -f hubd.mjs 2>/dev/null || true
         pkill -f supervisor.mjs 2>/dev/null || true
+        # The Telegram sidecar is started by the first claude-bot below, which
+        # has the token. Stopping the old one here is what makes a restart
+        # pick up new sidecar code.
+        pkill -f "link.mjs serve" 2>/dev/null || true
 
         mkdir -p "$VIBEWARS_BOT_ROOT/hub"
         ${node} ${llcScripts}/hubd.mjs >>"$VIBEWARS_BOT_ROOT/hub/hubd.log" 2>&1 &
