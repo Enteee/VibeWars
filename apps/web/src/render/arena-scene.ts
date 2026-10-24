@@ -7,6 +7,7 @@ import {
   areaFlashAlpha,
   decayAreaFlashes,
   healthFraction,
+  placeFloating,
   teamColour,
   type AreaFlash,
 } from "./arena-snapshot.js";
@@ -72,7 +73,7 @@ export class ArenaScene extends Phaser.Scene {
 
   /** Queue a floating number/label above a world position. */
   public addFloatingText(text: FloatingText): void {
-    this.floatingTexts.push(text);
+    this.floatingTexts.push({ ...text, position: placeFloating(this.floatingTexts, text) });
   }
 
   /** Flash where an area skill landed. */

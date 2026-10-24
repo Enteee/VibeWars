@@ -3,6 +3,7 @@ import { vec2 } from "@vibewars/game-core";
 import type { CombatMessage, MatchSnapshot } from "../net/match-connection.js";
 import {
   AREA_FLASH_SECONDS,
+  FLOATING_TEXT_SECONDS,
   teamColour,
   type AreaFlash,
   type FloatingText,
@@ -84,9 +85,10 @@ export function showCombatFeedback(
     scene.addFloatingText({
       id: nextFloatingId,
       text,
+      anchorId: subject.sessionId,
       position: vec2(subject.x, subject.y - 24),
       colour,
-      remainingSeconds: 1.2,
+      remainingSeconds: FLOATING_TEXT_SECONDS,
     });
   }
 }

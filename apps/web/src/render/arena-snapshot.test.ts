@@ -4,12 +4,15 @@ import { vec2 } from "@vibewars/game-core";
 
 import {
   AREA_FLASH_SECONDS,
+  FLOATING_TEXT_SECONDS,
+  placeFloating,
   areaFlashAlpha,
   decayAreaFlashes,
   actorAtPoint,
   healthFraction,
   teamColour,
   type ArenaSnapshot,
+  type FloatingText,
   type RenderableActor,
 } from "./arena-snapshot.js";
 
@@ -133,5 +136,58 @@ describe("area flashes", () => {
     const [older] = decayAreaFlashes([flash], 0.1);
     expect(older?.radius).toBe(81);
     expect(flash.remainingSeconds).toBe(AREA_FLASH_SECONDS);
+  });
+});
+
+describe("placeFloating", () => {
+  const AT = vec2(100, 100);
+  let nextId = 0;
+
+  /** A text on `anchorId`, `ageSeconds` old. */
+  function text(anchorId: string, ageSeconds = 0): FloatingText {
+    nextId += 1;
+    return {
+      id: nextId,
+      text: "−10",
+      anchorId,
+      position: AT,
+      colour: 0,
+      remainingSeconds: FLOATING_TEXT_SECONDS - ageSeconds,
+    };
+  }
+
+  /** Place `count` texts on one anchor at once, as the scene would. */
+  function burst(count: number): FloatingText[] {
+    const live: FloatingText[] = [];
+    for (let i = 0; i < count; i += 1) {
+      const next = text("a");
+      live.push({ ...next, position: placeFloating(live, next) });
+    }
+    return live;
+  }
+
+  it("leaves the first text on an actor where it is", () => {
+    expect(placeFloating([], text("a"))).toEqual(AT);
+  });
+
+  it("stacks the 2nd and 3rd 16 and 32 px higher, on opposite sides", () => {
+    const [, second, third] = burst(3);
+    expect(second?.position).toEqual(vec2(110, 84));
+    expect(third?.position).toEqual(vec2(90, 68));
+  });
+
+  it("does not offset a text on a different actor", () => {
+    expect(placeFloating([text("a"), text("a")], text("b"))).toEqual(AT);
+  });
+
+  it("does not count a text 0.4 s old or older", () => {
+    expect(placeFloating([text("a", 0.4), text("a", 1)], text("a"))).toEqual(AT);
+    expect(placeFloating([text("a", 0.39)], text("a"))).toEqual(vec2(110, 84));
+  });
+
+  it("puts the 7th at the slot-5 offset rather than climbing off-screen", () => {
+    const placed = burst(7);
+    expect(placed[5]?.position).toEqual(vec2(110, 20));
+    expect(placed[6]?.position).toEqual(vec2(110, 20));
   });
 });

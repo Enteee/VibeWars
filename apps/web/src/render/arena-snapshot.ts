@@ -43,10 +43,44 @@ export type RenderableWall = RectRenderableWall | PolygonRenderableWall;
 export interface FloatingText {
   readonly id: number;
   readonly text: string;
+  /** The actor it floats over, so texts landing together can stack. */
+  readonly anchorId: string;
   readonly position: Vec2;
   readonly colour: number;
   /** Seconds of life remaining; the scene fades and removes it. */
   remainingSeconds: number;
+}
+
+/** How long a floating text lives. */
+export const FLOATING_TEXT_SECONDS = 1.2;
+
+/** Texts on one actor younger than this landed "together" and stack. */
+const STACK_WINDOW_SECONDS = 0.4;
+/** How far each stacked text sits above the one before it, and to the side. */
+const STACK_RISE_PX = 16;
+const STACK_FAN_PX = 10;
+/** The highest slot: a burst reuses it rather than climbing off-screen. */
+const STACK_MAX_SLOT = 5;
+
+/**
+ * Where a new floating text goes (#54). Hits that land on one actor
+ * together would otherwise draw on top of each other as one smear, so
+ * each extra one sits a slot higher, alternating sides.
+ */
+export function placeFloating(live: readonly FloatingText[], next: FloatingText): Vec2 {
+  const together = live.filter(
+    (text) =>
+      text.anchorId === next.anchorId &&
+      FLOATING_TEXT_SECONDS - text.remainingSeconds < STACK_WINDOW_SECONDS,
+  ).length;
+  const slot = Math.min(together, STACK_MAX_SLOT);
+  if (slot === 0) {
+    return next.position;
+  }
+  return {
+    x: next.position.x + (slot % 2 === 1 ? STACK_FAN_PX : -STACK_FAN_PX),
+    y: next.position.y - STACK_RISE_PX * slot,
+  };
 }
 
 /**
