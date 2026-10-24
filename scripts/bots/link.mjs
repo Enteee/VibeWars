@@ -34,6 +34,7 @@ import { fileURLToPath } from "node:url";
 import { ROLES } from "./hub-policy.mjs";
 import {
   TOPIC_TITLES,
+  admitUser,
   deliverPeer,
   formatMirror,
   formatQuestion,
@@ -50,13 +51,15 @@ import {
 
 /**
  * Something for the mirror to send: a peer message still to be formatted,
- * an item for the Operator topic (a question, an edit of one, a hint), or
- * a reply already bound for a topic (the "which role?" under a message
- * addressed to nobody).
+ * an item for the Operator topic (a question, an edit of one, a hint), a
+ * reply already bound for a topic (the "which role?" under a message
+ * addressed to nobody), or support's answer to a user, for the Support
+ * topic.
  *
  * @typedef {{ peer: import("./protocol.mjs").Mirrored }
  *   | { operator: Omit<import("./protocol.mjs").Queued, "topicId"> }
- *   | { reply: import("./protocol.mjs").Queued }} Outgoing
+ *   | { reply: import("./protocol.mjs").Queued }
+ *   | { support: import("./protocol.mjs").SupportReply }} Outgoing
  */
 
 /** How long to leave a topic Telegram would not create before asking again. */
@@ -468,7 +471,9 @@ class Company {
  * Operator messages, from Telegram into the inboxes they are for.
  *
  * Answers in the Operator topic go to `routeAnswer` first; everything else
- * to `routeInbound`.
+ * to `routeInbound`. A user's message in the Support topic also has to get
+ * past `admitUser`, per user, in memory: a restart forgets who was
+ * flooding, which costs at most one more minute of their messages.
  *
  * @param {Company} company
  * @param {Outgoing[]} mirror Operator-topic edits and hints, and "which role?" replies, go here
@@ -476,6 +481,8 @@ class Company {
  */
 async function pollInbound(company, mirror) {
   let backoff = 1000;
+  /** @type {Map<string, import("./protocol.mjs").UserFlood>} keyed by `user:<id>` */
+  const floods = new Map();
   for (;;) {
     try {
       const updates = /** @type {unknown[]} */ (
@@ -487,6 +494,7 @@ async function pollInbound(company, mirror) {
       );
       const operatorTopicId = company.registry.operator?.topicId ?? null;
       const managerTopicId = company.registry.manager?.topicId;
+      const supportTopicId = company.registry.support?.topicId;
       for (const raw of updates) {
         const update = obj(raw);
         if (typeof update.update_id === "number") {
@@ -508,9 +516,24 @@ async function pollInbound(company, mirror) {
           roles: ROLES,
           ...(managerTopicId === undefined ? {} : { managerTopicId }),
           ...(operatorTopicId === null ? {} : { operatorTopicId }),
+          ...(supportTopicId === undefined ? {} : { supportTopicId }),
         });
         if (routed === null) {
           continue;
+        }
+        if (routed.line.kind === "user") {
+          const gate = admitUser(floods.get(routed.line.from), Date.now());
+          floods.set(routed.line.from, gate.state);
+          if (gate.warn) {
+            // Quoted, though the id is a number Telegram gave us (#115).
+            console.error(
+              `[link] support: dropping messages from ${JSON.stringify(routed.line.from)}, ` +
+                "over the per-user cap",
+            );
+          }
+          if (!gate.admit) {
+            continue;
+          }
         }
         for (const role of routed.to) {
           appendInbox(company.at.bus, role, routed.line);
@@ -616,6 +639,9 @@ async function drainOutboxes(company, mirror) {
         if (delivered.mirror !== null) {
           mirror.push({ peer: delivered.mirror });
         }
+        if (delivered.reply !== null) {
+          mirror.push({ support: delivered.reply });
+        }
         if (obj(payload).kind === "ask") {
           /** @type {Record<string, unknown>} */
           let receipt = { error: delivered.notice?.text ?? "refused" };
@@ -675,16 +701,26 @@ async function mirrorOut(company, mirror) {
         mirror.shift();
         continue;
       }
-      const name = "peer" in outgoing ? mirrorTopic(outgoing.peer) : "operator";
+      /** @type {import("./protocol.mjs").TopicName | null} */
+      let name = "operator";
+      if ("peer" in outgoing) {
+        name = mirrorTopic(outgoing.peer);
+      } else if ("support" in outgoing) {
+        name = "support";
+      }
       const topicId = name === null ? null : await company.topic(name);
       if (name !== null && topicId === null) {
         break;
       }
-      queue.push(
-        "peer" in outgoing
-          ? { topicId, ...formatMirror(outgoing.peer, { repo: company.repo }) }
-          : { topicId, ...outgoing.operator },
-      );
+      if ("peer" in outgoing) {
+        queue.push({ topicId, ...formatMirror(outgoing.peer, { repo: company.repo }) });
+      } else if ("support" in outgoing) {
+        // Plain text, no entities: what support writes is shown as written.
+        const { text, replyTo } = outgoing.support;
+        queue.push({ topicId, text, entities: [], ...(replyTo === null ? {} : { replyTo }) });
+      } else {
+        queue.push({ topicId, ...outgoing.operator });
+      }
       mirror.shift();
     }
 
@@ -807,9 +843,11 @@ async function serve() {
     ensureBus(at.bus, role);
   }
   console.error(`[link] serving ${String(ROLES.length)} roles on one bot`);
-  // The operator writes to the manager in the Manager topic, so it has to
-  // exist before the manager has said anything.
+  // The operator writes to the manager in the Manager topic, and users to
+  // support in the Support topic, so both have to exist before either role
+  // has said anything.
   await company.topic("manager");
+  await company.topic("support");
 
   /** @type {Outgoing[]} */
   const mirror = [];

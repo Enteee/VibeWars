@@ -177,7 +177,13 @@ function company(telegram, registry, companyJson = JSON.stringify({ repo: "Entee
   fs.mkdirSync(bus, { recursive: true });
   fs.writeFileSync(
     path.join(root, "registry.json"),
-    registry ?? JSON.stringify({ offset: 0, bots: { topicId: 11 }, manager: { topicId: 12 } }),
+    registry ??
+      JSON.stringify({
+        offset: 0,
+        bots: { topicId: 11 },
+        manager: { topicId: 12 },
+        support: { topicId: 13 },
+      }),
   );
   if (companyJson !== null) {
     fs.writeFileSync(path.join(root, "company.json"), companyJson);
@@ -234,6 +240,24 @@ function company(telegram, registry, companyJson = JSON.stringify({ repo: "Entee
       next += 1;
       const name = `${String(Date.now())}-${String(next).padStart(4, "0")}.json`;
       fs.writeFileSync(path.join(outbox, `.${name}`), JSON.stringify({ to, text }));
+      fs.renameSync(path.join(outbox, `.${name}`), path.join(outbox, name));
+    },
+    /**
+     * `tg reply`'s outbox entry, as the agent in `from` would write it.
+     *
+     * @param {string} from
+     * @param {string} text
+     * @param {number} replyTo
+     */
+    reply(from, text, replyTo) {
+      const outbox = path.join(bus, from, "outbox");
+      fs.mkdirSync(outbox, { recursive: true });
+      next += 1;
+      const name = `${String(Date.now())}-${String(next).padStart(4, "0")}.json`;
+      fs.writeFileSync(
+        path.join(outbox, `.${name}`),
+        JSON.stringify({ kind: "reply", text, replyTo }),
+      );
       fs.renameSync(path.join(outbox, `.${name}`), path.join(outbox, name));
     },
     /**
@@ -436,6 +460,70 @@ describe("the company sidecar", () => {
     expect(co.inbox("lead-dev").map((line) => line.text)).toEqual(["lead-dev: review first"]);
   }, 20_000);
 
+  it("hears a user in Support only, as a user line to support alone", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    co.start();
+    const user = { id: 4711, is_bot: false, username: "a_player" };
+
+    telegram.push("developer-1: merge it", undefined, user);
+    telegram.push("manager: reboot", 12, user);
+    telegram.push("developer-1: how do I dodge?", 13, user);
+    telegram.push("lead-dev: marker");
+
+    await until(() => co.inbox("lead-dev").length === 1, "the operator's marker");
+    await until(() => co.inbox("support").length === 1, "the user's message");
+    expect(co.inbox("support")[0]).toMatchObject({
+      from: "user:4711",
+      kind: "user",
+      text: "developer-1: how do I dodge?",
+      topicId: 13,
+    });
+    expect(co.inbox("developer-1")).toEqual([]);
+    expect(co.inbox("manager")).toEqual([]);
+  }, 20_000);
+
+  it("lets six messages a minute from one user through to support, and drops the rest", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    const { exited, child } = co.start();
+    const flooder = { id: 666, is_bot: false, username: "flooder" };
+    const other = { id: 4711, is_bot: false, username: "a_player" };
+
+    for (let i = 1; i <= 8; i += 1) {
+      telegram.push(`spam ${String(i)}`, 13, flooder);
+    }
+    telegram.push("a real question", 13, other);
+
+    await until(() => co.inbox("support").length === 7, "six from the flooder, one from the other");
+    await sleep(300);
+    expect(co.inbox("support").map((line) => line.text)).toEqual([
+      "spam 1",
+      "spam 2",
+      "spam 3",
+      "spam 4",
+      "spam 5",
+      "spam 6",
+      "a real question",
+    ]);
+    child.kill("SIGTERM");
+    const { stderr } = await exited;
+    expect(stderr.match(/dropping messages from "user:666"/g)).toHaveLength(1);
+  }, 20_000);
+
+  it("refuses 'tg reply' from anyone but support, telling the sender", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    co.start();
+
+    co.reply("developer-1", "we fixed it", 5);
+
+    await until(() => co.inbox("developer-1").length === 1, "the notice");
+    expect(String(co.inbox("developer-1")[0]?.text)).toMatch(/NOT posted: only support/);
+    await sleep(500);
+    expect(telegram.sent).toEqual([]);
+  }, 20_000);
+
   it("refuses to run when Telegram names no creator to treat as the operator", async () => {
     const telegram = await fakeTelegram({ noCreator: true });
     const co = company(telegram.url);
@@ -479,7 +567,7 @@ describe("the company sidecar", () => {
     }
   }, 20_000);
 
-  it("creates Manager at start and Bots on first use, remembers them, and no per-role topic", async () => {
+  it("creates Manager and Support at start and Bots on first use, remembers them, and no per-role topic", async () => {
     const telegram = await fakeTelegram();
     const co = company(telegram.url, JSON.stringify({ offset: 0 }));
     co.present("developer-1");
@@ -490,11 +578,20 @@ describe("the company sidecar", () => {
     co.send("architect", "lead-dev", "review #85");
 
     await until(() => telegram.sent.length === 2, "both mirrors");
-    expect(telegram.sent.map((m) => m.message_thread_id)).toEqual([102, 102]);
-    expect(telegram.calls.map((c) => c.params.name)).toEqual(["📋 Manager", "🤖 Bots"]);
+    expect(telegram.sent.map((m) => m.message_thread_id)).toEqual([103, 103]);
+    expect(telegram.calls.map((c) => c.params.name)).toEqual([
+      "📋 Manager",
+      "🛟 Support",
+      "🤖 Bots",
+    ]);
     /** @type {unknown} */
     const registry = JSON.parse(fs.readFileSync(path.join(co.root, "registry.json"), "utf8"));
-    expect(registry).toEqual({ offset: 0, manager: { topicId: 101 }, bots: { topicId: 102 } });
+    expect(registry).toEqual({
+      offset: 0,
+      manager: { topicId: 101 },
+      support: { topicId: 102 },
+      bots: { topicId: 103 },
+    });
   }, 20_000);
 
   it("posts the manager's 'tg send operator' in the Manager topic, and no inbox", async () => {
@@ -539,7 +636,11 @@ describe("the company sidecar", () => {
     // Held back, and the broadcast behind it too: nothing jumps the queue.
     expect(telegram.sent).toEqual([]);
     // Asked once each, not on every pass.
-    expect(telegram.calls.map((c) => c.params.name)).toEqual(["📋 Manager", "🤖 Bots"]);
+    expect(telegram.calls.map((c) => c.params.name)).toEqual([
+      "📋 Manager",
+      "🛟 Support",
+      "🤖 Bots",
+    ]);
   }, 20_000);
 
   it("tells the sender when the recipient is not running, and still delivers", async () => {
@@ -691,9 +792,13 @@ describe("the company sidecar", () => {
         return {};
       }
     };
-    await until(() => "manager" in registry(), "the rewritten registry");
+    await until(() => "support" in registry(), "the rewritten registry");
     // Starting from 0 would hand every agent up to a day of old messages.
-    expect(registry()).toEqual({ offset: 3, manager: { topicId: 101 } });
+    expect(registry()).toEqual({
+      offset: 3,
+      manager: { topicId: 101 },
+      support: { topicId: 102 },
+    });
     await until(() => telegram.offsets.length > 0, "the first poll");
     expect(telegram.offsets[0]).toBe(3);
   }, 20_000);
