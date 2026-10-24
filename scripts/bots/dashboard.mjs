@@ -10,7 +10,6 @@
  * silently stops at `In Review` because there is no reviewer looks identical
  * to a pipeline where everyone is just slow, and the difference matters.
  */
-import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -20,6 +19,7 @@ import { ROLES } from "./hub-policy.mjs";
 
 const ROOT = process.env.VIBEWARS_BOT_ROOT ?? path.join(process.cwd(), ".bots");
 const BUS = path.join(ROOT, "bus");
+const HUB = path.join(ROOT, "hub");
 const REFRESH_MS = 20_000;
 
 /**
@@ -37,13 +37,33 @@ const COLUMN_OWNERS = {
 };
 
 /**
- * @param {string} file
- * @param {string[]} args
+ * A JSON file hubd writes, or `null` before it has written one.
+ *
+ * The dashboard never calls GitHub itself. It used to poll the board every
+ * 20 s, which was the largest single drain on the shared GraphQL budget
+ * (issue #17); hubd's own snapshot is at most a minute old whenever anyone is
+ * working, and costs nothing extra to read.
+ *
+ * @param {string} name
+ * @returns {Record<string, unknown> | null}
+ */
+function hubFile(name) {
+  try {
+    /** @type {unknown} */
+    const parsed = JSON.parse(fs.readFileSync(path.join(HUB, name), "utf8"));
+    return obj(parsed);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @param {number} at epoch milliseconds
  * @returns {string}
  */
-function capture(file, args) {
-  const result = spawnSync(file, args, { encoding: "utf8", cwd: process.cwd() });
-  return typeof result.stdout === "string" ? result.stdout : "";
+function hhmm(at) {
+  const time = new Date(at);
+  return `${String(time.getHours()).padStart(2, "0")}:${String(time.getMinutes()).padStart(2, "0")}`;
 }
 
 /**
@@ -144,37 +164,29 @@ function render() {
   if (cfg === null) {
     console.log("board: not set up yet — run claude-llc-init");
   } else {
-    const raw = capture("gh", [
-      "project",
-      "item-list",
-      String(cfg.project),
-      "--owner",
-      cfg.owner,
-      "--format",
-      "json",
-      "--limit",
-      "200",
-    ]);
+    const snapshot = hubFile("board.json");
     /** @type {Record<string, { number: number, title: string }[]>} */
     const byColumn = {};
-    try {
-      /** @type {unknown} */
-      const parsed = JSON.parse(raw);
-      for (const item of Array.isArray(obj(parsed).items) ? obj(parsed).items : []) {
-        const row = obj(item);
-        const content = obj(row.content);
-        const column = typeof row.status === "string" && row.status !== "" ? row.status : "(none)";
-        byColumn[column] ??= [];
-        byColumn[column].push({
-          number: typeof content.number === "number" ? content.number : 0,
-          title: typeof content.title === "string" ? content.title : "",
-        });
-      }
-    } catch {
-      /* gh unavailable or board empty */
+    const items = obj(snapshot?.board).items;
+    for (const item of Array.isArray(items) ? items : []) {
+      const row = obj(item);
+      const content = obj(row.content);
+      const column = typeof row.status === "string" && row.status !== "" ? row.status : "(none)";
+      byColumn[column] ??= [];
+      byColumn[column].push({
+        number: typeof content.number === "number" ? content.number : 0,
+        title: typeof content.title === "string" ? content.title : "",
+      });
     }
 
-    console.log("BOARD");
+    const at = snapshot?.at;
+    // The snapshot is only refreshed when someone reads the board, so an old
+    // one means a quiet company, not a broken dashboard.
+    console.log(
+      typeof at === "number"
+        ? `BOARD  as of ${hhmm(at)}`
+        : "BOARD  (no snapshot yet — hubd writes one on the first board read)",
+    );
     let total = 0;
     for (const column of cfg.columns) {
       const cards = byColumn[column] ?? [];
@@ -190,6 +202,24 @@ function render() {
     if (total === 0) {
       console.log("      (empty — tell the architect what you want built)");
     }
+  }
+
+  /* the GitHub budget ----------------------------------------------------- */
+  const budget = hubFile("ratelimit.json");
+  console.log("");
+  if (
+    budget === null ||
+    typeof budget.remaining !== "number" ||
+    typeof budget.limit !== "number" ||
+    typeof budget.resetAt !== "number"
+  ) {
+    console.log("GITHUB  budget unknown (hubd has not checked yet)");
+  } else {
+    const empty = budget.remaining === 0;
+    console.log(
+      `GITHUB  GraphQL ${String(budget.remaining)}/${String(budget.limit)} left, ` +
+        `resets ${hhmm(budget.resetAt)}${empty ? "  <- RATE-LIMITED, agents are waiting" : ""}`,
+    );
   }
 
   /* the roster ------------------------------------------------------------ */

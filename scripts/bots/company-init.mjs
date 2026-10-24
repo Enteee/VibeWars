@@ -147,44 +147,47 @@ if (projectNumber === 0) {
 
 /* 3. the Status column set ------------------------------------------------- */
 
-const fields = gh([
-  "project",
-  "field-list",
-  String(projectNumber),
-  "--owner",
-  OWNER,
-  "--format",
-  "json",
-  "--limit",
-  "50",
-]);
-if (fields.code !== 0) {
-  console.error(`claude-llc-init: could not read the board's fields\n${fields.stderr}`);
-  process.exit(1);
-}
-
-/** @type {{ id: string, name: string, options: string[] } | null} */
-let status = null;
-for (const raw of Array.isArray(obj(JSON.parse(fields.stdout)).fields)
-  ? obj(JSON.parse(fields.stdout)).fields
-  : []) {
-  const field = obj(raw);
-  if (field.name === "Status") {
-    status = {
-      id: String(field.id),
-      name: "Status",
-      options: (Array.isArray(field.options) ? field.options : []).map((o) => String(obj(o).name)),
-    };
+/**
+ * The Status field, with every option's id, as GitHub has it now.
+ *
+ * @returns {{ id: string, options: { name: string, id: string }[] }}
+ */
+function readStatus() {
+  const fields = gh([
+    "project",
+    "field-list",
+    String(projectNumber),
+    "--owner",
+    OWNER,
+    "--format",
+    "json",
+    "--limit",
+    "50",
+  ]);
+  if (fields.code !== 0) {
+    console.error(`claude-llc-init: could not read the board's fields\n${fields.stderr}`);
+    process.exit(1);
   }
-}
-
-if (status === null) {
+  const listed = obj(parse(fields.stdout)).fields;
+  for (const raw of Array.isArray(listed) ? listed : []) {
+    const field = obj(raw);
+    if (field.name === "Status") {
+      return {
+        id: String(field.id),
+        options: (Array.isArray(field.options) ? field.options : []).map((o) => ({
+          name: String(obj(o).name),
+          id: String(obj(o).id),
+        })),
+      };
+    }
+  }
   console.error("claude-llc-init: the board has no Status field, which should not happen");
   process.exit(1);
 }
 
+let status = readStatus();
 const wanted = COLUMNS.join("|");
-if (status.options.join("|") === wanted) {
+if (status.options.map((option) => option.name).join("|") === wanted) {
   say("columns", "already correct");
 } else {
   // A fresh board comes with Todo / In Progress / Done. Replacing the option
@@ -201,6 +204,8 @@ if (status.options.join("|") === wanted) {
     process.exit(1);
   }
   say("columns", `set to ${COLUMNS.join(" -> ")}`);
+  // Replacing the option set gives every option a new id.
+  status = readStatus();
 }
 
 /* 4. link the board to the repository ------------------------------------- */
@@ -300,6 +305,13 @@ const config = {
   name: NAME,
   project: projectNumber,
   projectId,
+  // Stored so `board move` is one mutation instead of four lookups and one
+  // mutation, which mattered once the company kept hitting GitHub's rate
+  // limit (issue #17).
+  statusField: {
+    id: status.id,
+    options: Object.fromEntries(status.options.map((option) => [option.name, option.id])),
+  },
   columns: COLUMNS,
   expectedChecks: EXPECTED_CHECKS,
 };
