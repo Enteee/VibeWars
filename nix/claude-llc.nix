@@ -63,6 +63,8 @@ let
       claude-llc              bring the company up and attach
       claude-llc status       what is running, without attaching
       claude-llc stop         stop everything
+      claude-llc up           bring the company up without attaching (a reboot uses this)
+      claude-llc reboot-abort cancel a reboot the manager scheduled
       claude-llc --help
 
     One tmux window per employee plus a dashboard. The session opens on the
@@ -74,6 +76,11 @@ let
     starting a second one. Bottom-right of the status bar has clickable
     "detach" (leave it running) and "stop" (shut every agent down). Ctrl-C in
     an employee's window restarts just that employee, keeping its memory.
+
+    After company code changes land on main, the manager can reboot the
+    company onto it (`company reboot "<reason>"`): everyone is told, gets up
+    to ten minutes to commit and say ready, and the company comes back on the
+    new main, if your checkout is a clean main that fast-forwards to it.
 
     Employees coordinate over the Telegram group and take their work from the
     GitHub Projects board. Inside each sandbox: `tg` for colleagues, `board`
@@ -103,6 +110,12 @@ let
     }
   '';
 
+  # The last step of a company reboot (#21), started by the supervisor in a
+  # session of its own: see scripts/bots/restart.mjs.
+  restarter = pkgs.writeShellScript "claude-llc-restart" ''
+    exec ${node} ${llcScripts}/restart.mjs
+  '';
+
   claudeLlc = ''
         set -euo pipefail
 
@@ -113,6 +126,8 @@ let
         usage() {
       cat ${llcUsage}
     }
+
+        attach=1
 
         case "''${1-}" in
           -h | --help)
@@ -130,6 +145,18 @@ let
               if pgrep -f "$d.mjs" >/dev/null 2>&1; then echo "  $d: running"; else echo "  $d: stopped"; fi
             done
             if pgrep -f "link.mjs serve" >/dev/null 2>&1; then echo "  telegram: running"; else echo "  telegram: stopped"; fi
+            exit 0
+            ;;
+          up)
+            attach=0
+            ;;
+          reboot-abort)
+            if [ -e "$VIBEWARS_BOT_ROOT/reboot.json" ]; then
+              rm -f "$VIBEWARS_BOT_ROOT/reboot.json"
+              echo "reboot aborted; the supervisor tells everyone within 30s"
+            else
+              echo "no reboot is scheduled"
+            fi
             exit 0
             ;;
           stop)
@@ -170,9 +197,12 @@ let
           fi
           if ! pgrep -f supervisor.mjs >/dev/null 2>&1; then
             echo "claude-llc: supervisor was not running; restarting it."
-            ${node} ${llcScripts}/supervisor.mjs >>"$VIBEWARS_BOT_ROOT/hub/supervisor.log" 2>&1 &
+            VIBEWARS_LLC_RESTART=${restarter} ${node} ${llcScripts}/supervisor.mjs >>"$VIBEWARS_BOT_ROOT/hub/supervisor.log" 2>&1 &
           fi
 
+          if [ "$attach" = 0 ]; then
+            exit 0
+          fi
           exec ${tmux} attach-session -t "$SESSION"
         fi
 
@@ -207,6 +237,13 @@ let
           echo "claude-llc: warning: could not create a backup bundle" >&2
         fi
 
+        # What this boot loaded, and when. hubd reads it to decide whether a
+        # reboot has new company code to load, and to keep reboots 30 minutes
+        # apart (scripts/bots/reboot.mjs).
+        printf '{"sha":"%s","at":%s}\n' \
+          "$(git -C "$DEVENV_ROOT" rev-parse HEAD)" "$(date +%s%3N)" \
+          >"$VIBEWARS_BOT_ROOT/boot.json"
+
         # ------------------------------------------------------------------------
         # The daemons. hubd holds the only GitHub credential in the system.
         # ------------------------------------------------------------------------
@@ -233,7 +270,7 @@ let
             "claude-llc-agent $role"
         done
 
-        ${node} ${llcScripts}/supervisor.mjs >>"$VIBEWARS_BOT_ROOT/hub/supervisor.log" 2>&1 &
+        VIBEWARS_LLC_RESTART=${restarter} ${node} ${llcScripts}/supervisor.mjs >>"$VIBEWARS_BOT_ROOT/hub/supervisor.log" 2>&1 &
         echo "claude-llc: supervisor started (log: .bots/hub/supervisor.log)"
 
         # ----------------------------------------------------------------------
@@ -251,6 +288,11 @@ let
         ${tmux} set-option -t "$SESSION" status-right \
           "#[range=user|detach] detach #[norange]|#[range=user|stop] stop #[norange] "
         ${tmux} source-file ${llcTmuxConf}
+
+        if [ "$attach" = 0 ]; then
+          echo "claude-llc: the company is up; attach with claude-llc"
+          exit 0
+        fi
 
         # Opens on the architect, which is where you type.
         if ${tmux} select-window -t "$SESSION:architect" 2>/dev/null; then

@@ -19,6 +19,7 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import { GIT_ENV, GIT_HARDENING } from "./git-hardening.mjs";
 import { isBoardRead, limitedMessage, parseRateLimit, usesGraphql } from "./hub-budget.mjs";
 import { hasFilter } from "./hub-filter.mjs";
 import { approvalsSatisfied, checksSatisfied, explainGuard } from "./hub-guards.mjs";
@@ -33,6 +34,7 @@ import {
   renderView,
 } from "./hub-rest.mjs";
 import { obj } from "./protocol.mjs";
+import { DRAIN_MS, clock, rebootAllowed } from "./reboot.mjs";
 import { ROLES, authorize, parseMerge, parseReview, touchesGate } from "./hub-policy.mjs";
 import {
   boardNumbers,
@@ -75,6 +77,12 @@ const RATE_LIMIT = path.join(HUB, "ratelimit.json");
 const MIRROR = path.join(HUB, ".git-mirror");
 /** An empty directory hubd owns, where gh runs, so gh reads no checkout. */
 const GH_CWD = path.join(HUB, ".gh-cwd");
+/** The commit and time the company last started from (claude-llc writes it). */
+const BOOT = path.join(ROOT, "boot.json");
+/** A reboot hubd has accepted and the supervisor has not yet carried out. */
+const REBOOT = path.join(ROOT, "reboot.json");
+/** Present while hubd is serving a request, so a reboot waits for it. */
+const BUSY = path.join(HUB, "hubd.busy");
 
 /**
  * Commands that accept `--repo`. The repository is pinned by us rather than
@@ -227,33 +235,6 @@ function servedByRest(kind, argv) {
 }
 
 /**
- * Settings that make git run a command: hooks, an fsmonitor, an SSH or proxy
- * command, a credential or askpass helper, an external diff, and the `ext::`
- * transport. hubd runs git only in its mirror, but it fetches from the
- * company's shared repository, which every agent can write, and git hands
- * `-c` on to the upload-pack it runs there. `-c` beats that repository's
- * own config, so these pin each to something inert (#26).
- */
-const GIT_HARDENING = [
-  "-c",
-  "core.hooksPath=/dev/null",
-  "-c",
-  "core.fsmonitor=false",
-  "-c",
-  "core.sshCommand=ssh",
-  "-c",
-  "core.gitProxy=",
-  "-c",
-  "core.askPass=",
-  "-c",
-  "credential.helper=",
-  "-c",
-  "diff.external=",
-  "-c",
-  "protocol.ext.allow=never",
-];
-
-/**
  * git in hubd's mirror, hardened, with no system or global config, so
  * nothing outside hubd changes what runs. The remote is SSH, so no
  * credential helper is needed.
@@ -262,10 +243,7 @@ const GIT_HARDENING = [
  * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
  */
 function git(args) {
-  return run("git", [...GIT_HARDENING, `--git-dir=${MIRROR}`, ...args], HUB, {
-    GIT_CONFIG_NOSYSTEM: "1",
-    GIT_CONFIG_GLOBAL: "/dev/null",
-  });
+  return run("git", [...GIT_HARDENING, `--git-dir=${MIRROR}`, ...args], HUB, GIT_ENV);
 }
 
 /**
@@ -840,6 +818,139 @@ async function handle(request) {
   return response;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Company reboot                                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The commit the company was started from, and when: written by claude-llc
+ * on every start, read here to decide whether a reboot has anything to load.
+ *
+ * @returns {{ sha: string, at: number } | null}
+ */
+function readBoot() {
+  try {
+    const raw = obj(JSON.parse(fs.readFileSync(BOOT, "utf8")));
+    return typeof raw.sha === "string" &&
+      /^[0-9a-f]{40}$/.test(raw.sha) &&
+      typeof raw.at === "number"
+      ? { sha: raw.sha, at: raw.at }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The reboot waiting for the supervisor to carry it out, if any.
+ *
+ * @returns {import("./reboot.mjs").Reboot | null}
+ */
+function readReboot() {
+  try {
+    const raw = obj(JSON.parse(fs.readFileSync(REBOOT, "utf8")));
+    return typeof raw.requestedAt === "number" &&
+      typeof raw.reason === "string" &&
+      typeof raw.by === "string" &&
+      typeof raw.deadline === "number" &&
+      typeof raw.bootSha === "string"
+      ? {
+          requestedAt: raw.requestedAt,
+          reason: raw.reason,
+          by: raw.by,
+          deadline: raw.deadline,
+          bootSha: raw.bootSha,
+        }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The files `main` on GitHub changed since `sha`, read in the mirror.
+ *
+ * @param {string} sha
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string[] | null>} `null` when that could not be worked out
+ */
+async function changedSince(sha, cfg) {
+  const main = await git([
+    "fetch",
+    "-q",
+    "--no-tags",
+    remoteUrl(cfg),
+    "+refs/heads/main:refs/heads/main",
+  ]);
+  if (main.code !== 0) {
+    return null;
+  }
+  const log = await git(["log", "--format=", "--name-only", `${sha}..main`]);
+  return log.code === 0 ? log.stdout.split("\n").filter((line) => line !== "") : null;
+}
+
+/**
+ * Schedule or abort a company reboot (#21). hubd only checks and records
+ * it in `.bots/reboot.json`; the supervisor, which watches every pane,
+ * drains the company and starts the restarter.
+ *
+ * @param {string} role
+ * @param {string[]} argv `["request", reason]` or `["abort"]`
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function reboot(role, argv, cfg) {
+  const kind = "reboot";
+  const pending = readReboot();
+  if (argv[0] === "abort") {
+    if (pending === null) {
+      return { allow: true, code: 1, stdout: "", stderr: "company: no reboot is scheduled\n" };
+    }
+    fs.rmSync(REBOOT, { force: true });
+    audit({ role, kind, argv, decision: "allowed" });
+    return {
+      allow: true,
+      code: 0,
+      stdout: "Reboot aborted. The supervisor tells everyone.\n",
+      stderr: "",
+    };
+  }
+
+  const boot = readBoot();
+  const now = Date.now();
+  const allowed = rebootAllowed({
+    bootSha: boot?.sha ?? null,
+    changedPaths: boot === null ? null : await changedSince(boot.sha, cfg),
+    lastRebootAt: boot?.at ?? null,
+    now,
+    pending,
+  });
+  if (!allowed.ok || boot === null) {
+    const reason = allowed.ok ? "the company's boot was not recorded" : allowed.reason;
+    audit({ role, kind, argv, decision: "refused", reason });
+    return { allow: false, reason, code: 77 };
+  }
+
+  /** @type {import("./reboot.mjs").Reboot} */
+  const scheduled = {
+    requestedAt: now,
+    reason: argv[1] ?? "",
+    by: role,
+    deadline: now + DRAIN_MS,
+    bootSha: boot.sha,
+  };
+  writeAtomic(REBOOT, JSON.stringify(scheduled));
+  audit({ role, kind, argv, decision: "allowed" });
+  return {
+    allow: true,
+    code: 0,
+    stdout:
+      `Reboot scheduled. The supervisor announces it within 30 s, and the company stops by ` +
+      `${clock(scheduled.deadline)} at the latest.\nAbort: company reboot --abort\n`,
+    stderr: "",
+  };
+}
+
 /**
  * Serve a request the policy has already allowed.
  *
@@ -864,6 +975,10 @@ async function serve(request, verdict, acting) {
   }
 
   const cfg = company();
+
+  if (kind === "reboot") {
+    return reboot(role, argv, cfg);
+  }
 
   // Before the guards, whose refusals would otherwise describe a pull request
   // the company is not supposed to know about.
@@ -1040,6 +1155,10 @@ async function drain(role) {
     } catch {
       continue;
     }
+    // Written before the request leaves the spool, so a reboot waiting for
+    // the company to go quiet never sees neither (#21): a merge or a push is
+    // not cut off by the company stopping underneath it.
+    fs.writeFileSync(BUSY, `${role}\n`);
     fs.rmSync(file, { force: true });
 
     const raw = /** @type {Record<string, unknown>} */ (parsed);
@@ -1060,6 +1179,8 @@ async function drain(role) {
         code: 1,
         stderr: `hubd: ${error instanceof Error ? error.message : "failed"}\n`,
       };
+    } finally {
+      fs.rmSync(BUSY, { force: true });
     }
 
     const id = name.replace(/\.json$/, "");
@@ -1077,10 +1198,7 @@ async function main() {
   const cfg = company();
   fs.mkdirSync(GH_CWD, { recursive: true });
   if (!fs.existsSync(MIRROR)) {
-    const init = await run("git", ["init", "--bare", "-q", MIRROR], HUB, {
-      GIT_CONFIG_NOSYSTEM: "1",
-      GIT_CONFIG_GLOBAL: "/dev/null",
-    });
+    const init = await run("git", ["init", "--bare", "-q", MIRROR], HUB, GIT_ENV);
     if (init.code !== 0) {
       console.error(`hubd: could not create ${MIRROR}: ${init.stderr}`);
       process.exit(1);

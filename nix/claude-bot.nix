@@ -57,6 +57,15 @@ let
     '';
   };
 
+  # `company reboot "<reason>"`: the manager reboots the company onto new
+  # main (#21). A hub request like any other; the policy says who may.
+  company = pkgs.writeShellApplication {
+    name = "company";
+    text = ''
+      exec ${node} ${botScripts}/hub.mjs company "$@"
+    '';
+  };
+
   tg = pkgs.writeShellApplication {
     name = "tg";
     text = ''
@@ -91,6 +100,7 @@ let
       tg
       hub
       board
+      company
     ]
   );
 

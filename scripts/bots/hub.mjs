@@ -15,6 +15,8 @@
  *   hub request-changes <pr> --sha <commit> <note>  reviewers only
  *     <commit> is the head you reviewed; a verdict on a moved head is refused
  *   hub whoami                       your role and what it may do
+ *   company reboot "<reason>"        manager only; also: company reboot --abort
+ *     (`company` is this script with `company` as its first word)
  *
  * `whoami` is answered locally, because the policy is pure and bundled in
  * here too: an agent should be able to find out what it is allowed to do
@@ -81,6 +83,8 @@ if (argv[0] === "whoami") {
     { acting: ACTING },
   );
   console.log(`  ${reviews.allow ? "yes" : "no "}  record review verdicts`);
+  const reboots = authorize(ROLE, { kind: "reboot", argv: ["abort"] }, { acting: ACTING });
+  console.log(`  ${reboots.allow ? "yes" : "no "}  reboot the company (company reboot)`);
 
   // Borrowed hats are stated loudly: an agent covering the merge seat as well
   // as both reviewer seats is self-certifying, and that should never be a
@@ -105,6 +109,17 @@ if (argv[0] === "push") {
   request = { kind: "push", argv: argv.slice(1) };
 } else if (argv[0] === "approve" || argv[0] === "request-changes") {
   request = { kind: "review", argv };
+} else if (argv[0] === "company") {
+  // `company reboot "<reason>"` and `company reboot --abort` (#21).
+  const [, verb, ...rest] = argv;
+  if (verb !== "reboot" || rest.length === 0) {
+    console.error('company: usage: company reboot "<reason>" | company reboot --abort');
+    process.exit(2);
+  }
+  request = {
+    kind: "reboot",
+    argv: rest.length === 1 && rest[0] === "--abort" ? ["abort"] : ["request", rest.join(" ")],
+  };
 } else {
   request = { kind: "gh", argv };
 }

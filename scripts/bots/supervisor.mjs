@@ -22,13 +22,28 @@
  * and that it never touches the pane the operator is looking at, so a nudge
  * cannot land in the middle of something you are typing.
  */
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { ROLES } from "./hub-policy.mjs";
+import { obj } from "./protocol.mjs";
+import { announcement, drainStep, readyReplies } from "./reboot.mjs";
 
 const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
+
+/** The company's state directory; the test imports this module without one. */
+const ROOT = process.env.VIBEWARS_BOT_ROOT ?? "";
+const BUS = path.join(ROOT, "bus");
+const HUB = path.join(ROOT, "hub");
+/** A reboot hubd accepted (see hubd.mjs and reboot.mjs). */
+const REBOOT = path.join(ROOT, "reboot.json");
+/** The same record, once handed to the restarter. */
+const REBOOTING = path.join(ROOT, "rebooting.json");
+/** `claude-llc-restart`, which claude-llc passes in. */
+const RESTARTER = process.env.VIBEWARS_LLC_RESTART;
 
 /** How often to sample each pane. */
 const SAMPLE_MS = 30_000;
@@ -106,11 +121,150 @@ function focusedWindow() {
   return active === "" ? null : active;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Company reboot (#21)                                                       */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The supervisor already watches every pane, so it is what drains the
+ * company for a reboot hubd has accepted: it tells everyone, waits for each
+ * agent to say `ready` or go idle, waits for any `hub` request in flight,
+ * and then starts the restarter, detached, because nothing inside the tmux
+ * session survives the session being killed.
+ */
+
+/**
+ * @param {string} file
+ * @returns {unknown}
+ */
+function readJson(file) {
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+/** @returns {import("./reboot.mjs").Reboot | null} */
+function readReboot() {
+  const raw = obj(readJson(REBOOT));
+  return typeof raw.requestedAt === "number" &&
+    typeof raw.reason === "string" &&
+    typeof raw.by === "string" &&
+    typeof raw.deadline === "number" &&
+    typeof raw.bootSha === "string"
+    ? {
+        requestedAt: raw.requestedAt,
+        reason: raw.reason,
+        by: raw.by,
+        deadline: raw.deadline,
+        bootSha: raw.bootSha,
+      }
+    : null;
+}
+
+/**
+ * A message to the company, sent through the manager's outbox, which is
+ * where the sidecar picks it up: every other agent gets it in its inbox,
+ * and the operator sees it in Telegram.
+ *
+ * @param {string} to a role, or "all"
+ * @param {string} text
+ * @returns {void}
+ */
+function say(to, text) {
+  const outbox = path.join(BUS, "manager", "outbox");
+  fs.mkdirSync(outbox, { recursive: true });
+  const name = `${String(Date.now()).padStart(14, "0")}-supervisor-${to}.json`;
+  const tmp = path.join(outbox, `.${name}.part`);
+  fs.writeFileSync(tmp, JSON.stringify({ to, text: `[reboot] ${text}` }));
+  fs.renameSync(tmp, path.join(outbox, name));
+}
+
+/** @returns {unknown[]} the manager's inbox, where the `ready` replies land */
+function managerInbox() {
+  try {
+    return fs
+      .readFileSync(path.join(BUS, "manager", "inbox.jsonl"), "utf8")
+      .split("\n")
+      .filter((line) => line.trim() !== "")
+      .map((line) => {
+        try {
+          return /** @type {unknown} */ (JSON.parse(line));
+        } catch {
+          return null;
+        }
+      });
+  } catch {
+    return [];
+  }
+}
+
+/** @returns {number} `hub` requests queued or being served right now */
+function inflight() {
+  let count = fs.existsSync(path.join(HUB, "hubd.busy")) ? 1 : 0;
+  for (const role of ROLES) {
+    try {
+      count += fs
+        .readdirSync(path.join(HUB, role, "req"))
+        .filter((name) => name.endsWith(".json") && !name.startsWith(".")).length;
+    } catch {
+      /* this role has never spoken to hubd */
+    }
+  }
+  return count;
+}
+
+/**
+ * Hand over to the restarter and stop supervising: the session it watches is
+ * about to go. The record moves to `rebooting.json` first, so the supervisor
+ * of the restarted company cannot mistake it for a new request.
+ *
+ * @param {import("./reboot.mjs").Reboot} reboot
+ * @returns {void}
+ */
+function restart(reboot) {
+  try {
+    fs.renameSync(REBOOT, REBOOTING);
+  } catch {
+    // Aborted between this sample and now.
+    say("all", "The company reboot was aborted. Carry on.");
+    return;
+  }
+  if (RESTARTER === undefined) {
+    say("all", "cannot restart: no restarter is configured. Operator: restart claude-llc by hand.");
+    return;
+  }
+  say("all", `Stopping the company now for: ${reboot.reason}`);
+  // setsid: its own session, so killing the tmux session and everything in
+  // it leaves the restarter running.
+  spawn("setsid", ["-f", RESTARTER], { detached: true, stdio: "ignore" }).unref();
+  console.error("supervisor: handed over to the restarter");
+  process.exit(0);
+}
+
+/* -------------------------------------------------------------------------- */
+
 async function main() {
   console.error(`supervisor: watching ${String(ROLES.length)} panes in ${SESSION}`);
 
+  /** @type {{ reboot: import("./reboot.mjs").Reboot, idle: Record<string, number>, drainedAt: number | null } | null} */
+  let drain = null;
+
   for (;;) {
+    const reboot = readReboot();
+    if (reboot === null && drain !== null) {
+      say("all", "The company reboot was aborted. Carry on.");
+      say("manager", "The company reboot was aborted.");
+      drain = null;
+    } else if (reboot !== null && drain?.reboot.requestedAt !== reboot.requestedAt) {
+      drain = { reboot, idle: {}, drainedAt: null };
+      say("all", announcement(reboot));
+    }
+
     const focused = focusedWindow();
+    /** @type {string[]} */
+    const running = [];
 
     for (const role of ROLES) {
       const target = `${SESSION}:${role}`;
@@ -119,13 +273,23 @@ async function main() {
         // No such window — the company may be partly up, which is fine.
         continue;
       }
+      running.push(role);
 
       const previous = state.get(role) ?? { snapshot: "", idle: 0, nudgedAt: 0 };
-      const idle = looksIdle(previous.snapshot, snapshot) ? previous.idle + 1 : 0;
+      const isIdle = looksIdle(previous.snapshot, snapshot);
+      const idle = isIdle ? previous.idle + 1 : 0;
       let nudgedAt = previous.nudgedAt;
 
+      if (drain !== null) {
+        drain.idle[role] = isIdle ? (drain.idle[role] ?? 0) + 1 : 0;
+      }
+
+      // No nudges during a drain: an agent that said `ready` is meant to sit.
       const dueANudge =
-        idle >= IDLE_SAMPLES && Date.now() - nudgedAt > NUDGE_COOLDOWN_MS && role !== focused;
+        drain === null &&
+        idle >= IDLE_SAMPLES &&
+        Date.now() - nudgedAt > NUDGE_COOLDOWN_MS &&
+        role !== focused;
 
       if (dueANudge) {
         // Typed as text then Enter separately, so a pane that is NOT actually
@@ -138,6 +302,23 @@ async function main() {
       }
 
       state.set(role, { snapshot, idle: dueANudge ? 0 : idle, nudgedAt });
+    }
+
+    if (drain !== null) {
+      const step = drainStep({
+        now: Date.now(),
+        reboot: drain.reboot,
+        running,
+        ready: readyReplies(managerInbox(), drain.reboot.requestedAt),
+        idle: drain.idle,
+        inflight: inflight(),
+        drainedAt: drain.drainedAt,
+      });
+      drain.drainedAt = step.drainedAt;
+      if (step.stop) {
+        restart(drain.reboot);
+        drain = null;
+      }
     }
 
     await sleep(SAMPLE_MS);
