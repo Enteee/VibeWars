@@ -109,8 +109,8 @@ test("activating a self-cast skill spends energy and applies its effect", async 
 test("a skill the player cannot afford is refused rather than cast", async ({ page }) => {
   await startQuickMatch(page);
 
-  // Spam the bar. Every rejection must be silent-but-safe: no crash, and
-  // energy must never go negative, whatever the client asks for.
+  // Spam the bar. Every rejection must be safe: no crash, and energy must
+  // never go negative, whatever the client asks for.
   for (let i = 0; i < 20; i += 1) {
     await page.keyboard.press(String((i % 8) + 1));
   }
@@ -118,4 +118,19 @@ test("a skill the player cannot afford is refused rather than cast", async ({ pa
 
   expect(await readEnergy(page)).toBeGreaterThanOrEqual(0);
   await expect(page.locator("#viewport canvas")).toBeVisible();
+});
+
+test("a refused cast says why, briefly, above the skill bar", async ({ page }) => {
+  await startQuickMatch(page);
+  const message = page.locator(".hud-message");
+  await expect(message).not.toHaveClass(/is-visible/);
+
+  // Slot 1 is Fireball, which needs a target, and nobody is targeted yet.
+  // Before issue #51 this key press did nothing at all.
+  await page.keyboard.press("1");
+
+  await expect(message).toHaveText("Select a target first.");
+  await expect(message).toHaveClass(/is-visible/);
+  // Gone again on its own, so it never becomes clutter.
+  await expect(message).not.toHaveClass(/is-visible/, { timeout: 4000 });
 });

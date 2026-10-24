@@ -109,6 +109,20 @@ export interface UseSkillIntent {
   readonly slot: number;
 }
 
+/**
+ * Sent as `"cast-refused"` to the caster alone when the server turns down a
+ * `UseSkillIntent`, so a key that did nothing can say why (issue #51).
+ * Advisory only: the refusal has already happened, and nothing about the
+ * match state rides on this message.
+ */
+export interface CastRefusedMessage {
+  /** The slot the client asked for. */
+  readonly slot: number;
+  readonly skillId: string;
+  /** game-core's `ActivationRejection`, e.g. `"out-of-range"`. */
+  readonly reason: string;
+}
+
 /** Options a client passes when creating or joining a match room. */
 export interface MatchJoinOptions {
   /** Must equal `PROTOCOL_VERSION`, or the join is refused. */

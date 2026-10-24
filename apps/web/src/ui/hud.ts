@@ -1,4 +1,4 @@
-import { getWeapon } from "@vibewars/game-core";
+import { getWeapon, type ActivationRejection } from "@vibewars/game-core";
 
 import type { MatchSnapshot, PlayerSnapshot, SkillSlot } from "../net/match-client.js";
 
@@ -26,6 +26,8 @@ export interface HudElements {
   readonly adrenalineText: HTMLElement;
   readonly statusList: HTMLElement;
   readonly skillBar: HTMLElement;
+  /** One line above the skill bar, for why a key did nothing. */
+  readonly message: HTMLElement;
   readonly targetPanel: HTMLElement;
   readonly scoreboard: HTMLElement;
   readonly result: HTMLElement;
@@ -62,6 +64,8 @@ export function createHud(parent: HTMLElement): HudElements {
   const adrenalineText = element("div", "hud-adrenaline", bars);
   const statusList = element("div", "hud-statuses", bars);
 
+  const message = element("div", "hud-message", root);
+  message.setAttribute("role", "status");
   const skillBar = element("div", "hud-skills", root);
 
   return {
@@ -73,10 +77,69 @@ export function createHud(parent: HTMLElement): HudElements {
     adrenalineText,
     statusList,
     skillBar,
+    message,
     targetPanel,
     scoreboard,
     result,
   };
+}
+
+/**
+ * What the player is told when the server refuses a cast, in the terse,
+ * one-line style of the genre. A `Record` over every rejection, so a new
+ * one in game-core does not compile until it has a message here.
+ */
+const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
+  "caster-dead": "You are dead.",
+  "skill-not-on-bar": "That skill is not on your bar.",
+  "still-recharging": "That skill is recharging.",
+  "already-casting": "You are already using a skill.",
+  "insufficient-energy": "Not enough energy.",
+  "insufficient-adrenaline": "Not enough adrenaline.",
+  "no-target": "Select a target first.",
+  "invalid-target-dead": "Your target is dead.",
+  "invalid-target-self": "You cannot target yourself with that.",
+  "invalid-target-ally": "That skill needs an enemy target.",
+  "invalid-target-enemy": "That skill needs an ally target.",
+  "out-of-range": "Target is out of range.",
+  "no-line-of-sight": "Target is not in line of sight.",
+};
+
+/**
+ * The line for a refusal reason as the server sent it. A reason this
+ * client does not know (wrong data, not old data) still says something.
+ */
+export function describeRefusal(reason: string): string {
+  return isRejection(reason) ? REFUSALS[reason] : "You cannot use that skill now.";
+}
+
+function isRejection(reason: string): reason is ActivationRejection {
+  return Object.hasOwn(REFUSALS, reason);
+}
+
+/** How long a refusal stays on screen. */
+export const MESSAGE_SECONDS = 2;
+
+const messageTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
+
+/**
+ * Show `text` on the message line for MESSAGE_SECONDS. A newer message
+ * replaces the old one and restarts the clock, so mashing a key that is out
+ * of range keeps the reason up rather than flickering.
+ */
+export function flashMessage(hud: HudElements, text: string): void {
+  hud.message.textContent = text;
+  hud.message.classList.add("is-visible");
+  const previous = messageTimers.get(hud.message);
+  if (previous !== undefined) {
+    clearTimeout(previous);
+  }
+  messageTimers.set(
+    hud.message,
+    setTimeout(() => {
+      hud.message.classList.remove("is-visible");
+    }, MESSAGE_SECONDS * 1000),
+  );
 }
 
 /** Render the skill bar once; slots are stable for the match's lifetime. */

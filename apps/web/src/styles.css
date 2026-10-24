@@ -1053,3 +1053,23 @@ body {
      rather than being cut off at the interesting part. */
   white-space: normal;
 }
+
+/* --- cast refusals (issue #51) ------------------------------------------ */
+
+/* Why a key did nothing: one line just above the skill bar, where the eye
+   already is, and gone again before it becomes clutter. Its height is
+   always reserved, so showing it never shifts the skill bar. */
+.hud-message {
+  min-height: 1.2em;
+  color: #f2cc60;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
+  opacity: 0;
+  transition: opacity 250ms ease-out;
+}
+
+.hud-message.is-visible {
+  opacity: 1;
+  transition: none;
+}
