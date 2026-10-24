@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
+  <defs><radialGradient id="bg" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#7D52DB"/><stop offset="1" stop-color="#5230A6"/></radialGradient></defs>
+  <rect width="640" height="640" fill="url(#bg)"/>
+    <path d="M320 160 L440 205 V295 C440 375 388 428 320 458 C252 428 200 375 200 295 V205 Z" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M265 310 L305 350 L378 268" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="320" y="530" text-anchor="middle" font-family="Inter, DejaVu Sans, sans-serif" font-weight="700" font-size="40" letter-spacing="4" fill="#fff" fill-opacity="0.92">LEAD DEV</text>
+</svg>

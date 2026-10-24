@@ -20,18 +20,43 @@ let
   # Staged as one directory rather than three loose files: each `${./x.mjs}`
   # would land at its own store path, and `tg.mjs`'s `import "./protocol.mjs"`
   # would then resolve to /nix/store/protocol.mjs, which does not exist.
+  # Every script, staged as one directory.
+  #
+  # This was a hand-written list of `cp` lines, and it went wrong twice: once
+  # when a lone file was staged without the module it imports, and again when
+  # `hubd.mjs` gained an import of protocol.mjs that the list did not mention —
+  # which made hubd die on startup and every agent correctly report that the
+  # hub was unreachable. A list that has to be kept in step with the imports is
+  # a list that will drift, so the whole directory goes in and the tests are
+  # filtered out.
   botScripts = pkgs.runCommand "vibewars-bot-scripts" { } ''
     mkdir -p $out
-    cp ${../scripts/bots/protocol.mjs} $out/protocol.mjs
-    cp ${../scripts/bots/tg.mjs} $out/tg.mjs
-    cp ${../scripts/bots/link.mjs} $out/link.mjs
-    cp ${../scripts/bots/setup.mjs} $out/setup.mjs
+    for f in ${../scripts/bots}/*.mjs; do
+      case "$f" in *.test.mjs) continue ;; esac
+      cp "$f" "$out/$(basename "$f")"
+    done
   '';
 
   node = "${pkgs.nodejs_24}/bin/node";
 
   # The in-jail CLI. Deliberately has no network access of its own: it only
   # reads and writes the two bus directories bound into the sandbox.
+  # GitHub, from inside the jail. Like `tg`, it speaks to a spool directory
+  # rather than the network: the credential lives in hubd, outside.
+  hub = pkgs.writeShellApplication {
+    name = "hub";
+    text = ''
+      exec ${node} ${botScripts}/hub.mjs "$@"
+    '';
+  };
+
+  board = pkgs.writeShellApplication {
+    name = "board";
+    text = ''
+      exec ${node} ${botScripts}/board.mjs "$@"
+    '';
+  };
+
   tg = pkgs.writeShellApplication {
     name = "tg";
     text = ''
@@ -64,10 +89,56 @@ let
       nodejs_24
       pnpm_10
       tg
+      hub
+      board
     ]
   );
 
-  sandboxPath = "${corePath}:/etc/profiles/per-user/ente/bin:/run/current-system/sw/bin";
+  # Tools only one role needs. Everything here is reachable from inside the
+  # jail only because /nix/store is bind-mounted, so adding a role's tools
+  # costs nothing for the other eight.
+  roleTools = {
+    asset-designer = with pkgs; [
+      imagemagick
+      inkscape
+      sox
+      ffmpeg
+    ];
+    # Judges the pipeline, so it needs the same linters CI runs.
+    cicd-engineer = with pkgs; [
+      actionlint
+      shellcheck
+      skopeo
+    ];
+    # GitHub's scanners are unavailable to us (Dependabot disabled, code
+    # scanning needs Advanced Security), so this role's local tooling is the
+    # whole of our automated security posture.
+    perf-sec-qa = with pkgs; [
+      semgrep
+      trivy
+      gitleaks
+      osv-scanner
+      hyperfine
+      chromium
+    ];
+    # Has to actually play the game to judge whether it is fun.
+    qa-tester = [ pkgs.chromium ];
+  };
+
+  basePath = "${corePath}:/etc/profiles/per-user/ente/bin:/run/current-system/sw/bin";
+
+  # The role is a runtime shell value, not a Nix one, so the per-role PATHs are
+  # emitted as a `case` and selected inside the script.
+  selectPath = ''
+    case "$role" in
+    ${lib.concatStringsSep "\n    " (
+      lib.mapAttrsToList (
+        role: tools: "${role}) sandboxPath=\"${lib.makeBinPath tools}:${basePath}\" ;;"
+      ) roleTools
+    )}
+      *) sandboxPath="${basePath}" ;;
+    esac
+  '';
 
   claudeBot = ''
         # devenv does not wrap scripts in `set -e`, so without this a failing
@@ -153,6 +224,15 @@ let
             ;;
         esac
 
+        # On a restart we want the agent to pick up where it left off rather
+        # than re-reading the whole world, so claude-llc-agent passes
+        # --continue on every iteration after the first.
+        resume=0
+        if [ "''${1-}" = "--continue" ]; then
+          resume=1
+          shift
+        fi
+
         role="''${1-}"
         if [ -z "$role" ]; then
           usage >&2
@@ -217,6 +297,46 @@ let
         # Every agent gets the shared coordination contract plus its own charter.
         briefing="$(cat "$DEVENV_ROOT/.claude/bots/_protocol.md" "$brief")"
 
+        # A system prompt gives an agent a role; it does not give it a turn.
+        # Claude Code starts interactive and waits, so nine agents with
+        # perfect briefings and nobody speaking to them do precisely nothing —
+        # which is exactly what happened the first time the company was
+        # started. The positional prompt argument is the ignition: it runs as
+        # the first user turn and the session stays interactive afterwards, so
+        # the operator can still type into the pane.
+        #
+        # Overridable: `claude-bot architect "look at issue 14"` wins, so the
+        # command is still useful by hand.
+        kickoff="You are the $role. Start work now, on your own, without waiting to be asked.
+
+        First, orient yourself:
+          1. \`hub whoami\` — what you are allowed to do
+          2. \`tg roster\` — who else is working, and who has not been hired yet
+          3. \`tg inbox\` — anything already waiting for you
+          4. \`board ls\` — the state of the work
+
+        Then do your job as described in your role briefing: pick the single
+        most valuable thing you can finish end to end, do it, move the card,
+        and tell whoever is next in the chain on Telegram.
+
+        When you genuinely have nothing to do, run \`tg wait --timeout 900\` to
+        block until a colleague or the operator says something, then continue.
+        Do not stop and wait for a prompt; nobody is going to send you one."
+
+        # `claude --continue` on its own reopens the conversation and then
+        # waits, which would leave a restarted agent exactly as idle as an
+        # unprompted one. The flag and a turn have to go together.
+        if [ "$resume" = "1" ]; then
+          continueFlag="--continue"
+          prompt="You were interrupted and have just been restarted. Check \`tg inbox\`
+        and \`board ls\` in case something changed while you were gone, then carry on
+        with the most valuable thing you can finish. If you were mid-task, finish
+        that first."
+        else
+          continueFlag=""
+          prompt="$kickoff"
+        fi
+
         export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
         export VIBEWARS_BOT_ROLE="$role"
         export VIBEWARS_BOT_BUS="$DEVENV_ROOT/.bots/bus"
@@ -225,7 +345,25 @@ let
         export VIBEWARS_BOT_USERNAME_PREFIX="${cfg.usernamePrefix}"
 
         mkdir -p "$VIBEWARS_BOT_ROOT" "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_ROOT/link" "$VIBEWARS_BOT_ROOT/wt"
+        mkdir -p "$VIBEWARS_BOT_ROOT/hub/$role/req" "$VIBEWARS_BOT_ROOT/hub/$role/res"
+        # Skills are shared and live outside every worktree on purpose: they
+        # are the manager's instrument for steering the company, and if they
+        # sat in the manager's worktree nobody would see a new one until it
+        # was merged.
+        mkdir -p "$VIBEWARS_BOT_ROOT/skills"
         chmod 700 "$VIBEWARS_BOT_ROOT"
+
+        # claude-bot works standalone, without the company having been set up,
+        # so a missing company.json is not an error here — `board` will simply
+        # say so if an agent tries to use it.
+        projectNumber="$(${pkgs.jq}/bin/jq -r '.project // ""' "$VIBEWARS_BOT_ROOT/company.json" 2>/dev/null || true)"
+
+        # Roles this one is covering for while they have no bot. Passed in so
+        # `hub whoami` can say so out loud — an agent holding both reviewer
+        # seats and the merge seat is self-certifying, and that should never
+        # be something it has to infer.
+        acting="$(${pkgs.jq}/bin/jq -r --arg r "$role" \
+          '(.acting[$r] // []) | join(",")' "$VIBEWARS_BOT_ROOT/company.json" 2>/dev/null || true)"
 
         # ----------------------------------------------------------------------
         # Claude's own credential, handled exactly as claude-box does: it is the
@@ -235,6 +373,30 @@ let
         boxDir="$HOME/.claude-bot/$role"
         mkdir -p "$boxDir/config"
         [ -e "$boxDir/claude.json" ] || printf '{}' > "$boxDir/claude.json"
+
+        # An autonomous agent cannot answer a question, so every first-run
+        # prompt has to be pre-answered or it sits at a menu forever. Three
+        # separate prompts from three different mechanisms: the theme picker
+        # (gated on hasCompletedOnboarding), "is this a project you trust?"
+        # (per project path, set below once the worktree exists), and the
+        # confirmation for --dangerously-skip-permissions itself.
+        #
+        # None of this grants an agent anything it would not have had after
+        # the operator clicked through. It only removes the clicking.
+        #
+        # MERGED, not written-if-absent: a box that was once started
+        # interactively already has a settings.json holding the theme the
+        # operator picked, and a create-if-absent guard silently skips it —
+        # which is exactly how the bypass-permissions prompt survived the
+        # first attempt at this.
+        [ -e "$boxDir/config/settings.json" ] || printf '{}' > "$boxDir/config/settings.json"
+        if merged="$(${pkgs.jq}/bin/jq \
+             '.theme //= "dark"
+              | .skipDangerousModePermissionPrompt = true
+              | .skipWorkflowUsageWarning = true' \
+             "$boxDir/config/settings.json" 2>/dev/null)"; then
+          printf '%s\n' "$merged" > "$boxDir/config/settings.json"
+        fi
 
         creds="$HOME/.claude/.credentials.json"
         if [ ! -e "$creds" ]; then
@@ -268,6 +430,21 @@ let
           fi
         fi
 
+        # Marks onboarding done and this worktree trusted. Merged rather than
+        # overwritten, so an agent's accumulated state survives.
+        claudeVersion="$(claude --version 2>/dev/null | ${pkgs.gawk}/bin/awk '{print $1}')"
+        if seeded="$(${pkgs.jq}/bin/jq \
+             --arg v "$claudeVersion" --arg wt "$worktree" \
+             '.hasCompletedOnboarding = true
+              | .lastOnboardingVersion = $v
+              | .projects[$wt].hasTrustDialogAccepted = true' \
+             "$boxDir/claude.json" 2>/dev/null)"; then
+          printf '%s\n' "$seeded" > "$boxDir/claude.json"
+        else
+          echo "claude-bot: warning: could not pre-accept the first-run prompts;" >&2
+          echo "claude-bot: warning: $role may stop and wait for input." >&2
+        fi
+
         # ----------------------------------------------------------------------
         # The sidecar. Owns the role's bot token, which is why it stays out here.
         # ----------------------------------------------------------------------
@@ -277,8 +454,24 @@ let
         VIBEWARS_BOT_LAUNCHER_PID="$$"
         export VIBEWARS_BOT_LAUNCHER_PID
 
+        # Only one process may long-poll a given bot token: a second one gets
+        # "409 Conflict: terminated by other getUpdates request" and the role
+        # goes deaf. Restarting a role is normal — claude-llc does it on every
+        # start — so the old sidecar is cleared rather than left to fight.
+        if [ -e "$VIBEWARS_BOT_ROOT/link/$role.pid" ]; then
+          stale="$(cat "$VIBEWARS_BOT_ROOT/link/$role.pid")"
+          if kill -0 "$stale" 2>/dev/null; then
+            echo "claude-bot: replacing the existing $role sidecar (pid $stale)"
+            kill "$stale" 2>/dev/null || true
+            # Give it a moment to drop its Telegram connection, or the new one
+            # inherits the conflict it was meant to resolve.
+            sleep 2
+          fi
+        fi
+
         ${node} ${botScripts}/link.mjs serve "$role" &
         linkPid=$!
+        printf '%s\n' "$linkPid" > "$VIBEWARS_BOT_ROOT/link/$role.pid"
         # This trap covers only the gap between here and the exec below: once exec
         # replaces this shell with bwrap, no trap of ours can ever run. What ends
         # the sidecar at the end of a real session is its own watchLauncher, which
@@ -287,6 +480,15 @@ let
         # shellcheck disable=SC2064
         # Expanded now on purpose: $linkPid must be captured at trap-setting time.
         trap "kill $linkPid 2>/dev/null || true" EXIT INT TERM
+
+        ${selectPath}
+
+        # One role writes the skills; the other eight read them.
+        if [ "$role" = "manager" ]; then
+          skillsBind="--bind $VIBEWARS_BOT_ROOT/skills $worktree/.claude/skills"
+        else
+          skillsBind="--ro-bind $VIBEWARS_BOT_ROOT/skills $worktree/.claude/skills"
+        fi
 
         # ----------------------------------------------------------------------
         # dev.tty.legacy_tiocsti is 0 on this kernel, so terminal injection is
@@ -322,20 +524,30 @@ let
           --bind "$DEVENV_ROOT/.git" "$DEVENV_ROOT/.git" \
           --ro-bind "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_BUS" \
           --bind "$VIBEWARS_BOT_BUS/$role" "$VIBEWARS_BOT_BUS/$role" \
+          --ro-bind "$VIBEWARS_BOT_ROOT/hub" "$VIBEWARS_BOT_ROOT/hub" \
+          --bind "$VIBEWARS_BOT_ROOT/hub/$role" "$VIBEWARS_BOT_ROOT/hub/$role" \
           --bind "$worktree" "$worktree" \
+          $skillsBind \
           --chdir "$worktree" \
           --setenv HOME "$HOME" \
           --setenv USER "$USER" \
           --setenv SHELL "${lib.getExe pkgs.bashInteractive}" \
-          --setenv PATH "${sandboxPath}" \
+          --setenv PATH "$sandboxPath" \
           --setenv TERM "''${TERM:-xterm-256color}" \
           --setenv LANG "''${LANG:-C.UTF-8}" \
           --setenv COLORTERM "''${COLORTERM:-truecolor}" \
           --setenv XDG_RUNTIME_DIR "/run/user/$(id -u)" \
           --setenv VIBEWARS_BOT_ROLE "$role" \
           --setenv VIBEWARS_BOT_BUS "$VIBEWARS_BOT_BUS" \
+          --setenv VIBEWARS_HUB "$VIBEWARS_BOT_ROOT/hub/$role" \
+          --setenv VIBEWARS_PROJECT "$projectNumber" \
+          --setenv VIBEWARS_ACTING "$acting" \
           --setenv VIBEWARS_ENV "development" \
-          -- claude --append-system-prompt "$briefing" "$@"
+          -- claude \
+            --dangerously-skip-permissions \
+            --append-system-prompt "$briefing" \
+            $continueFlag \
+            "''${@:-$prompt}"
   '';
 in
 {
@@ -382,10 +594,15 @@ in
 
     usernamePrefix = lib.mkOption {
       type = lib.types.str;
-      default = "vibewars";
+      default = "vw";
       description = ''
         Prefix for suggested usernames of newly provisioned role bots, as in
-        `vibewars_qa_7f3a_bot`.
+        `vw_qa_tester_bot`.
+
+        Deliberately not "vibewars": `vibewars_manager_bot` is already taken by
+        the manager bot that provisions these, so the `manager` employee could
+        never have had the obvious name. A short shared prefix keeps all nine
+        employees consistent instead of giving one of them an exception.
       '';
     };
   };
@@ -394,7 +611,12 @@ in
     packages = [
       pkgs.bubblewrap
       pkgs.claude-code
+      # Also on the dev shell's PATH, not just the sandbox's: when an agent
+      # reports that `hub` refused something, the quickest way to understand
+      # why is to run the same command yourself.
       tg
+      hub
+      board
     ];
 
     scripts.claude-bot = {

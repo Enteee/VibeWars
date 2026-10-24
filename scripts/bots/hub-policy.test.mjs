@@ -1,0 +1,354 @@
+/**
+ * Every test here is a way the company could damage itself.
+ *
+ * `hub-policy.mjs` is the only enforcement of the kanban rules that depends
+ * on nothing but code: GitHub rulesets cover the mechanical invariants (no
+ * direct push to main, checks must pass) but cannot tell our nine agents
+ * apart, because they share one GitHub identity. So "only QA merges" and
+ * "two reviewers must sign off" are enforced here or not at all, and they are
+ * worth asserting one by one rather than trusting a reading of the table.
+ */
+import { describe, expect, it } from "vitest";
+
+import { ROLES, authorize, touchesGate } from "./hub-policy.mjs";
+
+/**
+ * @param {string} role
+ * @param {string[]} argv
+ */
+const gh = (role, argv) => authorize(role, { kind: "gh", argv });
+/**
+ * @param {string} role
+ * @param {string[]} argv
+ */
+const push = (role, argv) => authorize(role, { kind: "push", argv });
+/**
+ * @param {string} role
+ * @param {string[]} argv
+ */
+const review = (role, argv) => authorize(role, { kind: "review", argv });
+
+describe("the roster", () => {
+  it("is the nine employees, and nothing else is a role", () => {
+    expect(ROLES).toHaveLength(9);
+    expect(gh("intern", ["issue", "list"])).toMatchObject({ allow: false });
+    expect(gh("", ["issue", "list"])).toMatchObject({ allow: false });
+  });
+});
+
+describe("merging", () => {
+  it("is allowed for qa-tester, behind three guards", () => {
+    const verdict = gh("qa-tester", ["pr", "merge", "22", "--squash"]);
+
+    expect(verdict.allow).toBe(true);
+    expect(verdict.guards).toStrictEqual([
+      "checks-green",
+      "approved-by:lead-dev",
+      "approved-by:perf-sec-qa",
+    ]);
+  });
+
+  it("is refused for every other role", () => {
+    for (const role of ROLES.filter((r) => r !== "qa-tester")) {
+      expect(gh(role, ["pr", "merge", "22"]), role).toMatchObject({ allow: false });
+    }
+  });
+
+  it("is refused for the reviewers specifically, who are the plausible mistake", () => {
+    // A lead-dev that has just approved a PR is one step from merging it, and
+    // the whole point of the QA gate is that approval is not permission.
+    expect(gh("lead-dev", ["pr", "merge", "22"])).toMatchObject({ allow: false });
+    expect(gh("perf-sec-qa", ["pr", "merge", "22"])).toMatchObject({ allow: false });
+  });
+
+  it("cannot be reached by a developer dressing it up with flags", () => {
+    expect(gh("developer-1", ["pr", "merge", "22", "--admin", "--squash"])).toMatchObject({
+      allow: false,
+    });
+  });
+});
+
+describe("review verdicts", () => {
+  it("are recorded by the two reviewers", () => {
+    expect(review("lead-dev", ["approve", "22"])).toMatchObject({ allow: true });
+    expect(review("perf-sec-qa", ["approve", "22"])).toMatchObject({ allow: true });
+    expect(review("lead-dev", ["request-changes", "22"])).toMatchObject({ allow: true });
+  });
+
+  it("cannot be recorded by the role that merges", () => {
+    // Otherwise qa-tester could manufacture the approvals that unlock its own
+    // merge button, and the three gates collapse into one.
+    expect(review("qa-tester", ["approve", "22"])).toMatchObject({ allow: false });
+  });
+
+  it("cannot be recorded by the author roles", () => {
+    expect(review("developer-1", ["approve", "22"])).toMatchObject({ allow: false });
+    expect(review("manager", ["approve", "22"])).toMatchObject({ allow: false });
+  });
+
+  it("reject a malformed verdict or pull request number", () => {
+    expect(review("lead-dev", ["lgtm", "22"])).toMatchObject({ allow: false });
+    expect(review("lead-dev", ["approve", "../../etc"])).toMatchObject({ allow: false });
+    expect(review("lead-dev", ["approve"])).toMatchObject({ allow: false });
+  });
+
+  it("do not go through gh pr review, which one shared identity cannot use", () => {
+    for (const role of ROLES) {
+      expect(gh(role, ["pr", "review", "22", "--approve"]), role).toMatchObject({ allow: false });
+    }
+  });
+});
+
+describe("pushing", () => {
+  it("lets an implementer push its own namespace", () => {
+    expect(push("developer-1", ["bot/developer-1/issue-14"])).toMatchObject({ allow: true });
+    expect(push("asset-designer", ["bot/asset-designer/sprites"])).toMatchObject({ allow: true });
+  });
+
+  it("refuses main for everyone, including the role that merges", () => {
+    for (const role of ROLES) {
+      expect(push(role, ["main"]), role).toMatchObject({ allow: false });
+    }
+    expect(push("developer-1", ["refs/heads/main"])).toMatchObject({ allow: false });
+    expect(push("developer-1", ["HEAD"])).toMatchObject({ allow: false });
+  });
+
+  it("refuses another role's namespace", () => {
+    expect(push("developer-1", ["bot/developer-2/issue-14"])).toMatchObject({ allow: false });
+    expect(push("developer-1", ["bot/architect/whatever"])).toMatchObject({ allow: false });
+  });
+
+  it("refuses a refspec, which would sidestep the branch check entirely", () => {
+    // `git push origin bot/developer-1/x:main` ends up on main while passing
+    // a naive prefix test.
+    expect(push("developer-1", ["bot/developer-1/x:main"])).toMatchObject({ allow: false });
+  });
+
+  it("refuses force, delete, mirror and prune", () => {
+    for (const flag of [
+      "-f",
+      "--force",
+      "--force-with-lease",
+      "--delete",
+      "-d",
+      "--mirror",
+      "--prune",
+    ]) {
+      expect(push("developer-1", ["bot/developer-1/x", flag]), flag).toMatchObject({
+        allow: false,
+      });
+    }
+  });
+
+  it("refuses roles that have no business pushing", () => {
+    for (const role of ["manager", "architect", "lead-dev", "qa-tester"]) {
+      expect(push(role, [`bot/${role}/x`]), role).toMatchObject({ allow: false });
+    }
+  });
+
+  it("refuses an empty branch", () => {
+    expect(push("developer-1", [])).toMatchObject({ allow: false });
+    expect(push("developer-1", [""])).toMatchObject({ allow: false });
+  });
+});
+
+describe("the raw API, which is a hole through every other rule", () => {
+  it("is refused for everyone but the CI/CD engineer", () => {
+    for (const role of ROLES.filter((r) => r !== "cicd-engineer")) {
+      expect(gh(role, ["api", "repos/{owner}/{repo}/merges"]), role).toMatchObject({
+        allow: false,
+      });
+    }
+  });
+
+  it("is limited to environments and deployments even for the CI/CD engineer", () => {
+    expect(gh("cicd-engineer", ["api", "repos/{owner}/{repo}/environments/prod"])).toMatchObject({
+      allow: true,
+    });
+    expect(gh("cicd-engineer", ["api", "repos/{owner}/{repo}/deployments"])).toMatchObject({
+      allow: true,
+    });
+    // The interesting refusals: a merge, and rewriting the protection that
+    // backs up this very policy.
+    expect(gh("cicd-engineer", ["api", "repos/{owner}/{repo}/merges"])).toMatchObject({
+      allow: false,
+    });
+    expect(gh("cicd-engineer", ["api", "repos/{owner}/{repo}/rulesets"])).toMatchObject({
+      allow: false,
+    });
+    expect(gh("cicd-engineer", ["api", "user"])).toMatchObject({ allow: false });
+  });
+});
+
+describe("deny by default", () => {
+  it("refuses anything not written down, for every role", () => {
+    // These are the commands that would end the experiment: an alias runs
+    // arbitrary shell, an extension installs arbitrary code, and the rest
+    // destroy things.
+    const dangerous = [
+      ["alias", "set", "x", "!rm -rf /"],
+      ["extension", "install", "someone/evil"],
+      ["repo", "delete"],
+      ["repo", "edit", "--visibility", "private"],
+      ["auth", "token"],
+      ["secret", "set", "TOKEN"],
+      ["ssh-key", "add"],
+      ["gpg-key", "add"],
+      ["release", "delete", "v1"],
+      ["issue", "delete", "1"],
+      ["project", "delete", "2"],
+    ];
+    for (const role of ROLES) {
+      for (const argv of dangerous) {
+        expect(gh(role, argv), `${role}: ${argv.join(" ")}`).toMatchObject({ allow: false });
+      }
+    }
+  });
+
+  it("refuses an empty command and an unknown request kind", () => {
+    expect(gh("manager", [])).toMatchObject({ allow: false });
+    expect(authorize("manager", { kind: "exec", argv: ["sh"] })).toMatchObject({ allow: false });
+  });
+
+  it("refuses --repo, so nobody can act on a repository nobody is watching", () => {
+    expect(gh("manager", ["issue", "list", "--repo", "someone/else"])).toMatchObject({
+      allow: false,
+    });
+    expect(gh("manager", ["issue", "list", "-R", "someone/else"])).toMatchObject({ allow: false });
+  });
+});
+
+describe("reading", () => {
+  it("is open to every role, because an agent cannot act on what it cannot see", () => {
+    for (const role of ROLES) {
+      for (const argv of [
+        ["issue", "list"],
+        ["pr", "view", "22"],
+        ["pr", "checks", "22"],
+        ["project", "item-list", "2"],
+        ["run", "view", "123"],
+      ]) {
+        expect(gh(role, argv), `${role}: ${argv.join(" ")}`).toMatchObject({ allow: true });
+      }
+    }
+  });
+
+  it("does not leak write access through a longer read prefix", () => {
+    // `pr view` is open to all; `pr merge` must not inherit that.
+    expect(gh("developer-1", ["pr", "view", "22"])).toMatchObject({ allow: true });
+    expect(gh("developer-1", ["pr", "merge", "22"])).toMatchObject({ allow: false });
+  });
+});
+
+describe("the board", () => {
+  it("is restructured only by the manager", () => {
+    expect(gh("manager", ["project", "field-create", "2"])).toMatchObject({ allow: true });
+    expect(gh("manager", ["project", "item-add", "2"])).toMatchObject({ allow: true });
+    expect(gh("developer-1", ["project", "item-add", "2"])).toMatchObject({ allow: false });
+    expect(gh("architect", ["project", "field-create", "2"])).toMatchObject({ allow: false });
+  });
+
+  it("lets the workflow roles move their own cards", () => {
+    // Each hand-off is a column change, so this has to be broader than the
+    // rest of the board permissions.
+    for (const role of ["developer-1", "lead-dev", "perf-sec-qa", "qa-tester", "manager"]) {
+      expect(gh(role, ["project", "item-edit"]), role).toMatchObject({ allow: true });
+    }
+    expect(gh("architect", ["project", "item-edit"])).toMatchObject({ allow: false });
+  });
+});
+
+describe("the pipeline", () => {
+  it("is operated only by the CI/CD engineer", () => {
+    expect(gh("cicd-engineer", ["workflow", "run", "ci.yml"])).toMatchObject({ allow: true });
+    expect(gh("cicd-engineer", ["run", "rerun", "123"])).toMatchObject({ allow: true });
+    expect(gh("cicd-engineer", ["release", "create", "v1"])).toMatchObject({ allow: true });
+    expect(gh("developer-1", ["workflow", "disable", "ci.yml"])).toMatchObject({ allow: false });
+    expect(gh("developer-1", ["run", "rerun", "123"])).toMatchObject({ allow: false });
+    expect(gh("qa-tester", ["workflow", "disable", "ci.yml"])).toMatchObject({ allow: false });
+  });
+});
+
+describe("touchesGate", () => {
+  it("flags changes to the definitions of the quality gates", () => {
+    expect(touchesGate([".github/workflows/ci.yml"])).toBe(true);
+    expect(touchesGate(["eslint.config.mjs"])).toBe(true);
+    expect(touchesGate(["devenv.nix"])).toBe(true);
+    // The policy protecting the company counts as a gate.
+    expect(touchesGate(["scripts/bots/hub-policy.mjs"])).toBe(true);
+  });
+
+  it("does not flag ordinary work", () => {
+    expect(touchesGate(["packages/game-core/src/skills/catalog.ts"])).toBe(false);
+    expect(touchesGate(["apps/web/src/main.ts", "README.md"])).toBe(false);
+    expect(touchesGate([])).toBe(false);
+  });
+});
+
+describe("borrowed hats", () => {
+  const acting = { acting: ["perf-sec-qa", "qa-tester"] };
+
+  it("lets a covering role do the absent role's job", () => {
+    // The company is short of bots, so one agent holds several gates.
+    expect(
+      authorize("lead-dev", { kind: "gh", argv: ["pr", "merge", "22"] }, acting),
+    ).toMatchObject({ allow: true, as: "qa-tester" });
+    expect(
+      authorize("lead-dev", { kind: "push", argv: ["bot/perf-sec-qa/x"] }, acting),
+    ).toMatchObject({ allow: true, as: "perf-sec-qa" });
+  });
+
+  it("names which hat it allowed, so the audit log can record it", () => {
+    const verdict = authorize("lead-dev", { kind: "gh", argv: ["pr", "merge", "22"] }, acting);
+
+    // Without `as`, a merge by lead-dev would be indistinguishable from a
+    // policy bug that let the wrong role merge.
+    expect(verdict.as).toBe("qa-tester");
+  });
+
+  it("still carries the merge guards when merging under a borrowed hat", () => {
+    // The gates are not what is being relaxed — only who may stand at them.
+    const verdict = authorize("lead-dev", { kind: "gh", argv: ["pr", "merge", "22"] }, acting);
+
+    expect(verdict.guards).toStrictEqual([
+      "checks-green",
+      "approved-by:lead-dev",
+      "approved-by:perf-sec-qa",
+    ]);
+  });
+
+  it("grants nothing when no hat permits it either", () => {
+    expect(
+      authorize("lead-dev", { kind: "gh", argv: ["workflow", "disable", "ci.yml"] }, acting),
+    ).toMatchObject({ allow: false });
+    expect(authorize("lead-dev", { kind: "gh", argv: ["repo", "delete"] }, acting)).toMatchObject({
+      allow: false,
+    });
+  });
+
+  it("changes nothing for a role that has been given no hats", () => {
+    // hubd looks `acting` up by role in company.json, so a role with no entry
+    // is called with an empty list and must be unaffected. Handing
+    // developer-1 lead-dev's hats WOULD let it merge — that is the whole
+    // mechanism, and it is exactly why the list comes from configuration on
+    // the host and never from the request.
+    expect(
+      authorize("developer-1", { kind: "gh", argv: ["pr", "merge", "22"] }, { acting: [] }),
+    ).toMatchObject({ allow: false });
+    expect(authorize("lead-dev", { kind: "gh", argv: ["pr", "merge", "22"] })).toMatchObject({
+      allow: false,
+    });
+  });
+
+  it("does not let a hat be invented by the requester", () => {
+    // `acting` comes from company.json via hubd, never from the agent. This
+    // asserts the shape that matters: an unknown hat grants nothing.
+    expect(
+      authorize(
+        "developer-1",
+        { kind: "gh", argv: ["pr", "merge", "22"] },
+        { acting: ["nonsense"] },
+      ),
+    ).toMatchObject({ allow: false });
+  });
+});

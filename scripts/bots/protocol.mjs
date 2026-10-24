@@ -185,6 +185,7 @@ export function inboundLine(raw, context) {
  *   from: string,
  *   topics: Map<string, number>,
  *   usernames: Map<string, string>,
+ *   roster?: string[],
  * }} context
  * @returns {Record<string, unknown>}
  */
@@ -204,8 +205,17 @@ export function outboundParams(raw, context) {
 
   const topicId = context.topics.get(to);
   if (topicId === undefined) {
-    const known = [...context.topics.keys()].sort().join(", ");
-    throw new Error(`unknown role "${to}"; known roles: ${known === "" ? "(none yet)" : known}`);
+    const hired = [...context.topics.keys()].sort().join(", ");
+    // Two different problems, and an agent needs to tell them apart: a
+    // colleague who has not been hired yet will exist later and the work
+    // should be parked, whereas a name that is not a role at all is a
+    // mistake to correct now.
+    throw new Error(
+      (context.roster ?? []).includes(to)
+        ? `"${to}" is a real role but has not been hired yet, so it cannot be messaged. ` +
+            `Hired: ${hired === "" ? "(nobody)" : hired}`
+        : `"${to}" is not one of this company's roles. Hired: ${hired === "" ? "(nobody)" : hired}`,
+    );
   }
   params.message_thread_id = topicId;
   const mention = context.usernames.get(to);

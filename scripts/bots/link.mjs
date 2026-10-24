@@ -33,6 +33,9 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
+// The company's roster, so that messaging a colleague who has not been hired
+// yet can say so, rather than reporting an unknown role.
+import { ROLES as COMPANY_ROLES } from "./hub-policy.mjs";
 import {
   acceptsManagedBot,
   indexRoles,
@@ -483,6 +486,68 @@ async function reportAccess(token, username) {
 }
 
 /**
+ * Give an existing managed bot a role.
+ *
+ * Creating a bot is the rate-limited, human-tapping part of hiring; the rest
+ * is bookkeeping. When a bot already exists — a retired role, or one created
+ * for a role that got renamed — there is no reason to burn a creation on it.
+ * `adopt` writes the registry entry from a bot id and then hands over to
+ * `provision`, which picks up at the first step that has not been done.
+ *
+ * The display name is reset to match the new role, because a bot called
+ * "VibeWars-Gameplay-Bot" reviewing pull requests as `lead-dev` is the kind
+ * of mismatch that wastes a minute every time someone reads the chat. The
+ * @username cannot be changed over the API — that is BotFather only — so it
+ * stays wrong, and that is the honest cost of repurposing.
+ *
+ * @param {string} role
+ * @param {string} botId
+ * @returns {Promise<void>}
+ */
+async function adopt(role, botId) {
+  const env = environment();
+  ensureBus(env.bus, role);
+
+  const registry = readRegistry(env.registry);
+  const claimed = Object.entries(registry.roles).find(
+    ([other, entry]) => other !== role && entry.id === Number(botId),
+  );
+  if (claimed !== undefined) {
+    throw new Error(`bot ${botId} is already the "${claimed[0]}" role; pick another`);
+  }
+
+  const me = obj(
+    await api(
+      String(await api(env.managerToken, "getManagedBotToken", { user_id: Number(botId) })),
+      "getMe",
+    ),
+  );
+  if (typeof me.id !== "number" || typeof me.username !== "string") {
+    throw new Error(`could not read bot ${botId}; is it managed by @${env.managerUsername}?`);
+  }
+
+  const token = String(
+    await api(env.managerToken, "getManagedBotToken", { user_id: Number(botId) }),
+  );
+  const entry = registry.roles[role] ?? {};
+  entry.token = token;
+  entry.id = me.id;
+  entry.username = me.username;
+  registry.roles[role] = entry;
+  writeRegistry(env.registry, registry);
+  console.log(`  adopted @${me.username} as "${role}"`);
+
+  try {
+    await api(token, "setMyName", { name: suggestName(role) });
+    console.log(`  renamed it to ${suggestName(role)}`);
+  } catch (error) {
+    console.log(`  could not rename it: ${error instanceof Error ? error.message : "?"}`);
+  }
+
+  await provision(role);
+}
+
+/**
  * @param {string} role
  * @returns {Promise<void>}
  */
@@ -701,6 +766,7 @@ async function drainOutbound(env, role, reload) {
           from: role,
           topics,
           usernames,
+          roster: COMPANY_ROLES,
         });
         const since = Date.now() - lastSend;
         if (since < MIN_SEND_INTERVAL_MS) {
@@ -848,12 +914,19 @@ async function serve(role) {
 async function main() {
   const [command, role] = process.argv.slice(2);
   if (command === undefined || role === undefined) {
-    console.error("usage: link.mjs <provision|serve> <role>");
+    console.error("usage: link.mjs <provision|serve|adopt> <role> [bot-user-id]");
     process.exit(2);
   }
 
   if (command === "provision") {
     await provision(role);
+  } else if (command === "adopt") {
+    const botId = process.argv[4];
+    if (botId === undefined || !/^[0-9]+$/.test(botId)) {
+      console.error("usage: link.mjs adopt <role> <bot-user-id>");
+      process.exit(2);
+    }
+    await adopt(role, botId);
   } else if (command === "serve") {
     await serve(role);
   } else {

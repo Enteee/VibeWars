@@ -23,6 +23,11 @@ export default defineConfig([
     ".pnpm-store/**",
     ".devenv/**",
     ".direnv/**",
+    // Agent worktrees. Each claude-bot role gets a full checkout under here,
+    // so without this every file in the repository is linted once per agent —
+    // and a half-finished branch in someone's worktree fails the lint for
+    // everybody, including CI.
+    ".bots/**",
     "packages/game-data/generated/**",
   ]),
 

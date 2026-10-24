@@ -3,6 +3,8 @@ dist/
 coverage/
 .devenv/
 .direnv/
+# Agent worktrees: a full checkout per claude-bot role.
+.bots/
 pnpm-lock.yaml
 devenv.lock
 # Verbatim upstream brief: must not be reformatted.

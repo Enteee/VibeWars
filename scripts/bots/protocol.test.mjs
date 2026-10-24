@@ -174,13 +174,34 @@ describe("outboundParams", () => {
     expect(params.message_thread_id).toBeUndefined();
   });
 
-  it("refuses a role that has no topic yet, and names the ones that do", () => {
+  it("says a real colleague is not hired yet, which is a different problem", () => {
+    // The company runs with a partial roster. An agent that cannot tell
+    // "nobody has reviewed this yet" from "there is no reviewer" waits
+    // forever for someone who was never hired.
     expect(() =>
       outboundParams(
         { to: "qa", text: "hi" },
-        { chatId: CHAT, from: "architect", topics, usernames },
+        { chatId: CHAT, from: "architect", topics, usernames, roster: ["qa", "architect"] },
       ),
-    ).toThrow(/unknown role "qa".*architect, gameplay/s);
+    ).toThrow(/"qa" is a real role but has not been hired yet/);
+  });
+
+  it("says a name that is not a role at all is a mistake to correct", () => {
+    expect(() =>
+      outboundParams(
+        { to: "intern", text: "hi" },
+        { chatId: CHAT, from: "architect", topics, usernames, roster: ["qa", "architect"] },
+      ),
+    ).toThrow(/"intern" is not one of this company's roles/);
+  });
+
+  it("still names who IS hired, so the agent knows who it can reach", () => {
+    expect(() =>
+      outboundParams(
+        { to: "qa", text: "hi" },
+        { chatId: CHAT, from: "architect", topics, usernames, roster: ["qa"] },
+      ),
+    ).toThrow(/architect, gameplay/);
   });
 });
 
