@@ -139,6 +139,18 @@ jobs:
             # Replace next/ entirely; leave the release around it alone.
             mkdir -p next
             rsync -a --checksum --delete "$dist/" next/
+            # Until the first release fills the root, send it to next/
+            # rather than 404 (#142). The release's rsync --delete replaces
+            # this page, and after that a next deploy never writes here.
+            if [ ! -e index.html ]; then
+              cat > index.html <<'HTML'
+          <!doctype html>
+          <meta charset="utf-8" />
+          <title>vibewars</title>
+          <meta http-equiv="refresh" content="0; url=next/" />
+          <p>No release yet. The latest build from main is at <a href="next/">next/</a>.</p>
+          HTML
+            fi
           else
             # Replace everything but next/, so stale hashed assets from older
             # releases don't pile up. A release before any next deploy must
