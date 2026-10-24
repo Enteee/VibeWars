@@ -43,6 +43,10 @@ describe("usesGraphql", () => {
     expect(usesGraphql("gh", ["api", "repos/o/r/collaborators"])).toBe(false);
   });
 
+  it("does not count a board read, which hubd answers from its copy", () => {
+    expect(usesGraphql("board", ["ls", "Ready"])).toBe(false);
+  });
+
   it("counts an explicit GraphQL query through gh api", () => {
     expect(usesGraphql("gh", ["api", "graphql", "-f", "query=..."])).toBe(true);
   });
