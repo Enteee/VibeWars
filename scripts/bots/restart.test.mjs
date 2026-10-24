@@ -55,7 +55,7 @@ function commit(message, cwd) {
  * An operator checkout booted at one commit, a remote whose main is one
  * company commit ahead of it, and a reboot handed over by the supervisor.
  *
- * @param {{ failBuild?: boolean }} [options]
+ * @param {{ failBuild?: boolean, signed?: boolean }} [options]
  */
 function setup(options = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "restart-test-"));
@@ -81,6 +81,17 @@ function setup(options = {}) {
   fs.writeFileSync(path.join(other, "scripts", "bots", "new.mjs"), "x\n");
   sh(["add", "scripts"], other);
   commit("company: a new thing", other);
+  if (options.signed === true) {
+    // As GitHub signs the squash merges on main: any gpgsig header makes git
+    // run gpg.program to check it, if it is asked to.
+    const raw = sh(["cat-file", "commit", "HEAD"], other);
+    const signature =
+      "gpgsig -----BEGIN PGP SIGNATURE-----\n \n AAAA\n -----END PGP SIGNATURE-----";
+    const signed = raw.replace(/^(committer .*)$/m, `$1\n${signature}`);
+    fs.writeFileSync(path.join(dir, "signed"), `${signed}\n`);
+    const sha = sh(["hash-object", "-t", "commit", "-w", path.join(dir, "signed")], other);
+    sh(["update-ref", "refs/heads/main", sha], other);
+  }
   sh(["push", "-q", "origin", "main"], other);
   const target = sh(["rev-parse", "HEAD"], other);
 
@@ -103,7 +114,7 @@ function setup(options = {}) {
   };
   fake(
     "devenv",
-    `echo "devenv $PWD $* rebooted=$VIBEWARS_REBOOTED" >>${calls}\n${options.failBuild === true ? 'case "$*" in *--help*) exit 1 ;; esac' : ""}`,
+    `echo "devenv $PWD $* rebooted=$VIBEWARS_REBOOTED" >>${calls}\n[ -e scripts/bots/new.mjs ] && echo "saw the new main in $PWD" >>${calls}\n${options.failBuild === true ? 'case "$*" in *--help*) exit 1 ;; esac' : ""}`,
   );
   fake("tmux", `echo "tmux $*" >>${calls}`);
   fake("pkill", `echo "pkill $*" >>${calls}`);
@@ -132,7 +143,7 @@ function setup(options = {}) {
     };
   };
 
-  return { repo, root, boot, target, restart };
+  return { dir, repo, remote, root, boot, target, restart };
 }
 
 describe("the restarter", () => {
@@ -166,7 +177,7 @@ describe("the restarter", () => {
     const result = company.restart();
 
     expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
-    expect(String(result.boot.note)).toMatch(/did NOT update: checkout is on branch mine/);
+    expect(String(result.boot.note)).toMatch(/NOT updated: checkout is on branch mine/);
     expect(result.calls).toContain(`devenv ${company.repo} shell -- claude-llc up rebooted=1`);
   });
 
@@ -177,7 +188,7 @@ describe("the restarter", () => {
     const result = company.restart();
 
     expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
-    expect(String(result.boot.note)).toMatch(/did NOT update: checkout has local changes/);
+    expect(String(result.boot.note)).toMatch(/NOT updated: checkout has local changes/);
   });
 
   it("keeps the old code when the new main does not build", () => {
@@ -188,9 +199,102 @@ describe("the restarter", () => {
     expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
     expect(String(result.boot.note)).toMatch(
       new RegExp(
-        `onto ${company.target.slice(0, 8)} failed to build; running ${company.boot.slice(0, 8)}`,
+        `main ${company.target.slice(0, 8)} failed to build; running ${company.boot.slice(0, 8)}`,
       ),
     );
     expect(result.calls).toContain(`devenv ${company.repo} shell -- claude-llc up rebooted=1`);
+  });
+});
+
+describe("the restarter, against a checkout an agent has tampered with", () => {
+  /**
+   * A script that leaves a marker if anything ever runs it.
+   *
+   * @param {string} dir
+   * @returns {{ script: string, marker: string }}
+   */
+  const trap = (dir) => {
+    const marker = path.join(dir, "trap-ran");
+    const script = path.join(dir, "trap.sh");
+    fs.writeFileSync(script, `#!/bin/sh\ntouch ${marker}\ncat\n`, { mode: 0o755 });
+    return { script, marker };
+  };
+
+  it("never fetches main through a URL rewrite in the checkout's config", () => {
+    const company = setup();
+    // An unreviewed repository the rewrite would hand back instead.
+    const evil = path.join(company.dir, "evil.git");
+    sh(["clone", "-q", "--bare", company.remote, evil], company.dir);
+    const work = path.join(company.dir, "evil");
+    sh(["clone", "-q", evil, work], company.dir);
+    fs.writeFileSync(path.join(work, "evil.txt"), "x\n");
+    sh(["add", "evil.txt"], work);
+    commit("unreviewed", work);
+    sh(["push", "-q", "origin", "main"], work);
+    sh(["config", `url.${evil}.insteadOf`, company.remote], company.repo);
+
+    const result = company.restart();
+
+    expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.target);
+    expect(fs.existsSync(path.join(company.repo, "evil.txt"))).toBe(false);
+    expect(result.boot).toMatchObject({ updated: true });
+  });
+
+  it("refuses a commit that is not the mirror's, whatever the checkout fetched", () => {
+    const company = setup();
+    const evil = path.join(company.dir, "evil.git");
+    sh(["init", "--bare", "-q", "-b", "main", evil], company.dir);
+    sh(["push", "-q", evil, "HEAD:refs/heads/main"], company.repo);
+    sh(
+      ["config", `url.${evil}.insteadOf`, path.join(company.root, "hub", ".git-mirror")],
+      company.repo,
+    );
+
+    const result = company.restart();
+
+    expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
+    expect(String(result.boot.note)).toMatch(/NOT updated: fetching main from hubd's mirror gave/);
+  });
+
+  it("runs no filter driver the checkout's config names", () => {
+    const company = setup();
+    const { script, marker } = trap(company.dir);
+    for (const key of ["smudge", "clean", "process"]) {
+      sh(["config", `filter.evil.${key}`, script], company.repo);
+    }
+    sh(["config", "filter.evil.required", "true"], company.repo);
+    fs.writeFileSync(path.join(company.repo, ".git", "info", "attributes"), "* filter=evil\n");
+
+    const result = company.restart();
+
+    expect(fs.existsSync(marker)).toBe(false);
+    expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.target);
+    expect(fs.readFileSync(path.join(company.repo, "scripts", "bots", "new.mjs"), "utf8")).toBe(
+      "x\n",
+    );
+    expect(result.boot).toMatchObject({ updated: true });
+  });
+
+  it("runs no gpg program on GitHub's signed commits", () => {
+    const company = setup({ signed: true });
+    const { script, marker } = trap(company.dir);
+    sh(["config", "gpg.program", script], company.repo);
+    sh(["config", "merge.verifySignatures", "true"], company.repo);
+    sh(["config", "log.showSignature", "true"], company.repo);
+
+    const result = company.restart();
+
+    expect(fs.existsSync(marker)).toBe(false);
+    expect(result.boot).toMatchObject({ updated: true });
+  });
+
+  it("builds main from the mirror, not from the checkout", () => {
+    const company = setup();
+
+    const result = company.restart();
+
+    expect(
+      result.calls.includes(`saw the new main in ${path.join(company.root, "reboot-check")}`),
+    ).toBe(true);
   });
 });

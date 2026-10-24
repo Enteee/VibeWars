@@ -46,11 +46,19 @@ particular:
 
 ## Consequences
 
-- An agent can still write anything into the shared repository's `.git`,
-  including its config and hooks. That now only affects the agents
-  themselves; the read-only binds #26 suggested would also stop devenv
-  reinstalling the pre-commit hook it keeps there, and the mirror makes
-  them unnecessary.
+- An agent can write the shared repository's `.git`, including its config,
+  hooks and `info/`. hubd no longer runs anything there with authority, but
+  the operator's own git in the main checkout reads the same config, which
+  is #61; #63 binds those paths read-only into the jails.
+- A company reboot (#21) runs host git in the operator's checkout,
+  unattended. So it takes nothing about `main` from that checkout: it
+  fetches and builds main in hubd's mirror (built from `git archive`, never
+  a checkout), and fast-forwards the checkout only to a fetched commit equal
+  to the mirror's. Every git it runs there pins the settings that run
+  commands (hooks, fsmonitor, ssh, gpg and signature checks, submodules)
+  and every filter driver the config names. The residual is a setting git
+  adds in future that runs a command and is not pinned; read-only binds
+  (#63) close that class instead of chasing it key by key.
 - hubd no longer sets an upstream in the agent's repository on push, and the
   agent's `origin/<branch>` does not move. Agents compare against the branch
   on GitHub when they need to.

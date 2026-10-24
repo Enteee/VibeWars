@@ -8,9 +8,10 @@
  *
  *   1. stops the company: the tmux session, hubd, the Telegram sidecar, and
  *      any jail still running after 15 s;
- *   2. checks that GitHub's `main` builds, in a scratch worktree;
- *   3. fast-forwards the operator's checkout to it, only if that is safe
- *      (reboot.mjs, `fastForwardDecision`) and it built;
+ *   2. fetches GitHub's `main` into hubd's mirror and checks that it builds,
+ *      from an archive of it, never a checkout;
+ *   3. fast-forwards the operator's checkout to exactly that commit, only if
+ *      that is safe (reboot.mjs, `fastForwardDecision`) and it built;
  *   4. records what it loaded, or plainly why it did not, in
  *      `.bots/boot.json`, whose note claude-llc puts in the manager's first
  *      prompt so the manager can tell everyone;
@@ -21,8 +22,13 @@
  * the code it had, and the operator is told. The company must not stay down
  * because of a bad merge.
  *
- * Every git it runs is hardened (git-hardening.mjs): the operator's checkout
- * shares its `.git` with every agent's worktree.
+ * The operator's checkout shares its `.git` with every agent's worktree, so
+ * nothing about where `main` comes from is taken from it: the fetch and the
+ * build happen in hubd's mirror, which no jail can write, and the commit
+ * fetched into the checkout must be the mirror's, or it is not used. Every
+ * git run in the checkout is hardened (git-hardening.mjs), including against
+ * the filter drivers its config names. The agents are all stopped first, so
+ * that config cannot change while this runs.
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -30,7 +36,7 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { GIT_ENV, GIT_HARDENING } from "./git-hardening.mjs";
+import { FILTER_KEYS, GIT_ENV, GIT_HARDENING, filterPins } from "./git-hardening.mjs";
 import { obj } from "./protocol.mjs";
 import { COMPANY_PATHSPECS, fastForwardDecision } from "./reboot.mjs";
 
@@ -52,6 +58,8 @@ const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
 const REBOOTING = path.join(ROOT, "rebooting.json");
 const LOG = path.join(ROOT, "hub", "reboot.log");
 const CHECK = path.join(ROOT, "reboot-check");
+/** hubd's own clone (hubd.mjs): no jail can write its config. */
+const MIRROR = path.join(ROOT, "hub", ".git-mirror");
 
 /** How long the company gets to exit before what is left is killed. */
 const STOP_TIMEOUT_MS = 15_000;
@@ -122,11 +130,27 @@ function devenv(args, cwd) {
 }
 
 /**
+ * git in hubd's mirror, hardened like hubd's own.
+ *
  * @param {string[]} args
  * @returns {{ code: number, stdout: string }}
  */
-function git(args) {
-  return run("git", [...GIT_HARDENING, "-C", REPO, ...args], { env: GIT_ENV });
+function mirror(args) {
+  return run("git", [...GIT_HARDENING, `--git-dir=${MIRROR}`, ...args], { env: GIT_ENV });
+}
+
+/**
+ * git in the operator's checkout: hardened, and with every filter driver its
+ * config names pinned empty. Read once, after the agents have stopped.
+ *
+ * @returns {(args: string[]) => { code: number, stdout: string }}
+ */
+function checkoutGit() {
+  const base = [...GIT_HARDENING, "-C", REPO];
+  const pins = filterPins(
+    run("git", [...base, "config", "--get-regexp", FILTER_KEYS], { env: GIT_ENV }).stdout,
+  );
+  return (args) => run("git", [...base, ...pins, ...args], { env: GIT_ENV });
 }
 
 /**
@@ -157,20 +181,34 @@ async function stopCompany() {
 }
 
 /**
- * Does this commit build? Checked in a scratch worktree, so the operator's
- * checkout is only moved to a commit already known to work.
+ * Does this commit build? Checked in a scratch directory unpacked from the
+ * mirror with `git archive`: no checkout, so no filter or hook of any
+ * repository runs, and the operator's checkout only ever moves to a commit
+ * already known to work.
  *
  * @param {string} sha
  * @returns {boolean}
  */
 function builds(sha) {
-  git(["worktree", "remove", "--force", CHECK]);
-  if (git(["worktree", "add", "--detach", CHECK, sha]).code !== 0) {
-    return false;
+  fs.rmSync(CHECK, { recursive: true, force: true });
+  fs.mkdirSync(CHECK, { recursive: true });
+  try {
+    const archive = spawnSync("git", [...GIT_HARDENING, `--git-dir=${MIRROR}`, "archive", sha], {
+      env: { ...process.env, ...GIT_ENV },
+      maxBuffer: 1024 * 1024 * 1024,
+    });
+    if (archive.status !== 0) {
+      log(`git archive ${sha}: exit ${String(archive.status)}`);
+      return false;
+    }
+    if (spawnSync("tar", ["-x", "-C", CHECK], { input: archive.stdout }).status !== 0) {
+      log(`could not unpack ${sha}`);
+      return false;
+    }
+    return devenv(["claude-llc", "--help"], CHECK) === 0;
+  } finally {
+    fs.rmSync(CHECK, { recursive: true, force: true });
   }
-  const built = devenv(["claude-llc", "--help"], CHECK) === 0;
-  git(["worktree", "remove", "--force", CHECK]);
-  return built;
 }
 
 /**
@@ -181,6 +219,41 @@ function short(sha) {
   return sha.slice(0, 8);
 }
 
+/**
+ * Move the operator's checkout to `target`, if that is safe.
+ *
+ * @param {(args: string[]) => { code: number, stdout: string }} git
+ * @param {string} target the commit the mirror fetched from GitHub and built
+ * @returns {{ updated: boolean, why: string }}
+ */
+function update(git, target) {
+  // From the mirror, and then checked: a URL rewrite in the checkout's
+  // config could hand back any commit, and only the mirror's is reviewed.
+  if (git(["fetch", "-q", "--no-tags", MIRROR, "refs/heads/main"]).code !== 0) {
+    return { updated: false, why: "could not fetch main from hubd's mirror" };
+  }
+  const fetched = git(["rev-parse", "FETCH_HEAD"]).stdout.trim();
+  if (fetched !== target) {
+    return {
+      updated: false,
+      why: `fetching main from hubd's mirror gave ${short(fetched)}, not ${short(target)}`,
+    };
+  }
+  const branch = git(["symbolic-ref", "--short", "-q", "HEAD"]);
+  const decision = fastForwardDecision({
+    branch: branch.code === 0 ? branch.stdout.trim() : null,
+    dirty: git(["status", "--porcelain", "--untracked-files=no"]).stdout.trim() !== "",
+    fastForward: git(["merge-base", "--is-ancestor", "HEAD", target]).code === 0,
+  });
+  if (!decision.update) {
+    return { updated: false, why: decision.reason };
+  }
+  if (git(["merge", "--ff-only", "-q", target]).code !== 0) {
+    return { updated: false, why: `the fast-forward to ${short(target)} failed` };
+  }
+  return { updated: true, why: "" };
+}
+
 async function main() {
   const reboot = obj(JSON.parse(fs.readFileSync(REBOOTING, "utf8")));
   const bootSha = typeof reboot.bootSha === "string" ? reboot.bootSha : "HEAD";
@@ -189,38 +262,40 @@ async function main() {
   log(`reboot: ${String(reboot.reason)}`);
 
   await stopCompany();
+  const git = checkoutGit();
 
-  // GitHub's main, by URL: never a remote an agent could have rewritten.
-  // VIBEWARS_GIT_REMOTE is the host's to set, as for hubd: a test points it
-  // at a local bare repository.
+  // GitHub's main, by URL, into the mirror. VIBEWARS_GIT_REMOTE is the
+  // host's to set, as for hubd: a test points it at a local bare repository.
   const remote = process.env.VIBEWARS_GIT_REMOTE ?? `git@github.com:${repo}.git`;
+  if (!fs.existsSync(MIRROR)) {
+    run("git", ["init", "--bare", "-q", MIRROR], { env: GIT_ENV });
+  }
   /** @type {string | null} */
   let target = null;
-  if (git(["fetch", "-q", "--no-tags", remote, "main"]).code === 0) {
-    target = git(["rev-parse", "FETCH_HEAD"]).stdout.trim();
+  if (mirror(["fetch", "-q", "--no-tags", remote, "+refs/heads/main:refs/heads/main"]).code === 0) {
+    target = mirror(["rev-parse", "refs/heads/main"]).stdout.trim();
   }
 
   /** @type {string} */
   let outcome;
   let updated = false;
   if (target === null) {
-    outcome = "Rebooted, but did NOT update: could not fetch main from GitHub.";
+    outcome = "Rebooted, but NOT updated: could not fetch main from GitHub.";
   } else if (!builds(target)) {
-    outcome = `Reboot onto ${short(target)} failed to build; running ${short(bootSha)}. Log: ${LOG}`;
+    outcome = `Rebooted, but NOT updated: main ${short(target)} failed to build; running ${short(bootSha)}. Log: ${LOG}`;
   } else {
-    const branch = git(["symbolic-ref", "--short", "-q", "HEAD"]);
-    const decision = fastForwardDecision({
-      branch: branch.code === 0 ? branch.stdout.trim() : null,
-      dirty: git(["status", "--porcelain", "--untracked-files=no"]).stdout.trim() !== "",
-      fastForward: git(["merge-base", "--is-ancestor", "HEAD", target]).code === 0,
-    });
-    if (!decision.update) {
-      outcome = `Rebooted, but did NOT update: ${decision.reason}.`;
-    } else if (git(["merge", "--ff-only", "-q", target]).code !== 0) {
-      outcome = `Rebooted, but did NOT update: the fast-forward to ${short(target)} failed.`;
+    const result = update(git, target);
+    updated = result.updated;
+    if (!updated) {
+      outcome = `Rebooted, but NOT updated: ${result.why}.`;
     } else {
-      updated = true;
-      const subjects = git(["log", "--format=%s", `${bootSha}..HEAD`, "--", ...COMPANY_PATHSPECS])
+      const subjects = mirror([
+        "log",
+        "--format=%s",
+        `${bootSha}..${target}`,
+        "--",
+        ...COMPANY_PATHSPECS,
+      ])
         .stdout.trim()
         .split("\n")
         .filter((line) => line !== "");
