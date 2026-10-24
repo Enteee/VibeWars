@@ -88,6 +88,39 @@ export function endpointFromLocation(location: Pick<Location, "protocol" | "host
   return `${wsProtocol}//${location.host}`;
 }
 
+/**
+ * Where the game server lives.
+ *
+ * Normally the page's own origin: in production the server serves the
+ * client, so they are the same host and nothing needs configuring.
+ *
+ * During `pnpm run dev` they are *not* the same host — Vite serves the
+ * client on 5173 with hot reload while the game server runs on 2567 —
+ * so `VITE_VIBEWARS_SERVER` points the client at the real server. The
+ * override is read from Vite's compile-time env, so it is baked in at
+ * build time and a production bundle simply has no override to find.
+ */
+export function resolveEndpoint(
+  location: Pick<Location, "protocol" | "host">,
+  override: string | undefined = import.meta.env.VITE_VIBEWARS_SERVER,
+): string {
+  const trimmed = override?.trim();
+  return trimmed === undefined || trimmed === "" ? endpointFromLocation(location) : trimmed;
+}
+
+/**
+ * The same server, addressed over HTTP instead of WebSocket.
+ *
+ * The REST endpoints (`/api/maps`) have to reach the *server*, not the
+ * page's origin. In production those are the same thing and a relative
+ * URL would do; in dev they are not, and a relative URL quietly hits
+ * Vite and 404s. Deriving both from one resolved endpoint means there is
+ * a single answer to "where is the server".
+ */
+export function httpOriginFrom(endpoint: string): string {
+  return endpoint.replace(/^ws/, "http");
+}
+
 /** Room state as the Colyseus client actually decodes it — a minimal, local shape. */
 interface DecodedPlayer {
   readonly sessionId: string;

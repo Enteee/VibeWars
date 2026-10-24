@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { ConfigError, loadConfig, parseBoolean, parsePort } from "./config.js";
+import {
+  ConfigError,
+  DEFAULT_DEV_CLIENT_ORIGIN,
+  loadConfig,
+  parseBoolean,
+  parsePort,
+} from "./config.js";
 
 describe("parsePort", () => {
   it("defaults to 2567 when unset or blank", () => {
@@ -82,6 +88,7 @@ describe("loadConfig", () => {
       host: "127.0.0.1",
       webRoot: "/srv/web",
       devMode: true,
+      devClientOrigin: DEFAULT_DEV_CLIENT_ORIGIN,
     });
   });
 
@@ -91,6 +98,20 @@ describe("loadConfig", () => {
     // test must not assume either way — it only asserts the two inputs are
     // handled identically.
     expect(loadConfig({ VIBEWARS_WEB_ROOT: "   " }).webRoot).toBe(loadConfig({}).webRoot);
+  });
+
+  it("serves no client at all for VIBEWARS_WEB_ROOT=none", () => {
+    // What `pnpm run dev` relies on: Vite serves the client, and the
+    // game server must not also serve a previously built copy at its own
+    // port, or you end up debugging an hour-old bundle.
+    expect(loadConfig({ VIBEWARS_WEB_ROOT: "none" }).webRoot).toBeUndefined();
+  });
+
+  it("defaults the dev client origin, and lets it be overridden", () => {
+    expect(loadConfig({}).devClientOrigin).toBe(DEFAULT_DEV_CLIENT_ORIGIN);
+    expect(loadConfig({ VIBEWARS_DEV_ORIGIN: "http://192.168.1.5:5173" }).devClientOrigin).toBe(
+      "http://192.168.1.5:5173",
+    );
   });
 
   it("propagates a malformed PORT as a loud ConfigError", () => {

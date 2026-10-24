@@ -1,4 +1,4 @@
-import { endpointFromLocation } from "./net/match-client.js";
+import { httpOriginFrom, resolveEndpoint } from "./net/match-client.js";
 import {
   LobbyNotFoundError,
   createLobby,
@@ -70,12 +70,12 @@ async function main(): Promise<void> {
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
 
-  const endpoint = endpointFromLocation(window.location);
+  const endpoint = resolveEndpoint(window.location);
 
   // Fetched once: the server is the authority on which arenas exist.
   let availableMaps: { id: string; name: string }[] = [];
   try {
-    const response = await fetch("/api/maps");
+    const response = await fetch(`${httpOriginFrom(endpoint)}/api/maps`);
     if (response.ok) {
       const body = (await response.json()) as { maps: { id: string; name: string }[] };
       availableMaps = body.maps;

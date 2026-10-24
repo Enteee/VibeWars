@@ -6,7 +6,7 @@ import { loadAllMaps } from "@vibewars/game-maps";
 import { ROOM_LOBBY, ROOM_MATCH } from "@vibewars/game-protocol";
 import express from "express";
 
-import type { ServerConfig } from "./config.js";
+import { DEFAULT_DEV_CLIENT_ORIGIN, type ServerConfig } from "./config.js";
 import { LobbyRoom } from "./rooms/lobby-room.js";
 import { MatchRoom } from "./rooms/match-room.js";
 
@@ -30,6 +30,28 @@ export function createGameServer(config: ServerConfig) {
     },
 
     express: (app) => {
+      // During `pnpm run dev` the client is served by Vite on another
+      // port, so matchmaking and /api are cross-origin. Allowed only in
+      // dev mode, and only for one exact origin — never `*`, and never
+      // by echoing back whatever Origin the caller sent.
+      //
+      // Production needs none of this: the server serves the client, so
+      // every request is same-origin.
+      if (config.devMode) {
+        const devOrigin = config.devClientOrigin ?? DEFAULT_DEV_CLIENT_ORIGIN;
+        console.warn(`[http] dev mode: allowing cross-origin requests from ${devOrigin}`);
+        app.use((req, res, next) => {
+          res.setHeader("Access-Control-Allow-Origin", devOrigin);
+          res.setHeader("Vary", "Origin");
+          res.setHeader("Access-Control-Allow-Headers", "content-type");
+          if (req.method === "OPTIONS") {
+            res.sendStatus(204);
+            return;
+          }
+          next();
+        });
+      }
+
       // Liveness probe for container orchestrators. Deliberately free of game
       // state so it stays cheap and cannot be used to enumerate lobbies.
       app.get("/healthz", (_req, res) => {

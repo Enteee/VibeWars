@@ -102,8 +102,20 @@ headlessly. See [ARCHITECTURE.md](ARCHITECTURE.md).
 ## Development
 
 ```sh
+pnpm run dev      # the whole game, reloading as you edit
+```
+
+Opens the client on <http://localhost:5173> with the game server on 2567.
+Editing the client reloads the page; editing the server or any package
+rebuilds and restarts it. Ctrl-C stops all three watchers.
+
+Use `pnpm run build && node apps/server/dist/main.js` instead when you
+want the real single-port setup — that is what LAN guests connect to, and
+it is what the browser tests run against.
+
+```sh
 pnpm run ci       # format + lint + typecheck + test + build
-pnpm run test     # 576 tests: unit, integration, fuzz, headless simulation
+pnpm run test     # 583 tests: unit, integration, fuzz, headless simulation
 pnpm run test:e2e # 19 browser tests in a real Chromium (needs one installed)
 pnpm run ci:full  # both of the above
 ```

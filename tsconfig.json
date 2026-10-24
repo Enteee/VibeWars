@@ -11,5 +11,5 @@
     "allowJs": true,
     "checkJs": false
   },
-  "include": ["*.config.ts", "*.config.mjs", "*.config.js", "e2e/**/*.ts"]
+  "include": ["*.config.ts", "*.config.mjs", "*.config.js", "e2e/**/*.ts", "scripts/**/*.mjs"]
 }

@@ -19,6 +19,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "clean": "git clean -xdf node_modules dist .tsbuildinfo && pnpm -r exec rm -rf dist node_modules",
+    "dev": "node scripts/dev.mjs",
     "test:e2e": "playwright test",
     "ci": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build",
     "ci:full": "pnpm run ci && pnpm run test:e2e"

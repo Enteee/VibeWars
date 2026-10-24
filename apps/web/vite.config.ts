@@ -15,10 +15,11 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    proxy: {
-      // Colyseus matchmaking + websocket during `vite dev`.
-      "/matchmake": { target: "http://localhost:2567", changeOrigin: true },
-      "/healthz": { target: "http://localhost:2567", changeOrigin: true },
-    },
+    // No proxy to the game server. The client addresses it directly via
+    // `VITE_VIBEWARS_SERVER` (see `resolveEndpoint`), because Colyseus
+    // opens its WebSocket at `/<processId>/<roomId>` — a root-level path
+    // that cannot be pattern-matched apart from Vite's own HMR socket
+    // without guessing. An earlier proxy here claimed to forward the
+    // websocket and never did; it only forwarded matchmaking.
   },
 });

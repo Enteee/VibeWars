@@ -13,6 +13,7 @@ command below is a plain `pnpm` script underneath (see `package.json`).
 ## Everyday commands
 
 ```sh
+pnpm run dev           # client on :5173 + game server on :2567, both reloading
 pnpm run build         # build every package/app
 pnpm run test          # the headless suite
 pnpm run test:e2e      # browser tests (Playwright; needs a Chromium)
@@ -27,6 +28,24 @@ pnpm run ci            # format:check + lint + typecheck + test + build, in orde
 
 `devenv test` runs the same sequence as `pnpm run ci` via `enterTest` in
 `devenv.nix` — see ADR-0007 for why both exist.
+
+### How `pnpm run dev` is wired
+
+`scripts/dev.mjs` runs three watchers: `tsc --build --watch` for the
+packages and the server, `node --watch` for the server process, and Vite
+for the client.
+
+Because Vite serves the client on a different port from the game server,
+the client is pointed at the server explicitly through
+`VITE_VIBEWARS_SERVER` rather than guessing from the page origin, and the
+server allows that one origin cross-origin — but **only** when
+`VIBEWARS_DEV=1`. Production serves the client from the game server, so
+it is same-origin and none of this applies.
+
+Proxying through Vite instead would have been the obvious approach and
+does not work: Colyseus opens its WebSocket at `/<processId>/<roomId>`,
+a root-level path that cannot be told apart from Vite's own HMR socket
+without guessing.
 
 ## Before opening a PR
 

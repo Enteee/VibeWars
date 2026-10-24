@@ -14,10 +14,29 @@ export interface ServerConfig {
   readonly port: number;
   /** Interface to bind. Defaults to all interfaces so LAN peers can connect. */
   readonly host: string;
-  /** Absolute path to the built web client, or `undefined` to not serve one. */
+  /**
+   * Absolute path to the built web client, or `undefined` to not serve
+   * one. Set `VIBEWARS_WEB_ROOT=none` to serve no client even when a
+   * built one exists — which is what `pnpm run dev` does, so an
+   * hour-old bundle at the server's own port cannot be mistaken for the
+   * hot-reloading one Vite is serving.
+   */
   readonly webRoot: string | undefined;
   /** Enables dev-only diagnostics (brief §34). Never on by default. */
   readonly devMode: boolean;
+  /**
+   * Origin allowed to call this server cross-origin, and ONLY honoured
+   * when `devMode` is on.
+   *
+   * `pnpm run dev` serves the client from Vite on another port, which
+   * makes matchmaking a cross-origin request. An exact origin rather than
+   * `*`: a wildcard would still be a wildcard on the day someone runs a
+   * dev server on a shared network.
+   *
+   * Optional because it is meaningless unless `devMode` is on — a caller
+   * building a production config has nothing to say about it.
+   */
+  readonly devClientOrigin?: string;
 }
 
 export class ConfigError extends Error {
@@ -25,6 +44,9 @@ export class ConfigError extends Error {
 }
 
 const DEFAULT_PORT = 2567;
+
+/** Where `pnpm run dev` serves the client from. */
+export const DEFAULT_DEV_CLIENT_ORIGIN = "http://localhost:5173";
 
 /**
  * Parse a port from a string, rejecting anything that is not a usable TCP port.
@@ -76,10 +98,19 @@ function conventionalWebRoot(): string | undefined {
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   const webRoot = env.VIBEWARS_WEB_ROOT?.trim();
+  const devOrigin = env.VIBEWARS_DEV_ORIGIN?.trim();
+  const resolvedWebRoot =
+    webRoot === "none"
+      ? undefined
+      : webRoot !== undefined && webRoot !== ""
+        ? webRoot
+        : conventionalWebRoot();
   return {
     port: parsePort(env.PORT),
     host: env.HOST?.trim() ?? "0.0.0.0",
-    webRoot: webRoot !== undefined && webRoot !== "" ? webRoot : conventionalWebRoot(),
+    webRoot: resolvedWebRoot,
     devMode: parseBoolean(env.VIBEWARS_DEV, false),
+    devClientOrigin:
+      devOrigin === undefined || devOrigin === "" ? DEFAULT_DEV_CLIENT_ORIGIN : devOrigin,
   };
 }
