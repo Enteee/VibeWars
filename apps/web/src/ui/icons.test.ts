@@ -6,7 +6,13 @@ import { describe, expect, it } from "vitest";
 
 import { PROFESSIONS, type ProfessionId, type SkillType } from "@vibewars/game-core";
 
-import { SKILL_TYPE_NAME, professionIcon, skillTypeBadgeHtml, skillTypeIcon } from "./icons.js";
+import {
+  SKILL_TYPE_NAME,
+  professionIcon,
+  skillTypeBadgeHtml,
+  skillTypeIcon,
+  soundIcon,
+} from "./icons.js";
 
 const PUBLIC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../public");
 
@@ -21,6 +27,13 @@ describe("icons", () => {
     for (const profession of Object.keys(PROFESSIONS) as ProfessionId[]) {
       expect(fs.existsSync(path.join(PUBLIC, professionIcon(profession))), profession).toBe(true);
     }
+  });
+
+  it("has a file under public/ for both mute states", () => {
+    for (const muted of [false, true]) {
+      expect(fs.existsSync(path.join(PUBLIC, soundIcon(muted))), String(muted)).toBe(true);
+    }
+    expect(soundIcon(true)).not.toBe(soundIcon(false));
   });
 
   it("names a badge for screen readers and on hover", () => {

@@ -119,6 +119,16 @@ marker on someone, which carry that marker's colour.
 | Hex         | Broken purple ring |
 | Skill       | Square             |
 
+### UI controls
+
+Buttons in the HUD and menus. Ink on the panel. The states of one control
+differ by shape, so the icon shows the current state at a glance.
+
+| Icon        | Means          | Shape              |
+| ----------- | -------------- | ------------------ |
+| `sound-on`  | Sound is on    | Speaker, two waves |
+| `sound-off` | Sound is muted | Speaker, a cross   |
+
 ## Sizes
 
 - Icons are drawn on a 24×24 grid with strokes of at least 2 units.
@@ -158,14 +168,15 @@ generator. Never hand-edit an output file; change the script and re-run.
 | Profession | `apps/web/public/icons/profession/` |
 | Skill type | `apps/web/public/icons/skill-type/` |
 | Status     | `apps/web/public/icons/status/`     |
+| UI         | `apps/web/public/icons/ui/`         |
 
 Each file is a flat SVG of 150–450 bytes with colours baked in, because Phaser
 rasterises SVG textures without CSS. Load it in Phaser with
 `this.load.svg(key, url, { width, height })` at the size you draw it, and in
 HTML with a plain `<img>`.
 
-Adding a status, profession or skill type: add one entry to the matching table
-in the generator, re-run it, and add a row to this page.
+Adding a status, profession, skill type or UI control: add one entry to the
+matching table in the generator, re-run it, and add a row to this page.
 
 ## Sound
 
