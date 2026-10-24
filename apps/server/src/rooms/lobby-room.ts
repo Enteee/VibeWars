@@ -270,7 +270,7 @@ export class LobbyRoom extends Room {
     try {
       reservations = await openLobbyMatch(mapId, seated);
     } catch (error: unknown) {
-      console.error(`[lobby]  could not open its match`, error);
+      console.error(`[lobby] ${this.state.code} could not open its match`, error);
       this.state.phase = "waiting";
       client.send("start-rejected", { reason: "the server could not create the match" });
       return;
@@ -285,7 +285,9 @@ export class LobbyRoom extends Room {
       }
     });
 
-    console.info(`[lobby]  starting match on `);
+    console.info(
+      `[lobby] ${this.state.code} starting match ${reservations[0]?.roomId ?? "?"} on ${mapId}`,
+    );
   }
 
   public override onJoin(client: Client, options: unknown): void {
