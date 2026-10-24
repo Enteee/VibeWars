@@ -26,6 +26,7 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import { inlineBodyFile } from "./hub-body.mjs";
 import { splitFilter } from "./hub-filter.mjs";
 import { ROLES, authorize } from "./hub-policy.mjs";
 
@@ -112,6 +113,15 @@ if (argv[0] === "push") {
 /** @type {string | null} */
 let jqFilter = null;
 if (request.kind === "gh") {
+  // Read here, in the jail; gh on the host never sees a path (hub-body.mjs).
+  const inlined = inlineBodyFile(request.argv, (file) =>
+    fs.readFileSync(file === "-" ? 0 : file, "utf8"),
+  );
+  if ("error" in inlined) {
+    console.error(`hub: ${inlined.error}`);
+    process.exit(2);
+  }
+  request = { kind: "gh", argv: inlined.argv };
   const split = splitFilter(request.argv);
   if ("error" in split) {
     console.error(`hub: ${split.error}`);
