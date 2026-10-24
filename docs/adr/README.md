@@ -23,5 +23,6 @@ rewriting history.
 | [0015](0015-agent-company.md)              | The agent company's GitHub boundary                    |
 | [0016](0016-no-backwards-compatibility.md) | No backwards compatibility before 1.0                  |
 | [0017](0017-shared-match-simulation.md)    | One steppable match simulation in `game-core`          |
+| [0021](0021-ci-in-devenv.md)               | CI in the devenv shell, every git hook                 |
 | [0023](0023-one-telegram-bot.md)           | One Telegram bot for the whole company                 |
 | [0024](0024-telegram-topics.md)            | Four Telegram topics: General, Bots, Manager, Operator |
