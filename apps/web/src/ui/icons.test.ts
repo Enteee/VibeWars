@@ -9,6 +9,7 @@ import { PROFESSIONS, type ProfessionId, type SkillType } from "@vibewars/game-c
 import {
   SKILL_TYPE_NAME,
   professionIcon,
+  skillBadgeHtml,
   skillTypeBadgeHtml,
   skillTypeIcon,
   soundIcon,
@@ -40,5 +41,10 @@ describe("icons", () => {
     expect(skillTypeBadgeHtml("hex")).toBe(
       '<img class="skill-type-badge" src="/icons/skill-type/hex.svg" alt="Hex" title="Hex">',
     );
+  });
+
+  it("gives a known skill its type badge, and an unknown one none", () => {
+    expect(skillBadgeHtml("elementalist.fireball")).toBe(skillTypeBadgeHtml("spell"));
+    expect(skillBadgeHtml("nobody.unknown")).toBe("");
   });
 });
