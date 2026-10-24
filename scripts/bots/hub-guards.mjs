@@ -116,6 +116,23 @@ export function approvalsSatisfied(ledger, target) {
 }
 
 /**
+ * Does a push change only paths under `prefix`?
+ *
+ * The guard on a role that may push only one kind of file: the manager, who
+ * ships skills and nothing else (#27). `paths` must list both sides of a
+ * rename (hubd diffs with --no-renames), so moving a file out of `prefix`
+ * shows up as a change outside it. A deletion inside is a change inside.
+ *
+ * @param {string} prefix a directory, ending in "/"
+ * @param {readonly string[]} paths every path the push changes, relative to main
+ * @returns {{ ok: boolean, outside: string[] }}
+ */
+export function pathsWithin(prefix, paths) {
+  const outside = paths.filter((path) => !path.startsWith(prefix) || path.includes("/../"));
+  return { ok: outside.length === 0, outside };
+}
+
+/**
  * Turn a guard name from the policy into a human sentence, for the refusal
  * the agent actually reads.
  *
