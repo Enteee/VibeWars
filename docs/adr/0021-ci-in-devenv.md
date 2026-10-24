@@ -36,7 +36,9 @@ for the enabled hook ids and emits them as a JSON matrix. The `hook (<id>)`
 jobs run `prek run <id> --all-files` (`prek` is devenv's default
 `git-hooks.package`). Adding a hook to `devenv.nix` adds a CI job for it
 with no workflow edit. The `git hooks` job is green only if every hook job
-was, which gives branch protection one fixed name to require.
+was, and it is the one that is required: `company-init.mjs` lists it in
+`EXPECTED_CHECKS` for hubd and for the ruleset on `main`. Third-party
+actions are pinned to a commit.
 
 **D4. The `enterTest` checks run as separate steps** of the
 `format + lint + typecheck + test + build` job, in `enterTest`'s order,

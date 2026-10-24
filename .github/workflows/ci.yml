@@ -67,7 +67,8 @@ jobs:
           -c .pre-commit-config.yaml
 
   # One check that is green only if every hook job was. A matrix has no fixed
-  # job names to require, so this is the name branch protection can require.
+  # job names to require, so this is the one required (company-init.mjs
+  # EXPECTED_CHECKS and the ruleset). It must never be skipped: always().
   hooks:
     name: git hooks
     needs: [hook-list, hook]

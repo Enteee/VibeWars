@@ -17,9 +17,10 @@ runs:
     # Single-user Nix with a store the runner owns: cache-nix-action restores
     # the store with tar as the runner user, and cannot write into the
     # root-owned store a multi-user install (cachix/install-nix-action) makes.
-    - uses: nixbuild/nix-quick-install-action@v30
+    # Third-party actions are pinned to a commit, not a movable tag.
+    - uses: nixbuild/nix-quick-install-action@5bb6a3b3abe66fd09bbf250dce8ada94f856a703 # v30
 
-    - uses: nix-community/cache-nix-action@v6
+    - uses: nix-community/cache-nix-action@135667ec418502fa5a3598af6fb9eb733888ce6a # v6
       with:
         primary-key: nix-${{ runner.os }}-${{ hashFiles('devenv.nix', 'devenv.lock', 'devenv.yaml', 'nix/**') }}
         restore-prefixes-first-match: nix-${{ runner.os }}-
