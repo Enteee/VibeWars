@@ -8,10 +8,19 @@ import {
   type SoundPlayerDeps,
 } from "./sound-player.js";
 
-/** A context that counts the sounds started, and decodes or fails on demand. */
-function fakeContext(decode: () => Promise<AudioBuffer>): SoundContext & { started: number } {
+/** A context that counts the sounds started and resumes, and decodes or fails on demand. */
+function fakeContext(
+  decode: () => Promise<AudioBuffer>,
+): SoundContext & { started: number; resumed: number; state: string } {
   const context = {
     started: 0,
+    resumed: 0,
+    state: "running",
+    resume: () => {
+      context.resumed += 1;
+      context.state = "running";
+      return Promise.resolve();
+    },
     destination: {},
     createGain: () => ({ gain: { value: 1 }, connect: () => undefined }),
     createBufferSource: () => ({
@@ -131,6 +140,17 @@ describe("createWebAudioPlayer", () => {
     player.play("heal");
     expect(createContext).toHaveBeenCalledTimes(1);
     expect(context.started).toBe(1);
+  });
+
+  it("resumes a context that opened suspended on the next gesture", async () => {
+    const { context, gestures } = setup();
+    context.state = "suspended";
+    gestures.dispatchEvent(new Event("pointerdown"));
+    expect(context.resumed).toBe(1);
+    gestures.dispatchEvent(new Event("pointerdown"));
+    gestures.dispatchEvent(new Event("keydown"));
+    expect(context.resumed).toBe(1);
+    await settle();
   });
 
   it("warns once when decoding fails, and stays silent after", async () => {

@@ -30,6 +30,8 @@ export type SoundSink = object;
 /** The slice of Web Audio the player uses, so a test can hand it a fake. */
 export interface SoundContext {
   readonly destination: SoundSink;
+  readonly state: string;
+  resume(): Promise<void>;
   createGain(): { readonly gain: { value: number }; connect(sink: SoundSink): unknown };
   createBufferSource(): {
     buffer: AudioBuffer | null;
@@ -71,8 +73,6 @@ export function createWebAudioPlayer(deps: SoundPlayerDeps): SoundPlayer {
   };
 
   const open = (): void => {
-    deps.gestures.removeEventListener("pointerdown", open);
-    deps.gestures.removeEventListener("keydown", open);
     if (output !== undefined || broken) {
       return;
     }
@@ -98,12 +98,23 @@ export function createWebAudioPlayer(deps: SoundPlayerDeps): SoundPlayer {
     buffers.set(id, await context.decodeAudioData(await response.arrayBuffer()));
   };
 
+  // A context opened outside a gesture can start suspended (Safari), so
+  // each gesture resumes it until it runs; then there is no need to listen.
+  const onGesture = (): void => {
+    open();
+    if (output === undefined || output.context.state === "running") {
+      deps.gestures.removeEventListener("pointerdown", onGesture);
+      deps.gestures.removeEventListener("keydown", onGesture);
+      return;
+    }
+    output.context.resume().catch(fail);
+  };
+
   if (deps.hasBeenActive) {
     open();
-  } else {
-    deps.gestures.addEventListener("pointerdown", open);
-    deps.gestures.addEventListener("keydown", open);
   }
+  deps.gestures.addEventListener("pointerdown", onGesture);
+  deps.gestures.addEventListener("keydown", onGesture);
 
   return {
     play(id) {

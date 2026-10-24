@@ -64,6 +64,27 @@ describe("soundsForCombat", () => {
     expect(soundsForCombat(other, ME)).toEqual([]);
   });
 
+  it("is silent for a status tick on you, except the death it causes", () => {
+    // How the server sends burning or Regeneration: the bearer as caster, no skill.
+    const burning = {
+      casterSessionId: ME,
+      skillId: "",
+      events: [{ kind: "damage", targetId: ME }],
+    };
+    const regen = { casterSessionId: ME, skillId: "", events: [{ kind: "heal", targetId: ME }] };
+    const fatal = {
+      casterSessionId: ME,
+      skillId: "",
+      events: [
+        { kind: "damage", targetId: ME },
+        { kind: "death", targetId: ME },
+      ],
+    };
+    expect(soundsForCombat(burning, ME)).toEqual([]);
+    expect(soundsForCombat(regen, ME)).toEqual([]);
+    expect(soundsForCombat(fatal, ME)).toEqual(["death"]);
+  });
+
   it("plays a kill as a hit and a death", () => {
     const kill = message(ME, [
       { kind: "damage", targetId: "foe", amount: 90 },
