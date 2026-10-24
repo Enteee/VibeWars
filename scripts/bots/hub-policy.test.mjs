@@ -168,6 +168,10 @@ describe("retargeting and parser tricks", () => {
       ["issue", "list", "--repo=other/repo"],
       ["issue", "list", "-Rother/repo"],
       ["issue", "list", "-R", "other/repo"],
+      ["pr", "create", "-dRother/repo"],
+      ["pr", "create", "-dR", "other/repo"],
+      ["project", "item-list", "2", "--owner", "someone-else"],
+      ["project", "item-list", "2", "--owner=someone-else"],
       ["issue", "comment", "1", "--", "--body-file", "x"],
     ]) {
       expect(gh("developer-1", argv), argv.join(" ")).toMatchObject({ allow: false });

@@ -100,6 +100,7 @@ async function startHubd(remaining) {
       PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
       VIBEWARS_BOT_ROOT: root,
       DEVENV_ROOT: repo,
+      VIBEWARS_GIT_REMOTE: path.join(dir, "remote.git"),
       FAKE_GH_STATE: state,
       // Something only hubd's environment holds, to prove a filter cannot
       // reach it.
@@ -116,6 +117,8 @@ async function startHubd(remaining) {
   return {
     root,
     hub,
+    repo,
+    remote: path.join(dir, "remote.git"),
     /** @param {number} left */
     setRemaining(left) {
       fs.writeFileSync(path.join(state, "remaining"), String(left));
@@ -414,7 +417,7 @@ describe("hubd answering issue and PR reads from REST", () => {
   }, 20_000);
 });
 
-describe("hubd running git in an agent's worktree", () => {
+describe("hubd pushing through its own mirror", () => {
   /**
    * @param {string[]} args
    * @param {string} cwd
@@ -431,40 +434,60 @@ describe("hubd running git in an agent's worktree", () => {
     }
     return result.stdout;
   };
+  /**
+   * @param {string} message
+   * @param {string} cwd
+   */
+  const commit = (message, cwd) =>
+    sh(["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", message], cwd);
 
-  it("does not run a hook the agent planted, and still pushes", async () => {
+  it("runs nothing the agent planted, ignores its remote, and still pushes", async () => {
     const hubd = await startHubd(5000);
-    const remote = path.join(hubd.root, "remote.git");
-    const worktree = path.join(hubd.root, "wt", "developer-1");
+    const { repo, remote } = hubd;
+    const decoy = path.join(hubd.root, "decoy.git");
     sh(["init", "--bare", "-q", remote], hubd.root);
-    sh(["init", "-q", "-b", "main", worktree], hubd.root);
-    sh(
-      ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "x"],
-      worktree,
-    );
-    sh(["remote", "add", "origin", remote], worktree);
+    sh(["init", "--bare", "-q", decoy], hubd.root);
+    sh(["init", "-q", "-b", "main", repo], hubd.root);
+    fs.writeFileSync(path.join(repo, "README.md"), "x\n");
+    sh(["add", "README.md"], repo);
+    commit("main", repo);
+    sh(["push", "-q", remote, "main"], repo);
 
-    // Planted both ways an agent could: in .git/hooks, and through a
-    // hooksPath of its choosing.
+    // A branch that changes a gate file, so the audit has to tag it.
+    sh(["checkout", "-q", "-b", "bot/developer-1/x"], repo);
+    fs.mkdirSync(path.join(repo, "scripts", "bots"), { recursive: true });
+    fs.writeFileSync(path.join(repo, "scripts", "bots", "hubd.mjs"), "// weakened\n");
+    sh(["add", "scripts"], repo);
+    commit("gate", repo);
+
+    // Planted every way an agent could: in .git/hooks, through a hooksPath
+    // of its choosing, and an origin that points somewhere else.
     const marker = path.join(hubd.root, "hook-ran");
     const hook = `#!/bin/sh\ntouch ${marker}\n`;
-    fs.writeFileSync(path.join(worktree, ".git", "hooks", "pre-push"), hook, { mode: 0o755 });
-    const planted = path.join(worktree, "planted-hooks");
+    fs.writeFileSync(path.join(repo, ".git", "hooks", "pre-push"), hook, { mode: 0o755 });
+    fs.writeFileSync(path.join(repo, ".git", "hooks", "reference-transaction"), hook, {
+      mode: 0o755,
+    });
+    const planted = path.join(repo, "planted-hooks");
     fs.mkdirSync(planted);
     fs.writeFileSync(path.join(planted, "pre-push"), hook, { mode: 0o755 });
-    sh(["config", "core.hooksPath", planted], worktree);
+    sh(["config", "core.hooksPath", planted], repo);
+    sh(["remote", "add", "origin", decoy], repo);
 
     // The hook is real: a plain git push runs it.
-    sh(["push", "-q", "origin", "HEAD:refs/heads/plain"], worktree);
+    sh(["push", "-q", "origin", "HEAD:refs/heads/plain"], repo);
     expect(fs.existsSync(marker)).toBe(true);
     fs.rmSync(marker);
 
-    sh(["branch", "bot/developer-1/x"], worktree);
     const answer = await hubd.request("developer-1", "push", ["bot/developer-1/x"]);
 
-    expect(answer.code).toBe(0);
+    expect(answer.code, String(answer.stderr)).toBe(0);
     expect(fs.existsSync(marker)).toBe(false);
     expect(sh(["branch", "--list", "bot/developer-1/x"], remote)).toContain("bot/developer-1/x");
+    expect(sh(["branch", "--list", "bot/developer-1/x"], decoy)).toBe("");
+    const audit = fs.readFileSync(path.join(hubd.hub, "audit.jsonl"), "utf8");
+    expect(audit).toContain('"tag":"gate-change"');
+    expect(audit).toContain('"paths":["scripts/bots/hubd.mjs"]');
   }, 20_000);
 });
 

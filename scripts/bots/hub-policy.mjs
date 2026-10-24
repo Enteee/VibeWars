@@ -210,19 +210,22 @@ const RULES = [
 ];
 
 /**
- * Flags that retarget a command at another repository. hubd pins the
- * repository itself, so these are refused rather than merged with — a
- * conflicting `--repo` would otherwise either be silently ignored or let an
- * agent operate somewhere nobody is watching.
+ * Flags that retarget a command at another repository, or the board at
+ * another owner. hubd pins both itself, so these are refused rather than
+ * merged with — a conflicting `--repo` would otherwise either be silently
+ * ignored or let an agent operate somewhere nobody is watching.
  */
-const REPO_FLAGS = new Set(["-R", "--repo"]);
+const RETARGET_FLAGS = { long: ["--repo", "--owner"], short: "R" };
 
 /**
  * @param {string} word
  * @returns {boolean} whether it retargets the repository, in any spelling
  */
 function isRepoFlag(word) {
-  return REPO_FLAGS.has(word) || word.startsWith("--repo=") || /^-R./.test(word);
+  if (word.startsWith("--")) {
+    return RETARGET_FLAGS.long.some((flag) => word === flag || word.startsWith(`${flag}=`));
+  }
+  return shortFlag(word, (letter) => RETARGET_FLAGS.short.includes(letter)) !== null;
 }
 
 /**
@@ -454,10 +457,9 @@ function permits(roles, role) {
  * it must be visible rather than quietly folded into the policy.
  *
  * Two things keep it honest. The delegation is data, not a change to the
- * table below — so the base policy stays the thing we test. And hubd only
- * honours a hat whose real wearer is **not hired yet**, so the override
- * expires on its own the moment the proper bot comes online; nobody has to
- * remember to take it back.
+ * table below — so the base policy stays the thing we test. And it is
+ * written down in `company.json`, where the operator gives it and takes it
+ * back; nothing grants or revokes a hat on its own.
  *
  * Sign-off under a borrowed hat has to be explicit — `hub approve 22 --sha
  * <commit> --as perf-sec-qa` — so the ledger still records two distinct

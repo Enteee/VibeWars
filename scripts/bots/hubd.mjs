@@ -67,6 +67,14 @@ const COMPANY = path.join(ROOT, "company.json");
 const BOARD_SNAPSHOT = path.join(HUB, "board.json");
 /** GraphQL budget as of hubd's last check, for the dashboard. */
 const RATE_LIMIT = path.join(HUB, "ratelimit.json");
+/**
+ * hubd's own bare clone: the only repository it runs git in with authority.
+ * The hub directory is bound read-only into every jail, so no agent can plant
+ * a hook, a config or a remote here (#26).
+ */
+const MIRROR = path.join(HUB, ".git-mirror");
+/** An empty directory hubd owns, where gh runs, so gh reads no checkout. */
+const GH_CWD = path.join(HUB, ".gh-cwd");
 
 /**
  * Commands that accept `--repo`. The repository is pinned by us rather than
@@ -136,7 +144,9 @@ function run(file, args, cwd, extraEnv = {}) {
  * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
  */
 function gh(args) {
-  return run("gh", args, REPO_DIR);
+  // GH_REPO answers gh api's `{owner}/{repo}` placeholders, which gh would
+  // otherwise take from the git remote of the directory it runs in.
+  return run("gh", args, GH_CWD, { GH_REPO: company().repo });
 }
 
 /**
@@ -217,14 +227,12 @@ function servedByRest(kind, argv) {
 }
 
 /**
- * Settings an agent could plant in its worktree's `.git/config` to make
- * hubd, which runs unjailed, execute its code: hooks, an fsmonitor, an SSH
- * or proxy command, a credential or askpass helper, an external diff, and
- * the `ext::` transport. `-c` beats the repository's own config, so these
- * pin each to something inert (issue #26, stopgap).
- *
- * This does not stop `remote.origin.url` pointing somewhere else; that is
- * #26's mirror fix.
+ * Settings that make git run a command: hooks, an fsmonitor, an SSH or proxy
+ * command, a credential or askpass helper, an external diff, and the `ext::`
+ * transport. hubd runs git only in its mirror, but it fetches from the
+ * company's shared repository, which every agent can write, and git hands
+ * `-c` on to the upload-pack it runs there. `-c` beats that repository's
+ * own config, so these pin each to something inert (#26).
  */
 const GIT_HARDENING = [
   "-c",
@@ -246,20 +254,30 @@ const GIT_HARDENING = [
 ];
 
 /**
- * git in an agent's worktree, with the repository's dangerous settings
- * neutralised and no system or global config, so nothing outside the
- * worktree changes what runs either. The remote is SSH, so no credential
- * helper is needed.
+ * git in hubd's mirror, hardened, with no system or global config, so
+ * nothing outside hubd changes what runs. The remote is SSH, so no
+ * credential helper is needed.
  *
  * @param {string[]} args
- * @param {string} worktree
  * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
  */
-function git(args, worktree) {
-  return run("git", [...GIT_HARDENING, ...args], worktree, {
+function git(args) {
+  return run("git", [...GIT_HARDENING, `--git-dir=${MIRROR}`, ...args], HUB, {
     GIT_CONFIG_NOSYSTEM: "1",
     GIT_CONFIG_GLOBAL: "/dev/null",
   });
+}
+
+/**
+ * Where pushes go and where `main` comes from: the company's repository,
+ * never a remote an agent configured. VIBEWARS_GIT_REMOTE is the host's to
+ * set, for a test to point at a local bare repository.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {string}
+ */
+function remoteUrl(cfg) {
+  return process.env.VIBEWARS_GIT_REMOTE ?? `git@github.com:${cfg.repo}.git`;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -313,7 +331,7 @@ function pinRepo(argv, cfg) {
   if (group !== undefined && REPO_SCOPED.has(group)) {
     return [...argv, "--repo", cfg.repo];
   }
-  if (group === "project" && !argv.includes("--owner")) {
+  if (group === "project") {
     return [...argv, "--owner", cfg.owner];
   }
   return argv;
@@ -454,16 +472,33 @@ function audit(entry) {
  * afterwards with one `grep` instead of being indistinguishable from ordinary
  * work.
  *
- * @param {string} worktree
+ * Compared in the mirror, against `main` as GitHub has it: not against
+ * whatever an agent's repository calls `origin/main`.
+ *
+ * @param {string} ref the pushed branch, as it is in the mirror
+ * @param {ReturnType<typeof company>} cfg
  * @returns {Promise<string[]>}
  */
-async function changedPaths(worktree) {
-  // --no-ext-diff and --no-textconv: a `.gitattributes` in the worktree
-  // can name a diff driver, which is a command.
-  const result = await git(
-    ["diff", "--no-ext-diff", "--no-textconv", "--name-only", "origin/main...HEAD"],
-    worktree,
-  );
+async function changedPaths(ref, cfg) {
+  const main = await git([
+    "fetch",
+    "-q",
+    "--no-tags",
+    remoteUrl(cfg),
+    "+refs/heads/main:refs/heads/main",
+  ]);
+  if (main.code !== 0) {
+    return [];
+  }
+  // --no-ext-diff and --no-textconv: a `.gitattributes` on the branch can
+  // name a diff driver, which is a command.
+  const result = await git([
+    "diff",
+    "--no-ext-diff",
+    "--no-textconv",
+    "--name-only",
+    `main...${ref}`,
+  ]);
   return result.code === 0 ? result.stdout.split("\n").filter((line) => line !== "") : [];
 }
 
@@ -912,11 +947,26 @@ async function serve(request, verdict, acting) {
   }
 
   if (kind === "push") {
-    const [branch] = argv;
-    const worktree = path.join(ROOT, "wt", role);
-    const paths = await changedPaths(worktree);
+    const [branch = ""] = argv;
+    const ref = `refs/heads/${branch}`;
+    // Through the mirror. The branch is taken by name from the shared
+    // repository, never from a path or remote the agent chose, and pushed to
+    // the company's repository by URL, so nothing an agent planted runs and
+    // no remote it configured is used (#26).
+    const fetched = await git([
+      "fetch",
+      "-q",
+      "--no-tags",
+      path.join(REPO_DIR, ".git"),
+      `+${ref}:${ref}`,
+    ]);
+    if (fetched.code !== 0) {
+      audit({ role, kind, argv, decision: "allowed", code: fetched.code });
+      return { allow: true, ...fetched };
+    }
+    const paths = await changedPaths(ref, cfg);
     const gateChange = touchesGate(paths);
-    const result = await git(["push", "--set-upstream", "origin", String(branch)], worktree);
+    const result = await git(["push", remoteUrl(cfg), `${ref}:${ref}`]);
     audit({
       role,
       kind,
@@ -1025,7 +1075,18 @@ async function main() {
     process.exit(1);
   }
   const cfg = company();
-  const token = await run("gh", ["auth", "token"], REPO_DIR);
+  fs.mkdirSync(GH_CWD, { recursive: true });
+  if (!fs.existsSync(MIRROR)) {
+    const init = await run("git", ["init", "--bare", "-q", MIRROR], HUB, {
+      GIT_CONFIG_NOSYSTEM: "1",
+      GIT_CONFIG_GLOBAL: "/dev/null",
+    });
+    if (init.code !== 0) {
+      console.error(`hubd: could not create ${MIRROR}: ${init.stderr}`);
+      process.exit(1);
+    }
+  }
+  const token = await run("gh", ["auth", "token"], GH_CWD);
   if (token.code !== 0) {
     console.error("hubd: gh is not authenticated on this machine");
     process.exit(1);
