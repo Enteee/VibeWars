@@ -6,12 +6,22 @@
  * is NOT covered is the half that needs a socket and a real group; see the
  * manual steps in docs/adr/0023-one-telegram-bot.md.
  */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import {
   MAX_MESSAGE_CHARS,
+  OPERATOR_HINT,
+  ROLE_STYLE,
   deliverPeer,
   formatLine,
+  formatMirror,
+  formatQuestion,
+  parseQuestions,
+  routeAnswer,
   isReadyOutboxEntry,
   parseRegistry,
   planSends,
@@ -49,6 +59,33 @@ function update(message) {
     },
   };
 }
+
+describe("parseRegistry and the Operator topic", () => {
+  it("reads the Operator topic, and treats a missing one as not created yet", () => {
+    const text = JSON.stringify({ offset: 1, roles: {}, operator: { topicId: 77 } });
+    expect(parseRegistry(text)).toEqual({
+      registry: { offset: 1, roles: {}, operator: { topicId: 77 } },
+    });
+    expect(parseRegistry(JSON.stringify({ offset: 1, roles: {} }))).toEqual({
+      registry: { offset: 1, roles: {} },
+    });
+  });
+
+  it("refuses a malformed Operator entry", () => {
+    expect(
+      "error" in parseRegistry(JSON.stringify({ offset: 1, roles: {}, operator: { id: 7 } })),
+    ).toBe(true);
+  });
+
+  it("still refuses the per-role-bot format", () => {
+    const old = JSON.stringify({
+      offset: 0,
+      roles: { architect: { topicId: 11, token: "x" } },
+      operator: { topicId: 77 },
+    });
+    expect("error" in parseRegistry(old)).toBe(true);
+  });
+});
 
 describe("parseRegistry", () => {
   it("starts a fresh company when there is no registry yet", () => {
@@ -157,7 +194,8 @@ describe("deliverPeer", () => {
       text: "take #28",
     });
     expect(delivered.notice).toBeNull();
-    expect(delivered.mirror).toEqual({ to: "developer-1", text: "[manager] take #28" });
+    // Raw: formatting is the mirror's job, not delivery's.
+    expect(delivered.mirror).toEqual({ from: "manager", to: "developer-1", text: "take #28" });
   });
 
   it("delivers a broadcast to everyone except the sender", () => {
@@ -191,14 +229,438 @@ describe("deliverPeer", () => {
   });
 });
 
+/**
+ * The part of `text` each entity covers, so a test reads as what it means.
+ *
+ * @param {{ text: string, entities: readonly import("./protocol.mjs").MessageEntity[] }} message
+ * @returns {string[]}
+ */
+function covered(message) {
+  return message.entities.map(
+    (e) =>
+      `${e.type}:${message.text.slice(e.offset, e.offset + e.length)}${e.url === undefined ? "" : `=>${e.url}`}`,
+  );
+}
+
+/**
+ * @param {string} text
+ * @returns {boolean} whether a surrogate is missing its other half
+ */
+function hasLoneSurrogate(text) {
+  return /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/.test(text);
+}
+
+describe("formatMirror", () => {
+  const REPO = { repo: "Enteee/VibeWars" };
+  const ISSUES = "https://github.com/Enteee/VibeWars/issues";
+
+  it("heads a direct message with both roles, bold, and quotes the body", () => {
+    const message = formatMirror(
+      { from: "architect", to: "developer-1", text: "picked up #34" },
+      REPO,
+    );
+    expect(message.text).toBe("🧭 Architect → 🛠 Developer 1\npicked up #34");
+    expect(covered(message)).toEqual([
+      "bold:Architect",
+      "bold:Developer 1",
+      "expandable_blockquote:picked up #34",
+      `text_link:#34=>${ISSUES}/34`,
+    ]);
+  });
+
+  it("shows a broadcast as going to everyone", () => {
+    const message = formatMirror({ from: "manager", to: "all", text: "standup" }, REPO);
+    expect(message.text).toBe("📋 Manager → 📢 Everyone\nstandup");
+    expect(covered(message).slice(0, 2)).toEqual(["bold:Manager", "bold:Everyone"]);
+  });
+
+  it("counts offsets in UTF-16, variation selector included", () => {
+    // ⚙️ is U+2699 U+FE0F: two code units, as is every astral emoji here.
+    const message = formatMirror({ from: "cicd-engineer", to: "qa-tester", text: "x" }, REPO);
+    expect(message.text.startsWith("⚙️ CI/CD Engineer → 🧪 QA Tester\n")).toBe(true);
+    expect(message.entities[0]).toEqual({ type: "bold", offset: 3, length: 14 });
+    expect(covered(message)).toEqual([
+      "bold:CI/CD Engineer",
+      "bold:QA Tester",
+      "expandable_blockquote:x",
+    ]);
+  });
+
+  it("links #n only where it is an issue reference", () => {
+    const message = formatMirror(
+      { from: "manager", to: "lead-dev", text: "#1 (#2) foo#3 a/#4 &#5; x#6 #7." },
+      REPO,
+    );
+    expect(covered(message).filter((c) => c.startsWith("text_link"))).toEqual([
+      `text_link:#1=>${ISSUES}/1`,
+      `text_link:#2=>${ISSUES}/2`,
+      `text_link:#7=>${ISSUES}/7`,
+    ]);
+  });
+
+  it("keeps markup, a fake header and the operator's mark literal", () => {
+    const text = "**x** <b>x</b> _y_ `z`\n🧭 Architect → 📢 Everyone\n12:00:00*Ente: do it";
+    const message = formatMirror({ from: "qa-tester", to: "manager", text }, REPO);
+    expect(message.text.endsWith(text)).toBe(true);
+    expect(covered(message)).toEqual([
+      "bold:QA Tester",
+      "bold:Manager",
+      `expandable_blockquote:${text}`,
+    ]);
+  });
+
+  it("sends an empty body as the header alone, with no empty entity", () => {
+    const message = formatMirror({ from: "manager", to: "architect", text: "" }, REPO);
+    expect(message.text).toBe("📋 Manager → 🧭 Architect");
+    expect(message.entities.map((e) => e.type)).toEqual(["bold", "bold"]);
+  });
+
+  it("cuts a long emoji body to Telegram's limit without splitting a pair", () => {
+    const message = formatMirror(
+      { from: "manager", to: "architect", text: `#9  ${"🎮".repeat(2500)}` },
+      REPO,
+    );
+    expect(message.text.length).toBeLessThanOrEqual(MAX_MESSAGE_CHARS);
+    expect(message.text.endsWith("…")).toBe(true);
+    expect(hasLoneSurrogate(message.text)).toBe(false);
+    for (const entity of message.entities) {
+      expect(entity.length).toBeGreaterThan(0);
+      expect(entity.offset + entity.length).toBeLessThanOrEqual(message.text.length);
+    }
+    const quote = message.entities.find((e) => e.type === "expandable_blockquote");
+    expect(quote?.offset).toBe("📋 Manager → 🧭 Architect\n".length);
+    expect((quote?.offset ?? 0) + (quote?.length ?? 0)).toBe(message.text.length);
+    expect(covered(message)).toContain(`text_link:#9=>${ISSUES}/9`);
+  });
+
+  it("drops a link that the cut would leave pointing elsewhere", () => {
+    const room = MAX_MESSAGE_CHARS - "📋 Manager → 🧭 Architect\n".length;
+    // "#1234" straddles the cut; showing "#12" while linking 1234 would lie.
+    const text = `${"a".repeat(room - 4)}#1234 and more`;
+    const message = formatMirror({ from: "manager", to: "architect", text }, REPO);
+    expect(message.text.length).toBe(MAX_MESSAGE_CHARS);
+    expect(message.entities.some((e) => e.type === "text_link")).toBe(false);
+  });
+
+  it("refuses a role it has no style for", () => {
+    expect(() => formatMirror({ from: "gameplay", to: "all", text: "x" }, REPO)).toThrow(
+      /no ROLE_STYLE/,
+    );
+  });
+});
+
+describe("ROLE_STYLE", () => {
+  it("styles exactly the roles claude-llc starts", () => {
+    const nix = fs.readFileSync(
+      path.join(path.dirname(fileURLToPath(import.meta.url)), "../../nix/claude-llc.nix"),
+      "utf8",
+    );
+    const list = /\broles = \[([^\]]*)\]/.exec(nix)?.[1] ?? "";
+    const roles = [...list.matchAll(/"([a-z0-9-]+)"/g)].map((m) => m[1]);
+    expect(roles.length).toBeGreaterThan(0);
+    expect(Object.keys(ROLE_STYLE).sort()).toEqual([...roles].sort());
+  });
+
+  it("uses no ZWJ sequences", () => {
+    for (const { emoji } of Object.values(ROLE_STYLE)) {
+      expect(emoji).not.toContain("\u200d");
+    }
+  });
+});
+
+describe("questions for the operator", () => {
+  const base = { roles: ROLES, present: new Set(ROLES), now: 1000 };
+  /**
+   * @param {string} from
+   * @param {unknown} entry
+   */
+  const ask = (from, entry) => deliverPeer({ kind: "ask", ...obj(entry) }, { ...base, from });
+  /** @param {unknown} value */
+  function obj(value) {
+    return /** @type {Record<string, unknown>} */ (value);
+  }
+
+  it("accepts a question from an asker, delivering it to nobody", () => {
+    const delivered = ask("architect", { text: "keep the slot?", options: ["Keep", "Free"] });
+    expect(delivered.question).toEqual({
+      from: "architect",
+      text: "keep the slot?",
+      options: ["Keep", "Free"],
+    });
+    expect(delivered.deliveries).toEqual([]);
+    expect(delivered.mirror).toBeNull();
+    expect(delivered.notice).toBeNull();
+  });
+
+  it("refuses a question from a role that is not an asker, telling it whom to ask", () => {
+    const delivered = ask("developer-1", { text: "can I?", options: [] });
+    expect(delivered.question).toBeNull();
+    expect(delivered.mirror).toBeNull();
+    expect(delivered.notice?.text).toMatch(/NOT posted.*Ask the manager/);
+  });
+
+  it.each([
+    ["seven options", { text: "q", options: ["1", "2", "3", "4", "5", "6", "7"] }, /at most 6/],
+    ["a 41-character option", { text: "q", options: ["x".repeat(41)] }, /1-40 characters/],
+    ["an empty question", { text: "  ", options: [] }, /empty/],
+    ["options that are not strings", { text: "q", options: [1] }, /list of strings/],
+  ])("refuses %s", (_, entry, reason) => {
+    const delivered = ask("manager", entry);
+    expect(delivered.question).toBeNull();
+    expect(delivered.notice?.text).toMatch(reason);
+  });
+
+  it("posts a question with one button per row, data within Telegram's 64 bytes", () => {
+    const question = {
+      from: "architect",
+      text: "Keep the slot for 30 s?",
+      options: ["Keep for 30 s", "Free it"],
+    };
+    const posted = formatQuestion(7, question);
+    expect(posted.text).toBe(
+      "❓ 🧭 Architect asks · Q7\nKeep the slot for 30 s?\nTap an option, or reply to this message to answer in your own words.",
+    );
+    expect(covered({ text: posted.text, entities: posted.entities })).toEqual([
+      "bold:Architect",
+      "blockquote:Keep the slot for 30 s?",
+    ]);
+    expect(posted.replyMarkup).toEqual({
+      inline_keyboard: [
+        [{ text: "Keep for 30 s", callback_data: "q:7:0" }],
+        [{ text: "Free it", callback_data: "q:7:1" }],
+      ],
+    });
+    const huge = formatQuestion(Number.MAX_SAFE_INTEGER, {
+      ...question,
+      options: ["1", "2", "3", "4", "5", "6"],
+    });
+    for (const [button] of huge.replyMarkup?.inline_keyboard ?? []) {
+      expect(Buffer.byteLength(button?.callback_data ?? "", "utf8")).toBeLessThanOrEqual(64);
+    }
+  });
+
+  it("shows an answered question without buttons", () => {
+    const answered = formatQuestion(
+      7,
+      { from: "lead-dev", text: "Merge?", options: ["Yes"] },
+      "Yes",
+    );
+    expect(answered.text.endsWith("\n✅ Answered: Yes")).toBe(true);
+    expect(answered.replyMarkup).toBeUndefined();
+  });
+
+  it("round-trips the question store, and refuses another shape", () => {
+    const store = {
+      next: 8,
+      questions: {
+        7: { from: "architect", text: "q", options: ["a"], messageId: 500, answered: false },
+      },
+    };
+    expect(parseQuestions(JSON.stringify(store))).toEqual({ store });
+    expect(parseQuestions(null)).toEqual({ store: { next: 1, questions: {} } });
+    expect(
+      "error" in parseQuestions(JSON.stringify({ next: 1, questions: { 1: { from: "x" } } })),
+    ).toBe(true);
+  });
+});
+
+describe("routeAnswer", () => {
+  /** @param {unknown} value */
+  const obj = (value) => /** @type {Record<string, unknown>} */ (value);
+  const OPERATOR_TOPIC = 77;
+  const QUESTION_MESSAGE = 500;
+  const OPERATOR = 9;
+  const context = {
+    chatId: CHAT,
+    operatorId: OPERATOR,
+    operatorTopicId: OPERATOR_TOPIC,
+    now: 5000,
+  };
+  /** @param {boolean} answered */
+  const store = (answered) => ({
+    next: 8,
+    questions: {
+      7: {
+        from: "architect",
+        text: "Should reconnects keep the slot?",
+        options: ["Keep for 30 s", "Free immediately"],
+        messageId: QUESTION_MESSAGE,
+        answered,
+      },
+    },
+  });
+  /**
+   * @param {string} data
+   * @param {Record<string, unknown>} [from]
+   */
+  const tap = (data, from = { id: 9, is_bot: false, username: "operator" }) => ({
+    update_id: 600,
+    callback_query: {
+      id: "cb1",
+      from,
+      data,
+      message: { message_id: QUESTION_MESSAGE, chat: { id: Number(CHAT) } },
+    },
+  });
+  /**
+   * @param {string} text
+   * @param {number | undefined} replyTo
+   */
+  const say = (text, replyTo) =>
+    update({
+      message_id: 900,
+      text,
+      message_thread_id: OPERATOR_TOPIC,
+      ...(replyTo === undefined ? {} : { reply_to_message: { message_id: replyTo } }),
+    });
+
+  it("delivers a tap to the asker only, acknowledges it, and closes the question", () => {
+    const routed = routeAnswer(tap("q:7:0"), store(false), context);
+    expect(routed?.deliveries).toEqual([
+      {
+        role: "architect",
+        line: {
+          ts: 5000,
+          from: "@operator",
+          kind: "human",
+          text: 'answer to Q7 ("Should reconnects keep the slot?"): Keep for 30 s',
+          topicId: OPERATOR_TOPIC,
+          messageId: 0,
+        },
+      },
+    ]);
+    expect(routed?.immediate).toEqual([
+      { method: "answerCallbackQuery", params: { callback_query_id: "cb1" } },
+    ]);
+    expect(routed?.paced).toHaveLength(1);
+    expect(routed?.paced[0]?.edit).toBe(QUESTION_MESSAGE);
+    expect(routed?.paced[0]?.text.endsWith("✅ Answered: Keep for 30 s")).toBe(true);
+    expect(routed?.paced[0]?.replyMarkup).toBeUndefined();
+    expect(routed?.answered?.question.answered).toBe(true);
+  });
+
+  it("delivers a reply to the asker only, and shows an excerpt on the question", () => {
+    const routed = routeAnswer(
+      say("Keep it,\nbut only for 10 s", QUESTION_MESSAGE),
+      store(false),
+      context,
+    );
+    expect(routed?.deliveries.map((d) => d.role)).toEqual(["architect"]);
+    expect(routed?.deliveries[0]?.line.text).toBe(
+      'answer to Q7 ("Should reconnects keep the slot?"): Keep it,\nbut only for 10 s',
+    );
+    expect(routed?.paced[0]?.text.endsWith("✅ Answered: Keep it, but only for 10 s")).toBe(true);
+    expect(routed?.answered?.n).toBe(7);
+  });
+
+  it("makes a second reply a follow-up to the same asker", () => {
+    const routed = routeAnswer(say("and log it", QUESTION_MESSAGE), store(true), context);
+    expect(routed?.deliveries.map((d) => d.role)).toEqual(["architect"]);
+    expect(routed?.deliveries[0]?.line.text).toMatch(/^follow-up to Q7/);
+    expect(routed?.paced).toEqual([]);
+    expect(routed?.answered).toBeNull();
+  });
+
+  it("hints once, and delivers to nobody, for a message that answers nothing", () => {
+    // In a forum, a plain message replies to the topic's first message.
+    for (const replyTo of [undefined, OPERATOR_TOPIC]) {
+      const routed = routeAnswer(say("hello?", replyTo), store(false), context);
+      expect(routed?.deliveries).toEqual([]);
+      expect(routed?.paced).toEqual([{ text: OPERATOR_HINT, entities: [], replyTo: 900 }]);
+    }
+  });
+
+  it("only toasts on a second tap", () => {
+    const routed = routeAnswer(tap("q:7:1"), store(true), context);
+    expect(routed?.deliveries).toEqual([]);
+    expect(routed?.paced).toEqual([]);
+    expect(routed?.answered).toBeNull();
+    expect(routed?.immediate).toEqual([
+      {
+        method: "answerCallbackQuery",
+        params: { callback_query_id: "cb1", text: "Q7 is already answered" },
+      },
+    ]);
+  });
+
+  it.each([["q:8:0"], ["q:7:2"], ["q:abc:9"], ["q:7:-1"], ["7:0"], [""]])(
+    "changes nothing for button data %j",
+    (data) => {
+      const routed = routeAnswer(tap(data), store(false), context);
+      expect(routed?.deliveries).toEqual([]);
+      expect(routed?.paced).toEqual([]);
+      expect(routed?.answered).toBeNull();
+    },
+  );
+
+  it("only acknowledges a tap by anyone but the operator", () => {
+    const routed = routeAnswer(
+      tap("q:7:0", { id: 77, is_bot: false, username: "stranger" }),
+      store(false),
+      context,
+    );
+    expect(routed).toEqual({
+      deliveries: [],
+      immediate: [{ method: "answerCallbackQuery", params: { callback_query_id: "cb1" } }],
+      paced: [],
+      answered: null,
+    });
+  });
+
+  it("ignores a reply, or any message, by anyone but the operator", () => {
+    const stranger = { id: 77, is_bot: false, username: "stranger" };
+    for (const replyTo of [QUESTION_MESSAGE, undefined]) {
+      const raw = obj(say("Free it", replyTo));
+      const routed = routeAnswer(
+        { ...raw, message: { ...obj(raw.message), from: stranger } },
+        store(false),
+        context,
+      );
+      expect(routed).toEqual({ deliveries: [], immediate: [], paced: [], answered: null });
+    }
+  });
+
+  it("ignores button data aimed at a different message than the question's", () => {
+    const raw = obj(tap("q:7:0"));
+    const query = obj(raw.callback_query);
+    const routed = routeAnswer(
+      { ...raw, callback_query: { ...query, message: { ...obj(query.message), message_id: 999 } } },
+      store(false),
+      context,
+    );
+    expect(routed?.deliveries).toEqual([]);
+    expect(routed?.answered).toBeNull();
+  });
+
+  it("ignores a tap that a bot made", () => {
+    const routed = routeAnswer(tap("q:7:0", { id: 1, is_bot: true }), store(false), context);
+    expect(routed).toEqual({ deliveries: [], immediate: [], paced: [], answered: null });
+  });
+
+  it("leaves everything outside the Operator topic to routeInbound", () => {
+    expect(routeAnswer(update({ message_thread_id: 11 }), store(false), context)).toBeNull();
+    expect(routeAnswer(update({}), store(false), context)).toBeNull();
+  });
+
+  it("is never routed to everyone by routeInbound", () => {
+    expect(
+      routeInbound(say("x", undefined), { ...CONTEXT, operatorTopicId: OPERATOR_TOPIC }),
+    ).toBeNull();
+  });
+});
+
 describe("planSends", () => {
   const NOW = 1_000_000;
-  /** @param {number} topicId @param {string} text */
-  const q = (topicId, text) => ({ topicId, text });
+  /**
+   * @param {number} topicId
+   * @param {string} text
+   * @param {import("./protocol.mjs").MessageEntity[]} [entities]
+   */
+  const q = (topicId, text, entities = []) => ({ topicId, text, entities });
 
   it("sends the next message at once when under the limit", () => {
     const plan = planSends([q(1, "a"), q(1, "b")], [], NOW);
-    expect(plan.batch).toEqual({ topicId: 1, text: "a", count: 1 });
+    expect(plan.batch).toEqual({ topicId: 1, text: "a", entities: [], count: 1 });
     expect(plan.rest).toEqual([q(1, "b")]);
   });
 
@@ -219,7 +681,7 @@ describe("planSends", () => {
   it("coalesces consecutive messages to one topic when backlogged", () => {
     const sent = Array.from({ length: 17 }, (_, i) => NOW - 40_000 + i * 1000);
     const plan = planSends([q(1, "a"), q(1, "b"), q(2, "c"), q(1, "d")], sent, NOW);
-    expect(plan.batch).toEqual({ topicId: 1, text: "a\nb", count: 2 });
+    expect(plan.batch).toEqual({ topicId: 1, text: "a\n\nb", entities: [], count: 2 });
     // Different topics are never merged, and nothing jumps ahead.
     expect(plan.rest).toEqual([q(2, "c"), q(1, "d")]);
   });
@@ -231,9 +693,72 @@ describe("planSends", () => {
     expect(plan.batch?.count).toBe(1);
   });
 
-  it("clips a single message that is too long on its own", () => {
-    const plan = planSends([q(1, "y".repeat(MAX_MESSAGE_CHARS + 50))], [], NOW);
+  it("never joins a question, an edit or a reply with anything", () => {
+    const sent = Array.from({ length: 17 }, (_, i) => NOW - 40_000 + i * 1000);
+    const markup = { inline_keyboard: [[{ text: "Yes", callback_data: "q:1:0" }]] };
+    const question = { ...q(1, "question"), replyMarkup: markup, question: 1 };
+    const edit = { ...q(1, "edited"), edit: 500 };
+
+    const first = planSends([q(1, "a"), question, q(1, "b")], sent, NOW);
+    expect(first.batch).toMatchObject({ text: "a", count: 1 });
+
+    const second = planSends([question, q(1, "b"), q(1, "c")], sent, NOW);
+    expect(second.batch).toEqual({ ...question, count: 1 });
+
+    const third = planSends([edit, q(1, "b")], sent, NOW);
+    expect(third.batch).toEqual({ ...edit, count: 1 });
+  });
+
+  it("shifts every entity when it coalesces formatted messages", () => {
+    const sent = Array.from({ length: 17 }, (_, i) => NOW - 40_000 + i * 1000);
+    const repo = { repo: "Enteee/VibeWars" };
+    const parts = [
+      formatMirror({ from: "manager", to: "architect", text: "one #1" }, repo),
+      formatMirror({ from: "lead-dev", to: "architect", text: "two #2" }, repo),
+      formatMirror({ from: "cicd-engineer", to: "architect", text: "three #3" }, repo),
+    ];
+    const plan = planSends(
+      parts.map((part) => ({ topicId: 1, ...part })),
+      sent,
+      NOW,
+    );
+    expect(plan.batch?.count).toBe(3);
+    expect(plan.batch?.text).toBe(parts.map((part) => part.text).join("\n\n"));
+    expect(covered({ text: plan.batch?.text ?? "", entities: plan.batch?.entities ?? [] })).toEqual(
+      parts.flatMap((part) => covered(part)),
+    );
+  });
+
+  it("clips a single message that is too long on its own, entities included", () => {
+    const long = "y".repeat(MAX_MESSAGE_CHARS + 50);
+    const plan = planSends(
+      [
+        q(1, long, [
+          { type: "bold", offset: 0, length: 4 },
+          { type: "expandable_blockquote", offset: 10, length: long.length - 10 },
+          { type: "bold", offset: MAX_MESSAGE_CHARS + 10, length: 4 },
+        ]),
+      ],
+      [],
+      NOW,
+    );
     expect(plan.batch?.text.length).toBe(MAX_MESSAGE_CHARS);
+    expect(plan.batch?.entities).toEqual([
+      { type: "bold", offset: 0, length: 4 },
+      { type: "expandable_blockquote", offset: 10, length: MAX_MESSAGE_CHARS - 11 },
+    ]);
+  });
+
+  it("drops a link the clip would cut, rather than leave it pointing elsewhere", () => {
+    const long = `${"y".repeat(MAX_MESSAGE_CHARS - 3)}#123 tail`;
+    const link = {
+      type: /** @type {const} */ ("text_link"),
+      offset: MAX_MESSAGE_CHARS - 3,
+      length: 4,
+      url: "u",
+    };
+    const plan = planSends([q(1, long, [link])], [], NOW);
+    expect(plan.batch?.entities).toEqual([]);
   });
 
   it("waits out a retry_after", () => {

@@ -18,6 +18,8 @@ tg inbox                     messages since you last looked
 tg wait --timeout 900        block until someone says something
 tg send <role> <text>        message one colleague (arrives at once)
 tg broadcast <text>          message everyone, in General
+tg ask <question> [--option <text>]...
+                             ask the operator (manager, architect, lead-dev)
 
 board ls [column]            what is on the board
 board move <issue> <column>  move a card
@@ -33,6 +35,12 @@ hub whoami                   your role, and what you are allowed to do
 checks what your role is allowed to do before anything happens. A refusal is
 information, not an obstacle to route around — it means the thing you tried is
 someone else's job. Ask them on Telegram.
+
+**Questions for the operator.** If you are the manager, architect or lead-dev,
+use `tg ask` for decisions only the operator can make. Give `--option`s
+whenever the choice is closed. Never block on the answer: it arrives in your
+inbox, marked `*`, so carry on with other work. Every other role raises
+questions through the manager.
 
 ## The board
 
