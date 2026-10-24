@@ -47,7 +47,7 @@ like.
 | An illegal build (over budget, wrong profession)    | `validatePlayerBuild` runs at join; anything illegal gets the house loadout.                                                                                                      |
 | Moving faster than allowed                          | Direction is clamped to unit length; speed comes from the ruleset; walls and bodies are resolved on the server.                                                                   |
 | Targeting a player who does not exist               | `applyTarget` accepts only a session id present in the room. Range and line of sight are checked at cast time.                                                                    |
-| Display names used to attack other players' UIs     | `sanitizeName` strips control characters and clamps to 16 characters. The web client must render names as text, never as HTML.                                                    |
+| Display names used to attack other players' UIs     | `sanitizeName` strips control characters and clamps to 16 characters. The web client must render names as text, never as HTML. See gap 8.                                         |
 | Host-only lobby actions by a non-host               | `select-map` and `start-match` check `isHost` (but see the open `return-to-lobby` gap below).                                                                                     |
 | A stale or foreign client desynchronising a match   | `PROTOCOL_VERSION` is checked on every join; a mismatch is refused.                                                                                                               |
 | Oversized frames                                    | The WebSocket transport caps a frame at 4 KiB (Colyseus `ws-transport` default) and has per-message deflate off. Do not raise either without a reason written here.               |
@@ -84,35 +84,13 @@ like.
 
 ## Known open gaps
 
-Gaps 1–5 were found by reviewing `main` at `47a403f`, and 6–7 at `1cfd5b5`
-(both 2026-10-24). Each one is in scope by the rules above and needs a fix.
-When one is fixed, remove it from this list in the same PR.
+Gaps 1–5 were found by reviewing `main` at `47a403f`, 6–7 at `1cfd5b5` (both
+2026-10-24), and 8 at `76388c3` (2026-10-25). Each one is in scope by the
+rules above and needs a fix. When one is fixed, cut it down to one line
+saying so in the same PR. Keep the numbers: issues cite them.
 
-1. **A lobby's match is not tied to that lobby** (#41). The web client joins a
-   match with `joinOrCreate("match")` and no filter. `match-starting`
-   carries an empty `roomId`, because `matchRoomId` is never set. Every
-   lobby, and every Quick Match player, therefore lands in the same match
-   room. A stranger can join a private lobby's match just by clicking Quick
-   Match. The match also gives out teams by join order, so the lobby's team
-   choices are ignored.
-   _Reproduce:_ start a lobby match in one browser, then press Quick Match
-   in another. Both players are in the same room.
-2. **There is no cap on players per match** (#42). `LobbyRoom` sets
-   `maxClients = 16` but `MatchRoom` sets none. Body-blocking collision is
-   O(n²) per tick. Measured with `tools/benchmark.ts` (server and clients in
-   one process, 5 s per scenario):
-
-   | players | tick p50 | tick p95 | tick max | heap    | sync p95 |
-   | ------- | -------- | -------- | -------- | ------- | -------- |
-   | 32      | 0.64 ms  | 2.34 ms  | 4.49 ms  | 51 MiB  | 53 ms    |
-   | 100     | 3.31 ms  | 21.1 ms  | 34.7 ms  | 106 MiB | 140 ms   |
-   | 200     | 7.40 ms  | 51.8 ms  | 89.5 ms  | 253 MiB | 845 ms   |
-   | 400     | 18.8 ms  | 67.3 ms  | 320 ms   | 913 MiB | 1808 ms  |
-
-   The tick budget is 50 ms. One script that opens a few hundred sockets
-   into the shared match room (see gap 1) makes the game unplayable for
-   everyone in it.
-
+1. **Fixed by #156:** a lobby's match was open to strangers (#41).
+2. **Fixed by #156:** there was no cap on players per match (#42).
 3. **No per-client message rate limit** (#43). Colyseus's `maxMessagesPerSecond`
    defaults to `Infinity`, and neither room sets it. Every `intent` runs its
    handler right away, outside the tick.
@@ -124,14 +102,15 @@ When one is fixed, remove it from this list in the same PR.
    joining is not rate-limited. That is fine for a LAN party. It is not
    access control, and it must not be described as access control.
 
-6. **No cap on the number of match rooms.** Any client can call
-   `create("match")` as often as it likes. Every room runs its own 20 Hz
-   fixed-timestep simulation, even with a single player in it. So a cap on
-   players per room (#42) does not bound the work: the attacker just opens
-   more rooms. The fix for #41 makes rooms per lobby, so it needs this cap
-   too. Measured at `1cfd5b5`: the server ran as its own process, and one
-   client process opened rooms and sent a move every 100 ms per socket,
-   all on one host:
+6. **No cap on the number of match rooms** (#114). Any client can call
+   `create("match")` as often as it likes, and gets a Quick Match room. Every
+   room runs its own 20 Hz fixed-timestep simulation, even with a single
+   player in it. So the cap of 8 players per Quick Match room does not bound
+   the work: the attacker just opens more rooms. Each lobby match is a room
+   of its own too (#156), but only `LobbyRoom` can open one, so lobbies are
+   the same problem one step removed. Measured at `1cfd5b5`: the server
+   ran as its own process, and one client process opened rooms and sent a
+   move every 100 ms per socket, all on one host:
 
    | rooms × players | server CPU | event-loop p99 | event-loop max |
    | --------------- | ---------- | -------------- | -------------- |
@@ -144,7 +123,7 @@ When one is fixed, remove it from this list in the same PR.
    the attacker is not in. A server-wide cap on live match rooms is needed,
    as is a cap per remote address.
 
-7. **Client strings reach the server log unescaped.** When `MatchRoom`
+7. **Client strings reach the server log unescaped** (#115). When `MatchRoom`
    refuses a build, it logs each problem, and a problem message embeds
    client-chosen text: an unknown skill id, for example. A skill id
    containing `\n` writes whole fake log lines.
@@ -153,6 +132,18 @@ When one is fixed, remove it from this list in the same PR.
    `[match] finished …` line that no match produced. Only the build name
    goes through `JSON.stringify`. Escape or drop client text before
    logging it, and cap how much of it is logged.
+
+8. **Display names can carry invisible and direction-changing characters**
+   (#174). `sanitizeName` strips only C0 control characters and DEL. Bidi
+   overrides and isolates (U+202A–202E, U+2066–2069), zero-width characters
+   (U+200B–200D, U+2060) and unbounded combining marks pass through, and
+   `trim()` does not remove them. Names are drawn above every player in the
+   arena (#172) and shown in the lobby and the target panel. A name can
+   therefore look like a different name, render as nothing, or stack marks
+   far above its line. This is not identity (there is none, see above), but
+   it lets one player make the board unreadable for the others.
+   _Reproduce:_ join a lobby as `"\u202Eedoc"`, which other players see as
+   `code`, or as `"\u200B"`, which shows an empty name.
 
 ## The static deploy
 
