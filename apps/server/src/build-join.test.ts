@@ -135,6 +135,18 @@ describe("joining with a build", () => {
     await room.leave(true);
   });
 
+  it("treats a build with no equipment as invalid, not old", async () => {
+    // Absent gear is malformed (ADR-0016): it takes the same invalid-build
+    // path as any other broken build, rather than being given a default.
+    const { equipment: _dropped, ...withoutGear } = LEGAL_BUILD;
+    const { room, slots } = await joinWith(withoutGear);
+
+    expect(slots).toHaveLength(8);
+    expect(room.state.players.get(room.sessionId)?.name).not.toBe("Flame Caller");
+
+    await room.leave(true);
+  });
+
   it("refuses a build whose skills its professions cannot access", async () => {
     // The whole point of professions: a warrior may not cast Fireball.
     const cheat = {

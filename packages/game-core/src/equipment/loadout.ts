@@ -1,7 +1,7 @@
 import { primaryAttributeOf, type ProfessionId } from "../professions.js";
 import { bareArmorSet, type ArmorSet } from "./armor.js";
 import type { OffhandId } from "./offhands.js";
-import { UNARMED_WEAPON_ID, type WeaponId } from "./weapons.js";
+import type { WeaponId } from "./weapons.js";
 
 /**
  * What a build stores about its gear (ADR-0012).
@@ -38,12 +38,11 @@ export interface BuildEquipment {
  * The weapon a character of this profession should be holding when
  * nobody has told us otherwise.
  *
- * Used in two places that must agree: the persistence migration that
- * upgrades a character saved before weapons existed, and the build
- * editor when a profession change makes the current weapon a poor fit.
- * A migrated warrior must find a *sword* selected — not fists, and not
- * an empty slot. An empty weapon slot is a character who cannot attack,
- * which is strictly worse than any guess we could make.
+ * The build editor uses it for a new character and when a profession
+ * change makes the current weapon a poor fit. A warrior must find a
+ * *sword* selected — not fists, and not an empty slot. An empty weapon
+ * slot is a character who cannot attack, which is strictly worse than
+ * any guess we could make.
  */
 export function defaultWeaponFor(profession: ProfessionId): WeaponId {
   switch (profession) {
@@ -97,10 +96,9 @@ export function defaultOffhandFor(profession: ProfessionId): OffhandId | null {
  * mouth. A bare armor set is the honest default.
  *
  * **Legal is the operative word.** Everything this returns must pass
- * `validatePlayerBuild` untouched, because it is what a character
- * migrated from before weapons existed receives — and a migration that
- * hands someone an invalid build has destroyed it just as surely as
- * deleting it. Classes with a `chosen` requirement (wand, staff,
+ * `validatePlayerBuild` untouched, because it is what the build editor
+ * hands a new character — and a default that is not a legal build would
+ * make the editor's first screen an error. Classes with a `chosen` requirement (wand, staff,
  * shield, focus) therefore nominate the profession's primary attribute,
  * which is always reachable and always within the allowed set.
  */
@@ -116,15 +114,6 @@ export function defaultEquipmentFor(profession: ProfessionId): BuildEquipment {
       requirementAttributeId: needsNomination ? primaryAttributeId : null,
     },
     offHand: offhandId === null ? null : { offhandId, requirementAttributeId: primaryAttributeId },
-    armor: bareArmorSet(),
-  };
-}
-
-/** Fists and nothing else — the fallback when a build names gear we do not know. */
-export function unarmedEquipment(): BuildEquipment {
-  return {
-    mainHand: { weaponId: UNARMED_WEAPON_ID, requirementAttributeId: null },
-    offHand: null,
     armor: bareArmorSet(),
   };
 }

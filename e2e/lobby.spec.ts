@@ -175,3 +175,40 @@ test("a lobby match shows the score, the clock and both fighters", async ({ brow
     await guestContext.close();
   }
 });
+
+/**
+ * Make this page behave like a tab left open across a deploy: every
+ * create or join it makes claims a protocol version the server does not
+ * speak. Colyseus sends join options in the body of its HTTP matchmaking
+ * request, so rewriting that body is the same thing a stale bundle does.
+ */
+async function actAsStaleTab(page: Page): Promise<void> {
+  await page.route("**/matchmake/**", async (route) => {
+    const body = route.request().postData();
+    if (body === null) {
+      await route.continue();
+      return;
+    }
+    const options = JSON.parse(body) as Record<string, unknown>;
+    await route.continue({ postData: JSON.stringify({ ...options, protocolVersion: 0 }) });
+  });
+}
+
+const RELOAD_PROMPT = "This tab is running an outdated version of VibeWars. Reload the page.";
+
+test("a stale tab trying to host a lobby is told to reload", async ({ page }) => {
+  await actAsStaleTab(page);
+  await openMenu(page, "Stale");
+  await page.getByRole("button", { name: "host a lobby" }).click();
+
+  await expect(page.locator(".screen-connection-problem")).toHaveText(RELOAD_PROMPT);
+  await expect(page.locator(".lobby-code")).toHaveCount(0);
+});
+
+test("a stale tab trying a quick match is told to reload", async ({ page }) => {
+  await actAsStaleTab(page);
+  await openMenu(page, "Stale");
+  await page.getByRole("button", { name: "quick match" }).click();
+
+  await expect(page.locator(".screen-connection-problem")).toHaveText(RELOAD_PROMPT);
+});

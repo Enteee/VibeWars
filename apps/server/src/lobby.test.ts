@@ -1,6 +1,8 @@
 import { Client } from "@colyseus/sdk";
 import { createRng, seedFromString } from "@vibewars/game-core";
 import {
+  PROTOCOL_MISMATCH_MESSAGE,
+  PROTOCOL_VERSION,
   LOBBY_CODE_ALPHABET,
   LOBBY_CODE_LENGTH,
   ROOM_LOBBY,
@@ -85,7 +87,7 @@ describe("lobby room", () => {
 
   it("gives a newly created lobby a valid, shareable code", async () => {
     const client = new Client(endpoint);
-    const room = await client.create(ROOM_LOBBY, {});
+    const room = await client.create(ROOM_LOBBY, { protocolVersion: PROTOCOL_VERSION });
     // Wait for the condition actually under test. `create()` resolves on
     // the handshake, before the first state patch decodes, so polling for
     // a merely non-empty string can observe a half-synced value.
@@ -95,9 +97,36 @@ describe("lobby room", () => {
     await room.leave();
   });
 
+  it("refuses to create a lobby for a client on another protocol version", async () => {
+    await expect(
+      new Client(endpoint).create(ROOM_LOBBY, { protocolVersion: PROTOCOL_VERSION + 1 }),
+    ).rejects.toThrow(PROTOCOL_MISMATCH_MESSAGE);
+  });
+
+  it("refuses a guest with a wrong or missing protocol version, and keeps no trace", async () => {
+    const host = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    await waitFor(() => host.state.players.size === 1, { label: "the host" });
+
+    for (const options of [{ protocolVersion: PROTOCOL_VERSION + 1 }, {}]) {
+      await expect(new Client(endpoint).joinById(host.roomId, options)).rejects.toThrow(
+        PROTOCOL_MISMATCH_MESSAGE,
+      );
+    }
+    const guest = await new Client(endpoint).joinById(host.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    await waitFor(() => host.state.players.size === 2, { label: "the valid guest" });
+    expect(host.state.players.size).toBe(2);
+
+    await guest.leave();
+    await host.leave();
+  });
+
   it("makes the first player the host", async () => {
     const client = new Client(endpoint);
-    const room = await client.create(ROOM_LOBBY, {});
+    const room = await client.create(ROOM_LOBBY, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self to appear" });
 
     expect(room.state.players.get(room.sessionId)?.isHost).toBe(true);
@@ -106,7 +135,10 @@ describe("lobby room", () => {
 
   it("sanitises the display name a client asks for", async () => {
     const client = new Client(endpoint);
-    const room = await client.create(ROOM_LOBBY, { name: "x".repeat(100) });
+    const room = await client.create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+      name: "x".repeat(100),
+    });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self to appear" });
 
     expect(room.state.players.get(room.sessionId)?.name.length).toBeLessThanOrEqual(16);
@@ -114,8 +146,12 @@ describe("lobby room", () => {
   });
 
   it("lets a second player join by room id and does not make them host", async () => {
-    const host = await new Client(endpoint).create(ROOM_LOBBY, {});
-    const guest = await new Client(endpoint).joinById(host.roomId);
+    const host = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    const guest = await new Client(endpoint).joinById(host.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => host.state.players.size === 2, { label: "both players" });
 
     expect(host.state.players.get(guest.sessionId)?.isHost).toBe(false);
@@ -126,7 +162,9 @@ describe("lobby room", () => {
   });
 
   it("assigns a team when a player chooses one", async () => {
-    const room = await new Client(endpoint).create(ROOM_LOBBY, {});
+    const room = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self" });
 
     room.send("choose-team", { team: 1 });
@@ -139,7 +177,9 @@ describe("lobby room", () => {
   });
 
   it("rejects a nonsense team value rather than accepting it", async () => {
-    const room = await new Client(endpoint).create(ROOM_LOBBY, {});
+    const room = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self" });
 
     room.send("choose-team", { team: 99 });
@@ -151,7 +191,9 @@ describe("lobby room", () => {
   });
 
   it("clears readiness when a player switches teams", async () => {
-    const room = await new Client(endpoint).create(ROOM_LOBBY, {});
+    const room = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self" });
 
     room.send("choose-team", { team: 0 });
@@ -169,7 +211,9 @@ describe("lobby room", () => {
   });
 
   it("refuses to mark a spectator ready", async () => {
-    const room = await new Client(endpoint).create(ROOM_LOBBY, {});
+    const room = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self" });
 
     room.send("ready", { ready: true });
@@ -181,7 +225,9 @@ describe("lobby room", () => {
   });
 
   it("rejects starting when nobody is on a team", async () => {
-    const room = await new Client(endpoint).create(ROOM_LOBBY, {});
+    const room = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self" });
 
     const rejection = new Promise<{ reason: string }>((resolve) => {
@@ -195,8 +241,12 @@ describe("lobby room", () => {
   });
 
   it("rejects starting while someone on a team is not ready", async () => {
-    const host = await new Client(endpoint).create(ROOM_LOBBY, {});
-    const guest = await new Client(endpoint).joinById(host.roomId);
+    const host = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    const guest = await new Client(endpoint).joinById(host.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => host.state.players.size === 2, { label: "both players" });
 
     host.send("choose-team", { team: 0 });
@@ -216,8 +266,12 @@ describe("lobby room", () => {
   });
 
   it("ignores a start request from a non-host", async () => {
-    const host = await new Client(endpoint).create(ROOM_LOBBY, {});
-    const guest = await new Client(endpoint).joinById(host.roomId);
+    const host = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    const guest = await new Client(endpoint).joinById(host.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => host.state.players.size === 2, { label: "both players" });
 
     host.send("choose-team", { team: 0 });
@@ -239,8 +293,12 @@ describe("lobby room", () => {
   });
 
   it("starts the match when the host asks and everyone on a team is ready", async () => {
-    const host = await new Client(endpoint).create(ROOM_LOBBY, {});
-    const guest = await new Client(endpoint).joinById(host.roomId);
+    const host = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    const guest = await new Client(endpoint).joinById(host.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => host.state.players.size === 2, { label: "both players" });
 
     host.send("choose-team", { team: 0 });
@@ -269,8 +327,12 @@ describe("lobby room", () => {
   });
 
   it("hands hosting to someone else when the host leaves", async () => {
-    const host = await new Client(endpoint).create(ROOM_LOBBY, {});
-    const guest = await new Client(endpoint).joinById(host.roomId);
+    const host = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    const guest = await new Client(endpoint).joinById(host.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => guest.state.players.size === 2, { label: "both players" });
 
     await host.leave();
@@ -283,8 +345,12 @@ describe("lobby room", () => {
   });
 
   it("ignores a map selection from a non-host, and an unknown map from the host", async () => {
-    const host = await new Client(endpoint).create(ROOM_LOBBY, {});
-    const guest = await new Client(endpoint).joinById(host.roomId);
+    const host = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    const guest = await new Client(endpoint).joinById(host.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => host.state.players.size === 2, { label: "both players" });
 
     const original = host.state.mapId;
@@ -316,8 +382,12 @@ describe("playing more than one match in a lobby", () => {
 
   /** Drive a lobby from fresh to a started match. */
   async function startAMatch() {
-    const host = await new Client(endpoint).create(ROOM_LOBBY, {});
-    const guest = await new Client(endpoint).joinById(host.roomId);
+    const host = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    const guest = await new Client(endpoint).joinById(host.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => host.state.players.size === 2, { label: "both players" });
 
     host.send("choose-team", { team: 0 });
@@ -415,10 +485,14 @@ describe("joining by code", () => {
   });
 
   it("puts a player into the lobby whose code they typed", async () => {
-    const host = await new Client(endpoint).create(ROOM_LOBBY, { name: "Host" });
+    const host = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+      name: "Host",
+    });
     await waitFor(() => isLobbyCode(host.state.code), { label: "code" });
 
     const guest = await new Client(endpoint).join(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
       code: host.state.code,
       name: "Guest",
     });
@@ -433,14 +507,21 @@ describe("joining by code", () => {
   });
 
   it("does not drop a player into an unrelated lobby when two exist", async () => {
-    const first = await new Client(endpoint).create(ROOM_LOBBY, {});
-    const second = await new Client(endpoint).create(ROOM_LOBBY, {});
+    const first = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    const second = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => isLobbyCode(first.state.code) && isLobbyCode(second.state.code), {
       label: "both codes",
     });
     expect(first.state.code).not.toBe(second.state.code);
 
-    const guest = await new Client(endpoint).join(ROOM_LOBBY, { code: second.state.code });
+    const guest = await new Client(endpoint).join(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+      code: second.state.code,
+    });
     await waitFor(() => second.state.players.size === 2, { label: "guest in the right lobby" });
 
     expect(guest.roomId).toBe(second.roomId);
@@ -452,12 +533,15 @@ describe("joining by code", () => {
   });
 
   it("accepts a lower-case or spaced code, because players mistype them", async () => {
-    const host = await new Client(endpoint).create(ROOM_LOBBY, {});
+    const host = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
     await waitFor(() => isLobbyCode(host.state.code), { label: "code" });
 
     const code: string = host.state.code;
     const messy = ` ${code.toLowerCase()} `;
     const guest = await new Client(endpoint).join(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
       code: normalizeLobbyCode(messy),
     });
     await waitFor(() => host.state.players.size === 2, { label: "guest to arrive" });

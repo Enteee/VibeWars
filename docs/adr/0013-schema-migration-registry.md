@@ -2,7 +2,12 @@
 
 ## Status
 
-Accepted (2026-10-24). Supersedes the migration half of
+Superseded by [ADR-0016](0016-no-backwards-compatibility.md)
+(2026-10-24): the registry, the frozen v1 types and the build-format
+window are removed, and old data is discarded rather than upgraded. Kept
+below as written.
+
+Originally: Accepted (2026-10-24). Supersedes the migration half of
 [ADR-0005](0005-persistence.md); the rest of ADR-0005 (IndexedDB, the
 repository layer, validate-twice) stands unchanged.
 

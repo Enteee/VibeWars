@@ -185,9 +185,7 @@ function bow(
 }
 
 /**
- * Fists. The fallback when a build names a weapon that does not exist,
- * and what a migrated pre-weapons character would get if the migration
- * had no better idea (it does — see `defaults.ts`).
+ * Fists. The fallback when a build names a weapon that does not exist.
  *
  * Genuinely bad on purpose: it has to be a visible downgrade, or
  * "the server did not understand your build" would be an invisible

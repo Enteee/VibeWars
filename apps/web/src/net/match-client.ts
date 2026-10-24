@@ -1,9 +1,11 @@
 import { Client, type Room } from "@colyseus/sdk";
 import type { PlayerBuild } from "@vibewars/game-core";
 import {
+  PROTOCOL_VERSION,
   ROOM_MATCH,
   type ClientIntent,
   type MapDescriptor,
+  type MatchJoinOptions,
   type ServerHello,
 } from "@vibewars/game-protocol";
 
@@ -214,13 +216,11 @@ export async function connectToMatch(
   // The build travels the same way, but it is only a *request*: the
   // server validates it and silently falls back to its house loadout if
   // it is illegal (brief '32). Nothing here may assume it was honoured.
-  const joinOptions: Record<string, unknown> = {};
-  if (mapId !== undefined) {
-    joinOptions.mapId = mapId;
-  }
-  if (build !== undefined) {
-    joinOptions.build = build;
-  }
+  const joinOptions: MatchJoinOptions = {
+    protocolVersion: PROTOCOL_VERSION,
+    ...(mapId === undefined ? {} : { mapId }),
+    ...(build === undefined ? {} : { build }),
+  };
   const room = await client.joinOrCreate<DecodedMatchState>(ROOM_MATCH, joinOptions);
 
   // Both arrive on join; waiting for them here means the caller gets a

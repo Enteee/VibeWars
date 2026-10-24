@@ -1,7 +1,12 @@
 import { Client } from "@colyseus/sdk";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
 import { loadMap } from "@vibewars/game-maps";
-import { PROTOCOL_VERSION, ROOM_MATCH, type ServerHello } from "@vibewars/game-protocol";
+import {
+  PROTOCOL_MISMATCH_MESSAGE,
+  PROTOCOL_VERSION,
+  ROOM_MATCH,
+  type ServerHello,
+} from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { DEFAULT_MAP_ID } from "./rooms/match-room.js";
@@ -57,7 +62,7 @@ describe("match room", () => {
 
   it("accepts a client and syncs state, spawned at the map's first spawn point", async () => {
     const client = new Client(endpoint);
-    const room = await client.joinOrCreate(ROOM_MATCH);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
 
     await waitFor(() => room.state.players.size === 1, { label: "player to appear in state" });
 
@@ -73,7 +78,7 @@ describe("match room", () => {
 
   it("sends a hello carrying the protocol version and tick interval", async () => {
     const client = new Client(endpoint);
-    const room = await client.joinOrCreate(ROOM_MATCH);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
 
     const hello = await new Promise<ServerHello>((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -96,8 +101,8 @@ describe("match room", () => {
     const clientA = new Client(endpoint);
     const clientB = new Client(endpoint);
 
-    const roomA = await clientA.joinOrCreate(ROOM_MATCH);
-    const roomB = await clientB.joinById(roomA.roomId);
+    const roomA = await clientA.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
+    const roomB = await clientB.joinById(roomA.roomId, { protocolVersion: PROTOCOL_VERSION });
 
     await waitFor(() => roomA.state.players.size === 2, { label: "both players to appear" });
     expect(roomA.state.players.size).toBe(2);
@@ -109,6 +114,44 @@ describe("match room", () => {
     await roomA.leave();
   });
 
+  describe("the protocol handshake", () => {
+    it("refuses a client on another protocol version, telling it to reload", async () => {
+      await expect(
+        new Client(endpoint).joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION + 1 }),
+      ).rejects.toThrow(PROTOCOL_MISMATCH_MESSAGE);
+    });
+
+    it("refuses a client that sends no protocol version at all", async () => {
+      // Absence is a mismatch, not "an old client, let it in".
+      await expect(new Client(endpoint).joinOrCreate(ROOM_MATCH, {})).rejects.toThrow(
+        PROTOCOL_MISMATCH_MESSAGE,
+      );
+    });
+
+    it("leaves no trace of a refused client in the room", async () => {
+      const room = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+        protocolVersion: PROTOCOL_VERSION,
+      });
+      await waitFor(() => room.state.players.size === 1, { label: "the valid player" });
+
+      await expect(new Client(endpoint).joinById(room.roomId, {})).rejects.toThrow(
+        PROTOCOL_MISMATCH_MESSAGE,
+      );
+      const second = await new Client(endpoint).joinById(room.roomId, {
+        protocolVersion: PROTOCOL_VERSION,
+      });
+      await waitFor(() => room.state.players.size === 2, { label: "the second valid player" });
+      // The refused join consumed no team slot: alternating assignment
+      // still puts the second real player on the other team.
+      expect(room.state.players.get(second.sessionId)?.team).not.toBe(
+        room.state.players.get(room.sessionId)?.team,
+      );
+
+      await second.leave();
+      await room.leave();
+    });
+  });
+
   it("rejects a join for an unknown room type", async () => {
     const client = new Client(endpoint);
     await expect(client.joinOrCreate("no-such-room")).rejects.toThrow();
@@ -116,7 +159,7 @@ describe("match room", () => {
 
   it("moves a player in the requested direction at the ruleset's speed", async () => {
     const client = new Client(endpoint);
-    const room = await client.joinOrCreate(ROOM_MATCH);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self to appear" });
 
     room.send("intent", { kind: "move", dirX: 1, dirY: 0 });
@@ -137,7 +180,7 @@ describe("match room", () => {
 
   it("stops moving once a stop intent is sent", async () => {
     const client = new Client(endpoint);
-    const room = await client.joinOrCreate(ROOM_MATCH);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self to appear" });
 
     room.send("intent", { kind: "move", dirX: 0, dirY: 1 });
@@ -159,7 +202,7 @@ describe("match room", () => {
 
   it("ignores a malformed intent rather than crashing the room", async () => {
     const client = new Client(endpoint);
-    const room = await client.joinOrCreate(ROOM_MATCH);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self to appear" });
 
     room.send("intent", { kind: "move", dirX: "not-a-number", dirY: 0 });
@@ -177,8 +220,8 @@ describe("match room", () => {
   it("accepts targeting another connected player", async () => {
     const clientA = new Client(endpoint);
     const clientB = new Client(endpoint);
-    const roomA = await clientA.joinOrCreate(ROOM_MATCH);
-    const roomB = await clientB.joinById(roomA.roomId);
+    const roomA = await clientA.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
+    const roomB = await clientB.joinById(roomA.roomId, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => roomA.state.players.size === 2, { label: "both players to appear" });
 
     roomA.send("intent", { kind: "target", targetSessionId: roomB.sessionId });
@@ -195,7 +238,7 @@ describe("match room", () => {
 
   it("allows self-targeting", async () => {
     const client = new Client(endpoint);
-    const room = await client.joinOrCreate(ROOM_MATCH);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self to appear" });
 
     room.send("intent", { kind: "target", targetSessionId: room.sessionId });
@@ -212,8 +255,8 @@ describe("match room", () => {
   it("clears a target when targetSessionId is null", async () => {
     const clientA = new Client(endpoint);
     const clientB = new Client(endpoint);
-    const roomA = await clientA.joinOrCreate(ROOM_MATCH);
-    const roomB = await clientB.joinById(roomA.roomId);
+    const roomA = await clientA.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
+    const roomB = await clientB.joinById(roomA.roomId, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => roomA.state.players.size === 2, { label: "both players to appear" });
 
     roomA.send("intent", { kind: "target", targetSessionId: roomB.sessionId });
@@ -235,7 +278,7 @@ describe("match room", () => {
 
   it("rejects targeting a session id that does not exist", async () => {
     const client = new Client(endpoint);
-    const room = await client.joinOrCreate(ROOM_MATCH);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self to appear" });
 
     room.send("intent", { kind: "target", targetSessionId: "no-such-session" });
@@ -249,8 +292,8 @@ describe("match room", () => {
   it("clears a stale target once the targeted player leaves", async () => {
     const clientA = new Client(endpoint);
     const clientB = new Client(endpoint);
-    const roomA = await clientA.joinOrCreate(ROOM_MATCH);
-    const roomB = await clientB.joinById(roomA.roomId);
+    const roomA = await clientA.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
+    const roomB = await clientB.joinById(roomA.roomId, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => roomA.state.players.size === 2, { label: "both players to appear" });
 
     roomA.send("intent", { kind: "target", targetSessionId: roomB.sessionId });

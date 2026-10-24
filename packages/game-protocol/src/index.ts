@@ -12,6 +12,7 @@
 
 export {
   PROTOCOL_VERSION,
+  PROTOCOL_MISMATCH_MESSAGE,
   ROOM_MATCH,
   ROOM_LOBBY,
   MAX_LOBBY_PLAYERS,
@@ -34,6 +35,7 @@ export type {
   RectWallDescriptor,
   PolygonWallDescriptor,
   LobbyPhase,
+  MatchJoinOptions,
   LobbyJoinOptions,
   LobbyChooseTeamMessage,
   LobbyReadyMessage,

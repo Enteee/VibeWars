@@ -13,6 +13,7 @@ import {
 } from "@vibewars/game-protocol";
 
 import { DEFAULT_MAP_ID } from "./match-room.js";
+import { assertProtocolVersion, field } from "./options.js";
 
 /**
  * The pre-match lobby (brief §19, §25).
@@ -88,22 +89,6 @@ export function generateLobbyCode(rng: SimulationRng): string {
     code += LOBBY_CODE_ALPHABET[index] ?? "A";
   }
   return code;
-}
-
-/**
- * Read one field from a client-supplied message, safely.
- *
- * A client can send literally anything — including `null`, `undefined`,
- * a number or a string — and `(message as {x?: unknown}).x` THROWS on the
- * nullish cases, which crashed the whole server process. Found by the
- * fuzz tests in `fuzz.test.ts`; never dereference a client payload
- * directly again (brief §27, §32).
- */
-function field(message: unknown, name: string): unknown {
-  if (typeof message !== "object" || message === null) {
-    return undefined;
-  }
-  return (message as Record<string, unknown>)[name];
 }
 
 export class LobbyRoom extends Room {
@@ -270,6 +255,7 @@ export class LobbyRoom extends Room {
   }
 
   public override onJoin(client: Client, options: unknown): void {
+    assertProtocolVersion(options);
     const isFirst = this.state.players.size === 0;
     const player = new LobbyPlayer({
       sessionId: client.sessionId,

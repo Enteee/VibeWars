@@ -55,12 +55,7 @@ export type { ArmorCondition, Insignia, InsigniaEffect, InsigniaId } from "./ins
 export { ALL_INSIGNIAS, INSIGNIAS, getInsignia, isInsigniaId, perSlotAmount } from "./insignias.js";
 
 export type { BuildEquipment, EquippedOffhand, EquippedWeapon } from "./loadout.js";
-export {
-  defaultEquipmentFor,
-  defaultOffhandFor,
-  defaultWeaponFor,
-  unarmedEquipment,
-} from "./loadout.js";
+export { defaultEquipmentFor, defaultOffhandFor, defaultWeaponFor } from "./loadout.js";
 
 export type { GearOmission, MissingGearMechanic } from "./coverage.js";
 export { GEAR_OMISSIONS, formatGearCoverage, gearOmission, openGearGaps } from "./coverage.js";

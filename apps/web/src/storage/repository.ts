@@ -2,8 +2,8 @@ import {
   CHARACTER_SCHEMA_VERSION,
   TEAM_SCHEMA_VERSION,
   PersistenceError,
-  migrateCharacter,
-  migrateTeam,
+  isStoredCharacter,
+  isStoredTeam,
   type StoredCharacter,
   type StoredTeam,
 } from "./schema.js";
@@ -22,6 +22,20 @@ const DB_VERSION = 1;
 const CHARACTER_STORE = "characters";
 const TEAM_STORE = "teams";
 
+/** The notice shown when `count` stale characters were discarded. */
+export function discardedCharactersNotice(count: number): string {
+  return count === 1
+    ? "A saved character from an older build of the game could not be read and was discarded."
+    : `${String(count)} saved characters from an older build of the game could not be read and were discarded.`;
+}
+
+/** The notice shown when `count` stale teams were discarded. */
+export function discardedTeamsNotice(count: number): string {
+  return count === 1
+    ? "A saved team from an older build of the game could not be read and was discarded."
+    : `${String(count)} saved teams from an older build of the game could not be read and were discarded.`;
+}
+
 /**
  * The subset of IndexedDB this module uses, as an interface, so tests can
  * substitute an in-memory implementation without a browser. The real
@@ -31,7 +45,8 @@ export interface KeyValueStore {
   get<T>(store: string, key: string): Promise<T | undefined>;
   put(store: string, key: string, value: unknown): Promise<void>;
   delete(store: string, key: string): Promise<void>;
-  list<T>(store: string): Promise<T[]>;
+  /** Every record in a store, with the key it is stored under. */
+  list(store: string): Promise<{ key: string; value: unknown }[]>;
 }
 
 function promisify<T>(request: IDBRequest<T>): Promise<T> {
@@ -78,9 +93,18 @@ export function openIndexedDbStore(): Promise<KeyValueStore> {
           const tx = db.transaction(store, "readwrite");
           await promisify(tx.objectStore(store).delete(key));
         },
-        async list<T>(store: string): Promise<T[]> {
+        async list(store: string): Promise<{ key: string; value: unknown }[]> {
+          // One transaction, so the two arrays describe the same snapshot
+          // and line up index for index (both are in key order). Every key
+          // this module writes is a string.
           const tx = db.transaction(store, "readonly");
-          return (await promisify(tx.objectStore(store).getAll())) as T[];
+          const [keys, values] = await Promise.all([
+            promisify(tx.objectStore(store).getAllKeys()),
+            promisify(tx.objectStore(store).getAll() as IDBRequest<unknown[]>),
+          ]);
+          return keys.flatMap((key, i) =>
+            typeof key === "string" ? [{ key, value: values[i] }] : [],
+          );
         },
       });
     };
@@ -114,10 +138,58 @@ export function createMemoryStore(): KeyValueStore {
       of(store).delete(key);
       return Promise.resolve();
     },
-    list<T>(store: string): Promise<T[]> {
-      return Promise.resolve([...of(store).values()] as T[]);
+    list(store: string): Promise<{ key: string; value: unknown }[]> {
+      return Promise.resolve([...of(store)].map(([key, value]) => ({ key, value })));
     },
   };
+}
+
+/**
+ * Read one record, discarding it if it is not in the current shape.
+ *
+ * A record from another schema version is not upgraded (ADR-0016): it is
+ * deleted, so it cannot come back on the next read, and the caller
+ * treats it as absent.
+ */
+async function loadCurrent<T>(
+  store: KeyValueStore,
+  name: string,
+  key: string,
+  isCurrent: (value: unknown) => value is T,
+): Promise<T | undefined> {
+  const raw = await store.get<unknown>(name, key);
+  if (raw === undefined) {
+    return undefined;
+  }
+  if (isCurrent(raw)) {
+    return raw;
+  }
+  await store.delete(name, key);
+  return undefined;
+}
+
+/**
+ * Every record in the current shape. Any that are not are deleted and
+ * reported in a single plain-English line in `problems`, so the roster is
+ * never silently short and the player is told once, not once per record.
+ */
+async function listCurrent<T>(
+  store: KeyValueStore,
+  name: string,
+  isCurrent: (value: unknown) => value is T,
+  discardedNotice: (count: number) => string,
+): Promise<{ records: T[]; problems: string[] }> {
+  const records: T[] = [];
+  let discarded = 0;
+  for (const { key, value } of await store.list(name)) {
+    if (isCurrent(value)) {
+      records.push(value);
+    } else {
+      await store.delete(name, key);
+      discarded += 1;
+    }
+  }
+  return { records, problems: discarded === 0 ? [] : [discardedNotice(discarded)] };
 }
 
 export class CharacterRepository {
@@ -137,38 +209,17 @@ export class CharacterRepository {
   }
 
   public async load(id: string): Promise<StoredCharacter | undefined> {
-    const raw = await this.#store.get<unknown>(CHARACTER_STORE, id);
-    if (raw === undefined) {
-      return undefined;
-    }
-    // Migrate first: an older record is *old*, not malformed, and the
-    // current structural guard would reject it. `migrateCharacter`
-    // validates the result on the way out.
-    try {
-      return migrateCharacter(raw);
-    } catch (error) {
-      throw error instanceof PersistenceError
-        ? new PersistenceError(`stored character ${id}: ${error.message}`)
-        : error;
-    }
+    return loadCurrent(this.#store, CHARACTER_STORE, id, isStoredCharacter);
   }
 
-  /**
-   * Every saved character. A single malformed or future-versioned record
-   * is reported rather than silently dropped, so a user is told their
-   * data needs attention instead of quietly losing a build.
-   */
+  /** Every saved character, newest first. Stale records are discarded and reported. */
   public async list(): Promise<{ characters: StoredCharacter[]; problems: string[] }> {
-    const raw = await this.#store.list<unknown>(CHARACTER_STORE);
-    const characters: StoredCharacter[] = [];
-    const problems: string[] = [];
-    for (const record of raw) {
-      try {
-        characters.push(migrateCharacter(record));
-      } catch (error) {
-        problems.push(error instanceof Error ? error.message : String(error));
-      }
-    }
+    const { records: characters, problems } = await listCurrent(
+      this.#store,
+      CHARACTER_STORE,
+      isStoredCharacter,
+      discardedCharactersNotice,
+    );
     characters.sort((a, b) => b.updatedAt - a.updatedAt);
     return { characters, problems };
   }
@@ -195,30 +246,17 @@ export class TeamRepository {
   }
 
   public async load(id: string): Promise<StoredTeam | undefined> {
-    const raw = await this.#store.get<unknown>(TEAM_STORE, id);
-    if (raw === undefined) {
-      return undefined;
-    }
-    try {
-      return migrateTeam(raw);
-    } catch (error) {
-      throw error instanceof PersistenceError
-        ? new PersistenceError(`stored team ${id}: ${error.message}`)
-        : error;
-    }
+    return loadCurrent(this.#store, TEAM_STORE, id, isStoredTeam);
   }
 
+  /** Every saved team, newest first. Stale records are discarded and reported. */
   public async list(): Promise<{ teams: StoredTeam[]; problems: string[] }> {
-    const raw = await this.#store.list<unknown>(TEAM_STORE);
-    const teams: StoredTeam[] = [];
-    const problems: string[] = [];
-    for (const record of raw) {
-      try {
-        teams.push(migrateTeam(record));
-      } catch (error) {
-        problems.push(error instanceof Error ? error.message : String(error));
-      }
-    }
+    const { records: teams, problems } = await listCurrent(
+      this.#store,
+      TEAM_STORE,
+      isStoredTeam,
+      discardedTeamsNotice,
+    );
     teams.sort((a, b) => b.updatedAt - a.updatedAt);
     return { teams, problems };
   }

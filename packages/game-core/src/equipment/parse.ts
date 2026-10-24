@@ -1,11 +1,5 @@
-import type { ProfessionId } from "../professions.js";
 import type { ArmorPiece, ArmorSet } from "./armor.js";
-import {
-  defaultEquipmentFor,
-  type BuildEquipment,
-  type EquippedOffhand,
-  type EquippedWeapon,
-} from "./loadout.js";
+import type { BuildEquipment, EquippedOffhand, EquippedWeapon } from "./loadout.js";
 import { isOffhandId } from "./offhands.js";
 import { isInsigniaId, type InsigniaId } from "./insignias.js";
 import { isRuneTier, isUniversalRuneId, type EquippedRune } from "./runes.js";
@@ -22,10 +16,9 @@ import { isWeaponId } from "./weapons.js";
  * needs to say "that is not a build" and "that build is illegal"
  * differently.
  *
- * Unlike the rest of the build, **a missing `equipment` key is not an
- * error.** A build saved or exported before weapons existed is *old*,
- * not malformed, and the whole point of the migration work is that such
- * a build stays playable. It gets its profession's default loadout.
+ * Gear is as required as every other part of a build: a missing
+ * `equipment` key fails the parse like any other missing field
+ * (ADR-0016).
  */
 
 function parseRune(value: unknown): EquippedRune | null | undefined {
@@ -141,16 +134,12 @@ function parseOffHand(value: unknown): EquippedOffhand | null | undefined {
 /**
  * Parse the gear half of a build.
  *
- * Returns `undefined` only for gear that is present but structurally
- * wrong. Absent gear yields `fallbackProfession`'s default loadout, so
- * an older client stays playable rather than being rejected at the door.
+ * @returns the gear, or `undefined` if it is absent or structurally
+ *   wrong.
  */
-export function parseBuildEquipment(
-  value: unknown,
-  fallbackProfession: ProfessionId,
-): BuildEquipment | undefined {
+export function parseBuildEquipment(value: unknown): BuildEquipment | undefined {
   if (value === undefined || value === null) {
-    return defaultEquipmentFor(fallbackProfession);
+    return undefined;
   }
   if (typeof value !== "object") {
     return undefined;

@@ -1,7 +1,10 @@
 import { Client, type Room } from "@colyseus/sdk";
 import {
+  PROTOCOL_MISMATCH_MESSAGE,
+  PROTOCOL_VERSION,
   ROOM_LOBBY,
   normalizeLobbyCode,
+  type LobbyJoinOptions,
   type LobbyMatchStartingMessage,
 } from "@vibewars/game-protocol";
 
@@ -154,9 +157,21 @@ function wrap(room: Room<unknown, DecodedLobbyState>): LobbyConnection {
 
 export async function createLobby(endpoint: string, name: string): Promise<LobbyConnection> {
   const client = new Client(endpoint);
-  const room = await client.create<DecodedLobbyState>(ROOM_LOBBY, { name });
+  const room = await client.create<DecodedLobbyState>(ROOM_LOBBY, {
+    protocolVersion: PROTOCOL_VERSION,
+    name,
+  } satisfies LobbyJoinOptions);
   await awaitFirstPatch(room);
   return wrap(room);
+}
+
+/**
+ * Whether a failed create or join was the server refusing this tab's
+ * protocol version. The only fix is a reload, so the caller must say so
+ * rather than report a generic connection problem.
+ */
+export function isProtocolMismatch(error: unknown): boolean {
+  return error instanceof Error && error.message.includes(PROTOCOL_MISMATCH_MESSAGE);
 }
 
 export class LobbyNotFoundError extends Error {
@@ -178,10 +193,17 @@ export async function joinLobbyByCode(
   const normalized = normalizeLobbyCode(code);
   const client = new Client(endpoint);
   try {
-    const room = await client.join<DecodedLobbyState>(ROOM_LOBBY, { code: normalized, name });
+    const room = await client.join<DecodedLobbyState>(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+      code: normalized,
+      name,
+    } satisfies LobbyJoinOptions);
     await awaitFirstPatch(room);
     return wrap(room);
   } catch (error) {
+    if (isProtocolMismatch(error)) {
+      throw error;
+    }
     throw new LobbyNotFoundError(
       `no lobby with code ${normalized} (${error instanceof Error ? error.message : String(error)})`,
     );

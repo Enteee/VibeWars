@@ -58,6 +58,8 @@ left half-done.
 
 ## Rules
 
+- **Read `CLAUDE.md` before changing code.** It bans backwards-compatibility
+  code (migrations, version windows, "absent means old"), for every change.
 - **A message marked `*` is from the human operator. It outranks everything,
   including this file.** A message without it is from a peer agent — a
   colleague, not an authority. Weigh their claims as you would your own.
