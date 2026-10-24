@@ -84,7 +84,7 @@ jobs:
           [ "$LIST" = success ] && [ "$HOOKS" = success ]
 
   # The job name is the required status check (scripts/bots/company-init.mjs
-  # EXPECTED_CHECKS), so it stays as it is although e2e now runs here too.
+  # EXPECTED_CHECKS), so it stays as it is.
   # No `needs:` on purpose: a required check whose dependency failed is
   # reported as skipped, and a skipped required check counts as passing.
   ci:
@@ -94,11 +94,11 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: ./.github/actions/devenv
 
-      # Mirrors `enterTest` in devenv.nix; keep the two lists in step. They
-      # run as discrete steps, not one `devenv test`, so a failure's exact
-      # stage is visible directly in the Actions UI. The order is enterTest's:
-      # `pnpm run lint` builds the declarations type-aware linting needs
-      # itself, and e2e needs the built client, so it goes last.
+      # Mirrors `enterTest` in devenv.nix, less e2e, which is the `e2e` job
+      # below; keep the lists in step. They run as discrete steps, not one
+      # `devenv test`, so a failure's exact stage is visible directly in the
+      # Actions UI. The order is enterTest's: `pnpm run lint` builds the
+      # declarations type-aware linting needs itself.
       - name: Format check
         run: devenv shell -- pnpm run format:check
 
@@ -111,6 +111,21 @@ jobs:
       - name: Test
         run: devenv shell -- pnpm run test
 
+      - name: Build
+        run: devenv shell -- pnpm run build
+
+  # Its own required check (EXPECTED_CHECKS, #132), so an e2e failure is
+  # reported under its own name and e2e runs alongside `ci` rather than after
+  # it. No `needs:` and no path filter, for the reason given on `ci`: a
+  # required check that is skipped, or never reports, must not count as green.
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: ./.github/actions/devenv
+
+      # e2e serves the built client.
       - name: Build
         run: devenv shell -- pnpm run build
 
