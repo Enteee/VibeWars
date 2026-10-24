@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { MatchSnapshot, PlayerSnapshot } from "../net/match-client.js";
+import type { MatchSnapshot, PlayerSnapshot } from "../net/match-connection.js";
 import type { FloatingText } from "./arena-snapshot.js";
 import { showCombatFeedback } from "./combat-feedback.js";
 

@@ -1,6 +1,6 @@
 import { vec2 } from "@vibewars/game-core";
 
-import type { CombatMessage, MatchSnapshot } from "../net/match-client.js";
+import type { CombatMessage, MatchSnapshot } from "../net/match-connection.js";
 import type { FloatingText } from "./arena-snapshot.js";
 
 /**
