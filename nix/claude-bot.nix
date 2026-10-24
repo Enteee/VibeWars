@@ -26,12 +26,34 @@ let
     cp ${../scripts/bots/tg.mjs} $out/tg.mjs
     cp ${../scripts/bots/link.mjs} $out/link.mjs
     cp ${../scripts/bots/setup.mjs} $out/setup.mjs
+    cp ${../scripts/bots/hub-policy.mjs} $out/hub-policy.mjs
+    cp ${../scripts/bots/hub-guards.mjs} $out/hub-guards.mjs
+    cp ${../scripts/bots/hub.mjs} $out/hub.mjs
+    cp ${../scripts/bots/hubd.mjs} $out/hubd.mjs
+    cp ${../scripts/bots/board.mjs} $out/board.mjs
+    cp ${../scripts/bots/company-init.mjs} $out/company-init.mjs
   '';
 
   node = "${pkgs.nodejs_24}/bin/node";
 
   # The in-jail CLI. Deliberately has no network access of its own: it only
   # reads and writes the two bus directories bound into the sandbox.
+  # GitHub, from inside the jail. Like `tg`, it speaks to a spool directory
+  # rather than the network: the credential lives in hubd, outside.
+  hub = pkgs.writeShellApplication {
+    name = "hub";
+    text = ''
+      exec ${node} ${botScripts}/hub.mjs "$@"
+    '';
+  };
+
+  board = pkgs.writeShellApplication {
+    name = "board";
+    text = ''
+      exec ${node} ${botScripts}/board.mjs "$@"
+    '';
+  };
+
   tg = pkgs.writeShellApplication {
     name = "tg";
     text = ''
@@ -64,10 +86,56 @@ let
       nodejs_24
       pnpm_10
       tg
+      hub
+      board
     ]
   );
 
-  sandboxPath = "${corePath}:/etc/profiles/per-user/ente/bin:/run/current-system/sw/bin";
+  # Tools only one role needs. Everything here is reachable from inside the
+  # jail only because /nix/store is bind-mounted, so adding a role's tools
+  # costs nothing for the other eight.
+  roleTools = {
+    asset-designer = with pkgs; [
+      imagemagick
+      inkscape
+      sox
+      ffmpeg
+    ];
+    # Judges the pipeline, so it needs the same linters CI runs.
+    cicd-engineer = with pkgs; [
+      actionlint
+      shellcheck
+      skopeo
+    ];
+    # GitHub's scanners are unavailable to us (Dependabot disabled, code
+    # scanning needs Advanced Security), so this role's local tooling is the
+    # whole of our automated security posture.
+    perf-sec-qa = with pkgs; [
+      semgrep
+      trivy
+      gitleaks
+      osv-scanner
+      hyperfine
+      chromium
+    ];
+    # Has to actually play the game to judge whether it is fun.
+    qa-tester = [ pkgs.chromium ];
+  };
+
+  basePath = "${corePath}:/etc/profiles/per-user/ente/bin:/run/current-system/sw/bin";
+
+  # The role is a runtime shell value, not a Nix one, so the per-role PATHs are
+  # emitted as a `case` and selected inside the script.
+  selectPath = ''
+    case "$role" in
+    ${lib.concatStringsSep "\n    " (
+      lib.mapAttrsToList (
+        role: tools: "${role}) sandboxPath=\"${lib.makeBinPath tools}:${basePath}\" ;;"
+      ) roleTools
+    )}
+      *) sandboxPath="${basePath}" ;;
+    esac
+  '';
 
   claudeBot = ''
         # devenv does not wrap scripts in `set -e`, so without this a failing
@@ -225,7 +293,18 @@ let
         export VIBEWARS_BOT_USERNAME_PREFIX="${cfg.usernamePrefix}"
 
         mkdir -p "$VIBEWARS_BOT_ROOT" "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_ROOT/link" "$VIBEWARS_BOT_ROOT/wt"
+        mkdir -p "$VIBEWARS_BOT_ROOT/hub/$role/req" "$VIBEWARS_BOT_ROOT/hub/$role/res"
+        # Skills are shared and live outside every worktree on purpose: they
+        # are the manager's instrument for steering the company, and if they
+        # sat in the manager's worktree nobody would see a new one until it
+        # was merged.
+        mkdir -p "$VIBEWARS_BOT_ROOT/skills"
         chmod 700 "$VIBEWARS_BOT_ROOT"
+
+        # claude-bot works standalone, without the company having been set up,
+        # so a missing company.json is not an error here — `board` will simply
+        # say so if an agent tries to use it.
+        projectNumber="$(${pkgs.jq}/bin/jq -r '.project // ""' "$VIBEWARS_BOT_ROOT/company.json" 2>/dev/null || true)"
 
         # ----------------------------------------------------------------------
         # Claude's own credential, handled exactly as claude-box does: it is the
@@ -288,6 +367,15 @@ let
         # Expanded now on purpose: $linkPid must be captured at trap-setting time.
         trap "kill $linkPid 2>/dev/null || true" EXIT INT TERM
 
+        ${selectPath}
+
+        # One role writes the skills; the other eight read them.
+        if [ "$role" = "manager" ]; then
+          skillsBind="--bind $VIBEWARS_BOT_ROOT/skills $worktree/.claude/skills"
+        else
+          skillsBind="--ro-bind $VIBEWARS_BOT_ROOT/skills $worktree/.claude/skills"
+        fi
+
         # ----------------------------------------------------------------------
         # dev.tty.legacy_tiocsti is 0 on this kernel, so terminal injection is
         # already blocked and --new-session can be omitted; omitting it keeps the
@@ -322,18 +410,22 @@ let
           --bind "$DEVENV_ROOT/.git" "$DEVENV_ROOT/.git" \
           --ro-bind "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_BUS" \
           --bind "$VIBEWARS_BOT_BUS/$role" "$VIBEWARS_BOT_BUS/$role" \
+          --bind "$VIBEWARS_BOT_ROOT/hub/$role" "$VIBEWARS_BOT_ROOT/hub/$role" \
           --bind "$worktree" "$worktree" \
+          $skillsBind \
           --chdir "$worktree" \
           --setenv HOME "$HOME" \
           --setenv USER "$USER" \
           --setenv SHELL "${lib.getExe pkgs.bashInteractive}" \
-          --setenv PATH "${sandboxPath}" \
+          --setenv PATH "$sandboxPath" \
           --setenv TERM "''${TERM:-xterm-256color}" \
           --setenv LANG "''${LANG:-C.UTF-8}" \
           --setenv COLORTERM "''${COLORTERM:-truecolor}" \
           --setenv XDG_RUNTIME_DIR "/run/user/$(id -u)" \
           --setenv VIBEWARS_BOT_ROLE "$role" \
           --setenv VIBEWARS_BOT_BUS "$VIBEWARS_BOT_BUS" \
+          --setenv VIBEWARS_HUB "$VIBEWARS_BOT_ROOT/hub/$role" \
+          --setenv VIBEWARS_PROJECT "$projectNumber" \
           --setenv VIBEWARS_ENV "development" \
           -- claude --append-system-prompt "$briefing" "$@"
   '';
@@ -382,10 +474,15 @@ in
 
     usernamePrefix = lib.mkOption {
       type = lib.types.str;
-      default = "vibewars";
+      default = "vw";
       description = ''
         Prefix for suggested usernames of newly provisioned role bots, as in
-        `vibewars_qa_7f3a_bot`.
+        `vw_qa_tester_bot`.
+
+        Deliberately not "vibewars": `vibewars_manager_bot` is already taken by
+        the manager bot that provisions these, so the `manager` employee could
+        never have had the obvious name. A short shared prefix keeps all nine
+        employees consistent instead of giving one of them an exception.
       '';
     };
   };
@@ -394,7 +491,12 @@ in
     packages = [
       pkgs.bubblewrap
       pkgs.claude-code
+      # Also on the dev shell's PATH, not just the sandbox's: when an agent
+      # reports that `hub` refused something, the quickest way to understand
+      # why is to run the same command yourself.
       tg
+      hub
+      board
     ];
 
     scripts.claude-bot = {
