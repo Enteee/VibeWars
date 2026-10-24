@@ -540,7 +540,11 @@ let
           if git -C "$DEVENV_ROOT" show-ref --verify --quiet "refs/heads/bot/$role"; then
             git -C "$DEVENV_ROOT" worktree add "$worktree" "bot/$role"
           else
-            git -C "$DEVENV_ROOT" worktree add -b "bot/$role" "$worktree"
+            # Detached, not `-b bot/$role`: agents work on bot/<role>/issue-N
+            # branches, and while any of those exist git cannot create a
+            # branch named bot/<role>. Every issue starts from origin/main
+            # anyway (the fresh-branch skill).
+            git -C "$DEVENV_ROOT" worktree add --detach "$worktree" origin/main
           fi
         fi
 
