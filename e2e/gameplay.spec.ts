@@ -125,12 +125,35 @@ test("a refused cast says why, briefly, above the skill bar", async ({ page }) =
   const message = page.locator(".hud-message");
   await expect(message).not.toHaveClass(/is-visible/);
 
-  // Slot 1 is Fireball, which needs a target, and nobody is targeted yet.
+  // Slot 5 is a self-cast enchantment with a 15 s recharge: once it has
+  // landed, pressing it again is refused whoever else is in the room.
   // Before issue #51 this key press did nothing at all.
-  await page.keyboard.press("1");
+  await page.keyboard.press("5");
+  await expect(page.locator(".hud-statuses")).not.toContainText("no active effects");
+  await page.keyboard.press("5");
 
-  await expect(message).toHaveText("Select a target first.");
+  await expect(message).toHaveText("That skill is recharging.");
   await expect(message).toHaveClass(/is-visible/);
   // Gone again on its own, so it never becomes clutter.
   await expect(message).not.toHaveClass(/is-visible/, { timeout: 4000 });
+});
+
+test("an enemy skill with nothing targeted targets the nearest enemy", async ({
+  browser,
+  page,
+}) => {
+  // Teams alternate by join order, so whoever joins just before us is an
+  // enemy: there is at least one, whatever earlier tests left behind.
+  const opponent = await browser.newPage();
+  await startQuickMatch(opponent);
+  await startQuickMatch(page);
+  const target = page.locator(".hud-target");
+  await expect(target).toHaveText("no target");
+
+  // Slot 1 is Fireball. Whether it is then in range or not, the target
+  // stays picked.
+  await page.keyboard.press("1");
+
+  await expect(target).toHaveText(/^target: /);
+  await opponent.close();
 });

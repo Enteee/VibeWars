@@ -111,4 +111,17 @@ export type {
   BehaviourIntent,
   Targeting,
 } from "./match/behaviour.js";
-export { createCursor, decide, resolveTargeting } from "./match/behaviour.js";
+export { createCursor, decide, nearestLiving, resolveTargeting } from "./match/behaviour.js";
+
+export type {
+  TrainingDummy,
+  TrainingKnob,
+  TrainingMechanic,
+  TrainingScenario,
+} from "./match/training-scenarios.js";
+export {
+  getTrainingScenario,
+  PLAYER_TEAM,
+  scenarioParticipants,
+  TRAINING_SCENARIOS,
+} from "./match/training-scenarios.js";
