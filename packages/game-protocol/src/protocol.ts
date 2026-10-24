@@ -10,7 +10,7 @@
  * mid-match. It only ever rejects; there is no code path per version
  * (ADR-0016).
  */
-export const PROTOCOL_VERSION = 1 as const;
+export const PROTOCOL_VERSION = 2 as const;
 
 /** What a client is told when its `protocolVersion` does not match. */
 export const PROTOCOL_MISMATCH_MESSAGE =
@@ -149,6 +149,13 @@ export interface LobbyJoinOptions {
   readonly code?: string;
   /** Display name the player asks for; the server sanitises it. */
   readonly name?: string;
+  /**
+   * The build this player will ask to play when the lobby's match starts.
+   * The lobby joins the match on the player's behalf, so the build
+   * travels with them here, untyped for the same reason as in
+   * `MatchJoinOptions`.
+   */
+  readonly build?: unknown;
 }
 
 /** Pick a team slot, or `null` to become a spectator. */
@@ -166,15 +173,34 @@ export interface LobbySelectMapMessage {
   readonly mapId: string;
 }
 
-/** Sent to every client when the host starts the match. */
+/**
+ * Sent to each player on a team, and only to them, when the host starts
+ * the match. Spectators get nothing and stay in the lobby.
+ */
 export interface LobbyMatchStartingMessage {
-  /** The match room to join. */
-  readonly roomId: string;
   readonly mapId: string;
+  /** This player's seat, reserved by the lobby. Never shared with anyone else. */
+  readonly reservation: MatchSeatReservation;
+}
+
+/**
+ * A seat the server reserved in a match room, as Colyseus describes it;
+ * a client takes it with `consumeSeatReservation`. Opaque to the game.
+ */
+export interface MatchSeatReservation {
+  readonly name: string;
+  readonly roomId: string;
+  readonly sessionId: string;
+  readonly processId?: string;
+  readonly publicAddress?: string;
+  readonly devMode?: boolean;
 }
 
 /** The maximum players a single lobby accepts (brief §4: not hardcoded to 8). */
 export const MAX_LOBBY_PLAYERS = 16;
+
+/** How many players one Quick Match room holds before a new one opens. */
+export const QUICK_MATCH_MAX_PLAYERS = 8;
 
 /**
  * Every message a client is allowed to send during a match.

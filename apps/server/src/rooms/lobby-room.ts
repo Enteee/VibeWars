@@ -12,7 +12,7 @@ import {
   type LobbyMatchStartingMessage,
 } from "@vibewars/game-protocol";
 
-import { DEFAULT_MAP_ID } from "./match-room.js";
+import { DEFAULT_MAP_ID, openLobbyMatch, type LobbySeat } from "./match-room.js";
 import { assertProtocolVersion, field } from "./options.js";
 
 /**
@@ -48,8 +48,6 @@ export const LobbyState = schema(
     phase: t.string().default("waiting"),
     mapId: t.string().default(DEFAULT_MAP_ID),
     players: t.map(LobbyPlayer),
-    /** Set once the host starts; the room clients should join. */
-    matchRoomId: t.string().default(""),
   },
   "LobbyState",
 );
@@ -96,6 +94,12 @@ export class LobbyRoom extends Room {
 
   #rng: SimulationRng = createRng(0);
 
+  /**
+   * The build each member joined with, unparsed, for the match to
+   * validate. Kept off the synced state: nobody else needs it.
+   */
+  readonly #builds = new Map<string, unknown>();
+
   public override onCreate(options: unknown): void {
     this.autoDispose = true;
     this.maxClients = MAX_LOBBY_PLAYERS;
@@ -130,7 +134,7 @@ export class LobbyRoom extends Room {
       this.handleSelectMap(client, message);
     });
     this.onMessage("start-match", (client) => {
-      this.handleStartMatch(client);
+      void this.handleStartMatch(client);
     });
     this.onMessage("return-to-lobby", () => {
       this.returnToLobby();
@@ -207,7 +211,6 @@ export class LobbyRoom extends Room {
       return;
     }
     this.state.phase = "waiting";
-    this.state.matchRoomId = "";
     for (const player of this.state.players.values()) {
       player.ready = false;
     }
@@ -228,7 +231,14 @@ export class LobbyRoom extends Room {
     return { ok: true };
   }
 
-  private handleStartMatch(client: Client): void {
+  /**
+   * Start the lobby's own match (#41): a private room with a seat
+   * reserved for each of this lobby's team players, each sent only their
+   * own reservation. A reservation is a seat, so it is never broadcast,
+   * and the room's id is never put in the shared state: spectators get
+   * nothing and stay here.
+   */
+  private async handleStartMatch(client: Client): Promise<void> {
     const player = this.state.players.get(client.sessionId);
     if (player === undefined || !player.isHost || this.state.phase !== "waiting") {
       return;
@@ -239,19 +249,45 @@ export class LobbyRoom extends Room {
       return;
     }
 
+    // Leaves "waiting" before the await, so a second start cannot race in.
     this.state.phase = "starting";
-    // Clients create/join the match room themselves; the lobby only says
-    // which map to play. Keeping room creation client-side means a lobby
-    // cannot leak an empty match room if everyone disconnects between
-    // "start" and "join".
-    const message: LobbyMatchStartingMessage = {
-      roomId: this.state.matchRoomId,
-      mapId: this.state.mapId,
-    };
-    this.broadcast("match-starting", message);
-    this.state.phase = "in-match";
+    const mapId = this.state.mapId;
+    const seated: (LobbySeat & { readonly sessionId: string })[] = [
+      ...this.state.players.values(),
+    ].flatMap((other) =>
+      other.team === 0 || other.team === 1
+        ? [
+            {
+              sessionId: other.sessionId,
+              team: other.team,
+              build: this.#builds.get(other.sessionId),
+            },
+          ]
+        : [],
+    );
 
-    console.info(`[lobby] ${this.state.code} starting match on ${this.state.mapId}`);
+    let reservations: Awaited<ReturnType<typeof openLobbyMatch>>;
+    try {
+      reservations = await openLobbyMatch(mapId, seated);
+    } catch (error: unknown) {
+      console.error(`[lobby] ${this.state.code} could not open its match`, error);
+      this.state.phase = "waiting";
+      client.send("start-rejected", { reason: "the server could not create the match" });
+      return;
+    }
+
+    this.state.phase = "in-match";
+    seated.forEach(({ sessionId }, i) => {
+      const reservation = reservations[i];
+      if (reservation !== undefined) {
+        const message: LobbyMatchStartingMessage = { mapId, reservation };
+        this.clients.get(sessionId)?.send("match-starting", message);
+      }
+    });
+
+    console.info(
+      `[lobby] ${this.state.code} starting match ${reservations[0]?.roomId ?? "?"} on ${mapId}`,
+    );
   }
 
   public override onJoin(client: Client, options: unknown): void {
@@ -264,6 +300,7 @@ export class LobbyRoom extends Room {
       isHost: isFirst,
     });
     this.state.players.set(client.sessionId, player);
+    this.#builds.set(client.sessionId, field(options, "build"));
 
     console.info(
       `[lobby] ${this.state.code} join ${client.sessionId} (${String(this.state.players.size)} players)`,
@@ -274,6 +311,7 @@ export class LobbyRoom extends Room {
     const leaving = this.state.players.get(client.sessionId);
     const wasHost = leaving?.isHost ?? false;
     this.state.players.delete(client.sessionId);
+    this.#builds.delete(client.sessionId);
 
     // Hosting must not vanish with the host, or the lobby becomes
     // unstartable and everyone has to regroup under a new code.
