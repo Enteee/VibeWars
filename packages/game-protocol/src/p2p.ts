@@ -21,7 +21,7 @@ import type {
 } from "./protocol.js";
 import { MAX_LOBBY_PLAYERS } from "./protocol.js";
 
-/** The channels a match uses. Trystero caps an action name at 12 bytes, so each fits. */
+/** The channels a match uses. Trystero caps an action name at 32 bytes (#16), so each fits. */
 export const CHANNELS = [
   "hello",
   "welcome",
@@ -59,19 +59,43 @@ export const MAX_WIRE_POINTS = 256;
 /** The widest area a combat message may draw. */
 export const MAX_WIRE_RADIUS = 200;
 
+/** The most combat entries one tick's `"combat"` message carries. */
+export const MAX_WIRE_COMBATS = 64;
+
+/** The most shots in flight one snapshot carries. */
+export const MAX_WIRE_PROJECTILES = 256;
+
+/**
+ * Plain JSON: what every message on a `Transport` is (#16). A value that
+ * is not, such as `undefined` or a `Map`, would not survive the trip.
+ */
+export type JsonValue =
+  null | boolean | number | string | readonly JsonValue[] | { readonly [key: string]: JsonValue };
+
+/** A rejoin token: 128 random bits, as 32 lowercase hex digits. */
+const REJOIN_TOKEN = /^[0-9a-f]{32}$/;
+
 /** Client to host, first: who is joining, and with what build. */
 export interface PeerHello {
   /** `PROTOCOL_VERSION`; the host refuses any other, so it is not checked here. */
   readonly protocolVersion: string;
   readonly name: string;
   /** Opaque here: the host validates it by the build-join rules. */
-  readonly build: unknown;
+  readonly build: JsonValue;
+  /**
+   * The seat this peer held before it dropped, and the token the host gave
+   * it for that seat; `null` for a fresh join. A peer id lasts one page
+   * load, so this is how a returning player is known.
+   */
+  readonly rejoin: { readonly playerId: string; readonly token: string } | null;
 }
 
 /** Host to one client: it is in, as `playerId`, on `map`. */
 export interface PeerWelcome {
   readonly protocolVersion: string;
   readonly playerId: string;
+  /** What this peer sends in `PeerHello.rejoin` to take its seat back after a drop. */
+  readonly rejoinToken: string;
   readonly tickIntervalMs: number;
   readonly map: MapDescriptor;
 }
@@ -83,14 +107,25 @@ export interface PeerRefuse {
   readonly message: string;
 }
 
-/** One player as a snapshot carries it. */
+/**
+ * One player as a snapshot carries it. Every field of the client's
+ * `PlayerSnapshot` has one here, `undefined` there being `null` here: a
+ * client builds the one from the other, and a test holds the two key sets
+ * together, so a field added to one cannot be forgotten in the other.
+ */
 export interface WirePlayer {
   readonly id: string;
   readonly name: string;
   readonly team: 0 | 1;
   readonly x: number;
   readonly y: number;
+  /** Radians, `atan2` convention, 0 = +x (#187). */
+  readonly facing: number;
   readonly targetId: string | null;
+  /** Who this player is attacking with their weapon (#160). */
+  readonly attackTargetId: string | null;
+  /** Walking to a clicked point (#310, #342). */
+  readonly walking: boolean;
   readonly health: number;
   readonly maxHealth: number;
   readonly energy: number;
@@ -98,10 +133,27 @@ export interface WirePlayer {
   readonly adrenaline: number;
   readonly armor: number;
   readonly weaponId: string | null;
+  readonly offhandId: string | null;
+  readonly primaryProfession: string | null;
+  readonly secondaryProfession: string | null;
   readonly dead: boolean;
   readonly castingSkillId: string | null;
   readonly castRemaining: number;
+  /** The current cast's whole length, dazed included; 0 when not casting. */
+  readonly castTotal: number;
   readonly statuses: readonly string[];
+}
+
+/** A ranged weapon's shot in flight, from `from` to `to` over `flightSeconds` from `launchedAt` (#160). */
+export interface WireProjectile {
+  readonly id: number;
+  readonly attackerId: string;
+  readonly weaponId: string;
+  readonly from: { readonly x: number; readonly y: number };
+  readonly to: { readonly x: number; readonly y: number };
+  /** The match clock (`elapsedSeconds`) at release. */
+  readonly launchedAt: number;
+  readonly flightSeconds: number;
 }
 
 /** Host to every client, each tick: the whole match, not a delta. */
@@ -114,6 +166,8 @@ export interface WireSnapshot {
   readonly winningTeam: 0 | 1 | null;
   readonly endReason: "score" | "time" | null;
   readonly players: readonly WirePlayer[];
+  /** Oldest first. */
+  readonly projectiles: readonly WireProjectile[];
 }
 
 /** One thing a combat resolution did, flattened so this package needs no game-core. */
@@ -121,9 +175,15 @@ export interface WireCombatEvent {
   readonly kind: string;
   readonly targetId: string | null;
   readonly amount: number | null;
+  /** The skill an interrupt or a cancel cut short. */
+  readonly skillId: string | null;
+  /** The status applied, removed or expired. */
+  readonly statusId: string | null;
+  /** How long an applied status lasts. */
+  readonly durationSeconds: number | null;
 }
 
-/** Host to every client: one cast, swing or status tick, and what it did. */
+/** One cast, swing or status tick, and what it did. */
 export interface WireCombat {
   readonly casterId: string;
   readonly cause: "skill" | "weapon" | "degeneration";
@@ -142,6 +202,12 @@ export interface WireSkillBar {
 }
 
 /** Host to every client, once: the match is over. */
+/**
+ * Host to every client, each tick that logged anything: that tick's
+ * entries, in combat-log order (#288).
+ */
+export type WireCombatBatch = readonly WireCombat[];
+
 export interface WireEnded {
   readonly winningTeam: 0 | 1 | null;
   readonly endReason: "score" | "time" | "host-left";
@@ -165,6 +231,11 @@ function isNumber(value: unknown): value is number {
 
 function isCount(value: unknown): value is number {
   return isNumber(value) && Number.isInteger(value) && value >= 0;
+}
+
+/** A skill-bar slot index. */
+function isSlot(value: unknown): value is number {
+  return isCount(value) && value < MAX_WIRE_SLOTS;
 }
 
 function isTeam(value: unknown): value is 0 | 1 {
@@ -206,12 +277,68 @@ function parseString(value: unknown): string | undefined {
   return isString(value) ? value : undefined;
 }
 
+function isRejoinToken(value: unknown): value is string {
+  return typeof value === "string" && REJOIN_TOKEN.test(value);
+}
+
+function parseRejoin(value: unknown): PeerHello["rejoin"] | undefined {
+  if (value === null) {
+    return null;
+  }
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.playerId) && isRejoinToken(raw.token)
+    ? { playerId: raw.playerId, token: raw.token }
+    : undefined;
+}
+
+/**
+ * `value` itself if it is plain JSON: no `undefined`, no non-finite
+ * number, no prototype other than an array's or an object's. Whatever
+ * came off a Transport already is; this is for the type.
+ */
+function parseJson(value: unknown): JsonValue | undefined {
+  if (value === null || typeof value === "boolean" || typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : undefined;
+  }
+  if (Array.isArray(value)) {
+    const items: JsonValue[] = [];
+    for (const item of value as unknown[]) {
+      const one = parseJson(item);
+      if (one === undefined) {
+        return undefined;
+      }
+      items.push(one);
+    }
+    return items;
+  }
+  const raw = fields(value);
+  if (raw === undefined || Object.getPrototypeOf(raw) !== Object.prototype) {
+    return undefined;
+  }
+  const out: Record<string, JsonValue> = {};
+  for (const [key, item] of Object.entries(raw)) {
+    const one = parseJson(item);
+    if (one === undefined) {
+      return undefined;
+    }
+    out[key] = one;
+  }
+  return out;
+}
+
 export function parsePeerHello(value: unknown): PeerHello | undefined {
   const raw = fields(value);
   if (raw === undefined || !isString(raw.protocolVersion) || !isString(raw.name)) {
     return undefined;
   }
-  return { protocolVersion: raw.protocolVersion, name: raw.name, build: raw.build };
+  const build = parseJson(raw.build);
+  const rejoin = parseRejoin(raw.rejoin);
+  return build === undefined || rejoin === undefined
+    ? undefined
+    : { protocolVersion: raw.protocolVersion, name: raw.name, build, rejoin };
 }
 
 function parseWall(value: unknown): WallDescriptor | undefined {
@@ -260,6 +387,7 @@ export function parsePeerWelcome(value: unknown): PeerWelcome | undefined {
     raw === undefined ||
     !isString(raw.protocolVersion) ||
     !isString(raw.playerId) ||
+    !isRejoinToken(raw.rejoinToken) ||
     !isNumber(raw.tickIntervalMs) ||
     raw.tickIntervalMs <= 0
   ) {
@@ -271,6 +399,7 @@ export function parsePeerWelcome(value: unknown): PeerWelcome | undefined {
     : {
         protocolVersion: raw.protocolVersion,
         playerId: raw.playerId,
+        rejoinToken: raw.rejoinToken,
         tickIntervalMs: raw.tickIntervalMs,
         map,
       };
@@ -294,7 +423,10 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isTeam(raw.team) ||
     !isNumber(raw.x) ||
     !isNumber(raw.y) ||
+    !isNumber(raw.facing) ||
     !isNullableString(raw.targetId) ||
+    !isNullableString(raw.attackTargetId) ||
+    typeof raw.walking !== "boolean" ||
     !isNumber(raw.health) ||
     !isNumber(raw.maxHealth) ||
     !isNumber(raw.energy) ||
@@ -302,9 +434,13 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isNumber(raw.adrenaline) ||
     !isNumber(raw.armor) ||
     !isNullableString(raw.weaponId) ||
+    !isNullableString(raw.offhandId) ||
+    !isNullableString(raw.primaryProfession) ||
+    !isNullableString(raw.secondaryProfession) ||
     typeof raw.dead !== "boolean" ||
     !isNullableString(raw.castingSkillId) ||
-    !isNumber(raw.castRemaining)
+    !isNumber(raw.castRemaining) ||
+    !isNumber(raw.castTotal)
   ) {
     return undefined;
   }
@@ -317,7 +453,10 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         team: raw.team,
         x: raw.x,
         y: raw.y,
+        facing: raw.facing,
         targetId: raw.targetId,
+        attackTargetId: raw.attackTargetId,
+        walking: raw.walking,
         health: raw.health,
         maxHealth: raw.maxHealth,
         energy: raw.energy,
@@ -325,10 +464,42 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         adrenaline: raw.adrenaline,
         armor: raw.armor,
         weaponId: raw.weaponId,
+        offhandId: raw.offhandId,
+        primaryProfession: raw.primaryProfession,
+        secondaryProfession: raw.secondaryProfession,
         dead: raw.dead,
         castingSkillId: raw.castingSkillId,
         castRemaining: raw.castRemaining,
+        castTotal: raw.castTotal,
         statuses,
+      };
+}
+
+function parseProjectile(value: unknown): WireProjectile | undefined {
+  const raw = fields(value);
+  if (
+    raw === undefined ||
+    !isCount(raw.id) ||
+    !isString(raw.attackerId) ||
+    !isString(raw.weaponId) ||
+    !isNumber(raw.launchedAt) ||
+    !isNumber(raw.flightSeconds) ||
+    raw.flightSeconds <= 0
+  ) {
+    return undefined;
+  }
+  const from = parsePoint(raw.from);
+  const to = parsePoint(raw.to);
+  return from === undefined || to === undefined
+    ? undefined
+    : {
+        id: raw.id,
+        attackerId: raw.attackerId,
+        weaponId: raw.weaponId,
+        from,
+        to,
+        launchedAt: raw.launchedAt,
+        flightSeconds: raw.flightSeconds,
       };
 }
 
@@ -347,8 +518,9 @@ export function parseWireSnapshot(value: unknown): WireSnapshot | undefined {
     return undefined;
   }
   const players = parseArray(raw.players, MAX_LOBBY_PLAYERS, parsePlayer);
+  const projectiles = parseArray(raw.projectiles, MAX_WIRE_PROJECTILES, parseProjectile);
   const [team0 = 0, team1 = 0] = score;
-  return players === undefined
+  return players === undefined || projectiles === undefined
     ? undefined
     : {
         tick: raw.tick,
@@ -358,6 +530,7 @@ export function parseWireSnapshot(value: unknown): WireSnapshot | undefined {
         winningTeam: raw.winningTeam,
         endReason: raw.endReason,
         players,
+        projectiles,
       };
 }
 
@@ -370,8 +543,18 @@ function parseCombatEvent(value: unknown): WireCombatEvent | undefined {
   return raw !== undefined &&
     isString(raw.kind) &&
     isNullableString(raw.targetId) &&
-    (raw.amount === null || isNumber(raw.amount))
-    ? { kind: raw.kind, targetId: raw.targetId, amount: raw.amount }
+    (raw.amount === null || isNumber(raw.amount)) &&
+    isNullableString(raw.skillId) &&
+    isNullableString(raw.statusId) &&
+    (raw.durationSeconds === null || isNumber(raw.durationSeconds))
+    ? {
+        kind: raw.kind,
+        targetId: raw.targetId,
+        amount: raw.amount,
+        skillId: raw.skillId,
+        statusId: raw.statusId,
+        durationSeconds: raw.durationSeconds,
+      }
     : undefined;
 }
 
@@ -390,7 +573,7 @@ function parseArea(value: unknown): WireCombat["area"] | undefined {
     : undefined;
 }
 
-export function parseWireCombat(value: unknown): WireCombat | undefined {
+function parseWireCombat(value: unknown): WireCombat | undefined {
   const raw = fields(value);
   if (
     raw === undefined ||
@@ -413,6 +596,11 @@ export function parseWireCombat(value: unknown): WireCombat | undefined {
         area,
         events,
       };
+}
+
+/** The `"combat"` channel: one tick's entries, in log order. */
+export function parseWireCombatBatch(value: unknown): WireCombatBatch | undefined {
+  return parseArray(value, MAX_WIRE_COMBATS, parseWireCombat);
 }
 
 function parseSlot(value: unknown): SkillBarSlot | null | undefined {
@@ -456,7 +644,7 @@ export function parseWireEnded(value: unknown): WireEnded | undefined {
 export function parseCastRefused(value: unknown): CastRefusedMessage | undefined {
   const raw = fields(value);
   if (raw?.kind === "skill") {
-    return isCount(raw.slot) && isString(raw.skillId) && isString(raw.reason)
+    return isSlot(raw.slot) && isString(raw.skillId) && isString(raw.reason)
       ? { kind: "skill", slot: raw.slot, skillId: raw.skillId, reason: raw.reason }
       : undefined;
   }
@@ -469,7 +657,7 @@ export function parseCastRefused(value: unknown): CastRefusedMessage | undefined
 function parseRechargeSlot(value: unknown): RechargeSlot | undefined {
   const raw = fields(value);
   return raw !== undefined &&
-    isCount(raw.slot) &&
+    isSlot(raw.slot) &&
     isNumber(raw.remainingSeconds) &&
     isNumber(raw.totalSeconds)
     ? { slot: raw.slot, remainingSeconds: raw.remainingSeconds, totalSeconds: raw.totalSeconds }

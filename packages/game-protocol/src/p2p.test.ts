@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   CHANNELS,
+  MAX_WIRE_COMBATS,
   MAX_WIRE_EVENTS,
+  MAX_WIRE_PROJECTILES,
   MAX_WIRE_RADIUS,
   MAX_WIRE_SLOTS,
   MAX_WIRE_STATUSES,
@@ -13,7 +15,7 @@ import {
   parsePeerRefuse,
   parsePeerWelcome,
   parseRecharge,
-  parseWireCombat,
+  parseWireCombatBatch,
   parseWireEnded,
   parseWireSkillBar,
   parseWireSnapshot,
@@ -23,6 +25,7 @@ import type {
   PeerRefuse,
   PeerWelcome,
   WireCombat,
+  WireCombatBatch,
   WireEnded,
   WirePlayer,
   WireSkillBar,
@@ -35,12 +38,17 @@ import { PROTOCOL_VERSION } from "./protocol-version.js";
 const hello: PeerHello = {
   protocolVersion: PROTOCOL_VERSION,
   name: "Mhenlo",
-  build: { profession: "monk", skills: ["healing-breeze"] },
+  build: { profession: "monk", skills: ["healing-breeze", null] },
+  rejoin: null,
 };
+
+/** 128 bits of hex, as the host makes them; repeated so it reads as no secret. */
+const TOKEN = "0f".repeat(16);
 
 const welcome: PeerWelcome = {
   protocolVersion: PROTOCOL_VERSION,
   playerId: "peer-2",
+  rejoinToken: TOKEN,
   tickIntervalMs: 50,
   map: {
     id: "isle",
@@ -69,7 +77,10 @@ const player: WirePlayer = {
   team: 0,
   x: 120.5,
   y: -3,
+  facing: -1.57,
   targetId: null,
+  attackTargetId: "peer-2",
+  walking: false,
   health: 480,
   maxHealth: 480,
   energy: 25,
@@ -77,9 +88,13 @@ const player: WirePlayer = {
   adrenaline: 0,
   armor: 60,
   weaponId: "staff",
+  offhandId: null,
+  primaryProfession: "monk",
+  secondaryProfession: null,
   dead: false,
   castingSkillId: "healing-breeze",
   castRemaining: 0.75,
+  castTotal: 1,
   statuses: ["crippled"],
 };
 
@@ -91,6 +106,17 @@ const snapshot: WireSnapshot = {
   winningTeam: null,
   endReason: null,
   players: [player, { ...player, id: "peer-2", team: 1, targetId: "peer-1", statuses: [] }],
+  projectiles: [
+    {
+      id: 7,
+      attackerId: "peer-2",
+      weaponId: "longbow",
+      from: { x: 10, y: 20 },
+      to: { x: 300, y: 20 },
+      launchedAt: 1.9,
+      flightSeconds: 0.6,
+    },
+  ],
 };
 
 const combat: WireCombat = {
@@ -100,10 +126,37 @@ const combat: WireCombat = {
   weaponId: "",
   area: { x: 300, y: 200, radius: 80 },
   events: [
-    { kind: "damage", targetId: "peer-2", amount: 64 },
-    { kind: "interrupted", targetId: null, amount: null },
+    {
+      kind: "damage",
+      targetId: "peer-2",
+      amount: 64,
+      skillId: null,
+      statusId: null,
+      durationSeconds: null,
+    },
+    {
+      kind: "interrupted",
+      targetId: "peer-2",
+      amount: null,
+      skillId: "healing-breeze",
+      statusId: null,
+      durationSeconds: null,
+    },
+    {
+      kind: "status-applied",
+      targetId: "peer-2",
+      amount: null,
+      skillId: null,
+      statusId: "burning",
+      durationSeconds: 3,
+    },
   ],
 };
+
+const combatBatch: WireCombatBatch = [
+  combat,
+  { ...combat, cause: "weapon", skillId: "", weaponId: "sword", area: null },
+];
 
 const skillBar: WireSkillBar = {
   slots: [
@@ -135,10 +188,11 @@ const recharge: RechargeMessage = {
 /** Each parser, with the one fixture it must round-trip. */
 const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["hello", parsePeerHello, hello],
+  ["rejoining hello", parsePeerHello, { ...hello, rejoin: { playerId: "peer-2", token: TOKEN } }],
   ["welcome", parsePeerWelcome, welcome],
   ["refuse", parsePeerRefuse, refuse],
   ["snapshot", parseWireSnapshot, snapshot],
-  ["combat", parseWireCombat, combat],
+  ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
   ["ended", parseWireEnded, ended],
   ["refused", parseCastRefused, refused],
@@ -156,6 +210,20 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["hello without a name", parsePeerHello, { ...hello, name: undefined }],
   ["hello with a numeric version", parsePeerHello, { ...hello, protocolVersion: 2 }],
   ["hello with a long name", parsePeerHello, { ...hello, name: long }],
+  ["hello without a rejoin", parsePeerHello, { ...hello, rejoin: undefined }],
+  ["hello with an undefined in its build", parsePeerHello, { ...hello, build: { x: undefined } }],
+  ["hello with a NaN in its build", parsePeerHello, { ...hello, build: [NaN] }],
+  [
+    "hello with a short rejoin token",
+    parsePeerHello,
+    { ...hello, rejoin: { playerId: "peer-2", token: "abc" } },
+  ],
+  [
+    "hello with an uppercase rejoin token",
+    parsePeerHello,
+    { ...hello, rejoin: { playerId: "peer-2", token: TOKEN.toUpperCase() } },
+  ],
+  ["welcome without a rejoin token", parsePeerWelcome, { ...welcome, rejoinToken: undefined }],
   ["welcome with a zero tick", parsePeerWelcome, { ...welcome, tickIntervalMs: 0 }],
   ["welcome with an infinite tick", parsePeerWelcome, { ...welcome, tickIntervalMs: Infinity }],
   ["welcome without a map", parsePeerWelcome, { ...welcome, map: null }],
@@ -225,30 +293,74 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireSnapshot,
     { ...snapshot, players: [{ ...player, statuses: [long] }] },
   ],
-  ["combat with an unknown cause", parseWireCombat, { ...combat, cause: "magic" }],
-  ["combat with an absent area", parseWireCombat, { ...combat, area: undefined }],
-  ["combat with a zero radius", parseWireCombat, { ...combat, area: { x: 0, y: 0, radius: 0 } }],
   [
-    "combat with too wide a radius",
-    parseWireCombat,
-    { ...combat, area: { x: 0, y: 0, radius: MAX_WIRE_RADIUS + 1 } },
+    "snapshot with a player missing a field",
+    parseWireSnapshot,
+    { ...snapshot, players: [{ ...player, castTotal: undefined }] },
   ],
   [
-    "combat with too many events",
-    parseWireCombat,
+    "snapshot with a string for walking",
+    parseWireSnapshot,
+    { ...snapshot, players: [{ ...player, walking: "yes" }] },
+  ],
+  ["snapshot without projectiles", parseWireSnapshot, { ...snapshot, projectiles: undefined }],
+  [
+    "snapshot with too many projectiles",
+    parseWireSnapshot,
     {
-      ...combat,
-      events: Array.from({ length: MAX_WIRE_EVENTS + 1 }, () => ({
-        kind: "damage",
-        targetId: null,
-        amount: 1,
-      })),
+      ...snapshot,
+      projectiles: Array.from({ length: MAX_WIRE_PROJECTILES + 1 }, () => snapshot.projectiles[0]),
     },
   ],
   [
+    "snapshot with a projectile that never lands",
+    parseWireSnapshot,
+    { ...snapshot, projectiles: [{ ...snapshot.projectiles[0], flightSeconds: 0 }] },
+  ],
+  ["combat that is one entry, not a batch", parseWireCombatBatch, combat],
+  [
+    "combat batch with too many entries",
+    parseWireCombatBatch,
+    Array.from({ length: MAX_WIRE_COMBATS + 1 }, () => combat),
+  ],
+  ["combat with an unknown cause", parseWireCombatBatch, [{ ...combat, cause: "magic" }]],
+  ["combat with an absent area", parseWireCombatBatch, [{ ...combat, area: undefined }]],
+  [
+    "combat with a zero radius",
+    parseWireCombatBatch,
+    [{ ...combat, area: { x: 0, y: 0, radius: 0 } }],
+  ],
+  [
+    "combat with too wide a radius",
+    parseWireCombatBatch,
+    [{ ...combat, area: { x: 0, y: 0, radius: MAX_WIRE_RADIUS + 1 } }],
+  ],
+  [
+    "combat with too many events",
+    parseWireCombatBatch,
+    [
+      {
+        ...combat,
+        events: Array.from({ length: MAX_WIRE_EVENTS + 1 }, () => ({
+          kind: "damage",
+          targetId: null,
+          amount: 1,
+          skillId: null,
+          statusId: null,
+          durationSeconds: null,
+        })),
+      },
+    ],
+  ],
+  [
     "combat with a NaN amount",
-    parseWireCombat,
-    { ...combat, events: [{ kind: "damage", targetId: null, amount: NaN }] },
+    parseWireCombatBatch,
+    [{ ...combat, events: [{ ...combat.events[0], amount: NaN }] }],
+  ],
+  [
+    "combat with an event missing its status",
+    parseWireCombatBatch,
+    [{ ...combat, events: [{ ...combat.events[0], statusId: undefined }] }],
   ],
   [
     "skill bar with too many slots",
@@ -264,6 +376,12 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["ended by an unknown reason", parseWireEnded, { ...ended, endReason: "forfeit" }],
   ["ended without a winner", parseWireEnded, { endReason: "score" }],
   ["refused with a negative slot", parseCastRefused, { ...refused, slot: -1 }],
+  ["refused past the last slot", parseCastRefused, { ...refused, slot: MAX_WIRE_SLOTS }],
+  [
+    "recharge past the last slot",
+    parseRecharge,
+    { slots: [{ slot: MAX_WIRE_SLOTS, remainingSeconds: 1, totalSeconds: 5 }] },
+  ],
   ["refused of an unknown kind", parseCastRefused, { kind: "move", reason: "stuck" }],
   [
     "recharge with a NaN",
@@ -273,10 +391,10 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
 ];
 
 describe("the P2P channels (#82)", () => {
-  it("each fit a Trystero action name, 12 bytes of UTF-8", () => {
+  it("each fit a Trystero action name, 32 bytes of UTF-8 (#16)", () => {
     for (const channel of CHANNELS) {
       // ASCII only, so a character is a byte.
-      expect(channel, channel).toMatch(/^[a-z-]{1,12}$/);
+      expect(channel, channel).toMatch(/^[a-z-]{1,32}$/);
     }
   });
 
