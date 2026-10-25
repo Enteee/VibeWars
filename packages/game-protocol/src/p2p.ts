@@ -33,6 +33,7 @@ export const CHANNELS = [
   "skill-bar",
   "recharge",
   "ended",
+  "bye",
 ] as const;
 
 export type Channel = (typeof CHANNELS)[number];
@@ -87,6 +88,10 @@ const REJOIN_TOKEN = /^[0-9a-f]{32}$/;
 export interface PeerHello {
   /** `PROTOCOL_VERSION`; the host refuses any other, so it is not checked here. */
   readonly protocolVersion: string;
+  /**
+   * As the player typed it, cut to `MAX_WIRE_TEXT`: the host sanitises
+   * it, so a long one is shortened rather than refused.
+   */
   readonly name: string;
   /** Opaque here: the host validates it by the build-join rules. */
   readonly build: JsonValue;
@@ -105,6 +110,12 @@ export interface PeerWelcome {
   /** What this peer sends in `PeerHello.rejoin` to take its seat back after a drop. */
   readonly rejoinToken: string;
   readonly tickIntervalMs: number;
+  /**
+   * The match time it was sent at: the client's clock until its first
+   * snapshot, so a recharge told along with it counts down from now, not
+   * from the start of the match.
+   */
+  readonly elapsedSeconds: number;
   readonly map: MapDescriptor;
 }
 
@@ -214,6 +225,13 @@ export interface WireSkillBar {
  * entries, in combat-log order (#288).
  */
 export type WireCombatBatch = readonly WireCombat[];
+
+/**
+ * Client to host, last: the player meant to go, so the seat is freed at
+ * once. A peer that drops without it keeps its seat for the reconnect
+ * window.
+ */
+export type PeerBye = Readonly<Record<string, never>>;
 
 /** Host to every client, once: the match is over. */
 export interface WireEnded {
@@ -351,16 +369,34 @@ function parseJson(value: unknown): JsonValue | undefined {
   return parse(value, 0);
 }
 
+/**
+ * The `protocolVersion` a hello carries, read before the rest is parsed,
+ * so a client of another version is told so whatever else it sent.
+ */
+export function helloProtocolVersion(value: unknown): string | undefined {
+  return parseString(fields(value)?.protocolVersion);
+}
+
 export function parsePeerHello(value: unknown): PeerHello | undefined {
   const raw = fields(value);
-  if (raw === undefined || !isString(raw.protocolVersion) || !isString(raw.name)) {
+  if (raw === undefined || !isString(raw.protocolVersion) || typeof raw.name !== "string") {
     return undefined;
   }
   const build = parseJson(raw.build);
   const rejoin = parseRejoin(raw.rejoin);
   return build === undefined || rejoin === undefined
     ? undefined
-    : { protocolVersion: raw.protocolVersion, name: raw.name, build, rejoin };
+    : {
+        protocolVersion: raw.protocolVersion,
+        name: raw.name.slice(0, MAX_WIRE_TEXT),
+        build,
+        rejoin,
+      };
+}
+
+export function parsePeerBye(value: unknown): PeerBye | undefined {
+  const raw = fields(value);
+  return raw !== undefined && Object.keys(raw).length === 0 ? {} : undefined;
 }
 
 function parseWall(value: unknown): WallDescriptor | undefined {
@@ -411,7 +447,9 @@ export function parsePeerWelcome(value: unknown): PeerWelcome | undefined {
     !isString(raw.playerId) ||
     !isRejoinToken(raw.rejoinToken) ||
     !isNumber(raw.tickIntervalMs) ||
-    raw.tickIntervalMs <= 0
+    raw.tickIntervalMs <= 0 ||
+    !isNumber(raw.elapsedSeconds) ||
+    raw.elapsedSeconds < 0
   ) {
     return undefined;
   }
@@ -423,6 +461,7 @@ export function parsePeerWelcome(value: unknown): PeerWelcome | undefined {
         playerId: raw.playerId,
         rejoinToken: raw.rejoinToken,
         tickIntervalMs: raw.tickIntervalMs,
+        elapsedSeconds: raw.elapsedSeconds,
         map,
       };
 }
