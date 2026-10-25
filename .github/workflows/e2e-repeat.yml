@@ -24,30 +24,24 @@ jobs:
   e2e-repeat:
     name: e2e-repeat
     runs-on: ubuntu-latest
+    # Ten runs of a few specs take minutes. Without a cap, a hang would sit
+    # pending for six hours, and hubd blocks the merge while it does.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           # The merge base with the pull request's base must be present.
           fetch-depth: 0
 
-      # Changed specs, or the whole suite when the config or a helper under
-      # e2e/ changes, since those change every spec. Deleted specs are left
-      # out; a deleted helper still widens the run.
+      # Only the specs the pull request adds or modifies; deleted ones are
+      # left out. A helper or playwright.config.ts change does not widen the
+      # run: the whole suite ten times would go red on background flakes the
+      # change did not write, and ci.yml's `e2e` job already runs it once.
       - id: select
         name: Select specs
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
         run: |
-          changed=$(git diff --name-only "$BASE...HEAD")
-          # Collected first, not piped into grep -q: under pipefail an early
-          # exit would SIGPIPE the first grep and read as "no match".
-          wide=$(grep -E '^(playwright\.config\.ts|e2e/.*)$' <<<"$changed" |
-            grep -vE '^e2e/[^/]+\.spec\.ts$' || true)
-          if [ -n "$wide" ]; then
-            echo "The e2e config or a helper changed: repeating the whole suite"
-            echo "specs=e2e/" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
           specs=$(git diff --name-only --diff-filter=AM "$BASE...HEAD" -- 'e2e/*.spec.ts' | tr '\n' ' ')
           if [ -z "$specs" ]; then
             echo "no e2e specs changed"
