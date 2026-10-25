@@ -10,8 +10,9 @@ import type { MatchSnapshot, SkillSlot } from "@vibewars/game-session";
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
 import { saveMuted } from "../audio/mute-preference.js";
 import { soundPlayer } from "../audio/sound-player.js";
-import { attackClickIntents, attackKeyIntents, hasActionToCancel } from "../input/attack-key.js";
+import { attackKeyIntents, hasActionToCancel } from "../input/attack-key.js";
 import { createDoubleClick } from "../input/double-click.js";
+import { secondaryClickIntents } from "../input/mouse-intents.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
 import {
@@ -30,7 +31,6 @@ import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
 import { music } from "../music/play-music.js";
 import { TRACKS } from "../music/tracks/index.js";
 import {
-  actorAtPoint,
   EMPTY_SNAPSHOT,
   withNames,
   type ArenaSnapshot,
@@ -675,7 +675,7 @@ export function createTrainingPanel(): TrainingPanel {
     }
   });
   let pointer: Vec2 | undefined;
-  // A double-click on an enemy attacks it, as Space would (#298).
+  // A double right click on an enemy attacks it, as Space would (#298, #438).
   const doubleClick = createDoubleClick();
 
   void createArenaViewport(stage, {
@@ -717,25 +717,27 @@ export function createTrainingPanel(): TrainingPanel {
         paintMeter();
       }
     });
-    offPointer = created.onPointerDown((world) => {
+    offPointer = created.onButton(({ button, phase, world }) => {
       if (session === undefined) {
         return;
       }
-      // As in a match (#310): a body is targeted, the ground walked to.
-      const hit = actorAtPoint(latestArena, world);
-      const double = doubleClick.press(hit?.id, performance.now());
-      if (hit !== undefined) {
-        session.connection.sendIntent({ kind: "target", targetSessionId: hit.id });
-        if (double) {
-          for (const intent of attackClickIntents(session.connection.getSnapshot(), hit.id)) {
-            session.connection.sendIntent(intent);
-          }
+      // As in a match (#438): the left button walks, the right one picks.
+      if (button === "right" && phase === "up") {
+        const intents = secondaryClickIntents(
+          session.connection.getSnapshot(),
+          latestArena,
+          world,
+          doubleClick,
+          performance.now(),
+        );
+        for (const intent of intents) {
+          session.connection.sendIntent(intent);
         }
         return;
       }
       // The stage's capturing listener ran first, so this click's arming
-      // is already known.
-      if (!armedBeforeClick) {
+      // is already known: the click that takes control only takes it.
+      if (button !== "left" || phase !== "down" || !armedBeforeClick) {
         return;
       }
       session.connection.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
