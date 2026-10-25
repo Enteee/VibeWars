@@ -5,17 +5,17 @@
  *
  *   agent-loop.mjs pause <previous> <ran> <failed>
  *       print the next pause in seconds (`nextPause`)
- *   agent-loop.mjs wait <role> <seconds>
- *       return after `seconds`, or sooner once the role has unread mail
- *   agent-loop.mjs gave-up <role>
+ *   agent-loop.mjs wait <employee> <seconds>
+ *       return after `seconds`, or sooner once the employee has unread mail
+ *   agent-loop.mjs gave-up <employee>
  *       tell the company the loop has stopped for good
- *   agent-loop.mjs limited <role> <state-dir> <previous>
+ *   agent-loop.mjs limited <employee> <state-dir> <previous>
  *       print how long to wait out Claude's usage limit (`limitPause`),
  *       and tell the company, once for all roles (#308)
  *   agent-loop.mjs sleep <seconds>
  *       return after `seconds`, whatever arrives: a message must not wake
  *       a role into another run the limit refuses
- *   agent-loop.mjs resumed <role>
+ *   agent-loop.mjs resumed <employee>
  *       after a turn that ended, tell the company a limit is over, once
  *
  * Agents end turns while idle, whatever the briefing says, and a resumed
@@ -32,6 +32,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 import { RELEASE_AT, diskHold, freeBytes, gib } from "./disk.mjs";
 import { obj, readInbox, SYSTEM } from "./protocol.mjs";
+import { roleOf } from "./staff.mjs";
 
 /** Never less: an agent that ends turns instead of waiting cannot spin. */
 export const PAUSE_MIN = 10;
@@ -261,7 +262,7 @@ async function holdForDisk(root, dir) {
 }
 
 /**
- * Has `dir`, a role's bus directory, mail its `tg` has not read yet?
+ * Has `dir`, an employee's bus directory, mail its `tg` has not read yet?
  *
  * @param {string} dir
  * @returns {boolean}
@@ -310,15 +311,15 @@ function seconds(value) {
 }
 
 /**
- * @param {string | undefined} role
+ * @param {string | undefined} employee
  * @returns {string}
  */
-function roleName(role) {
-  if (role === undefined || !/^[a-z0-9][a-z0-9-]*$/.test(role)) {
-    console.error(`agent-loop: not a role: ${String(role)}`);
+function employeeName(employee) {
+  if (employee === undefined || roleOf(employee) === null) {
+    console.error(`agent-loop: not an employee: ${String(employee)}`);
     process.exit(2);
   }
-  return role;
+  return employee;
 }
 
 async function main() {
@@ -334,7 +335,7 @@ async function main() {
     return;
   }
   if (command === "wait") {
-    const dir = path.join(env("VIBEWARS_BOT_ROOT"), "bus", roleName(args[0]));
+    const dir = path.join(env("VIBEWARS_BOT_ROOT"), "bus", employeeName(args[0]));
     const until = Date.now() + seconds(args[1]) * 1000;
     await sleep(PAUSE_MIN * 1000);
     while (Date.now() < until && !hasUnread(dir)) {
@@ -351,20 +352,20 @@ async function main() {
     return;
   }
   if (command === "gave-up") {
-    const role = roleName(args[0]);
+    const employee = employeeName(args[0]);
     tellCompany(
       env("VIBEWARS_BOT_ROOT"),
-      `${role}-stopped`,
-      `${role} failed five runs in a row and is stopped. Its window says why; ` +
-        `restart it there with: claude-llc-agent ${role}`,
+      `${employee}-stopped`,
+      `${employee} failed five runs in a row and is stopped. Its window says why; ` +
+        `restart it there with: claude-llc-agent ${employee}`,
     );
     return;
   }
   if (command === "limited") {
-    const role = roleName(args[0]);
+    const employee = employeeName(args[0]);
     const state = args[1];
     if (state === undefined || state === "") {
-      console.error("agent-loop: limited needs the role's state directory");
+      console.error("agent-loop: limited needs the employee's state directory");
       process.exit(2);
     }
     const previous = seconds(args[2]);
@@ -374,7 +375,7 @@ async function main() {
     if (claimNotice(root, until, now)) {
       tellCompany(
         root,
-        `${role}-usage-limit`,
+        `${employee}-usage-limit`,
         until === null
           ? "Claude usage limit reached; agents retry every few minutes until it resets."
           : `Claude usage limit reached; agents resume at ${clock(until)}.`,
@@ -384,16 +385,21 @@ async function main() {
     return;
   }
   if (command === "resumed") {
-    const role = roleName(args[0]);
+    const employee = employeeName(args[0]);
     const root = env("VIBEWARS_BOT_ROOT");
     if (releaseNotice(root)) {
-      tellCompany(root, `${role}-usage-limit-over`, "Claude usage limit over; agents are back.");
+      tellCompany(
+        root,
+        `${employee}-usage-limit-over`,
+        "Claude usage limit over; agents are back.",
+      );
     }
     return;
   }
   console.error(
-    "usage: agent-loop.mjs pause <previous> <ran> <failed> | wait <role> <seconds> | " +
-      "sleep <seconds> | disk | gave-up <role> | limited <role> <state-dir> <previous> | resumed <role>",
+    "usage: agent-loop.mjs pause <previous> <ran> <failed> | wait <employee> <seconds> | " +
+      "sleep <seconds> | disk | gave-up <employee> | " +
+      "limited <employee> <state-dir> <previous> | resumed <employee>",
   );
   process.exit(2);
 }

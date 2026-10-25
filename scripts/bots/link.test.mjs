@@ -17,6 +17,9 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { ROLES } from "./hub-policy.mjs";
+import { seedStaff } from "./staff.mjs";
+
 const LINK = path.join(path.dirname(fileURLToPath(import.meta.url)), "link.mjs");
 const CHAT = "-1001";
 
@@ -165,7 +168,31 @@ async function fakeTelegram({ noCreator = false, refuseTopics = false } = {}) {
 }
 
 /**
- * A company root with a registry, and a running sidecar.
+ * Writes a staff.json employing every role's first seat, as the first boot
+ * does, and `more` besides (#62).
+ *
+ * @param {string} root
+ * @param {string[]} more further employee ids, such as `qa-tester@2`
+ * @returns {void}
+ */
+function employ(root, more) {
+  const staff = seedStaff(ROLES, 1);
+  for (const id of more) {
+    const [role = id] = id.split("@");
+    staff.employees[id] = {
+      role,
+      hiredAt: 1,
+      by: "manager",
+      reason: "test",
+      state: "working",
+      readyAt: null,
+    };
+  }
+  fs.writeFileSync(path.join(root, "staff.json"), JSON.stringify(staff));
+}
+
+/**
+ * A company root with a registry and a staff, and a running sidecar.
  *
  * @param {string} telegram base URL of the fake
  * @param {string} [registry] registry.json contents
@@ -188,6 +215,7 @@ function company(telegram, registry, companyJson = JSON.stringify({ repo: "Entee
   if (companyJson !== null) {
     fs.writeFileSync(path.join(root, "company.json"), companyJson);
   }
+  employ(root, []);
   const env = {
     ...process.env,
     VIBEWARS_BOT_ROOT: root,
@@ -228,6 +256,14 @@ function company(telegram, registry, companyJson = JSON.stringify({ repo: "Entee
     root,
     bus,
     start,
+    /**
+     * Employ every role's first seat and `more`, and nobody else.
+     *
+     * @param {string[]} more
+     */
+    employ(more) {
+      employ(root, more);
+    },
     /**
      * `tg send`, as the agent in `from` would run it.
      *
@@ -498,6 +534,8 @@ describe("the company sidecar", () => {
   it("hears a user in Support only, as a user line to support alone", async () => {
     const telegram = await fakeTelegram();
     const co = company(telegram.url);
+    // Support is not one of today's roles; employed here as it would be once it is.
+    co.employ(["support"]);
     co.start();
     const user = { id: 4711, is_bot: false, username: "a_player" };
 
@@ -521,6 +559,8 @@ describe("the company sidecar", () => {
   it("lets six messages a minute from one user through to support, and drops the rest", async () => {
     const telegram = await fakeTelegram();
     const co = company(telegram.url);
+    // Support is not one of today's roles; employed here as it would be once it is.
+    co.employ(["support"]);
     const { exited, child } = co.start();
     const flooder = { id: 666, is_bot: false, username: "flooder" };
     const other = { id: 4711, is_bot: false, username: "a_player" };
@@ -549,6 +589,8 @@ describe("the company sidecar", () => {
   it("caps all users together at 30 a minute, says so once in Support, and never caps the operator", async () => {
     const telegram = await fakeTelegram();
     const co = company(telegram.url);
+    // Support is not one of today's roles; employed here as it would be once it is.
+    co.employ(["support"]);
     const { exited, child } = co.start();
 
     for (let id = 1000; id < 1032; id += 1) {
@@ -710,6 +752,65 @@ describe("the company sidecar", () => {
       "🛟 Support",
       "🤖 Bots",
     ]);
+  }, 20_000);
+
+  it("delivers to every employee of a role, or to one, and names the seat in the mirror (#62)", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    co.employ(["qa-tester@2"]);
+    for (const employee of ["manager", "qa-tester", "qa-tester@2"]) {
+      co.present(employee);
+    }
+    co.start();
+
+    co.send("manager", "qa-tester", "#9 is in QA");
+    await until(() => co.inbox("qa-tester@2").length === 1, "the second employee's copy");
+    expect(co.inbox("qa-tester").map((line) => line.text)).toEqual(["#9 is in QA"]);
+
+    co.send("qa-tester@2", "qa-tester", "taking #9 (qa-tester@2)");
+    co.send("qa-tester@2", "manager", "#9 passes");
+    await until(() => co.inbox("manager").length === 1, "the manager's message");
+    expect(co.inbox("manager")[0]).toMatchObject({ from: "qa-tester@2", text: "#9 passes" });
+    expect(co.inbox("qa-tester").map((line) => line.text)).toEqual([
+      "#9 is in QA",
+      "taking #9 (qa-tester@2)",
+    ]);
+    // Not its own message back.
+    expect(co.inbox("qa-tester@2")).toHaveLength(1);
+
+    await until(() => telegram.sent.length > 0, "the mirror");
+    await until(
+      () =>
+        telegram.sent
+          .map((m) => String(m.text))
+          .join("\n")
+          .includes("🧪 QA Tester 2 → 📋 Manager"),
+      "the second employee's header",
+    );
+
+    telegram.push("qa-tester@2: and #10");
+    await until(() => co.inbox("qa-tester@2").length === 2, "the operator's message");
+    expect(co.inbox("qa-tester").map((line) => line.text)).not.toContain("qa-tester@2: and #10");
+  }, 20_000);
+
+  it("stops reading a fired employee's outbox, and refuses messages to it (#62)", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    co.employ(["developer-1@2"]);
+    co.start();
+    co.send("developer-1@2", "manager", "hello");
+    await until(() => co.inbox("manager").length === 1, "the employee's message");
+
+    co.employ([]);
+    co.send("manager", "developer-1@2", "are you there?");
+    await until(() => co.inbox("manager").length === 2, "the notice");
+    expect(String(co.inbox("manager")[1]?.text)).toMatch(
+      /NOT delivered: "developer-1@2" is not one/,
+    );
+    co.send("developer-1@2", "manager", "still here");
+    co.send("architect", "manager", "after");
+    await until(() => co.inbox("manager").length === 3, "the next message");
+    expect(co.inbox("manager")[2]).toMatchObject({ from: "architect", text: "after" });
   }, 20_000);
 
   it("tells the sender when the recipient is not running, and still delivers", async () => {

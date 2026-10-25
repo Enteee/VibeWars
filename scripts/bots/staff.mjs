@@ -157,6 +157,37 @@ export function parseStaff(json) {
 }
 
 /**
+ * Who is employed, employee id to role, re-read from `file` on every call,
+ * so a hire counts on the next pass of whoever reads it (hubd, link). A
+ * file it cannot read leaves the last list it could in force, and is
+ * reported once through `complain`; until it has read one, nobody is
+ * employed.
+ *
+ * @param {string} file `staff.json`
+ * @param {(problem: string, kept: ReadonlyMap<string, string>) => void} complain
+ * @returns {() => ReadonlyMap<string, string>}
+ */
+export function staffReader(file, complain) {
+  /** @type {ReadonlyMap<string, string>} */
+  let employed = new Map();
+  let last = "";
+  return () => {
+    try {
+      const { employees } = parseStaff(fs.readFileSync(file, "utf8"));
+      employed = new Map(Object.entries(employees).map(([id, { role }]) => [id, role]));
+      last = "";
+    } catch (error) {
+      const problem = error instanceof Error ? error.message : String(error);
+      if (problem !== last) {
+        last = problem;
+        complain(problem, employed);
+      }
+    }
+    return employed;
+  };
+}
+
+/**
  * The id the next employee of `role` gets: the bare role while that seat is
  * free, else `<role>@<n>` with the lowest free n from 2.
  *

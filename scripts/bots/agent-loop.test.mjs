@@ -247,12 +247,25 @@ describe("agent-loop.mjs", () => {
     expect(fs.existsSync(path.join(root, "usage-limit.json"))).toBe(false);
   });
 
-  it("refuses a role that is not a plain name", () => {
-    const result = spawnSync(process.execPath, [AGENT_LOOP, "gave-up", "../x"], {
+  it("refuses a name that is not an employee id", () => {
+    for (const name of ["../x", "developer-1@1", "developer-1@../x"]) {
+      const result = spawnSync(process.execPath, [AGENT_LOOP, "gave-up", name], {
+        encoding: "utf8",
+        env: { ...process.env, VIBEWARS_BOT_ROOT: scratch() },
+      });
+      expect(result.status, name).toBe(2);
+    }
+  });
+
+  it("names a further employee when its loop gives up (#62)", () => {
+    const root = scratch();
+    spawnSync(process.execPath, [AGENT_LOOP, "gave-up", "developer-1@2"], {
       encoding: "utf8",
-      env: { ...process.env, VIBEWARS_BOT_ROOT: scratch() },
+      env: { ...process.env, VIBEWARS_BOT_ROOT: root },
     });
-    expect(result.status).toBe(2);
+    expect(outboxTexts(root)).toEqual([
+      expect.stringMatching(/^developer-1@2 failed .*claude-llc-agent developer-1@2$/),
+    ]);
   });
 });
 
@@ -394,17 +407,18 @@ describe("claude-llc-agent", () => {
     expect(result.notes).toEqual(["Rebooted onto abc", "", "", "", "", "", ""]);
   });
 
-  it("names the role's context file in its bus directory, where tg wait reads it (#321)", () => {
+  it("names the employee's context file in its bus directory, where tg wait reads it (#321)", () => {
     expect(run(["fail"]).contextFile).toBe(".bots/bus/developer-1/context.json");
   });
 
-  it("runs a second employee under its own id and state, on its role's bus (#62)", () => {
+  it("runs a second employee under its own id, state and bus directory (#62)", () => {
     const result = run(["fail"], {}, "developer-1@2");
 
     expect(result.ran).toBe("developer-1@2");
     expect(fs.readdirSync(path.join(result.dir, ".bots", "agents"))).toEqual(["developer-1@2"]);
-    expect(result.contextFile).toBe(".bots/bus/developer-1/context.json");
+    expect(result.contextFile).toBe(".bots/bus/developer-1@2/context.json");
     expect(result.stdout).toContain("next turn for developer-1@2 in 0s");
+    expect(result.calls).toContain("wait developer-1@2 0");
   });
 
   it("neither counts a limit as a failure nor lets it reset the count", () => {

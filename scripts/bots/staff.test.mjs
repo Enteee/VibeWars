@@ -16,6 +16,7 @@ import {
   roleOf,
   seedStaff,
   staffAllowed,
+  staffReader,
   strangers,
 } from "./staff.mjs";
 
@@ -398,5 +399,32 @@ describe("the CLI claude-llc up runs", () => {
 
     fs.writeFileSync(file, JSON.stringify({ employees: {} }));
     expect(run(root, "check").stderr).toMatch(/staff.recent is missing/);
+  });
+});
+
+describe("staffReader (#62)", () => {
+  it("reads every call, keeps the last good list through a bad file, and says so once", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "staff-reader-"));
+    dirs.push(root);
+    const file = path.join(root, "staff.json");
+    /** @type {string[]} */
+    const problems = [];
+    const read = staffReader(file, (problem, kept) => {
+      problems.push(`${problem}; kept ${[...kept.keys()].join(",")}`);
+    });
+
+    expect(read()).toEqual(new Map());
+    fs.writeFileSync(file, JSON.stringify(seedStaff(["manager", "qa-tester"], NOW)));
+    expect(read()).toEqual(
+      new Map([
+        ["manager", "manager"],
+        ["qa-tester", "qa-tester"],
+      ]),
+    );
+    fs.writeFileSync(file, "{");
+    expect([...read().keys()]).toEqual(["manager", "qa-tester"]);
+    expect([...read().keys()]).toEqual(["manager", "qa-tester"]);
+    expect(problems).toHaveLength(2);
+    expect(problems[1]).toMatch(/; kept manager,qa-tester$/);
   });
 });

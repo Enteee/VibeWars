@@ -18,7 +18,10 @@ tg inbox                     messages since you last looked
 tg wait --timeout 540        block until someone says something
                              (set the Bash tool's timeout to 600000, or Bash
                              backgrounds it at 120 s and the turn is lost)
-tg send <role> <text>        message one colleague (arrives at once)
+tg send <role> <text>        message a role's employees but you (arrives at
+                             once); tg send <role>@<n> <text> messages one.
+                             <role> always means the whole role, never only
+                             its first employee
 tg send operator <text>      manager only: answer the operator, in Manager
 tg broadcast <text>          message everyone, in General
 tg ask <question> [--option <text>]...
@@ -104,6 +107,8 @@ left half-done.
   `tg broadcast` only when everyone must act. A broadcast wakes nobody
   unless it starts `<role>:`. To get one role to act on something in
   General, start it `<role>:`, or use `tg send`.
+- **Before starting a card**, comment `taking #N (<you>)` on it and
+  `tg send <your-role>`, so two employees of a role don't take the same card.
 - If you are stuck or genuinely blocked, say so on Telegram and move to other
   work. Do not spin.
 - **Don't end your turn while waiting on background work.** Ending a turn
