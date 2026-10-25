@@ -52,6 +52,7 @@ import {
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { directionAngle } from "./facing.js";
+import { steerAround } from "./steering.js";
 
 /**
  * One match, steppable, with no transport attached (ADR-0017).
@@ -190,6 +191,14 @@ function degenerationSources(combatant: Combatant): {
 /** How far short of its interval a swing or a flight may be and still land; see `#advanceAttack`. */
 const SWING_EPSILON = 1e-9;
 
+/**
+ * An approach step that covers less than this share of the distance it was
+ * asked to walk made no progress (#277): boxed in by bodies, or pressed
+ * into a wall. A tenth leaves room for a slide round a body or along a
+ * wall, which is slower than a straight walk but still progress.
+ */
+const STALL_FRACTION = 0.1;
+
 /** Turn to face `point`; one exactly underfoot has no direction, so facing stays. */
 function faceToward(record: Participant, point: Vec2): void {
   const dx = point.x - record.position.x;
@@ -206,6 +215,8 @@ export class MatchSimulation {
   readonly #bounds: { readonly width: number; readonly height: number } | undefined;
   /** Corners an approach can path through, built once from the walls (#211). */
   readonly #nav: NavGraph;
+  /** The living bodies an approach steers round, refilled for each one rather than allocated (#277). */
+  readonly #bodies: Vec2[] = [];
   readonly #rng: SimulationRng;
   readonly #participants = new Map<string, ParticipantRecord>();
   #projectiles: Projectile[] = [];
@@ -702,6 +713,28 @@ export class MatchSimulation {
    * zeroing, so the rate stays exact at 20 Hz. A target that steps out of
    * reach mid-swing keeps the swing's progress for when it is caught.
    */
+  /**
+   * Another `dt` of the attack getting nowhere. Once it has lasted
+   * `unreachableAfterSeconds` (#218), the attack ends and says so.
+   *
+   * @returns whether the attack ended
+   */
+  #unreachableFor(record: ParticipantRecord, targetId: string, dt: number): boolean {
+    const attack = record.combatant.attack;
+    if (attack === undefined) {
+      return true;
+    }
+    attack.unreachableSeconds += dt;
+    if (attack.unreachableSeconds < this.#ruleset.combat.unreachableAfterSeconds - SWING_EPSILON) {
+      return false;
+    }
+    record.combatant.attack = undefined;
+    this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, [
+      { kind: "attack-unreachable", targetId },
+    ]);
+    return true;
+  }
+
   #advanceAttack(record: ParticipantRecord, dt: number): void {
     const attack = record.combatant.attack;
     if (attack === undefined) {
@@ -738,22 +771,36 @@ export class MatchSimulation {
         // No way there, this tick. It has to last before the attack ends
         // (#218); meanwhile, steer straight at the target, which is what
         // usually shoves a squeezed body back out (#211).
-        attack.unreachableSeconds += dt;
-        if (
-          attack.unreachableSeconds >=
-          this.#ruleset.combat.unreachableAfterSeconds - SWING_EPSILON
-        ) {
-          record.combatant.attack = undefined;
-          this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, [
-            { kind: "attack-unreachable", targetId: target.id },
-          ]);
+        if (this.#unreachableFor(record, target.id, dt)) {
           return;
         }
         this.advanceMovement(record, sub(target.position, record.position), dt);
         return;
       }
-      attack.unreachableSeconds = 0;
-      this.advanceMovement(record, sub(next, record.position), dt);
+      // Round any living body in the way but the target (#277): reaching
+      // the target is the point.
+      this.#bodies.length = 0;
+      for (const [otherId, other] of this.#participants) {
+        if (otherId !== record.id && otherId !== target.id && !other.combatant.dead) {
+          this.#bodies.push(other.position);
+        }
+      }
+      const radius = this.#ruleset.collision.playerRadius;
+      const asked =
+        this.#ruleset.movement.maxSpeedUnitsPerSecond * moveSpeedMultiplier(record.combatant) * dt;
+      const before = record.position;
+      this.advanceMovement(record, steerAround(before, next, radius, this.#bodies), dt);
+      // A path that leads nowhere counts as none: an approach that cannot
+      // move, boxed in or with a body in a doorway, ends as unreachable
+      // too. One asked to walk nowhere, rooted or knocked down, is held,
+      // not lost, so it neither counts nor resets.
+      if (asked > 0) {
+        if (distance(before, record.position) < STALL_FRACTION * asked) {
+          this.#unreachableFor(record, target.id, dt);
+        } else {
+          attack.unreachableSeconds = 0;
+        }
+      }
       return;
     }
     faceToward(record, target.position);
