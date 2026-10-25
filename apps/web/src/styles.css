@@ -188,6 +188,17 @@ body {
   opacity: 0.45;
 }
 
+/* An empty slot keeps its place and its key, and does nothing (#347). */
+.hud-skill.is-empty {
+  border-style: dashed;
+  opacity: 0.45;
+  cursor: default;
+}
+
+.hud-skill.is-empty:hover {
+  border-color: var(--line);
+}
+
 .hud-skill-key {
   position: relative;
   z-index: 1;
@@ -849,6 +860,17 @@ body {
 /* A hint, not a gate: the simulation still decides whether a cast is legal. */
 .training-skill.is-unaffordable {
   opacity: 0.45;
+}
+
+/* An empty slot keeps its place and its key, and does nothing (#347). */
+.training-skill.is-empty {
+  border-style: dashed;
+  opacity: 0.45;
+  cursor: default;
+}
+
+.training-skill.is-empty:hover {
+  border-color: var(--line);
 }
 
 .training-skill-key {

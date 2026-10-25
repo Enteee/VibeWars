@@ -96,6 +96,24 @@ describe("MatchSimulation step", () => {
     expect(sim.requestSkill("nobody", 0)).toBeUndefined();
   });
 
+  it("keeps a bar's gaps: an empty slot does nothing, the next slot casts its own skill (#347)", () => {
+    const sim = new MatchSimulation({
+      seed: "gap",
+      participants: [
+        spec("a", 0, vec2(0, 0), { skillBar: [ORISON, null, FIREBALL] }),
+        spec("b", 1, vec2(200, 0)),
+      ],
+    });
+    sim.setTarget("a", "b");
+    const energy = participant(sim, "a").combatant.energy;
+
+    expect(sim.requestSkill("a", 1)).toBeUndefined();
+    expect(participant(sim, "a").combatant.cast.isCasting).toBe(false);
+    expect(participant(sim, "a").combatant.energy).toBe(energy);
+
+    expect(sim.requestSkill("a", 2)).toEqual({ skillId: FIREBALL, check: { ok: true } });
+  });
+
   it("with no target, an enemy skill targets the nearest living enemy, and keeps it", () => {
     const sim = new MatchSimulation({
       seed: "auto",

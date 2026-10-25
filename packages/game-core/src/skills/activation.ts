@@ -1,3 +1,4 @@
+import type { SkillBar } from "../build.js";
 import { distanceWithinRange, hasLineOfSight, type Segment } from "../geometry.js";
 import type { Vec2 } from "../vec2.js";
 
@@ -48,8 +49,8 @@ export interface ActivationRequest {
   readonly rechargeRemaining: ReadonlyMap<string, number>;
   /** True if the caster is mid-cast on something else. */
   readonly isCasting: boolean;
-  /** The caster's equipped skills; a skill not on the bar can never be cast. */
-  readonly skillBar: readonly string[];
+  /** The caster's bar by slot; a skill not on it can never be cast. */
+  readonly skillBar: SkillBar;
   readonly losBlockers: readonly Segment[];
 }
 

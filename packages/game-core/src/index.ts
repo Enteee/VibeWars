@@ -70,13 +70,12 @@ export {
 
 export * from "./equipment/index.js";
 
-export type { BuildProblem, PlayerBuild } from "./build.js";
+export type { BuildProblem, PlayerBuild, SkillBar } from "./build.js";
 export {
   SKILL_BAR_SLOTS,
   attributeRanksOf,
   defaultBuildEquipment,
   equippableSkills,
-  equippedSkillIds,
   isProfessionId,
   parsePlayerBuild,
   toCharacter,

@@ -7,6 +7,7 @@ import {
   type Participant,
   type ProfessionId,
   type ResolvedLoadout,
+  type SkillBar,
   type StepResult,
 } from "@vibewars/game-core";
 import type { CastRefusedMessage, ClientIntent, MapDescriptor } from "@vibewars/game-protocol";
@@ -37,7 +38,7 @@ export interface LocalMatchConnection extends MatchConnection {
   /** Every step's result, including the status ticks `onCombat` folds away. */
   onStep(handler: (result: StepResult) => void): void;
   /** Swap the player's build in place; the skill bar follows. */
-  rearm(loadout: ResolvedLoadout, skillBar: readonly string[]): void;
+  rearm(loadout: ResolvedLoadout, skillBar: SkillBar): void;
 }
 
 /** One simulation tick, at the ruleset's rate, exactly as the server steps. */
@@ -79,9 +80,12 @@ export function drainAccumulator(
   return { ticks, remainder };
 }
 
-/** The bar the HUD draws, from skill ids, as the server sends it on join. */
-export function skillSlotsFor(skillBar: readonly string[]): SkillSlot[] {
+/** The bar the HUD draws, from skill ids, gaps kept, as the server sends it on join. */
+export function skillSlotsFor(skillBar: SkillBar): (SkillSlot | null)[] {
   return skillBar.map((skillId) => {
+    if (skillId === null) {
+      return null;
+    }
     const skill = getSkill(skillId);
     return {
       id: skillId,
@@ -272,8 +276,8 @@ export function createLocalConnection(options: {
       // Straight from the simulation: there is no wire to extrapolate over.
       const cast = simulation.get(selfId)?.combatant.cast;
       return skillBar.map((slot) => ({
-        remaining: cast?.rechargeRemaining.get(slot.id) ?? 0,
-        total: cast?.rechargeTotal.get(slot.id) ?? 0,
+        remaining: (slot === null ? undefined : cast?.rechargeRemaining.get(slot.id)) ?? 0,
+        total: (slot === null ? undefined : cast?.rechargeTotal.get(slot.id)) ?? 0,
       }));
     },
     onStep(handler) {

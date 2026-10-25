@@ -29,13 +29,20 @@ import { IMPLEMENTED_SKILLS, getSkill } from "./skills/catalog.js";
 
 export const SKILL_BAR_SLOTS = 8;
 
+/**
+ * Skill ids by slot: index i is the skill under key `skill-(i+1)`, `null`
+ * an empty slot. Nothing closes the gaps up, so a key always means its
+ * slot (#347).
+ */
+export type SkillBar = readonly (string | null)[];
+
 export interface PlayerBuild {
   readonly name: string;
   readonly primaryProfession: ProfessionId;
   readonly secondaryProfession: ProfessionId | undefined;
   readonly attributes: readonly AttributeAllocation[];
   /** Skill ids by slot; `null` is an empty slot. Always `SKILL_BAR_SLOTS` long. */
-  readonly skillBar: readonly (string | null)[];
+  readonly skillBar: SkillBar;
   /** Weapon, off-hand and armor (ADR-0012). */
   readonly equipment: BuildEquipment;
 }
@@ -153,11 +160,6 @@ export function validatePlayerBuild(build: PlayerBuild, rules: AttributeRules): 
 /** Attribute ranks as the simulation wants them. */
 export function attributeRanksOf(build: PlayerBuild): ReadonlyMap<string, number> {
   return new Map(build.attributes.map((a) => [a.attributeId, a.rank]));
-}
-
-/** The skill ids actually on the bar, in slot order, empties dropped. */
-export function equippedSkillIds(build: PlayerBuild): readonly string[] {
-  return build.skillBar.filter((id): id is string => id !== null);
 }
 
 /**

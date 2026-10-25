@@ -112,8 +112,11 @@ export interface MatchConnection {
   onConnectionChange(handler: (state: "online" | "reconnecting" | "lost") => void): void;
   /** The match's static geometry, received once on join (brief §19). */
   readonly map: MapDescriptor;
-  /** The server-assigned skill bar, received once on join. */
-  readonly skillBar: readonly SkillSlot[];
+  /**
+   * The server-assigned skill bar, received once on join: every slot in
+   * its place, `null` where it is empty (#347).
+   */
+  readonly skillBar: readonly (SkillSlot | null)[];
   sendIntent(intent: ClientIntent): void;
   getSnapshot(): MatchSnapshot;
   onCombat(handler: (message: CombatMessage) => void): void;

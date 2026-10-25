@@ -1,6 +1,7 @@
 import {
   TRAINING_SCENARIOS,
   getTrainingScenario,
+  type SkillBar,
   type StepResult,
   type Vec2,
   type TrainingScenario,
@@ -337,7 +338,7 @@ export function createTrainingPanel(): TrainingPanel {
     }
   };
 
-  const paintSkills = (slots: readonly SkillSlot[]): void => {
+  const paintSkills = (slots: readonly (SkillSlot | null)[]): void => {
     skillButtons = slots.map((slot, index) => {
       const button = document.createElement("button");
       button.type = "button";
@@ -348,9 +349,6 @@ export function createTrainingPanel(): TrainingPanel {
       button.addEventListener("mousedown", (event) => {
         event.preventDefault();
       });
-      button.addEventListener("click", () => {
-        cast(index);
-      });
       const action = SKILL_ACTIONS[index];
       button.append(
         h(
@@ -359,6 +357,15 @@ export function createTrainingPanel(): TrainingPanel {
           action === undefined ? "" : actionLabel(keymap, action, keyLabel),
         ),
       );
+      if (slot === null) {
+        // An empty slot keeps its place and its key, and does nothing (#347).
+        button.classList.add("is-empty");
+        button.disabled = true;
+        return button;
+      }
+      button.addEventListener("click", () => {
+        cast(index);
+      });
       button.insertAdjacentHTML("beforeend", skillBadgeHtml(slot.id));
       button.append(h("span", "training-skill-name", slot.name));
       return button;
@@ -368,7 +375,7 @@ export function createTrainingPanel(): TrainingPanel {
 
   const paintOverlay = (
     problem: string | undefined,
-    skillBar: readonly string[],
+    skillBar: SkillBar,
     scenario: TrainingScenario,
   ): void => {
     const text = overlayMessage(problem, skillBar, scenario);
@@ -395,16 +402,17 @@ export function createTrainingPanel(): TrainingPanel {
     const reducedMotion = prefersReducedMotion();
     const casting = castingSlot(slots, self);
     skillButtons.forEach((button, index) => {
-      const slot = slots[index];
+      const slot = slots[index] ?? null;
+      if (slot === null) {
+        return;
+      }
       // The casting slot is lit, as on the match HUD (#300).
       button.classList.toggle("is-casting", index === casting);
       // A hint, not a gate: the simulation still decides.
-      const unaffordable =
-        slot !== undefined &&
-        (self.energy < slot.energyCost || self.adrenaline < slot.adrenalineCost);
+      const unaffordable = self.energy < slot.energyCost || self.adrenaline < slot.adrenalineCost;
       button.classList.toggle("is-unaffordable", unaffordable);
       // The same wipe as the match HUD (#152).
-      paintRecharge(button, recharges[index], slot?.name ?? "", reducedMotion);
+      paintRecharge(button, recharges[index], slot.name, reducedMotion);
     });
   };
 
@@ -556,7 +564,7 @@ export function createTrainingPanel(): TrainingPanel {
       }
       return;
     }
-    const slot = skillSlotForKeyDown(event, keymap, session?.connection.skillBar.length ?? 0);
+    const slot = skillSlotForKeyDown(event, keymap, session?.connection.skillBar ?? []);
     if (slot !== undefined) {
       cast(slot);
     }

@@ -20,6 +20,12 @@ describe("rechargeSlots", () => {
   it("is empty for a bar with nothing recharging", () => {
     expect(rechargeSlots(["a", "b"], new CastState())).toEqual([]);
   });
+
+  it("keeps an empty slot's index: the slots after it are where the bar has them (#347)", () => {
+    const cast = new CastState();
+    cast.startRecharge("c", 8);
+    expect(rechargeSlots(["a", null, "c"], cast)).toEqual([recharging(2, 8, 8)]);
+  });
 });
 
 describe("rechargePredicted", () => {

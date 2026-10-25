@@ -1,4 +1,4 @@
-import type { TrainingScenario } from "@vibewars/game-core";
+import type { SkillBar, TrainingScenario } from "@vibewars/game-core";
 
 import type { KeyLabeller } from "../input/key-labels.js";
 import { actionLabel, codeLabel, type KeyAction, type Keymap } from "../input/keymap.js";
@@ -87,7 +87,7 @@ export function resolveScenarioId(
  */
 export function overlayMessage(
   problem: string | undefined,
-  skillBar: readonly string[],
+  skillBar: SkillBar,
   scenario: Pick<TrainingScenario, "exercises">,
 ): string | undefined {
   if (problem !== undefined) {
@@ -96,7 +96,7 @@ export function overlayMessage(
   const weaponDrill = scenario.exercises.some(
     (mechanic) => mechanic === "auto-attacks" || mechanic === "dodging",
   );
-  if (skillBar.length === 0 && !weaponDrill) {
+  if (skillBar.every((id) => id === null) && !weaponDrill) {
     return "Equip a skill to start testing.";
   }
   return undefined;

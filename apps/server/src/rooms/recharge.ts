@@ -1,4 +1,4 @@
-import type { CastState } from "@vibewars/game-core";
+import type { CastState, SkillBar } from "@vibewars/game-core";
 import type { RechargeSlot } from "@vibewars/game-protocol";
 
 /**
@@ -8,12 +8,15 @@ import type { RechargeSlot } from "@vibewars/game-protocol";
  */
 export const RECHARGE_TOLERANCE_SECONDS = 0.05;
 
-/** A player's running recharges, by slot, as a `RechargeMessage` lists them. */
+/** A player's running recharges, by slot, as a `RechargeMessage` lists them; an empty slot has none. */
 export function rechargeSlots(
-  skillBar: readonly string[],
+  skillBar: SkillBar,
   cast: Pick<CastState, "rechargeRemaining" | "rechargeTotal">,
 ): RechargeSlot[] {
   return skillBar.flatMap((skillId, slot) => {
+    if (skillId === null) {
+      return [];
+    }
     const remainingSeconds = cast.rechargeRemaining.get(skillId);
     const totalSeconds = cast.rechargeTotal.get(skillId);
     return remainingSeconds === undefined || totalSeconds === undefined

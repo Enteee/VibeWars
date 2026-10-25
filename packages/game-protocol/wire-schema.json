@@ -550,13 +550,18 @@
               "optional": false,
               "type": {
                 "array": {
-                  "properties": [
-                    { "name": "activationSeconds", "optional": false, "type": "number" },
-                    { "name": "adrenalineCost", "optional": false, "type": "number" },
-                    { "name": "energyCost", "optional": false, "type": "number" },
-                    { "name": "id", "optional": false, "type": "string" },
-                    { "name": "name", "optional": false, "type": "string" },
-                    { "name": "rechargeSeconds", "optional": false, "type": "number" }
+                  "union": [
+                    "null",
+                    {
+                      "properties": [
+                        { "name": "activationSeconds", "optional": false, "type": "number" },
+                        { "name": "adrenalineCost", "optional": false, "type": "number" },
+                        { "name": "energyCost", "optional": false, "type": "number" },
+                        { "name": "id", "optional": false, "type": "string" },
+                        { "name": "name", "optional": false, "type": "string" },
+                        { "name": "rechargeSeconds", "optional": false, "type": "number" }
+                      ]
+                    }
                   ]
                 }
               }
@@ -1371,13 +1376,18 @@
                 "optional": false,
                 "type": {
                   "array": {
-                    "properties": [
-                      { "name": "activationSeconds", "optional": false, "type": "number" },
-                      { "name": "adrenalineCost", "optional": false, "type": "number" },
-                      { "name": "energyCost", "optional": false, "type": "number" },
-                      { "name": "id", "optional": false, "type": "string" },
-                      { "name": "name", "optional": false, "type": "string" },
-                      { "name": "rechargeSeconds", "optional": false, "type": "number" }
+                    "union": [
+                      "null",
+                      {
+                        "properties": [
+                          { "name": "activationSeconds", "optional": false, "type": "number" },
+                          { "name": "adrenalineCost", "optional": false, "type": "number" },
+                          { "name": "energyCost", "optional": false, "type": "number" },
+                          { "name": "id", "optional": false, "type": "string" },
+                          { "name": "name", "optional": false, "type": "string" },
+                          { "name": "rechargeSeconds", "optional": false, "type": "number" }
+                        ]
+                      }
                     ]
                   }
                 }
@@ -1399,13 +1409,18 @@
           "optional": false,
           "type": {
             "array": {
-              "properties": [
-                { "name": "activationSeconds", "optional": false, "type": "number" },
-                { "name": "adrenalineCost", "optional": false, "type": "number" },
-                { "name": "energyCost", "optional": false, "type": "number" },
-                { "name": "id", "optional": false, "type": "string" },
-                { "name": "name", "optional": false, "type": "string" },
-                { "name": "rechargeSeconds", "optional": false, "type": "number" }
+              "union": [
+                "null",
+                {
+                  "properties": [
+                    { "name": "activationSeconds", "optional": false, "type": "number" },
+                    { "name": "adrenalineCost", "optional": false, "type": "number" },
+                    { "name": "energyCost", "optional": false, "type": "number" },
+                    { "name": "id", "optional": false, "type": "string" },
+                    { "name": "name", "optional": false, "type": "string" },
+                    { "name": "rechargeSeconds", "optional": false, "type": "number" }
+                  ]
+                }
               ]
             }
           }

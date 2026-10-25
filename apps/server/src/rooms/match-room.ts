@@ -34,6 +34,7 @@ import {
   type PlayerBuild,
   type ProfessionId,
   type Segment,
+  type SkillBar,
   type Vec2,
 } from "@vibewars/game-core";
 import { allWallSegments, loadMap, type MapData } from "@vibewars/game-maps";
@@ -235,7 +236,7 @@ const DEFAULT_EQUIPMENT: BuildEquipment = defaultBuildEquipment("warrior");
 
 /** What a joining client claimed, after it has been checked. */
 interface ResolvedJoinLoadout {
-  readonly skillBar: readonly string[];
+  readonly skillBar: SkillBar;
   readonly attributeRanks: ReadonlyMap<string, number>;
   readonly primaryProfession: ProfessionId;
   readonly secondaryProfession: ProfessionId | undefined;
@@ -286,14 +287,14 @@ function resolveLoadout(options: unknown): ResolvedJoinLoadout {
     return HOUSE_LOADOUT;
   }
 
-  const skillBar = build.skillBar.filter((id): id is string => id !== null);
-  if (skillBar.length === 0) {
+  if (build.skillBar.every((id) => id === null)) {
     console.warn(`[match] build ${quote(build.name)} has an empty bar; using the house loadout`);
     return HOUSE_LOADOUT;
   }
 
   return {
-    skillBar,
+    // Gaps and all: the key of an empty slot does nothing (#347).
+    skillBar: build.skillBar,
     attributeRanks: attributeRanksOf(build),
     primaryProfession: build.primaryProfession,
     secondaryProfession: build.secondaryProfession,
@@ -995,6 +996,9 @@ export class MatchRoom extends Room {
     send(client, "map", this.#mapDescriptor);
     send(client, "skill-bar", {
       slots: sim.skillBar.map((skillId) => {
+        if (skillId === null) {
+          return null;
+        }
         const skill = getSkill(skillId);
         return {
           id: skillId,
