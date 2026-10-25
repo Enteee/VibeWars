@@ -54,6 +54,10 @@ jobs:
 
       # Against the whole tree, not only changed files: a commit made with
       # --no-verify, or outside the shell, is caught here.
+      # The hooks run in sequence on one checkout, so a fixer (prettier,
+      # nixfmt) that rewrites a file shows later hooks the fixed file.
+      # Accepted: prek exits non-zero whenever a fixer changed anything, so
+      # the job still fails, and --show-diff-on-failure prints the fix.
       - name: Run every hook on every file
         run: >-
           devenv shell --
