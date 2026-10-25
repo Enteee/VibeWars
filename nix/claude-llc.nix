@@ -422,9 +422,15 @@ in
       # that ended normally, however short, resets the count.
       #
       # The pause is agent-loop.mjs's: at least 10 s, doubling up to 5 min
-      # while turns stay short, because idle agents do end turns and each
-      # resume re-reads the whole conversation. A message to the agent ends
-      # the pause early, after the first 10 s.
+      # while turns stay short or runs fail, because idle agents do end
+      # turns and each resume re-reads the whole conversation. A message to
+      # the agent ends the pause early, after the first 10 s.
+      #
+      # A run that hit Claude's usage limit (agent-turn.mjs exits 3) is not
+      # a failure (#308): the loop waits until the limit resets, or retries
+      # every 5 to 30 min if it does not know when, and no message wakes it
+      # early. The company is told once when the limit is reached and once
+      # when it is over. agent-loop.test.mjs runs this loop for real.
       #
       # `between-turns` exists exactly while the loop is not running a turn.
       # The supervisor reads it to drain the company for a reboot, and while
@@ -458,31 +464,46 @@ in
 
           failures=0
           pause=0
+          limitPause=0
           while true; do
             rm -f "$between"
             started=$SECONDS
-            if ${node} ${llcScripts}/agent-turn.mjs "$state" -- claude-bot "$role" "$@"; then
-              failures=0
-              failed=0
-            else
-              failures=$(( failures + 1 ))
-              failed=1
-            fi
+            ${node} ${llcScripts}/agent-turn.mjs "$state" -- claude-bot "$role" "$@"
+            turn=$?
             touch "$between"
-            pause="$(${node} ${llcScripts}/agent-loop.mjs pause "$pause" $(( SECONDS - started )) "$failed")"
 
             echo ""
-            if [ "$failures" -ge 5 ]; then
-              echo "claude-llc-agent: $role failed five runs in a row."
-              echo "claude-llc-agent: not restarting. Fix the cause, then:"
-              echo "claude-llc-agent:   claude-llc-agent $role"
-              ${node} ${llcScripts}/agent-loop.mjs gave-up "$role" || true
-              exit 1
-            fi
+            if [ "$turn" -eq 3 ]; then
+              # Claude's usage limit: not this agent's fault, so it neither
+              # counts toward the five nor resets them.
+              limitPause="$(${node} ${llcScripts}/agent-loop.mjs limited "$role" "$state" "$limitPause")" || limitPause=300
+              echo "claude-llc-agent: Claude usage limit reached; next turn for $role in ''${limitPause}s."
+              echo "claude-llc-agent: messages do not wake it. Ctrl-C now to stop for good."
+              ${node} ${llcScripts}/agent-loop.mjs sleep "$limitPause" || stopped
+            else
+              if [ "$turn" -eq 0 ]; then
+                failures=0
+                failed=0
+                limitPause=0
+                ${node} ${llcScripts}/agent-loop.mjs resumed "$role" || true
+              else
+                failures=$(( failures + 1 ))
+                failed=1
+              fi
+              pause="$(${node} ${llcScripts}/agent-loop.mjs pause "$pause" $(( SECONDS - started )) "$failed")"
 
-            echo "claude-llc-agent: next turn for $role in ''${pause}s, or when a message arrives."
-            echo "claude-llc-agent: Ctrl-C now to stop for good."
-            ${node} ${llcScripts}/agent-loop.mjs wait "$role" "$pause" || stopped
+              if [ "$failures" -ge 5 ]; then
+                echo "claude-llc-agent: $role failed five runs in a row."
+                echo "claude-llc-agent: not restarting. Fix the cause, then:"
+                echo "claude-llc-agent:   claude-llc-agent $role"
+                ${node} ${llcScripts}/agent-loop.mjs gave-up "$role" || true
+                exit 1
+              fi
+
+              echo "claude-llc-agent: next turn for $role in ''${pause}s, or when a message arrives."
+              echo "claude-llc-agent: Ctrl-C now to stop for good."
+              ${node} ${llcScripts}/agent-loop.mjs wait "$role" "$pause" || stopped
+            fi
             # The marker goes before the reboot check, not after: a reboot
             # requested between the two would otherwise see this agent
             # between turns while it starts one. So the marker is only ever

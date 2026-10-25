@@ -108,6 +108,7 @@ export function toArenaSnapshot(
         position: { x: player.x, y: player.y },
         facing: player.facing,
         weaponId: player.weaponId,
+        offhandId: player.offhandId,
         profession: player.primaryProfession,
         radius: ACTOR_RADIUS,
         team:

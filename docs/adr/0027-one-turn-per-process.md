@@ -42,14 +42,26 @@ turn, which is exactly the moment the TUI used to sit idle.
   non-JSON lines shown cut to one line, never thrown on;
 - exits 0 when the turn ended and 1 when the run failed. A run failed if it
   exited non-zero or emitted no `result` event. A short turn is not a crash.
+  It exits 3 when the stream says Claude's usage limit is reached (#308),
+  whatever else the run did.
 
 Five failed runs in a row stop the loop, as before, and the company is told
 through the system outbox; a turn that ended resets the count.
 
+**A usage limit is not a failure** (#308). When the whole company hit it,
+every role used up its five tries in a minute and stopped for good. A
+limited run now neither counts toward the five nor resets them. The loop
+waits until the reported reset plus a minute (at most 6 h), or retries at
+5 min doubling to 30 min when the reset is unknown, and no message wakes it
+early. One role, whichever creates `.bots/usage-limit.json` first, tells
+the company the limit is reached; whichever deletes it after a turn that
+ended says it is over.
+
 **The pause between turns backs off** (`scripts/bots/agent-loop.mjs`). It
 is at least 10 s, so an agent that ends turns instead of running `tg wait`
 cannot spin, and it doubles while turns stay under a minute, up to 5 min. A
-long turn or a failure resets it. After the first 10 s, a message in the
+long turn resets it; a failed run doubles it too, so a short outage cannot
+use up the five tries in under a minute. After the first 10 s, a message in the
 role's inbox that `tg` has not read ends the pause early. Agents do end
 turns while idle, whatever the briefing says (QA counted about ten an hour),
 and each resume re-reads the whole conversation, so a fixed 10 s would have

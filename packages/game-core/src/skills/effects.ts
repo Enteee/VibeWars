@@ -39,6 +39,16 @@ export type CombatEvent =
       /** The skill whose cast was cut short. */
       readonly skillId: string;
     }
+  /**
+   * A cast its caster walked out of (#279): paid for, never resolved, and
+   * not recharging. The caster's own choice, so not an interrupt.
+   */
+  | {
+      readonly kind: "cancelled";
+      readonly targetId: string;
+      /** The skill whose cast was abandoned. */
+      readonly skillId: string;
+    }
   /** An interrupt that found nothing to interrupt — a wasted cast. */
   | { readonly kind: "interrupt-missed"; readonly targetId: string }
   /** A blinded attack skill that swung and missed: paid for, no effect. */

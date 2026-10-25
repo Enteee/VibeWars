@@ -137,14 +137,17 @@ describe("facing in the match (#187)", () => {
     expect(facing(sim, "a")).toBeCloseTo(Math.PI, 9);
   });
 
-  it("faces the cast target while strafing mid-cast", () => {
+  it("faces the cast target mid-cast; a strafe gives the cast up and faces the walk (#279)", () => {
     const sim = pair(vec2(-200, 0));
     sim.setTarget("a", "b");
     sim.requestSkill("a", 0);
+    sim.step(DT);
+    expect(facing(sim, "a")).toBeCloseTo(Math.PI, 9);
+
     sim.setInputDirection("a", vec2(0, 1));
     sim.step(DT);
-    const a = sim.get("a");
-    expect(facing(sim, "a")).toBeCloseTo(Math.atan2(-(a?.position.y ?? 0), -200), 9);
+    expect(sim.get("a")?.combatant.cast.isCasting).toBe(false);
+    expect(facing(sim, "a")).toBeCloseTo(Math.PI / 2, 9);
   });
 
   it("goes back to the spec's facing on a reset, and rearming keeps it", () => {
