@@ -68,12 +68,17 @@ export function describeCombatEvent(
   const skill = skillName(entry.skillId);
   const source = entry.sourceId === undefined ? undefined : nameOf(entry.sourceId);
   // "Fireball (You)", "Attack (You)" for a weapon swing, or, for a
-  // status tick, the statuses behind it.
-  const what = entry.cause === "weapon" ? "Attack" : (skill ?? "a skill");
-  const by =
-    entry.cause === "degeneration"
-      ? "degeneration"
-      : `${what}${source === undefined ? "" : ` (${source})`}`;
+  // status tick, GW1's word for which way it went (#151): regeneration
+  // heals, degeneration hurts. The source, when exactly one is known.
+  const what =
+    entry.cause === "weapon"
+      ? "Attack"
+      : entry.cause === "degeneration"
+        ? event.kind === "heal"
+          ? "regeneration"
+          : "degeneration"
+        : (skill ?? "a skill");
+  const by = `${what}${source === undefined ? "" : ` (${source})`}`;
   switch (event.kind) {
     case "damage":
       return `${by} hits ${target} for ${formatAmount(event.amount)}`;
@@ -116,6 +121,101 @@ export function combatEventToRow(
     text: describeCombatEvent(entry, event, nameOf),
     tone: logToneOf(event.kind),
   };
+}
+
+/** How long the log gathers a target's status ticks into one row. */
+export const STATUS_TICK_WINDOW_SECONDS = 1;
+
+interface TickWindow {
+  readonly targetId: string;
+  readonly kind: "damage" | "heal";
+  readonly startedAt: number;
+  amount: number;
+  /** `undefined` when unknown, or when ticks from different sources met. */
+  sourceId: string | undefined;
+}
+
+/**
+ * Status ticks, summed (#151). The simulation logs degeneration and
+ * regeneration every tick, 20 rows a second of fractions that print as
+ * "0". This gathers them per target and direction into one row a second,
+ * timed at the window's start, and drops a sum that prints as 0.
+ *
+ * Anything else in a status entry (a death, an expiry) is written at
+ * once, after that target's open windows, so nobody dies before the
+ * damage that killed them. Skill and weapon entries pass straight through.
+ */
+export class StatusTickBatcher {
+  readonly #open = new Map<string, TickWindow>();
+
+  /** The rows `entry` makes ready now. */
+  public push(entry: CombatLogEntry, nameOf: (id: string) => string): LogRow[] {
+    const rows = this.advance(entry.atSeconds, nameOf);
+    for (const event of entry.events) {
+      if (entry.cause !== "degeneration") {
+        rows.push(combatEventToRow(entry, event, nameOf));
+        continue;
+      }
+      if (event.kind === "damage" || event.kind === "heal") {
+        const key = `${event.targetId}:${event.kind}`;
+        const open = this.#open.get(key);
+        if (open === undefined) {
+          this.#open.set(key, {
+            targetId: event.targetId,
+            kind: event.kind,
+            startedAt: entry.atSeconds,
+            amount: event.amount,
+            sourceId: entry.sourceId,
+          });
+        } else {
+          open.amount += event.amount;
+          if (open.sourceId !== entry.sourceId) {
+            open.sourceId = undefined;
+          }
+        }
+        continue;
+      }
+      rows.push(...this.#close((open) => open.targetId === event.targetId, nameOf));
+      rows.push(combatEventToRow(entry, event, nameOf));
+    }
+    return rows;
+  }
+
+  /** Close the windows that are a full second old at `atSeconds`. */
+  public advance(atSeconds: number, nameOf: (id: string) => string): LogRow[] {
+    return this.#close((open) => atSeconds >= open.startedAt + STATUS_TICK_WINDOW_SECONDS, nameOf);
+  }
+
+  /** Close every window, as before a divider. */
+  public flush(nameOf: (id: string) => string): LogRow[] {
+    return this.#close(() => true, nameOf);
+  }
+
+  #close(due: (open: TickWindow) => boolean, nameOf: (id: string) => string): LogRow[] {
+    const closing = [...this.#open.entries()]
+      .filter(([, open]) => due(open))
+      .sort(([, a], [, b]) => a.startedAt - b.startedAt);
+    const rows: LogRow[] = [];
+    for (const [key, open] of closing) {
+      this.#open.delete(key);
+      if (formatAmount(open.amount) === "0") {
+        continue;
+      }
+      rows.push(
+        combatEventToRow(
+          {
+            atSeconds: open.startedAt,
+            cause: "degeneration",
+            sourceId: open.sourceId,
+            skillId: undefined,
+          },
+          { kind: open.kind, targetId: open.targetId, amount: open.amount },
+          nameOf,
+        ),
+      );
+    }
+    return rows;
+  }
 }
 
 /** A `── re-armed ──` line: something changed, and the meter restarted. */

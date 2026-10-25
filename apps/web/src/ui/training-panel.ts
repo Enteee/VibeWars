@@ -31,10 +31,10 @@ import {
   EMPTY_TOTALS,
   accumulate,
   appendRows,
-  combatEventToRow,
   dividerRow,
   meterRows,
   shouldStickToBottom,
+  StatusTickBatcher,
   type LogRow,
   type MeterTotals,
 } from "./combat-readouts.js";
@@ -200,6 +200,8 @@ export function createTrainingPanel(): TrainingPanel {
   let armed = false;
   let logRows: readonly LogRow[] = [];
   let totals: MeterTotals = EMPTY_TOTALS;
+  /** Gathers status ticks into a row a second (#151); one per session. */
+  let ticks = new StatusTickBatcher();
   let sinceMeterPaint = 0;
   let latestMatch: MatchSnapshot | undefined;
   let latestArena: ArenaSnapshot = EMPTY_SNAPSHOT;
@@ -255,7 +257,11 @@ export function createTrainingPanel(): TrainingPanel {
     totals = EMPTY_TOTALS;
     sinceMeterPaint = 0;
     paintMeter();
-    appendLog([dividerRow(label, session?.connection.simulation.elapsedSeconds ?? 0)]);
+    // The gathered ticks belong before the line, not after it.
+    appendLog([
+      ...ticks.flush(nameOf),
+      dividerRow(label, session?.connection.simulation.elapsedSeconds ?? 0),
+    ]);
   };
 
   const flash = (text: string): void => {
@@ -347,9 +353,7 @@ export function createTrainingPanel(): TrainingPanel {
     totals = accumulate(totals, result.log, SELF_ID, TICK_SECONDS);
     const rows: LogRow[] = [];
     for (const entry of result.log) {
-      for (const event of entry.events) {
-        rows.push(combatEventToRow(entry, event, nameOf));
-      }
+      rows.push(...ticks.push(entry, nameOf));
     }
     appendLog(rows);
   };
@@ -358,6 +362,7 @@ export function createTrainingPanel(): TrainingPanel {
     session?.sounds.dispose();
     void session?.connection.disconnect();
     const setup = setupScenario(scenario, build);
+    ticks = new StatusTickBatcher();
     const connection = createLocalConnection({
       simulation: setup.simulation,
       selfId: SELF_ID,
@@ -576,6 +581,7 @@ export function createTrainingPanel(): TrainingPanel {
       }
       const { connection } = session;
       connection.advance(deltaSeconds);
+      appendLog(ticks.advance(connection.simulation.elapsedSeconds, nameOf));
       latestMatch = connection.getSnapshot();
       session.sounds.snapshot(latestMatch);
       latestArena = toArenaSnapshot(latestMatch, session.walls);
