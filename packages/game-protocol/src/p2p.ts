@@ -67,6 +67,14 @@ export const MAX_WIRE_COMBATS = 64;
 export const MAX_WIRE_PROJECTILES = 256;
 
 /**
+ * The deepest nesting, and the most values in all, an opaque JSON field
+ * such as a hello's build may hold. A real build is a few levels deep and
+ * a few hundred values; past either, a peer is attacking the parser.
+ */
+export const MAX_WIRE_JSON_DEPTH = 16;
+export const MAX_WIRE_JSON_VALUES = 4096;
+
+/**
  * Plain JSON: what every message on a `Transport` is (#16). A value that
  * is not, such as `undefined` or a `Map`, would not survive the trip.
  */
@@ -206,7 +214,6 @@ export interface WireSkillBar {
   readonly slots: readonly (SkillBarSlot | null)[];
 }
 
-/** Host to every client, once: the match is over. */
 /**
  * Host to every client, each tick that logged anything: that tick's
  * entries, in combat-log order (#288).
@@ -220,6 +227,7 @@ export type WireCombatBatch = readonly WireCombat[];
  */
 export type PeerBye = Readonly<Record<string, never>>;
 
+/** Host to every client, once: the match is over. */
 export interface WireEnded {
   readonly winningTeam: 0 | 1 | null;
   readonly endReason: "score" | "time" | "host-left";
@@ -304,41 +312,55 @@ function parseRejoin(value: unknown): PeerHello["rejoin"] | undefined {
 }
 
 /**
- * `value` itself if it is plain JSON: no `undefined`, no non-finite
- * number, no prototype other than an array's or an object's. Whatever
- * came off a Transport already is; this is for the type.
+ * A copy of `value` if it is plain JSON: no `undefined`, no non-finite
+ * number, no prototype other than an array's or an object's, at most
+ * `MAX_WIRE_JSON_DEPTH` deep and `MAX_WIRE_JSON_VALUES` in all. Past
+ * either it is `undefined`, never a thrown stack overflow.
  */
 function parseJson(value: unknown): JsonValue | undefined {
-  if (value === null || typeof value === "boolean" || typeof value === "string") {
-    return value;
-  }
-  if (typeof value === "number") {
-    return Number.isFinite(value) ? value : undefined;
-  }
-  if (Array.isArray(value)) {
-    const items: JsonValue[] = [];
-    for (const item of value as unknown[]) {
-      const one = parseJson(item);
+  let budget = MAX_WIRE_JSON_VALUES;
+  const parse = (item: unknown, depth: number): JsonValue | undefined => {
+    budget -= 1;
+    if (budget < 0) {
+      return undefined;
+    }
+    if (item === null || typeof item === "boolean" || typeof item === "string") {
+      return item;
+    }
+    if (typeof item === "number") {
+      return Number.isFinite(item) ? item : undefined;
+    }
+    if (depth >= MAX_WIRE_JSON_DEPTH) {
+      return undefined;
+    }
+    if (Array.isArray(item)) {
+      const items: JsonValue[] = [];
+      for (const element of item as unknown[]) {
+        const one = parse(element, depth + 1);
+        if (one === undefined) {
+          return undefined;
+        }
+        items.push(one);
+      }
+      return items;
+    }
+    const raw = fields(item);
+    if (raw === undefined || Object.getPrototypeOf(raw) !== Object.prototype) {
+      return undefined;
+    }
+    const entries: [string, JsonValue][] = [];
+    for (const [key, field] of Object.entries(raw)) {
+      const one = parse(field, depth + 1);
       if (one === undefined) {
         return undefined;
       }
-      items.push(one);
+      entries.push([key, one]);
     }
-    return items;
-  }
-  const raw = fields(value);
-  if (raw === undefined || Object.getPrototypeOf(raw) !== Object.prototype) {
-    return undefined;
-  }
-  const out: Record<string, JsonValue> = {};
-  for (const [key, item] of Object.entries(raw)) {
-    const one = parseJson(item);
-    if (one === undefined) {
-      return undefined;
-    }
-    out[key] = one;
-  }
-  return out;
+    // Not `out[key] = one`: for a "__proto__" key, which JSON.parse makes
+    // an own key, that runs the prototype setter and the key is lost.
+    return Object.fromEntries(entries);
+  };
+  return parse(value, 0);
 }
 
 /**

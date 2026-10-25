@@ -10,6 +10,8 @@ import {
   MAX_WIRE_STATUSES,
   MAX_WIRE_STRING,
   MAX_WIRE_TEXT,
+  MAX_WIRE_JSON_DEPTH,
+  MAX_WIRE_JSON_VALUES,
   helloProtocolVersion,
   parseCastRefused,
   parsePeerBye,
@@ -441,6 +443,42 @@ describe("the P2P validators (#82)", () => {
     expect(parsePeerHello({ ...hello, protocolVersion: "000000000000" })).toEqual({
       ...hello,
       protocolVersion: "000000000000",
+    });
+  });
+
+  describe("a hello's build, which is opaque JSON", () => {
+    /** `value` inside `depth` arrays. */
+    const nested = (depth: number, value: unknown = 1): unknown => {
+      let out = value;
+      for (let i = 0; i < depth; i += 1) {
+        out = [out];
+      }
+      return out;
+    };
+
+    it("refuses one nested past MAX_WIRE_JSON_DEPTH, and never throws on a deep one", () => {
+      expect(parsePeerHello({ ...hello, build: nested(MAX_WIRE_JSON_DEPTH) })).toBeDefined();
+      expect(parsePeerHello({ ...hello, build: nested(MAX_WIRE_JSON_DEPTH + 1) })).toBeUndefined();
+      // Deep enough to overflow the stack of a parser that recursed freely.
+      const deep: unknown = JSON.parse(`${"[".repeat(200_000)}${"]".repeat(200_000)}`);
+      expect(() => parsePeerHello({ ...hello, build: deep })).not.toThrow();
+      expect(parsePeerHello({ ...hello, build: deep })).toBeUndefined();
+    });
+
+    it("refuses one holding more than MAX_WIRE_JSON_VALUES values", () => {
+      const values = (count: number): number[] => Array.from({ length: count }, () => 0);
+      // The array itself is one value.
+      expect(parsePeerHello({ ...hello, build: values(MAX_WIRE_JSON_VALUES - 1) })).toBeDefined();
+      expect(parsePeerHello({ ...hello, build: values(MAX_WIRE_JSON_VALUES) })).toBeUndefined();
+    });
+
+    it("keeps a __proto__ key as an own key, not as the copy's prototype", () => {
+      const build: unknown = JSON.parse('{"__proto__":{"skills":[1]}}');
+      const parsed = parsePeerHello({ ...hello, build })?.build;
+
+      expect(Object.keys(parsed ?? {})).toEqual(["__proto__"]);
+      expect(Object.getPrototypeOf(parsed)).toBe(Object.prototype);
+      expect(parsed).not.toHaveProperty("skills");
     });
   });
 });
