@@ -1006,12 +1006,30 @@ async function refuseCardEdit(role, argv, cfg) {
   if (ids === null) {
     return "the board's Status field is not known; run claude-llc-init";
   }
-  const id = flagValue(argv, "--id");
+  // gh takes the last of a repeated flag and flagValue the first, so a
+  // repeat would have hubd judge one move and gh run another: every flag is
+  // one of these, once, and `--clear` is bare and alone.
+  const names = argv.map((word) => word.split("=")[0] ?? "");
+  const allowed = new Set([
+    "--id",
+    "--project-id",
+    "--field-id",
+    "--single-select-option-id",
+    "--clear",
+  ]);
   if (
-    id === null ||
-    flagValue(argv, "--field-id") !== ids.fieldId ||
-    argv.some((word) => /^--(title|body)(=|$)/.test(word))
+    names.some(
+      (name) =>
+        name.startsWith("--") &&
+        (!allowed.has(name) || names.indexOf(name) !== names.lastIndexOf(name)),
+    ) ||
+    argv.some((word) => word.startsWith("--clear=")) ||
+    (argv.includes("--clear") && flagValue(argv, "--single-select-option-id") !== null)
   ) {
+    return "hub only moves a card between columns: each flag once, and --clear alone";
+  }
+  const id = flagValue(argv, "--id");
+  if (id === null || flagValue(argv, "--field-id") !== ids.fieldId) {
     return "hub only moves a card between columns: edit its Status, nothing else";
   }
   const optionId = flagValue(argv, "--single-select-option-id");

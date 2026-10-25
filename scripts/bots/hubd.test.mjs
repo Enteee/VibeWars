@@ -450,6 +450,71 @@ describe("hubd and the GraphQL budget", () => {
     );
   }, 30_000);
 
+  it("refuses an item-edit whose flags gh and hubd could read differently (#349)", async () => {
+    const hubd = await startHubd(5000);
+    const base = ["project", "item-edit", "--project-id", "PVT_2"];
+    const attempts = [
+      [
+        ...base,
+        "--id",
+        "PVTI_8",
+        "--field-id",
+        "F_status",
+        "--single-select-option-id",
+        "o_backlog",
+        "--single-select-option-id",
+        "o_ready",
+      ],
+      [
+        ...base,
+        "--id",
+        "PVTI_8",
+        "--id",
+        "PVTI_10",
+        "--field-id",
+        "F_status",
+        "--single-select-option-id",
+        "o_done",
+      ],
+      [
+        ...base,
+        "--id",
+        "PVTI_8",
+        "--field-id",
+        "F_status",
+        "--field-id",
+        "F_other",
+        "--single-select-option-id",
+        "o_done",
+      ],
+      [
+        ...base,
+        "--id",
+        "PVTI_8",
+        "--field-id",
+        "F_status",
+        "--single-select-option-id",
+        "o_backlog",
+        "--single-select-option-id=o_ready",
+      ],
+      [...base, "--id", "PVTI_8", "--field-id", "F_status", "--clear=true"],
+      [
+        ...base,
+        "--id",
+        "PVTI_8",
+        "--field-id",
+        "F_status",
+        "--clear",
+        "--single-select-option-id",
+        "o_ready",
+      ],
+    ];
+    for (const attempt of attempts) {
+      expect((await hubd.request("manager", "gh", attempt)).code, attempt.join(" ")).toBe(77);
+    }
+    expect(hubd.calls("project item-edit")).toBe(0);
+  }, 30_000);
+
   it("refuses an item-edit that is not a Status move (#349)", async () => {
     const hubd = await startHubd(5000);
 
