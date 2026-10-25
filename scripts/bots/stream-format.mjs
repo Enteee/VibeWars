@@ -12,6 +12,8 @@
  * that runs one.
  */
 
+import { visible } from "./protocol.mjs";
+
 /** The widest a single pane line gets before it is cut. */
 export const LINE_MAX = 200;
 
@@ -156,10 +158,26 @@ function turnEnd(event) {
  * line that is not JSON, an error claude printed say, is shown cut to one
  * line; an event of a kind this does not know is skipped.
  *
+ * Every line goes through `visible()`. Tool results carry issue bodies and
+ * command output anyone can write, and a jailed process can write to
+ * claude's stdout itself, so without it an ESC or CR could clear the
+ * operator's pane, retitle the window or overwrite a line with a fake
+ * `■ turn success` (found in review of #146).
+ *
  * @param {string} line
  * @returns {string[]}
  */
 export function formatLine(line) {
+  return describe(line)
+    .flatMap((text) => text.split("\n"))
+    .map(visible);
+}
+
+/**
+ * @param {string} line
+ * @returns {string[]} what `formatLine` shows, before `visible()`
+ */
+function describe(line) {
   if (line.trim() === "") {
     return [];
   }
@@ -170,7 +188,7 @@ export function formatLine(line) {
   switch (event.type) {
     case "system":
       return event.subtype === "init"
-        ? [`● session ${String(event.session_id)} · ${String(event.model)}`]
+        ? [`● session ${sessionIdOf(event) ?? "?"} · ${String(event.model)}`]
         : [];
     case "assistant":
       return contentOf(event).flatMap((part) => {

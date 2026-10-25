@@ -452,7 +452,7 @@ let
         most valuable thing you can finish end to end, do it, move the card,
         and tell whoever is next in the chain on Telegram.
 
-        When you genuinely have nothing to do, run \`tg wait --timeout 900\` to
+        When you genuinely have nothing to do, run \`tg wait --timeout 540\` to
         block until a colleague or the operator says something, then continue.
         Do not stop and wait for a prompt; nobody is going to send you one."
 
@@ -474,7 +474,7 @@ let
         and \`board ls\` in case something changed, then carry on with the most
         valuable thing you can finish. If you were mid-task, finish that first.
         Do not end your turn while waiting on background work or a colleague:
-        block on it, or on \`tg wait --timeout 900\`, instead."
+        block on it, or on \`tg wait --timeout 540\`, instead."
         else
           resumeFlag=()
           prompt="$kickoff"

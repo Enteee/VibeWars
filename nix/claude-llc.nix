@@ -470,12 +470,19 @@ in
 
             echo "claude-llc-agent: next turn for $role in 10s — Ctrl-C now to stop for good."
             sleep 10 || stopped
+            # The marker goes before the reboot check, not after: a reboot
+            # requested between the two would otherwise see this agent
+            # between turns while it starts one. So the marker is only ever
+            # up while no turn can start.
+            rm -f "$between"
             if [ -e "$root/reboot.json" ]; then
               echo "claude-llc-agent: a company reboot is pending; $role waits for it."
-              while [ -e "$root/reboot.json" ]; do
-                sleep 5 || stopped
-              done
             fi
+            while [ -e "$root/reboot.json" ]; do
+              touch "$between"
+              sleep 5 || stopped
+              rm -f "$between"
+            done
           done
         '';
       };

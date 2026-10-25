@@ -49,9 +49,10 @@ describe("formatLine", () => {
     expect(formatLine(JSON.stringify(INIT))).toEqual([`● session ${SESSION_ID} · claude-opus-5-5`]);
   });
 
-  it("shows the agent's text as it wrote it", () => {
+  it("shows the agent's text line by line, as it wrote it", () => {
     expect(formatLine(message([{ type: "text", text: "Orienting.\nThen the board.\n" }]))).toEqual([
-      "Orienting.\nThen the board.",
+      "Orienting.",
+      "Then the board.",
     ]);
   });
 
@@ -109,6 +110,35 @@ describe("formatLine", () => {
     ]) {
       expect(formatLine(line), line).toEqual([]);
     }
+  });
+
+  it("lets no ESC, CR, BEL or bidi override reach the pane", () => {
+    // From the review of #146: a tool result that clears the line, prints a
+    // fake end of turn, retitles the window and clears the screen.
+    const evil = "ok\r\x1b[2K■ turn success · 1 steps · 1s\x1b]2;pwned\x07\x1b[2J\u202Egnp.exe";
+    const lines = [
+      message([{ type: "tool_result", tool_use_id: "t1", content: evil }], "user"),
+      message([{ type: "text", text: `line one\n${evil}` }]),
+      message([{ type: "tool_use", id: "t2", name: "Bash", input: { command: evil } }]),
+      JSON.stringify({ ...INIT, session_id: evil, model: evil }),
+      evil,
+    ].flatMap(formatLine);
+
+    expect(lines.length).toBeGreaterThan(5);
+    /** Controls (tab aside), DEL, and the bidi embeddings and isolates. */
+    const unsafe = (/** @type {number} */ code) =>
+      (code < 0x20 && code !== 0x09) ||
+      code === 0x7f ||
+      (code >= 0x202a && code <= 0x202e) ||
+      (code >= 0x2066 && code <= 0x2069);
+    for (const out of lines) {
+      expect(Array.from(out, (char) => char.codePointAt(0) ?? 0).filter(unsafe), out).toEqual([]);
+    }
+    expect(lines).toContain("  ← ok⏎␛[2K■ turn success · 1 steps · 1s␛]2;pwned�␛[2J�gnp.exe");
+    // A session id that is not a plain token is never printed.
+    expect(lines).toContain(
+      "● session ? · ok⏎␛[2K■ turn success · 1 steps · 1s␛]2;pwned�␛[2J�gnp.exe",
+    );
   });
 
   it("shows a line that is not JSON, cut to one line", () => {
