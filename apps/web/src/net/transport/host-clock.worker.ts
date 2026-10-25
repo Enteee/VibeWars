@@ -4,7 +4,11 @@
  * (ADR-0028, measurement 3). It posts `{ elapsed }`, the seconds since its
  * last post, and keeps no accumulator: `MatchHost.advance` has one.
  */
-import { TICK_SECONDS } from "../../training/local-connection.js";
+import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
+
+// Derived here, not imported from `training/local-connection.ts`, so the
+// Worker chunk carries the ruleset and not the training session.
+const TICK_SECONDS = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
 
 let last = performance.now();
 

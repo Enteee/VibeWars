@@ -1,5 +1,5 @@
 import { transportContract } from "@vibewars/game-session/testing";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
   HEARTBEAT_MS,
@@ -21,14 +21,66 @@ function freshCode(): string {
   return `TEST${String(++rooms)}`;
 }
 
+/** Frames posted on each channel name, by every channel the transport opens. */
+const posted = new Map<string, number>();
+
+class CountingChannel extends BroadcastChannel {
+  override postMessage(message: unknown): void {
+    posted.set(this.name, (posted.get(this.name) ?? 0) + 1);
+    super.postMessage(message);
+  }
+}
+
+/** How long a drained room must stay silent before `settle` resolves. */
+const QUIET_MS = 50;
+/** The longest `settle` waits: a room that never drains fails its case, not the run. */
+const SETTLE_CAP_MS = 5000;
+
+const observers: BroadcastChannel[] = [];
+
 transportContract(
   "BroadcastChannel",
   () => {
     const code = freshCode();
-    return { join: () => joinBroadcastRoom(code), settle };
+    const name = `${APP_ID}:${code}`;
+    // Sees every frame any peer posts, so it can tell when the backlog of
+    // a burst has landed. Node drains a backlog over many loop turns, so
+    // a fixed sleep would race it on a slow runner.
+    const observer = new BroadcastChannel(name);
+    observers.push(observer);
+    let received = 0;
+    let lastFrameAt = performance.now();
+    observer.onmessage = () => {
+      received++;
+      lastFrameAt = performance.now();
+    };
+    return {
+      join: () => joinBroadcastRoom(code),
+      async settle() {
+        const start = performance.now();
+        for (;;) {
+          await new Promise<void>((resolve) => setTimeout(resolve, QUIET_MS / 5));
+          const now = performance.now();
+          const drained = received === (posted.get(name) ?? 0) && now - lastFrameAt >= QUIET_MS;
+          if (drained || now - start >= SETTLE_CAP_MS) return;
+        }
+      },
+    };
   },
   { describe, it, expect },
 );
+
+beforeAll(() => {
+  vi.stubGlobal("BroadcastChannel", CountingChannel);
+});
+
+afterEach(() => {
+  for (const observer of observers.splice(0)) observer.close();
+});
+
+afterAll(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("the BroadcastChannel transport (#392)", () => {
   afterEach(() => {
