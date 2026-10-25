@@ -19,6 +19,7 @@ import type {
   MatchSnapshot,
   PlayerSnapshot,
   SkillSlot,
+  SlotRecharge,
 } from "./match-connection.js";
 import { extrapolateRecharges } from "./recharge-clock.js";
 
@@ -201,7 +202,13 @@ export async function connectToMatch(
     awaitMessage<{ slots: SkillSlot[] }>(room, "skill-bar", 5000),
   ]);
 
-  return createMatchConnection(room, map, bar.slots);
+  return createMatchConnection(room, map, bar.slots, () =>
+    extrapolateRecharges(
+      recharges.slots,
+      bar.slots.length,
+      (performance.now() - recharges.at) / 1000,
+    ),
+  );
 }
 
 /**
@@ -228,6 +235,7 @@ export function createMatchConnection(
   room: LiveMatchRoom,
   map: MapDescriptor,
   skillBar: readonly SkillSlot[],
+  getRecharges: () => readonly SlotRecharge[],
 ): MatchConnection {
   // A dropped connection is retried by the SDK itself, which reconnects
   // this same room in place: state, message handlers and `send` all keep
@@ -274,13 +282,7 @@ export function createMatchConnection(
     onCastRefused(handler: (message: CastRefusedMessage) => void): void {
       room.onMessage("cast-refused", handler);
     },
-    getRecharges() {
-      return extrapolateRecharges(
-        recharges.slots,
-        bar.slots.length,
-        (performance.now() - recharges.at) / 1000,
-      );
-    },
+    getRecharges,
     async disconnect(): Promise<void> {
       await room.leave();
     },

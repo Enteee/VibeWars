@@ -129,7 +129,7 @@ function connect(): {
   connection: ReturnType<typeof createMatchConnection>;
 } {
   const room = new FakeRoom();
-  const connection = createMatchConnection(room, MAP, []);
+  const connection = createMatchConnection(room, MAP, [], () => []);
   const states: string[] = [];
   connection.onConnectionChange((state) => states.push(state));
   return { room, states, connection };
