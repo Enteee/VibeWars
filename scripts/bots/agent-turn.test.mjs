@@ -50,6 +50,20 @@ const EVENTS = {
       ],
     },
   }),
+  timedOut: JSON.stringify({
+    type: "user",
+    message: {
+      role: "user",
+      content: [
+        {
+          type: "tool_result",
+          tool_use_id: "w1",
+          content:
+            "Command did not complete within its 590s timeout and was moved to the background (ID: b2). Output is being written to: /x",
+        },
+      ],
+    },
+  }),
   foreground: JSON.stringify({
     type: "user",
     message: {
@@ -114,6 +128,13 @@ describe("a tg wait that went to the background", () => {
       role: "developer-1",
       command: "tg wait --timeout 540",
     });
+    expect(result.cursor).toBe("100\n");
+  });
+
+  it("is caught when Bash moved it there after its timeout", () => {
+    const result = turn(["init", "wait", "timedOut", "swallow", "result"]);
+
+    expect(result.log.trim().split("\n")).toHaveLength(1);
     expect(result.cursor).toBe("100\n");
   });
 

@@ -194,8 +194,9 @@ const recent = [];
 /** The `tg wait` and `board wait` calls of this turn, by tool call id (#325). */
 /** @type {Map<string, string>} */
 const waits = new Map();
+/** @type {Set<string>} */
+const counted = new Set();
 /** The inbox cursor when the first wait went to the background (#325). */
-/** @type {string | null} */
 /** @type {{ to: string | null }} */
 const rewind = { to: null };
 
@@ -243,12 +244,14 @@ lines.on("line", (line) => {
   for (const call of waitCallsOf(event)) {
     waits.set(call.id, call.command);
     if (call.background) {
+      counted.add(call.id);
       backgrounded(call.command);
     }
   }
   for (const id of backgroundedIdsOf(event)) {
     const command = waits.get(id);
-    if (command !== undefined) {
+    // An explicit run_in_background was counted when it was called.
+    if (command !== undefined && !counted.has(id)) {
       backgrounded(command);
     }
   }

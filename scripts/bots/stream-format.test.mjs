@@ -616,6 +616,13 @@ describe("backgrounded waits (#325)", () => {
     expect(backgroundedIdsOf(parseEvent(answered(text)))).toEqual(["t1"]);
   });
 
+  it("finds a call Bash moved to the background after its timeout", () => {
+    const text =
+      "Command did not complete within its 590s timeout and was moved to the background (ID: bpree7vvv). Output is being written to: /x.output";
+
+    expect(backgroundedIdsOf(parseEvent(answered(text)))).toEqual(["t1"]);
+  });
+
   it("does not take a finished call for a backgrounded one", () => {
     expect(backgroundedIdsOf(parseEvent(answered("(nothing new in 540s)")))).toEqual([]);
   });

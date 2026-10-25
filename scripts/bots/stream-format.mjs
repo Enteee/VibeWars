@@ -395,8 +395,10 @@ export function waitCallsOf(event) {
 
 /**
  * The ids of the tool calls this `user` event says were moved to the
- * background (#325): Claude Code answers a Bash call that outlived its
- * timeout with "Command running in background with ID: …".
+ * background (#325). Claude Code answers an explicit `run_in_background` with
+ * "Command running in background with ID: …", and a call that outlived its
+ * timeout with "Command did not complete within its 590s timeout and was moved
+ * to the background (ID: …)".
  *
  * @param {Record<string, unknown> | null} event
  * @returns {string[]}
@@ -409,7 +411,9 @@ export function backgroundedIdsOf(event) {
     const block = record(part);
     return block?.type === "tool_result" &&
       typeof block.tool_use_id === "string" &&
-      resultText(block.content).startsWith("Command running in background")
+      /^Command running in background|moved to the background \(ID: /.test(
+        resultText(block.content),
+      )
       ? [block.tool_use_id]
       : [];
   });
