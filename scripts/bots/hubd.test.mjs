@@ -1816,6 +1816,7 @@ describe("hubd scheduling a company reboot", () => {
     expect(JSON.parse(fs.readFileSync(path.join(outbox, sent[0] ?? ""), "utf8"))).toEqual({
       to: "all",
       text: String(asked.stdout).trim(),
+      nudge: null,
     });
     expect(JSON.parse(fs.readFileSync(record, "utf8"))).toMatchObject({
       reason: "load #21",

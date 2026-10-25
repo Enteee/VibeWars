@@ -84,6 +84,8 @@ ready` or has that marker, and while `reboot.json` exists the loop starts no
 new turn. A reboot deletes `.bots/agents/`, so every agent comes back on a
 fresh conversation. The supervisor no longer samples panes or nudges anyone.
 
+hubd's schedule (`scripts/bots/schedule.json`, ADR-0015) is not pane nudging: it sends a fixed message on a clock, through the inbox, and samples no pane.
+
 ## Consequences
 
 - Nobody can type into an agent's pane. That is intended: Telegram is the

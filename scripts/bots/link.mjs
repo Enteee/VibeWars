@@ -52,6 +52,8 @@ import {
   formatMirror,
   formatQuestion,
   inboxesOf,
+  readInbox,
+  skipNudge,
   isReadyOutboxEntry,
   mirrorTopic,
   obj,
@@ -747,6 +749,33 @@ async function drainOutboxes(company, mirror) {
 }
 
 /**
+ * The lines an employee has not read yet: its inbox from its cursor, read
+ * without following links a jail may have planted. Unreadable is none.
+ *
+ * @param {string} bus
+ * @param {string} employee
+ * @returns {import("./protocol.mjs").InboxLine[]}
+ */
+function unreadOf(bus, employee) {
+  try {
+    return withJailDir(busPaths(bus, employee).dir, "", {}, (dir) => {
+      let cursor = 0;
+      try {
+        cursor = Number.parseInt(dir.readSmall("cursor", 64).trim(), 10) || 0;
+      } catch {
+        // Never read: everything is unread.
+      }
+      return readInbox(dir.readSmall("inbox.jsonl", INBOX_READ_MAX_BYTES), cursor).lines;
+    });
+  } catch {
+    return [];
+  }
+}
+
+/** The most of an inbox read to tell whether a nudge is still unread. */
+const INBOX_READ_MAX_BYTES = 16 * 1024 * 1024;
+
+/**
  * The system outbox (#23): what host-side code says to everyone, such as a
  * daemon crash-looping. Delivered to every employee as a `link` line and
  * mirrored to General under the System header. Only the host can write
@@ -759,13 +788,18 @@ async function drainOutboxes(company, mirror) {
 function drainSystem(company, mirror) {
   return takeOutbox(path.join(company.at.bus, SYSTEM), SYSTEM, (_name, payload) => {
     const delivered = deliverSystem(payload, {
-      employees: [...company.employees().keys()],
+      employees: company.employees(),
       now: Date.now(),
     });
+    let sent = 0;
     for (const { employee, line } of delivered.deliveries) {
+      if (line.nudge !== null && skipNudge(unreadOf(company.at.bus, employee), line.nudge)) {
+        continue;
+      }
       appendInbox(company.at.bus, employee, line);
+      sent += 1;
     }
-    if (delivered.mirror !== null) {
+    if (delivered.mirror !== null && sent > 0) {
       mirror.push({ peer: delivered.mirror });
     }
   });
