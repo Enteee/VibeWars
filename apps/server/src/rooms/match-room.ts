@@ -42,7 +42,12 @@ import {
 import type { StepContext } from "colyseus";
 
 import { sanitizeName } from "./lobby-room.js";
-import { assertProtocolVersion, field } from "./options.js";
+import {
+  FLOOD_MESSAGES_PER_SECOND,
+  assertProtocolVersion,
+  field,
+  messageBudget,
+} from "./options.js";
 import { rechargePredicted, rechargeSlots } from "./recharge.js";
 
 /**
@@ -378,6 +383,8 @@ export class MatchRoom extends Room {
    * told at, so only what their countdown cannot predict is sent (#152).
    */
   readonly #rechargesSent = new Map<string, { slots: RechargeSlot[]; at: number }>();
+  /** How many intents each client may still have handled (#43). */
+  readonly #budget = messageBudget("match");
 
   /**
    * A lobby's match: each seat's team, its player's lobby name, and
@@ -443,6 +450,7 @@ export class MatchRoom extends Room {
 
   public override async onCreate(options?: unknown): Promise<void> {
     this.autoDispose = true;
+    this.maxMessagesPerSecond = FLOOD_MESSAGES_PER_SECOND;
 
     const seating = field(options, "seating");
     if (seating === undefined) {
@@ -485,6 +493,9 @@ export class MatchRoom extends Room {
     });
 
     this.onMessage("intent", (client, message: unknown) => {
+      if (!this.#budget.take(client.sessionId, this.clock.currentTime)) {
+        return;
+      }
       const intent = parseClientIntent(message);
       if (intent === undefined) {
         // Malformed or malicious payload: nothing is applied and the
@@ -875,6 +886,7 @@ export class MatchRoom extends Room {
     this.state.players.delete(sessionId);
     this.#sim.remove(sessionId);
     this.#rechargesSent.delete(sessionId);
+    this.#budget.forget(sessionId);
 
     for (const player of this.state.players.values()) {
       if (player.targetSessionId === sessionId) {

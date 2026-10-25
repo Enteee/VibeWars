@@ -96,6 +96,28 @@ test("a wrong code does not drop the player into someone else's lobby", async ({
   }
 });
 
+test("leaving a lobby puts the status bar back to ready", async ({ page }) => {
+  // The status used to keep saying "lobby CODE" on the menu (#206).
+  const code = await hostLobby(page, "Host");
+  await expect(page.locator("#status")).toHaveText(`lobby ${code}`);
+
+  await page.getByRole("button", { name: "leave" }).click();
+  await expect(page.getByRole("heading", { name: "vibewars" })).toBeVisible();
+  await expect(page.locator("#status")).toHaveText("ready");
+});
+
+test("a code with no lobby keeps 'could not join' in the status bar", async ({ page }) => {
+  // Back on the menu, but the error must not be reset to "ready".
+  await openMenu(page, "Lost");
+  await page.locator("input.code-input").fill("ZZZZ");
+  await page.getByRole("button", { name: "join", exact: true }).click();
+
+  await expect(page.locator(".screen-connection-problem")).toHaveText(
+    "No lobby with that code. Check the code and try again.",
+  );
+  await expect(page.locator("#status")).toHaveText("could not join");
+});
+
 test("the host starts a match and both players enter the arena", async ({ browser }) => {
   const hostContext = await browser.newContext();
   const guestContext = await browser.newContext();
