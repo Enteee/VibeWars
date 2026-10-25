@@ -20,6 +20,11 @@ on:
 permissions:
   contents: read
 
+# A newer push cancels the run it supersedes (#230).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   e2e-repeat:
     name: e2e-repeat

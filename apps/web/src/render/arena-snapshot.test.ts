@@ -39,6 +39,7 @@ function actor(
     name: id,
     position: vec2(x, y),
     facing: 0,
+    weaponId: undefined,
     radius,
     team: "ally",
     health: 500,
