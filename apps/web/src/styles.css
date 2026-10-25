@@ -246,6 +246,13 @@ body {
   color: #ffb3ae;
 }
 
+.screen-info {
+  padding: 0.5rem 0.7rem;
+  border-left: 3px solid var(--accent);
+  background: rgb(89 194 255 / 8%);
+  color: var(--ink);
+}
+
 .field {
   display: flex;
   flex-direction: column;

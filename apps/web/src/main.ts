@@ -391,10 +391,14 @@ async function main(): Promise<void> {
     if (match !== undefined || enteringMatch) {
       return;
     }
+    // Every way back here (leaving, a finished match, a lost connection)
+    // passes through this, so the status bar stops saying "in match".
+    const snapshot = lobby.getSnapshot();
+    setStatus(`lobby ${snapshot.code}`, "online");
     showViewport(false);
     renderLobbyScreen(
       screenRoot,
-      lobby.getSnapshot(),
+      snapshot,
       {
         onSelectMap: (mapId) => {
           lobby?.selectMap(mapId);
