@@ -19,7 +19,8 @@
  *
  *   --browser chromium|firefox   one browser only
  *   --seconds <n>                play this long (default 60)
- *   --url <url>                  measure a client already served there
+ *   --url <url>                  measure a client already served there, built
+ *                                with VITE_VIBEWARS_STRESS=on for `?stress=`
  *   --rows                       print every second, not only the totals
  *
  * Browsers: VIBEWARS_CHROMIUM (as for e2e), VIBEWARS_FIREFOX (a Playwright
@@ -89,7 +90,8 @@ async function serve() {
     `--host 127.0.0.1 --port ${String(PORT)} --strictPort`;
   const child = spawn("sh", ["-c", command], {
     stdio: ["ignore", "ignore", "inherit"],
-    env: { ...process.env, VITE_VIBEWARS_ONLINE: "off" },
+    // The one build where `?stress=` works.
+    env: { ...process.env, VITE_VIBEWARS_ONLINE: "off", VITE_VIBEWARS_STRESS: "on" },
     detached: true,
   });
   // `exitCode` stays null while it runs, as a server should.

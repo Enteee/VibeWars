@@ -1,15 +1,22 @@
 /**
  * `?stress=<ms>` (#420): the main thread busy-waits that long every
  * 100 ms, so a desktop browser with no CPU throttling, like Firefox, can
- * be loaded the way a phone's game frames load it. For
- * scripts/music-stress.mjs; nothing else sets it.
+ * be loaded the way a phone's game frames load it. Only in the build
+ * scripts/music-stress.mjs makes: anywhere else a shared link could make
+ * a player's game busy-wait.
  */
+
+/** Whether this build honours `?stress=`. */
+export const STRESS_BUILD: boolean = import.meta.env.VITE_VIBEWARS_STRESS === "on";
 
 /** How often the stressor takes the main thread. */
 export const STRESS_PERIOD_MS = 100;
 
-/** The busy wait `?stress=` asks for, or `null`. Never the whole period. */
-export function stressMs(search: string): number | null {
+/** The busy wait `?stress=` asks for in a stress build, or `null`. Never the whole period. */
+export function stressMs(search: string, stressBuild: boolean): number | null {
+  if (!stressBuild) {
+    return null;
+  }
   const asked = Number(new URLSearchParams(search).get("stress"));
   return Number.isFinite(asked) && asked > 0 ? Math.min(asked, STRESS_PERIOD_MS - 10) : null;
 }
