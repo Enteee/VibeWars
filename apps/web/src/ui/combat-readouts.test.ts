@@ -258,6 +258,12 @@ describe("floatingCueFor", () => {
     expect(floatingCueFor("heal", 40)).toEqual({ text: "+40", tone: "heal" });
   });
 
+  it("floats nothing for an amount that rounds to zero, like a status tick", () => {
+    expect(floatingCueFor("damage", 0.4)).toBeUndefined();
+    expect(floatingCueFor("heal", 0.2)).toBeUndefined();
+    expect(floatingCueFor("damage", 0.6)).toEqual({ text: "−1", tone: "damage" });
+  });
+
   it("calls out interrupts and deaths, and floats nothing for statuses", () => {
     expect(floatingCueFor("interrupted", undefined)).toEqual({
       text: "interrupted!",
@@ -277,7 +283,7 @@ describe("floatingCueFor", () => {
     });
   });
 
-  it("treats a missing amount as 0", () => {
-    expect(floatingCueFor("damage", undefined)).toEqual({ text: "−0", tone: "damage" });
+  it("treats a missing amount as 0, so floats nothing for it", () => {
+    expect(floatingCueFor("damage", undefined)).toBeUndefined();
   });
 });

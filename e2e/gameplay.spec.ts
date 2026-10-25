@@ -271,6 +271,30 @@ test("Esc cancels the attack; leaving the match is a button that asks first (#16
   await opponent.close();
 });
 
+test("Tab targets the nearest enemy, and the hint goes for good (#55)", async ({
+  browser,
+  page,
+}) => {
+  // A lobby of two, for the reason the test above gives.
+  const opponent = await browser.newPage();
+  await startLobbyMatch(page, [opponent]);
+  const hint = page.locator(".hud-hint");
+  await expect(hint).toHaveText("Click an enemy or press Tab to target");
+  await expect(hint).toBeVisible();
+
+  await page.keyboard.press("Tab");
+  await expect(page.locator(".hud-target-text")).toHaveText(/^target: /);
+  await expect(hint).toBeHidden();
+  // The browser kept its focus where it was: Tab is the game's now.
+  expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+
+  // Cleared again, the hint stays gone.
+  await page.locator("#viewport canvas").click({ position: { x: 5, y: 5 } });
+  await expect(page.locator(".hud-target-text")).toHaveText("no target");
+  await expect(hint).toBeHidden();
+  await opponent.close();
+});
+
 test("a recharging skill shows the clock-wipe and the seconds left, then clears (#152)", async ({
   page,
 }) => {

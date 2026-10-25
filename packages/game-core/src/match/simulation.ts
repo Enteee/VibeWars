@@ -2,6 +2,7 @@ import type { ResolvedEquipment, ResolvedLoadout } from "../equipment/resolve.js
 import type { WeaponId } from "../equipment/weapons.js";
 import {
   distanceWithinRange,
+  firstHit,
   hasLineOfSight,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
@@ -40,7 +41,7 @@ import {
   type Projectile,
 } from "../skills/projectile.js";
 import { blindMisses, landBlow, resolveSwing, weaponSnapshotOf } from "../skills/weapon-attack.js";
-import { distance, sub, ZERO, type Vec2 } from "../vec2.js";
+import { add, distance, normalize, scale, sub, ZERO, type Vec2 } from "../vec2.js";
 import {
   createCursor,
   decide,
@@ -789,13 +790,24 @@ export class MatchSimulation {
     }
     const from = record.position;
     const tracked = trackTarget(target.history.samples(), dt, target.position);
-    const aimPoint = leadAimPoint(from, tracked.position, tracked.velocity, speed);
+    const leadPoint = leadAimPoint(from, tracked.position, tracked.velocity, speed);
+    // Along the whole flight, once: the path is fixed from here (#215). A
+    // shot led round a corner, or at a target stepping behind a pillar,
+    // stops at the wall, a unit short of it so it lands on the near side.
+    const impact = firstHit(from, leadPoint, this.#walls);
+    const aimPoint =
+      impact === undefined
+        ? leadPoint
+        : distance(from, impact) <= 1
+          ? from
+          : add(impact, scale(normalize(sub(from, impact)), 1));
     this.#projectiles.push({
       id: this.#nextProjectileId,
       attackerId: record.id,
       targetId: target.id,
       from,
       aimPoint,
+      obstructed: impact !== undefined,
       speed,
       flightSeconds: distance(from, aimPoint) / speed,
       elapsed: 0,
@@ -829,6 +841,13 @@ export class MatchSimulation {
    * to dodge, so nothing happens.
    */
   #land(projectile: Projectile): void {
+    if (projectile.obstructed) {
+      // It hit the wall; where the target is now has nothing to do with it.
+      this.#logWeapon(projectile.attackerId, projectile.weaponSnapshot.mainHand.weapon.id, [
+        { kind: "attack-obstructed", targetId: projectile.targetId },
+      ]);
+      return;
+    }
     const target = this.#participants.get(projectile.targetId);
     if (target === undefined || target.combatant.dead) {
       return;
