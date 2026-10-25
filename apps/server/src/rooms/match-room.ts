@@ -631,13 +631,15 @@ export class MatchRoom extends Room {
     if (events.length === 0) {
       return;
     }
-    // `cause` says what this was; `skillId` is `""` unless it was a skill.
+    // `cause` says what this was; `skillId` is `""` unless it was a
+    // skill, and `weaponId` `""` unless it was a weapon (#162).
     const skillId = entry.skillId ?? "";
+    const weaponId = entry.weaponId ?? "";
     this.broadcast(
       "combat",
       area === undefined
-        ? { casterSessionId, cause, skillId, events }
-        : { casterSessionId, cause, skillId, events, area },
+        ? { casterSessionId, cause, skillId, weaponId, events }
+        : { casterSessionId, cause, skillId, weaponId, events, area },
     );
   }
 

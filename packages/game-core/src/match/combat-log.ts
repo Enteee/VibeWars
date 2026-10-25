@@ -1,3 +1,4 @@
+import type { WeaponId } from "../equipment/weapons.js";
 import type { CombatEvent } from "../skills/effects.js";
 
 /**
@@ -27,6 +28,8 @@ export interface CombatLogEntry {
    */
   readonly sourceId: string | undefined;
   readonly skillId: string | undefined;
+  /** The weapon, on every `"weapon"` entry; `undefined` on every other (#162). */
+  readonly weaponId: WeaponId | undefined;
   /** Where an area skill landed, and how far it reached. */
   readonly area: { readonly x: number; readonly y: number; readonly radius: number } | undefined;
   readonly events: readonly CombatEvent[];

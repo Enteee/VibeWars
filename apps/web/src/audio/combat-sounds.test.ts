@@ -6,7 +6,7 @@ import { soundsForCombat, soundsForSnapshot } from "./combat-sounds.js";
 const ME = "me";
 
 function message(casterSessionId: string, events: CombatMessage["events"]): CombatMessage {
-  return { casterSessionId, cause: "skill", skillId: "x", events };
+  return { casterSessionId, cause: "skill", skillId: "x", weaponId: "", events };
 }
 
 describe("soundsForCombat", () => {
@@ -70,18 +70,21 @@ describe("soundsForCombat", () => {
       casterSessionId: ME,
       cause: "degeneration",
       skillId: "",
+      weaponId: "",
       events: [{ kind: "damage", targetId: ME }],
     };
     const regen: CombatMessage = {
       casterSessionId: ME,
       cause: "degeneration",
       skillId: "",
+      weaponId: "",
       events: [{ kind: "heal", targetId: ME }],
     };
     const fatal: CombatMessage = {
       casterSessionId: ME,
       cause: "degeneration",
       skillId: "",
+      weaponId: "",
       events: [
         { kind: "damage", targetId: ME },
         { kind: "death", targetId: ME },
@@ -97,6 +100,7 @@ describe("soundsForCombat", () => {
       casterSessionId: ME,
       cause: "weapon",
       skillId: "",
+      weaponId: "sword",
       events: [{ kind: "damage", targetId: "foe", amount: 12 }],
     };
     expect(soundsForCombat(swing, ME)).toEqual(["hit-dealt"]);

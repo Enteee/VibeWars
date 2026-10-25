@@ -1,4 +1,5 @@
 import type { ResolvedEquipment, ResolvedLoadout } from "../equipment/resolve.js";
+import type { WeaponId } from "../equipment/weapons.js";
 import {
   distanceWithinRange,
   hasLineOfSight,
@@ -497,6 +498,7 @@ export class MatchSimulation {
           cause: "degeneration",
           sourceId: drained ? sources.draining : sources.healing,
           skillId: undefined,
+          weaponId: undefined,
           area: undefined,
           events: statusEvents,
         });
@@ -580,6 +582,10 @@ export class MatchSimulation {
     });
     this.setInputDirection(record.id, intent.moveDirection);
     this.setTarget(record.id, intent.targetId);
+    // Asked only while no attack is going, as a player presses Space once.
+    if (intent.attackTargetId !== undefined && record.combatant.attack === undefined) {
+      this.requestAttack(record.id, intent.attackTargetId);
+    }
     if (intent.useSkillId !== undefined) {
       const slot = record.skillBar.indexOf(intent.useSkillId);
       if (slot !== -1) {
@@ -658,6 +664,7 @@ export class MatchSimulation {
       cause: "skill",
       sourceId: record.id,
       skillId: skill.id,
+      weaponId: undefined,
       area,
       events,
     });
@@ -706,7 +713,9 @@ export class MatchSimulation {
       const next = path?.[0];
       if (next === undefined) {
         record.combatant.attack = undefined;
-        this.#logWeapon(record.id, [{ kind: "attack-unreachable", targetId: target.id }]);
+        this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, [
+          { kind: "attack-unreachable", targetId: target.id },
+        ]);
         return;
       }
       this.advanceMovement(record, sub(next, record.position), dt);
@@ -734,7 +743,7 @@ export class MatchSimulation {
     });
     this.#gainAdrenaline(record, events);
     this.#recordDeaths(events);
-    this.#logWeapon(record.id, events);
+    this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events);
   }
 
   /**
@@ -746,11 +755,15 @@ export class MatchSimulation {
    */
   #release(record: ParticipantRecord, target: ParticipantRecord, speed: number, dt: number): void {
     if (blindMisses(record.combatant, this.#rng)) {
-      this.#logWeapon(record.id, [{ kind: "attack-missed", targetId: target.id }]);
+      this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, [
+        { kind: "attack-missed", targetId: target.id },
+      ]);
       return;
     }
     if (!hasLineOfSight(record.position, target.position, this.#walls)) {
-      this.#logWeapon(record.id, [{ kind: "attack-obstructed", targetId: target.id }]);
+      this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, [
+        { kind: "attack-obstructed", targetId: target.id },
+      ]);
       return;
     }
     const from = record.position;
@@ -817,16 +830,18 @@ export class MatchSimulation {
       this.#gainAdrenaline(attacker, events);
     }
     this.#recordDeaths(events);
-    this.#logWeapon(projectile.attackerId, events);
+    this.#logWeapon(projectile.attackerId, projectile.weaponSnapshot.mainHand.weapon.id, events);
   }
 
-  #logWeapon(sourceId: string, events: readonly CombatEvent[]): void {
+  /** A weapon entry, named for the weapon that swung or shot (#162). */
+  #logWeapon(sourceId: string, weaponId: WeaponId, events: readonly CombatEvent[]): void {
     this.#log.push({
       tick: this.#tick,
       atSeconds: this.#elapsedSeconds,
       cause: "weapon",
       sourceId,
       skillId: undefined,
+      weaponId,
       area: undefined,
       events,
     });

@@ -45,7 +45,13 @@ function floated(events: { kind: string; targetId?: string; amount?: number }[])
   const texts: FloatingText[] = [];
   showCombatFeedback(
     { addFloatingText: (text) => texts.push(text), addAreaFlash: () => undefined },
-    { casterSessionId: "me", cause: "skill", skillId: "elementalist.fireball", events },
+    {
+      casterSessionId: "me",
+      cause: "skill",
+      skillId: "elementalist.fireball",
+      weaponId: "",
+      events,
+    },
     SNAPSHOT,
   );
   return texts.map((text) => text.text);
@@ -83,6 +89,7 @@ describe("showCombatFeedback", () => {
           casterSessionId: "me",
           cause,
           skillId: cause === "skill" ? "elementalist.fireball" : "",
+          weaponId: cause === "weapon" ? "sword" : "",
           events: [{ kind: "damage", targetId: "them", amount: 12 }],
         },
         SNAPSHOT,
@@ -112,6 +119,7 @@ describe("showCombatFeedback and areas", () => {
         casterSessionId,
         cause: "skill",
         skillId: "elementalist.fireball",
+        weaponId: "",
         events: [],
         ...(area && { area }),
       },

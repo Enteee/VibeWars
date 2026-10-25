@@ -424,3 +424,30 @@ describe("the approach on Arena Alpha (#211)", () => {
     expect(get(match, "a").position).toEqual(vec2(80, 320));
   });
 });
+
+describe("the auto-attack behaviour (#162)", () => {
+  it("attacks the nearest enemy, and asks again once its target is back", () => {
+    const attacker: ParticipantSpec = {
+      ...swordsman("bot", vec2(0, 0)),
+      team: 1,
+      behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
+    };
+    const victim: ParticipantSpec = {
+      ...dummy("v", vec2(30, 0)),
+      team: 0,
+      reset: { kind: "on-death", afterSeconds: 1 },
+    };
+    const match = sim(attacker, victim);
+    match.step(DT);
+    expect(get(match, "bot").combatant.attack?.targetId).toBe("v");
+
+    // Dead: the attack drops. Back: the behaviour attacks again, unasked.
+    get(match, "v").combatant.health = 0;
+    get(match, "v").combatant.dead = true;
+    match.step(DT);
+    expect(get(match, "bot").combatant.attack).toBeUndefined();
+    stepFor(match, 1.5);
+    expect(get(match, "v").combatant.dead).toBe(false);
+    expect(get(match, "bot").combatant.attack?.targetId).toBe("v");
+  });
+});

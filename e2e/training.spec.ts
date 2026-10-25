@@ -294,3 +294,18 @@ test("(13) a recharging skill shows the clock-wipe and the seconds left, then cl
   await expect(slot).not.toHaveAttribute("aria-label");
   await expect(slot).not.toHaveClass(/\bis-recharging\b/);
 });
+
+test("(14) in Weapon DPS, Space swings and the meter's weapon row counts it (#162)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("weapon-dps");
+  await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
+  await takeControl(page);
+
+  await page.keyboard.press(" ");
+  // "weapon / skills": the weapon's share is no longer 0.
+  await expect(meter(page, "weapon / skills")).not.toHaveText(/^0 \//, { timeout: 3000 });
+  // Named for the weapon that swung, by the character who swung it.
+  await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Melee dummy/);
+});

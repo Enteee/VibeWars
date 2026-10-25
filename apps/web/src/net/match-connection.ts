@@ -90,6 +90,8 @@ export interface CombatMessage {
   readonly cause: "skill" | "weapon" | "degeneration";
   /** The skill, when `cause` is `"skill"`; `""` otherwise. */
   readonly skillId: string;
+  /** The weapon, when `cause` is `"weapon"`; `""` otherwise (#162). */
+  readonly weaponId: string;
   /** Where an area skill landed, and how far it reached (#5). */
   readonly area?: { readonly x: number; readonly y: number; readonly radius: number };
   readonly events: readonly {

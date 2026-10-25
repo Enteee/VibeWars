@@ -44,6 +44,8 @@ export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, str
     "enchantment-sacrifice": "removing your own enchantments as a cost, scaled by how many",
     "reactive-triggers": "effects that fire in response to something happening to you",
     "expiry-triggers": "effects that fire when a status ends rather than when it is applied",
+    // The auto-attack itself is modelled (ADR-0026); attack skills still
+    // deal their own damage rather than the weapon's.
     "weapon-attacks": "attack skills that ride on an underlying weapon auto-attack",
   });
 
