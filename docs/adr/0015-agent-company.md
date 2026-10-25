@@ -62,6 +62,43 @@ Backlog`, judged against the card's column in hubd's copy of the board
   `ARCHITECTURE OK` comment on `Ready -> In Progress`, which costs an issue
   read per move and can be faked by any role that can comment.
 
+- **The jails share one resource budget** (#358). Jails run as the
+  operator's UID, so without a cap one runaway test run takes the host's RAM,
+  CPU or process table with it. `claude-bot` starts every jail as a systemd
+  user scope in `vibewars-jails.slice`, whose limits (set at runtime by
+  `claude-bot --slice`, which `claude-llc start` runs first) are for all
+  jails together, not per agent: `MemoryMax=90%`, `MemoryHigh=85%`,
+  `MemorySwapMax=0` (the throttle is the soft landing; swap would hide a
+  leak while the disk thrashes), `CPUQuota=90%` of all cores,
+  `CPUWeight=20`, `IOWeight=20`, `TasksMax=8192` (well under the
+  operator's own `ulimit -u`). Inside, `oom_score_adj=1000` makes the
+  kernel kill a jailed process before any host process, `nice -n 10` keeps
+  the jails below the host (a process cannot undo it), and `--core=0` stops
+  core dumps. hubd, the supervisor, the dashboard, the Telegram sidecar and
+  presence stay outside the slice: they must survive a jail's OOM. A host
+  without a user manager or memory delegation is refused, never run
+  uncapped. Known limits, accepted: a jailed process may lower its own
+  `oom_score_adj` to 0 (pinning it needs CAP_SYS_RESOURCE), so the cap is
+  the guarantee and the score the tie-breaker; `IOWeight` does nothing
+  without the BFQ scheduler; network bandwidth has no cgroup controller. Not
+  done: per-agent limits (they strand capacity), `memory.oom.group` (it
+  would kill the whole session instead of the runaway subprocess), hard I/O
+  bandwidth caps (they need device paths and fixed numbers), `CI=1` in jails
+  (it changes how Playwright behaves, so tests would not mean what agents
+  think). Disk space is outside cgroups: the agent loop starts no turn below
+  10 GiB free on the repository's filesystem and resumes at 12 GiB, telling
+  the company both times (`scripts/bots/disk.mjs`).
+  On the operator's side, `IODeviceLatencyTargetSec=` on the session
+  protects host I/O latency; that is host configuration, not ours.
+  To check by hand, on the host: `systemctl --user show vibewars-jails.slice
+-p MemoryMax,MemoryHigh,MemorySwapMax,CPUQuotaPerSecUSec,CPUWeight,TasksMax`;
+  the `/proc/<pid>/cgroup` of a jail is under
+  `vibewars-jails.slice/vibewars-jail-<role>-<pid>.scope`, hubd's is not; and
+  `claude-bot --smoke <role>` checks the OOM score, nice and core limit.
+  A memory hog (`node -e 'const a=[];for(;;)a.push(Buffer.alloc(1<<26,1))'`),
+  a bounded fork bomb and a CPU burner in one jail must leave the other
+  agents and hubd running.
+
 ## Consequences
 
 - **The parts of the shared `.git` that git executes are read-only in
