@@ -13,6 +13,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   LINE_MAX,
+  backgroundedIdsOf,
   contextOf,
   formatLine,
   oneLine,
@@ -20,6 +21,7 @@ import {
   runFailed,
   sessionIdOf,
   usageLimitOf,
+  waitCallsOf,
 } from "./stream-format.mjs";
 import { obj } from "./protocol.mjs";
 
@@ -563,5 +565,58 @@ describe("agent-turn.mjs", () => {
     expect(run.stderr).toMatch(/reset time unknown/);
     expect(run.file("limited-until")).toBe("");
     expect(run.session).toBe(SESSION_ID);
+  });
+});
+
+describe("backgrounded waits (#325)", () => {
+  /**
+   * @param {string} command
+   * @param {Record<string, unknown>} [extra] more Bash input
+   * @returns {string}
+   */
+  function bash(command, extra = {}) {
+    return JSON.stringify({
+      type: "assistant",
+      message: {
+        role: "assistant",
+        content: [{ type: "tool_use", id: "t1", name: "Bash", input: { command, ...extra } }],
+      },
+    });
+  }
+
+  /** @param {string} text */
+  function answered(text) {
+    return JSON.stringify({
+      type: "user",
+      message: {
+        role: "user",
+        content: [{ type: "tool_result", tool_use_id: "t1", content: text }],
+      },
+    });
+  }
+
+  it("finds a tg wait and a board wait, and whether it asked for the background", () => {
+    expect(waitCallsOf(parseEvent(bash("tg wait --timeout 540")))).toEqual([
+      { id: "t1", command: "tg wait --timeout 540", background: false },
+    ]);
+    expect(waitCallsOf(parseEvent(bash("board wait Ready", { run_in_background: true })))).toEqual([
+      { id: "t1", command: "board wait Ready", background: true },
+    ]);
+  });
+
+  it("ignores any other command", () => {
+    expect(waitCallsOf(parseEvent(bash("pnpm test", { run_in_background: true })))).toEqual([]);
+    expect(waitCallsOf(parseEvent(bash("tg inbox")))).toEqual([]);
+  });
+
+  it("finds a result saying the call went to the background", () => {
+    const text =
+      "Command running in background with ID: bvwg2cskr. Output is being written to: /x.output";
+
+    expect(backgroundedIdsOf(parseEvent(answered(text)))).toEqual(["t1"]);
+  });
+
+  it("does not take a finished call for a backgrounded one", () => {
+    expect(backgroundedIdsOf(parseEvent(answered("(nothing new in 540s)")))).toEqual([]);
   });
 });

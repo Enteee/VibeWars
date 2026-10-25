@@ -400,10 +400,15 @@ switch (command) {
   case "wait": {
     const flag = rest.indexOf("--timeout");
     const raw = flag === -1 ? undefined : rest[flag + 1];
-    const timeout = raw === undefined ? 300 : Number.parseInt(raw, 10);
+    // 110 s fits Bash's 120 s default timeout; 540 s fits its 600 s maximum.
+    let timeout = raw === undefined ? 110 : Number.parseInt(raw, 10);
     if (!Number.isFinite(timeout) || timeout <= 0) {
       console.error("tg: --timeout takes a positive number of seconds");
       process.exit(2);
+    }
+    if (timeout > 540) {
+      console.log("(tg wait: --timeout capped at 540 s)");
+      timeout = 540;
     }
     await wait(timeout, rest.includes("--all"));
     break;
