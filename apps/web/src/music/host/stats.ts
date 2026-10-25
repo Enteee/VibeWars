@@ -1,4 +1,5 @@
 import type { MusicStats } from "../host-protocol.js";
+import type { UnderrunProbe } from "./underruns.js";
 
 /**
  * What the music costs, second by second (#420): counted in the host only
@@ -10,7 +11,7 @@ import type { MusicStats } from "../host-protocol.js";
 /** What the audio context says about itself, read once a second. */
 export type AudioReadings = Pick<
   MusicStats,
-  "baseLatencyMs" | "outputLatencyMs" | "glitches" | "glitchMs"
+  "baseLatencyMs" | "outputLatencyMs" | "glitches" | "glitchMs" | "underruns" | "underrunMs"
 >;
 
 /** Counts one second's ticks and events. */
@@ -23,6 +24,8 @@ export interface StatsMeter {
   skipped(ms: number): void;
   /** An event handed to superdough, `late` if its onset had passed. */
   event(late: boolean): void;
+  /** The limiter pulled the mix down by `db` (0 or less) just now. */
+  reduced(db: number): void;
   /** The counts since the last take, which starts the next second. */
   take(audio: AudioReadings): MusicStats;
 }
@@ -39,6 +42,7 @@ export function createMeter(): StatsMeter {
   let skippedMs = 0;
   let events = 0;
   let lateEvents = 0;
+  let maxReductionDb = 0;
   return {
     tick(atMs, intervalMs) {
       ticks += 1;
@@ -63,6 +67,9 @@ export function createMeter(): StatsMeter {
         lateEvents += 1;
       }
     },
+    reduced(db) {
+      maxReductionDb = Math.min(maxReductionDb, db);
+    },
     take(audio) {
       const taken = {
         ticks,
@@ -72,6 +79,7 @@ export function createMeter(): StatsMeter {
         skippedMs,
         events,
         lateEvents,
+        maxReductionDb,
         ...audio,
       };
       ticks = 0;
@@ -81,6 +89,7 @@ export function createMeter(): StatsMeter {
       skippedMs = 0;
       events = 0;
       lateEvents = 0;
+      maxReductionDb = 0;
       return taken;
     },
   };
@@ -132,7 +141,7 @@ function ms(seconds: number): number {
  * `context`'s latencies, and Chromium's `playoutStats` where it has them:
  * fallback frames are the audio thread running dry, which is a crackle.
  */
-export function readAudio(context: AudioContext): AudioReadings {
+export function readAudio(context: AudioContext, underruns: UnderrunProbe): AudioReadings {
   const playout = record((context as unknown as Record<string, unknown>).playoutStats);
   const glitches = playout?.fallbackFramesEvents;
   // A DOMHighResTimeStamp: milliseconds already.
@@ -142,5 +151,6 @@ export function readAudio(context: AudioContext): AudioReadings {
     outputLatencyMs: ms(context.outputLatency),
     glitches: typeof glitches === "number" ? glitches : null,
     glitchMs: typeof fallback === "number" ? fallback : null,
+    ...underruns.take(),
   };
 }

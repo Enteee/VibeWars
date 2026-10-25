@@ -176,6 +176,9 @@ describe("measuring the music (#420)", () => {
     outputLatencyMs: 32,
     glitches: null,
     glitchMs: null,
+    underruns: null,
+    underrunMs: null,
+    maxReductionDb: 0,
   };
 
   it("asks every host to measure first, and hands on what it reports", () => {
