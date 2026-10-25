@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { segment, type Segment } from "../geometry.js";
+import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { applyEffects } from "../skills/effects.js";
+import { withAttackDuration } from "../skills/testing.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import { tallyCombat, type CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
@@ -12,7 +15,7 @@ const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 const FIREBALL = "elementalist.fireball";
 const ARMOR_OF_EARTH = "elementalist.armor-of-earth";
-const SWIFT_CHOP = "warrior.swift-chop";
+const OPENING_CUT = "warrior.sever-artery-lite";
 
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   return {
@@ -21,12 +24,12 @@ function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   };
 }
 
-/** A swordsman at rank 12 who also knows a little fire, and Swift Chop. */
+/** A swordsman at rank 12 who also knows a little fire, and Opening Cut. */
 function swordsman(id: string, spawn: Vec2): ParticipantSpec {
   return {
     id,
     team: 0,
-    skillBar: [FIREBALL, ARMOR_OF_EARTH, SWIFT_CHOP],
+    skillBar: [FIREBALL, ARMOR_OF_EARTH, OPENING_CUT],
     attributeRanks: new Map([
       ["warrior.swordsmanship", 12],
       ["elementalist.fire-magic", 12],
@@ -250,8 +253,9 @@ describe("skills and the swing", () => {
   it("an attack skill at an enemy starts an attack on them, and swings follow", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     match.setTarget("a", "d");
+    get(match, "a").combatant.adrenaline = 3;
     expect(match.requestSkill("a", 2)?.check).toEqual({ ok: true });
-    const log = stepFor(match, 2);
+    const log = stepFor(match, 3);
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
     expect(swings(log).length).toBeGreaterThan(0);
   });
@@ -302,8 +306,9 @@ describe("adrenaline", () => {
 
     const chop = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     chop.setTarget("a", "d");
+    get(chop, "a").combatant.adrenaline = 3;
     expect(chop.requestSkill("a", 2)?.check).toEqual({ ok: true });
-    stepFor(chop, DT);
+    stepFor(chop, 0.7);
     expect(get(chop, "a").combatant.adrenaline).toBe(RULES.resources.adrenalinePerHit);
   });
 
@@ -577,10 +582,16 @@ describe("aftercast (#317)", () => {
     ).toBeLessThanOrEqual(DT);
   });
 
-  it("an attack skill has none: the next skill can be used at once", () => {
+  it("an attack skill has its own instead: the recovery from its blow, as long as the wind-up", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     match.setTarget("a", "d");
+    get(match, "a").combatant.adrenaline = 3;
     match.requestSkill("a", 2);
+    const hitTicks = Math.ceil(WEAPONS.sword.attackIntervalSeconds / 2 / DT);
+    stepFor(match, hitTicks * DT);
+    expect(get(match, "a").combatant.cast.inAftercast).toBe(true);
+    stepFor(match, (hitTicks - 1) * DT);
+    expect(get(match, "a").combatant.cast.inAftercast).toBe(true);
     match.step(DT);
     expect(get(match, "a").combatant.cast.inAftercast).toBe(false);
     expect(match.requestSkill("a", 1)).toEqual({ skillId: ARMOR_OF_EARTH, check: { ok: true } });
@@ -663,16 +674,19 @@ describe("aftercast (#317)", () => {
     expect(get(match, "a").combatant.cast.activeCast?.skillId).toBe(ARMOR_OF_EARTH);
   });
 
-  it("an attack skill pressed in it goes off at once", () => {
+  it("an attack skill pressed in it waits for it, as it winds up like a cast (ADR-0029)", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     match.setTarget("a", "d");
     match.requestSkill("a", 1);
     stepFor(match, 0.75);
     get(match, "a").combatant.adrenaline = 25;
-    expect(match.requestSkill("a", 2)).toEqual({ skillId: SWIFT_CHOP, check: { ok: true } });
-    const log = stepFor(match, DT);
-    expect(log.map((entry) => entry.skillId)).toEqual([SWIFT_CHOP]);
-    expect(get(match, "a").combatant.cast.inAftercast).toBe(true);
+    expect(match.requestSkill("a", 2)).toEqual({
+      skillId: OPENING_CUT,
+      check: { ok: true },
+      queued: true,
+    });
+    stepFor(match, AFTERCAST);
+    expect(get(match, "a").combatant.cast.activeCast?.skillId).toBe(OPENING_CUT);
   });
 
   it("a skill that could not go off is refused at the press, not queued", () => {
@@ -724,5 +738,128 @@ describe("aftercast (#317)", () => {
     match.cancelAction("a");
     stepFor(match, AFTERCAST + DT);
     expect(get(match, "a").combatant.cast.isCasting).toBe(false);
+  });
+});
+
+describe("attack skills ride the weapon (ADR-0029)", () => {
+  const SWIFT_CHOP = "warrior.swift-chop";
+  const BACKBREAKER = "warrior.backbreaker";
+
+  /** A rank-12 warrior with `weapon`, Swift Chop and Backbreaker, and plenty of adrenaline. */
+  function warrior(id: string, weapon: Weapon, attributeId: string): ParticipantSpec {
+    return {
+      ...swordsman(id, vec2(0, 0)),
+      skillBar: [SWIFT_CHOP, BACKBREAKER],
+      attributeRanks: new Map([
+        ["warrior.axe-mastery", 12],
+        ["warrior.hammer-mastery", 12],
+      ]),
+      equipment: wielding(weapon, attributeId),
+    };
+  }
+  const axeman = (id = "a") => warrior(id, WEAPONS.axe, "warrior.axe-mastery");
+  const hammerer = (id = "a") => warrior(id, WEAPONS.hammer, "warrior.hammer-mastery");
+
+  /** Ticks until a cast of `seconds` goes off, as `CastState.advance` counts them. */
+  const ticksFor = (seconds: number) => Math.ceil(seconds / DT - 1e-9);
+
+  function skillHits(log: readonly CombatLogEntry[], skillId: string): CombatLogEntry[] {
+    return log.filter((entry) => entry.skillId === skillId);
+  }
+
+  it("Swift Chop on an axe hits halfway through a swing, recovers as long, then swings again", () => {
+    const match = sim(axeman(), dummy("d", vec2(40, 0)));
+    match.setTarget("a", "d");
+    expect(match.requestSkill("a", 0)?.check).toEqual({ ok: true });
+    const log = stepFor(match, 4);
+
+    const half = WEAPONS.axe.attackIntervalSeconds / 2;
+    const chop = skillHits(log, SWIFT_CHOP);
+    expect(chop).toHaveLength(1);
+    expect(chop[0]?.atSeconds).toBeCloseTo(ticksFor(half) * DT, 6);
+    expect(chop[0]?.events.map((event) => event.kind)).toEqual(["damage"]);
+
+    const ends = (chop[0]?.atSeconds ?? 0) + half;
+    const next = swings(log)[0]?.atSeconds ?? 0;
+    expect(Math.abs(next - ends - WEAPONS.axe.attackIntervalSeconds)).toBeLessThanOrEqual(DT);
+  });
+
+  it("shows the wind-up on the cast bar until the hit", () => {
+    const match = sim(axeman(), dummy("d", vec2(40, 0)));
+    match.setTarget("a", "d");
+    match.requestSkill("a", 0);
+    expect(get(match, "a").combatant.cast.activeCast).toMatchObject({
+      skillId: SWIFT_CHOP,
+      totalSeconds: WEAPONS.axe.attackIntervalSeconds / 2,
+    });
+  });
+
+  it("Backbreaker on a hammer hits at half the hammer's 1.75 s", () => {
+    const match = sim(hammerer(), dummy("d", vec2(40, 0)));
+    match.setTarget("a", "d");
+    get(match, "a").combatant.adrenaline = 9;
+    expect(match.requestSkill("a", 1)?.check).toEqual({ ok: true });
+    const log = stepFor(match, 2);
+    expect(skillHits(log, BACKBREAKER)[0]?.atSeconds).toBeCloseTo(ticksFor(0.875) * DT, 6);
+  });
+
+  it("pressed mid-swing, the swing is lost: no auto hit before the skill's", () => {
+    const match = sim(axeman(), dummy("d", vec2(40, 0)));
+    match.requestAttack("a", "d");
+    match.setTarget("a", "d");
+    stepFor(match, 1.2);
+    match.requestSkill("a", 0);
+    expect(get(match, "a").combatant.attack?.swingElapsed).toBe(0);
+
+    const log = stepFor(match, 1);
+    expect(swings(log)).toEqual([]);
+    expect(skillHits(log, SWIFT_CHOP)).toHaveLength(1);
+  });
+
+  it("is refused with the wrong weapon, and costs nothing", () => {
+    const match = sim(
+      warrior("a", WEAPONS.sword, "warrior.swordsmanship"),
+      dummy("d", vec2(40, 0)),
+    );
+    match.setTarget("a", "d");
+    const energy = get(match, "a").combatant.energy;
+    expect(match.requestSkill("a", 0)?.check).toEqual({ ok: false, reason: "wrong-weapon" });
+    expect(get(match, "a").combatant.energy).toBe(energy);
+  });
+
+  it("an interrupt in the wind-up stops the hit, and the skill recharges", () => {
+    const match = sim(axeman(), dummy("d", vec2(40, 0)));
+    match.setTarget("a", "d");
+    match.requestSkill("a", 0);
+    stepFor(match, 0.3);
+    const a = get(match, "a").combatant;
+    applyEffects([{ kind: "interrupt" }], {
+      caster: get(match, "d").combatant,
+      target: a,
+      rng: createRng(1),
+      rules: RULES.combat,
+    });
+
+    const log = stepFor(match, 1);
+    expect(skillHits(log, SWIFT_CHOP)).toEqual([]);
+    expect(a.cast.rechargeRemaining.get(SWIFT_CHOP)).toBeGreaterThan(0);
+  });
+
+  it("a faster attack speed shortens both the swing and the attack skill", () => {
+    withAttackDuration({ bleeding: 0.67 }, () => {
+      const fast = WEAPONS.axe.attackIntervalSeconds * 0.67;
+
+      const swinging = sim(axeman(), dummy("d", vec2(40, 0)));
+      get(swinging, "a").combatant.statuses.apply("bleeding", 100, "x");
+      swinging.requestAttack("a", "d");
+      const first = swings(stepFor(swinging, 2))[0]?.atSeconds ?? 0;
+      expect(Math.abs(first - fast)).toBeLessThanOrEqual(DT);
+
+      const chopping = sim(axeman(), dummy("d", vec2(40, 0)));
+      get(chopping, "a").combatant.statuses.apply("bleeding", 100, "x");
+      chopping.setTarget("a", "d");
+      chopping.requestSkill("a", 0);
+      expect(get(chopping, "a").combatant.cast.activeCast?.totalSeconds).toBeCloseTo(fast / 2, 9);
+    });
   });
 });

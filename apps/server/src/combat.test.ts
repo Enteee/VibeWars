@@ -323,7 +323,22 @@ describe("networked combat", () => {
   });
 
   it("doubles a dazed player's cast, and syncs the doubled total for the cast bar", async () => {
-    const { roomA, roomB } = await joinPair();
+    // Broad Head Arrow needs a bow (ADR-0029): A is a ranger.
+    const roomA = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+      build: {
+        name: "Archer",
+        primaryProfession: "ranger",
+        secondaryProfession: undefined,
+        attributes: [{ attributeId: "ranger.marksmanship", rank: 12 }],
+        skillBar: ["ranger.broad-head-arrow", null, null, null, null, null, null, null],
+        equipment: defaultBuildEquipment("ranger"),
+      },
+    });
+    const roomB = await new Client(endpoint).joinById(roomA.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    await waitFor(() => roomA.state.players.has(roomB.sessionId), { label: "both players" });
     await closeDistance(roomA, roomB.sessionId, 300);
     roomA.send("intent", { kind: "target", targetSessionId: roomB.sessionId });
     await waitFor(
@@ -332,10 +347,7 @@ describe("networked combat", () => {
     );
 
     // Broad Head Arrow dazes whoever it hits.
-    roomA.send("intent", {
-      kind: "use-skill",
-      slot: DEFAULT_SKILL_BAR.indexOf("ranger.broad-head-arrow"),
-    });
+    roomA.send("intent", { kind: "use-skill", slot: 0 });
     await waitFor(
       () => [...(roomB.state.players.get(roomB.sessionId)?.statuses ?? [])].includes("dazed"),
       {

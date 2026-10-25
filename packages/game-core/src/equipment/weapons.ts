@@ -1,4 +1,5 @@
 import { RANGE_MELEE, RANGE_SPELL } from "../distances.js";
+import type { AttackWeaponClass } from "../skills/types.js";
 import { EQUIPMENT_REQUIREMENT_RANK, type DamageType, type EquipmentRequirement } from "./types.js";
 
 /**
@@ -369,4 +370,23 @@ export const ALL_WEAPONS: readonly Weapon[] = Object.freeze(Object.values(WEAPON
 /** A two-handed weapon leaves no hand free for a shield or a focus. */
 export function allowsOffhand(weapon: Weapon): boolean {
   return weapon.grip === "one-handed";
+}
+
+const MELEE_WEAPONS: readonly WeaponId[] = ["sword", "axe", "hammer", "daggers", "scythe", "spear"];
+
+/** The weapons each class of attack skill can be used with (ADR-0029). */
+const WIELDS: Readonly<Record<AttackWeaponClass, readonly WeaponId[]>> = Object.freeze({
+  axe: ["axe"],
+  sword: ["sword"],
+  hammer: ["hammer"],
+  daggers: ["daggers"],
+  scythe: ["scythe"],
+  spear: ["spear"],
+  bow: ["flatbow", "shortbow", "longbow", "recurve-bow", "hornbow"],
+  melee: MELEE_WEAPONS,
+});
+
+/** Whether `weaponId` is one an attack skill needing `required` can be used with. */
+export function wieldsFor(weaponId: WeaponId, required: AttackWeaponClass): boolean {
+  return WIELDS[required].includes(weaponId);
 }

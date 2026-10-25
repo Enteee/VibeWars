@@ -2,14 +2,20 @@ import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
-import { createRng } from "../rng.js";
+import { createRng, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
-import { weaponAttributeMultiplier } from "./damage.js";
+import { getSkill } from "./catalog.js";
+import { mitigate, weaponAttributeMultiplier } from "./damage.js";
 import type { CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
-import { doubleStrikeChance, resolveSwing } from "./weapon-attack.js";
-import type { Combatant } from "./types.js";
+import {
+  attackDurationSeconds,
+  doubleStrikeChance,
+  resolveAttackSkill,
+  resolveSwing,
+} from "./weapon-attack.js";
+import type { Combatant, Skill } from "./types.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.combat;
 
@@ -161,5 +167,92 @@ describe("resolveSwing", () => {
     expect(
       resolveSwing({ attacker: sword, target, candidates: [], rng: createRng(6), rules: RULES }),
     ).toEqual([]);
+  });
+});
+
+describe("resolveAttackSkill (ADR-0029)", () => {
+  const swiftChop = getSkill("warrior.swift-chop");
+  const openingCut = getSkill("warrior.sever-artery-lite");
+  const barrage = getSkill("ranger.barrage");
+
+  /** A stream whose damage rolls are all `roll`, and whose floats are all `float`. */
+  const fixed = (roll: number, float = 0.5): SimulationRng =>
+    Object.assign(createRng(1), { nextInt: () => roll, nextFloat: () => float });
+
+  function resolve(
+    skill: Skill | undefined,
+    caster: Combatant,
+    targets: Combatant[],
+    rng = fixed(10),
+  ) {
+    if (skill === undefined) {
+      throw new Error("missing skill");
+    }
+    return resolveAttackSkill({ skill, caster, targets, rng, rules: RULES });
+  }
+
+  const victim = (id = "t"): Combatant =>
+    makeCombatant({ id, team: 1, health: 1e6, maxHealth: 1e6 });
+
+  it("is one blow: the weapon's roll times the attribute, plus the bonus, then armor once", () => {
+    const axe = attacker(WEAPONS.axe, "warrior.axe-mastery", 12);
+    const target = victim();
+    const events = resolve(swiftChop, axe, [target]);
+
+    const expected = mitigate(
+      {
+        amount: 10 * weaponAttributeMultiplier(12, RULES) + 16,
+        type: WEAPONS.axe.damageType,
+        source: "weapon",
+        armorPenetration: WEAPONS.axe.armorPenetration,
+      },
+      target,
+      RULES,
+    );
+    expect(events).toEqual([{ kind: "damage", targetId: "t", amount: expected }]);
+  });
+
+  it("lands its riders on whoever the blow hit", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    const target = victim();
+    const events = resolve(openingCut, sword, [target]);
+    expect(events.map((event) => event.kind)).toEqual(["damage", "status-applied"]);
+    expect(target.statuses.has("bleeding")).toBe(true);
+  });
+
+  it("blinded, a miss is an attack-missed and none of the riders", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    sword.statuses.apply("blind", 10, "foe");
+    const target = victim();
+    const events = resolve(openingCut, sword, [target], fixed(10, 0.5));
+    expect(events).toEqual([{ kind: "attack-missed", targetId: "t" }]);
+    expect(target.statuses.has("bleeding")).toBe(false);
+    expect(target.health).toBe(target.maxHealth);
+  });
+
+  it("draws no miss roll for an attacker who is not blind", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    const rng = createRng(1);
+    const replay = createRng(1);
+    resolve(openingCut, sword, [victim()], rng);
+    replay.nextInt(WEAPONS.sword.damageMin, WEAPONS.sword.damageMax + 1);
+    expect(rng.getState()).toBe(replay.getState());
+  });
+
+  it("strikes every victim of an area, each with its own blow", () => {
+    const bow = attacker(WEAPONS.longbow, "ranger.marksmanship");
+    const events = resolve(barrage, bow, [victim("a"), victim("b"), victim("c")]);
+    expect(events.map((event) => event.kind === "damage" && event.targetId)).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
+  });
+});
+
+describe("attackDurationSeconds", () => {
+  it("is the base duration with no attack-speed effect", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    expect(attackDurationSeconds(sword, 1.33)).toBe(1.33);
   });
 });

@@ -7,6 +7,7 @@ import {
   getStatusDefinition,
   type StatusId,
 } from "./status.js";
+import { withAttackDuration } from "./testing.js";
 
 const ALL_STATUS_IDS = Object.keys(STATUS_DEFINITIONS) as StatusId[];
 
@@ -43,7 +44,8 @@ describe("status definitions", () => {
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
         def.maxHealthMultiplier !== 1 ||
-        def.castTimeMultiplier !== 1;
+        def.castTimeMultiplier !== 1 ||
+        def.attackDurationMultiplier !== 1;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -235,5 +237,38 @@ describe("aggregateModifiers", () => {
     expect(aggregateModifiers(set.active).attackMissChance).toBe(
       getStatusDefinition("blind").attackMissChance,
     );
+  });
+});
+
+describe("attack duration (ADR-0029)", () => {
+  function multiplierWith(statuses: Partial<Record<StatusId, number>>): number {
+    return withAttackDuration(statuses, () => {
+      const set = new StatusSet();
+      for (const id of Object.keys(statuses)) {
+        set.apply(id as StatusId, 10, "a");
+      }
+      return aggregateModifiers(set.active).attackDurationMultiplier;
+    });
+  }
+
+  it("is 1 with nothing on, and no catalog status sets it", () => {
+    expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
+    for (const id of ALL_STATUS_IDS) {
+      expect(getStatusDefinition(id).attackDurationMultiplier, id).toBe(1);
+    }
+  });
+
+  it("takes only the strongest speed-up", () => {
+    expect(multiplierWith({ bleeding: 0.67 })).toBe(0.67);
+    expect(multiplierWith({ bleeding: 0.67, poison: 0.75 })).toBe(0.67);
+  });
+
+  it("multiplies the strongest speed-up by the strongest slow-down", () => {
+    expect(multiplierWith({ bleeding: 0.67, poison: 1.2 })).toBeCloseTo(0.804, 9);
+    expect(multiplierWith({ bleeding: 0.67, poison: 1.2, burning: 1.1 })).toBeCloseTo(0.804, 9);
+  });
+
+  it("leaves the table as it was", () => {
+    expect(getStatusDefinition("bleeding").attackDurationMultiplier).toBe(1);
   });
 });

@@ -5,7 +5,14 @@ import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { distance } from "../vec2.js";
 import { mitigate, weaponAttributeMultiplier, type DamagePacket } from "./damage.js";
-import { applyDamage, type CombatEvent } from "./effects.js";
+import {
+  applyDamage,
+  applySkillEffects,
+  type CombatEvent,
+  type SkillResolution,
+} from "./effects.js";
+import { resolveMagnitude } from "./scaling.js";
+import { aggregateModifiers } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
 import { attackMissChanceOf } from "./tick.js";
 import type { Combatant } from "./types.js";
@@ -39,6 +46,15 @@ export interface Swing {
   readonly candidates: readonly TargetCandidate[];
   readonly rng: SimulationRng;
   readonly rules: CombatRules;
+}
+
+/**
+ * How long an attack of `baseSeconds` takes this combatant, after
+ * attack-speed effects (ADR-0029): a swing's interval, or an attack
+ * skill's whole duration. Cast-speed effects do not apply.
+ */
+export function attackDurationSeconds(combatant: Combatant, baseSeconds: number): number {
+  return baseSeconds * aggregateModifiers(combatant.statuses.active).attackDurationMultiplier;
 }
 
 /** The attacker's rank in `attributeId`: 0 for fists, which have none. */
@@ -104,10 +120,14 @@ export function blindMisses(attacker: Combatant, rng: SimulationRng): boolean {
   return chance > 0 && rng.nextFloat() < chance;
 }
 
-/** A blow that connects: the damage roll, mitigated by the victim's armor. */
+/**
+ * A blow that connects: the damage roll plus `bonus` (an attack skill's,
+ * ADR-0029; 0 for a plain swing), mitigated once by the victim's armor.
+ */
 export function landBlow(
   snapshot: WeaponSnapshot,
   victim: Combatant,
+  bonus: number,
   rng: SimulationRng,
   rules: CombatRules,
   events: CombatEvent[],
@@ -117,8 +137,9 @@ export function landBlow(
   const packet: DamagePacket = {
     amount:
       base *
-      weaponAttributeMultiplier(snapshot.rank, rules) *
-      (requirementMet ? 1 : rules.unmetRequirementMultiplier),
+        weaponAttributeMultiplier(snapshot.rank, rules) *
+        (requirementMet ? 1 : rules.unmetRequirementMultiplier) +
+      bonus,
     type: weapon.damageType,
     source: "weapon",
     armorPenetration: weapon.armorPenetration,
@@ -136,7 +157,7 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
     events.push({ kind: "attack-missed", targetId: victim.id });
     return;
   }
-  landBlow(weaponSnapshotOf(attacker), victim, rng, rules, events);
+  landBlow(weaponSnapshotOf(attacker), victim, 0, rng, rules, events);
 }
 
 /**
@@ -160,4 +181,32 @@ export function resolveSwing(swing: Swing): CombatEvent[] {
     }
   }
   return events;
+}
+
+/**
+ * Resolve an attack skill at its hit (ADR-0029): one blow of the weapon on
+ * each victim, the primary first, with the skill's bonus added before
+ * armor. A victim the blow misses (blind) gets none of the skill's
+ * riders; the ones it hits get them all. No double strike and no cleave:
+ * an area, as Barrage's, is already the skill's own.
+ */
+export function resolveAttackSkill(resolution: SkillResolution): CombatEvent[] {
+  const { skill, caster, rng, rules } = resolution;
+  const bonusDamage = skill.attack?.bonusDamage;
+  const bonus = bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster);
+  const snapshot = weaponSnapshotOf(caster);
+  const events: CombatEvent[] = [];
+  const hit: Combatant[] = [];
+  for (const victim of resolution.targets) {
+    if (victim.dead) {
+      continue;
+    }
+    if (blindMisses(caster, rng)) {
+      events.push({ kind: "attack-missed", targetId: victim.id });
+      continue;
+    }
+    landBlow(snapshot, victim, bonus, rng, rules, events);
+    hit.push(victim);
+  }
+  return [...events, ...applySkillEffects({ ...resolution, targets: hit })];
 }

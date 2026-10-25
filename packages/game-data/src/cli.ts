@@ -73,6 +73,9 @@ function printStatuses(): void {
     if (status.castTimeMultiplier !== 1) {
       parts.push(`cast x${String(status.castTimeMultiplier)}`);
     }
+    if (status.attackDurationMultiplier !== 1) {
+      parts.push(`attack x${String(status.attackDurationMultiplier)}`);
+    }
     console.info(`${status.id.padEnd(14)} ${status.category.padEnd(12)} ${parts.join(", ")}`);
   }
 }
