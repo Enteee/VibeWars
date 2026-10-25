@@ -84,6 +84,11 @@ export class ArenaScene extends Phaser.Scene {
     { image: Phaser.GameObjects.Image; to: { x: number; y: number }; endedAt: number | undefined }
   >();
   private readonly clock = new MatchClock();
+  /**
+   * Shots that have ended, kept until they leave the state: if the clock
+   * steps back after an overshot, a faded shot must not fly again.
+   */
+  private readonly endedShots = new Set<number>();
   private floatingTextObjects = new Map<number, Phaser.GameObjects.Text>();
   /**
    * Status icons per actor id, reused frame to frame: hidden when not
@@ -206,11 +211,17 @@ export class ArenaScene extends Phaser.Scene {
     this.clock.observe(this.snapshot.clock, now);
     const clock = this.clock.read(now);
     const flying = new Set<number>();
+    const sent = new Set(this.snapshot.projectiles.map((shot) => shot.id));
+    for (const id of this.endedShots) {
+      if (!sent.has(id)) {
+        this.endedShots.delete(id);
+      }
+    }
     for (const shot of this.snapshot.projectiles) {
       const position = projectilePosition(shot, clock);
       const shown = this.projectileImages.get(shot.id);
       // An ended shot never flies again, even while its id is still sent.
-      if (position === undefined || shown?.endedAt !== undefined) {
+      if (position === undefined || this.endedShots.has(shot.id)) {
         continue;
       }
       flying.add(shot.id);
@@ -227,6 +238,9 @@ export class ArenaScene extends Phaser.Scene {
     for (const [id, shown] of this.projectileImages) {
       if (flying.has(id)) {
         continue;
+      }
+      if (sent.has(id)) {
+        this.endedShots.add(id);
       }
       if (shown.endedAt === undefined && fade) {
         shown.endedAt = now;
