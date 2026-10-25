@@ -68,7 +68,13 @@ export type Behaviour =
       readonly everySeconds: number;
       readonly targeting: Targeting;
     }
-  | { readonly kind: "parallel"; readonly behaviours: readonly Behaviour[] };
+  | { readonly kind: "parallel"; readonly behaviours: readonly Behaviour[] }
+  /**
+   * Attack the target with the weapon, as Space does (#162), and ask again
+   * whenever no attack is going: after the target's respawn, or the
+   * dummy's own reset.
+   */
+  | { readonly kind: "auto-attack"; readonly targeting: Targeting };
 
 /**
  * When a participant is put back as it started: the respawn path, at its
@@ -92,6 +98,8 @@ export interface BehaviourIntent {
   readonly moveDirection: Vec2;
   readonly targetId: string | undefined;
   readonly useSkillId: string | undefined;
+  /** Whom to attack with the weapon, through `requestAttack`. */
+  readonly attackTargetId: string | undefined;
   readonly applyStatuses: readonly StatusApplication[];
 }
 
@@ -184,6 +192,7 @@ const STAND_STILL: BehaviourIntent = {
   moveDirection: ZERO,
   targetId: undefined,
   useSkillId: undefined,
+  attackTargetId: undefined,
   applyStatuses: [],
 };
 
@@ -207,6 +216,10 @@ export function decide(
       return statusCadence(behaviour, cursor, context);
     case "parallel":
       return parallel(behaviour, cursor, context);
+    case "auto-attack": {
+      const targetId = resolveTargeting(behaviour.targeting, context);
+      return { ...STAND_STILL, targetId, attackTargetId: targetId };
+    }
   }
 }
 
@@ -344,6 +357,7 @@ function parallel(
     moveDirection: intents.find((intent) => intent.moveDirection !== ZERO)?.moveDirection ?? ZERO,
     targetId: (casting ?? intents.find((intent) => intent.targetId !== undefined))?.targetId,
     useSkillId: casting?.useSkillId,
+    attackTargetId: intents.find((intent) => intent.attackTargetId !== undefined)?.attackTargetId,
     applyStatuses: intents.flatMap((intent) => intent.applyStatuses),
   };
 }

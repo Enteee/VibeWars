@@ -294,3 +294,31 @@ test("(13) a recharging skill shows the clock-wipe and the seconds left, then cl
   await expect(slot).not.toHaveAttribute("aria-label");
   await expect(slot).not.toHaveClass(/\bis-recharging\b/);
 });
+
+test("(14) in Weapon DPS, Space swings and the meter's weapon row counts it (#162)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("weapon-dps");
+  await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
+  await takeControl(page);
+
+  await page.keyboard.press(" ");
+  // "weapon / skills": the weapon's share is no longer 0.
+  await expect(meter(page, "weapon / skills")).not.toHaveText(/^0 \//, { timeout: 3000 });
+  // Named for the weapon that swung, by the character who swung it.
+  await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Melee dummy/);
+});
+
+test("(15) a weapon drill is never dimmed for want of a skill (#162)", async ({ page }) => {
+  await openTraining(page);
+  const overlay = page.locator(".training-overlay");
+  // An empty bar, as a fresh character has.
+  await page.locator(".skill-slot", { hasText: "Fireball" }).locator(".skill-slot-clear").click();
+  await expect(page.locator(".training-skill")).toHaveCount(0);
+  await expect(overlay).toHaveText("Equip a skill to start testing.");
+
+  await page.locator("select.training-scenario").selectOption("dodge-drill");
+  await expect(page.locator(".training-log")).toContainText("── Dodge drill ──");
+  await expect(overlay).toBeHidden();
+});

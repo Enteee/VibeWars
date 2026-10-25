@@ -1,4 +1,5 @@
-import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
+import { WEAPONS, type WeaponId } from "../equipment/weapons.js";
 import type { MissingMechanic } from "../skills/coverage.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { Behaviour } from "./behaviour.js";
@@ -24,7 +25,8 @@ import type { ParticipantSpec } from "./simulation.js";
  * What a scenario exercises. Every missing mechanic is in the union too:
  * claiming one compiles, and the gate test then fails and says why.
  */
-export type TrainingMechanic = "spell-damage" | "armor" | "interrupts" | MissingMechanic;
+export type TrainingMechanic =
+  "spell-damage" | "armor" | "interrupts" | "auto-attacks" | "dodging" | MissingMechanic;
 
 /** One setting a scenario offers, generated into the editor's sub-controls. */
 export interface TrainingKnob {
@@ -48,6 +50,12 @@ export interface TrainingDummy {
   readonly skillBar: readonly string[];
   readonly attributeRanks: Readonly<Record<string, number>>;
   readonly behaviour: Behaviour;
+  /**
+   * What it carries (#162). A weapon whose attribute is fixed, scaling
+   * with that attribute's rank in `attributeRanks`. Without one it is
+   * unarmed.
+   */
+  readonly weapon?: WeaponId;
 }
 
 export interface TrainingScenario {
@@ -79,6 +87,26 @@ function target(id: string, label: string, position: Vec2, armor: number): Train
     skillBar: [],
     attributeRanks: {},
     behaviour: IDLE,
+  };
+}
+
+/** A dummy's gear: its armor, and its weapon if it has one. */
+function dummyEquipment(dummy: TrainingDummy): ResolvedEquipment {
+  const unarmed = unarmedResolvedEquipment(dummy.armor);
+  if (dummy.weapon === undefined) {
+    return unarmed;
+  }
+  const weapon = WEAPONS[dummy.weapon];
+  const { requirement } = weapon;
+  const attributeId = requirement.kind === "fixed" ? requirement.attributeId : undefined;
+  return {
+    ...unarmed,
+    mainHand: {
+      weapon,
+      attributeId,
+      requirementMet:
+        attributeId === undefined || (dummy.attributeRanks[attributeId] ?? 0) >= requirement.rank,
+    },
   };
 }
 
@@ -140,6 +168,42 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
       },
     ],
   },
+  {
+    id: "weapon-dps",
+    label: "Weapon DPS",
+    teaches: "What your weapon does per second: press Space and read the weapon row.",
+    mapId: "training-hall",
+    exercises: ["auto-attacks"],
+    knobs: [],
+    // One in melee reach of the spawn at (100, 210), bodies just apart,
+    // and one out at bow range, inside even a shortbow's reach.
+    dummies: [
+      target("melee", "Melee dummy (60 armor)", vec2(136, 210), 60),
+      target("ranged", "Bow-range dummy (60 armor)", vec2(480, 210), 60),
+    ],
+  },
+  {
+    id: "dodge-drill",
+    label: "Dodge drill",
+    teaches: "That an arrow lands where you would have been: turn after it leaves the bow.",
+    mapId: "training-hall",
+    exercises: ["dodging"],
+    knobs: [],
+    dummies: [
+      {
+        id: "archer",
+        label: "Longbow dummy",
+        team: 1,
+        position: vec2(500, 210),
+        armor: 60,
+        maxHealth: IMMORTAL,
+        skillBar: [],
+        attributeRanks: { "ranger.marksmanship": 12 },
+        behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
+        weapon: "longbow",
+      },
+    ],
+  },
 ];
 
 export function getTrainingScenario(id: string): TrainingScenario | undefined {
@@ -156,7 +220,7 @@ export function scenarioParticipants(
     team: dummy.team,
     skillBar: dummy.skillBar,
     attributeRanks: new Map(Object.entries(dummy.attributeRanks)),
-    equipment: unarmedResolvedEquipment(dummy.armor),
+    equipment: dummyEquipment(dummy),
     spawn: dummy.position,
     facing: facingToward(dummy.position, playerSpawn),
     maxHealth: dummy.maxHealth,

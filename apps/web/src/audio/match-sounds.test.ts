@@ -80,6 +80,7 @@ describe("attachMatchSounds", () => {
       casterSessionId: "foe",
       cause: "skill",
       skillId: "x",
+      weaponId: "",
       events: [{ kind: "damage", targetId: ME }],
     });
     refused();

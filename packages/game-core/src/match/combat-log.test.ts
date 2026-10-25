@@ -15,6 +15,7 @@ function hit(atSeconds: number, sourceId: string | undefined, amount: number): C
     cause: sourceId === undefined ? "degeneration" : "skill",
     sourceId,
     skillId: undefined,
+    weaponId: undefined,
     area: undefined,
     events: [{ kind: "damage", targetId: "target", amount }],
   };

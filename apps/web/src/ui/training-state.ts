@@ -61,15 +61,24 @@ export function resolveScenarioId(
   return scenarios[0]?.id;
 }
 
-/** What the arena overlay says, if anything covers it. */
+/**
+ * What the arena overlay says, if anything covers it. An empty bar is a
+ * hint only where skills are the point: a weapon drill is played with
+ * Space, so it stays uncovered, or the Dodge drill would shoot at a
+ * dimmed arena (#162).
+ */
 export function overlayMessage(
   problem: string | undefined,
   skillBar: readonly string[],
+  scenario: Pick<TrainingScenario, "exercises">,
 ): string | undefined {
   if (problem !== undefined) {
     return `This build cannot be tested: ${problem}`;
   }
-  if (skillBar.length === 0) {
+  const weaponDrill = scenario.exercises.some(
+    (mechanic) => mechanic === "auto-attacks" || mechanic === "dodging",
+  );
+  if (skillBar.length === 0 && !weaponDrill) {
     return "Equip a skill to start testing.";
   }
   return undefined;

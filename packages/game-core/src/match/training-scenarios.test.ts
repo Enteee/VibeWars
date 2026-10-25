@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import { MAX_ATTRIBUTE_RANK, isAffordable } from "../attributes.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { getAttribute } from "../professions.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { RANGE_SPELL } from "../distances.js";
 import { getSkill } from "../skills/catalog.js";
 import { MISSING_MECHANIC_DESCRIPTIONS } from "../skills/coverage.js";
-import { armorMultiplier } from "../skills/damage.js";
+import { armorMultiplier, weaponAttributeMultiplier } from "../skills/damage.js";
 import { describeSkill } from "../skills/describe.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation } from "./simulation.js";
@@ -201,5 +202,121 @@ describe("interrupt-timing", () => {
       }
     }
     expect(casts).toEqual([3, 16]);
+  });
+});
+
+/** A player at the scenario's spawn, holding `weapon` at rank 12 of its attribute. */
+function armedArena(played: TrainingScenario, seed: string, weapon: Weapon): MatchSimulation {
+  const map = MAPS[played.mapId];
+  if (map === undefined) {
+    throw new Error(`no map ${played.mapId}`);
+  }
+  const attributeId = weapon.requirement.kind === "fixed" ? weapon.requirement.attributeId : "";
+  return new MatchSimulation({
+    seed,
+    participants: [
+      {
+        id: "player",
+        team: PLAYER_TEAM,
+        skillBar: [],
+        attributeRanks: new Map([[attributeId, 12]]),
+        equipment: {
+          ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+          mainHand: { weapon, attributeId, requirementMet: true },
+        },
+        maxHealth: 1e6,
+        spawn: map.playerSpawn,
+        facing: 0,
+      },
+      ...scenarioParticipants(played, map.playerSpawn),
+    ],
+  });
+}
+
+describe("weapon-dps, headless", () => {
+  it("measures a sword at its own damage range, swing interval and rank", () => {
+    const sword = WEAPONS.sword;
+    const sim = armedArena(scenario("weapon-dps"), "dps", sword);
+    expect(sim.requestAttack("player", "melee")).toEqual({ ok: true });
+
+    const seconds = 30;
+    const hits: number[] = [];
+    for (let i = 0; i < Math.round(seconds / DT); i += 1) {
+      for (const entry of sim.step(DT).log) {
+        if (entry.cause === "weapon" && entry.sourceId === "player") {
+          expect(entry.weaponId).toBe("sword");
+          for (const event of entry.events) {
+            if (event.kind === "damage" && event.targetId === "melee") {
+              hits.push(event.amount);
+            }
+          }
+        }
+      }
+    }
+    // Already in reach: the first swing lands one interval in.
+    expect(hits).toHaveLength(Math.floor(seconds / sword.attackIntervalSeconds));
+    const scale = weaponAttributeMultiplier(12, RULES.combat) * armorMultiplier(60, RULES.combat);
+    const average = hits.reduce((sum, hit) => sum + hit, 0) / hits.length;
+    expect(average).toBeGreaterThanOrEqual(sword.damageMin * scale);
+    expect(average).toBeLessThanOrEqual(sword.damageMax * scale);
+  });
+});
+
+describe("dodge-drill, headless", () => {
+  /**
+   * Ten of the archer's shots land on a player who walks round it as
+   * `turn` says: 0 stands still, 1 or -1 walks the circle one way or the
+   * other. `released` is true on the tick a new shot leaves the bow. How
+   * many of the ten hit. Round it, not away, so the walk never leaves the
+   * bow's reach and the archer never stops to close in.
+   */
+  function hitsOutOfTen(turn: (released: boolean) => 0 | 1 | -1): number {
+    const sim = armedArena(scenario("dodge-drill"), "dodge", WEAPONS.sword);
+    let landed = 0;
+    let hits = 0;
+    let shots = 0;
+    for (let i = 0; i < Math.round(60 / DT) && landed < 10; i += 1) {
+      const released = sim.projectiles.length > shots;
+      shots = sim.projectiles.length;
+      const from = sim.get("archer")?.position ?? vec2(0, 0);
+      const at = sim.get("player")?.position ?? vec2(0, 0);
+      const way = turn(released);
+      // Along the tangent: a steady walk at a steady distance.
+      sim.setInputDirection("player", vec2(-(at.y - from.y) * way, (at.x - from.x) * way));
+      for (const entry of sim.step(DT).log) {
+        if (entry.cause !== "weapon" || entry.sourceId !== "archer") {
+          continue;
+        }
+        expect(entry.weaponId).toBe("longbow");
+        for (const event of entry.events) {
+          if (event.kind === "damage" || event.kind === "attack-dodged") {
+            landed += 1;
+            hits += event.kind === "damage" ? 1 : 0;
+          }
+        }
+      }
+    }
+    expect(landed).toBe(10);
+    return hits;
+  }
+
+  it("hits a player who stands still, every time", () => {
+    expect(hitsOutOfTen(() => 0)).toBe(10);
+  });
+
+  it("hits a player who walks steadily, every time: the shot leads them", () => {
+    expect(hitsOutOfTen(() => 1)).toBe(10);
+  });
+
+  it("never hits a player who turns round as each arrow leaves the bow", () => {
+    let way: 1 | -1 = 1;
+    expect(
+      hitsOutOfTen((released) => {
+        if (released) {
+          way = way === 1 ? -1 : 1;
+        }
+        return way;
+      }),
+    ).toBe(0);
   });
 });
