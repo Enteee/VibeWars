@@ -30,6 +30,7 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import { RELEASE_AT, diskHold, freeBytes, gib } from "./disk.mjs";
 import { obj, readInbox, SYSTEM } from "./protocol.mjs";
 
 /** Never less: an agent that ends turns instead of waiting cannot spin. */
@@ -58,6 +59,12 @@ const NOTICE_STALE_PAST = 10 * 60;
 
 /** The company-wide usage limit notice, under VIBEWARS_BOT_ROOT. */
 const NOTICE = "usage-limit.json";
+
+/** The company-wide disk hold notice, under VIBEWARS_BOT_ROOT (#358). */
+const DISK_NOTICE = "disk-hold.json";
+
+/** How often a disk hold looks at the disk again. */
+const DISK_POLL_MS = 60_000;
 
 /** How often a wait looks at the inbox. */
 const POLL_MS = 2000;
@@ -215,6 +222,45 @@ function tellCompany(root, name, text) {
 }
 
 /**
+ * Block while the disk is nearly full (#358); returns at once otherwise.
+ * Nine loops may all be here: creating the notice file is what makes one of
+ * them say so, and removing it what makes one say the hold is over. A turn
+ * already running is not stopped; only the next one waits.
+ *
+ * @param {string} root VIBEWARS_BOT_ROOT
+ * @param {string} dir a directory on the filesystem to watch
+ * @returns {Promise<void>}
+ */
+async function holdForDisk(root, dir) {
+  const file = path.join(root, DISK_NOTICE);
+  let holding = fs.existsSync(file);
+  for (;;) {
+    const free = freeBytes(dir);
+    holding = diskHold({ freeBytes: free, holding });
+    if (!holding) {
+      try {
+        fs.unlinkSync(file);
+        tellCompany(root, "disk-hold-over", "Disk space is back; agent turns resume.");
+      } catch {
+        // Not held, or another loop already said so.
+      }
+      return;
+    }
+    try {
+      fs.writeFileSync(file, JSON.stringify({ at: Date.now() }), { flag: "wx" });
+      tellCompany(
+        root,
+        "disk-hold",
+        `Disk nearly full (${gib(free)} GiB free where the repository is): agent turns are on hold until ${gib(RELEASE_AT)} GiB is free.`,
+      );
+    } catch {
+      // Another loop already said so.
+    }
+    await sleep(DISK_POLL_MS);
+  }
+}
+
+/**
  * Has `dir`, a role's bus directory, mail its `tg` has not read yet?
  *
  * @param {string} dir
@@ -296,6 +342,10 @@ async function main() {
     }
     return;
   }
+  if (command === "disk") {
+    await holdForDisk(env("VIBEWARS_BOT_ROOT"), env("DEVENV_ROOT"));
+    return;
+  }
   if (command === "sleep") {
     await sleep(seconds(args[0]) * 1000);
     return;
@@ -343,7 +393,7 @@ async function main() {
   }
   console.error(
     "usage: agent-loop.mjs pause <previous> <ran> <failed> | wait <role> <seconds> | " +
-      "sleep <seconds> | gave-up <role> | limited <role> <state-dir> <previous> | resumed <role>",
+      "sleep <seconds> | disk | gave-up <role> | limited <role> <state-dir> <previous> | resumed <role>",
   );
   process.exit(2);
 }
