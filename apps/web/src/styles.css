@@ -769,7 +769,8 @@ body {
   position: relative;
   display: flex;
   gap: 0.3rem;
-  padding: 0.25rem 0.4rem;
+  /* Room for the recharge seconds; see .training-skill .recharge-seconds. */
+  padding: 0.25rem 2.4em 0.25rem 0.4rem;
   background: var(--panel);
   border: 1px solid var(--line);
   color: var(--ink);
@@ -785,13 +786,6 @@ body {
 /* A hint, not a gate: the simulation still decides whether a cast is legal. */
 .training-skill.is-unaffordable {
   opacity: 0.45;
-}
-
-.training-skill-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .training-skill-key {
@@ -833,16 +827,14 @@ body {
   font-size: 0.85rem;
 }
 
-/* Training Ground: one row, so the number takes the right end and the
-   name truncates before it instead of running under it. */
+/* Training Ground: one row, so the number takes the right end, in room
+   every button keeps for two digits whether or not it is recharging. The
+   buttons are sized by their content, so room made only while recharging
+   would shove every button after it sideways on each cast (#185). */
 .training-skill .recharge-seconds {
   top: 50%;
   right: 0.4rem;
   transform: translateY(-50%);
-}
-
-.training-skill.is-recharging {
-  padding-right: 2.4em;
 }
 
 /* Ready again: the border flashes, in the same frame the wipe and the

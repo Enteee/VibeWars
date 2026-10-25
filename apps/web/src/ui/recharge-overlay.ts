@@ -61,8 +61,8 @@ export function prefersReducedMotion(): boolean {
  *
  * The overlay is the wipe alone; the seconds are a child of it that each
  * surface places where they cover no name (#185). `is-recharging` on
- * the slot lives exactly as long as the overlay, so a layout that makes
- * room for the number keeps it through the last, numberless second.
+ * the slot lives exactly as long as the overlay, the last, numberless
+ * second included.
  */
 export function paintRecharge(
   slot: HTMLElement,
