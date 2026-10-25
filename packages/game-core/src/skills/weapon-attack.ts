@@ -24,6 +24,12 @@ export interface AttackState {
   readonly targetId: string;
   /** Seconds into the swing in progress; it lands at the weapon's interval. */
   swingElapsed: number;
+  /**
+   * Seconds in a row the approach has found no path (#218). A body shoved
+   * into a concave corner can fail one search and walk free the next, so
+   * the attack ends only once this reaches `unreachableAfterSeconds`.
+   */
+  unreachableSeconds: number;
 }
 
 export interface Swing {
