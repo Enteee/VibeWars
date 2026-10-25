@@ -34,6 +34,7 @@ import { fileURLToPath } from "node:url";
 import { ROLES } from "./hub-policy.mjs";
 import { takeLock } from "./instance-lock.mjs";
 import { openJailDir, withJailDir } from "./jail-fs.mjs";
+import { readRoster } from "./presence.mjs";
 import {
   SUPPORT_BUSY,
   SYSTEM,
@@ -76,9 +77,6 @@ const API = process.env.VIBEWARS_TELEGRAM_API ?? "https://api.telegram.org";
 
 /** How long getUpdates parks server-side. Telegram's documented maximum. */
 const LONG_POLL_SECONDS = 50;
-
-/** A roster entry older than this belongs to an agent that is gone. */
-const PRESENCE_STALE_MS = 60_000;
 
 /* -------------------------------------------------------------------------- */
 /* Environment                                                                */
@@ -405,19 +403,8 @@ function takeOutbox(dir, role, take) {
  * @returns {Set<string>}
  */
 function present(bus) {
-  /** @type {Set<string>} */
-  const live = new Set();
-  for (const role of ROLES) {
-    try {
-      const record = obj(JSON.parse(fs.readFileSync(busPaths(bus, role).roster, "utf8")));
-      if (typeof record.lastSeen === "number" && Date.now() - record.lastSeen < PRESENCE_STALE_MS) {
-        live.add(role);
-      }
-    } catch {
-      /* not running */
-    }
-  }
-  return live;
+  const roster = readRoster(path.join(bus, "roster"), ROLES, Date.now());
+  return new Set([...roster].filter(([, entry]) => entry.fresh).map(([role]) => role));
 }
 
 /* -------------------------------------------------------------------------- */

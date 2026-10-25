@@ -78,7 +78,13 @@ export type LobbyPhase = "waiting" | "starting" | "in-match";
  */
 export const LOBBY_CODE_ALPHABET = "ACDEFGHJKMNPQRTWXY34679";
 
-export const LOBBY_CODE_LENGTH = 4;
+/**
+ * In peer-to-peer play the code is both the room on public relays and its
+ * password (#15, #379): 23⁴ ≈ 280 k codes can be enumerated, 23⁶ ≈ 148 M
+ * are not worth the trouble. Shown as `ABC-DEF`; `normalizeLobbyCode`
+ * strips the dash.
+ */
+export const LOBBY_CODE_LENGTH = 6;
 
 const LOBBY_CODE_PATTERN = new RegExp(`^[${LOBBY_CODE_ALPHABET}]{${String(LOBBY_CODE_LENGTH)}}$`);
 

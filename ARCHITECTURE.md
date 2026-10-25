@@ -141,9 +141,13 @@ fails a change that did not. A change in meaning with no change in shape bumps
 ### `packages/game-session` — peer-to-peer sessions (in progress)
 
 The start of epic #15 ([ADR-0022](docs/adr/0022-peer-to-peer-networking.md),
-Proposed): a match hosted in one player's browser. So far it holds the
-`Transport` interface every peer-to-peer transport implements, and an
-in-memory one for tests (`@vibewars/game-session/testing`). It compiles with
+Proposed): a lobby and its match hosted in one player's browser. It holds
+the `Transport` interface every peer-to-peer transport implements, and an
+in-memory one for tests (`@vibewars/game-session/testing`); `MatchHost` and
+`connectMatch` (#375); and `LobbyHost` and `joinLobby` (#379). The lobby's
+host is its match's host, and seats only the peers the lobby put on a team.
+`scopeTransport` gives each match its own handlers on the lobby's room, so
+leaving the match does not leave the lobby. It compiles with
 no DOM and no Node types, and may not import `node:*` or `trystero`. Its
 messages, one per `CHANNELS` entry, and their validators are in
 `game-protocol`'s `src/p2p.ts`.

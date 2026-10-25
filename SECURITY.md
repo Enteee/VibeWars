@@ -434,6 +434,18 @@ server, now enforced by the host:
   included, and only a peer leaving the room resets it, so a peer cannot
   refill it by quitting and saying hello again. A peer that said `bye` is
   not seated again until it leaves the room.
+- `LobbyHost` (#379) acts on nothing a peer sends before its `lobby-join`,
+  charges `lobby-join` and `lobby-cmd` to the same per-peer budget, and
+  lets only its own player pick the map and start. A command names no
+  player: it changes its sender. A lobby's match seats only the peers the
+  lobby put on a team, with the lobby's team and name; any other `hello`
+  is refused `match-full`.
+- `joinLobby` takes as host the peer that sends the first `lobby-state`
+  for its code that names that peer as host and lists the player, then
+  drops every lobby and match message from anyone else. Before that
+  first state, a peer in the room can answer faster than the host and
+  pose as it. That peer had to know the code, so it is someone invited
+  (see above), and the lobby it fakes holds nothing but names.
 - `hello.build` is capped in values and depth by `parsePeerHello`, then
   goes through the same `resolveJoinLoadout` and `validatePlayerBuild`
   join check as the server: an illegal build gets the house loadout.

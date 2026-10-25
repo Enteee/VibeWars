@@ -27,6 +27,8 @@ import { attachNameReveal } from "../input/name-reveal.js";
 import { nextTabTarget } from "../input/tab-target.js";
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
 import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
+import { MUSIC_MODE, music } from "../music/play-music.js";
+import { TRACKS } from "../music/tracks/index.js";
 import {
   actorAtPoint,
   EMPTY_SNAPSHOT,
@@ -439,12 +441,13 @@ export function createTrainingPanel(): TrainingPanel {
       walls: setup.map.walls.map(toRenderableWall),
       // The same sounds as a match (#112), muted by the same M.
       sounds: attachMatchSounds(connection, soundPlayer()),
-      // #371: the music player will take these; until then nothing plays.
       music: attachMatchMusic(connection, {
         screen: "training",
-        mode: { kind: "auto" },
-        tracks: [],
-        onChange: () => undefined,
+        mode: MUSIC_MODE,
+        tracks: TRACKS,
+        onChange: (state) => {
+          music().follow(state);
+        },
       }),
       parked: setup.arming.problem !== undefined,
     };
@@ -556,6 +559,7 @@ export function createTrainingPanel(): TrainingPanel {
         // No HUD here, so the message line says what the mute key did.
         const sounds = soundPlayer();
         sounds.setMuted(!sounds.muted);
+        music().setMuted(sounds.muted);
         saveMuted(sounds.muted);
         flash(
           sounds.muted

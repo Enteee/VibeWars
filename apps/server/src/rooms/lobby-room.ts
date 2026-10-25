@@ -3,8 +3,6 @@ import { schema, t } from "@colyseus/schema";
 import { createRng, seedFromString, type SimulationRng } from "@vibewars/game-core";
 import { listMapIds } from "@vibewars/game-maps";
 import {
-  LOBBY_CODE_ALPHABET,
-  LOBBY_CODE_LENGTH,
   MAX_LOBBY_PLAYERS,
   PROTOCOL_VERSION,
   ROOM_LIMIT,
@@ -13,7 +11,7 @@ import {
   normalizeLobbyCode,
   type LobbyMatchStartingMessage,
 } from "@vibewars/game-protocol";
-import { sanitizeName } from "@vibewars/game-session";
+import { generateLobbyCode, sanitizeName } from "@vibewars/game-session";
 
 import { quote } from "../log-safe.js";
 import { DEFAULT_MAP_ID, openLobbyMatch, type LobbySeat } from "./match-room.js";
@@ -63,16 +61,6 @@ export const LobbyState = schema(
   },
   "LobbyState",
 );
-
-/** Generate a lobby code from the injected RNG (never `Math.random`). */
-export function generateLobbyCode(rng: SimulationRng): string {
-  let code = "";
-  for (let i = 0; i < LOBBY_CODE_LENGTH; i += 1) {
-    const index = rng.nextInt(0, LOBBY_CODE_ALPHABET.length);
-    code += LOBBY_CODE_ALPHABET[index] ?? "A";
-  }
-  return code;
-}
 
 export class LobbyRoom extends Room {
   public override state = new LobbyState();
@@ -147,7 +135,9 @@ export class LobbyRoom extends Room {
     // treatment as any other payload.
     const requestedCode = field(options, "code");
     const requested = typeof requestedCode === "string" ? normalizeLobbyCode(requestedCode) : "";
-    this.state.code = isLobbyCode(requested) ? requested : generateLobbyCode(this.#rng);
+    this.state.code = isLobbyCode(requested)
+      ? requested
+      : generateLobbyCode(() => this.#rng.nextFloat());
 
     // The code is the matchmaking key other clients filter on.
     // `setMetadata` is async; a rejection here would leave the lobby

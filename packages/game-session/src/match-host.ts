@@ -84,12 +84,27 @@ export interface MatchHostOptions {
    */
   readonly random: () => number;
   readonly maxPlayers: number;
+  /**
+   * Who may play, by peer id, on which team and under which name: the
+   * lobby decided (#379). Anyone else is refused `match-full`. `null`
+   * seats whoever says hello, on alternating teams.
+   */
+  readonly seats: PlannedSeats | null;
 }
+
+/** A lobby's seating for its match: each seated peer's team and sanitised name. */
+export type PlannedSeats = ReadonlyMap<string, { readonly team: 0 | 1; readonly name: string }>;
 
 export interface MatchHost {
   /** Run as many whole ticks as `seconds` holds, carrying the rest. */
   advance(seconds: number): void;
   readonly phase: "active" | "finished";
+  /**
+   * A lobby's match nobody is playing any more: every seat is gone, and
+   * every seated peer that never came has left the room. The lobby then
+   * ends it, as the server did with a room everyone left.
+   */
+  readonly abandoned: boolean;
   /** Tell every peer the match is over because the host left, then leave. */
   close(reason: "host-left"): Promise<void>;
 }
@@ -121,7 +136,7 @@ function wireTeam(team: number | undefined): 0 | 1 | null {
 }
 
 export function createMatchHost(options: MatchHostOptions): MatchHost {
-  const { transport, map, random, maxPlayers } = options;
+  const { transport, map, random, maxPlayers, seats: planned } = options;
   const sim = new MatchSimulation({
     seed: options.seed,
     ruleset: RULESET,
@@ -138,6 +153,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    * and a team re-roll, as often as the budget allows.
    */
   const departed = new Set<string>();
+  /** The planned peers that have not said hello yet, while they are in the room. */
+  const awaited = new Set(planned?.keys());
   let seated = 0;
   let accumulator = 0;
   let finished = false;
@@ -188,11 +205,16 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     sendRecharges(seat, true);
   };
 
-  const seatNew = (hello: PeerHello, peerId: string): void => {
+  const seatNew = (
+    hello: PeerHello,
+    peerId: string,
+    plan: { readonly team: 0 | 1; readonly name: string } | undefined,
+  ): void => {
     seated += 1;
     const playerId = `player-${String(seated)}`;
-    // Teams alternate as players arrive, so a 1v1 is adversarial by default.
-    const team: 0 | 1 = seats.size % 2 === 0 ? 0 : 1;
+    // Without a plan, teams alternate as players arrive, so a 1v1 is
+    // adversarial by default.
+    const team: 0 | 1 = plan?.team ?? (seats.size % 2 === 0 ? 0 : 1);
     const { loadout } = resolveJoinLoadout(hello.build, RULESET.attributes);
     // Gear becomes numbers exactly once, before the combatant exists (ADR-0012).
     const resolved = resolveLoadout(
@@ -203,7 +225,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       },
       RULESET.combat,
     );
-    const spawn = spawnPoint(map.spawns, team, seated - 1);
+    // Counted on the team, so each side fills its own points in turn
+    // rather than every other player of a team landing on one.
+    const teammates = [...seats.values()].filter((seat) => seat.team === team).length;
+    const spawn = spawnPoint(map.spawns, team, teammates);
     sim.add({
       id: playerId,
       team,
@@ -222,8 +247,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     const seat: Seat = {
       playerId,
       team,
-      // The name is the peer's to choose, so it is sanitised before anyone sees it.
-      name: sanitizeName(hello.name, playerId),
+      // The lobby's name, whatever the hello says (#53). Without a lobby the
+      // name is the peer's to choose, so it is sanitised before anyone sees it.
+      name: plan?.name ?? sanitizeName(hello.name, playerId),
       primaryProfession: loadout.primaryProfession,
       secondaryProfession: loadout.secondaryProfession,
       peerId: undefined,
@@ -265,12 +291,15 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       welcome(held, from);
       return;
     }
-    // A wrong or expired token is a fresh join.
-    if (seats.size >= maxPlayers) {
+    // A wrong or expired token is a fresh join, and only for a peer the
+    // lobby seated: anyone else in the room is a spectator, or a stranger.
+    const plan = planned?.get(from);
+    if (seats.size >= maxPlayers || (planned !== null && plan === undefined)) {
       refuse(from, "match-full", MATCH_FULL_MESSAGE);
       return;
     }
-    seatNew(hello, from);
+    awaited.delete(from);
+    seatNew(hello, from, plan);
   });
 
   transport.on("intent", (data, from) => {
@@ -314,6 +343,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   transport.onPeerLeave((peerId) => {
     budget.forget(peerId);
     departed.delete(peerId);
+    awaited.delete(peerId);
     const seat = seatOfPeer.get(peerId);
     if (seat === undefined) {
       return;
@@ -431,6 +461,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     },
     get phase() {
       return finished ? "finished" : "active";
+    },
+    get abandoned() {
+      return planned !== null && awaited.size === 0 && seats.size === 0;
     },
     async close(reason) {
       // Nothing more is ticked onto a transport that has left.

@@ -23,6 +23,11 @@ import {
   parseWireEnded,
   parseWireSkillBar,
   parseWireSnapshot,
+  parsePeerLobbyJoin,
+  parseWireLobbyCommand,
+  parseWireLobbyNote,
+  parseWireLobbyState,
+  parseWireMatchStart,
 } from "./p2p.js";
 import type {
   PeerHello,
@@ -34,6 +39,8 @@ import type {
   WirePlayer,
   WireSkillBar,
   WireSnapshot,
+  PeerLobbyJoin,
+  WireLobbyState,
 } from "./p2p.js";
 import { MAX_LOBBY_PLAYERS, PROTOCOL_MISMATCH_MESSAGE } from "./protocol.js";
 import type { CastRefusedMessage, RechargeMessage } from "./protocol.js";
@@ -191,6 +198,20 @@ const recharge: RechargeMessage = {
 };
 
 /** Each parser, with the one fixture it must round-trip. */
+const lobbyJoin: PeerLobbyJoin = { protocolVersion: PROTOCOL_VERSION, name: "Mhenlo" };
+
+const lobbyState: WireLobbyState = {
+  code: "ACDEFG",
+  phase: "in-match",
+  mapId: "isle",
+  hostId: "peer-1",
+  matchId: "match-2",
+  players: [
+    { id: "peer-1/local", name: "Host", team: 0, ready: true, isHost: true },
+    { id: "peer-3", name: "Watcher", team: null, ready: false, isHost: false },
+  ],
+};
+
 const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["hello", parsePeerHello, hello],
   ["rejoining hello", parsePeerHello, { ...hello, rejoin: { playerId: "peer-2", token: TOKEN } }],
@@ -204,6 +225,17 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["refused attack", parseCastRefused, { kind: "attack", reason: "no-weapon" }],
   ["recharge", parseRecharge, recharge],
   ["bye", parsePeerBye, {}],
+  ["lobby-join", parsePeerLobbyJoin, lobbyJoin],
+  ["lobby-state", parseWireLobbyState, lobbyState],
+  ["waiting lobby-state", parseWireLobbyState, { ...lobbyState, phase: "waiting", matchId: null }],
+  ["choose-team", parseWireLobbyCommand, { kind: "choose-team", team: 1 }],
+  ["spectate", parseWireLobbyCommand, { kind: "choose-team", team: null }],
+  ["ready", parseWireLobbyCommand, { kind: "ready", ready: false }],
+  ["select-map", parseWireLobbyCommand, { kind: "select-map", mapId: "isle" }],
+  ["start", parseWireLobbyCommand, { kind: "start" }],
+  ["start-rejected", parseWireLobbyNote, { kind: "start-rejected", reason: "nobody is ready" }],
+  ["lobby refusal", parseWireLobbyNote, { kind: "refused", reason: "lobby-full" }],
+  ["match-start", parseWireMatchStart, { mapId: "isle", matchId: "match-2" }],
 ];
 
 const long = "x".repeat(MAX_WIRE_STRING + 1);
@@ -395,6 +427,35 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseRecharge,
     { slots: [{ slot: 0, remainingSeconds: NaN, totalSeconds: 5 }] },
   ],
+  ["lobby-join without a name", parsePeerLobbyJoin, { protocolVersion: PROTOCOL_VERSION }],
+  ["lobby-state of an unknown phase", parseWireLobbyState, { ...lobbyState, phase: "over" }],
+  ["lobby-state without a host", parseWireLobbyState, { ...lobbyState, hostId: undefined }],
+  ["lobby-state with a long code", parseWireLobbyState, { ...lobbyState, code: long }],
+  [
+    "lobby-state with a third team",
+    parseWireLobbyState,
+    { ...lobbyState, players: [{ ...lobbyState.players[0], team: 2 }] },
+  ],
+  [
+    "lobby-state past MAX_LOBBY_PLAYERS",
+    parseWireLobbyState,
+    {
+      ...lobbyState,
+      players: Array.from({ length: MAX_LOBBY_PLAYERS + 1 }, () => lobbyState.players[1]),
+    },
+  ],
+  ["choose-team without a team", parseWireLobbyCommand, { kind: "choose-team" }],
+  ["choose-team of a string", parseWireLobbyCommand, { kind: "choose-team", team: "0" }],
+  ["ready of a string", parseWireLobbyCommand, { kind: "ready", ready: "true" }],
+  ["select-map with a long id", parseWireLobbyCommand, { kind: "select-map", mapId: long }],
+  ["a command of an unknown kind", parseWireLobbyCommand, { kind: "kick", id: "peer-2" }],
+  ["a note of an unknown kind", parseWireLobbyNote, { kind: "kicked", reason: "x" }],
+  [
+    "a note with a long reason",
+    parseWireLobbyNote,
+    { kind: "start-rejected", reason: "x".repeat(MAX_WIRE_TEXT + 1) },
+  ],
+  ["match-start without a match", parseWireMatchStart, { mapId: "isle" }],
 ];
 
 describe("the P2P channels (#82)", () => {

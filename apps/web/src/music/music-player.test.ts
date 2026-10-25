@@ -1,0 +1,162 @@
+import { describe, expect, it } from "vitest";
+
+import type { GameToHost, HostToGame } from "./host-protocol.js";
+import {
+  CROSSFADE_CYCLES,
+  HEARTBEAT_MS,
+  HEARTBEAT_TIMEOUT_MS,
+  HUNG_MESSAGE,
+  createMusicPlayer,
+  type MusicError,
+  type MusicPlayerDeps,
+} from "./music-player.js";
+
+const track = { id: "first-light", source: 's("bd")', phraseCycles: 8 };
+
+/** A player over fake hosts that record what they were sent. */
+function setup(overrides: Partial<MusicPlayerDeps> = {}) {
+  const frames: {
+    sent: GameToHost[];
+    destroyed: boolean;
+    receive: (message: HostToGame) => void;
+  }[] = [];
+  const gestures = new EventTarget();
+  let now = 0;
+  let tick: (() => void) | undefined;
+  const player = createMusicPlayer({
+    createFrame: (receive) => {
+      const frame = { sent: [] as GameToHost[], destroyed: false, receive };
+      frames.push(frame);
+      return {
+        post: (message) => frame.sent.push(message),
+        destroy: () => {
+          frame.destroyed = true;
+        },
+      };
+    },
+    gestures,
+    now: () => now,
+    every: (ms, callback) => {
+      expect(ms).toBe(HEARTBEAT_MS);
+      tick = callback;
+      return () => {
+        tick = undefined;
+      };
+    },
+    ...overrides,
+  });
+  return {
+    player,
+    frames,
+    click: () => gestures.dispatchEvent(new Event("pointerdown")),
+    /** Let `ms` pass, ticking the heartbeat each second. */
+    advance: (ms: number) => {
+      for (let passed = 0; passed < ms; passed += HEARTBEAT_MS) {
+        now += HEARTBEAT_MS;
+        tick?.();
+      }
+    },
+  };
+}
+
+/** A player whose host was made by a click. */
+function opened() {
+  const setUp = setup();
+  setUp.click();
+  return setUp;
+}
+
+describe("createMusicPlayer", () => {
+  it("makes no host before the first gesture, and one on it", () => {
+    const { player, frames, click } = setup();
+    player.load(track);
+    expect(frames).toHaveLength(0);
+    click();
+    click();
+    expect(frames).toHaveLength(1);
+  });
+
+  it("queues calls until the host is ready, keeping only the last of each kind", () => {
+    const { player, frames, click } = setup();
+    player.setIntensity(1);
+    player.load(track);
+    player.setIntensity(2);
+    player.crossfadeTo({ ...track, id: "ashen-fields" });
+    click();
+    player.setVolume(0.5, 0.3);
+    expect(frames[0]?.sent).toEqual([]);
+
+    frames[0]?.receive({ type: "ready" });
+
+    // The volume set after the click replaces the one a new host starts with.
+    expect(frames[0]?.sent).toEqual([
+      { type: "setIntensity", level: 2 },
+      {
+        type: "crossfadeTo",
+        cycles: CROSSFADE_CYCLES,
+        trackId: "ashen-fields",
+        source: track.source,
+        phraseCycles: 8,
+      },
+      { type: "setVolume", gain: 0.5, rampSeconds: 0.3 },
+    ]);
+    player.stop();
+    expect(frames[0]?.sent.at(-1)).toEqual({ type: "stop" });
+  });
+
+  it("reports what the host says is playing, and its errors", () => {
+    const { player, frames } = opened();
+    const playing: string[] = [];
+    const errors: MusicError[] = [];
+    player.onNowPlaying((id) => playing.push(id));
+    player.onError((error) => errors.push(error));
+    frames[0]?.receive({ type: "ready" });
+    frames[0]?.receive({ type: "playing", trackId: "first-light", cycle: 0, cps: 0.3 });
+    frames[0]?.receive({ type: "error", message: "Unexpected token (3:0)", line: 3 });
+    expect(playing).toEqual(["first-light"]);
+    expect(errors).toEqual([{ message: "Unexpected token (3:0)", line: 3 }]);
+  });
+
+  it("tears down a host that stops answering, and makes a new one for the next track", () => {
+    const { player, frames, advance } = opened();
+    const errors: MusicError[] = [];
+    player.onError((error) => errors.push(error));
+    player.setVolume(0, 0);
+    frames[0]?.receive({ type: "ready" });
+
+    // A host that answers is kept.
+    for (let i = 0; i < 10; i += 1) {
+      advance(HEARTBEAT_MS);
+      const ping = frames[0]?.sent.at(-1);
+      if (ping?.type === "ping") {
+        frames[0]?.receive({ type: "pong", seq: ping.seq });
+      }
+    }
+    expect(frames[0]?.destroyed).toBe(false);
+
+    advance(HEARTBEAT_MS);
+    advance(HEARTBEAT_TIMEOUT_MS + HEARTBEAT_MS);
+    expect(frames[0]?.destroyed).toBe(true);
+    expect(errors).toEqual([{ message: HUNG_MESSAGE }]);
+
+    player.setIntensity(3);
+    expect(frames).toHaveLength(1);
+    player.crossfadeTo(track);
+    expect(frames).toHaveLength(2);
+    frames[1]?.receive({ type: "ready" });
+    expect(frames[1]?.sent.slice(0, 3)).toEqual([
+      { type: "setVolume", gain: 0, rampSeconds: 0 },
+      { type: "setIntensity", level: 3 },
+      expect.objectContaining({ type: "crossfadeTo", trackId: "first-light" }),
+    ]);
+  });
+
+  it("does not let a pong for another ping stand in for its own", () => {
+    const { frames, advance } = opened();
+    frames[0]?.receive({ type: "ready" });
+    advance(HEARTBEAT_MS);
+    frames[0]?.receive({ type: "pong", seq: 999 });
+    advance(HEARTBEAT_TIMEOUT_MS + HEARTBEAT_MS);
+    expect(frames[0]?.destroyed).toBe(true);
+  });
+});

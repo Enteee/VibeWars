@@ -98,3 +98,40 @@ test("a character saved under the sub-path survives a reload", async ({ page }) 
   await page.reload();
   await expect(page.locator(".roster")).toContainText("Pages Ranger");
 });
+
+test("music plays under the sub-path, every sample from our own files", async ({
+  page,
+  baseURL,
+}) => {
+  const traffic = watchTraffic(page);
+  const ours = new URL(baseURL ?? "").origin;
+  const foreign: string[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.origin !== ours && url.protocol !== "data:" && url.protocol !== "blob:") {
+      foreign.push(request.url());
+    }
+  });
+  const said: string[] = [];
+  await page.exposeFunction("musicSaid", (type: string) => {
+    said.push(type);
+  });
+  await page.addInitScript(() => {
+    addEventListener("message", (event: MessageEvent) => {
+      const data: unknown = event.data;
+      if (typeof data === "object" && data !== null && "type" in data) {
+        void (window as unknown as { musicSaid: (type: string) => Promise<void> }).musicSaid(
+          String(data.type),
+        );
+      }
+    });
+  });
+
+  await page.goto("./");
+  await expect(page.locator(".roster")).toBeVisible();
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
+
+  await expect.poll(() => said, { timeout: 5_000 }).toContain("playing");
+  expect(traffic.failed).toEqual([]);
+  expect(foreign).toEqual([]);
+});

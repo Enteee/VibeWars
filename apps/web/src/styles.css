@@ -1719,3 +1719,18 @@ body {
   width: 20px;
   height: 20px;
 }
+
+/*
+ * The music host (#371). Not display: none: Chromium throttles a hidden
+ * cross-origin frame that makes no sound (ADR-0028, measurement 3).
+ */
+.music-host {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}

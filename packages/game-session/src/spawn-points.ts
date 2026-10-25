@@ -7,9 +7,8 @@ export interface SpawnPoint {
 }
 
 /**
- * Where the player seated `seated`-th (0 for the first, on any team)
- * spawns on `team`: cycling through that team's own points as more
- * players arrive (#375).
+ * Where the `seated`-th player on `team` (0 for the first) spawns:
+ * cycling through that team's own points as more players arrive (#375).
  *
  * Filtering by team matters: spawning a team-1 player at a team-0 point
  * would drop them in the middle of the enemy's starting position, which
