@@ -199,9 +199,11 @@ export const ROOM_CONTROLS = ["roomsize", "roomfade", "roomlp", "roomdim"];
 /** @typedef {{ orbit: number, control: string, values: string[] }} RoomMix */
 
 /**
- * Every orbit and room control with more than one value among `events`, the
- * values in the order they first sound. Unset is a value of its own, and an
- * event with no orbit is on orbit 1.
+ * Every orbit and room control with more than one value among the wet
+ * `events`, the values in the order they first sound. A dry event (no `room`
+ * above 0) never touches the reverb, so it is left out; among the wet ones
+ * unset is a value of its own (superdough's default). An event with no orbit
+ * is on orbit 1.
  *
  * @param {readonly Record<string, unknown>[]} events
  * @returns {RoomMix[]}
@@ -210,6 +212,7 @@ export function roomMixesOf(events) {
   /** @type {Map<string, { orbit: number, control: string, values: string[] }>} */
   const seen = new Map();
   for (const value of events) {
+    if (!(typeof value.room === "number" && value.room > 0)) continue;
     const orbit = typeof value.orbit === "number" ? value.orbit : 1;
     for (const control of ROOM_CONTROLS) {
       const id = `${String(orbit)} ${control}`;

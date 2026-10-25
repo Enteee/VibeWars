@@ -164,6 +164,13 @@ describe("the track checker rejects short and repetitive tracks (#427)", () => {
     );
   });
 
+  it("lets a dry voice share an orbit with a wet one", async () => {
+    // The dry bass never touches orbit 2's reverb, so it sets no room size.
+    const source = fixture("room-mix").source.replace(".roomsize(6)", ".roomsize(7)");
+    const t = fixture("room-mix", { source: source.replace(".room(.3)", "") });
+    expect((await check(t, options)).problems).toEqual([]);
+  });
+
   it("fails a track denser than the shipped ones", async () => {
     // 128 hits a cycle at 18 cycles a minute: 38.4 a second.
     const source = 'setcpm(72 / 4)\ns("white*128").gain(.1)';
