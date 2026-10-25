@@ -204,6 +204,7 @@ async function runScenario(
     DEFAULT_MAP_ID,
     Array.from({ length: playerCount }, (_, i) => ({
       team: i % 2 === 0 ? 0 : 1,
+      name: `bench-${String(i)}`,
       build: undefined,
     })),
   );

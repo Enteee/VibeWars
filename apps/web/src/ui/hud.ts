@@ -322,7 +322,7 @@ export function updateHud(
   hud.targetPanel.textContent =
     target === undefined
       ? "no target"
-      : `target: ${target.sessionId.slice(0, 6)} — ${String(Math.round(target.health))}/${String(
+      : `target: ${target.name} — ${String(Math.round(target.health))}/${String(
           Math.round(target.maxHealth),
         )} hp · armor ${String(target.armor)}${
           target.weaponId === undefined ? "" : ` · ${describeWeaponName(target.weaponId)}`

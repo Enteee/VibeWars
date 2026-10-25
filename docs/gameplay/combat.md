@@ -137,8 +137,23 @@ adjacent to its target.
 progress. When the skill is done, you go back to attacking the same
 target.
 
+**Ranged weapons fire projectiles** (bows, spears, wands, staves). The
+shot is aimed where the target will be if it keeps moving as it has over
+the last `trackWindowSeconds` (0.6 s, a least-squares fit of its
+positions), and lands there after its flight time. If the target is
+still within its body plus `projectileTolerance` (10 units) of that
+point, it is hit with the weapon and rank the shot was released with;
+otherwise it dodged. So walking steadily in any direction, sideways
+included, does not dodge: stopping, turning or reversing after the
+release does. Tapping back and forth averages out to standing still and
+is hit; strafing in longer swings is a real change of course and dodges
+most shots. At 40 units a shot lands too soon to dodge. Blind is rolled at release, so
+a blinded shot misses at once and nothing flies. A shot still lands if
+its archer dies, and does nothing to a target that died in flight. It
+flies through walls and bodies; obstruction at release is not modelled
+yet.
+
 Not modelled: critical hits, attack-speed changes, block and evade.
-Ranged weapons hit at once for now; dodgeable projectiles are next (#159).
 
 ## Positioning
 

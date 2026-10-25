@@ -1,3 +1,4 @@
+import { matchMaker } from "@colyseus/core";
 import { Client } from "@colyseus/sdk";
 import { PROTOCOL_VERSION, ROOM_MATCH } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -105,6 +106,43 @@ describe("reconnection", () => {
     expect(later).toBeCloseTo(settled, 1);
 
     await watcher.leave();
+  });
+
+  it("reconnects the same room in place after an abnormal drop", async () => {
+    // apps/web's match client relies on this (#181): the SDK walks back in
+    // on its own and keeps the room object, so the state, the message
+    // handlers and `send` the client already holds keep working.
+    const room = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    room.reconnection.minUptime = 0;
+    const events: string[] = [];
+    room.onDrop((code) => events.push(`drop ${String(code)}`));
+    room.onReconnect(() => events.push("reconnect"));
+    room.onLeave((code) => events.push(`leave ${String(code)}`));
+    // A socket cut mid-handshake is a failed join, not a drop.
+    await waitFor(() => room.state.players.has(room.sessionId), { label: "joined" });
+
+    // Cut the socket from the server's side without a close frame: the
+    // client sees 1006, exactly like a wifi blip.
+    const socket = matchMaker
+      .getLocalRoomById(room.roomId)
+      .clients.find((client) => client.sessionId === room.sessionId)?.ref;
+    if (
+      socket === undefined ||
+      !("terminate" in socket) ||
+      typeof socket.terminate !== "function"
+    ) {
+      throw new Error("expected the server-side ws socket");
+    }
+    socket.terminate();
+    await waitFor(() => events.includes("reconnect"), { label: "reconnect", timeoutMs: 5000 });
+
+    const before = room.state.elapsedSeconds;
+    await waitFor(() => room.state.elapsedSeconds > before, { label: "state still updating" });
+    expect(events).toEqual(["drop 1006", "reconnect"]);
+
+    await room.leave();
   });
 
   it("removes a player who leaves deliberately, without holding their slot", async () => {

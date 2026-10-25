@@ -293,6 +293,7 @@ export class LobbyRoom extends Room {
             {
               sessionId: other.sessionId,
               team: other.team,
+              name: other.name,
               build: this.#builds.get(other.sessionId),
             },
           ]

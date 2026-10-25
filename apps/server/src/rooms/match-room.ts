@@ -175,7 +175,6 @@ const DEFAULT_EQUIPMENT: BuildEquipment = defaultBuildEquipment("warrior");
 interface ResolvedJoinLoadout {
   readonly skillBar: readonly string[];
   readonly attributeRanks: ReadonlyMap<string, number>;
-  readonly buildName: string | undefined;
   readonly primaryProfession: ProfessionId;
   readonly equipment: BuildEquipment;
 }
@@ -183,7 +182,6 @@ interface ResolvedJoinLoadout {
 const HOUSE_LOADOUT: ResolvedJoinLoadout = {
   skillBar: DEFAULT_SKILL_BAR,
   attributeRanks: DEFAULT_ATTRIBUTE_RANKS,
-  buildName: undefined,
   primaryProfession: "warrior",
   equipment: DEFAULT_EQUIPMENT,
 };
@@ -235,7 +233,6 @@ function resolveLoadout(options: unknown): ResolvedJoinLoadout {
   return {
     skillBar,
     attributeRanks: attributeRanksOf(build),
-    buildName: build.name,
     primaryProfession: build.primaryProfession,
     equipment: build.equipment,
   };
@@ -261,9 +258,11 @@ const RECONNECT_WINDOW_SECONDS = 30;
  */
 export const LOBBY_MATCH_JOIN_DEADLINE_SECONDS = 30;
 
-/** One player a lobby seats in its match: their team, and the build they asked for. */
+/** One player a lobby seats in its match: their team, name, and the build they asked for. */
 export interface LobbySeat {
   readonly team: 0 | 1;
+  /** The name the lobby showed, so a player is the same person on both screens. */
+  readonly name: string;
   /** Unparsed: the match validates it like any other requested build. */
   readonly build: unknown;
 }
@@ -349,10 +348,11 @@ export class MatchRoom extends Room {
   readonly #rechargesSent = new Map<string, { slots: RechargeSlot[]; at: number }>();
 
   /**
-   * A lobby's match: each seat's team, and whether it was taken. Absent
-   * for Quick Match, which alternates teams as players arrive.
+   * A lobby's match: each seat's team, its player's lobby name, and
+   * whether it was taken. Absent for Quick Match, which alternates teams
+   * as players arrive.
    */
-  #seats: Map<string, { readonly team: 0 | 1; used: boolean }> | undefined;
+  #seats: Map<string, { readonly team: 0 | 1; readonly name: string; used: boolean }> | undefined;
 
   /**
    * Rolling tick-duration samples in milliseconds (brief §26).
@@ -427,7 +427,10 @@ export class MatchRoom extends Room {
       this.maxClients = pending.seats.length;
       this.seatReservationTimeout = pending.joinDeadlineSeconds;
       this.#seats = new Map(
-        pending.seats.map((seat) => [seat.sessionId, { team: seat.team, used: false }]),
+        pending.seats.map((seat) => [
+          seat.sessionId,
+          { team: seat.team, name: seat.name, used: false },
+        ]),
       );
     }
 
@@ -682,30 +685,37 @@ export class MatchRoom extends Room {
   }
 
   /**
-   * The team a joining player plays on. In a lobby's match that is the
-   * team of the seat the lobby reserved for their session, and the seat
-   * is spent. Only the session id counts, which the server chose, never
+   * The team and name a joining player plays under. In a lobby's match
+   * those are the team and lobby name of the seat the lobby reserved for
+   * their session, and the seat is spent. Only the session id counts, which the server chose, never
    * the join options, which a client did: a seat that lapsed or that a
    * dropped player gave up is free again, and a stranger joining into it
    * is refused.
    * In Quick Match, teams alternate as players join so a 1v1 is
    * adversarial by default.
    */
-  private claimTeam(sessionId: string): number {
+  private claimSeat(sessionId: string, options: unknown): { team: number; name: string } {
     if (this.#seats === undefined) {
-      return [...this.#sim.participants()].length % 2;
+      return {
+        team: [...this.#sim.participants()].length % 2,
+        // The player's chosen name is client-supplied, so it goes through
+        // the same sanitiser the lobby uses before anyone else sees it.
+        name: sanitizeName(field(options, "name"), `player-${sessionId.slice(0, 4)}`),
+      };
     }
     const seat = this.#seats.get(sessionId);
     if (seat === undefined || seat.used) {
       throw new Error("This match is for its lobby's players only.");
     }
     seat.used = true;
-    return seat.team;
+    // The lobby already sanitised and showed this name; a seated player
+    // cannot rename themselves on the way in.
+    return { team: seat.team, name: seat.name };
   }
 
   public override onJoin(client: Client, options?: unknown): void {
     assertProtocolVersion(options);
-    const team = this.claimTeam(client.sessionId);
+    const { team, name } = this.claimSeat(client.sessionId, options);
     const spawn = this.nextSpawnPoint(team);
     const loadout = resolveLoadout(options);
 
@@ -735,9 +745,7 @@ export class MatchRoom extends Room {
 
     const player = new PlayerState({
       sessionId: client.sessionId,
-      // A build name is client-supplied, so it goes through the same
-      // sanitiser the lobby uses before any other player ever sees it.
-      name: sanitizeName(loadout.buildName, `player-${client.sessionId.slice(0, 4)}`),
+      name,
       x: spawn.x,
       y: spawn.y,
       team,

@@ -1,4 +1,5 @@
 import { AREA_ADJACENT } from "../distances.js";
+import type { ResolvedWeapon } from "../equipment/resolve.js";
 import type { Weapon } from "../equipment/weapons.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
@@ -14,8 +15,8 @@ import type { Combatant } from "./types.js";
  *
  * When a swing lands, and who it is aimed at, is the simulation's
  * business: approach, the swing timer, skills interrupting it. This module
- * only answers "a swing landed on this target; what happened", so the
- * projectiles of #159 can land through the same function as a sword.
+ * only answers "a swing landed on this target; what happened", and a
+ * projectile lands through the same blow as a sword (`landBlow`).
  */
 
 /** A combatant's auto-attack: who at, and how far into the current swing. */
@@ -72,33 +73,64 @@ function victimsOf(swing: Swing, weapon: Weapon): readonly Combatant[] {
 }
 
 /**
- * One blow on one victim: blind first, then the damage roll.
- *
- * The miss is rolled only when there is a chance to miss, as for attack
- * skills, so an unblinded fight's random stream does not move.
+ * What a blow is struck with: the weapon and the attacker's rank in its
+ * attribute. A projectile carries the one it was released with, so gear
+ * swapped in flight changes nothing.
  */
-function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
-  const { attacker, rng, rules } = swing;
-  if (victim.dead) {
-    return;
-  }
+export interface WeaponSnapshot {
+  readonly mainHand: ResolvedWeapon;
+  readonly rank: number;
+}
+
+export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
+  const { mainHand } = attacker.equipment;
+  return { mainHand, rank: rankIn(attacker, mainHand.attributeId) };
+}
+
+/**
+ * Whether a blinded attacker's blow misses.
+ *
+ * Rolled only when there is a chance to miss, as for attack skills, so
+ * an unblinded fight's random stream does not move.
+ */
+export function blindMisses(attacker: Combatant, rng: SimulationRng): boolean {
   const chance = attackMissChanceOf(attacker);
-  if (chance > 0 && rng.nextFloat() < chance) {
-    events.push({ kind: "attack-missed", targetId: victim.id });
-    return;
-  }
-  const { weapon, attributeId, requirementMet } = attacker.equipment.mainHand;
+  return chance > 0 && rng.nextFloat() < chance;
+}
+
+/** A blow that connects: the damage roll, mitigated by the victim's armor. */
+export function landBlow(
+  snapshot: WeaponSnapshot,
+  victim: Combatant,
+  rng: SimulationRng,
+  rules: CombatRules,
+  events: CombatEvent[],
+): void {
+  const { weapon, requirementMet } = snapshot.mainHand;
   const base = rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
   const packet: DamagePacket = {
     amount:
       base *
-      weaponAttributeMultiplier(rankIn(attacker, attributeId), rules) *
+      weaponAttributeMultiplier(snapshot.rank, rules) *
       (requirementMet ? 1 : rules.unmetRequirementMultiplier),
     type: weapon.damageType,
     source: "weapon",
     armorPenetration: weapon.armorPenetration,
   };
   applyDamage(victim, mitigate(packet, victim, rules), events);
+}
+
+/** One blow on one victim: blind first, then the damage roll. */
+function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
+  const { attacker, rng, rules } = swing;
+  if (victim.dead) {
+    return;
+  }
+  if (blindMisses(attacker, rng)) {
+    events.push({ kind: "attack-missed", targetId: victim.id });
+    return;
+  }
+  landBlow(weaponSnapshotOf(attacker), victim, rng, rules, events);
 }
 
 /**

@@ -79,7 +79,9 @@ skill used on an enemy starting or switching the attack to it (Q17), and
 adrenaline coming from attacks only (Q19). Both change live play, and
 neither should land before a player can see and stop an attack.
 
-**Ranged weapons resolve instantly** until #159 adds projectiles.
+**Ranged weapons fire projectiles** (#159): the swing landing releases a
+shot led ahead of the target, which hits or is dodged when it lands
+(`MatchSimulation.projectiles`, `skills/projectile.ts`).
 
 ## Simplifications
 

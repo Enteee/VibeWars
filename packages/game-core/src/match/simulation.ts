@@ -30,8 +30,14 @@ import {
   moveSpeedMultiplier,
 } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
-import { resolveSwing } from "../skills/weapon-attack.js";
-import { sub, ZERO, type Vec2 } from "../vec2.js";
+import {
+  leadAimPoint,
+  PositionHistory,
+  trackTarget,
+  type Projectile,
+} from "../skills/projectile.js";
+import { blindMisses, landBlow, resolveSwing, weaponSnapshotOf } from "../skills/weapon-attack.js";
+import { distance, sub, ZERO, type Vec2 } from "../vec2.js";
 import {
   createCursor,
   decide,
@@ -55,7 +61,8 @@ import type { CombatLogEntry } from "./combat-log.js";
  * Order within a tick, per participant, in the order they were added:
  * reset policy, respawn countdown (if dead), movement, energy regeneration, statuses,
  * cast resolution, the weapon attack (approach or swing), then the
- * participant's behaviour, if it has one. Player-driven participants have
+ * participant's behaviour, if it has one. Projectiles already in flight
+ * advance, and land, before anyone acts. Player-driven participants have
  * none: their intents arrive between steps, through `setInputDirection`,
  * `setTarget`, `requestSkill`, `requestAttack` and `cancelAttack`.
  */
@@ -127,6 +134,8 @@ interface ParticipantRecord extends Participant {
   readonly cursor: BehaviourCursor;
   /** `on-interval`: seconds since the last reset. */
   sinceReset: number;
+  /** Where it ended its last ticks: what a projectile leads. */
+  readonly history: PositionHistory;
 }
 
 /**
@@ -159,7 +168,7 @@ function degenerationSources(combatant: Combatant): {
   return { draining: only(draining), healing: only(healing) };
 }
 
-/** How far short of its interval a swing may be and still land; see `#advanceAttack`. */
+/** How far short of its interval a swing or a flight may be and still land; see `#advanceAttack`. */
 const SWING_EPSILON = 1e-9;
 
 export class MatchSimulation {
@@ -168,6 +177,8 @@ export class MatchSimulation {
   readonly #walls: readonly Segment[];
   readonly #rng: SimulationRng;
   readonly #participants = new Map<string, ParticipantRecord>();
+  #projectiles: Projectile[] = [];
+  #nextProjectileId = 1;
 
   #tick = 0;
   #elapsedSeconds = 0;
@@ -209,6 +220,11 @@ export class MatchSimulation {
     return this.#score;
   }
 
+  /** Ranged weapons' shots in flight, oldest first. */
+  public get projectiles(): readonly Readonly<Projectile>[] {
+    return this.#projectiles;
+  }
+
   public get(id: string): Participant | undefined {
     return this.#participants.get(id);
   }
@@ -245,6 +261,7 @@ export class MatchSimulation {
       behaviour: spec.behaviour,
       cursor: createCursor(),
       sinceReset: 0,
+      history: new PositionHistory(this.#historyLength()),
     };
     this.#participants.set(spec.id, record);
     return record;
@@ -431,6 +448,7 @@ export class MatchSimulation {
     this.#elapsedSeconds += dt;
     this.#log = [];
     this.checkMatchEnd();
+    this.#advanceProjectiles(dt);
 
     for (const record of this.#participants.values()) {
       if (this.#resetDue(record, dt)) {
@@ -486,6 +504,8 @@ export class MatchSimulation {
       }
 
       this.#advanceAttack(record, dt);
+      // Walked or approached: either way, it is what a shot leads.
+      record.history.push(record.position);
 
       // Behaviours act after their own cast resolves, so a dummy can
       // finish one cast and begin the next within the same tick.
@@ -654,7 +674,10 @@ export class MatchSimulation {
     }
     attack.swingElapsed = Math.max(0, attack.swingElapsed - weapon.attackIntervalSeconds);
 
-    // Ranged weapons land at once until projectiles exist (#159).
+    if (weapon.projectileSpeed !== undefined) {
+      this.#release(record, target, weapon.projectileSpeed, dt);
+      return;
+    }
     const events = resolveSwing({
       attacker: record.combatant,
       target,
@@ -664,11 +687,92 @@ export class MatchSimulation {
     });
     this.#gainAdrenaline(record, events);
     this.#recordDeaths(events);
+    this.#logWeapon(record.id, events);
+  }
+
+  /**
+   * A ranged swing lands as a shot leaving the bow, led ahead of the
+   * target. Blind is rolled now, as GW1 does: a blinded shot misses at
+   * once and nothing flies.
+   */
+  #release(record: ParticipantRecord, target: ParticipantRecord, speed: number, dt: number): void {
+    if (blindMisses(record.combatant, this.#rng)) {
+      this.#logWeapon(record.id, [{ kind: "attack-missed", targetId: target.id }]);
+      return;
+    }
+    const from = record.position;
+    const tracked = trackTarget(target.history.samples(), dt, target.position);
+    const aimPoint = leadAimPoint(from, tracked.position, tracked.velocity, speed);
+    this.#projectiles.push({
+      id: this.#nextProjectileId,
+      attackerId: record.id,
+      targetId: target.id,
+      from,
+      aimPoint,
+      speed,
+      flightSeconds: distance(from, aimPoint) / speed,
+      elapsed: 0,
+      weaponSnapshot: weaponSnapshotOf(record.combatant),
+    });
+    this.#nextProjectileId += 1;
+  }
+
+  /** Fly every shot in flight one tick, and land those that arrive, in release order. */
+  #advanceProjectiles(dt: number): void {
+    const landed: Projectile[] = [];
+    const flying: Projectile[] = [];
+    for (const projectile of this.#projectiles) {
+      projectile.elapsed += dt;
+      (projectile.elapsed >= projectile.flightSeconds - SWING_EPSILON ? landed : flying).push(
+        projectile,
+      );
+    }
+    this.#projectiles = flying;
+    for (const projectile of landed) {
+      this.#land(projectile);
+    }
+  }
+
+  /**
+   * A shot lands at its aim point, and hits whoever it was aimed at if
+   * they are still there: alive, and within their body plus the
+   * tolerance. Anyone else is dodged. Its attacker may have died since;
+   * the shot lands all the same, as in GW1, but the dead earn no
+   * adrenaline. A target that died in flight is not there to be hit or
+   * to dodge, so nothing happens.
+   */
+  #land(projectile: Projectile): void {
+    const target = this.#participants.get(projectile.targetId);
+    if (target === undefined || target.combatant.dead) {
+      return;
+    }
+    const reach = this.#ruleset.collision.playerRadius + this.#ruleset.combat.projectileTolerance;
+    const events: CombatEvent[] = [];
+    if (distance(target.position, projectile.aimPoint) <= reach) {
+      landBlow(
+        projectile.weaponSnapshot,
+        target.combatant,
+        this.#rng,
+        this.#ruleset.combat,
+        events,
+      );
+    } else {
+      events.push({ kind: "attack-dodged", targetId: target.id });
+    }
+    const attacker = this.#participants.get(projectile.attackerId);
+    if (attacker !== undefined && !attacker.combatant.dead) {
+      this.#gainAdrenaline(attacker, events);
+    }
+    this.#recordDeaths(events);
+    this.#logWeapon(projectile.attackerId, events);
+  }
+
+  #logWeapon(sourceId: string, events: readonly CombatEvent[]): void {
     this.#log.push({
       tick: this.#tick,
       atSeconds: this.#elapsedSeconds,
       cause: "weapon",
-      sourceId: record.id,
+      sourceId,
       skillId: undefined,
       area: undefined,
       events,
@@ -839,6 +943,15 @@ export class MatchSimulation {
     record.combatant.cast.cancelCast();
     record.combatant.attack = undefined;
     record.sinceReset = 0;
+    record.history.clear();
+  }
+
+  /** Ticks in the ruleset's tracking window: at least two, or there is no motion to fit. */
+  #historyLength(): number {
+    return Math.max(
+      2,
+      Math.round(this.#ruleset.combat.trackWindowSeconds * this.#ruleset.tickRateHz),
+    );
   }
 
   #combatant(spec: ParticipantSpec): Combatant {

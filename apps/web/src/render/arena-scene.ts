@@ -7,6 +7,7 @@ import {
   areaFlashAlpha,
   decayAreaFlashes,
   healthFraction,
+  nameLabelBottom,
   teamColour,
   type AreaFlash,
 } from "./arena-snapshot.js";
@@ -40,6 +41,7 @@ const CAST_BAR_FILL = 0xd7dee8;
 const SELF_RIM = 0xd7dee8;
 const DEAD_COLOUR = 0x4a5464;
 const INK = "#d7dee8";
+const DEAD_INK = "#4a5464";
 
 const HEALTH_BAR_WIDTH = 34;
 const HEALTH_BAR_HEIGHT = 4;
@@ -58,6 +60,8 @@ export class ArenaScene extends Phaser.Scene {
    */
   private statusIcons = new Map<string, Phaser.GameObjects.Image[]>();
   private statusOverflow = new Map<string, Phaser.GameObjects.Text>();
+  /** One name label per actor id, reused frame to frame like the icons. */
+  private nameLabels = new Map<string, Phaser.GameObjects.Text>();
   /** Status ids the server sent that this client has no icon for. */
   private readonly unknownStatuses = new Set<string>();
 
@@ -117,6 +121,7 @@ export class ArenaScene extends Phaser.Scene {
       this.drawActor(g, actor);
     }
     this.updateStatusIcons();
+    this.updateNameLabels();
     this.updateFloatingTexts(deltaMs / 1000);
   }
 
@@ -204,6 +209,37 @@ export class ArenaScene extends Phaser.Scene {
         this.statusIcons.delete(id);
         this.statusOverflow.get(id)?.destroy();
         this.statusOverflow.delete(id);
+      }
+    }
+  }
+
+  /**
+   * Every actor's name above its bars (#53). A corpse keeps its name, greyed,
+   * so a player can still see who went down.
+   */
+  private updateNameLabels(): void {
+    const seen = new Set<string>();
+    for (const actor of this.snapshot.actors) {
+      seen.add(actor.id);
+      let label = this.nameLabels.get(actor.id);
+      if (label === undefined) {
+        label = this.add
+          .text(0, 0, "", { fontSize: "11px", fontFamily: "ui-monospace, monospace", color: INK })
+          .setOrigin(0.5, 1);
+        this.nameLabels.set(actor.id, label);
+      }
+      // setText skips an unchanged string, but setColor redraws and
+      // re-uploads the label's texture every call, so only on a change.
+      const color = actor.dead ? DEAD_INK : INK;
+      if (label.style.color !== color) {
+        label.setColor(color);
+      }
+      label.setText(actor.name).setPosition(actor.position.x, nameLabelBottom(actor));
+    }
+    for (const [id, label] of this.nameLabels) {
+      if (!seen.has(id)) {
+        label.destroy();
+        this.nameLabels.delete(id);
       }
     }
   }

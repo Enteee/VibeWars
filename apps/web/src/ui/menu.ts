@@ -15,7 +15,7 @@ export interface MenuCallbacks {
   readonly onCreateLobby: (name: string) => void;
   readonly onJoinLobby: (code: string, name: string) => void;
   readonly onManageTeams: () => void;
-  readonly onQuickMatch: () => void;
+  readonly onQuickMatch: (name: string) => void;
   /** Open the build editor on a new character. */
   readonly onNewCharacter: () => void;
   readonly onEditCharacter: (id: string) => void;
@@ -256,7 +256,9 @@ export function renderMenu(
 
   const manageRow = h("div", "menu-row");
   manageRow.appendChild(button("teams", "", callbacks.onManageTeams));
-  const quickMatch = button("quick match", "", callbacks.onQuickMatch);
+  const quickMatch = button("quick match", "", () => {
+    callbacks.onQuickMatch(nameInput.value);
+  });
   quickMatch.disabled = !onlinePlay;
   manageRow.appendChild(quickMatch);
   panel.appendChild(manageRow);

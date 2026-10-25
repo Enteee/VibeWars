@@ -13,6 +13,8 @@ import type { CastRefusedMessage, ClientIntent, MapDescriptor } from "@vibewars/
 
 export interface PlayerSnapshot {
   readonly sessionId: string;
+  /** The display name the server settled on; never the session id. */
+  readonly name: string;
   readonly x: number;
   readonly y: number;
   /** Who this player is targeting, or `undefined` for no target. */

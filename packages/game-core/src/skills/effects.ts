@@ -42,7 +42,9 @@ export type CombatEvent =
   /** An interrupt that found nothing to interrupt — a wasted cast. */
   | { readonly kind: "interrupt-missed"; readonly targetId: string }
   /** A blinded attack skill that swung and missed: paid for, no effect. */
-  | { readonly kind: "attack-missed"; readonly targetId: string };
+  | { readonly kind: "attack-missed"; readonly targetId: string }
+  /** A projectile that landed where its target would have been, had it kept moving. */
+  | { readonly kind: "attack-dodged"; readonly targetId: string };
 
 /**
  * Apply an already-mitigated amount, clamping at 0 and flagging death

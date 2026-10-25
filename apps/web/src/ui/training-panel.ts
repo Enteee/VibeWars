@@ -350,6 +350,7 @@ export function createTrainingPanel(): TrainingPanel {
       simulation: setup.simulation,
       selfId: SELF_ID,
       map: setup.map,
+      nameOf,
     });
     session = {
       scenario,

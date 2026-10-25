@@ -8,6 +8,7 @@ import {
 import { PROTOCOL_VERSION, ROOM_MATCH } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { DEFAULT_SKILL_BAR } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
 
@@ -79,10 +80,12 @@ describe("joining with a build", () => {
   /** Join and return the skill bar the server actually granted. */
   const joinWith = async (
     build: unknown,
+    name?: string,
   ): Promise<{ room: Room<unknown, MatchView>; slots: SkillSlot[] }> => {
     const room = await new Client(endpoint).joinOrCreate<MatchView>(ROOM_MATCH, {
       protocolVersion: PROTOCOL_VERSION,
       ...(build === undefined ? {} : { build }),
+      ...(name === undefined ? {} : { name }),
     });
     const slots = await new Promise<SkillSlot[]>((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -118,18 +121,31 @@ describe("joining with a build", () => {
     await room.leave(true);
   });
 
-  it("names the player after their build", async () => {
-    const { room } = await joinWith(LEGAL_BUILD);
+  it("names the player what they asked to be called, not after their build", async () => {
+    const { room } = await joinWith(LEGAL_BUILD, "Ellie");
 
-    expect(room.state.players.get(room.sessionId)?.name).toBe("Flame Caller");
+    // #53: the build is what you play, the name is who you are.
+    expect(room.state.players.get(room.sessionId)?.name).toBe("Ellie");
 
     await room.leave(true);
+  });
+
+  it("gives a nameless player a placeholder, and sanitises a hostile one", async () => {
+    const nameless = await joinWith(LEGAL_BUILD);
+    expect(nameless.room.state.players.get(nameless.room.sessionId)?.name).toMatch(/^player-/);
+    await nameless.room.leave(true);
+
+    const hostile = await joinWith(LEGAL_BUILD, `\u0000${"x".repeat(100)}`);
+    const name = hostile.room.state.players.get(hostile.room.sessionId)?.name ?? "";
+    expect(name).not.toContain("\u0000");
+    expect(name.length).toBeLessThanOrEqual(16);
+    await hostile.room.leave(true);
   });
 
   it("falls back to the house loadout when no build is sent", async () => {
     const { room, slots } = await joinWith(undefined);
 
-    expect(slots).toHaveLength(8);
+    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
     expect(slots.map((s) => s.id)).toContain("elementalist.fireball");
 
     await room.leave(true);
@@ -141,8 +157,7 @@ describe("joining with a build", () => {
     const { equipment: _dropped, ...withoutGear } = LEGAL_BUILD;
     const { room, slots } = await joinWith(withoutGear);
 
-    expect(slots).toHaveLength(8);
-    expect(room.state.players.get(room.sessionId)?.name).not.toBe("Flame Caller");
+    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
 
     await room.leave(true);
   });
@@ -159,9 +174,7 @@ describe("joining with a build", () => {
     const { room, slots } = await joinWith(cheat);
 
     expect(slots.map((s) => s.id)).not.toEqual(["elementalist.fireball"]);
-    expect(slots).toHaveLength(8);
-    // Refused, so the build's name is not adopted either.
-    expect(room.state.players.get(room.sessionId)?.name).not.toBe("Cheater");
+    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
 
     await room.leave(true);
   });
@@ -178,9 +191,10 @@ describe("joining with a build", () => {
         { attributeId: "monk.healing-prayers", rank: 20 },
       ],
     };
-    const { room } = await joinWith(cheat);
+    const { room, slots } = await joinWith(cheat);
 
-    expect(room.state.players.get(room.sessionId)?.name).not.toBe("Overspender");
+    // Refused: the house loadout's full bar, not the build's.
+    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
 
     await room.leave(true);
   });
@@ -193,9 +207,10 @@ describe("joining with a build", () => {
       name: "Divine Thief",
       attributes: [{ attributeId: "monk.divine-favor", rank: 12 }],
     };
-    const { room } = await joinWith(cheat);
+    const { room, slots } = await joinWith(cheat);
 
-    expect(room.state.players.get(room.sessionId)?.name).not.toBe("Divine Thief");
+    // Refused: the house loadout's full bar, not the build's.
+    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
 
     await room.leave(true);
   });
@@ -206,9 +221,10 @@ describe("joining with a build", () => {
       name: "Meteor Dreamer",
       skillBar: ["elementalist.meteor-shower", null, null, null, null, null, null, null],
     };
-    const { room } = await joinWith(cheat);
+    const { room, slots } = await joinWith(cheat);
 
-    expect(room.state.players.get(room.sessionId)?.name).not.toBe("Meteor Dreamer");
+    // Refused: the house loadout's full bar, not the build's.
+    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
 
     await room.leave(true);
   });

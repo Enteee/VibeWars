@@ -221,7 +221,7 @@ test("a recharging skill shows the clock-wipe and the seconds left, then clears 
   const slot = page.locator(".hud-skill").nth(4);
   const overlay = slot.locator(".recharge-overlay");
   await expect(overlay).toHaveCount(1);
-  expect(Number(await overlay.textContent())).toBeGreaterThan(0);
+  expect(Number(await overlay.locator(".recharge-seconds").textContent())).toBeGreaterThan(0);
   const recharge = await overlay.evaluate((node) => node.style.getPropertyValue("--recharge"));
   expect(Number(recharge)).toBeGreaterThan(0);
   // No other slot started recharging.
