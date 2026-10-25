@@ -6,8 +6,8 @@
  * The restart loop in nix/claude-llc.nix runs this with `claude-bot <role>`
  * as the command. It resumes the role's conversation by id, shows the
  * stream-json claude prints as readable lines (stream-format.mjs), and
- * exits 0 if the turn ended and 1 if the run failed, which is all the loop
- * needs to know.
+ * exits 0 if the turn ended, 1 if the run failed and 3 if Claude's usage
+ * limit is reached (#308), which is all the loop needs to know.
  *
  * `<state-dir>/session-id` is the conversation to resume. This writes it
  * from the run's `system`/`init` event; the agent, inside its jail, cannot
@@ -15,6 +15,12 @@
  * what `--resume` with an id claude no longer has looks like, deletes it,
  * so the next turn starts a fresh conversation instead of failing the same
  * way until the loop gives up.
+ *
+ * A limited run writes `<state-dir>/limited-until`, the reset in unix
+ * seconds or empty when it is unknown, for agent-loop.mjs to wait on. It
+ * also keeps the event that said so in `usage-limit-sample.json`, and a
+ * failed run its last raw lines in `last-failure.jsonl`, so the shapes
+ * the limit detection guesses at can be checked against real ones.
  */
 
 import { spawn } from "node:child_process";
@@ -23,7 +29,7 @@ import path from "node:path";
 import process from "node:process";
 import readline from "node:readline";
 
-import { formatLine, parseEvent, runFailed, sessionIdOf } from "./stream-format.mjs";
+import { formatLine, parseEvent, runFailed, sessionIdOf, usageLimitOf } from "./stream-format.mjs";
 
 const [state, separator, command, ...args] = process.argv.slice(2);
 if (state === undefined || separator !== "--" || command === undefined) {
@@ -31,6 +37,9 @@ if (state === undefined || separator !== "--" || command === undefined) {
   process.exit(2);
 }
 const SESSION = path.join(state, "session-id");
+
+/** How many raw lines of a failed run `last-failure.jsonl` keeps. */
+const FAILURE_LINES = 20;
 
 /** @returns {string | null} */
 function savedSession() {
@@ -47,9 +56,32 @@ function savedSession() {
  * @returns {void}
  */
 function saveSession(id) {
-  const part = `${SESSION}.part`;
-  fs.writeFileSync(part, `${id}\n`);
-  fs.renameSync(part, SESSION);
+  writeAtomically(SESSION, `${id}\n`);
+}
+
+/**
+ * @param {string} file
+ * @param {string} contents
+ * @returns {void}
+ */
+function writeAtomically(file, contents) {
+  const part = `${file}.part`;
+  fs.writeFileSync(part, contents);
+  fs.renameSync(part, file);
+}
+
+/**
+ * @param {number | null} until unix seconds
+ * @returns {string}
+ */
+function resetText(until) {
+  if (until === null) {
+    return "reset time unknown";
+  }
+  const at = new Date(until * 1000);
+  const hh = String(at.getHours()).padStart(2, "0");
+  const mm = String(at.getMinutes()).padStart(2, "0");
+  return `resets ${hh}:${mm}`;
 }
 
 process.on("SIGINT", () => {
@@ -65,10 +97,22 @@ const child = spawn(command, [...(resume === null ? [] : ["--resume", resume]), 
 });
 
 /** What the run got as far as; set from the stream as it arrives. */
-const seen = { init: false, result: false };
+/** @type {{ init: boolean, result: boolean, limit: { until: number | null } | null, limitLine: string }} */
+const seen = { init: false, result: false, limit: null, limitLine: "" };
+/** @type {string[]} */
+const recent = [];
 const lines = readline.createInterface({ input: child.stdout, crlfDelay: Infinity });
 lines.on("line", (line) => {
+  recent.push(line);
+  if (recent.length > FAILURE_LINES) {
+    recent.shift();
+  }
   const event = parseEvent(line);
+  const limit = usageLimitOf(event);
+  if (limit !== null) {
+    seen.limit = limit;
+    seen.limitLine = line;
+  }
   // The first init only: claude prints one, so a second is forged.
   const id = seen.init ? null : sessionIdOf(event);
   if (id !== null) {
@@ -95,9 +139,19 @@ const exited = new Promise((resolve) => {
 });
 const code = await exited;
 
+// A limit outranks the exit code and the result: the run that hit it may
+// well have ended "normally", and it must not count as a failure either.
+if (seen.limit !== null) {
+  const { until } = seen.limit;
+  writeAtomically(path.join(state, "limited-until"), until === null ? "" : `${String(until)}\n`);
+  writeAtomically(path.join(state, "usage-limit-sample.json"), `${seen.limitLine}\n`);
+  console.error(`agent-turn: Claude usage limit reached; ${resetText(until)}`);
+  process.exit(3);
+}
 if (!runFailed({ code, sawResult: seen.result })) {
   process.exit(0);
 }
+writeAtomically(path.join(state, "last-failure.jsonl"), recent.map((line) => `${line}\n`).join(""));
 if (!seen.init && resume !== null) {
   fs.rmSync(SESSION, { force: true });
   console.error(`agent-turn: could not resume session ${resume}; the next turn starts a new one`);

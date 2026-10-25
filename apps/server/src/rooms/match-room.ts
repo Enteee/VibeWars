@@ -27,6 +27,7 @@ import {
   spawnFacing,
   validatePlayerBuild,
   vec2,
+  type CombatEvent,
   type CombatLogEntry,
   type BuildEquipment,
   type Participant,
@@ -42,6 +43,8 @@ import {
   ROOM_MATCH,
   parseClientIntent,
   type CastRefusedMessage,
+  type CombatBatchMessage,
+  type CombatMessage,
   type MapDescriptor,
   type RechargeMessage,
   type RechargeSlot,
@@ -381,6 +384,45 @@ export async function openLobbyMatch(
   );
 }
 
+/**
+ * A combat-log entry for the clients, or `undefined` for one with no
+ * events. The client uses these for floating numbers and a combat log;
+ * authoritative *state* still arrives via schema sync, so a dropped event
+ * can never desync the simulation — it only costs a visual flourish. An
+ * area skill also says where it landed and how far it reached, for the
+ * flash (#5).
+ */
+function combatEntry(entry: CombatLogEntry): CombatMessage<CombatEvent> | undefined {
+  const { cause, events, area } = entry;
+  if (events.length === 0) {
+    return undefined;
+  }
+  // On the wire, a status tick is sent as its bearer's, with no skill:
+  // who applied the statuses is the combat log's business. A weapon swing
+  // goes out as its attacker's, with no skill.
+  const casterSessionId = (cause === "degeneration" ? events[0]?.targetId : entry.sourceId) ?? "";
+  // `cause` says what this was; `skillId` is `""` unless it was a
+  // skill, and `weaponId` `""` unless it was a weapon (#162).
+  const skillId = entry.skillId ?? "";
+  const weaponId = entry.weaponId ?? "";
+  return area === undefined
+    ? { casterSessionId, cause, skillId, weaponId, events }
+    : { casterSessionId, cause, skillId, weaponId, events, area };
+}
+
+/**
+ * A tick's combat log as one `"combat"` message (#288), entries in log
+ * order, or `undefined` when there is nothing to send. One broadcast a
+ * tick, however many entries: each broadcast encodes and sends to every
+ * client, and a 16v16 tick under attack has a hundred entries or more.
+ */
+export function combatBatch(
+  log: readonly CombatLogEntry[],
+): CombatBatchMessage<CombatEvent> | undefined {
+  const entries = log.flatMap((entry) => combatEntry(entry) ?? []);
+  return entries.length === 0 ? undefined : { entries };
+}
+
 function toMapDescriptor(map: MapData): MapDescriptor {
   const walls: WallDescriptor[] = map.walls.map((wall) =>
     wall.kind === "rect"
@@ -688,31 +730,6 @@ export class MatchRoom extends Room {
     }
   }
 
-  /**
-   * Push combat events to every client. The client uses these for
-   * floating numbers and a combat log; authoritative *state* still
-   * arrives via schema sync, so a dropped event can never desync the
-   * simulation — it only costs a visual flourish. An area skill also says
-   * where it landed and how far it reached, for the flash (#5).
-   */
-  private broadcastCombatEvents(casterSessionId: string, entry: CombatLogEntry): void {
-    const { cause, events, area } = entry;
-    if (events.length === 0) {
-      return;
-    }
-    // `cause` says what this was; `skillId` is `""` unless it was a
-    // skill, and `weaponId` `""` unless it was a weapon (#162).
-    const skillId = entry.skillId ?? "";
-    const weaponId = entry.weaponId ?? "";
-    broadcast(
-      this,
-      "combat",
-      area === undefined
-        ? { casterSessionId, cause, skillId, weaponId, events }
-        : { casterSessionId, cause, skillId, weaponId, events, area },
-    );
-  }
-
   private tick(ctx: StepContext): void {
     // A finished match stops simulating but stays joinable, so everyone
     // can read the result before heading back to the lobby.
@@ -725,13 +742,9 @@ export class MatchRoom extends Room {
     this.state.scoreTeam0 = this.#sim.score.byTeam.get(0) ?? 0;
     this.state.scoreTeam1 = this.#sim.score.byTeam.get(1) ?? 0;
 
-    for (const entry of result.log) {
-      // On the wire, a status tick is sent as its bearer's, with no
-      // skill: who applied the statuses is the combat log's business. A
-      // weapon swing goes out as its attacker's, with no skill.
-      const casterSessionId =
-        entry.cause === "degeneration" ? entry.events[0]?.targetId : entry.sourceId;
-      this.broadcastCombatEvents(casterSessionId ?? "", entry);
+    const batch = combatBatch(result.log);
+    if (batch !== undefined) {
+      broadcast(this, "combat", batch);
     }
     this.syncProjectiles();
 

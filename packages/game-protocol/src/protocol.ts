@@ -26,12 +26,22 @@ export const SERVER_FULL_MESSAGE = "The server is full. Try again in a minute.";
 export const CLIENT_LIMIT = 4503;
 
 /**
- * The error code of a join or matchmaking request refused because one
- * network address is over its share (#265): too many sockets open, or too
- * many matchmaking requests at once. An HTTP status, 429 Too Many
- * Requests, because matchmaking answers with it as one.
+ * The error code of a matchmaking request refused because one network
+ * address sent too many at once (#265, #282). An HTTP status, 429 Too Many
+ * Requests, because the HTTP gate answers the request with it; the player
+ * sees `RATE_LIMIT_MESSAGE`.
  */
-export const ADDRESS_LIMIT = 429;
+export const RATE_LIMIT = 429;
+
+/** What a player is told when their network sent too many requests at once. */
+export const RATE_LIMIT_MESSAGE = "Too many requests from your network. Try again in a moment.";
+
+/**
+ * The error code of a join refused because one network address holds too
+ * many sockets (#265). Told on the socket, after matchmaking, like
+ * `CLIENT_LIMIT`, so it need not be an HTTP status.
+ */
+export const ADDRESS_LIMIT = 4429;
 
 /** What a player is told when their network address is over its share. */
 export const ADDRESS_LIMIT_MESSAGE =
@@ -417,7 +427,7 @@ export interface SkillBarMessage {
 }
 
 /**
- * Broadcast as `"combat"` for one resolution: a cast, a status tick or a
+ * One resolution in a `"combat"` batch: a cast, a status tick or a
  * weapon swing, and everything it did. Generic over the event so this
  * package stays dependency-free; the server and the client both
  * instantiate it with game-core's `CombatEvent`.
@@ -433,6 +443,11 @@ export interface CombatMessage<Event> {
   /** Where an area skill landed, and how far it reached (#5). */
   readonly area?: { readonly x: number; readonly y: number; readonly radius: number };
   readonly events: readonly Event[];
+}
+
+/** What one `"combat"` broadcast carries: a tick's entries, in combat-log order (#288). */
+export interface CombatBatchMessage<Event> {
+  readonly entries: readonly CombatMessage<Event>[];
 }
 
 /** Broadcast as `"match-ended"`, once, when the match finishes. */
@@ -470,7 +485,7 @@ export interface ServerMessages<Event> {
   readonly "skill-bar": SkillBarMessage;
   readonly recharge: RechargeMessage;
   readonly "cast-refused": CastRefusedMessage;
-  readonly combat: CombatMessage<Event>;
+  readonly combat: CombatBatchMessage<Event>;
   readonly "match-ended": MatchEndedMessage;
   readonly "match-starting": LobbyMatchStartingMessage;
   readonly "start-rejected": LobbyStartRejectedMessage;

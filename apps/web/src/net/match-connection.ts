@@ -2,6 +2,7 @@ import type { CombatEvent, OffhandId, ProfessionId } from "@vibewars/game-core";
 import type {
   CastRefusedMessage,
   ClientIntent,
+  CombatBatchMessage as WireCombatBatchMessage,
   CombatMessage as WireCombatMessage,
   MapDescriptor,
   SkillBarSlot,
@@ -101,6 +102,9 @@ export interface SlotRecharge {
 
 /** A `"combat"` message, its events game-core's. */
 export type CombatMessage = WireCombatMessage<CombatEvent>;
+
+/** What one `"combat"` message carries: a tick's entries, in combat-log order (#288). */
+export type CombatBatchMessage = WireCombatBatchMessage<CombatEvent>;
 
 export interface MatchConnection {
   readonly selfSessionId: string;

@@ -153,230 +153,268 @@
         }
       },
       "combat": {
-        "payload": "CombatMessage<CombatEvent>",
+        "payload": "CombatBatchMessage<CombatEvent>",
         "shape": {
           "properties": [
             {
-              "name": "area",
-              "optional": true,
-              "type": {
-                "properties": [
-                  { "name": "radius", "optional": false, "type": "number" },
-                  { "name": "x", "optional": false, "type": "number" },
-                  { "name": "y", "optional": false, "type": "number" }
-                ]
-              }
-            },
-            { "name": "casterSessionId", "optional": false, "type": "string" },
-            {
-              "name": "cause",
-              "optional": false,
-              "type": {
-                "union": [
-                  { "literal": "degeneration" },
-                  { "literal": "skill" },
-                  { "literal": "weapon" }
-                ]
-              }
-            },
-            {
-              "name": "events",
+              "name": "entries",
               "optional": false,
               "type": {
                 "array": {
-                  "union": [
+                  "properties": [
                     {
-                      "properties": [
-                        { "name": "amount", "optional": false, "type": "number" },
-                        { "name": "kind", "optional": false, "type": { "literal": "damage" } },
-                        { "name": "targetId", "optional": false, "type": "string" }
-                      ]
+                      "name": "area",
+                      "optional": true,
+                      "type": {
+                        "properties": [
+                          { "name": "radius", "optional": false, "type": "number" },
+                          { "name": "x", "optional": false, "type": "number" },
+                          { "name": "y", "optional": false, "type": "number" }
+                        ]
+                      }
+                    },
+                    { "name": "casterSessionId", "optional": false, "type": "string" },
+                    {
+                      "name": "cause",
+                      "optional": false,
+                      "type": {
+                        "union": [
+                          { "literal": "degeneration" },
+                          { "literal": "skill" },
+                          { "literal": "weapon" }
+                        ]
+                      }
                     },
                     {
-                      "properties": [
-                        { "name": "amount", "optional": false, "type": "number" },
-                        { "name": "kind", "optional": false, "type": { "literal": "energy-gain" } },
-                        { "name": "targetId", "optional": false, "type": "string" }
-                      ]
+                      "name": "events",
+                      "optional": false,
+                      "type": {
+                        "array": {
+                          "union": [
+                            {
+                              "properties": [
+                                { "name": "amount", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "damage" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                { "name": "amount", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "energy-gain" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                { "name": "amount", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "heal" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                { "name": "amount", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "sacrifice" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                { "name": "durationSeconds", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "status-applied" }
+                                },
+                                {
+                                  "name": "statusId",
+                                  "optional": false,
+                                  "type": {
+                                    "union": [
+                                      { "literal": "armor-boost" },
+                                      { "literal": "bleeding" },
+                                      { "literal": "blind" },
+                                      { "literal": "burning" },
+                                      { "literal": "crippled" },
+                                      { "literal": "dazed" },
+                                      { "literal": "deep-wound" },
+                                      { "literal": "life-drain" },
+                                      { "literal": "poison" },
+                                      { "literal": "regeneration" },
+                                      { "literal": "weakness" }
+                                    ]
+                                  }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "attack-dodged" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "attack-missed" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "attack-obstructed" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "attack-unreachable" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "cancelled" }
+                                },
+                                { "name": "skillId", "optional": false, "type": "string" },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "death" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "interrupt-missed" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "interrupted" }
+                                },
+                                { "name": "skillId", "optional": false, "type": "string" },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "status-expired" }
+                                },
+                                {
+                                  "name": "statusId",
+                                  "optional": false,
+                                  "type": {
+                                    "union": [
+                                      { "literal": "armor-boost" },
+                                      { "literal": "bleeding" },
+                                      { "literal": "blind" },
+                                      { "literal": "burning" },
+                                      { "literal": "crippled" },
+                                      { "literal": "dazed" },
+                                      { "literal": "deep-wound" },
+                                      { "literal": "life-drain" },
+                                      { "literal": "poison" },
+                                      { "literal": "regeneration" },
+                                      { "literal": "weakness" }
+                                    ]
+                                  }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "status-removed" }
+                                },
+                                {
+                                  "name": "statusId",
+                                  "optional": false,
+                                  "type": {
+                                    "union": [
+                                      { "literal": "armor-boost" },
+                                      { "literal": "bleeding" },
+                                      { "literal": "blind" },
+                                      { "literal": "burning" },
+                                      { "literal": "crippled" },
+                                      { "literal": "dazed" },
+                                      { "literal": "deep-wound" },
+                                      { "literal": "life-drain" },
+                                      { "literal": "poison" },
+                                      { "literal": "regeneration" },
+                                      { "literal": "weakness" }
+                                    ]
+                                  }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            }
+                          ]
+                        }
+                      }
                     },
-                    {
-                      "properties": [
-                        { "name": "amount", "optional": false, "type": "number" },
-                        { "name": "kind", "optional": false, "type": { "literal": "heal" } },
-                        { "name": "targetId", "optional": false, "type": "string" }
-                      ]
-                    },
-                    {
-                      "properties": [
-                        { "name": "amount", "optional": false, "type": "number" },
-                        { "name": "kind", "optional": false, "type": { "literal": "sacrifice" } },
-                        { "name": "targetId", "optional": false, "type": "string" }
-                      ]
-                    },
-                    {
-                      "properties": [
-                        { "name": "durationSeconds", "optional": false, "type": "number" },
-                        {
-                          "name": "kind",
-                          "optional": false,
-                          "type": { "literal": "status-applied" }
-                        },
-                        {
-                          "name": "statusId",
-                          "optional": false,
-                          "type": {
-                            "union": [
-                              { "literal": "armor-boost" },
-                              { "literal": "bleeding" },
-                              { "literal": "blind" },
-                              { "literal": "burning" },
-                              { "literal": "crippled" },
-                              { "literal": "dazed" },
-                              { "literal": "deep-wound" },
-                              { "literal": "life-drain" },
-                              { "literal": "poison" },
-                              { "literal": "regeneration" },
-                              { "literal": "weakness" }
-                            ]
-                          }
-                        },
-                        { "name": "targetId", "optional": false, "type": "string" }
-                      ]
-                    },
-                    {
-                      "properties": [
-                        {
-                          "name": "kind",
-                          "optional": false,
-                          "type": { "literal": "attack-dodged" }
-                        },
-                        { "name": "targetId", "optional": false, "type": "string" }
-                      ]
-                    },
-                    {
-                      "properties": [
-                        {
-                          "name": "kind",
-                          "optional": false,
-                          "type": { "literal": "attack-missed" }
-                        },
-                        { "name": "targetId", "optional": false, "type": "string" }
-                      ]
-                    },
-                    {
-                      "properties": [
-                        {
-                          "name": "kind",
-                          "optional": false,
-                          "type": { "literal": "attack-obstructed" }
-                        },
-                        { "name": "targetId", "optional": false, "type": "string" }
-                      ]
-                    },
-                    {
-                      "properties": [
-                        {
-                          "name": "kind",
-                          "optional": false,
-                          "type": { "literal": "attack-unreachable" }
-                        },
-                        { "name": "targetId", "optional": false, "type": "string" }
-                      ]
-                    },
-                    {
-                      "properties": [
-                        { "name": "kind", "optional": false, "type": { "literal": "cancelled" } },
-                        { "name": "skillId", "optional": false, "type": "string" },
-                        { "name": "targetId", "optional": false, "type": "string" }
-                      ]
-                    },
-                    {
-                      "properties": [
-                        { "name": "kind", "optional": false, "type": { "literal": "death" } },
-                        { "name": "targetId", "optional": false, "type": "string" }
-                      ]
-                    },
-                    {
-                      "properties": [
-                        {
-                          "name": "kind",
-                          "optional": false,
-                          "type": { "literal": "interrupt-missed" }
-                        },
-                        { "name": "targetId", "optional": false, "type": "string" }
-                      ]
-                    },
-                    {
-                      "properties": [
-                        { "name": "kind", "optional": false, "type": { "literal": "interrupted" } },
-                        { "name": "skillId", "optional": false, "type": "string" },
-                        { "name": "targetId", "optional": false, "type": "string" }
-                      ]
-                    },
-                    {
-                      "properties": [
-                        {
-                          "name": "kind",
-                          "optional": false,
-                          "type": { "literal": "status-expired" }
-                        },
-                        {
-                          "name": "statusId",
-                          "optional": false,
-                          "type": {
-                            "union": [
-                              { "literal": "armor-boost" },
-                              { "literal": "bleeding" },
-                              { "literal": "blind" },
-                              { "literal": "burning" },
-                              { "literal": "crippled" },
-                              { "literal": "dazed" },
-                              { "literal": "deep-wound" },
-                              { "literal": "life-drain" },
-                              { "literal": "poison" },
-                              { "literal": "regeneration" },
-                              { "literal": "weakness" }
-                            ]
-                          }
-                        },
-                        { "name": "targetId", "optional": false, "type": "string" }
-                      ]
-                    },
-                    {
-                      "properties": [
-                        {
-                          "name": "kind",
-                          "optional": false,
-                          "type": { "literal": "status-removed" }
-                        },
-                        {
-                          "name": "statusId",
-                          "optional": false,
-                          "type": {
-                            "union": [
-                              { "literal": "armor-boost" },
-                              { "literal": "bleeding" },
-                              { "literal": "blind" },
-                              { "literal": "burning" },
-                              { "literal": "crippled" },
-                              { "literal": "dazed" },
-                              { "literal": "deep-wound" },
-                              { "literal": "life-drain" },
-                              { "literal": "poison" },
-                              { "literal": "regeneration" },
-                              { "literal": "weakness" }
-                            ]
-                          }
-                        },
-                        { "name": "targetId", "optional": false, "type": "string" }
-                      ]
-                    }
+                    { "name": "skillId", "optional": false, "type": "string" },
+                    { "name": "weaponId", "optional": false, "type": "string" }
                   ]
                 }
               }
-            },
-            { "name": "skillId", "optional": false, "type": "string" },
-            { "name": "weaponId", "optional": false, "type": "string" }
+            }
           ]
         }
       },
@@ -528,7 +566,7 @@
     }
   },
   "constants": {
-    "ADDRESS_LIMIT": { "literal": 429 },
+    "ADDRESS_LIMIT": { "literal": 4429 },
     "ADDRESS_LIMIT_MESSAGE": {
       "literal": "Too many connections from your network. Close other VibeWars tabs and try again."
     },
@@ -540,6 +578,10 @@
       "literal": "This tab is running an outdated version of VibeWars. Reload the page."
     },
     "QUICK_MATCH_MAX_PLAYERS": { "literal": 8 },
+    "RATE_LIMIT": { "literal": 429 },
+    "RATE_LIMIT_MESSAGE": {
+      "literal": "Too many requests from your network. Try again in a moment."
+    },
     "ROOM_LIMIT": { "literal": 503 },
     "ROOM_LOBBY": { "literal": "lobby" },
     "ROOM_MATCH": { "literal": "match" },
@@ -682,6 +724,50 @@
           "name": "start-match",
           "optional": false,
           "type": { "properties": [], "index": [{ "key": "string", "value": "never" }] }
+        }
+      ]
+    },
+    "CombatBatchMessage": {
+      "properties": [
+        {
+          "name": "entries",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                {
+                  "name": "area",
+                  "optional": true,
+                  "type": {
+                    "properties": [
+                      { "name": "radius", "optional": false, "type": "number" },
+                      { "name": "x", "optional": false, "type": "number" },
+                      { "name": "y", "optional": false, "type": "number" }
+                    ]
+                  }
+                },
+                { "name": "casterSessionId", "optional": false, "type": "string" },
+                {
+                  "name": "cause",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      { "literal": "degeneration" },
+                      { "literal": "skill" },
+                      { "literal": "weapon" }
+                    ]
+                  }
+                },
+                {
+                  "name": "events",
+                  "optional": false,
+                  "type": { "array": { "typeParameter": "Event" } }
+                },
+                { "name": "skillId", "optional": false, "type": "string" },
+                { "name": "weaponId", "optional": false, "type": "string" }
+              ]
+            }
+          }
         }
       ]
     },
@@ -1095,35 +1181,45 @@
           "type": {
             "properties": [
               {
-                "name": "area",
-                "optional": true,
-                "type": {
-                  "properties": [
-                    { "name": "radius", "optional": false, "type": "number" },
-                    { "name": "x", "optional": false, "type": "number" },
-                    { "name": "y", "optional": false, "type": "number" }
-                  ]
-                }
-              },
-              { "name": "casterSessionId", "optional": false, "type": "string" },
-              {
-                "name": "cause",
+                "name": "entries",
                 "optional": false,
                 "type": {
-                  "union": [
-                    { "literal": "degeneration" },
-                    { "literal": "skill" },
-                    { "literal": "weapon" }
-                  ]
+                  "array": {
+                    "properties": [
+                      {
+                        "name": "area",
+                        "optional": true,
+                        "type": {
+                          "properties": [
+                            { "name": "radius", "optional": false, "type": "number" },
+                            { "name": "x", "optional": false, "type": "number" },
+                            { "name": "y", "optional": false, "type": "number" }
+                          ]
+                        }
+                      },
+                      { "name": "casterSessionId", "optional": false, "type": "string" },
+                      {
+                        "name": "cause",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            { "literal": "degeneration" },
+                            { "literal": "skill" },
+                            { "literal": "weapon" }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "events",
+                        "optional": false,
+                        "type": { "array": { "typeParameter": "Event" } }
+                      },
+                      { "name": "skillId", "optional": false, "type": "string" },
+                      { "name": "weaponId", "optional": false, "type": "string" }
+                    ]
+                  }
                 }
-              },
-              {
-                "name": "events",
-                "optional": false,
-                "type": { "array": { "typeParameter": "Event" } }
-              },
-              { "name": "skillId", "optional": false, "type": "string" },
-              { "name": "weaponId", "optional": false, "type": "string" }
+              }
             ]
           }
         },

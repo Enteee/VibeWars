@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { MatchSnapshot, PlayerSnapshot } from "../net/match-connection.js";
-import { attackKeyIntents, isAttacking } from "./attack-key.js";
+import { attackClickIntents, attackKeyIntents, isAttacking } from "./attack-key.js";
 
 function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
   return {
@@ -76,5 +76,24 @@ describe("isAttacking", () => {
   it("is whether self has an attack target", () => {
     expect(isAttacking(snapshot([player("me", { attackTargetSessionId: "x" })]))).toBe(true);
     expect(isAttacking(snapshot([player("me")]))).toBe(false);
+  });
+});
+
+describe("attackClickIntents", () => {
+  const match = snapshot([
+    player("me"),
+    player("ally", { x: 5 }),
+    player("foe", { x: 90, team: 1 }),
+    player("corpse", { x: 40, team: 1, dead: true }),
+  ]);
+
+  it("attacks a living enemy", () => {
+    expect(attackClickIntents(match, "foe")).toEqual([{ kind: "attack", targetId: "foe" }]);
+  });
+
+  it("sends nothing for an ally, yourself, a corpse, empty ground or a stranger", () => {
+    for (const hitId of ["ally", "me", "corpse", undefined, "gone"]) {
+      expect(attackClickIntents(match, hitId)).toEqual([]);
+    }
   });
 });
