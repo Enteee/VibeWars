@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "../net/match-connection.js";
-import { soundsForCombat, soundsForSnapshot } from "./combat-sounds.js";
+import { hitsForCombat, soundsForCombat, soundsForSnapshot } from "./combat-sounds.js";
 
 const ME = "me";
 
@@ -119,6 +119,44 @@ describe("soundsForCombat", () => {
       { kind: "death", targetId: "foe" },
     ]);
     expect(soundsForCombat(kill, ME)).toEqual(["hit-dealt", "death"]);
+  });
+});
+
+describe("hitsForCombat (#370)", () => {
+  it("counts damage, interrupts, conditions and hexes, dealt or taken", () => {
+    const dealt = message(ME, [
+      { kind: "damage", targetId: "foe", amount: 9 },
+      { kind: "interrupted", targetId: "foe", skillId: "heal" },
+      { kind: "status-applied", targetId: "foe", statusId: "bleeding", durationSeconds: 5 },
+      { kind: "status-applied", targetId: "foe", statusId: "life-drain", durationSeconds: 5 },
+    ]);
+    expect(hitsForCombat(dealt, ME)).toEqual(["dealt", "dealt", "dealt", "dealt"]);
+    const taken = message("foe", [
+      { kind: "damage", targetId: ME, amount: 9 },
+      { kind: "status-applied", targetId: ME, statusId: "crippled", durationSeconds: 5 },
+    ]);
+    expect(hitsForCombat(taken, ME)).toEqual(["taken", "taken"]);
+  });
+
+  it("does not count heals, enchantments, your own buffs, status ticks or other fights", () => {
+    const friendly = message("ally", [
+      { kind: "heal", targetId: ME, amount: 5 },
+      { kind: "status-applied", targetId: ME, statusId: "regeneration", durationSeconds: 5 },
+    ]);
+    const ownBuff = message(ME, [
+      { kind: "status-applied", targetId: ME, statusId: "armor-boost", durationSeconds: 5 },
+    ]);
+    const tick: CombatMessage = {
+      casterSessionId: "foe",
+      cause: "degeneration",
+      skillId: "",
+      weaponId: "",
+      events: [{ kind: "damage", targetId: ME, amount: 1 }],
+    };
+    const elsewhere = message("foe", [{ kind: "damage", targetId: "ally", amount: 9 }]);
+    for (const m of [friendly, ownBuff, tick, elsewhere]) {
+      expect(hitsForCombat(m, ME)).toEqual([]);
+    }
   });
 });
 
