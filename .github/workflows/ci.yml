@@ -8,32 +8,40 @@ on:
 permissions:
   contents: read
 
+# A newer push to a pull request cancels the run it supersedes, so stale runs
+# stop holding runners other pull requests are queued for. Main is keyed on
+# the commit, not the ref: a concurrency group keeps only one pending run, so
+# a ref-keyed group would silently drop the run of an intermediate merge.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 # Every check runs inside the dev shell devenv.nix defines, with the toolchain
 # devenv.lock pins: there is no second toolchain setup to drift from it. See
 # docs/adr/0021-ci-in-devenv.md.
 jobs:
-  # The hook list is read from the .pre-commit-config.yaml the shell
-  # generates, so adding a hook to `git-hooks.hooks` in devenv.nix adds a CI
-  # job for it with no edit here.
-  hook-list:
-    name: list git hooks
+  # Every hook in one job (#230): the shell is realised once, not once per
+  # hook. prek runs every hook even after one fails and names each one
+  # Passed or Failed in the log. The hooks are read from the
+  # .pre-commit-config.yaml the shell generates, so adding one to
+  # `git-hooks.hooks` in devenv.nix runs it here with no edit.
+  # The job name is a required check (company-init.mjs EXPECTED_CHECKS).
+  # No `needs:`, for the reason given on `ci`.
+  hooks:
+    name: git hooks
     runs-on: ubuntu-latest
-    outputs:
-      hooks: ${{ steps.list.outputs.hooks }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      # The one job that saves the Nix store cache. The hook jobs wait for
-      # it, so they restore the store this one realised.
+      # The one job that saves the Nix store cache; the others restore it.
       - uses: ./.github/actions/devenv
         with:
           save-cache: "true"
 
-      - id: list
-        name: List enabled hooks
-        # Asks prek, the runner the hook jobs use, rather than parsing the
-        # file: it reads the config exactly as `prek run` will. Written to a
-        # file because the shell's own greeting also goes to stdout.
+      # An empty hook list would pass `prek run` vacuously. Asks prek, the
+      # runner itself, rather than parsing the file. Written to a file
+      # because the shell's own greeting also goes to stdout.
+      - name: List enabled hooks
         run: |
           devenv shell -- bash -c \
             "prek list -c .pre-commit-config.yaml --output-format json > '$RUNNER_TEMP/hooks.json'"
@@ -43,45 +51,14 @@ jobs:
             echo "::error::.pre-commit-config.yaml lists no hooks"
             exit 1
           fi
-          echo "hooks=$hooks" >> "$GITHUB_OUTPUT"
-
-  hook:
-    name: hook (${{ matrix.hook }})
-    needs: hook-list
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        hook: ${{ fromJSON(needs.hook-list.outputs.hooks) }}
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - uses: ./.github/actions/devenv
 
       # Against the whole tree, not only changed files: a commit made with
       # --no-verify, or outside the shell, is caught here.
-      - name: Run ${{ matrix.hook }} on every file
+      - name: Run every hook on every file
         run: >-
           devenv shell --
-          prek run "${{ matrix.hook }}"
-          --all-files --show-diff-on-failure
+          prek run --all-files --show-diff-on-failure
           -c .pre-commit-config.yaml
-
-  # One check that is green only if every hook job was. A matrix has no fixed
-  # job names to require, so this is the one required (company-init.mjs
-  # EXPECTED_CHECKS and the ruleset). It must never be skipped: always().
-  hooks:
-    name: git hooks
-    needs: [hook-list, hook]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Every hook passed
-        env:
-          LIST: ${{ needs.hook-list.result }}
-          HOOKS: ${{ needs.hook.result }}
-        run: |
-          echo "hook-list: $LIST, hook: $HOOKS"
-          [ "$LIST" = success ] && [ "$HOOKS" = success ]
 
   # The job name is the required status check (scripts/bots/company-init.mjs
   # EXPECTED_CHECKS), so it stays as it is.

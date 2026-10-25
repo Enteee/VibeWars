@@ -3,7 +3,7 @@
 ## Status
 
 Accepted (2026-10-24). Amends [ADR-0007](0007-development-environment.md):
-devenv is now also the CI environment.
+devenv is now also the CI environment. D3 amended (2026-10-25, #230).
 
 ## Context
 
@@ -26,19 +26,24 @@ by `vibewars.claudeBot.enable = false`, written to the gitignored
 
 **D2. Caching needs no secret.** `nix-community/cache-nix-action` caches
 `/nix/store` in the normal Actions cache, keyed on `devenv.nix`,
-`devenv.lock`, `devenv.yaml` and `nix/**`. Only the `list git hooks` job
+`devenv.lock`, `devenv.yaml` and `nix/**`. Only the `git hooks` job
 saves it; the others restore it. The pnpm store is cached on
 `pnpm-lock.yaml`.
 
-**D3. One job per hook, from a generated matrix.** The `list git hooks` job
-enters the shell, which writes `.pre-commit-config.yaml`, asks `prek list`
-for the enabled hook ids and emits them as a JSON matrix. The `hook (<id>)`
-jobs run `prek run <id> --all-files` (`prek` is devenv's default
-`git-hooks.package`). Adding a hook to `devenv.nix` adds a CI job for it
-with no workflow edit. The `git hooks` job is green only if every hook job
-was, and it is the one that is required: `company-init.mjs` lists it in
-`EXPECTED_CHECKS` for hubd and for the ruleset on `main`. Third-party
+**D3. Every hook in one job.** The `git hooks` job enters the shell, which
+writes `.pre-commit-config.yaml`, checks with `prek list` that at least one
+hook is enabled, then runs `prek run --all-files` (`prek` is devenv's
+default `git-hooks.package`). prek runs every hook even after one fails, and
+names each one Passed or Failed. Adding a hook to `devenv.nix` runs it in
+CI with no workflow edit. `git hooks` is required: `company-init.mjs` lists
+it in `EXPECTED_CHECKS` for hubd and for the ruleset on `main`. Third-party
 actions are pinned to a commit.
+
+Until #230 this was a generated matrix: a `list git hooks` job and one
+`hook (<id>)` job per hook. Each of those 12 jobs spent 40–60 s realising
+the shell to run a hook of a few seconds, and 16 jobs per run queued behind
+the account's concurrent-job limit, about 2.5 min per run. Pull request
+runs now also cancel the run their next push supersedes.
 
 **D4. The `enterTest` checks run as separate steps** of the
 `format + lint + typecheck + test + build` job, in `enterTest`'s order,
@@ -50,7 +55,7 @@ is the required status check.
 
 - CI and a developer's shell run the same tools at the same versions, and a
   `devenv update` moves both.
-- A hook failure is its own red job in the Actions UI.
+- A hook failure turns `git hooks` red; its log names the hook that failed.
 - The first run after a `devenv.lock` or `nix/**` change builds or downloads
   the shell; later runs restore it. The Actions cache is 10 GB per
   repository, and the shell (Chromium included) is a large share of it.
