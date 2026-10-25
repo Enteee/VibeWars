@@ -34,7 +34,7 @@ export default defineConfig([
     "packages/game-data/generated/**",
     // Strudel source, not project JavaScript: it is evaluated by the music
     // host, where quotes carry meaning and `layer`/`INTENSITY` are globals.
-    "**/*.strudel.js",
+    "apps/web/src/music/**/*.strudel.js",
   ]),
 
   eslint.configs.recommended,

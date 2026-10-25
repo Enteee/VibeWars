@@ -23,4 +23,4 @@ packages/game-data/raw/
 # Strudel gives quotes meaning (double quotes are mini-notation, single quotes
 # are plain strings), so Prettier's quote normalisation would change what a
 # track plays.
-*.strudel.js
+apps/web/src/music/**/*.strudel.js
