@@ -53,3 +53,21 @@ describe("lockfile age check", () => {
     expect(problems[1]).toContain("c@1.0.0");
   });
 });
+
+describe("exotic resolutions", () => {
+  it("fails a git or tarball entry added to the lockfile", async () => {
+    const withUrl = `${base}\n`.replace(
+      "snapshots:",
+      "  u@https://codeload.github.com/o/u/tar.gz/abc123:\n    resolution: {gitHosted: true}\n\nsnapshots:",
+    );
+    const added = addedPackages(base, withUrl);
+    expect(added).toEqual(["u@https://codeload.github.com/o/u/tar.gz/abc123"]);
+    const problems = await tooYoung(
+      added,
+      () => Promise.resolve("2020-01-01T00:00:00Z"),
+      new Date(),
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("blockExoticSubdeps");
+  });
+});

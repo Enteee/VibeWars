@@ -95,8 +95,10 @@ jobs:
       - name: Build
         run: devenv shell -- pnpm run build
 
-      # No package version younger than a week may enter pnpm-lock.yaml
-      # (#107), even if the author overrode minimumReleaseAge locally for a
+      # No package version younger than a week, and no git/tarball/URL
+      # resolution, may enter pnpm-lock.yaml
+      # (#107), even if the author overrode minimumReleaseAge or
+      # blockExoticSubdeps on the command line for a
       # one-off add. Pull requests only: main has no base to diff against.
       - name: Lockfile age
         if: github.event_name == 'pull_request'

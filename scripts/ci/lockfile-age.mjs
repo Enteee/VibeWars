@@ -1,6 +1,7 @@
 /**
- * Fail a pull request that adds a package version published less than a week
- * ago to pnpm-lock.yaml (#107, operator Q48).
+ * Fail a pull request that adds to pnpm-lock.yaml a package version published
+ * less than a week ago, or one resolved from git, a tarball or a URL (#107,
+ * operator Q48).
  *
  * `minimumReleaseAge` guards `pnpm install`, but a one-off `pnpm add` with the
  * age gate overridden on the command line is sometimes needed. This is the
@@ -17,8 +18,8 @@ import { fileURLToPath } from "node:url";
 export const MIN_AGE_DAYS = 7;
 
 /**
- * The `name@version` keys under the lockfile's top-level `packages:`.
- * Registry packages only; git and tarball entries have no registry date.
+ * The `name@spec` keys under the lockfile's top-level `packages:`; the spec is
+ * a version for registry packages and a URL or ref for git and tarball ones.
  * @param {string} lockfile
  * @returns {Set<string>}
  */
@@ -29,7 +30,7 @@ export const packagesOf = (lockfile) => {
   for (const line of lockfile.split("\n")) {
     if (/^\S/.test(line)) inPackages = line.startsWith("packages:");
     else if (inPackages) {
-      const match = /^ {2}'?((?:@[^/\s]+\/)?[^@\s']+@\d[^\s':]*)'?:\s*$/.exec(line);
+      const match = /^ {2}'?((?:@[^/\s]+\/)?[^@\s']+@[^\s']+?)'?:\s*$/.exec(line);
       if (match) keys.add(match[1]);
     }
   }
@@ -47,7 +48,8 @@ export const addedPackages = (baseLockfile, headLockfile) => {
 };
 
 /**
- * The added versions younger than the minimum age, or unknown to the registry.
+ * The added entries that are not a registry version at least the minimum age:
+ * too young, unknown to the registry, or a git/tarball/URL resolution.
  * @param {string[]} added
  * @param {(name: string, version: string) => Promise<string | undefined>} publishedAt
  * @param {Date} now
@@ -57,7 +59,11 @@ export const tooYoung = async (added, publishedAt, now) => {
   /** @type {string[]} */
   const problems = [];
   for (const key of added) {
-    const at = key.lastIndexOf("@");
+    const at = key.indexOf("@", 1);
+    if (!/^\d/.test(key.slice(at + 1))) {
+      problems.push(`${key}: git, tarball or URL resolution (blockExoticSubdeps)`);
+      continue;
+    }
     const published = await publishedAt(key.slice(0, at), key.slice(at + 1));
     if (published === undefined) {
       problems.push(`${key}: no publish date on the registry`);
