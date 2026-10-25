@@ -98,6 +98,7 @@ export function setupScenario(
     // same numbers every time, which is what makes it a measurement.
     seed: `training:${scenario.id}`,
     walls: allWallSegments(map.walls),
+    bounds: { width: map.width, height: map.height },
     participants: [
       {
         id: SELF_ID,

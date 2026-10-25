@@ -102,6 +102,22 @@ export function segmentsIntersect(s1: Segment, s2: Segment): boolean {
   return false;
 }
 
+/**
+ * The shortest distance between two segments: 0 if they touch or cross,
+ * otherwise the nearest of their four endpoints to the other segment.
+ */
+export function distanceSegmentToSegment(s: Segment, t: Segment): number {
+  if (segmentsIntersect(s, t)) {
+    return 0;
+  }
+  return Math.min(
+    distancePointToSegment(s.a, t),
+    distancePointToSegment(s.b, t),
+    distancePointToSegment(t.a, s),
+    distancePointToSegment(t.b, s),
+  );
+}
+
 function cross(a: Vec2, b: Vec2): number {
   return a.x * b.y - a.y * b.x;
 }

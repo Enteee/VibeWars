@@ -50,6 +50,11 @@ export interface FloatingText {
   /** Where it starts; it rises from here as it ages. */
   readonly position: Vec2;
   readonly colour: number;
+  /**
+   * `"light"` for weapon swings: smaller and fainter, so a stream of
+   * them never drowns a skill's number (#160).
+   */
+  readonly weight: "normal" | "light";
   /** Seconds of life remaining; the scene fades and removes it. */
   remainingSeconds: number;
 }

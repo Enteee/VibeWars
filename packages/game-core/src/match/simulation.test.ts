@@ -11,6 +11,7 @@ import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 const FIREBALL = "elementalist.fireball";
+const ORISON = "monk.orison-of-healing";
 const MATCH: MatchRules = { scoreToWin: 2, timeLimitSeconds: 600, respawnSeconds: 8 };
 
 function spec(id: string, team: number, spawn: Vec2, extra: Partial<ParticipantSpec> = {}) {
@@ -78,8 +79,8 @@ describe("MatchSimulation step", () => {
         events: [{ kind: "damage", targetId: "b", amount: 91 }],
       },
     ]);
-    // Adrenaline only for damage to someone else.
-    expect(participant(sim, "a").combatant.adrenaline).toBe(RULES.resources.adrenalinePerHit);
+    // A spell earns no adrenaline, whatever it hits; only attacks do.
+    expect(participant(sim, "a").combatant.adrenaline).toBe(0);
   });
 
   it("says why a cast was refused, and nothing for an empty slot", () => {
@@ -114,6 +115,44 @@ describe("MatchSimulation step", () => {
     sim.setTarget("ally", "far");
     sim.requestSkill("ally", 0);
     expect(participant(sim, "ally").targetId).toBe("far");
+  });
+
+  it("an ally skill with an enemy or nothing selected heals the caster (#52)", () => {
+    const monk = (id: string, team: number, spawn: Vec2) =>
+      spec(id, team, spawn, {
+        skillBar: [ORISON],
+        attributeRanks: new Map([["monk.healing-prayers", 12]]),
+      });
+    const sim = new MatchSimulation({
+      seed: "orison",
+      participants: [
+        monk("a", 0, vec2(0, 0)),
+        monk("ally", 0, vec2(50, 0)),
+        monk("b", 1, vec2(200, 0)),
+      ],
+    });
+    const healed = (log: CombatLogEntry[]) =>
+      log.flatMap((entry) => entry.events).filter((event) => event.kind === "heal");
+    for (const id of ["a", "ally", "b"]) {
+      participant(sim, id).combatant.health = 100;
+    }
+
+    // An enemy selected: the heal is the caster's, and the enemy stays selected.
+    sim.setTarget("a", "b");
+    expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
+    expect(healed(stepFor(sim, 3.5)).map((event) => event.targetId)).toEqual(["a"]);
+    expect(participant(sim, "a").targetId).toBe("b");
+
+    // Nothing selected: still the caster, and nothing gets selected.
+    sim.setTarget("a", undefined);
+    expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
+    expect(healed(stepFor(sim, 3.5)).map((event) => event.targetId)).toEqual(["a"]);
+    expect(participant(sim, "a").targetId).toBeUndefined();
+
+    // An ally selected: the ally, as before.
+    sim.setTarget("a", "ally");
+    expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
+    expect(healed(stepFor(sim, 3.5)).map((event) => event.targetId)).toEqual(["ally"]);
   });
 
   it("removing a participant clears every target that pointed at them", () => {

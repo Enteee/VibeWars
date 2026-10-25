@@ -139,6 +139,9 @@ async function main(): Promise<void> {
   };
 
   const showMenu = (): void => {
+    // Every way back to the menu passes through here, so the status bar
+    // never keeps saying where the player was. Error paths set theirs after.
+    setStatus("ready", "offline");
     disposeBuildEditor();
     showViewport(false);
     void (async () => {
@@ -434,13 +437,14 @@ async function main(): Promise<void> {
     try {
       lobby = await connect();
     } catch (error) {
-      setStatus("could not join", "error");
       menuNotice = isProtocolMismatch(error)
         ? PROTOCOL_MISMATCH_MESSAGE
         : error instanceof LobbyNotFoundError
           ? "No lobby with that code. Check the code and try again."
           : "Could not connect to the server.";
       showMenu();
+      // After showMenu, which would put the status back to "ready".
+      setStatus("could not join", "error");
       return;
     }
 
@@ -517,17 +521,16 @@ async function main(): Promise<void> {
       setStatus("in match", "online");
     } catch (error) {
       console.error("[web] could not enter match", error);
-      setStatus("match failed", "error");
       if (isProtocolMismatch(error)) {
         menuNotice = PROTOCOL_MISMATCH_MESSAGE;
       }
       enteringMatch = false;
       showMenu();
+      setStatus("match failed", "error");
     }
   };
 
   showMenu();
-  setStatus("ready", "offline");
 }
 
 main().catch((error: unknown) => {

@@ -51,6 +51,13 @@ export function showCombatFeedback(
     });
   }
 
+  // A degeneration tick lands every sim tick, about a point each: as
+  // numbers they would fill the stack and push out the hits that matter.
+  // The health bar shows them, as GW1 does.
+  if (message.cause === "degeneration") {
+    return;
+  }
+
   for (const event of message.events) {
     const subject = snapshot.players.find((p) => p.sessionId === event.targetId);
     if (subject === undefined) {
@@ -70,6 +77,7 @@ export function showCombatFeedback(
       position: vec2(subject.x, subject.y - 24),
       colour: COLOURS[cue.tone],
       remainingSeconds: FLOATING_TEXT_SECONDS,
+      weight: message.cause === "weapon" ? "light" : "normal",
     });
   }
 }

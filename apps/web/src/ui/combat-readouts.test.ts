@@ -129,6 +129,11 @@ describe("describeCombatEvent", () => {
     expect(describeCombatEvent({ ...entry([dodged]), cause: "weapon" }, dodged, nameOf)).toBe(
       "Caster dummy dodges Attack (Pyro)",
     );
+    const unreachable: CombatEvent = { kind: "attack-unreachable", targetId: "dummy" };
+    expect(
+      describeCombatEvent({ ...entry([unreachable]), cause: "weapon" }, unreachable, nameOf),
+    ).toBe("Attack (Pyro) can't reach Caster dummy");
+    expect(logToneOf("attack-unreachable")).toBe("control");
   });
 });
 
@@ -239,6 +244,10 @@ describe("floatingCueFor", () => {
   it("floats 'miss' over the target of a blinded attack", () => {
     expect(floatingCueFor("attack-missed", undefined)).toEqual({ text: "miss", tone: "neutral" });
     expect(floatingCueFor("attack-dodged", undefined)).toEqual({ text: "dodge", tone: "neutral" });
+    expect(floatingCueFor("attack-unreachable", undefined)).toEqual({
+      text: "can't reach",
+      tone: "neutral",
+    });
   });
 
   it("treats a missing amount as 0, so floats nothing for it", () => {

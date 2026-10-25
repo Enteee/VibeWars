@@ -168,6 +168,7 @@ describe("placeFloatingText", () => {
       text: "−10",
       position: vec2(100, 100),
       colour: 0xff7b72,
+      weight: "normal",
       remainingSeconds,
     };
   };

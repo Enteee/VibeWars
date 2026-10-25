@@ -1,4 +1,4 @@
-import { Client } from "@colyseus/sdk";
+import { Client, type Room } from "@colyseus/sdk";
 import { createRng, seedFromString } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
@@ -8,6 +8,7 @@ import {
 } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { FLOOD_MESSAGES_PER_SECOND, MESSAGE_BURST, MESSAGES_PER_SECOND } from "./rooms/options.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
 
@@ -183,11 +184,14 @@ describe("server survives hostile clients", () => {
     });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self" });
 
+    // Paced, so this client stays within its message budget (#43): the
+    // point is what the handlers do with each value, not the flood.
     for (const value of hostileValues()) {
       room.send("choose-team", value);
       room.send("ready", value);
       room.send("select-map", value);
       room.send("start-match", value);
+      await new Promise((resolve) => setTimeout(resolve, 125));
     }
     await new Promise((resolve) => setTimeout(resolve, 400));
 
@@ -249,22 +253,118 @@ describe("server survives hostile clients", () => {
     await fresh.leave();
   });
 
-  it("survives a client that floods messages", async () => {
-    const room = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+  /** A watcher and a second client in one match, both seated. */
+  async function twoInAMatch(): Promise<{ watcher: Room; other: Room }> {
+    const watcher = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
       protocolVersion: PROTOCOL_VERSION,
     });
-    await waitFor(() => (room.state.players.get(room.sessionId)?.maxHealth ?? 0) > 0, {
-      label: "stats",
+    const other = await new Client(endpoint).joinById(watcher.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
     });
+    await waitFor(() => (watcher.state.players.get(other.sessionId)?.maxHealth ?? 0) > 0, {
+      label: "both",
+    });
+    return { watcher, other };
+  }
+
+  /**
+   * Whether the server still acts on `client`: it targets itself, and
+   * `watcher` sees it. A target is mirrored at once and no wall can get in
+   * its way, as one can in a walk; and no enemy skill picks yourself for
+   * you, so only this intent can put it there.
+   */
+  async function listensTo(watcher: Room, client: Room): Promise<boolean> {
+    client.send("intent", { kind: "target", targetSessionId: client.sessionId });
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    const listened =
+      watcher.state.players.get(client.sessionId)?.targetSessionId === client.sessionId;
+    client.send("intent", { kind: "target", targetSessionId: null });
+    return listened;
+  }
+
+  it("keeps playing a client whose input arrives in one burst after a stall", async () => {
+    // A wifi blip mid-fight: everything the client sent while its socket
+    // stalled arrives at once. Before the budget, 60 in a second dropped
+    // the player, deaf and frozen, and never told them (#43).
+    const { watcher, other } = await twoInAMatch();
+
+    for (let i = 0; i < 250; i += 1) {
+      other.send(
+        "intent",
+        i % 2 === 0
+          ? { kind: "move", dirX: Math.cos(i), dirY: Math.sin(i) }
+          : { kind: "use-skill", slot: i % 8 },
+      );
+    }
+    expect(await listensTo(watcher, other)).toBe(true);
+
+    await other.leave();
+    await watcher.leave();
+  });
+
+  it("ignores a match client's intents over its budget, then listens again", async () => {
+    const { watcher, other } = await twoInAMatch();
+
+    // A second's refill past the burst: on a loaded machine the burst
+    // arrives spread out, and the bucket refills as it does.
+    for (let i = 0; i < MESSAGE_BURST + MESSAGES_PER_SECOND; i += 1) {
+      other.send("intent", { kind: "stop" });
+    }
+    expect(await listensTo(watcher, other)).toBe(false);
+
+    // The budget refills at MESSAGES_PER_SECOND; the client was never dropped.
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    expect(await listensTo(watcher, other)).toBe(true);
+
+    await other.leave();
+    await watcher.leave();
+  });
+
+  it("stops listening to a match client that floods messages", async () => {
+    const { watcher, other: flooder } = await twoInAMatch();
 
     for (let i = 0; i < 1000; i += 1) {
-      room.send("intent", { kind: "move", dirX: Math.cos(i), dirY: Math.sin(i) });
-      room.send("intent", { kind: "use-skill", slot: i % 12 });
+      flooder.send("intent", { kind: "move", dirX: Math.cos(i), dirY: Math.sin(i) });
+      flooder.send("intent", { kind: "use-skill", slot: i % 12 });
     }
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
-    expect(room.state.players.get(room.sessionId)).toBeDefined();
+    // Past FLOOD_MESSAGES_PER_SECOND, Colyseus stops reading the socket
+    // and drops the player (#43): frozen in place, and deaf to anything it
+    // sends next. Its slot is held like any drop's, because Colyseus
+    // closes a half-open reconnect with the same code, so the code cannot
+    // tell a flooder from a wifi blip.
+    expect(await listensTo(watcher, flooder)).toBe(false);
+
+    // Everyone else plays on.
+    const elapsed = watcher.state.elapsedSeconds;
+    await waitFor(() => watcher.state.elapsedSeconds > elapsed, { label: "the match ticking" });
     expect(await serverIsHealthy()).toBe(true);
-    await room.leave();
+    await watcher.leave();
+  });
+
+  it("drops a lobby client that floods messages", async () => {
+    const host = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    const flooder = await new Client(endpoint).joinById(host.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    await waitFor(() => host.state.players.has(flooder.sessionId), { label: "both" });
+    let closeCode: number | undefined;
+    flooder.onLeave((code) => {
+      closeCode = code;
+    });
+
+    for (let i = 0; i < 2 * FLOOD_MESSAGES_PER_SECOND; i += 1) {
+      flooder.send("ready", { ready: i % 2 === 0 });
+    }
+
+    await waitFor(() => closeCode !== undefined, { label: "the flooder to be dropped" });
+    expect(closeCode).toBe(4002);
+    await waitFor(() => !host.state.players.has(flooder.sessionId), {
+      label: "the flooder to leave the lobby",
+    });
+    await host.leave();
   });
 });

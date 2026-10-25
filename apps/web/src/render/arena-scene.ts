@@ -41,7 +41,12 @@ const HEALTH_BAR_LOW = 0xff7b72;
 const CAST_BAR_FILL = 0xd7dee8;
 /** Marks the actor you control, inside its circle, in any team colour. */
 const SELF_RIM = 0xd7dee8;
+/** Edges every living body, darker than the grid and walls, so no body blends into what it stands on. */
+const BODY_EDGE = 0x0b0f14;
+const BODY_EDGE_WIDTH = 1.5;
 const DEAD_COLOUR = 0x4a5464;
+/** How opaque a weapon swing's number is at most: present, never louder than a skill (#160). */
+const LIGHT_TEXT_ALPHA = 0.8;
 const INK = "#d7dee8";
 const DEAD_INK = "#4a5464";
 
@@ -142,6 +147,10 @@ export class ArenaScene extends Phaser.Scene {
 
     g.fillStyle(teamColour(actor.team), 1);
     g.fillCircle(x, y, actor.radius);
+    // Centred half its width in, so the edge stays inside the collision
+    // radius (#166) and only touches the self rim inside it.
+    g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+    g.strokeCircle(x, y, actor.radius - BODY_EDGE_WIDTH / 2);
 
     if (actor.team === "self") {
       g.lineStyle(2, SELF_RIM, 1);
@@ -299,7 +308,7 @@ export class ArenaScene extends Phaser.Scene {
       let object = this.floatingTextObjects.get(floating.id);
       if (object === undefined) {
         object = this.add.text(floating.position.x, floating.position.y, floating.text, {
-          fontSize: "13px",
+          fontSize: floating.weight === "light" ? "11px" : "13px",
           fontFamily: "ui-monospace, monospace",
           color: `#${floating.colour.toString(16).padStart(6, "0")}`,
         });
@@ -316,7 +325,9 @@ export class ArenaScene extends Phaser.Scene {
       // Drift upward and fade as it ages; placeFloatingText relies on
       // this rise to find room for the next one.
       object.y = floatingTextY(floating);
-      object.setAlpha(Math.min(1, floating.remainingSeconds));
+      object.setAlpha(
+        Math.min(floating.weight === "light" ? LIGHT_TEXT_ALPHA : 1, floating.remainingSeconds),
+      );
       survivors.push(floating);
     }
     this.floatingTexts = survivors;
