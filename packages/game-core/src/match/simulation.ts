@@ -191,6 +191,14 @@ function degenerationSources(combatant: Combatant): {
 /** How far short of its interval a swing or a flight may be and still land; see `#advanceAttack`. */
 const SWING_EPSILON = 1e-9;
 
+/** At most this many push-out passes per move; see `advanceMovement`. */
+const MOVEMENT_RELAX_PASSES = 4;
+
+/** How deep a body of `radius` at `position` is inside a living body of the same radius at `other`. */
+function penetration(position: Vec2, other: Vec2, radius: number): number {
+  return Math.max(0, 2 * radius - distance(position, other));
+}
+
 /**
  * An approach step that covers less than this share of the distance it was
  * asked to walk made no progress (#277): boxed in by bodies, or pressed
@@ -227,7 +235,10 @@ export class MatchSimulation {
   #elapsedSeconds = 0;
   #score: MatchScore = emptyScore([0, 1]);
   #outcome: MatchOutcome = MATCH_IN_PROGRESS;
-  /** The entries of the step in progress. */
+  /**
+   * The entries for the next step to report: its own, and a cast that a
+   * move cancelled since the last one, stamped with when it happened.
+   */
   #log: CombatLogEntry[] = [];
 
   public constructor(options: MatchSimulationOptions) {
@@ -362,13 +373,34 @@ export class MatchSimulation {
     }
   }
 
-  /** Walk. Any direction but none cancels the attack: in GW1, moving does. */
+  /**
+   * Walk. Any direction but none cancels the attack and the cast, as
+   * moving does in GW1 (#279). The cast stays paid for and does not
+   * recharge. Only a new direction cancels: one held as a cast begins was
+   * dropped by `requestSkill`, and the client sends only changes. An
+   * instant skill waits for the next step to resolve, but it has no cast
+   * to walk out of, so a move leaves it alone.
+   */
   public setInputDirection(id: string, direction: Vec2): void {
     const record = this.#participants.get(id);
     if (record !== undefined) {
       record.inputDirection = clampInputDirection(direction);
       if (record.inputDirection.x !== 0 || record.inputDirection.y !== 0) {
         record.combatant.attack = undefined;
+        const cast = record.combatant.cast.activeCast;
+        if (cast !== undefined && cast.totalSeconds > 0) {
+          record.combatant.cast.cancelCast();
+          this.#log.push({
+            tick: this.#tick,
+            atSeconds: this.#elapsedSeconds,
+            cause: "skill",
+            sourceId: record.id,
+            skillId: cast.skillId,
+            weaponId: undefined,
+            area: undefined,
+            events: [{ kind: "cancelled", targetId: record.id, skillId: cast.skillId }],
+          });
+        }
       }
     }
   }
@@ -483,11 +515,14 @@ export class MatchSimulation {
     if (record.combatant.attack !== undefined) {
       record.combatant.attack.swingElapsed = 0;
     }
-    record.combatant.cast.beginCast(
-      skill.id,
-      castTargetId,
-      effectiveActivationSeconds(skill, record.combatant),
-    );
+    const activationSeconds = effectiveActivationSeconds(skill, record.combatant);
+    record.combatant.cast.beginCast(skill.id, castTargetId, activationSeconds);
+    // Casting stops you (operator Q33): a key held as the cast begins
+    // does not walk, and only the next move cancels the cast. An instant
+    // has no cast, so it leaves the walk alone.
+    if (activationSeconds > 0) {
+      record.inputDirection = ZERO;
+    }
     return { skillId: skill.id, check };
   }
 
@@ -499,7 +534,6 @@ export class MatchSimulation {
 
     this.#tick += 1;
     this.#elapsedSeconds += dt;
-    this.#log = [];
     this.checkMatchEnd();
     this.#advanceProjectiles(dt);
 
@@ -569,7 +603,9 @@ export class MatchSimulation {
       }
     }
 
-    return this.#result(this.#log);
+    const log = this.#log;
+    this.#log = [];
+    return this.#result(log);
   }
 
   #result(log: readonly CombatLogEntry[]): StepResult {
@@ -1073,19 +1109,53 @@ export class MatchSimulation {
       record.facing = directionAngle(direction.x, direction.y);
     }
     const radius = this.#ruleset.collision.playerRadius;
+    const start = record.position;
     let position = integrateMovement(
-      record.position,
+      start,
       direction,
       this.#ruleset.movement.maxSpeedUnitsPerSecond * moveSpeedMultiplier(record.combatant),
       dt,
     );
 
+    // One push-out pass at a time, until a pass changes nothing. Squeezed
+    // between a body and a wall, each push undoes the other, so one pass
+    // alone can leave a body anywhere; a few settle it.
+    for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
+      const relaxed = this.#pushOut(record.id, position, radius);
+      const settled = relaxed.x === position.x && relaxed.y === position.y;
+      position = relaxed;
+      if (settled) {
+        break;
+      }
+    }
+
+    // A doorway a body stands in stays held (#291): a move that ends any
+    // deeper inside a living body than it started is refused, so hugging
+    // the wall never squeezes past. Per body and against the start, so two
+    // bodies that already overlap (a shared spawn) can still move apart.
+    for (const [otherId, other] of this.#participants) {
+      if (otherId === record.id || other.combatant.dead) {
+        continue;
+      }
+      if (
+        penetration(position, other.position, radius) >
+        penetration(start, other.position, radius) + 1e-6
+      ) {
+        return;
+      }
+    }
+
+    record.position = position;
+  }
+
+  /** One pass of push-outs for a body of `radius` at `position`: bodies, then walls, then the edge. */
+  #pushOut(id: string, position: Vec2, radius: number): Vec2 {
     // Body blocking (brief §21): living players are solid, so a front
     // line can physically deny ground and a caster can be boxed in.
     // Corpses are not solid — standing on a dead player should never
     // trap the living.
     for (const [otherId, other] of this.#participants) {
-      if (otherId === record.id || other.combatant.dead) {
+      if (otherId === id || other.combatant.dead) {
         continue;
       }
       position = resolveCircleCircleCollision(position, radius, other.position, radius);
@@ -1109,14 +1179,14 @@ export class MatchSimulation {
         Math.min(Math.max(position.y, radius), bounds.height - radius),
       );
     }
-
-    record.position = position;
+    return position;
   }
 
   /**
-   * Casting at somebody else turns you to them, after any walking this
-   * step, so a caster strafing mid-cast still faces the cast. A self-cast,
-   * or a target that is gone, leaves facing alone.
+   * Casting at somebody else turns you to them, after anything that
+   * pushed you this step; nobody walks mid-cast, since a move cancels the
+   * cast (#279). A self-cast, or a target that is gone, leaves facing
+   * alone.
    */
   #faceCastTarget(record: ParticipantRecord): void {
     const targetId = record.combatant.cast.activeCast?.targetId;

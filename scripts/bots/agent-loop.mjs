@@ -9,6 +9,14 @@
  *       return after `seconds`, or sooner once the role has unread mail
  *   agent-loop.mjs gave-up <role>
  *       tell the company the loop has stopped for good
+ *   agent-loop.mjs limited <role> <state-dir> <previous>
+ *       print how long to wait out Claude's usage limit (`limitPause`),
+ *       and tell the company, once for all roles (#308)
+ *   agent-loop.mjs sleep <seconds>
+ *       return after `seconds`, whatever arrives: a message must not wake
+ *       a role into another run the limit refuses
+ *   agent-loop.mjs resumed <role>
+ *       after a turn that ended, tell the company a limit is over, once
  *
  * Agents end turns while idle, whatever the briefing says, and a resumed
  * turn re-reads the whole conversation. A fixed ten seconds between turns
@@ -22,7 +30,7 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { readInbox, SYSTEM } from "./protocol.mjs";
+import { obj, readInbox, SYSTEM } from "./protocol.mjs";
 
 /** Never less: an agent that ends turns instead of waiting cannot spin. */
 export const PAUSE_MIN = 10;
@@ -33,6 +41,24 @@ export const PAUSE_MAX = 300;
 /** A turn shorter than this did nothing much, most likely an empty inbox. */
 export const SHORT_TURN = 60;
 
+/** The shortest wait for a usage limit, and the margin past its reset. */
+export const LIMIT_MARGIN = 60;
+
+/** The longest wait for a usage limit with a known reset. */
+export const LIMIT_MAX = 6 * 60 * 60;
+
+/** The first wait for a usage limit whose reset is unknown. */
+export const LIMIT_UNKNOWN_MIN = 300;
+
+/** The longest wait for a usage limit whose reset is unknown. */
+export const LIMIT_UNKNOWN_MAX = 1800;
+
+/** A notice whose reset is this far past is stale; so is one with no reset this old. */
+const NOTICE_STALE_PAST = 10 * 60;
+
+/** The company-wide usage limit notice, under VIBEWARS_BOT_ROOT. */
+const NOTICE = "usage-limit.json";
+
 /** How often a wait looks at the inbox. */
 const POLL_MS = 2000;
 
@@ -40,17 +66,152 @@ const POLL_MS = 2000;
  * The pause before the next turn.
  *
  * A short turn that ended normally doubles the last pause, up to
- * `PAUSE_MAX`; a long turn means work, and a failure has its own limit, so
- * both go back to `PAUSE_MIN`.
+ * `PAUSE_MAX`; a long turn means work, so it goes back to `PAUSE_MIN`. A
+ * failed run doubles too, however long it ran, so a short outage cannot use
+ * up a role's five tries in under a minute (#308).
  *
  * @param {{ previous: number, ran: number, failed: boolean }} turn seconds
  * @returns {number} seconds
  */
 export function nextPause({ previous, ran, failed }) {
-  if (failed || ran >= SHORT_TURN) {
+  if (!failed && ran >= SHORT_TURN) {
     return PAUSE_MIN;
   }
   return Math.min(PAUSE_MAX, Math.max(PAUSE_MIN, previous * 2));
+}
+
+/**
+ * How long to wait out Claude's usage limit, in seconds (#308).
+ *
+ * A known reset is waited for, plus a margin, within 1 min and 6 h. An
+ * unknown one is retried at 5 min, doubling to at most 30 min; `previous`
+ * is the last limit wait, 0 after a turn that ended.
+ *
+ * @param {{ until: number | null, now: number, previous: number }} limit unix seconds
+ * @returns {number} seconds
+ */
+export function limitPause({ until, now, previous }) {
+  if (until !== null) {
+    return Math.min(LIMIT_MAX, Math.max(LIMIT_MARGIN, until - now + LIMIT_MARGIN));
+  }
+  return Math.min(LIMIT_UNKNOWN_MAX, Math.max(LIMIT_UNKNOWN_MIN, previous * 2));
+}
+
+/**
+ * The reset agent-turn.mjs wrote to `<state>/limited-until`; `null` when it
+ * is empty, missing or not a time, all of which mean "unknown".
+ *
+ * @param {string} state
+ * @returns {number | null} unix seconds
+ */
+export function limitedUntil(state) {
+  let text;
+  try {
+    text = fs.readFileSync(path.join(state, "limited-until"), "utf8").trim();
+  } catch {
+    return null;
+  }
+  const until = Number(text);
+  return text !== "" && Number.isInteger(until) && until > 0 ? until : null;
+}
+
+/**
+ * Is the usage limit notice at `file` stale, or not one at all?
+ *
+ * @param {string} file
+ * @param {number} now unix seconds
+ * @returns {boolean}
+ */
+function staleNotice(file, now) {
+  let notice;
+  try {
+    notice = obj(/** @type {unknown} */ (JSON.parse(fs.readFileSync(file, "utf8"))));
+  } catch {
+    return true;
+  }
+  const { until, at } = notice;
+  if (typeof until === "number") {
+    return now > until + NOTICE_STALE_PAST;
+  }
+  return until !== null || typeof at !== "number" || now - at > LIMIT_MAX;
+}
+
+/**
+ * Claim the company's usage limit notice: `true` if this call created it,
+ * and so is the one to tell everyone; `false` if someone already has.
+ *
+ * The `wx` create is the dedupe, so nine roles hitting the limit at once
+ * post one message. A stale notice, left by a limit long over, is replaced.
+ * Two roles that both find it stale can race: the second removes the
+ * first's fresh notice and posts again. Two notices is harmless, and rare
+ * enough not to lock for.
+ *
+ * @param {string} root VIBEWARS_BOT_ROOT
+ * @param {number | null} until unix seconds
+ * @param {number} now unix seconds
+ * @returns {boolean}
+ */
+export function claimNotice(root, until, now) {
+  const file = path.join(root, NOTICE);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const fd = fs.openSync(file, "wx");
+      fs.writeSync(fd, JSON.stringify({ until, at: now }));
+      fs.closeSync(fd);
+      return true;
+    } catch (error) {
+      if (/** @type {NodeJS.ErrnoException} */ (error).code !== "EEXIST") {
+        throw error;
+      }
+    }
+    if (attempt > 0 || !staleNotice(file, now)) {
+      return false;
+    }
+    fs.rmSync(file, { force: true });
+  }
+  return false;
+}
+
+/**
+ * Release the usage limit notice after a turn that ended: `true` if this
+ * call removed it, and so is the one to say the limit is over.
+ *
+ * @param {string} root VIBEWARS_BOT_ROOT
+ * @returns {boolean}
+ */
+export function releaseNotice(root) {
+  try {
+    fs.unlinkSync(path.join(root, NOTICE));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * @param {number} until unix seconds
+ * @returns {string} host local time, 24 h
+ */
+function clock(until) {
+  const at = new Date(until * 1000);
+  return `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+}
+
+/**
+ * Tell the whole company, through the sidecar's system outbox, as
+ * run-forever uses: a broadcast nobody can mistake for an agent's own words.
+ *
+ * @param {string} root VIBEWARS_BOT_ROOT
+ * @param {string} name what the file is about, for whoever lists the outbox
+ * @param {string} text
+ * @returns {void}
+ */
+function tellCompany(root, name, text) {
+  const outbox = path.join(root, "bus", SYSTEM, "outbox");
+  fs.mkdirSync(outbox, { recursive: true });
+  const file = `${String(Date.now())}-${name}.json`;
+  fs.writeFileSync(path.join(outbox, `.${file}.part`), JSON.stringify({ to: "all", text }));
+  fs.renameSync(path.join(outbox, `.${file}.part`), path.join(outbox, file));
 }
 
 /**
@@ -135,22 +296,54 @@ async function main() {
     }
     return;
   }
+  if (command === "sleep") {
+    await sleep(seconds(args[0]) * 1000);
+    return;
+  }
   if (command === "gave-up") {
     const role = roleName(args[0]);
-    // The sidecar's system outbox, as run-forever uses: a broadcast nobody
-    // can mistake for the agent's own words.
-    const outbox = path.join(env("VIBEWARS_BOT_ROOT"), "bus", SYSTEM, "outbox");
-    fs.mkdirSync(outbox, { recursive: true });
-    const file = `${String(Date.now())}-${role}-stopped.json`;
-    const text =
+    tellCompany(
+      env("VIBEWARS_BOT_ROOT"),
+      `${role}-stopped`,
       `${role} failed five runs in a row and is stopped. Its window says why; ` +
-      `restart it there with: claude-llc-agent ${role}`;
-    fs.writeFileSync(path.join(outbox, `.${file}.part`), JSON.stringify({ to: "all", text }));
-    fs.renameSync(path.join(outbox, `.${file}.part`), path.join(outbox, file));
+        `restart it there with: claude-llc-agent ${role}`,
+    );
+    return;
+  }
+  if (command === "limited") {
+    const role = roleName(args[0]);
+    const state = args[1];
+    if (state === undefined || state === "") {
+      console.error("agent-loop: limited needs the role's state directory");
+      process.exit(2);
+    }
+    const previous = seconds(args[2]);
+    const root = env("VIBEWARS_BOT_ROOT");
+    const now = Math.floor(Date.now() / 1000);
+    const until = limitedUntil(state);
+    if (claimNotice(root, until, now)) {
+      tellCompany(
+        root,
+        `${role}-usage-limit`,
+        until === null
+          ? "Claude usage limit reached; agents retry every few minutes until it resets."
+          : `Claude usage limit reached; agents resume at ${clock(until)}.`,
+      );
+    }
+    console.log(String(limitPause({ until, now, previous })));
+    return;
+  }
+  if (command === "resumed") {
+    const role = roleName(args[0]);
+    const root = env("VIBEWARS_BOT_ROOT");
+    if (releaseNotice(root)) {
+      tellCompany(root, `${role}-usage-limit-over`, "Claude usage limit over; agents are back.");
+    }
     return;
   }
   console.error(
-    "usage: agent-loop.mjs pause <previous> <ran> <failed> | wait <role> <seconds> | gave-up <role>",
+    "usage: agent-loop.mjs pause <previous> <ran> <failed> | wait <role> <seconds> | " +
+      "sleep <seconds> | gave-up <role> | limited <role> <state-dir> <previous> | resumed <role>",
   );
   process.exit(2);
 }

@@ -434,7 +434,24 @@ test("(18) names show only on the target, under the cursor, and under Ctrl (#253
   await expect.poll(named).toBe(1);
 });
 
-test("(19) a double-click on a far enemy attacks it: you walk there and swing (#298)", async ({
+test("(19) a move mid-cast cancels it: logged, and the cast never lands (#279)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  await takeControl(page);
+  await page.keyboard.press("1");
+  // Fireball takes a second; a step aside well inside it gives it up.
+  await holdKey(page, "w", 150);
+
+  const log = page.locator(".training-log");
+  await expect(log).toContainText(/cancels Fireball/);
+  // Long past when it would have landed.
+  await page.waitForTimeout(1500);
+  await expect(page.locator('.training-log-row[data-tone="damage"]')).toHaveCount(0);
+  await expect(meter(page, "damage")).toHaveText("0");
+});
+
+test("(20) a double-click on a far enemy attacks it: you walk there and swing (#298)", async ({
   page,
 }) => {
   const canvas = await openTraining(page);

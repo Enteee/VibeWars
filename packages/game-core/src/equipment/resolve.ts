@@ -5,7 +5,7 @@ import type { StatusId } from "../skills/status.js";
 import { armorPieces, baseArmorFor } from "./armor.js";
 import { getInsignia, perSlotAmount, type ArmorCondition } from "./insignias.js";
 import type { BuildEquipment } from "./loadout.js";
-import { getOffhand } from "./offhands.js";
+import { getOffhand, type OffhandId } from "./offhands.js";
 import { ATTRIBUTE_RUNE_TIERS, getUniversalRune, type EquippedRune } from "./runes.js";
 import type { ArmorSlot, EquipmentRequirement } from "./types.js";
 import { getWeapon, type Weapon } from "./weapons.js";
@@ -45,6 +45,8 @@ export interface ResolvedEquipment {
   readonly flatPhysicalReduction: number;
   /** Multiplier applied to an incoming condition's duration. Absent means 1. */
   readonly statusDurationScale: ReadonlyMap<StatusId, number>;
+  /** The off-hand that counts, for its mark in the arena (#276); `undefined` for none. */
+  readonly offhandId: OffhandId | undefined;
 }
 
 export interface ResolvedLoadout {
@@ -226,6 +228,7 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
 
   let baseArmor = baseArmorFor(input.primaryProfession);
   let energyDelta = runes.energyDelta;
+  let offhandId: OffhandId | undefined;
 
   const offHand = input.equipment.offHand;
   if (offHand !== null) {
@@ -234,6 +237,7 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
     // validation; if one reaches here anyway it grants nothing rather
     // than quietly handing out free armor.
     if (definition !== undefined && weapon?.grip === "one-handed") {
+      offhandId = offHand.offhandId;
       const linked = linkedAttribute(definition.requirement, offHand.requirementAttributeId);
       const met = rankOf(linked) >= definition.requirement.rank;
       const amount = definition.baseBonus + (met ? definition.metRequirementBonus : 0);
@@ -255,6 +259,7 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
       conditionalArmor: conditionalArmorOf(input.equipment),
       flatPhysicalReduction: runes.flatPhysicalReduction,
       statusDurationScale: runes.statusDurationScale,
+      offhandId,
     },
   };
 }
@@ -293,5 +298,6 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
     conditionalArmor: [],
     flatPhysicalReduction: 0,
     statusDurationScale: new Map(),
+    offhandId: undefined,
   };
 }

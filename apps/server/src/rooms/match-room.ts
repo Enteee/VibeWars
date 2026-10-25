@@ -97,6 +97,8 @@ export const PlayerState = schema(
     armor: t.number().default(0),
     /** Equipped weapon class id, so a target panel can name it. */
     weaponId: t.string().default(""),
+    /** The equipped `OffhandId`, or `""` for none, for its mark in the arena (#276). */
+    offhandId: t.string().default(""),
     /**
      * The build's professions, as the server resolved them, never as
      * claimed (#281): the arena shows the primary's glyph, the target
@@ -851,6 +853,7 @@ export class MatchRoom extends Room {
     player.dead = sim.combatant.dead;
     player.armor = sim.combatant.equipment.baseArmor;
     player.weaponId = sim.combatant.equipment.mainHand.weapon.id;
+    player.offhandId = sim.combatant.equipment.offhandId ?? "";
     player.attackTargetSessionId = sim.combatant.attack?.targetId ?? "";
 
     const activeCast = sim.combatant.cast.activeCast;

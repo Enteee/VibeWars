@@ -12,6 +12,7 @@ const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 const FIREBALL = "elementalist.fireball";
 const ORISON = "monk.orison-of-healing";
+const BARRAGE = "ranger.barrage";
 const MATCH: MatchRules = { scoreToWin: 2, timeLimitSeconds: 600, respawnSeconds: 8 };
 
 function spec(id: string, team: number, spawn: Vec2, extra: Partial<ParticipantSpec> = {}) {
@@ -293,6 +294,74 @@ describe("walls", () => {
   });
 });
 
+describe("body blocking at a doorway (#291)", () => {
+  const R = RULES.collision.playerRadius;
+  const BLOCKER_X = 200;
+  /**
+   * A corridor `width` units wide between two walls along x, a blocker
+   * standing still in its middle, and a mover hugging the lower wall to
+   * its left.
+   */
+  function doorway(width: number): MatchSimulation {
+    return new MatchSimulation({
+      seed: "doorway",
+      walls: [segment(vec2(-500, 0), vec2(900, 0)), segment(vec2(-500, width), vec2(900, width))],
+      participants: [
+        spec("mover", 0, vec2(100, R)),
+        spec("blocker", 1, vec2(BLOCKER_X, width / 2)),
+      ],
+    });
+  }
+  const gap = (sim: MatchSimulation) =>
+    Math.hypot(
+      participant(sim, "mover").position.x - participant(sim, "blocker").position.x,
+      participant(sim, "mover").position.y - participant(sim, "blocker").position.y,
+    );
+
+  // Along the wall, and pressed into it: both used to squeeze through.
+  for (const direction of [vec2(1, 0), vec2(1, -1)]) {
+    it(`holds a 60-unit corridor against a mover pushing (${String(direction.x)}, ${String(direction.y)})`, () => {
+      const sim = doorway(60);
+      sim.setInputDirection("mover", direction);
+      for (let tick = 0; tick < 120; tick += 1) {
+        sim.step(DT);
+        expect(gap(sim)).toBeGreaterThanOrEqual(2 * R - 1e-6);
+      }
+      expect(participant(sim, "mover").position.x).toBeLessThan(BLOCKER_X - R);
+      expect(participant(sim, "blocker").position).toEqual(vec2(BLOCKER_X, 30));
+    });
+  }
+
+  it("lets a mover past along the wall where the gap is wider than a body", () => {
+    const sim = doorway(90);
+    sim.setInputDirection("mover", vec2(1, 0));
+    stepFor(sim, 120 * DT);
+    expect(participant(sim, "mover").position.x).toBeGreaterThan(BLOCKER_X + 2 * R);
+  });
+
+  it("lets a corpse in the doorway be walked past", () => {
+    const sim = doorway(60);
+    const blocker = participant(sim, "blocker");
+    blocker.combatant.dead = true;
+    blocker.respawnInSeconds = Number.POSITIVE_INFINITY;
+    sim.setInputDirection("mover", vec2(1, 0));
+    stepFor(sim, 120 * DT);
+    expect(participant(sim, "mover").position.x).toBeGreaterThan(BLOCKER_X + 2 * R);
+  });
+
+  it("lets two bodies on the same point move apart", () => {
+    const sim = new MatchSimulation({
+      seed: "stacked",
+      participants: [spec("a", 0, vec2(100, 100)), spec("b", 0, vec2(100, 100))],
+    });
+    sim.setInputDirection("a", vec2(-1, 0));
+    stepFor(sim, 10 * DT);
+    const a = participant(sim, "a").position;
+    const b = participant(sim, "b").position;
+    expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(2 * R - 1e-6);
+  });
+});
+
 describe("the map's edge (#244)", () => {
   const R = RULES.collision.playerRadius;
   // Arena Alpha's size, no walls.
@@ -558,5 +627,120 @@ describe("determinism", () => {
     const first = run();
     expect(first.log.length).toBeGreaterThan(10);
     expect(run()).toEqual(first);
+  });
+});
+
+describe("moving cancels a cast (#279)", () => {
+  it("a new move mid-cast cancels it: still paid for, no effect, no recharge, logged", () => {
+    const sim = duel();
+    const a = participant(sim, "a");
+    sim.setTarget("a", "b");
+    sim.requestSkill("a", 0);
+    stepFor(sim, 0.5);
+
+    sim.setInputDirection("a", vec2(0, 1));
+    expect(a.combatant.cast.isCasting).toBe(false);
+    const log = stepFor(sim, 2);
+
+    expect(log).toEqual([
+      {
+        tick: 10,
+        atSeconds: expect.closeTo(0.5, 6) as number,
+        cause: "skill",
+        sourceId: "a",
+        skillId: FIREBALL,
+        weaponId: undefined,
+        area: undefined,
+        events: [{ kind: "cancelled", targetId: "a", skillId: FIREBALL }],
+      },
+    ]);
+    expect(participant(sim, "b").combatant.health).toBe(participant(sim, "b").combatant.maxHealth);
+    expect(a.combatant.cast.rechargeRemaining.has(FIREBALL)).toBe(false);
+    // Fireball's 10 energy stays spent; 2.5 s of regeneration since.
+    expect(a.combatant.energy).toBeCloseTo(
+      a.combatant.maxEnergy - 10 + RULES.resources.energyRegenPerSecond * 2.5,
+      6,
+    );
+    // Not recharging, so it can be cast again at once.
+    expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
+  });
+
+  it("a direction held as the cast begins stops the body, and the cast resolves", () => {
+    const sim = duel();
+    const a = participant(sim, "a");
+    sim.setTarget("a", "b");
+    sim.setInputDirection("a", vec2(0, 1));
+    stepFor(sim, 0.25);
+    const before = a.position;
+
+    sim.requestSkill("a", 0);
+    // Up to the tick before it lands: resolving starts an attack on b,
+    // whose approach walks.
+    const log = stepFor(sim, 1 - DT);
+    expect(a.position).toEqual(before);
+    log.push(...stepFor(sim, DT));
+
+    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([["damage"]]);
+    expect(a.combatant.cast.rechargeRemaining.has(FIREBALL)).toBe(true);
+  });
+
+  it("an instant leaves a held walk alone, and a move in its tick does not cancel it", () => {
+    const archer = () =>
+      new MatchSimulation({
+        seed: "instant",
+        participants: [
+          spec("a", 0, vec2(0, 0), { skillBar: [BARRAGE] }),
+          spec("b", 1, vec2(200, 0)),
+        ],
+      });
+
+    const held = archer();
+    held.setTarget("a", "b");
+    held.setInputDirection("a", vec2(0, 1));
+    expect(held.requestSkill("a", 0)?.check).toEqual({ ok: true });
+    expect(stepFor(held, 0.5).map((entry) => entry.skillId)).toEqual([BARRAGE]);
+    expect(participant(held, "a").position.y).toBeCloseTo(
+      RULES.movement.maxSpeedUnitsPerSecond * 0.5,
+      6,
+    );
+
+    const moved = archer();
+    moved.setTarget("a", "b");
+    moved.requestSkill("a", 0);
+    moved.setInputDirection("a", vec2(0, 1));
+    expect(moved.step(DT).log.map((entry) => entry.events.map((event) => event.kind))).toEqual([
+      ["damage"],
+    ]);
+  });
+
+  it("a stop mid-cast cancels nothing", () => {
+    const sim = duel();
+    sim.setTarget("a", "b");
+    sim.requestSkill("a", 0);
+    stepFor(sim, 0.5);
+
+    sim.setInputDirection("a", vec2(0, 0));
+    const log = stepFor(sim, 0.5);
+
+    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([["damage"]]);
+  });
+
+  it("being pushed out of another body mid-cast cancels nothing", () => {
+    // An ally spawned on top of a: collision pushes the two apart.
+    const sim = new MatchSimulation({
+      seed: "push",
+      participants: [
+        spec("a", 0, vec2(0, 0)),
+        spec("ally", 0, vec2(5, 0)),
+        spec("b", 1, vec2(200, 0)),
+      ],
+    });
+    const a = participant(sim, "a");
+    sim.setTarget("a", "b");
+    sim.requestSkill("a", 0);
+    const log = stepFor(sim, 1);
+
+    expect(a.position).not.toEqual(vec2(0, 0));
+    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([["damage"]]);
   });
 });

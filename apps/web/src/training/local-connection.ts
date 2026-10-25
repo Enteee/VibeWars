@@ -125,6 +125,7 @@ function toPlayerSnapshot(
     adrenaline: combatant.adrenaline,
     armor: combatant.equipment.baseArmor,
     weaponId: combatant.equipment.mainHand.weapon.id,
+    offhandId: combatant.equipment.offhandId,
     primaryProfession: professions.primary,
     secondaryProfession: professions.secondary,
     team: combatant.team,

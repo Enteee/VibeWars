@@ -15,6 +15,8 @@ import {
   healthFraction,
   nameLabelBottom,
   nameShown,
+  offhandMarkLayout,
+  type OffhandMarkLayout,
   nameplateLayout,
   PROFESSION_GLYPH_SIZE,
   withNames,
@@ -45,6 +47,7 @@ function actor(
     position: vec2(x, y),
     facing: 0,
     weaponId: undefined,
+    offhandId: undefined,
     profession: undefined,
     radius,
     team: "ally",
@@ -341,6 +344,96 @@ describe("withNames (#253)", () => {
     expect(named.hoverId).toBeUndefined();
     expect(named.showAllNames).toBe(true);
     expect(named.actors).toBe(base.actors);
+  });
+});
+
+describe("offhandMarkLayout (#276)", () => {
+  const R = 14;
+  const X = 100;
+  const Y = 100;
+  const FACINGS = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+
+  /** Points on both edges of the casing, the widest thing the mark paints. */
+  function painted(mark: OffhandMarkLayout): { x: number; y: number }[] {
+    const points: { x: number; y: number }[] = [];
+    for (const offset of [-mark.casing / 2, mark.casing / 2]) {
+      for (let k = 0; k <= 24; k += 1) {
+        if (mark.kind === "arc") {
+          const angle = mark.from + ((mark.to - mark.from) * k) / 24;
+          const radius = mark.radius + offset;
+          points.push({
+            x: mark.x + Math.cos(angle) * radius,
+            y: mark.y + Math.sin(angle) * radius,
+          });
+        } else {
+          const angle = (k * 2 * Math.PI) / 24;
+          const radius = mark.radius + offset;
+          points.push({
+            x: mark.x + Math.cos(angle) * radius,
+            y: mark.y + Math.sin(angle) * radius,
+          });
+        }
+      }
+    }
+    return points;
+  }
+
+  /** Signed angle from the facing to the point, in degrees; negative is left (y down). */
+  function bearing(point: { x: number; y: number }, facing: number): number {
+    const raw = Math.atan2(point.y - Y, point.x - X) - facing;
+    return (Math.atan2(Math.sin(raw), Math.cos(raw)) * 180) / Math.PI;
+  }
+
+  it("draws nothing without an off-hand", () => {
+    expect(offhandMarkLayout(X, Y, R, 0, undefined)).toBeUndefined();
+  });
+
+  it("makes the shield an arc on the body at r + 3.5, cased 5 under 3", () => {
+    expect(offhandMarkLayout(X, Y, R, 0, "shield")).toEqual({
+      kind: "arc",
+      x: X,
+      y: Y,
+      radius: R + 3.5,
+      from: (-105 * Math.PI) / 180,
+      to: (-45 * Math.PI) / 180,
+      casing: 5,
+      core: 3,
+    });
+  });
+
+  it("makes the focus a 1.75 ring at r + 3.5, 75° left, cased 3 under 1.5", () => {
+    const mark = offhandMarkLayout(X, Y, R, 0, "focus");
+    expect(mark?.kind).toBe("ring");
+    expect(mark?.radius).toBe(1.75);
+    expect(mark?.casing).toBe(3);
+    expect(mark?.core).toBe(1.5);
+    expect(Math.hypot((mark?.x ?? 0) - X, (mark?.y ?? 0) - Y)).toBeCloseTo(R + 3.5, 9);
+  });
+
+  for (const offhand of ["shield", "focus"] as const) {
+    it(`keeps the ${offhand} inside r + 7, left of the facing, clear of the weapon's 25°`, () => {
+      for (const facing of FACINGS) {
+        const mark = offhandMarkLayout(X, Y, R, facing, offhand);
+        expect(mark).toBeDefined();
+        if (mark === undefined) {
+          continue;
+        }
+        for (const point of painted(mark)) {
+          expect(Math.hypot(point.x - X, point.y - Y)).toBeLessThanOrEqual(R + 7 + 1e-9);
+          const off = bearing(point, facing);
+          // Left of the facing, never inside the weapon mark's corridor.
+          expect(off, `facing ${String(facing)}`).toBeLessThan(-25);
+          expect(off).toBeGreaterThan(-180);
+        }
+      }
+    });
+  }
+
+  it("turns with the body: facing south puts it east, facing north puts it west", () => {
+    const south = offhandMarkLayout(X, Y, R, Math.PI / 2, "focus");
+    const north = offhandMarkLayout(X, Y, R, -Math.PI / 2, "focus");
+    expect(south?.x ?? 0).toBeGreaterThan(X);
+    expect(north?.x ?? 0).toBeLessThan(X);
   });
 });
 
