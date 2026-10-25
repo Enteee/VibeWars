@@ -55,6 +55,19 @@ export function parseEvent(line) {
 }
 
 /**
+ * @param {string} line
+ * @returns {boolean}
+ */
+function isJson(line) {
+  try {
+    JSON.parse(line);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * The input field that says what a tool call is about, by tool, so the pane
  * reads `Bash: pnpm run ci` rather than a JSON object.
  *
@@ -152,7 +165,7 @@ export function formatLine(line) {
   }
   const event = parseEvent(line);
   if (event === null) {
-    return [oneLine(line)];
+    return isJson(line) ? [] : [oneLine(line)];
   }
   switch (event.type) {
     case "system":
