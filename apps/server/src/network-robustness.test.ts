@@ -8,6 +8,8 @@ import {
   ADDRESS_LIMIT_MESSAGE,
   CLIENT_LIMIT,
   PROTOCOL_VERSION,
+  RATE_LIMIT,
+  RATE_LIMIT_MESSAGE,
   ROOM_LIMIT,
   ROOM_LOBBY,
   ROOM_MATCH,
@@ -418,12 +420,12 @@ describe("the seat limits (#265)", () => {
       ),
     );
 
-    const refused = responses.filter((response) => response.status === ADDRESS_LIMIT);
+    const refused = responses.filter((response) => response.status === RATE_LIMIT);
     expect(responses.filter((response) => response.ok)).toHaveLength(10);
     expect(refused).toHaveLength(1);
     expect(await refused[0]?.json()).toEqual({
-      code: ADDRESS_LIMIT,
-      error: ADDRESS_LIMIT_MESSAGE,
+      code: RATE_LIMIT,
+      error: RATE_LIMIT_MESSAGE,
     });
     // Ten requests, ten lobbies: the refused one made nothing.
     expect(await matchMaker.query({ name: ROOM_LOBBY })).toHaveLength(10);
@@ -459,7 +461,7 @@ describe("the seat limits (#265)", () => {
       return response.split("\r\n")[0] ?? "";
     };
 
-    const tooMany = `HTTP/1.1 ${String(ADDRESS_LIMIT)} Too Many Requests`;
+    const tooMany = `HTTP/1.1 ${String(RATE_LIMIT)} Too Many Requests`;
     expect(await rawCreate()).not.toBe(tooMany);
     expect(await rawCreate()).not.toBe(tooMany);
     expect(await rawCreate()).toBe(tooMany);
@@ -469,7 +471,7 @@ describe("the seat limits (#265)", () => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ protocolVersion: PROTOCOL_VERSION }),
     });
-    expect(plain.status).toBe(ADDRESS_LIMIT);
+    expect(plain.status).toBe(RATE_LIMIT);
     expect(await matchMaker.query({ name: ROOM_LOBBY })).toHaveLength(0);
   });
 
