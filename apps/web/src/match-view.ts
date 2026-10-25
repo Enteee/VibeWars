@@ -17,6 +17,7 @@ import {
   renderMute,
   renderSkillBar,
   updateHud,
+  updateRecharges,
 } from "./ui/hud.js";
 
 /**
@@ -73,6 +74,7 @@ export function toArenaSnapshot(
     actors: match.players.map((player) => {
       return {
         id: player.sessionId,
+        name: player.name,
         position: { x: player.x, y: player.y },
         radius: 14,
         team:
@@ -195,6 +197,7 @@ export async function startMatchView(
     // permanently blank: the server tracked all three and the HUD could
     // draw all three, and nothing connected them.
     updateHud(hud, self, target, connection.skillBar, latestMatch);
+    updateRecharges(hud, connection.skillBar, connection.getRecharges());
   });
 
   const offPointer = viewport.onPointerDown((world) => {

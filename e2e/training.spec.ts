@@ -105,9 +105,13 @@ test("(3) typing in the editor never drives the arena", async ({ page }) => {
   const rowsBefore = await logRows(page).count();
   const before = await arenaShot(page, canvas);
 
+  const original = await name.inputValue();
   await name.fill("");
   await page.keyboard.type("wasdd");
   await expect(name).toHaveValue("wasdd");
+  // The name is drawn over the player's head, live (#53), so it goes back
+  // before the frames are compared: what is left to differ is movement.
+  await name.fill(original);
 
   const search = page.locator("input.skill-search");
   await search.click();
@@ -264,4 +268,23 @@ test("(12) the health and energy numbers read at 4.5:1 on the fill and the track
     expect(contrast(ink, fill), `${kind} fill`).toBeGreaterThanOrEqual(4.5);
     expect(contrast(ink, track), `${kind} track`).toBeGreaterThanOrEqual(4.5);
   }
+});
+
+test("(13) a recharging skill shows the clock-wipe and the seconds left, then clears (#152)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  await castFireballAndLand(page);
+
+  const slot = page.locator(".training-skill").first();
+  const overlay = slot.locator(".recharge-overlay");
+  await expect(overlay).toHaveCount(1);
+  expect(Number(await overlay.textContent())).toBeGreaterThan(0);
+  const recharge = await overlay.evaluate((node) => node.style.getPropertyValue("--recharge"));
+  expect(Number(recharge)).toBeGreaterThan(0);
+  await expect(slot).toHaveAttribute("aria-label", /^Fireball, recharging, \d+ seconds?$/);
+
+  // Fireball recharges in 7 s.
+  await expect(overlay).toHaveCount(0, { timeout: 10_000 });
+  await expect(slot).not.toHaveAttribute("aria-label");
 });

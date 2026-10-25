@@ -39,29 +39,31 @@ like.
 
 ## What we defend against
 
-| Threat                                              | Defence                                                                                                                                                                           |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A client claims an outcome (damage, position, HP)   | Clients send **intent only** (`ClientIntent`: move / stop / target / use-skill). Every outcome is computed server-side in `game-core`.                                            |
-| A malformed or malicious message crashes the server | Every inbound payload is `unknown` until `parseClientIntent` or `field()` has checked it; non-finite numbers are rejected. `fuzz.test.ts` enforces "never crash on client input". |
-| Casting a skill the player does not have            | The client sends a **slot index**, never a skill id; the server reads its own copy of the bar.                                                                                    |
-| An illegal build (over budget, wrong profession)    | `validatePlayerBuild` runs at join; anything illegal gets the house loadout.                                                                                                      |
-| Moving faster than allowed                          | Direction is clamped to unit length; speed comes from the ruleset; walls and bodies are resolved on the server.                                                                   |
-| Targeting a player who does not exist               | `applyTarget` accepts only a session id present in the room. Range and line of sight are checked at cast time.                                                                    |
-| Display names used to attack other players' UIs     | `sanitizeName` strips control characters and clamps to 16 characters. The web client must render names as text, never as HTML. See gap 8.                                         |
-| Host-only lobby actions by a non-host               | `select-map` and `start-match` check `isHost` (but see the open `return-to-lobby` gap below).                                                                                     |
-| A stale or foreign client desynchronising a match   | `PROTOCOL_VERSION` is checked on every join; a mismatch is refused.                                                                                                               |
-| Oversized frames                                    | The WebSocket transport caps a frame at 4 KiB (Colyseus `ws-transport` default) and has per-message deflate off. Do not raise either without a reason written here.               |
-| Cross-origin use of the HTTP API                    | Production is same-origin. CORS is sent only in dev mode, and only for one exact origin, never `*`.                                                                               |
-| Enumerating live matches                            | `/healthz` carries no game state. `/api/maps` lists static map ids only.                                                                                                          |
-| Path traversal through the static file server       | `express.static` on one fixed root; the SPA fallback always sends that root's `index.html`, never a path built from the request.                                                  |
-| Secrets in source                                   | There are none to leak: the game server has no credentials. `gitleaks` runs over history on review.                                                                               |
-| Non-reproducible simulation abuse                   | Simulation randomness is seeded (`SimulationRng`), so any reported exploit can be replayed from its seed.                                                                         |
+| Threat                                              | Defence                                                                                                                                                                                                                              |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A client claims an outcome (damage, position, HP)   | Clients send **intent only** (`ClientIntent`: move / stop / target / use-skill). Every outcome is computed server-side in `game-core`.                                                                                               |
+| A malformed or malicious message crashes the server | Every inbound payload is `unknown` until `parseClientIntent` or `field()` has checked it; non-finite numbers are rejected. `fuzz.test.ts` enforces "never crash on client input".                                                    |
+| Casting a skill the player does not have            | The client sends a **slot index**, never a skill id; the server reads its own copy of the bar.                                                                                                                                       |
+| An illegal build (over budget, wrong profession)    | `validatePlayerBuild` runs at join; anything illegal gets the house loadout.                                                                                                                                                         |
+| Moving faster than allowed                          | Direction is clamped to unit length; speed comes from the ruleset; walls and bodies are resolved on the server.                                                                                                                      |
+| Targeting a player who does not exist               | `applyTarget` accepts only a session id present in the room. Range and line of sight are checked at cast time.                                                                                                                       |
+| Display names used to attack other players' UIs     | `sanitizeName` strips controls, format characters (bidi overrides, zero-width) and blank fillers, keeps at most 2 combining marks per letter, and clamps to 16 code points. The web client must render names as text, never as HTML. |
+| Host-only lobby actions by a non-host               | `select-map` and `start-match` check `isHost` (but see the open `return-to-lobby` gap below).                                                                                                                                        |
+| A stale or foreign client desynchronising a match   | `PROTOCOL_VERSION` is checked on every join; a mismatch is refused.                                                                                                                                                                  |
+| Oversized frames                                    | The WebSocket transport caps a frame at 4 KiB (Colyseus `ws-transport` default) and has per-message deflate off. Do not raise either without a reason written here.                                                                  |
+| Cross-origin use of the HTTP API                    | Production is same-origin. CORS is sent only in dev mode, and only for one exact origin, never `*`.                                                                                                                                  |
+| Enumerating live matches                            | `/healthz` carries no game state. `/api/maps` lists static map ids only.                                                                                                                                                             |
+| Path traversal through the static file server       | `express.static` on one fixed root; the SPA fallback always sends that root's `index.html`, never a path built from the request.                                                                                                     |
+| Secrets in source                                   | There are none to leak: the game server has no credentials. `gitleaks` runs over history on review.                                                                                                                                  |
+| Non-reproducible simulation abuse                   | Simulation randomness is seeded (`SimulationRng`), so any reported exploit can be replayed from its seed.                                                                                                                            |
 
 ## What we explicitly do not defend against
 
 - **Identity.** There are no accounts, passwords or tokens. A player is a
   WebSocket session. Anyone can pick any name, and two players can share
   one. Do not build anything that relies on a name meaning a person.
+- **Look-alike names.** A name may use letters from any script, so a
+  Cyrillic "а" can pass for a Latin "a". There is no confusable detection.
 - **Network-level attackers.** The server speaks plain HTTP/WS. Anyone on
   the path can read and alter traffic. If you expose a server to the
   internet, put it behind a TLS-terminating reverse proxy. `HOST` defaults
@@ -133,19 +135,8 @@ saying so in the same PR. Keep the numbers: issues cite them.
    goes through `JSON.stringify`. Escape or drop client text before
    logging it, and cap how much of it is logged.
 
-8. **Display names can carry invisible and direction-changing characters**
-   (#174). `sanitizeName` strips only C0 control characters and DEL. C1
-   controls (U+0080–009F), bidi overrides and isolates (U+202A–202E,
-   U+2066–2069), zero-width characters (U+200B–200D, U+2060) and unbounded
-   combining marks pass through, and `trim()` does not remove them. The
-   16-character clamp counts UTF-16 units, so it can split a surrogate pair
-   and leave half an emoji. Names are drawn above every player in the
-   arena (#172) and shown in the lobby and the target panel. A name can
-   therefore look like a different name, render as nothing, or stack marks
-   far above its line. This is not identity (there is none, see above), but
-   it lets one player make the board unreadable for the others.
-   _Reproduce:_ join a lobby as `"\u202Eedoc"`, which other players see as
-   `code`, or as `"\u200B"`, which shows an empty name.
+8. **Fixed by #178:** display names could carry invisible and
+   direction-changing characters (#174).
 
 ## The static deploy
 

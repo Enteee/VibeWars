@@ -15,6 +15,7 @@ const ME = "me";
 function snapshot(castingSkillId: string | undefined): MatchSnapshot {
   const me: PlayerSnapshot = {
     sessionId: ME,
+    name: ME,
     x: 0,
     y: 0,
     targetSessionId: undefined,

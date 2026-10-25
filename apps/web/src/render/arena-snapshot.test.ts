@@ -8,6 +8,7 @@ import {
   decayAreaFlashes,
   actorAtPoint,
   healthFraction,
+  nameLabelBottom,
   teamColour,
   type ArenaSnapshot,
   type RenderableActor,
@@ -29,6 +30,7 @@ function actor(
 ): RenderableActor {
   return {
     id,
+    name: id,
     position: vec2(x, y),
     radius,
     team: "ally",
@@ -133,5 +135,19 @@ describe("area flashes", () => {
     const [older] = decayAreaFlashes([flash], 0.1);
     expect(older?.radius).toBe(81);
     expect(flash.remainingSeconds).toBe(AREA_FLASH_SECONDS);
+  });
+});
+
+describe("nameLabelBottom", () => {
+  it("keeps a living actor's name clear of its health and cast bars", () => {
+    const living = actor("a", 100, 100);
+    // The cast bar's top is 19 above the circle; the name sits above that.
+    expect(nameLabelBottom(living)).toBeLessThan(100 - 14 - 19);
+  });
+
+  it("lowers a corpse's name, which has no bars to clear", () => {
+    expect(nameLabelBottom(actor("a", 100, 100, 14, { dead: true }))).toBeGreaterThan(
+      nameLabelBottom(actor("a", 100, 100)),
+    );
   });
 });

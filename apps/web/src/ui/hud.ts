@@ -1,7 +1,13 @@
 import { getWeapon, type ActivationRejection } from "@vibewars/game-core";
 
-import type { MatchSnapshot, PlayerSnapshot, SkillSlot } from "../net/match-connection.js";
+import type {
+  MatchSnapshot,
+  PlayerSnapshot,
+  SkillSlot,
+  SlotRecharge,
+} from "../net/match-connection.js";
 import { skillBadgeHtml, soundIcon } from "./icons.js";
+import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 
 /**
  * The player's heads-up display: health/energy, skill bar, and status
@@ -226,6 +232,22 @@ export function renderSkillBar(
   });
 }
 
+/** Paint each slot's recharge wipe, from the render loop (#152). */
+export function updateRecharges(
+  hud: HudElements,
+  skillBar: readonly SkillSlot[],
+  recharges: readonly SlotRecharge[],
+): void {
+  const buttons = hud.skillBar.querySelectorAll("button");
+  const reducedMotion = prefersReducedMotion();
+  skillBar.forEach((slot, index) => {
+    const button = buttons[index];
+    if (button !== undefined) {
+      paintRecharge(button, recharges[index], slot.name, reducedMotion);
+    }
+  });
+}
+
 function setBar(
   fill: HTMLElement,
   label: HTMLElement,
@@ -300,7 +322,7 @@ export function updateHud(
   hud.targetPanel.textContent =
     target === undefined
       ? "no target"
-      : `target: ${target.sessionId.slice(0, 6)} — ${String(Math.round(target.health))}/${String(
+      : `target: ${target.name} — ${String(Math.round(target.health))}/${String(
           Math.round(target.maxHealth),
         )} hp · armor ${String(target.armor)}${
           target.weaponId === undefined ? "" : ` · ${describeWeaponName(target.weaponId)}`

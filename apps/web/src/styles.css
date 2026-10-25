@@ -7,6 +7,8 @@
   --ink: #d7dee8;
   --ink-dim: #7d8899;
   --accent: #59c2ff;
+  /* Darkens whatever is under it: a luminance change, never a hue (#152). */
+  --recharge-shade: rgb(0 0 0 / 55%);
   font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 
@@ -177,6 +179,8 @@ body {
 }
 
 .hud-skill-key {
+  position: relative;
+  z-index: 1;
   color: var(--accent);
   font-weight: 700;
 }
@@ -762,6 +766,7 @@ body {
 }
 
 .training-skill {
+  position: relative;
   display: flex;
   gap: 0.3rem;
   padding: 0.25rem 0.4rem;
@@ -783,8 +788,41 @@ body {
 }
 
 .training-skill-key {
+  position: relative;
+  z-index: 1;
   color: var(--accent);
   font-weight: 700;
+}
+
+/* The recharge clock-wipe (#152), on the HUD and the Training Ground
+   alike: full when the recharge starts, clearing clockwise from 12 as it
+   runs down. Over the icon, badge and name, under the hotkey (which is
+   lifted above it), and never in the way of a click. */
+.recharge-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: conic-gradient(
+    from 0deg,
+    transparent calc((1 - var(--recharge)) * 1turn),
+    var(--recharge-shade) 0
+  );
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 700;
+  text-shadow: 0 0 3px var(--bg);
+  pointer-events: none;
+}
+
+/* Ready again: the border flashes, in the same frame the wipe and the
+   number vanish, so the cue is never colour alone. */
+.hud-skill.is-ready-flash,
+.training-skill.is-ready-flash {
+  /* Ink, not accent: blue means "friend" in the arena (art direction). */
+  border-color: var(--ink);
+  box-shadow: 0 0 0 1px var(--ink);
 }
 
 /* Same 14 px badge as the HUD, but in line: this button is one short row,

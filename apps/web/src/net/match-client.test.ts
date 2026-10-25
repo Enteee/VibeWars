@@ -1,6 +1,15 @@
+import type { ClientIntent, MapDescriptor } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
-import { endpointFromLocation, httpOriginFrom, resolveEndpoint } from "./match-client.js";
+import {
+  createMatchConnection,
+  endpointFromLocation,
+  httpOriginFrom,
+  resolveEndpoint,
+  type DecodedMatchState,
+  type LiveMatchRoom,
+} from "./match-client.js";
+import type { CombatMessage } from "./match-connection.js";
 
 describe("endpointFromLocation", () => {
   it("uses ws:// for http pages", () => {
@@ -52,5 +61,129 @@ describe("httpOriginFrom", () => {
 
   it("only rewrites the scheme, not a host that happens to start with ws", () => {
     expect(httpOriginFrom("ws://ws-host:2567")).toBe("http://ws-host:2567");
+  });
+});
+
+/** A Colyseus room without a socket: the test plays the SDK's part. */
+class FakeRoom implements LiveMatchRoom {
+  readonly sessionId = "me";
+  state: DecodedMatchState = {
+    players: new Map(),
+    scoreTeam0: 0,
+    scoreTeam1: 0,
+    elapsedSeconds: 0,
+    phase: "active",
+    winningTeam: -1,
+    endReason: "",
+  };
+  readonly reconnection = { minUptime: 5000 };
+  readonly sent: ClientIntent[] = [];
+  left = false;
+  private readonly messages = new Map<string, ((message: unknown) => void)[]>();
+  private readonly drops: ((code: number) => void)[] = [];
+  private readonly reconnects: (() => void)[] = [];
+  private readonly leaves: ((code: number) => void)[] = [];
+
+  send(_type: "intent", payload: ClientIntent): void {
+    this.sent.push(payload);
+  }
+  onMessage(type: string, callback: (message: never) => void): void {
+    const handlers = this.messages.get(type) ?? [];
+    handlers.push(callback as (message: unknown) => void);
+    this.messages.set(type, handlers);
+  }
+  onDrop(callback: (code: number) => void): void {
+    this.drops.push(callback);
+  }
+  onReconnect(callback: () => void): void {
+    this.reconnects.push(callback);
+  }
+  onLeave(callback: (code: number) => void): void {
+    this.leaves.push(callback);
+  }
+  leave(): Promise<void> {
+    this.left = true;
+    this.emitLeave(4000);
+    return Promise.resolve();
+  }
+
+  emit(type: string, message: unknown): void {
+    for (const handler of this.messages.get(type) ?? []) handler(message);
+  }
+  emitDrop(code: number): void {
+    for (const handler of this.drops) handler(code);
+  }
+  emitReconnect(): void {
+    for (const handler of this.reconnects) handler();
+  }
+  emitLeave(code: number): void {
+    for (const handler of this.leaves) handler(code);
+  }
+}
+
+const MAP: MapDescriptor = { id: "test", name: "Test", width: 10, height: 10, walls: [] };
+
+function connect(): {
+  room: FakeRoom;
+  states: string[];
+  connection: ReturnType<typeof createMatchConnection>;
+} {
+  const room = new FakeRoom();
+  const connection = createMatchConnection(room, MAP, [], () => []);
+  const states: string[] = [];
+  connection.onConnectionChange((state) => states.push(state));
+  return { room, states, connection };
+}
+
+describe("createMatchConnection", () => {
+  it("lets the SDK retry a drop right after joining, not only after 5 s", () => {
+    expect(connect().room.reconnection.minUptime).toBe(0);
+  });
+
+  it("says reconnecting on a drop and online once the SDK is back in", () => {
+    const { room, states } = connect();
+    room.emitDrop(1006);
+    room.emitReconnect();
+    expect(states).toEqual(["reconnecting", "online"]);
+  });
+
+  it("keeps the match live after a reconnect: state, intents and messages", () => {
+    // The SDK reconnects the same room in place (#181), so nothing this
+    // connection holds may be swapped out or registered again.
+    const { room, connection } = connect();
+    const combats: CombatMessage[] = [];
+    connection.onCombat((message) => combats.push(message));
+
+    room.emitDrop(1006);
+    room.emitReconnect();
+    room.state = { ...room.state, elapsedSeconds: 42 };
+    room.emit("combat", { casterSessionId: "x", skillId: "s", events: [] });
+    connection.sendIntent({ kind: "stop" });
+
+    expect(connection.getSnapshot().elapsedSeconds).toBe(42);
+    expect(combats).toHaveLength(1);
+    expect(room.sent).toEqual([{ kind: "stop" }]);
+  });
+
+  it("notices a second drop", () => {
+    const { room, states } = connect();
+    room.emitDrop(1006);
+    room.emitReconnect();
+    room.emitDrop(1006);
+    expect(states).toEqual(["reconnecting", "online", "reconnecting"]);
+  });
+
+  it("says lost once the SDK stops retrying", () => {
+    const { room, states } = connect();
+    room.emitDrop(1006);
+    room.emitLeave(4003);
+    expect(states).toEqual(["reconnecting", "lost"]);
+  });
+
+  it("says nothing when the player leaves on purpose", async () => {
+    const { room, states, connection } = connect();
+    await connection.disconnect();
+    expect(room.left).toBe(true);
+    expect(states).toEqual([]);
   });
 });

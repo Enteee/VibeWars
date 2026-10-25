@@ -10,7 +10,7 @@
  * mid-match. It only ever rejects; there is no code path per version
  * (ADR-0016).
  */
-export const PROTOCOL_VERSION = 3 as const;
+export const PROTOCOL_VERSION = 4 as const;
 
 /** What a client is told when its `protocolVersion` does not match. */
 export const PROTOCOL_MISMATCH_MESSAGE =
@@ -123,12 +123,33 @@ export interface CastRefusedMessage {
   readonly reason: string;
 }
 
+/** One recharging slot of a `RechargeMessage`. */
+export interface RechargeSlot {
+  readonly slot: number;
+  readonly remainingSeconds: number;
+  /** What the recharge started with, so a modified one still draws a true wipe. */
+  readonly totalSeconds: number;
+}
+
+/**
+ * Sent as `"recharge"` to one player alone: their own recharges are
+ * nobody else's business, so they never ride the shared state (#152). A
+ * full replacement list; a slot absent from it is ready. Sent on join and
+ * whenever the recharges change in a way the client cannot predict by
+ * counting down; the countdown itself is the client's to extrapolate.
+ */
+export interface RechargeMessage {
+  readonly slots: readonly RechargeSlot[];
+}
+
 /** Options a client passes when creating or joining a match room. */
 export interface MatchJoinOptions {
   /** Must equal `PROTOCOL_VERSION`, or the join is refused. */
   readonly protocolVersion: number;
   /** The arena the first joiner asks for; later joiners get the room's. */
   readonly mapId?: string;
+  /** Display name the player asks for; the server sanitises it. */
+  readonly name?: string;
   /**
    * The build the player asks to play. Untyped on purpose: this package has
    * no game-core dependency, and the server parses and validates whatever

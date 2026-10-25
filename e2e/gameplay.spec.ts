@@ -209,3 +209,23 @@ test("an enemy skill with nothing targeted targets the nearest enemy", async ({
   await expect(target).toHaveText(/^target: /);
   await opponent.close();
 });
+
+test("a recharging skill shows the clock-wipe and the seconds left, then clears (#152)", async ({
+  page,
+}) => {
+  await startQuickMatch(page);
+
+  // Slot 5 of the house bar is Armor of Earth: self-cast, so it needs no
+  // target, and it recharges in 15 s.
+  await page.keyboard.press("5");
+  const slot = page.locator(".hud-skill").nth(4);
+  const overlay = slot.locator(".recharge-overlay");
+  await expect(overlay).toHaveCount(1);
+  expect(Number(await overlay.textContent())).toBeGreaterThan(0);
+  const recharge = await overlay.evaluate((node) => node.style.getPropertyValue("--recharge"));
+  expect(Number(recharge)).toBeGreaterThan(0);
+  // No other slot started recharging.
+  await expect(page.locator(".hud-skill .recharge-overlay")).toHaveCount(1);
+
+  await expect(overlay).toHaveCount(0, { timeout: 20_000 });
+});
