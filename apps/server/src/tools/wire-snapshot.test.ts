@@ -134,6 +134,13 @@ describe("what changes the hash", () => {
     );
   });
 
+  it("a tuple's elements changed change it (#82)", () => {
+    const tuple = (elements: string) =>
+      hashOf(`export interface Score { readonly score: readonly [${elements}] }\n`);
+    expect(tuple("number, number")).not.toBe(tuple("number, string"));
+    expect(tuple("number, number")).not.toBe(tuple("number, number, number"));
+  });
+
   it("a state schema's fields reordered do", () => {
     const ab = schema({ a: t.string(), b: t.number() }, "Fixture");
     const ba = schema({ b: t.number(), a: t.string() }, "Fixture");

@@ -110,6 +110,29 @@ export default defineConfig([
     },
   },
 
+  // A session runs in a page, a worker and Node alike, and is handed its
+  // Transport (#15): no Node built-ins, and no transport library.
+  {
+    files: ["packages/game-session/src/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["node:*", ...builtinModules],
+              message: "game-session runs in the browser too; keep Node out.",
+            },
+            {
+              group: ["trystero", "trystero/*"],
+              message: "game-session is handed a Transport; the Trystero one lives in apps/web.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // Tests deliberately feed wrong-typed values to validators to prove they are
   // rejected, so the rules that assume well-typed inputs only create noise.
   {
