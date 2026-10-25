@@ -65,3 +65,8 @@ export function skillBadgeHtml(skillId: string): string {
 export function soundIcon(muted: boolean): string {
   return iconUrl("ui", muted ? "sound-off" : "sound-on");
 }
+
+/** The HUD's target panel while you auto-attack that target (#160). */
+export function attackingIcon(): string {
+  return iconUrl("ui", "attacking");
+}

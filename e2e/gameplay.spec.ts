@@ -27,6 +27,7 @@ async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
       page.locator(".hud-scoreboard"),
       page.locator(".hud-result"),
       page.locator(".hud-mute"),
+      page.locator(".hud-leave"),
     ],
   });
 }
@@ -199,7 +200,7 @@ test("an enemy skill with nothing targeted targets the nearest enemy", async ({
   // when earlier tests' ghosts fill one (#41).
   const opponent = await browser.newPage();
   await startLobbyMatch(page, [opponent]);
-  const target = page.locator(".hud-target");
+  const target = page.locator(".hud-target-text");
   await expect(target).toHaveText("no target");
 
   // Slot 1 is Fireball. Whether it is then in range or not, the target
@@ -207,6 +208,66 @@ test("an enemy skill with nothing targeted targets the nearest enemy", async ({
   await page.keyboard.press("1");
 
   await expect(target).toHaveText(/^target: /);
+  await opponent.close();
+});
+
+/** The target's health as the target panel says it, e.g. "… — 480/480 hp" -> 480. */
+async function readTargetHealth(page: Page): Promise<number> {
+  const text = (await page.locator(".hud-target-text").textContent()) ?? "";
+  const match = /— (\d+)\//.exec(text);
+  expect(match, `could not read target health from ${JSON.stringify(text)}`).not.toBeNull();
+  return Number(match?.[1] ?? NaN);
+}
+
+test("Space attacks the nearest enemy with the weapon, and moving stops it (#160)", async ({
+  browser,
+  page,
+}) => {
+  // A lobby of two, for the reason the test above gives.
+  const opponent = await browser.newPage();
+  await startLobbyMatch(page, [opponent]);
+  const attacking = page.locator(".hud-attacking");
+  await expect(attacking).toBeHidden();
+
+  // Nothing targeted: Space picks the nearest enemy, as an enemy skill does.
+  await page.keyboard.press(" ");
+  await expect(page.locator(".hud-target-text")).toHaveText(/^target: /);
+  await expect(attacking).toBeVisible();
+  await expect(attacking).toHaveText("attacking");
+  const before = await readTargetHealth(page);
+
+  // The attacker walks into reach and swings; the target gets hurt.
+  await expect.poll(() => readTargetHealth(page), { timeout: 20_000 }).toBeLessThan(before);
+
+  await page.keyboard.press("w");
+  await expect(attacking).toBeHidden();
+  await opponent.close();
+});
+
+test("Esc cancels the attack; leaving the match is a button that asks first (#160)", async ({
+  browser,
+  page,
+}) => {
+  const opponent = await browser.newPage();
+  await startLobbyMatch(page, [opponent]);
+  const attacking = page.locator(".hud-attacking");
+
+  await page.keyboard.press(" ");
+  await expect(attacking).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(attacking).toBeHidden();
+  // Esc no longer leaves: still in the match.
+  await expect(page.locator(".hud-bar-health")).toBeVisible();
+
+  const leave = page.locator(".hud-leave");
+  await leave.getByRole("button", { name: "leave match" }).click();
+  await expect(leave).toContainText("leave?");
+  await leave.getByRole("button", { name: "no" }).click();
+  await expect(leave.getByRole("button", { name: "leave match" })).toBeVisible();
+
+  await leave.getByRole("button", { name: "leave match" }).click();
+  await leave.getByRole("button", { name: "yes" }).click();
+  await expect(page.locator(".hud-bar-health")).toHaveCount(0);
   await opponent.close();
 });
 
