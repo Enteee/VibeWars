@@ -1,0 +1,85 @@
+name: e2e repeat
+
+# Repeats the e2e specs a pull request adds or changes, ten times, and fails
+# on any failure (#216). A 1-in-10 flake survives ten runs 35% of the time,
+# so qa-tester's flake-check skill stays: this is the floor, not a
+# replacement.
+#
+# Its own workflow, not a job in ci.yml: the merge guard reads ci.yml's
+# pull_request job conclusions (#123). Not in EXPECTED_CHECKS and not in the
+# ruleset, but hubd still refuses a merge while any check on the head is
+# failing (hub-guards.mjs checksSatisfied), so a red run here blocks a merge
+# until the flake is fixed. That is the point.
+#
+# Pull requests only. With no spec changed it passes rather than skips, so
+# it never sits pending.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-repeat:
+    name: e2e-repeat
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # The merge base with the pull request's base must be present.
+          fetch-depth: 0
+
+      # Changed specs, or the whole suite when the config or a helper under
+      # e2e/ changes, since those change every spec. Deleted specs are left
+      # out; a deleted helper still widens the run.
+      - id: select
+        name: Select specs
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          changed=$(git diff --name-only "$BASE...HEAD")
+          # Collected first, not piped into grep -q: under pipefail an early
+          # exit would SIGPIPE the first grep and read as "no match".
+          wide=$(grep -E '^(playwright\.config\.ts|e2e/.*)$' <<<"$changed" |
+            grep -vE '^e2e/[^/]+\.spec\.ts$' || true)
+          if [ -n "$wide" ]; then
+            echo "The e2e config or a helper changed: repeating the whole suite"
+            echo "specs=e2e/" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          specs=$(git diff --name-only --diff-filter=AM "$BASE...HEAD" -- 'e2e/*.spec.ts' | tr '\n' ' ')
+          if [ -z "$specs" ]; then
+            echo "no e2e specs changed"
+          else
+            echo "Repeating: $specs"
+          fi
+          echo "specs=$specs" >> "$GITHUB_OUTPUT"
+
+      - if: steps.select.outputs.specs != ''
+        uses: ./.github/actions/devenv
+
+      # e2e serves the built client, as in ci.yml's e2e job.
+      - if: steps.select.outputs.specs != ''
+        name: Build
+        run: devenv shell -- pnpm run build
+
+      - if: steps.select.outputs.specs != ''
+        name: Repeat specs ten times
+        env:
+          SPECS: ${{ steps.select.outputs.specs }}
+        # SPECS is split on spaces on purpose: one argument per spec.
+        run: |
+          # shellcheck disable=SC2086
+          devenv shell -- pnpm exec playwright test $SPECS \
+            --repeat-each=10 --retries=0 --workers=1
+
+      - name: Upload Playwright output
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: e2e-repeat-output
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
