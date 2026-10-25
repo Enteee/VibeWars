@@ -154,6 +154,20 @@ describe("validateCharacter", () => {
     );
   });
 
+  it("allows 12/12/3, which spends the 200-point budget exactly, and refuses 12/12/4", () => {
+    const build = (third: number) =>
+      character({
+        attributes: [
+          { attributeId: "warrior.strength", rank: 12 },
+          { attributeId: "warrior.swordsmanship", rank: 12 },
+          { attributeId: "warrior.tactics", rank: third },
+        ],
+      });
+    expect(RULES.attributePointBudget).toBe(200);
+    expect(() => validateCharacter(build(3), RULES)).not.toThrow();
+    expect(() => validateCharacter(build(4), RULES)).toThrow(CharacterValidationError);
+  });
+
   it("reports every problem at once, not just the first", () => {
     const c = character({
       name: "",

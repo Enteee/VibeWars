@@ -145,10 +145,9 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
     aftercastSeconds: 0.75,
   }),
   attributes: Object.freeze({
-    // Enough to max two attributes (12+12=24 ranks -> 2*78=156 points) with
-    // a little left for a third — an original budget, not a copied number
-    // (see attributes.ts's cost-curve comment for why exact fidelity to any
-    // specific game's table is not the goal).
+    // GW1's level-20 budget, per the brief, under GW1's cost table
+    // (attributes.ts): two maxed attributes cost 2*97=194 points, which
+    // leaves 6 for a third at rank 3.
     attributePointBudget: 200,
   }),
 });
