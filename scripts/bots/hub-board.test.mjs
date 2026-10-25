@@ -20,8 +20,12 @@ import {
   parseBoardRequest,
   parseIssueAnswer,
   parseItemAnswer,
+  parseRankRequest,
   planHint,
   planMutation,
+  rankCards,
+  rankLine,
+  rankTarget,
   readBoardState,
   selectorNumber,
   sweep,
@@ -547,5 +551,116 @@ describe("boardLines", () => {
       "Done:",
       ...done.slice(0, 5).map((c) => `  #${String(c.number)}  ${c.title}`),
     ]);
+  });
+});
+
+describe("ranking (#351)", () => {
+  /** #1, #2 and #3 in Backlog with #4 in Ready after them, in the project's order. */
+  const ranked = () =>
+    sweep(
+      null,
+      [item(1, "Backlog"), item(2, "Backlog"), item(3, "Backlog"), item(4)],
+      NOW,
+      "e1",
+      REPO,
+    );
+  /** @param {import("./hub-board.mjs").BoardState} state */
+  const order = (state) => state.cards.map((card) => card.item.id);
+
+  it("moves a card to the top, after another, or to the bottom", () => {
+    expect(order(rankCards(ranked(), "PVTI_3", null, NOW + 1))).toEqual([
+      "PVTI_3",
+      "PVTI_1",
+      "PVTI_2",
+      "PVTI_4",
+    ]);
+    expect(order(rankCards(ranked(), "PVTI_1", "PVTI_2", NOW + 1))).toEqual([
+      "PVTI_2",
+      "PVTI_1",
+      "PVTI_3",
+      "PVTI_4",
+    ]);
+    expect(order(rankCards(ranked(), "PVTI_1", "PVTI_4", NOW + 1))).toEqual([
+      "PVTI_2",
+      "PVTI_3",
+      "PVTI_4",
+      "PVTI_1",
+    ]);
+  });
+
+  it("gives the moved card a new revision, so board changes shows it", () => {
+    const before = ranked();
+    const after = rankCards(before, "PVTI_3", null, NOW + 1);
+    expect(after.rev).toBe(before.rev + 1);
+    expect(after.at).toBe(NOW + 1);
+    expect(
+      after.cards.filter((card) => card.rev === after.rev).map((card) => card.item.id),
+    ).toEqual(["PVTI_3"]);
+  });
+
+  it("leaves the state as it was for a card already in place, or one it does not hold", () => {
+    const state = ranked();
+    expect(rankCards(state, "PVTI_1", null, NOW + 1)).toBe(state);
+    expect(rankCards(state, "PVTI_2", "PVTI_1", NOW + 1)).toBe(state);
+    expect(rankCards(state, "PVTI_9", null, NOW + 1)).toBe(state);
+    expect(rankCards(state, "PVTI_1", "PVTI_9", NOW + 1)).toBe(state);
+  });
+
+  it("finds the items to send, bottom being after the project's last card", () => {
+    const state = ranked();
+    expect(rankTarget(state, { number: 2, place: "top" }, REPO)).toEqual({
+      id: "PVTI_2",
+      afterId: null,
+    });
+    expect(rankTarget(state, { number: 2, place: "after", after: 3 }, REPO)).toEqual({
+      id: "PVTI_2",
+      afterId: "PVTI_3",
+    });
+    expect(rankTarget(state, { number: 2, place: "bottom" }, REPO)).toEqual({
+      id: "PVTI_2",
+      afterId: "PVTI_4",
+    });
+    expect(rankTarget(state, { number: 4, place: "bottom" }, REPO)).toEqual({
+      id: "PVTI_4",
+      afterId: "PVTI_3",
+    });
+    expect(rankTarget(state, { number: 9, place: "top" }, REPO)).toEqual({
+      error: "#9 is not on the board",
+    });
+    expect(rankTarget(state, { number: 1, place: "after", after: 9 }, REPO)).toEqual({
+      error: "#9 is not on the board",
+    });
+  });
+
+  it("says where the card now is in its column", () => {
+    const state = rankCards(ranked(), "PVTI_3", null, NOW + 1);
+    expect(rankLine(state, "PVTI_3", REPO)).toBe("#3: now 1st of 3 in Backlog");
+    expect(rankLine(state, "PVTI_2", REPO)).toBe("#2: now 3rd of 3 in Backlog");
+    expect(rankLine(state, "PVTI_4", REPO)).toBe("#4: now 1st of 1 in Ready");
+  });
+
+  it("parses top, bottom and after, and refuses anything else", () => {
+    expect(parseRankRequest(["12", "top"])).toEqual({ number: 12, place: "top" });
+    expect(parseRankRequest(["12", "bottom"])).toEqual({ number: 12, place: "bottom" });
+    expect(parseRankRequest(["12", "after", "7"])).toEqual({
+      number: 12,
+      place: "after",
+      after: 7,
+    });
+    expect(parseRankRequest(["12", "after", "12"])).toEqual({
+      error: "#12 cannot go after itself",
+    });
+    for (const argv of [
+      [],
+      ["12"],
+      ["x", "top"],
+      ["12", "up"],
+      ["12", "top", "7"],
+      ["12", "after"],
+      ["12", "after", "7", "8"],
+      ["0", "top"],
+    ]) {
+      expect(parseRankRequest(argv), argv.join(" ")).toHaveProperty("error");
+    }
   });
 });

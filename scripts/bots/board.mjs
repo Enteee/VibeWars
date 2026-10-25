@@ -22,6 +22,9 @@
  *                               which column one issue is in; --fresh asks
  *                               GitHub, for a card someone moved by hand
  *   board move <issue> <column>
+ *   board rank <issue> top | bottom | after <other-issue>
+ *                               the manager orders the board; `ls` lists
+ *                               each column top first (#351)
  *   board wait <column> [--timeout N]
  *                               block until a card arrives in the column
  *   board changes [--since <token>]
@@ -193,6 +196,15 @@ switch (command) {
     break;
   }
 
+  case "rank": {
+    // hubd checks the words, the role and the cards, and prints the result.
+    const result = hub(["board", "rank", ...rest]);
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(result.code);
+    break;
+  }
+
   case "changes": {
     const answer = ask(["changes", ...rest]);
     const cards = cardsOf(answer);
@@ -248,6 +260,6 @@ switch (command) {
   }
 
   default:
-    console.error("board: usage: board <ls|show|move|wait|changes|columns> ...");
+    console.error("board: usage: board <ls|show|move|rank|wait|changes|columns> ...");
     process.exit(2);
 }

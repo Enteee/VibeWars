@@ -344,6 +344,10 @@ async function startHubd(remaining, before) {
         .split("\n")
         .filter((line) => line.startsWith(prefix)).length;
     },
+    /** Every gh call so far, as one text: a GraphQL query spans lines. */
+    callLog() {
+      return fs.readFileSync(path.join(state, "calls.log"), "utf8");
+    },
     /**
      * Send one request as `hub` would, and wait for the answer.
      *
@@ -586,6 +590,44 @@ describe("hubd and the GraphQL budget", () => {
     }
     expect(hubd.calls("project item-edit")).toBe(0);
   }, 30_000);
+
+  it("ranks a card for the manager with one mutation, and reorders its copy (#351)", async () => {
+    const hubd = await startHubd(5000);
+
+    await hubd.request("manager", "board", ["ls"]);
+    const top = await hubd.request("manager", "rank", ["10", "top"]);
+    expect(top).toMatchObject({ code: 0, stdout: "#10: now 1st of 2 in Ready\n" });
+    expect(hubd.calls("api graphql -f query=mutation")).toBe(1);
+    expect(hubd.callLog()).toContain("-f project=PVT_2 -f item=PVTI_10\n");
+    expect(printed(await hubd.request("manager", "board", ["ls", "Ready"])).cards).toMatchObject([
+      { number: 10 },
+      { number: 8 },
+    ]);
+
+    const after = await hubd.request("manager", "rank", ["10", "after", "8"]);
+    expect(after).toMatchObject({ code: 0, stdout: "#10: now 2nd of 2 in Ready\n" });
+    expect(hubd.callLog()).toContain("-f item=PVTI_10 -f after=PVTI_8\n");
+    expect(printed(await hubd.request("manager", "board", ["ls", "Ready"])).cards).toMatchObject([
+      { number: 8 },
+      { number: 10 },
+    ]);
+    // Two board reads and two ranks: the copy answered everything else.
+    expect(hubd.calls("api graphql")).toBe(4);
+  }, 20_000);
+
+  it("refuses a rank by anyone but the manager, or of a card after itself (#351)", async () => {
+    const hubd = await startHubd(5000);
+
+    const architect = await hubd.request("architect", "rank", ["8", "top"]);
+    const itself = await hubd.request("manager", "rank", ["8", "after", "8"]);
+
+    expect(architect).toMatchObject({ code: 77, reason: "only the manager ranks the board" });
+    expect(itself).toMatchObject({ code: 77, reason: "#8 cannot go after itself" });
+    expect(hubd.calls("api graphql -f query=mutation")).toBe(0);
+    expect(fs.readFileSync(path.join(hubd.hub, "audit.jsonl"), "utf8")).toContain(
+      '"role":"architect","kind":"rank","argv":["8","top"],"decision":"refused"',
+    );
+  }, 20_000);
 
   it("refuses an item-edit that is not a Status move (#349)", async () => {
     const hubd = await startHubd(5000);

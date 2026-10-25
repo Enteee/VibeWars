@@ -629,6 +629,13 @@ function authorizeAs(role, request, acting, employee) {
   if (request.kind === "board") {
     return authorizeBoard(argv);
   }
+  if (request.kind === "rank") {
+    // The Backlog's order is the manager's to keep (#351). hubd checks the
+    // words and the cards; roles never get GraphQL of their own.
+    return role === "manager"
+      ? { allow: true }
+      : { allow: false, reason: "only the manager ranks the board" };
+  }
   if (request.kind === "alerts") {
     // A read for the company's own roles, a developer included, so it can
     // see what CodeQL says about its pull request (#184). Deny by default:
