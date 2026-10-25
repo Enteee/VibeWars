@@ -303,7 +303,10 @@ describe("walls", () => {
       participants: [spec("a", 0, vec2(0, 0)), spec("b", 1, vec2(200, 0))],
     });
     sim.setTarget("a", "b");
-    expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: false, reason: "no-line-of-sight" });
+    // Out of sight, the skill is not refused: it walks round to see (#499).
+    expect(sim.requestSkill("a", 0)).toMatchObject({ check: { ok: true }, queued: true });
+    expect(participant(sim, "a").pendingSkill).toBeDefined();
+    sim.cancelAction("a");
 
     sim.setInputDirection("a", vec2(1, 0));
     stepFor(sim, 2);

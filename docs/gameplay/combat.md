@@ -11,8 +11,9 @@ tick, for every living player, in the order they joined:
 2. energy regenerates
 3. status effects tick (degeneration, regeneration, expiry)
 4. an in-progress cast advances; if it completes, its effects apply
-5. the weapon attack walks into reach or swings
-6. a training dummy's behaviour acts
+5. a skill pressed out of range walks in, or goes off on arrival
+6. the weapon attack walks into reach or swings
+7. a training dummy's behaviour acts
 
 Then state is synchronised to clients.
 
@@ -62,6 +63,16 @@ mid-fight, and the server logs which one happened.
 Order matters for that reason too: cost is checked before range, so a
 player who is both broke and too far away is told the more actionable
 thing.
+
+**Out of range walks in.** When range or line of sight is all that
+fails, the press is not refused: your character walks toward the target,
+round walls, and the skill goes off the moment it is in range and in
+sight, checked all over again, as in GW1. Nothing is paid and no recharge
+starts until then, and there is no cast bar on the way. Moving, Esc,
+attacking someone else, using another skill, the target dying, or half a
+second with no way to them ("can't reach") drops it. A weapon attack
+already running pauses for the walk and resumes on its own target after
+the cast. A self-target skill never walks.
 
 A cast in progress can be **given up**: by moving, or by Esc (Cancel
 Action, which also stops your weapon attack). A cancelled skill stays
