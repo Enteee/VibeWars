@@ -53,23 +53,36 @@ export function resolveTargets(selection: TargetSelection): readonly Combatant[]
       ? []
       : [primary.combatant];
 
-  const caught = selection.candidates
-    .filter(({ combatant, position }) => {
-      if (combatant.dead || combatant.id === primary?.combatant.id) {
-        return false;
-      }
-      if (combatant.id === caster.id && !area.includesCaster) {
-        return false;
-      }
-      const ally = combatant.team === caster.team;
-      if ((area.affects === "enemies" && ally) || (area.affects === "allies" && !ally)) {
-        return false;
-      }
-      return (
-        distance(position, origin) <= area.radius &&
-        hasLineOfSight(origin, position, selection.losBlockers)
-      );
-    })
+  const caught = selection.candidates.filter(({ combatant, position }) => {
+    if (combatant.dead || combatant.id === primary?.combatant.id) {
+      return false;
+    }
+    if (combatant.id === caster.id && !area.includesCaster) {
+      return false;
+    }
+    const ally = combatant.team === caster.team;
+    if ((area.affects === "enemies" && ally) || (area.affects === "allies" && !ally)) {
+      return false;
+    }
+    return (
+      distance(position, origin) <= area.radius &&
+      hasLineOfSight(origin, position, selection.losBlockers)
+    );
+  });
+
+  const all = [...first, ...nearestFirst(caught, origin)];
+  return area.maxTargets === undefined ? all : all.slice(0, area.maxTargets);
+}
+
+/**
+ * `candidates` by distance from `origin`, ties by id: the one order every
+ * cut to "at most N" uses, an area's and a scythe's cleave alike.
+ */
+export function nearestFirst(
+  candidates: readonly TargetCandidate[],
+  origin: Vec2,
+): readonly Combatant[] {
+  return candidates
     .map((candidate) => ({ ...candidate, away: distance(candidate.position, origin) }))
     .sort(
       (a, b) =>
@@ -77,7 +90,4 @@ export function resolveTargets(selection: TargetSelection): readonly Combatant[]
         (a.combatant.id < b.combatant.id ? -1 : a.combatant.id > b.combatant.id ? 1 : 0),
     )
     .map(({ combatant }) => combatant);
-
-  const all = [...first, ...caught];
-  return area.maxTargets === undefined ? all : all.slice(0, area.maxTargets);
 }

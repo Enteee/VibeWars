@@ -573,8 +573,9 @@ describe("the gear coverage record", () => {
   });
 
   it("does not claim an attacking insignia exists", () => {
-    // Nothing is ever mid-attack, so Brawler's would be a permanent zero.
-    expect(gearOmission("attack-state")).toBeDefined();
+    // Armor does not read the attack state yet, so Brawler's would be a
+    // permanent zero.
+    expect(gearOmission("armor-while-attacking")).toBeDefined();
     expect(ALL_INSIGNIAS.map((insignia) => insignia.id)).not.toContain("brawlers");
   });
 

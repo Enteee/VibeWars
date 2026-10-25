@@ -16,11 +16,11 @@ export type InsigniaId = "survivor" | "radiant" | "stalwart" | "blessed";
  *
  * Every member of this union must be answerable from state the
  * simulation already has. The reference data also has "while in a
- * stance" and "while attacking" insignias; this game has neither stances
- * nor an attack in progress, so both are absent from the catalog
- * entirely and recorded as gaps in `coverage.ts` (`"stances"`,
- * `"attack-state"`). A number that is always zero is a lie with a
- * tooltip.
+ * stance" and "while attacking" insignias; this game has no stances, and
+ * armor does not yet read the attack state, so both are absent from the
+ * catalog entirely and recorded as gaps in `coverage.ts` (`"stances"`,
+ * `"armor-while-attacking"`). A number that is always zero is a lie with
+ * a tooltip.
  */
 export type ArmorCondition = "vs-physical" | "while-enchanted";
 
