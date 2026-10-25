@@ -26,6 +26,7 @@ import {
   scheduleLevel,
   type LevelChange,
 } from "./transitions.js";
+import { makeLayer, type TrackClock } from "./layer.js";
 import { within } from "./within.js";
 import { workerTimers } from "./worker-timers.js";
 
@@ -58,10 +59,10 @@ interface Playing {
   readonly phraseCycles: number;
   readonly cps: number;
   /** The cycle its cycle 0 plays on. */
-  readonly origin: number;
+  readonly clock: TrackClock;
 }
 
-/** A switch to `next`, landing at `next.origin` and fading until `until`. */
+/** A switch to `next`, landing at `next.clock.origin` and fading until `until`. */
 interface Switch {
   readonly next: Playing;
   readonly until: number;
@@ -109,9 +110,12 @@ export async function startEngine(): Promise<void> {
   let volume = 1;
   let bus: GainNode | undefined;
 
-  /** `layer(n, pat)`: `pat` plays only while the intensity is at least `n`. */
-  const layer = (n: number, pattern: core.Pattern): core.Pattern =>
-    pattern.filterHaps((hap) => levelAt(levels, hap.wholeOrPart().begin.valueOf()) >= n);
+  /** The clock of the source being evaluated, which its `layer` calls keep. */
+  let compiling: TrackClock = { origin: 0 };
+  const layer = makeLayer(
+    () => levels,
+    () => compiling,
+  );
   Object.defineProperty(globalThis, "INTENSITY", {
     get: () => levelAt(levels, position()),
   });
@@ -157,8 +161,11 @@ export async function startEngine(): Promise<void> {
   const compile = async (
     source: string,
     phraseCycles: number,
-  ): Promise<{ pattern: core.Pattern; cps: number }> => {
+  ): Promise<{ pattern: core.Pattern; cps: number; clock: TrackClock }> => {
     requestedCps = undefined;
+    // Placed by the caller, once it knows where the track starts.
+    const clock: TrackClock = { origin: 0 };
+    compiling = clock;
     const { pattern } = await evaluate(source);
     if (!core.isPattern(pattern)) {
       throw new Error("the source does not end in a pattern");
@@ -170,7 +177,7 @@ export async function startEngine(): Promise<void> {
     } finally {
       levels = saved;
     }
-    return { pattern, cps: askedCps() ?? scheduler.cps };
+    return { pattern, cps: askedCps() ?? scheduler.cps, clock };
   };
 
   /** Music needs a running context, made after a gesture, and our bus. */
@@ -202,7 +209,7 @@ export async function startEngine(): Promise<void> {
   };
 
   const announce = (track: Playing): void => {
-    post({ type: "playing", trackId: track.trackId, cycle: track.origin, cps: track.cps });
+    post({ type: "playing", trackId: track.trackId, cycle: track.clock.origin, cps: track.cps });
   };
 
   const schedule = async (pattern: core.Pattern): Promise<void> => {
@@ -212,13 +219,13 @@ export async function startEngine(): Promise<void> {
 
   /** Play `track` now, in place of anything playing or planned. */
   const load = async (track: HostTrack): Promise<void> => {
-    const { pattern, cps } = await compile(track.source, track.phraseCycles);
+    const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
     await ensureAudio();
-    const origin = scheduler.started ? Math.floor(position()) : 0;
+    clock.origin = scheduler.started ? Math.floor(position()) : 0;
     switching = undefined;
-    playing = { trackId: track.trackId, pattern, phraseCycles: track.phraseCycles, cps, origin };
+    playing = { trackId: track.trackId, pattern, phraseCycles: track.phraseCycles, cps, clock };
     scheduler.setCps(cps);
-    await schedule(pattern.late(origin));
+    await schedule(pattern.late(clock.origin));
     announce(playing);
   };
 
@@ -257,16 +264,17 @@ export async function startEngine(): Promise<void> {
       await load(track);
       return;
     }
-    const { pattern, cps } = await compile(track.source, track.phraseCycles);
+    const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
     // A switch still planned is replaced: this one lands where it would have.
     const current = switching?.next ?? playing;
-    const from = nextBoundary(position(), current.origin, current.phraseCycles);
+    const from = nextBoundary(position(), current.clock.origin, current.phraseCycles);
+    clock.origin = from;
     const next: Playing = {
       trackId: track.trackId,
       pattern,
       phraseCycles: track.phraseCycles,
       cps,
-      origin: from,
+      clock,
     };
     const until = from + cycles;
     // What plays fades out, even if that is a crossfade still under way.
@@ -296,14 +304,14 @@ export async function startEngine(): Promise<void> {
     if (planned === undefined) {
       return;
     }
-    if (!planned.announced && position() >= planned.next.origin) {
+    if (!planned.announced && position() >= planned.next.clock.origin) {
       planned.announced = true;
       announce(planned.next);
     }
     if (position() >= planned.until) {
       switching = undefined;
       playing = planned.next;
-      void schedule(planned.next.pattern.late(planned.next.origin));
+      void schedule(planned.next.pattern.late(planned.next.clock.origin));
     }
   }, SWITCH_POLL_MS);
 
@@ -318,7 +326,7 @@ export async function startEngine(): Promise<void> {
       case "play":
         // From the top: a stopped scheduler counts cycles from 0 again.
         if (playing !== undefined && !scheduler.started) {
-          playing = { ...playing, origin: 0 };
+          playing.clock.origin = 0;
           scheduler.setCps(playing.cps);
           await schedule(playing.pattern);
         }
@@ -351,11 +359,12 @@ export async function startEngine(): Promise<void> {
         if (track === undefined) {
           throw new Error("nothing is playing to change");
         }
-        const { pattern, cps } = await compile(message.source, track.phraseCycles);
+        const { pattern, cps, clock } = await compile(message.source, track.phraseCycles);
+        clock.origin = track.clock.origin;
         switching = undefined;
-        playing = { ...track, pattern, cps };
+        playing = { ...track, pattern, cps, clock };
         scheduler.setCps(cps);
-        await schedule(pattern.late(track.origin));
+        await schedule(pattern.late(clock.origin));
         post({ type: "evaluated" });
         return;
       }

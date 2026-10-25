@@ -26,6 +26,7 @@ declare module "@strudel/core" {
   export function isPattern(value: unknown): value is Pattern;
   export function stack(...patterns: readonly Pattern[]): Pattern;
   export const silence: Pattern;
+  export function pure(value: unknown): Pattern;
   export function evalScope(...modules: readonly object[]): Promise<readonly object[]>;
 }
 declare module "@strudel/mini" {}
