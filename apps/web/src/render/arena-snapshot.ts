@@ -18,6 +18,8 @@ export interface RenderableActor {
   readonly position: Vec2;
   /** Radians, `atan2` convention, 0 = +x (#187). Not drawn yet. */
   readonly facing: number;
+  /** Picks the weapon mark's tip (#188); `undefined` draws none. */
+  readonly weaponId: string | undefined;
   readonly radius: number;
   readonly team: "ally" | "enemy" | "self";
   readonly health: number;

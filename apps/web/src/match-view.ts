@@ -81,6 +81,7 @@ export function toArenaSnapshot(
         name: player.name,
         position: { x: player.x, y: player.y },
         facing: player.facing,
+        weaponId: player.weaponId,
         radius: 14,
         team:
           player.sessionId === match.selfSessionId
