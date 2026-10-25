@@ -10,7 +10,7 @@
  * mid-match. It only ever rejects; there is no code path per version
  * (ADR-0016).
  */
-export const PROTOCOL_VERSION = 14 as const;
+export const PROTOCOL_VERSION = 15 as const;
 
 /** What a client is told when its `protocolVersion` does not match. */
 export const PROTOCOL_MISMATCH_MESSAGE =

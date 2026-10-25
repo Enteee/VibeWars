@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { circleIntersectsSegment, hasLineOfSight } from "@vibewars/game-core";
 
 import { allWallSegments } from "./geometry.js";
-import { MapValidationError, validateMapData } from "./schema.js";
+import { MapValidationError, validateMapData, type Wall } from "./schema.js";
 
 const validMap = {
   id: "arena-test",
@@ -178,5 +178,97 @@ describe("every training map", () => {
     expect(
       seen.some((slot) => Math.hypot(slot.x - player.x, slot.y - player.y) > RANGE_SPELL),
     ).toBe(true);
+  });
+});
+
+/**
+ * Walls never overlap, in any map, bundled or training. The walk's
+ * `nearestStandable` (#310) tells inside from outside by counting wall
+ * sides crossed, which holds only while no point is inside two walls.
+ */
+describe("every map's walls", () => {
+  interface Point {
+    readonly x: number;
+    readonly y: number;
+  }
+  const maps = ["../maps/", "../training/"].flatMap((dir) => {
+    const root = fileURLToPath(new URL(dir, import.meta.url));
+    return readdirSync(root, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) =>
+        validateMapData(JSON.parse(readFileSync(join(root, entry.name, "map.json"), "utf8"))),
+      );
+  });
+
+  function outline(wall: Wall): Point[] {
+    return wall.kind === "rect"
+      ? [
+          { x: wall.x, y: wall.y },
+          { x: wall.x + wall.width, y: wall.y },
+          { x: wall.x + wall.width, y: wall.y + wall.height },
+          { x: wall.x, y: wall.y + wall.height },
+        ]
+      : wall.points;
+  }
+
+  function edges(points: readonly Point[]): [Point, Point][] {
+    return points.map((point, i) => [point, points[(i + 1) % points.length] ?? point]);
+  }
+
+  /** Which side of the line `a`→`b` `p` is on: 0 on it. */
+  function side(a: Point, b: Point, p: Point): number {
+    return Math.sign((b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x));
+  }
+
+  /** Two edges that cross, not merely touch or run along each other. */
+  function cross([a, b]: [Point, Point], [c, d]: [Point, Point]): boolean {
+    return side(c, d, a) * side(c, d, b) < 0 && side(a, b, c) * side(a, b, d) < 0;
+  }
+
+  /** `p` inside the outline, and not on it. */
+  function strictlyInside(p: Point, points: readonly Point[]): boolean {
+    let inside = false;
+    for (const [a, b] of edges(points)) {
+      if (side(a, b, p) === 0 && Math.min(a.x, b.x) <= p.x && p.x <= Math.max(a.x, b.x)) {
+        if (Math.min(a.y, b.y) <= p.y && p.y <= Math.max(a.y, b.y)) {
+          return false;
+        }
+      }
+      if (a.y > p.y !== b.y > p.y && a.x + ((p.y - a.y) / (b.y - a.y)) * (b.x - a.x) > p.x) {
+        inside = !inside;
+      }
+    }
+    return inside;
+  }
+
+  it("finds an overlap where there is one", () => {
+    const a = outline({ kind: "rect", x: 0, y: 0, width: 10, height: 10 });
+    const plus = outline({ kind: "rect", x: 4, y: -5, width: 2, height: 20 });
+    const within = outline({ kind: "rect", x: 2, y: 2, width: 2, height: 2 });
+    const beside = outline({ kind: "rect", x: 10, y: 0, width: 5, height: 10 });
+    expect(edges(a).some((e) => edges(plus).some((f) => cross(e, f)))).toBe(true);
+    expect(within.some((p) => strictlyInside(p, a))).toBe(true);
+    expect(edges(a).some((e) => edges(beside).some((f) => cross(e, f)))).toBe(false);
+    expect(beside.some((p) => strictlyInside(p, a))).toBe(false);
+  });
+
+  it("never overlaps two walls", () => {
+    expect(maps.length).toBeGreaterThan(4);
+    for (const map of maps) {
+      const outlines = map.walls.map(outline);
+      outlines.forEach((a, i) => {
+        outlines.slice(i + 1).forEach((b, k) => {
+          const pair = `${map.id}: walls ${String(i)} and ${String(i + 1 + k)}`;
+          expect(
+            edges(a).some((e) => edges(b).some((f) => cross(e, f))),
+            pair,
+          ).toBe(false);
+          expect(
+            a.some((p) => strictlyInside(p, b)) || b.some((p) => strictlyInside(p, a)),
+            pair,
+          ).toBe(false);
+        });
+      });
+    }
   });
 });
