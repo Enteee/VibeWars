@@ -51,7 +51,7 @@ const SNAPSHOT: MatchSnapshot = {
 
 /** The texts a scene would have been asked to float, for these events. */
 function floated(
-  events: { kind: string; targetId?: string; amount?: number }[],
+  events: CombatMessage["events"],
   cause: CombatMessage["cause"] = "skill",
 ): string[] {
   const texts: FloatingText[] = [];
@@ -163,7 +163,7 @@ describe("showCombatFeedback", () => {
 
   it("floats no degeneration ticks, which the health bar already shows (#54)", () => {
     // Burning and poison together: 11 hp/s, about 1 a tick at 20 Hz.
-    const tick = [{ kind: "damage", targetId: "them", amount: 0.55 * 2 }];
+    const tick: CombatMessage["events"] = [{ kind: "damage", targetId: "them", amount: 0.55 * 2 }];
     expect(floated(tick, "degeneration")).toEqual([]);
     // Dying of it still says so.
     expect(floated([{ kind: "death", targetId: "them" }], "degeneration")).toEqual(["defeated"]);
@@ -244,12 +244,17 @@ describe("swingFlashFor (#161)", () => {
       { ...player("them"), x: 100, y: 200, team: 1 },
     ],
   });
-  const swing = (cause: CombatMessage["cause"], kind = "damage"): CombatMessage => ({
+  const swing = (
+    cause: CombatMessage["cause"],
+    kind: "damage" | "attack-missed" = "damage",
+  ): CombatMessage => ({
     casterSessionId: "me",
     cause,
     skillId: "",
     weaponId: cause === "weapon" ? "sword" : "",
-    events: [{ kind, targetId: "them", amount: 30 }],
+    events: [
+      kind === "damage" ? { kind, targetId: "them", amount: 30 } : { kind, targetId: "them" },
+    ],
   });
 
   it("flashes one arc around a melee attacker, toward its target", () => {
