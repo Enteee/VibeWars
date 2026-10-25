@@ -139,7 +139,7 @@ function connect(): {
   connection: ReturnType<typeof createMatchConnection>;
 } {
   const room = new FakeRoom();
-  const connection = createMatchConnection(room, MAP, [], () => []);
+  const connection = createMatchConnection(room, MAP, { slots: [], ranks: {} }, () => []);
   const states: string[] = [];
   connection.onConnectionChange((state) => states.push(state));
   return { room, states, connection };
@@ -235,7 +235,7 @@ describe("the off-hand on the wire (#276)", () => {
       statuses: [],
     };
     room.state = { ...room.state, players: new Map([["me", player]]) };
-    return createMatchConnection(room, MAP, [], () => []).getSnapshot().players[0]?.offhandId;
+    return createMatchConnection(room, MAP, { slots: [], ranks: {} }, () => []).getSnapshot().players[0]?.offhandId;
   };
 
   it("maps none to undefined, a known off-hand to itself, and an unknown one to undefined", () => {

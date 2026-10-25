@@ -24,7 +24,6 @@ import type {
   MatchConnection,
   MatchSnapshot,
   PlayerSnapshot,
-  SkillSlot,
   SlotRecharge,
 } from "@vibewars/game-session";
 
@@ -271,7 +270,7 @@ export async function connectToMatch(
     awaitMessage<SkillBarMessage>(room, "skill-bar", 5000),
   ]);
 
-  return createMatchConnection(room, map, bar.slots, () =>
+  return createMatchConnection(room, map, bar, () =>
     extrapolateRecharges(
       recharges.slots,
       bar.slots.length,
@@ -303,7 +302,7 @@ const CONSENTED_LEAVE = 4000;
 export function createMatchConnection(
   room: LiveMatchRoom,
   map: MapDescriptor,
-  skillBar: readonly (SkillSlot | null)[],
+  bar: SkillBarMessage,
   getRecharges: () => readonly SlotRecharge[],
 ): MatchConnection {
   // A dropped connection is retried by the SDK itself, which reconnects
@@ -339,7 +338,8 @@ export function createMatchConnection(
   return {
     selfSessionId: room.sessionId,
     map,
-    skillBar,
+    skillBar: bar.slots,
+    ranks: new Map(Object.entries(bar.ranks)),
     onConnectionChange(handler) {
       notifyConnection = handler;
     },

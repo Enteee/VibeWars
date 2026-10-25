@@ -857,6 +857,7 @@ export class MatchRoom extends Room {
           rechargeSeconds: skill?.rechargeSeconds ?? 0,
         };
       }),
+      ranks: Object.fromEntries(sim.combatant.attributeRanks),
     });
     this.sendRecharges(client, true);
 

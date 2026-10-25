@@ -167,6 +167,10 @@ export function createLocalConnection(options: {
     get skillBar() {
       return skillBar;
     },
+    get ranks() {
+      // Straight from the simulation, so a rearm shows at once.
+      return simulation.get(selfId)?.combatant.attributeRanks ?? new Map<string, number>();
+    },
     onConnectionChange() {
       // Nothing to lose: the simulation is in this tab.
     },

@@ -28,6 +28,7 @@ import {
   type RechargeSlot,
   type WireEnded,
   type WirePlayer,
+  type WireSkillBar,
   type WireSnapshot,
 } from "@vibewars/game-protocol";
 
@@ -201,7 +202,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       map: map.descriptor,
     };
     transport.send("welcome", message, peerId);
-    transport.send("skill-bar", { slots: skillBarSlots(participant?.skillBar ?? []) }, peerId);
+    const bar: WireSkillBar = {
+      slots: skillBarSlots(participant?.skillBar ?? []),
+      ranks: Object.fromEntries(participant?.combatant.attributeRanks ?? []),
+    };
+    transport.send("skill-bar", bar, peerId);
     sendRecharges(seat, true);
   };
 
