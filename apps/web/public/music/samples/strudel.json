@@ -1,1 +1,79 @@
-{}
+{
+  "anvil": [
+    "anvil/0.mp3",
+    "anvil/1.mp3",
+    "anvil/2.mp3"
+  ],
+  "bells": {
+    "c3": "bells/c3.mp3",
+    "c4": "bells/c4.mp3",
+    "e3": "bells/e3.mp3",
+    "e4": "bells/e4.mp3",
+    "g#3": "bells/gs3.mp3"
+  },
+  "crash": [
+    "crash/0.mp3",
+    "crash/1.mp3"
+  ],
+  "frame": [
+    "frame/0.mp3",
+    "frame/1.mp3",
+    "frame/2.mp3",
+    "frame/3.mp3"
+  ],
+  "gong": [
+    "gong/0.mp3"
+  ],
+  "harp": {
+    "a2": "harp/a2.mp3",
+    "d4": "harp/d4.mp3",
+    "d6": "harp/d6.mp3",
+    "e3": "harp/e3.mp3",
+    "g5": "harp/g5.mp3"
+  },
+  "pizz": {
+    "c4": "pizz/c4.mp3",
+    "c5": "pizz/c5.mp3",
+    "e4": "pizz/e4.mp3",
+    "e5": "pizz/e5.mp3",
+    "g#4": "pizz/gs4.mp3"
+  },
+  "recorder": {
+    "c4": "recorder/c4.mp3",
+    "d5": "recorder/d5.mp3",
+    "e4": "recorder/e4.mp3",
+    "f3": "recorder/f3.mp3",
+    "g#4": "recorder/gs4.mp3"
+  },
+  "snare": [
+    "snare/0.mp3",
+    "snare/1.mp3"
+  ],
+  "strum": {
+    "a2": "strum/a2.mp3",
+    "a3": "strum/a3.mp3",
+    "a4": "strum/a4.mp3",
+    "d3": "strum/d3.mp3",
+    "e4": "strum/e4.mp3"
+  },
+  "swell": [
+    "swell/0.mp3"
+  ],
+  "taiko": [
+    "taiko/0.mp3",
+    "taiko/1.mp3"
+  ],
+  "timp": [
+    "timp/0.mp3",
+    "timp/1.mp3",
+    "timp/2.mp3"
+  ],
+  "whistle": {
+    "c4": "whistle/c4.mp3",
+    "c6": "whistle/c6.mp3",
+    "d5": "whistle/d5.mp3",
+    "e4": "whistle/e4.mp3",
+    "f#5": "whistle/fs5.mp3",
+    "g#4": "whistle/gs4.mp3"
+  }
+}

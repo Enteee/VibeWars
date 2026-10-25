@@ -112,7 +112,7 @@ function str(value) {
  * @param {string} text
  * @returns {string}
  */
-function stripped(text) {
+export function stripped(text) {
   return text.replace(/[\p{Cc}\p{Cf}]|\u115f|\u1160|\u3164|\uffa0|[\u{e0100}-\u{e01ef}]/gu, "");
 }
 

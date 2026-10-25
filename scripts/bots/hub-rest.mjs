@@ -16,6 +16,8 @@
  * Pure functions only. hubd does the fetching.
  */
 
+import { scrubComment } from "./hub-strangers.mjs";
+
 /** @typedef {Record<string, unknown>} Json */
 
 /**
@@ -66,7 +68,8 @@ function assigneesOf(assignees) {
 }
 
 /**
- * REST issue comments, in gh's `comments` shape.
+ * REST issue comments, in gh's `comments` shape, scrubbed of strangers'
+ * text (hub-strangers.mjs).
  *
  * @param {unknown[]} comments
  * @returns {Json[]}
@@ -74,14 +77,38 @@ function assigneesOf(assignees) {
 export function commentsOf(comments) {
   return comments.map((raw) => {
     const comment = rec(raw);
-    return {
+    return scrubComment({
       author: login(comment.user),
       authorAssociation: str(comment.author_association),
       body: str(comment.body),
       createdAt: str(comment.created_at),
       url: str(comment.html_url),
-    };
+    });
   });
+}
+
+/**
+ * REST pull request reviews that have a body, in gh's `reviews` shape,
+ * scrubbed like comments. A review with no body is only a verdict, and
+ * gh's plain `--comments` output leaves it out too.
+ *
+ * @param {unknown[]} reviews `GET /repos/{o}/{r}/pulls/{n}/reviews`
+ * @returns {Json[]}
+ */
+export function reviewsOf(reviews) {
+  return reviews
+    .map(rec)
+    .filter((review) => str(review.body) !== "")
+    .map((review) =>
+      scrubComment({
+        author: login(review.user),
+        authorAssociation: str(review.author_association),
+        body: str(review.body),
+        state: str(review.state),
+        submittedAt: str(review.submitted_at),
+        url: str(review.html_url),
+      }),
+    );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -204,9 +231,10 @@ function mergeableOf(/** @type {unknown} */ value) {
  *
  * @param {unknown} raw `GET /repos/{o}/{r}/pulls/{n}`, or one row of the list
  * @param {unknown[]} [comments] its issue comments, which is what gh means
+ * @param {unknown[]} [reviews] its reviews
  * @returns {Json}
  */
-export function ghPull(raw, comments) {
+export function ghPull(raw, comments, reviews) {
   const pull = rec(raw);
   const merged = typeof pull.merged_at === "string";
   return {
@@ -237,6 +265,7 @@ export function ghPull(raw, comments) {
         }
       : {}),
     ...(comments === undefined ? {} : { comments: commentsOf(comments) }),
+    ...(reviews === undefined ? {} : { reviews: reviewsOf(reviews) }),
   };
 }
 
@@ -247,7 +276,8 @@ export function ghPull(raw, comments) {
 /**
  * @typedef {{
  *   group: "issue" | "pr",
- *   number: number,
+ *   selector: string,
+ *   number: number | null,
  *   fields: string[] | null,
  *   comments: boolean,
  * }} ViewPlan
@@ -327,23 +357,20 @@ export function planView(argv) {
     return null;
   }
   const selector = parsed.positional[0] ?? "";
-  // Numbers only. A URL or, for a pull request, a branch name needs a lookup
-  // gh already knows how to do.
-  if (!/^\d+$/.test(selector)) {
-    return null;
-  }
   const json = last(parsed.flags, ["--json"]);
   const fields = json === undefined ? null : json.split(",").filter((field) => field !== "");
   if (fields !== null && (fields.length === 0 || fields.some((f) => !VIEW_FIELDS[group].has(f)))) {
     return null;
   }
-  return {
-    group,
-    number: Number(selector),
-    fields,
-    comments:
-      parsed.flags.has("--comments") || parsed.flags.has("-c") || !!fields?.includes("comments"),
-  };
+  const comments = fields === null && (parsed.flags.has("--comments") || parsed.flags.has("-c"));
+  const numeric = /^\d+$/.test(selector);
+  // A URL or, for a pull request, a branch name needs a lookup gh already
+  // knows how to do. Except for comments, which are always read here, so
+  // hubd can hide strangers' (hub-strangers.mjs); hubd resolves those.
+  if (!numeric && !comments) {
+    return null;
+  }
+  return { group, selector, number: numeric ? Number(selector) : null, fields, comments };
 }
 
 /**
@@ -475,7 +502,8 @@ export function pickJson(item, fields) {
 /**
  * gh's non-terminal plain output for a view: tab-separated metadata, `--`,
  * the body. With `--comments`, gh prints the comments instead, each as its
- * own metadata block and body.
+ * own metadata block and body, and for a pull request its reviews among
+ * them in date order, each marked with a `review:` line.
  *
  * @param {"issue" | "pr"} group
  * @param {Json} item
@@ -484,16 +512,21 @@ export function pickJson(item, fields) {
  */
 export function renderView(group, item, comments) {
   if (comments) {
-    return arr(item.comments)
-      .map((raw) => {
-        const comment = rec(raw);
+    const entries = [
+      ...arr(item.comments).map((raw) => ({ at: str(rec(raw).createdAt), entry: rec(raw) })),
+      ...arr(item.reviews).map((raw) => ({ at: str(rec(raw).submittedAt), entry: rec(raw) })),
+    ].sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
+    return entries
+      .map(({ entry }) => {
+        const review = "state" in entry;
         return [
-          `author:\t${str(rec(comment.author).login)}`,
-          `association:\t${str(comment.authorAssociation).toLowerCase()}`,
+          `author:\t${str(rec(entry.author).login)}`,
+          `association:\t${str(entry.authorAssociation).toLowerCase()}`,
           "edited:\tfalse",
-          "status:\tnone",
+          `status:\t${review ? str(entry.state).toLowerCase().replace(/_/g, " ") : "none"}`,
+          ...(review ? ["review:\ttrue"] : []),
           "--",
-          str(comment.body),
+          str(entry.body),
           "--",
         ].join("\n");
       })

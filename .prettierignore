@@ -24,3 +24,5 @@ packages/game-data/raw/
 # are plain strings), so Prettier's quote normalisation would change what a
 # track plays.
 apps/web/src/music/**/*.strudel.js
+# Written by scripts/assets/music-palette.sh.
+apps/web/public/music/samples/strudel.json
