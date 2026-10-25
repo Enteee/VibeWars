@@ -120,6 +120,13 @@ for (const track of tracks) {
       `key: ${a.outsideKey.length ? `outside ${a.outsideKey.join(" ")}` : "every note is in key"}`,
     );
     console.log(`worst-case summed gain: ${a.peakGain.toFixed(2)}`);
+    console.log(
+      `register: ${a.registers
+        .map(
+          (r) => `${r.sound} ${r.highest ?? "-"}${r.lpf === null ? "" : ` lpf≤${String(r.lpf)}`}`,
+        )
+        .join(", ")}`,
+    );
     const form =
       a.formCycles === MAX_FORM_CYCLES
         ? `no repeat within ${String(MAX_FORM_CYCLES)} cycles`

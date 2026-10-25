@@ -295,25 +295,25 @@ describe("build format version", () => {
     expect(result.problems[0]).toMatch(/equipment is missing/);
   });
 
-  it("refuses a pre-equipment build string even though its formatVersion is 1", () => {
-    // Exactly what the game exported before gear existed. Its version
-    // number matches the reset constant, so the missing gear is what
-    // refuses it.
-    const preEquipment = {
-      format: BUILD_FORMAT,
+  it("refuses a formatVersion 1 string, shared before GW1's attribute costs (#470)", () => {
+    // 12/12/8 was legal under the old cost table. Its version, not its
+    // budget, is what refuses it: it is not half-loaded and re-priced.
+    const beforeGw1Costs = {
+      ...CURRENT_PAYLOAD,
       formatVersion: 1,
-      name: "Old Share",
-      primaryProfession: "warrior",
-      secondaryProfession: null,
-      attributes: [{ attributeId: "warrior.swordsmanship", rank: 12 }],
-      skillBar: ["warrior.sever-artery-lite", null, null, null, null, null, null, null],
+      attributes: [
+        { attributeId: "warrior.strength", rank: 12 },
+        { attributeId: "warrior.swordsmanship", rank: 12 },
+        { attributeId: "warrior.tactics", rank: 8 },
+      ],
     };
-    const result = importBuild(JSON.stringify(preEquipment), "id", 0);
+    const result = importBuild(JSON.stringify(beforeGw1Costs), "id", 0);
     expect(result.ok).toBe(false);
     if (result.ok) {
       return;
     }
-    expect(result.problems).toEqual(["This build's equipment is missing or malformed."]);
+    expect(result.problems).toHaveLength(1);
+    expect(result.problems[0]).toMatch(/uses format version 1, but this game reads only version 2/);
   });
 
   it("refuses a build with no usable format version", () => {

@@ -3,12 +3,10 @@
  * progression should be represented as data/rules rather than scattered
  * constants").
  *
- * This is an *original* cost curve, not a reverse-engineered copy of any
- * specific game's table: a flat per-rank cost would be trivially gameable
- * (always max one attribute first), so the curve below charges
- * progressively more for each additional rank, which is the design
- * property that actually matters for build diversity — not matching a
- * specific proprietary numeric table.
+ * The cost table is GW1's, per the brief (§5, §7): the brief takes GW1's
+ * game-rule numbers as reference data, and every skill's attribute scaling
+ * assumes GW1's rank spreads. Ranks 8 to 12 are steep on purpose, so the
+ * last ranks are a real price: 12/12/3 spends the 200-point budget exactly.
  */
 
 /** The highest rank attribute *points* can buy. Enforced by `validateCharacter`. */
@@ -26,23 +24,16 @@ export const MAX_ATTRIBUTE_RANK = 12;
 export const MAX_EFFECTIVE_RANK = 15;
 
 /**
- * Point cost to go from rank `n-1` to rank `n`. Rank 0 is free (everyone
- * starts there); each subsequent rank costs its own rank number of points,
- * so higher investment costs progressively more per rank — a standard
- * "diminishing returns" curve shape, implemented as our own formula.
+ * Point cost to go from rank `n-1` to rank `n`, at index `n - 1`: GW1's
+ * table (wiki.guildwars.com/wiki/Attribute_point). Rank 0 is free, as
+ * everyone starts there. One entry per rank up to `MAX_ATTRIBUTE_RANK`.
  */
-function pointCostOfRank(rank: number): number {
-  if (rank <= 0) {
-    return 0;
-  }
-  return rank;
-}
+const POINT_COST_OF_RANK: readonly number[] = [1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16, 20];
 
 const CUMULATIVE_COST_BY_RANK: readonly number[] = (() => {
   const costs: number[] = [0];
-  for (let rank = 1; rank <= MAX_ATTRIBUTE_RANK; rank += 1) {
-    const previous = costs[rank - 1] ?? 0;
-    costs.push(previous + pointCostOfRank(rank));
+  for (const cost of POINT_COST_OF_RANK) {
+    costs.push((costs[costs.length - 1] ?? 0) + cost);
   }
   return costs;
 })();
