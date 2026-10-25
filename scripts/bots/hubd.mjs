@@ -28,13 +28,19 @@ import {
   ITEM_QUERY,
   answerBoard,
   applyFacts,
+  itemNumber,
   listing,
   needsSweep,
   parseBoardRequest,
   parseIssueAnswer,
   parseItemAnswer,
+  parseRankRequest,
   planHint,
   planMutation,
+  RANK_MUTATION,
+  rankCards,
+  rankLine,
+  rankTarget,
   readBoardState,
   sweep,
 } from "./hub-board.mjs";
@@ -1260,6 +1266,65 @@ async function serveBoard(argv, cfg) {
   };
 }
 
+/**
+ * `board rank` (#351): the manager's, policy says. The issues are found in
+ * the copy, each re-read once if the copy lacks it, as a move's card is
+ * (#349); then one mutation, and the copy reordered to match, for nothing.
+ *
+ * @param {string} role
+ * @param {string[]} argv `[issue, "top" | "bottom"]` or `[issue, "after", other]`
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function rank(role, argv, cfg) {
+  const kind = "rank";
+  const request = parseRankRequest(argv);
+  if ("error" in request) {
+    audit({ role, kind, argv, decision: "refused", reason: request.error });
+    return { allow: false, reason: request.error, code: 77 };
+  }
+  await freshBoard(cfg);
+  for (const number of request.place === "after"
+    ? [request.number, request.after]
+    : [request.number]) {
+    if (board !== null && !board.cards.some((card) => itemNumber(card.item, cfg.repo) === number)) {
+      await reread({ kind: "issue", number }, cfg);
+    }
+  }
+  if (board === null || board.stale) {
+    return Date.now() < limitedUntil
+      ? limitedResponse()
+      : {
+          allow: true,
+          code: 1,
+          stdout: "",
+          stderr: "board: could not read the board from GitHub\n",
+        };
+  }
+  const target = rankTarget(board, request, cfg.repo);
+  if ("error" in target) {
+    audit({ role, kind, argv, decision: "refused", reason: target.error });
+    return { allow: false, reason: target.error, code: 77 };
+  }
+  const result = await gh([
+    "api",
+    "graphql",
+    "-f",
+    `query=${RANK_MUTATION}`,
+    "-f",
+    `project=${cfg.projectId}`,
+    "-f",
+    `item=${target.id}`,
+    ...(target.afterId === null ? [] : ["-f", `after=${target.afterId}`]),
+  ]);
+  audit({ role, kind, argv, decision: "allowed", code: result.code });
+  if (result.code !== 0) {
+    return { allow: true, code: result.code, stdout: "", stderr: result.stderr };
+  }
+  keepBoard(rankCards(board, target.id, target.afterId, Date.now()), cfg);
+  return { allow: true, code: 0, stdout: `${rankLine(board, target.id, cfg.repo)}\n`, stderr: "" };
+}
+
 /** Who counts as a member changes more rarely still. */
 const MEMBERS_TTL_MS = 300_000;
 /** @type {{ at: number, logins: Set<string> } | null} */
@@ -1834,6 +1899,10 @@ async function serve(request, verdict, acting) {
 
   if (kind === "staff") {
     return staff(role, argv, cfg);
+  }
+
+  if (kind === "rank") {
+    return rank(role, argv, cfg);
   }
 
   if (kind === "board") {

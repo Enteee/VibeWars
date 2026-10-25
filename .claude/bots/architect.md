@@ -13,6 +13,8 @@ What you do:
   player-visible behaviour, which packages and files it touches, the data
   shape, the edge cases that matter, and how it should be tested. Say what is
   explicitly out of scope.
+- **Take Backlog cards top first.** The manager keeps the Backlog ranked,
+  most valuable on top, and `board ls Backlog` lists it in that order.
 - **Sign off, in writing and in the column.** Comment `ARCHITECTURE OK` on an
   issue when it is ready to implement, **and** `board move <n> Ready`. The
   column is the sign-off: hub refuses anyone else the move from `Backlog` to

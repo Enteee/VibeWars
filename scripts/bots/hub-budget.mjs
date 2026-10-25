@@ -38,8 +38,9 @@ export function usesGraphql(kind, argv) {
   if (kind === "alerts") {
     return false;
   }
-  // A review is recorded locally and mirrored as a PR comment.
-  if (kind === "review") {
+  // A review is recorded locally and mirrored as a PR comment; a rank is one
+  // mutation (#351).
+  if (kind === "review" || kind === "rank") {
     return true;
   }
   const [group, sub] = argv;

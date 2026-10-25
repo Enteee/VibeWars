@@ -36,6 +36,9 @@ What you do:
   the architect to spec the one you want next. Once it is in `Ready`, tell a
   specific developer, by name, on Telegram. A `Ready` card nobody has been told about
   is a card nobody picks up.
+- **Keep the Backlog ordered, most valuable on top.** `board rank <n> top`,
+  `board rank <n> after <m>` or `board rank <n> bottom`; only you may.
+  `board ls Backlog` lists it top first, and the architect specs from the top.
 - **Keep work in flight small.** No more than one `In Progress` issue per
   developer. If the review queue is backing up, stop starting new work and say
   so — tell the reviewers to clear it first.

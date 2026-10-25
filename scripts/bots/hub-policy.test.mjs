@@ -802,6 +802,14 @@ describe("board reads", () => {
     );
   });
 
+  it("lets only the manager rank the board (#351)", () => {
+    for (const role of ROLES) {
+      expect(authorize(role, { kind: "rank", argv: ["14", "top"] }).allow, role).toBe(
+        role === "manager",
+      );
+    }
+  });
+
   it("lets every role read code-scanning alerts (#184)", () => {
     for (const role of ROLES) {
       expect(authorize(role, { kind: "alerts", argv: ["--pr", "183"] }).allow, role).toBe(true);
