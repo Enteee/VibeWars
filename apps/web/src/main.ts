@@ -20,6 +20,7 @@ import {
 } from "./storage/repository.js";
 import type { StoredCharacter, StoredTeam } from "./storage/schema.js";
 import { disposeBuildEditor, newCharacter, renderBuildEditor } from "./ui/build-editor.js";
+import { disposeKeysScreen, renderKeysScreen } from "./ui/keys-screen.js";
 import { renderLobbyScreen } from "./ui/lobby-screen.js";
 import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
 import { addMember, duplicateTeam, moveMember, newTeam, removeMember } from "./ui/team-builder.js";
@@ -144,6 +145,7 @@ async function main(): Promise<void> {
     // never keeps saying where the player was. Error paths set theirs after.
     setStatus("ready", "offline");
     disposeBuildEditor();
+    disposeKeysScreen();
     showViewport(false);
     void (async () => {
       const { characters: list, problems } = await characters.list();
@@ -166,6 +168,9 @@ async function main(): Promise<void> {
         },
         onManageTeams: () => {
           void showTeams();
+        },
+        onKeys: () => {
+          renderKeysScreen(screenRoot, { onBack: showMenu });
         },
         // Straight into a match with no lobby — how the game worked before
         // Sprint 19, kept because it is the fastest way to try the game.
