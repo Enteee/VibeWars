@@ -29,14 +29,18 @@ import {
   answerBoard,
   applyFacts,
   itemNumber,
+  LANDING_COLUMN,
   listing,
   needsSweep,
   parseBoardRequest,
+  parseColumnFlag,
   parseIssueAnswer,
   parseItemAnswer,
   parseRankRequest,
   planHint,
+  planLanding,
   planMutation,
+  selectorNumber,
   RANK_MUTATION,
   rankCards,
   rankLine,
@@ -58,6 +62,7 @@ import { hasFilter } from "./hub-filter.mjs";
 import {
   approvalsSatisfied,
   boardMoveAllowed,
+  landingAllowed,
   checksSatisfied,
   explainGuard,
   pathsOutside,
@@ -1281,6 +1286,116 @@ async function afterProjectCommand(argv, result, cfg) {
 }
 
 /**
+ * Put a card in a column after `gh issue create` or `gh project item-add`
+ * succeeded (#517), so nothing sits in "No Status". hubd's own calls, so the
+ * caller's role was judged before gh ran. A failure here never fails the
+ * caller's command: it comes back as one line to print.
+ *
+ * @param {string} role
+ * @param {string[]} argv
+ * @param {{ code: number, stdout: string }} result
+ * @param {string} column
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string>} a line for stderr, or ""
+ */
+async function land(role, argv, result, column, cfg) {
+  const plan = planLanding(argv, result, cfg.repo);
+  if (plan.kind === "none") {
+    return "";
+  }
+  if (plan.kind === "unlanded") {
+    return `hub: ${plan.why}; place the card with: board move <n> ${column}`;
+  }
+  const ids = cfg.board;
+  const optionId = ids?.options.get(column);
+  /** @type {import("./hub-board.mjs").Landing} */
+  let landing = plan;
+  let force = false;
+  let label = "the card";
+  if (plan.kind === "add") {
+    label = `#${String(selectorNumber(plan.url, cfg.repo))}`;
+    const addArgv = [
+      "project",
+      "item-add",
+      String(cfg.project),
+      "--url",
+      plan.url,
+      "--format",
+      "json",
+    ];
+    const added = await gh(pinRepo(addArgv, cfg));
+    audit({
+      role,
+      kind: "gh",
+      argv: addArgv,
+      decision: "allowed",
+      code: added.code,
+      landing: true,
+    });
+    if (added.code !== 0) {
+      return `hub: ${label} was created but is not on the board: ${added.stderr.trim()}. Ask the manager to add it`;
+    }
+    const next = planLanding(addArgv, added, cfg.repo);
+    if (next.kind !== "land" || next.id === null) {
+      return `hub: ${label} was created but is not in ${column}: gh did not print the item. Run: board move ${label.slice(1)} ${column}`;
+    }
+    landing = next;
+    force = true;
+  } else if (plan.number !== null) {
+    label = `#${String(plan.number)}`;
+  }
+  const isNot = force ? "was created but is not" : "is not";
+  const move = `Run: board move ${label.startsWith("#") ? label.slice(1) : "<n>"} ${column}`;
+  if (ids === null || optionId === undefined) {
+    return `hub: ${label} ${isNot} in ${column}: the board's Status field is not known. ${move}`;
+  }
+  /** @type {string | null} */
+  let id = landing.kind === "land" ? landing.id : null;
+  if (!force) {
+    const state = await freshBoard(cfg);
+    const card = state?.cards.find(
+      (candidate) =>
+        candidate.item.id === id ||
+        (landing.number !== null && itemNumber(candidate.item, cfg.repo) === landing.number),
+    );
+    if (card === undefined) {
+      return `hub: ${label} ${isNot} in ${column}: could not find it on the board. ${move}`;
+    }
+    const status = card.item.status;
+    if (typeof status === "string" && status !== "") {
+      return "";
+    }
+    id = String(card.item.id);
+  }
+  const editArgv = [
+    "project",
+    "item-edit",
+    "--id",
+    String(id),
+    "--project-id",
+    ids.projectId,
+    "--field-id",
+    ids.fieldId,
+    "--single-select-option-id",
+    optionId,
+  ];
+  const edited = await gh(pinRepo(editArgv, cfg));
+  audit({
+    role,
+    kind: "gh",
+    argv: editArgv,
+    decision: "allowed",
+    code: edited.code,
+    landing: true,
+  });
+  if (edited.code !== 0) {
+    return `hub: ${label} ${isNot} in ${column}: ${edited.stderr.trim()}. ${move}`;
+  }
+  await afterProjectCommand(editArgv, edited, cfg);
+  return "";
+}
+
+/**
  * Remember to re-read an issue hubd just closed, merged or renamed, once
  * GitHub's workflows have moved its card. Only one that is on the board:
  * a merged pull request that is not would cost a point per merge (~16 an
@@ -2170,13 +2285,40 @@ async function serve(request, verdict, acting) {
     }
   }
 
-  const result = await gh(pinRepo(argv, cfg));
+  // `--column` is hub's, not gh's: judged here, and gone before gh runs.
+  let ghArgv = argv;
+  let column = LANDING_COLUMN;
+  if (kind === "gh" && argv[0] === "project" && argv[1] === "item-add") {
+    const parsed = parseColumnFlag(argv, cfg.board?.options.keys() ?? []);
+    const named = "error" in parsed ? null : parsed.column;
+    const pull = /\/pull\/\d+\/?$/.test(flagValue(argv, "--url") ?? "");
+    const decision =
+      "error" in parsed
+        ? { ok: false, reason: parsed.error }
+        : named !== null && cfg.board === null
+          ? { ok: false, reason: "the board's Status field is not known; run claude-llc-init" }
+          : landingAllowed({ role, to: named ?? LANDING_COLUMN, pull });
+    if (!decision.ok) {
+      audit({ role, kind, argv, decision: "refused-by-guard", reason: decision.reason });
+      return { allow: false, reason: decision.reason, code: 77 };
+    }
+    if (!("error" in parsed)) {
+      ghArgv = parsed.argv;
+      column = parsed.column ?? LANDING_COLUMN;
+    }
+  }
+
+  let result = await gh(pinRepo(ghArgv, cfg));
   // An item just added, moved or archived must show up on the next read,
   // not when the copy happens to be swept.
   if (argv[0] === "project") {
-    await afterProjectCommand(argv, result, cfg);
+    await afterProjectCommand(ghArgv, result, cfg);
   }
   noteHint(argv, result.code, cfg);
+  const hint = await land(role, ghArgv, result, column, cfg);
+  if (hint !== "") {
+    result = { ...result, stderr: `${result.stderr}${hint}\n` };
+  }
   audit({
     role,
     kind,

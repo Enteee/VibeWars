@@ -18,10 +18,12 @@ import {
   listing,
   needsSweep,
   parseBoardRequest,
+  parseColumnFlag,
   parseIssueAnswer,
   parseItemAnswer,
   parseRankRequest,
   planHint,
+  planLanding,
   planMutation,
   rankCards,
   rankLine,
@@ -662,5 +664,67 @@ describe("ranking (#351)", () => {
     ]) {
       expect(parseRankRequest(argv), argv.join(" ")).toHaveProperty("error");
     }
+  });
+});
+
+describe("parseColumnFlag (#517)", () => {
+  const columns = ["Backlog", "In Review"];
+
+  it("reads both spellings and strips the flag", () => {
+    expect(parseColumnFlag(["a", "--column", "In Review", "b"], columns)).toEqual({
+      argv: ["a", "b"],
+      column: "In Review",
+    });
+    expect(parseColumnFlag(["a", "--column=Backlog"], columns)).toEqual({
+      argv: ["a"],
+      column: "Backlog",
+    });
+    expect(parseColumnFlag(["a"], columns)).toEqual({ argv: ["a"], column: null });
+  });
+
+  it("refuses twice, a value that is missing, and a column that is not one", () => {
+    expect(parseColumnFlag(["--column", "Backlog", "--column=Backlog"], columns)).toHaveProperty(
+      "error",
+    );
+    expect(parseColumnFlag(["--column"], columns)).toHaveProperty("error");
+    expect(parseColumnFlag(["--column", "Nowhere"], columns)).toHaveProperty("error");
+  });
+});
+
+describe("planLanding (#517)", () => {
+  const repo = "Enteee/VibeWars";
+  const url = "https://github.com/Enteee/VibeWars/issues/12";
+
+  it("adds the issue gh created, named by the last line of its output", () => {
+    expect(
+      planLanding(["issue", "create"], { code: 0, stdout: `Creating...\n${url}\n` }, repo),
+    ).toEqual({
+      kind: "add",
+      url,
+    });
+  });
+
+  it("does nothing for a failure, and says so when no URL came back", () => {
+    expect(planLanding(["issue", "create"], { code: 1, stdout: url }, repo)).toEqual({
+      kind: "none",
+    });
+    expect(planLanding(["issue", "create"], { code: 0, stdout: "ok" }, repo).kind).toBe("unlanded");
+  });
+
+  it("lands an added item by its id when gh printed it, else by its issue", () => {
+    const add = ["project", "item-add", "2", "--url", url];
+    expect(planLanding(add, { code: 0, stdout: '{"id":"PVTI_12"}' }, repo)).toEqual({
+      kind: "land",
+      id: "PVTI_12",
+      number: 12,
+    });
+    expect(planLanding(add, { code: 0, stdout: "" }, repo)).toEqual({
+      kind: "land",
+      id: null,
+      number: 12,
+    });
+    expect(planLanding(["project", "item-add", "2"], { code: 0, stdout: "" }, repo).kind).toBe(
+      "unlanded",
+    );
   });
 });

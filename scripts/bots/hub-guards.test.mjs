@@ -13,6 +13,7 @@ import {
   boardMoveAllowed,
   checksSatisfied,
   explainGuard,
+  landingAllowed,
   pathsOutside,
   pathsWithin,
 } from "./hub-guards.mjs";
@@ -413,5 +414,22 @@ describe("boardMoveAllowed (#349)", () => {
   it("is a no-op for the same column", () => {
     expect(ok("developer-1", "Backlog", "Backlog")).toBe(true);
     expect(ok("architect", "Done", "Done")).toBe(true);
+  });
+});
+
+describe("landingAllowed (#517)", () => {
+  const ok = (/** @type {string} */ role, /** @type {string} */ to, /** @type {boolean} */ pull) =>
+    landingAllowed({ role, to, pull }).ok;
+
+  it("judges an issue as a move out of no column", () => {
+    expect(ok("manager", "Backlog", false)).toBe(true);
+    expect(ok("manager", "Ready", false)).toBe(false);
+    expect(ok("manager", "In Review", false)).toBe(false);
+  });
+
+  it("lets the manager put a pull request anywhere but Ready", () => {
+    expect(ok("manager", "In Review", true)).toBe(true);
+    expect(ok("manager", "Ready", true)).toBe(false);
+    expect(ok("developer-1", "In Review", true)).toBe(false);
   });
 });

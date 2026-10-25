@@ -136,9 +136,27 @@ if (group === "api" && sub === "graphql" && argv.some((word) => word.includes("i
   console.log(JSON.stringify({ data: {
     rateLimit: { cost: 1, remaining: remaining - 1, resetAt },
     repository: { issueOrPullRequest: { number, projectItems: { nodes: [{
-      id: "PVTI_" + number, isArchived: false, project: { id: "PVT_2" }, status: { name: "Backlog" },
+      id: "PVTI_" + number, isArchived: false, project: { id: "PVT_2" }, status: fs.existsSync(path.join(state, "no-status-" + number)) ? null : { name: "Backlog" },
       content: { __typename: "Issue", number, title: "item " + number, url: "https://github.com/Enteee/VibeWars/issues/" + number, repository: { nameWithOwner: "Enteee/VibeWars" } },
     }] } } },
+  } }));
+  process.exit(0);
+}
+// A new issue, a card added with its id asked for, and a card re-read by id (#517).
+if (group === "issue" && sub === "create") { console.log("https://github.com/Enteee/VibeWars/issues/11"); process.exit(0); }
+if (group === "project" && sub === "item-add" && argv.includes("--format")) {
+  console.log(JSON.stringify({ id: "PVTI_" + /(\\d+)$/.exec(argv[argv.indexOf("--url") + 1])[1] }));
+  process.exit(0);
+}
+if (group === "project" && sub === "item-edit" && fs.existsSync(path.join(state, "edit-fails"))) { console.error("edit boom"); process.exit(1); }
+if (group === "api" && sub === "graphql" && argv.some((word) => word.startsWith("item="))) {
+  const id = (argv.find((word) => word.startsWith("item=")) ?? "").slice(5);
+  const number = Number(id.slice(5));
+  const resetAt = new Date(Number(fs.readFileSync(path.join(state, "reset"), "utf8")) * 1000).toISOString();
+  console.log(JSON.stringify({ data: {
+    rateLimit: { cost: 1, remaining: remaining - 1, resetAt },
+    item: { id, isArchived: false, project: { id: "PVT_2" }, status: { name: "Backlog" },
+      content: { __typename: "Issue", number, title: "item " + number, url: "https://github.com/Enteee/VibeWars/issues/" + number, repository: { nameWithOwner: "Enteee/VibeWars" } } },
   } }));
   process.exit(0);
 }
@@ -236,7 +254,12 @@ async function startHubd(remaining, before) {
       projectId: "PVT_2",
       statusField: {
         id: "F_status",
-        options: { Backlog: "o_backlog", Ready: "o_ready", Done: "o_done" },
+        options: {
+          Backlog: "o_backlog",
+          Ready: "o_ready",
+          "In Review": "o_review",
+          Done: "o_done",
+        },
       },
       columns: [],
       expectedChecks: [],
@@ -271,6 +294,7 @@ async function startHubd(remaining, before) {
   return {
     root,
     hub,
+    state,
     /**
      * Employs every role's first seat and these further employees.
      *
@@ -696,6 +720,105 @@ describe("hubd and the GraphQL budget", () => {
       readJson(path.join(hubd.hub, "ratelimit.json")).spend
     );
     expect(spend.at(-1)).toMatchObject({ role: "manager", cmd: "board item", cost: 1 });
+  }, 20_000);
+
+  it("puts the issue it creates in Backlog, whoever created it (#517)", async () => {
+    const hubd = await startHubd(5000);
+    await hubd.request("developer-1", "board", ["ls"]);
+
+    const created = await hubd.request("architect", "gh", ["issue", "create", "--title", "t"]);
+
+    expect(created).toMatchObject({ code: 0 });
+    expect(String(created.stdout)).toContain("/issues/11");
+    expect(created.stderr).toBeFalsy();
+    expect(hubd.callLog()).toContain(
+      "project item-add 2 --url https://github.com/Enteee/VibeWars/issues/11 --format json",
+    );
+    expect(hubd.callLog()).toContain("--single-select-option-id o_backlog");
+    const shown = printed(await hubd.request("developer-1", "board", ["show", "11"]));
+    expect(shown.card).toMatchObject({ number: 11, status: "Backlog" });
+  }, 20_000);
+
+  it("keeps the issue it created, and says so, when it cannot place it (#517)", async () => {
+    const hubd = await startHubd(5000);
+    fs.writeFileSync(path.join(hubd.state, "edit-fails"), "");
+    await hubd.request("developer-1", "board", ["ls"]);
+
+    const created = await hubd.request("cicd-engineer", "gh", ["issue", "create", "--title", "t"]);
+
+    expect(created).toMatchObject({ code: 0 });
+    expect(String(created.stderr)).toContain("#11 was created but is not in Backlog");
+    expect(String(created.stderr)).toContain("Run: board move 11 Backlog");
+  }, 20_000);
+
+  it("lands an added card that has no column, and leaves one that has (#517)", async () => {
+    const hubd = await startHubd(5000);
+    fs.writeFileSync(path.join(hubd.state, "no-status-7"), "");
+    await hubd.request("developer-1", "board", ["ls"]);
+    const add = (/** @type {number} */ n) => [
+      "project",
+      "item-add",
+      "2",
+      "--url",
+      `https://github.com/Enteee/VibeWars/issues/${String(n)}`,
+    ];
+
+    await hubd.request("manager", "gh", add(7));
+    expect(hubd.calls("project item-edit")).toBe(1);
+    expect(hubd.callLog()).toContain(
+      "--id PVTI_7 --project-id PVT_2 --field-id F_status --single-select-option-id o_backlog",
+    );
+    expect(printed(await hubd.request("developer-1", "board", ["show", "7"])).card).toMatchObject({
+      status: "Backlog",
+    });
+
+    // Already in a column (the fake's issue 12 has one): not touched.
+    await hubd.request("manager", "gh", add(12));
+    expect(hubd.calls("project item-edit")).toBe(1);
+  }, 20_000);
+
+  it("lets the manager land a pull request in In Review, with --column kept from gh (#517)", async () => {
+    const hubd = await startHubd(5000);
+    fs.writeFileSync(path.join(hubd.state, "no-status-9"), "");
+    await hubd.request("developer-1", "board", ["ls"]);
+
+    const landed = await hubd.request("manager", "gh", [
+      "project",
+      "item-add",
+      "2",
+      "--url",
+      "https://github.com/Enteee/VibeWars/pull/9",
+      "--column",
+      "In Review",
+    ]);
+
+    expect(landed).toMatchObject({ code: 0 });
+    expect(hubd.callLog()).not.toContain("--column");
+    expect(hubd.callLog()).toContain(
+      "--id PVTI_9 --project-id PVT_2 --field-id F_status --single-select-option-id o_review",
+    );
+  }, 20_000);
+
+  it("refuses to land a card in Ready, or in a column that is not one, before gh runs (#517)", async () => {
+    const hubd = await startHubd(5000);
+    const add = (/** @type {string} */ kind, /** @type {string[]} */ column) => [
+      "project",
+      "item-add",
+      "2",
+      "--url",
+      `https://github.com/Enteee/VibeWars/${kind}/9`,
+      ...column,
+    ];
+
+    for (const argv of [
+      add("pull", ["--column", "Ready"]),
+      add("issues", ["--column=Ready"]),
+      add("pull", ["--column", "Nowhere"]),
+      add("pull", ["--column", "Done", "--column", "Done"]),
+    ]) {
+      expect((await hubd.request("manager", "gh", argv)).code).toBe(77);
+    }
+    expect(hubd.calls("project item-add")).toBe(0);
   }, 20_000);
 
   it("answers board ls with one column, and changes with only what moved", async () => {

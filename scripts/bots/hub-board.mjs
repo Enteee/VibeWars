@@ -449,6 +449,87 @@ export function planMutation(argv, result, ids, state, repo) {
   }
 }
 
+/** The column a card lands in when nobody names one: new work is unsigned. */
+export const LANDING_COLUMN = "Backlog";
+
+/**
+ * `--column <name>` out of a `project item-add`, which is hub's flag and
+ * never gh's. Both spellings; once; and a column of the board.
+ *
+ * @param {readonly string[]} argv
+ * @param {Iterable<string>} columns the board's Status options
+ * @returns {{ argv: string[], column: string | null } | { error: string }}
+ */
+export function parseColumnFlag(argv, columns) {
+  /** @type {string[]} */
+  const rest = [];
+  /** @type {string[]} */
+  const named = [];
+  for (let at = 0; at < argv.length; at += 1) {
+    const word = argv[at] ?? "";
+    if (word === "--column") {
+      const value = argv[at + 1];
+      if (value === undefined) {
+        return { error: "--column needs a column name" };
+      }
+      named.push(value);
+      at += 1;
+    } else if (word.startsWith("--column=")) {
+      named.push(word.slice("--column=".length));
+    } else {
+      rest.push(word);
+    }
+  }
+  if (named.length > 1) {
+    return { error: "--column once" };
+  }
+  const [column = null] = named;
+  if (column !== null && ![...columns].includes(column)) {
+    return { error: `"${column}" is not a column of the board: ${[...columns].join(", ")}` };
+  }
+  return { argv: rest, column };
+}
+
+/**
+ * What to do after a `gh issue create` or `gh project item-add` succeeded
+ * (#517): put the card in a column.
+ *
+ * `add`: the issue was just created; put it on the board, then in a column.
+ * `land`: the item was just added; put it in a column unless it has one.
+ * `unlanded`: cannot tell what was created; say so.
+ *
+ * @typedef {{ kind: "none" }
+ *   | { kind: "add", url: string }
+ *   | { kind: "land", id: string | null, number: number | null }
+ *   | { kind: "unlanded", why: string }} Landing
+ */
+
+/**
+ * @param {readonly string[]} argv
+ * @param {{ code: number, stdout: string }} result
+ * @param {string} repo
+ * @returns {Landing}
+ */
+export function planLanding(argv, result, repo) {
+  if (result.code !== 0) {
+    return { kind: "none" };
+  }
+  if (argv[0] === "issue" && argv[1] === "create") {
+    const url = result.stdout.trim().split("\n").pop()?.trim() ?? "";
+    return /\/issues\/\d+$/.test(url) && selectorNumber(url, repo) !== null
+      ? { kind: "add", url }
+      : { kind: "unlanded", why: "gh did not print the new issue's URL" };
+  }
+  if (argv[0] === "project" && argv[1] === "item-add") {
+    const id = returnedId(result.stdout);
+    const number = selectorNumber(flagValue(argv, "--url") ?? undefined, repo);
+    return id === null && number === null
+      ? { kind: "unlanded", why: "could not tell which card that is" }
+      : { kind: "land", id, number };
+  }
+  return { kind: "none" };
+}
+
 /**
  * The item id out of `--format json` output, if that is what gh printed.
  *
