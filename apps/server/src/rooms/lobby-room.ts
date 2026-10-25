@@ -24,6 +24,7 @@ import {
 } from "./options.js";
 import { RoomSeats, peerAddress, type ClientLimits } from "./client-budget.js";
 import { RoomSlot, type RoomBudget } from "./room-budget.js";
+import { send } from "./wire.js";
 
 /**
  * The pre-match lobby (brief §19, §25).
@@ -52,7 +53,7 @@ export const LobbyPlayer = schema(
 
 export const LobbyState = schema(
   {
-    protocolVersion: t.number().default(PROTOCOL_VERSION),
+    protocolVersion: t.string().default(PROTOCOL_VERSION),
     /** The short code players type to join. */
     code: t.string().default(""),
     phase: t.string().default("waiting"),
@@ -466,7 +467,7 @@ export class LobbyRoom extends Room {
     }
     const check = this.canStart();
     if (!check.ok) {
-      client.send("start-rejected", { reason: check.reason });
+      send(client, "start-rejected", { reason: check.reason });
       return;
     }
 
@@ -502,7 +503,7 @@ export class LobbyRoom extends Room {
       this.state.phase = "waiting";
       // A full server says so, as Quick Match and hosting do (#114).
       const full = error instanceof ServerError && error.code === ROOM_LIMIT;
-      client.send("start-rejected", {
+      send(client, "start-rejected", {
         reason: full ? SERVER_FULL_MESSAGE : "the server could not create the match",
       });
       return;
@@ -513,7 +514,10 @@ export class LobbyRoom extends Room {
       const reservation = reservations[i];
       if (reservation !== undefined) {
         const message: LobbyMatchStartingMessage = { mapId, reservation };
-        this.clients.get(sessionId)?.send("match-starting", message);
+        const seat = this.clients.get(sessionId);
+        if (seat !== undefined) {
+          send(seat, "match-starting", message);
+        }
       }
     });
 

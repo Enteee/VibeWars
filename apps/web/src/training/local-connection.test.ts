@@ -126,7 +126,7 @@ describe("createLocalConnection", () => {
     expect(swings[0]?.skillId).toBe("");
     expect(swings[0]?.events[0]?.targetId).toBe("dummy");
 
-    connection.sendIntent({ kind: "cancel-attack" });
+    connection.sendIntent({ kind: "cancel" });
     expect(self()?.attackTargetSessionId).toBeUndefined();
   });
 

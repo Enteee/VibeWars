@@ -1,0 +1,1450 @@
+{
+  "semanticsRevision": 1,
+  "state": {
+    "MatchState": [
+      { "name": "protocolVersion", "type": "string" },
+      { "name": "players", "type": { "map": { "schema": "PlayerState" } } },
+      { "name": "projectiles", "type": { "array": { "schema": "ProjectileState" } } },
+      { "name": "scoreTeam0", "type": "number" },
+      { "name": "scoreTeam1", "type": "number" },
+      { "name": "elapsedSeconds", "type": "number" },
+      { "name": "phase", "type": "string" },
+      { "name": "winningTeam", "type": "number" },
+      { "name": "endReason", "type": "string" }
+    ],
+    "PlayerState": [
+      { "name": "sessionId", "type": "string" },
+      { "name": "name", "type": "string" },
+      { "name": "x", "type": "number" },
+      { "name": "y", "type": "number" },
+      { "name": "facing", "type": "number" },
+      { "name": "targetSessionId", "type": "string" },
+      { "name": "attackTargetSessionId", "type": "string" },
+      { "name": "health", "type": "number" },
+      { "name": "maxHealth", "type": "number" },
+      { "name": "energy", "type": "number" },
+      { "name": "maxEnergy", "type": "number" },
+      { "name": "adrenaline", "type": "number" },
+      { "name": "armor", "type": "number" },
+      { "name": "weaponId", "type": "string" },
+      { "name": "offhandId", "type": "string" },
+      { "name": "primaryProfession", "type": "string" },
+      { "name": "secondaryProfession", "type": "string" },
+      { "name": "team", "type": "number" },
+      { "name": "dead", "type": "boolean" },
+      { "name": "castingSkillId", "type": "string" },
+      { "name": "castRemaining", "type": "number" },
+      { "name": "castTotal", "type": "number" },
+      { "name": "statuses", "type": { "array": "string" } }
+    ],
+    "ProjectileState": [
+      { "name": "id", "type": "number" },
+      { "name": "attackerId", "type": "string" },
+      { "name": "weaponId", "type": "string" },
+      { "name": "x0", "type": "number" },
+      { "name": "y0", "type": "number" },
+      { "name": "x1", "type": "number" },
+      { "name": "y1", "type": "number" },
+      { "name": "launchedAt", "type": "number" },
+      { "name": "flightSeconds", "type": "number" }
+    ],
+    "LobbyState": [
+      { "name": "protocolVersion", "type": "string" },
+      { "name": "code", "type": "string" },
+      { "name": "phase", "type": "string" },
+      { "name": "mapId", "type": "string" },
+      { "name": "players", "type": { "map": { "schema": "LobbyPlayer" } } }
+    ],
+    "LobbyPlayer": [
+      { "name": "sessionId", "type": "string" },
+      { "name": "name", "type": "string" },
+      { "name": "team", "type": "number" },
+      { "name": "ready", "type": "boolean" },
+      { "name": "isHost", "type": "boolean" }
+    ]
+  },
+  "messages": {
+    "clientToServer": {
+      "choose-team": {
+        "payload": "LobbyChooseTeamMessage",
+        "shape": {
+          "properties": [
+            { "name": "team", "optional": false, "type": { "union": ["null", "number"] } }
+          ]
+        }
+      },
+      "intent": {
+        "payload": "ClientIntent",
+        "shape": {
+          "union": [
+            {
+              "properties": [
+                { "name": "dirX", "optional": false, "type": "number" },
+                { "name": "dirY", "optional": false, "type": "number" },
+                { "name": "kind", "optional": false, "type": { "literal": "move" } }
+              ]
+            },
+            {
+              "properties": [
+                { "name": "kind", "optional": false, "type": { "literal": "attack" } },
+                { "name": "targetId", "optional": false, "type": "string" }
+              ]
+            },
+            {
+              "properties": [{ "name": "kind", "optional": false, "type": { "literal": "cancel" } }]
+            },
+            {
+              "properties": [{ "name": "kind", "optional": false, "type": { "literal": "stop" } }]
+            },
+            {
+              "properties": [
+                { "name": "kind", "optional": false, "type": { "literal": "target" } },
+                {
+                  "name": "targetSessionId",
+                  "optional": false,
+                  "type": { "union": ["null", "string"] }
+                }
+              ]
+            },
+            {
+              "properties": [
+                { "name": "kind", "optional": false, "type": { "literal": "use-skill" } },
+                { "name": "slot", "optional": false, "type": "number" }
+              ]
+            }
+          ]
+        }
+      },
+      "ready": {
+        "payload": "LobbyReadyMessage",
+        "shape": { "properties": [{ "name": "ready", "optional": false, "type": "boolean" }] }
+      },
+      "select-map": {
+        "payload": "LobbySelectMapMessage",
+        "shape": { "properties": [{ "name": "mapId", "optional": false, "type": "string" }] }
+      },
+      "start-match": {
+        "payload": "LobbyStartMatchMessage",
+        "shape": { "properties": [], "index": [{ "key": "string", "value": "never" }] }
+      }
+    },
+    "serverToClient": {
+      "cast-refused": {
+        "payload": "CastRefusedMessage",
+        "shape": {
+          "union": [
+            {
+              "properties": [
+                { "name": "kind", "optional": false, "type": { "literal": "attack" } },
+                { "name": "reason", "optional": false, "type": "string" }
+              ]
+            },
+            {
+              "properties": [
+                { "name": "kind", "optional": false, "type": { "literal": "skill" } },
+                { "name": "reason", "optional": false, "type": "string" },
+                { "name": "skillId", "optional": false, "type": "string" },
+                { "name": "slot", "optional": false, "type": "number" }
+              ]
+            }
+          ]
+        }
+      },
+      "combat": {
+        "payload": "CombatBatchMessage<CombatEvent>",
+        "shape": {
+          "properties": [
+            {
+              "name": "entries",
+              "optional": false,
+              "type": {
+                "array": {
+                  "properties": [
+                    {
+                      "name": "area",
+                      "optional": true,
+                      "type": {
+                        "properties": [
+                          { "name": "radius", "optional": false, "type": "number" },
+                          { "name": "x", "optional": false, "type": "number" },
+                          { "name": "y", "optional": false, "type": "number" }
+                        ]
+                      }
+                    },
+                    { "name": "casterSessionId", "optional": false, "type": "string" },
+                    {
+                      "name": "cause",
+                      "optional": false,
+                      "type": {
+                        "union": [
+                          { "literal": "degeneration" },
+                          { "literal": "skill" },
+                          { "literal": "weapon" }
+                        ]
+                      }
+                    },
+                    {
+                      "name": "events",
+                      "optional": false,
+                      "type": {
+                        "array": {
+                          "union": [
+                            {
+                              "properties": [
+                                { "name": "amount", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "damage" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                { "name": "amount", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "energy-gain" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                { "name": "amount", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "heal" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                { "name": "amount", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "sacrifice" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                { "name": "durationSeconds", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "status-applied" }
+                                },
+                                {
+                                  "name": "statusId",
+                                  "optional": false,
+                                  "type": {
+                                    "union": [
+                                      { "literal": "armor-boost" },
+                                      { "literal": "bleeding" },
+                                      { "literal": "blind" },
+                                      { "literal": "burning" },
+                                      { "literal": "crippled" },
+                                      { "literal": "dazed" },
+                                      { "literal": "deep-wound" },
+                                      { "literal": "life-drain" },
+                                      { "literal": "poison" },
+                                      { "literal": "regeneration" },
+                                      { "literal": "weakness" }
+                                    ]
+                                  }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "attack-dodged" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "attack-missed" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "attack-obstructed" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "attack-unreachable" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "cancelled" }
+                                },
+                                { "name": "skillId", "optional": false, "type": "string" },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "death" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "interrupt-missed" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "interrupted" }
+                                },
+                                { "name": "skillId", "optional": false, "type": "string" },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "status-expired" }
+                                },
+                                {
+                                  "name": "statusId",
+                                  "optional": false,
+                                  "type": {
+                                    "union": [
+                                      { "literal": "armor-boost" },
+                                      { "literal": "bleeding" },
+                                      { "literal": "blind" },
+                                      { "literal": "burning" },
+                                      { "literal": "crippled" },
+                                      { "literal": "dazed" },
+                                      { "literal": "deep-wound" },
+                                      { "literal": "life-drain" },
+                                      { "literal": "poison" },
+                                      { "literal": "regeneration" },
+                                      { "literal": "weakness" }
+                                    ]
+                                  }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "status-removed" }
+                                },
+                                {
+                                  "name": "statusId",
+                                  "optional": false,
+                                  "type": {
+                                    "union": [
+                                      { "literal": "armor-boost" },
+                                      { "literal": "bleeding" },
+                                      { "literal": "blind" },
+                                      { "literal": "burning" },
+                                      { "literal": "crippled" },
+                                      { "literal": "dazed" },
+                                      { "literal": "deep-wound" },
+                                      { "literal": "life-drain" },
+                                      { "literal": "poison" },
+                                      { "literal": "regeneration" },
+                                      { "literal": "weakness" }
+                                    ]
+                                  }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    { "name": "skillId", "optional": false, "type": "string" },
+                    { "name": "weaponId", "optional": false, "type": "string" }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "hello": {
+        "payload": "ServerHello",
+        "shape": {
+          "properties": [
+            { "name": "protocolVersion", "optional": false, "type": "string" },
+            { "name": "sessionId", "optional": false, "type": "string" },
+            { "name": "tickIntervalMs", "optional": false, "type": "number" }
+          ]
+        }
+      },
+      "map": {
+        "payload": "MapDescriptor",
+        "shape": {
+          "properties": [
+            { "name": "height", "optional": false, "type": "number" },
+            { "name": "id", "optional": false, "type": "string" },
+            { "name": "name", "optional": false, "type": "string" },
+            {
+              "name": "walls",
+              "optional": false,
+              "type": {
+                "array": {
+                  "union": [
+                    {
+                      "properties": [
+                        { "name": "height", "optional": false, "type": "number" },
+                        { "name": "kind", "optional": false, "type": { "literal": "rect" } },
+                        { "name": "width", "optional": false, "type": "number" },
+                        { "name": "x", "optional": false, "type": "number" },
+                        { "name": "y", "optional": false, "type": "number" }
+                      ]
+                    },
+                    {
+                      "properties": [
+                        { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+                        {
+                          "name": "points",
+                          "optional": false,
+                          "type": {
+                            "array": {
+                              "properties": [
+                                { "name": "x", "optional": false, "type": "number" },
+                                { "name": "y", "optional": false, "type": "number" }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            { "name": "width", "optional": false, "type": "number" }
+          ]
+        }
+      },
+      "match-ended": {
+        "payload": "MatchEndedMessage",
+        "shape": {
+          "properties": [
+            {
+              "name": "reason",
+              "optional": false,
+              "type": { "union": ["null", { "literal": "score" }, { "literal": "time" }] }
+            },
+            { "name": "scoreTeam0", "optional": false, "type": "number" },
+            { "name": "scoreTeam1", "optional": false, "type": "number" },
+            { "name": "winningTeam", "optional": false, "type": { "union": ["null", "number"] } }
+          ]
+        }
+      },
+      "match-starting": {
+        "payload": "LobbyMatchStartingMessage",
+        "shape": {
+          "properties": [
+            { "name": "mapId", "optional": false, "type": "string" },
+            {
+              "name": "reservation",
+              "optional": false,
+              "type": {
+                "properties": [
+                  {
+                    "name": "devMode",
+                    "optional": true,
+                    "type": { "union": [{ "literal": false }, { "literal": true }] }
+                  },
+                  { "name": "name", "optional": false, "type": "string" },
+                  { "name": "processId", "optional": true, "type": "string" },
+                  { "name": "publicAddress", "optional": true, "type": "string" },
+                  { "name": "roomId", "optional": false, "type": "string" },
+                  { "name": "sessionId", "optional": false, "type": "string" }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "recharge": {
+        "payload": "RechargeMessage",
+        "shape": {
+          "properties": [
+            {
+              "name": "slots",
+              "optional": false,
+              "type": {
+                "array": {
+                  "properties": [
+                    { "name": "remainingSeconds", "optional": false, "type": "number" },
+                    { "name": "slot", "optional": false, "type": "number" },
+                    { "name": "totalSeconds", "optional": false, "type": "number" }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "skill-bar": {
+        "payload": "SkillBarMessage",
+        "shape": {
+          "properties": [
+            {
+              "name": "slots",
+              "optional": false,
+              "type": {
+                "array": {
+                  "properties": [
+                    { "name": "activationSeconds", "optional": false, "type": "number" },
+                    { "name": "adrenalineCost", "optional": false, "type": "number" },
+                    { "name": "energyCost", "optional": false, "type": "number" },
+                    { "name": "id", "optional": false, "type": "string" },
+                    { "name": "name", "optional": false, "type": "string" },
+                    { "name": "rechargeSeconds", "optional": false, "type": "number" }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "start-rejected": {
+        "payload": "LobbyStartRejectedMessage",
+        "shape": { "properties": [{ "name": "reason", "optional": false, "type": "string" }] }
+      }
+    }
+  },
+  "constants": {
+    "ADDRESS_LIMIT": { "literal": 4429 },
+    "ADDRESS_LIMIT_MESSAGE": {
+      "literal": "Too many connections from your network. Close other VibeWars tabs and try again."
+    },
+    "CLIENT_LIMIT": { "literal": 4503 },
+    "LOBBY_CODE_ALPHABET": { "literal": "ACDEFGHJKMNPQRTWXY34679" },
+    "LOBBY_CODE_LENGTH": { "literal": 4 },
+    "MAX_LOBBY_PLAYERS": { "literal": 16 },
+    "PROTOCOL_MISMATCH_MESSAGE": {
+      "literal": "This tab is running an outdated version of VibeWars. Reload the page."
+    },
+    "QUICK_MATCH_MAX_PLAYERS": { "literal": 8 },
+    "RATE_LIMIT": { "literal": 429 },
+    "RATE_LIMIT_MESSAGE": {
+      "literal": "Too many requests from your network. Try again in a moment."
+    },
+    "ROOM_LIMIT": { "literal": 503 },
+    "ROOM_LOBBY": { "literal": "lobby" },
+    "ROOM_MATCH": { "literal": "match" },
+    "SERVER_FULL_MESSAGE": { "literal": "The server is full. Try again in a minute." }
+  },
+  "types": {
+    "AttackIntent": {
+      "properties": [
+        { "name": "kind", "optional": false, "type": { "literal": "attack" } },
+        { "name": "targetId", "optional": false, "type": "string" }
+      ]
+    },
+    "CancelIntent": {
+      "properties": [{ "name": "kind", "optional": false, "type": { "literal": "cancel" } }]
+    },
+    "CastRefusedMessage": {
+      "union": [
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "attack" } },
+            { "name": "reason", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "skill" } },
+            { "name": "reason", "optional": false, "type": "string" },
+            { "name": "skillId", "optional": false, "type": "string" },
+            { "name": "slot", "optional": false, "type": "number" }
+          ]
+        }
+      ]
+    },
+    "ClientIntent": {
+      "union": [
+        {
+          "properties": [
+            { "name": "dirX", "optional": false, "type": "number" },
+            { "name": "dirY", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "move" } }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "attack" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "cancel" } }] },
+        { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "stop" } }] },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "target" } },
+            {
+              "name": "targetSessionId",
+              "optional": false,
+              "type": { "union": ["null", "string"] }
+            }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "use-skill" } },
+            { "name": "slot", "optional": false, "type": "number" }
+          ]
+        }
+      ]
+    },
+    "ClientMessages": {
+      "properties": [
+        {
+          "name": "choose-team",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "team", "optional": false, "type": { "union": ["null", "number"] } }
+            ]
+          }
+        },
+        {
+          "name": "intent",
+          "optional": false,
+          "type": {
+            "union": [
+              {
+                "properties": [
+                  { "name": "dirX", "optional": false, "type": "number" },
+                  { "name": "dirY", "optional": false, "type": "number" },
+                  { "name": "kind", "optional": false, "type": { "literal": "move" } }
+                ]
+              },
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "attack" } },
+                  { "name": "targetId", "optional": false, "type": "string" }
+                ]
+              },
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "cancel" } }
+                ]
+              },
+              {
+                "properties": [{ "name": "kind", "optional": false, "type": { "literal": "stop" } }]
+              },
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "target" } },
+                  {
+                    "name": "targetSessionId",
+                    "optional": false,
+                    "type": { "union": ["null", "string"] }
+                  }
+                ]
+              },
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "use-skill" } },
+                  { "name": "slot", "optional": false, "type": "number" }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "ready",
+          "optional": false,
+          "type": { "properties": [{ "name": "ready", "optional": false, "type": "boolean" }] }
+        },
+        {
+          "name": "select-map",
+          "optional": false,
+          "type": { "properties": [{ "name": "mapId", "optional": false, "type": "string" }] }
+        },
+        {
+          "name": "start-match",
+          "optional": false,
+          "type": { "properties": [], "index": [{ "key": "string", "value": "never" }] }
+        }
+      ]
+    },
+    "CombatBatchMessage": {
+      "properties": [
+        {
+          "name": "entries",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                {
+                  "name": "area",
+                  "optional": true,
+                  "type": {
+                    "properties": [
+                      { "name": "radius", "optional": false, "type": "number" },
+                      { "name": "x", "optional": false, "type": "number" },
+                      { "name": "y", "optional": false, "type": "number" }
+                    ]
+                  }
+                },
+                { "name": "casterSessionId", "optional": false, "type": "string" },
+                {
+                  "name": "cause",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      { "literal": "degeneration" },
+                      { "literal": "skill" },
+                      { "literal": "weapon" }
+                    ]
+                  }
+                },
+                {
+                  "name": "events",
+                  "optional": false,
+                  "type": { "array": { "typeParameter": "Event" } }
+                },
+                { "name": "skillId", "optional": false, "type": "string" },
+                { "name": "weaponId", "optional": false, "type": "string" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "CombatEvent": {
+      "union": [
+        {
+          "properties": [
+            { "name": "amount", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "damage" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "amount", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "energy-gain" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "amount", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "heal" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "amount", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "sacrifice" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "durationSeconds", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "status-applied" } },
+            {
+              "name": "statusId",
+              "optional": false,
+              "type": {
+                "union": [
+                  { "literal": "armor-boost" },
+                  { "literal": "bleeding" },
+                  { "literal": "blind" },
+                  { "literal": "burning" },
+                  { "literal": "crippled" },
+                  { "literal": "dazed" },
+                  { "literal": "deep-wound" },
+                  { "literal": "life-drain" },
+                  { "literal": "poison" },
+                  { "literal": "regeneration" },
+                  { "literal": "weakness" }
+                ]
+              }
+            },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "attack-dodged" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "attack-missed" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "attack-obstructed" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "attack-unreachable" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "cancelled" } },
+            { "name": "skillId", "optional": false, "type": "string" },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "death" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "interrupt-missed" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "interrupted" } },
+            { "name": "skillId", "optional": false, "type": "string" },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "status-expired" } },
+            {
+              "name": "statusId",
+              "optional": false,
+              "type": {
+                "union": [
+                  { "literal": "armor-boost" },
+                  { "literal": "bleeding" },
+                  { "literal": "blind" },
+                  { "literal": "burning" },
+                  { "literal": "crippled" },
+                  { "literal": "dazed" },
+                  { "literal": "deep-wound" },
+                  { "literal": "life-drain" },
+                  { "literal": "poison" },
+                  { "literal": "regeneration" },
+                  { "literal": "weakness" }
+                ]
+              }
+            },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "status-removed" } },
+            {
+              "name": "statusId",
+              "optional": false,
+              "type": {
+                "union": [
+                  { "literal": "armor-boost" },
+                  { "literal": "bleeding" },
+                  { "literal": "blind" },
+                  { "literal": "burning" },
+                  { "literal": "crippled" },
+                  { "literal": "dazed" },
+                  { "literal": "deep-wound" },
+                  { "literal": "life-drain" },
+                  { "literal": "poison" },
+                  { "literal": "regeneration" },
+                  { "literal": "weakness" }
+                ]
+              }
+            },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        }
+      ]
+    },
+    "CombatMessage": {
+      "properties": [
+        {
+          "name": "area",
+          "optional": true,
+          "type": {
+            "properties": [
+              { "name": "radius", "optional": false, "type": "number" },
+              { "name": "x", "optional": false, "type": "number" },
+              { "name": "y", "optional": false, "type": "number" }
+            ]
+          }
+        },
+        { "name": "casterSessionId", "optional": false, "type": "string" },
+        {
+          "name": "cause",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "degeneration" },
+              { "literal": "skill" },
+              { "literal": "weapon" }
+            ]
+          }
+        },
+        { "name": "events", "optional": false, "type": { "array": { "typeParameter": "Event" } } },
+        { "name": "skillId", "optional": false, "type": "string" },
+        { "name": "weaponId", "optional": false, "type": "string" }
+      ]
+    },
+    "LobbyChooseTeamMessage": {
+      "properties": [{ "name": "team", "optional": false, "type": { "union": ["null", "number"] } }]
+    },
+    "LobbyJoinOptions": {
+      "properties": [
+        { "name": "build", "optional": true, "type": "unknown" },
+        { "name": "code", "optional": true, "type": "string" },
+        { "name": "name", "optional": true, "type": "string" },
+        { "name": "protocolVersion", "optional": false, "type": "string" }
+      ]
+    },
+    "LobbyMatchStartingMessage": {
+      "properties": [
+        { "name": "mapId", "optional": false, "type": "string" },
+        {
+          "name": "reservation",
+          "optional": false,
+          "type": {
+            "properties": [
+              {
+                "name": "devMode",
+                "optional": true,
+                "type": { "union": [{ "literal": false }, { "literal": true }] }
+              },
+              { "name": "name", "optional": false, "type": "string" },
+              { "name": "processId", "optional": true, "type": "string" },
+              { "name": "publicAddress", "optional": true, "type": "string" },
+              { "name": "roomId", "optional": false, "type": "string" },
+              { "name": "sessionId", "optional": false, "type": "string" }
+            ]
+          }
+        }
+      ]
+    },
+    "LobbyPhase": {
+      "union": [{ "literal": "in-match" }, { "literal": "starting" }, { "literal": "waiting" }]
+    },
+    "LobbyReadyMessage": {
+      "properties": [{ "name": "ready", "optional": false, "type": "boolean" }]
+    },
+    "LobbySelectMapMessage": {
+      "properties": [{ "name": "mapId", "optional": false, "type": "string" }]
+    },
+    "LobbyStartMatchMessage": {
+      "properties": [],
+      "index": [{ "key": "string", "value": "never" }]
+    },
+    "LobbyStartRejectedMessage": {
+      "properties": [{ "name": "reason", "optional": false, "type": "string" }]
+    },
+    "MapDescriptor": {
+      "properties": [
+        { "name": "height", "optional": false, "type": "number" },
+        { "name": "id", "optional": false, "type": "string" },
+        { "name": "name", "optional": false, "type": "string" },
+        {
+          "name": "walls",
+          "optional": false,
+          "type": {
+            "array": {
+              "union": [
+                {
+                  "properties": [
+                    { "name": "height", "optional": false, "type": "number" },
+                    { "name": "kind", "optional": false, "type": { "literal": "rect" } },
+                    { "name": "width", "optional": false, "type": "number" },
+                    { "name": "x", "optional": false, "type": "number" },
+                    { "name": "y", "optional": false, "type": "number" }
+                  ]
+                },
+                {
+                  "properties": [
+                    { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+                    {
+                      "name": "points",
+                      "optional": false,
+                      "type": {
+                        "array": {
+                          "properties": [
+                            { "name": "x", "optional": false, "type": "number" },
+                            { "name": "y", "optional": false, "type": "number" }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        { "name": "width", "optional": false, "type": "number" }
+      ]
+    },
+    "MatchEndedMessage": {
+      "properties": [
+        {
+          "name": "reason",
+          "optional": false,
+          "type": { "union": ["null", { "literal": "score" }, { "literal": "time" }] }
+        },
+        { "name": "scoreTeam0", "optional": false, "type": "number" },
+        { "name": "scoreTeam1", "optional": false, "type": "number" },
+        { "name": "winningTeam", "optional": false, "type": { "union": ["null", "number"] } }
+      ]
+    },
+    "MatchJoinOptions": {
+      "properties": [
+        { "name": "build", "optional": true, "type": "unknown" },
+        { "name": "mapId", "optional": true, "type": "string" },
+        { "name": "name", "optional": true, "type": "string" },
+        { "name": "protocolVersion", "optional": false, "type": "string" }
+      ]
+    },
+    "MatchSeatReservation": {
+      "properties": [
+        {
+          "name": "devMode",
+          "optional": true,
+          "type": { "union": [{ "literal": false }, { "literal": true }] }
+        },
+        { "name": "name", "optional": false, "type": "string" },
+        { "name": "processId", "optional": true, "type": "string" },
+        { "name": "publicAddress", "optional": true, "type": "string" },
+        { "name": "roomId", "optional": false, "type": "string" },
+        { "name": "sessionId", "optional": false, "type": "string" }
+      ]
+    },
+    "MoveIntent": {
+      "properties": [
+        { "name": "dirX", "optional": false, "type": "number" },
+        { "name": "dirY", "optional": false, "type": "number" },
+        { "name": "kind", "optional": false, "type": { "literal": "move" } }
+      ]
+    },
+    "PolygonWallDescriptor": {
+      "properties": [
+        { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+        {
+          "name": "points",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "RechargeMessage": {
+      "properties": [
+        {
+          "name": "slots",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "remainingSeconds", "optional": false, "type": "number" },
+                { "name": "slot", "optional": false, "type": "number" },
+                { "name": "totalSeconds", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "RechargeSlot": {
+      "properties": [
+        { "name": "remainingSeconds", "optional": false, "type": "number" },
+        { "name": "slot", "optional": false, "type": "number" },
+        { "name": "totalSeconds", "optional": false, "type": "number" }
+      ]
+    },
+    "RectWallDescriptor": {
+      "properties": [
+        { "name": "height", "optional": false, "type": "number" },
+        { "name": "kind", "optional": false, "type": { "literal": "rect" } },
+        { "name": "width", "optional": false, "type": "number" },
+        { "name": "x", "optional": false, "type": "number" },
+        { "name": "y", "optional": false, "type": "number" }
+      ]
+    },
+    "ServerHello": {
+      "properties": [
+        { "name": "protocolVersion", "optional": false, "type": "string" },
+        { "name": "sessionId", "optional": false, "type": "string" },
+        { "name": "tickIntervalMs", "optional": false, "type": "number" }
+      ]
+    },
+    "ServerMessages": {
+      "properties": [
+        {
+          "name": "cast-refused",
+          "optional": false,
+          "type": {
+            "union": [
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "attack" } },
+                  { "name": "reason", "optional": false, "type": "string" }
+                ]
+              },
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "skill" } },
+                  { "name": "reason", "optional": false, "type": "string" },
+                  { "name": "skillId", "optional": false, "type": "string" },
+                  { "name": "slot", "optional": false, "type": "number" }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "combat",
+          "optional": false,
+          "type": {
+            "properties": [
+              {
+                "name": "entries",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "properties": [
+                      {
+                        "name": "area",
+                        "optional": true,
+                        "type": {
+                          "properties": [
+                            { "name": "radius", "optional": false, "type": "number" },
+                            { "name": "x", "optional": false, "type": "number" },
+                            { "name": "y", "optional": false, "type": "number" }
+                          ]
+                        }
+                      },
+                      { "name": "casterSessionId", "optional": false, "type": "string" },
+                      {
+                        "name": "cause",
+                        "optional": false,
+                        "type": {
+                          "union": [
+                            { "literal": "degeneration" },
+                            { "literal": "skill" },
+                            { "literal": "weapon" }
+                          ]
+                        }
+                      },
+                      {
+                        "name": "events",
+                        "optional": false,
+                        "type": { "array": { "typeParameter": "Event" } }
+                      },
+                      { "name": "skillId", "optional": false, "type": "string" },
+                      { "name": "weaponId", "optional": false, "type": "string" }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "hello",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "protocolVersion", "optional": false, "type": "string" },
+              { "name": "sessionId", "optional": false, "type": "string" },
+              { "name": "tickIntervalMs", "optional": false, "type": "number" }
+            ]
+          }
+        },
+        {
+          "name": "map",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "height", "optional": false, "type": "number" },
+              { "name": "id", "optional": false, "type": "string" },
+              { "name": "name", "optional": false, "type": "string" },
+              {
+                "name": "walls",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "union": [
+                      {
+                        "properties": [
+                          { "name": "height", "optional": false, "type": "number" },
+                          { "name": "kind", "optional": false, "type": { "literal": "rect" } },
+                          { "name": "width", "optional": false, "type": "number" },
+                          { "name": "x", "optional": false, "type": "number" },
+                          { "name": "y", "optional": false, "type": "number" }
+                        ]
+                      },
+                      {
+                        "properties": [
+                          { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+                          {
+                            "name": "points",
+                            "optional": false,
+                            "type": {
+                              "array": {
+                                "properties": [
+                                  { "name": "x", "optional": false, "type": "number" },
+                                  { "name": "y", "optional": false, "type": "number" }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              { "name": "width", "optional": false, "type": "number" }
+            ]
+          }
+        },
+        {
+          "name": "match-ended",
+          "optional": false,
+          "type": {
+            "properties": [
+              {
+                "name": "reason",
+                "optional": false,
+                "type": { "union": ["null", { "literal": "score" }, { "literal": "time" }] }
+              },
+              { "name": "scoreTeam0", "optional": false, "type": "number" },
+              { "name": "scoreTeam1", "optional": false, "type": "number" },
+              { "name": "winningTeam", "optional": false, "type": { "union": ["null", "number"] } }
+            ]
+          }
+        },
+        {
+          "name": "match-starting",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "mapId", "optional": false, "type": "string" },
+              {
+                "name": "reservation",
+                "optional": false,
+                "type": {
+                  "properties": [
+                    {
+                      "name": "devMode",
+                      "optional": true,
+                      "type": { "union": [{ "literal": false }, { "literal": true }] }
+                    },
+                    { "name": "name", "optional": false, "type": "string" },
+                    { "name": "processId", "optional": true, "type": "string" },
+                    { "name": "publicAddress", "optional": true, "type": "string" },
+                    { "name": "roomId", "optional": false, "type": "string" },
+                    { "name": "sessionId", "optional": false, "type": "string" }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "recharge",
+          "optional": false,
+          "type": {
+            "properties": [
+              {
+                "name": "slots",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "properties": [
+                      { "name": "remainingSeconds", "optional": false, "type": "number" },
+                      { "name": "slot", "optional": false, "type": "number" },
+                      { "name": "totalSeconds", "optional": false, "type": "number" }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "skill-bar",
+          "optional": false,
+          "type": {
+            "properties": [
+              {
+                "name": "slots",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "properties": [
+                      { "name": "activationSeconds", "optional": false, "type": "number" },
+                      { "name": "adrenalineCost", "optional": false, "type": "number" },
+                      { "name": "energyCost", "optional": false, "type": "number" },
+                      { "name": "id", "optional": false, "type": "string" },
+                      { "name": "name", "optional": false, "type": "string" },
+                      { "name": "rechargeSeconds", "optional": false, "type": "number" }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "start-rejected",
+          "optional": false,
+          "type": { "properties": [{ "name": "reason", "optional": false, "type": "string" }] }
+        }
+      ]
+    },
+    "SkillBarMessage": {
+      "properties": [
+        {
+          "name": "slots",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "activationSeconds", "optional": false, "type": "number" },
+                { "name": "adrenalineCost", "optional": false, "type": "number" },
+                { "name": "energyCost", "optional": false, "type": "number" },
+                { "name": "id", "optional": false, "type": "string" },
+                { "name": "name", "optional": false, "type": "string" },
+                { "name": "rechargeSeconds", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "SkillBarSlot": {
+      "properties": [
+        { "name": "activationSeconds", "optional": false, "type": "number" },
+        { "name": "adrenalineCost", "optional": false, "type": "number" },
+        { "name": "energyCost", "optional": false, "type": "number" },
+        { "name": "id", "optional": false, "type": "string" },
+        { "name": "name", "optional": false, "type": "string" },
+        { "name": "rechargeSeconds", "optional": false, "type": "number" }
+      ]
+    },
+    "StopIntent": {
+      "properties": [{ "name": "kind", "optional": false, "type": { "literal": "stop" } }]
+    },
+    "TargetIntent": {
+      "properties": [
+        { "name": "kind", "optional": false, "type": { "literal": "target" } },
+        { "name": "targetSessionId", "optional": false, "type": { "union": ["null", "string"] } }
+      ]
+    },
+    "UseSkillIntent": {
+      "properties": [
+        { "name": "kind", "optional": false, "type": { "literal": "use-skill" } },
+        { "name": "slot", "optional": false, "type": "number" }
+      ]
+    },
+    "WallDescriptor": {
+      "union": [
+        {
+          "properties": [
+            { "name": "height", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "rect" } },
+            { "name": "width", "optional": false, "type": "number" },
+            { "name": "x", "optional": false, "type": "number" },
+            { "name": "y", "optional": false, "type": "number" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+            {
+              "name": "points",
+              "optional": false,
+              "type": {
+                "array": {
+                  "properties": [
+                    { "name": "x", "optional": false, "type": "number" },
+                    { "name": "y", "optional": false, "type": "number" }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

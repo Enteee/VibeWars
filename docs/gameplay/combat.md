@@ -62,6 +62,13 @@ Order matters for that reason too: cost is checked before range, so a
 player who is both broke and too far away is told the more actionable
 thing.
 
+A cast in progress can be **given up**: by moving, or by Esc (Cancel
+Action, which also stops your weapon attack). A cancelled skill stays
+paid for, does not recharge, and is logged as `cancelled`. While a skill
+casts, its slot on the bar is lit; when your cast ends without going
+off, the slot flashes, red with a ✕ if you were interrupted and grey if
+you cancelled it.
+
 ## Interrupts
 
 Interrupting cancels a cast **only if one is in progress**. Too early or

@@ -5,7 +5,6 @@ import {
   CLIENT_LIMIT,
   LOBBY_CODE_ALPHABET,
   LOBBY_CODE_LENGTH,
-  PROTOCOL_VERSION,
   RATE_LIMIT,
   ROOM_LIMIT,
   ROOM_MATCH,
@@ -13,10 +12,11 @@ import {
   normalizeLobbyCode,
   parseClientIntent,
 } from "./protocol.js";
+import { PROTOCOL_VERSION } from "./protocol-version.js";
 
 describe("protocol constants", () => {
-  it("pins a protocol version", () => {
-    expect(PROTOCOL_VERSION).toBe(13);
+  it("derives the protocol version from the wire schema", () => {
+    expect(PROTOCOL_VERSION).toMatch(/^[0-9a-f]{12}$/);
   });
 
   it("gives every capacity refusal its own code (#282)", () => {
@@ -177,7 +177,11 @@ describe("parseClientIntent — attack", () => {
       kind: "attack",
       targetId: "abc123",
     });
-    expect(parseClientIntent({ kind: "cancel-attack" })).toEqual({ kind: "cancel-attack" });
+    expect(parseClientIntent({ kind: "cancel" })).toEqual({ kind: "cancel" });
+  });
+
+  it("rejects the cancel-attack kind that cancel replaced (#300)", () => {
+    expect(parseClientIntent({ kind: "cancel-attack" })).toBeUndefined();
   });
 
   it("rejects an attack without a real target id", () => {
@@ -189,6 +193,6 @@ describe("parseClientIntent — attack", () => {
 
   it("rejects either with a field it does not name", () => {
     expect(parseClientIntent({ kind: "attack", targetId: "a", slot: 0 })).toBeUndefined();
-    expect(parseClientIntent({ kind: "cancel-attack", targetId: "a" })).toBeUndefined();
+    expect(parseClientIntent({ kind: "cancel", targetId: "a" })).toBeUndefined();
   });
 });

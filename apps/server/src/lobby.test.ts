@@ -252,7 +252,7 @@ describe("lobby room", () => {
 
   it("refuses to create a lobby for a client on another protocol version", async () => {
     await expect(
-      new Client(endpoint).create(ROOM_LOBBY, { protocolVersion: PROTOCOL_VERSION + 1 }),
+      new Client(endpoint).create(ROOM_LOBBY, { protocolVersion: `${PROTOCOL_VERSION}-stale` }),
     ).rejects.toThrow(PROTOCOL_MISMATCH_MESSAGE);
   });
 
@@ -262,7 +262,11 @@ describe("lobby room", () => {
     });
     await waitFor(() => host.state.players.size === 1, { label: "the host" });
 
-    for (const options of [{ protocolVersion: PROTOCOL_VERSION + 1 }, {}]) {
+    for (const options of [
+      { protocolVersion: `${PROTOCOL_VERSION}-stale` },
+      { protocolVersion: 10 },
+      {},
+    ]) {
       await expect(new Client(endpoint).joinById(host.roomId, options)).rejects.toThrow(
         PROTOCOL_MISMATCH_MESSAGE,
       );

@@ -10,8 +10,9 @@
  * positions, no cooldown state. See `docs/adr/0002-networking.md` §Security.
  */
 
+export { PROTOCOL_VERSION } from "./protocol-version.js";
+
 export {
-  PROTOCOL_VERSION,
   PROTOCOL_MISMATCH_MESSAGE,
   ROOM_LIMIT,
   SERVER_FULL_MESSAGE,
@@ -38,7 +39,7 @@ export type {
   TargetIntent,
   UseSkillIntent,
   AttackIntent,
-  CancelAttackIntent,
+  CancelIntent,
   CastRefusedMessage,
   RechargeMessage,
   RechargeSlot,
@@ -54,5 +55,14 @@ export type {
   LobbyReadyMessage,
   LobbySelectMapMessage,
   LobbyMatchStartingMessage,
+  LobbyStartMatchMessage,
+  LobbyStartRejectedMessage,
+  SkillBarMessage,
+  SkillBarSlot,
+  CombatMessage,
+  CombatBatchMessage,
+  MatchEndedMessage,
+  ClientMessages,
+  ServerMessages,
   MatchSeatReservation,
 } from "./protocol.js";

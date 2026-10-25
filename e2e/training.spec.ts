@@ -488,7 +488,45 @@ test("(20) a double-click on a far enemy attacks it: you walk there and swing (#
   });
 });
 
-test("(21) a stored Classic keymap casts on the number row (#302)", async ({ page }) => {
+test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#300)", async ({
+  page,
+}) => {
+  // Troll Unguent: a 3 s self-cast, so a slow runner still has the whole
+  // window to see the ring and press Esc inside it.
+  await page.setViewportSize(WIDE);
+  await page.goto("/");
+  await page.getByRole("button", { name: "new character" }).click();
+  await page.locator(".editor-row select").first().selectOption("ranger");
+  await page.locator(".skill-box", { hasText: "Troll Unguent" }).click();
+  await expect(page.locator(".training-skill")).toHaveText([
+    `${codeLabel(skillKey(0))}Troll Unguent`,
+  ]);
+  await takeControl(page);
+  const slot = page.locator(".training-skill").first();
+  await page.keyboard.press(skillKey(0));
+  await expect(slot).toHaveClass(/is-casting/);
+
+  // Esc inside the cast gives it up, and the arena stays armed: there was
+  // a cast to cancel, so Esc did not release it.
+  await page.keyboard.press("Escape");
+  await expect(slot).toHaveClass(/is-cancelled/);
+  await expect(slot).not.toHaveClass(/is-casting/);
+  await expect(page.locator(".training")).toHaveClass(/is-armed/);
+  await expect(page.locator(".training-log")).toContainText(/cancels Troll Unguent/);
+  // The flash is 400 ms, then the slot is plain again.
+  await expect(slot).not.toHaveClass(/is-cancelled/);
+  // Cancelled, not cast: it does not recharge, so the bar casts it again.
+  await expect(slot).not.toHaveClass(/\bis-recharging\b/);
+  await page.keyboard.press(skillKey(0));
+  await expect(slot).toHaveClass(/is-casting/);
+  await page.keyboard.press("Escape");
+  await expect(slot).not.toHaveClass(/is-casting/);
+
+  // With nothing running, Esc releases the arena as before.
+  await releaseControl(page);
+});
+
+test("(22) a stored Classic keymap casts on the number row (#302)", async ({ page }) => {
   // The server-served build stores under the plain `vibewars` namespace.
   await page.addInitScript((classic) => {
     localStorage.setItem("vibewars.keymap", JSON.stringify(classic));
