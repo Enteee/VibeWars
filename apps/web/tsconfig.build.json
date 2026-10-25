@@ -9,7 +9,7 @@
     "resolveJsonModule": true,
     "types": []
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/music/tracks/manifest.json"],
   "exclude": ["src/**/*.test.ts"],
   "references": [
     { "path": "../../packages/game-protocol/tsconfig.build.json" },

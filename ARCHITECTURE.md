@@ -30,6 +30,7 @@ for rationale and trade-offs.
                  │  game-protocol wire      │
                  │  game-maps    arenas     │
                  │  game-data    reference  │
+                 │  game-session P2P (wip)  │
                  └──────────────────────────┘
 ```
 
@@ -136,6 +137,16 @@ version, and two wire changes always conflict on that one line.
 `pnpm run wire:snapshot` regenerates both files; a test in the server suite
 fails a change that did not. A change in meaning with no change in shape bumps
 `SEMANTICS_REVISION` in the generator by hand.
+
+### `packages/game-session` — peer-to-peer sessions (in progress)
+
+The start of epic #15 ([ADR-0022](docs/adr/0022-peer-to-peer-networking.md),
+Proposed): a match hosted in one player's browser. So far it holds the
+`Transport` interface every peer-to-peer transport implements, and an
+in-memory one for tests (`@vibewars/game-session/testing`). It compiles with
+no DOM and no Node types, and may not import `node:*` or `trystero`. Its
+messages, one per `CHANNELS` entry, and their validators are in
+`game-protocol`'s `src/p2p.ts`. Nothing uses it yet.
 
 ### `packages/game-maps` — arenas
 

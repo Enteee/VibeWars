@@ -187,6 +187,21 @@ saying so in the same PR. Keep the numbers: issues cite them.
 8. **Fixed by #178:** display names could carry invisible and
    direction-changing characters (#174).
 
+## Music patterns are code
+
+The music (#366) is written in Strudel. Strudel turns a pattern into
+JavaScript and runs it in the page, with the page's full rights. A track
+is therefore code, not data. Shipped tracks are fine, because they come
+from this repository and get reviewed like any other source.
+
+Review rule: a pattern from anywhere else, such as a beat editor, a shared
+link, a lobby message or a file a player loads, must never reach Strudel's
+evaluator in the game page. A player may run their own pattern on their
+own machine. If patterns are ever shared, evaluate them in a sandboxed,
+cross-origin iframe or worker that holds no game state, saves or
+connection. Treat any such path as remote code execution until it is
+sandboxed.
+
 ## The static deploy
 
 `.github/workflows/pages.yml` publishes the client alone to GitHub Pages:
@@ -275,6 +290,13 @@ rule: a new host write, read or delete below `.bots/bus/<role>` or
 `.bots/hub/<role>` that does not use `jail-fs.mjs` is a finding.
 Directories jails cannot write, like `bus/_system`, are exempt.
 
+**Review rule: jail-written text on the host terminal.** Anything a jail
+can write can carry ESC sequences, which a host terminal or tmux pane
+obeys: it can retitle the pane, clear it, or draw fake lines. That covers
+bus files, hub results, worktree files and each agent's own Claude logs.
+Host code that prints any string from it goes through `visible()`. #357 printed the model name
+from the logs raw, and was fixed before merge.
+
 **Open: forged CI checks.** A workflow pushed on a side branch runs with
 `GITHUB_TOKEN` and can post a check run, or a commit status, for any
 commit in the repository, under any name. Since #116, hubd refuses a
@@ -310,3 +332,24 @@ backend) has been proposed. That **removes the authoritative server**, and
 with it most of the defences listed above. In a peer-to-peer match some
 peer computes the outcomes, so that peer can cheat. Such a mode needs its
 own threat model here before it merges. It must not inherit this one.
+
+That mode is now being built (#15). Step 1 (#82, #365) added the P2P
+message set and a `Transport` interface, but no playable mode yet. What
+holds so far:
+
+- Every message from a peer is `unknown` until a `parse*` in
+  `game-protocol/src/p2p.ts` accepts it. Each parser caps string lengths
+  and array sizes, never throws, and returns a fresh object. This applies
+  to the host's messages too, because a host is trusted for outcomes but
+  not for well-formed bytes.
+
+What a later step must add before P2P play can merge:
+
+- A parser for the `intent` channel that applies the same checks as
+  `parseClientIntent`. The host must also enforce the server's per-client
+  rate limit (gap 3), counted per peer.
+- A size cap on `hello.build` before it is parsed, plus the same
+  `validatePlayerBuild` join check the server runs.
+- A section here that names what the host can cheat on: every outcome.
+  It must also say what a peer learns about the others, such as their IP
+  addresses through WebRTC.
