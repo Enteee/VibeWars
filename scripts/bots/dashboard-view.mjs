@@ -8,6 +8,7 @@
  * tmux wrap it, and the whole pane jumps.
  */
 import { visible } from "./protocol.mjs";
+import { clock } from "./reboot.mjs";
 
 /**
  * Which roles each column needs before work can leave it. Used to explain a
@@ -283,7 +284,8 @@ export function boardLines(snapshot, columns, live, { rows, width }) {
  * @property {ReadonlySet<string>} live the roles hired right now
  * @property {Budget | null} budget null before hubd has checked
  * @property {ReturnType<typeof import("./hub-health.mjs").hubHealth>} hub hubd, as its heartbeat and restarts say (#23)
- * @property {import("./reboot.mjs").Reboot | null} reboot the scheduled company reboot, if any (#345)
+ * @property {{ record: import("./reboot.mjs").Reboot, between: readonly string[], now: number } | { rebooting: string } | null} reboot
+ *   the pending reboot with the roles between turns, or the reason of the one handed to the restarter (#345)
  */
 
 /**
@@ -347,26 +349,41 @@ function hubSection({ hub }, width) {
 }
 
 /**
- * A scheduled reboot: its deadline and the roles that have not yet run
- * `company ready`. Nothing when none is scheduled (#345).
+ * The reboot, as the COMPANY pane tells it (#345): who holds the drain up
+ * is the roles in a turn that have not run `company ready`; a role between
+ * turns counts as done, as in `drainStep`.
  *
  * @param {CompanyFacts} facts
  * @param {number} width
  * @returns {string[]}
  */
-function rebootSection({ reboot, live }, width) {
+function rebootSection({ reboot, roles, live }, width) {
   if (reboot === null) {
     return [];
   }
-  const waiting = [...live].filter((role) => !reboot.ready.includes(role));
+  if ("rebooting" in reboot) {
+    return [paint(cut(`REBOOTING now — ${reboot.rebooting}`, width), "1;31")];
+  }
+  const { record, between, now } = reboot;
+  const left = record.deadline - now;
+  const when =
+    left <= 0
+      ? `REBOOT overdue since ${clock(record.deadline)}, stopping`
+      : `REBOOT by ${clock(record.deadline)} (in ${left < 60_000 ? "<1m" : `${String(Math.ceil(left / 60_000))}m`}) — ${record.by}: ${record.reason}`;
+  const inOrder = (/** @type {(role: string) => boolean} */ keep) =>
+    [...new Set([...roles, ...record.ready])].filter(keep);
+  const notReady = (/** @type {string} */ role) => live.has(role) && !record.ready.includes(role);
+  /** @type {{ label: string, names: string[] }[]} */
+  const rows = [
+    { label: "ready:   ", names: inOrder((role) => record.ready.includes(role)) },
+    { label: "waiting: ", names: inOrder((role) => notReady(role) && !between.includes(role)) },
+    { label: "idle:    ", names: inOrder((role) => notReady(role) && between.includes(role)) },
+  ];
   return [
-    paint(cut(`REBOOT by ${hhmm(reboot.deadline)}: ${reboot.reason}`, width), "1;33"),
-    cut(
-      waiting.length === 0
-        ? "  everyone is ready"
-        : `  not ready (${String(waiting.length)}): ${waiting.join(", ")}`,
-      width,
-    ),
+    paint(cut(when, width), "1;31"),
+    ...rows
+      .filter(({ names }) => names.length > 0)
+      .map(({ label, names }) => cut(`  ${label}${names.join(", ")}`, width)),
   ];
 }
 

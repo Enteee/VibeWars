@@ -232,23 +232,85 @@ describe("companyLines", () => {
     expect(lines.at(-1)).toMatch(/^… \+\d+ lines$/);
   });
 
-  it("shows a scheduled reboot first: the deadline and who is not ready (#345)", () => {
-    const reboot = {
+  describe("the reboot (#345)", () => {
+    const deadline = new Date(2026, 9, 25, 12, 41).getTime();
+    const record = {
       requestedAt: 0,
-      reason: "new hubd",
+      reason: "load #345",
       by: "manager",
-      deadline: new Date(2026, 9, 25, 12, 5).getTime(),
+      deadline,
       bootSha: "abc",
-      ready: ["manager"],
+      ready: ["manager", "lead-dev"],
     };
-    const lines = companyLines(
-      { roles, live: new Set(["manager", "architect"]), budget, hub, reboot },
-      { rows: 30, width: 60 },
-    ).map(plain);
-    expect(lines[0]).toBe("REBOOT by 12:05: new hubd");
-    expect(lines[1]).toBe("  not ready (1): architect");
-    expect(lines[2]).toBe("");
-    expect(lines[3]).toBe("ROSTER 2/5 hired");
+    const live = new Set(["manager", "architect", "developer-1", "developer-2", "lead-dev"]);
+
+    /**
+     * @param {import("./dashboard-view.mjs").CompanyFacts["reboot"]} reboot
+     * @param {{ rows?: number, width?: number }} [pane]
+     */
+    const pane = (reboot, { rows = 30, width = 80 } = {}) =>
+      companyLines({ roles, live, budget: null, hub, reboot }, { rows, width }).map(plain);
+
+    it("is first: the deadline, then ready, waiting and idle in org-chart order", () => {
+      const lines = pane({
+        record,
+        between: ["developer-2"],
+        now: deadline - 6.5 * 60_000,
+      });
+      expect(lines.slice(0, 5)).toEqual([
+        "REBOOT by 12:41 (in 7m) — manager: load #345",
+        "  ready:   manager, lead-dev",
+        "  waiting: architect, developer-1",
+        "  idle:    developer-2",
+        "",
+      ]);
+      expect(lines[5]).toBe("ROSTER 5/5 hired");
+    });
+
+    it("omits an empty row, says <1m under a minute, and paints the header red", () => {
+      const raw = companyLines(
+        {
+          roles,
+          live,
+          budget: null,
+          hub,
+          reboot: { record: { ...record, ready: [] }, between: [], now: deadline - 30_000 },
+        },
+        { rows: 30, width: 80 },
+      );
+      const lines = raw.map(plain);
+      expect(lines[0]).toBe("REBOOT by 12:41 (in <1m) — manager: load #345");
+      expect(lines[1]).toBe("  waiting: manager, architect, developer-1, developer-2, lead-dev");
+      expect(lines[2]).toBe("");
+      expect(raw[0]).toContain("\x1b[1;31m");
+    });
+
+    it("is overdue and stopping after the deadline", () => {
+      expect(pane({ record, between: [], now: deadline + 1 })[0]).toBe(
+        "REBOOT overdue since 12:41, stopping",
+      );
+    });
+
+    it("is one line once the restarter has it", () => {
+      const lines = pane({ rebooting: "load #345" });
+      expect(lines.slice(0, 3)).toEqual(["REBOOTING now — load #345", "", "ROSTER 5/5 hired"]);
+    });
+
+    it("is no section, and no blank line, without a reboot", () => {
+      expect(pane(null)[0]).toBe("ROSTER 5/5 hired");
+    });
+
+    it("keeps every line within the width and wins over the rest on a short pane", () => {
+      const lines = pane(
+        { record, between: [], now: deadline - 60_000 * 7 },
+        { rows: 3, width: 30 },
+      );
+      expect(lines).toHaveLength(3);
+      expect(lines[0]).toMatch(/^REBOOT by 12:41/);
+      for (const line of lines) {
+        expect(columnsOf(line)).toBeLessThanOrEqual(30);
+      }
+    });
   });
 });
 
