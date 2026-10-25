@@ -28,7 +28,7 @@ import {
 } from "../pathing.js";
 import { createRng, seedFromString, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
-import { canActivate, payCost, type ActivationCheck } from "../skills/activation.js";
+import { canActivate, hasAftercast, payCost, type ActivationCheck } from "../skills/activation.js";
 import { CastState } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
 import { applySkillEffects, type CombatEvent } from "../skills/effects.js";
@@ -155,6 +155,8 @@ export interface StepResult {
 export interface SkillRequest {
   readonly skillId: string;
   readonly check: ActivationCheck;
+  /** Pressed during an aftercast: it goes off when the aftercast ends (#317). */
+  readonly queued?: true;
 }
 
 /** `Participant`, plus what only the simulation may change. */
@@ -459,23 +461,31 @@ export class MatchSimulation {
     record.walkLeast = Number.POSITIVE_INFINITY;
   }
 
-  /** Moving cancels the attack and a cast with a cast time, as in GW1 (#279). */
+  /**
+   * Moving cancels the attack and a cast with a cast time, as in GW1
+   * (#279). In the aftercast it drops the skill queued for after it, so
+   * the walk goes when the aftercast ends instead of being swallowed by
+   * the queued cast (#317).
+   */
   #moveInterrupts(record: ParticipantRecord): void {
     record.combatant.attack = undefined;
     this.#cancelCast(record);
+    record.combatant.cast.clearQueue();
   }
 
   /**
    * Cancel Action, Esc in GW1 (#300): stop the cast, the attack and a
    * walk to a clicked point (#310) in one press, whichever are running.
-   * The cast ends as walking ends it, paid for and not recharging. With
-   * none running, nothing happens.
+   * The cast ends as walking ends it, paid for and not recharging. A skill
+   * queued for after the aftercast is dropped too (#317). With none of
+   * these, nothing happens.
    */
   public cancelAction(id: string): void {
     const record = this.#participants.get(id);
     if (record !== undefined) {
       this.#cancelCast(record);
       record.combatant.attack = undefined;
+      record.combatant.cast.clearQueue();
       record.walkGoal = undefined;
     }
   }
@@ -603,6 +613,14 @@ export class MatchSimulation {
     if (!check.ok) {
       return { skillId: skill.id, check };
     }
+    // During an aftercast a skill with an activation time waits for it to
+    // end, as in GW1 (#317): checked now, so one that could never go off
+    // is refused at once, and tried again for real when it fires. An
+    // instant goes off at once.
+    if (record.combatant.cast.inAftercast && skill.activationSeconds > 0) {
+      record.combatant.cast.queue(slot);
+      return { skillId: skill.id, check, queued: true };
+    }
 
     payCost(skill, record.combatant);
     // The swing in progress is lost, as in GW1; the attack itself resumes
@@ -647,8 +665,12 @@ export class MatchSimulation {
         continue;
       }
 
-      this.advanceMovement(record, record.inputDirection, dt);
-      this.#advanceWalk(record, dt);
+      // The aftercast holds the body still; a held direction or a clicked
+      // point is kept for after it.
+      if (!record.combatant.cast.inAftercast) {
+        this.advanceMovement(record, record.inputDirection, dt);
+        this.#advanceWalk(record, dt);
+      }
 
       // Energy regenerates continuously; adrenaline is earned by acting,
       // not by waiting, so it deliberately does not tick up here.
@@ -684,9 +706,18 @@ export class MatchSimulation {
         continue;
       }
 
+      const wasInAftercast = record.combatant.cast.inAftercast;
       const completed = record.combatant.cast.advance(dt);
       if (completed !== undefined) {
         this.resolveCast(record, completed.skillId, completed.targetId);
+      }
+      // A skill pressed during the aftercast goes off the tick it ends. A
+      // refusal now is dropped: nobody is pressing a key at this moment.
+      if (wasInAftercast && !record.combatant.cast.inAftercast) {
+        const queued = record.combatant.cast.takeQueued();
+        if (queued !== undefined) {
+          this.requestSkill(record.id, queued);
+        }
       }
 
       this.#advanceAttack(record, dt);
@@ -821,11 +852,19 @@ export class MatchSimulation {
       this.#gainAdrenaline(record, events);
     }
     this.#recordDeaths(events);
-    // A skill on an enemy turns on them with the weapon, as in GW1: it
-    // starts an attack, or switches one to them. Any other skill leaves
-    // the attack in progress to resume on its own target.
-    if (primary !== undefined && this.#attackCheck(record, primary.id).ok) {
+    // An attack skill is a swing, so it turns on its target with the
+    // weapon: it starts an attack, or switches one to them. Any other skill
+    // leaves the attack alone (#317): one in progress resumes on its own
+    // target after the cast, and none starts.
+    if (
+      skill.type === "attack" &&
+      primary !== undefined &&
+      this.#attackCheck(record, primary.id).ok
+    ) {
       record.combatant.attack = { targetId: primary.id, swingElapsed: 0, unreachableSeconds: 0 };
+    }
+    if (hasAftercast(skill)) {
+      record.combatant.cast.beginAftercast(this.#ruleset.combat.aftercastSeconds);
     }
 
     record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds);
@@ -967,7 +1006,8 @@ export class MatchSimulation {
 
   /**
    * The attack step (ADR-0026): drop an attack whose target is no longer
-   * a living enemy, pause while casting, walk into reach, then swing.
+   * a living enemy, pause while casting and through the aftercast, walk
+   * into reach, then swing.
    *
    * The swing timer keeps the remainder past each interval rather than
    * zeroing, so the rate stays exact at 20 Hz. A target that steps out of
@@ -997,7 +1037,7 @@ export class MatchSimulation {
       record.combatant.attack = undefined;
       return;
     }
-    if (record.combatant.cast.isCasting) {
+    if (record.combatant.cast.isCasting || record.combatant.cast.inAftercast) {
       return;
     }
 
@@ -1229,6 +1269,7 @@ export class MatchSimulation {
       const victim = this.#participants.get(event.targetId);
       if (victim !== undefined) {
         victim.combatant.attack = undefined;
+        victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
         victim.respawnInSeconds = this.#respawnSeconds(victim);
         this.recordDeath(victim.combatant.team);
@@ -1407,6 +1448,7 @@ export class MatchSimulation {
     record.walkGoal = undefined;
     record.respawnInSeconds = 0;
     record.combatant.cast.cancelCast();
+    record.combatant.cast.endAftercast();
     record.combatant.attack = undefined;
     record.sinceReset = 0;
     record.history.clear();

@@ -134,3 +134,39 @@ describe("CastState recharge", () => {
     expect(run()).toBe(run());
   });
 });
+
+describe("aftercast and the queue (#317)", () => {
+  it("counts down from the next advance, and is not casting", () => {
+    const state = new CastState();
+    state.beginAftercast(0.75);
+    expect(state.inAftercast).toBe(true);
+    expect(state.isCasting).toBe(false);
+    for (let i = 0; i < 14; i += 1) {
+      state.advance(0.05);
+    }
+    expect(state.inAftercast).toBe(true);
+    state.advance(0.05);
+    expect(state.inAftercast).toBe(false);
+  });
+
+  it("takes the queued slot once; a later press replaces it", () => {
+    const state = new CastState();
+    state.queue(0);
+    state.queue(2);
+    expect(state.takeQueued()).toBe(2);
+    expect(state.takeQueued()).toBeUndefined();
+  });
+
+  it("ending the aftercast drops the queue, and cancelling a cast starts none", () => {
+    const state = new CastState();
+    state.beginAftercast(0.75);
+    state.queue(1);
+    state.endAftercast();
+    expect(state.inAftercast).toBe(false);
+    expect(state.queuedSlot).toBeUndefined();
+
+    state.beginCast("x", undefined, 1);
+    state.cancelCast();
+    expect(state.inAftercast).toBe(false);
+  });
+});

@@ -90,6 +90,12 @@ export interface CombatRules {
    * enough that a real change of course shows.
    */
   readonly trackWindowSeconds: number;
+  /**
+   * The aftercast (#317): how long after a skill with an activation time
+   * goes off its caster can neither move, attack, nor start another cast.
+   * GW1's "almost always ¾ second". Attack skills have none.
+   */
+  readonly aftercastSeconds: number;
 }
 
 export interface Ruleset {
@@ -136,6 +142,7 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
     projectileTolerance: 10,
     unreachableAfterSeconds: 0.5,
     trackWindowSeconds: 0.6,
+    aftercastSeconds: 0.75,
   }),
   attributes: Object.freeze({
     // Enough to max two attributes (12+12=24 ranks -> 2*78=156 points) with
