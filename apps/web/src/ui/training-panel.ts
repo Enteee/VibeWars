@@ -17,6 +17,16 @@ import {
 } from "../input/attack-key.js";
 import { createDoubleClick } from "../input/double-click.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
+import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
+import {
+  SKILL_ACTIONS,
+  actionForCode,
+  actionLabel,
+  codeLabel,
+  isShortcut,
+} from "../input/keymap.js";
+import { loadKeymap } from "../input/keymap-preference.js";
+import { skillSlotForKeyDown } from "../input/skill-keys.js";
 import { attachNameReveal } from "../input/name-reveal.js";
 import { nextTabTarget } from "../input/tab-target.js";
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
@@ -55,13 +65,13 @@ import { skillBadgeHtml } from "./icons.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import { castingSlot, flashSlot, slotFlashes } from "./skill-slot-state.js";
 import {
+  armedHint,
   buildSignature,
   loadScenarioChoice,
   overlayMessage,
   resolveScenarioId,
   saveScenarioChoice,
   shouldRestoreFocus,
-  slotForKey,
 } from "./training-state.js";
 
 /**
@@ -90,8 +100,6 @@ const LOG_CAP = 200;
 const METER_PAINT_SECONDS = 0.2;
 
 const HINT_IDLE = "click the arena to take control";
-const HINT_ARMED =
-  "wasd move · 1–8 cast · tab/click to target · space/double-click attack · esc to release";
 
 /**
  * Clicking one of these takes the keyboard, so it takes arena control
@@ -206,12 +214,21 @@ export function createTrainingPanel(): TrainingPanel {
   /* --- state ----------------------------------------------------------- */
 
   let disposed = false;
+  // Read once per panel, so the arena and its hint agree (#302); the
+  // labels by code until the browser says what the layout is.
+  const keymap = loadKeymap();
+  let keyLabel: KeyLabeller = codeLabel;
   let viewport: ArenaViewport | undefined;
   let session: Session | undefined;
   let character: StoredCharacter | undefined;
   let signature: string | undefined;
   let displayName = "";
   let armed = false;
+  /**
+   * Whether the stage was armed when this click began: the click that
+   * takes control only takes it, and does not walk the hero off (#310).
+   */
+  let armedBeforeClick = false;
   let logRows: readonly LogRow[] = [];
   let totals: MeterTotals = EMPTY_TOTALS;
   /** Gathers status ticks into a row a second (#151); one per session. */
@@ -334,7 +351,14 @@ export function createTrainingPanel(): TrainingPanel {
       button.addEventListener("click", () => {
         cast(index);
       });
-      button.append(h("span", "training-skill-key", String(index + 1)));
+      const action = SKILL_ACTIONS[index];
+      button.append(
+        h(
+          "span",
+          "training-skill-key",
+          action === undefined ? "" : actionLabel(keymap, action, keyLabel),
+        ),
+      );
       button.insertAdjacentHTML("beforeend", skillBadgeHtml(slot.id));
       button.append(h("span", "training-skill-name", slot.name));
       return button;
@@ -473,25 +497,11 @@ export function createTrainingPanel(): TrainingPanel {
   };
   // On the stage, never on `window`: typing in the name field or the
   // library search bubbles up past the stage and can never move anyone.
-  let detachMovement = attachKeyboardMoveInput(stage, onMove);
+  const detachMovement = attachKeyboardMoveInput(stage, keymap, onMove);
 
   const onStageKeyDown = (event: KeyboardEvent): void => {
-    if (event.key === "Tab") {
-      // Never the browser's focus cycle while armed (#268): it would land in
-      // the name field, and the next key would type into it. Esc releases
-      // the stage, and then Tab is the browser's again.
-      event.preventDefault();
-      if (!event.repeat) {
-        cycleTarget(event.shiftKey ? -1 : 1);
-      }
-      return;
-    }
-    if (event.key === " ") {
-      event.preventDefault();
-      // Held Space auto-repeats; one attack is all it means (#160).
-      if (!event.repeat) {
-        attack();
-      }
+    // Ctrl, Alt and Meta are the browser's, armed or not (#302).
+    if (isShortcut(event)) {
       return;
     }
     if (event.key === "Escape") {
@@ -510,25 +520,50 @@ export function createTrainingPanel(): TrainingPanel {
       stage.blur();
       return;
     }
-    if (event.key === "m" || event.key === "M") {
-      event.preventDefault();
+    const action = actionForCode(keymap, event.code);
+    if (action === undefined || action === "show-names") {
+      return;
+    }
+    // A bound key is the arena's, and never scrolls the editor.
+    event.preventDefault();
+    if (action === "target-next") {
+      // Never the browser's focus cycle while armed (#268): it would land in
+      // the name field, and the next key would type into it. Esc releases
+      // the stage, and then Tab is the browser's again.
       if (!event.repeat) {
-        // No HUD here, so the message line says what M did.
-        const sounds = soundPlayer();
-        sounds.setMuted(!sounds.muted);
-        saveMuted(sounds.muted);
-        flash(sounds.muted ? "Sound off. Press M to turn it on." : "Sound on.");
+        cycleTarget(event.shiftKey ? -1 : 1);
       }
       return;
     }
-    const slot = slotForKey(event.key, session?.connection.skillBar.length ?? 0);
+    if (action === "attack") {
+      // Held Space auto-repeats; one attack is all it means (#160).
+      if (!event.repeat) {
+        attack();
+      }
+      return;
+    }
+    if (action === "mute") {
+      if (!event.repeat) {
+        // No HUD here, so the message line says what the mute key did.
+        const sounds = soundPlayer();
+        sounds.setMuted(!sounds.muted);
+        saveMuted(sounds.muted);
+        flash(
+          sounds.muted
+            ? `Sound off. Press ${actionLabel(keymap, "mute", keyLabel)} to turn it on.`
+            : "Sound on.",
+        );
+      }
+      return;
+    }
+    const slot = skillSlotForKeyDown(event, keymap, session?.connection.skillBar.length ?? 0);
     if (slot !== undefined) {
-      event.preventDefault();
       cast(slot);
     }
   };
 
   const onStagePointerDown = (): void => {
+    armedBeforeClick = armed;
     armed = true;
     stage.focus({ preventScroll: true });
   };
@@ -545,17 +580,13 @@ export function createTrainingPanel(): TrainingPanel {
 
   const onStageFocus = (): void => {
     root.classList.add("is-armed");
-    hint.textContent = HINT_ARMED;
+    hint.textContent = armedHint(keymap, keyLabel);
   };
 
   const onStageBlur = (): void => {
     root.classList.remove("is-armed");
     hint.textContent = HINT_IDLE;
-    // A key held while focus left will never send its keyup here: let go
-    // of everything, rather than walk on forever.
-    detachMovement();
-    detachMovement = attachKeyboardMoveInput(stage, onMove);
-    onMove({ x: 0, y: 0 });
+    // The move input lets go of any held key itself, on the same blur.
   };
 
   stage.addEventListener("keydown", onStageKeyDown);
@@ -614,9 +645,22 @@ export function createTrainingPanel(): TrainingPanel {
   let offFrame: (() => void) | undefined;
   let offPointer: (() => void) | undefined;
   let offPointerMove: (() => void) | undefined;
-  // Ctrl on the stage shows every name, as its other keys work; the
-  // cursor shows one (#253). In world units, which a still cursor keeps.
-  const nameReveal = attachNameReveal(stage);
+  // The names key on the stage shows every name, as its other keys work;
+  // the cursor shows one (#253). In world units, which a still cursor keeps.
+  const nameReveal = attachNameReveal(stage, keymap);
+
+  void loadLayoutLabeller().then((label) => {
+    if (label === undefined || disposed) {
+      return;
+    }
+    keyLabel = label;
+    if (session !== undefined) {
+      paintSkills(session.connection.skillBar);
+    }
+    if (root.classList.contains("is-armed")) {
+      hint.textContent = armedHint(keymap, keyLabel);
+    }
+  });
   let pointer: Vec2 | undefined;
   // A double-click on an enemy attacks it, as Space would (#298).
   const doubleClick = createDoubleClick();
@@ -663,13 +707,25 @@ export function createTrainingPanel(): TrainingPanel {
       if (session === undefined) {
         return;
       }
+      // As in a match (#310): a body is targeted, the ground walked to.
       const hit = actorAtPoint(latestArena, world);
-      session.connection.sendIntent({ kind: "target", targetSessionId: hit?.id ?? null });
-      if (doubleClick.press(hit?.id, performance.now())) {
-        for (const intent of attackClickIntents(session.connection.getSnapshot(), hit?.id)) {
-          session.connection.sendIntent(intent);
+      const double = doubleClick.press(hit?.id, performance.now());
+      if (hit !== undefined) {
+        session.connection.sendIntent({ kind: "target", targetSessionId: hit.id });
+        if (double) {
+          for (const intent of attackClickIntents(session.connection.getSnapshot(), hit.id)) {
+            session.connection.sendIntent(intent);
+          }
         }
+        return;
       }
+      // The stage's capturing listener ran first, so this click's arming
+      // is already known.
+      if (!armedBeforeClick) {
+        return;
+      }
+      session.connection.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
+      created.scene.showWalkMarker(world);
     });
     offPointerMove = created.onPointerMove((world) => {
       pointer = world;

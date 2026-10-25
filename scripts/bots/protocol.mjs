@@ -54,6 +54,8 @@ export const TOPIC_TITLES = {
  * @property {string} text
  * @property {number | null} topicId
  * @property {number} messageId
+ * @property {boolean} broadcast sent with `tg broadcast`: it reaches every
+ *   role, and wakes none of them unless it names one (`wakes`)
  */
 
 /**
@@ -197,6 +199,7 @@ export function routeInbound(raw, context) {
             text: visible(cut(message.text, MAX_USER_CHARS)),
             topicId,
             messageId: message.message_id,
+            broadcast: false,
           },
           whichRole: null,
         }
@@ -221,6 +224,7 @@ export function routeInbound(raw, context) {
     text: message.text,
     topicId,
     messageId: message.message_id,
+    broadcast: false,
   });
 
   // "developer-1: do X" or "@developer-1 do X". The name must be a role,
@@ -329,6 +333,7 @@ export function deliverPeer(raw, context) {
     text: body,
     topicId: null,
     messageId: 0,
+    broadcast: false,
   });
 
   if (message.kind === "ask") {
@@ -390,6 +395,7 @@ export function deliverPeer(raw, context) {
     text,
     topicId: null,
     messageId: 0,
+    broadcast: to === "all",
   };
   const recipients = to === "all" ? context.roles.filter((role) => role !== context.from) : [to];
   const absent = to !== "all" && !context.present.has(to);
@@ -551,7 +557,15 @@ export function deliverSystem(raw, context) {
     return { deliveries: [], mirror: null };
   }
   /** @type {InboxLine} */
-  const line = { ts: context.now, from: "system", kind: "link", text, topicId: null, messageId: 0 };
+  const line = {
+    ts: context.now,
+    from: "system",
+    kind: "link",
+    text,
+    topicId: null,
+    messageId: 0,
+    broadcast: false,
+  };
   return {
     deliveries: context.roles.map((role) => ({ role, line })),
     mirror: { from: SYSTEM, to: "all", text },
@@ -929,6 +943,7 @@ export function routeAnswer(raw, store, context) {
       text: `${followUp ? "follow-up to" : "answer to"} Q${String(n)} ("${excerpt(question.text, 40)}"): ${answer}`,
       topicId: context.operatorTopicId,
       messageId: 0,
+      broadcast: false,
     },
   });
 
@@ -1226,7 +1241,26 @@ function toInboxLine(value) {
     text: record.text,
     topicId: typeof record.topicId === "number" ? record.topicId : null,
     messageId: typeof record.messageId === "number" ? record.messageId : 0,
+    broadcast: record.broadcast === true,
   };
+}
+
+/**
+ * Does this line end a `tg wait` for `role`? Everything does but a plain
+ * broadcast: one that does not start `<role>:` or `@<role>`, the prefix
+ * rule of `routeInbound`. It is still delivered, and printed with the next
+ * line that does wake, but it costs no turn by itself (#323).
+ *
+ * @param {InboxLine} line
+ * @param {string} role
+ * @returns {boolean}
+ */
+export function wakes(line, role) {
+  if (line.kind !== "peer" || !line.broadcast) {
+    return true;
+  }
+  const prefix = /^(@?)([a-z0-9-]+)\s*(:|\s|$)/i.exec(line.text);
+  return prefix?.[2]?.toLowerCase() === role && (prefix[3] === ":" || prefix[1] === "@");
 }
 
 /**

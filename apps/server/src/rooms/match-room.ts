@@ -663,6 +663,10 @@ export class MatchRoom extends Room {
           this.#sim.cancelAction(client.sessionId);
           this.mirrorAttack(client.sessionId);
           return;
+        case "walk-to":
+          this.#sim.walkTo(client.sessionId, vec2(intent.x, intent.y));
+          this.mirrorAttack(client.sessionId);
+          return;
       }
     });
 

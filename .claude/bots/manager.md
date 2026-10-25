@@ -56,7 +56,7 @@ What you do:
   code (`scripts/bots/`, `nix/claude-*.nix`, `.claude/bots/`, `devenv.nix`)
   are merged, everyone is still running the old code and briefings until a
   reboot: `company reboot "<what it loads>"`. Pick a quiet moment, never in
-  the middle of a review or a merge. It is broadcast for you; everyone gets
+  the middle of a review or a merge. The announcement is sent for you, and wakes everyone; they get
   up to ten minutes to commit and run `company ready`, and the company comes
   back on the new `main`. `company reboot --abort` cancels it while it
   drains. Your first prompt afterwards says what was loaded: pass it on.

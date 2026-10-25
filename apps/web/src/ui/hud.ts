@@ -1,6 +1,8 @@
 import { getProfession, getWeapon, type ActivationRejection } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
 
+import type { KeyLabeller } from "../input/key-labels.js";
+import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
 import type {
   MatchSnapshot,
   PlayerSnapshot,
@@ -63,8 +65,36 @@ function element(tag: string, className: string, parent: HTMLElement): HTMLEleme
   return node;
 }
 
-/** Shown above the skill bar until the player first has a target (#55); Ctrl shows every name (#253). */
-export const TARGET_HINT = "Click an enemy or press Tab to target · hold Ctrl for names";
+/**
+ * Shown above the skill bar until the player first has a target (#55),
+ * with the keymap's target and names keys (#253, #302). A clause whose
+ * action has no key is left out.
+ */
+export function targetHint(keymap: Keymap, label: KeyLabeller = codeLabel): string {
+  const next = actionLabel(keymap, "target-next", label);
+  const names = actionLabel(keymap, "show-names", label);
+  return (
+    (next === "" ? "Click an enemy to target" : `Click an enemy or press ${next} to target`) +
+    (names === "" ? "" : ` · hold ${names} for names`)
+  );
+}
+
+/**
+ * Label the skill slots' hotkeys and the targeting hint from `keymap`:
+ * once by code when the HUD is drawn, and again once the keyboard's
+ * layout is known.
+ */
+export function renderKeyLabels(
+  hud: HudElements,
+  keymap: Keymap,
+  label: KeyLabeller = codeLabel,
+): void {
+  hud.hint.textContent = targetHint(keymap, label);
+  hud.skillBar.querySelectorAll(".hud-skill-key").forEach((node, index) => {
+    const action = SKILL_ACTIONS[index];
+    node.textContent = action === undefined ? "" : actionLabel(keymap, action, label);
+  });
+}
 
 /**
  * Whether the targeting hint is gone for good: it was already, or the
@@ -117,7 +147,6 @@ export function createHud(parent: HTMLElement): HudElements {
   const statusList = element("div", "hud-statuses", bars);
 
   const hint = element("div", "hud-hint", root);
-  hint.textContent = TARGET_HINT;
   const message = element("div", "hud-message", root);
   message.setAttribute("role", "status");
   const skillBar = element("div", "hud-skills", root);
@@ -245,16 +274,15 @@ export function flashMessage(hud: HudElements, text: string): void {
 
 /** Render the skill bar once; slots are stable for the match's lifetime. */
 /**
- * The inside of one skill-bar button: hotkey, type badge, and empty name
- * and cost spans for the caller to fill as text. The type comes from
- * game-core's catalogue, so the wire needs no field for it; a skill this
- * client does not know gets no badge.
+ * The inside of one skill-bar button: type badge, and empty hotkey, name
+ * and cost spans for the caller to fill as text (the hotkey from the
+ * keymap, `renderKeyLabels`). The type comes from game-core's catalogue,
+ * so the wire needs no field for it; a skill this client does not know
+ * gets no badge.
  */
-export function skillSlotHtml(slot: SkillSlot, index: number): string {
-  // 1-9 then 0, matching the hotkeys bound in main.ts.
-  const hotkey = index < 9 ? String(index + 1) : "0";
+export function skillSlotHtml(slot: SkillSlot): string {
   return (
-    `<span class="hud-skill-key">${hotkey}</span>` +
+    `<span class="hud-skill-key"></span>` +
     skillBadgeHtml(slot.id) +
     `<span class="hud-skill-name"></span>` +
     `<span class="hud-skill-cost"></span>`
@@ -271,7 +299,7 @@ export function renderSkillBar(
     const button = document.createElement("button");
     button.className = "hud-skill";
     button.type = "button";
-    button.innerHTML = skillSlotHtml(slot, index);
+    button.innerHTML = skillSlotHtml(slot);
     const nameNode = button.querySelector(".hud-skill-name");
     const costNode = button.querySelector(".hud-skill-cost");
     if (nameNode !== null) {

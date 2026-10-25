@@ -1,5 +1,7 @@
 import { expect, test, type Page, type Locator } from "@playwright/test";
 
+import { key, skillKey } from "./keys.js";
+
 /**
  * Browser tests for playing (brief §31): start a match, basic movement,
  * skill activation.
@@ -81,6 +83,14 @@ async function startLobbyMatch(host: Page, guests: readonly Page[]): Promise<Loc
   return host.locator("#viewport canvas");
 }
 
+/** Leave by the button, which leaves for good: a closed page is held for its reconnection. */
+async function leaveMatch(page: Page): Promise<void> {
+  const leave = page.locator(".hud-leave");
+  await leave.getByRole("button", { name: "leave match" }).click();
+  await leave.getByRole("button", { name: "yes" }).click();
+  await expect(page.locator(".hud-bar-health")).toHaveCount(0);
+}
+
 /** Energy as the HUD reports it, e.g. "50 / 50 en" -> 50. */
 async function readEnergy(page: Page): Promise<number> {
   const text = (await page.locator(".hud-bar-energy .hud-bar-label").textContent()) ?? "";
@@ -101,9 +111,9 @@ test("M mutes and unmutes the combat sounds", async ({ page }) => {
   await startQuickMatch(page);
   const mute = page.getByRole("button", { name: "Mute sounds" });
   await expect(mute).toHaveAttribute("aria-pressed", "false");
-  await page.keyboard.press("m");
+  await page.keyboard.press(key("mute"));
   await expect(mute).toHaveAttribute("aria-pressed", "true");
-  await page.keyboard.press("m");
+  await page.keyboard.press(key("mute"));
   await expect(mute).toHaveAttribute("aria-pressed", "false");
 });
 
@@ -118,21 +128,55 @@ test("holding a movement key moves the player on screen", async ({ page }) => {
   const idleAfter = await arenaShot(page, canvas);
   expect(idleAfter.equals(idleBefore), "the idle arena should not animate").toBe(true);
 
-  await page.keyboard.down("w");
+  await page.keyboard.down(key("move-up"));
   await page.waitForTimeout(700);
-  await page.keyboard.up("w");
+  await page.keyboard.up(key("move-up"));
   await page.waitForTimeout(300);
 
   const moved = await arenaShot(page, canvas);
-  expect(moved.equals(idleAfter), "holding W should have moved the player").toBe(false);
+  expect(moved.equals(idleAfter), "holding the up arrow should have moved the player").toBe(false);
+});
+
+test("the arrows move; A, once move-left, casts slot 5 and moves nobody (#302)", async ({
+  page,
+}) => {
+  const canvas = await startSoloMatch(page);
+  await expect(page.locator(".hud-skill-key").first()).toHaveText("Q");
+  expect(key("skill-5")).toBe("KeyA");
+
+  // Slot 5 of the house bar is a self-cast enchantment. Held, A casts it
+  // once, and the player stays where they are while it is held.
+  await page.keyboard.down("a");
+  await expect(page.locator(".hud-statuses")).not.toContainText("no active effects");
+  const held = await arenaShot(page, canvas);
+  await page.waitForTimeout(500);
+  expect((await arenaShot(page, canvas)).equals(held), "A should not move the player").toBe(true);
+  await page.keyboard.up("a");
+
+  await page.keyboard.down(key("move-right"));
+  await page.waitForTimeout(500);
+  await page.keyboard.up(key("move-right"));
+  await page.waitForTimeout(300);
+  expect((await arenaShot(page, canvas)).equals(held), "the right arrow should move").toBe(false);
+});
+
+test("closing the tab mid-match asks first, as Ctrl+W would (#302)", async ({ page }) => {
+  await startSoloMatch(page);
+  // A browser only asks a page the player has touched.
+  await page.keyboard.press(key("move-right"));
+  const asked = page.waitForEvent("dialog");
+  await page.close({ runBeforeUnload: true });
+  const dialog = await asked;
+  expect(dialog.type()).toBe("beforeunload");
+  await dialog.accept();
 });
 
 test("releasing the movement key stops the player", async ({ page }) => {
   const canvas = await startSoloMatch(page);
 
-  await page.keyboard.down("d");
+  await page.keyboard.down(key("move-right"));
   await page.waitForTimeout(400);
-  await page.keyboard.up("d");
+  await page.keyboard.up(key("move-right"));
   // Give the stop intent time to reach the server and come back.
   await page.waitForTimeout(500);
 
@@ -151,7 +195,7 @@ test("activating a self-cast skill spends energy and applies its effect", async 
   await expect(page.locator(".hud-statuses")).toContainText("no active effects");
   const before = await readEnergy(page);
 
-  await page.keyboard.press("5");
+  await page.keyboard.press(key("skill-5"));
 
   // The enchantment appearing is the server's word that the cast
   // resolved; energy alone could just be a client-side guess.
@@ -165,7 +209,7 @@ test("a skill the player cannot afford is refused rather than cast", async ({ pa
   // Spam the bar. Every rejection must be safe: no crash, and energy must
   // never go negative, whatever the client asks for.
   for (let i = 0; i < 20; i += 1) {
-    await page.keyboard.press(String((i % 8) + 1));
+    await page.keyboard.press(skillKey(i % 8));
   }
   await page.waitForTimeout(500);
 
@@ -181,9 +225,9 @@ test("a refused cast says why, briefly, above the skill bar", async ({ page }) =
   // Slot 5 is a self-cast enchantment with a 15 s recharge: once it has
   // landed, pressing it again is refused whoever else is in the room.
   // Before issue #51 this key press did nothing at all.
-  await page.keyboard.press("5");
+  await page.keyboard.press(key("skill-5"));
   await expect(page.locator(".hud-statuses")).not.toContainText("no active effects");
-  await page.keyboard.press("5");
+  await page.keyboard.press(key("skill-5"));
 
   await expect(message).toHaveText("That skill is recharging.");
   await expect(message).toHaveClass(/is-visible/);
@@ -205,7 +249,7 @@ test("an enemy skill with nothing targeted targets the nearest enemy", async ({
 
   // Slot 1 is Fireball. Whether it is then in range or not, the target
   // stays picked.
-  await page.keyboard.press("1");
+  await page.keyboard.press(key("skill-1"));
 
   await expect(target).toHaveText(/^target: /);
   await opponent.close();
@@ -230,7 +274,7 @@ test("Space attacks the nearest enemy with the weapon, and moving stops it (#160
   await expect(attacking).toBeHidden();
 
   // Nothing targeted: Space picks the nearest enemy, as an enemy skill does.
-  await page.keyboard.press(" ");
+  await page.keyboard.press(key("attack"));
   await expect(page.locator(".hud-target-text")).toHaveText(/^target: /);
   await expect(attacking).toBeVisible();
   await expect(attacking).toHaveText("attacking");
@@ -239,8 +283,77 @@ test("Space attacks the nearest enemy with the weapon, and moving stops it (#160
   // The attacker walks into reach and swings; the target gets hurt.
   await expect.poll(() => readTargetHealth(page), { timeout: 20_000 }).toBeLessThan(before);
 
-  await page.keyboard.press("w");
+  await page.keyboard.press(key("move-up"));
   await expect(attacking).toBeHidden();
+  await opponent.close();
+});
+
+/**
+ * A page screenshot of the arena round `world`, `half` units each way.
+ * One world unit is one canvas pixel (arena-viewport.ts), so a world point
+ * is the canvas's own offset plus itself.
+ */
+async function spotShot(
+  page: Page,
+  canvas: Locator,
+  world: { readonly x: number; readonly y: number },
+  half = 20,
+): Promise<Buffer> {
+  const box = await canvas.boundingBox();
+  expect(box, "the arena canvas has no box").not.toBeNull();
+  return page.screenshot({
+    clip: {
+      x: (box?.x ?? 0) + world.x - half,
+      y: (box?.y ?? 0) + world.y - half,
+      width: 2 * half,
+      height: 2 * half,
+    },
+  });
+}
+
+test("clicking the ground walks there, round a wall, and stops (#310)", async ({ page }) => {
+  const canvas = await startSoloMatch(page);
+  // Behind the top wall (x 440 to 464, y 0 to 260) from the first spawn, (80, 200).
+  const goal = { x: 520, y: 150 };
+  const empty = await spotShot(page, canvas, goal);
+
+  await canvas.click({ position: goal });
+  // The marker there fades in 0.4 s; the walk round the wall takes about 3 s.
+  await page.waitForTimeout(600);
+  await expect
+    .poll(async () => (await spotShot(page, canvas, goal)).equals(empty), { timeout: 10_000 })
+    .toBe(false);
+
+  // Arrived, it stays.
+  await page.waitForTimeout(600);
+  const there = await spotShot(page, canvas, goal);
+  await page.waitForTimeout(700);
+  expect((await spotShot(page, canvas, goal)).equals(there), "the hero should stop there").toBe(
+    true,
+  );
+});
+
+test("clicking the ground keeps the target, and Space attacks it from there (#310)", async ({
+  browser,
+  page,
+}) => {
+  // A lobby of two, for the reason the tests above give.
+  const opponent = await browser.newPage();
+  const canvas = await startLobbyMatch(page, [opponent]);
+  const target = page.locator(".hud-target-text");
+  await page.keyboard.press("Tab");
+  await expect(target).toHaveText(/^target: /);
+  const before = await readTargetHealth(page);
+
+  // Open ground, short of the top wall and away from both spawns.
+  await canvas.click({ position: { x: 260, y: 120 } });
+  await page.waitForTimeout(300);
+  await expect(target).toHaveText(/^target: /);
+
+  await page.keyboard.press(" ");
+  await expect(page.locator(".hud-attacking")).toBeVisible();
+  await expect.poll(() => readTargetHealth(page), { timeout: 20_000 }).toBeLessThan(before);
+  await expect(target).toHaveText(/^target: /);
   await opponent.close();
 });
 
@@ -252,7 +365,7 @@ test("Esc cancels the attack; leaving the match is a button that asks first (#16
   await startLobbyMatch(page, [opponent]);
   const attacking = page.locator(".hud-attacking");
 
-  await page.keyboard.press(" ");
+  await page.keyboard.press(key("attack"));
   await expect(attacking).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(attacking).toBeHidden();
@@ -298,7 +411,7 @@ test("F10 then Esc says no, and the attack goes on (#221)", async ({ browser, pa
   const attacking = page.locator(".hud-attacking");
   const leave = page.locator(".hud-leave");
 
-  await page.keyboard.press(" ");
+  await page.keyboard.press(key("attack"));
   await expect(attacking).toBeVisible();
   await page.keyboard.press("F10");
   await expect(leave).toContainText("leave?");
@@ -323,7 +436,7 @@ test("Tab targets the nearest enemy, and the hint goes for good (#55)", async ({
   const opponent = await browser.newPage();
   await startLobbyMatch(page, [opponent]);
   const hint = page.locator(".hud-hint");
-  await expect(hint).toHaveText("Click an enemy or press Tab to target · hold Ctrl for names");
+  await expect(hint).toHaveText("Click an enemy or press Tab to target · hold Shift for names");
   await expect(hint).toBeVisible();
 
   await page.keyboard.press("Tab");
@@ -332,8 +445,8 @@ test("Tab targets the nearest enemy, and the hint goes for good (#55)", async ({
   // The browser kept its focus where it was: Tab is the game's now.
   expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
 
-  // Cleared again, the hint stays gone.
-  await page.locator("#viewport canvas").click({ position: { x: 5, y: 5 } });
+  // Cleared again, when the target leaves, the hint stays gone.
+  await leaveMatch(opponent);
   await expect(page.locator(".hud-target-text")).toHaveText("no target");
   await expect(hint).toBeHidden();
   await opponent.close();
@@ -346,7 +459,7 @@ test("a recharging skill shows the clock-wipe and the seconds left, then clears 
 
   // Slot 5 of the house bar is Armor of Earth: self-cast, so it needs no
   // target, and it recharges in 15 s.
-  await page.keyboard.press("5");
+  await page.keyboard.press(key("skill-5"));
   const slot = page.locator(".hud-skill").nth(4);
   const overlay = slot.locator(".recharge-overlay");
   await expect(overlay).toHaveCount(1);
@@ -421,7 +534,8 @@ test("the target panel shows the target's professions before its name (#281)", a
   await expect(icons.first()).toHaveAttribute("alt", "Warrior");
   await expect(icons.first()).toHaveAttribute("src", /icons\/profession\/warrior\.svg$/);
 
-  await page.locator("#viewport canvas").click({ position: { x: 5, y: 5 } });
+  // Gone with the target, when it leaves.
+  await leaveMatch(opponent);
   await expect(icons).toHaveCount(0);
   await opponent.close();
 });

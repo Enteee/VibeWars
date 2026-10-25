@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { key } from "./keys.js";
+
 /**
  * Browser tests for the lobby flow (brief §31): create lobby, join
  * lobby, start match.
@@ -188,11 +190,11 @@ test("a lobby match shows the score, the clock and both fighters", async ({ brow
 
     // Both fighters are still in the match after moving — a player who
     // walks must not vanish from anyone else's arena.
-    await host.keyboard.down("d");
-    await guest.keyboard.down("a");
+    await host.keyboard.down(key("move-right"));
+    await guest.keyboard.down(key("move-left"));
     await host.waitForTimeout(800);
-    await host.keyboard.up("d");
-    await guest.keyboard.up("a");
+    await host.keyboard.up(key("move-right"));
+    await guest.keyboard.up(key("move-left"));
     await host.waitForTimeout(400);
 
     await expect(host.locator(".hud-scoreboard")).toBeVisible();

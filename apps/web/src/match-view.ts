@@ -12,6 +12,9 @@ import {
 } from "./input/attack-key.js";
 import { createDoubleClick } from "./input/double-click.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
+import { loadLayoutLabeller } from "./input/key-labels.js";
+import { actionForCode, isShortcut } from "./input/keymap.js";
+import { loadKeymap } from "./input/keymap-preference.js";
 import { attachNameReveal } from "./input/name-reveal.js";
 import { nextTabTarget } from "./input/tab-target.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
@@ -33,6 +36,7 @@ import {
   describeRefusal,
   flashMessage,
   renderLeave,
+  renderKeyLabels,
   renderMute,
   renderSkillBar,
   updateHud,
@@ -169,6 +173,15 @@ export async function startMatchView(
     connection.sendIntent({ kind: "use-skill", slot });
   };
   renderSkillBar(hud, connection.skillBar, useSkill);
+  // Read once per match: a keymap changed elsewhere applies from the next.
+  const keymap = loadKeymap();
+  renderKeyLabels(hud, keymap);
+  let disposed = false;
+  void loadLayoutLabeller().then((label) => {
+    if (label !== undefined && !disposed) {
+      renderKeyLabels(hud, keymap, label);
+    }
+  });
 
   const sounds = soundPlayer();
   const matchSounds = attachMatchSounds(connection, sounds);
@@ -182,7 +195,7 @@ export async function startMatchView(
   // Esc cancels an attack now, so leaving is a button that asks first (#160).
   const leave = renderLeave(hud, callbacks.onLeave);
 
-  const detachMovement = attachKeyboardMoveInput(window, (direction) => {
+  const detachMovement = attachKeyboardMoveInput(window, keymap, (direction) => {
     if (direction.x === 0 && direction.y === 0) {
       connection.sendIntent({ kind: "stop" });
     } else {
@@ -191,6 +204,11 @@ export async function startMatchView(
   });
 
   const handleKeyDown = (event: KeyboardEvent): void => {
+    // Ctrl, Alt and Meta are the browser's: Ctrl+R, Ctrl+W and the rest
+    // do what they always do, and no game key fires with them (#302).
+    if (isShortcut(event)) {
+      return;
+    }
     // F10, GW1's menu key, asks to leave (#221): the way out without a mouse.
     if (event.key === "F10") {
       // Some browsers focus their menu bar on F10.
@@ -223,35 +241,6 @@ export async function startMatchView(
       }
       return;
     }
-    if (event.key === "Tab") {
-      // Never the browser's focus cycle, during a match (#55).
-      event.preventDefault();
-      if (!event.repeat) {
-        const current = latestMatch.players.find(
-          (player) => player.sessionId === connection.selfSessionId,
-        )?.targetSessionId;
-        const next = nextTabTarget(
-          latestMatch.players,
-          connection.selfSessionId,
-          current,
-          event.shiftKey ? -1 : 1,
-        );
-        if (next !== undefined && next !== current) {
-          connection.sendIntent({ kind: "target", targetSessionId: next });
-        }
-      }
-      return;
-    }
-    if (event.key === " ") {
-      // Held Space auto-repeats; one attack is all it means (#160).
-      if (!event.repeat && !isTyping(event.target)) {
-        event.preventDefault();
-        for (const intent of attackKeyIntents(connection.getSnapshot())) {
-          connection.sendIntent(intent);
-        }
-      }
-      return;
-    }
     if (event.key === "Escape") {
       // Cancel Action (#300): the cast and the attack, whichever run.
       const snapshot = connection.getSnapshot();
@@ -260,23 +249,72 @@ export async function startMatchView(
       }
       return;
     }
-    if (event.key === "m" || event.key === "M") {
-      if (!event.repeat && !isTyping(event.target)) {
-        toggleMute();
-      }
+    if (isTyping(event.target)) {
       return;
     }
-    const slot = skillSlotForKeyDown(event, connection.skillBar.length);
-    if (slot !== undefined) {
-      useSkill(slot);
+    const action = actionForCode(keymap, event.code);
+    if (action === undefined) {
+      return;
+    }
+    if (action !== "show-names") {
+      // A bound key is the game's: never the browser's focus cycle (#55),
+      // nor a page scroll on the arrows or Space.
+      event.preventDefault();
+    }
+    // Held keys auto-repeat; one press is one target, attack, toggle or
+    // cast (#43, #160).
+    if (event.repeat) {
+      return;
+    }
+    if (action === "target-next") {
+      const current = latestMatch.players.find(
+        (player) => player.sessionId === connection.selfSessionId,
+      )?.targetSessionId;
+      const next = nextTabTarget(
+        latestMatch.players,
+        connection.selfSessionId,
+        current,
+        event.shiftKey ? -1 : 1,
+      );
+      if (next !== undefined && next !== current) {
+        connection.sendIntent({ kind: "target", targetSessionId: next });
+      }
+    } else if (action === "attack") {
+      for (const intent of attackKeyIntents(connection.getSnapshot())) {
+        connection.sendIntent(intent);
+      }
+    } else if (action === "mute") {
+      toggleMute();
+    } else {
+      const slot = skillSlotForKeyDown(event, keymap, connection.skillBar.length);
+      if (slot !== undefined) {
+        useSkill(slot);
+      }
     }
   };
   window.addEventListener("keydown", handleKeyDown);
 
   let latestMatch = connection.getSnapshot();
   let latestArena = toArenaSnapshot(latestMatch, walls);
-  // Ctrl shows every name; the cursor shows one (#253).
-  const nameReveal = attachNameReveal(window);
+  // The names key shows every name; the cursor shows one (#253).
+  const nameReveal = attachNameReveal(window, keymap);
+  // While the match runs, closing or reloading the tab asks first: an
+  // accidental Ctrl+W must not drop the player (#302). Not once the
+  // result shows; then leaving is what they mean.
+  const askBeforeUnload = (event: BeforeUnloadEvent): void => {
+    event.preventDefault();
+  };
+  let guardingUnload = false;
+  const guardUnload = (running: boolean): void => {
+    if (running !== guardingUnload) {
+      guardingUnload = running;
+      if (running) {
+        window.addEventListener("beforeunload", askBeforeUnload);
+      } else {
+        window.removeEventListener("beforeunload", askBeforeUnload);
+      }
+    }
+  };
   // In world units. The camera never moves, so a still cursor stays over
   // the same spot while bodies walk under it.
   let pointer: Vec2 | undefined;
@@ -309,6 +347,7 @@ export async function startMatchView(
   const offFrame = viewport.onFrame(() => {
     latestMatch = connection.getSnapshot();
     matchSounds.snapshot(latestMatch);
+    guardUnload(latestMatch.phase !== "finished");
     // Hover is hit-tested every frame, not every move, so a body that
     // walks under a still cursor shows its name.
     latestArena = withNames(toArenaSnapshot(latestMatch, walls), pointer, nameReveal.held());
@@ -324,13 +363,21 @@ export async function startMatchView(
     updateRecharges(hud, connection.skillBar, connection.getRecharges());
   });
 
-  // A double-click on an enemy attacks it, as Space would (#298).
+  // A body is targeted, and a double-click on an enemy attacks it, as
+  // Space would (#298). The ground is walked to, and the target kept, as
+  // in GW1 (#310).
   const doubleClick = createDoubleClick();
   const offPointer = viewport.onPointerDown((world) => {
     const hit = actorAtPoint(latestArena, world);
-    connection.sendIntent({ kind: "target", targetSessionId: hit?.id ?? null });
-    if (doubleClick.press(hit?.id, performance.now())) {
-      for (const intent of attackClickIntents(latestMatch, hit?.id)) {
+    const double = doubleClick.press(hit?.id, performance.now());
+    if (hit === undefined) {
+      connection.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
+      viewport.scene.showWalkMarker(world);
+      return;
+    }
+    connection.sendIntent({ kind: "target", targetSessionId: hit.id });
+    if (double) {
+      for (const intent of attackClickIntents(latestMatch, hit.id)) {
         connection.sendIntent(intent);
       }
     }
@@ -343,7 +390,9 @@ export async function startMatchView(
     async dispose(): Promise<void> {
       // Order matters: stop listening before tearing down, so a late
       // event cannot touch a destroyed scene.
+      disposed = true;
       offFrame();
+      guardUnload(false);
       offPointer();
       offPointerMove();
       nameReveal.detach();

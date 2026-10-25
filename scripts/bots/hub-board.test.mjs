@@ -14,6 +14,7 @@ import {
   answerBoard,
   applyFacts,
   arrivals,
+  boardLines,
   listing,
   needsSweep,
   parseBoardRequest,
@@ -501,5 +502,50 @@ describe("readBoardState", () => {
     expect(readBoardState({ ...state, cards: [{ rev: 1, item: { id: "x" } }] })).toBeNull();
     expect(readBoardState({ ...state, removed: [{ id: "x", rev: 1 }] })).toBeNull();
     expect(readBoardState(null)).toBeNull();
+  });
+});
+
+describe("boardLines", () => {
+  /**
+   * @param {number} number
+   * @param {string} status
+   */
+  const card = (number, status) => ({
+    id: `I_${String(number)}`,
+    number,
+    title: `card ${String(number)}`,
+    status,
+    type: "Issue",
+  });
+  const done = Array.from({ length: 12 }, (_, i) => card(100 + i, "Done"));
+  const board = [card(1, "Ready"), ...done, card(2, "In Review")];
+
+  it("folds Done to its last five cards and says how many more there are", () => {
+    expect(boardLines(board, true)).toEqual([
+      "Ready:",
+      "  #1    card 1",
+      "In Review:",
+      "  #2    card 2",
+      "Done:",
+      "  #107  card 107",
+      "  #108  card 108",
+      "  #109  card 109",
+      "  #110  card 110",
+      "  #111  card 111",
+      "  … 7 more: board ls Done",
+    ]);
+  });
+
+  it("lists every Done card when not folded, as `board ls Done` does", () => {
+    const lines = boardLines(done, false);
+    expect(lines).toHaveLength(13);
+    expect(lines.some((line) => line.includes("more"))).toBe(false);
+  });
+
+  it("prints no 'more' line when Done fits", () => {
+    expect(boardLines(done.slice(0, 5), true)).toEqual([
+      "Done:",
+      ...done.slice(0, 5).map((c) => `  #${String(c.number)}  ${c.title}`),
+    ]);
   });
 });
