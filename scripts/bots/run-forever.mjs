@@ -25,7 +25,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 import { nextDelay } from "./hub-health.mjs";
 import { releaseLock, takeLock } from "./instance-lock.mjs";
-import { SYSTEM } from "./protocol.mjs";
+import { SYSTEM, visible } from "./protocol.mjs";
 
 const [name, separator, command, ...args] = process.argv.slice(2);
 if (name === undefined || !/^[a-z][a-z0-9-]*$/.test(name) || separator !== "--" || !command) {
@@ -132,7 +132,9 @@ for (;;) {
       `restart #${String(runs.length)} in ${String(delayMs / 1000)} s ──\n`,
   );
   if (crashLooping && !alerted) {
-    alert(`${NAME} is crash-looping: ${lastLine || how}`);
+    // The last line is the daemon's, and can echo request text: quoted and
+    // made visible, so it cannot pass for something the system says.
+    alert(`${NAME} is crash-looping. Its last line: "${visible(lastLine || how)}"`);
     alerted = true;
   } else if (!crashLooping) {
     // Out of the loop again: the next one is worth telling, too.
