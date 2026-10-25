@@ -1,6 +1,6 @@
 /**
  * `pnpm music:check [id…] [--cycles N]` and
- * `pnpm music:check <file.strudel.js> --key "D aeolian" [--layers N] [--bpm N] [--colour C#,Db] [--json]`
+ * `pnpm music:check <file.strudel.js> --key "D aeolian" [--layers N] [--bpm N] [--colour C#,Db] [--phrase-cycles N] [--json]`
  *
  * Prints, for every track and every intensity level, what the track plays,
  * and exits 1 on any failure `tracks.test.ts` would fail on. With `--json` the
@@ -14,7 +14,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { allowedSounds, checkTrack } from "./analyse.mjs";
+import { allowedSounds, checkTrack, MAX_FORM_CYCLES } from "./analyse.mjs";
 import { checkManifest } from "./manifest.mjs";
 
 /** @typedef {import("./manifest.mjs").ManifestEntry} ManifestEntry */
@@ -53,7 +53,7 @@ const sampleMap = /** @type {Record<string, unknown>} */ (
 );
 const allowed = allowedSounds(sampleMap);
 
-/** @type {{ id: string, source: string, bpm: number, key: string, colour: string[], layers: number }[]} */
+/** @type {{ id: string, source: string, bpm: number, key: string, colour: string[], layers: number, phraseCycles: number }[]} */
 const tracks = [];
 /** @type {string[]} */
 const problems = [];
@@ -80,6 +80,7 @@ if (fileArgs.length > 0) {
       key: flags.key,
       colour: (flags.colour ?? "").split(",").filter(Boolean),
       layers: Number(flags.layers ?? 4),
+      phraseCycles: Number(flags["phrase-cycles"] ?? 8),
     });
   }
 } else {
@@ -119,6 +120,15 @@ for (const track of tracks) {
       `key: ${a.outsideKey.length ? `outside ${a.outsideKey.join(" ")}` : "every note is in key"}`,
     );
     console.log(`worst-case summed gain: ${a.peakGain.toFixed(2)}`);
+    const form =
+      a.formCycles === MAX_FORM_CYCLES
+        ? `no repeat within ${String(MAX_FORM_CYCLES)} cycles`
+        : `${String(a.formCycles)} cycles`;
+    console.log(
+      `form: ${form}, ${a.formSeconds === null ? "?" : a.formSeconds.toFixed(0)} s, ` +
+        `${String(a.distinctPhrases)} distinct phrase(s) of ${String(track.phraseCycles)} cycles, ` +
+        `${a.eventsPerSecond === null ? "?" : a.eventsPerSecond.toFixed(2)} events/s`,
+    );
   });
 }
 
