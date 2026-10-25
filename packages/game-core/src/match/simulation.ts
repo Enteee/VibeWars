@@ -949,11 +949,6 @@ export class MatchSimulation {
   }
 
   /**
-   * Respawn, and every reset policy: the one way back to the start. At
-   * the starting health, full energy, no adrenaline, nothing active, any
-   * cast dropped, at spawn. Recharges carry on, as they would in a match.
-   */
-  /**
    * Casting at somebody else turns you to them, after any walking this
    * step, so a caster strafing mid-cast still faces the cast. A self-cast,
    * or a target that is gone, leaves facing alone.
@@ -969,6 +964,11 @@ export class MatchSimulation {
     }
   }
 
+  /**
+   * Respawn, and every reset policy: the one way back to the start. At
+   * the starting health, full energy, no adrenaline, nothing active, any
+   * cast dropped, at spawn. Recharges carry on, as they would in a match.
+   */
   #reset(record: ParticipantRecord): void {
     record.combatant.dead = false;
     record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);
