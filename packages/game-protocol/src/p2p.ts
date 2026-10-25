@@ -175,6 +175,12 @@ export interface WireCombatEvent {
   readonly kind: string;
   readonly targetId: string | null;
   readonly amount: number | null;
+  /** The skill an interrupt or a cancel cut short. */
+  readonly skillId: string | null;
+  /** The status applied, removed or expired. */
+  readonly statusId: string | null;
+  /** How long an applied status lasts. */
+  readonly durationSeconds: number | null;
 }
 
 /** One cast, swing or status tick, and what it did. */
@@ -537,8 +543,18 @@ function parseCombatEvent(value: unknown): WireCombatEvent | undefined {
   return raw !== undefined &&
     isString(raw.kind) &&
     isNullableString(raw.targetId) &&
-    (raw.amount === null || isNumber(raw.amount))
-    ? { kind: raw.kind, targetId: raw.targetId, amount: raw.amount }
+    (raw.amount === null || isNumber(raw.amount)) &&
+    isNullableString(raw.skillId) &&
+    isNullableString(raw.statusId) &&
+    (raw.durationSeconds === null || isNumber(raw.durationSeconds))
+    ? {
+        kind: raw.kind,
+        targetId: raw.targetId,
+        amount: raw.amount,
+        skillId: raw.skillId,
+        statusId: raw.statusId,
+        durationSeconds: raw.durationSeconds,
+      }
     : undefined;
 }
 

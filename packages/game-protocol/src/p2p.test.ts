@@ -126,8 +126,30 @@ const combat: WireCombat = {
   weaponId: "",
   area: { x: 300, y: 200, radius: 80 },
   events: [
-    { kind: "damage", targetId: "peer-2", amount: 64 },
-    { kind: "interrupted", targetId: null, amount: null },
+    {
+      kind: "damage",
+      targetId: "peer-2",
+      amount: 64,
+      skillId: null,
+      statusId: null,
+      durationSeconds: null,
+    },
+    {
+      kind: "interrupted",
+      targetId: "peer-2",
+      amount: null,
+      skillId: "healing-breeze",
+      statusId: null,
+      durationSeconds: null,
+    },
+    {
+      kind: "status-applied",
+      targetId: "peer-2",
+      amount: null,
+      skillId: null,
+      statusId: "burning",
+      durationSeconds: 3,
+    },
   ],
 };
 
@@ -323,6 +345,9 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
           kind: "damage",
           targetId: null,
           amount: 1,
+          skillId: null,
+          statusId: null,
+          durationSeconds: null,
         })),
       },
     ],
@@ -330,7 +355,12 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "combat with a NaN amount",
     parseWireCombatBatch,
-    [{ ...combat, events: [{ kind: "damage", targetId: null, amount: NaN }] }],
+    [{ ...combat, events: [{ ...combat.events[0], amount: NaN }] }],
+  ],
+  [
+    "combat with an event missing its status",
+    parseWireCombatBatch,
+    [{ ...combat, events: [{ ...combat.events[0], statusId: undefined }] }],
   ],
   [
     "skill bar with too many slots",

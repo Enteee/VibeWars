@@ -1670,7 +1670,14 @@
             "array": {
               "properties": [
                 { "name": "amount", "optional": false, "type": { "union": ["null", "number"] } },
+                {
+                  "name": "durationSeconds",
+                  "optional": false,
+                  "type": { "union": ["null", "number"] }
+                },
                 { "name": "kind", "optional": false, "type": "string" },
+                { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "statusId", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } }
               ]
             }
@@ -1718,7 +1725,18 @@
               "array": {
                 "properties": [
                   { "name": "amount", "optional": false, "type": { "union": ["null", "number"] } },
+                  {
+                    "name": "durationSeconds",
+                    "optional": false,
+                    "type": { "union": ["null", "number"] }
+                  },
                   { "name": "kind", "optional": false, "type": "string" },
+                  { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
+                  {
+                    "name": "statusId",
+                    "optional": false,
+                    "type": { "union": ["null", "string"] }
+                  },
                   { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } }
                 ]
               }
@@ -1732,7 +1750,10 @@
     "WireCombatEvent": {
       "properties": [
         { "name": "amount", "optional": false, "type": { "union": ["null", "number"] } },
+        { "name": "durationSeconds", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "kind", "optional": false, "type": "string" },
+        { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "statusId", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } }
       ]
     },
