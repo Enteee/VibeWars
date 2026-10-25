@@ -13,5 +13,5 @@
     { "path": "../game-protocol/tsconfig.build.json" }
   ],
   "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.test.ts"]
+  "exclude": ["src/**/*.test.ts", "src/**/*.test-support.ts"]
 }

@@ -82,7 +82,9 @@ export {
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_JSON_DEPTH,
   MAX_WIRE_JSON_VALUES,
+  helloProtocolVersion,
   parsePeerHello,
+  parsePeerBye,
   parsePeerWelcome,
   parsePeerRefuse,
   parseWireSnapshot,
@@ -96,6 +98,7 @@ export {
 export type {
   Channel,
   PeerHello,
+  PeerBye,
   PeerWelcome,
   PeerRefuse,
   WirePlayer,
