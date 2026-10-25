@@ -749,7 +749,7 @@ test("(28) a left click while the right button is held still walks (#438)", asyn
   expect((await shot()).equals(start), "the hero should be walking").toBe(false);
 });
 
-test("(28) an attack skill pressed out of reach walks in, then lands (#415)", async ({ page }) => {
+test("(29) an attack skill pressed out of reach walks in, then lands (#415)", async ({ page }) => {
   await page.setViewportSize(WIDE);
   await page.goto("/");
   await page.getByRole("button", { name: "new character" }).click();
@@ -766,12 +766,8 @@ test("(28) an attack skill pressed out of reach walks in, then lands (#415)", as
   await takeControl(page);
 
   // Target the bow-range dummy, at (480, 210), far out of an axe's reach.
-  const box = await canvas.boundingBox();
-  if (box === null) {
-    throw new Error("the arena canvas has no box");
-  }
-  const scale = box.width / TRAINING_HALL_WIDTH;
-  await page.mouse.click(box.x + 480 * scale, box.y + 210 * scale, { button: "right" });
+  const dummy = (await trainingView(page, canvas)).onPage({ x: 480, y: 210 });
+  await page.mouse.click(dummy.x, dummy.y, { button: "right" });
   await page.keyboard.press(skillKey(0));
 
   // Not refused: no "out of range", and the hero walks there to chop. The
