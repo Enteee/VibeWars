@@ -40,8 +40,9 @@ export type CombatEvent =
       readonly skillId: string;
     }
   /**
-   * A cast its caster walked out of (#279): paid for, never resolved, and
-   * not recharging. The caster's own choice, so not an interrupt.
+   * A cast its caster gave up by moving (#279) or Cancel Action, Esc
+   * (#300): paid for, never resolved, and not recharging. The caster's
+   * own choice, so not an interrupt.
    */
   | {
       readonly kind: "cancelled";

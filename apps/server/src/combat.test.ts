@@ -404,7 +404,7 @@ describe("networked combat", () => {
         { timeoutMs: 6000, label: "a weapon hit" },
       );
 
-      roomA.send("intent", { kind: "cancel-attack" });
+      roomA.send("intent", { kind: "cancel" });
       await waitFor(() => roomB.state.players.get(roomA.sessionId)?.attackTargetSessionId === "", {
         label: "the attack to end",
       });

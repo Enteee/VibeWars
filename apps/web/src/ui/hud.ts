@@ -9,6 +9,7 @@ import type {
 } from "../net/match-connection.js";
 import { attackingIcon, professionIcon, skillBadgeHtml, soundIcon } from "./icons.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
+import { castingSlot } from "./skill-slot-state.js";
 
 /**
  * The player's heads-up display: health/energy, skill bar, and status
@@ -504,11 +505,14 @@ export function updateHud(
   // still the authority on whether a cast is legal — this is a hint, not
   // a gate (brief §32).
   const buttons = hud.skillBar.querySelectorAll("button");
+  const casting = castingSlot(skillBar, self);
   skillBar.forEach((slot, index) => {
     const button = buttons[index];
     if (button === undefined) {
       return;
     }
+    // Lit for as long as the snapshot says it casts, however it ends (#300).
+    button.classList.toggle("is-casting", index === casting);
     const affordable =
       slot.adrenalineCost > 0
         ? self.adrenaline >= slot.adrenalineCost

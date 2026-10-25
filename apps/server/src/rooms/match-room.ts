@@ -659,8 +659,8 @@ export class MatchRoom extends Room {
           this.mirrorAttack(client.sessionId);
           return;
         }
-        case "cancel-attack":
-          this.#sim.cancelAttack(client.sessionId);
+        case "cancel":
+          this.#sim.cancelAction(client.sessionId);
           this.mirrorAttack(client.sessionId);
           return;
       }

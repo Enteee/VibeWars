@@ -67,3 +67,9 @@ export function attackClickIntents(
   }
   return [{ kind: "attack", targetId: hit.sessionId }];
 }
+
+/** Whether this player is casting, so Esc has a cast to cancel (#300). */
+export function isCasting(snapshot: MatchSnapshot): boolean {
+  const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
+  return self?.castingSkillId !== undefined && self.castTotal > 0;
+}
