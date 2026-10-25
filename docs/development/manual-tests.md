@@ -42,7 +42,8 @@ page keeps the last second's counts in `window.__musicStats`.
    `about:debugging` on the desktop Firefox. Chrome for Android: the same,
    with `chrome://inspect` in desktop Chromium.
 3. On the phone, open `<client>/?musicstats`, make a character and play
-   the Training Ground for a minute, fighting the dummies.
+   the Training Ground for a minute, fighting the dummies, then a match
+   (#448): the music should not drop out while the game is busy.
 4. In the remote console, read `__musicStats` a few times.
 
 Pass: the music sounds clean, with no crackle and no gaps.

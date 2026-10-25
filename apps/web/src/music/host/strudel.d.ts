@@ -72,6 +72,8 @@ declare module "@strudel/webaudio" {
     transpiler: (input: string, options?: object) => { output: string };
     setInterval?: (callback: () => void, ms: number) => number;
     clearInterval?: (id: number) => void;
+    /** The scheduler's clock, in seconds; defaults to the context's. */
+    getTime?: () => number;
     defaultOutput?: Output;
   }): Repl;
   /** How a hap is played: `t` is its onset, in the audio context's time. */
