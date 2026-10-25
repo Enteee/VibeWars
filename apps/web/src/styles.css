@@ -787,6 +787,13 @@ body {
   opacity: 0.45;
 }
 
+.training-skill-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .training-skill-key {
   position: relative;
   z-index: 1;
@@ -801,19 +808,41 @@ body {
 .recharge-overlay {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: conic-gradient(
     from 0deg,
     transparent calc((1 - var(--recharge)) * 1turn),
     var(--recharge-shade) 0
   );
-  color: var(--ink);
-  font-size: 1rem;
-  font-weight: 700;
-  text-shadow: 0 0 3px var(--bg);
   pointer-events: none;
+}
+
+/* The seconds left, placed per surface so they never sit on the name (#185). */
+.recharge-seconds {
+  position: absolute;
+  color: var(--ink);
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 0 3px var(--bg);
+}
+
+/* HUD: in the top row, between the hotkey and the corner badge. */
+.hud-skill .recharge-seconds {
+  top: 0.35rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.85rem;
+}
+
+/* Training Ground: one row, so the number takes the right end and the
+   name truncates before it instead of running under it. */
+.training-skill .recharge-seconds {
+  top: 50%;
+  right: 0.4rem;
+  transform: translateY(-50%);
+}
+
+.training-skill.is-recharging {
+  padding-right: 2.4em;
 }
 
 /* Ready again: the border flashes, in the same frame the wipe and the

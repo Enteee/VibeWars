@@ -275,12 +275,14 @@ test("(13) a recharging skill shows the clock-wipe and the seconds left, then cl
   const slot = page.locator(".training-skill").first();
   const overlay = slot.locator(".recharge-overlay");
   await expect(overlay).toHaveCount(1);
-  expect(Number(await overlay.textContent())).toBeGreaterThan(0);
+  expect(Number(await overlay.locator(".recharge-seconds").textContent())).toBeGreaterThan(0);
   const recharge = await overlay.evaluate((node) => node.style.getPropertyValue("--recharge"));
   expect(Number(recharge)).toBeGreaterThan(0);
   await expect(slot).toHaveAttribute("aria-label", /^Fireball, recharging, \d+ seconds?$/);
+  await expect(slot).toHaveClass(/\bis-recharging\b/);
 
   // Fireball recharges in 7 s.
   await expect(overlay).toHaveCount(0, { timeout: 10_000 });
   await expect(slot).not.toHaveAttribute("aria-label");
+  await expect(slot).not.toHaveClass(/\bis-recharging\b/);
 });

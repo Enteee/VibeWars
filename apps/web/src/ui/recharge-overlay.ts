@@ -58,6 +58,11 @@ export function prefersReducedMotion(): boolean {
 /**
  * Paint `recharge` onto one slot element, from the render loop. Writes
  * only what changed, so a frame with nothing new touches nothing.
+ *
+ * The overlay is the wipe alone; the seconds are a child of it that each
+ * surface places where they cover no name (#185). `is-recharging` on
+ * the slot lives exactly as long as the overlay, so a layout that makes
+ * room for the number keeps it through the last, numberless second.
  */
 export function paintRecharge(
   slot: HTMLElement,
@@ -74,6 +79,7 @@ export function paintRecharge(
       // Overlay, number and label go in the same frame as the flash, so
       // the cue is never colour alone.
       overlay.remove();
+      slot.classList.remove("is-recharging");
       slot.removeAttribute("aria-label");
       if (!reducedMotion) {
         flashReady(slot);
@@ -86,14 +92,19 @@ export function paintRecharge(
     overlay = document.createElement("span");
     overlay.className = "recharge-overlay";
     overlay.setAttribute("aria-hidden", "true");
+    const seconds = document.createElement("span");
+    seconds.className = "recharge-seconds";
+    overlay.appendChild(seconds);
     slot.appendChild(overlay);
+    slot.classList.add("is-recharging");
   }
   const fraction = String(view.fraction);
   if (overlay.style.getPropertyValue("--recharge") !== fraction) {
     overlay.style.setProperty("--recharge", fraction);
   }
-  if (overlay.textContent !== view.seconds) {
-    overlay.textContent = view.seconds;
+  const seconds = overlay.firstElementChild;
+  if (seconds !== null && seconds.textContent !== view.seconds) {
+    seconds.textContent = view.seconds;
   }
   if (slot.getAttribute("aria-label") !== view.label) {
     slot.setAttribute("aria-label", view.label);
