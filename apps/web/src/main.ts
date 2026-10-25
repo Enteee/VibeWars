@@ -11,6 +11,7 @@ import {
   type LobbyConnection,
 } from "./net/lobby-client.js";
 import { startMatchView, type MatchView } from "./match-view.js";
+import { music } from "./music/play-music.js";
 import {
   CharacterRepository,
   TeamRepository,
@@ -147,6 +148,7 @@ async function main(): Promise<void> {
     disposeBuildEditor();
     disposeKeysScreen();
     showViewport(false);
+    music().screen("menu");
     void (async () => {
       const { characters: list, problems } = await characters.list();
       renderMenuWith(list, problems);
@@ -405,6 +407,7 @@ async function main(): Promise<void> {
     const snapshot = lobby.getSnapshot();
     setStatus(`lobby ${snapshot.code}`, "online");
     showViewport(false);
+    music().screen("lobby");
     renderLobbyScreen(
       screenRoot,
       snapshot,
