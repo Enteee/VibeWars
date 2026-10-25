@@ -59,5 +59,7 @@ export type {
   SkillBarSlot,
   CombatMessage,
   MatchEndedMessage,
+  ClientMessages,
+  ServerMessages,
   MatchSeatReservation,
 } from "./protocol.js";

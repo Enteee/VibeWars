@@ -28,6 +28,7 @@ import type {
   SlotRecharge,
 } from "./match-connection.js";
 import { extrapolateRecharges } from "./recharge-clock.js";
+import { sendMessage } from "./wire.js";
 
 /**
  * Thin wrapper around the Colyseus browser SDK for the match room.
@@ -330,7 +331,7 @@ export function createMatchConnection(
       notifyConnection = handler;
     },
     sendIntent(intent: ClientIntent): void {
-      room.send("intent", intent);
+      sendMessage(room, "intent", intent);
     },
     getSnapshot(): MatchSnapshot {
       return snapshotFrom(room);

@@ -27,7 +27,6 @@ import {
   spawnFacing,
   validatePlayerBuild,
   vec2,
-  type CombatEvent,
   type CombatLogEntry,
   type BuildEquipment,
   type Participant,
@@ -43,13 +42,10 @@ import {
   ROOM_MATCH,
   parseClientIntent,
   type CastRefusedMessage,
-  type CombatMessage,
   type MapDescriptor,
-  type MatchEndedMessage,
   type RechargeMessage,
   type RechargeSlot,
   type ServerHello,
-  type SkillBarMessage,
   type WallDescriptor,
 } from "@vibewars/game-protocol";
 import type { StepContext } from "colyseus";
@@ -63,6 +59,7 @@ import {
   messageBudget,
 } from "./options.js";
 import { rechargePredicted, rechargeSlots } from "./recharge.js";
+import { broadcast, send } from "./wire.js";
 import { RoomSeats, peerAddress, type ClientLimits } from "./client-budget.js";
 import { RoomSlot, type RoomBudget } from "./room-budget.js";
 
@@ -607,7 +604,7 @@ export class MatchRoom extends Room {
               skillId: request.skillId,
               reason: request.check.reason,
             };
-            client.send("cast-refused", message);
+            send(client, "cast-refused", message);
           }
           return;
         }
@@ -615,7 +612,7 @@ export class MatchRoom extends Room {
           const check = this.#sim.requestAttack(client.sessionId, intent.targetId);
           if (check !== undefined && !check.ok) {
             const message: CastRefusedMessage = { kind: "attack", reason: check.reason };
-            client.send("cast-refused", message);
+            send(client, "cast-refused", message);
           }
           this.mirrorAttack(client.sessionId);
           return;
@@ -707,18 +704,12 @@ export class MatchRoom extends Room {
     // skill, and `weaponId` `""` unless it was a weapon (#162).
     const skillId = entry.skillId ?? "";
     const weaponId = entry.weaponId ?? "";
-    this.broadcast(
+    broadcast(
+      this,
       "combat",
-      (area === undefined
+      area === undefined
         ? { casterSessionId, cause, skillId, weaponId, events }
-        : {
-            casterSessionId,
-            cause,
-            skillId,
-            weaponId,
-            events,
-            area,
-          }) satisfies CombatMessage<CombatEvent>,
+        : { casterSessionId, cause, skillId, weaponId, events, area },
     );
   }
 
@@ -787,12 +778,12 @@ export class MatchRoom extends Room {
     this.state.phase = "finished";
     this.state.winningTeam = outcome.winningTeam ?? -1;
     this.state.endReason = outcome.reason ?? "";
-    this.broadcast("match-ended", {
+    broadcast(this, "match-ended", {
       winningTeam: outcome.winningTeam ?? null,
       reason: outcome.reason ?? null,
       scoreTeam0: this.state.scoreTeam0,
       scoreTeam1: this.state.scoreTeam1,
-    } satisfies MatchEndedMessage);
+    });
     console.info(
       `[match] finished winner=${String(outcome.winningTeam ?? "draw")} reason=${String(outcome.reason)}`,
     );
@@ -816,7 +807,7 @@ export class MatchRoom extends Room {
     }
     this.#rechargesSent.set(client.sessionId, { slots, at: now });
     const message: RechargeMessage = { slots };
-    client.send("recharge", message);
+    send(client, "recharge", message);
   }
 
   /** Add the shots released this tick and drop those that landed; leave the rest alone. */
@@ -983,9 +974,9 @@ export class MatchRoom extends Room {
       sessionId: client.sessionId,
       tickIntervalMs: TICK_INTERVAL_MS,
     };
-    client.send("hello", hello);
-    client.send("map", this.#mapDescriptor);
-    client.send("skill-bar", {
+    send(client, "hello", hello);
+    send(client, "map", this.#mapDescriptor);
+    send(client, "skill-bar", {
       slots: sim.skillBar.map((skillId) => {
         const skill = getSkill(skillId);
         return {
@@ -997,7 +988,7 @@ export class MatchRoom extends Room {
           rechargeSeconds: skill?.rechargeSeconds ?? 0,
         };
       }),
-    } satisfies SkillBarMessage);
+    });
     this.sendRecharges(client, true);
 
     console.info(

@@ -443,3 +443,35 @@ export interface MatchEndedMessage {
   readonly scoreTeam0: number;
   readonly scoreTeam1: number;
 }
+
+/* -------------------------------------------------------------------------- */
+/* The message tables                                                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * What a client may send, by message name, to its payload. Both sides send
+ * through helpers typed by these tables, never a raw `send("name", ...)`,
+ * so the wire schema snapshot that hashes them is what really crosses the
+ * socket (#303). The server still parses every client payload as
+ * `unknown` (brief §32); this says what a well-formed one is.
+ */
+export interface ClientMessages {
+  readonly intent: ClientIntent;
+  readonly "choose-team": LobbyChooseTeamMessage;
+  readonly ready: LobbyReadyMessage;
+  readonly "select-map": LobbySelectMapMessage;
+  readonly "start-match": LobbyStartMatchMessage;
+}
+
+/** What the server sends, by message name, to its payload; `Event` as in `CombatMessage`. */
+export interface ServerMessages<Event> {
+  readonly hello: ServerHello;
+  readonly map: MapDescriptor;
+  readonly "skill-bar": SkillBarMessage;
+  readonly recharge: RechargeMessage;
+  readonly "cast-refused": CastRefusedMessage;
+  readonly combat: CombatMessage<Event>;
+  readonly "match-ended": MatchEndedMessage;
+  readonly "match-starting": LobbyMatchStartingMessage;
+  readonly "start-rejected": LobbyStartRejectedMessage;
+}

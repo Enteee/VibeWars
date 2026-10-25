@@ -527,6 +527,24 @@
       }
     }
   },
+  "constants": {
+    "ADDRESS_LIMIT": { "literal": 429 },
+    "ADDRESS_LIMIT_MESSAGE": {
+      "literal": "Too many connections from your network. Close other VibeWars tabs and try again."
+    },
+    "CLIENT_LIMIT": { "literal": 4503 },
+    "LOBBY_CODE_ALPHABET": { "literal": "ACDEFGHJKMNPQRTWXY34679" },
+    "LOBBY_CODE_LENGTH": { "literal": 4 },
+    "MAX_LOBBY_PLAYERS": { "literal": 16 },
+    "PROTOCOL_MISMATCH_MESSAGE": {
+      "literal": "This tab is running an outdated version of VibeWars. Reload the page."
+    },
+    "QUICK_MATCH_MAX_PLAYERS": { "literal": 8 },
+    "ROOM_LIMIT": { "literal": 503 },
+    "ROOM_LOBBY": { "literal": "lobby" },
+    "ROOM_MATCH": { "literal": "match" },
+    "SERVER_FULL_MESSAGE": { "literal": "The server is full. Try again in a minute." }
+  },
   "types": {
     "AttackIntent": {
       "properties": [
@@ -591,6 +609,79 @@
             { "name": "kind", "optional": false, "type": { "literal": "use-skill" } },
             { "name": "slot", "optional": false, "type": "number" }
           ]
+        }
+      ]
+    },
+    "ClientMessages": {
+      "properties": [
+        {
+          "name": "choose-team",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "team", "optional": false, "type": { "union": ["null", "number"] } }
+            ]
+          }
+        },
+        {
+          "name": "intent",
+          "optional": false,
+          "type": {
+            "union": [
+              {
+                "properties": [
+                  { "name": "dirX", "optional": false, "type": "number" },
+                  { "name": "dirY", "optional": false, "type": "number" },
+                  { "name": "kind", "optional": false, "type": { "literal": "move" } }
+                ]
+              },
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "attack" } },
+                  { "name": "targetId", "optional": false, "type": "string" }
+                ]
+              },
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "cancel-attack" } }
+                ]
+              },
+              {
+                "properties": [{ "name": "kind", "optional": false, "type": { "literal": "stop" } }]
+              },
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "target" } },
+                  {
+                    "name": "targetSessionId",
+                    "optional": false,
+                    "type": { "union": ["null", "string"] }
+                  }
+                ]
+              },
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "use-skill" } },
+                  { "name": "slot", "optional": false, "type": "number" }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "ready",
+          "optional": false,
+          "type": { "properties": [{ "name": "ready", "optional": false, "type": "boolean" }] }
+        },
+        {
+          "name": "select-map",
+          "optional": false,
+          "type": { "properties": [{ "name": "mapId", "optional": false, "type": "string" }] }
+        },
+        {
+          "name": "start-match",
+          "optional": false,
+          "type": { "properties": [], "index": [{ "key": "string", "value": "never" }] }
         }
       ]
     },
@@ -972,6 +1063,222 @@
         { "name": "protocolVersion", "optional": false, "type": "string" },
         { "name": "sessionId", "optional": false, "type": "string" },
         { "name": "tickIntervalMs", "optional": false, "type": "number" }
+      ]
+    },
+    "ServerMessages": {
+      "properties": [
+        {
+          "name": "cast-refused",
+          "optional": false,
+          "type": {
+            "union": [
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "attack" } },
+                  { "name": "reason", "optional": false, "type": "string" }
+                ]
+              },
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "skill" } },
+                  { "name": "reason", "optional": false, "type": "string" },
+                  { "name": "skillId", "optional": false, "type": "string" },
+                  { "name": "slot", "optional": false, "type": "number" }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "combat",
+          "optional": false,
+          "type": {
+            "properties": [
+              {
+                "name": "area",
+                "optional": true,
+                "type": {
+                  "properties": [
+                    { "name": "radius", "optional": false, "type": "number" },
+                    { "name": "x", "optional": false, "type": "number" },
+                    { "name": "y", "optional": false, "type": "number" }
+                  ]
+                }
+              },
+              { "name": "casterSessionId", "optional": false, "type": "string" },
+              {
+                "name": "cause",
+                "optional": false,
+                "type": {
+                  "union": [
+                    { "literal": "degeneration" },
+                    { "literal": "skill" },
+                    { "literal": "weapon" }
+                  ]
+                }
+              },
+              {
+                "name": "events",
+                "optional": false,
+                "type": { "array": { "typeParameter": "Event" } }
+              },
+              { "name": "skillId", "optional": false, "type": "string" },
+              { "name": "weaponId", "optional": false, "type": "string" }
+            ]
+          }
+        },
+        {
+          "name": "hello",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "protocolVersion", "optional": false, "type": "string" },
+              { "name": "sessionId", "optional": false, "type": "string" },
+              { "name": "tickIntervalMs", "optional": false, "type": "number" }
+            ]
+          }
+        },
+        {
+          "name": "map",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "height", "optional": false, "type": "number" },
+              { "name": "id", "optional": false, "type": "string" },
+              { "name": "name", "optional": false, "type": "string" },
+              {
+                "name": "walls",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "union": [
+                      {
+                        "properties": [
+                          { "name": "height", "optional": false, "type": "number" },
+                          { "name": "kind", "optional": false, "type": { "literal": "rect" } },
+                          { "name": "width", "optional": false, "type": "number" },
+                          { "name": "x", "optional": false, "type": "number" },
+                          { "name": "y", "optional": false, "type": "number" }
+                        ]
+                      },
+                      {
+                        "properties": [
+                          { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+                          {
+                            "name": "points",
+                            "optional": false,
+                            "type": {
+                              "array": {
+                                "properties": [
+                                  { "name": "x", "optional": false, "type": "number" },
+                                  { "name": "y", "optional": false, "type": "number" }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              { "name": "width", "optional": false, "type": "number" }
+            ]
+          }
+        },
+        {
+          "name": "match-ended",
+          "optional": false,
+          "type": {
+            "properties": [
+              {
+                "name": "reason",
+                "optional": false,
+                "type": { "union": ["null", { "literal": "score" }, { "literal": "time" }] }
+              },
+              { "name": "scoreTeam0", "optional": false, "type": "number" },
+              { "name": "scoreTeam1", "optional": false, "type": "number" },
+              { "name": "winningTeam", "optional": false, "type": { "union": ["null", "number"] } }
+            ]
+          }
+        },
+        {
+          "name": "match-starting",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "mapId", "optional": false, "type": "string" },
+              {
+                "name": "reservation",
+                "optional": false,
+                "type": {
+                  "properties": [
+                    {
+                      "name": "devMode",
+                      "optional": true,
+                      "type": { "union": [{ "literal": false }, { "literal": true }] }
+                    },
+                    { "name": "name", "optional": false, "type": "string" },
+                    { "name": "processId", "optional": true, "type": "string" },
+                    { "name": "publicAddress", "optional": true, "type": "string" },
+                    { "name": "roomId", "optional": false, "type": "string" },
+                    { "name": "sessionId", "optional": false, "type": "string" }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "recharge",
+          "optional": false,
+          "type": {
+            "properties": [
+              {
+                "name": "slots",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "properties": [
+                      { "name": "remainingSeconds", "optional": false, "type": "number" },
+                      { "name": "slot", "optional": false, "type": "number" },
+                      { "name": "totalSeconds", "optional": false, "type": "number" }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "skill-bar",
+          "optional": false,
+          "type": {
+            "properties": [
+              {
+                "name": "slots",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "properties": [
+                      { "name": "activationSeconds", "optional": false, "type": "number" },
+                      { "name": "adrenalineCost", "optional": false, "type": "number" },
+                      { "name": "energyCost", "optional": false, "type": "number" },
+                      { "name": "id", "optional": false, "type": "string" },
+                      { "name": "name", "optional": false, "type": "string" },
+                      { "name": "rechargeSeconds", "optional": false, "type": "number" }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "start-rejected",
+          "optional": false,
+          "type": { "properties": [{ "name": "reason", "optional": false, "type": "string" }] }
+        }
       ]
     },
     "SkillBarMessage": {

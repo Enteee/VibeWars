@@ -39,8 +39,9 @@ const REPO = path.resolve(HERE, "../../../..");
 const PROTOCOL = path.join(REPO, "packages/game-protocol");
 export const SCHEMA_FILE = path.join(PROTOCOL, "wire-schema.json");
 export const VERSION_FILE = path.join(PROTOCOL, "src/protocol-version.ts");
-const MESSAGES_FILE = path.join(HERE, "wire-messages.ts");
 const TSCONFIG = path.join(REPO, "apps/server/tsconfig.json");
+/** Where the server's message table, and the helpers typed by it, live. */
+const WIRE_FILE = path.join(HERE, "../rooms/wire.ts");
 
 /** The Colyseus state classes, roots first. A nested schema must be listed. */
 const STATE = [MatchState, PlayerState, ProjectileState, LobbyState, LobbyPlayer];
@@ -53,23 +54,30 @@ export interface WireFiles {
 
 /** Generate both files in memory. */
 export async function generateWireFiles(): Promise<WireFiles> {
-  const program = programFor([MESSAGES_FILE], TSCONFIG);
-  const messages = program.getSourceFile(MESSAGES_FILE);
-  if (messages === undefined) {
-    throw new Error(`cannot read ${MESSAGES_FILE}`);
+  const program = programFor([WIRE_FILE], TSCONFIG);
+  const wire = program.getSourceFile(WIRE_FILE);
+  if (wire === undefined) {
+    throw new Error(`cannot read ${WIRE_FILE}`);
   }
-  const types = {
-    ...describeExports(program, messages, "@vibewars/game-protocol"),
-    ...describeExports(program, messages, "@vibewars/game-core", ["CombatEvent"]),
-  };
+  const checker = program.getTypeChecker();
+  const protocol = moduleOf(program, wire, "@vibewars/game-protocol");
+  const core = moduleOf(program, wire, "@vibewars/game-core");
   const snapshot: Json = {
     semanticsRevision: SEMANTICS_REVISION,
     state: describeState(STATE),
     messages: {
-      clientToServer: describeInterface(program, messages, "ClientMessages"),
-      serverToClient: describeInterface(program, messages, "ServerMessages"),
+      clientToServer: describeMessages(checker, exportedType(checker, protocol, "ClientMessages")),
+      serverToClient: describeMessages(
+        checker,
+        exportedType(checker, moduleOf(program, wire), "ServerMessage"),
+      ),
     },
-    types: sortKeys(types),
+    // The version cannot hash itself.
+    constants: describeConstants(checker, protocol, ["PROTOCOL_VERSION"]),
+    types: sortKeys({
+      ...describeTypes(checker, protocol),
+      CombatEvent: describeType(checker, exportedType(checker, core, "CombatEvent")),
+    }),
   };
   const schema = await formatted(`${JSON.stringify(snapshot)}\n`, SCHEMA_FILE);
   return { schema, version: await formatted(versionSource(versionOf(schema)), VERSION_FILE) };
@@ -121,59 +129,84 @@ export function programFor(roots: readonly string[], tsconfig: string): ts.Progr
   return ts.createProgram({ rootNames: roots, options: { ...parsed.options, noEmit: true } });
 }
 
-/**
- * Every type `from` exports, or the `only` ones, as imported by `file`:
- * by name, to its shape.
- */
-export function describeExports(
-  program: ts.Program,
-  file: ts.SourceFile,
-  from: string,
-  only?: readonly string[],
-): Record<string, Json> {
+/** The module `file` imports as `from`, or `file`'s own without one. */
+export function moduleOf(program: ts.Program, file: ts.SourceFile, from?: string): ts.Symbol {
   const checker = program.getTypeChecker();
-  const resolved = ts.resolveModuleName(from, file.fileName, program.getCompilerOptions(), ts.sys)
-    .resolvedModule?.resolvedFileName;
+  const resolved =
+    from === undefined
+      ? file.fileName
+      : ts.resolveModuleName(from, file.fileName, program.getCompilerOptions(), ts.sys)
+          .resolvedModule?.resolvedFileName;
   const source = resolved === undefined ? undefined : program.getSourceFile(resolved);
   const module = source === undefined ? undefined : checker.getSymbolAtLocation(source);
   if (module === undefined) {
-    throw new Error(`${file.fileName} does not import ${from}`);
+    throw new Error(`${file.fileName} does not import ${from ?? "itself"}`);
   }
+  return module;
+}
+
+/** `module`'s exports, aliases resolved, by name. */
+function exportsOf(checker: ts.TypeChecker, module: ts.Symbol): Map<string, ts.Symbol> {
+  return new Map(
+    checker
+      .getExportsOfModule(module)
+      .map((exported) => [
+        exported.name,
+        exported.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(exported) : exported,
+      ]),
+  );
+}
+
+const TYPES = ts.SymbolFlags.Interface | ts.SymbolFlags.TypeAlias;
+
+/** The type `module` exports as `name`. */
+export function exportedType(checker: ts.TypeChecker, module: ts.Symbol, name: string): ts.Type {
+  const symbol = exportsOf(checker, module).get(name);
+  if (symbol === undefined || !(symbol.flags & TYPES)) {
+    throw new Error(`${module.name} exports no type ${name}`);
+  }
+  return checker.getDeclaredTypeOfSymbol(symbol);
+}
+
+/** Every type `module` exports, by name, to its shape. */
+export function describeTypes(checker: ts.TypeChecker, module: ts.Symbol): Record<string, Json> {
   const described: Record<string, Json> = {};
-  for (const exported of checker.getExportsOfModule(module)) {
-    const symbol =
-      exported.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(exported) : exported;
-    if (symbol.flags & (ts.SymbolFlags.Interface | ts.SymbolFlags.TypeAlias)) {
-      if (only === undefined || only.includes(exported.name)) {
-        described[exported.name] = describeType(checker, checker.getDeclaredTypeOfSymbol(symbol));
+  for (const [name, symbol] of exportsOf(checker, module)) {
+    if (symbol.flags & TYPES) {
+      described[name] = describeType(checker, checker.getDeclaredTypeOfSymbol(symbol));
+    }
+  }
+  return sortKeys(described);
+}
+
+/**
+ * Every constant `module` exports whose type is a literal, by name, to its
+ * value: close codes, room names and limits mean something on the wire
+ * as much as a payload's shape does. Constants of any other type say
+ * nothing about the wire and are left out.
+ */
+export function describeConstants(
+  checker: ts.TypeChecker,
+  module: ts.Symbol,
+  except: readonly string[],
+): Record<string, Json> {
+  const described: Record<string, Json> = {};
+  for (const [name, symbol] of exportsOf(checker, module)) {
+    if (symbol.flags & ts.SymbolFlags.BlockScopedVariable && !except.includes(name)) {
+      const type = checker.getTypeOfSymbol(symbol);
+      if (type.flags & ts.TypeFlags.Literal) {
+        described[name] = describeType(checker, type);
       }
     }
   }
-  for (const name of only ?? []) {
-    if (!(name in described)) {
-      throw new Error(`${from} exports no type ${name}`);
-    }
-  }
-  return described;
+  return sortKeys(described);
 }
 
-/** The interface `name` in `file`, each property its payload: written as, and its shape. */
-export function describeInterface(
-  program: ts.Program,
-  file: ts.SourceFile,
-  name: string,
-): Record<string, Json> {
-  const checker = program.getTypeChecker();
-  const declaration = file.statements.find(
-    (statement): statement is ts.InterfaceDeclaration =>
-      ts.isInterfaceDeclaration(statement) && statement.name.text === name,
-  );
-  if (declaration === undefined) {
-    throw new Error(`${file.fileName} declares no interface ${name}`);
-  }
+/** A message table: each name to its payload, as written and as a shape. */
+export function describeMessages(checker: ts.TypeChecker, table: ts.Type): Record<string, Json> {
   const described: Record<string, Json> = {};
-  const properties = checker.getPropertiesOfType(checker.getTypeAtLocation(declaration));
-  for (const property of [...properties].sort((a, b) => compare(a.name, b.name))) {
+  const properties = [...checker.getPropertiesOfType(table)];
+  for (const property of properties.sort((a, b) => compare(a.name, b.name))) {
     const type = checker.getTypeOfSymbol(property);
     described[property.name] = {
       payload: checker.typeToString(type),

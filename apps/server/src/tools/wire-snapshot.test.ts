@@ -9,9 +9,11 @@ import { beforeAll, describe, expect, it } from "vitest";
 import {
   SCHEMA_FILE,
   VERSION_FILE,
-  describeExports,
+  describeConstants,
   describeState,
+  describeTypes,
   generateWireFiles,
+  moduleOf,
   programFor,
   versionOf,
   type WireFiles,
@@ -48,24 +50,40 @@ describe("the wire schema snapshot (#303)", () => {
     expect(await generateWireFiles()).toEqual(generated);
   }, 60_000);
 
-  it("holds every message the rooms send, broadcast or handle, and no other", () => {
-    const used = new Set<string>();
-    for (const file of fs.readdirSync(ROOMS)) {
-      if (file.endsWith(".ts") && !file.endsWith(".test.ts")) {
-        const source = fs.readFileSync(path.join(ROOMS, file), "utf8");
-        for (const match of source.matchAll(/\.(?:send|broadcast|onMessage)\(\s*"([^"]+)"/g)) {
-          used.add(match[1] ?? "");
+  it("is what the rooms send: every send goes through the typed helpers", () => {
+    const raw: string[] = [];
+    for (const file of roomSources()) {
+      if (path.basename(file.name) !== "wire.ts") {
+        for (const match of file.source.matchAll(/\.(?:send|broadcast)\(/g)) {
+          raw.push(`${file.name}: ${match[0]}`);
         }
       }
     }
+    expect(raw, "send through rooms/wire.ts, so the snapshot sees the payload").toEqual([]);
+  });
+
+  it("holds every message the rooms handle, and no other", () => {
+    const handled = new Set<string>();
+    for (const file of roomSources()) {
+      for (const match of file.source.matchAll(/\.onMessage\(\s*"([^"]+)"/g)) {
+        handled.add(match[1] ?? "");
+      }
+    }
     const snapshot = JSON.parse(generated.schema) as {
-      messages: Record<string, Record<string, unknown>>;
+      messages: { clientToServer: Record<string, unknown> };
     };
-    const named = Object.values(snapshot.messages).flatMap((direction) => Object.keys(direction));
-    expect(used.size).toBeGreaterThan(0);
-    expect(new Set(named)).toEqual(used);
+    expect(handled.size).toBeGreaterThan(0);
+    expect(new Set(Object.keys(snapshot.messages.clientToServer))).toEqual(handled);
   });
 });
+
+/** The rooms' sources, tests aside. */
+function roomSources(): { name: string; source: string }[] {
+  return fs
+    .readdirSync(ROOMS)
+    .filter((file) => file.endsWith(".ts") && !file.endsWith(".test.ts"))
+    .map((file) => ({ name: file, source: fs.readFileSync(path.join(ROOMS, file), "utf8") }));
+}
 
 describe("what changes the hash", () => {
   /** The hash of one module's exported types, as the snapshot describes them. */
@@ -73,7 +91,7 @@ describe("what changes the hash", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "wire-"));
     try {
       fs.writeFileSync(path.join(dir, "payloads.ts"), source);
-      fs.writeFileSync(path.join(dir, "main.ts"), 'export type * from "./payloads.js";\n');
+      fs.writeFileSync(path.join(dir, "main.ts"), 'export * from "./payloads.js";\n');
       fs.writeFileSync(
         path.join(dir, "tsconfig.json"),
         JSON.stringify({ compilerOptions: { strict: true, module: "nodenext" } }),
@@ -84,7 +102,11 @@ describe("what changes the hash", () => {
       if (file === undefined) {
         throw new Error("the fixture did not compile");
       }
-      return versionOf(JSON.stringify(describeExports(program, file, "./payloads.js")));
+      const checker = program.getTypeChecker();
+      const module = moduleOf(program, file, "./payloads.js");
+      return versionOf(
+        JSON.stringify([describeTypes(checker, module), describeConstants(checker, module, [])]),
+      );
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -104,6 +126,12 @@ describe("what changes the hash", () => {
     expect(
       hashOf("export interface Hit { readonly amount: number; readonly targetId: string }\n"),
     ).toBe(hashOf(BASE));
+  });
+
+  it("an exported constant changed changes it", () => {
+    expect(hashOf(`${BASE}export const ADDRESS_LIMIT = 4429;\n`)).not.toBe(
+      hashOf(`${BASE}export const ADDRESS_LIMIT = 429;\n`),
+    );
   });
 
   it("a state schema's fields reordered do", () => {

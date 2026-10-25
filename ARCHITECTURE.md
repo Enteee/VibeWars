@@ -125,13 +125,17 @@ check at join time. Shared by both apps so neither can drift.
 The version is not written by hand (#303). `wire-schema.json` is a committed,
 generated description of everything that crosses the socket: the Colyseus
 state classes, fields in their encoded order; every type this package exports
-and game-core's `CombatEvent`, structurally; and each message name the rooms
-use, mapped to its payload. `PROTOCOL_VERSION` is the first 12 hex digits of
-its sha256, generated into `src/protocol-version.ts`. A wire change changes the
-snapshot and so the version, and two wire changes always conflict on that one
-line. `pnpm run wire:snapshot` regenerates both files; a test in the server
-suite fails a change that did not. A change in meaning with no change in shape
-bumps `SEMANTICS_REVISION` in the generator by hand.
+and game-core's `CombatEvent`, structurally; every literal constant it exports
+(close codes, room names, limits); and the message tables, `ClientMessages`
+and `ServerMessages`, each name to its payload. Both sides send only through
+helpers typed by those tables (`apps/server/src/rooms/wire.ts`,
+`apps/web/src/net/wire.ts`), so the tables are what crosses the socket.
+`PROTOCOL_VERSION` is the first 12 hex digits of its sha256, generated into
+`src/protocol-version.ts`. A wire change changes the snapshot and so the
+version, and two wire changes always conflict on that one line.
+`pnpm run wire:snapshot` regenerates both files; a test in the server suite
+fails a change that did not. A change in meaning with no change in shape bumps
+`SEMANTICS_REVISION` in the generator by hand.
 
 ### `packages/game-maps` — arenas
 
@@ -199,8 +203,10 @@ both are legitimately in scope.
   real server over real WebSockets (brief §26). It reports numbers; it tunes
   nothing.
 - `tools/wire-snapshot.ts` — generates game-protocol's `wire-schema.json` and
-  `protocol-version.ts` (#303), walking the message table in
-  `tools/wire-messages.ts`. Run by `pnpm run wire:snapshot`.
+  `protocol-version.ts` (#303). Run by `pnpm run wire:snapshot`.
+- `rooms/wire.ts` — `send` and `broadcast`, typed by the protocol's
+  `ServerMessages`: the only way a room sends, which `wire-snapshot.test.ts`
+  checks.
 
 The room and seat budgets are made per server by `createGameServer`, never as
 module globals, because the tests run several servers in one process. The
