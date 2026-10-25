@@ -6,7 +6,7 @@ import { soundsForCombat, soundsForSnapshot } from "./combat-sounds.js";
 const ME = "me";
 
 function message(casterSessionId: string, events: CombatMessage["events"]): CombatMessage {
-  return { casterSessionId, skillId: "x", events };
+  return { casterSessionId, cause: "skill", skillId: "x", events };
 }
 
 describe("soundsForCombat", () => {
@@ -66,14 +66,21 @@ describe("soundsForCombat", () => {
 
   it("is silent for a status tick on you, except the death it causes", () => {
     // How the server sends burning or Regeneration: the bearer as caster, no skill.
-    const burning = {
+    const burning: CombatMessage = {
       casterSessionId: ME,
+      cause: "degeneration",
       skillId: "",
       events: [{ kind: "damage", targetId: ME }],
     };
-    const regen = { casterSessionId: ME, skillId: "", events: [{ kind: "heal", targetId: ME }] };
-    const fatal = {
+    const regen: CombatMessage = {
       casterSessionId: ME,
+      cause: "degeneration",
+      skillId: "",
+      events: [{ kind: "heal", targetId: ME }],
+    };
+    const fatal: CombatMessage = {
+      casterSessionId: ME,
+      cause: "degeneration",
       skillId: "",
       events: [
         { kind: "damage", targetId: ME },
@@ -83,6 +90,16 @@ describe("soundsForCombat", () => {
     expect(soundsForCombat(burning, ME)).toEqual([]);
     expect(soundsForCombat(regen, ME)).toEqual([]);
     expect(soundsForCombat(fatal, ME)).toEqual(["death"]);
+  });
+
+  it("cracks for a weapon hit you deal: no skill, but not a status tick either (#160)", () => {
+    const swing: CombatMessage = {
+      casterSessionId: ME,
+      cause: "weapon",
+      skillId: "",
+      events: [{ kind: "damage", targetId: "foe", amount: 12 }],
+    };
+    expect(soundsForCombat(swing, ME)).toEqual(["hit-dealt"]);
   });
 
   it("plays a kill as a hit and a death", () => {
@@ -102,6 +119,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     y: 0,
     facing: 0,
     targetSessionId: undefined,
+    attackTargetSessionId: undefined,
     health: 100,
     maxHealth: 100,
     energy: 20,
@@ -129,6 +147,7 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     phase: "active",
     winningTeam: undefined,
     endReason: undefined,
+    projectiles: [],
   };
 }
 

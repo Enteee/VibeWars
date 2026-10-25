@@ -17,6 +17,13 @@ async function openMenu(page: Page, playerName: string): Promise<void> {
   await page.locator(".screen-menu input.field-input").first().fill(playerName);
 }
 
+/** Quit the match with the HUD's leave button, which asks first (#160). */
+async function leaveMatch(page: Page): Promise<void> {
+  const leave = page.locator(".hud-leave");
+  await leave.getByRole("button", { name: "leave match" }).click();
+  await leave.getByRole("button", { name: "yes" }).click();
+}
+
 /** Host a lobby and return the code the host is told to read out. */
 async function hostLobby(page: Page, playerName: string): Promise<string> {
   await openMenu(page, playerName);
@@ -224,13 +231,13 @@ test("a player who quits early is told the match still runs, until it ends", asy
     await expect(host.locator("#viewport canvas")).toBeVisible();
     await expect(guest.locator("#viewport canvas")).toBeVisible();
 
-    // The canvas shows before the join resolves, and Escape only leaves once
-    // the match view listens for it; "in match" is set right after that.
+    // The canvas shows before the join resolves, and the leave button only
+    // exists once the match view is up; "in match" is set right after that.
     await expect(host.locator("#status")).toHaveText("in match");
     await expect(guest.locator("#status")).toHaveText("in match");
 
     // The host quits; the guest is still fighting.
-    await host.keyboard.press("Escape");
+    await leaveMatch(host);
     const running = host.locator(".lobby-running");
     await expect(running).toHaveText(
       "A match is still running. The lobby opens again when it ends.",
@@ -245,7 +252,7 @@ test("a player who quits early is told the match still runs, until it ends", asy
     await expect(host.getByRole("button", { name: "leave" })).toBeEnabled();
 
     // The last player leaves, the match is over, and the lobby opens.
-    await guest.keyboard.press("Escape");
+    await leaveMatch(guest);
     await expect(running).toHaveCount(0);
     await expect(guest.locator("#status")).toHaveText(`lobby ${code}`);
     const ready = host.getByRole("button", { name: "ready", exact: true });

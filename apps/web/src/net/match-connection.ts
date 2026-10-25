@@ -21,6 +21,8 @@ export interface PlayerSnapshot {
   readonly facing: number;
   /** Who this player is targeting, or `undefined` for no target. */
   readonly targetSessionId: string | undefined;
+  /** Who this player is attacking with their weapon, or `undefined` (#160). */
+  readonly attackTargetSessionId: string | undefined;
   readonly health: number;
   readonly maxHealth: number;
   readonly energy: number;
@@ -51,6 +53,20 @@ export interface MatchSnapshot {
   readonly winningTeam: number | undefined;
   /** "score", "time", or `undefined` while active. */
   readonly endReason: string | undefined;
+  /** Weapon shots in flight, oldest first (#160). */
+  readonly projectiles: readonly ProjectileSnapshot[];
+}
+
+/**
+ * A ranged weapon's shot, as released: it flies from `from` to `to` over
+ * `flightSeconds`, starting at `launchedAt` on the match clock.
+ */
+export interface ProjectileSnapshot {
+  readonly id: number;
+  readonly from: { readonly x: number; readonly y: number };
+  readonly to: { readonly x: number; readonly y: number };
+  readonly launchedAt: number;
+  readonly flightSeconds: number;
 }
 
 /** One slot of the server-assigned skill bar. */
@@ -72,6 +88,9 @@ export interface SlotRecharge {
 
 export interface CombatMessage {
   readonly casterSessionId: string;
+  /** What this was. Read this, never `skillId === ""`, to tell them apart. */
+  readonly cause: "skill" | "weapon" | "degeneration";
+  /** The skill, when `cause` is `"skill"`; `""` otherwise. */
   readonly skillId: string;
   /** Where an area skill landed, and how far it reached (#5). */
   readonly area?: { readonly x: number; readonly y: number; readonly radius: number };

@@ -1,6 +1,7 @@
 import type { ResolvedEquipment, ResolvedLoadout } from "../equipment/resolve.js";
 import {
   distanceWithinRange,
+  hasLineOfSight,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
 } from "../geometry.js";
@@ -16,6 +17,7 @@ import {
   type MatchScore,
 } from "../match-rules.js";
 import { clampInputDirection, integrateMovement } from "../movement.js";
+import { buildNavGraph, findPath, type NavGraph } from "../pathing.js";
 import { createRng, seedFromString, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { canActivate, payCost, type ActivationCheck } from "../skills/activation.js";
@@ -117,6 +119,11 @@ export interface MatchSimulationOptions {
   readonly matchRules?: MatchRules | undefined;
   /** Omitted or `[]`: nothing collides with a wall or blocks line of sight. */
   readonly walls?: readonly Segment[];
+  /**
+   * The map's size, which an attack's approach never paths outside of
+   * (#211). Omitted: an open field with no edge.
+   */
+  readonly bounds?: { readonly width: number; readonly height: number } | undefined;
   readonly participants?: readonly ParticipantSpec[];
 }
 
@@ -193,6 +200,8 @@ export class MatchSimulation {
   readonly #ruleset: Ruleset;
   readonly #matchRules: MatchRules | undefined;
   readonly #walls: readonly Segment[];
+  /** Corners an approach can path through, built once from the walls (#211). */
+  readonly #nav: NavGraph;
   readonly #rng: SimulationRng;
   readonly #participants = new Map<string, ParticipantRecord>();
   #projectiles: Projectile[] = [];
@@ -209,6 +218,7 @@ export class MatchSimulation {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
     this.#matchRules = options.matchRules;
     this.#walls = options.walls ?? [];
+    this.#nav = buildNavGraph(this.#walls, options.bounds, this.#ruleset.collision.playerRadius);
     this.#rng = createRng(
       typeof options.seed === "string" ? seedFromString(options.seed) : options.seed,
     );
@@ -352,8 +362,8 @@ export class MatchSimulation {
    * target starts a fresh one. Refused, with the reason a cast at it
    * would get, unless the target is a living enemy and the attacker is
    * alive. Range and line of sight are not checked: approach closes the
-   * one, and the other is out of scope, as it is for a skill after
-   * activation.
+   * one, and a ranged swing checks the other as it is released, so an
+   * attack can start behind a corner and walk out.
    */
   public requestAttack(id: string, targetId: string): ActivationCheck | undefined {
     const record = this.#participants.get(id);
@@ -413,6 +423,10 @@ export class MatchSimulation {
    * With no target, an enemy-targeted skill targets the nearest living
    * enemy first, picked exactly as a behaviour picks one. That target
    * stays selected, whether or not the cast is then allowed.
+   *
+   * An ally-targeted skill with nothing or an enemy selected goes to the
+   * caster, as in GW1 (#52). The enemy stays selected, so a monk can heal
+   * themself mid-fight without losing the target.
    */
   public requestSkill(id: string, slot: number): SkillRequest | undefined {
     const record = this.#participants.get(id);
@@ -438,7 +452,8 @@ export class MatchSimulation {
       );
     }
 
-    const check = this.#check(record, skill, record.targetId);
+    const castTargetId = skill.target === "self" ? id : this.#castTarget(record, skill);
+    const check = this.#check(record, skill, castTargetId);
     if (!check.ok) {
       return { skillId: skill.id, check };
     }
@@ -451,7 +466,7 @@ export class MatchSimulation {
     }
     record.combatant.cast.beginCast(
       skill.id,
-      skill.target === "self" ? id : record.targetId,
+      castTargetId,
       effectiveActivationSeconds(skill, record.combatant),
     );
     return { skillId: skill.id, check };
@@ -541,7 +556,18 @@ export class MatchSimulation {
     return { tick: this.#tick, elapsedSeconds: this.#elapsedSeconds, phase: this.phase, log };
   }
 
+  /** Who a targeted skill lands on: the selection, or the caster for an ally skill with no ally selected. */
+  #castTarget(record: ParticipantRecord, skill: Skill): string | undefined {
+    if (skill.target !== "single-ally") {
+      return record.targetId;
+    }
+    const selected =
+      record.targetId === undefined ? undefined : this.#participants.get(record.targetId);
+    return selected?.combatant.team === record.combatant.team ? selected.id : record.id;
+  }
+
   /** The one activation check, for a cast and for a behaviour asking whether it could. */
+
   #check(record: ParticipantRecord, skill: Skill, targetId: string | undefined): ActivationCheck {
     const target = targetId === undefined ? undefined : this.#participants.get(targetId);
     return canActivate({
@@ -631,10 +657,19 @@ export class MatchSimulation {
         ? undefined
         : { x: origin.x, y: origin.y, radius: skill.area.radius };
 
-    this.#gainAdrenaline(record, events);
+    // Only attack skills earn adrenaline, as weapon hits do: a spell is
+    // paid for in energy, and earning both would make casters the best
+    // adrenaline builders.
+    if (skill.type === "attack") {
+      this.#gainAdrenaline(record, events);
+    }
     this.#recordDeaths(events);
-    // An attack in progress resumes on its own target: the cast only
-    // paused it. Switching it to the skill's target arrives with #160.
+    // A skill on an enemy turns on them with the weapon, as in GW1: it
+    // starts an attack, or switches one to them. Any other skill leaves
+    // the attack in progress to resume on its own target.
+    if (primary !== undefined && this.#attackCheck(record, primary.id).ok) {
+      record.combatant.attack = { targetId: primary.id, swingElapsed: 0 };
+    }
 
     record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds);
     this.#log.push({
@@ -679,10 +714,22 @@ export class MatchSimulation {
     }
 
     const { weapon } = record.combatant.equipment.mainHand;
-    if (!distanceWithinRange(record.position, target.position, weapon.range)) {
-      // Approach: the only movement the simulation chooses, and never on
-      // top of the player's own.
-      this.advanceMovement(record, sub(target.position, record.position), dt);
+    if (
+      !distanceWithinRange(record.position, target.position, weapon.range) ||
+      !hasLineOfSight(record.position, target.position, this.#walls)
+    ) {
+      // Approach until in reach and in sight, round walls (#211): the only
+      // movement the simulation chooses, and never on top of the
+      // player's own. Replanned every tick, so a target that moves, or a
+      // shove, is simply where the next plan starts.
+      const path = findPath(this.#nav, record.position, target.position);
+      const next = path?.[0];
+      if (next === undefined) {
+        record.combatant.attack = undefined;
+        this.#logWeapon(record.id, [{ kind: "attack-unreachable", targetId: target.id }]);
+        return;
+      }
+      this.advanceMovement(record, sub(next, record.position), dt);
       return;
     }
     faceToward(record, target.position);
@@ -714,11 +761,17 @@ export class MatchSimulation {
   /**
    * A ranged swing lands as a shot leaving the bow, led ahead of the
    * target. Blind is rolled now, as GW1 does: a blinded shot misses at
-   * once and nothing flies.
+   * once and nothing flies. Then line of sight, once: a wall in the way
+   * spends the swing and nothing flies either, and the next swing looks
+   * again. Melee is never checked; its reach is shorter than any gap.
    */
   #release(record: ParticipantRecord, target: ParticipantRecord, speed: number, dt: number): void {
     if (blindMisses(record.combatant, this.#rng)) {
       this.#logWeapon(record.id, [{ kind: "attack-missed", targetId: target.id }]);
+      return;
+    }
+    if (!hasLineOfSight(record.position, target.position, this.#walls)) {
+      this.#logWeapon(record.id, [{ kind: "attack-obstructed", targetId: target.id }]);
       return;
     }
     const from = record.position;
