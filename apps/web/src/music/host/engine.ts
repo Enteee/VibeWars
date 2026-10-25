@@ -3,11 +3,11 @@ import * as mini from "@strudel/mini";
 import * as tonal from "@strudel/tonal";
 import { evaluate, transpiler } from "@strudel/transpiler";
 import {
-  getAudioContext,
   getSuperdoughAudioController,
   initAudio,
   registerSynthSounds,
   samples,
+  webaudioOutput,
   webaudioRepl,
 } from "@strudel/webaudio";
 
@@ -19,14 +19,17 @@ import {
 } from "../host-protocol.js";
 import { samplesBaseUrl } from "../music-urls.js";
 import {
-  fadeGain,
   levelAt,
   nextBoundary,
   nextCycle,
   scheduleLevel,
   type LevelChange,
 } from "./transitions.js";
+import { crossfade, isTempoMark } from "./crossfade.js";
 import { makeLayer, type TrackClock } from "./layer.js";
+import { reverbPins } from "./reverb-pins.js";
+import { createMeasurement, readAudio } from "./stats.js";
+import { suspendWhileHidden } from "./visibility.js";
 import { within } from "./within.js";
 import { workerTimers } from "./worker-timers.js";
 
@@ -51,7 +54,6 @@ const SWITCH_POLL_MS = 100;
 const MAX_ERROR_LENGTH = 300;
 /** How long the audio context may take to start before the host gives up on it. */
 const AUDIO_START_MS = 3_000;
-
 /** A track as it plays: its pattern, unshifted, and where it started. */
 interface Playing {
   readonly trackId: string;
@@ -92,8 +94,63 @@ export async function startEngine(): Promise<void> {
     parent.postMessage(message, "*");
   };
 
+  // Music needs no low latency, and a bigger output buffer is what keeps
+  // a busy phone's audio thread from running dry (#420). The sound effects
+  // have a context of their own.
+  const context = new AudioContext({ latencyHint: "playback" });
+  suspendWhileHidden(document, context, (error) => {
+    post(describe(error));
+  });
   const timers = workerTimers();
-  const repl = webaudioRepl({ transpiler, ...timers });
+  const measurement = createMeasurement(
+    (stats) => {
+      post({ type: "stats", ...stats });
+    },
+    () => readAudio(context),
+    (callback, ms) => timers.setInterval(callback, ms),
+  );
+  const pins = reverbPins();
+  const repl = webaudioRepl({
+    audioContext: context,
+    transpiler,
+    // The scheduler's own ticks, timed and checked for music they skip (#420).
+    setInterval: (callback, ms) =>
+      timers.setInterval(() => {
+        const meter = measurement.meter;
+        if (meter === undefined) {
+          callback();
+          return;
+        }
+        const began = performance.now();
+        meter.tick(began, ms);
+        // A tick later than the clock's lookahead skips every slot already
+        // behind `currentTime` without querying it: a gap.
+        const behind = context.currentTime - scheduler.clock.getPhase();
+        if (scheduler.started && behind > 0) {
+          meter.skipped(
+            Math.ceil(behind / scheduler.clock.duration) * scheduler.clock.duration * 1000,
+          );
+        }
+        callback();
+        meter.worked(performance.now() - began);
+      }, ms),
+    clearInterval: (id) => {
+      timers.clearInterval(id);
+    },
+    defaultOutput: (hap, deadline, duration, cps, t) => {
+      if (isTempoMark(hap.value)) {
+        return undefined;
+      }
+      measurement.meter?.event(t < context.currentTime);
+      return webaudioOutput(
+        hap.withValue((value) => pins.pin(value)),
+        deadline,
+        duration,
+        cps,
+        t,
+      );
+    },
+  });
   const scheduler = repl.scheduler;
   /** The end of what the scheduler has queried. Nothing before it can change. */
   const position = (): number => scheduler.lastEnd;
@@ -188,11 +245,10 @@ export async function startEngine(): Promise<void> {
     // Without audio activation in this frame these never settle; bounded,
     // the message fails with `error` and the next one tries again.
     await within(
-      initAudio().then(() => getAudioContext().resume()),
+      initAudio().then(() => context.resume()),
       AUDIO_START_MS,
       "the browser did not let music start",
     );
-    const context = getAudioContext();
     // superdough → music bus → limiter → speakers (#366 §3.1).
     bus = context.createGain();
     bus.gain.value = volume;
@@ -224,36 +280,11 @@ export async function startEngine(): Promise<void> {
     clock.origin = scheduler.started ? Math.floor(position()) : 0;
     switching = undefined;
     playing = { trackId: track.trackId, pattern, phraseCycles: track.phraseCycles, cps, clock };
+    pins.reset();
     scheduler.setCps(cps);
     await schedule(pattern.late(clock.origin));
     announce(playing);
   };
-
-  /** A side of a crossfade: louder or quieter by cycle, and at the new tempo from `from`. */
-  const faded = (
-    pattern: core.Pattern,
-    from: number,
-    cycles: number,
-    side: "in" | "out",
-    cps: number,
-  ): core.Pattern =>
-    pattern.withHap((hap) => {
-      const begin = hap.wholeOrPart().begin.valueOf();
-      return hap.withValue((value) => {
-        const fields = record(value);
-        if (fields === null) {
-          return value;
-        }
-        const velocity = typeof fields.velocity === "number" ? fields.velocity : 1;
-        // A `cps` on an event changes the scheduler's tempo on its onset,
-        // so the new tempo starts exactly on the boundary.
-        return {
-          ...fields,
-          velocity: velocity * fadeGain(begin, from, cycles, side),
-          ...(begin >= from ? { cps } : {}),
-        };
-      });
-    });
 
   /**
    * Switch to `track` on the playing track's next phrase boundary, with
@@ -277,25 +308,9 @@ export async function startEngine(): Promise<void> {
       clock,
     };
     const until = from + cycles;
-    // What plays fades out, even if that is a crossfade still under way.
-    const stacked = core.stack(
-      faded(
-        scheduled.filterHaps((hap) => hap.wholeOrPart().begin.valueOf() < until),
-        from,
-        cycles,
-        "out",
-        cps,
-      ),
-      faded(
-        pattern.late(from).filterHaps((hap) => hap.wholeOrPart().begin.valueOf() >= from),
-        from,
-        cycles,
-        "in",
-        cps,
-      ),
-    );
     switching = { next, until, announced: false };
-    await schedule(stacked);
+    // What plays fades out, even if that is a crossfade still under way.
+    await schedule(crossfade(scheduled, pattern, from, cycles, cps));
   };
 
   /** Land a planned switch: announce it on its boundary, then play the new track alone. */
@@ -311,6 +326,7 @@ export async function startEngine(): Promise<void> {
     if (position() >= planned.until) {
       switching = undefined;
       playing = planned.next;
+      pins.reset();
       void schedule(planned.next.pattern.late(planned.next.clock.origin));
     }
   }, SWITCH_POLL_MS);
@@ -363,12 +379,16 @@ export async function startEngine(): Promise<void> {
         clock.origin = track.clock.origin;
         switching = undefined;
         playing = { ...track, pattern, cps, clock };
+        pins.reset();
         scheduler.setCps(cps);
         await schedule(pattern.late(clock.origin));
         post({ type: "evaluated" });
         return;
       }
       case "ping":
+        return;
+      case "measure":
+        measurement.start();
         return;
     }
   };
