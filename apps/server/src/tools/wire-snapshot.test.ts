@@ -141,6 +141,16 @@ describe("what changes the hash", () => {
     expect(tuple("number, number")).not.toBe(tuple("number, number, number"));
   });
 
+  it("a recursive named union is described, by name where it recurs, and changes it (#375)", () => {
+    const json = (leaf: string) =>
+      hashOf(
+        `export type Json = ${leaf} | readonly Json[] | { readonly [key: string]: Json };\n` +
+          "export interface Hello { readonly build: Json }\n",
+      );
+    expect(json("null | string")).toMatch(/^[0-9a-f]{12}$/);
+    expect(json("null | string")).not.toBe(json("null | number"));
+  });
+
   it("a state schema's fields reordered do", () => {
     const ab = schema({ a: t.string(), b: t.number() }, "Fixture");
     const ba = schema({ b: t.number(), a: t.string() }, "Fixture");

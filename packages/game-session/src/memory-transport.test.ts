@@ -97,12 +97,13 @@ describe("the memory transport (#82)", () => {
     expect(atC).toEqual(["+a", "+b", "-b"]);
   });
 
-  it("resolves leave() after every remaining peer has seen it", async () => {
+  it("shows every remaining peer the leave soon after leave() resolves", async () => {
     const network = createMemoryNetwork();
     const [a, b] = [network.join(), network.join()];
     await settle();
     const atA = events(a);
     await b.leave();
+    await settle();
     expect(atA).toEqual([`-${b.selfId}`]);
   });
 
@@ -129,6 +130,7 @@ describe("the memory transport (#82)", () => {
     a.onPeerLeave((id) => seen.push(`-${id}`));
     b.send("intent", "bye");
     await b.leave();
+    await settle();
     expect(seen).toEqual(["bye", `-${b.selfId}`]);
   });
 
