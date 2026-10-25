@@ -1,12 +1,12 @@
-import { PROTOCOL_MISMATCH_MESSAGE, SERVER_FULL_MESSAGE } from "@vibewars/game-protocol";
+import { PROTOCOL_MISMATCH_MESSAGE } from "@vibewars/game-protocol";
 
 import { httpOriginFrom, resolveEndpoint, type MatchTarget } from "./net/match-client.js";
 import { ONLINE_PLAY } from "./net/online.js";
 import {
   LobbyNotFoundError,
+  capacityRefusal,
   createLobby,
   isProtocolMismatch,
-  isServerFull,
   joinLobbyByCode,
   type LobbyConnection,
 } from "./net/lobby-client.js";
@@ -440,11 +440,10 @@ async function main(): Promise<void> {
     } catch (error) {
       menuNotice = isProtocolMismatch(error)
         ? PROTOCOL_MISMATCH_MESSAGE
-        : isServerFull(error)
-          ? SERVER_FULL_MESSAGE
-          : error instanceof LobbyNotFoundError
+        : (capacityRefusal(error) ??
+          (error instanceof LobbyNotFoundError
             ? "No lobby with that code. Check the code and try again."
-            : "Could not connect to the server.";
+            : "Could not connect to the server."));
       showMenu();
       // After showMenu, which would put the status back to "ready".
       setStatus("could not join", "error");
@@ -524,10 +523,11 @@ async function main(): Promise<void> {
       setStatus("in match", "online");
     } catch (error) {
       console.error("[web] could not enter match", error);
+      const refusal = capacityRefusal(error);
       if (isProtocolMismatch(error)) {
         menuNotice = PROTOCOL_MISMATCH_MESSAGE;
-      } else if (isServerFull(error)) {
-        menuNotice = SERVER_FULL_MESSAGE;
+      } else if (refusal !== undefined) {
+        menuNotice = refusal;
       }
       enteringMatch = false;
       showMenu();

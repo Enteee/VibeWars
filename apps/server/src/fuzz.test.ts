@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { FLOOD_MESSAGES_PER_SECOND, MESSAGE_BURST, MESSAGES_PER_SECOND } from "./rooms/options.js";
 import { createGameServer, type GameServer } from "./server.js";
-import { findFreePort, waitFor } from "./testing/harness.js";
+import { LOOPBACK_LIMITS, findFreePort, waitFor } from "./testing/harness.js";
 import { DEFAULT_MAX_ROOMS } from "./config.js";
 
 /**
@@ -138,6 +138,7 @@ describe("server survives hostile clients", () => {
       webRoot: undefined,
       devMode: false,
       maxRooms: DEFAULT_MAX_ROOMS,
+      ...LOOPBACK_LIMITS,
     });
     await server.listen(port, "127.0.0.1");
   });

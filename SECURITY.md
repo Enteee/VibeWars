@@ -105,7 +105,7 @@ saying so in the same PR. Keep the numbers: issues cite them.
    joining is not rate-limited. That is fine for a LAN party. It is not
    access control, and it must not be described as access control.
 
-6. **Mitigated by #114: there was no cap on the number of rooms.** Any client could call
+6. **Mitigated by #114 and #265: there was no cap on rooms or players.** Any client could call
    `create("match")` as often as it liked, and got a Quick Match room. Every
    room runs its own 20 Hz fixed-timestep simulation, even with a single
    player in it. So the cap of 8 players per Quick Match room does not bound
@@ -127,11 +127,42 @@ saying so in the same PR. Keep the numbers: issues cite them.
    to 1000 messages a second before it is dropped. Measured at `71bff02`, one
    such client costs about 1.5 % of a core with small messages and 6–8 % with
    ones near the 4 KiB frame cap, so about 13 of them fill a core.
-   Since #114 the server holds at most `VIBEWARS_MAX_ROOMS` rooms, match and
-   lobby together (default 200). Past that, a create is refused with 503 and
-   "The server is full", and running matches never notice. **Still open:**
-   one client can fill that budget and keep everyone else out, so a cap per
-   client or per remote address is still needed.
+   Four caps now hold, and matches already running never notice any of
+   them. A player coming back after a drop is never refused: their seat
+   was already counted.
+   - **Rooms (#114):** at most `VIBEWARS_MAX_ROOMS` rooms, match and lobby
+     together (default 200). Past that, a create is refused with 503 and
+     "The server is full".
+   - **Players (#265):** at most `VIBEWARS_MAX_CLIENTS` seats, match and
+     lobby together (default 800; a lobby player in their match holds
+     two). #259 measured 1 600 players at p99 30–43 ms against the 50 ms
+     tick budget, and 16-player lobby matches cost about twice that.
+     Refused with `CLIENT_LIMIT` and "The server is full".
+   - **Seats per address (#265):** at most `VIBEWARS_MAX_CLIENTS_PER_ADDRESS`
+     (default 32: one address can fill a whole lobby and its match, as a
+     LAN party behind an address-rewriting port forwarder must). Refused with `ADDRESS_LIMIT` (429) and "Too many connections
+     from your network".
+   - **Matchmaking requests per address (#265):** a bucket of
+     `VIBEWARS_MATCHMAKING_BURST` (default 10), refilling one a second,
+     checked before Colyseus reads the request. A request creates a room
+     and reserves a seat whether or not a socket ever connects, so without
+     it one address could keep the room budget full of empty rooms for
+     the seat reservation timeout. Refused with `ADDRESS_LIMIT`.
+
+   **The address is the socket's, never a header.** Colyseus 0.18 takes
+   `context.ip` from `X-Real-IP`, `X-Forwarded-For` or `X-Client-IP`
+   before the socket's peer address, unchecked. We run behind no proxy
+   (ADR-0009), so the client writes those: believed, they would let it
+   dodge the per-address caps with a new address each time, or fill a
+   victim's share by naming the victim. `createGameServer` runs its own
+   `http.Server` (`apps/server/src/http-gate.ts`), which deletes the three
+   headers from every request and upgrade before any listener sees them.
+   Running behind a reverse proxy would need its own trusted-proxy setting.
+
+   **Still open:** the per-address caps count one address. An attacker
+   with many addresses, such as an IPv6 host rotating through its /64, gets
+   a share for each, and only the server-wide caps hold. They keep the
+   server's tick budget, but not its seats for everyone else.
 
 7. **Fixed by #115:** client strings reached the server log unescaped. A
    skill id of `"a\n[match] finished winner=1 reason=score"` printed a

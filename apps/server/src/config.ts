@@ -2,6 +2,8 @@ import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { MAX_LOBBY_PLAYERS } from "@vibewars/game-protocol";
+
 /**
  * Server configuration, resolved once from the environment.
  *
@@ -43,6 +45,23 @@ export interface ServerConfig {
    * "the server is full" rather than slowing every match down.
    */
   readonly maxRooms: number;
+  /**
+   * How many players, match and lobby seats together, the server holds at
+   * once (#265): `VIBEWARS_MAX_CLIENTS`. A lobby player in their match
+   * holds two.
+   */
+  readonly maxClients: number;
+  /**
+   * How many of those seats one network address may hold (#265):
+   * `VIBEWARS_MAX_CLIENTS_PER_ADDRESS`.
+   */
+  readonly maxClientsPerAddress: number;
+  /**
+   * How many matchmaking requests one network address may make at once,
+   * refilling one a second (#265): `VIBEWARS_MATCHMAKING_BURST`. Every
+   * request reserves a seat and may create a room, socket or no socket.
+   */
+  readonly matchmakingBurst: number;
 }
 
 export class ConfigError extends Error {
@@ -80,18 +99,41 @@ export function parsePort(raw: string | undefined, fallback: number = DEFAULT_PO
  */
 export const DEFAULT_MAX_ROOMS = 200;
 
-/** A positive decimal integer, like `parsePort` is strict about ports. */
-export function parseMaxRooms(raw: string | undefined): number {
+/**
+ * 800 by default: 1 600 players in 200 full Quick Matches ran p99 30-43 ms
+ * against the 50 ms tick budget, and 16-player lobby matches cost about
+ * twice that (#259), so 800 leaves headroom.
+ */
+export const DEFAULT_MAX_CLIENTS = 800;
+
+/**
+ * 32 by default: one address can always fill a whole lobby and its match,
+ * as a LAN party behind a port forwarder that rewrites every player's
+ * address to one (Docker Desktop, rootless Docker) must. Still 4 % of
+ * the server-wide cap.
+ */
+export const DEFAULT_MAX_CLIENTS_PER_ADDRESS = 2 * MAX_LOBBY_PLAYERS;
+
+/** 10 by default: a few tabs opening at once, never a stream of empty rooms. */
+export const DEFAULT_MATCHMAKING_BURST = 10;
+
+/**
+ * A positive decimal integer for the limit `name`, or `fallback` when
+ * unset, strict the way `parsePort` is about ports.
+ */
+export function parseLimit(name: string, raw: string | undefined, fallback: number): number {
   if (raw === undefined || raw.trim() === "") {
-    return DEFAULT_MAX_ROOMS;
+    return fallback;
   }
   const value = raw.trim();
   if (!/^\d+$/.test(value) || Number.parseInt(value, 10) < 1) {
-    throw new ConfigError(
-      `VIBEWARS_MAX_ROOMS must be a positive integer, got ${JSON.stringify(raw)}`,
-    );
+    throw new ConfigError(`${name} must be a positive integer, got ${JSON.stringify(raw)}`);
   }
   return Number.parseInt(value, 10);
+}
+
+export function parseMaxRooms(raw: string | undefined): number {
+  return parseLimit("VIBEWARS_MAX_ROOMS", raw, DEFAULT_MAX_ROOMS);
 }
 
 /** Treats only explicit truthy spellings as true; anything else is false. */
@@ -137,6 +179,17 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     webRoot: resolvedWebRoot,
     devMode: parseBoolean(env.VIBEWARS_DEV, false),
     maxRooms: parseMaxRooms(env.VIBEWARS_MAX_ROOMS),
+    maxClients: parseLimit("VIBEWARS_MAX_CLIENTS", env.VIBEWARS_MAX_CLIENTS, DEFAULT_MAX_CLIENTS),
+    maxClientsPerAddress: parseLimit(
+      "VIBEWARS_MAX_CLIENTS_PER_ADDRESS",
+      env.VIBEWARS_MAX_CLIENTS_PER_ADDRESS,
+      DEFAULT_MAX_CLIENTS_PER_ADDRESS,
+    ),
+    matchmakingBurst: parseLimit(
+      "VIBEWARS_MATCHMAKING_BURST",
+      env.VIBEWARS_MATCHMAKING_BURST,
+      DEFAULT_MATCHMAKING_BURST,
+    ),
     devClientOrigin:
       devOrigin === undefined || devOrigin === "" ? DEFAULT_DEV_CLIENT_ORIGIN : devOrigin,
   };

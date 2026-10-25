@@ -2,6 +2,8 @@ import { createServer, type Server as HttpServer } from "node:http";
 import { once } from "node:events";
 import type { AddressInfo } from "node:net";
 
+import { DEFAULT_MAX_CLIENTS } from "../config.js";
+
 /**
  * Pick a free TCP port by binding an ephemeral listener and releasing it.
  *
@@ -61,3 +63,15 @@ export async function waitFor(
   }
   throw new Error(`Timed out after ${String(timeoutMs)}ms waiting for ${label}`);
 }
+
+/**
+ * Seat limits for a test server, whose every client comes from
+ * 127.0.0.1 (#265): the server-wide cap as deployed, and per-address caps
+ * no test of ordinary play can meet. The caps themselves are tested in
+ * `network-robustness.test.ts`.
+ */
+export const LOOPBACK_LIMITS = {
+  maxClients: DEFAULT_MAX_CLIENTS,
+  maxClientsPerAddress: 10_000,
+  matchmakingBurst: 10_000,
+} as const;

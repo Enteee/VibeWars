@@ -1,4 +1,4 @@
-import { Room, ServerError, type Client } from "colyseus";
+import { ClientState, CloseCode, Room, ServerError, type AuthContext, type Client } from "colyseus";
 import { schema, t } from "@colyseus/schema";
 import { createRng, seedFromString, type SimulationRng } from "@vibewars/game-core";
 import { listMapIds } from "@vibewars/game-maps";
@@ -22,6 +22,7 @@ import {
   field,
   messageBudget,
 } from "./options.js";
+import { RoomSeats, peerAddress, type ClientLimits } from "./client-budget.js";
 import { RoomSlot, type RoomBudget } from "./room-budget.js";
 
 /**
@@ -284,6 +285,17 @@ export class LobbyRoom extends Room {
   /** This room's slot in the budget: taken first, given back once. */
   #slot: RoomSlot | undefined;
 
+  /**
+   * This server's seat limits (#265), supplied by the same subclass as
+   * the room budget.
+   */
+  protected get clientLimits(): ClientLimits {
+    throw new Error("LobbyRoom has no seat limits: define it through createGameServer");
+  }
+
+  /** The seat each client holds: taken in `onAuth`, given back once. */
+  readonly #clientSeats = new RoomSeats(this.clientLimits);
+
   public override onCreate(options: unknown): void {
     // Before anything else, so a full server refuses cheaply; and given
     // back if creating fails after it was taken.
@@ -510,6 +522,23 @@ export class LobbyRoom extends Room {
     );
   }
 
+  /**
+   * Take the client's seat before it joins (#265), or refuse it with
+   * `CLIENT_LIMIT` or `ADDRESS_LIMIT`. `context.ip` is the socket's own
+   * address: `createGameServer` strips the forwarding headers it would
+   * otherwise believe.
+   */
+  public override onAuth(client: Client, _options: unknown, context: AuthContext): true {
+    if (client.state === ClientState.LEAVING) {
+      // Its socket closed before it got here. Colyseus refuses it right
+      // after `onAuth` without ever calling `onLeave`, so a seat taken now
+      // would be held until the room is gone.
+      throw new ServerError(CloseCode.WITH_ERROR, "already disconnected");
+    }
+    this.#clientSeats.take(client.sessionId, peerAddress(context.ip));
+    return true;
+  }
+
   public override onJoin(client: Client, options: unknown): void {
     assertProtocolVersion(options);
     const isFirst = this.state.players.size === 0;
@@ -533,6 +562,7 @@ export class LobbyRoom extends Room {
     this.state.players.delete(client.sessionId);
     this.#builds.delete(client.sessionId);
     this.#budget.forget(client.sessionId);
+    this.#clientSeats.release(client.sessionId);
 
     // Hosting must not vanish with the host, or the lobby becomes
     // unstartable and everyone has to regroup under a new code.
@@ -550,16 +580,21 @@ export class LobbyRoom extends Room {
 
   public override onDispose(): void {
     this.#slot?.release();
+    this.#clientSeats.releaseAll();
     this.#disposed = true;
     console.info(`[lobby] ${this.state.code} disposed`);
   }
 }
 
-/** `LobbyRoom`, holding this server's room budget (#114). */
-export function budgetedLobbyRoom(budget: RoomBudget): typeof LobbyRoom {
+/** `LobbyRoom`, holding this server's room budget (#114) and seat limits (#265). */
+export function budgetedLobbyRoom(budget: RoomBudget, limits: ClientLimits): typeof LobbyRoom {
   return class extends LobbyRoom {
     protected override get roomBudget(): RoomBudget {
       return budget;
+    }
+
+    protected override get clientLimits(): ClientLimits {
+      return limits;
     }
   };
 }

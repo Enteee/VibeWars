@@ -1,5 +1,12 @@
+import { once } from "node:events";
+import { connect } from "node:net";
+
+import { matchMaker } from "@colyseus/core";
 import { Client, type Room } from "@colyseus/sdk";
 import {
+  ADDRESS_LIMIT,
+  ADDRESS_LIMIT_MESSAGE,
+  CLIENT_LIMIT,
   PROTOCOL_VERSION,
   ROOM_LIMIT,
   ROOM_LOBBY,
@@ -9,8 +16,8 @@ import {
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { createGameServer, type GameServer } from "./server.js";
-import { findFreePort, waitFor } from "./testing/harness.js";
-import { DEFAULT_MAX_ROOMS } from "./config.js";
+import { LOOPBACK_LIMITS, findFreePort, waitFor } from "./testing/harness.js";
+import { DEFAULT_MAX_ROOMS, type ServerConfig } from "./config.js";
 
 /**
  * Network robustness (brief §25).
@@ -60,6 +67,7 @@ describe("network robustness", () => {
       webRoot: undefined,
       devMode: false,
       maxRooms: DEFAULT_MAX_ROOMS,
+      ...LOOPBACK_LIMITS,
     });
     await server.listen(port);
   });
@@ -232,6 +240,7 @@ describe("network robustness", () => {
       webRoot: undefined,
       devMode: false,
       maxRooms: DEFAULT_MAX_ROOMS,
+      ...LOOPBACK_LIMITS,
     });
     await server.listen(port);
 
@@ -254,6 +263,7 @@ describe("the server-wide room budget (#114)", () => {
       webRoot: undefined,
       devMode: false,
       maxRooms: 2,
+      ...LOOPBACK_LIMITS,
     });
     await server.listen(port);
   });
@@ -294,5 +304,197 @@ describe("the server-wide room budget (#114)", () => {
     expect(third).toBeDefined();
     await third?.leave(true);
     await second.leave(true);
+  });
+});
+
+describe("the seat limits (#265)", () => {
+  let server: GameServer | undefined;
+  let port = 0;
+  let endpoint = "";
+
+  const start = async (
+    limits: Partial<Pick<ServerConfig, "maxClients" | "maxClientsPerAddress" | "matchmakingBurst">>,
+  ): Promise<void> => {
+    port = await findFreePort();
+    endpoint = `ws://127.0.0.1:${String(port)}`;
+    server = createGameServer({
+      port,
+      host: "127.0.0.1",
+      webRoot: undefined,
+      devMode: false,
+      maxRooms: DEFAULT_MAX_ROOMS,
+      ...LOOPBACK_LIMITS,
+      ...limits,
+    });
+    await server.listen(port);
+  };
+
+  afterEach(async () => {
+    await server?.gracefullyShutdown(false);
+    server = undefined;
+  });
+
+  const quickMatch = (headers?: Record<string, string>): Promise<Room> =>
+    new Client(endpoint, headers === undefined ? undefined : { headers }).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+
+  const refusal = async (join: Promise<unknown>): Promise<Error & { code?: unknown }> => {
+    try {
+      await join;
+    } catch (error: unknown) {
+      return error as Error & { code?: unknown };
+    }
+    throw new Error("expected the join to be refused");
+  };
+
+  /** A seat comes back when the server has handled the leave, a moment later. */
+  const eventually = async (join: () => Promise<Room>): Promise<Room> => {
+    for (let tries = 0; ; tries += 1) {
+      try {
+        return await join();
+      } catch (error: unknown) {
+        if (tries >= 50) {
+          throw error;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
+  };
+
+  it("refuses a player past the server's cap with CLIENT_LIMIT, and seats one once a seat is free", async () => {
+    await start({ maxClients: 2 });
+    const first = await quickMatch();
+    const second = await quickMatch();
+
+    const refused = await refusal(quickMatch());
+    expect(refused.code).toBe(CLIENT_LIMIT);
+    expect(refused.message).toContain(SERVER_FULL_MESSAGE);
+
+    await first.leave(true);
+    const third = await eventually(() => quickMatch());
+    await third.leave(true);
+    await second.leave(true);
+  });
+
+  it("refuses an address past its share with ADDRESS_LIMIT", async () => {
+    await start({ maxClientsPerAddress: 2 });
+    const first = await quickMatch();
+    const second = await quickMatch();
+
+    const refused = await refusal(quickMatch());
+    expect(refused.code).toBe(ADDRESS_LIMIT);
+    expect(refused.message).toContain(ADDRESS_LIMIT_MESSAGE);
+
+    await first.leave(true);
+    await second.leave(true);
+  });
+
+  it("counts a client by its socket, whatever address its headers claim", async () => {
+    await start({ maxClientsPerAddress: 2 });
+    // Believed, these would be two other networks, and the next join a
+    // first seat for 127.0.0.1.
+    const first = await quickMatch({ "x-forwarded-for": "203.0.113.1" });
+    const second = await quickMatch({ "x-real-ip": "203.0.113.2", "x-client-ip": "203.0.113.3" });
+
+    const refused = await refusal(quickMatch());
+    expect(refused.code).toBe(ADDRESS_LIMIT);
+
+    await first.leave(true);
+    await second.leave(true);
+  });
+
+  it("refuses an address's 11th matchmaking request at once, before it creates a room", async () => {
+    await start({ matchmakingBurst: 10 });
+    // Eleven at once: the bucket refills one a second, and these all land
+    // within milliseconds. None ever connects a socket.
+    const responses = await Promise.all(
+      Array.from({ length: 11 }, () =>
+        fetch(`http://127.0.0.1:${String(port)}/matchmake/create/${ROOM_LOBBY}`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ protocolVersion: PROTOCOL_VERSION }),
+        }),
+      ),
+    );
+
+    const refused = responses.filter((response) => response.status === ADDRESS_LIMIT);
+    expect(responses.filter((response) => response.ok)).toHaveLength(10);
+    expect(refused).toHaveLength(1);
+    expect(await refused[0]?.json()).toEqual({
+      code: ADDRESS_LIMIT,
+      error: ADDRESS_LIMIT_MESSAGE,
+    });
+    // Ten requests, ten lobbies: the refused one made nothing.
+    expect(await matchMaker.query({ name: ROOM_LOBBY })).toHaveLength(10);
+  });
+
+  it("spends the bucket on an absolute-form request target too", async () => {
+    await start({ matchmakingBurst: 2 });
+    // Colyseus's node middleware routes `POST http://evil/matchmake/...` by
+    // its path, `/matchmake/create/lobby`, so the bucket counts it by that
+    // path too. (Behind our express app the router 404s it today; the
+    // bucket must not depend on that.)
+    const rawCreate = async (): Promise<string> => {
+      const body = JSON.stringify({ protocolVersion: PROTOCOL_VERSION });
+      const socket = connect(port, "127.0.0.1");
+      await once(socket, "connect");
+      socket.write(
+        [
+          `POST http://evil.example/matchmake/create/${ROOM_LOBBY} HTTP/1.1`,
+          "Host: evil.example",
+          "Content-Type: application/json",
+          `Content-Length: ${String(Buffer.byteLength(body))}`,
+          "Connection: close",
+          "",
+          body,
+        ].join("\r\n"),
+      );
+      let response = "";
+      socket.setEncoding("utf8");
+      socket.on("data", (chunk: string) => {
+        response += chunk;
+      });
+      await once(socket, "close");
+      return response.split("\r\n")[0] ?? "";
+    };
+
+    const tooMany = `HTTP/1.1 ${String(ADDRESS_LIMIT)} Too Many Requests`;
+    expect(await rawCreate()).not.toBe(tooMany);
+    expect(await rawCreate()).not.toBe(tooMany);
+    expect(await rawCreate()).toBe(tooMany);
+    // One bucket for both forms: the plain path is out of budget as well.
+    const plain = await fetch(`http://127.0.0.1:${String(port)}/matchmake/create/${ROOM_LOBBY}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ protocolVersion: PROTOCOL_VERSION }),
+    });
+    expect(plain.status).toBe(ADDRESS_LIMIT);
+    expect(await matchMaker.query({ name: ROOM_LOBBY })).toHaveLength(0);
+  });
+
+  it("never refuses a player coming back, and never counts them twice", async () => {
+    await start({ maxClients: 2, maxClientsPerAddress: 2 });
+    const watcher = await quickMatch();
+    const client = new Client(endpoint);
+    const dropper = await client.joinById(watcher.roomId, { protocolVersion: PROTOCOL_VERSION });
+    const token = dropper.reconnectionToken;
+
+    // Both caps are full while the dropped player is away.
+    await dropper.leave(false);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect((await refusal(quickMatch())).code).toBe(CLIENT_LIMIT);
+
+    const resumed = await client.reconnect(token);
+    expect(resumed.sessionId).toBe(dropper.sessionId);
+    expect((await refusal(quickMatch())).code).toBe(CLIENT_LIMIT);
+
+    // Counted once and released once: both seats come back.
+    await resumed.leave(true);
+    await watcher.leave(true);
+    const one = await eventually(() => quickMatch());
+    const two = await eventually(() => quickMatch());
+    await one.leave(true);
+    await two.leave(true);
   });
 });

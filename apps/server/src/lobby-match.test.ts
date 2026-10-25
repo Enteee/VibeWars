@@ -19,7 +19,7 @@ import {
   openLobbyMatch,
 } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
-import { findFreePort, waitFor } from "./testing/harness.js";
+import { LOOPBACK_LIMITS, findFreePort, waitFor } from "./testing/harness.js";
 import { DEFAULT_MAX_ROOMS } from "./config.js";
 
 /** What a test reads of a match room's decoded state. */
@@ -65,6 +65,7 @@ describe("a lobby's own match", () => {
       webRoot: undefined,
       devMode: false,
       maxRooms: DEFAULT_MAX_ROOMS,
+      ...LOOPBACK_LIMITS,
     });
     await server.listen(port, "127.0.0.1");
   });
@@ -454,6 +455,7 @@ describe("Quick Match", () => {
       webRoot: undefined,
       devMode: false,
       maxRooms: DEFAULT_MAX_ROOMS,
+      ...LOOPBACK_LIMITS,
     });
     await server.listen(port, "127.0.0.1");
   });
