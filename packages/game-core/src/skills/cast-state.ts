@@ -16,17 +16,40 @@ export interface ActiveCast {
   remainingSeconds: number;
 }
 
+/**
+ * How close to zero an aftercast may be and count as over: 0.75 s in
+ * 0.05 s ticks leaves a float crumb that would otherwise cost a tick.
+ */
+const AFTERCAST_EPSILON = 1e-9;
+
 export class CastState {
   #activeCast: ActiveCast | undefined;
   readonly #rechargeRemaining = new Map<string, number>();
   readonly #rechargeTotal = new Map<string, number>();
+  #aftercastRemaining = 0;
+  #queuedSlot: number | undefined;
 
   public get activeCast(): ActiveCast | undefined {
     return this.#activeCast;
   }
 
+  /** Activating: what the cast bar shows. Not true during aftercast. */
   public get isCasting(): boolean {
     return this.#activeCast !== undefined;
+  }
+
+  /**
+   * The aftercast (#317): after a skill with an activation time goes off,
+   * a moment in which the caster neither moves, attacks, nor starts
+   * another cast, as in GW1.
+   */
+  public get inAftercast(): boolean {
+    return this.#aftercastRemaining > 0;
+  }
+
+  /** The slot to use when the aftercast ends, if one was pressed during it. */
+  public get queuedSlot(): number | undefined {
+    return this.#queuedSlot;
   }
 
   public get rechargeRemaining(): ReadonlyMap<string, number> {
@@ -62,6 +85,32 @@ export class CastState {
     return cancelled;
   }
 
+  public beginAftercast(seconds: number): void {
+    this.#aftercastRemaining = seconds;
+  }
+
+  /** End the aftercast now (death, reset), and with it anything queued. */
+  public endAftercast(): void {
+    this.#aftercastRemaining = 0;
+    this.#queuedSlot = undefined;
+  }
+
+  /** Use `slot` once the aftercast ends; a later press replaces it. */
+  public queue(slot: number): void {
+    this.#queuedSlot = slot;
+  }
+
+  /** The queued slot, emptying the queue. */
+  public takeQueued(): number | undefined {
+    const slot = this.#queuedSlot;
+    this.#queuedSlot = undefined;
+    return slot;
+  }
+
+  public clearQueue(): void {
+    this.#queuedSlot = undefined;
+  }
+
   public startRecharge(skillId: string, rechargeSeconds: number): void {
     if (rechargeSeconds > 0) {
       this.#rechargeRemaining.set(skillId, rechargeSeconds);
@@ -73,7 +122,8 @@ export class CastState {
    * Advance time by `dt` seconds. Returns the cast that completed on this
    * tick, if any — the caller is responsible for actually applying its
    * effects, because only the caller knows whether the target is still
-   * valid by the time the cast lands.
+   * valid by the time the cast lands. An aftercast the caller begins on
+   * resolving it counts down from the next call.
    */
   public advance(dt: number): ActiveCast | undefined {
     for (const [skillId, remaining] of this.#rechargeRemaining) {
@@ -83,6 +133,13 @@ export class CastState {
         this.#rechargeTotal.delete(skillId);
       } else {
         this.#rechargeRemaining.set(skillId, next);
+      }
+    }
+
+    if (this.#aftercastRemaining > 0) {
+      this.#aftercastRemaining -= dt;
+      if (this.#aftercastRemaining <= AFTERCAST_EPSILON) {
+        this.#aftercastRemaining = 0;
       }
     }
 

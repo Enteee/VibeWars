@@ -124,10 +124,12 @@ describe("cast-loop", () => {
       .map((entry) => [entry.skillId, Math.round(entry.atSeconds * 100) / 100]);
   };
 
-  it("takes skills in order without firstLegal, the next one in the tick the last resolves", () => {
+  it("takes skills in order without firstLegal, the next one queued for the end of the aftercast", () => {
+    // Troll Unguent resolves at 3.1; its 0.75 s aftercast (#317) holds
+    // Fireball's 1 s cast back until 3.85.
     expect(inOrder(0)).toEqual([
       ["ranger.troll-unguent", 3.1],
-      [FIREBALL, 4.1],
+      [FIREBALL, 4.85],
     ]);
   });
 

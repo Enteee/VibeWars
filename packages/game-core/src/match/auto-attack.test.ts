@@ -194,7 +194,7 @@ describe("the swing", () => {
 });
 
 describe("skills and the swing", () => {
-  it("a Fireball mid-swing loses the swing; the attack resumes once it lands", () => {
+  it("a Fireball mid-swing loses the swing; the attack resumes after its aftercast", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     match.requestAttack("a", "d");
     match.setTarget("a", "d");
@@ -202,12 +202,14 @@ describe("skills and the swing", () => {
     expect(match.requestSkill("a", 0)?.check).toEqual({ ok: true });
     expect(get(match, "a").combatant.attack?.swingElapsed).toBe(0);
 
-    const log = stepFor(match, 3);
+    const log = stepFor(match, 4);
     const fireball = log.find((entry) => entry.cause === "skill");
     const hit = swings(log)[0];
-    // Fireball lands 1 s in; no swing while it was cast, then a full one.
+    // Fireball lands 1 s in; no swing while it was cast or in the 0.75 s
+    // aftercast (#317), then a full one.
     expect(fireball?.atSeconds).toBeCloseTo(2, 6);
-    expect(Math.abs((hit?.atSeconds ?? 0) - 2 - 1.33)).toBeLessThanOrEqual(DT);
+    const aftercastEnds = 2 + RULES.combat.aftercastSeconds;
+    expect(Math.abs((hit?.atSeconds ?? 0) - aftercastEnds - 1.33)).toBeLessThanOrEqual(DT);
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
   });
 
@@ -219,7 +221,7 @@ describe("skills and the swing", () => {
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
   });
 
-  it("a skill at another enemy switches the attack to them once it lands", () => {
+  it("a spell at another enemy leaves the attack on the first, and the target on them (#317)", () => {
     const match = sim(
       swordsman("a", vec2(0, 0)),
       dummy("d", vec2(40, 0)),
@@ -228,27 +230,30 @@ describe("skills and the swing", () => {
     match.requestAttack("a", "d");
     match.setTarget("a", "e");
     match.requestSkill("a", 0);
-    // Still on d while the Fireball is in the air: a cast only pauses.
-    stepFor(match, 0.5);
+    const log = stepFor(match, 1 + RULES.combat.aftercastSeconds + 1.5);
+
+    expect(log.find((entry) => entry.cause === "skill")?.events[0]?.targetId).toBe("e");
+    expect(swings(log)[0]?.events[0]?.targetId).toBe("d");
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
-    stepFor(match, 0.6);
-    expect(get(match, "a").combatant.attack).toEqual({
-      targetId: "e",
-      swingElapsed: expect.any(Number) as number,
-      unreachableSeconds: 0,
-    });
+    expect(get(match, "a").targetId).toBe("e");
   });
 
-  it("a skill at an enemy starts an attack on them, and the swordsman walks in", () => {
+  it("a spell at an enemy starts no attack (#317)", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
     match.setTarget("a", "d");
     match.requestSkill("a", 0);
-    stepFor(match, 0.9);
+    stepFor(match, 1 + RULES.combat.aftercastSeconds + 1);
     expect(get(match, "a").combatant.attack).toBeUndefined();
-    stepFor(match, 0.2);
+    expect(get(match, "a").position).toEqual(vec2(0, 0));
+  });
+
+  it("an attack skill at an enemy starts an attack on them, and swings follow", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
+    match.setTarget("a", "d");
+    expect(match.requestSkill("a", 2)?.check).toEqual({ ok: true });
+    const log = stepFor(match, 2);
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
-    stepFor(match, 1);
-    expect(get(match, "a").position.x).toBeGreaterThan(0);
+    expect(swings(log).length).toBeGreaterThan(0);
   });
 
   it("an interrupted cast at an enemy starts nothing, and resumes the attack in progress", () => {
@@ -552,5 +557,142 @@ describe("the approach round bodies (#277)", () => {
     const log = stepFor(match, 3);
     expect(unreachable(log)).toEqual([]);
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
+  });
+});
+
+describe("aftercast (#317)", () => {
+  const AFTERCAST = RULES.combat.aftercastSeconds;
+
+  it("attacking, a cast at the foe: no swing in the cast or the aftercast, then one full interval", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
+    match.requestAttack("a", "d");
+    match.setTarget("a", "d");
+    match.requestSkill("a", 0);
+    const log = stepFor(match, 1 + AFTERCAST + 2);
+
+    const first = swings(log)[0]?.atSeconds ?? 0;
+    expect(first).toBeGreaterThan(1 + AFTERCAST);
+    expect(
+      Math.abs(first - (1 + AFTERCAST) - WEAPONS.sword.attackIntervalSeconds),
+    ).toBeLessThanOrEqual(DT);
+  });
+
+  it("an attack skill has none: the next skill can be used at once", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
+    match.setTarget("a", "d");
+    match.requestSkill("a", 2);
+    match.step(DT);
+    expect(get(match, "a").combatant.cast.inAftercast).toBe(false);
+    expect(match.requestSkill("a", 1)).toEqual({ skillId: ARMOR_OF_EARTH, check: { ok: true } });
+  });
+
+  it("a cancelled or interrupted cast has none", () => {
+    const moved = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
+    moved.setTarget("a", "d");
+    moved.requestSkill("a", 0);
+    stepFor(moved, 0.5);
+    moved.setInputDirection("a", vec2(0, 1));
+    moved.step(DT);
+    expect(get(moved, "a").combatant.cast.inAftercast).toBe(false);
+
+    const cut = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
+    cut.setTarget("a", "d");
+    cut.requestSkill("a", 0);
+    get(cut, "a").combatant.cast.cancelCast();
+    stepFor(cut, 1.1);
+    expect(get(cut, "a").combatant.cast.inAftercast).toBe(false);
+  });
+
+  it("holds a walking hero still, who walks the first tick after it ends", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
+    match.requestSkill("a", 1);
+    stepFor(match, 0.75);
+    expect(get(match, "a").combatant.cast.inAftercast).toBe(true);
+    match.setInputDirection("a", vec2(0, 1));
+
+    let ticks = 0;
+    while (get(match, "a").combatant.cast.inAftercast) {
+      match.step(DT);
+      ticks += 1;
+      expect(get(match, "a").position).toEqual(vec2(0, 0));
+    }
+    expect(ticks * DT).toBeCloseTo(AFTERCAST, 6);
+    // Armor of Earth's own slow still applies; the body moves, that is all.
+    match.step(DT);
+    expect(get(match, "a").position.y).toBeGreaterThan(0);
+  });
+
+  it("a skill with an activation time pressed in it is queued, and starts the tick it ends", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
+    match.setTarget("a", "d");
+    match.requestSkill("a", 1);
+    stepFor(match, 0.75);
+    const energy = get(match, "a").combatant.energy;
+    expect(match.requestSkill("a", 0)).toEqual({
+      skillId: FIREBALL,
+      check: { ok: true },
+      queued: true,
+    });
+    // Nothing paid, nothing cast, until the aftercast ends.
+    expect(get(match, "a").combatant.energy).toBe(energy);
+
+    let ticks = 0;
+    while (get(match, "a").combatant.cast.inAftercast) {
+      expect(get(match, "a").combatant.cast.isCasting).toBe(false);
+      match.step(DT);
+      ticks += 1;
+    }
+    expect(ticks * DT).toBeCloseTo(AFTERCAST, 6);
+    expect(get(match, "a").combatant.cast.activeCast).toMatchObject({
+      skillId: FIREBALL,
+      remainingSeconds: 1,
+    });
+    const log = stepFor(match, 1);
+    expect(log.map((entry) => entry.skillId)).toEqual([FIREBALL]);
+  });
+
+  it("a second press replaces the queued skill", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
+    match.setTarget("a", "d");
+    match.requestSkill("a", 0);
+    stepFor(match, 1);
+    match.requestSkill("a", 0);
+    match.requestSkill("a", 1);
+    expect(get(match, "a").combatant.cast.queuedSlot).toBe(1);
+    stepFor(match, AFTERCAST);
+    expect(get(match, "a").combatant.cast.activeCast?.skillId).toBe(ARMOR_OF_EARTH);
+  });
+
+  it("an attack skill pressed in it goes off at once", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
+    match.setTarget("a", "d");
+    match.requestSkill("a", 1);
+    stepFor(match, 0.75);
+    get(match, "a").combatant.adrenaline = 25;
+    expect(match.requestSkill("a", 2)).toEqual({ skillId: SWIFT_CHOP, check: { ok: true } });
+    const log = stepFor(match, DT);
+    expect(log.map((entry) => entry.skillId)).toEqual([SWIFT_CHOP]);
+    expect(get(match, "a").combatant.cast.inAftercast).toBe(true);
+  });
+
+  it("a skill that could not go off is refused at the press, not queued", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
+    match.setTarget("a", "d");
+    match.requestSkill("a", 1);
+    stepFor(match, 0.75);
+    get(match, "a").combatant.energy = 0;
+    expect(match.requestSkill("a", 0)?.check).toEqual({ ok: false, reason: "insufficient-energy" });
+    expect(get(match, "a").combatant.cast.queuedSlot).toBeUndefined();
+  });
+
+  it("cancelling the attack drops the queue", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
+    match.setTarget("a", "d");
+    match.requestSkill("a", 1);
+    stepFor(match, 0.75);
+    match.requestSkill("a", 0);
+    match.cancelAttack("a");
+    stepFor(match, AFTERCAST + DT);
+    expect(get(match, "a").combatant.cast.isCasting).toBe(false);
   });
 });
