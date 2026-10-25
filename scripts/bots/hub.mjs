@@ -229,7 +229,9 @@ try {
   /* never started, or its directory is not visible from here */
 }
 if (!daemonAlive) {
-  console.error("hub: the hub daemon is not answering, so GitHub is unreachable from here.");
+  console.error(
+    "hub: the hub daemon has not reported for a minute, so GitHub is unreachable from here.",
+  );
   console.error("hub: it is started by `claude-llc`. If you started this agent by hand");
   console.error("hub: with `claude-bot`, GitHub will not work until claude-llc is up.");
   console.error("hub: everything else — tg, the repo, the tests — works as normal.");

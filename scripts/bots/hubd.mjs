@@ -77,6 +77,7 @@ import {
 } from "./hub-rest.mjs";
 import { COMMENT_FIELDS, jsonFields, scrubJson, unknownField } from "./hub-strangers.mjs";
 import { BOARD_QUERY, costBetween, parseBoardPage, recordSpend } from "./hub-spend.mjs";
+import { HEARTBEAT_MS } from "./hub-health.mjs";
 import { SYSTEM, obj } from "./protocol.mjs";
 import {
   COMPANY_PATHSPECS,
@@ -191,6 +192,13 @@ function company() {
 /* -------------------------------------------------------------------------- */
 
 /**
+ * The longest any gh or git child may run (#496). hubd serves one request at
+ * a time, so a call that never returns would starve every other employee.
+ * VIBEWARS_HUBD_CHILD_TIMEOUT_MS is for a test to shorten it.
+ */
+const CHILD_DEADLINE_MS = Number(process.env.VIBEWARS_HUBD_CHILD_TIMEOUT_MS ?? 120_000);
+
+/**
  * @param {string} file
  * @param {string[]} args
  * @param {string} cwd
@@ -204,6 +212,11 @@ function run(file, args, cwd, extraEnv = {}) {
       env: { ...process.env, GH_PROMPT_DISABLED: "1", GIT_TERMINAL_PROMPT: "0", ...extraEnv },
       stdio: ["ignore", "pipe", "pipe"],
     });
+    let timedOut = false;
+    const deadline = setTimeout(() => {
+      timedOut = true;
+      child.kill("SIGKILL");
+    }, CHILD_DEADLINE_MS);
     let stdout = "";
     let stderr = "";
     child.stdout.setEncoding("utf8");
@@ -211,9 +224,20 @@ function run(file, args, cwd, extraEnv = {}) {
     child.stdout.on("data", (/** @type {string} */ chunk) => (stdout += chunk));
     child.stderr.on("data", (/** @type {string} */ chunk) => (stderr += chunk));
     child.on("error", (error) => {
+      clearTimeout(deadline);
       resolve({ code: 127, stdout, stderr: `${stderr}${error.message}\n` });
     });
     child.on("close", (code) => {
+      clearTimeout(deadline);
+      if (timedOut) {
+        const seconds = String(Math.round(CHILD_DEADLINE_MS / 1000));
+        resolve({
+          code: 124,
+          stdout,
+          stderr: `${stderr}hubd: ${file} ${args.slice(0, 2).join(" ")} killed after ${seconds} s\n`,
+        });
+        return;
+      }
       resolve({ code: code ?? 0, stdout, stderr });
     });
   });
@@ -468,13 +492,16 @@ function gitBytes(args) {
       env: { ...process.env, GIT_TERMINAL_PROMPT: "0", ...GIT_ENV },
       stdio: ["ignore", "pipe", "ignore"],
     });
+    const deadline = setTimeout(() => child.kill("SIGKILL"), CHILD_DEADLINE_MS);
     /** @type {Buffer[]} */
     const chunks = [];
     child.stdout.on("data", (/** @type {Buffer} */ chunk) => chunks.push(chunk));
     child.on("error", () => {
+      clearTimeout(deadline);
       resolve({ code: 127, stdout: Buffer.alloc(0) });
     });
     child.on("close", (code) => {
+      clearTimeout(deadline);
       resolve({ code: code ?? 0, stdout: Buffer.concat(chunks) });
     });
   });
@@ -2117,6 +2144,9 @@ const health = {
   lastError: null,
 };
 
+/** Whether a request is being served right now; the timer heartbeat reports it. */
+let serving = false;
+
 /**
  * The heartbeat, a `HubdAlive` (`hub-health.mjs`).
  *
@@ -2314,6 +2344,7 @@ async function serveSpool(employee, role, req, res) {
     }
     // Before the request leaves the spool, so a reboot waiting for hubd to
     // go quiet never sees it as neither queued nor in flight.
+    serving = true;
     heartbeat(true);
     req.remove(name);
 
@@ -2343,6 +2374,7 @@ async function serveSpool(employee, role, req, res) {
       } else {
         health.served += 1;
       }
+      serving = false;
       heartbeat(false);
     }
 
@@ -2388,7 +2420,11 @@ async function main() {
   loadBoard(cfg);
   readStaffed();
   heartbeat(false);
-  let lastBeat = Date.now();
+  // On a timer, not between requests: a slow request must not look like a
+  // dead daemon (#496).
+  setInterval(() => {
+    heartbeat(serving);
+  }, HEARTBEAT_MS).unref();
   // The dashboard's budget line. Free to ask (see `budgetExhausted`), and
   // it is also what lifts `limitedUntil` once GitHub resets the budget.
   const BUDGET_CHECK_MS = 60_000;
@@ -2423,12 +2459,6 @@ async function main() {
       } catch (error) {
         console.error(`hubd: board: ${error instanceof Error ? error.message : "failed"}`);
       }
-    }
-    // Cheap enough at this interval, and far below the staleness window hub
-    // allows, so a busy daemon is never mistaken for a dead one.
-    if (Date.now() - lastBeat > 5000) {
-      heartbeat(false);
-      lastBeat = Date.now();
     }
     if (Date.now() - lastBudgetCheck > BUDGET_CHECK_MS) {
       await budgetExhausted();

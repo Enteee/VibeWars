@@ -82,6 +82,7 @@ if (group === "api" && sub !== "graphql") {
   if (rel.startsWith("issues?")) { console.log(JSON.stringify([issue7, { ...pull9, pull_request: {} }])); process.exit(0); }
   console.log("rest ok"); process.exit(0);
 }
+if (group === "run" && argv.includes("--hang")) { setInterval(() => {}, 1000); return; }
 if (group === "run") { console.log("rest ok"); process.exit(0); }
 if (remaining === 0) { console.error("unknown owner type"); process.exit(1); }
 // Every GraphQL call costs a point, so hubd's measuring has something to see.
@@ -242,6 +243,8 @@ async function startHubd(remaining, before) {
     // Something only hubd's environment holds, to prove a filter cannot
     // reach it.
     HUBD_SECRET: "leaked",
+    // Short, for the test of a child that never returns (#496).
+    VIBEWARS_HUBD_CHILD_TIMEOUT_MS: "1500",
   };
   const child = spawn(process.execPath, [HUBD], { env, stdio: ["ignore", "ignore", "pipe"] });
   running.push({ child, dir });
@@ -818,6 +821,17 @@ describe("hubd and the GraphQL budget", () => {
 
     expect(answer.code).toBe(0);
     expect(String(answer.stdout)).toContain("rest ok");
+  }, 20_000);
+
+  it("kills a child that outlives its deadline and serves the next request (#496)", async () => {
+    const hubd = await startHubd(5000);
+
+    const hung = await hubd.request("developer-1", "gh", ["run", "list", "--hang"]);
+    const next = await hubd.request("developer-2", "gh", ["run", "list", "--limit", "1"]);
+
+    expect(hung.code).not.toBe(0);
+    expect(String(hung.stderr)).toContain("killed after");
+    expect(next.code).toBe(0);
   }, 20_000);
 
   it("records the budget for the dashboard", async () => {
