@@ -9,13 +9,23 @@ import { expect, test, type Page } from "@playwright/test";
  * `Access-Control-Allow-Origin` on static files or the host never starts.
  */
 
-/** Every message the page receives, from the music host or anyone else. */
+/**
+ * Every message the page receives, from the music host or anyone else; and
+ * apart, those from this page's own host frame, which is all the game hears.
+ * A host torn down by a reload can still have a message land in the new
+ * page, from a window the game no longer knows.
+ */
 async function recordMessages(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const seen: unknown[] = [];
-    Object.assign(window, { musicMessages: seen });
+    const fromHost: unknown[] = [];
+    Object.assign(window, { musicMessages: seen, hostMessages: fromHost });
     addEventListener("message", (event: MessageEvent) => {
       seen.push(event.data);
+      const host = document.querySelector<HTMLIFrameElement>("iframe.music-host");
+      if (host !== null && event.source === host.contentWindow) {
+        fromHost.push(event.data);
+      }
     });
   });
 }
@@ -125,5 +135,108 @@ test("the game's own scripts carry no Strudel engine", async ({ page, request })
     const body = await (await request.get(url)).text();
     // Names only the engine's own code has.
     expect(body, url).not.toMatch(/superdough|webaudioRepl|evalScope/);
+  }
+});
+
+/** The ids of every track this page's host said it started. */
+function playedTracks(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const seen = (window as unknown as { hostMessages: unknown[] }).hostMessages;
+    return seen.flatMap((message) =>
+      typeof message === "object" &&
+      message !== null &&
+      "type" in message &&
+      message.type === "playing" &&
+      "trackId" in message
+        ? [String(message.trackId)]
+        : [],
+    );
+  });
+}
+
+test("a pinned track is what plays after a reload (#372)", async ({ page }) => {
+  await recordMessages(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "music", exact: true }).click();
+  await page
+    .locator(".jukebox-row", { hasText: "Ember Deep" })
+    .getByRole("button", { name: "pin" })
+    .click();
+  await expect(page.locator(".jukebox-mode")).toHaveValue("pinned");
+
+  await page.reload();
+  await expect(page.locator(".roster")).toBeVisible();
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
+  await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toEqual(["ember-deep"]);
+});
+
+test("Off plays nothing after a click, and the music mute survives a reload (#372)", async ({
+  page,
+}) => {
+  await recordMessages(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "music", exact: true }).click();
+  await page.locator(".jukebox-mode").selectOption("off");
+  await page.locator(".jukebox-mute").click();
+  await expect(page.locator(".jukebox-mute")).toHaveAttribute("aria-pressed", "true");
+
+  await page.reload();
+  await expect(page.locator(".roster")).toBeVisible();
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
+  await expect(page.locator("iframe.music-host")).toHaveCount(1);
+  // Long enough for a track to have started, had one been asked for.
+  await page.waitForTimeout(4_000);
+  expect(await playedTracks(page)).toEqual([]);
+
+  await page.getByRole("button", { name: "music", exact: true }).click();
+  await expect(page.locator(".jukebox-mode")).toHaveValue("off");
+  await expect(page.locator(".jukebox-mute")).toHaveAttribute("aria-pressed", "true");
+});
+
+interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+test("the now-playing toast at a match start covers none of the HUD (#372)", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "quick match" })).toBeVisible();
+  // The toast hides after a few seconds, which a busy page can spend before
+  // a locator gets to it: note where it is the moment it shows.
+  await page.evaluate(() => {
+    const toast = document.querySelector<HTMLElement>(".now-playing");
+    if (toast === null) {
+      throw new Error("no now-playing toast");
+    }
+    const observer = new MutationObserver(() => {
+      if (!toast.hidden) {
+        observer.disconnect();
+        Object.assign(window, { toastBox: toast.getBoundingClientRect().toJSON() as unknown });
+      }
+    });
+    observer.observe(toast, { attributes: true, attributeFilter: ["hidden"] });
+  });
+  // The click that starts the match is the one that starts the music.
+  await page.getByRole("button", { name: "quick match" }).click();
+  await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+
+  const toastBox = (): Promise<Box | null> =>
+    page.evaluate(() => (window as { toastBox?: Box }).toastBox ?? null);
+  await expect.poll(toastBox, { timeout: 5_000 }).not.toBeNull();
+  const box = await toastBox();
+  for (const part of [".hud-skills", ".hud-bar-health", ".hud-scoreboard", ".hud-mute"]) {
+    const other = await page.locator(part).boundingBox();
+    expect(other, part).not.toBeNull();
+    if (box !== null && other !== null) {
+      const overlaps =
+        box.x < other.x + other.width &&
+        other.x < box.x + box.width &&
+        box.y < other.y + other.height &&
+        other.y < box.y + box.height;
+      expect(overlaps, `the toast overlaps ${part}`).toBe(false);
+    }
   }
 });

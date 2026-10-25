@@ -11,7 +11,9 @@ import {
   type LobbyConnection,
 } from "./net/lobby-client.js";
 import { startMatchView, type MatchView } from "./match-view.js";
+import { musicPlayer } from "./music/music-player.js";
 import { music } from "./music/play-music.js";
+import { TRACKS } from "./music/tracks/index.js";
 import { STRESS_BUILD, startStress, stressMs } from "./music/stress.js";
 import {
   CharacterRepository,
@@ -22,8 +24,10 @@ import {
 } from "./storage/repository.js";
 import type { StoredCharacter, StoredTeam } from "./storage/schema.js";
 import { disposeBuildEditor, newCharacter, renderBuildEditor } from "./ui/build-editor.js";
+import { disposeJukeboxScreen, renderJukeboxScreen } from "./ui/jukebox.js";
 import { disposeOptionsScreen, renderOptionsScreen } from "./ui/options-screen.js";
 import { renderLobbyScreen } from "./ui/lobby-screen.js";
+import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
 import { addMember, duplicateTeam, moveMember, newTeam, removeMember } from "./ui/team-builder.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
@@ -70,6 +74,10 @@ async function openStore(): Promise<KeyValueStore> {
 
 async function main(): Promise<void> {
   const screenRoot = requireElement("#screens");
+  const showNowPlaying = createNowPlayingToast(document.body);
+  musicPlayer().onNowPlaying((trackId) => {
+    showNowPlaying(nowPlayingText(trackId, TRACKS, music().intensity));
+  });
   const viewport = requireElement("#viewport");
 
   const stress = stressMs(window.location.search, STRESS_BUILD);
@@ -153,6 +161,7 @@ async function main(): Promise<void> {
     setStatus("ready", "offline");
     disposeBuildEditor();
     disposeOptionsScreen();
+    disposeJukeboxScreen();
     showViewport(false);
     music().screen("menu");
     void (async () => {
@@ -179,6 +188,9 @@ async function main(): Promise<void> {
         },
         onOptions: () => {
           renderOptionsScreen(screenRoot, { onBack: showMenu });
+        },
+        onMusic: () => {
+          renderJukeboxScreen(screenRoot, { onBack: showMenu });
         },
         // Straight into a match with no lobby — how the game worked before
         // Sprint 19, kept because it is the fastest way to try the game.

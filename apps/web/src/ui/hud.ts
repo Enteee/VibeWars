@@ -54,6 +54,8 @@ export interface HudElements {
   readonly result: HTMLElement;
   /** Sound on or off (#112); `renderMute` keeps it showing which. */
   readonly mute: HTMLButtonElement;
+  /** Opens the jukebox (#372), showing whether the music is muted. */
+  readonly music: HTMLButtonElement;
   /** Leave the match, after a yes (#160): Esc cancels an attack now. */
   readonly leave: HTMLElement;
 }
@@ -121,6 +123,14 @@ export function createHud(parent: HTMLElement): HudElements {
   mute.className = "hud-mute";
   mute.appendChild(document.createElement("img")).alt = "";
   parent.appendChild(mute);
+  const music = document.createElement("button");
+  music.type = "button";
+  music.className = "hud-music";
+  music.setAttribute("aria-label", "Music");
+  music.setAttribute("aria-haspopup", "dialog");
+  music.title = "Music";
+  music.appendChild(document.createElement("img")).alt = "";
+  parent.appendChild(music);
   const leave = element("div", "hud-leave", parent);
 
   const targetPanel = element("div", "hud-target", root);
@@ -170,6 +180,7 @@ export function createHud(parent: HTMLElement): HudElements {
     scoreboard,
     result,
     mute,
+    music,
     leave,
   };
 }

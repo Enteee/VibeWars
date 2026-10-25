@@ -87,7 +87,7 @@ function setup() {
   const changes: MusicState[] = [];
   const music = attachMatchMusic(connection, {
     screen: "match",
-    mode: { kind: "auto" },
+    mode: () => ({ kind: "auto" }),
     tracks: [
       { id: "hall-of-champions", moods: ["epic"] },
       { id: "victors-hymn", moods: ["triumphant"] },

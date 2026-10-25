@@ -9,6 +9,7 @@ import { PROFESSIONS, type ProfessionId, type SkillType } from "@vibewars/game-c
 import {
   SKILL_TYPE_NAME,
   attackingIcon,
+  musicIcon,
   professionIcon,
   skillBadgeHtml,
   skillTypeBadgeHtml,
@@ -36,6 +37,13 @@ describe("icons", () => {
       expect(fs.existsSync(path.join(PUBLIC, soundIcon(muted))), String(muted)).toBe(true);
     }
     expect(soundIcon(true)).not.toBe(soundIcon(false));
+  });
+
+  it("has a file under public/ for both music mute states (#372)", () => {
+    for (const muted of [false, true]) {
+      expect(fs.existsSync(path.join(PUBLIC, musicIcon(muted))), String(muted)).toBe(true);
+    }
+    expect(musicIcon(true)).not.toBe(musicIcon(false));
   });
 
   it("has a file under public/ for the attacking state", () => {
