@@ -8,6 +8,7 @@ import { PROFESSIONS, type ProfessionId, type SkillType } from "@vibewars/game-c
 
 import {
   SKILL_TYPE_NAME,
+  attackingIcon,
   professionIcon,
   skillBadgeHtml,
   skillTypeBadgeHtml,
@@ -35,6 +36,10 @@ describe("icons", () => {
       expect(fs.existsSync(path.join(PUBLIC, soundIcon(muted))), String(muted)).toBe(true);
     }
     expect(soundIcon(true)).not.toBe(soundIcon(false));
+  });
+
+  it("has a file under public/ for the attacking state", () => {
+    expect(fs.existsSync(path.join(PUBLIC, attackingIcon()))).toBe(true);
   });
 
   it("names a badge for screen readers and on hover", () => {

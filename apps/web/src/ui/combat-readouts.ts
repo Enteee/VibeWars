@@ -46,6 +46,8 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "interrupt-missed":
     case "attack-missed":
     case "attack-dodged":
+    case "attack-obstructed":
+    case "attack-unreachable":
       return "control";
     case "death":
       return "death";
@@ -97,6 +99,10 @@ export function describeCombatEvent(
       return `${by} misses ${target}`;
     case "attack-dodged":
       return `${target} dodges ${by}`;
+    case "attack-obstructed":
+      return `${by} is obstructed on the way to ${target}`;
+    case "attack-unreachable":
+      return `${by} can't reach ${target}`;
   }
 }
 
@@ -238,6 +244,12 @@ export function floatingCueFor(kind: string, amount: number | undefined): Floati
     case "attack-dodged":
       // A shot that landed where the target would have been (#159).
       return { text: "dodge", tone: "neutral" };
+    case "attack-obstructed":
+      // A wall between the bow and its target at release (#160).
+      return { text: "obstructed", tone: "neutral" };
+    case "attack-unreachable":
+      // No way round the walls; the attack has ended (#211).
+      return { text: "can't reach", tone: "neutral" };
     case "death":
       return { text: "defeated", tone: "damage" };
     default:

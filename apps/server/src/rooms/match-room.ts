@@ -18,7 +18,6 @@ import {
   resolveLoadout as resolveLoadout_,
   validatePlayerBuild,
   vec2,
-  type CombatEvent,
   type CombatLogEntry,
   type BuildEquipment,
   type Participant,
@@ -69,6 +68,11 @@ export const PlayerState = schema(
     x: t.number().default(0),
     y: t.number().default(0),
     targetSessionId: t.string().default(""),
+    /**
+     * Who this player is attacking with their weapon, or `""`. Public, as
+     * in GW1: everyone can see who is swinging at whom.
+     */
+    attackTargetSessionId: t.string().default(""),
 
     health: t.number().default(0),
     maxHealth: t.number().default(0),
@@ -94,10 +98,32 @@ export const PlayerState = schema(
   "PlayerState",
 );
 
+/**
+ * A ranged weapon's shot in flight, as it was released: the client flies
+ * it from `(x0, y0)` to `(x1, y1)` over `flightSeconds` from
+ * `launchedAt`. Written once at release and removed when it lands, so a
+ * shot costs no traffic while it flies.
+ */
+export const ProjectileState = schema(
+  {
+    id: t.number(),
+    x0: t.number(),
+    y0: t.number(),
+    x1: t.number(),
+    y1: t.number(),
+    /** The match clock (`elapsedSeconds`) at release. */
+    launchedAt: t.number(),
+    flightSeconds: t.number(),
+  },
+  "ProjectileState",
+);
+
 export const MatchState = schema(
   {
     protocolVersion: t.number().default(PROTOCOL_VERSION),
     players: t.map(PlayerState),
+    /** Weapon shots in flight, oldest first. */
+    projectiles: t.array(ProjectileState),
 
     /** Kills scored by team 0 and team 1 (brief §22's match rules). */
     scoreTeam0: t.number().default(0),
@@ -464,6 +490,7 @@ export class MatchRoom extends Room {
       ruleset: RULESET,
       matchRules: DEFAULT_MATCH_RULES,
       walls: this.#wallSegments,
+      bounds: { width: this.#map.width, height: this.#map.height },
     });
 
     this.onMessage("intent", (client, message: unknown) => {
@@ -502,6 +529,7 @@ export class MatchRoom extends Room {
           // broken game, and why it did nothing is nobody else's business.
           if (request !== undefined && !request.check.ok) {
             const message: CastRefusedMessage = {
+              kind: "skill",
               slot: intent.slot,
               skillId: request.skillId,
               reason: request.check.reason,
@@ -510,6 +538,19 @@ export class MatchRoom extends Room {
           }
           return;
         }
+        case "attack": {
+          const check = this.#sim.requestAttack(client.sessionId, intent.targetId);
+          if (check !== undefined && !check.ok) {
+            const message: CastRefusedMessage = { kind: "attack", reason: check.reason };
+            client.send("cast-refused", message);
+          }
+          this.mirrorAttack(client.sessionId);
+          return;
+        }
+        case "cancel-attack":
+          this.#sim.cancelAttack(client.sessionId);
+          this.mirrorAttack(client.sessionId);
+          return;
       }
     });
 
@@ -554,6 +595,14 @@ export class MatchRoom extends Room {
     };
   }
 
+  /** Mirror an attack change onto the schema at once, as `applyTarget` does. */
+  private mirrorAttack(sessionId: string): void {
+    const player = this.state.players.get(sessionId);
+    if (player !== undefined) {
+      player.attackTargetSessionId = this.#sim.get(sessionId)?.combatant.attack?.targetId ?? "";
+    }
+  }
+
   /**
    * Apply a target selection; the simulation decides whether it is valid
    * (brief §5). Mirrored onto the schema at once rather than at the next
@@ -577,20 +626,18 @@ export class MatchRoom extends Room {
    * where it landed and how far it reached, for the flash (#5). This is
    * not part of `game-protocol`, so the field is additive.
    */
-  private broadcastCombatEvents(
-    casterSessionId: string,
-    skillId: string,
-    events: readonly CombatEvent[],
-    area: CombatLogEntry["area"],
-  ): void {
+  private broadcastCombatEvents(casterSessionId: string, entry: CombatLogEntry): void {
+    const { cause, events, area } = entry;
     if (events.length === 0) {
       return;
     }
+    // `cause` says what this was; `skillId` is `""` unless it was a skill.
+    const skillId = entry.skillId ?? "";
     this.broadcast(
       "combat",
       area === undefined
-        ? { casterSessionId, skillId, events }
-        : { casterSessionId, skillId, events, area },
+        ? { casterSessionId, cause, skillId, events }
+        : { casterSessionId, cause, skillId, events, area },
     );
   }
 
@@ -612,13 +659,9 @@ export class MatchRoom extends Room {
       // weapon swing goes out as its attacker's, with no skill.
       const casterSessionId =
         entry.cause === "degeneration" ? entry.events[0]?.targetId : entry.sourceId;
-      this.broadcastCombatEvents(
-        casterSessionId ?? "",
-        entry.skillId ?? "",
-        entry.events,
-        entry.area,
-      );
+      this.broadcastCombatEvents(casterSessionId ?? "", entry);
     }
+    this.syncProjectiles();
 
     for (const [sessionId, player] of this.state.players) {
       const participant = this.#sim.get(sessionId);
@@ -677,6 +720,34 @@ export class MatchRoom extends Room {
     client.send("recharge", message);
   }
 
+  /** Add the shots released this tick and drop those that landed; leave the rest alone. */
+  private syncProjectiles(): void {
+    const flying = this.#sim.projectiles;
+    const ids = new Set(flying.map((projectile) => projectile.id));
+    for (let i = this.state.projectiles.length - 1; i >= 0; i -= 1) {
+      const shown = this.state.projectiles[i];
+      if (shown !== undefined && !ids.has(shown.id)) {
+        this.state.projectiles.splice(i, 1);
+      }
+    }
+    const shownIds = new Set(this.state.projectiles.map((projectile) => projectile.id));
+    for (const projectile of flying) {
+      if (!shownIds.has(projectile.id)) {
+        this.state.projectiles.push(
+          new ProjectileState({
+            id: projectile.id,
+            x0: projectile.from.x,
+            y0: projectile.from.y,
+            x1: projectile.aimPoint.x,
+            y1: projectile.aimPoint.y,
+            launchedAt: this.#sim.elapsedSeconds - projectile.elapsed,
+            flightSeconds: projectile.flightSeconds,
+          }),
+        );
+      }
+    }
+  }
+
   /** Copy simulation state onto the synchronized schema object. */
   private syncPlayer(player: InstanceType<typeof PlayerState>, sim: Participant): void {
     player.x = sim.position.x;
@@ -689,6 +760,7 @@ export class MatchRoom extends Room {
     player.dead = sim.combatant.dead;
     player.armor = sim.combatant.equipment.baseArmor;
     player.weaponId = sim.combatant.equipment.mainHand.weapon.id;
+    player.attackTargetSessionId = sim.combatant.attack?.targetId ?? "";
 
     const activeCast = sim.combatant.cast.activeCast;
     player.castingSkillId = activeCast?.skillId ?? "";

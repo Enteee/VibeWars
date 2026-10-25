@@ -8,6 +8,7 @@ import {
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
 import { saveMuted } from "../audio/mute-preference.js";
 import { soundPlayer } from "../audio/sound-player.js";
+import { attackKeyIntents, isAttacking } from "../input/attack-key.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
 import type { MatchSnapshot, SkillSlot } from "../net/match-connection.js";
@@ -76,7 +77,7 @@ const LOG_CAP = 200;
 const METER_PAINT_SECONDS = 0.2;
 
 const HINT_IDLE = "click the arena to take control";
-const HINT_ARMED = "wasd move · 1–8 cast · click to target · esc to release";
+const HINT_ARMED = "wasd move · 1–8 cast · click to target · space attack · esc to release";
 
 /**
  * Clicking one of these takes the keyboard, so it takes arena control
@@ -274,6 +275,15 @@ export function createTrainingPanel(): TrainingPanel {
     session.connection.sendIntent({ kind: "use-skill", slot });
   };
 
+  const attack = (): void => {
+    if (session === undefined || session.parked) {
+      return;
+    }
+    for (const intent of attackKeyIntents(session.connection.getSnapshot())) {
+      session.connection.sendIntent(intent);
+    }
+  };
+
   const paintSkills = (slots: readonly SkillSlot[]): void => {
     skillButtons = slots.map((slot, index) => {
       const button = document.createElement("button");
@@ -313,7 +323,9 @@ export function createTrainingPanel(): TrainingPanel {
     health.label.textContent = `${String(self.health)} / ${String(self.maxHealth)}`;
     energy.fill.style.width = fraction(self.energy, self.maxEnergy);
     energy.label.textContent = `${String(self.energy)} / ${String(self.maxEnergy)}`;
-    adrenaline.textContent = `adrenaline ${String(self.adrenaline)}`;
+    adrenaline.textContent =
+      `adrenaline ${String(self.adrenaline)}` +
+      (self.attackTargetSessionId === undefined ? "" : " · attacking");
     const slots = session?.connection.skillBar ?? [];
     const recharges = session?.connection.getRecharges() ?? [];
     const reducedMotion = prefersReducedMotion();
@@ -368,7 +380,7 @@ export function createTrainingPanel(): TrainingPanel {
       }
     });
     connection.onCastRefused((refusal) => {
-      flash(describeRefusal(refusal.reason));
+      flash(describeRefusal(refusal));
     });
 
     picker.value = scenario.id;
@@ -415,9 +427,25 @@ export function createTrainingPanel(): TrainingPanel {
   let detachMovement = attachKeyboardMoveInput(stage, onMove);
 
   const onStageKeyDown = (event: KeyboardEvent): void => {
-    if (event.key === "Escape") {
-      // Releases control; never navigates away from the editor.
+    if (event.key === " ") {
       event.preventDefault();
+      // Held Space auto-repeats; one attack is all it means (#160).
+      if (!event.repeat) {
+        attack();
+      }
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      if (event.repeat) {
+        return;
+      }
+      // An attack in progress is cancelled first (#160).
+      if (session !== undefined && isAttacking(session.connection.getSnapshot())) {
+        session.connection.sendIntent({ kind: "cancel-attack" });
+        return;
+      }
+      // Releases control; never navigates away from the editor.
       armed = false;
       stage.blur();
       return;

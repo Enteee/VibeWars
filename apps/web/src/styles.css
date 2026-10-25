@@ -517,6 +517,52 @@ body {
   height: 24px;
 }
 
+/* Left of the mute button; asks before it leaves (#160). */
+.hud-leave {
+  position: absolute;
+  top: 0.6rem;
+  right: 3.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 2.2rem;
+  padding: 0 0.5rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  font-size: 0.85rem;
+}
+
+.hud-leave button {
+  padding: 0.15rem 0.5rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.hud-leave button:hover,
+.hud-leave button:focus-visible {
+  border-color: var(--accent);
+}
+
+.hud-attacking {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.6rem;
+  color: var(--ink);
+}
+
+.hud-attacking[hidden] {
+  display: none;
+}
+
+.hud-attacking img {
+  width: 16px;
+  height: 16px;
+}
+
 .hud-result {
   position: absolute;
   top: 38%;

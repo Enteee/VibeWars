@@ -31,7 +31,11 @@ code.
 | `1`–`9`, `0`    | Use the matching skill-bar slot     |
 | `Tab`           | Target the next nearest enemy       |
 | `Shift` `Tab`   | Target the previous one             |
-| `Esc`           | Leave the match                     |
+| `Space`         | Attack your target with your weapon |
+| `Esc`           | Stop attacking                      |
+| `M`             | Mute or unmute the sound            |
+
+To leave a match, use **leave match** at the top right; it asks first.
 
 To try the character editor and the roster without hosting anything,
 open the static build on GitHub Pages:
