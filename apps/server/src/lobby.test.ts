@@ -175,8 +175,14 @@ describe("sanitizeName", () => {
       expect(sanitizeName(toned, "fallback")).toBe(toned);
     });
 
-    it("clamps in graphemes, so twenty families are sixteen whole ones", () => {
-      expect(sanitizeName(FAMILY.repeat(20), "fallback")).toBe(FAMILY.repeat(16));
+    it("clamps in whole graphemes, 48 code points in all: twenty families are six", () => {
+      expect(sanitizeName(FAMILY.repeat(20), "fallback")).toBe(FAMILY.repeat(6));
+    });
+
+    it("bounds a name of many wide graphemes, not just each one", () => {
+      // Eleven code points each, under the per-grapheme cap: four fit in 48.
+      const swatches = `a${String.fromCodePoint(0x1f3fb).repeat(10)}`;
+      expect(sanitizeName(swatches.repeat(11), "fallback")).toBe(swatches.repeat(4));
     });
   });
 });

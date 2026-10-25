@@ -105,6 +105,12 @@ const MAX_JOINERS_PER_GRAPHEME = 4;
  * leading jamo, is also one grapheme, and draws far wider than a letter.
  */
 const MAX_CODE_POINTS_PER_GRAPHEME = 12;
+/**
+ * Code points in the whole name. Each grapheme stays under the cap above,
+ * but sixteen of them at eleven swatches each still draw a wall; this is
+ * six families, or sixteen of nearly anything else.
+ */
+const MAX_NAME_CODE_POINTS = 48;
 
 /** One character of `INVISIBLE_CHARACTERS`, for testing a single code point. */
 const INVISIBLE_CHARACTER = new RegExp(INVISIBLE_CHARACTERS.source, "u");
@@ -174,13 +180,15 @@ function wantedFormatCharacters(chars: readonly string[]): Set<number> {
 }
 
 /**
- * The first `MAX_NAME_LENGTH` graphemes. One holding more than
+ * The first `MAX_NAME_LENGTH` graphemes, whole ones only, up to
+ * `MAX_NAME_CODE_POINTS` in all. One holding more than
  * `MAX_JOINERS_PER_GRAPHEME` joiners or `MAX_CODE_POINTS_PER_GRAPHEME`
  * code points keeps only its first code point.
  */
 function clampGraphemes(name: string): string {
   const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
   const kept: string[] = [];
+  let codePointsKept = 0;
   for (const { segment } of segmenter.segment(name)) {
     if (kept.length === MAX_NAME_LENGTH) {
       break;
@@ -190,7 +198,12 @@ function clampGraphemes(name: string): string {
     // A chain of thirty faces is one grapheme, drawn over everyone's bars.
     const tooWide =
       joiners > MAX_JOINERS_PER_GRAPHEME || codePoints.length > MAX_CODE_POINTS_PER_GRAPHEME;
-    kept.push(tooWide ? (codePoints[0] ?? "") : segment);
+    const grapheme = tooWide ? (codePoints[0] ?? "") : segment;
+    codePointsKept += tooWide ? 1 : codePoints.length;
+    if (codePointsKept > MAX_NAME_CODE_POINTS) {
+      break;
+    }
+    kept.push(grapheme);
   }
   return kept.join("");
 }
