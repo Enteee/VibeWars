@@ -148,9 +148,15 @@ console.log("ok");
 /** @type {{ child: import("node:child_process").ChildProcess, dir: string }[]} */
 const running = [];
 
-afterEach(() => {
+// Wait for hubd to exit before removing its directory: its heartbeat timer
+// writes there until it does, and rmSync would meet a file mid-write (#496).
+afterEach(async () => {
   for (const { child, dir } of running.splice(0)) {
-    child.kill("SIGTERM");
+    if (child.exitCode === null && child.signalCode === null) {
+      const exited = new Promise((resolve) => child.once("exit", resolve));
+      child.kill("SIGTERM");
+      await exited;
+    }
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
