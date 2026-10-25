@@ -453,9 +453,9 @@ test("(19) a move mid-cast cancels it: logged, and the cast never lands (#279)",
 }) => {
   await openTraining(page);
   await takeControl(page);
-  await page.keyboard.press("1");
+  await page.keyboard.press(skillKey(0));
   // Fireball takes a second; a step aside well inside it gives it up.
-  await holdKey(page, "w", 150);
+  await holdKey(page, key("move-up"), 150);
 
   const log = page.locator(".training-log");
   await expect(log).toContainText(/cancels Fireball/);
