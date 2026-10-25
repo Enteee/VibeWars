@@ -67,4 +67,29 @@ export class MessageBudget {
   public forget(sessionId: string): void {
     this.#buckets.delete(sessionId);
   }
+
+  /**
+   * Stop tracking every bucket that has refilled by `nowMs`: it would
+   * start full anyway. For keys that never say goodbye, like a network
+   * address, so the map cannot grow without end. Drops not yet reported
+   * are reported first.
+   */
+  public forgetRefilled(nowMs: number): void {
+    for (const [key, bucket] of this.#buckets) {
+      const refilled =
+        bucket.tokens + (Math.max(0, nowMs - bucket.at) / 1000) * this.#ratePerSecond >=
+        this.#burst;
+      if (refilled) {
+        if (bucket.dropped > 0) {
+          this.#report(key, bucket.dropped);
+        }
+        this.#buckets.delete(key);
+      }
+    }
+  }
+
+  /** How many keys are tracked. */
+  public get size(): number {
+    return this.#buckets.size;
+  }
 }

@@ -88,7 +88,7 @@ so the silhouette identifies the profession and the colour only supports it.
 | ----------- | ----------------------------------------------------- |
 | Actor       | Filled circle in team colour                          |
 | You         | Your team's circle plus an `ink` rim, 2 px inside     |
-| Target      | `target` ring, 5 px outside the actor                 |
+| Target      | `target` ring, 9 px outside the actor                 |
 | Dead        | Hollow `dead` circle, no bars                         |
 | Cast        | Bar above the health bar, fills as the cast completes |
 | Condition   | Circle plate, glyph inside                            |
@@ -119,7 +119,7 @@ Where an area skill lands (#5), the scene flashes the area it hit:
   hides a health bar, a status plate or a target ring.
 
 It cannot be confused with the target ring. The target ring is yellow and
-hugs one actor (5 px outside a radius of 14). The flash is team-coloured,
+hugs one actor (9 px outside a radius of 14). The flash is team-coloured,
 at least 40 units in radius, and gone in under half a second.
 
 ### Swing flash
@@ -192,7 +192,8 @@ removed at once.
 
 The body is a circle at the collision radius, r = 14 (#166). Everything on
 it is drawn in code. `node scripts/assets/player-mark.mjs` draws the
-reference sheet [`player-mark.svg`](player-mark.svg) at true size and at 4×.
+reference sheet [`player-mark.svg`](player-mark.svg) at true size and at 4×,
+off-hands included.
 
 ![Player mark reference sheet](player-mark.svg)
 
@@ -203,8 +204,16 @@ Outward from the centre:
 | Body     | 0 … r          | Team colour fill                     |
 | Edge     | r − 1.5 … r    | 1.5 px `edge` `#0b0f14`, living only |
 | Self rim | r − 3 … r − 1  | 2 px `ink`, your own body only       |
-| Weapon   | centre … r + 5 | See below, living only; under target |
-| Target   | r + 4 … r + 6  | 2 px `target`, your target only      |
+| Off-hand | r … r + 7      | See below, living only, left side    |
+| Weapon   | centre … r + 5 | See below, living only               |
+| Target   | r + 8 … r + 10 | 2 px `target`, your target only      |
+
+**The target ring sits at r + 9** (operator, Q26), its 2 px stroke from
+r + 8 to r + 10, so nothing on the body reaches it: the weapon mark stops at
+r + 5 and the off-hand mark inside r + 7. It is still drawn last. Its top
+passes under the health bar (r + 8 … r + 12 above the centre) and its bottom
+under the first status plate (from r + 6 below), both drawn over it; the
+sides, where you look for it, stay clear.
 
 **The weapon mark** (#188) points where the player faces. It is a line from
 the centre with a tip that names the weapon family. Its geometry (the stroke
@@ -213,10 +222,9 @@ twice: a 4 px `edge` casing first, then a 2 px `ink` core. The ends are
 butt, not round, because Phaser Graphics strokes have no caps. Every end lies
 outside the body, over the floor, where the ink reads without the casing
 wrapping it. Across a tip's crossbar, arc, head or orb, the casing paints out
-to r + 5 along the facing. That overlaps the target ring by a pixel, so **the
-target ring is drawn after the weapon mark** and covers it. Pulling the tip
-in to clear the ring would sink it into the body edge, where it stops
-reading. Without the
+to r + 5 along the facing, 3 units short of the target ring. Pulling the tip
+in further would sink it into the body edge, where it stops reading. Every
+tip, casing included, stays within 25° of the facing. Without the
 casing the ink line vanishes over the bright body: `ink` is 1.5:1 on `friend`
 and 1.9:1 on `foe`; the `edge` casing is 9.7:1 and 7.6:1.
 
@@ -237,6 +245,38 @@ cut through the target ring on the one body you look at most.
 In Phaser: one `beginPath`, the strokes as `moveTo`/`lineTo`, one
 `strokePath` per colour, plus one `fillPoints` per colour for the axe and
 the orb. That is two or three calls per actor, whatever the family.
+
+**The off-hand mark** (#275) sits on the off-hand side, the left of the
+facing (in screen coordinates, y down: facing angle − 90°), the side the axe
+head already hangs on. It is cased like the weapon mark, `edge` under `ink`,
+so it reads over the floor and over a neighbour's body: `ink` on `edge` is
+14.2:1, and the casing is 9.7:1 on `friend` and 7.6:1 on `foe`.
+
+| Off-hand | Geometry (world units, angles from the facing, toward the left)                                                                       |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| shield   | arc on the body's centre, radius r + 3.5, from 45° to 105°; 5 px `edge` casing (r + 1 … r + 6) under a 3 px `ink` core; butt ends     |
+| focus    | ring of radius 1.75, centred at r + 3.5 and 75°; 3 px `edge` casing under a 1.5 px `ink` core; r + 0.25 … r + 6.75, hole shows `edge` |
+| none     | nothing: no off-hand equipped, or a two-handed weapon                                                                                 |
+
+Why it reads, and what it is not:
+
+- **Clear of every weapon tip.** The tips stay within 25° of the facing; the
+  shield starts at 45°, about 6 px away at true size. Rows 6 and 7 of the
+  sheet put every family beside each off-hand.
+- **Shield and focus differ by shape and size**: a 60° band hugging the body
+  against a 5 px ring just off it. At true size the focus reads as a
+  bright dot, the shield as a bracket.
+- **Not a second weapon.** Nothing runs from the centre and nothing points
+  along the facing, so two sticks never appear.
+- **Not the swing flash**, which is a 2 px team-coloured arc at r + 6,
+  centred on the facing, spanning ±45°, and fades in 120 ms. The shield is
+  `ink`, standing, and begins where the flash ends.
+- **Not a status, area flash or self rim.** Statuses are plates under the
+  body; the area flash is a team-coloured ring at 40 units or more; the self
+  rim is inside the body. The off-hand is `ink`, partial and outside.
+- **Draw order**: body, edge, self rim, off-hand, weapon mark, target ring.
+  In Phaser the shield is one `arc` path stroked twice, the focus one
+  `strokeCircle` per colour: two calls per actor.
 
 ### Profession in the arena (study, not decided)
 

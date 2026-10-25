@@ -1,12 +1,14 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { defineRoom, defineServer } from "colyseus";
+import { WebSocketTransport, defineRoom, defineServer } from "colyseus";
 import { loadAllMaps } from "@vibewars/game-maps";
 import { ROOM_LOBBY, ROOM_MATCH } from "@vibewars/game-protocol";
 import express from "express";
 
 import { DEFAULT_DEV_CLIENT_ORIGIN, type ServerConfig } from "./config.js";
+import { GatedHttpServer } from "./http-gate.js";
+import { createClientLimits } from "./rooms/client-budget.js";
 import { budgetedLobbyRoom } from "./rooms/lobby-room.js";
 import { budgetedMatchRoom } from "./rooms/match-room.js";
 import { createRoomBudget } from "./rooms/room-budget.js";
@@ -21,16 +23,23 @@ import { createRoomBudget } from "./rooms/room-budget.js";
 export function createGameServer(config: ServerConfig) {
   // One budget for every room this server holds, match and lobby alike.
   const budget = createRoomBudget(config.maxRooms);
+  // And one set of seat limits, every room's clients together (#265).
+  const limits = createClientLimits(config.maxClients, config.maxClientsPerAddress);
   return defineServer({
     greet: false,
 
+    // Our own HTTP server, which strips forged forwarding headers and
+    // limits matchmaking per address before Colyseus sees a request (#265).
+    transport: new WebSocketTransport({ server: new GatedHttpServer(config.matchmakingBurst) }),
+
     rooms: {
-      // Each room class is this server's own, holding its budget (#114).
-      [ROOM_MATCH]: defineRoom(budgetedMatchRoom(budget)),
+      // Each room class is this server's own, holding its budget (#114)
+      // and its seat limits (#265).
+      [ROOM_MATCH]: defineRoom(budgetedMatchRoom(budget, limits)),
       // `filterBy(["code"])` is what makes "join by code" actually mean
       // "join *that* lobby": without it, matchmaking would hand a player
       // any available lobby and quietly ignore the code they typed.
-      [ROOM_LOBBY]: defineRoom(budgetedLobbyRoom(budget)).filterBy(["code"]),
+      [ROOM_LOBBY]: defineRoom(budgetedLobbyRoom(budget, limits)).filterBy(["code"]),
     },
 
     express: (app) => {

@@ -60,6 +60,22 @@ describe("MessageBudget", () => {
     expect(takeMany(of, 300, 0)).toBe(300);
   });
 
+  it("forgets the buckets that have refilled, reporting their drops first", () => {
+    const reports: Report[] = [];
+    const of = budget(reports);
+    takeMany(of, 302, 0, "a");
+    takeMany(of, 1, 4000, "b");
+    // `b` refilled its one in 1/60 s; `a` needs 5 s for its 300.
+    of.forgetRefilled(4900);
+    expect(of.size).toBe(1);
+    of.forgetRefilled(5000);
+    expect(of.size).toBe(0);
+    expect(reports).toEqual([
+      { sessionId: "a", dropped: 1 },
+      { sessionId: "a", dropped: 1 },
+    ]);
+  });
+
   it("does not refill when the clock steps back", () => {
     const of = budget();
     takeMany(of, 300, 5000);

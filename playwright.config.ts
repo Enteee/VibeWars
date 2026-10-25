@@ -87,7 +87,14 @@ export default defineConfig({
       // these tests cannot pass against a dev-only code path.
       command: `node apps/server/dist/main.js`,
       url: `http://127.0.0.1:${String(PORT)}/healthz`,
-      env: { PORT: String(PORT), HOST: "127.0.0.1" },
+      // Every browser here comes from 127.0.0.1, so the per-address caps
+      // (#265) are lifted; network-robustness.test.ts tests them.
+      env: {
+        PORT: String(PORT),
+        HOST: "127.0.0.1",
+        VIBEWARS_MAX_CLIENTS_PER_ADDRESS: "10000",
+        VIBEWARS_MATCHMAKING_BURST: "10000",
+      },
       reuseExistingServer: false,
       timeout: 60_000,
     },
