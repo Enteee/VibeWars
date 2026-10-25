@@ -218,6 +218,11 @@ function describe(line) {
  * The session to resume next turn, from the `system`/`init` event that opens
  * every run.
  *
+ * Only a UUID, as claude makes them. A jailed process can write to
+ * claude's stdout and so forge this event, and the id becomes an argument
+ * on the next turn: `--settings` passes a looser token check and would be
+ * read as a flag (found in review of #146).
+ *
  * @param {Record<string, unknown> | null} event
  * @returns {string | null}
  */
@@ -225,7 +230,7 @@ export function sessionIdOf(event) {
   return event?.type === "system" &&
     event.subtype === "init" &&
     typeof event.session_id === "string" &&
-    /^[A-Za-z0-9-]+$/.test(event.session_id)
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(event.session_id)
     ? event.session_id
     : null;
 }

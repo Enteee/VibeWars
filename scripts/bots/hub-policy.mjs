@@ -130,6 +130,7 @@ export const GATE_PATHS = [
   "scripts/bots/restart.mjs",
   "scripts/bots/supervisor.mjs",
   "scripts/bots/agent-turn.mjs",
+  "scripts/bots/agent-loop.mjs",
   "scripts/bots/stream-format.mjs",
   "scripts/bots/hub.mjs",
   "scripts/bots/hub-alerts.mjs",

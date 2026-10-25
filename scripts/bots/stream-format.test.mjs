@@ -162,7 +162,10 @@ describe("sessionIdOf", () => {
     expect(sessionIdOf(null)).toBeNull();
   });
 
-  it("refuses an id that is not a plain token", () => {
+  it("refuses an id that is not a UUID", () => {
+    // A forged init could otherwise put a flag on the next turn (#146 review).
+    expect(sessionIdOf({ ...INIT, session_id: "--settings" })).toBeNull();
+    expect(sessionIdOf({ ...INIT, session_id: "abc-123" })).toBeNull();
     expect(sessionIdOf({ ...INIT, session_id: "../../etc" })).toBeNull();
     expect(sessionIdOf({ ...INIT, session_id: "" })).toBeNull();
     expect(sessionIdOf({ ...INIT, session_id: 7 })).toBeNull();
@@ -243,6 +246,16 @@ describe("agent-turn.mjs", () => {
 
     expect(run.code).toBe(0);
     expect(run.args).toBe(`--resume ${SESSION_ID} developer-1`);
+    expect(run.session).toBe(SESSION_ID);
+  });
+
+  it("takes the first init of a run only, so a forged second one changes nothing", () => {
+    const forged = { ...INIT, session_id: "11111111-2222-4333-8444-555555555555" };
+    const run = turn({
+      lines: [JSON.stringify(INIT), JSON.stringify(forged), JSON.stringify(RESULT)],
+    });
+
+    expect(run.code).toBe(0);
     expect(run.session).toBe(SESSION_ID);
   });
 

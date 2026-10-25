@@ -43,10 +43,22 @@ turn, which is exactly the moment the TUI used to sit idle.
 - exits 0 when the turn ended and 1 when the run failed. A run failed if it
   exited non-zero or emitted no `result` event. A short turn is not a crash.
 
-Five failed runs in a row stop the loop, as before; a turn that ended resets
-the count. Between turns the loop pauses 10 s, so an agent that ends turns
-instead of running `tg wait` cannot spin, and the next turn's prompt sends
-it back to `tg inbox` and `board ls`.
+Five failed runs in a row stop the loop, as before, and the company is told
+through the system outbox; a turn that ended resets the count.
+
+**The pause between turns backs off** (`scripts/bots/agent-loop.mjs`). It
+is at least 10 s, so an agent that ends turns instead of running `tg wait`
+cannot spin, and it doubles while turns stay under a minute, up to 5 min. A
+long turn or a failure resets it. After the first 10 s, a message in the
+role's inbox that `tg` has not read ends the pause early. Agents do end
+turns while idle, whatever the briefing says (QA counted about ten an hour),
+and each resume re-reads the whole conversation, so a fixed 10 s would have
+idle agents outspend working ones. The next turn's prompt sends the agent
+back to `tg inbox` and `board ls`.
+
+**A session id must be a UUID**, and only a run's first `init` counts: a
+jailed process can write to claude's stdout and forge one, and the id is an
+argument on the next turn.
 
 **A session that cannot be resumed is dropped.** A resumed run that fails
 before its `init` event (a deleted transcript, a new claude version) deletes
@@ -70,7 +82,12 @@ fresh conversation. The supervisor no longer samples panes or nudges anyone.
   exited. The shared briefing and the resume prompt say so: block on the
   work, or on `tg wait`, rather than end the turn.
 - Each turn costs a process start and a resume. A turn that waits in
-  `tg wait` stays one process, so an idle company is not a busy one.
+  `tg wait` stays one process, and an agent that ends idle turns anyway
+  backs off to one resume every 5 min unless someone writes to it. A board
+  change does not wake it; the 5 min cap bounds how late it sees one.
+- **Waits stay under Bash's 600 s cap.** A longer `tg wait` is moved to the
+  background, the turn ends, and the messages it already marked read are
+  lost. Agents are told `--timeout 540`.
 - `claude-bot <role>` run by hand prints raw stream-json. Pipe it through
   `agent-turn.mjs`, or use `claude-llc-agent`.
 

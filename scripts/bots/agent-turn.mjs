@@ -69,7 +69,8 @@ const seen = { init: false, result: false };
 const lines = readline.createInterface({ input: child.stdout, crlfDelay: Infinity });
 lines.on("line", (line) => {
   const event = parseEvent(line);
-  const id = sessionIdOf(event);
+  // The first init only: claude prints one, so a second is forged.
+  const id = seen.init ? null : sessionIdOf(event);
   if (id !== null) {
     seen.init = true;
     saveSession(id);

@@ -418,8 +418,13 @@ in
       # pause; a second Ctrl-C during the pause stops the agent for good.
       # A run that failed (agent-turn.mjs decides) counts; five in a row and
       # the loop gives up, because an agent that cannot start at all should
-      # say so rather than flicker forever. A turn that ended normally, however
-      # short, resets the count.
+      # say so rather than flicker forever, and the company is told. A turn
+      # that ended normally, however short, resets the count.
+      #
+      # The pause is agent-loop.mjs's: at least 10 s, doubling up to 5 min
+      # while turns stay short, because idle agents do end turns and each
+      # resume re-reads the whole conversation. A message to the agent ends
+      # the pause early, after the first 10 s.
       #
       # `between-turns` exists exactly while the loop is not running a turn.
       # The supervisor reads it to drain the company for a reboot, and while
@@ -438,6 +443,7 @@ in
           shift || true
 
           root="$DEVENV_ROOT/.bots"
+          export VIBEWARS_BOT_ROOT="$root"
           state="$root/agents/$role"
           mkdir -p "$state"
           between="$state/between-turns"
@@ -451,25 +457,32 @@ in
           }
 
           failures=0
+          pause=0
           while true; do
             rm -f "$between"
+            started=$SECONDS
             if ${node} ${llcScripts}/agent-turn.mjs "$state" -- claude-bot "$role" "$@"; then
               failures=0
+              failed=0
             else
               failures=$(( failures + 1 ))
+              failed=1
             fi
             touch "$between"
+            pause="$(${node} ${llcScripts}/agent-loop.mjs pause "$pause" $(( SECONDS - started )) "$failed")"
 
             echo ""
             if [ "$failures" -ge 5 ]; then
               echo "claude-llc-agent: $role failed five runs in a row."
               echo "claude-llc-agent: not restarting. Fix the cause, then:"
               echo "claude-llc-agent:   claude-llc-agent $role"
+              ${node} ${llcScripts}/agent-loop.mjs gave-up "$role" || true
               exit 1
             fi
 
-            echo "claude-llc-agent: next turn for $role in 10s — Ctrl-C now to stop for good."
-            sleep 10 || stopped
+            echo "claude-llc-agent: next turn for $role in ''${pause}s, or when a message arrives."
+            echo "claude-llc-agent: Ctrl-C now to stop for good."
+            ${node} ${llcScripts}/agent-loop.mjs wait "$role" "$pause" || stopped
             # The marker goes before the reboot check, not after: a reboot
             # requested between the two would otherwise see this agent
             # between turns while it starts one. So the marker is only ever
