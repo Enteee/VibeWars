@@ -123,7 +123,8 @@ rewrites and which is easier to leak.
 ## Consequences
 
 - Hiring a role is `claude-bot <role>`, with no Telegram step. `claude-llc`
-  starts every role by default; `CLAUDE_LLC_ROLES` names a subset.
+  starts every role by default; `CLAUDE_LLC_ROLES` names a subset, on the
+  first boot only: after it, `.bots/staff.json` says who is employed (#62).
 - Agents talk to each other even when Telegram is slow, rate-limited or
   down. Only the operator's copy waits.
 - Per-role avatars and `@vw_<role>_bot` mentions are gone. The operator

@@ -127,6 +127,7 @@ export const GATE_PATHS = [
   "scripts/bots/protocol.mjs",
   "scripts/bots/git-hardening.mjs",
   "scripts/bots/reboot.mjs",
+  "scripts/bots/staff.mjs",
   "scripts/bots/restart.mjs",
   "scripts/bots/supervisor.mjs",
   "scripts/bots/agent-turn.mjs",
@@ -580,7 +581,8 @@ function permits(roles, role) {
 export function authorize(role, request, options = {}) {
   const acting = options.acting ?? [];
   const direct = authorizeAs(role, request, acting);
-  if (direct.allow) {
+  // Hiring and firing is the manager's own; no hat lends it (#380).
+  if (direct.allow || request.kind === "staff") {
     return direct;
   }
 
@@ -613,6 +615,9 @@ function authorizeAs(role, request, acting) {
   }
   if (request.kind === "reboot") {
     return authorizeReboot(role, argv);
+  }
+  if (request.kind === "staff") {
+    return authorizeStaff(role, argv);
   }
   if (request.kind === "board") {
     return authorizeBoard(argv);
@@ -877,6 +882,36 @@ function authorizeReboot(role, argv) {
     return { allow: true };
   }
   return { allow: false, reason: 'usage: company reboot "<reason>" | company reboot --abort' };
+}
+
+/**
+ * `company hire <role> "<reason>"` and `company fire <employee> "<reason>"`
+ * (#380): the manager's, who scales the company to the work. Whether this
+ * hire or fire may happen now is hubd's to decide, against `staff.json`.
+ *
+ * @param {string} role
+ * @param {string[]} argv `["hire", role, reason]` or `["fire", employee, reason]`
+ * @returns {{ allow: boolean, reason?: string }}
+ */
+function authorizeStaff(role, argv) {
+  const [verb, who, reason, ...rest] = argv;
+  if (
+    (verb !== "hire" && verb !== "fire") ||
+    who === undefined ||
+    who === "" ||
+    reason === undefined ||
+    reason.trim() === "" ||
+    rest.length > 0
+  ) {
+    return {
+      allow: false,
+      reason: 'usage: company hire <role> "<reason>" | company fire <employee> "<reason>"',
+    };
+  }
+  if (role !== "manager") {
+    return { allow: false, reason: "only the manager hires and fires" };
+  }
+  return { allow: true };
 }
 
 /**

@@ -386,6 +386,8 @@ differ by shape, so the icon shows the current state at a glance.
 | ----------- | ---------------------- | ------------------------------ |
 | `sound-on`  | Sound is on            | Speaker, two waves             |
 | `sound-off` | Sound is muted         | Speaker, a cross               |
+| `music-on`  | Music is on            | Beamed eighth notes            |
+| `music-off` | Music is muted         | The notes under a slash        |
 | `attacking` | You are auto-attacking | Two crossed swords, guards low |
 
 `attacking` has two blades, so at 16 px it never reads as the one-sword
