@@ -1,4 +1,5 @@
 import { Client } from "@colyseus/sdk";
+import { defaultBuildEquipment, type PlayerBuild } from "@vibewars/game-core";
 import { PROTOCOL_VERSION, ROOM_MATCH, type CastRefusedMessage } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -356,13 +357,10 @@ describe("networked combat", () => {
       { label: "target applied" },
     );
 
-    // Opening Cut costs adrenaline, which is earned by landing damage —
-    // so land a Fireball first. This is the adrenaline economy working
-    // as designed, not a workaround.
-    roomA.send("intent", {
-      kind: "use-skill",
-      slot: DEFAULT_SKILL_BAR.indexOf("elementalist.fireball"),
-    });
+    // Opening Cut costs adrenaline, which only attacks earn (Q19) — so
+    // land a weapon hit first. This is the adrenaline economy working as
+    // designed, not a workaround.
+    roomA.send("intent", { kind: "attack", targetId: roomB.sessionId });
     await waitFor(() => (roomA.state.players.get(roomA.sessionId)?.adrenaline ?? 0) > 0, {
       timeoutMs: 6000,
       label: "adrenaline from landing a hit",
@@ -381,6 +379,20 @@ describe("networked combat", () => {
 
     const victim = roomA.state.players.get(roomB.sessionId);
     expect([...(victim?.statuses ?? [])]).toContain("bleeding");
+
+    // The bleed ticks go out as degeneration, said outright (#160).
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error("no degeneration tick"));
+      }, 3000);
+      roomA.onMessage("combat", (message: { cause: string; skillId: string }) => {
+        if (message.cause === "degeneration") {
+          expect(message.skillId).toBe("");
+          clearTimeout(timer);
+          resolve();
+        }
+      });
+    });
 
     await roomA.leave();
     await roomB.leave();
@@ -413,6 +425,96 @@ describe("networked combat", () => {
     });
     const message = await combat;
     expect(message.events.some((e) => e.kind === "damage")).toBe(true);
+    expect(message).toMatchObject({ cause: "skill", skillId: "elementalist.fireball" });
+
+    await roomA.leave();
+    await roomB.leave();
+  });
+
+  it("attacks on an attack intent: the target is public, hits go out as weapon, cancel stops", async () => {
+    const { roomA, roomB } = await joinPair();
+    // Approach walks straight at the target, so get past the dividing wall.
+    await closeDistance(roomA, roomB.sessionId, 60);
+    roomA.send("intent", { kind: "stop" });
+    const swing = new Promise<{ cause: string; skillId: string }>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error("no weapon hit"));
+      }, 15_000);
+      roomA.onMessage(
+        "combat",
+        (message: { cause: string; skillId: string; events: { kind: string }[] }) => {
+          if (message.cause === "weapon" && message.events.some((e) => e.kind === "damage")) {
+            clearTimeout(timer);
+            resolve(message);
+          }
+        },
+      );
+    });
+
+    roomA.send("intent", { kind: "attack", targetId: roomB.sessionId });
+    // Everyone sees it, the target included.
+    await waitFor(
+      () =>
+        roomB.state.players.get(roomA.sessionId)?.attackTargetSessionId === roomB.sessionId,
+      { label: "attack target synced" },
+    );
+    expect(await swing).toMatchObject({ cause: "weapon", skillId: "" });
+
+    roomA.send("intent", { kind: "cancel-attack" });
+    await waitFor(() => roomB.state.players.get(roomA.sessionId)?.attackTargetSessionId === "", {
+      label: "attack cancelled",
+    });
+
+    await roomA.leave();
+    await roomB.leave();
+  });
+
+  it("puts a bow's shots in flight on the state, and takes them off when they land", async () => {
+    const archer: PlayerBuild = {
+      name: "Archer",
+      primaryProfession: "ranger",
+      secondaryProfession: undefined,
+      attributes: [{ attributeId: "ranger.marksmanship", rank: 12 }],
+      // A bar of nothing gets the house loadout, sword and all.
+      skillBar: ["ranger.barrage", null, null, null, null, null, null, null],
+      equipment: defaultBuildEquipment("ranger"),
+    };
+    const roomA = await new Client(endpoint).create(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+      build: archer,
+    });
+    const roomB = await new Client(endpoint).joinById(roomA.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    await waitFor(() => roomA.state.players.has(roomB.sessionId), { label: "both players" });
+    await closeDistance(roomA, roomB.sessionId, 250);
+    roomA.send("intent", { kind: "stop" });
+    expect(roomA.state.players.get(roomA.sessionId)?.weaponId).toMatch(/bow/);
+
+    roomA.send("intent", { kind: "attack", targetId: roomB.sessionId });
+    await waitFor(() => roomA.state.projectiles.length > 0, {
+      timeoutMs: 8000,
+      label: "a shot in flight",
+    });
+    const shot = roomA.state.projectiles[0];
+    const me = roomA.state.players.get(roomA.sessionId);
+    expect(shot?.x0).toBeCloseTo(me?.x ?? NaN, 0);
+    expect(shot?.flightSeconds).toBeGreaterThan(0);
+    expect(shot?.launchedAt).toBeLessThanOrEqual(roomA.state.elapsedSeconds);
+    await waitFor(() => roomA.state.projectiles.length === 0, { label: "the shot landed" });
+
+    await roomA.leave();
+    await roomB.leave();
+  });
+
+  it("refuses an attack on yourself, and says why", async () => {
+    const { roomA, roomB } = await joinPair();
+    const refused = new Promise<{ slot: number; skillId: string; reason: string }>((resolve) => {
+      roomA.onMessage("cast-refused", resolve);
+    });
+    roomA.send("intent", { kind: "attack", targetId: roomA.sessionId });
+    expect(await refused).toEqual({ slot: -1, skillId: "", reason: "invalid-target-self" });
+    expect(roomA.state.players.get(roomA.sessionId)?.attackTargetSessionId).toBe("");
 
     await roomA.leave();
     await roomB.leave();
