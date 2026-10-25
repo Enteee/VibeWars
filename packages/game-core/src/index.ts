@@ -23,6 +23,7 @@ export {
   distancePointToSegment,
   distanceSegmentToSegment,
   distanceWithinRange,
+  firstHit,
   hasLineOfSight,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,

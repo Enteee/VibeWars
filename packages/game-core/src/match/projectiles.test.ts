@@ -366,3 +366,42 @@ describe("line of sight (#211)", () => {
     expect(weaponEvents(match, sword.attackIntervalSeconds * 2 + 2)).toContain("damage");
   });
 });
+
+describe("walls along the flight (#215)", () => {
+  /** A rect wall's sides, just above the archer's line to the target at release. */
+  const WALL = [
+    { a: vec2(200, 5), b: vec2(220, 5) },
+    { a: vec2(220, 5), b: vec2(220, 100) },
+    { a: vec2(220, 100), b: vec2(200, 100) },
+    { a: vec2(200, 100), b: vec2(200, 5) },
+  ];
+
+  /** The target walks down the screen into cover: in sight at release, led behind the wall. */
+  function pillarDance(walls: typeof WALL | []): MatchSimulation {
+    return new MatchSimulation({
+      seed: "pillar",
+      walls,
+      participants: [archer(vec2(0, 0)), target(vec2(300, -200))],
+    });
+  }
+
+  it("stops a shot led behind a wall at the wall: obstructed, no damage", () => {
+    const match = pillarDance(WALL);
+    const { projectile } = fire(match, UP);
+    expect(projectile.obstructed).toBe(true);
+    // On the near side of the wall, short of x = 200.
+    expect(projectile.aimPoint.x).toBeLessThan(200);
+    expect(projectile.aimPoint.x).toBeGreaterThan(195);
+
+    const landed = land(match);
+    expect(landed.events).toEqual([{ kind: "attack-obstructed", targetId: "target" }]);
+    expect(get(match, "archer").combatant.adrenaline).toBe(0);
+  });
+
+  it("hits, as before, with no wall in the way", () => {
+    const match = pillarDance([]);
+    const { projectile } = fire(match, UP);
+    expect(projectile.obstructed).toBe(false);
+    expect(land(match).events.some((event) => event.kind === "damage")).toBe(true);
+  });
+});
