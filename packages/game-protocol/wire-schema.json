@@ -583,7 +583,7 @@
     },
     "CLIENT_LIMIT": { "literal": 4503 },
     "LOBBY_CODE_ALPHABET": { "literal": "ACDEFGHJKMNPQRTWXY34679" },
-    "LOBBY_CODE_LENGTH": { "literal": 4 },
+    "LOBBY_CODE_LENGTH": { "literal": 6 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },
     "MAX_WIRE_COMBATS": { "literal": 64 },
     "MAX_WIRE_EVENTS": { "literal": 64 },
@@ -645,6 +645,11 @@
         { "literal": "ended" },
         { "literal": "hello" },
         { "literal": "intent" },
+        { "literal": "lobby-cmd" },
+        { "literal": "lobby-join" },
+        { "literal": "lobby-note" },
+        { "literal": "lobby-state" },
+        { "literal": "match-start" },
         { "literal": "recharge" },
         { "literal": "refuse" },
         { "literal": "refused" },
@@ -1058,6 +1063,13 @@
     "LobbyReadyMessage": {
       "properties": [{ "name": "ready", "optional": false, "type": "boolean" }]
     },
+    "LobbyRefusal": {
+      "union": [
+        { "literal": "host-left" },
+        { "literal": "lobby-full" },
+        { "literal": "protocol-mismatch" }
+      ]
+    },
     "LobbySelectMapMessage": {
       "properties": [{ "name": "mapId", "optional": false, "type": "string" }]
     },
@@ -1188,6 +1200,12 @@
             ]
           }
         }
+      ]
+    },
+    "PeerLobbyJoin": {
+      "properties": [
+        { "name": "name", "optional": false, "type": "string" },
+        { "name": "protocolVersion", "optional": false, "type": "string" }
       ]
     },
     "PeerRefuse": {
@@ -1776,6 +1794,100 @@
           "optional": false,
           "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
         }
+      ]
+    },
+    "WireLobbyCommand": {
+      "union": [
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "choose-team" } },
+            {
+              "name": "team",
+              "optional": false,
+              "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+            }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "ready" } },
+            { "name": "ready", "optional": false, "type": "boolean" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "select-map" } },
+            { "name": "mapId", "optional": false, "type": "string" }
+          ]
+        },
+        { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "start" } }] }
+      ]
+    },
+    "WireLobbyNote": {
+      "properties": [
+        {
+          "name": "kind",
+          "optional": false,
+          "type": { "union": [{ "literal": "refused" }, { "literal": "start-rejected" }] }
+        },
+        { "name": "reason", "optional": false, "type": "string" }
+      ]
+    },
+    "WireLobbyPlayer": {
+      "properties": [
+        { "name": "id", "optional": false, "type": "string" },
+        { "name": "isHost", "optional": false, "type": "boolean" },
+        { "name": "name", "optional": false, "type": "string" },
+        { "name": "ready", "optional": false, "type": "boolean" },
+        {
+          "name": "team",
+          "optional": false,
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+        }
+      ]
+    },
+    "WireLobbyState": {
+      "properties": [
+        { "name": "code", "optional": false, "type": "string" },
+        { "name": "hostId", "optional": false, "type": "string" },
+        { "name": "mapId", "optional": false, "type": "string" },
+        { "name": "matchId", "optional": false, "type": { "union": ["null", "string"] } },
+        {
+          "name": "phase",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "in-match" },
+              { "literal": "starting" },
+              { "literal": "waiting" }
+            ]
+          }
+        },
+        {
+          "name": "players",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "id", "optional": false, "type": "string" },
+                { "name": "isHost", "optional": false, "type": "boolean" },
+                { "name": "name", "optional": false, "type": "string" },
+                { "name": "ready", "optional": false, "type": "boolean" },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "WireMatchStart": {
+      "properties": [
+        { "name": "mapId", "optional": false, "type": "string" },
+        { "name": "matchId", "optional": false, "type": "string" }
       ]
     },
     "WirePlayer": {
