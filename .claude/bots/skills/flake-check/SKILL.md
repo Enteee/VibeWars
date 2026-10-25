@@ -1,6 +1,6 @@
 ---
 name: flake-check
-description: Repeat-run every new or changed test before it reaches main, so flaky tests are caught in review, not on main. Use when you write or change a test, when you review a PR that adds one, and before you merge.
+description: qa-tester repeat-runs every new or changed test before merging, so flaky tests are caught in QA, not on main. Use when a PR you are about to merge adds or changes a test, and when you write a test that waits on time, rooms or randomness.
 ---
 
 # Flake check: run new tests ten times
@@ -13,8 +13,12 @@ about a new test's stability.
 
 ## Who runs it
 
-- **The author**, before pushing a PR that adds or changes a test.
-- **qa-tester**, before merging any PR that adds or changes a test.
+**qa-tester**, before merging any PR that adds or changes a test.
+
+Developers do not: the operator asked that developers leave running
+tests to CI and QA (#35). A developer writing a test should still avoid
+what makes tests flaky (see below), and say in the PR which tests are
+new so QA knows what to repeat-run.
 
 ## How
 
