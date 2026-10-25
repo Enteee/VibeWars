@@ -50,7 +50,13 @@ Everything that decides what happens in a fight.
   you cannot fix.
 - `vec2.ts`, `movement.ts`, `geometry.ts` — vector math, speed-capped
   movement integration, and the shared geometric queries: circle-vs-segment
-  (walls), circle-vs-circle (body blocking), and line of sight.
+  (walls), circle-vs-circle (body blocking), segment distance, and line of
+  sight.
+- `distances.ts` — the game's shared distances (melee, ranges), in world
+  units.
+- `pathing.ts` — a visibility graph over wall corners and an A* search on
+  it. The weapon attack's approach uses it to walk round walls (ADR-0026).
+  Built once per match from the walls and the map bounds.
 - `ruleset.ts` — the versioned ruleset (brief §11). Tick rate, movement
   speed, collision radius, attribute budget and the resource economy live
   here as _data_, so the live server and the headless runner cannot drift
@@ -63,14 +69,21 @@ Everything that decides what happens in a fight.
   rather than in the web client precisely because the server is the thing
   that must enforce it; a second copy of the rules in the client would be
   the obvious way to get the two quietly disagreeing.
+- `equipment/` — weapons, off-hands, armor, runes and insignias as static
+  catalogs, plus resolving a build's equipment into the numbers a fight
+  uses (ADR-0012). `weapons.ts` is the one table of weapon damage, speed,
+  range and projectile speed.
 - `skills/` — the composable skill system (see below).
 - `match-rules.ts` — score target, clock, and victory evaluation.
 - `match/` — the one copy of the per-tick pipeline (ADR-0017).
-  `simulation.ts` is `MatchSimulation`: movement, collision, casting,
-  effects, statuses, death, respawn and scoring, stepped by whoever owns
-  the clock. `combat-log.ts` records each resolution with its source and
-  time. `behaviour.ts` turns behaviours (data) into the same intents a
-  player sends.
+  `simulation.ts` is `MatchSimulation`: movement (clamped to the map
+  bounds), collision, casting, weapon auto-attacks and their approach,
+  projectiles in flight, effects, statuses, death, respawn and scoring,
+  stepped by whoever owns the clock. `facing.ts` defines where a
+  participant looks. `combat-log.ts` records each resolution with its
+  source and time. `behaviour.ts` turns behaviours (data) into the same
+  intents a player sends. `training-scenarios.ts` holds the Training
+  Ground's scenarios as data (ADR-0020).
 - `tools/headless-match.ts` — runs real combat with no I/O at all, on
   `MatchSimulation`.
 
@@ -82,16 +95,21 @@ composed from a small set of reusable effects, never bespoke classes and
 never a giant `switch`.
 
 ```text
-types.ts      Skill, SkillEffect, Combatant, TargetRule
-effects.ts    the effect interpreter: damage, heal, status, interrupt,
-              energy/adrenaline — one handler per effect kind
-scaling.ts    attribute rank -> magnitude (linear interpolation)
-activation.ts can this skill be cast right now, and if not, *why not*
-cast-state.ts activation/recharge timers for one combatant
-status.ts     condition/hex/enchantment definitions and stacking rules
-tick.ts       per-tick status advancement (degen, regen, expiry)
-catalog.ts    the implemented skills, as data
-coverage.ts   imported corpus vs implemented — the honest gap report
+types.ts         Skill, SkillEffect, Combatant, TargetRule
+effects.ts       the effect interpreter: damage, heal, status, interrupt,
+                 energy/adrenaline — one handler per effect kind
+scaling.ts       attribute rank -> magnitude (linear interpolation)
+activation.ts    can this skill be cast right now, and if not, *why not*
+cast-state.ts    activation/recharge timers for one combatant
+status.ts        condition/hex/enchantment definitions and stacking rules
+tick.ts          per-tick status advancement (degen, regen, expiry)
+catalog.ts       the implemented skills, as data
+coverage.ts      imported corpus vs implemented — the honest gap report
+damage.ts        the damage pipeline: armor, penetration, every point of damage
+targeting.ts     who a landed skill hits: the target, or everyone in its area
+weapon-attack.ts what one weapon swing does when it lands (ADR-0026)
+projectile.ts    a ranged shot in flight, led at where the target is going
+describe.ts      skill descriptions, generated from the effect data
 ```
 
 Adding a skill means adding an entry to `catalog.ts`. If it needs a
