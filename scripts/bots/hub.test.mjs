@@ -31,9 +31,10 @@ afterEach(() => {
  *
  * @param {{ code: number, stdout: string }} answer
  * @param {unknown[]} [seen] where to keep every request it answered
+ * @param {Record<string, unknown>} [alive] fields of the heartbeat to override
  * @returns {string} the spool, for VIBEWARS_HUB
  */
-function stubHubd(answer, seen = []) {
+function stubHubd(answer, seen = [], alive = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hub-test-"));
   const spool = path.join(dir, "developer-1");
   const req = path.join(spool, "req");
@@ -48,9 +49,11 @@ function stubHubd(answer, seen = []) {
       heartbeatAt: Date.now(),
       sha: null,
       inflight: 0,
+      current: null,
       served: 0,
       refused: 0,
       lastError: null,
+      ...alive,
     }),
   );
 
@@ -124,6 +127,69 @@ function hubIntoHead(spool, args) {
     });
   });
 }
+
+/**
+ * @param {string} spool
+ * @param {string[]} args
+ * @returns {Promise<{ code: number | null, stderr: string }>}
+ */
+function hubStderr(spool, args) {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [HUB, ...args], {
+      env: {
+        PATH: process.env.PATH ?? "",
+        VIBEWARS_BOT_EMPLOYEE: "developer-1",
+        VIBEWARS_BOT_ROLE: "developer-1",
+        VIBEWARS_HUB: spool,
+      },
+      stdio: ["ignore", "ignore", "pipe"],
+    });
+    let stderr = "";
+    child.stderr.on("data", (/** @type {Buffer} */ chunk) => (stderr += chunk.toString()));
+    child.on("close", (code) => {
+      resolve({ code, stderr });
+    });
+  });
+}
+
+describe("hub and a busy daemon (#496)", () => {
+  it("says hubd is busy when the heartbeat is fresh and a request has run over 10 s", async () => {
+    const current = {
+      employee: "developer-2",
+      command: "gh pr checks",
+      startedAt: Date.now() - 15_000,
+    };
+    const spool = stubHubd({ code: 0, stdout: "ok" }, [], { inflight: 1, current });
+
+    const result = await hubStderr(spool, ["issue", "list"]);
+
+    expect(result.code).toBe(0);
+    expect(result.stderr).toMatch(
+      /hubd is busy with developer-2's `gh pr checks` for 1\d s; queued/,
+    );
+    expect(result.stderr).not.toContain("not answering");
+  });
+
+  it("stays quiet for a request under 10 s, and says not answering for a stale heartbeat", async () => {
+    const recent = {
+      employee: "developer-2",
+      command: "gh pr checks",
+      startedAt: Date.now() - 2000,
+    };
+    const quiet = await hubStderr(stubHubd({ code: 0, stdout: "ok" }, [], { current: recent }), [
+      "issue",
+      "list",
+    ]);
+    expect(quiet.stderr).not.toContain("busy");
+
+    const stale = await hubStderr(
+      stubHubd({ code: 0, stdout: "ok" }, [], { heartbeatAt: Date.now() - 120_000 }),
+      ["issue", "list"],
+    );
+    expect(stale.code).toBe(75);
+    expect(stale.stderr).toContain("not answering");
+  });
+});
 
 /** @returns {string} a JSON array of issues, BIG bytes or more */
 function bigJson() {

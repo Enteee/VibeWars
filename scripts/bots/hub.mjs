@@ -221,21 +221,31 @@ if (!local.allow) {
 const HEARTBEAT_MAX_AGE_MS = 60_000;
 const beatFile = path.join(SPOOL, "..", "hubd.alive");
 let daemonAlive = false;
+/** @type {import("./hub-health.mjs").HubdAlive | null} */
+let beat = null;
 try {
   // A `HubdAlive`, written by hubd (#23). Only its time means anything here.
-  const beat = parseAlive(fs.readFileSync(beatFile, "utf8"));
+  beat = parseAlive(fs.readFileSync(beatFile, "utf8"));
   daemonAlive = beat !== null && Date.now() - beat.heartbeatAt < HEARTBEAT_MAX_AGE_MS;
 } catch {
   /* never started, or its directory is not visible from here */
 }
 if (!daemonAlive) {
-  console.error(
-    "hub: the hub daemon has not reported for a minute, so GitHub is unreachable from here.",
-  );
+  console.error("hub: the hub daemon is not answering, so GitHub is unreachable from here.");
   console.error("hub: it is started by `claude-llc`. If you started this agent by hand");
   console.error("hub: with `claude-bot`, GitHub will not work until claude-llc is up.");
   console.error("hub: everything else — tg, the repo, the tests — works as normal.");
   process.exit(75);
+}
+
+// A fresh heartbeat with a slow request in flight is a busy daemon, not a dead
+// one: say so, once, and wait as usual (#496).
+const BUSY_AFTER_MS = 10_000;
+if (beat?.current != null && Date.now() - beat.current.startedAt > BUSY_AFTER_MS) {
+  const seconds = String(Math.round((Date.now() - beat.current.startedAt) / 1000));
+  console.error(
+    `hub: hubd is busy with ${beat.current.employee}'s \`${beat.current.command}\` for ${seconds} s; queued`,
+  );
 }
 
 const id = `${String(Date.now()).padStart(14, "0")}-${String(process.pid)}`;
