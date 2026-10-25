@@ -35,6 +35,8 @@ import {
   parseClientIntent,
   type CastRefusedMessage,
   type MapDescriptor,
+  type RechargeMessage,
+  type RechargeSlot,
   type ServerHello,
   type WallDescriptor,
 } from "@vibewars/game-protocol";
@@ -42,6 +44,7 @@ import type { StepContext } from "colyseus";
 
 import { sanitizeName } from "./lobby-room.js";
 import { assertProtocolVersion, field } from "./options.js";
+import { rechargePredicted, rechargeSlots } from "./recharge.js";
 
 /**
  * The match simulation room: authoritative movement, targeting and combat
@@ -340,6 +343,12 @@ export class MatchRoom extends Room {
   #nextSpawnIndex = 0;
 
   /**
+   * The recharges each player was last told, and the match time they were
+   * told at, so only what their countdown cannot predict is sent (#152).
+   */
+  readonly #rechargesSent = new Map<string, { slots: RechargeSlot[]; at: number }>();
+
+  /**
    * A lobby's match: each seat's team, and whether it was taken. Absent
    * for Quick Match, which alternates teams as players arrive.
    */
@@ -594,6 +603,9 @@ export class MatchRoom extends Room {
         this.syncPlayer(player, participant);
       }
     }
+    for (const client of this.clients) {
+      this.sendRecharges(client, false);
+    }
 
     if (result.phase === "finished") {
       this.endMatch();
@@ -615,6 +627,27 @@ export class MatchRoom extends Room {
     console.info(
       `[match] finished winner=${String(outcome.winningTeam ?? "draw")} reason=${String(outcome.reason)}`,
     );
+  }
+
+  /**
+   * Tell one player their own recharges, when they changed in a way the
+   * client's countdown cannot know, or always with `force` (on join and
+   * reconnect). Never broadcast: an opponent's recharges are private.
+   */
+  private sendRecharges(client: Client, force: boolean): void {
+    const participant = this.#sim.get(client.sessionId);
+    if (participant === undefined) {
+      return;
+    }
+    const now = this.#sim.elapsedSeconds;
+    const slots = rechargeSlots(participant.skillBar, participant.combatant.cast);
+    const sent = this.#rechargesSent.get(client.sessionId);
+    if (!force && sent !== undefined && rechargePredicted(sent.slots, now - sent.at, slots)) {
+      return;
+    }
+    this.#rechargesSent.set(client.sessionId, { slots, at: now });
+    const message: RechargeMessage = { slots };
+    client.send("recharge", message);
   }
 
   /** Copy simulation state onto the synchronized schema object. */
@@ -732,6 +765,7 @@ export class MatchRoom extends Room {
         };
       }),
     });
+    this.sendRecharges(client, true);
 
     console.info(
       `[match] join sessionId=${client.sessionId} team=${String(team)} size=${String(this.state.players.size)}`,
@@ -748,6 +782,7 @@ export class MatchRoom extends Room {
   private removePlayer(sessionId: string): void {
     this.state.players.delete(sessionId);
     this.#sim.remove(sessionId);
+    this.#rechargesSent.delete(sessionId);
 
     for (const player of this.state.players.values()) {
       if (player.targetSessionId === sessionId) {
@@ -782,8 +817,9 @@ export class MatchRoom extends Room {
     );
 
     try {
-      await this.allowReconnection(client, RECONNECT_WINDOW_SECONDS);
+      const returned = await this.allowReconnection(client, RECONNECT_WINDOW_SECONDS);
       console.info(`[match] ${client.sessionId} reconnected`);
+      this.sendRecharges(returned, true);
     } catch {
       // Window expired, or the room is shutting down.
       this.removePlayer(client.sessionId);

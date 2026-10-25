@@ -31,6 +31,8 @@ export type {
   TargetIntent,
   UseSkillIntent,
   CastRefusedMessage,
+  RechargeMessage,
+  RechargeSlot,
   ServerHello,
   MapDescriptor,
   WallDescriptor,
