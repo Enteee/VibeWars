@@ -28,6 +28,14 @@ pnpm vitest run <path/to/file.test.ts> --repeats 9      # 1 run + 9 repeats
 pnpm playwright test <path/to/file.spec.ts> --repeat-each 10
 ```
 
+`--repeats` re-runs the test body but not `beforeAll`/`afterAll`. If the
+test leans on file-level setup (a server, a room, a port), run the whole
+file ten times instead:
+
+```sh
+for i in $(seq 10); do pnpm vitest run <path/to/file.test.ts> || break; done
+```
+
 Add `-t '<name>'` (vitest) or `-g '<name>'` (playwright) to narrow it to
 the tests the PR touches.
 
