@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { parseAlive } from "./hub-health.mjs";
+import { parseStaff } from "./staff.mjs";
 
 const HUBD = path.join(path.dirname(fileURLToPath(import.meta.url)), "hubd.mjs");
 const HUB = path.join(path.dirname(fileURLToPath(import.meta.url)), "hub.mjs");
@@ -1659,5 +1660,118 @@ describe("hubd scheduling a company reboot", () => {
     company(hubd, "scripts/bots/new.mjs", HOUR);
     const answer = await hubd.request("developer-1", "reboot", ["request", "x"]);
     expect(answer.allow).toBe(false);
+  }, 20_000);
+});
+
+describe("hubd hiring and firing", () => {
+  /**
+   * A company of the manager and one QA tester, capped at `maxAgents`.
+   *
+   * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+   * @param {number | null} maxAgents
+   */
+  const employ = (hubd, maxAgents) => {
+    const file = path.join(hubd.root, "company.json");
+    /** @type {unknown} */
+    const raw = JSON.parse(fs.readFileSync(file, "utf8"));
+    const cfg = typeof raw === "object" && raw !== null ? raw : {};
+    fs.writeFileSync(file, JSON.stringify(maxAgents === null ? cfg : { ...cfg, maxAgents }));
+    const first = {
+      hiredAt: 1,
+      by: "operator",
+      reason: "first boot",
+      state: "working",
+      readyAt: null,
+    };
+    fs.writeFileSync(
+      path.join(hubd.root, "staff.json"),
+      JSON.stringify({
+        employees: {
+          manager: { role: "manager", ...first },
+          "qa-tester": { role: "qa-tester", ...first },
+        },
+        recent: [],
+      }),
+    );
+  };
+  /**
+   * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+   * @returns {import("./staff.mjs").Staff}
+   */
+  const staff = (hubd) => parseStaff(fs.readFileSync(path.join(hubd.root, "staff.json"), "utf8"));
+  /**
+   * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+   * @returns {string[]}
+   */
+  const told = (hubd) => {
+    const outbox = path.join(hubd.root, "bus", "_system", "outbox");
+    return fs.existsSync(outbox)
+      ? fs
+          .readdirSync(outbox)
+          .sort()
+          .map((name) => {
+            /** @type {unknown} */
+            const message = JSON.parse(fs.readFileSync(path.join(outbox, name), "utf8"));
+            return typeof message === "object" && message !== null && "text" in message
+              ? String(message.text)
+              : "";
+          })
+      : [];
+  };
+
+  it("records a hire and a fire in staff.json, and tells the company", async () => {
+    const hubd = await startHubd(5000);
+    employ(hubd, 4);
+
+    const hired = await hubd.request("manager", "staff", ["hire", "qa-tester", "QA column at 4"]);
+    expect(hired.code, String(hired.reason)).toBe(0);
+    expect(hired.stdout).toBe(
+      "recorded qa-tester@2 (takes effect when the supervisor reconciles, #383)\n",
+    );
+    expect(staff(hubd).employees["qa-tester@2"]).toMatchObject({
+      role: "qa-tester",
+      by: "manager",
+      reason: "QA column at 4",
+      state: "working",
+      readyAt: null,
+    });
+
+    const fired = await hubd.request("manager", "staff", ["fire", "qa-tester", "no QA work"]);
+    expect(fired.code, String(fired.reason)).toBe(0);
+    expect(staff(hubd).employees["qa-tester"]).toMatchObject({ state: "firing" });
+    expect(staff(hubd).recent.map((change) => change.id)).toEqual(["qa-tester@2", "qa-tester"]);
+    expect(told(hubd)).toEqual([
+      "Hired qa-tester@2: QA column at 4",
+      "Firing qa-tester: no QA work",
+    ]);
+
+    // The same employee again inside the cooldown, and over the cap.
+    const again = await hubd.request("manager", "staff", ["fire", "qa-tester@2", "x"]);
+    expect(String(again.reason)).toMatch(/qa-tester@2 changed at/);
+    await hubd.request("manager", "staff", ["hire", "architect", "x"]);
+    const over = await hubd.request("manager", "staff", ["hire", "lead-dev", "x"]);
+    expect(String(over.reason)).toBe("the company has 4 employees, maxAgents is 4");
+  }, 20_000);
+
+  it("refuses every request while company.json has no maxAgents", async () => {
+    const hubd = await startHubd(5000);
+    employ(hubd, null);
+    const before = fs.readFileSync(path.join(hubd.root, "staff.json"), "utf8");
+    const answer = await hubd.request("manager", "staff", ["hire", "qa-tester", "x"]);
+    expect(answer.allow).toBe(false);
+    expect(String(answer.reason)).toBe("company.json has no maxAgents; add it");
+    expect(fs.readFileSync(path.join(hubd.root, "staff.json"), "utf8")).toBe(before);
+  }, 20_000);
+
+  it("refuses anyone but the manager, and a malformed staff.json", async () => {
+    const hubd = await startHubd(5000);
+    employ(hubd, 9);
+    const answer = await hubd.request("lead-dev", "staff", ["hire", "qa-tester", "x"]);
+    expect(answer.allow).toBe(false);
+
+    fs.writeFileSync(path.join(hubd.root, "staff.json"), JSON.stringify({ employees: {} }));
+    const broken = await hubd.request("manager", "staff", ["hire", "qa-tester", "x"]);
+    expect(String(broken.reason)).toBe("staff.json: staff.recent is missing");
+    expect(told(hubd)).toEqual([]);
   }, 20_000);
 });
