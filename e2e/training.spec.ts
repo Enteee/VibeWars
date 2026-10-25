@@ -771,3 +771,73 @@ test("(28) an attack skill pressed out of reach walks in, then lands (#415)", as
   });
   await expect(page.locator(".training-log")).not.toContainText("out of range");
 });
+
+test("(29) a slot out of reach of the target is marked, and the mark goes once in reach (#485)", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("/");
+  await page.getByRole("button", { name: "new character" }).click();
+  // A new character is a warrior; Swift Chop needs an axe.
+  await page.getByRole("button", { name: "gear", exact: true }).click();
+  await page.locator(".gear-box").filter({ hasText: "Axe" }).first().click();
+  await expect(page.locator(".gear-slot").first()).toContainText("Axe");
+  await page.getByRole("button", { name: "skills", exact: true }).click();
+  await page.locator(".skill-box", { hasText: "Swift Chop" }).click();
+  const canvas = page.locator(".training canvas");
+  await page.locator("select.training-scenario").selectOption("weapon-dps");
+  await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
+  await takeControl(page);
+  const slot = page.locator(FILLED_SLOTS).first();
+  // No target, no mark.
+  await expect(slot).not.toHaveClass(/is-out-of-range/);
+
+  // The bow-range dummy, at (480, 210), far out of an axe's reach.
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+  const scale = box.width / TRAINING_HALL_WIDTH;
+  await page.mouse.click(box.x + 480 * scale, box.y + 210 * scale, { button: "right" });
+  await expect(slot).toHaveClass(/is-out-of-range/);
+  // A shape, not only a colour: the `↔` after the name.
+  const glyph = await slot
+    .locator(".training-skill-name")
+    .evaluate((node) => getComputedStyle(node, "::after").content);
+  expect(glyph).toBe('"↔"');
+
+  // A hint, not a gate: the press walks in (#415), and in reach the mark goes.
+  await page.keyboard.press(skillKey(0));
+  await expect(slot).not.toHaveClass(/is-out-of-range/, { timeout: 20_000 });
+});
+
+test("(30) the casting slot fills as the cast goes, hovering it shows its tooltip, and a cast hides it (#485)", async ({
+  page,
+}) => {
+  // Troll Unguent: a 3 s self-cast, long enough to see the fill rise.
+  await page.setViewportSize(WIDE);
+  await page.goto("/");
+  await page.getByRole("button", { name: "new character" }).click();
+  await page.locator(".editor-row select").first().selectOption("ranger");
+  await page.locator(".skill-box", { hasText: "Troll Unguent" }).click();
+  await expect(page.locator(FILLED_SLOTS)).toHaveText([`${codeLabel(skillKey(0))}Troll Unguent`]);
+  await takeControl(page);
+  const slot = page.locator(FILLED_SLOTS).first();
+
+  await slot.hover();
+  const tip = page.locator(".skill-tip:visible");
+  await expect(tip).toContainText("Troll Unguent");
+
+  await page.keyboard.press(skillKey(0));
+  await expect(slot).toHaveClass(/is-casting/);
+  await expect(tip).toHaveCount(0);
+  const fill = (): Promise<number> =>
+    slot.evaluate((node) => Number((node as HTMLElement).style.getPropertyValue("--cast-fill")));
+  const early = await fill();
+  await expect.poll(fill).toBeGreaterThan(early);
+  expect(await fill()).toBeLessThanOrEqual(1);
+
+  // The fill goes the frame the cast does.
+  await expect(slot).not.toHaveClass(/is-casting/, { timeout: 10_000 });
+  expect(await fill()).toBe(0);
+});

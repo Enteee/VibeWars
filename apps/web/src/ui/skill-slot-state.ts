@@ -1,3 +1,4 @@
+import { distanceWithinRange, getSkill, hasLineOfSight, type Segment } from "@vibewars/game-core";
 import type { CombatMessage, PlayerSnapshot, SkillSlot } from "@vibewars/game-session";
 
 /**
@@ -26,6 +27,74 @@ export function castingSlot(
   }
   const slot = skillBar.findIndex((skill) => skill !== null && skill.id === self.castingSkillId);
   return slot === -1 ? undefined : slot;
+}
+
+/**
+ * How far the casting slot's cast has got, from 0 as it starts to 1 as it
+ * goes off (#485), or undefined when nothing is casting.
+ */
+export function castFill(
+  skillBar: readonly (SkillSlot | null)[],
+  self: PlayerSnapshot | undefined,
+): { slot: number; fraction: number } | undefined {
+  const slot = castingSlot(skillBar, self);
+  if (slot === undefined || self === undefined) {
+    return undefined;
+  }
+  const fraction = 1 - self.castRemaining / self.castTotal;
+  return { slot, fraction: Math.max(0, Math.min(1, fraction)) };
+}
+
+/**
+ * Paint `fraction` of a cast onto the slot it casts from, or clear it with
+ * `undefined`. Writes only on change: this runs every frame.
+ */
+export function paintCastFill(button: HTMLElement, fraction: number | undefined): void {
+  if (fraction === undefined) {
+    if (button.style.getPropertyValue("--cast-fill") !== "") {
+      button.style.removeProperty("--cast-fill");
+    }
+    return;
+  }
+  const value = String(fraction);
+  if (button.style.getPropertyValue("--cast-fill") !== value) {
+    button.style.setProperty("--cast-fill", value);
+  }
+}
+
+/**
+ * Which slots could not reach `target` from where `self` stands (#485):
+ * too far, or a wall in the way. The same two game-core checks activation
+ * makes, so the hint and the refusal cannot disagree. A hint, not a gate:
+ * the press still goes to the host (brief §32).
+ *
+ * Nothing is out of range with no target, a dead one, or for a skill that
+ * only targets its caster.
+ */
+export function outOfRange(
+  skillBar: readonly (SkillSlot | null)[],
+  self: PlayerSnapshot | undefined,
+  target: PlayerSnapshot | undefined,
+  walls: readonly Segment[],
+): boolean[] {
+  if (self === undefined || target === undefined || target.dead) {
+    return skillBar.map(() => false);
+  }
+  const from = { x: self.x, y: self.y };
+  const to = { x: target.x, y: target.y };
+  // Measured once for the whole bar: only the range differs per skill.
+  let sight: boolean | undefined;
+  return skillBar.map((slot) => {
+    const skill = slot === null ? undefined : getSkill(slot.id);
+    if (skill === undefined || skill.target === "self") {
+      return false;
+    }
+    if (!distanceWithinRange(from, to, skill.range)) {
+      return true;
+    }
+    sight ??= hasLineOfSight(from, to, walls);
+    return !sight;
+  });
 }
 
 /**

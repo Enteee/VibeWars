@@ -235,7 +235,8 @@ describe("the off-hand on the wire (#276)", () => {
       statuses: [],
     };
     room.state = { ...room.state, players: new Map([["me", player]]) };
-    return createMatchConnection(room, MAP, { slots: [], ranks: {} }, () => []).getSnapshot().players[0]?.offhandId;
+    return createMatchConnection(room, MAP, { slots: [], ranks: {} }, () => []).getSnapshot()
+      .players[0]?.offhandId;
   };
 
   it("maps none to undefined, a known off-hand to itself, and an unknown one to undefined", () => {

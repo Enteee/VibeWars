@@ -122,6 +122,26 @@ test("a quick match renders the arena and a populated HUD", async ({ page }) => 
   expect(await readEnergy(page)).toBeGreaterThan(0);
 });
 
+test("hovering a slot shows its tooltip at the host's ranks, above the bar (#485)", async ({
+  page,
+}) => {
+  await startQuickMatch(page);
+  const slot = page.locator(".hud-skill", { hasText: "Fireball" });
+  await slot.hover();
+  const tip = page.locator(".skill-tip:visible");
+  await expect(tip).toContainText("Fireball");
+  await expect(tip).toContainText("Fire Magic");
+  // The house loadout's Fire Magic 12, as the host resolved it; a client
+  // describing the skill without its ranks would say 7.
+  await expect(tip).toContainText("Deals 91 damage");
+  const tipBox = await tip.boundingBox();
+  const slotBox = await slot.boundingBox();
+  expect((tipBox?.y ?? Infinity) + (tipBox?.height ?? 0)).toBeLessThanOrEqual(slotBox?.y ?? 0);
+
+  await page.mouse.move(5, 5);
+  await expect(tip).toHaveCount(0);
+});
+
 test("M mutes and unmutes the combat sounds", async ({ page }) => {
   await startQuickMatch(page);
   const mute = page.getByRole("button", { name: "Mute sounds" });

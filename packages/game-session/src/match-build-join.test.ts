@@ -121,6 +121,18 @@ describe("joining a P2P match with a build (#375)", () => {
     ]);
   });
 
+  it("hands the client the ranks the host resolved, for its tooltips (#485)", async () => {
+    const { connection } = await joinWith(LEGAL_BUILD);
+    expect(connection.ranks.get("elementalist.fire-magic")).toBe(12);
+    expect(connection.ranks.get("monk.healing-prayers")).toBe(8);
+
+    // A refused build plays, and so describes, the house loadout.
+    const refused = await joinWith({ ...LEGAL_BUILD, skillBar: null });
+    expect(refused.connection.ranks.get("elementalist.fire-magic")).toBe(12);
+    expect(refused.connection.ranks.get("monk.healing-prayers")).toBe(12);
+    expect(refused.connection.ranks.get("necromancer.curses")).toBe(12);
+  });
+
   it("keeps a gap in the bar: the empty slot casts nothing, the next its own skill (#347)", async () => {
     const gap = { ...LEGAL_BUILD, skillBar: [null, "elementalist.armor-of-earth", ...nulls(6)] };
     const { match, connection, slots } = await joinWith(gap);

@@ -386,11 +386,13 @@ _inset_ in the slot, so it is never confused with the ready flash's outer ring
 and the layout never moves. It sits above the recharge wipe and under the
 hotkey.
 
-| State         | Ring              | Content   | Glyph        | Time           |
-| ------------- | ----------------- | --------- | ------------ | -------------- |
-| `casting`     | `ink`, pulsing    | as is     | none         | while it casts |
-| `interrupted` | `damage`, steady  | 0.6 alpha | `damage` `✕` | 400 ms         |
-| `cancelled`   | `ink-dim`, steady | 0.6 alpha | none         | 400 ms         |
+| State          | Ring              | Content                   | Glyph        | Time                  |
+| -------------- | ----------------- | ------------------------- | ------------ | --------------------- |
+| `casting`      | `ink`, pulsing    | as is                     | none         | while it casts        |
+| `interrupted`  | `damage`, steady  | 0.6 alpha                 | `damage` `✕` | 400 ms                |
+| `cancelled`    | `ink-dim`, steady | 0.6 alpha                 | none         | 400 ms                |
+| `cast fill`    | as `casting`      | `ink` 18% from the bottom | none         | while it casts        |
+| `out of range` | none              | cost struck through       | `ink` `↔`    | while it cannot reach |
 
 - **Casting** pulses its opacity from 0.65 to 1 over 700 ms. Under reduced
   motion the ring is steady.
@@ -398,6 +400,15 @@ hotkey.
   differ by ring colour _and_ by the glyph, so an interrupt reads without
   colour (#75). Never the recharge shade: a cancelled skill does not
   recharge.
+- **Casting fills the slot** (#485): `ink` at 18% alpha rises from the bottom
+  as the cast goes, under the ring and over nothing else, and goes the frame
+  the cast does. It is not the recharge wipe, which is a dark clock sweep.
+  It moves under reduced motion too: it is information, not decoration.
+- **Out of range** (#485): with a target selected, a slot whose skill cannot
+  reach it (too far, or a wall in the way) has its cost struck through and a
+  `↔` in `ink` after it. In the Training Ground row, which shows no cost, the
+  `↔` follows the name. A shape, never only a colour, and a hint, not a gate:
+  it combines with the unaffordable dimming.
 - **The `✕` must win at a glance.** On the HUD it is about half the slot's
   height (1.9rem), centred over the name and cased in `bg`. In the Training
   Ground row it sits at the right end, at row height.

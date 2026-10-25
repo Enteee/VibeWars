@@ -11,6 +11,8 @@
   --damage: #ff7b72;
   /* Darkens whatever is under it: a luminance change, never a hue (#152). */
   --recharge-shade: rgb(0 0 0 / 55%);
+  /* A cast's progress on its slot: --ink at low alpha (#485). */
+  --cast-fill-shade: rgb(215 222 232 / 18%);
   font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 
@@ -1121,6 +1123,39 @@ body {
 .training-skill.is-casting::after {
   box-shadow: inset 0 0 0 2px var(--ink);
   animation: slot-casting 700ms ease-in-out infinite alternate;
+}
+
+/* How far the cast has got (#485): ink at low alpha, rising from the
+   bottom, under the ring and over nothing else. Information, not
+   decoration, so it moves under reduced motion too. */
+.hud-skill.is-casting::before,
+.training-skill.is-casting::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    var(--cast-fill-shade) calc(var(--cast-fill, 0) * 100%),
+    transparent 0
+  );
+  pointer-events: none;
+}
+
+/* Out of reach of the target (#485): a shape, not only a colour. The cost
+   is struck through and a `↔` follows it; the Training Ground row has no
+   cost, so the glyph follows the name. A hint, not a gate. */
+.hud-skill.is-out-of-range .hud-skill-cost {
+  text-decoration: line-through;
+}
+
+.hud-skill.is-out-of-range .hud-skill-cost::after,
+.training-skill.is-out-of-range .training-skill-name::after {
+  content: "↔";
+  /* Inline-block, so the strike-through stops at the cost. */
+  display: inline-block;
+  margin-left: 0.3em;
+  color: var(--ink);
+  font-weight: 700;
 }
 
 @keyframes slot-casting {

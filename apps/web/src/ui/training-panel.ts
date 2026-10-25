@@ -2,9 +2,11 @@ import {
   TRAINING_SCENARIOS,
   getTrainingScenario,
   type StepResult,
+  type Segment,
   type Vec2,
   type TrainingScenario,
 } from "@vibewars/game-core";
+import { allWallSegments } from "@vibewars/game-maps";
 import type { MatchSnapshot, SkillSlot } from "@vibewars/game-session";
 
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
@@ -61,7 +63,8 @@ import {
 import { describeRefusal, MESSAGE_SECONDS } from "./hud.js";
 import { skillBadgeHtml } from "./icons.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
-import { castingSlot, flashSlot, slotFlashes } from "./skill-slot-state.js";
+import { castFill, flashSlot, outOfRange, paintCastFill, slotFlashes } from "./skill-slot-state.js";
+import { createSlotTooltips } from "./slot-tooltip.js";
 import {
   armedHint,
   buildSignature,
@@ -142,6 +145,8 @@ interface Session {
   readonly connection: LocalMatchConnection;
   readonly names: ReadonlyMap<string, string>;
   readonly walls: readonly RenderableWall[];
+  /** The same walls as segments, for the skill bar's line-of-sight hint (#485). */
+  readonly wallSegments: readonly Segment[];
   readonly sounds: MatchSounds;
   readonly music: MatchMusic;
   parked: boolean;
@@ -237,6 +242,7 @@ export function createTrainingPanel(): TrainingPanel {
   let latestArena: ArenaSnapshot = EMPTY_SNAPSHOT;
   let messageTimer: ReturnType<typeof setTimeout> | undefined;
   let skillButtons: HTMLButtonElement[] = [];
+  const slotTips = createSlotTooltips();
 
   // The player's professions follow the build being edited (#281).
   const professionsOf = (id: string): Professions =>
@@ -364,6 +370,8 @@ export function createTrainingPanel(): TrainingPanel {
       button.addEventListener("click", () => {
         cast(index);
       });
+      // The ranks read at hover, so a rearm shows at once.
+      slotTips.bind(button, index, slot.id, () => session?.connection.ranks ?? new Map());
       button.insertAdjacentHTML("beforeend", skillBadgeHtml(slot.id));
       button.append(h("span", "training-skill-name", slot.name));
       return button;
@@ -394,14 +402,19 @@ export function createTrainingPanel(): TrainingPanel {
     const slots = session?.connection.skillBar ?? [];
     const recharges = session?.connection.getRecharges() ?? [];
     const reducedMotion = prefersReducedMotion();
-    const casting = castingSlot(slots, self);
+    const fill = castFill(slots, self);
+    const target = match.players.find((player) => player.sessionId === self.targetSessionId);
+    const far = outOfRange(slots, self, target, session?.wallSegments ?? []);
+    slotTips.casting(fill?.slot);
     skillButtons.forEach((button, index) => {
       const slot = slots[index] ?? null;
       if (slot === null) {
         return;
       }
-      // The casting slot is lit, as on the match HUD (#300).
-      button.classList.toggle("is-casting", index === casting);
+      // The casting slot is lit and fills, as on the match HUD (#300, #485).
+      button.classList.toggle("is-casting", index === fill?.slot);
+      paintCastFill(button, index === fill?.slot ? fill.fraction : undefined);
+      button.classList.toggle("is-out-of-range", far[index] === true);
       // A hint, not a gate: the simulation still decides.
       const unaffordable = self.energy < slot.energyCost || self.adrenaline < slot.adrenalineCost;
       button.classList.toggle("is-unaffordable", unaffordable);
@@ -439,6 +452,7 @@ export function createTrainingPanel(): TrainingPanel {
       connection,
       names: setup.names,
       walls: setup.map.walls.map(toRenderableWall),
+      wallSegments: allWallSegments(setup.map.walls),
       // The same sounds as a match (#112), muted by the same M.
       sounds: attachMatchSounds(connection, soundPlayer()),
       music: attachMatchMusic(connection, {
@@ -796,6 +810,7 @@ export function createTrainingPanel(): TrainingPanel {
       void session?.connection.disconnect();
       session = undefined;
       root.remove();
+      slotTips.dispose();
       viewport?.destroy();
       viewport = undefined;
     },
