@@ -277,6 +277,9 @@ async function main() {
   log(`reboot: ${String(reboot.reason)}`);
 
   await stopCompany();
+  // A reboot starts every agent on a fresh conversation, with the kickoff
+  // prompt: the sessions to resume go with the restart loops' state.
+  fs.rmSync(path.join(ROOT, "agents"), { recursive: true, force: true });
   const git = checkoutGit();
 
   // GitHub's main, by URL, into the mirror. VIBEWARS_GIT_REMOTE is the

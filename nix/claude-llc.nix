@@ -406,20 +406,27 @@ in
         '';
       };
 
-      # One employee's window: claude-bot, restarted when it exits.
+      # One employee's window: one turn after another (#146, ADR-0027).
       #
-      # Without this the pane dies with the agent. Ctrl-C in Claude Code
-      # exits the process, tmux closes the window whose command returned,
-      # and the employee is gone for the rest of the day — which is a harsh
-      # penalty for interrupting a turn.
+      # claude-bot runs a single turn in print mode and exits when the agent
+      # ends it. agent-turn.mjs makes its output readable and resumes the
+      # role's conversation by the id it recorded in .bots/agents/<role>/,
+      # which no jail can see. Then a pause, and the next turn, whose prompt
+      # sends the agent back to its inbox and the board.
       #
-      # So Ctrl-C now means "restart this agent": the pane stays, the agent
-      # comes back in ten seconds with its kickoff prompt, and a second
-      # Ctrl-C during that pause stops it for good. A crash loop is capped,
-      # because an agent that cannot start at all should say so rather than
-      # flicker forever.
+      # Ctrl-C ends the current turn, and the next one starts after the
+      # pause; a second Ctrl-C during the pause stops the agent for good.
+      # A run that failed (agent-turn.mjs decides) counts; five in a row and
+      # the loop gives up, because an agent that cannot start at all should
+      # say so rather than flicker forever. A turn that ended normally, however
+      # short, resets the count.
+      #
+      # `between-turns` exists exactly while the loop is not running a turn.
+      # The supervisor reads it to drain the company for a reboot, and while
+      # a reboot is pending no new turn starts, so a drained agent stays
+      # drained.
       claude-llc-agent = {
-        description = "Run one employee in a restart loop (used by claude-llc)";
+        description = "Run one employee, one turn after another (used by claude-llc)";
         exec = ''
           set -uo pipefail
 
@@ -430,40 +437,44 @@ in
           fi
           shift || true
 
-          quick=0
-          first=1
-          while true; do
-            started=$SECONDS
-            if [ "$first" = "1" ]; then
-              first=0
-              claude-bot "$role" "$@" || true
-            else
-              # Keep the agent's memory across a restart. An employee that
-              # forgets its half-finished branch whenever someone presses
-              # Ctrl-C is worse than useless, because it starts over.
-              claude-bot --continue "$role" "$@" || true
-            fi
-            ran=$(( SECONDS - started ))
+          root="$DEVENV_ROOT/.bots"
+          state="$root/agents/$role"
+          mkdir -p "$state"
+          between="$state/between-turns"
+          # However the loop ends, Ctrl-C and a killed window included, it is
+          # no longer between turns.
+          trap 'rm -f "$between"' EXIT
 
-            if [ "$ran" -lt 20 ]; then
-              quick=$(( quick + 1 ))
+          stopped() {
+            echo "claude-llc-agent: stopped $role."
+            exit 0
+          }
+
+          failures=0
+          while true; do
+            rm -f "$between"
+            if ${node} ${llcScripts}/agent-turn.mjs "$state" -- claude-bot "$role" "$@"; then
+              failures=0
             else
-              quick=0
+              failures=$(( failures + 1 ))
             fi
+            touch "$between"
 
             echo ""
-            if [ "$quick" -ge 5 ]; then
-              echo "claude-llc-agent: $role exited immediately five times running."
+            if [ "$failures" -ge 5 ]; then
+              echo "claude-llc-agent: $role failed five runs in a row."
               echo "claude-llc-agent: not restarting. Fix the cause, then:"
               echo "claude-llc-agent:   claude-llc-agent $role"
               exit 1
             fi
 
-            echo "claude-llc-agent: $role stopped after ''${ran}s."
-            echo "claude-llc-agent: restarting in 10s — Ctrl-C now to stop for good."
-            if ! sleep 10; then
-              echo "claude-llc-agent: stopped $role."
-              exit 0
+            echo "claude-llc-agent: next turn for $role in 10s — Ctrl-C now to stop for good."
+            sleep 10 || stopped
+            if [ -e "$root/reboot.json" ]; then
+              echo "claude-llc-agent: a company reboot is pending; $role waits for it."
+              while [ -e "$root/reboot.json" ]; do
+                sleep 5 || stopped
+              done
             fi
           done
         '';

@@ -129,6 +129,8 @@ export const GATE_PATHS = [
   "scripts/bots/reboot.mjs",
   "scripts/bots/restart.mjs",
   "scripts/bots/supervisor.mjs",
+  "scripts/bots/agent-turn.mjs",
+  "scripts/bots/stream-format.mjs",
   "scripts/bots/hub.mjs",
   "scripts/bots/hub-alerts.mjs",
   "scripts/bots/instance-lock.mjs",

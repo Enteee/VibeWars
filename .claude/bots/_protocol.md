@@ -97,6 +97,9 @@ left half-done.
   changes through a merged pull request.
 - If you are stuck or genuinely blocked, say so on Telegram and move to other
   work. Do not spin.
+- **Don't end your turn while waiting on background work.** Ending a turn
+  ends the process, and nothing re-invokes you when a background command or
+  task finishes. Block on it, or on `tg wait`, instead.
 - **On a company reboot announcement**, WIP-commit your work, push it, then
-  run `company ready` and wait. You come back in a fresh session; your work
+  run `company ready` and end your turn. You come back in a fresh session; your work
   survives in git, on the board and in Telegram.

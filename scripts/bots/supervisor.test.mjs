@@ -1,94 +1,36 @@
 /**
- * Idle detection, against real captured panes.
+ * Which agents the supervisor counts as between turns during a reboot drain.
  *
- * This function decides whether an agent has stopped working, and it is wrong
- * in both directions at once if you get it slightly off: too eager and it
- * types into an agent that is mid-thought, too lax and the company quietly
- * stops. The first version looked for an ASCII ">" prompt and so never fired
- * at all — every interrupted agent sat there — which is the reason these
- * fixtures are verbatim captures rather than invented strings.
+ * The restart loop in nix/claude-llc.nix creates the marker before its pause
+ * and removes it before the next turn; a turn in flight has none.
  */
-import { describe, expect, it } from "vitest";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
-import { looksIdle } from "./supervisor.mjs";
+import { afterEach, describe, expect, it } from "vitest";
 
-/** Captured while a turn was in flight. */
-const BUSY = `● I'll orient myself first.
-  Running hub whoami; echo ---; tg roster; echo ---; tg inb… · 1m 20s
-  ⎿  $ hub whoami; echo ---; tg roster (1m 20s · 29 lines)
-     (ctrl+b to run in background)
-* Gallivanting… (1m 27s · ↓ 91 tokens)
-────────────────────────────────────────────
-❯
-────────────────────────────────────────────
-  ⏵⏵ bypass permissions on (shift+tab to cycle) · install gh for PR status · esc to interrupt · ← for agents`;
+import { betweenTurns } from "./supervisor.mjs";
 
-/** Captured after a turn finished on its own. */
-const DONE = `● Three agents are online: architect, lead-dev and me.
-  DONE
-✻ Cogitated for 7s · done 2:37 PM
-────────────────────────────────────────────
-❯
-────────────────────────────────────────────
-  ⏵⏵ bypass permissions on (shift+tab to cycle) · install gh for PR status · ← for agents`;
+/** @type {string[]} */
+const dirs = [];
 
-/** Captured right after two Ctrl-C presses interrupted a turn. */
-const INTERRUPTED = `  Ran 1 shell command
-  ⎿  Interrupted · What should Claude do instead?
-────────────────────────────────────────────
-❯
-────────────────────────────────────────────
-  ⏵⏵ bypass permissions on (shift+tab to cycle) · install gh for PR status · ← for agents`;
+afterEach(() => {
+  for (const dir of dirs.splice(0)) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
 
-/** Captured on a fresh start, before the kickoff prompt was answered. */
-const FRESH = ` ▐▛███▛█   Claude Code v2.1.293
-▝▜██████▀  Opus 5.5 · Claude Pro
-────────────────────────────────────────────
-❯ Try "fix typecheck errors"
-────────────────────────────────────────────
-  ⏵⏵ bypass permissions on (shift+tab to cycle) · install gh for PR status · ← for agents`;
+describe("betweenTurns", () => {
+  it("is the roles whose loop has written its marker, and no others", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "supervisor-test-"));
+    dirs.push(root);
+    fs.mkdirSync(path.join(root, "agents", "manager"), { recursive: true });
+    fs.writeFileSync(path.join(root, "agents", "manager", "between-turns"), "");
+    // In a turn: the state directory and its session, but no marker.
+    fs.mkdirSync(path.join(root, "agents", "architect"), { recursive: true });
+    fs.writeFileSync(path.join(root, "agents", "architect", "session-id"), "abc\n");
 
-describe("looksIdle", () => {
-  it("leaves a working agent alone", () => {
-    // "esc to interrupt" is in the footer for exactly as long as a turn runs,
-    // including while a long tool call is silent — which is what makes it a
-    // better signal than a spinner.
-    expect(looksIdle(BUSY, BUSY)).toBe(false);
-  });
-
-  it("notices an agent that finished its turn and stopped", () => {
-    expect(looksIdle(DONE, DONE)).toBe(true);
-  });
-
-  it("notices an agent left idle by an interrupt", () => {
-    // The state the operator actually produces by pressing Ctrl-C, and the
-    // one the original implementation missed entirely.
-    expect(looksIdle(INTERRUPTED, INTERRUPTED)).toBe(true);
-  });
-
-  it("notices a fresh pane that never got a turn", () => {
-    expect(looksIdle(FRESH, FRESH)).toBe(true);
-  });
-
-  it("requires two identical samples, so output in flight is not idle", () => {
-    expect(looksIdle(BUSY, DONE)).toBe(false);
-    expect(looksIdle(DONE, INTERRUPTED)).toBe(false);
-  });
-
-  it("treats an empty capture as not idle rather than as stuck", () => {
-    // A window that does not exist, or has not drawn yet. Nudging it would
-    // type into whatever appears there next.
-    expect(looksIdle("", "")).toBe(false);
-    expect(looksIdle(DONE, "")).toBe(false);
-    expect(looksIdle("", DONE)).toBe(false);
-  });
-
-  it("is not fooled by the word interrupt appearing in an agent's own output", () => {
-    const talking = `● The tick loop can be interrupted by a disconnect mid-cast.
-  Running pnpm test · 12s
-────────────────────────────────────────────
-  ⏵⏵ bypass permissions on · esc to interrupt · ← for agents`;
-
-    expect(looksIdle(talking, talking)).toBe(false);
+    expect(betweenTurns(root, ["manager", "architect", "developer-1"])).toEqual(["manager"]);
   });
 });
