@@ -105,11 +105,12 @@ describe("showCombatFeedback", () => {
     expect(floated([{ kind: "damage", targetId: "gone", amount: 5 }])).toEqual([]);
   });
 
-  it("floats nothing for degeneration, which the health bar already shows (#54)", () => {
+  it("floats no degeneration ticks, which the health bar already shows (#54)", () => {
     // Burning and poison together: 11 hp/s, about 1 a tick at 20 Hz.
     const tick = [{ kind: "damage", targetId: "them", amount: 0.55 * 2 }];
     expect(floated(tick, "degeneration")).toEqual([]);
-    expect(floated([{ kind: "death", targetId: "them" }], "degeneration")).toEqual([]);
+    // Dying of it still says so.
+    expect(floated([{ kind: "death", targetId: "them" }], "degeneration")).toEqual(["defeated"]);
     // A real hit still floats.
     expect(floated([{ kind: "damage", targetId: "them", amount: 91 }])).toEqual(["−91"]);
   });

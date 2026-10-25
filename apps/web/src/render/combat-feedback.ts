@@ -53,12 +53,13 @@ export function showCombatFeedback(
 
   // A degeneration tick lands every sim tick, about a point each: as
   // numbers they would fill the stack and push out the hits that matter.
-  // The health bar shows them, as GW1 does.
-  if (message.cause === "degeneration") {
-    return;
-  }
+  // The health bar shows them, as GW1 does. A death by bleeding still says so.
+  const ticking = message.cause === "degeneration";
 
   for (const event of message.events) {
+    if (ticking && (event.kind === "damage" || event.kind === "heal")) {
+      continue;
+    }
     const subject = snapshot.players.find((p) => p.sessionId === event.targetId);
     if (subject === undefined) {
       continue;
