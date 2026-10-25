@@ -709,14 +709,6 @@ export class MatchSimulation {
   }
 
   /**
-   * The attack step (ADR-0026): drop an attack whose target is no longer
-   * a living enemy, pause while casting, walk into reach, then swing.
-   *
-   * The swing timer keeps the remainder past each interval rather than
-   * zeroing, so the rate stays exact at 20 Hz. A target that steps out of
-   * reach mid-swing keeps the swing's progress for when it is caught.
-   */
-  /**
    * Another `dt` of the attack getting nowhere. Once it has lasted
    * `unreachableAfterSeconds` (#218), the attack ends and says so.
    *
@@ -738,6 +730,14 @@ export class MatchSimulation {
     return true;
   }
 
+  /**
+   * The attack step (ADR-0026): drop an attack whose target is no longer
+   * a living enemy, pause while casting, walk into reach, then swing.
+   *
+   * The swing timer keeps the remainder past each interval rather than
+   * zeroing, so the rate stays exact at 20 Hz. A target that steps out of
+   * reach mid-swing keeps the swing's progress for when it is caught.
+   */
   #advanceAttack(record: ParticipantRecord, dt: number): void {
     const attack = record.combatant.attack;
     if (attack === undefined) {
@@ -795,8 +795,10 @@ export class MatchSimulation {
       this.advanceMovement(record, steerAround(before, next, radius, this.#bodies), dt);
       // A path that leads nowhere counts as none: an approach that cannot
       // move, boxed in or with a body in a doorway, ends as unreachable
-      // too. One asked to walk nowhere, rooted or knocked down, is held,
-      // not lost, so it neither counts nor resets.
+      // too. One asked to walk nowhere is held, not lost, so it neither
+      // counts nor resets: nothing in the game does that today (the speed
+      // multiplier floors at 0.25), but a ruleset or a future status that
+      // zeroes speed would.
       if (asked > 0) {
         if (distance(before, record.position) < STALL_FRACTION * asked) {
           this.#unreachableFor(record, target.id, dt);
