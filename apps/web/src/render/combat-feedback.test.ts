@@ -7,6 +7,7 @@ import { showCombatFeedback } from "./combat-feedback.js";
 function player(sessionId: string): PlayerSnapshot {
   return {
     sessionId,
+    name: sessionId,
     x: 100,
     y: 100,
     targetSessionId: undefined,

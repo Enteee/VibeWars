@@ -13,6 +13,8 @@ import { Vec, type Vec2 } from "@vibewars/game-core";
 
 export interface RenderableActor {
   readonly id: string;
+  /** Drawn above the actor, so a player can tell who is who. */
+  readonly name: string;
   readonly position: Vec2;
   readonly radius: number;
   readonly team: "ally" | "enemy" | "self";
@@ -134,4 +136,15 @@ export function healthFraction(actor: RenderableActor): number {
     return 0;
   }
   return Math.max(0, Math.min(1, actor.health / actor.maxHealth));
+}
+
+/**
+ * Where an actor's name label sits: its bottom edge, in world y (#53).
+ *
+ * Clear of the cast bar whether or not one is showing, so a name does not
+ * jump every time its owner starts casting. A corpse has no bars, so its
+ * name sits just over the circle.
+ */
+export function nameLabelBottom(actor: RenderableActor): number {
+  return actor.position.y - actor.radius - (actor.dead ? 4 : 22);
 }

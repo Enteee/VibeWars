@@ -93,11 +93,12 @@ export function skillSlotsFor(skillBar: readonly string[]): SkillSlot[] {
   });
 }
 
-function toPlayerSnapshot(participant: Participant): PlayerSnapshot {
+function toPlayerSnapshot(participant: Participant, name: string): PlayerSnapshot {
   const { combatant } = participant;
   const activeCast = combatant.cast.activeCast;
   return {
     sessionId: participant.id,
+    name,
     x: participant.position.x,
     y: participant.position.y,
     targetSessionId: participant.targetId,
@@ -121,8 +122,10 @@ export function createLocalConnection(options: {
   readonly simulation: MatchSimulation;
   readonly selfId: string;
   readonly map: MapDescriptor;
+  /** What to call each participant: dummies by label, the player by their name. */
+  readonly nameOf: (id: string) => string;
 }): LocalMatchConnection {
-  const { simulation, selfId, map } = options;
+  const { simulation, selfId, map, nameOf } = options;
   let skillBar = skillSlotsFor(simulation.get(selfId)?.skillBar ?? []);
   let accumulator = 0;
   let closed = false;
@@ -199,7 +202,9 @@ export function createLocalConnection(options: {
     getSnapshot(): MatchSnapshot {
       return {
         selfSessionId: selfId,
-        players: [...simulation.participants()].map(toPlayerSnapshot),
+        players: [...simulation.participants()].map((participant) =>
+          toPlayerSnapshot(participant, nameOf(participant.id)),
+        ),
         scoreTeam0: simulation.score.byTeam.get(0) ?? 0,
         scoreTeam1: simulation.score.byTeam.get(1) ?? 0,
         elapsedSeconds: simulation.elapsedSeconds,

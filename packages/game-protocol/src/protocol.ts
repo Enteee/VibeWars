@@ -148,6 +148,8 @@ export interface MatchJoinOptions {
   readonly protocolVersion: number;
   /** The arena the first joiner asks for; later joiners get the room's. */
   readonly mapId?: string;
+  /** Display name the player asks for; the server sanitises it. */
+  readonly name?: string;
   /**
    * The build the player asks to play. Untyped on purpose: this package has
    * no game-core dependency, and the server parses and validates whatever

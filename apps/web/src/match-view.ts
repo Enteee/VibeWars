@@ -74,6 +74,7 @@ export function toArenaSnapshot(
     actors: match.players.map((player) => {
       return {
         id: player.sessionId,
+        name: player.name,
         position: { x: player.x, y: player.y },
         radius: 14,
         team:

@@ -97,6 +97,7 @@ describe("soundsForCombat", () => {
 function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
   return {
     sessionId,
+    name: sessionId,
     x: 0,
     y: 0,
     targetSessionId: undefined,

@@ -73,6 +73,7 @@ export function httpOriginFrom(endpoint: string): string {
 /** Room state as the Colyseus client actually decodes it — a minimal, local shape. */
 interface DecodedPlayer {
   readonly sessionId: string;
+  readonly name: string;
   readonly x: number;
   readonly y: number;
   readonly targetSessionId: string;
@@ -105,6 +106,7 @@ function snapshotFrom(room: Room<unknown, DecodedMatchState>): MatchSnapshot {
   for (const player of room.state.players.values()) {
     players.push({
       sessionId: player.sessionId,
+      name: player.name,
       x: player.x,
       y: player.y,
       targetSessionId: player.targetSessionId === "" ? undefined : player.targetSessionId,
@@ -154,7 +156,12 @@ function awaitMessage<T>(room: Room, type: string, timeoutMs: number): Promise<T
  * lobby reserved for this player in its own match (#41).
  */
 export type MatchTarget =
-  | { readonly kind: "quick"; readonly mapId?: string | undefined }
+  | {
+      readonly kind: "quick";
+      readonly mapId?: string | undefined;
+      /** The display name to ask for; the server sanitises it. */
+      readonly name?: string | undefined;
+    }
   | { readonly kind: "lobby"; readonly reservation: MatchSeatReservation };
 
 export async function connectToMatch(
@@ -179,6 +186,7 @@ export async function connectToMatch(
       protocolVersion: PROTOCOL_VERSION,
       ...(target.mapId === undefined ? {} : { mapId: target.mapId }),
       ...(build === undefined ? {} : { build }),
+      ...(target.name === undefined ? {} : { name: target.name }),
     };
     room = await client.joinOrCreate<DecodedMatchState>(ROOM_MATCH, joinOptions);
   }

@@ -162,8 +162,8 @@ async function main(): Promise<void> {
         },
         // Straight into a match with no lobby — how the game worked before
         // Sprint 19, kept because it is the fastest way to try the game.
-        onQuickMatch: () => {
-          void enterMatch({ kind: "quick" });
+        onQuickMatch: (name) => {
+          void enterMatch({ kind: "quick", name });
         },
         onNewCharacter: () => {
           showCharacterEditor(newCharacter(crypto.randomUUID()));
