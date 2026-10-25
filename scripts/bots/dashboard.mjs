@@ -26,7 +26,7 @@ import { formatSpend, readSpend } from "./hub-spend.mjs";
 import { readRoster } from "./presence.mjs";
 import { betweenTurns, parseReboot } from "./reboot.mjs";
 import { parseSchedule } from "./schedule.mjs";
-import { readInbox } from "./protocol.mjs";
+import { unreadOf } from "./unread.mjs";
 import { boardLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
 import { hubHealth, parseAlive, parseRestarts } from "./hub-health.mjs";
 import { parseStaff, roleOf } from "./staff.mjs";
@@ -241,17 +241,7 @@ function nudges(staff, now) {
   /** @type {Map<string, string[]>} */
   const unread = new Map();
   for (const employee of Object.keys(staff?.employees ?? {})) {
-    let lines;
-    try {
-      const dir = path.join(BUS, employee);
-      const cursor = Number.parseInt(fs.readFileSync(path.join(dir, "cursor"), "utf8").trim(), 10);
-      lines = readInbox(
-        fs.readFileSync(path.join(dir, "inbox.jsonl"), "utf8"),
-        Number.isNaN(cursor) ? 0 : cursor,
-      ).lines;
-    } catch {
-      continue;
-    }
+    const lines = unreadOf(BUS, employee);
     for (const { nudge } of lines) {
       if (nudge !== null) {
         unread.set(nudge, [...new Set([...(unread.get(nudge) ?? []), employee])]);
