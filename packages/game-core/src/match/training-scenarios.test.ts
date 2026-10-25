@@ -123,8 +123,9 @@ function arena(played: TrainingScenario, seed: string): MatchSimulation {
         attributeRanks: new Map([["elementalist.fire-magic", 12]]),
         equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
         spawn: map.playerSpawn,
+        facing: 0,
       },
-      ...scenarioParticipants(played),
+      ...scenarioParticipants(played, map.playerSpawn),
     ],
   });
 }

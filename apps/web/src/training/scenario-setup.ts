@@ -1,4 +1,5 @@
 import {
+  facingToward,
   MatchSimulation,
   PLAYER_TEAM,
   scenarioParticipants,
@@ -93,6 +94,8 @@ export function setupScenario(
 ): TrainingSetup {
   const map = trainingMap(scenario);
   const arming = playerArming(character);
+  const spawn = playerSpawn(map);
+  const firstDummy = scenario.dummies[0];
   const simulation = new MatchSimulation({
     // A fixed seed: the same build against the same scenario reads the
     // same numbers every time, which is what makes it a measurement.
@@ -106,14 +109,15 @@ export function setupScenario(
         skillBar: arming.skillBar,
         attributeRanks: arming.loadout.attributeRanks,
         equipment: arming.loadout.equipment,
-        spawn: playerSpawn(map),
+        spawn,
+        facing: firstDummy === undefined ? 0 : facingToward(spawn, firstDummy.position),
         maxHealth: arming.loadout.maxHealth,
         maxEnergy: arming.loadout.maxEnergy,
         // A player who dies in training is back at once: the scenario is
         // the lesson, not the walk back.
         reset: { kind: "on-death", afterSeconds: 3 },
       },
-      ...scenarioParticipants(scenario),
+      ...scenarioParticipants(scenario, spawn),
     ],
   });
   return {

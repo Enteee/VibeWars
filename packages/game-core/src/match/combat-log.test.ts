@@ -32,6 +32,7 @@ function degenerationEntry(sources: readonly string[]): CombatLogEntry | undefin
       attributeRanks: new Map(),
       equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
       spawn: vec2(index * 100, 0),
+      facing: 0,
     })),
   });
   const victim = sim.get("victim");

@@ -50,6 +50,14 @@ sends: `setInputDirection`, `setTarget` and `requestSkill`.
   source only when exactly one participant applied the statuses behind it.
   Otherwise the source is `undefined` and is tallied as unattributed
   damage, never guessed.
+- **Facing is simulation state (#187).** `Participant.facing` is an angle
+  in radians (`atan2`, 0 = +x), set from `ParticipantSpec.facing` on add
+  and on every reset. Moving turns a participant to the direction it
+  pushes, even into a wall. Then casting at someone else, or swinging at
+  its attack target in reach, turns it to that target. The last of these
+  in a step wins, and the dead keep their facing. `MatchRoom` only copies
+  it into `PlayerState`, rounded to two decimals. Nothing in combat reads
+  it yet.
 
 ## Consequences
 

@@ -3,6 +3,7 @@ import { WEAPONS, type WeaponId } from "../equipment/weapons.js";
 import type { MissingMechanic } from "../skills/coverage.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { Behaviour } from "./behaviour.js";
+import { facingToward } from "./facing.js";
 import type { ParticipantSpec } from "./simulation.js";
 
 /**
@@ -209,8 +210,11 @@ export function getTrainingScenario(id: string): TrainingScenario | undefined {
   return TRAINING_SCENARIOS.find((scenario) => scenario.id === id);
 }
 
-/** A scenario's dummies, ready to add to a `MatchSimulation`. */
-export function scenarioParticipants(scenario: TrainingScenario): ParticipantSpec[] {
+/** A scenario's dummies, ready to add to a `MatchSimulation`, each facing the player at `playerSpawn`. */
+export function scenarioParticipants(
+  scenario: TrainingScenario,
+  playerSpawn: Vec2,
+): ParticipantSpec[] {
   return scenario.dummies.map((dummy) => ({
     id: dummy.id,
     team: dummy.team,
@@ -218,6 +222,7 @@ export function scenarioParticipants(scenario: TrainingScenario): ParticipantSpe
     attributeRanks: new Map(Object.entries(dummy.attributeRanks)),
     equipment: dummyEquipment(dummy),
     spawn: dummy.position,
+    facing: facingToward(dummy.position, playerSpawn),
     maxHealth: dummy.maxHealth,
     behaviour: dummy.behaviour,
   }));

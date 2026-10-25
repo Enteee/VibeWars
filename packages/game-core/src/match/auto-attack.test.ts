@@ -35,6 +35,7 @@ function swordsman(id: string, spawn: Vec2): ParticipantSpec {
     equipment: wielding(WEAPONS.sword, "warrior.swordsmanship"),
     maxEnergy: 1000,
     spawn,
+    facing: 0,
   };
 }
 
@@ -48,6 +49,7 @@ function dummy(id: string, spawn: Vec2): ParticipantSpec {
     equipment: unarmedResolvedEquipment(60),
     maxHealth: 1e6,
     spawn,
+    facing: 0,
   };
 }
 
