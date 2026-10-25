@@ -5,6 +5,7 @@ import {
   vec2,
   type MatchSimulation,
   type Participant,
+  type ProfessionId,
   type ResolvedLoadout,
   type StepResult,
 } from "@vibewars/game-core";
@@ -93,7 +94,20 @@ export function skillSlotsFor(skillBar: readonly string[]): SkillSlot[] {
   });
 }
 
-function toPlayerSnapshot(participant: Participant, name: string): PlayerSnapshot {
+/** A participant's professions, as a snapshot carries them (#281). */
+export interface Professions {
+  readonly primary: ProfessionId | undefined;
+  readonly secondary: ProfessionId | undefined;
+}
+
+/** A dummy's: it has no build, so no profession. */
+export const NO_PROFESSIONS: Professions = { primary: undefined, secondary: undefined };
+
+function toPlayerSnapshot(
+  participant: Participant,
+  name: string,
+  professions: Professions,
+): PlayerSnapshot {
   const { combatant } = participant;
   const activeCast = combatant.cast.activeCast;
   return {
@@ -111,6 +125,8 @@ function toPlayerSnapshot(participant: Participant, name: string): PlayerSnapsho
     adrenaline: combatant.adrenaline,
     armor: combatant.equipment.baseArmor,
     weaponId: combatant.equipment.mainHand.weapon.id,
+    primaryProfession: professions.primary,
+    secondaryProfession: professions.secondary,
     team: combatant.team,
     dead: combatant.dead,
     castingSkillId: activeCast?.skillId,
@@ -126,8 +142,10 @@ export function createLocalConnection(options: {
   readonly map: MapDescriptor;
   /** What to call each participant: dummies by label, the player by their name. */
   readonly nameOf: (id: string) => string;
+  /** Each participant's professions: the player's build's, a dummy's none. */
+  readonly professionsOf: (id: string) => Professions;
 }): LocalMatchConnection {
-  const { simulation, selfId, map, nameOf } = options;
+  const { simulation, selfId, map, nameOf, professionsOf } = options;
   let skillBar = skillSlotsFor(simulation.get(selfId)?.skillBar ?? []);
   let accumulator = 0;
   let closed = false;
@@ -221,7 +239,7 @@ export function createLocalConnection(options: {
       return {
         selfSessionId: selfId,
         players: [...simulation.participants()].map((participant) =>
-          toPlayerSnapshot(participant, nameOf(participant.id)),
+          toPlayerSnapshot(participant, nameOf(participant.id), professionsOf(participant.id)),
         ),
         scoreTeam0: simulation.score.byTeam.get(0) ?? 0,
         scoreTeam1: simulation.score.byTeam.get(1) ?? 0,

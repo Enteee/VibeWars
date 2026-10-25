@@ -1,21 +1,24 @@
 import Phaser from "phaser";
 
-import { isStatusId, type StatusId } from "@vibewars/game-core";
+import { PROFESSIONS, isStatusId, type ProfessionId, type StatusId } from "@vibewars/game-core";
 
+import { professionIcon } from "../ui/icons.js";
 import { prefersReducedMotion } from "../ui/recharge-overlay.js";
 import {
   EMPTY_SNAPSHOT,
+  PROFESSION_GLYPH_SIZE,
   areaFlashAlpha,
   decayAreaFlashes,
   decaySwingFlashes,
   floatingTextY,
   healthFraction,
-  nameLabelBottom,
   nameShown,
+  nameplateLayout,
   placeFloatingText,
   swingFlashAlpha,
   teamColour,
   type AreaFlash,
+  type NameplateLayout,
   type SwingFlash,
 } from "./arena-snapshot.js";
 import {
@@ -72,6 +75,9 @@ const INK = "#d7dee8";
  */
 const TEXT_EDGE = "#0b0f14";
 const DEAD_INK = "#4a5464";
+/** The same two inks as tints, for the profession glyph before a name (#281). */
+const INK_TINT = 0xd7dee8;
+const DEAD_INK_TINT = 0x4a5464;
 
 const HEALTH_BAR_WIDTH = 34;
 const HEALTH_BAR_HEIGHT = 4;
@@ -107,6 +113,8 @@ export class ArenaScene extends Phaser.Scene {
   private statusOverflow = new Map<string, Phaser.GameObjects.Text>();
   /** One name label per actor id, reused frame to frame like the icons. */
   private nameLabels = new Map<string, Phaser.GameObjects.Text>();
+  /** The primary profession's glyph before each name, one pooled image per actor (#281). */
+  private nameGlyphs = new Map<string, Phaser.GameObjects.Image>();
   /** Status ids the server sent that this client has no icon for. */
   private readonly unknownStatuses = new Set<string>();
 
@@ -144,6 +152,13 @@ export class ArenaScene extends Phaser.Scene {
       this.load.svg(statusTexture(id), url, {
         width: STATUS_ICON_SIZE,
         height: STATUS_ICON_SIZE,
+      });
+    }
+    // Drawn in ink, never the profession colour: in the arena, colour is team.
+    for (const profession of Object.keys(PROFESSIONS) as ProfessionId[]) {
+      this.load.svg(professionTexture(profession), professionIcon(profession), {
+        width: PROFESSION_GLYPH_SIZE,
+        height: PROFESSION_GLYPH_SIZE,
       });
     }
     for (const sprite of PROJECTILE_SPRITES) {
@@ -441,17 +456,46 @@ export class ArenaScene extends Phaser.Scene {
       if (label.style.color !== color) {
         label.setColor(color);
       }
-      label
-        .setText(actor.name)
-        .setPosition(actor.position.x, nameLabelBottom(actor))
-        .setVisible(nameShown(this.snapshot, actor));
+      const shown = nameShown(this.snapshot, actor);
+      label.setText(actor.name);
+      const layout = nameplateLayout(actor, label.width);
+      label.setPosition(layout.textX, layout.bottom).setVisible(shown);
+      this.updateNameGlyph(actor, layout, shown);
     }
     for (const [id, label] of this.nameLabels) {
       if (!seen.has(id)) {
         label.destroy();
         this.nameLabels.delete(id);
+        this.nameGlyphs.get(id)?.destroy();
+        this.nameGlyphs.delete(id);
       }
     }
+  }
+
+  /**
+   * The glyph before `actor`'s name (#281): shown with the name, greyed with
+   * a corpse's. Its texture and tint are set only when they change, as the
+   * label's colour is, so a steady frame re-uploads nothing.
+   */
+  private updateNameGlyph(actor: RenderableActor, layout: NameplateLayout, shown: boolean): void {
+    let glyph = this.nameGlyphs.get(actor.id);
+    if (actor.profession === undefined || layout.glyphX === undefined) {
+      glyph?.setVisible(false);
+      return;
+    }
+    const texture = professionTexture(actor.profession);
+    if (glyph === undefined) {
+      glyph = this.add.image(0, 0, texture).setOrigin(0.5, 1).setTintMode(Phaser.TintModes.FILL);
+      this.nameGlyphs.set(actor.id, glyph);
+    }
+    if (glyph.texture.key !== texture) {
+      glyph.setTexture(texture);
+    }
+    const tint = actor.dead ? DEAD_INK_TINT : INK_TINT;
+    if (glyph.tint !== tint) {
+      glyph.setTint(tint);
+    }
+    glyph.setPosition(layout.glyphX, layout.bottom).setVisible(shown);
   }
 
   /**
@@ -560,6 +604,10 @@ export class ArenaScene extends Phaser.Scene {
 
 function projectileTexture(sprite: string): string {
   return `projectile:${sprite}`;
+}
+
+function professionTexture(profession: ProfessionId): string {
+  return `profession:${profession}`;
 }
 
 function statusTexture(id: string): string {

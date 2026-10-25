@@ -1,5 +1,5 @@
 import { Client, type Room } from "@colyseus/sdk";
-import type { PlayerBuild } from "@vibewars/game-core";
+import { isProfessionId, type PlayerBuild, type ProfessionId } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   ROOM_MATCH,
@@ -87,6 +87,8 @@ export interface DecodedPlayer {
   readonly adrenaline: number;
   readonly armor: number;
   readonly weaponId: string;
+  readonly primaryProfession: string;
+  readonly secondaryProfession: string;
   readonly team: number;
   readonly dead: boolean;
   readonly castingSkillId: string;
@@ -116,6 +118,14 @@ export interface DecodedMatchState {
   readonly projectiles: Iterable<DecodedProjectile>;
 }
 
+/**
+ * A profession off the wire (#281): `""` is none, and so is an id this
+ * client does not know, which draws no glyph rather than throwing.
+ */
+export function professionFrom(raw: string): ProfessionId | undefined {
+  return isProfessionId(raw) ? raw : undefined;
+}
+
 function snapshotFrom(room: LiveMatchRoom): MatchSnapshot {
   const players: PlayerSnapshot[] = [];
   for (const player of room.state.players.values()) {
@@ -135,6 +145,8 @@ function snapshotFrom(room: LiveMatchRoom): MatchSnapshot {
       adrenaline: player.adrenaline,
       armor: player.armor,
       weaponId: player.weaponId === "" ? undefined : player.weaponId,
+      primaryProfession: professionFrom(player.primaryProfession),
+      secondaryProfession: professionFrom(player.secondaryProfession),
       team: player.team,
       dead: player.dead,
       castingSkillId: player.castingSkillId === "" ? undefined : player.castingSkillId,
