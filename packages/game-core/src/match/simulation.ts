@@ -47,6 +47,7 @@ import {
   type ResetPolicy,
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
+import { directionAngle } from "./facing.js";
 
 /**
  * One match, steppable, with no transport attached (ADR-0017).
@@ -184,7 +185,7 @@ function faceToward(record: Participant, point: Vec2): void {
   const dx = point.x - record.position.x;
   const dy = point.y - record.position.y;
   if (dx !== 0 || dy !== 0) {
-    record.facing = Math.atan2(dy, dx);
+    record.facing = directionAngle(dx, dy);
   }
 }
 
@@ -916,7 +917,7 @@ export class MatchSimulation {
   private advanceMovement(record: ParticipantRecord, direction: Vec2, dt: number): void {
     // Where it pushes, even into a wall.
     if (direction.x !== 0 || direction.y !== 0) {
-      record.facing = Math.atan2(direction.y, direction.x);
+      record.facing = directionAngle(direction.x, direction.y);
     }
     const radius = this.#ruleset.collision.playerRadius;
     let position = integrateMovement(

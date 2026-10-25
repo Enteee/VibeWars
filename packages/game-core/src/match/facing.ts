@@ -6,11 +6,20 @@ import type { Vec2 } from "../vec2.js";
  * casting at or swinging at somebody (see `MatchSimulation`).
  */
 
+/**
+ * The angle of a direction, in (−π, π]. `atan2` gives −π for `(-0, -x)`,
+ * which is the same way as π, so it is folded onto π.
+ */
+export function directionAngle(dx: number, dy: number): number {
+  const angle = Math.atan2(dy, dx);
+  return angle === -Math.PI ? Math.PI : angle;
+}
+
 /** The angle from `from` to `to`; 0 when they are the same point, which has no direction. */
 export function facingToward(from: Vec2, to: Vec2): number {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
-  return dx === 0 && dy === 0 ? 0 : Math.atan2(dy, dx);
+  return dx === 0 && dy === 0 ? 0 : directionAngle(dx, dy);
 }
 
 function mean(points: readonly Vec2[]): Vec2 | undefined {

@@ -184,13 +184,17 @@ describe("match room", () => {
     const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self to appear" });
 
-    room.send("intent", { kind: "move", dirX: 0, dirY: 1 });
-    await waitFor(() => room.state.players.get(room.sessionId)?.facing === 1.57, {
-      timeoutMs: 2000,
-      label: "player to face +y",
-    });
-
-    await room.leave();
+    try {
+      room.send("intent", { kind: "move", dirX: 0, dirY: 1 });
+      // Rounded to 1.57 on the server, but the schema sends a float32,
+      // so it arrives as 1.5700000524...
+      await waitFor(
+        () => Math.abs((room.state.players.get(room.sessionId)?.facing ?? 0) - 1.57) < 1e-6,
+        { timeoutMs: 2000, label: "player to face +y" },
+      );
+    } finally {
+      await room.leave();
+    }
   });
 
   it("stops moving once a stop intent is sent", async () => {

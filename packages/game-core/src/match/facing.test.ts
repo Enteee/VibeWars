@@ -5,7 +5,7 @@ import { WEAPONS } from "../equipment/weapons.js";
 import { segment } from "../geometry.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
-import { facingToward, spawnFacing } from "./facing.js";
+import { directionAngle, facingToward, spawnFacing } from "./facing.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
@@ -20,6 +20,11 @@ describe("facingToward", () => {
     expect(facingToward(vec2(0, 0), vec2(10, 0))).toBe(0);
     expect(facingToward(vec2(0, 0), vec2(0, 10))).toBeCloseTo(Math.PI / 2, 9);
     expect(facingToward(vec2(0, 0), vec2(-10, 0))).toBeCloseTo(Math.PI, 9);
+  });
+
+  it("folds −π onto π, so facing stays in (−π, π]", () => {
+    expect(directionAngle(-1, -0)).toBe(Math.PI);
+    expect(facingToward(vec2(0, -0), vec2(-10, 0))).toBe(Math.PI);
   });
 
   it("is 0 for the same point", () => {
