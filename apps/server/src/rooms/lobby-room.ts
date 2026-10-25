@@ -13,7 +13,12 @@ import {
 } from "@vibewars/game-protocol";
 
 import { DEFAULT_MAP_ID, openLobbyMatch, type LobbySeat } from "./match-room.js";
-import { MAX_MESSAGES_PER_SECOND, assertProtocolVersion, field } from "./options.js";
+import {
+  FLOOD_MESSAGES_PER_SECOND,
+  assertProtocolVersion,
+  field,
+  messageBudget,
+} from "./options.js";
 
 /**
  * The pre-match lobby (brief §19, §25).
@@ -131,6 +136,8 @@ export class LobbyRoom extends Room {
    * validate. Kept off the synced state: nobody else needs it.
    */
   readonly #builds = new Map<string, unknown>();
+  /** How many messages each client may still have handled (#43). */
+  readonly #budget = messageBudget();
 
   /**
    * Counts the matches this lobby opened, so a room from an earlier one
@@ -143,7 +150,7 @@ export class LobbyRoom extends Room {
 
   public override onCreate(options: unknown): void {
     this.autoDispose = true;
-    this.maxMessagesPerSecond = MAX_MESSAGES_PER_SECOND;
+    this.maxMessagesPerSecond = FLOOD_MESSAGES_PER_SECOND;
     this.maxClients = MAX_LOBBY_PLAYERS;
 
     this.#rng = createRng(seedFromString(this.roomId));
@@ -166,17 +173,28 @@ export class LobbyRoom extends Room {
       console.error(`[lobby] failed to publish code ${this.state.code}`, error);
     });
 
+    // Over budget, a message is ignored, never its sender dropped (#43).
+    const within = (client: Client): boolean =>
+      this.#budget.take(client.sessionId, this.clock.currentTime);
     this.onMessage("choose-team", (client, message: unknown) => {
-      this.handleChooseTeam(client, message);
+      if (within(client)) {
+        this.handleChooseTeam(client, message);
+      }
     });
     this.onMessage("ready", (client, message: unknown) => {
-      this.handleReady(client, message);
+      if (within(client)) {
+        this.handleReady(client, message);
+      }
     });
     this.onMessage("select-map", (client, message: unknown) => {
-      this.handleSelectMap(client, message);
+      if (within(client)) {
+        this.handleSelectMap(client, message);
+      }
     });
     this.onMessage("start-match", (client) => {
-      void this.handleStartMatch(client);
+      if (within(client)) {
+        void this.handleStartMatch(client);
+      }
     });
 
     console.info(`[lobby] created code=${this.state.code} roomId=${this.roomId}`);
@@ -361,6 +379,7 @@ export class LobbyRoom extends Room {
     const wasHost = leaving?.isHost ?? false;
     this.state.players.delete(client.sessionId);
     this.#builds.delete(client.sessionId);
+    this.#budget.forget(client.sessionId);
 
     // Hosting must not vanish with the host, or the lobby becomes
     // unstartable and everyone has to regroup under a new code.

@@ -93,7 +93,9 @@ saying so in the same PR. Keep the numbers: issues cite them.
 
 1. **Fixed by #156:** a lobby's match was open to strangers (#41).
 2. **Fixed by #156:** there was no cap on players per match (#42).
-3. **Fixed by #43:** there was no per-client message rate limit.
+3. **Fixed by #43:** there was no per-client message rate limit. Each client
+   now has 60 messages a second handled, with bursts of up to 300, and the
+   rest are ignored. Colyseus drops a client that sends over 1000 in a second.
 4. **Fixed by #44:** any lobby member could send `return-to-lobby`.
 5. **Lobby codes can be enumerated.** There are 23⁴ = 279,841 codes, and
    joining is not rate-limited. That is fine for a LAN party. It is not

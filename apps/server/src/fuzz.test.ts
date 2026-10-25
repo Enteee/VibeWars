@@ -1,4 +1,4 @@
-import { Client } from "@colyseus/sdk";
+import { Client, type Room } from "@colyseus/sdk";
 import { createRng, seedFromString } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
@@ -8,6 +8,7 @@ import {
 } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { FLOOD_MESSAGES_PER_SECOND, MESSAGE_BURST } from "./rooms/options.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
 
@@ -183,7 +184,7 @@ describe("server survives hostile clients", () => {
     });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self" });
 
-    // Paced, so this client stays under the message cap (#43): the
+    // Paced, so this client stays within its message budget (#43): the
     // point is what the handlers do with each value, not the flood.
     for (const value of hostileValues()) {
       room.send("choose-team", value);
@@ -252,14 +253,73 @@ describe("server survives hostile clients", () => {
     await fresh.leave();
   });
 
-  it("stops listening to a match client that floods messages", async () => {
+  /** A watcher and a second client in one match, both seated. */
+  async function twoInAMatch(): Promise<{ watcher: Room; other: Room }> {
     const watcher = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
       protocolVersion: PROTOCOL_VERSION,
     });
-    const flooder = await new Client(endpoint).joinById(watcher.roomId, {
+    const other = await new Client(endpoint).joinById(watcher.roomId, {
       protocolVersion: PROTOCOL_VERSION,
     });
-    await waitFor(() => watcher.state.players.has(flooder.sessionId), { label: "both" });
+    await waitFor(() => (watcher.state.players.get(other.sessionId)?.maxHealth ?? 0) > 0, {
+      label: "both",
+    });
+    return { watcher, other };
+  }
+
+  /**
+   * Whether the server still acts on `client`: it targets itself, and
+   * `watcher` sees it. A target is mirrored at once and no wall can get in
+   * its way, as one can in a walk; and no enemy skill picks yourself for
+   * you, so only this intent can put it there.
+   */
+  async function listensTo(watcher: Room, client: Room): Promise<boolean> {
+    client.send("intent", { kind: "target", targetSessionId: client.sessionId });
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    const listened =
+      watcher.state.players.get(client.sessionId)?.targetSessionId === client.sessionId;
+    client.send("intent", { kind: "target", targetSessionId: null });
+    return listened;
+  }
+
+  it("keeps playing a client whose input arrives in one burst after a stall", async () => {
+    // A wifi blip mid-fight: everything the client sent while its socket
+    // stalled arrives at once. Before the budget, 60 in a second dropped
+    // the player, deaf and frozen, and never told them (#43).
+    const { watcher, other } = await twoInAMatch();
+
+    for (let i = 0; i < 250; i += 1) {
+      other.send(
+        "intent",
+        i % 2 === 0
+          ? { kind: "move", dirX: Math.cos(i), dirY: Math.sin(i) }
+          : { kind: "use-skill", slot: i % 8 },
+      );
+    }
+    expect(await listensTo(watcher, other)).toBe(true);
+
+    await other.leave();
+    await watcher.leave();
+  });
+
+  it("ignores a match client's intents over its budget, then listens again", async () => {
+    const { watcher, other } = await twoInAMatch();
+
+    for (let i = 0; i < MESSAGE_BURST; i += 1) {
+      other.send("intent", { kind: "stop" });
+    }
+    expect(await listensTo(watcher, other)).toBe(false);
+
+    // The budget refills at MESSAGES_PER_SECOND; the client was never dropped.
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    expect(await listensTo(watcher, other)).toBe(true);
+
+    await other.leave();
+    await watcher.leave();
+  });
+
+  it("stops listening to a match client that floods messages", async () => {
+    const { watcher, other: flooder } = await twoInAMatch();
 
     for (let i = 0; i < 1000; i += 1) {
       flooder.send("intent", { kind: "move", dirX: Math.cos(i), dirY: Math.sin(i) });
@@ -267,15 +327,12 @@ describe("server survives hostile clients", () => {
     }
     await new Promise((resolve) => setTimeout(resolve, 300));
 
-    // Over the cap, Colyseus stops reading the socket and drops the
-    // player (#43): frozen in place, and deaf to anything it sends next.
-    // Its slot is held like any drop's, because Colyseus closes a
-    // half-open reconnect with the same code, so the code cannot tell a
-    // flooder from a wifi blip. Back in, it would be capped again at once.
-    const frozenX = watcher.state.players.get(flooder.sessionId)?.x ?? Number.NaN;
-    flooder.send("intent", { kind: "move", dirX: 1, dirY: 0 });
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    expect(watcher.state.players.get(flooder.sessionId)?.x).toBeCloseTo(frozenX, 1);
+    // Past FLOOD_MESSAGES_PER_SECOND, Colyseus stops reading the socket
+    // and drops the player (#43): frozen in place, and deaf to anything it
+    // sends next. Its slot is held like any drop's, because Colyseus
+    // closes a half-open reconnect with the same code, so the code cannot
+    // tell a flooder from a wifi blip.
+    expect(await listensTo(watcher, flooder)).toBe(false);
 
     // Everyone else plays on.
     const elapsed = watcher.state.elapsedSeconds;
@@ -297,7 +354,7 @@ describe("server survives hostile clients", () => {
       closeCode = code;
     });
 
-    for (let i = 0; i < 1000; i += 1) {
+    for (let i = 0; i < 2 * FLOOD_MESSAGES_PER_SECOND; i += 1) {
       flooder.send("ready", { ready: i % 2 === 0 });
     }
 
