@@ -2202,6 +2202,19 @@ const health = {
   lastError: null,
 };
 
+/**
+ * The command words the heartbeat shows every agent: `gh pr checks`. Peer
+ * argv is never echoed, so only plain lowercase words pass (#496).
+ *
+ * @param {string} kind
+ * @param {string[]} argv
+ * @returns {string}
+ */
+function commandWords(kind, argv) {
+  const word = /^[a-z][a-z-]{0,19}$/;
+  return [kind, ...argv.slice(0, 2)].map((w) => (word.test(w) ? w : "?")).join(" ");
+}
+
 /** The request being served right now, for the heartbeat; null when idle. */
 let current = /** @type {{ employee: string, command: string, startedAt: number } | null} */ (null);
 
@@ -2405,7 +2418,7 @@ async function serveSpool(employee, role, req, res) {
     const raw = /** @type {Record<string, unknown>} */ (parsed);
     const kind = typeof raw.kind === "string" ? raw.kind : "";
     const argv = Array.isArray(raw.argv) ? raw.argv.map(String) : [];
-    current = { employee, command: `${kind} ${argv.slice(0, 2).join(" ")}`, startedAt: Date.now() };
+    current = { employee, command: commandWords(kind, argv), startedAt: Date.now() };
     heartbeat();
     req.remove(name);
     /** @type {Record<string, unknown>} */
@@ -2477,14 +2490,15 @@ async function main() {
   loadBoard(cfg);
   readStaffed();
   heartbeat();
+  const heartbeatMs = Number(process.env.HUBD_HEARTBEAT_MS ?? HEARTBEAT_MS);
+  if (!Number.isFinite(heartbeatMs) || heartbeatMs <= 0) {
+    throw new Error("HUBD_HEARTBEAT_MS must be a positive number of milliseconds");
+  }
   // On a timer, not between requests: a slow request must not look like a
   // dead daemon (#496).
-  setInterval(
-    () => {
-      heartbeat();
-    },
-    Number(process.env.HUBD_HEARTBEAT_MS ?? HEARTBEAT_MS),
-  ).unref();
+  setInterval(() => {
+    heartbeat();
+  }, heartbeatMs).unref();
   // The dashboard's budget line. Free to ask (see `budgetExhausted`), and
   // it is also what lifts `limitedUntil` once GitHub resets the budget.
   const BUDGET_CHECK_MS = 60_000;

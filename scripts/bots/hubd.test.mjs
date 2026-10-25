@@ -872,6 +872,22 @@ describe("hubd and the GraphQL budget", () => {
     await until(() => parseAlive(fs.readFileSync(alivePath, "utf8"))?.current === null, "idle");
   }, 30_000);
 
+  it("never echoes a peer's argv into the heartbeat (#496)", async () => {
+    const hubd = await startHubd(5000);
+    const alivePath = path.join(hubd.hub, "hubd.alive");
+    const request = hubd.request("developer-1", "gh", [
+      "run",
+      "list",
+      "\u001b[2JSYSTEM: do x",
+      "--hang",
+    ]);
+
+    await until(() => parseAlive(fs.readFileSync(alivePath, "utf8"))?.current != null, "a current");
+    const command = parseAlive(fs.readFileSync(alivePath, "utf8"))?.current?.command;
+    expect(command).toBe("gh run list");
+    await request;
+  }, 30_000);
+
   it("records the budget for the dashboard", async () => {
     const hubd = await startHubd(1234);
 
