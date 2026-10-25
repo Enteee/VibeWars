@@ -55,7 +55,15 @@ export const MESSAGE_BURST = 300;
  */
 export const FLOOD_MESSAGES_PER_SECOND = 1000;
 
-/** A room's handling budget, one bucket per client. */
-export function messageBudget(): MessageBudget {
-  return new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST);
+/**
+ * A room's handling budget, one bucket per client, shared by every
+ * handler in the room. `room` names it in the log line for ignored
+ * messages.
+ */
+export function messageBudget(room: string): MessageBudget {
+  return new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, (sessionId, dropped) => {
+    console.warn(
+      `[${room}] ignored ${String(dropped)} messages from ${sessionId}: over its budget`,
+    );
+  });
 }

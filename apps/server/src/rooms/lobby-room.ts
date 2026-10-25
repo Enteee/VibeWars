@@ -137,7 +137,7 @@ export class LobbyRoom extends Room {
    */
   readonly #builds = new Map<string, unknown>();
   /** How many messages each client may still have handled (#43). */
-  readonly #budget = messageBudget();
+  readonly #budget = messageBudget("lobby");
 
   /**
    * Counts the matches this lobby opened, so a room from an earlier one

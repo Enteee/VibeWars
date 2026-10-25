@@ -358,7 +358,7 @@ export class MatchRoom extends Room {
    */
   readonly #rechargesSent = new Map<string, { slots: RechargeSlot[]; at: number }>();
   /** How many intents each client may still have handled (#43). */
-  readonly #budget = messageBudget();
+  readonly #budget = messageBudget("match");
 
   /**
    * A lobby's match: each seat's team, its player's lobby name, and
