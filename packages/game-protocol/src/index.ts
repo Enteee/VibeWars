@@ -80,6 +80,8 @@ export {
   MAX_WIRE_RADIUS,
   MAX_WIRE_COMBATS,
   MAX_WIRE_PROJECTILES,
+  MAX_WIRE_JSON_DEPTH,
+  MAX_WIRE_JSON_VALUES,
   parsePeerHello,
   parsePeerWelcome,
   parsePeerRefuse,
