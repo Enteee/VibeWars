@@ -46,7 +46,7 @@ import {
   walkMarkerTicks,
   type WalkMarker,
 } from "./walk-marker.js";
-import { weaponFamily, weaponLineLayout } from "./weapon-line.js";
+import { weaponMarkLayout } from "./weapon-mark.js";
 import type {
   ArenaSnapshot,
   FloatingText,
@@ -68,7 +68,7 @@ const WALL_STROKE = 0x3b4759;
 const TARGET_RING = 0xffd866;
 /**
  * The target ring's radius past the body's edge (operator Q26): its 2 px
- * stroke spans r + 8 … r + 10, clear of the weapon mark (r + 5) and the
+ * stroke spans r + 8 … r + 10, clear of the weapon mark (r + 7.5) and the
  * off-hand mark (inside r + 7).
  */
 const TARGET_RING_OFFSET = 9;
@@ -263,18 +263,21 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * The weapon mark (#188): a 4 px `edge` casing, then a 2 px `ink` core,
+   * The weapon mark (#188, #418): a 4 px `edge` casing, then a 2 px `ink` core,
    * so the line reads on either team's colour. The casing also outlines the
-   * filled tips, which the core then fills.
+   * filled shapes, which the core then fills. Bow strings are one extra
+   * pass, thinner: a 3 px casing under a 1 px core.
    */
-  private drawWeaponLine(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
-    const family = weaponFamily(actor.weaponId);
-    if (family === undefined) {
-      return;
-    }
+  private drawWeaponMark(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
     const { x, y } = actor.position;
-    const { strokes, fills } = weaponLineLayout(x, y, actor.radius, actor.facing, family);
-    if (strokes.length === 0) {
+    const { strokes, fills, strings } = weaponMarkLayout(
+      x,
+      y,
+      actor.radius,
+      actor.facing,
+      actor.weaponId,
+    );
+    if (strokes.length === 0 && fills.length === 0) {
       return;
     }
     const trace = (
@@ -316,6 +319,20 @@ export class ArenaScene extends Phaser.Scene {
         shape.map((point) => new Phaser.Math.Vector2(point.x, point.y)),
         true,
       );
+    }
+
+    for (const [width, colour] of strings.length === 0
+      ? []
+      : ([
+          [3, BODY_EDGE],
+          [1, SELF_RIM],
+        ] as const)) {
+      g.lineStyle(width, colour, 1);
+      g.beginPath();
+      for (const line of strings) {
+        trace(line, false);
+      }
+      g.strokePath();
     }
   }
 
@@ -435,7 +452,7 @@ export class ArenaScene extends Phaser.Scene {
 
     // Off-hand, then weapon mark, then target ring: the order #275 gives.
     this.drawOffhandMark(g, actor);
-    this.drawWeaponLine(g, actor);
+    this.drawWeaponMark(g, actor);
 
     if (actor.id === this.snapshot.targetId) {
       g.lineStyle(2, TARGET_RING, 1);

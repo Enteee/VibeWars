@@ -97,7 +97,7 @@ so the silhouette identifies the profession and the colour only supports it.
 | Area flash  | Caster's team colour ring at the area's true radius   |
 | Swing flash | Attacker's team colour arc between it and its target  |
 | Projectile  | Weapon silhouette, tinted the shooter's team colour   |
-| Weapon mark | `ink` line in the facing direction, tip by weapon     |
+| Weapon mark | `ink` weapon held in the hands, one shape per weapon  |
 | Walk marker | `ink` cross of four ticks where you clicked the floor |
 
 The status plates differ in outline as well as colour. Hex purple and
@@ -223,52 +223,77 @@ off-hands included.
 
 Outward from the centre:
 
-| Ring     | Radius         | Style                                |
-| -------- | -------------- | ------------------------------------ |
-| Body     | 0 … r          | Team colour fill                     |
-| Edge     | r − 1.5 … r    | 1.5 px `edge` `#0b0f14`, living only |
-| Self rim | r − 3 … r − 1  | 2 px `ink`, your own body only       |
-| Off-hand | r … r + 7      | See below, living only, left side    |
-| Weapon   | centre … r + 5 | See below, living only               |
-| Target   | r + 8 … r + 10 | 2 px `target`, your target only      |
+| Ring     | Radius           | Style                                |
+| -------- | ---------------- | ------------------------------------ |
+| Body     | 0 … r            | Team colour fill                     |
+| Edge     | r − 1.5 … r      | 1.5 px `edge` `#0b0f14`, living only |
+| Self rim | r − 3 … r − 1    | 2 px `ink`, your own body only       |
+| Off-hand | r … r + 7        | See below, living only, left side    |
+| Weapon   | centre … r + 7.5 | See below, living only               |
+| Target   | r + 8 … r + 10   | 2 px `target`, your target only      |
 
 **The target ring sits at r + 9** (operator, Q26), its 2 px stroke from
 r + 8 to r + 10, so nothing on the body reaches it: the weapon mark stops at
-r + 5 and the off-hand mark inside r + 7. It is still drawn last. Its top
+r + 7.5 and the off-hand mark inside r + 7. It is still drawn last. Its top
 passes under the health bar (r + 8 … r + 12 above the centre) and its bottom
 under the first status plate (from r + 6 below), both drawn over it; the
 sides, where you look for it, stay clear.
 
-**The weapon mark** (#188) points where the player faces. It is a line from
-the centre with a tip that names the weapon family. Its geometry (the stroke
-centrelines) ends at **r + 3**, measured along the facing. It is drawn
-twice: a 4 px `edge` casing first, then a 2 px `ink` core. The ends are
-butt, not round, because Phaser Graphics strokes have no caps. Every end lies
-outside the body, over the floor, where the ink reads without the casing
-wrapping it. Across a tip's crossbar, arc, head or orb, the casing paints out
-to r + 5 along the facing, 3 units short of the target ring. Pulling the tip
-in further would sink it into the body edge, where it stops reading. Every
-tip, casing included, stays within 25° of the facing. Without the
-casing the ink line vanishes over the bright body: `ink` is 1.5:1 on `friend`
-and 1.9:1 on `foe`; the `edge` casing is 9.7:1 and 7.6:1.
+**The weapon mark** (#188, #418) is the weapon held in the hands: one
+silhouette for each of the 14 weapons. The shapes are data in
+`apps/web/src/render/weapon-mark-geometry.ts`, in the body's local frame
+(+x is the facing, +y the right hand, r = 14); the renderer, this sheet
+(`node scripts/assets/player-mark.mjs`) and later the icons all read that
+one file. Every point stays within **r + 5.5** of the centre; the 4 px casing
+then ends by r + 7.5, short of the target ring. Strokes are 4 px `edge` under
+2 px `ink`; filled shapes get the same casing and an `ink` fill; a bow's
+string is the only thin line, 3 px `edge` under 1 px `ink`. Ends are butt,
+because Phaser Graphics strokes have no caps. `ink` alone vanishes over the
+bright body (1.5:1 on `friend`, 1.9:1 on `foe`); the casing is 9.7:1 and 7.6:1.
 
-| Family  | Weapons      | Tip (world units, tip point T at r + 3)                                              |
-| ------- | ------------ | ------------------------------------------------------------------------------------ |
-| blade   | sword, spear | none, the plain line                                                                 |
-| axe     | axe, scythe  | one-sided filled triangle: T, 6 back along the line, and 5 out to the left at 2 back |
-| hammer  | hammer       | crossbar through T, 8 long, perpendicular                                            |
-| daggers | daggers      | the line forks 5 before T into two 5.5-unit prongs at ±30°                           |
-| bow     | bows         | arc of radius 5 over 140°, apex at T, bulging outward                                |
-| caster  | wand, staff  | filled orb of radius 3 whose outer edge is T; the line stops at its centre           |
-| unarmed | unarmed      | no mark at all                                                                       |
+Where it is held:
 
-Why not the first draft: a symmetric axe wedge and a dagger V at the line end
-read as an arrowhead and a fletching, and tips whose geometry ran to r + 7
-cut through the target ring on the one body you look at most.
+- **One-handed** (sword, axe, spear, wand): gripped on the **right** rim, about
+  9 units right of the centre, pointing forward. The off-hand is on the left,
+  so a loadout reads as left hand plus right hand.
+- **Two-handed**: bows are held across the front with a string; daggers are a
+  short blade in each hand; hammer, scythe, staff and spear are long hafts across the
+  body. Spear, scythe and staff butts poke out behind the body, a length cue
+  (operator Q52).
+- **Unarmed**: two fists at the front rim, so a bare-handed player still shows
+  a facing.
 
-In Phaser: one `beginPath`, the strokes as `moveTo`/`lineTo`, one
-`strokePath` per colour, plus one `fillPoints` per colour for the axe and
-the orb. That is two or three calls per actor, whatever the family.
+| Weapon      | Grip | Shape (local frame, world units)                                           |
+| ----------- | ---- | -------------------------------------------------------------------------- |
+| unarmed     | –    | two 12-gon discs, r 2.4, at (11.5, ±7.5)                                   |
+| sword       | 1H   | blade (1, 9)→(16, 9); crossguard (5, 6)→(5, 12)                            |
+| axe         | 1H   | haft (1, 9)→(15, 9); head turned inward, a five-point polygon to (17, 5.5) |
+| spear       | 1H   | shaft (−15, 7.5)→(12.5, 7.5); leaf head to (17.9, 7.5)                     |
+| wand        | 1H   | stick (4, 9)→(12.5, 9); four-point star, outer 3, at (14.3, 8.2)           |
+| hammer      | 2H   | haft (−8, 6.8)→(11.5, 6.8); block head (11.5…16, 2.4…11)                   |
+| scythe      | 2H   | haft (−14, 9)→(12.5, 9); crescent blade sweeping out to the left           |
+| daggers     | 2H   | a blade (5, ±9)→(15, ±9) with a guard at x = 7.5, in each hand             |
+| staff       | 2H   | diagonal pole (−12, 10.2)→(13.2, 5.8); orb r 2.9 at (15.2, 5.4)            |
+| shortbow    | 2H   | limb x = 17.5 − 5.5·(y/6)², y ±6: the smallest span                        |
+| longbow     | 2H   | limb x = 17 − 5.5·(y/11)², y ±11: the widest span                          |
+| flatbow     | 2H   | straight limbs from (12, ±9.5) to a flat grip at x = 16.5                  |
+| recurve-bow | 2H   | limb x = 16.5 − 4.5·(y/7)², tips flicking forward to (13.8, ±9.6)          |
+| hornbow     | 2H   | two humps with a dip at the grip, tips at (13.4, ±10)                      |
+
+The five bows differ by span and limb shape, which matches how their ranges
+differ. The string runs from one limb tip to (tip.x − 1.5, 0) to the other.
+The exact numbers are in the geometry file; the table is the summary.
+
+Why not the first draft: the first mark was a line from the centre with a
+small tip at r + 3. Six families covered 14 weapons, the tip lived in a
+3-unit band, and the centre-line read as a facing arrow rather than a weapon
+in a hand; unarmed drew nothing, so its facing was invisible. Before that, a
+symmetric axe wedge and a dagger V at the line end read as an arrowhead and a
+fletching, and tips running to r + 7 cut through the target ring.
+
+In Phaser: one `beginPath`, the strokes and fill outlines as
+`moveTo`/`lineTo`, one `strokePath` for the casing and one for the core, one
+`fillPoints` per fill, plus one thin pass over the strings for bows.
 
 **The off-hand mark** (#275) sits on the off-hand side, the left of the
 facing (in screen coordinates, y down: facing angle − 90°), the side the axe
@@ -284,14 +309,14 @@ so it reads over the floor and over a neighbour's body: `ink` on `edge` is
 
 Why it reads, and what it is not:
 
-- **Clear of every weapon tip.** The tips stay within 25° of the facing; the
-  shield starts at 45°, about 6 px away at true size. Rows 6 and 7 of the
-  sheet put every family beside each off-hand.
+- **Clear of the weapon.** One-handed weapons sit on the right, and the
+  off-hand only exists with them, so the two never share a side. Rows 6 and 7
+  of the sheet put every one-handed weapon beside each off-hand.
 - **Shield and focus differ by shape and size**: a 60° band hugging the body
   against a 5 px ring just off it. At true size the focus reads as a
   bright dot, the shield as a bracket.
-- **Not a second weapon.** Nothing runs from the centre and nothing points
-  along the facing, so two sticks never appear.
+- **Not a second weapon.** Nothing runs from the centre, so two sticks
+  never appear.
 - **Not the swing flash**, which is a 2 px team-coloured arc at r + 6,
   centred on the facing, spanning ±45°, and fades in 120 ms. The shield is
   `ink`, standing, and begins where the flash ends.
@@ -325,7 +350,7 @@ team:
 - **A: the primary, 11 px, before the name.** All ten read at true size.
 - **B: A, plus the secondary at 8 px in dim ink.** The secondary is mush at
   that size; at 11 px the name plate doubles in width over a 34 px bar.
-- **C: the primary on the body.** The weapon line (#188) runs across it, so
+- **C: the primary on the body.** The weapon mark (#188) runs across it, so
   it does not read.
 
 It recommended A, with the pair in the target panel, where there is room
