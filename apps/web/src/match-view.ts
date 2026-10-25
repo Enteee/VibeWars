@@ -4,6 +4,7 @@ import type { WallDescriptor } from "@vibewars/game-protocol";
 import { attachMatchSounds } from "./audio/match-sounds.js";
 import { saveMuted } from "./audio/mute-preference.js";
 import { soundPlayer } from "./audio/sound-player.js";
+import { attackKeyIntents, isAttacking } from "./input/attack-key.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
 import { connectToMatch, type MatchTarget } from "./net/match-client.js";
@@ -15,6 +16,7 @@ import {
   createHud,
   describeRefusal,
   flashMessage,
+  renderLeave,
   renderMute,
   renderSkillBar,
   updateHud,
@@ -139,6 +141,8 @@ export async function startMatchView(
   };
   renderMute(hud, sounds.muted);
   hud.mute.addEventListener("click", toggleMute);
+  // Esc cancels an attack now, so leaving is a button that asks first (#160).
+  renderLeave(hud, callbacks.onLeave);
 
   const detachMovement = attachKeyboardMoveInput(window, (direction) => {
     if (direction.x === 0 && direction.y === 0) {
@@ -149,8 +153,20 @@ export async function startMatchView(
   });
 
   const handleKeyDown = (event: KeyboardEvent): void => {
+    if (event.key === " ") {
+      // Held Space auto-repeats; one attack is all it means (#160).
+      if (!event.repeat && !isTyping(event.target)) {
+        event.preventDefault();
+        for (const intent of attackKeyIntents(connection.getSnapshot())) {
+          connection.sendIntent(intent);
+        }
+      }
+      return;
+    }
     if (event.key === "Escape") {
-      callbacks.onLeave();
+      if (!event.repeat && isAttacking(connection.getSnapshot())) {
+        connection.sendIntent({ kind: "cancel-attack" });
+      }
       return;
     }
     if (event.key === "m" || event.key === "M") {
@@ -179,7 +195,7 @@ export async function startMatchView(
   });
   // A key that does nothing reads as a broken game; say why (issue #51).
   connection.onCastRefused((message) => {
-    flashMessage(hud, describeRefusal(message.reason));
+    flashMessage(hud, describeRefusal(message));
   });
 
   const offFrame = viewport.onFrame(() => {
@@ -218,6 +234,7 @@ export async function startMatchView(
       hud.scoreboard.remove();
       hud.result.remove();
       hud.mute.remove();
+      hud.leave.remove();
       viewport.destroy();
       await connection.disconnect();
     },

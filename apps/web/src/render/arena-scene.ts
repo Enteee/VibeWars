@@ -43,6 +43,8 @@ const SELF_RIM = 0xd7dee8;
 const BODY_EDGE = 0x0b0f14;
 const BODY_EDGE_WIDTH = 1.5;
 const DEAD_COLOUR = 0x4a5464;
+/** How opaque a weapon swing's number is at most: present, never louder than a skill (#160). */
+const LIGHT_TEXT_ALPHA = 0.8;
 const INK = "#d7dee8";
 const DEAD_INK = "#4a5464";
 
@@ -301,7 +303,7 @@ export class ArenaScene extends Phaser.Scene {
       let object = this.floatingTextObjects.get(floating.id);
       if (object === undefined) {
         object = this.add.text(floating.position.x, floating.position.y, floating.text, {
-          fontSize: "13px",
+          fontSize: floating.weight === "light" ? "11px" : "13px",
           fontFamily: "ui-monospace, monospace",
           color: `#${floating.colour.toString(16).padStart(6, "0")}`,
         });
@@ -317,7 +319,9 @@ export class ArenaScene extends Phaser.Scene {
 
       // Drift upward and fade as it ages, so overlapping hits stay readable.
       object.y -= 24 * dt;
-      object.setAlpha(Math.min(1, floating.remainingSeconds));
+      object.setAlpha(
+        Math.min(floating.weight === "light" ? LIGHT_TEXT_ALPHA : 1, floating.remainingSeconds),
+      );
       survivors.push(floating);
     }
     this.floatingTexts = survivors;

@@ -1,4 +1,5 @@
 import { getWeapon, type ActivationRejection } from "@vibewars/game-core";
+import type { CastRefusedMessage } from "@vibewars/game-protocol";
 
 import type {
   MatchSnapshot,
@@ -6,7 +7,7 @@ import type {
   SkillSlot,
   SlotRecharge,
 } from "../net/match-connection.js";
-import { skillBadgeHtml, soundIcon } from "./icons.js";
+import { attackingIcon, skillBadgeHtml, soundIcon } from "./icons.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 
 /**
@@ -36,10 +37,16 @@ export interface HudElements {
   /** One line above the skill bar, for why a key did nothing. */
   readonly message: HTMLElement;
   readonly targetPanel: HTMLElement;
+  /** Who is targeted, as text, inside the target panel. */
+  readonly targetText: HTMLElement;
+  /** Crossed swords and "attacking", shown while self attacks the target (#160). */
+  readonly attacking: HTMLElement;
   readonly scoreboard: HTMLElement;
   readonly result: HTMLElement;
   /** Sound on or off (#112); `renderMute` keeps it showing which. */
   readonly mute: HTMLButtonElement;
+  /** Leave the match, after a yes (#160): Esc cancels an attack now. */
+  readonly leave: HTMLElement;
 }
 
 function element(tag: string, className: string, parent: HTMLElement): HTMLElement {
@@ -62,8 +69,16 @@ export function createHud(parent: HTMLElement): HudElements {
   mute.className = "hud-mute";
   mute.appendChild(document.createElement("img")).alt = "";
   parent.appendChild(mute);
+  const leave = element("div", "hud-leave", parent);
 
   const targetPanel = element("div", "hud-target", root);
+  const targetText = element("span", "hud-target-text", targetPanel);
+  const attacking = element("span", "hud-attacking", targetPanel);
+  const swords = attacking.appendChild(document.createElement("img"));
+  swords.src = attackingIcon();
+  swords.alt = "";
+  attacking.append("attacking");
+  attacking.hidden = true;
 
   const bars = element("div", "hud-bars", root);
 
@@ -93,9 +108,12 @@ export function createHud(parent: HTMLElement): HudElements {
     skillBar,
     message,
     targetPanel,
+    targetText,
+    attacking,
     scoreboard,
     result,
     mute,
+    leave,
   };
 }
 
@@ -150,12 +168,22 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "no-line-of-sight": "Target is not in line of sight.",
 };
 
+/** Where an attack's refusal differs from a cast's: it is about the weapon, not a skill. */
+const ATTACK_REFUSALS: Readonly<Partial<Record<ActivationRejection, string>>> = {
+  "invalid-target-self": "You cannot attack yourself.",
+  "invalid-target-ally": "You can only attack an enemy.",
+};
+
 /**
- * The line for a refusal reason as the server sent it. A reason this
- * client does not know (wrong data, not old data) still says something.
+ * The line for a refusal as the server sent it. A reason this client does
+ * not know (wrong data, not old data) still says something.
  */
-export function describeRefusal(reason: string): string {
-  return isRejection(reason) ? REFUSALS[reason] : "You cannot use that skill now.";
+export function describeRefusal(refusal: CastRefusedMessage): string {
+  const { reason } = refusal;
+  if (!isRejection(reason)) {
+    return refusal.kind === "attack" ? "You cannot attack now." : "You cannot use that skill now.";
+  }
+  return (refusal.kind === "attack" ? ATTACK_REFUSALS[reason] : undefined) ?? REFUSALS[reason];
 }
 
 function isRejection(reason: string): reason is ActivationRejection {
@@ -285,6 +313,48 @@ export function describeOutcome(
   return winningTeam === selfTeam ? `Victory${why}` : `Defeat${why}`;
 }
 
+/** The target panel's line. */
+export function describeTarget(target: PlayerSnapshot | undefined): string {
+  return target === undefined
+    ? "no target"
+    : `target: ${target.name} — ${String(Math.round(target.health))}/${String(
+        Math.round(target.maxHealth),
+      )} hp · armor ${String(target.armor)}${
+        target.weaponId === undefined ? "" : ` · ${describeWeaponName(target.weaponId)}`
+      }${target.dead ? " (dead)" : ""}`;
+}
+
+/** Whether self's weapon is swinging at the target the panel shows. */
+export function isAttackingTarget(
+  self: PlayerSnapshot,
+  target: PlayerSnapshot | undefined,
+): boolean {
+  return target !== undefined && self.attackTargetSessionId === target.sessionId;
+}
+
+/**
+ * Fill the leave control: a "leave match" button that asks "leave? yes /
+ * no" first, so a stray click cannot drop a player out of a match.
+ */
+export function renderLeave(hud: HudElements, onLeave: () => void): void {
+  const button = (label: string, onClick: () => void): HTMLButtonElement => {
+    const node = document.createElement("button");
+    node.type = "button";
+    node.textContent = label;
+    node.addEventListener("click", onClick);
+    return node;
+  };
+  const idle = (): void => {
+    hud.leave.replaceChildren(button("leave match", ask));
+  };
+  const ask = (): void => {
+    const question = document.createElement("span");
+    question.textContent = "leave?";
+    hud.leave.replaceChildren(question, button("yes", onLeave), button("no", idle));
+  };
+  idle();
+}
+
 export function updateHud(
   hud: HudElements,
   self: PlayerSnapshot | undefined,
@@ -319,14 +389,8 @@ export function updateHud(
   hud.statusList.textContent =
     self.statuses.length > 0 ? self.statuses.join(" · ") : "no active effects";
 
-  hud.targetPanel.textContent =
-    target === undefined
-      ? "no target"
-      : `target: ${target.name} — ${String(Math.round(target.health))}/${String(
-          Math.round(target.maxHealth),
-        )} hp · armor ${String(target.armor)}${
-          target.weaponId === undefined ? "" : ` · ${describeWeaponName(target.weaponId)}`
-        }${target.dead ? " (dead)" : ""}`;
+  hud.targetText.textContent = describeTarget(target);
+  hud.attacking.hidden = !isAttackingTarget(self, target);
 
   // Grey out skills the player cannot currently afford. The server is
   // still the authority on whether a cast is legal — this is a hint, not
