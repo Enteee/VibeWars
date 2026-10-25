@@ -1,28 +1,51 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SOUND_IDS } from "./sound-ids.js";
+import { VOLUME_RAMP_SECONDS } from "./volume-ramp.js";
 import {
+  MASTER_GAIN,
   SOUND_THROTTLE_MS,
   createWebAudioPlayer,
   type SoundContext,
+  type SoundGain,
   type SoundPlayerDeps,
 } from "./sound-player.js";
 
+/** A gain that records its ramps as `[value, time]`. */
+function fakeGain(): SoundGain & { ramps: [number, number][] } {
+  const gain = {
+    value: 1,
+    ramps: [] as [number, number][],
+    cancelScheduledValues: () => undefined,
+    setValueAtTime: () => undefined,
+    linearRampToValueAtTime: (value: number, time: number) => {
+      gain.ramps.push([value, time]);
+    },
+  };
+  return gain;
+}
+
 /** A context that counts the sounds started and resumes, and decodes or fails on demand. */
-function fakeContext(
-  decode: () => Promise<AudioBuffer>,
-): SoundContext & { started: number; resumed: number; state: string } {
+function fakeContext(decode: () => Promise<AudioBuffer>): SoundContext & {
+  started: number;
+  resumed: number;
+  state: string;
+  output: ReturnType<typeof fakeGain>;
+} {
+  const output = fakeGain();
   const context = {
     started: 0,
     resumed: 0,
     state: "running",
+    currentTime: 3,
+    output,
     resume: () => {
       context.resumed += 1;
       context.state = "running";
       return Promise.resolve();
     },
     destination: {},
-    createGain: () => ({ gain: { value: 1 }, connect: () => undefined }),
+    createGain: () => ({ gain: output, connect: () => undefined }),
     createBufferSource: () => ({
       buffer: null,
       connect: () => undefined,
@@ -56,6 +79,7 @@ function setup(overrides: Partial<SoundPlayerDeps> = {}, decode = decoded) {
     hasBeenActive: true,
     baseUrl: "/",
     muted: false,
+    volume: 1,
     ...overrides,
   });
   return {
@@ -106,6 +130,28 @@ describe("createWebAudioPlayer", () => {
     player.setMuted(false);
     player.play("heal");
     expect(context.started).toBe(1);
+  });
+
+  it("opens at the saved volume, and ramps the gain to each new one", () => {
+    const { player, context } = setup({ volume: 0.4 });
+    expect(player.volume).toBe(0.4);
+    expect(context.output.value).toBeCloseTo(MASTER_GAIN * 0.4);
+
+    player.setVolume(0.8);
+    player.setVolume(0);
+    expect(player.volume).toBe(0);
+    expect(context.output.ramps).toEqual([
+      [MASTER_GAIN * 0.8, 3 + VOLUME_RAMP_SECONDS],
+      [0, 3 + VOLUME_RAMP_SECONDS],
+    ]);
+  });
+
+  it("keeps a volume set before the first gesture for when the context opens", () => {
+    const { player, context, gestures } = setup({ hasBeenActive: false });
+    player.setVolume(0.25);
+    gestures.dispatchEvent(new Event("pointerdown"));
+    expect(context.output.value).toBeCloseTo(MASTER_GAIN * 0.25);
+    expect(context.output.ramps).toEqual([]);
   });
 
   it("drops a sound asked for before its buffer has decoded", async () => {

@@ -31,6 +31,7 @@ import { catchUpTick, leadClock } from "./lead-clock.js";
 import { makeLayer, type TrackClock } from "./layer.js";
 import { reverbPins } from "./reverb-pins.js";
 import { createMeasurement, readAudio } from "./stats.js";
+import { createUnderrunProbe } from "./underruns.js";
 import { suspendWhileHidden } from "./visibility.js";
 import { within } from "./within.js";
 import { workerTimers } from "./worker-timers.js";
@@ -113,11 +114,14 @@ export async function startEngine(): Promise<void> {
     post(describe(error));
   });
   const timers = workerTimers();
+  const underruns = createUnderrunProbe(context);
+  /** The bus limiter, made with the bus once the first track plays. */
+  let limiter: DynamicsCompressorNode | undefined;
   const measurement = createMeasurement(
     (stats) => {
       post({ type: "stats", ...stats });
     },
-    () => readAudio(context),
+    () => readAudio(context, underruns),
     (callback, ms) => timers.setInterval(callback, ms),
   );
   const pins = reverbPins();
@@ -140,6 +144,9 @@ export async function startEngine(): Promise<void> {
         }
         const began = performance.now();
         meter.tick(began, ms);
+        if (limiter !== undefined) {
+          meter.reduced(limiter.reduction);
+        }
         // A slot's time is its time in the audio context, so one behind
         // `currentTime` is a note the audio thread never plays: a gap.
         const behind = context.currentTime - scheduler.clock.getPhase();
@@ -271,7 +278,7 @@ export async function startEngine(): Promise<void> {
     bus = context.createGain();
     bus.gain.value = volume;
     gate = busGate(bus.gain, () => context.currentTime, LEAD_SECONDS, volume);
-    const limiter = context.createDynamicsCompressor();
+    limiter = context.createDynamicsCompressor();
     limiter.threshold.value = LIMITER_DB;
     limiter.knee.value = 0;
     limiter.ratio.value = 20;

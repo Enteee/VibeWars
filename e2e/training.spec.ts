@@ -738,3 +738,36 @@ test("(27) a left click while the right button is held still walks (#438)", asyn
   await page.waitForTimeout(500);
   expect((await shot()).equals(start), "the hero should be walking").toBe(false);
 });
+
+test("(28) an attack skill pressed out of reach walks in, then lands (#415)", async ({ page }) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("/");
+  await page.getByRole("button", { name: "new character" }).click();
+  // A new character is a warrior; Swift Chop needs an axe.
+  await page.getByRole("button", { name: "gear", exact: true }).click();
+  await page.locator(".gear-box").filter({ hasText: "Axe" }).first().click();
+  await expect(page.locator(".gear-slot").first()).toContainText("Axe");
+  await page.getByRole("button", { name: "skills", exact: true }).click();
+  await page.locator(".skill-box", { hasText: "Swift Chop" }).click();
+  await expect(page.locator(FILLED_SLOTS)).toHaveText([`${codeLabel(skillKey(0))}Swift Chop`]);
+  const canvas = page.locator(".training canvas");
+  await page.locator("select.training-scenario").selectOption("weapon-dps");
+  await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
+  await takeControl(page);
+
+  // Target the bow-range dummy, at (480, 210), far out of an axe's reach.
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+  const scale = box.width / TRAINING_HALL_WIDTH;
+  await page.mouse.click(box.x + 480 * scale, box.y + 210 * scale, { button: "right" });
+  await page.keyboard.press(skillKey(0));
+
+  // Not refused: no "out of range", and the hero walks there to chop. The
+  // walk is in game time, which runs slower than wall time under load (#327).
+  await expect(page.locator(".training-log")).toContainText(/Swift Chop .*Bow-range dummy/, {
+    timeout: 20_000,
+  });
+  await expect(page.locator(".training-log")).not.toContainText("out of range");
+});

@@ -192,6 +192,7 @@ describe("the swing", () => {
       targetId: "e",
       swingElapsed: 0,
       unreachableSeconds: 0,
+      pendingSkillSlot: undefined,
     });
   });
 });

@@ -15,6 +15,8 @@ import { visible } from "./protocol.mjs";
  * @property {number} heartbeatAt epoch ms
  * @property {string | null} sha the commit the company was started from, short
  * @property {number} inflight requests queued or being served
+ * @property {{ employee: string, command: string, startedAt: number } | null} current
+ *   the request being served, or null when idle
  * @property {number} served
  * @property {number} refused
  * @property {{ at: number, message: string } | null} lastError
@@ -71,7 +73,18 @@ export function parseAlive(text) {
     typeof (/** @type {Record<string, unknown>} */ (error).message) === "string"
       ? /** @type {{ at: number, message: string }} */ (error)
       : null;
+  const now = raw.current;
+  const record = /** @type {Record<string, unknown>} */ (now);
+  const current =
+    typeof now === "object" &&
+    now !== null &&
+    typeof record.employee === "string" &&
+    typeof record.command === "string" &&
+    isTime(record.startedAt)
+      ? /** @type {{ employee: string, command: string, startedAt: number }} */ (now)
+      : null;
   if (
+    (now !== null && current === null) ||
     !isTime(raw.pid) ||
     !isTime(raw.startedAt) ||
     !isTime(raw.heartbeatAt) ||
@@ -89,6 +102,7 @@ export function parseAlive(text) {
     heartbeatAt: raw.heartbeatAt,
     sha: raw.sha,
     inflight: raw.inflight,
+    current,
     served: raw.served,
     refused: raw.refused,
     lastError,

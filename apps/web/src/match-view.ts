@@ -3,7 +3,7 @@ import type { WallDescriptor } from "@vibewars/game-protocol";
 import type { MatchConnection, MatchSnapshot } from "@vibewars/game-session";
 
 import { attachMatchSounds } from "./audio/match-sounds.js";
-import { saveMuted } from "./audio/mute-preference.js";
+import { onGlobalMute, setGlobalMute } from "./audio/global-mute.js";
 import { soundPlayer } from "./audio/sound-player.js";
 import { attackKeyIntents, hasActionToCancel } from "./input/attack-key.js";
 import { createDoubleClick } from "./input/double-click.js";
@@ -193,11 +193,12 @@ export async function startMatchView(
     },
   });
   const toggleMute = (): void => {
-    sounds.setMuted(!sounds.muted);
-    music().setMuted(sounds.muted);
-    saveMuted(sounds.muted);
-    renderMute(hud, sounds.muted);
+    setGlobalMute(!sounds.muted);
   };
+  // Also when the jukebox popover's Sound controls mute all (#424).
+  const offMute = onGlobalMute((muted) => {
+    renderMute(hud, muted);
+  });
   renderMute(hud, sounds.muted);
   hud.mute.addEventListener("click", toggleMute);
   const jukebox = attachJukeboxPopover(hud.music, parent);
@@ -418,6 +419,7 @@ export async function startMatchView(
       hud.scoreboard.remove();
       hud.result.remove();
       hud.mute.remove();
+      offMute();
       jukebox.dispose();
       hud.music.remove();
       hud.leave.remove();

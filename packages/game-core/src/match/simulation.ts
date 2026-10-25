@@ -51,6 +51,7 @@ import {
   attackDurationSeconds,
   blindMisses,
   landBlow,
+  PLAIN_BLOW,
   resolveAttackSkill,
   resolveSwing,
   weaponSnapshotOf,
@@ -163,7 +164,11 @@ export interface StepResult {
 export interface SkillRequest {
   readonly skillId: string;
   readonly check: ActivationCheck;
-  /** Pressed during an aftercast: it goes off when the aftercast ends (#317). */
+  /**
+   * Pressed during an aftercast, it goes off when the aftercast ends
+   * (#317); an attack skill pressed out of reach, when it is walked into
+   * reach (#415).
+   */
   readonly queued?: true;
 }
 
@@ -542,7 +547,12 @@ export class MatchSimulation {
     if (check.ok) {
       record.walkGoal = undefined;
       if (record.combatant.attack?.targetId !== targetId) {
-        record.combatant.attack = { targetId, swingElapsed: 0, unreachableSeconds: 0 };
+        record.combatant.attack = {
+          targetId,
+          swingElapsed: 0,
+          unreachableSeconds: 0,
+          pendingSkillSlot: undefined,
+        };
       }
     }
     return check;
@@ -618,8 +628,47 @@ export class MatchSimulation {
 
     const castTargetId = skill.target === "self" ? id : this.#castTarget(record, skill);
     const check = this.#check(record, skill, castTargetId);
+    // An attack skill out of reach or out of sight walks in and goes off
+    // there, as Space does (#415). Range and line of sight are checked
+    // last, so everything else has passed; it is all checked again on
+    // arrival. A spell out of range does not path (ADR-0026).
+    if (
+      !check.ok &&
+      (check.reason === "out-of-range" || check.reason === "no-line-of-sight") &&
+      skill.attack !== undefined &&
+      castTargetId !== undefined
+    ) {
+      record.walkGoal = undefined;
+      record.combatant.cast.clearQueue();
+      record.combatant.attack = {
+        targetId: castTargetId,
+        swingElapsed: 0,
+        unreachableSeconds: 0,
+        pendingSkillSlot: slot,
+      };
+      return { skillId: skill.id, check: { ok: true }, queued: true };
+    }
+    return this.#useSkill(record, slot, skill, castTargetId, check);
+  }
+
+  /**
+   * The rest of `requestSkill`, once its target is known and `check`
+   * made: queue it behind an aftercast, or pay for it and begin it. Also
+   * how a pending attack skill goes off on arrival (#415).
+   */
+  #useSkill(
+    record: ParticipantRecord,
+    slot: number,
+    skill: Skill,
+    castTargetId: string | undefined,
+    check: ActivationCheck,
+  ): SkillRequest {
     if (!check.ok) {
       return { skillId: skill.id, check };
+    }
+    // Another skill, accepted, drops one pending: the press replaces it.
+    if (record.combatant.attack !== undefined) {
+      record.combatant.attack.pendingSkillSlot = undefined;
     }
     // During an aftercast a skill with an activation time, or an attack
     // skill, which takes its weapon's, waits for it to end, as in GW1
@@ -887,7 +936,12 @@ export class MatchSimulation {
       primary !== undefined &&
       this.#attackCheck(record, primary.id).ok
     ) {
-      record.combatant.attack = { targetId: primary.id, swingElapsed: 0, unreachableSeconds: 0 };
+      record.combatant.attack = {
+        targetId: primary.id,
+        swingElapsed: 0,
+        unreachableSeconds: 0,
+        pendingSkillSlot: undefined,
+      };
     }
     if (hasAftercast(skill)) {
       record.combatant.cast.beginAftercast(this.#ruleset.combat.aftercastSeconds);
@@ -1037,7 +1091,7 @@ export class MatchSimulation {
   /**
    * The attack step (ADR-0026): drop an attack whose target is no longer
    * a living enemy, pause while casting and through the aftercast, walk
-   * into reach, then swing.
+   * into reach, then swing, or use the attack skill pending (#415).
    *
    * The swing timer keeps the remainder past each interval rather than
    * zeroing, so the rate stays exact at 20 Hz. A target that steps out of
@@ -1072,8 +1126,17 @@ export class MatchSimulation {
     }
 
     const { weapon } = record.combatant.equipment.mainHand;
+    // A pending attack skill walks to its own range, not the weapon's:
+    // Barrage stops at its own, short of a longbow's (#415).
+    const pendingSkillId =
+      attack.pendingSkillSlot === undefined ? undefined : record.skillBar[attack.pendingSkillSlot];
+    const pending =
+      pendingSkillId === undefined || pendingSkillId === null
+        ? undefined
+        : getSkill(pendingSkillId);
+    const reach = pending === undefined ? weapon.range : pending.range;
     if (
-      !distanceWithinRange(record.position, target.position, weapon.range) ||
+      !distanceWithinRange(record.position, target.position, reach) ||
       !hasLineOfSight(record.position, target.position, this.#walls)
     ) {
       // Approach until in reach and in sight, round walls (#211): the only
@@ -1103,6 +1166,16 @@ export class MatchSimulation {
       return;
     }
     faceToward(record, target.position);
+
+    // Arrived: the pending skill goes off as if pressed now, checked all
+    // over again. Refused (Energy Burn took the energy on the way), it is
+    // dropped and the attack carries on as an auto-attack.
+    if (pending !== undefined && attack.pendingSkillSlot !== undefined) {
+      const slot = attack.pendingSkillSlot;
+      attack.pendingSkillSlot = undefined;
+      this.#useSkill(record, slot, pending, target.id, this.#check(record, pending, target.id));
+      return;
+    }
 
     attack.swingElapsed += dt;
     const interval = attackDurationSeconds(record.combatant, weapon.attackIntervalSeconds);
@@ -1219,7 +1292,7 @@ export class MatchSimulation {
       landBlow(
         projectile.weaponSnapshot,
         target.combatant,
-        0,
+        PLAIN_BLOW,
         this.#rng,
         this.#ruleset.combat,
         events,

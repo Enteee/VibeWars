@@ -1,4 +1,5 @@
 import { controlsSection } from "./controls-section.js";
+import { mountSoundControls, soundControlsDeps } from "./sound-controls.js";
 
 /**
  * The Options screen's sections (#423), in the order its list shows them.
@@ -14,4 +15,11 @@ export interface OptionsSection {
   readonly mount: (container: HTMLElement) => () => void;
 }
 
-export const OPTIONS_SECTIONS: readonly OptionsSection[] = [controlsSection];
+/** Sound (#424): the same controls the HUD's ♪ popover shows in a match. */
+export const soundSection: OptionsSection = {
+  id: "sound",
+  title: "sound",
+  mount: (container) => mountSoundControls(container, soundControlsDeps()),
+};
+
+export const OPTIONS_SECTIONS: readonly OptionsSection[] = [soundSection, controlsSection];

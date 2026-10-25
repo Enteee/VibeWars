@@ -14,7 +14,8 @@ const cell = (page: Page, action: string, index = 0): Locator =>
 async function openKeys(page: Page): Promise<void> {
   await page.getByRole("button", { name: "options" }).click();
   await expect(page.locator(".options-screen")).toBeVisible();
-  // Options opens on its first section, Controls.
+  // Options opens on its first section, Sound (#424).
+  await page.locator('.options-entry[data-section="controls"]').click();
   await expect(page.locator('.options-entry[data-section="controls"]')).toHaveClass(/is-selected/);
   await expect(page.locator(".keys-screen")).toBeVisible();
 }

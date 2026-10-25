@@ -87,6 +87,26 @@ test("spending attribute points updates the remaining budget", async ({ page }) 
   await expect(budget).not.toHaveText(before);
 });
 
+test("12/12/3 spends all 200 points, GW1's split (#470)", async ({ page }) => {
+  await newCharacter(page);
+
+  const plus = (row: number) =>
+    page.locator(".editor-attribute").nth(row).locator("button", { hasText: "+" });
+  for (const [row, rank] of [
+    [0, 12],
+    [1, 12],
+    [2, 3],
+  ] as const) {
+    for (let step = 0; step < rank; step += 1) {
+      await plus(row).click();
+    }
+  }
+
+  await expect(page.locator(".editor-points")).toHaveText("0 attribute points remaining");
+  await expect(plus(2)).toBeDisabled();
+  await expect(plus(3)).toBeDisabled();
+});
+
 test("a team can be created and persists", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "teams" }).click();

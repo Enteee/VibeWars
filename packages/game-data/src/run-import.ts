@@ -33,6 +33,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Warrior/11-Backbreaker",
   },
   {
+    id: "warrior.distracting-blow",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/71-Distracting_Blow",
+  },
+  {
     id: "monk.contemplation-of-purity",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/154-Contemplation_of_Purity",

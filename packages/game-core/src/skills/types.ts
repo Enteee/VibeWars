@@ -2,6 +2,7 @@ import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 
 import type { ResolvedEquipment } from "../equipment/resolve.js";
+import type { ProfessionId } from "../professions.js";
 import type { CastState } from "./cast-state.js";
 import type { AttackState } from "./weapon-attack.js";
 import type { StatusCategory, StatusId, StatusSet } from "./status.js";
@@ -126,6 +127,11 @@ export type AttackWeaponClass =
 /** What makes an attack skill a blow of its weapon (ADR-0029). */
 export interface AttackSkillRule {
   readonly weapon: AttackWeaponClass;
+  /**
+   * What the weapon's roll is multiplied by: 1 for a blow of the weapon,
+   * 0 for one that deals no damage but still hits (Distracting Blow).
+   */
+  readonly weaponDamage: number;
   /** Added to the weapon's roll before armor; `undefined`: no bonus. */
   readonly bonusDamage: Magnitude | undefined;
 }
@@ -135,15 +141,20 @@ export interface Skill {
   readonly name: string;
   readonly type: SkillType;
   /**
-   * The attribute this skill belongs to, and therefore which professions
-   * may equip it (brief §6's skill shape).
+   * The profession this skill belongs to, and therefore who may equip it:
+   * a character whose primary or secondary it is (brief §6's skill shape).
    *
    * Stated explicitly rather than inferred from the effect list: a skill
    * whose effects are not attribute-scaled (a pure interrupt, say) still
    * belongs to a profession, and inferring it would wrongly make such
    * skills equippable by everyone — a real bug this field replaced.
    */
-  readonly attributeId: string;
+  readonly profession: ProfessionId;
+  /**
+   * The attribute of `profession` it is linked to; `undefined` for GW1's
+   * "No Attribute" skills, whose numbers are written for rank 0 (#445).
+   */
+  readonly attributeId: string | undefined;
   readonly cost: SkillCost | undefined;
   /** Cast time in seconds. `0` is instant. */
   readonly activationSeconds: number;

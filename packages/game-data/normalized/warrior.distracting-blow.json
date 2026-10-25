@@ -1,0 +1,24 @@
+{
+  "id": "warrior.distracting-blow",
+  "name": "Distracting Blow",
+  "profession": "warrior",
+  "attribute": "No Attribute",
+  "type": "Melee attack.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 0.5,
+  "rechargeSeconds": 10,
+  "description": "Swipe your weapon at the target, dealing no damage but disrupting the target's current action (and the actions of foes adjacent to your target).",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Warrior/71-Distracting_Blow",
+    "fetchedAt": "2026-10-25T21:02:56.378Z"
+  },
+  "unmapped": {}
+}

@@ -14,6 +14,7 @@ import {
 import { PROFESSIONS, type ProfessionId } from "./professions.js";
 import type { AttributeRules } from "./ruleset.js";
 import { IMPLEMENTED_SKILLS, getSkill } from "./skills/catalog.js";
+import type { Skill } from "./skills/types.js";
 
 /**
  * A playable build: a character plus the skill bar they take into a match
@@ -68,17 +69,19 @@ export function toCharacter(build: PlayerBuild, id: string): Character {
 }
 
 /**
- * Skills this build may equip: those whose attribute belongs to a
- * profession it actually has access to.
- *
- * The same primary/secondary rule the attribute allocator enforces,
- * expressed once and applied in both places.
+ * May a character of these professions equip `skill`? Only if it is a
+ * skill of its primary or secondary: the same rule the attribute
+ * allocator enforces, and the one that covers a "No Attribute" skill.
  */
-export function equippableSkills(build: PlayerBuild): typeof IMPLEMENTED_SKILLS {
-  const accessible = new Set(
-    accessibleAttributeIds(build.primaryProfession, build.secondaryProfession),
+function hasProfessionOf(skill: Skill, build: PlayerBuild): boolean {
+  return (
+    skill.profession === build.primaryProfession || skill.profession === build.secondaryProfession
   );
-  return IMPLEMENTED_SKILLS.filter((skill) => accessible.has(skill.attributeId));
+}
+
+/** Skills this build may equip: those of a profession it has. */
+export function equippableSkills(build: PlayerBuild): typeof IMPLEMENTED_SKILLS {
+  return IMPLEMENTED_SKILLS.filter((skill) => hasProfessionOf(skill, build));
 }
 
 /**
@@ -139,10 +142,10 @@ export function validatePlayerBuild(build: PlayerBuild, rules: AttributeRules): 
     // Skill ownership (brief §32). Filtering the editor's dropdown is a
     // UI convenience; this is the rule. A build can also arrive from an
     // import, from older storage, or from a client that simply made it up.
-    if (!accessible.has(skill.attributeId)) {
+    if (!hasProfessionOf(skill, build)) {
       problems.push({
         field: `skillBar[${String(index)}]`,
-        message: `${skill.name} needs ${skill.attributeId}, which this character cannot access`,
+        message: `${skill.name} is a ${PROFESSIONS[skill.profession].name} skill, which this character cannot access`,
       });
     }
     if (seen.has(skillId)) {

@@ -120,8 +120,9 @@ complete:
 - ~~**No attack-speed modifiers**~~: the hook exists since ADR-0029.
 - **No block or evade.**
 - ~~**Attack skills do not ride the weapon.**~~ They do since ADR-0029.
-- **Pathing is for the attack's approach only.** Player movement, and
-  skills cast out of range, do not path. Planning ignores other bodies;
+- **Pathing is for the attack's approach only**, an attack skill's
+  included since ADR-0029 (#415). Player movement, and spells cast out of
+  range, do not path. Planning ignores other bodies;
   collision handles shoves, and the next plan starts from there.
 - **Armor does not read the attack state.** ADR-0019 removed Brawler's
   Insignia because "while attacking" was never true. It now can be, but
