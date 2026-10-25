@@ -138,6 +138,42 @@ let
   testRoles = "developer-* | asset-designer | cicd-engineer | lead-dev | perf-sec-qa | qa-tester";
   chromium = lib.getExe pkgs.chromium;
 
+  # The jails' shared resource budget (#358, ADR-0015): one systemd user slice
+  # that every jail's scope is placed in, so the limits are for all jails
+  # together and no agent has a fixed share. Runtime properties: they last
+  # until reboot and touch nothing under ~/.config. The host's systemctl, not
+  # one from nixpkgs: it has to talk to the running user manager. A host that
+  # cannot enforce the cap (no user manager, no memory delegation) is refused
+  # with a plain message; an unlimited jail is never started quietly.
+  jailSlice = pkgs.writeShellScript "vibewars-jail-slice" ''
+    systemctl="$(command -v systemctl || true)"
+    if [ -z "$systemctl" ]; then
+      echo "claude-bot: no systemctl on PATH; the jails' resource cap cannot be set, so no jail starts." >&2
+      exit 1
+    fi
+    cpus="$(${pkgs.coreutils}/bin/nproc)"
+    if ! "$systemctl" --user set-property --runtime vibewars-jails.slice \
+      MemoryMax=90% MemoryHigh=85% MemorySwapMax=0 \
+      CPUQuota="$(( cpus * 90 ))%" CPUWeight=20 IOWeight=20 TasksMax=8192; then
+      echo "claude-bot: could not set the jails' resource cap (is the systemd user manager running?), so no jail starts." >&2
+      exit 1
+    fi
+    # A property stored on the slice proves nothing: without the controller
+    # delegated to the user manager the kernel ignores it. So ask the
+    # manager's own cgroup which controllers it has.
+    managerCgroup="$("$systemctl" show "user@$(${pkgs.coreutils}/bin/id -u).service" -p ControlGroup --value)"
+    controllers="$(cat "/sys/fs/cgroup$managerCgroup/cgroup.controllers" 2>/dev/null || true)"
+    for controller in memory pids cpu; do
+      case " $controllers " in
+        (*" $controller "*) ;;
+        (*)
+          echo "claude-bot: the systemd user manager does not have the $controller controller delegated; the jails would be uncapped, so no jail starts." >&2
+          exit 1
+          ;;
+      esac
+    done
+  '';
+
   # `claude-bot --smoke <role>` runs this inside the role's jail instead of
   # claude, as the regression check for issue #29. LD_LIBRARY_PATH is set by
   # hand, to what claude's own wrapper sets it to, because the smoke test has
@@ -205,6 +241,17 @@ let
         git update-ref 'refs/heads/$branch' \"\$c\" && echo committed" 2>&1)" \
       "committed"
     git update-ref -d "refs/heads/$branch" >/dev/null 2>&1 || true
+
+    # #358: the launch line has the kernel kill a jailed process before any
+    # host process, and runs it at lower priority than the host's own. The
+    # slice itself cannot be seen from here (the jail has its own cgroup
+    # namespace, so /proc/self/cgroup says "/"): see docs/adr/0015.
+    check "oom_score_adj is 1000" "$(cat /proc/self/oom_score_adj)" "1000"
+    check "oom_score_adj is 1000 in a grandchild" \
+      "$("$SHELL" -c 'cat /proc/self/oom_score_adj')" "1000"
+    check "nice is 10" "$(${pkgs.coreutils}/bin/nice)" "10"
+    refused "lowering nice back to 0" '${pkgs.util-linux}/bin/renice -n 0 $$'
+    check "core dumps are off" "$(ulimit -c)" "0"
     exit "$failed"
   '';
 
@@ -299,6 +346,7 @@ let
     usage:
       claude-bot [--resume <session-id>] <role> [claude args...]
       claude-bot --smoke <role>  check that role's jail can run the browser tests
+      claude-bot --slice         set the jails' shared resource cap and exit
       claude-bot --help
 
     Each role runs in its own bubblewrap sandbox, on its own git worktree
@@ -365,6 +413,12 @@ let
 
         # --smoke runs the jail checks instead of claude: the regression test
         # for issue #29, and the quickest way to see what an agent's shell sees.
+        # --slice sets the shared resource cap for every jail (jailSlice) and
+        # exits; claude-llc start runs it once before any window opens.
+        if [ "''${1-}" = "--slice" ]; then
+          exec ${jailSlice}
+        fi
+
         smoke=0
         if [ "''${1-}" = "--smoke" ]; then
           smoke=1
@@ -678,7 +732,25 @@ let
             "''${@:-$prompt}")
         fi
 
-        exec ${bwrap} \
+        # Every jail, smoke included, starts in the shared slice (#358) with the
+        # kernel's OOM killer told to take it first, at a lower priority than
+        # the host and without core dumps. Each wrapper execs, so $$ is still
+        # the jail's PID for the presence process and the turn runner. Only
+        # what is forked above (the Telegram sidecar, presence) is outside the
+        # slice, and hubd and the supervisor are never started from here. No
+        # memory.oom.group: the biggest process dies, not the whole session.
+        ${jailSlice} || exit 1
+        systemdRun="$(command -v systemd-run || true)"
+        if [ -z "$systemdRun" ]; then
+          echo "claude-bot: no systemd-run on PATH; the jail cannot be capped, so it does not start." >&2
+          exit 1
+        fi
+        exec "$systemdRun" --user --scope --quiet --collect \
+          --unit="vibewars-jail-$role-$$" --slice=vibewars-jails.slice \
+          -- ${pkgs.util-linux}/bin/choom -n 1000 \
+          -- ${pkgs.coreutils}/bin/nice -n 10 \
+          -- ${pkgs.util-linux}/bin/prlimit --core=0 \
+          -- ${bwrap} \
           --die-with-parent \
           --unshare-all \
           --share-net \
