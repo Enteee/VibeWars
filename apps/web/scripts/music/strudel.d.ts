@@ -14,8 +14,15 @@ declare module "@strudel/tonal" {
 }
 
 declare module "@strudel/transpiler" {
+  /** Strudel's times are fraction.js fractions, exact where floats round. */
+  export interface Fraction {
+    valueOf(): number;
+    floor(): Fraction;
+    sub(other: Fraction): Fraction;
+    toFraction(): string;
+  }
   export interface Hap {
-    whole: { begin: { valueOf(): number } };
+    whole: { begin: Fraction };
     value: Record<string, unknown>;
     hasOnset(): boolean;
   }
