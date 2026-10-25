@@ -29,6 +29,14 @@ describe("attachNameReveal (#253)", () => {
     expect(reveal.held()).toBe(false);
   });
 
+  it("lets go when its own target loses focus, as the stage does to the editor", () => {
+    const { keys, ...rest } = page();
+    const reveal = attachNameReveal(keys, rest);
+    keys.dispatchEvent(key("keydown", "Control"));
+    keys.dispatchEvent(new Event("blur"));
+    expect(reveal.held()).toBe(false);
+  });
+
   it("lets go when the page loses focus, or turns hidden", () => {
     const { keys, ...rest } = page();
     const reveal = attachNameReveal(keys, rest);
