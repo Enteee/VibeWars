@@ -174,7 +174,7 @@ Outward from the centre:
 
 **The weapon mark** (#188) points where the player faces. It is a line from
 the centre with a tip that names the weapon family. Its geometry (the stroke
-centrelines) ends at **r + 3**. It is drawn twice: a 4 px `edge` casing first,
+centrelines) ends at **r + 3**, measured along the facing. It is drawn twice: a 4 px `edge` casing first,
 then a 2 px `ink` core, both round-capped, so the painted ink reaches r + 4
 and the casing r + 5. That overlaps the target ring by a pixel, so **the
 target ring is drawn after the weapon mark** and covers it. Pulling the tip
@@ -188,7 +188,7 @@ and 1.9:1 on `foe`; the `edge` casing is 9.7:1 and 7.6:1.
 | blade   | sword, spear | none, the plain line                                                                 |
 | axe     | axe, scythe  | one-sided filled triangle: T, 6 back along the line, and 5 out to the left at 2 back |
 | hammer  | hammer       | crossbar through T, 8 long, perpendicular                                            |
-| daggers | daggers      | the line forks 5 before T into two 6-unit prongs at ±30°                             |
+| daggers | daggers      | the line forks 5 before T into two 5.5-unit prongs at ±30°                           |
 | bow     | bows         | arc of radius 5 over 140°, apex at T, bulging outward                                |
 | caster  | wand, staff  | filled orb of radius 3 whose outer edge is T; the line stops at its centre           |
 | unarmed | unarmed      | no mark at all                                                                       |

@@ -95,14 +95,15 @@ function weaponMark(x, y, a, family) {
     };
   }
   if (family === "daggers") {
-    // The shaft forks 6 units before the tip into two prongs, 30° apart.
+    // The shaft forks 5 units before the tip into two 5.5-unit prongs at
+    // ±30°, which end 4.76 along the line: inside R + REACH (6 would not).
     const fork = polar(x, y, a, R + REACH - 5);
     const [fx, fy] = fork;
     return {
       strokes: [
         [[x, y], fork],
-        [fork, polar(fx, fy, a - Math.PI / 6, 6)],
-        [fork, polar(fx, fy, a + Math.PI / 6, 6)],
+        [fork, polar(fx, fy, a - Math.PI / 6, 5.5)],
+        [fork, polar(fx, fy, a + Math.PI / 6, 5.5)],
       ],
       fills: [],
     };
