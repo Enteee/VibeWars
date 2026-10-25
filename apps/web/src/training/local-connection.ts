@@ -101,6 +101,7 @@ function toPlayerSnapshot(participant: Participant, name: string): PlayerSnapsho
     name,
     x: participant.position.x,
     y: participant.position.y,
+    facing: participant.facing,
     targetSessionId: participant.targetId,
     attackTargetSessionId: combatant.attack?.targetId,
     health: Math.round(combatant.health),
