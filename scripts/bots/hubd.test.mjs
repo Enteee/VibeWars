@@ -1179,6 +1179,8 @@ describe("hubd serving one spool per employee (#62)", () => {
     const stranger = await hubd.request("qa-tester@2", "board", ["ls"]);
     expect(stranger).toEqual({ allow: false, reason: 'unknown employee "qa-tester@2"', code: 77 });
 
+    // hubd makes the spool again only once it has read the new staff.
+    fs.rmSync(path.join(hubd.hub, "qa-tester@2"), { recursive: true });
     hubd.employ("qa-tester@2");
     const hired = await hubd.request("qa-tester@2", "board", ["ls"]);
     expect(hired.code, String(hired.reason)).toBe(0);
@@ -1188,6 +1190,7 @@ describe("hubd serving one spool per employee (#62)", () => {
     const hubd = await startHubd(5000);
     await hubd.until(() => fs.existsSync(path.join(hubd.hub, "architect", "req")), "a spool");
     fs.writeFileSync(path.join(hubd.root, "staff.json"), "{");
+    await hubd.until(() => hubd.stderr().includes("staff.json: "), "hubd to read the broken staff");
 
     const answer = await hubd.request("architect", "board", ["ls"]);
     expect(answer.code).toBe(0);
