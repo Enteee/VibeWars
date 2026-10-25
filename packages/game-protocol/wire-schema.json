@@ -1208,6 +1208,7 @@
     },
     "PeerWelcome": {
       "properties": [
+        { "name": "elapsedSeconds", "optional": false, "type": "number" },
         {
           "name": "map",
           "optional": false,

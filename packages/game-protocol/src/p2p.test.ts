@@ -54,6 +54,7 @@ const welcome: PeerWelcome = {
   playerId: "peer-2",
   rejoinToken: TOKEN,
   tickIntervalMs: 50,
+  elapsedSeconds: 12.5,
   map: {
     id: "isle",
     name: "Isle of the Nameless",

@@ -133,7 +133,8 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     }
   };
 
-  const elapsed = (): number => latest?.elapsedSeconds ?? 0;
+  /** The match clock: the latest snapshot's, or before the first, the welcome's. */
+  const elapsed = (): number => latest?.elapsedSeconds ?? welcomed?.elapsedSeconds ?? 0;
 
   fromHost("snapshot", parseWireSnapshot, (snapshot) => {
     // Only ever forward: one late or replayed is dropped.
@@ -219,7 +220,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 players: [],
                 scoreTeam0: 0,
                 scoreTeam1: 0,
-                elapsedSeconds: 0,
+                elapsedSeconds: welcome.elapsedSeconds,
                 phase: "active",
                 winningTeam: undefined,
                 endReason: undefined,

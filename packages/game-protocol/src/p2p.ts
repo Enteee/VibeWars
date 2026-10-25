@@ -110,6 +110,12 @@ export interface PeerWelcome {
   /** What this peer sends in `PeerHello.rejoin` to take its seat back after a drop. */
   readonly rejoinToken: string;
   readonly tickIntervalMs: number;
+  /**
+   * The match time it was sent at: the client's clock until its first
+   * snapshot, so a recharge told along with it counts down from now, not
+   * from the start of the match.
+   */
+  readonly elapsedSeconds: number;
   readonly map: MapDescriptor;
 }
 
@@ -441,7 +447,9 @@ export function parsePeerWelcome(value: unknown): PeerWelcome | undefined {
     !isString(raw.playerId) ||
     !isRejoinToken(raw.rejoinToken) ||
     !isNumber(raw.tickIntervalMs) ||
-    raw.tickIntervalMs <= 0
+    raw.tickIntervalMs <= 0 ||
+    !isNumber(raw.elapsedSeconds) ||
+    raw.elapsedSeconds < 0
   ) {
     return undefined;
   }
@@ -453,6 +461,7 @@ export function parsePeerWelcome(value: unknown): PeerWelcome | undefined {
         playerId: raw.playerId,
         rejoinToken: raw.rejoinToken,
         tickIntervalMs: raw.tickIntervalMs,
+        elapsedSeconds: raw.elapsedSeconds,
         map,
       };
 }

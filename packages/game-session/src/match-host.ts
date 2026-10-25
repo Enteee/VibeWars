@@ -14,6 +14,7 @@ import {
 } from "@vibewars/game-core";
 import {
   MAX_WIRE_COMBATS,
+  MAX_WIRE_PROJECTILES,
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   helloProtocolVersion,
@@ -76,7 +77,11 @@ export interface MatchHostOptions {
   readonly map: HostMap;
   readonly seed: string;
   readonly matchRules: MatchRules;
-  /** In [0, 1), for rejoin tokens; injected so a test is reproducible. */
+  /**
+   * In [0, 1), for rejoin tokens; injected so a test is reproducible. A
+   * token is all that stands between a seat and whoever guesses it, so in
+   * a page this must come from `crypto.getRandomValues`, never `Math.random`.
+   */
   readonly random: () => number;
   readonly maxPlayers: number;
 }
@@ -169,6 +174,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       playerId: seat.playerId,
       rejoinToken: seat.token,
       tickIntervalMs: 1000 / RULESET.tickRateHz,
+      elapsedSeconds: sim.elapsedSeconds,
       map: map.descriptor,
     };
     transport.send("welcome", message, peerId);
@@ -354,7 +360,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       const seat = seats.get(participant.id);
       return seat === undefined ? [] : [wirePlayer(participant, seat)];
     }),
-    projectiles: sim.projectiles.map((shot) => ({
+    // The newest, if ever there were more than a snapshot may carry: a
+    // client refuses a whole snapshot past the cap.
+    projectiles: sim.projectiles.slice(-MAX_WIRE_PROJECTILES).map((shot) => ({
       id: shot.id,
       attackerId: shot.attackerId,
       weaponId: shot.weaponSnapshot.mainHand.weapon.id,
@@ -416,6 +424,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       return finished ? "finished" : "active";
     },
     async close(reason) {
+      // Nothing more is ticked onto a transport that has left.
+      finished = true;
       const ended: WireEnded = { winningTeam: null, endReason: reason };
       transport.send("ended", ended);
       await transport.leave();

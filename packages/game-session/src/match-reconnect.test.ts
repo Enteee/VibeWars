@@ -1,3 +1,4 @@
+import { DEFAULT_SKILL_BAR } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { hello, playerIn, self, startMatch } from "./match-harness.test-support.js";
@@ -52,6 +53,33 @@ describe("reconnection over P2P (#375)", () => {
     expect(resumed.selfSessionId).toBe(dropper.selfSessionId);
     // Same character, same place: not a fresh spawn.
     expect(self(resumed)?.x).toBeCloseTo(beforeX, 0);
+  });
+
+  it("keeps counting a recharge down from where it was after a rejoin", async () => {
+    // A rejoin is a fresh connection with no snapshot yet: its recharges
+    // must count from the host's clock, not from the start of the match,
+    // or every skill shows ready once the first snapshot lands.
+    const match = startMatch();
+    await match.joinLocal();
+    const { connection: caster, transport } = await match.join();
+    await match.step(5);
+
+    // Armor of Earth: self-targeted, 15 s to recharge.
+    const slot = DEFAULT_SKILL_BAR.indexOf("elementalist.armor-of-earth");
+    caster.sendIntent({ kind: "use-skill", slot });
+    await match.step(1);
+    const before = caster.getRecharges()[slot]?.remaining ?? 0;
+    expect(before).toBeGreaterThan(13);
+
+    await transport.leave();
+    await match.step(2);
+    const { connection: resumed } = await match.join(
+      hello({ rejoin: { playerId: caster.selfSessionId, token: caster.rejoinToken } }),
+    );
+    await match.step(1);
+
+    // Three seconds on: two away, one back.
+    expect(resumed.getRecharges()[slot]?.remaining).toBeCloseTo(before - 3, 0);
   });
 
   it("freezes a dropped player rather than leaving them running into a wall", async () => {
