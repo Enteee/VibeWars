@@ -17,6 +17,7 @@ import {
   type MatchScore,
 } from "../match-rules.js";
 import { clampInputDirection, integrateMovement } from "../movement.js";
+import { buildNavGraph, findPath, type NavGraph } from "../pathing.js";
 import { createRng, seedFromString, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { canActivate, payCost, type ActivationCheck } from "../skills/activation.js";
@@ -109,6 +110,11 @@ export interface MatchSimulationOptions {
   readonly matchRules?: MatchRules | undefined;
   /** Omitted or `[]`: nothing collides with a wall or blocks line of sight. */
   readonly walls?: readonly Segment[];
+  /**
+   * The map's size, which an attack's approach never paths outside of
+   * (#211). Omitted: an open field with no edge.
+   */
+  readonly bounds?: { readonly width: number; readonly height: number } | undefined;
   readonly participants?: readonly ParticipantSpec[];
 }
 
@@ -176,6 +182,8 @@ export class MatchSimulation {
   readonly #ruleset: Ruleset;
   readonly #matchRules: MatchRules | undefined;
   readonly #walls: readonly Segment[];
+  /** Corners an approach can path through, built once from the walls (#211). */
+  readonly #nav: NavGraph;
   readonly #rng: SimulationRng;
   readonly #participants = new Map<string, ParticipantRecord>();
   #projectiles: Projectile[] = [];
@@ -192,6 +200,7 @@ export class MatchSimulation {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
     this.#matchRules = options.matchRules;
     this.#walls = options.walls ?? [];
+    this.#nav = buildNavGraph(this.#walls, options.bounds, this.#ruleset.collision.playerRadius);
     this.#rng = createRng(
       typeof options.seed === "string" ? seedFromString(options.seed) : options.seed,
     );
@@ -669,10 +678,22 @@ export class MatchSimulation {
     }
 
     const { weapon } = record.combatant.equipment.mainHand;
-    if (!distanceWithinRange(record.position, target.position, weapon.range)) {
-      // Approach: the only movement the simulation chooses, and never on
-      // top of the player's own.
-      this.advanceMovement(record, sub(target.position, record.position), dt);
+    if (
+      !distanceWithinRange(record.position, target.position, weapon.range) ||
+      !hasLineOfSight(record.position, target.position, this.#walls)
+    ) {
+      // Approach until in reach and in sight, round walls (#211): the only
+      // movement the simulation chooses, and never on top of the
+      // player's own. Replanned every tick, so a target that moves, or a
+      // shove, is simply where the next plan starts.
+      const path = findPath(this.#nav, record.position, target.position);
+      const next = path?.[0];
+      if (next === undefined) {
+        record.combatant.attack = undefined;
+        this.#logWeapon(record.id, [{ kind: "attack-unreachable", targetId: target.id }]);
+        return;
+      }
+      this.advanceMovement(record, sub(next, record.position), dt);
       return;
     }
 

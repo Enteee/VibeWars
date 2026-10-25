@@ -490,6 +490,7 @@ export class MatchRoom extends Room {
       ruleset: RULESET,
       matchRules: DEFAULT_MATCH_RULES,
       walls: this.#wallSegments,
+      bounds: { width: this.#map.width, height: this.#map.height },
     });
 
     this.onMessage("intent", (client, message: unknown) => {

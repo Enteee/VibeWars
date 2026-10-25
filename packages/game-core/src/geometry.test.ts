@@ -4,6 +4,7 @@ import {
   circleIntersectsSegment,
   closestPointOnSegment,
   distancePointToSegment,
+  distanceSegmentToSegment,
   distanceWithinRange,
   hasLineOfSight,
   resolveCircleCircleCollision,
@@ -216,6 +217,22 @@ describe("hasLineOfSight", () => {
       segment(vec2(4, 2), vec2(4, -2)),
     ];
     expect(hasLineOfSight(vec2(0, 0), vec2(10, 0), box)).toBe(false);
+  });
+});
+
+describe("distanceSegmentToSegment", () => {
+  it("is 0 for segments that cross or touch", () => {
+    const across = segment(vec2(0, -10), vec2(0, 10));
+    expect(distanceSegmentToSegment(segment(vec2(-10, 0), vec2(10, 0)), across)).toBe(0);
+    expect(distanceSegmentToSegment(segment(vec2(0, 10), vec2(5, 20)), across)).toBe(0);
+  });
+
+  it("is the nearest endpoint's distance to the other segment otherwise", () => {
+    const wall = segment(vec2(0, 0), vec2(0, 100));
+    expect(distanceSegmentToSegment(segment(vec2(14, 20), vec2(14, 80)), wall)).toBeCloseTo(14);
+    expect(distanceSegmentToSegment(segment(vec2(3, 110), vec2(40, 140)), wall)).toBeCloseTo(
+      Math.hypot(3, 10),
+    );
   });
 });
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
+import { hasLineOfSight } from "../geometry.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import type { Projectile } from "../skills/projectile.js";
 import { vec2, ZERO, type Vec2 } from "../vec2.js";
@@ -295,7 +296,7 @@ describe("tapping back and forth", () => {
   });
 });
 
-describe("obstruction at release", () => {
+describe("line of sight (#211)", () => {
   /** A wall across the line from the archer at (0, 0) to anyone at x = 300 near y = 0. */
   const WALL = { a: vec2(150, -50), b: vec2(150, 50) };
 
@@ -319,36 +320,49 @@ describe("obstruction at release", () => {
     return kinds;
   }
 
-  it("a longbow behind a wall is obstructed: nothing flies, and the attack goes on", () => {
+  /** Step until a shot is in flight, at most `seconds`; whether one is. */
+  function untilAShotFlies(match: MatchSimulation, seconds: number): boolean {
+    for (let i = 0; i < Math.round(seconds / DT); i += 1) {
+      match.step(DT);
+      if (match.projectiles.length > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  it("a longbow in range behind a wall walks until it sees, then shoots, never obstructed", () => {
     const match = walled(vec2(0, 0), vec2(300, 0));
     expect(match.requestAttack("archer", "target")).toEqual({ ok: true });
 
-    const kinds = weaponEvents(match, LONGBOW.attackIntervalSeconds + DT);
-    expect(kinds).toEqual(["attack-obstructed"]);
-    expect(match.projectiles).toHaveLength(0);
-    expect(get(match, "archer").combatant.attack?.targetId).toBe("target");
+    expect(untilAShotFlies(match, 4)).toBe(true);
+    const at = get(match, "archer").position;
+    expect(Math.abs(at.y)).toBeGreaterThan(0);
+    expect(hasLineOfSight(at, vec2(300, 0), [WALL])).toBe(true);
+    expect(weaponEvents(match, LONGBOW.attackIntervalSeconds * 3)).not.toContain(
+      "attack-obstructed",
+    );
   });
 
-  it("the next swing shoots once the target steps out of cover", () => {
-    const match = walled(vec2(0, 0), vec2(300, 0));
+  it("follows a target that steps behind cover, rather than shooting the wall", () => {
+    const match = walled(vec2(0, 0), vec2(300, 200));
     match.requestAttack("archer", "target");
-    expect(weaponEvents(match, LONGBOW.attackIntervalSeconds + DT)).toEqual(["attack-obstructed"]);
+    expect(untilAShotFlies(match, 4)).toBe(true);
 
-    // Past the wall's end: the line now crosses x = 150 at y = 100.
-    get(match, "target").position = vec2(300, 200);
-    for (let i = 0; i < Math.round(LONGBOW.attackIntervalSeconds / DT) + 1; i += 1) {
-      match.step(DT);
-      if (match.projectiles.length > 0) {
-        break;
-      }
-    }
-    expect(match.projectiles).toHaveLength(1);
+    // Behind the wall, as seen from where the archer stands.
+    const from = get(match, "archer").position;
+    get(match, "target").position = vec2(300, 0);
+    expect(hasLineOfSight(from, vec2(300, 0), [WALL])).toBe(false);
+    expect(weaponEvents(match, LONGBOW.attackIntervalSeconds * 3)).not.toContain(
+      "attack-obstructed",
+    );
+    expect(get(match, "archer").position).not.toEqual(from);
   });
 
-  it("a sword through the same wall at melee reach still hits", () => {
+  it("a sword across a thin wall walks round it and hits", () => {
     const sword = WEAPONS.sword;
-    const match = walled(vec2(140, 0), vec2(160, 0), sword);
+    const match = walled(vec2(136, 0), vec2(164, 0), sword);
     match.requestAttack("archer", "target");
-    expect(weaponEvents(match, sword.attackIntervalSeconds * 2 + DT)).toContain("damage");
+    expect(weaponEvents(match, sword.attackIntervalSeconds * 2 + 2)).toContain("damage");
   });
 });
