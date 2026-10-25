@@ -42,7 +42,13 @@ import {
   type ServerHello,
   type WallDescriptor,
 } from "@vibewars/game-protocol";
-import { rechargePredicted, rechargeSlots, sanitizeName, spawnPoint } from "@vibewars/game-session";
+import {
+  RECONNECT_WINDOW_SECONDS,
+  rechargePredicted,
+  rechargeSlots,
+  sanitizeName,
+  spawnPoint,
+} from "@vibewars/game-session";
 import type { StepContext } from "colyseus";
 
 import { quote } from "../log-safe.js";
@@ -214,12 +220,6 @@ function joinLoadout(options: unknown): JoinLoadout {
 // Starting health and energy now come from the ruleset's combat rules,
 // via `resolveLoadout` — runes move both, so a fixed constant here
 // would quietly override them. Respawn time comes from the match rules.
-/**
- * How long a dropped player keeps their slot, character and position.
- * Long enough to survive a wifi blip or a laptop lid, short enough that
- * a quit does not leave a ghost standing in the arena.
- */
-const RECONNECT_WINDOW_SECONDS = 30;
 
 /**
  * How long a lobby's players have to take the seats it reserved for
