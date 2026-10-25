@@ -488,3 +488,69 @@ describe("the auto-attack behaviour (#162)", () => {
     expect(get(match, "bot").combatant.attack?.targetId).toBe("v");
   });
 });
+
+describe("the approach round bodies (#277)", () => {
+  function unreachable(log: readonly CombatLogEntry[]): CombatLogEntry[] {
+    return swings(log).filter((entry) =>
+      entry.events.some((event) => event.kind === "attack-unreachable"),
+    );
+  }
+
+  it("steers round a body between it and its target, and hits", () => {
+    // Weapon DPS as it stands: the spawn, the melee dummy just in front,
+    // and the bow-range dummy behind it on the same line (#277's repro).
+    const match = sim(
+      swordsman("a", vec2(100, 210)),
+      dummy("melee", vec2(136, 210)),
+      dummy("ranged", vec2(480, 210)),
+    );
+    match.requestAttack("a", "ranged");
+
+    const log = stepFor(match, 5);
+    expect(unreachable(log)).toEqual([]);
+    expect(distance(get(match, "a").position, vec2(480, 210))).toBeLessThanOrEqual(
+      WEAPONS.sword.range,
+    );
+    const hits = swings(log).filter((entry) => entry.events.some((e) => e.kind === "damage"));
+    expect(hits.length).toBeGreaterThan(0);
+    expect(hits.every((entry) => entry.events.some((e) => e.targetId === "ranged"))).toBe(true);
+  });
+
+  it("gives up, once, when bodies box it in and it cannot move", () => {
+    // Six bodies round it, each touching the next: there is a path, and
+    // no way along it.
+    const ring = [0, 1, 2, 3, 4, 5].map((k) =>
+      dummy(
+        `r${String(k)}`,
+        vec2(200 + 28 * Math.cos((k * Math.PI) / 3), 200 + 28 * Math.sin((k * Math.PI) / 3)),
+      ),
+    );
+    const match = sim(swordsman("a", vec2(200, 200)), ...ring, dummy("d", vec2(500, 200)));
+    match.requestAttack("a", "d");
+
+    const log = stepFor(match, 2);
+    const ended = unreachable(log);
+    expect(ended).toHaveLength(1);
+    // Half a second of no progress (#218). Since #291 refuses a move deeper
+    // into a body there is no jostling first, so it can land on 0.5 s exactly.
+    const at = ended[0]?.atSeconds ?? 0;
+    expect(at).toBeGreaterThanOrEqual(RULES.combat.unreachableAfterSeconds - 1e-9);
+    expect(at).toBeLessThanOrEqual(RULES.combat.unreachableAfterSeconds + 3 * DT + 1e-9);
+    expect(get(match, "a").combatant.attack).toBeUndefined();
+  });
+
+  it("is held, not lost, when it cannot move at all", () => {
+    // No speed: every step asks for nothing, so no step is a stall.
+    const still = { ...RULES, movement: { ...RULES.movement, maxSpeedUnitsPerSecond: 0 } };
+    const match = new MatchSimulation({
+      seed: "held",
+      ruleset: still,
+      participants: [swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0))],
+    });
+    match.requestAttack("a", "d");
+
+    const log = stepFor(match, 3);
+    expect(unreachable(log)).toEqual([]);
+    expect(get(match, "a").combatant.attack?.targetId).toBe("d");
+  });
+});

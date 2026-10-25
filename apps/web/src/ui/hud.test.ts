@@ -11,6 +11,7 @@ import {
   isAttackingTarget,
   muteButtonState,
   skillSlotHtml,
+  TARGET_HINT,
   targetHintDismissed,
 } from "./hud.js";
 
@@ -51,6 +52,13 @@ describe("describeOutcome", () => {
 
   it("falls back to naming the team for a spectator with no team of their own", () => {
     expect(describeOutcome(1, "score", undefined)).toBe("Team 2 wins");
+  });
+});
+
+describe("TARGET_HINT", () => {
+  it("tells a new player both how to target and how to see every name (#253)", () => {
+    expect(TARGET_HINT).toContain("Tab");
+    expect(TARGET_HINT).toContain("Ctrl");
   });
 });
 

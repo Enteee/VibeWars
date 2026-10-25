@@ -323,7 +323,7 @@ test("Tab targets the nearest enemy, and the hint goes for good (#55)", async ({
   const opponent = await browser.newPage();
   await startLobbyMatch(page, [opponent]);
   const hint = page.locator(".hud-hint");
-  await expect(hint).toHaveText("Click an enemy or press Tab to target");
+  await expect(hint).toHaveText("Click an enemy or press Tab to target · hold Ctrl for names");
   await expect(hint).toBeVisible();
 
   await page.keyboard.press("Tab");

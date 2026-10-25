@@ -60,8 +60,8 @@ function element(tag: string, className: string, parent: HTMLElement): HTMLEleme
   return node;
 }
 
-/** Shown above the skill bar until the player first has a target (#55). */
-export const TARGET_HINT = "Click an enemy or press Tab to target";
+/** Shown above the skill bar until the player first has a target (#55); Ctrl shows every name (#253). */
+export const TARGET_HINT = "Click an enemy or press Tab to target · hold Ctrl for names";
 
 /**
  * Whether the targeting hint is gone for good: it was already, or the
