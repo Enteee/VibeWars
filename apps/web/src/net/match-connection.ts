@@ -59,6 +59,13 @@ export interface SkillSlot {
   readonly rechargeSeconds: number;
 }
 
+/** One slot's recharge: `remaining` is 0 when the skill is ready. */
+export interface SlotRecharge {
+  readonly remaining: number;
+  /** What the recharge started with, for the wipe's proportion. */
+  readonly total: number;
+}
+
 export interface CombatMessage {
   readonly casterSessionId: string;
   readonly skillId: string;
@@ -84,5 +91,7 @@ export interface MatchConnection {
   onCombat(handler: (message: CombatMessage) => void): void;
   /** Why the server refused one of this player's casts, sent to them alone. */
   onCastRefused(handler: (message: CastRefusedMessage) => void): void;
+  /** This player's recharges right now, one entry per skill-bar slot (#152). */
+  getRecharges(): readonly SlotRecharge[];
   disconnect(): Promise<void>;
 }

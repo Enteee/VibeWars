@@ -5,11 +5,12 @@ import {
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   ROOM_MATCH,
+  type RechargeMessage,
   type ServerHello,
 } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { DEFAULT_MAP_ID } from "./rooms/match-room.js";
+import { DEFAULT_MAP_ID, DEFAULT_SKILL_BAR } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
 
@@ -310,5 +311,46 @@ describe("match room", () => {
     expect(roomA.state.players.get(roomA.sessionId)?.targetSessionId).toBe("");
 
     await roomA.leave();
+  });
+
+  describe("recharges (#152)", () => {
+    /** Join, and keep every `recharge` message this client is sent. */
+    async function joinCounting() {
+      const room = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+        protocolVersion: PROTOCOL_VERSION,
+      });
+      const received: RechargeMessage[] = [];
+      room.onMessage("recharge", (message: RechargeMessage) => {
+        received.push(message);
+      });
+      return { room, received };
+    }
+
+    it("tells the caster alone, once, and nothing more while it counts down", async () => {
+      const caster = await joinCounting();
+      const other = await joinCounting();
+      // On join, each is told their bar is ready.
+      await waitFor(() => caster.received.length === 1 && other.received.length === 1, {
+        label: "join messages",
+      });
+      expect(caster.received[0]?.slots).toEqual([]);
+
+      // Armor of Earth: self-targeted, so it fires with nobody in range.
+      const slot = DEFAULT_SKILL_BAR.indexOf("elementalist.armor-of-earth");
+      caster.room.send("intent", { kind: "use-skill", slot });
+      await waitFor(() => caster.received.length === 2, { label: "the recharge" });
+      const [started] = caster.received[1]?.slots ?? [];
+      expect(started?.slot).toBe(slot);
+      expect(started?.totalSeconds).toBe(15);
+      expect(started?.remainingSeconds).toBeGreaterThan(14);
+
+      // A second of plain countdown is the client's to predict.
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      expect(caster.received).toHaveLength(2);
+      expect(other.received).toHaveLength(1);
+
+      await caster.room.leave();
+      await other.room.leave();
+    });
   });
 });
