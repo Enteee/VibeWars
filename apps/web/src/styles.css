@@ -1862,6 +1862,14 @@ body {
   color: var(--ink);
 }
 
+/* A weapon or off-hand icon (#419): ink on the panel, the arena silhouette. */
+.gear-icon {
+  width: 1.4em;
+  height: 1.4em;
+  margin-right: 0.35em;
+  vertical-align: -0.3em;
+}
+
 .gear-box .skill-box-name {
   /* Rune labels carry their whole trade-off, so they get two lines
      rather than being cut off at the interesting part. */
