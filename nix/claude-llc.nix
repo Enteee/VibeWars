@@ -94,7 +94,8 @@ let
 
     first time:
       claude-llc-init         create the board, protect main, write company.json
-      CLAUDE_LLC_ROLES="..."  start only these roles (default: all of them)
+      CLAUDE_LLC_ROLES="..."  employ only these roles (default: all of them);
+                              later boots start who .bots/staff.json employs
 
     See docs/adr/0015-agent-company.md.
   '';
@@ -263,9 +264,12 @@ let
         # (docs/adr/0023-one-telegram-bot.md) hiring needs no setup, so every
         # role can start. Nine agents is a real cost, so CLAUDE_LLC_ROLES can
         # name a subset, e.g. CLAUDE_LLC_ROLES="manager architect developer-1".
+        # That subset only seeds .bots/staff.json on the first boot (#62);
+        # from then on the company starts who staff.json employs, and the
+        # manager hires and fires.
         # ------------------------------------------------------------------------
-        ready="''${CLAUDE_LLC_ROLES:-${lib.concatStringsSep " " roles}}"
-        for role in $ready; do
+        seed="''${CLAUDE_LLC_ROLES:-${lib.concatStringsSep " " roles}}"
+        for role in $seed; do
           case " ${lib.concatStringsSep " " roles} " in
             *" $role "*) ;;
             *)
@@ -273,6 +277,18 @@ let
               exit 1
               ;;
           esac
+        done
+        # shellcheck disable=SC2086 # one word per role
+        ${node} ${llcScripts}/staff.mjs seed $seed || exit 1
+        ${node} ${llcScripts}/staff.mjs check || exit 1
+        # The roles whose first seat is employed, in roster order. Further
+        # seats (role@2...) start once the supervisor reconciles (#383).
+        ready=""
+        for role in ${lib.concatStringsSep " " roles}; do
+          if ${lib.getExe pkgs.jq} -e --arg r "$role" '.employees | has($r)' \
+            "$VIBEWARS_BOT_ROOT/staff.json" >/dev/null; then
+            ready="$ready $role"
+          fi
         done
 
         # Replace refs live under .git/refs, which every jail can write, and

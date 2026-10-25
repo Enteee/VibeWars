@@ -81,6 +81,7 @@ import {
   rebootAllowed,
 } from "./reboot.mjs";
 import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
+import { applyStaff, parseStaff, staffAllowed } from "./staff.mjs";
 import {
   RESTRICTED_PATHS,
   ROLES,
@@ -134,6 +135,8 @@ const GH_CWD = path.join(HUB, ".gh-cwd");
 const BOOT = path.join(ROOT, "boot.json");
 /** A reboot hubd has accepted and the supervisor has not yet carried out. */
 const REBOOT = path.join(ROOT, "reboot.json");
+/** Who is employed (#62): hubd is its only writer. */
+const STAFF = path.join(ROOT, "staff.json");
 /** The heartbeat, `{ ts, inFlight }`: see `heartbeat`. */
 const ALIVE = path.join(HUB, "hubd.alive");
 const LOCK = path.join(HUB, "hubd.lock");
@@ -149,7 +152,7 @@ const REPO_SCOPED = new Set(["issue", "pr", "label", "run", "workflow", "release
  * @returns {{
  *   repo: string, owner: string, project: number, projectId: string, expectedChecks: string[],
  *   columns: string[], acting: Record<string, string[] | undefined>,
- *   board: import("./hub-board.mjs").BoardIds | null,
+ *   board: import("./hub-board.mjs").BoardIds | null, maxAgents: number | null,
  * }}
  */
 function company() {
@@ -172,6 +175,8 @@ function company() {
     expectedChecks: Array.isArray(cfg.expectedChecks) ? cfg.expectedChecks.map(String) : [],
     acting: /** @type {Record<string, string[] | undefined>} */ (obj(cfg.acting)),
     columns: Array.isArray(cfg.columns) ? cfg.columns.map(String) : [],
+    // Required for hiring; `staff` refuses every request without it.
+    maxAgents: typeof cfg.maxAgents === "number" ? cfg.maxAgents : null,
   };
 }
 
@@ -1691,6 +1696,68 @@ async function reboot(role, argv, cfg) {
 }
 
 /**
+ * `company hire` and `company fire` (#380). hubd checks the request and
+ * records it in `.bots/staff.json`; nothing starts or stops until the
+ * supervisor reconciles that file (#383). An accepted change is told to
+ * everyone through the system outbox, as a reboot is.
+ *
+ * @param {string} role
+ * @param {string[]} argv `["hire", role, reason]` or `["fire", employee, reason]`
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Record<string, unknown>}
+ */
+function staff(role, argv, cfg) {
+  const kind = "staff";
+  /** @param {string} reason */
+  const refuse = (reason) => {
+    audit({ role, kind, argv, decision: "refused", reason });
+    return { allow: false, reason, code: 77 };
+  };
+  if (cfg.maxAgents === null) {
+    return refuse("company.json has no maxAgents; add it");
+  }
+  /** @type {import("./staff.mjs").Staff} */
+  let current;
+  try {
+    current = parseStaff(fs.readFileSync(STAFF, "utf8"));
+  } catch (error) {
+    return refuse(`staff.json: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  const [verb, who, reason] = argv;
+  if ((verb !== "hire" && verb !== "fire") || who === undefined || reason === undefined) {
+    return refuse('usage: company hire <role> "<reason>" | company fire <employee> "<reason>"');
+  }
+  /** @type {import("./staff.mjs").StaffRequest} */
+  const request =
+    verb === "hire"
+      ? { verb, role: who, reason, by: "manager" }
+      : { verb, employee: who, reason, by: "manager" };
+  const now = Date.now();
+  const allowed = staffAllowed(current, request, {
+    roster: ROLES,
+    maxAgents: cfg.maxAgents,
+    rebootPending: readReboot() !== null,
+    now,
+    history: current.recent,
+  });
+  if (!allowed.ok) {
+    return refuse(allowed.reason);
+  }
+  writeAtomic(
+    STAFF,
+    `${JSON.stringify(applyStaff(current, request, allowed.employee, now), null, 2)}\n`,
+  );
+  audit({ role, kind, argv, decision: "allowed" });
+  tellCompany(kind, `${verb === "hire" ? "Hired" : "Firing"} ${allowed.employee}: ${reason}`);
+  return {
+    allow: true,
+    code: 0,
+    stdout: `recorded ${allowed.employee} (takes effect when the supervisor reconciles, #383)\n`,
+    stderr: "",
+  };
+}
+
+/**
  * `hub alerts` (#184): one REST read of the code-scanning alerts, rendered.
  * A failure says what failed, and never reads as "no alerts".
  *
@@ -1744,6 +1811,10 @@ async function serve(request, verdict, acting) {
 
   if (kind === "reboot") {
     return reboot(role, argv, cfg);
+  }
+
+  if (kind === "staff") {
+    return staff(role, argv, cfg);
   }
 
   if (kind === "board") {
