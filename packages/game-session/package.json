@@ -11,8 +11,8 @@
       "default": "./dist/index.js"
     },
     "./testing": {
-      "types": "./dist/memory-transport.d.ts",
-      "default": "./dist/memory-transport.js"
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
     }
   },
   "main": "./dist/index.js",

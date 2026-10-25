@@ -94,6 +94,34 @@ export default defineConfig([
     languageOptions: { globals: globals.browser },
   },
 
+  // Trystero is one adapter behind `Transport` (#392): everything else
+  // sees the interface, so swapping or patching the library touches one
+  // file. First of the no-restricted-imports blocks, because a later block
+  // replaces the rule rather than adding to it, so each later one repeats
+  // this pattern.
+  {
+    files: ["**/*.ts", "**/*.mjs"],
+    // Its unit test fakes Trystero's room, so it needs the types too.
+    ignores: [
+      "apps/web/src/net/transport/trystero.ts",
+      "apps/web/src/net/transport/trystero.test.ts",
+    ],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["trystero", "trystero/*", "@trystero-p2p/*"],
+              message:
+                "Only apps/web/src/net/transport/trystero.ts (and its test) imports Trystero.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // The browser imports these through `@vibewars/game-maps/schema` and
   // `/geometry` (#8), so they must stay free of Node built-ins; `loader.ts`,
   // which reads `maps/` from disk, is behind `"."` only.
@@ -107,6 +135,10 @@ export default defineConfig([
             {
               group: ["node:*", ...builtinModules],
               message: "schema.ts and geometry.ts are imported by the browser; keep Node out.",
+            },
+            {
+              group: ["trystero", "trystero/*", "@trystero-p2p/*"],
+              message: "Only apps/web/src/net/transport/trystero.ts imports Trystero.",
             },
           ],
         },
@@ -128,7 +160,7 @@ export default defineConfig([
               message: "game-session runs in the browser too; keep Node out.",
             },
             {
-              group: ["trystero", "trystero/*"],
+              group: ["trystero", "trystero/*", "@trystero-p2p/*"],
               message: "game-session is handed a Transport; the Trystero one lives in apps/web.",
             },
           ],

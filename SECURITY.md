@@ -437,12 +437,13 @@ server, now enforced by the host:
 - `hello.build` is capped in values and depth by `parsePeerHello`, then
   goes through the same `resolveJoinLoadout` and `validatePlayerBuild`
   join check as the server: an illegal build gets the house loadout.
+- The Trystero transport (#392) passes `maxReceiveBytes`
+  (`MAX_RECEIVE_BYTES` in `relays.ts`), so Trystero drops an oversized
+  message before decoding it, and a peer cannot make another allocate an
+  unbounded buffer.
 
 What a later step must add before P2P play can merge:
 
-- **In the Trystero transport (#392):** `maxReceiveBytes` caps a message
-  before it is decoded, so a peer cannot make another allocate an
-  unbounded buffer.
 - **In the web client (#403):** `MatchClient` drops every
   message that does not come from `hostId`, since any peer can send to any
   other directly. The app must take `hostId` from the lobby it joined,
