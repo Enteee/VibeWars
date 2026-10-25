@@ -39,6 +39,9 @@ const HEALTH_BAR_LOW = 0xff7b72;
 const CAST_BAR_FILL = 0xd7dee8;
 /** Marks the actor you control, inside its circle, in any team colour. */
 const SELF_RIM = 0xd7dee8;
+/** Edges every living body, darker than the grid and walls, so no body blends into what it stands on. */
+const BODY_EDGE = 0x0b0f14;
+const BODY_EDGE_WIDTH = 1.5;
 const DEAD_COLOUR = 0x4a5464;
 const INK = "#d7dee8";
 const DEAD_INK = "#4a5464";
@@ -137,6 +140,10 @@ export class ArenaScene extends Phaser.Scene {
 
     g.fillStyle(teamColour(actor.team), 1);
     g.fillCircle(x, y, actor.radius);
+    // Centred half its width in, so the edge stays inside the collision
+    // radius (#166) and only touches the self rim inside it.
+    g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+    g.strokeCircle(x, y, actor.radius - BODY_EDGE_WIDTH / 2);
 
     if (actor.team === "self") {
       g.lineStyle(2, SELF_RIM, 1);
