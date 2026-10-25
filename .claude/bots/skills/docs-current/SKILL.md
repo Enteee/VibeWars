@@ -11,13 +11,13 @@ Operator rule: a change is not done if the documentation now lies.
 
 Read the diff and ask what a reader of the docs would now get wrong. Check, at least:
 
-- `README.md` and `CONTRIBUTING.md` (commands, setup, workflow);
+- `README.md`, `CONTRIBUTING.md` (commands, setup, workflow) and `ARCHITECTURE.md` (package boundaries);
 - `docs/` and the ADRs the change touches (an ADR that the change contradicts needs a new ADR, not a silent edit);
 - `SECURITY.md` when intents, limits or trust boundaries move;
 - in-game text, help and skill descriptions the change makes untrue;
 - `CLAUDE.md` and the briefings when agent behaviour changes.
 
-If something is stale or now irrelevant, ask the author to fix it in the same PR. Do not merge until it is. A docs-only fix may be pushed by you.
+If something is stale or now irrelevant, ask the author to fix it in the same PR. Do not merge until it is. You cannot push to the author's branch: ask them, or open a follow-up docs PR from `bot/qa-tester/*`.
 
 Say in your merge note that you checked, and what you looked at.
 
