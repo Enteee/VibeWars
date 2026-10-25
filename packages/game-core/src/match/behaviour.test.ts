@@ -87,7 +87,6 @@ describe("cast-loop", () => {
   it("obeys canActivate: a dummy with no energy casts nothing", () => {
     const sim = new MatchSimulation({
       seed: "broke",
-      ruleset: { ...RULES, resources: { ...RULES.resources, energyRegenPerSecond: 0 } },
       participants: [spec("dummy", 1, vec2(0, 0), castLoop()), spec("p", 0, vec2(150, 0))],
     });
     const dummy = sim.get("dummy");

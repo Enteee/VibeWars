@@ -819,6 +819,7 @@ export class MatchRoom extends Room {
       ),
       maxHealth: resolved.maxHealth,
       maxEnergy: resolved.maxEnergy,
+      baseEnergyPips: loadout.baseEnergyPips,
     });
 
     const player = new PlayerState({

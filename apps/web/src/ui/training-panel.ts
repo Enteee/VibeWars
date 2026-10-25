@@ -3,7 +3,6 @@ import {
   getTrainingScenario,
   type StepResult,
   type Segment,
-  type Vec2,
   type TrainingScenario,
 } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps";
@@ -39,6 +38,7 @@ import {
   type RenderableWall,
 } from "../render/arena-snapshot.js";
 import { createArenaViewport, type ArenaViewport } from "../render/arena-viewport.js";
+import { attachFollowCamera, type FollowCamera } from "../render/follow-camera.js";
 import { showCombatFeedback } from "../render/combat-feedback.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import {
@@ -223,6 +223,8 @@ export function createTrainingPanel(): TrainingPanel {
   const keymap = loadKeymap();
   let keyLabel: KeyLabeller = codeLabel;
   let viewport: ArenaViewport | undefined;
+  /** The same follow camera as a match's (Q57). */
+  let camera: FollowCamera | undefined;
   let session: Session | undefined;
   let character: StoredCharacter | undefined;
   let signature: string | undefined;
@@ -485,7 +487,7 @@ export function createTrainingPanel(): TrainingPanel {
     teaches.textContent = scenario.teaches;
     const map = trainingMap(scenario);
     stage.style.setProperty("--training-aspect", `${String(map.width)} / ${String(map.height)}`);
-    viewport?.setWorldSize(map.width, map.height);
+    camera?.restart(map);
     paintSkills(connection.skillBar);
     paintOverlay(setup.arming.problem);
     restartMeter(scenario.label);
@@ -669,9 +671,8 @@ export function createTrainingPanel(): TrainingPanel {
 
   let offFrame: (() => void) | undefined;
   let offPointer: (() => void) | undefined;
-  let offPointerMove: (() => void) | undefined;
   // The names key on the stage shows every name, as its other keys work;
-  // the cursor shows one (#253). In world units, which a still cursor keeps.
+  // the cursor shows one (#253).
   const nameReveal = attachNameReveal(stage, keymap);
 
   void loadLayoutLabeller().then((label) => {
@@ -686,24 +687,21 @@ export function createTrainingPanel(): TrainingPanel {
       hint.textContent = armedHint(keymap, keyLabel);
     }
   });
-  let pointer: Vec2 | undefined;
   // A double right click on an enemy attacks it, as Space would (#298, #438).
   const doubleClick = createDoubleClick();
 
-  void createArenaViewport(stage, {
-    mode: "fit",
-    width: firstMap.width,
-    height: firstMap.height,
-  }).then((created) => {
+  void createArenaViewport(stage).then((created) => {
     if (disposed) {
       created.destroy();
       return;
     }
     viewport = created;
-    if (session !== undefined) {
-      const map = trainingMap(session.scenario);
-      created.setWorldSize(map.width, map.height);
-    }
+    const follow = attachFollowCamera(
+      created,
+      stage,
+      session === undefined ? firstMap : trainingMap(session.scenario),
+    );
+    camera = follow;
     // The one clock: Phaser's STEP. It stops when the game is
     // destroyed, so teardown cannot leave an orphan loop behind.
     offFrame = created.onFrame((deltaSeconds) => {
@@ -716,9 +714,11 @@ export function createTrainingPanel(): TrainingPanel {
       latestMatch = connection.getSnapshot();
       session.sounds.snapshot(latestMatch);
       session.music.snapshot(latestMatch);
+      const self = latestMatch.players.find((player) => player.sessionId === SELF_ID);
+      follow.frame(deltaSeconds, self === undefined ? undefined : { x: self.x, y: self.y });
       latestArena = withNames(
         toArenaSnapshot(latestMatch, session.walls),
-        pointer,
+        created.pointerWorld(),
         nameReveal.held(),
       );
       created.scene.setSnapshot(latestArena);
@@ -754,9 +754,6 @@ export function createTrainingPanel(): TrainingPanel {
       }
       session.connection.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
       created.scene.showWalkMarker(world);
-    });
-    offPointerMove = created.onPointerMove((world) => {
-      pointer = world;
     });
   });
 
@@ -794,7 +791,8 @@ export function createTrainingPanel(): TrainingPanel {
       // so a late event cannot touch a destroyed scene.
       offFrame?.();
       offPointer?.();
-      offPointerMove?.();
+      camera?.dispose();
+      camera = undefined;
       nameReveal.detach();
       detachMovement();
       stage.removeEventListener("keydown", onStageKeyDown);

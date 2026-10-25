@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  MAX_PIPS,
   STATUS_DEFINITIONS,
   StatusSet,
   aggregateModifiers,
+  clampPips,
   getStatusDefinition,
   type StatusId,
 } from "./status.js";
@@ -39,7 +41,7 @@ describe("status definitions", () => {
     for (const id of ALL_STATUS_IDS) {
       const def = getStatusDefinition(id);
       const hasEffect =
-        def.healthPerSecond !== 0 ||
+        def.healthPips !== 0 ||
         def.armorModifier !== 0 ||
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
@@ -53,8 +55,8 @@ describe("status definitions", () => {
   it("keeps each condition's mechanical identity distinct", () => {
     // Burning should drain faster than bleeding — if these ever converge,
     // the two conditions stop being meaningfully different choices.
-    expect(getStatusDefinition("burning").healthPerSecond).toBeLessThan(
-      getStatusDefinition("bleeding").healthPerSecond,
+    expect(getStatusDefinition("burning").healthPips).toBeLessThan(
+      getStatusDefinition("bleeding").healthPips,
     );
     expect(getStatusDefinition("crippled").moveSpeedMultiplier).toBeLessThan(1);
     expect(getStatusDefinition("blind").attackMissChance).toBeGreaterThan(0.5);
@@ -62,10 +64,22 @@ describe("status definitions", () => {
     expect(getStatusDefinition("dazed").castTimeMultiplier).toBeGreaterThan(1);
   });
 
+  it("counts health in GW1's pips", () => {
+    expect(
+      Object.fromEntries(
+        ALL_STATUS_IDS.filter((id) => getStatusDefinition(id).healthPips !== 0).map((id) => [
+          id,
+          getStatusDefinition(id).healthPips,
+        ]),
+      ),
+    ).toEqual({ bleeding: -3, burning: -7, poison: -4, "life-drain": -2, regeneration: 4 });
+    expect(ALL_STATUS_IDS.every((id) => getStatusDefinition(id).energyPips === 0)).toBe(true);
+  });
+
   it("makes enchantments beneficial and hexes/conditions detrimental", () => {
-    expect(getStatusDefinition("regeneration").healthPerSecond).toBeGreaterThan(0);
+    expect(getStatusDefinition("regeneration").healthPips).toBeGreaterThan(0);
     expect(getStatusDefinition("armor-boost").armorModifier).toBeGreaterThan(0);
-    expect(getStatusDefinition("life-drain").healthPerSecond).toBeLessThan(0);
+    expect(getStatusDefinition("life-drain").healthPips).toBeLessThan(0);
   });
 });
 
@@ -186,10 +200,22 @@ describe("StatusSet duration advance", () => {
   });
 });
 
+describe("clampPips", () => {
+  it("clamps a net pip count to 10 either way", () => {
+    expect(clampPips(0)).toBe(0);
+    expect(clampPips(7)).toBe(7);
+    expect(clampPips(-10)).toBe(-10);
+    expect(clampPips(10)).toBe(10);
+    expect(clampPips(-14)).toBe(-MAX_PIPS);
+    expect(clampPips(23)).toBe(MAX_PIPS);
+  });
+});
+
 describe("aggregateModifiers", () => {
   it("returns neutral modifiers for no statuses", () => {
     const mods = aggregateModifiers([]);
-    expect(mods.healthPerSecond).toBe(0);
+    expect(mods.healthPips).toBe(0);
+    expect(mods.energyPips).toBe(0);
     expect(mods.armorModifier).toBe(0);
     expect(mods.moveSpeedMultiplier).toBe(1);
     expect(mods.attackMissChance).toBe(0);
@@ -202,9 +228,8 @@ describe("aggregateModifiers", () => {
     set.apply("bleeding", 10, "a");
     set.apply("poison", 10, "a");
     const mods = aggregateModifiers(set.active);
-    expect(mods.healthPerSecond).toBe(
-      getStatusDefinition("bleeding").healthPerSecond +
-        getStatusDefinition("poison").healthPerSecond,
+    expect(mods.healthPips).toBe(
+      getStatusDefinition("bleeding").healthPips + getStatusDefinition("poison").healthPips,
     );
   });
 
@@ -214,7 +239,7 @@ describe("aggregateModifiers", () => {
     set.apply("regeneration", 10, "a");
     // -3 + 4 = +1: the heal wins, which is exactly the counterplay a
     // regeneration skill is supposed to provide.
-    expect(aggregateModifiers(set.active).healthPerSecond).toBeGreaterThan(0);
+    expect(aggregateModifiers(set.active).healthPips).toBeGreaterThan(0);
   });
 
   it("sums armor modifiers, including a negative one", () => {

@@ -38,6 +38,8 @@ import {
   projectileSpriteUrl,
   shotFadeAlpha,
 } from "./projectiles.js";
+import { NO_COVER, type CameraView, type Cover } from "./camera-rig.js";
+import { edgeMarkers, type EdgeBody, type EdgeMarker } from "./edge-markers.js";
 import { STATUS_ICON, STATUS_ICON_SIZE, statusRowLayout } from "./status-icons.js";
 import {
   decayWalkMarker,
@@ -99,6 +101,12 @@ const DEAD_INK = "#4a5464";
 const INK_TINT = 0xd7dee8;
 const DEAD_INK_TINT = 0x4a5464;
 
+/** An off-screen marker's length, tip to base, and width, screen px (#440). */
+const EDGE_MARKER_LENGTH = 12;
+const EDGE_MARKER_WIDTH = 10;
+/** Over every world object, names and numbers included. */
+const EDGE_MARKER_DEPTH = 10;
+
 const HEALTH_BAR_WIDTH = 34;
 const HEALTH_BAR_HEIGHT = 4;
 
@@ -106,7 +114,14 @@ export class ArenaScene extends Phaser.Scene {
   public static readonly KEY = "arena";
 
   private graphics: Phaser.GameObjects.Graphics | undefined;
+  /** The off-screen markers, drawn in screen px over everything (#440). */
+  private markerGraphics: Phaser.GameObjects.Graphics | undefined;
   private snapshot: ArenaSnapshot = EMPTY_SNAPSHOT;
+  /** What the camera shows; `undefined` until the first `setCamera`. */
+  private view: CameraView | undefined;
+  /** What the HUD covers, so no edge marker hides under it. */
+  private cover: Cover = NO_COVER;
+  private arena = { width: 0, height: 0 };
   private floatingTexts: FloatingText[] = [];
   private areaFlashes: AreaFlash[] = [];
   private swingFlashes: SwingFlash[] = [];
@@ -141,6 +156,22 @@ export class ArenaScene extends Phaser.Scene {
 
   public constructor() {
     super(ArenaScene.KEY);
+  }
+
+  /**
+   * Point the camera: `view` is at the centre of the canvas, `zoom` CSS px
+   * per world unit; `cover` is what the HUD covers.
+   */
+  public setCamera(view: CameraView, cover: Cover): void {
+    this.cover = cover;
+    this.view = view;
+    this.cameras.main.setZoom(view.zoom);
+    this.cameras.main.centerOn(view.x, view.y);
+  }
+
+  /** The arena's bounds, which the grid covers and the edge line traces. */
+  public setArenaBounds(width: number, height: number): void {
+    this.arena = { width, height };
   }
 
   /** Replace the snapshot to draw on the next frame. */
@@ -197,6 +228,7 @@ export class ArenaScene extends Phaser.Scene {
 
   public create(): void {
     this.graphics = this.add.graphics();
+    this.markerGraphics = this.add.graphics().setDepth(EDGE_MARKER_DEPTH);
   }
 
   public override update(time: number, deltaMs: number): void {
@@ -234,6 +266,72 @@ export class ArenaScene extends Phaser.Scene {
     this.updateStatusIcons();
     this.updateNameLabels();
     this.updateFloatingTexts(deltaMs / 1000);
+    this.updateEdgeMarkers();
+  }
+
+  /**
+   * A triangle on the screen edge toward every living body out of view:
+   * `foe` or `friend`, a `target` outline round your target's, `ink` for
+   * your own, which the follow camera should never need. Drawn in world
+   * space through the inverse of the camera, so it sits still on screen at
+   * any zoom.
+   */
+  private updateEdgeMarkers(): void {
+    const g = this.markerGraphics;
+    if (g === undefined) {
+      return;
+    }
+    g.clear();
+    const view = this.view;
+    if (view === undefined) {
+      return;
+    }
+    const screen = { width: this.scale.width, height: this.scale.height };
+    const bodies: EdgeBody[] = this.snapshot.actors.map((actor) => ({
+      id: actor.id,
+      kind: actor.team === "self" ? "self" : actor.team === "ally" ? "friend" : "foe",
+      position: actor.position,
+      dead: actor.dead,
+      targeted: actor.id === this.snapshot.targetId,
+    }));
+    for (const marker of edgeMarkers(bodies, view, screen, this.cover)) {
+      this.drawEdgeMarker(g, marker, view, screen);
+    }
+  }
+
+  private drawEdgeMarker(
+    g: Phaser.GameObjects.Graphics,
+    marker: EdgeMarker,
+    view: CameraView,
+    screen: { readonly width: number; readonly height: number },
+  ): void {
+    /** Screen px from the marker, along and across its heading, to a world point. */
+    const at = (along: number, across: number): Phaser.Math.Vector2 => {
+      const cos = Math.cos(marker.angle);
+      const sin = Math.sin(marker.angle);
+      const sx = marker.x + along * cos - across * sin;
+      const sy = marker.y + along * sin + across * cos;
+      return new Phaser.Math.Vector2(
+        view.x + (sx - screen.width / 2) / view.zoom,
+        view.y + (sy - screen.height / 2) / view.zoom,
+      );
+    };
+    // The tip on the marker point, the base back toward the centre.
+    const points = [
+      at(0, 0),
+      at(-EDGE_MARKER_LENGTH, EDGE_MARKER_WIDTH / 2),
+      at(-EDGE_MARKER_LENGTH, -EDGE_MARKER_WIDTH / 2),
+    ];
+    const fill =
+      marker.kind === "self" ? SELF_RIM : teamColour(marker.kind === "friend" ? "ally" : "enemy");
+    g.fillStyle(fill, 1);
+    g.fillPoints(points, true);
+    g.lineStyle(
+      (marker.targeted ? 2 : BODY_EDGE_WIDTH) / view.zoom,
+      marker.targeted ? TARGET_RING : BODY_EDGE,
+      1,
+    );
+    g.strokePoints(points, true);
   }
 
   /**
@@ -681,8 +779,9 @@ export class ArenaScene extends Phaser.Scene {
     g.strokePoints(points, true);
   }
 
+  /** The grid over the arena's bounds, not the screen, and its edge in `wall-stroke`; outside is `bg`. */
   private drawGrid(g: Phaser.GameObjects.Graphics): void {
-    const { width, height } = this.scale;
+    const { width, height } = this.arena;
     const step = 64;
     g.lineStyle(1, GRID, 1);
     for (let x = 0; x <= width; x += step) {
@@ -691,6 +790,8 @@ export class ArenaScene extends Phaser.Scene {
     for (let y = 0; y <= height; y += step) {
       g.lineBetween(0, y, width, y);
     }
+    g.lineStyle(1, WALL_STROKE, 1);
+    g.strokeRect(0, 0, width, height);
   }
 }
 
