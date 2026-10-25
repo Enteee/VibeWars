@@ -66,6 +66,13 @@ is the required status check.
 - No job in this workflow `needs:` another job before the required check,
   because a required check skipped for a failed dependency counts as
   passing.
+- The generated `.pre-commit-config.yaml` is not tracked. It is a
+  machine-specific store path that devenv rewrites on every shell. While it
+  was tracked, a hooks change left the operator's checkout permanently
+  dirty, and every company reboot refused to fast-forward (#283). Bot
+  worktrees get a link to the host's copy from `ensureWorktree`
+  (`scripts/bots/worktree.mjs`), because the shared pre-commit hook reads it
+  from whichever worktree commits.
 
 ## Alternatives Considered
 

@@ -19,7 +19,11 @@
  *     `--hard`: the agent's uncommitted files are the point of keeping the
  *     directory, and they come back as unstaged changes;
  *   - a worktree whose `.git` file and admin dir do not point at each other:
- *     rewrite both links, which is what `git worktree repair` does.
+ *     rewrite both links, which is what `git worktree repair` does;
+ *   - every worktree: link `.pre-commit-config.yaml` to the host's. devenv
+ *     generates it on the host, it is not tracked (#283), and the shared
+ *     pre-commit hook reads it from whichever worktree commits. Jails cannot
+ *     run devenv, so without the link every agent commit fails in the hook.
  *
  * Everything under `.bots/wt/<role>` and `.git/worktrees/<role>` is the
  * agent's to write, so nothing is read from there: the admin dir is derived
@@ -96,6 +100,49 @@ function readPlain(file) {
   return stat?.isFile() === true ? fs.readFileSync(file, "utf8") : null;
 }
 
+/** Where a real hook config lives: devenv's git-hooks writes it to the store. */
+const NIX_STORE = "/nix/store/";
+
+/**
+ * Links `<worktree>/.pre-commit-config.yaml` to the store path the host's
+ * own `<repo>/.pre-commit-config.yaml` resolves to, which `devenv shell` on
+ * the host has just regenerated. The worktree's entry is the agent's, so it
+ * is never followed: whatever is there is removed and the link written
+ * fresh. Never throws: a jail without hooks still starts.
+ *
+ * @param {string} repo
+ * @param {string} worktree
+ * @param {string} store
+ * @returns {string | null} what was done, or null if the link was already right
+ */
+function linkHookConfig(repo, worktree, store) {
+  const name = ".pre-commit-config.yaml";
+  const link = path.join(worktree, name);
+  /** @type {string} */
+  let target;
+  try {
+    target = fs.realpathSync(path.join(repo, name));
+  } catch {
+    target = "";
+  }
+  if (!target.startsWith(store)) {
+    return `no ${path.join(repo, name)} in ${store} (has devenv shell run?); git hooks will not run in ${worktree}`;
+  }
+  try {
+    const stat = fs.lstatSync(link, { throwIfNoEntry: false });
+    if (stat?.isSymbolicLink() === true && fs.readlinkSync(link) === target) {
+      return null;
+    }
+    if (stat !== undefined) {
+      fs.rmSync(link, { recursive: true, force: true });
+    }
+    fs.symlinkSync(target, link);
+    return `linked ${link}`;
+  } catch (error) {
+    return `could not link ${link}: ${error instanceof Error ? error.message : String(error)}`;
+  }
+}
+
 /**
  * The commit a new worktree starts from: GitHub's `main`, by the SHA the
  * fetch itself reports, never by reading back a ref every jail can write.
@@ -142,8 +189,10 @@ function mainCommit(repo, remote, done) {
  *
  * @param {string} repo the operator's checkout
  * @param {string} role
- * @param {{ remote?: string }} [options] where to fetch `main` from; omitted,
- *   nothing is fetched and the existing `origin/main` is used
+ * @param {{ remote?: string, store?: string }} [options] `remote`: where to
+ *   fetch `main` from; omitted, nothing is fetched and the existing
+ *   `origin/main` is used. `store`: the prefix a hook config must resolve
+ *   into, `/nix/store/` unless a test says otherwise
  * @returns {string[]} what was done, one line each; empty if nothing was needed
  */
 export function ensureWorktree(repo, role, options = {}) {
@@ -156,6 +205,14 @@ export function ensureWorktree(repo, role, options = {}) {
   const pins = filterPins(run(repo, ["config", "--get-regexp", FILTER_KEYS]).stdout);
   /** @type {string[]} */
   const done = [];
+  /**
+   * @param {string[]} lines
+   * @returns {string[]}
+   */
+  const withHookConfig = (lines) => {
+    const linked = linkHookConfig(repo, worktree, options.store ?? NIX_STORE);
+    return linked === null ? lines : [...lines, linked];
+  };
 
   if (!fs.existsSync(worktree)) {
     const base = mainCommit(repo, options.remote, done);
@@ -163,7 +220,8 @@ export function ensureWorktree(repo, role, options = {}) {
     // worktree, which `add` refuses without -f. -f reuses the name.
     const force = fs.existsSync(admin) ? ["-f"] : [];
     git(repo, [...pins, "worktree", "add", "-q", ...force, "--detach", worktree, base]);
-    return [...done, `created ${worktree} at ${base.slice(0, 7)}`];
+    done.push(`created ${worktree} at ${base.slice(0, 7)}`);
+    return withHookConfig(done);
   }
 
   const adminStat = fs.lstatSync(admin, { throwIfNoEntry: false });
@@ -200,7 +258,7 @@ export function ensureWorktree(repo, role, options = {}) {
     writeFresh(path.join(admin, "gitdir"), `${dotGit}\n`);
     done.push(`re-linked ${admin} to ${dotGit}`);
   }
-  return done;
+  return withHookConfig(done);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
