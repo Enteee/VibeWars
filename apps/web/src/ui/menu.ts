@@ -115,7 +115,7 @@ export function renderMenu(
   root.replaceChildren();
   const panel = h("div", "screen screen-menu");
 
-  panel.appendChild(h("h1", "screen-title", "vibewars"));
+  panel.appendChild(h("h1", "screen-title", "VibeWars"));
   const subtitle = h(
     "p",
     "screen-subtitle",

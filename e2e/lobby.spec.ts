@@ -15,7 +15,8 @@ import { key } from "./keys.js";
 
 async function openMenu(page: Page, playerName: string): Promise<void> {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "vibewars" })).toBeVisible();
+  await expect(page).toHaveTitle("VibeWars");
+  await expect(page.getByRole("heading", { name: "VibeWars" })).toBeVisible();
   await page.locator(".screen-menu input.field-input").first().fill(playerName);
 }
 
@@ -104,7 +105,7 @@ test("leaving a lobby puts the status bar back to ready", async ({ page }) => {
   await expect(page.locator("#status")).toHaveText(`lobby ${code}`);
 
   await page.getByRole("button", { name: "leave" }).click();
-  await expect(page.getByRole("heading", { name: "vibewars" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "VibeWars" })).toBeVisible();
   await expect(page.locator("#status")).toHaveText("ready");
 });
 
