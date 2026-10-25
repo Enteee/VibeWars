@@ -155,6 +155,15 @@ describe("the track checker rejects short and repetitive tracks (#427)", () => {
     expect(problems).toContain("lfo-only level 0: repeats after 13 s (4 cycles), want ≥ 180 s");
   });
 
+  it("fails a track whose orbit mixes room sizes, unset among them", async () => {
+    const { problems } = await check(fixture("room-mix"), options);
+    expect(problems).toEqual(
+      [0, 1, 2].map(
+        (level) => `room-mix level ${String(level)}: orbit 2 mixes roomsize unset, 7, 6`,
+      ),
+    );
+  });
+
   it("fails a track denser than the shipped ones", async () => {
     // 128 hits a cycle at 18 cycles a minute: 38.4 a second.
     const source = 'setcpm(72 / 4)\ns("white*128").gain(.1)';
@@ -220,6 +229,13 @@ describe("the form finder", () => {
         4,
       ),
     ).toBe(1);
+  });
+
+  it("gives a form's partial tail no phrase of its own", () => {
+    // A 6-cycle form in 4-cycle phrases: one whole phrase, the tail left out.
+    const tail = cycles((c) => (c % 6 < 4 ? "a" : "b"));
+    expect(form(tail, MAX)).toBe(6);
+    expect(phrases(tail, 6, 4)).toBe(1);
   });
 });
 

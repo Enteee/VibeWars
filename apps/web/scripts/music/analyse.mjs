@@ -111,6 +111,7 @@ const BOOKKEEPING = new Set([
  *   null when it sets none
  * @property {number} distinctPhrases different `phraseCycles` blocks in the form
  * @property {number | null} eventsPerSecond onsets per second over the form
+ * @property {RoomMix[]} roomMixes orbits whose events disagree on a room control
  */
 
 /** @type {Promise<Engine> | null} */
@@ -182,12 +183,44 @@ const pitchClass = (note) => {
  * which pitch. Continuous controls (`gain`, `lpf`, `pan`, ...) are left out,
  * so a slow `sine` on a filter cannot pass for variation.
  *
- * @param {number} offset onset time from the start of its cycle
+ * @param {string} offset onset time from the start of its cycle, an exact fraction
  * @param {Record<string, unknown>} value
  * @returns {string}
  */
 const eventKey = (offset, value) =>
-  JSON.stringify([offset.toFixed(6), value.s, value.note ?? value.n, value.bank]);
+  JSON.stringify([offset, value.s, value.note ?? value.n, value.bank]);
+
+/**
+ * The reverb controls one orbit must agree on (#420): superdough rebuilds the
+ * impulse response whenever they change, which is most of a phone's frame.
+ */
+export const ROOM_CONTROLS = ["roomsize", "roomfade", "roomlp", "roomdim"];
+
+/** @typedef {{ orbit: number, control: string, values: string[] }} RoomMix */
+
+/**
+ * Every orbit and room control with more than one value among `events`, the
+ * values in the order they first sound. Unset is a value of its own, and an
+ * event with no orbit is on orbit 1.
+ *
+ * @param {readonly Record<string, unknown>[]} events
+ * @returns {RoomMix[]}
+ */
+export function roomMixesOf(events) {
+  /** @type {Map<string, { orbit: number, control: string, values: string[] }>} */
+  const seen = new Map();
+  for (const value of events) {
+    const orbit = typeof value.orbit === "number" ? value.orbit : 1;
+    for (const control of ROOM_CONTROLS) {
+      const id = `${String(orbit)} ${control}`;
+      const entry = seen.get(id) ?? { orbit, control, values: [] };
+      seen.set(id, entry);
+      const v = value[control] === undefined ? "unset" : JSON.stringify(value[control]);
+      if (!entry.values.includes(v)) entry.values.push(v);
+    }
+  }
+  return [...seen.values()].filter((m) => m.values.length > 1).sort((a, b) => a.orbit - b.orbit);
+}
 
 /**
  * The smallest `p` in `1 … max` that every cycle queried repeats after;
@@ -212,7 +245,9 @@ export function formOf(cycles, max) {
 
 /**
  * How many different blocks of `phraseCycles` the first `form` cycles hold,
- * a block compared with its times taken from its own start.
+ * a block compared with its times taken from its own start. Whole blocks
+ * only, so a form that is not a multiple of the phrase gets no extra phrase
+ * from its tail; a form shorter than one phrase is one phrase.
  *
  * @param {readonly (readonly string[])[]} cycles as for `formOf`
  * @param {number} form
@@ -220,10 +255,11 @@ export function formOf(cycles, max) {
  * @returns {number}
  */
 export function distinctPhrasesOf(cycles, form, phraseCycles) {
+  if (form < phraseCycles) return 1;
   const blocks = new Set();
-  for (let start = 0; start < form; start += phraseCycles) {
+  for (let start = 0; start + phraseCycles <= form; start += phraseCycles) {
     const block = [];
-    for (let c = start; c < Math.min(start + phraseCycles, form); c++) {
+    for (let c = start; c < start + phraseCycles; c++) {
       block.push((cycles[c] ?? []).join("\n"));
     }
     blocks.add(block.join("\n--\n"));
@@ -324,11 +360,15 @@ export async function analyseTrack(source, { intensity, cycles, key, colour = []
     // The form needs far more cycles than the rules above, so it has its own query.
     /** @type {string[][]} */
     const keysByCycle = Array.from({ length: 2 * MAX_FORM_CYCLES }, () => []);
+    /** @type {Record<string, unknown>[]} */
+    const formValues = [];
     for (const h of pattern.queryArc(0, 2 * MAX_FORM_CYCLES)) {
       if (!h.hasOnset()) continue;
-      const begin = h.whole.begin.valueOf();
-      const cycle = Math.floor(begin);
-      keysByCycle[cycle]?.push(eventKey(begin - cycle, h.value));
+      // Exact fractions: a float offset could round two equal cycles apart.
+      const cycle = h.whole.begin.floor();
+      const offset = h.whole.begin.sub(cycle).toFraction();
+      keysByCycle[cycle.valueOf()]?.push(eventKey(offset, h.value));
+      formValues.push(h.value);
     }
     for (const keys of keysByCycle) keys.sort();
     const formCycles = formOf(keysByCycle, MAX_FORM_CYCLES);
@@ -349,6 +389,7 @@ export async function analyseTrack(source, { intensity, cycles, key, colour = []
       formSeconds,
       distinctPhrases: distinctPhrasesOf(keysByCycle, formCycles, phraseCycles),
       eventsPerSecond: formSeconds === null ? null : formEvents / formSeconds,
+      roomMixes: roomMixesOf(formValues),
     };
   } finally {
     restore();
@@ -374,8 +415,8 @@ export function allowedSounds(sampleMap) {
  * every stack member sounds at the top level, each level adds events, only
  * allowed sounds and known controls, no clipping. And of #427: at every level
  * a form of at least `MIN_FORM_SECONDS` holding `MIN_DISTINCT_PHRASES`, and at
- * the top no more than `MAX_EVENTS_PER_SECOND`. Each problem names the track,
- * the level and the offending value.
+ * the top no more than `MAX_EVENTS_PER_SECOND`; and of #420: one room per
+ * orbit. Each problem names the track, the level and the offending value.
  *
  * @param {{ id: string, source: string, bpm: number, key: string, colour: readonly string[], layers: number, phraseCycles: number }} track
  * @param {{ cycles: number, allowedSounds: ReadonlySet<string> }} options
@@ -438,6 +479,9 @@ export async function checkTrack(track, { cycles, allowedSounds: allowed }) {
       problems.push(
         `${at}: repeats after ${a.formSeconds.toFixed(0)} s (${String(a.formCycles)} cycles), want ≥ ${String(MIN_FORM_SECONDS)} s`,
       );
+    }
+    for (const m of a.roomMixes) {
+      problems.push(`${at}: orbit ${String(m.orbit)} mixes ${m.control} ${m.values.join(", ")}`);
     }
     if (a.distinctPhrases < MIN_DISTINCT_PHRASES) {
       problems.push(
