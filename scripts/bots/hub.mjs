@@ -38,6 +38,7 @@ import { parseAlive } from "./hub-health.mjs";
 import { inlineBodyFile } from "./hub-body.mjs";
 import { splitFilter } from "./hub-filter.mjs";
 import { ROLES, authorize } from "./hub-policy.mjs";
+import { visible } from "./protocol.mjs";
 
 // The employee (`qa-tester@2`) is who pushes; the role is what it may do (#62).
 const EMPLOYEE = process.env.VIBEWARS_BOT_EMPLOYEE;
@@ -244,7 +245,9 @@ const BUSY_AFTER_MS = 10_000;
 if (beat?.current != null && Date.now() - beat.current.startedAt > BUSY_AFTER_MS) {
   const seconds = String(Math.round((Date.now() - beat.current.startedAt) / 1000));
   console.error(
-    `hub: hubd is busy with ${beat.current.employee}'s \`${beat.current.command}\` for ${seconds} s; queued`,
+    visible(
+      `hub: hubd is busy with ${beat.current.employee}'s \`${beat.current.command}\` for ${seconds} s; queued`,
+    ),
   );
 }
 

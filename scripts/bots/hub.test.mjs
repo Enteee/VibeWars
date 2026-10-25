@@ -170,6 +170,21 @@ describe("hub and a busy daemon (#496)", () => {
     expect(result.stderr).not.toContain("not answering");
   });
 
+  it("shows nothing but visible characters of the heartbeat", async () => {
+    const current = {
+      employee: "developer-2",
+      command: "gh \u001b[2J\u202eevil",
+      startedAt: Date.now() - 15_000,
+    };
+    const spool = stubHubd({ code: 0, stdout: "ok" }, [], { inflight: 1, current });
+
+    const result = await hubStderr(spool, ["issue", "list"]);
+
+    expect(result.stderr).not.toContain("\u001b");
+    expect(result.stderr).not.toContain("\u202e");
+    expect(result.stderr).toContain("busy with developer-2");
+  });
+
   it("stays quiet for a request under 10 s, and says not answering for a stale heartbeat", async () => {
     const recent = {
       employee: "developer-2",
