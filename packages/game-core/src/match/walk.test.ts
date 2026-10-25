@@ -156,6 +156,7 @@ describe("walkTo (#310)", () => {
     const match = arena(hero("a", vec2(300, 150)));
     // Inside the top wall, 4 units from its left side.
     match.walkTo("a", vec2(444, 100));
+    match.step(DT);
     const goal = get(match, "a").walkGoal;
     expect(goal).toEqual(vec2(440 - RADIUS - 1, 100));
     stepFor(match, 3);
@@ -166,6 +167,7 @@ describe("walkTo (#310)", () => {
   it("a click off the map walks to its edge", () => {
     const match = arena(hero("a", vec2(300, 150)));
     match.walkTo("a", vec2(-50, 150));
+    match.step(DT);
     expect(get(match, "a").walkGoal).toEqual(vec2(RADIUS, 150));
   });
 
@@ -180,9 +182,21 @@ describe("walkTo (#310)", () => {
       participants: [hero("a", vec2(150, 150))],
     });
     match.walkTo("a", vec2(500, 150));
+    match.step(DT);
     expect(get(match, "a").walkGoal).toBeUndefined();
     stepFor(match, 1);
     expect(get(match, "a").position).toEqual(vec2(150, 150));
+  });
+
+  it("settles only the last click before a step, however many came", () => {
+    const match = arena(hero("a", vec2(300, 150)));
+    for (let i = 0; i < 300; i += 1) {
+      match.walkTo("a", vec2(444, 100 + i));
+    }
+    match.walkTo("a", vec2(-50, 150));
+    expect(get(match, "a").walkGoal).toEqual(vec2(-50, 150));
+    match.step(DT);
+    expect(get(match, "a").walkGoal).toEqual(vec2(RADIUS, 150));
   });
 
   it("a direct move ends it, and so does stop", () => {

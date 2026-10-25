@@ -113,7 +113,11 @@ export interface Participant {
    */
   facing: number;
   inputDirection: Vec2;
-  /** Where a click-to-walk is taking it, round walls and bodies (#310); `undefined` when not walking. */
+  /**
+   * Where a click-to-walk is taking it, round walls and bodies (#310);
+   * `undefined` when not walking. Until the next step settles it, the
+   * point as clicked.
+   */
   walkGoal: Vec2 | undefined;
   targetId: string | undefined;
   respawnInSeconds: number;
@@ -168,6 +172,8 @@ interface ParticipantRecord extends Participant {
   walkStalledSeconds: number;
   /** The shortest way left to the goal the walk has reached so far: what counts as progress. */
   walkLeast: number;
+  /** Whether `walkGoal` is settled: pulled onto a spot a body fits on, with a way there. */
+  walkSettled: boolean;
 }
 
 /**
@@ -353,6 +359,7 @@ export class MatchSimulation {
       history: new PositionHistory(this.#historyLength()),
       walkStalledSeconds: 0,
       walkLeast: Number.POSITIVE_INFINITY,
+      walkSettled: false,
     };
     this.#participants.set(spec.id, record);
     return record;
@@ -434,6 +441,10 @@ export class MatchSimulation {
    * A point a body cannot stand on, inside a wall or off the map, walks
    * to the nearest one that it can. A goal with no way there at all is
    * no walk; the hero only stops.
+   *
+   * Only the point is kept here. The next step settles it, once however
+   * many clicks arrived since: settling costs a path search, and a client
+   * may send hundreds of clicks a second.
    */
   public walkTo(id: string, point: Vec2): void {
     const record = this.#participants.get(id);
@@ -442,8 +453,8 @@ export class MatchSimulation {
     }
     record.inputDirection = ZERO;
     this.#moveInterrupts(record);
-    const goal = nearestStandable(this.#graph, point);
-    record.walkGoal = this.#paths.find(record.position, goal) === undefined ? undefined : goal;
+    record.walkGoal = point;
+    record.walkSettled = false;
     record.walkStalledSeconds = 0;
     record.walkLeast = Number.POSITIVE_INFINITY;
   }
@@ -897,6 +908,11 @@ export class MatchSimulation {
    * is not held: there is nothing for it to resume.
    */
   #advanceWalk(record: ParticipantRecord, dt: number): void {
+    if (record.walkGoal !== undefined && !record.walkSettled) {
+      const spot = nearestStandable(this.#graph, record.walkGoal);
+      record.walkGoal = this.#paths.find(record.position, spot) === undefined ? undefined : spot;
+      record.walkSettled = true;
+    }
     const goal = record.walkGoal;
     if (goal === undefined) {
       return;
