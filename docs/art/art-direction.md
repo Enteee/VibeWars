@@ -232,6 +232,16 @@ Recommendation: **A**, and if both professions should show, put the pair in
 the target panel, where there is room and the profession colours are
 allowed.
 
+### Name labels (study, not decided)
+
+Every body carries its name, 11 px and centred, so two bodies a name's
+width apart already collide, and a team fight smears names over the bars.
+Issue #253 proposes names only on your target and the body under the cursor,
+with Alt showing them all. `node scripts/assets/name-label-study.mjs` draws
+the same 8v8 clump both ways:
+
+![Name label study](name-label-study.svg)
+
 ### Skill type badges
 
 The corner badge on a skill slot. Ink on the slot, except the two that leave a
