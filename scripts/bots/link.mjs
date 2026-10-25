@@ -335,9 +335,6 @@ function refused(role, site, error) {
   );
 }
 
-/** Entries already taken that a jail's permissions kept us from removing. */
-const stuck = new Set();
-
 /**
  * The ready entries of an outbox, each read whole and removed: `take` gets
  * each one's name and parsed contents, and says whether it was handled.
@@ -362,10 +359,7 @@ function takeOutbox(dir, role, take) {
   }
   let moved = false;
   try {
-    for (const name of outbox
-      .list()
-      .filter((n) => isReadyOutboxEntry(n) && !stuck.has(`${dir}/${n}`))
-      .sort()) {
+    for (const name of outbox.list().filter(isReadyOutboxEntry).sort()) {
       /** @type {string} */
       let text;
       try {
@@ -387,16 +381,16 @@ function takeOutbox(dir, role, take) {
         // A half-written file from a `tg send` still in flight; next pass.
         continue;
       }
-      take(name, payload);
-      moved = true;
+      // Removed before it is delivered: an outbox the jail made unwritable
+      // would otherwise deliver the same message on every pass.
       try {
         outbox.remove(name);
       } catch (removal) {
-        // An outbox the jail made unwritable. The entry was taken, so it is
-        // remembered rather than delivered again on every pass.
-        stuck.add(`${dir}/${name}`);
         refused(role, `outbox/${name} (remove)`, removal);
+        continue;
       }
+      take(name, payload);
+      moved = true;
     }
   } finally {
     outbox.close();

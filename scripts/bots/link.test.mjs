@@ -394,18 +394,19 @@ describe("the company sidecar", () => {
     fs.chmodSync(path.join(outbox, "evil.json"), 0o700);
   }, 20_000);
 
-  it("delivers once from an outbox it cannot remove from", async () => {
+  it("delivers nothing from an outbox it cannot remove from, and keeps serving the others", async () => {
     const telegram = await fakeTelegram();
     const co = company(telegram.url);
     co.present("architect");
-    co.send("manager", "architect", "only once");
-    const outbox = path.join(co.bus, "manager", "outbox");
-    fs.chmodSync(outbox, 0o500);
+    co.present("manager");
+    co.send("manager", "architect", "stuck");
+    fs.chmodSync(path.join(co.bus, "manager", "outbox"), 0o500);
     co.start();
-    await until(() => co.inbox("architect").length === 1, "the inbox");
+    co.send("lead-dev", "architect", "next");
+    await until(() => co.inbox("architect").length >= 1, "the inbox");
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    fs.chmodSync(outbox, 0o700);
-    expect(co.inbox("architect")).toHaveLength(1);
+    fs.chmodSync(path.join(co.bus, "manager", "outbox"), 0o700);
+    expect(co.inbox("architect").map((m) => m.text)).toEqual(["next"]);
   }, 20_000);
 
   it("resends a message Telegram refuses for its entities as plain text", async () => {
