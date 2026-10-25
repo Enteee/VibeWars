@@ -1,5 +1,20 @@
 # vibewars
 
+[![Latest release](https://img.shields.io/github/v/release/Enteee/VibeWars?style=flat&label=release)](https://github.com/Enteee/VibeWars/releases)
+[![CI](https://img.shields.io/github/actions/workflow/status/Enteee/VibeWars/ci.yml?branch=main&style=flat&label=CI)](https://github.com/Enteee/VibeWars/actions/workflows/ci.yml?query=branch%3Amain)
+[![Pages](https://img.shields.io/github/actions/workflow/status/Enteee/VibeWars/pages.yml?branch=main&style=flat&label=pages)](https://github.com/Enteee/VibeWars/actions/workflows/pages.yml)
+[![License: AGPL v3](https://img.shields.io/github/license/Enteee/VibeWars?style=flat&label=license)](LICENSE)
+
+Team arena PvP in the browser, after Guild Wars 1: two professions,
+eight skills on the bar, and real-time fights on a 20 Hz server.
+
+**[▶ Try it now](https://enteee.github.io/VibeWars/next/)** — build a
+character and test it on dummies in the Training Ground, right in your
+browser. Matches against other players need a server; see
+[Play it](#play-it).
+
+![The character editor, with the Training Ground on the left: a Fireball has just hit a caster dummy](docs/screenshots/training-ground.png)
+
 A browser-based, minimalist, multiplayer PvP arena game mechanically
 inspired by Guild Wars 1 PvP — original implementation, original
 geometric visuals, no proprietary GW1 assets or code. Built for LAN
