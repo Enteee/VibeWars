@@ -187,16 +187,16 @@ describe("a JailDir", () => {
     expect(snapshot(outside)).toEqual({ victim: "the operator's\n" });
   });
 
-  it("does not list a name it would refuse, and removes a planted directory", () => {
+  it("does not list a name it would refuse, or a directory", () => {
     const { role } = tree();
     fs.writeFileSync(path.join(role, "a b.json"), "{}");
     fs.mkdirSync(path.join(role, "evil.json", "inner"), { recursive: true });
     fs.writeFileSync(path.join(role, "good.json"), "{}");
 
     withJailDir(role, "", {}, (dir) => {
-      expect(dir.list().sort()).toEqual(["evil.json", "good.json"]);
-      dir.remove("evil.json");
       expect(dir.list()).toEqual(["good.json"]);
+      dir.remove("evil.json");
+      expect(fs.existsSync(path.join(role, "evil.json", "inner"))).toBe(true);
     });
   });
 

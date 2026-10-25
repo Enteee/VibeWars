@@ -66,12 +66,16 @@ export class JailDir {
 
   /**
    * Only names this module will address; anything else a jail planted is
-   * not listed, so it can never be read, removed or make a caller throw.
+   * not listed (nor is any directory), so it is never read, removed or made
+   * to throw.
    *
    * @returns {string[]} the names in it
    */
   list() {
-    return fs.readdirSync(`/proc/self/fd/${String(this.fd)}`).filter((n) => NAME.test(n));
+    return fs
+      .readdirSync(`/proc/self/fd/${String(this.fd)}`, { withFileTypes: true })
+      .filter((entry) => !entry.isDirectory() && NAME.test(entry.name))
+      .map((entry) => entry.name);
   }
 
   /**
@@ -163,7 +167,7 @@ export class JailDir {
 
   /**
    * Remove `name`, whatever it is; a symlink goes, not what it points to,
-   * and a directory goes with what is in it.
+   * and an empty directory goes too.
    *
    * @param {string} name
    * @returns {void}
@@ -174,9 +178,14 @@ export class JailDir {
     } catch (error) {
       const code = codeOf(error);
       if (code === "EISDIR" || code === "EPERM") {
-        // A directory a jail planted where a file belongs. rm does not
-        // follow symlinks, so nothing outside the jail's own directory goes.
-        fs.rmSync(this.at(name), { recursive: true, force: true });
+        // A directory the jail swapped in after list(). Only an empty one
+        // goes, and never recursively: a tree the jail controls is not
+        // deleted as the operator.
+        try {
+          fs.rmdirSync(this.at(name));
+        } catch {
+          // Left where it is; list() does not show it.
+        }
       } else if (code !== "ENOENT") {
         throw error;
       }
