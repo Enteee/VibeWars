@@ -48,7 +48,7 @@ like.
 | Moving faster than allowed                          | Direction is clamped to unit length; speed comes from the ruleset; walls and bodies are resolved on the server.                                                                                                                      |
 | Targeting a player who does not exist               | `applyTarget` accepts only a session id present in the room. Range and line of sight are checked at cast time.                                                                                                                       |
 | Display names used to attack other players' UIs     | `sanitizeName` strips controls, format characters (bidi overrides, zero-width) and blank fillers, keeps at most 2 combining marks per letter, and clamps to 16 code points. The web client must render names as text, never as HTML. |
-| Host-only lobby actions by a non-host               | `select-map` and `start-match` check `isHost` (but see the open `return-to-lobby` gap below).                                                                                                                                        |
+| Host-only lobby actions by a non-host               | `select-map` and `start-match` check `isHost`; the lobby leaves its match only when the match room says it is over.                                                                                                                  |
 | A stale or foreign client desynchronising a match   | `PROTOCOL_VERSION` is checked on every join; a mismatch is refused.                                                                                                                                                                  |
 | Oversized frames                                    | The WebSocket transport caps a frame at 4 KiB (Colyseus `ws-transport` default) and has per-message deflate off. Do not raise either without a reason written here.                                                                  |
 | Cross-origin use of the HTTP API                    | Production is same-origin. CORS is sent only in dev mode, and only for one exact origin, never `*`.                                                                                                                                  |
@@ -96,10 +96,7 @@ saying so in the same PR. Keep the numbers: issues cite them.
 3. **No per-client message rate limit** (#43). Colyseus's `maxMessagesPerSecond`
    defaults to `Infinity`, and neither room sets it. Every `intent` runs its
    handler right away, outside the tick.
-4. **Any lobby member can send `return-to-lobby`** (#44). It has no
-   `isHost` check. Its only phase guard is a no-op while already `waiting`,
-   so a non-host can reset a lobby that is in a match back to `waiting` and
-   clear everyone's ready state.
+4. **Fixed by #44:** any lobby member could send `return-to-lobby`.
 5. **Lobby codes can be enumerated.** There are 23⁴ = 279,841 codes, and
    joining is not rate-limited. That is fine for a LAN party. It is not
    access control, and it must not be described as access control.

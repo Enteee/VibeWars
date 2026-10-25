@@ -478,10 +478,9 @@ async function main(): Promise<void> {
               await match?.dispose();
               match = undefined;
               enteringMatch = false;
-              // Returning from a match puts the lobby back into its
-              // waiting phase so another match can be started
-              // immediately (brief §46).
-              lobby?.returnToLobby();
+              // The lobby goes back to waiting by itself once the match
+              // is over (#44), so another can start straight away
+              // (brief §46).
               if (lobby !== undefined) {
                 renderLobby();
               } else {
