@@ -585,8 +585,12 @@
     "LOBBY_CODE_ALPHABET": { "literal": "ACDEFGHJKMNPQRTWXY34679" },
     "LOBBY_CODE_LENGTH": { "literal": 4 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },
+    "MAX_WIRE_COMBATS": { "literal": 64 },
     "MAX_WIRE_EVENTS": { "literal": 64 },
+    "MAX_WIRE_JSON_DEPTH": { "literal": 16 },
+    "MAX_WIRE_JSON_VALUES": { "literal": 4096 },
     "MAX_WIRE_POINTS": { "literal": 256 },
+    "MAX_WIRE_PROJECTILES": { "literal": 256 },
     "MAX_WIRE_RADIUS": { "literal": 200 },
     "MAX_WIRE_SLOTS": { "literal": 8 },
     "MAX_WIRE_STATUSES": { "literal": 32 },
@@ -1002,6 +1006,17 @@
         { "name": "weaponId", "optional": false, "type": "string" }
       ]
     },
+    "JsonValue": {
+      "union": [
+        "null",
+        "number",
+        "string",
+        { "array": { "ref": "JsonValue" } },
+        { "literal": false },
+        { "literal": true },
+        { "properties": [], "index": [{ "key": "string", "value": { "ref": "JsonValue" } }] }
+      ]
+    },
     "LobbyChooseTeamMessage": {
       "properties": [{ "name": "team", "optional": false, "type": { "union": ["null", "number"] } }]
     },
@@ -1139,9 +1154,38 @@
     },
     "PeerHello": {
       "properties": [
-        { "name": "build", "optional": false, "type": "unknown" },
+        {
+          "name": "build",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              "number",
+              "string",
+              { "array": { "ref": "JsonValue" } },
+              { "literal": false },
+              { "literal": true },
+              { "properties": [], "index": [{ "key": "string", "value": { "ref": "JsonValue" } }] }
+            ]
+          }
+        },
         { "name": "name", "optional": false, "type": "string" },
-        { "name": "protocolVersion", "optional": false, "type": "string" }
+        { "name": "protocolVersion", "optional": false, "type": "string" },
+        {
+          "name": "rejoin",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "playerId", "optional": false, "type": "string" },
+                  { "name": "token", "optional": false, "type": "string" }
+                ]
+              }
+            ]
+          }
+        }
       ]
     },
     "PeerRefuse": {
@@ -1212,6 +1256,7 @@
         },
         { "name": "playerId", "optional": false, "type": "string" },
         { "name": "protocolVersion", "optional": false, "type": "string" },
+        { "name": "rejoinToken", "optional": false, "type": "string" },
         { "name": "tickIntervalMs", "optional": false, "type": "number" }
       ]
     },
@@ -1627,7 +1672,14 @@
             "array": {
               "properties": [
                 { "name": "amount", "optional": false, "type": { "union": ["null", "number"] } },
+                {
+                  "name": "durationSeconds",
+                  "optional": false,
+                  "type": { "union": ["null", "number"] }
+                },
                 { "name": "kind", "optional": false, "type": "string" },
+                { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "statusId", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } }
               ]
             }
@@ -1637,10 +1689,73 @@
         { "name": "weaponId", "optional": false, "type": "string" }
       ]
     },
+    "WireCombatBatch": {
+      "array": {
+        "properties": [
+          {
+            "name": "area",
+            "optional": false,
+            "type": {
+              "union": [
+                "null",
+                {
+                  "properties": [
+                    { "name": "radius", "optional": false, "type": "number" },
+                    { "name": "x", "optional": false, "type": "number" },
+                    { "name": "y", "optional": false, "type": "number" }
+                  ]
+                }
+              ]
+            }
+          },
+          { "name": "casterId", "optional": false, "type": "string" },
+          {
+            "name": "cause",
+            "optional": false,
+            "type": {
+              "union": [
+                { "literal": "degeneration" },
+                { "literal": "skill" },
+                { "literal": "weapon" }
+              ]
+            }
+          },
+          {
+            "name": "events",
+            "optional": false,
+            "type": {
+              "array": {
+                "properties": [
+                  { "name": "amount", "optional": false, "type": { "union": ["null", "number"] } },
+                  {
+                    "name": "durationSeconds",
+                    "optional": false,
+                    "type": { "union": ["null", "number"] }
+                  },
+                  { "name": "kind", "optional": false, "type": "string" },
+                  { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
+                  {
+                    "name": "statusId",
+                    "optional": false,
+                    "type": { "union": ["null", "string"] }
+                  },
+                  { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } }
+                ]
+              }
+            }
+          },
+          { "name": "skillId", "optional": false, "type": "string" },
+          { "name": "weaponId", "optional": false, "type": "string" }
+        ]
+      }
+    },
     "WireCombatEvent": {
       "properties": [
         { "name": "amount", "optional": false, "type": { "union": ["null", "number"] } },
+        { "name": "durationSeconds", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "kind", "optional": false, "type": "string" },
+        { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "statusId", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } }
       ]
     },
@@ -1664,15 +1779,25 @@
       "properties": [
         { "name": "adrenaline", "optional": false, "type": "number" },
         { "name": "armor", "optional": false, "type": "number" },
+        { "name": "attackTargetId", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "castRemaining", "optional": false, "type": "number" },
+        { "name": "castTotal", "optional": false, "type": "number" },
         { "name": "castingSkillId", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "dead", "optional": false, "type": "boolean" },
         { "name": "energy", "optional": false, "type": "number" },
+        { "name": "facing", "optional": false, "type": "number" },
         { "name": "health", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
         { "name": "maxEnergy", "optional": false, "type": "number" },
         { "name": "maxHealth", "optional": false, "type": "number" },
         { "name": "name", "optional": false, "type": "string" },
+        { "name": "offhandId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "primaryProfession", "optional": false, "type": { "union": ["null", "string"] } },
+        {
+          "name": "secondaryProfession",
+          "optional": false,
+          "type": { "union": ["null", "string"] }
+        },
         { "name": "statuses", "optional": false, "type": { "array": "string" } },
         { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } },
         {
@@ -1680,9 +1805,39 @@
           "optional": false,
           "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
         },
+        { "name": "walking", "optional": false, "type": "boolean" },
         { "name": "weaponId", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "x", "optional": false, "type": "number" },
         { "name": "y", "optional": false, "type": "number" }
+      ]
+    },
+    "WireProjectile": {
+      "properties": [
+        { "name": "attackerId", "optional": false, "type": "string" },
+        { "name": "flightSeconds", "optional": false, "type": "number" },
+        {
+          "name": "from",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "x", "optional": false, "type": "number" },
+              { "name": "y", "optional": false, "type": "number" }
+            ]
+          }
+        },
+        { "name": "id", "optional": false, "type": "number" },
+        { "name": "launchedAt", "optional": false, "type": "number" },
+        {
+          "name": "to",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "x", "optional": false, "type": "number" },
+              { "name": "y", "optional": false, "type": "number" }
+            ]
+          }
+        },
+        { "name": "weaponId", "optional": false, "type": "string" }
       ]
     },
     "WireSkillBar": {
@@ -1731,7 +1886,13 @@
               "properties": [
                 { "name": "adrenaline", "optional": false, "type": "number" },
                 { "name": "armor", "optional": false, "type": "number" },
+                {
+                  "name": "attackTargetId",
+                  "optional": false,
+                  "type": { "union": ["null", "string"] }
+                },
                 { "name": "castRemaining", "optional": false, "type": "number" },
+                { "name": "castTotal", "optional": false, "type": "number" },
                 {
                   "name": "castingSkillId",
                   "optional": false,
@@ -1739,11 +1900,23 @@
                 },
                 { "name": "dead", "optional": false, "type": "boolean" },
                 { "name": "energy", "optional": false, "type": "number" },
+                { "name": "facing", "optional": false, "type": "number" },
                 { "name": "health", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "string" },
                 { "name": "maxEnergy", "optional": false, "type": "number" },
                 { "name": "maxHealth", "optional": false, "type": "number" },
                 { "name": "name", "optional": false, "type": "string" },
+                { "name": "offhandId", "optional": false, "type": { "union": ["null", "string"] } },
+                {
+                  "name": "primaryProfession",
+                  "optional": false,
+                  "type": { "union": ["null", "string"] }
+                },
+                {
+                  "name": "secondaryProfession",
+                  "optional": false,
+                  "type": { "union": ["null", "string"] }
+                },
                 { "name": "statuses", "optional": false, "type": { "array": "string" } },
                 { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } },
                 {
@@ -1751,9 +1924,45 @@
                   "optional": false,
                   "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
                 },
+                { "name": "walking", "optional": false, "type": "boolean" },
                 { "name": "weaponId", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "x", "optional": false, "type": "number" },
                 { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "projectiles",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "attackerId", "optional": false, "type": "string" },
+                { "name": "flightSeconds", "optional": false, "type": "number" },
+                {
+                  "name": "from",
+                  "optional": false,
+                  "type": {
+                    "properties": [
+                      { "name": "x", "optional": false, "type": "number" },
+                      { "name": "y", "optional": false, "type": "number" }
+                    ]
+                  }
+                },
+                { "name": "id", "optional": false, "type": "number" },
+                { "name": "launchedAt", "optional": false, "type": "number" },
+                {
+                  "name": "to",
+                  "optional": false,
+                  "type": {
+                    "properties": [
+                      { "name": "x", "optional": false, "type": "number" },
+                      { "name": "y", "optional": false, "type": "number" }
+                    ]
+                  }
+                },
+                { "name": "weaponId", "optional": false, "type": "string" }
               ]
             }
           }
