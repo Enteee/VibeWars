@@ -122,3 +122,23 @@ records too.
 history.** Rejected for now. The chat history in question belongs to
 the people writing the code. When there are real players with real
 shared builds, the revisit condition above applies.
+
+## Amendment (2026-10-25, #303): the protocol version is derived
+
+`PROTOCOL_VERSION` is no longer a number anyone bumps. It is the hash of
+`packages/game-protocol/wire-schema.json`, a committed, generated
+description of the whole wire schema, and `pnpm run wire:snapshot`
+writes both. A wire change changes the version with no human step, a
+change that did not regenerate fails the server suite, and two wire
+changes always conflict on the one generated line. It still only
+rejects: the rooms compare it and refuse a mismatch, as above.
+
+What was tried first:
+
+- **A hand-bumped integer.** Three open PRs (#292, #293, #301) each
+  bumped 9 to 10. Git merges identical edits cleanly, so the second and
+  third wire changes would have shipped under one number, and a stale
+  tab would have passed the check this ADR relies on.
+- **A hand-appended `PROTOCOL_LOG.md` line per wire change.** It makes
+  the PRs conflict, but it is still a step someone has to remember, and
+  only a heuristic can say when they forgot.

@@ -16,6 +16,7 @@ import {
   type RechargeMessage,
   type RechargeSlot,
   type ServerHello,
+  type SkillBarMessage,
 } from "@vibewars/game-protocol";
 
 import type {
@@ -28,6 +29,7 @@ import type {
   SlotRecharge,
 } from "./match-connection.js";
 import { extrapolateRecharges } from "./recharge-clock.js";
+import { sendMessage } from "./wire.js";
 
 /**
  * Thin wrapper around the Colyseus browser SDK for the match room.
@@ -264,7 +266,7 @@ export async function connectToMatch(
   // skill bar for the first few frames.
   const [map, bar] = await Promise.all([
     awaitMessage<MapDescriptor>(room, "map", 5000),
-    awaitMessage<{ slots: SkillSlot[] }>(room, "skill-bar", 5000),
+    awaitMessage<SkillBarMessage>(room, "skill-bar", 5000),
   ]);
 
   return createMatchConnection(room, map, bar.slots, () =>
@@ -340,7 +342,7 @@ export function createMatchConnection(
       notifyConnection = handler;
     },
     sendIntent(intent: ClientIntent): void {
-      room.send("intent", intent);
+      sendMessage(room, "intent", intent);
     },
     getSnapshot(): MatchSnapshot {
       return snapshotFrom(room);

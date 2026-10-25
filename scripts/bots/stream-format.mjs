@@ -236,6 +236,38 @@ export function sessionIdOf(event) {
 }
 
 /**
+ * How big the context was for the call this `assistant` event came from
+ * (#321): everything the model read, fresh, from the cache and into it.
+ * A subagent's calls, which carry the tool call that started it, are its
+ * own context, not the session's.
+ *
+ * @param {Record<string, unknown> | null} event
+ * @returns {number | null} tokens, or `null` for any other event, a
+ *   subagent's, or one without usage
+ */
+export function contextOf(event) {
+  if (event?.type !== "assistant" || typeof event.parent_tool_use_id === "string") {
+    return null;
+  }
+  const usage = record(record(event.message)?.usage);
+  if (usage === null) {
+    return null;
+  }
+  const fields = [
+    usage.input_tokens,
+    usage.cache_read_input_tokens,
+    usage.cache_creation_input_tokens,
+  ];
+  if (!fields.some((value) => typeof value === "number")) {
+    return null;
+  }
+  return fields.reduce(
+    (/** @type {number} */ sum, value) => sum + (typeof value === "number" ? value : 0),
+    0,
+  );
+}
+
+/**
  * Did this run fail, rather than end its turn?
  *
  * A short turn is not a crash: an agent that checks its inbox and finds
