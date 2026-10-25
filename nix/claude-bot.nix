@@ -574,7 +574,7 @@ let
         # one real secret the jail gets, bound read-write because Claude rewrites
         # it on token refresh.
         # ----------------------------------------------------------------------
-        boxDir="$HOME/.claude-bot/$role"
+        boxDir="$HOME/${config.vibewars.claudeBot.boxes}/$role"
         mkdir -p "$boxDir/config"
         [ -e "$boxDir/claude.json" ] || printf '{}' > "$boxDir/claude.json"
 
@@ -809,16 +809,30 @@ let
   '';
 in
 {
-  # Off in CI: the checks need the toolchain, not the agent tooling, and
-  # claude-code alone is a large unfree download. CI writes a
-  # devenv.local.nix that sets this to false; see .github/actions/devenv.
-  options.vibewars.claudeBot.enable = lib.mkOption {
-    type = lib.types.bool;
-    default = true;
-    description = ''
-      Whether to put claude-bot, claude-llc and their tools (claude-code,
-      bubblewrap, tg, hub, board, tmux) into the shell.
-    '';
+  options.vibewars.claudeBot = {
+    # Off in CI: the checks need the toolchain, not the agent tooling, and
+    # claude-code alone is a large unfree download. CI writes a
+    # devenv.local.nix that sets this to false; see .github/actions/devenv.
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Whether to put claude-bot, claude-llc and their tools (claude-code,
+        bubblewrap, tg, hub, board, tmux) into the shell.
+      '';
+    };
+
+    # Where each role's Claude keeps its config and session logs, as
+    # `$HOME/<boxes>/<role>/config`: claude-bot makes them, and claude-llc's
+    # dashboard reads the logs for tokens per role (#50).
+    boxes = lib.mkOption {
+      type = lib.types.str;
+      default = ".claude-bot";
+      readOnly = true;
+      description = ''
+        The directory under $HOME holding one Claude config dir per role.
+      '';
+    };
   };
 
   options.vibewars.telegram = {
