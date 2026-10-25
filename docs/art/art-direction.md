@@ -169,13 +169,17 @@ Outward from the centre:
 | Body     | 0 … r          | Team colour fill                     |
 | Edge     | r − 1.5 … r    | 1.5 px `edge` `#0b0f14`, living only |
 | Self rim | r − 3 … r − 1  | 2 px `ink`, your own body only       |
-| Weapon   | centre … r + 3 | See below, living only               |
+| Weapon   | centre … r + 5 | See below, living only; under target |
 | Target   | r + 4 … r + 6  | 2 px `target`, your target only      |
 
 **The weapon mark** (#188) points where the player faces. It is a line from
-the centre with a tip that names the weapon family, and nothing reaches past
-**r + 3**, so it never touches the target ring. It is drawn twice: a 4 px
-`edge` casing first, then a 2 px `ink` core, both round-capped. Without the
+the centre with a tip that names the weapon family. Its geometry (the stroke
+centrelines) ends at **r + 3**. It is drawn twice: a 4 px `edge` casing first,
+then a 2 px `ink` core, both round-capped, so the painted ink reaches r + 4
+and the casing r + 5. That overlaps the target ring by a pixel, so **the
+target ring is drawn after the weapon mark** and covers it. Pulling the tip
+in to clear the ring would sink it into the body edge, where it stops
+reading. Without the
 casing the ink line vanishes over the bright body: `ink` is 1.5:1 on `friend`
 and 1.9:1 on `foe`; the `edge` casing is 9.7:1 and 7.6:1.
 
@@ -190,8 +194,8 @@ and 1.9:1 on `foe`; the `edge` casing is 9.7:1 and 7.6:1.
 | unarmed | unarmed      | no mark at all                                                                       |
 
 Why not the first draft: a symmetric axe wedge and a dagger V at the line end
-read as an arrowhead and a fletching, and tips at r + 4 and beyond crossed
-the target ring on the one body you look at most.
+read as an arrowhead and a fletching, and tips whose geometry ran to r + 7
+cut through the target ring on the one body you look at most.
 
 In Phaser: one `beginPath`, the strokes as `moveTo`/`lineTo`, one
 `strokePath` per colour, plus one `fillPoints` per colour for the axe and

@@ -61,13 +61,14 @@ const f = (n) => String(Math.round(n * 100) / 100);
  */
 const polar = (x, y, a, d) => [x + Math.cos(a) * d, y + Math.sin(a) * d];
 
-/** How far past the body edge the weapon mark reaches, tip included. */
+/** How far past the body edge the weapon mark's centrelines reach. */
 const REACH = 3;
 
 /**
  * The weapon mark for a body at (x, y) facing `a`: open strokes and filled
- * shapes, as point lists. Everything ends within R + REACH of the centre, so
- * it stays clear of the target ring at R + 5.
+ * shapes, as point lists. The centrelines end within R + REACH of the centre;
+ * the 4 px casing paints 2 units further, to R + 5, under the target ring,
+ * which is drawn after it.
  * @param {number} x
  * @param {number} y
  * @param {number} a
