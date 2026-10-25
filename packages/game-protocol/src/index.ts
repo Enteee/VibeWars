@@ -67,3 +67,37 @@ export type {
   ServerMessages,
   MatchSeatReservation,
 } from "./protocol.js";
+
+export {
+  CHANNELS,
+  MAX_WIRE_STRING,
+  MAX_WIRE_TEXT,
+  MAX_WIRE_STATUSES,
+  MAX_WIRE_EVENTS,
+  MAX_WIRE_SLOTS,
+  MAX_WIRE_WALLS,
+  MAX_WIRE_POINTS,
+  MAX_WIRE_RADIUS,
+  parsePeerHello,
+  parsePeerWelcome,
+  parsePeerRefuse,
+  parseWireSnapshot,
+  parseWireCombat,
+  parseWireSkillBar,
+  parseWireEnded,
+  parseCastRefused,
+  parseRecharge,
+} from "./p2p.js";
+
+export type {
+  Channel,
+  PeerHello,
+  PeerWelcome,
+  PeerRefuse,
+  WirePlayer,
+  WireSnapshot,
+  WireCombatEvent,
+  WireCombat,
+  WireSkillBar,
+  WireEnded,
+} from "./p2p.js";

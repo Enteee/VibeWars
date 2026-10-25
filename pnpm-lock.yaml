@@ -116,6 +116,15 @@ importers:
 
   packages/game-protocol: {}
 
+  packages/game-session:
+    dependencies:
+      '@vibewars/game-core':
+        specifier: workspace:*
+        version: link:../game-core
+      '@vibewars/game-protocol':
+        specifier: workspace:*
+        version: link:../game-protocol
+
 packages:
 
   '@babel/helper-string-parser@7.29.7':
