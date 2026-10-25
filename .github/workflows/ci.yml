@@ -95,6 +95,20 @@ jobs:
       - name: Build
         run: devenv shell -- pnpm run build
 
+      # No package version younger than a week, and no git/tarball/URL
+      # resolution, may enter pnpm-lock.yaml
+      # (#107), even if the author overrode minimumReleaseAge or
+      # blockExoticSubdeps on the command line for a
+      # one-off add. Pull requests only: main has no base to diff against.
+      - name: Lockfile age
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --depth=1 origin "$BASE_REF"
+          git show "origin/$BASE_REF:pnpm-lock.yaml" > "$RUNNER_TEMP/base-lock.yaml"
+          devenv shell -- node scripts/ci/lockfile-age.mjs "$RUNNER_TEMP/base-lock.yaml" pnpm-lock.yaml
+
   # Its own required check (EXPECTED_CHECKS, #132), so an e2e failure is
   # reported under its own name and e2e runs alongside `ci` rather than after
   # it. No `needs:` and no path filter, for the reason given on `ci`: a

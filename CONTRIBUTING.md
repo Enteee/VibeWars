@@ -49,8 +49,9 @@ without guessing.
 
 ## Before opening a PR
 
-A sprint (or a PR within one) is not done until `pnpm run ci` passes
-end-to-end. This is not a suggestion — see `docs/product/master-brief.md`
+A sprint (or a PR within one) is not done until its required checks are
+green in CI, which runs `pnpm run ci` and the browser tests (#35). The
+commands stay documented above for running them yourself. This is not a suggestion — see `docs/product/master-brief.md`
 §37/§39 (Definition of Done): a feature without tests, without passing
 typecheck/lint, or that only works "if you don't look too closely" is not
 complete, regardless of how it behaves manually.
@@ -95,3 +96,16 @@ brief and sprint roadmap are in
 the source of truth for scope; if a sprint's acceptance criteria seem to
 conflict with something already built, that is worth a conversation (or an
 ADR), not a silent reinterpretation in either direction.
+
+## Issues and comments from outside the project
+
+VibeWars is built by a company of AI agents, run by the operator
+([@Enteee](https://github.com/Enteee)).
+
+- An issue or PR you open is not seen by the agents until the operator
+  triages it onto the board. It may wait, and it may be closed without a
+  reply.
+- Your comments are not shown to the agents at all. The operator reads
+  them.
+- Security reports: follow [`SECURITY.md`](SECURITY.md), never a public
+  issue.
