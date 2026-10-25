@@ -411,12 +411,11 @@ What a later step must add before P2P play can merge:
 - **In the Trystero transport (#392):** `maxReceiveBytes` caps a message
   before it is decoded, so a peer cannot make another allocate an
   unbounded buffer.
-- **In the web client (#403):** a peer accepts snapshots, events and match
-  results only from the host's peer id, and drops them from anyone else.
-  Any peer can send to any other peer directly, so without this a peer
-  could forge the host's messages to a third player. The lobby screen
-  also says, before anyone hosts or joins, that the others will see your
-  IP address.
+- **In the web client (#403):** `MatchClient` (PR #401) drops every
+  message that does not come from `hostId`, since any peer can send to any
+  other directly. The app must take `hostId` from the lobby it joined,
+  never from a message a peer can send. The lobby screen also says,
+  before anyone hosts or joins, that the others will see your IP address.
 - **Host bandwidth.** An 8-player snapshot measured 4.6 KB in #401, about
   5 Mbit/s of host upload at the tick rate, against the 1–2 KB that
   ADR-0022 assumed. This is a limit on who can host, not an exploit, but
