@@ -2,16 +2,6 @@
  * Wire vocabulary shared by the browser client and the authoritative server.
  */
 
-/**
- * Bumped whenever the wire format changes incompatibly. Every client sends
- * it as `protocolVersion` on every create and join, and both rooms refuse a
- * join whose value is absent or different (`PROTOCOL_MISMATCH_MESSAGE`), so
- * a stale browser tab fails loudly at join time instead of desynchronising
- * mid-match. It only ever rejects; there is no code path per version
- * (ADR-0016).
- */
-export const PROTOCOL_VERSION = 14 as const;
-
 /** What a client is told when its `protocolVersion` does not match. */
 export const PROTOCOL_MISMATCH_MESSAGE =
   "This tab is running an outdated version of VibeWars. Reload the page.";
@@ -208,7 +198,7 @@ export interface RechargeMessage {
 /** Options a client passes when creating or joining a match room. */
 export interface MatchJoinOptions {
   /** Must equal `PROTOCOL_VERSION`, or the join is refused. */
-  readonly protocolVersion: number;
+  readonly protocolVersion: string;
   /** The arena the first joiner asks for; later joiners get the room's. */
   readonly mapId?: string;
   /** Display name the player asks for; the server sanitises it. */
@@ -228,7 +218,7 @@ export interface MatchJoinOptions {
 /** Options a client passes when creating or joining a lobby. */
 export interface LobbyJoinOptions {
   /** Must equal `PROTOCOL_VERSION`, or the join is refused. */
-  readonly protocolVersion: number;
+  readonly protocolVersion: string;
   /** Omitted when creating; required (and validated) when joining. */
   readonly code?: string;
   /** Display name the player asks for; the server sanitises it. */
@@ -255,6 +245,15 @@ export interface LobbyReadyMessage {
 /** Host-only: change which map the match will use. */
 export interface LobbySelectMapMessage {
   readonly mapId: string;
+}
+
+/** Host-only: start the lobby's match. Carries nothing. */
+export type LobbyStartMatchMessage = Record<string, never>;
+
+/** Sent as `"start-rejected"` to the host alone when the match cannot start. */
+export interface LobbyStartRejectedMessage {
+  /** Why, in words the host is shown as they are. */
+  readonly reason: string;
 }
 
 /**
@@ -372,7 +371,8 @@ function hasOnlyKeys(record: Record<string, unknown>, keys: readonly string[]): 
 
 /** Sent once on join, before any state patch. */
 export interface ServerHello {
-  readonly protocolVersion: typeof PROTOCOL_VERSION;
+  /** `PROTOCOL_VERSION`. */
+  readonly protocolVersion: string;
   readonly sessionId: string;
   /** Fixed simulation step in milliseconds; clients interpolate against it. */
   readonly tickIntervalMs: number;
@@ -409,4 +409,84 @@ export interface MapDescriptor {
   readonly width: number;
   readonly height: number;
   readonly walls: readonly WallDescriptor[];
+}
+
+/** One slot of a `SkillBarMessage`: what the HUD needs to draw it. */
+export interface SkillBarSlot {
+  readonly id: string;
+  readonly name: string;
+  readonly energyCost: number;
+  readonly adrenalineCost: number;
+  readonly activationSeconds: number;
+  readonly rechargeSeconds: number;
+}
+
+/** Sent as `"skill-bar"` once on join: the bar the server resolved for this player. */
+export interface SkillBarMessage {
+  readonly slots: readonly SkillBarSlot[];
+}
+
+/**
+ * One resolution in a `"combat"` batch: a cast, a status tick or a
+ * weapon swing, and everything it did. Generic over the event so this
+ * package stays dependency-free; the server and the client both
+ * instantiate it with game-core's `CombatEvent`.
+ */
+export interface CombatMessage<Event> {
+  readonly casterSessionId: string;
+  /** What this was. Read this, never `skillId === ""`, to tell them apart. */
+  readonly cause: "skill" | "weapon" | "degeneration";
+  /** The skill, when `cause` is `"skill"`; `""` otherwise. */
+  readonly skillId: string;
+  /** The weapon, when `cause` is `"weapon"`; `""` otherwise (#162). */
+  readonly weaponId: string;
+  /** Where an area skill landed, and how far it reached (#5). */
+  readonly area?: { readonly x: number; readonly y: number; readonly radius: number };
+  readonly events: readonly Event[];
+}
+
+/** What one `"combat"` broadcast carries: a tick's entries, in combat-log order (#288). */
+export interface CombatBatchMessage<Event> {
+  readonly entries: readonly CombatMessage<Event>[];
+}
+
+/** Broadcast as `"match-ended"`, once, when the match finishes. */
+export interface MatchEndedMessage {
+  /** The winning team, or `null` for a draw. */
+  readonly winningTeam: number | null;
+  readonly reason: "score" | "time" | null;
+  readonly scoreTeam0: number;
+  readonly scoreTeam1: number;
+}
+
+/* -------------------------------------------------------------------------- */
+/* The message tables                                                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * What a client may send, by message name, to its payload. Both sides send
+ * through helpers typed by these tables, never a raw `send("name", ...)`,
+ * so the wire schema snapshot that hashes them is what really crosses the
+ * socket (#303). The server still parses every client payload as
+ * `unknown` (brief §32); this says what a well-formed one is.
+ */
+export interface ClientMessages {
+  readonly intent: ClientIntent;
+  readonly "choose-team": LobbyChooseTeamMessage;
+  readonly ready: LobbyReadyMessage;
+  readonly "select-map": LobbySelectMapMessage;
+  readonly "start-match": LobbyStartMatchMessage;
+}
+
+/** What the server sends, by message name, to its payload; `Event` as in `CombatMessage`. */
+export interface ServerMessages<Event> {
+  readonly hello: ServerHello;
+  readonly map: MapDescriptor;
+  readonly "skill-bar": SkillBarMessage;
+  readonly recharge: RechargeMessage;
+  readonly "cast-refused": CastRefusedMessage;
+  readonly combat: CombatBatchMessage<Event>;
+  readonly "match-ended": MatchEndedMessage;
+  readonly "match-starting": LobbyMatchStartingMessage;
+  readonly "start-rejected": LobbyStartRejectedMessage;
 }

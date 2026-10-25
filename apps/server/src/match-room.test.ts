@@ -122,7 +122,9 @@ describe("match room", () => {
   describe("the protocol handshake", () => {
     it("refuses a client on another protocol version, telling it to reload", async () => {
       await expect(
-        new Client(endpoint).joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION + 1 }),
+        new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+          protocolVersion: `${PROTOCOL_VERSION}-stale`,
+        }),
       ).rejects.toThrow(PROTOCOL_MISMATCH_MESSAGE);
     });
 

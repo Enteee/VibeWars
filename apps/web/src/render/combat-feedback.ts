@@ -64,9 +64,7 @@ export function swingFlashFor(
     return undefined;
   }
   // The first one hit is the target; a cleave's others come after it.
-  const targetId = message.events.find(
-    (event) => event.targetId !== undefined && event.targetId !== attacker.sessionId,
-  )?.targetId;
+  const targetId = message.events.find((event) => event.targetId !== attacker.sessionId)?.targetId;
   const target = snapshot.players.find((p) => p.sessionId === targetId);
   if (target === undefined || (target.x === attacker.x && target.y === attacker.y)) {
     return undefined;
@@ -123,7 +121,7 @@ export function showCombatFeedback(
       continue;
     }
 
-    const cue = floatingCueFor(event.kind, event.amount);
+    const cue = floatingCueFor(event.kind, "amount" in event ? event.amount : undefined);
     if (cue === undefined) {
       continue;
     }

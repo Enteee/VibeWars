@@ -14,7 +14,10 @@ import {
   normalizeLobbyCode,
   type LobbyJoinOptions,
   type LobbyMatchStartingMessage,
+  type LobbyStartRejectedMessage,
 } from "@vibewars/game-protocol";
+
+import { sendMessage } from "./wire.js";
 
 /**
  * Browser-side wrapper for the lobby room.
@@ -50,7 +53,7 @@ export interface LobbyConnection {
   startMatch(): void;
   onChange(handler: () => void): void;
   onMatchStarting(handler: (message: LobbyMatchStartingMessage) => void): void;
-  onStartRejected(handler: (message: { reason: string }) => void): void;
+  onStartRejected(handler: (message: LobbyStartRejectedMessage) => void): void;
   disconnect(): Promise<void>;
 }
 
@@ -133,16 +136,16 @@ function wrap(room: Room<unknown, DecodedLobbyState>): LobbyConnection {
     selfSessionId: room.sessionId,
     getSnapshot: () => snapshotFrom(room),
     chooseTeam(team) {
-      room.send("choose-team", { team });
+      sendMessage(room, "choose-team", { team });
     },
     setReady(ready) {
-      room.send("ready", { ready });
+      sendMessage(room, "ready", { ready });
     },
     selectMap(mapId) {
-      room.send("select-map", { mapId });
+      sendMessage(room, "select-map", { mapId });
     },
     startMatch() {
-      room.send("start-match", {});
+      sendMessage(room, "start-match", {});
     },
     onChange(handler) {
       room.onStateChange(handler);

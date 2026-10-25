@@ -33,14 +33,14 @@ describe("soundsForCombat", () => {
   });
 
   it("plays the interrupt when it is yours, or you are the one interrupted", () => {
-    const yours = message(ME, [{ kind: "interrupted", targetId: "foe" }]);
-    const onYou = message("foe", [{ kind: "interrupted", targetId: ME }]);
+    const yours = message(ME, [{ kind: "interrupted", targetId: "foe", skillId: "x" }]);
+    const onYou = message("foe", [{ kind: "interrupted", targetId: ME, skillId: "x" }]);
     expect(soundsForCombat(yours, ME)).toEqual(["interrupt"]);
     expect(soundsForCombat(onYou, ME)).toEqual(["interrupt"]);
   });
 
   it("is silent for a cast you cancel by moving (#279)", () => {
-    const cancelled = message(ME, [{ kind: "cancelled", targetId: ME }]);
+    const cancelled = message(ME, [{ kind: "cancelled", targetId: ME, skillId: "x" }]);
     expect(soundsForCombat(cancelled, ME)).toEqual([]);
   });
 
@@ -61,10 +61,12 @@ describe("soundsForCombat", () => {
     const elsewhere = message("ally", [
       { kind: "damage", targetId: "foe", amount: 9 },
       { kind: "heal", targetId: "foe", amount: 9 },
-      { kind: "interrupted", targetId: "foe" },
+      { kind: "interrupted", targetId: "foe", skillId: "x" },
       { kind: "interrupt-missed", targetId: "foe" },
     ]);
-    const other = message(ME, [{ kind: "status-applied", targetId: ME }]);
+    const other = message(ME, [
+      { kind: "status-applied", targetId: ME, statusId: "burning", durationSeconds: 3 },
+    ]);
     expect(soundsForCombat(elsewhere, ME)).toEqual([]);
     expect(soundsForCombat(other, ME)).toEqual([]);
   });
@@ -76,14 +78,14 @@ describe("soundsForCombat", () => {
       cause: "degeneration",
       skillId: "",
       weaponId: "",
-      events: [{ kind: "damage", targetId: ME }],
+      events: [{ kind: "damage", targetId: ME, amount: 1 }],
     };
     const regen: CombatMessage = {
       casterSessionId: ME,
       cause: "degeneration",
       skillId: "",
       weaponId: "",
-      events: [{ kind: "heal", targetId: ME }],
+      events: [{ kind: "heal", targetId: ME, amount: 1 }],
     };
     const fatal: CombatMessage = {
       casterSessionId: ME,
@@ -91,7 +93,7 @@ describe("soundsForCombat", () => {
       skillId: "",
       weaponId: "",
       events: [
-        { kind: "damage", targetId: ME },
+        { kind: "damage", targetId: ME, amount: 1 },
         { kind: "death", targetId: ME },
       ],
     };

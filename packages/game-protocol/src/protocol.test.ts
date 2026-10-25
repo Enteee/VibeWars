@@ -5,7 +5,6 @@ import {
   CLIENT_LIMIT,
   LOBBY_CODE_ALPHABET,
   LOBBY_CODE_LENGTH,
-  PROTOCOL_VERSION,
   RATE_LIMIT,
   ROOM_LIMIT,
   ROOM_MATCH,
@@ -13,10 +12,11 @@ import {
   normalizeLobbyCode,
   parseClientIntent,
 } from "./protocol.js";
+import { PROTOCOL_VERSION } from "./protocol-version.js";
 
 describe("protocol constants", () => {
-  it("pins a protocol version", () => {
-    expect(PROTOCOL_VERSION).toBe(14);
+  it("derives the protocol version from the wire schema", () => {
+    expect(PROTOCOL_VERSION).toMatch(/^[0-9a-f]{12}$/);
   });
 
   it("gives every capacity refusal its own code (#282)", () => {
