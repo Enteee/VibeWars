@@ -53,8 +53,10 @@ const stroke = (colour, width = 2) =>
 
 // ---------------------------------------------------------------------------
 // Professions: one silhouette each, distinct with the colour removed.
-// Used in menus, the build editor and the target panel, never in the arena,
-// where colour means team.
+// Coloured in menus, the build editor and the target panel. In the arena,
+// where colour means team, the scene tints them flat `ink` (#281), so every
+// cut is a transparent hole (fill-rule evenodd), never a painted plate
+// colour, which a tint fill would paint over.
 // ---------------------------------------------------------------------------
 
 const profession = {
@@ -67,14 +69,13 @@ const profession = {
   monk: () => `<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="${C.monk}"/>`,
   // Downward triangle with a hollow eye: the hexer, pointing at the ground.
   necromancer: () =>
-    `<path d="M3 4h18L12 21z" fill="${C.necromancer}"/>` +
-    `<circle cx="12" cy="9.5" r="2.5" fill="${C.plate}"/>`,
+    `<path d="M3 4h18L12 21zM9.5 9.5a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0-5 0z" fill="${C.necromancer}" fill-rule="evenodd"/>`,
   // Hourglass: time, echoes, interrupts.
   mesmer: () => `<path d="M5 3h14l-5.5 9L19 21H5l5.5-9z" fill="${C.mesmer}"/>`,
   // Diamond, split: four elements.
+  // The split is a plus-shaped hole, 2 wide, with round ends at 5 and 19.
   elementalist: () =>
-    `<path d="M12 2l10 10-10 10L2 12z" fill="${C.elementalist}"/>` +
-    `<path d="M12 6v12M6 12h12" ${stroke(C.plate, 2)}/>`,
+    `<path d="M12 2l10 10-10 10L2 12zM11 6a1 1 0 0 1 2 0v5h5a1 1 0 0 1 0 2h-5v5a1 1 0 0 1-2 0v-5H6a1 1 0 0 1 0-2h5z" fill="${C.elementalist}" fill-rule="evenodd"/>`,
   // Crescent moon: strikes from the shadows.
   assassin: () =>
     `<path d="M11.4 2.5A9.5 9.5 0 1 0 21.3 13.7 7.5 7.5 0 0 1 11.4 2.5z" fill="${C.assassin}"/>`,

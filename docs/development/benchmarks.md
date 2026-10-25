@@ -27,10 +27,13 @@ cost at 16v16 is state encoding and per-client delta emission, which a
 direct tick loop skips entirely, and benchmarking the cheap half of the
 system would be worse than not benchmarking it.
 
-Every client moves continuously (a new direction 10×/second) and
-constantly attempts to cast. Most cast attempts are rejected for range or
+Half the clients move continuously (a new direction 10×/second) and
+constantly attempt to cast. Most cast attempts are rejected for range or
 recharge — which is what a real match looks like, and still exercises the
-whole activation gate each time.
+whole activation gate each time. The other half stand still and
+auto-attack the enemy beside them in seat order, so they approach round
+walls along the path finder every tick (#267). A load that never attacks
+cannot see the attack path get slower.
 
 | Metric       | How                                                                                               |
 | ------------ | ------------------------------------------------------------------------------------------------- |
@@ -49,33 +52,36 @@ budget, and that tick is exactly the one a player feels as a stutter.
 
 ## Results
 
-Measured 2026-10-24 on the development machine (Linux 6.18, Node 24).
-Tick budget is **50 ms** — what a tick is allowed to take at 20 Hz.
+Measured 2026-10-25 in an agent jail on the development machine (Linux
+6.18, Node 24), with the load above: half the clients attacking. Tick
+budget is **50 ms** — what a tick is allowed to take at 20 Hz. The jail is
+noisy: three runs of 16v16 gave a tick p95 of 4.68–4.85 ms, against
+3.89–4.83 ms for a load where every client moves.
 
 | Scenario | Players | Tick p50 | Tick p95 | Tick max | Heap   | Net/client | Sync p50 | Sync p95 |
 | -------- | ------- | -------- | -------- | -------- | ------ | ---------- | -------- | -------- |
-| 1v1      | 2       | 0.29 ms  | 0.63 ms  | 3.21 ms  | 31 MiB | 0.9 KiB/s  | 50.3 ms  | 51.6 ms  |
-| 4v4      | 8       | 0.46 ms  | 1.57 ms  | 1.96 ms  | 33 MiB | 3.4 KiB/s  | 49.9 ms  | 51.4 ms  |
-| 8v8      | 16      | 0.73 ms  | 2.43 ms  | 7.82 ms  | 34 MiB | 6.6 KiB/s  | 50.6 ms  | 55.5 ms  |
-| 16v16    | 32      | 1.27 ms  | 6.40 ms  | 11.29 ms | 37 MiB | 13.1 KiB/s | 50.8 ms  | 58.1 ms  |
+| 1v1      | 2       | 0.37 ms  | 1.64 ms  | 6.31 ms  | 34 MiB | 0.6 KiB/s  | 50.4 ms  | 52.8 ms  |
+| 4v4      | 8       | 0.91 ms  | 3.36 ms  | 7.66 ms  | 37 MiB | 3.8 KiB/s  | 50.0 ms  | 52.4 ms  |
+| 8v8      | 16      | 0.83 ms  | 3.48 ms  | 4.18 ms  | 39 MiB | 6.4 KiB/s  | 50.1 ms  | 54.2 ms  |
+| 16v16    | 32      | 1.61 ms  | 4.68 ms  | 8.74 ms  | 44 MiB | 14.7 KiB/s | 50.0 ms  | 54.4 ms  |
 
 ## Reading these numbers
 
-**Tick time is not the constraint.** At 16v16 the p95 tick uses 13% of its
-budget and the worst observed tick uses 23%. Tick cost grows roughly
-linearly with player count (0.29 → 1.27 ms p50 across a 16× increase in
+**Tick time is not the constraint.** At 16v16 the p95 tick uses 9% of its
+budget and the worst observed tick uses 17%. Tick cost grows roughly
+linearly with player count (0.37 → 1.61 ms p50 across a 16× increase in
 players), with no sign of the quadratic blow-up that pairwise collision
 and line-of-sight work could have produced at this scale.
 
-**Bandwidth is irrelevant on a LAN.** 13 KiB/s per client at 16v16 means
-a full 32-player match is around 420 KiB/s server-side — nothing for
+**Bandwidth is irrelevant on a LAN.** 15 KiB/s per client at 16v16 means
+a full 32-player match is around 470 KiB/s server-side — nothing for
 even old wired Ethernet, which is the only network this game targets.
 
 **Sync latency is the patch rate, not the simulation.** The ~50 ms floor
 across every scenario is Colyseus's default 50 ms state-patch interval:
 an intent is applied on the next 20 Hz tick, but the client does not
 _see_ it until the next patch. That it barely moves from 1v1 to 16v16
-(50.3 → 50.8 ms p50) confirms the server is not the bottleneck.
+(50.4 → 50.0 ms p50) confirms the server is not the bottleneck.
 
 Halving the patch interval would roughly halve this number and roughly
 double bandwidth — which, given the figures above, would cost nothing

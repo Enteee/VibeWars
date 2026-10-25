@@ -190,6 +190,10 @@ export interface ArenaSnapshot {
   readonly projectiles: readonly RenderableProjectile[];
   /** The match clock (`elapsedSeconds`), which projectiles fly against. */
   readonly clock: number;
+  /** The living body under the mouse cursor, whose name shows (#253). */
+  readonly hoverId: string | undefined;
+  /** Ctrl is held: every name shows (#253). */
+  readonly showAllNames: boolean;
 }
 
 export const EMPTY_SNAPSHOT: ArenaSnapshot = {
@@ -198,6 +202,8 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   targetId: undefined,
   projectiles: [],
   clock: 0,
+  hoverId: undefined,
+  showAllNames: false,
 };
 
 /**
@@ -237,6 +243,34 @@ export function actorAtPoint(snapshot: ArenaSnapshot, point: Vec2): RenderableAc
     }
   }
   return best;
+}
+
+/**
+ * `snapshot` with whose names show this frame (#253): the body under
+ * `pointer` (in world units, `undefined` once the cursor left the
+ * arena), hit-tested like a click so a corpse is never picked, and
+ * every name while `showAllNames`.
+ */
+export function withNames(
+  snapshot: ArenaSnapshot,
+  pointer: Vec2 | undefined,
+  showAllNames: boolean,
+): ArenaSnapshot {
+  const hoverId = pointer === undefined ? undefined : actorAtPoint(snapshot, pointer)?.id;
+  return { ...snapshot, hoverId, showAllNames };
+}
+
+/**
+ * Whether `actor`'s name label is drawn (#253): only your target's, the
+ * body's under the cursor, and everyone's while Ctrl is held. Eleven
+ * pixel names over every body smeared together as soon as two stood
+ * close. Never your own: the ink rim marks you.
+ */
+export function nameShown(snapshot: ArenaSnapshot, actor: RenderableActor): boolean {
+  if (actor.team === "self") {
+    return false;
+  }
+  return snapshot.showAllNames || actor.id === snapshot.targetId || actor.id === snapshot.hoverId;
 }
 
 /** Health as a 0..1 fraction, clamped — the shape a health bar needs. */
