@@ -8,7 +8,7 @@ import {
 } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { FLOOD_MESSAGES_PER_SECOND, MESSAGE_BURST } from "./rooms/options.js";
+import { FLOOD_MESSAGES_PER_SECOND, MESSAGE_BURST, MESSAGES_PER_SECOND } from "./rooms/options.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
 
@@ -305,7 +305,9 @@ describe("server survives hostile clients", () => {
   it("ignores a match client's intents over its budget, then listens again", async () => {
     const { watcher, other } = await twoInAMatch();
 
-    for (let i = 0; i < MESSAGE_BURST; i += 1) {
+    // A second's refill past the burst: on a loaded machine the burst
+    // arrives spread out, and the bucket refills as it does.
+    for (let i = 0; i < MESSAGE_BURST + MESSAGES_PER_SECOND; i += 1) {
       other.send("intent", { kind: "stop" });
     }
     expect(await listensTo(watcher, other)).toBe(false);
