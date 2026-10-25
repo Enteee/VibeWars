@@ -13,7 +13,7 @@ character and test it on dummies in the Training Ground, right in your
 browser. Matches against other players need a server; see
 [Play it](#play-it).
 
-![The character editor, with the Training Ground on the left: a Fireball has just hit a caster dummy](docs/screenshots/training-ground.png)
+![The character editor, with the Training Ground on the left: a Fireball has just hit a caster dummy](docs/media/readme-arena.png)
 
 A browser-based, minimalist, multiplayer PvP arena game mechanically
 inspired by Guild Wars 1 PvP — original implementation, original
