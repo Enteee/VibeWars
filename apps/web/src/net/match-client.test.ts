@@ -80,6 +80,7 @@ class FakeRoom implements LiveMatchRoom {
   readonly reconnection = { minUptime: 5000 };
   readonly sent: ClientIntent[] = [];
   left = false;
+  private gone = false;
   private readonly messages = new Map<string, ((message: unknown) => void)[]>();
   private readonly drops: ((code: number) => void)[] = [];
   private readonly reconnects: (() => void)[] = [];
@@ -103,6 +104,11 @@ class FakeRoom implements LiveMatchRoom {
     this.leaves.push(callback);
   }
   leave(): Promise<void> {
+    if (this.gone) {
+      // As the SDK: its listeners are dropped once the room has left, so
+      // this leave is never answered.
+      return new Promise(() => undefined);
+    }
     this.left = true;
     this.emitLeave(4000);
     return Promise.resolve();
@@ -119,6 +125,7 @@ class FakeRoom implements LiveMatchRoom {
   }
   emitLeave(code: number): void {
     for (const handler of this.leaves) handler(code);
+    this.gone = true;
   }
 }
 
@@ -179,6 +186,13 @@ describe("createMatchConnection", () => {
     room.emitDrop(1006);
     room.emitLeave(4003);
     expect(states).toEqual(["reconnecting", "lost"]);
+  });
+
+  it("disconnects at once from a room that is already lost (#195)", async () => {
+    const { room, connection } = connect();
+    room.emitLeave(4003);
+    await connection.disconnect();
+    expect(room.left).toBe(false);
   });
 
   it("says nothing when the player leaves on purpose", async () => {

@@ -229,3 +229,48 @@ test("a recharging skill shows the clock-wipe and the seconds left, then clears 
 
   await expect(overlay).toHaveCount(0, { timeout: 20_000 });
 });
+
+/** The page's WebSockets, oldest first, recorded by `recordSockets`. */
+interface SocketLog {
+  vibewarsSockets: WebSocket[];
+}
+
+/**
+ * Record every WebSocket the page opens, so a test can cut one. Test-side
+ * only: Playwright's routeWebSocket rejects the protocols argument the
+ * Colyseus SDK passes, so the constructor is wrapped instead.
+ */
+async function recordSockets(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const log = window as unknown as SocketLog;
+    log.vibewarsSockets = [];
+    const Native = window.WebSocket;
+    window.WebSocket = class extends Native {
+      constructor(url: string | URL, protocols?: string | string[]) {
+        super(url, protocols);
+        log.vibewarsSockets.push(this);
+      }
+    };
+  });
+}
+
+test("a match lost for good returns to the menu and says why (#195)", async ({ page }) => {
+  await recordSockets(page);
+  const canvas = await startQuickMatch(page);
+
+  // The match's socket is the newest. A plain close (1000) is neither a
+  // code the SDK retries nor a consented leave: exactly what the SDK
+  // reports once it has given up retrying.
+  await page.evaluate(() => {
+    (window as unknown as SocketLog).vibewarsSockets.at(-1)?.close(1000, "e2e: lost for good");
+  });
+
+  const notice = page.getByText("Lost the connection to the match.");
+  await expect(notice).toBeVisible();
+  await expect(page.getByRole("button", { name: "quick match" })).toBeVisible();
+  await expect(canvas).toBeHidden();
+
+  // A new match works, and the notice is gone with the menu.
+  await startQuickMatch(page);
+  await expect(notice).toHaveCount(0);
+});

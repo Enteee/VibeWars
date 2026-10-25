@@ -284,7 +284,11 @@ export function createMatchConnection(
   room.onReconnect(() => {
     notifyConnection("online");
   });
+  // Once the room has left, the SDK drops every listener, so a later
+  // room.leave() would wait forever for a leave that already happened.
+  let left = false;
   room.onLeave((code) => {
+    left = true;
     // The SDK only reports a leave once it has stopped retrying.
     if (code !== CONSENTED_LEAVE) {
       notifyConnection("lost");
@@ -312,7 +316,9 @@ export function createMatchConnection(
     },
     getRecharges,
     async disconnect(): Promise<void> {
-      await room.leave();
+      if (!left) {
+        await room.leave();
+      }
     },
   };
 }

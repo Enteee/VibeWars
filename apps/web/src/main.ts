@@ -34,6 +34,9 @@ import type { PlayerBuild } from "@vibewars/game-core";
  * machinery than the problem has (brief §30).
  */
 
+/** Shown on the lobby or the menu once the SDK has stopped retrying a dropped match. */
+const LOST_MATCH_NOTICE = "Lost the connection to the match.";
+
 function requireElement(selector: string): HTMLElement {
   const element = document.querySelector<HTMLElement>(selector);
   if (element === null) {
@@ -451,9 +454,34 @@ async function main(): Promise<void> {
     renderLobby();
   };
 
+  /**
+   * Back to where the player came from: the lobby if there is one, else
+   * the menu, with `notice` on it. A no-op once the match is gone, so a
+   * lost connection racing a leave click exits once.
+   */
+  const exitMatch = async (notice?: string): Promise<void> => {
+    const leaving = match;
+    if (leaving === undefined) {
+      return;
+    }
+    match = undefined;
+    await leaving.dispose();
+    enteringMatch = false;
+    // The lobby goes back to waiting by itself once the match is over
+    // (#44), so another can start straight away (brief §46).
+    if (lobby !== undefined) {
+      lobbyNotice = notice ?? lobbyNotice;
+      renderLobby();
+    } else {
+      menuNotice = notice ?? menuNotice;
+      showMenu();
+    }
+  };
+
   const enterMatch = async (target: MatchTarget): Promise<void> => {
     enteringMatch = true;
     menuNotice = undefined;
+    lobbyNotice = undefined;
     showViewport(true);
     setStatus("entering match…", "offline");
     try {
@@ -470,23 +498,14 @@ async function main(): Promise<void> {
             } else if (state === "online") {
               setStatus("in match", "online");
             } else {
+              // The SDK has given up: the arena is frozen for good, so
+              // there is nothing to stay for.
               setStatus("disconnected", "error");
+              void exitMatch(LOST_MATCH_NOTICE);
             }
           },
           onLeave: () => {
-            void (async () => {
-              await match?.dispose();
-              match = undefined;
-              enteringMatch = false;
-              // The lobby goes back to waiting by itself once the match
-              // is over (#44), so another can start straight away
-              // (brief §46).
-              if (lobby !== undefined) {
-                renderLobby();
-              } else {
-                showMenu();
-              }
-            })();
+            void exitMatch();
           },
         },
         { target, build },
