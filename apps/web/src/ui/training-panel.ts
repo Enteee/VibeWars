@@ -5,6 +5,9 @@ import {
   type TrainingScenario,
 } from "@vibewars/game-core";
 
+import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
+import { saveMuted } from "../audio/mute-preference.js";
+import { soundPlayer } from "../audio/sound-player.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
 import type { MatchSnapshot, SkillSlot } from "../net/match-connection.js";
@@ -117,6 +120,7 @@ interface Session {
   readonly connection: LocalMatchConnection;
   readonly names: ReadonlyMap<string, string>;
   readonly walls: readonly RenderableWall[];
+  readonly sounds: MatchSounds;
   parked: boolean;
 }
 
@@ -334,6 +338,7 @@ export function createTrainingPanel(): TrainingPanel {
   };
 
   const startSession = (scenario: TrainingScenario, build: StoredCharacter): void => {
+    session?.sounds.dispose();
     void session?.connection.disconnect();
     const setup = setupScenario(scenario, build);
     const connection = createLocalConnection({
@@ -346,6 +351,8 @@ export function createTrainingPanel(): TrainingPanel {
       connection,
       names: setup.names,
       walls: setup.map.walls.map(toRenderableWall),
+      // The same sounds as a match (#112), muted by the same M.
+      sounds: attachMatchSounds(connection, soundPlayer()),
       parked: setup.arming.problem !== undefined,
     };
     connection.onStep(onStep);
@@ -407,6 +414,17 @@ export function createTrainingPanel(): TrainingPanel {
       event.preventDefault();
       armed = false;
       stage.blur();
+      return;
+    }
+    if (event.key === "m" || event.key === "M") {
+      event.preventDefault();
+      if (!event.repeat) {
+        // No HUD here, so the message line says what M did.
+        const sounds = soundPlayer();
+        sounds.setMuted(!sounds.muted);
+        saveMuted(sounds.muted);
+        flash(sounds.muted ? "Sound off. Press M to turn it on." : "Sound on.");
+      }
       return;
     }
     const slot = slotForKey(event.key, session?.connection.skillBar.length ?? 0);
@@ -525,6 +543,7 @@ export function createTrainingPanel(): TrainingPanel {
       const { connection } = session;
       connection.advance(deltaSeconds);
       latestMatch = connection.getSnapshot();
+      session.sounds.snapshot(latestMatch);
       latestArena = toArenaSnapshot(latestMatch, session.walls);
       created.scene.setSnapshot(latestArena);
       paintVitals(latestMatch);
@@ -586,6 +605,7 @@ export function createTrainingPanel(): TrainingPanel {
       if (messageTimer !== undefined) {
         clearTimeout(messageTimer);
       }
+      session?.sounds.dispose();
       void session?.connection.disconnect();
       session = undefined;
       root.remove();
