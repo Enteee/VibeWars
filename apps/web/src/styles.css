@@ -1453,6 +1453,18 @@ body {
   transition: none;
 }
 
+/* How to target, until the first target (#55): quieter than a refusal. */
+.hud-hint {
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
+}
+
+.hud-hint[hidden] {
+  display: none;
+}
+
 /* A skill's type, by shape (#75): top-right of every skill tile. */
 .skill-type-badge {
   position: absolute;

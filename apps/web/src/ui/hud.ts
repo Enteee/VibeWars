@@ -35,6 +35,10 @@ export interface HudElements {
   readonly skillBar: HTMLElement;
   /** One line above the skill bar, for why a key did nothing. */
   readonly message: HTMLElement;
+  /** How to target, until the first target of the match (#55). */
+  readonly hint: HTMLElement;
+  /** Set once there has been a target; the hint never comes back that match. */
+  hintDismissed: boolean;
   readonly targetPanel: HTMLElement;
   readonly scoreboard: HTMLElement;
   readonly result: HTMLElement;
@@ -47,6 +51,21 @@ function element(tag: string, className: string, parent: HTMLElement): HTMLEleme
   node.className = className;
   parent.appendChild(node);
   return node;
+}
+
+/** Shown above the skill bar until the player first has a target (#55). */
+export const TARGET_HINT = "Click an enemy or press Tab to target";
+
+/**
+ * Whether the targeting hint is gone for good: it was already, or the
+ * player has a target now. Clearing the target later does not bring it
+ * back.
+ */
+export function targetHintDismissed(
+  wasDismissed: boolean,
+  self: PlayerSnapshot | undefined,
+): boolean {
+  return wasDismissed || self?.targetSessionId !== undefined;
 }
 
 export function createHud(parent: HTMLElement): HudElements {
@@ -78,6 +97,8 @@ export function createHud(parent: HTMLElement): HudElements {
   const adrenalineText = element("div", "hud-adrenaline", bars);
   const statusList = element("div", "hud-statuses", bars);
 
+  const hint = element("div", "hud-hint", root);
+  hint.textContent = TARGET_HINT;
   const message = element("div", "hud-message", root);
   message.setAttribute("role", "status");
   const skillBar = element("div", "hud-skills", root);
@@ -92,6 +113,8 @@ export function createHud(parent: HTMLElement): HudElements {
     statusList,
     skillBar,
     message,
+    hint,
+    hintDismissed: false,
     targetPanel,
     scoreboard,
     result,
@@ -306,6 +329,9 @@ export function updateHud(
   if (self === undefined) {
     return;
   }
+
+  hud.hintDismissed = targetHintDismissed(hud.hintDismissed, self);
+  hud.hint.hidden = hud.hintDismissed;
 
   setBar(hud.healthFill, hud.healthText, self.health, self.maxHealth, "hp");
   setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, "en");

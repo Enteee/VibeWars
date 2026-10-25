@@ -5,6 +5,7 @@ import { attachMatchSounds } from "./audio/match-sounds.js";
 import { saveMuted } from "./audio/mute-preference.js";
 import { soundPlayer } from "./audio/sound-player.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
+import { nextTabTarget } from "./input/tab-target.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
 import { connectToMatch, type MatchTarget } from "./net/match-client.js";
 import type { MatchConnection, MatchSnapshot } from "./net/match-connection.js";
@@ -149,6 +150,25 @@ export async function startMatchView(
   });
 
   const handleKeyDown = (event: KeyboardEvent): void => {
+    if (event.key === "Tab") {
+      // Never the browser's focus cycle, during a match (#55).
+      event.preventDefault();
+      if (!event.repeat) {
+        const current = latestMatch.players.find(
+          (player) => player.sessionId === connection.selfSessionId,
+        )?.targetSessionId;
+        const next = nextTabTarget(
+          latestMatch.players,
+          connection.selfSessionId,
+          current,
+          event.shiftKey ? -1 : 1,
+        );
+        if (next !== undefined && next !== current) {
+          connection.sendIntent({ kind: "target", targetSessionId: next });
+        }
+      }
+      return;
+    }
     if (event.key === "Escape") {
       callbacks.onLeave();
       return;

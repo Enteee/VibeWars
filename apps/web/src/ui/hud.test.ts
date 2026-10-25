@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 
+import type { PlayerSnapshot } from "../net/match-connection.js";
+
 import {
   describeOutcome,
   describeRefusal,
   formatClock,
   muteButtonState,
   skillSlotHtml,
+  targetHintDismissed,
 } from "./hud.js";
 
 describe("formatClock", () => {
@@ -45,6 +48,38 @@ describe("describeOutcome", () => {
 
   it("falls back to naming the team for a spectator with no team of their own", () => {
     expect(describeOutcome(1, "score", undefined)).toBe("Team 2 wins");
+  });
+});
+
+describe("targetHintDismissed", () => {
+  const self = (targetSessionId: string | undefined): PlayerSnapshot => ({
+    sessionId: "me",
+    name: "me",
+    x: 0,
+    y: 0,
+    targetSessionId,
+    health: 500,
+    maxHealth: 500,
+    energy: 20,
+    maxEnergy: 50,
+    adrenaline: 0,
+    armor: 60,
+    weaponId: undefined,
+    team: 0,
+    dead: false,
+    castingSkillId: undefined,
+    castRemaining: 0,
+    castTotal: 0,
+    statuses: [],
+  });
+
+  it("keeps the hint up with no target, takes it down for good at the first one", () => {
+    expect(targetHintDismissed(false, self(undefined))).toBe(false);
+    expect(targetHintDismissed(false, undefined)).toBe(false);
+    const dismissed = targetHintDismissed(false, self("foe"));
+    expect(dismissed).toBe(true);
+    // Clearing the target later does not bring it back.
+    expect(targetHintDismissed(dismissed, self(undefined))).toBe(true);
   });
 });
 
