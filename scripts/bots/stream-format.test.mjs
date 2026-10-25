@@ -11,7 +11,15 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { LINE_MAX, formatLine, oneLine, runFailed, sessionIdOf } from "./stream-format.mjs";
+import {
+  LINE_MAX,
+  formatLine,
+  oneLine,
+  parseEvent,
+  runFailed,
+  sessionIdOf,
+  usageLimitOf,
+} from "./stream-format.mjs";
 
 const AGENT_TURN = path.join(path.dirname(fileURLToPath(import.meta.url)), "agent-turn.mjs");
 
@@ -224,8 +232,76 @@ function turn({ lines, code = 0, session }) {
     stderr: result.stderr,
     args: fs.readFileSync(argsLog, "utf8").trim(),
     session: fs.existsSync(sessionFile) ? fs.readFileSync(sessionFile, "utf8").trim() : null,
+    /** @param {string} name @returns {string | null} a file the run left in its state */
+    file: (name) =>
+      fs.existsSync(path.join(state, name))
+        ? fs.readFileSync(path.join(state, name), "utf8")
+        : null,
   };
 }
+
+/**
+ * Limit events in the shapes the CLI documents. No real one has been
+ * captured yet; agent-turn.mjs keeps the first it sees (#308).
+ */
+const REJECTED = {
+  type: "rate_limit_event",
+  rate_limit_info: { status: "rejected", resetsAt: 1_761_400_800 },
+  session_id: SESSION_ID,
+};
+/** @param {string} text @returns {Record<string, unknown>} */
+const errorResult = (text) => ({ ...RESULT, subtype: "success", is_error: true, result: text });
+
+describe("usageLimitOf", () => {
+  it("takes the reset of a rejected rate_limit_event", () => {
+    expect(usageLimitOf(REJECTED)).toEqual({ until: 1_761_400_800 });
+  });
+
+  it("ignores a rate_limit_event that still allows the request", () => {
+    for (const status of ["allowed", "allowed_warning"]) {
+      const event = { ...REJECTED, rate_limit_info: { status, resetsAt: 1_761_400_800 } };
+      expect(usageLimitOf(event)).toBeNull();
+    }
+  });
+
+  it("reads the reset an error result ends with", () => {
+    expect(usageLimitOf(errorResult("Claude AI usage limit reached|1761400800"))).toEqual({
+      until: 1_761_400_800,
+    });
+  });
+
+  it("knows a limit without a reset, and never parses clock text", () => {
+    expect(usageLimitOf(errorResult("You've hit your limit · resets 3pm (Europe/Zurich)"))).toEqual(
+      { until: null },
+    );
+  });
+
+  it("is not fooled by an ordinary error result, or a success", () => {
+    expect(usageLimitOf(errorResult("Execution error"))).toBeNull();
+    expect(usageLimitOf(errorResult("Context limit reached"))).toBeNull();
+    expect(
+      usageLimitOf(errorResult("Request req_011CU4291xyz failed after 4291 bytes")),
+    ).toBeNull();
+    expect(usageLimitOf(errorResult("API Error: 429 Too Many Requests"))).toEqual({ until: null });
+    expect(usageLimitOf({ ...RESULT, result: "I hit your limit of patience" })).toBeNull();
+    expect(usageLimitOf(RESULT)).toBeNull();
+    expect(usageLimitOf(null)).toBeNull();
+  });
+
+  it("knows an API error that says 429 or rate_limit_error", () => {
+    expect(
+      usageLimitOf({
+        type: "assistant",
+        error: { type: "rate_limit_error", message: "slow down" },
+      }),
+    ).toEqual({ until: null });
+    expect(usageLimitOf({ type: "system", subtype: "api_error", error: "API Error: 429" })).toEqual(
+      { until: null },
+    );
+    expect(usageLimitOf({ type: "assistant", error: { type: "overloaded_error" } })).toBeNull();
+    expect(usageLimitOf(parseEvent(message([{ type: "text", text: "429" }])))).toBeNull();
+  });
+});
 
 describe("agent-turn.mjs", () => {
   it("records the session of a first turn, and exits 0 when the turn ends", () => {
@@ -284,5 +360,34 @@ describe("agent-turn.mjs", () => {
     expect(run.code).toBe(1);
     expect(run.session).toBeNull();
     expect(run.stdout).toContain("No conversation found");
+  });
+
+  it("keeps a failed run's last lines for whoever looks into it", () => {
+    const run = turn({ lines: [JSON.stringify(INIT), "boom"], code: 1 });
+
+    expect(run.code).toBe(1);
+    expect(run.file("last-failure.jsonl")).toBe(`${JSON.stringify(INIT)}\nboom\n`);
+  });
+
+  it("exits 3 on a usage limit, with its reset, even when the run otherwise ended", () => {
+    const run = turn({
+      lines: [JSON.stringify(INIT), JSON.stringify(REJECTED), JSON.stringify(RESULT)],
+    });
+
+    expect(run.code).toBe(3);
+    expect(run.stderr).toMatch(/usage limit reached; resets \d\d:\d\d/);
+    expect(run.file("limited-until")).toBe("1761400800\n");
+    expect(run.file("usage-limit-sample.json")).toBe(`${JSON.stringify(REJECTED)}\n`);
+    expect(run.file("last-failure.jsonl")).toBeNull();
+  });
+
+  it("exits 3 with an unknown reset, and never forgets the session over a limit", () => {
+    const limit = errorResult("You've hit your limit · resets 3pm");
+    const run = turn({ lines: [JSON.stringify(limit)], code: 1, session: SESSION_ID });
+
+    expect(run.code).toBe(3);
+    expect(run.stderr).toMatch(/reset time unknown/);
+    expect(run.file("limited-until")).toBe("");
+    expect(run.session).toBe(SESSION_ID);
   });
 });

@@ -2,6 +2,8 @@ import {
   ADDRESS_LIMIT,
   ADDRESS_LIMIT_MESSAGE,
   CLIENT_LIMIT,
+  RATE_LIMIT,
+  RATE_LIMIT_MESSAGE,
   ROOM_LIMIT,
   SERVER_FULL_MESSAGE,
 } from "@vibewars/game-protocol";
@@ -11,18 +13,23 @@ import { LobbyNotFoundError, capacityRefusal, joinByCodeFailure } from "./lobby-
 
 const refused = (code: number): Error => Object.assign(new Error("refused"), { code });
 
-describe("capacityRefusal (#114, #265)", () => {
+describe("capacityRefusal (#114, #265, #282)", () => {
   it("says the server is full for ROOM_LIMIT and CLIENT_LIMIT", () => {
     expect(capacityRefusal(refused(ROOM_LIMIT))).toBe(SERVER_FULL_MESSAGE);
     expect(capacityRefusal(refused(CLIENT_LIMIT))).toBe(SERVER_FULL_MESSAGE);
   });
 
-  it("says this network is over its share for ADDRESS_LIMIT", () => {
+  it("says this network holds too many seats for ADDRESS_LIMIT", () => {
     expect(capacityRefusal(refused(ADDRESS_LIMIT))).toBe(ADDRESS_LIMIT_MESSAGE);
   });
 
+  it("says to wait a moment, not to close tabs, for RATE_LIMIT", () => {
+    expect(capacityRefusal(refused(RATE_LIMIT))).toBe(RATE_LIMIT_MESSAGE);
+    expect(RATE_LIMIT_MESSAGE).not.toContain("tabs");
+  });
+
   it("survives a join by code, so the player is not told the code is wrong", () => {
-    for (const code of [ROOM_LIMIT, CLIENT_LIMIT, ADDRESS_LIMIT]) {
+    for (const code of [ROOM_LIMIT, CLIENT_LIMIT, ADDRESS_LIMIT, RATE_LIMIT]) {
       const error = refused(code);
       expect(joinByCodeFailure(error, "ABCD")).toBe(error);
     }
