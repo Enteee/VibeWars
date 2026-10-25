@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   CHUNK_BYTES,
+  MAX_KEPT,
   MAX_LINE_BYTES,
   ROLE_BYTES,
   createUsageReader,
@@ -178,10 +179,11 @@ describe("createUsageReader", () => {
   });
 
   /** @param {ReturnType<typeof createUsageReader>} reader */
-  const ids = (reader) => (reader.read(now - WINDOW) ?? []).map((r) => `${r.role}:${r.id}`).sort();
+  const ids = (reader) =>
+    (reader.read(now - WINDOW, now)?.records ?? []).map((r) => `${r.role}:${r.id}`).sort();
 
   it("is null before any agent has a box", () => {
-    expect(createUsageReader(path.join(boxes, "missing"), ["manager"]).read(0)).toBeNull();
+    expect(createUsageReader(path.join(boxes, "missing"), ["manager"]).read(0, now)).toBeNull();
   });
 
   it("adds only the replies appended since the last read", () => {
@@ -210,6 +212,35 @@ describe("createUsageReader", () => {
     fs.rmSync(log);
     fs.writeFileSync(log, `${reply("m4", now)}\n${reply("m5", now)}\n${reply("m6", now)}\n`);
     expect(ids(reader)).toContain("manager:m6");
+  });
+
+  it("does not keep a reply dated in the future", () => {
+    const reader = createUsageReader(boxes, ["manager"]);
+    fs.writeFileSync(log, `${reply("future", now + HOUR)}\n${reply("new", now)}\n`);
+    expect(ids(reader)).toEqual(["manager:new"]);
+  });
+
+  it("keeps at most MAX_KEPT replies of a role, and says it is over the cap", () => {
+    const reader = createUsageReader(boxes, ["manager", "architect"]);
+    const other = path.join(boxes, "architect", "config", "projects", "-p", "s.jsonl");
+    fs.mkdirSync(path.dirname(other), { recursive: true });
+    fs.writeFileSync(other, `${reply("a1", now)}\n`);
+    fs.writeFileSync(
+      log,
+      Array.from({ length: MAX_KEPT + 10_000 }, (_, i) => `${reply(`m${String(i)}`, now)}\n`).join(
+        "",
+      ),
+    );
+    const refreshes = Math.ceil(fs.statSync(log).size / CHUNK_BYTES) + 1;
+    /** @type {ReturnType<ReturnType<typeof createUsageReader>["read"]>} */
+    let read = null;
+    for (let i = 0; i < refreshes; i++) {
+      read = reader.read(now - WINDOW, now);
+    }
+    const records = read?.records ?? [];
+    expect(records.filter((r) => r.role === "manager")).toHaveLength(MAX_KEPT);
+    expect(records.filter((r) => r.role === "architect")).toHaveLength(1);
+    expect([...(read?.capped ?? [])]).toEqual(["manager"]);
   });
 
   it("forgets replies older than it was asked for", () => {
@@ -242,7 +273,8 @@ describe("createUsageReader, on a tree the jail controls (#329)", () => {
   });
 
   /** @param {ReturnType<typeof createUsageReader>} reader */
-  const ids = (reader) => (reader.read(now - WINDOW) ?? []).map((r) => `${r.role}:${r.id}`).sort();
+  const ids = (reader) =>
+    (reader.read(now - WINDOW, now)?.records ?? []).map((r) => `${r.role}:${r.id}`).sort();
 
   /** @param {string} line */
   const ok = (line) => {

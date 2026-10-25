@@ -192,6 +192,16 @@ const MAX_DEPTH = 4;
 /** Entries looked at per role and refresh, so a million empty dirs cost little. */
 const MAX_ENTRIES = 20_000;
 
+/**
+ * The most replies kept per role, well above a real day's. A jail writing
+ * fake replies fills its own row up to this and is shown as over it; real
+ * replies already kept are never dropped to make room.
+ */
+export const MAX_KEPT = 20_000;
+
+/** A reply dated further ahead than this is not believed, so never kept. */
+const MAX_SKEW_MS = 60_000;
+
 const { O_NOFOLLOW, O_NONBLOCK, O_RDONLY } = fs.constants;
 
 /**
@@ -282,7 +292,30 @@ export function createUsageReader(boxes, roles) {
   const cursors = new Map();
   /** @type {Map<string, UsageRecord & { role: string }>} */
   const kept = new Map();
+  /** @type {Map<string, number>} replies kept per role */
+  const keptBy = new Map();
+  /** @type {Map<string, number>} the newest reply each role had refused at `MAX_KEPT` */
+  const refused = new Map();
   let refresh = 0;
+
+  /**
+   * @param {UsageRecord} record
+   * @param {string} role
+   */
+  function keep(record, role) {
+    const old = kept.get(record.id);
+    if (old?.role !== role) {
+      if ((keptBy.get(role) ?? 0) >= MAX_KEPT) {
+        refused.set(role, Math.max(refused.get(role) ?? record.ts, record.ts));
+        return;
+      }
+      if (old !== undefined) {
+        keptBy.set(old.role, (keptBy.get(old.role) ?? 1) - 1);
+      }
+      keptBy.set(role, (keptBy.get(role) ?? 0) + 1);
+    }
+    kept.set(record.id, { ...record, role });
+  }
 
   /**
    * How many bytes `name` has that were not read yet, by `lstat`: a guess
@@ -320,9 +353,10 @@ export function createUsageReader(boxes, roles) {
    * @param {string} key the file's cursor
    * @param {string} role
    * @param {number} since replies before this are not kept
+   * @param {number} now replies dated past this, give or take, are not kept
    * @param {number} allowance
    */
-  function readFile(dir, name, key, role, since, allowance) {
+  function readFile(dir, name, key, role, since, now, allowance) {
     /** @type {number} */
     let fd;
     try {
@@ -368,8 +402,8 @@ export function createUsageReader(boxes, roles) {
           .toString("utf8")
           .split("\n")) {
           const record = line === "" ? null : parseUsageLine(line);
-          if (record !== null && record.ts >= since) {
-            kept.set(record.id, { ...record, role });
+          if (record !== null && record.ts >= since && record.ts <= now + MAX_SKEW_MS) {
+            keep(record, role);
           }
         }
         used = end + 1;
@@ -388,13 +422,16 @@ export function createUsageReader(boxes, roles) {
 
   return {
     /**
-     * Every reply since `since`, after reading what is new.
+     * Every reply since `since`, after reading what is new, and the roles
+     * that had one refused at `MAX_KEPT` since then, so their counts are
+     * short.
      *
      * @param {number} since epoch milliseconds
-     * @returns {(UsageRecord & { role: string })[] | null} null when `boxes`
-     *   does not exist, so no agent has run yet
+     * @param {number} now epoch milliseconds
+     * @returns {{ records: (UsageRecord & { role: string })[], capped: Set<string> } | null}
+     *   null when `boxes` does not exist, so no agent has run yet
      */
-    read(since) {
+    read(since, now) {
       if (!fs.existsSync(boxes)) {
         return null;
       }
@@ -430,7 +467,7 @@ export function createUsageReader(boxes, roles) {
             const key = `${role}/${rel}`;
             const allowance = allowed.get(key);
             if (allowance !== undefined) {
-              readFile(dir, name, key, role, since, allowance);
+              readFile(dir, name, key, role, since, now, allowance);
             }
           });
         }
@@ -443,9 +480,19 @@ export function createUsageReader(boxes, roles) {
       for (const [id, record] of kept) {
         if (record.ts < since) {
           kept.delete(id);
+          keptBy.set(record.role, (keptBy.get(record.role) ?? 1) - 1);
         }
       }
-      return [...kept.values()];
+      /** @type {Set<string>} */
+      const capped = new Set();
+      for (const [role, newest] of refused) {
+        if (newest < since) {
+          refused.delete(role);
+        } else {
+          capped.add(role);
+        }
+      }
+      return { records: [...kept.values()], capped };
     },
   };
 }

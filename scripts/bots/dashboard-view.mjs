@@ -356,6 +356,8 @@ function hubSection({ hub }, width) {
  *
  * @typedef {object} ClaudeUsage
  * @property {import("./claude-usage.mjs").UsageSummary} summary
+ * @property {ReadonlySet<string>} capped roles whose counts are short: their
+ *   logs hold more replies than are kept
  * @property {number} now epoch milliseconds
  */
 
@@ -385,7 +387,7 @@ function claudeSection({ roles, claude }, width) {
   if (claude === null) {
     return [cut("CLAUDE usage unknown (no agent logs yet)", width)];
   }
-  const { summary, now } = claude;
+  const { summary, capped, now } = claude;
   let top = "";
   let most = 0;
   for (const [role, usage] of summary.roles) {
@@ -405,7 +407,10 @@ function claudeSection({ roles, claude }, width) {
       if (usage === undefined) {
         return cut(usageRow(role, ["—"], ""), width);
       }
-      const model = usage.model.replace(/^claude-/, "");
+      // The model is agent-written, printed into the operator's tmux: see
+      // `visible`. A capped row says so instead, where no model can push it
+      // out of the pane.
+      const model = capped.has(role) ? "over cap" : visible(usage.model.replace(/^claude-/, ""));
       const line = cut(
         usageRow(role, counts(usage), `${model}${role === top ? "  <- top" : ""}`),
         width,

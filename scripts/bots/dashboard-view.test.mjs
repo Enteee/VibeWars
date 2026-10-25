@@ -241,6 +241,7 @@ describe("companyLines", () => {
     });
     const claude = {
       now: new Date(2026, 9, 25, 16, 42).getTime(),
+      capped: new Set(),
       summary: {
         roles: new Map([
           ["manager", usage(61_000)],
@@ -265,6 +266,38 @@ describe("companyLines", () => {
     for (const line of lines) {
       expect(columnsOf(line)).toBeLessThanOrEqual(72);
     }
+  });
+
+  it("escapes the agent-written model, and shows a capped role as over cap (#50)", () => {
+    const usage = (/** @type {number} */ output, /** @type {string} */ model) => ({
+      replies: 20_000,
+      output,
+      input: 0,
+      cacheRead: 0,
+      model,
+    });
+    const claude = {
+      now: new Date(2026, 9, 25, 16, 42).getTime(),
+      capped: new Set(["architect"]),
+      summary: {
+        roles: new Map([
+          ["manager", usage(5, "\u001b]0;x\u0007\u001b[2J")],
+          ["architect", usage(50, "claude-opus-5-5".padEnd(80, "x"))],
+        ]),
+        total: usage(55, ""),
+        todayOutput: 55,
+      },
+    };
+    const lines = companyLines(
+      { roles, live: new Set(), budget: null, hub, reboot: null, claude },
+      { rows: 40, width: 72 },
+    );
+    // The manager's row is not the top one, so nothing paints it.
+    const manager = lines.find((line) => line.startsWith("  manager")) ?? "";
+    expect(manager).not.toContain("\u001b");
+    expect(manager).toMatch(/ {2}␛\]0;x�␛\[2J$/);
+    const architect = plain(lines.find((line) => line.includes("  architect")) ?? "");
+    expect(architect).toMatch(/ {2}over cap {2}<- top$/);
   });
 
   it("cuts an overflow with … +N lines", () => {

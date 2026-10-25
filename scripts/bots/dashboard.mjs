@@ -225,11 +225,15 @@ function claude() {
   const midnight = new Date(now);
   midnight.setHours(0, 0, 0, 0);
   const dayStart = midnight.getTime();
-  const records = usage?.read(Math.min(dayStart, now - WINDOW_MS)) ?? null;
-  if (records === null) {
+  const read = usage?.read(Math.min(dayStart, now - WINDOW_MS), now) ?? null;
+  if (read === null) {
     return null;
   }
-  return { summary: summarize(records, { now, windowMs: WINDOW_MS, dayStart }), now };
+  return {
+    summary: summarize(read.records, { now, windowMs: WINDOW_MS, dayStart }),
+    capped: read.capped,
+    now,
+  };
 }
 
 function budget() {
