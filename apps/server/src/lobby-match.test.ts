@@ -375,10 +375,10 @@ describe("a lobby's own match", () => {
     );
     const roomId = reservations[0]?.roomId ?? "";
     // Finish it now, rather than after ten minutes of play.
-    const finish = (): void => {
+    const finish = async (): Promise<void> => {
       const room = localRoom(roomId);
       if (!(room instanceof MatchRoom)) throw new Error("no match room");
-      room.endMatch();
+      await room.endMatch();
     };
     return { players, finish, roomId };
   }
@@ -390,7 +390,7 @@ describe("a lobby's own match", () => {
     });
     expect(calls).toBe(0);
 
-    finish();
+    await finish();
     expect(calls).toBe(1);
 
     await leaveAll(players);
@@ -413,7 +413,7 @@ describe("a lobby's own match", () => {
       throw new Error("the lobby is broken");
     });
 
-    finish();
+    await finish();
     await waitFor(() => players.every((player) => player.state.phase === "finished"), {
       label: "everyone sees the finish",
     });
