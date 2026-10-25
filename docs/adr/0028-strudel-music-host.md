@@ -305,6 +305,20 @@ ramp the bus as before.
 - **Rejected: queries in a Worker, nodes on the main thread.** It saves
   the roughly 4 % the queries cost, and the nodes are still made on the
   stalled thread.
+- **Measured** with `node scripts/music-stress.mjs --browser chromium
+--only match` (Armor ladder, SFX, HUD and key mashing; there is no 4v4
+  with bots locally). The box was very noisy (load 8–18), so only the
+  clean runs count:
+
+  | Screen, CPU throttle | Skipped, before | Skipped, after | Late events, before | Late events, after |
+  | -------------------- | --------------: | -------------: | ------------------: | -----------------: |
+  | match, 4x            |          150 ms |           0 ms |                  17 |                  0 |
+  | training, 4x         |          900 ms |           0 ms |                   – |                  – |
+
+  A later no-throttle run: 0 ms skipped, 0 late events. A 4x run on a
+  loaded box skipped 26.5 s and 6x ran too few ticks to say anything:
+  those are noise, not results.
+
 - **Not above 1 s.** More lead would hide a main thread that is too busy;
   that is the game's to fix.
 
