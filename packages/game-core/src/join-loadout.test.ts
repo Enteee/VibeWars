@@ -29,6 +29,13 @@ describe("resolveJoinLoadout", () => {
     expect(loadout.attributeRanks.get("elementalist.fire-magic")).toBe(12);
   });
 
+  it("keeps the bar's gaps where the build has them, so a key always means its slot (#347)", () => {
+    const gappy = [null, "elementalist.fireball", null, null, null, null, null, null];
+    const { loadout, refused } = resolveJoinLoadout({ ...LEGAL, skillBar: gappy }, RULES);
+    expect(refused).toBeUndefined();
+    expect(loadout.skillBar).toEqual(gappy);
+  });
+
   it("gives the house loadout for no build, without calling it a refusal", () => {
     expect(resolveJoinLoadout(undefined, RULES)).toEqual({
       loadout: HOUSE_LOADOUT,
