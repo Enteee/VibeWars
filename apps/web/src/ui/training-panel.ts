@@ -10,6 +10,7 @@ import { saveMuted } from "../audio/mute-preference.js";
 import { soundPlayer } from "../audio/sound-player.js";
 import { attackKeyIntents, isAttacking } from "../input/attack-key.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
+import { nextTabTarget } from "../input/tab-target.js";
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
 import type { MatchSnapshot, SkillSlot } from "../net/match-connection.js";
 import {
@@ -77,7 +78,7 @@ const LOG_CAP = 200;
 const METER_PAINT_SECONDS = 0.2;
 
 const HINT_IDLE = "click the arena to take control";
-const HINT_ARMED = "wasd move · 1–8 cast · click to target · space attack · esc to release";
+const HINT_ARMED = "wasd move · 1–8 cast · tab/click to target · space attack · esc to release";
 
 /**
  * Clicking one of these takes the keyboard, so it takes arena control
@@ -288,6 +289,19 @@ export function createTrainingPanel(): TrainingPanel {
     }
   };
 
+  /** Tab and Shift+Tab: the next living enemy by distance, as in a match (#55). */
+  const cycleTarget = (step: 1 | -1): void => {
+    if (session === undefined || session.parked) {
+      return;
+    }
+    const { players } = session.connection.getSnapshot();
+    const current = players.find((player) => player.sessionId === SELF_ID)?.targetSessionId;
+    const next = nextTabTarget(players, SELF_ID, current, step);
+    if (next !== undefined && next !== current) {
+      session.connection.sendIntent({ kind: "target", targetSessionId: next });
+    }
+  };
+
   const paintSkills = (slots: readonly SkillSlot[]): void => {
     skillButtons = slots.map((slot, index) => {
       const button = document.createElement("button");
@@ -434,6 +448,16 @@ export function createTrainingPanel(): TrainingPanel {
   let detachMovement = attachKeyboardMoveInput(stage, onMove);
 
   const onStageKeyDown = (event: KeyboardEvent): void => {
+    if (event.key === "Tab") {
+      // Never the browser's focus cycle while armed (#268): it would land in
+      // the name field, and the next key would type into it. Esc releases
+      // the stage, and then Tab is the browser's again.
+      event.preventDefault();
+      if (!event.repeat) {
+        cycleTarget(event.shiftKey ? -1 : 1);
+      }
+      return;
+    }
     if (event.key === " ") {
       event.preventDefault();
       // Held Space auto-repeats; one attack is all it means (#160).

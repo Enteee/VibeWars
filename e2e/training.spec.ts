@@ -322,3 +322,36 @@ test("(15) a weapon drill is never dimmed for want of a skill (#162)", async ({ 
   await expect(page.locator(".training-log")).toContainText("── Dodge drill ──");
   await expect(overlay).toBeHidden();
 });
+
+test("(16) Tab targets in the arena and never leaves it for the name field (#268)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  const name = page.locator("input.editor-name");
+  const original = await name.inputValue();
+  await page.locator("select.training-scenario").selectOption("weapon-dps");
+  await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
+  await takeControl(page);
+
+  // The repro: Tab used to move focus to the name field, and Space then
+  // typed into it.
+  await page.keyboard.press("Tab");
+  await page.keyboard.press(" ");
+  await expect(page.locator(".training-stage")).toBeFocused();
+  await expect(name).toHaveValue(original);
+  // The Space was the arena's: a swing at the dummy Tab picked.
+  await expect(meter(page, "weapon / skills")).not.toHaveText(/^0 \//, { timeout: 3000 });
+  await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Melee dummy/);
+});
+
+test("(17) after Esc releases the arena, Tab is the browser's again (#268)", async ({ page }) => {
+  await openTraining(page);
+  await takeControl(page);
+  await page.keyboard.press("Tab");
+  await expect(page.locator(".training-stage")).toBeFocused();
+
+  // Nothing is attacking, so one Esc releases; no keyboard trap.
+  await releaseControl(page);
+  await page.keyboard.press("Tab");
+  await expect(page.locator(".training-stage")).not.toBeFocused();
+});
