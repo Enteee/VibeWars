@@ -15,6 +15,10 @@ import { findFreePort, waitFor } from "./testing/harness.js";
  * rather than merely present in `game-core`: real clients, real intents,
  * real authoritative state coming back.
  */
+
+/** For a test that waits on walking and swinging in real game time. */
+const GAME_TIME = { timeout: 20_000 };
+
 describe("networked combat", () => {
   let server: GameServer;
   let port: number;
@@ -363,80 +367,91 @@ describe("networked combat", () => {
     return heard;
   }
 
-  it("attacks with the weapon: shown to everyone, hits as cause weapon, cancel ends it", async () => {
-    const { roomA, roomB } = await joinPair();
-    const heard = combatMessages(roomB);
-    await closeDistance(roomA, roomB.sessionId, 60);
+  // Real game time, not a slow test: the two walk up to 800 units apart
+  // at 180 a second (4.5 s), then wait out a swing (1.75 s) and more. The
+  // default 5 s cannot hold that; 20 s does, with room for a busy runner.
+  it(
+    "attacks with the weapon: shown to everyone, hits as cause weapon, cancel ends it",
+    GAME_TIME,
+    async () => {
+      const { roomA, roomB } = await joinPair();
+      const heard = combatMessages(roomB);
+      await closeDistance(roomA, roomB.sessionId, 60);
 
-    roomA.send("intent", { kind: "attack", targetId: roomB.sessionId });
-    await waitFor(
-      () => roomB.state.players.get(roomA.sessionId)?.attackTargetSessionId === roomB.sessionId,
-      { label: "the attack, as B sees it" },
-    );
-    await waitFor(
-      () =>
-        heard.some(
-          (message) =>
-            message.cause === "weapon" &&
-            message.casterSessionId === roomA.sessionId &&
-            message.skillId === "" &&
-            message.events.some((event) => event.kind === "damage"),
-        ),
-      { timeoutMs: 6000, label: "a weapon hit" },
-    );
+      roomA.send("intent", { kind: "attack", targetId: roomB.sessionId });
+      await waitFor(
+        () => roomB.state.players.get(roomA.sessionId)?.attackTargetSessionId === roomB.sessionId,
+        { label: "the attack, as B sees it" },
+      );
+      await waitFor(
+        () =>
+          heard.some(
+            (message) =>
+              message.cause === "weapon" &&
+              message.casterSessionId === roomA.sessionId &&
+              message.skillId === "" &&
+              message.events.some((event) => event.kind === "damage"),
+          ),
+        { timeoutMs: 6000, label: "a weapon hit" },
+      );
 
-    roomA.send("intent", { kind: "cancel-attack" });
-    await waitFor(() => roomB.state.players.get(roomA.sessionId)?.attackTargetSessionId === "", {
-      label: "the attack to end",
-    });
+      roomA.send("intent", { kind: "cancel-attack" });
+      await waitFor(() => roomB.state.players.get(roomA.sessionId)?.attackTargetSessionId === "", {
+        label: "the attack to end",
+      });
 
-    await roomA.leave();
-    await roomB.leave();
-  });
+      await roomA.leave();
+      await roomB.leave();
+    },
+  );
 
-  it("puts a ranged shot in the shared state while it flies, and takes it out when it lands", async () => {
-    // An elementalist's default weapon is a ranged one.
-    const caster = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
-      protocolVersion: PROTOCOL_VERSION,
-      build: {
-        name: "Shooter",
-        primaryProfession: "elementalist",
-        secondaryProfession: undefined,
-        attributes: [{ attributeId: "elementalist.fire-magic", rank: 9 }],
-        skillBar: ["elementalist.fireball", null, null, null, null, null, null, null],
-        equipment: defaultBuildEquipment("elementalist"),
-      },
-    });
-    const victim = await new Client(endpoint).joinById(caster.roomId, {
-      protocolVersion: PROTOCOL_VERSION,
-    });
-    await waitFor(() => caster.state.players.has(victim.sessionId), { label: "both players" });
-    await closeDistance(caster, victim.sessionId, 200);
+  it(
+    "puts a ranged shot in the shared state while it flies, and takes it out when it lands",
+    GAME_TIME,
+    async () => {
+      // An elementalist's default weapon is a ranged one.
+      const caster = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+        protocolVersion: PROTOCOL_VERSION,
+        build: {
+          name: "Shooter",
+          primaryProfession: "elementalist",
+          secondaryProfession: undefined,
+          attributes: [{ attributeId: "elementalist.fire-magic", rank: 9 }],
+          skillBar: ["elementalist.fireball", null, null, null, null, null, null, null],
+          equipment: defaultBuildEquipment("elementalist"),
+        },
+      });
+      const victim = await new Client(endpoint).joinById(caster.roomId, {
+        protocolVersion: PROTOCOL_VERSION,
+      });
+      await waitFor(() => caster.state.players.has(victim.sessionId), { label: "both players" });
+      await closeDistance(caster, victim.sessionId, 200);
 
-    caster.send("intent", { kind: "attack", targetId: victim.sessionId });
-    await waitFor(() => victim.state.projectiles.length > 0, {
-      timeoutMs: 6000,
-      label: "a shot in flight",
-    });
-    const shot = victim.state.projectiles[0];
-    const me = victim.state.players.get(caster.sessionId);
-    expect(Math.hypot((shot?.x0 ?? 0) - (me?.x ?? 0), (shot?.y0 ?? 0) - (me?.y ?? 0))).toBeLessThan(
-      1,
-    );
-    expect(shot?.flightSeconds).toBeGreaterThan(0);
-    expect(shot?.launchedAt).toBeLessThanOrEqual(victim.state.elapsedSeconds);
+      caster.send("intent", { kind: "attack", targetId: victim.sessionId });
+      await waitFor(() => victim.state.projectiles.length > 0, {
+        timeoutMs: 6000,
+        label: "a shot in flight",
+      });
+      const shot = victim.state.projectiles[0];
+      const me = victim.state.players.get(caster.sessionId);
+      expect(
+        Math.hypot((shot?.x0 ?? 0) - (me?.x ?? 0), (shot?.y0 ?? 0) - (me?.y ?? 0)),
+      ).toBeLessThan(1);
+      expect(shot?.flightSeconds).toBeGreaterThan(0);
+      expect(shot?.launchedAt).toBeLessThanOrEqual(victim.state.elapsedSeconds);
 
-    const id = shot?.id;
-    await waitFor(
-      () => !victim.state.projectiles.some((flying: { id: number }) => flying.id === id),
-      {
-        label: "the shot to land",
-      },
-    );
+      const id = shot?.id;
+      await waitFor(
+        () => !victim.state.projectiles.some((flying: { id: number }) => flying.id === id),
+        {
+          label: "the shot to land",
+        },
+      );
 
-    await caster.leave();
-    await victim.leave();
-  });
+      await caster.leave();
+      await victim.leave();
+    },
+  );
 
   it("refuses an attack on an ally or on nobody, and tells only the attacker why", async () => {
     const { roomA, roomB } = await joinPair();
@@ -454,53 +469,57 @@ describe("networked combat", () => {
     await roomB.leave();
   });
 
-  it("syncs applied statuses so the client can show condition markers, and ticks them as degeneration", async () => {
-    const { roomA, roomB } = await joinPair();
-    await closeDistance(roomA, roomB.sessionId, 300);
-    roomA.send("intent", { kind: "target", targetSessionId: roomB.sessionId });
-    await waitFor(
-      () => roomA.state.players.get(roomA.sessionId)?.targetSessionId === roomB.sessionId,
-      { label: "target applied" },
-    );
+  it(
+    "syncs applied statuses so the client can show condition markers, and ticks them as degeneration",
+    GAME_TIME,
+    async () => {
+      const { roomA, roomB } = await joinPair();
+      await closeDistance(roomA, roomB.sessionId, 300);
+      roomA.send("intent", { kind: "target", targetSessionId: roomB.sessionId });
+      await waitFor(
+        () => roomA.state.players.get(roomA.sessionId)?.targetSessionId === roomB.sessionId,
+        { label: "target applied" },
+      );
 
-    // Sever Artery costs adrenaline, which is earned by landing attacks:
-    // so swing at them first. This is the adrenaline economy working as
-    // designed, not a workaround.
-    const heard = combatMessages(roomA);
-    roomA.send("intent", { kind: "attack", targetId: roomB.sessionId });
-    await waitFor(() => (roomA.state.players.get(roomA.sessionId)?.adrenaline ?? 0) > 0, {
-      timeoutMs: 6000,
-      label: "adrenaline from landing a hit",
-    });
+      // Sever Artery costs adrenaline, which is earned by landing attacks:
+      // so swing at them first. This is the adrenaline economy working as
+      // designed, not a workaround.
+      const heard = combatMessages(roomA);
+      roomA.send("intent", { kind: "attack", targetId: roomB.sessionId });
+      await waitFor(() => (roomA.state.players.get(roomA.sessionId)?.adrenaline ?? 0) > 0, {
+        timeoutMs: 6000,
+        label: "adrenaline from landing a hit",
+      });
 
-    await closeDistance(roomA, roomB.sessionId, 30);
-    roomA.send("intent", {
-      kind: "use-skill",
-      slot: DEFAULT_SKILL_BAR.indexOf("warrior.sever-artery-lite"),
-    });
+      await closeDistance(roomA, roomB.sessionId, 30);
+      roomA.send("intent", {
+        kind: "use-skill",
+        slot: DEFAULT_SKILL_BAR.indexOf("warrior.sever-artery-lite"),
+      });
 
-    await waitFor(() => (roomA.state.players.get(roomB.sessionId)?.statuses.length ?? 0) > 0, {
-      timeoutMs: 6000,
-      label: "status to appear",
-    });
+      await waitFor(() => (roomA.state.players.get(roomB.sessionId)?.statuses.length ?? 0) > 0, {
+        timeoutMs: 6000,
+        label: "status to appear",
+      });
 
-    const victim = roomA.state.players.get(roomB.sessionId);
-    expect([...(victim?.statuses ?? [])]).toContain("bleeding");
-    // The bleeding ticks as its bearer's, caused by degeneration, no skill.
-    await waitFor(
-      () =>
-        heard.some(
-          (message) =>
-            message.cause === "degeneration" &&
-            message.casterSessionId === roomB.sessionId &&
-            message.skillId === "",
-        ),
-      { label: "a bleeding tick" },
-    );
+      const victim = roomA.state.players.get(roomB.sessionId);
+      expect([...(victim?.statuses ?? [])]).toContain("bleeding");
+      // The bleeding ticks as its bearer's, caused by degeneration, no skill.
+      await waitFor(
+        () =>
+          heard.some(
+            (message) =>
+              message.cause === "degeneration" &&
+              message.casterSessionId === roomB.sessionId &&
+              message.skillId === "",
+          ),
+        { label: "a bleeding tick" },
+      );
 
-    await roomA.leave();
-    await roomB.leave();
-  });
+      await roomA.leave();
+      await roomB.leave();
+    },
+  );
 
   it("broadcasts combat events so clients can show floating numbers", async () => {
     const { roomA, roomB } = await joinPair();
