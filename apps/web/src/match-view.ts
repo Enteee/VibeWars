@@ -14,6 +14,8 @@ import { attachNameReveal } from "./input/name-reveal.js";
 import { nextTabTarget } from "./input/tab-target.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
 import { attachMatchMusic } from "./music/match-music.js";
+import { MUSIC_MODE, music } from "./music/play-music.js";
+import { TRACKS } from "./music/tracks/index.js";
 import { connectToMatch, type MatchTarget } from "./net/match-client.js";
 import type { MatchConnection, MatchSnapshot } from "./net/match-connection.js";
 import {
@@ -181,15 +183,17 @@ export async function startMatchView(
 
   const sounds = soundPlayer();
   const matchSounds = attachMatchSounds(connection, sounds);
-  // #371: the music player will take these; until then nothing plays.
   const matchMusic = attachMatchMusic(connection, {
     screen: "match",
-    mode: { kind: "auto" },
-    tracks: [],
-    onChange: () => undefined,
+    mode: MUSIC_MODE,
+    tracks: TRACKS,
+    onChange: (state) => {
+      music().follow(state);
+    },
   });
   const toggleMute = (): void => {
     sounds.setMuted(!sounds.muted);
+    music().setMuted(sounds.muted);
     saveMuted(sounds.muted);
     renderMute(hud, sounds.muted);
   };

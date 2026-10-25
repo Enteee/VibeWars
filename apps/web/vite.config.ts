@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url";
+
 import { defineConfig } from "vite";
 
 /**
@@ -15,8 +17,24 @@ export default defineConfig({
     // Phaser is large; a visible budget keeps us honest about what we add.
     chunkSizeWarningLimit: 1600,
     sourcemap: true,
+    // The sandboxed music host is a second page (ADR-0028).
+    rolldownOptions: {
+      input: { main: "index.html", "music-host": "music-host.html" },
+    },
   },
+  resolve: {
+    alias: {
+      // Strudel's repl builds a Kabelsalat REPL no track uses (ADR-0028).
+      "@kabelsalat/web": fileURLToPath(
+        new URL("./src/music/host/shims/kabelsalat-web.ts", import.meta.url),
+      ),
+    },
+  },
+  // The music host has an opaque origin, so its own module scripts and
+  // samples are cross-origin fetches with `Origin: null` (ADR-0028).
+  preview: { cors: { origin: "*" } },
   server: {
+    cors: { origin: "*" },
     port: 5173,
     strictPort: true,
     // No proxy to the game server. The client addresses it directly via
