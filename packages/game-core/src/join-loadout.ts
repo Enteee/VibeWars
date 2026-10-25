@@ -7,7 +7,7 @@ import {
   type PlayerBuild,
   type SkillBar,
 } from "./build.js";
-import type { BuildEquipment } from "./equipment/index.js";
+import { baseEnergyPipsFor, type BuildEquipment } from "./equipment/index.js";
 import type { ProfessionId } from "./professions.js";
 import type { AttributeRules } from "./ruleset.js";
 
@@ -61,6 +61,8 @@ export interface JoinLoadout {
   readonly primaryProfession: ProfessionId;
   readonly secondaryProfession: ProfessionId | undefined;
   readonly equipment: BuildEquipment;
+  /** Energy regeneration in pips, before effects (#502). */
+  readonly baseEnergyPips: number;
 }
 
 export const HOUSE_LOADOUT: JoinLoadout = {
@@ -69,6 +71,10 @@ export const HOUSE_LOADOUT: JoinLoadout = {
   primaryProfession: "warrior",
   secondaryProfession: undefined,
   equipment: DEFAULT_EQUIPMENT,
+  // A caster's 4 pips, not the warrior's 2: five of the eight skills
+  // are spells, and at 2 pips a first-time player gets one 10-energy
+  // spell every 15 s once the opening energy is gone.
+  baseEnergyPips: baseEnergyPipsFor("elementalist"),
 };
 
 /** Why a claimed build was turned down for the house loadout, for the host's log. */
@@ -117,6 +123,7 @@ export function resolveJoinLoadout(
       primaryProfession: build.primaryProfession,
       secondaryProfession: build.secondaryProfession,
       equipment: build.equipment,
+      baseEnergyPips: baseEnergyPipsFor(build.primaryProfession),
     },
     refused: undefined,
   };
