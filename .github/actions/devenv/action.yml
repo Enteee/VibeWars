@@ -20,7 +20,7 @@ runs:
     # Third-party actions are pinned to a commit, not a movable tag.
     - uses: nixbuild/nix-quick-install-action@5bb6a3b3abe66fd09bbf250dce8ada94f856a703 # v30
 
-    - uses: nix-community/cache-nix-action@135667ec418502fa5a3598af6fb9eb733888ce6a # v6
+    - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
       with:
         primary-key: nix-${{ runner.os }}-${{ hashFiles('devenv.nix', 'devenv.lock', 'devenv.yaml', 'nix/**') }}
         restore-prefixes-first-match: nix-${{ runner.os }}-
@@ -50,7 +50,7 @@ runs:
       shell: bash
       run: echo "npm_config_store_dir=$RUNNER_TEMP/pnpm-store" >> "$GITHUB_ENV"
 
-    - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+    - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
       with:
         path: ${{ runner.temp }}/pnpm-store
         key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
