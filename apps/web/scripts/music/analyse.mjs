@@ -46,6 +46,33 @@ export const BUILTIN_SOUNDS = new Set([
 export const MAX_PEAK_GAIN = 1.5;
 
 /**
+ * How long a track plays before it repeats exactly, at every level (#427):
+ * the menu sits at level 0 for minutes.
+ */
+export const MIN_FORM_SECONDS = 180;
+
+/** Different `phraseCycles` blocks a form must hold, at every level (#427). */
+export const MIN_DISTINCT_PHRASES = 4;
+
+/**
+ * The longest form the analyser looks for; a track that does not repeat
+ * within it is long enough. It queries twice this many cycles to find one.
+ */
+export const MAX_FORM_CYCLES = 128;
+
+/**
+ * Onsets per second at the top level, over the form (#427). Longer tracks
+ * must not cost more CPU than the ones measured here (#420's budget), so
+ * this is the densest shipped track on 2026-10-25, rounded up. Measured at
+ * the top level by `pnpm music:check`:
+ *
+ *   last-stand 30.94, clash-of-banners 30.04, hall-of-champions 19.73,
+ *   ember-deep 16.25, victors-hymn 14.06, northern-pass 11.65,
+ *   first-light 7.60, jungle-veil 6.00, glass-dunes 5.55, ashen-fields 2.41
+ */
+export const MAX_EVENTS_PER_SECOND = 31;
+
+/**
  * Controls that Strudel's voicing and scale helpers leave on an event as
  * bookkeeping. They are not sound parameters, so they are neither checked
  * against `KNOWN_CONTROLS` nor reported.
@@ -78,6 +105,12 @@ const BOOKKEEPING = new Set([
  * @property {string[][]} harmony pitches sounding at the start of each cycle
  * @property {number[]} silentMembers 1-based positions, in evaluation order, of
  *   `stack(...)` members that play no event in the queried cycles
+ * @property {number} formCycles cycles before the event keys repeat exactly,
+ *   `MAX_FORM_CYCLES` if they do not within it
+ * @property {number | null} formSeconds `formCycles` at the source's tempo,
+ *   null when it sets none
+ * @property {number} distinctPhrases different `phraseCycles` blocks in the form
+ * @property {number | null} eventsPerSecond onsets per second over the form
  */
 
 /** @type {Promise<Engine> | null} */
@@ -145,11 +178,65 @@ const pitchClass = (note) => {
 };
 
 /**
+ * What an onset is, for telling cycles apart: when in its cycle, which sound,
+ * which pitch. Continuous controls (`gain`, `lpf`, `pan`, ...) are left out,
+ * so a slow `sine` on a filter cannot pass for variation.
+ *
+ * @param {number} offset onset time from the start of its cycle
+ * @param {Record<string, unknown>} value
+ * @returns {string}
+ */
+const eventKey = (offset, value) =>
+  JSON.stringify([offset.toFixed(6), value.s, value.note ?? value.n, value.bank]);
+
+/**
+ * The smallest `p` in `1 … max` that every cycle queried repeats after;
+ * `max` if none does. Every cycle, not just the first `p`: a track that
+ * holds one section for 16 cycles has not come round after 2 of them.
+ *
+ * @param {readonly (readonly string[])[]} cycles sorted event keys per cycle,
+ *   `2 × max` of them
+ * @param {number} max
+ * @returns {number}
+ */
+export function formOf(cycles, max) {
+  const same = (/** @type {number} */ a, /** @type {number} */ b) =>
+    (cycles[a] ?? []).join("\n") === (cycles[b] ?? []).join("\n");
+  for (let p = 1; p < max; p++) {
+    let repeats = true;
+    for (let c = 0; c + p < cycles.length && repeats; c++) repeats = same(c, c + p);
+    if (repeats) return p;
+  }
+  return max;
+}
+
+/**
+ * How many different blocks of `phraseCycles` the first `form` cycles hold,
+ * a block compared with its times taken from its own start.
+ *
+ * @param {readonly (readonly string[])[]} cycles as for `formOf`
+ * @param {number} form
+ * @param {number} phraseCycles
+ * @returns {number}
+ */
+export function distinctPhrasesOf(cycles, form, phraseCycles) {
+  const blocks = new Set();
+  for (let start = 0; start < form; start += phraseCycles) {
+    const block = [];
+    for (let c = start; c < Math.min(start + phraseCycles, form); c++) {
+      block.push((cycles[c] ?? []).join("\n"));
+    }
+    blocks.add(block.join("\n--\n"));
+  }
+  return blocks.size;
+}
+
+/**
  * @param {string} source
- * @param {{ intensity: number, cycles: number, key: string, colour?: readonly string[] }} options
+ * @param {{ intensity: number, cycles: number, key: string, colour?: readonly string[], phraseCycles: number }} options
  * @returns {Promise<Analysis>}
  */
-export async function analyseTrack(source, { intensity, cycles, key, colour = [] }) {
+export async function analyseTrack(source, { intensity, cycles, key, colour = [], phraseCycles }) {
   const { evaluate, ref } = await loadEngine();
   /** @type {string[]} */
   const warnings = [];
@@ -234,6 +321,20 @@ export async function analyseTrack(source, { intensity, cycles, key, colour = []
 
     const silentMembers = members.flatMap((m, i) => (queried(m).length === 0 ? [i + 1] : []));
 
+    // The form needs far more cycles than the rules above, so it has its own query.
+    /** @type {string[][]} */
+    const keysByCycle = Array.from({ length: 2 * MAX_FORM_CYCLES }, () => []);
+    for (const h of pattern.queryArc(0, 2 * MAX_FORM_CYCLES)) {
+      if (!h.hasOnset()) continue;
+      const begin = h.whole.begin.valueOf();
+      const cycle = Math.floor(begin);
+      keysByCycle[cycle]?.push(eventKey(begin - cycle, h.value));
+    }
+    for (const keys of keysByCycle) keys.sort();
+    const formCycles = formOf(keysByCycle, MAX_FORM_CYCLES);
+    const formSeconds = repl.cpm === null ? null : (formCycles * 60) / repl.cpm;
+    const formEvents = keysByCycle.slice(0, formCycles).reduce((n, keys) => n + keys.length, 0);
+
     return {
       cpm: repl.cpm,
       events: events.length,
@@ -244,6 +345,10 @@ export async function analyseTrack(source, { intensity, cycles, key, colour = []
       warnings,
       harmony,
       silentMembers,
+      formCycles,
+      formSeconds,
+      distinctPhrases: distinctPhrasesOf(keysByCycle, formCycles, phraseCycles),
+      eventsPerSecond: formSeconds === null ? null : formEvents / formSeconds,
     };
   } finally {
     restore();
@@ -267,10 +372,12 @@ export function allowedSounds(sampleMap) {
  * Runs a track at every intensity level `0 … layers−1` and applies the rules
  * of #369: no evaluation error or warning, tempo matches, every note in key,
  * every stack member sounds at the top level, each level adds events, only
- * allowed sounds and known controls, no clipping. Each problem names the
- * track, the level and the offending value.
+ * allowed sounds and known controls, no clipping. And of #427: at every level
+ * a form of at least `MIN_FORM_SECONDS` holding `MIN_DISTINCT_PHRASES`, and at
+ * the top no more than `MAX_EVENTS_PER_SECOND`. Each problem names the track,
+ * the level and the offending value.
  *
- * @param {{ id: string, source: string, bpm: number, key: string, colour: readonly string[], layers: number }} track
+ * @param {{ id: string, source: string, bpm: number, key: string, colour: readonly string[], layers: number, phraseCycles: number }} track
  * @param {{ cycles: number, allowedSounds: ReadonlySet<string> }} options
  * @returns {Promise<{ levels: (Analysis | null)[], problems: string[] }>}
  */
@@ -289,6 +396,7 @@ export async function checkTrack(track, { cycles, allowedSounds: allowed }) {
         cycles,
         key: track.key,
         colour: track.colour,
+        phraseCycles: track.phraseCycles,
       });
     } catch (e) {
       problems.push(`${at}: evaluation error: ${e instanceof Error ? e.message : String(e)}`);
@@ -319,6 +427,22 @@ export async function checkTrack(track, { cycles, allowedSounds: allowed }) {
       for (const m of a.silentMembers) {
         problems.push(`${at}: stack member #${String(m)} plays no event at the highest level`);
       }
+      if (a.eventsPerSecond !== null && a.eventsPerSecond > MAX_EVENTS_PER_SECOND) {
+        problems.push(
+          `${at}: ${a.eventsPerSecond.toFixed(1)} events per second, want ≤ ${String(MAX_EVENTS_PER_SECOND)}`,
+        );
+      }
+    }
+    // Without a tempo there are no seconds; the tempo rule has said so already.
+    if (a.formSeconds !== null && a.formSeconds < MIN_FORM_SECONDS) {
+      problems.push(
+        `${at}: repeats after ${a.formSeconds.toFixed(0)} s (${String(a.formCycles)} cycles), want ≥ ${String(MIN_FORM_SECONDS)} s`,
+      );
+    }
+    if (a.distinctPhrases < MIN_DISTINCT_PHRASES) {
+      problems.push(
+        `${at}: ${String(a.distinctPhrases)} distinct phrase(s) of ${String(track.phraseCycles)} cycles, want ≥ ${String(MIN_DISTINCT_PHRASES)}`,
+      );
     }
     const before = levels[level - 1];
     if (before && a.events <= before.events) {
