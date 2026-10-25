@@ -5,11 +5,13 @@ import { defineConfig, devices } from "@playwright/test";
 /**
  * Browser tests (brief §31 "Browser tests").
  *
- * These drive a real browser against a real server: create a character,
- * host a lobby, join it from a second browser context, start a match,
- * move, and activate a skill. Everything below the UI already has
- * headless coverage — what only a browser can tell us is whether the
- * pieces are actually wired to each other.
+ * These drive a real browser against the real static build: create a
+ * character, host a lobby, join it from a second page, start a match,
+ * move, and activate a skill. Every page of a test shares one
+ * `BrowserContext`, since a BroadcastChannel reaches nothing outside it:
+ * open them with `openPeers` (`e2e/helpers/peers.ts`). Everything below
+ * the UI already has headless coverage — what only a browser can tell us
+ * is whether the pieces are actually wired to each other.
  *
  * The browser is the one the machine already has rather than a
  * Playwright-managed download: this environment cannot fetch Playwright's
@@ -21,15 +23,15 @@ import { defineConfig, devices } from "@playwright/test";
 const PORT = Number(process.env.VIBEWARS_E2E_PORT ?? 2577);
 /**
  * The static GitHub Pages build (#103), served by `vite preview` under the
- * same sub-path and flags `pages.yml` deploys `next` with. It builds into
- * its own directory so the server-served `apps/web/dist` stays untouched.
+ * sub-path `pages.yml` deploys `next` at, with one difference: its pages
+ * play over BroadcastChannel rather than Trystero (#403), so they find
+ * each other with no relay and no network. It builds into its own
+ * directory, so a dev build in `apps/web/dist` stays untouched.
  *
- * Playwright starts every webServer whatever `--project` selects, so even
- * a chromium-only run pays for this build (about 2s of vite today).
+ * `baseURL` ends in the sub-path, so every `goto` is relative: `./`.
  */
-const STATIC_PORT = PORT + 1;
-const STATIC_BASE = "/VibeWars/next/";
-const STATIC_URL = `http://127.0.0.1:${String(STATIC_PORT)}${STATIC_BASE}`;
+const BASE = "/VibeWars/next/";
+const BASE_URL = `http://127.0.0.1:${String(PORT)}${BASE}`;
 function resolveChromium(): string {
   const override = process.env.VIBEWARS_CHROMIUM;
   if (override !== undefined && override !== "") {
@@ -63,51 +65,22 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   reporter: process.env.CI === "true" ? [["list"]] : [["list"]],
   use: {
-    baseURL: `http://127.0.0.1:${String(PORT)}`,
+    baseURL: BASE_URL,
     trace: "retain-on-failure",
     // --no-sandbox because the sandbox this runs in cannot nest Chromium's
     // own. Acceptable here: the only page ever loaded is our own client.
     launchOptions: { executablePath, args: ["--no-sandbox"] },
   },
-  projects: [
-    {
-      name: "chromium",
-      testIgnore: "static.spec.ts",
-      use: { ...devices["Desktop Chrome"] },
-    },
-    {
-      name: "static",
-      testMatch: "static.spec.ts",
-      use: { ...devices["Desktop Chrome"], baseURL: STATIC_URL },
-    },
-  ],
-  webServer: [
-    {
-      // The real production entry point serving the real built client, so
-      // these tests cannot pass against a dev-only code path.
-      command: `node apps/server/dist/main.js`,
-      url: `http://127.0.0.1:${String(PORT)}/healthz`,
-      // Every browser here comes from 127.0.0.1, so the per-address caps
-      // (#265) are lifted; network-robustness.test.ts tests them.
-      env: {
-        PORT: String(PORT),
-        HOST: "127.0.0.1",
-        VIBEWARS_MAX_CLIENTS_PER_ADDRESS: "10000",
-        VIBEWARS_MATCHMAKING_BURST: "10000",
-      },
-      reuseExistingServer: false,
-      timeout: 60_000,
-    },
-    {
-      command:
-        "pnpm --filter @vibewars/web exec vite build --outDir dist-static && " +
-        `pnpm --filter @vibewars/web exec vite preview --outDir dist-static ` +
-        `--host 127.0.0.1 --port ${String(STATIC_PORT)} --strictPort`,
-      url: STATIC_URL,
-      env: { VIBEWARS_BASE: STATIC_BASE, VITE_VIBEWARS_ONLINE: "off" },
-      reuseExistingServer: false,
-      // It builds the client first, which takes far longer than a start.
-      timeout: 180_000,
-    },
-  ],
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  webServer: {
+    command:
+      "pnpm --filter @vibewars/web exec vite build --outDir dist-static && " +
+      `pnpm --filter @vibewars/web exec vite preview --outDir dist-static ` +
+      `--host 127.0.0.1 --port ${String(PORT)} --strictPort`,
+    url: BASE_URL,
+    env: { VIBEWARS_BASE: BASE, VITE_VIBEWARS_TRANSPORT: "broadcast" },
+    reuseExistingServer: false,
+    // It builds the client first, which takes far longer than a start.
+    timeout: 180_000,
+  },
 });

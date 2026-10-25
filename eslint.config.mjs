@@ -146,6 +146,33 @@ export default defineConfig([
     },
   },
 
+  // The client plays peer to peer (#403): nothing in it talks to Colyseus.
+  {
+    files: ["apps/web/src/**/*.ts"],
+    ignores: [
+      "apps/web/src/net/transport/trystero.ts",
+      "apps/web/src/net/transport/trystero.test.ts",
+    ],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@colyseus/*"],
+              message: "apps/web plays over a Transport; Colyseus is the old server's.",
+            },
+            {
+              group: ["trystero", "trystero/*", "@trystero-p2p/*"],
+              message:
+                "Only apps/web/src/net/transport/trystero.ts (and its test) imports Trystero.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // A session runs in a page, a worker and Node alike, and is handed its
   // Transport (#15): no Node built-ins, and no transport library.
   {

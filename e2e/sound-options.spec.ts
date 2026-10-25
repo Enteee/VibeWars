@@ -7,7 +7,7 @@ import { expect, test } from "@playwright/test";
  */
 
 test("a sound effects volume of 0 set in Options is kept after a reload", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "options" }).click();
   // Sound is the first section, so Options opens on it.
   await expect(page.locator('.options-entry[data-section="sound"]')).toHaveClass(/is-selected/);
@@ -24,7 +24,7 @@ test("a sound effects volume of 0 set in Options is kept after a reload", async 
 test("music muted in Options shows muted in the HUD popover, and mute all follows the HUD button", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "options" }).click();
   await page.getByLabel("Mute music").check();
   await page.getByRole("button", { name: "back", exact: true }).click();

@@ -15,7 +15,7 @@ import { skillKey } from "./keys.js";
 
 /** The roster lives on the entry screen, so the editor is one click away. */
 async function newCharacter(page: Page): Promise<void> {
-  await page.goto("/");
+  await page.goto("./");
   await expect(page.locator(".roster")).toBeVisible();
   await page.getByRole("button", { name: "new character" }).click();
   await expect(page.locator("input.editor-name")).toBeVisible();
@@ -72,7 +72,7 @@ test("a character shown in the roster survives leaving the page at once, even on
   await page.getByRole("button", { name: "save", exact: true }).click();
   await expect(page.locator(".roster")).toContainText("Slow Disk");
 
-  await page.goto("/");
+  await page.goto("./");
   await expect(page.locator(".roster")).toContainText("Slow Disk");
 });
 
@@ -88,7 +88,7 @@ test("spending attribute points updates the remaining budget", async ({ page }) 
 });
 
 test("a team can be created and persists", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "teams" }).click();
   await expect(page.getByRole("heading", { name: "teams" })).toBeVisible();
 
@@ -375,7 +375,7 @@ test("a skill can be removed from the bar", async ({ page }) => {
 test("the in-match skill bar is not draggable", async ({ page }) => {
   // Builds are fixed once a match starts; the HUD must not offer an
   // interaction the server would refuse.
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "quick match" }).click();
   await expect(page.locator("#viewport canvas")).toBeVisible();
 
@@ -433,7 +433,7 @@ async function inCharacterStore(page: Page, body: string): Promise<unknown> {
 test("a stale saved character is discarded, the player is told once, and it stays gone", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("./");
   await expect(page.locator(".roster")).toBeVisible();
   const record = JSON.stringify(STALE_CHARACTER);
   await inCharacterStore(

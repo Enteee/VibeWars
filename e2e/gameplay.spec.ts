@@ -50,7 +50,7 @@ async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
 }
 
 async function startQuickMatch(page: Page): Promise<Locator> {
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "quick match" }).click();
 
   const canvas = page.locator("#viewport canvas");
@@ -77,12 +77,12 @@ async function startSoloMatch(page: Page): Promise<Locator> {
  * arena canvas, once everyone is in.
  */
 async function startLobbyMatch(host: Page, guests: readonly Page[]): Promise<Locator> {
-  await host.goto("/");
+  await host.goto("./");
   await host.getByRole("button", { name: "host a lobby" }).click();
   await expect(host.locator(".lobby-code")).toHaveText(/^[A-Z0-9]{4,8}$/);
   const code = (await host.locator(".lobby-code").textContent())?.trim() ?? "";
   for (const guest of guests) {
-    await guest.goto("/");
+    await guest.goto("./");
     await guest.locator("input.code-input").fill(code);
     await guest.getByRole("button", { name: "join", exact: true }).click();
     await guest.getByRole("button", { name: "join team 2" }).click();

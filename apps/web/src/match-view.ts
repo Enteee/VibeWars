@@ -1,4 +1,4 @@
-import type { PlayerBuild, Vec2 } from "@vibewars/game-core";
+import type { Vec2 } from "@vibewars/game-core";
 import type { WallDescriptor } from "@vibewars/game-protocol";
 import type { MatchConnection, MatchSnapshot } from "@vibewars/game-session";
 
@@ -18,7 +18,6 @@ import { skillSlotForKeyDown } from "./input/skill-keys.js";
 import { attachMatchMusic } from "./music/match-music.js";
 import { music } from "./music/play-music.js";
 import { TRACKS } from "./music/tracks/index.js";
-import { connectToMatch, type MatchTarget } from "./net/match-client.js";
 import {
   ACTOR_RADIUS,
   withNames,
@@ -58,18 +57,11 @@ export interface MatchViewCallbacks {
 }
 
 export interface MatchViewOptions {
-  /** Which match on the game server: Quick Match unless a lobby says otherwise. */
-  readonly target?: MatchTarget | undefined;
   /**
-   * The build to request. The server validates it and may refuse it, so
-   * this is what the player *asked* to play, never what they got.
+   * Where the match comes from: a lobby's match over its transport, or the
+   * Training Ground's local simulation.
    */
-  readonly build?: PlayerBuild | undefined;
-  /**
-   * Where the match comes from. Defaults to the game server, with `target`
-   * and `build`; the Training Ground passes a local simulation instead.
-   */
-  readonly connect?: (() => Promise<MatchConnection>) | undefined;
+  readonly connect: () => Promise<MatchConnection>;
 }
 
 export interface MatchView {
@@ -154,17 +146,20 @@ function isTyping(target: EventTarget | null): boolean {
 
 export async function startMatchView(
   parent: HTMLElement,
-  endpoint: string,
   callbacks: MatchViewCallbacks,
-  options: MatchViewOptions = {},
+  options: MatchViewOptions,
 ): Promise<MatchView> {
   const viewport = await createArenaViewport(parent, { mode: "resize" });
   const { scene } = viewport;
 
-  const connect =
-    options.connect ??
-    (() => connectToMatch(endpoint, options.target ?? { kind: "quick" }, options.build));
-  const connection = await connect();
+  let connection: MatchConnection;
+  try {
+    connection = await options.connect();
+  } catch (error) {
+    // Refused, or the host never answered: no arena to leave behind.
+    viewport.destroy();
+    throw error;
+  }
   const walls = connection.map.walls.map(toRenderableWall);
 
   const hud = createHud(parent);

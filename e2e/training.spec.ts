@@ -23,7 +23,7 @@ async function openTraining(
   keymap: Keymap = KEYMAP_PRESETS.vibewars,
 ): Promise<Locator> {
   await page.setViewportSize(WIDE);
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator(".editor-row select").first().selectOption("elementalist");
   await page.locator(".skill-box", { hasText: "Fireball" }).click();
@@ -191,7 +191,7 @@ test("(7) editing the build re-arms the arena in place", async ({ page }) => {
 
 test("(8) leaving the editor leaves no arena behind", async ({ page }) => {
   await page.setViewportSize(WIDE);
-  await page.goto("/");
+  await page.goto("./");
   for (let i = 0; i < 3; i += 1) {
     await page.getByRole("button", { name: "new character" }).click();
     await expect(page.locator(".training canvas")).toBeVisible();
@@ -213,7 +213,7 @@ test("(8) leaving the editor leaves no arena behind", async ({ page }) => {
 });
 
 test("(9) a quick match is unaffected", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "quick match" }).click();
   await expect(page.locator("#viewport canvas")).toHaveCount(1);
   await expect(page.locator(".hud-skills .hud-skill")).toHaveCount(8);
@@ -509,7 +509,7 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
   // Troll Unguent: a 3 s self-cast, so a slow runner still has the whole
   // window to see the ring and press Esc inside it.
   await page.setViewportSize(WIDE);
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator(".editor-row select").first().selectOption("ranger");
   await page.locator(".skill-box", { hasText: "Troll Unguent" }).click();

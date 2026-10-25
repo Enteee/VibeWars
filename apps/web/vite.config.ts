@@ -2,6 +2,15 @@ import { fileURLToPath } from "node:url";
 
 import { defineConfig } from "vite";
 
+// The transport the client plays over (#403): see `src/net/transport/index.ts`.
+// A typo would otherwise build a client that quietly uses Trystero.
+const TRANSPORT = process.env.VITE_VIBEWARS_TRANSPORT;
+if (TRANSPORT !== undefined && TRANSPORT !== "trystero" && TRANSPORT !== "broadcast") {
+  throw new Error(
+    `VITE_VIBEWARS_TRANSPORT must be "trystero" or "broadcast", got ${JSON.stringify(TRANSPORT)}`,
+  );
+}
+
 /**
  * The client is a plain ESM app — no framework. The HTML/CSS shell owns menus
  * and build editors; Phaser owns only the game viewport (brief §21).
@@ -49,11 +58,5 @@ export default defineConfig({
     },
     port: 5173,
     strictPort: true,
-    // No proxy to the game server. The client addresses it directly via
-    // `VITE_VIBEWARS_SERVER` (see `resolveEndpoint`), because Colyseus
-    // opens its WebSocket at `/<processId>/<roomId>` — a root-level path
-    // that cannot be pattern-matched apart from Vite's own HMR socket
-    // without guessing. An earlier proxy here claimed to forward the
-    // websocket and never did; it only forwarded matchmaking.
   },
 });

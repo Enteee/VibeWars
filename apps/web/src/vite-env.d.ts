@@ -10,19 +10,11 @@
  */
 interface ImportMetaEnv {
   /**
-   * WebSocket URL of the game server, e.g. `ws://localhost:2567`.
-   *
-   * Only set during `pnpm run dev`, where Vite serves the client on its
-   * own port. Unset in production, where the server serves the client
-   * and same-origin is correct.
+   * `broadcast` for the build e2e runs against, whose pages share one
+   * browser (#403); `trystero`, or unset, for every other build. Read only
+   * by `net/transport/index.ts`; `vite.config.ts` refuses anything else.
    */
-  readonly VITE_VIBEWARS_SERVER?: string;
-  /**
-   * `off` for a build with no game server behind it (the GitHub Pages
-   * deploy). Anything else, including unset, means online play is on.
-   * Read only by `net/online.ts`.
-   */
-  readonly VITE_VIBEWARS_ONLINE?: string;
+  readonly VITE_VIBEWARS_TRANSPORT?: "trystero" | "broadcast";
   /**
    * `on` only in the build scripts/music-stress.mjs makes, the one build
    * where `?stress=` works (#420). Read only by `music/stress.ts`.
