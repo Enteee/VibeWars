@@ -26,6 +26,7 @@ function player(sessionId: string): PlayerSnapshot {
     adrenaline: 0,
     armor: 60,
     weaponId: undefined,
+    offhandId: undefined,
     primaryProfession: undefined,
     secondaryProfession: undefined,
     team: 0,

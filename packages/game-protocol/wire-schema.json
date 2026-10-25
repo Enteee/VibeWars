@@ -27,6 +27,7 @@
       { "name": "adrenaline", "type": "number" },
       { "name": "armor", "type": "number" },
       { "name": "weaponId", "type": "string" },
+      { "name": "offhandId", "type": "string" },
       { "name": "primaryProfession", "type": "string" },
       { "name": "secondaryProfession", "type": "string" },
       { "name": "team", "type": "number" },
@@ -279,6 +280,13 @@
                           "optional": false,
                           "type": { "literal": "attack-unreachable" }
                         },
+                        { "name": "targetId", "optional": false, "type": "string" }
+                      ]
+                    },
+                    {
+                      "properties": [
+                        { "name": "kind", "optional": false, "type": { "literal": "cancelled" } },
+                        { "name": "skillId", "optional": false, "type": "string" },
                         { "name": "targetId", "optional": false, "type": "string" }
                       ]
                     },
@@ -663,6 +671,13 @@
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "attack-unreachable" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "cancelled" } },
+            { "name": "skillId", "optional": false, "type": "string" },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
         },

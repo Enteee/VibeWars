@@ -39,6 +39,11 @@ describe("soundsForCombat", () => {
     expect(soundsForCombat(onYou, ME)).toEqual(["interrupt"]);
   });
 
+  it("is silent for a cast you cancel by moving (#279)", () => {
+    const cancelled = message(ME, [{ kind: "cancelled", targetId: ME, skillId: "x" }]);
+    expect(soundsForCombat(cancelled, ME)).toEqual([]);
+  });
+
   it("plays interrupt-missed only for your own miss", () => {
     const yours = message(ME, [{ kind: "interrupt-missed", targetId: "foe" }]);
     const theirs = message("foe", [{ kind: "interrupt-missed", targetId: ME }]);
@@ -133,6 +138,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     adrenaline: 0,
     armor: 60,
     weaponId: undefined,
+    offhandId: undefined,
     primaryProfession: undefined,
     secondaryProfession: undefined,
     team: sessionId === ME ? 0 : 1,
