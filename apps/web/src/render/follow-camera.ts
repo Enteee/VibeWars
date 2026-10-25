@@ -2,7 +2,15 @@ import type { Vec2 } from "@vibewars/game-core";
 
 import { prefersReducedMotion } from "../ui/recharge-overlay.js";
 import type { ArenaViewport } from "./arena-viewport.js";
-import { VIEW_STEPS, createCameraRig, stepCamera, wheelNotch, type Size } from "./camera-rig.js";
+import {
+  NO_COVER,
+  VIEW_STEPS,
+  createCameraRig,
+  stepCamera,
+  wheelNotch,
+  type Cover,
+  type Size,
+} from "./camera-rig.js";
 
 /**
  * The follow camera's per-frame wiring (#440), one helper the match view
@@ -19,6 +27,8 @@ export interface FollowCamera {
    * `Default`, and the view snaps there with no glide.
    */
   restart(arena: Size): void;
+  /** What the HUD covers from now on; none until this is called. */
+  setCover(next: Cover): void;
   dispose(): void;
 }
 
@@ -29,6 +39,7 @@ export function attachFollowCamera(
 ): FollowCamera {
   let rig = createCameraRig();
   let bounds = arena;
+  let cover = NO_COVER;
   viewport.setArenaBounds(bounds.width, bounds.height);
   const offWheel = viewport.onWheelNotch((direction) => {
     rig = wheelNotch(rig, direction);
@@ -53,11 +64,12 @@ export function attachFollowCamera(
           pointer: viewport.pointerScreen(),
           reducedMotion: prefersReducedMotion(),
           arena: bounds,
+          cover,
         },
         deltaSeconds,
       );
       rig = stepped.rig;
-      viewport.setCamera(stepped.view);
+      viewport.setCamera(stepped.view, cover);
       mark("zoomStep", VIEW_STEPS[rig.step]?.name ?? "");
       mark("camera", `${String(Math.round(stepped.view.x))},${String(Math.round(stepped.view.y))}`);
     },
@@ -65,6 +77,9 @@ export function attachFollowCamera(
       bounds = next;
       viewport.setArenaBounds(next.width, next.height);
       rig = createCameraRig();
+    },
+    setCover(next) {
+      cover = next;
     },
     dispose() {
       offWheel();

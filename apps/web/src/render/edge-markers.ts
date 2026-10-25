@@ -1,6 +1,6 @@
 import type { Vec2 } from "@vibewars/game-core";
 
-import type { CameraView, Size } from "./camera-rig.js";
+import type { CameraView, Cover, Size } from "./camera-rig.js";
 
 /**
  * Off-screen markers (#437 §4, #440): for each living body outside the
@@ -34,27 +34,30 @@ export interface EdgeMarker {
 export const EDGE_INSET_PX = 22;
 
 /**
- * A marker for every living body outside the viewport inset by `insetPx`,
- * where the ray from the screen centre to it crosses that inset rectangle.
+ * A marker for every living body outside the part of the viewport the HUD
+ * leaves uncovered, inset by `insetPx`, where the ray from that part's
+ * centre to it crosses the inset rectangle: a foe due south is marked
+ * above the skill bar, not under it.
  */
 export function edgeMarkers(
   bodies: readonly EdgeBody[],
   view: CameraView,
   viewport: Size,
+  cover: Cover,
   insetPx = EDGE_INSET_PX,
 ): EdgeMarker[] {
-  const halfW = viewport.width / 2;
-  const halfH = viewport.height / 2;
-  const reachX = Math.max(0, halfW - insetPx);
-  const reachY = Math.max(0, halfH - insetPx);
+  const centreX = viewport.width / 2;
+  const centreY = (cover.top + viewport.height - cover.bottom) / 2;
+  const reachX = Math.max(0, viewport.width / 2 - insetPx);
+  const reachY = Math.max(0, (viewport.height - cover.top - cover.bottom) / 2 - insetPx);
   const markers: EdgeMarker[] = [];
   for (const body of bodies) {
     if (body.dead) {
       continue;
     }
-    // From the screen centre, in screen px.
-    const dx = (body.position.x - view.x) * view.zoom;
-    const dy = (body.position.y - view.y) * view.zoom;
+    // From the uncovered centre, in screen px.
+    const dx = viewport.width / 2 + (body.position.x - view.x) * view.zoom - centreX;
+    const dy = viewport.height / 2 + (body.position.y - view.y) * view.zoom - centreY;
     if (Math.abs(dx) <= reachX && Math.abs(dy) <= reachY) {
       continue;
     }
@@ -66,8 +69,8 @@ export function edgeMarkers(
       id: body.id,
       kind: body.kind,
       targeted: body.targeted,
-      x: halfW + dx * t,
-      y: halfH + dy * t,
+      x: centreX + dx * t,
+      y: centreY + dy * t,
       angle: Math.atan2(dy, dx),
     });
   }

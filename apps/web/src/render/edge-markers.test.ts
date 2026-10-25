@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { NO_COVER } from "./camera-rig.js";
 import { EDGE_INSET_PX, edgeMarkers, type EdgeBody } from "./edge-markers.js";
 
 const VIEW = { x: 500, y: 500, zoom: 0.5 };
@@ -16,7 +17,12 @@ const body = (overrides: Partial<EdgeBody>): EdgeBody => ({
 
 describe("edgeMarkers", () => {
   it("puts a body due right on the right inset edge, pointing right", () => {
-    const [marker, ...rest] = edgeMarkers([body({ position: { x: 3_000, y: 500 } })], VIEW, SCREEN);
+    const [marker, ...rest] = edgeMarkers(
+      [body({ position: { x: 3_000, y: 500 } })],
+      VIEW,
+      SCREEN,
+      NO_COVER,
+    );
     expect(rest).toEqual([]);
     expect(marker).toMatchObject({ id: "b", kind: "foe", targeted: false, angle: 0 });
     expect(marker?.x).toBeCloseTo(SCREEN.width - EDGE_INSET_PX);
@@ -28,6 +34,7 @@ describe("edgeMarkers", () => {
       [body({ kind: "friend", targeted: true, position: { x: -1_000, y: -1_000 } })],
       VIEW,
       SCREEN,
+      NO_COVER,
     );
     expect(marker).toMatchObject({ kind: "friend", targeted: true });
     expect(marker?.angle).toBeCloseTo((-3 * Math.PI) / 4);
@@ -45,7 +52,19 @@ describe("edgeMarkers", () => {
         ],
         VIEW,
         SCREEN,
+        NO_COVER,
       ),
     ).toEqual([]);
+  });
+
+  it("keeps a marker out from under the HUD, and marks a body under it", () => {
+    const cover = { top: 40, bottom: 160 };
+    // On screen at y 500, but behind the skill bar.
+    const [south] = edgeMarkers([body({ position: { x: 500, y: 900 } })], VIEW, SCREEN, cover);
+    expect(south?.y).toBeCloseTo(SCREEN.height - cover.bottom - EDGE_INSET_PX);
+    expect(south?.x).toBeCloseTo(SCREEN.width / 2);
+    expect(south?.angle).toBeCloseTo(Math.PI / 2);
+    const [north] = edgeMarkers([body({ position: { x: 500, y: -2_000 } })], VIEW, SCREEN, cover);
+    expect(north?.y).toBeCloseTo(cover.top + EDGE_INSET_PX);
   });
 });

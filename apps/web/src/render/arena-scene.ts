@@ -38,7 +38,7 @@ import {
   projectileSpriteUrl,
   shotFadeAlpha,
 } from "./projectiles.js";
-import type { CameraView } from "./camera-rig.js";
+import { NO_COVER, type CameraView, type Cover } from "./camera-rig.js";
 import { edgeMarkers, type EdgeBody, type EdgeMarker } from "./edge-markers.js";
 import { STATUS_ICON, STATUS_ICON_SIZE, statusRowLayout } from "./status-icons.js";
 import {
@@ -119,6 +119,8 @@ export class ArenaScene extends Phaser.Scene {
   private snapshot: ArenaSnapshot = EMPTY_SNAPSHOT;
   /** What the camera shows; `undefined` until the first `setCamera`. */
   private view: CameraView | undefined;
+  /** What the HUD covers, so no edge marker hides under it. */
+  private cover: Cover = NO_COVER;
   private arena = { width: 0, height: 0 };
   private floatingTexts: FloatingText[] = [];
   private areaFlashes: AreaFlash[] = [];
@@ -156,8 +158,12 @@ export class ArenaScene extends Phaser.Scene {
     super(ArenaScene.KEY);
   }
 
-  /** Point the camera: `view` is at the centre of the canvas, `zoom` CSS px per world unit. */
-  public setCamera(view: CameraView): void {
+  /**
+   * Point the camera: `view` is at the centre of the canvas, `zoom` CSS px
+   * per world unit; `cover` is what the HUD covers.
+   */
+  public setCamera(view: CameraView, cover: Cover): void {
+    this.cover = cover;
     this.view = view;
     this.cameras.main.setZoom(view.zoom);
     this.cameras.main.centerOn(view.x, view.y);
@@ -288,7 +294,7 @@ export class ArenaScene extends Phaser.Scene {
       dead: actor.dead,
       targeted: actor.id === this.snapshot.targetId,
     }));
-    for (const marker of edgeMarkers(bodies, view, screen)) {
+    for (const marker of edgeMarkers(bodies, view, screen, this.cover)) {
       this.drawEdgeMarker(g, marker, view, screen);
     }
   }

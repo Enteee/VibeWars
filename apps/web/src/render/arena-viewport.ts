@@ -3,7 +3,7 @@ import type Phaser from "phaser";
 import { vec2, type Vec2 } from "@vibewars/game-core";
 
 import type { ArenaScene } from "./arena-scene.js";
-import { WHEEL_IDLE, feedWheel, type CameraView, type Size } from "./camera-rig.js";
+import { WHEEL_IDLE, feedWheel, type CameraView, type Cover, type Size } from "./camera-rig.js";
 import { buttonChanges, type MouseButton } from "./pointer-buttons.js";
 
 /** One mouse button going down or up over the arena (#438). */
@@ -45,8 +45,8 @@ export interface ArenaViewport {
   pointerScreen(): Vec2 | undefined;
   /** The canvas, CSS px. */
   size(): Size;
-  /** Point the camera; the scene draws through it from this frame. */
-  setCamera(view: CameraView): void;
+  /** Point the camera, with what the HUD covers; the scene draws through it from this frame. */
+  setCamera(view: CameraView, cover: Cover): void;
   /** The arena's bounds, for the grid, its edge and the camera's clamp. */
   setArenaBounds(width: number, height: number): void;
   /** Re-measure the parent, after the layout around it changed. */
@@ -196,8 +196,8 @@ export async function createArenaViewport(parent: HTMLElement): Promise<ArenaVie
     size() {
       return { width: game.scale.width, height: game.scale.height };
     },
-    setCamera(view) {
-      scene.setCamera(view);
+    setCamera(view, cover) {
+      scene.setCamera(view, cover);
     },
     setArenaBounds(width, height) {
       scene.setArenaBounds(width, height);

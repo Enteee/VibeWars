@@ -38,6 +38,17 @@ export interface Size {
   readonly height: number;
 }
 
+/**
+ * Canvas px the HUD covers at the top and bottom edges, CSS px: at the
+ * arena's edge, it stops above the skill bar, not under it.
+ */
+export interface Cover {
+  readonly top: number;
+  readonly bottom: number;
+}
+
+export const NO_COVER: Cover = { top: 0, bottom: 0 };
+
 export interface CameraRig {
   /** Index into `VIEW_STEPS`. */
   readonly step: number;
@@ -62,6 +73,8 @@ export interface CameraInput {
   readonly reducedMotion: boolean;
   /** The arena's bounds, world units from (0, 0). */
   readonly arena: Size;
+  /** What the HUD covers; the clamp keeps the arena out from under it. */
+  readonly cover: Cover;
 }
 
 export interface CameraView {
@@ -102,13 +115,21 @@ export function wheelNotch(rig: CameraRig, direction: -1 | 1): CameraRig {
 
 /**
  * The centre on one axis: the arena edge stops the camera where the arena
- * is bigger than the view, and the arena is centred where it is smaller.
+ * is bigger than the uncovered view, and the arena is centred in that
+ * where it is smaller. `before` and `after` are the world units covered
+ * at the low and high ends of the axis.
  */
-function clampAxis(centre: number, arena: number, visible: number): number {
-  if (arena <= visible) {
-    return arena / 2;
+function clampAxis(
+  centre: number,
+  arena: number,
+  visible: number,
+  before: number,
+  after: number,
+): number {
+  if (arena <= visible - before - after) {
+    return arena / 2 + (after - before) / 2;
   }
-  return Math.min(arena - visible / 2, Math.max(visible / 2, centre));
+  return Math.min(arena - visible / 2 + after, Math.max(visible / 2 - before, centre));
 }
 
 export function stepCamera(
@@ -140,8 +161,14 @@ export function stepCamera(
 
   // Clamped after the lead, so leaning never shows the void past the edge.
   const view = {
-    x: clampAxis(input.self.x + lead.x, input.arena.width, input.viewport.width / zoom),
-    y: clampAxis(input.self.y + lead.y, input.arena.height, input.viewport.height / zoom),
+    x: clampAxis(input.self.x + lead.x, input.arena.width, input.viewport.width / zoom, 0, 0),
+    y: clampAxis(
+      input.self.y + lead.y,
+      input.arena.height,
+      input.viewport.height / zoom,
+      input.cover.top / zoom,
+      input.cover.bottom / zoom,
+    ),
     zoom,
   };
   return { rig: { step: rig.step, height, lead, last: input.self }, view };

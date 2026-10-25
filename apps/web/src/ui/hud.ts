@@ -36,6 +36,8 @@ function describeWeaponName(weaponId: string): string {
 
 export interface HudElements {
   readonly root: HTMLElement;
+  /** Health, energy and statuses, then the skill bar: from its top down, the HUD hides the arena. */
+  readonly bars: HTMLElement;
   readonly healthFill: HTMLElement;
   readonly healthText: HTMLElement;
   readonly energyFill: HTMLElement;
@@ -169,6 +171,7 @@ export function createHud(parent: HTMLElement): HudElements {
 
   return {
     root,
+    bars,
     healthFill,
     healthText,
     energyFill,

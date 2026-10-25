@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { expect, test, type Page, type Locator } from "@playwright/test";
 
 import { projection } from "./camera.js";
@@ -553,4 +555,56 @@ test("the target panel shows the target's professions before its name (#281)", a
   await leaveMatch(opponent);
   await expect(icons).toHaveCount(0);
   await opponent.close();
+});
+
+test("at Close, the arena's bottom edge stops above the skill bar, not under it (#440)", async ({
+  page,
+}) => {
+  const arena = JSON.parse(
+    readFileSync(
+      new URL("../packages/game-maps/maps/arena-alpha/map.json", import.meta.url),
+      "utf8",
+    ),
+  ) as { readonly height: number };
+  await page.goto("/");
+  await page.getByRole("button", { name: "host a lobby" }).click();
+  await expect(page.locator(".lobby-map select")).toHaveValue("arena-alpha");
+  await page.getByRole("button", { name: "join team 1" }).click();
+  await page.getByRole("button", { name: "ready", exact: true }).click();
+  await page.getByRole("button", { name: "start match" }).click();
+  await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+  const stage = page.locator("#viewport");
+  const canvas = page.locator("#viewport canvas");
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+
+  // The pointer at the centre leans the camera nowhere.
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  for (const _ of [1, 2]) {
+    await page.waitForTimeout(200);
+    await page.mouse.wheel(0, -100);
+  }
+  await expect(stage).toHaveAttribute("data-zoom-step", "Close");
+
+  // Down until the camera stops: you are at the bottom wall.
+  await page.keyboard.down(key("move-down"));
+  let last = "";
+  await expect
+    .poll(
+      async () => {
+        const now = (await stage.getAttribute("data-camera")) ?? "";
+        const stopped = now === last;
+        last = now;
+        return stopped;
+      },
+      { intervals: [500], timeout: 15_000 },
+    )
+    .toBe(true);
+  await page.keyboard.up(key("move-down"));
+
+  const edge = (await projection(stage, canvas)).onPage({ x: 0, y: arena.height }).y;
+  const bars = await page.locator(".hud-bars").boundingBox();
+  expect(Math.abs(edge - (bars?.y ?? 0))).toBeLessThan(2);
 });

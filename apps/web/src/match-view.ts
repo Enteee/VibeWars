@@ -170,6 +170,18 @@ export async function startMatchView(
   const camera = attachFollowCamera(viewport, parent, connection.map);
 
   const hud = createHud(parent);
+  // The arena's edge stops below the scoreboard and above the bars, not
+  // under them (#440). From the bars, as the lines above them come and go.
+  const measureCover = (): void => {
+    camera.setCover({
+      top: hud.scoreboard.offsetTop + hud.scoreboard.offsetHeight,
+      bottom: hud.root.offsetHeight - hud.bars.offsetTop,
+    });
+  };
+  const coverObserver = new ResizeObserver(measureCover);
+  coverObserver.observe(hud.root);
+  coverObserver.observe(hud.bars);
+  coverObserver.observe(hud.scoreboard);
   const useSkill = (slot: number): void => {
     connection.sendIntent({ kind: "use-skill", slot });
   };
@@ -408,6 +420,7 @@ export async function startMatchView(
       offFrame();
       guardUnload(false);
       offPointer();
+      coverObserver.disconnect();
       camera.dispose();
       nameReveal.detach();
       window.removeEventListener("keydown", handleKeyDown);

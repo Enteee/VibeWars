@@ -13,6 +13,7 @@ import {
   stepCamera,
   wheelNotch,
   zoomFor,
+  NO_COVER,
   type CameraInput,
   type CameraRig,
 } from "./camera-rig.js";
@@ -27,6 +28,7 @@ const input = (overrides: Partial<CameraInput> = {}): CameraInput => ({
   pointer: undefined,
   reducedMotion: false,
   arena: BIG,
+  cover: NO_COVER,
   ...overrides,
 });
 
@@ -136,6 +138,25 @@ describe("stepCamera", () => {
       60,
     );
     expect(view).toMatchObject({ x: 480, y: 320 });
+  });
+
+  it("stops the arena's edge at the HUD, not under it", () => {
+    const arena = { width: 3_000, height: 2_000 };
+    const cover = { top: 40, bottom: 175 };
+    const close = wheelNotch(wheelNotch(createCameraRig(), -1), -1);
+    const atBottom = run(close, input({ self: { x: 1_500, y: 2_000 }, arena, cover }), 120).view;
+    // The arena's bottom edge, on screen, sits on the HUD's top.
+    expect(360 + (arena.height - atBottom.y) * atBottom.zoom).toBeCloseTo(720 - cover.bottom);
+    const atTop = run(close, input({ self: { x: 1_500, y: 0 }, arena, cover }), 120).view;
+    expect(360 + (0 - atTop.y) * atTop.zoom).toBeCloseTo(cover.top);
+  });
+
+  it("centres a small arena in what the HUD leaves uncovered", () => {
+    const arena = { width: 960, height: 640 };
+    const cover = { top: 40, bottom: 175 };
+    const { view } = run(createCameraRig(), input({ self: { x: 80, y: 200 }, arena, cover }), 60);
+    const middle = 360 + (arena.height / 2 - view.y) * view.zoom;
+    expect(middle).toBeCloseTo((cover.top + 720 - cover.bottom) / 2);
   });
 
   it("snaps when you jump: no glide from the old place", () => {
