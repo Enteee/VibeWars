@@ -5,7 +5,7 @@
  * Runs on the host, outside every jail, so it can read the board, the roster
  * and every role's inbox at once — which no single agent can do.
  *
- * It also states plainly which roles are not hired yet and what that blocks.
+ * It also states plainly which roles have nobody employed and what that blocks.
  * The company is designed to run on a partial roster, but a pipeline that
  * silently stops at `In Review` because there is no reviewer looks identical
  * to a pipeline where everyone is just slow, and the difference matters.
@@ -27,6 +27,7 @@ import { readRoster } from "./presence.mjs";
 import { betweenTurns, parseReboot } from "./reboot.mjs";
 import { boardLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
 import { hubHealth, parseAlive, parseRestarts } from "./hub-health.mjs";
+import { parseStaff, roleOf } from "./staff.mjs";
 
 const ROOT = process.env.VIBEWARS_BOT_ROOT ?? path.join(process.cwd(), ".bots");
 const BUS = path.join(ROOT, "bus");
@@ -90,7 +91,7 @@ function reboot(live) {
     : { record: pending, between: betweenTurns(ROOT, [...live]), now: Date.now() };
 }
 
-/** @returns {{ project: number, owner: string, columns: string[] } | null} */
+/** @returns {{ project: number, owner: string, columns: string[], maxAgents: number | null } | null} */
 function company() {
   try {
     /** @type {unknown} */
@@ -100,6 +101,7 @@ function company() {
       project: typeof cfg.project === "number" ? cfg.project : 0,
       owner: typeof cfg.owner === "string" ? cfg.owner : "",
       columns: Array.isArray(cfg.columns) ? cfg.columns.map(String) : [],
+      maxAgents: typeof cfg.maxAgents === "number" ? cfg.maxAgents : null,
     };
   } catch {
     return null;
@@ -107,21 +109,61 @@ function company() {
 }
 
 /**
- * The roster as it stands (#363): who is running, and who died without
- * cleaning up, with when they were last seen.
+ * `staff.json`, or null while it is missing or not the current shape:
+ * hubd is its only writer, and the dashboard never repairs it (#386).
  *
+ * @returns {import("./staff.mjs").Staff | null}
+ */
+function staffFile() {
+  try {
+    return parseStaff(fs.readFileSync(path.join(ROOT, "staff.json"), "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The manager watchdog's restarts since local midnight (#384), from
+ * `.bots/manager-restarts.json`: a JSON array of epoch milliseconds, one
+ * per restart. No file, or one in another shape, is none.
+ *
+ * @param {number} now
+ * @returns {number}
+ */
+function managerRestarts(now) {
+  /** @type {unknown} */
+  let raw;
+  try {
+    raw = JSON.parse(fs.readFileSync(path.join(ROOT, "manager-restarts.json"), "utf8"));
+  } catch {
+    return 0;
+  }
+  if (!Array.isArray(raw)) {
+    return 0;
+  }
+  const midnight = new Date(now);
+  midnight.setHours(0, 0, 0, 0);
+  return raw.filter((at) => typeof at === "number" && at >= midnight.getTime() && at <= now).length;
+}
+
+/**
+ * The roster as it stands (#363): which employees are running, and which
+ * died without cleaning up, with when they were last seen.
+ *
+ * @param {import("./staff.mjs").Staff | null} staff
  * @returns {{ live: Set<string>, stale: Map<string, number> }}
  */
-function presence() {
+function presence(staff) {
   /** @type {Set<string>} */
   const live = new Set();
   /** @type {Map<string, number>} */
   const stale = new Map();
-  for (const [role, entry] of readRoster(path.join(BUS, "roster"), ROLES, Date.now())) {
+  const employees = Object.keys(staff?.employees ?? {});
+  for (const [id, entry] of readRoster(path.join(BUS, "roster"), employees, Date.now())) {
     if (entry.fresh) {
-      live.add(role);
+      live.add(id);
     } else {
-      stale.set(role, entry.lastSeen);
+      stale.set(id, entry.lastSeen);
     }
   }
   return { live, stale };
@@ -269,22 +311,29 @@ function linesOf(section, pane) {
   switch (section) {
     case "board": {
       const cfg = company();
+      const roles = new Set([...presence(staffFile()).live].map((id) => roleOf(id) ?? id));
       // hubd's copy of the board (hub-board.mjs); one in another shape is
       // hubd's to discard, and shows here as no snapshot.
-      return boardLines(
-        readBoardState(hubFile("board.json")),
-        cfg?.columns ?? null,
-        presence().live,
-        pane,
-      );
+      return boardLines(readBoardState(hubFile("board.json")), cfg?.columns ?? null, roles, pane);
     }
     case "company": {
-      const { live, stale } = presence();
+      const staff = staffFile();
+      const { live, stale } = presence(staff);
+      const now = Date.now();
       return companyLines(
         {
           roles: ROLES,
           live,
           stale,
+          staff:
+            staff === null
+              ? null
+              : {
+                  staff,
+                  maxAgents: company()?.maxAgents ?? null,
+                  managerRestarts: managerRestarts(now),
+                  now,
+                },
           budget: budget(),
           hub: hub(),
           reboot: reboot(live),

@@ -9,7 +9,7 @@
  */
 import { formatCount } from "./claude-usage.mjs";
 import { visible } from "./protocol.mjs";
-import { clock } from "./reboot.mjs";
+import { DRAIN_MS, clock } from "./reboot.mjs";
 
 /**
  * Which roles each column needs before work can leave it. Used to explain a
@@ -202,7 +202,7 @@ function cardLine(card, width) {
  * @param {{ at: number, sweptAt: number, cards: readonly { rev: number, item: unknown }[] } | null} snapshot
  *   hubd's board copy, or null before its first sweep
  * @param {readonly string[] | null} columns the board's columns, or null before claude-llc-init
- * @param {ReadonlySet<string>} live the roles hired right now
+ * @param {ReadonlySet<string>} live the roles with an employee running right now
  * @param {Pane} pane
  * @returns {string[]}
  */
@@ -282,8 +282,9 @@ export function boardLines(snapshot, columns, live, { rows, width }) {
 /**
  * @typedef {object} CompanyFacts
  * @property {readonly string[]} roles every role, in org-chart order
- * @property {ReadonlySet<string>} live the roles hired right now
- * @property {ReadonlyMap<string, number>} stale roles whose agent died without cleaning up, to when it was last seen (#363)
+ * @property {ReadonlySet<string>} live the employees running right now
+ * @property {ReadonlyMap<string, number>} stale employees whose agent died without cleaning up, to when it was last seen (#363)
+ * @property {StaffFacts | null} staff null while `staff.json` is missing or malformed (#386)
  * @property {Budget | null} budget null before hubd has checked
  * @property {ReturnType<typeof import("./hub-health.mjs").hubHealth>} hub hubd, as its heartbeat and restarts say (#23)
  * @property {ClaudeUsage | null} claude null before any agent has logged (#50)
@@ -292,39 +293,94 @@ export function boardLines(snapshot, columns, live, { rows, width }) {
  */
 
 /**
+ * Who is employed, as `staff.json` says, with what the dashboard read
+ * beside it (#386).
+ *
+ * @typedef {object} StaffFacts
+ * @property {import("./staff.mjs").Staff} staff
+ * @property {number | null} maxAgents `company.json`'s, or null if it has none
+ * @property {number} managerRestarts the watchdog's restarts of the manager today (#384)
+ * @property {number} now epoch milliseconds
+ */
+
+/**
+ * The order of one role's employees: the bare seat, then `@2`, `@3`, ….
+ *
+ * @param {string} id
+ * @returns {number}
+ */
+function seat(id) {
+  const n = id.split("@")[1];
+  return n === undefined ? 1 : Number(n);
+}
+
+/**
+ * What one employee is doing when it is not simply working: being fired,
+ * down, or not running at all.
+ *
+ * @param {string} id
+ * @param {CompanyFacts} facts
+ * @param {StaffFacts} staff
+ * @returns {string | null} null for an employee at work
+ */
+function staffNote(id, { live, stale }, { staff, now }) {
+  const employee = staff.employees[id];
+  if (employee?.state === "firing") {
+    if (employee.readyAt !== null) {
+      return `${id} firing (ready)`;
+    }
+    // #21's drain: ten minutes from the fire, then the pane goes.
+    const at = staff.recent
+      .filter((change) => change.id === id && change.change === "fire")
+      .at(-1)?.at;
+    if (at === undefined) {
+      return `${id} firing`;
+    }
+    const left = at + DRAIN_MS - now;
+    return left <= 0
+      ? `${id} firing (overdue)`
+      : `${id} firing (${String(Math.ceil(left / 60_000))} min left)`;
+  }
+  const lastSeen = stale.get(id);
+  if (lastSeen !== undefined) {
+    return `${id} down since ${hhmm(lastSeen)}`;
+  }
+  return live.has(id) ? null : `${id} not running`;
+}
+
+/**
+ * The STAFF section (#386): headcount per role in org-chart order out of
+ * `maxAgents`, and every employee that is not at work. A role with nobody
+ * is a dimmed 0. Read-only: hubd alone writes `staff.json`.
+ *
  * @param {CompanyFacts} facts
  * @param {number} width
  * @returns {string[]}
  */
-function rosterSection({ roles, live, stale }, width) {
-  const absent = roles.filter((role) => !live.has(role) && !stale.has(role));
-  const down = roles.flatMap((role) => {
-    const lastSeen = stale.get(role);
-    return lastSeen === undefined ? [] : [`${role} since ${hhmm(lastSeen)}`];
-  });
-  const lines = [
-    paint(cut(`ROSTER ${String(live.size)}/${String(roles.length)} hired`, width), "1"),
+function staffSection(facts, width) {
+  const { roles, staff } = facts;
+  if (staff === null) {
+    return [paint(cut("STAFF unknown (no staff.json yet: claude-llc up seeds it)", width), "1")];
+  }
+  const ids = Object.keys(staff.staff.employees);
+  const cap = staff.maxAgents === null ? "?" : String(staff.maxAgents);
+  return [
+    paint(cut(`STAFF  ${String(ids.length)}/${cap}`, width), "1"),
+    ...roles.map((role) => {
+      const mine = ids
+        .filter((id) => staff.staff.employees[id]?.role === role)
+        .sort((a, b) => seat(a) - seat(b));
+      const notes = mine.flatMap((id) => staffNote(id, facts, staff) ?? []);
+      if (role === "manager" && staff.managerRestarts > 0) {
+        notes.unshift(`restarted ${String(staff.managerRestarts)}× today`);
+      }
+      const row = cut(
+        `  ${role.padEnd(16)}${String(mine.length).padStart(2)}   ${notes.join(", ")}`.trimEnd(),
+        width,
+      );
+      return mine.length === 0 ? paint(row, "2") : row;
+    }),
   ];
-  /** `+` running, `!` died without cleaning up, `-` never hired. */
-  const mark = (/** @type {string} */ role) => (live.has(role) ? "+" : stale.has(role) ? "!" : "-");
-  // As many roles a row as the pane is wide.
-  const cell = Math.max(...roles.map((role) => role.length)) + 3;
-  const perRow = Math.max(1, Math.floor((width - 2) / cell));
-  for (let i = 0; i < roles.length; i += perRow) {
-    const row = roles
-      .slice(i, i + perRow)
-      .map((role) => `${mark(role)} ${role}`.padEnd(cell))
-      .join("");
-    lines.push(cut(`  ${row}`.trimEnd(), width));
-  }
-  if (down.length > 0) {
-    lines.push(cut(`  down: ${down.join(", ")} (restart: claude-llc-agent <role>)`, width));
-  }
-  if (absent.length > 0) {
-    lines.push(cut(`  not hired yet: ${absent.join(", ")}`, width));
-    lines.push(cut("  (rate-limited? provision the rest later: claude-bot <role>)", width));
-  }
-  return lines;
 }
 
 /**
@@ -458,7 +514,7 @@ function rebootSection({ reboot, roles, live }, width) {
       ? `REBOOT overdue since ${clock(record.deadline)}, stopping`
       : `REBOOT by ${clock(record.deadline)} (in ${left < 60_000 ? "<1m" : `${String(Math.ceil(left / 60_000))}m`}) — ${visible(record.by)}: ${visible(record.reason)}`;
   const inOrder = (/** @type {(role: string) => boolean} */ keep) =>
-    [...new Set([...roles, ...record.ready])].filter(keep);
+    [...new Set([...roles, ...live, ...record.ready])].filter(keep);
   const notReady = (/** @type {string} */ role) => live.has(role) && !record.ready.includes(role);
   /** @type {{ label: string, names: string[] }[]} */
   const rows = [
@@ -482,7 +538,7 @@ function rebootSection({ reboot, roles, live }, width) {
  */
 export const COMPANY_SECTIONS = [
   rebootSection,
-  rosterSection,
+  staffSection,
   hubSection,
   githubSection,
   claudeSection,
