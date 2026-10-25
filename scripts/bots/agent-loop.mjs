@@ -218,7 +218,10 @@ function tellCompany(root, name, text) {
   const outbox = path.join(root, "bus", SYSTEM, "outbox");
   fs.mkdirSync(outbox, { recursive: true });
   const file = `${String(Date.now())}-${name}.json`;
-  fs.writeFileSync(path.join(outbox, `.${file}.part`), JSON.stringify({ to: "all", text }));
+  fs.writeFileSync(
+    path.join(outbox, `.${file}.part`),
+    JSON.stringify({ to: "all", text, nudge: null }),
+  );
   fs.renameSync(path.join(outbox, `.${file}.part`), path.join(outbox, file));
 }
 

@@ -19,6 +19,7 @@ const ALIVE = {
   heartbeatAt: NOW - 1000,
   sha: "4319174",
   inflight: 0,
+  current: null,
   served: 178,
   refused: 12,
   lastError: null,
@@ -29,6 +30,19 @@ describe("parseAlive", () => {
     expect(parseAlive(JSON.stringify(ALIVE))).toEqual(ALIVE);
     const failing = { ...ALIVE, lastError: { at: 5, message: "gh: boom" } };
     expect(parseAlive(JSON.stringify(failing))).toEqual(failing);
+    const busy = {
+      ...ALIVE,
+      inflight: 1,
+      current: { employee: "developer-2", command: "gh pr checks", startedAt: NOW - 5000 },
+    };
+    expect(parseAlive(JSON.stringify(busy))).toEqual(busy);
+  });
+
+  it("rejects a heartbeat whose current is missing or malformed (#496)", () => {
+    const { current: _, ...missing } = ALIVE;
+    expect(parseAlive(JSON.stringify(missing))).toBeNull();
+    expect(parseAlive(JSON.stringify({ ...ALIVE, current: "gh" }))).toBeNull();
+    expect(parseAlive(JSON.stringify({ ...ALIVE, current: { employee: "x" } }))).toBeNull();
   });
 
   it("is null for anything else: corrupt, another shape, a field missing", () => {

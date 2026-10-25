@@ -77,6 +77,7 @@ import {
 } from "./hub-rest.mjs";
 import { COMMENT_FIELDS, jsonFields, scrubJson, unknownField } from "./hub-strangers.mjs";
 import { BOARD_QUERY, costBetween, parseBoardPage, recordSpend } from "./hub-spend.mjs";
+import { HEARTBEAT_MS } from "./hub-health.mjs";
 import { SYSTEM, obj } from "./protocol.mjs";
 import {
   COMPANY_PATHSPECS,
@@ -87,6 +88,7 @@ import {
   rebootAllowed,
 } from "./reboot.mjs";
 import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
+import { dueNudges, scheduleReader } from "./schedule.mjs";
 import { applyStaff, parseStaff, roleOf, staffAllowed, staffReader } from "./staff.mjs";
 import {
   RESTRICTED_PATHS,
@@ -191,11 +193,52 @@ function company() {
 /* -------------------------------------------------------------------------- */
 
 /**
+ * The longest any gh or git child may run (#496). hubd serves one request at
+ * a time, so a call that never returns would starve every other employee.
+ * HUBD_CHILD_TIMEOUT_MS is for a test to shorten it.
+ */
+const CHILD_DEADLINE_MS = Number(process.env.HUBD_CHILD_TIMEOUT_MS ?? 120_000);
+if (!Number.isFinite(CHILD_DEADLINE_MS) || CHILD_DEADLINE_MS <= 0) {
+  throw new Error("HUBD_CHILD_TIMEOUT_MS must be a positive number of milliseconds");
+}
+
+/** How long a child has after SIGTERM before its group gets SIGKILL. */
+const KILL_GRACE_MS = 5000;
+
+/**
+ * Ends a child and everything it started, once its deadline has passed.
+ * Children run detached, as leaders of their own process group, because git's
+ * remote helper and gh's credential helpers inherit the pipes: killing only
+ * the child leaves `close` waiting for them (#496).
+ *
+ * @param {import("node:child_process").ChildProcess} child
+ * @returns {void}
+ */
+function killGroup(child) {
+  const pid = child.pid;
+  if (pid === undefined) {
+    return;
+  }
+  /** @param {NodeJS.Signals} signal */
+  const send = (signal) => {
+    try {
+      process.kill(-pid, signal);
+    } catch {
+      // The group is already gone.
+    }
+  };
+  send("SIGTERM");
+  setTimeout(() => {
+    send("SIGKILL");
+  }, KILL_GRACE_MS).unref();
+}
+
+/**
  * @param {string} file
  * @param {string[]} args
  * @param {string} cwd
  * @param {Record<string, string>} [extraEnv]
- * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
+ * @returns {Promise<{ code: number, stdout: string, stderr: string, timedOut?: boolean }>}
  */
 function run(file, args, cwd, extraEnv = {}) {
   return new Promise((resolve) => {
@@ -203,7 +246,13 @@ function run(file, args, cwd, extraEnv = {}) {
       cwd,
       env: { ...process.env, GH_PROMPT_DISABLED: "1", GIT_TERMINAL_PROMPT: "0", ...extraEnv },
       stdio: ["ignore", "pipe", "pipe"],
+      detached: true,
     });
+    let timedOut = false;
+    const deadline = setTimeout(() => {
+      timedOut = true;
+      killGroup(child);
+    }, CHILD_DEADLINE_MS);
     let stdout = "";
     let stderr = "";
     child.stdout.setEncoding("utf8");
@@ -211,10 +260,27 @@ function run(file, args, cwd, extraEnv = {}) {
     child.stdout.on("data", (/** @type {string} */ chunk) => (stdout += chunk));
     child.stderr.on("data", (/** @type {string} */ chunk) => (stderr += chunk));
     child.on("error", (error) => {
+      clearTimeout(deadline);
       resolve({ code: 127, stdout, stderr: `${stderr}${error.message}\n` });
     });
-    child.on("close", (code) => {
-      resolve({ code: code ?? 0, stdout, stderr });
+    child.on("close", (code, signal) => {
+      clearTimeout(deadline);
+      if (timedOut) {
+        const seconds = String(Math.round(CHILD_DEADLINE_MS / 1000));
+        resolve({
+          code: 124,
+          stdout,
+          stderr: `${stderr}hubd: ${file} ${args.slice(0, 2).join(" ")} timed out after ${seconds} s\n`,
+          timedOut: true,
+        });
+        return;
+      }
+      // Killed by a signal is a failure, never the success a null code reads as.
+      resolve({
+        code: code ?? 1,
+        stdout,
+        stderr: signal === null ? stderr : `${stderr}hubd: ${file} killed by ${signal}\n`,
+      });
     });
   });
 }
@@ -467,15 +533,28 @@ function gitBytes(args) {
       cwd: HUB,
       env: { ...process.env, GIT_TERMINAL_PROMPT: "0", ...GIT_ENV },
       stdio: ["ignore", "pipe", "ignore"],
+      detached: true,
     });
+    let timedOut = false;
+    const deadline = setTimeout(() => {
+      timedOut = true;
+      killGroup(child);
+    }, CHILD_DEADLINE_MS);
     /** @type {Buffer[]} */
     const chunks = [];
     child.stdout.on("data", (/** @type {Buffer} */ chunk) => chunks.push(chunk));
     child.on("error", () => {
+      clearTimeout(deadline);
       resolve({ code: 127, stdout: Buffer.alloc(0) });
     });
     child.on("close", (code) => {
-      resolve({ code: code ?? 0, stdout: Buffer.concat(chunks) });
+      clearTimeout(deadline);
+      // A killed git left a truncated blob: it is a failure with no bytes.
+      resolve(
+        timedOut || code === null
+          ? { code: timedOut ? 124 : 1, stdout: Buffer.alloc(0) }
+          : { code, stdout: Buffer.concat(chunks) },
+      );
     });
   });
 }
@@ -939,13 +1018,15 @@ function writeAtomic(file, contents) {
  *
  * @param {string} name what the file is about, for whoever lists the outbox
  * @param {string} text
+ * @param {{ to?: string, nudge?: string | null }} [addressed] a role instead of
+ *   everyone, and the scheduled nudge this is (#537)
  * @returns {void}
  */
-function tellCompany(name, text) {
+function tellCompany(name, text, { to = "all", nudge = null } = {}) {
   const outbox = path.join(ROOT, "bus", SYSTEM, "outbox");
   fs.mkdirSync(outbox, { recursive: true });
   const file = `${String(Date.now())}-${name}.json`;
-  writeAtomic(path.join(outbox, file), JSON.stringify({ to: "all", text }));
+  writeAtomic(path.join(outbox, file), JSON.stringify({ to, text, nudge }));
 }
 
 /**
@@ -2099,7 +2180,14 @@ async function serve(request, verdict, acting) {
     await afterProjectCommand(argv, result, cfg);
   }
   noteHint(argv, result.code, cfg);
-  audit({ role, kind, argv, decision: "allowed", code: result.code });
+  audit({
+    role,
+    kind,
+    argv,
+    decision: "allowed",
+    code: result.code,
+    timedOut: result.timedOut === true,
+  });
   return { allow: true, ...result };
 }
 
@@ -2118,6 +2206,22 @@ const health = {
 };
 
 /**
+ * The command words the heartbeat shows every agent: `gh pr checks`. Peer
+ * argv is never echoed, so only plain lowercase words pass (#496).
+ *
+ * @param {string} kind
+ * @param {string[]} argv
+ * @returns {string}
+ */
+function commandWords(kind, argv) {
+  const word = /^[a-z][a-z-]{0,19}$/;
+  return [kind, ...argv.slice(0, 2)].map((w) => (word.test(w) ? w : "?")).join(" ");
+}
+
+/** The request being served right now, for the heartbeat; null when idle. */
+let current = /** @type {{ employee: string, command: string, startedAt: number } | null} */ (null);
+
+/**
  * The heartbeat, a `HubdAlive` (`hub-health.mjs`).
  *
  * `heartbeatAt` lets `hub` tell "the daemon is busy" from "the daemon was
@@ -2132,10 +2236,9 @@ const health = {
  * it to reach 0, so a merge or a push is not cut off by the company stopping
  * underneath it (#21). The rest is the dashboard's hub line (#23).
  *
- * @param {boolean} serving whether a request is being served right now
  * @returns {void}
  */
-function heartbeat(serving) {
+function heartbeat() {
   let queued = 0;
   for (const employee of staffed.keys()) {
     try {
@@ -2150,7 +2253,8 @@ function heartbeat(serving) {
   const alive = {
     ...health,
     heartbeatAt: Date.now(),
-    inflight: (serving ? 1 : 0) + queued,
+    inflight: (current === null ? 0 : 1) + queued,
+    current,
   };
   writeAtomic(ALIVE, JSON.stringify(alive));
 }
@@ -2178,6 +2282,33 @@ const readStaff = staffReader(STAFF, (problem, kept) => {
  */
 function readStaffed() {
   staffed = readStaff();
+}
+
+/** `schedule.json` in the checkout hubd serves, read the way `scheduleReader` reads it. */
+const readSchedule = scheduleReader(
+  path.join(REPO_DIR, "scripts", "bots", "schedule.json"),
+  (problem) => {
+    console.error(`hubd: schedule.json: ${problem}; still on the last good schedule`);
+  },
+);
+
+/** When each scheduled nudge was last sent, and when hubd began counting. */
+const nudgesSent = new Map();
+const nudgesSince = Date.now();
+
+/**
+ * Send the nudges that are due (#537). link decides per employee whether one
+ * is still unread; hubd only keeps the clock.
+ *
+ * @returns {void}
+ */
+function sendNudges() {
+  const schedule = readSchedule();
+  const now = Date.now();
+  for (const nudge of dueNudges({ now, schedule, lastSent: nudgesSent, since: nudgesSince })) {
+    nudgesSent.set(nudge.id, now);
+    tellCompany(`nudge-${nudge.id}`, nudge.text, { to: nudge.to, nudge: nudge.id });
+  }
 }
 
 /**
@@ -2314,12 +2445,12 @@ async function serveSpool(employee, role, req, res) {
     }
     // Before the request leaves the spool, so a reboot waiting for hubd to
     // go quiet never sees it as neither queued nor in flight.
-    heartbeat(true);
-    req.remove(name);
-
     const raw = /** @type {Record<string, unknown>} */ (parsed);
     const kind = typeof raw.kind === "string" ? raw.kind : "";
     const argv = Array.isArray(raw.argv) ? raw.argv.map(String) : [];
+    current = { employee, command: commandWords(kind, argv), startedAt: Date.now() };
+    heartbeat();
+    req.remove(name);
     /** @type {Record<string, unknown>} */
     let response;
     try {
@@ -2343,7 +2474,8 @@ async function serveSpool(employee, role, req, res) {
       } else {
         health.served += 1;
       }
-      heartbeat(false);
+      current = null;
+      heartbeat();
     }
 
     try {
@@ -2387,21 +2519,46 @@ async function main() {
   // A restart costs no sweep the board's age does not call for.
   loadBoard(cfg);
   readStaffed();
-  heartbeat(false);
-  let lastBeat = Date.now();
+  heartbeat();
+  const heartbeatMs = Number(process.env.HUBD_HEARTBEAT_MS ?? HEARTBEAT_MS);
+  if (!Number.isFinite(heartbeatMs) || heartbeatMs <= 0) {
+    throw new Error("HUBD_HEARTBEAT_MS must be a positive number of milliseconds");
+  }
+  // On a timer, not between requests: a slow request must not look like a
+  // dead daemon (#496).
+  setInterval(() => {
+    heartbeat();
+  }, heartbeatMs).unref();
   // The dashboard's budget line. Free to ask (see `budgetExhausted`), and
   // it is also what lifts `limitedUntil` once GitHub resets the budget.
   const BUDGET_CHECK_MS = 60_000;
+  const NUDGE_CHECK_MS = 10_000;
   await budgetExhausted();
   await syncSkills(cfg);
   let lastBudgetCheck = Date.now();
-  const stop = () => {
+  let lastNudgeCheck = 0;
+  /** @param {string} why */
+  const stop = (why) => {
+    console.error(`hubd: stopping on ${why}`);
     fs.rmSync(ALIVE, { force: true });
     releaseLock(LOCK);
     process.exit(0);
   };
-  process.on("SIGINT", stop);
-  process.on("SIGTERM", stop);
+  process.on("SIGINT", () => {
+    stop("SIGINT");
+  });
+  process.on("SIGTERM", () => {
+    stop("SIGTERM");
+  });
+  // So the next "hubd exited (code N)" line in hubd.log is explained.
+  for (const event of /** @type {const} */ (["uncaughtException", "unhandledRejection"])) {
+    process.on(event, (error) => {
+      console.error(
+        `hubd: ${event}: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
+      );
+      process.exit(1);
+    });
+  }
 
   for (;;) {
     readStaffed();
@@ -2424,11 +2581,9 @@ async function main() {
         console.error(`hubd: board: ${error instanceof Error ? error.message : "failed"}`);
       }
     }
-    // Cheap enough at this interval, and far below the staleness window hub
-    // allows, so a busy daemon is never mistaken for a dead one.
-    if (Date.now() - lastBeat > 5000) {
-      heartbeat(false);
-      lastBeat = Date.now();
+    if (Date.now() - lastNudgeCheck > NUDGE_CHECK_MS) {
+      lastNudgeCheck = Date.now();
+      sendNudges();
     }
     if (Date.now() - lastBudgetCheck > BUDGET_CHECK_MS) {
       await budgetExhausted();

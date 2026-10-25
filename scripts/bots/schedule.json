@@ -1,0 +1,10 @@
+{
+  "nudges": [
+    {
+      "id": "groom-backlog",
+      "to": "manager",
+      "everyMinutes": 30,
+      "text": "Groom the Backlog: re-rank by value, finish started features first, add unboarded issues, check No Status."
+    }
+  ]
+}
