@@ -479,7 +479,7 @@ test("(19) a move mid-cast cancels it: logged, and the cast never lands (#279)",
   await expect(meter(page, "damage")).toHaveText("0");
 });
 
-test("(20) a double-click on a far enemy attacks it: you walk there and swing (#298)", async ({
+test("(20) a double right click on a far enemy attacks it: you walk there and swing (#298, #438)", async ({
   page,
 }) => {
   const canvas = await openTraining(page);
@@ -493,7 +493,7 @@ test("(20) a double-click on a far enemy attacks it: you walk there and swing (#
     throw new Error("the arena canvas has no box");
   }
   const scale = box.width / TRAINING_HALL_WIDTH;
-  await page.mouse.dblclick(box.x + 480 * scale, box.y + 210 * scale);
+  await page.mouse.dblclick(box.x + 480 * scale, box.y + 210 * scale, { button: "right" });
 
   await expect(page.locator(".training-adrenaline")).toContainText("· attacking");
   // Only a body that walked the whole way there can land this. The walk
@@ -548,7 +548,7 @@ test("(22) a stored Classic keymap casts on the number row (#302)", async ({ pag
   await expect(page.locator(".training-skill-key").first()).toHaveText("1");
   await takeControl(page);
   await expect(page.locator(".training-hint")).toHaveText(
-    "WASD move · 1–8 cast · tab/click to target · space/double-click attack · esc to release",
+    "WASD move · 1–8 cast · tab/right-click to target · space/double right-click attack · esc to release",
   );
 
   await page.keyboard.press(skillKey(0, KEYMAP_PRESETS.classic));
@@ -644,4 +644,97 @@ test("(24) an empty slot's key does nothing; the next key casts its own skill (#
   await page.keyboard.press(skillKey(2));
   await expect(slots.nth(2).locator(".recharge-overlay")).toHaveCount(1);
   await expect(energy).not.toHaveText(full ?? "");
+});
+
+test("(25) left click walks, even onto a dummy, and never targets; right click targets (#438)", async ({
+  page,
+}) => {
+  const canvas = await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("armor-ladder");
+  await expect(page.locator(".training-log")).toContainText("── Armor ladder ──");
+  await takeControl(page);
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+  const scale = box.width / TRAINING_HALL_WIDTH;
+  const at = (x: number, y: number) => ({ x: box.x + x * scale, y: box.y + y * scale });
+  const [first] = LADDER;
+  const dummy = at(first.x, first.y);
+
+  // No target yet, and the cursor off the arena: no name shows. Shot armed
+  // throughout, as Esc would first stop the walk rather than release.
+  await page.mouse.move(1, 1);
+  const blank = await nameBands(page, canvas);
+  const named = async (): Promise<number> =>
+    (await nameBands(page, canvas)).filter((band, i) => !band.equals(blank[i] ?? band)).length;
+  const shot = (): Promise<Buffer> =>
+    canvas.screenshot({ mask: [page.locator(".training-overlay")] });
+  const start = await shot();
+
+  // A left click on the dummy walks toward it, and targets nobody.
+  await page.mouse.click(dummy.x, dummy.y);
+  await page.mouse.move(1, 1);
+  await page.waitForTimeout(300);
+  expect(await named()).toBe(0);
+  expect((await shot()).equals(start), "the hero should be walking").toBe(false);
+
+  // A right click on it targets it: its name shows with the cursor gone.
+  await page.mouse.click(dummy.x, dummy.y, { button: "right" });
+  await page.mouse.move(1, 1);
+  await expect.poll(named).toBe(1);
+  await expect(page.locator(".training-adrenaline")).not.toContainText("attacking");
+});
+
+test("(26) a right click on the ground moves nobody and keeps the target (#438)", async ({
+  page,
+}) => {
+  const canvas = await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("armor-ladder");
+  await expect(page.locator(".training-log")).toContainText("── Armor ladder ──");
+  await takeControl(page);
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+  const scale = box.width / TRAINING_HALL_WIDTH;
+  await page.mouse.move(1, 1);
+  const blank = await nameBands(page, canvas);
+  const named = async (): Promise<number> =>
+    (await nameBands(page, canvas)).filter((band, i) => !band.equals(blank[i] ?? band)).length;
+
+  await page.keyboard.press("Tab");
+  await expect.poll(named).toBe(1);
+  await releaseControl(page);
+  const before = await stillArena(page, canvas);
+
+  // Empty ground between the spawn and the ladder.
+  await takeControl(page);
+  await page.mouse.click(box.x + 220 * scale, box.y + 330 * scale, { button: "right" });
+  await page.mouse.move(1, 1);
+  await releaseControl(page);
+  expect(await named()).toBe(1);
+  expect((await stillArena(page, canvas)).equals(before), "nobody should have moved").toBe(true);
+});
+
+test("(27) a left click while the right button is held still walks (#438)", async ({ page }) => {
+  const canvas = await openTraining(page);
+  await takeControl(page);
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+  const scale = box.width / TRAINING_HALL_WIDTH;
+  const shot = (): Promise<Buffer> =>
+    canvas.screenshot({ mask: [page.locator(".training-overlay")] });
+  const start = await shot();
+
+  // Empty ground in the far corner, with the right button down first.
+  await page.mouse.move(box.x + 520 * scale, box.y + 30 * scale);
+  await page.mouse.down({ button: "right" });
+  await page.mouse.down({ button: "left" });
+  await page.mouse.up({ button: "left" });
+  await page.mouse.up({ button: "right" });
+  await page.waitForTimeout(500);
+  expect((await shot()).equals(start), "the hero should be walking").toBe(false);
 });

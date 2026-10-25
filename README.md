@@ -42,7 +42,8 @@ code.
 | Key             | Action                              |
 | --------------- | ----------------------------------- |
 | `W` `A` `S` `D` | Move                                |
-| Left click      | Target (click empty space to clear) |
+| Left click      | Walk there                          |
+| Right click     | Target (double: attack)             |
 | `1`–`9`, `0`    | Use the matching skill-bar slot     |
 | `Tab`           | Target the next nearest enemy       |
 | `Shift` `Tab`   | Target the previous one             |

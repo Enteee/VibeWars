@@ -57,10 +57,10 @@ describe("buildSignature", () => {
 describe("armedHint (#302)", () => {
   it("names the keymap's keys: arrows and Q–F by default, WASD and 1–8 in Classic", () => {
     expect(armedHint(DEFAULT_KEYMAP)).toBe(
-      "arrows move · Q–F cast · tab/click to target · space/double-click attack · esc to release",
+      "arrows move · Q–F cast · tab/right-click to target · space/double right-click attack · esc to release",
     );
     expect(armedHint(KEYMAP_PRESETS.classic)).toBe(
-      "WASD move · 1–8 cast · tab/click to target · space/double-click attack · esc to release",
+      "WASD move · 1–8 cast · tab/right-click to target · space/double right-click attack · esc to release",
     );
   });
 });

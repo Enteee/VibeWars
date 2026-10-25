@@ -3,6 +3,7 @@ import type Phaser from "phaser";
 import { vec2, type Vec2 } from "@vibewars/game-core";
 
 import type { ArenaScene } from "./arena-scene.js";
+import { buttonChanges, type MouseButton } from "./pointer-buttons.js";
 
 /**
  * How the arena fills its parent element.
@@ -16,16 +17,29 @@ export type ArenaScaleMode =
   | { readonly mode: "resize" } // the match view
   | { readonly mode: "fit"; readonly width: number; readonly height: number }; // a fixed world, scaled to fit
 
+/** One mouse button going down or up over the arena (#438). */
+export interface ButtonEvent {
+  readonly button: MouseButton;
+  readonly phase: "down" | "up";
+  /** Where, in world units. */
+  readonly world: Vec2;
+  /** Where, in CSS pixels from the canvas's top-left corner. */
+  readonly screen: Vec2;
+}
+
 /** A running Phaser host for one `ArenaScene`, whatever feeds it snapshots. */
 export interface ArenaViewport {
   readonly scene: ArenaScene;
   /** Called once per rendered frame; returns the unsubscribe. */
   onFrame(handler: (deltaSeconds: number) => void): () => void;
   /**
-   * A left click or a tap on the arena, in world units; returns the
-   * unsubscribe. Other buttons do nothing yet, and their menus stay.
+   * A mouse button went down or up over the arena, a chorded press
+   * included (#438); returns the unsubscribe. Only a press that began
+   * over the arena counts, and its release arrives wherever the pointer
+   * is by then. A tap is the left button. The browser's menu does not
+   * open over the arena.
    */
-  onPointerDown(handler: (world: Vec2) => void): () => void;
+  onButton(handler: (event: ButtonEvent) => void): () => void;
   /**
    * The cursor moved over the arena, in world units, or left it
    * (`undefined`), so a name shown under it does not stay (#253).
@@ -96,15 +110,63 @@ export async function createArenaViewport(
         game.events.off(Phaser.Core.Events.STEP, onStep);
       };
     },
-    onPointerDown(handler) {
-      const onDown = (pointer: Phaser.Input.Pointer): void => {
-        if (pointer.button === 0) {
-          handler(vec2(pointer.worldX, pointer.worldY));
+    onButton(handler) {
+      // DOM pointer events rather than Phaser's: a second button pressed
+      // while one is held arrives as a move with a new `buttons` mask, and
+      // a release over the HUD only arrives through pointer capture.
+      const canvas = game.canvas;
+      let held = 0;
+      let last: { world: Vec2; screen: Vec2 } = { world: vec2(0, 0), screen: vec2(0, 0) };
+      const emit = (pressed: readonly MouseButton[], released: readonly MouseButton[]): void => {
+        for (const button of pressed) {
+          handler({ button, phase: "down", ...last });
+        }
+        for (const button of released) {
+          handler({ button, phase: "up", ...last });
         }
       };
-      scene.input.on("pointerdown", onDown);
+      const onPointer = (event: PointerEvent): void => {
+        // Buttons held with none tracked were pressed elsewhere first.
+        if (event.type !== "pointerdown" && held === 0) {
+          return;
+        }
+        const bounds = canvas.getBoundingClientRect();
+        const world = scene.cameras.main.getWorldPoint(
+          game.scale.transformX(event.pageX),
+          game.scale.transformY(event.pageY),
+        );
+        last = {
+          world: vec2(world.x, world.y),
+          screen: vec2(event.clientX - bounds.left, event.clientY - bounds.top),
+        };
+        const { pressed, released } = buttonChanges(held, event.buttons);
+        held = event.buttons & 7;
+        if (event.type === "pointerdown") {
+          canvas.setPointerCapture(event.pointerId);
+        }
+        emit(pressed, released);
+      };
+      const releaseAll = (): void => {
+        const { released } = buttonChanges(held, 0);
+        held = 0;
+        emit([], released);
+      };
+      const onContextMenu = (event: MouseEvent): void => {
+        event.preventDefault();
+      };
+      canvas.addEventListener("pointerdown", onPointer);
+      canvas.addEventListener("pointermove", onPointer);
+      canvas.addEventListener("pointerup", onPointer);
+      canvas.addEventListener("pointercancel", releaseAll);
+      canvas.addEventListener("contextmenu", onContextMenu);
+      window.addEventListener("blur", releaseAll);
       return () => {
-        scene.input.off("pointerdown", onDown);
+        canvas.removeEventListener("pointerdown", onPointer);
+        canvas.removeEventListener("pointermove", onPointer);
+        canvas.removeEventListener("pointerup", onPointer);
+        canvas.removeEventListener("pointercancel", releaseAll);
+        canvas.removeEventListener("contextmenu", onContextMenu);
+        window.removeEventListener("blur", releaseAll);
       };
     },
     onPointerMove(handler) {
