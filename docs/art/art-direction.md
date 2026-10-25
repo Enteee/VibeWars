@@ -154,6 +154,14 @@ Drawn at 32×12 px, over the actors and under the HUD: a shot is
 gameplay information, and the player has to see where it will land in time
 to step aside. Projectiles stay on under reduced motion.
 
+**How a shot ends.** When a shot leaves the state, its sprite does not pop
+out. It holds at the end of its flight, its aim point, and fades from full
+to zero alpha over 120 ms, as the swing flash does. A shot cut short by a
+wall (#215) ends at the wall's face, so the arrow is seen to stop on the
+stone; a dodged shot ends where its target was. Both are the same fade:
+the damage number, or its absence, says which. Under reduced motion it is
+removed at once.
+
 ### Player mark
 
 The body is a circle at the collision radius, r = 14 (#166). Everything on

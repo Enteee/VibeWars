@@ -152,8 +152,9 @@ most shots. At 40 units a shot lands too soon to dodge. Blind is rolled at relea
 a blinded shot misses at once and nothing flies. A shot still lands if
 its archer dies, and does nothing to a target that died in flight. Line of sight is checked once, at release: with a wall in the way the
 shot is "obstructed", nothing flies, and the next swing looks again.
-Once released, a shot flies through walls and bodies. Melee swings are
-never obstructed.
+A shot whose flight would cross a wall stops at it and is "obstructed"
+too, so stepping behind a pillar dodges it. Shots fly through bodies.
+Melee swings are never obstructed.
 
 Not modelled: critical hits, attack-speed changes, block and evade.
 
