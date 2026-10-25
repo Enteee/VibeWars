@@ -114,6 +114,9 @@ importers:
       tonal:
         specifier: 6.5.1
         version: 6.5.1
+      trystero:
+        specifier: 0.26.0
+        version: 0.26.0
 
   packages/game-core: {}
 
@@ -434,6 +437,9 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@noble/secp256k1@3.2.0':
+    resolution: {integrity: sha512-Z3ZAWOTxJ0EuTuZTi7Y69iK7GgrLHh8sgm45lVDhg/b3Nk1TpAiKhick2KkZisHuupeepSkyIydN/J459SdX1w==}
+
   '@oxc-project/types@0.155.0':
     resolution: {integrity: sha512-SeE8JPwW1xs1tHeNycjUtUBdhorRa8o4jlvjwk49R7/Z291i+4DQa7JJIgOm/TaYQZx+QrPQbVJ/9c8dMIZN8Q==}
 
@@ -682,6 +688,12 @@ packages:
 
   '@tonaljs/voicing@5.1.5':
     resolution: {integrity: sha512-iNbXna6aCUdiTbl2bxPeSTiUwthDsvJGFyWF0zlNYFCTAW5aSgXUlVPqHpAsCuQuy5QDUIWuyTxWN7qfvwvMNw==}
+
+  '@trystero-p2p/core@0.26.0':
+    resolution: {integrity: sha512-CZpeXPgfbDdFKrGxfD98F9tn/fTjya4mQ2o/Ax6H0qpBaJXCBz5+jyPtjsYEPAAcKRK/btOatCetFiQ5qIMCOA==}
+
+  '@trystero-p2p/nostr@0.26.0':
+    resolution: {integrity: sha512-HArp9fonBkqFZgw3U2D823fCePQv7haKkvjtwbGRkWzy+Wo9G3cCDEnG/GENDWwzERHrhRcRacpFsFt4JpwRJQ==}
 
   '@types/body-parser@1.19.6':
     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
@@ -1822,6 +1834,9 @@ packages:
   tonal@6.5.1:
     resolution: {integrity: sha512-zIg3eBoRooX6f3bSFpPh/qKWMRrWGbNUVgklqCXDKt8eDi9snJt5UBFhwE3/JkupPV5w+JaeU7Lk0f0sFTFM/Q==}
 
+  trystero@0.26.0:
+    resolution: {integrity: sha512-M6NsoGmAkAy72K4YiPj0iGbd9hyuAGJpIBm0wL6f0g6bP/nCsMtbJKM8VpcxexK61HaQ5q5KDVnqFZogXGIolQ==}
+
   ts-api-utils@2.5.0:
     resolution: {integrity: sha512-OJ/ibxhPlqrMM0UiNHJ/0CKQkoKF243/AEmplt3qpRgkW8VG7IfOS41h7V8TjITqdByHzrjcS/2si+y4lIh8NA==}
     engines: {node: '>=18.12'}
@@ -2290,6 +2305,8 @@ snapshots:
   '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.4':
     optional: true
 
+  '@noble/secp256k1@3.2.0': {}
+
   '@oxc-project/types@0.155.0': {}
 
   '@playwright/test@1.64.1':
@@ -2611,6 +2628,13 @@ snapshots:
       '@tonaljs/range': 4.9.4
       '@tonaljs/voice-leading': 5.1.4
       '@tonaljs/voicing-dictionary': 5.1.5
+
+  '@trystero-p2p/core@0.26.0': {}
+
+  '@trystero-p2p/nostr@0.26.0':
+    dependencies:
+      '@noble/secp256k1': 3.2.0
+      '@trystero-p2p/core': 0.26.0
 
   '@types/body-parser@1.19.6':
     dependencies:
@@ -3881,6 +3905,10 @@ snapshots:
       '@tonaljs/voice-leading': 5.1.4
       '@tonaljs/voicing': 5.1.5
       '@tonaljs/voicing-dictionary': 5.1.5
+
+  trystero@0.26.0:
+    dependencies:
+      '@trystero-p2p/nostr': 0.26.0
 
   ts-api-utils@2.5.0(typescript@6.0.3):
     dependencies:
