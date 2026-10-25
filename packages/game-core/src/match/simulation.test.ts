@@ -22,6 +22,7 @@ function spec(id: string, team: number, spawn: Vec2, extra: Partial<ParticipantS
     attributeRanks: new Map([["elementalist.fire-magic", 12]]),
     equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
     spawn,
+    facing: 0,
     ...extra,
   };
 }

@@ -49,6 +49,7 @@ import {
   type ResetPolicy,
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
+import { directionAngle } from "./facing.js";
 
 /**
  * One match, steppable, with no transport attached (ADR-0017).
@@ -76,6 +77,8 @@ export interface ParticipantSpec {
   readonly attributeRanks: ReadonlyMap<string, number>;
   readonly equipment: ResolvedEquipment;
   readonly spawn: Vec2;
+  /** Where it faces at the start and after every reset, in radians (`atan2`, 0 = +x). */
+  readonly facing: number;
   /** Defaults to the ruleset's base health. */
   readonly maxHealth?: number;
   /** Defaults to the ruleset's base energy. */
@@ -94,6 +97,12 @@ export interface Participant {
   readonly skillBar: readonly string[];
   readonly spawn: Vec2;
   position: Vec2;
+  /**
+   * Where it faces, in radians, `atan2` convention, in (−π, π], 0 = +x.
+   * Where it last pushed, or at what it is casting at or swinging at,
+   * whichever came last in the step. The dead keep the facing they died with.
+   */
+  facing: number;
   inputDirection: Vec2;
   targetId: string | undefined;
   respawnInSeconds: number;
@@ -177,6 +186,15 @@ function degenerationSources(combatant: Combatant): {
 
 /** How far short of its interval a swing or a flight may be and still land; see `#advanceAttack`. */
 const SWING_EPSILON = 1e-9;
+
+/** Turn to face `point`; one exactly underfoot has no direction, so facing stays. */
+function faceToward(record: Participant, point: Vec2): void {
+  const dx = point.x - record.position.x;
+  const dy = point.y - record.position.y;
+  if (dx !== 0 || dy !== 0) {
+    record.facing = directionAngle(dx, dy);
+  }
+}
 
 export class MatchSimulation {
   readonly #ruleset: Ruleset;
@@ -264,6 +282,7 @@ export class MatchSimulation {
       skillBar: spec.skillBar,
       spawn: spec.spawn,
       position: spec.spawn,
+      facing: spec.facing,
       inputDirection: ZERO,
       targetId: undefined,
       respawnInSeconds: 0,
@@ -519,6 +538,7 @@ export class MatchSimulation {
       }
 
       this.#advanceAttack(record, dt);
+      this.#faceCastTarget(record);
       // Walked or approached: either way, it is what a shot leads.
       record.history.push(record.position);
 
@@ -712,6 +732,7 @@ export class MatchSimulation {
       this.advanceMovement(record, sub(next, record.position), dt);
       return;
     }
+    faceToward(record, target.position);
 
     attack.swingElapsed += dt;
     // Within a hair: twenty-odd additions of 0.05 fall just short of
@@ -947,6 +968,10 @@ export class MatchSimulation {
   }
 
   private advanceMovement(record: ParticipantRecord, direction: Vec2, dt: number): void {
+    // Where it pushes, even into a wall.
+    if (direction.x !== 0 || direction.y !== 0) {
+      record.facing = directionAngle(direction.x, direction.y);
+    }
     const radius = this.#ruleset.collision.playerRadius;
     let position = integrateMovement(
       record.position,
@@ -978,6 +1003,22 @@ export class MatchSimulation {
   }
 
   /**
+   * Casting at somebody else turns you to them, after any walking this
+   * step, so a caster strafing mid-cast still faces the cast. A self-cast,
+   * or a target that is gone, leaves facing alone.
+   */
+  #faceCastTarget(record: ParticipantRecord): void {
+    const targetId = record.combatant.cast.activeCast?.targetId;
+    if (targetId === undefined || targetId === record.id) {
+      return;
+    }
+    const target = this.#participants.get(targetId);
+    if (target !== undefined) {
+      faceToward(record, target.position);
+    }
+  }
+
+  /**
    * Respawn, and every reset policy: the one way back to the start. At
    * the starting health, full energy, no adrenaline, nothing active, any
    * cast dropped, at spawn. Recharges carry on, as they would in a match.
@@ -991,6 +1032,7 @@ export class MatchSimulation {
     record.combatant.statuses.removeByCategory("hex");
     record.combatant.statuses.removeByCategory("enchantment");
     record.position = record.spawn;
+    record.facing = record.spec.facing;
     record.inputDirection = ZERO;
     record.respawnInSeconds = 0;
     record.combatant.cast.cancelCast();

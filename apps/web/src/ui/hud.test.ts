@@ -89,6 +89,7 @@ describe("isAttackingTarget", () => {
     name: sessionId,
     x: 0,
     y: 0,
+    facing: 0,
     targetSessionId: undefined,
     attackTargetSessionId,
     health: 500,

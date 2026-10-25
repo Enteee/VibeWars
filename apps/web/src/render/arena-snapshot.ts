@@ -18,6 +18,8 @@ export interface RenderableActor {
   /** Drawn above the actor, so a player can tell who is who. */
   readonly name: string;
   readonly position: Vec2;
+  /** Radians, `atan2` convention, 0 = +x (#187). Not drawn yet. */
+  readonly facing: number;
   readonly radius: number;
   readonly team: "ally" | "enemy" | "self";
   readonly health: number;

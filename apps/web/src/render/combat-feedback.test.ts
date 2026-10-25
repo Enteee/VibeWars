@@ -10,6 +10,7 @@ function player(sessionId: string): PlayerSnapshot {
     name: sessionId,
     x: 100,
     y: 100,
+    facing: 0,
     targetSessionId: undefined,
     attackTargetSessionId: undefined,
     health: 400,
