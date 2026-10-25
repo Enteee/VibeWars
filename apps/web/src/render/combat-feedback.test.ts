@@ -127,7 +127,11 @@ describe("showCombatFeedback", () => {
   it("anchors each number to whoever it happened to, so a burst can stack (#54)", () => {
     const texts: FloatingText[] = [];
     showCombatFeedback(
-      { addFloatingText: (text) => texts.push(text), addAreaFlash: () => undefined },
+      {
+        addFloatingText: (text) => texts.push(text),
+        addAreaFlash: () => undefined,
+        addSwingFlash: () => undefined,
+      },
       {
         casterSessionId: "me",
         cause: "skill",
