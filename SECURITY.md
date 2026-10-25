@@ -161,10 +161,19 @@ saying so in the same PR. Keep the numbers: issues cite them.
    headers from every request and upgrade before any listener sees them.
    Running behind a reverse proxy would need its own trusted-proxy setting.
 
-   **Still open:** the per-address caps count one address. An attacker
-   with many addresses, such as an IPv6 host rotating through its /64, gets
-   a share for each, and only the server-wide caps hold. They keep the
-   server's tick budget, but not its seats for everyone else.
+   **An IPv6 peer off the server's links counts per /64 (#271).** A host
+   on the internet usually holds a whole /64, so rotating through it gets
+   no fresh share: every off-link address in one /64 shares one share of
+   both caps. A peer on a link the server is on (inside the prefix of one
+   of the server's own IPv6 addresses, link-local `fe80::/10`, or `::1`)
+   still counts per address, because an IPv6 LAN party all sits in the
+   server's /64. IPv4, also as `::ffff:a.b.c.d`, counts per address. The
+   server reads its links once, at start: a LAN renumbered while it runs
+   looks off-link, and its guests share one /64 share until it restarts.
+
+   **Still open:** an attacker with many /64s, or many IPv4 addresses,
+   still gets a share for each, and only the server-wide caps hold. They
+   keep the server's tick budget, but not its seats for everyone else.
 
 7. **Fixed by #115:** client strings reached the server log unescaped. A
    skill id of `"a\n[match] finished winner=1 reason=score"` printed a

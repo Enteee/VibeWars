@@ -3,7 +3,7 @@ import { Server as HttpServer, type IncomingMessage, type ServerResponse } from 
 import { matchMaker } from "colyseus";
 import { RATE_LIMIT, RATE_LIMIT_MESSAGE } from "@vibewars/game-protocol";
 
-import { peerAddress } from "./rooms/client-budget.js";
+import type { ClientLimits } from "./rooms/client-budget.js";
 import { MessageBudget } from "./rooms/message-budget.js";
 
 /**
@@ -38,14 +38,18 @@ const FORGET_EVERY_MS = 10_000;
  */
 export class GatedHttpServer extends HttpServer {
   readonly #matchmaking: MessageBudget;
+  readonly #addressKey: ClientLimits["addressKey"];
   #forgotAt = 0;
 
   /**
    * @param matchmakingBurst how many matchmaking requests one address may
    *   make at once; it gets `MATCHMAKING_PER_SECOND` back each second
+   * @param addressKey the key a request's address is counted under, the
+   *   one the seat limits use (#271)
    */
-  public constructor(matchmakingBurst: number) {
+  public constructor(matchmakingBurst: number, addressKey: ClientLimits["addressKey"]) {
     super();
+    this.#addressKey = addressKey;
     this.#matchmaking = new MessageBudget(
       MATCHMAKING_PER_SECOND,
       matchmakingBurst,
@@ -87,7 +91,7 @@ export class GatedHttpServer extends HttpServer {
       this.#matchmaking.forgetRefilled(now);
       this.#forgotAt = now;
     }
-    return this.#matchmaking.take(peerAddress(req.socket.remoteAddress), now);
+    return this.#matchmaking.take(this.#addressKey(req.socket.remoteAddress), now);
   }
 }
 
