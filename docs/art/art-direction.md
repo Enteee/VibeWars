@@ -354,6 +354,29 @@ marker on someone, which carry that marker's colour.
 | Hex         | Broken purple ring |
 | Skill       | Square             |
 
+### Skill slot states
+
+A skill slot says what its cast is doing (#300). Every state is one 2 px ring
+_inset_ in the slot, so it is never confused with the ready flash's outer ring
+and the layout never moves. It sits above the recharge wipe and under the
+hotkey.
+
+| State         | Ring              | Content   | Glyph        | Time           |
+| ------------- | ----------------- | --------- | ------------ | -------------- |
+| `casting`     | `ink`, pulsing    | as is     | none         | while it casts |
+| `interrupted` | `damage`, steady  | 0.6 alpha | `damage` `✕` | 400 ms         |
+| `cancelled`   | `ink-dim`, steady | 0.6 alpha | none         | 400 ms         |
+
+- **Casting** pulses its opacity from 0.65 to 1 over 700 ms. Under reduced
+  motion the ring is steady.
+- **Both failures dim the slot**, because the cast did not go off. They
+  differ by ring colour _and_ by the glyph, so an interrupt reads without
+  colour (#75). Never the recharge shade: a cancelled skill does not
+  recharge.
+- **The `✕` must win at a glance.** On the HUD it is about half the slot's
+  height (1.9rem), centred over the name and cased in `bg`. In the Training
+  Ground row it sits at the right end, at row height.
+
 ### UI controls
 
 Buttons and indicators in the HUD and menus. Ink on the panel. The states of one control
