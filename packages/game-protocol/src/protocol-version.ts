@@ -1,0 +1,1 @@
+export const PROTOCOL_VERSION = "000000000000";

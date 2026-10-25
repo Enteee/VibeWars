@@ -12,6 +12,7 @@ import {
   normalizeLobbyCode,
   type LobbyJoinOptions,
   type LobbyMatchStartingMessage,
+  type LobbyStartRejectedMessage,
 } from "@vibewars/game-protocol";
 
 /**
@@ -48,7 +49,7 @@ export interface LobbyConnection {
   startMatch(): void;
   onChange(handler: () => void): void;
   onMatchStarting(handler: (message: LobbyMatchStartingMessage) => void): void;
-  onStartRejected(handler: (message: { reason: string }) => void): void;
+  onStartRejected(handler: (message: LobbyStartRejectedMessage) => void): void;
   disconnect(): Promise<void>;
 }
 

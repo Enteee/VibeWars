@@ -12,6 +12,7 @@ import {
   isLobbyCode,
   normalizeLobbyCode,
   type LobbyMatchStartingMessage,
+  type LobbyStartRejectedMessage,
 } from "@vibewars/game-protocol";
 
 import { quote } from "../log-safe.js";
@@ -52,7 +53,7 @@ export const LobbyPlayer = schema(
 
 export const LobbyState = schema(
   {
-    protocolVersion: t.number().default(PROTOCOL_VERSION),
+    protocolVersion: t.string().default(PROTOCOL_VERSION),
     /** The short code players type to join. */
     code: t.string().default(""),
     phase: t.string().default("waiting"),
@@ -466,7 +467,7 @@ export class LobbyRoom extends Room {
     }
     const check = this.canStart();
     if (!check.ok) {
-      client.send("start-rejected", { reason: check.reason });
+      client.send("start-rejected", { reason: check.reason } satisfies LobbyStartRejectedMessage);
       return;
     }
 
@@ -504,7 +505,7 @@ export class LobbyRoom extends Room {
       const full = error instanceof ServerError && error.code === ROOM_LIMIT;
       client.send("start-rejected", {
         reason: full ? SERVER_FULL_MESSAGE : "the server could not create the match",
-      });
+      } satisfies LobbyStartRejectedMessage);
       return;
     }
 

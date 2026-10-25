@@ -27,6 +27,7 @@ import {
   spawnFacing,
   validatePlayerBuild,
   vec2,
+  type CombatEvent,
   type CombatLogEntry,
   type BuildEquipment,
   type Participant,
@@ -42,10 +43,13 @@ import {
   ROOM_MATCH,
   parseClientIntent,
   type CastRefusedMessage,
+  type CombatMessage,
   type MapDescriptor,
+  type MatchEndedMessage,
   type RechargeMessage,
   type RechargeSlot,
   type ServerHello,
+  type SkillBarMessage,
   type WallDescriptor,
 } from "@vibewars/game-protocol";
 import type { StepContext } from "colyseus";
@@ -145,7 +149,7 @@ export const ProjectileState = schema(
 
 export const MatchState = schema(
   {
-    protocolVersion: t.number().default(PROTOCOL_VERSION),
+    protocolVersion: t.string().default(PROTOCOL_VERSION),
     players: t.map(PlayerState),
     /** Weapon shots in flight, oldest first. */
     projectiles: t.array(ProjectileState),
@@ -690,8 +694,7 @@ export class MatchRoom extends Room {
    * floating numbers and a combat log; authoritative *state* still
    * arrives via schema sync, so a dropped event can never desync the
    * simulation — it only costs a visual flourish. An area skill also says
-   * where it landed and how far it reached, for the flash (#5). This is
-   * not part of `game-protocol`, so the field is additive.
+   * where it landed and how far it reached, for the flash (#5).
    */
   private broadcastCombatEvents(casterSessionId: string, entry: CombatLogEntry): void {
     const { cause, events, area } = entry;
@@ -704,9 +707,16 @@ export class MatchRoom extends Room {
     const weaponId = entry.weaponId ?? "";
     this.broadcast(
       "combat",
-      area === undefined
+      (area === undefined
         ? { casterSessionId, cause, skillId, weaponId, events }
-        : { casterSessionId, cause, skillId, weaponId, events, area },
+        : {
+            casterSessionId,
+            cause,
+            skillId,
+            weaponId,
+            events,
+            area,
+          }) satisfies CombatMessage<CombatEvent>,
     );
   }
 
@@ -777,10 +787,10 @@ export class MatchRoom extends Room {
     this.state.endReason = outcome.reason ?? "";
     this.broadcast("match-ended", {
       winningTeam: outcome.winningTeam ?? null,
-      reason: outcome.reason,
+      reason: outcome.reason ?? null,
       scoreTeam0: this.state.scoreTeam0,
       scoreTeam1: this.state.scoreTeam1,
-    });
+    } satisfies MatchEndedMessage);
     console.info(
       `[match] finished winner=${String(outcome.winningTeam ?? "draw")} reason=${String(outcome.reason)}`,
     );
@@ -984,7 +994,7 @@ export class MatchRoom extends Room {
           rechargeSeconds: skill?.rechargeSeconds ?? 0,
         };
       }),
-    });
+    } satisfies SkillBarMessage);
     this.sendRecharges(client, true);
 
     console.info(

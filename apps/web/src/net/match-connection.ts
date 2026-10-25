@@ -1,5 +1,11 @@
-import type { ProfessionId } from "@vibewars/game-core";
-import type { CastRefusedMessage, ClientIntent, MapDescriptor } from "@vibewars/game-protocol";
+import type { CombatEvent, ProfessionId } from "@vibewars/game-core";
+import type {
+  CastRefusedMessage,
+  ClientIntent,
+  CombatMessage as WireCombatMessage,
+  MapDescriptor,
+  SkillBarSlot,
+} from "@vibewars/game-protocol";
 
 /**
  * What a match looks like to the client, whoever runs it: the plain
@@ -82,14 +88,7 @@ export interface ProjectileSnapshot {
 }
 
 /** One slot of the server-assigned skill bar. */
-export interface SkillSlot {
-  readonly id: string;
-  readonly name: string;
-  readonly energyCost: number;
-  readonly adrenalineCost: number;
-  readonly activationSeconds: number;
-  readonly rechargeSeconds: number;
-}
+export type SkillSlot = SkillBarSlot;
 
 /** One slot's recharge: `remaining` is 0 when the skill is ready. */
 export interface SlotRecharge {
@@ -98,22 +97,8 @@ export interface SlotRecharge {
   readonly total: number;
 }
 
-export interface CombatMessage {
-  readonly casterSessionId: string;
-  /** What this was. Read this, never `skillId === ""`, to tell them apart. */
-  readonly cause: "skill" | "weapon" | "degeneration";
-  /** The skill, when `cause` is `"skill"`; `""` otherwise. */
-  readonly skillId: string;
-  /** The weapon, when `cause` is `"weapon"`; `""` otherwise (#162). */
-  readonly weaponId: string;
-  /** Where an area skill landed, and how far it reached (#5). */
-  readonly area?: { readonly x: number; readonly y: number; readonly radius: number };
-  readonly events: readonly {
-    readonly kind: string;
-    readonly targetId?: string;
-    readonly amount?: number;
-  }[];
-}
+/** A `"combat"` message, its events game-core's. */
+export type CombatMessage = WireCombatMessage<CombatEvent>;
 
 export interface MatchConnection {
   readonly selfSessionId: string;

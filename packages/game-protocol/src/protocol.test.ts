@@ -3,16 +3,16 @@ import { describe, expect, it } from "vitest";
 import {
   LOBBY_CODE_ALPHABET,
   LOBBY_CODE_LENGTH,
-  PROTOCOL_VERSION,
   ROOM_MATCH,
   isLobbyCode,
   normalizeLobbyCode,
   parseClientIntent,
 } from "./protocol.js";
+import { PROTOCOL_VERSION } from "./protocol-version.js";
 
 describe("protocol constants", () => {
-  it("pins a protocol version", () => {
-    expect(PROTOCOL_VERSION).toBe(10);
+  it("derives the protocol version from the wire schema", () => {
+    expect(PROTOCOL_VERSION).toMatch(/^[0-9a-f]{12}$/);
   });
 
   it("names the match room", () => {

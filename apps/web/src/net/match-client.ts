@@ -11,6 +11,7 @@ import {
   type RechargeMessage,
   type RechargeSlot,
   type ServerHello,
+  type SkillBarMessage,
 } from "@vibewars/game-protocol";
 
 import type {
@@ -245,7 +246,7 @@ export async function connectToMatch(
   // skill bar for the first few frames.
   const [map, bar] = await Promise.all([
     awaitMessage<MapDescriptor>(room, "map", 5000),
-    awaitMessage<{ slots: SkillSlot[] }>(room, "skill-bar", 5000),
+    awaitMessage<SkillBarMessage>(room, "skill-bar", 5000),
   ]);
 
   return createMatchConnection(room, map, bar.slots, () =>
