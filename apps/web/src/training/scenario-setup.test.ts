@@ -50,7 +50,7 @@ describe("setupScenario", () => {
 });
 
 describe("playerArming", () => {
-  it("packs the bar, as the server does", () => {
+  it("keeps the bar's gaps, as the server does (#347)", () => {
     const character = setSkill(
       setProfessions(newCharacter("c1"), "elementalist", undefined),
       3,
@@ -58,7 +58,16 @@ describe("playerArming", () => {
     );
     const arming = playerArming(character);
     expect(arming.problem).toBeUndefined();
-    expect(arming.skillBar).toEqual(["elementalist.fireball"]);
+    expect(arming.skillBar).toEqual([
+      null,
+      null,
+      null,
+      "elementalist.fireball",
+      null,
+      null,
+      null,
+      null,
+    ]);
   });
 
   it("an empty bar is legal", () => {

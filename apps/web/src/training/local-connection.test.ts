@@ -73,7 +73,11 @@ describe("createLocalConnection", () => {
     const snapshot = connection.getSnapshot();
     expect(snapshot.selfSessionId).toBe(SELF_ID);
     expect(snapshot.players.map((p) => p.sessionId).sort()).toEqual(["dummy", SELF_ID].sort());
-    expect(connection.skillBar.map((slot) => slot.id)).toEqual(["elementalist.fireball"]);
+    // Every slot in its place, the empty ones null (#347).
+    expect(connection.skillBar.map((slot) => slot?.id ?? null)).toEqual([
+      "elementalist.fireball",
+      ...Array.from({ length: 7 }, () => null),
+    ]);
     expect(connection.map.id).toBe("training-hall");
   });
 
@@ -188,7 +192,11 @@ describe("createLocalConnection", () => {
     const { connection } = targetDummy();
     const arming = playerArming(setSkill(pyro(), 1, "elementalist.armor-of-earth"));
     connection.rearm(arming.loadout, arming.skillBar);
-    expect(connection.skillBar.map((slot) => slot.name)).toEqual(["Fireball", "Armor of Earth"]);
+    expect(connection.skillBar.slice(0, 3).map((slot) => slot?.name ?? null)).toEqual([
+      "Fireball",
+      "Armor of Earth",
+      null,
+    ]);
   });
 
   it("does nothing once disconnected", async () => {

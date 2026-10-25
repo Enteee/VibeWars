@@ -37,7 +37,7 @@ test("(1) Skill 1 bound to Z on the Keys screen casts on Z, not Q, and survives 
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator(".editor-row select").first().selectOption("elementalist");
   await page.locator(".skill-box", { hasText: "Fireball" }).click();
-  await expect(page.locator(".training-skill")).toHaveText(["ZFireball"]);
+  await expect(page.locator(".training-skill").first()).toHaveText("ZFireball");
   await page.locator(".training-stage").click({ position: { x: 12, y: 12 } });
   await expect(page.locator(".training")).toHaveClass(/is-armed/);
 

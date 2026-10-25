@@ -1,3 +1,4 @@
+import type { SkillBar } from "../build.js";
 import type { ResolvedEquipment, ResolvedLoadout } from "../equipment/resolve.js";
 import type { WeaponId } from "../equipment/weapons.js";
 import {
@@ -82,7 +83,7 @@ import { steerAround } from "./steering.js";
 export interface ParticipantSpec {
   readonly id: string;
   readonly team: number;
-  readonly skillBar: readonly string[];
+  readonly skillBar: SkillBar;
   readonly attributeRanks: ReadonlyMap<string, number>;
   readonly equipment: ResolvedEquipment;
   readonly spawn: Vec2;
@@ -103,7 +104,7 @@ export interface ParticipantSpec {
 export interface Participant {
   readonly id: string;
   readonly combatant: Combatant;
-  readonly skillBar: readonly string[];
+  readonly skillBar: SkillBar;
   readonly spawn: Vec2;
   position: Vec2;
   /**
@@ -162,7 +163,7 @@ export interface SkillRequest {
 /** `Participant`, plus what only the simulation may change. */
 interface ParticipantRecord extends Participant {
   combatant: Combatant;
-  skillBar: readonly string[];
+  skillBar: SkillBar;
   readonly spec: ParticipantSpec;
   readonly behaviour: Behaviour | undefined;
   readonly cursor: BehaviourCursor;
@@ -387,7 +388,7 @@ export class MatchSimulation {
    * change that moves max health must not be a free heal, and a corpse
    * stays a corpse until its respawn.
    */
-  public rearm(id: string, loadout: ResolvedLoadout, skillBar: readonly string[]): void {
+  public rearm(id: string, loadout: ResolvedLoadout, skillBar: SkillBar): void {
     const record = this.#participants.get(id);
     if (record === undefined) {
       return;
@@ -591,7 +592,7 @@ export class MatchSimulation {
     }
 
     const skillId = record.skillBar[slot];
-    if (skillId === undefined) {
+    if (skillId === undefined || skillId === null) {
       return undefined;
     }
     const skill = getSkill(skillId);
