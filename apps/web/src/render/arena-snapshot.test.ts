@@ -52,32 +52,62 @@ function actor(
 
 describe("actorAtPoint", () => {
   it("returns undefined when there are no actors", () => {
-    const snapshot: ArenaSnapshot = { actors: [], walls: [], targetId: undefined };
+    const snapshot: ArenaSnapshot = {
+      actors: [],
+      walls: [],
+      targetId: undefined,
+      projectiles: [],
+      clock: 0,
+    };
     expect(actorAtPoint(snapshot, vec2(0, 0))).toBeUndefined();
   });
 
   it("hits an actor when the point is within its radius", () => {
     const self = actor("a", 100, 100, 14);
-    const snapshot: ArenaSnapshot = { actors: [self], walls: [], targetId: undefined };
+    const snapshot: ArenaSnapshot = {
+      actors: [self],
+      walls: [],
+      targetId: undefined,
+      projectiles: [],
+      clock: 0,
+    };
     expect(actorAtPoint(snapshot, vec2(105, 100))?.id).toBe("a");
   });
 
   it("misses when the point is outside every actor's radius", () => {
     const self = actor("a", 100, 100, 14);
-    const snapshot: ArenaSnapshot = { actors: [self], walls: [], targetId: undefined };
+    const snapshot: ArenaSnapshot = {
+      actors: [self],
+      walls: [],
+      targetId: undefined,
+      projectiles: [],
+      clock: 0,
+    };
     expect(actorAtPoint(snapshot, vec2(200, 200))).toBeUndefined();
   });
 
   it("hits exactly at the radius boundary", () => {
     const self = actor("a", 0, 0, 10);
-    const snapshot: ArenaSnapshot = { actors: [self], walls: [], targetId: undefined };
+    const snapshot: ArenaSnapshot = {
+      actors: [self],
+      walls: [],
+      targetId: undefined,
+      projectiles: [],
+      clock: 0,
+    };
     expect(actorAtPoint(snapshot, vec2(10, 0))?.id).toBe("a");
   });
 
   it("picks the closest actor when two overlap the point", () => {
     const near = actor("near", 100, 100, 20);
     const far = actor("far", 110, 100, 20);
-    const snapshot: ArenaSnapshot = { actors: [far, near], walls: [], targetId: undefined };
+    const snapshot: ArenaSnapshot = {
+      actors: [far, near],
+      walls: [],
+      targetId: undefined,
+      projectiles: [],
+      clock: 0,
+    };
     expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("near");
   });
 });
@@ -90,13 +120,21 @@ describe("actorAtPoint and the dead", () => {
       actors: [corpse, living],
       walls: [],
       targetId: undefined,
+      projectiles: [],
+      clock: 0,
     };
     expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("living");
   });
 
   it("returns undefined when the only actor under the point is dead", () => {
     const corpse = actor("corpse", 100, 100, 20, { dead: true });
-    const snapshot: ArenaSnapshot = { actors: [corpse], walls: [], targetId: undefined };
+    const snapshot: ArenaSnapshot = {
+      actors: [corpse],
+      walls: [],
+      targetId: undefined,
+      projectiles: [],
+      clock: 0,
+    };
     expect(actorAtPoint(snapshot, vec2(100, 100))).toBeUndefined();
   });
 });
