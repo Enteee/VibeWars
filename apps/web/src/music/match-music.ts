@@ -1,7 +1,7 @@
 import { LONG_BOW_RANGE } from "@vibewars/game-core";
+import type { MatchConnection, MatchSnapshot } from "@vibewars/game-session";
 
 import { hitsForCombat } from "../audio/combat-sounds.js";
-import type { MatchConnection, MatchSnapshot } from "../net/match-connection.js";
 import {
   HIT_WINDOW_MS,
   directMusic,

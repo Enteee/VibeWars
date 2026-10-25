@@ -21,6 +21,7 @@
     "@vibewars/game-core": "workspace:*",
     "@vibewars/game-maps": "workspace:*",
     "@vibewars/game-protocol": "workspace:*",
+    "@vibewars/game-session": "workspace:*",
     "phaser": "4.2.1",
     "tonal": "6.5.1"
   }

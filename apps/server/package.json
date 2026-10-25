@@ -17,6 +17,7 @@
     "@vibewars/game-core": "workspace:*",
     "@vibewars/game-maps": "workspace:*",
     "@vibewars/game-protocol": "workspace:*",
+    "@vibewars/game-session": "workspace:*",
     "colyseus": "0.18.10",
     "express": "5.3.0"
   },

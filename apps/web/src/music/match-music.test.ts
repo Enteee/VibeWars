@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
-
 import type {
   CombatMessage,
   MatchConnection,
   MatchSnapshot,
   PlayerSnapshot,
-} from "../net/match-connection.js";
+} from "@vibewars/game-session";
+import { describe, expect, it } from "vitest";
+
 import type { MusicState } from "./director.js";
 import { DIRECT_INTERVAL_MS, ENGAGE_RANGE, attachMatchMusic } from "./match-music.js";
 

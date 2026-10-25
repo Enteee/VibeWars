@@ -146,7 +146,17 @@ Proposed): a match hosted in one player's browser. So far it holds the
 in-memory one for tests (`@vibewars/game-session/testing`). It compiles with
 no DOM and no Node types, and may not import `node:*` or `trystero`. Its
 messages, one per `CHANNELS` entry, and their validators are in
-`game-protocol`'s `src/p2p.ts`. Nothing uses it yet.
+`game-protocol`'s `src/p2p.ts`.
+
+It also holds what the server's rooms, the Training Ground and a P2P host
+share (#375), so the three cannot drift: `MatchConnection` and the snapshot
+types the client draws, `MessageBudget` (a token bucket per client on
+inbound messages, #43: over budget, a message is ignored rather than its
+sender dropped), `sanitizeName`, `spawnPoint`, and `recharge.ts` (when a
+player's recharges are re-sent: only when they drift from the client's
+countdown by more than one 50 ms tick, #152). game-core holds the rest of
+the shared match code: `applyIntent`, `resolveJoinLoadout` and the house
+loadout, and the fixed-step `drainAccumulator`.
 
 ### `packages/game-maps` — arenas
 
@@ -190,21 +200,15 @@ both are legitimately in scope.
 - `rooms/client-budget.ts` — the server-wide seat cap and the per-address
   seat cap (#265): the same counter as the room budget, counting seats
   instead of rooms.
-- `rooms/message-budget.ts` — a token bucket per client on inbound messages
-  (#43). Over budget, a message is ignored rather than its sender dropped: a
-  burst is what an honest client sends after a network stall, and dropping it
-  left the player connected but deaf for the whole reconnection window.
 - `rooms/options.ts` — `field()`, which reads one field off a client message
-  safely, and the protocol-version check on join.
+  safely, the protocol-version check on join, and each room's
+  `MessageBudget` (game-session).
 
   Every client message is treated as hostile until validated. Reading a field
   off an inbound message goes through `field()`, which tolerates `null` and
   non-objects, because `(message as {team?: unknown}).team` throws on `null`
   and _did_ crash the server during fuzzing.
 
-- `rooms/recharge.ts` — when the server re-sends a player's recharges: only
-  when they drift from the client's countdown by more than the 50 ms
-  tolerance, one tick (#152).
 - `log-safe.ts` — `quote()`, the only way a value a client chose reaches a
   log line, so it cannot end the line or forge another. `log-safe.test.ts`
   enforces it (#115).

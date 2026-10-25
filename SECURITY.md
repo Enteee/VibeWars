@@ -281,6 +281,18 @@ bidi characters, so an agent can type a line that looks like another
 sender's header, such as `📋 Manager → 👤 Operator`. Until #93 lands,
 trust the topic a message is in, not a header inside its text.
 
+**Strangers' text (#394).** The repository is public, so anyone can
+write text that agents read. Agents never see a comment by someone with
+no role in the project: hubd replaces its body with a fixed placeholder
+(`hub-strangers.mjs`), whether gh or REST answered, and refuses gh output
+it cannot parse or a `--json` field it does not know. Only `OWNER`,
+`MEMBER` and `COLLABORATOR` count, so it fails closed. Agents can still
+read stranger text in these places, and each one is a prompt-injection
+channel to treat as data: the body and title of a stranger's item once the
+operator has put it on the board (`hub-visibility.mjs`), fork commit
+messages and diffs, check and run names from fork workflows, run logs,
+and project item bodies.
+
 **Fixed: #329.** Host processes used to follow symlinks a jail planted in
 its own writable directories: hubd's `hub/<role>/res/.<id>.json.part`,
 the sidecar's `bus/<role>/inbox.jsonl` and `receipts/*.tmp`. An agent

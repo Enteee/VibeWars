@@ -59,6 +59,9 @@ importers:
       '@vibewars/game-protocol':
         specifier: workspace:*
         version: link:../../packages/game-protocol
+      '@vibewars/game-session':
+        specifier: workspace:*
+        version: link:../../packages/game-session
       colyseus:
         specifier: 0.18.10
         version: 0.18.10(@colyseus/auth@0.18.4)(@colyseus/core@0.18.23)(@colyseus/redis-driver@0.18.7(@colyseus/core@0.18.23))(@colyseus/redis-presence@0.18.6(@colyseus/auth@0.18.4)(@colyseus/better-call@1.3.3(zod@4.6.7))(@colyseus/schema@5.0.42(typescript@6.0.3))(@colyseus/ws-transport@0.18.4)(@pm2/io@6.1.0)(express@5.3.0)(zod@4.6.7))(@colyseus/schema@5.0.42(typescript@6.0.3))(@colyseus/uwebsockets-transport@0.18.4(@colyseus/core@0.18.23))(@colyseus/ws-transport@0.18.4)(vite@8.3.5(@types/node@26.6.5))(zod@4.6.7)
@@ -99,6 +102,9 @@ importers:
       '@vibewars/game-protocol':
         specifier: workspace:*
         version: link:../../packages/game-protocol
+      '@vibewars/game-session':
+        specifier: workspace:*
+        version: link:../../packages/game-session
       phaser:
         specifier: 4.2.1
         version: 4.2.1

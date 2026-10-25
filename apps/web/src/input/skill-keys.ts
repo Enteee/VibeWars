@@ -1,4 +1,5 @@
-import type { SkillSlot } from "../net/match-connection.js";
+import type { SkillSlot } from "@vibewars/game-session";
+
 import { SKILL_ACTIONS, actionForCode, isShortcut, type Keymap } from "./keymap.js";
 
 /**

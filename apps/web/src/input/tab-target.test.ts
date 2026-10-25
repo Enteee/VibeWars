@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import type { PlayerSnapshot } from "@vibewars/game-session";
 
-import type { PlayerSnapshot } from "../net/match-connection.js";
 import { nextTabTarget } from "./tab-target.js";
 
 function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {

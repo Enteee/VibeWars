@@ -16,25 +16,16 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   MatchSimulation,
   ZERO,
-  attributeRanksOf,
-  defaultBuildEquipment,
+  applyIntent,
   getSkill,
-  parsePlayerBuild,
-  // Named apart from this module's own join-time `resolveLoadout`, which
-  // decides *whether* to honour a build; this one turns the gear in an
-  // already-accepted build into numbers.
-  resolveLoadout as resolveLoadout_,
+  resolveJoinLoadout,
+  resolveLoadout,
   spawnFacing,
-  validatePlayerBuild,
-  vec2,
   type CombatEvent,
   type CombatLogEntry,
-  type BuildEquipment,
+  type JoinLoadout,
   type Participant,
-  type PlayerBuild,
-  type ProfessionId,
   type Segment,
-  type SkillBar,
   type Vec2,
 } from "@vibewars/game-core";
 import { allWallSegments, loadMap, type MapData } from "@vibewars/game-maps";
@@ -43,7 +34,6 @@ import {
   QUICK_MATCH_MAX_PLAYERS,
   ROOM_MATCH,
   parseClientIntent,
-  type CastRefusedMessage,
   type CombatBatchMessage,
   type CombatMessage,
   type MapDescriptor,
@@ -52,17 +42,16 @@ import {
   type ServerHello,
   type WallDescriptor,
 } from "@vibewars/game-protocol";
+import { rechargePredicted, rechargeSlots, sanitizeName, spawnPoint } from "@vibewars/game-session";
 import type { StepContext } from "colyseus";
 
 import { quote } from "../log-safe.js";
-import { sanitizeName } from "./lobby-room.js";
 import {
   FLOOD_MESSAGES_PER_SECOND,
   assertProtocolVersion,
   field,
   messageBudget,
 } from "./options.js";
-import { rechargePredicted, rechargeSlots } from "./recharge.js";
 import { broadcast, send } from "./wire.js";
 import { RoomSeats, type ClientLimits } from "./client-budget.js";
 import { RoomSlot, type RoomBudget } from "./room-budget.js";
@@ -194,114 +183,32 @@ export interface TickMetrics {
 }
 
 /**
- * The skill bar a player gets when they bring no build of their own.
- *
- * Quick match and a first-time player both land here, so it is chosen to
- * be immediately playable: damage, a heal, a self-buff, an interrupt, a
- * condition and a cure — enough for a real fight with counterplay on the
- * very first join, without visiting the editor.
- *
- * It is NOT a legal single-character build (no character has access to
- * all six of these professions' attributes), which is deliberate: it is
- * the house loadout, not a build anyone could make. A player who wants a
- * legal, tuned build makes one and brings it.
+ * What a joining client gets to play: game-core decides (brief §32), and
+ * the reason it refused a build goes to the log, never to the client.
  */
-const DEFAULT_SKILL_BAR: readonly string[] = [
-  "elementalist.fireball",
-  "monk.orison-of-healing",
-  "warrior.sever-artery-lite",
-  "ranger.broad-head-arrow",
-  "elementalist.armor-of-earth",
-  "monk.mend-affliction",
-  "necromancer.faintheartedness",
-  "ranger.troll-unguent",
-];
-
-/** Attribute ranks that go with `DEFAULT_SKILL_BAR`. */
-const DEFAULT_ATTRIBUTE_RANKS: ReadonlyMap<string, number> = new Map([
-  ["elementalist.fire-magic", 12],
-  ["monk.healing-prayers", 12],
-  ["warrior.swordsmanship", 12],
-  ["ranger.marksmanship", 12],
-  ["necromancer.curses", 12],
-  ["ranger.wilderness-survival", 12],
-]);
-
-/**
- * The gear that goes with `DEFAULT_SKILL_BAR`.
- *
- * A warrior's kit, because the house bar is melee-capable and handing a
- * first-time player a wand to go with a sword skill would be a worse
- * first five seconds than any argument for neutrality.
- */
-const DEFAULT_EQUIPMENT: BuildEquipment = defaultBuildEquipment("warrior");
-
-/** What a joining client claimed, after it has been checked. */
-interface ResolvedJoinLoadout {
-  readonly skillBar: SkillBar;
-  readonly attributeRanks: ReadonlyMap<string, number>;
-  readonly primaryProfession: ProfessionId;
-  readonly secondaryProfession: ProfessionId | undefined;
-  readonly equipment: BuildEquipment;
-}
-
-const HOUSE_LOADOUT: ResolvedJoinLoadout = {
-  skillBar: DEFAULT_SKILL_BAR,
-  attributeRanks: DEFAULT_ATTRIBUTE_RANKS,
-  primaryProfession: "warrior",
-  secondaryProfession: undefined,
-  equipment: DEFAULT_EQUIPMENT,
-};
-
-/**
- * Decide what a joining client actually gets to play (brief §32).
- *
- * The client sends a build; the server decides whether to honour it. An
- * illegal or malformed build is refused and replaced with the house
- * loadout rather than rejecting the join — being dropped at the door
- * because of a stale saved character is a miserable way to find out
- * something is wrong, and the player still gets a playable match.
- *
- * Nothing about the claimed build is trusted: not the attribute ranks
- * (which scale every skill), not the skill bar (which decides what can be
- * cast at all), and not the professions that gate both.
- */
-function resolveLoadout(options: unknown): ResolvedJoinLoadout {
-  const claimed = field(options, "build");
-  if (claimed === undefined) {
-    return HOUSE_LOADOUT;
+function joinLoadout(options: unknown): JoinLoadout {
+  const { loadout, refused } = resolveJoinLoadout(field(options, "build"), RULESET.attributes);
+  switch (refused?.kind) {
+    case undefined:
+      break;
+    case "malformed":
+      console.warn("[match] ignoring a malformed build; using the house loadout");
+      break;
+    case "illegal":
+      // Every reason, not just the first: a client that sent a bad build
+      // deserves a log that says exactly what was wrong with it.
+      console.warn(
+        `[match] refusing build ${quote(refused.build.name)}: ` +
+          refused.problems.map((p) => `${p.field}: ${quote(p.message)}`).join("; "),
+      );
+      break;
+    case "empty-bar":
+      console.warn(
+        `[match] build ${quote(refused.build.name)} has an empty bar; using the house loadout`,
+      );
+      break;
   }
-
-  const build: PlayerBuild | undefined = parsePlayerBuild(claimed);
-  if (build === undefined) {
-    console.warn("[match] ignoring a malformed build; using the house loadout");
-    return HOUSE_LOADOUT;
-  }
-
-  const problems = validatePlayerBuild(build, RULESET.attributes);
-  if (problems.length > 0) {
-    // Every reason, not just the first: a client that sent a bad build
-    // deserves a log that says exactly what was wrong with it.
-    console.warn(
-      `[match] refusing build ${quote(build.name)}: ` +
-        problems.map((p) => `${p.field}: ${quote(p.message)}`).join("; "),
-    );
-    return HOUSE_LOADOUT;
-  }
-
-  if (build.skillBar.every((id) => id === null)) {
-    console.warn(`[match] build ${quote(build.name)} has an empty bar; using the house loadout`);
-    return HOUSE_LOADOUT;
-  }
-
-  return {
-    // Gaps and all: the key of an empty slot does nothing (#347).
-    skillBar: build.skillBar,
-    attributeRanks: attributeRanksOf(build),
-    primaryProfession: build.primaryProfession,
-    secondaryProfession: build.secondaryProfession,
-    equipment: build.equipment,
-  };
+  return loadout;
 }
 
 // Starting health and energy now come from the ruleset's combat rules,
@@ -510,21 +417,11 @@ export class MatchRoom extends Room {
     this.#mapDescriptor = toMapDescriptor(this.#map);
   }
 
-  /**
-   * A spawn point belonging to `team`, cycling through that team's own
-   * points as more of its players join.
-   *
-   * Filtering by team matters: spawning a team-1 player at a team-0 point
-   * would drop them in the middle of the enemy's starting position, which
-   * is both unfair and exactly the kind of bug that only shows up once
-   * more than two people join.
-   */
+  /** Where the next player seated on `team` spawns. */
   private nextSpawnPoint(team: number): Vec2 {
-    const teamSpawns = this.#map.spawnPoints.filter((spawn) => spawn.team === team);
-    const pool = teamSpawns.length > 0 ? teamSpawns : this.#map.spawnPoints;
-    const spawn = pool[this.#nextSpawnIndex % pool.length];
+    const spawn = spawnPoint(this.#map.spawnPoints, team, this.#nextSpawnIndex);
     this.#nextSpawnIndex += 1;
-    return spawn?.position ?? { x: 0, y: 0 };
+    return spawn;
   }
 
   /**
@@ -618,59 +515,13 @@ export class MatchRoom extends Room {
         // sender gets nothing back (brief §32).
         return;
       }
-      if (this.#sim.get(client.sessionId) === undefined) {
-        return;
+      const refusal = applyIntent(this.#sim, client.sessionId, intent);
+      // Only the caster hears it: a key that does nothing reads as a
+      // broken game, and why it did nothing is nobody else's business.
+      if (refusal !== null) {
+        send(client, "cast-refused", refusal);
       }
-
-      switch (intent.kind) {
-        case "stop":
-          this.#sim.setInputDirection(client.sessionId, ZERO);
-          return;
-        case "move":
-          this.#sim.setInputDirection(client.sessionId, vec2(intent.dirX, intent.dirY));
-          return;
-        case "target":
-          this.applyTarget(client.sessionId, intent.targetSessionId);
-          return;
-        case "use-skill": {
-          const request = this.#sim.requestSkill(client.sessionId, intent.slot);
-          // An enemy skill cast at nobody targets the nearest enemy, so
-          // mirror the simulation's target back, as `applyTarget` does.
-          const player = this.state.players.get(client.sessionId);
-          if (player !== undefined) {
-            player.targetSessionId = this.#sim.get(client.sessionId)?.targetId ?? "";
-          }
-          // Only the caster hears it: a key that does nothing reads as a
-          // broken game, and why it did nothing is nobody else's business.
-          if (request !== undefined && !request.check.ok) {
-            const message: CastRefusedMessage = {
-              kind: "skill",
-              slot: intent.slot,
-              skillId: request.skillId,
-              reason: request.check.reason,
-            };
-            send(client, "cast-refused", message);
-          }
-          return;
-        }
-        case "attack": {
-          const check = this.#sim.requestAttack(client.sessionId, intent.targetId);
-          if (check !== undefined && !check.ok) {
-            const message: CastRefusedMessage = { kind: "attack", reason: check.reason };
-            send(client, "cast-refused", message);
-          }
-          this.mirrorAction(client.sessionId);
-          return;
-        }
-        case "cancel":
-          this.#sim.cancelAction(client.sessionId);
-          this.mirrorAction(client.sessionId);
-          return;
-        case "walk-to":
-          this.#sim.walkTo(client.sessionId, vec2(intent.x, intent.y));
-          this.mirrorAction(client.sessionId);
-          return;
-      }
+      this.mirrorIntent(client.sessionId);
     });
 
     this.setFixedTimestep((ctx: StepContext) => {
@@ -714,28 +565,20 @@ export class MatchRoom extends Room {
     };
   }
 
-  /** Mirror an attack or walk change onto the schema at once, as `applyTarget` does. */
-  private mirrorAction(sessionId: string): void {
+  /**
+   * Mirror what an intent changed onto the schema at once rather than at
+   * the next tick, so a click is answered by the very next patch: the
+   * target (the simulation decides whether it is valid, brief §5, and an
+   * enemy skill cast at nobody picks the nearest enemy), the attack and
+   * the walk.
+   */
+  private mirrorIntent(sessionId: string): void {
     const player = this.state.players.get(sessionId);
     const sim = this.#sim.get(sessionId);
-    if (player !== undefined) {
-      player.attackTargetSessionId = sim?.combatant.attack?.targetId ?? "";
-      player.walking = sim?.walkGoal !== undefined;
-    }
-  }
-
-  /**
-   * Apply a target selection; the simulation decides whether it is valid
-   * (brief §5). Mirrored onto the schema at once rather than at the next
-   * tick, so a click is answered by the very next patch.
-   */
-  private applyTarget(sessionId: string, targetSessionId: string | null): void {
-    const player = this.state.players.get(sessionId);
-    if (player === undefined) {
-      return;
-    }
-    if (this.#sim.setTarget(sessionId, targetSessionId ?? undefined)) {
-      player.targetSessionId = targetSessionId ?? "";
+    if (player !== undefined && sim !== undefined) {
+      player.targetSessionId = sim.targetId ?? "";
+      player.attackTargetSessionId = sim.combatant.attack?.targetId ?? "";
+      player.walking = sim.walkGoal !== undefined;
     }
   }
 
@@ -947,13 +790,13 @@ export class MatchRoom extends Room {
     assertProtocolVersion(options);
     const { team, name } = this.claimSeat(client.sessionId, options);
     const spawn = this.nextSpawnPoint(team);
-    const loadout = resolveLoadout(options);
+    const loadout = joinLoadout(options);
 
     // Gear becomes numbers exactly once, here, before the combatant
     // exists (ADR-0012). Health, energy and attribute ranks all arrive
     // already including rune and insignia effects, which is why they can
     // stay readonly on `Combatant`.
-    const resolved = resolveLoadout_(
+    const resolved = resolveLoadout(
       {
         primaryProfession: loadout.primaryProfession,
         allocatedRanks: loadout.attributeRanks,
@@ -1113,7 +956,7 @@ export function budgetedMatchRoom(budget: RoomBudget, limits: ClientLimits): typ
   };
 }
 
-export { IMPLEMENTED_SKILLS, DEFAULT_SKILL_BAR };
+export { IMPLEMENTED_SKILLS };
 
 // Keep the generated Schema classes' instance types nameable from other modules.
 export type MatchStateInstance = InstanceType<typeof MatchState>;

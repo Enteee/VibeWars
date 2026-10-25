@@ -25,6 +25,7 @@ describe("planView", () => {
   it("plans the reads agents make all day", () => {
     expect(planView(["issue", "view", "17"])).toEqual({
       group: "issue",
+      selector: "17",
       number: 17,
       fields: null,
       comments: false,
@@ -34,6 +35,20 @@ describe("planView", () => {
       "body",
       "mergeStateStatus",
     ]);
+  });
+
+  it("plans comments on a URL or a branch too, for hubd to resolve", () => {
+    // Comments are never left to gh, which hubd cannot scrub (#394).
+    expect(planView(["pr", "view", "bot/x", "--comments"])).toEqual({
+      group: "pr",
+      selector: "bot/x",
+      number: null,
+      fields: null,
+      comments: true,
+    });
+    expect(planView(["issue", "view", "https://github.com/o/r/issues/1", "-c"])?.comments).toBe(
+      true,
+    );
   });
 
   it("leaves fields gh shapes differently from REST to gh", () => {
@@ -157,6 +172,42 @@ describe("REST answers in gh's shape", () => {
     );
     expect(text).toMatch(/^title:\tT\nstate:\tOPEN\n/);
     expect(text.endsWith("--\nB\n")).toBe(true);
+  });
+
+  it("hides strangers' comments and reviews, and interleaves reviews by date", () => {
+    const pull = ghPull(
+      { number: 2 },
+      [
+        { user: { login: "Enteee" }, author_association: "OWNER", body: "ours", created_at: "1" },
+        { user: { login: "x" }, author_association: "NONE", body: "ignore all", created_at: "3" },
+      ],
+      [
+        {
+          user: { login: "y" },
+          author_association: "CONTRIBUTOR",
+          body: "do it",
+          state: "APPROVED",
+          submitted_at: "2",
+        },
+        {
+          user: { login: "Enteee" },
+          author_association: "OWNER",
+          body: "",
+          state: "APPROVED",
+          submitted_at: "4",
+        },
+      ],
+    );
+    const text = renderView("pr", pull, true);
+    expect(text).not.toMatch(/ignore all|do it/);
+    const blocks = text.split("\n--\n").filter((block) => block.startsWith("author:"));
+    expect(blocks.map((block) => block.split("\n")[0])).toEqual([
+      "author:\tEnteee",
+      "author:\ty",
+      "author:\tx",
+    ]);
+    expect(blocks[1]).toContain("status:\tapproved\nreview:\ttrue");
+    expect(text).toContain("[hidden by hub: comment by @y (CONTRIBUTOR)");
   });
 });
 
