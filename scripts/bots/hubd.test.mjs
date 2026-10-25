@@ -191,8 +191,10 @@ async function startHubd(remaining, before) {
     // reach it.
     HUBD_SECRET: "leaked",
   };
-  const child = spawn(process.execPath, [HUBD], { env, stdio: "ignore" });
+  const child = spawn(process.execPath, [HUBD], { env, stdio: ["ignore", "ignore", "pipe"] });
   running.push({ child, dir });
+  let stderr = "";
+  child.stderr.on("data", (chunk) => (stderr += String(chunk)));
 
   const hub = path.join(root, "hub");
   await until(() => fs.existsSync(path.join(hub, "hubd.alive")), "hubd to start");
@@ -239,6 +241,11 @@ async function startHubd(remaining, before) {
     secondHubd() {
       return spawnSync(process.execPath, [HUBD], { env, encoding: "utf8", timeout: 15_000 });
     },
+    /** What hubd has logged so far. */
+    stderr() {
+      return stderr;
+    },
+    until,
     /** The heartbeat as hubd last wrote it. */
     alive() {
       return parseAlive(fs.readFileSync(path.join(root, "hub", "hubd.alive"), "utf8"));
@@ -737,6 +744,64 @@ describe("hubd running once, and saying how it is (#23)", () => {
     expect(alive?.inflight).toBe(0);
     expect(alive?.lastError).toBeNull();
     expect(Date.now() - (alive?.heartbeatAt ?? 0)).toBeLessThan(10_000);
+  }, 20_000);
+});
+
+describe("hubd and what a jail plants in its spool (#329)", () => {
+  /** @param {string} root */
+  const outside = (root) => {
+    const dir = path.join(root, "outside");
+    fs.mkdirSync(dir);
+    fs.writeFileSync(path.join(dir, "victim"), "the operator's\n");
+    return dir;
+  };
+  /** @param {string} dir */
+  const contents = (dir) =>
+    Object.fromEntries(
+      fs.readdirSync(dir).map((name) => [name, fs.readFileSync(path.join(dir, name), "utf8")]),
+    );
+
+  it("answers nothing through a res/ that is a symlink, and serves the other roles", async () => {
+    const hubd = await startHubd(5000);
+    const target = outside(hubd.root);
+    const res = path.join(hubd.hub, "developer-2", "res");
+    await hubd.until(() => fs.existsSync(res), "developer-2's spool");
+    fs.rmSync(res, { recursive: true });
+    fs.symlinkSync(target, res);
+    const req = path.join(hubd.hub, "developer-2", "req");
+    fs.writeFileSync(
+      path.join(req, "00000000000001-1.json"),
+      JSON.stringify({ kind: "gh", argv: ["issue", "view", "7"] }),
+    );
+
+    await hubd.request("developer-1", "gh", ["issue", "view", "7"]);
+    await hubd.until(
+      () => hubd.stderr().includes("developer-2: refused req/ or res/"),
+      "the refusal",
+    );
+
+    expect(contents(target)).toEqual({ victim: "the operator's\n" });
+  }, 20_000);
+
+  it("drops a request whose name is no request id, and one that is a symlink", async () => {
+    const hubd = await startHubd(5000);
+    const target = outside(hubd.root);
+    const req = path.join(hubd.hub, "developer-1", "req");
+    await hubd.until(() => fs.existsSync(req), "the spool");
+    fs.writeFileSync(
+      path.join(req, "a.b.json"),
+      JSON.stringify({ kind: "gh", argv: ["issue", "view", "7"] }),
+    );
+    fs.symlinkSync(path.join(target, "victim"), path.join(req, "00000000000002-1.json"));
+
+    await hubd.request("developer-1", "gh", ["issue", "view", "7"]);
+    await hubd.until(() => !fs.existsSync(path.join(req, "a.b.json")), "the bad id to go");
+
+    expect(hubd.stderr()).toContain('developer-1: refused request "a.b.json": not a request id');
+    expect(hubd.stderr()).toContain("developer-1: refused request 00000000000002-1.json");
+    expect(fs.existsSync(path.join(req, "00000000000002-1.json"))).toBe(false);
+    expect(fs.readdirSync(path.join(hubd.hub, "developer-1", "res"))).not.toContain("a.b.json");
+    expect(contents(target)).toEqual({ victim: "the operator's\n" });
   }, 20_000);
 });
 

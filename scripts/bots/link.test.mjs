@@ -226,6 +226,7 @@ function company(telegram, registry, companyJson = JSON.stringify({ repo: "Entee
   let next = 0;
   return {
     root,
+    bus,
     start,
     /**
      * `tg send`, as the agent in `from` would run it.
@@ -374,6 +375,38 @@ describe("the company sidecar", () => {
       link_preview_options: { is_disabled: true },
       message_thread_id: 11,
     });
+  }, 20_000);
+
+  it("survives what a jail plants in its outbox, and still delivers the next message", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    co.present("architect");
+    const outbox = path.join(co.bus, "manager", "outbox");
+    fs.mkdirSync(path.join(outbox, "evil.json"), { recursive: true });
+    fs.chmodSync(path.join(outbox, "evil.json"), 0o000);
+    fs.writeFileSync(path.join(outbox, "a b.json"), "{}");
+    co.start();
+
+    co.send("manager", "architect", "still here");
+
+    await until(() => co.inbox("architect").length === 1, "the inbox");
+    expect(co.inbox("architect")[0]).toMatchObject({ text: "still here" });
+    fs.chmodSync(path.join(outbox, "evil.json"), 0o700);
+  }, 20_000);
+
+  it("delivers nothing from an outbox it cannot remove from, and keeps serving the others", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    co.present("architect");
+    co.present("manager");
+    co.send("manager", "architect", "stuck");
+    fs.chmodSync(path.join(co.bus, "manager", "outbox"), 0o500);
+    co.start();
+    co.send("lead-dev", "architect", "next");
+    await until(() => co.inbox("architect").length >= 1, "the inbox");
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    fs.chmodSync(path.join(co.bus, "manager", "outbox"), 0o700);
+    expect(co.inbox("architect").map((m) => m.text)).toEqual(["next"]);
   }, 20_000);
 
   it("resends a message Telegram refuses for its entities as plain text", async () => {
@@ -839,5 +872,88 @@ describe("the company sidecar", () => {
     });
     await until(() => telegram.offsets.length > 0, "the first poll");
     expect(telegram.offsets[0]).toBe(3);
+  }, 20_000);
+});
+
+describe("the company sidecar, and what a jail plants in its bus (#329)", () => {
+  /** @param {string} root */
+  const outside = (root) => {
+    const dir = path.join(root, "outside");
+    fs.mkdirSync(dir);
+    fs.writeFileSync(path.join(dir, "victim"), "the operator's\n");
+    return dir;
+  };
+  /** @param {string} dir */
+  const contents = (dir) =>
+    Object.fromEntries(
+      fs.readdirSync(dir).map((name) => [name, fs.readFileSync(path.join(dir, name), "utf8")]),
+    );
+
+  it("never appends through an inbox that is a symlink, and delivers to everyone else", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    const target = outside(co.root);
+    fs.mkdirSync(path.join(co.bus, "architect"));
+    fs.symlinkSync(path.join(target, "victim"), path.join(co.bus, "architect", "inbox.jsonl"));
+    co.present("architect");
+    co.present("developer-1");
+    const sidecar = co.start();
+
+    co.send("manager", "architect", "spec #28 please");
+    co.send("manager", "developer-1", "take #29");
+
+    await until(() => co.inbox("developer-1").length === 1, "the other delivery");
+    sidecar.child.kill("SIGTERM");
+    const { stderr } = await sidecar.exited;
+    expect(stderr).toContain("[link] architect: refused inbox.jsonl");
+    expect(contents(target)).toEqual({ victim: "the operator's\n" });
+  }, 20_000);
+
+  it("refuses an outbox entry that is a symlink, and removes the link only", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    const target = outside(co.root);
+    fs.writeFileSync(path.join(target, "victim"), JSON.stringify({ to: "architect", text: "x" }));
+    const outbox = path.join(co.bus, "manager", "outbox");
+    fs.mkdirSync(outbox, { recursive: true });
+    fs.symlinkSync(path.join(target, "victim"), path.join(outbox, "00000000000001-1.json"));
+    co.present("architect");
+    co.start();
+
+    co.send("manager", "architect", "the real one");
+
+    await until(() => co.inbox("architect").length === 1, "the real one");
+    await until(() => fs.readdirSync(outbox).length === 0, "the link to go");
+    expect(co.inbox("architect")[0]).toMatchObject({ text: "the real one" });
+    expect(contents(target)).toEqual({
+      victim: JSON.stringify({ to: "architect", text: "x" }),
+    });
+  }, 20_000);
+
+  it("writes a receipt over a planted symlink, never through it, nor through receipts/", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    const target = outside(co.root);
+    const receipts = path.join(co.bus, "manager", "receipts");
+    fs.mkdirSync(path.join(co.bus, "architect"), { recursive: true });
+    fs.symlinkSync(target, path.join(co.bus, "architect", "receipts"));
+    co.start();
+
+    const name = co.ask("manager", "Ship it?", ["yes", "no"]);
+    fs.mkdirSync(receipts, { recursive: true });
+    fs.symlinkSync(path.join(target, "victim"), path.join(receipts, name));
+    const refusedName = co.ask("architect", "Ship it too?", ["yes"]);
+
+    await until(
+      () =>
+        co.receipt("manager", name) !== null &&
+        !fs.lstatSync(path.join(receipts, name)).isSymbolicLink(),
+      "the receipt",
+    );
+    await until(
+      () => !fs.existsSync(path.join(co.bus, "architect", "outbox", refusedName)),
+      "the second ask",
+    );
+    expect(contents(target)).toEqual({ victim: "the operator's\n" });
   }, 20_000);
 });
