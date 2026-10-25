@@ -55,8 +55,11 @@ to the other without coming closer to a wall than its radius. The graph
 is built once per map. Every tick the approach replans from where the
 hero stands, with A*, and walks toward the first waypoint, so a target
 that moves or a shove costs nothing extra. Every weapon approaches until
-it is in reach **and** in line of sight. The release-time check
-(`attack-obstructed`) stays as a backstop. If there is no path, the
+it is in reach **and** in line of sight. Obstruction is checked at
+release, along the whole flight path (#215): the path is fixed then, so
+a shot led round a corner or at a target stepping behind a pillar is cut
+short at the wall and lands as `attack-obstructed`. Pillar-dancing, the
+GW1 counter to rangers, works. If there is no path, the
 attack ends with `attack-unreachable` ("can't reach"); today's maps have
 no such place, but an attack must never loop. Rejected alternatives:
 
