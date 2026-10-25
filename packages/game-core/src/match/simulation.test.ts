@@ -78,8 +78,8 @@ describe("MatchSimulation step", () => {
         events: [{ kind: "damage", targetId: "b", amount: 91 }],
       },
     ]);
-    // Adrenaline only for damage to someone else.
-    expect(participant(sim, "a").combatant.adrenaline).toBe(RULES.resources.adrenalinePerHit);
+    // Adrenaline comes from attacks only (Q19): a spell earns none.
+    expect(participant(sim, "a").combatant.adrenaline).toBe(0);
   });
 
   it("says why a cast was refused, and nothing for an empty slot", () => {

@@ -1,6 +1,7 @@
 import type { ResolvedEquipment, ResolvedLoadout } from "../equipment/resolve.js";
 import {
   distanceWithinRange,
+  hasLineOfSight,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
 } from "../geometry.js";
@@ -611,10 +612,22 @@ export class MatchSimulation {
         ? undefined
         : { x: origin.x, y: origin.y, radius: skill.area.radius };
 
-    this.#gainAdrenaline(record, events);
+    // Adrenaline comes from attacks (Q19): an attack skill, or a swing.
+    if (skill.type === "attack") {
+      this.#gainAdrenaline(record, events);
+    }
     this.#recordDeaths(events);
-    // An attack in progress resumes on its own target: the cast only
-    // paused it. Switching it to the skill's target arrives with #160.
+    // A skill on a living enemy attacks it once it resolves, starting an
+    // attack or switching one to it (Q17). Any other skill leaves the
+    // attack in progress to resume on its own target: the cast only
+    // paused it.
+    if (
+      skill.target === "single-enemy" &&
+      targetId !== undefined &&
+      this.#attackCheck(record, targetId).ok
+    ) {
+      record.combatant.attack = { targetId, swingElapsed: 0 };
+    }
 
     record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds);
     this.#log.push({
@@ -693,11 +706,16 @@ export class MatchSimulation {
   /**
    * A ranged swing lands as a shot leaving the bow, led ahead of the
    * target. Blind is rolled now, as GW1 does: a blinded shot misses at
-   * once and nothing flies.
+   * once and nothing flies. So is obstruction: a wall between the two at
+   * release spends the swing, and the next one looks again.
    */
   #release(record: ParticipantRecord, target: ParticipantRecord, speed: number, dt: number): void {
     if (blindMisses(record.combatant, this.#rng)) {
       this.#logWeapon(record.id, [{ kind: "attack-missed", targetId: target.id }]);
+      return;
+    }
+    if (!hasLineOfSight(record.position, target.position, this.#walls)) {
+      this.#logWeapon(record.id, [{ kind: "attack-obstructed", targetId: target.id }]);
       return;
     }
     const from = record.position;

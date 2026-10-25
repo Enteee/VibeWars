@@ -212,7 +212,7 @@ describe("skills and the swing", () => {
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
   });
 
-  it("a skill at another enemy resumes the attack on its own target, and starts none", () => {
+  it("a skill at another enemy switches the attack to it once it resolves (Q17)", () => {
     const match = sim(
       swordsman("a", vec2(0, 0)),
       dummy("d", vec2(40, 0)),
@@ -221,15 +221,38 @@ describe("skills and the swing", () => {
     match.requestAttack("a", "d");
     match.setTarget("a", "e");
     match.requestSkill("a", 0);
+    // Still on d while Fireball is in the air.
+    stepFor(match, 0.5);
+    expect(get(match, "a").combatant.attack?.targetId).toBe("d");
+    stepFor(match, 0.55);
+    expect(get(match, "a").combatant.attack).toEqual({ targetId: "e", swingElapsed: 0 });
+  });
+
+  it("a skill on an enemy starts an attack when there was none", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
+    match.setTarget("a", "d");
+    match.requestSkill("a", 0);
+    stepFor(match, 1.1);
+    expect(get(match, "a").combatant.attack?.targetId).toBe("d");
+    // And walks into reach to swing.
+    expect(get(match, "a").position.x).toBeGreaterThan(0);
+  });
+
+  it("an interrupted skill on an enemy resumes the attack, and starts none", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)), dummy("e", vec2(0, 300)));
+    match.requestAttack("a", "d");
+    match.setTarget("a", "e");
+    match.requestSkill("a", 0);
+    get(match, "a").combatant.cast.cancelCast();
     stepFor(match, 1.1);
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
 
     const fresh = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
     fresh.setTarget("a", "d");
     fresh.requestSkill("a", 0);
+    get(fresh, "a").combatant.cast.cancelCast();
     stepFor(fresh, 1.1);
     expect(get(fresh, "a").combatant.attack).toBeUndefined();
-    expect(get(fresh, "a").position).toEqual(vec2(0, 0));
   });
 });
 

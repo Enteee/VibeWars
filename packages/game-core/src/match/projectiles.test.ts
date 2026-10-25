@@ -294,3 +294,65 @@ describe("tapping back and forth", () => {
     expect(jitterHitRate(weapon, 0.25, 20)).toBeGreaterThanOrEqual(0.75);
   });
 });
+
+describe("obstruction at release (#160)", () => {
+  /** A wall across x = 150, from y = -50 to y = 50. */
+  const WALL = { a: vec2(150, -50), b: vec2(150, 50) };
+
+  function walled(...participants: ParticipantSpec[]): MatchSimulation {
+    return new MatchSimulation({ seed: "wall", walls: [WALL], participants });
+  }
+
+  it("a longbow behind a wall is obstructed: the swing is spent and nothing flies", () => {
+    const match = walled(archer(vec2(0, 0)), target(vec2(300, 0)));
+    match.requestAttack("archer", "target");
+    const log: CombatLogEntry[] = [];
+    for (let i = 0; i < Math.round(LONGBOW.attackIntervalSeconds / DT) + 1; i += 1) {
+      log.push(...match.step(DT).log);
+      expect(match.projectiles).toHaveLength(0);
+    }
+    expect(log.map((entry) => entry.events)).toEqual([
+      [{ kind: "attack-obstructed", targetId: "target" }],
+    ]);
+    // The attack goes on, and the next swing looks again.
+    expect(get(match, "archer").combatant.attack?.targetId).toBe("target");
+  });
+
+  it("the next swing flies once the target steps out of cover", () => {
+    const match = walled(archer(vec2(0, 0)), target(vec2(300, 0)));
+    match.requestAttack("archer", "target");
+    const obstructed = (): boolean => {
+      const entry = match.step(DT).log[0];
+      return entry?.events[0]?.kind === "attack-obstructed";
+    };
+    for (let i = 0; i < 100 && !obstructed(); i += 1) {
+      // Until the first swing is spent on the wall.
+    }
+    match.setInputDirection("target", UP);
+    for (let i = 0; i < 20 * 3 && match.projectiles.length === 0; i += 1) {
+      match.step(DT);
+    }
+    expect(match.projectiles).toHaveLength(1);
+  });
+
+  it("a sword through the same wall at melee reach still hits", () => {
+    const swordsman: ParticipantSpec = {
+      ...archer(vec2(130, 0)),
+      equipment: {
+        ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+        mainHand: {
+          weapon: WEAPONS.sword,
+          attributeId: "warrior.swordsmanship",
+          requirementMet: true,
+        },
+      },
+    };
+    const match = walled(swordsman, target(vec2(170, 0)));
+    match.requestAttack("archer", "target");
+    const log: CombatLogEntry[] = [];
+    for (let i = 0; i < Math.round(2 / DT); i += 1) {
+      log.push(...match.step(DT).log);
+    }
+    expect(log[0]?.events[0]?.kind).toBe("damage");
+  });
+});

@@ -12,7 +12,7 @@ import {
 
 describe("protocol constants", () => {
   it("pins a protocol version", () => {
-    expect(PROTOCOL_VERSION).toBe(5);
+    expect(PROTOCOL_VERSION).toBe(6);
   });
 
   it("names the match room", () => {
@@ -159,5 +159,26 @@ describe("parseClientIntent — target", () => {
     expect(parseClientIntent({ kind: "target", targetSessionId: 123 })).toBeUndefined();
     expect(parseClientIntent({ kind: "target", targetSessionId: undefined })).toBeUndefined();
     expect(parseClientIntent({ kind: "target" })).toBeUndefined();
+  });
+});
+
+describe("parseClientIntent — attack", () => {
+  it("accepts an attack at a target, and a cancel", () => {
+    expect(parseClientIntent({ kind: "attack", targetId: "abc123" })).toEqual({
+      kind: "attack",
+      targetId: "abc123",
+    });
+    expect(parseClientIntent({ kind: "cancel-attack" })).toEqual({ kind: "cancel-attack" });
+  });
+
+  it("rejects an attack with no target, or a target that is not a string", () => {
+    expect(parseClientIntent({ kind: "attack" })).toBeUndefined();
+    expect(parseClientIntent({ kind: "attack", targetId: null })).toBeUndefined();
+    expect(parseClientIntent({ kind: "attack", targetId: 7 })).toBeUndefined();
+  });
+
+  it("rejects either with an unknown field", () => {
+    expect(parseClientIntent({ kind: "attack", targetId: "a", slot: 0 })).toBeUndefined();
+    expect(parseClientIntent({ kind: "cancel-attack", targetId: "a" })).toBeUndefined();
   });
 });

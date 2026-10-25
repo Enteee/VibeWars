@@ -153,7 +153,9 @@ describe("armor-ladder, headless", () => {
       expect(sim.requestSkill("player", 0)?.check).toEqual({ ok: true });
       // Fireball lands at 1 s and recharges for 7: 9 s clears both.
       for (let i = 0; i < Math.round(9 / DT); i += 1) {
-        for (const entry of sim.step(DT).log) {
+        // Fireball also starts an attack on the rung (#160); only its
+        // own damage is the tooltip's arithmetic.
+        for (const entry of sim.step(DT).log.filter((logged) => logged.cause === "skill")) {
           for (const event of entry.events) {
             if (event.kind === "damage") {
               dealt[event.targetId] = (dealt[event.targetId] ?? 0) + event.amount;

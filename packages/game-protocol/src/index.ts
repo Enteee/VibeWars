@@ -25,6 +25,8 @@ export {
 } from "./protocol.js";
 
 export type {
+  AttackIntent,
+  CancelAttackIntent,
   ClientIntent,
   MoveIntent,
   StopIntent,

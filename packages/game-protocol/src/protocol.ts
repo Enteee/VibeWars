@@ -10,7 +10,7 @@
  * mid-match. It only ever rejects; there is no code path per version
  * (ADR-0016).
  */
-export const PROTOCOL_VERSION = 5 as const;
+export const PROTOCOL_VERSION = 6 as const;
 
 /** What a client is told when its `protocolVersion` does not match. */
 export const PROTOCOL_MISMATCH_MESSAGE =
@@ -110,14 +110,30 @@ export interface UseSkillIntent {
 }
 
 /**
+ * Attack `targetId` with the equipped weapon until told otherwise: walk
+ * into reach, then swing (ADR-0026). The server decides whether it is a
+ * living enemy; a refusal comes back as `"cast-refused"`.
+ */
+export interface AttackIntent {
+  readonly kind: "attack";
+  readonly targetId: string;
+}
+
+/** Stop the attack in progress, if any. */
+export interface CancelAttackIntent {
+  readonly kind: "cancel-attack";
+}
+
+/**
  * Sent as `"cast-refused"` to the caster alone when the server turns down a
- * `UseSkillIntent`, so a key that did nothing can say why (issue #51).
- * Advisory only: the refusal has already happened, and nothing about the
- * match state rides on this message.
+ * `UseSkillIntent` or an `AttackIntent`, so a key that did nothing can
+ * say why (issue #51). Advisory only: the refusal has already happened,
+ * and nothing about the match state rides on this message.
  */
 export interface CastRefusedMessage {
-  /** The slot the client asked for. */
+  /** The slot the client asked for; -1 for an attack. */
   readonly slot: number;
+  /** `""` for an attack. */
   readonly skillId: string;
   /** game-core's `ActivationRejection`, e.g. `"out-of-range"`. */
   readonly reason: string;
@@ -230,7 +246,19 @@ export const QUICK_MATCH_MAX_PLAYERS = 8;
  * requires touching this type, which forces a protocol-version decision and a
  * server-side validator.
  */
-export type ClientIntent = MoveIntent | StopIntent | TargetIntent | UseSkillIntent;
+export type ClientIntent =
+  | MoveIntent
+  | StopIntent
+  | TargetIntent
+  | UseSkillIntent
+  | AttackIntent
+  | CancelAttackIntent;
+
+/** Whether `record` has exactly the fields in `keys`, and no others. */
+function hasExactly(record: Record<string, unknown>, keys: readonly string[]): boolean {
+  const own = Object.keys(record);
+  return own.length === keys.length && keys.every((key) => own.includes(key));
+}
 
 /**
  * Validate an arbitrary network payload as a `ClientIntent`, or reject it.
@@ -279,6 +307,19 @@ export function parseClientIntent(value: unknown): ClientIntent | undefined {
     // rejected by the room against the caster's actual bar length —
     // parsing validates shape, the simulation validates meaning.
     return { kind: "use-skill", slot: record.slot };
+  }
+
+  // The attack intents are strict: an unknown field is refused too.
+  if (
+    record.kind === "attack" &&
+    hasExactly(record, ["kind", "targetId"]) &&
+    typeof record.targetId === "string"
+  ) {
+    return { kind: "attack", targetId: record.targetId };
+  }
+
+  if (record.kind === "cancel-attack" && hasExactly(record, ["kind"])) {
+    return { kind: "cancel-attack" };
   }
 
   return undefined;
