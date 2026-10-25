@@ -190,6 +190,14 @@ function degenerationSources(combatant: Combatant): {
 /** How far short of its interval a swing or a flight may be and still land; see `#advanceAttack`. */
 const SWING_EPSILON = 1e-9;
 
+/** At most this many push-out passes per move; see `advanceMovement`. */
+const MOVEMENT_RELAX_PASSES = 4;
+
+/** How deep a body of `radius` at `position` is inside a living body of the same radius at `other`. */
+function penetration(position: Vec2, other: Vec2, radius: number): number {
+  return Math.max(0, 2 * radius - distance(position, other));
+}
+
 /** Turn to face `point`; one exactly underfoot has no direction, so facing stays. */
 function faceToward(record: Participant, point: Vec2): void {
   const dx = point.x - record.position.x;
@@ -1024,19 +1032,53 @@ export class MatchSimulation {
       record.facing = directionAngle(direction.x, direction.y);
     }
     const radius = this.#ruleset.collision.playerRadius;
+    const start = record.position;
     let position = integrateMovement(
-      record.position,
+      start,
       direction,
       this.#ruleset.movement.maxSpeedUnitsPerSecond * moveSpeedMultiplier(record.combatant),
       dt,
     );
 
+    // One push-out pass at a time, until a pass changes nothing. Squeezed
+    // between a body and a wall, each push undoes the other, so one pass
+    // alone can leave a body anywhere; a few settle it.
+    for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
+      const relaxed = this.#pushOut(record.id, position, radius);
+      const settled = relaxed.x === position.x && relaxed.y === position.y;
+      position = relaxed;
+      if (settled) {
+        break;
+      }
+    }
+
+    // A doorway a body stands in stays held (#291): a move that ends any
+    // deeper inside a living body than it started is refused, so hugging
+    // the wall never squeezes past. Per body and against the start, so two
+    // bodies that already overlap (a shared spawn) can still move apart.
+    for (const [otherId, other] of this.#participants) {
+      if (otherId === record.id || other.combatant.dead) {
+        continue;
+      }
+      if (
+        penetration(position, other.position, radius) >
+        penetration(start, other.position, radius) + 1e-6
+      ) {
+        return;
+      }
+    }
+
+    record.position = position;
+  }
+
+  /** One pass of push-outs for a body of `radius` at `position`: bodies, then walls, then the edge. */
+  #pushOut(id: string, position: Vec2, radius: number): Vec2 {
     // Body blocking (brief §21): living players are solid, so a front
     // line can physically deny ground and a caster can be boxed in.
     // Corpses are not solid — standing on a dead player should never
     // trap the living.
     for (const [otherId, other] of this.#participants) {
-      if (otherId === record.id || other.combatant.dead) {
+      if (otherId === id || other.combatant.dead) {
         continue;
       }
       position = resolveCircleCircleCollision(position, radius, other.position, radius);
@@ -1060,8 +1102,7 @@ export class MatchSimulation {
         Math.min(Math.max(position.y, radius), bounds.height - radius),
       );
     }
-
-    record.position = position;
+    return position;
   }
 
   /**
