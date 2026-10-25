@@ -197,12 +197,20 @@ const status = {
 /** The speaker both sound icons share: a box and a flared cone. */
 const speaker = `<path d="M3 9h4l5-5v16l-5-5H3z" fill="${C.ink}"/>`;
 
+/** The beamed eighth notes both music icons share: two heads, two stems, a slab beam, one fill. */
+const notes = `<path d="M8.5 18V6L19.5 4v12h-2V7.5l-7 1.5v9zM3 18a3 2 0 1 1 6 0 3 2 0 1 1-6 0M14 16a3 2 0 1 1 6 0 3 2 0 1 1-6 0" fill="${C.ink}"/>`;
+
 const ui = {
   // Speaker with two sound waves: sound is on (#112).
   "sound-on": () =>
     speaker + `<path d="M15.5 9a4 4 0 0 1 0 6M18.5 6a8 8 0 0 1 0 12" ${stroke(C.ink, 2)}/>`,
   // Speaker with a cross where the waves were: muted (#112).
   "sound-off": () => speaker + `<path d="M15.5 9l6 6M21.5 9l-6 6" ${stroke(C.ink, 2)}/>`,
+  // Beamed eighth notes: music is on (#372).
+  "music-on": () => notes,
+  // The same notes under a slash cased in the background: music is muted (#372).
+  "music-off": () =>
+    notes + `<path d="M4 4l16 16" ${stroke(C.bg, 4)}/><path d="M4 4l16 16" ${stroke(C.ink, 2)}/>`,
   // Two crossed swords, tips up, guards and grips low: you are auto-attacking
   // (#160). Two blades, so it never reads as the one-sword attack skill type.
   attacking: () =>
