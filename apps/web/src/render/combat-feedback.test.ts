@@ -57,6 +57,7 @@ function floated(
       casterSessionId: "me",
       cause,
       skillId: cause === "skill" ? "elementalist.fireball" : "",
+      weaponId: cause === "weapon" ? "sword" : "",
       events,
     },
     SNAPSHOT,
@@ -100,6 +101,7 @@ describe("showCombatFeedback", () => {
           casterSessionId: "me",
           cause,
           skillId: cause === "skill" ? "elementalist.fireball" : "",
+          weaponId: cause === "weapon" ? "sword" : "",
           events: [{ kind: "damage", targetId: "them", amount: 12 }],
         },
         SNAPSHOT,
@@ -136,6 +138,7 @@ describe("showCombatFeedback", () => {
         casterSessionId: "me",
         cause: "skill",
         skillId: "elementalist.fireball",
+        weaponId: "",
         events: [
           { kind: "damage", targetId: "them", amount: 5 },
           { kind: "heal", targetId: "me", amount: 5 },
@@ -165,6 +168,7 @@ describe("showCombatFeedback and areas", () => {
         casterSessionId,
         cause: "skill",
         skillId: "elementalist.fireball",
+        weaponId: "",
         events: [],
         ...(area && { area }),
       },
@@ -199,6 +203,7 @@ describe("swingFlashFor (#161)", () => {
     casterSessionId: "me",
     cause,
     skillId: "",
+    weaponId: cause === "weapon" ? "sword" : "",
     events: [{ kind, targetId: "them", amount: 30 }],
   });
 

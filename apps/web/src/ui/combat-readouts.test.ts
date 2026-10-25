@@ -33,6 +33,7 @@ function entry(events: CombatEvent[], extra: Partial<CombatLogEntry> = {}): Comb
     cause: "skill",
     sourceId: "you",
     skillId: "elementalist.fireball",
+    weaponId: undefined,
     area: undefined,
     events,
     ...extra,
@@ -95,11 +96,12 @@ describe("describeCombatEvent", () => {
     expect(describeCombatEvent(tick, event, nameOf)).toBe("degeneration hits Caster dummy for 3");
   });
 
-  it("says Attack for a weapon swing, with its attacker", () => {
+  it("names a weapon swing for its weapon and attacker, and an unknown weapon plainly", () => {
     const event: CombatEvent = { kind: "damage", targetId: "dummy", amount: 18 };
-    const swing = entry([event], { cause: "weapon", skillId: undefined });
-    expect(describeCombatEvent(swing, event, nameOf)).toBe(
-      "Attack (Pyro) hits Caster dummy for 18",
+    const swing = entry([event], { cause: "weapon", skillId: undefined, weaponId: "sword" });
+    expect(describeCombatEvent(swing, event, nameOf)).toBe("Sword (Pyro) hits Caster dummy for 18");
+    expect(describeCombatEvent({ ...swing, weaponId: undefined }, event, nameOf)).toBe(
+      "a weapon (Pyro) hits Caster dummy for 18",
     );
   });
 
@@ -125,15 +127,31 @@ describe("describeCombatEvent", () => {
     expect(describeCombatEvent(entry([missed]), missed, nameOf)).toBe(
       "Fireball (Pyro) misses Caster dummy",
     );
-    const dodged: CombatEvent = { kind: "attack-dodged", targetId: "dummy" };
-    expect(describeCombatEvent({ ...entry([dodged]), cause: "weapon" }, dodged, nameOf)).toBe(
-      "Caster dummy dodges Attack (Pyro)",
-    );
-    const unreachable: CombatEvent = { kind: "attack-unreachable", targetId: "dummy" };
-    expect(
-      describeCombatEvent({ ...entry([unreachable]), cause: "weapon" }, unreachable, nameOf),
-    ).toBe("Attack (Pyro) can't reach Caster dummy");
     expect(logToneOf("attack-unreachable")).toBe("control");
+  });
+
+  it("names a weapon entry for the weapon that swung or shot (#162)", () => {
+    const shot = (event: CombatEvent): string =>
+      describeCombatEvent(
+        entry([event], { cause: "weapon", skillId: undefined, weaponId: "longbow" }),
+        event,
+        nameOf,
+      );
+    expect(shot({ kind: "damage", targetId: "dummy", amount: 14 })).toBe(
+      "Longbow (Pyro) hits Caster dummy for 14",
+    );
+    expect(shot({ kind: "attack-missed", targetId: "dummy" })).toBe(
+      "Longbow (Pyro) misses Caster dummy",
+    );
+    expect(shot({ kind: "attack-dodged", targetId: "dummy" })).toBe(
+      "Caster dummy dodges Longbow (Pyro)",
+    );
+    expect(shot({ kind: "attack-obstructed", targetId: "dummy" })).toBe(
+      "Longbow (Pyro) is obstructed on the way to Caster dummy",
+    );
+    expect(shot({ kind: "attack-unreachable", targetId: "dummy" })).toBe(
+      "Longbow (Pyro) can't reach Caster dummy",
+    );
   });
 });
 
@@ -187,11 +205,23 @@ describe("accumulate", () => {
         entry([{ kind: "heal", targetId: "dummy", amount: 99 }], { sourceId: "dummy" }),
         // Hurting yourself is damage taken, not damage dealt.
         entry([{ kind: "damage", targetId: "you", amount: 5 }]),
+        // A swing counts as damage, and as the weapon's share of it.
+        entry([{ kind: "damage", targetId: "dummy", amount: 12 }], {
+          cause: "weapon",
+          skillId: undefined,
+          weaponId: "sword",
+        }),
       ],
       "you",
       0.05,
     );
-    expect(totals).toEqual({ damage: 64, healing: 30, taken: 15, seconds: 0.05 });
+    expect(totals).toEqual({
+      damage: 76,
+      weaponDamage: 12,
+      healing: 30,
+      taken: 15,
+      seconds: 0.05,
+    });
   });
 });
 
@@ -207,14 +237,17 @@ describe("formatAmount, formatRate and meterRows", () => {
   it("round amounts, give rates one decimal, and lay out the meter", () => {
     expect(formatAmount(63.6)).toBe("64");
     expect(formatRate(12.345)).toBe("12.3");
-    expect(meterRows({ damage: 128, healing: 0, taken: 15, seconds: 4 })).toEqual([
-      { label: "dps", value: "32.0" },
-      { label: "hps", value: "0.0" },
-      { label: "damage", value: "128" },
-      { label: "healing", value: "0" },
-      { label: "taken", value: "15" },
-      { label: "time", value: "0:04.0" },
-    ]);
+    expect(meterRows({ damage: 128, weaponDamage: 28, healing: 0, taken: 15, seconds: 4 })).toEqual(
+      [
+        { label: "dps", value: "32.0" },
+        { label: "hps", value: "0.0" },
+        { label: "damage", value: "128" },
+        { label: "weapon / skills", value: "28 / 100" },
+        { label: "healing", value: "0" },
+        { label: "taken", value: "15" },
+        { label: "time", value: "0:04.0" },
+      ],
+    );
     expect(meterRows(EMPTY_TOTALS)[0]).toEqual({ label: "dps", value: "0.0" });
   });
 });

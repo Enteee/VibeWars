@@ -150,10 +150,11 @@ export function createLocalConnection(options: {
         (entry.cause === "degeneration" ? entry.events[0]?.targetId : entry.sourceId) ?? "";
       const { cause } = entry;
       const skillId = entry.skillId ?? "";
+      const weaponId = entry.weaponId ?? "";
       const message: CombatMessage =
         entry.area === undefined
-          ? { casterSessionId, cause, skillId, events: entry.events }
-          : { casterSessionId, cause, skillId, events: entry.events, area: entry.area };
+          ? { casterSessionId, cause, skillId, weaponId, events: entry.events }
+          : { casterSessionId, cause, skillId, weaponId, events: entry.events, area: entry.area };
       for (const handler of combatHandlers) {
         handler(message);
       }

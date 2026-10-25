@@ -1,6 +1,7 @@
 import {
   STATUS_DEFINITIONS,
   getSkill,
+  getWeapon,
   type CombatEvent,
   type CombatLogEntry,
 } from "@vibewars/game-core";
@@ -60,16 +61,19 @@ function skillName(skillId: string | undefined): string | undefined {
 
 /** One event as a sentence a player can learn from. */
 export function describeCombatEvent(
-  entry: Pick<CombatLogEntry, "cause" | "sourceId" | "skillId">,
+  entry: Pick<CombatLogEntry, "cause" | "sourceId" | "skillId" | "weaponId">,
   event: CombatEvent,
   nameOf: (id: string) => string,
 ): string {
   const target = nameOf(event.targetId);
   const skill = skillName(entry.skillId);
   const source = entry.sourceId === undefined ? undefined : nameOf(entry.sourceId);
-  // "Fireball (You)", "Attack (You)" for a weapon swing, or, for a
-  // status tick, the statuses behind it.
-  const what = entry.cause === "weapon" ? "Attack" : (skill ?? "a skill");
+  // "Fireball (You)", "Longbow (You)" for a weapon swing (#162), or, for
+  // a status tick, the statuses behind it.
+  const what =
+    entry.cause === "weapon"
+      ? (getWeapon(entry.weaponId ?? "")?.name ?? "a weapon")
+      : (skill ?? "a skill");
   const by =
     entry.cause === "degeneration"
       ? "degeneration"
@@ -107,7 +111,7 @@ export function describeCombatEvent(
 }
 
 export function combatEventToRow(
-  entry: Pick<CombatLogEntry, "atSeconds" | "cause" | "sourceId" | "skillId">,
+  entry: Pick<CombatLogEntry, "atSeconds" | "cause" | "sourceId" | "skillId" | "weaponId">,
   event: CombatEvent,
   nameOf: (id: string) => string,
 ): LogRow {
@@ -153,12 +157,20 @@ export function shouldStickToBottom(
 /** What the meter adds up, for the player, since the last reset. */
 export interface MeterTotals {
   readonly damage: number;
+  /** The part of `damage` the weapon did; the rest is skills and statuses (#162). */
+  readonly weaponDamage: number;
   readonly healing: number;
   readonly taken: number;
   readonly seconds: number;
 }
 
-export const EMPTY_TOTALS: MeterTotals = { damage: 0, healing: 0, taken: 0, seconds: 0 };
+export const EMPTY_TOTALS: MeterTotals = {
+  damage: 0,
+  weaponDamage: 0,
+  healing: 0,
+  taken: 0,
+  seconds: 0,
+};
 
 /**
  * Add one step's entries to the player's totals. Damage to yourself is
@@ -171,7 +183,7 @@ export function accumulate(
   selfId: string,
   stepSeconds: number,
 ): MeterTotals {
-  let { damage, healing, taken } = totals;
+  let { damage, weaponDamage, healing, taken } = totals;
   for (const entry of entries) {
     for (const event of entry.events) {
       if (event.kind === "damage") {
@@ -179,13 +191,16 @@ export function accumulate(
           taken += event.amount;
         } else if (entry.sourceId === selfId) {
           damage += event.amount;
+          if (entry.cause === "weapon") {
+            weaponDamage += event.amount;
+          }
         }
       } else if (event.kind === "heal" && entry.sourceId === selfId) {
         healing += event.amount;
       }
     }
   }
-  return { damage, healing, taken, seconds: totals.seconds + stepSeconds };
+  return { damage, weaponDamage, healing, taken, seconds: totals.seconds + stepSeconds };
 }
 
 /** An amount over a time, with no time reading as 0 rather than `Infinity`. */
@@ -211,6 +226,10 @@ export function meterRows(totals: MeterTotals): readonly MeterRow[] {
     { label: "dps", value: formatRate(perSecond(totals.damage, totals.seconds)) },
     { label: "hps", value: formatRate(perSecond(totals.healing, totals.seconds)) },
     { label: "damage", value: formatAmount(totals.damage) },
+    {
+      label: "weapon / skills",
+      value: `${formatAmount(totals.weaponDamage)} / ${formatAmount(totals.damage - totals.weaponDamage)}`,
+    },
     { label: "healing", value: formatAmount(totals.healing) },
     { label: "taken", value: formatAmount(totals.taken) },
     { label: "time", value: formatSimClock(totals.seconds) },
