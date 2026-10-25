@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { segment } from "../geometry.js";
 import { vec2 } from "../vec2.js";
-import { canActivate, payCost, type ActivationRequest } from "./activation.js";
+import { canActivate, hasAftercast, payCost, type ActivationRequest } from "./activation.js";
 import { makeCombatant } from "./testing.js";
 import type { Skill } from "./types.js";
 
@@ -214,5 +214,17 @@ describe("payCost", () => {
     payCost(skill, caster);
     expect(caster.energy).toBe(50);
     expect(caster.adrenaline).toBe(5);
+  });
+});
+
+describe("hasAftercast (#317)", () => {
+  it("follows a skill with an activation time", () => {
+    expect(hasAftercast(SPELL)).toBe(true);
+    expect(hasAftercast({ ...SPELL, type: "skill" })).toBe(true);
+  });
+
+  it("never follows an attack skill, or an instant one like a shout", () => {
+    expect(hasAftercast({ ...SPELL, type: "attack" })).toBe(false);
+    expect(hasAftercast({ ...SPELL, type: "skill", activationSeconds: 0 })).toBe(false);
   });
 });

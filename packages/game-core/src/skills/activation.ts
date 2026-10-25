@@ -144,3 +144,12 @@ export function payCost(skill: Skill, caster: Combatant): void {
   }
   caster.adrenaline -= skill.cost.amount;
 }
+
+/**
+ * Whether `skill` is followed by GW1's aftercast when it goes off (#317):
+ * one with an activation time, unless it is an attack skill, whose timing
+ * is the weapon's. Instant skills, like GW1's shouts and stances, have none.
+ */
+export function hasAftercast(skill: Skill): boolean {
+  return skill.type !== "attack" && skill.activationSeconds > 0;
+}

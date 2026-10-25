@@ -141,9 +141,18 @@ damage. Daggers sometimes strike twice; a scythe also hits up to two foes
 adjacent to its target.
 
 **Skills interrupt and resume.** Starting a skill loses the swing in
-progress. When a skill on a foe lands, you attack that foe, whether or
-not you were attacking before, and whoever you were. Any other skill,
-or a cast that is interrupted, goes back to the attack in progress.
+progress. Attacking and casting are otherwise separate, as in GW1
+(#317): a spell never starts an attack or changes whom you attack, so
+after a spell on B you go back to swinging at A, with B selected. Only
+an attack skill, which is a swing, turns your attack on its foe.
+
+**Aftercast.** A skill with an activation time that goes off, unless it
+is an attack skill, is followed by 0.75 s in which you neither move,
+swing, nor start another cast. A move held through it walks the moment
+it ends. A skill with an activation time pressed during it waits and
+starts the tick it ends (a later press replaces it; a move or Esc drops it); an
+instant skill goes off at once. A cancelled or interrupted cast has no
+aftercast.
 
 **Ranged weapons fire projectiles** (bows, spears, wands, staves). The
 shot is aimed where the target will be if it keeps moving as it has over
