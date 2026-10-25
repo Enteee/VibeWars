@@ -681,15 +681,23 @@ export class MatchRoom extends Room {
     }
 
     if (result.phase === "finished") {
-      this.endMatch();
+      void this.endMatch().catch((error: unknown) => {
+        console.error("[match] could not end the match", error);
+      });
     }
   }
 
   /**
    * The match just finished: say so, once, to everyone. The tick calls it
    * when the rules say so; tests call it to skip ten minutes of play.
+   *
+   * Locked first (#249): matchmaking must stop offering the room before
+   * anyone hears the match is over, or a Quick Match places a newcomer in
+   * a frozen, finished one. An explicit lock, so a leaving player does not
+   * reopen it. Players still here keep the result and can reconnect.
    */
-  public endMatch(): void {
+  public async endMatch(): Promise<void> {
+    await this.lock();
     this.over();
     const outcome = this.#sim.outcome;
     this.state.phase = "finished";

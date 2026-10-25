@@ -573,10 +573,10 @@ describe("playing more than one match in a lobby", () => {
   }
 
   /** Finish a match now, rather than after ten minutes of play. */
-  function finish(match: Room): void {
+  async function finish(match: Room): Promise<void> {
     const room = matchMaker.getLocalRoomById(match.roomId);
     if (!(room instanceof MatchRoom)) throw new Error("no match room");
-    room.endMatch();
+    await room.endMatch();
   }
 
   it("returns to waiting the moment its match finishes, with readiness cleared and teams kept", async () => {
@@ -584,7 +584,7 @@ describe("playing more than one match in a lobby", () => {
     const [match] = matches;
     if (match === undefined) throw new Error("no match");
 
-    finish(match);
+    await finish(match);
     await waitFor(() => host.state.phase === "waiting", { label: "return to waiting" });
 
     expect(host.state.players.get(host.sessionId)?.ready).toBe(false);
@@ -604,7 +604,7 @@ describe("playing more than one match in a lobby", () => {
     await guest.leave();
     await host.leave();
 
-    finish(match);
+    await finish(match);
     await waitFor(() => matches.every((room) => room.state.phase === "finished"), {
       label: "the match to finish",
     });
