@@ -166,7 +166,7 @@ export async function startMatchView(
   renderMute(hud, sounds.muted);
   hud.mute.addEventListener("click", toggleMute);
   // Esc cancels an attack now, so leaving is a button that asks first (#160).
-  renderLeave(hud, callbacks.onLeave);
+  const leave = renderLeave(hud, callbacks.onLeave);
 
   const detachMovement = attachKeyboardMoveInput(window, (direction) => {
     if (direction.x === 0 && direction.y === 0) {
@@ -177,6 +177,38 @@ export async function startMatchView(
   });
 
   const handleKeyDown = (event: KeyboardEvent): void => {
+    // F10, GW1's menu key, asks to leave (#221): the way out without a mouse.
+    if (event.key === "F10") {
+      // Some browsers focus their menu bar on F10.
+      event.preventDefault();
+      event.stopPropagation();
+      if (!event.repeat) {
+        if (leave.isOpen()) {
+          leave.close();
+        } else {
+          leave.open();
+        }
+      }
+      return;
+    }
+    if (leave.isOpen()) {
+      // While it asks, keys answer it and nothing else: Esc is "no" and
+      // does not also cancel the attack, Tab moves between the answers,
+      // and Enter or Space press the focused one, natively. No skill,
+      // target or attack goes out. Movement keys still move.
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        leave.close();
+      } else if (event.key === "Tab") {
+        event.preventDefault();
+        event.stopPropagation();
+        leave.cycleFocus();
+      } else if (event.key !== "Enter" && event.key !== " ") {
+        event.stopPropagation();
+      }
+      return;
+    }
     if (event.key === "Tab") {
       // Never the browser's focus cycle, during a match (#55).
       event.preventDefault();
