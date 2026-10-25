@@ -4,14 +4,17 @@ How a fight actually works, and why each rule is the way it is.
 
 ## The loop
 
-The server advances a fixed **20 Hz** tick (ADR-0003). Every tick, for
-every living player:
+The server advances a fixed **20 Hz** tick (ADR-0003, ADR-0017). Every
+tick, for every living player, in the order they joined:
 
-1. status effects tick (degeneration, regeneration, expiry)
+1. movement integrates, then resolves against other players and walls
 2. energy regenerates
-3. movement integrates, then resolves against other players and walls
+3. status effects tick (degeneration, regeneration, expiry)
 4. an in-progress cast advances; if it completes, its effects apply
-5. state is synchronised to clients
+5. the weapon attack walks into reach or swings
+6. a training dummy's behaviour acts
+
+Then state is synchronised to clients.
 
 The client renders whatever the server last said. It never decides an
 outcome — it sends _intent_ (`move`, `stop`, `target`, `use-skill`) and
@@ -19,10 +22,10 @@ the server decides what happens (brief §12, §32).
 
 ## Resources
 
-| Resource   | How you get it                                   | What it gates     |
-| ---------- | ------------------------------------------------ | ----------------- |
-| Energy     | Regenerates 2/second, up to 50                   | Most skills       |
-| Adrenaline | +3 each time your skill damages an enemy, max 25 | Adrenaline skills |
+| Resource   | How you get it                                                   | What it gates     |
+| ---------- | ---------------------------------------------------------------- | ----------------- |
+| Energy     | Regenerates 2/second, up to 50                                   | Most skills       |
+| Adrenaline | +3 each time your skill or weapon swing damages an enemy, max 25 | Adrenaline skills |
 
 The split is deliberate. Energy rewards patience; adrenaline rewards
 staying in the fight and landing hits. An adrenaline skill you cannot
@@ -89,31 +92,53 @@ condition cannot out-last one well-timed long one.
 Each condition has a distinct mechanical identity, not just a different
 number:
 
-| Condition  | Effect                         |
-| ---------- | ------------------------------ |
-| Bleeding   | −3 health/second               |
-| Burning    | −7 health/second               |
-| Poison     | −4 health/second               |
-| Crippled   | Half movement speed            |
-| Blind      | 90% of your attack skills miss |
-| Weakness   | −20 armor                      |
-| Deep Wound | −20% maximum health            |
-| Dazed      | Double cast time               |
+| Condition  | Effect                   |
+| ---------- | ------------------------ |
+| Bleeding   | −3 health/second         |
+| Burning    | −7 health/second         |
+| Poison     | −4 health/second         |
+| Crippled   | Half movement speed      |
+| Blind      | 90% of your attacks miss |
+| Weakness   | −20 armor                |
+| Deep Wound | −20% maximum health      |
+| Dazed      | Double cast time         |
 
 **Dazed doubles cast time; it does not make you easier to interrupt.**
 That is the reference's dazed, and here it would do nothing: every cast
 is already interruptible. An instant skill stays instant. See
 [ADR-0019](../adr/0019-status-modifiers.md).
 
-**Blind makes attack skills miss** (Swift Chop, Backbreaker, Opening Cut,
-Barrage, Broad Head Arrow). The miss is rolled when the attack lands, so
-it still costs energy or adrenaline and starts the recharge. Spells are
-unaffected, and there are no auto-attacks for blind to deny.
+**Blind makes attacks miss**: weapon swings, each blow rolled on its own,
+and attack skills (Swift Chop, Backbreaker, Opening Cut, Barrage, Broad
+Head Arrow). An attack skill's miss is rolled when it lands, so it still
+costs energy or adrenaline and starts the recharge. Spells are
+unaffected.
 
 Degeneration applies **continuously** (`rate × dt`), not in once-per-
 second lumps, so a bleed at 20 Hz drains smoothly instead of
 stair-stepping. Regeneration correctly caps at the deep-wound-_reduced_
 maximum, not the raw one.
+
+## Weapon attacks
+
+Select a foe and attack it (Space, from #160): your character walks into weapon reach, then
+swings at the weapon's own interval until the foe dies, you move, or you
+cancel. Reach is checked exactly as a skill's range is, so wherever you
+can swing you can also use a melee skill. The first hit lands one full
+interval after you arrive. See [ADR-0026](../adr/0026-weapon-auto-attack.md).
+
+Each hit is the weapon's damage range, scaled by your rank in its
+attribute (exactly the stated damage at 12) and cut to a third if you do
+not meet its requirement, then mitigated by armor like any other weapon
+damage. Daggers sometimes strike twice; a scythe also hits up to two foes
+adjacent to its target.
+
+**Skills interrupt and resume.** Starting a skill loses the swing in
+progress. When the skill is done, you go back to attacking the same
+target.
+
+Not modelled: critical hits, attack-speed changes, block and evade.
+Ranged weapons hit at once for now; dodgeable projectiles are next (#159).
 
 ## Positioning
 

@@ -21,6 +21,7 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     dead: false,
     statuses: new StatusSet(),
     cast: new CastState(),
+    attack: undefined,
     // Armor at the reference level, so an unconfigured test combatant
     // takes damage for exactly its stated amount. A test that wants to
     // exercise mitigation says so explicitly.

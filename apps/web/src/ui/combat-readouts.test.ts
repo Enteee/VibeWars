@@ -93,6 +93,14 @@ describe("describeCombatEvent", () => {
     expect(describeCombatEvent(tick, event, nameOf)).toBe("degeneration hits Caster dummy for 3");
   });
 
+  it("says Attack for a weapon swing, with its attacker", () => {
+    const event: CombatEvent = { kind: "damage", targetId: "dummy", amount: 18 };
+    const swing = entry([event], { cause: "weapon", skillId: undefined });
+    expect(describeCombatEvent(swing, event, nameOf)).toBe(
+      "Attack (Pyro) hits Caster dummy for 18",
+    );
+  });
+
   it("names statuses and interrupted skills", () => {
     const applied: CombatEvent = {
       kind: "status-applied",

@@ -101,6 +101,23 @@ describe("createLocalConnection", () => {
     expect(areas).toEqual([{ x: dummy?.x, y: dummy?.y, radius: 81 }]);
   });
 
+  it("reports a swing as its attacker's, with no skill", () => {
+    const { setup, connection } = targetDummy();
+    const swings: CombatMessage[] = [];
+    connection.onCombat((message) => {
+      if (message.skillId === "") {
+        swings.push(message);
+      }
+    });
+    // No key for it until #160: ask the simulation directly.
+    expect(setup.simulation.requestAttack(SELF_ID, "dummy")).toEqual({ ok: true });
+    for (let i = 0; i < 400 && swings.length === 0; i += 1) {
+      connection.advance(TICK_SECONDS);
+    }
+    expect(swings[0]?.casterSessionId).toBe(SELF_ID);
+    expect(swings[0]?.events[0]?.targetId).toBe("dummy");
+  });
+
   it("reports a cast's real total, as the server does, so the bar fills over it", () => {
     const { connection } = targetDummy();
     connection.sendIntent({ kind: "use-skill", slot: 0 });

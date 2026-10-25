@@ -3,6 +3,7 @@ import type { CombatRules } from "../ruleset.js";
 
 import type { ResolvedEquipment } from "../equipment/resolve.js";
 import type { CastState } from "./cast-state.js";
+import type { AttackState } from "./weapon-attack.js";
 import type { StatusCategory, StatusId, StatusSet } from "./status.js";
 
 /**
@@ -182,6 +183,11 @@ export interface Combatant {
   readonly statuses: StatusSet;
   /** In-progress cast and per-skill recharge; also the interrupt target. */
   readonly cast: CastState;
+  /**
+   * The weapon auto-attack in progress, if any (ADR-0026). Lives next to
+   * `cast` because a cast pauses it and resets its swing.
+   */
+  attack: AttackState | undefined;
   /**
    * Weapon, armor and rune effects, already resolved (ADR-0012).
    *
