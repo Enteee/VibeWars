@@ -7,6 +7,8 @@ const audio: AudioReadings = {
   outputLatencyMs: 32,
   glitches: null,
   glitchMs: null,
+  underruns: null,
+  underrunMs: null,
 };
 
 describe("createMeter", () => {
@@ -30,8 +32,18 @@ describe("createMeter", () => {
       skippedMs: 150,
       events: 3,
       lateEvents: 1,
+      maxReductionDb: 0,
       ...audio,
     });
+  });
+
+  it("keeps the deepest limiter reduction of the second, and starts the next from 0", () => {
+    const meter = createMeter();
+    meter.reduced(-0.5);
+    meter.reduced(-6.25);
+    meter.reduced(-2);
+    expect(meter.take(audio).maxReductionDb).toBe(-6.25);
+    expect(meter.take(audio).maxReductionDb).toBe(0);
   });
 
   it("starts each second from nothing, but times the first tick from the last", () => {
