@@ -239,7 +239,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
     const { rejoin } = hello;
     const held = rejoin === null ? undefined : seats.get(rejoin.playerId);
-    if (held !== undefined && held.peerId === undefined && held.token === rejoin?.token) {
+    if (held !== undefined && held.token === rejoin?.token) {
+      // The player may be back before the host has seen its old peer go:
+      // the token is the proof, and the old peer is forgotten.
+      if (held.peerId !== undefined) {
+        seatOfPeer.delete(held.peerId);
+        budget.forget(held.peerId);
+      }
       welcome(held, from);
       return;
     }
