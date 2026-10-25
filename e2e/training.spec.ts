@@ -330,17 +330,23 @@ test("(14) in Weapon DPS, Space swings and the meter's weapon row counts it (#16
   await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Melee dummy/);
 });
 
-test("(15) a weapon drill is never dimmed for want of a skill (#162)", async ({ page }) => {
+test("(15) an empty bar is never dimmed, and Space still swings (#360)", async ({ page }) => {
   await openTraining(page);
   const overlay = page.locator(".training-overlay");
   // An empty bar, as a fresh character has.
   await page.locator(".skill-slot", { hasText: "Fireball" }).locator(".skill-slot-clear").click();
+  // The bar repaints in the same re-arm as the overlay.
   await expect(page.locator(FILLED_SLOTS)).toHaveCount(0);
-  await expect(overlay).toHaveText("Equip a skill to start testing.");
-
-  await page.locator("select.training-scenario").selectOption("dodge-drill");
-  await expect(page.locator(".training-log")).toContainText("── Dodge drill ──");
   await expect(overlay).toBeHidden();
+
+  await page.locator("select.training-scenario").selectOption("weapon-dps");
+  await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
+  await expect(overlay).toBeHidden();
+  await takeControl(page);
+  await page.keyboard.press(key("attack"));
+  // The walk and swing are game time, slower than wall time under load
+  // (#327), so this waits the default.
+  await expect(meter(page, "weapon / skills")).not.toHaveText(/^0 \//);
 });
 
 test("(16) Tab targets in the arena and never leaves it for the name field (#268)", async ({

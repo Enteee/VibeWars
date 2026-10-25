@@ -266,6 +266,13 @@ export function describeType(
     }
     return { array: describeType(checker, element, within) };
   }
+  if (checker.isTupleType(type)) {
+    return {
+      tuple: checker
+        .getTypeArguments(type as ts.TypeReference)
+        .map((element) => describeType(checker, element, within)),
+    };
+  }
   if (type.flags & (ts.TypeFlags.Object | ts.TypeFlags.Intersection)) {
     if (within.has(type)) {
       throw new Error(`a recursive type cannot be described: ${checker.typeToString(type)}`);

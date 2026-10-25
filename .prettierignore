@@ -20,3 +20,7 @@ packages/game-data/generated/
 # must actually handle.
 packages/game-data/src/__fixtures__/
 packages/game-data/raw/
+# Strudel gives quotes meaning (double quotes are mini-notation, single quotes
+# are plain strings), so Prettier's quote normalisation would change what a
+# track plays.
+apps/web/src/music/**/*.strudel.js

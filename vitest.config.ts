@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url";
+
 import { defineConfig } from "vitest/config";
 
 /**
@@ -9,7 +11,19 @@ import { defineConfig } from "vitest/config";
  * never quietly grow a browser dependency.
  */
 export default defineConfig({
+  // The music checker (#369) imports @strudel/core in Node, which needs a
+  // stand-in for @kabelsalat/web. Vitest only applies an alias to modules it
+  // transforms, so @strudel/* is inlined. Node-only: the browser build keeps
+  // the real package.
+  resolve: {
+    alias: {
+      "@kabelsalat/web": fileURLToPath(
+        new URL("./apps/web/scripts/music/shims/kabelsalat-web.mjs", import.meta.url),
+      ),
+    },
+  },
   test: {
+    server: { deps: { inline: [/@strudel\//] } },
     environment: "node",
     // `scripts/` is plain JSDoc-typed .mjs rather than a workspace package,
     // so it needs its own entry: the claude-bot Telegram bridge keeps its

@@ -585,6 +585,14 @@
     "LOBBY_CODE_ALPHABET": { "literal": "ACDEFGHJKMNPQRTWXY34679" },
     "LOBBY_CODE_LENGTH": { "literal": 4 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },
+    "MAX_WIRE_EVENTS": { "literal": 64 },
+    "MAX_WIRE_POINTS": { "literal": 256 },
+    "MAX_WIRE_RADIUS": { "literal": 200 },
+    "MAX_WIRE_SLOTS": { "literal": 8 },
+    "MAX_WIRE_STATUSES": { "literal": 32 },
+    "MAX_WIRE_STRING": { "literal": 64 },
+    "MAX_WIRE_TEXT": { "literal": 256 },
+    "MAX_WIRE_WALLS": { "literal": 1024 },
     "PROTOCOL_MISMATCH_MESSAGE": {
       "literal": "This tab is running an outdated version of VibeWars. Reload the page."
     },
@@ -624,6 +632,20 @@
             { "name": "slot", "optional": false, "type": "number" }
           ]
         }
+      ]
+    },
+    "Channel": {
+      "union": [
+        { "literal": "combat" },
+        { "literal": "ended" },
+        { "literal": "hello" },
+        { "literal": "intent" },
+        { "literal": "recharge" },
+        { "literal": "refuse" },
+        { "literal": "refused" },
+        { "literal": "skill-bar" },
+        { "literal": "snapshot" },
+        { "literal": "welcome" }
       ]
     },
     "ClientIntent": {
@@ -1115,6 +1137,84 @@
         { "name": "kind", "optional": false, "type": { "literal": "move" } }
       ]
     },
+    "PeerHello": {
+      "properties": [
+        { "name": "build", "optional": false, "type": "unknown" },
+        { "name": "name", "optional": false, "type": "string" },
+        { "name": "protocolVersion", "optional": false, "type": "string" }
+      ]
+    },
+    "PeerRefuse": {
+      "properties": [
+        { "name": "message", "optional": false, "type": "string" },
+        {
+          "name": "reason",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "match-full" },
+              { "literal": "match-over" },
+              { "literal": "protocol-mismatch" }
+            ]
+          }
+        }
+      ]
+    },
+    "PeerWelcome": {
+      "properties": [
+        {
+          "name": "map",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "height", "optional": false, "type": "number" },
+              { "name": "id", "optional": false, "type": "string" },
+              { "name": "name", "optional": false, "type": "string" },
+              {
+                "name": "walls",
+                "optional": false,
+                "type": {
+                  "array": {
+                    "union": [
+                      {
+                        "properties": [
+                          { "name": "height", "optional": false, "type": "number" },
+                          { "name": "kind", "optional": false, "type": { "literal": "rect" } },
+                          { "name": "width", "optional": false, "type": "number" },
+                          { "name": "x", "optional": false, "type": "number" },
+                          { "name": "y", "optional": false, "type": "number" }
+                        ]
+                      },
+                      {
+                        "properties": [
+                          { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
+                          {
+                            "name": "points",
+                            "optional": false,
+                            "type": {
+                              "array": {
+                                "properties": [
+                                  { "name": "x", "optional": false, "type": "number" },
+                                  { "name": "y", "optional": false, "type": "number" }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              { "name": "width", "optional": false, "type": "number" }
+            ]
+          }
+        },
+        { "name": "playerId", "optional": false, "type": "string" },
+        { "name": "protocolVersion", "optional": false, "type": "string" },
+        { "name": "tickIntervalMs", "optional": false, "type": "number" }
+      ]
+    },
     "PolygonWallDescriptor": {
       "properties": [
         { "name": "kind", "optional": false, "type": { "literal": "polygon" } },
@@ -1487,6 +1587,183 @@
               }
             }
           ]
+        }
+      ]
+    },
+    "WireCombat": {
+      "properties": [
+        {
+          "name": "area",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "radius", "optional": false, "type": "number" },
+                  { "name": "x", "optional": false, "type": "number" },
+                  { "name": "y", "optional": false, "type": "number" }
+                ]
+              }
+            ]
+          }
+        },
+        { "name": "casterId", "optional": false, "type": "string" },
+        {
+          "name": "cause",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "degeneration" },
+              { "literal": "skill" },
+              { "literal": "weapon" }
+            ]
+          }
+        },
+        {
+          "name": "events",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "amount", "optional": false, "type": { "union": ["null", "number"] } },
+                { "name": "kind", "optional": false, "type": "string" },
+                { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } }
+              ]
+            }
+          }
+        },
+        { "name": "skillId", "optional": false, "type": "string" },
+        { "name": "weaponId", "optional": false, "type": "string" }
+      ]
+    },
+    "WireCombatEvent": {
+      "properties": [
+        { "name": "amount", "optional": false, "type": { "union": ["null", "number"] } },
+        { "name": "kind", "optional": false, "type": "string" },
+        { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } }
+      ]
+    },
+    "WireEnded": {
+      "properties": [
+        {
+          "name": "endReason",
+          "optional": false,
+          "type": {
+            "union": [{ "literal": "host-left" }, { "literal": "score" }, { "literal": "time" }]
+          }
+        },
+        {
+          "name": "winningTeam",
+          "optional": false,
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+        }
+      ]
+    },
+    "WirePlayer": {
+      "properties": [
+        { "name": "adrenaline", "optional": false, "type": "number" },
+        { "name": "armor", "optional": false, "type": "number" },
+        { "name": "castRemaining", "optional": false, "type": "number" },
+        { "name": "castingSkillId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "dead", "optional": false, "type": "boolean" },
+        { "name": "energy", "optional": false, "type": "number" },
+        { "name": "health", "optional": false, "type": "number" },
+        { "name": "id", "optional": false, "type": "string" },
+        { "name": "maxEnergy", "optional": false, "type": "number" },
+        { "name": "maxHealth", "optional": false, "type": "number" },
+        { "name": "name", "optional": false, "type": "string" },
+        { "name": "statuses", "optional": false, "type": { "array": "string" } },
+        { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } },
+        {
+          "name": "team",
+          "optional": false,
+          "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+        },
+        { "name": "weaponId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "x", "optional": false, "type": "number" },
+        { "name": "y", "optional": false, "type": "number" }
+      ]
+    },
+    "WireSkillBar": {
+      "properties": [
+        {
+          "name": "slots",
+          "optional": false,
+          "type": {
+            "array": {
+              "union": [
+                "null",
+                {
+                  "properties": [
+                    { "name": "activationSeconds", "optional": false, "type": "number" },
+                    { "name": "adrenalineCost", "optional": false, "type": "number" },
+                    { "name": "energyCost", "optional": false, "type": "number" },
+                    { "name": "id", "optional": false, "type": "string" },
+                    { "name": "name", "optional": false, "type": "string" },
+                    { "name": "rechargeSeconds", "optional": false, "type": "number" }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "WireSnapshot": {
+      "properties": [
+        { "name": "elapsedSeconds", "optional": false, "type": "number" },
+        {
+          "name": "endReason",
+          "optional": false,
+          "type": { "union": ["null", { "literal": "score" }, { "literal": "time" }] }
+        },
+        {
+          "name": "phase",
+          "optional": false,
+          "type": { "union": [{ "literal": "active" }, { "literal": "finished" }] }
+        },
+        {
+          "name": "players",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "adrenaline", "optional": false, "type": "number" },
+                { "name": "armor", "optional": false, "type": "number" },
+                { "name": "castRemaining", "optional": false, "type": "number" },
+                {
+                  "name": "castingSkillId",
+                  "optional": false,
+                  "type": { "union": ["null", "string"] }
+                },
+                { "name": "dead", "optional": false, "type": "boolean" },
+                { "name": "energy", "optional": false, "type": "number" },
+                { "name": "health", "optional": false, "type": "number" },
+                { "name": "id", "optional": false, "type": "string" },
+                { "name": "maxEnergy", "optional": false, "type": "number" },
+                { "name": "maxHealth", "optional": false, "type": "number" },
+                { "name": "name", "optional": false, "type": "string" },
+                { "name": "statuses", "optional": false, "type": { "array": "string" } },
+                { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "weaponId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
+        { "name": "score", "optional": false, "type": { "tuple": ["number", "number"] } },
+        { "name": "tick", "optional": false, "type": "number" },
+        {
+          "name": "winningTeam",
+          "optional": false,
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
         }
       ]
     }
