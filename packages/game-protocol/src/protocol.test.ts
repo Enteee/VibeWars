@@ -71,20 +71,21 @@ describe("isLobbyCode", () => {
   });
 
   it("rejects wrong lengths", () => {
-    expect(isLobbyCode("ACD")).toBe(false);
+    expect(isLobbyCode("ACDE")).toBe(false);
     expect(isLobbyCode("ACDEF")).toBe(false);
+    expect(isLobbyCode("ACDEFGH")).toBe(false);
     expect(isLobbyCode("")).toBe(false);
   });
 
   it("rejects characters outside the alphabet", () => {
-    expect(isLobbyCode("ACD0")).toBe(false);
-    expect(isLobbyCode("ACDO")).toBe(false);
-    expect(isLobbyCode("acde")).toBe(false);
+    expect(isLobbyCode("ACDEF0")).toBe(false);
+    expect(isLobbyCode("ACDEFO")).toBe(false);
+    expect(isLobbyCode("acdefg")).toBe(false);
   });
 
   it("rejects codes with separators before normalisation", () => {
-    expect(isLobbyCode("A-CDE")).toBe(false);
-    expect(isLobbyCode(normalizeLobbyCode("a-cde"))).toBe(true);
+    expect(isLobbyCode("ACD-EFG")).toBe(false);
+    expect(isLobbyCode(normalizeLobbyCode("acd-efg"))).toBe(true);
   });
 
   it("is not fooled by regex metacharacters or newlines", () => {

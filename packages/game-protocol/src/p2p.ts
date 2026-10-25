@@ -19,9 +19,12 @@ import type {
   SkillBarSlot,
   WallDescriptor,
 } from "./protocol.js";
-import { MAX_LOBBY_PLAYERS } from "./protocol.js";
+import { MAX_LOBBY_PLAYERS, type LobbyPhase } from "./protocol.js";
 
-/** The channels a match uses. Trystero caps an action name at 32 bytes (#16), so each fits. */
+/**
+ * The channels a lobby and its match use. Trystero caps an action name at
+ * 32 bytes (#16), so each fits.
+ */
 export const CHANNELS = [
   "hello",
   "welcome",
@@ -34,6 +37,11 @@ export const CHANNELS = [
   "recharge",
   "ended",
   "bye",
+  "lobby-join",
+  "lobby-state",
+  "lobby-cmd",
+  "lobby-note",
+  "match-start",
 ] as const;
 
 export type Channel = (typeof CHANNELS)[number];
@@ -239,6 +247,72 @@ export interface WireEnded {
   readonly endReason: "score" | "time" | "host-left";
 }
 
+/**
+ * Peer to lobby host, first (#379): who is joining. Nothing a peer sends
+ * before it is acted on. The build comes later, in the match `hello`.
+ */
+export interface PeerLobbyJoin {
+  /** `PROTOCOL_VERSION`; the host refuses any other, so it is not checked here. */
+  readonly protocolVersion: string;
+  /** As the player typed it, cut to `MAX_WIRE_TEXT`; the host sanitises it. */
+  readonly name: string;
+}
+
+/** One lobby member, as `lobby-state` lists them. */
+export interface WireLobbyPlayer {
+  /** The member's peer id. */
+  readonly id: string;
+  readonly name: string;
+  /** `null` spectates. */
+  readonly team: 0 | 1 | null;
+  readonly ready: boolean;
+  /** The host's own player: the one who picks the map and starts. */
+  readonly isHost: boolean;
+}
+
+/** Lobby host to every peer, on every change: the whole lobby, not a delta. */
+export interface WireLobbyState {
+  readonly code: string;
+  readonly phase: LobbyPhase;
+  readonly mapId: string;
+  /** The peer every lobby and match message comes from. */
+  readonly hostId: string;
+  /** The match being played, while `phase` is not `"waiting"`. */
+  readonly matchId: string | null;
+  readonly players: readonly WireLobbyPlayer[];
+}
+
+/** Peer to lobby host: what the member asks for. The host decides. */
+export type WireLobbyCommand =
+  | { readonly kind: "choose-team"; readonly team: 0 | 1 | null }
+  | { readonly kind: "ready"; readonly ready: boolean }
+  | { readonly kind: "select-map"; readonly mapId: string }
+  | { readonly kind: "start" };
+
+/** Lobby host to one peer: a start it turned down, or a member it turned away. */
+export interface WireLobbyNote {
+  readonly kind: "start-rejected" | "refused";
+  /**
+   * For `"start-rejected"`, the words the host is shown. For `"refused"`,
+   * one of `LOBBY_REFUSALS`.
+   */
+  readonly reason: string;
+}
+
+/** Why a lobby host turns a peer away, or sends everyone off. */
+export const LOBBY_REFUSALS = ["protocol-mismatch", "lobby-full", "host-left"] as const;
+
+export type LobbyRefusal = (typeof LOBBY_REFUSALS)[number];
+
+/**
+ * Lobby host to each seated peer, and only to them: the match is on, on
+ * `mapId`. The peer then says `hello` to the host on the same transport.
+ */
+export interface WireMatchStart {
+  readonly mapId: string;
+  readonly matchId: string;
+}
+
 type Fields = Record<string, unknown>;
 
 function fields(value: unknown): Fields | undefined {
@@ -370,7 +444,7 @@ function parseJson(value: unknown): JsonValue | undefined {
 }
 
 /**
- * The `protocolVersion` a hello carries, read before the rest is parsed,
+ * The `protocolVersion` a hello or a lobby-join carries, read before the rest is parsed,
  * so a client of another version is told so whatever else it sent.
  */
 export function helloProtocolVersion(value: unknown): string | undefined {
@@ -729,4 +803,93 @@ function parseRechargeSlot(value: unknown): RechargeSlot | undefined {
 export function parseRecharge(value: unknown): RechargeMessage | undefined {
   const slots = parseArray(fields(value)?.slots, MAX_WIRE_SLOTS, parseRechargeSlot);
   return slots === undefined ? undefined : { slots };
+}
+
+/** The `"lobby-join"` channel. */
+export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
+  const raw = fields(value);
+  if (raw === undefined || !isString(raw.protocolVersion) || typeof raw.name !== "string") {
+    return undefined;
+  }
+  return { protocolVersion: raw.protocolVersion, name: raw.name.slice(0, MAX_WIRE_TEXT) };
+}
+
+function parseLobbyTeam(value: unknown): 0 | 1 | null | undefined {
+  return value === null || isTeam(value) ? value : undefined;
+}
+
+function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
+  const raw = fields(value);
+  const team = parseLobbyTeam(raw?.team);
+  return raw !== undefined &&
+    isString(raw.id) &&
+    isString(raw.name) &&
+    team !== undefined &&
+    typeof raw.ready === "boolean" &&
+    typeof raw.isHost === "boolean"
+    ? { id: raw.id, name: raw.name, team, ready: raw.ready, isHost: raw.isHost }
+    : undefined;
+}
+
+/** The `"lobby-state"` channel. */
+export function parseWireLobbyState(value: unknown): WireLobbyState | undefined {
+  const raw = fields(value);
+  if (
+    raw === undefined ||
+    !isString(raw.code) ||
+    !isOneOf(raw.phase, ["waiting", "starting", "in-match"] as const) ||
+    !isString(raw.mapId) ||
+    !isString(raw.hostId) ||
+    !isNullableString(raw.matchId)
+  ) {
+    return undefined;
+  }
+  const players = parseArray(raw.players, MAX_LOBBY_PLAYERS, parseLobbyPlayer);
+  return players === undefined
+    ? undefined
+    : {
+        code: raw.code,
+        phase: raw.phase,
+        mapId: raw.mapId,
+        hostId: raw.hostId,
+        matchId: raw.matchId,
+        players,
+      };
+}
+
+/** The `"lobby-cmd"` channel. */
+export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefined {
+  const raw = fields(value);
+  switch (raw?.kind) {
+    case "choose-team": {
+      const team = parseLobbyTeam(raw.team);
+      return team === undefined ? undefined : { kind: "choose-team", team };
+    }
+    case "ready":
+      return typeof raw.ready === "boolean" ? { kind: "ready", ready: raw.ready } : undefined;
+    case "select-map":
+      return isString(raw.mapId) ? { kind: "select-map", mapId: raw.mapId } : undefined;
+    case "start":
+      return { kind: "start" };
+    default:
+      return undefined;
+  }
+}
+
+/** The `"lobby-note"` channel. */
+export function parseWireLobbyNote(value: unknown): WireLobbyNote | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    isOneOf(raw.kind, ["start-rejected", "refused"] as const) &&
+    isString(raw.reason, MAX_WIRE_TEXT)
+    ? { kind: raw.kind, reason: raw.reason }
+    : undefined;
+}
+
+/** The `"match-start"` channel. */
+export function parseWireMatchStart(value: unknown): WireMatchStart | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.mapId) && isString(raw.matchId)
+    ? { mapId: raw.mapId, matchId: raw.matchId }
+    : undefined;
 }

@@ -93,6 +93,12 @@ export {
   parseWireEnded,
   parseCastRefused,
   parseRecharge,
+  LOBBY_REFUSALS,
+  parsePeerLobbyJoin,
+  parseWireLobbyState,
+  parseWireLobbyCommand,
+  parseWireLobbyNote,
+  parseWireMatchStart,
 } from "./p2p.js";
 
 export type {
@@ -110,4 +116,11 @@ export type {
   JsonValue,
   WireSkillBar,
   WireEnded,
+  PeerLobbyJoin,
+  WireLobbyPlayer,
+  WireLobbyState,
+  WireLobbyCommand,
+  WireLobbyNote,
+  LobbyRefusal,
+  WireMatchStart,
 } from "./p2p.js";

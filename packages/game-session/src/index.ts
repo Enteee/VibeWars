@@ -30,7 +30,7 @@ export {
   RECONNECT_WINDOW_SECONDS,
   createMatchHost,
 } from "./match-host.js";
-export type { HostMap, MatchHost, MatchHostOptions } from "./match-host.js";
+export type { HostMap, MatchHost, MatchHostOptions, PlannedSeats } from "./match-host.js";
 export {
   HostLeftError,
   MatchRefusedError,
@@ -38,3 +38,15 @@ export {
   connectMatch,
 } from "./match-client.js";
 export type { ConnectMatchOptions, PeerMatchConnection } from "./match-client.js";
+export { generateLobbyCode } from "./lobby-codes.js";
+export type {
+  LobbyConnection,
+  LobbyPlayerSnapshot,
+  LobbySnapshot,
+  MatchStarting,
+} from "./lobby-connection.js";
+export { canStart, createLobbyHost } from "./lobby-host.js";
+export type { LobbyHost, LobbyHostOptions, MatchPlan } from "./lobby-host.js";
+export { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
+export type { JoinLobbyOptions } from "./lobby-client.js";
+export { scopeTransport } from "./scoped-transport.js";

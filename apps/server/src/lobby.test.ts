@@ -1,11 +1,8 @@
 import { matchMaker } from "@colyseus/core";
 import { Client, type Room } from "@colyseus/sdk";
-import { createRng, seedFromString } from "@vibewars/game-core";
 import {
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
-  LOBBY_CODE_ALPHABET,
-  LOBBY_CODE_LENGTH,
   ROOM_LOBBY,
   isLobbyCode,
   normalizeLobbyCode,
@@ -13,38 +10,10 @@ import {
 } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { generateLobbyCode } from "./rooms/lobby-room.js";
 import { MatchRoom } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { LOOPBACK_LIMITS, findFreePort, waitFor } from "./testing/harness.js";
 import { DEFAULT_MAX_ROOMS } from "./config.js";
-
-describe("generateLobbyCode", () => {
-  it("produces a code of the expected length from the code alphabet", () => {
-    const code = generateLobbyCode(createRng(seedFromString("seed")));
-    expect(code).toHaveLength(LOBBY_CODE_LENGTH);
-    expect(isLobbyCode(code)).toBe(true);
-  });
-
-  it("uses only characters from the unambiguous alphabet", () => {
-    const rng = createRng(seedFromString("alphabet"));
-    for (let i = 0; i < 200; i += 1) {
-      for (const char of generateLobbyCode(rng)) {
-        expect(LOBBY_CODE_ALPHABET).toContain(char);
-      }
-    }
-  });
-
-  it("is deterministic for a given seed, so a match can be reproduced", () => {
-    expect(generateLobbyCode(createRng(42))).toBe(generateLobbyCode(createRng(42)));
-  });
-
-  it("produces varied codes across draws rather than repeating one", () => {
-    const rng = createRng(seedFromString("variety"));
-    const codes = new Set(Array.from({ length: 50 }, () => generateLobbyCode(rng)));
-    expect(codes.size).toBeGreaterThan(40);
-  });
-});
 
 describe("lobby room", () => {
   let server: GameServer;

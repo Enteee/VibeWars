@@ -13,7 +13,13 @@ import { PROTOCOL_VERSION, type JsonValue, type PeerHello } from "@vibewars/game
 import { createLocalPeer } from "./local-peer.js";
 import { connectMatch, type PeerMatchConnection } from "./match-client.js";
 import type { MatchSnapshot, PlayerSnapshot } from "./match-connection.js";
-import { createMatchHost, RULESET, type HostMap, type MatchHost } from "./match-host.js";
+import {
+  createMatchHost,
+  RULESET,
+  type HostMap,
+  type MatchHost,
+  type PlannedSeats,
+} from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
 import type { Transport } from "./transport.js";
 
@@ -82,7 +88,12 @@ export interface TestMatch {
 }
 
 export function startMatch(
-  options: { matchRules?: MatchRules; maxPlayers?: number; random?: () => number } = {},
+  options: {
+    matchRules?: MatchRules;
+    maxPlayers?: number;
+    random?: () => number;
+    seats?: PlannedSeats;
+  } = {},
 ): TestMatch {
   const network = createMemoryNetwork();
   const remote = network.join("host");
@@ -96,6 +107,7 @@ export function startMatch(
     // Reproducible, and different each draw.
     random: options.random ?? (() => ((draws += 1) * 0.6180339887) % 1),
     maxPlayers: options.maxPlayers ?? 8,
+    seats: options.seats ?? null,
   });
   return {
     network,
