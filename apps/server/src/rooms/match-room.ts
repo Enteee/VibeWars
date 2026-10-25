@@ -88,6 +88,13 @@ export const PlayerState = schema(
     armor: t.number().default(0),
     /** Equipped weapon class id, so a target panel can name it. */
     weaponId: t.string().default(""),
+    /**
+     * The build's professions, as the server resolved them, never as
+     * claimed (#281): the arena shows the primary's glyph, the target
+     * panel both. `""` for no secondary.
+     */
+    primaryProfession: t.string().default(""),
+    secondaryProfession: t.string().default(""),
     team: t.number().default(0),
     dead: t.boolean().default(false),
 
@@ -216,6 +223,7 @@ interface ResolvedJoinLoadout {
   readonly skillBar: readonly string[];
   readonly attributeRanks: ReadonlyMap<string, number>;
   readonly primaryProfession: ProfessionId;
+  readonly secondaryProfession: ProfessionId | undefined;
   readonly equipment: BuildEquipment;
 }
 
@@ -223,6 +231,7 @@ const HOUSE_LOADOUT: ResolvedJoinLoadout = {
   skillBar: DEFAULT_SKILL_BAR,
   attributeRanks: DEFAULT_ATTRIBUTE_RANKS,
   primaryProfession: "warrior",
+  secondaryProfession: undefined,
   equipment: DEFAULT_EQUIPMENT,
 };
 
@@ -272,6 +281,7 @@ function resolveLoadout(options: unknown): ResolvedJoinLoadout {
     skillBar,
     attributeRanks: attributeRanksOf(build),
     primaryProfession: build.primaryProfession,
+    secondaryProfession: build.secondaryProfession,
     equipment: build.equipment,
   };
 }
@@ -910,6 +920,9 @@ export class MatchRoom extends Room {
       x: spawn.x,
       y: spawn.y,
       team,
+      // Set once, from what the server resolved, never from the claim.
+      primaryProfession: loadout.primaryProfession,
+      secondaryProfession: loadout.secondaryProfession ?? "",
       statuses: new ArraySchema<string>(),
     });
     this.state.players.set(client.sessionId, player);

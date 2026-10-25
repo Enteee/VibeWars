@@ -27,8 +27,10 @@ import { showCombatFeedback } from "../render/combat-feedback.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import {
   createLocalConnection,
+  NO_PROFESSIONS,
   TICK_SECONDS,
   type LocalMatchConnection,
+  type Professions,
 } from "../training/local-connection.js";
 import { playerArming, setupScenario, SELF_ID, trainingMap } from "../training/scenario-setup.js";
 import {
@@ -212,6 +214,11 @@ export function createTrainingPanel(): TrainingPanel {
   let messageTimer: ReturnType<typeof setTimeout> | undefined;
   let skillButtons: HTMLButtonElement[] = [];
 
+  // The player's professions follow the build being edited (#281).
+  const professionsOf = (id: string): Professions =>
+    id === SELF_ID && character !== undefined
+      ? { primary: character.primaryProfession, secondary: character.secondaryProfession }
+      : NO_PROFESSIONS;
   const nameOf = (id: string): string =>
     id === SELF_ID ? displayName.trim() || "You" : (session?.names.get(id) ?? id);
 
@@ -387,6 +394,7 @@ export function createTrainingPanel(): TrainingPanel {
       selfId: SELF_ID,
       map: setup.map,
       nameOf,
+      professionsOf,
     });
     session = {
       scenario,

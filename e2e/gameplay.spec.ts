@@ -403,3 +403,25 @@ test("a match lost for good returns to the menu and says why (#195)", async ({ p
   await startQuickMatch(page);
   await expect(notice).toHaveCount(0);
 });
+
+test("the target panel shows the target's professions before its name (#281)", async ({
+  browser,
+  page,
+}) => {
+  // A fresh tab has no character, so the opponent plays the house
+  // loadout: a warrior with no secondary.
+  const opponent = await browser.newPage();
+  await startLobbyMatch(page, [opponent]);
+  const icons = page.locator(".hud-target-professions img");
+  await expect(icons).toHaveCount(0);
+
+  await page.keyboard.press("Tab");
+  await expect(page.locator(".hud-target-text")).toHaveText(/^target: /);
+  await expect(icons).toHaveCount(1);
+  await expect(icons.first()).toHaveAttribute("alt", "Warrior");
+  await expect(icons.first()).toHaveAttribute("src", /icons\/profession\/warrior\.svg$/);
+
+  await page.locator("#viewport canvas").click({ position: { x: 5, y: 5 } });
+  await expect(icons).toHaveCount(0);
+  await opponent.close();
+});

@@ -34,6 +34,8 @@ interface PlayerView {
   readonly x: number;
   readonly y: number;
   readonly targetSessionId: string;
+  readonly primaryProfession: string;
+  readonly secondaryProfession: string;
 }
 
 interface MatchView {
@@ -126,6 +128,21 @@ describe("joining with a build", () => {
     ]);
 
     await room.leave(true);
+  });
+
+  it("shows the professions the server resolved, and the house loadout's for a broken build (#281)", async () => {
+    const legal = await joinWith(LEGAL_BUILD);
+    const player = legal.room.state.players.get(legal.room.sessionId);
+    expect(player?.primaryProfession).toBe("elementalist");
+    expect(player?.secondaryProfession).toBe("monk");
+    await legal.room.leave(true);
+
+    // A claim the server refused is never what the arena shows.
+    const broken = await joinWith({ ...LEGAL_BUILD, primaryProfession: "bogus" });
+    const house = broken.room.state.players.get(broken.room.sessionId);
+    expect(house?.primaryProfession).toBe("warrior");
+    expect(house?.secondaryProfession).toBe("");
+    await broken.room.leave(true);
   });
 
   it("names the player what they asked to be called, not after their build", async () => {
