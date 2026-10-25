@@ -61,6 +61,18 @@ describe("sanitizeName", () => {
     expect(sanitizeName("a\u2028b\u2029c", "fallback")).toBe("abc");
   });
 
+  it("strips the characters that are blank by design: Hangul fillers and the braille blank", () => {
+    for (const blank of ["\u115f", "\u1160", "\u3164", "\uffa0", "\u2800"]) {
+      expect(sanitizeName(`a${blank}b`, "fallback")).toBe("ab");
+      expect(sanitizeName(blank.repeat(3), "fallback")).toBe("fallback");
+    }
+  });
+
+  it("reads only the head of a huge name, and still cleans it", () => {
+    const huge = `\u202eEllie${"\u0301".repeat(1_000_000)}`;
+    expect(sanitizeName(huge, "fallback")).toBe("Elli\u00e9\u0301\u0301");
+  });
+
   it("strips C1 controls", () => {
     expect(sanitizeName("\u0085x\u009f", "fallback")).toBe("x");
   });

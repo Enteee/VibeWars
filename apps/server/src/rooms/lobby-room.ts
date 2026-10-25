@@ -56,15 +56,24 @@ export const LobbyState = schema(
 const MAX_NAME_LENGTH = 16;
 
 /**
+ * How much of the raw string is looked at, in UTF-16 units. A join body
+ * can carry a megabyte of name, and the passes below cost per unit, so
+ * the rest is dropped unread: 16 units per kept character leaves room for
+ * any real name and its marks (#174).
+ */
+const MAX_RAW_NAME_UNITS = MAX_NAME_LENGTH * 16;
+
+/**
  * Characters that draw nothing of their own or rearrange what is drawn
  * around them: every control (C0 and C1), every format character (bidi
  * overrides, zero-width joiners and spaces, the BOM, the soft hyphen),
- * the line and paragraph separators, and lone surrogate halves, which
- * draw as a replacement box. In a log they corrupt the terminal; over a
- * player's head they make a name invisible, or reverse it and whatever
- * is drawn after it (#174).
+ * the line and paragraph separators, lone surrogate halves, which draw
+ * as a replacement box, and the letters and symbols that are blank by
+ * design: the Hangul fillers and the braille blank. In a log they corrupt
+ * the terminal; over a player's head they make a name invisible, or
+ * reverse it and whatever is drawn after it (#174).
  */
-const INVISIBLE_CHARACTERS = /[\p{Cc}\p{Cf}\p{Cs}\p{Zl}\p{Zp}]/gu;
+const INVISIBLE_CHARACTERS = /[\p{Cc}\p{Cf}\p{Cs}\p{Zl}\p{Zp}\u115f\u1160\u3164\uffa0\u2800]/gu;
 
 /** Leading whitespace, and combining marks before any base letter: they have nothing to sit on. */
 const LEADING_MARKS = /^[\s\p{M}]+/u;
@@ -86,7 +95,9 @@ export function sanitizeName(raw: unknown, fallback: string): string {
   if (typeof raw !== "string") {
     return fallback;
   }
+  // Slicing can halve a surrogate pair; the stray half is stripped below.
   const cleaned = raw
+    .slice(0, MAX_RAW_NAME_UNITS)
     .normalize("NFC")
     .replace(INVISIBLE_CHARACTERS, "")
     .replace(/\s+/gu, " ")
