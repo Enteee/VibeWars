@@ -50,7 +50,8 @@ function rescale(referenceUnits: number): number {
 const SPEAR_RANGE = rescale(1000);
 const SHORTBOW_RANGE = rescale(1050);
 const MEDIUM_BOW_RANGE = rescale(1400);
-const LONG_BOW_RANGE = rescale(1600);
+/** The longest any weapon reaches; the music director calls this engaged (#370). */
+export const LONG_BOW_RANGE = rescale(1600);
 
 /**
  * Projectile speed is **derived**, never stored.

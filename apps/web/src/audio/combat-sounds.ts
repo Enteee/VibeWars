@@ -1,3 +1,4 @@
+import { findStatusDefinition } from "@vibewars/game-core";
 import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
 import type { SoundId } from "./sound-ids.js";
@@ -15,10 +16,7 @@ import type { SoundId } from "./sound-ids.js";
  */
 export function soundsForCombat(message: CombatMessage, selfId: string): SoundId[] {
   const mine = message.casterSessionId === selfId;
-  // A status tick (burning, Regeneration) comes up to 20 times a second:
-  // a chime per tick drowns everything. Its health shows on the bar; only
-  // a death it causes is worth a sound.
-  const tick = message.cause === "degeneration";
+  const tick = isTick(message);
   const sounds: SoundId[] = [];
   for (const event of message.events) {
     if (tick && event.kind !== "death") {
@@ -26,14 +24,13 @@ export function soundsForCombat(message: CombatMessage, selfId: string): SoundId
     }
     const onMe = event.targetId === selfId;
     switch (event.kind) {
-      case "damage":
-        // Hurting yourself is a hit you take, not one you deal.
-        if (onMe) {
-          sounds.push("hit-taken");
-        } else if (mine) {
-          sounds.push("hit-dealt");
+      case "damage": {
+        const hit = hitOn(message, event.targetId, selfId);
+        if (hit !== undefined) {
+          sounds.push(hit === "taken" ? "hit-taken" : "hit-dealt");
         }
         break;
+      }
       case "heal":
         if (onMe) {
           sounds.push("heal");
@@ -57,6 +54,53 @@ export function soundsForCombat(message: CombatMessage, selfId: string): SoundId
     }
   }
   return sounds;
+}
+
+/**
+ * A status tick (burning, Regeneration) comes up to 20 times a second: a
+ * chime per tick drowns everything. Its health shows on the bar; only a
+ * death it causes is worth a sound, and it is no new hit.
+ */
+function isTick(message: CombatMessage): boolean {
+  return message.cause === "degeneration";
+}
+
+export type Hit = "dealt" | "taken";
+
+/**
+ * Whether something landing on `targetId` is a hit `selfId` took or
+ * dealt, or neither. Hurting yourself is a hit you take, not one you deal.
+ */
+function hitOn(message: CombatMessage, targetId: string, selfId: string): Hit | undefined {
+  if (targetId === selfId) {
+    return "taken";
+  }
+  return message.casterSessionId === selfId ? "dealt" : undefined;
+}
+
+/**
+ * The hostile hits in one combat message that concern `selfId` (#370),
+ * classified as the sounds are: damage, an interrupt, or a condition or
+ * hex landing. Heals, enchantments and status ticks are not hits.
+ */
+export function hitsForCombat(message: CombatMessage, selfId: string): Hit[] {
+  if (isTick(message)) {
+    return [];
+  }
+  const hits: Hit[] = [];
+  for (const event of message.events) {
+    const hostile =
+      event.kind === "damage" ||
+      event.kind === "interrupted" ||
+      (event.kind === "status-applied" &&
+        event.targetId !== message.casterSessionId &&
+        findStatusDefinition(event.statusId)?.category !== "enchantment");
+    const hit = hostile ? hitOn(message, event.targetId, selfId) : undefined;
+    if (hit !== undefined) {
+      hits.push(hit);
+    }
+  }
+  return hits;
 }
 
 function playerById(snapshot: MatchSnapshot, id: string | undefined): PlayerSnapshot | undefined {

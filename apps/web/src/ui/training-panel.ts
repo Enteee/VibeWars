@@ -26,6 +26,7 @@ import { skillSlotForKeyDown } from "../input/skill-keys.js";
 import { attachNameReveal } from "../input/name-reveal.js";
 import { nextTabTarget } from "../input/tab-target.js";
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
+import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
 import {
   actorAtPoint,
   EMPTY_SNAPSHOT,
@@ -140,6 +141,7 @@ interface Session {
   readonly names: ReadonlyMap<string, string>;
   readonly walls: readonly RenderableWall[];
   readonly sounds: MatchSounds;
+  readonly music: MatchMusic;
   parked: boolean;
 }
 
@@ -419,6 +421,7 @@ export function createTrainingPanel(): TrainingPanel {
 
   const startSession = (scenario: TrainingScenario, build: StoredCharacter): void => {
     session?.sounds.dispose();
+    session?.music.dispose();
     void session?.connection.disconnect();
     const setup = setupScenario(scenario, build);
     ticks = new StatusTickBatcher();
@@ -436,6 +439,13 @@ export function createTrainingPanel(): TrainingPanel {
       walls: setup.map.walls.map(toRenderableWall),
       // The same sounds as a match (#112), muted by the same M.
       sounds: attachMatchSounds(connection, soundPlayer()),
+      // #371: the music player will take these; until then nothing plays.
+      music: attachMatchMusic(connection, {
+        screen: "training",
+        mode: { kind: "auto" },
+        tracks: [],
+        onChange: () => undefined,
+      }),
       parked: setup.arming.problem !== undefined,
     };
     connection.onStep(onStep);
@@ -689,6 +699,7 @@ export function createTrainingPanel(): TrainingPanel {
       appendLog(ticks.advance(connection.simulation.elapsedSeconds, nameOf));
       latestMatch = connection.getSnapshot();
       session.sounds.snapshot(latestMatch);
+      session.music.snapshot(latestMatch);
       latestArena = withNames(
         toArenaSnapshot(latestMatch, session.walls),
         pointer,
@@ -777,6 +788,7 @@ export function createTrainingPanel(): TrainingPanel {
         clearTimeout(messageTimer);
       }
       session?.sounds.dispose();
+      session?.music.dispose();
       void session?.connection.disconnect();
       session = undefined;
       root.remove();
