@@ -6,6 +6,10 @@
  * Every message is copied with `structuredClone` per receiver, so no two
  * peers ever share an object. `partition` cuts two peers off from each
  * other, as a dropped connection does, and `heal` joins them again.
+ *
+ * It keeps more order than the `Transport` contract asks: the others see
+ * a peer leave before its `leave()` resolves, where a real network tells
+ * them later. Code under test must not rely on that.
  */
 import type { Channel } from "@vibewars/game-protocol";
 

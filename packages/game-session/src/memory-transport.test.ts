@@ -17,6 +17,13 @@ function inbox(peer: Transport): [string, unknown][] {
   return got;
 }
 
+/** Let every macrotask queued so far run, and every microtask with it. */
+async function flush(): Promise<void> {
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
 /** Who `peer` sees join and leave, in order. */
 function events(peer: Transport): string[] {
   const seen: string[] = [];
@@ -97,12 +104,13 @@ describe("the memory transport (#82)", () => {
     expect(atC).toEqual(["+a", "+b", "-b"]);
   });
 
-  it("resolves leave() after every remaining peer has seen it", async () => {
+  it("shows every remaining peer the leave once leave() has resolved and a macrotask ran", async () => {
     const network = createMemoryNetwork();
     const [a, b] = [network.join(), network.join()];
     await settle();
     const atA = events(a);
     await b.leave();
+    await flush();
     expect(atA).toEqual([`-${b.selfId}`]);
   });
 
@@ -129,6 +137,7 @@ describe("the memory transport (#82)", () => {
     a.onPeerLeave((id) => seen.push(`-${id}`));
     b.send("intent", "bye");
     await b.leave();
+    await flush();
     expect(seen).toEqual(["bye", `-${b.selfId}`]);
   });
 
