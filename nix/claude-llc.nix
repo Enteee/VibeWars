@@ -131,6 +131,40 @@ let
       cat ${llcUsage}
     }
 
+        # The hub window (#23), last in the session: hubd on top, the
+        # supervisor below, each under run-forever, which shows its output,
+        # restarts it whenever it exits and tells everyone if it crash-loops.
+        # This is the only way either daemon starts. Index 99 keeps it last
+        # however many role windows open after it, and it opens first so
+        # hubd is answering before any agent asks it anything.
+        hub_window() {
+          mkdir -p "$VIBEWARS_BOT_ROOT/hub"
+          # A pane gets the tmux server's environment, not this script's,
+          # so what the daemons read is passed on explicitly: hubd needs
+          # DEVENV_ROOT, and gh and git on PATH.
+          hub_env=(-e "DEVENV_ROOT=$DEVENV_ROOT" -e "VIBEWARS_BOT_ROOT=$VIBEWARS_BOT_ROOT"
+            -e "VIBEWARS_BOT_BUS=$VIBEWARS_BOT_ROOT/bus" -e "VIBEWARS_LLC_SESSION=$SESSION"
+            -e "VIBEWARS_LLC_RESTART=${restarter}" -e "PATH=$PATH")
+          hubd_pane="$(${tmux} new-window -d -P -F '#{pane_id}' -t "$SESSION:99" -n hub \
+            -c "$DEVENV_ROOT" "''${hub_env[@]}" \
+            "${node} ${llcScripts}/run-forever.mjs hubd -- ${node} ${llcScripts}/hubd.mjs")"
+          supervisor_pane="$(${tmux} split-window -v -P -F '#{pane_id}' -t "$hubd_pane" \
+            -c "$DEVENV_ROOT" "''${hub_env[@]}" \
+            "${node} ${llcScripts}/run-forever.mjs supervisor -- ${node} ${llcScripts}/supervisor.mjs")"
+          ${tmux} select-pane -t "$hubd_pane" -T HUBD
+          ${tmux} select-pane -t "$supervisor_pane" -T SUPERVISOR
+          ${tmux} set-option -w -t "$SESSION:hub" pane-border-status top
+          ${tmux} set-option -w -t "$SESSION:hub" pane-border-format " #[bold]#{pane_title}#[nobold] "
+          echo "claude-llc: hubd and supervisor started in the hub window (logs: .bots/hub/)"
+        }
+
+        # The loops first, so stopping a daemon does not restart it.
+        stop_daemons() {
+          pkill -f run-forever.mjs 2>/dev/null || true
+          pkill -f hubd.mjs 2>/dev/null || true
+          pkill -f supervisor.mjs 2>/dev/null || true
+        }
+
         attach=1
 
         case "''${1-}" in
@@ -146,7 +180,7 @@ let
               echo "session $SESSION is not running"
             fi
             for d in hubd supervisor; do
-              if pgrep -f "$d.mjs" >/dev/null 2>&1; then echo "  $d: running"; else echo "  $d: stopped"; fi
+              if pgrep -f "run-forever.mjs $d" >/dev/null 2>&1; then echo "  $d: running (restarted on exit)"; else echo "  $d: stopped"; fi
             done
             if pgrep -f "link.mjs serve" >/dev/null 2>&1; then echo "  telegram: running"; else echo "  telegram: stopped"; fi
             exit 0
@@ -177,8 +211,8 @@ let
             ;;
           stop)
             ${tmux} kill-session -t "$SESSION" 2>/dev/null && echo "stopped $SESSION" || echo "$SESSION was not running"
-            pkill -f hubd.mjs 2>/dev/null && echo "stopped hubd" || true
-            pkill -f supervisor.mjs 2>/dev/null && echo "stopped supervisor" || true
+            stop_daemons
+            echo "stopped hubd and supervisor"
             pkill -f "link.mjs serve" 2>/dev/null && echo "stopped the Telegram sidecar" || true
             exit 0
             ;;
@@ -203,17 +237,13 @@ let
         if ${tmux} has-session -t "$SESSION" 2>/dev/null; then
           echo "claude-llc: $SESSION is already running; attaching to it."
 
-          # A session can outlive its daemons: the machine slept, something
-          # was killed, hubd crashed. Bring back whichever is missing, or you
-          # attach to a company whose GitHub access silently does not work.
-          if ! pgrep -f hubd.mjs >/dev/null 2>&1; then
-            echo "claude-llc: hubd was not running; restarting it."
-            mkdir -p "$VIBEWARS_BOT_ROOT/hub"
-            ${node} ${llcScripts}/hubd.mjs >>"$VIBEWARS_BOT_ROOT/hub/hubd.log" 2>&1 &
-          fi
-          if ! pgrep -f supervisor.mjs >/dev/null 2>&1; then
-            echo "claude-llc: supervisor was not running; restarting it."
-            VIBEWARS_LLC_RESTART=${restarter} ${node} ${llcScripts}/supervisor.mjs >>"$VIBEWARS_BOT_ROOT/hub/supervisor.log" 2>&1 &
+          # run-forever brings a daemon back on its own, but not its window:
+          # if someone closed it, open it again, or you attach to a company
+          # whose GitHub access silently does not work.
+          if ! ${tmux} list-windows -t "$SESSION" -F '#{window_name}' | grep -qx hub; then
+            echo "claude-llc: the hub window was gone; opening it again."
+            stop_daemons
+            hub_window
           fi
 
           if [ "$attach" = 0 ]; then
@@ -281,16 +311,12 @@ let
         # ------------------------------------------------------------------------
         # The daemons. hubd holds the only GitHub credential in the system.
         # ------------------------------------------------------------------------
-        pkill -f hubd.mjs 2>/dev/null || true
-        pkill -f supervisor.mjs 2>/dev/null || true
+        stop_daemons
         # The Telegram sidecar is started by the first claude-bot below, which
         # has the token. Stopping the old one here is what makes a restart
         # pick up new sidecar code.
         pkill -f "link.mjs serve" 2>/dev/null || true
 
-        mkdir -p "$VIBEWARS_BOT_ROOT/hub"
-        ${node} ${llcScripts}/hubd.mjs >>"$VIBEWARS_BOT_ROOT/hub/hubd.log" 2>&1 &
-        echo "claude-llc: hubd started (log: .bots/hub/hubd.log)"
 
         # ------------------------------------------------------------------------
         # The session. One window per employee, each running claude-bot, which
@@ -315,6 +341,7 @@ let
         ${tmux} set-option -w -t "$SESSION:dashboard" pane-border-lines heavy
         ${tmux} set-option -w -t "$SESSION:dashboard" pane-border-style fg=blue
         ${tmux} set-option -w -t "$SESSION:dashboard" pane-active-border-style fg=cyan
+        hub_window
 
         for role in $ready; do
           if [ "$role" = manager ] && [ -n "$note" ]; then
@@ -326,8 +353,6 @@ let
           fi
         done
 
-        VIBEWARS_LLC_RESTART=${restarter} ${node} ${llcScripts}/supervisor.mjs >>"$VIBEWARS_BOT_ROOT/hub/supervisor.log" 2>&1 &
-        echo "claude-llc: supervisor started (log: .bots/hub/supervisor.log)"
 
         # ----------------------------------------------------------------------
         # A clickable status bar: leave the company running and walk away,

@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 
 import { boardLines, companyLines, cut, doneOrder, feedLines } from "./dashboard-view.mjs";
+/** @typedef {{ state: "up" | "stale" | "down" | "crash-looping", line: string }} HubLine */
 
 const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
 const EVERYONE = new Set(["architect", "manager", "developer-1", "lead-dev", "qa-tester"]);
@@ -187,22 +188,39 @@ describe("boardLines", () => {
 describe("companyLines", () => {
   const roles = ["manager", "architect", "developer-1", "developer-2", "lead-dev"];
   const budget = { remaining: 4210, limit: 5000, resetAt: 0, spend: "GRAPHQL  ~380/h" };
+  /** @type {HubLine} */
+  const hub = { state: "up", line: "hub ● up 3m · restarts 0/h" };
 
-  it("is the roster, then the GitHub budget", () => {
+  it("is the roster, the hub, then the GitHub budget", () => {
     const lines = companyLines(
-      { roles, live: new Set(["manager", "architect"]), budget },
+      { roles, live: new Set(["manager", "architect"]), budget, hub },
       { rows: 30, width: 40 },
     ).map(plain);
     expect(lines[0]).toBe("ROSTER 2/5 hired");
     expect(lines).toContain("  not hired yet: developer-1, developer…");
     expect(lines.some((line) => line.startsWith("GITHUB GraphQL 4210/5000"))).toBe(true);
+    expect(lines.indexOf("hub ● up 3m · restarts 0/h")).toBeGreaterThan(0);
     for (const line of lines) {
       expect(columnsOf(line)).toBeLessThanOrEqual(40);
     }
   });
 
+  it("paints the hub line red unless hubd is up (#23)", () => {
+    /** @param {HubLine} health */
+    const hubLine = (health) =>
+      companyLines(
+        { roles, live: new Set(), budget: null, hub: health },
+        { rows: 30, width: 80 },
+      ).find((line) => plain(line).startsWith("hub "));
+    expect(hubLine(hub)).toContain("\x1b[1;32m");
+    expect(hubLine({ state: "down", line: "hub ● down · restarts 0/h" })).toContain("\x1b[1;31m");
+  });
+
   it("cuts an overflow with … +N lines", () => {
-    const lines = companyLines({ roles, live: new Set(), budget: null }, { rows: 4, width: 40 });
+    const lines = companyLines(
+      { roles, live: new Set(), budget: null, hub },
+      { rows: 4, width: 40 },
+    );
     expect(lines).toHaveLength(4);
     expect(lines.at(-1)).toMatch(/^… \+\d+ lines$/);
   });

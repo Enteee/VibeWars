@@ -131,6 +131,7 @@ export const GATE_PATHS = [
   "scripts/bots/supervisor.mjs",
   "scripts/bots/hub.mjs",
   "scripts/bots/hub-alerts.mjs",
+  "scripts/bots/instance-lock.mjs",
   "nix/claude-bot.nix",
   "nix/claude-llc.nix",
   ".github/CODEOWNERS",

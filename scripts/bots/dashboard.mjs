@@ -23,6 +23,7 @@ import { readBoardState } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { formatSpend, readSpend } from "./hub-spend.mjs";
 import { boardLines, companyLines, feedLines } from "./dashboard-view.mjs";
+import { hubHealth, parseAlive, parseRestarts } from "./hub-health.mjs";
 
 const ROOT = process.env.VIBEWARS_BOT_ROOT ?? path.join(process.cwd(), ".bots");
 const BUS = path.join(ROOT, "bus");
@@ -152,6 +153,28 @@ function sectionOf(arg) {
 }
 
 /** @returns {import("./dashboard-view.mjs").Budget | null} */
+/**
+ * hubd's health, from its heartbeat and its runner's restarts: local files,
+ * never a GitHub call (#23).
+ *
+ * @returns {ReturnType<typeof hubHealth>}
+ */
+function hub() {
+  /** @param {string} name */
+  const read = (name) => {
+    try {
+      return fs.readFileSync(path.join(HUB, name), "utf8");
+    } catch {
+      return "";
+    }
+  };
+  return hubHealth(
+    parseAlive(read("hubd.alive")),
+    parseRestarts(read("hubd.restarts")),
+    Date.now(),
+  );
+}
+
 function budget() {
   const raw = hubFile("ratelimit.json");
   if (
@@ -185,7 +208,7 @@ function linesOf(section, pane) {
       return boardLines(readBoardState(hubFile("board.json")), cfg?.columns ?? null, hired(), pane);
     }
     case "company":
-      return companyLines({ roles: ROLES, live: hired(), budget: budget() }, pane);
+      return companyLines({ roles: ROLES, live: hired(), budget: budget(), hub: hub() }, pane);
     case "feed":
       return feedLines(feed(pane.rows), pane);
   }

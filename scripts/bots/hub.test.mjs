@@ -40,7 +40,19 @@ function stubHubd(answer, seen = []) {
   const res = path.join(spool, "res");
   fs.mkdirSync(req, { recursive: true });
   fs.mkdirSync(res, { recursive: true });
-  fs.writeFileSync(path.join(dir, "hubd.alive"), JSON.stringify({ ts: Date.now(), inFlight: 0 }));
+  fs.writeFileSync(
+    path.join(dir, "hubd.alive"),
+    JSON.stringify({
+      pid: 1,
+      startedAt: Date.now(),
+      heartbeatAt: Date.now(),
+      sha: null,
+      inflight: 0,
+      served: 0,
+      refused: 0,
+      lastError: null,
+    }),
+  );
 
   const timer = setInterval(() => {
     for (const name of fs.readdirSync(req).filter((n) => n.endsWith(".json"))) {

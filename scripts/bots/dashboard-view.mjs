@@ -282,6 +282,7 @@ export function boardLines(snapshot, columns, live, { rows, width }) {
  * @property {readonly string[]} roles every role, in org-chart order
  * @property {ReadonlySet<string>} live the roles hired right now
  * @property {Budget | null} budget null before hubd has checked
+ * @property {ReturnType<typeof import("./hub-health.mjs").hubHealth>} hub hubd, as its heartbeat and restarts say (#23)
  */
 
 /**
@@ -333,12 +334,24 @@ function githubSection({ budget }, width) {
 }
 
 /**
- * The COMPANY pane's sections, in order. #23 (hub health) and #50 (tokens
- * per role) each add a function here rather than a pane.
+ * The hub line: red unless hubd is up, since every agent's GitHub goes
+ * through it (#23).
+ *
+ * @param {CompanyFacts} facts
+ * @param {number} width
+ * @returns {string[]}
+ */
+function hubSection({ hub }, width) {
+  return [paint(cut(hub.line, width), hub.state === "up" ? "1;32" : "1;31")];
+}
+
+/**
+ * The COMPANY pane's sections, in order. #50 (tokens per role) adds a
+ * function here rather than a pane, as #23's hub line did.
  *
  * @type {readonly ((facts: CompanyFacts, width: number) => string[])[]}
  */
-export const COMPANY_SECTIONS = [rosterSection, githubSection];
+export const COMPANY_SECTIONS = [rosterSection, hubSection, githubSection];
 
 /**
  * The COMPANY pane: each section, a blank line between, cut with
