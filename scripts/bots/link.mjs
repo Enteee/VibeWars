@@ -142,7 +142,7 @@ class TelegramError extends Error {
  * @param {Record<string, unknown>} [params]
  * @returns {Promise<unknown>}
  */
-async function api(token, method, params = {}) {
+export async function api(token, method, params = {}) {
   /** @type {Response} */
   let response;
   /** @type {unknown} */

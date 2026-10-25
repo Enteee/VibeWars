@@ -1,9 +1,10 @@
 import { Client } from "@colyseus/sdk";
-import { defaultBuildEquipment } from "@vibewars/game-core";
+import { matchMaker } from "@colyseus/core";
+import { defaultBuildEquipment, type CombatLogEntry } from "@vibewars/game-core";
 import { PROTOCOL_VERSION, ROOM_MATCH, type CastRefusedMessage } from "@vibewars/game-protocol";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { DEFAULT_SKILL_BAR } from "./rooms/match-room.js";
+import { DEFAULT_SKILL_BAR, MatchRoom, combatBatch } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { LOOPBACK_LIMITS, findFreePort, waitFor } from "./testing/harness.js";
 import { DEFAULT_MAX_ROOMS } from "./config.js";
@@ -369,8 +370,8 @@ describe("networked combat", () => {
       skillId: string;
       events: { kind: string; targetId?: string }[];
     }[] = [];
-    room.onMessage("combat", (message: (typeof heard)[number]) => {
-      heard.push(message);
+    room.onMessage("combat", (batch: { entries: typeof heard }) => {
+      heard.push(...batch.entries);
     });
     return heard;
   }
@@ -548,8 +549,13 @@ describe("networked combat", () => {
         }, 6000);
         roomA.onMessage(
           "combat",
-          (message: { cause: string; skillId: string; events: { kind: string }[] }) => {
-            if (message.events.some((e) => e.kind === "damage")) {
+          (batch: {
+            entries: { cause: string; skillId: string; events: { kind: string }[] }[];
+          }) => {
+            const message = batch.entries.find((entry) =>
+              entry.events.some((e) => e.kind === "damage"),
+            );
+            if (message !== undefined) {
               clearTimeout(timer);
               resolve(message);
             }
@@ -566,6 +572,54 @@ describe("networked combat", () => {
     expect(message.events.some((e) => e.kind === "damage")).toBe(true);
     expect(message.cause).toBe("skill");
     expect(message.skillId).toBe("elementalist.fireball");
+
+    await roomA.leave();
+    await roomB.leave();
+  });
+
+  it("sends at most one combat message a tick, as a batch of entries (#288)", async () => {
+    const { roomA, roomB } = await joinPair();
+    const room = matchMaker.getLocalRoomById(roomA.roomId);
+    if (!(room instanceof MatchRoom)) {
+      throw new Error("no match room");
+    }
+    // What the room broadcasts, and on which tick: the clock is set before
+    // the tick's log goes out, so two messages in one tick share it.
+    const sent: { atSeconds: number; message: unknown }[] = [];
+    const broadcast = room.broadcast.bind(room);
+    vi.spyOn(room, "broadcast").mockImplementation((type, message, options) => {
+      if (type === "combat") {
+        sent.push({ atSeconds: room.state.elapsedSeconds, message });
+      }
+      return broadcast(type, message, options);
+    });
+
+    await closeDistance(roomA, roomB.sessionId, 300);
+    for (const [caster, target] of [
+      [roomA, roomB],
+      [roomB, roomA],
+    ] as const) {
+      caster.send("intent", { kind: "target", targetSessionId: target.sessionId });
+      caster.send("intent", {
+        kind: "use-skill",
+        slot: DEFAULT_SKILL_BAR.indexOf("elementalist.fireball"),
+      });
+    }
+    await waitFor(
+      () =>
+        [roomA, roomB].every((r) => {
+          const me = r.state.players.get(r.sessionId);
+          return me !== undefined && me.health < me.maxHealth;
+        }),
+      { timeoutMs: 6000, label: "both fireballs to land" },
+    );
+
+    expect(sent.length).toBeGreaterThan(0);
+    const ticks = sent.map((entry) => entry.atSeconds);
+    expect(new Set(ticks).size).toBe(ticks.length);
+    for (const { message } of sent) {
+      expect(message).toEqual({ entries: expect.any(Array) as unknown });
+    }
 
     await roomA.leave();
     await roomB.leave();
@@ -615,8 +669,11 @@ describe("networked combat", () => {
       }, 6000);
       a.onMessage(
         "combat",
-        (message: { skillId: string; events: { kind: string }[]; area?: { radius: number } }) => {
-          if (message.skillId === "elementalist.fireball") {
+        (batch: {
+          entries: { skillId: string; events: { kind: string }[]; area?: { radius: number } }[];
+        }) => {
+          const message = batch.entries.find((entry) => entry.skillId === "elementalist.fireball");
+          if (message !== undefined) {
             clearTimeout(timer);
             resolve(message);
           }
@@ -739,5 +796,63 @@ describe("match rules over the network", () => {
     expect(room.state.winningTeam).toBe(-1);
 
     await room.leave();
+  });
+});
+
+describe("combatBatch (#288)", () => {
+  const entry = (overrides: Partial<CombatLogEntry>): CombatLogEntry => ({
+    tick: 7,
+    atSeconds: 0.35,
+    cause: "weapon",
+    sourceId: "a",
+    skillId: undefined,
+    weaponId: "sword",
+    area: undefined,
+    events: [{ kind: "damage", targetId: "b", amount: 12 }],
+    ...overrides,
+  });
+
+  it("puts two hits in one tick into one message, in log order", () => {
+    const batch = combatBatch([
+      entry({ sourceId: "a" }),
+      entry({ sourceId: "c", weaponId: "axe" }),
+    ]);
+    expect(batch?.entries.map((e) => [e.casterSessionId, e.weaponId])).toEqual([
+      ["a", "sword"],
+      ["c", "axe"],
+    ]);
+  });
+
+  it("leaves out entries with no events, and sends nothing for none at all", () => {
+    expect(combatBatch([entry({ events: [] }), entry({ sourceId: "c" })])?.entries).toHaveLength(1);
+    expect(combatBatch([entry({ events: [] })])).toBeUndefined();
+    expect(combatBatch([])).toBeUndefined();
+  });
+
+  it("sends a status tick as its bearer's, and a skill with its area", () => {
+    const [tick, fireball] =
+      combatBatch([
+        entry({
+          cause: "degeneration",
+          sourceId: "a",
+          weaponId: undefined,
+          events: [{ kind: "damage", targetId: "b", amount: 2 }],
+        }),
+        entry({
+          cause: "skill",
+          skillId: "elementalist.fireball",
+          weaponId: undefined,
+          area: { x: 1, y: 2, radius: 81 },
+        }),
+      ])?.entries ?? [];
+    expect(tick).toEqual({
+      casterSessionId: "b",
+      cause: "degeneration",
+      skillId: "",
+      weaponId: "",
+      events: [{ kind: "damage", targetId: "b", amount: 2 }],
+    });
+    expect(fireball?.area).toEqual({ x: 1, y: 2, radius: 81 });
+    expect(fireball?.skillId).toBe("elementalist.fireball");
   });
 });
