@@ -78,6 +78,12 @@ export interface CombatRules {
    * small enough that reversing dodges a longbow at range.
    */
   readonly projectileTolerance: number;
+  /**
+   * How much of a target's recent movement a shot is led by. Long enough
+   * that tapping back and forth averages out to standing still, short
+   * enough that a real change of course shows.
+   */
+  readonly trackWindowSeconds: number;
 }
 
 export interface Ruleset {
@@ -121,7 +127,8 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
     baseHealth: 500,
     baseEnergy: 50,
     minimumMaxHealth: 100,
-    projectileTolerance: 8,
+    projectileTolerance: 10,
+    trackWindowSeconds: 0.6,
   }),
   attributes: Object.freeze({
     // Enough to max two attributes (12+12=24 ranks -> 2*78=156 points) with

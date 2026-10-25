@@ -30,9 +30,14 @@ import {
   moveSpeedMultiplier,
 } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
-import { leadAimPoint, type Projectile } from "../skills/projectile.js";
+import {
+  leadAimPoint,
+  PositionHistory,
+  trackTarget,
+  type Projectile,
+} from "../skills/projectile.js";
 import { blindMisses, landBlow, resolveSwing, weaponSnapshotOf } from "../skills/weapon-attack.js";
-import { distance, scale, sub, ZERO, type Vec2 } from "../vec2.js";
+import { distance, sub, ZERO, type Vec2 } from "../vec2.js";
 import {
   createCursor,
   decide,
@@ -129,8 +134,8 @@ interface ParticipantRecord extends Participant {
   readonly cursor: BehaviourCursor;
   /** `on-interval`: seconds since the last reset. */
   sinceReset: number;
-  /** How it moved in its last tick, per second: what a projectile leads. */
-  velocity: Vec2;
+  /** Where it ended its last ticks: what a projectile leads. */
+  readonly history: PositionHistory;
 }
 
 /**
@@ -256,7 +261,7 @@ export class MatchSimulation {
       behaviour: spec.behaviour,
       cursor: createCursor(),
       sinceReset: 0,
-      velocity: ZERO,
+      history: new PositionHistory(this.#historyLength()),
     };
     this.#participants.set(spec.id, record);
     return record;
@@ -449,7 +454,6 @@ export class MatchSimulation {
       if (this.#resetDue(record, dt)) {
         this.#reset(record);
       }
-      record.velocity = ZERO;
 
       if (record.combatant.dead) {
         record.respawnInSeconds -= dt;
@@ -459,7 +463,6 @@ export class MatchSimulation {
         continue;
       }
 
-      const before = record.position;
       this.advanceMovement(record, record.inputDirection, dt);
 
       // Energy regenerates continuously; adrenaline is earned by acting,
@@ -502,7 +505,7 @@ export class MatchSimulation {
 
       this.#advanceAttack(record, dt);
       // Walked or approached: either way, it is what a shot leads.
-      record.velocity = scale(sub(record.position, before), 1 / dt);
+      record.history.push(record.position);
 
       // Behaviours act after their own cast resolves, so a dummy can
       // finish one cast and begin the next within the same tick.
@@ -672,7 +675,7 @@ export class MatchSimulation {
     attack.swingElapsed = Math.max(0, attack.swingElapsed - weapon.attackIntervalSeconds);
 
     if (weapon.projectileSpeed !== undefined) {
-      this.#release(record, target, weapon.projectileSpeed);
+      this.#release(record, target, weapon.projectileSpeed, dt);
       return;
     }
     const events = resolveSwing({
@@ -692,13 +695,14 @@ export class MatchSimulation {
    * target. Blind is rolled now, as GW1 does: a blinded shot misses at
    * once and nothing flies.
    */
-  #release(record: ParticipantRecord, target: ParticipantRecord, speed: number): void {
+  #release(record: ParticipantRecord, target: ParticipantRecord, speed: number, dt: number): void {
     if (blindMisses(record.combatant, this.#rng)) {
       this.#logWeapon(record.id, [{ kind: "attack-missed", targetId: target.id }]);
       return;
     }
     const from = record.position;
-    const aimPoint = leadAimPoint(from, target.position, target.velocity, speed);
+    const tracked = trackTarget(target.history.samples(), dt, target.position);
+    const aimPoint = leadAimPoint(from, tracked.position, tracked.velocity, speed);
     this.#projectiles.push({
       id: this.#nextProjectileId,
       attackerId: record.id,
@@ -939,7 +943,15 @@ export class MatchSimulation {
     record.combatant.cast.cancelCast();
     record.combatant.attack = undefined;
     record.sinceReset = 0;
-    record.velocity = ZERO;
+    record.history.clear();
+  }
+
+  /** Ticks in the ruleset's tracking window: at least two, or there is no motion to fit. */
+  #historyLength(): number {
+    return Math.max(
+      2,
+      Math.round(this.#ruleset.combat.trackWindowSeconds * this.#ruleset.tickRateHz),
+    );
   }
 
   #combatant(spec: ParticipantSpec): Combatant {

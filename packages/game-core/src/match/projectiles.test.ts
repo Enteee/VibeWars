@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
-import { WEAPONS } from "../equipment/weapons.js";
+import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import type { Projectile } from "../skills/projectile.js";
 import { vec2, ZERO, type Vec2 } from "../vec2.js";
@@ -16,7 +16,7 @@ const UP = vec2(0, 1);
 const DOWN = vec2(0, -1);
 
 /** A longbow at rank 12 Marksmanship. */
-function archer(spawn: Vec2): ParticipantSpec {
+function archer(spawn: Vec2, weapon: Weapon = LONGBOW): ParticipantSpec {
   return {
     id: "archer",
     team: 0,
@@ -24,7 +24,7 @@ function archer(spawn: Vec2): ParticipantSpec {
     attributeRanks: new Map([["ranger.marksmanship", 12]]),
     equipment: {
       ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-      mainHand: { weapon: LONGBOW, attributeId: "ranger.marksmanship", requirementMet: true },
+      mainHand: { weapon, attributeId: "ranger.marksmanship", requirementMet: true },
     },
     spawn,
   };
@@ -57,12 +57,13 @@ interface Shot {
 }
 
 /**
- * Attack, with the target walking `walking` for the last half second
- * before the release, so the shot has a velocity to lead.
+ * Attack, with the target walking `walking` for the last second before
+ * the release: longer than the tracking window, so the shot leads the
+ * walk exactly.
  */
 function fire(match: MatchSimulation, walking: Vec2 = ZERO): Shot {
   match.requestAttack("archer", "target");
-  const walkFrom = LONGBOW.attackIntervalSeconds - 0.5;
+  const walkFrom = LONGBOW.attackIntervalSeconds - 1;
   for (let i = 0; i < 200; i += 1) {
     if (match.elapsedSeconds >= walkFrom) {
       match.setInputDirection("target", walking);
@@ -218,6 +219,21 @@ describe("ranged weapons fire projectiles", () => {
     expect(misses.length).toBeGreaterThan(5);
   });
 
+  it("a respawned target is aimed at where it stands, not where it walked before", () => {
+    const match = sim();
+    match.requestAttack("archer", "target");
+    match.setInputDirection("target", UP);
+    // Two ticks before the release: it has walked 2.3 s, then is back at spawn.
+    while (match.elapsedSeconds < LONGBOW.attackIntervalSeconds - 2 * DT - 1e-9) {
+      match.step(DT);
+    }
+    match.resetParticipant("target");
+    for (let i = 0; i < 5 && match.projectiles.length === 0; i += 1) {
+      match.step(DT);
+    }
+    expect(match.projectiles[0]?.aimPoint).toEqual(vec2(300, 0));
+  });
+
   it("is the same twice from one seed", () => {
     const run = (): CombatLogEntry[] => {
       const match = sim();
@@ -234,5 +250,47 @@ describe("ranged weapons fire projectiles", () => {
     const first = run();
     expect(first.length).toBeGreaterThan(0);
     expect(run()).toEqual(first);
+  });
+});
+
+/**
+ * Hits out of `shots` on a target tapping W and S, `flipSeconds` each,
+ * at 300 units, from five starting phases spread over the wobble.
+ */
+function jitterHitRate(weapon: Weapon, flipSeconds: number, shots: number): number {
+  const flipTicks = Math.round(flipSeconds / DT);
+  let hits = 0;
+  let landed = 0;
+  for (let phase = 0; phase < 5; phase += 1) {
+    const offset = Math.round((phase * 2 * flipTicks) / 5);
+    const match = new MatchSimulation({
+      seed: `jitter-${String(phase)}`,
+      participants: [archer(vec2(0, 0), weapon), target(vec2(300, 0))],
+    });
+    match.requestAttack("archer", "target");
+    let counted = 0;
+    for (let tick = 0; counted < shots; tick += 1) {
+      const up = Math.floor((tick + offset) / flipTicks) % 2 === 0;
+      match.setInputDirection("target", up ? UP : DOWN);
+      for (const entry of match.step(DT).log) {
+        const kind = entry.events[0]?.kind;
+        if (kind === "damage" || kind === "attack-dodged") {
+          counted += 1;
+          hits += kind === "damage" ? 1 : 0;
+        }
+      }
+    }
+    landed += counted;
+  }
+  return hits / landed;
+}
+
+describe("tapping back and forth", () => {
+  // Leading by the last tick's step missed every one of these (#159).
+  it.each([
+    { name: "longbow", weapon: WEAPONS.longbow },
+    { name: "wand", weapon: WEAPONS.wand },
+  ])("does not dodge a $name: at least 75% of shots hit a 0.25 s W/S jitter", ({ weapon }) => {
+    expect(jitterHitRate(weapon, 0.25, 20)).toBeGreaterThanOrEqual(0.75);
   });
 });

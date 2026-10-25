@@ -1,4 +1,4 @@
-import { add, dot, lengthSquared, scale, sub, type Vec2 } from "../vec2.js";
+import { add, dot, lengthSquared, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import type { WeaponSnapshot } from "./weapon-attack.js";
 
 /**
@@ -66,4 +66,85 @@ function smallestPositiveRoot(a: number, b: number, c: number): number | undefin
   const root = Math.sqrt(discriminant);
   const positive = [(-b - root) / (2 * a), (-b + root) / (2 * a)].filter((t) => t > 0);
   return positive.length === 0 ? undefined : Math.min(...positive);
+}
+
+/** Where a target is and how it is moving, as a shot sees it. */
+export interface Track {
+  readonly position: Vec2;
+  readonly velocity: Vec2;
+}
+
+/**
+ * The target's motion over its recent positions: a least-squares line
+ * through `samples` (oldest first, `dt` apart), read at the newest one.
+ *
+ * Not the last tick's step: a target tapping back and forth every few
+ * ticks moves at full speed every tick yet goes nowhere, and a shot led
+ * by that step would miss it every time. The fit aims at the middle of
+ * the wobble instead, and is exact for a target walking straight. Under
+ * two samples, or no time between them, there is no motion to read, so
+ * the target stands at its newest position, or at `current`.
+ */
+export function trackTarget(samples: readonly Vec2[], dt: number, current: Vec2): Track {
+  const count = samples.length;
+  const newest = samples[count - 1] ?? current;
+  if (count < 2 || !(dt > 0)) {
+    return { position: newest, velocity: ZERO };
+  }
+  // Sample i is at time i * dt; centre the times on their mean.
+  const meanTime = ((count - 1) * dt) / 2;
+  let meanX = 0;
+  let meanY = 0;
+  for (const sample of samples) {
+    meanX += sample.x / count;
+    meanY += sample.y / count;
+  }
+  let spread = 0;
+  let slopeX = 0;
+  let slopeY = 0;
+  samples.forEach((sample, index) => {
+    const time = index * dt - meanTime;
+    spread += time * time;
+    slopeX += time * (sample.x - meanX);
+    slopeY += time * (sample.y - meanY);
+  });
+  const velocity = vec2(slopeX / spread, slopeY / spread);
+  return {
+    position: add(vec2(meanX, meanY), scale(velocity, (count - 1) * dt - meanTime)),
+    velocity,
+  };
+}
+
+/**
+ * A participant's last positions, one per tick, oldest first: the ring
+ * buffer `trackTarget` reads. Cleared whenever the participant jumps, so
+ * a fit never spans a teleport.
+ */
+export class PositionHistory {
+  readonly #capacity: number;
+  readonly #ring: Vec2[] = [];
+  /** Index of the oldest sample, once the ring is full. */
+  #start = 0;
+
+  public constructor(capacity: number) {
+    this.#capacity = Math.max(1, capacity);
+  }
+
+  public push(position: Vec2): void {
+    if (this.#ring.length < this.#capacity) {
+      this.#ring.push(position);
+      return;
+    }
+    this.#ring[this.#start] = position;
+    this.#start = (this.#start + 1) % this.#capacity;
+  }
+
+  public clear(): void {
+    this.#ring.length = 0;
+    this.#start = 0;
+  }
+
+  public samples(): Vec2[] {
+    return [...this.#ring.slice(this.#start), ...this.#ring.slice(0, this.#start)];
+  }
 }
