@@ -4,13 +4,19 @@ import { vec2 } from "@vibewars/game-core";
 
 import {
   AREA_FLASH_SECONDS,
+  FLOATING_TEXT_LINE,
+  FLOATING_TEXT_SECONDS,
+  FLOATING_TEXT_STACK,
   areaFlashAlpha,
   decayAreaFlashes,
+  floatingTextY,
   actorAtPoint,
   healthFraction,
   nameLabelBottom,
+  placeFloatingText,
   teamColour,
   type ArenaSnapshot,
+  type FloatingText,
   type RenderableActor,
 } from "./arena-snapshot.js";
 
@@ -150,5 +156,75 @@ describe("nameLabelBottom", () => {
     expect(nameLabelBottom(actor("a", 100, 100, 14, { dead: true }))).toBeGreaterThan(
       nameLabelBottom(actor("a", 100, 100)),
     );
+  });
+});
+
+describe("placeFloatingText", () => {
+  let nextId = 0;
+  const text = (anchorId: string, remainingSeconds = FLOATING_TEXT_SECONDS): FloatingText => {
+    nextId += 1;
+    return {
+      id: nextId,
+      anchorId,
+      text: "−10",
+      position: vec2(100, 100),
+      colour: 0xff7b72,
+      weight: "normal",
+      remainingSeconds,
+    };
+  };
+  /** Add texts one by one, as the scene does, and say where each one is now. */
+  const burst = (texts: FloatingText[]): number[] => {
+    const placed: FloatingText[] = [];
+    for (const incoming of texts) {
+      const next = placeFloatingText(placed, incoming);
+      if (next !== undefined) {
+        placed.push(next);
+      }
+    }
+    return placed.map(floatingTextY);
+  };
+
+  it("stacks hits landing together a line apart, newest on top (#54)", () => {
+    expect(burst([text("b"), text("b"), text("b")])).toEqual([
+      100,
+      100 - FLOATING_TEXT_LINE,
+      100 - 2 * FLOATING_TEXT_LINE,
+    ]);
+  });
+
+  it("leaves a number alone once the last one has risen out of its way", () => {
+    // A second old: risen 24px, well clear of a fresh number.
+    expect(burst([text("b", FLOATING_TEXT_SECONDS - 1), text("b")])).toEqual([76, 100]);
+  });
+
+  it("lifts past an old number only as far as it has to", () => {
+    // Half a second old: risen 12px, so the new one goes a line above it.
+    const ys = burst([text("b", FLOATING_TEXT_SECONDS - 0.5), text("b")]);
+    expect(ys[1]).toBeCloseTo(88 - FLOATING_TEXT_LINE, 6);
+  });
+
+  it("makes no room for numbers over somebody else", () => {
+    expect(burst([text("a"), text("b")])).toEqual([100, 100]);
+  });
+
+  it("never stacks more than FLOATING_TEXT_STACK over one actor, even from a stream", () => {
+    // A status ticking at 20 Hz for one text lifetime: 24 texts.
+    let live: FloatingText[] = [];
+    let tallest = 0;
+    for (let tick = 0; tick < 24; tick += 1) {
+      for (const floating of live) {
+        floating.remainingSeconds -= 0.05;
+      }
+      live = live.filter((floating) => floating.remainingSeconds > 0);
+      const placed = placeFloatingText(live, text("b"));
+      if (placed !== undefined) {
+        live.push(placed);
+      }
+      expect(live.length).toBeLessThanOrEqual(FLOATING_TEXT_STACK);
+      tallest = Math.max(tallest, ...live.map((floating) => 100 - floatingTextY(floating)));
+    }
+    // A column of FLOATING_TEXT_STACK lines, plus how far one rises in its life.
+    expect(tallest).toBeLessThanOrEqual((FLOATING_TEXT_STACK - 1) * FLOATING_TEXT_LINE + 24 * 1.2);
   });
 });

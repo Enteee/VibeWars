@@ -227,6 +227,11 @@ export interface FloatingCue {
  * types, because the match view gets its events off the wire.
  */
 export function floatingCueFor(kind: string, amount: number | undefined): FloatingCue | undefined {
+  // A status ticks every sim tick, mostly for under a point; a "−0" tells
+  // the player nothing, and twenty a second would bury the real hits.
+  if ((kind === "damage" || kind === "heal") && Math.round(amount ?? 0) === 0) {
+    return undefined;
+  }
   switch (kind) {
     case "damage":
       // The sign says damage or heal; the colour only backs it up, so a
