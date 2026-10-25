@@ -130,15 +130,14 @@ saying so in the same PR. Keep the numbers: issues cite them.
    server-wide cap on live match rooms is needed, as is a cap per remote
    address.
 
-7. **Client strings reach the server log unescaped** (#115). When `MatchRoom`
-   refuses a build, it logs each problem, and a problem message embeds
-   client-chosen text: an unknown skill id, for example. A skill id
-   containing `\n` writes whole fake log lines.
-   _Reproduce:_ join `match` with a build whose `skillBar[0]` is
-   `"a\n[match] finished winner=1 reason=score"`. The server prints a
-   `[match] finished …` line that no match produced. Only the build name
-   goes through `JSON.stringify`. Escape or drop client text before
-   logging it, and cap how much of it is logged.
+7. **Fixed by #115:** client strings reached the server log unescaped. A
+   skill id of `"a\n[match] finished winner=1 reason=score"` printed a
+   `[match] finished …` line that no match produced. Every client value in
+   a room's log line now goes through `quote()` (`apps/server/src/log-safe.ts`),
+   which escapes newlines, control characters and the Unicode line
+   separators. `log-safe.test.ts` checks that every interpolation in those
+   lines is either quoted or a value the server made. How much client text
+   a line carries is still not capped.
 
 8. **Fixed by #178:** display names could carry invisible and
    direction-changing characters (#174).

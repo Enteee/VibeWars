@@ -1,12 +1,12 @@
 import { Client, type Room } from "@colyseus/sdk";
-import { createRng, seedFromString } from "@vibewars/game-core";
+import { createRng, defaultBuildEquipment, seedFromString } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   ROOM_LOBBY,
   ROOM_MATCH,
   parseClientIntent,
 } from "@vibewars/game-protocol";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { FLOOD_MESSAGES_PER_SECOND, MESSAGE_BURST, MESSAGES_PER_SECOND } from "./rooms/options.js";
 import { createGameServer, type GameServer } from "./server.js";
@@ -220,6 +220,38 @@ describe("server survives hostile clients", () => {
     expect(name).not.toContain("\u001b");
 
     await room.leave();
+  });
+
+  it("never lets a client's text forge a log line (#115)", async () => {
+    const forged = "a\n[match] finished winner=1 reason=score\r";
+    const warn = vi.spyOn(console, "warn");
+    const info = vi.spyOn(console, "info");
+    try {
+      const room = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+        protocolVersion: PROTOCOL_VERSION,
+        mapId: forged,
+        build: {
+          name: forged,
+          primaryProfession: "elementalist",
+          secondaryProfession: undefined,
+          attributes: [{ attributeId: "elementalist.fire-magic", rank: 9 }],
+          skillBar: [forged, null, null, null, null, null, null, null],
+          equipment: defaultBuildEquipment("elementalist"),
+        },
+      });
+      await waitFor(() => room.state.players.has(room.sessionId), { label: "self" });
+      await room.leave();
+
+      const lines = [...warn.mock.calls, ...info.mock.calls].map((call) => String(call[0]));
+      // The build was refused, and said so, in one line.
+      expect(lines.some((line) => line.startsWith("[match] refusing build"))).toBe(true);
+      for (const line of lines) {
+        expect(line).not.toMatch(/[\n\r]/);
+      }
+    } finally {
+      warn.mockRestore();
+      info.mockRestore();
+    }
   });
 
   /**

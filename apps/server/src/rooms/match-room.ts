@@ -42,6 +42,7 @@ import {
 } from "@vibewars/game-protocol";
 import type { StepContext } from "colyseus";
 
+import { quote } from "../log-safe.js";
 import { sanitizeName } from "./lobby-room.js";
 import {
   FLOOD_MESSAGES_PER_SECOND,
@@ -254,17 +255,15 @@ function resolveLoadout(options: unknown): ResolvedJoinLoadout {
     // Every reason, not just the first: a client that sent a bad build
     // deserves a log that says exactly what was wrong with it.
     console.warn(
-      `[match] refusing build ${JSON.stringify(build.name)}: ` +
-        problems.map((p) => `${p.field}: ${p.message}`).join("; "),
+      `[match] refusing build ${quote(build.name)}: ` +
+        problems.map((p) => `${p.field}: ${quote(p.message)}`).join("; "),
     );
     return HOUSE_LOADOUT;
   }
 
   const skillBar = build.skillBar.filter((id): id is string => id !== null);
   if (skillBar.length === 0) {
-    console.warn(
-      `[match] build ${JSON.stringify(build.name)} has an empty bar; using the house loadout`,
-    );
+    console.warn(`[match] build ${quote(build.name)} has an empty bar; using the house loadout`);
     return HOUSE_LOADOUT;
   }
 
@@ -436,7 +435,7 @@ export class MatchRoom extends Room {
     try {
       this.#map = loadMap(mapId);
     } catch {
-      console.warn(`[match] unknown map ${mapId}; falling back to ${DEFAULT_MAP_ID}`);
+      console.warn(`[match] unknown map ${quote(mapId)}; falling back to ${DEFAULT_MAP_ID}`);
       this.#map = loadMap(DEFAULT_MAP_ID);
     }
     this.#wallSegments = allWallSegments(this.#map.walls);
