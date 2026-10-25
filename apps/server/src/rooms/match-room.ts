@@ -708,7 +708,6 @@ export class MatchRoom extends Room {
     client.send("recharge", message);
   }
 
-  /** Copy simulation state onto the synchronized schema object. */
   /** Add the shots released this tick and drop those that landed; leave the rest alone. */
   private syncProjectiles(): void {
     const flying = this.#sim.projectiles;
@@ -737,6 +736,7 @@ export class MatchRoom extends Room {
     }
   }
 
+  /** Copy simulation state onto the synchronized schema object. */
   private syncPlayer(player: InstanceType<typeof PlayerState>, sim: Participant): void {
     player.x = sim.position.x;
     player.y = sim.position.y;
