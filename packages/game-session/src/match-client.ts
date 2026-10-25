@@ -12,6 +12,7 @@ import {
   type CastRefusedMessage,
   type Channel,
   type ClientIntent,
+  type PeerBye,
   type PeerHello,
   type PeerRefuse,
   type PeerWelcome,
@@ -256,6 +257,10 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
       },
       async disconnect() {
         stop();
+        // Said first, so the host frees the seat now rather than holding
+        // it for a player who is not coming back.
+        const bye: PeerBye = {};
+        transport.send("bye", bye, hostId);
         await transport.leave();
       },
     });

@@ -16,7 +16,9 @@ import {
   MAX_WIRE_COMBATS,
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
+  helloProtocolVersion,
   parseClientIntent,
+  parsePeerBye,
   parsePeerHello,
   type MapDescriptor,
   type PeerHello,
@@ -225,12 +227,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     if (seatOfPeer.has(from)) {
       return;
     }
-    const hello = parsePeerHello(data);
-    if (hello === undefined) {
+    // Checked first: a client of another version, or of none, is told so
+    // rather than left waiting for a welcome that never comes.
+    if (helloProtocolVersion(data) !== PROTOCOL_VERSION) {
+      refuse(from, "protocol-mismatch", PROTOCOL_MISMATCH_MESSAGE);
       return;
     }
-    if (hello.protocolVersion !== PROTOCOL_VERSION) {
-      refuse(from, "protocol-mismatch", PROTOCOL_MISMATCH_MESSAGE);
+    const hello = parsePeerHello(data);
+    if (hello === undefined) {
       return;
     }
     if (finished) {
@@ -272,6 +276,25 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       // Only the caster hears it: why a key did nothing is nobody else's business.
       transport.send("refused", refusal, from);
     }
+  });
+
+  /** Forget `seat`'s player, and every target on them. */
+  const free = (seat: Seat): void => {
+    if (seat.peerId !== undefined) {
+      seatOfPeer.delete(seat.peerId);
+      budget.forget(seat.peerId);
+    }
+    sim.remove(seat.playerId);
+    seats.delete(seat.playerId);
+  };
+
+  transport.on("bye", (data, from) => {
+    const seat = seatOfPeer.get(from);
+    if (seat === undefined || parsePeerBye(data) === undefined) {
+      return;
+    }
+    // The player meant to go: there is nothing to hold the seat for.
+    free(seat);
   });
 
   transport.onPeerLeave((peerId) => {
@@ -349,8 +372,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         seat.droppedAt !== undefined &&
         sim.elapsedSeconds - seat.droppedAt >= RECONNECT_WINDOW_SECONDS
       ) {
-        sim.remove(seat.playerId);
-        seats.delete(seat.playerId);
+        free(seat);
       }
     }
   };

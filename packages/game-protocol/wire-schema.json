@@ -638,6 +638,7 @@
     },
     "Channel": {
       "union": [
+        { "literal": "bye" },
         { "literal": "combat" },
         { "literal": "ended" },
         { "literal": "hello" },
@@ -1150,6 +1151,7 @@
         { "name": "kind", "optional": false, "type": { "literal": "move" } }
       ]
     },
+    "PeerBye": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
     "PeerHello": {
       "properties": [
         {

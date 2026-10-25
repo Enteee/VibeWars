@@ -80,7 +80,9 @@ export {
   MAX_WIRE_RADIUS,
   MAX_WIRE_COMBATS,
   MAX_WIRE_PROJECTILES,
+  helloProtocolVersion,
   parsePeerHello,
+  parsePeerBye,
   parsePeerWelcome,
   parsePeerRefuse,
   parseWireSnapshot,
@@ -94,6 +96,7 @@ export {
 export type {
   Channel,
   PeerHello,
+  PeerBye,
   PeerWelcome,
   PeerRefuse,
   WirePlayer,

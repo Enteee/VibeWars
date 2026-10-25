@@ -10,7 +10,9 @@ import {
   MAX_WIRE_STATUSES,
   MAX_WIRE_STRING,
   MAX_WIRE_TEXT,
+  helloProtocolVersion,
   parseCastRefused,
+  parsePeerBye,
   parsePeerHello,
   parsePeerRefuse,
   parsePeerWelcome,
@@ -198,6 +200,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["refused", parseCastRefused, refused],
   ["refused attack", parseCastRefused, { kind: "attack", reason: "no-weapon" }],
   ["recharge", parseRecharge, recharge],
+  ["bye", parsePeerBye, {}],
 ];
 
 const long = "x".repeat(MAX_WIRE_STRING + 1);
@@ -209,7 +212,8 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["null", parseWireSnapshot, null],
   ["hello without a name", parsePeerHello, { ...hello, name: undefined }],
   ["hello with a numeric version", parsePeerHello, { ...hello, protocolVersion: 2 }],
-  ["hello with a long name", parsePeerHello, { ...hello, name: long }],
+  ["bye with a field", parsePeerBye, { reason: "x" }],
+  ["bye that is not an object", parsePeerBye, null],
   ["hello without a rejoin", parsePeerHello, { ...hello, rejoin: undefined }],
   ["hello with an undefined in its build", parsePeerHello, { ...hello, build: { x: undefined } }],
   ["hello with a NaN in its build", parsePeerHello, { ...hello, build: [NaN] }],
@@ -420,6 +424,17 @@ describe("the P2P validators (#82)", () => {
       ...snapshot,
       players: [player],
     });
+  });
+
+  it("cut a hello's long name to MAX_WIRE_TEXT: shortening it is the host's job", () => {
+    const named = parsePeerHello({ ...hello, name: "x".repeat(5000) });
+    expect(named?.name).toBe("x".repeat(MAX_WIRE_TEXT));
+  });
+
+  it("read a hello's version even when the rest of it is malformed", () => {
+    expect(helloProtocolVersion({ protocolVersion: "000000000000", name: 7 })).toBe("000000000000");
+    expect(helloProtocolVersion({ name: "Tester" })).toBeUndefined();
+    expect(helloProtocolVersion("hello")).toBeUndefined();
   });
 
   it("parse a hello of another version: refusing it is the host's job", () => {

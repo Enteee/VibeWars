@@ -93,11 +93,12 @@ describe("a P2P match host, as the match room (#375)", () => {
   it("tracks multiple clients and removes them on leave", async () => {
     const match = startMatch();
     const { connection: a } = await match.join();
-    const { connection: b } = await match.join();
+    const { connection: b, transport: bTransport } = await match.join();
     await match.step(TICK_SECONDS);
     expect(a.getSnapshot().players).toHaveLength(2);
 
-    await b.disconnect();
+    // A drop: the peer goes without saying `bye`.
+    await bTransport.leave();
     // Unlike the room, the host holds a dropped seat for a while, so a
     // wifi blip does not cost the player their character.
     await match.step(TICK_SECONDS);

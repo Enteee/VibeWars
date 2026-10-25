@@ -268,11 +268,11 @@ describe("the P2P seat limit (#375)", () => {
   it("never refuses a player coming back, and never counts them twice", async () => {
     const match = startMatch({ maxPlayers: 2 });
     const { connection: watcher } = await match.join();
-    const { connection: dropper } = await match.join();
+    const { connection: dropper, transport: dropperTransport } = await match.join();
     await match.step(TICK);
 
     // Both seats are taken while the dropped player is away.
-    await dropper.disconnect();
+    await dropperTransport.leave();
     await match.step(TICK);
     expect(await refusal(match.join())).toBeInstanceOf(MatchRefusedError);
 
@@ -285,7 +285,7 @@ describe("the P2P seat limit (#375)", () => {
     // Counted once and released once: both seats come back.
     await resumed.disconnect();
     await watcher.disconnect();
-    await match.step(RECONNECT_WINDOW_SECONDS + TICK);
+    await match.step(TICK);
     await match.join();
     await match.join();
   });
@@ -317,7 +317,7 @@ describe("a P2P host survives hostile peers (#375)", () => {
     expect(match.host.phase).toBe("active");
   });
 
-  it("ignores every malformed hello, and still seats an honest peer", async () => {
+  it("seats no malformed hello, and still seats an honest peer", async () => {
     const match = startMatch();
     const raw = match.network.join();
     const answers: string[] = [];
@@ -325,15 +325,18 @@ describe("a P2P host survives hostile peers (#375)", () => {
     raw.on("refuse", () => answers.push("refuse"));
     await settle();
 
+    let junkVersions = 0;
     for (const value of hostileValues()) {
       raw.send("hello", value, "host");
-      // Junk fields in a hello's shape, and a junk rejoin (`null` is a
-      // fresh join, so it is the one value left out).
+      // Junk fields in a hello's shape.
       raw.send(
         "hello",
         { protocolVersion: value, name: value, build: value, rejoin: value },
         "host",
       );
+      junkVersions += 2;
+      // A junk rejoin under the right version (`null` is a fresh join, so
+      // it is the one value left out).
       if (value !== null) {
         raw.send(
           "hello",
@@ -345,9 +348,10 @@ describe("a P2P host survives hostile peers (#375)", () => {
     await settle();
     await match.step(TICK);
 
-    // A malformed hello is no hello: nobody is seated for one, nor told
-    // anything, and an honest peer still gets in.
-    expect(answers).toEqual([]);
+    // Nobody is seated for a malformed hello. One that does not carry this
+    // version is refused as a mismatch, so a stale client is told to
+    // reload; one that does, but is malformed otherwise, is not answered.
+    expect(answers).toEqual(Array.from({ length: junkVersions }, () => "refuse"));
     const { connection } = await match.join();
     await match.step(TICK);
     expect(connection.getSnapshot().players).toHaveLength(1);
