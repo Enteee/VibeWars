@@ -226,8 +226,9 @@ function armedArena(played: TrainingScenario, seed: string, weapon: Weapon): Mat
         },
         maxHealth: 1e6,
         spawn: map.playerSpawn,
+        facing: 0,
       },
-      ...scenarioParticipants(played),
+      ...scenarioParticipants(played, map.playerSpawn),
     ],
   });
 }
