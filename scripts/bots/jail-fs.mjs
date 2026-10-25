@@ -64,9 +64,14 @@ export class JailDir {
     return `/proc/self/fd/${String(this.fd)}/${checked(name)}`;
   }
 
-  /** @returns {string[]} the names in it */
+  /**
+   * Only names this module will address; anything else a jail planted is
+   * not listed, so it can never be read, removed or make a caller throw.
+   *
+   * @returns {string[]} the names in it
+   */
   list() {
-    return fs.readdirSync(`/proc/self/fd/${String(this.fd)}`);
+    return fs.readdirSync(`/proc/self/fd/${String(this.fd)}`).filter((n) => NAME.test(n));
   }
 
   /**
@@ -157,7 +162,8 @@ export class JailDir {
   }
 
   /**
-   * Remove `name`, whatever it is; a symlink goes, not what it points to.
+   * Remove `name`, whatever it is; a symlink goes, not what it points to,
+   * and a directory goes with what is in it.
    *
    * @param {string} name
    * @returns {void}
@@ -166,7 +172,12 @@ export class JailDir {
     try {
       fs.unlinkSync(this.at(name));
     } catch (error) {
-      if (codeOf(error) !== "ENOENT") {
+      const code = codeOf(error);
+      if (code === "EISDIR" || code === "EPERM") {
+        // A directory a jail planted where a file belongs. rm does not
+        // follow symlinks, so nothing outside the jail's own directory goes.
+        fs.rmSync(this.at(name), { recursive: true, force: true });
+      } else if (code !== "ENOENT") {
         throw error;
       }
     }
