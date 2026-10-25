@@ -177,4 +177,26 @@ describe("reconnection", () => {
 
     await stayer.leave();
   });
+  it("lets a player back in while the server still holds their old socket", async () => {
+    // A wifi blip: the client sees its socket die and retries within
+    // 100 ms, long before the server notices the old one is gone. Colyseus
+    // then closes the old socket with WITH_ERROR, the same code it uses
+    // for a flooder, and the player must still get back in (#43).
+    const watcher = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    const dropper = await new Client(endpoint).joinById(watcher.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    await waitFor(() => watcher.state.players.has(dropper.sessionId), { label: "both" });
+
+    const resumed = await new Client(endpoint).reconnect(dropper.reconnectionToken);
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+    expect(resumed.sessionId).toBe(dropper.sessionId);
+    expect(watcher.state.players.has(dropper.sessionId)).toBe(true);
+
+    await resumed.leave();
+    await watcher.leave();
+  });
 });

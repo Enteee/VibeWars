@@ -5,6 +5,7 @@ import { attachMatchSounds } from "./audio/match-sounds.js";
 import { saveMuted } from "./audio/mute-preference.js";
 import { soundPlayer } from "./audio/sound-player.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
+import { skillSlotForKeyDown } from "./input/skill-keys.js";
 import { connectToMatch, type MatchTarget } from "./net/match-client.js";
 import type { MatchConnection, MatchSnapshot } from "./net/match-connection.js";
 import { actorAtPoint, type ArenaSnapshot, type RenderableWall } from "./render/arena-snapshot.js";
@@ -157,11 +158,8 @@ export async function startMatchView(
       }
       return;
     }
-    if (!/^[0-9]$/.test(event.key)) {
-      return;
-    }
-    const slot = event.key === "0" ? 9 : Number.parseInt(event.key, 10) - 1;
-    if (slot < connection.skillBar.length) {
+    const slot = skillSlotForKeyDown(event, connection.skillBar.length);
+    if (slot !== undefined) {
       useSkill(slot);
     }
   };

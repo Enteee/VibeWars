@@ -804,14 +804,6 @@ export class MatchRoom extends Room {
       console.info(`[match] leave sessionId=${client.sessionId} (left deliberately)`);
       return;
     }
-    // WITH_ERROR (4002) is Colyseus throwing a client out: too many
-    // messages (#43) or one the room never registered. Holding its slot
-    // would let it walk straight back in and start again.
-    if (code === CloseCode.WITH_ERROR) {
-      this.removePlayer(client.sessionId);
-      console.info(`[match] leave sessionId=${client.sessionId} (dropped by the server)`);
-      return;
-    }
 
     const sim = this.#sim.get(client.sessionId);
     if (sim !== undefined) {
