@@ -4,6 +4,7 @@ import { vec2 } from "@vibewars/game-core";
 
 import {
   AREA_FLASH_SECONDS,
+  EMPTY_SNAPSHOT,
   FLOATING_TEXT_LINE,
   FLOATING_TEXT_SECONDS,
   FLOATING_TEXT_STACK,
@@ -13,6 +14,8 @@ import {
   actorAtPoint,
   healthFraction,
   nameLabelBottom,
+  nameShown,
+  withNames,
   placeFloatingText,
   teamColour,
   type ArenaSnapshot,
@@ -59,6 +62,8 @@ describe("actorAtPoint", () => {
       targetId: undefined,
       projectiles: [],
       clock: 0,
+      hoverId: undefined,
+      showAllNames: false,
     };
     expect(actorAtPoint(snapshot, vec2(0, 0))).toBeUndefined();
   });
@@ -71,6 +76,8 @@ describe("actorAtPoint", () => {
       targetId: undefined,
       projectiles: [],
       clock: 0,
+      hoverId: undefined,
+      showAllNames: false,
     };
     expect(actorAtPoint(snapshot, vec2(105, 100))?.id).toBe("a");
   });
@@ -83,6 +90,8 @@ describe("actorAtPoint", () => {
       targetId: undefined,
       projectiles: [],
       clock: 0,
+      hoverId: undefined,
+      showAllNames: false,
     };
     expect(actorAtPoint(snapshot, vec2(200, 200))).toBeUndefined();
   });
@@ -95,6 +104,8 @@ describe("actorAtPoint", () => {
       targetId: undefined,
       projectiles: [],
       clock: 0,
+      hoverId: undefined,
+      showAllNames: false,
     };
     expect(actorAtPoint(snapshot, vec2(10, 0))?.id).toBe("a");
   });
@@ -108,6 +119,8 @@ describe("actorAtPoint", () => {
       targetId: undefined,
       projectiles: [],
       clock: 0,
+      hoverId: undefined,
+      showAllNames: false,
     };
     expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("near");
   });
@@ -123,6 +136,8 @@ describe("actorAtPoint and the dead", () => {
       targetId: undefined,
       projectiles: [],
       clock: 0,
+      hoverId: undefined,
+      showAllNames: false,
     };
     expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("living");
   });
@@ -135,6 +150,8 @@ describe("actorAtPoint and the dead", () => {
       targetId: undefined,
       projectiles: [],
       clock: 0,
+      hoverId: undefined,
+      showAllNames: false,
     };
     expect(actorAtPoint(snapshot, vec2(100, 100))).toBeUndefined();
   });
@@ -265,5 +282,61 @@ describe("placeFloatingText", () => {
     }
     // A column of FLOATING_TEXT_STACK lines, plus how far one rises in its life.
     expect(tallest).toBeLessThanOrEqual((FLOATING_TEXT_STACK - 1) * FLOATING_TEXT_LINE + 24 * 1.2);
+  });
+});
+
+describe("nameShown (#253)", () => {
+  const enemy = actor("enemy", 100, 100, 14, { team: "enemy" });
+  const me = actor("me", 200, 100, 14, { team: "self" });
+  const corpse = actor("corpse", 300, 100, 14, { team: "enemy", dead: true });
+  const arena = (overrides: Partial<ArenaSnapshot>): ArenaSnapshot => ({
+    ...EMPTY_SNAPSHOT,
+    actors: [enemy, me, corpse],
+    ...overrides,
+  });
+
+  it("shows your target's, the hovered body's, and every name under Ctrl", () => {
+    expect(nameShown(arena({ targetId: "enemy" }), enemy)).toBe(true);
+    expect(nameShown(arena({ hoverId: "enemy" }), enemy)).toBe(true);
+    expect(nameShown(arena({ showAllNames: true }), enemy)).toBe(true);
+  });
+
+  it("hides every other name", () => {
+    expect(nameShown(arena({}), enemy)).toBe(false);
+    expect(nameShown(arena({ targetId: "corpse", hoverId: "me" }), enemy)).toBe(false);
+  });
+
+  it("never shows your own, whatever the rule", () => {
+    expect(nameShown(arena({ targetId: "me" }), me)).toBe(false);
+    expect(nameShown(arena({ hoverId: "me" }), me)).toBe(false);
+    expect(nameShown(arena({ showAllNames: true }), me)).toBe(false);
+  });
+
+  it("shows a dead target's name, and the dead under Ctrl", () => {
+    expect(nameShown(arena({ targetId: "corpse" }), corpse)).toBe(true);
+    expect(nameShown(arena({ showAllNames: true }), corpse)).toBe(true);
+  });
+
+  it("does not mind a hovered id that is not in the snapshot", () => {
+    expect(nameShown(arena({ hoverId: "gone" }), enemy)).toBe(false);
+  });
+});
+
+describe("withNames (#253)", () => {
+  const enemy = actor("enemy", 100, 100, 14, { team: "enemy" });
+  const corpse = actor("corpse", 300, 100, 14, { team: "enemy", dead: true });
+  const base: ArenaSnapshot = { ...EMPTY_SNAPSHOT, actors: [enemy, corpse] };
+
+  it("hovers the living body under the cursor, as a click would target it", () => {
+    expect(withNames(base, vec2(105, 100), false).hoverId).toBe("enemy");
+    expect(withNames(base, vec2(300, 100), false).hoverId).toBeUndefined();
+    expect(withNames(base, vec2(500, 500), false).hoverId).toBeUndefined();
+  });
+
+  it("hovers nothing once the cursor has left, and carries Ctrl through", () => {
+    const named = withNames(base, undefined, true);
+    expect(named.hoverId).toBeUndefined();
+    expect(named.showAllNames).toBe(true);
+    expect(named.actors).toBe(base.actors);
   });
 });

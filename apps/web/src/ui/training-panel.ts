@@ -2,6 +2,7 @@ import {
   TRAINING_SCENARIOS,
   getTrainingScenario,
   type StepResult,
+  type Vec2,
   type TrainingScenario,
 } from "@vibewars/game-core";
 
@@ -10,12 +11,14 @@ import { saveMuted } from "../audio/mute-preference.js";
 import { soundPlayer } from "../audio/sound-player.js";
 import { attackKeyIntents, isAttacking } from "../input/attack-key.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
+import { attachNameReveal } from "../input/name-reveal.js";
 import { nextTabTarget } from "../input/tab-target.js";
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
 import type { MatchSnapshot, SkillSlot } from "../net/match-connection.js";
 import {
   actorAtPoint,
   EMPTY_SNAPSHOT,
+  withNames,
   type ArenaSnapshot,
   type RenderableWall,
 } from "../render/arena-snapshot.js";
@@ -584,6 +587,11 @@ export function createTrainingPanel(): TrainingPanel {
 
   let offFrame: (() => void) | undefined;
   let offPointer: (() => void) | undefined;
+  let offPointerMove: (() => void) | undefined;
+  // Ctrl on the stage shows every name, as its other keys work; the
+  // cursor shows one (#253). In world units, which a still cursor keeps.
+  const nameReveal = attachNameReveal(stage);
+  let pointer: Vec2 | undefined;
 
   void createArenaViewport(stage, {
     mode: "fit",
@@ -610,7 +618,11 @@ export function createTrainingPanel(): TrainingPanel {
       appendLog(ticks.advance(connection.simulation.elapsedSeconds, nameOf));
       latestMatch = connection.getSnapshot();
       session.sounds.snapshot(latestMatch);
-      latestArena = toArenaSnapshot(latestMatch, session.walls);
+      latestArena = withNames(
+        toArenaSnapshot(latestMatch, session.walls),
+        pointer,
+        nameReveal.held(),
+      );
       created.scene.setSnapshot(latestArena);
       paintVitals(latestMatch);
       sinceMeterPaint += deltaSeconds;
@@ -625,6 +637,9 @@ export function createTrainingPanel(): TrainingPanel {
       }
       const hit = actorAtPoint(latestArena, world);
       session.connection.sendIntent({ kind: "target", targetSessionId: hit?.id ?? null });
+    });
+    offPointerMove = created.onPointerMove((world) => {
+      pointer = world;
     });
   });
 
@@ -662,6 +677,8 @@ export function createTrainingPanel(): TrainingPanel {
       // so a late event cannot touch a destroyed scene.
       offFrame?.();
       offPointer?.();
+      offPointerMove?.();
+      nameReveal.detach();
       detachMovement();
       stage.removeEventListener("keydown", onStageKeyDown);
       stage.removeEventListener("pointerdown", onStagePointerDown, { capture: true });

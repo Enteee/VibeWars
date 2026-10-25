@@ -23,6 +23,12 @@ export interface ArenaViewport {
   onFrame(handler: (deltaSeconds: number) => void): () => void;
   /** A click or tap on the arena, in world units; returns the unsubscribe. */
   onPointerDown(handler: (world: Vec2) => void): () => void;
+  /**
+   * The cursor moved over the arena, in world units, or left it
+   * (`undefined`), so a name shown under it does not stay (#253).
+   * Returns the unsubscribe.
+   */
+  onPointerMove(handler: (world: Vec2 | undefined) => void): () => void;
   /** Re-measure the parent, after the layout around it changed. */
   refreshScale(): void;
   /**
@@ -94,6 +100,20 @@ export async function createArenaViewport(
       scene.input.on("pointerdown", onDown);
       return () => {
         scene.input.off("pointerdown", onDown);
+      };
+    },
+    onPointerMove(handler) {
+      const onMove = (pointer: Phaser.Input.Pointer): void => {
+        handler(vec2(pointer.worldX, pointer.worldY));
+      };
+      const onOut = (): void => {
+        handler(undefined);
+      };
+      scene.input.on("pointermove", onMove);
+      scene.input.on("gameout", onOut);
+      return () => {
+        scene.input.off("pointermove", onMove);
+        scene.input.off("gameout", onOut);
       };
     },
     refreshScale() {

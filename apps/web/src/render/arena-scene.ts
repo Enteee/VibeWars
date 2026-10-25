@@ -11,6 +11,7 @@ import {
   floatingTextY,
   healthFraction,
   nameLabelBottom,
+  nameShown,
   placeFloatingText,
   swingFlashAlpha,
   teamColour,
@@ -410,7 +411,10 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * Every actor's name above its bars (#53). A corpse keeps its name, greyed,
+   * Names above the bars (#53), shown only where `nameShown` says (#253):
+   * your target, the body under the cursor, everyone while Ctrl is held.
+   * Every actor keeps its label, hidden or not, so showing one is a
+   * visibility flip, never a new texture. A corpse keeps its name, greyed,
    * so a player can still see who went down.
    */
   private updateNameLabels(): void {
@@ -430,7 +434,10 @@ export class ArenaScene extends Phaser.Scene {
       if (label.style.color !== color) {
         label.setColor(color);
       }
-      label.setText(actor.name).setPosition(actor.position.x, nameLabelBottom(actor));
+      label
+        .setText(actor.name)
+        .setPosition(actor.position.x, nameLabelBottom(actor))
+        .setVisible(nameShown(this.snapshot, actor));
     }
     for (const [id, label] of this.nameLabels) {
       if (!seen.has(id)) {
