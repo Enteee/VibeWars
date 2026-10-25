@@ -212,7 +212,7 @@ describe("skills and the swing", () => {
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
   });
 
-  it("a skill at another enemy resumes the attack on its own target, and starts none", () => {
+  it("a skill at another enemy switches the attack to them once it lands", () => {
     const match = sim(
       swordsman("a", vec2(0, 0)),
       dummy("d", vec2(40, 0)),
@@ -221,15 +221,45 @@ describe("skills and the swing", () => {
     match.requestAttack("a", "d");
     match.setTarget("a", "e");
     match.requestSkill("a", 0);
+    // Still on d while the Fireball is in the air: a cast only pauses.
+    stepFor(match, 0.5);
+    expect(get(match, "a").combatant.attack?.targetId).toBe("d");
+    stepFor(match, 0.6);
+    expect(get(match, "a").combatant.attack).toEqual({
+      targetId: "e",
+      swingElapsed: expect.any(Number) as number,
+    });
+  });
+
+  it("a skill at an enemy starts an attack on them, and the swordsman walks in", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
+    match.setTarget("a", "d");
+    match.requestSkill("a", 0);
+    stepFor(match, 0.9);
+    expect(get(match, "a").combatant.attack).toBeUndefined();
+    stepFor(match, 0.2);
+    expect(get(match, "a").combatant.attack?.targetId).toBe("d");
+    stepFor(match, 1);
+    expect(get(match, "a").position.x).toBeGreaterThan(0);
+  });
+
+  it("an interrupted cast at an enemy starts nothing, and resumes the attack in progress", () => {
+    const match = sim(
+      swordsman("a", vec2(0, 0)),
+      dummy("d", vec2(40, 0)),
+      dummy("e", vec2(0, 300)),
+    );
+    match.setTarget("a", "e");
+    match.requestSkill("a", 0);
+    get(match, "a").combatant.cast.cancelCast();
+    stepFor(match, 1.1);
+    expect(get(match, "a").combatant.attack).toBeUndefined();
+
+    match.requestAttack("a", "d");
+    match.requestSkill("a", 0);
+    get(match, "a").combatant.cast.cancelCast();
     stepFor(match, 1.1);
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
-
-    const fresh = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
-    fresh.setTarget("a", "d");
-    fresh.requestSkill("a", 0);
-    stepFor(fresh, 1.1);
-    expect(get(fresh, "a").combatant.attack).toBeUndefined();
-    expect(get(fresh, "a").position).toEqual(vec2(0, 0));
   });
 });
 
@@ -251,7 +281,7 @@ describe("moving", () => {
 });
 
 describe("adrenaline", () => {
-  it("a landed swing gives +3, as a damaging skill does", () => {
+  it("a landed swing gives +3, as a damaging attack skill does", () => {
     const hit = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     hit.requestAttack("a", "d");
     stepFor(hit, 1.4);
@@ -262,6 +292,17 @@ describe("adrenaline", () => {
     expect(chop.requestSkill("a", 2)?.check).toEqual({ ok: true });
     stepFor(chop, DT);
     expect(get(chop, "a").combatant.adrenaline).toBe(RULES.resources.adrenalinePerHit);
+  });
+
+  it("a damaging spell gives none (Q19)", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
+    match.setTarget("a", "d");
+    expect(match.requestSkill("a", 0)?.check).toEqual({ ok: true });
+    const log = stepFor(match, 1.1);
+    expect(
+      log.some((entry) => entry.cause === "skill" && entry.events.some((e) => e.kind === "damage")),
+    ).toBe(true);
+    expect(get(match, "a").combatant.adrenaline).toBe(0);
   });
 });
 

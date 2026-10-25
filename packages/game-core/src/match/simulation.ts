@@ -1,6 +1,7 @@
 import type { ResolvedEquipment, ResolvedLoadout } from "../equipment/resolve.js";
 import {
   distanceWithinRange,
+  hasLineOfSight,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
 } from "../geometry.js";
@@ -333,8 +334,8 @@ export class MatchSimulation {
    * target starts a fresh one. Refused, with the reason a cast at it
    * would get, unless the target is a living enemy and the attacker is
    * alive. Range and line of sight are not checked: approach closes the
-   * one, and the other is out of scope, as it is for a skill after
-   * activation.
+   * one, and a ranged swing checks the other as it is released, so an
+   * attack can start behind a corner and walk out.
    */
   public requestAttack(id: string, targetId: string): ActivationCheck | undefined {
     const record = this.#participants.get(id);
@@ -611,10 +612,19 @@ export class MatchSimulation {
         ? undefined
         : { x: origin.x, y: origin.y, radius: skill.area.radius };
 
-    this.#gainAdrenaline(record, events);
+    // Only attack skills earn adrenaline, as weapon hits do: a spell is
+    // paid for in energy, and earning both would make casters the best
+    // adrenaline builders.
+    if (skill.type === "attack") {
+      this.#gainAdrenaline(record, events);
+    }
     this.#recordDeaths(events);
-    // An attack in progress resumes on its own target: the cast only
-    // paused it. Switching it to the skill's target arrives with #160.
+    // A skill on an enemy turns on them with the weapon, as in GW1: it
+    // starts an attack, or switches one to them. Any other skill leaves
+    // the attack in progress to resume on its own target.
+    if (primary !== undefined && this.#attackCheck(record, primary.id).ok) {
+      record.combatant.attack = { targetId: primary.id, swingElapsed: 0 };
+    }
 
     record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds);
     this.#log.push({
@@ -693,11 +703,17 @@ export class MatchSimulation {
   /**
    * A ranged swing lands as a shot leaving the bow, led ahead of the
    * target. Blind is rolled now, as GW1 does: a blinded shot misses at
-   * once and nothing flies.
+   * once and nothing flies. Then line of sight, once: a wall in the way
+   * spends the swing and nothing flies either, and the next swing looks
+   * again. Melee is never checked; its reach is shorter than any gap.
    */
   #release(record: ParticipantRecord, target: ParticipantRecord, speed: number, dt: number): void {
     if (blindMisses(record.combatant, this.#rng)) {
       this.#logWeapon(record.id, [{ kind: "attack-missed", targetId: target.id }]);
+      return;
+    }
+    if (!hasLineOfSight(record.position, target.position, this.#walls)) {
+      this.#logWeapon(record.id, [{ kind: "attack-obstructed", targetId: target.id }]);
       return;
     }
     const from = record.position;

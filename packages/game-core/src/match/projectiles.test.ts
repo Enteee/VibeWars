@@ -294,3 +294,61 @@ describe("tapping back and forth", () => {
     expect(jitterHitRate(weapon, 0.25, 20)).toBeGreaterThanOrEqual(0.75);
   });
 });
+
+describe("obstruction at release", () => {
+  /** A wall across the line from the archer at (0, 0) to anyone at x = 300 near y = 0. */
+  const WALL = { a: vec2(150, -50), b: vec2(150, 50) };
+
+  function walled(archerAt: Vec2, targetAt: Vec2, weapon: Weapon = LONGBOW): MatchSimulation {
+    return new MatchSimulation({
+      seed: "obstructed",
+      walls: [WALL],
+      participants: [archer(archerAt, weapon), target(targetAt)],
+    });
+  }
+
+  function weaponEvents(match: MatchSimulation, seconds: number): string[] {
+    const kinds: string[] = [];
+    for (let i = 0; i < Math.round(seconds / DT); i += 1) {
+      for (const entry of match.step(DT).log) {
+        if (entry.cause === "weapon") {
+          kinds.push(...entry.events.map((event) => event.kind));
+        }
+      }
+    }
+    return kinds;
+  }
+
+  it("a longbow behind a wall is obstructed: nothing flies, and the attack goes on", () => {
+    const match = walled(vec2(0, 0), vec2(300, 0));
+    expect(match.requestAttack("archer", "target")).toEqual({ ok: true });
+
+    const kinds = weaponEvents(match, LONGBOW.attackIntervalSeconds + DT);
+    expect(kinds).toEqual(["attack-obstructed"]);
+    expect(match.projectiles).toHaveLength(0);
+    expect(get(match, "archer").combatant.attack?.targetId).toBe("target");
+  });
+
+  it("the next swing shoots once the target steps out of cover", () => {
+    const match = walled(vec2(0, 0), vec2(300, 0));
+    match.requestAttack("archer", "target");
+    expect(weaponEvents(match, LONGBOW.attackIntervalSeconds + DT)).toEqual(["attack-obstructed"]);
+
+    // Past the wall's end: the line now crosses x = 150 at y = 100.
+    get(match, "target").position = vec2(300, 200);
+    for (let i = 0; i < Math.round(LONGBOW.attackIntervalSeconds / DT) + 1; i += 1) {
+      match.step(DT);
+      if (match.projectiles.length > 0) {
+        break;
+      }
+    }
+    expect(match.projectiles).toHaveLength(1);
+  });
+
+  it("a sword through the same wall at melee reach still hits", () => {
+    const sword = WEAPONS.sword;
+    const match = walled(vec2(140, 0), vec2(160, 0), sword);
+    match.requestAttack("archer", "target");
+    expect(weaponEvents(match, sword.attackIntervalSeconds * 2 + DT)).toContain("damage");
+  });
+});
