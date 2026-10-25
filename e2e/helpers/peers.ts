@@ -20,27 +20,18 @@ export async function openPeers(
   return { context, pages };
 }
 
-/** Host a lobby from the menu; its code, as the lobby screen shows it. */
-export async function hostLobby(page: Page): Promise<string> {
-  await page.goto("./");
+/** Host a lobby from the menu on show; its code, as the lobby screen shows it. */
+async function hostLobby(page: Page): Promise<string> {
   await page.getByRole("button", { name: "host a lobby" }).click();
   const code = page.locator(".lobby-code");
   await expect(code).toHaveText(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
   return (await code.textContent())?.trim() ?? "";
 }
 
-/** Join the lobby `code` names from the menu, and wait to be listed in it. */
-export async function joinLobby(page: Page, code: string): Promise<void> {
-  await page.goto("./");
-  await page.locator("input.code-input").fill(code);
-  await page.getByRole("button", { name: "join", exact: true }).click();
-  await expect(page.locator(".lobby-code")).toHaveText(code);
-}
-
 /**
  * A match in a lobby of one, which `canStart` allows: what Quick Match
  * was for the tests that need nobody else. Resolves once the HUD shows
- * the player, so the match is really on.
+ * the player, so the match is really on. Starts from the menu on show.
  */
 export async function startSoloMatch(page: Page): Promise<void> {
   await hostLobby(page);

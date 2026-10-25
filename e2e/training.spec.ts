@@ -1,6 +1,8 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { KEYMAP_PRESETS, codeLabel, type Keymap } from "../apps/web/src/input/keymap.js";
+import { STORAGE_NAMESPACE } from "./helpers/base.js";
+import { startSoloMatch } from "./helpers/peers.js";
 import { key, skillKey } from "./keys.js";
 
 /**
@@ -212,9 +214,9 @@ test("(8) leaving the editor leaves no arena behind", async ({ page }) => {
   expect(await arenaShot(page, canvas)).not.toEqual(before);
 });
 
-test("(9) a quick match is unaffected", async ({ page }) => {
+test("(9) a match is unaffected", async ({ page }) => {
   await page.goto("./");
-  await page.getByRole("button", { name: "quick match" }).click();
+  await startSoloMatch(page);
   await expect(page.locator("#viewport canvas")).toHaveCount(1);
   await expect(page.locator(".hud-skills .hud-skill")).toHaveCount(8);
   await expect(page.locator(".training")).toHaveCount(0);
@@ -540,10 +542,12 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
 });
 
 test("(22) a stored Classic keymap casts on the number row (#302)", async ({ page }) => {
-  // The server-served build stores under the plain `vibewars` namespace.
-  await page.addInitScript((classic) => {
-    localStorage.setItem("vibewars.keymap", JSON.stringify(classic));
-  }, KEYMAP_PRESETS.classic);
+  await page.addInitScript(
+    ({ key, classic }) => {
+      localStorage.setItem(key, JSON.stringify(classic));
+    },
+    { key: `${STORAGE_NAMESPACE}.keymap`, classic: KEYMAP_PRESETS.classic },
+  );
   await openTraining(page, KEYMAP_PRESETS.classic);
   await expect(page.locator(".training-skill-key").first()).toHaveText("1");
   await takeControl(page);

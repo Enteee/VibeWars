@@ -2,6 +2,8 @@ import { spawnSync } from "node:child_process";
 
 import { defineConfig, devices } from "@playwright/test";
 
+import { E2E_BASE } from "./e2e/helpers/base.js";
+
 /**
  * Browser tests (brief §31 "Browser tests").
  *
@@ -30,7 +32,7 @@ const PORT = Number(process.env.VIBEWARS_E2E_PORT ?? 2577);
  *
  * `baseURL` ends in the sub-path, so every `goto` is relative: `./`.
  */
-const BASE = "/VibeWars/next/";
+const BASE = E2E_BASE;
 const BASE_URL = `http://127.0.0.1:${String(PORT)}${BASE}`;
 function resolveChromium(): string {
   const override = process.env.VIBEWARS_CHROMIUM;

@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { startSoloMatch } from "./helpers/peers.js";
+
 /**
  * Options → Sound (#424): one set of sound controls, shown in Options and
  * in the HUD's ♪ popover. What only a browser can tell is that a setting
@@ -29,7 +31,7 @@ test("music muted in Options shows muted in the HUD popover, and mute all follow
   await page.getByLabel("Mute music").check();
   await page.getByRole("button", { name: "back", exact: true }).click();
 
-  await page.getByRole("button", { name: "quick match" }).click();
+  await startSoloMatch(page);
   await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
   await page.locator(".hud-music").click();
   const popover = page.locator(".hud-jukebox");

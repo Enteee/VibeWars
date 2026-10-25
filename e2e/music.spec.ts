@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { startSoloMatch } from "./helpers/peers.js";
+
 /**
  * Music (#371, ADR-0028): the Strudel engine in a sandboxed iframe, made
  * on the first click. Audio output itself is not asserted; what the host
@@ -206,7 +208,7 @@ interface Box {
 test("the now-playing toast at a match start covers none of the HUD (#372)", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("./");
-  await expect(page.getByRole("button", { name: "quick match" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "host a lobby" })).toBeVisible();
   // The toast hides after a few seconds, which a busy page can spend before
   // a locator gets to it: note where it is the moment it shows.
   await page.evaluate(() => {
@@ -222,8 +224,8 @@ test("the now-playing toast at a match start covers none of the HUD (#372)", asy
     });
     observer.observe(toast, { attributes: true, attributeFilter: ["hidden"] });
   });
-  // The click that starts the match is the one that starts the music.
-  await page.getByRole("button", { name: "quick match" }).click();
+  // The click that hosts the lobby is the one that starts the music.
+  await startSoloMatch(page);
   await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
 
   const toastBox = (): Promise<Box | null> =>

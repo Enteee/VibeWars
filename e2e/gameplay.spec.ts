@@ -1,5 +1,6 @@
 import { expect, test, type Page, type Locator } from "@playwright/test";
 
+import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { key, skillKey } from "./keys.js";
 
 /**
@@ -20,12 +21,12 @@ import { key, skillKey } from "./keys.js";
  * Music has its own spec.
  */
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
+  await page.addInitScript((key) => {
     localStorage.setItem(
-      "vibewars.music",
+      key,
       JSON.stringify({ mode: "off", pinnedTrackId: null, musicVolume: 0.6, musicMuted: false }),
     );
-  });
+  }, `${STORAGE_NAMESPACE}.music`);
 });
 
 /**
@@ -49,24 +50,9 @@ async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
   });
 }
 
-async function startQuickMatch(page: Page): Promise<Locator> {
-  await page.goto("./");
-  await page.getByRole("button", { name: "quick match" }).click();
-
-  const canvas = page.locator("#viewport canvas");
-  await expect(canvas).toBeVisible();
-  // The HUD only populates once the first authoritative snapshot of this
-  // player has arrived, so this doubles as "we are really in a match".
-  await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
-  return canvas;
-}
-
 /**
- * A match in a lobby of one. Tests that compare frames need it: a Quick
- * Match room is shared, so it can hold other tests' players, including
- * ghosts that stay for the reconnection window after their page closed
- * and then vanish, mid-comparison (#128). A lobby's match is private to
- * the lobby (#41), so nothing moves in it that the test did not move.
+ * A match in a lobby of one, which is what a test with nobody to fight
+ * needs: nothing moves in it that the test did not move (#128).
  */
 async function startSoloMatch(page: Page): Promise<Locator> {
   return startLobbyMatch(page, []);
@@ -79,7 +65,7 @@ async function startSoloMatch(page: Page): Promise<Locator> {
 async function startLobbyMatch(host: Page, guests: readonly Page[]): Promise<Locator> {
   await host.goto("./");
   await host.getByRole("button", { name: "host a lobby" }).click();
-  await expect(host.locator(".lobby-code")).toHaveText(/^[A-Z0-9]{4,8}$/);
+  await expect(host.locator(".lobby-code")).toHaveText(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
   const code = (await host.locator(".lobby-code").textContent())?.trim() ?? "";
   for (const guest of guests) {
     await guest.goto("./");
@@ -114,8 +100,8 @@ async function readEnergy(page: Page): Promise<number> {
   return Number(match?.[1] ?? NaN);
 }
 
-test("a quick match renders the arena and a populated HUD", async ({ page }) => {
-  await startQuickMatch(page);
+test("a match renders the arena and a populated HUD", async ({ page }) => {
+  await startSoloMatch(page);
 
   await expect(page.locator(".hud-skills .hud-skill")).toHaveCount(8);
   await expect(page.locator(".hud-target")).toContainText("no target");
@@ -123,7 +109,7 @@ test("a quick match renders the arena and a populated HUD", async ({ page }) => 
 });
 
 test("M mutes and unmutes the combat sounds", async ({ page }) => {
-  await startQuickMatch(page);
+  await startSoloMatch(page);
   const mute = page.getByRole("button", { name: "Mute sounds" });
   await expect(mute).toHaveAttribute("aria-pressed", "false");
   await page.keyboard.press(key("mute"));
@@ -203,7 +189,7 @@ test("releasing the movement key stops the player", async ({ page }) => {
 });
 
 test("activating a self-cast skill spends energy and applies its effect", async ({ page }) => {
-  await startQuickMatch(page);
+  await startSoloMatch(page);
 
   // Slot 5 is a self-target enchantment, so it needs no target — which
   // makes it the one skill a solo player can honestly test.
@@ -219,7 +205,7 @@ test("activating a self-cast skill spends energy and applies its effect", async 
 });
 
 test("a skill the player cannot afford is refused rather than cast", async ({ page }) => {
-  await startQuickMatch(page);
+  await startSoloMatch(page);
 
   // Spam the bar. Every rejection must be safe: no crash, and energy must
   // never go negative, whatever the client asks for.
@@ -233,7 +219,7 @@ test("a skill the player cannot afford is refused rather than cast", async ({ pa
 });
 
 test("a refused cast says why, briefly, above the skill bar", async ({ page }) => {
-  await startQuickMatch(page);
+  await startSoloMatch(page);
   const message = page.locator(".hud-message");
   await expect(message).not.toHaveClass(/is-visible/);
 
@@ -250,14 +236,8 @@ test("a refused cast says why, briefly, above the skill bar", async ({ page }) =
   await expect(message).not.toHaveClass(/is-visible/, { timeout: 4000 });
 });
 
-test("an enemy skill with nothing targeted targets the nearest enemy", async ({
-  browser,
-  page,
-}) => {
-  // A lobby, not Quick Match: a Quick Match room holds at most eight, so
-  // two players joining one after the other can land in different rooms
-  // when earlier tests' ghosts fill one (#41).
-  const opponent = await browser.newPage();
+test("an enemy skill with nothing targeted targets the nearest enemy", async ({ page }) => {
+  const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
   const target = page.locator(".hud-target-text");
   await expect(target).toHaveText("no target");
@@ -279,11 +259,10 @@ async function readTargetHealth(page: Page): Promise<number> {
 }
 
 test("Space attacks the nearest enemy with the weapon, and moving stops it (#160)", async ({
-  browser,
   page,
 }) => {
   // A lobby of two, for the reason the test above gives.
-  const opponent = await browser.newPage();
+  const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
   const attacking = page.locator(".hud-attacking");
   await expect(attacking).toBeHidden();
@@ -349,11 +328,10 @@ test("clicking the ground walks there, round a wall, and stops (#310)", async ({
 });
 
 test("clicking the ground keeps the target, and Space attacks it from there (#310)", async ({
-  browser,
   page,
 }) => {
   // A lobby of two, for the reason the tests above give.
-  const opponent = await browser.newPage();
+  const opponent = await page.context().newPage();
   const canvas = await startLobbyMatch(page, [opponent]);
   const target = page.locator(".hud-target-text");
   await page.keyboard.press("Tab");
@@ -373,10 +351,9 @@ test("clicking the ground keeps the target, and Space attacks it from there (#31
 });
 
 test("Esc cancels the attack; leaving the match is a button that asks first (#160)", async ({
-  browser,
   page,
 }) => {
-  const opponent = await browser.newPage();
+  const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
   const attacking = page.locator(".hud-attacking");
 
@@ -399,11 +376,8 @@ test("Esc cancels the attack; leaving the match is a button that asks first (#16
   await opponent.close();
 });
 
-test("F10, Tab, Enter on yes leaves the match without a mouse (#221)", async ({
-  browser,
-  page,
-}) => {
-  const opponent = await browser.newPage();
+test("F10, Tab, Enter on yes leaves the match without a mouse (#221)", async ({ page }) => {
+  const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
   await expect(page.locator("#status")).toHaveText("in match");
   const leave = page.locator(".hud-leave");
@@ -419,8 +393,8 @@ test("F10, Tab, Enter on yes leaves the match without a mouse (#221)", async ({
   await opponent.close();
 });
 
-test("F10 then Esc says no, and the attack goes on (#221)", async ({ browser, page }) => {
-  const opponent = await browser.newPage();
+test("F10 then Esc says no, and the attack goes on (#221)", async ({ page }) => {
+  const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
   await expect(page.locator("#status")).toHaveText("in match");
   const attacking = page.locator(".hud-attacking");
@@ -443,12 +417,9 @@ test("F10 then Esc says no, and the attack goes on (#221)", async ({ browser, pa
   await opponent.close();
 });
 
-test("Tab targets the nearest enemy, and the hint goes for good (#55)", async ({
-  browser,
-  page,
-}) => {
+test("Tab targets the nearest enemy, and the hint goes for good (#55)", async ({ page }) => {
   // A lobby of two, for the reason the test above gives.
-  const opponent = await browser.newPage();
+  const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
   const hint = page.locator(".hud-hint");
   await expect(hint).toHaveText("Click an enemy or press Tab to target · hold Shift for names");
@@ -470,7 +441,7 @@ test("Tab targets the nearest enemy, and the hint goes for good (#55)", async ({
 test("a recharging skill shows the clock-wipe and the seconds left, then clears (#152)", async ({
   page,
 }) => {
-  await startQuickMatch(page);
+  await startSoloMatch(page);
 
   // Slot 5 of the house bar is Armor of Earth: self-cast, so it needs no
   // target, and it recharges in 15 s.
@@ -487,58 +458,29 @@ test("a recharging skill shows the clock-wipe and the seconds left, then clears 
   await expect(overlay).toHaveCount(0, { timeout: 20_000 });
 });
 
-/** The page's WebSockets, oldest first, recorded by `recordSockets`. */
-interface SocketLog {
-  vibewarsSockets: WebSocket[];
-}
+test("a match whose host goes returns to the menu and says why (#195)", async ({ page }) => {
+  // The guest's side: the host's page closes mid-match, which ends the
+  // match and the lobby with it (#403).
+  const host = await page.context().newPage();
+  await startLobbyMatch(host, [page]);
+  const canvas = page.locator("#viewport canvas");
 
-/**
- * Record every WebSocket the page opens, so a test can cut one. Test-side
- * only: Playwright's routeWebSocket rejects the protocols argument the
- * Colyseus SDK passes, so the constructor is wrapped instead.
- */
-async function recordSockets(page: Page): Promise<void> {
-  await page.addInitScript(() => {
-    const log = window as unknown as SocketLog;
-    log.vibewarsSockets = [];
-    const Native = window.WebSocket;
-    window.WebSocket = class extends Native {
-      constructor(url: string | URL, protocols?: string | string[]) {
-        super(url, protocols);
-        log.vibewarsSockets.push(this);
-      }
-    };
-  });
-}
+  await host.close();
 
-test("a match lost for good returns to the menu and says why (#195)", async ({ page }) => {
-  await recordSockets(page);
-  const canvas = await startQuickMatch(page);
-
-  // The match's socket is the newest. A plain close (1000) is neither a
-  // code the SDK retries nor a consented leave: exactly what the SDK
-  // reports once it has given up retrying.
-  await page.evaluate(() => {
-    (window as unknown as SocketLog).vibewarsSockets.at(-1)?.close(1000, "e2e: lost for good");
-  });
-
-  const notice = page.getByText("Lost the connection to the match.");
+  const notice = page.getByText("The host closed the lobby.");
   await expect(notice).toBeVisible();
-  await expect(page.getByRole("button", { name: "quick match" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "host a lobby" })).toBeVisible();
   await expect(canvas).toBeHidden();
 
   // A new match works, and the notice is gone with the menu.
-  await startQuickMatch(page);
+  await startSoloMatch(page);
   await expect(notice).toHaveCount(0);
 });
 
-test("the target panel shows the target's professions before its name (#281)", async ({
-  browser,
-  page,
-}) => {
+test("the target panel shows the target's professions before its name (#281)", async ({ page }) => {
   // A fresh tab has no character, so the opponent plays the house
   // loadout: a warrior with no secondary.
-  const opponent = await browser.newPage();
+  const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
   const icons = page.locator(".hud-target-professions img");
   await expect(icons).toHaveCount(0);
