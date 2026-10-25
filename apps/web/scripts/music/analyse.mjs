@@ -25,7 +25,8 @@ export const KNOWN_CONTROLS = new Set(
     "s n note gain postgain velocity attack decay sustain release clip legato " +
     "lpf lpq hpf hpq bpf cutoff resonance vowel room roomsize orbit pan delay " +
     "delaytime delayfeedback speed bank fm fmh fmattack fmdecay fmsustain " +
-    "coarse crush shape distort"
+    "coarse crush shape distort distortvol lpattack lpdecay lpenv unison detune " +
+    "vib vibmod"
   ).split(" "),
 );
 
@@ -137,7 +138,11 @@ const noteName = (note) => (typeof note === "number" ? Note.fromMidi(note) : Str
  * @param {unknown} note
  * @returns {string}
  */
-const pitchClass = (note) => Note.pitchClass(Note.simplify(noteName(note)));
+const pitchClass = (note) => {
+  const chroma = Note.chroma(noteName(note));
+  // One spelling for both sides: MIDI numbers come back flat, scales sharp.
+  return chroma === undefined ? noteName(note) : Note.pitchClass(Note.fromMidiSharps(60 + chroma));
+};
 
 /**
  * @param {string} source
