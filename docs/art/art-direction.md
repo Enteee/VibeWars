@@ -23,18 +23,18 @@ the code and `scripts/assets/icons.mjs` copy them.
 
 ### Field
 
-| Token         | Hex       | Use                                 |
-| ------------- | --------- | ----------------------------------- |
-| `bg`          | `#0e1116` | Arena floor, page background        |
-| `grid`        | `#1a212c` | Arena grid                          |
-| `panel`       | `#161b22` | HUD and menu panels, icon glyph cut |
-| `line`        | `#2b3440` | Hairlines, panel borders            |
-| `wall-fill`   | `#202836` | Walls                               |
-| `wall-stroke` | `#3b4759` | Wall edges                          |
-| `ink`         | `#d7dee8` | Text, neutral icons                 |
-| `ink-dim`     | `#7d8899` | Secondary text                      |
-| `dead`        | `#4a5464` | Corpses (hollow circle, no bars)    |
-| `edge`        | `#0b0f14` | Body outline, weapon-mark casing    |
+| Token         | Hex       | Use                              |
+| ------------- | --------- | -------------------------------- |
+| `bg`          | `#0e1116` | Arena floor, page background     |
+| `grid`        | `#1a212c` | Arena grid                       |
+| `panel`       | `#161b22` | HUD and menu panels, plate cuts  |
+| `line`        | `#2b3440` | Hairlines, panel borders         |
+| `wall-fill`   | `#202836` | Walls                            |
+| `wall-stroke` | `#3b4759` | Wall edges                       |
+| `ink`         | `#d7dee8` | Text, neutral icons              |
+| `ink-dim`     | `#7d8899` | Secondary text                   |
+| `dead`        | `#4a5464` | Corpses (hollow circle, no bars) |
+| `edge`        | `#0b0f14` | Body outline, weapon-mark casing |
 
 ### Signals (arena)
 
@@ -278,10 +278,20 @@ Why it reads, and what it is not:
   In Phaser the shield is one `arc` path stroked twice, the focus one
   `strokeCircle` per colour: two calls per actor.
 
-### Profession in the arena (study, not decided)
+### Profession in the arena
 
-How a player's profession could show in the arena (#166) waits on the
-operator's Q25: one profession or both. `node
+Decided (Q25, Q29, Q32): placement **A**. The primary glyph shows at 11 px
+in `ink` before the name, and hides with it. The target panel shows the
+primary and the secondary in their profession colours (#281).
+
+**Profession icons have no painted cuts.** The scene draws them with a tint
+fill, which paints every opaque pixel `ink`. So the necromancer's eye and
+the elementalist's split are transparent holes (fill-rule evenodd), not
+`panel`-coloured shapes on top. A painted cut would vanish and leave a plain
+triangle and a plain diamond. Every other icon family keeps its plates and
+plate-coloured cuts, because they are never tinted.
+
+The study that chose A, `node
 scripts/assets/profession-badge-study.mjs` draws three placements of the
 existing profession glyphs, all in `ink`, because in the arena colour means
 team:
@@ -294,9 +304,8 @@ team:
 - **C: the primary on the body.** The weapon line (#188) runs across it, so
   it does not read.
 
-Recommendation: **A**, and if both professions should show, put the pair in
-the target panel, where there is room and the profession colours are
-allowed.
+It recommended A, with the pair in the target panel, where there is room
+and the profession colours are allowed.
 
 ### Name labels (study, not decided)
 
