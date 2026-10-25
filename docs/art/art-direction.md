@@ -212,6 +212,26 @@ In Phaser: one `beginPath`, the strokes as `moveTo`/`lineTo`, one
 `strokePath` per colour, plus one `fillPoints` per colour for the axe and
 the orb. That is two or three calls per actor, whatever the family.
 
+### Profession in the arena (study, not decided)
+
+How a player's profession could show in the arena (#166) waits on the
+operator's Q25: one profession or both. `node
+scripts/assets/profession-badge-study.mjs` draws three placements of the
+existing profession glyphs, all in `ink`, because in the arena colour means
+team:
+
+![Profession badge study](profession-badge-study.svg)
+
+- **A: the primary, 11 px, before the name.** All ten read at true size.
+- **B: A, plus the secondary at 8 px in dim ink.** The secondary is mush at
+  that size; at 11 px the name plate doubles in width over a 34 px bar.
+- **C: the primary on the body.** The weapon line (#188) runs across it, so
+  it does not read.
+
+Recommendation: **A**, and if both professions should show, put the pair in
+the target panel, where there is room and the profession colours are
+allowed.
+
 ### Skill type badges
 
 The corner badge on a skill slot. Ink on the slot, except the two that leave a
