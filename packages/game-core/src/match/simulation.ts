@@ -394,6 +394,10 @@ export class MatchSimulation {
    * With no target, an enemy-targeted skill targets the nearest living
    * enemy first, picked exactly as a behaviour picks one. That target
    * stays selected, whether or not the cast is then allowed.
+   *
+   * An ally-targeted skill with nothing or an enemy selected goes to the
+   * caster, as in GW1 (#52). The enemy stays selected, so a monk can heal
+   * themself mid-fight without losing the target.
    */
   public requestSkill(id: string, slot: number): SkillRequest | undefined {
     const record = this.#participants.get(id);
@@ -419,7 +423,8 @@ export class MatchSimulation {
       );
     }
 
-    const check = this.#check(record, skill, record.targetId);
+    const castTargetId = skill.target === "self" ? id : this.#castTarget(record, skill);
+    const check = this.#check(record, skill, castTargetId);
     if (!check.ok) {
       return { skillId: skill.id, check };
     }
@@ -432,7 +437,7 @@ export class MatchSimulation {
     }
     record.combatant.cast.beginCast(
       skill.id,
-      skill.target === "self" ? id : record.targetId,
+      castTargetId,
       effectiveActivationSeconds(skill, record.combatant),
     );
     return { skillId: skill.id, check };
@@ -521,7 +526,18 @@ export class MatchSimulation {
     return { tick: this.#tick, elapsedSeconds: this.#elapsedSeconds, phase: this.phase, log };
   }
 
+  /** Who a targeted skill lands on: the selection, or the caster for an ally skill with no ally selected. */
+  #castTarget(record: ParticipantRecord, skill: Skill): string | undefined {
+    if (skill.target !== "single-ally") {
+      return record.targetId;
+    }
+    const selected =
+      record.targetId === undefined ? undefined : this.#participants.get(record.targetId);
+    return selected?.combatant.team === record.combatant.team ? selected.id : record.id;
+  }
+
   /** The one activation check, for a cast and for a behaviour asking whether it could. */
+
   #check(record: ParticipantRecord, skill: Skill, targetId: string | undefined): ActivationCheck {
     const target = targetId === undefined ? undefined : this.#participants.get(targetId);
     return canActivate({
