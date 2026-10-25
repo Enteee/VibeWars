@@ -26,6 +26,7 @@ import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js"
 import { addMember, duplicateTeam, moveMember, newTeam, removeMember } from "./ui/team-builder.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
 import type { PlayerBuild } from "@vibewars/game-core";
+import { mountMusicSpike } from "./music/spike.js";
 
 /**
  * Application shell: owns which screen is showing and the connections
@@ -543,6 +544,7 @@ async function main(): Promise<void> {
   showMenu();
 }
 
+mountMusicSpike();
 main().catch((error: unknown) => {
   setStatus("failed to start", "error");
   console.error("[web] boot failed", error);

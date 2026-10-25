@@ -101,7 +101,14 @@ export function createGameServer(
       }
 
       console.info(`[http] serving client from ${webRoot}`);
-      app.use(express.static(webRoot));
+      // Spike (#368): the sandboxed music host has an opaque origin, so its
+      // module scripts and samples are cross-origin fetches. Static files
+      // are public; GitHub Pages sends the same header for everything.
+      app.use(
+        express.static(webRoot, {
+          setHeaders: (res) => res.setHeader("Access-Control-Allow-Origin", "*"),
+        }),
+      );
 
       // The client is a single-page app: unknown non-API paths must return
       // index.html so that deep links survive a reload. Every API prefix

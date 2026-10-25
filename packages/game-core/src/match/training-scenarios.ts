@@ -204,7 +204,38 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
       },
     ],
   },
+  {
+    // Spike (#368) only, never merged: a 4v4 brawl to measure music CPU under load.
+    id: "spike-4v4",
+    label: "Spike 4v4",
+    teaches: "Nothing: a load test for the music spike.",
+    mapId: "training-hall",
+    exercises: ["auto-attacks"],
+    knobs: [],
+    dummies: [
+      ...[0, 1, 2].map((i) => brawler(`ally-${String(i)}`, 0, vec2(140, 150 + i * 60), "longbow")),
+      ...[0, 1, 2, 3].map((i) =>
+        brawler(`enemy-${String(i)}`, 1, vec2(420, 120 + i * 60), i % 2 ? "longbow" : "flatbow"),
+      ),
+    ],
+  },
 ];
+
+/** Spike (#368): a mortal dummy that fights the nearest enemy. */
+function brawler(id: string, team: number, position: Vec2, weapon: WeaponId): TrainingDummy {
+  return {
+    id,
+    label: id,
+    team,
+    position,
+    armor: 60,
+    maxHealth: IMMORTAL,
+    skillBar: [],
+    attributeRanks: { "ranger.marksmanship": 12 },
+    behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
+    weapon,
+  };
+}
 
 export function getTrainingScenario(id: string): TrainingScenario | undefined {
   return TRAINING_SCENARIOS.find((scenario) => scenario.id === id);

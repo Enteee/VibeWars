@@ -15,8 +15,22 @@ export default defineConfig({
     // Phaser is large; a visible budget keeps us honest about what we add.
     chunkSizeWarningLimit: 1600,
     sourcemap: true,
+    // Spike (#368): the sandboxed music host is a second entry.
+    rolldownOptions: {
+      input: { main: "index.html", "music-host": "music-host.html" },
+    },
   },
+  // Spike (#368): the opaque-origin music host fetches its own module
+  // scripts and samples in CORS mode, with `Origin: null`.
+  resolve: {
+    alias: {
+      "@kabelsalat/web": new URL("./src/music/host/shims/kabelsalat-web.ts", import.meta.url)
+        .pathname,
+    },
+  },
+  preview: { cors: { origin: "*" } },
   server: {
+    cors: { origin: "*" },
     port: 5173,
     strictPort: true,
     // No proxy to the game server. The client addresses it directly via
