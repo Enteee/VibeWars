@@ -105,9 +105,13 @@ test("(3) typing in the editor never drives the arena", async ({ page }) => {
   const rowsBefore = await logRows(page).count();
   const before = await arenaShot(page, canvas);
 
+  const original = await name.inputValue();
   await name.fill("");
   await page.keyboard.type("wasdd");
   await expect(name).toHaveValue("wasdd");
+  // The name is drawn over the player's head, live (#53), so it goes back
+  // before the frames are compared: what is left to differ is movement.
+  await name.fill(original);
 
   const search = page.locator("input.skill-search");
   await search.click();
