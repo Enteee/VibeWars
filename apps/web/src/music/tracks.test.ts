@@ -7,6 +7,8 @@ import { describe, expect, it } from "vitest";
 // Plain JS, shared with `pnpm music:check`: one implementation of the rules.
 // @ts-expect-error -- JSDoc-typed .mjs, outside the tsc project on purpose
 import { allowedSounds, checkTrack, KNOWN_CONTROLS } from "../../scripts/music/analyse.mjs";
+// @ts-expect-error -- as above
+import { distinctPhrasesOf, formOf, MAX_EVENTS_PER_SECOND } from "../../scripts/music/analyse.mjs";
 // @ts-expect-error -- JSDoc-typed .mjs, outside the tsc project on purpose
 import { checkManifest } from "../../scripts/music/manifest.mjs";
 import { MOODS } from "./mood.js";
@@ -22,12 +24,19 @@ interface CheckInput {
   key: string;
   colour: string[];
   layers: number;
+  phraseCycles: number;
 }
 const check = checkTrack as (
   t: CheckInput,
   o: { cycles: number; allowedSounds: Set<string> },
 ) => Promise<Checked>;
 const sounds = allowedSounds as (m: Record<string, unknown>) => Set<string>;
+const form = formOf as (cycles: readonly (readonly string[])[], max: number) => number;
+const phrases = distinctPhrasesOf as (
+  cycles: readonly (readonly string[])[],
+  form: number,
+  phraseCycles: number,
+) => number;
 const hygiene = checkManifest as (
   m: readonly object[],
   files: readonly string[],
@@ -50,14 +59,21 @@ const fixture = (name: string, overrides: Partial<CheckInput> = {}): CheckInput 
   key: "D aeolian",
   colour: [],
   layers: 3,
+  phraseCycles: 8,
   ...overrides,
 });
 
+/**
+ * The fixtures for the older rules are short loops on purpose, so the form
+ * rules of #427 fail them; those tests look at every other problem.
+ */
+const besidesForm = (problems: readonly string[]): string[] =>
+  problems.filter((p) => !/repeats after|distinct phrase/.test(p));
+
 describe("the track checker rejects broken tracks (fixtures)", () => {
-  it("passes the reference track", async () => {
-    expect(
-      (await check(fixture("good"), { cycles: CYCLES, allowedSounds: allowed })).problems,
-    ).toEqual([]);
+  it("passes the reference track on every rule but the form's", async () => {
+    const { problems } = await check(fixture("good"), { cycles: CYCLES, allowedSounds: allowed });
+    expect(besidesForm(problems)).toEqual([]);
   });
 
   it.each([
@@ -84,7 +100,7 @@ describe("the track checker rejects broken tracks (fixtures)", () => {
       cycles: CYCLES,
       allowedSounds: allowed,
     });
-    expect(problems).toEqual([]);
+    expect(besidesForm(problems)).toEqual([]);
   });
 
   it("fails a sound that is not in the palette", async () => {
@@ -112,6 +128,98 @@ describe("the track checker rejects broken tracks (fixtures)", () => {
     const { problems } = await check(dead, { cycles: CYCLES, allowedSounds: allowed });
     expect(problems.join("\n")).toContain("the layer adds nothing");
     expect(problems.join("\n")).toContain("stack member #2 plays no event at the highest level");
+  });
+});
+
+describe("the track checker rejects short and repetitive tracks (#427)", () => {
+  const options = { cycles: CYCLES, allowedSounds: allowed };
+
+  it("passes a 64-cycle track with four sections, at every level", async () => {
+    expect((await check(fixture("long"), options)).problems).toEqual([]);
+  });
+
+  it("fails a track that comes round every 8 cycles, at every level", async () => {
+    const { problems } = await check(fixture("short-loop"), options);
+    for (const level of [0, 1, 2]) {
+      expect(problems).toContain(
+        `short-loop level ${String(level)}: repeats after 27 s (8 cycles), want ≥ 180 s`,
+      );
+      expect(problems).toContain(
+        `short-loop level ${String(level)}: 1 distinct phrase(s) of 8 cycles, want ≥ 4`,
+      );
+    }
+  });
+
+  it("does not count a slow filter sweep as variation", async () => {
+    const { problems } = await check(fixture("lfo-only"), options);
+    expect(problems).toContain("lfo-only level 0: repeats after 13 s (4 cycles), want ≥ 180 s");
+  });
+
+  it("fails a track denser than the shipped ones", async () => {
+    // 128 hits a cycle at 18 cycles a minute: 38.4 a second.
+    const source = 'setcpm(72 / 4)\ns("white*128").gain(.1)';
+    const t = fixture("good", { id: "dense", source, layers: 1 });
+    const { problems } = await check(t, options);
+    expect(problems).toContain(
+      `dense level 0: 38.4 events per second, want ≤ ${String(MAX_EVENTS_PER_SECOND)}`,
+    );
+  });
+});
+
+describe("the form finder", () => {
+  const MAX = 16;
+  /** `2 × MAX` cycles, cycle `c` playing `play(c)`. */
+  const cycles = (play: (c: number) => string): string[][] =>
+    Array.from({ length: 2 * MAX }, (_, c) => [play(c)]);
+
+  it("finds a one-cycle loop", () => {
+    expect(
+      form(
+        cycles(() => "a"),
+        MAX,
+      ),
+    ).toBe(1);
+  });
+
+  it("finds a seven-cycle loop", () => {
+    expect(
+      form(
+        cycles((c) => String(c % 7)),
+        MAX,
+      ),
+    ).toBe(7);
+  });
+
+  it("says long enough when nothing repeats within the max", () => {
+    expect(
+      form(
+        cycles((c) => String(c)),
+        MAX,
+      ),
+    ).toBe(MAX);
+  });
+
+  it("is not fooled by a section that holds for a while", () => {
+    // Eight cycles of "a", eight of "b", round again: 16, not 1 or 2.
+    expect(
+      form(
+        cycles((c) => (c % 16 < 8 ? "a" : "b")),
+        MAX,
+      ),
+    ).toBe(16);
+  });
+
+  it("counts the different phrases in the form", () => {
+    const sections = cycles((c) => String(Math.floor((c % 12) / 4)));
+    expect(form(sections, MAX)).toBe(12);
+    expect(phrases(sections, 12, 4)).toBe(3);
+    expect(
+      phrases(
+        cycles(() => "a"),
+        1,
+        4,
+      ),
+    ).toBe(1);
   });
 });
 
