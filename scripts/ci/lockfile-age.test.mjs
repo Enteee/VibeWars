@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { addedPackages, packagesOf, tooYoung } from "./lockfile-age.mjs";
+import { diffPackages, packagesOf, tooYoung } from "./lockfile-age.mjs";
 
 const base = `lockfileVersion: '9.0'
 
@@ -13,27 +13,39 @@ importers:
 packages:
 
   '@scope/b@2.0.0':
-    resolution: {integrity: x}
+    resolution: {integrity: sha512-b}
 
   a@1.0.0:
-    resolution: {integrity: y}
+    resolution: {integrity: sha512-a}
 
 snapshots:
 
   a@1.0.0: {}
 `;
-const head = base.replace(
-  "snapshots:",
-  "  c@3.1.0-beta.1:\n    resolution: {integrity: z}\n\n  '@scope/d@0.0.1':\n    resolution: {integrity: w}\n\nsnapshots:",
-);
+
+/**
+ * @param {string} lockfile
+ * @param {string} entries
+ */
+const withEntries = (lockfile, entries) => lockfile.replace("snapshots:", `${entries}\nsnapshots:`);
 
 describe("lockfile age check", () => {
-  it("reads name@version keys from packages: only", () => {
-    expect([...packagesOf(base)].sort()).toEqual(["@scope/b@2.0.0", "a@1.0.0"]);
+  it("reads each packages: entry with its resolution, and nothing else", () => {
+    expect([...packagesOf(base)]).toEqual([
+      ["@scope/b@2.0.0", "resolution: {integrity: sha512-b}"],
+      ["a@1.0.0", "resolution: {integrity: sha512-a}"],
+    ]);
   });
 
   it("finds what the head lockfile adds", () => {
-    expect(addedPackages(base, head)).toEqual(["@scope/d@0.0.1", "c@3.1.0-beta.1"]);
+    const head = withEntries(
+      base,
+      "  c@3.1.0-beta.1:\n    resolution: {integrity: sha512-c}\n\n  '@scope/d@0.0.1':\n    resolution: {integrity: sha512-d}\n",
+    );
+    expect(diffPackages(base, head)).toEqual({
+      added: ["@scope/d@0.0.1", "c@3.1.0-beta.1"],
+      problems: [],
+    });
   });
 
   it("flags young and unknown versions, passes old ones", async () => {
@@ -55,19 +67,42 @@ describe("lockfile age check", () => {
 });
 
 describe("exotic resolutions", () => {
-  it("fails a git or tarball entry added to the lockfile", async () => {
-    const withUrl = `${base}\n`.replace(
-      "snapshots:",
-      "  u@https://codeload.github.com/o/u/tar.gz/abc123:\n    resolution: {gitHosted: true}\n\nsnapshots:",
+  it("fails a git or tarball entry added to the lockfile", () => {
+    const head = withEntries(
+      base,
+      "  u@https://codeload.github.com/o/u/tar.gz/abc123:\n    resolution: {gitHosted: true, tarball: https://codeload.github.com/o/u/tar.gz/abc123}\n",
     );
-    const added = addedPackages(base, withUrl);
-    expect(added).toEqual(["u@https://codeload.github.com/o/u/tar.gz/abc123"]);
-    const problems = await tooYoung(
-      added,
-      () => Promise.resolve("2020-01-01T00:00:00Z"),
-      new Date(),
-    );
+    const { problems } = diffPackages(base, head);
     expect(problems).toHaveLength(1);
     expect(problems[0]).toContain("blockExoticSubdeps");
+  });
+
+  it("fails an existing key whose resolution is rewritten to a tarball", () => {
+    const head = base.replace(
+      "{integrity: sha512-a}",
+      "{integrity: sha512-evil, tarball: https://evil.example/a.tgz}",
+    );
+    const { added, problems } = diffPackages(base, head);
+    expect(added).toEqual([]);
+    expect(problems).toHaveLength(2);
+    expect(problems[0]).toContain("resolution changed");
+    expect(problems[1]).toContain("tarball");
+  });
+
+  it("fails an existing key whose integrity is swapped", () => {
+    const head = base.replace("sha512-a", "sha512-other");
+    expect(diffPackages(base, head).problems).toHaveLength(1);
+  });
+
+  it("passes an exotic entry that is identical to the base", () => {
+    const exotic = withEntries(
+      base,
+      "  u@https://x.example/u.tgz:\n    resolution: {tarball: https://x.example/u.tgz}\n",
+    );
+    expect(diffPackages(exotic, exotic)).toEqual({ added: [], problems: [] });
+  });
+
+  it("fails closed on a key line it cannot parse", () => {
+    expect(() => packagesOf(withEntries(base, "  weird key:\n"))).toThrow("cannot parse");
   });
 });

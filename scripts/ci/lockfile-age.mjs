@@ -18,38 +18,66 @@ import { fileURLToPath } from "node:url";
 export const MIN_AGE_DAYS = 7;
 
 /**
- * The `name@spec` keys under the lockfile's top-level `packages:`; the spec is
- * a version for registry packages and a URL or ref for git and tarball ones.
+ * The entries under the lockfile's top-level `packages:`, `name@spec` mapped to
+ * its `resolution:` line. The spec is a version for registry packages and a URL
+ * or ref for git and tarball ones. A key line this cannot parse throws: the
+ * check fails closed rather than skip what it does not understand.
  * @param {string} lockfile
- * @returns {Set<string>}
+ * @returns {Map<string, string>}
  */
 export const packagesOf = (lockfile) => {
-  /** @type {Set<string>} */
-  const keys = new Set();
+  /** @type {Map<string, string>} */
+  const entries = new Map();
   let inPackages = false;
+  let current = "";
   for (const line of lockfile.split("\n")) {
     if (/^\S/.test(line)) inPackages = line.startsWith("packages:");
     else if (inPackages) {
-      const match = /^ {2}'?((?:@[^/\s]+\/)?[^@\s']+@[^\s']+?)'?:\s*$/.exec(line);
-      if (match) keys.add(match[1]);
+      if (/^ {2}\S/.test(line)) {
+        const match = /^ {2}'?((?:@[^/\s]+\/)?[^@\s']+@[^\s']+?)'?:\s*$/.exec(line);
+        if (!match) throw new Error(`cannot parse lockfile entry: ${line}`);
+        current = match[1];
+        entries.set(current, "");
+      } else if (/^ {4}resolution:/.test(line) && current !== "") {
+        entries.set(current, line.trim());
+      }
     }
   }
-  return keys;
+  return entries;
 };
 
+/** What every registry entry's resolution looks like: an integrity hash, nothing else. */
+const REGISTRY_RESOLUTION = /^resolution: \{integrity: [^,{}\s]+\}$/;
+
 /**
+ * What the head lockfile adds or rewrites relative to the base. `added` are the
+ * new keys; `problems` are entries whose resolution is new or changed and is
+ * anything but a bare registry integrity (git, tarball, URL), or changed at all.
  * @param {string} baseLockfile
  * @param {string} headLockfile
- * @returns {string[]}
+ * @returns {{ added: string[], problems: string[] }}
  */
-export const addedPackages = (baseLockfile, headLockfile) => {
+export const diffPackages = (baseLockfile, headLockfile) => {
   const base = packagesOf(baseLockfile);
-  return [...packagesOf(headLockfile)].filter((key) => !base.has(key)).sort();
+  /** @type {string[]} */
+  const added = [];
+  /** @type {string[]} */
+  const problems = [];
+  for (const [key, resolution] of packagesOf(headLockfile)) {
+    const before = base.get(key);
+    if (before === resolution) continue;
+    if (before === undefined) added.push(key);
+    else problems.push(`${key}: resolution changed (${before} -> ${resolution})`);
+    if (!REGISTRY_RESOLUTION.test(resolution)) {
+      problems.push(`${key}: git, tarball or URL resolution (blockExoticSubdeps)`);
+    }
+  }
+  return { added: added.sort(), problems };
 };
 
 /**
- * The added entries that are not a registry version at least the minimum age:
- * too young, unknown to the registry, or a git/tarball/URL resolution.
+ * The added registry versions younger than the minimum age, or unknown to the
+ * registry.
  * @param {string[]} added
  * @param {(name: string, version: string) => Promise<string | undefined>} publishedAt
  * @param {Date} now
@@ -60,10 +88,7 @@ export const tooYoung = async (added, publishedAt, now) => {
   const problems = [];
   for (const key of added) {
     const at = key.indexOf("@", 1);
-    if (!/^\d/.test(key.slice(at + 1))) {
-      problems.push(`${key}: git, tarball or URL resolution (blockExoticSubdeps)`);
-      continue;
-    }
+    if (!/^\d/.test(key.slice(at + 1))) continue; // reported by diffPackages
     const published = await publishedAt(key.slice(0, at), key.slice(at + 1));
     if (published === undefined) {
       problems.push(`${key}: no publish date on the registry`);
@@ -93,9 +118,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error("usage: lockfile-age.mjs <base-lockfile> <head-lockfile>");
     process.exit(2);
   }
-  const added = addedPackages(fs.readFileSync(baseFile, "utf8"), fs.readFileSync(headFile, "utf8"));
+  const diff = diffPackages(fs.readFileSync(baseFile, "utf8"), fs.readFileSync(headFile, "utf8"));
+  const { added } = diff;
   console.log(`${String(added.length)} package version(s) added to the lockfile`);
-  const problems = await tooYoung(added, registryPublishedAt, new Date());
+  const problems = [...diff.problems, ...(await tooYoung(added, registryPublishedAt, new Date()))];
   for (const problem of problems) console.error(`::error::${problem}`);
   if (problems.length > 0) {
     console.error(
