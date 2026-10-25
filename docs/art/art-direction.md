@@ -488,3 +488,110 @@ Rules:
 
 Play them through Web Audio with each buffer decoded once at load, not through
 `<audio>` elements: a hit must start within a frame of the damage number.
+
+## Music
+
+Music is mood; sound effects are information. A player must never mistake a
+musical note for a cue, and must never lose a cue under the music. The music
+is Strudel source we write (`apps/web/src/music/tracks/<id>.strudel.js`), one
+file per track, played by the music host and driven by the game's intensity
+(epic #366). Everything here serves one idea: the soundtrack of a Guild Wars
+fight, orchestral, Celtic and medieval, small enough to load over a LAN.
+
+**Evoke, never copy.** No melody, progression or motif from any existing
+score, and no place names from the game that inspired this one.
+
+### Palette
+
+Every sound a track plays is either one of Strudel's built-in oscillators or
+a key of `apps/web/public/music/samples/strudel.json`. Nothing else, and
+nothing from a CDN. The allowed set is exactly that file plus the built-ins,
+so there is no second list to drift.
+
+| Voice                | How it is made                                              |
+| -------------------- | ----------------------------------------------------------- |
+| Strings (sustained)  | `supersaw`, 2–3 voices, slow attack, low-pass that opens    |
+| Strings (pizzicato)  | `pizz` samples                                              |
+| Cello, low brass     | `sawtooth` with a low-pass envelope (`lpenv`, `lpa`, `lpd`) |
+| Horn, brass stabs    | `sawtooth`, faster envelope, `lpf` 1–1.5 kHz                |
+| Choir "ah"/"oh"      | `sawtooth` through `.vowel("a")`                            |
+| Sub, bass            | `sine`, `triangle`                                          |
+| Harp, lute           | `harp`, `strum` samples                                     |
+| Flute, tin whistle   | `recorder`, `whistle` samples                               |
+| Timpani, war drum    | `timp`, `taiko` samples                                     |
+| Hand drum, snare     | `frame`, `snare` samples                                    |
+| Bells, metal, cymbal | `bells`, `anvil`, `gong`, `crash`, `swell` samples          |
+
+Samples are cut from VCSL (CC0) by `scripts/assets/music-palette.sh` into mono
+MP3, 32 kHz, 40 kbit/s. The set is about 0.55 MB; the budget is 3 MB. Licences
+are in `apps/web/public/music/samples/LICENSES.md`. A map of pitched samples
+has note-name keys; unpitched hits are arrays (`s("taiko:1")`). A key with
+`#` in it is stored as `s` in the file name, because `#` starts a URL fragment.
+The host must pass the base URL itself (`samples(map, base)`, with a trailing
+slash): Strudel does not derive it from the map's URL.
+
+### Loudness
+
+- Music sits **under** the sound effects. Target **−18 LUFS integrated** at
+  intensity 2 (or the top level of a track with fewer layers), true peak
+  below −5 dBFS, before the host's music bus.
+- Measured on an offline render of eight cycles: layers rise by 1–3 LU per
+  level, so a fight sounds bigger without getting louder than a cue.
+- The checker's worst-case summed gain stays at or below 1.5 at every level,
+  and is a pessimistic bound, not a loudness: a track at 1.5 renders at about
+  −9 dBFS peak. Keep one `.postgain()` per track.
+
+### Never in the music
+
+- A high double tick (that is `cast-target`).
+- A broadband crack into a buzzy falling tone (that is `interrupt`).
+- A short falling two-note blip (that is `refused`).
+- Anything above 4 kHz that is loud and short. Highs are for air and bells.
+
+### Moods
+
+| Mood        | Sounds like                                               | Tracks                         |
+| ----------- | --------------------------------------------------------- | ------------------------------ |
+| atmospheric | Open fifths, flute over harp, long reverb                 | first-light, jungle-veil       |
+| melancholy  | Low strings, sparse harp, minor, lots of air              | ashen-fields                   |
+| adventurous | Horn call, striding bass, frame drum, tin whistle         | northern-pass                  |
+| mysterious  | Odd-length phrases, pizzicato, breathy flute, drones      | jungle-veil, glass-dunes       |
+| epic        | Choir, timpani, brass melody, big open voicings           | hall-of-champions, glass-dunes |
+| action      | Driving drums, string ostinato in sixteenths, short brass | clash-of-banners, ember-deep   |
+| tense       | Heartbeat sub, trembling strings, the filter opening      | last-stand                     |
+| dark        | Low brass, anvil, a grinding ostinato, phrygian colour    | ember-deep, last-stand         |
+| triumphant  | Brass chorale, choir, bells; noble, never cheesy          | victors-hymn                   |
+
+### Intensity
+
+`layer(n, pattern)` plays only while the director's intensity is at least `n`.
+Level 0 is a finished, calm version of the track, not the track with holes.
+
+| Level | In game  | A track adds                                         |
+| ----- | -------- | ---------------------------------------------------- |
+| 0     | calm     | The bed: pad, bass, a sparse lead                    |
+| 1     | engaged  | Motion: harp or pizzicato ostinato, light percussion |
+| 2     | fighting | Drums, brass, the full melody                        |
+| 3     | peak     | War drums doubled, choir, filter fully open          |
+
+A track declares `layers` = its highest level plus one. Continuous moves use
+`INTENSITY`, e.g. `.lpf(ref(() => 600 + INTENSITY * 900))`.
+
+### Writing a track
+
+1. Pick an id (kebab-case), a key from the scales Strudel's tonal knows, a
+   tempo, and a mood. Add the entry to `apps/web/src/music/tracks/manifest.json`.
+   List in `colour` every pitch class the track uses on purpose outside its key.
+2. The first line of code is `setcpm(bpm / 4)`, under a comment with the id,
+   key, bpm and one line of intent.
+3. Chords only via `chord("…").voicing()`, in jazz spellings (`Ab^9`, `Cm9`,
+   `Cadd9`). Never `note("c'min9")`, never `.arp()`: index into the chord with
+   `n("0 2 4").chord(P).voicing()`.
+4. Scales with a name of two words use tonal's one-word alias in `.scale()`:
+   `e5:spanish` is E phrygian dominant. `e5:phrygian dominant` fails silently.
+5. No two tracks share a progression. Each is recognisable within four cycles.
+6. Run the checker at every level, then render and measure. Fix anything that
+   prints `[tonal] error` or `unknown chord`: the track loses a voice and
+   still "passes".
+7. Quotes in `.strudel.js` are deliberate: double quotes are mini-notation.
+   Prettier does not touch these files.
