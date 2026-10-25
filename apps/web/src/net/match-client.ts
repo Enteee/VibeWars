@@ -1,5 +1,10 @@
 import { Client, type Room } from "@colyseus/sdk";
-import { isProfessionId, type PlayerBuild, type ProfessionId } from "@vibewars/game-core";
+import {
+  isOffhandId,
+  isProfessionId,
+  type PlayerBuild,
+  type ProfessionId,
+} from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   ROOM_MATCH,
@@ -87,6 +92,7 @@ export interface DecodedPlayer {
   readonly adrenaline: number;
   readonly armor: number;
   readonly weaponId: string;
+  readonly offhandId: string;
   readonly primaryProfession: string;
   readonly secondaryProfession: string;
   readonly team: number;
@@ -145,6 +151,8 @@ function snapshotFrom(room: LiveMatchRoom): MatchSnapshot {
       adrenaline: player.adrenaline,
       armor: player.armor,
       weaponId: player.weaponId === "" ? undefined : player.weaponId,
+      // "" is none; an id this client does not know draws nothing either.
+      offhandId: isOffhandId(player.offhandId) ? player.offhandId : undefined,
       primaryProfession: professionFrom(player.primaryProfession),
       secondaryProfession: professionFrom(player.secondaryProfession),
       team: player.team,

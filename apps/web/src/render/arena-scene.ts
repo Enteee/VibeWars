@@ -13,6 +13,7 @@ import {
   floatingTextY,
   healthFraction,
   nameShown,
+  offhandMarkLayout,
   nameplateLayout,
   placeFloatingText,
   swingFlashAlpha,
@@ -52,6 +53,12 @@ import type {
 const WALL_FILL = 0x202836;
 const WALL_STROKE = 0x3b4759;
 const TARGET_RING = 0xffd866;
+/**
+ * The target ring's radius past the body's edge (operator Q26): its 2 px
+ * stroke spans r + 8 … r + 10, clear of the weapon mark (r + 5) and the
+ * off-hand mark (inside r + 7).
+ */
+const TARGET_RING_OFFSET = 9;
 const GRID = 0x1a212c;
 const HEALTH_BAR_BG = 0x11161d;
 const HEALTH_BAR_FILL = 0x7ee787;
@@ -207,6 +214,32 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
+   * The off-hand mark (#276): an `edge` casing under an `ink` core, like
+   * the weapon mark. The shield is one arc path stroked twice, the focus
+   * one circle per colour.
+   */
+  private drawOffhandMark(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
+    const { x, y } = actor.position;
+    const mark = offhandMarkLayout(x, y, actor.radius, actor.facing, actor.offhandId);
+    if (mark === undefined) {
+      return;
+    }
+    for (const [width, colour] of [
+      [mark.casing, BODY_EDGE],
+      [mark.core, SELF_RIM],
+    ] as const) {
+      g.lineStyle(width, colour, 1);
+      if (mark.kind === "arc") {
+        g.beginPath();
+        g.arc(mark.x, mark.y, mark.radius, mark.from, mark.to);
+        g.strokePath();
+      } else {
+        g.strokeCircle(mark.x, mark.y, mark.radius);
+      }
+    }
+  }
+
+  /**
    * The weapon mark (#188): a 4 px `edge` casing, then a 2 px `ink` core,
    * so the line reads on either team's colour. The casing also outlines the
    * filled tips, which the core then fills.
@@ -359,12 +392,13 @@ export class ArenaScene extends Phaser.Scene {
       g.strokeCircle(x, y, actor.radius - 2);
     }
 
-    // Under the target ring, which covers the pixel the casing overlaps.
+    // Off-hand, then weapon mark, then target ring: the order #275 gives.
+    this.drawOffhandMark(g, actor);
     this.drawWeaponLine(g, actor);
 
     if (actor.id === this.snapshot.targetId) {
       g.lineStyle(2, TARGET_RING, 1);
-      g.strokeCircle(x, y, actor.radius + 5);
+      g.strokeCircle(x, y, actor.radius + TARGET_RING_OFFSET);
     }
 
     this.drawHealthBar(g, actor);
