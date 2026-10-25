@@ -1,5 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { codeLabel } from "../apps/web/src/input/keymap.js";
+import { skillKey } from "./keys.js";
+
 /**
  * Browser tests for local build management (brief §31: create character,
  * create team; §24: import/export).
@@ -160,8 +163,46 @@ test("a saved character can be chosen and is taken into a match", async ({ page 
   await expect(page.locator("#viewport canvas")).toBeVisible();
 
   // The server grants the build's bar, so the HUD shows exactly the one
-  // skill that was equipped — not the eight-slot house loadout.
-  await expect(page.locator(".hud-skills .hud-skill")).toHaveCount(1);
+  // skill that was equipped, not the house loadout, and seven empty slots.
+  await expect(page.locator(".hud-skills .hud-skill:not(.is-empty)")).toHaveCount(1);
+  await expect(page.locator(".hud-skills .hud-skill.is-empty")).toHaveCount(7);
+});
+
+test("in a match, an empty slot's key does nothing; the next key casts its own skill (#347)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Gap");
+  await page.locator(".editor-row select").first().selectOption("elementalist");
+  // Armor of Earth on E, the third slot, with nothing on Q or W.
+  await page
+    .locator(".skill-box", { hasText: "Armor of Earth" })
+    .dragTo(page.locator(".skill-slot").nth(2));
+  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.locator(".roster-row", { hasText: "Gap" }).click();
+  await page.getByRole("button", { name: "quick match" }).click();
+  const energy = page.locator(".hud-bar-energy .hud-bar-label");
+  await expect(energy).toContainText("en");
+
+  // Every slot in its place: W is empty, but still labelled W.
+  const slots = page.locator(".hud-skills .hud-skill");
+  await expect(slots).toHaveCount(8);
+  await expect(slots.nth(1)).toHaveClass(/is-empty/);
+  await expect(slots.nth(1)).toHaveText(codeLabel(skillKey(1)));
+  await expect(slots.nth(2)).toContainText("Armor of Earth");
+
+  const full = await energy.textContent();
+  await page.keyboard.press(skillKey(1));
+  // Long enough for the server to answer, had it anything to answer.
+  await page.waitForTimeout(500);
+  await expect(page.locator(".hud-skill.is-casting")).toHaveCount(0);
+  await expect(page.locator(".hud-skill .recharge-overlay")).toHaveCount(0);
+  await expect(energy).toHaveText(full ?? "");
+
+  // E casts Armor of Earth, not some skill closed up into W.
+  await page.keyboard.press(skillKey(2));
+  await expect(slots.nth(2).locator(".recharge-overlay")).toHaveCount(1);
+  await expect(energy).not.toHaveText(full ?? "");
 });
 
 test("a team supports every operation sprint 18 asks for", async ({ page }) => {

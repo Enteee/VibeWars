@@ -5,6 +5,7 @@ import {
   validatePlayerBuild,
   type BuildProblem,
   type PlayerBuild,
+  type SkillBar,
 } from "./build.js";
 import type { BuildEquipment } from "./equipment/index.js";
 import type { ProfessionId } from "./professions.js";
@@ -23,7 +24,7 @@ import type { AttributeRules } from "./ruleset.js";
  * the house loadout, not a build anyone could make. A player who wants a
  * legal, tuned build makes one and brings it.
  */
-export const DEFAULT_SKILL_BAR: readonly string[] = [
+export const DEFAULT_SKILL_BAR: SkillBar = [
   "elementalist.fireball",
   "monk.orison-of-healing",
   "warrior.sever-artery-lite",
@@ -55,7 +56,7 @@ const DEFAULT_EQUIPMENT: BuildEquipment = defaultBuildEquipment("warrior");
 
 /** What a joining player gets to play, after their claim has been checked. */
 export interface JoinLoadout {
-  readonly skillBar: readonly string[];
+  readonly skillBar: SkillBar;
   readonly attributeRanks: ReadonlyMap<string, number>;
   readonly primaryProfession: ProfessionId;
   readonly secondaryProfession: ProfessionId | undefined;
@@ -105,13 +106,13 @@ export function resolveJoinLoadout(
   if (problems.length > 0) {
     return { loadout: HOUSE_LOADOUT, refused: { kind: "illegal", build, problems } };
   }
-  const skillBar = build.skillBar.filter((id): id is string => id !== null);
-  if (skillBar.length === 0) {
+  if (build.skillBar.every((id) => id === null)) {
     return { loadout: HOUSE_LOADOUT, refused: { kind: "empty-bar", build } };
   }
   return {
     loadout: {
-      skillBar,
+      // Gaps and all: the key of an empty slot does nothing (#347).
+      skillBar: build.skillBar,
       attributeRanks: attributeRanksOf(build),
       primaryProfession: build.primaryProfession,
       secondaryProfession: build.secondaryProfession,

@@ -291,7 +291,7 @@ export function skillSlotHtml(slot: SkillSlot): string {
 
 export function renderSkillBar(
   hud: HudElements,
-  slots: readonly SkillSlot[],
+  slots: readonly (SkillSlot | null)[],
   onUse: (slot: number) => void,
 ): void {
   hud.skillBar.replaceChildren();
@@ -299,6 +299,15 @@ export function renderSkillBar(
     const button = document.createElement("button");
     button.className = "hud-skill";
     button.type = "button";
+    if (slot === null) {
+      // An empty slot keeps its place and its key, as in GW1, and does
+      // nothing (#347).
+      button.classList.add("is-empty");
+      button.disabled = true;
+      button.innerHTML = `<span class="hud-skill-key"></span>`;
+      hud.skillBar.appendChild(button);
+      return;
+    }
     button.innerHTML = skillSlotHtml(slot);
     const nameNode = button.querySelector(".hud-skill-name");
     const costNode = button.querySelector(".hud-skill-cost");
@@ -319,14 +328,14 @@ export function renderSkillBar(
 /** Paint each slot's recharge wipe, from the render loop (#152). */
 export function updateRecharges(
   hud: HudElements,
-  skillBar: readonly SkillSlot[],
+  skillBar: readonly (SkillSlot | null)[],
   recharges: readonly SlotRecharge[],
 ): void {
   const buttons = hud.skillBar.querySelectorAll("button");
   const reducedMotion = prefersReducedMotion();
   skillBar.forEach((slot, index) => {
     const button = buttons[index];
-    if (button !== undefined) {
+    if (button !== undefined && slot !== null) {
       paintRecharge(button, recharges[index], slot.name, reducedMotion);
     }
   });
@@ -492,7 +501,7 @@ export function updateHud(
   hud: HudElements,
   self: PlayerSnapshot | undefined,
   target: PlayerSnapshot | undefined,
-  skillBar: readonly SkillSlot[],
+  skillBar: readonly (SkillSlot | null)[],
   match?: MatchSnapshot,
 ): void {
   if (match !== undefined) {
@@ -536,7 +545,7 @@ export function updateHud(
   const casting = castingSlot(skillBar, self);
   skillBar.forEach((slot, index) => {
     const button = buttons[index];
-    if (button === undefined) {
+    if (button === undefined || slot === null) {
       return;
     }
     // Lit for as long as the snapshot says it casts, however it ends (#300).

@@ -14,6 +14,9 @@ import { key, skillKey } from "./keys.js";
 
 const WIDE = { width: 1500, height: 950 };
 
+/** The bar's filled slots; an empty one keeps its place and its key (#347). */
+const FILLED_SLOTS = ".training-skill:not(.is-empty)";
+
 /** A new elementalist with Fireball on the bar, in a wide editor. */
 async function openTraining(
   page: Page,
@@ -24,7 +27,7 @@ async function openTraining(
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator(".editor-row select").first().selectOption("elementalist");
   await page.locator(".skill-box", { hasText: "Fireball" }).click();
-  await expect(page.locator(".training-skill")).toHaveText([
+  await expect(page.locator(FILLED_SLOTS)).toHaveText([
     `${codeLabel(skillKey(0, keymap))}Fireball`,
   ]);
   const canvas = page.locator(".training canvas");
@@ -179,7 +182,7 @@ test("(7) editing the build re-arms the arena in place", async ({ page }) => {
     "Fireball",
   );
   await expect(meter(page, "damage")).toHaveText("0");
-  await expect(page.locator(".training-skill")).toHaveText([
+  await expect(page.locator(FILLED_SLOTS)).toHaveText([
     `${codeLabel(skillKey(0))}Fireball`,
     `${codeLabel(skillKey(1))}Armor of Earth`,
   ]);
@@ -238,7 +241,7 @@ test("(10) on a narrow screen the columns stack: training, editor, library", asy
 test("(11) every skill button shows its skill-type badge, as the HUD does", async ({ page }) => {
   await openTraining(page);
   await page.locator(".skill-box", { hasText: "Armor of Earth" }).click();
-  const buttons = page.locator(".training-skill");
+  const buttons = page.locator(FILLED_SLOTS);
   await expect(buttons).toHaveText([
     `${codeLabel(skillKey(0))}Fireball`,
     `${codeLabel(skillKey(1))}Armor of Earth`,
@@ -288,7 +291,7 @@ test("(13) a recharging skill shows the clock-wipe and the seconds left, then cl
   page,
 }) => {
   await openTraining(page);
-  const slot = page.locator(".training-skill").first();
+  const slot = page.locator(FILLED_SLOTS).first();
   const idleWidth = (await slot.boundingBox())?.width;
   await castFireballAndLand(page);
 
@@ -333,7 +336,7 @@ test("(15) an empty bar is never dimmed, and Space still swings (#360)", async (
   // An empty bar, as a fresh character has.
   await page.locator(".skill-slot", { hasText: "Fireball" }).locator(".skill-slot-clear").click();
   // The bar repaints in the same re-arm as the overlay.
-  await expect(page.locator(".training-skill")).toHaveCount(0);
+  await expect(page.locator(FILLED_SLOTS)).toHaveCount(0);
   await expect(overlay).toBeHidden();
 
   await page.locator("select.training-scenario").selectOption("weapon-dps");
@@ -510,11 +513,9 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator(".editor-row select").first().selectOption("ranger");
   await page.locator(".skill-box", { hasText: "Troll Unguent" }).click();
-  await expect(page.locator(".training-skill")).toHaveText([
-    `${codeLabel(skillKey(0))}Troll Unguent`,
-  ]);
+  await expect(page.locator(FILLED_SLOTS)).toHaveText([`${codeLabel(skillKey(0))}Troll Unguent`]);
   await takeControl(page);
-  const slot = page.locator(".training-skill").first();
+  const slot = page.locator(FILLED_SLOTS).first();
   await page.keyboard.press(skillKey(0));
   await expect(slot).toHaveClass(/is-casting/);
 
@@ -614,4 +615,33 @@ test("(23) Esc stops a walk to a clicked point, and the next Esc releases the ar
   expect(arrived.equals(stopped), "Esc should have stopped the hero short of the corner").toBe(
     false,
   );
+});
+
+test("(24) an empty slot's key does nothing; the next key casts its own skill (#347)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  // Fireball on Q, nothing on W, Armor of Earth on E.
+  await page
+    .locator(".skill-box", { hasText: "Armor of Earth" })
+    .dragTo(page.locator(".skill-slot").nth(2));
+  const slots = page.locator(".training-skill");
+  await expect(slots).toHaveCount(8);
+  await expect(slots.nth(1)).toHaveClass(/is-empty/);
+  await expect(slots.nth(1)).toHaveText(codeLabel(skillKey(1)));
+  await expect(slots.nth(2)).toHaveText(`${codeLabel(skillKey(2))}Armor of Earth`);
+  await takeControl(page);
+  const energy = page.locator(".training-bar-energy .training-bar-label");
+  const full = await energy.textContent();
+
+  await page.keyboard.press(skillKey(1));
+  await page.waitForTimeout(500);
+  await expect(page.locator(".training-skill.is-casting")).toHaveCount(0);
+  await expect(page.locator(".training-skill .recharge-overlay")).toHaveCount(0);
+  await expect(energy).toHaveText(full ?? "");
+
+  // E casts Armor of Earth, not some skill closed up into W.
+  await page.keyboard.press(skillKey(2));
+  await expect(slots.nth(2).locator(".recharge-overlay")).toHaveCount(1);
+  await expect(energy).not.toHaveText(full ?? "");
 });

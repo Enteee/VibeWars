@@ -1,9 +1,13 @@
+import type { SkillSlot } from "@vibewars/game-session";
+
 import { SKILL_ACTIONS, actionForCode, isShortcut, type Keymap } from "./keymap.js";
 
 /**
  * The bar slot a keydown casts, or `undefined` for none: the keymap's
- * `skill-1` to `skill-8`, as far as the bar reaches (#302). The match and
- * the Training Ground both ask here, so a key casts the same slot in both.
+ * `skill-1` to `skill-8`, each bound to its own slot (#302). The match
+ * and the Training Ground both ask here, so a key casts the same slot in
+ * both. The key of an empty slot casts nothing and does nothing else
+ * (#347).
  *
  * An auto-repeat keydown casts nothing. Holding a skill key while it
  * recharges is a common habit, and at a fast OS repeat rate it would
@@ -15,12 +19,12 @@ import { SKILL_ACTIONS, actionForCode, isShortcut, type Keymap } from "./keymap.
 export function skillSlotForKeyDown(
   event: Pick<KeyboardEvent, "code" | "repeat" | "ctrlKey" | "altKey" | "metaKey">,
   keymap: Keymap,
-  barLength: number,
+  bar: readonly (SkillSlot | null)[],
 ): number | undefined {
   if (event.repeat || isShortcut(event)) {
     return undefined;
   }
   const action = actionForCode(keymap, event.code);
   const slot = action === undefined ? -1 : SKILL_ACTIONS.indexOf(action);
-  return slot >= 0 && slot < barLength ? slot : undefined;
+  return slot >= 0 && (bar[slot] ?? null) !== null ? slot : undefined;
 }

@@ -280,7 +280,7 @@ export async function startMatchView(
     } else if (action === "mute") {
       toggleMute();
     } else {
-      const slot = skillSlotForKeyDown(event, keymap, connection.skillBar.length);
+      const slot = skillSlotForKeyDown(event, keymap, connection.skillBar);
       if (slot !== undefined) {
         useSkill(slot);
       }

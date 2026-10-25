@@ -844,6 +844,9 @@ export class MatchRoom extends Room {
     send(client, "map", this.#mapDescriptor);
     send(client, "skill-bar", {
       slots: sim.skillBar.map((skillId) => {
+        if (skillId === null) {
+          return null;
+        }
         const skill = getSkill(skillId);
         return {
           id: skillId,

@@ -37,11 +37,17 @@ interface PlayerView {
   readonly offhandId: string;
   readonly primaryProfession: string;
   readonly secondaryProfession: string;
+  readonly energy: number;
+  readonly maxEnergy: number;
+  readonly castingSkillId: string;
 }
 
 interface MatchView {
   readonly players: { get: (id: string) => PlayerView | undefined };
 }
+
+/** `count` empty slots. */
+const nulls = (count: number): null[] => Array.from({ length: count }, () => null);
 
 /** A legal elementalist/monk: both professions' attributes, both their skills. */
 const LEGAL_BUILD: PlayerBuild = {
@@ -102,17 +108,17 @@ describe("joining with a build", () => {
   const joinWith = async (
     build: unknown,
     name?: string,
-  ): Promise<{ room: Room<unknown, MatchView>; slots: SkillSlot[] }> => {
+  ): Promise<{ room: Room<unknown, MatchView>; slots: (SkillSlot | null)[] }> => {
     const room = await new Client(endpoint).joinOrCreate<MatchView>(ROOM_MATCH, {
       protocolVersion: PROTOCOL_VERSION,
       ...(build === undefined ? {} : { build }),
       ...(name === undefined ? {} : { name }),
     });
-    const slots = await new Promise<SkillSlot[]>((resolve, reject) => {
+    const slots = await new Promise<(SkillSlot | null)[]>((resolve, reject) => {
       const timer = setTimeout(() => {
         reject(new Error("no skill-bar message"));
       }, 5000);
-      room.onMessage("skill-bar", (message: { slots: SkillSlot[] }) => {
+      room.onMessage("skill-bar", (message: { slots: (SkillSlot | null)[] }) => {
         clearTimeout(timer);
         resolve(message.slots);
       });
@@ -147,11 +153,46 @@ describe("joining with a build", () => {
   it("grants the requested skills when the build is legal", async () => {
     const { room, slots } = await joinWith(LEGAL_BUILD);
 
-    expect(slots.map((s) => s.id)).toEqual([
+    expect(slots.map((s) => s?.id ?? null)).toEqual([
       "elementalist.fireball",
       "elementalist.armor-of-earth",
       "monk.orison-of-healing",
+      null,
+      null,
+      null,
+      null,
+      null,
     ]);
+
+    await room.leave(true);
+  });
+
+  it("keeps a gap in the bar: the empty slot casts nothing, the next its own skill (#347)", async () => {
+    const gap = { ...LEGAL_BUILD, skillBar: [null, "elementalist.armor-of-earth", ...nulls(6)] };
+    const { room, slots } = await joinWith(gap);
+    expect(slots.map((s) => s?.id ?? null)).toEqual([
+      null,
+      "elementalist.armor-of-earth",
+      ...nulls(6),
+    ]);
+    const self = () => room.state.players.get(room.sessionId);
+    await waitFor(() => self()?.maxEnergy !== 0, { label: "energy in state" });
+    const full = self()?.maxEnergy;
+    let refusals = 0;
+    room.onMessage("cast-refused", () => {
+      refusals += 1;
+    });
+
+    room.send("intent", { kind: "use-skill", slot: 0 });
+    // Long enough for the server to have acted on it, had it anything to do.
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(self()?.castingSkillId).toBe("");
+    expect(self()?.energy).toBe(full);
+    expect(refusals).toBe(0);
+
+    // Armor of Earth costs energy, so the next slot casting is visible.
+    room.send("intent", { kind: "use-skill", slot: 1 });
+    await waitFor(() => (self()?.energy ?? 0) < (full ?? 0), { label: "Armor of Earth cast" });
 
     await room.leave(true);
   });
@@ -195,8 +236,8 @@ describe("joining with a build", () => {
   it("falls back to the house loadout when no build is sent", async () => {
     const { room, slots } = await joinWith(undefined);
 
-    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
-    expect(slots.map((s) => s.id)).toContain("elementalist.fireball");
+    expect(slots.map((s) => s?.id ?? null)).toEqual(DEFAULT_SKILL_BAR);
+    expect(slots.map((s) => s?.id ?? null)).toContain("elementalist.fireball");
 
     await room.leave(true);
   });
@@ -207,7 +248,7 @@ describe("joining with a build", () => {
     const { equipment: _dropped, ...withoutGear } = LEGAL_BUILD;
     const { room, slots } = await joinWith(withoutGear);
 
-    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
+    expect(slots.map((s) => s?.id ?? null)).toEqual(DEFAULT_SKILL_BAR);
 
     await room.leave(true);
   });
@@ -223,8 +264,8 @@ describe("joining with a build", () => {
     };
     const { room, slots } = await joinWith(cheat);
 
-    expect(slots.map((s) => s.id)).not.toEqual(["elementalist.fireball"]);
-    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
+    expect(slots.map((s) => s?.id ?? null)).not.toEqual(["elementalist.fireball"]);
+    expect(slots.map((s) => s?.id ?? null)).toEqual(DEFAULT_SKILL_BAR);
 
     await room.leave(true);
   });
@@ -244,7 +285,7 @@ describe("joining with a build", () => {
     const { room, slots } = await joinWith(cheat);
 
     // Refused: the house loadout's full bar, not the build's.
-    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
+    expect(slots.map((s) => s?.id ?? null)).toEqual(DEFAULT_SKILL_BAR);
 
     await room.leave(true);
   });
@@ -260,7 +301,7 @@ describe("joining with a build", () => {
     const { room, slots } = await joinWith(cheat);
 
     // Refused: the house loadout's full bar, not the build's.
-    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
+    expect(slots.map((s) => s?.id ?? null)).toEqual(DEFAULT_SKILL_BAR);
 
     await room.leave(true);
   });
@@ -274,7 +315,7 @@ describe("joining with a build", () => {
     const { room, slots } = await joinWith(cheat);
 
     // Refused: the house loadout's full bar, not the build's.
-    expect(slots.map((s) => s.id)).toEqual(DEFAULT_SKILL_BAR);
+    expect(slots.map((s) => s?.id ?? null)).toEqual(DEFAULT_SKILL_BAR);
 
     await room.leave(true);
   });

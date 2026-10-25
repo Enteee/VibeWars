@@ -4,6 +4,7 @@ import {
   PLAYER_TEAM,
   scenarioParticipants,
   type ResolvedLoadout,
+  type SkillBar,
   type TrainingScenario,
 } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
@@ -29,7 +30,7 @@ export const SELF_ID = "you";
 
 export interface PlayerArming {
   readonly loadout: ResolvedLoadout;
-  readonly skillBar: readonly string[];
+  readonly skillBar: SkillBar;
   /**
    * Why the build cannot be tested, or `undefined` when it can. An
    * illegal build gets an empty bar and stands still: the server swaps
@@ -47,9 +48,8 @@ export function playerArming(character: StoredCharacter): PlayerArming {
   const problem = validateBuild(character)[0]?.message;
   return {
     loadout: resolveForDisplay(character),
-    // Empty slots close up, exactly as the server packs a joining bar.
-    skillBar:
-      problem === undefined ? character.skillBar.filter((id): id is string => id !== null) : [],
+    // Gaps and all, exactly as the server keeps a joining bar (#347).
+    skillBar: problem === undefined ? character.skillBar : [],
     problem,
   };
 }

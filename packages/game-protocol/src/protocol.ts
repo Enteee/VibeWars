@@ -453,9 +453,12 @@ export interface SkillBarSlot {
   readonly rechargeSeconds: number;
 }
 
-/** Sent as `"skill-bar"` once on join: the bar the server resolved for this player. */
+/**
+ * Sent as `"skill-bar"` once on join: the bar the server resolved for
+ * this player, every slot in its place, `null` where it is empty (#347).
+ */
 export interface SkillBarMessage {
-  readonly slots: readonly SkillBarSlot[];
+  readonly slots: readonly (SkillBarSlot | null)[];
 }
 
 /**

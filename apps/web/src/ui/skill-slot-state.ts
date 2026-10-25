@@ -18,13 +18,13 @@ export const SLOT_FLASH_MS = 400;
  * no cast to light, so it never shows here.
  */
 export function castingSlot(
-  skillBar: readonly SkillSlot[],
+  skillBar: readonly (SkillSlot | null)[],
   self: PlayerSnapshot | undefined,
 ): number | undefined {
   if (self?.castingSkillId === undefined || self.castTotal <= 0) {
     return undefined;
   }
-  const slot = skillBar.findIndex((skill) => skill.id === self.castingSkillId);
+  const slot = skillBar.findIndex((skill) => skill !== null && skill.id === self.castingSkillId);
   return slot === -1 ? undefined : slot;
 }
 
@@ -36,7 +36,7 @@ export function castingSlot(
 export function slotFlashes(
   events: CombatMessage["events"],
   selfId: string,
-  skillBar: readonly SkillSlot[],
+  skillBar: readonly (SkillSlot | null)[],
 ): { slot: number; kind: SlotFlashKind }[] {
   const flashes: { slot: number; kind: SlotFlashKind }[] = [];
   for (const event of events) {
@@ -46,7 +46,7 @@ export function slotFlashes(
     if (event.kind !== "interrupted" && event.kind !== "cancelled") {
       continue;
     }
-    const slot = skillBar.findIndex((skill) => skill.id === event.skillId);
+    const slot = skillBar.findIndex((skill) => skill !== null && skill.id === event.skillId);
     if (slot !== -1) {
       flashes.push({ slot, kind: event.kind });
     }

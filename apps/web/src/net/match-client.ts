@@ -303,7 +303,7 @@ const CONSENTED_LEAVE = 4000;
 export function createMatchConnection(
   room: LiveMatchRoom,
   map: MapDescriptor,
-  skillBar: readonly SkillSlot[],
+  skillBar: readonly (SkillSlot | null)[],
   getRecharges: () => readonly SlotRecharge[],
 ): MatchConnection {
   // A dropped connection is retried by the SDK itself, which reconnects

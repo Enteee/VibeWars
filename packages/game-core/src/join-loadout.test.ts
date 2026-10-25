@@ -23,7 +23,7 @@ describe("resolveJoinLoadout", () => {
   it("plays a legal build as claimed", () => {
     const { loadout, refused } = resolveJoinLoadout(LEGAL, RULES);
     expect(refused).toBeUndefined();
-    expect(loadout.skillBar).toEqual(["elementalist.fireball", "monk.orison-of-healing"]);
+    expect(loadout.skillBar).toEqual(LEGAL.skillBar);
     expect(loadout.primaryProfession).toBe("elementalist");
     expect(loadout.secondaryProfession).toBe("monk");
     expect(loadout.attributeRanks.get("elementalist.fire-magic")).toBe(12);
