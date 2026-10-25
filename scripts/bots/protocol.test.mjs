@@ -17,6 +17,8 @@ import {
   MAX_USER_CHARS,
   OPERATOR_HINT,
   ROLE_STYLE,
+  SYSTEM,
+  SYSTEM_STYLE,
   TOPIC_TITLES,
   TO_OPERATOR,
   USERS_MESSAGES_PER_MINUTE,
@@ -25,6 +27,7 @@ import {
   admitUser,
   deliverPeer,
   formatLine,
+  deliverSystem,
   formatMirror,
   formatQuestion,
   parseQuestions,
@@ -1241,5 +1244,51 @@ describe("formatLine cannot be made to forge a line", () => {
     // Emoji keep their ordinary variation selector.
     expect(visible("❤️")).toBe("❤️");
     expect(visible("a\tb")).toBe("a b");
+  });
+});
+
+describe("deliverSystem (#23)", () => {
+  const ROLES_HERE = ["manager", "qa-tester"];
+
+  it("puts a system message in every role's inbox and mirrors it to General", () => {
+    const delivered = deliverSystem(
+      { text: "hubd is crash-looping: boom" },
+      {
+        roles: ROLES_HERE,
+        now: 5,
+      },
+    );
+    expect(delivered.deliveries.map((d) => d.role)).toEqual(ROLES_HERE);
+    expect(delivered.deliveries[0]?.line).toEqual({
+      ts: 5,
+      from: "system",
+      kind: "link",
+      text: "hubd is crash-looping: boom",
+      topicId: null,
+      messageId: 0,
+    });
+    expect(delivered.mirror).toEqual({
+      from: SYSTEM,
+      to: "all",
+      text: "hubd is crash-looping: boom",
+    });
+    expect(mirrorTopic({ from: SYSTEM, to: "all", text: "x" })).toBeNull();
+  });
+
+  it("sends nothing for an empty or shapeless entry", () => {
+    expect(deliverSystem({ text: "  " }, { roles: ROLES_HERE, now: 1 })).toEqual({
+      deliveries: [],
+      mirror: null,
+    });
+    expect(deliverSystem(null, { roles: ROLES_HERE, now: 1 }).mirror).toBeNull();
+  });
+
+  it("heads the mirror with the System style, apart from every role", () => {
+    const message = formatMirror(
+      { from: SYSTEM, to: "all", text: "down" },
+      { repo: "Enteee/VibeWars" },
+    );
+    expect(message.text.startsWith(`${SYSTEM_STYLE.emoji} System → `)).toBe(true);
+    expect(Object.keys(ROLE_STYLE)).not.toContain(SYSTEM);
   });
 });

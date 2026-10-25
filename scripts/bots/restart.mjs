@@ -173,8 +173,16 @@ async function stopCompany() {
   run("tmux", ["kill-session", "-t", SESSION]);
   // The jails are recognised by their worktree binds, which no other
   // process on the machine carries.
-  const patterns = ["hubd.mjs", "supervisor.mjs", "link.mjs serve", `${ROOT}/wt/`];
-  for (const pattern of patterns.slice(0, 3)) {
+  // The run-forever loops first, so stopping a daemon does not restart it
+  // (#23); killing the session has usually stopped them already.
+  const patterns = [
+    "run-forever.mjs",
+    "hubd.mjs",
+    "supervisor.mjs",
+    "link.mjs serve",
+    `${ROOT}/wt/`,
+  ];
+  for (const pattern of patterns.slice(0, 4)) {
     run("pkill", ["-f", pattern]);
   }
   const until = Date.now() + STOP_TIMEOUT_MS;

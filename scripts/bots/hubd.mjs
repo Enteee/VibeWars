@@ -45,6 +45,7 @@ import {
   usesGraphql,
 } from "./hub-budget.mjs";
 import { alertRows, alertsFailure, alertsPath, parseAlerts, renderAlerts } from "./hub-alerts.mjs";
+import { releaseLock, takeLock } from "./instance-lock.mjs";
 import { hasFilter } from "./hub-filter.mjs";
 import {
   approvalsSatisfied,
@@ -130,6 +131,7 @@ const BOOT = path.join(ROOT, "boot.json");
 const REBOOT = path.join(ROOT, "reboot.json");
 /** The heartbeat, `{ ts, inFlight }`: see `heartbeat`. */
 const ALIVE = path.join(HUB, "hubd.alive");
+const LOCK = path.join(HUB, "hubd.lock");
 
 /**
  * Commands that accept `--repo`. The repository is pinned by us rather than
@@ -1724,19 +1726,32 @@ async function serve(request, verdict, acting) {
 
 /* -------------------------------------------------------------------------- */
 
+/** What the heartbeat reports about this run of hubd (#23). */
+const health = {
+  pid: process.pid,
+  startedAt: Date.now(),
+  /** The commit the company was started from, short, if claude-llc wrote it. */
+  sha: /** @type {string | null} */ (null),
+  served: 0,
+  refused: 0,
+  /** @type {{ at: number, message: string } | null} */
+  lastError: null,
+};
+
 /**
- * The heartbeat, `{ ts, inFlight }`.
+ * The heartbeat, a `HubdAlive` (`hub-health.mjs`).
  *
- * `ts` lets `hub` tell "the daemon is busy" from "the daemon was never
- * started"; without it, every call inside a sandbox blocks for the full
- * request timeout and the agent looks hung. A timestamp rather than a pid,
- * because the sandboxes run in their own PID namespace, where a pid written
- * here is meaningless: that is how the first version of this made every
- * agent announce that the hub was down.
+ * `heartbeatAt` lets `hub` tell "the daemon is busy" from "the daemon was
+ * never started"; without it, every call inside a sandbox blocks for the
+ * full request timeout and the agent looks hung. `hub` reads the time, never
+ * the pid: the sandboxes run in their own PID namespace, where a pid
+ * written here is meaningless. That is how the first version of this made
+ * every agent announce that the hub was down. The pid is for the host's
+ * dashboard.
  *
- * `inFlight` counts the requests queued or being served. A reboot waits for
+ * `inflight` counts the requests queued or being served. A reboot waits for
  * it to reach 0, so a merge or a push is not cut off by the company stopping
- * underneath it (#21).
+ * underneath it (#21). The rest is the dashboard's hub line (#23).
  *
  * @param {boolean} serving whether a request is being served right now
  * @returns {void}
@@ -1752,7 +1767,13 @@ function heartbeat(serving) {
       // This role has never spoken to hubd.
     }
   }
-  writeAtomic(ALIVE, JSON.stringify({ ts: Date.now(), inFlight: (serving ? 1 : 0) + queued }));
+  /** @type {import("./hub-health.mjs").HubdAlive} */
+  const alive = {
+    ...health,
+    heartbeatAt: Date.now(),
+    inflight: (serving ? 1 : 0) + queued,
+  };
+  writeAtomic(ALIVE, JSON.stringify(alive));
 }
 
 /**
@@ -1797,12 +1818,15 @@ async function drain(role) {
         argv: Array.isArray(raw.argv) ? raw.argv.map(String) : [],
       });
     } catch (error) {
-      response = {
-        allow: true,
-        code: 1,
-        stderr: `hubd: ${error instanceof Error ? error.message : "failed"}\n`,
-      };
+      const message = error instanceof Error ? error.message : "failed";
+      health.lastError = { at: Date.now(), message };
+      response = { allow: true, code: 1, stderr: `hubd: ${message}\n` };
     } finally {
+      if (response.allow === false) {
+        health.refused += 1;
+      } else {
+        health.served += 1;
+      }
       heartbeat(false);
     }
 
@@ -1837,6 +1861,12 @@ async function main() {
   );
 
   fs.mkdirSync(HUB, { recursive: true });
+  // One hubd per spool: two would run every request twice (#23).
+  if (!takeLock(LOCK)) {
+    console.error(`hubd: another hubd holds ${LOCK}; not starting a second`);
+    process.exit(1);
+  }
+  health.sha = readBoot()?.sha.slice(0, 7) ?? null;
   // A restart costs no sweep the board's age does not call for.
   loadBoard(cfg);
   heartbeat(false);
@@ -1849,6 +1879,7 @@ async function main() {
   let lastBudgetCheck = Date.now();
   const stop = () => {
     fs.rmSync(ALIVE, { force: true });
+    releaseLock(LOCK);
     process.exit(0);
   };
   process.on("SIGINT", stop);

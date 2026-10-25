@@ -32,12 +32,15 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import { ROLES } from "./hub-policy.mjs";
+import { takeLock } from "./instance-lock.mjs";
 import {
   SUPPORT_BUSY,
+  SYSTEM,
   TOPIC_TITLES,
   admitAll,
   admitUser,
   deliverPeer,
+  deliverSystem,
   formatMirror,
   formatQuestion,
   isReadyOutboxEntry,
@@ -322,55 +325,6 @@ function present(bus) {
 /* -------------------------------------------------------------------------- */
 /* serve                                                                      */
 /* -------------------------------------------------------------------------- */
-
-/**
- * Become the company's only sidecar, or say there already is one.
- *
- * Telegram allows one getUpdates consumer per token; a second gets
- * "409 Conflict" and the company goes deaf. `wx` makes taking the lock
- * atomic, and a lock whose holder has died is taken over by renaming it. This runs on the
- * host, so a pid is meaningful here, unlike inside the jails.
- *
- * @param {string} lock
- * @returns {boolean} whether this process now holds it
- */
-function takeLock(lock) {
-  const mine = `${String(process.pid)}\n`;
-  try {
-    fs.writeFileSync(lock, mine, { flag: "wx" });
-    return true;
-  } catch {
-    /* held, or left behind; see below */
-  }
-  const seen = fs.readFileSync(lock, "utf8");
-  try {
-    process.kill(Number.parseInt(seen.trim(), 10), 0);
-    return false;
-  } catch {
-    /* the holder is dead */
-  }
-  // Take over a dead holder's lock by renaming it away. Only one rename of
-  // that file can succeed, so two sidecars racing here cannot both win, and
-  // checking the contents makes sure the file renamed is the stale one we
-  // looked at, not a lock a faster sidecar has just written.
-  const stale = `${lock}.stale-${String(process.pid)}`;
-  try {
-    fs.renameSync(lock, stale);
-  } catch {
-    return false;
-  }
-  if (fs.readFileSync(stale, "utf8") !== seen) {
-    fs.renameSync(stale, lock);
-    return false;
-  }
-  fs.rmSync(stale, { force: true });
-  try {
-    fs.writeFileSync(lock, mine, { flag: "wx" });
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 /**
  * The company's state as the sidecar holds it. Topic ids are added as the
@@ -686,10 +640,53 @@ async function drainOutboxes(company, mirror) {
         moved = true;
       }
     }
+    moved = drainSystem(company, mirror) || moved;
     if (!moved) {
       await sleep(250);
     }
   }
+}
+
+/**
+ * The system outbox (#23): what host-side code says to everyone, such as a
+ * daemon crash-looping. Delivered to every role as a `link` line and
+ * mirrored to General under the System header. Only the host can write
+ * here; no jail binds this directory.
+ *
+ * @param {Company} company
+ * @param {Outgoing[]} mirror
+ * @returns {boolean} whether anything was delivered
+ */
+function drainSystem(company, mirror) {
+  const outbox = path.join(company.at.bus, SYSTEM, "outbox");
+  /** @type {string[]} */
+  let pending;
+  try {
+    pending = fs.readdirSync(outbox).filter(isReadyOutboxEntry).sort();
+  } catch {
+    return false;
+  }
+  let moved = false;
+  for (const name of pending) {
+    const file = path.join(outbox, name);
+    /** @type {unknown} */
+    let payload;
+    try {
+      payload = JSON.parse(fs.readFileSync(file, "utf8"));
+    } catch {
+      continue;
+    }
+    const delivered = deliverSystem(payload, { roles: ROLES, now: Date.now() });
+    for (const { role, line } of delivered.deliveries) {
+      appendInbox(company.at.bus, role, line);
+    }
+    if (delivered.mirror !== null) {
+      mirror.push({ peer: delivered.mirror });
+    }
+    fs.rmSync(file, { force: true });
+    moved = true;
+  }
+  return moved;
 }
 
 /**
@@ -855,6 +852,8 @@ async function serve() {
   const chatId = required("TELEGRAM_CHAT_ID");
   fs.mkdirSync(at.link, { recursive: true });
 
+  // Telegram allows one getUpdates consumer per token; a second gets
+  // "409 Conflict" and the company goes deaf.
   const lock = path.join(at.link, "serve.pid");
   if (!takeLock(lock)) {
     console.error("[link] the company sidecar is already running");

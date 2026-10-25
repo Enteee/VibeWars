@@ -18,6 +18,8 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { parseAlive } from "./hub-health.mjs";
+
 const HUBD = path.join(path.dirname(fileURLToPath(import.meta.url)), "hubd.mjs");
 const HUB = path.join(path.dirname(fileURLToPath(import.meta.url)), "hub.mjs");
 
@@ -178,20 +180,18 @@ async function startHubd(remaining, before) {
   );
 
   before?.({ root, repo, remote: path.join(dir, "remote.git") });
-  const child = spawn(process.execPath, [HUBD], {
-    env: {
-      ...process.env,
-      PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
-      VIBEWARS_BOT_ROOT: root,
-      DEVENV_ROOT: repo,
-      VIBEWARS_GIT_REMOTE: path.join(dir, "remote.git"),
-      FAKE_GH_STATE: state,
-      // Something only hubd's environment holds, to prove a filter cannot
-      // reach it.
-      HUBD_SECRET: "leaked",
-    },
-    stdio: "ignore",
-  });
+  const env = {
+    ...process.env,
+    PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
+    VIBEWARS_BOT_ROOT: root,
+    DEVENV_ROOT: repo,
+    VIBEWARS_GIT_REMOTE: path.join(dir, "remote.git"),
+    FAKE_GH_STATE: state,
+    // Something only hubd's environment holds, to prove a filter cannot
+    // reach it.
+    HUBD_SECRET: "leaked",
+  };
+  const child = spawn(process.execPath, [HUBD], { env, stdio: "ignore" });
   running.push({ child, dir });
 
   const hub = path.join(root, "hub");
@@ -234,6 +234,14 @@ async function startHubd(remaining, before) {
      */
     setAlerts(answer) {
       fs.writeFileSync(path.join(state, "alerts.json"), JSON.stringify(answer));
+    },
+    /** Start another hubd on the same root, and wait for it to give up. */
+    secondHubd() {
+      return spawnSync(process.execPath, [HUBD], { env, encoding: "utf8", timeout: 15_000 });
+    },
+    /** The heartbeat as hubd last wrote it. */
+    alive() {
+      return parseAlive(fs.readFileSync(path.join(root, "hub", "hubd.alive"), "utf8"));
     },
     /** Every REST read of a commit's checks fails, as on a GitHub outage. */
     failRest() {
@@ -704,6 +712,31 @@ describe("hubd answering issue and PR reads from REST", () => {
     await hubd.request("developer-1", "gh", ["pr", "view", "9", "--json", "reviewDecision"]);
 
     expect(hubd.calls("pr view 9")).toBe(1);
+  }, 20_000);
+});
+
+describe("hubd running once, and saying how it is (#23)", () => {
+  it("refuses to start a second hubd on the same spool", async () => {
+    const hubd = await startHubd(5000);
+
+    const second = hubd.secondHubd();
+
+    expect(second.status).toBe(1);
+    expect(second.stderr).toContain("another hubd holds");
+  }, 30_000);
+
+  it("writes a heartbeat with its pid, start, and what it served and refused", async () => {
+    const hubd = await startHubd(5000);
+    await hubd.request("developer-1", "gh", ["issue", "view", "7"]);
+    await hubd.request("developer-1", "gh", ["pr", "merge", "1"]);
+
+    const alive = hubd.alive();
+    expect(alive).not.toBeNull();
+    expect(alive?.served).toBeGreaterThanOrEqual(1);
+    expect(alive?.refused).toBeGreaterThanOrEqual(1);
+    expect(alive?.inflight).toBe(0);
+    expect(alive?.lastError).toBeNull();
+    expect(Date.now() - (alive?.heartbeatAt ?? 0)).toBeLessThan(10_000);
   }, 20_000);
 });
 

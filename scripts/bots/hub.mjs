@@ -32,6 +32,7 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import { parseAlive } from "./hub-health.mjs";
 import { inlineBodyFile } from "./hub-body.mjs";
 import { splitFilter } from "./hub-filter.mjs";
 import { ROLES, authorize } from "./hub-policy.mjs";
@@ -201,11 +202,9 @@ const HEARTBEAT_MAX_AGE_MS = 60_000;
 const beatFile = path.join(SPOOL, "..", "hubd.alive");
 let daemonAlive = false;
 try {
-  // `{ ts, inFlight }`, written by hubd (#21).
-  /** @type {unknown} */
-  const beat = JSON.parse(fs.readFileSync(beatFile, "utf8"));
-  const ts = typeof beat === "object" && beat !== null && "ts" in beat ? beat.ts : null;
-  daemonAlive = typeof ts === "number" && Date.now() - ts < HEARTBEAT_MAX_AGE_MS;
+  // A `HubdAlive`, written by hubd (#23). Only its time means anything here.
+  const beat = parseAlive(fs.readFileSync(beatFile, "utf8"));
+  daemonAlive = beat !== null && Date.now() - beat.heartbeatAt < HEARTBEAT_MAX_AGE_MS;
 } catch {
   /* never started, or its directory is not visible from here */
 }

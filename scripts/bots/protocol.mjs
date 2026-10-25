@@ -526,6 +526,38 @@ export const ROLE_STYLE = {
   "qa-tester": { emoji: "🧪", name: "QA Tester" },
 };
 
+/**
+ * The bus directory host-side code writes to when it has something to say to
+ * the whole company: a daemon crash-looping (#23). No jail can reach it, since
+ * each binds only its own role's directory, and no role is called this, so
+ * a role's outbox can never produce a system message.
+ */
+export const SYSTEM = "_system";
+
+/** How a system message is shown in the mirror: apart from every role. */
+export const SYSTEM_STYLE = Object.freeze({ emoji: "⚠️", name: "System" });
+
+/**
+ * A system outbox entry, `{ text }`, as a `link` line in every role's inbox and
+ * a broadcast in General. An empty one goes nowhere.
+ *
+ * @param {unknown} raw the outbox file's contents
+ * @param {{ roles: readonly string[], now: number }} context
+ * @returns {{ deliveries: { role: string, line: InboxLine }[], mirror: Mirrored | null }}
+ */
+export function deliverSystem(raw, context) {
+  const text = typeof obj(raw).text === "string" ? String(obj(raw).text) : "";
+  if (text.trim() === "") {
+    return { deliveries: [], mirror: null };
+  }
+  /** @type {InboxLine} */
+  const line = { ts: context.now, from: "system", kind: "link", text, topicId: null, messageId: 0 };
+  return {
+    deliveries: context.roles.map((role) => ({ role, line })),
+    mirror: { from: SYSTEM, to: "all", text },
+  };
+}
+
 /** How a broadcast's recipient is shown. */
 const EVERYONE = { emoji: "📢", name: "Everyone" };
 
@@ -621,7 +653,7 @@ function cut(text, max) {
  * @returns {{ text: string, entities: MessageEntity[] }}
  */
 export function formatMirror(message, context) {
-  const sender = styleOf(message.from);
+  const sender = message.from === SYSTEM ? SYSTEM_STYLE : styleOf(message.from);
   let recipient = EVERYONE;
   if (message.to === TO_OPERATOR) {
     recipient = OPERATOR;

@@ -28,8 +28,9 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import { parseAlive } from "./hub-health.mjs";
+import { releaseLock, takeLock } from "./instance-lock.mjs";
 import { ROLES } from "./hub-policy.mjs";
-import { obj } from "./protocol.mjs";
 import { drainStep, parseReboot } from "./reboot.mjs";
 
 const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
@@ -37,6 +38,7 @@ const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
 /** The company's state directory; the test imports this module without one. */
 const ROOT = process.env.VIBEWARS_BOT_ROOT ?? "";
 const HUB = path.join(ROOT, "hub");
+const LOCK = path.join(HUB, "supervisor.lock");
 /** A reboot hubd accepted (see hubd.mjs and reboot.mjs). */
 const REBOOT = path.join(ROOT, "reboot.json");
 /** The same record, once handed to the restarter. */
@@ -148,8 +150,11 @@ function readJson(file) {
 
 /** @returns {number} `hub` requests queued or being served, from hubd's heartbeat */
 function inFlight() {
-  const beat = obj(readJson(path.join(HUB, "hubd.alive")));
-  return typeof beat.inFlight === "number" ? beat.inFlight : 0;
+  try {
+    return parseAlive(fs.readFileSync(path.join(HUB, "hubd.alive"), "utf8"))?.inflight ?? 0;
+  } catch {
+    return 0;
+  }
 }
 
 /**
@@ -174,12 +179,24 @@ function restart() {
   // it leaves the restarter running.
   spawn("setsid", ["-f", RESTARTER], { detached: true, stdio: "ignore" }).unref();
   console.error("supervisor: handed over to the restarter");
+  releaseLock(LOCK);
   process.exit(0);
 }
 
 /* -------------------------------------------------------------------------- */
 
 async function main() {
+  // One supervisor: two would hand a reboot to the restarter twice (#23).
+  if (!takeLock(LOCK)) {
+    console.error(`supervisor: another supervisor holds ${LOCK}; not starting a second`);
+    process.exit(1);
+  }
+  for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
+    process.on(signal, () => {
+      releaseLock(LOCK);
+      process.exit(0);
+    });
+  }
   console.error(`supervisor: watching ${String(ROLES.length)} panes in ${SESSION}`);
 
   /** @type {{ requestedAt: number, idle: Record<string, number>, drainedAt: number | null } | null} */
