@@ -1,0 +1,169 @@
+import { CHANNELS, type Channel } from "@vibewars/game-protocol";
+import type {
+  DataPayload,
+  JoinRoomCallbacks,
+  JoinRoomConfig,
+  MessageAction,
+  Room,
+} from "trystero/nostr";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { APP_ID, MAX_RECEIVE_BYTES, NOSTR_RELAYS, RELAY_REDUNDANCY } from "./relays.js";
+import { joinTrysteroRoom } from "./trystero.js";
+
+/** A Trystero room with no network: the test plays the remote peers. */
+function fakeRoom(options: { sendFails?: boolean } = {}) {
+  const actions = new Map<string, MessageAction>();
+  const sent: { channel: string; data: DataPayload; target: unknown }[] = [];
+  const joins: {
+    config: JoinRoomConfig;
+    roomId: string;
+    callbacks: JoinRoomCallbacks | undefined;
+  }[] = [];
+  let left = false;
+  const room = {
+    makeAction(namespace: string) {
+      const action: MessageAction = {
+        send(data, sendOptions) {
+          sent.push({ channel: namespace, data, target: sendOptions?.target });
+          return options.sendFails === true
+            ? Promise.reject(new Error("peer gone"))
+            : Promise.resolve();
+        },
+        onMessage: null,
+        onReceiveProgress: null,
+        onReceive: null,
+      };
+      actions.set(namespace, action);
+      return action;
+    },
+    leave() {
+      left = true;
+      return Promise.resolve();
+    },
+    onPeerJoin: null as Room["onPeerJoin"],
+    onPeerLeave: null as Room["onPeerLeave"],
+  };
+  const joinRoom = (config: JoinRoomConfig, roomId: string, callbacks?: JoinRoomCallbacks) => {
+    joins.push({ config, roomId, callbacks });
+    return room as unknown as Room;
+  };
+  return {
+    joinRoom,
+    joins,
+    sent,
+    room,
+    get left() {
+      return left;
+    },
+    /** A message from `peerId` on `channel`, as Trystero hands it over. */
+    receive(channel: Channel, data: DataPayload, peerId: string) {
+      void actions.get(channel)?.onMessage?.(data, { peerId });
+    },
+    actions,
+  };
+}
+
+describe("the Trystero transport (#392)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("makes an action for every channel up front", () => {
+    const fake = fakeRoom();
+    joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    expect([...fake.actions.keys()]).toEqual([...CHANNELS]);
+  });
+
+  it("joins the normalised code's room with the app id, password, size cap and relays", () => {
+    const fake = fakeRoom();
+    const transport = joinTrysteroRoom(" a7-kq ", { joinRoom: fake.joinRoom, selfId: "me" });
+    expect(transport.selfId).toBe("me");
+    expect(fake.joins).toHaveLength(1);
+    const [join] = fake.joins;
+    expect(join?.roomId).toBe("A7KQ");
+    expect(join?.config).toMatchObject({
+      appId: APP_ID,
+      password: "A7KQ",
+      maxReceiveBytes: MAX_RECEIVE_BYTES,
+      relayConfig: { urls: [...NOSTR_RELAYS], redundancy: RELAY_REDUNDANCY },
+    });
+  });
+
+  it("fans one channel out to every handler, and stops calling a removed one", () => {
+    const fake = fakeRoom();
+    const transport = joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    const got: string[] = [];
+    transport.on("intent", (data, from) => got.push(`first ${String(data)} ${from}`));
+    const off = transport.on("intent", (data, from) => got.push(`second ${String(data)} ${from}`));
+    fake.receive("intent", 1, "peer");
+    off();
+    fake.receive("intent", 2, "peer");
+    fake.receive("snapshot", 3, "peer");
+    expect(got).toEqual(["first 1 peer", "second 1 peer", "first 2 peer"]);
+  });
+
+  it("fans joins and leaves out to every handler", () => {
+    const fake = fakeRoom();
+    const transport = joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    const seen: string[] = [];
+    transport.onPeerJoin((id) => seen.push(`+${id}`));
+    const off = transport.onPeerJoin((id) => seen.push(`again +${id}`));
+    transport.onPeerLeave((id) => seen.push(`-${id}`));
+    fake.room.onPeerJoin?.("a");
+    off();
+    fake.room.onPeerJoin?.("b");
+    fake.room.onPeerLeave?.("a");
+    expect(seen).toEqual(["+a", "again +a", "+b", "-a"]);
+  });
+
+  it("sends to one peer with `to`, and to all without", () => {
+    const fake = fakeRoom();
+    const transport = joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    transport.send("intent", { kind: "stop" }, "peer");
+    transport.send("snapshot", { tick: 1 });
+    expect(fake.sent).toEqual([
+      { channel: "intent", data: { kind: "stop" }, target: "peer" },
+      { channel: "snapshot", data: { tick: 1 }, target: null },
+    ]);
+  });
+
+  it("swallows a send that fails, with a warning naming the channel and target", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const fake = fakeRoom({ sendFails: true });
+    const transport = joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    expect(() => transport.send("intent", 1, "peer")).not.toThrow();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0]).toEqual(expect.arrayContaining(["intent", "peer"]) as unknown[]);
+  });
+
+  it("warns on a join error and does not retry", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const fake = fakeRoom();
+    joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    fake.joins[0]?.callbacks?.onJoinError?.({
+      error: "incorrect password",
+      appId: APP_ID,
+      roomId: "A7KQ",
+      peerId: "peer",
+    });
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(fake.joins).toHaveLength(1);
+  });
+
+  it("leaves the room and delivers nothing after leave()", async () => {
+    const fake = fakeRoom();
+    const transport = joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    const got: unknown[] = [];
+    transport.on("intent", (data) => got.push(data));
+    transport.onPeerJoin((id) => got.push(`+${id}`));
+    transport.onPeerLeave((id) => got.push(`-${id}`));
+    await transport.leave();
+    expect(fake.left).toBe(true);
+    fake.receive("intent", 1, "peer");
+    fake.room.onPeerJoin?.("b");
+    fake.room.onPeerLeave?.("b");
+    expect(got).toEqual([]);
+  });
+});

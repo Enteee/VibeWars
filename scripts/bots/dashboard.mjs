@@ -23,6 +23,7 @@ import { readBoardState } from "./hub-board.mjs";
 import { WINDOW_MS, createUsageReader, summarize } from "./claude-usage.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { formatSpend, readSpend } from "./hub-spend.mjs";
+import { readRoster } from "./presence.mjs";
 import { betweenTurns, parseReboot } from "./reboot.mjs";
 import { boardLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
 import { hubHealth, parseAlive, parseRestarts } from "./hub-health.mjs";
@@ -105,21 +106,25 @@ function company() {
   }
 }
 
-/** @returns {Set<string>} */
-function hired() {
+/**
+ * The roster as it stands (#363): who is running, and who died without
+ * cleaning up, with when they were last seen.
+ *
+ * @returns {{ live: Set<string>, stale: Map<string, number> }}
+ */
+function presence() {
   /** @type {Set<string>} */
   const live = new Set();
-  try {
-    for (const name of fs.readdirSync(path.join(BUS, "roster"))) {
-      if (!name.endsWith(".json")) {
-        continue;
-      }
-      live.add(name.replace(/\.json$/, ""));
+  /** @type {Map<string, number>} */
+  const stale = new Map();
+  for (const [role, entry] of readRoster(path.join(BUS, "roster"), ROLES, Date.now())) {
+    if (entry.fresh) {
+      live.add(role);
+    } else {
+      stale.set(role, entry.lastSeen);
     }
-  } catch {
-    /* no roster yet */
   }
-  return live;
+  return { live, stale };
 }
 
 /**
@@ -266,14 +271,20 @@ function linesOf(section, pane) {
       const cfg = company();
       // hubd's copy of the board (hub-board.mjs); one in another shape is
       // hubd's to discard, and shows here as no snapshot.
-      return boardLines(readBoardState(hubFile("board.json")), cfg?.columns ?? null, hired(), pane);
+      return boardLines(
+        readBoardState(hubFile("board.json")),
+        cfg?.columns ?? null,
+        presence().live,
+        pane,
+      );
     }
     case "company": {
-      const live = hired();
+      const { live, stale } = presence();
       return companyLines(
         {
           roles: ROLES,
           live,
+          stale,
           budget: budget(),
           hub: hub(),
           reboot: reboot(live),
