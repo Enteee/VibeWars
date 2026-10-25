@@ -64,6 +64,7 @@ const CROSSFADE_TO = "last-stand";
  *   skippedMs: number,
  *   events: number, lateEvents: number, baseLatencyMs: number, outputLatencyMs: number,
  *   glitches: number | null, glitchMs: number | null,
+ *   underruns: number | null, underrunMs: number | null, maxReductionDb: number,
  * }} Stats
  *
  * @typedef {{
@@ -289,7 +290,7 @@ function report(load, rows) {
   console.log(`\n## ${load.browser}, ${load.name} (${String(rows.length)} s)`);
   if (options.rows) {
     console.log(
-      "s | ticks | late ticks | max gap ms | max tick work ms | skipped ms | events | late events | glitches",
+      "s | ticks | late ticks | max gap ms | max tick work ms | skipped ms | events | late events | underrun ms | max reduction dB | glitches",
     );
     rows.forEach((row, i) => {
       console.log(
@@ -302,8 +303,10 @@ function report(load, rows) {
           row.skippedMs,
           row.events,
           row.lateEvents,
+          row.underrunMs ?? "-",
+          row.maxReductionDb,
         ]
-          .map((value) => fixed(value))
+          .map((value) => (value === "-" ? value : fixed(value)))
           .concat(row.glitches === null ? "-" : String(row.glitches))
           .join(" | "),
       );
@@ -314,10 +317,15 @@ function report(load, rows) {
     first?.glitches == null || last?.glitches == null
       ? "n/a"
       : `${String(last.glitches - first.glitches)} (${fixed((last.glitchMs ?? 0) - (first.glitchMs ?? 0))} ms)`;
+  // Per second, not cumulative; `null` where the browser cannot say.
+  const underruns = rows.some((row) => row.underrunMs === null)
+    ? "n/a"
+    : `${String(sum("underruns"))} s (${fixed(sum("underrunMs"))} ms)`;
   console.log(
     `ticks ${String(sum("ticks"))}, late ${String(sum("lateTicks"))}, max gap ${fixed(max("maxTickGapMs"))} ms, max tick work ${fixed(max("maxTickWorkMs"))} ms, ` +
       `skipped ${fixed(sum("skippedMs"))} ms, events ${String(sum("events"))}, ` +
       `late events ${String(sum("lateEvents"))}, glitches ${glitches}, ` +
+      `underruns ${underruns}, max reduction ${fixed(Math.min(0, ...rows.map((r) => r.maxReductionDb)))} dB, ` +
       `latency base ${fixed(last?.baseLatencyMs ?? 0)} / output ${fixed(last?.outputLatencyMs ?? 0)} ms`,
   );
 }

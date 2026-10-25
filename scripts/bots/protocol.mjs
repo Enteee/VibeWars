@@ -58,6 +58,8 @@ export const TOPIC_TITLES = {
  * @property {number} messageId
  * @property {boolean} broadcast sent with `tg broadcast`: it reaches every
  *   role, and wakes none of them unless it names one (`wakes`)
+ * @property {string | null} nudge the id of the scheduled nudge this line is
+ *   (#537), else `null`
  */
 
 /**
@@ -204,6 +206,7 @@ export function routeInbound(raw, context) {
             topicId,
             messageId: message.message_id,
             broadcast: false,
+            nudge: null,
           },
           whichRole: null,
         }
@@ -229,6 +232,7 @@ export function routeInbound(raw, context) {
     topicId,
     messageId: message.message_id,
     broadcast: false,
+    nudge: null,
   });
 
   // "developer-1: do X", "@developer-1 do X", or "qa-tester@2: do X" for
@@ -374,6 +378,7 @@ export function deliverPeer(raw, context) {
     topicId: null,
     messageId: 0,
     broadcast: false,
+    nudge: null,
   });
 
   if (message.kind === "ask") {
@@ -453,6 +458,7 @@ export function deliverPeer(raw, context) {
     topicId: null,
     messageId: 0,
     broadcast: to === "all",
+    nudge: null,
   };
   const absent =
     to === "all" ? [] : recipients.filter((employee) => !context.present.has(employee));
@@ -603,16 +609,29 @@ export const SYSTEM = "_system";
 export const SYSTEM_STYLE = Object.freeze({ emoji: "⚠️", name: "System" });
 
 /**
- * A system outbox entry, `{ text }`, as a `link` line in every employee's
- * inbox and a broadcast in General. An empty one goes nowhere.
+ * A system outbox entry, `{ to, text, nudge }`, as a `link` line in the
+ * inbox of everyone it is for. `to` is `"all"` or a role, and `nudge` the id
+ * of the scheduled nudge it is (#537) or `null`. To everyone it is a
+ * broadcast in General; to a role it is mirrored as a message to that role.
+ * An empty or malformed one goes nowhere; a role nobody is employed in gets
+ * nothing, and nothing is mirrored.
  *
  * @param {unknown} raw the outbox file's contents
- * @param {{ employees: readonly string[], now: number }} context
+ * @param {{ employees: ReadonlyMap<string, string>, now: number }} context
+ *   employee id to role
  * @returns {{ deliveries: { employee: string, line: InboxLine }[], mirror: Mirrored | null }}
  */
 export function deliverSystem(raw, context) {
-  const text = typeof obj(raw).text === "string" ? String(obj(raw).text) : "";
-  if (text.trim() === "") {
+  const { text, to, nudge } = obj(raw);
+  if (typeof text !== "string" || text.trim() === "" || typeof to !== "string") {
+    return { deliveries: [], mirror: null };
+  }
+  if (nudge !== null && typeof nudge !== "string") {
+    return { deliveries: [], mirror: null };
+  }
+  const recipients =
+    to === "all" ? [...context.employees.keys()] : inboxesOf(to, context.employees);
+  if (recipients.length === 0 || (to !== "all" && !new Set(context.employees.values()).has(to))) {
     return { deliveries: [], mirror: null };
   }
   /** @type {InboxLine} */
@@ -624,11 +643,24 @@ export function deliverSystem(raw, context) {
     topicId: null,
     messageId: 0,
     broadcast: false,
+    nudge,
   };
   return {
-    deliveries: context.employees.map((employee) => ({ employee, line })),
-    mirror: { from: SYSTEM, to: "all", text },
+    deliveries: recipients.map((employee) => ({ employee, line })),
+    mirror: { from: SYSTEM, to, text },
   };
+}
+
+/**
+ * Whether a scheduled nudge is to be skipped for an employee: one of the
+ * same entry is still unread (#537), so nudges never pile up.
+ *
+ * @param {readonly InboxLine[]} unread the employee's lines after its cursor
+ * @param {string | null} nudge the entry about to be delivered
+ * @returns {boolean}
+ */
+export function skipNudge(unread, nudge) {
+  return nudge !== null && unread.some((line) => line.nudge === nudge);
 }
 
 /** How a broadcast's recipient is shown. */
@@ -1008,6 +1040,7 @@ export function routeAnswer(raw, store, context) {
       topicId: context.operatorTopicId,
       messageId: 0,
       broadcast: false,
+      nudge: null,
     },
   });
 
@@ -1306,6 +1339,7 @@ function toInboxLine(value) {
     topicId: typeof record.topicId === "number" ? record.topicId : null,
     messageId: typeof record.messageId === "number" ? record.messageId : 0,
     broadcast: record.broadcast === true,
+    nudge: typeof record.nudge === "string" ? record.nudge : null,
   };
 }
 

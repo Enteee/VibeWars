@@ -17,6 +17,9 @@ const stats = {
   outputLatencyMs: 32,
   glitches: null,
   glitchMs: null,
+  underruns: null,
+  underrunMs: null,
+  maxReductionDb: 0,
 };
 
 describe("parseGameToHost", () => {
@@ -78,6 +81,7 @@ describe("parseHostToGame", () => {
       { type: "pong", seq: 3 },
       stats,
       { ...stats, glitches: 2, glitchMs: 21.3 },
+      { ...stats, underruns: 1, underrunMs: 50.5, maxReductionDb: -4.2 },
     ]) {
       expect(parseHostToGame(message), message.type).toEqual(message);
     }
@@ -96,6 +100,10 @@ describe("parseHostToGame", () => {
       { ...stats, skippedMs: Number.POSITIVE_INFINITY },
       { ...stats, lateEvents: "0" },
       { ...stats, glitches: undefined },
+      { ...stats, underrunMs: -1 },
+      { ...stats, underruns: undefined },
+      { ...stats, maxReductionDb: 3 },
+      { ...stats, maxReductionDb: null },
       { type: "stats" },
       // The host never sends a game message back.
       { type: "load", ...track },

@@ -37,7 +37,8 @@ export type GameToHost =
 
 /**
  * One second of the music's timing (#420), counted only after `measure`.
- * Gaps show as `skippedMs` and `lateEvents`, crackle as `glitches`.
+ * Gaps show as `skippedMs` and `lateEvents`, crackle as `underrunMs` in
+ * every browser and `glitches` in Chromium, clipping as `maxReductionDb`.
  */
 export interface MusicStats {
   /** Scheduler ticks this second. */
@@ -63,6 +64,15 @@ export interface MusicStats {
    */
   readonly glitches: number | null;
   readonly glitchMs: number | null;
+  /**
+   * Seconds in which the audio clock fell behind the wall clock (0 or 1),
+   * and by how many milliseconds (#507): the audio thread running dry.
+   * `null` where the browser cannot say.
+   */
+  readonly underruns: number | null;
+  readonly underrunMs: number | null;
+  /** The deepest the bus limiter pulled the mix down this second, in dB (0 or less). */
+  readonly maxReductionDb: number;
 }
 
 export type HostToGame =
@@ -207,6 +217,7 @@ function optionalStat(value: unknown): value is number | null {
 function stats(message: Fields): HostToGame | null {
   const { ticks, lateTicks, maxTickGapMs, maxTickWorkMs, skippedMs, events, lateEvents } = message;
   const { baseLatencyMs, outputLatencyMs, glitches, glitchMs } = message;
+  const { underruns, underrunMs, maxReductionDb } = message;
   return stat(ticks) &&
     stat(lateTicks) &&
     stat(maxTickGapMs) &&
@@ -217,7 +228,10 @@ function stats(message: Fields): HostToGame | null {
     stat(baseLatencyMs) &&
     stat(outputLatencyMs) &&
     optionalStat(glitches) &&
-    optionalStat(glitchMs)
+    optionalStat(glitchMs) &&
+    optionalStat(underruns) &&
+    optionalStat(underrunMs) &&
+    finite(maxReductionDb, -MAX_STAT, 0)
     ? {
         type: "stats",
         ticks,
@@ -231,6 +245,9 @@ function stats(message: Fields): HostToGame | null {
         outputLatencyMs,
         glitches,
         glitchMs,
+        underruns,
+        underrunMs,
+        maxReductionDb,
       }
     : null;
 }
