@@ -1061,6 +1061,7 @@ function renderGear(
   const stats = h("div", "gear-stats");
   stats.appendChild(statLine("health", String(summary.maxHealth)));
   stats.appendChild(statLine("energy", String(summary.maxEnergy)));
+  stats.appendChild(statLine("energy regen", `${String(summary.baseEnergyPips)} pips`));
   stats.appendChild(statLine("armor", String(summary.armor)));
   if (!summary.requirementMet) {
     // Said out loud rather than left for the player to discover by

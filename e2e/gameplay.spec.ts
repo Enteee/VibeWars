@@ -1,6 +1,9 @@
+import { readFileSync } from "node:fs";
+
 import { expect, test, type Page, type Locator } from "@playwright/test";
 
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
+import { projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
 
 /**
@@ -282,26 +285,25 @@ test("Space attacks the nearest enemy with the weapon, and moving stops it (#160
   await opponent.close();
 });
 
-/**
- * A page screenshot of the arena round `world`, `half` units each way.
- * One world unit is one canvas pixel (arena-viewport.ts), so a world point
- * is the canvas's own offset plus itself.
- */
+/** Where `world` is on the match's canvas, through its camera (#440). */
+async function matchPoint(
+  page: Page,
+  canvas: Locator,
+  world: { readonly x: number; readonly y: number },
+): Promise<{ x: number; y: number }> {
+  return (await projection(page.locator("#viewport"), canvas)).onCanvas(world);
+}
+
+/** A page screenshot of the arena round `world`, `half` canvas px each way. */
 async function spotShot(
   page: Page,
   canvas: Locator,
   world: { readonly x: number; readonly y: number },
   half = 20,
 ): Promise<Buffer> {
-  const box = await canvas.boundingBox();
-  expect(box, "the arena canvas has no box").not.toBeNull();
+  const at = (await projection(page.locator("#viewport"), canvas)).onPage(world);
   return page.screenshot({
-    clip: {
-      x: (box?.x ?? 0) + world.x - half,
-      y: (box?.y ?? 0) + world.y - half,
-      width: 2 * half,
-      height: 2 * half,
-    },
+    clip: { x: at.x - half, y: at.y - half, width: 2 * half, height: 2 * half },
   });
 }
 
@@ -311,7 +313,7 @@ test("clicking the ground walks there, round a wall, and stops (#310)", async ({
   const goal = { x: 520, y: 150 };
   const empty = await spotShot(page, canvas, goal);
 
-  await canvas.click({ position: goal });
+  await canvas.click({ position: await matchPoint(page, canvas, goal) });
   // The marker there fades in 0.4 s; the walk round the wall takes about 3 s.
   await page.waitForTimeout(600);
   await expect
@@ -339,7 +341,7 @@ test("clicking the ground keeps the target, and Space attacks it from there (#31
   const before = await readTargetHealth(page);
 
   // Open ground, short of the top wall and away from both spawns.
-  await canvas.click({ position: { x: 260, y: 120 } });
+  await canvas.click({ position: await matchPoint(page, canvas, { x: 260, y: 120 }) });
   await page.waitForTimeout(300);
   await expect(target).not.toHaveText("no target");
 
@@ -495,6 +497,58 @@ test("the target panel shows the target's professions before its name (#281)", a
   await leaveMatch(opponent);
   await expect(icons).toHaveCount(0);
   await opponent.close();
+});
+
+test("at Close, the arena's bottom edge stops above the skill bar, not under it (#440)", async ({
+  page,
+}) => {
+  const arena = JSON.parse(
+    readFileSync(
+      new URL("../packages/game-maps/maps/arena-alpha/map.json", import.meta.url),
+      "utf8",
+    ),
+  ) as { readonly height: number };
+  await page.goto("./");
+  await page.getByRole("button", { name: "host a lobby" }).click();
+  await expect(page.locator(".lobby-map select")).toHaveValue("arena-alpha");
+  await page.getByRole("button", { name: "join team 1" }).click();
+  await page.getByRole("button", { name: "ready", exact: true }).click();
+  await page.getByRole("button", { name: "start match" }).click();
+  await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+  const stage = page.locator("#viewport");
+  const canvas = page.locator("#viewport canvas");
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+
+  // The pointer at the centre leans the camera nowhere.
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  for (const _ of [1, 2]) {
+    await page.waitForTimeout(200);
+    await page.mouse.wheel(0, -100);
+  }
+  await expect(stage).toHaveAttribute("data-zoom-step", "Close");
+
+  // Down until the camera stops: you are at the bottom wall.
+  await page.keyboard.down(key("move-down"));
+  let last = "";
+  await expect
+    .poll(
+      async () => {
+        const now = (await stage.getAttribute("data-camera")) ?? "";
+        const stopped = now === last;
+        last = now;
+        return stopped;
+      },
+      { intervals: [500], timeout: 15_000 },
+    )
+    .toBe(true);
+  await page.keyboard.up(key("move-down"));
+
+  const edge = (await projection(stage, canvas)).onPage({ x: 0, y: arena.height }).y;
+  const bars = await page.locator(".hud-bars").boundingBox();
+  expect(Math.abs(edge - (bars?.y ?? 0))).toBeLessThan(2);
 });
 
 test("the target frame shows the target's health and the skill it casts, filling, then clears (#484)", async ({

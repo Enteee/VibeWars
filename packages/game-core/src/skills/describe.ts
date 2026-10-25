@@ -91,11 +91,18 @@ export function describeStatus(id: string): string {
     return id;
   }
   const parts: string[] = [];
-  if (definition.healthPerSecond < 0) {
-    parts.push(`${String(-definition.healthPerSecond)} health lost per second`);
+  // In pips, as GW1 words it: "−3 Health degeneration".
+  if (definition.healthPips < 0) {
+    parts.push(`−${String(-definition.healthPips)} Health degeneration`);
   }
-  if (definition.healthPerSecond > 0) {
-    parts.push(`${String(definition.healthPerSecond)} health gained per second`);
+  if (definition.healthPips > 0) {
+    parts.push(`+${String(definition.healthPips)} Health regeneration`);
+  }
+  if (definition.energyPips < 0) {
+    parts.push(`−${String(-definition.energyPips)} Energy degeneration`);
+  }
+  if (definition.energyPips > 0) {
+    parts.push(`+${String(definition.energyPips)} Energy regeneration`);
   }
   if (definition.armorModifier !== 0) {
     const sign = definition.armorModifier > 0 ? "+" : "";

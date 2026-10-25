@@ -262,6 +262,10 @@ describe("the gear summary", () => {
     expect(summariseGear(trained).armor).toBe(96);
   });
 
+  it("shows the primary profession's energy regeneration in pips", () => {
+    expect(summariseGear(warrior()).baseEnergyPips).toBe(2);
+  });
+
   it("shows the health a rune costs, not just the rank it gives", () => {
     // The trade the player is actually making, both halves visible.
     const runed = setRune(warrior(), "head", {

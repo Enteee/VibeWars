@@ -24,8 +24,17 @@ the server decides what happens (brief §12, §32).
 
 | Resource   | How you get it                                                                             | What it gates     |
 | ---------- | ------------------------------------------------------------------------------------------ | ----------------- |
-| Energy     | Regenerates 2/second, up to 50                                                             | Most skills       |
+| Energy     | Regenerates by profession, up to 50: see below                                             | Most skills       |
 | Adrenaline | +3 each time your attack skill or weapon swing damages an enemy (spells earn none), max 25 | Adrenaline skills |
+
+Regeneration and degeneration count in **pips**, as in GW1. One health
+pip is 2 HP/s and one energy pip ⅓ energy/s. Every status's pips sum
+(Bleeding −3, Burning −7, Poison −4, Life Drain −2, Regeneration +4), and
+the net is clamped to ±10 before it applies: burning, bleeding and poison
+together (−14) drain 20 HP/s, not 28. Energy is the primary profession's
+base pips plus any status's, clamped the same way: Warrior and Paragon 2
+(⅔/s), Ranger 3 (1/s), every caster, Assassin and Dervish 4 (1⅓/s). The
+build editor shows the base as "energy regen".
 
 The split is deliberate. Energy rewards patience; adrenaline rewards
 staying in the fight and landing hits. An adrenaline skill you cannot
@@ -124,7 +133,7 @@ lands, so a miss still costs energy or adrenaline and starts the
 recharge, and the missed foe gets none of the skill's riders. Spells are
 unaffected.
 
-Degeneration applies **continuously** (`rate × dt`), not in once-per-
+Degeneration applies **continuously** (`pips × 2 × dt`), not in once-per-
 second lumps, so a bleed at 20 Hz drains smoothly instead of
 stair-stepping. Regeneration correctly caps at the deep-wound-_reduced_
 maximum, not the raw one.
