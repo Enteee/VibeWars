@@ -59,7 +59,7 @@ describe("sanitizeName", () => {
   });
 
   it("strips zero-width and other invisible characters", () => {
-    expect(sanitizeName("a\u200bb\u200dc\ufeff\u2060\u00ad", "fallback")).toBe("abc");
+    expect(sanitizeName("a\u200bbc\ufeff\u2060\u00ad", "fallback")).toBe("abc");
     expect(sanitizeName("\u200b\u200c\u200d\u2060", "fallback")).toBe("fallback");
     expect(sanitizeName("a\u2028b\u2029c", "fallback")).toBe("abc");
   });
@@ -109,6 +109,63 @@ describe("sanitizeName", () => {
 
   it("does not end on a space the clamp exposed", () => {
     expect(sanitizeName(`${"x".repeat(15)} y`, "fallback")).toBe("x".repeat(15));
+  });
+
+  // #192: the format characters real names need survive where they belong.
+  describe("joiners and flags", () => {
+    const ZWJ = String.fromCodePoint(0x200d);
+    const ZWNJ = String.fromCodePoint(0x200c);
+    const MAN = String.fromCodePoint(0x1f468);
+    const WOMAN = String.fromCodePoint(0x1f469);
+    const GIRL = String.fromCodePoint(0x1f467);
+    const BOY = String.fromCodePoint(0x1f466);
+    const FAMILY = [MAN, WOMAN, GIRL, BOY].join(ZWJ);
+    const BLACK_FLAG = String.fromCodePoint(0x1f3f4);
+    const CANCEL_TAG = String.fromCodePoint(0xe007f);
+    /** Tag characters spelling `letters`, as a subdivision flag does. */
+    const tags = (letters: string) =>
+      Array.from(letters, (letter) =>
+        String.fromCodePoint(0xe0000 + (letter.codePointAt(0) ?? 0)),
+      ).join("");
+    const ENGLAND = `${BLACK_FLAG}${tags("gbeng")}${CANCEL_TAG}`;
+    const graphemes = (name: string) =>
+      Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(name));
+
+    it("keeps a family emoji whole, as one grapheme", () => {
+      expect(sanitizeName(FAMILY, "fallback")).toBe(FAMILY);
+      expect(graphemes(FAMILY)).toHaveLength(1);
+    });
+
+    it("keeps the England flag", () => {
+      expect(sanitizeName(ENGLAND, "fallback")).toBe(ENGLAND);
+    });
+
+    it("keeps a ZWNJ inside a Persian name, and strips one at an edge or by a space", () => {
+      // می‌خواهم: mim, yeh, ZWNJ, then the rest of the word.
+      const before = String.fromCodePoint(0x0645, 0x06cc);
+      const after = String.fromCodePoint(0x062e, 0x0648, 0x0627, 0x0647, 0x0645);
+      expect(sanitizeName(`${before}${ZWNJ}${after}`, "fallback")).toBe(`${before}${ZWNJ}${after}`);
+      expect(sanitizeName(`${ZWNJ}${before}`, "fallback")).toBe(before);
+      expect(sanitizeName(`${before}${ZWNJ}`, "fallback")).toBe(before);
+      expect(sanitizeName(`${before} ${ZWNJ}${after}`, "fallback")).toBe(`${before} ${after}`);
+    });
+
+    it("strips a run of joiners, a stray tag, and an incomplete or overlong flag", () => {
+      expect(sanitizeName(`a${ZWJ}${ZWJ}b`, "fallback")).toBe("ab");
+      expect(sanitizeName(`a${tags("g")}`, "fallback")).toBe("a");
+      expect(sanitizeName(`${BLACK_FLAG}${tags("gbeng")}`, "fallback")).toBe(BLACK_FLAG);
+      expect(sanitizeName(`${BLACK_FLAG}${tags("abcdefg")}${CANCEL_TAG}`, "fallback")).toBe(
+        BLACK_FLAG,
+      );
+    });
+
+    it("cuts a chain of ten faces down to its first", () => {
+      expect(sanitizeName(Array(10).fill(MAN).join(ZWJ), "fallback")).toBe(MAN);
+    });
+
+    it("clamps in graphemes, so twenty families are sixteen whole ones", () => {
+      expect(sanitizeName(FAMILY.repeat(20), "fallback")).toBe(FAMILY.repeat(16));
+    });
   });
 });
 
