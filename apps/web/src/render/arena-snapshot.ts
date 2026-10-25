@@ -1,5 +1,7 @@
 import { Vec, type Vec2 } from "@vibewars/game-core";
 
+import type { RenderableProjectile } from "./projectiles.js";
+
 /**
  * The renderer's own data shape and its pure helpers (team colour lookup,
  * click hit-testing). Deliberately has zero dependency on Phaser — the
@@ -18,6 +20,8 @@ export interface RenderableActor {
   readonly position: Vec2;
   /** Radians, `atan2` convention, 0 = +x (#187). Not drawn yet. */
   readonly facing: number;
+  /** Picks the weapon mark's tip (#188); `undefined` draws none. */
+  readonly weaponId: string | undefined;
   readonly radius: number;
   readonly team: "ally" | "enemy" | "self";
   readonly health: number;
@@ -131,16 +135,60 @@ export function areaFlashAlpha(flash: AreaFlash): number {
   return Math.max(0, Math.min(1, flash.remainingSeconds / AREA_FLASH_SECONDS));
 }
 
+/**
+ * A melee swing (#161): a 90° arc around the attacker, toward its target,
+ * in the attacker's side's colour, fading out (docs/art/art-direction.md
+ * "Swing flash"). It hugs the attacker, so it never reads as the target ring.
+ */
+export interface SwingFlash {
+  readonly id: number;
+  /** The attacker's centre when it swung. */
+  readonly centre: Vec2;
+  /** Toward the target, in radians. */
+  readonly angle: number;
+  readonly radius: number;
+  readonly colour: number;
+  /** Your own swing, which gets an `ink` line along its outer edge. */
+  readonly own: boolean;
+  /** Seconds of life remaining. */
+  readonly remainingSeconds: number;
+}
+
+/** Every body's radius, as drawn: the ruleset's collision radius. */
+export const ACTOR_RADIUS = 14;
+
+/** Short, so a dagger's rapid hits read as separate flashes, never a standing ring. */
+export const SWING_FLASH_SECONDS = 0.12;
+/** Outside the body: the attacker's radius plus this. */
+export const SWING_FLASH_GAP = 6;
+
+/** Every swing `dt` seconds older, the faded ones gone. */
+export function decaySwingFlashes(flashes: readonly SwingFlash[], dt: number): SwingFlash[] {
+  return flashes
+    .map((flash) => ({ ...flash, remainingSeconds: flash.remainingSeconds - dt }))
+    .filter((flash) => flash.remainingSeconds > 0);
+}
+
+export function swingFlashAlpha(flash: SwingFlash): number {
+  return Math.max(0, Math.min(1, flash.remainingSeconds / SWING_FLASH_SECONDS));
+}
+
 export interface ArenaSnapshot {
   readonly actors: readonly RenderableActor[];
   readonly walls: readonly RenderableWall[];
   readonly targetId: string | undefined;
+  /** Weapon shots in flight (#161). */
+  readonly projectiles: readonly RenderableProjectile[];
+  /** The match clock (`elapsedSeconds`), which projectiles fly against. */
+  readonly clock: number;
 }
 
 export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   actors: [],
   walls: [],
   targetId: undefined,
+  projectiles: [],
+  clock: 0,
 };
 
 /**

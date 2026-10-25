@@ -41,7 +41,7 @@ import {
   type Projectile,
 } from "../skills/projectile.js";
 import { blindMisses, landBlow, resolveSwing, weaponSnapshotOf } from "../skills/weapon-attack.js";
-import { add, distance, normalize, scale, sub, ZERO, type Vec2 } from "../vec2.js";
+import { add, distance, normalize, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import {
   createCursor,
   decide,
@@ -122,8 +122,9 @@ export interface MatchSimulationOptions {
   /** Omitted or `[]`: nothing collides with a wall or blocks line of sight. */
   readonly walls?: readonly Segment[];
   /**
-   * The map's size, which an attack's approach never paths outside of
-   * (#211). Omitted: an open field with no edge.
+   * The map's size: no body leaves it, and an attack's approach never
+   * paths outside it (#211). Omitted: an open field with no edge
+   * (headless tools).
    */
   readonly bounds?: { readonly width: number; readonly height: number } | undefined;
   readonly participants?: readonly ParticipantSpec[];
@@ -202,6 +203,7 @@ export class MatchSimulation {
   readonly #ruleset: Ruleset;
   readonly #matchRules: MatchRules | undefined;
   readonly #walls: readonly Segment[];
+  readonly #bounds: { readonly width: number; readonly height: number } | undefined;
   /** Corners an approach can path through, built once from the walls (#211). */
   readonly #nav: NavGraph;
   readonly #rng: SimulationRng;
@@ -220,6 +222,7 @@ export class MatchSimulation {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
     this.#matchRules = options.matchRules;
     this.#walls = options.walls ?? [];
+    this.#bounds = options.bounds;
     this.#nav = buildNavGraph(this.#walls, options.bounds, this.#ruleset.collision.playerRadius);
     this.#rng = createRng(
       typeof options.seed === "string" ? seedFromString(options.seed) : options.seed,
@@ -1025,12 +1028,23 @@ export class MatchSimulation {
       position = resolveCircleCircleCollision(position, radius, other.position, radius);
     }
 
-    // Walls resolve last so a player squeezed between a blocker and a
-    // wall ends up outside the wall rather than inside it — being pushed
-    // through level geometry is far worse than overlapping a teammate
-    // for one tick.
+    // Walls resolve after bodies so a player squeezed between a blocker
+    // and a wall ends up outside the wall rather than inside it — being
+    // pushed through level geometry is far worse than overlapping a
+    // teammate for one tick.
     for (const wallSegment of this.#walls) {
       position = resolveCircleSegmentCollision(position, radius, wallSegment);
+    }
+
+    // The map's edge last (#244), so nobody walks off it out of sight.
+    // Every wall that meets an edge on today's maps is perpendicular to it,
+    // so this slides a body along the wall's face, never into it.
+    const bounds = this.#bounds;
+    if (bounds !== undefined) {
+      position = vec2(
+        Math.min(Math.max(position.x, radius), bounds.width - radius),
+        Math.min(Math.max(position.y, radius), bounds.height - radius),
+      );
     }
 
     record.position = position;

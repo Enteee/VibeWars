@@ -182,9 +182,12 @@ Outward from the centre:
 
 **The weapon mark** (#188) points where the player faces. It is a line from
 the centre with a tip that names the weapon family. Its geometry (the stroke
-centrelines) ends at **r + 3**. It is drawn twice: a 4 px `edge` casing first,
-then a 2 px `ink` core, both round-capped, so the painted ink reaches r + 4
-and the casing r + 5. That overlaps the target ring by a pixel, so **the
+centrelines) ends at **r + 3**, measured along the facing. It is drawn
+twice: a 4 px `edge` casing first, then a 2 px `ink` core. The ends are
+butt, not round, because Phaser Graphics strokes have no caps. Every end lies
+outside the body, over the floor, where the ink reads without the casing
+wrapping it. Across a tip's crossbar, arc, head or orb, the casing paints out
+to r + 5 along the facing. That overlaps the target ring by a pixel, so **the
 target ring is drawn after the weapon mark** and covers it. Pulling the tip
 in to clear the ring would sink it into the body edge, where it stops
 reading. Without the
@@ -196,7 +199,7 @@ and 1.9:1 on `foe`; the `edge` casing is 9.7:1 and 7.6:1.
 | blade   | sword, spear | none, the plain line                                                                 |
 | axe     | axe, scythe  | one-sided filled triangle: T, 6 back along the line, and 5 out to the left at 2 back |
 | hammer  | hammer       | crossbar through T, 8 long, perpendicular                                            |
-| daggers | daggers      | the line forks 5 before T into two 6-unit prongs at ±30°                             |
+| daggers | daggers      | the line forks 5 before T into two 5.5-unit prongs at ±30°                           |
 | bow     | bows         | arc of radius 5 over 140°, apex at T, bulging outward                                |
 | caster  | wand, staff  | filled orb of radius 3 whose outer edge is T; the line stops at its centre           |
 | unarmed | unarmed      | no mark at all                                                                       |
@@ -208,6 +211,26 @@ cut through the target ring on the one body you look at most.
 In Phaser: one `beginPath`, the strokes as `moveTo`/`lineTo`, one
 `strokePath` per colour, plus one `fillPoints` per colour for the axe and
 the orb. That is two or three calls per actor, whatever the family.
+
+### Profession in the arena (study, not decided)
+
+How a player's profession could show in the arena (#166) waits on the
+operator's Q25: one profession or both. `node
+scripts/assets/profession-badge-study.mjs` draws three placements of the
+existing profession glyphs, all in `ink`, because in the arena colour means
+team:
+
+![Profession badge study](profession-badge-study.svg)
+
+- **A: the primary, 11 px, before the name.** All ten read at true size.
+- **B: A, plus the secondary at 8 px in dim ink.** The secondary is mush at
+  that size; at 11 px the name plate doubles in width over a 34 px bar.
+- **C: the primary on the body.** The weapon line (#188) runs across it, so
+  it does not read.
+
+Recommendation: **A**, and if both professions should show, put the pair in
+the target panel, where there is room and the profession colours are
+allowed.
 
 ### Skill type badges
 

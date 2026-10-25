@@ -30,9 +30,10 @@ afterEach(() => {
  * on it with `answer`.
  *
  * @param {{ code: number, stdout: string }} answer
+ * @param {unknown[]} [seen] where to keep every request it answered
  * @returns {string} the spool, for VIBEWARS_HUB
  */
-function stubHubd(answer) {
+function stubHubd(answer, seen = []) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hub-test-"));
   const spool = path.join(dir, "developer-1");
   const req = path.join(spool, "req");
@@ -43,6 +44,7 @@ function stubHubd(answer) {
 
   const timer = setInterval(() => {
     for (const name of fs.readdirSync(req).filter((n) => n.endsWith(".json"))) {
+      seen.push(JSON.parse(fs.readFileSync(path.join(req, name), "utf8")));
       fs.rmSync(path.join(req, name));
       const tmp = path.join(res, `.${name}.part`);
       fs.writeFileSync(tmp, JSON.stringify({ allow: true, stderr: "", ...answer }));
@@ -174,5 +176,23 @@ describe("hub whoami", () => {
   it("says only the manager may close and reopen", () => {
     expect(whoami("manager")).toContain("yes  close and reopen issues and pull requests");
     expect(whoami("lead-dev")).toContain("no   close and reopen issues and pull requests");
+  });
+
+  it("says every role may read code-scanning alerts (#184)", () => {
+    expect(whoami("developer-1")).toContain("yes  read code-scanning alerts");
+    expect(whoami("asset-designer")).toContain("yes  read code-scanning alerts");
+  });
+});
+
+describe("hub alerts (#184)", () => {
+  it("sends the alerts verb, not a gh command", async () => {
+    /** @type {unknown[]} */
+    const seen = [];
+    const spool = stubHubd({ code: 0, stdout: "no open code-scanning alerts\n" }, seen);
+
+    const { code } = await hub(spool, ["alerts", "--pr", "3"]);
+
+    expect(code).toBe(0);
+    expect(seen).toEqual([expect.objectContaining({ kind: "alerts", argv: ["--pr", "3"] })]);
   });
 });

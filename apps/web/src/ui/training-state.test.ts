@@ -84,18 +84,26 @@ describe("resolveScenarioId", () => {
 });
 
 describe("overlayMessage", () => {
+  const skills = { exercises: ["spell-damage"] } as const;
+  const drill = { exercises: ["dodging"] } as const;
+
   it("names the problem of an illegal build", () => {
-    expect(overlayMessage("too many points", [])).toBe(
+    expect(overlayMessage("too many points", [], drill)).toBe(
       "This build cannot be tested: too many points",
     );
   });
 
   it("hints at an empty bar, which is legal", () => {
-    expect(overlayMessage(undefined, [])).toBe("Equip a skill to start testing.");
+    expect(overlayMessage(undefined, [], skills)).toBe("Equip a skill to start testing.");
   });
 
   it("covers nothing for a legal, armed build", () => {
-    expect(overlayMessage(undefined, ["elementalist.fireball"])).toBeUndefined();
+    expect(overlayMessage(undefined, ["elementalist.fireball"], skills)).toBeUndefined();
+  });
+
+  it("covers nothing in a weapon drill, bar or no bar (#162)", () => {
+    expect(overlayMessage(undefined, [], drill)).toBeUndefined();
+    expect(overlayMessage(undefined, [], { exercises: ["auto-attacks"] })).toBeUndefined();
   });
 });
 

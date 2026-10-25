@@ -87,6 +87,8 @@ if (argv[0] === "whoami") {
     { acting: ACTING },
   );
   console.log(`  ${reviews.allow ? "yes" : "no "}  record review verdicts`);
+  const alerts = authorize(ROLE, { kind: "alerts", argv: [] }, { acting: ACTING });
+  console.log(`  ${alerts.allow ? "yes" : "no "}  read code-scanning alerts`);
   const reboots = authorize(ROLE, { kind: "reboot", argv: ["abort"] }, { acting: ACTING });
   console.log(`  ${reboots.allow ? "yes" : "no "}  reboot the company (company reboot)`);
 
@@ -113,6 +115,10 @@ if (argv[0] === "push") {
   request = { kind: "push", argv: argv.slice(1) };
 } else if (argv[0] === "approve" || argv[0] === "request-changes") {
   request = { kind: "review", argv };
+} else if (argv[0] === "alerts") {
+  // Code-scanning alerts on main or a pull request (#184): a hub verb,
+  // because gh has none and `gh api` is refused.
+  request = { kind: "alerts", argv: argv.slice(1) };
 } else if (argv[0] === "board") {
   // Reads of hubd's copy of the board, for `board` (board.mjs).
   request = { kind: "board", argv: argv.slice(1) };

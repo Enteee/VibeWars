@@ -95,14 +95,15 @@ function weaponMark(x, y, a, family) {
     };
   }
   if (family === "daggers") {
-    // The shaft forks 6 units before the tip into two prongs, 30° apart.
+    // The shaft forks 5 units before the tip into two 5.5-unit prongs at
+    // ±30°, which end 4.76 along the line: inside R + REACH (6 would not).
     const fork = polar(x, y, a, R + REACH - 5);
     const [fx, fy] = fork;
     return {
       strokes: [
         [[x, y], fork],
-        [fork, polar(fx, fy, a - Math.PI / 6, 6)],
-        [fork, polar(fx, fy, a + Math.PI / 6, 6)],
+        [fork, polar(fx, fy, a - Math.PI / 6, 5.5)],
+        [fork, polar(fx, fy, a + Math.PI / 6, 5.5)],
       ],
       fills: [],
     };
@@ -152,7 +153,7 @@ function weaponLine(x, y, a, family) {
     [C.edge, 4],
     [C.ink, 2],
   ])) {
-    const s = `stroke="${colour}" stroke-width="${String(w)}" stroke-linecap="round" stroke-linejoin="round"`;
+    const s = `stroke="${colour}" stroke-width="${String(w)}" stroke-linecap="butt" stroke-linejoin="miter"`;
     for (const p of m.strokes) out += `<polyline points="${pts(p)}" fill="none" ${s}/>`;
     for (const p of m.fills)
       out += `<polygon points="${pts(p)}" fill="${colour}" ${s.replace(String(w), String(w - 2))}/>`;

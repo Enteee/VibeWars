@@ -309,3 +309,16 @@ test("(14) in Weapon DPS, Space swings and the meter's weapon row counts it (#16
   // Named for the weapon that swung, by the character who swung it.
   await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Melee dummy/);
 });
+
+test("(15) a weapon drill is never dimmed for want of a skill (#162)", async ({ page }) => {
+  await openTraining(page);
+  const overlay = page.locator(".training-overlay");
+  // An empty bar, as a fresh character has.
+  await page.locator(".skill-slot", { hasText: "Fireball" }).locator(".skill-slot-clear").click();
+  await expect(page.locator(".training-skill")).toHaveCount(0);
+  await expect(overlay).toHaveText("Equip a skill to start testing.");
+
+  await page.locator("select.training-scenario").selectOption("dodge-drill");
+  await expect(page.locator(".training-log")).toContainText("── Dodge drill ──");
+  await expect(overlay).toBeHidden();
+});
