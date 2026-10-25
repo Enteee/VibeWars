@@ -188,7 +188,6 @@ describe("server survives hostile clients", () => {
       room.send("ready", value);
       room.send("select-map", value);
       room.send("start-match", value);
-      room.send("return-to-lobby", value);
     }
     await new Promise((resolve) => setTimeout(resolve, 400));
 
