@@ -16,7 +16,7 @@ export { ZERO, length, normalize, vec2 } from "./vec2.js";
 export { clampInputDirection, integrateMovement } from "./movement.js";
 
 export type { Segment } from "./geometry.js";
-export { buildNavGraph, findPath, type NavGraph } from "./pathing.js";
+export { buildNavGraph, createPathFinder, type NavGraph, type PathFinder } from "./pathing.js";
 export {
   circleIntersectsSegment,
   closestPointOnSegment,

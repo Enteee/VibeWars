@@ -67,6 +67,13 @@ const DEAD_COLOUR = 0x4a5464;
 /** How opaque a weapon swing's number is at most: present, never louder than a skill (#160). */
 const LIGHT_TEXT_ALPHA = 0.8;
 const INK = "#d7dee8";
+/**
+ * The outline under every floating number and cue: `BODY_EDGE` as a CSS
+ * colour. "Every number wears a 3 px edge outline" (docs/art/art-direction.md),
+ * so a heal over a full health bar, or damage over a melee attacker, still
+ * reads (#274).
+ */
+const TEXT_EDGE = "#0b0f14";
 const DEAD_INK = "#4a5464";
 /** The same two inks as tints, for the profession glyph before a name (#281). */
 const INK_TINT = 0xd7dee8;
@@ -544,6 +551,8 @@ export class ArenaScene extends Phaser.Scene {
           fontSize: floating.weight === "light" ? "11px" : "13px",
           fontFamily: "ui-monospace, monospace",
           color: `#${floating.colour.toString(16).padStart(6, "0")}`,
+          stroke: TEXT_EDGE,
+          strokeThickness: 3,
         });
         // Left-aligned, bottom on the position: it grows away from the bar.
         object.setOrigin(0, 1);
