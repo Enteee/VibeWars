@@ -33,7 +33,7 @@ stack(
   layer(2, stack(
     s("taiko:0 taiko:1 ~ taiko:0 taiko:1 ~ taiko:0 taiko:1").gain(.7).room(.3),
     n(line).scale("b3:phrygian")
-      .s("sawtooth").attack(.02).release(.3).gain(.45).lpf(1400).lpenv(2).lpd(.25).room(.4).roomsize(7).orbit(2))),
+      .s("sawtooth").attack(.02).release(.3).gain(.45).lpf(1000).lpenv(2).lpd(.25).room(.4).roomsize(7).orbit(2))),
   // 3: choir, cymbal swell, everything open
   layer(3, stack(
     chord(P).voicing().mode("below:f#5").s("sawtooth").vowel("a").attack(.3).release(1).gain(.2).lpf(2600).room(.7).roomsize(7).orbit(2),
