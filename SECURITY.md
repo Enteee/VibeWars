@@ -257,6 +257,17 @@ bidi characters, so an agent can type a line that looks like another
 sender's header, such as `📋 Manager → 👤 Operator`. Until #93 lands,
 trust the topic a message is in, not a header inside its text.
 
+**Open: #329.** Host processes write into directories a jail can write,
+and they follow symlinks there. hubd writes
+`hub/<role>/res/.<id>.json.part`, with an id the agent chose, and the
+Telegram sidecar appends to `bus/<role>/inbox.jsonl` and writes
+`receipts/*.tmp`. An agent that plants a symlink at one of those names
+gets the host to overwrite or append to any file the operator's user can
+write, with JSON, some of it text the agent wrote. Until #329 lands, a
+host write into a jail-writable directory must create its temporary file
+with `O_CREAT | O_EXCL | O_NOFOLLOW` under a random name and then rename
+it, and must append with `O_NOFOLLOW`. Review every new one for this.
+
 **Open: forged CI checks.** A workflow pushed on a side branch runs with
 `GITHUB_TOKEN` and can post a check run, or a commit status, for any
 commit in the repository, under any name. Since #116, hubd refuses a
