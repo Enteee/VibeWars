@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { defineRoom, defineServer } from "colyseus";
+import { defineRoom, defineServer } from "@colyseus/core";
 import { loadAllMaps } from "@vibewars/game-maps";
 import { ROOM_LOBBY, ROOM_MATCH } from "@vibewars/game-protocol";
 import express from "express";

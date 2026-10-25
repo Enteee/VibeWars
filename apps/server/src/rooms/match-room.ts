@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { CloseCode, Room, matchMaker, type Client } from "colyseus";
+import { CloseCode, Room, matchMaker, type Client } from "@colyseus/core";
 import { ArraySchema, schema, t } from "@colyseus/schema";
 import {
   IMPLEMENTED_SKILLS,
@@ -40,7 +40,7 @@ import {
   type ServerHello,
   type WallDescriptor,
 } from "@vibewars/game-protocol";
-import type { StepContext } from "colyseus";
+import type { StepContext } from "@colyseus/core";
 
 import { sanitizeName } from "./lobby-room.js";
 import {

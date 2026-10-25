@@ -1,4 +1,4 @@
-import { Room, type Client } from "colyseus";
+import { Room, type Client } from "@colyseus/core";
 import { schema, t } from "@colyseus/schema";
 import { createRng, seedFromString, type SimulationRng } from "@vibewars/game-core";
 import { listMapIds } from "@vibewars/game-maps";

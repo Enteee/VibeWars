@@ -165,15 +165,13 @@ is no server behind it, so online play is off there.
 `osv-scanner` and `trivy` run over `pnpm-lock.yaml` on review, and
 `semgrep` (`p/javascript`, `p/typescript`, `p/nodejsscan`, `p/secrets`)
 runs over the source. The last full run was at `1cfd5b5` (2026-10-24).
-semgrep found nothing real there. Currently reported:
+semgrep found nothing real there. Nothing is currently reported.
 
-| Package          | Advisory                             | Reached via                                       | Status                                                                          |
-| ---------------- | ------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `uuid` 8.3.2     | GHSA-w5hq-g745-h8pq / CVE-2026-41907 | `colyseus` → `@colyseus/auth` → `grant` → request | Not reachable: we never mount `@colyseus/auth`. Remove it once Colyseus allows. |
-| `elliptic` 6.6.1 | GHSA-848j-6mx2-7j84 / CVE-2025-14505 | `colyseus` → `@colyseus/auth` → `jwk-to-pem`      | Not reachable, same reason. No fixed version exists upstream.                   |
-
-"Not reachable" is a claim about our code today. If anyone ever wires up
-`@colyseus/auth`, both of these become live and must be fixed first.
+`uuid` 8.3.2 (GHSA-w5hq-g745-h8pq) and `elliptic` 6.6.1
+(GHSA-848j-6mx2-7j84) were reported until #227. Both came only through
+`@colyseus/auth`, which the `colyseus` meta-package pulled in. The server
+now depends on `@colyseus/core` and `@colyseus/ws-transport` directly,
+where `@colyseus/auth` is an optional peer, so neither is installed.
 
 Two checks in CI (#133):
 

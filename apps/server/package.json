@@ -13,11 +13,12 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
+    "@colyseus/core": "0.18.23",
     "@colyseus/schema": "5.0.42",
+    "@colyseus/ws-transport": "0.18.4",
     "@vibewars/game-core": "workspace:*",
     "@vibewars/game-maps": "workspace:*",
     "@vibewars/game-protocol": "workspace:*",
-    "colyseus": "0.18.10",
     "express": "5.3.0"
   },
   "devDependencies": {

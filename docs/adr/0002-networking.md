@@ -63,6 +63,9 @@ arrives in Sprint 3/4.
   via `.npmrc`'s `public-hoist-pattern[]=@colyseus/*`. This is a documented,
   reproducible gotcha for any pnpm + Colyseus 0.18 project and is worth
   re-checking if a future Colyseus upgrade changes its peer-dependency graph.
+  Since #227 the server no longer uses the `colyseus` meta-package: it
+  depends on `@colyseus/core` and `@colyseus/ws-transport` directly, which
+  drops the core↔auth optional-peer cycle; the hoist stays, at no cost.
 - A second, more routine finding: `client.joinOrCreate()` resolves on the
   WebSocket handshake, _before_ the first state patch is decoded. Code that
   reads `room.state.<field>` immediately after a successful join may see
