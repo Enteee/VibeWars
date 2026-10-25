@@ -34,8 +34,9 @@ code.
 | `Space`         | Attack your target with your weapon |
 | `Esc`           | Stop attacking                      |
 | `M`             | Mute or unmute the sound            |
+| `F10`           | Leave the match (asks first)        |
 
-To leave a match, use **leave match** at the top right; it asks first.
+To leave a match, press `F10` or use **leave match** at the top right; it asks first.
 
 To try the character editor and the roster without hosting anything,
 open the static build on GitHub Pages:

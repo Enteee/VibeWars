@@ -271,6 +271,50 @@ test("Esc cancels the attack; leaving the match is a button that asks first (#16
   await opponent.close();
 });
 
+test("F10, Tab, Enter on yes leaves the match without a mouse (#221)", async ({
+  browser,
+  page,
+}) => {
+  const opponent = await browser.newPage();
+  await startLobbyMatch(page, [opponent]);
+  await expect(page.locator("#status")).toHaveText("in match");
+  const leave = page.locator(".hud-leave");
+
+  await page.keyboard.press("F10");
+  await expect(leave).toContainText("leave?");
+  // Focus starts on "no", so a stray Enter would only close the question.
+  await expect(leave.getByRole("button", { name: "no" })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(leave.getByRole("button", { name: "yes" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".hud-bar-health")).toHaveCount(0);
+  await opponent.close();
+});
+
+test("F10 then Esc says no, and the attack goes on (#221)", async ({ browser, page }) => {
+  const opponent = await browser.newPage();
+  await startLobbyMatch(page, [opponent]);
+  await expect(page.locator("#status")).toHaveText("in match");
+  const attacking = page.locator(".hud-attacking");
+  const leave = page.locator(".hud-leave");
+
+  await page.keyboard.press(" ");
+  await expect(attacking).toBeVisible();
+  await page.keyboard.press("F10");
+  await expect(leave).toContainText("leave?");
+  // Asking, keys answer the question: Tab stays between yes and no.
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Tab");
+  await expect(leave.getByRole("button", { name: "no" })).toBeFocused();
+
+  await page.keyboard.press("Escape");
+  await expect(leave.getByRole("button", { name: "leave match (F10)" })).toBeVisible();
+  await expect(page.locator(".hud-bar-health")).toBeVisible();
+  // Esc answered the question; it did not also cancel the attack.
+  await expect(attacking).toBeVisible();
+  await opponent.close();
+});
+
 test("Tab targets the nearest enemy, and the hint goes for good (#55)", async ({
   browser,
   page,

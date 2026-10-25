@@ -355,11 +355,25 @@ export function isAttackingTarget(
   return target !== undefined && self.attackTargetSessionId === target.sessionId;
 }
 
+/** The leave question, shared by the button and the keyboard (#221). */
+export interface LeaveControl {
+  /** Ask "leave? yes / no", with focus on "no" so a stray Enter is harmless. */
+  readonly open: () => void;
+  /** Back to the button, and focus back to the game. */
+  readonly close: () => void;
+  readonly isOpen: () => boolean;
+  /** Tab while asking: between "yes" and "no", never out to the page. */
+  readonly cycleFocus: () => void;
+}
+
 /**
- * Fill the leave control: a "leave match" button that asks "leave? yes /
- * no" first, so a stray click cannot drop a player out of a match.
+ * Fill the leave control: a "leave match (F10)" button that asks "leave?
+ * yes / no" first, so a stray click or key cannot drop a player out of a
+ * match.
  */
-export function renderLeave(hud: HudElements, onLeave: () => void): void {
+export function renderLeave(hud: HudElements, onLeave: () => void): LeaveControl {
+  let answers: readonly HTMLButtonElement[] = [];
+  let left = false;
   const button = (label: string, onClick: () => void): HTMLButtonElement => {
     const node = document.createElement("button");
     node.type = "button";
@@ -367,15 +381,40 @@ export function renderLeave(hud: HudElements, onLeave: () => void): void {
     node.addEventListener("click", onClick);
     return node;
   };
-  const idle = (): void => {
-    hud.leave.replaceChildren(button("leave match", ask));
+  const control: LeaveControl = {
+    open: () => {
+      const question = document.createElement("span");
+      question.textContent = "leave?";
+      const yes = button("yes", () => {
+        if (!left) {
+          left = true;
+          onLeave();
+        }
+      });
+      const no = button("no", control.close);
+      answers = [yes, no];
+      hud.leave.replaceChildren(question, yes, no);
+      no.focus();
+    },
+    close: () => {
+      answers = [];
+      // The game listens on the window: nothing in the HUD keeps the keys.
+      const focused = document.activeElement;
+      if (focused instanceof HTMLElement && hud.leave.contains(focused)) {
+        focused.blur();
+      }
+      hud.leave.replaceChildren(button("leave match (F10)", control.open));
+    },
+    isOpen: () => {
+      return answers.length > 0;
+    },
+    cycleFocus: () => {
+      const at = answers.findIndex((answer) => answer === document.activeElement);
+      answers[(at + 1) % answers.length]?.focus();
+    },
   };
-  const ask = (): void => {
-    const question = document.createElement("span");
-    question.textContent = "leave?";
-    hud.leave.replaceChildren(question, button("yes", onLeave), button("no", idle));
-  };
-  idle();
+  control.close();
+  return control;
 }
 
 export function updateHud(
