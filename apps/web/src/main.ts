@@ -14,6 +14,7 @@ import { startMatchView, type MatchView } from "./match-view.js";
 import { musicPlayer } from "./music/music-player.js";
 import { music } from "./music/play-music.js";
 import { TRACKS } from "./music/tracks/index.js";
+import { STRESS_BUILD, startStress, stressMs } from "./music/stress.js";
 import {
   CharacterRepository,
   TeamRepository,
@@ -78,6 +79,11 @@ async function main(): Promise<void> {
     showNowPlaying(nowPlayingText(trackId, TRACKS, music().intensity));
   });
   const viewport = requireElement("#viewport");
+
+  const stress = stressMs(window.location.search, STRESS_BUILD);
+  if (stress !== null) {
+    startStress(stress);
+  }
 
   const store = await openStore();
   const characters = new CharacterRepository(store);

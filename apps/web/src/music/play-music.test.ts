@@ -29,6 +29,7 @@ function recording(): { player: MusicPlayer; calls: [string, unknown][] } {
       stop: record("stop"),
       onNowPlaying: record("onNowPlaying"),
       onError: record("onError"),
+      onStats: record("onStats"),
     },
   };
 }

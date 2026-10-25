@@ -5,7 +5,8 @@ import {
   type MusicPreference,
 } from "../audio/music-preference.js";
 import { directMusic, type Intensity, type MusicMode, type MusicState } from "./director.js";
-import { musicPlayer, type MusicPlayer, type MusicTrack } from "./music-player.js";
+import { measuringMusic, musicPlayer, type MusicPlayer, type MusicTrack } from "./music-player.js";
+import type { MusicLevel } from "./host-protocol.js";
 import type { Mood } from "./mood.js";
 import { TRACKS } from "./tracks/index.js";
 
@@ -154,11 +155,30 @@ let shared: MusicFollower | undefined;
 
 /** The page's music. */
 export function music(): MusicFollower {
-  shared ??= createMusicFollower(
-    musicPlayer(),
-    TRACKS,
-    { muted: loadMuted(), preference: loadMusicPreference() },
-    () => Date.now(),
-  );
+  if (shared === undefined) {
+    const player = musicPlayer();
+    shared = createMusicFollower(
+      player,
+      TRACKS,
+      { muted: loadMuted(), preference: loadMusicPreference() },
+      () => Date.now(),
+    );
+    if (measuringMusic(location.search)) {
+      // For scripts/music-stress.mjs: force the load it measures (#420).
+      Object.assign(window, {
+        __music: {
+          intensity: (level: MusicLevel) => {
+            player.setIntensity(level);
+          },
+          crossfadeTo: (trackId: string) => {
+            const track = TRACKS.find((candidate) => candidate.id === trackId);
+            if (track !== undefined) {
+              player.crossfadeTo(track);
+            }
+          },
+        },
+      });
+    }
+  }
   return shared;
 }

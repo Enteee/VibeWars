@@ -38,16 +38,17 @@ jobs:
           # The merge base with the pull request's base must be present.
           fetch-depth: 0
 
-      # Only the specs the pull request adds or modifies; deleted ones are
-      # left out. A helper or playwright.config.ts change does not widen the
-      # run: the whole suite ten times would go red on background flakes the
-      # change did not write, and ci.yml's `e2e` job already runs it once.
+      # Only the specs the pull request adds, modifies or renames (with or
+      # without edits, #430); deleted ones are left out. A helper or
+      # playwright.config.ts change does not widen the run: the whole suite
+      # ten times would go red on background flakes the change did not write,
+      # and ci.yml's `e2e` job already runs it once.
       - id: select
         name: Select specs
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
         run: |
-          specs=$(git diff --name-only --diff-filter=AM "$BASE...HEAD" -- 'e2e/*.spec.ts' | tr '\n' ' ')
+          specs=$(node scripts/ci/select-e2e-specs.mjs "$BASE")
           if [ -z "$specs" ]; then
             echo "no e2e specs changed"
           else
@@ -70,8 +71,10 @@ jobs:
         # SPECS is split on spaces on purpose: one argument per spec.
         run: |
           # shellcheck disable=SC2086
-          devenv shell -- pnpm exec playwright test $SPECS \
-            --repeat-each=10 --retries=0 --workers=1
+          PLAYWRIGHT_JSON_OUTPUT_NAME=e2e-repeat.json devenv shell -- pnpm exec playwright test $SPECS \
+            --reporter=list,json --repeat-each=10 --retries=0 --workers=1
+          # A pass that ran nothing (every test skipped) is not a pass.
+          node scripts/ci/select-e2e-specs.mjs --assert-ran e2e-repeat.json
 
       - name: Upload Playwright output
         if: failure()

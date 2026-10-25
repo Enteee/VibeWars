@@ -217,6 +217,50 @@ then `AudioContext.resume()` in the host, and the context reaches
 
 Firefox and Safari were not tested: neither is in the dev shell.
 
+### 7. Under load, and what it changed (#420)
+
+The runs used `scripts/music-stress.mjs`: Chromium with Pixel 7
+emulation and sandboxed frames in the page's process, as on Android. Each
+run was 60 s of the Training Ground at intensity 3, with one crossfade.
+`skipped` is music the cyclist never queried because a tick came later
+than its 0.2 s lookahead. Those are the gaps a player hears.
+
+| Load               | skipped before | skipped after | late events before → after |
+| ------------------ | -------------: | ------------: | -------------------------: |
+| no throttle        |          50 ms |          0 ms |                     25 → 0 |
+| CPU 4×             |       7 500 ms |        550 ms |                     25 → 0 |
+| CPU 6×             |       7 550 ms |        200 ms |                     25 → 0 |
+| CPU 4×, music only |      11 250 ms |        100 ms |                     25 → 0 |
+
+- **One reverb per orbit.** superdough rebuilds an orbit's reverb, an
+  impulse response seconds long generated on the main thread, whenever an
+  event asks for a different room on that orbit. Every track mixed room
+  sizes on `orbit(2)`, which cost about 30 % of the main thread at 4×.
+  The host now keeps the first room a track asks for on each orbit
+  (`host/reverb-pins.ts`). **A voice that needs another room needs its
+  own orbit.**
+- **Tempo changes on a marker.** Strudel's cyclist times the rest of a
+  slot by the tempo it started with, so an event carrying `cps` early in
+  the slot put the rest of the new track's downbeat seconds in the past.
+  A crossfade now changes the tempo with one silent event, last in its
+  slot (`host/crossfade.ts`).
+- **`latencyHint: "playback"`.** The music has a context of its own,
+  with a bigger output buffer (base 10 → 23 ms, output 32 → 72 ms here),
+  so a busy phone's audio thread is less likely to run dry. The sound
+  effects keep theirs.
+- **The music stops while the page is hidden.** Its context is suspended
+  on `visibilitychange` and resumed on return. That is a deliberate change
+  from measurement 3, where a hidden tab played on: a phone may freeze a
+  page in the background while its audio clock runs on.
+- **The lookahead stays.** The cyclist's `latency` is not what skips a
+  query, and `webaudioRepl` does not pass one through. What is left at 4×
+  is one rebuild of the reverb when a new track takes over, and compiling
+  the new track when a switch is asked for.
+
+Firefox could not be measured here: in this sandbox it has no audio
+output. Its numbers come from the phone check in
+`docs/development/manual-tests.md`.
+
 ## Budgets
 
 Step 4 builds to these budgets, and QA (step 8) checks them.
