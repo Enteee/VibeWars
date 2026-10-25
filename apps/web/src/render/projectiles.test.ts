@@ -4,6 +4,8 @@ import { vec2 } from "@vibewars/game-core";
 
 import {
   MatchClock,
+  SHOT_FADE_SECONDS,
+  shotFadeAlpha,
   projectileHeading,
   projectilePosition,
   projectileSprite,
@@ -57,6 +59,16 @@ describe("projectilePosition", () => {
 
   it("points the way it flies", () => {
     expect(projectileHeading(shot)).toBeCloseTo(Math.atan2(50, 100), 9);
+  });
+});
+
+describe("shotFadeAlpha (#238)", () => {
+  it("fades an ended shot from full to nothing over 120 ms, then lets it go", () => {
+    expect(SHOT_FADE_SECONDS).toBe(0.12);
+    expect(shotFadeAlpha(0, 0)).toBe(1);
+    expect(shotFadeAlpha(0, 0.06)).toBeCloseTo(0.5, 9);
+    expect(shotFadeAlpha(0, 0.12)).toBe(0);
+    expect(shotFadeAlpha(0, 0.121)).toBeUndefined();
   });
 });
 

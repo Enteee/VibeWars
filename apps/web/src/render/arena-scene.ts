@@ -25,6 +25,7 @@ import {
   projectileHeading,
   projectilePosition,
   projectileSpriteUrl,
+  shotFadeAlpha,
 } from "./projectiles.js";
 import { STATUS_ICON, STATUS_ICON_SIZE, statusRowLayout } from "./status-icons.js";
 import type {
@@ -74,8 +75,14 @@ export class ArenaScene extends Phaser.Scene {
   private floatingTexts: FloatingText[] = [];
   private areaFlashes: AreaFlash[] = [];
   private swingFlashes: SwingFlash[] = [];
-  /** One sprite per shot in flight, by projectile id. */
-  private projectileImages = new Map<number, Phaser.GameObjects.Image>();
+  /**
+   * One sprite per shot, by projectile id: in flight, or ended and fading
+   * at its end point since `endedAt` (scene seconds).
+   */
+  private projectileImages = new Map<
+    number,
+    { image: Phaser.GameObjects.Image; to: { x: number; y: number }; endedAt: number | undefined }
+  >();
   private readonly clock = new MatchClock();
   private floatingTextObjects = new Map<number, Phaser.GameObjects.Text>();
   /**
@@ -190,7 +197,10 @@ export class ArenaScene extends Phaser.Scene {
 
   /**
    * Shots in flight, over the actors: one sprite each, moved along its
-   * flight against the match clock, gone once it lands or leaves the state.
+   * flight against the match clock. Once a shot ends, by landing or by
+   * leaving the state, it holds at its end point and fades out (#238),
+   * timed on the scene's own clock, which keeps running after a match ends.
+   * Under reduced motion it goes at once.
    */
   private updateProjectiles(now: number): void {
     this.clock.observe(this.snapshot.clock, now);
@@ -198,23 +208,36 @@ export class ArenaScene extends Phaser.Scene {
     const flying = new Set<number>();
     for (const shot of this.snapshot.projectiles) {
       const position = projectilePosition(shot, clock);
-      if (position === undefined) {
+      const shown = this.projectileImages.get(shot.id);
+      // An ended shot never flies again, even while its id is still sent.
+      if (position === undefined || shown?.endedAt !== undefined) {
         continue;
       }
       flying.add(shot.id);
-      let image = this.projectileImages.get(shot.id);
-      if (image === undefined) {
-        image = this.add.image(position.x, position.y, projectileTexture(shot.sprite));
+      if (shown === undefined) {
+        const image = this.add.image(position.x, position.y, projectileTexture(shot.sprite));
         image.setRotation(projectileHeading(shot));
         image.setTint(shot.colour);
-        this.projectileImages.set(shot.id, image);
+        this.projectileImages.set(shot.id, { image, to: shot.to, endedAt: undefined });
+      } else {
+        shown.image.setPosition(position.x, position.y);
       }
-      image.setPosition(position.x, position.y);
     }
-    for (const [id, image] of this.projectileImages) {
-      if (!flying.has(id)) {
-        image.destroy();
+    const fade = !prefersReducedMotion();
+    for (const [id, shown] of this.projectileImages) {
+      if (flying.has(id)) {
+        continue;
+      }
+      if (shown.endedAt === undefined && fade) {
+        shown.endedAt = now;
+        shown.image.setPosition(shown.to.x, shown.to.y);
+      }
+      const alpha = shown.endedAt === undefined ? undefined : shotFadeAlpha(shown.endedAt, now);
+      if (alpha === undefined) {
+        shown.image.destroy();
         this.projectileImages.delete(id);
+      } else {
+        shown.image.setAlpha(alpha);
       }
     }
   }
