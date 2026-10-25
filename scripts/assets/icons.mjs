@@ -16,6 +16,8 @@ import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { WEAPON_MARK_GEOMETRY } from "../../apps/web/src/render/weapon-mark-geometry.ts";
+
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const outDir = join(root, "apps", "web", "public", "icons");
 
@@ -240,10 +242,175 @@ const projectile = {
   bolt: "M2 6l20-3.5v7zM24.5 6m-4.5 0a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0-9 0",
 };
 
+// ---------------------------------------------------------------------------
+// Weapons and off-hands (#419): the arena's marks (#188, #418, #275) turned to
+// point up and fitted to the grid, so what a picker shows is what you spot in
+// the fight. The weapon geometry is imported as it is, from the module the
+// arena draws it with. The off-hand numbers are copied from `offhandMarkLayout`
+// in apps/web/src/render/arena-snapshot.ts (it imports game-core, so a script
+// cannot load it): keep them in step. No body disc. Strokes keep one weight
+// whatever the scale: a core of 2 units is 2.3 px at 28 px display.
+// ---------------------------------------------------------------------------
+
+/** @typedef {{ x: number, y: number }} Pt */
+/** @typedef {{ pts: Pt[], casing: number, core: number, closed: boolean, fill: boolean }} Shape */
+
+const EDGE = "#0b0f14";
+const CASING = 3.6;
+const CORE = 2;
+const STRING_CASING = 2.6;
+const STRING_CORE = 1;
+const GRID = 24;
+const MARGIN = 1;
+
+/**
+ * Body frame (+x facing, +y right hand) to icon frame, facing up.
+ * @param {Pt} q
+ * @returns {Pt}
+ */
+const turnUp = (q) => ({ x: q.y, y: -q.x });
+
+/**
+ * Fit shapes into the grid: uniform scale, centred, never enlarging past
+ * `maxScale`. Stroke widths are given in final units and are not scaled,
+ * except in `scaleStrokes` mode (the off-hands, whose widths are part of the
+ * shape).
+ * @param {Shape[]} shapes in the body frame
+ * @param {{ maxScale?: number, scaleStrokes?: boolean }} [options]
+ */
+function fitIcon(shapes, options = {}) {
+  const { maxScale = 1.6, scaleStrokes = false } = options;
+  const turned = shapes.map((s) => ({ ...s, pts: s.pts.map(turnUp) }));
+  const all = turned.flatMap((s) => s.pts);
+  const minX = Math.min(...all.map((q) => q.x));
+  const maxX = Math.max(...all.map((q) => q.x));
+  const minY = Math.min(...all.map((q) => q.y));
+  const maxY = Math.max(...all.map((q) => q.y));
+  const widest = Math.max(...shapes.map((s) => s.casing));
+  const w = maxX - minX;
+  const h = maxY - minY;
+  // With scaled strokes the casing grows with the scale: solve for it.
+  const avail = GRID - 2 * MARGIN;
+  const scale = scaleStrokes
+    ? Math.min(maxScale, avail / (Math.max(w, h) + widest))
+    : Math.min(maxScale, (avail - widest) / Math.max(w, h));
+  const mul = scaleStrokes ? scale : 1;
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+  /** @param {Pt} q */
+  const place = (q) =>
+    `${String(Math.round((GRID / 2 + (q.x - cx) * scale) * 100) / 100)} ${String(Math.round((GRID / 2 + (q.y - cy) * scale) * 100) / 100)}`;
+  /** @param {number} n */
+  const width = (n) => String(Math.round(n * mul * 100) / 100);
+  /** @param {Shape} s */
+  const d = (s) => `M${s.pts.map(place).join("L")}${s.closed ? "z" : ""}`;
+  const casings = turned
+    .map(
+      (s) =>
+        `<path d="${d(s)}" fill="none" stroke="${EDGE}" stroke-width="${width(s.casing)}" stroke-linecap="round" stroke-linejoin="round"/>`,
+    )
+    .join("");
+  const cores = turned
+    .map((s) =>
+      s.fill
+        ? `<path d="${d(s)}" fill="${C.ink}"/>`
+        : `<path d="${d(s)}" fill="none" stroke="${C.ink}" stroke-width="${width(s.core)}" stroke-linecap="round" stroke-linejoin="round"/>`,
+    )
+    .join("");
+  return svg(casings + cores);
+}
+
+/** @type {Record<string, Shape[]>} */
+const weaponShapes = Object.fromEntries(
+  Object.entries(WEAPON_MARK_GEOMETRY).map(([id, g]) => [
+    id,
+    [
+      ...g.strokes.map((pts) => ({
+        pts: [...pts],
+        casing: CASING,
+        core: CORE,
+        closed: false,
+        fill: false,
+      })),
+      // A filled head is cased by a stroke of the same polygon, a little thinner.
+      ...g.fills.map((pts) => ({
+        pts: [...pts],
+        casing: CASING - 1.6,
+        core: 0,
+        closed: true,
+        fill: true,
+      })),
+      ...g.strings.map((pts) => ({
+        pts: [...pts],
+        casing: STRING_CASING,
+        core: STRING_CORE,
+        closed: false,
+        fill: false,
+      })),
+    ],
+  ]),
+);
+
+/**
+ * `n + 1` points of the arc of `radius` about the origin, angles in degrees.
+ * @param {number} radius
+ * @param {number} from
+ * @param {number} to
+ * @param {number} n
+ * @returns {Pt[]}
+ */
+const arcPoints = (radius, from, to, n) =>
+  Array.from({ length: n + 1 }, (_, k) => {
+    const a = ((from + ((to - from) * k) / n) * Math.PI) / 180;
+    return { x: Math.cos(a) * radius, y: Math.sin(a) * radius };
+  });
+
+/** Body radius, and how far past its edge the off-hand marks sit. */
+const BODY_R = 14;
+const OFFHAND_REACH = 3.5;
+
+/** @type {Record<string, [Shape[], boolean]>} */
+const offhandShapes = {
+  // The shield: an arc 105° to 45° left of the facing, casing 5, core 3.
+  shield: [
+    [
+      {
+        pts: arcPoints(BODY_R + OFFHAND_REACH, -105, -45, 12),
+        casing: 5,
+        core: 3,
+        closed: false,
+        fill: false,
+      },
+    ],
+    true,
+  ],
+  // The focus: a ring of radius 1.75, casing 3, core 1.5; scaled up, but drawn in
+  // the family weight, or its hole closes.
+  focus: [
+    [
+      {
+        pts: arcPoints(1.75, 0, 360, 24).slice(0, 24),
+        casing: CASING,
+        core: CORE,
+        closed: true,
+        fill: false,
+      },
+    ],
+    false,
+  ],
+};
+
 /** @type {Record<string, Record<string, string>>} */
 const families = {
   profession: Object.fromEntries(Object.entries(profession).map(([k, f]) => [k, svg(f())])),
   "skill-type": Object.fromEntries(Object.entries(skillType).map(([k, f]) => [k, svg(f())])),
+  weapon: Object.fromEntries(Object.entries(weaponShapes).map(([k, s]) => [k, fitIcon(s)])),
+  offhand: Object.fromEntries(
+    Object.entries(offhandShapes).map(([k, [s, scaled]]) => [
+      k,
+      fitIcon(s, { maxScale: 3, scaleStrokes: scaled }),
+    ]),
+  ),
   ui: Object.fromEntries(Object.entries(ui).map(([k, f]) => [k, svg(f())])),
   projectile: Object.fromEntries(
     Object.entries(projectile).map(([k, d]) => [k, projectileSprite(d)]),

@@ -15,6 +15,7 @@ import {
   targetHint,
   targetHintDismissed,
   targetProfessionIcons,
+  targetWeaponIcon,
 } from "./hud.js";
 
 describe("formatClock", () => {
@@ -263,5 +264,22 @@ describe("targetProfessionIcons (#281)", () => {
     ]);
     expect(targetProfessionIcons(target(undefined, undefined))).toEqual([]);
     expect(targetProfessionIcons(undefined)).toEqual([]);
+  });
+});
+
+describe("targetWeaponIcon (#419)", () => {
+  const armed = (weaponId: PlayerSnapshot["weaponId"]): PlayerSnapshot =>
+    ({ weaponId, primaryProfession: undefined, secondaryProfession: undefined }) as PlayerSnapshot;
+
+  it("names the target's weapon for alt and title", () => {
+    const icon = targetWeaponIcon(armed("longbow"));
+    expect(icon?.name).toBe("Longbow");
+    expect(icon?.src).toMatch(/icons\/weapon\/longbow\.svg$/);
+  });
+
+  it("is nothing with no target, no weapon or an unknown one", () => {
+    expect(targetWeaponIcon(undefined)).toBeUndefined();
+    expect(targetWeaponIcon(armed(undefined))).toBeUndefined();
+    expect(targetWeaponIcon(armed("lightsaber"))).toBeUndefined();
   });
 });

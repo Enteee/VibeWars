@@ -366,6 +366,17 @@ the same 8v8 clump both ways:
 
 ![Name label study](name-label-study.svg)
 
+### Weapon and off-hand icons
+
+The pickers and the target frame (#419) show a weapon or off-hand as its arena
+mark, turned to point up and fitted to the 24 grid, so what you pick is what
+you spot in the fight. Drawn from the same geometry as the arena
+(`weapon-mark-geometry.ts`): a 2-unit `ink` core (2.3 px at 28 px) in a
+3.6-unit `edge` casing, bow strings in the thin 1-unit weight, filled heads
+cased thinner. No body disc. Unarmed is the two fists. The shield is its arc
+and the focus its ring, scaled up (the ring in the same weight, or its hole
+closes). Ink, never team colour: an icon in a menu names a thing, not a side.
+
 ### Skill type badges
 
 The corner badge on a skill slot. Ink on the slot, except the two that leave a
@@ -463,6 +474,8 @@ generator. Never hand-edit an output file; change the script and re-run.
 | Status     | `apps/web/public/icons/status/`     |
 | UI         | `apps/web/public/icons/ui/`         |
 | Projectile | `apps/web/public/icons/projectile/` |
+| Weapon     | `apps/web/public/icons/weapon/`     |
+| Off-hand   | `apps/web/public/icons/offhand/`    |
 
 Each file is a flat SVG of 150–450 bytes with colours baked in, because Phaser
 rasterises SVG textures without CSS. Projectiles are the one exception: white,
