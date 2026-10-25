@@ -19,7 +19,10 @@
  *                           support only: answer a user in the Support
  *                           topic, as a reply to their message <msg>
  *   tg inbox [--all]        print unread messages, advancing the read cursor
- *   tg wait [--timeout N]   block until something new arrives, then print it
+ *   tg wait [--timeout N] [--all]
+ *                           block until a message for you arrives, then print
+ *                           everything unread; --all wakes on a plain
+ *                           broadcast too
  *   tg roster               who is online
  *
  * `wait` is the important one: it is how an agent yields to a peer instead of
@@ -43,6 +46,7 @@ import {
   formatLine,
   obj,
   readInbox,
+  wakes,
 } from "./protocol.mjs";
 
 const ROLE = process.env.VIBEWARS_BOT_ROLE;
@@ -153,9 +157,11 @@ function readCursor() {
 /**
  * @param {boolean} fromStart Ignore the cursor and replay the whole inbox.
  * @param {boolean} advance Persist the new cursor.
+ * @param {(line: import("./protocol.mjs").InboxLine) => boolean} [ends] Print
+ *   and advance only if some unread line satisfies this; otherwise nothing.
  * @returns {number} How many messages were printed.
  */
-function drain(fromStart, advance) {
+function drain(fromStart, advance, ends = () => true) {
   let contents;
   try {
     contents = fs.readFileSync(INBOX, "utf8");
@@ -164,6 +170,9 @@ function drain(fromStart, advance) {
   }
 
   const { lines, cursor } = readInbox(contents, fromStart ? 0 : readCursor());
+  if (!lines.some(ends)) {
+    return 0;
+  }
   for (const line of lines) {
     console.log(formatLine(line));
   }
@@ -203,12 +212,13 @@ function kilo(tokens) {
 
 /**
  * @param {number} timeoutSeconds
+ * @param {boolean} all wake on a plain broadcast too
  * @returns {Promise<number>}
  */
-async function wait(timeoutSeconds) {
+async function wait(timeoutSeconds, all) {
   const deadline = Date.now() + timeoutSeconds * 1000;
   for (;;) {
-    const printed = drain(false, true);
+    const printed = drain(false, true, all ? () => true : (line) => wakes(line, ROLE ?? ""));
     if (printed > 0) {
       return printed;
     }
@@ -222,7 +232,12 @@ async function wait(timeoutSeconds) {
       return 0;
     }
     if (Date.now() >= deadline) {
-      console.log(`(nothing new in ${String(timeoutSeconds)}s)`);
+      const queued = pending();
+      console.log(
+        queued === 0
+          ? `(nothing new in ${String(timeoutSeconds)}s)`
+          : `(nothing for you in ${String(timeoutSeconds)}s; ${String(queued)} General messages queued, tg inbox shows them)`,
+      );
       return 0;
     }
     // A poll rather than fs.watch: the inbox is written by a process in a
@@ -230,6 +245,15 @@ async function wait(timeoutSeconds) {
     // something to bet a blocking call on. One second is far below the
     // latency an agent cares about.
     await sleep(1000);
+  }
+}
+
+/** @returns {number} how many unread lines wait, which `wait` left unprinted */
+function pending() {
+  try {
+    return readInbox(fs.readFileSync(INBOX, "utf8"), readCursor()).lines.length;
+  } catch {
+    return 0;
   }
 }
 
@@ -381,7 +405,7 @@ switch (command) {
       console.error("tg: --timeout takes a positive number of seconds");
       process.exit(2);
     }
-    await wait(timeout);
+    await wait(timeout, rest.includes("--all"));
     break;
   }
 

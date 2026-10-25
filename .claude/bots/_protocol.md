@@ -96,6 +96,11 @@ left half-done.
 - Commit on your own branch, `bot/<your-role>/<something>`. Never force-push.
   You cannot push to `main` and neither can anyone else — `main` only ever
   changes through a merged pull request.
+- **Message a role only when it must act.** The board is the state: don't
+  announce what a card move already shows, and send no courtesy copies.
+  `tg broadcast` only when everyone must act. A broadcast wakes nobody
+  unless it starts `<role>:`. To get one role to act on something in
+  General, start it `<role>:`, or use `tg send`.
 - If you are stuck or genuinely blocked, say so on Telegram and move to other
   work. Do not spin.
 - **Don't end your turn while waiting on background work.** Ending a turn
