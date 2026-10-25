@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "../net/match-connection.js";
-import { teamColour, type AreaFlash, type FloatingText } from "./arena-snapshot.js";
+import {
+  floatingTextY,
+  placeFloatingText,
+  teamColour,
+  type AreaFlash,
+  type FloatingText,
+} from "./arena-snapshot.js";
 import { showCombatFeedback, swingFlashFor } from "./combat-feedback.js";
 
 function player(sessionId: string): PlayerSnapshot {
@@ -110,6 +116,43 @@ describe("showCombatFeedback", () => {
     };
     expect(weights("weapon")).toEqual(["light"]);
     expect(weights("skill")).toEqual(["normal"]);
+  });
+
+  it("starts a number right of the bar, clear of the name (#262)", () => {
+    // Both bodies stand at (100, 100).
+    const texts: FloatingText[] = [];
+    showCombatFeedback(
+      {
+        addFloatingText: (text) => texts.push(text),
+        addAreaFlash: () => undefined,
+        addSwingFlash: () => undefined,
+      },
+      {
+        casterSessionId: "me",
+        cause: "skill",
+        skillId: "elementalist.fireball",
+        weaponId: "",
+        events: [
+          { kind: "damage", targetId: "them", amount: 30 },
+          { kind: "damage", targetId: "them", amount: 20 },
+        ],
+      },
+      SNAPSHOT,
+    );
+    expect(texts[0]?.position).toEqual({ x: 118, y: 108 });
+
+    // Landing together, the second sits a line above it, as #54 stacks them.
+    const placed: FloatingText[] = [];
+    for (const text of texts) {
+      const next = placeFloatingText(placed, text);
+      if (next !== undefined) {
+        placed.push(next);
+      }
+    }
+    expect(placed.map((text) => [text.position.x, floatingTextY(text)])).toEqual([
+      [118, 108],
+      [118, 94],
+    ]);
   });
 
   it("skips events about nobody it can see", () => {

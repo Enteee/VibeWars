@@ -5,6 +5,8 @@ import { floatingCueFor, type FloatingCue } from "../ui/combat-readouts.js";
 import {
   ACTOR_RADIUS,
   AREA_FLASH_SECONDS,
+  FLOATING_TEXT_OFFSET_X,
+  FLOATING_TEXT_OFFSET_Y,
   FLOATING_TEXT_SECONDS,
   SWING_FLASH_GAP,
   SWING_FLASH_SECONDS,
@@ -131,7 +133,7 @@ export function showCombatFeedback(
       id: nextFloatingId,
       anchorId: subject.sessionId,
       text: cue.text,
-      position: vec2(subject.x, subject.y - 24),
+      position: vec2(subject.x + FLOATING_TEXT_OFFSET_X, subject.y + FLOATING_TEXT_OFFSET_Y),
       colour: COLOURS[cue.tone],
       remainingSeconds: FLOATING_TEXT_SECONDS,
       weight: message.cause === "weapon" ? "light" : "normal",
