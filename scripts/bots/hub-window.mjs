@@ -65,7 +65,7 @@ export function hubWindowUp(tmux, session) {
   const windows = run(tmux, [
     "list-windows",
     "-t",
-    session,
+    `=${session}`,
     "-F",
     "#{window_index} #{window_name}",
   ]);
@@ -100,7 +100,7 @@ export function openHubWindow(tmux, session) {
   const hubd = run(tmux, [
     "new-window",
     ...["-d", "-k", "-P", "-F", "#{pane_id}"],
-    ...["-t", `${session}:${HUB_INDEX}`, "-n", HUB_NAME, "-c", root],
+    ...["-t", `=${session}:${HUB_INDEX}`, "-n", HUB_NAME, "-c", root],
     ...env,
     daemon("hubd"),
   ]);

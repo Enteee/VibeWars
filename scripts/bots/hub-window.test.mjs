@@ -89,7 +89,7 @@ describe("hub-window open", () => {
     expect(result.code).toBe(0);
     const open = result.calls.find((c) => c.startsWith("new-window"));
     expect(open).toMatch(/ -k /);
-    expect(open).toMatch(/ -t hub-test:99 -n hub /);
+    expect(open).toMatch(/ -t =hub-test:99 -n hub /);
     expect(open).toMatch(/run-forever\.mjs hubd -- .*hubd\.mjs$/);
     expect(result.calls.find((c) => c.startsWith("split-window"))).toMatch(
       /run-forever\.mjs supervisor -- .*supervisor\.mjs$/,
