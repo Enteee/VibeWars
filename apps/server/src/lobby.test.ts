@@ -17,6 +17,7 @@ import { generateLobbyCode, sanitizeName } from "./rooms/lobby-room.js";
 import { MatchRoom } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
+import { DEFAULT_MAX_ROOMS } from "./config.js";
 
 describe("sanitizeName", () => {
   it("keeps a reasonable name as-is", () => {
@@ -222,7 +223,13 @@ describe("lobby room", () => {
   beforeAll(async () => {
     port = await findFreePort();
     endpoint = `ws://127.0.0.1:${String(port)}`;
-    server = createGameServer({ port, host: "127.0.0.1", webRoot: undefined, devMode: false });
+    server = createGameServer({
+      port,
+      host: "127.0.0.1",
+      webRoot: undefined,
+      devMode: false,
+      maxRooms: DEFAULT_MAX_ROOMS,
+    });
     await server.listen(port, "127.0.0.1");
   });
 
@@ -517,7 +524,13 @@ describe("playing more than one match in a lobby", () => {
   beforeAll(async () => {
     port = await findFreePort();
     endpoint = `ws://127.0.0.1:${String(port)}`;
-    server = createGameServer({ port, host: "127.0.0.1", webRoot: undefined, devMode: false });
+    server = createGameServer({
+      port,
+      host: "127.0.0.1",
+      webRoot: undefined,
+      devMode: false,
+      maxRooms: DEFAULT_MAX_ROOMS,
+    });
     await server.listen(port, "127.0.0.1");
   });
 
@@ -695,7 +708,13 @@ describe("joining by code", () => {
   beforeAll(async () => {
     port = await findFreePort();
     endpoint = `ws://127.0.0.1:${String(port)}`;
-    server = createGameServer({ port, host: "127.0.0.1", webRoot: undefined, devMode: false });
+    server = createGameServer({
+      port,
+      host: "127.0.0.1",
+      webRoot: undefined,
+      devMode: false,
+      maxRooms: DEFAULT_MAX_ROOMS,
+    });
     await server.listen(port, "127.0.0.1");
   });
 

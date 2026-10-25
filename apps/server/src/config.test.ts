@@ -3,10 +3,28 @@ import { describe, expect, it } from "vitest";
 import {
   ConfigError,
   DEFAULT_DEV_CLIENT_ORIGIN,
+  DEFAULT_MAX_ROOMS,
   loadConfig,
   parseBoolean,
+  parseMaxRooms,
   parsePort,
 } from "./config.js";
+
+describe("parseMaxRooms (#114)", () => {
+  it("defaults to 200, and reads a positive integer", () => {
+    expect(parseMaxRooms(undefined)).toBe(DEFAULT_MAX_ROOMS);
+    expect(DEFAULT_MAX_ROOMS).toBe(200);
+    expect(parseMaxRooms(" ")).toBe(DEFAULT_MAX_ROOMS);
+    expect(parseMaxRooms("50")).toBe(50);
+    expect(loadConfig({ VIBEWARS_MAX_ROOMS: "7" }).maxRooms).toBe(7);
+  });
+
+  it("rejects zero, a negative number and anything not a number", () => {
+    for (const raw of ["0", "-1", "abc", "1.5", "1e3"]) {
+      expect(() => parseMaxRooms(raw), raw).toThrow(ConfigError);
+    }
+  });
+});
 
 describe("parsePort", () => {
   it("defaults to 2567 when unset or blank", () => {
@@ -89,6 +107,7 @@ describe("loadConfig", () => {
       webRoot: "/srv/web",
       devMode: true,
       devClientOrigin: DEFAULT_DEV_CLIENT_ORIGIN,
+      maxRooms: DEFAULT_MAX_ROOMS,
     });
   });
 

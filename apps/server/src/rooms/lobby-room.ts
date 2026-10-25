@@ -1,4 +1,4 @@
-import { Room, type Client } from "colyseus";
+import { Room, ServerError, type Client } from "colyseus";
 import { schema, t } from "@colyseus/schema";
 import { createRng, seedFromString, type SimulationRng } from "@vibewars/game-core";
 import { listMapIds } from "@vibewars/game-maps";
@@ -7,6 +7,8 @@ import {
   LOBBY_CODE_LENGTH,
   MAX_LOBBY_PLAYERS,
   PROTOCOL_VERSION,
+  ROOM_LIMIT,
+  SERVER_FULL_MESSAGE,
   isLobbyCode,
   normalizeLobbyCode,
   type LobbyMatchStartingMessage,
@@ -20,6 +22,7 @@ import {
   field,
   messageBudget,
 } from "./options.js";
+import { RoomSlot, type RoomBudget } from "./room-budget.js";
 
 /**
  * The pre-match lobby (brief §19, §25).
@@ -269,7 +272,32 @@ export class LobbyRoom extends Room {
   /** Set once this room is gone, so a match ending later finds nobody to reset. */
   #disposed = false;
 
+  /**
+   * This server's room budget (#114). `createGameServer` defines a
+   * subclass that supplies it, so a LobbyRoom defined any other way fails
+   * loudly instead of running uncapped.
+   */
+  protected get roomBudget(): RoomBudget {
+    throw new Error("LobbyRoom has no room budget: define it through createGameServer");
+  }
+
+  /** This room's slot in the budget: taken first, given back once. */
+  #slot: RoomSlot | undefined;
+
   public override onCreate(options: unknown): void {
+    // Before anything else, so a full server refuses cheaply; and given
+    // back if creating fails after it was taken.
+    this.#slot = new RoomSlot(this.roomBudget);
+    this.#slot.take();
+    try {
+      this.#create(options);
+    } catch (error: unknown) {
+      this.#slot.release();
+      throw error;
+    }
+  }
+
+  #create(options: unknown): void {
     this.autoDispose = true;
     this.maxMessagesPerSecond = FLOOD_MESSAGES_PER_SECOND;
     this.maxClients = MAX_LOBBY_PLAYERS;
@@ -460,7 +488,11 @@ export class LobbyRoom extends Room {
     } catch (error: unknown) {
       console.error(`[lobby] ${this.state.code} could not open its match`, error);
       this.state.phase = "waiting";
-      client.send("start-rejected", { reason: "the server could not create the match" });
+      // A full server says so, as Quick Match and hosting do (#114).
+      const full = error instanceof ServerError && error.code === ROOM_LIMIT;
+      client.send("start-rejected", {
+        reason: full ? SERVER_FULL_MESSAGE : "the server could not create the match",
+      });
       return;
     }
 
@@ -517,9 +549,19 @@ export class LobbyRoom extends Room {
   }
 
   public override onDispose(): void {
+    this.#slot?.release();
     this.#disposed = true;
     console.info(`[lobby] ${this.state.code} disposed`);
   }
+}
+
+/** `LobbyRoom`, holding this server's room budget (#114). */
+export function budgetedLobbyRoom(budget: RoomBudget): typeof LobbyRoom {
+  return class extends LobbyRoom {
+    protected override get roomBudget(): RoomBudget {
+      return budget;
+    }
+  };
 }
 
 export type LobbyStateInstance = InstanceType<typeof LobbyState>;

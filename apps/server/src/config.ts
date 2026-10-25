@@ -37,6 +37,12 @@ export interface ServerConfig {
    * building a production config has nothing to say about it.
    */
   readonly devClientOrigin?: string;
+  /**
+   * How many rooms, match and lobby together, the server holds at once
+   * (#114): `VIBEWARS_MAX_ROOMS`. Past it, a new room is refused with
+   * "the server is full" rather than slowing every match down.
+   */
+  readonly maxRooms: number;
 }
 
 export class ConfigError extends Error {
@@ -66,6 +72,26 @@ export function parsePort(raw: string | undefined, fallback: number = DEFAULT_PO
     throw new ConfigError(`PORT must be between 1 and 65535, got ${String(port)}`);
   }
   return port;
+}
+
+/**
+ * 200 by default: one client opening ~1 500 one-player rooms blew the tick
+ * budget for everyone, full rooms cost more than that, and 200 leaves room.
+ */
+export const DEFAULT_MAX_ROOMS = 200;
+
+/** A positive decimal integer, like `parsePort` is strict about ports. */
+export function parseMaxRooms(raw: string | undefined): number {
+  if (raw === undefined || raw.trim() === "") {
+    return DEFAULT_MAX_ROOMS;
+  }
+  const value = raw.trim();
+  if (!/^\d+$/.test(value) || Number.parseInt(value, 10) < 1) {
+    throw new ConfigError(
+      `VIBEWARS_MAX_ROOMS must be a positive integer, got ${JSON.stringify(raw)}`,
+    );
+  }
+  return Number.parseInt(value, 10);
 }
 
 /** Treats only explicit truthy spellings as true; anything else is false. */
@@ -110,6 +136,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     host: env.HOST?.trim() ?? "0.0.0.0",
     webRoot: resolvedWebRoot,
     devMode: parseBoolean(env.VIBEWARS_DEV, false),
+    maxRooms: parseMaxRooms(env.VIBEWARS_MAX_ROOMS),
     devClientOrigin:
       devOrigin === undefined || devOrigin === "" ? DEFAULT_DEV_CLIENT_ORIGIN : devOrigin,
   };

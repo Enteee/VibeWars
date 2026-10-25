@@ -51,6 +51,7 @@ import {
   messageBudget,
 } from "./options.js";
 import { rechargePredicted, rechargeSlots } from "./recharge.js";
+import { RoomSlot, type RoomBudget } from "./room-budget.js";
 
 /**
  * The match simulation room: authoritative movement, targeting and combat
@@ -459,7 +460,32 @@ export class MatchRoom extends Room {
     return spawn?.position ?? { x: 0, y: 0 };
   }
 
+  /**
+   * This server's room budget (#114). `createGameServer` defines a
+   * subclass that supplies it, so a MatchRoom defined any other way fails
+   * loudly instead of running uncapped.
+   */
+  protected get roomBudget(): RoomBudget {
+    throw new Error("MatchRoom has no room budget: define it through createGameServer");
+  }
+
+  /** This room's slot in the budget: taken first, given back once. */
+  #slot: RoomSlot | undefined;
+
   public override async onCreate(options?: unknown): Promise<void> {
+    // Before anything else, so a full server refuses cheaply; and given
+    // back if creating fails after it was taken.
+    this.#slot = new RoomSlot(this.roomBudget);
+    this.#slot.take();
+    try {
+      await this.#create(options);
+    } catch (error: unknown) {
+      this.#slot.release();
+      throw error;
+    }
+  }
+
+  async #create(options?: unknown): Promise<void> {
     this.autoDispose = true;
     this.maxMessagesPerSecond = FLOOD_MESSAGES_PER_SECOND;
 
@@ -973,6 +999,7 @@ export class MatchRoom extends Room {
   }
 
   public override onDispose(): void {
+    this.#slot?.release();
     this.over();
     console.info("[match] disposed");
   }
@@ -988,6 +1015,15 @@ export class MatchRoom extends Room {
       console.error("[match] the lobby failed to take its players back", error);
     }
   }
+}
+
+/** `MatchRoom`, holding this server's room budget (#114). */
+export function budgetedMatchRoom(budget: RoomBudget): typeof MatchRoom {
+  return class extends MatchRoom {
+    protected override get roomBudget(): RoomBudget {
+      return budget;
+    }
+  };
 }
 
 export { IMPLEMENTED_SKILLS, DEFAULT_SKILL_BAR };

@@ -25,7 +25,9 @@ HTTP/WebSocket port, with no database and minimal configuration (§26–§27).
 - Configuration is environment-variable only, with LAN-friendly defaults
   (`apps/server/src/config.ts`): `PORT` defaults to `2567`, `HOST` defaults
   to `0.0.0.0` (binds all interfaces, since the primary use case is "friends
-  on the same LAN," not localhost-only), `VIBEWARS_WEB_ROOT` is optional.
+  on the same LAN," not localhost-only), `VIBEWARS_WEB_ROOT` is optional,
+  and `VIBEWARS_MAX_ROOMS` caps the rooms the server holds (default 200,
+  #114).
   `parsePort`/`parseBoolean` reject malformed values loudly rather than
   silently coercing `"abc"` into a fallback port.
 - `devenv.nix` will define a `containers.prod` entry (devenv's

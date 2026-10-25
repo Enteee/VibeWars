@@ -105,8 +105,8 @@ saying so in the same PR. Keep the numbers: issues cite them.
    joining is not rate-limited. That is fine for a LAN party. It is not
    access control, and it must not be described as access control.
 
-6. **No cap on the number of match rooms** (#114). Any client can call
-   `create("match")` as often as it likes, and gets a Quick Match room. Every
+6. **Mitigated by #114: there was no cap on the number of rooms.** Any client could call
+   `create("match")` as often as it liked, and got a Quick Match room. Every
    room runs its own 20 Hz fixed-timestep simulation, even with a single
    player in it. So the cap of 8 players per Quick Match room does not bound
    the work: the attacker just opens more rooms. Each lobby match is a room
@@ -126,9 +126,12 @@ saying so in the same PR. Keep the numbers: issues cite them.
    the attacker is not in. Since #43 each of those sockets may also send up
    to 1000 messages a second before it is dropped. Measured at `71bff02`, one
    such client costs about 1.5 % of a core with small messages and 6–8 % with
-   ones near the 4 KiB frame cap, so about 13 of them fill a core. A
-   server-wide cap on live match rooms is needed, as is a cap per remote
-   address.
+   ones near the 4 KiB frame cap, so about 13 of them fill a core.
+   Since #114 the server holds at most `VIBEWARS_MAX_ROOMS` rooms, match and
+   lobby together (default 200). Past that, a create is refused with 503 and
+   "The server is full", and running matches never notice. **Still open:**
+   one client can fill that budget and keep everyone else out, so a cap per
+   client or per remote address is still needed.
 
 7. **Fixed by #115:** client strings reached the server log unescaped. A
    skill id of `"a\n[match] finished winner=1 reason=score"` printed a

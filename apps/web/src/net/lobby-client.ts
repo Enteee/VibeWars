@@ -2,6 +2,7 @@ import { Client, type Room } from "@colyseus/sdk";
 import type { PlayerBuild } from "@vibewars/game-core";
 import {
   PROTOCOL_MISMATCH_MESSAGE,
+  ROOM_LIMIT,
   PROTOCOL_VERSION,
   ROOM_LOBBY,
   normalizeLobbyCode,
@@ -178,6 +179,21 @@ export async function createLobby(
  */
 export function isProtocolMismatch(error: unknown): boolean {
   return error instanceof Error && error.message.includes(PROTOCOL_MISMATCH_MESSAGE);
+}
+
+/**
+ * Whether a failed create was the server holding all the rooms it can
+ * (#114): matchmaking hands back `ROOM_LIMIT`. Quick Match and hosting say
+ * so, rather than "could not connect", because waiting a minute fixes it.
+ *
+ * @param error what the SDK rejected with
+ */
+export function isServerFull(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    "code" in error &&
+    (error as Error & { readonly code: unknown }).code === ROOM_LIMIT
+  );
 }
 
 export class LobbyNotFoundError extends Error {

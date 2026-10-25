@@ -14,6 +14,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { DEFAULT_MAP_ID, DEFAULT_SKILL_BAR, MatchRoom } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
+import { DEFAULT_MAX_ROOMS } from "./config.js";
 
 /**
  * The first client to join a fresh room always gets the map's first spawn
@@ -48,6 +49,7 @@ describe("match room", () => {
       host: "127.0.0.1",
       webRoot: undefined,
       devMode: false,
+      maxRooms: DEFAULT_MAX_ROOMS,
     });
     await server.listen(port, "127.0.0.1");
   });

@@ -10,6 +10,7 @@ import {
 } from "../rooms/match-room.js";
 import { createGameServer, type GameServer } from "../server.js";
 import { findFreePort, waitFor } from "../testing/harness.js";
+import { DEFAULT_MAX_ROOMS } from "../config.js";
 
 /**
  * Load benchmarks at realistic team sizes (brief §26).
@@ -293,6 +294,7 @@ export async function runBenchmarks(
       host: "127.0.0.1",
       webRoot: undefined,
       devMode: false,
+      maxRooms: DEFAULT_MAX_ROOMS,
     });
     await server.listen(port);
 

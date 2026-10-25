@@ -5,6 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
+import { DEFAULT_MAX_ROOMS } from "./config.js";
 
 /**
  * Network robustness (brief §25).
@@ -22,7 +23,13 @@ describe("reconnection", () => {
   beforeAll(async () => {
     port = await findFreePort();
     endpoint = `ws://127.0.0.1:${String(port)}`;
-    server = createGameServer({ port, host: "127.0.0.1", webRoot: undefined, devMode: false });
+    server = createGameServer({
+      port,
+      host: "127.0.0.1",
+      webRoot: undefined,
+      devMode: false,
+      maxRooms: DEFAULT_MAX_ROOMS,
+    });
     await server.listen(port, "127.0.0.1");
   });
 

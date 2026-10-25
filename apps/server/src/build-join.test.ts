@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { DEFAULT_SKILL_BAR } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
+import { DEFAULT_MAX_ROOMS } from "./config.js";
 
 /**
  * Bringing a build into a match (brief §17, §32).
@@ -69,7 +70,13 @@ describe("joining with a build", () => {
   beforeAll(async () => {
     const port = await findFreePort();
     endpoint = `ws://127.0.0.1:${String(port)}`;
-    server = createGameServer({ port, host: "127.0.0.1", webRoot: undefined, devMode: false });
+    server = createGameServer({
+      port,
+      host: "127.0.0.1",
+      webRoot: undefined,
+      devMode: false,
+      maxRooms: DEFAULT_MAX_ROOMS,
+    });
     await server.listen(port);
   });
 

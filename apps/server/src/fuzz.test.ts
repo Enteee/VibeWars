@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { FLOOD_MESSAGES_PER_SECOND, MESSAGE_BURST, MESSAGES_PER_SECOND } from "./rooms/options.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
+import { DEFAULT_MAX_ROOMS } from "./config.js";
 
 /**
  * Security / validation hardening (brief §27, §32).
@@ -131,7 +132,13 @@ describe("server survives hostile clients", () => {
   beforeAll(async () => {
     port = await findFreePort();
     endpoint = `ws://127.0.0.1:${String(port)}`;
-    server = createGameServer({ port, host: "127.0.0.1", webRoot: undefined, devMode: false });
+    server = createGameServer({
+      port,
+      host: "127.0.0.1",
+      webRoot: undefined,
+      devMode: false,
+      maxRooms: DEFAULT_MAX_ROOMS,
+    });
     await server.listen(port, "127.0.0.1");
   });
 
