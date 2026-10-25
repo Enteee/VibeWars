@@ -170,7 +170,17 @@ async function measureSyncLatency(
 function driveInputs(participants: readonly Participant[], seed: string): () => void {
   const rng = createRng(seedFromString(seed));
   const timer = setInterval(() => {
-    for (const participant of participants) {
+    for (const [i, participant] of participants.entries()) {
+      // Half the bots stand still and auto-attack the enemy beside them in
+      // seat order, so they approach along their path finder (#267): a
+      // bench that never attacks cannot catch the attack path regressing.
+      // House builds are melee, so they always approach.
+      const enemy = participants[i ^ 1];
+      if (i % 4 < 2 && enemy !== undefined) {
+        participant.room.send("intent", { kind: "stop" });
+        participant.room.send("intent", { kind: "attack", targetId: enemy.sessionId });
+        continue;
+      }
       const angle = rng.nextFloat() * Math.PI * 2;
       participant.room.send("intent", {
         kind: "move",

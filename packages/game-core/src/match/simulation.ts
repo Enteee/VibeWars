@@ -19,7 +19,7 @@ import {
   type MatchScore,
 } from "../match-rules.js";
 import { clampInputDirection, integrateMovement } from "../movement.js";
-import { buildNavGraph, findPath, type NavGraph } from "../pathing.js";
+import { buildNavGraph, createPathFinder, type PathFinder } from "../pathing.js";
 import { createRng, seedFromString, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { canActivate, payCost, type ActivationCheck } from "../skills/activation.js";
@@ -205,7 +205,8 @@ export class MatchSimulation {
   readonly #walls: readonly Segment[];
   readonly #bounds: { readonly width: number; readonly height: number } | undefined;
   /** Corners an approach can path through, built once from the walls (#211). */
-  readonly #nav: NavGraph;
+  /** Paths round this match's walls, for the attack's approach (#211, #267). */
+  readonly #paths: PathFinder;
   readonly #rng: SimulationRng;
   readonly #participants = new Map<string, ParticipantRecord>();
   #projectiles: Projectile[] = [];
@@ -226,7 +227,9 @@ export class MatchSimulation {
     this.#matchRules = options.matchRules;
     this.#walls = options.walls ?? [];
     this.#bounds = options.bounds;
-    this.#nav = buildNavGraph(this.#walls, options.bounds, this.#ruleset.collision.playerRadius);
+    this.#paths = createPathFinder(
+      buildNavGraph(this.#walls, options.bounds, this.#ruleset.collision.playerRadius),
+    );
     this.#rng = createRng(
       typeof options.seed === "string" ? seedFromString(options.seed) : options.seed,
     );
@@ -760,7 +763,7 @@ export class MatchSimulation {
       // movement the simulation chooses, and never on top of the
       // player's own. Replanned every tick, so a target that moves, or a
       // shove, is simply where the next plan starts.
-      const next = findPath(this.#nav, record.position, target.position)?.[0];
+      const next = this.#paths.find(record.position, target.position)?.[0];
       if (next === undefined) {
         // No way there, this tick. It has to last before the attack ends
         // (#218); meanwhile, steer straight at the target, which is what

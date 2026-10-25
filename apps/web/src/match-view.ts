@@ -1,4 +1,4 @@
-import type { PlayerBuild } from "@vibewars/game-core";
+import type { PlayerBuild, Vec2 } from "@vibewars/game-core";
 import type { WallDescriptor } from "@vibewars/game-protocol";
 
 import { attachMatchSounds } from "./audio/match-sounds.js";
@@ -6,6 +6,7 @@ import { saveMuted } from "./audio/mute-preference.js";
 import { soundPlayer } from "./audio/sound-player.js";
 import { attackKeyIntents, isAttacking } from "./input/attack-key.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
+import { attachNameReveal } from "./input/name-reveal.js";
 import { nextTabTarget } from "./input/tab-target.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
 import { connectToMatch, type MatchTarget } from "./net/match-client.js";
@@ -13,6 +14,7 @@ import type { MatchConnection, MatchSnapshot } from "./net/match-connection.js";
 import {
   ACTOR_RADIUS,
   actorAtPoint,
+  withNames,
   teamColour,
   type ArenaSnapshot,
   type RenderableWall,
@@ -96,6 +98,9 @@ export function toArenaSnapshot(
     // Render the target the *server* confirmed, not whatever was last
     // clicked — a click is only a request (brief §32).
     targetId: self?.targetSessionId,
+    // Whose names show is the caller's to say (`withNames`, #253).
+    hoverId: undefined,
+    showAllNames: false,
     actors: match.players.map((player) => {
       return {
         id: player.sessionId,
@@ -259,6 +264,11 @@ export async function startMatchView(
 
   let latestMatch = connection.getSnapshot();
   let latestArena = toArenaSnapshot(latestMatch, walls);
+  // Ctrl shows every name; the cursor shows one (#253).
+  const nameReveal = attachNameReveal(window);
+  // In world units. The camera never moves, so a still cursor stays over
+  // the same spot while bodies walk under it.
+  let pointer: Vec2 | undefined;
 
   connection.onConnectionChange((state) => {
     matchSounds.connectionChanged(state);
@@ -276,7 +286,9 @@ export async function startMatchView(
   const offFrame = viewport.onFrame(() => {
     latestMatch = connection.getSnapshot();
     matchSounds.snapshot(latestMatch);
-    latestArena = toArenaSnapshot(latestMatch, walls);
+    // Hover is hit-tested every frame, not every move, so a body that
+    // walks under a still cursor shows its name.
+    latestArena = withNames(toArenaSnapshot(latestMatch, walls), pointer, nameReveal.held());
     scene.setSnapshot(latestArena);
 
     const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
@@ -293,6 +305,9 @@ export async function startMatchView(
     const hit = actorAtPoint(latestArena, world);
     connection.sendIntent({ kind: "target", targetSessionId: hit?.id ?? null });
   });
+  const offPointerMove = viewport.onPointerMove((world) => {
+    pointer = world;
+  });
 
   return {
     async dispose(): Promise<void> {
@@ -300,6 +315,8 @@ export async function startMatchView(
       // event cannot touch a destroyed scene.
       offFrame();
       offPointer();
+      offPointerMove();
+      nameReveal.detach();
       window.removeEventListener("keydown", handleKeyDown);
       detachMovement();
       matchSounds.dispose();
