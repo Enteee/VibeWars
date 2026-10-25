@@ -10,7 +10,7 @@
  * mid-match. It only ever rejects; there is no code path per version
  * (ADR-0016).
  */
-export const PROTOCOL_VERSION = 12 as const;
+export const PROTOCOL_VERSION = 13 as const;
 
 /** What a client is told when its `protocolVersion` does not match. */
 export const PROTOCOL_MISMATCH_MESSAGE =
@@ -36,12 +36,22 @@ export const SERVER_FULL_MESSAGE = "The server is full. Try again in a minute.";
 export const CLIENT_LIMIT = 4503;
 
 /**
- * The error code of a join or matchmaking request refused because one
- * network address is over its share (#265): too many sockets open, or too
- * many matchmaking requests at once. An HTTP status, 429 Too Many
- * Requests, because matchmaking answers with it as one.
+ * The error code of a matchmaking request refused because one network
+ * address sent too many at once (#265, #282). An HTTP status, 429 Too Many
+ * Requests, because the HTTP gate answers the request with it; the player
+ * sees `RATE_LIMIT_MESSAGE`.
  */
-export const ADDRESS_LIMIT = 429;
+export const RATE_LIMIT = 429;
+
+/** What a player is told when their network sent too many requests at once. */
+export const RATE_LIMIT_MESSAGE = "Too many requests from your network. Try again in a moment.";
+
+/**
+ * The error code of a join refused because one network address holds too
+ * many sockets (#265). Told on the socket, after matchmaking, like
+ * `CLIENT_LIMIT`, so it need not be an HTTP status.
+ */
+export const ADDRESS_LIMIT = 4429;
 
 /** What a player is told when their network address is over its share. */
 export const ADDRESS_LIMIT_MESSAGE =
