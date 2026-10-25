@@ -99,6 +99,12 @@ const CANCEL_TAG = 0xe007f;
 const MAX_FLAG_TAGS = 6;
 /** Joiners one grapheme may hold: the family emoji has three. */
 const MAX_JOINERS_PER_GRAPHEME = 4;
+/**
+ * Code points one grapheme may hold. A family in four skin tones is 11;
+ * a letter under a hundred skin-tone modifiers, or a run of Hangul
+ * leading jamo, is also one grapheme, and draws far wider than a letter.
+ */
+const MAX_CODE_POINTS_PER_GRAPHEME = 12;
 
 /** One character of `INVISIBLE_CHARACTERS`, for testing a single code point. */
 const INVISIBLE_CHARACTER = new RegExp(INVISIBLE_CHARACTERS.source, "u");
@@ -167,7 +173,11 @@ function wantedFormatCharacters(chars: readonly string[]): Set<number> {
   return keep;
 }
 
-/** The first `MAX_NAME_LENGTH` graphemes, each at most `MAX_JOINERS_PER_GRAPHEME` joiners wide. */
+/**
+ * The first `MAX_NAME_LENGTH` graphemes. One holding more than
+ * `MAX_JOINERS_PER_GRAPHEME` joiners or `MAX_CODE_POINTS_PER_GRAPHEME`
+ * code points keeps only its first code point.
+ */
 function clampGraphemes(name: string): string {
   const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
   const kept: string[] = [];
@@ -175,9 +185,12 @@ function clampGraphemes(name: string): string {
     if (kept.length === MAX_NAME_LENGTH) {
       break;
     }
-    const joiners = Array.from(segment).filter((char) => char.codePointAt(0) === ZWJ).length;
+    const codePoints = Array.from(segment);
+    const joiners = codePoints.filter((char) => char.codePointAt(0) === ZWJ).length;
     // A chain of thirty faces is one grapheme, drawn over everyone's bars.
-    kept.push(joiners > MAX_JOINERS_PER_GRAPHEME ? (Array.from(segment)[0] ?? "") : segment);
+    const tooWide =
+      joiners > MAX_JOINERS_PER_GRAPHEME || codePoints.length > MAX_CODE_POINTS_PER_GRAPHEME;
+    kept.push(tooWide ? (codePoints[0] ?? "") : segment);
   }
   return kept.join("");
 }

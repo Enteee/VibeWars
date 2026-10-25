@@ -59,7 +59,8 @@ describe("sanitizeName", () => {
   });
 
   it("strips zero-width and other invisible characters", () => {
-    expect(sanitizeName("a\u200bbc\ufeff\u2060\u00ad", "fallback")).toBe("abc");
+    // The ZWJ between two letters is kept (#192); everything else here goes.
+    expect(sanitizeName("a\u200bb\u200dc\ufeff\u2060\u00ad", "fallback")).toBe("ab\u200dc");
     expect(sanitizeName("\u200b\u200c\u200d\u2060", "fallback")).toBe("fallback");
     expect(sanitizeName("a\u2028b\u2029c", "fallback")).toBe("abc");
   });
@@ -161,6 +162,17 @@ describe("sanitizeName", () => {
 
     it("cuts a chain of ten faces down to its first", () => {
       expect(sanitizeName(Array(10).fill(MAN).join(ZWJ), "fallback")).toBe(MAN);
+    });
+
+    it("cuts any grapheme of more than 12 code points down to its first", () => {
+      const skinTone = String.fromCodePoint(0x1f3fb);
+      expect(sanitizeName(`a${skinTone.repeat(100)}`, "fallback")).toBe("a");
+      const leadingJamo = String.fromCodePoint(0x1100);
+      expect(sanitizeName(leadingJamo.repeat(120), "fallback")).toBe(leadingJamo);
+      // A family in four skin tones is 11 code points, and stays.
+      const tones = [0x1f3fb, 0x1f3fc, 0x1f3fd, 0x1f3fe].map((tone) => String.fromCodePoint(tone));
+      const toned = [MAN, WOMAN, GIRL, BOY].map((face, i) => `${face}${tones[i] ?? ""}`).join(ZWJ);
+      expect(sanitizeName(toned, "fallback")).toBe(toned);
     });
 
     it("clamps in graphemes, so twenty families are sixteen whole ones", () => {
