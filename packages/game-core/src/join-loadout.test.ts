@@ -28,6 +28,7 @@ describe("resolveJoinLoadout", () => {
     expect(loadout.skillBar).toEqual(LEGAL.skillBar);
     expect(loadout.primaryProfession).toBe("elementalist");
     expect(loadout.secondaryProfession).toBe("monk");
+    expect(loadout.baseEnergyPips).toBe(4);
     expect(loadout.attributeRanks.get("elementalist.fire-magic")).toBe(12);
   });
 
@@ -65,6 +66,11 @@ describe("resolveJoinLoadout", () => {
 });
 
 describe("HOUSE_LOADOUT", () => {
+  it("regenerates 4 energy pips, a caster's, though it wears a warrior's kit (#502)", () => {
+    expect(HOUSE_LOADOUT.primaryProfession).toBe("warrior");
+    expect(HOUSE_LOADOUT.baseEnergyPips).toBe(4);
+  });
+
   it("has no dead slot: every attack skill on it can be used with the house weapon (#445)", () => {
     const weapon = HOUSE_LOADOUT.equipment.mainHand.weaponId;
     for (const id of HOUSE_LOADOUT.skillBar) {

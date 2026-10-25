@@ -1,3 +1,4 @@
+import { baseEnergyPipsFor } from "../equipment/armor.js";
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type WeaponId } from "../equipment/weapons.js";
 import type { MissingMechanic } from "../skills/coverage.js";
@@ -49,6 +50,8 @@ export interface TrainingDummy {
   readonly maxHealth: number;
   readonly skillBar: readonly string[];
   readonly attributeRanks: Readonly<Record<string, number>>;
+  /** Energy regeneration, in pips: its profession's if it casts, else 0. */
+  readonly baseEnergyPips: number;
   readonly behaviour: Behaviour;
   /**
    * What it carries (#162). A weapon whose attribute is fixed, scaling
@@ -86,6 +89,7 @@ function target(id: string, label: string, position: Vec2, armor: number): Train
     maxHealth: IMMORTAL,
     skillBar: [],
     attributeRanks: {},
+    baseEnergyPips: 0,
     behaviour: IDLE,
   };
 }
@@ -158,6 +162,8 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
         maxHealth: IMMORTAL,
         skillBar: ["ranger.troll-unguent"],
         attributeRanks: { "ranger.wilderness-survival": 12 },
+        // A ranger: it casts all session long on its own regeneration.
+        baseEnergyPips: baseEnergyPipsFor("ranger"),
         behaviour: {
           kind: "cast-loop",
           skillIds: ["ranger.troll-unguent"],
@@ -199,6 +205,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
         maxHealth: IMMORTAL,
         skillBar: [],
         attributeRanks: { "ranger.marksmanship": 12 },
+        baseEnergyPips: 0,
         behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
         weapon: "longbow",
       },
@@ -224,6 +231,7 @@ export function scenarioParticipants(
     spawn: dummy.position,
     facing: facingToward(dummy.position, playerSpawn),
     maxHealth: dummy.maxHealth,
+    baseEnergyPips: dummy.baseEnergyPips,
     behaviour: dummy.behaviour,
   }));
 }

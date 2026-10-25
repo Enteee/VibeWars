@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { HEALTH_PER_PIP, MAX_PIPS } from "../skills/status.js";
 import { vec2 } from "../vec2.js";
 import { CombatMeter, tallyCombat, type CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation } from "./simulation.js";
@@ -49,7 +50,7 @@ describe("degeneration attribution", () => {
     expect(entry?.cause).toBe("degeneration");
     expect(entry?.sourceId).toBe("necro");
     expect(tallyCombat(entry === undefined ? [] : [entry])).toMatchObject({
-      damageByActor: new Map([["necro", expect.closeTo(3 / 20, 9) as number]]),
+      damageByActor: new Map([["necro", expect.closeTo((3 * HEALTH_PER_PIP) / 20, 9) as number]]),
       unattributedDamage: 0,
     });
   });
@@ -59,8 +60,14 @@ describe("degeneration attribution", () => {
     expect(entry?.sourceId).toBeUndefined();
     const tally = tallyCombat(entry === undefined ? [] : [entry]);
     expect(tally.damageByActor.size).toBe(0);
-    expect(tally.unattributedDamage).toBeCloseTo((3 + 7) / 20, 9);
-    expect(tally.damageTakenByActor.get("victim")).toBeCloseTo((3 + 7) / 20, 9);
+    expect(tally.unattributedDamage).toBeCloseTo(
+      (Math.min(3 + 7, MAX_PIPS) * HEALTH_PER_PIP) / 20,
+      9,
+    );
+    expect(tally.damageTakenByActor.get("victim")).toBeCloseTo(
+      (Math.min(3 + 7, MAX_PIPS) * HEALTH_PER_PIP) / 20,
+      9,
+    );
   });
 });
 

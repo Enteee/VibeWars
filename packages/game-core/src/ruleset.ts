@@ -32,11 +32,10 @@ export interface AttributeRules {
  * Lives in the ruleset rather than in the server, because the headless
  * runner and the live match must agree: a balance answer from a runner
  * that regenerates energy differently would be an answer about a
- * different game.
+ * different game. Energy regeneration is not here: it is each
+ * character's, in pips, by profession (`BASE_ENERGY_PIPS_BY_PROFESSION`).
  */
 export interface ResourceRules {
-  /** Energy regained per second. The pacing lever for how often skills fire. */
-  readonly energyRegenPerSecond: number;
   /** Adrenaline earned each time one of your skills damages an enemy. */
   readonly adrenalinePerHit: number;
   /** Adrenaline ceiling, so it cannot be banked indefinitely between fights. */
@@ -119,7 +118,6 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
     playerRadius: 14,
   }),
   resources: Object.freeze({
-    energyRegenPerSecond: 2,
     adrenalinePerHit: 3,
     maxAdrenaline: 25,
   }),

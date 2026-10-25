@@ -48,6 +48,30 @@ export function baseArmorFor(profession: ProfessionId): number {
   return BASE_ARMOR_BY_PROFESSION[profession];
 }
 
+/**
+ * Energy regeneration by primary profession, in pips (GW1, Q63): every
+ * character has 2, and the armor adds 0, +1 or +2. Armor is
+ * profession-locked here, so the sum is a table, as armor is.
+ */
+export const BASE_ENERGY_PIPS_BY_PROFESSION: Readonly<Record<ProfessionId, number>> = Object.freeze(
+  {
+    warrior: 2,
+    paragon: 2,
+    ranger: 3,
+    monk: 4,
+    necromancer: 4,
+    mesmer: 4,
+    elementalist: 4,
+    assassin: 4,
+    ritualist: 4,
+    dervish: 4,
+  },
+);
+
+export function baseEnergyPipsFor(profession: ProfessionId): number {
+  return BASE_ENERGY_PIPS_BY_PROFESSION[profession];
+}
+
 /** One of the five pieces, as a build stores it. */
 export interface ArmorPiece {
   readonly insigniaId: InsigniaId | null;

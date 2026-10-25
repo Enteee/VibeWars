@@ -1,3 +1,4 @@
+import { baseEnergyPipsFor } from "../equipment/armor.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { tallyCombat, type CombatLogEntry } from "../match/combat-log.js";
 import { spawnFacing } from "../match/facing.js";
@@ -24,6 +25,8 @@ export interface HeadlessFighter {
   readonly skillBar: readonly string[];
   readonly attributeRanks: ReadonlyMap<string, number>;
   readonly position: Vec2;
+  /** Energy regeneration before statuses, in pips (#502). */
+  readonly baseEnergyPips: number;
 }
 
 export interface HeadlessMatchOptions {
@@ -68,6 +71,7 @@ export function runHeadlessMatch(options: HeadlessMatchOptions): HeadlessMatchRe
       attributeRanks: fighter.attributeRanks,
       // Armor at the reference level, so damage lands at its stated amount.
       equipment: unarmedResolvedEquipment(ruleset.combat.armorReferenceLevel),
+      baseEnergyPips: fighter.baseEnergyPips,
       spawn: fighter.position,
       facing: spawnFacing(
         fighter.position,
@@ -127,6 +131,8 @@ export function fighter(
     skillBar,
     attributeRanks: new Map(),
     position: vec2(team === 0 ? 0 : 100, 0),
+    // A caster's: the bars these runs are given are spells.
+    baseEnergyPips: baseEnergyPipsFor("elementalist"),
     ...overrides,
   };
 }

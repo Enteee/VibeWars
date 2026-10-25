@@ -55,8 +55,11 @@ function printSkills(filter: string | undefined): void {
 function printStatuses(): void {
   for (const status of Object.values(STATUS_DEFINITIONS)) {
     const parts: string[] = [];
-    if (status.healthPerSecond !== 0) {
-      parts.push(`${String(status.healthPerSecond)} hp/s`);
+    if (status.healthPips !== 0) {
+      parts.push(`${String(status.healthPips)} health pips`);
+    }
+    if (status.energyPips !== 0) {
+      parts.push(`${String(status.energyPips)} energy pips`);
     }
     if (status.armorModifier !== 0) {
       parts.push(`${String(status.armorModifier)} armor`);
