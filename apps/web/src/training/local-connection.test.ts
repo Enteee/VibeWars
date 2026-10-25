@@ -8,6 +8,7 @@ import { setProfessions, setRank, setSkill, newCharacter } from "../ui/build-edi
 import {
   MAX_CATCHUP_SECONDS,
   TICK_SECONDS,
+  NO_PROFESSIONS,
   createLocalConnection,
   drainAccumulator,
   skillSlotsFor,
@@ -60,6 +61,8 @@ function targetDummy() {
       selfId: SELF_ID,
       map: setup.map,
       nameOf: (id) => (id === SELF_ID ? "Tester" : (setup.names.get(id) ?? id)),
+      professionsOf: (id) =>
+        id === SELF_ID ? { primary: "elementalist", secondary: undefined } : NO_PROFESSIONS,
     }),
   };
 }

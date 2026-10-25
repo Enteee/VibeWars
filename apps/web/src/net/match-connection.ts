@@ -1,4 +1,4 @@
-import type { OffhandId } from "@vibewars/game-core";
+import type { OffhandId, ProfessionId } from "@vibewars/game-core";
 import type { CastRefusedMessage, ClientIntent, MapDescriptor } from "@vibewars/game-protocol";
 
 /**
@@ -35,6 +35,13 @@ export interface PlayerSnapshot {
   readonly weaponId: string | undefined;
   /** The off-hand whose mark the arena draws (#276); `undefined` for none, or one this client does not know. */
   readonly offhandId: OffhandId | undefined;
+  /**
+   * The build's professions as the server resolved them (#281), or
+   * `undefined` for none: a training dummy has neither, most players no
+   * secondary.
+   */
+  readonly primaryProfession: ProfessionId | undefined;
+  readonly secondaryProfession: ProfessionId | undefined;
   readonly team: number;
   readonly dead: boolean;
   readonly castingSkillId: string | undefined;

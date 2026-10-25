@@ -1,4 +1,4 @@
-import { getWeapon, type ActivationRejection } from "@vibewars/game-core";
+import { getProfession, getWeapon, type ActivationRejection } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
 
 import type {
@@ -7,7 +7,7 @@ import type {
   SkillSlot,
   SlotRecharge,
 } from "../net/match-connection.js";
-import { attackingIcon, skillBadgeHtml, soundIcon } from "./icons.js";
+import { attackingIcon, professionIcon, skillBadgeHtml, soundIcon } from "./icons.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 
 /**
@@ -41,6 +41,8 @@ export interface HudElements {
   /** Set once there has been a target; the hint never comes back that match. */
   hintDismissed: boolean;
   readonly targetPanel: HTMLElement;
+  /** The target's primary and secondary profession icons, before its name (#281). */
+  readonly targetProfessions: HTMLElement;
   /** Who is targeted, as text, inside the target panel. */
   readonly targetText: HTMLElement;
   /** Crossed swords and "attacking", shown while self attacks the target (#160). */
@@ -60,8 +62,8 @@ function element(tag: string, className: string, parent: HTMLElement): HTMLEleme
   return node;
 }
 
-/** Shown above the skill bar until the player first has a target (#55). */
-export const TARGET_HINT = "Click an enemy or press Tab to target";
+/** Shown above the skill bar until the player first has a target (#55); Ctrl shows every name (#253). */
+export const TARGET_HINT = "Click an enemy or press Tab to target · hold Ctrl for names";
 
 /**
  * Whether the targeting hint is gone for good: it was already, or the
@@ -91,6 +93,7 @@ export function createHud(parent: HTMLElement): HudElements {
   const leave = element("div", "hud-leave", parent);
 
   const targetPanel = element("div", "hud-target", root);
+  const targetProfessions = element("span", "hud-target-professions", targetPanel);
   const targetText = element("span", "hud-target-text", targetPanel);
   const attacking = element("span", "hud-attacking", targetPanel);
   const swords = attacking.appendChild(document.createElement("img"));
@@ -131,6 +134,7 @@ export function createHud(parent: HTMLElement): HudElements {
     hint,
     hintDismissed: false,
     targetPanel,
+    targetProfessions,
     targetText,
     attacking,
     scoreboard,
@@ -417,6 +421,44 @@ export function renderLeave(hud: HudElements, onLeave: () => void): LeaveControl
   return control;
 }
 
+/** One profession icon for the target panel. */
+export interface ProfessionIcon {
+  readonly src: string;
+  /** The profession's name, for `alt` and `title`. */
+  readonly name: string;
+}
+
+/**
+ * The target's profession icons (#281): the primary, then the secondary
+ * if it has one, in their own colours as the editor shows them. None for
+ * no target, or for one without a profession, like a training dummy.
+ */
+export function targetProfessionIcons(target: PlayerSnapshot | undefined): ProfessionIcon[] {
+  return [target?.primaryProfession, target?.secondaryProfession].flatMap((id) =>
+    id === undefined ? [] : [{ src: professionIcon(id), name: getProfession(id).name }],
+  );
+}
+
+/** Replace the icons only when the target or its professions changed, never every frame. */
+function renderTargetProfessions(container: HTMLElement, target: PlayerSnapshot | undefined): void {
+  const icons = targetProfessionIcons(target);
+  const key = icons.map((icon) => icon.name).join(" / ");
+  if (container.dataset.professions === key) {
+    return;
+  }
+  container.dataset.professions = key;
+  container.title = key;
+  container.replaceChildren(
+    ...icons.map((icon) => {
+      const img = document.createElement("img");
+      img.src = icon.src;
+      img.alt = icon.name;
+      img.title = icon.name;
+      return img;
+    }),
+  );
+}
+
 export function updateHud(
   hud: HudElements,
   self: PlayerSnapshot | undefined,
@@ -454,6 +496,7 @@ export function updateHud(
   hud.statusList.textContent =
     self.statuses.length > 0 ? self.statuses.join(" · ") : "no active effects";
 
+  renderTargetProfessions(hud.targetProfessions, target);
   hud.targetText.textContent = describeTarget(target);
   hud.attacking.hidden = !isAttackingTarget(self, target);
 

@@ -29,6 +29,8 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     armor: 60,
     weaponId: undefined,
     offhandId: undefined,
+    primaryProfession: undefined,
+    secondaryProfession: undefined,
     team: 0,
     dead: false,
     castingSkillId,

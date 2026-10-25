@@ -17,6 +17,8 @@ import {
   nameShown,
   offhandMarkLayout,
   type OffhandMarkLayout,
+  nameplateLayout,
+  PROFESSION_GLYPH_SIZE,
   withNames,
   placeFloatingText,
   teamColour,
@@ -46,6 +48,7 @@ function actor(
     facing: 0,
     weaponId: undefined,
     offhandId: undefined,
+    profession: undefined,
     radius,
     team: "ally",
     health: 500,
@@ -431,5 +434,41 @@ describe("offhandMarkLayout (#276)", () => {
     const north = offhandMarkLayout(X, Y, R, -Math.PI / 2, "focus");
     expect(south?.x ?? 0).toBeGreaterThan(X);
     expect(north?.x ?? 0).toBeLessThan(X);
+  });
+});
+
+describe("nameplateLayout (#281)", () => {
+  it("centres glyph, gap and name together on the body, on the name's bottom", () => {
+    const monk = actor("m", 200, 100, 14, { profession: "monk" });
+    const layout = nameplateLayout(monk, 40);
+    const glyphLeft = (layout.glyphX ?? 0) - PROFESSION_GLYPH_SIZE / 2;
+    const textRight = layout.textX + 40 / 2;
+    expect((glyphLeft + textRight) / 2).toBeCloseTo(200, 9);
+    // Glyph, then a 2 px gap, then the name.
+    expect(layout.textX - 20 - ((layout.glyphX ?? 0) + PROFESSION_GLYPH_SIZE / 2)).toBeCloseTo(
+      2,
+      9,
+    );
+    expect(layout.bottom).toBe(nameLabelBottom(monk));
+  });
+
+  it("moves the glyph left with a longer name", () => {
+    const monk = actor("m", 200, 100, 14, { profession: "monk" });
+    expect(nameplateLayout(monk, 120).glyphX ?? 0).toBeLessThan(
+      nameplateLayout(monk, 40).glyphX ?? 0,
+    );
+  });
+
+  it("centres the glyph alone on a zero-width name", () => {
+    const layout = nameplateLayout(actor("m", 200, 100, 14, { profession: "monk" }), 0);
+    expect(
+      (layout.glyphX ?? 0) + (PROFESSION_GLYPH_SIZE + 2) / 2 - PROFESSION_GLYPH_SIZE / 2,
+    ).toBeCloseTo(200, 9);
+  });
+
+  it("centres the name alone, with no glyph, for no profession", () => {
+    const layout = nameplateLayout(actor("d", 200, 100), 40);
+    expect(layout.glyphX).toBeUndefined();
+    expect(layout.textX).toBe(200);
   });
 });

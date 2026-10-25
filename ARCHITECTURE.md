@@ -142,21 +142,56 @@ both are legitimately in scope.
 
 ### `apps/server`
 
+- `main.ts` — the process entry point. One process serves both the static
+  client and the game WebSocket, so a LAN host runs one container behind one
+  URL (ADR-0009).
+- `config.ts` — `loadConfig()`: every `VIBEWARS_*` setting, resolved once
+  from the environment, each with a LAN-friendly default (brief §27).
 - `server.ts` — builds (but does not start) the Colyseus server via
   `defineServer`/`defineRoom`, so tests can boot it on an ephemeral port
   (ADR-0002).
+- `http-gate.ts` — runs before Colyseus sees an HTTP request. It deletes the
+  forwarding headers, since we run behind no proxy and a client could forge
+  them, and rate-limits, per address, the matchmaking calls that reserve a
+  seat (#265).
 - `rooms/lobby-room.ts` — lobby codes, team assignment, ready state, map
   selection, and the handoff into a match.
 - `rooms/match-room.ts` — the authoritative match: a fixed 20 Hz tick that
   steps game-core's `MatchSimulation`, feeds it the players' intents, and
   syncs the result to the schema and the `combat` broadcast.
+- `rooms/room-budget.ts` — at most `VIBEWARS_MAX_ROOMS` rooms per server,
+  match and lobby rooms together (#114).
+- `rooms/client-budget.ts` — the server-wide seat cap and the per-address
+  seat cap (#265): the same counter as the room budget, counting seats
+  instead of rooms.
+- `rooms/message-budget.ts` — a token bucket per client on inbound messages
+  (#43). Over budget, a message is ignored rather than its sender dropped: a
+  burst is what an honest client sends after a network stall, and dropping it
+  left the player connected but deaf for the whole reconnection window.
+- `rooms/options.ts` — `field()`, which reads one field off a client message
+  safely, and the protocol-version check on join.
+
+  Every client message is treated as hostile until validated. Reading a field
+  off an inbound message goes through `field()`, which tolerates `null` and
+  non-objects, because `(message as {team?: unknown}).team` throws on `null`
+  and _did_ crash the server during fuzzing.
+
+- `rooms/recharge.ts` — when the server re-sends a player's recharges: only
+  when they drift from the client's countdown by more than the 50 ms
+  tolerance, one tick (#152).
+- `log-safe.ts` — `quote()`, the only way a value a client chose reaches a
+  log line, so it cannot end the line or forge another. `log-safe.test.ts`
+  enforces it (#115).
 - `testing/harness.ts` — boots a real server on a real port for integration
   tests.
+- `tools/benchmark.ts` — load benchmarks at realistic team sizes, against a
+  real server over real WebSockets (brief §26). It reports numbers; it tunes
+  nothing.
 
-Every client message is treated as hostile until validated. Reading a field
-off an inbound message goes through a helper that tolerates `null` and
-non-objects, because `(message as {team?: unknown}).team` throws on `null`
-and _did_ crash the server during fuzzing.
+The room and seat budgets are made per server by `createGameServer`, never as
+module globals, because the tests run several servers in one process. The
+caps' values and the threat they answer are in [SECURITY.md](SECURITY.md#known-open-gaps),
+gap 6.
 
 ### `apps/web`
 

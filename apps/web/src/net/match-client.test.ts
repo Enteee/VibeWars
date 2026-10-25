@@ -5,6 +5,7 @@ import {
   createMatchConnection,
   endpointFromLocation,
   httpOriginFrom,
+  professionFrom,
   resolveEndpoint,
   type DecodedMatchState,
   type DecodedPlayer,
@@ -223,6 +224,8 @@ describe("the off-hand on the wire (#276)", () => {
       armor: 60,
       weaponId: "sword",
       offhandId,
+      primaryProfession: "",
+      secondaryProfession: "",
       team: 0,
       dead: false,
       castingSkillId: "",
@@ -239,5 +242,13 @@ describe("the off-hand on the wire (#276)", () => {
     expect(offhandOf("shield")).toBe("shield");
     expect(offhandOf("focus")).toBe("focus");
     expect(offhandOf("bogus")).toBeUndefined();
+  });
+});
+
+describe("professionFrom (#281)", () => {
+  it("reads a known profession, and none for empty or unknown", () => {
+    expect(professionFrom("monk")).toBe("monk");
+    expect(professionFrom("")).toBeUndefined();
+    expect(professionFrom("bogus")).toBeUndefined();
   });
 });
