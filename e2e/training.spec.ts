@@ -544,6 +544,31 @@ test("(22) a stored Classic keymap casts on the number row (#302)", async ({ pag
   );
 });
 
+/**
+ * The arena once it holds still: two shots 700 ms apart that match. The
+ * walk marker's 400 ms fade and any walk are game time, which runs slower
+ * than wall time under load (#327), so this polls rather than waits once.
+ * Armed or not, as long as both shots are taken the same way.
+ */
+async function stillArena(page: Page, canvas: Locator): Promise<Buffer> {
+  const shot = (): Promise<Buffer> =>
+    canvas.screenshot({ mask: [page.locator(".training-overlay")] });
+  let previous = await shot();
+  await expect
+    .poll(
+      async () => {
+        await page.waitForTimeout(700);
+        const next = await shot();
+        const still = next.equals(previous);
+        previous = next;
+        return still;
+      },
+      { message: "the arena should hold still", intervals: [0], timeout: 15_000 },
+    )
+    .toBe(true);
+  return previous;
+}
+
 test("(23) Esc stops a walk to a clicked point, and the next Esc releases the arena (#342)", async ({
   page,
 }) => {
@@ -555,29 +580,26 @@ test("(23) Esc stops a walk to a clicked point, and the next Esc releases the ar
   }
   // Empty ground in the far corner, a long walk from the spawn.
   const scale = box.width / TRAINING_HALL_WIDTH;
-  await page.mouse.click(box.x + 520 * scale, box.y + 30 * scale);
+  const corner = { x: box.x + 520 * scale, y: box.y + 30 * scale };
+  await page.mouse.click(corner.x, corner.y);
   await page.waitForTimeout(300);
 
   // There was a walk to stop, so Esc did not release the arena.
   await page.keyboard.press("Escape");
   await expect(page.locator(".training")).toHaveClass(/is-armed/);
-
   await releaseControl(page);
-  // Stopped where it stood: two shots 700 ms apart match, once the walk
-  // marker has faded. The fade is 400 ms of game time, which runs slower
-  // than wall time under load (#327), so this polls. A hero still walking
-  // never matches.
-  let previous = await arenaShot(page, canvas);
-  await expect
-    .poll(
-      async () => {
-        await page.waitForTimeout(700);
-        const next = await arenaShot(page, canvas);
-        const still = next.equals(previous);
-        previous = next;
-        return still;
-      },
-      { message: "the hero should have stopped", intervals: [0], timeout: 3000 },
-    )
-    .toBe(true);
+  await stillArena(page, canvas);
+  const stopped = await arenaShot(page, canvas);
+
+  // Stopped short of the corner: walking the rest of the way moves the
+  // hero on. A hero Esc never stopped would stand there already, and
+  // still, so stillness alone would not tell the two apart.
+  await takeControl(page);
+  await page.mouse.click(corner.x, corner.y);
+  await stillArena(page, canvas);
+  await releaseControl(page);
+  const arrived = await arenaShot(page, canvas);
+  expect(arrived.equals(stopped), "Esc should have stopped the hero short of the corner").toBe(
+    false,
+  );
 });
