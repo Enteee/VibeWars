@@ -21,6 +21,7 @@ import {
   sessionIdOf,
   usageLimitOf,
 } from "./stream-format.mjs";
+import { obj } from "./protocol.mjs";
 
 const AGENT_TURN = path.join(path.dirname(fileURLToPath(import.meta.url)), "agent-turn.mjs");
 
@@ -352,6 +353,17 @@ describe("contextOf", () => {
     expect(contextOf(parseEvent(called({ input_tokens: 7 })))).toBe(7);
   });
 
+  it("is null for a subagent's call, which is not the session's context", () => {
+    const sub = {
+      ...obj(JSON.parse(called({ input_tokens: 150_000 }))),
+      parent_tool_use_id: "toolu_1",
+    };
+    const main = { ...obj(JSON.parse(called({ input_tokens: 9 }))), parent_tool_use_id: null };
+
+    expect(contextOf(parseEvent(JSON.stringify(sub)))).toBeNull();
+    expect(contextOf(parseEvent(JSON.stringify(main)))).toBe(9);
+  });
+
   it("is null for any other event, or an assistant event without usage", () => {
     expect(contextOf(parseEvent(JSON.stringify(RESULT)))).toBeNull();
     expect(contextOf(parseEvent(message([{ type: "text", text: "hi" }])))).toBeNull();
@@ -379,6 +391,14 @@ describe("agent-turn.mjs and the context ceiling (#321)", () => {
     const run = turn({ lines: [JSON.stringify(INIT), over, under, JSON.stringify(RESULT)] });
 
     expect(run.code).toBe(0);
+    expect(run.session).toBe(SESSION_ID);
+    expect(run.context).toEqual({ tokens: 50_004, ceiling: 120_000 });
+  });
+
+  it("does not count a subagent's context as the session's", () => {
+    const sub = JSON.stringify({ ...obj(JSON.parse(over)), parent_tool_use_id: "toolu_1" });
+    const run = turn({ lines: [JSON.stringify(INIT), under, sub, JSON.stringify(RESULT)] });
+
     expect(run.session).toBe(SESSION_ID);
     expect(run.context).toEqual({ tokens: 50_004, ceiling: 120_000 });
   });
