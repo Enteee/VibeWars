@@ -318,7 +318,9 @@ let
     The company has one Telegram bot. Hiring a role needs no Telegram step:
     it has no topic of its own, and the operator addresses it as
     "<role>: ...". Add a role by writing .claude/bots/<name>.md — the file is
-    that agent's charter, and is appended to its system prompt.
+    that agent's charter, and is appended to its system prompt. A first
+    line of `---`, then `model: claude-…` and `---`, picks its model;
+    without one it runs on claude-opus-5-5.
 
     inside the sandbox:
       tg roster                  who else is working right now
@@ -429,8 +431,13 @@ let
           exit 1
         fi
 
-        # Every agent gets the shared coordination contract plus its own charter.
-        briefing="$(cat "$DEVENV_ROOT/.claude/bots/_protocol.md" "$brief")"
+        # The role's model, from its briefing's frontmatter, or the default
+        # (#322). One that is not a model id stops the start, loudly.
+        model="$(${node} ${botScripts}/briefing.mjs model "$brief")" || exit 2
+
+        # Every agent gets the shared coordination contract plus its own
+        # charter, without the charter's frontmatter.
+        briefing="$(cat "$DEVENV_ROOT/.claude/bots/_protocol.md"; ${node} ${botScripts}/briefing.mjs body "$brief")"
 
         # A system prompt gives an agent a role; it does not give it a turn.
         # The positional prompt argument is the turn: claude -p runs it and
@@ -665,6 +672,7 @@ let
             -p --output-format stream-json --verbose
             --dangerously-skip-permissions
             --disallowedTools AskUserQuestion
+            --model "$model"
             --append-system-prompt "$briefing"
             "''${resumeFlag[@]}"
             "''${@:-$prompt}")
