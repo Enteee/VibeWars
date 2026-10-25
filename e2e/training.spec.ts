@@ -465,7 +465,30 @@ test("(19) a move mid-cast cancels it: logged, and the cast never lands (#279)",
   await expect(meter(page, "damage")).toHaveText("0");
 });
 
-test("(20) a stored Classic keymap casts on the number row (#302)", async ({ page }) => {
+test("(20) a double-click on a far enemy attacks it: you walk there and swing (#298)", async ({
+  page,
+}) => {
+  const canvas = await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("weapon-dps");
+  await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
+  await takeControl(page);
+
+  // The bow-range dummy, at (480, 210): far out of a sword's reach.
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+  const scale = box.width / TRAINING_HALL_WIDTH;
+  await page.mouse.dblclick(box.x + 480 * scale, box.y + 210 * scale);
+
+  await expect(page.locator(".training-adrenaline")).toContainText("· attacking");
+  // Only a body that walked the whole way there can land this.
+  await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Bow-range dummy/, {
+    timeout: 8000,
+  });
+});
+
+test("(21) a stored Classic keymap casts on the number row (#302)", async ({ page }) => {
   // The server-served build stores under the plain `vibewars` namespace.
   await page.addInitScript((classic) => {
     localStorage.setItem("vibewars.keymap", JSON.stringify(classic));
@@ -474,7 +497,7 @@ test("(20) a stored Classic keymap casts on the number row (#302)", async ({ pag
   await expect(page.locator(".training-skill-key").first()).toHaveText("1");
   await takeControl(page);
   await expect(page.locator(".training-hint")).toHaveText(
-    "WASD move · 1–8 cast · tab/click to target · space attack · esc to release",
+    "WASD move · 1–8 cast · tab/click to target · space/double-click attack · esc to release",
   );
 
   await page.keyboard.press(skillKey(0, KEYMAP_PRESETS.classic));

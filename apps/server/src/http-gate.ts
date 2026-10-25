@@ -1,7 +1,7 @@
 import { Server as HttpServer, type IncomingMessage, type ServerResponse } from "node:http";
 
 import { matchMaker } from "colyseus";
-import { ADDRESS_LIMIT, ADDRESS_LIMIT_MESSAGE } from "@vibewars/game-protocol";
+import { RATE_LIMIT, RATE_LIMIT_MESSAGE } from "@vibewars/game-protocol";
 
 import { peerAddress } from "./rooms/client-budget.js";
 import { MessageBudget } from "./rooms/message-budget.js";
@@ -107,8 +107,8 @@ function routedPath(url: string | undefined): string {
  * `{ code, error }` as the body, with Colyseus's own CORS headers.
  */
 function refuse(res: ServerResponse, req: IncomingMessage): void {
-  const body = JSON.stringify({ code: ADDRESS_LIMIT, error: ADDRESS_LIMIT_MESSAGE });
-  res.writeHead(ADDRESS_LIMIT, {
+  const body = JSON.stringify({ code: RATE_LIMIT, error: RATE_LIMIT_MESSAGE });
+  res.writeHead(RATE_LIMIT, {
     ...matchMaker.controller.DEFAULT_CORS_HEADERS,
     ...matchMaker.controller.getCorsHeaders(new Headers(headerPairs(req))),
     "content-type": "application/json",

@@ -4,7 +4,8 @@ import type { WallDescriptor } from "@vibewars/game-protocol";
 import { attachMatchSounds } from "./audio/match-sounds.js";
 import { saveMuted } from "./audio/mute-preference.js";
 import { soundPlayer } from "./audio/sound-player.js";
-import { attackKeyIntents, isAttacking } from "./input/attack-key.js";
+import { attackClickIntents, attackKeyIntents, isAttacking } from "./input/attack-key.js";
+import { createDoubleClick } from "./input/double-click.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { loadLayoutLabeller } from "./input/key-labels.js";
 import { actionForCode, isShortcut } from "./input/keymap.js";
@@ -342,9 +343,16 @@ export async function startMatchView(
     updateRecharges(hud, connection.skillBar, connection.getRecharges());
   });
 
+  // A double-click on an enemy attacks it, as Space would (#298).
+  const doubleClick = createDoubleClick();
   const offPointer = viewport.onPointerDown((world) => {
     const hit = actorAtPoint(latestArena, world);
     connection.sendIntent({ kind: "target", targetSessionId: hit?.id ?? null });
+    if (doubleClick.press(hit?.id, performance.now())) {
+      for (const intent of attackClickIntents(latestMatch, hit?.id)) {
+        connection.sendIntent(intent);
+      }
+    }
   });
   const offPointerMove = viewport.onPointerMove((world) => {
     pointer = world;

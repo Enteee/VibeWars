@@ -38,7 +38,8 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { FILTER_KEYS, GIT_ENV, GIT_HARDENING, filterPins } from "./git-hardening.mjs";
-import { obj } from "./protocol.mjs";
+import { api } from "./link.mjs";
+import { obj, parseRegistry } from "./protocol.mjs";
 import { COMPANY_PATHSPECS, fastForwardDecision } from "./reboot.mjs";
 
 /**
@@ -56,6 +57,13 @@ function required(name) {
 const REPO = required("DEVENV_ROOT");
 const ROOT = required("VIBEWARS_BOT_ROOT");
 const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
+/** The session, exactly: tmux takes a bare name as a prefix if nothing has it whole. */
+const TARGET = `=${SESSION}`;
+/**
+ * The tmux the session runs on, as claude-llc passes it: not whatever is on
+ * PATH. Checked in main(), so that a missing one is logged.
+ */
+const TMUX = process.env.VIBEWARS_TMUX ?? "";
 const REBOOTING = path.join(ROOT, "rebooting.json");
 const LOG = path.join(ROOT, "hub", "reboot.log");
 const CHECK = path.join(ROOT, "reboot-check");
@@ -64,6 +72,10 @@ const MIRROR = path.join(ROOT, "hub", ".git-mirror");
 
 /** How long the company gets to exit before what is left is killed. */
 const STOP_TIMEOUT_MS = 15_000;
+/** How long the tmux session gets to go after each kill-session, which is synchronous. */
+const SESSION_TIMEOUT_MS = 1_000;
+/** Kill-session, then its panes' processes, then once more both. */
+const SESSION_ATTEMPTS = 3;
 
 /**
  * @param {string} line
@@ -89,6 +101,11 @@ function run(file, args, options = {}) {
   });
   const stdout = typeof result.stdout === "string" ? result.stdout : "";
   const stderr = typeof result.stderr === "string" ? result.stderr : "";
+  // A command that could not even start must not pass for one that ran and
+  // found nothing to do (#315).
+  if (result.error !== undefined) {
+    log(`${file} ${args.join(" ")}: ${result.error.message}`);
+  }
   if (stderr.trim() !== "") {
     log(`${file} ${args.join(" ")}: ${stderr.trim()}`);
   }
@@ -121,8 +138,13 @@ function devenv(args, cwd) {
       cwd,
       env: {
         ...Object.fromEntries(
+          // Nor the bot token, which is the restarter's alone: the tmux
+          // server claude-llc starts would hand it to every pane.
           Object.entries(process.env).filter(
-            ([name]) => !name.startsWith("DEVENV_") && name !== "IN_NIX_SHELL",
+            ([name]) =>
+              !name.startsWith("DEVENV_") &&
+              !name.startsWith("TELEGRAM_") &&
+              name !== "IN_NIX_SHELL",
           ),
         ),
         // The boot record is already written; claude-llc must not replace it.
@@ -168,21 +190,65 @@ function running(pattern) {
   return run("pgrep", ["-f", pattern]).code === 0;
 }
 
-/** @returns {Promise<void>} */
+/** @returns {boolean} */
+function sessionUp() {
+  return run(TMUX, ["has-session", "-t", TARGET]).code === 0;
+}
+
+/**
+ * Kill the tmux session, and check that it is gone (#315): a session that
+ * survives is the old company, and `claude-llc up` would join it. Each
+ * attempt that leaves it standing kills the processes in its panes, which
+ * closes them, and the session with its last one.
+ *
+ * @returns {Promise<boolean>} whether it is gone
+ */
+async function stopSession() {
+  for (let attempt = 1; attempt <= SESSION_ATTEMPTS; attempt += 1) {
+    run(TMUX, ["kill-session", "-t", TARGET]);
+    const until = Date.now() + SESSION_TIMEOUT_MS;
+    while (Date.now() < until && sessionUp()) {
+      await sleep(250);
+    }
+    if (!sessionUp()) {
+      return true;
+    }
+    log(
+      `tmux session ${SESSION} survived kill-session (attempt ${String(attempt)}); killing its panes`,
+    );
+    const panes = run(TMUX, ["list-panes", "-s", "-t", TARGET, "-F", "#{pane_pid}"]);
+    for (const pid of panes.stdout
+      .split("\n")
+      .map(Number)
+      .filter((n) => n > 0)) {
+      try {
+        process.kill(pid, "SIGKILL");
+      } catch {
+        // Gone already.
+      }
+    }
+  }
+  log(`tmux session ${SESSION} would not stop`);
+  return false;
+}
+
+/** @returns {Promise<boolean>} whether the tmux session is gone */
 async function stopCompany() {
-  run("tmux", ["kill-session", "-t", SESSION]);
+  const stopped = await stopSession();
   // The jails are recognised by their worktree binds, which no other
   // process on the machine carries.
-  // The run-forever loops first, so stopping a daemon does not restart it
-  // (#23); killing the session has usually stopped them already.
+  // The loops first, so stopping what they run does not restart it: an
+  // agent's (#315) and the daemons' (#23). Killing the session has usually
+  // stopped them already.
   const patterns = [
+    "claude-llc-agent",
     "run-forever.mjs",
     "hubd.mjs",
     "supervisor.mjs",
     "link.mjs serve",
     `${ROOT}/wt/`,
   ];
-  for (const pattern of patterns.slice(0, 4)) {
+  for (const pattern of patterns.slice(0, -1)) {
     run("pkill", ["-f", pattern]);
   }
   const until = Date.now() + STOP_TIMEOUT_MS;
@@ -193,6 +259,7 @@ async function stopCompany() {
     log(`still running after ${String(STOP_TIMEOUT_MS / 1000)}s, killing: ${pattern}`);
     run("pkill", ["-KILL", "-f", pattern]);
   }
+  return stopped;
 }
 
 /**
@@ -270,13 +337,25 @@ function update(git, target) {
 }
 
 async function main() {
+  if (TMUX === "") {
+    throw new Error("VIBEWARS_TMUX is not set; claude-llc starts this");
+  }
   const reboot = obj(JSON.parse(fs.readFileSync(REBOOTING, "utf8")));
   const bootSha = typeof reboot.bootSha === "string" ? reboot.bootSha : "HEAD";
   const company = obj(JSON.parse(fs.readFileSync(path.join(ROOT, "company.json"), "utf8")));
   const repo = typeof company.repo === "string" ? company.repo : "";
   log(`reboot: ${String(reboot.reason)}`);
 
-  await stopCompany();
+  if (!(await stopCompany())) {
+    // `claude-llc up` would join the old company: better down and said so
+    // than up on the old code and called a reboot (#315).
+    fs.rmSync(REBOOTING, { force: true });
+    await tellOperator(
+      `Reboot FAILED: tmux session ${SESSION} would not stop; the company was not restarted.`,
+    );
+    process.exitCode = 1;
+    return;
+  }
   // A reboot starts every agent on a fresh conversation, with the kickoff
   // prompt: the sessions to resume go with the restart loops' state.
   fs.rmSync(path.join(ROOT, "agents"), { recursive: true, force: true });
@@ -324,23 +403,75 @@ async function main() {
   // What this boot loaded. claude-llc puts the note in the manager's first
   // prompt, and the manager tells everyone; hubd reads sha and at for the
   // next reboot.
-  log(outcome);
-  fs.writeFileSync(
-    path.join(ROOT, "boot.json"),
-    `${JSON.stringify({
-      sha: git(["rev-parse", "HEAD"]).stdout.trim(),
-      at: Date.now(),
-      previousSha: bootSha,
-      updated,
-      note: outcome,
-    })}\n`,
-  );
+  const sha = git(["rev-parse", "HEAD"]).stdout.trim();
+  /** @param {string} note */
+  const record = (note) => {
+    log(note);
+    fs.writeFileSync(
+      path.join(ROOT, "boot.json"),
+      `${JSON.stringify({ sha, at: Date.now(), previousSha: bootSha, updated, note })}\n`,
+    );
+  };
+  record(outcome);
   fs.rmSync(REBOOTING, { force: true });
 
-  const started = devenv(["claude-llc", "up"], REPO);
+  // Once more if it fails, from a stopped company again: whatever made it
+  // fail may have left half a company running (#315).
+  let started = devenv(["claude-llc", "up"], REPO);
+  /** @type {string | null} */
+  let failure = null;
   if (started !== 0) {
-    log(`the company did not come back up (exit ${String(started)})`);
+    log(`the company did not come back up (exit ${String(started)}); stopping it to try once more`);
+    if (!(await stopCompany())) {
+      failure = `claude-llc up exited ${String(started)}, and then tmux session ${SESSION} would not stop`;
+    } else {
+      // In the manager's first prompt, if this try works.
+      record(
+        `${outcome} It came up on the second try: the first claude-llc up exited ${String(started)}.`,
+      );
+      started = devenv(["claude-llc", "up"], REPO);
+      if (started !== 0) {
+        failure = `claude-llc up exited ${String(started)}, twice`;
+      }
+    }
+  }
+  if (failure !== null) {
+    record(`Reboot FAILED: ${failure}. ${outcome}`);
+    await tellOperator(
+      `Reboot FAILED: ${failure}. Restart by hand: claude-llc stop, then claude-llc.`,
+    );
     process.exitCode = 1;
+  }
+}
+
+/**
+ * Straight to the operator's topic, with the company bot's token (#315):
+ * the reboot failed, so no sidecar is running to carry a message.
+ * claude-llc-restart passes the token, as claude-bot passes it to the
+ * sidecar; without one configured there is only the log.
+ *
+ * @param {string} text
+ * @returns {Promise<void>}
+ */
+async function tellOperator(text) {
+  const token = process.env.TELEGRAM_MANAGER_TOKEN ?? "";
+  const chatId = process.env.TELEGRAM_CHAT_ID ?? "";
+  if (token === "" || chatId === "") {
+    log("no Telegram token or chat configured; the operator is told only here");
+    return;
+  }
+  const registry = path.join(ROOT, "registry.json");
+  const topic = parseRegistry(fs.existsSync(registry) ? fs.readFileSync(registry, "utf8") : null)
+    .registry.operator?.topicId;
+  try {
+    await api(token, "sendMessage", {
+      chat_id: chatId,
+      text: `${text} Log: ${LOG}`,
+      ...(topic === undefined ? {} : { message_thread_id: topic }),
+    });
+    log("told the operator on Telegram");
+  } catch (error) {
+    log(`could not tell the operator on Telegram: ${error instanceof Error ? error.message : "?"}`);
   }
 }
 

@@ -51,7 +51,7 @@ export function armedHint(keymap: Keymap, label: KeyLabeller = codeLabel): strin
     `${move} move`,
     `${first}–${last} cast`,
     `${key("target-next")}/click to target`,
-    `${key("attack")} attack`,
+    `${key("attack")}/double-click attack`,
     "esc to release",
   ].join(" · ");
 }

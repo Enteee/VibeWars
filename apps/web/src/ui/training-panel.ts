@@ -9,7 +9,8 @@ import {
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
 import { saveMuted } from "../audio/mute-preference.js";
 import { soundPlayer } from "../audio/sound-player.js";
-import { attackKeyIntents, isAttacking } from "../input/attack-key.js";
+import { attackClickIntents, attackKeyIntents, isAttacking } from "../input/attack-key.js";
+import { createDoubleClick } from "../input/double-click.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
 import {
@@ -643,6 +644,8 @@ export function createTrainingPanel(): TrainingPanel {
     }
   });
   let pointer: Vec2 | undefined;
+  // A double-click on an enemy attacks it, as Space would (#298).
+  const doubleClick = createDoubleClick();
 
   void createArenaViewport(stage, {
     mode: "fit",
@@ -688,6 +691,11 @@ export function createTrainingPanel(): TrainingPanel {
       }
       const hit = actorAtPoint(latestArena, world);
       session.connection.sendIntent({ kind: "target", targetSessionId: hit?.id ?? null });
+      if (doubleClick.press(hit?.id, performance.now())) {
+        for (const intent of attackClickIntents(session.connection.getSnapshot(), hit?.id)) {
+          session.connection.sendIntent(intent);
+        }
+      }
     });
     offPointerMove = created.onPointerMove((world) => {
       pointer = world;

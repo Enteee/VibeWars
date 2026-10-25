@@ -49,3 +49,21 @@ export function isAttacking(snapshot: MatchSnapshot): boolean {
   const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
   return self?.attackTargetSessionId !== undefined;
 }
+
+/**
+ * What a double-click on `hitId` sends (#298): the mouse twin of
+ * `attackKeyIntents`. An attack, when it is a living enemy; nothing for
+ * an ally, yourself, a corpse or empty ground, whose double-click is just
+ * the target its single click already set.
+ */
+export function attackClickIntents(
+  snapshot: MatchSnapshot,
+  hitId: string | undefined,
+): ClientIntent[] {
+  const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
+  const hit = snapshot.players.find((player) => player.sessionId === hitId);
+  if (self === undefined || hit === undefined || hit.dead || hit.team === self.team) {
+    return [];
+  }
+  return [{ kind: "attack", targetId: hit.sessionId }];
+}
