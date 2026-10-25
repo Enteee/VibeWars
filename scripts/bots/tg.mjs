@@ -36,6 +36,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 // The full roster, so an absent colleague can be reported as "not hired
 // yet" rather than silently omitted.
 import { ROLES } from "./hub-policy.mjs";
+import { readRoster } from "./presence.mjs";
 import {
   ASKERS,
   MAX_OPTION_CHARS,
@@ -259,29 +260,7 @@ function pending() {
 
 /** @returns {void} */
 function roster() {
-  /** @type {string[]} */
-  let files;
-  try {
-    files = fs.readdirSync(ROSTER).filter((name) => name.endsWith(".json"));
-  } catch {
-    // No roster directory yet: nobody has ever started a sidecar here.
-    files = [];
-  }
-  /** @type {Map<string, number>} */
-  const seen = new Map();
-  for (const name of files) {
-    /** @type {unknown} */
-    let entry;
-    try {
-      entry = JSON.parse(fs.readFileSync(path.join(ROSTER, name), "utf8"));
-    } catch {
-      continue;
-    }
-    const record = /** @type {Record<string, unknown>} */ (entry);
-    if (typeof record.role === "string" && typeof record.lastSeen === "number") {
-      seen.set(record.role, record.lastSeen);
-    }
-  }
+  const seen = readRoster(ROSTER, ROLES, Date.now());
 
   // Every role is listed, hired or not. The company runs with a partial
   // roster, and an agent that cannot tell "nobody has reviewed my pull
@@ -289,17 +268,17 @@ function roster() {
   // who was never hired.
   for (const role of ROLES) {
     const self = role === ROLE ? " (you)" : "";
-    const last = seen.get(role);
-    if (last === undefined) {
+    const entry = seen.get(role);
+    if (entry === undefined) {
       console.log(`${role.padEnd(16)} not hired yet${self}`);
       continue;
     }
-    const ageSeconds = Math.round((Date.now() - last) / 1000);
+    const ageSeconds = Math.round((Date.now() - entry.lastSeen) / 1000);
     // The sidecar heartbeats every 15s and removes its own entry on a clean
     // exit, so anything past a minute died without cleaning up. Its age is
     // then meaningless, so say "stale" and stop there.
     console.log(
-      `${role.padEnd(16)} ${ageSeconds > 60 ? "stale" : `online, ${String(ageSeconds)}s ago`}${self}`,
+      `${role.padEnd(16)} ${entry.fresh ? `online, ${String(ageSeconds)}s ago` : "stale"}${self}`,
     );
   }
 }
