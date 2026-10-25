@@ -278,6 +278,11 @@ describe("usageLimitOf", () => {
 
   it("is not fooled by an ordinary error result, or a success", () => {
     expect(usageLimitOf(errorResult("Execution error"))).toBeNull();
+    expect(usageLimitOf(errorResult("Context limit reached"))).toBeNull();
+    expect(
+      usageLimitOf(errorResult("Request req_011CU4291xyz failed after 4291 bytes")),
+    ).toBeNull();
+    expect(usageLimitOf(errorResult("API Error: 429 Too Many Requests"))).toEqual({ until: null });
     expect(usageLimitOf({ ...RESULT, result: "I hit your limit of patience" })).toBeNull();
     expect(usageLimitOf(RESULT)).toBeNull();
     expect(usageLimitOf(null)).toBeNull();

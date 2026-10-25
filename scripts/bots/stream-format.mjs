@@ -250,8 +250,14 @@ export function runFailed({ code, sawResult }) {
   return code !== 0 || !sawResult;
 }
 
-/** What a limit message says; anything else in an error result is a real failure. */
-const LIMIT_TEXT = /usage limit|limit reached|hit your limit|rate.?limit|429/i;
+/**
+ * What a limit message says; anything else in an error result is a real
+ * failure. Narrow on purpose: a misread error is never counted toward the
+ * five that stop a role, so it would retry forever under a false company
+ * notice. Hence no bare "limit reached", which "Context limit reached" also
+ * says, and 429 only as a whole number.
+ */
+const LIMIT_TEXT = /usage limit|hit your limit|rate.?limit|\b429\b/i;
 
 /** The reset time some limit messages end with: `…usage limit reached|1761400800`. */
 const LIMIT_EPOCH = /\|(\d{9,11})\s*$/;

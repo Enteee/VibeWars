@@ -142,6 +142,9 @@ function staleNotice(file, now) {
  *
  * The `wx` create is the dedupe, so nine roles hitting the limit at once
  * post one message. A stale notice, left by a limit long over, is replaced.
+ * Two roles that both find it stale can race: the second removes the
+ * first's fresh notice and posts again. Two notices is harmless, and rare
+ * enough not to lock for.
  *
  * @param {string} root VIBEWARS_BOT_ROOT
  * @param {number | null} until unix seconds
