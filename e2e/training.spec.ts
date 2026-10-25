@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { KEYMAP_PRESETS, codeLabel, type Keymap } from "../apps/web/src/input/keymap.js";
+import { projection, type Projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
 
 /**
@@ -393,7 +394,11 @@ const LADDER = [
   { x: 460, y: 210 },
   { x: 460, y: 330 },
 ] as const;
-const TRAINING_HALL_WIDTH = 560;
+
+/** World units to the page, through the Training Ground's camera (#440). */
+function trainingView(page: Page, canvas: Locator): Promise<Projection> {
+  return projection(page.locator(".training-stage"), canvas);
+}
 
 /**
  * The band a dummy's name is drawn in, as screenshots: 11 px text whose
@@ -402,22 +407,14 @@ const TRAINING_HALL_WIDTH = 560;
  * Labels are Phaser text, not DOM, so a pixel diff is the only way to see one.
  */
 async function nameBands(page: Page, canvas: Locator): Promise<Buffer[]> {
-  const box = await canvas.boundingBox();
-  if (box === null) {
-    throw new Error("the arena canvas has no box");
-  }
-  const scale = box.width / TRAINING_HALL_WIDTH;
+  const view = await trainingView(page, canvas);
   return Promise.all(
-    LADDER.map((dummy) =>
-      page.screenshot({
-        clip: {
-          x: box.x + (dummy.x - 30) * scale,
-          y: box.y + (dummy.y - 52) * scale,
-          width: 60 * scale,
-          height: 16 * scale,
-        },
-      }),
-    ),
+    LADDER.map((dummy) => {
+      const corner = view.onPage({ x: dummy.x - 30, y: dummy.y - 52 });
+      return page.screenshot({
+        clip: { ...corner, width: 60 * view.zoom, height: 16 * view.zoom },
+      });
+    }),
   );
 }
 
@@ -447,10 +444,9 @@ test("(18) names show only on the target, under the cursor, and under Shift (#25
 
   // The cursor over a dummy shows that one too. Two lie on the target
   // or the cursor, whichever dummy Tab picked, unless they are the same.
-  const box = await canvas.boundingBox();
-  const scale = (box?.width ?? 0) / TRAINING_HALL_WIDTH;
   const [first] = LADDER;
-  await page.mouse.move((box?.x ?? 0) + first.x * scale, (box?.y ?? 0) + first.y * scale);
+  const over = (await trainingView(page, canvas)).onPage(first);
+  await page.mouse.move(over.x, over.y);
   await expect.poll(named).toBeGreaterThanOrEqual(1);
   const withHover = await named();
   expect(withHover === 1 || withHover === 2).toBe(true);
@@ -488,12 +484,8 @@ test("(20) a double-click on a far enemy attacks it: you walk there and swing (#
   await takeControl(page);
 
   // The bow-range dummy, at (480, 210): far out of a sword's reach.
-  const box = await canvas.boundingBox();
-  if (box === null) {
-    throw new Error("the arena canvas has no box");
-  }
-  const scale = box.width / TRAINING_HALL_WIDTH;
-  await page.mouse.dblclick(box.x + 480 * scale, box.y + 210 * scale);
+  const dummy = (await trainingView(page, canvas)).onPage({ x: 480, y: 210 });
+  await page.mouse.dblclick(dummy.x, dummy.y);
 
   await expect(page.locator(".training-adrenaline")).toContainText("· attacking");
   // Only a body that walked the whole way there can land this. The walk
@@ -587,13 +579,8 @@ test("(23) Esc stops a walk to a clicked point, and the next Esc releases the ar
 }) => {
   const canvas = await openTraining(page);
   await takeControl(page);
-  const box = await canvas.boundingBox();
-  if (box === null) {
-    throw new Error("the arena canvas has no box");
-  }
   // Empty ground in the far corner, a long walk from the spawn.
-  const scale = box.width / TRAINING_HALL_WIDTH;
-  const corner = { x: box.x + 520 * scale, y: box.y + 30 * scale };
+  const corner = (await trainingView(page, canvas)).onPage({ x: 520, y: 30 });
   await page.mouse.click(corner.x, corner.y);
   await page.waitForTimeout(300);
 
@@ -644,4 +631,39 @@ test("(24) an empty slot's key does nothing; the next key casts its own skill (#
   await page.keyboard.press(skillKey(2));
   await expect(slots.nth(2).locator(".recharge-overlay")).toHaveCount(1);
   await expect(energy).not.toHaveText(full ?? "");
+});
+
+test("(25) the wheel over the arena steps the zoom; over the build panel it does not (#440)", async ({
+  page,
+}) => {
+  const canvas = await openTraining(page);
+  const stage = page.locator(".training-stage");
+  await expect(stage).toHaveAttribute("data-zoom-step", "Default");
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+  const scrolled = () => page.evaluate(() => [window.scrollX, window.scrollY]);
+  const before = await scrolled();
+
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.wheel(0, 100);
+  await expect(stage).toHaveAttribute("data-zoom-step", "Wide");
+  // Each notch after the wheel's lockout, so none is swallowed.
+  for (const _ of [1, 2]) {
+    await page.waitForTimeout(200);
+    await page.mouse.wheel(0, -100);
+  }
+  await expect(stage).toHaveAttribute("data-zoom-step", "Near");
+  expect(await scrolled()).toEqual(before);
+
+  const editor = await page.locator(".editor").boundingBox();
+  if (editor === null) {
+    throw new Error("the build panel has no box");
+  }
+  await page.mouse.move(editor.x + editor.width / 2, editor.y + editor.height / 2);
+  await page.waitForTimeout(200);
+  await page.mouse.wheel(0, 100);
+  await page.waitForTimeout(300);
+  await expect(stage).toHaveAttribute("data-zoom-step", "Near");
 });

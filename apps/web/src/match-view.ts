@@ -1,4 +1,4 @@
-import type { PlayerBuild, Vec2 } from "@vibewars/game-core";
+import type { PlayerBuild } from "@vibewars/game-core";
 import type { WallDescriptor } from "@vibewars/game-protocol";
 import type { MatchConnection, MatchSnapshot } from "@vibewars/game-session";
 
@@ -27,6 +27,7 @@ import {
   type RenderableWall,
 } from "./render/arena-snapshot.js";
 import { createArenaViewport } from "./render/arena-viewport.js";
+import { attachFollowCamera } from "./render/follow-camera.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
 import { projectileSprite } from "./render/projectiles.js";
 import {
@@ -158,7 +159,7 @@ export async function startMatchView(
   callbacks: MatchViewCallbacks,
   options: MatchViewOptions = {},
 ): Promise<MatchView> {
-  const viewport = await createArenaViewport(parent, { mode: "resize" });
+  const viewport = await createArenaViewport(parent);
   const { scene } = viewport;
 
   const connect =
@@ -166,6 +167,7 @@ export async function startMatchView(
     (() => connectToMatch(endpoint, options.target ?? { kind: "quick" }, options.build));
   const connection = await connect();
   const walls = connection.map.walls.map(toRenderableWall);
+  const camera = attachFollowCamera(viewport, parent, connection.map);
 
   const hud = createHud(parent);
   const useSkill = (slot: number): void => {
@@ -323,10 +325,6 @@ export async function startMatchView(
       }
     }
   };
-  // In world units. The camera never moves, so a still cursor stays over
-  // the same spot while bodies walk under it.
-  let pointer: Vec2 | undefined;
-
   connection.onConnectionChange((state) => {
     matchSounds.connectionChanged(state);
     matchMusic.connectionChanged(state);
@@ -353,17 +351,23 @@ export async function startMatchView(
     flashMessage(hud, describeRefusal(message));
   });
 
-  const offFrame = viewport.onFrame(() => {
+  const offFrame = viewport.onFrame((deltaSeconds) => {
     latestMatch = connection.getSnapshot();
     matchSounds.snapshot(latestMatch);
     matchMusic.snapshot(latestMatch);
     guardUnload(latestMatch.phase !== "finished");
-    // Hover is hit-tested every frame, not every move, so a body that
-    // walks under a still cursor shows its name.
-    latestArena = withNames(toArenaSnapshot(latestMatch, walls), pointer, nameReveal.held());
+    const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
+    camera.frame(deltaSeconds, self === undefined ? undefined : { x: self.x, y: self.y });
+    // Hover is hit-tested every frame, through the camera as it is now, so
+    // a body that walks under a still cursor, or a camera that moves under
+    // it, shows the right name.
+    latestArena = withNames(
+      toArenaSnapshot(latestMatch, walls),
+      viewport.pointerWorld(),
+      nameReveal.held(),
+    );
     scene.setSnapshot(latestArena);
 
-    const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
     const target = latestMatch.players.find((p) => p.sessionId === self?.targetSessionId);
     // `latestMatch` carries the score, clock and outcome. Omitting it
     // here left the scoreboard, the match clock and the victory banner
@@ -392,9 +396,6 @@ export async function startMatchView(
       }
     }
   });
-  const offPointerMove = viewport.onPointerMove((world) => {
-    pointer = world;
-  });
 
   return {
     async dispose(): Promise<void> {
@@ -404,7 +405,7 @@ export async function startMatchView(
       offFrame();
       guardUnload(false);
       offPointer();
-      offPointerMove();
+      camera.dispose();
       nameReveal.detach();
       window.removeEventListener("keydown", handleKeyDown);
       detachMovement();

@@ -1,5 +1,6 @@
 import { expect, test, type Page, type Locator } from "@playwright/test";
 
+import { projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
 
 /**
@@ -303,26 +304,25 @@ test("Space attacks the nearest enemy with the weapon, and moving stops it (#160
   await opponent.close();
 });
 
-/**
- * A page screenshot of the arena round `world`, `half` units each way.
- * One world unit is one canvas pixel (arena-viewport.ts), so a world point
- * is the canvas's own offset plus itself.
- */
+/** Where `world` is on the match's canvas, through its camera (#440). */
+async function matchPoint(
+  page: Page,
+  canvas: Locator,
+  world: { readonly x: number; readonly y: number },
+): Promise<{ x: number; y: number }> {
+  return (await projection(page.locator("#viewport"), canvas)).onCanvas(world);
+}
+
+/** A page screenshot of the arena round `world`, `half` canvas px each way. */
 async function spotShot(
   page: Page,
   canvas: Locator,
   world: { readonly x: number; readonly y: number },
   half = 20,
 ): Promise<Buffer> {
-  const box = await canvas.boundingBox();
-  expect(box, "the arena canvas has no box").not.toBeNull();
+  const at = (await projection(page.locator("#viewport"), canvas)).onPage(world);
   return page.screenshot({
-    clip: {
-      x: (box?.x ?? 0) + world.x - half,
-      y: (box?.y ?? 0) + world.y - half,
-      width: 2 * half,
-      height: 2 * half,
-    },
+    clip: { x: at.x - half, y: at.y - half, width: 2 * half, height: 2 * half },
   });
 }
 
@@ -332,7 +332,7 @@ test("clicking the ground walks there, round a wall, and stops (#310)", async ({
   const goal = { x: 520, y: 150 };
   const empty = await spotShot(page, canvas, goal);
 
-  await canvas.click({ position: goal });
+  await canvas.click({ position: await matchPoint(page, canvas, goal) });
   // The marker there fades in 0.4 s; the walk round the wall takes about 3 s.
   await page.waitForTimeout(600);
   await expect
@@ -361,7 +361,7 @@ test("clicking the ground keeps the target, and Space attacks it from there (#31
   const before = await readTargetHealth(page);
 
   // Open ground, short of the top wall and away from both spawns.
-  await canvas.click({ position: { x: 260, y: 120 } });
+  await canvas.click({ position: await matchPoint(page, canvas, { x: 260, y: 120 }) });
   await page.waitForTimeout(300);
   await expect(target).toHaveText(/^target: /);
 
