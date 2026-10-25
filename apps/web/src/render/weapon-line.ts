@@ -88,7 +88,7 @@ export function weaponLineLayout(
       };
     case "daggers": {
       // Forks 5 before the tip. Prongs of 5.5 at ±30° end 4.76 along the
-      // line, inside the reach; the sheet's 6 would end past it.
+      // line, inside the reach.
       const fork = polar(centre, a, r + WEAPON_REACH - 5);
       return {
         strokes: [
