@@ -31,9 +31,9 @@ stack(
   layer(1, stack(
     n("~ 0 ~ 2 ~ 0 ~ 2").chord(P).voicing().mode("above:g3")
       .s("strum").gain(.55).room(.4),
-    n("~ ~ ~ ~ 4 [5 4] 2 ~ ~ ~ ~ ~ 2 [3 2] 0 ~".slow(2).add("<0 0 2 0 -2 0 3 0>"))
-      .scale("g5:mixolydian")
-      .s("whistle").gain(.4).attack(.03).release(.4).room(.5).roomsize(6).orbit(2))),
+    n("~ ~ ~ ~ 4 [5 4] 2 ~ ~ ~ ~ ~ 2 [3 2] 0 ~".slow(2).add("<0 0 -1 0 -2 0 -3 0>"))
+      .scale("g4:mixolydian")
+      .s("whistle").gain(.45).attack(.03).release(.4).lpf(2800).room(.5).roomsize(6).orbit(2))),
   // 2: the march
   layer(2, stack(
     s("timp:0 ~ ~ timp:0 ~ ~ timp:0 ~").gain(.55).room(.3),
