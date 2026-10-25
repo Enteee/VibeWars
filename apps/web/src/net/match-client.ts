@@ -68,7 +68,7 @@ export function httpOriginFrom(endpoint: string): string {
 }
 
 /** Room state as the Colyseus client actually decodes it — a minimal, local shape. */
-interface DecodedPlayer {
+export interface DecodedPlayer {
   readonly sessionId: string;
   readonly x: number;
   readonly y: number;
@@ -87,7 +87,7 @@ interface DecodedPlayer {
   readonly castTotal: number;
   readonly statuses: Iterable<string>;
 }
-interface DecodedMatchState {
+export interface DecodedMatchState {
   readonly players: ReadonlyMap<string, DecodedPlayer> | Map<string, DecodedPlayer>;
   readonly scoreTeam0: number;
   readonly scoreTeam1: number;
@@ -97,7 +97,7 @@ interface DecodedMatchState {
   readonly endReason: string;
 }
 
-function snapshotFrom(room: Room<unknown, DecodedMatchState>): MatchSnapshot {
+function snapshotFrom(room: LiveMatchRoom): MatchSnapshot {
   const players: PlayerSnapshot[] = [];
   for (const player of room.state.players.values()) {
     players.push({
@@ -188,40 +188,64 @@ export async function connectToMatch(
     awaitMessage<{ slots: SkillSlot[] }>(room, "skill-bar", 5000),
   ]);
 
-  // A dropped connection is retried automatically: the server holds the
-  // player's slot for a window (see the match room's onLeave), so the
-  // right behaviour on a wifi blip is to walk back in, not to dump the
-  // player back to the menu having lost the match.
+  return createMatchConnection(room, map, bar.slots);
+}
+
+/**
+ * The few members of a Colyseus `Room` a match connection uses, so the
+ * wiring below can be tested against a fake room without a socket.
+ */
+export interface LiveMatchRoom {
+  readonly sessionId: string;
+  readonly state: DecodedMatchState;
+  readonly reconnection: { minUptime: number };
+  send(type: "intent", payload: ClientIntent): void;
+  onMessage(type: "combat", callback: (message: CombatMessage) => void): unknown;
+  onMessage(type: "cast-refused", callback: (message: CastRefusedMessage) => void): unknown;
+  onDrop(callback: (code: number) => void): unknown;
+  onReconnect(callback: () => void): unknown;
+  onLeave(callback: (code: number) => void): unknown;
+  leave(): Promise<unknown>;
+}
+
+/** Colyseus' close code for a leave the player asked for. */
+const CONSENTED_LEAVE = 4000;
+
+export function createMatchConnection(
+  room: LiveMatchRoom,
+  map: MapDescriptor,
+  skillBar: readonly SkillSlot[],
+): MatchConnection {
+  // A dropped connection is retried by the SDK itself, which reconnects
+  // this same room in place: state, message handlers and `send` all keep
+  // working afterwards (#181). The server holds the player's slot for a
+  // window (see the match room's onLeave), so the right behaviour on a
+  // wifi blip is to walk back in, not to dump the player back to the menu
+  // having lost the match. By default the SDK gives up on a room younger
+  // than 5 s; a blip right after joining deserves the same retry.
+  room.reconnection.minUptime = 0;
+
   let notifyConnection: (state: "online" | "reconnecting" | "lost") => void = () => {
     /* no handler yet */
   };
 
-  room.onLeave((code) => {
-    if (code === 4000) {
-      // A deliberate leave; nothing to recover.
-      return;
-    }
+  room.onDrop(() => {
     notifyConnection("reconnecting");
-    void (async () => {
-      const token = room.reconnectionToken;
-      for (let attempt = 0; attempt < 6; attempt += 1) {
-        await new Promise((resolve) => setTimeout(resolve, 1000 + attempt * 500));
-        try {
-          await client.reconnect(token);
-          notifyConnection("online");
-          return;
-        } catch {
-          // Keep trying until the server's window closes.
-        }
-      }
+  });
+  room.onReconnect(() => {
+    notifyConnection("online");
+  });
+  room.onLeave((code) => {
+    // The SDK only reports a leave once it has stopped retrying.
+    if (code !== CONSENTED_LEAVE) {
       notifyConnection("lost");
-    })();
+    }
   });
 
   return {
     selfSessionId: room.sessionId,
     map,
-    skillBar: bar.slots,
+    skillBar,
     onConnectionChange(handler) {
       notifyConnection = handler;
     },
