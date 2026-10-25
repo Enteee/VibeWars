@@ -1,6 +1,5 @@
 import { PROTOCOL_MISMATCH_MESSAGE, PROTOCOL_VERSION } from "@vibewars/game-protocol";
-
-import { MessageBudget } from "./message-budget.js";
+import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "@vibewars/game-session";
 
 /**
  * Read one field from a client-supplied message, safely.
@@ -31,22 +30,6 @@ export function assertProtocolVersion(options: unknown): void {
     throw new Error(PROTOCOL_MISMATCH_MESSAGE);
   }
 }
-
-/**
- * How many messages per second one client may have handled, sustained
- * (#43). Every handler runs as the message arrives, outside the tick, so
- * without a limit one client could spend the whole room's tick budget.
- * Real play peaks near 25 a second.
- */
-export const MESSAGES_PER_SECOND = 60;
-
-/**
- * How many may be handled at once: what an honest client queues behind a
- * network stall and then sends in one go. The server gives up on a silent
- * socket after about 9 s (Colyseus pings every 3 s, twice), and 9 s of
- * frantic play is about 225 messages.
- */
-export const MESSAGE_BURST = 300;
 
 /**
  * Past this many in one second Colyseus drops the client outright. Far

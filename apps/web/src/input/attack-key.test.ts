@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import type { MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
-import type { MatchSnapshot, PlayerSnapshot } from "../net/match-connection.js";
 import {
   attackClickIntents,
   attackKeyIntents,

@@ -1,6 +1,6 @@
+import type { SkillSlot } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
-import type { SkillSlot } from "../net/match-connection.js";
 import { DEFAULT_KEYMAP, KEYMAP_PRESETS } from "./keymap.js";
 import { skillSlotForKeyDown } from "./skill-keys.js";
 

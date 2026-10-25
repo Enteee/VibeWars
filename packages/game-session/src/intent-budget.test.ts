@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { MessageBudget } from "./message-budget.js";
-import { MESSAGE_BURST, MESSAGES_PER_SECOND } from "./options.js";
+import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 
 interface Report {
   readonly sessionId: string;

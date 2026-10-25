@@ -18,7 +18,6 @@ import {
   type ServerHello,
   type SkillBarMessage,
 } from "@vibewars/game-protocol";
-
 import type {
   CombatBatchMessage,
   CombatMessage,
@@ -27,7 +26,8 @@ import type {
   PlayerSnapshot,
   SkillSlot,
   SlotRecharge,
-} from "./match-connection.js";
+} from "@vibewars/game-session";
+
 import { extrapolateRecharges } from "./recharge-clock.js";
 import { sendMessage } from "./wire.js";
 
@@ -36,7 +36,7 @@ import { sendMessage } from "./wire.js";
  *
  * This module is the *only* place in `apps/web` allowed to import
  * `@colyseus/sdk` — everything else (the renderer, the input handler) talks
- * to the plain snapshot/intent interface in `match-connection.ts`, so the
+ * to the plain snapshot/intent interface, game-session's `MatchConnection`, so the
  * networking layer can change without touching rendering code (ADR-0001).
  */
 

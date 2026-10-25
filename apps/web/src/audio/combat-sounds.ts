@@ -1,6 +1,6 @@
 import { findStatusDefinition } from "@vibewars/game-core";
+import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
-import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "../net/match-connection.js";
 import type { SoundId } from "./sound-ids.js";
 
 /**

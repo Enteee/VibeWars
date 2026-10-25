@@ -1,6 +1,5 @@
 import type { RechargeSlot } from "@vibewars/game-protocol";
-
-import type { SlotRecharge } from "./match-connection.js";
+import type { SlotRecharge } from "@vibewars/game-session";
 
 /**
  * Every slot's recharge, `elapsedSeconds` after the server's last

@@ -5,6 +5,7 @@ import {
   type Vec2,
   type TrainingScenario,
 } from "@vibewars/game-core";
+import type { MatchSnapshot, SkillSlot } from "@vibewars/game-session";
 
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
 import { saveMuted } from "../audio/mute-preference.js";
@@ -26,7 +27,6 @@ import { attachNameReveal } from "../input/name-reveal.js";
 import { nextTabTarget } from "../input/tab-target.js";
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
 import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
-import type { MatchSnapshot, SkillSlot } from "../net/match-connection.js";
 import {
   actorAtPoint,
   EMPTY_SNAPSHOT,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
-import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "../net/match-connection.js";
 import {
   floatingTextY,
   placeFloatingText,

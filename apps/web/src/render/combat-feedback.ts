@@ -1,6 +1,6 @@
 import { isWeaponId, vec2, WEAPONS } from "@vibewars/game-core";
+import type { CombatMessage, MatchSnapshot } from "@vibewars/game-session";
 
-import type { CombatMessage, MatchSnapshot } from "../net/match-connection.js";
 import { floatingCueFor, type FloatingCue } from "../ui/combat-readouts.js";
 import {
   ACTOR_RADIUS,

@@ -13,10 +13,9 @@ import type {
  * snapshot/intent interface the renderer, the HUD and the input handler are
  * written against (ADR-0001).
  *
- * Kept apart from `match-client.ts`, which is the one Colyseus-backed
- * implementation and the only file in `apps/web` that imports
- * `@colyseus/sdk`, so another implementation (the Training Ground's local
- * simulation, #2 §4.3) can provide a `MatchConnection` without it.
+ * Implemented by `apps/web`'s Colyseus client, the Training Ground's local
+ * simulation (#2 §4.3) and, over a `Transport`, this package's P2P
+ * client (#375). It lives here so all three share it.
  */
 
 export interface PlayerSnapshot {
