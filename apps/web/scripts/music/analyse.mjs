@@ -141,7 +141,7 @@ const noteName = (note) => (typeof note === "number" ? Note.fromMidi(note) : Str
 const pitchClass = (note) => {
   const chroma = Note.chroma(noteName(note));
   // One spelling for both sides: MIDI numbers come back flat, scales sharp.
-  return chroma === undefined ? noteName(note) : Note.pitchClass(Note.fromMidiSharps(60 + chroma));
+  return Number.isNaN(chroma) ? noteName(note) : Note.pitchClass(Note.fromMidiSharps(60 + chroma));
 };
 
 /**
