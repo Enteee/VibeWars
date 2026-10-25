@@ -167,13 +167,17 @@ marker on someone, which carry that marker's colour.
 
 ### UI controls
 
-Buttons in the HUD and menus. Ink on the panel. The states of one control
+Buttons and indicators in the HUD and menus. Ink on the panel. The states of one control
 differ by shape, so the icon shows the current state at a glance.
 
-| Icon        | Means          | Shape              |
-| ----------- | -------------- | ------------------ |
-| `sound-on`  | Sound is on    | Speaker, two waves |
-| `sound-off` | Sound is muted | Speaker, a cross   |
+| Icon        | Means                  | Shape                          |
+| ----------- | ---------------------- | ------------------------------ |
+| `sound-on`  | Sound is on            | Speaker, two waves             |
+| `sound-off` | Sound is muted         | Speaker, a cross               |
+| `attacking` | You are auto-attacking | Two crossed swords, guards low |
+
+`attacking` has two blades, so at 16 px it never reads as the one-sword
+`attack` skill type badge.
 
 ## Sizes
 
