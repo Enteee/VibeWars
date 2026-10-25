@@ -13,7 +13,10 @@ import {
   feedLines,
   groupFeed,
   hhmm,
+  nudgeLines,
 } from "./dashboard-view.mjs";
+/** @type {import("./dashboard-view.mjs").NudgeFacts} */
+const noNudges = { schedule: [], since: null, sent: new Map(), unread: new Map(), now: 0 };
 /** @typedef {{ state: "up" | "stale" | "down" | "crash-looping", line: string }} HubLine */
 
 const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
@@ -245,6 +248,7 @@ describe("companyLines", () => {
         hub,
         reboot: null,
         claude: null,
+        nudges: noNudges,
       },
       { rows: 30, width: 40 },
     ).map(plain);
@@ -269,6 +273,7 @@ describe("companyLines", () => {
           hub: health,
           reboot: null,
           claude: null,
+          nudges: noNudges,
         },
         { rows: 30, width: 80 },
       ).find((line) => plain(line).startsWith("hub "));
@@ -287,6 +292,7 @@ describe("companyLines", () => {
         hub,
         reboot: null,
         claude: null,
+        nudges: noNudges,
       },
       { rows: 30, width: 72 },
     ).map(plain);
@@ -323,6 +329,7 @@ describe("companyLines", () => {
         hub,
         reboot: null,
         claude,
+        nudges: noNudges,
       },
       { rows: 40, width: 72 },
     ).map(plain);
@@ -369,6 +376,7 @@ describe("companyLines", () => {
         hub,
         reboot: null,
         claude,
+        nudges: noNudges,
       },
       { rows: 40, width: 72 },
     );
@@ -391,6 +399,7 @@ describe("companyLines", () => {
         hub,
         reboot: null,
         claude: null,
+        nudges: noNudges,
       },
       { rows: 4, width: 40 },
     );
@@ -408,7 +417,17 @@ describe("companyLines", () => {
      */
     const section = (staff, { live = [], stale = new Map(), width = 80 } = {}) => {
       const raw = companyLines(
-        { roles, live: new Set(live), stale, staff, budget: null, hub, reboot: null, claude: null },
+        {
+          roles,
+          live: new Set(live),
+          stale,
+          staff,
+          budget: null,
+          hub,
+          reboot: null,
+          claude: null,
+          nudges: noNudges,
+        },
         { rows: 40, width },
       );
       const end = raw.indexOf("");
@@ -531,7 +550,17 @@ describe("companyLines", () => {
      */
     const pane = (reboot, { rows = 30, width = 80 } = {}) =>
       companyLines(
-        { roles, live, stale: new Map(), staff: null, budget: null, hub, reboot, claude: null },
+        {
+          roles,
+          live,
+          stale: new Map(),
+          staff: null,
+          budget: null,
+          hub,
+          reboot,
+          claude: null,
+          nudges: noNudges,
+        },
         { rows, width },
       ).map(plain);
 
@@ -562,6 +591,7 @@ describe("companyLines", () => {
           hub,
           reboot: { record: { ...record, ready: [] }, between: [], now: deadline - 30_000 },
           claude: null,
+          nudges: noNudges,
         },
         { rows: 30, width: 80 },
       );
@@ -592,7 +622,17 @@ describe("companyLines", () => {
       ];
       for (const reboot of reboots) {
         const lines = companyLines(
-          { roles, live, stale: new Map(), staff: null, budget: null, hub, reboot, claude: null },
+          {
+            roles,
+            live,
+            stale: new Map(),
+            staff: null,
+            budget: null,
+            hub,
+            reboot,
+            claude: null,
+            nudges: noNudges,
+          },
           { rows: 30, width: 200 },
         ).map(plain);
         for (const line of lines) {
@@ -699,5 +739,67 @@ describe("groupFeed (#189)", () => {
   it("puts rows in time order whatever order the inboxes were read in", () => {
     const rows = [row(30, "architect", "a"), row(10, "lead-dev", "b"), row(20, "qa-tester", "c")];
     expect(groupFeed(rows).map((line) => line.ts)).toEqual([10, 20, 30]);
+  });
+});
+
+describe("nudgeLines (#547)", () => {
+  const at = (/** @type {string} */ time) => new Date(`2026-10-26T${time}:00`).getTime();
+  const groom = {
+    id: "groom-backlog",
+    to: "manager",
+    everyMinutes: 30,
+    text: "Groom the Backlog: re-rank by value, finish started features first.",
+  };
+  /** @param {Partial<import("./dashboard-view.mjs").NudgeFacts>} over */
+  const lines = (over, width = 200) =>
+    nudgeLines({ nudges: { ...noNudges, now: at("23:40"), ...over } }, width).map(plain);
+
+  it("shows when it last went and when it is next due", () => {
+    expect(
+      lines({
+        schedule: [groom],
+        since: at("22:00"),
+        sent: new Map([["groom-backlog", at("23:31")]]),
+      }),
+    ).toEqual([
+      "nudges",
+      "  groom-backlog → manager · every 30m · last 23:31 · next 00:01",
+      "    " + groom.text,
+    ]);
+  });
+
+  it("counts a nudge never sent from hubd's start", () => {
+    expect(lines({ schedule: [groom], since: at("23:30") })[1]).toBe(
+      "  groom-backlog → manager · every 30m · last never · next 00:00",
+    );
+  });
+
+  it("says overdue when the next one is more than a minute late", () => {
+    expect(lines({ schedule: [groom], since: at("22:00") })[1]).toContain("next overdue");
+    expect(lines({ schedule: [groom], since: at("23:10") })[1]).toContain("next 23:40");
+  });
+
+  it("names who has it unread", () => {
+    const unread = new Map([["groom-backlog", ["manager", "manager@2"]]]);
+    expect(lines({ schedule: [groom], since: at("23:30"), unread })[1]).toMatch(
+      / · unread: manager, manager@2$/,
+    );
+  });
+
+  it("shows dashes when hubd never wrote its clock", () => {
+    expect(lines({ schedule: [groom] })[1]).toContain("last — · next —");
+  });
+
+  it("is one problem line for a bad schedule, and nothing for an empty one", () => {
+    expect(lines({ schedule: "schedule.nudges is not an array" })).toEqual([
+      "nudges: schedule.json: schedule.nudges is not an array",
+    ]);
+    expect(lines({ schedule: [] })).toEqual([]);
+  });
+
+  it("cuts the text to the pane width", () => {
+    const [, , text] = lines({ schedule: [groom], since: at("23:30") }, 20);
+    expect(Array.from(text ?? "")).toHaveLength(20);
+    expect(text).toMatch(/…$/);
   });
 });

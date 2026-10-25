@@ -25,6 +25,8 @@ import { ROLES } from "./hub-policy.mjs";
 import { formatSpend, readSpend } from "./hub-spend.mjs";
 import { readRoster } from "./presence.mjs";
 import { betweenTurns, parseReboot } from "./reboot.mjs";
+import { parseSchedule } from "./schedule.mjs";
+import { unreadOf } from "./unread.mjs";
 import { boardLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
 import { hubHealth, parseAlive, parseRestarts } from "./hub-health.mjs";
 import { parseStaff, roleOf } from "./staff.mjs";
@@ -210,6 +212,51 @@ function feed(limit) {
   return groupFeed(lines).slice(-limit);
 }
 
+/**
+ * The scheduled nudges (#547): the checked-in schedule, hubd's clock for it,
+ * and who has each unread, by the rule link uses (inbox past `cursor`).
+ *
+ * @param {import("./staff.mjs").Staff | null} staff
+ * @param {number} now
+ * @returns {import("./dashboard-view.mjs").NudgeFacts}
+ */
+function nudges(staff, now) {
+  /** @type {import("./dashboard-view.mjs").NudgeFacts["schedule"]} */
+  let schedule;
+  try {
+    schedule = parseSchedule(
+      fs.readFileSync(path.join(import.meta.dirname, "schedule.json"), "utf8"),
+    );
+  } catch (error) {
+    schedule = error instanceof Error ? error.message : String(error);
+  }
+  const clock = hubFile("nudges.json");
+  /** @type {Map<string, number>} */
+  const sent = new Map();
+  for (const [id, at] of Object.entries(obj(clock?.sent))) {
+    if (typeof at === "number") {
+      sent.set(id, at);
+    }
+  }
+  /** @type {Map<string, string[]>} */
+  const unread = new Map();
+  for (const employee of Object.keys(staff?.employees ?? {})) {
+    const lines = unreadOf(BUS, employee);
+    for (const { nudge } of lines) {
+      if (nudge !== null) {
+        unread.set(nudge, [...new Set([...(unread.get(nudge) ?? []), employee])]);
+      }
+    }
+  }
+  return {
+    schedule,
+    since: typeof clock?.since === "number" ? clock.since : null,
+    sent,
+    unread,
+    now,
+  };
+}
+
 /* -------------------------------------------------------------------------- */
 
 /** @typedef {"board" | "company" | "feed"} Section */
@@ -338,6 +385,7 @@ function linesOf(section, pane) {
           hub: hub(),
           reboot: reboot(live),
           claude: claude(),
+          nudges: nudges(staff, now),
         },
         pane,
       );

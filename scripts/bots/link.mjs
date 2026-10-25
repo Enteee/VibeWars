@@ -40,6 +40,7 @@ import { fileURLToPath } from "node:url";
 import { ROLES } from "./hub-policy.mjs";
 import { takeLock } from "./instance-lock.mjs";
 import { openJailDir, withJailDir } from "./jail-fs.mjs";
+import { unreadOf } from "./unread.mjs";
 import { readRoster } from "./presence.mjs";
 import {
   SUPPORT_BUSY,
@@ -52,7 +53,6 @@ import {
   formatMirror,
   formatQuestion,
   inboxesOf,
-  readInbox,
   skipNudge,
   isReadyOutboxEntry,
   mirrorTopic,
@@ -747,33 +747,6 @@ async function drainOutboxes(company, mirror) {
     }
   }
 }
-
-/**
- * The lines an employee has not read yet: its inbox from its cursor, read
- * without following links a jail may have planted. Unreadable is none.
- *
- * @param {string} bus
- * @param {string} employee
- * @returns {import("./protocol.mjs").InboxLine[]}
- */
-function unreadOf(bus, employee) {
-  try {
-    return withJailDir(busPaths(bus, employee).dir, "", {}, (dir) => {
-      let cursor = 0;
-      try {
-        cursor = Number.parseInt(dir.readSmall("cursor", 64).trim(), 10) || 0;
-      } catch {
-        // Never read: everything is unread.
-      }
-      return readInbox(dir.readSmall("inbox.jsonl", INBOX_READ_MAX_BYTES), cursor).lines;
-    });
-  } catch {
-    return [];
-  }
-}
-
-/** The most of an inbox read to tell whether a nudge is still unread. */
-const INBOX_READ_MAX_BYTES = 16 * 1024 * 1024;
 
 /**
  * The system outbox (#23): what host-side code says to everyone, such as a
