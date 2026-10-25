@@ -112,6 +112,7 @@ function toPlayerSnapshot(participant: Participant): PlayerSnapshot {
     dead: combatant.dead,
     castingSkillId: activeCast?.skillId,
     castRemaining: activeCast?.remainingSeconds ?? 0,
+    castTotal: activeCast?.totalSeconds ?? 0,
     statuses: combatant.statuses.active.map((status) => status.id),
   };
 }

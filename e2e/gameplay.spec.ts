@@ -22,7 +22,12 @@ import { expect, test, type Page, type Locator } from "@playwright/test";
  */
 async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
   return canvas.screenshot({
-    mask: [page.locator(".hud"), page.locator(".hud-scoreboard"), page.locator(".hud-result")],
+    mask: [
+      page.locator(".hud"),
+      page.locator(".hud-scoreboard"),
+      page.locator(".hud-result"),
+      page.locator(".hud-mute"),
+    ],
   });
 }
 
@@ -89,6 +94,16 @@ test("a quick match renders the arena and a populated HUD", async ({ page }) => 
   await expect(page.locator(".hud-skills .hud-skill")).toHaveCount(8);
   await expect(page.locator(".hud-target")).toContainText("no target");
   expect(await readEnergy(page)).toBeGreaterThan(0);
+});
+
+test("M mutes and unmutes the combat sounds", async ({ page }) => {
+  await startQuickMatch(page);
+  const mute = page.getByRole("button", { name: "Mute sounds" });
+  await expect(mute).toHaveAttribute("aria-pressed", "false");
+  await page.keyboard.press("m");
+  await expect(mute).toHaveAttribute("aria-pressed", "true");
+  await page.keyboard.press("m");
+  await expect(mute).toHaveAttribute("aria-pressed", "false");
 });
 
 test("holding a movement key moves the player on screen", async ({ page }) => {

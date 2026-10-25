@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { createRng } from "../rng.js";
+import { createRng, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { getSkill } from "./catalog.js";
 import { applyEffect, applyEffects, applySkillEffects, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, SkillContext } from "./types.js";
@@ -239,5 +240,52 @@ describe("applySkillEffects", () => {
         applyEffects(skill.effects, { caster, target, rng: createRng(1), rules }),
       ),
     );
+  });
+});
+
+describe("applySkillEffects, blinded", () => {
+  const rules = MINIMAL_GW_INSPIRED_PVP_V1.combat;
+  const swiftChop = getSkill("warrior.swift-chop");
+  const fireball = getSkill("elementalist.fireball");
+
+  /** A stream whose next float is `roll`. */
+  const rolling = (roll: number): SimulationRng =>
+    Object.assign(createRng(1), { nextFloat: () => roll });
+
+  function hit(skill: Skill | undefined, rng: SimulationRng, blind: boolean) {
+    const caster = makeCombatant({ id: "caster" });
+    if (blind) {
+      caster.statuses.apply("blind", 10, "foe");
+    }
+    const target = makeCombatant({ id: "t", team: 1 });
+    const events = skill ? applySkillEffects({ skill, caster, targets: [target], rng, rules }) : [];
+    return { events, target };
+  }
+
+  it("makes an attack skill miss on a roll under 90%, and nothing lands", () => {
+    const { events, target } = hit(swiftChop, rolling(0.5), true);
+    expect(events).toEqual([{ kind: "attack-missed", targetId: "t" }]);
+    expect(target.health).toBe(target.maxHealth);
+  });
+
+  it("lets an attack skill land on a roll over 90%", () => {
+    const { events } = hit(swiftChop, rolling(0.95), true);
+    expect(events.map((event) => event.kind)).toEqual(["damage"]);
+  });
+
+  it("leaves a blinded spell alone, without drawing", () => {
+    const rng = createRng(1);
+    const before = rng.getState();
+    const { events } = hit(fireball, rng, true);
+    expect(events.map((event) => event.kind)).toEqual(["damage"]);
+    expect(rng.getState()).toBe(before);
+  });
+
+  it("draws nothing for an attack by someone who is not blind", () => {
+    const rng = createRng(1);
+    const before = rng.getState();
+    const { events } = hit(swiftChop, rng, false);
+    expect(events.map((event) => event.kind)).toEqual(["damage"]);
+    expect(rng.getState()).toBe(before);
   });
 });

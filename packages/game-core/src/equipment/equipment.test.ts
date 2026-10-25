@@ -572,6 +572,12 @@ describe("the gear coverage record", () => {
     }
   });
 
+  it("does not claim an attacking insignia exists", () => {
+    // Nothing is ever mid-attack, so Brawler's would be a permanent zero.
+    expect(gearOmission("attack-state")).toBeDefined();
+    expect(ALL_INSIGNIAS.map((insignia) => insignia.id)).not.toContain("brawlers");
+  });
+
   it("does not claim a stance insignia exists", () => {
     // The specific thing the record was written to keep honest: the
     // reference's stance insignia is absent from the catalog, not

@@ -1,7 +1,7 @@
 import { getWeapon, type ActivationRejection } from "@vibewars/game-core";
 
 import type { MatchSnapshot, PlayerSnapshot, SkillSlot } from "../net/match-connection.js";
-import { skillBadgeHtml } from "./icons.js";
+import { skillBadgeHtml, soundIcon } from "./icons.js";
 
 /**
  * The player's heads-up display: health/energy, skill bar, and status
@@ -32,6 +32,8 @@ export interface HudElements {
   readonly targetPanel: HTMLElement;
   readonly scoreboard: HTMLElement;
   readonly result: HTMLElement;
+  /** Sound on or off (#112); `renderMute` keeps it showing which. */
+  readonly mute: HTMLButtonElement;
 }
 
 function element(tag: string, className: string, parent: HTMLElement): HTMLElement {
@@ -49,6 +51,11 @@ export function createHud(parent: HTMLElement): HudElements {
   const scoreboard = element("div", "hud-scoreboard", parent);
   const result = element("div", "hud-result", parent);
   result.style.display = "none";
+  const mute = document.createElement("button");
+  mute.type = "button";
+  mute.className = "hud-mute";
+  mute.appendChild(document.createElement("img")).alt = "";
+  parent.appendChild(mute);
 
   const targetPanel = element("div", "hud-target", root);
 
@@ -82,7 +89,38 @@ export function createHud(parent: HTMLElement): HudElements {
     targetPanel,
     scoreboard,
     result,
+    mute,
   };
+}
+
+/**
+ * Show whether the sound is on. The icon is the current state, not what a
+ * click does (art-direction §UI controls), and the label says both.
+ */
+export function muteButtonState(muted: boolean): {
+  readonly label: string;
+  readonly pressed: "true" | "false";
+  readonly title: string;
+  readonly icon: string;
+} {
+  return {
+    // A toggle keeps one name; whether it is on is what aria-pressed says.
+    label: "Mute sounds",
+    pressed: muted ? "true" : "false",
+    title: muted ? "Sound off. Press M to turn it on." : "Sound on. Press M to mute.",
+    icon: soundIcon(muted),
+  };
+}
+
+export function renderMute(hud: HudElements, muted: boolean): void {
+  const state = muteButtonState(muted);
+  const icon = hud.mute.querySelector("img");
+  if (icon !== null) {
+    icon.src = state.icon;
+  }
+  hud.mute.setAttribute("aria-label", state.label);
+  hud.mute.setAttribute("aria-pressed", state.pressed);
+  hud.mute.title = state.title;
 }
 
 /**

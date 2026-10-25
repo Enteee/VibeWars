@@ -53,10 +53,12 @@ export interface StatusDefinition {
   readonly attackMissChance: number;
   /** Multiplier on the bearer's maximum health (deep wound's signature). */
   readonly maxHealthMultiplier: number;
-  /** While true, the bearer cannot cast spells (dazed is the near-miss: it
-   *  makes casting interruptible, handled separately in interrupts). */
-  readonly preventsSpellCasting: boolean;
-  /** Multiplier on the bearer's cast time; >1 is a penalty. */
+  /**
+   * Multiplier on the bearer's cast time; >1 is a penalty. Dazed is the
+   * one that sets it: here it doubles cast time, where the reference
+   * makes casting easy to interrupt. Every cast in this game is already
+   * interruptible, so that rule would do nothing (ADR-0019).
+   */
   readonly castTimeMultiplier: number;
 }
 
@@ -75,7 +77,6 @@ function define(
     moveSpeedMultiplier: 1,
     attackMissChance: 0,
     maxHealthMultiplier: 1,
-    preventsSpellCasting: false,
     castTimeMultiplier: 1,
     ...overrides,
   };
@@ -99,7 +100,11 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
 
   "life-drain": define("life-drain", "Life Drain", "hex", { healthPerSecond: -2 }),
   regeneration: define("regeneration", "Regeneration", "enchantment", { healthPerSecond: 4 }),
-  "armor-boost": define("armor-boost", "Armor Boost", "enchantment", { armorModifier: 24 }),
+  // The slow is Armor of Earth's price: without it, +24 armor is free.
+  "armor-boost": define("armor-boost", "Armor Boost", "enchantment", {
+    armorModifier: 24,
+    moveSpeedMultiplier: 0.75,
+  }),
 };
 
 export interface ActiveStatus {
@@ -230,7 +235,6 @@ export interface StatusModifiers {
   readonly moveSpeedMultiplier: number;
   readonly attackMissChance: number;
   readonly maxHealthMultiplier: number;
-  readonly preventsSpellCasting: boolean;
   readonly castTimeMultiplier: number;
 }
 
@@ -248,7 +252,6 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
   let moveSpeedMultiplier = 1;
   let attackMissChance = 0;
   let maxHealthMultiplier = 1;
-  let preventsSpellCasting = false;
   let castTimeMultiplier = 1;
 
   for (const status of statuses) {
@@ -258,7 +261,6 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
     moveSpeedMultiplier *= def.moveSpeedMultiplier;
     attackMissChance = Math.max(attackMissChance, def.attackMissChance);
     maxHealthMultiplier *= def.maxHealthMultiplier;
-    preventsSpellCasting = preventsSpellCasting || def.preventsSpellCasting;
     castTimeMultiplier *= def.castTimeMultiplier;
   }
 
@@ -268,7 +270,6 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
     moveSpeedMultiplier,
     attackMissChance,
     maxHealthMultiplier,
-    preventsSpellCasting,
     castTimeMultiplier,
   };
 }
