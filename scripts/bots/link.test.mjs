@@ -537,6 +537,7 @@ describe("the company sidecar", () => {
         chat_id: CHAT,
         text: "Support is busy, try again in a minute.",
         entities: [],
+        link_preview_options: { is_disabled: true },
         message_thread_id: 13,
         reply_parameters: { message_id: 32 },
       },
