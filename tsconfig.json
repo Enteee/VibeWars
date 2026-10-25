@@ -13,5 +13,13 @@
     "allowJs": true,
     "checkJs": false
   },
-  "include": ["*.config.ts", "*.config.mjs", "*.config.js", "e2e/**/*.ts", "scripts/**/*.mjs"]
+  "include": [
+    "*.config.ts",
+    "*.config.mjs",
+    "*.config.js",
+    "e2e/**/*.ts",
+    "scripts/**/*.mjs",
+    "apps/web/scripts/**/*.mjs",
+    "apps/web/scripts/**/*.d.ts"
+  ]
 }

@@ -32,6 +32,9 @@ export default defineConfig([
     // everybody, including CI.
     ".bots/**",
     "packages/game-data/generated/**",
+    // Strudel source, not project JavaScript: it is evaluated by the music
+    // host, where quotes carry meaning and `layer`/`INTENSITY` are globals.
+    "apps/web/src/music/**/*.strudel.js",
   ]),
 
   eslint.configs.recommended,
@@ -81,6 +84,7 @@ export default defineConfig([
       // harmless; the bot bridge needs `fetch` and `Buffer`, which have no
       // import form.
       "scripts/**/*.mjs",
+      "apps/web/scripts/**/*.mjs",
     ],
     languageOptions: { globals: globals.node },
   },
