@@ -5,8 +5,8 @@ import { attachMatchSounds } from "./audio/match-sounds.js";
 import { saveMuted } from "./audio/mute-preference.js";
 import { soundPlayer } from "./audio/sound-player.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
-import { connectToMatch } from "./net/match-client.js";
-import type { MatchConnection, MatchSnapshot, SkillSlot } from "./net/match-connection.js";
+import { connectToMatch, type MatchTarget } from "./net/match-client.js";
+import type { MatchConnection, MatchSnapshot } from "./net/match-connection.js";
 import { actorAtPoint, type ArenaSnapshot, type RenderableWall } from "./render/arena-snapshot.js";
 import { createArenaViewport } from "./render/arena-viewport.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
@@ -34,15 +34,15 @@ export interface MatchViewCallbacks {
 }
 
 export interface MatchViewOptions {
-  /** The arena to play; `undefined` means the server's default. */
-  readonly mapId?: string | undefined;
+  /** Which match on the game server: Quick Match unless a lobby says otherwise. */
+  readonly target?: MatchTarget | undefined;
   /**
    * The build to request. The server validates it and may refuse it, so
    * this is what the player *asked* to play, never what they got.
    */
   readonly build?: PlayerBuild | undefined;
   /**
-   * Where the match comes from. Defaults to the game server, with `mapId`
+   * Where the match comes from. Defaults to the game server, with `target`
    * and `build`; the Training Ground passes a local simulation instead.
    */
   readonly connect?: (() => Promise<MatchConnection>) | undefined;
@@ -62,10 +62,8 @@ export function toRenderableWall(wall: WallDescriptor): RenderableWall {
 export function toArenaSnapshot(
   match: MatchSnapshot,
   walls: readonly RenderableWall[],
-  skillBar: readonly SkillSlot[],
 ): ArenaSnapshot {
   const self = match.players.find((player) => player.sessionId === match.selfSessionId);
-  const activationById = new Map(skillBar.map((slot) => [slot.id, slot.activationSeconds]));
 
   return {
     walls,
@@ -73,7 +71,6 @@ export function toArenaSnapshot(
     // clicked — a click is only a request (brief §32).
     targetId: self?.targetSessionId,
     actors: match.players.map((player) => {
-      const activation = activationById.get(player.castingSkillId ?? "") ?? 0;
       return {
         id: player.sessionId,
         position: { x: player.x, y: player.y },
@@ -88,8 +85,10 @@ export function toArenaSnapshot(
         maxHealth: player.maxHealth,
         dead: player.dead,
         castProgress:
-          player.castingSkillId !== undefined && activation > 0
-            ? Math.max(0, Math.min(1, 1 - player.castRemaining / activation))
+          // The server's total, not the skill's activation time: dazed
+          // doubles a cast, and the bar must fill over the real one.
+          player.castingSkillId !== undefined && player.castTotal > 0
+            ? Math.max(0, Math.min(1, 1 - player.castRemaining / player.castTotal))
             : undefined,
         statuses: player.statuses,
       };
@@ -116,7 +115,9 @@ export async function startMatchView(
   const viewport = await createArenaViewport(parent, { mode: "resize" });
   const { scene } = viewport;
 
-  const connect = options.connect ?? (() => connectToMatch(endpoint, options.mapId, options.build));
+  const connect =
+    options.connect ??
+    (() => connectToMatch(endpoint, options.target ?? { kind: "quick" }, options.build));
   const connection = await connect();
   const walls = connection.map.walls.map(toRenderableWall);
 
@@ -166,7 +167,7 @@ export async function startMatchView(
   window.addEventListener("keydown", handleKeyDown);
 
   let latestMatch = connection.getSnapshot();
-  let latestArena = toArenaSnapshot(latestMatch, walls, connection.skillBar);
+  let latestArena = toArenaSnapshot(latestMatch, walls);
 
   connection.onConnectionChange((state) => {
     matchSounds.connectionChanged(state);
@@ -184,7 +185,7 @@ export async function startMatchView(
   const offFrame = viewport.onFrame(() => {
     latestMatch = connection.getSnapshot();
     matchSounds.snapshot(latestMatch);
-    latestArena = toArenaSnapshot(latestMatch, walls, connection.skillBar);
+    latestArena = toArenaSnapshot(latestMatch, walls);
     scene.setSnapshot(latestArena);
 
     const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);

@@ -44,6 +44,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
       return "status";
     case "interrupted":
     case "interrupt-missed":
+    case "attack-missed":
       return "control";
     case "death":
       return "death";
@@ -89,6 +90,8 @@ export function describeCombatEvent(
       return `${by} interrupts ${target}'s ${skillName(event.skillId) ?? event.skillId}`;
     case "interrupt-missed":
       return `${by} finds nothing to interrupt on ${target}`;
+    case "attack-missed":
+      return `${by} misses ${target}`;
   }
 }
 
@@ -223,6 +226,10 @@ export function floatingCueFor(kind: string, amount: number | undefined): Floati
       return { text: `+${formatAmount(amount ?? 0)}`, tone: "heal" };
     case "interrupted":
       return { text: "interrupted!", tone: "neutral" };
+    case "attack-missed":
+      // A blinded swing paid for and wasted: over the target, so the
+      // attacker sees where it went (#6).
+      return { text: "miss", tone: "neutral" };
     case "death":
       return { text: "defeated", tone: "damage" };
     default:

@@ -42,11 +42,23 @@ the code and `scripts/assets/icons.mjs` copy them.
 | `target`      | `#ffd866` | Your current target (ring, nothing else) |
 | `friend`      | `#59c2ff` | You and your team                        |
 | `foe`         | `#ff7b72` | The other team                           |
-| `heal`        | `#7ee787` | Health gained, health bar                |
+| `heal`        | `#7ee787` | Health gained, arena health bar          |
 | `damage`      | `#ff7b72` | Health lost                              |
 | `condition`   | `#ffa657` | Condition markers                        |
 | `hex`         | `#d2a8ff` | Hex markers                              |
 | `enchantment` | `#56d4dd` | Enchantment markers                      |
+
+### HUD bars
+
+The health and energy bars in the match HUD and the Training Ground carry
+their numbers in `ink` text, centred over a fill that may be full or nearly
+empty. The fill is therefore a dark shade of its signal colour, so the text
+reads on the fill and on the empty track alike.
+
+| Token        | Hex       | Use             | `ink` on it |
+| ------------ | --------- | --------------- | ----------- |
+| `hud-health` | `#3a6a3e` | Health bar fill | 4.7:1       |
+| `hud-energy` | `#2f6787` | Energy bar fill | 4.6:1       |
 
 ### Professions (menus only)
 
@@ -82,6 +94,8 @@ so the silhouette identifies the profession and the colour only supports it.
 | Hex         | Diamond plate, glyph inside                           |
 | Enchantment | Rounded-square plate, glyph inside                    |
 | Area flash  | Caster's team colour ring at the area's true radius   |
+| Swing flash | Attacker's team colour arc between it and its target  |
+| Projectile  | Weapon silhouette, tinted the shooter's team colour   |
 
 The status plates differ in outline as well as colour. Hex purple and
 enchantment teal are close for a deuteranope (simulated ΔE ≈ 18); diamond
@@ -105,6 +119,38 @@ Where an area skill lands (#5), the scene flashes the area it hit:
 It cannot be confused with the target ring. The target ring is yellow and
 hugs one actor (5 px outside a radius of 14). The flash is team-coloured,
 at least 40 units in radius, and gone in under half a second.
+
+### Swing flash
+
+When a weapon attack lands or misses (#161), the scene flashes the swing:
+
+- **A 2 px arc in the attacker's team colour**, 90° wide, centred on the
+  direction from the attacker to its target, at the attacker's radius + 6.
+  Drawn in code, not a sprite. Your own swing gets a 1 px `ink` line along
+  its outer edge, as your circle gets its rim.
+- **It fades from full to zero alpha over 120 ms**, so a dagger's rapid hits
+  read as separate flashes, never as a standing ring.
+- **It hugs the attacker, never the target.** The target ring hugs the
+  target, is yellow, and does not fade, so the two cannot be confused.
+- **Off under reduced motion.** The damage number still says what happened.
+
+### Projectiles
+
+Ranged weapon shots in flight (#161). Each is a sprite on a 32×12 grid,
+pointing along +x, centred on the shot's position. The scene rotates it to
+the heading and tints it to the shooter's team colour (`friend` or `foe`).
+The sprites are white under a `bg` outline, so the tint gives the exact team
+colour and the outline keeps them off the floor.
+
+| Sprite  | Weapons     | Silhouette                                |
+| ------- | ----------- | ----------------------------------------- |
+| `arrow` | Bows        | Thin shaft, triangular head, chevron tail |
+| `spear` | Spear       | Thicker shaft, long leaf blade, no tail   |
+| `bolt`  | Wand, staff | Round orb with a tapering comet tail      |
+
+Drawn at 32×12 px, over the actors and under the HUD: a shot is
+gameplay information, and the player has to see where it will land in time
+to step aside. Projectiles stay on under reduced motion.
 
 ### Skill type badges
 
@@ -157,6 +203,10 @@ below ~20 is hard to tell apart, below ~10 is the same colour.
   glyph the status.
 - **Skill slots carry the type badge, and the editor the profession icon**
   (#78).
+- **HUD bar numbers used to be `ink` on `heal` and `friend`: 1.1:1 and
+  1.5:1**, which is unreadable. Dark text would vanish over the empty track
+  once health drops, so the fills are dark shades instead, at least 4.5:1
+  under `ink` (WCAG AA).
 
 ## Assets
 
@@ -169,11 +219,13 @@ generator. Never hand-edit an output file; change the script and re-run.
 | Skill type | `apps/web/public/icons/skill-type/` |
 | Status     | `apps/web/public/icons/status/`     |
 | UI         | `apps/web/public/icons/ui/`         |
+| Projectile | `apps/web/public/icons/projectile/` |
 
 Each file is a flat SVG of 150–450 bytes with colours baked in, because Phaser
-rasterises SVG textures without CSS. Load it in Phaser with
-`this.load.svg(key, url, { width, height })` at the size you draw it, and in
-HTML with a plain `<img>`.
+rasterises SVG textures without CSS. Projectiles are the one exception: white,
+for the scene to tint. Load it in Phaser with
+`this.load.svg(key, url, { width, height })` at the size you draw it (24×24
+for icons, 32×12 for projectiles), and in HTML with a plain `<img>`.
 
 Adding a status, profession, skill type or UI control: add one entry to the
 matching table in the generator, re-run it, and add a row to this page.
@@ -196,6 +248,8 @@ concerns you, never the whole arena (#104).
 | `interrupt-missed` | your interrupt hit nothing          | 0.10 s | −14 dBFS | Muted low click: "wasted"            |
 | `death`            | anyone dies                         | 0.60 s | −6 dBFS  | Long low fall with a breath of noise |
 | `refused`          | the server refuses your cast        | 0.16 s | −12 dBFS | Tiny falling two-note blip           |
+| `weapon-swing`     | your weapon attack misses           | 0.16 s | −14 dBFS | Dry, pitchless airy whoosh           |
+| `bow-release`      | you fire a ranged weapon            | 0.18 s | −13 dBFS | Soft low string pluck, a tiny snap   |
 
 Rules:
 

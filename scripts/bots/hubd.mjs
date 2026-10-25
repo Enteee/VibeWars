@@ -14,13 +14,36 @@
  * See docs/adr/0015-agent-company.md.
  */
 import { spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { GIT_ENV, GIT_HARDENING } from "./git-hardening.mjs";
-import { isBoardRead, limitedMessage, parseRateLimit, usesGraphql } from "./hub-budget.mjs";
+import {
+  HINT_DELAY_MS,
+  ISSUE_ITEMS_QUERY,
+  ITEM_QUERY,
+  answerBoard,
+  applyFacts,
+  listing,
+  needsSweep,
+  parseBoardRequest,
+  parseIssueAnswer,
+  parseItemAnswer,
+  planHint,
+  planMutation,
+  readBoardState,
+  sweep,
+} from "./hub-board.mjs";
+import {
+  isBoardRead,
+  limitedMessage,
+  parseBoardIds,
+  parseRateLimit,
+  usesGraphql,
+} from "./hub-budget.mjs";
 import { hasFilter } from "./hub-filter.mjs";
 import {
   approvalsSatisfied,
@@ -88,7 +111,7 @@ const HUB = path.join(ROOT, "hub");
 const AUDIT = path.join(HUB, "audit.jsonl");
 const APPROVALS = path.join(HUB, "approvals.jsonl");
 const COMPANY = path.join(ROOT, "company.json");
-/** The board as hubd last read it, for the dashboard. Never read by agents. */
+/** hubd's copy of the board (hub-board.mjs), for the dashboard and the next start. */
 const BOARD_SNAPSHOT = path.join(HUB, "board.json");
 /** GraphQL budget as of hubd's last check, for the dashboard. */
 const RATE_LIMIT = path.join(HUB, "ratelimit.json");
@@ -118,19 +141,25 @@ const REPO_SCOPED = new Set(["issue", "pr", "label", "run", "workflow", "release
  * @returns {{
  *   repo: string, owner: string, project: number, projectId: string, expectedChecks: string[],
  *   columns: string[], acting: Record<string, string[] | undefined>,
+ *   board: import("./hub-board.mjs").BoardIds | null,
  * }}
  */
 function company() {
+  const text = fs.readFileSync(COMPANY, "utf8");
   /** @type {unknown} */
-  const raw = JSON.parse(fs.readFileSync(COMPANY, "utf8"));
+  const raw = JSON.parse(text);
   const cfg = /** @type {Record<string, unknown>} */ (
     typeof raw === "object" && raw !== null ? raw : {}
   );
   const repo = typeof cfg.repo === "string" ? cfg.repo : "";
+  const project = typeof cfg.project === "number" ? cfg.project : 0;
+  // The Status field's ids, which `board move` sends and hubd reads back.
+  const ids = parseBoardIds(text);
   return {
     repo,
     owner: repo.split("/")[0] ?? "",
-    project: typeof cfg.project === "number" ? cfg.project : 0,
+    project,
+    board: ids === null ? null : { project, ...ids },
     projectId: typeof cfg.projectId === "string" ? cfg.projectId : "",
     expectedChecks: Array.isArray(cfg.expectedChecks) ? cfg.expectedChecks.map(String) : [],
     acting: /** @type {Record<string, string[] | undefined>} */ (obj(cfg.acting)),
@@ -744,13 +773,27 @@ async function syncSkills(cfg) {
 
 /**
  * The board changes rarely and is read constantly: by every visibility check,
- * by every agent's `board ls`, and by the dashboard. One snapshot serves all
- * three, so the whole company costs at most one board query a minute. Any
- * board mutation through hubd drops it, so a move shows up on the next read.
+ * by every agent's `board ls`, and by the dashboard. One copy serves all
+ * three. hubd patches it with what its own mutations did, re-reads single
+ * items where it can only guess, and sweeps the whole board once
+ * `BOARD_TTL_MS` has passed (hub-board.mjs). The copy survives a restart in
+ * `board.json`.
+ *
+ * @type {import("./hub-board.mjs").BoardState | null}
  */
-const BOARD_TTL_MS = 60_000;
-/** @type {{ at: number, stdout: string, numbers: Set<number> } | null} */
-let boardCache = null;
+let board = null;
+/**
+ * The repository's numbers on the board, for visibility checks.
+ *
+ * @type {Set<number>}
+ */
+let boardSet = new Set();
+/**
+ * Issues to re-read once GitHub's workflows have had their turn: number → due.
+ *
+ * @type {Map<number, number>}
+ */
+const hints = new Map();
 
 /**
  * Write a file whole or not at all, so the dashboard never reads half of one.
@@ -765,36 +808,73 @@ function writeAtomic(file, contents) {
 }
 
 /**
- * The project's item list as JSON, fresh within `BOARD_TTL_MS`, or `null`
- * when GitHub cannot be asked.
+ * Take `next` as the board, and write it down for the dashboard and the
+ * next start.
  *
+ * @param {import("./hub-board.mjs").BoardState} next
  * @param {ReturnType<typeof company>} cfg
- * @returns {Promise<string | null>}
  */
-async function boardSnapshot(cfg) {
-  if (boardCache === null || Date.now() - boardCache.at > BOARD_TTL_MS) {
-    const listing = await boardListing(cfg);
-    if (listing === null) {
-      // Board membership changes rarely. A snapshot a little out of date
-      // serves visibility checks better than refusing every read while
-      // GitHub is unreachable or the GraphQL budget is gone.
-      return boardCache?.stdout ?? null;
-    }
-    const at = Date.now();
-    const stdout = `${JSON.stringify(listing)}\n`;
-    boardCache = { at, stdout, numbers: boardNumbers(listing, cfg.repo) };
-    writeAtomic(BOARD_SNAPSHOT, JSON.stringify({ at, board: listing }));
+function keepBoard(next, cfg) {
+  if (next === board) {
+    return;
   }
-  return boardCache.stdout;
+  board = next;
+  boardSet = boardNumbers(listing(next), cfg.repo);
+  writeAtomic(BOARD_SNAPSHOT, JSON.stringify(next));
 }
 
 /**
- * The board as `gh project item-list --format json` lists it, cut down to
- * what is read, from BOARD_QUERY a page at a time (#97). Its cost comes
- * back with the answer, so it is written down exactly.
+ * The board as the last hubd left it. A file in any other shape is deleted,
+ * and the board read afresh on first use (ADR-0016).
  *
  * @param {ReturnType<typeof company>} cfg
- * @returns {Promise<{ items: Record<string, unknown>[], totalCount: number } | null>}
+ */
+function loadBoard(cfg) {
+  if (!fs.existsSync(BOARD_SNAPSHOT)) {
+    return;
+  }
+  /** @type {unknown} */
+  let raw = null;
+  try {
+    raw = JSON.parse(fs.readFileSync(BOARD_SNAPSHOT, "utf8"));
+  } catch {
+    // Not JSON: discarded below, like any other shape.
+  }
+  const state = readBoardState(raw);
+  if (state === null) {
+    fs.rmSync(BOARD_SNAPSHOT, { force: true });
+    console.error("hubd: board.json is from another build; discarded, the board is read afresh");
+    return;
+  }
+  board = state;
+  boardSet = boardNumbers(listing(state), cfg.repo);
+}
+
+/**
+ * The board, swept first if it is due and GitHub can be asked, or `null`
+ * when there is none at all. Out of date beats nothing: while GitHub is
+ * unreachable or the budget is gone, the last copy is served.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<import("./hub-board.mjs").BoardState | null>}
+ */
+async function freshBoard(cfg) {
+  if (needsSweep(board, Date.now()) && Date.now() >= limitedUntil) {
+    const items = await boardListing(cfg);
+    if (items !== null) {
+      const epoch = `${Date.now().toString(36)}-${randomBytes(3).toString("hex")}`;
+      keepBoard(sweep(board, items, Date.now(), epoch, cfg.repo), cfg);
+    }
+  }
+  return board;
+}
+
+/**
+ * Every item on the board, from BOARD_QUERY a page at a time (#97). Its
+ * cost comes back with the answer, so it is written down exactly.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<Record<string, unknown>[] | null>}
  */
 async function boardListing(cfg) {
   /** @type {Record<string, unknown>[]} */
@@ -817,15 +897,165 @@ async function boardListing(cfg) {
     if (page === null) {
       return null;
     }
-    if (page.budget !== null && lastBudget !== null) {
-      lastBudget = { ...lastBudget, ...page.budget, at: Date.now() };
-    }
+    noteBudget(page.budget);
     items.push(...page.items);
     if (page.next === null) {
-      return { items, totalCount: page.totalCount };
+      return items;
     }
     cursor = page.next;
   }
+}
+
+/**
+ * A budget reading that came back with one of hubd's own queries.
+ *
+ * @param {import("./hub-spend.mjs").Budget | null} budget
+ */
+function noteBudget(budget) {
+  if (budget !== null && lastBudget !== null) {
+    lastBudget = { ...lastBudget, ...budget, at: Date.now() };
+  }
+}
+
+/**
+ * Re-read one item, or one issue's items, and apply what came back: a
+ * point, where a sweep is a point per hundred cards. If GitHub cannot be
+ * asked, the next read sweeps instead.
+ *
+ * @param {{ kind: "item", id: string } | { kind: "issue", number: number }} target
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<void>}
+ */
+async function reread(target, cfg) {
+  if (board === null) {
+    // The next read sweeps anyway.
+    return;
+  }
+  const [owner = "", name = ""] = cfg.repo.split("/");
+  const started = Date.now();
+  const result =
+    Date.now() < limitedUntil
+      ? null
+      : target.kind === "item"
+        ? await ghRaw(["api", "graphql", "-f", `query=${ITEM_QUERY}`, "-f", `item=${target.id}`])
+        : await ghRaw([
+            "api",
+            "graphql",
+            "-f",
+            `query=${ISSUE_ITEMS_QUERY}`,
+            "-f",
+            `owner=${owner}`,
+            "-f",
+            `name=${name}`,
+            "-F",
+            `number=${String(target.number)}`,
+          ]);
+  const answer =
+    result?.code !== 0
+      ? null
+      : target.kind === "item"
+        ? parseItemAnswer(result.stdout, target.id, cfg.projectId)
+        : parseIssueAnswer(result.stdout, target.number, cfg.projectId, cfg.repo);
+  if (result !== null) {
+    noteSpend(servingRole, "board item", Date.now() - started, answer?.cost ?? null);
+  }
+  if (answer === null) {
+    keepBoard({ ...board, stale: true }, cfg);
+    return;
+  }
+  noteBudget(answer.budget);
+  keepBoard(applyFacts(board, answer.facts, Date.now(), cfg.repo), cfg);
+}
+
+/**
+ * Bring the copy up to date with a `gh project ...` command hubd just ran.
+ *
+ * @param {string[]} argv
+ * @param {{ code: number, stdout: string }} result
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<void>}
+ */
+async function afterProjectCommand(argv, result, cfg) {
+  if (board === null) {
+    return;
+  }
+  if (cfg.board === null) {
+    // Without the Status field's ids no move can be read; sweep instead.
+    keepBoard({ ...board, stale: true }, cfg);
+    return;
+  }
+  const plan = planMutation(argv, result, cfg.board, board, cfg.repo);
+  if (plan.kind === "apply") {
+    keepBoard(applyFacts(board, plan.facts, Date.now(), cfg.repo), cfg);
+  } else if (plan.kind === "item" || plan.kind === "issue") {
+    await reread(plan, cfg);
+  } else if (plan.kind === "sweep") {
+    keepBoard({ ...board, stale: true }, cfg);
+  }
+}
+
+/**
+ * Remember to re-read an issue hubd just closed, merged or renamed, once
+ * GitHub's workflows have moved its card. Only one that is on the board:
+ * a merged pull request that is not would cost a point per merge (~16 an
+ * hour) to learn about the issues it closes, which the agents move to Done
+ * themselves and the next sweep catches anyway.
+ *
+ * @param {string[]} argv
+ * @param {number} code
+ * @param {ReturnType<typeof company>} cfg
+ */
+function noteHint(argv, code, cfg) {
+  const number = planHint(argv, code, cfg.repo);
+  if (number !== null && boardSet.has(number)) {
+    hints.set(number, Date.now() + HINT_DELAY_MS);
+  }
+}
+
+/**
+ * Re-read every issue whose hint is due.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<void>}
+ */
+async function flushHints(cfg) {
+  for (const [number, due] of hints) {
+    if (Date.now() >= due) {
+      hints.delete(number);
+      await reread({ kind: "issue", number }, cfg);
+    }
+  }
+}
+
+/**
+ * Answer `board ls`, `board show` or `board changes` from the copy.
+ *
+ * @param {string[]} argv
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
+ */
+async function serveBoard(argv, cfg) {
+  const request = parseBoardRequest(argv);
+  if ("error" in request) {
+    return { code: 2, stdout: "", stderr: `board: ${request.error}\n` };
+  }
+  const asked = Date.now();
+  let state = await freshBoard(cfg);
+  if (state !== null && request.verb === "show" && request.fresh && state.sweptAt < asked) {
+    // The operator moved it by hand, say: one point to see it now.
+    await reread({ kind: "issue", number: request.number }, cfg);
+    state = board;
+  }
+  if (state === null) {
+    return Date.now() < limitedUntil
+      ? limitedResponse()
+      : { code: 1, stdout: "", stderr: "board: could not read the board from GitHub\n" };
+  }
+  return {
+    code: 0,
+    stdout: `${JSON.stringify(answerBoard(state, request, cfg.repo))}\n`,
+    stderr: "",
+  };
 }
 
 /** Who counts as a member changes more rarely still. */
@@ -868,10 +1098,10 @@ async function members(cfg) {
  * @returns {Promise<import("./hub-visibility.mjs").Viewer | null>}
  */
 async function viewer(cfg) {
-  if ((await boardSnapshot(cfg)) === null || boardCache === null) {
+  if ((await freshBoard(cfg)) === null) {
     return null;
   }
-  const { numbers } = boardCache;
+  const numbers = boardSet;
   const logins = await members(cfg);
   if (logins === null) {
     return null;
@@ -1082,7 +1312,9 @@ async function handle(request) {
     audit({ role, kind, argv, decision: "refused", reason: verdict.reason, acting });
     return { allow: false, reason: verdict.reason, code: 77 };
   }
-  const spendsGraphql = usesGraphql(kind, argv) && !servedByRest(kind, argv);
+  // A board read the copy can answer spends nothing, budget or not.
+  const fromCopy = board !== null && kind === "gh" && isBoardRead(argv, company().project);
+  const spendsGraphql = usesGraphql(kind, argv) && !servedByRest(kind, argv) && !fromCopy;
   if (spendsGraphql && Date.now() < limitedUntil) {
     audit({ role, kind, argv, decision: "rate-limited" });
     return limitedResponse();
@@ -1278,6 +1510,12 @@ async function serve(request, verdict, acting) {
     return reboot(role, argv, cfg);
   }
 
+  if (kind === "board") {
+    const answered = await serveBoard(argv, cfg);
+    audit({ role, kind, argv, decision: "allowed", code: answered.code, cached: true });
+    return { allow: true, ...answered };
+  }
+
   // Before the guards, whose refusals would otherwise describe a pull request
   // the company is not supposed to know about.
   const visibility = await checkVisibility(kind, argv, cfg);
@@ -1311,6 +1549,7 @@ async function serve(request, verdict, acting) {
       guarded.sha,
     ];
     const result = await gh(pinRepo(pinned, cfg));
+    noteHint(pinned, result.code, cfg);
     audit({ role, kind, argv, decision: "allowed", code: result.code, sha: guarded.sha });
     return { allow: true, ...result };
   }
@@ -1424,22 +1663,20 @@ async function serve(request, verdict, acting) {
   }
 
   if (isBoardRead(argv, cfg.project)) {
-    const snapshot = await boardSnapshot(cfg);
-    if (snapshot !== null) {
+    const state = await freshBoard(cfg);
+    if (state !== null) {
       audit({ role, kind, argv, decision: "allowed", code: 0, cached: true });
-      return { allow: true, code: 0, stdout: snapshot, stderr: "" };
+      return { allow: true, code: 0, stdout: `${JSON.stringify(listing(state))}\n`, stderr: "" };
     }
   }
 
   const result = await gh(pinRepo(argv, cfg));
-  if (
-    argv[0] === "project" &&
-    !["item-list", "field-list", "list", "view"].includes(argv[1] ?? "")
-  ) {
-    // An item just added, moved or archived must show up on the next list,
-    // not when the snapshot happens to expire.
-    boardCache = null;
+  // An item just added, moved or archived must show up on the next read,
+  // not when the copy happens to be swept.
+  if (argv[0] === "project") {
+    await afterProjectCommand(argv, result, cfg);
   }
+  noteHint(argv, result.code, cfg);
   audit({ role, kind, argv, decision: "allowed", code: result.code });
   return { allow: true, ...result };
 }
@@ -1559,6 +1796,8 @@ async function main() {
   );
 
   fs.mkdirSync(HUB, { recursive: true });
+  // A restart costs no sweep the board's age does not call for.
+  loadBoard(cfg);
   heartbeat(false);
   let lastBeat = Date.now();
   // The dashboard's budget line. Free to ask (see `budgetExhausted`), and
@@ -1580,6 +1819,13 @@ async function main() {
         await drain(role);
       } catch (error) {
         console.error(`hubd: ${role}: ${error instanceof Error ? error.message : "failed"}`);
+      }
+    }
+    if (hints.size > 0) {
+      try {
+        await flushHints(company());
+      } catch (error) {
+        console.error(`hubd: board: ${error instanceof Error ? error.message : "failed"}`);
       }
     }
     // Cheap enough at this interval, and far below the staleness window hub

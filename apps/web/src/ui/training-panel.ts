@@ -38,6 +38,7 @@ import {
   type MeterTotals,
 } from "./combat-readouts.js";
 import { describeRefusal, MESSAGE_SECONDS } from "./hud.js";
+import { skillBadgeHtml } from "./icons.js";
 import {
   buildSignature,
   loadScenarioChoice,
@@ -286,10 +287,9 @@ export function createTrainingPanel(): TrainingPanel {
       button.addEventListener("click", () => {
         cast(index);
       });
-      button.append(
-        h("span", "training-skill-key", String(index + 1)),
-        h("span", "training-skill-name", slot.name),
-      );
+      button.append(h("span", "training-skill-key", String(index + 1)));
+      button.insertAdjacentHTML("beforeend", skillBadgeHtml(slot.id));
+      button.append(h("span", "training-skill-name", slot.name));
       return button;
     });
     skills.replaceChildren(...skillButtons);
@@ -544,7 +544,7 @@ export function createTrainingPanel(): TrainingPanel {
       connection.advance(deltaSeconds);
       latestMatch = connection.getSnapshot();
       session.sounds.snapshot(latestMatch);
-      latestArena = toArenaSnapshot(latestMatch, session.walls, connection.skillBar);
+      latestArena = toArenaSnapshot(latestMatch, session.walls);
       created.scene.setSnapshot(latestArena);
       paintVitals(latestMatch);
       sinceMeterPaint += deltaSeconds;

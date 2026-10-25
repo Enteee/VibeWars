@@ -111,6 +111,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     dead: false,
     castingSkillId: undefined,
     castRemaining: 0,
+    castTotal: 0,
     statuses: [],
     ...extra,
   };

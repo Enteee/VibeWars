@@ -523,6 +523,22 @@ describe("the pipeline", () => {
     expect(gh("developer-1", ["run", "rerun", "123"])).toMatchObject({ allow: false });
     expect(gh("qa-tester", ["workflow", "disable", "ci.yml"])).toMatchObject({ allow: false });
   });
+
+  it("lets the CI/CD engineer read a failing run and file the bug, and nothing more of issues", () => {
+    // #164: watching main is its job, so the log and the bug report are too.
+    expect(gh("cicd-engineer", ["run", "view", "123", "--log-failed"])).toMatchObject({
+      allow: true,
+    });
+    expect(
+      gh("cicd-engineer", ["issue", "create", "--title", "Bug: main CI red", "--body", "x"]),
+    ).toMatchObject({ allow: true });
+    expect(gh("cicd-engineer", ["issue", "comment", "170", "--body", "again"])).toMatchObject({
+      allow: true,
+    });
+    expect(gh("cicd-engineer", ["issue", "edit", "170"])).toMatchObject({ allow: false });
+    expect(gh("cicd-engineer", ["issue", "close", "170"])).toMatchObject({ allow: false });
+    expect(gh("developer-1", ["issue", "create", "--title", "x"])).toMatchObject({ allow: false });
+  });
 });
 
 describe("touchesGate", () => {
@@ -695,5 +711,20 @@ describe("closing and reopening", () => {
 
   it("names nobody when nobody may", () => {
     expect(refusal("manager", ["pr", "status"])).toContain("no role may");
+  });
+});
+
+describe("board reads", () => {
+  it("lets every role read hubd's copy of the board, and nothing else through it", () => {
+    for (const role of ROLES) {
+      for (const argv of [["ls"], ["ls", "In Review"], ["show", "14"], ["changes"]]) {
+        expect(authorize(role, { kind: "board", argv }).allow, `${role} ${argv.join(" ")}`).toBe(
+          true,
+        );
+      }
+    }
+    expect(authorize("developer-1", { kind: "board", argv: ["move", "14", "Done"] }).allow).toBe(
+      false,
+    );
   });
 });

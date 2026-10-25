@@ -125,11 +125,11 @@ body {
 }
 
 .hud-bar-health .hud-bar-fill {
-  background: #7ee787;
+  background: #3a6a3e;
 }
 
 .hud-bar-energy .hud-bar-fill {
-  background: #59c2ff;
+  background: #2f6787;
 }
 
 .hud-bar-label {
@@ -734,11 +734,11 @@ body {
 }
 
 .training-bar-health .training-bar-fill {
-  background: #7ee787;
+  background: #3a6a3e;
 }
 
 .training-bar-energy .training-bar-fill {
-  background: #59c2ff;
+  background: #2f6787;
 }
 
 .training-bar-label {
@@ -785,6 +785,13 @@ body {
 .training-skill-key {
   color: var(--accent);
   font-weight: 700;
+}
+
+/* Same 14 px badge as the HUD, but in line: this button is one short row,
+   so a corner badge would sit on the name. */
+.training-skill .skill-type-badge {
+  position: static;
+  align-self: center;
 }
 
 .training-meter {

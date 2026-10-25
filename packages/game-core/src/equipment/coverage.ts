@@ -20,6 +20,7 @@
 /** A piece of gear behaviour this project does not simulate. */
 export type MissingGearMechanic =
   | "stances"
+  | "attack-state"
   | "attribute-headgear"
   | "profession-insignias"
   | "weapon-upgrades"
@@ -54,6 +55,16 @@ export const GEAR_OMISSIONS: readonly GearOmission[] = Object.freeze([
     affects: [],
   },
   {
+    mechanic: "attack-state",
+    description: "knowing that a combatant is mid-attack, for armor and skills to key off",
+    kind: "gap",
+    reason:
+      "There are no weapon auto-attacks and every attack skill is instant, so 'while " +
+      "attacking' is never true. The reference's Brawler's Insignia is therefore not in the " +
+      "catalog rather than shipped as a stat line that is permanently zero (ADR-0019).",
+    affects: [],
+  },
+  {
     mechanic: "attribute-headgear",
     description: "a headpiece granting +1 to a chosen attribute, stacking with its rune",
     kind: "gap",
@@ -68,7 +79,7 @@ export const GEAR_OMISSIONS: readonly GearOmission[] = Object.freeze([
     description: "insignias available to one profession only, each with its own bonus",
     kind: "gap",
     reason:
-      "Only the six universal insignias are modelled. The profession-specific ones are what " +
+      "Only universal insignias are modelled. The profession-specific ones are what " +
       "make an armor set feel like a set, and they are roughly forty more catalog entries " +
       "with no new mechanics behind them.",
     affects: [],

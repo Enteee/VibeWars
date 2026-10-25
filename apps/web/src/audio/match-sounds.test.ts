@@ -29,6 +29,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     dead: false,
     castingSkillId,
     castRemaining: castingSkillId === undefined ? 0 : 1,
+    castTotal: castingSkillId === undefined ? 0 : 1,
     statuses: [],
   };
   return {

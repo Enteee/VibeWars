@@ -113,8 +113,8 @@ export interface BehaviourContext {
   readonly participants: readonly Participant[];
   readonly dt: number;
   /**
-   * How far one tick of movement carries `self`. Movement is always at
-   * full speed, so "arrived" means "within one step".
+   * How far one tick of movement carries `self`, slowed by its statuses.
+   * Movement is always at that speed, so "arrived" means "within one step".
    */
   readonly stepUnits: number;
   /**

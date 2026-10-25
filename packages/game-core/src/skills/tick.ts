@@ -1,6 +1,6 @@
 import type { CombatEvent } from "./effects.js";
 import { aggregateModifiers } from "./status.js";
-import type { Combatant } from "./types.js";
+import type { Combatant, Skill } from "./types.js";
 
 /**
  * Per-tick status processing (brief §13's "durations", §12's degeneration).
@@ -56,7 +56,38 @@ export function effectiveMaxHealth(combatant: Combatant): number {
   return combatant.maxHealth * aggregateModifiers(combatant.statuses.active).maxHealthMultiplier;
 }
 
-/** Whether an attack by this combatant misses, consuming one RNG draw. */
-export function attackMisses(combatant: Combatant, roll: number): boolean {
-  return roll < aggregateModifiers(combatant.statuses.active).attackMissChance;
+/** The slowest and fastest a combination of statuses can make anyone move. */
+const MOVE_SPEED_MIN = 0.25;
+const MOVE_SPEED_MAX = 1.33;
+
+/**
+ * The bearer's movement speed multiplier, clamped. The clamp lives here,
+ * not in `aggregateModifiers`, so each status's own number ("moves at 50%
+ * speed") stays what its tooltip says.
+ */
+export function moveSpeedMultiplier(combatant: Combatant): number {
+  return clampMoveSpeed(aggregateModifiers(combatant.statuses.active).moveSpeedMultiplier);
+}
+
+/**
+ * No status combination reaches either bound today; the clamp is there so
+ * the next slow or speed boost cannot stack a player into a standstill or
+ * a sprint.
+ */
+export function clampMoveSpeed(raw: number): number {
+  return Math.min(MOVE_SPEED_MAX, Math.max(MOVE_SPEED_MIN, raw));
+}
+
+/**
+ * How long this caster takes to cast this skill. Dazed doubles it; an
+ * instant skill stays instant (0 × 2 = 0), the one place dazed visibly
+ * does nothing.
+ */
+export function effectiveActivationSeconds(skill: Skill, caster: Combatant): number {
+  return skill.activationSeconds * aggregateModifiers(caster.statuses.active).castTimeMultiplier;
+}
+
+/** The chance in [0, 1] that the bearer's attacks miss (blind). */
+export function attackMissChanceOf(combatant: Combatant): number {
+  return aggregateModifiers(combatant.statuses.active).attackMissChance;
 }

@@ -43,6 +43,43 @@ async function startQuickMatch(page: Page): Promise<Locator> {
   return canvas;
 }
 
+/**
+ * A match in a lobby of one. Tests that compare frames need it: a Quick
+ * Match room is shared, so it can hold other tests' players, including
+ * ghosts that stay for the reconnection window after their page closed
+ * and then vanish, mid-comparison (#128). A lobby's match is private to
+ * the lobby (#41), so nothing moves in it that the test did not move.
+ */
+async function startSoloMatch(page: Page): Promise<Locator> {
+  return startLobbyMatch(page, []);
+}
+
+/**
+ * A lobby match: `host` on team 1, every guest on team 2. The host's
+ * arena canvas, once everyone is in.
+ */
+async function startLobbyMatch(host: Page, guests: readonly Page[]): Promise<Locator> {
+  await host.goto("/");
+  await host.getByRole("button", { name: "host a lobby" }).click();
+  await expect(host.locator(".lobby-code")).toHaveText(/^[A-Z0-9]{4,8}$/);
+  const code = (await host.locator(".lobby-code").textContent())?.trim() ?? "";
+  for (const guest of guests) {
+    await guest.goto("/");
+    await guest.locator("input.code-input").fill(code);
+    await guest.getByRole("button", { name: "join", exact: true }).click();
+    await guest.getByRole("button", { name: "join team 2" }).click();
+    await guest.getByRole("button", { name: "ready", exact: true }).click();
+  }
+  await host.getByRole("button", { name: "join team 1" }).click();
+  await host.getByRole("button", { name: "ready", exact: true }).click();
+  await host.getByRole("button", { name: "start match" }).click();
+
+  for (const page of [host, ...guests]) {
+    await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+  }
+  return host.locator("#viewport canvas");
+}
+
 /** Energy as the HUD reports it, e.g. "50 / 50 en" -> 50. */
 async function readEnergy(page: Page): Promise<number> {
   const text = (await page.locator(".hud-bar-energy .hud-bar-label").textContent()) ?? "";
@@ -70,7 +107,7 @@ test("M mutes and unmutes the combat sounds", async ({ page }) => {
 });
 
 test("holding a movement key moves the player on screen", async ({ page }) => {
-  const canvas = await startQuickMatch(page);
+  const canvas = await startSoloMatch(page);
 
   // A still frame first. If the arena animated on its own, this control
   // would make the test below meaningless — so it is asserted, not
@@ -90,7 +127,7 @@ test("holding a movement key moves the player on screen", async ({ page }) => {
 });
 
 test("releasing the movement key stops the player", async ({ page }) => {
-  const canvas = await startQuickMatch(page);
+  const canvas = await startSoloMatch(page);
 
   await page.keyboard.down("d");
   await page.waitForTimeout(400);
@@ -157,11 +194,11 @@ test("an enemy skill with nothing targeted targets the nearest enemy", async ({
   browser,
   page,
 }) => {
-  // Teams alternate by join order, so whoever joins just before us is an
-  // enemy: there is at least one, whatever earlier tests left behind.
+  // A lobby, not Quick Match: a Quick Match room holds at most eight, so
+  // two players joining one after the other can land in different rooms
+  // when earlier tests' ghosts fill one (#41).
   const opponent = await browser.newPage();
-  await startQuickMatch(opponent);
-  await startQuickMatch(page);
+  await startLobbyMatch(page, [opponent]);
   const target = page.locator(".hud-target");
   await expect(target).toHaveText("no target");
 

@@ -1,7 +1,7 @@
-import { getSkill, getWeapon, type ActivationRejection } from "@vibewars/game-core";
+import { getWeapon, type ActivationRejection } from "@vibewars/game-core";
 
 import type { MatchSnapshot, PlayerSnapshot, SkillSlot } from "../net/match-connection.js";
-import { skillTypeBadgeHtml, soundIcon } from "./icons.js";
+import { skillBadgeHtml, soundIcon } from "./icons.js";
 
 /**
  * The player's heads-up display: health/energy, skill bar, and status
@@ -191,10 +191,9 @@ export function flashMessage(hud: HudElements, text: string): void {
 export function skillSlotHtml(slot: SkillSlot, index: number): string {
   // 1-9 then 0, matching the hotkeys bound in main.ts.
   const hotkey = index < 9 ? String(index + 1) : "0";
-  const type = getSkill(slot.id)?.type;
   return (
     `<span class="hud-skill-key">${hotkey}</span>` +
-    (type === undefined ? "" : skillTypeBadgeHtml(type)) +
+    skillBadgeHtml(slot.id) +
     `<span class="hud-skill-name"></span>` +
     `<span class="hud-skill-cost"></span>`
   );
