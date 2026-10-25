@@ -337,31 +337,87 @@ Every finding here so far came from **reading a gate with a hostile
 agent in mind**: #26, #39, #47, #57, #61, #67, #73. A change to any file in
 `GATE_PATHS` gets that review, from `perf-sec-qa` and `lead-dev` both.
 
-## If the architecture changes
+## Peer-to-peer play (#15)
 
-A peer-to-peer mode (for example WebRTC via Trystero, with no hosted
-backend) has been proposed. That **removes the authoritative server**, and
-with it most of the defences listed above. In a peer-to-peer match some
-peer computes the outcomes, so that peer can cheat. Such a mode needs its
-own threat model here before it merges. It must not inherit this one.
+Peer-to-peer play is being built to replace the server (#15, ADR-0022).
+It **removes the authoritative server**, and with it most of the defences
+above. It does not inherit this file's threat model; this section is its
+own. Until step 5 (#404) deletes `apps/server`, both modes exist and both
+sections hold.
 
-That mode is now being built (#15). Step 1 (#82, #365) added the P2P
-message set and a `Transport` interface, but no playable mode yet. What
-holds so far:
+### Who computes what
 
-- Every message from a peer is `unknown` until a `parse*` in
+One player's browser, the **host**, runs the simulation in a `MatchHost`
+and sends snapshots. Every other browser is a **peer**: it sends intents
+and draws what the host says. Peers find each other through Trystero over
+public Nostr relays, then talk over WebRTC data channels, with public STUN
+and no TURN. The lobby code is both the Trystero room and its password.
+
+### What we explicitly do not defend against
+
+- **A cheating host.** The host decides every outcome: damage, hits,
+  deaths, energy, cooldowns, the score and who won. It sees every intent
+  before it acts on it, can drop, delay or forge any message it relays,
+  can kick anyone, and controls the match clock. Nothing a peer runs can
+  tell a fair host from a cheating one. P2P is for playing with people you
+  would let host; there is no ranked play, and none is planned without a
+  server.
+- **Knowing the code means being invited.** Anyone with the lobby code
+  can join and see the lobby. A code is shared like a party invite; it is
+  not a credential.
+- **A dropped match.** Without TURN, some pairs of networks never connect
+  (ADR-0022). A peer that cannot reach the host cannot play.
+
+### What a peer learns about the others
+
+- **IP addresses.** WebRTC exchanges ICE candidates, so every peer in a
+  room learns the public IP address of every peer it connects to, and on
+  some browsers a LAN address too. Browsers hide LAN addresses behind
+  mDNS names by default, but the public address is always visible.
+- **The relays see who meets whom.** Each Nostr relay sees the IP address
+  of every browser in a room and a hash of the room, though not the
+  encrypted offers. The relays are third parties we do not run; the list
+  lives in `apps/web/src/net/transport/relays.ts` (#392).
+- **Everything in a snapshot.** A peer receives every snapshot field the
+  host sends, for every player. Anything that must stay hidden from a
+  player must not be in the snapshot at all, as it already must not be on
+  the server.
+
+### What we still defend against
+
+A hostile **peer** gets the same treatment as a hostile client of the
+server, now enforced by the host:
+
+- Every message is `unknown` until a `parse*` in
   `game-protocol/src/p2p.ts` accepts it. Each parser caps string lengths
-  and array sizes, never throws, and returns a fresh object. This applies
-  to the host's messages too, because a host is trusted for outcomes but
-  not for well-formed bytes.
+  and array sizes, never throws, and returns a fresh object. Peers parse
+  the host's messages too: a host is trusted for outcomes, not for
+  well-formed bytes.
+- A sender is the `from` the `Transport` reports, which comes from the
+  connection, never from a field in the payload. A message names no other
+  player whose state it changes.
+- A returning player proves who they were with their rejoin token, never
+  with their peer id: `selfId` lasts one page load.
 
 What a later step must add before P2P play can merge:
 
-- A parser for the `intent` channel that applies the same checks as
-  `parseClientIntent`. The host must also enforce the server's per-client
-  rate limit (gap 3), counted per peer.
-- A size cap on `hello.build` before it is parsed, plus the same
-  `validatePlayerBuild` join check the server runs.
-- A section here that names what the host can cheat on: every outcome.
-  It must also say what a peer learns about the others, such as their IP
-  addresses through WebRTC.
+- **In `MatchHost` (#375, PR #401):** an `intent` parser with the same
+  checks as `parseClientIntent`, and the server's per-client message
+  budget (gap 3) counted per peer. The budget covers **every** channel,
+  `hello` and `bye` included, and outlives a `bye`, so a peer cannot
+  reset it by leaving and rejoining. `hello.build` gets a size cap before
+  it is parsed, then the same `validatePlayerBuild` join check the server
+  runs.
+- **In the Trystero transport (#392):** `maxReceiveBytes` caps a message
+  before it is decoded, so a peer cannot make another allocate an
+  unbounded buffer.
+- **In the web client (#403):** a peer accepts snapshots, events and match
+  results only from the host's peer id, and drops them from anyone else.
+  Any peer can send to any other peer directly, so without this a peer
+  could forge the host's messages to a third player. The lobby screen
+  also says, before anyone hosts or joins, that the others will see your
+  IP address.
+- **Host bandwidth.** An 8-player snapshot measured 4.6 KB in #401, about
+  5 Mbit/s of host upload at the tick rate, against the 1–2 KB that
+  ADR-0022 assumed. This is a limit on who can host, not an exploit, but
+  it belongs in the host's "can I host?" check.
