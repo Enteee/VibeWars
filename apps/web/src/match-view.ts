@@ -17,6 +17,7 @@ import {
   renderMute,
   renderSkillBar,
   updateHud,
+  updateRecharges,
 } from "./ui/hud.js";
 
 /**
@@ -196,6 +197,7 @@ export async function startMatchView(
     // permanently blank: the server tracked all three and the HUD could
     // draw all three, and nothing connected them.
     updateHud(hud, self, target, connection.skillBar, latestMatch);
+    updateRecharges(hud, connection.skillBar, connection.getRecharges());
   });
 
   const offPointer = viewport.onPointerDown((world) => {

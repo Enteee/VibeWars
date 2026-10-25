@@ -8,6 +8,8 @@ import {
   type MapDescriptor,
   type MatchJoinOptions,
   type MatchSeatReservation,
+  type RechargeMessage,
+  type RechargeSlot,
   type ServerHello,
 } from "@vibewars/game-protocol";
 
@@ -18,6 +20,7 @@ import type {
   PlayerSnapshot,
   SkillSlot,
 } from "./match-connection.js";
+import { extrapolateRecharges } from "./recharge-clock.js";
 
 /**
  * Thin wrapper around the Colyseus browser SDK for the match room.
@@ -188,6 +191,16 @@ export async function connectToMatch(
     room = await client.joinOrCreate<DecodedMatchState>(ROOM_MATCH, joinOptions);
   }
 
+  // Sent on join, right behind the skill bar, so listen before awaiting
+  // anything: a message with no listener yet is dropped.
+  let recharges: { slots: readonly RechargeSlot[]; at: number } = {
+    slots: [],
+    at: performance.now(),
+  };
+  room.onMessage("recharge", (message: RechargeMessage) => {
+    recharges = { slots: message.slots, at: performance.now() };
+  });
+
   // Both arrive on join; waiting for them here means the caller gets a
   // fully-usable connection rather than one that is missing its map or
   // skill bar for the first few frames.
@@ -244,6 +257,13 @@ export async function connectToMatch(
     },
     onCastRefused(handler: (message: CastRefusedMessage) => void): void {
       room.onMessage("cast-refused", handler);
+    },
+    getRecharges() {
+      return extrapolateRecharges(
+        recharges.slots,
+        bar.slots.length,
+        (performance.now() - recharges.at) / 1000,
+      );
     },
     async disconnect(): Promise<void> {
       await room.leave();
