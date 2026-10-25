@@ -107,6 +107,10 @@ export const PlayerState = schema(
 export const ProjectileState = schema(
   {
     id: t.number(),
+    /** Who shot it, so a client can tint it by side (#161). */
+    attackerId: t.string(),
+    /** The weapon it left, as released: a swap mid-flight changes nothing. */
+    weaponId: t.string(),
     x0: t.number(),
     y0: t.number(),
     x1: t.number(),
@@ -736,6 +740,8 @@ export class MatchRoom extends Room {
         this.state.projectiles.push(
           new ProjectileState({
             id: projectile.id,
+            attackerId: projectile.attackerId,
+            weaponId: projectile.weaponSnapshot.mainHand.weapon.id,
             x0: projectile.from.x,
             y0: projectile.from.y,
             x1: projectile.aimPoint.x,

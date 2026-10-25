@@ -9,9 +9,16 @@ import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
 import { connectToMatch, type MatchTarget } from "./net/match-client.js";
 import type { MatchConnection, MatchSnapshot } from "./net/match-connection.js";
-import { actorAtPoint, type ArenaSnapshot, type RenderableWall } from "./render/arena-snapshot.js";
+import {
+  ACTOR_RADIUS,
+  actorAtPoint,
+  teamColour,
+  type ArenaSnapshot,
+  type RenderableWall,
+} from "./render/arena-snapshot.js";
 import { createArenaViewport } from "./render/arena-viewport.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
+import { projectileSprite } from "./render/projectiles.js";
 import {
   createHud,
   describeRefusal,
@@ -71,6 +78,20 @@ export function toArenaSnapshot(
 
   return {
     walls,
+    clock: match.elapsedSeconds,
+    projectiles: match.projectiles.map((shot) => {
+      const shooter = match.players.find((player) => player.sessionId === shot.attackerId);
+      return {
+        id: shot.id,
+        sprite: projectileSprite(shot.weaponId),
+        from: shot.from,
+        to: shot.to,
+        launchedAt: shot.launchedAt,
+        flightSeconds: shot.flightSeconds,
+        // Tinted by side; a shooter who has left counts as the other side.
+        colour: teamColour(shooter !== undefined && shooter.team === self?.team ? "ally" : "enemy"),
+      };
+    }),
     // Render the target the *server* confirmed, not whatever was last
     // clicked — a click is only a request (brief §32).
     targetId: self?.targetSessionId,
@@ -79,7 +100,7 @@ export function toArenaSnapshot(
         id: player.sessionId,
         name: player.name,
         position: { x: player.x, y: player.y },
-        radius: 14,
+        radius: ACTOR_RADIUS,
         team:
           player.sessionId === match.selfSessionId
             ? ("self" as const)

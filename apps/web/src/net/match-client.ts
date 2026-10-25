@@ -95,6 +95,8 @@ export interface DecodedPlayer {
 }
 export interface DecodedProjectile {
   readonly id: number;
+  readonly attackerId: string;
+  readonly weaponId: string;
   readonly x0: number;
   readonly y0: number;
   readonly x1: number;
@@ -151,6 +153,8 @@ function snapshotFrom(room: LiveMatchRoom): MatchSnapshot {
     endReason: room.state.endReason === "" ? undefined : room.state.endReason,
     projectiles: [...room.state.projectiles].map((shot) => ({
       id: shot.id,
+      attackerId: shot.attackerId,
+      weaponId: shot.weaponId,
       from: { x: shot.x0, y: shot.y0 },
       to: { x: shot.x1, y: shot.y1 },
       launchedAt: shot.launchedAt,
