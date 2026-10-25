@@ -22,3 +22,19 @@ export { sanitizeName } from "./names.js";
 export { RECHARGE_TOLERANCE_SECONDS, rechargePredicted, rechargeSlots } from "./recharge.js";
 export { spawnPoint } from "./spawn-points.js";
 export type { SpawnPoint } from "./spawn-points.js";
+export type { Json } from "./transport.js";
+export { createLocalPeer } from "./local-peer.js";
+export {
+  MATCH_FULL_MESSAGE,
+  MATCH_OVER_MESSAGE,
+  RECONNECT_WINDOW_SECONDS,
+  createMatchHost,
+} from "./match-host.js";
+export type { HostMap, MatchHost, MatchHostOptions } from "./match-host.js";
+export {
+  HostLeftError,
+  MatchRefusedError,
+  MatchTimeoutError,
+  connectMatch,
+} from "./match-client.js";
+export type { ConnectMatchOptions, PeerMatchConnection } from "./match-client.js";
