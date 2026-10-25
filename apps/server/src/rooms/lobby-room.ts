@@ -12,6 +12,7 @@ import {
   type LobbyMatchStartingMessage,
 } from "@vibewars/game-protocol";
 
+import { quote } from "../log-safe.js";
 import { DEFAULT_MAP_ID, openLobbyMatch, type LobbySeat } from "./match-room.js";
 import {
   FLOOD_MESSAGES_PER_SECOND,
@@ -473,7 +474,7 @@ export class LobbyRoom extends Room {
     });
 
     console.info(
-      `[lobby] ${this.state.code} starting match ${reservations[0]?.roomId ?? "?"} on ${mapId}`,
+      `[lobby] ${this.state.code} starting match ${reservations[0]?.roomId ?? "?"} on ${quote(mapId)}`,
     );
   }
 
