@@ -79,6 +79,10 @@ edges, which #366 §1 lists:
   or from `apps/web/public/music/` through one `strudel.json`. The palette
   is at most 3 MB. Nothing loads from a CDN.
 - **Lazy.** Nothing of the engine loads before the first user gesture.
+- **The scheduler works ahead of the audio clock** (#446, #448): its clock
+  runs `LEAD_SECONDS` = 0.75 s ahead of the context's, so a stall of the
+  main thread up to about 0.9 s costs no note. See "The scheduler works
+  ahead" below.
 - **Worker timers are required.** The scheduler's `setInterval` and
   `clearInterval` are backed by a dedicated Worker (see Measurements).
 - **Static files carry `Access-Control-Allow-Origin: *`.** This is needed
@@ -133,10 +137,15 @@ with music on.
 | game page, script | 8.8 % (6.0–9.7)           | 7.6 % (6.5–8.2)          |
 | music host, busy  | –                         | 3.9 % (3.4–4.9)          |
 
-- **The engine never runs on the game's main thread.** Chromium puts the
-  sandboxed frame in its own renderer process: CDP lists it as a separate
-  `iframe` target. The game page shows no measurable cost, and noise
-  between runs is larger than any difference.
+- **The engine runs on the game's main thread on Android Chrome and in
+  Firefox** (corrected in #446). Desktop Chromium puts the sandboxed frame
+  in its own renderer process (CDP lists it as a separate `iframe`
+  target), so there the game page shows no measurable cost. Android
+  Chrome keeps sandboxed frames in the page's process, and so does
+  Firefox, whose process follows the site that created the frame. There
+  the host's scheduler, Strudel's queries and superdough's node creation
+  share a thread with Phaser, the HUD, net messages and GC, and a stall
+  of that thread drops music (see "The scheduler works ahead").
 - The host's main thread uses about 4 % of a core.
 - Audio rendering happens on the audio thread, which these numbers do not
   include.
@@ -252,7 +261,7 @@ than its 0.2 s lookahead. Those are the gaps a player hears.
   on `visibilitychange` and resumed on return. That is a deliberate change
   from measurement 3, where a hidden tab played on: a phone may freeze a
   page in the background while its audio clock runs on.
-- **The lookahead stays.** The cyclist's `latency` is not what skips a
+- **The lookahead stays** at 0.2 s (#448 moves the clock, not the lookahead). The cyclist's `latency` is not what skips a
   query, and `webaudioRepl` does not pass one through. What is left at 4×
   is one rebuild of the reverb when a new track takes over, and compiling
   the new track when a switch is asked for.
@@ -260,6 +269,58 @@ than its 0.2 s lookahead. Those are the gaps a player hears.
 Firefox could not be measured here: in this sandbox it has no audio
 output. Its numbers come from the phone check in
 `docs/development/manual-tests.md`.
+
+## The scheduler works ahead
+
+Strudel's cyclist queries slots up to 0.2 s past its clock and skips every
+slot already behind it. A tick the main thread delivers late finds the
+clock moved on and its slots skipped: a dropout. A note queried late but
+before its time starts off the beat: a crack. Worker timers only make the
+tick fire on time; its callback still waits for the main thread. Where the
+host shares that thread (Android Chrome, Firefox), a match's stalls are
+enough to hear.
+
+**Decision (#448): the scheduler's clock runs `LEAD_SECONDS` (0.75 s)
+ahead of `context.currentTime`** (`host/lead-clock.ts`). Every note is
+queried and handed to Web Audio at least that long before it plays; once
+a node exists the audio thread plays it on time however busy the main
+thread is. The price is that an intensity step, a switch, an edit and a
+jukebox preview are heard up to 0.75 s later, and a stop must not be:
+`host/bus-gate.ts` ramps the music bus to 0 in 50 ms on `stop` and opens
+it again when the next pattern's first note can sound. Volume and mute
+ramp the bus as before.
+
+- **A constant shift is not enough.** The first design passed
+  `context.currentTime + LEAD` as `getTime`. The cyclist then looks ahead
+  from, and skips behind, the shifted time, so the shifted lookahead
+  moves with it and a 0.6 s stall skips as many slots as before (the
+  unit test keeps this as a control). The clock moves on by at most 0.2 s,
+  the cyclist's own lookahead, per reading, so a late tick resumes where
+  the last stopped; `catchUpTick` runs the tick again until the clock has
+  closed the gap, since one tick only covers 0.2 s of music.
+- **Rejected: a Worker.** `AudioContext` and node creation exist only on a
+  window's main thread.
+- **Rejected: an AudioWorklet.** It would mean rewriting superdough's
+  synths, samples and effects as DSP: a new engine.
+- **Rejected: queries in a Worker, nodes on the main thread.** It saves
+  the roughly 4 % the queries cost, and the nodes are still made on the
+  stalled thread.
+- **Measured** with `node scripts/music-stress.mjs --browser chromium
+--only match` (Armor ladder, SFX, HUD and key mashing; there is no 4v4
+  with bots locally). The box was very noisy (load 8–18), so only the
+  clean runs count:
+
+  | Screen, CPU throttle | Skipped, before | Skipped, after | Late events, before | Late events, after |
+  | -------------------- | --------------: | -------------: | ------------------: | -----------------: |
+  | match, 4x            |          150 ms |           0 ms |                  17 |                  0 |
+  | training, 4x         |          900 ms |           0 ms |                   – |                  – |
+
+  A later no-throttle run: 0 ms skipped, 0 late events. A 4x run on a
+  loaded box skipped 26.5 s and 6x ran too few ticks to say anything:
+  those are noise, not results.
+
+- **Not above 1 s.** More lead would hide a main thread that is too busy;
+  that is the game's to fix.
 
 ## Budgets
 
