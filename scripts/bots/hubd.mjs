@@ -1419,8 +1419,8 @@ async function changedSince(sha, cfg) {
 /**
  * A company reboot (#21): schedule it, abort it, or mark a role ready for
  * it. hubd only checks and records it, in `.bots/reboot.json`; the
- * supervisor, which watches every pane, drains the company and starts the
- * restarter. What a schedule or an abort answers is the announcement, which
+ * supervisor, which watches the agents' restart loops, drains the company
+ * and starts the restarter. What a schedule or an abort answers is the announcement, which
  * `company` broadcasts.
  *
  * @param {string} role

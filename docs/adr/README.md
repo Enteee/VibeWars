@@ -30,3 +30,4 @@ rewriting history.
 | [0023](0023-one-telegram-bot.md)           | One Telegram bot for the whole company                 |
 | [0024](0024-telegram-topics.md)            | Four Telegram topics: General, Bots, Manager, Operator |
 | [0026](0026-weapon-auto-attack.md)         | Weapon auto-attack                                     |
+| [0027](0027-one-turn-per-process.md)       | Agents run one turn per process                        |

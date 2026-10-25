@@ -1,26 +1,21 @@
 #!/usr/bin/env node
 /**
- * `supervisor` — keeps nine autonomous agents working.
+ * `supervisor` — drains the company for a reboot (#21).
  *
- * This is the least elegant part of the company, so here is the honest
- * reasoning rather than a clean-sounding story.
+ * It used to keep the agents working, too. Each pane ran the interactive
+ * Claude TUI, which ends a turn and then waits at its prompt for input
+ * nobody sends, so this sampled every pane and typed a nudge into one that
+ * had sat unchanged at a prompt. That was screen-scraping, and it failed
+ * silently once, looking for ">" where Claude Code draws "❯". Now every
+ * agent runs one turn per process (#146, ADR-0027): a turn that ends exits,
+ * and claude-llc-agent starts the next. There is nothing left to nudge.
  *
- * Each pane runs the *interactive* Claude TUI, not `claude -p`, because the
- * manager's window has to accept the operator typing a feature request into
- * it. An interactive session ends its turn and waits. An agent with work to do
- * therefore stops having work to do, silently, and the company stalls.
- *
- * Two things keep it moving. The first is in the agents' own hands: a role
- * with nothing to do runs `tg wait --timeout 900`, which blocks, extending its
- * current turn so it resumes the moment a colleague or the operator speaks.
- * That covers idleness but not turn *end*.
- *
- * The second is this process: it samples each pane, and when one has sat
- * unchanged at an input prompt across several samples, it types a short nudge
- * into it. That is as crude as it sounds. What makes it tolerable is that it
- * is conservative — it would rather leave an agent idle than interrupt one —
- * and that it never touches the pane the operator is looking at, so a nudge
- * cannot land in the middle of something you are typing.
+ * What remains is the reboot: wait for each running agent to run `company
+ * ready` or be between turns, then for any `hub` request in flight, and
+ * then start the restarter, detached, because nothing inside the tmux
+ * session survives the session being killed. Everything it needs is in
+ * `.bots/reboot.json`, the agents' `between-turns` markers and hubd's
+ * heartbeat; the announcements are the manager's `company` broadcasts.
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -46,17 +41,8 @@ const REBOOTING = path.join(ROOT, "rebooting.json");
 /** `claude-llc-restart`, which claude-llc passes in. */
 const RESTARTER = process.env.VIBEWARS_LLC_RESTART;
 
-/** How often to sample each pane. */
-const SAMPLE_MS = 30_000;
-
-/** Consecutive unchanged samples before a pane counts as genuinely stuck. */
-const IDLE_SAMPLES = 3;
-
-/** Never nudge the same window more often than this. */
-const NUDGE_COOLDOWN_MS = 300_000;
-
-const NUDGE =
-  "Check `tg inbox` and `board ls`, then continue with the most valuable thing you can finish.";
+/** How often to look at the reboot record and the agents. */
+const SAMPLE_MS = 5_000;
 
 /**
  * @param {string[]} args
@@ -67,74 +53,23 @@ function tmux(args) {
   return typeof result.stdout === "string" ? result.stdout : "";
 }
 
-/**
- * Does this pane look like it is sitting at a prompt waiting for input,
- * rather than working?
- *
- * Deliberately a pure function of two snapshots so it can be tested, because
- * getting it wrong is costly in both directions: too eager and it interrupts
- * an agent mid-thought, too lax and the company quietly stops.
- *
- * Two signals have to agree. The pane must not have changed at all since the
- * last sample — a working agent emits output constantly — and its tail must
- * not look like Claude still being busy. The second test is what stops a
- * long-running tool call, which produces no output while it waits, from being
- * mistaken for an idle prompt.
- *
- * @param {string} previous
- * @param {string} current
- * @returns {boolean}
- */
-export function looksIdle(previous, current) {
-  if (previous === "" || current === "" || previous !== current) {
-    return false;
-  }
-  const tail = current.trimEnd().split("\n").slice(-6).join("\n");
-
-  // The footer carries "esc to interrupt" for exactly as long as a turn is in
-  // flight, which makes it a far better busy signal than looking for a
-  // spinner: it is also present while a long tool call produces no output, so
-  // a blocking `tg wait` is correctly seen as working rather than stuck.
-  if (/esc to interrupt/i.test(tail)) {
-    return false;
-  }
-
-  // The input box. Claude Code draws "❯", not ">" — an earlier version of
-  // this function looked for the ASCII form and therefore never fired, which
-  // is why interrupted agents sat idle instead of being nudged.
-  return /❯|Try "|What should Claude do instead/.test(tail);
+/** @returns {string[]} the roles with a window in the session */
+function runningRoles() {
+  const windows = tmux(["list-windows", "-t", SESSION, "-F", "#{window_name}"]).split("\n");
+  return ROLES.filter((role) => windows.includes(role));
 }
 
-/* -------------------------------------------------------------------------- */
-
-/** @type {Map<string, { snapshot: string, idle: number, nudgedAt: number }>} */
-const state = new Map();
-
 /**
- * @returns {string | null} The window the operator is currently looking at.
+ * The roles whose restart loop is between turns: it has created
+ * `.bots/agents/<role>/between-turns` and not yet started the next turn.
+ *
+ * @param {string} root the company's state directory
+ * @param {readonly string[]} roles
+ * @returns {string[]}
  */
-function focusedWindow() {
-  // Nobody attached means nobody is typing, so every pane is fair game.
-  if (tmux(["list-clients", "-t", SESSION, "-F", "#{client_session}"]).trim() === "") {
-    return null;
-  }
-  const active = tmux(["display-message", "-p", "-t", SESSION, "-F", "#{window_name}"]).trim();
-  return active === "" ? null : active;
+export function betweenTurns(root, roles) {
+  return roles.filter((role) => fs.existsSync(path.join(root, "agents", role, "between-turns")));
 }
-
-/* -------------------------------------------------------------------------- */
-/* Company reboot (#21)                                                       */
-/* -------------------------------------------------------------------------- */
-
-/**
- * The supervisor already watches every pane, so it is what drains the
- * company for a reboot hubd has accepted: it waits for each agent to run
- * `company ready` or go idle, then for any `hub` request in flight, and
- * then starts the restarter, detached, because nothing inside the tmux
- * session survives the session being killed. Everything it needs is in
- * `.bots/reboot.json` and hubd's heartbeat; the announcements are the
- * manager's `company` broadcasts.
- */
 
 /**
  * @param {string} file
@@ -197,9 +132,9 @@ async function main() {
       process.exit(0);
     });
   }
-  console.error(`supervisor: watching ${String(ROLES.length)} panes in ${SESSION}`);
+  console.error(`supervisor: waiting for a reboot of ${SESSION}`);
 
-  /** @type {{ requestedAt: number, idle: Record<string, number>, drainedAt: number | null } | null} */
+  /** @type {{ requestedAt: number, drainedAt: number | null } | null} */
   let drain = null;
 
   for (;;) {
@@ -208,57 +143,16 @@ async function main() {
     if (reboot === null) {
       drain = null;
     } else if (drain?.requestedAt !== reboot.requestedAt) {
-      drain = { requestedAt: reboot.requestedAt, idle: {}, drainedAt: null };
-    }
-
-    const focused = focusedWindow();
-    /** @type {string[]} */
-    const running = [];
-
-    for (const role of ROLES) {
-      const target = `${SESSION}:${role}`;
-      const snapshot = tmux(["capture-pane", "-p", "-t", target]);
-      if (snapshot === "") {
-        // No such window — the company may be partly up, which is fine.
-        continue;
-      }
-      running.push(role);
-
-      const previous = state.get(role) ?? { snapshot: "", idle: 0, nudgedAt: 0 };
-      const isIdle = looksIdle(previous.snapshot, snapshot);
-      const idle = isIdle ? previous.idle + 1 : 0;
-      let nudgedAt = previous.nudgedAt;
-
-      if (drain !== null) {
-        drain.idle[role] = isIdle ? (drain.idle[role] ?? 0) + 1 : 0;
-      }
-
-      // No nudges during a drain: an agent that said `ready` is meant to sit.
-      const dueANudge =
-        drain === null &&
-        idle >= IDLE_SAMPLES &&
-        Date.now() - nudgedAt > NUDGE_COOLDOWN_MS &&
-        role !== focused;
-
-      if (dueANudge) {
-        // Typed as text then Enter separately, so a pane that is NOT actually
-        // at a prompt gets a stray line of text rather than an executed
-        // command.
-        tmux(["send-keys", "-t", target, NUDGE]);
-        tmux(["send-keys", "-t", target, "Enter"]);
-        nudgedAt = Date.now();
-        console.error(`supervisor: nudged ${role}`);
-      }
-
-      state.set(role, { snapshot, idle: dueANudge ? 0 : idle, nudgedAt });
+      drain = { requestedAt: reboot.requestedAt, drainedAt: null };
     }
 
     if (drain !== null && reboot !== null) {
+      const running = runningRoles();
       const step = drainStep({
         now: Date.now(),
         reboot,
         running,
-        idle: drain.idle,
+        between: betweenTurns(ROOT, running),
         inflight: inFlight(),
         drainedAt: drain.drainedAt,
       });
@@ -273,7 +167,7 @@ async function main() {
   }
 }
 
-// Only run when invoked directly; the test imports looksIdle.
+// Only run when invoked directly; the test imports betweenTurns.
 if (process.argv[1]?.endsWith("supervisor.mjs") === true) {
   await main();
 }
