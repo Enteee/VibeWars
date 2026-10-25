@@ -194,13 +194,43 @@ JavaScript and runs it in the page, with the page's full rights. A track
 is therefore code, not data. Shipped tracks are fine, because they come
 from this repository and get reviewed like any other source.
 
-Review rule: a pattern from anywhere else, such as a beat editor, a shared
-link, a lobby message or a file a player loads, must never reach Strudel's
-evaluator in the game page. A player may run their own pattern on their
-own machine. If patterns are ever shared, evaluate them in a sandboxed,
-cross-origin iframe or worker that holds no game state, saves or
-connection. Treat any such path as remote code execution until it is
-sandboxed.
+So no pattern runs in the game page. All of them run in the music host
+(ADR-0028, #371): `music-host.html` in an `<iframe sandbox="allow-scripts">`
+with an opaque origin, which holds no game state, saves or connection, and
+talks to the game only by `postMessage`. What holds:
+
+- **The host runs only sandboxed and framed.** `host/guard.ts` checks
+  `self.origin === "null"` and `parent !== window` before the engine is
+  even fetched. Opened top-level or framed without a sandbox, it loads
+  nothing and answers nothing (e2e covers both).
+- **The sandbox is exactly `allow-scripts`.** `allow-same-origin` would
+  give a pasted beat the game's storage; e2e asserts the attribute.
+- **Both sides check `event.source`, never the origin**, since every
+  sandboxed frame's origin is `"null"`. Every message is parsed field by
+  field, with length caps, in `host-protocol.ts`; anything else is dropped.
+- **The host's CSP is `default-src 'none'`**, with `connect-src 'self'`, so
+  a pattern cannot fetch from or beacon to another host.
+- **A hung host is torn down.** The game pings every second and removes a
+  frame that has not answered for five.
+
+What does not hold, and why it is acceptable:
+
+- **A pattern can navigate its own frame.** The new page keeps the same
+  `contentWindow`, so it passes the game's source check and can speak the
+  protocol. It is still sandboxed and opaque, and everything it says is
+  parsed. Review rule: render text the host sends, such as a track id or
+  an error, with `textContent`, never as HTML.
+- **Any site can frame the host** in its own sandbox and drive it, because
+  static files carry `Access-Control-Allow-Origin: *`. There it is just a
+  copy of Strudel with an opaque origin that reaches nothing of ours.
+- **The vite dev server answers `Origin: null`**, which any site's
+  sandboxed frame sends, so `server.fs.allow` limits it to `apps/web`,
+  `packages` and `node_modules`. Never widen it to the repo root: `.bots/`
+  holds the company's logs.
+
+Review rule: a pattern from anywhere, including a beat editor, a shared
+link or a lobby message, reaches Strudel only through the music host, never
+the game page.
 
 ## The static deploy
 
