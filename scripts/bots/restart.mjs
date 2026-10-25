@@ -138,8 +138,13 @@ function devenv(args, cwd) {
       cwd,
       env: {
         ...Object.fromEntries(
+          // Nor the bot token, which is the restarter's alone: the tmux
+          // server claude-llc starts would hand it to every pane.
           Object.entries(process.env).filter(
-            ([name]) => !name.startsWith("DEVENV_") && name !== "IN_NIX_SHELL",
+            ([name]) =>
+              !name.startsWith("DEVENV_") &&
+              !name.startsWith("TELEGRAM_") &&
+              name !== "IN_NIX_SHELL",
           ),
         ),
         // The boot record is already written; claude-llc must not replace it.

@@ -127,6 +127,7 @@ function setup(options = {}) {
     "devenv",
     [
       `echo "devenv $PWD $* rebooted=$VIBEWARS_REBOOTED" >>${calls}`,
+      `[ -n "$TELEGRAM_MANAGER_TOKEN" ] && echo "devenv saw the bot token" >>${calls}`,
       `[ -e scripts/bots/new.mjs ] && echo "saw the new main in $PWD" >>${calls}`,
       options.failBuild === true ? 'case "$*" in *--help*) exit 1 ;; esac' : "",
       'case "$*" in *" up") ;; *) exit 0 ;; esac',
@@ -377,6 +378,7 @@ describe("the restarter, when the old session will not go (#315)", () => {
 
     expect(result.code).toBe(1);
     expect(String(result.boot.note)).toMatch(/^Reboot FAILED: claude-llc up exited 1, twice\./);
+    expect(result.calls).not.toContain("devenv saw the bot token");
     expect(telegram.sent).toHaveLength(1);
     expect(telegram.sent[0]).toMatchObject({
       path: "/botT0KEN/sendMessage",
