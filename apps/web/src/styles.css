@@ -820,8 +820,9 @@ body {
    number vanish, so the cue is never colour alone. */
 .hud-skill.is-ready-flash,
 .training-skill.is-ready-flash {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+  /* Ink, not accent: blue means "friend" in the arena (art direction). */
+  border-color: var(--ink);
+  box-shadow: 0 0 0 1px var(--ink);
 }
 
 /* Same 14 px badge as the HUD, but in line: this button is one short row,

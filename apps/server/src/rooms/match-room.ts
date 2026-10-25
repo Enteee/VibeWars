@@ -343,15 +343,15 @@ export class MatchRoom extends Room {
   #nextSpawnIndex = 0;
 
   /**
-   * A lobby's match: each seat's team, and whether it was taken. Absent
-   * for Quick Match, which alternates teams as players arrive.
-   */
-  /**
    * The recharges each player was last told, and the match time they were
    * told at, so only what their countdown cannot predict is sent (#152).
    */
   readonly #rechargesSent = new Map<string, { slots: RechargeSlot[]; at: number }>();
 
+  /**
+   * A lobby's match: each seat's team, and whether it was taken. Absent
+   * for Quick Match, which alternates teams as players arrive.
+   */
   #seats: Map<string, { readonly team: 0 | 1; used: boolean }> | undefined;
 
   /**
