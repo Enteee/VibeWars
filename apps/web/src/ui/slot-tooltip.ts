@@ -1,6 +1,6 @@
 import { describeSkill, getSkill } from "@vibewars/game-core";
 
-import { createSkillTooltip } from "./skill-tooltip.js";
+import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
 
 /**
  * The hover tooltip on a skill bar's slots in play (#485), shared by the
@@ -26,7 +26,8 @@ export interface SlotTooltips {
 }
 
 export function createSlotTooltips(): SlotTooltips {
-  const tooltip = createSkillTooltip("above");
+  // Made on the first hover, so a bar nobody hovers adds nothing to the page.
+  let tooltip: SkillTooltip | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   // The slot whose tooltip is up, or waiting out the delay.
   let current: number | undefined;
@@ -35,7 +36,7 @@ export function createSlotTooltips(): SlotTooltips {
     clearTimeout(timer);
     timer = undefined;
     current = undefined;
-    tooltip.hide();
+    tooltip?.hide();
   };
 
   return {
@@ -47,6 +48,7 @@ export function createSlotTooltips(): SlotTooltips {
           timer = undefined;
           const skill = getSkill(skillId);
           if (skill !== undefined && button.isConnected) {
+            tooltip ??= createSkillTooltip("above");
             tooltip.show(button, describeSkill(skill, ranks()));
           }
         }, SLOT_TOOLTIP_DELAY_MS);
@@ -65,7 +67,8 @@ export function createSlotTooltips(): SlotTooltips {
     },
     dispose() {
       hide();
-      tooltip.dispose();
+      tooltip?.dispose();
+      tooltip = undefined;
     },
   };
 }
