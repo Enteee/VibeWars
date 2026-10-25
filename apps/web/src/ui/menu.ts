@@ -15,8 +15,8 @@ export interface MenuCallbacks {
   readonly onCreateLobby: (name: string) => void;
   readonly onJoinLobby: (code: string, name: string) => void;
   readonly onManageTeams: () => void;
-  /** Open the Keys screen (#309). */
-  readonly onKeys: () => void;
+  /** Open the Options screen (#423). */
+  readonly onOptions: () => void;
   /** Open the jukebox (#372). */
   readonly onMusic: () => void;
   readonly onQuickMatch: (name: string) => void;
@@ -260,7 +260,7 @@ export function renderMenu(
 
   const manageRow = h("div", "menu-row");
   manageRow.appendChild(button("teams", "", callbacks.onManageTeams));
-  manageRow.appendChild(button("keys", "", callbacks.onKeys));
+  manageRow.appendChild(button("options", "", callbacks.onOptions));
   manageRow.appendChild(button("music", "", callbacks.onMusic));
   const quickMatch = button("quick match", "", () => {
     callbacks.onQuickMatch(nameInput.value);

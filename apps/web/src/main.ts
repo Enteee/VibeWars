@@ -24,7 +24,7 @@ import {
 import type { StoredCharacter, StoredTeam } from "./storage/schema.js";
 import { disposeBuildEditor, newCharacter, renderBuildEditor } from "./ui/build-editor.js";
 import { disposeJukeboxScreen, renderJukeboxScreen } from "./ui/jukebox.js";
-import { disposeKeysScreen, renderKeysScreen } from "./ui/keys-screen.js";
+import { disposeOptionsScreen, renderOptionsScreen } from "./ui/options-screen.js";
 import { renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
@@ -154,7 +154,7 @@ async function main(): Promise<void> {
     // never keeps saying where the player was. Error paths set theirs after.
     setStatus("ready", "offline");
     disposeBuildEditor();
-    disposeKeysScreen();
+    disposeOptionsScreen();
     disposeJukeboxScreen();
     showViewport(false);
     music().screen("menu");
@@ -180,8 +180,8 @@ async function main(): Promise<void> {
         onManageTeams: () => {
           void showTeams();
         },
-        onKeys: () => {
-          renderKeysScreen(screenRoot, { onBack: showMenu });
+        onOptions: () => {
+          renderOptionsScreen(screenRoot, { onBack: showMenu });
         },
         onMusic: () => {
           renderJukeboxScreen(screenRoot, { onBack: showMenu });

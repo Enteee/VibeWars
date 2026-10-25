@@ -14,12 +14,16 @@
  *  3. protect `main` with a ruleset — newly possible now that the repository
  *     is public, and the one piece of enforcement that does not depend on our
  *     own code being correct
- *  4. write `.bots/company.json`, which hubd and the dashboard read
+ *  4. write `.bots/company.json`, which hubd and the dashboard read, with
+ *     the most employees the company may have (`maxAgents`), asked once
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { createInterface } from "node:readline/promises";
+
+import { ROLES } from "./hub-policy.mjs";
 
 const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
 
@@ -310,6 +314,13 @@ fs.mkdirSync(ROOT, { recursive: true });
  * are inert once the proper bots exist and need no cleanup.
  */
 let acting = { "lead-dev": ["perf-sec-qa", "qa-tester"] };
+/**
+ * The most employees the company may have, manager included (#62): a cost
+ * the operator decides, so it is asked, not assumed. Kept across re-runs.
+ *
+ * @type {number | null}
+ */
+let maxAgents = null;
 try {
   /** @type {unknown} */
   const previous = JSON.parse(fs.readFileSync(path.join(ROOT, "company.json"), "utf8"));
@@ -317,8 +328,25 @@ try {
   if (typeof existing === "object" && existing !== null) {
     acting = /** @type {typeof acting} */ (existing);
   }
+  const cap = obj(previous).maxAgents;
+  if (typeof cap === "number" && Number.isInteger(cap) && cap > 0) {
+    maxAgents = cap;
+  }
 } catch {
   /* first run */
+}
+while (maxAgents === null) {
+  const prompt = createInterface({ input: process.stdin, output: process.stdout });
+  const answer = (
+    await prompt.question(`  Most employees the company may have [${String(ROLES.length)}]: `)
+  ).trim();
+  prompt.close();
+  const cap = answer === "" ? ROLES.length : Number(answer);
+  if (Number.isInteger(cap) && cap > 0) {
+    maxAgents = cap;
+  } else {
+    console.error("  A whole number above 0, please.");
+  }
 }
 
 const config = {
@@ -337,6 +365,7 @@ const config = {
   },
   columns: COLUMNS,
   expectedChecks: EXPECTED_CHECKS,
+  maxAgents,
 };
 fs.writeFileSync(path.join(ROOT, "company.json"), `${JSON.stringify(config, null, 2)}\n`);
 say("company.json", path.join(ROOT, "company.json"));

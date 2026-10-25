@@ -428,7 +428,64 @@ body {
   font-size: 0.85rem;
 }
 
+/* --- options (#423) ----------------------------------------------------- */
+
+/* Wider than other screens: the section list sits beside the Controls
+   table, which alone is most of a normal screen's width. */
+.screen.options-screen {
+  width: min(52rem, 100%);
+}
+
+.options-body {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.options-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.screen button.options-entry {
+  text-align: left;
+}
+
+.screen button.options-entry.is-selected {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.options-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+  /* The Controls table is wider than a phone; it scrolls, not spills. */
+  overflow-x: auto;
+}
+
+/* Narrow: the section list becomes a row above the section. */
+@media (width <= 52rem) {
+  .options-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .options-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
 /* --- keys (#309) -------------------------------------------------------- */
+
+.keys-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
 
 .keys-table {
   border-collapse: collapse;

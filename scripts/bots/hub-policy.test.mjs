@@ -668,6 +668,42 @@ describe("company reboot", () => {
   });
 });
 
+describe("company hire and fire", () => {
+  /**
+   * @param {string} role
+   * @param {string[]} argv
+   * @param {string[]} [acting]
+   */
+  const staff = (role, argv, acting = []) => authorize(role, { kind: "staff", argv }, { acting });
+
+  it("is the manager's only, and no hat lends it", () => {
+    expect(staff("manager", ["hire", "qa-tester", "QA column at 4"])).toMatchObject({
+      allow: true,
+    });
+    expect(staff("manager", ["fire", "qa-tester@2", "no QA work"])).toMatchObject({ allow: true });
+    for (const role of ROLES.filter((r) => r !== "manager")) {
+      expect(staff(role, ["hire", "qa-tester", "x"]), role).toMatchObject({ allow: false });
+      expect(staff(role, ["fire", "qa-tester", "x"]), role).toMatchObject({ allow: false });
+    }
+    expect(staff("lead-dev", ["hire", "qa-tester", "x"], ["manager"])).toMatchObject({
+      allow: false,
+    });
+  });
+
+  it("needs a verb, a who and a reason, and nothing else", () => {
+    for (const argv of [
+      ["hire", "qa-tester"],
+      ["hire", "qa-tester", " "],
+      ["fire", "", "x"],
+      ["promote", "qa-tester", "x"],
+      ["hire", "qa-tester", "a", "b"],
+      [],
+    ]) {
+      expect(staff("manager", argv), argv.join(" ")).toMatchObject({ allow: false });
+    }
+  });
+});
+
 describe("closing and reopening", () => {
   /**
    * The reason a refused command gives; fails if it was allowed.
