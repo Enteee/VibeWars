@@ -17,7 +17,7 @@ stack(
     .s("sawtooth").attack(.7).release(1.4).gain(.3)
     .lpf(500).lpenv(3).lpa(.5).lpd(1.2).room(.6).roomsize(6).orbit(2),
   note(P.rootNotes(1)).s("sine").attack(.05).release(1.2).gain(.4),
-  s("anvil:0 ~ ~ ~ ~ ~ ~ ~").slow(2).gain(.35).room(.6).orbit(2),
+  s("anvil:0 ~ ~ ~ ~ ~ ~ ~").slow(2).gain(.35).room(.6).roomsize(6).orbit(2),
   // 1: the grinding ostinato
   layer(1, n("0 0 [0 1] 0 0 3 0 [0 1]".fast(2).add("<0 0 0 0 0 0 3 0 0 0 0 0 -2 0 3 1>")).scale("c2:aeolian")
       .s("sawtooth").decay(.12).sustain(.2).release(.05).gain(.6)
@@ -29,7 +29,7 @@ stack(
   // 3: brass stabs and the choir
   layer(3, stack(
     n("0 ~ ~ 0 ~ ~ 4 ~".add("<0 0 2 0 3 0 -1 0 4 2 0 0 -2 0 3 2>")).scale("c3:aeolian").s("sawtooth").attack(.02).release(.3).gain(.4)
-      .lpf(1500).lpenv(2).lpd(.3).room(.4).orbit(2),
+      .lpf(1500).lpenv(2).lpd(.3).room(.4).roomsize(6).orbit(2),
     chord(P).voicing().mode("below:c5").s("sawtooth").vowel("o").attack(.4).release(1.5).gain(.2)
-      .lpf(2000).room(.8).orbit(2)))
+      .lpf(2000).room(.8).roomsize(6).orbit(2)))
 ).postgain(.27)

@@ -25,9 +25,9 @@ stack(
   note("e2").s("triangle").attack(1.5).release(3).gain(.35),
   chord(P).voicing().mode("below:e5")
     .s("sawtooth").vowel("a").attack(1.2).release(2.5).gain(.16)
-    .lpf(2500).room(.9).roomsize(9).orbit(2),
+    .lpf(2500).room(.9).roomsize(8).orbit(2),
   n(lead).scale("e5:spanish")
-    .s("whistle").gain(.55).attack(.1).release(.9).room(.8).roomsize(7).orbit(2),
+    .s("whistle").gain(.55).attack(.1).release(.9).room(.8).roomsize(8).orbit(2),
   // 1: glass bells, a slow pulse
   layer(1, stack(
     n("<[0 ~ 2 ~ 4 ~ 2 ~] [1 ~ 3 ~ 5 ~ 3 ~]>".add("<0 0 2 0 -1 0 3 0>")).scale("e4:spanish")
@@ -38,5 +38,5 @@ stack(
     s("taiko:0 ~ ~ ~ ~ ~ taiko:1 ~").gain(.8).room(.5),
     s("swell:0 ~ ~ ~ ~ ~ ~ ~").slow(2).gain(.35).lpf(5000),
     n("<0 ~ 1 ~ 2 ~ 1 ~>".add("<0 0 0 0 2 2 -1 -1>")).scale("e3:spanish")
-      .s("sawtooth").attack(.2).release(1).gain(.3).lpf(1200).room(.6).orbit(2)))
+      .s("sawtooth").attack(.2).release(1).gain(.3).lpf(1200).room(.6).roomsize(8).orbit(2)))
 ).postgain(.33)
