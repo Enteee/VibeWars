@@ -6,7 +6,7 @@ import { soundsForCombat, soundsForSnapshot } from "./combat-sounds.js";
 const ME = "me";
 
 function message(casterSessionId: string, events: CombatMessage["events"]): CombatMessage {
-  return { casterSessionId, skillId: "x", events };
+  return { casterSessionId, cause: "skill", skillId: "x", events };
 }
 
 describe("soundsForCombat", () => {
@@ -64,16 +64,33 @@ describe("soundsForCombat", () => {
     expect(soundsForCombat(other, ME)).toEqual([]);
   });
 
+  it("cracks for your weapon's hit, which comes with no skill (#160)", () => {
+    const swing: CombatMessage = {
+      casterSessionId: ME,
+      cause: "weapon",
+      skillId: "",
+      events: [{ kind: "damage", targetId: "foe", amount: 18 }],
+    };
+    expect(soundsForCombat(swing, ME)).toEqual(["hit-dealt"]);
+  });
+
   it("is silent for a status tick on you, except the death it causes", () => {
     // How the server sends burning or Regeneration: the bearer as caster, no skill.
     const burning = {
       casterSessionId: ME,
+      cause: "degeneration" as const,
       skillId: "",
       events: [{ kind: "damage", targetId: ME }],
     };
-    const regen = { casterSessionId: ME, skillId: "", events: [{ kind: "heal", targetId: ME }] };
+    const regen = {
+      casterSessionId: ME,
+      cause: "degeneration" as const,
+      skillId: "",
+      events: [{ kind: "heal", targetId: ME }],
+    };
     const fatal = {
       casterSessionId: ME,
+      cause: "degeneration" as const,
       skillId: "",
       events: [
         { kind: "damage", targetId: ME },
@@ -101,6 +118,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     x: 0,
     y: 0,
     targetSessionId: undefined,
+    attackTargetSessionId: undefined,
     health: 100,
     maxHealth: 100,
     energy: 20,
@@ -128,6 +146,7 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     phase: "active",
     winningTeam: undefined,
     endReason: undefined,
+    projectiles: [],
   };
 }
 

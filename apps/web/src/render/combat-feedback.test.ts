@@ -11,6 +11,7 @@ function player(sessionId: string): PlayerSnapshot {
     x: 100,
     y: 100,
     targetSessionId: undefined,
+    attackTargetSessionId: undefined,
     health: 400,
     maxHealth: 500,
     energy: 20,
@@ -36,17 +37,26 @@ const SNAPSHOT: MatchSnapshot = {
   phase: "active",
   winningTeam: undefined,
   endReason: undefined,
+  projectiles: [],
 };
 
-/** The texts a scene would have been asked to float, for these events. */
-function floated(events: { kind: string; targetId?: string; amount?: number }[]): string[] {
+type Events = { kind: string; targetId?: string; amount?: number }[];
+
+/** What a scene would have been asked to float, for these events. */
+function floatedTexts(events: Events, cause: "skill" | "weapon" = "skill"): FloatingText[] {
   const texts: FloatingText[] = [];
   showCombatFeedback(
     { addFloatingText: (text) => texts.push(text), addAreaFlash: () => undefined },
-    { casterSessionId: "me", skillId: "elementalist.fireball", events },
+    cause === "skill"
+      ? { casterSessionId: "me", cause, skillId: "elementalist.fireball", events }
+      : { casterSessionId: "me", cause, skillId: "", events },
     SNAPSHOT,
   );
-  return texts.map((text) => text.text);
+  return texts;
+}
+
+function floated(events: Events): string[] {
+  return floatedTexts(events).map((text) => text.text);
 }
 
 describe("showCombatFeedback", () => {
@@ -61,6 +71,21 @@ describe("showCombatFeedback", () => {
 
   it("floats a blinded attack's miss over its target", () => {
     expect(floated([{ kind: "attack-missed", targetId: "them" }])).toEqual(["miss"]);
+  });
+
+  it("floats a weapon's numbers smaller than a skill's, and its misses as words", () => {
+    const hit = [{ kind: "damage", targetId: "them", amount: 18 }];
+    expect(floatedTexts(hit, "weapon")[0]?.size).toBe("small");
+    expect(floatedTexts(hit, "skill")[0]?.size).toBe("full");
+    expect(
+      floatedTexts(
+        [
+          { kind: "attack-dodged", targetId: "them" },
+          { kind: "attack-obstructed", targetId: "them" },
+        ],
+        "weapon",
+      ).map((text) => text.text),
+    ).toEqual(["dodge", "obstructed"]);
   });
 
   it("skips events about nobody it can see", () => {
@@ -78,7 +103,13 @@ describe("showCombatFeedback and areas", () => {
     const flashes: AreaFlash[] = [];
     showCombatFeedback(
       { addFloatingText: () => undefined, addAreaFlash: (flash) => flashes.push(flash) },
-      { casterSessionId, skillId: "elementalist.fireball", events: [], ...(area && { area }) },
+      {
+        casterSessionId,
+        cause: "skill",
+        skillId: "elementalist.fireball",
+        events: [],
+        ...(area && { area }),
+      },
       snapshot,
     );
     return flashes;

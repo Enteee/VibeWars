@@ -47,6 +47,11 @@ export interface FloatingText {
   readonly text: string;
   readonly position: Vec2;
   readonly colour: number;
+  /**
+   * `small` for a weapon swing's number: there are many more of them than
+   * of skill numbers, which they must not drown out (#160).
+   */
+  readonly size: "full" | "small";
   /** Seconds of life remaining; the scene fades and removes it. */
   remainingSeconds: number;
 }

@@ -1,3 +1,4 @@
+import type { CombatCause } from "@vibewars/game-core";
 import type { CastRefusedMessage, ClientIntent, MapDescriptor } from "@vibewars/game-protocol";
 
 /**
@@ -19,6 +20,8 @@ export interface PlayerSnapshot {
   readonly y: number;
   /** Who this player is targeting, or `undefined` for no target. */
   readonly targetSessionId: string | undefined;
+  /** Who this player's weapon is attacking, or `undefined` for nobody. */
+  readonly attackTargetSessionId: string | undefined;
   readonly health: number;
   readonly maxHealth: number;
   readonly energy: number;
@@ -37,6 +40,19 @@ export interface PlayerSnapshot {
   readonly statuses: readonly string[];
 }
 
+/** A ranged weapon's shot in flight, as released (#159). */
+export interface ProjectileSnapshot {
+  readonly id: number;
+  readonly x0: number;
+  readonly y0: number;
+  /** Where it lands. */
+  readonly x1: number;
+  readonly y1: number;
+  /** Match time of the release, on the `elapsedSeconds` clock. */
+  readonly launchedAt: number;
+  readonly flightSeconds: number;
+}
+
 export interface MatchSnapshot {
   readonly selfSessionId: string;
   readonly players: readonly PlayerSnapshot[];
@@ -49,6 +65,8 @@ export interface MatchSnapshot {
   readonly winningTeam: number | undefined;
   /** "score", "time", or `undefined` while active. */
   readonly endReason: string | undefined;
+  /** Shots in flight, oldest first. */
+  readonly projectiles: readonly ProjectileSnapshot[];
 }
 
 /** One slot of the server-assigned skill bar. */
@@ -70,6 +88,9 @@ export interface SlotRecharge {
 
 export interface CombatMessage {
   readonly casterSessionId: string;
+  /** What it was: read this, never an empty `skillId`. */
+  readonly cause: CombatCause;
+  /** The skill, or `""` when `cause` is not `"skill"`. */
   readonly skillId: string;
   /** Where an area skill landed, and how far it reached (#5). */
   readonly area?: { readonly x: number; readonly y: number; readonly radius: number };

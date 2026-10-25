@@ -294,7 +294,7 @@ export class ArenaScene extends Phaser.Scene {
       let object = this.floatingTextObjects.get(floating.id);
       if (object === undefined) {
         object = this.add.text(floating.position.x, floating.position.y, floating.text, {
-          fontSize: "13px",
+          fontSize: floating.size === "small" ? "11px" : "13px",
           fontFamily: "ui-monospace, monospace",
           color: `#${floating.colour.toString(16).padStart(6, "0")}`,
         });

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { getTrainingScenario } from "@vibewars/game-core";
 
+import type { CastRefusedMessage } from "@vibewars/game-protocol";
 import type { CombatMessage } from "../net/match-connection.js";
 import { setProfessions, setRank, setSkill, newCharacter } from "../ui/build-editor.js";
 import {
@@ -79,8 +80,11 @@ describe("createLocalConnection", () => {
     const areas: CombatMessage["area"][] = [];
     let steps = 0;
     connection.onCombat((message) => {
-      combat.push(...message.events.map((event) => event.kind));
-      areas.push(message.area);
+      // Fireball also starts an attack on the dummy (#160); only the cast counts here.
+      if (message.cause === "skill") {
+        combat.push(...message.events.map((event) => event.kind));
+        areas.push(message.area);
+      }
     });
     connection.onStep(() => {
       steps += 1;
@@ -101,21 +105,33 @@ describe("createLocalConnection", () => {
     expect(areas).toEqual([{ x: dummy?.x, y: dummy?.y, radius: 81 }]);
   });
 
-  it("reports a swing as its attacker's, with no skill", () => {
-    const { setup, connection } = targetDummy();
+  it("attacks on an attack intent, reports each swing as its attacker's, and cancels", () => {
+    const { connection } = targetDummy();
     const swings: CombatMessage[] = [];
     connection.onCombat((message) => {
-      if (message.skillId === "") {
+      if (message.cause === "weapon") {
         swings.push(message);
       }
     });
-    // No key for it until #160: ask the simulation directly.
-    expect(setup.simulation.requestAttack(SELF_ID, "dummy")).toEqual({ ok: true });
+    connection.sendIntent({ kind: "attack", targetId: "dummy" });
+    const self = () => connection.getSnapshot().players.find((p) => p.sessionId === SELF_ID);
+    expect(self()?.attackTargetSessionId).toBe("dummy");
     for (let i = 0; i < 400 && swings.length === 0; i += 1) {
       connection.advance(TICK_SECONDS);
     }
-    expect(swings[0]?.casterSessionId).toBe(SELF_ID);
+    expect(swings[0]).toMatchObject({ casterSessionId: SELF_ID, skillId: "" });
     expect(swings[0]?.events[0]?.targetId).toBe("dummy");
+
+    connection.sendIntent({ kind: "cancel-attack" });
+    expect(self()?.attackTargetSessionId).toBeUndefined();
+  });
+
+  it("says why an attack was refused", () => {
+    const { connection } = targetDummy();
+    const refusals: CastRefusedMessage[] = [];
+    connection.onCastRefused((message) => refusals.push(message));
+    connection.sendIntent({ kind: "attack", targetId: SELF_ID });
+    expect(refusals).toEqual([{ slot: -1, skillId: "", reason: "invalid-target-self" }]);
   });
 
   it("reports a cast's real total, as the server does, so the bar fills over it", () => {

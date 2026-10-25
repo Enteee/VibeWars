@@ -67,6 +67,7 @@ export function showCombatFeedback(
       text: cue.text,
       position: vec2(subject.x, subject.y - 24),
       colour: COLOURS[cue.tone],
+      size: message.cause === "weapon" ? "small" : "full",
       remainingSeconds: 1.2,
     });
   }

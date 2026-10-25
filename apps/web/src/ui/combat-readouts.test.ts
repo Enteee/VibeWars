@@ -63,6 +63,7 @@ describe("logToneOf", () => {
       "interrupt-missed",
       "attack-missed",
       "attack-dodged",
+      "attack-obstructed",
     ];
     expect(kinds.map(logToneOf)).toEqual([
       "damage",
@@ -73,6 +74,7 @@ describe("logToneOf", () => {
       "status",
       "status",
       "status",
+      "control",
       "control",
       "control",
       "control",
@@ -233,6 +235,10 @@ describe("floatingCueFor", () => {
   it("floats 'miss' over the target of a blinded attack", () => {
     expect(floatingCueFor("attack-missed", undefined)).toEqual({ text: "miss", tone: "neutral" });
     expect(floatingCueFor("attack-dodged", undefined)).toEqual({ text: "dodge", tone: "neutral" });
+    expect(floatingCueFor("attack-obstructed", undefined)).toEqual({
+      text: "obstructed",
+      tone: "neutral",
+    });
   });
 
   it("treats a missing amount as 0", () => {
