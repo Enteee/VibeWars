@@ -1,0 +1,31 @@
+{
+  "name": "@vibewars/game-session",
+  "version": "0.0.0",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "description": "Peer-to-peer match sessions over a Transport (#15). Runs in a browser, a worker or Node; touches none of them directly.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/memory-transport.d.ts",
+      "default": "./dist/memory-transport.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@vibewars/game-core": "workspace:*",
+    "@vibewars/game-protocol": "workspace:*"
+  }
+}

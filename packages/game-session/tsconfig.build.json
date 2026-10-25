@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "// lib": "No DOM and no Node types: a session runs in a page, a worker and Node alike, so `window` and `RTCPeerConnection` must not compile here. The two globals all three share are declared in src/globals.d.ts.",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": [],
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "tsBuildInfoFile": "./dist/.tsbuildinfo"
+  },
+  "references": [
+    { "path": "../game-core/tsconfig.build.json" },
+    { "path": "../game-protocol/tsconfig.build.json" }
+  ],
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}

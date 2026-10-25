@@ -20,6 +20,7 @@
     "format:check": "prettier --check .",
     "clean": "git clean -xdf node_modules dist .tsbuildinfo && pnpm -r exec rm -rf dist node_modules",
     "dev": "node scripts/dev.mjs",
+    "music:check": "pnpm --filter @vibewars/web run music:check",
     "test:e2e": "playwright test",
     "wire:snapshot": "tsc --build tsconfig.build.json && WIRE_SNAPSHOT=write vitest run apps/server/src/tools/wire-snapshot.test.ts",
     "ci": "pnpm run format:check && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build",

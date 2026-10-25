@@ -32,6 +32,9 @@ export default defineConfig([
     // everybody, including CI.
     ".bots/**",
     "packages/game-data/generated/**",
+    // Strudel source, not project JavaScript: it is evaluated by the music
+    // host, where quotes carry meaning and `layer`/`INTENSITY` are globals.
+    "apps/web/src/music/**/*.strudel.js",
   ]),
 
   eslint.configs.recommended,
@@ -81,6 +84,7 @@ export default defineConfig([
       // harmless; the bot bridge needs `fetch` and `Buffer`, which have no
       // import form.
       "scripts/**/*.mjs",
+      "apps/web/scripts/**/*.mjs",
     ],
     languageOptions: { globals: globals.node },
   },
@@ -103,6 +107,29 @@ export default defineConfig([
             {
               group: ["node:*", ...builtinModules],
               message: "schema.ts and geometry.ts are imported by the browser; keep Node out.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // A session runs in a page, a worker and Node alike, and is handed its
+  // Transport (#15): no Node built-ins, and no transport library.
+  {
+    files: ["packages/game-session/src/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["node:*", ...builtinModules],
+              message: "game-session runs in the browser too; keep Node out.",
+            },
+            {
+              group: ["trystero", "trystero/*"],
+              message: "game-session is handed a Transport; the Trystero one lives in apps/web.",
             },
           ],
         },

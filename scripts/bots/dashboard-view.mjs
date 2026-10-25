@@ -7,6 +7,7 @@
  * once its colour codes are left out. A line one column too wide makes
  * tmux wrap it, and the whole pane jumps.
  */
+import { formatCount } from "./claude-usage.mjs";
 import { visible } from "./protocol.mjs";
 import { clock } from "./reboot.mjs";
 
@@ -284,6 +285,7 @@ export function boardLines(snapshot, columns, live, { rows, width }) {
  * @property {ReadonlySet<string>} live the roles hired right now
  * @property {Budget | null} budget null before hubd has checked
  * @property {ReturnType<typeof import("./hub-health.mjs").hubHealth>} hub hubd, as its heartbeat and restarts say (#23)
+ * @property {ClaudeUsage | null} claude null before any agent has logged (#50)
  * @property {{ record: import("./reboot.mjs").Reboot, between: readonly string[], now: number } | { rebooting: string } | null} reboot
  *   the pending reboot with the roles between turns, or the reason of the one handed to the restarter (#345)
  */
@@ -349,6 +351,80 @@ function hubSection({ hub }, width) {
 }
 
 /**
+ * What each role's Claude used (#50), with the clock it was read at:
+ * the pane's own functions have none.
+ *
+ * @typedef {object} ClaudeUsage
+ * @property {import("./claude-usage.mjs").UsageSummary} summary
+ * @property {ReadonlySet<string>} capped roles whose counts are short: their
+ *   logs hold more replies than are kept
+ * @property {number} now epoch milliseconds
+ */
+
+/**
+ * One row of the CLAUDE table: a name, then four counts and a model.
+ *
+ * @param {string} name
+ * @param {readonly string[]} cells replies, output, input, cache read
+ * @param {string} model
+ * @returns {string}
+ */
+function usageRow(name, cells, model) {
+  const [replies = "", output = "", input = "", cacheRead = ""] = cells;
+  return `  ${name.padEnd(15)}${replies.padStart(8)}${output.padStart(9)}${input.padStart(9)}${cacheRead.padStart(10)}  ${model}`.trimEnd();
+}
+
+/**
+ * Tokens per role over the plan's 5-hour window (#50), so a role stuck in
+ * a loop shows before the limit hits everyone. No prices and no quota:
+ * neither is in the logs.
+ *
+ * @param {CompanyFacts} facts
+ * @param {number} width
+ * @returns {string[]}
+ */
+function claudeSection({ roles, claude }, width) {
+  if (claude === null) {
+    return [cut("CLAUDE usage unknown (no agent logs yet)", width)];
+  }
+  const { summary, capped, now } = claude;
+  let top = "";
+  let most = 0;
+  for (const [role, usage] of summary.roles) {
+    if (usage.output > most) {
+      top = role;
+      most = usage.output;
+    }
+  }
+  /** @param {import("./claude-usage.mjs").RoleUsage} usage */
+  const counts = (usage) =>
+    [usage.replies, usage.output, usage.input, usage.cacheRead].map(formatCount);
+  return [
+    paint(cut(`CLAUDE tokens, last 5h, as of ${hhmm(now)}`, width), "1"),
+    cut(usageRow("role", ["replies", "output", "input", "cache rd"], "model"), width),
+    ...roles.map((role) => {
+      const usage = summary.roles.get(role);
+      if (usage === undefined) {
+        return cut(usageRow(role, ["—"], ""), width);
+      }
+      // The model is agent-written, printed into the operator's tmux: see
+      // `visible`. A capped row says so instead, where no model can push it
+      // out of the pane.
+      const model = capped.has(role) ? "over cap" : visible(usage.model.replace(/^claude-/, ""));
+      const line = cut(
+        usageRow(role, counts(usage), `${model}${role === top ? "  <- top" : ""}`),
+        width,
+      );
+      return role === top ? paint(line, "1") : line;
+    }),
+    cut(
+      usageRow("total", counts(summary.total), `(today: ${formatCount(summary.todayOutput)} out)`),
+      width,
+    ),
+  ];
+}
+
+/**
  * The reboot, as the COMPANY pane tells it (#345): who holds the drain up
  * is the roles in a turn that have not run `company ready`; a role between
  * turns counts as done, as in `drainStep`.
@@ -389,12 +465,18 @@ function rebootSection({ reboot, roles, live }, width) {
 }
 
 /**
- * The COMPANY pane's sections, in order. #50 (tokens per role) adds a
- * function here rather than a pane, as #23's hub line did.
+ * The COMPANY pane's sections, in order. A new one is a
+ * function here rather than a pane, as #23's hub line and #50's tokens are.
  *
  * @type {readonly ((facts: CompanyFacts, width: number) => string[])[]}
  */
-export const COMPANY_SECTIONS = [rebootSection, rosterSection, hubSection, githubSection];
+export const COMPANY_SECTIONS = [
+  rebootSection,
+  rosterSection,
+  hubSection,
+  githubSection,
+  claudeSection,
+];
 
 /**
  * The COMPANY pane: each section, a blank line between, cut with

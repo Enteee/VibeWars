@@ -80,26 +80,12 @@ export function resolveScenarioId(
 }
 
 /**
- * What the arena overlay says, if anything covers it. An empty bar is a
- * hint only where skills are the point: a weapon drill is played with
- * Space, so it stays uncovered, or the Dodge drill would shoot at a
- * dimmed arena (#162).
+ * What the arena overlay says, if anything covers it: only an illegal
+ * build is parked behind it (ADR-0020). An empty bar is a legal build
+ * and plays, since walking, targeting and the weapon need no skill (#360).
  */
-export function overlayMessage(
-  problem: string | undefined,
-  skillBar: readonly string[],
-  scenario: Pick<TrainingScenario, "exercises">,
-): string | undefined {
-  if (problem !== undefined) {
-    return `This build cannot be tested: ${problem}`;
-  }
-  const weaponDrill = scenario.exercises.some(
-    (mechanic) => mechanic === "auto-attacks" || mechanic === "dodging",
-  );
-  if (skillBar.length === 0 && !weaponDrill) {
-    return "Equip a skill to start testing.";
-  }
-  return undefined;
+export function overlayMessage(problem: string | undefined): string | undefined {
+  return problem === undefined ? undefined : `This build cannot be tested: ${problem}`;
 }
 
 export const SCENARIO_STORAGE_KEY = "vibewars.training.scenario";

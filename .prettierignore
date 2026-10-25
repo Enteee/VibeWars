@@ -20,8 +20,9 @@ packages/game-data/generated/
 # must actually handle.
 packages/game-data/src/__fixtures__/
 packages/game-data/raw/
-# Strudel patterns: Prettier turns single quotes into double, and to Strudel
-# double quotes mean mini-notation.
-*.strudel.js
+# Strudel gives quotes meaning (double quotes are mini-notation, single quotes
+# are plain strings), so Prettier's quote normalisation would change what a
+# track plays.
+apps/web/src/music/**/*.strudel.js
 # Written by scripts/assets/music-palette.sh.
 apps/web/public/music/samples/strudel.json

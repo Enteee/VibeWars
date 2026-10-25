@@ -32,6 +32,9 @@ packages/
   game-maps/        (Sprint 6+) Declarative map data + geometry helpers.
   game-data/        (Sprint 9+) Normalized GW1 skill corpus + the importer
                      pipeline that produces it.
+  game-session/     Peer-to-peer match sessions over an injected Transport
+                     (ADR-0022, Proposed). No DOM, no Node, no transport
+                     library.
 ```
 
 The dependency direction is one-way:
@@ -41,7 +44,9 @@ game-core  <--  game-protocol  <--  apps/server
     ^                           <--  apps/web
     |
     +--  game-maps  <--  apps/server
-                    <--  apps/web   (schema, geometry and map JSON only)
+    |               <--  apps/web   (schema, geometry and map JSON only)
+    |
+    +--  game-session  (also on game-protocol; nothing uses it yet, #15)
 ```
 
 `game-core` depends on nothing else in the workspace, and `game-maps` on

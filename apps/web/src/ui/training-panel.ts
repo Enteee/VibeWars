@@ -361,12 +361,8 @@ export function createTrainingPanel(): TrainingPanel {
     skills.replaceChildren(...skillButtons);
   };
 
-  const paintOverlay = (
-    problem: string | undefined,
-    skillBar: readonly string[],
-    scenario: TrainingScenario,
-  ): void => {
-    const text = overlayMessage(problem, skillBar, scenario);
+  const paintOverlay = (problem: string | undefined): void => {
+    const text = overlayMessage(problem);
     overlay.hidden = text === undefined;
     overlay.textContent = text ?? "";
   };
@@ -457,7 +453,7 @@ export function createTrainingPanel(): TrainingPanel {
     stage.style.setProperty("--training-aspect", `${String(map.width)} / ${String(map.height)}`);
     viewport?.setWorldSize(map.width, map.height);
     paintSkills(connection.skillBar);
-    paintOverlay(setup.arming.problem, setup.arming.skillBar, scenario);
+    paintOverlay(setup.arming.problem);
     restartMeter(scenario.label);
   };
 
@@ -473,7 +469,7 @@ export function createTrainingPanel(): TrainingPanel {
     session.connection.rearm(arming.loadout, arming.skillBar);
     session.parked = parked;
     paintSkills(session.connection.skillBar);
-    paintOverlay(arming.problem, arming.skillBar, session.scenario);
+    paintOverlay(arming.problem);
     // A meter averaging two builds is a lie; the log keeps the history.
     restartMeter("re-armed");
   };

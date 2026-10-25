@@ -120,6 +120,7 @@ packages/
   game-protocol/  The client/server wire contract
   game-maps/      Declarative arenas + loader/validator
   game-data/      GW1 reference-skill import pipeline + dev CLI
+  game-session/   Peer-to-peer match sessions over a Transport (in progress, #15)
 docs/
   product/master-brief.md   Product brief and sprint roadmap
   adr/                      Architectural Decision Records
