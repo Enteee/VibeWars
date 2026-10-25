@@ -215,6 +215,17 @@ describe("walkTo (#310)", () => {
     expect(get(match, "a").position).toEqual(stopped);
   });
 
+  it("Esc, cancel action, ends it where the hero stands (#300)", () => {
+    const match = arena(hero("a", vec2(80, 200)));
+    match.walkTo("a", vec2(400, 200));
+    stepFor(match, 0.5);
+    match.cancelAction("a");
+    expect(get(match, "a").walkGoal).toBeUndefined();
+    const stopped = get(match, "a").position;
+    stepFor(match, 0.5);
+    expect(get(match, "a").position).toEqual(stopped);
+  });
+
   it("an attack replaces it, and its approach takes over", () => {
     const match = arena(hero("a", vec2(80, 200)), body("d", vec2(80, 500)));
     match.walkTo("a", vec2(400, 200));

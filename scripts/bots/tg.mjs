@@ -41,6 +41,7 @@ import {
   SUPPORT,
   TO_OPERATOR,
   formatLine,
+  obj,
   readInbox,
 } from "./protocol.mjs";
 
@@ -58,6 +59,8 @@ const OUTBOX = path.join(DIR, "outbox");
 const RECEIPTS = path.join(DIR, "receipts");
 const CURSOR = path.join(DIR, "cursor");
 const ROSTER = path.join(BUS, "roster");
+/** The context of this agent's last call, written by agent-turn.mjs (#321). */
+const CONTEXT = path.join(DIR, "context.json");
 
 /* -------------------------------------------------------------------------- */
 
@@ -171,6 +174,34 @@ function drain(fromStart, advance) {
 }
 
 /**
+ * Is this agent's context past the ceiling? A missing or unreadable file
+ * means no ceiling.
+ *
+ * @returns {{ tokens: number, ceiling: number } | null} the two, when it is
+ */
+function overCeiling() {
+  /** @type {unknown} */
+  let parsed;
+  try {
+    parsed = JSON.parse(fs.readFileSync(CONTEXT, "utf8"));
+  } catch {
+    return null;
+  }
+  const { tokens, ceiling } = obj(parsed);
+  return typeof tokens === "number" && typeof ceiling === "number" && tokens >= ceiling
+    ? { tokens, ceiling }
+    : null;
+}
+
+/**
+ * @param {number} tokens
+ * @returns {string}
+ */
+function kilo(tokens) {
+  return `${String(Math.round(tokens / 1000))}k`;
+}
+
+/**
  * @param {number} timeoutSeconds
  * @returns {Promise<number>}
  */
@@ -180,6 +211,15 @@ async function wait(timeoutSeconds) {
     const printed = drain(false, true);
     if (printed > 0) {
       return printed;
+    }
+    // Waiting on would make every call of the next task re-read all of
+    // this one (#321): end the turn here, and the next starts fresh.
+    const over = overCeiling();
+    if (over !== null) {
+      console.log(
+        `Your context is over the ceiling (${kilo(over.tokens)} of ${kilo(over.ceiling)}). Commit and push any WIP, put anything that lives only in this conversation on the card or in a memory, then END YOUR TURN. The next turn starts fresh; your inbox is kept.`,
+      );
+      return 0;
     }
     if (Date.now() >= deadline) {
       console.log(`(nothing new in ${String(timeoutSeconds)}s)`);

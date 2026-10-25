@@ -142,7 +142,7 @@ export interface UseSkillIntent {
 
 /**
  * Attack `targetId` with the equipped weapon until told otherwise: walk
- * into reach, then swing (#160). Moving, `CancelAttackIntent` or the
+ * into reach, then swing (#160). Moving, `CancelIntent` or the
  * target dying ends it.
  */
 export interface AttackIntent {
@@ -150,9 +150,12 @@ export interface AttackIntent {
   readonly targetId: string;
 }
 
-/** Stop the attack in progress, if there is one. */
-export interface CancelAttackIntent {
-  readonly kind: "cancel-attack";
+/**
+ * Cancel Action, Esc in GW1 (#300): stop the cast and the attack in
+ * progress, whichever are running.
+ */
+export interface CancelIntent {
+  readonly kind: "cancel";
 }
 
 /**
@@ -310,7 +313,7 @@ export type ClientIntent =
   | TargetIntent
   | UseSkillIntent
   | AttackIntent
-  | CancelAttackIntent
+  | CancelIntent
   | WalkToIntent;
 
 /**
@@ -372,8 +375,8 @@ export function parseClientIntent(value: unknown): ClientIntent | undefined {
     return { kind: "attack", targetId: record.targetId };
   }
 
-  if (record.kind === "cancel-attack" && hasOnlyKeys(record, ["kind"])) {
-    return { kind: "cancel-attack" };
+  if (record.kind === "cancel" && hasOnlyKeys(record, ["kind"])) {
+    return { kind: "cancel" };
   }
 
   if (

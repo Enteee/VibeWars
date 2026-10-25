@@ -21,15 +21,29 @@
  * also keeps the event that said so in `usage-limit-sample.json`, and a
  * failed run its last raw lines in `last-failure.jsonl`, so the shapes
  * the limit detection guesses at can be checked against real ones.
+ *
+ * Every call re-reads the whole conversation, so a long one is paid for on
+ * every call (#321). The context of each call goes to
+ * `$VIBEWARS_CONTEXT_FILE`, where `tg wait` reads it and tells an agent
+ * past CONTEXT_CEILING to end its turn. A turn that ends past it forgets
+ * the session, so the next one starts fresh from the kickoff prompt.
  */
 
 import { spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import readline from "node:readline";
 
-import { formatLine, parseEvent, runFailed, sessionIdOf, usageLimitOf } from "./stream-format.mjs";
+import {
+  contextOf,
+  formatLine,
+  parseEvent,
+  runFailed,
+  sessionIdOf,
+  usageLimitOf,
+} from "./stream-format.mjs";
 
 const [state, separator, command, ...args] = process.argv.slice(2);
 if (state === undefined || separator !== "--" || command === undefined) {
@@ -40,6 +54,54 @@ const SESSION = path.join(state, "session-id");
 
 /** How many raw lines of a failed run `last-failure.jsonl` keeps. */
 const FAILURE_LINES = 20;
+
+/** Past this many tokens of context, the next turn starts a new session (#321). */
+const CONTEXT_CEILING = 120_000;
+const CONTEXT_FILE = process.env.VIBEWARS_CONTEXT_FILE ?? "";
+
+/**
+ * @param {number} tokens
+ * @returns {void}
+ */
+function saveContext(tokens) {
+  if (CONTEXT_FILE === "") {
+    return;
+  }
+  // The file is in the agent's own bus directory, which its jail can
+  // write, and this runs on the host. So the temporary file gets a name
+  // the agent cannot guess and is created, never opened: a symlink planted
+  // there is refused, not followed onto a host file. The rename then
+  // replaces whatever is at the final name, a symlink included, without
+  // following it.
+  // A write that fails costs the agent its notice, never the turn.
+  const part = `${CONTEXT_FILE}.${randomBytes(8).toString("hex")}.part`;
+  try {
+    const fd = fs.openSync(
+      part,
+      fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_NOFOLLOW,
+      0o644,
+    );
+    try {
+      fs.writeSync(fd, `${JSON.stringify({ tokens, ceiling: CONTEXT_CEILING })}\n`);
+    } finally {
+      fs.closeSync(fd);
+    }
+    fs.renameSync(part, CONTEXT_FILE);
+  } catch (error) {
+    fs.rmSync(part, { force: true });
+    console.error(
+      `agent-turn: could not write ${CONTEXT_FILE}: ${error instanceof Error ? error.message : "?"}`,
+    );
+  }
+}
+
+/**
+ * @param {number} tokens
+ * @returns {string}
+ */
+function kilo(tokens) {
+  return `${String(Math.round(tokens / 1000))}k`;
+}
 
 /** @returns {string | null} */
 function savedSession() {
@@ -91,14 +153,19 @@ process.on("SIGINT", () => {
 });
 
 fs.mkdirSync(state, { recursive: true });
+if (CONTEXT_FILE !== "") {
+  fs.mkdirSync(path.dirname(CONTEXT_FILE), { recursive: true });
+}
+// So a file left from the last session never turns this one away.
+saveContext(0);
 const resume = savedSession();
 const child = spawn(command, [...(resume === null ? [] : ["--resume", resume]), ...args], {
   stdio: ["inherit", "pipe", "inherit"],
 });
 
 /** What the run got as far as; set from the stream as it arrives. */
-/** @type {{ init: boolean, result: boolean, limit: { until: number | null } | null, limitLine: string }} */
-const seen = { init: false, result: false, limit: null, limitLine: "" };
+/** @type {{ init: boolean, result: boolean, limit: { until: number | null } | null, limitLine: string, context: number }} */
+const seen = { init: false, result: false, limit: null, limitLine: "", context: 0 };
 /** @type {string[]} */
 const recent = [];
 const lines = readline.createInterface({ input: child.stdout, crlfDelay: Infinity });
@@ -121,6 +188,11 @@ lines.on("line", (line) => {
   }
   if (event?.type === "result") {
     seen.result = true;
+  }
+  const context = contextOf(event);
+  if (context !== null) {
+    seen.context = context;
+    saveContext(context);
   }
   for (const out of formatLine(line)) {
     process.stdout.write(`${out}\n`);
@@ -147,6 +219,12 @@ if (seen.limit !== null) {
   writeAtomically(path.join(state, "usage-limit-sample.json"), `${seen.limitLine}\n`);
   console.error(`agent-turn: Claude usage limit reached; ${resetText(until)}`);
   process.exit(3);
+}
+if (seen.context >= CONTEXT_CEILING) {
+  fs.rmSync(SESSION, { force: true });
+  console.error(
+    `agent-turn: context ${kilo(seen.context)} >= ${kilo(CONTEXT_CEILING)}; next turn starts a fresh session`,
+  );
 }
 if (!runFailed({ code, sawResult: seen.result })) {
   process.exit(0);

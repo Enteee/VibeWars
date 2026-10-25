@@ -76,7 +76,7 @@ import { steerAround } from "./steering.js";
  * participant's behaviour, if it has one. Projectiles already in flight
  * advance, and land, before anyone acts. Player-driven participants have
  * none: their intents arrive between steps, through `setInputDirection`,
- * `walkTo`, `setTarget`, `requestSkill`, `requestAttack` and `cancelAttack`.
+ * `walkTo`, `setTarget`, `requestSkill`, `requestAttack` and `cancelAction`.
  */
 
 export interface ParticipantSpec {
@@ -462,6 +462,29 @@ export class MatchSimulation {
   /** Moving cancels the attack and a cast with a cast time, as in GW1 (#279). */
   #moveInterrupts(record: ParticipantRecord): void {
     record.combatant.attack = undefined;
+    this.#cancelCast(record);
+  }
+
+  /**
+   * Cancel Action, Esc in GW1 (#300): stop the cast, the attack and a
+   * walk to a clicked point (#310) in one press, whichever are running.
+   * The cast ends as walking ends it, paid for and not recharging. With
+   * none running, nothing happens.
+   */
+  public cancelAction(id: string): void {
+    const record = this.#participants.get(id);
+    if (record !== undefined) {
+      this.#cancelCast(record);
+      record.combatant.attack = undefined;
+      record.walkGoal = undefined;
+    }
+  }
+
+  /**
+   * Abandon `record`'s cast and log it as `"cancelled"`. An instant skill
+   * has no cast to give up, so it is left to resolve.
+   */
+  #cancelCast(record: ParticipantRecord): void {
     const cast = record.combatant.cast.activeCast;
     if (cast !== undefined && cast.totalSeconds > 0) {
       record.combatant.cast.cancelCast();
@@ -505,13 +528,6 @@ export class MatchSimulation {
       }
     }
     return check;
-  }
-
-  public cancelAttack(id: string): void {
-    const record = this.#participants.get(id);
-    if (record !== undefined) {
-      record.combatant.attack = undefined;
-    }
   }
 
   /**

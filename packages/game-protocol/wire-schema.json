@@ -91,9 +91,7 @@
               ]
             },
             {
-              "properties": [
-                { "name": "kind", "optional": false, "type": { "literal": "cancel-attack" } }
-              ]
+              "properties": [{ "name": "kind", "optional": false, "type": { "literal": "cancel" } }]
             },
             {
               "properties": [{ "name": "kind", "optional": false, "type": { "literal": "stop" } }]
@@ -601,8 +599,8 @@
         { "name": "targetId", "optional": false, "type": "string" }
       ]
     },
-    "CancelAttackIntent": {
-      "properties": [{ "name": "kind", "optional": false, "type": { "literal": "cancel-attack" } }]
+    "CancelIntent": {
+      "properties": [{ "name": "kind", "optional": false, "type": { "literal": "cancel" } }]
     },
     "CastRefusedMessage": {
       "union": [
@@ -637,11 +635,7 @@
             { "name": "targetId", "optional": false, "type": "string" }
           ]
         },
-        {
-          "properties": [
-            { "name": "kind", "optional": false, "type": { "literal": "cancel-attack" } }
-          ]
-        },
+        { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "cancel" } }] },
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "stop" } }] },
         {
           "properties": [
@@ -699,7 +693,7 @@
               },
               {
                 "properties": [
-                  { "name": "kind", "optional": false, "type": { "literal": "cancel-attack" } }
+                  { "name": "kind", "optional": false, "type": { "literal": "cancel" } }
                 ]
               },
               {
