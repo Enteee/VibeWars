@@ -1,3 +1,4 @@
+import { MAX_MESSAGE_BYTES } from "@vibewars/game-session";
 import { transportContract } from "@vibewars/game-session/testing";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
@@ -110,6 +111,22 @@ describe("the BroadcastChannel transport (#392)", () => {
     raw.postMessage({ kind: "msg", from: "x", to: null, channel: "intent", data: 3 });
     await settle();
     expect(got).toEqual([3]);
+    await peer.leave();
+    raw.close();
+  });
+
+  it("drops a message over MAX_MESSAGE_BYTES before anything reads it (#403)", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const code = freshCode();
+    const peer = joinBroadcastRoom(code);
+    const got: unknown[] = [];
+    peer.on("intent", (data) => got.push(data));
+    const raw = new BroadcastChannel(`${APP_ID}:${code}`);
+    const big = "x".repeat(MAX_MESSAGE_BYTES);
+    raw.postMessage({ kind: "msg", from: "x", to: null, channel: "intent", data: big });
+    raw.postMessage({ kind: "msg", from: "x", to: null, channel: "intent", data: "small" });
+    await settle();
+    expect(got).toEqual(["small"]);
     await peer.leave();
     raw.close();
   });

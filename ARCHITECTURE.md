@@ -263,16 +263,17 @@ gap 6.
 ## Deploy targets
 
 - **The container** (`containers.prod`, ADR-0009): one process serves the
-  built client and the game server. This is how online play is hosted.
+  built client and the game server. The client no longer uses the server
+  (#403); phase 5 (#404) deletes it, and this target with it.
 - **GitHub Pages** (`.github/workflows/pages.yml`, #103): the client alone,
-  as a static site, built with `VIBEWARS_BASE` (a sub-path) and
-  `VITE_VIBEWARS_ONLINE=off`. `/next/` follows `main`, and the root follows
-  the latest release. With no server behind it, online play is disabled.
+  as a static site, built with `VIBEWARS_BASE` (a sub-path). `/next/`
+  follows `main`, and the root follows the latest release. Online play is
+  peer to peer over Trystero (#15, #403): one player's browser hosts the
+  lobby and its match, and no server is involved.
   Each base path gets its own storage namespace (`storage/namespace.ts`), so
   the two builds on one origin never read each other's saves.
 
-ADR-0009 is not superseded by this; #15 does that once online play itself
-becomes static.
+ADR-0009 is superseded once #404 deletes the server and the container.
 
 ## Two rules worth stating plainly
 

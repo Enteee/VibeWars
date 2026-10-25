@@ -27,6 +27,29 @@ Pass: the tick advanced about 20 a second throughout, about 1 200 over
 the 60 s, and there was no burst of ticks on return. A Worker clock
 should keep its rate; a page-timer clock drops to about 1 a second.
 
+## Two browsers play a match over Trystero
+
+Code: `apps/web/src/net/session.ts`, `net/transport/trystero.ts` and
+`net/transport/index.ts` (#403).
+
+e2e plays over BroadcastChannel, inside one browser. Only real relays
+show that two browsers that share nothing find each other.
+
+1. Open `https://enteee.github.io/VibeWars/next/` in two browsers, or in
+   one browser and a private window (separate storage, so separate peers).
+2. In the first, host a lobby. Read its code, `ABC-DEF`.
+3. In the second, type the code and join. Both lobby screens list both
+   players within a few seconds.
+4. Each picks a team and readies; the host starts. Play for a minute:
+   walk, target the other, cast, attack.
+5. The guest leaves the match, then the host does. Both are back in the
+   lobby, and the lobby opens again.
+6. The host closes its tab. The guest is on the menu with "The host
+   closed the lobby."
+
+Pass: every step as written. Two networks and a hidden host tab in
+Firefox are phase 5's QA (Q46).
+
 ## Music under load, on a phone
 
 Code: `apps/web/src/music/host/` and `scripts/music-stress.mjs` (#420).

@@ -14,6 +14,7 @@ import type { Channel } from "@vibewars/game-protocol";
 import type { Transport } from "@vibewars/game-session";
 
 import { HandlerSets } from "./handler-sets.js";
+import { oversizedCheck } from "./oversized.js";
 import { APP_ID } from "./relays.js";
 
 export const HEARTBEAT_MS = 1000;
@@ -83,6 +84,8 @@ export function joinBroadcastRoom(code: string): Transport {
     return !known;
   }
 
+  const oversized = oversizedCheck("broadcast transport");
+
   function gone(peerId: string): void {
     if (peers.delete(peerId)) {
       handlers.left(peerId);
@@ -108,7 +111,9 @@ export function joinBroadcastRoom(code: string): Transport {
       case "msg":
         if (frame.to === null || frame.to === selfId) {
           heard(frame.from);
-          handlers.message(frame.channel, frame.data, frame.from);
+          if (!oversized(frame.data, frame.from)) {
+            handlers.message(frame.channel, frame.data, frame.from);
+          }
         }
         return;
       case "bye":

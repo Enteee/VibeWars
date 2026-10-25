@@ -102,7 +102,7 @@ async function serve() {
   const child = spawn("sh", ["-c", command], {
     stdio: ["ignore", "ignore", "inherit"],
     // The one build where `?stress=` works.
-    env: { ...process.env, VITE_VIBEWARS_ONLINE: "off", VITE_VIBEWARS_STRESS: "on" },
+    env: { ...process.env, VITE_VIBEWARS_STRESS: "on" },
     detached: true,
   });
   // `exitCode` stays null while it runs, as a server should.
