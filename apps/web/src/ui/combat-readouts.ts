@@ -45,6 +45,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "interrupted":
     case "interrupt-missed":
     case "attack-missed":
+    case "attack-dodged":
       return "control";
     case "death":
       return "death";
@@ -94,6 +95,8 @@ export function describeCombatEvent(
       return `${by} finds nothing to interrupt on ${target}`;
     case "attack-missed":
       return `${by} misses ${target}`;
+    case "attack-dodged":
+      return `${target} dodges ${by}`;
   }
 }
 
@@ -232,6 +235,9 @@ export function floatingCueFor(kind: string, amount: number | undefined): Floati
       // A blinded swing paid for and wasted: over the target, so the
       // attacker sees where it went (#6).
       return { text: "miss", tone: "neutral" };
+    case "attack-dodged":
+      // A shot that landed where the target would have been (#159).
+      return { text: "dodge", tone: "neutral" };
     case "death":
       return { text: "defeated", tone: "damage" };
     default:
