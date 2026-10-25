@@ -20,10 +20,11 @@
  *     directory, and they come back as unstaged changes;
  *   - a worktree whose `.git` file and admin dir do not point at each other:
  *     rewrite both links, which is what `git worktree repair` does;
- *   - every worktree: link `.pre-commit-config.yaml` to the host's. devenv
- *     generates it on the host, it is not tracked (#283), and the shared
- *     pre-commit hook reads it from whichever worktree commits. Jails cannot
- *     run devenv, so without the link every agent commit fails in the hook.
+ *   - a worktree with no `.pre-commit-config.yaml`: link it to the host's.
+ *     devenv generates it on the host, it is not tracked (#283), and the
+ *     shared pre-commit hook reads it from whichever worktree commits. Jails
+ *     cannot run devenv, so without the link every agent commit fails in the
+ *     hook.
  *
  * Everything under `.bots/wt/<role>` and `.git/worktrees/<role>` is the
  * agent's to write, so nothing is read from there: the admin dir is derived
@@ -106,18 +107,25 @@ const NIX_STORE = "/nix/store/";
 /**
  * Links `<worktree>/.pre-commit-config.yaml` to the store path the host's
  * own `<repo>/.pre-commit-config.yaml` resolves to, which `devenv shell` on
- * the host has just regenerated. The worktree's entry is the agent's, so it
- * is never followed: whatever is there is removed and the link written
- * fresh. Never throws: a jail without hooks still starts.
+ * the host has just regenerated, but only when nothing is at that path.
+ *
+ * Anything already there is left alone, unread and unfollowed. On a branch
+ * from before #283 the file is still tracked, and retargeting it would dirty
+ * the worktree, so that checking out main aborts. A stale link costs that
+ * agent its local hooks until it deletes the entry. CI's `git hooks` job is
+ * the gate either way. Never throws: a jail without hooks still starts.
  *
  * @param {string} repo
  * @param {string} worktree
  * @param {string} store
- * @returns {string | null} what was done, or null if the link was already right
+ * @returns {string | null} what was done, or null if something is already there
  */
 function linkHookConfig(repo, worktree, store) {
   const name = ".pre-commit-config.yaml";
   const link = path.join(worktree, name);
+  if (fs.lstatSync(link, { throwIfNoEntry: false }) !== undefined) {
+    return null;
+  }
   /** @type {string} */
   let target;
   try {
@@ -129,13 +137,6 @@ function linkHookConfig(repo, worktree, store) {
     return `no ${path.join(repo, name)} in ${store} (has devenv shell run?); git hooks will not run in ${worktree}`;
   }
   try {
-    const stat = fs.lstatSync(link, { throwIfNoEntry: false });
-    if (stat?.isSymbolicLink() === true && fs.readlinkSync(link) === target) {
-      return null;
-    }
-    if (stat !== undefined) {
-      fs.rmSync(link, { recursive: true, force: true });
-    }
     fs.symlinkSync(target, link);
     return `linked ${link}`;
   } catch (error) {

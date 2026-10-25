@@ -233,24 +233,61 @@ describe("ensureWorktree", () => {
     expect(sh(["status", "--porcelain"], worktree)).toBe("");
   });
 
-  it("replaces a planted file or symlink at the hook config's path, unread", () => {
-    const { repo, worktree, store, config, linked } = setup();
+  it("leaves any existing hook config entry untouched, file or link", () => {
+    const { repo, worktree, store } = setup();
     ensureWorktree(repo, "dev", { store });
     const link = path.join(worktree, ".pre-commit-config.yaml");
 
+    // A planted file, unreadable, so reading it would fail the run.
     fs.rmSync(link);
     fs.writeFileSync(link, "planted\n");
     fs.chmodSync(link, 0o000);
-    expect(ensureWorktree(repo, "dev", { store })).toEqual([linked]);
-    expect(fs.readlinkSync(link)).toBe(config);
+    expect(ensureWorktree(repo, "dev", { store })).toEqual([]);
+    expect(fs.lstatSync(link).isFile()).toBe(true);
+    fs.chmodSync(link, 0o600);
+    expect(fs.readFileSync(link, "utf8")).toBe("planted\n");
 
+    // A link to another store path: what an old branch tracks.
+    const old = path.join(store, "old-pre-commit-config.json");
+    fs.rmSync(link);
+    fs.symlinkSync(old, link);
+    expect(ensureWorktree(repo, "dev", { store })).toEqual([]);
+    expect(fs.readlinkSync(link)).toBe(old);
+
+    // A link out of the store, at a file the host must not touch.
     const victim = path.join(repo, "victim");
     fs.writeFileSync(victim, "untouched\n");
     fs.rmSync(link);
     fs.symlinkSync(victim, link);
-    expect(ensureWorktree(repo, "dev", { store })).toEqual([linked]);
-    expect(fs.readlinkSync(link)).toBe(config);
+    expect(ensureWorktree(repo, "dev", { store })).toEqual([]);
+    expect(fs.readlinkSync(link)).toBe(victim);
     expect(fs.readFileSync(victim, "utf8")).toBe("untouched\n");
+  });
+
+  it("keeps an old branch's tracked hook config clean, so checking out main works", () => {
+    const { repo, worktree, store } = setup();
+    // An old branch: the config tracked, as a link to an older store path.
+    const old = path.join(store, "old-pre-commit-config.json");
+    sh(["switch", "-q", "-c", "old"], repo);
+    fs.rmSync(path.join(repo, ".pre-commit-config.yaml"));
+    fs.symlinkSync(old, path.join(repo, ".pre-commit-config.yaml"));
+    sh(["add", "-f", ".pre-commit-config.yaml"], repo);
+    commit("tracked hook config", repo);
+    sh(["switch", "-q", "main"], repo);
+    fs.rmSync(path.join(repo, ".pre-commit-config.yaml"), { force: true });
+    fs.symlinkSync(
+      path.join(store, "abc-pre-commit-config.json"),
+      path.join(repo, ".pre-commit-config.yaml"),
+    );
+    ensureWorktree(repo, "dev", { store });
+    sh(["checkout", "-q", "old"], worktree);
+
+    expect(ensureWorktree(repo, "dev", { store })).toEqual([]);
+    expect(sh(["status", "--porcelain"], worktree)).toBe("");
+    sh(["checkout", "-q", "--detach", "main"], worktree);
+    expect(
+      fs.lstatSync(path.join(worktree, ".pre-commit-config.yaml"), { throwIfNoEntry: false }),
+    ).toBeUndefined();
   });
 
   it("says so, and links nothing, when the host's hook config is not in the store", () => {
