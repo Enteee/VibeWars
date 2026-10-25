@@ -1297,9 +1297,10 @@ async function afterProjectCommand(argv, result, cfg) {
  * @param {{ code: number, stdout: string }} result
  * @param {string} column
  * @param {ReturnType<typeof company>} cfg
+ * @param {"pull" | "issue" | null} target what the caller's --url said it was
  * @returns {Promise<string>} a line for stderr, or ""
  */
-async function land(role, argv, result, column, cfg) {
+async function land(role, argv, result, column, cfg, target) {
   const plan = planLanding(argv, result, cfg.repo);
   if (plan.kind === "none") {
     return "";
@@ -1365,6 +1366,12 @@ async function land(role, argv, result, column, cfg) {
     const status = card.item.status;
     if (typeof status === "string" && status !== "") {
       return "";
+    }
+    // GitHub resolves /pull/N to an issue; a pull request's rights are not
+    // an issue's, so a card that is not what the URL said is left alone.
+    const content = /** @type {{ type?: unknown } | null} */ (card.item.content);
+    if (target !== null && (content?.type === "PullRequest") !== (target === "pull")) {
+      return `hub: ${label} ${isNot} in ${column}: the URL named a ${target === "pull" ? "pull request" : "issue"} but the card is not one. ${move}`;
     }
     id = String(card.item.id);
   }
@@ -2289,10 +2296,12 @@ async function serve(request, verdict, acting) {
   // `--column` is hub's, not gh's: judged here, and gone before gh runs.
   let ghArgv = argv;
   let column = LANDING_COLUMN;
+  /** @type {ReturnType<typeof itemAddTarget>} */
+  let target = null;
   if (kind === "gh" && argv[0] === "project" && argv[1] === "item-add") {
     const parsed = parseColumnFlag(argv, cfg.board?.options.keys() ?? []);
     const named = "error" in parsed ? null : parsed.column;
-    const target = itemAddTarget(argv);
+    target = itemAddTarget(argv);
     const decision =
       "error" in parsed
         ? { ok: false, reason: parsed.error }
@@ -2318,7 +2327,7 @@ async function serve(request, verdict, acting) {
     await afterProjectCommand(ghArgv, result, cfg);
   }
   noteHint(argv, result.code, cfg);
-  const hint = await land(role, ghArgv, result, column, cfg);
+  const hint = await land(role, ghArgv, result, column, cfg, target);
   if (hint !== "") {
     result = { ...result, stderr: `${result.stderr}${hint}\n` };
   }

@@ -137,7 +137,7 @@ if (group === "api" && sub === "graphql" && argv.some((word) => word.includes("i
     rateLimit: { cost: 1, remaining: remaining - 1, resetAt },
     repository: { issueOrPullRequest: { number, projectItems: { nodes: [{
       id: "PVTI_" + number, isArchived: false, project: { id: "PVT_2" }, status: fs.existsSync(path.join(state, "no-status-" + number)) ? null : { name: "Backlog" },
-      content: { __typename: "Issue", number, title: "item " + number, url: "https://github.com/Enteee/VibeWars/issues/" + number, repository: { nameWithOwner: "Enteee/VibeWars" } },
+      content: { __typename: fs.existsSync(path.join(state, "pull-" + number)) ? "PullRequest" : "Issue", number, title: "item " + number, url: "https://github.com/Enteee/VibeWars/issues/" + number, repository: { nameWithOwner: "Enteee/VibeWars" } },
     }] } } },
   } }));
   process.exit(0);
@@ -156,7 +156,7 @@ if (group === "api" && sub === "graphql" && argv.some((word) => word.startsWith(
   console.log(JSON.stringify({ data: {
     rateLimit: { cost: 1, remaining: remaining - 1, resetAt },
     item: { id, isArchived: false, project: { id: "PVT_2" }, status: { name: "Backlog" },
-      content: { __typename: "Issue", number, title: "item " + number, url: "https://github.com/Enteee/VibeWars/issues/" + number, repository: { nameWithOwner: "Enteee/VibeWars" } } },
+      content: { __typename: fs.existsSync(path.join(state, "pull-" + number)) ? "PullRequest" : "Issue", number, title: "item " + number, url: "https://github.com/Enteee/VibeWars/issues/" + number, repository: { nameWithOwner: "Enteee/VibeWars" } } },
   } }));
   process.exit(0);
 }
@@ -780,6 +780,7 @@ describe("hubd and the GraphQL budget", () => {
   it("lets the manager land a pull request in In Review, with --column kept from gh (#517)", async () => {
     const hubd = await startHubd(5000);
     fs.writeFileSync(path.join(hubd.state, "no-status-9"), "");
+    fs.writeFileSync(path.join(hubd.state, "pull-9"), "");
     await hubd.request("developer-1", "board", ["ls"]);
 
     const landed = await hubd.request("manager", "gh", [
@@ -797,6 +798,23 @@ describe("hubd and the GraphQL budget", () => {
     expect(hubd.callLog()).toContain(
       "--id PVTI_9 --project-id PVT_2 --field-id F_status --single-select-option-id o_review",
     );
+  }, 20_000);
+
+  it("does not land a card that GitHub resolved to something other than the URL's kind (#517)", async () => {
+    const hubd = await startHubd(5000);
+    fs.writeFileSync(path.join(hubd.state, "no-status-9"), "");
+    await hubd.request("developer-1", "board", ["ls"]);
+
+    const landed = await hubd.request("manager", "gh", [
+      "project",
+      "item-add",
+      "2",
+      "--url",
+      "https://github.com/Enteee/VibeWars/pull/9",
+    ]);
+
+    expect(String(landed.stderr)).toContain("the URL named a pull request but the card is not one");
+    expect(hubd.calls("project item-edit")).toBe(0);
   }, 20_000);
 
   it("refuses to land a card in Ready, or in a column that is not one, before gh runs (#517)", async () => {
