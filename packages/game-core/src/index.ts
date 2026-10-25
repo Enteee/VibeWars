@@ -82,6 +82,8 @@ export {
   toCharacter,
   validatePlayerBuild,
 } from "./build.js";
+export type { JoinLoadout, JoinRefusal } from "./build/join-loadout.js";
+export { DEFAULT_SKILL_BAR, HOUSE_LOADOUT, resolveJoinLoadout } from "./build/join-loadout.js";
 
 export * from "./skills/index.js";
 
@@ -110,6 +112,9 @@ export type {
 } from "./match/simulation.js";
 export { MatchSimulation } from "./match/simulation.js";
 export { facingToward, spawnFacing } from "./match/facing.js";
+export type { IntentRefusal, MatchIntent } from "./match/apply-intent.js";
+export { applyIntent } from "./match/apply-intent.js";
+export { MAX_CATCHUP_SECONDS, drainAccumulator } from "./match/accumulator.js";
 
 export type { CombatCause, CombatLogEntry, CombatTally } from "./match/combat-log.js";
 export { CombatMeter, tallyCombat } from "./match/combat-log.js";

@@ -4,7 +4,7 @@ import { matchMaker } from "colyseus";
 import { RATE_LIMIT, RATE_LIMIT_MESSAGE } from "@vibewars/game-protocol";
 
 import type { ClientLimits } from "./rooms/client-budget.js";
-import { MessageBudget } from "./rooms/message-budget.js";
+import { MessageBudget } from "@vibewars/game-session";
 
 /**
  * Delete the headers Colyseus 0.18 reads a client's address from before

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-
 import type {
   CombatMessage,
   MatchConnection,
   MatchSnapshot,
   PlayerSnapshot,
-} from "../net/match-connection.js";
+} from "@vibewars/game-session";
+
 import { attachMatchSounds } from "./match-sounds.js";
 import type { SoundId } from "./sound-ids.js";
 import type { SoundPlayer } from "./sound-player.js";

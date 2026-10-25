@@ -1,6 +1,5 @@
 import type { ClientIntent } from "@vibewars/game-protocol";
-
-import type { MatchSnapshot } from "../net/match-connection.js";
+import type { MatchSnapshot } from "@vibewars/game-session";
 
 /**
  * Space and Esc, as pure functions of the latest snapshot (#160), shared

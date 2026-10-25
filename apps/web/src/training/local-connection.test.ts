@@ -2,45 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import { getTrainingScenario } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
+import type { CombatMessage } from "@vibewars/game-session";
 
-import type { CombatMessage } from "../net/match-connection.js";
 import { setProfessions, setRank, setSkill, newCharacter } from "../ui/build-editor.js";
 import {
-  MAX_CATCHUP_SECONDS,
   TICK_SECONDS,
   NO_PROFESSIONS,
   createLocalConnection,
-  drainAccumulator,
   skillSlotsFor,
 } from "./local-connection.js";
 import { SELF_ID, playerArming, setupScenario } from "./scenario-setup.js";
-
-describe("drainAccumulator", () => {
-  it("runs whole ticks and carries the rest", () => {
-    expect(drainAccumulator(0, TICK_SECONDS * 2.5).ticks).toBe(2);
-    const { remainder } = drainAccumulator(0, TICK_SECONDS * 2.5);
-    expect(remainder).toBeCloseTo(TICK_SECONDS * 0.5);
-    expect(drainAccumulator(remainder, TICK_SECONDS * 0.5).ticks).toBe(1);
-  });
-
-  it("a frame shorter than a tick runs none, and keeps it", () => {
-    const { ticks, remainder } = drainAccumulator(0, TICK_SECONDS / 3);
-    expect(ticks).toBe(0);
-    expect(remainder).toBeCloseTo(TICK_SECONDS / 3);
-  });
-
-  it("clamps a 10 s delta, as a backgrounded tab sends, to at most 6 ticks", () => {
-    const { ticks, remainder } = drainAccumulator(0, 10);
-    expect(ticks).toBeLessThanOrEqual(6);
-    expect(ticks).toBeGreaterThan(0);
-    expect(remainder).toBeLessThan(TICK_SECONDS);
-    expect(MAX_CATCHUP_SECONDS).toBe(0.25);
-  });
-
-  it("ignores a negative delta", () => {
-    expect(drainAccumulator(0, -1)).toEqual({ ticks: 0, remainder: 0 });
-  });
-});
 
 function pyro() {
   let character = setProfessions(newCharacter("c1"), "elementalist", undefined);

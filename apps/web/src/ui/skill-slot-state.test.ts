@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { PlayerSnapshot, SkillSlot } from "@vibewars/game-session";
 
-import type { PlayerSnapshot, SkillSlot } from "../net/match-connection.js";
 import { castingSlot, flashSlot, SLOT_FLASH_MS, slotFlashes } from "./skill-slot-state.js";
 
 function slot(id: string): SkillSlot {

@@ -1,4 +1,5 @@
-import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "../net/match-connection.js";
+import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
+
 import type { SoundId } from "./sound-ids.js";
 
 /**

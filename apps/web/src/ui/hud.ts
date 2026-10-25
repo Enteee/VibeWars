@@ -1,14 +1,14 @@
 import { getProfession, getWeapon, type ActivationRejection } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
-
-import type { KeyLabeller } from "../input/key-labels.js";
-import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
 import type {
   MatchSnapshot,
   PlayerSnapshot,
   SkillSlot,
   SlotRecharge,
-} from "../net/match-connection.js";
+} from "@vibewars/game-session";
+
+import type { KeyLabeller } from "../input/key-labels.js";
+import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
 import { attackingIcon, professionIcon, skillBadgeHtml, soundIcon } from "./icons.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import { castingSlot } from "./skill-slot-state.js";

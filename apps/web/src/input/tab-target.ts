@@ -1,4 +1,4 @@
-import type { PlayerSnapshot } from "../net/match-connection.js";
+import type { PlayerSnapshot } from "@vibewars/game-session";
 
 /**
  * Tab and Shift-Tab: cycle through living enemies by distance (#55).

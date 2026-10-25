@@ -10,6 +10,23 @@
  * is over. Ignoring instead keeps the handlers' cost bounded for a
  * flooder and costs an honest player nothing it could still use.
  */
+
+/**
+ * How many messages per second one client may have handled, sustained
+ * (#43). Every handler runs as the message arrives, outside the tick, so
+ * without a limit one client could spend the whole room's tick budget.
+ * Real play peaks near 25 a second.
+ */
+export const MESSAGES_PER_SECOND = 60;
+
+/**
+ * How many may be handled at once: what an honest client queues behind a
+ * network stall and then sends in one go. A server gives up on a silent
+ * socket after about 9 s (Colyseus pings every 3 s, twice), and 9 s of
+ * frantic play is about 225 messages.
+ */
+export const MESSAGE_BURST = 300;
+
 /** Told how many messages from one client were ignored since it was last told. */
 export type DropReport = (sessionId: string, dropped: number) => void;
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
-import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "../net/match-connection.js";
 import { soundsForCombat, soundsForSnapshot } from "./combat-sounds.js";
 
 const ME = "me";

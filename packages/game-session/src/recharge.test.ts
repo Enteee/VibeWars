@@ -1,7 +1,7 @@
 import { CastState } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { RECHARGE_TOLERANCE_SECONDS, rechargePredicted, rechargeSlots } from "./rooms/recharge.js";
+import { RECHARGE_TOLERANCE_SECONDS, rechargePredicted, rechargeSlots } from "./recharge.js";
 
 const recharging = (slot: number, remainingSeconds: number, totalSeconds = 10) => ({
   slot,

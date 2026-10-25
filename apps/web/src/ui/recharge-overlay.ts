@@ -1,4 +1,4 @@
-import type { SlotRecharge } from "../net/match-connection.js";
+import type { SlotRecharge } from "@vibewars/game-session";
 
 /**
  * The recharge clock-wipe on a skill slot (#152), shared by the match HUD
