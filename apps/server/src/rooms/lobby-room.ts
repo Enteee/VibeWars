@@ -22,7 +22,7 @@ import {
   field,
   messageBudget,
 } from "./options.js";
-import { RoomSeats, peerAddress, type ClientLimits } from "./client-budget.js";
+import { RoomSeats, type ClientLimits } from "./client-budget.js";
 import { RoomSlot, type RoomBudget } from "./room-budget.js";
 import { send } from "./wire.js";
 
@@ -539,7 +539,7 @@ export class LobbyRoom extends Room {
       // would be held until the room is gone.
       throw new ServerError(CloseCode.WITH_ERROR, "already disconnected");
     }
-    this.#clientSeats.take(client.sessionId, peerAddress(context.ip));
+    this.#clientSeats.take(client.sessionId, this.clientLimits.addressKey(context.ip));
     return true;
   }
 

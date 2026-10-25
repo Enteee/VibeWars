@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { networkInterfaces } from "node:os";
 import { resolve } from "node:path";
 
 import { WebSocketTransport, defineRoom, defineServer } from "colyseus";
@@ -8,7 +9,7 @@ import express from "express";
 
 import { DEFAULT_DEV_CLIENT_ORIGIN, type ServerConfig } from "./config.js";
 import { GatedHttpServer } from "./http-gate.js";
-import { createClientLimits } from "./rooms/client-budget.js";
+import { createClientLimits, onLinkFrom, type OnLink } from "./rooms/client-budget.js";
 import { budgetedLobbyRoom } from "./rooms/lobby-room.js";
 import { budgetedMatchRoom } from "./rooms/match-room.js";
 import { createRoomBudget } from "./rooms/room-budget.js";
@@ -19,18 +20,27 @@ import { createRoomBudget } from "./rooms/room-budget.js";
  * Construction is separated from `listen()` so tests can boot a server on an
  * ephemeral port, and so a startup failure is a rejected promise rather than a
  * half-initialised module.
+ *
+ * @param onLink which IPv6 peers are LAN guests, counted per address
+ *   rather than per /64 (#271): by default, those on this host's links as
+ *   they are now. Tests pass their own.
  */
-export function createGameServer(config: ServerConfig) {
+export function createGameServer(
+  config: ServerConfig,
+  onLink: OnLink = onLinkFrom(networkInterfaces()),
+) {
   // One budget for every room this server holds, match and lobby alike.
   const budget = createRoomBudget(config.maxRooms);
   // And one set of seat limits, every room's clients together (#265).
-  const limits = createClientLimits(config.maxClients, config.maxClientsPerAddress);
+  const limits = createClientLimits(config.maxClients, config.maxClientsPerAddress, onLink);
   return defineServer({
     greet: false,
 
     // Our own HTTP server, which strips forged forwarding headers and
     // limits matchmaking per address before Colyseus sees a request (#265).
-    transport: new WebSocketTransport({ server: new GatedHttpServer(config.matchmakingBurst) }),
+    transport: new WebSocketTransport({
+      server: new GatedHttpServer(config.matchmakingBurst, limits.addressKey),
+    }),
 
     rooms: {
       // Each room class is this server's own, holding its budget (#114)
