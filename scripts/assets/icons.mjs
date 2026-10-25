@@ -202,6 +202,10 @@ const ui = {
     speaker + `<path d="M15.5 9a4 4 0 0 1 0 6M18.5 6a8 8 0 0 1 0 12" ${stroke(C.ink, 2)}/>`,
   // Speaker with a cross where the waves were: muted (#112).
   "sound-off": () => speaker + `<path d="M15.5 9l6 6M21.5 9l-6 6" ${stroke(C.ink, 2)}/>`,
+  // Two crossed swords, tips up, guards and grips low: you are auto-attacking
+  // (#160). Two blades, so it never reads as the one-sword attack skill type.
+  attacking: () =>
+    `<path d="M4 4l13 13M20 4L7 17M14 20l6-6M10 20l-6-6M17 17l3.5 3.5M7 17l-3.5 3.5" ${stroke(C.ink, 2)}/>`,
 };
 
 // ---------------------------------------------------------------------------
