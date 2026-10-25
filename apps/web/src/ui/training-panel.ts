@@ -8,7 +8,7 @@ import {
 import type { MatchSnapshot, SkillSlot } from "@vibewars/game-session";
 
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
-import { saveMuted } from "../audio/mute-preference.js";
+import { setGlobalMute } from "../audio/global-mute.js";
 import { soundPlayer } from "../audio/sound-player.js";
 import { attackKeyIntents, hasActionToCancel } from "../input/attack-key.js";
 import { createDoubleClick } from "../input/double-click.js";
@@ -557,12 +557,10 @@ export function createTrainingPanel(): TrainingPanel {
     if (action === "mute") {
       if (!event.repeat) {
         // No HUD here, so the message line says what the mute key did.
-        const sounds = soundPlayer();
-        sounds.setMuted(!sounds.muted);
-        music().setMuted(sounds.muted);
-        saveMuted(sounds.muted);
+        const muted = !soundPlayer().muted;
+        setGlobalMute(muted);
         flash(
-          sounds.muted
+          muted
             ? `Sound off. Press ${actionLabel(keymap, "mute", keyLabel)} to turn it on.`
             : "Sound on.",
         );

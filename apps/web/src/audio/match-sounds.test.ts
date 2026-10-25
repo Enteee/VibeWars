@@ -58,6 +58,8 @@ function setup() {
     play: (id) => played.push(id),
     setMuted: () => undefined,
     muted: false,
+    setVolume: () => undefined,
+    volume: 1,
   };
   let combat: (message: CombatMessage) => void = () => undefined;
   let refused: () => void = () => undefined;

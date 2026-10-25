@@ -4,6 +4,7 @@ import {
   musicModeOf,
   type MusicPreference,
 } from "../audio/music-preference.js";
+import { VOLUME_RAMP_SECONDS } from "../audio/volume-ramp.js";
 import { directMusic, type Intensity, type MusicMode, type MusicState } from "./director.js";
 import { measuringMusic, musicPlayer, type MusicPlayer, type MusicTrack } from "./music-player.js";
 import type { MusicLevel } from "./host-protocol.js";
@@ -17,9 +18,6 @@ import { TRACKS } from "./tracks/index.js";
  * track means silence. A jukebox preview plays over all of that until it
  * ends.
  */
-
-/** How long the music takes to reach a new volume, or to fade on a mute. */
-export const VOLUME_RAMP_SECONDS = 0.2;
 
 type PlayableTrack = MusicTrack & { readonly moods: readonly Mood[] };
 

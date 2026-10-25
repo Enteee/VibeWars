@@ -7,10 +7,13 @@ import {
 import { music, type MusicFollower } from "../music/play-music.js";
 import { TRACKS, type Track } from "../music/tracks/index.js";
 import { musicIcon } from "./icons.js";
+import { mountSoundControls, soundControlsDeps } from "./sound-controls.js";
 
 /**
- * The jukebox (#372, #366 §3.6): what plays, and how loud. A menu screen,
- * and the same panel as a popover from the HUD's ♪ button in a match.
+ * The jukebox (#372, #366 §3.6): what plays. A menu screen, and the same
+ * panel as a popover from the HUD's ♪ button in a match. How loud is the
+ * sound controls' business (#424): the screen links to Options → Sound,
+ * and the popover, the one place for them in a match, shows them itself.
  *
  * Click a row to hear it; the preview lasts until another row is picked
  * or the jukebox closes. Every change is saved at once. The rules are
@@ -91,11 +94,7 @@ export interface JukeboxPanel {
  * key typed while it has focus does nothing in the match; Esc calls
  * `onClose`.
  */
-export function jukeboxPanel(
-  onClose: () => void,
-  player: MusicFollower = music(),
-  onPreferenceChange: (preference: MusicPreference) => void = () => undefined,
-): JukeboxPanel {
+export function jukeboxPanel(onClose: () => void, player: MusicFollower = music()): JukeboxPanel {
   let previewId: string | null = null;
   const panel = h("div", "jukebox");
 
@@ -111,24 +110,8 @@ export function jukeboxPanel(
   }
   modeField.appendChild(modePicker);
 
-  const volumeField = h("label", "field jukebox-volume");
-  volumeField.appendChild(h("span", "field-label", "music volume"));
-  const volume = document.createElement("input");
-  volume.type = "range";
-  volume.min = "0";
-  volume.max = "1";
-  volume.step = "0.05";
-  volumeField.appendChild(volume);
-
-  const mute = document.createElement("button");
-  mute.type = "button";
-  mute.className = "jukebox-mute";
-  mute.appendChild(document.createElement("img")).alt = "";
-  // The icon alone did not read as a mute (#372 QA).
-  mute.appendChild(h("span", "", "mute"));
-
   const controls = h("div", "menu-row jukebox-controls");
-  controls.append(modeField, volumeField, mute);
+  controls.append(modeField);
   panel.appendChild(controls);
 
   const list = h("div", "entity-list jukebox-list");
@@ -137,7 +120,6 @@ export function jukeboxPanel(
   const change = (next: MusicPreference): void => {
     player.setPreference(next);
     saveMusicPreference(next);
-    onPreferenceChange(next);
     paint();
   };
 
@@ -147,12 +129,6 @@ export function jukeboxPanel(
       change(chooseMode(player.preference, mode));
     }
   });
-  volume.addEventListener("input", () => {
-    change({ ...player.preference, musicVolume: Number(volume.value) });
-  });
-  mute.addEventListener("click", () => {
-    change({ ...player.preference, musicMuted: !player.preference.musicMuted });
-  });
 
   function paint(): void {
     const preference = player.preference;
@@ -161,14 +137,6 @@ export function jukeboxPanel(
     if (pinnedOption !== undefined) {
       pinnedOption.disabled = preference.pinnedTrackId === null;
     }
-    volume.value = String(preference.musicVolume);
-    const icon = mute.querySelector("img");
-    if (icon !== null) {
-      icon.src = musicIcon(preference.musicMuted);
-    }
-    mute.setAttribute("aria-label", "Mute music");
-    mute.setAttribute("aria-pressed", preference.musicMuted ? "true" : "false");
-    mute.title = preference.musicMuted ? "Music off. Click to turn it on." : "Music on.";
 
     list.replaceChildren();
     for (const row of jukeboxRows(TRACKS, preference, previewId)) {
@@ -232,7 +200,10 @@ export function disposeJukeboxScreen(): void {
 }
 
 /** The jukebox as a menu screen. */
-export function renderJukeboxScreen(root: HTMLElement, callbacks: { onBack: () => void }): void {
+export function renderJukeboxScreen(
+  root: HTMLElement,
+  callbacks: { onBack: () => void; onSoundSettings: () => void },
+): void {
   disposeJukeboxScreen();
   root.replaceChildren();
   const screen = h("div", "screen jukebox-screen");
@@ -242,6 +213,9 @@ export function renderJukeboxScreen(root: HTMLElement, callbacks: { onBack: () =
   screen.appendChild(panel.element);
   const actions = h("div", "menu-row");
   actions.appendChild(button("back", "", callbacks.onBack));
+  actions.appendChild(
+    button("sound settings", "jukebox-sound-settings", callbacks.onSoundSettings),
+  );
   screen.appendChild(actions);
   root.appendChild(screen);
   disposeScreen = () => {
@@ -280,10 +254,28 @@ export function attachJukeboxPopover(
       close();
       return;
     }
-    open = jukeboxPanel(close, music(), paintTrigger);
+    const panel = jukeboxPanel(close, music());
+    // Above the tracks: in a match, how loud comes before what plays.
+    const sound = h("div", "hud-sound");
+    panel.element.prepend(sound);
+    const defaults = soundControlsDeps();
+    const unmountSound = mountSoundControls(sound, {
+      ...defaults,
+      saveMusicPreference: (preference) => {
+        defaults.saveMusicPreference(preference);
+        paintTrigger(preference);
+      },
+    });
+    open = {
+      element: panel.element,
+      dispose() {
+        unmountSound();
+        panel.dispose();
+      },
+    };
     open.element.classList.add("screen", "hud-jukebox");
     open.element.setAttribute("role", "dialog");
-    open.element.setAttribute("aria-label", "Music");
+    open.element.setAttribute("aria-label", "Sound and music");
     parent.appendChild(open.element);
     trigger.setAttribute("aria-expanded", "true");
     open.element.querySelector<HTMLElement>(".jukebox-play")?.focus();

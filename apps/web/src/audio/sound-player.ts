@@ -1,5 +1,7 @@
 import { loadMuted } from "./mute-preference.js";
+import { loadSfxVolume } from "./sfx-volume-preference.js";
 import { SOUND_IDS, type SoundId } from "./sound-ids.js";
+import { VOLUME_RAMP_SECONDS } from "./volume-ramp.js";
 
 /**
  * Plays the combat sounds (#104, #112) through Web Audio, each buffer
@@ -17,12 +19,16 @@ export interface SoundPlayer {
   play(id: SoundId): void;
   setMuted(muted: boolean): void;
   readonly muted: boolean;
+  /** 0 to 1, the player's sound effects volume (#424); a change ramps to it. */
+  setVolume(volume: number): void;
+  readonly volume: number;
 }
 
 /** One id plays at most this often, so a Barrage hitting five is one thwack (#54). */
 export const SOUND_THROTTLE_MS = 60;
 
-const MASTER_GAIN = 0.5;
+/** The output gain at full volume. */
+export const MASTER_GAIN = 0.5;
 
 /** Anything a node can be connected to. */
 export type SoundSink = object;
@@ -31,14 +37,23 @@ export type SoundSink = object;
 export interface SoundContext {
   readonly destination: SoundSink;
   readonly state: string;
+  readonly currentTime: number;
   resume(): Promise<void>;
-  createGain(): { readonly gain: { value: number }; connect(sink: SoundSink): unknown };
+  createGain(): { readonly gain: SoundGain; connect(sink: SoundSink): unknown };
   createBufferSource(): {
     buffer: AudioBuffer | null;
     connect(sink: SoundSink): unknown;
     start(): void;
   };
   decodeAudioData(bytes: ArrayBuffer): Promise<AudioBuffer>;
+}
+
+/** The slice of an `AudioParam` the volume ramps. */
+export interface SoundGain {
+  value: number;
+  cancelScheduledValues(time: number): unknown;
+  setValueAtTime(value: number, time: number): unknown;
+  linearRampToValueAtTime(value: number, time: number): unknown;
 }
 
 export interface SoundPlayerDeps {
@@ -54,12 +69,15 @@ export interface SoundPlayerDeps {
   /** Where the sfx live, `import.meta.env.BASE_URL`, so a Pages subpath works (#103). */
   readonly baseUrl: string;
   readonly muted: boolean;
+  /** 0 to 1. */
+  readonly volume: number;
 }
 
 export function createWebAudioPlayer(deps: SoundPlayerDeps): SoundPlayer {
   let muted = deps.muted;
+  let volume = deps.volume;
   let broken = false;
-  let output: { context: SoundContext; sink: SoundSink } | undefined;
+  let output: { context: SoundContext; sink: SoundSink; gain: SoundGain } | undefined;
   const buffers = new Map<SoundId, AudioBuffer>();
   const lastPlayed = new Map<SoundId, number>();
 
@@ -79,9 +97,9 @@ export function createWebAudioPlayer(deps: SoundPlayerDeps): SoundPlayer {
     try {
       const context = deps.createContext();
       const gain = context.createGain();
-      gain.gain.value = MASTER_GAIN;
+      gain.gain.value = MASTER_GAIN * volume;
       gain.connect(context.destination);
-      output = { context, sink: gain };
+      output = { context, sink: gain, gain: gain.gain };
       for (const id of SOUND_IDS) {
         void load(context, id).catch(fail);
       }
@@ -143,12 +161,31 @@ export function createWebAudioPlayer(deps: SoundPlayerDeps): SoundPlayer {
     get muted() {
       return muted;
     },
+    setVolume(next) {
+      volume = Math.min(1, Math.max(0, next));
+      if (output === undefined) {
+        return;
+      }
+      try {
+        // From where it is now, so a slider dragged mid-ramp does not jump.
+        const { gain, context } = output;
+        const now = context.currentTime;
+        gain.cancelScheduledValues(now);
+        gain.setValueAtTime(gain.value, now);
+        gain.linearRampToValueAtTime(MASTER_GAIN * volume, now + VOLUME_RAMP_SECONDS);
+      } catch (error) {
+        fail(error);
+      }
+    },
+    get volume() {
+      return volume;
+    },
   };
 }
 
 let shared: SoundPlayer | undefined;
 
-/** The page's one sound player, with the muting the player chose last time. */
+/** The page's one sound player, with the muting and volume the player chose last time. */
 export function soundPlayer(): SoundPlayer {
   shared ??= createWebAudioPlayer({
     createContext: () => new AudioContext(),
@@ -159,6 +196,7 @@ export function soundPlayer(): SoundPlayer {
     hasBeenActive: "userActivation" in navigator && navigator.userActivation.hasBeenActive,
     baseUrl: import.meta.env.BASE_URL,
     muted: loadMuted(),
+    volume: loadSfxVolume(),
   });
   return shared;
 }
