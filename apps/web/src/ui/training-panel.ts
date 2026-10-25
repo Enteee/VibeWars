@@ -258,10 +258,8 @@ export function createTrainingPanel(): TrainingPanel {
     sinceMeterPaint = 0;
     paintMeter();
     // The gathered ticks belong before the line, not after it.
-    appendLog([
-      ...ticks.flush(nameOf),
-      dividerRow(label, session?.connection.simulation.elapsedSeconds ?? 0),
-    ]);
+    const now = session?.connection.simulation.elapsedSeconds ?? 0;
+    appendLog([...ticks.flush(now, nameOf), dividerRow(label, now)]);
   };
 
   const flash = (text: string): void => {

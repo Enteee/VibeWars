@@ -140,7 +140,8 @@ interface TickWindow {
  * Status ticks, summed (#151). The simulation logs degeneration and
  * regeneration every tick, 20 rows a second of fractions that print as
  * "0". This gathers them per target and direction into one row a second,
- * timed at the window's start, and drops a sum that prints as 0.
+ * timed when the window closes, so the log's clock never runs backwards
+ * past rows already written, and drops a sum that prints as 0.
  *
  * Anything else in a status entry (a death, an expiry) is written at
  * once, after that target's open windows, so nobody dies before the
@@ -156,7 +157,13 @@ export class StatusTickBatcher {
       if (entry.cause !== "degeneration") {
         // A skill or a swing can finish off someone still ticking too.
         if (event.kind === "death") {
-          rows.push(...this.#close((open) => open.targetId === event.targetId, nameOf));
+          rows.push(
+            ...this.#close(
+              (open) => open.targetId === event.targetId,
+              () => entry.atSeconds,
+              nameOf,
+            ),
+          );
         }
         rows.push(combatEventToRow(entry, event, nameOf));
         continue;
@@ -180,7 +187,13 @@ export class StatusTickBatcher {
         }
         continue;
       }
-      rows.push(...this.#close((open) => open.targetId === event.targetId, nameOf));
+      rows.push(
+        ...this.#close(
+          (open) => open.targetId === event.targetId,
+          () => entry.atSeconds,
+          nameOf,
+        ),
+      );
       rows.push(combatEventToRow(entry, event, nameOf));
     }
     return rows;
@@ -188,15 +201,28 @@ export class StatusTickBatcher {
 
   /** Close the windows that are a full second old at `atSeconds`. */
   public advance(atSeconds: number, nameOf: (id: string) => string): LogRow[] {
-    return this.#close((open) => atSeconds >= open.startedAt + STATUS_TICK_WINDOW_SECONDS, nameOf);
+    return this.#close(
+      (open) => atSeconds >= open.startedAt + STATUS_TICK_WINDOW_SECONDS,
+      (open) => open.startedAt + STATUS_TICK_WINDOW_SECONDS,
+      nameOf,
+    );
   }
 
-  /** Close every window, as before a divider. */
-  public flush(nameOf: (id: string) => string): LogRow[] {
-    return this.#close(() => true, nameOf);
+  /** Close every window at `atSeconds`, as before a divider. */
+  public flush(atSeconds: number, nameOf: (id: string) => string): LogRow[] {
+    return this.#close(
+      () => true,
+      () => atSeconds,
+      nameOf,
+    );
   }
 
-  #close(due: (open: TickWindow) => boolean, nameOf: (id: string) => string): LogRow[] {
+  /** Write the due windows, each stamped at `closedAt`, oldest first. */
+  #close(
+    due: (open: TickWindow) => boolean,
+    closedAt: (open: TickWindow) => number,
+    nameOf: (id: string) => string,
+  ): LogRow[] {
     const closing = [...this.#open.entries()]
       .filter(([, open]) => due(open))
       .sort(([, a], [, b]) => a.startedAt - b.startedAt);
@@ -209,7 +235,7 @@ export class StatusTickBatcher {
       rows.push(
         combatEventToRow(
           {
-            atSeconds: open.startedAt,
+            atSeconds: closedAt(open),
             cause: "degeneration",
             sourceId: open.sourceId,
             skillId: undefined,

@@ -320,7 +320,7 @@ describe("StatusTickBatcher (#151)", () => {
     expect(rows).toEqual([]);
     const closed = batcher.advance(1, nameOf);
     expect(texts(closed)).toEqual(["regeneration heals Caster dummy for 4"]);
-    expect(closed[0]?.time).toBe("0:00.0");
+    expect(closed[0]?.time).toBe("0:01.0");
   });
 
   it("keeps the two directions on one target apart", () => {
@@ -343,7 +343,7 @@ describe("StatusTickBatcher (#151)", () => {
       { kind: "damage", targetId: "you", amount: 0.5 },
     ];
     const rows = ticks(0, 40, two).flatMap((t) => batcher.push(t, nameOf));
-    expect(texts([...rows, ...batcher.flush(nameOf)])).toEqual([
+    expect(texts([...rows, ...batcher.flush(2, nameOf)])).toEqual([
       "degeneration hits Caster dummy for 10",
       "degeneration hits Pyro for 10",
       "degeneration hits Caster dummy for 10",
@@ -379,8 +379,32 @@ describe("StatusTickBatcher (#151)", () => {
   it("flushes before a divider, so the line comes after the ticks", () => {
     const batcher = new StatusTickBatcher();
     batcher.push(tick(0, [{ kind: "damage", targetId: "dummy", amount: 3 }]), nameOf);
-    const rows = [...batcher.flush(nameOf), dividerRow("re-armed", 0.5)];
+    const rows = [...batcher.flush(0.5, nameOf), dividerRow("re-armed", 0.5)];
     expect(texts(rows)).toEqual(["degeneration hits Caster dummy for 3", "── re-armed ──"]);
+  });
+
+  it("never writes a row timed before one already written", () => {
+    // Regeneration all the while, a skill hit mid-second, a death, a divider.
+    const batcher = new StatusTickBatcher();
+    const heal: CombatEvent = { kind: "heal", targetId: "you", amount: 0.2 };
+    const hit: CombatEvent = { kind: "damage", targetId: "dummy", amount: 30 };
+    const rows: LogRow[] = [];
+    for (let i = 0; i < 50; i += 1) {
+      const at = i * 0.05;
+      rows.push(...batcher.push(tick(at, [heal]), nameOf));
+      if (i === 15) {
+        rows.push(...batcher.push(entry([hit], { atSeconds: at }), nameOf));
+      }
+      if (i === 30) {
+        const death: CombatEvent = { kind: "death", targetId: "you" };
+        rows.push(...batcher.push(tick(at, [death]), nameOf));
+      }
+      rows.push(...batcher.advance(at, nameOf));
+    }
+    rows.push(...batcher.flush(2.5, nameOf), dividerRow("reset", 2.5));
+    const times = rows.map((row) => row.time);
+    expect(rows.length).toBeGreaterThan(4);
+    expect(times).toEqual([...times].sort());
   });
 
   it("passes skill entries straight through", () => {
