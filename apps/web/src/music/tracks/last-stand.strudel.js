@@ -1,9 +1,21 @@
 // last-stand - B phrygian, 150 bpm. mood: tense, dark.
 // Back to the wall. A heartbeat sub pulse that never stops, strings that tremble
 // faster as intensity climbs, a filter that opens with every level.
+// Fifteen sections of eight cycles (3m12s before it repeats): the held chords
+// take four dark roads and the rising line climbs a new stair each time.
 setcpm(150 / 4)
 
-let P = "<Bm Cadd9 Bm Gadd9 Bm Cadd9 Am7 Bm>"
+let A = "<Bm Cadd9 Bm Gadd9 Bm Cadd9 Am7 Bm>"
+let B = "<Em Bm Cadd9 Bm Gadd9 Am7 Cadd9 Bm>"
+let C = "<Bm D Gadd9 Cadd9 Bm Em Am7 Bm>"
+let D = "<Cadd9 Bm Am7 Gadd9 Em Bm Cadd9 Bm>"
+let P = arrange([8, A], [8, B], [8, A], [8, C], [8, D], [8, B], [8, A], [8, C], [8, D], [8, A], [8, B], [8, C], [8, D], [8, B], [8, A])
+
+// the rising line: eight cycles
+let stair = "<[0 ~ 1 ~ 0 ~ 2 ~] [4 ~ 3 ~ 2 ~ 1 ~] [0 ~ 2 ~ 4 ~ 2 ~] [3 ~ 2 ~ 1 ~ 0 ~] [0 ~ 1 ~ 3 ~ 1 ~] [5 ~ 4 ~ 2 ~ 1 ~] [2 ~ 1 ~ 0 ~ 1 ~] [4 ~ 5 ~ 4 ~ 2 ~]>"
+let line = arrange([8, stair], [8, stair.add(1)], [8, stair.rev()], [8, stair.add(3)], [8, stair.add(-1)],
+  [8, stair.rev().add(2)], [8, stair], [8, stair.add(2).rev()], [8, stair.add(4)], [8, stair.rev()],
+  [8, stair.add(1)], [8, stair.add(-1).rev()], [8, stair.add(3)], [8, stair.rev().add(1)], [8, stair])
 
 stack(
   // 0: the heartbeat and a dark held chord
@@ -20,7 +32,7 @@ stack(
   // 2: war drums and the rising line
   layer(2, stack(
     s("taiko:0 taiko:1 ~ taiko:0 taiko:1 ~ taiko:0 taiko:1").gain(.7).room(.3),
-    n("<[0 ~ 1 ~ 0 ~ 2 ~] [4 ~ 3 ~ 2 ~ 1 ~]>").scale("b3:phrygian")
+    n(line).scale("b3:phrygian")
       .s("sawtooth").attack(.02).release(.3).gain(.45).lpf(1400).lpenv(2).lpd(.25).room(.4).orbit(2))),
   // 3: choir, cymbal swell, everything open
   layer(3, stack(
