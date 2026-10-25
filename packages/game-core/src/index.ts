@@ -82,8 +82,8 @@ export {
   toCharacter,
   validatePlayerBuild,
 } from "./build.js";
-export type { JoinLoadout, JoinRefusal } from "./build/join-loadout.js";
-export { DEFAULT_SKILL_BAR, HOUSE_LOADOUT, resolveJoinLoadout } from "./build/join-loadout.js";
+export type { JoinLoadout, JoinRefusal } from "./join-loadout.js";
+export { DEFAULT_SKILL_BAR, HOUSE_LOADOUT, resolveJoinLoadout } from "./join-loadout.js";
 
 export * from "./skills/index.js";
 
