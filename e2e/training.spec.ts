@@ -563,12 +563,21 @@ test("(23) Esc stops a walk to a clicked point, and the next Esc releases the ar
   await expect(page.locator(".training")).toHaveClass(/is-armed/);
 
   await releaseControl(page);
-  // Stopped where it stood: the arena holds still, once the walk marker
-  // has faded (400 ms).
-  await page.waitForTimeout(600);
-  const stopped = await arenaShot(page, canvas);
-  await page.waitForTimeout(700);
-  expect((await arenaShot(page, canvas)).equals(stopped), "the hero should have stopped").toBe(
-    true,
-  );
+  // Stopped where it stood: two shots 700 ms apart match, once the walk
+  // marker has faded. The fade is 400 ms of game time, which runs slower
+  // than wall time under load (#327), so this polls. A hero still walking
+  // never matches.
+  let previous = await arenaShot(page, canvas);
+  await expect
+    .poll(
+      async () => {
+        await page.waitForTimeout(700);
+        const next = await arenaShot(page, canvas);
+        const still = next.equals(previous);
+        previous = next;
+        return still;
+      },
+      { message: "the hero should have stopped", intervals: [0], timeout: 3000 },
+    )
+    .toBe(true);
 });
