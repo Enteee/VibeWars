@@ -237,11 +237,23 @@ export async function joinLobbyByCode(
     await awaitFirstPatch(room);
     return wrap(room);
   } catch (error) {
-    if (isProtocolMismatch(error)) {
-      throw error;
-    }
-    throw new LobbyNotFoundError(
-      `no lobby with code ${normalized} (${error instanceof Error ? error.message : String(error)})`,
-    );
+    throw joinByCodeFailure(error, normalized);
   }
+}
+
+/**
+ * What a failed join by `code` is rethrown as. A stale tab and a server
+ * at capacity keep their own error, so the player is told what fixes it;
+ * anything else is reported as no such lobby.
+ *
+ * @param error what the SDK rejected with
+ * @param code the normalised code that was tried
+ */
+export function joinByCodeFailure(error: unknown, code: string): unknown {
+  if (isProtocolMismatch(error) || capacityRefusal(error) !== undefined) {
+    return error;
+  }
+  return new LobbyNotFoundError(
+    `no lobby with code ${code} (${error instanceof Error ? error.message : String(error)})`,
+  );
 }

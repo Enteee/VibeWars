@@ -1,4 +1,4 @@
-import { Room, ServerError, type AuthContext, type Client } from "colyseus";
+import { ClientState, CloseCode, Room, ServerError, type AuthContext, type Client } from "colyseus";
 import { schema, t } from "@colyseus/schema";
 import { createRng, seedFromString, type SimulationRng } from "@vibewars/game-core";
 import { listMapIds } from "@vibewars/game-maps";
@@ -529,6 +529,12 @@ export class LobbyRoom extends Room {
    * otherwise believe.
    */
   public override onAuth(client: Client, _options: unknown, context: AuthContext): true {
+    if (client.state === ClientState.LEAVING) {
+      // Its socket closed before it got here. Colyseus refuses it right
+      // after `onAuth` without ever calling `onLeave`, so a seat taken now
+      // would be held until the room is gone.
+      throw new ServerError(CloseCode.WITH_ERROR, "already disconnected");
+    }
     this.#clientSeats.take(client.sessionId, peerAddress(context.ip));
     return true;
   }

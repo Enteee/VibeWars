@@ -1,6 +1,14 @@
 import { randomUUID } from "node:crypto";
 
-import { CloseCode, Room, matchMaker, type AuthContext, type Client } from "colyseus";
+import {
+  ClientState,
+  CloseCode,
+  Room,
+  ServerError,
+  matchMaker,
+  type AuthContext,
+  type Client,
+} from "colyseus";
 import { ArraySchema, schema, t } from "@colyseus/schema";
 import {
   IMPLEMENTED_SKILLS,
@@ -888,6 +896,12 @@ export class MatchRoom extends Room {
    * otherwise believe.
    */
   public override onAuth(client: Client, _options: unknown, context: AuthContext): true {
+    if (client.state === ClientState.LEAVING) {
+      // Its socket closed before it got here. Colyseus refuses it right
+      // after `onAuth` without ever calling `onLeave`, so a seat taken now
+      // would be held until the room is gone.
+      throw new ServerError(CloseCode.WITH_ERROR, "already disconnected");
+    }
     this.#clientSeats.take(client.sessionId, peerAddress(context.ip));
     return true;
   }

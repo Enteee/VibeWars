@@ -36,7 +36,7 @@ describe("the seat and matchmaking limits (#265)", () => {
       "VIBEWARS_MAX_CLIENTS_PER_ADDRESS",
       "maxClientsPerAddress",
       DEFAULT_MAX_CLIENTS_PER_ADDRESS,
-      16,
+      32,
     ],
     ["VIBEWARS_MATCHMAKING_BURST", "matchmakingBurst", DEFAULT_MATCHMAKING_BURST, 10],
   ] as const;

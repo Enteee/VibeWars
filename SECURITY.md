@@ -139,8 +139,8 @@ saying so in the same PR. Keep the numbers: issues cite them.
      tick budget, and 16-player lobby matches cost about twice that.
      Refused with `CLIENT_LIMIT` and "The server is full".
    - **Seats per address (#265):** at most `VIBEWARS_MAX_CLIENTS_PER_ADDRESS`
-     (default 16: a household of 8 behind one NAT, in a lobby and its
-     match). Refused with `ADDRESS_LIMIT` (429) and "Too many connections
+     (default 32: one address can fill a whole lobby and its match, as a
+     LAN party behind an address-rewriting port forwarder must). Refused with `ADDRESS_LIMIT` (429) and "Too many connections
      from your network".
    - **Matchmaking requests per address (#265):** a bucket of
      `VIBEWARS_MATCHMAKING_BURST` (default 10), refilling one a second,

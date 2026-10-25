@@ -2,6 +2,8 @@ import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { MAX_LOBBY_PLAYERS } from "@vibewars/game-protocol";
+
 /**
  * Server configuration, resolved once from the environment.
  *
@@ -104,8 +106,13 @@ export const DEFAULT_MAX_ROOMS = 200;
  */
 export const DEFAULT_MAX_CLIENTS = 800;
 
-/** 16 by default: a household of 8 behind one NAT, each in a lobby and its match. */
-export const DEFAULT_MAX_CLIENTS_PER_ADDRESS = 16;
+/**
+ * 32 by default: one address can always fill a whole lobby and its match,
+ * as a LAN party behind a port forwarder that rewrites every player's
+ * address to one (Docker Desktop, rootless Docker) must. Still 4 % of
+ * the server-wide cap.
+ */
+export const DEFAULT_MAX_CLIENTS_PER_ADDRESS = 2 * MAX_LOBBY_PLAYERS;
 
 /** 10 by default: a few tabs opening at once, never a stream of empty rooms. */
 export const DEFAULT_MATCHMAKING_BURST = 10;

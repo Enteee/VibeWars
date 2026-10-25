@@ -76,7 +76,10 @@ export class GatedHttpServer extends HttpServer {
    * ever connects for it.
    */
   #admit(req: IncomingMessage): boolean {
-    if (req.method !== "POST" || !SEAT_RESERVING.test(req.url ?? "")) {
+    // The path the way Colyseus routes it: an absolute-form target such
+    // as `POST http://x/matchmake/create/lobby` reaches the router as
+    // `/matchmake/create/lobby`, so it must reach the bucket so too.
+    if (req.method !== "POST" || !SEAT_RESERVING.test(routedPath(req.url))) {
       return true;
     }
     const now = performance.now();
@@ -85,6 +88,16 @@ export class GatedHttpServer extends HttpServer {
       this.#forgotAt = now;
     }
     return this.#matchmaking.take(peerAddress(req.socket.remoteAddress), now);
+  }
+}
+
+/** The path Colyseus's router matches `url` on (`router/node.mjs`). */
+function routedPath(url: string | undefined): string {
+  try {
+    return new URL(url ?? "/", "http://localhost").pathname;
+  } catch {
+    // Not a URL Colyseus could route either.
+    return "/";
   }
 }
 

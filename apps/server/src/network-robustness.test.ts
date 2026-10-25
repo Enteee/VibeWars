@@ -1,3 +1,6 @@
+import { once } from "node:events";
+import { connect } from "node:net";
+
 import { matchMaker } from "@colyseus/core";
 import { Client, type Room } from "@colyseus/sdk";
 import {
@@ -424,6 +427,50 @@ describe("the seat limits (#265)", () => {
     });
     // Ten requests, ten lobbies: the refused one made nothing.
     expect(await matchMaker.query({ name: ROOM_LOBBY })).toHaveLength(10);
+  });
+
+  it("spends the bucket on an absolute-form request target too", async () => {
+    await start({ matchmakingBurst: 2 });
+    // Colyseus's node middleware routes `POST http://evil/matchmake/...` by
+    // its path, `/matchmake/create/lobby`, so the bucket counts it by that
+    // path too. (Behind our express app the router 404s it today; the
+    // bucket must not depend on that.)
+    const rawCreate = async (): Promise<string> => {
+      const body = JSON.stringify({ protocolVersion: PROTOCOL_VERSION });
+      const socket = connect(port, "127.0.0.1");
+      await once(socket, "connect");
+      socket.write(
+        [
+          `POST http://evil.example/matchmake/create/${ROOM_LOBBY} HTTP/1.1`,
+          "Host: evil.example",
+          "Content-Type: application/json",
+          `Content-Length: ${String(Buffer.byteLength(body))}`,
+          "Connection: close",
+          "",
+          body,
+        ].join("\r\n"),
+      );
+      let response = "";
+      socket.setEncoding("utf8");
+      socket.on("data", (chunk: string) => {
+        response += chunk;
+      });
+      await once(socket, "close");
+      return response.split("\r\n")[0] ?? "";
+    };
+
+    const tooMany = `HTTP/1.1 ${String(ADDRESS_LIMIT)} Too Many Requests`;
+    expect(await rawCreate()).not.toBe(tooMany);
+    expect(await rawCreate()).not.toBe(tooMany);
+    expect(await rawCreate()).toBe(tooMany);
+    // One bucket for both forms: the plain path is out of budget as well.
+    const plain = await fetch(`http://127.0.0.1:${String(port)}/matchmake/create/${ROOM_LOBBY}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ protocolVersion: PROTOCOL_VERSION }),
+    });
+    expect(plain.status).toBe(ADDRESS_LIMIT);
+    expect(await matchMaker.query({ name: ROOM_LOBBY })).toHaveLength(0);
   });
 
   it("never refuses a player coming back, and never counts them twice", async () => {
