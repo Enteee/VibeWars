@@ -20,6 +20,7 @@ import path from "node:path";
 import process from "node:process";
 
 import { readBoardState } from "./hub-board.mjs";
+import { WINDOW_MS, createUsageReader, summarize } from "./claude-usage.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { formatSpend, readSpend } from "./hub-spend.mjs";
 import { boardLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
@@ -177,6 +178,33 @@ function hub() {
   );
 }
 
+/**
+ * Each agent's Claude config dir is `<boxes>/<role>/config`, and its logs
+ * are under that; `claude-llc` says where `<boxes>` is (#50).
+ */
+const usage =
+  process.env.VIBEWARS_CLAUDE_BOXES === undefined
+    ? null
+    : createUsageReader(process.env.VIBEWARS_CLAUDE_BOXES, ROLES);
+
+/**
+ * Tokens per role over the last 5 hours, and today's output (#50): read
+ * from the agents' own logs, never an API.
+ *
+ * @returns {import("./dashboard-view.mjs").ClaudeUsage | null}
+ */
+function claude() {
+  const now = Date.now();
+  const midnight = new Date(now);
+  midnight.setHours(0, 0, 0, 0);
+  const dayStart = midnight.getTime();
+  const records = usage?.read(Math.min(dayStart, now - WINDOW_MS)) ?? null;
+  if (records === null) {
+    return null;
+  }
+  return { summary: summarize(records, { now, windowMs: WINDOW_MS, dayStart }), now };
+}
+
 function budget() {
   const raw = hubFile("ratelimit.json");
   if (
@@ -210,7 +238,10 @@ function linesOf(section, pane) {
       return boardLines(readBoardState(hubFile("board.json")), cfg?.columns ?? null, hired(), pane);
     }
     case "company":
-      return companyLines({ roles: ROLES, live: hired(), budget: budget(), hub: hub() }, pane);
+      return companyLines(
+        { roles: ROLES, live: hired(), budget: budget(), hub: hub(), claude: claude() },
+        pane,
+      );
     case "feed":
       return feedLines(feed(pane.rows), pane);
   }

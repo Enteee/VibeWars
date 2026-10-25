@@ -137,6 +137,8 @@ let
         SESSION="${session}"
         export VIBEWARS_LLC_SESSION="$SESSION"
         export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
+        # Where each role's Claude logs are, for the dashboard's tokens (#50).
+        export VIBEWARS_CLAUDE_BOXES="$HOME/${config.vibewars.claudeBot.boxes}"
 
         usage() {
       cat ${llcUsage}
@@ -335,7 +337,8 @@ let
         feed_pane="$(${tmux} split-window -v -l 30% -t "$board_pane" -P -F '#{pane_id}' \
           -c "$DEVENV_ROOT" "${node} ${llcScripts}/dashboard.mjs feed")"
         company_pane="$(${tmux} split-window -h -l 40% -t "$board_pane" -P -F '#{pane_id}' \
-          -c "$DEVENV_ROOT" "${node} ${llcScripts}/dashboard.mjs company")"
+          -c "$DEVENV_ROOT" -e "VIBEWARS_CLAUDE_BOXES=$VIBEWARS_CLAUDE_BOXES" \
+          "${node} ${llcScripts}/dashboard.mjs company")"
         ${tmux} select-pane -t "$feed_pane" -T TELEGRAM
         ${tmux} select-pane -t "$company_pane" -T COMPANY
         ${tmux} select-pane -t "$board_pane" -T BOARD
@@ -536,6 +539,7 @@ in
         exec = ''
           set -euo pipefail
           export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
+          export VIBEWARS_CLAUDE_BOXES="$HOME/${config.vibewars.claudeBot.boxes}"
           exec ${node} ${llcScripts}/dashboard.mjs "$@"
         '';
       };

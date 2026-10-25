@@ -200,7 +200,7 @@ describe("companyLines", () => {
 
   it("is the roster, the hub, then the GitHub budget", () => {
     const lines = companyLines(
-      { roles, live: new Set(["manager", "architect"]), budget, hub },
+      { roles, live: new Set(["manager", "architect"]), budget, hub, claude: null },
       { rows: 30, width: 40 },
     ).map(plain);
     expect(lines[0]).toBe("ROSTER 2/5 hired");
@@ -216,16 +216,60 @@ describe("companyLines", () => {
     /** @param {HubLine} health */
     const hubLine = (health) =>
       companyLines(
-        { roles, live: new Set(), budget: null, hub: health },
+        { roles, live: new Set(), budget: null, hub: health, claude: null },
         { rows: 30, width: 80 },
       ).find((line) => plain(line).startsWith("hub "));
     expect(hubLine(hub)).toContain("\x1b[1;32m");
     expect(hubLine({ state: "down", line: "hub ● down · restarts 0/h" })).toContain("\x1b[1;31m");
   });
 
+  it("says the Claude usage is unknown before any agent has logged (#50)", () => {
+    const lines = companyLines(
+      { roles, live: new Set(), budget: null, hub, claude: null },
+      { rows: 30, width: 72 },
+    ).map(plain);
+    expect(lines).toContain("CLAUDE usage unknown (no agent logs yet)");
+  });
+
+  it("shows tokens per role, — for a quiet one, and marks the top (#50)", () => {
+    const usage = (/** @type {number} */ output) => ({
+      replies: 41,
+      output,
+      input: 112_000,
+      cacheRead: 3_100_000,
+      model: "claude-opus-5-5",
+    });
+    const claude = {
+      now: new Date(2026, 9, 25, 16, 42).getTime(),
+      summary: {
+        roles: new Map([
+          ["manager", usage(61_000)],
+          ["developer-1", usage(240_000)],
+        ]),
+        total: usage(301_000),
+        todayOutput: 1_400_000,
+      },
+    };
+    const lines = companyLines(
+      { roles, live: new Set(), budget: null, hub, claude },
+      { rows: 40, width: 72 },
+    ).map(plain);
+    const at = lines.indexOf("CLAUDE tokens, last 5h, as of 16:42");
+    expect(at).toBeGreaterThan(0);
+    const table = lines.slice(at + 2);
+    expect(table.map((line) => line.trim().split(/\s+/)[0])).toEqual([...roles, "total"]);
+    expect(table[0]).toMatch(/^ {2}manager +41 +61k +112k +3\.1M {2}opus-5-5$/);
+    expect(table[1]).toMatch(/^ {2}architect +—$/);
+    expect(table[2]).toMatch(/240k .*opus-5-5 {2}<- top$/);
+    expect(table.at(-1)).toMatch(/\(today: 1\.4M out\)$/);
+    for (const line of lines) {
+      expect(columnsOf(line)).toBeLessThanOrEqual(72);
+    }
+  });
+
   it("cuts an overflow with … +N lines", () => {
     const lines = companyLines(
-      { roles, live: new Set(), budget: null, hub },
+      { roles, live: new Set(), budget: null, hub, claude: null },
       { rows: 4, width: 40 },
     );
     expect(lines).toHaveLength(4);

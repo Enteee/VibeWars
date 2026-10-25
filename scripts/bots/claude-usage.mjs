@@ -1,0 +1,293 @@
+/**
+ * How much Claude each role uses (#50), read from the session logs each
+ * agent's Claude writes under `<boxes>/<role>/config/projects/`. The
+ * dashboard runs on the host, outside every jail, so it can read them all;
+ * nothing here calls an API.
+ *
+ * The logs hold prompts, code and maybe secrets. Only the usage fields are
+ * ever parsed out of a line, and no line, nor any part of one, is ever
+ * printed, error messages included.
+ */
+import fs from "node:fs";
+import path from "node:path";
+
+/** The plan's rolling window, which the main figures cover. */
+export const WINDOW_MS = 5 * 60 * 60 * 1000;
+
+/**
+ * One API reply, as the log records it.
+ *
+ * @typedef {object} UsageRecord
+ * @property {string} id `message.id`: one reply is logged on several lines
+ * @property {number} ts epoch milliseconds
+ * @property {string} model
+ * @property {number} input `input_tokens`
+ * @property {number} output `output_tokens`
+ * @property {number} cacheWrite `cache_creation_input_tokens`
+ * @property {number} cacheRead `cache_read_input_tokens`
+ */
+
+/**
+ * @param {unknown} value
+ * @returns {Record<string, unknown>}
+ */
+function obj(value) {
+  return typeof value === "object" && value !== null
+    ? /** @type {Record<string, unknown>} */ (value)
+    : {};
+}
+
+/**
+ * @param {unknown} value
+ * @returns {number}
+ */
+function count(value) {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+/**
+ * The usage in one log line, or `null` for anything that is not an
+ * assistant reply with usage, malformed JSON included.
+ *
+ * @param {string} line
+ * @returns {UsageRecord | null}
+ */
+export function parseUsageLine(line) {
+  /** @type {unknown} */
+  let raw;
+  try {
+    raw = JSON.parse(line);
+  } catch {
+    return null;
+  }
+  const entry = obj(raw);
+  const message = obj(entry.message);
+  const usage = obj(message.usage);
+  const ts = typeof entry.timestamp === "string" ? Date.parse(entry.timestamp) : Number.NaN;
+  if (
+    entry.type !== "assistant" ||
+    typeof message.id !== "string" ||
+    message.usage === undefined ||
+    Number.isNaN(ts)
+  ) {
+    return null;
+  }
+  return {
+    id: message.id,
+    ts,
+    model: typeof message.model === "string" ? message.model : "",
+    input: count(usage.input_tokens),
+    output: count(usage.output_tokens),
+    cacheWrite: count(usage.cache_creation_input_tokens),
+    cacheRead: count(usage.cache_read_input_tokens),
+  };
+}
+
+/**
+ * One role's replies in the window.
+ *
+ * @typedef {object} RoleUsage
+ * @property {number} replies distinct replies
+ * @property {number} output
+ * @property {number} input fresh input: `input` plus `cacheWrite`
+ * @property {number} cacheRead
+ * @property {string} model the latest reply's, `""` with none
+ */
+
+/**
+ * @typedef {object} UsageSummary
+ * @property {Map<string, RoleUsage>} roles only roles with a reply in the window
+ * @property {RoleUsage} total
+ * @property {number} todayOutput output since `dayStart`, every role
+ */
+
+/** @returns {RoleUsage} */
+function none() {
+  return { replies: 0, output: 0, input: 0, cacheRead: 0, model: "" };
+}
+
+/**
+ * Each role's totals over the window, each reply counted once however many
+ * lines logged it; the last line for an id wins.
+ *
+ * @param {readonly (UsageRecord & { role: string })[]} records
+ * @param {{ now: number, windowMs: number, dayStart: number }} at
+ * @returns {UsageSummary}
+ */
+export function summarize(records, { now, windowMs, dayStart }) {
+  /** @type {Map<string, UsageRecord & { role: string }>} */
+  const replies = new Map();
+  for (const record of records) {
+    replies.set(record.id, record);
+  }
+  /** @type {Map<string, RoleUsage>} */
+  const roles = new Map();
+  /** @type {Map<string, number>} */
+  const latest = new Map();
+  const total = none();
+  let todayOutput = 0;
+  for (const reply of replies.values()) {
+    if (reply.ts >= dayStart && reply.ts <= now) {
+      todayOutput += reply.output;
+    }
+    if (reply.ts < now - windowMs || reply.ts > now) {
+      continue;
+    }
+    const role = roles.get(reply.role) ?? none();
+    for (const sum of [role, total]) {
+      sum.replies += 1;
+      sum.output += reply.output;
+      sum.input += reply.input + reply.cacheWrite;
+      sum.cacheRead += reply.cacheRead;
+    }
+    if (reply.ts >= (latest.get(reply.role) ?? Number.NEGATIVE_INFINITY)) {
+      latest.set(reply.role, reply.ts);
+      role.model = reply.model;
+    }
+    roles.set(reply.role, role);
+  }
+  return { roles, total, todayOutput };
+}
+
+/**
+ * A token count in at most five characters: `950`, `38k`, `1.1M`.
+ *
+ * @param {number} n
+ * @returns {string}
+ */
+export function formatCount(n) {
+  if (n < 1000) {
+    return String(Math.round(n));
+  }
+  if (Math.round(n / 1000) < 1000) {
+    return `${String(Math.round(n / 1000))}k`;
+  }
+  return `${(n / 1_000_000).toFixed(1)}M`;
+}
+
+/**
+ * Where one log file has been read up to.
+ *
+ * @typedef {object} Cursor
+ * @property {number} ino
+ * @property {number} offset bytes read, the unfinished last line included
+ * @property {Buffer} partial that unfinished last line, completed next time
+ */
+
+/**
+ * Every `.jsonl` under `dir`, at any depth, so subagents' logs count too.
+ *
+ * @param {string} dir
+ * @returns {string[]}
+ */
+function logFiles(dir) {
+  try {
+    return fs
+      .readdirSync(dir, { recursive: true, encoding: "utf8" })
+      .filter((name) => name.endsWith(".jsonl"))
+      .map((name) => path.join(dir, name));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Reads each role's logs as they grow: only the bytes appended since the
+ * last read, and only replies new enough to matter, so a refresh stays
+ * cheap however long the company has run.
+ *
+ * @param {string} boxes the directory holding each role's `<role>/config`
+ * @param {readonly string[]} roles
+ */
+export function createUsageReader(boxes, roles) {
+  /** @type {Map<string, Cursor>} */
+  const cursors = new Map();
+  /** @type {Map<string, UsageRecord & { role: string }>} */
+  const kept = new Map();
+
+  /**
+   * Read what was appended to `file` since last time.
+   *
+   * @param {string} file
+   * @param {string} role
+   * @param {number} since replies before this are not kept
+   */
+  function readFile(file, role, since) {
+    let stat;
+    try {
+      stat = fs.statSync(file);
+    } catch {
+      cursors.delete(file);
+      return;
+    }
+    let cursor = cursors.get(file);
+    if (cursor === undefined && stat.mtimeMs < since) {
+      // Nothing in it is new enough, and a write would change its mtime.
+      return;
+    }
+    if (cursor?.ino !== stat.ino || stat.size < cursor.offset) {
+      // New, replaced or cut short: read it from the start.
+      cursor = { ino: stat.ino, offset: 0, partial: Buffer.alloc(0) };
+    }
+    if (stat.size === cursor.offset) {
+      cursors.set(file, cursor);
+      return;
+    }
+    const appended = Buffer.alloc(stat.size - cursor.offset);
+    let fd;
+    try {
+      fd = fs.openSync(file, "r");
+      fs.readSync(fd, appended, 0, appended.length, cursor.offset);
+    } catch {
+      return;
+    } finally {
+      if (fd !== undefined) {
+        fs.closeSync(fd);
+      }
+    }
+    const bytes = Buffer.concat([cursor.partial, appended]);
+    // Split on the byte, not the decoded text, so a character cut in two
+    // by the writer is decoded whole next time.
+    const end = bytes.lastIndexOf(0x0a);
+    for (const line of bytes
+      .subarray(0, end + 1)
+      .toString("utf8")
+      .split("\n")) {
+      const record = line === "" ? null : parseUsageLine(line);
+      if (record !== null && record.ts >= since) {
+        kept.set(record.id, { ...record, role });
+      }
+    }
+    cursors.set(file, {
+      ino: stat.ino,
+      offset: stat.size,
+      partial: Buffer.from(bytes.subarray(end + 1)),
+    });
+  }
+
+  return {
+    /**
+     * Every reply since `since`, after reading what is new.
+     *
+     * @param {number} since epoch milliseconds
+     * @returns {(UsageRecord & { role: string })[] | null} null when `boxes`
+     *   does not exist, so no agent has run yet
+     */
+    read(since) {
+      if (!fs.existsSync(boxes)) {
+        return null;
+      }
+      for (const role of roles) {
+        for (const file of logFiles(path.join(boxes, role, "config", "projects"))) {
+          readFile(file, role, since);
+        }
+      }
+      for (const [id, record] of kept) {
+        if (record.ts < since) {
+          kept.delete(id);
+        }
+      }
+      return [...kept.values()];
+    },
+  };
+}
