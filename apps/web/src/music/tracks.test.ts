@@ -289,11 +289,12 @@ describe("manifest hygiene", () => {
 });
 
 describe.each(TRACKS)("track $id", (track) => {
+  // Evaluating up to 128 cycles at every level took 9 to 26 s for the densest tracks on a loaded runner.
   it("passes every rule at every intensity level", async () => {
     const { problems } = await check(
       { ...track, colour: [...track.colour] },
       { cycles: CYCLES, allowedSounds: allowed },
     );
     expect(problems).toEqual([]);
-  });
+  }, 60_000);
 });
