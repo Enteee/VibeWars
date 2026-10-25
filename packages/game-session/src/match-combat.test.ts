@@ -1,6 +1,7 @@
 import { DEFAULT_SKILL_BAR, defaultBuildEquipment, type CombatLogEntry } from "@vibewars/game-core";
 import {
   MAX_WIRE_COMBATS,
+  parsePeerHello,
   parseWireCombatBatch,
   parseWireSnapshot,
   type CastRefusedMessage,
@@ -45,33 +46,34 @@ async function until(
 }
 
 /**
- * Walk `connection`'s player to within `tolerance` of `point`, then stop.
- * The same movement rules as real play: no teleport for tests.
+ * Walk `connection`'s player toward `point` until within `tolerance`, or
+ * until `seconds` of match time run out, then stop. As on the server, a
+ * walk that ends short is not a failure: two bodies cannot overlap, so a
+ * tight tolerance on a player's centre may never be met, and whatever
+ * the test needs next is what it asserts. The same movement rules as real
+ * play: no teleport for tests.
  */
 async function walkTo(
   match: TestMatch,
   connection: MatchConnection,
   point: { x: number; y: number },
   tolerance: number,
+  seconds = 5,
 ): Promise<void> {
-  await until(
-    match,
-    () => {
-      const me = self(connection);
-      if (me === undefined) {
-        return true;
-      }
-      const dx = point.x - me.x;
-      const dy = point.y - me.y;
-      const length = Math.hypot(dx, dy);
-      if (length <= tolerance) {
-        return true;
-      }
-      connection.sendIntent({ kind: "move", dirX: dx / length, dirY: dy / length });
-      return false;
-    },
-    "the walk",
-  );
+  for (let passed = 0; passed < seconds; passed += TICK) {
+    const me = self(connection);
+    if (me === undefined) {
+      break;
+    }
+    const dx = point.x - me.x;
+    const dy = point.y - me.y;
+    const length = Math.hypot(dx, dy);
+    if (length <= tolerance) {
+      break;
+    }
+    connection.sendIntent({ kind: "move", dirX: dx / length, dirY: dy / length });
+    await match.step(TICK);
+  }
   connection.sendIntent({ kind: "stop" });
   await match.step(TICK);
 }
@@ -288,18 +290,22 @@ describe("networked combat (P2P)", () => {
   it("puts a ranged shot in the shared state while it flies, and takes it out when it lands", async () => {
     const match = startMatch();
     // An elementalist's default weapon is a ranged one.
-    const { connection: caster } = await match.join(
-      hello({
+    // The build goes through the host's own validator, as any peer's would:
+    // a plain JSON object, not game-core's typed equipment.
+    const shooter = parsePeerHello({
+      ...hello({ name: "Shooter" }),
+      build: {
         name: "Shooter",
-        build: {
-          name: "Shooter",
-          primaryProfession: "elementalist",
-          attributes: [{ attributeId: "elementalist.fire-magic", rank: 9 }],
-          skillBar: ["elementalist.fireball", null, null, null, null, null, null, null],
-          equipment: defaultBuildEquipment("elementalist"),
-        },
-      }),
-    );
+        primaryProfession: "elementalist",
+        attributes: [{ attributeId: "elementalist.fire-magic", rank: 9 }],
+        skillBar: ["elementalist.fireball", null, null, null, null, null, null, null],
+        equipment: defaultBuildEquipment("elementalist"),
+      },
+    });
+    if (shooter === undefined) {
+      throw new Error("the shooter's hello does not parse");
+    }
+    const { connection: caster } = await match.join(shooter);
     const { connection: victim } = await match.join();
     await match.step(TICK);
     await closeDistance(match, caster, victim.selfSessionId, 200);

@@ -1,6 +1,6 @@
-import { HOUSE_LOADOUT, defaultBuildEquipment } from "@vibewars/game-core";
+import { HOUSE_LOADOUT } from "@vibewars/game-core";
 import { PROTOCOL_VERSION, type JsonValue } from "@vibewars/game-protocol";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { MESSAGE_BURST } from "./intent-budget.js";
 import { MatchRefusedError, type PeerMatchConnection } from "./match-client.js";
@@ -292,10 +292,6 @@ describe("the P2P seat limit (#375)", () => {
 });
 
 describe("a P2P host survives hostile peers (#375)", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it("ignores every hostile match intent and keeps the player connected and sane", async () => {
     const match = startMatch();
     const { connection, transport } = await match.join();
@@ -321,7 +317,7 @@ describe("a P2P host survives hostile peers (#375)", () => {
     expect(match.host.phase).toBe("active");
   });
 
-  it("ignores every hostile hello, seats nobody for it, and still seats an honest peer", async () => {
+  it("ignores every malformed hello, and still seats an honest peer", async () => {
     const match = startMatch();
     const raw = match.network.join();
     const answers: string[] = [];
@@ -331,24 +327,62 @@ describe("a P2P host survives hostile peers (#375)", () => {
 
     for (const value of hostileValues()) {
       raw.send("hello", value, "host");
-      raw.send("hello", { protocolVersion: PROTOCOL_VERSION, name: value, build: value }, "host");
+      // Junk fields in a hello's shape, and a junk rejoin (`null` is a
+      // fresh join, so it is the one value left out).
       raw.send(
         "hello",
-        { protocolVersion: PROTOCOL_VERSION, name: "x", build: null, rejoin: value },
+        { protocolVersion: value, name: value, build: value, rejoin: value },
+        "host",
+      );
+      if (value !== null) {
+        raw.send(
+          "hello",
+          { protocolVersion: PROTOCOL_VERSION, name: "x", build: null, rejoin: value },
+          "host",
+        );
+      }
+    }
+    await settle();
+    await match.step(TICK);
+
+    // A malformed hello is no hello: nobody is seated for one, nor told
+    // anything, and an honest peer still gets in.
+    expect(answers).toEqual([]);
+    const { connection } = await match.join();
+    await match.step(TICK);
+    expect(connection.getSnapshot().players).toHaveLength(1);
+    expect(match.host.phase).toBe("active");
+  });
+
+  it("seats a peer whose hello is well-formed but full of junk exactly once", async () => {
+    const match = startMatch();
+    const { connection: watcher } = await match.join();
+    const raw = match.network.join();
+    const welcomes: unknown[] = [];
+    raw.on("welcome", (data) => welcomes.push(data));
+    await settle();
+
+    // Strings are the only names a hello may carry, and any JSON a build.
+    for (const value of hostileValues()) {
+      const name = typeof value === "string" ? value : "";
+      raw.send(
+        "hello",
+        { protocolVersion: PROTOCOL_VERSION, name, build: value, rejoin: null },
         "host",
       );
     }
     await settle();
     await match.step(TICK);
 
-    const { connection } = await match.join();
-    await match.step(TICK);
-    // A hello whose fields are all junk is no hello: nobody was seated for
-    // one, nor told anything, and an honest peer still gets in.
-    const seatedRaw = answers.filter((answer) => answer === "welcome").length;
-    expect(connection.getSnapshot().players).toHaveLength(1 + seatedRaw);
-    expect(self(connection)).toBeDefined();
-    expect(match.host.phase).toBe("active");
+    // One peer, one seat, whatever it repeats: the first hello seats it
+    // on the house loadout with a fallback name, and the rest are ignored.
+    expect(welcomes).toHaveLength(1);
+    const players = watcher.getSnapshot().players;
+    expect(players).toHaveLength(2);
+    for (const player of players) {
+      expect(player.name.length).toBeGreaterThan(0);
+      expect(Number.isFinite(player.x)).toBe(true);
+    }
   });
 
   it("sanitises a hostile display name without dropping the connection", async () => {
@@ -362,12 +396,27 @@ describe("a P2P host survives hostile peers (#375)", () => {
     expect(name).not.toContain("\u001b");
   });
 
-  it("never lets a peer's text forge a log line (#115)", async () => {
-    const forged = "a\n[match] finished winner=1 reason=score\r";
-    const warn = vi.spyOn(console, "warn");
-    const info = vi.spyOn(console, "info");
-    const log = vi.spyOn(console, "log");
+  it("sanitises a hostile display name short enough for the wire", async () => {
+    // The same attack inside MAX_WIRE_STRING, so the hello itself is valid
+    // and only the host's sanitising stands between it and everyone's screen.
     const match = startMatch();
+    const { connection } = await match.join(hello({ name: `\u0000\u001b[31m${"x".repeat(40)}` }));
+    await match.step(TICK);
+
+    const name = self(connection)?.name ?? "";
+    expect(name.length).toBeGreaterThan(0);
+    expect(name.length).toBeLessThanOrEqual(16);
+    expect(name).not.toContain("\u0000");
+    expect(name).not.toContain("\u001b");
+  });
+
+  it("never lets a peer's text forge a line on anyone's screen (#115)", async () => {
+    // The server's version spies on its log. A P2P host has no log (this
+    // package cannot even name `console`), so what is left is the text
+    // every other peer is sent: the name, and a build that names a skill.
+    const forged = "a\n[match] finished winner=1 reason=score\r";
+    const match = startMatch();
+    const { connection: watcher } = await match.join();
     const { connection } = await match.join(
       hello({
         name: forged,
@@ -376,7 +425,6 @@ describe("a P2P host survives hostile peers (#375)", () => {
           primaryProfession: "elementalist",
           attributes: [{ attributeId: "elementalist.fire-magic", rank: 9 }],
           skillBar: [forged, null, null, null, null, null, null, null],
-          equipment: defaultBuildEquipment("elementalist"),
         },
       }),
     );
@@ -386,13 +434,9 @@ describe("a P2P host survives hostile peers (#375)", () => {
     expect(connection.skillBar.map((slot) => slot?.id ?? null)).toEqual([
       ...HOUSE_LOADOUT.skillBar,
     ]);
-    expect(self(connection)?.name).not.toMatch(/[\n\r]/);
-    const lines = [...warn.mock.calls, ...info.mock.calls, ...log.mock.calls].map((call) =>
-      String(call[0]),
-    );
-    for (const line of lines) {
-      expect(line).not.toMatch(/[\n\r]/);
-    }
+    const seen = playerIn(watcher.getSnapshot(), connection.selfSessionId);
+    expect(seen?.name).toBeDefined();
+    expect(seen?.name).not.toMatch(/[\n\r]/);
   });
 
   it("ignores a seated peer's messages on channels the host does not listen to", async () => {
