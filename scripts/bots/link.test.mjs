@@ -370,6 +370,8 @@ describe("the company sidecar", () => {
           url: "https://github.com/Enteee/VibeWars/issues/28",
         },
       ],
+      // No preview card under a message full of links (#125).
+      link_preview_options: { is_disabled: true },
       message_thread_id: 11,
     });
   }, 20_000);
@@ -535,6 +537,7 @@ describe("the company sidecar", () => {
         chat_id: CHAT,
         text: "Support is busy, try again in a minute.",
         entities: [],
+        link_preview_options: { is_disabled: true },
         message_thread_id: 13,
         reply_parameters: { message_id: 32 },
       },
@@ -742,6 +745,8 @@ describe("the company sidecar", () => {
     expect(edit.message_id).toBe(1);
     expect(String(edit.text)).toMatch(/✅ Answered: Free$/);
     expect(edit.reply_markup).toBeUndefined();
+    // An edit is rendered afresh: without this its preview card comes back (#125).
+    expect(edit.link_preview_options).toEqual({ is_disabled: true });
   }, 20_000);
 
   it("refuses a question from a role that may not ask, with a receipt saying why", async () => {
