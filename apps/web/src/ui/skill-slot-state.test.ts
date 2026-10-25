@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlayerSnapshot, SkillSlot } from "@vibewars/game-session";
 
-import { castingSlot, flashSlot, SLOT_FLASH_MS, slotFlashes } from "./skill-slot-state.js";
+import {
+  castFailures,
+  castingSlot,
+  flashSlot,
+  SLOT_FLASH_MS,
+  slotFlashes,
+} from "./skill-slot-state.js";
 
 function slot(id: string): SkillSlot {
   return {
@@ -56,6 +62,25 @@ describe("castingSlot", () => {
     expect(castingSlot(BAR, undefined)).toBeUndefined();
     expect(castingSlot(BAR, self({ castingSkillId: "flare", castTotal: 0 }))).toBeUndefined();
     expect(castingSlot(BAR, self({ castingSkillId: "unknown", castTotal: 2 }))).toBeUndefined();
+  });
+});
+
+describe("castFailures (#484)", () => {
+  it("is this caster's interrupted and cancelled casts, in order, and no one else's", () => {
+    expect(
+      castFailures(
+        [
+          { kind: "interrupted", targetId: "foe", skillId: "ranger.troll-unguent" },
+          { kind: "interrupted", targetId: "me", skillId: "meteor" },
+          { kind: "damage", targetId: "foe", amount: 10 },
+          { kind: "cancelled", targetId: "foe", skillId: "unknown" },
+        ],
+        "foe",
+      ),
+    ).toEqual([
+      { skillId: "ranger.troll-unguent", kind: "interrupted" },
+      { skillId: "unknown", kind: "cancelled" },
+    ]);
   });
 });
 

@@ -12,10 +12,102 @@ import {
   isAttackingTarget,
   muteButtonState,
   skillSlotHtml,
+  targetCast,
+  targetHealthLabel,
+  targetHealthPercent,
   targetHint,
   targetHintDismissed,
   targetProfessionIcons,
 } from "./hud.js";
+
+/** A target on team 1, at full health of 480 and casting nothing. */
+function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
+  return {
+    sessionId: "foe",
+    name: "Mhenlo",
+    x: 0,
+    y: 0,
+    facing: 0,
+    targetSessionId: undefined,
+    attackTargetSessionId: undefined,
+    walking: false,
+    health: 480,
+    maxHealth: 480,
+    energy: 20,
+    maxEnergy: 50,
+    adrenaline: 0,
+    armor: 60,
+    weaponId: undefined,
+    offhandId: undefined,
+    primaryProfession: undefined,
+    secondaryProfession: undefined,
+    team: 1,
+    dead: false,
+    castingSkillId: undefined,
+    castRemaining: 0,
+    castTotal: 0,
+    statuses: [],
+    ...fields,
+  };
+}
+
+describe("targetHealthPercent (#484)", () => {
+  it("rounds down, but never reads 0% for the living", () => {
+    expect(targetHealthPercent(player({}))).toBe(100);
+    expect(targetHealthPercent(player({ health: 479 }))).toBe(99);
+    expect(targetHealthPercent(player({ health: 1 }))).toBe(1);
+    expect(targetHealthPercent(player({ health: 0, dead: true }))).toBe(0);
+  });
+
+  it("is of the current maximum, which can shrink", () => {
+    expect(targetHealthPercent(player({ health: 200, maxHealth: 400 }))).toBe(50);
+  });
+});
+
+describe("targetHealthLabel (#484)", () => {
+  it("shows a foe's percentage alone", () => {
+    expect(targetHealthLabel(player({ health: 412 }), 0)).toBe("85%");
+    expect(targetHealthLabel(player({ health: 412 }), undefined)).toBe("85%");
+  });
+
+  it("adds the hit points for an ally or yourself", () => {
+    expect(targetHealthLabel(player({ health: 412 }), 1)).toBe("85% · 412 / 480");
+  });
+
+  it("says dead", () => {
+    expect(targetHealthLabel(player({ health: 0, dead: true }), 0)).toBe("0% · dead");
+  });
+});
+
+describe("targetCast (#484)", () => {
+  const casting = (castRemaining: number): PlayerSnapshot =>
+    player({ castingSkillId: "ranger.troll-unguent", castRemaining, castTotal: 3 });
+
+  it("names the skill and fills from 0 to 1 as the cast runs", () => {
+    expect(targetCast(casting(3))).toEqual({
+      skillId: "ranger.troll-unguent",
+      name: "Troll Unguent",
+      progress: 0,
+    });
+    expect(targetCast(casting(1.5))?.progress).toBe(0.5);
+    expect(targetCast(casting(0))?.progress).toBe(1);
+  });
+
+  it("shows an unknown skill by its id, with no badge", () => {
+    expect(
+      targetCast(player({ castingSkillId: "mystery.skill", castRemaining: 1, castTotal: 2 })),
+    ).toEqual({ skillId: "mystery.skill", name: "mystery.skill", progress: 0.5 });
+  });
+
+  it("is nothing while not casting, or for an instant skill", () => {
+    expect(targetCast(player({}))).toBeUndefined();
+    expect(
+      targetCast(
+        player({ castingSkillId: "ranger.troll-unguent", castRemaining: 0, castTotal: 0 }),
+      ),
+    ).toBeUndefined();
+  });
+});
 
 describe("formatClock", () => {
   it("formats seconds as m:ss", () => {
