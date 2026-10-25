@@ -433,3 +433,26 @@ test("(18) names show only on the target, under the cursor, and under Ctrl (#253
   await page.mouse.move(1, 1);
   await expect.poll(named).toBe(1);
 });
+
+test("(19) a double-click on a far enemy attacks it: you walk there and swing (#298)", async ({
+  page,
+}) => {
+  const canvas = await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("weapon-dps");
+  await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
+  await takeControl(page);
+
+  // The bow-range dummy, at (480, 210): far out of a sword's reach.
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+  const scale = box.width / TRAINING_HALL_WIDTH;
+  await page.mouse.dblclick(box.x + 480 * scale, box.y + 210 * scale);
+
+  await expect(page.locator(".training-adrenaline")).toContainText("· attacking");
+  // Only a body that walked the whole way there can land this.
+  await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Bow-range dummy/, {
+    timeout: 8000,
+  });
+});

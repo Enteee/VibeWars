@@ -9,7 +9,8 @@ import {
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
 import { saveMuted } from "../audio/mute-preference.js";
 import { soundPlayer } from "../audio/sound-player.js";
-import { attackKeyIntents, isAttacking } from "../input/attack-key.js";
+import { attackClickIntents, attackKeyIntents, isAttacking } from "../input/attack-key.js";
+import { createDoubleClick } from "../input/double-click.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
 import { attachNameReveal } from "../input/name-reveal.js";
 import { nextTabTarget } from "../input/tab-target.js";
@@ -83,7 +84,8 @@ const LOG_CAP = 200;
 const METER_PAINT_SECONDS = 0.2;
 
 const HINT_IDLE = "click the arena to take control";
-const HINT_ARMED = "wasd move · 1–8 cast · tab/click to target · space attack · esc to release";
+const HINT_ARMED =
+  "wasd move · 1–8 cast · tab/click to target · space/double-click attack · esc to release";
 
 /**
  * Clicking one of these takes the keyboard, so it takes arena control
@@ -600,6 +602,8 @@ export function createTrainingPanel(): TrainingPanel {
   // cursor shows one (#253). In world units, which a still cursor keeps.
   const nameReveal = attachNameReveal(stage);
   let pointer: Vec2 | undefined;
+  // A double-click on an enemy attacks it, as Space would (#298).
+  const doubleClick = createDoubleClick();
 
   void createArenaViewport(stage, {
     mode: "fit",
@@ -645,6 +649,11 @@ export function createTrainingPanel(): TrainingPanel {
       }
       const hit = actorAtPoint(latestArena, world);
       session.connection.sendIntent({ kind: "target", targetSessionId: hit?.id ?? null });
+      if (doubleClick.press(hit?.id, performance.now())) {
+        for (const intent of attackClickIntents(session.connection.getSnapshot(), hit?.id)) {
+          session.connection.sendIntent(intent);
+        }
+      }
     });
     offPointerMove = created.onPointerMove((world) => {
       pointer = world;
