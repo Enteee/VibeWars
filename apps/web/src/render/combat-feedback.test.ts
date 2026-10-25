@@ -11,6 +11,7 @@ function player(sessionId: string): PlayerSnapshot {
     x: 100,
     y: 100,
     targetSessionId: undefined,
+    attackTargetSessionId: undefined,
     health: 400,
     maxHealth: 500,
     energy: 20,
@@ -36,6 +37,7 @@ const SNAPSHOT: MatchSnapshot = {
   phase: "active",
   winningTeam: undefined,
   endReason: undefined,
+  projectiles: [],
 };
 
 /** The texts a scene would have been asked to float, for these events. */
@@ -43,7 +45,7 @@ function floated(events: { kind: string; targetId?: string; amount?: number }[])
   const texts: FloatingText[] = [];
   showCombatFeedback(
     { addFloatingText: (text) => texts.push(text), addAreaFlash: () => undefined },
-    { casterSessionId: "me", skillId: "elementalist.fireball", events },
+    { casterSessionId: "me", cause: "skill", skillId: "elementalist.fireball", events },
     SNAPSHOT,
   );
   return texts.map((text) => text.text);
@@ -78,7 +80,13 @@ describe("showCombatFeedback and areas", () => {
     const flashes: AreaFlash[] = [];
     showCombatFeedback(
       { addFloatingText: () => undefined, addAreaFlash: (flash) => flashes.push(flash) },
-      { casterSessionId, skillId: "elementalist.fireball", events: [], ...(area && { area }) },
+      {
+        casterSessionId,
+        cause: "skill",
+        skillId: "elementalist.fireball",
+        events: [],
+        ...(area && { area }),
+      },
       snapshot,
     );
     return flashes;

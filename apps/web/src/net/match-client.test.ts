@@ -75,6 +75,7 @@ class FakeRoom implements LiveMatchRoom {
     phase: "active",
     winningTeam: -1,
     endReason: "",
+    projectiles: [],
   };
   readonly reconnection = { minUptime: 5000 };
   readonly sent: ClientIntent[] = [];

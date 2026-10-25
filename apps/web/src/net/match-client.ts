@@ -78,6 +78,7 @@ export interface DecodedPlayer {
   readonly x: number;
   readonly y: number;
   readonly targetSessionId: string;
+  readonly attackTargetSessionId: string;
   readonly health: number;
   readonly maxHealth: number;
   readonly energy: number;
@@ -92,6 +93,15 @@ export interface DecodedPlayer {
   readonly castTotal: number;
   readonly statuses: Iterable<string>;
 }
+export interface DecodedProjectile {
+  readonly id: number;
+  readonly x0: number;
+  readonly y0: number;
+  readonly x1: number;
+  readonly y1: number;
+  readonly launchedAt: number;
+  readonly flightSeconds: number;
+}
 export interface DecodedMatchState {
   readonly players: ReadonlyMap<string, DecodedPlayer> | Map<string, DecodedPlayer>;
   readonly scoreTeam0: number;
@@ -100,6 +110,7 @@ export interface DecodedMatchState {
   readonly phase: string;
   readonly winningTeam: number;
   readonly endReason: string;
+  readonly projectiles: Iterable<DecodedProjectile>;
 }
 
 function snapshotFrom(room: LiveMatchRoom): MatchSnapshot {
@@ -111,6 +122,8 @@ function snapshotFrom(room: LiveMatchRoom): MatchSnapshot {
       x: player.x,
       y: player.y,
       targetSessionId: player.targetSessionId === "" ? undefined : player.targetSessionId,
+      attackTargetSessionId:
+        player.attackTargetSessionId === "" ? undefined : player.attackTargetSessionId,
       health: player.health,
       maxHealth: player.maxHealth,
       energy: player.energy,
@@ -136,6 +149,13 @@ function snapshotFrom(room: LiveMatchRoom): MatchSnapshot {
     // -1 is the wire's "no winner"; the UI should not have to know that.
     winningTeam: room.state.winningTeam < 0 ? undefined : room.state.winningTeam,
     endReason: room.state.endReason === "" ? undefined : room.state.endReason,
+    projectiles: [...room.state.projectiles].map((shot) => ({
+      id: shot.id,
+      from: { x: shot.x0, y: shot.y0 },
+      to: { x: shot.x1, y: shot.y1 },
+      launchedAt: shot.launchedAt,
+      flightSeconds: shot.flightSeconds,
+    })),
   };
 }
 
