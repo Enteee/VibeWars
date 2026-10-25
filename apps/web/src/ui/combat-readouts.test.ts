@@ -146,6 +146,19 @@ describe("describeCombatEvent", () => {
     expect(logToneOf("attack-unreachable")).toBe("control");
   });
 
+  it("says a caster who moved cancels their own cast (#279)", () => {
+    const cancelled: CombatEvent = {
+      kind: "cancelled",
+      targetId: "you",
+      skillId: "elementalist.fireball",
+    };
+    expect(describeCombatEvent(entry([cancelled]), cancelled, nameOf)).toBe(
+      "Pyro cancels Fireball",
+    );
+    expect(logToneOf("cancelled")).toBe("control");
+    expect(floatingCueFor("cancelled", undefined)).toEqual({ text: "cancelled", tone: "neutral" });
+  });
+
   it("names a weapon entry for the weapon that swung or shot (#162)", () => {
     const shot = (event: CombatEvent): string =>
       describeCombatEvent(
