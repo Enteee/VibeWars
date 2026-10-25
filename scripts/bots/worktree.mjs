@@ -105,9 +105,12 @@ function readPlain(file) {
 const NIX_STORE = "/nix/store/";
 
 /**
- * Links `<worktree>/.pre-commit-config.yaml` to the store path the host's
- * own `<repo>/.pre-commit-config.yaml` resolves to, which `devenv shell` on
- * the host has just regenerated, but only when nothing is at that path.
+ * Links `<worktree>/.pre-commit-config.yaml` to `hookConfig`, the store file
+ * devenv's `config.git-hooks.configFile` names (claude-bot passes it, so it
+ * does not hang on `devenv shell` having linked the host's own copy, which
+ * untracking it in #283 deleted); without one, to the store path the host's
+ * `<repo>/.pre-commit-config.yaml` resolves to. Only when nothing is at that
+ * path.
  *
  * Anything already there is left alone, unread and unfollowed. On a branch
  * from before #283 the file is still tracked, and retargeting it would dirty
@@ -118,9 +121,10 @@ const NIX_STORE = "/nix/store/";
  * @param {string} repo
  * @param {string} worktree
  * @param {string} store
+ * @param {string | undefined} hookConfig
  * @returns {string | null} what was done, or null if something is already there
  */
-function linkHookConfig(repo, worktree, store) {
+function linkHookConfig(repo, worktree, store, hookConfig) {
   const name = ".pre-commit-config.yaml";
   const link = path.join(worktree, name);
   if (fs.lstatSync(link, { throwIfNoEntry: false }) !== undefined) {
@@ -129,12 +133,12 @@ function linkHookConfig(repo, worktree, store) {
   /** @type {string} */
   let target;
   try {
-    target = fs.realpathSync(path.join(repo, name));
+    target = fs.realpathSync(hookConfig ?? path.join(repo, name));
   } catch {
     target = "";
   }
   if (!target.startsWith(store)) {
-    return `no ${path.join(repo, name)} in ${store} (has devenv shell run?); git hooks will not run in ${worktree}`;
+    return `no ${hookConfig ?? path.join(repo, name)} in ${store} (has devenv shell run?); git hooks will not run in ${worktree}`;
   }
   try {
     fs.symlinkSync(target, link);
@@ -190,10 +194,11 @@ function mainCommit(repo, remote, done) {
  *
  * @param {string} repo the operator's checkout
  * @param {string} role
- * @param {{ remote?: string, store?: string }} [options] `remote`: where to
+ * @param {{ remote?: string, store?: string, hookConfig?: string }} [options] `remote`: where to
  *   fetch `main` from; omitted, nothing is fetched and the existing
  *   `origin/main` is used. `store`: the prefix a hook config must resolve
- *   into, `/nix/store/` unless a test says otherwise
+ *   into, `/nix/store/` unless a test says otherwise. `hookConfig`: the
+ *   store file to link as the hook config
  * @returns {string[]} what was done, one line each; empty if nothing was needed
  */
 export function ensureWorktree(repo, role, options = {}) {
@@ -211,7 +216,7 @@ export function ensureWorktree(repo, role, options = {}) {
    * @returns {string[]}
    */
   const withHookConfig = (lines) => {
-    const linked = linkHookConfig(repo, worktree, options.store ?? NIX_STORE);
+    const linked = linkHookConfig(repo, worktree, options.store ?? NIX_STORE, options.hookConfig);
     return linked === null ? lines : [...lines, linked];
   };
 
@@ -263,9 +268,9 @@ export function ensureWorktree(repo, role, options = {}) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const [repo, role] = process.argv.slice(2);
+  const [repo, role, hookConfig] = process.argv.slice(2);
   if (repo === undefined || role === undefined) {
-    process.stderr.write("usage: worktree.mjs <repo> <role>\n");
+    process.stderr.write("usage: worktree.mjs <repo> <role> [hook-config]\n");
     process.exit(2);
   }
   // GitHub's main, by URL, as the reboot fetches it. VIBEWARS_GIT_REMOTE is
@@ -278,7 +283,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     process.env.VIBEWARS_GIT_REMOTE ??
     (typeof slug === "string" && slug !== "" ? `git@github.com:${slug}.git` : undefined);
   try {
-    for (const line of ensureWorktree(repo, role, { remote })) {
+    for (const line of ensureWorktree(repo, role, { remote, hookConfig })) {
       process.stdout.write(`claude-bot: ${line}\n`);
     }
   } catch (error) {
