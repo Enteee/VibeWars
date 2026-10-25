@@ -417,6 +417,64 @@ body {
   font-size: 0.85rem;
 }
 
+/* --- keys (#309) -------------------------------------------------------- */
+
+.keys-table {
+  border-collapse: collapse;
+}
+
+.keys-table th,
+.keys-table td {
+  padding: 0.2rem 0.4rem 0.2rem 0;
+  text-align: left;
+  font-weight: normal;
+}
+
+.keys-action {
+  min-width: 12rem;
+}
+
+.screen button.key-cell,
+.key-cell.is-fixed {
+  display: inline-block;
+  min-width: 9rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.screen button.key-cell.is-capturing {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* A key moved to another action leaves an empty cell; it flashes once. */
+.screen button.key-cell.is-flashing {
+  animation: key-cell-emptied 1s ease-out;
+}
+
+@keyframes key-cell-emptied {
+  from {
+    border-color: var(--damage);
+    color: var(--damage);
+  }
+}
+
+.keys-table tr.is-fixed {
+  color: var(--ink-dim);
+}
+
+.keys-warning {
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+}
+
+.keys-line {
+  margin: 0;
+  min-height: 1.3em;
+  color: #ffb3ae;
+}
+
 /* --- lobby -------------------------------------------------------------- */
 
 .lobby-header {
