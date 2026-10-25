@@ -756,6 +756,20 @@ describe("closing and reopening", () => {
     }
   });
 
+  it("never watches: a watch would hold up the hub for everyone (#496)", () => {
+    for (const role of ROLES) {
+      for (const argv of [
+        ["pr", "checks", "471", "--watch"],
+        ["pr", "checks", "471", "--watch=true"],
+        ["pr", "checks", "471", "--watch", "--fail-fast", "-i", "5"],
+        ["run", "watch", "123"],
+      ]) {
+        expect(refusal(role, argv), `${role} ${argv.join(" ")}`).toContain("poll");
+      }
+      expect(gh(role, ["pr", "checks", "471"]).allow).toBe(true);
+    }
+  });
+
   it("never deletes the branch, in any spelling", () => {
     for (const argv of [
       ["pr", "close", "81", "--delete-branch"],

@@ -269,14 +269,14 @@ test("an enemy skill with nothing targeted targets the nearest enemy", async ({
   // stays picked.
   await page.keyboard.press(key("skill-1"));
 
-  await expect(target).toHaveText(/^target: /);
+  await expect(target).not.toHaveText("no target");
   await opponent.close();
 });
 
-/** The target's health as the target panel says it, e.g. "… — 480/480 hp" -> 480. */
+/** A foe's health as the target frame says it, in percent, e.g. "85%" -> 85 (#484). */
 async function readTargetHealth(page: Page): Promise<number> {
-  const text = (await page.locator(".hud-target-text").textContent()) ?? "";
-  const match = /— (\d+)\//.exec(text);
+  const text = (await page.locator(".hud-target-health .hud-bar-label").textContent()) ?? "";
+  const match = /^(\d+)%/.exec(text);
   expect(match, `could not read target health from ${JSON.stringify(text)}`).not.toBeNull();
   return Number(match?.[1] ?? NaN);
 }
@@ -293,7 +293,7 @@ test("Space attacks the nearest enemy with the weapon, and moving stops it (#160
 
   // Nothing targeted: Space picks the nearest enemy, as an enemy skill does.
   await page.keyboard.press(key("attack"));
-  await expect(page.locator(".hud-target-text")).toHaveText(/^target: /);
+  await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
   await expect(attacking).toBeVisible();
   await expect(attacking).toHaveText("attacking");
   const before = await readTargetHealth(page);
@@ -359,18 +359,18 @@ test("clicking the ground keeps the target, and Space attacks it from there (#31
   const canvas = await startLobbyMatch(page, [opponent]);
   const target = page.locator(".hud-target-text");
   await page.keyboard.press("Tab");
-  await expect(target).toHaveText(/^target: /);
+  await expect(target).not.toHaveText("no target");
   const before = await readTargetHealth(page);
 
   // Open ground, short of the top wall and away from both spawns.
   await canvas.click({ position: await matchPoint(page, canvas, { x: 260, y: 120 }) });
   await page.waitForTimeout(300);
-  await expect(target).toHaveText(/^target: /);
+  await expect(target).not.toHaveText("no target");
 
   await page.keyboard.press(" ");
   await expect(page.locator(".hud-attacking")).toBeVisible();
   await expect.poll(() => readTargetHealth(page), { timeout: 20_000 }).toBeLessThan(before);
-  await expect(target).toHaveText(/^target: /);
+  await expect(target).not.toHaveText("no target");
   await opponent.close();
 });
 
@@ -457,7 +457,7 @@ test("Tab targets the nearest enemy, and the hint goes for good (#55)", async ({
   await expect(hint).toBeVisible();
 
   await page.keyboard.press("Tab");
-  await expect(page.locator(".hud-target-text")).toHaveText(/^target: /);
+  await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
   await expect(hint).toBeHidden();
   // The browser kept its focus where it was: Tab is the game's now.
   expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
@@ -546,7 +546,7 @@ test("the target panel shows the target's professions before its name (#281)", a
   await expect(icons).toHaveCount(0);
 
   await page.keyboard.press("Tab");
-  await expect(page.locator(".hud-target-text")).toHaveText(/^target: /);
+  await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
   await expect(icons).toHaveCount(1);
   await expect(icons.first()).toHaveAttribute("alt", "Warrior");
   await expect(icons.first()).toHaveAttribute("src", /icons\/profession\/warrior\.svg$/);
@@ -607,4 +607,35 @@ test("at Close, the arena's bottom edge stops above the skill bar, not under it 
   const edge = (await projection(stage, canvas)).onPage({ x: 0, y: arena.height }).y;
   const bars = await page.locator(".hud-bars").boundingBox();
   expect(Math.abs(edge - (bars?.y ?? 0))).toBeLessThan(2);
+});
+
+test("the target frame shows the target's health and the skill it casts, filling, then clears (#484)", async ({
+  browser,
+  page,
+}) => {
+  const opponent = await browser.newPage();
+  await startLobbyMatch(page, [opponent]);
+  const health = page.locator(".hud-target-health");
+  const cast = page.locator(".hud-target-cast");
+  await expect(health).toBeHidden();
+  await expect(cast).toBeHidden();
+
+  // A foe at full health: the percentage alone.
+  await page.keyboard.press("Tab");
+  await expect(health).toHaveText("100%");
+  await expect(cast).toBeHidden();
+
+  // Slot 8 is Troll Unguent: a 3 s self cast, so it needs no target.
+  await opponent.keyboard.press(key("skill-8"));
+  await expect(cast).toBeVisible();
+  await expect(cast.locator(".hud-target-cast-name")).toHaveText("Troll Unguent");
+  await expect(cast.locator(".skill-type-badge")).toHaveCount(1);
+  const fill = cast.locator(".hud-target-cast-fill");
+  const width = (): Promise<number> => fill.evaluate((node) => node.getBoundingClientRect().width);
+  const early = await width();
+  await expect.poll(width).toBeGreaterThan(early);
+
+  // The frame it ends, the row clears.
+  await expect(cast).toBeHidden({ timeout: 5_000 });
+  await opponent.close();
 });

@@ -29,6 +29,28 @@ export function castingSlot(
 }
 
 /**
+ * The casts by `casterId` that this message ended without going off,
+ * interrupted or cancelled, in order. Anyone else's are ignored. The skill
+ * bar and the target frame's cast row (#484) both flash from this.
+ */
+export function castFailures(
+  events: CombatMessage["events"],
+  casterId: string,
+): { skillId: string; kind: SlotFlashKind }[] {
+  const failures: { skillId: string; kind: SlotFlashKind }[] = [];
+  for (const event of events) {
+    if (event.targetId !== casterId) {
+      continue;
+    }
+    if (event.kind !== "interrupted" && event.kind !== "cancelled") {
+      continue;
+    }
+    failures.push({ skillId: event.skillId, kind: event.kind });
+  }
+  return failures;
+}
+
+/**
  * The slots whose cast this message ended without going off: this
  * player's casts that were interrupted or cancelled. Anyone else's, and
  * a skill not on the bar, are ignored.
@@ -38,26 +60,16 @@ export function slotFlashes(
   selfId: string,
   skillBar: readonly (SkillSlot | null)[],
 ): { slot: number; kind: SlotFlashKind }[] {
-  const flashes: { slot: number; kind: SlotFlashKind }[] = [];
-  for (const event of events) {
-    if (event.targetId !== selfId) {
-      continue;
-    }
-    if (event.kind !== "interrupted" && event.kind !== "cancelled") {
-      continue;
-    }
-    const slot = skillBar.findIndex((skill) => skill !== null && skill.id === event.skillId);
-    if (slot !== -1) {
-      flashes.push({ slot, kind: event.kind });
-    }
-  }
-  return flashes;
+  return castFailures(events, selfId).flatMap(({ skillId, kind }) => {
+    const slot = skillBar.findIndex((skill) => skill !== null && skill.id === skillId);
+    return slot === -1 ? [] : [{ slot, kind }];
+  });
 }
 
 const flashTimers = new WeakMap<Element, ReturnType<typeof setTimeout>>();
 
 /**
- * Flash `button` as `kind` for SLOT_FLASH_MS. A new flash on the same slot
+ * Flash `button` (a slot, or the target frame's cast row) as `kind` for SLOT_FLASH_MS. A new flash on the same slot
  * replaces the old one and restarts the clock, as `flashMessage` does.
  */
 export function flashSlot(button: Element, kind: SlotFlashKind): void {

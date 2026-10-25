@@ -34,6 +34,7 @@ import {
   createHud,
   describeRefusal,
   flashMessage,
+  flashTargetCast,
   renderLeave,
   renderKeyLabels,
   renderMute,
@@ -358,6 +359,9 @@ export async function startMatchView(
         flashSlot(button, flash.kind);
       }
     }
+    // So does the target's, in the target frame (#484).
+    const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
+    flashTargetCast(hud, message.events, self?.targetSessionId);
   });
   // A key that does nothing reads as a broken game; say why (issue #51).
   connection.onCastRefused((message) => {
