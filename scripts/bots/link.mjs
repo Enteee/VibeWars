@@ -33,6 +33,7 @@ import { fileURLToPath } from "node:url";
 
 import { ROLES } from "./hub-policy.mjs";
 import { takeLock } from "./instance-lock.mjs";
+import { openJailDir, withJailDir } from "./jail-fs.mjs";
 import {
   SUPPORT_BUSY,
   SYSTEM,
@@ -275,21 +276,37 @@ function busPaths(bus, role) {
   };
 }
 
+/** The most an outbox entry may be: one message. */
+const OUTBOX_MAX_BYTES = 64 * 1024;
+
 /**
+ * A role's bus directory, and its outbox and inbox in it. Below the role
+ * directory is the jail's, so it goes through jail-fs.mjs (#329). What
+ * the jail made unusable there is logged, and costs only that role.
+ *
  * @param {string} bus
  * @param {string} role
  * @returns {void}
  */
 function ensureBus(bus, role) {
   const at = busPaths(bus, role);
-  fs.mkdirSync(at.outbox, { recursive: true });
+  fs.mkdirSync(at.dir, { recursive: true });
   fs.mkdirSync(path.dirname(at.roster), { recursive: true });
-  if (!fs.existsSync(at.inbox)) {
-    fs.writeFileSync(at.inbox, "");
+  try {
+    withJailDir(at.dir, "outbox", { create: true }, () => undefined);
+    withJailDir(at.dir, "", {}, (dir) => {
+      dir.create("inbox.jsonl");
+    });
+  } catch (error) {
+    refused(role, "outbox/ or inbox.jsonl", error);
   }
 }
 
 /**
+ * Append to a role's inbox. One the jail made unwritable, such as a
+ * symlink, costs that role its messages and nothing else: logged, never
+ * thrown into the delivery of everyone else's.
+ *
  * @param {string} bus
  * @param {string} role
  * @param {import("./protocol.mjs").InboxLine} line
@@ -297,7 +314,77 @@ function ensureBus(bus, role) {
  */
 function appendInbox(bus, role, line) {
   ensureBus(bus, role);
-  fs.appendFileSync(busPaths(bus, role).inbox, `${JSON.stringify(line)}\n`);
+  try {
+    withJailDir(busPaths(bus, role).dir, "", {}, (dir) => {
+      dir.append("inbox.jsonl", `${JSON.stringify(line)}\n`);
+    });
+  } catch (error) {
+    refused(role, "inbox.jsonl", error);
+  }
+}
+
+/**
+ * @param {string} role
+ * @param {string} site
+ * @param {unknown} error
+ * @returns {void}
+ */
+function refused(role, site, error) {
+  console.error(
+    `[link] ${role}: refused ${site}: ${error instanceof Error ? error.message : String(error)}`,
+  );
+}
+
+/**
+ * The ready entries of an outbox, each read whole and removed: `take` gets
+ * each one's name and parsed contents, and says whether it was handled.
+ * An entry that is not a small regular file is refused and removed; one
+ * that does not parse yet is left for the next pass.
+ *
+ * @param {string} dir the role's (or the system's) bus directory
+ * @param {string} role for the log
+ * @param {(name: string, payload: unknown) => void} take
+ * @returns {boolean} whether anything was taken
+ */
+function takeOutbox(dir, role, take) {
+  /** @type {import("./jail-fs.mjs").JailDir} */
+  let outbox;
+  try {
+    outbox = openJailDir(dir, "outbox");
+  } catch (error) {
+    if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) {
+      refused(role, "outbox/", error);
+    }
+    return false;
+  }
+  let moved = false;
+  try {
+    for (const name of outbox.list().filter(isReadyOutboxEntry).sort()) {
+      /** @type {string} */
+      let text;
+      try {
+        text = outbox.readSmall(name, OUTBOX_MAX_BYTES);
+      } catch (error) {
+        refused(role, `outbox/${name}`, error);
+        outbox.remove(name);
+        continue;
+      }
+      /** @type {unknown} */
+      let payload;
+      try {
+        payload = JSON.parse(text);
+      } catch {
+        // A half-written file from a `tg send` still in flight; next pass.
+        continue;
+      }
+      take(name, payload);
+      outbox.remove(name);
+      moved = true;
+    }
+  } finally {
+    outbox.close();
+  }
+  return moved;
 }
 
 /**
@@ -581,64 +668,55 @@ async function drainOutboxes(company, mirror) {
   for (;;) {
     let moved = false;
     for (const role of ROLES) {
-      const { outbox } = busPaths(company.at.bus, role);
-      /** @type {string[]} */
-      let pending;
-      try {
-        pending = fs.readdirSync(outbox).filter(isReadyOutboxEntry).sort();
-      } catch {
-        continue;
-      }
-      for (const name of pending) {
-        const file = path.join(outbox, name);
-        /** @type {unknown} */
-        let payload;
-        try {
-          payload = JSON.parse(fs.readFileSync(file, "utf8"));
-        } catch {
-          // A half-written file from a `tg send` still in flight; next pass.
-          continue;
-        }
-        const delivered = deliverPeer(payload, {
-          from: role,
-          roles: ROLES,
-          present: present(company.at.bus),
-          now: Date.now(),
-        });
-        for (const { role: recipient, line } of delivered.deliveries) {
-          appendInbox(company.at.bus, recipient, line);
-        }
-        if (delivered.notice !== null) {
-          appendInbox(company.at.bus, role, delivered.notice);
-        }
-        if (delivered.mirror !== null) {
-          mirror.push({ peer: delivered.mirror });
-        }
-        if (delivered.reply !== null) {
-          mirror.push({ support: delivered.reply });
-        }
-        if (obj(payload).kind === "ask") {
-          /** @type {Record<string, unknown>} */
-          let receipt = { error: delivered.notice?.text ?? "refused" };
-          if (delivered.question !== null) {
-            const n = company.questions.next;
-            company.questions.next += 1;
-            company.questions.questions[String(n)] = {
-              ...delivered.question,
-              messageId: null,
-              answered: false,
-            };
-            company.saveQuestions();
-            mirror.push({ operator: { ...formatQuestion(n, delivered.question), question: n } });
-            receipt = { question: n };
+      moved =
+        takeOutbox(busPaths(company.at.bus, role).dir, role, (name, payload) => {
+          const delivered = deliverPeer(payload, {
+            from: role,
+            roles: ROLES,
+            present: present(company.at.bus),
+            now: Date.now(),
+          });
+          for (const { role: recipient, line } of delivered.deliveries) {
+            appendInbox(company.at.bus, recipient, line);
           }
-          const { receipts } = busPaths(company.at.bus, role);
-          fs.mkdirSync(receipts, { recursive: true });
-          writeAtomically(path.join(receipts, name), receipt);
-        }
-        fs.rmSync(file, { force: true });
-        moved = true;
-      }
+          if (delivered.notice !== null) {
+            appendInbox(company.at.bus, role, delivered.notice);
+          }
+          if (delivered.mirror !== null) {
+            mirror.push({ peer: delivered.mirror });
+          }
+          if (delivered.reply !== null) {
+            mirror.push({ support: delivered.reply });
+          }
+          if (obj(payload).kind === "ask") {
+            /** @type {Record<string, unknown>} */
+            let receipt = { error: delivered.notice?.text ?? "refused" };
+            if (delivered.question !== null) {
+              const n = company.questions.next;
+              company.questions.next += 1;
+              company.questions.questions[String(n)] = {
+                ...delivered.question,
+                messageId: null,
+                answered: false,
+              };
+              company.saveQuestions();
+              mirror.push({ operator: { ...formatQuestion(n, delivered.question), question: n } });
+              receipt = { question: n };
+            }
+            try {
+              withJailDir(
+                busPaths(company.at.bus, role).dir,
+                "receipts",
+                { create: true },
+                (dir) => {
+                  dir.writeAtomic(name, `${JSON.stringify(receipt, null, 2)}\n`);
+                },
+              );
+            } catch (error) {
+              refused(role, `receipts/${name}`, error);
+            }
+          }
+        }) || moved;
     }
     moved = drainSystem(company, mirror) || moved;
     if (!moved) {
@@ -658,24 +736,7 @@ async function drainOutboxes(company, mirror) {
  * @returns {boolean} whether anything was delivered
  */
 function drainSystem(company, mirror) {
-  const outbox = path.join(company.at.bus, SYSTEM, "outbox");
-  /** @type {string[]} */
-  let pending;
-  try {
-    pending = fs.readdirSync(outbox).filter(isReadyOutboxEntry).sort();
-  } catch {
-    return false;
-  }
-  let moved = false;
-  for (const name of pending) {
-    const file = path.join(outbox, name);
-    /** @type {unknown} */
-    let payload;
-    try {
-      payload = JSON.parse(fs.readFileSync(file, "utf8"));
-    } catch {
-      continue;
-    }
+  return takeOutbox(path.join(company.at.bus, SYSTEM), SYSTEM, (_name, payload) => {
     const delivered = deliverSystem(payload, { roles: ROLES, now: Date.now() });
     for (const { role, line } of delivered.deliveries) {
       appendInbox(company.at.bus, role, line);
@@ -683,10 +744,7 @@ function drainSystem(company, mirror) {
     if (delivered.mirror !== null) {
       mirror.push({ peer: delivered.mirror });
     }
-    fs.rmSync(file, { force: true });
-    moved = true;
-  }
-  return moved;
+  });
 }
 
 /**

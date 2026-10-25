@@ -46,6 +46,7 @@ import {
 } from "./hub-budget.mjs";
 import { alertRows, alertsFailure, alertsPath, parseAlerts, renderAlerts } from "./hub-alerts.mjs";
 import { releaseLock, takeLock } from "./instance-lock.mjs";
+import { openJailDir, withJailDir } from "./jail-fs.mjs";
 import { hasFilter } from "./hub-filter.mjs";
 import {
   approvalsSatisfied,
@@ -1760,11 +1761,11 @@ function heartbeat(serving) {
   let queued = 0;
   for (const role of ROLES) {
     try {
-      queued += fs
-        .readdirSync(path.join(HUB, role, "req"))
-        .filter((name) => name.endsWith(".json") && !name.startsWith(".")).length;
+      queued += withJailDir(path.join(HUB, role), "req", {}, (req) =>
+        req.list().filter(isRequest),
+      ).length;
     } catch {
-      // This role has never spoken to hubd.
+      // This role has never spoken to hubd, or its req/ is not a directory.
     }
   }
   /** @type {import("./hub-health.mjs").HubdAlive} */
@@ -1776,34 +1777,101 @@ function heartbeat(serving) {
   writeAtomic(ALIVE, JSON.stringify(alive));
 }
 
+/** A request's id, as hub.mjs makes them: it names the response file. */
+const REQUEST_ID = /^[A-Za-z0-9-]{1,64}$/;
+
+/** The most a request may be: argv for one command. */
+const REQUEST_MAX_BYTES = 64 * 1024;
+
 /**
+ * @param {string} name
+ * @returns {boolean}
+ */
+function isRequest(name) {
+  return name.endsWith(".json") && !name.startsWith(".");
+}
+
+/**
+ * Serve a role's spool. req/ and res/ are the jail's (jail-fs.mjs, #329):
+ * what is in them, and what they are, is up to the agent, so nothing here
+ * goes through a path that a symlink could redirect.
+ *
  * @param {string} role
  * @returns {Promise<void>}
  */
 async function drain(role) {
-  const reqDir = path.join(HUB, role, "req");
-  const resDir = path.join(HUB, role, "res");
-  fs.mkdirSync(reqDir, { recursive: true });
-  fs.mkdirSync(resDir, { recursive: true });
+  const home = path.join(HUB, role);
+  fs.mkdirSync(home, { recursive: true });
+  /** @type {import("./jail-fs.mjs").JailDir | undefined} */
+  let req;
+  /** @type {import("./jail-fs.mjs").JailDir | undefined} */
+  let res;
+  try {
+    req = openJailDir(home, "req", { create: true });
+    res = openJailDir(home, "res", { create: true });
+  } catch (error) {
+    req?.close();
+    refused(role, "req/ or res/", error);
+    return;
+  }
+  try {
+    await serveSpool(role, req, res);
+  } finally {
+    req.close();
+    res.close();
+  }
+}
 
-  const pending = fs
-    .readdirSync(reqDir)
-    .filter((name) => name.endsWith(".json") && !name.startsWith("."))
-    .sort();
+/**
+ * A request the jail made unservable: logged, and the agent gets no answer.
+ *
+ * @param {string} role
+ * @param {string} site
+ * @param {unknown} error
+ * @returns {void}
+ */
+function refused(role, site, error) {
+  console.error(
+    `hubd: ${role}: refused ${site}: ${error instanceof Error ? error.message : String(error)}`,
+  );
+}
+
+/**
+ * @param {string} role
+ * @param {import("./jail-fs.mjs").JailDir} req
+ * @param {import("./jail-fs.mjs").JailDir} res
+ * @returns {Promise<void>}
+ */
+async function serveSpool(role, req, res) {
+  const pending = req.list().filter(isRequest).sort();
 
   for (const name of pending) {
-    const file = path.join(reqDir, name);
+    const id = name.replace(/\.json$/, "");
+    if (!REQUEST_ID.test(id)) {
+      refused(role, `request ${JSON.stringify(name)}`, "not a request id");
+      req.remove(name);
+      continue;
+    }
+    /** @type {string} */
+    let text;
+    try {
+      text = req.readSmall(name, REQUEST_MAX_BYTES);
+    } catch (error) {
+      refused(role, `request ${name}`, error);
+      req.remove(name);
+      continue;
+    }
     /** @type {unknown} */
     let parsed;
     try {
-      parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+      parsed = JSON.parse(text);
     } catch {
       continue;
     }
     // Before the request leaves the spool, so a reboot waiting for hubd to
     // go quiet never sees it as neither queued nor in flight.
     heartbeat(true);
-    fs.rmSync(file, { force: true });
+    req.remove(name);
 
     const raw = /** @type {Record<string, unknown>} */ (parsed);
     /** @type {Record<string, unknown>} */
@@ -1830,10 +1898,11 @@ async function drain(role) {
       heartbeat(false);
     }
 
-    const id = name.replace(/\.json$/, "");
-    const tmp = path.join(resDir, `.${id}.json.part`);
-    fs.writeFileSync(tmp, JSON.stringify(response));
-    fs.renameSync(tmp, path.join(resDir, `${id}.json`));
+    try {
+      res.writeAtomic(`${id}.json`, JSON.stringify(response));
+    } catch (error) {
+      refused(role, `response ${id}.json`, error);
+    }
   }
 }
 
