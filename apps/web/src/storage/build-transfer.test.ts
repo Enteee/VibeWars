@@ -91,7 +91,7 @@ describe("build export", () => {
     if (result.ok) {
       return;
     }
-    expect(result.problems.join()).toContain("monk.healing-prayers");
+    expect(result.problems.join()).toContain("Orison of Healing is a Monk skill");
   });
 });
 

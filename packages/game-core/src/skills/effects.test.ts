@@ -181,6 +181,7 @@ describe("applySkillEffects", () => {
     id: "test.blood-splash",
     name: "Blood Splash",
     type: "spell",
+    profession: "necromancer",
     attributeId: "necromancer.blood-magic",
     cost: undefined,
     activationSeconds: 0,

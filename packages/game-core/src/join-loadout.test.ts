@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { defaultBuildEquipment, type PlayerBuild } from "./build.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
+import { wieldsFor } from "./equipment/weapons.js";
 import { HOUSE_LOADOUT, resolveJoinLoadout } from "./join-loadout.js";
+import { getSkill } from "./skills/catalog.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.attributes;
 
@@ -59,5 +61,25 @@ describe("resolveJoinLoadout", () => {
       loadout: HOUSE_LOADOUT,
       refused: { kind: "empty-bar", build: expect.objectContaining({ name: "Flame Caller" }) },
     });
+  });
+});
+
+describe("HOUSE_LOADOUT", () => {
+  it("has no dead slot: every attack skill on it can be used with the house weapon (#445)", () => {
+    const weapon = HOUSE_LOADOUT.equipment.mainHand.weaponId;
+    for (const id of HOUSE_LOADOUT.skillBar) {
+      const rule = id === null ? undefined : getSkill(id)?.attack;
+      if (rule !== undefined) {
+        expect(wieldsFor(weapon, rule.weapon), `${String(id)} with ${weapon}`).toBe(true);
+      }
+    }
+  });
+
+  it("has every skill it lists, and an interrupt", () => {
+    const skills = HOUSE_LOADOUT.skillBar.map((id) => (id === null ? undefined : getSkill(id)));
+    expect(skills).not.toContain(undefined);
+    expect(
+      skills.some((skill) => skill?.effects.some((effect) => effect.kind === "interrupt")),
+    ).toBe(true);
   });
 });
