@@ -59,8 +59,11 @@ const ROOT = required("VIBEWARS_BOT_ROOT");
 const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
 /** The session, exactly: tmux takes a bare name as a prefix if nothing has it whole. */
 const TARGET = `=${SESSION}`;
-/** The tmux the session runs on, as claude-llc passes it: not whatever is on PATH. */
-const TMUX = required("VIBEWARS_TMUX");
+/**
+ * The tmux the session runs on, as claude-llc passes it: not whatever is on
+ * PATH. Checked in main(), so that a missing one is logged.
+ */
+const TMUX = process.env.VIBEWARS_TMUX ?? "";
 const REBOOTING = path.join(ROOT, "rebooting.json");
 const LOG = path.join(ROOT, "hub", "reboot.log");
 const CHECK = path.join(ROOT, "reboot-check");
@@ -329,6 +332,9 @@ function update(git, target) {
 }
 
 async function main() {
+  if (TMUX === "") {
+    throw new Error("VIBEWARS_TMUX is not set; claude-llc starts this");
+  }
   const reboot = obj(JSON.parse(fs.readFileSync(REBOOTING, "utf8")));
   const bootSha = typeof reboot.bootSha === "string" ? reboot.bootSha : "HEAD";
   const company = obj(JSON.parse(fs.readFileSync(path.join(ROOT, "company.json"), "utf8")));

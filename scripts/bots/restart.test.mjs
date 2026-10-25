@@ -172,10 +172,14 @@ function setup(options = {}) {
     const bootFile = path.join(root, "boot.json");
     /** @type {unknown} */
     const written = fs.existsSync(bootFile) ? JSON.parse(fs.readFileSync(bootFile, "utf8")) : {};
-    return { code, boot: obj(written), calls: fs.readFileSync(calls, "utf8").split("\n") };
+    return {
+      code,
+      boot: obj(written),
+      calls: fs.existsSync(calls) ? fs.readFileSync(calls, "utf8").split("\n") : [],
+    };
   };
-  const restart = () =>
-    outcome(spawnSync(process.execPath, [RESTART], { env: environment({}) }).status);
+  const restart = (/** @type {Record<string, string>} */ env = {}) =>
+    outcome(spawnSync(process.execPath, [RESTART], { env: environment(env) }).status);
   /**
    * For a test that serves something the restarter calls, such as a fake
    * Telegram: spawnSync would block the event loop that answers it.
@@ -218,6 +222,18 @@ describe("the restarter", () => {
     });
     expect(fs.existsSync(path.join(company.root, "rebooting.json"))).toBe(false);
     expect(fs.existsSync(path.join(company.root, "reboot-check"))).toBe(false);
+  });
+
+  it("logs, and touches nothing, when claude-llc did not say which tmux", () => {
+    const company = setup();
+
+    const result = company.restart({ VIBEWARS_TMUX: "" });
+
+    expect(result.code).toBe(1);
+    expect(result.calls).toEqual([]);
+    expect(fs.readFileSync(path.join(company.root, "hub", "reboot.log"), "utf8")).toMatch(
+      /restart failed: Error: VIBEWARS_TMUX is not set/,
+    );
   });
 
   it("starts every agent on a fresh conversation", () => {
