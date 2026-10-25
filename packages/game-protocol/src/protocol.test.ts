@@ -16,7 +16,7 @@ import {
 
 describe("protocol constants", () => {
   it("pins a protocol version", () => {
-    expect(PROTOCOL_VERSION).toBe(14);
+    expect(PROTOCOL_VERSION).toBe(15);
   });
 
   it("gives every capacity refusal its own code (#282)", () => {

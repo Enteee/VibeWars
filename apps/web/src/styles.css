@@ -955,6 +955,17 @@ body {
   opacity: 1;
 }
 
+/* HUD: big enough to win at a glance over the name, cased like the arena
+   marks, on a slot dimmed as a cancelled one is. */
+.hud-skill.is-interrupted::after {
+  font-size: 1.9rem;
+  line-height: 1;
+  text-shadow:
+    0 0 2px var(--bg),
+    0 0 2px var(--bg),
+    0 0 4px var(--bg);
+}
+
 /* Training Ground: one short row, so the cross takes the right end, where
    the recharge seconds go, not the name. */
 .training-skill.is-interrupted::after {
@@ -963,7 +974,8 @@ body {
 }
 
 /* Cancelled: grey and dimmed, never the recharge shade, because a
-   cancelled skill does not recharge. */
+   cancelled skill does not recharge. Both failures share the dimming and
+   differ only in ring and glyph. */
 .hud-skill.is-cancelled::after,
 .training-skill.is-cancelled::after {
   box-shadow: inset 0 0 0 2px var(--ink-dim);
@@ -971,6 +983,8 @@ body {
   opacity: 1;
 }
 
+.hud-skill.is-interrupted > *,
+.training-skill.is-interrupted > *,
 .hud-skill.is-cancelled > *,
 .training-skill.is-cancelled > * {
   opacity: 0.6;
