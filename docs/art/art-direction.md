@@ -146,9 +146,9 @@ name it hides is your target's.
 - **They rise beside the body, not over it.** Left-aligned at x = r + 4 to
   the right of the centre, clear of the 34-px bar, with the first line's
   bottom at y = 8 below the centre.
-- **They rise 24 px a second for 1.2 s**, so a single number ends with its
+- **They rise straight up, 24 px a second for 1.2 s**, so a single number ends with its
   top at 34 above the centre, still under the name.
-- **Numbers landing together stack a line apart, at most four** (#54).
+- **Numbers landing together stack a line apart, upward, at most four** (#54).
   A second line reaches the name's band late in its rise, so a burst may
   brush the name for a moment; a single hit, the common case, never does.
 
