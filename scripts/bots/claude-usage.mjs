@@ -176,8 +176,15 @@ export function formatCount(n) {
  */
 export const CHUNK_BYTES = 4 * 1024 * 1024;
 
-/** A line longer than this is no reply; it is dropped, not kept in memory. */
-export const MAX_LINE_BYTES = 16 * 1024 * 1024;
+/**
+ * The most bytes read from one role's logs in one refresh, however many it
+ * has. The logs least recently read go first, so a jail planting thousands
+ * of logs slows only its own row, and its real log still gets its turn.
+ */
+export const ROLE_BYTES = 16 * 1024 * 1024;
+
+/** A line longer than this is no reply worth counting; it is skipped. */
+export const MAX_LINE_BYTES = 1024 * 1024;
 
 /** Deep enough for `<project>/<session>/subagents/<agent>.jsonl`. */
 const MAX_DEPTH = 4;
@@ -188,14 +195,15 @@ const MAX_ENTRIES = 20_000;
 const { O_NOFOLLOW, O_NONBLOCK, O_RDONLY } = fs.constants;
 
 /**
- * Where one log file has been read up to.
+ * Where one log file has been read up to. An unfinished last line is not
+ * kept: it is read again, whole, once its writer ends it.
  *
  * @typedef {object} Cursor
  * @property {number} ino
- * @property {number} offset bytes read, the unfinished last line included
- * @property {Buffer} partial that unfinished last line, completed next time
- * @property {boolean} skipping inside a line over `MAX_LINE_BYTES`, dropped
+ * @property {number} offset the start of the first line not yet read
+ * @property {boolean} skipping inside a line over `MAX_LINE_BYTES`, skipped
  *   up to its end
+ * @property {number} served the refresh that last read it
  */
 
 /**
@@ -274,18 +282,47 @@ export function createUsageReader(boxes, roles) {
   const cursors = new Map();
   /** @type {Map<string, UsageRecord & { role: string }>} */
   const kept = new Map();
+  let refresh = 0;
 
   /**
-   * Read at most `CHUNK_BYTES` of what was appended to `name` since last
-   * time.
+   * How many bytes `name` has that were not read yet, by `lstat`: a guess
+   * for choosing what to read, which `readFile` checks on the descriptor.
+   *
+   * @param {JailDir} dir
+   * @param {string} name
+   * @param {string} key the file's cursor
+   * @param {number} since
+   * @returns {number}
+   */
+  function unread(dir, name, key, since) {
+    /** @type {fs.Stats} */
+    let stat;
+    try {
+      stat = fs.lstatSync(dir.at(name));
+    } catch {
+      return 0;
+    }
+    const cursor = cursors.get(key);
+    if (!stat.isFile() || (cursor === undefined && stat.mtimeMs < since)) {
+      return 0;
+    }
+    return cursor?.ino !== stat.ino || stat.size < cursor.offset
+      ? stat.size
+      : stat.size - cursor.offset;
+  }
+
+  /**
+   * Read at most `allowance` bytes of what was appended to `name` since
+   * last time.
    *
    * @param {JailDir} dir
    * @param {string} name
    * @param {string} key the file's cursor
    * @param {string} role
    * @param {number} since replies before this are not kept
+   * @param {number} allowance
    */
-  function readFile(dir, name, key, role, since) {
+  function readFile(dir, name, key, role, since, allowance) {
     /** @type {number} */
     let fd;
     try {
@@ -306,40 +343,42 @@ export function createUsageReader(boxes, roles) {
       }
       if (cursor?.ino !== stat.ino || stat.size < cursor.offset) {
         // New, replaced or cut short: read it from the start.
-        cursor = { ino: stat.ino, offset: 0, partial: Buffer.alloc(0), skipping: false };
+        cursor = { ino: stat.ino, offset: 0, skipping: false, served: refresh };
       }
       cursors.set(key, cursor);
-      if (stat.size === cursor.offset) {
-        return;
-      }
-      const chunk = Buffer.alloc(Math.min(stat.size - cursor.offset, CHUNK_BYTES));
-      const got = fs.readSync(fd, chunk, 0, chunk.length, cursor.offset);
-      cursor.offset += got;
-      let bytes = Buffer.concat([cursor.partial, chunk.subarray(0, got)]);
+      cursor.served = refresh;
+      const chunk = Buffer.alloc(Math.max(0, Math.min(stat.size - cursor.offset, allowance)));
+      const bytes = chunk.subarray(0, fs.readSync(fd, chunk, 0, chunk.length, cursor.offset));
+      let used = 0;
       if (cursor.skipping) {
         const lineEnd = bytes.indexOf(0x0a);
         if (lineEnd === -1) {
-          cursor.partial = Buffer.alloc(0);
+          cursor.offset += bytes.length;
           return;
         }
         cursor.skipping = false;
-        bytes = bytes.subarray(lineEnd + 1);
+        used = lineEnd + 1;
       }
       // Split on the byte, not the decoded text, so a character cut in two
       // by the writer is decoded whole next time.
       const end = bytes.lastIndexOf(0x0a);
-      for (const line of bytes
-        .subarray(0, end + 1)
-        .toString("utf8")
-        .split("\n")) {
-        const record = line === "" ? null : parseUsageLine(line);
-        if (record !== null && record.ts >= since) {
-          kept.set(record.id, { ...record, role });
+      if (end >= used) {
+        for (const line of bytes
+          .subarray(used, end + 1)
+          .toString("utf8")
+          .split("\n")) {
+          const record = line === "" ? null : parseUsageLine(line);
+          if (record !== null && record.ts >= since) {
+            kept.set(record.id, { ...record, role });
+          }
         }
+        used = end + 1;
       }
-      const rest = bytes.subarray(end + 1);
-      cursor.skipping = rest.length > MAX_LINE_BYTES;
-      cursor.partial = cursor.skipping ? Buffer.alloc(0) : Buffer.from(rest);
+      if (bytes.length - used > MAX_LINE_BYTES) {
+        cursor.skipping = true;
+        used = bytes.length;
+      }
+      cursor.offset += used;
     } catch {
       // Unreadable now; tried again next refresh.
     } finally {
@@ -359,14 +398,42 @@ export function createUsageReader(boxes, roles) {
       if (!fs.existsSync(boxes)) {
         return null;
       }
+      refresh += 1;
       /** @type {Set<string>} */
       const seen = new Set();
       for (const role of roles) {
-        walkLogs(path.join(boxes, role, "config"), (dir, name, rel) => {
+        const config = path.join(boxes, role, "config");
+        // Once to see what each log has unread, once to read the logs
+        // whose turn it is: the walk keeps no descriptor between them.
+        /** @type {{ key: string, bytes: number, served: number }[]} */
+        const pending = [];
+        walkLogs(config, (dir, name, rel) => {
           const key = `${role}/${rel}`;
           seen.add(key);
-          readFile(dir, name, key, role, since);
+          const bytes = Math.min(unread(dir, name, key, since), CHUNK_BYTES);
+          if (bytes > 0) {
+            pending.push({ key, bytes, served: cursors.get(key)?.served ?? 0 });
+          }
         });
+        /** @type {Map<string, number>} */
+        const allowed = new Map();
+        let budget = ROLE_BYTES;
+        for (const { key, bytes } of pending.sort((a, b) => a.served - b.served)) {
+          if (bytes > budget) {
+            break;
+          }
+          allowed.set(key, bytes);
+          budget -= bytes;
+        }
+        if (allowed.size > 0) {
+          walkLogs(config, (dir, name, rel) => {
+            const key = `${role}/${rel}`;
+            const allowance = allowed.get(key);
+            if (allowance !== undefined) {
+              readFile(dir, name, key, role, since, allowance);
+            }
+          });
+        }
       }
       for (const key of cursors.keys()) {
         if (!seen.has(key)) {

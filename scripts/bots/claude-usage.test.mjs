@@ -8,11 +8,12 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   CHUNK_BYTES,
   MAX_LINE_BYTES,
+  ROLE_BYTES,
   createUsageReader,
   formatCount,
   parseUsageLine,
@@ -293,6 +294,37 @@ describe("createUsageReader, on a tree the jail controls (#329)", () => {
       expect(ids(reader)).toEqual([]);
     }
     expect(ids(reader)).toEqual(["manager:after"]);
+  });
+
+  it("reads at most ROLE_BYTES of a role per refresh, and its real log still gets a turn", () => {
+    for (let i = 0; i < 12; i++) {
+      const sparse = path.join(projects, "-some-project", `sparse-${String(i)}.jsonl`);
+      fs.writeFileSync(sparse, "");
+      fs.truncateSync(sparse, 4 * MAX_LINE_BYTES);
+    }
+    ok(reply("m1", now));
+    const reader = createUsageReader(boxes, ["manager"]);
+    const readSync = vi.spyOn(fs, "readSync");
+    try {
+      /** @type {string[][]} */
+      const seen = [];
+      let total = 0;
+      for (let i = 0; i < 5; i++) {
+        readSync.mockClear();
+        seen.push(ids(reader));
+        const bytes = readSync.mock.results.reduce(
+          (sum, result) => sum + (typeof result.value === "number" ? result.value : 0),
+          0,
+        );
+        expect(bytes).toBeLessThanOrEqual(ROLE_BYTES);
+        total += bytes;
+      }
+      // The spy saw the sparse logs being read, over several refreshes.
+      expect(total).toBeGreaterThan(ROLE_BYTES);
+      expect(seen.at(-1)).toEqual(["manager:m1"]);
+    } finally {
+      readSync.mockRestore();
+    }
   });
 
   it.skipIf(process.getuid?.() === 0)("skips an unreadable directory, not the whole role", () => {
