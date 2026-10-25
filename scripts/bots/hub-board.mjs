@@ -453,6 +453,25 @@ export function planMutation(argv, result, ids, state, repo) {
 export const LANDING_COLUMN = "Backlog";
 
 /**
+ * What a `project item-add` adds: "pull" or "issue", or null unless there is
+ * exactly one `--url` (either spelling; gh takes the last of a repeat, so a
+ * repeat is refused rather than guessed at) and it is, whole, the URL of one
+ * issue or pull request.
+ *
+ * @param {readonly string[]} argv
+ * @returns {"pull" | "issue" | null}
+ */
+export function itemAddTarget(argv) {
+  const urls = argv.flatMap((word, at) =>
+    word === "--url" ? [argv[at + 1] ?? ""] : word.startsWith("--url=") ? [word.slice(6)] : [],
+  );
+  const match = /^https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(pull|issues)\/\d+$/.exec(
+    urls.length === 1 ? (urls[0] ?? "") : "",
+  );
+  return match === null ? null : match[1] === "pull" ? "pull" : "issue";
+}
+
+/**
  * `--column <name>` out of a `project item-add`, which is hub's flag and
  * never gh's. Both spellings; once; and a column of the board.
  *

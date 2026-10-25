@@ -15,6 +15,7 @@ import {
   applyFacts,
   arrivals,
   boardLines,
+  itemAddTarget,
   listing,
   needsSweep,
   parseBoardRequest,
@@ -726,5 +727,28 @@ describe("planLanding (#517)", () => {
     expect(planLanding(["project", "item-add", "2"], { code: 0, stdout: "" }, repo).kind).toBe(
       "unlanded",
     );
+  });
+});
+
+describe("itemAddTarget (#517)", () => {
+  const issue = "https://github.com/Enteee/VibeWars/issues/5";
+  const pull = "https://github.com/Enteee/VibeWars/pull/1";
+
+  it("names what one whole URL is", () => {
+    expect(itemAddTarget(["project", "item-add", "2", "--url", pull])).toBe("pull");
+    expect(itemAddTarget(["--url=" + issue])).toBe("issue");
+  });
+
+  it("refuses a repeated --url, in any order or spelling", () => {
+    expect(itemAddTarget(["--url", pull, "--url", issue])).toBeNull();
+    expect(itemAddTarget(["--url", issue, "--url=" + pull])).toBeNull();
+  });
+
+  it("refuses a URL that only ends or contains pull/N", () => {
+    expect(itemAddTarget(["--url", `${issue}#/pull/1`])).toBeNull();
+    expect(itemAddTarget(["--url", `${issue}?x=/pull/1`])).toBeNull();
+    expect(itemAddTarget(["--url", `${pull}/`])).toBeNull();
+    expect(itemAddTarget(["--url", "https://example.com/Enteee/VibeWars/pull/1"])).toBeNull();
+    expect(itemAddTarget(["project", "item-add", "2"])).toBeNull();
   });
 });

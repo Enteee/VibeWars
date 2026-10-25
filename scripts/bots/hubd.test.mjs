@@ -815,6 +815,7 @@ describe("hubd and the GraphQL budget", () => {
       add("issues", ["--column=Ready"]),
       add("pull", ["--column", "Nowhere"]),
       add("pull", ["--column", "Done", "--column", "Done"]),
+      add("pull", ["--url", "https://github.com/Enteee/VibeWars/issues/5"]),
     ]) {
       expect((await hubd.request("manager", "gh", argv)).code).toBe(77);
     }

@@ -24,6 +24,7 @@ import { GIT_ENV, GIT_HARDENING } from "./git-hardening.mjs";
 import {
   HINT_DELAY_MS,
   flagValue,
+  itemAddTarget,
   ISSUE_ITEMS_QUERY,
   ITEM_QUERY,
   answerBoard,
@@ -2291,13 +2292,15 @@ async function serve(request, verdict, acting) {
   if (kind === "gh" && argv[0] === "project" && argv[1] === "item-add") {
     const parsed = parseColumnFlag(argv, cfg.board?.options.keys() ?? []);
     const named = "error" in parsed ? null : parsed.column;
-    const pull = /\/pull\/\d+\/?$/.test(flagValue(argv, "--url") ?? "");
+    const target = itemAddTarget(argv);
     const decision =
       "error" in parsed
         ? { ok: false, reason: parsed.error }
-        : named !== null && cfg.board === null
-          ? { ok: false, reason: "the board's Status field is not known; run claude-llc-init" }
-          : landingAllowed({ role, to: named ?? LANDING_COLUMN, pull });
+        : target === null
+          ? { ok: false, reason: "item-add takes exactly one --url, of one issue or pull request" }
+          : named !== null && cfg.board === null
+            ? { ok: false, reason: "the board's Status field is not known; run claude-llc-init" }
+            : landingAllowed({ role, to: named ?? LANDING_COLUMN, pull: target === "pull" });
     if (!decision.ok) {
       audit({ role, kind, argv, decision: "refused-by-guard", reason: decision.reason });
       return { allow: false, reason: decision.reason, code: 77 };
