@@ -117,6 +117,11 @@ export interface CombatMessage {
   }[];
 }
 
+/** What one `"combat"` message carries: a tick's entries, in combat-log order (#288). */
+export interface CombatBatchMessage {
+  readonly entries: readonly CombatMessage[];
+}
+
 export interface MatchConnection {
   readonly selfSessionId: string;
   /** Notifies when the connection drops and when it comes back. */
