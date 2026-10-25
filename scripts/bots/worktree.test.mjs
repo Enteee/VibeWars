@@ -233,6 +233,13 @@ describe("ensureWorktree", () => {
     expect(sh(["status", "--porcelain"], worktree)).toBe("");
   });
 
+  it("links the config it is given when the host's own copy is gone", () => {
+    const { repo, worktree, store, config } = setup();
+    fs.unlinkSync(path.join(repo, ".pre-commit-config.yaml"));
+    ensureWorktree(repo, "dev", { store, hookConfig: config });
+    expect(fs.readlinkSync(path.join(worktree, ".pre-commit-config.yaml"))).toBe(config);
+  });
+
   it("leaves any existing hook config entry untouched, file or link", () => {
     const { repo, worktree, store } = setup();
     ensureWorktree(repo, "dev", { store });

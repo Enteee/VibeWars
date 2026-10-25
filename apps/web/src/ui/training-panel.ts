@@ -212,6 +212,11 @@ export function createTrainingPanel(): TrainingPanel {
   let signature: string | undefined;
   let displayName = "";
   let armed = false;
+  /**
+   * Whether the stage was armed when this click began: the click that
+   * takes control only takes it, and does not walk the hero off (#310).
+   */
+  let armedBeforeClick = false;
   let logRows: readonly LogRow[] = [];
   let totals: MeterTotals = EMPTY_TOTALS;
   /** Gathers status ticks into a row a second (#151); one per session. */
@@ -529,6 +534,7 @@ export function createTrainingPanel(): TrainingPanel {
   };
 
   const onStagePointerDown = (): void => {
+    armedBeforeClick = armed;
     armed = true;
     stage.focus({ preventScroll: true });
   };
@@ -663,13 +669,25 @@ export function createTrainingPanel(): TrainingPanel {
       if (session === undefined) {
         return;
       }
+      // As in a match (#310): a body is targeted, the ground walked to.
       const hit = actorAtPoint(latestArena, world);
-      session.connection.sendIntent({ kind: "target", targetSessionId: hit?.id ?? null });
-      if (doubleClick.press(hit?.id, performance.now())) {
-        for (const intent of attackClickIntents(session.connection.getSnapshot(), hit?.id)) {
-          session.connection.sendIntent(intent);
+      const double = doubleClick.press(hit?.id, performance.now());
+      if (hit !== undefined) {
+        session.connection.sendIntent({ kind: "target", targetSessionId: hit.id });
+        if (double) {
+          for (const intent of attackClickIntents(session.connection.getSnapshot(), hit.id)) {
+            session.connection.sendIntent(intent);
+          }
         }
+        return;
       }
+      // The stage's capturing listener ran first, so this click's arming
+      // is already known.
+      if (!armedBeforeClick) {
+        return;
+      }
+      session.connection.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
+      created.scene.showWalkMarker(world);
     });
     offPointerMove = created.onPointerMove((world) => {
       pointer = world;

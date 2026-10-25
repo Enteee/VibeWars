@@ -560,7 +560,7 @@ let
         # Created, or repaired if its admin dir is gone, here on the host: the
         # jail cannot write .git/worktrees (#69, see the binds below).
         worktree="$VIBEWARS_BOT_ROOT/wt/$role"
-        ${node} ${botScripts}/worktree.mjs "$DEVENV_ROOT" "$role"
+        ${node} ${botScripts}/worktree.mjs "$DEVENV_ROOT" "$role" ${config.git-hooks.configFile}
 
         # Marks onboarding done and this worktree trusted. Merged rather than
         # overwritten, so an agent's accumulated state survives.

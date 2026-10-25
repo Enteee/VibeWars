@@ -19,7 +19,13 @@ import {
   type MatchScore,
 } from "../match-rules.js";
 import { clampInputDirection, integrateMovement } from "../movement.js";
-import { buildNavGraph, createPathFinder, type PathFinder } from "../pathing.js";
+import {
+  buildNavGraph,
+  createPathFinder,
+  nearestStandable,
+  type NavGraph,
+  type PathFinder,
+} from "../pathing.js";
 import { createRng, seedFromString, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { canActivate, hasAftercast, payCost, type ActivationCheck } from "../skills/activation.js";
@@ -70,7 +76,7 @@ import { steerAround } from "./steering.js";
  * participant's behaviour, if it has one. Projectiles already in flight
  * advance, and land, before anyone acts. Player-driven participants have
  * none: their intents arrive between steps, through `setInputDirection`,
- * `setTarget`, `requestSkill`, `requestAttack` and `cancelAction`.
+ * `walkTo`, `setTarget`, `requestSkill`, `requestAttack` and `cancelAction`.
  */
 
 export interface ParticipantSpec {
@@ -107,6 +113,12 @@ export interface Participant {
    */
   facing: number;
   inputDirection: Vec2;
+  /**
+   * Where a click-to-walk is taking it, round walls and bodies (#310);
+   * `undefined` when not walking. Until the next step settles it, the
+   * point as clicked.
+   */
+  walkGoal: Vec2 | undefined;
   targetId: string | undefined;
   respawnInSeconds: number;
 }
@@ -158,6 +170,12 @@ interface ParticipantRecord extends Participant {
   sinceReset: number;
   /** Where it ended its last ticks: what a projectile leads. */
   readonly history: PositionHistory;
+  /** How long the walk has got nowhere, as an attack's `unreachableSeconds` counts for its approach. */
+  walkStalledSeconds: number;
+  /** The shortest way left to the goal the walk has reached so far: what counts as progress. */
+  walkLeast: number;
+  /** Whether `walkGoal` is settled: pulled onto a spot a body fits on, with a way there. */
+  walkSettled: boolean;
 }
 
 /**
@@ -209,6 +227,23 @@ function penetration(position: Vec2, other: Vec2, radius: number): number {
  */
 const STALL_FRACTION = 0.1;
 
+/** A walk this close to its goal has arrived (#310). */
+const ARRIVE_UNITS = 1;
+
+/** How a step toward a waypoint went; see `#stepToward`. */
+type PathStep = "moved" | "stalled" | "held";
+
+/** How far a body walks from `from` along `path`'s waypoints. */
+function pathLength(from: Vec2, path: readonly Vec2[]): number {
+  let total = 0;
+  let at = from;
+  for (const next of path) {
+    total += distance(at, next);
+    at = next;
+  }
+  return total;
+}
+
 /** Turn to face `point`; one exactly underfoot has no direction, so facing stays. */
 function faceToward(record: Participant, point: Vec2): void {
   const dx = point.x - record.position.x;
@@ -223,10 +258,11 @@ export class MatchSimulation {
   readonly #matchRules: MatchRules | undefined;
   readonly #walls: readonly Segment[];
   readonly #bounds: { readonly width: number; readonly height: number } | undefined;
-  /** Corners an approach can path through, built once from the walls (#211). */
-  /** Paths round this match's walls, for the attack's approach (#211, #267). */
+  /** Corners an approach or a walk can path through, built once from the walls (#211). */
+  readonly #graph: NavGraph;
+  /** Paths round this match's walls, for the attack's approach and for a walk (#211, #267, #310). */
   readonly #paths: PathFinder;
-  /** The living bodies an approach steers round, refilled for each one rather than allocated (#277). */
+  /** The living bodies a path step steers round, refilled for each one rather than allocated (#277). */
   readonly #bodies: Vec2[] = [];
   readonly #rng: SimulationRng;
   readonly #participants = new Map<string, ParticipantRecord>();
@@ -248,9 +284,8 @@ export class MatchSimulation {
     this.#matchRules = options.matchRules;
     this.#walls = options.walls ?? [];
     this.#bounds = options.bounds;
-    this.#paths = createPathFinder(
-      buildNavGraph(this.#walls, options.bounds, this.#ruleset.collision.playerRadius),
-    );
+    this.#graph = buildNavGraph(this.#walls, options.bounds, this.#ruleset.collision.playerRadius);
+    this.#paths = createPathFinder(this.#graph);
     this.#rng = createRng(
       typeof options.seed === "string" ? seedFromString(options.seed) : options.seed,
     );
@@ -316,6 +351,7 @@ export class MatchSimulation {
       position: spec.spawn,
       facing: spec.facing,
       inputDirection: ZERO,
+      walkGoal: undefined,
       targetId: undefined,
       respawnInSeconds: 0,
       spec,
@@ -323,6 +359,9 @@ export class MatchSimulation {
       cursor: createCursor(),
       sinceReset: 0,
       history: new PositionHistory(this.#historyLength()),
+      walkStalledSeconds: 0,
+      walkLeast: Number.POSITIVE_INFINITY,
+      walkSettled: false,
     };
     this.#participants.set(spec.id, record);
     return record;
@@ -383,27 +422,63 @@ export class MatchSimulation {
    * instant skill waits for the next step to resolve, but it has no cast
    * to walk out of, so a move leaves it alone.
    *
-   * A move in the aftercast drops the skill queued for after it, so the
-   * held direction walks when it ends instead of being swallowed by the
-   * queued cast (#317).
+   * Any direction, none included (`stop`), ends a click-to-walk (#310).
    */
   public setInputDirection(id: string, direction: Vec2): void {
     const record = this.#participants.get(id);
     if (record !== undefined) {
       record.inputDirection = clampInputDirection(direction);
+      record.walkGoal = undefined;
       if (record.inputDirection.x !== 0 || record.inputDirection.y !== 0) {
-        record.combatant.attack = undefined;
-        this.#cancelCast(record);
-        record.combatant.cast.clearQueue();
+        this.#moveInterrupts(record);
       }
     }
   }
 
   /**
-   * Cancel Action, Esc in GW1 (#300): stop the cast and the attack in one
-   * press, whichever are running. The cast ends as walking ends it, paid
-   * for and not recharging, and a skill queued for after the aftercast is
-   * dropped (#317). With none of these, nothing happens.
+   * Walk to `point`, round walls and bodies, and stop there (#310): a
+   * left-click on the ground. It interrupts what a move does, the attack
+   * and a cast (#279), and keeps the target, so Space resumes the attack.
+   *
+   * A point a body cannot stand on, inside a wall or off the map, walks
+   * to the nearest one that it can. A goal with no way there at all is
+   * no walk; the hero only stops.
+   *
+   * Only the point is kept here. The next step settles it, once however
+   * many clicks arrived since: settling costs a path search, and a client
+   * may send hundreds of clicks a second.
+   */
+  public walkTo(id: string, point: Vec2): void {
+    const record = this.#participants.get(id);
+    if (record === undefined || record.combatant.dead) {
+      return;
+    }
+    record.inputDirection = ZERO;
+    this.#moveInterrupts(record);
+    record.walkGoal = point;
+    record.walkSettled = false;
+    record.walkStalledSeconds = 0;
+    record.walkLeast = Number.POSITIVE_INFINITY;
+  }
+
+  /**
+   * Moving cancels the attack and a cast with a cast time, as in GW1
+   * (#279). In the aftercast it drops the skill queued for after it, so
+   * the walk goes when the aftercast ends instead of being swallowed by
+   * the queued cast (#317).
+   */
+  #moveInterrupts(record: ParticipantRecord): void {
+    record.combatant.attack = undefined;
+    this.#cancelCast(record);
+    record.combatant.cast.clearQueue();
+  }
+
+  /**
+   * Cancel Action, Esc in GW1 (#300): stop the cast, the attack and a
+   * walk to a clicked point (#310) in one press, whichever are running.
+   * The cast ends as walking ends it, paid for and not recharging. A skill
+   * queued for after the aftercast is dropped too (#317). With none of
+   * these, nothing happens.
    */
   public cancelAction(id: string): void {
     const record = this.#participants.get(id);
@@ -411,6 +486,7 @@ export class MatchSimulation {
       this.#cancelCast(record);
       record.combatant.attack = undefined;
       record.combatant.cast.clearQueue();
+      record.walkGoal = undefined;
     }
   }
 
@@ -445,6 +521,9 @@ export class MatchSimulation {
    * alive. Range and line of sight are not checked: approach closes the
    * one, and a ranged swing checks the other as it is released, so an
    * attack can start behind a corner and walk out.
+   *
+   * An attack allowed ends a click-to-walk, and its approach takes over
+   * (#310); one refused leaves the walk going.
    */
   public requestAttack(id: string, targetId: string): ActivationCheck | undefined {
     const record = this.#participants.get(id);
@@ -452,8 +531,11 @@ export class MatchSimulation {
       return undefined;
     }
     const check = this.#attackCheck(record, targetId);
-    if (check.ok && record.combatant.attack?.targetId !== targetId) {
-      record.combatant.attack = { targetId, swingElapsed: 0, unreachableSeconds: 0 };
+    if (check.ok) {
+      record.walkGoal = undefined;
+      if (record.combatant.attack?.targetId !== targetId) {
+        record.combatant.attack = { targetId, swingElapsed: 0, unreachableSeconds: 0 };
+      }
     }
     return check;
   }
@@ -550,9 +632,11 @@ export class MatchSimulation {
     record.combatant.cast.beginCast(skill.id, castTargetId, activationSeconds);
     // Casting stops you (operator Q33): a key held as the cast begins
     // does not walk, and only the next move cancels the cast. An instant
-    // has no cast, so it leaves the walk alone.
+    // has no cast, so it leaves the walk alone. A click-to-walk stops the
+    // same way (#310).
     if (activationSeconds > 0) {
       record.inputDirection = ZERO;
+      record.walkGoal = undefined;
     }
     return { skillId: skill.id, check };
   }
@@ -581,9 +665,11 @@ export class MatchSimulation {
         continue;
       }
 
-      // The aftercast holds the body still; the walk is kept for after it.
+      // The aftercast holds the body still; a held direction or a clicked
+      // point is kept for after it.
       if (!record.combatant.cast.inAftercast) {
         this.advanceMovement(record, record.inputDirection, dt);
+        this.#advanceWalk(record, dt);
       }
 
       // Energy regenerates continuously; adrenaline is earned by acting,
@@ -690,8 +776,7 @@ export class MatchSimulation {
       dt,
       // The same slowed speed advanceMovement will move it at, so a
       // crippled dummy plans with the step it will really take.
-      stepUnits:
-        this.#ruleset.movement.maxSpeedUnitsPerSecond * moveSpeedMultiplier(record.combatant) * dt,
+      stepUnits: this.#stepUnits(record, dt),
       canUse: (skillId, targetId) => {
         const skill = getSkill(skillId);
         return skill !== undefined && this.#check(record, skill, targetId).ok;
@@ -818,6 +903,108 @@ export class MatchSimulation {
   }
 
   /**
+   * One tick's walk toward `next`, a path's next waypoint round walls
+   * (#211), bent round any living body in the way but `self` and
+   * `passing` (#277). The approach passes its target, since reaching it
+   * is the point. With `land`, `next` is the goal, and a step longer than
+   * what is left ends on it rather than past it.
+   *
+   * A step that covers less than `STALL_FRACTION` of what it was asked
+   * made no progress: boxed in, or pressed into a wall. One asked to walk
+   * nowhere is `held`, which is neither: nothing in the game does that
+   * today (the speed multiplier floors at 0.25), but a ruleset or a
+   * future status that zeroes speed would.
+   */
+  #stepToward(
+    record: ParticipantRecord,
+    next: Vec2,
+    passing: string | undefined,
+    land: boolean,
+    dt: number,
+  ): PathStep {
+    this.#bodies.length = 0;
+    for (const [otherId, other] of this.#participants) {
+      if (otherId !== record.id && otherId !== passing && !other.combatant.dead) {
+        this.#bodies.push(other.position);
+      }
+    }
+    const radius = this.#ruleset.collision.playerRadius;
+    const before = record.position;
+    const left = distance(before, next);
+    const full = this.#stepUnits(record, dt);
+    // The same speed for less of the tick: on the goal, never past it.
+    const asked = land ? Math.min(full, left) : full;
+    const seconds = asked < full ? (dt * asked) / full : dt;
+    this.advanceMovement(record, steerAround(before, next, radius, this.#bodies), seconds);
+    if (!(asked > 0)) {
+      return "held";
+    }
+    return distance(before, record.position) < STALL_FRACTION * asked ? "stalled" : "moved";
+  }
+
+  /** How far `record` walks in `dt` at its speed now, slowed or not. */
+  #stepUnits(record: ParticipantRecord, dt: number): number {
+    return (
+      this.#ruleset.movement.maxSpeedUnitsPerSecond * moveSpeedMultiplier(record.combatant) * dt
+    );
+  }
+
+  /**
+   * The click-to-walk step (#310): along the path to the goal, until
+   * within `ARRIVE_UNITS` of it. A walk whose way there has got no
+   * shorter for as long as an approach may get nowhere
+   * (`unreachableAfterSeconds`, #218) ends where it is, without a word:
+   * the player sees the hero stop.
+   *
+   * Progress is the way left, not the step taken: a body in a doorway
+   * leaves a walker sliding to and fro along the wall, a full step every
+   * tick and no nearer. The approach cannot judge it so, since its
+   * target moves. And unlike an attack, a walk that cannot move at all
+   * is not held: there is nothing for it to resume.
+   */
+  #advanceWalk(record: ParticipantRecord, dt: number): void {
+    if (record.walkGoal !== undefined && !record.walkSettled) {
+      const spot = nearestStandable(this.#graph, record.walkGoal);
+      record.walkGoal = this.#paths.find(record.position, spot) === undefined ? undefined : spot;
+      record.walkSettled = true;
+    }
+    const goal = record.walkGoal;
+    if (goal === undefined) {
+      return;
+    }
+    if (distance(record.position, goal) <= ARRIVE_UNITS) {
+      record.walkGoal = undefined;
+      return;
+    }
+    const path = this.#paths.find(record.position, goal);
+    const left = path === undefined ? Number.POSITIVE_INFINITY : pathLength(record.position, path);
+    if (left < record.walkLeast - STALL_FRACTION * this.#stepUnits(record, dt)) {
+      record.walkLeast = left;
+      record.walkStalledSeconds = 0;
+    } else {
+      record.walkStalledSeconds += dt;
+      if (
+        record.walkStalledSeconds >=
+        this.#ruleset.combat.unreachableAfterSeconds - SWING_EPSILON
+      ) {
+        record.walkGoal = undefined;
+        return;
+      }
+    }
+    const next = path?.[0];
+    if (next === undefined) {
+      // As the approach does: straight at it usually shoves a squeezed
+      // body back out (#211).
+      this.advanceMovement(record, sub(goal, record.position), dt);
+    } else {
+      this.#stepToward(record, next, undefined, path?.length === 1, dt);
+    }
+    if (distance(record.position, goal) <= ARRIVE_UNITS) {
+      record.walkGoal = undefined;
+    }
+  }
+
+  /**
    * The attack step (ADR-0026): drop an attack whose target is no longer
    * a living enemy, pause while casting and through the aftercast, walk
    * into reach, then swing.
@@ -839,8 +1026,14 @@ export class MatchSimulation {
     }
     // Moving cancels, as in GW1. `setInputDirection` cancels on the way in,
     // but an attack asked for while a direction is already held would
-    // otherwise approach on top of the walk, at twice the speed.
-    if (record.inputDirection.x !== 0 || record.inputDirection.y !== 0) {
+    // otherwise approach on top of the walk, at twice the speed. A
+    // click-to-walk is moving too: an instant skill at an enemy, which
+    // turns on them with the weapon, does not stop it (#310).
+    if (
+      record.inputDirection.x !== 0 ||
+      record.inputDirection.y !== 0 ||
+      record.walkGoal !== undefined
+    ) {
       record.combatant.attack = undefined;
       return;
     }
@@ -868,31 +1061,14 @@ export class MatchSimulation {
         this.advanceMovement(record, sub(target.position, record.position), dt);
         return;
       }
-      // Round any living body in the way but the target (#277): reaching
-      // the target is the point.
-      this.#bodies.length = 0;
-      for (const [otherId, other] of this.#participants) {
-        if (otherId !== record.id && otherId !== target.id && !other.combatant.dead) {
-          this.#bodies.push(other.position);
-        }
-      }
-      const radius = this.#ruleset.collision.playerRadius;
-      const asked =
-        this.#ruleset.movement.maxSpeedUnitsPerSecond * moveSpeedMultiplier(record.combatant) * dt;
-      const before = record.position;
-      this.advanceMovement(record, steerAround(before, next, radius, this.#bodies), dt);
       // A path that leads nowhere counts as none: an approach that cannot
       // move, boxed in or with a body in a doorway, ends as unreachable
-      // too. One asked to walk nowhere is held, not lost, so it neither
-      // counts nor resets: nothing in the game does that today (the speed
-      // multiplier floors at 0.25), but a ruleset or a future status that
-      // zeroes speed would.
-      if (asked > 0) {
-        if (distance(before, record.position) < STALL_FRACTION * asked) {
-          this.#unreachableFor(record, target.id, dt);
-        } else {
-          attack.unreachableSeconds = 0;
-        }
+      // too. One held is neither lost nor progress.
+      const step = this.#stepToward(record, next, target.id, false, dt);
+      if (step === "stalled") {
+        this.#unreachableFor(record, target.id, dt);
+      } else if (step === "moved") {
+        attack.unreachableSeconds = 0;
       }
       return;
     }
@@ -1094,6 +1270,7 @@ export class MatchSimulation {
       if (victim !== undefined) {
         victim.combatant.attack = undefined;
         victim.combatant.cast.endAftercast();
+        victim.walkGoal = undefined;
         victim.respawnInSeconds = this.#respawnSeconds(victim);
         this.recordDeath(victim.combatant.team);
       }
@@ -1268,6 +1445,7 @@ export class MatchSimulation {
     record.position = record.spawn;
     record.facing = record.spec.facing;
     record.inputDirection = ZERO;
+    record.walkGoal = undefined;
     record.respawnInSeconds = 0;
     record.combatant.cast.cancelCast();
     record.combatant.cast.endAftercast();
