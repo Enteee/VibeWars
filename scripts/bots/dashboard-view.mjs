@@ -357,19 +357,20 @@ function hubSection({ hub }, width) {
  * @param {number} width
  * @returns {string[]}
  */
+// Reason and role names are agent-written, printed into the operator's tmux: see `visible`.
 function rebootSection({ reboot, roles, live }, width) {
   if (reboot === null) {
     return [];
   }
   if ("rebooting" in reboot) {
-    return [paint(cut(`REBOOTING now — ${reboot.rebooting}`, width), "1;31")];
+    return [paint(cut(`REBOOTING now — ${visible(reboot.rebooting)}`, width), "1;31")];
   }
   const { record, between, now } = reboot;
   const left = record.deadline - now;
   const when =
     left <= 0
       ? `REBOOT overdue since ${clock(record.deadline)}, stopping`
-      : `REBOOT by ${clock(record.deadline)} (in ${left < 60_000 ? "<1m" : `${String(Math.ceil(left / 60_000))}m`}) — ${record.by}: ${record.reason}`;
+      : `REBOOT by ${clock(record.deadline)} (in ${left < 60_000 ? "<1m" : `${String(Math.ceil(left / 60_000))}m`}) — ${visible(record.by)}: ${visible(record.reason)}`;
   const inOrder = (/** @type {(role: string) => boolean} */ keep) =>
     [...new Set([...roles, ...record.ready])].filter(keep);
   const notReady = (/** @type {string} */ role) => live.has(role) && !record.ready.includes(role);
@@ -383,7 +384,7 @@ function rebootSection({ reboot, roles, live }, width) {
     paint(cut(when, width), "1;31"),
     ...rows
       .filter(({ names }) => names.length > 0)
-      .map(({ label, names }) => cut(`  ${label}${names.join(", ")}`, width)),
+      .map(({ label, names }) => cut(`  ${label}${names.map(visible).join(", ")}`, width)),
   ];
 }
 

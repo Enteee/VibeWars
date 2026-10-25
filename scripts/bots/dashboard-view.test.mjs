@@ -296,6 +296,25 @@ describe("companyLines", () => {
       expect(lines.slice(0, 3)).toEqual(["REBOOTING now — load #345", "", "ROSTER 5/5 hired"]);
     });
 
+    it("never prints a control sequence from the reason or the roles", () => {
+      const evil = "x\u001B]52;c;AAAA\u0007\u001B[2J\nstolen";
+      const reboots = [
+        { record: { ...record, reason: evil, by: evil, ready: [evil] }, between: [], now: 0 },
+        { rebooting: evil },
+      ];
+      for (const reboot of reboots) {
+        const lines = companyLines(
+          { roles, live, budget: null, hub, reboot },
+          { rows: 30, width: 200 },
+        ).map(plain);
+        for (const line of lines) {
+          expect(
+            Array.from(line).every((char) => char.charCodeAt(0) >= 32 && char !== "\u007F"),
+          ).toBe(true);
+        }
+      }
+    });
+
     it("is no section, and no blank line, without a reboot", () => {
       expect(pane(null)[0]).toBe("ROSTER 5/5 hired");
     });
