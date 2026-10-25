@@ -539,4 +539,68 @@ describe("a P2P host survives hostile peers (#375)", () => {
     expect(watcher.getSnapshot().elapsedSeconds).toBeGreaterThan(elapsed);
     expect(match.host.phase).toBe("active");
   });
+  it("never seats again a peer that said bye, however it loops bye and hello", async () => {
+    const match = startMatch();
+    const { connection: watcher } = await match.join();
+    const raw = match.network.join();
+    let welcomes = 0;
+    raw.on("welcome", () => (welcomes += 1));
+    await settle();
+    raw.send("hello", hello(), "host");
+    await settle();
+    await match.step(TICK);
+    expect(welcomes).toBe(1);
+    expect(watcher.getSnapshot().players).toHaveLength(2);
+
+    // Each round would be a fresh player at spawn: full health, no
+    // cooldowns, and a new roll of the team.
+    for (let i = 0; i < 5000; i += 1) {
+      raw.send("bye", {}, "host");
+      raw.send("hello", hello(), "host");
+    }
+    await settle();
+    // Not even once the budget has refilled.
+    await match.step(1);
+    raw.send("hello", hello(), "host");
+    await settle();
+    await match.step(TICK);
+
+    expect(welcomes).toBe(1);
+    expect(watcher.getSnapshot().players).toHaveLength(1);
+    expect(match.host.phase).toBe("active");
+  });
+
+  it("seats a peer again once it has left the room and come back", async () => {
+    const match = startMatch();
+    let welcomes = 0;
+    const visit = async (): Promise<void> => {
+      const raw = match.network.join("returner");
+      raw.on("welcome", () => (welcomes += 1));
+      await settle();
+      raw.send("hello", hello(), "host");
+      await settle();
+      raw.send("bye", {}, "host");
+      await raw.leave();
+      await settle();
+    };
+    await visit();
+    // The same peer id, as a page that reloads into the room may not
+    // have, but a transport is free to reuse.
+    await visit();
+    expect(welcomes).toBe(2);
+  });
+
+  it("answers no more hellos than the budget holds", async () => {
+    const match = startMatch();
+    const raw = match.network.join();
+    let refusals = 0;
+    raw.on("refuse", () => (refusals += 1));
+    await settle();
+    // A wrong version is refused with an answer, so each one costs the host a send.
+    for (let i = 0; i < 1000; i += 1) {
+      raw.send("hello", { ...hello(), protocolVersion: "stale" }, "host");
+    }
+    await settle();
+    expect(refusals).toBe(MESSAGE_BURST);
+  });
 });

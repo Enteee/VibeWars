@@ -132,6 +132,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   const seats = new Map<string, Seat>();
   const seatOfPeer = new Map<string, Seat>();
   const budget = new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, () => undefined);
+  /**
+   * The peers that said `bye`, until they leave the room. A quit is never
+   * undone by a fresh `hello`: that would be a free heal, a cooldown reset
+   * and a team re-roll, as often as the budget allows.
+   */
+  const departed = new Set<string>();
   let seated = 0;
   let accumulator = 0;
   let finished = false;
@@ -230,7 +236,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   };
 
   transport.on("hello", (data, from) => {
-    if (seatOfPeer.has(from)) {
+    // Charged like an intent: every hello may send a whole map back.
+    if (!budget.take(from, nowMs()) || seatOfPeer.has(from) || departed.has(from)) {
       return;
     }
     // Checked first: a client of another version, or of none, is told so
@@ -254,7 +261,6 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       // the token is the proof, and the old peer is forgotten.
       if (held.peerId !== undefined) {
         seatOfPeer.delete(held.peerId);
-        budget.forget(held.peerId);
       }
       welcome(held, from);
       return;
@@ -288,7 +294,6 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   const free = (seat: Seat): void => {
     if (seat.peerId !== undefined) {
       seatOfPeer.delete(seat.peerId);
-      budget.forget(seat.peerId);
     }
     sim.remove(seat.playerId);
     seats.delete(seat.playerId);
@@ -296,20 +301,24 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
 
   transport.on("bye", (data, from) => {
     const seat = seatOfPeer.get(from);
-    if (seat === undefined || parsePeerBye(data) === undefined) {
+    if (!budget.take(from, nowMs()) || seat === undefined || parsePeerBye(data) === undefined) {
       return;
     }
     // The player meant to go: there is nothing to hold the seat for.
+    departed.add(from);
     free(seat);
   });
 
+  // The budget outlives a bye and a seat: only a peer leaving the room
+  // gets a fresh bucket, so neither can be cycled to refill it.
   transport.onPeerLeave((peerId) => {
+    budget.forget(peerId);
+    departed.delete(peerId);
     const seat = seatOfPeer.get(peerId);
     if (seat === undefined) {
       return;
     }
     seatOfPeer.delete(peerId);
-    budget.forget(peerId);
     seat.peerId = undefined;
     seat.droppedAt = sim.elapsedSeconds;
     seat.recharges = undefined;
