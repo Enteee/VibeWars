@@ -283,6 +283,7 @@ export function boardLines(snapshot, columns, live, { rows, width }) {
  * @typedef {object} CompanyFacts
  * @property {readonly string[]} roles every role, in org-chart order
  * @property {ReadonlySet<string>} live the roles hired right now
+ * @property {ReadonlyMap<string, number>} stale roles whose agent died without cleaning up, to when it was last seen (#363)
  * @property {Budget | null} budget null before hubd has checked
  * @property {ReturnType<typeof import("./hub-health.mjs").hubHealth>} hub hubd, as its heartbeat and restarts say (#23)
  * @property {ClaudeUsage | null} claude null before any agent has logged (#50)
@@ -295,20 +296,29 @@ export function boardLines(snapshot, columns, live, { rows, width }) {
  * @param {number} width
  * @returns {string[]}
  */
-function rosterSection({ roles, live }, width) {
-  const absent = roles.filter((role) => !live.has(role));
+function rosterSection({ roles, live, stale }, width) {
+  const absent = roles.filter((role) => !live.has(role) && !stale.has(role));
+  const down = roles.flatMap((role) => {
+    const lastSeen = stale.get(role);
+    return lastSeen === undefined ? [] : [`${role} since ${hhmm(lastSeen)}`];
+  });
   const lines = [
     paint(cut(`ROSTER ${String(live.size)}/${String(roles.length)} hired`, width), "1"),
   ];
+  /** `+` running, `!` died without cleaning up, `-` never hired. */
+  const mark = (/** @type {string} */ role) => (live.has(role) ? "+" : stale.has(role) ? "!" : "-");
   // As many roles a row as the pane is wide.
   const cell = Math.max(...roles.map((role) => role.length)) + 3;
   const perRow = Math.max(1, Math.floor((width - 2) / cell));
   for (let i = 0; i < roles.length; i += perRow) {
     const row = roles
       .slice(i, i + perRow)
-      .map((role) => `${live.has(role) ? "+" : "-"} ${role}`.padEnd(cell))
+      .map((role) => `${mark(role)} ${role}`.padEnd(cell))
       .join("");
     lines.push(cut(`  ${row}`.trimEnd(), width));
+  }
+  if (down.length > 0) {
+    lines.push(cut(`  down: ${down.join(", ")} (restart: claude-llc-agent <role>)`, width));
   }
   if (absent.length > 0) {
     lines.push(cut(`  not hired yet: ${absent.join(", ")}`, width));

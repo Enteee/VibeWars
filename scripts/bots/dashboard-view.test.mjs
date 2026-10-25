@@ -12,6 +12,7 @@ import {
   doneOrder,
   feedLines,
   groupFeed,
+  hhmm,
 } from "./dashboard-view.mjs";
 /** @typedef {{ state: "up" | "stale" | "down" | "crash-looping", line: string }} HubLine */
 
@@ -200,7 +201,15 @@ describe("companyLines", () => {
 
   it("is the roster, the hub, then the GitHub budget", () => {
     const lines = companyLines(
-      { roles, live: new Set(["manager", "architect"]), budget, hub, reboot: null, claude: null },
+      {
+        roles,
+        live: new Set(["manager", "architect"]),
+        stale: new Map(),
+        budget,
+        hub,
+        reboot: null,
+        claude: null,
+      },
       { rows: 30, width: 40 },
     ).map(plain);
     expect(lines[0]).toBe("ROSTER 2/5 hired");
@@ -212,11 +221,41 @@ describe("companyLines", () => {
     }
   });
 
+  it("marks an agent that died without cleaning up as down, not hired (#363)", () => {
+    const lastSeen = new Date(2026, 9, 25, 13, 30).getTime();
+    const lines = companyLines(
+      {
+        roles: ["manager", "developer-1", "lead-dev"],
+        live: new Set(["manager"]),
+        stale: new Map([["developer-1", lastSeen]]),
+        budget: null,
+        hub,
+        reboot: null,
+        claude: null,
+      },
+      { rows: 30, width: 100 },
+    ).map(plain);
+    expect(lines.slice(0, 4)).toEqual([
+      "ROSTER 1/3 hired",
+      "  + manager     ! developer-1 - lead-dev",
+      `  down: developer-1 since ${hhmm(lastSeen)} (restart: claude-llc-agent <role>)`,
+      "  not hired yet: lead-dev",
+    ]);
+  });
+
   it("paints the hub line red unless hubd is up (#23)", () => {
     /** @param {HubLine} health */
     const hubLine = (health) =>
       companyLines(
-        { roles, live: new Set(), budget: null, hub: health, reboot: null, claude: null },
+        {
+          roles,
+          live: new Set(),
+          stale: new Map(),
+          budget: null,
+          hub: health,
+          reboot: null,
+          claude: null,
+        },
         { rows: 30, width: 80 },
       ).find((line) => plain(line).startsWith("hub "));
     expect(hubLine(hub)).toContain("\x1b[1;32m");
@@ -225,7 +264,7 @@ describe("companyLines", () => {
 
   it("says the Claude usage is unknown before any agent has logged (#50)", () => {
     const lines = companyLines(
-      { roles, live: new Set(), budget: null, hub, reboot: null, claude: null },
+      { roles, live: new Set(), stale: new Map(), budget: null, hub, reboot: null, claude: null },
       { rows: 30, width: 72 },
     ).map(plain);
     expect(lines).toContain("CLAUDE usage unknown (no agent logs yet)");
@@ -252,7 +291,7 @@ describe("companyLines", () => {
       },
     };
     const lines = companyLines(
-      { roles, live: new Set(), budget: null, hub, reboot: null, claude },
+      { roles, live: new Set(), stale: new Map(), budget: null, hub, reboot: null, claude },
       { rows: 40, width: 72 },
     ).map(plain);
     const at = lines.indexOf("CLAUDE tokens, last 5h, as of 16:42");
@@ -289,7 +328,7 @@ describe("companyLines", () => {
       },
     };
     const lines = companyLines(
-      { roles, live: new Set(), budget: null, hub, reboot: null, claude },
+      { roles, live: new Set(), stale: new Map(), budget: null, hub, reboot: null, claude },
       { rows: 40, width: 72 },
     );
     // The manager's row is not the top one, so nothing paints it.
@@ -302,7 +341,7 @@ describe("companyLines", () => {
 
   it("cuts an overflow with … +N lines", () => {
     const lines = companyLines(
-      { roles, live: new Set(), budget: null, hub, reboot: null, claude: null },
+      { roles, live: new Set(), stale: new Map(), budget: null, hub, reboot: null, claude: null },
       { rows: 4, width: 40 },
     );
     expect(lines).toHaveLength(4);
@@ -326,9 +365,10 @@ describe("companyLines", () => {
      * @param {{ rows?: number, width?: number }} [pane]
      */
     const pane = (reboot, { rows = 30, width = 80 } = {}) =>
-      companyLines({ roles, live, budget: null, hub, reboot, claude: null }, { rows, width }).map(
-        plain,
-      );
+      companyLines(
+        { roles, live, stale: new Map(), budget: null, hub, reboot, claude: null },
+        { rows, width },
+      ).map(plain);
 
     it("is first: the deadline, then ready, waiting and idle in org-chart order", () => {
       const lines = pane({
@@ -351,6 +391,7 @@ describe("companyLines", () => {
         {
           roles,
           live,
+          stale: new Map(),
           budget: null,
           hub,
           reboot: { record: { ...record, ready: [] }, between: [], now: deadline - 30_000 },
@@ -384,7 +425,7 @@ describe("companyLines", () => {
       ];
       for (const reboot of reboots) {
         const lines = companyLines(
-          { roles, live, budget: null, hub, reboot, claude: null },
+          { roles, live, stale: new Map(), budget: null, hub, reboot, claude: null },
           { rows: 30, width: 200 },
         ).map(plain);
         for (const line of lines) {
