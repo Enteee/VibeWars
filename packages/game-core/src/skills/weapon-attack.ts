@@ -37,6 +37,12 @@ export interface AttackState {
    * the attack ends only once this reaches `unreachableAfterSeconds`.
    */
   unreachableSeconds: number;
+  /**
+   * The bar slot of an attack skill pressed out of reach (#415): the
+   * approach walks to its range instead of the weapon's, and it goes off
+   * on arrival. Nothing is paid until then.
+   */
+  pendingSkillSlot: number | undefined;
 }
 
 export interface Swing {

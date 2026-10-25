@@ -70,6 +70,17 @@ attack skill. Adrenaline as for any hit.
 swings and attack skills alike. As in GW1, only the strongest speed-up and
 the strongest slow-down count, and they multiply. No status sets it yet.
 
+**Out of reach.** An attack skill pressed out of range or out of sight
+of its target is walked into, as Space is (Q49, #415). The press is
+checked as any is, and accepted when range or sight is all that fails: the
+attack turns on the target with the skill as `AttackState.pendingSkillSlot`,
+and the approach walks to the skill's range rather than the weapon's, so
+Barrage stops at its own. In reach and in sight, it goes off through the
+same check as a press; nothing is paid, and no recharge starts, until then.
+Refused on arrival, it is dropped and the attack carries on. Whatever drops
+the attack drops it too (moving, Escape, a new target, the target dying or
+proving unreachable), and another skill pressed replaces it.
+
 **Interrupts.** An interrupted skill, attack or not, starts its recharge
 as if it had been used, as in GW1. Before, it could be cast again at once.
 
@@ -84,7 +95,6 @@ as if it had been used, as in GW1. Before, it could be cast again at once.
 ## Simplifications
 
 - A ranged attack skill lands at the hit, with no flight (child 3).
-- An attack skill out of reach is refused, as a spell is (child 2).
 - No crits, block or evade; no per-skill aftercast overrides.
 
 ## Consequences
