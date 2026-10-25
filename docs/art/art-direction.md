@@ -477,7 +477,7 @@ generator. Never hand-edit an output file; change the script and re-run.
 | Weapon     | `apps/web/public/icons/weapon/`     |
 | Off-hand   | `apps/web/public/icons/offhand/`    |
 
-Each file is a flat SVG of 150–450 bytes with colours baked in, because Phaser
+Each file is a flat SVG of 150–1,200 bytes with colours baked in, because Phaser
 rasterises SVG textures without CSS. Projectiles are the one exception: white,
 for the scene to tint. Load it in Phaser with
 `this.load.svg(key, url, { width, height })` at the size you draw it (24×24
