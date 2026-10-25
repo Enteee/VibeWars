@@ -31,6 +31,8 @@ export interface PlayerSnapshot {
   readonly targetSessionId: string | undefined;
   /** Who this player is attacking with their weapon, or `undefined` (#160). */
   readonly attackTargetSessionId: string | undefined;
+  /** Whether this player is walking to a clicked point (#310, #342). */
+  readonly walking: boolean;
   readonly health: number;
   readonly maxHealth: number;
   readonly energy: number;

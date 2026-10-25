@@ -223,11 +223,14 @@ const RULES = [
   { argv: ["project", "close"], roles: [] },
   { argv: ["project", "delete"], roles: [] },
   // Moving a card is the one board mutation the workflow roles must do
-  // themselves, since each hand-off is a column change.
+  // themselves, since each hand-off is a column change. Which move each role
+  // may make is `boardMoveAllowed` (hub-guards.mjs): the architect's sign-off
+  // out of the Backlog is theirs alone (#349).
   {
     argv: ["project", "item-edit"],
     roles: [
       "manager",
+      "architect",
       "developer-1",
       "developer-2",
       "asset-designer",

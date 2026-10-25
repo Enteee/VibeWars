@@ -1,4 +1,4 @@
-# Working on vibewars
+# Working on VibeWars
 
 Everything about how to build, test and contribute is in
 [`CONTRIBUTING.md`](CONTRIBUTING.md). This file holds the one rule that
@@ -6,7 +6,7 @@ keeps being broken, and it applies to every change you make.
 
 ## No backwards compatibility
 
-vibewars has no released version. Never write code whose purpose is to
+VibeWars has no released version. Never write code whose purpose is to
 tolerate data produced by an older build of this project. There is
 nobody to be compatible with, and every compatibility shim you add is a
 permanent ritual the next schema change has to perform. The full

@@ -161,7 +161,7 @@ export function importBuild(text: string, id: string, now: number): ImportResult
   if (record.format !== BUILD_FORMAT) {
     return {
       ok: false,
-      problems: [`This does not look like a vibewars build (expected format "${BUILD_FORMAT}").`],
+      problems: [`This does not look like a VibeWars build (expected format "${BUILD_FORMAT}").`],
     };
   }
   const formatVersion = record.formatVersion;

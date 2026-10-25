@@ -170,3 +170,36 @@ describe("tg wait, and General broadcasts (#323)", () => {
     expect(tg(env, ["wait", "--timeout", "1", "--all"])).toContain("FYI #9 merged");
   });
 });
+
+describe("tg wait, and a company reboot (#345)", () => {
+  it("ends within seconds on the announcement, prints it and advances the cursor", async () => {
+    const { dir, env } = bus();
+    const started = Date.now();
+    const child = spawn(process.execPath, [TG, "wait", "--timeout", "30"], { env });
+    let out = "";
+    child.stdout.on("data", (chunk) => {
+      out += String(chunk);
+    });
+    // deliverSystem's line: a link from the system, not a broadcast.
+    const announcement = {
+      ts: 1,
+      from: "system",
+      kind: "link",
+      text: "Company reboot by 12:41: load #345. Run `company ready`.",
+      topicId: null,
+      messageId: 0,
+      broadcast: false,
+    };
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    fs.appendFileSync(path.join(dir, "inbox.jsonl"), `${JSON.stringify(announcement)}\n`);
+    const code = await new Promise((/** @type {(code: number | null) => void} */ resolve) => {
+      child.on("exit", resolve);
+    });
+
+    expect(code).toBe(0);
+    expect(Date.now() - started).toBeLessThan(10_000);
+    expect(out).toContain("Company reboot by 12:41");
+    const again = spawnSync(process.execPath, [TG, "inbox"], { env, encoding: "utf8" });
+    expect(again.stdout).not.toContain("Company reboot by");
+  });
+});

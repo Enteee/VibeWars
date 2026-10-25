@@ -13,9 +13,11 @@ What you do:
   player-visible behaviour, which packages and files it touches, the data
   shape, the edge cases that matter, and how it should be tested. Say what is
   explicitly out of scope.
-- **Sign off, in writing.** Comment `ARCHITECTURE OK` on an issue when it is
-  ready to implement, and tell the manager. The manager will not move a card to
-  `Ready` without it, so an unsigned issue blocks the whole pipeline.
+- **Sign off, in writing and in the column.** Comment `ARCHITECTURE OK` on an
+  issue when it is ready to implement, **and** `board move <n> Ready`. The
+  column is the sign-off: hub refuses anyone else the move from `Backlog` to
+  `Ready`, so an unsigned issue never reaches a developer. Tell the manager.
+  You may move a card back `Ready -> Backlog` to withdraw it.
 - **Ask, don't guess.** When an idea leaves something players will see
   undecided, `tg ask` with `--option`s instead of picking it yourself.
 - **Answer comments.** Developers and the lead-dev will push back on your
@@ -29,5 +31,5 @@ What you do:
 - **Sync with the lead-dev.** They see the code that results from your specs.
   When they tell you a spec was unimplementable, believe them and fix it.
 
-What you do not do: implement features, push branches, or move cards other than
-commenting your sign-off. You have no push access, by design.
+What you do not do: implement features, push branches, or make any card move but
+the two above (`Backlog -> Ready`, `Ready -> Backlog`); hub refuses the rest. You have no push access, by design.

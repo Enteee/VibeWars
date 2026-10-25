@@ -9,6 +9,9 @@
  * processes and git.
  */
 
+import fs from "node:fs";
+import path from "node:path";
+
 /**
  * Paths whose change is what a reboot exists to load. A reboot is not a
  * general "unstick" button: with no new company code there is nothing for
@@ -167,6 +170,18 @@ export function announcement(reboot, subjects) {
     "`company ready`. Abort: `company reboot --abort` (manager), " +
     "`claude-llc reboot --abort` (operator)."
   );
+}
+
+/**
+ * The roles whose restart loop is between turns: it has created
+ * `.bots/agents/<role>/between-turns` and not yet started the next turn.
+ *
+ * @param {string} root the company's state directory
+ * @param {readonly string[]} roles
+ * @returns {string[]}
+ */
+export function betweenTurns(root, roles) {
+  return roles.filter((role) => fs.existsSync(path.join(root, "agents", role, "between-turns")));
 }
 
 /** `COMPANY_PATHS` as git pathspecs, for `git log -- ...`. */

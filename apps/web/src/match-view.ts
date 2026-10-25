@@ -4,12 +4,7 @@ import type { WallDescriptor } from "@vibewars/game-protocol";
 import { attachMatchSounds } from "./audio/match-sounds.js";
 import { saveMuted } from "./audio/mute-preference.js";
 import { soundPlayer } from "./audio/sound-player.js";
-import {
-  attackClickIntents,
-  attackKeyIntents,
-  isAttacking,
-  isCasting,
-} from "./input/attack-key.js";
+import { attackClickIntents, attackKeyIntents, hasActionToCancel } from "./input/attack-key.js";
 import { createDoubleClick } from "./input/double-click.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { loadLayoutLabeller } from "./input/key-labels.js";
@@ -242,9 +237,8 @@ export async function startMatchView(
       return;
     }
     if (event.key === "Escape") {
-      // Cancel Action (#300): the cast and the attack, whichever run.
-      const snapshot = connection.getSnapshot();
-      if (!event.repeat && (isCasting(snapshot) || isAttacking(snapshot))) {
+      // Cancel Action (#300): the cast, the attack and a walk, whichever run.
+      if (!event.repeat && hasActionToCancel(connection.getSnapshot())) {
         connection.sendIntent({ kind: "cancel" });
       }
       return;

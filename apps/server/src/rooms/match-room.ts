@@ -92,6 +92,8 @@ export const PlayerState = schema(
      * in GW1: everyone can see who is swinging at whom.
      */
     attackTargetSessionId: t.string().default(""),
+    /** Whether this player is walking to a clicked point, so Esc has a walk to stop (#342). */
+    walking: t.boolean().default(false),
 
     health: t.number().default(0),
     maxHealth: t.number().default(0),
@@ -657,16 +659,16 @@ export class MatchRoom extends Room {
             const message: CastRefusedMessage = { kind: "attack", reason: check.reason };
             send(client, "cast-refused", message);
           }
-          this.mirrorAttack(client.sessionId);
+          this.mirrorAction(client.sessionId);
           return;
         }
         case "cancel":
           this.#sim.cancelAction(client.sessionId);
-          this.mirrorAttack(client.sessionId);
+          this.mirrorAction(client.sessionId);
           return;
         case "walk-to":
           this.#sim.walkTo(client.sessionId, vec2(intent.x, intent.y));
-          this.mirrorAttack(client.sessionId);
+          this.mirrorAction(client.sessionId);
           return;
       }
     });
@@ -712,11 +714,13 @@ export class MatchRoom extends Room {
     };
   }
 
-  /** Mirror an attack change onto the schema at once, as `applyTarget` does. */
-  private mirrorAttack(sessionId: string): void {
+  /** Mirror an attack or walk change onto the schema at once, as `applyTarget` does. */
+  private mirrorAction(sessionId: string): void {
     const player = this.state.players.get(sessionId);
+    const sim = this.#sim.get(sessionId);
     if (player !== undefined) {
-      player.attackTargetSessionId = this.#sim.get(sessionId)?.combatant.attack?.targetId ?? "";
+      player.attackTargetSessionId = sim?.combatant.attack?.targetId ?? "";
+      player.walking = sim?.walkGoal !== undefined;
     }
   }
 
@@ -874,6 +878,7 @@ export class MatchRoom extends Room {
     player.weaponId = sim.combatant.equipment.mainHand.weapon.id;
     player.offhandId = sim.combatant.equipment.offhandId ?? "";
     player.attackTargetSessionId = sim.combatant.attack?.targetId ?? "";
+    player.walking = sim.walkGoal !== undefined;
 
     const activeCast = sim.combatant.cast.activeCast;
     player.castingSkillId = activeCast?.skillId ?? "";

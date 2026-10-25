@@ -53,6 +53,15 @@ particular:
   each fetch. Every jail binds that directory read-only as its user-level
   `~/.claude/skills`, so no worktree carries a copy that drifts.
 
+- **Sign-off is a column** (#349). A card leaves the Backlog for Ready
+  only by the architect's `board move`; hubd refuses every other role that
+  move, and the architect every move but `Backlog -> Ready` and `Ready ->
+Backlog`, judged against the card's column in hubd's copy of the board
+  (re-read once if the copy is stale). Work had reached developers unsigned
+  while the rule lived only in briefings. Rejected: checking for an
+  `ARCHITECTURE OK` comment on `Ready -> In Progress`, which costs an issue
+  read per move and can be faked by any role that can comment.
+
 ## Consequences
 
 - **The parts of the shared `.git` that git executes are read-only in

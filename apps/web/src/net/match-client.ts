@@ -88,6 +88,7 @@ export interface DecodedPlayer {
   readonly facing: number;
   readonly targetSessionId: string;
   readonly attackTargetSessionId: string;
+  readonly walking: boolean;
   readonly health: number;
   readonly maxHealth: number;
   readonly energy: number;
@@ -157,6 +158,7 @@ function snapshotFrom(room: LiveMatchRoom): MatchSnapshot {
       targetSessionId: player.targetSessionId === "" ? undefined : player.targetSessionId,
       attackTargetSessionId:
         player.attackTargetSessionId === "" ? undefined : player.attackTargetSessionId,
+      walking: player.walking,
       health: player.health,
       maxHealth: player.maxHealth,
       energy: player.energy,

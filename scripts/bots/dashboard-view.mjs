@@ -8,6 +8,7 @@
  * tmux wrap it, and the whole pane jumps.
  */
 import { visible } from "./protocol.mjs";
+import { clock } from "./reboot.mjs";
 
 /**
  * Which roles each column needs before work can leave it. Used to explain a
@@ -283,6 +284,8 @@ export function boardLines(snapshot, columns, live, { rows, width }) {
  * @property {ReadonlySet<string>} live the roles hired right now
  * @property {Budget | null} budget null before hubd has checked
  * @property {ReturnType<typeof import("./hub-health.mjs").hubHealth>} hub hubd, as its heartbeat and restarts say (#23)
+ * @property {{ record: import("./reboot.mjs").Reboot, between: readonly string[], now: number } | { rebooting: string } | null} reboot
+ *   the pending reboot with the roles between turns, or the reason of the one handed to the restarter (#345)
  */
 
 /**
@@ -346,12 +349,52 @@ function hubSection({ hub }, width) {
 }
 
 /**
+ * The reboot, as the COMPANY pane tells it (#345): who holds the drain up
+ * is the roles in a turn that have not run `company ready`; a role between
+ * turns counts as done, as in `drainStep`.
+ *
+ * @param {CompanyFacts} facts
+ * @param {number} width
+ * @returns {string[]}
+ */
+// Reason and role names are agent-written, printed into the operator's tmux: see `visible`.
+function rebootSection({ reboot, roles, live }, width) {
+  if (reboot === null) {
+    return [];
+  }
+  if ("rebooting" in reboot) {
+    return [paint(cut(`REBOOTING now — ${visible(reboot.rebooting)}`, width), "1;31")];
+  }
+  const { record, between, now } = reboot;
+  const left = record.deadline - now;
+  const when =
+    left <= 0
+      ? `REBOOT overdue since ${clock(record.deadline)}, stopping`
+      : `REBOOT by ${clock(record.deadline)} (in ${left < 60_000 ? "<1m" : `${String(Math.ceil(left / 60_000))}m`}) — ${visible(record.by)}: ${visible(record.reason)}`;
+  const inOrder = (/** @type {(role: string) => boolean} */ keep) =>
+    [...new Set([...roles, ...record.ready])].filter(keep);
+  const notReady = (/** @type {string} */ role) => live.has(role) && !record.ready.includes(role);
+  /** @type {{ label: string, names: string[] }[]} */
+  const rows = [
+    { label: "ready:   ", names: inOrder((role) => record.ready.includes(role)) },
+    { label: "waiting: ", names: inOrder((role) => notReady(role) && !between.includes(role)) },
+    { label: "idle:    ", names: inOrder((role) => notReady(role) && between.includes(role)) },
+  ];
+  return [
+    paint(cut(when, width), "1;31"),
+    ...rows
+      .filter(({ names }) => names.length > 0)
+      .map(({ label, names }) => cut(`  ${label}${names.map(visible).join(", ")}`, width)),
+  ];
+}
+
+/**
  * The COMPANY pane's sections, in order. #50 (tokens per role) adds a
  * function here rather than a pane, as #23's hub line did.
  *
  * @type {readonly ((facts: CompanyFacts, width: number) => string[])[]}
  */
-export const COMPANY_SECTIONS = [rosterSection, hubSection, githubSection];
+export const COMPANY_SECTIONS = [rebootSection, rosterSection, hubSection, githubSection];
 
 /**
  * The COMPANY pane: each section, a blank line between, cut with
@@ -362,10 +405,9 @@ export const COMPANY_SECTIONS = [rosterSection, hubSection, githubSection];
  * @returns {string[]}
  */
 export function companyLines(facts, { rows, width }) {
-  const lines = COMPANY_SECTIONS.flatMap((section, index) => [
-    ...(index === 0 ? [] : [""]),
-    ...section(facts, width),
-  ]);
+  const lines = COMPANY_SECTIONS.map((section) => section(facts, width))
+    .filter((section) => section.length > 0)
+    .flatMap((section, index) => [...(index === 0 ? [] : [""]), ...section]);
   if (lines.length <= rows) {
     return lines;
   }
