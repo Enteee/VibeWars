@@ -163,7 +163,7 @@ let
     # manager's own cgroup which controllers it has.
     managerCgroup="$("$systemctl" show "user@$(${pkgs.coreutils}/bin/id -u).service" -p ControlGroup --value)"
     controllers="$(cat "/sys/fs/cgroup$managerCgroup/cgroup.controllers" 2>/dev/null || true)"
-    for controller in memory pids cpu io; do
+    for controller in memory pids cpu; do
       case " $controllers " in
         (*" $controller "*) ;;
         (*)
