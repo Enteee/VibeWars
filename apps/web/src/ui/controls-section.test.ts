@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { DEFAULT_KEYMAP, KEYMAP_PRESETS, type Keymap } from "../input/keymap.js";
 
-import { KeysEditor, SHORTCUT_REFUSAL, noKeyWarning, type KeyPress } from "./keys-screen.js";
+import { KeysEditor, SHORTCUT_REFUSAL, noKeyWarning, type KeyPress } from "./controls-section.js";
 
 function key(code: string, held: Partial<Omit<KeyPress, "code">> = {}): KeyPress {
   return { code, ctrlKey: false, altKey: false, metaKey: false, ...held };

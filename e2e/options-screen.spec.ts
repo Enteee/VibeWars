@@ -1,9 +1,9 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 /**
- * The Keys screen (#309): what only a browser can tell is that a key bound
- * there is the key the Training Ground casts with, and that it is still
- * bound after a reload.
+ * The Options screen (#423) and its Controls section (#309): what only a
+ * browser can tell is that a key bound there is the key the Training Ground
+ * casts with, and that it is still bound after a reload.
  */
 
 const WIDE = { width: 1500, height: 950 };
@@ -12,11 +12,14 @@ const cell = (page: Page, action: string, index = 0): Locator =>
   page.locator(`.key-cell[data-action="${action}"][data-index="${String(index)}"]`);
 
 async function openKeys(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "keys" }).click();
+  await page.getByRole("button", { name: "options" }).click();
+  await expect(page.locator(".options-screen")).toBeVisible();
+  // Options opens on its first section, Controls.
+  await expect(page.locator('.options-entry[data-section="controls"]')).toHaveClass(/is-selected/);
   await expect(page.locator(".keys-screen")).toBeVisible();
 }
 
-test("(1) Skill 1 bound to Z on the Keys screen casts on Z, not Q, and survives a reload", async ({
+test("(1) Skill 1 bound to Z in Controls casts on Z, not Q, and survives a reload", async ({
   page,
 }) => {
   await page.setViewportSize(WIDE);
@@ -32,7 +35,7 @@ test("(1) Skill 1 bound to Z on the Keys screen casts on Z, not Q, and survives 
 
   // Esc outside a capture is the way back.
   await page.keyboard.press("Escape");
-  await expect(page.locator(".keys-screen")).toHaveCount(0);
+  await expect(page.locator(".options-screen")).toHaveCount(0);
 
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator(".editor-row select").first().selectOption("elementalist");
@@ -91,4 +94,23 @@ test("(3) Space binds and stays bound: its keyup does not click the cell again",
   await expect(cell(page, "mute")).toHaveText("Space");
   await expect(page.locator(".key-cell.is-capturing")).toHaveCount(0);
   await expect(cell(page, "attack")).toHaveText("-");
+});
+
+test("(4) Back leaves Options for the menu; on a narrow screen the sections sit above", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 400, height: 800 });
+  await page.goto("/");
+  await openKeys(page);
+  const entry = await page.locator('.options-entry[data-section="controls"]').boundingBox();
+  const pane = await page.locator(".options-pane").boundingBox();
+  expect(entry).not.toBeNull();
+  expect(pane).not.toBeNull();
+  if (entry !== null && pane !== null) {
+    expect(entry.y + entry.height).toBeLessThanOrEqual(pane.y);
+  }
+
+  await page.getByRole("button", { name: "back", exact: true }).click();
+  await expect(page.locator(".options-screen")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "options" })).toBeVisible();
 });

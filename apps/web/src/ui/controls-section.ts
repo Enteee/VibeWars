@@ -13,13 +13,15 @@ import {
 } from "../input/keymap.js";
 import { loadKeymap, saveKeymap } from "../input/keymap-preference.js";
 
+import type { OptionsSection } from "./options-sections.js";
+
 /**
- * The Keys screen (#309): pick a preset, or rebind any action, and every
- * change is saved at once. A menu screen, not an overlay in a match; the
- * next match or Training Ground session plays the new map.
+ * Controls (#309, #423): pick a preset, or rebind any action, and every
+ * change is saved at once. A section of the Options screen, not an overlay
+ * in a match; the next match or Training Ground session plays the new map.
  *
  * `KeysEditor` holds the rules and is plain data, so they are tested
- * without a DOM; `renderKeysScreen` only draws it and forwards keys.
+ * without a DOM; `controlsSection` only draws it and forwards keys.
  */
 
 export const ACTION_NAMES: Readonly<Record<KeyAction, string>> = {
@@ -204,18 +206,6 @@ export class KeysEditor {
   }
 }
 
-export interface KeysScreenCallbacks {
-  readonly onBack: () => void;
-}
-
-/** Torn down by `disposeKeysScreen`, which every way back to the menu calls. */
-let disposeCurrent: (() => void) | undefined;
-
-export function disposeKeysScreen(): void {
-  disposeCurrent?.();
-  disposeCurrent = undefined;
-}
-
 function h(tag: string, className?: string, text?: string): HTMLElement {
   const node = document.createElement(tag);
   if (className !== undefined) {
@@ -227,16 +217,23 @@ function h(tag: string, className?: string, text?: string): HTMLElement {
   return node;
 }
 
-export function renderKeysScreen(root: HTMLElement, callbacks: KeysScreenCallbacks): void {
-  disposeKeysScreen();
+/**
+ * The Controls section of the Options screen: what was the Keys screen,
+ * less the title and back button the Options screen now owns.
+ */
+export const controlsSection: OptionsSection = {
+  id: "controls",
+  title: "controls",
+  mount: mountControls,
+};
+
+function mountControls(container: HTMLElement): () => void {
   const editor = new KeysEditor(loadKeymap(), saveKeymap);
   let disposed = false;
 
-  root.replaceChildren();
-  const panel = h("div", "screen keys-screen");
-  root.appendChild(panel);
+  const panel = h("div", "keys-screen");
+  container.appendChild(panel);
 
-  panel.appendChild(h("h2", "screen-title", "keys"));
   panel.appendChild(
     h("p", "screen-subtitle", "Changes save at once, and play from the next match or session."),
   );
@@ -285,11 +282,7 @@ export function renderKeysScreen(root: HTMLElement, callbacks: KeysScreenCallbac
     editor.reset();
     paint();
   });
-  const back = document.createElement("button");
-  back.type = "button";
-  back.textContent = "back";
-  back.addEventListener("click", callbacks.onBack);
-  actions.append(reset, back);
+  actions.append(reset);
   panel.appendChild(actions);
 
   const cells: { readonly cell: KeyCell; readonly button: HTMLButtonElement }[] = [];
@@ -363,7 +356,8 @@ export function renderKeysScreen(root: HTMLElement, callbacks: KeysScreenCallbac
   };
 
   // A used key goes no further: Tab does not move focus, and Space does
-  // not click the focused cell back into a capture.
+  // not click the focused cell back into a capture. A capture's own Esc
+  // stops here too, so the Options screen never hears it as "back".
   const onKeydown = (event: KeyboardEvent): void => {
     if (editor.capturing === undefined) {
       return;
@@ -374,21 +368,7 @@ export function renderKeysScreen(root: HTMLElement, callbacks: KeysScreenCallbac
     }
     paint();
   };
-  // Esc outside a capture goes back, as the back button does. A capture's
-  // own Esc stops at the screen, so it never gets here.
-  const onDocumentKeydown = (event: KeyboardEvent): void => {
-    if (event.code === "Escape" && editor.capturing === undefined && !disposed) {
-      event.preventDefault();
-      callbacks.onBack();
-    }
-  };
-  root.addEventListener("keydown", onKeydown, true);
-  document.addEventListener("keydown", onDocumentKeydown);
-  disposeCurrent = () => {
-    disposed = true;
-    root.removeEventListener("keydown", onKeydown, true);
-    document.removeEventListener("keydown", onDocumentKeydown);
-  };
+  panel.addEventListener("keydown", onKeydown, true);
 
   void loadLayoutLabeller().then((label) => {
     if (label !== undefined && !disposed) {
@@ -399,4 +379,8 @@ export function renderKeysScreen(root: HTMLElement, callbacks: KeysScreenCallbac
 
   paint();
   cells[0]?.button.focus();
+  return () => {
+    disposed = true;
+    panel.removeEventListener("keydown", onKeydown, true);
+  };
 }
