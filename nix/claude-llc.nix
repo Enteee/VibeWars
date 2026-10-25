@@ -316,10 +316,6 @@ let
         # The daemons. hubd holds the only GitHub credential in the system.
         # ------------------------------------------------------------------------
         stop_daemons
-        # The jails' shared resource budget (#358), set before any window
-        # opens so a host that cannot enforce it fails here, once, not in
-        # every role. claude-bot sets it again before each launch.
-        claude-bot --slice || exit 1
         # The Telegram sidecar is started by the first claude-bot below, which
         # has the token. Stopping the old one here is what makes a restart
         # pick up new sidecar code.
@@ -478,9 +474,6 @@ in
           limitPause=0
           while true; do
             rm -f "$between"
-            # A nearly full disk holds the next turn (#358); a turn already
-            # running is not stopped.
-            ${node} ${llcScripts}/agent-loop.mjs disk || true
             started=$SECONDS
             ${node} ${llcScripts}/agent-turn.mjs "$state" -- claude-bot "$role" "$@"
             turn=$?
