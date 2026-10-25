@@ -500,10 +500,16 @@ describe("the board", () => {
   it("lets the workflow roles move their own cards", () => {
     // Each hand-off is a column change, so this has to be broader than the
     // rest of the board permissions.
-    for (const role of ["developer-1", "lead-dev", "perf-sec-qa", "qa-tester", "manager"]) {
+    for (const role of [
+      "developer-1",
+      "lead-dev",
+      "perf-sec-qa",
+      "qa-tester",
+      "manager",
+      "architect",
+    ]) {
       expect(gh(role, ["project", "item-edit"]), role).toMatchObject({ allow: true });
     }
-    expect(gh("architect", ["project", "item-edit"])).toMatchObject({ allow: false });
   });
 });
 
