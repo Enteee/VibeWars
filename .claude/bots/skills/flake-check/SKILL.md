@@ -37,7 +37,7 @@ test leans on file-level setup (a server, a room, a port), run the whole
 file ten times instead:
 
 ```sh
-for i in $(seq 10); do pnpm vitest run <path/to/file.test.ts> || break; done
+for i in $(seq 10); do pnpm vitest run <path/to/file.test.ts> || { echo "failed on run $i"; exit 1; }; done
 ```
 
 Add `-t '<name>'` (vitest) or `-g '<name>'` (playwright) to narrow it to
