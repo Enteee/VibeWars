@@ -18,6 +18,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     name: ME,
     x: 0,
     y: 0,
+    facing: 0,
     targetSessionId: undefined,
     health: 100,
     maxHealth: 100,

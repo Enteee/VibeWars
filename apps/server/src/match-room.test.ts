@@ -179,6 +179,20 @@ describe("match room", () => {
     await room.leave();
   });
 
+  it("syncs where a player faces, to two decimals (#187)", async () => {
+    const client = new Client(endpoint);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
+    await waitFor(() => room.state.players.has(room.sessionId), { label: "self to appear" });
+
+    room.send("intent", { kind: "move", dirX: 0, dirY: 1 });
+    await waitFor(() => room.state.players.get(room.sessionId)?.facing === 1.57, {
+      timeoutMs: 2000,
+      label: "player to face +y",
+    });
+
+    await room.leave();
+  });
+
   it("stops moving once a stop intent is sent", async () => {
     const client = new Client(endpoint);
     const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });

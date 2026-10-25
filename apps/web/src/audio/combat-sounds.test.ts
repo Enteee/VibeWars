@@ -100,6 +100,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     name: sessionId,
     x: 0,
     y: 0,
+    facing: 0,
     targetSessionId: undefined,
     health: 100,
     maxHealth: 100,

@@ -27,6 +27,7 @@ function archer(spawn: Vec2, weapon: Weapon = LONGBOW): ParticipantSpec {
       mainHand: { weapon, attributeId: "ranger.marksmanship", requirementMet: true },
     },
     spawn,
+    facing: 0,
   };
 }
 
@@ -40,6 +41,7 @@ function target(spawn: Vec2): ParticipantSpec {
     equipment: unarmedResolvedEquipment(60),
     maxHealth: 1e6,
     spawn,
+    facing: 0,
   };
 }
 

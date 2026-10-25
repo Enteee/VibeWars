@@ -1,0 +1,163 @@
+import { describe, expect, it } from "vitest";
+
+import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
+import { WEAPONS } from "../equipment/weapons.js";
+import { segment } from "../geometry.js";
+import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { vec2, type Vec2 } from "../vec2.js";
+import { facingToward, spawnFacing } from "./facing.js";
+import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+
+const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
+const DT = 1 / RULES.tickRateHz;
+const FIREBALL = "elementalist.fireball";
+const ARMOR_OF_EARTH = "elementalist.armor-of-earth";
+/** Where everyone starts facing in these tests: not 0, so a reset is visible. */
+const START = 1;
+
+describe("facingToward", () => {
+  it("uses the atan2 convention, 0 along +x", () => {
+    expect(facingToward(vec2(0, 0), vec2(10, 0))).toBe(0);
+    expect(facingToward(vec2(0, 0), vec2(0, 10))).toBeCloseTo(Math.PI / 2, 9);
+    expect(facingToward(vec2(0, 0), vec2(-10, 0))).toBeCloseTo(Math.PI, 9);
+  });
+
+  it("is 0 for the same point", () => {
+    expect(facingToward(vec2(3, 4), vec2(3, 4))).toBe(0);
+  });
+});
+
+describe("spawnFacing", () => {
+  it("faces the middle of the other team's spawns", () => {
+    const other = [vec2(100, -50), vec2(100, 50)];
+    expect(spawnFacing(vec2(0, 0), other, [vec2(0, 0), ...other])).toBe(0);
+    expect(spawnFacing(vec2(200, 0), other, [vec2(200, 0), ...other])).toBeCloseTo(Math.PI, 9);
+  });
+
+  it("faces the middle of every spawn when the other team has none", () => {
+    const all = [vec2(0, 0), vec2(0, 100)];
+    expect(spawnFacing(vec2(0, 0), [], all)).toBeCloseTo(Math.PI / 2, 9);
+  });
+
+  it("faces 0 when the only spawn is its own", () => {
+    expect(spawnFacing(vec2(5, 5), [], [vec2(5, 5)])).toBe(0);
+    expect(spawnFacing(vec2(5, 5), [], [])).toBe(0);
+  });
+});
+
+function swordsman(id: string, team: number, spawn: Vec2): ParticipantSpec {
+  const equipment: ResolvedEquipment = {
+    ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+    mainHand: { weapon: WEAPONS.sword, attributeId: "warrior.swordsmanship", requirementMet: true },
+  };
+  return {
+    id,
+    team,
+    skillBar: [FIREBALL, ARMOR_OF_EARTH],
+    attributeRanks: new Map([
+      ["warrior.swordsmanship", 12],
+      ["elementalist.fire-magic", 12],
+      ["elementalist.earth-magic", 12],
+    ]),
+    equipment,
+    maxEnergy: 1000,
+    maxHealth: 1e6,
+    spawn,
+    facing: START,
+  };
+}
+
+/** `a` at the origin, and `b`, an enemy, wherever the test puts it. */
+function pair(b: Vec2, walls: ReturnType<typeof segment>[] = []): MatchSimulation {
+  return new MatchSimulation({
+    seed: "facing",
+    walls,
+    participants: [swordsman("a", 0, vec2(0, 0)), swordsman("b", 1, b)],
+  });
+}
+
+function facing(sim: MatchSimulation, id: string): number {
+  const found = sim.get(id);
+  if (found === undefined) {
+    throw new Error(`no participant ${id}`);
+  }
+  return found.facing;
+}
+
+describe("facing in the match (#187)", () => {
+  it("starts at the spec's facing, turns to where you walk, and keeps it standing still", () => {
+    const sim = pair(vec2(500, 500));
+    expect(facing(sim, "a")).toBe(START);
+    sim.setInputDirection("a", vec2(0, 1));
+    sim.step(DT);
+    expect(facing(sim, "a")).toBeCloseTo(Math.PI / 2, 9);
+    sim.setInputDirection("a", vec2(0, 0));
+    sim.step(DT);
+    expect(facing(sim, "a")).toBeCloseTo(Math.PI / 2, 9);
+  });
+
+  it("faces a wall it pushes into, though it does not move", () => {
+    const sim = pair(vec2(500, 500), [segment(vec2(20, -100), vec2(20, 100))]);
+    sim.setInputDirection("a", vec2(1, 0));
+    for (let i = 0; i < 20; i += 1) {
+      sim.step(DT);
+    }
+    expect(facing(sim, "a")).toBe(0);
+  });
+
+  it("faces its target while swinging, and while approaching", () => {
+    const near = pair(vec2(-50, 0));
+    near.requestAttack("a", "b");
+    near.step(DT);
+    expect(facing(near, "a")).toBeCloseTo(Math.PI, 9);
+
+    const far = pair(vec2(-500, 300));
+    far.requestAttack("a", "b");
+    far.step(DT);
+    expect(facing(far, "a")).toBeCloseTo(Math.atan2(300, -500), 2);
+  });
+
+  it("turns to an enemy it casts at, but not for a self-cast", () => {
+    const sim = pair(vec2(-200, 0));
+    sim.requestSkill("a", 1);
+    sim.step(DT);
+    expect(facing(sim, "a")).toBe(START);
+
+    for (let i = 0; i < 40; i += 1) {
+      sim.step(DT);
+    }
+    sim.setTarget("a", "b");
+    expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
+    sim.step(DT);
+    expect(facing(sim, "a")).toBeCloseTo(Math.PI, 9);
+  });
+
+  it("faces the cast target while strafing mid-cast", () => {
+    const sim = pair(vec2(-200, 0));
+    sim.setTarget("a", "b");
+    sim.requestSkill("a", 0);
+    sim.setInputDirection("a", vec2(0, 1));
+    sim.step(DT);
+    const a = sim.get("a");
+    expect(facing(sim, "a")).toBeCloseTo(Math.atan2(-(a?.position.y ?? 0), -200), 9);
+  });
+
+  it("goes back to the spec's facing on a reset, and rearming keeps it", () => {
+    const sim = pair(vec2(500, 500));
+    sim.setInputDirection("a", vec2(-1, 0));
+    sim.step(DT);
+    sim.rearm(
+      "a",
+      {
+        attributeRanks: new Map(),
+        equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+        maxHealth: 500,
+        maxEnergy: 30,
+      },
+      [],
+    );
+    expect(facing(sim, "a")).toBeCloseTo(Math.PI, 9);
+    sim.resetParticipant("a");
+    expect(facing(sim, "a")).toBe(START);
+  });
+});

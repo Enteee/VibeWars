@@ -100,6 +100,7 @@ export type {
   StepResult,
 } from "./match/simulation.js";
 export { MatchSimulation } from "./match/simulation.js";
+export { facingToward, spawnFacing } from "./match/facing.js";
 
 export type { CombatCause, CombatLogEntry, CombatTally } from "./match/combat-log.js";
 export { CombatMeter, tallyCombat } from "./match/combat-log.js";

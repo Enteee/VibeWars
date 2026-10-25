@@ -12,7 +12,7 @@ import {
 
 describe("protocol constants", () => {
   it("pins a protocol version", () => {
-    expect(PROTOCOL_VERSION).toBe(5);
+    expect(PROTOCOL_VERSION).toBe(6);
   });
 
   it("names the match room", () => {

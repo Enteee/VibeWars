@@ -17,6 +17,8 @@ export interface PlayerSnapshot {
   readonly name: string;
   readonly x: number;
   readonly y: number;
+  /** Where the player faces, radians, `atan2` convention, 0 = +x (#187). */
+  readonly facing: number;
   /** Who this player is targeting, or `undefined` for no target. */
   readonly targetSessionId: string | undefined;
   readonly health: number;

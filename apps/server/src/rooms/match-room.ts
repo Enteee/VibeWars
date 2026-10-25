@@ -16,6 +16,7 @@ import {
   // decides *whether* to honour a build; this one turns the gear in an
   // already-accepted build into numbers.
   resolveLoadout as resolveLoadout_,
+  spawnFacing,
   validatePlayerBuild,
   vec2,
   type CombatEvent,
@@ -68,6 +69,8 @@ export const PlayerState = schema(
     name: t.string(),
     x: t.number().default(0),
     y: t.number().default(0),
+    /** Where the player faces, radians, `atan2` convention; to 2 decimals (#187). */
+    facing: t.number().default(0),
     targetSessionId: t.string().default(""),
 
     health: t.number().default(0),
@@ -681,6 +684,8 @@ export class MatchRoom extends Room {
   private syncPlayer(player: InstanceType<typeof PlayerState>, sim: Participant): void {
     player.x = sim.position.x;
     player.y = sim.position.y;
+    // Rounded, so jitter under a centiradian never costs a patch.
+    player.facing = Math.round(sim.facing * 100) / 100;
     player.health = Math.round(sim.combatant.health);
     player.maxHealth = sim.combatant.maxHealth;
     player.energy = Math.round(sim.combatant.energy);
@@ -762,6 +767,11 @@ export class MatchRoom extends Room {
       attributeRanks: resolved.attributeRanks,
       equipment: resolved.equipment,
       spawn,
+      facing: spawnFacing(
+        spawn,
+        this.#map.spawnPoints.filter((point) => point.team !== team).map((point) => point.position),
+        this.#map.spawnPoints.map((point) => point.position),
+      ),
       maxHealth: resolved.maxHealth,
       maxEnergy: resolved.maxEnergy,
     });
