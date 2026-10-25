@@ -35,10 +35,8 @@ import { spawnSync } from "node:child_process";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { arrivals } from "./hub-board.mjs";
+import { COLUMNS, arrivals, boardLines } from "./hub-board.mjs";
 import { parseBoardIds } from "./hub-budget.mjs";
-
-const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
 
 /** How often `board wait` asks hubd. Free: hubd answers from its copy. */
 const WAIT_POLL_MS = 15_000;
@@ -97,39 +95,6 @@ function cardsOf(answer) {
 }
 
 /**
- * @param {Summary} card
- * @returns {string}
- */
-function line(card) {
-  return `  #${String(card.number ?? "-").padEnd(4)} ${card.title}`;
-}
-
-/**
- * Cards grouped by column in workflow order, so the output reads like the
- * board rather than like a database dump.
- *
- * @param {Summary[]} cards
- */
-function print(cards) {
-  for (const column of COLUMNS) {
-    const group = cards.filter((card) => card.status === column);
-    if (group.length > 0) {
-      console.log(`${column}:`);
-      group.forEach((card) => {
-        console.log(line(card));
-      });
-    }
-  }
-  const loose = cards.filter((card) => !COLUMNS.includes(card.status));
-  if (loose.length > 0) {
-    console.log("(no column):");
-    loose.forEach((card) => {
-      console.log(line(card));
-    });
-  }
-}
-
-/**
  * @param {string} column
  */
 function checkColumn(column) {
@@ -172,7 +137,7 @@ switch (command) {
       console.log(wanted === "" ? "(board is empty)" : `(nothing in ${wanted})`);
       break;
     }
-    print(shown);
+    console.log(boardLines(shown, wanted === "").join("\n"));
     break;
   }
 
@@ -237,7 +202,9 @@ switch (command) {
     if (answer.reset === true && rest.length > 0) {
       console.log("(that token is too old; this is the whole board)");
     }
-    print(cards);
+    boardLines(cards, false).forEach((text) => {
+      console.log(text);
+    });
     for (const { number } of removed) {
       console.log(`  #${String(number ?? "-").padEnd(4)} (off the board)`);
     }
@@ -273,10 +240,7 @@ switch (command) {
       const seen = arrivals(known, changes, column);
       known = seen.known;
       if (seen.arrived.length > 0) {
-        console.log(`${column}:`);
-        seen.arrived.forEach((card) => {
-          console.log(line(card));
-        });
+        console.log(boardLines(seen.arrived, false).join("\n"));
         break;
       }
     }

@@ -8,6 +8,13 @@ What you do:
 - **Play the game.** Check out the branch, run it, play it. Not the test suite —
   the actual game, in a browser. The question you are answering is not "does
   the code work" but "is this good, and is it still fun?"
+- **Read only what you need.** `git diff --stat` first, then `git diff -- <file>`
+  for the files that matter. After a new push, diff only the new commits
+  (`git diff <reviewed-sha>..<new-sha>`). `hub pr view <pr> --json <fields>`,
+  not the full view.
+- **Screenshot small.** Shoot the element under test (`locator.screenshot()`)
+  or clip to it, at the smallest viewport the check needs, before you `Read`
+  it: one image per thing being checked, not a gallery.
 - **Test from a player's point of view.** Is the new thing discoverable? Does
   it feel responsive? Does it make combat more interesting or just more
   complicated? Did it break something unrelated that nobody thought to test?
