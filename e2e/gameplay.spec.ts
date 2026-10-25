@@ -498,10 +498,9 @@ test("the target panel shows the target's professions before its name (#281)", a
 });
 
 test("the target frame shows the target's health and the skill it casts, filling, then clears (#484)", async ({
-  browser,
   page,
 }) => {
-  const opponent = await browser.newPage();
+  const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
   const health = page.locator(".hud-target-health");
   const cast = page.locator(".hud-target-cast");

@@ -745,7 +745,7 @@ test("(27) a left click while the right button is held still walks (#438)", asyn
 
 test("(28) an attack skill pressed out of reach walks in, then lands (#415)", async ({ page }) => {
   await page.setViewportSize(WIDE);
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "new character" }).click();
   // A new character is a warrior; Swift Chop needs an axe.
   await page.getByRole("button", { name: "gear", exact: true }).click();
