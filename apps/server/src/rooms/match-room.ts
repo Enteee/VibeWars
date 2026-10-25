@@ -384,6 +384,11 @@ export class MatchRoom extends Room {
   #sim = new MatchSimulation({ seed: 0 });
 
   #nextSpawnIndex = 0;
+  /**
+   * Set the moment `endMatch` starts, before its lock is awaited: the
+   * tick keeps running meanwhile and would end the match a second time.
+   */
+  #ending = false;
 
   /**
    * The recharges each player was last told, and the match time they were
@@ -697,7 +702,17 @@ export class MatchRoom extends Room {
    * reopen it. Players still here keep the result and can reconnect.
    */
   public async endMatch(): Promise<void> {
-    await this.lock();
+    if (this.#ending) {
+      return;
+    }
+    this.#ending = true;
+    try {
+      await this.lock();
+    } catch (error: unknown) {
+      // Still end it: a match that never says it is over is worse than
+      // one Quick Match might still offer.
+      console.error("[match] could not lock the finished room", error);
+    }
     this.over();
     const outcome = this.#sim.outcome;
     this.state.phase = "finished";

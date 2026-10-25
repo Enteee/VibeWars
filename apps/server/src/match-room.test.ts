@@ -186,9 +186,17 @@ describe("match room", () => {
     });
     try {
       await waitFor(() => first.state.players.has(first.sessionId), { label: "the first player" });
+      let ended = 0;
+      first.onMessage("match-ended", () => {
+        ended += 1;
+      });
       const room = matchMaker.getLocalRoomById(first.roomId);
       if (!(room instanceof MatchRoom)) throw new Error("no match room");
-      await room.endMatch();
+      // Twice at once, as a tick during the lock would: it ends once.
+      await Promise.all([room.endMatch(), room.endMatch()]);
+      await waitFor(() => first.state.phase === "finished", { label: "the match to end" });
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      expect(ended).toBe(1);
 
       const second = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
         protocolVersion: PROTOCOL_VERSION,
