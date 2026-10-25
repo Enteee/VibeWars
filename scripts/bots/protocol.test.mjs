@@ -473,6 +473,24 @@ describe("deliverPeer", () => {
       expect(delivered.mirror?.from).toBe("developer-1@2");
     });
 
+    it("hands a first seat's message to its own role to the other employees", () => {
+      const delivered = deliverPeer(
+        { to: "developer-1", text: "taking #12 (developer-1)" },
+        { ...staffed, from: "developer-1" },
+      );
+      expect(delivered.deliveries.map((d) => d.employee)).toEqual([
+        "developer-1@2",
+        "developer-1@3",
+      ]);
+      expect(delivered.mirror?.from).toBe("developer-1");
+    });
+
+    it("tells a lone first seat that nobody else in its role is hired", () => {
+      const delivered = deliverPeer({ to: "manager", text: "x" }, staffed);
+      expect(delivered.deliveries).toEqual([]);
+      expect(delivered.notice?.text).toMatch(/NOT delivered: nobody else in manager is hired/);
+    });
+
     it("broadcasts to every employee but the sender", () => {
       const delivered = deliverPeer(
         { to: "all", text: "standup" },

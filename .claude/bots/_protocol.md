@@ -18,8 +18,10 @@ tg inbox                     messages since you last looked
 tg wait --timeout 540        block until someone says something
                              (set the Bash tool's timeout to 600000, or Bash
                              backgrounds it at 120 s and the turn is lost)
-tg send <role> <text>        message a role's employees (arrives at once);
-                             tg send <role>@<n> <text> messages one
+tg send <role> <text>        message a role's employees but you (arrives at
+                             once); tg send <role>@<n> <text> messages one.
+                             <role> always means the whole role, never only
+                             its first employee
 tg send operator <text>      manager only: answer the operator, in Manager
 tg broadcast <text>          message everyone, in General
 tg ask <question> [--option <text>]...

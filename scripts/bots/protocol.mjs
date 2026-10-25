@@ -427,12 +427,14 @@ export function deliverPeer(raw, context) {
     };
   }
 
-  // Only a message addressed to the sender itself wakes the sender.
+  // A role's first seat has the role's name, so a message to a role always
+  // goes to its other employees; only an `@<n>` employee writing to its own
+  // id gets the message back.
   /** @type {string[]} */
   let recipients = [to];
   if (to === "all") {
     recipients = [...context.employees.keys()].filter((id) => id !== context.from);
-  } else if (to !== context.from) {
+  } else if (context.roles.includes(to) || to !== context.from) {
     recipients = inboxesOf(to, context.employees).filter((id) => id !== context.from);
   }
   if (to !== "all" && recipients.length === 0) {
