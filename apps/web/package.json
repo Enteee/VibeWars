@@ -24,6 +24,7 @@
     "@vibewars/game-protocol": "workspace:*",
     "@vibewars/game-session": "workspace:*",
     "phaser": "4.2.1",
-    "tonal": "6.5.1"
+    "tonal": "6.5.1",
+    "trystero": "0.26.0"
   }
 }
