@@ -361,3 +361,60 @@ function apiLimitError(event) {
     (typeof fields.message === "string" && /\b429\b|rate_limit_error/.test(fields.message))
   );
 }
+
+/** A command that blocks on the bus or the board: `tg wait`, `board wait`. */
+const WAIT_COMMAND = /(?:^|[\s;&|(])(?:tg|board)\s+wait(?:\s|$)/;
+
+/**
+ * The Bash calls in this `assistant` event that run a `tg wait` or
+ * `board wait` (#325).
+ *
+ * @param {Record<string, unknown> | null} event
+ * @returns {{ id: string, command: string, background: boolean }[]} `background`
+ *   is set when the call asked for `run_in_background`
+ */
+export function waitCallsOf(event) {
+  if (event?.type !== "assistant") {
+    return [];
+  }
+  return contentOf(event).flatMap((part) => {
+    const block = record(part);
+    const input = record(block?.input);
+    if (
+      block?.type !== "tool_use" ||
+      block.name !== "Bash" ||
+      typeof block.id !== "string" ||
+      typeof input?.command !== "string" ||
+      !WAIT_COMMAND.test(input.command)
+    ) {
+      return [];
+    }
+    return [{ id: block.id, command: input.command, background: input.run_in_background === true }];
+  });
+}
+
+/**
+ * The ids of the tool calls this `user` event says were moved to the
+ * background (#325). Claude Code answers an explicit `run_in_background` with
+ * "Command running in background with ID: …", and a call that outlived its
+ * timeout with "Command did not complete within its 590s timeout and was moved
+ * to the background (ID: …)".
+ *
+ * @param {Record<string, unknown> | null} event
+ * @returns {string[]}
+ */
+export function backgroundedIdsOf(event) {
+  if (event?.type !== "user") {
+    return [];
+  }
+  return contentOf(event).flatMap((part) => {
+    const block = record(part);
+    return block?.type === "tool_result" &&
+      typeof block.tool_use_id === "string" &&
+      /^Command running in background|moved to the background \(ID: /.test(
+        resultText(block.content),
+      )
+      ? [block.tool_use_id]
+      : [];
+  });
+}

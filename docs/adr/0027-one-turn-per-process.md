@@ -97,9 +97,11 @@ fresh conversation. The supervisor no longer samples panes or nudges anyone.
   `tg wait` stays one process, and an agent that ends idle turns anyway
   backs off to one resume every 5 min unless someone writes to it. A board
   change does not wake it; the 5 min cap bounds how late it sees one.
-- **Waits stay under Bash's 600 s cap.** A longer `tg wait` is moved to the
-  background, the turn ends, and the messages it already marked read are
-  lost. Agents are told `--timeout 540`.
+- **Waits stay under Bash's timeout.** A `tg wait` that outlives it is moved
+  to the background, the turn ends, and the messages it already marked read
+  are lost. Bash's default is 120 s, its maximum 600 s: agents run
+  `tg wait --timeout 540` with the Bash tool's `timeout` set to 600000. `tg`
+  waits 110 s without `--timeout` and caps it at 540.
 - `claude-bot <role>` run by hand prints raw stream-json. Pipe it through
   `agent-turn.mjs`, or use `claude-llc-agent`.
 

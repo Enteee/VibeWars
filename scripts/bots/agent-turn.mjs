@@ -37,12 +37,14 @@ import readline from "node:readline";
 
 import { withJailDir } from "./jail-fs.mjs";
 import {
+  backgroundedIdsOf,
   contextOf,
   formatLine,
   parseEvent,
   runFailed,
   sessionIdOf,
   usageLimitOf,
+  waitCallsOf,
 } from "./stream-format.mjs";
 
 const [state, separator, command, ...args] = process.argv.slice(2);
@@ -51,6 +53,7 @@ if (state === undefined || separator !== "--" || command === undefined) {
   process.exit(2);
 }
 const SESSION = path.join(state, "session-id");
+const ROLE = process.env.VIBEWARS_BOT_ROLE ?? path.basename(state);
 
 /** How many raw lines of a failed run `last-failure.jsonl` keeps. */
 const FAILURE_LINES = 20;
@@ -80,6 +83,37 @@ function saveContext(tokens) {
   } catch (error) {
     console.error(
       `agent-turn: could not write ${CONTEXT_FILE}: ${error instanceof Error ? error.message : "?"}`,
+    );
+  }
+}
+
+/**
+ * What the role's read cursor is now (#325), or `null` if it has none.
+ *
+ * @returns {string | null}
+ */
+function readCursor() {
+  try {
+    return withJailDir(path.dirname(CONTEXT_FILE), "", {}, (dir) => dir.readSmall("cursor", 64));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Put the cursor back (#325). The jail is gone, so nothing races this.
+ *
+ * @param {string} cursor
+ * @returns {void}
+ */
+function restoreCursor(cursor) {
+  try {
+    withJailDir(path.dirname(CONTEXT_FILE), "", {}, (dir) => {
+      dir.writeAtomic("cursor", cursor);
+    });
+  } catch (error) {
+    console.error(
+      `agent-turn: could not rewind the inbox: ${error instanceof Error ? error.message : "?"}`,
     );
   }
 }
@@ -157,6 +191,35 @@ const child = spawn(command, [...(resume === null ? [] : ["--resume", resume]), 
 const seen = { init: false, result: false, limit: null, limitLine: "", context: 0 };
 /** @type {string[]} */
 const recent = [];
+/** The `tg wait` and `board wait` calls of this turn, by tool call id (#325). */
+/** @type {Map<string, string>} */
+const waits = new Map();
+/** @type {Set<string>} */
+const counted = new Set();
+/** The inbox cursor when the first wait went to the background (#325). */
+/** @type {{ to: string | null }} */
+const rewind = { to: null };
+
+/**
+ * @param {string} command
+ * @returns {void}
+ */
+function backgrounded(command) {
+  console.log("⚠ tg wait went to the background; inbox rewound");
+  try {
+    fs.appendFileSync(
+      path.join(state, "backgrounded-waits.jsonl"),
+      `${JSON.stringify({ ts: Date.now(), role: ROLE, command })}\n`,
+    );
+  } catch (error) {
+    console.error(
+      `agent-turn: could not log the wait: ${error instanceof Error ? error.message : "?"}`,
+    );
+  }
+  if (rewind.to === null && CONTEXT_FILE !== "") {
+    rewind.to = readCursor();
+  }
+}
 const lines = readline.createInterface({ input: child.stdout, crlfDelay: Infinity });
 lines.on("line", (line) => {
   recent.push(line);
@@ -177,6 +240,20 @@ lines.on("line", (line) => {
   }
   if (event?.type === "result") {
     seen.result = true;
+  }
+  for (const call of waitCallsOf(event)) {
+    waits.set(call.id, call.command);
+    if (call.background) {
+      counted.add(call.id);
+      backgrounded(call.command);
+    }
+  }
+  for (const id of backgroundedIdsOf(event)) {
+    const command = waits.get(id);
+    // An explicit run_in_background was counted when it was called.
+    if (command !== undefined && !counted.has(id)) {
+      backgrounded(command);
+    }
   }
   const context = contextOf(event);
   if (context !== null) {
@@ -199,6 +276,12 @@ const exited = new Promise((resolve) => {
   });
 });
 const code = await exited;
+
+// Messages a backgrounded wait marked read were never seen (#325); a
+// duplicate in the next inbox is the price of not losing one.
+if (rewind.to !== null) {
+  restoreCursor(rewind.to);
+}
 
 // A limit outranks the exit code and the result: the run that hit it may
 // well have ended "normally", and it must not count as a failure either.

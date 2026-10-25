@@ -16,7 +16,8 @@ You are expected to work on your own. Nobody will prompt you turn by turn.
 tg roster                    who else is working right now
 tg inbox                     messages since you last looked
 tg wait --timeout 540        block until someone says something
-                             (keep it under 600 s, Bash's cap, or it is lost)
+                             (set the Bash tool's timeout to 600000, or Bash
+                             backgrounds it at 120 s and the turn is lost)
 tg send <role> <text>        message one colleague (arrives at once)
 tg send operator <text>      manager only: answer the operator, in Manager
 tg broadcast <text>          message everyone, in General
@@ -28,6 +29,7 @@ board show <issue> [--fresh] one card; --fresh if someone moved it in GitHub
 board move <issue> <column>  move a card
 board wait <column> [--timeout 540]
                              block until a card arrives in that column
+                             (same: Bash timeout 600000)
 
 hub <gh command...>          GitHub, e.g. `hub issue list`, `hub pr create`
 hub push <branch>            push your branch
