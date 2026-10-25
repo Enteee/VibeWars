@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createMemoryNetwork } from "./memory-transport.js";
+import { transportContract } from "./transport-contract.js";
 import type { Transport } from "./transport.js";
 
 /** Let every delivery queued so far land: microtasks run in order. */
@@ -25,6 +26,15 @@ function events(peer: Transport): string[] {
   return seen;
 }
 
+transportContract(
+  "memory",
+  () => {
+    const network = createMemoryNetwork();
+    return { join: () => network.join(), settle };
+  },
+  { describe, it, expect },
+);
+
 describe("the memory transport (#82)", () => {
   it("delivers after send returns, not during it", async () => {
     const network = createMemoryNetwork();
@@ -37,66 +47,6 @@ describe("the memory transport (#82)", () => {
     expect(got).toEqual([[a.selfId, 1]]);
   });
 
-  it("keeps each sender's order to each receiver over 1 000 interleaved sends", async () => {
-    const network = createMemoryNetwork();
-    const [a, b, c] = [network.join(), network.join(), network.join()];
-    const got = inbox(c);
-    for (let i = 0; i < 1000; i++) {
-      (i % 3 === 0 ? b : a).send("intent", i);
-    }
-    await settle();
-    const from = (peer: Transport) =>
-      got.filter(([sender]) => sender === peer.selfId).map(([, data]) => data);
-    expect(from(a)).toEqual([...Array(1000).keys()].filter((i) => i % 3 !== 0));
-    expect(from(b)).toEqual([...Array(1000).keys()].filter((i) => i % 3 === 0));
-  });
-
-  it("broadcasts to every other peer, never back to the sender", async () => {
-    const network = createMemoryNetwork();
-    const [a, b, c] = [network.join(), network.join(), network.join()];
-    const [atA, atB, atC] = [inbox(a), inbox(b), inbox(c)];
-    a.send("intent", "hi");
-    await settle();
-    expect(atA).toEqual([]);
-    expect(atB).toEqual([[a.selfId, "hi"]]);
-    expect(atC).toEqual([[a.selfId, "hi"]]);
-  });
-
-  it("sends to one peer alone with `to`", async () => {
-    const network = createMemoryNetwork();
-    const [a, b, c] = [network.join(), network.join(), network.join()];
-    const [atB, atC] = [inbox(b), inbox(c)];
-    a.send("intent", "psst", c.selfId);
-    await settle();
-    expect(atB).toEqual([]);
-    expect(atC).toEqual([[a.selfId, "psst"]]);
-  });
-
-  it("delivers only on the channel sent to", async () => {
-    const network = createMemoryNetwork();
-    const [a, b] = [network.join(), network.join()];
-    const got = inbox(b);
-    a.send("snapshot", {});
-    await settle();
-    expect(got).toEqual([]);
-  });
-
-  it("tells every peer of each join and leave, existing peers included", async () => {
-    const network = createMemoryNetwork();
-    const a = network.join("a");
-    const atA = events(a);
-    const b = network.join("b");
-    const atB = events(b);
-    await settle();
-    const c = network.join("c");
-    const atC = events(c);
-    await settle();
-    await b.leave();
-    expect(atA).toEqual(["+b", "+c", "-b"]);
-    expect(atB).toEqual(["+a", "+c"]);
-    expect(atC).toEqual(["+a", "+b", "-b"]);
-  });
-
   it("shows every remaining peer the leave soon after leave() resolves", async () => {
     const network = createMemoryNetwork();
     const [a, b] = [network.join(), network.join()];
@@ -107,18 +57,14 @@ describe("the memory transport (#82)", () => {
     expect(atA).toEqual([`-${b.selfId}`]);
   });
 
-  it("delivers nothing to a peer after leave(), and nothing it sends after", async () => {
+  it("drops what is in flight to a peer that leaves", async () => {
     const network = createMemoryNetwork();
     const [a, b] = [network.join(), network.join()];
-    const [atA, atB] = [inbox(a), inbox(b)];
+    const atB = inbox(b);
     a.send("intent", "in flight");
-    const left = b.leave();
-    a.send("intent", "too late");
-    b.send("intent", "from beyond");
-    await left;
+    await b.leave();
     await settle();
     expect(atB).toEqual([]);
-    expect(atA).toEqual([]);
   });
 
   it("lands what a peer sent before leave() ahead of its leave", async () => {
@@ -155,37 +101,9 @@ describe("the memory transport (#82)", () => {
     expect(seen).toEqual(["-b", "+b"]);
   });
 
-  it("copies a message: mutating it after send changes nothing received", async () => {
-    const network = createMemoryNetwork();
-    const [a, b, c] = [network.join(), network.join(), network.join()];
-    const [atB, atC] = [inbox(b), inbox(c)];
-    const sent = { players: [{ health: 100 }] };
-    a.send("intent", sent);
-    const first = sent.players[0];
-    if (first !== undefined) {
-      first.health = 0;
-    }
-    await settle();
-    expect(atB[0]?.[1]).toEqual({ players: [{ health: 100 }] });
-    expect(atB[0]?.[1]).not.toBe(atC[0]?.[1]);
-  });
-
   it("refuses a second peer with the same id", () => {
     const network = createMemoryNetwork();
     network.join("host");
     expect(() => network.join("host")).toThrow(/already joined/);
-  });
-
-  it("stops calling a handler once it is removed", async () => {
-    const network = createMemoryNetwork();
-    const [a, b] = [network.join(), network.join()];
-    const got: unknown[] = [];
-    const off = b.on("intent", (data) => got.push(data));
-    a.send("intent", 1);
-    await settle();
-    off();
-    a.send("intent", 2);
-    await settle();
-    expect(got).toEqual([1]);
   });
 });
