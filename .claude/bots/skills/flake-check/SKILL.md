@@ -25,20 +25,16 @@ new so QA knows what to repeat-run.
 Run only the new or changed tests, at least 10 times. Every run must pass.
 
 ```sh
-# unit / fuzz (vitest)
-pnpm vitest run <path/to/file.test.ts> --repeats 9      # 1 run + 9 repeats
+# unit / fuzz (vitest): ten separate processes
+for i in $(seq 10); do pnpm vitest run <path/to/file.test.ts> || { echo "failed on run $i"; exit 1; }; done
 
 # e2e (playwright)
 pnpm playwright test <path/to/file.spec.ts> --repeat-each 10
 ```
 
-`--repeats` re-runs the test body but not `beforeAll`/`afterAll`. If the
-test leans on file-level setup (a server, a room, a port), run the whole
-file ten times instead:
-
-```sh
-for i in $(seq 10); do pnpm vitest run <path/to/file.test.ts> || { echo "failed on run $i"; exit 1; }; done
-```
+Do not use `vitest --repeats`: it re-runs inside one warm process and
+skips `beforeAll`/`afterAll`. It found the #197 fuzz flake 0 times in
+45 runs; ten separate processes found it 4 times in 15.
 
 Add `-t '<name>'` (vitest) or `-g '<name>'` (playwright) to narrow it to
 the tests the PR touches.
