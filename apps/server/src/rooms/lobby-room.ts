@@ -13,7 +13,7 @@ import {
 } from "@vibewars/game-protocol";
 
 import { DEFAULT_MAP_ID, openLobbyMatch, type LobbySeat } from "./match-room.js";
-import { assertProtocolVersion, field } from "./options.js";
+import { MAX_MESSAGES_PER_SECOND, assertProtocolVersion, field } from "./options.js";
 
 /**
  * The pre-match lobby (brief §19, §25).
@@ -134,6 +134,7 @@ export class LobbyRoom extends Room {
 
   public override onCreate(options: unknown): void {
     this.autoDispose = true;
+    this.maxMessagesPerSecond = MAX_MESSAGES_PER_SECOND;
     this.maxClients = MAX_LOBBY_PLAYERS;
 
     this.#rng = createRng(seedFromString(this.roomId));

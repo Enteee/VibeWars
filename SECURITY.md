@@ -93,9 +93,7 @@ saying so in the same PR. Keep the numbers: issues cite them.
 
 1. **Fixed by #156:** a lobby's match was open to strangers (#41).
 2. **Fixed by #156:** there was no cap on players per match (#42).
-3. **No per-client message rate limit** (#43). Colyseus's `maxMessagesPerSecond`
-   defaults to `Infinity`, and neither room sets it. Every `intent` runs its
-   handler right away, outside the tick.
+3. **Fixed by #43:** there was no per-client message rate limit.
 4. **Any lobby member can send `return-to-lobby`** (#44). It has no
    `isHost` check. Its only phase guard is a no-op while already `waiting`,
    so a non-host can reset a lobby that is in a match back to `waiting` and

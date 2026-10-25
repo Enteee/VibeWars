@@ -29,3 +29,13 @@ export function assertProtocolVersion(options: unknown): void {
     throw new Error(PROTOCOL_MISMATCH_MESSAGE);
   }
 }
+
+/**
+ * How many messages one client may send a room per second before
+ * Colyseus drops it (#43). Every handler runs as the message arrives,
+ * outside the tick, so without a cap one client could spend the whole
+ * room's tick budget. A real client sends only when its input changes,
+ * a few a second at most; the headroom is for a burst that queued up
+ * behind a network stall and arrives at once.
+ */
+export const MAX_MESSAGES_PER_SECOND = 60;

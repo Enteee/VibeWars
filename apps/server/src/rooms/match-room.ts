@@ -43,7 +43,7 @@ import {
 import type { StepContext } from "colyseus";
 
 import { sanitizeName } from "./lobby-room.js";
-import { assertProtocolVersion, field } from "./options.js";
+import { MAX_MESSAGES_PER_SECOND, assertProtocolVersion, field } from "./options.js";
 import { rechargePredicted, rechargeSlots } from "./recharge.js";
 
 /**
@@ -409,6 +409,7 @@ export class MatchRoom extends Room {
 
   public override async onCreate(options?: unknown): Promise<void> {
     this.autoDispose = true;
+    this.maxMessagesPerSecond = MAX_MESSAGES_PER_SECOND;
 
     const seating = field(options, "seating");
     if (seating === undefined) {
@@ -801,6 +802,14 @@ export class MatchRoom extends Room {
     if (code === CloseCode.CONSENTED) {
       this.removePlayer(client.sessionId);
       console.info(`[match] leave sessionId=${client.sessionId} (left deliberately)`);
+      return;
+    }
+    // WITH_ERROR (4002) is Colyseus throwing a client out: too many
+    // messages (#43) or one the room never registered. Holding its slot
+    // would let it walk straight back in and start again.
+    if (code === CloseCode.WITH_ERROR) {
+      this.removePlayer(client.sessionId);
+      console.info(`[match] leave sessionId=${client.sessionId} (dropped by the server)`);
       return;
     }
 

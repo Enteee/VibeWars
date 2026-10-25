@@ -183,12 +183,15 @@ describe("server survives hostile clients", () => {
     });
     await waitFor(() => room.state.players.has(room.sessionId), { label: "self" });
 
+    // Paced, so this client stays under the message cap (#43): the
+    // point is what the handlers do with each value, not the flood.
     for (const value of hostileValues()) {
       room.send("choose-team", value);
       room.send("ready", value);
       room.send("select-map", value);
       room.send("start-match", value);
       room.send("return-to-lobby", value);
+      await new Promise((resolve) => setTimeout(resolve, 125));
     }
     await new Promise((resolve) => setTimeout(resolve, 400));
 
@@ -250,22 +253,61 @@ describe("server survives hostile clients", () => {
     await fresh.leave();
   });
 
-  it("survives a client that floods messages", async () => {
-    const room = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+  it("drops a match client that floods messages, and holds no slot for it", async () => {
+    const watcher = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
       protocolVersion: PROTOCOL_VERSION,
     });
-    await waitFor(() => (room.state.players.get(room.sessionId)?.maxHealth ?? 0) > 0, {
-      label: "stats",
+    const flooder = await new Client(endpoint).joinById(watcher.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    await waitFor(() => watcher.state.players.has(flooder.sessionId), { label: "both" });
+    let closeCode: number | undefined;
+    flooder.onLeave((code) => {
+      closeCode = code;
     });
 
     for (let i = 0; i < 1000; i += 1) {
-      room.send("intent", { kind: "move", dirX: Math.cos(i), dirY: Math.sin(i) });
-      room.send("intent", { kind: "use-skill", slot: i % 12 });
+      flooder.send("intent", { kind: "move", dirX: Math.cos(i), dirY: Math.sin(i) });
+      flooder.send("intent", { kind: "use-skill", slot: i % 12 });
     }
-    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    expect(room.state.players.get(room.sessionId)).toBeDefined();
+    // Thrown out (WITH_ERROR), and gone at once rather than held for a
+    // reconnect it could use to start flooding again (#43).
+    await waitFor(() => closeCode !== undefined, { label: "the flooder to be dropped" });
+    expect(closeCode).toBe(4002);
+    await waitFor(() => !watcher.state.players.has(flooder.sessionId), {
+      label: "the flooder's player to be removed",
+    });
+
+    // Everyone else plays on.
+    const elapsed = watcher.state.elapsedSeconds;
+    await waitFor(() => watcher.state.elapsedSeconds > elapsed, { label: "the match ticking" });
     expect(await serverIsHealthy()).toBe(true);
-    await room.leave();
+    await watcher.leave();
+  });
+
+  it("drops a lobby client that floods messages", async () => {
+    const host = await new Client(endpoint).create(ROOM_LOBBY, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    const flooder = await new Client(endpoint).joinById(host.roomId, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    await waitFor(() => host.state.players.has(flooder.sessionId), { label: "both" });
+    let closeCode: number | undefined;
+    flooder.onLeave((code) => {
+      closeCode = code;
+    });
+
+    for (let i = 0; i < 1000; i += 1) {
+      flooder.send("ready", { ready: i % 2 === 0 });
+    }
+
+    await waitFor(() => closeCode !== undefined, { label: "the flooder to be dropped" });
+    expect(closeCode).toBe(4002);
+    await waitFor(() => !host.state.players.has(flooder.sessionId), {
+      label: "the flooder to leave the lobby",
+    });
+    await host.leave();
   });
 });
