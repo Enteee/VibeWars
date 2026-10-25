@@ -20,6 +20,7 @@
       { "name": "facing", "type": "number" },
       { "name": "targetSessionId", "type": "string" },
       { "name": "attackTargetSessionId", "type": "string" },
+      { "name": "walking", "type": "boolean" },
       { "name": "health", "type": "number" },
       { "name": "maxHealth", "type": "number" },
       { "name": "energy", "type": "number" },

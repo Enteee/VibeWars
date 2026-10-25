@@ -509,3 +509,32 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
   // With nothing running, Esc releases the arena as before.
   await releaseControl(page);
 });
+
+test("(22) Esc stops a walk to a clicked point, and the next Esc releases the arena (#342)", async ({
+  page,
+}) => {
+  const canvas = await openTraining(page);
+  await takeControl(page);
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+  // Empty ground in the far corner, a long walk from the spawn.
+  const scale = box.width / TRAINING_HALL_WIDTH;
+  await page.mouse.click(box.x + 520 * scale, box.y + 30 * scale);
+  await page.waitForTimeout(300);
+
+  // There was a walk to stop, so Esc did not release the arena.
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".training")).toHaveClass(/is-armed/);
+
+  await releaseControl(page);
+  // Stopped where it stood: the arena holds still, once the walk marker
+  // has faded (400 ms).
+  await page.waitForTimeout(600);
+  const stopped = await arenaShot(page, canvas);
+  await page.waitForTimeout(700);
+  expect((await arenaShot(page, canvas)).equals(stopped), "the hero should have stopped").toBe(
+    true,
+  );
+});

@@ -73,3 +73,17 @@ export function isCasting(snapshot: MatchSnapshot): boolean {
   const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
   return self?.castingSkillId !== undefined && self.castTotal > 0;
 }
+
+/** Whether this player is walking to a clicked point, so Esc has a walk to stop (#342). */
+export function isWalking(snapshot: MatchSnapshot): boolean {
+  const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
+  return self?.walking === true;
+}
+
+/**
+ * Whether Esc, Cancel Action, has anything to cancel (#300, #342): a
+ * cast, an attack or a walk to a clicked point.
+ */
+export function hasActionToCancel(snapshot: MatchSnapshot): boolean {
+  return isCasting(snapshot) || isAttacking(snapshot) || isWalking(snapshot);
+}

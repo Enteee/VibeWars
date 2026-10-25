@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import type { MatchSnapshot, PlayerSnapshot } from "../net/match-connection.js";
-import { attackClickIntents, attackKeyIntents, isAttacking, isCasting } from "./attack-key.js";
+import {
+  attackClickIntents,
+  attackKeyIntents,
+  hasActionToCancel,
+  isAttacking,
+  isCasting,
+  isWalking,
+} from "./attack-key.js";
 
 function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
   return {
@@ -12,6 +19,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     facing: 0,
     targetSessionId: undefined,
     attackTargetSessionId: undefined,
+    walking: false,
     health: 500,
     maxHealth: 500,
     energy: 20,
@@ -104,5 +112,22 @@ describe("isCasting", () => {
     expect(isCasting(snapshot([player("me", casting)]))).toBe(true);
     expect(isCasting(snapshot([player("me"), player("other", casting)]))).toBe(false);
     expect(isCasting(snapshot([player("me", { castingSkillId: "barrage" })]))).toBe(false);
+  });
+});
+
+describe("isWalking", () => {
+  it("is whether self is walking to a clicked point (#342)", () => {
+    expect(isWalking(snapshot([player("me", { walking: true })]))).toBe(true);
+    expect(isWalking(snapshot([player("me"), player("other", { walking: true })]))).toBe(false);
+  });
+});
+
+describe("hasActionToCancel", () => {
+  it("is a cast, an attack or a walk, so Esc stops any of them (#300, #342)", () => {
+    expect(hasActionToCancel(snapshot([player("me")]))).toBe(false);
+    expect(hasActionToCancel(snapshot([player("me", { walking: true })]))).toBe(true);
+    expect(hasActionToCancel(snapshot([player("me", { attackTargetSessionId: "x" })]))).toBe(true);
+    const casting = { castingSkillId: "fireball", castRemaining: 1, castTotal: 2 };
+    expect(hasActionToCancel(snapshot([player("me", casting)]))).toBe(true);
   });
 });

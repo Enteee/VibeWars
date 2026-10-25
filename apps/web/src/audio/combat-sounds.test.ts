@@ -131,6 +131,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     facing: 0,
     targetSessionId: undefined,
     attackTargetSessionId: undefined,
+    walking: false,
     health: 100,
     maxHealth: 100,
     energy: 20,
