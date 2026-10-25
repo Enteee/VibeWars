@@ -8,11 +8,17 @@
  * halfway. Prints one row per second of what the music host counted
  * (apps/web/src/music/host/stats.ts), and the totals, for each load:
  *
- *   chromium  Pixel 7 landscape: no throttle, CPU 4x and 6x (CDP), and
- *             the menu at 4x (music alone, no arena)
+ *   chromium  Pixel 7 landscape: no throttle, CPU 4x and 6x (CDP) in the
+ *             Training Ground, the same three in `match`, and the menu at 4x
+ *             (music alone, no arena)
  *   firefox   no throttle, `?stress=40` (the main thread busy-waits 40 ms
  *             every 100 ms; Firefox has no CPU throttling), and the menu
  *             with it
+ *
+ * `match` is the heaviest load the client can make in one page: the Training
+ * Ground's Armor ladder (six dummies), sound effects on, the HUD showing, and
+ * a player who never stops walking, targeting, attacking and casting. There is
+ * no 4v4 with bots to play locally; a networked match needs a server.
  *
  * Chromium runs with sandboxed frames in the page's process, as on a
  * phone, so the music shares the game's main thread.
@@ -21,6 +27,7 @@
  *   --seconds <n>                play this long (default 60)
  *   --url <url>                  measure a client already served there, built
  *                                with VITE_VIBEWARS_STRESS=on for `?stress=`
+ *   --only <text>               only the loads whose name contains this
  *   --rows                       print every second, not only the totals
  *
  * Browsers: VIBEWARS_CHROMIUM (as for e2e), VIBEWARS_FIREFOX (a Playwright
@@ -44,6 +51,7 @@ const { values: options } = parseArgs({
     seconds: { type: "string", default: "60" },
     url: { type: "string" },
     rows: { type: "boolean", default: false },
+    only: { type: "string" },
   },
 });
 const SECONDS = Number(options.seconds);
@@ -60,7 +68,7 @@ const CROSSFADE_TO = "last-stand";
  *
  * @typedef {{
  *   name: string, browser: "chromium" | "firefox", cpu: number, stress: number,
- *   screen: "training" | "menu",
+ *   screen: "training" | "match" | "menu",
  * }} Load
  */
 
@@ -69,6 +77,9 @@ const LOADS = [
   { name: "no throttle", browser: "chromium", cpu: 1, stress: 0, screen: "training" },
   { name: "CPU 4x", browser: "chromium", cpu: 4, stress: 0, screen: "training" },
   { name: "CPU 6x", browser: "chromium", cpu: 6, stress: 0, screen: "training" },
+  { name: "match, no throttle", browser: "chromium", cpu: 1, stress: 0, screen: "match" },
+  { name: "match, CPU 4x", browser: "chromium", cpu: 4, stress: 0, screen: "match" },
+  { name: "match, CPU 6x", browser: "chromium", cpu: 6, stress: 0, screen: "match" },
   { name: "menu, CPU 4x", browser: "chromium", cpu: 4, stress: 0, screen: "menu" },
   { name: "no stress", browser: "firefox", cpu: 1, stress: 0, screen: "training" },
   { name: "stress=40", browser: "firefox", cpu: 1, stress: 40, screen: "training" },
@@ -173,7 +184,7 @@ async function measure(url, load) {
     const query = `?musicstats${load.stress > 0 ? `&stress=${String(load.stress)}` : ""}`;
     await page.goto(`${url}${query}`);
     await page.locator(".roster").waitFor();
-    if (load.screen === "training") {
+    if (load.screen !== "menu") {
       await page.getByRole("button", { name: "new character" }).click();
       await page.locator(".editor-row select").first().selectOption("elementalist");
       // The arena needs WebGL, which a headless Firefox may not have. The
@@ -185,6 +196,9 @@ async function measure(url, load) {
       }
     } else {
       await page.locator("body").click({ position: { x: 5, y: 5 } });
+    }
+    if (load.screen === "match") {
+      await page.locator("select.training-scenario").selectOption("armor-ladder");
     }
     await page.waitForFunction(() => "__musicStats" in window, undefined, { timeout: 30_000 });
 
@@ -200,6 +214,7 @@ async function measure(url, load) {
       return /** @type {{ musicStatsSeen: unknown[] }} */ (/** @type {unknown} */ (window))
         .musicStatsSeen.length;
     });
+    const playing = load.screen === "match" ? play(page) : undefined;
     await sleep((SECONDS * 1000) / 2);
     await page.evaluate((trackId) => {
       const control = /** @type {{ __music: { crossfadeTo: (id: string) => void } }} */ (
@@ -208,6 +223,7 @@ async function measure(url, load) {
       control.crossfadeTo(trackId);
     }, CROSSFADE_TO);
     await sleep((SECONDS * 1000) / 2);
+    await playing?.stop();
     const seen = await page.evaluate(
       () =>
         /** @type {{ musicStatsSeen: unknown[] }} */ (/** @type {unknown} */ (window))
@@ -217,6 +233,43 @@ async function measure(url, load) {
   } finally {
     await browser.close();
   }
+}
+
+/**
+ * A player at the keyboard: arm the arena with a click, then walk about,
+ * target, attack and cast without a pause until stopped.
+ *
+ * @param {import("@playwright/test").Page} page
+ */
+function play(page) {
+  const state = { going: true };
+  const done = (async () => {
+    const box = await page.locator(".training canvas").boundingBox();
+    if (box === null) {
+      return;
+    }
+    // Clicks go to the canvas's coordinates: the stage's hint paints over its corner.
+    const click = (/** @type {number} */ fx, /** @type {number} */ fy) =>
+      page.mouse.click(box.x + box.width * fx, box.y + box.height * fy);
+    await click(0.5, 0.5);
+    const walks = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"];
+    for (let round = 0; state.going; round += 1) {
+      const walk = walks[round % walks.length] ?? "ArrowRight";
+      await page.keyboard.down(walk);
+      // The default keymap: Tab targets, Space attacks, Q-F cast.
+      for (const key of ["Tab", "Space", "KeyQ", "KeyW", "KeyE", "KeyR"]) {
+        await page.keyboard.press(key);
+        await sleep(40);
+      }
+      await page.keyboard.up(walk);
+    }
+  })();
+  return {
+    stop: async () => {
+      state.going = false;
+      await done;
+    },
+  };
 }
 
 /** @param {number} value */
@@ -280,7 +333,9 @@ const served =
       };
 try {
   for (const load of LOADS.filter(
-    (l) => options.browser === undefined || l.browser === options.browser,
+    (l) =>
+      (options.browser === undefined || l.browser === options.browser) &&
+      (options.only === undefined || l.name.includes(options.only)),
   )) {
     report(load, await measure(served.url, load));
   }

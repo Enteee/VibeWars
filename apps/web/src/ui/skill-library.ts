@@ -1,4 +1,4 @@
-import { describeSkill, type Skill, type SkillDescription } from "@vibewars/game-core";
+import { PROFESSIONS, describeSkill, type Skill, type SkillDescription } from "@vibewars/game-core";
 
 /**
  * The skill library: the browsable, filterable list a player drags from
@@ -10,7 +10,8 @@ import { describeSkill, type Skill, type SkillDescription } from "@vibewars/game
  */
 
 export interface SkillGroup {
-  readonly attributeId: string;
+  /** `undefined` for a profession's "No Attribute" skills (#445). */
+  readonly attributeId: string | undefined;
   readonly attributeName: string;
   readonly skills: readonly Skill[];
 }
@@ -36,30 +37,40 @@ export function filterSkillsByName(skills: readonly Skill[], query: string): rea
  * building: the attribute is what you spend points on, so seeing which
  * skills a point in Fire Magic would improve is the actual question.
  *
+ * A profession's "No Attribute" skills are a group of their own.
+ *
  * Groups come out in the order the skills do, so a stable catalog gives
  * a stable library and the list does not reshuffle as you type.
  */
 export function groupSkillsByAttribute(skills: readonly Skill[]): readonly SkillGroup[] {
   const groups = new Map<string, Skill[]>();
   for (const skill of skills) {
-    const existing = groups.get(skill.attributeId);
+    const key = skill.attributeId ?? `${skill.profession}:none`;
+    const existing = groups.get(key);
     if (existing === undefined) {
-      groups.set(skill.attributeId, [skill]);
+      groups.set(key, [skill]);
     } else {
       existing.push(skill);
     }
   }
-  return [...groups].map(([attributeId, grouped]) => {
+  return [...groups.values()].flatMap((grouped) => {
     // A group is never empty by construction, but the type cannot know
     // that and ADR-0008 rules out asserting it away.
     const first = grouped[0];
-    return {
-      attributeId,
-      // `describeSkill` already resolves the readable attribute name, so
-      // reusing it keeps one spelling of "Fire Magic" in the codebase.
-      attributeName: first === undefined ? attributeId : describeSkill(first).attributeName,
-      skills: grouped,
-    };
+    if (first === undefined) {
+      return [];
+    }
+    return [
+      {
+        attributeId: first.attributeId,
+        // `describeSkill` already resolves the readable attribute name, so
+        // reusing it keeps one spelling of "Fire Magic" in the codebase.
+        attributeName:
+          describeSkill(first).attributeName ??
+          `No Attribute (${PROFESSIONS[first.profession].name})`,
+        skills: grouped,
+      },
+    ];
   });
 }
 

@@ -25,7 +25,9 @@ import {
   scheduleLevel,
   type LevelChange,
 } from "./transitions.js";
+import { busGate, type BusGate } from "./bus-gate.js";
 import { crossfade, isTempoMark } from "./crossfade.js";
+import { catchUpTick, leadClock } from "./lead-clock.js";
 import { makeLayer, type TrackClock } from "./layer.js";
 import { reverbPins } from "./reverb-pins.js";
 import { createMeasurement, readAudio } from "./stats.js";
@@ -54,6 +56,15 @@ const SWITCH_POLL_MS = 100;
 const MAX_ERROR_LENGTH = 300;
 /** How long the audio context may take to start before the host gives up on it. */
 const AUDIO_START_MS = 3_000;
+/**
+ * How far ahead of the audio clock the scheduler works (#446). A note is
+ * queried and handed to Web Audio at least this long before it plays, so a
+ * stall of the main thread this long costs no note. Changes of intensity,
+ * of track and of source are heard this much later. Not above 1 s.
+ */
+const LEAD_SECONDS = 0.75;
+/** The cyclist's own lookahead (interval plus overlap): the most its clock may move on at once. */
+const CYCLIST_LOOKAHEAD_SECONDS = 0.2;
 /** A track as it plays: its pattern, unshifted, and where it started. */
 interface Playing {
   readonly trackId: string;
@@ -110,28 +121,34 @@ export async function startEngine(): Promise<void> {
     (callback, ms) => timers.setInterval(callback, ms),
   );
   const pins = reverbPins();
+  const schedulerTime = leadClock(
+    () => context.currentTime,
+    LEAD_SECONDS,
+    CYCLIST_LOOKAHEAD_SECONDS,
+  );
   const repl = webaudioRepl({
     audioContext: context,
+    getTime: schedulerTime,
     transpiler,
     // The scheduler's own ticks, timed and checked for music they skip (#420).
     setInterval: (callback, ms) =>
       timers.setInterval(() => {
         const meter = measurement.meter;
         if (meter === undefined) {
-          callback();
+          catchUpTick(schedulerTime, CYCLIST_LOOKAHEAD_SECONDS, callback);
           return;
         }
         const began = performance.now();
         meter.tick(began, ms);
-        // A tick later than the clock's lookahead skips every slot already
-        // behind `currentTime` without querying it: a gap.
+        // A slot's time is its time in the audio context, so one behind
+        // `currentTime` is a note the audio thread never plays: a gap.
         const behind = context.currentTime - scheduler.clock.getPhase();
         if (scheduler.started && behind > 0) {
           meter.skipped(
             Math.ceil(behind / scheduler.clock.duration) * scheduler.clock.duration * 1000,
           );
         }
-        callback();
+        catchUpTick(schedulerTime, CYCLIST_LOOKAHEAD_SECONDS, callback);
         meter.worked(performance.now() - began);
       }, ms),
     clearInterval: (id) => {
@@ -166,6 +183,7 @@ export async function startEngine(): Promise<void> {
   let scheduled: core.Pattern = core.silence;
   let volume = 1;
   let bus: GainNode | undefined;
+  let gate: BusGate | undefined;
 
   /** The clock of the source being evaluated, which its `layer` calls keep. */
   let compiling: TrackClock = { origin: 0 };
@@ -252,6 +270,7 @@ export async function startEngine(): Promise<void> {
     // superdough → music bus → limiter → speakers (#366 §3.1).
     bus = context.createGain();
     bus.gain.value = volume;
+    gate = busGate(bus.gain, () => context.currentTime, LEAD_SECONDS, volume);
     const limiter = context.createDynamicsCompressor();
     limiter.threshold.value = LIMITER_DB;
     limiter.knee.value = 0;
@@ -268,8 +287,17 @@ export async function startEngine(): Promise<void> {
     post({ type: "playing", trackId: track.trackId, cycle: track.clock.origin, cps: track.cps });
   };
 
+  /** What a scheduler that is about to start needs: a clock `LEAD_SECONDS` ahead, and the bus open. */
+  const startScheduler = (): void => {
+    if (!scheduler.started) {
+      schedulerTime.reset();
+      gate?.open();
+    }
+  };
+
   const schedule = async (pattern: core.Pattern): Promise<void> => {
     scheduled = pattern;
+    startScheduler();
     await repl.setPattern(guarded(pattern), true);
   };
 
@@ -355,18 +383,14 @@ export async function startEngine(): Promise<void> {
           switching = undefined;
         }
         scheduler.stop();
+        gate?.stop();
         return;
       case "setIntensity":
         levels = scheduleLevel(levels, message.level, nextCycle(position()));
         return;
       case "setVolume": {
         volume = message.gain;
-        if (bus !== undefined) {
-          const now = bus.context.currentTime;
-          bus.gain.cancelScheduledValues(now);
-          bus.gain.setValueAtTime(bus.gain.value, now);
-          bus.gain.linearRampToValueAtTime(volume, now + message.rampSeconds);
-        }
+        gate?.setVolume(message.gain, message.rampSeconds);
         return;
       }
       case "evaluate": {

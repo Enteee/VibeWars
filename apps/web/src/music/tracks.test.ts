@@ -131,6 +131,69 @@ describe("the track checker rejects broken tracks (fixtures)", () => {
   });
 });
 
+describe("the track checker keeps voices low and soft (#449)", () => {
+  const options = { cycles: CYCLES, allowedSounds: allowed };
+  const problemsOf = async (voice: string) =>
+    besidesForm(
+      (
+        await check(
+          fixture("good", { id: "reg", source: `setcpm(72 / 4)\n${voice}`, layers: 1 }),
+          options,
+        )
+      ).problems,
+    );
+  const wind = (note: string) => `note("${note}").s("recorder").lpf(2800)`;
+
+  it("fails a wind note above E5, and allows E5", async () => {
+    expect(await problemsOf(wind("e5 d6"))).toEqual([
+      "reg level 0: recorder reaches D6 (max E5) at cycle 0",
+    ]);
+    expect(await problemsOf(wind("e5 d5"))).not.toContainEqual(
+      expect.stringContaining("recorder reaches"),
+    );
+  });
+
+  it("fails any note above C6, and lets bells go to C7", async () => {
+    const harp = await problemsOf('note("c6 d6").s("harp")');
+    expect(harp).toEqual(["reg level 0: harp reaches D6 (max C6) at cycle 0"]);
+    expect(await problemsOf('note("c7").s("bells")')).toEqual([]);
+    expect(await problemsOf('note("d7").s("bells")')).toEqual([
+      "reg level 0: bells reaches D7 (max C7) at cycle 0",
+    ]);
+  });
+
+  it("fails a bright synth with no filter, and one filtered at 6000", async () => {
+    expect(await problemsOf('note("c3").s("sawtooth")')).toEqual([
+      "reg level 0: sawtooth has no lpf at cycle 0 (max 4000 Hz)",
+    ]);
+    expect(await problemsOf('note("c3").s("sawtooth").lpf(6000)')).toEqual([
+      "reg level 0: sawtooth lpf reaches 6000 Hz (max 4000) at cycle 0",
+    ]);
+  });
+
+  it("counts the filter envelope: lpenv 3 on lpf 1000 fails, lpenv 1 passes", async () => {
+    expect(await problemsOf('note("c3").s("sawtooth").lpf(1000).lpenv(3)')).toEqual([
+      "reg level 0: sawtooth lpf reaches 8000 Hz (max 4000) at cycle 0",
+    ]);
+    expect(await problemsOf('note("c3").s("sawtooth").lpf(1000).lpenv(1)')).toEqual([]);
+    expect(await problemsOf('note("c3").s("sawtooth").lpf(3000).lpattack(0.1)')).toEqual([
+      "reg level 0: sawtooth lpf reaches 6000 Hz (max 4000) at cycle 0",
+    ]);
+  });
+
+  it("counts speed as pitch on a sample, not on a synth", async () => {
+    expect(await problemsOf('note("c5").s("recorder").lpf(2800).speed(2)')).toEqual([
+      "reg level 0: recorder reaches C6 (max E5) at cycle 0",
+    ]);
+    expect(await problemsOf('note("c3").s("sawtooth").lpf(2800).speed(4)')).toEqual([]);
+  });
+
+  it("passes a sweep that stays within 800 to 3000", async () => {
+    const sweep = 'note("c3").s("supersaw").lpf(sine.range(800, 3000).slow(4))';
+    expect(await problemsOf(sweep)).toEqual([]);
+  });
+});
+
 describe("the track checker rejects short and repetitive tracks (#427)", () => {
   const options = { cycles: CYCLES, allowedSounds: allowed };
 
@@ -288,6 +351,18 @@ describe("manifest hygiene", () => {
   });
 });
 
+/**
+ * Tracks not yet re-voiced for #449's register rule: #450 does them and
+ * deletes this list. Until then they must fail it, so that it cannot rot.
+ */
+const NOT_YET_REVOICED: readonly string[] = [
+  "clash-of-banners",
+  "glass-dunes",
+  "jungle-veil",
+  "victors-hymn",
+];
+const REGISTER_PROBLEM = /reaches|has no lpf|lpf reaches/;
+
 describe.each(TRACKS)("track $id", (track) => {
   // Evaluating up to 128 cycles at every level took 9 to 26 s for the densest tracks on a loaded runner.
   it("passes every rule at every intensity level", async () => {
@@ -295,6 +370,11 @@ describe.each(TRACKS)("track $id", (track) => {
       { ...track, colour: [...track.colour] },
       { cycles: CYCLES, allowedSounds: allowed },
     );
-    expect(problems).toEqual([]);
+    if (NOT_YET_REVOICED.includes(track.id)) {
+      expect(problems.filter((p) => !REGISTER_PROBLEM.test(p))).toEqual([]);
+      expect(problems.some((p) => REGISTER_PROBLEM.test(p))).toBe(true);
+    } else {
+      expect(problems).toEqual([]);
+    }
   }, 60_000);
 });

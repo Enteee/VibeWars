@@ -29,7 +29,7 @@ stack(
   // 3: brass stabs and the choir
   layer(3, stack(
     n("0 ~ ~ 0 ~ ~ 4 ~".add("<0 0 2 0 3 0 -1 0 4 2 0 0 -2 0 3 2>")).scale("c3:aeolian").s("sawtooth").attack(.02).release(.3).gain(.4)
-      .lpf(1500).lpenv(2).lpd(.3).room(.4).roomsize(6).orbit(2),
+      .lpf(1000).lpenv(2).lpd(.3).room(.4).roomsize(6).orbit(2),
     chord(P).voicing().mode("below:c5").s("sawtooth").vowel("o").attack(.4).release(1.5).gain(.2)
       .lpf(2000).room(.8).roomsize(6).orbit(2)))
 ).postgain(.27)

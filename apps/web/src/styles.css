@@ -1859,24 +1859,6 @@ body {
   align-items: flex-end;
 }
 
-.jukebox-volume input {
-  width: 9rem;
-  accent-color: var(--accent);
-}
-
-.screen .jukebox-mute {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  height: 2.4rem;
-  padding: 0 0.6rem;
-}
-
-.jukebox-mute img {
-  width: 24px;
-  height: 24px;
-}
-
 .screen .jukebox-play {
   flex: 1;
   display: flex;
@@ -1906,6 +1888,58 @@ body {
 
 .screen .jukebox-row .menu-row button {
   padding: 0.3rem 0.6rem;
+}
+
+/* --- sound controls (#424): Options → Sound and the HUD's ♪ popover ------ */
+
+.sound-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* The label above; the slider with its percentage beside it. */
+.sound-volume {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: start;
+  align-items: center;
+  column-gap: 0.6rem;
+}
+
+.sound-volume .field-label {
+  grid-column: 1 / -1;
+}
+
+.sound-volume input {
+  width: 12rem;
+  accent-color: var(--accent);
+}
+
+.sound-volume-readout {
+  min-width: 3.5rem;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.sound-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.sound-toggle input {
+  accent-color: var(--accent);
+}
+
+.hud-sound {
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.hud-sound .sound-volume input {
+  width: 9rem;
 }
 
 /* The now-playing toast: top left, just under the top bar. In a match that

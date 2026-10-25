@@ -145,14 +145,17 @@ adjacent to its target.
 
 **Attack skills ride the weapon** (ADR-0029). An attack skill needs its
 weapon: Swift Chop an axe, Backbreaker a hammer, Opening Cut a sword,
-Barrage and Broad Head Arrow any bow. With the wrong one it is refused
-("Needs an axe."). It is one blow of that weapon: it hits halfway
-through a swing (or through its own activation, if it states one), for
-the weapon's damage plus the skill's bonus, mitigated once, and you
+Barrage and Broad Head Arrow any bow, Distracting Blow any melee weapon.
+With the wrong one it is refused ("Needs an axe."). It is one blow of
+that weapon: it hits halfway through a swing (or through its own
+activation, if it states one), for the weapon's damage plus the skill's
+bonus, mitigated once, and you
 recover for as long again before you swing or cast. The wind-up shows on
 the cast bar, and an interrupt or a move stops it. No double strike or
 cleave on an attack skill. Afterwards you swing at its foe, from a fresh
-swing.
+swing. Distracting Blow deals no damage: a hit only interrupts, and a
+miss does nothing. It has no attribute, as in GW1, so any warrior can
+use it and its numbers never scale.
 
 **Skills interrupt and resume.** Starting a skill loses the swing in
 progress. Attacking and casting are otherwise separate, as in GW1

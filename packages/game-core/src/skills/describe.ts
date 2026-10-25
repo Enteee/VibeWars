@@ -43,9 +43,10 @@ export interface EffectDescription {
 export interface SkillDescription {
   readonly id: string;
   readonly name: string;
-  readonly attributeId: string;
-  /** e.g. "Fire Magic", or the raw id if the attribute is unknown. */
-  readonly attributeName: string;
+  /** `undefined` for a "No Attribute" skill (#445). */
+  readonly attributeId: string | undefined;
+  /** e.g. "Fire Magic", or the raw id if the attribute is unknown; `undefined` with no attribute. */
+  readonly attributeName: string | undefined;
   /** Effects, one line each. */
   readonly effects: readonly EffectDescription[];
   /** Cost/cast/recharge/range, already formatted for display. */
@@ -187,7 +188,10 @@ export function describeSkill(
     id: skill.id,
     name: skill.name,
     attributeId: skill.attributeId,
-    attributeName: getAttribute(skill.attributeId)?.name ?? skill.attributeId,
+    attributeName:
+      skill.attributeId === undefined
+        ? undefined
+        : (getAttribute(skill.attributeId)?.name ?? skill.attributeId),
     effects,
     cost:
       skill.cost === undefined

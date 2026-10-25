@@ -2,7 +2,8 @@ import { OPTIONS_SECTIONS } from "./options-sections.js";
 
 /**
  * The Options screen (#423): the sections of `OPTIONS_SECTIONS` listed on
- * the left, the selected one on the right. It opens on the first section.
+ * the left, the selected one on the right. It opens on the first section,
+ * or on the one asked for, as the jukebox's "sound settings" link does.
  * Back, or Esc, returns to the menu; a section that wants Esc for itself,
  * as Controls does while a key is being rebound, stops it first.
  */
@@ -62,7 +63,11 @@ export function disposeOptionsScreen(): void {
   disposeCurrent = undefined;
 }
 
-export function renderOptionsScreen(root: HTMLElement, callbacks: OptionsScreenCallbacks): void {
+export function renderOptionsScreen(
+  root: HTMLElement,
+  callbacks: OptionsScreenCallbacks,
+  sectionId = OPTIONS_SECTIONS[0]?.id,
+): void {
   disposeOptionsScreen();
 
   root.replaceChildren();
@@ -141,8 +146,7 @@ export function renderOptionsScreen(root: HTMLElement, callbacks: OptionsScreenC
     switcher.close();
   };
 
-  const first = OPTIONS_SECTIONS[0];
-  if (first !== undefined) {
-    select(first.id);
+  if (sectionId !== undefined) {
+    select(sectionId);
   }
 }

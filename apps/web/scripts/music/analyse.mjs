@@ -46,6 +46,20 @@ export const BUILTIN_SOUNDS = new Set([
 export const MAX_PEAK_GAIN = 1.5;
 
 /**
+ * Register and brightness (#449): the operator found the flutes strident.
+ * Wind sounds stay at or below `MAX_WIND_NOTE`, every pitched sound at or
+ * below `MAX_NOTE` (`bells` to `MAX_BELLS_NOTE`: their shimmer is meant to
+ * sit high), and every bright sound carries a low-pass at `MAX_BRIGHT_LPF`
+ * Hz or lower, at every value a pattern gives it.
+ */
+export const WIND_SOUNDS = new Set(["recorder", "whistle", "flute", "ocarina", "panflute"]);
+export const BRIGHT_SOUNDS = new Set(["sawtooth", "supersaw", "square", ...WIND_SOUNDS]);
+export const MAX_WIND_NOTE = "E5";
+export const MAX_NOTE = "C6";
+export const MAX_BELLS_NOTE = "C7";
+export const MAX_BRIGHT_LPF = 4000;
+
+/**
  * How long a track plays before it repeats exactly, at every level (#427):
  * the menu sits at level 0 for minutes.
  */
@@ -112,6 +126,20 @@ const BOOKKEEPING = new Set([
  * @property {number} distinctPhrases different `phraseCycles` blocks in the form
  * @property {number | null} eventsPerSecond onsets per second over the form
  * @property {RoomMix[]} roomMixes orbits whose events disagree on a room control
+ * @property {Register[]} registers per sound, over the form (#449)
+ */
+
+/**
+ * Where one sound sits: its highest pitched event and its filter.
+ *
+ * @typedef {object} Register
+ * @property {string} sound
+ * @property {string | null} highest name of the highest note, null if it plays none
+ * @property {number} highestMidi
+ * @property {number} highestCycle first cycle that plays `highest`
+ * @property {number | null} lpf highest `lpf`/`cutoff` any event carries, null if none does
+ * @property {number} lpfCycle first cycle that carries `lpf`
+ * @property {number | null} unfilteredCycle first cycle with an event that has no filter
  */
 
 /** @type {Promise<Engine> | null} */
@@ -223,6 +251,67 @@ export function roomMixesOf(events) {
     }
   }
   return [...seen.values()].filter((m) => m.values.length > 1).sort((a, b) => a.orbit - b.orbit);
+}
+
+/**
+ * @param {unknown} note
+ * @returns {number | null}
+ */
+const midiOf = (note) => {
+  const m = typeof note === "number" ? note : Note.midi(String(note));
+  return typeof m === "number" ? m : null;
+};
+
+/**
+ * The highest cutoff the listener hears: superdough's filter envelope opens
+ * to `lpf · 2^|lpenv|` (anchor 0, the default; `fanchor` is not an allowed
+ * control), capped at 20 kHz. Any envelope control alone sets `lpenv` to 1.
+ *
+ * @param {Record<string, unknown>} value
+ * @returns {number | null} null when the event has no lowpass
+ */
+export function peakCutoffOf(value) {
+  const base = value.lpf ?? value.cutoff;
+  if (typeof base !== "number") return null;
+  const enveloped = ["lpattack", "lpdecay", "lpsustain", "lprelease"].some((k) => k in value);
+  const env = typeof value.lpenv === "number" ? value.lpenv : enveloped ? 1 : 0;
+  return Math.min(20000, base * 2 ** Math.abs(env));
+}
+
+/**
+ * @param {Map<string, { sound: string, highestMidi: number, highestCycle: number, lpf: number | null, lpfCycle: number, unfilteredCycle: number | null }>} seen
+ * @param {number} cycle
+ * @param {Record<string, unknown>} value
+ */
+function noteRegister(seen, cycle, value) {
+  const sound = typeof value.s === "string" ? value.s : "default";
+  const entry = seen.get(sound) ?? {
+    sound,
+    highestMidi: -1,
+    highestCycle: 0,
+    lpf: null,
+    lpfCycle: 0,
+    unfilteredCycle: null,
+  };
+  seen.set(sound, entry);
+  const written = midiOf(value.note);
+  // `speed` replays a sample faster, and so higher; a synth ignores it.
+  const speed = typeof value.speed === "number" && value.speed !== 0 ? Math.abs(value.speed) : 1;
+  const midi =
+    written !== null && !BUILTIN_SOUNDS.has(sound) ? written + 12 * Math.log2(speed) : written;
+  if (midi !== null && midi > entry.highestMidi) {
+    entry.highestMidi = midi;
+    entry.highestCycle = cycle;
+  }
+  const filter = peakCutoffOf(value);
+  if (filter !== null) {
+    if (entry.lpf === null || filter > entry.lpf) {
+      entry.lpf = filter;
+      entry.lpfCycle = cycle;
+    }
+  } else {
+    entry.unfilteredCycle ??= cycle;
+  }
 }
 
 /**
@@ -365,6 +454,8 @@ export async function analyseTrack(source, { intensity, cycles, key, colour = []
     const keysByCycle = Array.from({ length: 2 * MAX_FORM_CYCLES }, () => []);
     /** @type {Record<string, unknown>[]} */
     const formValues = [];
+    /** @type {Map<string, Parameters<typeof noteRegister>[0] extends Map<string, infer E> ? E : never>} */
+    const seenRegister = new Map();
     for (const h of pattern.queryArc(0, 2 * MAX_FORM_CYCLES)) {
       if (!h.hasOnset()) continue;
       // Exact fractions: a float offset could round two equal cycles apart.
@@ -372,6 +463,7 @@ export async function analyseTrack(source, { intensity, cycles, key, colour = []
       const offset = h.whole.begin.sub(cycle).toFraction();
       keysByCycle[cycle.valueOf()]?.push(eventKey(offset, h.value));
       formValues.push(h.value);
+      noteRegister(seenRegister, cycle.valueOf(), h.value);
     }
     for (const keys of keysByCycle) keys.sort();
     const formCycles = formOf(keysByCycle, MAX_FORM_CYCLES);
@@ -393,6 +485,17 @@ export async function analyseTrack(source, { intensity, cycles, key, colour = []
       distinctPhrases: distinctPhrasesOf(keysByCycle, formCycles, phraseCycles),
       eventsPerSecond: formSeconds === null ? null : formEvents / formSeconds,
       roomMixes: roomMixesOf(formValues),
+      registers: [...seenRegister.values()]
+        .map((r) => ({
+          sound: r.sound,
+          highest: r.highestMidi < 0 ? null : Note.fromMidi(r.highestMidi),
+          highestMidi: r.highestMidi,
+          highestCycle: r.highestCycle,
+          lpf: r.lpf,
+          lpfCycle: r.lpfCycle,
+          unfilteredCycle: r.unfilteredCycle,
+        }))
+        .sort((a, b) => a.sound.localeCompare(b.sound)),
     };
   } finally {
     restore();
@@ -419,7 +522,8 @@ export function allowedSounds(sampleMap) {
  * allowed sounds and known controls, no clipping. And of #427: at every level
  * a form of at least `MIN_FORM_SECONDS` holding `MIN_DISTINCT_PHRASES`, and at
  * the top no more than `MAX_EVENTS_PER_SECOND`; and of #420: one room per
- * orbit. Each problem names the track, the level and the offending value.
+ * orbit; and of #449: no wind note above `MAX_WIND_NOTE`, no note above
+ * `MAX_NOTE`, every bright sound filtered to `MAX_BRIGHT_LPF`. Each problem names the track, the level and the offending value.
  *
  * @param {{ id: string, source: string, bpm: number, key: string, colour: readonly string[], layers: number, phraseCycles: number }} track
  * @param {{ cycles: number, allowedSounds: ReadonlySet<string> }} options
@@ -490,6 +594,29 @@ export async function checkTrack(track, { cycles, allowedSounds: allowed }) {
       problems.push(
         `${at}: ${String(a.distinctPhrases)} distinct phrase(s) of ${String(track.phraseCycles)} cycles, want ≥ ${String(MIN_DISTINCT_PHRASES)}`,
       );
+    }
+    for (const r of a.registers) {
+      const limit = WIND_SOUNDS.has(r.sound)
+        ? MAX_WIND_NOTE
+        : r.sound === "bells"
+          ? MAX_BELLS_NOTE
+          : MAX_NOTE;
+      if (r.highest !== null && r.highestMidi > (Note.midi(limit) ?? 0)) {
+        problems.push(
+          `${at}: ${r.sound} reaches ${r.highest} (max ${limit}) at cycle ${String(r.highestCycle)}`,
+        );
+      }
+      if (BRIGHT_SOUNDS.has(r.sound)) {
+        if (r.unfilteredCycle !== null) {
+          problems.push(
+            `${at}: ${r.sound} has no lpf at cycle ${String(r.unfilteredCycle)} (max ${String(MAX_BRIGHT_LPF)} Hz)`,
+          );
+        } else if (r.lpf !== null && r.lpf > MAX_BRIGHT_LPF) {
+          problems.push(
+            `${at}: ${r.sound} lpf reaches ${String(r.lpf)} Hz (max ${String(MAX_BRIGHT_LPF)}) at cycle ${String(r.lpfCycle)}`,
+          );
+        }
+      }
     }
     const before = levels[level - 1];
     if (before && a.events <= before.events) {

@@ -31,6 +31,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     id: "monk.orison-of-healing",
     name: "Orison of Healing",
     type: "spell",
+    profession: "monk",
     attributeId: "monk.healing-prayers",
     cost: { kind: "energy", amount: 5 },
     activationSeconds: 1,
@@ -52,6 +53,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     id: "elementalist.fireball",
     name: "Fireball",
     type: "spell",
+    profession: "elementalist",
     attributeId: "elementalist.fire-magic",
     cost: { kind: "energy", amount: 10 },
     activationSeconds: 1,
@@ -80,6 +82,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     id: "warrior.swift-chop",
     name: "Swift Chop",
     type: "attack",
+    profession: "warrior",
     attributeId: "warrior.axe-mastery",
     cost: { kind: "energy", amount: 5 },
     activationSeconds: 0,
@@ -91,6 +94,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // blocking; the bonus damage is implemented faithfully.
     attack: {
       weapon: "axe",
+      weaponDamage: 1,
       bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 1, atTwelve: 16 } },
     },
     effects: [],
@@ -99,6 +103,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     id: "ranger.barrage",
     name: "Barrage",
     type: "attack",
+    profession: "ranger",
     attributeId: "ranger.marksmanship",
     cost: { kind: "energy", amount: 5 },
     activationSeconds: 0,
@@ -116,6 +121,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: {
       weapon: "bow",
+      weaponDamage: 1,
       bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 12 } },
     },
     effects: [],
@@ -124,6 +130,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     id: "warrior.backbreaker",
     name: "Backbreaker",
     type: "attack",
+    profession: "warrior",
     attributeId: "warrior.hammer-mastery",
     cost: { kind: "adrenaline", amount: 9 },
     activationSeconds: 0,
@@ -136,6 +143,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // it worth including now.
     attack: {
       weapon: "hammer",
+      weaponDamage: 1,
       bonusDamage: {
         scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 16 },
       },
@@ -146,6 +154,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     id: "necromancer.blood-renewal-lite",
     name: "Vital Transfer",
     type: "spell",
+    profession: "necromancer",
     attributeId: "necromancer.blood-magic",
     cost: { kind: "energy", amount: 5 },
     activationSeconds: 1,
@@ -176,9 +185,30 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   /* ---------------------------------------------------------------------- */
 
   {
+    id: "warrior.distracting-blow",
+    name: "Distracting Blow",
+    type: "attack",
+    profession: "warrior",
+    // GW1's "No Attribute": nothing scales, and any warrior can use it.
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 0.5,
+    rechargeSeconds: 10,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    // The real skill also disrupts foes adjacent to the target, but only
+    // with a scythe, and there are no scythes yet.
+    area: undefined,
+    // A swing of any melee weapon that deals no damage: still an attack,
+    // so blind makes it miss, and a miss interrupts nothing.
+    attack: { weapon: "melee", weaponDamage: 0, bonusDamage: undefined },
+    effects: [{ kind: "interrupt" }],
+  },
+  {
     id: "ranger.broad-head-arrow",
     name: "Broad Head Arrow",
     type: "attack",
+    profession: "ranger",
     attributeId: "ranger.marksmanship",
     cost: { kind: "energy", amount: 10 },
     activationSeconds: 0,
@@ -186,7 +216,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     range: RANGE_LONG,
     target: "single-enemy",
     area: undefined,
-    attack: { weapon: "bow", bonusDamage: undefined },
+    attack: { weapon: "bow", weaponDamage: 1, bonusDamage: undefined },
     // The real elite: Daze the target, and interrupt them if they were
     // casting. Both halves are now genuinely implementable — this is the
     // archetypal "shut down a caster" skill the whole interrupt mechanic
@@ -201,6 +231,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     id: "necromancer.faintheartedness",
     name: "Faintheartedness",
     type: "hex",
+    profession: "necromancer",
     attributeId: "necromancer.curses",
     cost: { kind: "energy", amount: 10 },
     activationSeconds: 1,
@@ -218,6 +249,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     id: "elementalist.armor-of-earth",
     name: "Armor of Earth",
     type: "enchantment",
+    profession: "elementalist",
     attributeId: "elementalist.earth-magic",
     cost: { kind: "energy", amount: 10 },
     activationSeconds: 0.75,
@@ -234,6 +266,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     id: "ranger.troll-unguent",
     name: "Troll Unguent",
     type: "skill",
+    profession: "ranger",
     attributeId: "ranger.wilderness-survival",
     cost: { kind: "energy", amount: 5 },
     activationSeconds: 3,
@@ -251,6 +284,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     id: "monk.mend-affliction",
     name: "Mend Affliction",
     type: "spell",
+    profession: "monk",
     attributeId: "monk.protection-prayers",
     cost: { kind: "energy", amount: 5 },
     activationSeconds: 1,
@@ -269,6 +303,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     id: "warrior.sever-artery-lite",
     name: "Opening Cut",
     type: "attack",
+    profession: "warrior",
     attributeId: "warrior.swordsmanship",
     // Costs exactly one hit's worth of adrenaline, so landing a skill
     // immediately opens up the follow-up. Charging more than a hit grants
@@ -284,6 +319,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // a blow + condition in one skill.
     attack: {
       weapon: "sword",
+      weaponDamage: 1,
       bonusDamage: {
         scaling: { attributeId: "warrior.swordsmanship", atZero: 5, atTwelve: 20 },
       },

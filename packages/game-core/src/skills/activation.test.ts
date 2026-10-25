@@ -13,6 +13,7 @@ const SPELL: Skill = {
   id: "test.spell",
   name: "Test Spell",
   type: "spell",
+  profession: "elementalist",
   attributeId: "elementalist.fire-magic",
   cost: { kind: "energy", amount: 10 },
   activationSeconds: 1,
@@ -267,7 +268,7 @@ describe("canActivate, an attack skill's weapon (ADR-0029)", () => {
     cost: undefined,
     activationSeconds: 0,
     range: 100,
-    attack: { weapon: "melee", bonusDamage: undefined },
+    attack: { weapon: "melee", weaponDamage: 1, bonusDamage: undefined },
     effects: [],
   };
 
@@ -291,6 +292,14 @@ describe("canActivate, an attack skill's weapon (ADR-0029)", () => {
     expect(check(MELEE, "unarmed")).toEqual({ ok: false, reason: "wrong-weapon" });
     expect(check(MELEE, "spear")).toEqual({ ok: true });
     expect(check(MELEE, "longbow")).toEqual({ ok: false, reason: "wrong-weapon" });
+  });
+
+  it("takes Distracting Blow with any melee weapon, not bare-handed or with a bow (#445)", () => {
+    const blow = getSkill("warrior.distracting-blow");
+    expect(check(blow, "sword")).toEqual({ ok: true });
+    expect(check(blow, "hammer")).toEqual({ ok: true });
+    expect(check(blow, "unarmed")).toEqual({ ok: false, reason: "wrong-weapon" });
+    expect(check(blow, "longbow")).toEqual({ ok: false, reason: "wrong-weapon" });
   });
 
   it("checks the weapon before the cost", () => {
