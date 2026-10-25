@@ -14,6 +14,18 @@
 
 import { Note, Scale } from "tonal";
 
+import {
+  describeAt,
+  peaksOf,
+  ROOM_CONTROLS,
+  reverbCostOf,
+  roomOffCatalogueOf,
+  soundingSeconds,
+  soundsOf,
+  voiceCostOf,
+  voiceGainOf,
+} from "./cost.mjs";
+
 /**
  * Controls a shipped track may use. `begin` and `end` are event times, not
  * controls. A misspelled control that happens to be a real method name is
@@ -42,8 +54,23 @@ export const BUILTIN_SOUNDS = new Set([
   "brown",
 ]);
 
-/** The tolerance for the summed-gain estimate (#366 §3.4 asks for 1.2, fails above 1.5). */
-export const MAX_PEAK_GAIN = 1.5;
+/**
+ * The tolerance for the summed-gain estimate. It counts every voice sounding
+ * at the instant, at its sustain level and through a synth's own turn-down
+ * (#508), not only voices that start together, so it is a different
+ * quantity from the 1.5 of #366 §3.4. PROVISIONAL: #507's `maxReductionDb`
+ * sets it again.
+ */
+export const MAX_PEAK_GAIN = 2;
+
+/**
+ * The most the audio thread is asked to carry at one instant at any level
+ * (#508): the peak, over the form, of the summed `DSP_COST` of what sounds,
+ * reverbs included. PROVISIONAL until #507 has a number for the highest cost
+ * that plays without underruns in Firefox. The crossfade, where two tracks
+ * sound at once, is part of that calibration, not a second term here.
+ */
+export const MAX_DSP_COST = 90;
 
 /**
  * Register and brightness (#449): the operator found the flutes strident.
@@ -126,6 +153,9 @@ const BOOKKEEPING = new Set([
  * @property {number} distinctPhrases different `phraseCycles` blocks in the form
  * @property {number | null} eventsPerSecond onsets per second over the form
  * @property {RoomMix[]} roomMixes orbits whose events disagree on a room control
+ * @property {string[]} roomOffCatalogue room controls that differ from `MUSIC_ROOMS` (#508)
+ * @property {number | null} dspCost peak DSP cost of what sounds at once, reverbs included (#508)
+ * @property {string} dspPeak who sounds at that peak, costliest first
  * @property {Register[]} registers per sound, over the form (#449)
  */
 
@@ -217,12 +247,6 @@ const pitchClass = (note) => {
  */
 const eventKey = (offset, value) =>
   JSON.stringify([offset, value.s, value.note ?? value.n, value.bank]);
-
-/**
- * The reverb controls one orbit must agree on (#420): superdough rebuilds the
- * impulse response whenever they change, which is most of a phone's frame.
- */
-export const ROOM_CONTROLS = ["roomsize", "roomfade", "roomlp", "roomdim"];
 
 /** @typedef {{ orbit: number, control: string, values: string[] }} RoomMix */
 
@@ -436,17 +460,6 @@ export async function analyseTrack(source, { intensity, cycles, key, colour = []
       harmony.push(notes.sort((a, b) => (Note.midi(a) ?? 0) - (Note.midi(b) ?? 0)));
     }
 
-    // superdough multiplies gain by postgain per voice and sums voices with no
-    // limiter. Everything landing at full amplitude in phase never quite
-    // happens, so this is a pessimistic bound.
-    /** @type {Map<number, number>} */
-    const byOnset = new Map();
-    for (const e of events) {
-      const gain = typeof e.value.gain === "number" ? e.value.gain : 1;
-      const post = typeof e.value.postgain === "number" ? e.value.postgain : 1;
-      byOnset.set(e.begin, (byOnset.get(e.begin) ?? 0) + gain * post);
-    }
-
     const silentMembers = members.flatMap((m, i) => (queried(m).length === 0 ? [i + 1] : []));
 
     // The form needs far more cycles than the rules above, so it has its own query.
@@ -454,6 +467,9 @@ export async function analyseTrack(source, { intensity, cycles, key, colour = []
     const keysByCycle = Array.from({ length: 2 * MAX_FORM_CYCLES }, () => []);
     /** @type {Record<string, unknown>[]} */
     const formValues = [];
+    /** @type {{ begin: number, seconds: number, value: Record<string, unknown> }[]} */
+    const formHaps = [];
+    const cps = repl.cpm === null ? null : repl.cpm / 60;
     /** @type {Map<string, Parameters<typeof noteRegister>[0] extends Map<string, infer E> ? E : never>} */
     const seenRegister = new Map();
     for (const h of pattern.queryArc(0, 2 * MAX_FORM_CYCLES)) {
@@ -463,6 +479,11 @@ export async function analyseTrack(source, { intensity, cycles, key, colour = []
       const offset = h.whole.begin.sub(cycle).toFraction();
       keysByCycle[cycle.valueOf()]?.push(eventKey(offset, h.value));
       formValues.push(h.value);
+      if (cps !== null) {
+        const whole = /** @type {Record<"begin" | "end", { valueOf(): number }>} */ (h.whole);
+        const begin = whole.begin.valueOf();
+        formHaps.push({ begin, seconds: (whole.end.valueOf() - begin) / cps, value: h.value });
+      }
       noteRegister(seenRegister, cycle.valueOf(), h.value);
     }
     for (const keys of keysByCycle) keys.sort();
@@ -470,13 +491,35 @@ export async function analyseTrack(source, { intensity, cycles, key, colour = []
     const formSeconds = repl.cpm === null ? null : (formCycles * 60) / repl.cpm;
     const formEvents = keysByCycle.slice(0, formCycles).reduce((n, keys) => n + keys.length, 0);
 
+    // What sounds at once: a voice lasts from its onset to the end of its
+    // release, so pads and tails count, not only the onsets that coincide.
+    const loop = formHaps.filter((h) => h.begin < formCycles);
+    const sounding = loop
+      .filter((h) => soundsOf(h.value))
+      .map((h) => ({
+        start: cps === null ? 0 : h.begin / cps,
+        length: soundingSeconds(h.value, h.seconds),
+        cost: voiceCostOf(h.value),
+        gain: voiceGainOf(h.value),
+        sound: typeof h.value.s === "string" ? h.value.s : "default",
+      }));
+    const peaks = formSeconds === null ? null : peaksOf(sounding, formSeconds);
+    const wet = loop.map((h) => h.value);
+
     return {
       cpm: repl.cpm,
       events: events.length,
       voices: [...voiceCounts].map(([name, count]) => ({ name, count })),
       controls: [...controls].sort(),
       outsideKey,
-      peakGain: Math.max(0, ...byOnset.values()),
+      peakGain: peaks === null ? 0 : peaks.gain,
+      dspCost: peaks === null ? null : peaks.cost + reverbCostOf(wet),
+      dspPeak:
+        peaks === null || formSeconds === null
+          ? ""
+          : describeAt(sounding, formSeconds, peaks.costAt) +
+            `, reverb (${String(reverbCostOf(wet))})`,
+      roomOffCatalogue: roomOffCatalogueOf(wet),
       warnings,
       harmony,
       silentMembers,
@@ -565,6 +608,14 @@ export async function checkTrack(track, { cycles, allowedSounds: allowed }) {
     }
     for (const c of a.controls) {
       if (!KNOWN_CONTROLS.has(c)) problems.push(`${at}: control "${c}" is not in KNOWN_CONTROLS`);
+    }
+    if (a.dspCost !== null && a.dspCost > MAX_DSP_COST) {
+      problems.push(
+        `${at}: DSP cost ${a.dspCost.toFixed(0)} is over ${String(MAX_DSP_COST)}: it will crackle (${a.dspPeak})`,
+      );
+    }
+    for (const r of a.roomOffCatalogue) {
+      problems.push(`${at}: ${r}`);
     }
     if (a.peakGain > MAX_PEAK_GAIN) {
       problems.push(

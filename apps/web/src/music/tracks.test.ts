@@ -220,16 +220,28 @@ describe("the track checker rejects short and repetitive tracks (#427)", () => {
 
   it("fails a track whose orbit mixes room sizes, unset among them", async () => {
     const { problems } = await check(fixture("room-mix"), options);
-    expect(problems).toEqual(
-      [0, 1, 2].map(
-        (level) => `room-mix level ${String(level)}: orbit 2 mixes roomsize unset, 7, 6`,
-      ),
+    for (const level of [0, 1, 2]) {
+      expect(problems).toContain(
+        `room-mix level ${String(level)}: orbit 2 mixes roomsize unset, 7, 6`,
+      );
+    }
+  });
+
+  it("fails a room that is not the catalogue's, naming orbit, control and value", async () => {
+    const { problems } = await check(fixture("room-mix"), options);
+    expect(problems).toContain("room-mix level 0: orbit 2 roomsize 7 (catalogue: 6)");
+    expect(problems).toContain("room-mix level 0: orbit 2 roomsize unset (catalogue: 6)");
+    const other =
+      'setcpm(18)\nnote("d3").s("sine").gain(.2).room(.3).roomsize(6).roomfade(2).orbit(2)';
+    const t = fixture("good", { id: "fade", source: other, layers: 1 });
+    expect((await check(t, options)).problems).toContain(
+      "fade level 0: orbit 2 roomfade 2 (catalogue: unset)",
     );
   });
 
   it("lets a dry voice share an orbit with a wet one", async () => {
     // The dry bass never touches orbit 2's reverb, so it sets no room size.
-    const source = fixture("room-mix").source.replace(".roomsize(6)", ".roomsize(7)");
+    const source = fixture("room-mix").source.replace(".roomsize(7)", ".roomsize(6)");
     const t = fixture("room-mix", { source: source.replace(".room(.3)", "") });
     expect((await check(t, options)).problems).toEqual([]);
   });
@@ -377,4 +389,47 @@ describe.each(TRACKS)("track $id", (track) => {
       expect(problems).toEqual([]);
     }
   }, 60_000);
+});
+
+describe("the track checker budgets the audio thread (#508)", () => {
+  const options = { cycles: CYCLES, allowedSounds: allowed };
+  const problemsOf = async (voice: string) =>
+    besidesForm(
+      (
+        await check(
+          fixture("good", { id: "dsp", source: `setcpm(18)\n${voice}`, layers: 1 }),
+          options,
+        )
+      ).problems,
+    );
+  const chord = "[d2,f2,a2,c3,d3,f3,a3,c4,d4,f4,a4,c5]";
+  const pad = (unison: number) =>
+    `note("${chord}").s("supersaw").unison(${String(unison)}).lpf(1200).gain(.05)`;
+
+  it("fails a supersaw pad of unison 8 and passes the same pad at unison 1", async () => {
+    const heavy = await problemsOf(pad(8));
+    expect(heavy).toHaveLength(1);
+    expect(heavy[0]).toMatch(
+      /^dsp level 0: DSP cost 1\d\d is over 90: it will crackle \(supersaw ×12 /,
+    );
+    expect(await problemsOf(pad(1))).toEqual([]);
+  });
+
+  it("adds the reverb of an orbit that has a wet voice", async () => {
+    const dry = await problemsOf(`${pad(5)}.s("supersaw")`);
+    expect(dry).toEqual([]);
+    const wet = await problemsOf(`${pad(5)}.room(.5).roomsize(6).orbit(2)`);
+    expect(wet).toEqual([]);
+    expect(
+      (await problemsOf(`stack(${pad(5)}.room(.5).roomsize(6).orbit(2), ${pad(3)})`))[0],
+    ).toMatch(/reverb \(6\)/);
+  });
+
+  it("counts a tail that still sounds when the next voice begins", async () => {
+    const notes = 'note("c3 d3 e3 f3").s("sine").gain(5)';
+    expect(await problemsOf(`${notes}.release(4)`)).toEqual([
+      "dsp level 0: summed gain 3.60 is over 2, it will clip",
+    ]);
+    expect(await problemsOf(`${notes}.release(.01)`)).toEqual([]);
+  });
 });
