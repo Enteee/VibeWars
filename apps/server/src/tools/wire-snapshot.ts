@@ -232,7 +232,8 @@ const PRIMITIVES: readonly (readonly [ts.TypeFlags, string])[] = [
  * A type's shape, structurally: unions as sorted member lists, objects as
  * properties sorted by name with their optionality, literals as values.
  * Readonly-ness and declaration order are not part of it; nothing about
- * the encoding depends on them.
+ * the encoding depends on them. A named union met again inside itself,
+ * as `JsonValue` is, is described by name there: `{ ref: "JsonValue" }`.
  */
 export function describeType(
   checker: ts.TypeChecker,
@@ -248,7 +249,12 @@ export function describeType(
     }
   }
   if (type.isUnion()) {
-    return union(type.types.map((member) => describeType(checker, member, within)));
+    const name = type.aliasSymbol?.name;
+    if (name !== undefined && within.has(type)) {
+      return { ref: name };
+    }
+    const inner = name === undefined ? within : new Set([...within, type]);
+    return union(type.types.map((member) => describeType(checker, member, inner)));
   }
   if (type.isStringLiteral() || type.isNumberLiteral()) {
     return { literal: type.value };
