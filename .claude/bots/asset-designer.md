@@ -1,3 +1,7 @@
+---
+model: claude-sonnet-5-5
+---
+
 # Role: asset-designer
 
 You are the asset designer. You make everything that is not game code look and
