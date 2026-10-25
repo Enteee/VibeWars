@@ -283,6 +283,7 @@ export function boardLines(snapshot, columns, live, { rows, width }) {
  * @property {ReadonlySet<string>} live the roles hired right now
  * @property {Budget | null} budget null before hubd has checked
  * @property {ReturnType<typeof import("./hub-health.mjs").hubHealth>} hub hubd, as its heartbeat and restarts say (#23)
+ * @property {import("./reboot.mjs").Reboot | null} reboot the scheduled company reboot, if any (#345)
  */
 
 /**
@@ -346,12 +347,36 @@ function hubSection({ hub }, width) {
 }
 
 /**
+ * A scheduled reboot: its deadline and the roles that have not yet run
+ * `company ready`. Nothing when none is scheduled (#345).
+ *
+ * @param {CompanyFacts} facts
+ * @param {number} width
+ * @returns {string[]}
+ */
+function rebootSection({ reboot, live }, width) {
+  if (reboot === null) {
+    return [];
+  }
+  const waiting = [...live].filter((role) => !reboot.ready.includes(role));
+  return [
+    paint(cut(`REBOOT by ${hhmm(reboot.deadline)}: ${reboot.reason}`, width), "1;33"),
+    cut(
+      waiting.length === 0
+        ? "  everyone is ready"
+        : `  not ready (${String(waiting.length)}): ${waiting.join(", ")}`,
+      width,
+    ),
+  ];
+}
+
+/**
  * The COMPANY pane's sections, in order. #50 (tokens per role) adds a
  * function here rather than a pane, as #23's hub line did.
  *
  * @type {readonly ((facts: CompanyFacts, width: number) => string[])[]}
  */
-export const COMPANY_SECTIONS = [rosterSection, hubSection, githubSection];
+export const COMPANY_SECTIONS = [rebootSection, rosterSection, hubSection, githubSection];
 
 /**
  * The COMPANY pane: each section, a blank line between, cut with
@@ -362,10 +387,9 @@ export const COMPANY_SECTIONS = [rosterSection, hubSection, githubSection];
  * @returns {string[]}
  */
 export function companyLines(facts, { rows, width }) {
-  const lines = COMPANY_SECTIONS.flatMap((section, index) => [
-    ...(index === 0 ? [] : [""]),
-    ...section(facts, width),
-  ]);
+  const lines = COMPANY_SECTIONS.map((section) => section(facts, width))
+    .filter((section) => section.length > 0)
+    .flatMap((section, index) => [...(index === 0 ? [] : [""]), ...section]);
   if (lines.length <= rows) {
     return lines;
   }

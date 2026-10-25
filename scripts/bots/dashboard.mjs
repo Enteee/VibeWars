@@ -22,6 +22,7 @@ import process from "node:process";
 import { readBoardState } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { formatSpend, readSpend } from "./hub-spend.mjs";
+import { parseReboot } from "./reboot.mjs";
 import { boardLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
 import { hubHealth, parseAlive, parseRestarts } from "./hub-health.mjs";
 
@@ -59,6 +60,15 @@ function obj(value) {
   return typeof value === "object" && value !== null
     ? /** @type {Record<string, unknown>} */ (value)
     : {};
+}
+
+/** @returns {import("./reboot.mjs").Reboot | null} the reboot hubd has scheduled, if any */
+function reboot() {
+  try {
+    return parseReboot(JSON.parse(fs.readFileSync(path.join(ROOT, "reboot.json"), "utf8")));
+  } catch {
+    return null;
+  }
 }
 
 /** @returns {{ project: number, owner: string, columns: string[] } | null} */
@@ -210,7 +220,10 @@ function linesOf(section, pane) {
       return boardLines(readBoardState(hubFile("board.json")), cfg?.columns ?? null, hired(), pane);
     }
     case "company":
-      return companyLines({ roles: ROLES, live: hired(), budget: budget(), hub: hub() }, pane);
+      return companyLines(
+        { roles: ROLES, live: hired(), budget: budget(), hub: hub(), reboot: reboot() },
+        pane,
+      );
     case "feed":
       return feedLines(feed(pane.rows), pane);
   }

@@ -200,7 +200,7 @@ describe("companyLines", () => {
 
   it("is the roster, the hub, then the GitHub budget", () => {
     const lines = companyLines(
-      { roles, live: new Set(["manager", "architect"]), budget, hub },
+      { roles, live: new Set(["manager", "architect"]), budget, hub, reboot: null },
       { rows: 30, width: 40 },
     ).map(plain);
     expect(lines[0]).toBe("ROSTER 2/5 hired");
@@ -216,7 +216,7 @@ describe("companyLines", () => {
     /** @param {HubLine} health */
     const hubLine = (health) =>
       companyLines(
-        { roles, live: new Set(), budget: null, hub: health },
+        { roles, live: new Set(), budget: null, hub: health, reboot: null },
         { rows: 30, width: 80 },
       ).find((line) => plain(line).startsWith("hub "));
     expect(hubLine(hub)).toContain("\x1b[1;32m");
@@ -225,11 +225,30 @@ describe("companyLines", () => {
 
   it("cuts an overflow with … +N lines", () => {
     const lines = companyLines(
-      { roles, live: new Set(), budget: null, hub },
+      { roles, live: new Set(), budget: null, hub, reboot: null },
       { rows: 4, width: 40 },
     );
     expect(lines).toHaveLength(4);
     expect(lines.at(-1)).toMatch(/^… \+\d+ lines$/);
+  });
+
+  it("shows a scheduled reboot first: the deadline and who is not ready (#345)", () => {
+    const reboot = {
+      requestedAt: 0,
+      reason: "new hubd",
+      by: "manager",
+      deadline: new Date(2026, 9, 25, 12, 5).getTime(),
+      bootSha: "abc",
+      ready: ["manager"],
+    };
+    const lines = companyLines(
+      { roles, live: new Set(["manager", "architect"]), budget, hub, reboot },
+      { rows: 30, width: 60 },
+    ).map(plain);
+    expect(lines[0]).toBe("REBOOT by 12:05: new hubd");
+    expect(lines[1]).toBe("  not ready (1): architect");
+    expect(lines[2]).toBe("");
+    expect(lines[3]).toBe("ROSTER 2/5 hired");
   });
 });
 
