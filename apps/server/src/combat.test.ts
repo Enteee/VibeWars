@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { DEFAULT_SKILL_BAR } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
-import { findFreePort, waitFor } from "./testing/harness.js";
+import { LOOPBACK_LIMITS, findFreePort, waitFor } from "./testing/harness.js";
 import { DEFAULT_MAX_ROOMS } from "./config.js";
 
 /**
@@ -34,6 +34,7 @@ describe("networked combat", () => {
       webRoot: undefined,
       devMode: false,
       maxRooms: DEFAULT_MAX_ROOMS,
+      ...LOOPBACK_LIMITS,
     });
     await server.listen(port, "127.0.0.1");
   });
@@ -718,6 +719,7 @@ describe("match rules over the network", () => {
       webRoot: undefined,
       devMode: false,
       maxRooms: DEFAULT_MAX_ROOMS,
+      ...LOOPBACK_LIMITS,
     });
     await server.listen(port, "127.0.0.1");
   });

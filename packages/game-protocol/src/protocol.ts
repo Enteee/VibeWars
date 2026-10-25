@@ -29,6 +29,25 @@ export const ROOM_LIMIT = 503;
 export const SERVER_FULL_MESSAGE = "The server is full. Try again in a minute.";
 
 /**
+ * The error code of a join refused because the server holds as many
+ * players as it can (#265). Told on the socket, after matchmaking, so it
+ * need not be an HTTP status; the player sees `SERVER_FULL_MESSAGE`.
+ */
+export const CLIENT_LIMIT = 4503;
+
+/**
+ * The error code of a join or matchmaking request refused because one
+ * network address is over its share (#265): too many sockets open, or too
+ * many matchmaking requests at once. An HTTP status, 429 Too Many
+ * Requests, because matchmaking answers with it as one.
+ */
+export const ADDRESS_LIMIT = 429;
+
+/** What a player is told when their network address is over its share. */
+export const ADDRESS_LIMIT_MESSAGE =
+  "Too many connections from your network. Close other VibeWars tabs and try again.";
+
+/**
  * Colyseus room name for the match simulation room.
  *
  * Players normally arrive here from a lobby (`ROOM_LOBBY`), but joining

@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { DEFAULT_SKILL_BAR } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
-import { findFreePort, waitFor } from "./testing/harness.js";
+import { LOOPBACK_LIMITS, findFreePort, waitFor } from "./testing/harness.js";
 import { DEFAULT_MAX_ROOMS } from "./config.js";
 
 /**
@@ -76,6 +76,7 @@ describe("joining with a build", () => {
       webRoot: undefined,
       devMode: false,
       maxRooms: DEFAULT_MAX_ROOMS,
+      ...LOOPBACK_LIMITS,
     });
     await server.listen(port);
   });

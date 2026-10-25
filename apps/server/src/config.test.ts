@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   ConfigError,
   DEFAULT_DEV_CLIENT_ORIGIN,
+  DEFAULT_MATCHMAKING_BURST,
+  DEFAULT_MAX_CLIENTS,
+  DEFAULT_MAX_CLIENTS_PER_ADDRESS,
   DEFAULT_MAX_ROOMS,
   loadConfig,
   parseBoolean,
@@ -22,6 +25,38 @@ describe("parseMaxRooms (#114)", () => {
   it("rejects zero, a negative number and anything not a number", () => {
     for (const raw of ["0", "-1", "abc", "1.5", "1e3"]) {
       expect(() => parseMaxRooms(raw), raw).toThrow(ConfigError);
+    }
+  });
+});
+
+describe("the seat and matchmaking limits (#265)", () => {
+  const limits = [
+    ["VIBEWARS_MAX_CLIENTS", "maxClients", DEFAULT_MAX_CLIENTS, 800],
+    [
+      "VIBEWARS_MAX_CLIENTS_PER_ADDRESS",
+      "maxClientsPerAddress",
+      DEFAULT_MAX_CLIENTS_PER_ADDRESS,
+      16,
+    ],
+    ["VIBEWARS_MATCHMAKING_BURST", "matchmakingBurst", DEFAULT_MATCHMAKING_BURST, 10],
+  ] as const;
+
+  it("take their defaults, and read a positive integer", () => {
+    for (const [name, key, fallback, expected] of limits) {
+      expect(fallback, name).toBe(expected);
+      expect(loadConfig({})[key], name).toBe(expected);
+      expect(loadConfig({ [name]: " " })[key], name).toBe(expected);
+      expect(loadConfig({ [name]: "7" })[key], name).toBe(7);
+    }
+  });
+
+  it("reject zero, a negative number and anything not a number, naming the variable", () => {
+    for (const [name] of limits) {
+      for (const raw of ["0", "-1", "abc", "1.5"]) {
+        expect(() => loadConfig({ [name]: raw }), `${name}=${raw}`).toThrow(
+          new ConfigError(`${name} must be a positive integer, got ${JSON.stringify(raw)}`),
+        );
+      }
     }
   });
 });
@@ -108,6 +143,9 @@ describe("loadConfig", () => {
       devMode: true,
       devClientOrigin: DEFAULT_DEV_CLIENT_ORIGIN,
       maxRooms: DEFAULT_MAX_ROOMS,
+      maxClients: DEFAULT_MAX_CLIENTS,
+      maxClientsPerAddress: DEFAULT_MAX_CLIENTS_PER_ADDRESS,
+      matchmakingBurst: DEFAULT_MATCHMAKING_BURST,
     });
   });
 

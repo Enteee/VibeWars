@@ -27,7 +27,10 @@ HTTP/WebSocket port, with no database and minimal configuration (§26–§27).
   to `0.0.0.0` (binds all interfaces, since the primary use case is "friends
   on the same LAN," not localhost-only), `VIBEWARS_WEB_ROOT` is optional,
   and `VIBEWARS_MAX_ROOMS` caps the rooms the server holds (default 200,
-  #114).
+  #114). `VIBEWARS_MAX_CLIENTS` caps its players (default 800),
+  `VIBEWARS_MAX_CLIENTS_PER_ADDRESS` one address's share of them (default
+  16), and `VIBEWARS_MATCHMAKING_BURST` one address's matchmaking requests
+  at once (default 10, refilling one a second, #265).
   `parsePort`/`parseBoolean` reject malformed values loudly rather than
   silently coercing `"abc"` into a fallback port.
 - `devenv.nix` will define a `containers.prod` entry (devenv's

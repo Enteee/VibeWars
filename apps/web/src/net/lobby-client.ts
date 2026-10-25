@@ -1,8 +1,12 @@
 import { Client, type Room } from "@colyseus/sdk";
 import type { PlayerBuild } from "@vibewars/game-core";
 import {
+  ADDRESS_LIMIT,
+  ADDRESS_LIMIT_MESSAGE,
+  CLIENT_LIMIT,
   PROTOCOL_MISMATCH_MESSAGE,
   ROOM_LIMIT,
+  SERVER_FULL_MESSAGE,
   PROTOCOL_VERSION,
   ROOM_LOBBY,
   normalizeLobbyCode,
@@ -182,18 +186,26 @@ export function isProtocolMismatch(error: unknown): boolean {
 }
 
 /**
- * Whether a failed create was the server holding all the rooms it can
- * (#114): matchmaking hands back `ROOM_LIMIT`. Quick Match and hosting say
- * so, rather than "could not connect", because waiting a minute fixes it.
+ * What to tell a player whose create or join the server refused for
+ * capacity, or `undefined` when it was some other failure. Quick Match,
+ * hosting and joining say so, rather than "could not connect", because
+ * waiting or closing a tab fixes it:
+ *
+ * - `ROOM_LIMIT`: the server holds all the rooms it can (#114);
+ * - `CLIENT_LIMIT`: it holds all the players it can (#265);
+ * - `ADDRESS_LIMIT`: this network is over its share (#265).
  *
  * @param error what the SDK rejected with
  */
-export function isServerFull(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    "code" in error &&
-    (error as Error & { readonly code: unknown }).code === ROOM_LIMIT
-  );
+export function capacityRefusal(error: unknown): string | undefined {
+  if (!(error instanceof Error) || !("code" in error)) {
+    return undefined;
+  }
+  const { code } = error as Error & { readonly code: unknown };
+  if (code === ROOM_LIMIT || code === CLIENT_LIMIT) {
+    return SERVER_FULL_MESSAGE;
+  }
+  return code === ADDRESS_LIMIT ? ADDRESS_LIMIT_MESSAGE : undefined;
 }
 
 export class LobbyNotFoundError extends Error {
