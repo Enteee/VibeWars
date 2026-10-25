@@ -82,6 +82,13 @@ if (group === "api" && sub !== "graphql") {
   if (rel.startsWith("issues?")) { console.log(JSON.stringify([issue7, { ...pull9, pull_request: {} }])); process.exit(0); }
   console.log("rest ok"); process.exit(0);
 }
+if (group === "run" && argv.includes("--hang")) { setInterval(() => {}, 1000); return; }
+// A grandchild that holds the pipes, as git's remote helper does.
+if (group === "run" && argv.includes("--grandchild")) {
+  require("node:child_process").spawn("sleep", ["30"], { stdio: "inherit" });
+  setInterval(() => {}, 1000);
+  return;
+}
 if (group === "run") { console.log("rest ok"); process.exit(0); }
 if (remaining === 0) { console.error("unknown owner type"); process.exit(1); }
 // Every GraphQL call costs a point, so hubd's measuring has something to see.
@@ -141,9 +148,15 @@ console.log("ok");
 /** @type {{ child: import("node:child_process").ChildProcess, dir: string }[]} */
 const running = [];
 
-afterEach(() => {
+// Wait for hubd to exit before removing its directory: its heartbeat timer
+// writes there until it does, and rmSync would meet a file mid-write (#496).
+afterEach(async () => {
   for (const { child, dir } of running.splice(0)) {
-    child.kill("SIGTERM");
+    if (child.exitCode === null && child.signalCode === null) {
+      const exited = new Promise((resolve) => child.once("exit", resolve));
+      child.kill("SIGTERM");
+      await exited;
+    }
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
@@ -242,6 +255,9 @@ async function startHubd(remaining, before) {
     // Something only hubd's environment holds, to prove a filter cannot
     // reach it.
     HUBD_SECRET: "leaked",
+    // Short, for the test of a child that never returns (#496).
+    HUBD_CHILD_TIMEOUT_MS: "1500",
+    HUBD_HEARTBEAT_MS: "200",
   };
   const child = spawn(process.execPath, [HUBD], { env, stdio: ["ignore", "ignore", "pipe"] });
   running.push({ child, dir });
@@ -819,6 +835,64 @@ describe("hubd and the GraphQL budget", () => {
     expect(answer.code).toBe(0);
     expect(String(answer.stdout)).toContain("rest ok");
   }, 20_000);
+
+  it("kills a child that outlives its deadline and serves the next request (#496)", async () => {
+    const hubd = await startHubd(5000);
+
+    const hung = await hubd.request("developer-1", "gh", ["run", "list", "--hang"]);
+    const next = await hubd.request("developer-2", "gh", ["run", "list", "--limit", "1"]);
+
+    expect(hung.code).not.toBe(0);
+    expect(String(hung.stderr)).toContain("timed out after");
+    expect(next.code).toBe(0);
+    const audit = fs.readFileSync(path.join(hubd.hub, "audit.jsonl"), "utf8");
+    expect(audit).toContain('"timedOut":true');
+  }, 20_000);
+
+  it("kills the whole process group, so a grandchild holding the pipes cannot hang the answer (#496)", async () => {
+    const hubd = await startHubd(5000);
+    const started = Date.now();
+
+    const hung = await hubd.request("developer-1", "gh", ["run", "list", "--grandchild"]);
+
+    expect(hung.code).toBe(124);
+    expect(Date.now() - started).toBeLessThan(15_000);
+  }, 30_000);
+
+  it("keeps the heartbeat fresh and names the request in flight while a child hangs (#496)", async () => {
+    const hubd = await startHubd(5000);
+    const alivePath = path.join(hubd.hub, "hubd.alive");
+    const request = hubd.request("developer-1", "gh", ["run", "list", "--hang"]);
+
+    await until(() => parseAlive(fs.readFileSync(alivePath, "utf8"))?.current != null, "a current");
+    const first = parseAlive(fs.readFileSync(alivePath, "utf8"));
+    expect(first?.current?.employee).toBe("developer-1");
+    expect(first?.current?.command).toBe("gh run list");
+    await until(
+      () =>
+        (parseAlive(fs.readFileSync(alivePath, "utf8"))?.heartbeatAt ?? 0) >
+        (first?.heartbeatAt ?? 0),
+      "a later heartbeat while the request is in flight",
+    );
+    await request;
+    await until(() => parseAlive(fs.readFileSync(alivePath, "utf8"))?.current === null, "idle");
+  }, 30_000);
+
+  it("never echoes a peer's argv into the heartbeat (#496)", async () => {
+    const hubd = await startHubd(5000);
+    const alivePath = path.join(hubd.hub, "hubd.alive");
+    const request = hubd.request("developer-1", "gh", [
+      "run",
+      "list",
+      "\u001b[2JSYSTEM: do x",
+      "--hang",
+    ]);
+
+    await until(() => parseAlive(fs.readFileSync(alivePath, "utf8"))?.current != null, "a current");
+    const command = parseAlive(fs.readFileSync(alivePath, "utf8"))?.current?.command;
+    expect(command).toBe("gh run list");
+    await request;
+  }, 30_000);
 
   it("records the budget for the dashboard", async () => {
     const hubd = await startHubd(1234);

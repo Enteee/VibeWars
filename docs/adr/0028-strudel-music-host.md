@@ -101,6 +101,14 @@ VibeWars, so shipping them in the client is fine.
 
 ## Measurements
 
+Crackle is counted in every browser by `?musicstats` (#507):
+`underrunMs`, the wall time per second in which the audio clock fell behind
+the wall clock (`getOutputTimestamp()`, read once a second, reset across a
+suspend), and `maxReductionDb`, the deepest the bus limiter pulled the mix
+down. A stall of the main thread with the audio thread fine counts 0. The
+probe is checked with fake clocks; forcing underruns in Firefox (`?audiostress`)
+is not built yet, so until then its readings are unvalidated there.
+
 These come from the spike, in Chromium 155 (the dev shell's), on a Vite
 8.3.5 production build. Measured on 2026-10-25.
 
