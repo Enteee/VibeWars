@@ -76,7 +76,7 @@ Backlog`, judged against the card's column in hubd's copy of the board
   the jails below the host (a process cannot undo it), and `--core=0` stops
   core dumps. hubd, the supervisor, the dashboard, the Telegram sidecar and
   presence stay outside the slice: they must survive a jail's OOM. A host
-  without a user manager or memory delegation is refused, never run
+  without a user manager, or without the memory, pids, cpu and io controllers delegated to it is refused, never run
   uncapped. Known limits, accepted: a jailed process may lower its own
   `oom_score_adj` to 0 (pinning it needs CAP_SYS_RESOURCE), so the cap is
   the guarantee and the score the tie-breaker; `IOWeight` does nothing

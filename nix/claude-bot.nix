@@ -158,11 +158,20 @@ let
       echo "claude-bot: could not set the jails' resource cap (is the systemd user manager running?), so no jail starts." >&2
       exit 1
     fi
-    memoryMax="$("$systemctl" --user show vibewars-jails.slice -p MemoryMax --value)"
-    if [ -z "$memoryMax" ] || [ "$memoryMax" = "infinity" ]; then
-      echo "claude-bot: the user manager does not delegate the memory controller; the jails would be uncapped, so no jail starts." >&2
-      exit 1
-    fi
+    # A property stored on the slice proves nothing: without the controller
+    # delegated to the user manager the kernel ignores it. So ask the
+    # manager's own cgroup which controllers it has.
+    managerCgroup="$("$systemctl" show "user@$(${pkgs.coreutils}/bin/id -u).service" -p ControlGroup --value)"
+    controllers="$(cat "/sys/fs/cgroup$managerCgroup/cgroup.controllers" 2>/dev/null || true)"
+    for controller in memory pids cpu io; do
+      case " $controllers " in
+        (*" $controller "*) ;;
+        (*)
+          echo "claude-bot: the systemd user manager does not have the $controller controller delegated; the jails would be uncapped, so no jail starts." >&2
+          exit 1
+          ;;
+      esac
+    done
   '';
 
   # `claude-bot --smoke <role>` runs this inside the role's jail instead of

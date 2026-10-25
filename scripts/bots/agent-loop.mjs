@@ -251,7 +251,7 @@ async function holdForDisk(root, dir) {
       tellCompany(
         root,
         "disk-hold",
-        `Disk nearly full (${gib(free)} GiB free on /): agent turns are on hold until ${gib(RELEASE_AT)} GiB is free.`,
+        `Disk nearly full (${gib(free)} GiB free where the repository is): agent turns are on hold until ${gib(RELEASE_AT)} GiB is free.`,
       );
     } catch {
       // Another loop already said so.
