@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { describeOutcome, describeRefusal, formatClock, skillSlotHtml } from "./hud.js";
+import {
+  describeOutcome,
+  describeRefusal,
+  formatClock,
+  muteButtonState,
+  skillSlotHtml,
+} from "./hud.js";
 
 describe("formatClock", () => {
   it("formats seconds as m:ss", () => {
@@ -74,5 +80,17 @@ describe("skillSlotHtml", () => {
 
   it("has no badge for a skill this client does not know", () => {
     expect(skillSlotHtml(slot("nobody.unknown"), 0)).not.toContain("skill-type-badge");
+  });
+});
+
+describe("muteButtonState", () => {
+  it("keeps one name and says with aria-pressed whether the sound is muted", () => {
+    expect(muteButtonState(false)).toMatchObject({ label: "Mute sounds", pressed: "false" });
+    expect(muteButtonState(true)).toMatchObject({ label: "Mute sounds", pressed: "true" });
+  });
+
+  it("shows what the sound is now, not what a click does", () => {
+    expect(muteButtonState(false).icon).toMatch(/sound-on\.svg$/);
+    expect(muteButtonState(true).icon).toMatch(/sound-off\.svg$/);
   });
 });

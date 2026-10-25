@@ -486,6 +486,30 @@ body {
   pointer-events: none;
 }
 
+.hud-mute {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.9rem;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.hud-mute:hover,
+.hud-mute:focus-visible {
+  border-color: var(--accent);
+}
+
+.hud-mute img {
+  width: 24px;
+  height: 24px;
+}
+
 .hud-result {
   position: absolute;
   top: 38%;

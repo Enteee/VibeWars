@@ -20,7 +20,7 @@
 /** A piece of gear behaviour this project does not simulate. */
 export type MissingGearMechanic =
   | "stances"
-  | "attack-state"
+  | "armor-while-attacking"
   | "attribute-headgear"
   | "profession-insignias"
   | "weapon-upgrades"
@@ -55,13 +55,13 @@ export const GEAR_OMISSIONS: readonly GearOmission[] = Object.freeze([
     affects: [],
   },
   {
-    mechanic: "attack-state",
-    description: "knowing that a combatant is mid-attack, for armor and skills to key off",
+    mechanic: "armor-while-attacking",
+    description: "armor that applies while its wearer is attacking: Brawler's Insignia",
     kind: "gap",
     reason:
-      "There are no weapon auto-attacks and every attack skill is instant, so 'while " +
-      "attacking' is never true. The reference's Brawler's Insignia is therefore not in the " +
-      "catalog rather than shipped as a stat line that is permanently zero (ADR-0019).",
+      "Weapon auto-attack now gives every combatant an attack state (ADR-0026), but armor " +
+      "does not key off it yet. Brawler's Insignia stays out of the catalog until it does, " +
+      "rather than shipping as a stat line nothing reads (ADR-0019).",
     affects: [],
   },
   {

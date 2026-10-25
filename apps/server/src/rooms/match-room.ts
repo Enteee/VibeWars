@@ -585,8 +585,10 @@ export class MatchRoom extends Room {
 
     for (const entry of result.log) {
       // On the wire, a status tick is sent as its bearer's, with no
-      // skill: who applied the statuses is the combat log's business.
-      const casterSessionId = entry.cause === "skill" ? entry.sourceId : entry.events[0]?.targetId;
+      // skill: who applied the statuses is the combat log's business. A
+      // weapon swing goes out as its attacker's, with no skill.
+      const casterSessionId =
+        entry.cause === "degeneration" ? entry.events[0]?.targetId : entry.sourceId;
       this.broadcastCombatEvents(
         casterSessionId ?? "",
         entry.skillId ?? "",

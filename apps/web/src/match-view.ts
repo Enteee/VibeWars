@@ -1,6 +1,9 @@
 import type { PlayerBuild } from "@vibewars/game-core";
 import type { WallDescriptor } from "@vibewars/game-protocol";
 
+import { attachMatchSounds } from "./audio/match-sounds.js";
+import { saveMuted } from "./audio/mute-preference.js";
+import { soundPlayer } from "./audio/sound-player.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { connectToMatch, type MatchTarget } from "./net/match-client.js";
 import type { MatchConnection, MatchSnapshot } from "./net/match-connection.js";
@@ -11,6 +14,7 @@ import {
   createHud,
   describeRefusal,
   flashMessage,
+  renderMute,
   renderSkillBar,
   updateHud,
   updateRecharges,
@@ -93,6 +97,16 @@ export function toArenaSnapshot(
   };
 }
 
+/** Whether a key press is someone typing, which no match key may steal. */
+function isTyping(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    (target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target.isContentEditable)
+  );
+}
+
 export async function startMatchView(
   parent: HTMLElement,
   endpoint: string,
@@ -114,6 +128,16 @@ export async function startMatchView(
   };
   renderSkillBar(hud, connection.skillBar, useSkill);
 
+  const sounds = soundPlayer();
+  const matchSounds = attachMatchSounds(connection, sounds);
+  const toggleMute = (): void => {
+    sounds.setMuted(!sounds.muted);
+    saveMuted(sounds.muted);
+    renderMute(hud, sounds.muted);
+  };
+  renderMute(hud, sounds.muted);
+  hud.mute.addEventListener("click", toggleMute);
+
   const detachMovement = attachKeyboardMoveInput(window, (direction) => {
     if (direction.x === 0 && direction.y === 0) {
       connection.sendIntent({ kind: "stop" });
@@ -125,6 +149,12 @@ export async function startMatchView(
   const handleKeyDown = (event: KeyboardEvent): void => {
     if (event.key === "Escape") {
       callbacks.onLeave();
+      return;
+    }
+    if (event.key === "m" || event.key === "M") {
+      if (!event.repeat && !isTyping(event.target)) {
+        toggleMute();
+      }
       return;
     }
     if (!/^[0-9]$/.test(event.key)) {
@@ -140,9 +170,10 @@ export async function startMatchView(
   let latestMatch = connection.getSnapshot();
   let latestArena = toArenaSnapshot(latestMatch, walls);
 
-  if (callbacks.onConnectionChange !== undefined) {
-    connection.onConnectionChange(callbacks.onConnectionChange);
-  }
+  connection.onConnectionChange((state) => {
+    matchSounds.connectionChanged(state);
+    callbacks.onConnectionChange?.(state);
+  });
 
   connection.onCombat((message) => {
     showCombatFeedback(scene, message, latestMatch);
@@ -154,6 +185,7 @@ export async function startMatchView(
 
   const offFrame = viewport.onFrame(() => {
     latestMatch = connection.getSnapshot();
+    matchSounds.snapshot(latestMatch);
     latestArena = toArenaSnapshot(latestMatch, walls);
     scene.setSnapshot(latestArena);
 
@@ -180,7 +212,13 @@ export async function startMatchView(
       offPointer();
       window.removeEventListener("keydown", handleKeyDown);
       detachMovement();
+      matchSounds.dispose();
+      // The scoreboard, result and mute button sit beside the HUD root, in
+      // the shared viewport, so they go one by one or pile up per match.
       hud.root.remove();
+      hud.scoreboard.remove();
+      hud.result.remove();
+      hud.mute.remove();
       viewport.destroy();
       await connection.disconnect();
     },

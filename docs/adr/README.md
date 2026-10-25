@@ -29,3 +29,4 @@ rewriting history.
 | [0021](0021-ci-in-devenv.md)               | CI in the devenv shell, every git hook                 |
 | [0023](0023-one-telegram-bot.md)           | One Telegram bot for the whole company                 |
 | [0024](0024-telegram-topics.md)            | Four Telegram topics: General, Bots, Manager, Operator |
+| [0026](0026-weapon-auto-attack.md)         | Weapon auto-attack                                     |
