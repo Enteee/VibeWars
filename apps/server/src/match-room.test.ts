@@ -179,6 +179,28 @@ describe("match room", () => {
     await room.leave();
   });
 
+  it("keeps a player inside the map's edge (#244)", async () => {
+    // qa-tester's repro: from the first spawn, (80, 200), left for 3 s then
+    // up for 3 s used to end at (-460, -340), off everyone's screen.
+    const client = new Client(endpoint);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
+    const radius = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
+    const self = () => room.state.players.get(room.sessionId);
+    try {
+      await waitFor(() => self() !== undefined, { label: "self to appear" });
+      room.send("intent", { kind: "move", dirX: -1, dirY: 0 });
+      await waitFor(() => self()?.x === radius, { timeoutMs: 3000, label: "the left edge" });
+      room.send("intent", { kind: "move", dirX: 0, dirY: -1 });
+      await waitFor(() => self()?.y === radius, { timeoutMs: 3000, label: "the top edge" });
+      // Still pushing: it stays put rather than creeping off.
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(self()?.x).toBe(radius);
+      expect(self()?.y).toBe(radius);
+    } finally {
+      await room.leave();
+    }
+  });
+
   it("syncs where a player faces, to two decimals (#187)", async () => {
     const client = new Client(endpoint);
     const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
