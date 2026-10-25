@@ -79,6 +79,12 @@ export interface CombatRules {
    */
   readonly projectileTolerance: number;
   /**
+   * How long an attack's approach may find no way to its target before the
+   * attack ends with "can't reach" (#218). A failure that brief is a body
+   * squeezed into a corner, not a target that cannot be reached.
+   */
+  readonly unreachableAfterSeconds: number;
+  /**
    * How much of a target's recent movement a shot is led by. Long enough
    * that tapping back and forth averages out to standing still, short
    * enough that a real change of course shows.
@@ -128,6 +134,7 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
     baseEnergy: 50,
     minimumMaxHealth: 100,
     projectileTolerance: 10,
+    unreachableAfterSeconds: 0.5,
     trackWindowSeconds: 0.6,
   }),
   attributes: Object.freeze({

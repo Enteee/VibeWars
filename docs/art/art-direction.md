@@ -136,6 +136,32 @@ When a weapon attack lands or misses (#161), the scene flashes the swing:
   target, is yellow, and does not fade, so the two cannot be confused.
 - **Off under reduced motion.** The damage number still says what happened.
 
+### Damage and heal numbers
+
+Above a body, the column is already full: the health bar at r + 8 … r + 12,
+the cast bar at r + 15 … r + 19, the name with its bottom at r + 22. A
+number that starts on the bar and rises through the name hides both, and the
+name it hides is your target's.
+
+- **They rise beside the body, not over it.** Left-aligned at x = r + 4 to
+  the right of the centre, clear of the 34-px bar, with the first line's
+  bottom at y = 8 below the centre.
+- **They rise straight up, 24 px a second for 1.2 s**, so a single number ends with its
+  top at 34 above the centre, still under the name.
+- **Numbers landing together stack a line apart, upward, at most four** (#54).
+  A second line reaches the name's band late in its rise, so a burst may
+  brush the name for a moment; a single hit, the common case, never does.
+- **Every number wears a 3 px `edge` outline**, stroke under fill (in
+  Phaser: `stroke: "#0b0f14", strokeThickness: 3`). In melee the attacker
+  stands where the target's numbers rise, so they cross their body, bar and
+  name. Plain, they are 1.0 to 1.9:1 there: a heal over a full health bar is
+  the bar's own green and vanishes. On the outline they are 7.6:1 (damage)
+  and 12.5:1 (heal), whatever lies under them. Weapon hits keep their 0.8
+  alpha, outline included. `node scripts/assets/number-outline-study.mjs`
+  draws the study below.
+
+![Number outline study](number-outline-study.svg)
+
 ### Projectiles
 
 Ranged weapon shots in flight (#161). Each is a sprite on a 32×12 grid,
@@ -231,6 +257,16 @@ team:
 Recommendation: **A**, and if both professions should show, put the pair in
 the target panel, where there is room and the profession colours are
 allowed.
+
+### Name labels (study, not decided)
+
+Every body carries its name, 11 px and centred, so two bodies a name's
+width apart already collide, and a team fight smears names over the bars.
+Issue #253 proposes names only on your target and the body under the cursor,
+with Alt showing them all. `node scripts/assets/name-label-study.mjs` draws
+the same 8v8 clump both ways:
+
+![Name label study](name-label-study.svg)
 
 ### Skill type badges
 

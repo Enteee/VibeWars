@@ -1,0 +1,61 @@
+name: e2e soak
+
+# The whole e2e suite, both projects, five times over on main, nightly
+# (#255). e2e-repeat (#216) catches a flake in the specs a pull request
+# changes. This catches the ones already on main, before they turn some
+# unrelated pull request red by chance.
+#
+# Deliberately not a pull request or push check. hubd refuses a pull request
+# on any failing check, but it reads checks only at the pull request's head
+# commit (hubd.mjs restChecks). A scheduled run posts its check on main's
+# head, which no guard reads, so this blocks nothing. A red run is for
+# cicd-engineer to triage and file as `Flaky e2e: <spec:line>`, not a gate.
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One soak at a time. A dispatch while the nightly one runs waits instead of
+# racing it for the same runner minutes.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  soak:
+    name: e2e soak
+    runs-on: ubuntu-latest
+    # Five suites at about 3 minutes each, with ample headroom.
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/devenv
+
+      # e2e serves the built client, as in ci.yml's e2e job.
+      - name: Build
+        run: devenv shell -- pnpm run build
+
+      # No maxFailures in playwright.config.ts, so a failure doesn't stop the
+      # run: the list reporter names each failing test, every time it fails.
+      - name: Repeat the suite five times
+        run: >-
+          devenv shell --
+          pnpm exec playwright test
+          --repeat-each=5 --retries=0 --workers=1
+
+      - name: Upload Playwright output
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: e2e-soak-output
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

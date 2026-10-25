@@ -157,6 +157,15 @@ export interface SwingFlash {
 /** Every body's radius, as drawn: the ruleset's collision radius. */
 export const ACTOR_RADIUS = 14;
 
+/**
+ * Where a damage or heal number starts, from the body's centre: right of
+ * the health bar, clear of the name ("Damage and heal numbers" in
+ * docs/art/art-direction.md, #262). Here rather than with the other
+ * floating-text constants, because it needs `ACTOR_RADIUS` declared first.
+ */
+export const FLOATING_TEXT_OFFSET_X = ACTOR_RADIUS + 4;
+export const FLOATING_TEXT_OFFSET_Y = 8;
+
 /** Short, so a dagger's rapid hits read as separate flashes, never a standing ring. */
 export const SWING_FLASH_SECONDS = 0.12;
 /** Outside the body: the attacker's radius plus this. */

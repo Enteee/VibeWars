@@ -494,7 +494,8 @@ export class ArenaScene extends Phaser.Scene {
           fontFamily: "ui-monospace, monospace",
           color: `#${floating.colour.toString(16).padStart(6, "0")}`,
         });
-        object.setOrigin(0.5, 1);
+        // Left-aligned, bottom on the position: it grows away from the bar.
+        object.setOrigin(0, 1);
         this.floatingTextObjects.set(floating.id, object);
       }
 
