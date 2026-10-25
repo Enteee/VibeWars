@@ -1,5 +1,7 @@
 import type { TrainingScenario } from "@vibewars/game-core";
 
+import type { KeyLabeller } from "../input/key-labels.js";
+import { actionLabel, codeLabel, type KeyAction, type Keymap } from "../input/keymap.js";
 import type { StoredCharacter } from "../storage/schema.js";
 
 /**
@@ -29,13 +31,29 @@ export function buildSignature(character: StoredCharacter): string {
   ]);
 }
 
-/** The bar slot a key casts, or `undefined` for any other key. 1–8, as in a match. */
-export function slotForKey(key: string, barLength: number): number | undefined {
-  if (!/^[1-8]$/.test(key)) {
-    return undefined;
-  }
-  const slot = Number.parseInt(key, 10) - 1;
-  return slot < barLength ? slot : undefined;
+const ARROW_CODES = ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"];
+
+/**
+ * The hint under an armed arena, from the keymap (#302): "arrows move ·
+ * Q–F cast · …" by default, "WASD move · 1–8 cast · …" in Classic.
+ */
+export function armedHint(keymap: Keymap, label: KeyLabeller = codeLabel): string {
+  const moves = (["move-up", "move-left", "move-down", "move-right"] as const).map(
+    (action) => keymap[action][0],
+  );
+  const move = moves.every((code, index) => code === ARROW_CODES[index])
+    ? "arrows"
+    : moves.map((code) => (code === undefined ? "" : label(code))).join("");
+  const first = actionLabel(keymap, "skill-1", label);
+  const last = actionLabel(keymap, "skill-8", label);
+  const key = (action: KeyAction): string => actionLabel(keymap, action, label).toLowerCase();
+  return [
+    `${move} move`,
+    `${first}–${last} cast`,
+    `${key("target-next")}/click to target`,
+    `${key("attack")}/double-click attack`,
+    "esc to release",
+  ].join(" · ");
 }
 
 /**

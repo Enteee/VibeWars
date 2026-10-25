@@ -1,6 +1,8 @@
+import { isShortcut, type Keymap } from "./keymap.js";
+
 type Listenable = Pick<EventTarget, "addEventListener" | "removeEventListener">;
 
-/** Whether Ctrl is held right now, which shows every name (#253). */
+/** Whether the names key is held right now, which shows every name (#253). */
 export interface NameReveal {
   held(): boolean;
   /** Stop listening. */
@@ -8,54 +10,54 @@ export interface NameReveal {
 }
 
 /**
- * Track Ctrl on `target`'s `keydown`/`keyup`: GW1's show-names key. Alt
- * would have been the other choice, but a lone Alt released on Windows
- * focuses the browser's menu bar, and the game loses the keyboard.
+ * Track the keymap's `show-names` keys on `target`'s `keydown`/`keyup`:
+ * GW1's show-names key, which was Ctrl. No keymap binds Ctrl, Alt or
+ * Meta, so a show-names press with one of them held is the browser's
+ * and reveals nothing (#302).
  *
  * A keyup that happens while `target` is unfocused never reaches it, so
- * Ctrl would stick on: `target`'s own `blur` (the Training Ground stage
- * losing focus to Esc or the editor), the page's, and its turning hidden
- * all count as letting go. Never `preventDefault`s: Ctrl+R and Ctrl+W must still
- * work.
+ * the key would stick on: `target`'s own `blur` (the Training Ground
+ * stage losing focus to Esc or the editor), the page's, and its turning
+ * hidden all count as letting go. Never `preventDefault`s.
  *
  * @param page where focus and visibility changes are heard; the real
  *   window and document unless a test passes stand-ins
  */
 export function attachNameReveal(
   target: Listenable,
+  keymap: Keymap,
   page: {
     readonly window: Listenable;
     readonly document: Listenable & { readonly visibilityState: string };
   } = { window, document },
 ): NameReveal {
-  let held = false;
+  const down = new Set<string>();
+  const codes = keymap["show-names"];
 
   const onKeyDown = (event: Event): void => {
-    if ((event as KeyboardEvent).key === "Control") {
-      held = true;
+    const keyEvent = event as KeyboardEvent;
+    if (codes.includes(keyEvent.code) && !isShortcut(keyEvent)) {
+      down.add(keyEvent.code);
     }
   };
   const onKeyUp = (event: Event): void => {
-    if ((event as KeyboardEvent).key === "Control") {
-      held = false;
-    }
+    down.delete((event as KeyboardEvent).code);
   };
   const letGo = (): void => {
-    held = false;
+    down.clear();
   };
   const onVisibility = (): void => {
     if (page.document.visibilityState === "hidden") {
-      held = false;
+      down.clear();
     }
   };
-
   target.addEventListener("keydown", onKeyDown);
   target.addEventListener("keyup", onKeyUp);
   target.addEventListener("blur", letGo);
   page.window.addEventListener("blur", letGo);
   page.document.addEventListener("visibilitychange", onVisibility);
   return {
-    held: () => held,
+    held: () => down.size > 0,
     detach() {
       target.removeEventListener("keydown", onKeyDown);
       target.removeEventListener("keyup", onKeyUp);
