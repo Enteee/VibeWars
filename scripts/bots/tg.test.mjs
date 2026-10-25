@@ -57,6 +57,14 @@ function wait(env, timeout) {
   return { code: result.status, stdout: result.stdout, ms: Date.now() - started };
 }
 
+describe("tg wait --timeout (#325)", () => {
+  it("caps a longer wait at 540 s and says so first", () => {
+    const { env } = bus({ context: { tokens: 134_000, ceiling: 120_000 } });
+
+    expect(wait(env, 9999).stdout).toMatch(/^\(tg wait: --timeout capped at 540 s\)\n/);
+  });
+});
+
 const OVER = { tokens: 134_000, ceiling: 120_000 };
 
 describe("tg wait, past the context ceiling", () => {

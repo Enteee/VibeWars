@@ -10,6 +10,8 @@ import {
   isBindable,
   isShortcut,
   parseKeymap,
+  presetOf,
+  rebind,
 } from "./keymap.js";
 import { layoutLabeller, loadLayoutLabeller } from "./key-labels.js";
 
@@ -172,5 +174,65 @@ describe("key labels", () => {
       keyboard: { getLayoutMap: () => Promise.resolve(new Map([["KeyW", "z"]])) },
     });
     expect(labeller?.("KeyW")).toBe("Z");
+  });
+});
+
+describe("rebind (#309)", () => {
+  it("binds a free key to the cell asked for", () => {
+    const { map, displaced } = rebind(DEFAULT_KEYMAP, "skill-1", 1, "KeyZ");
+    expect(map["skill-1"]).toEqual(["KeyQ", "KeyZ"]);
+    expect(displaced).toBeUndefined();
+    expect(parseKeymap(map)).toEqual(map);
+  });
+
+  it("replaces the key a cell held", () => {
+    const { map } = rebind(DEFAULT_KEYMAP, "skill-1", 0, "KeyZ");
+    expect(map["skill-1"]).toEqual(["KeyZ"]);
+    expect(actionForCode(map, "KeyQ")).toBeUndefined();
+  });
+
+  it("moves a taken key off the action that had it, and says which", () => {
+    const { map, displaced } = rebind(DEFAULT_KEYMAP, "skill-2", 0, "KeyQ");
+    expect(map["skill-2"]).toEqual(["KeyQ"]);
+    expect(map["skill-1"]).toEqual([]);
+    expect(displaced).toEqual({ action: "skill-1", code: "KeyQ" });
+    expect(parseKeymap(map)).toEqual(map);
+  });
+
+  it("moves a key between an action's own cells, displacing nothing", () => {
+    const { map, displaced } = rebind(KEYMAP_PRESETS.classic, "move-up", 1, "KeyW");
+    expect(map["move-up"]).toEqual(["ArrowUp", "KeyW"]);
+    expect(displaced).toBeUndefined();
+  });
+
+  it("clears a cell", () => {
+    const { map, displaced } = rebind(DEFAULT_KEYMAP, "mute", 0, null);
+    expect(map.mute).toEqual([]);
+    expect(displaced).toBeUndefined();
+    expect(parseKeymap(map)).toEqual(map);
+  });
+
+  it("promotes the secondary when the primary is cleared", () => {
+    expect(rebind(KEYMAP_PRESETS.classic, "move-up", 0, null).map["move-up"]).toEqual(["ArrowUp"]);
+    expect(rebind({ ...DEFAULT_KEYMAP, mute: [] }, "mute", 1, "KeyN").map.mute).toEqual(["KeyN"]);
+  });
+
+  it("promotes the other action's secondary when its primary is taken", () => {
+    const { map } = rebind(KEYMAP_PRESETS.classic, "skill-1", 0, "KeyW");
+    expect(map["move-up"]).toEqual(["ArrowUp"]);
+    expect(parseKeymap(map)).toEqual(map);
+  });
+
+  it("throws on a key the game never binds", () => {
+    expect(() => rebind(DEFAULT_KEYMAP, "skill-1", 0, "ControlLeft")).toThrow();
+  });
+});
+
+describe("presetOf (#309)", () => {
+  it("names either preset, and nothing for a custom map", () => {
+    expect(presetOf(KEYMAP_PRESETS.vibewars)).toBe("vibewars");
+    expect(presetOf(KEYMAP_PRESETS.classic)).toBe("classic");
+    expect(presetOf(rebind(DEFAULT_KEYMAP, "skill-1", 0, "KeyZ").map)).toBeUndefined();
+    expect(presetOf(rebind(DEFAULT_KEYMAP, "mute", 1, "KeyN").map)).toBeUndefined();
   });
 });
