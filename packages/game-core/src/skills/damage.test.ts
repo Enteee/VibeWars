@@ -352,3 +352,35 @@ describe("resolved loadouts feeding the pipeline", () => {
     expect(resolved.equipment.baseArmor).toBe(80);
   });
 });
+
+describe("the off-hand a resolved loadout holds (#276)", () => {
+  const offhandOf = (profession: "warrior" | "elementalist" | "ranger", weaponId?: "hammer") => {
+    const equipment = defaultEquipmentFor(profession);
+    return resolveLoadout(
+      {
+        primaryProfession: profession,
+        allocatedRanks: new Map(),
+        equipment:
+          weaponId === undefined
+            ? equipment
+            : {
+                ...equipment,
+                mainHand: { weaponId, requirementAttributeId: null },
+              },
+      },
+      RULES,
+    ).equipment.offhandId;
+  };
+
+  it("names the shield or focus held beside a one-handed weapon", () => {
+    expect(offhandOf("warrior")).toBe("shield");
+    expect(offhandOf("elementalist")).toBe("focus");
+  });
+
+  it("names none for an empty off-hand, or one beside a two-handed weapon", () => {
+    expect(offhandOf("ranger")).toBeUndefined();
+    // Validation refuses this pairing; a shield that slipped through grants nothing, so it shows nothing.
+    expect(offhandOf("warrior", "hammer")).toBeUndefined();
+    expect(unarmedResolvedEquipment(60).offhandId).toBeUndefined();
+  });
+});

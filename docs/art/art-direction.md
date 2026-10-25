@@ -98,6 +98,7 @@ so the silhouette identifies the profession and the colour only supports it.
 | Swing flash | Attacker's team colour arc between it and its target  |
 | Projectile  | Weapon silhouette, tinted the shooter's team colour   |
 | Weapon mark | `ink` line in the facing direction, tip by weapon     |
+| Walk marker | `ink` cross of four ticks where you clicked the floor |
 
 The status plates differ in outline as well as colour. Hex purple and
 enchantment teal are close for a deuteranope (simulated ΔE ≈ 18); diamond
@@ -135,6 +136,29 @@ When a weapon attack lands or misses (#161), the scene flashes the swing:
 - **It hugs the attacker, never the target.** The target ring hugs the
   target, is yellow, and does not fade, so the two cannot be confused.
 - **Off under reduced motion.** The damage number still says what happened.
+
+### Walk marker
+
+Where you click the floor to walk (#310), the scene marks the spot:
+
+- **Four short `ink` ticks in an ×**, at 45°, 135°, 225° and 315°. Each runs
+  from 3 to 8 units out from the click point, and the centre stays open.
+  Drawn in code, cased like the weapon mark: a 4 px `edge` casing first, then
+  a 2 px `ink` core, butt ends.
+- **It fades from full to zero alpha over 400 ms**, then is removed. A new
+  click removes the old marker at once, so there is only ever one. It shows
+  even when the walk is cut short or ends at the nearest reachable point.
+- **It is drawn under the actors**, with the area flash, so it never hides a
+  body, a bar or a plate.
+- **Only you see it.** It is client-only, so it is `ink`, the colour of "you"
+  (your rim, your weapon mark), never a team colour.
+- **Reduced motion:** held at full alpha for 400 ms, then removed.
+
+Why not a ring: every ring on the floor already means something. A
+team-coloured ring that fades in 0.4 s is the area flash, a yellow ring is
+your target, and a small ink ring beside a body is a focus. An × of ticks
+is the only shape here that is a point, not a thing, and the open centre
+shows exactly where you clicked.
 
 ### Damage and heal numbers
 

@@ -12,6 +12,7 @@ const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 const FIREBALL = "elementalist.fireball";
 const ORISON = "monk.orison-of-healing";
+const BARRAGE = "ranger.barrage";
 const MATCH: MatchRules = { scoreToWin: 2, timeLimitSeconds: 600, respawnSeconds: 8 };
 
 function spec(id: string, team: number, spawn: Vec2, extra: Partial<ParticipantSpec> = {}) {
@@ -626,5 +627,120 @@ describe("determinism", () => {
     const first = run();
     expect(first.log.length).toBeGreaterThan(10);
     expect(run()).toEqual(first);
+  });
+});
+
+describe("moving cancels a cast (#279)", () => {
+  it("a new move mid-cast cancels it: still paid for, no effect, no recharge, logged", () => {
+    const sim = duel();
+    const a = participant(sim, "a");
+    sim.setTarget("a", "b");
+    sim.requestSkill("a", 0);
+    stepFor(sim, 0.5);
+
+    sim.setInputDirection("a", vec2(0, 1));
+    expect(a.combatant.cast.isCasting).toBe(false);
+    const log = stepFor(sim, 2);
+
+    expect(log).toEqual([
+      {
+        tick: 10,
+        atSeconds: expect.closeTo(0.5, 6) as number,
+        cause: "skill",
+        sourceId: "a",
+        skillId: FIREBALL,
+        weaponId: undefined,
+        area: undefined,
+        events: [{ kind: "cancelled", targetId: "a", skillId: FIREBALL }],
+      },
+    ]);
+    expect(participant(sim, "b").combatant.health).toBe(participant(sim, "b").combatant.maxHealth);
+    expect(a.combatant.cast.rechargeRemaining.has(FIREBALL)).toBe(false);
+    // Fireball's 10 energy stays spent; 2.5 s of regeneration since.
+    expect(a.combatant.energy).toBeCloseTo(
+      a.combatant.maxEnergy - 10 + RULES.resources.energyRegenPerSecond * 2.5,
+      6,
+    );
+    // Not recharging, so it can be cast again at once.
+    expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
+  });
+
+  it("a direction held as the cast begins stops the body, and the cast resolves", () => {
+    const sim = duel();
+    const a = participant(sim, "a");
+    sim.setTarget("a", "b");
+    sim.setInputDirection("a", vec2(0, 1));
+    stepFor(sim, 0.25);
+    const before = a.position;
+
+    sim.requestSkill("a", 0);
+    // Up to the tick before it lands: resolving starts an attack on b,
+    // whose approach walks.
+    const log = stepFor(sim, 1 - DT);
+    expect(a.position).toEqual(before);
+    log.push(...stepFor(sim, DT));
+
+    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([["damage"]]);
+    expect(a.combatant.cast.rechargeRemaining.has(FIREBALL)).toBe(true);
+  });
+
+  it("an instant leaves a held walk alone, and a move in its tick does not cancel it", () => {
+    const archer = () =>
+      new MatchSimulation({
+        seed: "instant",
+        participants: [
+          spec("a", 0, vec2(0, 0), { skillBar: [BARRAGE] }),
+          spec("b", 1, vec2(200, 0)),
+        ],
+      });
+
+    const held = archer();
+    held.setTarget("a", "b");
+    held.setInputDirection("a", vec2(0, 1));
+    expect(held.requestSkill("a", 0)?.check).toEqual({ ok: true });
+    expect(stepFor(held, 0.5).map((entry) => entry.skillId)).toEqual([BARRAGE]);
+    expect(participant(held, "a").position.y).toBeCloseTo(
+      RULES.movement.maxSpeedUnitsPerSecond * 0.5,
+      6,
+    );
+
+    const moved = archer();
+    moved.setTarget("a", "b");
+    moved.requestSkill("a", 0);
+    moved.setInputDirection("a", vec2(0, 1));
+    expect(moved.step(DT).log.map((entry) => entry.events.map((event) => event.kind))).toEqual([
+      ["damage"],
+    ]);
+  });
+
+  it("a stop mid-cast cancels nothing", () => {
+    const sim = duel();
+    sim.setTarget("a", "b");
+    sim.requestSkill("a", 0);
+    stepFor(sim, 0.5);
+
+    sim.setInputDirection("a", vec2(0, 0));
+    const log = stepFor(sim, 0.5);
+
+    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([["damage"]]);
+  });
+
+  it("being pushed out of another body mid-cast cancels nothing", () => {
+    // An ally spawned on top of a: collision pushes the two apart.
+    const sim = new MatchSimulation({
+      seed: "push",
+      participants: [
+        spec("a", 0, vec2(0, 0)),
+        spec("ally", 0, vec2(5, 0)),
+        spec("b", 1, vec2(200, 0)),
+      ],
+    });
+    const a = participant(sim, "a");
+    sim.setTarget("a", "b");
+    sim.requestSkill("a", 0);
+    const log = stepFor(sim, 1);
+
+    expect(a.position).not.toEqual(vec2(0, 0));
+    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([["damage"]]);
   });
 });

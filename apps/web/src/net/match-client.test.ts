@@ -8,6 +8,7 @@ import {
   professionFrom,
   resolveEndpoint,
   type DecodedMatchState,
+  type DecodedPlayer,
   type LiveMatchRoom,
 } from "./match-client.js";
 import type { CombatMessage } from "./match-connection.js";
@@ -201,6 +202,46 @@ describe("createMatchConnection", () => {
     await connection.disconnect();
     expect(room.left).toBe(true);
     expect(states).toEqual([]);
+  });
+});
+
+describe("the off-hand on the wire (#276)", () => {
+  const offhandOf = (offhandId: string) => {
+    const room = new FakeRoom();
+    const player: DecodedPlayer = {
+      sessionId: "me",
+      name: "me",
+      x: 0,
+      y: 0,
+      facing: 0,
+      targetSessionId: "",
+      attackTargetSessionId: "",
+      health: 500,
+      maxHealth: 500,
+      energy: 20,
+      maxEnergy: 20,
+      adrenaline: 0,
+      armor: 60,
+      weaponId: "sword",
+      offhandId,
+      primaryProfession: "",
+      secondaryProfession: "",
+      team: 0,
+      dead: false,
+      castingSkillId: "",
+      castRemaining: 0,
+      castTotal: 0,
+      statuses: [],
+    };
+    room.state = { ...room.state, players: new Map([["me", player]]) };
+    return createMatchConnection(room, MAP, [], () => []).getSnapshot().players[0]?.offhandId;
+  };
+
+  it("maps none to undefined, a known off-hand to itself, and an unknown one to undefined", () => {
+    expect(offhandOf("")).toBeUndefined();
+    expect(offhandOf("shield")).toBe("shield");
+    expect(offhandOf("focus")).toBe("focus");
+    expect(offhandOf("bogus")).toBeUndefined();
   });
 });
 
