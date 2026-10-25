@@ -2,17 +2,30 @@ import Phaser from "phaser";
 
 import { isStatusId, type StatusId } from "@vibewars/game-core";
 
+import { prefersReducedMotion } from "../ui/recharge-overlay.js";
 import {
   EMPTY_SNAPSHOT,
   areaFlashAlpha,
   decayAreaFlashes,
+  decaySwingFlashes,
   floatingTextY,
   healthFraction,
   nameLabelBottom,
   placeFloatingText,
+  swingFlashAlpha,
   teamColour,
   type AreaFlash,
+  type SwingFlash,
 } from "./arena-snapshot.js";
+import {
+  MatchClock,
+  PROJECTILE_HEIGHT,
+  PROJECTILE_SPRITES,
+  PROJECTILE_WIDTH,
+  projectileHeading,
+  projectilePosition,
+  projectileSpriteUrl,
+} from "./projectiles.js";
 import { STATUS_ICON, STATUS_ICON_SIZE, statusRowLayout } from "./status-icons.js";
 import { weaponFamily, weaponLineLayout } from "./weapon-line.js";
 import type {
@@ -61,6 +74,10 @@ export class ArenaScene extends Phaser.Scene {
   private snapshot: ArenaSnapshot = EMPTY_SNAPSHOT;
   private floatingTexts: FloatingText[] = [];
   private areaFlashes: AreaFlash[] = [];
+  private swingFlashes: SwingFlash[] = [];
+  /** One sprite per shot in flight, by projectile id. */
+  private projectileImages = new Map<number, Phaser.GameObjects.Image>();
+  private readonly clock = new MatchClock();
   private floatingTextObjects = new Map<number, Phaser.GameObjects.Text>();
   /**
    * Status icons per actor id, reused frame to frame: hidden when not
@@ -95,11 +112,24 @@ export class ArenaScene extends Phaser.Scene {
     this.areaFlashes.push(flash);
   }
 
+  /** Flash a melee swing; off under reduced motion, where the damage number says enough. */
+  public addSwingFlash(flash: SwingFlash): void {
+    if (!prefersReducedMotion()) {
+      this.swingFlashes.push(flash);
+    }
+  }
+
   public preload(): void {
     for (const [id, url] of Object.entries(STATUS_ICON)) {
       this.load.svg(statusTexture(id), url, {
         width: STATUS_ICON_SIZE,
         height: STATUS_ICON_SIZE,
+      });
+    }
+    for (const sprite of PROJECTILE_SPRITES) {
+      this.load.svg(projectileTexture(sprite), projectileSpriteUrl(sprite), {
+        width: PROJECTILE_WIDTH,
+        height: PROJECTILE_HEIGHT,
       });
     }
   }
@@ -108,7 +138,7 @@ export class ArenaScene extends Phaser.Scene {
     this.graphics = this.add.graphics();
   }
 
-  public override update(_time: number, deltaMs: number): void {
+  public override update(time: number, deltaMs: number): void {
     const g = this.graphics;
     if (g === undefined) {
       return;
@@ -131,6 +161,11 @@ export class ArenaScene extends Phaser.Scene {
     for (const actor of this.snapshot.actors) {
       this.drawActor(g, actor);
     }
+    this.swingFlashes = decaySwingFlashes(this.swingFlashes, deltaMs / 1000);
+    for (const flash of this.swingFlashes) {
+      this.drawSwingFlash(g, flash);
+    }
+    this.updateProjectiles(time / 1000);
     this.updateStatusIcons();
     this.updateNameLabels();
     this.updateFloatingTexts(deltaMs / 1000);
@@ -190,6 +225,55 @@ export class ArenaScene extends Phaser.Scene {
         shape.map((point) => new Phaser.Math.Vector2(point.x, point.y)),
         true,
       );
+    }
+  }
+
+  private drawSwingFlash(g: Phaser.GameObjects.Graphics, flash: SwingFlash): void {
+    const alpha = swingFlashAlpha(flash);
+    const { x, y } = flash.centre;
+    const from = flash.angle - Math.PI / 4;
+    const to = flash.angle + Math.PI / 4;
+    g.lineStyle(2, flash.colour, alpha);
+    g.beginPath();
+    g.arc(x, y, flash.radius, from, to);
+    g.strokePath();
+    if (flash.own) {
+      // Along the outer edge, as your circle gets its rim.
+      g.lineStyle(1, SELF_RIM, alpha);
+      g.beginPath();
+      g.arc(x, y, flash.radius + 1.5, from, to);
+      g.strokePath();
+    }
+  }
+
+  /**
+   * Shots in flight, over the actors: one sprite each, moved along its
+   * flight against the match clock, gone once it lands or leaves the state.
+   */
+  private updateProjectiles(now: number): void {
+    this.clock.observe(this.snapshot.clock, now);
+    const clock = this.clock.read(now);
+    const flying = new Set<number>();
+    for (const shot of this.snapshot.projectiles) {
+      const position = projectilePosition(shot, clock);
+      if (position === undefined) {
+        continue;
+      }
+      flying.add(shot.id);
+      let image = this.projectileImages.get(shot.id);
+      if (image === undefined) {
+        image = this.add.image(position.x, position.y, projectileTexture(shot.sprite));
+        image.setRotation(projectileHeading(shot));
+        image.setTint(shot.colour);
+        this.projectileImages.set(shot.id, image);
+      }
+      image.setPosition(position.x, position.y);
+    }
+    for (const [id, image] of this.projectileImages) {
+      if (!flying.has(id)) {
+        image.destroy();
+        this.projectileImages.delete(id);
+      }
     }
   }
 
@@ -418,6 +502,10 @@ export class ArenaScene extends Phaser.Scene {
       g.lineBetween(0, y, width, y);
     }
   }
+}
+
+function projectileTexture(sprite: string): string {
+  return `projectile:${sprite}`;
 }
 
 function statusTexture(id: string): string {

@@ -230,6 +230,8 @@ export function createLocalConnection(options: {
         endReason: simulation.outcome.reason,
         projectiles: simulation.projectiles.map((shot) => ({
           id: shot.id,
+          attackerId: shot.attackerId,
+          weaponId: shot.weaponSnapshot.mainHand.weapon.id,
           from: shot.from,
           to: shot.aimPoint,
           launchedAt: simulation.elapsedSeconds - shot.elapsed,
