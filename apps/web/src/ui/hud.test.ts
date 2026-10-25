@@ -60,6 +60,7 @@ describe("targetHintDismissed", () => {
     name: "me",
     x: 0,
     y: 0,
+    facing: 0,
     targetSessionId,
     attackTargetSessionId: undefined,
     health: 500,

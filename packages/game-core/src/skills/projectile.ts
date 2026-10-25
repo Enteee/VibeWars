@@ -9,8 +9,9 @@ import type { WeaponSnapshot } from "./weapon-attack.js";
  * in any direction does not dodge; stopping, turning or reversing after
  * the release does, because the shot lands where you would have been.
  *
- * It flies straight through walls and bodies alike: obstruction is
- * checked once, at release, in GW1, and not at all here yet.
+ * Its path is fixed at release, so walls are decided then too (#215): a
+ * shot whose path crosses a wall is cut short at it, flies there, and
+ * lands `obstructed`. It still flies through bodies.
  */
 export interface Projectile {
   /** Deterministic: a counter, per match. */
@@ -18,8 +19,13 @@ export interface Projectile {
   readonly attackerId: string;
   readonly targetId: string;
   readonly from: Vec2;
-  /** Where it lands, led ahead of the target at release. */
+  /**
+   * Where it lands, led ahead of the target at release; or, if a wall is
+   * in the way, just short of the wall.
+   */
   readonly aimPoint: Vec2;
+  /** Cut short by a wall: it lands as `attack-obstructed`, whoever is where. */
+  readonly obstructed: boolean;
   /** World units per second. */
   readonly speed: number;
   readonly flightSeconds: number;
