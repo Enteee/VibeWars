@@ -698,6 +698,23 @@ describe("aftercast (#317)", () => {
     expect(get(match, "a").position.y).toBeGreaterThan(0);
   });
 
+  it("holds a click-to-walk too, drops the queue, and walks when it ends", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
+    match.setTarget("a", "d");
+    match.requestSkill("a", 1);
+    stepFor(match, 0.75);
+    match.requestSkill("a", 0);
+    match.walkTo("a", vec2(0, 100));
+    expect(get(match, "a").combatant.cast.queuedSlot).toBeUndefined();
+    while (get(match, "a").combatant.cast.inAftercast) {
+      match.step(DT);
+      expect(get(match, "a").position).toEqual(vec2(0, 0));
+    }
+    match.step(DT);
+    expect(get(match, "a").combatant.cast.isCasting).toBe(false);
+    expect(get(match, "a").position.y).toBeGreaterThan(0);
+  });
+
   it("Cancel Action drops the queue", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
     match.setTarget("a", "d");
