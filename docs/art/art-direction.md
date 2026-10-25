@@ -174,9 +174,12 @@ Outward from the centre:
 
 **The weapon mark** (#188) points where the player faces. It is a line from
 the centre with a tip that names the weapon family. Its geometry (the stroke
-centrelines) ends at **r + 3**, measured along the facing. It is drawn twice: a 4 px `edge` casing first,
-then a 2 px `ink` core, both round-capped, so the painted ink reaches r + 4
-and the casing r + 5. That overlaps the target ring by a pixel, so **the
+centrelines) ends at **r + 3**, measured along the facing. It is drawn
+twice: a 4 px `edge` casing first, then a 2 px `ink` core. The ends are
+butt, not round, because Phaser Graphics strokes have no caps. Every end lies
+outside the body, over the floor, where the ink reads without the casing
+wrapping it. Across a tip's crossbar, arc, head or orb, the casing paints out
+to r + 5 along the facing. That overlaps the target ring by a pixel, so **the
 target ring is drawn after the weapon mark** and covers it. Pulling the tip
 in to clear the ring would sink it into the body edge, where it stops
 reading. Without the

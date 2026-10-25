@@ -153,7 +153,7 @@ function weaponLine(x, y, a, family) {
     [C.edge, 4],
     [C.ink, 2],
   ])) {
-    const s = `stroke="${colour}" stroke-width="${String(w)}" stroke-linecap="round" stroke-linejoin="round"`;
+    const s = `stroke="${colour}" stroke-width="${String(w)}" stroke-linecap="butt" stroke-linejoin="miter"`;
     for (const p of m.strokes) out += `<polyline points="${pts(p)}" fill="none" ${s}/>`;
     for (const p of m.fills)
       out += `<polygon points="${pts(p)}" fill="${colour}" ${s.replace(String(w), String(w - 2))}/>`;
