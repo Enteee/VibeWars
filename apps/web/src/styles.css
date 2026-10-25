@@ -702,6 +702,12 @@ body {
   padding: 0.25rem 0.4rem;
 }
 
+/* Narrow: every row puts its meta under its title, not just the long ones. */
+.hud-jukebox button.jukebox-play {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 /* Left of the mute button; asks before it leaves (#160). */
 .hud-leave {
   position: absolute;
@@ -1859,11 +1865,11 @@ body {
 }
 
 .screen .jukebox-mute {
-  display: grid;
-  place-items: center;
-  width: 2.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   height: 2.4rem;
-  padding: 0;
+  padding: 0 0.6rem;
 }
 
 .jukebox-mute img {
@@ -1902,11 +1908,13 @@ body {
   padding: 0.3rem 0.6rem;
 }
 
-/* The now-playing toast: bottom left, clear of the skill bar. */
+/* The now-playing toast: top left, just under the top bar. In a match that
+   corner is empty; the skill bar is along the bottom, the scoreboard in the
+   middle and the buttons on the right. */
 .now-playing {
   position: fixed;
   left: 1rem;
-  bottom: 1rem;
+  top: 2.9rem;
   z-index: 10;
   padding: 0.4rem 0.8rem;
   background: rgb(14 17 22 / 90%);

@@ -182,3 +182,28 @@ test("Off plays nothing after a click, and the music mute survives a reload (#37
   await expect(page.locator(".jukebox-mode")).toHaveValue("off");
   await expect(page.locator(".jukebox-mute")).toHaveAttribute("aria-pressed", "true");
 });
+
+test("the now-playing toast at a match start covers none of the HUD (#372)", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/");
+  // The click that starts the match is the one that starts the music.
+  await page.getByRole("button", { name: "quick match" }).click();
+  await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+
+  const toast = page.locator(".now-playing");
+  await expect(toast).toBeVisible({ timeout: 5_000 });
+  const box = await toast.boundingBox();
+  expect(box).not.toBeNull();
+  for (const part of [".hud-skills", ".hud-bar-health", ".hud-scoreboard", ".hud-mute"]) {
+    const other = await page.locator(part).boundingBox();
+    expect(other, part).not.toBeNull();
+    if (box !== null && other !== null) {
+      const overlaps =
+        box.x < other.x + other.width &&
+        other.x < box.x + box.width &&
+        box.y < other.y + other.height &&
+        other.y < box.y + box.height;
+      expect(overlaps, `the toast overlaps ${part}`).toBe(false);
+    }
+  }
+});

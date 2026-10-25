@@ -1,7 +1,7 @@
 import type { Intensity } from "../music/director.js";
 
 /**
- * The now-playing toast (#372): "♪ <title>", bottom left, for a few
+ * The now-playing toast (#372): "♪ <title>", top left, for a few
  * seconds whenever the track changes. Not in a fight: at intensity 2 or
  * more the player has better things to read.
  */

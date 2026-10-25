@@ -124,6 +124,8 @@ export function jukeboxPanel(
   mute.type = "button";
   mute.className = "jukebox-mute";
   mute.appendChild(document.createElement("img")).alt = "";
+  // The icon alone did not read as a mute (#372 QA).
+  mute.appendChild(h("span", "", "mute"));
 
   const controls = h("div", "menu-row jukebox-controls");
   controls.append(modeField, volumeField, mute);
