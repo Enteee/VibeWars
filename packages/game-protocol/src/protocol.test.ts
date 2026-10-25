@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ADDRESS_LIMIT,
+  CLIENT_LIMIT,
   LOBBY_CODE_ALPHABET,
   LOBBY_CODE_LENGTH,
   PROTOCOL_VERSION,
+  RATE_LIMIT,
+  ROOM_LIMIT,
   ROOM_MATCH,
   isLobbyCode,
   normalizeLobbyCode,
@@ -13,6 +17,11 @@ import {
 describe("protocol constants", () => {
   it("pins a protocol version", () => {
     expect(PROTOCOL_VERSION).toBe(13);
+  });
+
+  it("gives every capacity refusal its own code (#282)", () => {
+    const codes = [ROOM_LIMIT, CLIENT_LIMIT, RATE_LIMIT, ADDRESS_LIMIT];
+    expect(new Set(codes).size).toBe(codes.length);
   });
 
   it("names the match room", () => {

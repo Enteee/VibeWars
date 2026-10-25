@@ -5,6 +5,8 @@ import {
   ADDRESS_LIMIT_MESSAGE,
   CLIENT_LIMIT,
   PROTOCOL_MISMATCH_MESSAGE,
+  RATE_LIMIT,
+  RATE_LIMIT_MESSAGE,
   ROOM_LIMIT,
   SERVER_FULL_MESSAGE,
   PROTOCOL_VERSION,
@@ -193,7 +195,8 @@ export function isProtocolMismatch(error: unknown): boolean {
  *
  * - `ROOM_LIMIT`: the server holds all the rooms it can (#114);
  * - `CLIENT_LIMIT`: it holds all the players it can (#265);
- * - `ADDRESS_LIMIT`: this network is over its share (#265).
+ * - `ADDRESS_LIMIT`: this network holds too many seats (#265);
+ * - `RATE_LIMIT`: this network sent too many requests at once (#282).
  *
  * @param error what the SDK rejected with
  */
@@ -204,6 +207,9 @@ export function capacityRefusal(error: unknown): string | undefined {
   const { code } = error as Error & { readonly code: unknown };
   if (code === ROOM_LIMIT || code === CLIENT_LIMIT) {
     return SERVER_FULL_MESSAGE;
+  }
+  if (code === RATE_LIMIT) {
+    return RATE_LIMIT_MESSAGE;
   }
   return code === ADDRESS_LIMIT ? ADDRESS_LIMIT_MESSAGE : undefined;
 }

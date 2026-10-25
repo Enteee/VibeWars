@@ -140,14 +140,16 @@ saying so in the same PR. Keep the numbers: issues cite them.
      Refused with `CLIENT_LIMIT` and "The server is full".
    - **Seats per address (#265):** at most `VIBEWARS_MAX_CLIENTS_PER_ADDRESS`
      (default 32: one address can fill a whole lobby and its match, as a
-     LAN party behind an address-rewriting port forwarder must). Refused with `ADDRESS_LIMIT` (429) and "Too many connections
+     LAN party behind an address-rewriting port forwarder must). Refused on
+     the socket with `ADDRESS_LIMIT` (4429) and "Too many connections
      from your network".
    - **Matchmaking requests per address (#265):** a bucket of
      `VIBEWARS_MATCHMAKING_BURST` (default 10), refilling one a second,
      checked before Colyseus reads the request. A request creates a room
      and reserves a seat whether or not a socket ever connects, so without
      it one address could keep the room budget full of empty rooms for
-     the seat reservation timeout. Refused with `ADDRESS_LIMIT`.
+     the seat reservation timeout. Refused with HTTP `RATE_LIMIT` (429)
+     and "Too many requests from your network. Try again in a moment."
 
    **The address is the socket's, never a header.** Colyseus 0.18 takes
    `context.ip` from `X-Real-IP`, `X-Forwarded-For` or `X-Client-IP`
