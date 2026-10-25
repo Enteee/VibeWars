@@ -34,7 +34,38 @@ export function closestPointOnSegment(point: Vec2, seg: Segment): Vec2 {
 }
 
 export function distancePointToSegment(point: Vec2, seg: Segment): number {
-  return distance(point, closestPointOnSegment(point, seg));
+  return distancePointToSegmentXY(point.x, point.y, seg.a.x, seg.a.y, seg.b.x, seg.b.y);
+}
+
+/**
+ * `distancePointToSegment` on bare coordinates, allocating nothing (#267):
+ * the point `(px, py)` and the segment `(ax, ay)-(bx, by)`. The same
+ * operations in the same order as `closestPointOnSegment` and `distance`,
+ * so the result is bit-identical to theirs.
+ */
+export function distancePointToSegmentXY(
+  px: number,
+  py: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+): number {
+  const abx = bx - ax;
+  const aby = by - ay;
+  const abLengthSquared = abx * abx + aby * aby;
+  if (abLengthSquared < 1e-12) {
+    // Degenerate (zero-length) segment: the distance to its one point.
+    return hypot(px - ax, py - ay);
+  }
+  const t = ((px - ax) * abx + (py - ay) * aby) / abLengthSquared;
+  const clampedT = Math.max(0, Math.min(1, t));
+  return hypot(px - (ax + abx * clampedT), py - (ay + aby * clampedT));
+}
+
+/** `distance`'s arithmetic on a difference already taken. */
+function hypot(dx: number, dy: number): number {
+  return Math.sqrt(dx * dx + dy * dy);
 }
 
 /** Whether a circle at `center` with `radius` overlaps `seg` at all. */
@@ -82,22 +113,38 @@ export function resolveCircleSegmentCollision(center: Vec2, radius: number, seg:
  * `p3->p4`), including shared-endpoint and collinear-overlap cases.
  */
 export function segmentsIntersect(s1: Segment, s2: Segment): boolean {
-  const { a: p1, b: p2 } = s1;
-  const { a: p3, b: p4 } = s2;
+  return segmentsIntersectXY(s1.a.x, s1.a.y, s1.b.x, s1.b.y, s2.a.x, s2.a.y, s2.b.x, s2.b.y);
+}
 
-  const d1 = cross(sub(p4, p3), sub(p1, p3));
-  const d2 = cross(sub(p4, p3), sub(p2, p3));
-  const d3 = cross(sub(p2, p1), sub(p3, p1));
-  const d4 = cross(sub(p2, p1), sub(p4, p1));
+/**
+ * `segmentsIntersect` on bare coordinates, allocating nothing (#267):
+ * `p1->p2` against `p3->p4`. The one implementation; the `Segment` form
+ * delegates here.
+ */
+export function segmentsIntersectXY(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  x3: number,
+  y3: number,
+  x4: number,
+  y4: number,
+): boolean {
+  // The cross products of (p4 - p3) and (p2 - p1) with each other end.
+  const d1 = (x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3);
+  const d2 = (x4 - x3) * (y2 - y3) - (y4 - y3) * (x2 - x3);
+  const d3 = (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1);
+  const d4 = (x2 - x1) * (y4 - y1) - (y2 - y1) * (x4 - x1);
 
   if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
     return true;
   }
 
-  if (d1 === 0 && isOnSegment(p3, p4, p1)) return true;
-  if (d2 === 0 && isOnSegment(p3, p4, p2)) return true;
-  if (d3 === 0 && isOnSegment(p1, p2, p3)) return true;
-  if (d4 === 0 && isOnSegment(p1, p2, p4)) return true;
+  if (d1 === 0 && isOnSegment(x3, y3, x4, y4, x1, y1)) return true;
+  if (d2 === 0 && isOnSegment(x3, y3, x4, y4, x2, y2)) return true;
+  if (d3 === 0 && isOnSegment(x1, y1, x2, y2, x3, y3)) return true;
+  if (d4 === 0 && isOnSegment(x1, y1, x2, y2, x4, y4)) return true;
 
   return false;
 }
@@ -107,14 +154,33 @@ export function segmentsIntersect(s1: Segment, s2: Segment): boolean {
  * otherwise the nearest of their four endpoints to the other segment.
  */
 export function distanceSegmentToSegment(s: Segment, t: Segment): number {
-  if (segmentsIntersect(s, t)) {
+  return distanceSegmentToSegmentXY(s.a.x, s.a.y, s.b.x, s.b.y, t.a.x, t.a.y, t.b.x, t.b.y);
+}
+
+/**
+ * `distanceSegmentToSegment` on bare coordinates, allocating nothing
+ * (#267): `(ax, ay)-(bx, by)` against `(cx, cy)-(dx, dy)`. The one
+ * implementation; the `Segment` form delegates here, so the nav graph's
+ * edges and its paths are the same whichever form a caller uses.
+ */
+export function distanceSegmentToSegmentXY(
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  cx: number,
+  cy: number,
+  dx: number,
+  dy: number,
+): number {
+  if (segmentsIntersectXY(ax, ay, bx, by, cx, cy, dx, dy)) {
     return 0;
   }
   return Math.min(
-    distancePointToSegment(s.a, t),
-    distancePointToSegment(s.b, t),
-    distancePointToSegment(t.a, s),
-    distancePointToSegment(t.b, s),
+    distancePointToSegmentXY(ax, ay, cx, cy, dx, dy),
+    distancePointToSegmentXY(bx, by, cx, cy, dx, dy),
+    distancePointToSegmentXY(cx, cy, ax, ay, bx, by),
+    distancePointToSegmentXY(dx, dy, ax, ay, bx, by),
   );
 }
 
@@ -122,13 +188,20 @@ function cross(a: Vec2, b: Vec2): number {
   return a.x * b.y - a.y * b.x;
 }
 
-/** Whether `point` lies on the closed segment `[a, b]`, given they are collinear. */
-function isOnSegment(a: Vec2, b: Vec2, point: Vec2): boolean {
+/** Whether `(px, py)` lies on the closed segment `[a, b]`, given they are collinear. */
+function isOnSegment(
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  px: number,
+  py: number,
+): boolean {
   return (
-    Math.min(a.x, b.x) <= point.x &&
-    point.x <= Math.max(a.x, b.x) &&
-    Math.min(a.y, b.y) <= point.y &&
-    point.y <= Math.max(a.y, b.y)
+    Math.min(ax, bx) <= px &&
+    px <= Math.max(ax, bx) &&
+    Math.min(ay, by) <= py &&
+    py <= Math.max(ay, by)
   );
 }
 

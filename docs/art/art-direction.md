@@ -151,16 +151,6 @@ name it hides is your target's.
 - **Numbers landing together stack a line apart, upward, at most four** (#54).
   A second line reaches the name's band late in its rise, so a burst may
   brush the name for a moment; a single hit, the common case, never does.
-- **Every number wears a 3 px `edge` outline**, stroke under fill (in
-  Phaser: `stroke: "#0b0f14", strokeThickness: 3`). In melee the attacker
-  stands where the target's numbers rise, so they cross their body, bar and
-  name. Plain, they are 1.0 to 1.9:1 there: a heal over a full health bar is
-  the bar's own green and vanishes. On the outline they are 7.6:1 (damage)
-  and 12.5:1 (heal), whatever lies under them. Weapon hits keep their 0.8
-  alpha, outline included. `node scripts/assets/number-outline-study.mjs`
-  draws the study below.
-
-![Number outline study](number-outline-study.svg)
 
 ### Projectiles
 
