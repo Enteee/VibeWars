@@ -3,7 +3,7 @@ name: CodeQL
 # GitHub code scanning for JavaScript and TypeScript: apps/*, packages/* and
 # scripts/bots/*.mjs (#175). Alerts land in the Security tab and as
 # annotations on the pull request that introduces them. Only the operator
-# can see them until hub can read code scanning alerts (#190). Then
+# can see them until hub can read code scanning alerts (#184). Then
 # perf-sec-qa triages them and files an issue for each real one (see
 # SECURITY.md).
 #
