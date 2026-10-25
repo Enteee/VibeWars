@@ -5,6 +5,7 @@ import {
   createMatchConnection,
   endpointFromLocation,
   httpOriginFrom,
+  professionFrom,
   resolveEndpoint,
   type DecodedMatchState,
   type LiveMatchRoom,
@@ -200,5 +201,13 @@ describe("createMatchConnection", () => {
     await connection.disconnect();
     expect(room.left).toBe(true);
     expect(states).toEqual([]);
+  });
+});
+
+describe("professionFrom (#281)", () => {
+  it("reads a known profession, and none for empty or unknown", () => {
+    expect(professionFrom("monk")).toBe("monk");
+    expect(professionFrom("")).toBeUndefined();
+    expect(professionFrom("bogus")).toBeUndefined();
   });
 });

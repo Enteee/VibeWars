@@ -323,7 +323,7 @@ test("Tab targets the nearest enemy, and the hint goes for good (#55)", async ({
   const opponent = await browser.newPage();
   await startLobbyMatch(page, [opponent]);
   const hint = page.locator(".hud-hint");
-  await expect(hint).toHaveText("Click an enemy or press Tab to target");
+  await expect(hint).toHaveText("Click an enemy or press Tab to target · hold Ctrl for names");
   await expect(hint).toBeVisible();
 
   await page.keyboard.press("Tab");
@@ -402,4 +402,26 @@ test("a match lost for good returns to the menu and says why (#195)", async ({ p
   // A new match works, and the notice is gone with the menu.
   await startQuickMatch(page);
   await expect(notice).toHaveCount(0);
+});
+
+test("the target panel shows the target's professions before its name (#281)", async ({
+  browser,
+  page,
+}) => {
+  // A fresh tab has no character, so the opponent plays the house
+  // loadout: a warrior with no secondary.
+  const opponent = await browser.newPage();
+  await startLobbyMatch(page, [opponent]);
+  const icons = page.locator(".hud-target-professions img");
+  await expect(icons).toHaveCount(0);
+
+  await page.keyboard.press("Tab");
+  await expect(page.locator(".hud-target-text")).toHaveText(/^target: /);
+  await expect(icons).toHaveCount(1);
+  await expect(icons.first()).toHaveAttribute("alt", "Warrior");
+  await expect(icons.first()).toHaveAttribute("src", /icons\/profession\/warrior\.svg$/);
+
+  await page.locator("#viewport canvas").click({ position: { x: 5, y: 5 } });
+  await expect(icons).toHaveCount(0);
+  await opponent.close();
 });

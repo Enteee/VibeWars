@@ -1,3 +1,4 @@
+import type { ProfessionId } from "@vibewars/game-core";
 import type { CastRefusedMessage, ClientIntent, MapDescriptor } from "@vibewars/game-protocol";
 
 /**
@@ -32,6 +33,13 @@ export interface PlayerSnapshot {
   readonly armor: number;
   /** Equipped weapon class id, or `undefined` if the server sent none. */
   readonly weaponId: string | undefined;
+  /**
+   * The build's professions as the server resolved them (#281), or
+   * `undefined` for none: a training dummy has neither, most players no
+   * secondary.
+   */
+  readonly primaryProfession: ProfessionId | undefined;
+  readonly secondaryProfession: ProfessionId | undefined;
   readonly team: number;
   readonly dead: boolean;
   readonly castingSkillId: string | undefined;

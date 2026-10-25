@@ -25,9 +25,6 @@ export const DRAIN_MS = 10 * 60_000;
 /** How long a stop waits for a `hub` request still being served. */
 export const INFLIGHT_GRACE_MS = 60_000;
 
-/** Unchanged samples at a prompt after which an agent counts as ready. */
-export const IDLE_SAMPLES_READY = 2;
-
 /**
  * @typedef {{
  *   requestedAt: number, reason: string, by: string, deadline: number, bootSha: string,
@@ -103,7 +100,9 @@ export function rebootAllowed({ bootSha, changedPaths, lastRebootAt, now, pendin
  * One step of the drain: stop the company now, or keep waiting?
  *
  * The company is drained once every running agent has run `company ready`
- * or sat idle at its prompt, or once the deadline passes. Then it stops as
+ * or is between turns, or once the deadline passes. Its restart loop starts
+ * no new turn while a reboot is pending, so an agent between turns stays
+ * there. Then it stops as
  * soon as no `hub` request is in flight, or after a grace period, so a merge
  * or a push is not cut off halfway.
  *
@@ -111,16 +110,14 @@ export function rebootAllowed({ bootSha, changedPaths, lastRebootAt, now, pendin
  *   now: number,
  *   reboot: Reboot,
  *   running: string[],
- *   idle: Record<string, number | undefined>,
+ *   between: string[],
  *   inflight: number,
  *   drainedAt: number | null,
  * }} state
  * @returns {{ stop: boolean, drainedAt: number | null }}
  */
-export function drainStep({ now, reboot, running, idle, inflight, drainedAt }) {
-  const everyone = running.every(
-    (role) => reboot.ready.includes(role) || (idle[role] ?? 0) >= IDLE_SAMPLES_READY,
-  );
+export function drainStep({ now, reboot, running, between, inflight, drainedAt }) {
+  const everyone = running.every((role) => reboot.ready.includes(role) || between.includes(role));
   const drained = drainedAt ?? (everyone || now >= reboot.deadline ? now : null);
   if (drained === null) {
     return { stop: false, drainedAt: null };

@@ -37,7 +37,7 @@ export const BOARD_FORMAT_VERSION = 1;
 /**
  * How long a full sweep stands. Ten minutes, because what it is still for is
  * what no hint covers: the operator moving a card by hand, or GitHub adding
- * an item on its own. An agent idles in `tg wait --timeout 900` between
+ * an item on its own. An agent idles in `tg wait --timeout 540` between
  * looks at the board, so a board up to ten minutes behind on those is
  * fresher than any agent's next look. Everything hubd does itself shows at
  * once, and an issue it closed shows within `HINT_DELAY_MS`.

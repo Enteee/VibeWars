@@ -1,4 +1,4 @@
-import { Vec, type Vec2 } from "@vibewars/game-core";
+import { Vec, type ProfessionId, type Vec2 } from "@vibewars/game-core";
 
 import type { RenderableProjectile } from "./projectiles.js";
 
@@ -22,6 +22,8 @@ export interface RenderableActor {
   readonly facing: number;
   /** Picks the weapon mark's tip (#188); `undefined` draws none. */
   readonly weaponId: string | undefined;
+  /** The primary profession, whose glyph leads the name (#281); `undefined` draws none. */
+  readonly profession: ProfessionId | undefined;
   readonly radius: number;
   readonly team: "ally" | "enemy" | "self";
   readonly health: number;
@@ -290,4 +292,39 @@ export function healthFraction(actor: RenderableActor): number {
  */
 export function nameLabelBottom(actor: RenderableActor): number {
   return actor.position.y - actor.radius - (actor.dead ? 4 : 22);
+}
+
+/** The profession glyph before a name, in world pixels: the name's own 11 px (#281). */
+export const PROFESSION_GLYPH_SIZE = 11;
+/** Between the glyph and the name. */
+const PROFESSION_GLYPH_GAP = 2;
+
+/** Where a name and its profession glyph go: centre x of each, and their shared bottom. */
+export interface NameplateLayout {
+  /** `undefined`: the actor has no profession, so no glyph. */
+  readonly glyphX: number | undefined;
+  readonly textX: number;
+  readonly bottom: number;
+}
+
+/**
+ * Lay out an actor's name and the glyph before it (#281): glyph, gap and
+ * name centred together on the body, so a long name pushes the glyph left
+ * with it, and both sit on `nameLabelBottom`.
+ *
+ * @param textWidth the label's measured width, never a character count:
+ *   a name can be any script (#192)
+ */
+export function nameplateLayout(actor: RenderableActor, textWidth: number): NameplateLayout {
+  const bottom = nameLabelBottom(actor);
+  const { x } = actor.position;
+  if (actor.profession === undefined) {
+    return { glyphX: undefined, textX: x, bottom };
+  }
+  const left = x - (PROFESSION_GLYPH_SIZE + PROFESSION_GLYPH_GAP + textWidth) / 2;
+  return {
+    glyphX: left + PROFESSION_GLYPH_SIZE / 2,
+    textX: left + PROFESSION_GLYPH_SIZE + PROFESSION_GLYPH_GAP + textWidth / 2,
+    bottom,
+  };
 }

@@ -103,6 +103,14 @@ body {
   min-height: 1.1em;
 }
 
+/* The target's professions, before its name, at the panel's line height (#281). */
+.hud-target-professions img {
+  width: 1.1em;
+  height: 1.1em;
+  margin-right: 0.25em;
+  vertical-align: -0.2em;
+}
+
 .hud-bars {
   display: flex;
   flex-wrap: wrap;

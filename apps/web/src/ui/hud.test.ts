@@ -11,7 +11,9 @@ import {
   isAttackingTarget,
   muteButtonState,
   skillSlotHtml,
+  TARGET_HINT,
   targetHintDismissed,
+  targetProfessionIcons,
 } from "./hud.js";
 
 describe("formatClock", () => {
@@ -54,6 +56,13 @@ describe("describeOutcome", () => {
   });
 });
 
+describe("TARGET_HINT", () => {
+  it("tells a new player both how to target and how to see every name (#253)", () => {
+    expect(TARGET_HINT).toContain("Tab");
+    expect(TARGET_HINT).toContain("Ctrl");
+  });
+});
+
 describe("targetHintDismissed", () => {
   const self = (targetSessionId: string | undefined): PlayerSnapshot => ({
     sessionId: "me",
@@ -70,6 +79,8 @@ describe("targetHintDismissed", () => {
     adrenaline: 0,
     armor: 60,
     weaponId: undefined,
+    primaryProfession: undefined,
+    secondaryProfession: undefined,
     team: 0,
     dead: false,
     castingSkillId: undefined,
@@ -134,6 +145,8 @@ describe("isAttackingTarget", () => {
     adrenaline: 0,
     armor: 60,
     weaponId: undefined,
+    primaryProfession: undefined,
+    secondaryProfession: undefined,
     team: 0,
     dead: false,
     castingSkillId: undefined,
@@ -179,5 +192,50 @@ describe("muteButtonState", () => {
   it("shows what the sound is now, not what a click does", () => {
     expect(muteButtonState(false).icon).toMatch(/sound-on\.svg$/);
     expect(muteButtonState(true).icon).toMatch(/sound-off\.svg$/);
+  });
+});
+
+describe("targetProfessionIcons (#281)", () => {
+  const target = (
+    primaryProfession: PlayerSnapshot["primaryProfession"],
+    secondaryProfession: PlayerSnapshot["secondaryProfession"],
+  ): PlayerSnapshot => ({
+    sessionId: "foe",
+    name: "foe",
+    x: 0,
+    y: 0,
+    facing: 0,
+    targetSessionId: undefined,
+    attackTargetSessionId: undefined,
+    health: 500,
+    maxHealth: 500,
+    energy: 20,
+    maxEnergy: 50,
+    adrenaline: 0,
+    armor: 60,
+    weaponId: undefined,
+    primaryProfession,
+    secondaryProfession,
+    team: 1,
+    dead: false,
+    castingSkillId: undefined,
+    castRemaining: 0,
+    castTotal: 0,
+    statuses: [],
+  });
+
+  it("shows the primary, then the secondary, each named for alt and title", () => {
+    const icons = targetProfessionIcons(target("warrior", "monk"));
+    expect(icons.map((icon) => icon.name)).toEqual(["Warrior", "Monk"]);
+    expect(icons[0]?.src).toMatch(/icons\/profession\/warrior\.svg$/);
+    expect(icons[1]?.src).toMatch(/icons\/profession\/monk\.svg$/);
+  });
+
+  it("shows the primary alone with no secondary, and nothing with no profession", () => {
+    expect(targetProfessionIcons(target("ranger", undefined)).map((icon) => icon.name)).toEqual([
+      "Ranger",
+    ]);
+    expect(targetProfessionIcons(target(undefined, undefined))).toEqual([]);
+    expect(targetProfessionIcons(undefined)).toEqual([]);
   });
 });

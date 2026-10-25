@@ -174,6 +174,17 @@ describe("the restarter", () => {
     expect(fs.existsSync(path.join(company.root, "reboot-check"))).toBe(false);
   });
 
+  it("starts every agent on a fresh conversation", () => {
+    const company = setup();
+    const agent = path.join(company.root, "agents", "developer-1");
+    fs.mkdirSync(agent, { recursive: true });
+    fs.writeFileSync(path.join(agent, "session-id"), "0f3c9a1e\n");
+    fs.writeFileSync(path.join(agent, "between-turns"), "");
+
+    expect(company.restart().code).toBe(0);
+    expect(fs.existsSync(path.join(company.root, "agents"))).toBe(false);
+  });
+
   it("never moves a checkout on another branch, and restarts on what it has", () => {
     const company = setup();
     sh(["checkout", "-q", "-b", "mine"], company.repo);

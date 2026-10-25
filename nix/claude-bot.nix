@@ -297,7 +297,7 @@ let
     claude-bot — run a sandboxed Claude agent in a role, coordinating over Telegram
 
     usage:
-      claude-bot <role> [claude args...]
+      claude-bot [--resume <session-id>] <role> [claude args...]
       claude-bot --smoke <role>  check that role's jail can run the browser tests
       claude-bot --help
 
@@ -305,6 +305,10 @@ let
     (detached at main), and talks to its peers through its inbox; Telegram
     carries the operator's copy. Your checkout is not mounted inside the
     sandbox. Any extra arguments are passed straight through to `claude`.
+
+    One run is one turn: `claude -p`, printing stream-json, exiting when the
+    agent ends its turn. claude-llc-agent runs turn after turn and shows them
+    readably (ADR-0027).
 
     roles:
     USAGE
@@ -348,13 +352,13 @@ let
             ;;
         esac
 
-        # On a restart we want the agent to pick up where it left off rather
-        # than re-reading the whole world, so claude-llc-agent passes
-        # --continue on every iteration after the first.
-        resume=0
-        if [ "''${1-}" = "--continue" ]; then
-          resume=1
-          shift
+        # Every turn after the first resumes the role's conversation, so an
+        # agent picks up where it left off rather than re-reading the whole
+        # world. agent-turn.mjs passes the id it recorded (#146).
+        resume=""
+        if [ "''${1-}" = "--resume" ]; then
+          resume="''${2-}"
+          shift 2
         fi
 
         # --smoke runs the jail checks instead of claude: the regression test
@@ -429,12 +433,10 @@ let
         briefing="$(cat "$DEVENV_ROOT/.claude/bots/_protocol.md" "$brief")"
 
         # A system prompt gives an agent a role; it does not give it a turn.
-        # Claude Code starts interactive and waits, so nine agents with
-        # perfect briefings and nobody speaking to them do precisely nothing —
-        # which is exactly what happened the first time the company was
-        # started. The positional prompt argument is the ignition: it runs as
-        # the first user turn and the session stays interactive afterwards, so
-        # the operator can still type into the pane.
+        # The positional prompt argument is the turn: claude -p runs it and
+        # exits when the agent ends its turn, and claude-llc-agent starts the
+        # next one (ADR-0027). Nobody types into the pane; Telegram is the
+        # only input.
         #
         # Overridable: `claude-bot architect "look at issue 14"` wins, so the
         # command is still useful by hand.
@@ -450,7 +452,7 @@ let
         most valuable thing you can finish end to end, do it, move the card,
         and tell whoever is next in the chain on Telegram.
 
-        When you genuinely have nothing to do, run \`tg wait --timeout 900\` to
+        When you genuinely have nothing to do, run \`tg wait --timeout 540\` to
         block until a colleague or the operator says something, then continue.
         Do not stop and wait for a prompt; nobody is going to send you one."
 
@@ -463,17 +465,18 @@ let
         Tell everyone with \`tg broadcast\` first, word for word."
         fi
 
-        # `claude --continue` on its own reopens the conversation and then
-        # waits, which would leave a restarted agent exactly as idle as an
-        # unprompted one. The flag and a turn have to go together.
-        if [ "$resume" = "1" ]; then
-          continueFlag=(--continue)
-          prompt="You were interrupted and have just been restarted. Check \`tg inbox\`
-        and \`board ls\` in case something changed while you were gone, then carry on
-        with the most valuable thing you can finish. If you were mid-task, finish
-        that first."
+        # A resumed conversation needs a turn too, or claude -p has nothing
+        # to run. It is the same prompt whether the last turn ended on its
+        # own or someone pressed Ctrl-C.
+        if [ -n "$resume" ]; then
+          resumeFlag=(--resume "$resume")
+          prompt="Your last turn ended and this is the next one. Check \`tg inbox\`
+        and \`board ls\` in case something changed, then carry on with the most
+        valuable thing you can finish. If you were mid-task, finish that first.
+        Do not end your turn while waiting on background work or a colleague:
+        block on it, or on \`tg wait --timeout 540\`, instead."
         else
-          continueFlag=()
+          resumeFlag=()
           prompt="$kickoff"
         fi
 
@@ -654,10 +657,16 @@ let
         if [ "$smoke" = "1" ]; then
           jailCommand=(${jailSmoke})
         else
+          # Print mode cannot show a permission prompt, so the skip is
+          # required, and nobody can answer AskUserQuestion: questions go
+          # through `tg ask`. --disallowedTools takes several values, so an
+          # option has to follow it, or it would swallow the prompt.
           jailCommand=(${jailInit} claude
+            -p --output-format stream-json --verbose
             --dangerously-skip-permissions
+            --disallowedTools AskUserQuestion
             --append-system-prompt "$briefing"
-            "''${continueFlag[@]}"
+            "''${resumeFlag[@]}"
             "''${@:-$prompt}")
         fi
 

@@ -91,12 +91,12 @@ describe("drainStep", () => {
     now: NOW + 60_000,
     reboot,
     running: ["manager", "developer-1"],
-    idle: {},
+    between: [],
     inflight: 0,
     drainedAt: null,
   };
 
-  it("waits while a running agent is neither ready nor idle", () => {
+  it("waits while a running agent is neither ready nor between turns", () => {
     expect(drainStep(base)).toEqual({ stop: false, drainedAt: null });
   });
 
@@ -109,9 +109,9 @@ describe("drainStep", () => {
     });
   });
 
-  it("counts an agent idle for two samples as ready", () => {
-    expect(drainStep({ ...base, idle: { "developer-1": 1 } }).stop).toBe(false);
-    expect(drainStep({ ...base, idle: { "developer-1": 2 } }).stop).toBe(true);
+  it("counts an agent between turns as ready", () => {
+    expect(drainStep({ ...base, between: ["developer-1"] }).stop).toBe(true);
+    expect(drainStep({ ...base, between: ["architect"] }).stop).toBe(false);
   });
 
   it("stops at the deadline whoever is still busy", () => {
