@@ -249,3 +249,77 @@ export function sessionIdOf(event) {
 export function runFailed({ code, sawResult }) {
   return code !== 0 || !sawResult;
 }
+
+/** What a limit message says; anything else in an error result is a real failure. */
+const LIMIT_TEXT = /usage limit|limit reached|hit your limit|rate.?limit|429/i;
+
+/** The reset time some limit messages end with: `…usage limit reached|1761400800`. */
+const LIMIT_EPOCH = /\|(\d{9,11})\s*$/;
+
+/**
+ * Does this event say Claude's usage limit is reached (#308)?
+ *
+ * A limit is not a broken agent: the restart loop waits it out instead of
+ * counting it toward the five failures that stop a role. Recognised, in
+ * order: a rejected `rate_limit_event`, an error `result` whose text names
+ * a limit, and an API error that says 429 or `rate_limit_error`.
+ *
+ * The reset time is taken only from fields that carry it as a number.
+ * Clock text such as "resets 3pm (Europe/Zurich)" is not parsed: its time
+ * zone and format drift, and the loop's backoff covers an unknown reset.
+ *
+ * @param {Record<string, unknown> | null} event
+ * @returns {{ until: number | null } | null} `until`, the reset in unix
+ *   seconds, or `null` when it is unknown; `null` overall when the event is
+ *   not a limit
+ */
+export function usageLimitOf(event) {
+  if (event === null) {
+    return null;
+  }
+  if (event.type === "rate_limit_event") {
+    const info = record(event.rate_limit_info);
+    if (info?.status !== "rejected") {
+      return null;
+    }
+    return { until: typeof info.resetsAt === "number" ? info.resetsAt : null };
+  }
+  if (event.type === "result") {
+    if (event.is_error !== true) {
+      return null;
+    }
+    const text = [event.result, event.error].find(
+      (value) => typeof value === "string" && LIMIT_TEXT.test(value),
+    );
+    if (typeof text !== "string") {
+      return null;
+    }
+    const epoch = LIMIT_EPOCH.exec(text);
+    return { until: epoch === null ? null : Number(epoch[1]) };
+  }
+  if (event.type === "assistant" || event.type === "system") {
+    return apiLimitError(event) ? { until: null } : null;
+  }
+  return null;
+}
+
+/**
+ * @param {Record<string, unknown>} event an `assistant` or `system` event
+ * @returns {boolean} does it carry an API error that says 429 or `rate_limit_error`?
+ */
+function apiLimitError(event) {
+  const error = event.error;
+  if (typeof error === "string") {
+    return /\b429\b|rate_limit_error/.test(error);
+  }
+  const fields = record(error);
+  if (fields === null) {
+    return false;
+  }
+  return (
+    fields.status === 429 ||
+    fields.type === "rate_limit_error" ||
+    record(fields.error)?.type === "rate_limit_error" ||
+    (typeof fields.message === "string" && /\b429\b|rate_limit_error/.test(fields.message))
+  );
+}
