@@ -7,8 +7,9 @@ import { ROOM_LOBBY, ROOM_MATCH } from "@vibewars/game-protocol";
 import express from "express";
 
 import { DEFAULT_DEV_CLIENT_ORIGIN, type ServerConfig } from "./config.js";
-import { LobbyRoom } from "./rooms/lobby-room.js";
-import { MatchRoom } from "./rooms/match-room.js";
+import { budgetedLobbyRoom } from "./rooms/lobby-room.js";
+import { budgetedMatchRoom } from "./rooms/match-room.js";
+import { createRoomBudget } from "./rooms/room-budget.js";
 
 /**
  * Build (but do not start) the game server.
@@ -18,15 +19,18 @@ import { MatchRoom } from "./rooms/match-room.js";
  * half-initialised module.
  */
 export function createGameServer(config: ServerConfig) {
+  // One budget for every room this server holds, match and lobby alike.
+  const budget = createRoomBudget(config.maxRooms);
   return defineServer({
     greet: false,
 
     rooms: {
-      [ROOM_MATCH]: defineRoom(MatchRoom),
+      // Each room class is this server's own, holding its budget (#114).
+      [ROOM_MATCH]: defineRoom(budgetedMatchRoom(budget)),
       // `filterBy(["code"])` is what makes "join by code" actually mean
       // "join *that* lobby": without it, matchmaking would hand a player
       // any available lobby and quietly ignore the code they typed.
-      [ROOM_LOBBY]: defineRoom(LobbyRoom).filterBy(["code"]),
+      [ROOM_LOBBY]: defineRoom(budgetedLobbyRoom(budget)).filterBy(["code"]),
     },
 
     express: (app) => {

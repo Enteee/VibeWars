@@ -1,9 +1,16 @@
 import { Client, type Room } from "@colyseus/sdk";
-import { PROTOCOL_VERSION, ROOM_MATCH } from "@vibewars/game-protocol";
+import {
+  PROTOCOL_VERSION,
+  ROOM_LIMIT,
+  ROOM_LOBBY,
+  ROOM_MATCH,
+  SERVER_FULL_MESSAGE,
+} from "@vibewars/game-protocol";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
+import { DEFAULT_MAX_ROOMS } from "./config.js";
 
 /**
  * Network robustness (brief §25).
@@ -47,7 +54,13 @@ describe("network robustness", () => {
   beforeEach(async () => {
     port = await findFreePort();
     endpoint = `ws://127.0.0.1:${String(port)}`;
-    server = createGameServer({ port, host: "127.0.0.1", webRoot: undefined, devMode: false });
+    server = createGameServer({
+      port,
+      host: "127.0.0.1",
+      webRoot: undefined,
+      devMode: false,
+      maxRooms: DEFAULT_MAX_ROOMS,
+    });
     await server.listen(port);
   });
 
@@ -213,11 +226,73 @@ describe("network robustness", () => {
 
     // Bring it back on the same port and confirm the game is playable
     // again — a restart must not need anything hand-reset.
-    server = createGameServer({ port, host: "127.0.0.1", webRoot: undefined, devMode: false });
+    server = createGameServer({
+      port,
+      host: "127.0.0.1",
+      webRoot: undefined,
+      devMode: false,
+      maxRooms: DEFAULT_MAX_ROOMS,
+    });
     await server.listen(port);
 
     const fresh = await join();
     expect(fresh.state.players.get(fresh.sessionId)).toBeDefined();
     await fresh.leave(true);
+  });
+});
+
+describe("the server-wide room budget (#114)", () => {
+  let server: GameServer;
+  let endpoint: string;
+
+  beforeEach(async () => {
+    const port = await findFreePort();
+    endpoint = `ws://127.0.0.1:${String(port)}`;
+    server = createGameServer({
+      port,
+      host: "127.0.0.1",
+      webRoot: undefined,
+      devMode: false,
+      maxRooms: 2,
+    });
+    await server.listen(port);
+  });
+
+  afterEach(async () => {
+    await server.gracefullyShutdown(false);
+  });
+
+  const host = (): Promise<Room> =>
+    new Client(endpoint).create(ROOM_LOBBY, { protocolVersion: PROTOCOL_VERSION, name: "Host" });
+
+  it("refuses a room past the budget with ROOM_LIMIT, and frees a slot on dispose", async () => {
+    const first = await host();
+    const second = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+
+    let refused: unknown;
+    try {
+      await host();
+    } catch (error: unknown) {
+      refused = error;
+    }
+    expect(refused).toBeInstanceOf(Error);
+    expect((refused as Error & { code?: unknown }).code).toBe(ROOM_LIMIT);
+    expect((refused as Error).message).toContain(SERVER_FULL_MESSAGE);
+
+    // The lobby empties and is disposed, and its slot is free again.
+    await first.leave(true);
+    let third: Room | undefined;
+    for (let tries = 0; third === undefined && tries < 50; tries += 1) {
+      try {
+        third = await host();
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
+    expect(third).toBeDefined();
+    await third?.leave(true);
+    await second.leave(true);
   });
 });

@@ -17,6 +17,18 @@ export const PROTOCOL_MISMATCH_MESSAGE =
   "This tab is running an outdated version of VibeWars. Reload the page.";
 
 /**
+ * The error code of a room the server would not create because it holds as
+ * many as it can (#114). Matchmaking hands it to the client with
+ * `SERVER_FULL_MESSAGE`. An HTTP status, because Colyseus answers the
+ * matchmaking request with the error's code as its status: 503, Service
+ * Unavailable, which a full server is.
+ */
+export const ROOM_LIMIT = 503;
+
+/** What a player is told when the server holds all the rooms it can. */
+export const SERVER_FULL_MESSAGE = "The server is full. Try again in a minute.";
+
+/**
  * Colyseus room name for the match simulation room.
  *
  * Players normally arrive here from a lobby (`ROOM_LOBBY`), but joining
