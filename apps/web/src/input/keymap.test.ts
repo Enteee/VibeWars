@@ -1,0 +1,176 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  DEFAULT_KEYMAP,
+  KEYMAP_PRESETS,
+  KEY_ACTIONS,
+  actionForCode,
+  actionLabel,
+  codeLabel,
+  isBindable,
+  isShortcut,
+  parseKeymap,
+} from "./keymap.js";
+import { layoutLabeller, loadLayoutLabeller } from "./key-labels.js";
+
+const presets = Object.entries(KEYMAP_PRESETS);
+
+describe("the keymap presets (#302)", () => {
+  it.each(presets)("%s is a valid keymap that binds all sixteen actions", (_, map) => {
+    expect(parseKeymap(map)).toEqual(map);
+    expect(KEY_ACTIONS).toHaveLength(16);
+    for (const action of KEY_ACTIONS) {
+      expect(map[action].length).toBeGreaterThan(0);
+    }
+  });
+
+  it.each(presets)("%s binds no key the browser or the OS owns", (_, map) => {
+    for (const codes of Object.values(map)) {
+      for (const code of codes) {
+        expect(isBindable(code)).toBe(true);
+        expect(code).not.toMatch(/^(?:Control|Alt|Meta)/);
+      }
+    }
+  });
+
+  it("defaults to VibeWars: skills on Q-F, arrows move, Shift shows names", () => {
+    expect(DEFAULT_KEYMAP).toBe(KEYMAP_PRESETS.vibewars);
+    const action = (code: string): string | undefined => actionForCode(DEFAULT_KEYMAP, code);
+    expect(["KeyQ", "KeyW", "KeyE", "KeyR", "KeyA", "KeyS", "KeyD", "KeyF"].map(action)).toEqual([
+      "skill-1",
+      "skill-2",
+      "skill-3",
+      "skill-4",
+      "skill-5",
+      "skill-6",
+      "skill-7",
+      "skill-8",
+    ]);
+    expect(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].map(action)).toEqual([
+      "move-up",
+      "move-down",
+      "move-left",
+      "move-right",
+    ]);
+    expect(action("Tab")).toBe("target-next");
+    expect(action("Space")).toBe("attack");
+    expect(action("ShiftLeft")).toBe("show-names");
+    expect(action("ShiftRight")).toBe("show-names");
+    expect(action("KeyM")).toBe("mute");
+    expect(action("Digit1")).toBeUndefined();
+    expect(action("ControlLeft")).toBeUndefined();
+  });
+
+  it("has Classic: skills on 1-8, WASD and the arrows both move", () => {
+    const action = (code: string): string | undefined =>
+      actionForCode(KEYMAP_PRESETS.classic, code);
+    expect(action("Digit1")).toBe("skill-1");
+    expect(action("Digit8")).toBe("skill-8");
+    expect(action("KeyW")).toBe("move-up");
+    expect(action("ArrowUp")).toBe("move-up");
+    expect(action("KeyD")).toBe("move-right");
+    expect(action("ShiftLeft")).toBe("show-names");
+    expect(action("KeyQ")).toBeUndefined();
+  });
+});
+
+describe("parseKeymap", () => {
+  const classic = KEYMAP_PRESETS.classic;
+
+  it("rejects a missing action, and an unknown one", () => {
+    const { mute: _mute, ...missing } = classic;
+    expect(parseKeymap(missing)).toBeUndefined();
+    expect(parseKeymap({ ...missing, dance: ["KeyM"] })).toBeUndefined();
+  });
+
+  it("rejects a code bound twice, and three codes on one action", () => {
+    expect(parseKeymap({ ...classic, mute: ["Digit1"] })).toBeUndefined();
+    expect(parseKeymap({ ...classic, mute: ["KeyM", "KeyN", "KeyB"] })).toBeUndefined();
+  });
+
+  it("rejects Ctrl, Esc and anything not a string", () => {
+    expect(parseKeymap({ ...classic, mute: ["ControlLeft"] })).toBeUndefined();
+    expect(parseKeymap({ ...classic, mute: ["Escape"] })).toBeUndefined();
+    expect(parseKeymap({ ...classic, mute: [7] })).toBeUndefined();
+    expect(parseKeymap({ ...classic, mute: "KeyM" })).toBeUndefined();
+    for (const value of [null, "classic", 7, [], undefined]) {
+      expect(parseKeymap(value)).toBeUndefined();
+    }
+  });
+
+  it("accepts an action with no key", () => {
+    expect(parseKeymap({ ...classic, mute: [] })).toEqual({ ...classic, mute: [] });
+  });
+});
+
+describe("isBindable and isShortcut", () => {
+  it("refuses the browser's and the OS's keys, and the game's fixed Esc and F10", () => {
+    for (const code of [
+      "ControlLeft",
+      "AltRight",
+      "MetaLeft",
+      "OSLeft",
+      "Escape",
+      "F10",
+      "F5",
+      "",
+    ]) {
+      expect(isBindable(code)).toBe(false);
+    }
+    for (const code of ["KeyQ", "Digit1", "ArrowUp", "Space", "ShiftLeft", "F2", "Tab"]) {
+      expect(isBindable(code)).toBe(true);
+    }
+  });
+
+  it("counts Ctrl, Alt and Meta as the browser's, and Shift as the game's", () => {
+    const none = { ctrlKey: false, altKey: false, metaKey: false };
+    expect(isShortcut(none)).toBe(false);
+    expect(isShortcut({ ...none, ctrlKey: true })).toBe(true);
+    expect(isShortcut({ ...none, altKey: true })).toBe(true);
+    expect(isShortcut({ ...none, metaKey: true })).toBe(true);
+  });
+});
+
+describe("key labels", () => {
+  it("reads a code as its key", () => {
+    expect(codeLabel("KeyQ")).toBe("Q");
+    expect(codeLabel("Digit1")).toBe("1");
+    expect(codeLabel("ArrowUp")).toBe("↑");
+    expect(codeLabel("ArrowLeft")).toBe("←");
+    expect(codeLabel("Space")).toBe("Space");
+    expect(codeLabel("ShiftLeft")).toBe("Shift");
+    expect(codeLabel("Tab")).toBe("Tab");
+  });
+
+  it("labels an action by its first key, and an unbound one as nothing", () => {
+    expect(actionLabel(DEFAULT_KEYMAP, "skill-1")).toBe("Q");
+    expect(actionLabel(KEYMAP_PRESETS.classic, "move-up")).toBe("W");
+    expect(actionLabel({ ...DEFAULT_KEYMAP, mute: [] }, "mute")).toBe("");
+  });
+
+  it("prefers the keyboard layout's character, uppercased, where it has one", () => {
+    // AZERTY: the key where QWERTY has Q reads A.
+    const azerty = layoutLabeller(
+      new Map([
+        ["KeyQ", "a"],
+        ["Space", " "],
+      ]),
+    );
+    expect(actionLabel(DEFAULT_KEYMAP, "skill-1", azerty)).toBe("A");
+    expect(azerty("Space")).toBe("Space");
+    expect(azerty("ArrowUp")).toBe("↑");
+  });
+
+  it("has no layout labels where the browser has no keyboard API, or refuses it", async () => {
+    expect(await loadLayoutLabeller({})).toBeUndefined();
+    expect(
+      await loadLayoutLabeller({
+        keyboard: { getLayoutMap: () => Promise.reject(new Error("not allowed")) },
+      }),
+    ).toBeUndefined();
+    const labeller = await loadLayoutLabeller({
+      keyboard: { getLayoutMap: () => Promise.resolve(new Map([["KeyW", "z"]])) },
+    });
+    expect(labeller?.("KeyW")).toBe("Z");
+  });
+});

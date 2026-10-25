@@ -450,10 +450,9 @@ let
         kickoff="You are the $role. Start work now, on your own, without waiting to be asked.
 
         First, orient yourself:
-          1. \`hub whoami\` — what you are allowed to do
-          2. \`tg roster\` — who else is working, and who has not been hired yet
-          3. \`tg inbox\` — anything already waiting for you
-          4. \`board ls\` — the state of the work
+          1. \`tg roster\` — who else is working, and who has not been hired yet
+          2. \`tg inbox\` — anything already waiting for you
+          3. \`board ls\` — the state of the work
 
         Then do your job as described in your role briefing: pick the single
         most valuable thing you can finish end to end, do it, move the card,
@@ -478,8 +477,9 @@ let
         if [ -n "$resume" ]; then
           resumeFlag=(--resume "$resume")
           prompt="Your last turn ended and this is the next one. Check \`tg inbox\`
-        and \`board ls\` in case something changed, then carry on with the most
-        valuable thing you can finish. If you were mid-task, finish that first.
+        and \`board ls <your column>\` in case something changed, then carry on
+        with the most valuable thing you can finish. If you were mid-task,
+        finish that first.
         Do not end your turn while waiting on background work or a colleague:
         block on it, or on \`tg wait --timeout 540\`, instead."
         else

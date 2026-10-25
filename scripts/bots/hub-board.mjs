@@ -784,6 +784,48 @@ export function arrivals(known, changes, column) {
   return { arrived, known: next };
 }
 
+/** The board's columns, in workflow order. */
+export const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
+
+/** Done cards a bare `board ls` shows; the rest are a `board ls Done` away. */
+export const DONE_SHOWN = 5;
+
+/**
+ * What `board ls` prints: the cards grouped by column in workflow order, so
+ * the output reads like the board rather than like a database dump.
+ *
+ * Folded, as for a bare `board ls`, Done keeps only its last `DONE_SHOWN`
+ * cards in the order hubd's copy gives, the most recent last, and says how
+ * many it left out. Done is most of the board, and every fresh agent turn
+ * reads the whole listing (#324).
+ *
+ * @param {readonly Summary[]} cards
+ * @param {boolean} fold
+ * @returns {string[]}
+ */
+export function boardLines(cards, fold) {
+  /** @param {Summary} card */
+  const line = (card) => `  #${String(card.number ?? "-").padEnd(4)} ${card.title}`;
+  /** @type {string[]} */
+  const lines = [];
+  for (const column of COLUMNS) {
+    const group = cards.filter((card) => card.status === column);
+    if (group.length === 0) {
+      continue;
+    }
+    const hidden = fold && column === "Done" ? Math.max(0, group.length - DONE_SHOWN) : 0;
+    lines.push(`${column}:`, ...group.slice(hidden).map(line));
+    if (hidden > 0) {
+      lines.push(`  … ${String(hidden)} more: board ls Done`);
+    }
+  }
+  const loose = cards.filter((card) => !COLUMNS.includes(card.status));
+  if (loose.length > 0) {
+    lines.push("(no column):", ...loose.map(line));
+  }
+  return lines;
+}
+
 /**
  * @param {string | null} token
  * @returns {{ epoch: string, rev: number } | null}

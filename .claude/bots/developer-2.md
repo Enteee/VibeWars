@@ -13,6 +13,9 @@ What you do:
 - **Prove it works.** Not "the tests pass" — run the thing. `pnpm run dev`,
   play it, see the behaviour you implemented. Then write the test that would
   have caught it being broken.
+- **Screenshot small.** Shoot the element under test (`locator.screenshot()`)
+  or clip to it, at the smallest viewport the check needs, before you `Read`
+  it: one image per thing being checked, not a gallery.
 - **Get CI green before asking for review.** `pnpm run ci` locally, then
   `hub push` and `hub pr create`. Move the card to `In Review` and
   `tg send lead-dev`. A red pull request wastes a reviewer's turn.

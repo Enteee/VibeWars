@@ -40,6 +40,7 @@ import {
   retryDelay,
   routeInbound,
   visible,
+  wakes,
 } from "./protocol.mjs";
 
 const CHAT = "-1001234567890";
@@ -174,6 +175,7 @@ describe("routeInbound", () => {
       text: "hello",
       topicId: MANAGER_TOPIC,
       messageId: 42,
+      broadcast: false,
     });
   });
 
@@ -216,6 +218,7 @@ describe("routeInbound in the Support topic (#131)", () => {
         text: "how do I dodge?",
         topicId: SUPPORT_TOPIC,
         messageId: 932,
+        broadcast: false,
       },
       whichRole: null,
     });
@@ -385,6 +388,12 @@ describe("deliverPeer", () => {
       "lead-dev",
     ]);
     expect(delivered.mirror?.to).toBe("all");
+    expect(delivered.deliveries.every((d) => d.line.broadcast)).toBe(true);
+  });
+
+  it("marks a directed message as no broadcast", () => {
+    const delivered = deliverPeer({ to: "developer-1", text: "x" }, base);
+    expect(delivered.deliveries[0]?.line.broadcast).toBe(false);
   });
 
   it("treats a missing recipient as a broadcast", () => {
@@ -766,6 +775,7 @@ describe("routeAnswer", () => {
           text: 'answer to Q7 ("Should reconnects keep the slot?"): Keep for 30 s',
           topicId: OPERATOR_TOPIC,
           messageId: 0,
+          broadcast: false,
         },
       },
     ]);
@@ -1108,6 +1118,7 @@ describe("readInbox", () => {
       text: "hello",
       topicId: null,
       messageId: 0,
+      broadcast: false,
     });
   });
 
@@ -1266,6 +1277,7 @@ describe("deliverSystem (#23)", () => {
       text: "hubd is crash-looping: boom",
       topicId: null,
       messageId: 0,
+      broadcast: false,
     });
     expect(delivered.mirror).toEqual({
       from: SYSTEM,
@@ -1290,5 +1302,36 @@ describe("deliverSystem (#23)", () => {
     );
     expect(message.text.startsWith(`${SYSTEM_STYLE.emoji} System → `)).toBe(true);
     expect(Object.keys(ROLE_STYLE)).not.toContain(SYSTEM);
+  });
+});
+
+describe("wakes", () => {
+  /** @type {import("./protocol.mjs").InboxLine} */
+  const line = {
+    ts: 1,
+    from: "manager",
+    kind: "peer",
+    text: "FYI",
+    topicId: null,
+    messageId: 0,
+    broadcast: false,
+  };
+
+  it("wakes on everything but a plain broadcast", () => {
+    expect(wakes(line, "lead-dev")).toBe(true);
+    for (const kind of /** @type {const} */ (["human", "link", "user"])) {
+      expect(wakes({ ...line, kind, broadcast: true }, "lead-dev")).toBe(true);
+    }
+    expect(wakes({ ...line, broadcast: true }, "lead-dev")).toBe(false);
+  });
+
+  it("wakes the role a broadcast starts with, by colon or at-mention", () => {
+    const named = (/** @type {string} */ text) => ({ ...line, broadcast: true, text });
+    expect(wakes(named("lead-dev: review #5"), "lead-dev")).toBe(true);
+    expect(wakes(named("Lead-Dev : review #5"), "lead-dev")).toBe(true);
+    expect(wakes(named("@lead-dev look"), "lead-dev")).toBe(true);
+    expect(wakes(named("lead-dev look"), "lead-dev")).toBe(false);
+    expect(wakes(named("architect: spec #5"), "lead-dev")).toBe(false);
+    expect(wakes(named("all: standup"), "lead-dev")).toBe(false);
   });
 });

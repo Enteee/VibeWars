@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
 
+import { DEFAULT_KEYMAP } from "../input/keymap.js";
 import type { PlayerSnapshot } from "../net/match-connection.js";
 
 import {
@@ -11,7 +12,7 @@ import {
   isAttackingTarget,
   muteButtonState,
   skillSlotHtml,
-  TARGET_HINT,
+  targetHint,
   targetHintDismissed,
   targetProfessionIcons,
 } from "./hud.js";
@@ -56,10 +57,18 @@ describe("describeOutcome", () => {
   });
 });
 
-describe("TARGET_HINT", () => {
-  it("tells a new player both how to target and how to see every name (#253)", () => {
-    expect(TARGET_HINT).toContain("Tab");
-    expect(TARGET_HINT).toContain("Ctrl");
+describe("targetHint (#253, #302)", () => {
+  it("tells a new player how to target and how to see every name, by their keys", () => {
+    expect(targetHint(DEFAULT_KEYMAP)).toBe(
+      "Click an enemy or press Tab to target · hold Shift for names",
+    );
+    expect(targetHint(DEFAULT_KEYMAP)).not.toContain("Ctrl");
+  });
+
+  it("leaves out a clause whose action has no key", () => {
+    expect(targetHint({ ...DEFAULT_KEYMAP, "target-next": [], "show-names": [] })).toBe(
+      "Click an enemy to target",
+    );
   });
 });
 
@@ -178,12 +187,12 @@ describe("skillSlotHtml", () => {
   });
 
   it("carries the skill's type badge, named for a screen reader", () => {
-    expect(skillSlotHtml(slot("elementalist.fireball"), 0)).toContain('alt="Spell"');
-    expect(skillSlotHtml(slot("necromancer.faintheartedness"), 6)).toContain('alt="Hex"');
+    expect(skillSlotHtml(slot("elementalist.fireball"))).toContain('alt="Spell"');
+    expect(skillSlotHtml(slot("necromancer.faintheartedness"))).toContain('alt="Hex"');
   });
 
   it("has no badge for a skill this client does not know", () => {
-    expect(skillSlotHtml(slot("nobody.unknown"), 0)).not.toContain("skill-type-badge");
+    expect(skillSlotHtml(slot("nobody.unknown"))).not.toContain("skill-type-badge");
   });
 });
 

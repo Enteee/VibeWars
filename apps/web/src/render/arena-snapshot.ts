@@ -196,7 +196,7 @@ export interface ArenaSnapshot {
   readonly clock: number;
   /** The living body under the mouse cursor, whose name shows (#253). */
   readonly hoverId: string | undefined;
-  /** Ctrl is held: every name shows (#253). */
+  /** The names key is held (Shift by default, #302): every name shows (#253). */
   readonly showAllNames: boolean;
 }
 
@@ -266,7 +266,7 @@ export function withNames(
 
 /**
  * Whether `actor`'s name label is drawn (#253): only your target's, the
- * body's under the cursor, and everyone's while Ctrl is held. Eleven
+ * body's under the cursor, and everyone's while the names key is held. Eleven
  * pixel names over every body smeared together as soon as two stood
  * close. Never your own: the ink rim marks you.
  */
