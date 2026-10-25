@@ -44,12 +44,20 @@ if (group === "api" && sub === "rate_limit") {
 const REPO = "repos/Enteee/VibeWars/";
 const issue7 = { number: 7, title: "seven", body: "the body", state: "open", html_url: "https://github.com/Enteee/VibeWars/issues/7", user: { login: "Enteee" }, labels: [{ node_id: "LA_bug", name: "bug" }], assignees: [], created_at: "2026-10-24T10:00:00Z", updated_at: "2026-10-24T11:00:00Z", closed_at: null };
 const pull9 = { number: 9, title: "nine", body: "", state: "open", html_url: "https://github.com/Enteee/VibeWars/pull/9", user: { login: "Enteee" }, labels: [], assignees: [], created_at: "x", updated_at: "y", closed_at: null, merged_at: null, draft: false, head: { ref: "bot/x", sha: "abc1234def" }, base: { ref: "main" }, additions: 1, deletions: 2, changed_files: 3, mergeable: true, mergeable_state: "clean" };
+// Three comments: ours, a collaborator's, and one by someone with no role.
+const restComments = [
+  { user: { login: "Enteee" }, author_association: "OWNER", body: "first comment", created_at: "2026-10-24T12:00:00Z", html_url: "u" },
+  { user: { login: "helper" }, author_association: "COLLABORATOR", body: "collaborator comment", created_at: "2026-10-24T13:00:00Z", html_url: "u" },
+  { user: { login: "drive-by" }, author_association: "NONE", body: "stranger comment", created_at: "2026-10-24T14:00:00Z", html_url: "u" },
+];
+const ghComments = restComments.map((c) => ({ author: { login: c.user.login }, authorAssociation: c.author_association, body: c.body, createdAt: c.created_at }));
 if (group === "api" && sub !== "graphql") {
   const target = argv.find((word) => word.startsWith(REPO)) ?? "";
   const rel = target.slice(REPO.length);
   if (rel.startsWith("collaborators")) { console.log("enteee"); process.exit(0); }
   if (rel === "issues/7") { console.log(JSON.stringify(issue7)); process.exit(0); }
-  if (rel.startsWith("issues/7/comments")) { console.log(JSON.stringify([{ user: { login: "Enteee" }, author_association: "OWNER", body: "first comment", created_at: "z", html_url: "u" }])); process.exit(0); }
+  if (rel.startsWith("issues/7/comments") || rel.startsWith("issues/9/comments")) { console.log(JSON.stringify(restComments)); process.exit(0); }
+  if (rel.startsWith("pulls/9/reviews")) { console.log(JSON.stringify([{ user: { login: "drive-by" }, author_association: "NONE", body: "stranger review", state: "COMMENTED", submitted_at: "2026-10-24T12:30:00Z", html_url: "r" }])); process.exit(0); }
   if (rel === "issues/9") { console.log(JSON.stringify({ ...pull9, pull_request: {} })); process.exit(0); }
   if (rel === "pulls/9") { console.log(JSON.stringify(pull9)); process.exit(0); }
   // A commit's checks: what the test planted for that SHA, or none.
@@ -88,6 +96,23 @@ if (group === "api" && sub === "graphql" && argv.some((word) => word.includes("n
       nodes: [{ id: "PVTI_" + issue, status: { name: "Ready" }, content: { __typename: "Issue", number: issue, title: "item " + issue, url: "https://github.com/Enteee/VibeWars/issues/" + issue, repository: { nameWithOwner: "Enteee/VibeWars" } } }],
     } },
   } }));
+  process.exit(0);
+}
+// hubd must answer comments itself; gh's own comments view is never asked.
+if (sub === "view" && argv.some((word) => word === "--comments" || word === "-c")) {
+  fs.writeFileSync(path.join(state, "gh-comments-view"), argv.join(" "));
+  process.exit(1);
+}
+if (group === "pr" && sub === "view" && argv[2] === pull9.html_url) {
+  console.log(JSON.stringify({ number: 9, url: pull9.html_url, author: { login: "Enteee" } }));
+  process.exit(0);
+}
+// gh's JSON with comment fields: what the test planted, or the comments.
+if ((group === "issue" || group === "pr") && (sub === "view" || sub === "list") && argv.some((word) => /comments|reviews/i.test(word))) {
+  const planted = path.join(state, "gh-json");
+  if (fs.existsSync(planted)) { console.log(fs.readFileSync(planted, "utf8")); process.exit(0); }
+  const item = { number: 7, url: issue7.html_url, author: { login: "Enteee" }, comments: ghComments, reviews: ghComments, latestReviews: [] };
+  console.log(JSON.stringify(sub === "list" ? [item] : item));
   process.exit(0);
 }
 // What hubd asks of an issue named by URL, to see who raised it.
@@ -253,6 +278,18 @@ async function startHubd(remaining, before) {
     /** Every REST read of a commit's checks fails, as on a GitHub outage. */
     failRest() {
       fs.writeFileSync(path.join(state, "rest-fails"), "");
+    },
+    /**
+     * What gh prints for a `--json` read of comments or reviews (#394).
+     *
+     * @param {string} text
+     */
+    setGhJson(text) {
+      fs.writeFileSync(path.join(state, "gh-json"), text);
+    },
+    /** Whether gh was ever asked for its own plain comments view. */
+    askedGhForComments() {
+      return fs.existsSync(path.join(state, "gh-comments-view"));
     },
     /** @param {string[]} expectedChecks */
     expectChecks(expectedChecks) {
@@ -853,6 +890,142 @@ describe("hubd answering issue and PR reads from REST", () => {
     await hubd.request("developer-1", "gh", ["pr", "view", "9", "--json", "reviewDecision"]);
 
     expect(hubd.calls("pr view 9")).toBe(1);
+  }, 20_000);
+});
+
+describe("hubd hiding comments by people with no role in the project (#394)", () => {
+  const HIDDEN =
+    "[hidden by hub: comment by @drive-by (NONE), who has no role in this project. Not shown to agents. The operator can read it on GitHub.]";
+
+  it("shows the project's comments and hides a stranger's", async () => {
+    const hubd = await startHubd(5000);
+
+    const answer = await hubd.request("developer-1", "gh", ["issue", "view", "7", "--comments"]);
+
+    const text = String(answer.stdout);
+    expect(text).toContain("first comment");
+    expect(text).toContain("collaborator comment");
+    expect(text).not.toContain("stranger comment");
+    expect(text).toContain(
+      `author:\tdrive-by\nassociation:\tnone\nedited:\tfalse\nstatus:\tnone\n--\n${HIDDEN}`,
+    );
+  }, 20_000);
+
+  it("answers a pull request's comments by URL from REST, reviews included", async () => {
+    const hubd = await startHubd(5000);
+
+    const answer = await hubd.request("developer-1", "gh", [
+      "pr",
+      "view",
+      "https://github.com/Enteee/VibeWars/pull/9",
+      "--comments",
+    ]);
+
+    const text = String(answer.stdout);
+    expect(answer.code).toBe(0);
+    expect(text).not.toMatch(/stranger (comment|review)/);
+    expect(text).toContain(`status:\tcommented\nreview:\ttrue\n--\n${HIDDEN}`);
+    // The review sits between the comments of 12:00 and 13:00 by date.
+    expect(text.indexOf("first comment")).toBeLessThan(text.indexOf("review:"));
+    expect(text.indexOf("review:")).toBeLessThan(text.indexOf("collaborator comment"));
+    expect(hubd.askedGhForComments()).toBe(false);
+  }, 20_000);
+
+  it("refuses a --comments form it cannot answer itself, rather than ask gh", async () => {
+    const hubd = await startHubd(5000);
+
+    const answer = await hubd.request("developer-1", "gh", ["issue", "view", "7", "-cw"]);
+
+    expect(answer.allow).toBe(false);
+    expect(hubd.askedGhForComments()).toBe(false);
+  }, 20_000);
+
+  it("scrubs gh's JSON comments and reviews", async () => {
+    const hubd = await startHubd(5000);
+
+    const answer = await hubd.request("developer-1", "gh", [
+      "pr",
+      "view",
+      "7",
+      "--json",
+      "comments,reviews",
+    ]);
+
+    /** @type {unknown} */
+    const raw = JSON.parse(String(answer.stdout));
+    const parsed = /** @type {{ comments: { body: string }[], reviews: { body: string }[] }} */ (
+      raw
+    );
+    for (const field of [parsed.comments, parsed.reviews]) {
+      expect(field.map((c) => c.body)).toEqual(["first comment", "collaborator comment", HIDDEN]);
+    }
+  }, 20_000);
+
+  it("refuses gh's answer when it cannot read it, and a field it does not know", async () => {
+    const hubd = await startHubd(5000);
+    hubd.setGhJson("stranger comment, not JSON");
+
+    const garbled = await hubd.request("developer-1", "gh", [
+      "issue",
+      "view",
+      "7",
+      "--json",
+      "comments",
+    ]);
+    const shaped = await hubd.request("developer-1", "gh", ["issue", "list", "--json", "comments"]);
+    hubd.setGhJson(JSON.stringify({ comments: "stranger comment" }));
+    const wrong = await hubd.request("developer-1", "gh", [
+      "issue",
+      "view",
+      "7",
+      "--json",
+      "comments",
+    ]);
+    const unknown = await hubd.request("developer-1", "gh", [
+      "issue",
+      "view",
+      "7",
+      "--json",
+      "someNewField",
+    ]);
+    const unknownList = await hubd.request("developer-1", "gh", [
+      "pr",
+      "list",
+      "--json",
+      "commits",
+    ]);
+
+    for (const answer of [garbled, shaped, wrong]) {
+      expect(answer.allow).toBe(false);
+      expect(String(answer.reason)).toBe("could not check comment authors");
+      expect(JSON.stringify(answer)).not.toContain("stranger comment");
+    }
+    for (const answer of [unknown, unknownList]) {
+      expect(answer.allow).toBe(false);
+      expect(String(answer.reason)).toMatch(/is not available through hub/);
+    }
+    expect(hubd.calls("issue view 7 --json someNewField")).toBe(0);
+  }, 20_000);
+
+  it("scrubs a list that gh answers", async () => {
+    const hubd = await startHubd(5000);
+
+    const answer = await hubd.request("developer-1", "gh", [
+      "issue",
+      "list",
+      "--json",
+      "number,comments",
+    ]);
+
+    /** @type {unknown} */
+    const raw = JSON.parse(String(answer.stdout));
+    const rows = /** @type {{ number: number, comments: { body: string }[] }[]} */ (raw);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.comments.map((c) => c.body)).toEqual([
+      "first comment",
+      "collaborator comment",
+      HIDDEN,
+    ]);
   }, 20_000);
 });
 

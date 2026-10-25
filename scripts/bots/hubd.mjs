@@ -67,7 +67,9 @@ import {
   planList,
   planView,
   renderView,
+  VIEW_FIELDS,
 } from "./hub-rest.mjs";
+import { COMMENT_FIELDS, jsonFields, scrubJson, unknownField } from "./hub-strangers.mjs";
 import { BOARD_QUERY, costBetween, parseBoardPage, recordSpend } from "./hub-spend.mjs";
 import { SYSTEM, obj } from "./protocol.mjs";
 import {
@@ -271,36 +273,139 @@ async function restChecks(sha, cfg) {
   return checksFromRest(answers[0], answers[1]);
 }
 
+/** The most pages of comments or reviews hubd reads for one view. */
+const MAX_PAGES = 10;
+
+/**
+ * Every row of a REST list, page by page.
+ *
+ * @param {string} rel e.g. `issues/17/comments`
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<unknown[] | undefined>} `undefined` if any page cannot be read
+ */
+async function restPages(rel, cfg) {
+  /** @type {unknown[]} */
+  const rows = [];
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const answer = await rest(`${rel}?per_page=100&page=${String(page)}`, cfg);
+    if (!Array.isArray(answer)) {
+      return undefined;
+    }
+    /** @type {unknown[]} */
+    const got = answer;
+    rows.push(...got);
+    if (got.length < 100) {
+      return rows;
+    }
+  }
+  return undefined;
+}
+
 /**
  * Answer `gh issue|pr view` from REST, or `null` to let gh answer it.
+ *
+ * Comments are never left to gh, whose answer hubd cannot scrub of
+ * strangers' text (hub-strangers.mjs): if REST cannot read them, the
+ * request fails.
  *
  * @param {import("./hub-rest.mjs").ViewPlan} plan
  * @param {ReturnType<typeof company>} cfg
  * @returns {Promise<{ code: number, stdout: string, stderr: string } | null>}
  */
 async function restView(plan, cfg) {
-  const path_ = `${plan.group === "issue" ? "issues" : "pulls"}/${String(plan.number)}`;
+  const unread = {
+    code: 1,
+    stdout: "",
+    stderr: `hub: could not read the comments on ${plan.selector} from GitHub; try again\n`,
+  };
+  const number = plan.number ?? (await resolve(plan.group, plan.selector, cfg))?.number;
+  if (number === undefined) {
+    return unread;
+  }
+  const path_ = `${plan.group === "issue" ? "issues" : "pulls"}/${String(number)}`;
   const raw = await rest(path_, cfg);
   if (raw === undefined) {
-    return null;
+    return plan.comments ? unread : null;
   }
   // `issues/{n}` also answers for a pull request; gh's `issue view` does
   // too, so that is not an error.
   /** @type {unknown[] | undefined} */
   let comments;
+  /** @type {unknown[] | undefined} */
+  let reviews;
   if (plan.comments) {
-    const page = await rest(`issues/${String(plan.number)}/comments?per_page=100`, cfg);
-    // A full page may not be all of them. gh pages through; let it.
-    if (!Array.isArray(page) || page.length >= 100) {
-      return null;
+    comments = await restPages(`issues/${String(number)}/comments`, cfg);
+    reviews = plan.group === "pr" ? await restPages(`pulls/${String(number)}/reviews`, cfg) : [];
+    if (comments === undefined || reviews === undefined) {
+      return unread;
     }
-    comments = page;
   }
-  const item = plan.group === "issue" ? ghIssue(raw, comments) : ghPull(raw, comments);
+  const item = plan.group === "issue" ? ghIssue(raw, comments) : ghPull(raw, comments, reviews);
   if (plan.fields === null) {
     return { code: 0, stdout: renderView(plan.group, item, plan.comments), stderr: "" };
   }
   return { code: 0, stdout: pickJson(item, plan.fields), stderr: "" };
+}
+
+/**
+ * gh's `--json` answer with strangers' comments hidden, or `null` if it
+ * cannot be read well enough to be sure.
+ *
+ * @param {string} stdout
+ * @returns {string | null}
+ */
+function scrubbedOutput(stdout) {
+  try {
+    const scrubbed = scrubJson(/** @type {unknown} */ (JSON.parse(stdout)));
+    return scrubbed === null ? null : `${JSON.stringify(scrubbed)}\n`;
+  } catch {
+    return null;
+  }
+}
+
+/** Why hubd refuses an answer it could not scrub. */
+const UNCHECKED = "could not check comment authors";
+
+/** Why hubd refuses a `--json` field it does not know. */
+const FIELD_CHECKED = "which checks every field for comments by people outside the project";
+
+/**
+ * Serve `gh issue|pr view`, with every comment by someone outside the
+ * project replaced (hub-strangers.mjs, the operator's rule in #394). No gh
+ * output that can hold a comment leaves here unless this code has parsed
+ * and scrubbed it: `--comments` is answered from REST, comment fields of
+ * `--json` are scrubbed, and a field hub does not know is refused.
+ *
+ * @param {string[]} argv
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ code: number, stdout: string, stderr: string, rest?: true } | { reason: string }>}
+ */
+async function serveView(argv, cfg) {
+  const fields = jsonFields(argv);
+  const unknown =
+    fields === null ? null : unknownField(fields, VIEW_FIELDS[argv[0] === "pr" ? "pr" : "issue"]);
+  if (unknown !== null) {
+    return {
+      reason: `--json ${unknown} is not available through hub, ${FIELD_CHECKED}`,
+    };
+  }
+  const plan = planView(argv);
+  if (plan !== null) {
+    const answered = await restView(plan, cfg);
+    if (answered !== null) {
+      return { ...answered, rest: true };
+    }
+  } else if (fields === null && argv.some((word) => /^(--comments(=|$)|-[a-z]*c)/i.test(word))) {
+    return {
+      reason: "--comments is served by hub alone: issue|pr view <number, URL or branch> --comments",
+    };
+  }
+  const result = await gh(pinRepo(argv, cfg));
+  if (result.code !== 0 || !fields?.some((field) => COMMENT_FIELDS.has(field))) {
+    return result;
+  }
+  const stdout = scrubbedOutput(result.stdout);
+  return stdout === null ? { reason: UNCHECKED } : { ...result, stdout };
 }
 
 /**
@@ -1314,14 +1419,24 @@ async function checkVisibility(kind, argv, cfg) {
 /**
  * Run an `issue list` / `pr list` and drop every row the company may not see.
  *
+ * Comment fields are scrubbed as in `serveView`, and an unknown field is
+ * refused.
+ *
  * @param {string[]} argv
  * @param {ReturnType<typeof company>} cfg
- * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
+ * @returns {Promise<{ code: number, stdout: string, stderr: string } | { reason: string }>}
  */
 async function filteredList(argv, cfg) {
   const prepared = prepareList(argv);
   if ("error" in prepared) {
     return { code: 1, stdout: "", stderr: `hub: ${prepared.error}\n` };
+  }
+  const group = argv[0] === "pr" ? "pr" : "issue";
+  const unknown = unknownField(prepared.fields ?? [], VIEW_FIELDS[group]);
+  if (unknown !== null) {
+    return {
+      reason: `--json ${unknown} is not available through hub, ${FIELD_CHECKED}`,
+    };
   }
   const seen = await viewer(cfg);
   if (seen === null) {
@@ -1344,13 +1459,18 @@ async function filteredList(argv, cfg) {
       return result;
     }
     stderr = result.stderr;
+    /** @type {unknown} */
+    let raw;
     try {
-      /** @type {unknown} */
-      const raw = JSON.parse(result.stdout);
-      rows = Array.isArray(raw) ? raw.map((row) => obj(row)) : [];
+      raw = JSON.parse(result.stdout);
     } catch {
-      return { code: 1, stdout: "", stderr: "hub: gh returned a list hub could not read\n" };
+      return { reason: UNCHECKED };
     }
+    const scrubbed = scrubJson(raw);
+    if (!Array.isArray(scrubbed)) {
+      return { reason: UNCHECKED };
+    }
+    rows = scrubbed;
   }
   const visible = rows.filter((row) =>
     isVisible(
@@ -1364,7 +1484,7 @@ async function filteredList(argv, cfg) {
   );
   return {
     code: 0,
-    stdout: renderList(argv[0] === "pr" ? "pr" : "issue", visible, prepared.fields),
+    stdout: renderList(group, visible, prepared.fields),
     stderr,
   };
 }
@@ -1771,17 +1891,30 @@ async function serve(request, verdict, acting) {
 
   if ((argv[0] === "issue" || argv[0] === "pr") && argv[1] === "list") {
     const listed = await filteredList(argv, cfg);
+    if ("reason" in listed) {
+      audit({ role, kind, argv, decision: "refused", reason: listed.reason });
+      return { allow: false, reason: listed.reason, code: 77 };
+    }
     audit({ role, kind, argv, decision: "allowed", code: listed.code, filtered: true });
     return { allow: true, ...listed };
   }
 
-  const view = planView(argv);
-  if (view !== null) {
-    const answered = await restView(view, cfg);
-    if (answered !== null) {
-      audit({ role, kind, argv, decision: "allowed", code: answered.code, rest: true });
-      return { allow: true, ...answered };
+  if ((argv[0] === "issue" || argv[0] === "pr") && argv[1] === "view") {
+    const viewed = await serveView(argv, cfg);
+    if ("reason" in viewed) {
+      audit({ role, kind, argv, decision: "refused", reason: viewed.reason });
+      return { allow: false, reason: viewed.reason, code: 77 };
     }
+    const { rest: fromRest, ...answered } = viewed;
+    audit({
+      role,
+      kind,
+      argv,
+      decision: "allowed",
+      code: answered.code,
+      ...(fromRest ? { rest: true } : {}),
+    });
+    return { allow: true, ...answered };
   }
 
   if (isBoardRead(argv, cfg.project)) {
