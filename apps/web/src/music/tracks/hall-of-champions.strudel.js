@@ -33,7 +33,7 @@ stack(
   // 2: the brass melody, snare and cymbal
   layer(2, stack(
     n(brass).scale("d4:aeolian")
-      .s("sawtooth").attack(.04).release(.4).gain(.5).lpf(1200).lpenv(3).lpa(.05).lpd(.5).room(.5).roomsize(7).orbit(2),
+      .s("sawtooth").attack(.04).release(.4).gain(.5).lpf(500).lpenv(3).lpa(.05).lpd(.5).room(.5).roomsize(7).orbit(2),
     s("~ snare:1 ~ snare:1").gain(.35).room(.3),
     s("crash:0 ~ ~ ~ ~ ~ ~ ~").slow(4).gain(.3))),
   // 3: the choir, doubled war drums

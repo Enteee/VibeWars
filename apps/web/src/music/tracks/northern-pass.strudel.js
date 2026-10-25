@@ -25,7 +25,7 @@ stack(
     .struct("x ~ x ~ x x x x"),
   n(horn).scale("g3:mixolydian")
     .s("sawtooth").attack(.08).release(.8).gain(.4)
-    .lpf(800).lpenv(3).lpa(.12).lpd(.6).room(.7).roomsize(6).orbit(2),
+    .lpf(500).lpenv(3).lpa(.12).lpd(.6).room(.7).roomsize(6).orbit(2),
   s("frame:1 ~ ~ ~ frame:1 ~ ~ ~").gain(.45).room(.3),
   // 1: the lute joins, the whistle answers the horn
   layer(1, stack(
@@ -39,5 +39,5 @@ stack(
     s("timp:0 ~ ~ timp:0 ~ ~ timp:0 ~").gain(.55).room(.3),
     s("~ ~ frame:0 ~ ~ ~ frame:0 ~").gain(.4),
     n("<0 0 0 0 0 0 0 0>*2".add("<0 0 -1 0 0 0 -2 0>")).scale("g3:mixolydian")
-      .s("sawtooth").attack(.05).release(.4).gain(.18).lpf(1100).lpenv(2).lpd(.3).roomsize(6).orbit(2)))
+      .s("sawtooth").attack(.05).release(.4).gain(.18).lpf(1000).lpenv(2).lpd(.3).roomsize(6).orbit(2)))
 ).postgain(.5)

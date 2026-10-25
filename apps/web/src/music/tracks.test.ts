@@ -171,6 +171,23 @@ describe("the track checker keeps voices low and soft (#449)", () => {
     ]);
   });
 
+  it("counts the filter envelope: lpenv 3 on lpf 1000 fails, lpenv 1 passes", async () => {
+    expect(await problemsOf('note("c3").s("sawtooth").lpf(1000).lpenv(3)')).toEqual([
+      "reg level 0: sawtooth lpf reaches 8000 Hz (max 4000) at cycle 0",
+    ]);
+    expect(await problemsOf('note("c3").s("sawtooth").lpf(1000).lpenv(1)')).toEqual([]);
+    expect(await problemsOf('note("c3").s("sawtooth").lpf(3000).lpattack(0.1)')).toEqual([
+      "reg level 0: sawtooth lpf reaches 6000 Hz (max 4000) at cycle 0",
+    ]);
+  });
+
+  it("counts speed as pitch on a sample, not on a synth", async () => {
+    expect(await problemsOf('note("c5").s("recorder").lpf(2800).speed(2)')).toEqual([
+      "reg level 0: recorder reaches C6 (max E5) at cycle 0",
+    ]);
+    expect(await problemsOf('note("c3").s("sawtooth").lpf(2800).speed(4)')).toEqual([]);
+  });
+
   it("passes a sweep that stays within 800 to 3000", async () => {
     const sweep = 'note("c3").s("supersaw").lpf(sine.range(800, 3000).slow(4))';
     expect(await problemsOf(sweep)).toEqual([]);

@@ -263,6 +263,22 @@ const midiOf = (note) => {
 };
 
 /**
+ * The highest cutoff the listener hears: superdough's filter envelope opens
+ * to `lpf · 2^|lpenv|` (anchor 0, the default; `fanchor` is not an allowed
+ * control), capped at 20 kHz. Any envelope control alone sets `lpenv` to 1.
+ *
+ * @param {Record<string, unknown>} value
+ * @returns {number | null} null when the event has no lowpass
+ */
+export function peakCutoffOf(value) {
+  const base = value.lpf ?? value.cutoff;
+  if (typeof base !== "number") return null;
+  const enveloped = ["lpattack", "lpdecay", "lpsustain", "lprelease"].some((k) => k in value);
+  const env = typeof value.lpenv === "number" ? value.lpenv : enveloped ? 1 : 0;
+  return Math.min(20000, base * 2 ** Math.abs(env));
+}
+
+/**
  * @param {Map<string, { sound: string, highestMidi: number, highestCycle: number, lpf: number | null, lpfCycle: number, unfilteredCycle: number | null }>} seen
  * @param {number} cycle
  * @param {Record<string, unknown>} value
@@ -278,13 +294,17 @@ function noteRegister(seen, cycle, value) {
     unfilteredCycle: null,
   };
   seen.set(sound, entry);
-  const midi = midiOf(value.note);
+  const written = midiOf(value.note);
+  // `speed` replays a sample faster, and so higher; a synth ignores it.
+  const speed = typeof value.speed === "number" && value.speed !== 0 ? Math.abs(value.speed) : 1;
+  const midi =
+    written !== null && !BUILTIN_SOUNDS.has(sound) ? written + 12 * Math.log2(speed) : written;
   if (midi !== null && midi > entry.highestMidi) {
     entry.highestMidi = midi;
     entry.highestCycle = cycle;
   }
-  const filter = value.lpf ?? value.cutoff;
-  if (typeof filter === "number") {
+  const filter = peakCutoffOf(value);
+  if (filter !== null) {
     if (entry.lpf === null || filter > entry.lpf) {
       entry.lpf = filter;
       entry.lpfCycle = cycle;
