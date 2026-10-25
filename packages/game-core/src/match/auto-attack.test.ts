@@ -531,9 +531,10 @@ describe("the approach round bodies (#277)", () => {
     const log = stepFor(match, 2);
     const ended = unreachable(log);
     expect(ended).toHaveLength(1);
-    // Half a second of no progress (#218), after a tick or two of jostling.
+    // Half a second of no progress (#218). Since #291 refuses a move deeper
+    // into a body there is no jostling first, so it can land on 0.5 s exactly.
     const at = ended[0]?.atSeconds ?? 0;
-    expect(at).toBeGreaterThan(RULES.combat.unreachableAfterSeconds);
+    expect(at).toBeGreaterThanOrEqual(RULES.combat.unreachableAfterSeconds - 1e-9);
     expect(at).toBeLessThanOrEqual(RULES.combat.unreachableAfterSeconds + 3 * DT + 1e-9);
     expect(get(match, "a").combatant.attack).toBeUndefined();
   });

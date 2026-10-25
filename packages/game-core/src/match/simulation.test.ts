@@ -293,6 +293,74 @@ describe("walls", () => {
   });
 });
 
+describe("body blocking at a doorway (#291)", () => {
+  const R = RULES.collision.playerRadius;
+  const BLOCKER_X = 200;
+  /**
+   * A corridor `width` units wide between two walls along x, a blocker
+   * standing still in its middle, and a mover hugging the lower wall to
+   * its left.
+   */
+  function doorway(width: number): MatchSimulation {
+    return new MatchSimulation({
+      seed: "doorway",
+      walls: [segment(vec2(-500, 0), vec2(900, 0)), segment(vec2(-500, width), vec2(900, width))],
+      participants: [
+        spec("mover", 0, vec2(100, R)),
+        spec("blocker", 1, vec2(BLOCKER_X, width / 2)),
+      ],
+    });
+  }
+  const gap = (sim: MatchSimulation) =>
+    Math.hypot(
+      participant(sim, "mover").position.x - participant(sim, "blocker").position.x,
+      participant(sim, "mover").position.y - participant(sim, "blocker").position.y,
+    );
+
+  // Along the wall, and pressed into it: both used to squeeze through.
+  for (const direction of [vec2(1, 0), vec2(1, -1)]) {
+    it(`holds a 60-unit corridor against a mover pushing (${String(direction.x)}, ${String(direction.y)})`, () => {
+      const sim = doorway(60);
+      sim.setInputDirection("mover", direction);
+      for (let tick = 0; tick < 120; tick += 1) {
+        sim.step(DT);
+        expect(gap(sim)).toBeGreaterThanOrEqual(2 * R - 1e-6);
+      }
+      expect(participant(sim, "mover").position.x).toBeLessThan(BLOCKER_X - R);
+      expect(participant(sim, "blocker").position).toEqual(vec2(BLOCKER_X, 30));
+    });
+  }
+
+  it("lets a mover past along the wall where the gap is wider than a body", () => {
+    const sim = doorway(90);
+    sim.setInputDirection("mover", vec2(1, 0));
+    stepFor(sim, 120 * DT);
+    expect(participant(sim, "mover").position.x).toBeGreaterThan(BLOCKER_X + 2 * R);
+  });
+
+  it("lets a corpse in the doorway be walked past", () => {
+    const sim = doorway(60);
+    const blocker = participant(sim, "blocker");
+    blocker.combatant.dead = true;
+    blocker.respawnInSeconds = Number.POSITIVE_INFINITY;
+    sim.setInputDirection("mover", vec2(1, 0));
+    stepFor(sim, 120 * DT);
+    expect(participant(sim, "mover").position.x).toBeGreaterThan(BLOCKER_X + 2 * R);
+  });
+
+  it("lets two bodies on the same point move apart", () => {
+    const sim = new MatchSimulation({
+      seed: "stacked",
+      participants: [spec("a", 0, vec2(100, 100)), spec("b", 0, vec2(100, 100))],
+    });
+    sim.setInputDirection("a", vec2(-1, 0));
+    stepFor(sim, 10 * DT);
+    const a = participant(sim, "a").position;
+    const b = participant(sim, "b").position;
+    expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(2 * R - 1e-6);
+  });
+});
+
 describe("the map's edge (#244)", () => {
   const R = RULES.collision.playerRadius;
   // Arena Alpha's size, no walls.
