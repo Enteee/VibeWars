@@ -81,7 +81,7 @@ import {
   rebootAllowed,
 } from "./reboot.mjs";
 import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
-import { applyStaff, parseStaff, staffAllowed } from "./staff.mjs";
+import { applyStaff, parseStaff, roleOf, staffAllowed } from "./staff.mjs";
 import {
   RESTRICTED_PATHS,
   ROLES,
@@ -512,6 +512,9 @@ let spendWindow = [];
 /** Whose request is being served, so its calls are written down as theirs. */
 let servingRole = "hubd";
 
+/** The employee whose request is being served, for the audit log (#62). */
+let servingEmployee = /** @type {string | null} */ (null);
+
 /** `ratelimit.json`: the budget, and where the last hour of it went. */
 function writeBudget() {
   if (lastBudget !== null) {
@@ -741,7 +744,8 @@ async function evaluateGuards(guards, argv) {
  */
 function audit(entry) {
   fs.mkdirSync(path.dirname(AUDIT), { recursive: true });
-  fs.appendFileSync(AUDIT, `${JSON.stringify({ ts: Date.now(), ...entry })}\n`);
+  const by = servingEmployee === null ? {} : { employee: servingEmployee };
+  fs.appendFileSync(AUDIT, `${JSON.stringify({ ts: Date.now(), ...by, ...entry })}\n`);
 }
 
 /**
@@ -1520,13 +1524,27 @@ function actingFor(role) {
 }
 
 /**
- * @param {{ role: string, kind: string, argv: string[] }} request
+ * @param {{ employee: string, role: string, kind: string, argv: string[] }} request
+ *   `role` is the employee's, from `staff.json`
  * @returns {Promise<Record<string, unknown>>}
  */
 async function handle(request) {
-  const { role, kind, argv } = request;
+  servingEmployee = request.employee;
+  try {
+    return await handleAs(request);
+  } finally {
+    servingEmployee = null;
+  }
+}
+
+/**
+ * @param {{ employee: string, role: string, kind: string, argv: string[] }} request
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function handleAs(request) {
+  const { employee, role, kind, argv } = request;
   const acting = actingFor(role);
-  const verdict = authorize(role, { kind, argv }, { acting });
+  const verdict = authorize(role, { kind, argv }, { acting, employee });
 
   if (!verdict.allow) {
     audit({ role, kind, argv, decision: "refused", reason: verdict.reason, acting });
@@ -1627,18 +1645,19 @@ async function changedSince(sha, cfg) {
 }
 
 /**
- * A company reboot (#21): schedule it, abort it, or mark a role ready for
- * it. hubd only checks and records it, in `.bots/reboot.json`; the
+ * A company reboot (#21): schedule it, abort it, or mark an employee ready
+ * for it. hubd only checks and records it, in `.bots/reboot.json`; the
  * supervisor, which watches the agents' restart loops, drains the company
  * and starts the restarter. A schedule or an abort is announced to everyone
  * through the system outbox, so it wakes every `tg wait` (#323).
  *
- * @param {string} role
+ * @param {string} employee who asks; `ready` is kept per employee (#62)
+ * @param {string} role the employee's
  * @param {string[]} argv `["request", reason]`, `["abort"]` or `["ready"]`
  * @param {ReturnType<typeof company>} cfg
  * @returns {Promise<Record<string, unknown>>}
  */
-async function reboot(role, argv, cfg) {
+async function reboot(employee, role, argv, cfg) {
   const kind = "reboot";
   const pending = readReboot();
   if (argv[0] === "ready" || argv[0] === "abort") {
@@ -1652,8 +1671,8 @@ async function reboot(role, argv, cfg) {
       tellCompany("reboot-aborted", aborted);
       return { allow: true, code: 0, stdout: `${aborted}\n`, stderr: "" };
     }
-    if (!pending.ready.includes(role)) {
-      writeAtomic(REBOOT, JSON.stringify({ ...pending, ready: [...pending.ready, role] }));
+    if (!pending.ready.includes(employee)) {
+      writeAtomic(REBOOT, JSON.stringify({ ...pending, ready: [...pending.ready, employee] }));
     }
     return {
       allow: true,
@@ -1787,13 +1806,13 @@ async function serveAlerts(argv, cfg) {
 /**
  * Serve a request the policy has already allowed.
  *
- * @param {{ role: string, kind: string, argv: string[] }} request
+ * @param {{ employee: string, role: string, kind: string, argv: string[] }} request
  * @param {ReturnType<typeof authorize>} verdict
  * @param {string[]} acting
  * @returns {Promise<Record<string, unknown>>}
  */
 async function serve(request, verdict, acting) {
-  const { role, kind, argv } = request;
+  const { employee, role, kind, argv } = request;
   // The hat this request is being served under, if it is not the role's own.
   const as = typeof verdict.as === "string" ? verdict.as : role;
 
@@ -1810,7 +1829,7 @@ async function serve(request, verdict, acting) {
   const cfg = company();
 
   if (kind === "reboot") {
-    return reboot(role, argv, cfg);
+    return reboot(employee, role, argv, cfg);
   }
 
   if (kind === "staff") {
@@ -1889,7 +1908,7 @@ async function serve(request, verdict, acting) {
         // signed off", and while lead-dev is covering that seat its sign-off
         // has to answer that question. `by` keeps who actually did it.
         role: seat,
-        by: role,
+        by: employee,
         verdict: promptVerb === "approve" ? "approve" : "request-changes",
         sha,
         ts: Date.now(),
@@ -2049,13 +2068,13 @@ const health = {
  */
 function heartbeat(serving) {
   let queued = 0;
-  for (const role of ROLES) {
+  for (const employee of staffed.keys()) {
     try {
-      queued += withJailDir(path.join(HUB, role), "req", {}, (req) =>
+      queued += withJailDir(path.join(HUB, employee), "req", {}, (req) =>
         req.list().filter(isRequest),
       ).length;
     } catch {
-      // This role has never spoken to hubd, or its req/ is not a directory.
+      // This employee has never spoken to hubd, or its req/ is not a directory.
     }
   }
   /** @type {import("./hub-health.mjs").HubdAlive} */
@@ -2065,6 +2084,59 @@ function heartbeat(serving) {
     inflight: (serving ? 1 : 0) + queued,
   };
   writeAtomic(ALIVE, JSON.stringify(alive));
+}
+
+/**
+ * Who hubd serves (#62): employee id to role, from `staff.json`. The spool
+ * directory's name is the employee, and this is the only way from it to a
+ * role, so a spool whose name nobody is employed under is never authorized.
+ *
+ * @type {Map<string, string>}
+ */
+let staffed = new Map();
+
+/** What was wrong with `staff.json` the last time, so it is logged once. */
+let staffProblem = "";
+
+/**
+ * Re-reads `staff.json`, so a hire is served on hubd's next pass. A file it
+ * cannot read leaves the last list it could in force, and is logged once;
+ * until it has read one, nobody is served.
+ *
+ * @returns {void}
+ */
+function readStaffed() {
+  try {
+    const { employees } = parseStaff(fs.readFileSync(STAFF, "utf8"));
+    staffed = new Map(Object.entries(employees).map(([id, { role }]) => [id, role]));
+    staffProblem = "";
+  } catch (error) {
+    const problem = error instanceof Error ? error.message : String(error);
+    if (problem !== staffProblem) {
+      staffProblem = problem;
+      console.error(
+        `hubd: staff.json: ${problem}; still serving ${[...staffed.keys()].join(", ") || "nobody"}`,
+      );
+    }
+  }
+}
+
+/**
+ * Spools named like an employee that nobody is employed under: a fired
+ * employee's, or one made by hand. Their requests are answered, refused.
+ *
+ * @returns {string[]}
+ */
+function unstaffedSpools() {
+  try {
+    return fs
+      .readdirSync(HUB, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory() && roleOf(entry.name) !== null)
+      .map((entry) => entry.name)
+      .filter((name) => !staffed.has(name));
+  } catch {
+    return [];
+  }
 }
 
 /** A request's id, as hub.mjs makes them: it names the response file. */
@@ -2082,15 +2154,20 @@ function isRequest(name) {
 }
 
 /**
- * Serve a role's spool. req/ and res/ are the jail's (jail-fs.mjs, #329):
- * what is in them, and what they are, is up to the agent, so nothing here
- * goes through a path that a symlink could redirect.
+ * Serve an employee's spool. req/ and res/ are the jail's (jail-fs.mjs,
+ * #329): what is in them, and what they are, is up to the agent, so nothing
+ * here goes through a path that a symlink could redirect.
  *
- * @param {string} role
+ * @param {string} employee the spool directory's name
+ * @param {string | null} role the employee's, or `null` if nobody is employed
+ *   under that name: then its requests are refused, and nothing is created
  * @returns {Promise<void>}
  */
-async function drain(role) {
-  const home = path.join(HUB, role);
+async function drain(employee, role) {
+  const home = path.join(HUB, employee);
+  if (role === null && !fs.existsSync(path.join(home, "req"))) {
+    return;
+  }
   fs.mkdirSync(home, { recursive: true });
   /** @type {import("./jail-fs.mjs").JailDir | undefined} */
   let req;
@@ -2101,11 +2178,11 @@ async function drain(role) {
     res = openJailDir(home, "res", { create: true });
   } catch (error) {
     req?.close();
-    refused(role, "req/ or res/", error);
+    refused(employee, "req/ or res/", error);
     return;
   }
   try {
-    await serveSpool(role, req, res);
+    await serveSpool(employee, role, req, res);
   } finally {
     req.close();
     res.close();
@@ -2144,19 +2221,20 @@ function dropRefused(role, req, name) {
 }
 
 /**
- * @param {string} role
+ * @param {string} employee
+ * @param {string | null} role see `drain`
  * @param {import("./jail-fs.mjs").JailDir} req
  * @param {import("./jail-fs.mjs").JailDir} res
  * @returns {Promise<void>}
  */
-async function serveSpool(role, req, res) {
+async function serveSpool(employee, role, req, res) {
   const pending = req.list().filter(isRequest).sort();
 
   for (const name of pending) {
     const id = name.replace(/\.json$/, "");
     if (!REQUEST_ID.test(id)) {
-      refused(role, `request ${JSON.stringify(name)}`, "not a request id");
-      dropRefused(role, req, name);
+      refused(employee, `request ${JSON.stringify(name)}`, "not a request id");
+      dropRefused(employee, req, name);
       continue;
     }
     /** @type {string} */
@@ -2164,8 +2242,8 @@ async function serveSpool(role, req, res) {
     try {
       text = req.readSmall(name, REQUEST_MAX_BYTES);
     } catch (error) {
-      refused(role, `request ${name}`, error);
-      dropRefused(role, req, name);
+      refused(employee, `request ${name}`, error);
+      dropRefused(employee, req, name);
       continue;
     }
     /** @type {unknown} */
@@ -2181,17 +2259,21 @@ async function serveSpool(role, req, res) {
     req.remove(name);
 
     const raw = /** @type {Record<string, unknown>} */ (parsed);
+    const kind = typeof raw.kind === "string" ? raw.kind : "";
+    const argv = Array.isArray(raw.argv) ? raw.argv.map(String) : [];
     /** @type {Record<string, unknown>} */
     let response;
     try {
-      response = await handle({
-        // The role comes from the directory, never from the request body: a
-        // request claiming to be from another role would otherwise be
-        // authorized as that role.
-        role,
-        kind: typeof raw.kind === "string" ? raw.kind : "",
-        argv: Array.isArray(raw.argv) ? raw.argv.map(String) : [],
-      });
+      if (role === null) {
+        const reason = `unknown employee "${employee}"`;
+        audit({ employee, kind, argv, decision: "refused", reason });
+        response = { allow: false, reason, code: 77 };
+      } else {
+        // The employee comes from the directory, never from the request
+        // body, and the role from staff.json: a request claiming to be from
+        // someone else would otherwise be authorized as them.
+        response = await handle({ employee, role, kind, argv });
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "failed";
       health.lastError = { at: Date.now(), message };
@@ -2208,7 +2290,7 @@ async function serveSpool(role, req, res) {
     try {
       res.writeAtomic(`${id}.json`, JSON.stringify(response));
     } catch (error) {
-      refused(role, `response ${id}.json`, error);
+      refused(employee, `response ${id}.json`, error);
     }
   }
 }
@@ -2233,7 +2315,7 @@ async function main() {
     process.exit(1);
   }
   console.error(
-    `hubd: serving ${String(ROLES.length)} roles on ${cfg.repo} (project ${String(cfg.project)})`,
+    `hubd: serving the employees in ${STAFF} on ${cfg.repo} (project ${String(cfg.project)})`,
   );
 
   fs.mkdirSync(HUB, { recursive: true });
@@ -2245,6 +2327,7 @@ async function main() {
   health.sha = readBoot()?.sha.slice(0, 7) ?? null;
   // A restart costs no sweep the board's age does not call for.
   loadBoard(cfg);
+  readStaffed();
   heartbeat(false);
   let lastBeat = Date.now();
   // The dashboard's budget line. Free to ask (see `budgetExhausted`), and
@@ -2262,11 +2345,17 @@ async function main() {
   process.on("SIGTERM", stop);
 
   for (;;) {
-    for (const role of ROLES) {
+    readStaffed();
+    /** @type {[string, string | null][]} */
+    const spools = [
+      ...staffed,
+      ...unstaffedSpools().map((name) => /** @type {[string, null]} */ ([name, null])),
+    ];
+    for (const [employee, role] of spools) {
       try {
-        await drain(role);
+        await drain(employee, role);
       } catch (error) {
-        console.error(`hubd: ${role}: ${error instanceof Error ? error.message : "failed"}`);
+        console.error(`hubd: ${employee}: ${error instanceof Error ? error.message : "failed"}`);
       }
     }
     if (hints.size > 0) {

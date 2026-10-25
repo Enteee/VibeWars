@@ -437,7 +437,7 @@ in
       #
       # claude-bot runs a single turn in print mode and exits when the agent
       # ends it. agent-turn.mjs makes its output readable and resumes the
-      # role's conversation by the id it recorded in .bots/agents/<role>/,
+      # employee's conversation by the id it recorded in .bots/agents/<employee>/,
       # which no jail can see. Then a pause, and the next turn, whose prompt
       # sends the agent back to its inbox and the board.
       #
@@ -468,16 +468,19 @@ in
         exec = ''
           set -uo pipefail
 
-          role="''${1-}"
-          if [ -z "$role" ]; then
-            echo "claude-llc-agent: usage: claude-llc-agent <role>" >&2
+          # An employee (#62): `qa-tester` or `qa-tester@2`. Its state, and
+          # with it `between-turns`, is its own; claude-bot checks the id.
+          employee="''${1-}"
+          if [ -z "$employee" ]; then
+            echo "claude-llc-agent: usage: claude-llc-agent <employee>" >&2
             exit 2
           fi
           shift || true
+          role="''${employee%%@*}"
 
           root="$DEVENV_ROOT/.bots"
           export VIBEWARS_BOT_ROOT="$root"
-          state="$root/agents/$role"
+          state="$root/agents/$employee"
           mkdir -p "$state"
           between="$state/between-turns"
           # The context of the turn's last call (#321), in the role's bus
@@ -488,7 +491,7 @@ in
           trap 'rm -f "$between"' EXIT
 
           stopped() {
-            echo "claude-llc-agent: stopped $role."
+            echo "claude-llc-agent: stopped $employee."
             exit 0
           }
 
@@ -501,7 +504,7 @@ in
             # running is not stopped.
             ${node} ${llcScripts}/agent-loop.mjs disk || true
             started=$SECONDS
-            ${node} ${llcScripts}/agent-turn.mjs "$state" -- claude-bot "$role" "$@"
+            ${node} ${llcScripts}/agent-turn.mjs "$state" -- claude-bot "$employee" "$@"
             turn=$?
             # The reboot note is for the first turn after the reboot, not
             # for each fresh session the context ceiling starts (#321).
@@ -513,7 +516,7 @@ in
               # Claude's usage limit: not this agent's fault, so it neither
               # counts toward the five nor resets them.
               limitPause="$(${node} ${llcScripts}/agent-loop.mjs limited "$role" "$state" "$limitPause")" || limitPause=300
-              echo "claude-llc-agent: Claude usage limit reached; next turn for $role in ''${limitPause}s."
+              echo "claude-llc-agent: Claude usage limit reached; next turn for $employee in ''${limitPause}s."
               echo "claude-llc-agent: messages do not wake it. Ctrl-C now to stop for good."
               ${node} ${llcScripts}/agent-loop.mjs sleep "$limitPause" || stopped
             else
@@ -529,14 +532,14 @@ in
               pause="$(${node} ${llcScripts}/agent-loop.mjs pause "$pause" $(( SECONDS - started )) "$failed")"
 
               if [ "$failures" -ge 5 ]; then
-                echo "claude-llc-agent: $role failed five runs in a row."
+                echo "claude-llc-agent: $employee failed five runs in a row."
                 echo "claude-llc-agent: not restarting. Fix the cause, then:"
-                echo "claude-llc-agent:   claude-llc-agent $role"
+                echo "claude-llc-agent:   claude-llc-agent $employee"
                 ${node} ${llcScripts}/agent-loop.mjs gave-up "$role" || true
                 exit 1
               fi
 
-              echo "claude-llc-agent: next turn for $role in ''${pause}s, or when a message arrives."
+              echo "claude-llc-agent: next turn for $employee in ''${pause}s, or when a message arrives."
               echo "claude-llc-agent: Ctrl-C now to stop for good."
               ${node} ${llcScripts}/agent-loop.mjs wait "$role" "$pause" || stopped
             fi
@@ -546,7 +549,7 @@ in
             # up while no turn can start.
             rm -f "$between"
             if [ -e "$root/reboot.json" ]; then
-              echo "claude-llc-agent: a company reboot is pending; $role waits for it."
+              echo "claude-llc-agent: a company reboot is pending; $employee waits for it."
             fi
             while [ -e "$root/reboot.json" ]; do
               touch "$between"

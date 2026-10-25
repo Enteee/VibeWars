@@ -226,7 +226,7 @@ let
     refused "adding a worktree" "mkdir '$common/worktrees/smoke-$$'"
     for other in "$common"/worktrees/*/; do
       other="''${other%/}"
-      [ "$other" = "$common/worktrees/$VIBEWARS_BOT_ROLE" ] && continue
+      [ "$other" = "$common/worktrees/$VIBEWARS_BOT_EMPLOYEE" ] && continue
       refused "writing another worktree's HEAD" "touch '$other/HEAD'"
       break
     done
@@ -344,13 +344,14 @@ let
     claude-bot — run a sandboxed Claude agent in a role, coordinating over Telegram
 
     usage:
-      claude-bot [--resume <session-id>] <role> [claude args...]
-      claude-bot --smoke <role>  check that role's jail can run the browser tests
+      claude-bot [--resume <session-id>] <employee> [claude args...]
+      claude-bot --smoke <employee>  check that employee's jail can run the browser tests
       claude-bot --slice         set the jails' shared resource cap and exit
       claude-bot --help
 
-    Each role runs in its own bubblewrap sandbox, on its own git worktree
-    (detached at main), and talks to its peers through its inbox; Telegram
+    An employee is a role's first seat, its bare name (qa-tester), or a
+    further one, <role>@<n> (qa-tester@2). Each runs in its own bubblewrap
+    sandbox, on its own git worktree (detached at main), and talks to its peers through its inbox; Telegram
     carries the operator's copy. Your checkout is not mounted inside the
     sandbox. Any extra arguments are passed straight through to `claude`.
 
@@ -386,7 +387,8 @@ let
       .bots/registry.json        the Bots, Manager and Operator topics, and the
                                  update offset
       .bots/bus/<role>/          that role's inbox and outbox
-      .bots/wt/<role>/           that role's git worktree
+      .bots/wt/<employee>/       that employee's git worktree
+      .bots/hub/<employee>/      that employee's GitHub spool
 
     See docs/adr/0014-agent-coordination.md and docs/adr/0023-one-telegram-bot.md
     for why it is built this way.
@@ -425,18 +427,31 @@ let
           shift
         fi
 
-        role="''${1-}"
-        if [ -z "$role" ]; then
+        # The employee (#62): `qa-tester`, the role's first seat, or
+        # `qa-tester@2`. Permissions, briefing and Telegram are the role's;
+        # the worktree, the hub spool and the push prefix are the employee's.
+        employee="''${1-}"
+        if [ -z "$employee" ]; then
           usage >&2
           exit 2
         fi
         shift
+        role="''${employee%%@*}"
+        seat="''${employee#"$role"}"
 
         case "$role" in
-          *[!a-z0-9-]* | -* | _*)
+          "" | *[!a-z0-9-]* | -* | _*)
             echo "claude-bot: a role is a plain name: [a-z0-9-]+, no leading dash or underscore." >&2
-            echo "claude-bot: got: $role" >&2
+            echo "claude-bot: got: $employee" >&2
             echo "claude-bot: try: claude-bot --help" >&2
+            exit 2
+            ;;
+        esac
+        case "$seat" in
+          "" | @[2-9] | @[1-9][0-9] | @[1-9][0-9][0-9]) ;;
+          *)
+            echo "claude-bot: a further employee is <role>@<n>, n from 2: qa-tester@2." >&2
+            echo "claude-bot: got: $employee" >&2
             exit 2
             ;;
         esac
@@ -542,12 +557,13 @@ let
         fi
 
         export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
+        export VIBEWARS_BOT_EMPLOYEE="$employee"
         export VIBEWARS_BOT_ROLE="$role"
         export VIBEWARS_BOT_BUS="$DEVENV_ROOT/.bots/bus"
         export TELEGRAM_CHAT_ID="${cfg.chatId}"
 
         mkdir -p "$VIBEWARS_BOT_ROOT" "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_ROOT/link" "$VIBEWARS_BOT_ROOT/wt"
-        mkdir -p "$VIBEWARS_BOT_ROOT/hub/$role/req" "$VIBEWARS_BOT_ROOT/hub/$role/res"
+        mkdir -p "$VIBEWARS_BOT_ROOT/hub/$employee/req" "$VIBEWARS_BOT_ROOT/hub/$employee/res"
         # Main's skills, which hubd exports here after each fetch (#27). Made
         # now so the bind below has something to bind before hubd's first run.
         mkdir -p "$VIBEWARS_BOT_ROOT/skills-main"
@@ -574,7 +590,7 @@ let
         # one real secret the jail gets, bound read-write because Claude rewrites
         # it on token refresh.
         # ----------------------------------------------------------------------
-        boxDir="$HOME/${config.vibewars.claudeBot.boxes}/$role"
+        boxDir="$HOME/${config.vibewars.claudeBot.boxes}/$employee"
         mkdir -p "$boxDir/config"
         [ -e "$boxDir/claude.json" ] || printf '{}' > "$boxDir/claude.json"
 
@@ -613,8 +629,8 @@ let
         # ----------------------------------------------------------------------
         # Created, or repaired if its admin dir is gone, here on the host: the
         # jail cannot write .git/worktrees (#69, see the binds below).
-        worktree="$VIBEWARS_BOT_ROOT/wt/$role"
-        ${node} ${botScripts}/worktree.mjs "$DEVENV_ROOT" "$role" ${config.git-hooks.configFile}
+        worktree="$VIBEWARS_BOT_ROOT/wt/$employee"
+        ${node} ${botScripts}/worktree.mjs "$DEVENV_ROOT" "$employee" ${config.git-hooks.configFile}
 
         # Marks onboarding done and this worktree trusted. Merged rather than
         # overwritten, so an agent's accumulated state survives.
@@ -628,7 +644,7 @@ let
           printf '%s\n' "$seeded" > "$boxDir/claude.json"
         else
           echo "claude-bot: warning: could not pre-accept the first-run prompts;" >&2
-          echo "claude-bot: warning: $role may stop and wait for input." >&2
+          echo "claude-bot: warning: $employee may stop and wait for input." >&2
         fi
 
         # ----------------------------------------------------------------------
@@ -746,7 +762,7 @@ let
           exit 1
         fi
         exec "$systemdRun" --user --scope --quiet --collect \
-          --unit="vibewars-jail-$role-$$" --slice=vibewars-jails.slice \
+          --unit="vibewars-jail-''${employee/@/-}-$$" --slice=vibewars-jails.slice \
           -- ${pkgs.util-linux}/bin/choom -n 1000 \
           -- ${pkgs.coreutils}/bin/nice -n 10 \
           -- ${pkgs.util-linux}/bin/prlimit --core=0 \
@@ -776,11 +792,11 @@ let
           --ro-bind "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/hooks" \
           --ro-bind "$DEVENV_ROOT/.git/info" "$DEVENV_ROOT/.git/info" \
           --ro-bind "$DEVENV_ROOT/.git/worktrees" "$DEVENV_ROOT/.git/worktrees" \
-          --bind "$DEVENV_ROOT/.git/worktrees/$role" "$DEVENV_ROOT/.git/worktrees/$role" \
+          --bind "$DEVENV_ROOT/.git/worktrees/$employee" "$DEVENV_ROOT/.git/worktrees/$employee" \
           --ro-bind "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_BUS" \
           --bind "$VIBEWARS_BOT_BUS/$role" "$VIBEWARS_BOT_BUS/$role" \
           --ro-bind "$VIBEWARS_BOT_ROOT/hub" "$VIBEWARS_BOT_ROOT/hub" \
-          --bind "$VIBEWARS_BOT_ROOT/hub/$role" "$VIBEWARS_BOT_ROOT/hub/$role" \
+          --bind "$VIBEWARS_BOT_ROOT/hub/$employee" "$VIBEWARS_BOT_ROOT/hub/$employee" \
           --bind "$worktree" "$worktree" \
           "''${skillsBind[@]}" \
           --chdir "$worktree" \
@@ -792,9 +808,10 @@ let
           --setenv LANG "''${LANG:-C.UTF-8}" \
           --setenv COLORTERM "''${COLORTERM:-truecolor}" \
           --setenv XDG_RUNTIME_DIR "/run/user/$(id -u)" \
+          --setenv VIBEWARS_BOT_EMPLOYEE "$employee" \
           --setenv VIBEWARS_BOT_ROLE "$role" \
           --setenv VIBEWARS_BOT_BUS "$VIBEWARS_BOT_BUS" \
-          --setenv VIBEWARS_HUB "$VIBEWARS_BOT_ROOT/hub/$role" \
+          --setenv VIBEWARS_HUB "$VIBEWARS_BOT_ROOT/hub/$employee" \
           --setenv VIBEWARS_PROJECT "$projectNumber" \
           --setenv VIBEWARS_BOARD "$boardIds" \
           --setenv VIBEWARS_ACTING "$acting" \
