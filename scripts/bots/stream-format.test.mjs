@@ -13,6 +13,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   LINE_MAX,
+  contextOf,
   formatLine,
   oneLine,
   parseEvent,
@@ -205,9 +206,13 @@ afterEach(() => {
  * A stand-in for `claude-bot`: records its arguments, prints `lines` and
  * exits with `code`.
  *
- * @param {{ lines: string[], code?: number, session?: string }} fake
+ * The context file is `context.json` in the run's directory. The stand-in
+ * copies it to `context-at-start.json` before printing anything, and
+ * `stale` is what the last turn left in it.
+ *
+ * @param {{ lines: string[], code?: number, session?: string, stale?: string }} fake
  */
-function turn({ lines, code = 0, session }) {
+function turn({ lines, code = 0, session, stale }) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "agent-turn-test-"));
   dirs.push(dir);
   const state = path.join(dir, "state");
@@ -215,16 +220,27 @@ function turn({ lines, code = 0, session }) {
   const out = path.join(dir, "out.jsonl");
   fs.writeFileSync(out, lines.map((l) => `${l}\n`).join(""));
   const bot = path.join(dir, "claude-bot");
-  fs.writeFileSync(bot, `#!/bin/sh\necho "$*" >${argsLog}\ncat ${out}\nexit ${String(code)}\n`, {
-    mode: 0o755,
-  });
+  const contextFile = path.join(dir, "bus", "context.json");
+  if (stale !== undefined) {
+    fs.mkdirSync(path.dirname(contextFile));
+    fs.writeFileSync(contextFile, stale);
+  }
+  const atStart = path.join(dir, "context-at-start.json");
+  fs.writeFileSync(
+    bot,
+    `#!/bin/sh\necho "$*" >${argsLog}\ncp ${contextFile} ${atStart}\ncat ${out}\nexit ${String(code)}\n`,
+    { mode: 0o755 },
+  );
   if (session !== undefined) {
     fs.mkdirSync(state);
     fs.writeFileSync(path.join(state, "session-id"), `${session}\n`);
   }
   const result = spawnSync(process.execPath, [AGENT_TURN, state, "--", bot, "developer-1"], {
     encoding: "utf8",
+    env: { ...process.env, VIBEWARS_CONTEXT_FILE: contextFile },
   });
+  /** @param {string} file @returns {unknown} */
+  const json = (file) => (fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : null);
   const sessionFile = path.join(state, "session-id");
   return {
     code: result.status,
@@ -232,6 +248,8 @@ function turn({ lines, code = 0, session }) {
     stderr: result.stderr,
     args: fs.readFileSync(argsLog, "utf8").trim(),
     session: fs.existsSync(sessionFile) ? fs.readFileSync(sessionFile, "utf8").trim() : null,
+    context: json(contextFile),
+    contextAtStart: json(atStart),
     /** @param {string} name @returns {string | null} a file the run left in its state */
     file: (name) =>
       fs.existsSync(path.join(state, name))
@@ -300,6 +318,97 @@ describe("usageLimitOf", () => {
     );
     expect(usageLimitOf({ type: "assistant", error: { type: "overloaded_error" } })).toBeNull();
     expect(usageLimitOf(parseEvent(message([{ type: "text", text: "429" }])))).toBeNull();
+  });
+});
+
+/**
+ * An assistant event from a call made at this context.
+ *
+ * @param {{ input_tokens?: number, cache_read_input_tokens?: number, cache_creation_input_tokens?: number }} usage
+ * @returns {string}
+ */
+function called(usage) {
+  return JSON.stringify({
+    type: "assistant",
+    message: { role: "assistant", content: [{ type: "text", text: "hm" }], usage },
+    session_id: SESSION_ID,
+  });
+}
+
+describe("contextOf", () => {
+  it("sums what the call read: fresh, from the cache and into it", () => {
+    const event = parseEvent(
+      called({
+        input_tokens: 5,
+        cache_read_input_tokens: 100_000,
+        cache_creation_input_tokens: 2_000,
+      }),
+    );
+
+    expect(contextOf(event)).toBe(102_005);
+  });
+
+  it("counts a field the call did not report as none", () => {
+    expect(contextOf(parseEvent(called({ input_tokens: 7 })))).toBe(7);
+  });
+
+  it("is null for any other event, or an assistant event without usage", () => {
+    expect(contextOf(parseEvent(JSON.stringify(RESULT)))).toBeNull();
+    expect(contextOf(parseEvent(message([{ type: "text", text: "hi" }])))).toBeNull();
+    expect(contextOf(parseEvent(called({})))).toBeNull();
+    expect(contextOf(null)).toBeNull();
+  });
+});
+
+describe("agent-turn.mjs and the context ceiling (#321)", () => {
+  const over = called({ input_tokens: 4, cache_read_input_tokens: 133_996 });
+  const under = called({ input_tokens: 4, cache_read_input_tokens: 50_000 });
+
+  it("forgets the session when the turn's last call was past the ceiling", () => {
+    const run = turn({ lines: [JSON.stringify(INIT), under, over, JSON.stringify(RESULT)] });
+
+    expect(run.code).toBe(0);
+    expect(run.session).toBeNull();
+    expect(run.stderr).toContain(
+      "agent-turn: context 134k >= 120k; next turn starts a fresh session",
+    );
+    expect(run.context).toEqual({ tokens: 134_000, ceiling: 120_000 });
+  });
+
+  it("keeps the session when the last call was under it, whatever came before", () => {
+    const run = turn({ lines: [JSON.stringify(INIT), over, under, JSON.stringify(RESULT)] });
+
+    expect(run.code).toBe(0);
+    expect(run.session).toBe(SESSION_ID);
+    expect(run.context).toEqual({ tokens: 50_004, ceiling: 120_000 });
+  });
+
+  it("forgets it after a failed run past the ceiling too", () => {
+    const run = turn({ lines: [JSON.stringify(INIT), over], code: 1 });
+
+    expect(run.code).toBe(1);
+    expect(run.session).toBeNull();
+  });
+
+  it("keeps it over a usage limit, however big the context", () => {
+    const run = turn({
+      lines: [JSON.stringify(INIT), over, JSON.stringify(REJECTED)],
+      session: SESSION_ID,
+    });
+
+    expect(run.code).toBe(3);
+    expect(run.session).toBe(SESSION_ID);
+  });
+
+  it("starts each turn at 0, so the last session's context turns no one away", () => {
+    const run = turn({
+      lines: [JSON.stringify(INIT), JSON.stringify(RESULT)],
+      stale: JSON.stringify({ tokens: 500_000, ceiling: 120_000 }),
+    });
+
+    expect(run.contextAtStart).toEqual({ tokens: 0, ceiling: 120_000 });
+    expect(run.context).toEqual({ tokens: 0, ceiling: 120_000 });
+    expect(run.session).toBe(SESSION_ID);
   });
 });
 

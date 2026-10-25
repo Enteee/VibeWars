@@ -288,9 +288,10 @@ describe("claude-llc-agent", () => {
 
   /**
    * @param {(keyof typeof RUNS)[]} plan
-   * @returns {{ code: number | null, calls: string[], runs: number, stdout: string }}
+   * @param {Record<string, string>} [env]
+   * @returns {{ code: number | null, calls: string[], runs: number, stdout: string, notes: string[], contextFile: string }}
    */
-  function run(plan) {
+  function run(plan, env = {}) {
     const dir = scratch();
     const scripts = path.join(dir, "scripts");
     const bin = path.join(dir, "bin");
@@ -311,6 +312,8 @@ describe("claude-llc-agent", () => {
       ].join("\n"),
     );
     const count = path.join(dir, "count");
+    const notes = path.join(dir, "notes");
+    const contextFile = path.join(dir, "context-file");
     fs.writeFileSync(count, "0");
     const cases = plan.map((kind, i) => `  ${String(i + 1)}) ${RUNS[kind]} ;;`).join("\n");
     fs.writeFileSync(
@@ -318,6 +321,8 @@ describe("claude-llc-agent", () => {
       [
         "#!/usr/bin/env bash",
         `n=$(( $(cat ${count}) + 1 )); echo "$n" >${count}`,
+        `echo "\${VIBEWARS_KICKOFF_NOTE-}" >>${notes}`,
+        `echo "$VIBEWARS_CONTEXT_FILE" >${contextFile}`,
         'case "$n" in',
         cases,
         "  *) exit 1 ;;",
@@ -331,13 +336,15 @@ describe("claude-llc-agent", () => {
     const result = spawnSync("bash", [script, "developer-1"], {
       encoding: "utf8",
       timeout: 30_000,
-      env: { ...process.env, DEVENV_ROOT: dir, PATH: `${bin}:${process.env.PATH ?? ""}` },
+      env: { ...process.env, DEVENV_ROOT: dir, PATH: `${bin}:${process.env.PATH ?? ""}`, ...env },
     });
     return {
       code: result.status,
       calls: fs.existsSync(calls) ? fs.readFileSync(calls, "utf8").trim().split("\n") : [],
       runs: Number(fs.readFileSync(count, "utf8").trim()),
       stdout: result.stdout,
+      notes: fs.existsSync(notes) ? fs.readFileSync(notes, "utf8").split("\n").slice(0, -1) : [],
+      contextFile: path.relative(dir, fs.readFileSync(contextFile, "utf8").trim()),
     };
   }
 
@@ -374,6 +381,17 @@ describe("claude-llc-agent", () => {
     ]);
     expect(result.calls.at(-1)).toBe("gave-up developer-1");
     expect(result.stdout).toContain("Claude usage limit reached; next turn for developer-1 in 1s.");
+  });
+
+  it("gives the reboot note to the first turn only (#321)", () => {
+    const result = run(["ok", "ok"], { VIBEWARS_KICKOFF_NOTE: "Rebooted onto abc" });
+
+    expect(result.runs).toBe(7);
+    expect(result.notes).toEqual(["Rebooted onto abc", "", "", "", "", "", ""]);
+  });
+
+  it("names the role's context file in its bus directory, where tg wait reads it (#321)", () => {
+    expect(run(["fail"]).contextFile).toBe(".bots/bus/developer-1/context.json");
   });
 
   it("neither counts a limit as a failure nor lets it reset the count", () => {

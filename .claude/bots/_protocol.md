@@ -101,6 +101,8 @@ left half-done.
 - **Don't end your turn while waiting on background work.** Ending a turn
   ends the process, and nothing re-invokes you when a background command or
   task finishes. Block on it, or on `tg wait`, instead.
+- **When `tg wait` says your context is over the ceiling, do what it says.**
+  Ending your turn there is required, not a failure.
 - **On a company reboot announcement**, WIP-commit your work, push it, then
   run `company ready` and end your turn. You come back in a fresh session; your work
   survives in git, on the board and in Telegram.

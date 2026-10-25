@@ -457,6 +457,9 @@ in
           state="$root/agents/$role"
           mkdir -p "$state"
           between="$state/between-turns"
+          # The context of the turn's last call (#321), in the role's bus
+          # directory, which its jail sees: `tg wait` reads it there.
+          export VIBEWARS_CONTEXT_FILE="$root/bus/$role/context.json"
           # However the loop ends, Ctrl-C and a killed window included, it is
           # no longer between turns.
           trap 'rm -f "$between"' EXIT
@@ -474,6 +477,9 @@ in
             started=$SECONDS
             ${node} ${llcScripts}/agent-turn.mjs "$state" -- claude-bot "$role" "$@"
             turn=$?
+            # The reboot note is for the first turn after the reboot, not
+            # for each fresh session the context ceiling starts (#321).
+            unset VIBEWARS_KICKOFF_NOTE
             touch "$between"
 
             echo ""
