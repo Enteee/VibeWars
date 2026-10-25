@@ -23,6 +23,11 @@ interface ImportMetaEnv {
    * Read only by `net/online.ts`.
    */
   readonly VITE_VIBEWARS_ONLINE?: string;
+  /**
+   * `on` only in the build scripts/music-stress.mjs makes, the one build
+   * where `?stress=` works (#420). Read only by `music/stress.ts`.
+   */
+  readonly VITE_VIBEWARS_STRESS?: string;
 }
 
 interface ImportMeta {

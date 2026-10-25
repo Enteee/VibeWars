@@ -26,3 +26,44 @@ Playwright keeps every page `visible`, so no e2e test can hide one.
 Pass: the tick advanced about 20 a second throughout, about 1 200 over
 the 60 s, and there was no burst of ticks on return. A Worker clock
 should keep its rate; a page-timer clock drops to about 1 a second.
+
+## Music under load, on a phone
+
+Code: `apps/web/src/music/host/` and `scripts/music-stress.mjs` (#420).
+
+The stress script measures Chromium with CPU throttling. A phone's real
+audio thread, Firefox for Android's included, can only be heard on a
+phone. `?musicstats` makes the music host count what it costs, and the
+page keeps the last second's counts in `window.__musicStats`.
+
+1. Serve the client where the phone can reach it, for example
+   `pnpm run dev` on the LAN.
+2. Firefox for Android: enable USB debugging, connect the phone, and open
+   `about:debugging` on the desktop Firefox. Chrome for Android: the same,
+   with `chrome://inspect` in desktop Chromium.
+3. On the phone, open `<client>/?musicstats`, make a character and play
+   the Training Ground for a minute, fighting the dummies.
+4. In the remote console, read `__musicStats` a few times.
+
+Pass: the music sounds clean, with no crackle and no gaps.
+`lateEvents` and `skippedMs` stay 0 in nearly every second. In Chrome,
+`glitches` (playout fallback events) does not grow.
+
+## Music after the tab was hidden
+
+Code: `apps/web/src/music/host/visibility.ts` (#420).
+
+The music's audio context is suspended while the page is hidden and
+resumed when it is shown again, so it comes back with nothing to catch
+up. Playwright keeps every page `visible`.
+
+1. Desktop: as in "The host clock keeps ticking in a hidden tab", open the
+   client with `?musicstats` in headful Chromium, start the Training
+   Ground, and hide the tab for 60 s with `Target.activateTarget`.
+2. Phone: play the Training Ground, switch to another app for a minute,
+   and come back.
+
+Pass: the music is silent while hidden. On return it carries on at its
+own tempo, with no crackle, no rush of notes and no "music stopped
+responding" notice. On the desktop, `__musicStats` shows `skippedMs` 0
+in the seconds after the return.

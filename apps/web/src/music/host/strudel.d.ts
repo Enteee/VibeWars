@@ -23,6 +23,18 @@ declare module "@strudel/core" {
     withHap(func: (hap: Hap) => Hap): Pattern;
     late(cycles: number): Pattern;
   }
+  /** The scheduler `webaudioRepl` makes; the host's tests drive one directly. */
+  export class Cyclist {
+    constructor(options: {
+      onTrigger: (hap: Hap, deadline: number, duration: number, cps: number, t: number) => void;
+      getTime: () => number;
+      setInterval: (callback: () => void, ms: number) => number;
+      clearInterval: (id: number) => void;
+    });
+    setCps(cps: number): void;
+    setPattern(pattern: Pattern, autostart?: boolean): Promise<void>;
+    stop(): void;
+  }
   export function isPattern(value: unknown): value is Pattern;
   export function stack(...patterns: readonly Pattern[]): Pattern;
   export const silence: Pattern;
@@ -39,7 +51,7 @@ declare module "@strudel/transpiler" {
   export type { Pattern };
 }
 declare module "@strudel/webaudio" {
-  import type { Pattern } from "@strudel/core";
+  import type { Hap, Pattern } from "@strudel/core";
 
   export interface Repl {
     readonly scheduler: {
@@ -47,6 +59,8 @@ declare module "@strudel/webaudio" {
       /** The end of what the scheduler has queried, in cycles. */
       readonly lastEnd: number;
       readonly cps: number;
+      /** zyklus: `getPhase` is the next slot's time, `duration` a slot's length, in seconds. */
+      readonly clock: { getPhase(): number; readonly duration: number };
       setCps(cps: number): void;
       start(): Promise<void>;
       stop(): void;
@@ -54,14 +68,24 @@ declare module "@strudel/webaudio" {
     setPattern(pattern: Pattern, autostart?: boolean): Promise<Pattern>;
   }
   export function webaudioRepl(options: {
+    audioContext?: AudioContext;
     transpiler: (input: string, options?: object) => { output: string };
     setInterval?: (callback: () => void, ms: number) => number;
     clearInterval?: (id: number) => void;
+    defaultOutput?: Output;
   }): Repl;
+  /** How a hap is played: `t` is its onset, in the audio context's time. */
+  export type Output = (
+    hap: Hap,
+    deadline: number,
+    duration: number,
+    cps: number,
+    t: number,
+  ) => Promise<void> | undefined;
+  export const webaudioOutput: Output;
   export function registerSynthSounds(): void;
   export function samples(map: string, baseUrl: string): Promise<void>;
   export function initAudio(options?: object): Promise<void>;
-  export function getAudioContext(): AudioContext;
   export function getSuperdoughAudioController(): {
     readonly output: { readonly destinationGain: GainNode };
   };

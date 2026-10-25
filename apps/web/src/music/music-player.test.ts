@@ -7,6 +7,7 @@ import {
   HEARTBEAT_TIMEOUT_MS,
   HUNG_MESSAGE,
   createMusicPlayer,
+  measuringMusic,
   type MusicError,
   type MusicPlayerDeps,
 } from "./music-player.js";
@@ -36,6 +37,7 @@ function setup(overrides: Partial<MusicPlayerDeps> = {}) {
     },
     gestures,
     now: () => now,
+    measure: false,
     every: (ms, callback) => {
       expect(ms).toBe(HEARTBEAT_MS);
       tick = callback;
@@ -158,5 +160,48 @@ describe("createMusicPlayer", () => {
     frames[0]?.receive({ type: "pong", seq: 999 });
     advance(HEARTBEAT_TIMEOUT_MS + HEARTBEAT_MS);
     expect(frames[0]?.destroyed).toBe(true);
+  });
+});
+
+describe("measuring the music (#420)", () => {
+  const stats = {
+    ticks: 10,
+    lateTicks: 0,
+    maxTickGapMs: 100,
+    maxTickWorkMs: 5,
+    skippedMs: 0,
+    events: 7,
+    lateEvents: 0,
+    baseLatencyMs: 10,
+    outputLatencyMs: 32,
+    glitches: null,
+    glitchMs: null,
+  };
+
+  it("asks every host to measure first, and hands on what it reports", () => {
+    const { player, frames, click } = setup({ measure: true });
+    const seen: unknown[] = [];
+    player.onStats((reported) => seen.push(reported));
+    click();
+    frames[0]?.receive({ type: "ready" });
+    expect(frames[0]?.sent[0]).toEqual({ type: "measure" });
+
+    frames[0]?.receive({ type: "stats", ...stats });
+    expect(seen).toEqual([stats]);
+  });
+
+  it("never asks a host to measure without ?musicstats", () => {
+    const { frames } = opened();
+    frames[0]?.receive({ type: "ready" });
+    expect(frames[0]?.sent.map((message) => message.type)).not.toContain("measure");
+  });
+});
+
+describe("measuringMusic", () => {
+  it("is ?musicstats, with or without a value", () => {
+    expect(measuringMusic("?musicstats")).toBe(true);
+    expect(measuringMusic("?stress=40&musicstats=1")).toBe(true);
+    expect(measuringMusic("")).toBe(false);
+    expect(measuringMusic("?music")).toBe(false);
   });
 });

@@ -31,7 +31,39 @@ export type GameToHost =
   /** Replace the playing track's pattern with this source, at once (the beat editor). */
   | { readonly type: "evaluate"; readonly source: string }
   /** The watchdog's heartbeat; the host answers `pong` with the same `seq`. */
-  | { readonly type: "ping"; readonly seq: number };
+  | { readonly type: "ping"; readonly seq: number }
+  /** Count what the music costs and report it every second (`?musicstats`, #420). */
+  | { readonly type: "measure" };
+
+/**
+ * One second of the music's timing (#420), counted only after `measure`.
+ * Gaps show as `skippedMs` and `lateEvents`, crackle as `glitches`.
+ */
+export interface MusicStats {
+  /** Scheduler ticks this second. */
+  readonly ticks: number;
+  /** Ticks that came more than 1.5 intervals after the one before. */
+  readonly lateTicks: number;
+  /** The longest wait between two ticks this second. */
+  readonly maxTickGapMs: number;
+  /** The longest a tick itself took: querying the pattern and starting its sounds. */
+  readonly maxTickWorkMs: number;
+  /** Music the scheduler never queried, because a tick came too late for it. */
+  readonly skippedMs: number;
+  /** Events handed to superdough this second. */
+  readonly events: number;
+  /** Of those, the ones whose onset had already passed: superdough drops them. */
+  readonly lateEvents: number;
+  /** `AudioContext.baseLatency` and `outputLatency`, in milliseconds. */
+  readonly baseLatencyMs: number;
+  readonly outputLatencyMs: number;
+  /**
+   * Chromium's `playoutStats`, since the context started: how often and for
+   * how long the audio thread had nothing to play. `null` where it is missing.
+   */
+  readonly glitches: number | null;
+  readonly glitchMs: number | null;
+}
 
 export type HostToGame =
   | { readonly type: "ready" }
@@ -43,7 +75,8 @@ export type HostToGame =
     }
   | { readonly type: "evaluated" }
   | { readonly type: "error"; readonly message: string; readonly line?: number }
-  | { readonly type: "pong"; readonly seq: number };
+  | { readonly type: "pong"; readonly seq: number }
+  | ({ readonly type: "stats" } & MusicStats);
 
 /** Longer sources are refused: a track is a few kilobytes. */
 export const MAX_SOURCE_LENGTH = 100_000;
@@ -115,6 +148,8 @@ export function parseGameToHost(data: unknown): GameToHost | null {
       return Number.isSafeInteger(message.seq)
         ? { type: "ping", seq: message.seq as number }
         : null;
+    case "measure":
+      return { type: "measure" };
     default:
       return null;
   }
@@ -151,7 +186,51 @@ export function parseHostToGame(data: unknown): HostToGame | null {
       return Number.isSafeInteger(message.seq)
         ? { type: "pong", seq: message.seq as number }
         : null;
+    case "stats":
+      return stats(message);
     default:
       return null;
   }
+}
+
+/** The largest count or duration a second of stats can carry. */
+const MAX_STAT = 1e9;
+
+function stat(value: unknown): value is number {
+  return finite(value, 0, MAX_STAT);
+}
+
+function optionalStat(value: unknown): value is number | null {
+  return value === null || stat(value);
+}
+
+function stats(message: Fields): HostToGame | null {
+  const { ticks, lateTicks, maxTickGapMs, maxTickWorkMs, skippedMs, events, lateEvents } = message;
+  const { baseLatencyMs, outputLatencyMs, glitches, glitchMs } = message;
+  return stat(ticks) &&
+    stat(lateTicks) &&
+    stat(maxTickGapMs) &&
+    stat(maxTickWorkMs) &&
+    stat(skippedMs) &&
+    stat(events) &&
+    stat(lateEvents) &&
+    stat(baseLatencyMs) &&
+    stat(outputLatencyMs) &&
+    optionalStat(glitches) &&
+    optionalStat(glitchMs)
+    ? {
+        type: "stats",
+        ticks,
+        lateTicks,
+        maxTickGapMs,
+        maxTickWorkMs,
+        skippedMs,
+        events,
+        lateEvents,
+        baseLatencyMs,
+        outputLatencyMs,
+        glitches,
+        glitchMs,
+      }
+    : null;
 }
