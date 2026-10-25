@@ -27,6 +27,7 @@ import {
   spawnFacing,
   validatePlayerBuild,
   vec2,
+  type CombatEvent,
   type CombatLogEntry,
   type BuildEquipment,
   type Participant,
@@ -42,6 +43,8 @@ import {
   ROOM_MATCH,
   parseClientIntent,
   type CastRefusedMessage,
+  type CombatBatchMessage,
+  type CombatMessage,
   type MapDescriptor,
   type RechargeMessage,
   type RechargeSlot,
@@ -59,6 +62,7 @@ import {
   messageBudget,
 } from "./options.js";
 import { rechargePredicted, rechargeSlots } from "./recharge.js";
+import { broadcast, send } from "./wire.js";
 import { RoomSeats, peerAddress, type ClientLimits } from "./client-budget.js";
 import { RoomSlot, type RoomBudget } from "./room-budget.js";
 
@@ -147,7 +151,7 @@ export const ProjectileState = schema(
 
 export const MatchState = schema(
   {
-    protocolVersion: t.number().default(PROTOCOL_VERSION),
+    protocolVersion: t.string().default(PROTOCOL_VERSION),
     players: t.map(PlayerState),
     /** Weapon shots in flight, oldest first. */
     projectiles: t.array(ProjectileState),
@@ -380,16 +384,6 @@ export async function openLobbyMatch(
   );
 }
 
-/** One combat-log entry as the client reads it: `CombatMessage` in `apps/web`. */
-interface CombatEntry {
-  readonly casterSessionId: string;
-  readonly cause: CombatLogEntry["cause"];
-  readonly skillId: string;
-  readonly weaponId: string;
-  readonly events: CombatLogEntry["events"];
-  readonly area?: NonNullable<CombatLogEntry["area"]>;
-}
-
 /**
  * A combat-log entry for the clients, or `undefined` for one with no
  * events. The client uses these for floating numbers and a combat log;
@@ -398,7 +392,7 @@ interface CombatEntry {
  * area skill also says where it landed and how far it reached, for the
  * flash (#5).
  */
-function combatEntry(entry: CombatLogEntry): CombatEntry | undefined {
+function combatEntry(entry: CombatLogEntry): CombatMessage<CombatEvent> | undefined {
   const { cause, events, area } = entry;
   if (events.length === 0) {
     return undefined;
@@ -424,7 +418,7 @@ function combatEntry(entry: CombatLogEntry): CombatEntry | undefined {
  */
 export function combatBatch(
   log: readonly CombatLogEntry[],
-): { readonly entries: readonly CombatEntry[] } | undefined {
+): CombatBatchMessage<CombatEvent> | undefined {
   const entries = log.flatMap((entry) => combatEntry(entry) ?? []);
   return entries.length === 0 ? undefined : { entries };
 }
@@ -652,7 +646,7 @@ export class MatchRoom extends Room {
               skillId: request.skillId,
               reason: request.check.reason,
             };
-            client.send("cast-refused", message);
+            send(client, "cast-refused", message);
           }
           return;
         }
@@ -660,7 +654,7 @@ export class MatchRoom extends Room {
           const check = this.#sim.requestAttack(client.sessionId, intent.targetId);
           if (check !== undefined && !check.ok) {
             const message: CastRefusedMessage = { kind: "attack", reason: check.reason };
-            client.send("cast-refused", message);
+            send(client, "cast-refused", message);
           }
           this.mirrorAttack(client.sessionId);
           return;
@@ -754,7 +748,7 @@ export class MatchRoom extends Room {
 
     const batch = combatBatch(result.log);
     if (batch !== undefined) {
-      this.broadcast("combat", batch);
+      broadcast(this, "combat", batch);
     }
     this.syncProjectiles();
 
@@ -801,9 +795,9 @@ export class MatchRoom extends Room {
     this.state.phase = "finished";
     this.state.winningTeam = outcome.winningTeam ?? -1;
     this.state.endReason = outcome.reason ?? "";
-    this.broadcast("match-ended", {
+    broadcast(this, "match-ended", {
       winningTeam: outcome.winningTeam ?? null,
-      reason: outcome.reason,
+      reason: outcome.reason ?? null,
       scoreTeam0: this.state.scoreTeam0,
       scoreTeam1: this.state.scoreTeam1,
     });
@@ -830,7 +824,7 @@ export class MatchRoom extends Room {
     }
     this.#rechargesSent.set(client.sessionId, { slots, at: now });
     const message: RechargeMessage = { slots };
-    client.send("recharge", message);
+    send(client, "recharge", message);
   }
 
   /** Add the shots released this tick and drop those that landed; leave the rest alone. */
@@ -997,9 +991,9 @@ export class MatchRoom extends Room {
       sessionId: client.sessionId,
       tickIntervalMs: TICK_INTERVAL_MS,
     };
-    client.send("hello", hello);
-    client.send("map", this.#mapDescriptor);
-    client.send("skill-bar", {
+    send(client, "hello", hello);
+    send(client, "map", this.#mapDescriptor);
+    send(client, "skill-bar", {
       slots: sim.skillBar.map((skillId) => {
         const skill = getSkill(skillId);
         return {
