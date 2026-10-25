@@ -1,7 +1,13 @@
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { CastState } from "./cast-state.js";
-import { StatusSet } from "./status.js";
+import {
+  STATUS_DEFINITIONS,
+  StatusSet,
+  isStatusId,
+  type StatusDefinition,
+  type StatusId,
+} from "./status.js";
 import type { Combatant } from "./types.js";
 
 /**
@@ -28,4 +34,27 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     equipment: unarmedResolvedEquipment(MINIMAL_GW_INSPIRED_PVP_V1.combat.armorReferenceLevel),
     ...overrides,
   };
+}
+
+/**
+ * Run `fn` with these statuses speeding up or slowing down attacks. No
+ * catalog status does yet (ADR-0029), so a test of the hook lends the
+ * multiplier to an existing one for the length of `fn`.
+ */
+export function withAttackDuration<T>(
+  multipliers: Partial<Record<StatusId, number>>,
+  fn: () => T,
+): T {
+  const table: Record<StatusId, StatusDefinition> = STATUS_DEFINITIONS;
+  const saved = { ...table };
+  try {
+    for (const [id, multiplier] of Object.entries(multipliers)) {
+      if (isStatusId(id)) {
+        table[id] = { ...table[id], attackDurationMultiplier: multiplier };
+      }
+    }
+    return fn();
+  } finally {
+    Object.assign(table, saved);
+  }
 }

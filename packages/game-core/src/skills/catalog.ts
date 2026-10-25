@@ -38,6 +38,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     range: RANGE_SPELL,
     target: "single-ally",
     area: undefined,
+    attack: undefined,
     effects: [
       {
         kind: "heal",
@@ -65,6 +66,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       maxTargets: undefined,
       includesCaster: false,
     },
+    attack: undefined,
     effects: [
       {
         kind: "damage",
@@ -86,16 +88,12 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     target: "single-enemy",
     area: undefined,
     // The real skill's block-interaction and Deep Wound rider need
-    // blocking and conditions (Sprint 12); the bonus damage is
-    // implemented faithfully.
-    effects: [
-      {
-        kind: "damage",
-        amount: {
-          scaling: { attributeId: "warrior.axe-mastery", atZero: 1, atTwelve: 16 },
-        },
-      },
-    ],
+    // blocking; the bonus damage is implemented faithfully.
+    attack: {
+      weapon: "axe",
+      bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 1, atTwelve: 16 } },
+    },
+    effects: [],
   },
   {
     id: "ranger.barrage",
@@ -107,9 +105,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     rechargeSeconds: 1,
     range: RANGE_LONG,
     target: "single-enemy",
-    // The volley: up to six foes adjacent to the target. Each hit is still
-    // spell damage, because Barrage really rides on a bow attack, and
-    // weapon attacks do not exist yet.
+    // The volley: an arrow at each of up to six foes adjacent to the
+    // target, each a blow of the bow plus the bonus.
     area: {
       radius: AREA_ADJACENT,
       origin: "target",
@@ -117,14 +114,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       maxTargets: 6,
       includesCaster: false,
     },
-    effects: [
-      {
-        kind: "damage",
-        amount: {
-          scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 12 },
-        },
-      },
-    ],
+    attack: {
+      weapon: "bow",
+      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 12 } },
+    },
+    effects: [],
   },
   {
     id: "warrior.backbreaker",
@@ -140,14 +134,13 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // Knockdown is Sprint 15; the elite's bonus damage is implemented, and
     // this is the catalog's one adrenaline-cost skill, which is what makes
     // it worth including now.
-    effects: [
-      {
-        kind: "damage",
-        amount: {
-          scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 16 },
-        },
+    attack: {
+      weapon: "hammer",
+      bonusDamage: {
+        scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 16 },
       },
-    ],
+    },
+    effects: [],
   },
   {
     id: "necromancer.blood-renewal-lite",
@@ -160,6 +153,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     range: RANGE_SPELL,
     target: "single-ally",
     area: undefined,
+    attack: undefined,
     // An *original* skill, not an import: the corpus's sacrifice skills
     // all also need hexes or regeneration, so none of them could be
     // implemented honestly yet. This one exists to exercise the
@@ -192,6 +186,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     range: RANGE_LONG,
     target: "single-enemy",
     area: undefined,
+    attack: { weapon: "bow", bonusDamage: undefined },
     // The real elite: Daze the target, and interrupt them if they were
     // casting. Both halves are now genuinely implementable — this is the
     // archetypal "shut down a caster" skill the whole interrupt mechanic
@@ -213,6 +208,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     range: RANGE_SPELL,
     target: "single-enemy",
     area: undefined,
+    attack: undefined,
     // A hex combining attack-slowing with health degeneration. The
     // degeneration is modelled by the hex's own healthPerSecond; the
     // attack-speed half awaits weapon attacks (Sprint 15/21).
@@ -229,6 +225,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     range: RANGE_SPELL,
     target: "self",
     area: undefined,
+    attack: undefined,
     // A self-enchantment: real armor gain, and the real movement penalty
     // that makes it a genuine trade-off rather than a free buff.
     effects: [{ kind: "apply-status", statusId: "armor-boost", durationSeconds: 30 }],
@@ -244,6 +241,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     range: RANGE_SPELL,
     target: "self",
     area: undefined,
+    attack: undefined,
     // Strong self-regeneration behind a long 3s cast — the canonical
     // "interrupt me" target, which is exactly why it pairs well with the
     // interrupt skills above in a test and in play.
@@ -260,6 +258,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     range: RANGE_SPELL,
     target: "single-ally",
     area: undefined,
+    attack: undefined,
     // Original design, not an import: the corpus's condition-removal
     // skills all also need enchantment-stripping or per-removal scaling
     // the engine does not express yet. This exercises the remove-status
@@ -282,16 +281,14 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     target: "single-enemy",
     area: undefined,
     // Original design: a bleed-applying adrenaline attack, exercising
-    // damage + condition in one skill.
-    effects: [
-      {
-        kind: "damage",
-        amount: {
-          scaling: { attributeId: "warrior.swordsmanship", atZero: 5, atTwelve: 20 },
-        },
+    // a blow + condition in one skill.
+    attack: {
+      weapon: "sword",
+      bonusDamage: {
+        scaling: { attributeId: "warrior.swordsmanship", atZero: 5, atTwelve: 20 },
       },
-      { kind: "apply-status", statusId: "bleeding", durationSeconds: 15 },
-    ],
+    },
+    effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 15 }],
   },
 ];
 

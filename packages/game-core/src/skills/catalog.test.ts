@@ -1,6 +1,8 @@
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { describe, expect, it } from "vitest";
 
+import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { WEAPONS } from "../equipment/weapons.js";
 import { getAttribute } from "../professions.js";
 import { createRng } from "../rng.js";
 import { vec2 } from "../vec2.js";
@@ -11,6 +13,12 @@ import { computeCoverage, formatCoverage } from "./coverage.js";
 import { applyEffects } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant } from "./types.js";
+
+/** A hammer in hand, for the hammer's attack skills. */
+const HAMMER = {
+  ...unarmedResolvedEquipment(MINIMAL_GW_INSPIRED_PVP_V1.combat.armorReferenceLevel),
+  mainHand: { weapon: WEAPONS.hammer, attributeId: "warrior.hammer-mastery", requirementMet: true },
+};
 
 describe("skill catalog integrity", () => {
   it("has no duplicate skill ids", () => {
@@ -25,9 +33,24 @@ describe("skill catalog integrity", () => {
     }
   });
 
-  it("gives every skill at least one effect — no empty placeholder skills", () => {
+  it("gives every skill something to do — no empty placeholder skills", () => {
     for (const skill of IMPLEMENTED_SKILLS) {
-      expect(skill.effects.length).toBeGreaterThan(0);
+      expect(skill.effects.length + (skill.attack === undefined ? 0 : 1), skill.id).toBeGreaterThan(
+        0,
+      );
+    }
+  });
+
+  it("makes every attack skill a blow of its weapon, and no other skill (ADR-0029)", () => {
+    for (const skill of IMPLEMENTED_SKILLS) {
+      expect(skill.attack !== undefined, skill.id).toBe(skill.type === "attack");
+      if (skill.type === "attack") {
+        // Its damage is the blow's bonus, never an effect of its own.
+        expect(
+          skill.effects.map((effect) => effect.kind),
+          skill.id,
+        ).not.toContain("damage");
+      }
     }
   });
 
@@ -264,7 +287,14 @@ describe("headless combat simulation", () => {
 
   it("an adrenaline skill is gated on adrenaline, not energy", () => {
     const warrior = actor(
-      makeCombatant({ id: "war", team: 0, energy: 100, maxEnergy: 100, adrenaline: 0 }),
+      makeCombatant({
+        id: "war",
+        team: 0,
+        energy: 100,
+        maxEnergy: 100,
+        adrenaline: 0,
+        equipment: HAMMER,
+      }),
       ["warrior.backbreaker"],
     );
     const victim = actor(makeCombatant({ id: "victim", team: 1 }), [], 20);
@@ -277,7 +307,7 @@ describe("headless combat simulation", () => {
   });
 
   it("melee range is genuinely short: a melee skill fails at spell range", () => {
-    const warrior = actor(makeCombatant({ id: "war", team: 0, adrenaline: 9 }), [
+    const warrior = actor(makeCombatant({ id: "war", team: 0, adrenaline: 9, equipment: HAMMER }), [
       "warrior.backbreaker",
     ]);
     const far = actor(makeCombatant({ id: "far", team: 1 }), [], 300);

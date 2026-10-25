@@ -59,6 +59,41 @@ function snapshot(counts, shape = () => ({})) {
   return { at: 0, sweptAt: 0, cards };
 }
 
+/**
+ * The STAFF facts for `staff.json` holding `employees`, each working unless
+ * it says otherwise, with `maxAgents` 12 and no manager restarts.
+ *
+ * @param {Record<string, Partial<import("./staff.mjs").Employee>>} employees
+ * @param {Partial<Omit<import("./dashboard-view.mjs").StaffFacts, "staff">> & {
+ *   recent?: import("./staff.mjs").Change[],
+ * }} [rest]
+ * @returns {import("./dashboard-view.mjs").StaffFacts}
+ */
+function staffFacts(employees, { recent = [], maxAgents = 12, managerRestarts = 0, now = 0 } = {}) {
+  return {
+    staff: {
+      employees: Object.fromEntries(
+        Object.entries(employees).map(([id, employee]) => [
+          id,
+          {
+            role: id.split("@")[0] ?? id,
+            hiredAt: 0,
+            by: /** @type {const} */ ("operator"),
+            reason: "first boot",
+            state: /** @type {const} */ ("working"),
+            readyAt: null,
+            ...employee,
+          },
+        ]),
+      ),
+      recent,
+    },
+    maxAgents,
+    managerRestarts,
+    now,
+  };
+}
+
 describe("boardLines", () => {
   it("shows Backlog and Ready as one count line each, however tall the pane", () => {
     const lines = boardLines(snapshot({ Backlog: 17, Ready: 10 }), COLUMNS, EVERYONE, {
@@ -199,12 +234,13 @@ describe("companyLines", () => {
   /** @type {HubLine} */
   const hub = { state: "up", line: "hub ● up 3m · restarts 0/h" };
 
-  it("is the roster, the hub, then the GitHub budget", () => {
+  it("is the staff, the hub, then the GitHub budget", () => {
     const lines = companyLines(
       {
         roles,
         live: new Set(["manager", "architect"]),
         stale: new Map(),
+        staff: staffFacts({ manager: {}, architect: {} }),
         budget,
         hub,
         reboot: null,
@@ -212,35 +248,12 @@ describe("companyLines", () => {
       },
       { rows: 30, width: 40 },
     ).map(plain);
-    expect(lines[0]).toBe("ROSTER 2/5 hired");
-    expect(lines).toContain("  not hired yet: developer-1, developer…");
+    expect(lines[0]).toBe("STAFF  2/12");
     expect(lines.some((line) => line.startsWith("GITHUB GraphQL 4210/5000"))).toBe(true);
     expect(lines.indexOf("hub ● up 3m · restarts 0/h")).toBeGreaterThan(0);
     for (const line of lines) {
       expect(columnsOf(line)).toBeLessThanOrEqual(40);
     }
-  });
-
-  it("marks an agent that died without cleaning up as down, not hired (#363)", () => {
-    const lastSeen = new Date(2026, 9, 25, 13, 30).getTime();
-    const lines = companyLines(
-      {
-        roles: ["manager", "developer-1", "lead-dev"],
-        live: new Set(["manager"]),
-        stale: new Map([["developer-1", lastSeen]]),
-        budget: null,
-        hub,
-        reboot: null,
-        claude: null,
-      },
-      { rows: 30, width: 100 },
-    ).map(plain);
-    expect(lines.slice(0, 4)).toEqual([
-      "ROSTER 1/3 hired",
-      "  + manager     ! developer-1 - lead-dev",
-      `  down: developer-1 since ${hhmm(lastSeen)} (restart: claude-llc-agent <role>)`,
-      "  not hired yet: lead-dev",
-    ]);
   });
 
   it("paints the hub line red unless hubd is up (#23)", () => {
@@ -251,6 +264,7 @@ describe("companyLines", () => {
           roles,
           live: new Set(),
           stale: new Map(),
+          staff: null,
           budget: null,
           hub: health,
           reboot: null,
@@ -264,7 +278,16 @@ describe("companyLines", () => {
 
   it("says the Claude usage is unknown before any agent has logged (#50)", () => {
     const lines = companyLines(
-      { roles, live: new Set(), stale: new Map(), budget: null, hub, reboot: null, claude: null },
+      {
+        roles,
+        live: new Set(),
+        stale: new Map(),
+        staff: null,
+        budget: null,
+        hub,
+        reboot: null,
+        claude: null,
+      },
       { rows: 30, width: 72 },
     ).map(plain);
     expect(lines).toContain("CLAUDE usage unknown (no agent logs yet)");
@@ -291,7 +314,16 @@ describe("companyLines", () => {
       },
     };
     const lines = companyLines(
-      { roles, live: new Set(), stale: new Map(), budget: null, hub, reboot: null, claude },
+      {
+        roles,
+        live: new Set(),
+        stale: new Map(),
+        staff: null,
+        budget: null,
+        hub,
+        reboot: null,
+        claude,
+      },
       { rows: 40, width: 72 },
     ).map(plain);
     const at = lines.indexOf("CLAUDE tokens, last 5h, as of 16:42");
@@ -328,7 +360,16 @@ describe("companyLines", () => {
       },
     };
     const lines = companyLines(
-      { roles, live: new Set(), stale: new Map(), budget: null, hub, reboot: null, claude },
+      {
+        roles,
+        live: new Set(),
+        stale: new Map(),
+        staff: null,
+        budget: null,
+        hub,
+        reboot: null,
+        claude,
+      },
       { rows: 40, width: 72 },
     );
     // The manager's row is not the top one, so nothing paints it.
@@ -341,11 +382,135 @@ describe("companyLines", () => {
 
   it("cuts an overflow with … +N lines", () => {
     const lines = companyLines(
-      { roles, live: new Set(), stale: new Map(), budget: null, hub, reboot: null, claude: null },
+      {
+        roles,
+        live: new Set(),
+        stale: new Map(),
+        staff: null,
+        budget: null,
+        hub,
+        reboot: null,
+        claude: null,
+      },
       { rows: 4, width: 40 },
     );
     expect(lines).toHaveLength(4);
     expect(lines.at(-1)).toMatch(/^… \+\d+ lines$/);
+  });
+
+  describe("the staff (#386)", () => {
+    const everyone = ["manager", "architect", "developer-1", "developer-2", "lead-dev"];
+    const fireAt = new Date(2026, 9, 25, 12, 0).getTime();
+
+    /**
+     * @param {import("./dashboard-view.mjs").StaffFacts | null} staff
+     * @param {{ live?: readonly string[], stale?: Map<string, number>, width?: number }} [presence]
+     */
+    const section = (staff, { live = [], stale = new Map(), width = 80 } = {}) => {
+      const raw = companyLines(
+        { roles, live: new Set(live), stale, staff, budget: null, hub, reboot: null, claude: null },
+        { rows: 40, width },
+      );
+      const end = raw.indexOf("");
+      return raw.slice(0, end === -1 ? raw.length : end);
+    };
+
+    it("is one row per role in org-chart order, with total/maxAgents in the heading", () => {
+      const staff = staffFacts(Object.fromEntries(everyone.map((id) => [id, {}])));
+      expect(section(staff, { live: everyone }).map(plain)).toEqual([
+        "STAFF  5/12",
+        "  manager          1",
+        "  architect        1",
+        "  developer-1      1",
+        "  developer-2      1",
+        "  lead-dev         1",
+      ]);
+    });
+
+    it("counts both employees of a role, and says how long a firing one has left", () => {
+      const staff = staffFacts(
+        { manager: {}, "developer-1@2": { state: "firing" }, "developer-1": {} },
+        { recent: [{ id: "developer-1@2", change: "fire", at: fireAt }], now: fireAt + 4 * 60_000 },
+      );
+      const lines = section(staff, { live: ["manager", "developer-1", "developer-1@2"] }).map(
+        plain,
+      );
+      expect(lines[0]).toBe("STAFF  3/12");
+      expect(lines[3]).toBe("  developer-1      2   developer-1@2 firing (6 min left)");
+    });
+
+    it("says a firing employee is ready, overdue, or just firing with no record of when", () => {
+      const note = (/** @type {Partial<import("./staff.mjs").Employee>} */ employee, now = 0) =>
+        plain(
+          section(
+            staffFacts(
+              { architect: { state: "firing", ...employee } },
+              { recent: [{ id: "architect", change: "fire", at: fireAt }], now },
+            ),
+            { live: ["architect"] },
+          )[2] ?? "",
+        );
+      expect(note({ readyAt: fireAt + 60_000 }, fireAt + 2 * 60_000)).toBe(
+        "  architect        1   architect firing (ready)",
+      );
+      expect(note({}, fireAt + 10 * 60_000)).toBe(
+        "  architect        1   architect firing (overdue)",
+      );
+      const unrecorded = section(staffFacts({ architect: { state: "firing" } }), {
+        live: ["architect"],
+      });
+      expect(plain(unrecorded[2] ?? "")).toBe("  architect        1   architect firing");
+    });
+
+    it("dims a role nobody is hired for, and names an employee down or not running", () => {
+      const lastSeen = new Date(2026, 9, 25, 13, 30).getTime();
+      const raw = section(staffFacts({ manager: {}, "developer-1": {}, "developer-2": {} }), {
+        live: ["manager"],
+        stale: new Map([["developer-1", lastSeen]]),
+      });
+      const lines = raw.map(plain);
+      expect(lines[2]).toBe("  architect        0");
+      expect(raw[2]).toContain("\x1b[2m");
+      expect(raw[1]).not.toContain("\x1b");
+      expect(lines[3]).toBe(`  developer-1      1   developer-1 down since ${hhmm(lastSeen)}`);
+      expect(lines[4]).toBe("  developer-2      1   developer-2 not running");
+    });
+
+    it("shows ? for a company.json without maxAgents", () => {
+      expect(
+        plain(
+          section(staffFacts({ manager: {} }, { maxAgents: null }), { live: ["manager"] })[0] ?? "",
+        ),
+      ).toBe("STAFF  1/?");
+    });
+
+    it("shows the manager's restarts today, only when there were some", () => {
+      const lines = (/** @type {number} */ managerRestarts) =>
+        section(staffFacts({ manager: {} }, { managerRestarts }), { live: ["manager"] }).map(plain);
+      expect(lines(2)[1]).toBe("  manager          1   restarted 2× today");
+      expect(lines(0)[1]).toBe("  manager          1");
+    });
+
+    it("says so when staff.json is missing or malformed", () => {
+      expect(section(null).map(plain)).toEqual([
+        "STAFF unknown (no staff.json yet: claude-llc up seeds it)",
+      ]);
+    });
+
+    it("keeps every line within the width", () => {
+      const staff = staffFacts(
+        {
+          manager: {},
+          "developer-1": { state: "firing" },
+          "developer-1@2": {},
+          "developer-1@3": {},
+        },
+        { managerRestarts: 3 },
+      );
+      for (const line of section(staff, { width: 30 })) {
+        expect(columnsOf(line)).toBeLessThanOrEqual(30);
+      }
+    });
   });
 
   describe("the reboot (#345)", () => {
@@ -366,7 +531,7 @@ describe("companyLines", () => {
      */
     const pane = (reboot, { rows = 30, width = 80 } = {}) =>
       companyLines(
-        { roles, live, stale: new Map(), budget: null, hub, reboot, claude: null },
+        { roles, live, stale: new Map(), staff: null, budget: null, hub, reboot, claude: null },
         { rows, width },
       ).map(plain);
 
@@ -383,7 +548,7 @@ describe("companyLines", () => {
         "  idle:    developer-2",
         "",
       ]);
-      expect(lines[5]).toBe("ROSTER 5/5 hired");
+      expect(lines[5]).toMatch(/^STAFF unknown/);
     });
 
     it("omits an empty row, says <1m under a minute, and paints the header red", () => {
@@ -392,6 +557,7 @@ describe("companyLines", () => {
           roles,
           live,
           stale: new Map(),
+          staff: null,
           budget: null,
           hub,
           reboot: { record: { ...record, ready: [] }, between: [], now: deadline - 30_000 },
@@ -414,7 +580,8 @@ describe("companyLines", () => {
 
     it("is one line once the restarter has it", () => {
       const lines = pane({ rebooting: "load #345" });
-      expect(lines.slice(0, 3)).toEqual(["REBOOTING now — load #345", "", "ROSTER 5/5 hired"]);
+      expect(lines.slice(0, 2)).toEqual(["REBOOTING now — load #345", ""]);
+      expect(lines[2]).toMatch(/^STAFF unknown/);
     });
 
     it("never prints a control sequence from the reason or the roles", () => {
@@ -425,7 +592,7 @@ describe("companyLines", () => {
       ];
       for (const reboot of reboots) {
         const lines = companyLines(
-          { roles, live, stale: new Map(), budget: null, hub, reboot, claude: null },
+          { roles, live, stale: new Map(), staff: null, budget: null, hub, reboot, claude: null },
           { rows: 30, width: 200 },
         ).map(plain);
         for (const line of lines) {
@@ -437,7 +604,7 @@ describe("companyLines", () => {
     });
 
     it("is no section, and no blank line, without a reboot", () => {
-      expect(pane(null)[0]).toBe("ROSTER 5/5 hired");
+      expect(pane(null)[0]).toMatch(/^STAFF unknown/);
     });
 
     it("keeps every line within the width and wins over the rest on a short pane", () => {

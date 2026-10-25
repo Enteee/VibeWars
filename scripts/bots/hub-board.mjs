@@ -747,6 +747,156 @@ export function answerBoard(state, request, repo) {
   };
 }
 
+/* -------------------------------------------------------------------------- */
+/* Ranking (#351)                                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Moves an item within the project's manual order, the order the board's
+ * GitHub view shows and BOARD_QUERY reads (`items` is ordered by position).
+ * No `$after` puts it on top.
+ */
+export const RANK_MUTATION = `mutation($project: ID!, $item: ID!, $after: ID) {
+  updateProjectV2ItemPosition(input: { projectId: $project, itemId: $item, afterId: $after }) {
+    clientMutationId
+  }
+}`;
+
+/**
+ * The request `board rank` sends, checked: `<issue> top`, `<issue> bottom`
+ * or `<issue> after <other>`.
+ *
+ * @typedef {{ number: number, place: "top" | "bottom" }
+ *   | { number: number, place: "after", after: number }} RankRequest
+ */
+
+const RANK_USAGE = "usage: board rank <issue> top | bottom | after <other-issue>";
+
+/**
+ * @param {string | undefined} word
+ * @returns {number | null}
+ */
+function issueNumber(word) {
+  return word !== undefined && /^\d+$/.test(word) && Number(word) > 0 ? Number(word) : null;
+}
+
+/**
+ * @param {readonly string[]} argv
+ * @returns {RankRequest | { error: string }}
+ */
+export function parseRankRequest(argv) {
+  const [first, place, other, ...rest] = argv;
+  const number = issueNumber(first);
+  if (number === null || rest.length > 0) {
+    return { error: RANK_USAGE };
+  }
+  if ((place === "top" || place === "bottom") && other === undefined) {
+    return { number, place };
+  }
+  const after = issueNumber(other);
+  if (place !== "after" || after === null) {
+    return { error: RANK_USAGE };
+  }
+  if (after === number) {
+    return { error: `#${String(number)} cannot go after itself` };
+  }
+  return { number, place, after };
+}
+
+/**
+ * The item to rank and the item it is to follow, `null` for the top.
+ * Positions are the whole project's, not a column's, so `bottom` is after
+ * the last card on the board.
+ *
+ * @param {BoardState} state
+ * @param {RankRequest} request
+ * @param {string} repo
+ * @returns {{ id: string, afterId: string | null } | { error: string }}
+ */
+export function rankTarget(state, request, repo) {
+  /** @param {number} number */
+  const find = (number) => state.cards.find((card) => itemNumber(card.item, repo) === number);
+  const card = find(request.number);
+  if (card === undefined) {
+    return { error: `#${String(request.number)} is not on the board` };
+  }
+  const id = String(card.item.id);
+  if (request.place === "after") {
+    const after = find(request.after);
+    return after === undefined
+      ? { error: `#${String(request.after)} is not on the board` }
+      : { id, afterId: String(after.item.id) };
+  }
+  if (request.place === "top") {
+    return { id, afterId: null };
+  }
+  const last = state.cards.filter((other) => other !== card).at(-1);
+  return { id, afterId: last === undefined ? null : String(last.item.id) };
+}
+
+/**
+ * The state with card `id` just after `afterId`, or first for `null`, as
+ * GitHub now orders them. A rank to where the card already is, or of a card
+ * or after one the copy does not hold, leaves the state as it was.
+ *
+ * @param {BoardState} state
+ * @param {string} id
+ * @param {string | null} afterId
+ * @param {number} now
+ * @returns {BoardState}
+ */
+export function rankCards(state, id, afterId, now) {
+  const from = state.cards.findIndex((card) => card.item.id === id);
+  const card = state.cards[from];
+  if (card === undefined) {
+    return state;
+  }
+  const others = state.cards.filter((other) => other !== card);
+  const at = afterId === null ? 0 : others.findIndex((other) => other.item.id === afterId) + 1;
+  if (at === 0 && afterId !== null) {
+    return state;
+  }
+  if (at === from) {
+    return state;
+  }
+  const rev = state.rev + 1;
+  return {
+    ...state,
+    rev,
+    at: now,
+    cards: [...others.slice(0, at), { rev, item: card.item }, ...others.slice(at)],
+  };
+}
+
+/**
+ * @param {number} n
+ * @returns {string}
+ */
+function ordinal(n) {
+  const teen = n % 100 >= 11 && n % 100 <= 13;
+  const suffix = teen ? "th" : (["th", "st", "nd", "rd"][n % 10] ?? "th");
+  return `${String(n)}${suffix}`;
+}
+
+/**
+ * What `board rank` prints: `#12: now 1st of 14 in Backlog`.
+ *
+ * @param {BoardState} state
+ * @param {string} id
+ * @param {string} repo
+ * @returns {string}
+ */
+export function rankLine(state, id, repo) {
+  const card = state.cards.find((candidate) => candidate.item.id === id);
+  if (card === undefined) {
+    return `${id}: ranked`;
+  }
+  const { number, status } = summary(card.item, repo);
+  const column = state.cards.filter((other) => summary(other.item, repo).status === status);
+  const place = column.indexOf(card) + 1;
+  return `#${String(number ?? "-")}: now ${ordinal(place)} of ${String(column.length)} in ${status || "(no column)"}`;
+}
+
 /**
  * What `board wait <column>` learns from one `board changes` answer: the
  * cards that arrived in the column since it last looked, and the column's

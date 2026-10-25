@@ -5,12 +5,13 @@ import type { MatchConnection, MatchSnapshot } from "@vibewars/game-session";
 import { attachMatchSounds } from "./audio/match-sounds.js";
 import { saveMuted } from "./audio/mute-preference.js";
 import { soundPlayer } from "./audio/sound-player.js";
-import { attackClickIntents, attackKeyIntents, hasActionToCancel } from "./input/attack-key.js";
+import { attackKeyIntents, hasActionToCancel } from "./input/attack-key.js";
 import { createDoubleClick } from "./input/double-click.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { loadLayoutLabeller } from "./input/key-labels.js";
 import { actionForCode, isShortcut } from "./input/keymap.js";
 import { loadKeymap } from "./input/keymap-preference.js";
+import { secondaryClickIntents } from "./input/mouse-intents.js";
 import { attachNameReveal } from "./input/name-reveal.js";
 import { nextTabTarget } from "./input/tab-target.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
@@ -20,7 +21,6 @@ import { TRACKS } from "./music/tracks/index.js";
 import { connectToMatch, type MatchTarget } from "./net/match-client.js";
 import {
   ACTOR_RADIUS,
-  actorAtPoint,
   withNames,
   teamColour,
   type ArenaSnapshot,
@@ -377,21 +377,23 @@ export async function startMatchView(
     updateRecharges(hud, connection.skillBar, connection.getRecharges());
   });
 
-  // A body is targeted, and a double-click on an enemy attacks it, as
-  // Space would (#298). The ground is walked to, and the target kept, as
-  // in GW1 (#310).
+  // A misclick must never move you (#438): the left button only walks,
+  // bodies included, and keeps the target; the right one picks, on its
+  // release, so a later drag can pan instead.
   const doubleClick = createDoubleClick();
-  const offPointer = viewport.onPointerDown((world) => {
-    const hit = actorAtPoint(latestArena, world);
-    const double = doubleClick.press(hit?.id, performance.now());
-    if (hit === undefined) {
+  const offPointer = viewport.onButton(({ button, phase, world }) => {
+    if (button === "left" && phase === "down") {
       connection.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
       viewport.scene.showWalkMarker(world);
-      return;
-    }
-    connection.sendIntent({ kind: "target", targetSessionId: hit.id });
-    if (double) {
-      for (const intent of attackClickIntents(latestMatch, hit.id)) {
+    } else if (button === "right" && phase === "up") {
+      const intents = secondaryClickIntents(
+        latestMatch,
+        latestArena,
+        world,
+        doubleClick,
+        performance.now(),
+      );
+      for (const intent of intents) {
         connection.sendIntent(intent);
       }
     }

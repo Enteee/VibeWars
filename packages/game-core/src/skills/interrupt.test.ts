@@ -253,3 +253,22 @@ describe("status-driven combat scenarios", () => {
     expect(victim.health).toBeLessThan(500);
   });
 });
+
+describe("an interrupted skill (ADR-0029)", () => {
+  it("starts recharging, as if it had been used", () => {
+    const victim = makeCombatant({ id: "victim", team: 1 });
+    const ranger = makeCombatant({ id: "ranger", team: 0 });
+    cast(victim, "ranger.troll-unguent", victim);
+
+    applyEffects([{ kind: "interrupt" }], {
+      caster: ranger,
+      target: victim,
+      rng: createRng(1),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
+    });
+
+    expect(victim.cast.rechargeRemaining.get("ranger.troll-unguent")).toBe(
+      getSkill("ranger.troll-unguent")?.rechargeSeconds,
+    );
+  });
+});

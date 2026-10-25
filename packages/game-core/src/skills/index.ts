@@ -52,6 +52,8 @@ export {
 
 export type {
   ApplyStatusEffect,
+  AttackSkillRule,
+  AttackWeaponClass,
   AttributeScaling,
   Combatant,
   DamageEffect,

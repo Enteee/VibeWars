@@ -49,10 +49,11 @@ Before a cast starts, the server checks, in order:
 2. skill actually on their bar
 3. not already casting
 4. not recharging
-5. affordable (energy or adrenaline)
-6. target legal for the skill's targeting rule
-7. target in range
-8. line of sight to target
+5. for an attack skill, the right weapon in hand
+6. affordable (energy or adrenaline)
+7. target legal for the skill's targeting rule
+8. target in range
+9. line of sight to target
 
 Each rejection has a **named reason**, not a bare `false` — "out of
 range" and "not enough energy" are very different things to a player
@@ -77,7 +78,8 @@ explicitly (`interrupt-missed`) rather than silently swallowed, because
 landing an interrupt is a timing skill and hiding failures hides the
 feedback that teaches it.
 
-The interrupted caster **still paid** their energy. That is what makes
+The interrupted caster **still paid** their energy. And the skill
+starts its recharge, as if it had been used, as in GW1. That is what makes
 interrupts so valuable: they do not just delay a skill, they burn the
 opponent's resources.
 
@@ -117,8 +119,9 @@ is already interruptible. An instant skill stays instant. See
 
 **Blind makes attacks miss**: weapon swings, each blow rolled on its own,
 and attack skills (Swift Chop, Backbreaker, Opening Cut, Barrage, Broad
-Head Arrow). An attack skill's miss is rolled when it lands, so it still
-costs energy or adrenaline and starts the recharge. Spells are
+Head Arrow). Each blow of an attack skill is rolled when it
+lands, so a miss still costs energy or adrenaline and starts the
+recharge, and the missed foe gets none of the skill's riders. Spells are
 unaffected.
 
 Degeneration applies **continuously** (`rate × dt`), not in once-per-
@@ -140,6 +143,17 @@ not meet its requirement, then mitigated by armor like any other weapon
 damage. Daggers sometimes strike twice; a scythe also hits up to two foes
 adjacent to its target.
 
+**Attack skills ride the weapon** (ADR-0029). An attack skill needs its
+weapon: Swift Chop an axe, Backbreaker a hammer, Opening Cut a sword,
+Barrage and Broad Head Arrow any bow. With the wrong one it is refused
+("Needs an axe."). It is one blow of that weapon: it hits halfway
+through a swing (or through its own activation, if it states one), for
+the weapon's damage plus the skill's bonus, mitigated once, and you
+recover for as long again before you swing or cast. The wind-up shows on
+the cast bar, and an interrupt or a move stops it. No double strike or
+cleave on an attack skill. Afterwards you swing at its foe, from a fresh
+swing.
+
 **Skills interrupt and resume.** Starting a skill loses the swing in
 progress. Attacking and casting are otherwise separate, as in GW1
 (#317): a spell never starts an attack or changes whom you attack, so
@@ -147,10 +161,10 @@ after a spell on B you go back to swinging at A, with B selected. Only
 an attack skill, which is a swing, turns your attack on its foe.
 
 **Aftercast.** A skill with an activation time that goes off, unless it
-is an attack skill, is followed by 0.75 s in which you neither move,
+is an attack skill, which has its recovery instead, is followed by 0.75 s in which you neither move,
 swing, nor start another cast. A move held through it walks the moment
-it ends. A skill with an activation time pressed during it waits and
-starts the tick it ends (a later press replaces it; a move or Esc drops it); an
+it ends. A skill with an activation time, or an attack skill, pressed during it
+waits and starts the tick it ends (a later press replaces it; a move or Esc drops it); an
 instant skill goes off at once. A cancelled or interrupted cast has no
 aftercast.
 
@@ -172,7 +186,9 @@ A shot whose flight would cross a wall stops at it and is "obstructed"
 too, so stepping behind a pillar dodges it. Shots fly through bodies.
 Melee swings are never obstructed.
 
-Not modelled: critical hits, attack-speed changes, block and evade.
+Not modelled: critical hits, block and evade. Attack-speed changes have
+a hook (only the strongest speed-up and slow-down count), but no skill
+uses it yet.
 
 ## Positioning
 

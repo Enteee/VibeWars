@@ -150,3 +150,30 @@ export function self(connection: {
 export function playerIn(snapshot: MatchSnapshot, id: string): PlayerSnapshot | undefined {
   return snapshot.players.find((player) => player.sessionId === id);
 }
+
+/**
+ * `value` as it would cross the wire: `undefined` fields dropped, the
+ * rest checked to be plain JSON. A build is a TypeScript object; a hello
+ * carries JSON.
+ */
+export function toJson(value: unknown): JsonValue {
+  if (
+    value === null ||
+    typeof value === "boolean" ||
+    typeof value === "number" ||
+    typeof value === "string"
+  ) {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item: unknown) => toJson(item));
+  }
+  if (typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([, field]) => field !== undefined)
+        .map(([key, field]: [string, unknown]) => [key, toJson(field)]),
+    );
+  }
+  throw new Error(`not JSON: ${typeof value}`);
+}

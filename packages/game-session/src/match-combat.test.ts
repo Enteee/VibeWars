@@ -1,4 +1,9 @@
-import { DEFAULT_SKILL_BAR, defaultBuildEquipment, type CombatLogEntry } from "@vibewars/game-core";
+import {
+  DEFAULT_SKILL_BAR,
+  defaultBuildEquipment,
+  type CombatLogEntry,
+  type PlayerBuild,
+} from "@vibewars/game-core";
 import {
   MAX_WIRE_COMBATS,
   parsePeerHello,
@@ -8,7 +13,14 @@ import {
 } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
-import { hello, playerIn, self, startMatch, type TestMatch } from "./match-harness.test-support.js";
+import {
+  hello,
+  playerIn,
+  self,
+  startMatch,
+  toJson,
+  type TestMatch,
+} from "./match-harness.test-support.js";
 import type { CombatMessage, MatchConnection } from "./match-connection.js";
 import { combatMessage, wireCombat } from "./wire.js";
 
@@ -23,6 +35,16 @@ import { combatMessage, wireCombat } from "./wire.js";
  */
 
 const FIREBALL = DEFAULT_SKILL_BAR.indexOf("elementalist.fireball");
+
+/** A ranger with a bow and Broad Head Arrow, which the house loadout lacks. */
+const ARCHER: PlayerBuild = {
+  name: "Archer",
+  primaryProfession: "ranger",
+  secondaryProfession: undefined,
+  attributes: [{ attributeId: "ranger.marksmanship", rank: 12 }],
+  skillBar: ["ranger.broad-head-arrow", null, null, null, null, null, null, null],
+  equipment: defaultBuildEquipment("ranger"),
+};
 
 /** One tick of match time. */
 const TICK = 0.05;
@@ -235,15 +257,16 @@ describe("networked combat (P2P)", () => {
   });
 
   it("doubles a dazed player's cast, and syncs the doubled total for the cast bar", async () => {
-    const { match, a, b } = await joinPair();
+    // Broad Head Arrow needs a bow (ADR-0029): A is a ranger.
+    const match = startMatch();
+    const { connection: a } = await match.join(hello({ build: toJson(ARCHER) }));
+    const { connection: b } = await match.join();
+    await match.step(TICK);
     await closeDistance(match, a, b.selfSessionId, 300);
     await target(match, a, b.selfSessionId);
 
     // Broad Head Arrow dazes whoever it hits.
-    a.sendIntent({
-      kind: "use-skill",
-      slot: DEFAULT_SKILL_BAR.indexOf("ranger.broad-head-arrow"),
-    });
+    a.sendIntent({ kind: "use-skill", slot: 0 });
     await until(match, () => self(b)?.statuses.includes("dazed") ?? false, "b dazed");
 
     b.sendIntent({ kind: "use-skill", slot: DEFAULT_SKILL_BAR.indexOf("ranger.troll-unguent") });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { WEAPONS } from "../equipment/weapons.js";
 import { segment } from "../geometry.js";
 import type { MatchRules } from "../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
@@ -702,12 +703,22 @@ describe("moving cancels a cast (#279)", () => {
     expect(a.combatant.cast.rechargeRemaining.has(FIREBALL)).toBe(true);
   });
 
-  it("an instant leaves a held walk alone, and a move in its tick does not cancel it", () => {
+  it("an attack skill winds up like a cast: it stops a held walk, and a move cancels it (ADR-0029)", () => {
     const archer = () =>
       new MatchSimulation({
         seed: "instant",
         participants: [
-          spec("a", 0, vec2(0, 0), { skillBar: [BARRAGE] }),
+          spec("a", 0, vec2(0, 0), {
+            skillBar: [BARRAGE],
+            equipment: {
+              ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+              mainHand: {
+                weapon: WEAPONS.longbow,
+                attributeId: "ranger.marksmanship",
+                requirementMet: true,
+              },
+            },
+          }),
           spec("b", 1, vec2(200, 0)),
         ],
       });
@@ -716,19 +727,18 @@ describe("moving cancels a cast (#279)", () => {
     held.setTarget("a", "b");
     held.setInputDirection("a", vec2(0, 1));
     expect(held.requestSkill("a", 0)?.check).toEqual({ ok: true });
-    expect(stepFor(held, 0.5).map((entry) => entry.skillId)).toEqual([BARRAGE]);
-    expect(participant(held, "a").position.y).toBeCloseTo(
-      RULES.movement.maxSpeedUnitsPerSecond * 0.5,
-      6,
-    );
+    const log = stepFor(held, WEAPONS.longbow.attackIntervalSeconds);
+    expect(log.map((entry) => entry.skillId)).toEqual([BARRAGE]);
+    expect(participant(held, "a").position).toEqual(vec2(0, 0));
 
     const moved = archer();
     moved.setTarget("a", "b");
     moved.requestSkill("a", 0);
     moved.setInputDirection("a", vec2(0, 1));
-    expect(moved.step(DT).log.map((entry) => entry.events.map((event) => event.kind))).toEqual([
-      ["damage"],
-    ]);
+    const movedLog = stepFor(moved, WEAPONS.longbow.attackIntervalSeconds);
+    expect(movedLog.flatMap((entry) => entry.events.map((event) => event.kind))).not.toContain(
+      "damage",
+    );
   });
 
   it("a stop mid-cast cancels nothing", () => {

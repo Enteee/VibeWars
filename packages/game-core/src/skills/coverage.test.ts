@@ -104,6 +104,7 @@ describe("skill coverage regression gate", () => {
 
     expect(grouped.get("skill-bar-mutation")).toEqual(["mesmer.arcane-echo", "mesmer.echo"]);
     expect(grouped.get("ground-targeting")).toEqual(["elementalist.meteor-shower"]);
+    expect(grouped.get("title-attribute")).toEqual(["warrior.whirlwind-attack"]);
   });
 
   it("does not blame a mechanic that now exists", () => {

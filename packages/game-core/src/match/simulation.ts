@@ -30,7 +30,7 @@ import {
 import { createRng, seedFromString, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { canActivate, hasAftercast, payCost, type ActivationCheck } from "../skills/activation.js";
-import { CastState } from "../skills/cast-state.js";
+import { CastState, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
 import { applySkillEffects, type CombatEvent } from "../skills/effects.js";
 import { STATUS_DEFINITIONS, StatusSet } from "../skills/status.js";
@@ -47,7 +47,14 @@ import {
   trackTarget,
   type Projectile,
 } from "../skills/projectile.js";
-import { blindMisses, landBlow, resolveSwing, weaponSnapshotOf } from "../skills/weapon-attack.js";
+import {
+  attackDurationSeconds,
+  blindMisses,
+  landBlow,
+  resolveAttackSkill,
+  resolveSwing,
+  weaponSnapshotOf,
+} from "../skills/weapon-attack.js";
 import { add, distance, normalize, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import {
   createCursor,
@@ -614,11 +621,15 @@ export class MatchSimulation {
     if (!check.ok) {
       return { skillId: skill.id, check };
     }
-    // During an aftercast a skill with an activation time waits for it to
-    // end, as in GW1 (#317): checked now, so one that could never go off
-    // is refused at once, and tried again for real when it fires. An
-    // instant goes off at once.
-    if (record.combatant.cast.inAftercast && skill.activationSeconds > 0) {
+    // During an aftercast a skill with an activation time, or an attack
+    // skill, which takes its weapon's, waits for it to end, as in GW1
+    // (#317): checked now, so one that could never go off is refused at
+    // once, and tried again for real when it fires. An instant goes off at
+    // once.
+    if (
+      record.combatant.cast.inAftercast &&
+      (skill.activationSeconds > 0 || skill.attack !== undefined)
+    ) {
       record.combatant.cast.queue(slot);
       return { skillId: skill.id, check, queued: true };
     }
@@ -629,7 +640,10 @@ export class MatchSimulation {
     if (record.combatant.attack !== undefined) {
       record.combatant.attack.swingElapsed = 0;
     }
-    const activationSeconds = effectiveActivationSeconds(skill, record.combatant);
+    const activationSeconds =
+      skill.attack === undefined
+        ? effectiveActivationSeconds(skill, record.combatant)
+        : this.#attackHitSeconds(record, skill);
     record.combatant.cast.beginCast(skill.id, castTargetId, activationSeconds);
     // Casting stops you (operator Q33): a key held as the cast begins
     // does not walk, and only the next move cancels the cast. An instant
@@ -710,7 +724,7 @@ export class MatchSimulation {
       const wasInAftercast = record.combatant.cast.inAftercast;
       const completed = record.combatant.cast.advance(dt);
       if (completed !== undefined) {
-        this.resolveCast(record, completed.skillId, completed.targetId);
+        this.resolveCast(record, completed);
       }
       // A skill pressed during the aftercast goes off the tick it ends. A
       // refusal now is dropped: nobody is pressing a key at this moment.
@@ -809,12 +823,22 @@ export class MatchSimulation {
     }
   }
 
+  /**
+   * How long an attack skill winds up before its blow lands (ADR-0029):
+   * half of its activation, or of a swing of the weapon when it states
+   * none, after attack-speed effects. Its recovery is as long again.
+   */
+  #attackHitSeconds(record: ParticipantRecord, skill: Skill): number {
+    const base =
+      skill.activationSeconds > 0
+        ? skill.activationSeconds
+        : record.combatant.equipment.mainHand.weapon.attackIntervalSeconds;
+    return attackDurationSeconds(record.combatant, base) / 2;
+  }
+
   /** Resolve a cast that has finished its activation time. */
-  private resolveCast(
-    record: ParticipantRecord,
-    skillId: string,
-    targetId: string | undefined,
-  ): void {
+  private resolveCast(record: ParticipantRecord, cast: ActiveCast): void {
+    const { skillId, targetId } = cast;
     const skill = getSkill(skillId);
     if (skill === undefined) {
       return;
@@ -822,7 +846,8 @@ export class MatchSimulation {
 
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
     const primary = skill.target === "self" ? record : targetRecord;
-    const events = applySkillEffects({
+    const resolve = skill.attack === undefined ? applySkillEffects : resolveAttackSkill;
+    const events = resolve({
       skill,
       caster: record.combatant,
       targets: resolveTargets({
@@ -866,6 +891,10 @@ export class MatchSimulation {
     }
     if (hasAftercast(skill)) {
       record.combatant.cast.beginAftercast(this.#ruleset.combat.aftercastSeconds);
+    }
+    // An attack skill recovers from its blow for as long as it wound up.
+    if (skill.attack !== undefined) {
+      record.combatant.cast.beginAftercast(cast.totalSeconds);
     }
 
     record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds);
@@ -1076,12 +1105,13 @@ export class MatchSimulation {
     faceToward(record, target.position);
 
     attack.swingElapsed += dt;
+    const interval = attackDurationSeconds(record.combatant, weapon.attackIntervalSeconds);
     // Within a hair: twenty-odd additions of 0.05 fall just short of
     // 1.75, and a swing a whole tick late would make the rate drift.
-    if (attack.swingElapsed < weapon.attackIntervalSeconds - SWING_EPSILON) {
+    if (attack.swingElapsed < interval - SWING_EPSILON) {
       return;
     }
-    attack.swingElapsed = Math.max(0, attack.swingElapsed - weapon.attackIntervalSeconds);
+    attack.swingElapsed = Math.max(0, attack.swingElapsed - interval);
 
     if (weapon.projectileSpeed !== undefined) {
       this.#release(record, target, weapon.projectileSpeed, dt);
@@ -1189,6 +1219,7 @@ export class MatchSimulation {
       landBlow(
         projectile.weaponSnapshot,
         target.combatant,
+        0,
         this.#rng,
         this.#ruleset.combat,
         events,

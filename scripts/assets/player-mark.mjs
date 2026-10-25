@@ -1,6 +1,6 @@
 // Draws the reference sheet for the arena player mark (#166): body, dark edge
-// (#186), self rim, target ring, the weapon line with its family tip (#188)
-// and the off-hand mark (#275), at true size and enlarged.
+// (#186), self rim, target ring, the 14 weapon marks (#188, #418) and the
+// off-hand mark (#275), at true size and enlarged.
 //
 //   node scripts/assets/player-mark.mjs
 //
@@ -12,6 +12,8 @@
 import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { WEAPON_MARK_GEOMETRY } from "../../apps/web/src/render/weapon-mark-geometry.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const outFile = join(root, "docs", "art", "player-mark.svg");
@@ -37,20 +39,16 @@ const C = {
 /** Body radius in world units; also the collision radius. */
 const R = 14;
 
-/**
- * @typedef {"blade" | "axe" | "hammer" | "daggers" | "bow" | "caster" | "unarmed"} Family
- */
+/** @typedef {keyof typeof WEAPON_MARK_GEOMETRY} Family */
 
 /** @type {readonly { family: Family, label: string }[]} */
-const FAMILIES = [
-  { family: "blade", label: "sword, spear" },
-  { family: "axe", label: "axe, scythe" },
-  { family: "hammer", label: "hammer" },
-  { family: "daggers", label: "daggers" },
-  { family: "bow", label: "bows" },
-  { family: "caster", label: "wand, staff" },
-  { family: "unarmed", label: "unarmed" },
-];
+const FAMILIES = /** @type {Family[]} */ (Object.keys(WEAPON_MARK_GEOMETRY)).map((family) => ({
+  family,
+  label: family,
+}));
+
+/** Only one-handed weapons leave the left hand free for a shield or a focus. */
+const ONE_HANDED = new Set(["sword", "axe", "spear", "wand"]);
 
 /**
  * @typedef {"shield" | "focus" | "none"} Offhand
@@ -70,9 +68,6 @@ const f = (n) => String(Math.round(n * 100) / 100);
  * @returns {[number, number]}
  */
 const polar = (x, y, a, d) => [x + Math.cos(a) * d, y + Math.sin(a) * d];
-
-/** How far past the body edge the weapon mark's centrelines reach. */
-const REACH = 3;
 
 /**
  * The off-hand side is the left of the facing (y points down, so a - 90°),
@@ -123,73 +118,25 @@ function offhandMark(x, y, a, offhand) {
 }
 
 /**
- * The weapon mark for a body at (x, y) facing `a`: open strokes and filled
- * shapes, as point lists. The centrelines end within R + REACH of the centre;
- * the 4 px casing paints 2 units further, to R + 5, 3 short of the target ring.
+ * The weapon mark for a body at (x, y) facing `a`: the local-frame geometry
+ * (+x facing, +y right hand) rotated and translated, as point lists.
  * @param {number} x
  * @param {number} y
  * @param {number} a
  * @param {Family} family
- * @returns {{ strokes: [number, number][][], fills: [number, number][][] }}
+ * @returns {{ strokes: [number, number][][], fills: [number, number][][], strings: [number, number][][] }}
  */
 function weaponMark(x, y, a, family) {
-  if (family === "unarmed") return { strokes: [], fills: [] };
-  const tip = polar(x, y, a, R + REACH);
-  const [tx, ty] = tip;
-  if (family === "axe") {
-    // A one-sided head: a triangle hanging off the left of the shaft's end.
-    const back = polar(tx, ty, a, -6);
-    const out = polar(...polar(tx, ty, a, -2), a - Math.PI / 2, 5);
-    return { strokes: [[[x, y], tip]], fills: [[tip, out, back]] };
-  }
-  if (family === "hammer") {
-    return {
-      strokes: [
-        [[x, y], tip],
-        [polar(tx, ty, a - Math.PI / 2, 4), polar(tx, ty, a + Math.PI / 2, 4)],
-      ],
-      fills: [],
-    };
-  }
-  if (family === "daggers") {
-    // The shaft forks 5 units before the tip into two 5.5-unit prongs at
-    // ±30°, which end 4.76 along the line: inside R + REACH (6 would not).
-    const fork = polar(x, y, a, R + REACH - 5);
-    const [fx, fy] = fork;
-    return {
-      strokes: [
-        [[x, y], fork],
-        [fork, polar(fx, fy, a - Math.PI / 6, 5.5)],
-        [fork, polar(fx, fy, a + Math.PI / 6, 5.5)],
-      ],
-      fills: [],
-    };
-  }
-  if (family === "bow") {
-    // An arc of radius 5 over 140°, bulging outward, its apex at the tip.
-    const [cx, cy] = polar(tx, ty, a, -5);
-    /** @type {[number, number][]} */
-    const arc = [];
-    for (let k = 0; k <= 8; k++) arc.push(polar(cx, cy, a - 1.22 + (k * 2.44) / 8, 5));
-    return { strokes: [[[x, y], tip], arc], fills: [] };
-  }
-  if (family === "caster") {
-    // A filled orb of radius 3 whose outer edge is the tip.
-    const [ox, oy] = polar(tx, ty, a, -3);
-    /** @type {[number, number][]} */
-    const orb = [];
-    for (let k = 0; k < 12; k++) orb.push(polar(ox, oy, (k * Math.PI) / 6, 3));
-    return {
-      strokes: [
-        [
-          [x, y],
-          [ox, oy],
-        ],
-      ],
-      fills: [orb],
-    };
-  }
-  return { strokes: [[[x, y], tip]], fills: [] };
+  const g = WEAPON_MARK_GEOMETRY[family];
+  const cos = Math.cos(a);
+  const sin = Math.sin(a);
+  /** @param {readonly { x: number, y: number }[]} line @returns {[number, number][]} */
+  const place = (line) => line.map((q) => [x + q.x * cos - q.y * sin, y + q.x * sin + q.y * cos]);
+  return {
+    strokes: g.strokes.map(place),
+    fills: g.fills.map(place),
+    strings: g.strings.map(place),
+  };
 }
 
 /** @param {[number, number][]} pts */
@@ -215,6 +162,12 @@ function weaponLine(x, y, a, family) {
     for (const p of m.fills)
       out += `<polygon points="${pts(p)}" fill="${colour}" ${s.replace(String(w), String(w - 2))}/>`;
   }
+  for (const [colour, w] of /** @type {const} */ ([
+    [C.edge, 3],
+    [C.ink, 1],
+  ]))
+    for (const p of m.strings)
+      out += `<polyline points="${pts(p)}" fill="none" stroke="${colour}" stroke-width="${String(w)}" stroke-linecap="butt" stroke-linejoin="miter"/>`;
   return out;
 }
 /**
@@ -224,11 +177,12 @@ function weaponLine(x, y, a, family) {
  * @param {{ team: string, self?: boolean, target?: boolean, facing: number, family: Family, offhand?: Offhand, hud?: boolean }} p
  */
 function actor(x, y, p) {
+  const offhand = ONE_HANDED.has(p.family) ? (p.offhand ?? "none") : "none";
   let out = `<circle cx="${f(x)}" cy="${f(y)}" r="${f(R)}" fill="${p.team}"/>`;
   out += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(R - 0.75)}" fill="none" stroke="${C.edge}" stroke-width="1.5"/>`;
   if (p.self)
     out += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(R - 2)}" fill="none" stroke="${C.ink}" stroke-width="2"/>`;
-  out += offhandMark(x, y, p.facing, p.offhand ?? "none");
+  out += offhandMark(x, y, p.facing, offhand);
   out += weaponLine(x, y, p.facing, p.family);
   if (p.target)
     out += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(R + TARGET_AT)}" fill="none" stroke="${C.target}" stroke-width="2"/>`;
@@ -259,7 +213,7 @@ const LEFT = 120;
  */
 const BIG = 4;
 const BIG_COL = 180;
-const BIG_PER_ROW = 4;
+const BIG_PER_ROW = 7;
 const BIG_ROW = 200;
 const W = Math.max(LEFT + COL * FAMILIES.length, LEFT + BIG_COL * BIG_PER_ROW) + 20;
 
@@ -269,10 +223,10 @@ const W = Math.max(LEFT + COL * FAMILIES.length, LEFT + BIG_COL * BIG_PER_ROW) +
  * @type {readonly { label: string, family: Family, offhand: Offhand, target?: boolean }[]}
  */
 const OFFHANDS = [
-  { label: "sword + shield", family: "blade", offhand: "shield" },
+  { label: "sword + shield", family: "sword", offhand: "shield" },
   { label: "axe + shield", family: "axe", offhand: "shield" },
-  { label: "wand + focus", family: "caster", offhand: "focus" },
-  { label: "target, r + 9", family: "blade", offhand: "shield", target: true },
+  { label: "wand + focus", family: "wand", offhand: "focus" },
+  { label: "target, r + 9", family: "sword", offhand: "shield", target: true },
 ];
 const BIG_ROWS = Math.ceil(FAMILIES.length / BIG_PER_ROW) + 1;
 /** Where the true-size grid starts, below the 4x band. */
@@ -347,7 +301,7 @@ parts.push(
 // Row 6: a crowded clump at true size, mixed families and facings.
 parts.push(text(10, DY + 504, "1×, 8v8 clump", "start"));
 for (let k = 0; k < 16; k++) {
-  const fam = FAMILIES[k % FAMILIES.length]?.family ?? "blade";
+  const fam = FAMILIES[k % FAMILIES.length]?.family ?? "sword";
   const x = LEFT + 30 + (k % 8) * 34 + (k >= 8 ? 17 : 0);
   const y = DY + 485 + Math.floor(k / 8) * 34;
   parts.push(

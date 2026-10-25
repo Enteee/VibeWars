@@ -117,11 +117,9 @@ All of these are deliberate, for a game that is fun before it is
 complete:
 
 - **No crits.** `criticalMultiplier` stays data.
-- **No attack-speed modifiers** (IAS, DAS): nothing consumes them yet.
+- ~~**No attack-speed modifiers**~~: the hook exists since ADR-0029.
 - **No block or evade.**
-- **Attack skills do not ride the weapon.** They keep their own damage,
-  and count as attacks only for blind and adrenaline. Making them weapon
-  damage plus a bonus is a later epic.
+- ~~**Attack skills do not ride the weapon.**~~ They do since ADR-0029.
 - **Pathing is for the attack's approach only.** Player movement, and
   skills cast out of range, do not path. Planning ignores other bodies;
   collision handles shoves, and the next plan starts from there.

@@ -5,11 +5,18 @@ import {
   validatePlayerBuild,
   type PlayerBuild,
 } from "@vibewars/game-core";
-import type { CastRefusedMessage, JsonValue } from "@vibewars/game-protocol";
+import type { CastRefusedMessage } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import type { PeerMatchConnection } from "./match-client.js";
-import { TICK_SECONDS, hello, playerIn, self, startMatch } from "./match-harness.test-support.js";
+import {
+  TICK_SECONDS,
+  hello,
+  playerIn,
+  self,
+  startMatch,
+  toJson,
+} from "./match-harness.test-support.js";
 
 /**
  * Bringing a build into a P2P match (brief §17, §32; #375), ported from
@@ -26,33 +33,6 @@ import { TICK_SECONDS, hello, playerIn, self, startMatch } from "./match-harness
 
 /** `count` empty slots. */
 const nulls = (count: number): null[] => Array.from({ length: count }, () => null);
-
-/**
- * `value` as it would cross the wire: `undefined` fields dropped, the
- * rest checked to be plain JSON. A build is a TypeScript object; a hello
- * carries JSON.
- */
-function toJson(value: unknown): JsonValue {
-  if (
-    value === null ||
-    typeof value === "boolean" ||
-    typeof value === "number" ||
-    typeof value === "string"
-  ) {
-    return value;
-  }
-  if (Array.isArray(value)) {
-    return value.map((item: unknown) => toJson(item));
-  }
-  if (typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value)
-        .filter(([, field]) => field !== undefined)
-        .map(([key, field]: [string, unknown]) => [key, toJson(field)]),
-    );
-  }
-  throw new Error(`not JSON: ${typeof value}`);
-}
 
 /** A legal elementalist/monk: both professions' attributes, both their skills. */
 const LEGAL_BUILD: PlayerBuild = {
