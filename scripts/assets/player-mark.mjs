@@ -1,6 +1,6 @@
 // Draws the reference sheet for the arena player mark (#166): body, dark edge
-// (#186), self rim, target ring and the weapon line with its family tip
-// (#188), at true size and enlarged.
+// (#186), self rim, target ring, the weapon line with its family tip (#188)
+// and the off-hand mark (#275), at true size and enlarged.
 //
 //   node scripts/assets/player-mark.mjs
 //
@@ -29,6 +29,9 @@ const C = {
   foe: "#ff7b72",
   dead: "#4a5464",
   edge: "#0b0f14",
+  barFill: "#7ee787",
+  barBg: "#11161d",
+  condition: "#ffa657",
 };
 
 /** Body radius in world units; also the collision radius. */
@@ -49,6 +52,13 @@ const FAMILIES = [
   { family: "unarmed", label: "unarmed" },
 ];
 
+/**
+ * @typedef {"shield" | "focus" | "none"} Offhand
+ */
+
+/** Where the target ring's 2 px stroke is centred: r + 8 … r + 10 (Q26). */
+const TARGET_AT = 9;
+
 /** @param {number} n */
 const f = (n) => String(Math.round(n * 100) / 100);
 
@@ -65,10 +75,57 @@ const polar = (x, y, a, d) => [x + Math.cos(a) * d, y + Math.sin(a) * d];
 const REACH = 3;
 
 /**
+ * The off-hand side is the left of the facing (y points down, so a - 90°),
+ * the side the axe head already hangs on. Every weapon tip, casing included,
+ * stays within 25° of the facing; the swing flash spans ±45°.
+ */
+const OFF_SIDE = -Math.PI / 2;
+/** The shield: an arc on the body's centre from 45° to 105° off the facing. */
+const SHIELD_FROM = (45 * Math.PI) / 180;
+const SHIELD_TO = (105 * Math.PI) / 180;
+const SHIELD_AT = R + 3.5;
+/** The focus: a ring of radius 1.75 centred 75° off the facing, at r + 3.5. */
+const FOCUS_ANGLE = (75 * Math.PI) / 180;
+const FOCUS_AT = R + 3.5;
+const FOCUS_R = 1.75;
+
+/**
+ * The off-hand mark, cased like the weapon mark: `edge` under `ink`.
+ * Shield: 5 px casing (r + 1 … r + 6) under a 3 px core. Focus: 3 px
+ * casing under a 1.5 px core, r + 0.25 … r + 6.75. Both inside r + 7.
+ * @param {number} x
+ * @param {number} y
+ * @param {number} a
+ * @param {Offhand} offhand
+ */
+function offhandMark(x, y, a, offhand) {
+  if (offhand === "none") return "";
+  const side = OFF_SIDE > 0 ? 1 : -1;
+  let out = "";
+  if (offhand === "shield") {
+    const [x1, y1] = polar(x, y, a + side * SHIELD_FROM, SHIELD_AT);
+    const [x2, y2] = polar(x, y, a + side * SHIELD_TO, SHIELD_AT);
+    const d = `M${f(x1)} ${f(y1)}A${f(SHIELD_AT)} ${f(SHIELD_AT)} 0 0 ${side > 0 ? "1" : "0"} ${f(x2)} ${f(y2)}`;
+    for (const [colour, w] of /** @type {const} */ ([
+      [C.edge, 5],
+      [C.ink, 3],
+    ]))
+      out += `<path d="${d}" fill="none" stroke="${colour}" stroke-width="${String(w)}" stroke-linecap="butt"/>`;
+    return out;
+  }
+  const [fx, fy] = polar(x, y, a + side * FOCUS_ANGLE, FOCUS_AT);
+  for (const [colour, w] of /** @type {const} */ ([
+    [C.edge, 3],
+    [C.ink, 1.5],
+  ]))
+    out += `<circle cx="${f(fx)}" cy="${f(fy)}" r="${f(FOCUS_R)}" fill="none" stroke="${colour}" stroke-width="${String(w)}"/>`;
+  return out;
+}
+
+/**
  * The weapon mark for a body at (x, y) facing `a`: open strokes and filled
  * shapes, as point lists. The centrelines end within R + REACH of the centre;
- * the 4 px casing paints 2 units further, to R + 5, under the target ring,
- * which is drawn after it.
+ * the 4 px casing paints 2 units further, to R + 5, 3 short of the target ring.
  * @param {number} x
  * @param {number} y
  * @param {number} a
@@ -164,16 +221,23 @@ function weaponLine(x, y, a, family) {
  * One living player mark.
  * @param {number} x
  * @param {number} y
- * @param {{ team: string, self?: boolean, target?: boolean, facing: number, family: Family }} p
+ * @param {{ team: string, self?: boolean, target?: boolean, facing: number, family: Family, offhand?: Offhand, hud?: boolean }} p
  */
 function actor(x, y, p) {
   let out = `<circle cx="${f(x)}" cy="${f(y)}" r="${f(R)}" fill="${p.team}"/>`;
   out += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(R - 0.75)}" fill="none" stroke="${C.edge}" stroke-width="1.5"/>`;
   if (p.self)
     out += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(R - 2)}" fill="none" stroke="${C.ink}" stroke-width="2"/>`;
+  out += offhandMark(x, y, p.facing, p.offhand ?? "none");
   out += weaponLine(x, y, p.facing, p.family);
   if (p.target)
-    out += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(R + 5)}" fill="none" stroke="${C.target}" stroke-width="2"/>`;
+    out += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(R + TARGET_AT)}" fill="none" stroke="${C.target}" stroke-width="2"/>`;
+  if (p.hud === true) {
+    // The health bar and one status plate, drawn over the ring as in the arena.
+    out += `<rect x="${f(x - 17)}" y="${f(y - R - 12)}" width="34" height="4" fill="${C.barBg}"/>`;
+    out += `<rect x="${f(x - 17)}" y="${f(y - R - 12)}" width="24" height="4" fill="${C.barFill}"/>`;
+    out += `<circle cx="${f(x)}" cy="${f(y + R + 14)}" r="7" fill="${C.condition}" stroke="${C.edge}" stroke-width="1"/>`;
+  }
   return out;
 }
 
@@ -188,19 +252,32 @@ const text = (x, y, s, anchor = "middle") =>
 
 const COL = 92;
 const LEFT = 120;
-const W = LEFT + COL * FAMILIES.length + 20;
 /**
- * The 4x band has its own pitch: a 4x mark paints out to 4 * (R + 5) = 76 px
- * from its centre, so at the true-size column pitch the weapon heads would
- * hide under their neighbours' bodies.
+ * The 4x band has its own pitch: a 4x mark paints out to 4 * (R + 7) = 84 px
+ * from its centre (4 * (R + 10) with the target ring), so at the true-size
+ * column pitch the marks would hide under their neighbours' bodies.
  */
 const BIG = 4;
-const BIG_COL = 144;
+const BIG_COL = 180;
 const BIG_PER_ROW = 4;
-const BIG_ROW = 160;
+const BIG_ROW = 200;
+const W = Math.max(LEFT + COL * FAMILIES.length, LEFT + BIG_COL * BIG_PER_ROW) + 20;
+
+/**
+ * The off-hand row of the 4x band. The target example carries the health bar
+ * and a status plate, drawn over the ring as the arena draws them.
+ * @type {readonly { label: string, family: Family, offhand: Offhand, target?: boolean }[]}
+ */
+const OFFHANDS = [
+  { label: "sword + shield", family: "blade", offhand: "shield" },
+  { label: "axe + shield", family: "axe", offhand: "shield" },
+  { label: "wand + focus", family: "caster", offhand: "focus" },
+  { label: "target, r + 9", family: "blade", offhand: "shield", target: true },
+];
+const BIG_ROWS = Math.ceil(FAMILIES.length / BIG_PER_ROW) + 1;
 /** Where the true-size grid starts, below the 4x band. */
-const DY = 20 + BIG_ROW * Math.ceil(FAMILIES.length / BIG_PER_ROW);
-const H = 560 + DY - 60;
+const DY = 70 + BIG_ROW * BIG_ROWS;
+const H = 680 + DY - 60;
 const diag = -Math.PI / 6;
 
 /** @type {string[]} */
@@ -214,9 +291,9 @@ for (let gy = 0; gy < H; gy += 32)
 FAMILIES.forEach(({ family, label }, i) => {
   // The 4x band: foe, facing right, labelled above.
   const bx = LEFT + BIG_COL * (i % BIG_PER_ROW) + BIG_COL / 2;
-  const by = 90 + BIG_ROW * Math.floor(i / BIG_PER_ROW);
+  const by = 110 + BIG_ROW * Math.floor(i / BIG_PER_ROW);
   parts.push(
-    text(bx, by - 66, family),
+    text(bx, by - 90, family),
     `<g transform="translate(${f(bx)},${f(by)}) scale(${f(BIG)}) translate(${f(-bx)},${f(-by)})">${actor(bx, by, { team: C.foe, facing: 0, family })}</g>`,
   );
 
@@ -227,12 +304,32 @@ FAMILIES.forEach(({ family, label }, i) => {
   parts.push(actor(cx, DY + 90, { team: C.foe, facing: 0, family }));
   parts.push(actor(cx, DY + 140, { team: C.friend, facing: diag, family }));
   parts.push(actor(cx, DY + 190, { team: C.friend, self: true, facing: Math.PI / 2, family }));
-  parts.push(actor(cx, DY + 240, { team: C.foe, target: true, facing: Math.PI * 0.8, family }));
+  parts.push(
+    actor(cx, DY + 240, {
+      team: C.foe,
+      target: true,
+      hud: true,
+      facing: Math.PI * 0.8,
+      family,
+    }),
+  );
   // Row 5: against a wall, the reason for the dark edge.
   parts.push(
-    `<rect x="${f(cx - 40)}" y="${f(DY + 270)}" width="80" height="18" fill="${C.wallFill}" stroke="${C.wallStroke}"/>`,
+    `<rect x="${f(cx - 40)}" y="${f(DY + 290)}" width="80" height="18" fill="${C.wallFill}" stroke="${C.wallStroke}"/>`,
   );
-  parts.push(actor(cx, DY + 300, { team: C.friend, facing: -Math.PI / 2, family }));
+  parts.push(actor(cx, DY + 320, { team: C.friend, facing: -Math.PI / 2, family }));
+  // Rows 6-7: every tip beside a shield and a focus, to show they never touch.
+  parts.push(actor(cx, DY + 370, { team: C.foe, facing: diag, family, offhand: "shield" }));
+  parts.push(actor(cx, DY + 420, { team: C.friend, facing: 0, family, offhand: "focus" }));
+});
+
+OFFHANDS.forEach(({ label, family, offhand, target }, i) => {
+  const bx = LEFT + BIG_COL * i + BIG_COL / 2;
+  const by = 110 + BIG_ROW * (BIG_ROWS - 1);
+  parts.push(
+    text(bx, by - 90, label),
+    `<g transform="translate(${f(bx)},${f(by)}) scale(${f(BIG)}) translate(${f(-bx)},${f(-by)})">${actor(bx, by, { team: C.foe, facing: 0, family, offhand, target: target === true, hud: target === true })}</g>`,
+  );
 });
 
 parts.push(
@@ -241,15 +338,18 @@ parts.push(
   text(10, DY + 144, "1×, friend ↗", "start"),
   text(10, DY + 194, "1×, you ↓", "start"),
   text(10, DY + 244, "1×, target ↖", "start"),
-  text(10, DY + 304, "1×, at a wall ↑", "start"),
+  text(10, DY + 324, "1×, at a wall ↑", "start"),
+  text(10, DY + 374, "1×, + shield ↗", "start"),
+  text(10, DY + 424, "1×, + focus →", "start"),
+  text(10, 114 + BIG_ROW * (BIG_ROWS - 1), "4×, off-hand", "start"),
 );
 
 // Row 6: a crowded clump at true size, mixed families and facings.
-parts.push(text(10, DY + 384, "1×, 8v8 clump", "start"));
+parts.push(text(10, DY + 504, "1×, 8v8 clump", "start"));
 for (let k = 0; k < 16; k++) {
   const fam = FAMILIES[k % FAMILIES.length]?.family ?? "blade";
   const x = LEFT + 30 + (k % 8) * 34 + (k >= 8 ? 17 : 0);
-  const y = DY + 365 + Math.floor(k / 8) * 34;
+  const y = DY + 485 + Math.floor(k / 8) * 34;
   parts.push(
     actor(x, y, {
       team: k >= 8 ? C.foe : C.friend,
@@ -257,13 +357,14 @@ for (let k = 0; k < 16; k++) {
       target: k === 12,
       facing: k >= 8 ? -Math.PI / 2 + k * 0.4 : Math.PI / 2 - k * 0.5,
       family: fam,
+      offhand: k % 3 === 0 ? "shield" : k % 3 === 1 ? "focus" : "none",
     }),
   );
 }
 // Two corpses in the clump: no line, hollow.
 for (const [x, y] of [
-  [LEFT + 330, DY + 370],
-  [LEFT + 364, DY + 400],
+  [LEFT + 330, DY + 490],
+  [LEFT + 364, DY + 520],
 ]) {
   parts.push(
     `<circle cx="${f(x ?? 0)}" cy="${f(y ?? 0)}" r="${f(R)}" fill="none" stroke="${C.dead}" stroke-width="2"/>`,
