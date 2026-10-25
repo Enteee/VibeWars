@@ -1,6 +1,8 @@
 /**
  * The pauses between an agent's turns (#146): how long, what ends one
- * early, and what the company hears when the loop gives up.
+ * early, what the company hears when the loop gives up, and how the loop
+ * waits out Claude's usage limit (#308). The last part runs the restart
+ * loop itself, from nix/claude-llc.nix, against a stand-in for claude-bot.
  */
 
 import { spawnSync } from "node:child_process";
@@ -11,10 +13,23 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { PAUSE_MAX, PAUSE_MIN, SHORT_TURN, hasUnread, nextPause } from "./agent-loop.mjs";
+import {
+  LIMIT_MAX,
+  PAUSE_MAX,
+  PAUSE_MIN,
+  SHORT_TURN,
+  claimNotice,
+  hasUnread,
+  limitPause,
+  nextPause,
+  releaseNotice,
+} from "./agent-loop.mjs";
 import { SYSTEM, obj } from "./protocol.mjs";
 
-const AGENT_LOOP = path.join(path.dirname(fileURLToPath(import.meta.url)), "agent-loop.mjs");
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const AGENT_LOOP = path.join(HERE, "agent-loop.mjs");
+const AGENT_TURN = path.join(HERE, "agent-turn.mjs");
+const LLC_NIX = path.join(HERE, "..", "..", "nix", "claude-llc.nix");
 
 /** @type {string[]} */
 const dirs = [];
@@ -50,8 +65,65 @@ describe("nextPause", () => {
     expect(nextPause({ previous: 160, ran: SHORT_TURN - 1, failed: false })).toBe(PAUSE_MAX);
   });
 
-  it("keeps a failed run's pause short; failures have their own limit", () => {
-    expect(nextPause({ previous: 300, ran: 2, failed: true })).toBe(PAUSE_MIN);
+  it("backs off failed runs too, however long they ran", () => {
+    const pauses = [];
+    let previous = 0;
+    for (let i = 0; i < 6; i += 1) {
+      previous = nextPause({ previous, ran: i === 2 ? SHORT_TURN * 2 : 1, failed: true });
+      pauses.push(previous);
+    }
+    expect(pauses).toEqual([10, 20, 40, 80, 160, 300]);
+  });
+});
+
+describe("limitPause", () => {
+  const now = 1_761_400_000;
+
+  it("waits for a known reset, plus a minute", () => {
+    expect(limitPause({ until: now + 1000, now, previous: 0 })).toBe(1060);
+  });
+
+  it("waits at least a minute, and at most six hours", () => {
+    expect(limitPause({ until: now - 500, now, previous: 0 })).toBe(60);
+    expect(limitPause({ until: now + 24 * 3600, now, previous: 0 })).toBe(LIMIT_MAX);
+    expect(LIMIT_MAX).toBe(6 * 3600);
+  });
+
+  it("retries an unknown reset at 5 min, doubling to 30 min", () => {
+    const waits = [];
+    let previous = 0;
+    for (let i = 0; i < 5; i += 1) {
+      previous = limitPause({ until: null, now, previous });
+      waits.push(previous);
+    }
+    expect(waits).toEqual([300, 600, 1200, 1800, 1800]);
+  });
+});
+
+describe("the usage limit notice", () => {
+  const now = 1_761_400_000;
+
+  it("is claimed by exactly one role, and released by exactly one", () => {
+    const root = scratch();
+    expect(claimNotice(root, now + 600, now)).toBe(true);
+    expect(claimNotice(root, now + 600, now)).toBe(false);
+    expect(releaseNotice(root)).toBe(true);
+    expect(releaseNotice(root)).toBe(false);
+  });
+
+  it("replaces a stale notice: a reset 10 min past, or no reset for 6 h", () => {
+    const root = scratch();
+    expect(claimNotice(root, now, now)).toBe(true);
+    expect(claimNotice(root, null, now + 600)).toBe(false);
+    expect(claimNotice(root, null, now + 601)).toBe(true);
+    expect(claimNotice(root, null, now + 601 + LIMIT_MAX)).toBe(false);
+    expect(claimNotice(root, null, now + 602 + LIMIT_MAX)).toBe(true);
+  });
+
+  it("replaces a notice that is not one", () => {
+    const root = scratch();
+    fs.writeFileSync(path.join(root, "usage-limit.json"), "{");
+    expect(claimNotice(root, null, now)).toBe(true);
   });
 });
 
@@ -101,11 +173,228 @@ describe("agent-loop.mjs", () => {
     );
   });
 
+  /**
+   * @param {string} root
+   * @returns {string[]} the texts in the system outbox, oldest first
+   */
+  function outboxTexts(root) {
+    const outbox = path.join(root, "bus", SYSTEM, "outbox");
+    if (!fs.existsSync(outbox)) {
+      return [];
+    }
+    return fs
+      .readdirSync(outbox)
+      .sort()
+      .map((file) =>
+        String(obj(JSON.parse(fs.readFileSync(path.join(outbox, file), "utf8"))).text),
+      );
+  }
+
+  /**
+   * @param {string[]} args
+   * @param {string} root
+   * @returns {import("node:child_process").SpawnSyncReturns<string>}
+   */
+  function loop(args, root) {
+    return spawnSync(process.execPath, [AGENT_LOOP, ...args], {
+      encoding: "utf8",
+      env: { ...process.env, VIBEWARS_BOT_ROOT: root },
+    });
+  }
+
+  it("tells the company once that the limit is reached, and when it resets", () => {
+    const root = scratch();
+    const state = scratch();
+    const until = Math.floor(Date.now() / 1000) + 3600;
+    fs.writeFileSync(path.join(state, "limited-until"), `${String(until)}\n`);
+
+    const first = loop(["limited", "developer-1", state, "0"], root);
+    const second = loop(["limited", "developer-2", state, "0"], root);
+
+    expect(first.status).toBe(0);
+    expect(Number(first.stdout.trim())).toBeGreaterThan(3600);
+    expect(Number(first.stdout.trim())).toBeLessThanOrEqual(3660);
+    expect(second.stdout.trim()).not.toBe("");
+    const texts = outboxTexts(root);
+    expect(texts).toHaveLength(1);
+    expect(texts[0]).toMatch(/^Claude usage limit reached; agents resume at \d\d:\d\d\.$/);
+  });
+
+  it("says so when it does not know the reset, and backs off from the last wait", () => {
+    const root = scratch();
+    const state = scratch();
+    fs.writeFileSync(path.join(state, "limited-until"), "");
+
+    const result = loop(["limited", "developer-1", state, "600"], root);
+
+    expect(result.stdout.trim()).toBe("1200");
+    expect(outboxTexts(root)).toEqual([
+      "Claude usage limit reached; agents retry every few minutes until it resets.",
+    ]);
+  });
+
+  it("says the limit is over once, after the first turn that ends, and never without one", () => {
+    const root = scratch();
+    loop(["resumed", "qa-tester"], root);
+    expect(outboxTexts(root)).toEqual([]);
+
+    const state = scratch();
+    loop(["limited", "developer-1", state, "0"], root);
+    loop(["resumed", "qa-tester"], root);
+    loop(["resumed", "developer-1"], root);
+
+    expect(outboxTexts(root).slice(1)).toEqual(["Claude usage limit over; agents are back."]);
+    expect(fs.existsSync(path.join(root, "usage-limit.json"))).toBe(false);
+  });
+
   it("refuses a role that is not a plain name", () => {
     const result = spawnSync(process.execPath, [AGENT_LOOP, "gave-up", "../x"], {
       encoding: "utf8",
       env: { ...process.env, VIBEWARS_BOT_ROOT: scratch() },
     });
     expect(result.status).toBe(2);
+  });
+});
+
+/**
+ * The restart loop, run for real: the `claude-llc-agent` script from
+ * nix/claude-llc.nix, with the real agent-turn.mjs, a claude-bot that plays
+ * a list of runs, and an agent-loop.mjs that records what it is asked and
+ * never sleeps.
+ */
+describe("claude-llc-agent", () => {
+  /** What a stand-in claude-bot prints and exits with, by kind of run. */
+  const RUNS = {
+    ok: `echo '{"type":"result","subtype":"success","is_error":false}'`,
+    fail: "exit 1",
+    limit: `echo '{"type":"rate_limit_event","rate_limit_info":{"status":"rejected"}}'`,
+  };
+
+  /**
+   * @returns {string} the loop's bash, as nix would write it, calling `scripts`
+   * @param {string} scripts
+   */
+  function loopScript(scripts) {
+    const nix = fs.readFileSync(LLC_NIX, "utf8");
+    const match = /claude-llc-agent = \{[\s\S]*?exec = ''\n([\s\S]*?)\n\s*'';/.exec(nix);
+    if (match?.[1] === undefined) {
+      throw new Error("no claude-llc-agent exec in nix/claude-llc.nix");
+    }
+    return match[1]
+      .replaceAll("${node}", process.execPath)
+      .replaceAll("${llcScripts}", scripts)
+      .replaceAll("''${", "${");
+  }
+
+  /**
+   * @param {(keyof typeof RUNS)[]} plan
+   * @returns {{ code: number | null, calls: string[], runs: number, stdout: string }}
+   */
+  function run(plan) {
+    const dir = scratch();
+    const scripts = path.join(dir, "scripts");
+    const bin = path.join(dir, "bin");
+    fs.mkdirSync(scripts);
+    fs.mkdirSync(bin);
+    fs.symlinkSync(AGENT_TURN, path.join(scripts, "agent-turn.mjs"));
+    const calls = path.join(dir, "calls");
+    // Records each call. `limited` prints the last wait plus one, so the
+    // calls show the loop hands each wait back to the next.
+    fs.writeFileSync(
+      path.join(scripts, "agent-loop.mjs"),
+      [
+        'import fs from "node:fs";',
+        "const args = process.argv.slice(2);",
+        `fs.appendFileSync(${JSON.stringify(calls)}, args.join(" ") + "\\n");`,
+        'if (args[0] === "pause") console.log("0");',
+        'if (args[0] === "limited") console.log(String(Number(args[3]) + 1));',
+      ].join("\n"),
+    );
+    const count = path.join(dir, "count");
+    fs.writeFileSync(count, "0");
+    const cases = plan.map((kind, i) => `  ${String(i + 1)}) ${RUNS[kind]} ;;`).join("\n");
+    fs.writeFileSync(
+      path.join(bin, "claude-bot"),
+      [
+        "#!/usr/bin/env bash",
+        `n=$(( $(cat ${count}) + 1 )); echo "$n" >${count}`,
+        'case "$n" in',
+        cases,
+        "  *) exit 1 ;;",
+        "esac",
+        "",
+      ].join("\n"),
+      { mode: 0o755 },
+    );
+    const script = path.join(dir, "claude-llc-agent");
+    fs.writeFileSync(script, loopScript(scripts));
+    const result = spawnSync("bash", [script, "developer-1"], {
+      encoding: "utf8",
+      timeout: 30_000,
+      env: { ...process.env, DEVENV_ROOT: dir, PATH: `${bin}:${process.env.PATH ?? ""}` },
+    });
+    return {
+      code: result.status,
+      calls: fs.existsSync(calls) ? fs.readFileSync(calls, "utf8").trim().split("\n") : [],
+      runs: Number(fs.readFileSync(count, "utf8").trim()),
+      stdout: result.stdout,
+    };
+  }
+
+  it("waits out five usage limits without giving up, then gives up on five failures", () => {
+    const result = run([
+      "limit",
+      "limit",
+      "limit",
+      "limit",
+      "limit",
+      "fail",
+      "fail",
+      "fail",
+      "fail",
+      "fail",
+    ]);
+
+    expect(result.code).toBe(1);
+    expect(result.runs).toBe(10);
+    expect(result.calls.filter((call) => call.startsWith("limited "))).toEqual(
+      [0, 1, 2, 3, 4].map(
+        (previous) =>
+          /** @type {unknown} */ (
+            expect.stringMatching(`^limited developer-1 .+ ${String(previous)}$`)
+          ),
+      ),
+    );
+    expect(result.calls.filter((call) => call.startsWith("sleep "))).toEqual([
+      "sleep 1",
+      "sleep 2",
+      "sleep 3",
+      "sleep 4",
+      "sleep 5",
+    ]);
+    expect(result.calls.at(-1)).toBe("gave-up developer-1");
+    expect(result.stdout).toContain("Claude usage limit reached; next turn for developer-1 in 1s.");
+  });
+
+  it("neither counts a limit as a failure nor lets it reset the count", () => {
+    const result = run(["fail", "fail", "limit", "fail", "fail", "fail", "ok"]);
+
+    expect(result.code).toBe(1);
+    expect(result.runs).toBe(6);
+    expect(result.calls.at(-1)).toBe("gave-up developer-1");
+  });
+
+  it("starts the limit backoff over, and says the limit is over, after a turn that ends", () => {
+    const result = run(["limit", "limit", "ok", "limit", "fail", "fail", "fail", "fail", "fail"]);
+
+    expect(result.code).toBe(1);
+    expect(
+      result.calls
+        .filter((call) => call.startsWith("limited "))
+        .map((call) => call.split(" ").at(-1)),
+    ).toEqual(["0", "1", "0"]);
+    expect(result.calls.filter((call) => call.startsWith("resumed "))).toEqual([
+      "resumed developer-1",
+    ]);
   });
 });
