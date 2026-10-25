@@ -19,6 +19,7 @@ import {
 } from "@vibewars/game-protocol";
 
 import type {
+  CombatBatchMessage,
   CombatMessage,
   MatchConnection,
   MatchSnapshot,
@@ -130,6 +131,16 @@ export interface DecodedMatchState {
  */
 export function professionFrom(raw: string): ProfessionId | undefined {
   return isProfessionId(raw) ? raw : undefined;
+}
+
+/** A tick's combat entries (#288), as far as the shape can be told apart from anything else. */
+function isCombatBatch(message: unknown): message is CombatBatchMessage {
+  return (
+    typeof message === "object" &&
+    message !== null &&
+    "entries" in message &&
+    Array.isArray(message.entries)
+  );
 }
 
 function snapshotFrom(room: LiveMatchRoom): MatchSnapshot {
@@ -274,7 +285,7 @@ export interface LiveMatchRoom {
   readonly state: DecodedMatchState;
   readonly reconnection: { minUptime: number };
   send(type: "intent", payload: ClientIntent): void;
-  onMessage(type: "combat", callback: (message: CombatMessage) => void): unknown;
+  onMessage(type: "combat", callback: (message: unknown) => void): unknown;
   onMessage(type: "cast-refused", callback: (message: CastRefusedMessage) => void): unknown;
   onDrop(callback: (code: number) => void): unknown;
   onReconnect(callback: () => void): unknown;
@@ -335,7 +346,15 @@ export function createMatchConnection(
       return snapshotFrom(room);
     },
     onCombat(handler: (message: CombatMessage) => void): void {
-      room.onMessage("combat", handler);
+      room.onMessage("combat", (batch) => {
+        // A malformed batch is dropped, never thrown: the render loop keeps running.
+        if (!isCombatBatch(batch)) {
+          return;
+        }
+        for (const entry of batch.entries) {
+          handler(entry);
+        }
+      });
     },
     onCastRefused(handler: (message: CastRefusedMessage) => void): void {
       room.onMessage("cast-refused", handler);
