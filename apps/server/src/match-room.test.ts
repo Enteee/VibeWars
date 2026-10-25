@@ -298,6 +298,30 @@ describe("match room", () => {
       const arrived = { x: self()?.x, y: self()?.y };
       await new Promise((resolve) => setTimeout(resolve, 150));
       expect({ x: self()?.x, y: self()?.y }).toEqual(arrived);
+      expect(self()?.walking).toBe(false);
+    } finally {
+      await room.leave();
+    }
+  });
+
+  it("shows a walk while it runs, and cancel stops it where the player stands (#342)", async () => {
+    const client = new Client(endpoint);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
+    const self = () => room.state.players.get(room.sessionId);
+    try {
+      await waitFor(() => self() !== undefined, { label: "self to appear" });
+      const goal = { x: FIRST_SPAWN.x + 300, y: FIRST_SPAWN.y };
+      room.send("intent", { kind: "walk-to", ...goal });
+      await waitFor(() => self()?.walking === true, { label: "the walk to show" });
+      await waitFor(() => (self()?.x ?? 0) > FIRST_SPAWN.x, { label: "the player to set off" });
+
+      room.send("intent", { kind: "cancel" });
+      await waitFor(() => self()?.walking === false, { label: "the walk to end" });
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      const stopped = self()?.x ?? 0;
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      expect(self()?.x).toBe(stopped);
+      expect(stopped).toBeLessThan(goal.x);
     } finally {
       await room.leave();
     }

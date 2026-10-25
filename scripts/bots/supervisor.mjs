@@ -26,7 +26,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { parseAlive } from "./hub-health.mjs";
 import { releaseLock, takeLock } from "./instance-lock.mjs";
 import { ROLES } from "./hub-policy.mjs";
-import { drainStep, parseReboot } from "./reboot.mjs";
+import { betweenTurns, drainStep, parseReboot } from "./reboot.mjs";
 
 const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
 
@@ -57,18 +57,6 @@ function tmux(args) {
 function runningRoles() {
   const windows = tmux(["list-windows", "-t", SESSION, "-F", "#{window_name}"]).split("\n");
   return ROLES.filter((role) => windows.includes(role));
-}
-
-/**
- * The roles whose restart loop is between turns: it has created
- * `.bots/agents/<role>/between-turns` and not yet started the next turn.
- *
- * @param {string} root the company's state directory
- * @param {readonly string[]} roles
- * @returns {string[]}
- */
-export function betweenTurns(root, roles) {
-  return roles.filter((role) => fs.existsSync(path.join(root, "agents", role, "between-turns")));
 }
 
 /**
@@ -167,7 +155,7 @@ async function main() {
   }
 }
 
-// Only run when invoked directly; the test imports betweenTurns.
+// Only run when invoked directly.
 if (process.argv[1]?.endsWith("supervisor.mjs") === true) {
   await main();
 }

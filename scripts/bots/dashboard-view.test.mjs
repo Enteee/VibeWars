@@ -200,7 +200,7 @@ describe("companyLines", () => {
 
   it("is the roster, the hub, then the GitHub budget", () => {
     const lines = companyLines(
-      { roles, live: new Set(["manager", "architect"]), budget, hub, claude: null },
+      { roles, live: new Set(["manager", "architect"]), budget, hub, reboot: null, claude: null },
       { rows: 30, width: 40 },
     ).map(plain);
     expect(lines[0]).toBe("ROSTER 2/5 hired");
@@ -216,7 +216,7 @@ describe("companyLines", () => {
     /** @param {HubLine} health */
     const hubLine = (health) =>
       companyLines(
-        { roles, live: new Set(), budget: null, hub: health, claude: null },
+        { roles, live: new Set(), budget: null, hub: health, reboot: null, claude: null },
         { rows: 30, width: 80 },
       ).find((line) => plain(line).startsWith("hub "));
     expect(hubLine(hub)).toContain("\x1b[1;32m");
@@ -225,7 +225,7 @@ describe("companyLines", () => {
 
   it("says the Claude usage is unknown before any agent has logged (#50)", () => {
     const lines = companyLines(
-      { roles, live: new Set(), budget: null, hub, claude: null },
+      { roles, live: new Set(), budget: null, hub, reboot: null, claude: null },
       { rows: 30, width: 72 },
     ).map(plain);
     expect(lines).toContain("CLAUDE usage unknown (no agent logs yet)");
@@ -251,7 +251,7 @@ describe("companyLines", () => {
       },
     };
     const lines = companyLines(
-      { roles, live: new Set(), budget: null, hub, claude },
+      { roles, live: new Set(), budget: null, hub, reboot: null, claude },
       { rows: 40, width: 72 },
     ).map(plain);
     const at = lines.indexOf("CLAUDE tokens, last 5h, as of 16:42");
@@ -269,11 +269,114 @@ describe("companyLines", () => {
 
   it("cuts an overflow with … +N lines", () => {
     const lines = companyLines(
-      { roles, live: new Set(), budget: null, hub, claude: null },
+      { roles, live: new Set(), budget: null, hub, reboot: null, claude: null },
       { rows: 4, width: 40 },
     );
     expect(lines).toHaveLength(4);
     expect(lines.at(-1)).toMatch(/^… \+\d+ lines$/);
+  });
+
+  describe("the reboot (#345)", () => {
+    const deadline = new Date(2026, 9, 25, 12, 41).getTime();
+    const record = {
+      requestedAt: 0,
+      reason: "load #345",
+      by: "manager",
+      deadline,
+      bootSha: "abc",
+      ready: ["manager", "lead-dev"],
+    };
+    const live = new Set(["manager", "architect", "developer-1", "developer-2", "lead-dev"]);
+
+    /**
+     * @param {import("./dashboard-view.mjs").CompanyFacts["reboot"]} reboot
+     * @param {{ rows?: number, width?: number }} [pane]
+     */
+    const pane = (reboot, { rows = 30, width = 80 } = {}) =>
+      companyLines({ roles, live, budget: null, hub, reboot, claude: null }, { rows, width }).map(
+        plain,
+      );
+
+    it("is first: the deadline, then ready, waiting and idle in org-chart order", () => {
+      const lines = pane({
+        record,
+        between: ["developer-2"],
+        now: deadline - 6.5 * 60_000,
+      });
+      expect(lines.slice(0, 5)).toEqual([
+        "REBOOT by 12:41 (in 7m) — manager: load #345",
+        "  ready:   manager, lead-dev",
+        "  waiting: architect, developer-1",
+        "  idle:    developer-2",
+        "",
+      ]);
+      expect(lines[5]).toBe("ROSTER 5/5 hired");
+    });
+
+    it("omits an empty row, says <1m under a minute, and paints the header red", () => {
+      const raw = companyLines(
+        {
+          roles,
+          live,
+          budget: null,
+          hub,
+          reboot: { record: { ...record, ready: [] }, between: [], now: deadline - 30_000 },
+          claude: null,
+        },
+        { rows: 30, width: 80 },
+      );
+      const lines = raw.map(plain);
+      expect(lines[0]).toBe("REBOOT by 12:41 (in <1m) — manager: load #345");
+      expect(lines[1]).toBe("  waiting: manager, architect, developer-1, developer-2, lead-dev");
+      expect(lines[2]).toBe("");
+      expect(raw[0]).toContain("\x1b[1;31m");
+    });
+
+    it("is overdue and stopping after the deadline", () => {
+      expect(pane({ record, between: [], now: deadline + 1 })[0]).toBe(
+        "REBOOT overdue since 12:41, stopping",
+      );
+    });
+
+    it("is one line once the restarter has it", () => {
+      const lines = pane({ rebooting: "load #345" });
+      expect(lines.slice(0, 3)).toEqual(["REBOOTING now — load #345", "", "ROSTER 5/5 hired"]);
+    });
+
+    it("never prints a control sequence from the reason or the roles", () => {
+      const evil = "x\u001B]52;c;AAAA\u0007\u001B[2J\nstolen";
+      const reboots = [
+        { record: { ...record, reason: evil, by: evil, ready: [evil] }, between: [], now: 0 },
+        { rebooting: evil },
+      ];
+      for (const reboot of reboots) {
+        const lines = companyLines(
+          { roles, live, budget: null, hub, reboot, claude: null },
+          { rows: 30, width: 200 },
+        ).map(plain);
+        for (const line of lines) {
+          expect(
+            Array.from(line).every((char) => char.charCodeAt(0) >= 32 && char !== "\u007F"),
+          ).toBe(true);
+        }
+      }
+    });
+
+    it("is no section, and no blank line, without a reboot", () => {
+      expect(pane(null)[0]).toBe("ROSTER 5/5 hired");
+    });
+
+    it("keeps every line within the width and wins over the rest on a short pane", () => {
+      const lines = pane(
+        { record, between: [], now: deadline - 60_000 * 7 },
+        { rows: 3, width: 30 },
+      );
+      expect(lines).toHaveLength(3);
+      expect(lines[0]).toMatch(/^REBOOT by 12:41/);
+      for (const line of lines) {
+        expect(columnsOf(line)).toBeLessThanOrEqual(30);
+      }
+    });
   });
 });
 

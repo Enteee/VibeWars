@@ -23,6 +23,7 @@ import { readBoardState } from "./hub-board.mjs";
 import { WINDOW_MS, createUsageReader, summarize } from "./claude-usage.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { formatSpend, readSpend } from "./hub-spend.mjs";
+import { betweenTurns, parseReboot } from "./reboot.mjs";
 import { boardLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
 import { hubHealth, parseAlive, parseRestarts } from "./hub-health.mjs";
 
@@ -60,6 +61,32 @@ function obj(value) {
   return typeof value === "object" && value !== null
     ? /** @type {Record<string, unknown>} */ (value)
     : {};
+}
+
+/**
+ * What the company is doing about a reboot: one handed to the restarter, or
+ * one waiting to drain. A file `parseReboot` rejects is no reboot.
+ *
+ * @param {ReadonlySet<string>} live
+ * @returns {import("./dashboard-view.mjs").CompanyFacts["reboot"]}
+ */
+function reboot(live) {
+  /** @param {string} name */
+  const record = (name) => {
+    try {
+      return parseReboot(JSON.parse(fs.readFileSync(path.join(ROOT, name), "utf8")));
+    } catch {
+      return null;
+    }
+  };
+  const rebooting = record("rebooting.json");
+  if (rebooting !== null) {
+    return { rebooting: rebooting.reason };
+  }
+  const pending = record("reboot.json");
+  return pending === null
+    ? null
+    : { record: pending, between: betweenTurns(ROOT, [...live]), now: Date.now() };
 }
 
 /** @returns {{ project: number, owner: string, columns: string[] } | null} */
@@ -237,11 +264,20 @@ function linesOf(section, pane) {
       // hubd's to discard, and shows here as no snapshot.
       return boardLines(readBoardState(hubFile("board.json")), cfg?.columns ?? null, hired(), pane);
     }
-    case "company":
+    case "company": {
+      const live = hired();
       return companyLines(
-        { roles: ROLES, live: hired(), budget: budget(), hub: hub(), claude: claude() },
+        {
+          roles: ROLES,
+          live,
+          budget: budget(),
+          hub: hub(),
+          reboot: reboot(live),
+          claude: claude(),
+        },
         pane,
       );
+    }
     case "feed":
       return feedLines(feed(pane.rows), pane);
   }

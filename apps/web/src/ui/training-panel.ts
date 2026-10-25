@@ -9,12 +9,7 @@ import {
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
 import { saveMuted } from "../audio/mute-preference.js";
 import { soundPlayer } from "../audio/sound-player.js";
-import {
-  attackClickIntents,
-  attackKeyIntents,
-  isAttacking,
-  isCasting,
-} from "../input/attack-key.js";
+import { attackClickIntents, attackKeyIntents, hasActionToCancel } from "../input/attack-key.js";
 import { createDoubleClick } from "../input/double-click.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
@@ -509,9 +504,10 @@ export function createTrainingPanel(): TrainingPanel {
       if (event.repeat) {
         return;
       }
-      // A cast or an attack in progress is cancelled first (#160, #300).
+      // A cast, an attack or a walk in progress is cancelled first (#160,
+      // #300, #342).
       const snapshot = session?.connection.getSnapshot();
-      if (snapshot !== undefined && (isCasting(snapshot) || isAttacking(snapshot))) {
+      if (snapshot !== undefined && hasActionToCancel(snapshot)) {
         session?.connection.sendIntent({ kind: "cancel" });
         return;
       }

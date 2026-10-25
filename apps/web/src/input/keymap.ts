@@ -223,3 +223,47 @@ export function parseKeymap(value: unknown): Keymap | undefined {
   }
   return map as Keymap;
 }
+
+/** A rebound keymap, and the action that lost the key to it, if one did. */
+export interface Rebind {
+  readonly map: Keymap;
+  readonly displaced?: { readonly action: KeyAction; readonly code: string };
+}
+
+/**
+ * Bind `code` to `action`'s cell `index` (0 primary, 1 secondary), moving
+ * it off any other action. `code === null` clears. Throws on a
+ * non-bindable code: callers check `isBindable` first.
+ *
+ * A key is never on two actions, so binding a taken one moves it; there
+ * is no swap. A cleared primary with a secondary set promotes the
+ * secondary, so an action's first key is always its primary.
+ */
+export function rebind(map: Keymap, action: KeyAction, index: 0 | 1, code: string | null): Rebind {
+  if (code !== null && !isBindable(code)) {
+    throw new Error(`${code} can never be bound`);
+  }
+  const owner = code === null ? undefined : actionForCode(map, code);
+  const next: Record<KeyAction, readonly string[]> = { ...map };
+  if (owner !== undefined) {
+    next[owner] = map[owner].filter((bound) => bound !== code);
+  }
+  const cells = [next[action][0], next[action][1]];
+  cells[index] = code ?? undefined;
+  next[action] = cells.filter((bound): bound is string => bound !== undefined);
+  return owner === undefined || owner === action || code === null
+    ? { map: next }
+    : { map: next, displaced: { action: owner, code } };
+}
+
+/** Which preset `map` is, key for key, or `undefined` for a custom one. */
+export function presetOf(map: Keymap): keyof typeof KEYMAP_PRESETS | undefined {
+  const names = Object.keys(KEYMAP_PRESETS) as (keyof typeof KEYMAP_PRESETS)[];
+  return names.find((name) =>
+    KEY_ACTIONS.every((action) => {
+      const preset = KEYMAP_PRESETS[name][action];
+      const codes = map[action];
+      return codes.length === preset.length && codes.every((code, i) => code === preset[i]);
+    }),
+  );
+}

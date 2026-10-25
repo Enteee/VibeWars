@@ -1305,6 +1305,20 @@ describe("deliverSystem (#23)", () => {
   });
 });
 
+describe("a system announcement wakes tg wait (#345)", () => {
+  it("is a link line, which wakes every role", () => {
+    const { deliveries } = deliverSystem(
+      { text: "Company reboot by 12:05: new hubd." },
+      { roles: ["developer-1"], now: 1 },
+    );
+    const delivered = deliveries[0]?.line;
+    expect(delivered).toBeDefined();
+    expect(
+      wakes(/** @type {import("./protocol.mjs").InboxLine} */ (delivered), "developer-1"),
+    ).toBe(true);
+  });
+});
+
 describe("wakes", () => {
   /** @type {import("./protocol.mjs").InboxLine} */
   const line = {
