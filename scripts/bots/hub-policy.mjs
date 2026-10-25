@@ -189,6 +189,7 @@ const RULES = [
   // cannot do the job it is given.
   { argv: ["run", "list"], roles: "*" },
   { argv: ["run", "view"], roles: "*" },
+  // Allowed so the refusal below can say what to do instead (#496).
   { argv: ["run", "watch"], roles: "*" },
   { argv: ["workflow", "list"], roles: "*" },
   { argv: ["workflow", "view"], roles: "*" },
@@ -486,6 +487,25 @@ function deletesBranch(argv) {
 }
 
 /**
+ * Whether a command waits on GitHub until something finishes (#496). hubd
+ * serves one request at a time, so a watch holds up every other employee.
+ * `--watch` in any spelling, or `run watch` itself.
+ *
+ * @param {string[]} argv
+ * @returns {boolean}
+ */
+function watches(argv) {
+  const command = argv.slice(0, 2).join(" ");
+  if (command === "run watch") {
+    return true;
+  }
+  return (
+    command === "pr checks" &&
+    argv.slice(2).some((word) => word === "--watch" || word.startsWith("--watch="))
+  );
+}
+
+/**
  * Who to ask instead, for a refusal: a refused agent should not have to
  * guess whose job the thing it tried is.
  *
@@ -694,6 +714,13 @@ function authorizeAs(role, request, acting, employee) {
     return {
       allow: false,
       reason: `role "${role}" may not run "gh ${best.argv.join(" ")}"; ${whoMay(best.roles)}`,
+    };
+  }
+  if (watches(argv)) {
+    return {
+      allow: false,
+      reason:
+        "watching blocks the hub for everyone: poll `gh pr checks <n>` or `gh run view <id>` between turns instead",
     };
   }
   if (best.argv.join(" ") === "pr close" && deletesBranch(argv)) {
