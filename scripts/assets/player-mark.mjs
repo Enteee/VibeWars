@@ -188,7 +188,18 @@ const text = (x, y, s, anchor = "middle") =>
 const COL = 92;
 const LEFT = 120;
 const W = LEFT + COL * FAMILIES.length + 20;
-const H = 560;
+/**
+ * The 4x band has its own pitch: a 4x mark paints out to 4 * (R + 5) = 76 px
+ * from its centre, so at the true-size column pitch the weapon heads would
+ * hide under their neighbours' bodies.
+ */
+const BIG = 4;
+const BIG_COL = 144;
+const BIG_PER_ROW = 4;
+const BIG_ROW = 160;
+/** Where the true-size grid starts, below the 4x band. */
+const DY = 20 + BIG_ROW * Math.ceil(FAMILIES.length / BIG_PER_ROW);
+const H = 560 + DY - 60;
 const diag = -Math.PI / 6;
 
 /** @type {string[]} */
@@ -200,39 +211,44 @@ for (let gy = 0; gy < H; gy += 32)
   parts.push(`<line x1="0" y1="${f(gy)}" x2="${f(W)}" y2="${f(gy)}" stroke="${C.grid}"/>`);
 
 FAMILIES.forEach(({ family, label }, i) => {
+  // The 4x band: foe, facing right, labelled above.
+  const bx = LEFT + BIG_COL * (i % BIG_PER_ROW) + BIG_COL / 2;
+  const by = 90 + BIG_ROW * Math.floor(i / BIG_PER_ROW);
+  parts.push(
+    text(bx, by - 66, family),
+    `<g transform="translate(${f(bx)},${f(by)}) scale(${f(BIG)}) translate(${f(-bx)},${f(-by)})">${actor(bx, by, { team: C.foe, facing: 0, family })}</g>`,
+  );
+
   const cx = LEFT + COL * i + COL / 2;
-  parts.push(text(cx, 18, family), text(cx, 30, label));
-  // Row 1: 4x, foe, facing right.
+  parts.push(text(cx, DY + 18, family));
+  if (label !== family) parts.push(text(cx, DY + 30, label));
+  // Rows 1-4: true size.
+  parts.push(actor(cx, DY + 90, { team: C.foe, facing: 0, family }));
+  parts.push(actor(cx, DY + 140, { team: C.friend, facing: diag, family }));
+  parts.push(actor(cx, DY + 190, { team: C.friend, self: true, facing: Math.PI / 2, family }));
+  parts.push(actor(cx, DY + 240, { team: C.foe, target: true, facing: Math.PI * 0.8, family }));
+  // Row 5: against a wall, the reason for the dark edge.
   parts.push(
-    `<g transform="translate(${f(cx)},90) scale(4) translate(${f(-cx)},-90)">${actor(cx, 90, { team: C.foe, facing: 0, family })}</g>`,
+    `<rect x="${f(cx - 40)}" y="${f(DY + 270)}" width="80" height="18" fill="${C.wallFill}" stroke="${C.wallStroke}"/>`,
   );
-  // Rows 2-5: true size.
-  parts.push(actor(cx, 190, { team: C.foe, facing: 0, family }));
-  parts.push(actor(cx, 240, { team: C.friend, facing: diag, family }));
-  parts.push(actor(cx, 290, { team: C.friend, self: true, facing: Math.PI / 2, family }));
-  parts.push(actor(cx, 340, { team: C.foe, target: true, facing: Math.PI * 0.8, family }));
-  // Row 6: against a wall, the reason for the dark edge.
-  parts.push(
-    `<rect x="${f(cx - 40)}" y="370" width="80" height="18" fill="${C.wallFill}" stroke="${C.wallStroke}"/>`,
-  );
-  parts.push(actor(cx, 400, { team: C.friend, facing: -Math.PI / 2, family }));
+  parts.push(actor(cx, DY + 300, { team: C.friend, facing: -Math.PI / 2, family }));
 });
 
 parts.push(
-  text(10, 94, "4×, foe", "start"),
-  text(10, 194, "1×, foe →", "start"),
-  text(10, 244, "1×, friend ↗", "start"),
-  text(10, 294, "1×, you ↓", "start"),
-  text(10, 344, "1×, target ↖", "start"),
-  text(10, 404, "1×, at a wall ↑", "start"),
+  text(10, 94, "4×, foe →", "start"),
+  text(10, DY + 94, "1×, foe →", "start"),
+  text(10, DY + 144, "1×, friend ↗", "start"),
+  text(10, DY + 194, "1×, you ↓", "start"),
+  text(10, DY + 244, "1×, target ↖", "start"),
+  text(10, DY + 304, "1×, at a wall ↑", "start"),
 );
 
-// Row 7: a crowded clump at true size, mixed families and facings.
-parts.push(text(10, 484, "1×, 8v8 clump", "start"));
+// Row 6: a crowded clump at true size, mixed families and facings.
+parts.push(text(10, DY + 384, "1×, 8v8 clump", "start"));
 for (let k = 0; k < 16; k++) {
   const fam = FAMILIES[k % FAMILIES.length]?.family ?? "blade";
   const x = LEFT + 30 + (k % 8) * 34 + (k >= 8 ? 17 : 0);
-  const y = 465 + Math.floor(k / 8) * 34;
+  const y = DY + 365 + Math.floor(k / 8) * 34;
   parts.push(
     actor(x, y, {
       team: k >= 8 ? C.foe : C.friend,
@@ -245,8 +261,8 @@ for (let k = 0; k < 16; k++) {
 }
 // Two corpses in the clump: no line, hollow.
 for (const [x, y] of [
-  [LEFT + 330, 470],
-  [LEFT + 364, 500],
+  [LEFT + 330, DY + 370],
+  [LEFT + 364, DY + 400],
 ]) {
   parts.push(
     `<circle cx="${f(x ?? 0)}" cy="${f(y ?? 0)}" r="${f(R)}" fill="none" stroke="${C.dead}" stroke-width="2"/>`,
