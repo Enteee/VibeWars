@@ -355,3 +355,81 @@ test("(17) after Esc releases the arena, Tab is the browser's again (#268)", asy
   await page.keyboard.press("Tab");
   await expect(page.locator(".training-stage")).not.toBeFocused();
 });
+
+/** The armor ladder's six still dummies, in world units (training-scenarios.ts). */
+const LADDER = [
+  { x: 360, y: 90 },
+  { x: 360, y: 210 },
+  { x: 360, y: 330 },
+  { x: 460, y: 90 },
+  { x: 460, y: 210 },
+  { x: 460, y: 330 },
+] as const;
+const TRAINING_HALL_WIDTH = 560;
+
+/**
+ * The band a dummy's name is drawn in, as screenshots: 11 px text whose
+ * bottom sits 36 above the body's centre (`nameLabelBottom`), and narrower
+ * than the 100 between columns, so a neighbour's name never reaches it.
+ * Labels are Phaser text, not DOM, so a pixel diff is the only way to see one.
+ */
+async function nameBands(page: Page, canvas: Locator): Promise<Buffer[]> {
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+  const scale = box.width / TRAINING_HALL_WIDTH;
+  return Promise.all(
+    LADDER.map((dummy) =>
+      page.screenshot({
+        clip: {
+          x: box.x + (dummy.x - 30) * scale,
+          y: box.y + (dummy.y - 52) * scale,
+          width: 60 * scale,
+          height: 16 * scale,
+        },
+      }),
+    ),
+  );
+}
+
+test("(18) names show only on the target, under the cursor, and under Ctrl (#253)", async ({
+  page,
+}) => {
+  const canvas = await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("armor-ladder");
+  await expect(page.locator(".training-log")).toContainText("── Armor ladder ──");
+  await takeControl(page);
+
+  // No target, and the cursor on the empty corner takeControl clicked:
+  // these bands hold no name.
+  const blank = await nameBands(page, canvas);
+  const named = async (): Promise<number> =>
+    (await nameBands(page, canvas)).filter((band, i) => !band.equals(blank[i] ?? band)).length;
+
+  // Tab picks one dummy: its name, and only its, appears.
+  await page.keyboard.press("Tab");
+  await expect.poll(named).toBe(1);
+
+  // Ctrl shows every name, and letting go hides all but the target's.
+  await page.keyboard.down("Control");
+  await expect.poll(named).toBe(LADDER.length);
+  await page.keyboard.up("Control");
+  await expect.poll(named).toBe(1);
+
+  // The cursor over a dummy shows that one too. Two lie on the target
+  // or the cursor, whichever dummy Tab picked, unless they are the same.
+  const box = await canvas.boundingBox();
+  const scale = (box?.width ?? 0) / TRAINING_HALL_WIDTH;
+  const [first] = LADDER;
+  await page.mouse.move((box?.x ?? 0) + first.x * scale, (box?.y ?? 0) + first.y * scale);
+  await expect.poll(named).toBeGreaterThanOrEqual(1);
+  const withHover = await named();
+  expect(withHover === 1 || withHover === 2).toBe(true);
+  const hovered = (await nameBands(page, canvas))[0];
+  expect(hovered?.equals(blank[0] ?? Buffer.alloc(0))).toBe(false);
+
+  // The cursor leaving the arena takes its name with it.
+  await page.mouse.move(1, 1);
+  await expect.poll(named).toBe(1);
+});
