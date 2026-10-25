@@ -11,6 +11,7 @@
   "references": [
     { "path": "../../packages/game-protocol/tsconfig.build.json" },
     { "path": "../../packages/game-core/tsconfig.build.json" },
-    { "path": "../../packages/game-maps/tsconfig.build.json" }
+    { "path": "../../packages/game-maps/tsconfig.build.json" },
+    { "path": "../../packages/game-session/tsconfig.build.json" }
   ]
 }

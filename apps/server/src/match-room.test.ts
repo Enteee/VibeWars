@@ -1,6 +1,6 @@
 import { matchMaker } from "@colyseus/core";
 import { Client } from "@colyseus/sdk";
-import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
+import { DEFAULT_SKILL_BAR, MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
 import { loadMap } from "@vibewars/game-maps";
 import {
   PROTOCOL_MISMATCH_MESSAGE,
@@ -11,7 +11,7 @@ import {
 } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { DEFAULT_MAP_ID, DEFAULT_SKILL_BAR, MatchRoom } from "./rooms/match-room.js";
+import { DEFAULT_MAP_ID, MatchRoom } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { LOOPBACK_LIMITS, findFreePort, waitFor } from "./testing/harness.js";
 import { DEFAULT_MAX_ROOMS } from "./config.js";

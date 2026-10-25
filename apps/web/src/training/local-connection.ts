@@ -1,8 +1,8 @@
 import {
   MINIMAL_GW_INSPIRED_PVP_V1,
-  ZERO,
+  applyIntent,
+  drainAccumulator,
   getSkill,
-  vec2,
   type MatchSimulation,
   type Participant,
   type ProfessionId,
@@ -11,14 +11,13 @@ import {
   type StepResult,
 } from "@vibewars/game-core";
 import type { CastRefusedMessage, ClientIntent, MapDescriptor } from "@vibewars/game-protocol";
-
 import type {
   CombatMessage,
   MatchConnection,
   MatchSnapshot,
   PlayerSnapshot,
   SkillSlot,
-} from "../net/match-connection.js";
+} from "@vibewars/game-session";
 
 /**
  * A `MatchConnection` backed by a `MatchSimulation` running in this tab
@@ -43,42 +42,6 @@ export interface LocalMatchConnection extends MatchConnection {
 
 /** One simulation tick, at the ruleset's rate, exactly as the server steps. */
 export const TICK_SECONDS = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
-
-/**
- * The most wall time one frame may catch up on. A backgrounded tab comes
- * back with a delta of minutes; running every tick of it at once would
- * freeze the page and fast-forward the fight past anything worth seeing.
- */
-export const MAX_CATCHUP_SECONDS = 0.25;
-
-const TICK_EPSILON = 1e-9;
-
-/**
- * The fixed-step accumulator, as a pure function: how many ticks this
- * frame runs, and the time carried to the next one.
- *
- * Lives in `apps/web`, never in `game-core`: the simulation stays
- * clock-free (ADR-0003), and only the pump differs from the server's
- * `setFixedTimestep`.
- */
-export function drainAccumulator(
-  accumulator: number,
-  elapsedSeconds: number,
-  tickSeconds: number = TICK_SECONDS,
-): { readonly ticks: number; readonly remainder: number } {
-  let remainder = Math.min(
-    accumulator + Math.max(0, elapsedSeconds),
-    MAX_CATCHUP_SECONDS + tickSeconds,
-  );
-  let ticks = 0;
-  // Within a hair of a whole tick counts as one: two half-tick frames
-  // sum to 0.04999… in floating point, and must not wait a third frame.
-  while (remainder >= tickSeconds - TICK_EPSILON) {
-    remainder = Math.max(0, remainder - tickSeconds);
-    ticks += 1;
-  }
-  return { ticks, remainder };
-}
 
 /** The bar the HUD draws, from skill ids, gaps kept, as the server sends it on join. */
 export function skillSlotsFor(skillBar: SkillBar): (SkillSlot | null)[] {
@@ -189,47 +152,11 @@ export function createLocalConnection(options: {
     if (closed) {
       return;
     }
-    switch (intent.kind) {
-      case "stop":
-        simulation.setInputDirection(selfId, ZERO);
-        return;
-      case "move":
-        simulation.setInputDirection(selfId, vec2(intent.dirX, intent.dirY));
-        return;
-      case "target":
-        simulation.setTarget(selfId, intent.targetSessionId ?? undefined);
-        return;
-      case "use-skill": {
-        const request = simulation.requestSkill(selfId, intent.slot);
-        if (request !== undefined && !request.check.ok) {
-          const message: CastRefusedMessage = {
-            kind: "skill",
-            slot: intent.slot,
-            skillId: request.skillId,
-            reason: request.check.reason,
-          };
-          for (const handler of refusalHandlers) {
-            handler(message);
-          }
-        }
-        return;
+    const refusal = applyIntent(simulation, selfId, intent);
+    if (refusal !== null) {
+      for (const handler of refusalHandlers) {
+        handler(refusal);
       }
-      case "attack": {
-        const check = simulation.requestAttack(selfId, intent.targetId);
-        if (check !== undefined && !check.ok) {
-          const message: CastRefusedMessage = { kind: "attack", reason: check.reason };
-          for (const handler of refusalHandlers) {
-            handler(message);
-          }
-        }
-        return;
-      }
-      case "cancel":
-        simulation.cancelAction(selfId);
-        return;
-      case "walk-to":
-        simulation.walkTo(selfId, vec2(intent.x, intent.y));
-        return;
     }
   };
 
@@ -288,7 +215,7 @@ export function createLocalConnection(options: {
       if (closed) {
         return;
       }
-      const drained = drainAccumulator(accumulator, elapsedSeconds);
+      const drained = drainAccumulator(accumulator, elapsedSeconds, TICK_SECONDS);
       accumulator = drained.remainder;
       for (let i = 0; i < drained.ticks; i += 1) {
         deliver(simulation.step(TICK_SECONDS));

@@ -5,3 +5,20 @@
  */
 
 export type { Transport } from "./transport.js";
+
+export type {
+  CombatBatchMessage,
+  CombatMessage,
+  MatchConnection,
+  MatchSnapshot,
+  PlayerSnapshot,
+  ProjectileSnapshot,
+  SkillSlot,
+  SlotRecharge,
+} from "./match-connection.js";
+export { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
+export type { DropReport } from "./intent-budget.js";
+export { sanitizeName } from "./names.js";
+export { RECHARGE_TOLERANCE_SECONDS, rechargePredicted, rechargeSlots } from "./recharge.js";
+export { spawnPoint } from "./spawn-points.js";
+export type { SpawnPoint } from "./spawn-points.js";

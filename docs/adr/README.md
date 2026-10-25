@@ -32,3 +32,4 @@ rewriting history.
 | [0024](0024-telegram-topics.md)            | Four Telegram topics: General, Bots, Manager, Operator |
 | [0026](0026-weapon-auto-attack.md)         | Weapon auto-attack                                     |
 | [0027](0027-one-turn-per-process.md)       | Agents run one turn per process                        |
+| [0028](0028-strudel-music-host.md)         | Strudel music engine in a sandboxed host               |

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
+import type { PlayerSnapshot } from "@vibewars/game-session";
 
 import { DEFAULT_KEYMAP } from "../input/keymap.js";
-import type { PlayerSnapshot } from "../net/match-connection.js";
 
 import {
   describeOutcome,

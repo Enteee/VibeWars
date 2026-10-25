@@ -8,7 +8,8 @@ import {
 } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { FLOOD_MESSAGES_PER_SECOND, MESSAGE_BURST, MESSAGES_PER_SECOND } from "./rooms/options.js";
+import { MESSAGE_BURST, MESSAGES_PER_SECOND } from "@vibewars/game-session";
+import { FLOOD_MESSAGES_PER_SECOND } from "./rooms/options.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { LOOPBACK_LIMITS, findFreePort, waitFor } from "./testing/harness.js";
 import { DEFAULT_MAX_ROOMS } from "./config.js";

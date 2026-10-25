@@ -1,4 +1,4 @@
-import type { CombatMessage, PlayerSnapshot, SkillSlot } from "../net/match-connection.js";
+import type { CombatMessage, PlayerSnapshot, SkillSlot } from "@vibewars/game-session";
 
 /**
  * Which skill-bar slot is casting, and which slot's cast just failed

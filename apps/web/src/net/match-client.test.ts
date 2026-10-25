@@ -1,5 +1,6 @@
 import type { ClientIntent, MapDescriptor } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
+import type { CombatMessage } from "@vibewars/game-session";
 
 import {
   createMatchConnection,
@@ -11,7 +12,6 @@ import {
   type DecodedPlayer,
   type LiveMatchRoom,
 } from "./match-client.js";
-import type { CombatMessage } from "./match-connection.js";
 
 describe("endpointFromLocation", () => {
   it("uses ws:// for http pages", () => {

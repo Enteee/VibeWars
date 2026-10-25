@@ -13,6 +13,7 @@ export { ARMOR_SLOTS, EQUIPMENT_REQUIREMENT_RANK, isArmorSlot, isPhysicalDamage 
 export type { DoubleStrikeRule, Weapon, WeaponGrip, WeaponId } from "./weapons.js";
 export {
   ALL_WEAPONS,
+  LONG_BOW_RANGE,
   UNARMED_WEAPON_ID,
   WEAPONS,
   allowsOffhand,

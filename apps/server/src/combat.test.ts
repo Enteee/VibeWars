@@ -1,10 +1,10 @@
 import { Client } from "@colyseus/sdk";
 import { matchMaker } from "@colyseus/core";
-import { defaultBuildEquipment, type CombatLogEntry } from "@vibewars/game-core";
+import { DEFAULT_SKILL_BAR, defaultBuildEquipment, type CombatLogEntry } from "@vibewars/game-core";
 import { PROTOCOL_VERSION, ROOM_MATCH, type CastRefusedMessage } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { DEFAULT_SKILL_BAR, MatchRoom, combatBatch } from "./rooms/match-room.js";
+import { MatchRoom, combatBatch } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { LOOPBACK_LIMITS, findFreePort, waitFor } from "./testing/harness.js";
 import { DEFAULT_MAX_ROOMS } from "./config.js";

@@ -1,5 +1,6 @@
 import type { PlayerBuild, Vec2 } from "@vibewars/game-core";
 import type { WallDescriptor } from "@vibewars/game-protocol";
+import type { MatchConnection, MatchSnapshot } from "@vibewars/game-session";
 
 import { attachMatchSounds } from "./audio/match-sounds.js";
 import { saveMuted } from "./audio/mute-preference.js";
@@ -13,8 +14,8 @@ import { loadKeymap } from "./input/keymap-preference.js";
 import { attachNameReveal } from "./input/name-reveal.js";
 import { nextTabTarget } from "./input/tab-target.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
+import { attachMatchMusic } from "./music/match-music.js";
 import { connectToMatch, type MatchTarget } from "./net/match-client.js";
-import type { MatchConnection, MatchSnapshot } from "./net/match-connection.js";
 import {
   ACTOR_RADIUS,
   actorAtPoint,
@@ -180,6 +181,13 @@ export async function startMatchView(
 
   const sounds = soundPlayer();
   const matchSounds = attachMatchSounds(connection, sounds);
+  // #371: the music player will take these; until then nothing plays.
+  const matchMusic = attachMatchMusic(connection, {
+    screen: "match",
+    mode: { kind: "auto" },
+    tracks: [],
+    onChange: () => undefined,
+  });
   const toggleMute = (): void => {
     sounds.setMuted(!sounds.muted);
     saveMuted(sounds.muted);
@@ -315,6 +323,7 @@ export async function startMatchView(
 
   connection.onConnectionChange((state) => {
     matchSounds.connectionChanged(state);
+    matchMusic.connectionChanged(state);
     callbacks.onConnectionChange?.(state);
   });
 
@@ -341,6 +350,7 @@ export async function startMatchView(
   const offFrame = viewport.onFrame(() => {
     latestMatch = connection.getSnapshot();
     matchSounds.snapshot(latestMatch);
+    matchMusic.snapshot(latestMatch);
     guardUnload(latestMatch.phase !== "finished");
     // Hover is hit-tested every frame, not every move, so a body that
     // walks under a still cursor shows its name.
@@ -393,6 +403,7 @@ export async function startMatchView(
       window.removeEventListener("keydown", handleKeyDown);
       detachMovement();
       matchSounds.dispose();
+      matchMusic.dispose();
       // The scoreboard, result and mute button sit beside the HUD root, in
       // the shared viewport, so they go one by one or pile up per match.
       hud.root.remove();
