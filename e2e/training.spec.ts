@@ -778,7 +778,7 @@ test("(29) an attack skill pressed out of reach walks in, then lands (#415)", as
   await expect(page.locator(".training-log")).not.toContainText("out of range");
 });
 
-test("(29) a slot out of reach of the target is marked, and the mark goes once in reach (#485)", async ({
+test("(31) a slot out of reach of the target is marked, and the mark goes once in reach (#485)", async ({
   page,
 }) => {
   await page.setViewportSize(WIDE);
@@ -799,12 +799,8 @@ test("(29) a slot out of reach of the target is marked, and the mark goes once i
   await expect(slot).not.toHaveClass(/is-out-of-range/);
 
   // The bow-range dummy, at (480, 210), far out of an axe's reach.
-  const box = await canvas.boundingBox();
-  if (box === null) {
-    throw new Error("the arena canvas has no box");
-  }
-  const scale = box.width / TRAINING_HALL_WIDTH;
-  await page.mouse.click(box.x + 480 * scale, box.y + 210 * scale, { button: "right" });
+  const dummy = (await trainingView(page, canvas)).onPage({ x: 480, y: 210 });
+  await page.mouse.click(dummy.x, dummy.y, { button: "right" });
   await expect(slot).toHaveClass(/is-out-of-range/);
   // A shape, not only a colour: the `↔` after the name.
   const glyph = await slot
@@ -817,7 +813,7 @@ test("(29) a slot out of reach of the target is marked, and the mark goes once i
   await expect(slot).not.toHaveClass(/is-out-of-range/, { timeout: 20_000 });
 });
 
-test("(30) the casting slot fills as the cast goes, hovering it shows its tooltip, and a cast hides it (#485)", async ({
+test("(32) the casting slot fills as the cast goes, hovering it shows its tooltip, and a cast hides it (#485)", async ({
   page,
 }) => {
   // Troll Unguent: a 3 s self-cast, long enough to see the fill rise.
