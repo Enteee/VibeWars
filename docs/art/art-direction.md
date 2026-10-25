@@ -204,7 +204,7 @@ Outward from the centre:
 | Body     | 0 … r          | Team colour fill                     |
 | Edge     | r − 1.5 … r    | 1.5 px `edge` `#0b0f14`, living only |
 | Self rim | r − 3 … r − 1  | 2 px `ink`, your own body only       |
-| Off-hand | r + 1 … r + 7  | See below, living only, left side    |
+| Off-hand | r … r + 7      | See below, living only, left side    |
 | Weapon   | centre … r + 5 | See below, living only               |
 | Target   | r + 8 … r + 10 | 2 px `target`, your target only      |
 
@@ -252,11 +252,11 @@ head already hangs on. It is cased like the weapon mark, `edge` under `ink`,
 so it reads over the floor and over a neighbour's body: `ink` on `edge` is
 14.2:1, and the casing is 9.7:1 on `friend` and 7.6:1 on `foe`.
 
-| Off-hand | Geometry (world units, angles from the facing, toward the left)                                                                    |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| shield   | arc on the body's centre, radius r + 3.5, from 45° to 105°; 5 px `edge` casing (r + 1 … r + 6) under a 3 px `ink` core; butt ends  |
-| focus    | ring of radius 2, centred at r + 3 and 75°; 3.5 px `edge` casing under a 1.5 px `ink` core; outer edge r + 6.75, hole shows `edge` |
-| none     | nothing: no off-hand equipped, or a two-handed weapon                                                                              |
+| Off-hand | Geometry (world units, angles from the facing, toward the left)                                                                       |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| shield   | arc on the body's centre, radius r + 3.5, from 45° to 105°; 5 px `edge` casing (r + 1 … r + 6) under a 3 px `ink` core; butt ends     |
+| focus    | ring of radius 1.75, centred at r + 3.5 and 75°; 3 px `edge` casing under a 1.5 px `ink` core; r + 0.25 … r + 6.75, hole shows `edge` |
+| none     | nothing: no off-hand equipped, or a two-handed weapon                                                                                 |
 
 Why it reads, and what it is not:
 
@@ -264,7 +264,7 @@ Why it reads, and what it is not:
   shield starts at 45°, about 6 px away at true size. Rows 6 and 7 of the
   sheet put every family beside each off-hand.
 - **Shield and focus differ by shape and size**: a 60° band hugging the body
-  against a 5 px ring standing off it. At true size the focus reads as a
+  against a 5 px ring just off it. At true size the focus reads as a
   bright dot, the shield as a bracket.
 - **Not a second weapon.** Nothing runs from the centre and nothing points
   along the facing, so two sticks never appear.

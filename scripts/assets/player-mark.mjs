@@ -84,15 +84,15 @@ const OFF_SIDE = -Math.PI / 2;
 const SHIELD_FROM = (45 * Math.PI) / 180;
 const SHIELD_TO = (105 * Math.PI) / 180;
 const SHIELD_AT = R + 3.5;
-/** The focus: a ring of radius 2 centred 75° off the facing, at r + 3. */
+/** The focus: a ring of radius 1.75 centred 75° off the facing, at r + 3.5. */
 const FOCUS_ANGLE = (75 * Math.PI) / 180;
-const FOCUS_AT = R + 3;
-const FOCUS_R = 2;
+const FOCUS_AT = R + 3.5;
+const FOCUS_R = 1.75;
 
 /**
  * The off-hand mark, cased like the weapon mark: `edge` under `ink`.
- * Shield: 5 px casing (r + 1 … r + 6) under a 3 px core. Focus: 3.5 px
- * casing under a 1.5 px core, outer edge at r + 6.75. Both inside r + 7.
+ * Shield: 5 px casing (r + 1 … r + 6) under a 3 px core. Focus: 3 px
+ * casing under a 1.5 px core, r + 0.25 … r + 6.75. Both inside r + 7.
  * @param {number} x
  * @param {number} y
  * @param {number} a
@@ -115,7 +115,7 @@ function offhandMark(x, y, a, offhand) {
   }
   const [fx, fy] = polar(x, y, a + side * FOCUS_ANGLE, FOCUS_AT);
   for (const [colour, w] of /** @type {const} */ ([
-    [C.edge, 3.5],
+    [C.edge, 3],
     [C.ink, 1.5],
   ]))
     out += `<circle cx="${f(fx)}" cy="${f(fy)}" r="${f(FOCUS_R)}" fill="none" stroke="${colour}" stroke-width="${String(w)}"/>`;
