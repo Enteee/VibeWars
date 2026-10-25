@@ -1,9 +1,14 @@
-import { describe, expect, it } from "vitest";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   COOLDOWN_MS,
   DRAIN_MS,
   INFLIGHT_GRACE_MS,
+  betweenTurns,
   bootNote,
   drainStep,
   fastForwardDecision,
@@ -15,6 +20,15 @@ import {
 } from "./reboot.mjs";
 
 const NOW = 1_800_000_000_000;
+
+/** @type {string[]} */
+const dirs = [];
+
+afterEach(() => {
+  for (const dir of dirs.splice(0)) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 describe("isCompanyPath", () => {
   it("is the code a reboot loads, and nothing else", () => {
@@ -250,5 +264,19 @@ describe("bootNote", () => {
     expect(bootNote({ note: null, sha, drift, running })).toContain(
       "a.mjs, b.mjs, c.mjs, d.mjs, e.mjs and 2 more differ",
     );
+  });
+});
+
+describe("betweenTurns", () => {
+  it("is the roles whose loop has written its marker, and no others", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "reboot-test-"));
+    dirs.push(root);
+    fs.mkdirSync(path.join(root, "agents", "manager"), { recursive: true });
+    fs.writeFileSync(path.join(root, "agents", "manager", "between-turns"), "");
+    // In a turn: the state directory and its session, but no marker.
+    fs.mkdirSync(path.join(root, "agents", "architect"), { recursive: true });
+    fs.writeFileSync(path.join(root, "agents", "architect", "session-id"), "abc\n");
+
+    expect(betweenTurns(root, ["manager", "architect", "developer-1"])).toEqual(["manager"]);
   });
 });
