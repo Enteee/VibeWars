@@ -289,8 +289,9 @@ test("(13) a recharging skill shows the clock-wipe and the seconds left, then cl
   await expect(slot).toHaveAttribute("aria-label", /^Fireball, recharging, \d+ seconds?$/);
   await expect(slot).toHaveClass(/\bis-recharging\b/);
 
-  // Fireball recharges in 7 s.
-  await expect(overlay).toHaveCount(0, { timeout: 10_000 });
+  // Fireball recharges in 7 s of game time, which runs slower than wall
+  // time when the CPU is loaded (#327).
+  await expect(overlay).toHaveCount(0, { timeout: 20_000 });
   await expect(slot).not.toHaveAttribute("aria-label");
   await expect(slot).not.toHaveClass(/\bis-recharging\b/);
 });
@@ -304,8 +305,10 @@ test("(14) in Weapon DPS, Space swings and the meter's weapon row counts it (#16
   await takeControl(page);
 
   await page.keyboard.press(" ");
-  // "weapon / skills": the weapon's share is no longer 0.
-  await expect(meter(page, "weapon / skills")).not.toHaveText(/^0 \//, { timeout: 3000 });
+  // "weapon / skills": the weapon's share is no longer 0. The walk and
+  // swing take ~1.9 s of game time, which runs slower than wall time when
+  // the CPU is loaded (#327), so this waits the default.
+  await expect(meter(page, "weapon / skills")).not.toHaveText(/^0 \//);
   // Named for the weapon that swung, by the character who swung it.
   await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Melee dummy/);
 });
@@ -339,8 +342,10 @@ test("(16) Tab targets in the arena and never leaves it for the name field (#268
   await page.keyboard.press(" ");
   await expect(page.locator(".training-stage")).toBeFocused();
   await expect(name).toHaveValue(original);
-  // The Space was the arena's: a swing at the dummy Tab picked.
-  await expect(meter(page, "weapon / skills")).not.toHaveText(/^0 \//, { timeout: 3000 });
+  // The Space was the arena's: a swing at the dummy Tab picked. ~1.9 s of
+  // game time, which runs slower than wall time under load (#327), so
+  // this waits the default.
+  await expect(meter(page, "weapon / skills")).not.toHaveText(/^0 \//);
   await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Melee dummy/);
 });
 
@@ -468,9 +473,10 @@ test("(20) a double-click on a far enemy attacks it: you walk there and swing (#
   await page.mouse.dblclick(box.x + 480 * scale, box.y + 210 * scale);
 
   await expect(page.locator(".training-adrenaline")).toContainText("· attacking");
-  // Only a body that walked the whole way there can land this.
+  // Only a body that walked the whole way there can land this. The walk
+  // is in game time, which runs slower than wall time under load (#327).
   await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Bow-range dummy/, {
-    timeout: 8000,
+    timeout: 20_000,
   });
 });
 
