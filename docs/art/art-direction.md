@@ -136,6 +136,22 @@ When a weapon attack lands or misses (#161), the scene flashes the swing:
   target, is yellow, and does not fade, so the two cannot be confused.
 - **Off under reduced motion.** The damage number still says what happened.
 
+### Damage and heal numbers
+
+Above a body, the column is already full: the health bar at r + 8 … r + 12,
+the cast bar at r + 15 … r + 19, the name with its bottom at r + 22. A
+number that starts on the bar and rises through the name hides both, and the
+name it hides is your target's.
+
+- **They rise beside the body, not over it.** Left-aligned at x = r + 4 to
+  the right of the centre, clear of the 34-px bar, with the first line's
+  bottom at y = 8 below the centre.
+- **They rise 24 px a second for 1.2 s**, so a single number ends with its
+  top at 34 above the centre, still under the name.
+- **Numbers landing together stack a line apart, at most four** (#54).
+  A second line reaches the name's band late in its rise, so a burst may
+  brush the name for a moment; a single hit, the common case, never does.
+
 ### Projectiles
 
 Ranged weapon shots in flight (#161). Each is a sprite on a 32×12 grid,
