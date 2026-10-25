@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_MUSIC_PREFERENCE, type MusicPreference } from "../audio/music-preference.js";
+import { VOLUME_RAMP_SECONDS } from "../audio/volume-ramp.js";
 import type { MusicState } from "./director.js";
 import type { MusicPlayer } from "./music-player.js";
-import { VOLUME_RAMP_SECONDS, createMusicFollower } from "./play-music.js";
+import { createMusicFollower } from "./play-music.js";
 
 const tracks = [
   { id: "first-light", source: "a", phraseCycles: 8, moods: ["atmospheric" as const] },

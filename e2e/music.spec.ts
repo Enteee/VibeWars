@@ -170,15 +170,17 @@ test("a pinned track is what plays after a reload (#372)", async ({ page }) => {
   await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toEqual(["ember-deep"]);
 });
 
-test("Off plays nothing after a click, and the music mute survives a reload (#372)", async ({
+test("Off plays nothing after a click, and the music mute survives a reload (#372, #424)", async ({
   page,
 }) => {
   await recordMessages(page);
   await page.goto("/");
   await page.getByRole("button", { name: "music", exact: true }).click();
   await page.locator(".jukebox-mode").selectOption("off");
-  await page.locator(".jukebox-mute").click();
-  await expect(page.locator(".jukebox-mute")).toHaveAttribute("aria-pressed", "true");
+  // The music's mute lives in Options → Sound, a link away.
+  await page.getByRole("button", { name: "sound settings" }).click();
+  await expect(page.locator('.options-entry[data-section="sound"]')).toHaveClass(/is-selected/);
+  await page.getByLabel("Mute music").check();
 
   await page.reload();
   await expect(page.locator(".roster")).toBeVisible();
@@ -190,7 +192,8 @@ test("Off plays nothing after a click, and the music mute survives a reload (#37
 
   await page.getByRole("button", { name: "music", exact: true }).click();
   await expect(page.locator(".jukebox-mode")).toHaveValue("off");
-  await expect(page.locator(".jukebox-mute")).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "sound settings" }).click();
+  await expect(page.getByLabel("Mute music")).toBeChecked();
 });
 
 interface Box {

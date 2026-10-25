@@ -170,6 +170,17 @@ async function main(): Promise<void> {
     })();
   };
 
+  const showJukebox = (): void => {
+    disposeOptionsScreen();
+    renderJukeboxScreen(screenRoot, {
+      onBack: showMenu,
+      onSoundSettings: () => {
+        disposeJukeboxScreen();
+        renderOptionsScreen(screenRoot, { onBack: showJukebox }, "sound");
+      },
+    });
+  };
+
   const renderMenuWith = (
     list: readonly StoredCharacter[],
     problems: readonly string[] = [],
@@ -189,9 +200,7 @@ async function main(): Promise<void> {
         onOptions: () => {
           renderOptionsScreen(screenRoot, { onBack: showMenu });
         },
-        onMusic: () => {
-          renderJukeboxScreen(screenRoot, { onBack: showMenu });
-        },
+        onMusic: showJukebox,
         // Straight into a match with no lobby — how the game worked before
         // Sprint 19, kept because it is the fastest way to try the game.
         onQuickMatch: (name) => {

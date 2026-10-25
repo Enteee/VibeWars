@@ -71,7 +71,7 @@ export function attackingIcon(): string {
   return iconUrl("ui", "attacking");
 }
 
-/** The music's own mute (#372), in the jukebox and on the HUD's ♪ button. */
+/** The music's own mute (#372), on the HUD's ♪ button. */
 export function musicIcon(muted: boolean): string {
   return iconUrl("ui", muted ? "music-off" : "music-on");
 }
