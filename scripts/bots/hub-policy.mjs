@@ -103,6 +103,7 @@ export const GATE_PATHS = [
   "scripts/bots/restart.mjs",
   "scripts/bots/supervisor.mjs",
   "scripts/bots/hub.mjs",
+  "scripts/bots/hub-alerts.mjs",
   "nix/claude-bot.nix",
   "nix/claude-llc.nix",
   ".github/CODEOWNERS",
@@ -581,6 +582,12 @@ function authorizeAs(role, request, acting) {
   }
   if (request.kind === "board") {
     return authorizeBoard(argv);
+  }
+  if (request.kind === "alerts") {
+    // A read, open to every role: everyone sees the state of the world, and
+    // a developer should see what CodeQL says about its own pull request
+    // (#184). hubd parses the words, and checks a named PR is visible.
+    return { allow: true };
   }
   if (request.kind !== "gh") {
     return { allow: false, reason: `unknown request kind "${request.kind}"` };

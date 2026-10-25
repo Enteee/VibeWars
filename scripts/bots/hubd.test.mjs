@@ -59,6 +59,14 @@ if (group === "api" && sub !== "graphql") {
     console.log(JSON.stringify(commit[2] === "status" ? { state: "pending", total_count: 0, statuses: [] } : { total_count: 0, check_runs: [] }));
     process.exit(0);
   }
+  // Code scanning: what the test planted, or no alerts.
+  if (rel.startsWith("code-scanning/alerts")) {
+    const planted = path.join(state, "alerts.json");
+    const answer = fs.existsSync(planted) ? JSON.parse(fs.readFileSync(planted, "utf8")) : { code: 0, stdout: "[]", stderr: "" };
+    if (answer.stderr) { console.error(answer.stderr); }
+    if (answer.stdout) { console.log(answer.stdout); }
+    process.exit(answer.code);
+  }
   if (rel.startsWith("issues?")) { console.log(JSON.stringify([issue7, { ...pull9, pull_request: {} }])); process.exit(0); }
   console.log("rest ok"); process.exit(0);
 }
@@ -218,6 +226,14 @@ async function startHubd(remaining, before) {
           statuses: checks.statuses ?? [],
         }),
       );
+    },
+    /**
+     * What GitHub answers a code-scanning read (#184).
+     *
+     * @param {{ code: number, stdout: string, stderr: string }} answer
+     */
+    setAlerts(answer) {
+      fs.writeFileSync(path.join(state, "alerts.json"), JSON.stringify(answer));
     },
     /** Every REST read of a commit's checks fails, as on a GitHub outage. */
     failRest() {
@@ -688,6 +704,67 @@ describe("hubd answering issue and PR reads from REST", () => {
     await hubd.request("developer-1", "gh", ["pr", "view", "9", "--json", "reviewDecision"]);
 
     expect(hubd.calls("pr view 9")).toBe(1);
+  }, 20_000);
+});
+
+describe("hubd serving hub alerts (#184)", () => {
+  const alert = {
+    number: 12,
+    state: "open",
+    html_url: "https://github.com/Enteee/VibeWars/security/code-scanning/12",
+    rule: { id: "js/xss", severity: "error", security_severity_level: "high" },
+    most_recent_instance: {
+      location: { path: "apps/web/src/ui/hud.ts", start_line: 204 },
+      message: { text: "Cross-site scripting" },
+    },
+  };
+
+  it("reads main's alerts from REST and prints one line each", async () => {
+    const hubd = await startHubd(5000);
+    hubd.setAlerts({ code: 0, stdout: JSON.stringify([alert]), stderr: "" });
+
+    const answer = await hubd.request("developer-1", "alerts", []);
+
+    expect(answer.code).toBe(0);
+    expect(String(answer.stdout)).toContain("#12  high  js/xss  apps/web/src/ui/hud.ts:204");
+    expect(String(answer.stdout)).toContain("1 open alert on refs/heads/main");
+    expect(hubd.calls("api graphql")).toBe(0);
+  }, 20_000);
+
+  it("says CodeQL has not run, never that there are no alerts, on a 404", async () => {
+    const hubd = await startHubd(5000);
+    hubd.setAlerts({ code: 1, stdout: "", stderr: "gh: no analysis found (HTTP 404)" });
+
+    const answer = await hubd.request("developer-1", "alerts", []);
+
+    expect(answer.code).toBe(1);
+    expect(String(answer.stderr)).toBe("CodeQL has not analysed refs/heads/main yet\n");
+  }, 20_000);
+
+  it("says the token cannot read code scanning on a 403", async () => {
+    const hubd = await startHubd(5000);
+    hubd.setAlerts({
+      code: 1,
+      stdout: "",
+      stderr: "gh: Resource not accessible by integration (HTTP 403)",
+    });
+
+    const answer = await hubd.request("developer-1", "alerts", []);
+
+    expect(answer.code).toBe(1);
+    expect(String(answer.stderr)).toBe(
+      "gh: Resource not accessible by integration (HTTP 403)\n" +
+        "the company token cannot read code scanning; ask the operator\n",
+    );
+  }, 20_000);
+
+  it("refuses the alerts of a pull request the company cannot see", async () => {
+    const hubd = await startHubd(5000);
+
+    const answer = await hubd.request("developer-1", "alerts", ["--pr", "4242"]);
+
+    expect(answer.allow).toBe(false);
+    expect(String(answer.reason)).toBe("4242 does not exist or is not on the board yet");
   }, 20_000);
 });
 
