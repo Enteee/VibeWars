@@ -17,6 +17,8 @@ export interface MenuCallbacks {
   readonly onManageTeams: () => void;
   /** Open the Options screen (#423). */
   readonly onOptions: () => void;
+  /** Open the jukebox (#372). */
+  readonly onMusic: () => void;
   readonly onQuickMatch: (name: string) => void;
   /** Open the build editor on a new character. */
   readonly onNewCharacter: () => void;
@@ -259,6 +261,7 @@ export function renderMenu(
   const manageRow = h("div", "menu-row");
   manageRow.appendChild(button("teams", "", callbacks.onManageTeams));
   manageRow.appendChild(button("options", "", callbacks.onOptions));
+  manageRow.appendChild(button("music", "", callbacks.onMusic));
   const quickMatch = button("quick match", "", () => {
     callbacks.onQuickMatch(nameInput.value);
   });

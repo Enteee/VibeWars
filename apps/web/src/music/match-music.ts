@@ -33,7 +33,8 @@ export interface MatchMusic {
 
 export interface MatchMusicOptions {
   readonly screen: "training" | "match";
-  readonly mode: MusicMode;
+  /** Asked on every snapshot, so a mode the player changes mid-match applies at once. */
+  readonly mode: () => MusicMode;
   readonly tracks: readonly TrackChoice[];
   /** Called with each new state: a new track, intensity or context. */
   readonly onChange: (state: MusicState) => void;
@@ -147,7 +148,7 @@ export function attachMatchMusic(
         nowMs: at,
       };
       const prev = state;
-      state = directMusic(input, prev, mode, tracks);
+      state = directMusic(input, prev, mode(), tracks);
       if (prev === null || !sameMusic(prev, state)) {
         onChange(state);
       }

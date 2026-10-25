@@ -15,6 +15,20 @@ import { key, skillKey } from "./keys.js";
  */
 
 /**
+ * No music: the now-playing toast (#372) shows over the arena for a few
+ * seconds at a match start, so one frame would have it and the next not.
+ * Music has its own spec.
+ */
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "vibewars.music",
+      JSON.stringify({ mode: "off", pinnedTrackId: null, musicVolume: 0.6, musicMuted: false }),
+    );
+  });
+});
+
+/**
  * Screenshot just the arena.
  *
  * An element screenshot is a clip of the page, so anything overlapping the
@@ -29,6 +43,7 @@ async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
       page.locator(".hud-scoreboard"),
       page.locator(".hud-result"),
       page.locator(".hud-mute"),
+      page.locator(".hud-music"),
       page.locator(".hud-leave"),
     ],
   });

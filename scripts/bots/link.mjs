@@ -13,14 +13,20 @@
  *
  *   serve             one per company. Long-polls the single token and routes
  *                     each operator message to the inboxes it is for. Drains
- *                     every role's outbox: a peer message goes straight into
+ *                     every employee's outbox: a peer message goes straight into
  *                     its recipients' inboxes, then a copy goes to Telegram
  *                     for the operator, paced so one bot stays under
  *                     Telegram's group rate limit. A second `serve` exits at
  *                     once, so any `claude-bot` may try to start it.
- *   presence <role>   one per running agent. Keeps the role's roster entry
- *                     fresh, which is what `tg roster` reads, and removes it
- *                     when the agent's session ends. Holds no token.
+ *   presence <employee>
+ *                     one per running agent. Keeps the employee's roster
+ *                     entry fresh, which is what `tg roster` reads, and
+ *                     removes it when the agent's session ends. Holds no
+ *                     token.
+ *
+ * Inboxes, outboxes and roster entries are per employee (#62), and who is
+ * employed is `staff.json`, re-read on every pass: a message to a role
+ * reaches each of its employees.
  *
  * The pure half of this lives in protocol.mjs and is unit-tested; what is
  * left here is the part that needs a token, a socket or a clock.
@@ -45,6 +51,7 @@ import {
   deliverSystem,
   formatMirror,
   formatQuestion,
+  inboxesOf,
   isReadyOutboxEntry,
   mirrorTopic,
   obj,
@@ -55,6 +62,7 @@ import {
   routeAnswer,
   routeInbound,
 } from "./protocol.mjs";
+import { roleOf, staffReader } from "./staff.mjs";
 
 /**
  * Something for the mirror to send: a peer message still to be formatted,
@@ -98,7 +106,10 @@ function required(name) {
  * Resolved lazily so that `presence`, which needs no token, does not demand
  * one.
  *
- * @returns {{ root: string, bus: string, link: string, registry: string, company: string, questions: string }}
+ * @returns {{
+ *   root: string, bus: string, link: string, registry: string, company: string,
+ *   questions: string, staff: string,
+ * }}
  */
 function paths() {
   const root = required("VIBEWARS_BOT_ROOT");
@@ -109,6 +120,7 @@ function paths() {
     registry: path.join(root, "registry.json"),
     company: path.join(root, "company.json"),
     questions: path.join(root, "link", "questions.json"),
+    staff: path.join(root, "staff.json"),
   };
 }
 
@@ -259,18 +271,18 @@ function readQuestions(file) {
 
 /**
  * @param {string} bus
- * @param {string} role
+ * @param {string} employee
  * @returns {{ dir: string, inbox: string, outbox: string, receipts: string, roster: string }}
  */
-function busPaths(bus, role) {
-  const dir = path.join(bus, role);
+function busPaths(bus, employee) {
+  const dir = path.join(bus, employee);
   return {
     dir,
     inbox: path.join(dir, "inbox.jsonl"),
     outbox: path.join(dir, "outbox"),
     // The sidecar's answer to each `tg ask`, named after its outbox entry.
     receipts: path.join(dir, "receipts"),
-    roster: path.join(bus, "roster", `${role}.json`),
+    roster: path.join(bus, "roster", `${employee}.json`),
   };
 }
 
@@ -278,16 +290,16 @@ function busPaths(bus, role) {
 const OUTBOX_MAX_BYTES = 64 * 1024;
 
 /**
- * A role's bus directory, and its outbox and inbox in it. Below the role
+ * An employee's bus directory, and its outbox and inbox in it. Below the employee's
  * directory is the jail's, so it goes through jail-fs.mjs (#329). What
- * the jail made unusable there is logged, and costs only that role.
+ * the jail made unusable there is logged, and costs only that employee.
  *
  * @param {string} bus
- * @param {string} role
+ * @param {string} employee
  * @returns {void}
  */
-function ensureBus(bus, role) {
-  const at = busPaths(bus, role);
+function ensureBus(bus, employee) {
+  const at = busPaths(bus, employee);
   fs.mkdirSync(at.dir, { recursive: true });
   fs.mkdirSync(path.dirname(at.roster), { recursive: true });
   try {
@@ -296,40 +308,40 @@ function ensureBus(bus, role) {
       dir.create("inbox.jsonl");
     });
   } catch (error) {
-    refused(role, "outbox/ or inbox.jsonl", error);
+    refused(employee, "outbox/ or inbox.jsonl", error);
   }
 }
 
 /**
- * Append to a role's inbox. One the jail made unwritable, such as a
- * symlink, costs that role its messages and nothing else: logged, never
+ * Append to an employee's inbox. One the jail made unwritable, such as a
+ * symlink, costs that employee its messages and nothing else: logged, never
  * thrown into the delivery of everyone else's.
  *
  * @param {string} bus
- * @param {string} role
+ * @param {string} employee
  * @param {import("./protocol.mjs").InboxLine} line
  * @returns {void}
  */
-function appendInbox(bus, role, line) {
-  ensureBus(bus, role);
+function appendInbox(bus, employee, line) {
+  ensureBus(bus, employee);
   try {
-    withJailDir(busPaths(bus, role).dir, "", {}, (dir) => {
+    withJailDir(busPaths(bus, employee).dir, "", {}, (dir) => {
       dir.append("inbox.jsonl", `${JSON.stringify(line)}\n`);
     });
   } catch (error) {
-    refused(role, "inbox.jsonl", error);
+    refused(employee, "inbox.jsonl", error);
   }
 }
 
 /**
- * @param {string} role
+ * @param {string} employee
  * @param {string} site
  * @param {unknown} error
  * @returns {void}
  */
-function refused(role, site, error) {
+function refused(employee, site, error) {
   console.error(
-    `[link] ${role}: refused ${site}: ${error instanceof Error ? error.message : String(error)}`,
+    `[link] ${employee}: refused ${site}: ${error instanceof Error ? error.message : String(error)}`,
   );
 }
 
@@ -339,19 +351,19 @@ function refused(role, site, error) {
  * An entry that is not a small regular file is refused and removed; one
  * that does not parse yet is left for the next pass.
  *
- * @param {string} dir the role's (or the system's) bus directory
- * @param {string} role for the log
+ * @param {string} dir the employee's (or the system's) bus directory
+ * @param {string} employee for the log
  * @param {(name: string, payload: unknown) => void} take
  * @returns {boolean} whether anything was taken
  */
-function takeOutbox(dir, role, take) {
+function takeOutbox(dir, employee, take) {
   /** @type {import("./jail-fs.mjs").JailDir} */
   let outbox;
   try {
     outbox = openJailDir(dir, "outbox");
   } catch (error) {
     if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) {
-      refused(role, "outbox/", error);
+      refused(employee, "outbox/", error);
     }
     return false;
   }
@@ -363,11 +375,11 @@ function takeOutbox(dir, role, take) {
       try {
         text = outbox.readSmall(name, OUTBOX_MAX_BYTES);
       } catch (error) {
-        refused(role, `outbox/${name}`, error);
+        refused(employee, `outbox/${name}`, error);
         try {
           outbox.remove(name);
         } catch (removal) {
-          refused(role, `outbox/${name} (remove)`, removal);
+          refused(employee, `outbox/${name} (remove)`, removal);
         }
         continue;
       }
@@ -384,7 +396,7 @@ function takeOutbox(dir, role, take) {
       try {
         outbox.remove(name);
       } catch (removal) {
-        refused(role, `outbox/${name} (remove)`, removal);
+        refused(employee, `outbox/${name} (remove)`, removal);
         continue;
       }
       take(name, payload);
@@ -397,14 +409,15 @@ function takeOutbox(dir, role, take) {
 }
 
 /**
- * Roles with a running agent right now, from their presence heartbeats.
+ * Employees with a running agent right now, from their presence heartbeats.
  *
  * @param {string} bus
+ * @param {ReadonlyMap<string, string>} employees
  * @returns {Set<string>}
  */
-function present(bus) {
-  const roster = readRoster(path.join(bus, "roster"), ROLES, Date.now());
-  return new Set([...roster].filter(([, entry]) => entry.fresh).map(([role]) => role));
+function present(bus, employees) {
+  const roster = readRoster(path.join(bus, "roster"), [...employees.keys()], Date.now());
+  return new Set([...roster].filter(([, entry]) => entry.fresh).map(([employee]) => employee));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -432,6 +445,12 @@ class Company {
     this.operatorId = 0;
     /** @type {Map<import("./protocol.mjs").TopicName, number>} when to ask for a topic again */
     this.topicRetryAt = new Map();
+    /** Who is employed, employee id to role: `staff.json` as of this call. */
+    this.employees = staffReader(at.staff, (problem, kept) => {
+      console.error(
+        `[link] staff.json: ${problem}; still delivering to ${[...kept.keys()].join(", ") || "nobody"}`,
+      );
+    });
   }
 
   saveQuestions() {
@@ -595,8 +614,9 @@ async function pollInbound(company, mirror) {
           }
           floods.set(routed.line.from, gate.state);
         }
-        for (const role of routed.to) {
-          appendInbox(company.at.bus, role, routed.line);
+        const employees = company.employees();
+        for (const employee of new Set(routed.to.flatMap((to) => inboxesOf(to, employees)))) {
+          appendInbox(company.at.bus, employee, routed.line);
         }
         if (routed.whichRole !== null && routed.line.topicId !== null) {
           mirror.push({
@@ -637,8 +657,8 @@ async function answerOperator(company, mirror, answer) {
     company.questions.questions[String(answer.answered.n)] = answer.answered.question;
     company.saveQuestions();
   }
-  for (const { role, line } of answer.deliveries) {
-    appendInbox(company.at.bus, role, line);
+  for (const { employee, line } of answer.deliveries) {
+    appendInbox(company.at.bus, employee, line);
   }
   for (const { method, params } of answer.immediate) {
     try {
@@ -653,7 +673,8 @@ async function answerOperator(company, mirror, answer) {
 }
 
 /**
- * Every role's outbox: delivered locally at once, then queued for Telegram.
+ * Every employee's outbox: delivered locally at once, then queued for
+ * Telegram. A fired employee's is no longer read.
  *
  * @param {Company} company
  * A question (`tg ask`) is numbered here, saved, and answered with a
@@ -665,20 +686,22 @@ async function answerOperator(company, mirror, answer) {
 async function drainOutboxes(company, mirror) {
   for (;;) {
     let moved = false;
-    for (const role of ROLES) {
+    const employees = company.employees();
+    for (const sender of employees.keys()) {
       moved =
-        takeOutbox(busPaths(company.at.bus, role).dir, role, (name, payload) => {
+        takeOutbox(busPaths(company.at.bus, sender).dir, sender, (name, payload) => {
           const delivered = deliverPeer(payload, {
-            from: role,
+            from: sender,
             roles: ROLES,
-            present: present(company.at.bus),
+            employees,
+            present: present(company.at.bus, employees),
             now: Date.now(),
           });
-          for (const { role: recipient, line } of delivered.deliveries) {
-            appendInbox(company.at.bus, recipient, line);
+          for (const { employee, line } of delivered.deliveries) {
+            appendInbox(company.at.bus, employee, line);
           }
           if (delivered.notice !== null) {
-            appendInbox(company.at.bus, role, delivered.notice);
+            appendInbox(company.at.bus, sender, delivered.notice);
           }
           if (delivered.mirror !== null) {
             mirror.push({ peer: delivered.mirror });
@@ -703,7 +726,7 @@ async function drainOutboxes(company, mirror) {
             }
             try {
               withJailDir(
-                busPaths(company.at.bus, role).dir,
+                busPaths(company.at.bus, sender).dir,
                 "receipts",
                 { create: true },
                 (dir) => {
@@ -711,7 +734,7 @@ async function drainOutboxes(company, mirror) {
                 },
               );
             } catch (error) {
-              refused(role, `receipts/${name}`, error);
+              refused(sender, `receipts/${name}`, error);
             }
           }
         }) || moved;
@@ -725,7 +748,7 @@ async function drainOutboxes(company, mirror) {
 
 /**
  * The system outbox (#23): what host-side code says to everyone, such as a
- * daemon crash-looping. Delivered to every role as a `link` line and
+ * daemon crash-looping. Delivered to every employee as a `link` line and
  * mirrored to General under the System header. Only the host can write
  * here; no jail binds this directory.
  *
@@ -735,9 +758,12 @@ async function drainOutboxes(company, mirror) {
  */
 function drainSystem(company, mirror) {
   return takeOutbox(path.join(company.at.bus, SYSTEM), SYSTEM, (_name, payload) => {
-    const delivered = deliverSystem(payload, { roles: ROLES, now: Date.now() });
-    for (const { role, line } of delivered.deliveries) {
-      appendInbox(company.at.bus, role, line);
+    const delivered = deliverSystem(payload, {
+      employees: [...company.employees().keys()],
+      now: Date.now(),
+    });
+    for (const { employee, line } of delivered.deliveries) {
+      appendInbox(company.at.bus, employee, line);
     }
     if (delivered.mirror !== null) {
       mirror.push({ peer: delivered.mirror });
@@ -924,10 +950,11 @@ async function serve() {
 
   const company = new Company(at, token, chatId);
   await company.findOperator();
-  for (const role of ROLES) {
-    ensureBus(at.bus, role);
+  const employees = company.employees();
+  for (const employee of employees.keys()) {
+    ensureBus(at.bus, employee);
   }
-  console.error(`[link] serving ${String(ROLES.length)} roles on one bot`);
+  console.error(`[link] serving ${String(employees.size)} employees on one bot`);
   // The operator writes to the manager in the Manager topic, and users to
   // support in the Support topic, so both have to exist before either role
   // has said anything.
@@ -954,20 +981,20 @@ async function serve() {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Keep `role`'s roster entry fresh while its agent runs.
+ * Keep `employee`'s roster entry fresh while its agent runs.
  *
  * claude-bot `exec`s into bwrap, so its EXIT trap never runs, and bwrap's
  * --die-with-parent does not reach us because we are outside the jail. So
  * claude-bot tells us its PID — which `exec` hands to bwrap, so it stays
  * alive exactly as long as the session does — and we exit when it goes.
  *
- * @param {string} role
+ * @param {string} employee
  * @returns {Promise<void>}
  */
-async function presence(role) {
+async function presence(employee) {
   const at = paths();
-  ensureBus(at.bus, role);
-  const { roster } = busPaths(at.bus, role);
+  ensureBus(at.bus, employee);
+  const { roster } = busPaths(at.bus, employee);
   const raw = process.env.VIBEWARS_BOT_LAUNCHER_PID;
   const launcher = raw === undefined ? Number.NaN : Number.parseInt(raw, 10);
 
@@ -981,7 +1008,7 @@ async function presence(role) {
   for (;;) {
     fs.writeFileSync(
       roster,
-      `${JSON.stringify({ role, pid: process.pid, lastSeen: Date.now() }, null, 2)}\n`,
+      `${JSON.stringify({ employee, pid: process.pid, lastSeen: Date.now() }, null, 2)}\n`,
     );
     await sleep(15_000);
     if (Number.isFinite(launcher)) {
@@ -998,13 +1025,17 @@ async function presence(role) {
 
 /** @returns {Promise<void>} */
 async function main() {
-  const [command, role] = process.argv.slice(2);
+  const [command, employee] = process.argv.slice(2);
   if (command === "serve") {
     await serve();
-  } else if (command === "presence" && role !== undefined && ROLES.includes(role)) {
-    await presence(role);
+  } else if (
+    command === "presence" &&
+    employee !== undefined &&
+    ROLES.includes(roleOf(employee) ?? "")
+  ) {
+    await presence(employee);
   } else {
-    console.error("usage: link.mjs serve | link.mjs presence <role>");
+    console.error("usage: link.mjs serve | link.mjs presence <employee>");
     process.exit(2);
   }
 }

@@ -23,15 +23,15 @@ afterEach(() => {
 });
 
 /**
- * A role's bus directory, with `context` as its context.json if given and
- * `messages` in its inbox.
+ * An employee's bus directory, with `context` as its context.json if given
+ * and `messages` in its inbox.
  *
- * @param {{ context?: unknown, messages?: string[] }} [options]
+ * @param {{ context?: unknown, messages?: string[], employee?: string }} [options]
  */
-function bus({ context, messages = [] } = {}) {
+function bus({ context, messages = [], employee = "developer-1" } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tg-test-"));
   dirs.push(root);
-  const dir = path.join(root, "developer-1");
+  const dir = path.join(root, employee);
   fs.mkdirSync(dir);
   if (context !== undefined) {
     fs.writeFileSync(path.join(dir, "context.json"), JSON.stringify(context));
@@ -40,8 +40,13 @@ function bus({ context, messages = [] } = {}) {
     path.join(dir, "inbox.jsonl"),
     messages.map((text) => `${JSON.stringify({ ts: 1, from: "manager", text })}\n`).join(""),
   );
-  const env = { ...process.env, VIBEWARS_BOT_ROLE: "developer-1", VIBEWARS_BOT_BUS: root };
-  return { dir, env };
+  const env = {
+    ...process.env,
+    VIBEWARS_BOT_EMPLOYEE: employee,
+    VIBEWARS_BOT_ROLE: employee.split("@")[0],
+    VIBEWARS_BOT_BUS: root,
+  };
+  return { root, dir, env };
 }
 
 /**
@@ -171,6 +176,19 @@ describe("tg wait, and General broadcasts (#323)", () => {
     expect(out.indexOf("take #12")).toBeLessThan(out.indexOf("direct"));
   });
 
+  it("wakes a further employee on its role's name and its own, not another's (#62)", () => {
+    const { dir, env } = bus({ employee: "developer-1@2" });
+    const inbox = path.join(dir, "inbox.jsonl");
+    fs.appendFileSync(inbox, line("developer-1@3: take #13", true));
+    expect(tg(env, ["wait", "--timeout", "1"])).toMatch(/^\(nothing for you in 1s/);
+
+    fs.appendFileSync(inbox, line("developer-1: who takes #12?", true));
+    expect(tg(env, ["wait", "--timeout", "1"])).toContain("who takes #12?");
+
+    fs.appendFileSync(inbox, line("developer-1@2: take #12", true));
+    expect(tg(env, ["wait", "--timeout", "1"])).toContain("developer-1@2: take #12");
+  });
+
   it("--all wakes on a plain broadcast", () => {
     const { dir, env } = bus();
     fs.appendFileSync(path.join(dir, "inbox.jsonl"), line("FYI #9 merged", true));
@@ -209,5 +227,39 @@ describe("tg wait, and a company reboot (#345)", () => {
     expect(out).toContain("Company reboot by 12:41");
     const again = spawnSync(process.execPath, [TG, "inbox"], { env, encoding: "utf8" });
     expect(again.stdout).not.toContain("Company reboot by");
+  });
+});
+
+describe("tg roster (#62)", () => {
+  it("lists every employee online, in seat order, and roles nobody runs", () => {
+    const { root, env } = bus({ employee: "developer-1@2" });
+    const roster = path.join(root, "roster");
+    fs.mkdirSync(roster);
+    const now = Date.now();
+    for (const [employee, lastSeen] of /** @type {const} */ ([
+      ["developer-1@10", now],
+      ["developer-1@2", now],
+      ["developer-1", now],
+      ["architect", now - 120_000],
+    ])) {
+      fs.writeFileSync(
+        path.join(roster, `${employee}.json`),
+        JSON.stringify({ employee, lastSeen }),
+      );
+    }
+    fs.writeFileSync(path.join(roster, "not an id.json"), JSON.stringify({ lastSeen: now }));
+
+    const out = spawnSync(process.execPath, [TG, "roster"], { env, encoding: "utf8" }).stdout;
+
+    const lines = out.split("\n");
+    expect(lines.filter((l) => l.startsWith("developer-1")).map((l) => l.split(/\s+/)[0])).toEqual([
+      "developer-1",
+      "developer-1@2",
+      "developer-1@10",
+    ]);
+    expect(out).toMatch(/^developer-1@2 +online, \d+s ago \(you\)$/m);
+    expect(lines).toContain("architect        stale");
+    expect(lines).toContain("manager          not hired yet");
+    expect(out).not.toContain("not an id");
   });
 });

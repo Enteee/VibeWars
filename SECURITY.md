@@ -325,10 +325,10 @@ and project item bodies.
 
 **Fixed: #329.** Host processes used to follow symlinks a jail planted in
 its own writable directories: hubd's `hub/<employee>/res/.<id>.json.part`,
-the sidecar's `bus/<role>/inbox.jsonl` and `receipts/*.tmp`. An agent
+the sidecar's `bus/<employee>/inbox.jsonl` and `receipts/*.tmp`. An agent
 could get the host to write, as the operator, to any file the operator
 can write. Since #333 every such write goes through `jail-fs.mjs`. Review
-rule: a new host write, read or delete below `.bots/bus/<role>` or
+rule: a new host write, read or delete below `.bots/bus/<employee>` or
 `.bots/hub/<employee>` that does not use `jail-fs.mjs` is a finding.
 Directories jails cannot write, like `bus/_system`, are exempt.
 

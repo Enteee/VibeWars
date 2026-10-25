@@ -81,7 +81,7 @@ import {
   rebootAllowed,
 } from "./reboot.mjs";
 import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
-import { applyStaff, parseStaff, roleOf, staffAllowed } from "./staff.mjs";
+import { applyStaff, parseStaff, roleOf, staffAllowed, staffReader } from "./staff.mjs";
 import {
   RESTRICTED_PATHS,
   ROLES,
@@ -2091,34 +2091,24 @@ function heartbeat(serving) {
  * directory's name is the employee, and this is the only way from it to a
  * role, so a spool whose name nobody is employed under is never authorized.
  *
- * @type {Map<string, string>}
+ * @type {ReadonlyMap<string, string>}
  */
 let staffed = new Map();
 
-/** What was wrong with `staff.json` the last time, so it is logged once. */
-let staffProblem = "";
+/** `staff.json`, read the way `staffReader` reads it: a bad file keeps the last list. */
+const readStaff = staffReader(STAFF, (problem, kept) => {
+  console.error(
+    `hubd: staff.json: ${problem}; still serving ${[...kept.keys()].join(", ") || "nobody"}`,
+  );
+});
 
 /**
- * Re-reads `staff.json`, so a hire is served on hubd's next pass. A file it
- * cannot read leaves the last list it could in force, and is logged once;
- * until it has read one, nobody is served.
+ * Re-reads `staff.json`, so a hire is served on hubd's next pass.
  *
  * @returns {void}
  */
 function readStaffed() {
-  try {
-    const { employees } = parseStaff(fs.readFileSync(STAFF, "utf8"));
-    staffed = new Map(Object.entries(employees).map(([id, { role }]) => [id, role]));
-    staffProblem = "";
-  } catch (error) {
-    const problem = error instanceof Error ? error.message : String(error);
-    if (problem !== staffProblem) {
-      staffProblem = problem;
-      console.error(
-        `hubd: staff.json: ${problem}; still serving ${[...staffed.keys()].join(", ") || "nobody"}`,
-      );
-    }
-  }
+  staffed = readStaff();
 }
 
 /**

@@ -17,6 +17,8 @@
  * rules as the rest of the repo, and ADR-0008 bans `any`.
  */
 
+import { roleOf } from "./staff.mjs";
+
 /**
  * @typedef {"bots" | "manager" | "operator" | "support"} TopicName
  */
@@ -131,7 +133,9 @@ export function parseRegistry(text) {
  * Who a message from the operator is for, and what they read.
  *
  * A message that starts with `<role>:` or `@<role>` is for that role, in
- * any topic. Otherwise the topic decides (#85): General is for everyone,
+ * any topic, and one that starts `<role>@<n>:` for that employee. `to`
+ * holds roles and employee ids; `inboxesOf` turns each into inboxes, a
+ * role's being every employee of it (#62). Otherwise the topic decides (#85): General is for everyone,
  * and the Manager topic is the operator's line to the manager, so an
  * unaddressed message there is the manager's. Anywhere else, Bots
  * included, an unaddressed message is for nobody, and `whichRole` is the
@@ -227,17 +231,10 @@ export function routeInbound(raw, context) {
     broadcast: false,
   });
 
-  // "developer-1: do X" or "@developer-1 do X". The name must be a role,
-  // and must be followed by a colon (spaces before it are fine: the
-  // operator types "manager : ..."), or for an at-mention by a space.
-  const prefix = /^(@?)([a-z0-9-]+)\s*(:|\s|$)/i.exec(message.text);
-  const named = prefix?.[2]?.toLowerCase();
-  if (
-    prefix !== null &&
-    named !== undefined &&
-    context.roles.includes(named) &&
-    (prefix[3] === ":" || prefix[1] === "@")
-  ) {
+  // "developer-1: do X", "@developer-1 do X", or "qa-tester@2: do X" for
+  // one employee of a role (#62).
+  const named = addressee(message.text);
+  if (named !== null && context.roles.includes(roleOf(named) ?? "")) {
     return { to: [named], line, whichRole: null };
   }
   if (topicId !== null && topicId === context.managerTopicId) {
@@ -258,6 +255,21 @@ export function routeInbound(raw, context) {
       `Delivered to nobody: which role? Start with "<role>:", or post in General for everyone. ` +
       `Roles: ${context.roles.join(", ")}`,
   };
+}
+
+/**
+ * Who a message starts by naming, lowercased: `developer-1: …`,
+ * `@developer-1 …` or `qa-tester@2: …`. The name must be followed by a
+ * colon (spaces before it are fine: the operator types "manager : ..."),
+ * or for an at-mention by a space.
+ *
+ * @param {string} text
+ * @returns {string | null}
+ */
+function addressee(text) {
+  const prefix = /^(@?)([a-z0-9-]+(?:@[0-9]+)?)\s*(:|\s|$)/i.exec(text);
+  const named = prefix?.[2]?.toLowerCase();
+  return named !== undefined && (prefix?.[3] === ":" || prefix?.[1] === "@") ? named : null;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -288,13 +300,33 @@ export const MAX_USER_CHARS = 2000;
  */
 
 /**
- * Deliver one outbox entry from `from` straight into the recipients'
- * inboxes.
+ * The inboxes a message addressed to `address` goes to (#62): a role's is
+ * every employee of it, an employee's is its own, and anything else has
+ * none.
  *
- * A colleague who is a real role but not running right now still gets the
- * message, in the inbox they will read when they start; the sender is told,
- * so it does not wait on them. A name that is not a role at all is a mistake
- * to correct, and only the sender hears about it.
+ * @param {string} address a role or an employee id
+ * @param {ReadonlyMap<string, string>} employees employee id to role, from `staff.json`
+ * @returns {string[]} employee ids
+ */
+export function inboxesOf(address, employees) {
+  const ofRole = [...employees].filter(([, role]) => role === address).map(([id]) => id);
+  return ofRole.length === 0 && employees.has(address) ? [address] : ofRole;
+}
+
+/**
+ * Deliver one outbox entry from the employee `from` straight into the
+ * recipients' inboxes.
+ *
+ * A message to a role reaches every employee of it (#62), and one to
+ * `<role>@<n>` only that employee. A recipient that is employed but not
+ * running right now still gets the message, in the inbox it will read when
+ * it starts; the sender is told, so it does not wait on them. A role nobody
+ * is employed in gets nothing, and the sender is told that too. A name that
+ * is neither a role nor an employee is a mistake to correct, and only the
+ * sender hears about it.
+ *
+ * What a sender may do is its role's: asking, writing to the operator and
+ * replying to users are checked against the role, never the employee id.
  *
  * A question for the operator (`kind: "ask"`, from `tg ask`) is delivered to
  * nobody: it comes back as `question` for the sidecar to number and post.
@@ -311,9 +343,16 @@ export const MAX_USER_CHARS = 2000;
  * so any other sender is refused here, the way TO_OPERATOR is.
  *
  * @param {unknown} raw the outbox file's contents
- * @param {{ from: string, roles: readonly string[], present: ReadonlySet<string>, now: number }} context
+ * @param {{
+ *   from: string,
+ *   roles: readonly string[],
+ *   employees: ReadonlyMap<string, string>,
+ *   present: ReadonlySet<string>,
+ *   now: number,
+ * }} context `employees` is employee id to role, from `staff.json`;
+ *   `present` holds the employees running right now
  * @returns {{
- *   deliveries: { role: string, line: InboxLine }[],
+ *   deliveries: { employee: string, line: InboxLine }[],
  *   notice: InboxLine | null,
  *   mirror: Mirrored | null,
  *   question: Ask | null,
@@ -324,6 +363,7 @@ export function deliverPeer(raw, context) {
   const message = obj(raw);
   const to = typeof message.to === "string" ? message.to : "all";
   const text = typeof message.text === "string" ? message.text : "";
+  const role = roleOf(context.from);
   const none = { deliveries: [], notice: null, mirror: null, question: null, reply: null };
   /** @type {(body: string) => InboxLine} */
   const fromLink = (body) => ({
@@ -337,7 +377,7 @@ export function deliverPeer(raw, context) {
   });
 
   if (message.kind === "ask") {
-    const refused = refuseQuestion(context.from, text, message.options);
+    const refused = refuseQuestion(role ?? "", text, message.options);
     if (refused !== null) {
       return { ...none, notice: fromLink(`your question was NOT posted: ${refused}`) };
     }
@@ -347,7 +387,7 @@ export function deliverPeer(raw, context) {
 
   // Support's answer to a user: no inbox, only the Support topic.
   if (message.kind === "reply") {
-    if (context.from !== SUPPORT) {
+    if (role !== SUPPORT) {
       return {
         ...none,
         notice: fromLink(`your reply was NOT posted: only ${SUPPORT} posts in the Support topic.`),
@@ -365,7 +405,7 @@ export function deliverPeer(raw, context) {
 
   // The manager's reply to the operator: no inbox, only the Manager topic.
   if (to === TO_OPERATOR) {
-    if (context.from !== OPERATOR_LINE) {
+    if (role !== OPERATOR_LINE) {
       return {
         ...none,
         notice: fromLink(
@@ -377,13 +417,30 @@ export function deliverPeer(raw, context) {
     return { ...none, mirror: { from: context.from, to, text } };
   }
 
-  if (to !== "all" && !context.roles.includes(to)) {
+  if (to !== "all" && !context.roles.includes(to) && !context.employees.has(to)) {
     return {
       ...none,
       notice: fromLink(
-        `your last message was NOT delivered: "${to}" is not one of this company's roles. ` +
-          `Roles: ${context.roles.join(", ")}`,
+        `your last message was NOT delivered: "${to}" is not one of this company's roles ` +
+          `or employees. Employees: ${[...context.employees.keys()].join(", ")}`,
       ),
+    };
+  }
+
+  // A role's first seat has the role's name, so a message to a role always
+  // goes to its other employees; only an `@<n>` employee writing to its own
+  // id gets the message back.
+  /** @type {string[]} */
+  let recipients = [to];
+  if (to === "all") {
+    recipients = [...context.employees.keys()].filter((id) => id !== context.from);
+  } else if (context.roles.includes(to) || to !== context.from) {
+    recipients = inboxesOf(to, context.employees).filter((id) => id !== context.from);
+  }
+  if (to !== "all" && recipients.length === 0) {
+    return {
+      ...none,
+      notice: fromLink(`your last message was NOT delivered: nobody else in ${to} is hired.`),
     };
   }
 
@@ -397,17 +454,19 @@ export function deliverPeer(raw, context) {
     messageId: 0,
     broadcast: to === "all",
   };
-  const recipients = to === "all" ? context.roles.filter((role) => role !== context.from) : [to];
-  const absent = to !== "all" && !context.present.has(to);
+  const absent =
+    to === "all" ? [] : recipients.filter((employee) => !context.present.has(employee));
   return {
     ...none,
-    deliveries: recipients.map((role) => ({ role, line })),
-    notice: absent
-      ? fromLink(
-          `delivered to ${to}'s inbox, but ${to} is not running right now; ` +
-            "they will read it when they start. Do not wait on them.",
-        )
-      : null,
+    deliveries: recipients.map((employee) => ({ employee, line })),
+    notice:
+      absent.length > 0
+        ? fromLink(
+            `delivered to ${absent.join(", ")}'s inbox, but ${absent.join(", ")} ` +
+              `${absent.length === 1 ? "is" : "are"} not running right now; ` +
+              "they will read it when they start. Do not wait on them.",
+          )
+        : null,
     mirror: { from: context.from, to, text },
   };
 }
@@ -492,8 +551,8 @@ export function admitAll(state, now) {
  * A peer message as delivered, before it is formatted for Telegram.
  *
  * @typedef {object} Mirrored
- * @property {string} from the sending role
- * @property {string} to a role, "all", or TO_OPERATOR
+ * @property {string} from the sending employee
+ * @property {string} to a role, an employee, "all", or TO_OPERATOR
  * @property {string} text the body exactly as the sender wrote it
  */
 
@@ -544,12 +603,12 @@ export const SYSTEM = "_system";
 export const SYSTEM_STYLE = Object.freeze({ emoji: "⚠️", name: "System" });
 
 /**
- * A system outbox entry, `{ text }`, as a `link` line in every role's inbox and
- * a broadcast in General. An empty one goes nowhere.
+ * A system outbox entry, `{ text }`, as a `link` line in every employee's
+ * inbox and a broadcast in General. An empty one goes nowhere.
  *
  * @param {unknown} raw the outbox file's contents
- * @param {{ roles: readonly string[], now: number }} context
- * @returns {{ deliveries: { role: string, line: InboxLine }[], mirror: Mirrored | null }}
+ * @param {{ employees: readonly string[], now: number }} context
+ * @returns {{ deliveries: { employee: string, line: InboxLine }[], mirror: Mirrored | null }}
  */
 export function deliverSystem(raw, context) {
   const text = typeof obj(raw).text === "string" ? String(obj(raw).text) : "";
@@ -567,7 +626,7 @@ export function deliverSystem(raw, context) {
     broadcast: false,
   };
   return {
-    deliveries: context.roles.map((role) => ({ role, line })),
+    deliveries: context.employees.map((employee) => ({ employee, line })),
     mirror: { from: SYSTEM, to: "all", text },
   };
 }
@@ -594,16 +653,21 @@ export function mirrorTopic(message) {
 }
 
 /**
- * @param {string} role
+ * An employee as the mirror shows it: its role's style, and its seat after
+ * the name from the second one on, `QA Tester 2` for `qa-tester@2`.
+ *
+ * @param {string} employee a role, its first employee, or `<role>@<n>`
  * @returns {{ emoji: string, name: string }}
  */
-function styleOf(role) {
-  const style = ROLE_STYLE[role];
+function styleOf(employee) {
+  const role = roleOf(employee);
+  const style = role === null ? undefined : ROLE_STYLE[role];
   if (style === undefined) {
     // deliverPeer refuses unknown roles, so reaching this is a bug, not data.
-    throw new Error(`no ROLE_STYLE for "${role}"`);
+    throw new Error(`no ROLE_STYLE for "${employee}"`);
   }
-  return style;
+  const seat = employee.slice(String(role).length + 1);
+  return seat === "" ? style : { ...style, name: `${style.name} ${seat}` };
 }
 
 /**
@@ -725,7 +789,7 @@ export const MAX_OPTION_CHARS = 40;
  * A question as `tg ask` sends it, once `deliverPeer` has accepted it.
  *
  * @typedef {object} Ask
- * @property {string} from the asking role
+ * @property {string} from the asking employee
  * @property {string} text
  * @property {string[]} options the buttons, possibly none
  */
@@ -916,7 +980,7 @@ export const OPERATOR_HINT = "Reply to a question to answer it.";
  * @param {{ chatId: string, operatorId: number, operatorTopicId: number | null, now: number }} context
  *   `operatorId` is the operator's Telegram user id
  * @returns {{
- *   deliveries: { role: string, line: InboxLine }[],
+ *   deliveries: { employee: string, line: InboxLine }[],
  *   immediate: { method: string, params: Record<string, unknown> }[],
  *   paced: Omit<Queued, "topicId">[],
  *   answered: { n: number, question: Question } | null,
@@ -932,10 +996,10 @@ export function routeAnswer(raw, store, context) {
    * @param {string} who
    * @param {string} answer
    * @param {boolean} followUp
-   * @returns {{ role: string, line: InboxLine }}
+   * @returns {{ employee: string, line: InboxLine }}
    */
   const deliver = (n, question, who, answer, followUp) => ({
-    role: question.from,
+    employee: question.from,
     line: {
       ts: context.now,
       from: who,
@@ -1246,21 +1310,22 @@ function toInboxLine(value) {
 }
 
 /**
- * Does this line end a `tg wait` for `role`? Everything does but a plain
- * broadcast: one that does not start `<role>:` or `@<role>`, the prefix
- * rule of `routeInbound`. It is still delivered, and printed with the next
- * line that does wake, but it costs no turn by itself (#323).
+ * Does this line end a `tg wait` for `employee`? Everything does but a
+ * plain broadcast: one that does not start `<role>:` or `@<role>`, with
+ * the employee's role or its own id, the prefix rule of `routeInbound`. It
+ * is still delivered, and printed with the next line that does wake, but it
+ * costs no turn by itself (#323).
  *
  * @param {InboxLine} line
- * @param {string} role
+ * @param {string} employee
  * @returns {boolean}
  */
-export function wakes(line, role) {
+export function wakes(line, employee) {
   if (line.kind !== "peer" || !line.broadcast) {
     return true;
   }
-  const prefix = /^(@?)([a-z0-9-]+)\s*(:|\s|$)/i.exec(line.text);
-  return prefix?.[2]?.toLowerCase() === role && (prefix[3] === ":" || prefix[1] === "@");
+  const named = addressee(line.text);
+  return named !== null && (named === employee || named === roleOf(employee));
 }
 
 /**

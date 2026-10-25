@@ -386,7 +386,7 @@ let
     state (all gitignored, 0600):
       .bots/registry.json        the Bots, Manager and Operator topics, and the
                                  update offset
-      .bots/bus/<role>/          that role's inbox and outbox
+      .bots/bus/<employee>/      that employee's inbox and outbox
       .bots/wt/<employee>/       that employee's git worktree
       .bots/hub/<employee>/      that employee's GitHub spool
 
@@ -516,7 +516,7 @@ let
         #
         # Overridable: `claude-bot architect "look at issue 14"` wins, so the
         # command is still useful by hand.
-        kickoff="You are the $role. Start work now, on your own, without waiting to be asked.
+        kickoff="You are $employee (role $role). Start work now, on your own, without waiting to be asked.
 
         First, orient yourself:
           1. \`tg roster\` — who else is working, and who has not been hired yet
@@ -564,6 +564,7 @@ let
 
         mkdir -p "$VIBEWARS_BOT_ROOT" "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_ROOT/link" "$VIBEWARS_BOT_ROOT/wt"
         mkdir -p "$VIBEWARS_BOT_ROOT/hub/$employee/req" "$VIBEWARS_BOT_ROOT/hub/$employee/res"
+        mkdir -p "$VIBEWARS_BOT_BUS/$employee"
         # Main's skills, which hubd exports here after each fetch (#27). Made
         # now so the bind below has something to bind before hubd's first run.
         mkdir -p "$VIBEWARS_BOT_ROOT/skills-main"
@@ -657,13 +658,13 @@ let
           ${pkgs.util-linux}/bin/setsid ${node} ${botScripts}/link.mjs serve \
             >>"$VIBEWARS_BOT_ROOT/link/serve.log" 2>&1 </dev/null &
 
-          # This role's presence: its roster entry, which `tg roster` reads. $$ is
+          # This employee's presence: its roster entry, which `tg roster` reads. $$ is
           # this shell's PID, which `exec` below hands to bwrap, so it stays alive
           # exactly as long as the session; presence exits when it goes. See
           # `presence` in link.mjs.
           VIBEWARS_BOT_LAUNCHER_PID="$$"
           export VIBEWARS_BOT_LAUNCHER_PID
-          ${node} ${botScripts}/link.mjs presence "$role" &
+          ${node} ${botScripts}/link.mjs presence "$employee" &
           presencePid=$!
           # Covers only the gap until exec; after that, presence watches the PID.
           #
@@ -702,7 +703,7 @@ let
         # simply not there, and neither is the Telegram token: `tg` reaches the
         # network only through the sidecar above. $DEVENV_ROOT is a tmpfs too, so
         # the only paths that survive back to the host are the worktree, this
-        # role's bus directory, and the git object store.
+        # employee's bus directory, and the git object store.
         #
         # /dev/shm gets a real tmpfs: --dev leaves it a bare directory, and
         # Chromium keeps its shared memory there. Chromium's own sandbox cannot
@@ -794,7 +795,7 @@ let
           --ro-bind "$DEVENV_ROOT/.git/worktrees" "$DEVENV_ROOT/.git/worktrees" \
           --bind "$DEVENV_ROOT/.git/worktrees/$employee" "$DEVENV_ROOT/.git/worktrees/$employee" \
           --ro-bind "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_BUS" \
-          --bind "$VIBEWARS_BOT_BUS/$role" "$VIBEWARS_BOT_BUS/$role" \
+          --bind "$VIBEWARS_BOT_BUS/$employee" "$VIBEWARS_BOT_BUS/$employee" \
           --ro-bind "$VIBEWARS_BOT_ROOT/hub" "$VIBEWARS_BOT_ROOT/hub" \
           --bind "$VIBEWARS_BOT_ROOT/hub/$employee" "$VIBEWARS_BOT_ROOT/hub/$employee" \
           --bind "$worktree" "$worktree" \

@@ -27,7 +27,7 @@ import { attachNameReveal } from "../input/name-reveal.js";
 import { nextTabTarget } from "../input/tab-target.js";
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
 import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
-import { MUSIC_MODE, music } from "../music/play-music.js";
+import { music } from "../music/play-music.js";
 import { TRACKS } from "../music/tracks/index.js";
 import {
   actorAtPoint,
@@ -443,7 +443,7 @@ export function createTrainingPanel(): TrainingPanel {
       sounds: attachMatchSounds(connection, soundPlayer()),
       music: attachMatchMusic(connection, {
         screen: "training",
-        mode: MUSIC_MODE,
+        mode: () => music().mode(),
         tracks: TRACKS,
         onChange: (state) => {
           music().follow(state);
