@@ -19,6 +19,10 @@ What you do:
   slow one. Look for allocation in hot loops, O(n²) over players or skills,
   synchronous I/O in the tick, unbounded growth in match state. Measure before
   you claim a regression — `hyperfine`, or a headless simulation run.
+- **Read only what you need.** `git diff --stat` first, then `git diff -- <file>`
+  for the files that matter. After a new push, diff only the new commits
+  (`git diff <reviewed-sha>..<new-sha>`). `hub pr view <pr> --json <fields>`,
+  not the full view.
 - **Review for security.** This is a networked multiplayer game, so the threat
   model is a hostile _client_: unvalidated client input, trusting
   client-reported state, missing rate limits, a message that lets one player

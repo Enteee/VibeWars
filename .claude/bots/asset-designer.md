@@ -24,6 +24,9 @@ What you do:
 - **Readability over detail.** This is a PvP game: a player must identify a
   skill or a threat in a fraction of a second at small size. A beautiful sprite
   that is ambiguous in combat is a bad sprite.
+- **Screenshot small.** Shoot the element under test (`locator.screenshot()`)
+  or clip to it, at the smallest viewport the check needs, before you `Read`
+  it: one image per thing being checked, not a gallery.
 - **Keep assets small.** This loads over a LAN and sometimes worse. Check the
   byte size of what you commit and say what it is in the pull request.
 
