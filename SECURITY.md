@@ -398,25 +398,27 @@ server, now enforced by the host:
   player whose state it changes.
 - A returning player proves who they were with their rejoin token, never
   with their peer id: `selfId` lasts one page load.
+- `MatchHost` (#375) parses every intent with `parseClientIntent`, the
+  server's own parser, and counts the server's per-client message budget
+  (gap 3) per peer. The budget covers every channel, `hello` and `bye`
+  included, and only a peer leaving the room resets it, so a peer cannot
+  refill it by quitting and saying hello again. A peer that said `bye` is
+  not seated again until it leaves the room.
+- `hello.build` is capped in values and depth by `parsePeerHello`, then
+  goes through the same `resolveJoinLoadout` and `validatePlayerBuild`
+  join check as the server: an illegal build gets the house loadout.
 
 What a later step must add before P2P play can merge:
 
-- **In `MatchHost` (#375, PR #401):** an `intent` parser with the same
-  checks as `parseClientIntent`, and the server's per-client message
-  budget (gap 3) counted per peer. The budget covers **every** channel,
-  `hello` and `bye` included, and outlives a `bye`, so a peer cannot
-  reset it by leaving and rejoining. `hello.build` gets a size cap before
-  it is parsed, then the same `validatePlayerBuild` join check the server
-  runs.
 - **In the Trystero transport (#392):** `maxReceiveBytes` caps a message
   before it is decoded, so a peer cannot make another allocate an
   unbounded buffer.
-- **In the web client (#403):** `MatchClient` (PR #401) drops every
+- **In the web client (#403):** `MatchClient` drops every
   message that does not come from `hostId`, since any peer can send to any
   other directly. The app must take `hostId` from the lobby it joined,
   never from a message a peer can send. The lobby screen also says,
   before anyone hosts or joins, that the others will see your IP address.
-- **Host bandwidth.** An 8-player snapshot measured 4.6 KB in #401, about
+- **Host bandwidth.** An 8-player snapshot measured 4.6 KB in #375, about
   5 Mbit/s of host upload at the tick rate, against the 1–2 KB that
   ADR-0022 assumed. This is a limit on who can host, not an exploit, but
   it belongs in the host's "can I host?" check.
