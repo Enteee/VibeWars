@@ -78,6 +78,8 @@ export const PlayerState = schema(
     castingSkillId: t.string().default(""),
     /** Seconds left on the current cast; 0 when not casting. */
     castRemaining: t.number().default(0),
+    /** The current cast's whole length, dazed included; 0 when not casting. */
+    castTotal: t.number().default(0),
     /** Active condition/hex/enchantment ids, for status markers. */
     statuses: t.array("string"),
   },
@@ -632,6 +634,7 @@ export class MatchRoom extends Room {
     const activeCast = sim.combatant.cast.activeCast;
     player.castingSkillId = activeCast?.skillId ?? "";
     player.castRemaining = activeCast?.remainingSeconds ?? 0;
+    player.castTotal = activeCast?.totalSeconds ?? 0;
 
     const statusIds = sim.combatant.statuses.active.map((s) => s.id);
     // Only rewrite the array when it actually changed: every assignment

@@ -13,6 +13,8 @@ export const SOUND_IDS = [
   "interrupt-missed",
   "death",
   "refused",
+  "weapon-swing",
+  "bow-release",
 ] as const;
 
 export type SoundId = (typeof SOUND_IDS)[number];

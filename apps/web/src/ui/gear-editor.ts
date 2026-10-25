@@ -264,7 +264,6 @@ export interface GearSummary {
 
 const CONDITION_LABELS: Readonly<Record<string, string>> = {
   "vs-physical": "vs physical damage",
-  "while-attacking": "while attacking",
   "while-enchanted": "while enchanted",
 };
 

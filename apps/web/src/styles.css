@@ -763,6 +763,13 @@ body {
   font-weight: 700;
 }
 
+/* Same 14 px badge as the HUD, but in line: this button is one short row,
+   so a corner badge would sit on the name. */
+.training-skill .skill-type-badge {
+  position: static;
+  align-self: center;
+}
+
 .training-meter {
   display: grid;
   grid-template-columns: repeat(3, auto 1fr);

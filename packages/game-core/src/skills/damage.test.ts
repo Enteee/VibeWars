@@ -179,24 +179,6 @@ describe("conditional insignia armor", () => {
     // +24 from the enchantment itself, +10 because one is active at all.
     expect(effectiveArmor(target, spellDamage(10))).toBe(114);
   });
-
-  it("applies Brawler's only when the caller says a swing is in progress", () => {
-    const resolved = resolveLoadout(
-      {
-        primaryProfession: "warrior",
-        allocatedRanks: new Map(),
-        equipment: {
-          mainHand: { weaponId: "sword", requirementAttributeId: null },
-          offHand: null,
-          armor: { ...bareArmorSet(), chest: { insigniaId: "brawlers", rune: null } },
-        },
-      },
-      RULES,
-    );
-    const target = makeCombatant({ id: "d", team: 1, equipment: resolved.equipment });
-    expect(effectiveArmor(target, physical(10), { isAttacking: false })).toBe(80);
-    expect(effectiveArmor(target, physical(10), { isAttacking: true })).toBe(90);
-  });
 });
 
 describe("Rune of Absorption", () => {

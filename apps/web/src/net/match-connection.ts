@@ -32,6 +32,8 @@ export interface PlayerSnapshot {
   readonly dead: boolean;
   readonly castingSkillId: string | undefined;
   readonly castRemaining: number;
+  /** The current cast's whole length, dazed included; 0 when not casting. */
+  readonly castTotal: number;
   readonly statuses: readonly string[];
 }
 

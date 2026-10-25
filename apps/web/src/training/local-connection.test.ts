@@ -101,6 +101,16 @@ describe("createLocalConnection", () => {
     expect(areas).toEqual([{ x: dummy?.x, y: dummy?.y, radius: 81 }]);
   });
 
+  it("reports a cast's real total, as the server does, so the bar fills over it", () => {
+    const { connection } = targetDummy();
+    connection.sendIntent({ kind: "use-skill", slot: 0 });
+    connection.advance(TICK_SECONDS);
+    const self = connection.getSnapshot().players.find((p) => p.sessionId === SELF_ID);
+    expect(self?.castingSkillId).toBe("elementalist.fireball");
+    expect(self?.castTotal).toBe(connection.skillBar[0]?.activationSeconds);
+    expect(self?.castRemaining).toBeLessThan(self?.castTotal ?? 0);
+  });
+
   it("says why a cast was refused", () => {
     const { connection } = targetDummy();
     const reasons: string[] = [];

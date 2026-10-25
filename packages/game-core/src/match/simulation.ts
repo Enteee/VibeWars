@@ -20,7 +20,11 @@ import { getSkill } from "../skills/catalog.js";
 import { applySkillEffects } from "../skills/effects.js";
 import { STATUS_DEFINITIONS, StatusSet } from "../skills/status.js";
 import { resolveTargets } from "../skills/targeting.js";
-import { advanceStatuses } from "../skills/tick.js";
+import {
+  advanceStatuses,
+  effectiveActivationSeconds,
+  moveSpeedMultiplier,
+} from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
 import { ZERO, type Vec2 } from "../vec2.js";
 import {
@@ -364,7 +368,7 @@ export class MatchSimulation {
     record.combatant.cast.beginCast(
       skill.id,
       skill.target === "self" ? id : record.targetId,
-      skill.activationSeconds,
+      effectiveActivationSeconds(skill, record.combatant),
     );
     return { skillId: skill.id, check };
   }
@@ -470,7 +474,10 @@ export class MatchSimulation {
       self: record,
       participants: [...this.#participants.values()],
       dt,
-      stepUnits: this.#ruleset.movement.maxSpeedUnitsPerSecond * dt,
+      // The same slowed speed advanceMovement will move it at, so a
+      // crippled dummy plans with the step it will really take.
+      stepUnits:
+        this.#ruleset.movement.maxSpeedUnitsPerSecond * moveSpeedMultiplier(record.combatant) * dt,
       canUse: (skillId, targetId) => {
         const skill = getSkill(skillId);
         return skill !== undefined && this.#check(record, skill, targetId).ok;
@@ -519,7 +526,9 @@ export class MatchSimulation {
         caster: record.combatant,
         casterPosition: record.position,
         primary,
-        candidates: [...this.#participants.values()],
+        // Only an area looks past the primary: skip the copy every other
+        // cast would make for nothing.
+        candidates: skill.area === undefined ? [] : [...this.#participants.values()],
         losBlockers: this.#walls,
       }),
       rng: this.#rng,
@@ -634,7 +643,7 @@ export class MatchSimulation {
     let position = integrateMovement(
       record.position,
       record.inputDirection,
-      this.#ruleset.movement.maxSpeedUnitsPerSecond,
+      this.#ruleset.movement.maxSpeedUnitsPerSecond * moveSpeedMultiplier(record.combatant),
       dt,
     );
 
