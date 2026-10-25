@@ -17,6 +17,7 @@ import {
   meterRows,
   perSecond,
   shouldStickToBottom,
+  StatusTickBatcher,
   type LogRow,
 } from "./combat-readouts.js";
 
@@ -90,10 +91,25 @@ describe("describeCombatEvent", () => {
     );
   });
 
-  it("says degeneration for a status tick, with no skill", () => {
-    const event: CombatEvent = { kind: "damage", targetId: "dummy", amount: 3 };
-    const tick = entry([event], { cause: "degeneration", skillId: undefined });
-    expect(describeCombatEvent(tick, event, nameOf)).toBe("degeneration hits Caster dummy for 3");
+  it("says degeneration for a status tick that hurts, regeneration for one that heals", () => {
+    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 3 };
+    const heal: CombatEvent = { kind: "heal", targetId: "dummy", amount: 4 };
+    const tick = (event: CombatEvent) =>
+      entry([event], { cause: "degeneration", sourceId: undefined, skillId: undefined });
+    expect(describeCombatEvent(tick(hurt), hurt, nameOf)).toBe(
+      "degeneration hits Caster dummy for 3",
+    );
+    expect(describeCombatEvent(tick(heal), heal, nameOf)).toBe(
+      "regeneration heals Caster dummy for 4",
+    );
+  });
+
+  it("names a status tick's source when exactly one is known", () => {
+    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 3 };
+    const tick = entry([hurt], { cause: "degeneration", skillId: undefined });
+    expect(describeCombatEvent(tick, hurt, nameOf)).toBe(
+      "degeneration (Pyro) hits Caster dummy for 3",
+    );
   });
 
   it("names a weapon swing for its weapon and attacker, and an unknown weapon plainly", () => {
@@ -285,5 +301,117 @@ describe("floatingCueFor", () => {
 
   it("treats a missing amount as 0, so floats nothing for it", () => {
     expect(floatingCueFor("damage", undefined)).toBeUndefined();
+  });
+});
+
+describe("StatusTickBatcher (#151)", () => {
+  /** A status entry at `at`, as the simulation logs one per tick. */
+  const tick = (at: number, events: CombatEvent[], sourceId?: string): CombatLogEntry =>
+    entry(events, { atSeconds: at, cause: "degeneration", sourceId, skillId: undefined });
+  const texts = (rows: readonly LogRow[]) => rows.map((row) => row.text);
+  /** Twenty ticks a second, from `from` for `count` ticks. */
+  const ticks = (from: number, count: number, events: CombatEvent[]) =>
+    Array.from({ length: count }, (_, i) => tick(from + i * 0.05, events));
+
+  it("gathers a second of regeneration into one row", () => {
+    const batcher = new StatusTickBatcher();
+    const heal: CombatEvent = { kind: "heal", targetId: "dummy", amount: 0.2 };
+    const rows = ticks(0, 20, [heal]).flatMap((t) => batcher.push(t, nameOf));
+    expect(rows).toEqual([]);
+    const closed = batcher.advance(1, nameOf);
+    expect(texts(closed)).toEqual(["regeneration heals Caster dummy for 4"]);
+    expect(closed[0]?.time).toBe("0:01.0");
+  });
+
+  it("keeps the two directions on one target apart", () => {
+    const batcher = new StatusTickBatcher();
+    const both: CombatEvent[] = [
+      { kind: "damage", targetId: "dummy", amount: 0.5 },
+      { kind: "heal", targetId: "dummy", amount: 0.3 },
+    ];
+    ticks(0, 20, both).forEach((t) => batcher.push(t, nameOf));
+    expect(texts(batcher.advance(1, nameOf))).toEqual([
+      "degeneration hits Caster dummy for 10",
+      "regeneration heals Caster dummy for 6",
+    ]);
+  });
+
+  it("gives each target its own row a second", () => {
+    const batcher = new StatusTickBatcher();
+    const two: CombatEvent[] = [
+      { kind: "damage", targetId: "dummy", amount: 0.5 },
+      { kind: "damage", targetId: "you", amount: 0.5 },
+    ];
+    const rows = ticks(0, 40, two).flatMap((t) => batcher.push(t, nameOf));
+    expect(texts([...rows, ...batcher.flush(2, nameOf)])).toEqual([
+      "degeneration hits Caster dummy for 10",
+      "degeneration hits Pyro for 10",
+      "degeneration hits Caster dummy for 10",
+      "degeneration hits Pyro for 10",
+    ]);
+  });
+
+  it("writes the damage before the death it caused", () => {
+    const batcher = new StatusTickBatcher();
+    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 2 };
+    batcher.push(tick(0, [hurt]), nameOf);
+    const rows = batcher.push(tick(0.05, [hurt, { kind: "death", targetId: "dummy" }]), nameOf);
+    expect(texts(rows)).toEqual(["degeneration hits Caster dummy for 4", "Caster dummy dies"]);
+  });
+
+  it("also writes the ticks before a death by a skill", () => {
+    const batcher = new StatusTickBatcher();
+    batcher.push(tick(0, [{ kind: "damage", targetId: "dummy", amount: 2 }]), nameOf);
+    const finish = entry([{ kind: "death", targetId: "dummy" }], { atSeconds: 0.5 });
+    expect(texts(batcher.push(finish, nameOf))).toEqual([
+      "degeneration hits Caster dummy for 2",
+      "Caster dummy dies",
+    ]);
+  });
+
+  it("writes no row for a second that sums to nothing", () => {
+    const batcher = new StatusTickBatcher();
+    const crumb: CombatEvent = { kind: "damage", targetId: "dummy", amount: 0.002 };
+    ticks(0, 20, [crumb]).forEach((t) => batcher.push(t, nameOf));
+    expect(batcher.advance(1, nameOf)).toEqual([]);
+  });
+
+  it("flushes before a divider, so the line comes after the ticks", () => {
+    const batcher = new StatusTickBatcher();
+    batcher.push(tick(0, [{ kind: "damage", targetId: "dummy", amount: 3 }]), nameOf);
+    const rows = [...batcher.flush(0.5, nameOf), dividerRow("re-armed", 0.5)];
+    expect(texts(rows)).toEqual(["degeneration hits Caster dummy for 3", "── re-armed ──"]);
+  });
+
+  it("never writes a row timed before one already written", () => {
+    // Regeneration all the while, a skill hit mid-second, a death, a divider.
+    const batcher = new StatusTickBatcher();
+    const heal: CombatEvent = { kind: "heal", targetId: "you", amount: 0.2 };
+    const hit: CombatEvent = { kind: "damage", targetId: "dummy", amount: 30 };
+    const rows: LogRow[] = [];
+    for (let i = 0; i < 50; i += 1) {
+      const at = i * 0.05;
+      rows.push(...batcher.push(tick(at, [heal]), nameOf));
+      if (i === 15) {
+        rows.push(...batcher.push(entry([hit], { atSeconds: at }), nameOf));
+      }
+      if (i === 30) {
+        const death: CombatEvent = { kind: "death", targetId: "you" };
+        rows.push(...batcher.push(tick(at, [death]), nameOf));
+      }
+      rows.push(...batcher.advance(at, nameOf));
+    }
+    rows.push(...batcher.flush(2.5, nameOf), dividerRow("reset", 2.5));
+    const times = rows.map((row) => row.time);
+    expect(rows.length).toBeGreaterThan(4);
+    expect(times).toEqual([...times].sort());
+  });
+
+  it("passes skill entries straight through", () => {
+    const batcher = new StatusTickBatcher();
+    const hit: CombatEvent = { kind: "damage", targetId: "dummy", amount: 63.6 };
+    expect(texts(batcher.push(entry([hit]), nameOf))).toEqual([
+      "Fireball (Pyro) hits Caster dummy for 64",
+    ]);
   });
 });
