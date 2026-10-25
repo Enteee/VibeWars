@@ -22,6 +22,17 @@ describe("lobbyControls", () => {
   it("says the match is running and locks everything but leave", () => {
     expect(lobbyControls(snapshot("in-match"))).toEqual({
       running: MATCH_RUNNING_NOTICE,
+      mapDisabled: true,
+      teamsDisabled: true,
+      readyDisabled: true,
+      startDisabled: true,
+    });
+  });
+
+  it("locks the controls while a match is starting, without saying one runs", () => {
+    expect(lobbyControls(snapshot("starting"))).toEqual({
+      running: undefined,
+      mapDisabled: true,
       teamsDisabled: true,
       readyDisabled: true,
       startDisabled: true,
@@ -31,6 +42,7 @@ describe("lobbyControls", () => {
   it("shows no line and opens the controls once the lobby is waiting", () => {
     expect(lobbyControls(snapshot("waiting"))).toEqual({
       running: undefined,
+      mapDisabled: false,
       teamsDisabled: false,
       readyDisabled: false,
       startDisabled: false,

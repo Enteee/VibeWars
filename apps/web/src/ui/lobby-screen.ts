@@ -42,13 +42,15 @@ export const MATCH_RUNNING_NOTICE = "A match is still running. The lobby opens a
  * Which lobby controls work right now. Apart from the DOM so the rules
  * can be tested without one.
  *
- * While the lobby's match runs, the server refuses every change but
- * leaving (#44), so those controls are disabled and a line says why. A
- * player who quit early would otherwise face a lobby that looks open and
- * ignores them. The line goes once the phase is back to "waiting".
+ * Outside "waiting" the server refuses every change but leaving (#44),
+ * so those controls are disabled. While the lobby's match runs, a line
+ * also says why: a player who quit early would otherwise face a lobby
+ * that looks open and ignores them. It goes once the phase is back to
+ * "waiting". "starting" gets no line, because no match is running yet.
  */
 export interface LobbyControls {
   readonly running: string | undefined;
+  readonly mapDisabled: boolean;
   readonly teamsDisabled: boolean;
   readonly readyDisabled: boolean;
   readonly startDisabled: boolean;
@@ -59,7 +61,8 @@ export function lobbyControls(snapshot: LobbySnapshot): LobbyControls {
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
   const assigned = snapshot.players.filter((p) => p.team >= 0);
   return {
-    running: waiting ? undefined : MATCH_RUNNING_NOTICE,
+    running: snapshot.phase === "in-match" ? MATCH_RUNNING_NOTICE : undefined,
+    mapDisabled: !waiting,
     teamsDisabled: !waiting,
     // Readiness is meaningless without a team, so the control is disabled
     // rather than silently doing nothing when pressed.
@@ -77,6 +80,7 @@ export function renderLobbyScreen(
 ): void {
   root.replaceChildren();
   const panel = h("div", "screen screen-lobby");
+  const controls = lobbyControls(snapshot);
 
   const header = h("div", "lobby-header");
   header.appendChild(h("span", "lobby-code-label", "lobby code"));
@@ -98,6 +102,7 @@ export function renderLobbyScreen(
       select.appendChild(option);
     }
     select.value = snapshot.mapId;
+    select.disabled = controls.mapDisabled;
     select.addEventListener("change", () => {
       callbacks.onSelectMap(select.value);
     });
@@ -112,7 +117,6 @@ export function renderLobbyScreen(
     panel.appendChild(h("div", "screen-problem", notice));
   }
 
-  const controls = lobbyControls(snapshot);
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
 
   const teams = h("div", "lobby-teams");

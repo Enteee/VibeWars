@@ -213,6 +213,8 @@ test("a player who quits early is told the match still runs, until it ends", asy
     await expect(host.getByRole("button", { name: "not ready" })).toBeDisabled();
     await expect(host.getByRole("button", { name: "start match" })).toBeDisabled();
     await expect(host.getByRole("button", { name: "join team 2" })).toBeDisabled();
+    // The server would drop a map change too, so the picker is locked as well.
+    await expect(host.locator(".lobby-map select")).toBeDisabled();
     await expect(host.getByRole("button", { name: "leave" })).toBeEnabled();
 
     // The last player leaves, the match is over, and the lobby opens.
@@ -221,6 +223,7 @@ test("a player who quits early is told the match still runs, until it ends", asy
     await expect(guest.locator("#status")).toHaveText(`lobby ${code}`);
     const ready = host.getByRole("button", { name: "ready", exact: true });
     await expect(ready).toBeEnabled();
+    await expect(host.locator(".lobby-map select")).toBeEnabled();
     await ready.click();
     await expect(host.getByRole("button", { name: "not ready" })).toBeVisible();
   } finally {
