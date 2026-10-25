@@ -62,6 +62,7 @@ describe("logToneOf", () => {
       "interrupted",
       "interrupt-missed",
       "attack-missed",
+      "attack-dodged",
     ];
     expect(kinds.map(logToneOf)).toEqual([
       "damage",
@@ -72,6 +73,7 @@ describe("logToneOf", () => {
       "status",
       "status",
       "status",
+      "control",
       "control",
       "control",
       "control",
@@ -122,6 +124,10 @@ describe("describeCombatEvent", () => {
     const missed: CombatEvent = { kind: "attack-missed", targetId: "dummy" };
     expect(describeCombatEvent(entry([missed]), missed, nameOf)).toBe(
       "Fireball (Pyro) misses Caster dummy",
+    );
+    const dodged: CombatEvent = { kind: "attack-dodged", targetId: "dummy" };
+    expect(describeCombatEvent({ ...entry([dodged]), cause: "weapon" }, dodged, nameOf)).toBe(
+      "Caster dummy dodges Attack (Pyro)",
     );
   });
 });
@@ -226,6 +232,7 @@ describe("floatingCueFor", () => {
 
   it("floats 'miss' over the target of a blinded attack", () => {
     expect(floatingCueFor("attack-missed", undefined)).toEqual({ text: "miss", tone: "neutral" });
+    expect(floatingCueFor("attack-dodged", undefined)).toEqual({ text: "dodge", tone: "neutral" });
   });
 
   it("treats a missing amount as 0", () => {
