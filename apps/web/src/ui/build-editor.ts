@@ -710,12 +710,15 @@ export function renderBuildEditor(
 
     for (const group of groupSkillsByAttribute(matches)) {
       const section = h("div", "skill-group");
-      const rank = ranks.get(group.attributeId) ?? 0;
       const header = h("div", "skill-group-header");
       header.appendChild(h("span", "skill-group-name", group.attributeName));
       // The rank is shown here because it is exactly what makes every
       // skill under this heading better — the reason to group this way.
-      header.appendChild(h("span", "skill-group-rank", `rank ${String(rank)}`));
+      // "No Attribute" skills have none to show.
+      if (group.attributeId !== undefined) {
+        const rank = ranks.get(group.attributeId) ?? 0;
+        header.appendChild(h("span", "skill-group-rank", `rank ${String(rank)}`));
+      }
       section.appendChild(header);
 
       for (const skill of group.skills) {

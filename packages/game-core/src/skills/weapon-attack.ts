@@ -121,13 +121,26 @@ export function blindMisses(attacker: Combatant, rng: SimulationRng): boolean {
 }
 
 /**
- * A blow that connects: the damage roll plus `bonus` (an attack skill's,
- * ADR-0029; 0 for a plain swing), mitigated once by the victim's armor.
+ * What an attack skill makes of a blow (ADR-0029): the weapon's roll times
+ * `weaponDamage`, plus `bonus`.
+ */
+export interface BlowRule {
+  readonly weaponDamage: number;
+  readonly bonus: number;
+}
+
+/** A swing of the weapon and nothing else. */
+export const PLAIN_BLOW: BlowRule = { weaponDamage: 1, bonus: 0 };
+
+/**
+ * A blow that connects: the damage roll as `blow` says, mitigated once by
+ * the victim's armor. One that deals nothing still connected, so an
+ * attack skill's riders go on.
  */
 export function landBlow(
   snapshot: WeaponSnapshot,
   victim: Combatant,
-  bonus: number,
+  blow: BlowRule,
   rng: SimulationRng,
   rules: CombatRules,
   events: CombatEvent[],
@@ -137,9 +150,10 @@ export function landBlow(
   const packet: DamagePacket = {
     amount:
       base *
+        blow.weaponDamage *
         weaponAttributeMultiplier(snapshot.rank, rules) *
         (requirementMet ? 1 : rules.unmetRequirementMultiplier) +
-      bonus,
+      blow.bonus,
     type: weapon.damageType,
     source: "weapon",
     armorPenetration: weapon.armorPenetration,
@@ -157,7 +171,7 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
     events.push({ kind: "attack-missed", targetId: victim.id });
     return;
   }
-  landBlow(weaponSnapshotOf(attacker), victim, 0, rng, rules, events);
+  landBlow(weaponSnapshotOf(attacker), victim, PLAIN_BLOW, rng, rules, events);
 }
 
 /**
@@ -193,7 +207,10 @@ export function resolveSwing(swing: Swing): CombatEvent[] {
 export function resolveAttackSkill(resolution: SkillResolution): CombatEvent[] {
   const { skill, caster, rng, rules } = resolution;
   const bonusDamage = skill.attack?.bonusDamage;
-  const bonus = bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster);
+  const blow: BlowRule = {
+    weaponDamage: skill.attack?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
+    bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
+  };
   const snapshot = weaponSnapshotOf(caster);
   const events: CombatEvent[] = [];
   const hit: Combatant[] = [];
@@ -205,7 +222,7 @@ export function resolveAttackSkill(resolution: SkillResolution): CombatEvent[] {
       events.push({ kind: "attack-missed", targetId: victim.id });
       continue;
     }
-    landBlow(snapshot, victim, bonus, rng, rules, events);
+    landBlow(snapshot, victim, blow, rng, rules, events);
     hit.push(victim);
   }
   return [...events, ...applySkillEffects({ ...resolution, targets: hit })];

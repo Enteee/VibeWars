@@ -316,16 +316,37 @@ describe("headless combat simulation", () => {
 });
 
 describe("skill attribute ownership", () => {
-  it("gives every skill an explicit attributeId", () => {
+  it("links every linked skill to a real attribute of its own profession", () => {
     for (const skill of IMPLEMENTED_SKILLS) {
-      expect(skill.attributeId.length, `${skill.id} has no attributeId`).toBeGreaterThan(0);
+      if (skill.attributeId === undefined) {
+        continue;
+      }
+      expect(
+        getAttribute(skill.attributeId)?.professionId,
+        `${skill.id} -> ${skill.attributeId}`,
+      ).toBe(skill.profession);
     }
   });
 
-  it("points every attributeId at a real profession attribute", () => {
+  it("scales a skill only with its own attribute, and a No Attribute skill not at all", () => {
+    // An unlinked skill's numbers are GW1's rank-0 ones (#445).
     for (const skill of IMPLEMENTED_SKILLS) {
-      expect(getAttribute(skill.attributeId), `${skill.id} -> ${skill.attributeId}`).toBeDefined();
+      const scaled = [
+        skill.attack?.bonusDamage,
+        ...skill.effects.flatMap((effect) => ("amount" in effect ? [effect.amount] : [])),
+      ].flatMap((magnitude) =>
+        magnitude !== undefined && "scaling" in magnitude ? [magnitude.scaling.attributeId] : [],
+      );
+      for (const attributeId of scaled) {
+        expect(attributeId, skill.id).toBe(skill.attributeId);
+      }
     }
+  });
+
+  it("has Distracting Blow as a warrior skill with no attribute (#445)", () => {
+    const blow = getSkill("warrior.distracting-blow");
+    expect(blow?.profession).toBe("warrior");
+    expect(blow?.attributeId).toBeUndefined();
   });
 
   it("names the attribute explicitly rather than leaving it inferable", () => {

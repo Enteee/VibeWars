@@ -239,6 +239,39 @@ describe("resolveAttackSkill (ADR-0029)", () => {
     expect(rng.getState()).toBe(replay.getState());
   });
 
+  describe("Distracting Blow (#445)", () => {
+    const blow = getSkill("warrior.distracting-blow");
+
+    /** A foe halfway through Troll Unguent's cast. */
+    const casting = (): Combatant => {
+      const target = victim();
+      target.cast.beginCast("ranger.troll-unguent", target.id, 3);
+      target.cast.advance(1);
+      return target;
+    };
+
+    it("deals no damage, and interrupts the cast of whoever it hits", () => {
+      const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+      const target = casting();
+      const events = resolve(blow, sword, [target]);
+      expect(events).toEqual([
+        { kind: "interrupted", targetId: "t", skillId: "ranger.troll-unguent" },
+      ]);
+      expect(target.cast.isCasting).toBe(false);
+      expect(target.health).toBe(target.maxHealth);
+    });
+
+    it("blinded, misses and interrupts nothing", () => {
+      const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+      sword.statuses.apply("blind", 10, "foe");
+      const target = casting();
+      expect(resolve(blow, sword, [target], fixed(10, 0.5))).toEqual([
+        { kind: "attack-missed", targetId: "t" },
+      ]);
+      expect(target.cast.isCasting).toBe(true);
+    });
+  });
+
   it("strikes every victim of an area, each with its own blow", () => {
     const bow = attacker(WEAPONS.longbow, "ranger.marksmanship");
     const events = resolve(barrage, bow, [victim("a"), victim("b"), victim("c")]);

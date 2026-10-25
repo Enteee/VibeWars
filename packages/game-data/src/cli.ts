@@ -39,7 +39,7 @@ function printSkills(filter: string | undefined): void {
     const cost =
       skill.cost === undefined ? "free" : `${String(skill.cost.amount)} ${skill.cost.kind}`;
     console.info(skill.id);
-    console.info(`  ${skill.name} — ${skill.attributeId}`);
+    console.info(`  ${skill.name} — ${skill.attributeId ?? `${skill.profession}, no attribute`}`);
     console.info(
       `  cost ${cost} · cast ${String(skill.activationSeconds)}s · recharge ${String(
         skill.rechargeSeconds,

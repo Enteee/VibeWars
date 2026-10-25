@@ -51,6 +51,7 @@ import {
   attackDurationSeconds,
   blindMisses,
   landBlow,
+  PLAIN_BLOW,
   resolveAttackSkill,
   resolveSwing,
   weaponSnapshotOf,
@@ -1219,7 +1220,7 @@ export class MatchSimulation {
       landBlow(
         projectile.weaponSnapshot,
         target.combatant,
-        0,
+        PLAIN_BLOW,
         this.#rng,
         this.#ruleset.combat,
         events,

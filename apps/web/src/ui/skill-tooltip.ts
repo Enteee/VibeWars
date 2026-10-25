@@ -42,10 +42,13 @@ export function createSkillTooltip(): SkillTooltip {
     title.textContent = description.name;
     node.appendChild(title);
 
-    const attribute = document.createElement("div");
-    attribute.className = "tip-attribute";
-    attribute.textContent = description.attributeName;
-    node.appendChild(attribute);
+    // A "No Attribute" skill has no line here, as in GW1 (#445).
+    if (description.attributeName !== undefined) {
+      const attribute = document.createElement("div");
+      attribute.className = "tip-attribute";
+      attribute.textContent = description.attributeName;
+      node.appendChild(attribute);
+    }
 
     const effects = document.createElement("div");
     effects.className = "tip-effects";
