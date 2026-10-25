@@ -377,7 +377,7 @@ export class MatchSimulation {
     }
     const check = this.#attackCheck(record, targetId);
     if (check.ok && record.combatant.attack?.targetId !== targetId) {
-      record.combatant.attack = { targetId, swingElapsed: 0 };
+      record.combatant.attack = { targetId, swingElapsed: 0, unreachableSeconds: 0 };
     }
     return check;
   }
@@ -678,7 +678,7 @@ export class MatchSimulation {
     // starts an attack, or switches one to them. Any other skill leaves
     // the attack in progress to resume on its own target.
     if (primary !== undefined && this.#attackCheck(record, primary.id).ok) {
-      record.combatant.attack = { targetId: primary.id, swingElapsed: 0 };
+      record.combatant.attack = { targetId: primary.id, swingElapsed: 0, unreachableSeconds: 0 };
     }
 
     record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds);
@@ -733,15 +733,26 @@ export class MatchSimulation {
       // movement the simulation chooses, and never on top of the
       // player's own. Replanned every tick, so a target that moves, or a
       // shove, is simply where the next plan starts.
-      const path = findPath(this.#nav, record.position, target.position);
-      const next = path?.[0];
+      const next = findPath(this.#nav, record.position, target.position)?.[0];
       if (next === undefined) {
-        record.combatant.attack = undefined;
-        this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, [
-          { kind: "attack-unreachable", targetId: target.id },
-        ]);
+        // No way there, this tick. It has to last before the attack ends
+        // (#218); meanwhile, steer straight at the target, which is what
+        // usually shoves a squeezed body back out (#211).
+        attack.unreachableSeconds += dt;
+        if (
+          attack.unreachableSeconds >=
+          this.#ruleset.combat.unreachableAfterSeconds - SWING_EPSILON
+        ) {
+          record.combatant.attack = undefined;
+          this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, [
+            { kind: "attack-unreachable", targetId: target.id },
+          ]);
+          return;
+        }
+        this.advanceMovement(record, sub(target.position, record.position), dt);
         return;
       }
+      attack.unreachableSeconds = 0;
       this.advanceMovement(record, sub(next, record.position), dt);
       return;
     }

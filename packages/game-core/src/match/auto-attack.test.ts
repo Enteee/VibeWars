@@ -185,7 +185,11 @@ describe("the swing", () => {
     match.requestAttack("a", "d");
     expect(get(match, "a").combatant.attack?.swingElapsed).toBeCloseTo(1, 6);
     match.requestAttack("a", "e");
-    expect(get(match, "a").combatant.attack).toEqual({ targetId: "e", swingElapsed: 0 });
+    expect(get(match, "a").combatant.attack).toEqual({
+      targetId: "e",
+      swingElapsed: 0,
+      unreachableSeconds: 0,
+    });
   });
 });
 
@@ -231,6 +235,7 @@ describe("skills and the swing", () => {
     expect(get(match, "a").combatant.attack).toEqual({
       targetId: "e",
       swingElapsed: expect.any(Number) as number,
+      unreachableSeconds: 0,
     });
   });
 
@@ -422,8 +427,38 @@ describe("the approach on Arena Alpha (#211)", () => {
       entry.events.some((event) => event.kind === "attack-unreachable"),
     );
     expect(unreachable).toHaveLength(1);
+    // Not on the first failing tick: it has to last (#218).
+    expect(unreachable[0]?.atSeconds).toBeCloseTo(RULES.combat.unreachableAfterSeconds, 5);
     expect(get(match, "a").combatant.attack).toBeUndefined();
-    expect(get(match, "a").position).toEqual(vec2(80, 320));
+  });
+
+  it("walks out of a notch it was squeezed into, rather than giving up (#218)", () => {
+    // Two walls meeting at 60 degrees, opening to the left, and the
+    // attacker pressed 20 units into the apex: 10 from each wall, well
+    // inside its 14 of clearance, so no path leaves from where it stands.
+    const apex = vec2(300, 300);
+    const arm = 200;
+    const notch = [
+      segment(apex, vec2(300 - arm * Math.cos(Math.PI / 6), 300 - arm * Math.sin(Math.PI / 6))),
+      segment(apex, vec2(300 - arm * Math.cos(Math.PI / 6), 300 + arm * Math.sin(Math.PI / 6))),
+    ];
+    const match = new MatchSimulation({
+      seed: "notch",
+      walls: notch,
+      participants: [swordsman("a", vec2(280, 300)), dummy("d", vec2(100, 300))],
+    });
+    match.requestAttack("a", "d");
+
+    const log = stepFor(match, 2);
+    expect(
+      swings(log).some((entry) =>
+        entry.events.some((event) => event.kind === "attack-unreachable"),
+      ),
+    ).toBe(false);
+    expect(get(match, "a").combatant.attack?.targetId).toBe("d");
+    expect(distance(get(match, "a").position, vec2(100, 300))).toBeLessThanOrEqual(
+      WEAPONS.sword.range,
+    );
   });
 });
 

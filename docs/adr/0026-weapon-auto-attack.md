@@ -60,7 +60,10 @@ release, along the whole flight path (#215): the path is fixed then, so
 a shot led round a corner or at a target stepping behind a pillar is cut
 short at the wall and lands as `attack-obstructed`. Pillar-dancing, the
 GW1 counter to rangers, works. If there is no path, the
-attack ends with `attack-unreachable` ("can't reach"); today's maps have
+attack ends with `attack-unreachable` ("can't reach") once that has lasted
+`unreachableAfterSeconds` (0.5 s, #218). A single failed search can be a body
+shoved into a concave corner, which steering straight at the target usually
+frees within a few ticks, so it does not end the attack. Today's maps have
 no such place, but an attack must never loop. Rejected alternatives:
 
 - a grid with A*, which needs a resolution choice and is coarser for no

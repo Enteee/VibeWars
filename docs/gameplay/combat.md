@@ -123,7 +123,7 @@ maximum, not the raw one.
 
 Select a foe and attack it (Space; with nothing selected, the nearest foe): your character walks into weapon reach and sight, round walls if it has to, then
 swings at the weapon's own interval until the foe dies, you move, or you
-cancel (Esc). A foe with no way to them ends the attack with "can't reach". Reach is checked exactly as a skill's range is, so wherever you
+cancel (Esc). A foe with no way to them for half a second ends the attack with "can't reach". Reach is checked exactly as a skill's range is, so wherever you
 can swing you can also use a melee skill. The first hit lands one full
 interval after you arrive. See [ADR-0026](../adr/0026-weapon-auto-attack.md).
 
