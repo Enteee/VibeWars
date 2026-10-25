@@ -8,7 +8,8 @@
  * Telegram. An agent cannot leak the bot token because it never has it, and
  * cannot call deleteChat because it has no API client.
  *
- *   tg send <role> <text>   message one colleague (mirrored to the Bots topic)
+ *   tg send <role> <text>   message every employee of a role (mirrored to the
+ *                           Bots topic); tg send <role>@<n> messages one
  *   tg send operator <text> the manager only: reply to the operator, in the
  *                           Manager topic
  *   tg broadcast <text>     queue a message into General
@@ -23,7 +24,7 @@
  *                           block until a message for you arrives, then print
  *                           everything unread; --all wakes on a plain
  *                           broadcast too
- *   tg roster               who is online
+ *   tg roster               who is online, one line per employee
  *
  * `wait` is the important one: it is how an agent yields to a peer instead of
  * busy-polling or guessing.
@@ -49,16 +50,20 @@ import {
   readInbox,
   wakes,
 } from "./protocol.mjs";
+import { roleOf } from "./staff.mjs";
 
+// Who this agent is (#62): the bus directory is the employee's, and what it
+// may do is its role's.
+const EMPLOYEE = process.env.VIBEWARS_BOT_EMPLOYEE;
 const ROLE = process.env.VIBEWARS_BOT_ROLE;
 const BUS = process.env.VIBEWARS_BOT_BUS;
 
-if (ROLE === undefined || BUS === undefined) {
+if (EMPLOYEE === undefined || ROLE === undefined || BUS === undefined) {
   console.error("tg: not running inside a claude-bot sandbox");
   process.exit(1);
 }
 
-const DIR = path.join(BUS, ROLE);
+const DIR = path.join(BUS, EMPLOYEE);
 const INBOX = path.join(DIR, "inbox.jsonl");
 const OUTBOX = path.join(DIR, "outbox");
 const RECEIPTS = path.join(DIR, "receipts");
@@ -219,7 +224,7 @@ function kilo(tokens) {
 async function wait(timeoutSeconds, all) {
   const deadline = Date.now() + timeoutSeconds * 1000;
   for (;;) {
-    const printed = drain(false, true, all ? () => true : (line) => wakes(line, ROLE ?? ""));
+    const printed = drain(false, true, all ? () => true : (line) => wakes(line, EMPLOYEE ?? ""));
     if (printed > 0) {
       return printed;
     }
@@ -258,28 +263,55 @@ function pending() {
   }
 }
 
+/**
+ * The seat of an employee id, for listing a role's employees in order:
+ * the bare role is 1, `<role>@<n>` is n.
+ *
+ * @param {string} employee
+ * @returns {number}
+ */
+function seat(employee) {
+  const [, n] = employee.split("@");
+  return n === undefined ? 1 : Number(n);
+}
+
 /** @returns {void} */
 function roster() {
-  const seen = readRoster(ROSTER, ROLES, Date.now());
+  /** @type {string[]} */
+  let entries = [];
+  try {
+    entries = fs.readdirSync(ROSTER);
+  } catch {
+    // No roster directory yet: nobody has come online.
+  }
+  const employees = entries
+    .filter((name) => name.endsWith(".json"))
+    .map((name) => name.slice(0, -".json".length))
+    .filter((employee) => roleOf(employee) !== null);
+  const seen = readRoster(ROSTER, employees, Date.now());
 
   // Every role is listed, hired or not. The company runs with a partial
   // roster, and an agent that cannot tell "nobody has reviewed my pull
   // request yet" from "there is no reviewer" waits forever for a colleague
-  // who was never hired.
+  // who was never hired. A role with employees gets a line for each.
   for (const role of ROLES) {
-    const self = role === ROLE ? " (you)" : "";
-    const entry = seen.get(role);
-    if (entry === undefined) {
-      console.log(`${role.padEnd(16)} not hired yet${self}`);
+    const mine = [...seen]
+      .filter(([employee]) => roleOf(employee) === role)
+      .sort(([a], [b]) => seat(a) - seat(b));
+    if (mine.length === 0) {
+      console.log(`${role.padEnd(16)} not hired yet`);
       continue;
     }
-    const ageSeconds = Math.round((Date.now() - entry.lastSeen) / 1000);
-    // The sidecar heartbeats every 15s and removes its own entry on a clean
-    // exit, so anything past a minute died without cleaning up. Its age is
-    // then meaningless, so say "stale" and stop there.
-    console.log(
-      `${role.padEnd(16)} ${entry.fresh ? `online, ${String(ageSeconds)}s ago` : "stale"}${self}`,
-    );
+    for (const [employee, entry] of mine) {
+      const self = employee === EMPLOYEE ? " (you)" : "";
+      const ageSeconds = Math.round((Date.now() - entry.lastSeen) / 1000);
+      // The sidecar heartbeats every 15s and removes its own entry on a clean
+      // exit, so anything past a minute died without cleaning up. Its age is
+      // then meaningless, so say "stale" and stop there.
+      console.log(
+        `${employee.padEnd(16)} ${entry.fresh ? `online, ${String(ageSeconds)}s ago` : "stale"}${self}`,
+      );
+    }
   }
 }
 
@@ -291,7 +323,7 @@ switch (command) {
   case "send": {
     const [to, ...words] = rest;
     if (to === undefined || words.length === 0) {
-      console.error("tg: usage: tg send <role> <text...>");
+      console.error("tg: usage: tg send <role|employee> <text...>");
       process.exit(2);
     }
     // The sidecar refuses this too; saying so here saves a round trip.

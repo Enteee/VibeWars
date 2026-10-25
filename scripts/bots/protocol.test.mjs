@@ -30,6 +30,7 @@ import {
   deliverSystem,
   formatMirror,
   formatQuestion,
+  inboxesOf,
   parseQuestions,
   routeAnswer,
   isReadyOutboxEntry,
@@ -134,6 +135,15 @@ describe("routeInbound", () => {
         expect(routeInbound(update({ text, ...topic }), CONTEXT)?.to, text).toEqual(["lead-dev"]);
       }
     }
+  });
+
+  it("delivers '<role>@<n>: ...' to that employee only (#62)", () => {
+    expect(routeInbound(update({ text: "lead-dev@2: look at #5" }), CONTEXT)?.to).toEqual([
+      "lead-dev@2",
+    ]);
+    expect(routeInbound(update({ text: "@lead-dev@2 look" }), CONTEXT)?.to).toEqual(["lead-dev@2"]);
+    // Not a role's employee: General, so everyone.
+    expect(routeInbound(update({ text: "gameplay@2: hi" }), CONTEXT)?.to).toEqual(ROLES);
   });
 
   it("delivers '@role ...' to that role only", () => {
@@ -364,12 +374,21 @@ describe("admitUser", () => {
   });
 });
 
+/** One employee per role, each in its first seat. */
+const EMPLOYEES = new Map(ROLES.map((role) => [role, role]));
+
 describe("deliverPeer", () => {
-  const base = { from: "manager", roles: ROLES, present: new Set(ROLES), now: 1000 };
+  const base = {
+    from: "manager",
+    roles: ROLES,
+    employees: EMPLOYEES,
+    present: new Set(ROLES),
+    now: 1000,
+  };
 
   it("delivers a directed message to that inbox only, and mirrors it", () => {
     const delivered = deliverPeer({ to: "developer-1", text: "take #28" }, base);
-    expect(delivered.deliveries.map((d) => d.role)).toEqual(["developer-1"]);
+    expect(delivered.deliveries.map((d) => d.employee)).toEqual(["developer-1"]);
     expect(delivered.deliveries[0]?.line).toMatchObject({
       from: "manager",
       kind: "peer",
@@ -382,7 +401,7 @@ describe("deliverPeer", () => {
 
   it("delivers a broadcast to everyone except the sender", () => {
     const delivered = deliverPeer({ to: "all", text: "standup" }, base);
-    expect(delivered.deliveries.map((d) => d.role)).toEqual([
+    expect(delivered.deliveries.map((d) => d.employee)).toEqual([
       "architect",
       "developer-1",
       "lead-dev",
@@ -405,7 +424,7 @@ describe("deliverPeer", () => {
       { to: "lead-dev", text: "review #30" },
       { ...base, present: new Set(["manager"]) },
     );
-    expect(delivered.deliveries.map((d) => d.role)).toEqual(["lead-dev"]);
+    expect(delivered.deliveries.map((d) => d.employee)).toEqual(["lead-dev"]);
     expect(delivered.notice?.text).toMatch(/not running right now/);
   });
 
@@ -414,6 +433,120 @@ describe("deliverPeer", () => {
     expect(delivered.deliveries).toEqual([]);
     expect(delivered.mirror).toBeNull();
     expect(delivered.notice?.text).toMatch(/NOT delivered.*not one of this company's roles/);
+  });
+
+  describe("to employees (#62)", () => {
+    const employees = new Map([
+      ...EMPLOYEES,
+      ["developer-1@2", "developer-1"],
+      ["developer-1@3", "developer-1"],
+    ]);
+    const staffed = { ...base, employees, present: new Set(employees.keys()) };
+
+    it("delivers a message to a role to every employee of it", () => {
+      const delivered = deliverPeer({ to: "developer-1", text: "who takes #12?" }, staffed);
+      expect(delivered.deliveries.map((d) => d.employee)).toEqual([
+        "developer-1",
+        "developer-1@2",
+        "developer-1@3",
+      ]);
+      expect(delivered.notice).toBeNull();
+      expect(delivered.mirror).toEqual({
+        from: "manager",
+        to: "developer-1",
+        text: "who takes #12?",
+      });
+    });
+
+    it("delivers a message to an employee to that employee only", () => {
+      const delivered = deliverPeer({ to: "developer-1@2", text: "take #12" }, staffed);
+      expect(delivered.deliveries.map((d) => d.employee)).toEqual(["developer-1@2"]);
+      expect(delivered.mirror?.to).toBe("developer-1@2");
+    });
+
+    it("does not hand an employee its own message to its role", () => {
+      const delivered = deliverPeer(
+        { to: "developer-1", text: "taking #12 (developer-1@2)" },
+        { ...staffed, from: "developer-1@2" },
+      );
+      expect(delivered.deliveries.map((d) => d.employee)).toEqual(["developer-1", "developer-1@3"]);
+      expect(delivered.mirror?.from).toBe("developer-1@2");
+    });
+
+    it("broadcasts to every employee but the sender", () => {
+      const delivered = deliverPeer(
+        { to: "all", text: "standup" },
+        { ...staffed, from: "developer-1@3" },
+      );
+      expect(delivered.deliveries.map((d) => d.employee)).toEqual([
+        "architect",
+        "manager",
+        "developer-1",
+        "lead-dev",
+        "developer-1@2",
+      ]);
+    });
+
+    it("names the employees that are not running", () => {
+      const delivered = deliverPeer(
+        { to: "developer-1", text: "x" },
+        { ...staffed, present: new Set(["developer-1"]) },
+      );
+      expect(delivered.deliveries).toHaveLength(3);
+      expect(delivered.notice?.text).toMatch(
+        /^delivered to developer-1@2, developer-1@3's inbox, but .* are not running right now/,
+      );
+    });
+
+    it("refuses a fired employee, listing who is employed", () => {
+      const delivered = deliverPeer({ to: "developer-1@4", text: "x" }, staffed);
+      expect(delivered.deliveries).toEqual([]);
+      expect(delivered.mirror).toBeNull();
+      expect(delivered.notice?.text).toMatch(/NOT delivered: "developer-1@4" is not one of/);
+      expect(delivered.notice?.text).toMatch(
+        /Employees: architect, manager, developer-1, lead-dev, developer-1@2, developer-1@3$/,
+      );
+    });
+
+    it("tells the sender when nobody in a role is hired", () => {
+      const delivered = deliverPeer(
+        { to: "lead-dev", text: "review #30" },
+        {
+          ...staffed,
+          employees: new Map([...employees].filter(([, role]) => role !== "lead-dev")),
+        },
+      );
+      expect(delivered.deliveries).toEqual([]);
+      expect(delivered.mirror).toBeNull();
+      expect(delivered.notice?.text).toBe(
+        "your last message was NOT delivered: nobody else in lead-dev is hired.",
+      );
+    });
+
+    it("lets an employee act as its role: ask, write to the operator, reply", () => {
+      const askers = new Map([...employees, ["manager@2", "manager"], ["support@2", "support"]]);
+      const as = { ...staffed, employees: askers };
+      expect(
+        deliverPeer({ kind: "ask", text: "Ship?", options: [] }, { ...as, from: "manager@2" })
+          .question,
+      ).toEqual({ from: "manager@2", text: "Ship?", options: [] });
+      expect(
+        deliverPeer({ to: TO_OPERATOR, text: "hi" }, { ...as, from: "manager@2" }).mirror,
+      ).toEqual({
+        from: "manager@2",
+        to: TO_OPERATOR,
+        text: "hi",
+      });
+      expect(
+        deliverPeer({ kind: "reply", text: "hi" }, { ...as, from: "support@2" }).reply,
+      ).toEqual({
+        text: "hi",
+        replyTo: null,
+      });
+      expect(
+        deliverPeer({ to: TO_OPERATOR, text: "hi" }, { ...as, from: "developer-1@2" }).notice?.text,
+      ).toMatch(/NOT delivered: only the manager/);
+    });
   });
 
   it("delivers the manager's message to the operator to no inbox, and mirrors it", () => {
@@ -457,6 +590,31 @@ describe("deliverPeer", () => {
       expect(delivered.mirror, from).toBeNull();
       expect(delivered.notice?.text, from).toMatch(/NOT delivered: only the manager/);
     }
+  });
+});
+
+describe("inboxesOf (#62)", () => {
+  const employees = new Map([
+    ["qa-tester", "qa-tester"],
+    ["qa-tester@2", "qa-tester"],
+    ["manager", "manager"],
+  ]);
+
+  it("gives a role every employee of it, and an employee itself", () => {
+    expect(inboxesOf("qa-tester", employees)).toEqual(["qa-tester", "qa-tester@2"]);
+    expect(inboxesOf("qa-tester@2", employees)).toEqual(["qa-tester@2"]);
+    expect(inboxesOf("manager", employees)).toEqual(["manager"]);
+  });
+
+  it("gives nobody to a role nobody is employed in, or a fired employee", () => {
+    expect(inboxesOf("lead-dev", employees)).toEqual([]);
+    expect(inboxesOf("qa-tester@3", employees)).toEqual([]);
+  });
+
+  it("still reaches a role whose first seat is free", () => {
+    expect(inboxesOf("qa-tester", new Map([["qa-tester@2", "qa-tester"]]))).toEqual([
+      "qa-tester@2",
+    ]);
   });
 });
 
@@ -510,6 +668,15 @@ describe("formatMirror", () => {
       "expandable_blockquote:picked up #34",
       `text_link:#34=>${ISSUES}/34`,
     ]);
+  });
+
+  it("names a further employee by its role and seat (#62)", () => {
+    const message = formatMirror({ from: "qa-tester@2", to: "developer-1", text: "x" }, REPO);
+    expect(message.text).toBe("🧪 QA Tester 2 → 🛠 Developer 1\nx");
+    expect(covered(message).slice(0, 2)).toEqual(["bold:QA Tester 2", "bold:Developer 1"]);
+    expect(formatMirror({ from: "manager", to: "lead-dev@3", text: "" }, REPO).text).toBe(
+      "📋 Manager → 🔍 Lead Dev 3",
+    );
   });
 
   it("shows a broadcast as going to everyone", () => {
@@ -618,7 +785,7 @@ describe("ROLE_STYLE", () => {
 });
 
 describe("questions for the operator", () => {
-  const base = { roles: ROLES, present: new Set(ROLES), now: 1000 };
+  const base = { roles: ROLES, employees: EMPLOYEES, present: new Set(ROLES), now: 1000 };
   /**
    * @param {string} from
    * @param {unknown} entry
@@ -767,7 +934,7 @@ describe("routeAnswer", () => {
     const routed = routeAnswer(tap("q:7:0"), store(false), context);
     expect(routed?.deliveries).toEqual([
       {
-        role: "architect",
+        employee: "architect",
         line: {
           ts: 5000,
           from: "@operator",
@@ -795,7 +962,7 @@ describe("routeAnswer", () => {
       store(false),
       context,
     );
-    expect(routed?.deliveries.map((d) => d.role)).toEqual(["architect"]);
+    expect(routed?.deliveries.map((d) => d.employee)).toEqual(["architect"]);
     expect(routed?.deliveries[0]?.line.text).toBe(
       'answer to Q7 ("Should reconnects keep the slot?"): Keep it,\nbut only for 10 s',
     );
@@ -805,7 +972,7 @@ describe("routeAnswer", () => {
 
   it("makes a second reply a follow-up to the same asker", () => {
     const routed = routeAnswer(say("and log it", QUESTION_MESSAGE), store(true), context);
-    expect(routed?.deliveries.map((d) => d.role)).toEqual(["architect"]);
+    expect(routed?.deliveries.map((d) => d.employee)).toEqual(["architect"]);
     expect(routed?.deliveries[0]?.line.text).toMatch(/^follow-up to Q7/);
     expect(routed?.paced).toEqual([]);
     expect(routed?.answered).toBeNull();
@@ -1261,15 +1428,15 @@ describe("formatLine cannot be made to forge a line", () => {
 describe("deliverSystem (#23)", () => {
   const ROLES_HERE = ["manager", "qa-tester"];
 
-  it("puts a system message in every role's inbox and mirrors it to General", () => {
+  it("puts a system message in every employee's inbox and mirrors it to General", () => {
     const delivered = deliverSystem(
       { text: "hubd is crash-looping: boom" },
       {
-        roles: ROLES_HERE,
+        employees: ROLES_HERE,
         now: 5,
       },
     );
-    expect(delivered.deliveries.map((d) => d.role)).toEqual(ROLES_HERE);
+    expect(delivered.deliveries.map((d) => d.employee)).toEqual(ROLES_HERE);
     expect(delivered.deliveries[0]?.line).toEqual({
       ts: 5,
       from: "system",
@@ -1288,11 +1455,11 @@ describe("deliverSystem (#23)", () => {
   });
 
   it("sends nothing for an empty or shapeless entry", () => {
-    expect(deliverSystem({ text: "  " }, { roles: ROLES_HERE, now: 1 })).toEqual({
+    expect(deliverSystem({ text: "  " }, { employees: ROLES_HERE, now: 1 })).toEqual({
       deliveries: [],
       mirror: null,
     });
-    expect(deliverSystem(null, { roles: ROLES_HERE, now: 1 }).mirror).toBeNull();
+    expect(deliverSystem(null, { employees: ROLES_HERE, now: 1 }).mirror).toBeNull();
   });
 
   it("heads the mirror with the System style, apart from every role", () => {
@@ -1309,7 +1476,7 @@ describe("a system announcement wakes tg wait (#345)", () => {
   it("is a link line, which wakes every role", () => {
     const { deliveries } = deliverSystem(
       { text: "Company reboot by 12:05: new hubd." },
-      { roles: ["developer-1"], now: 1 },
+      { employees: ["developer-1"], now: 1 },
     );
     const delivered = deliveries[0]?.line;
     expect(delivered).toBeDefined();
@@ -1347,5 +1514,14 @@ describe("wakes", () => {
     expect(wakes(named("lead-dev look"), "lead-dev")).toBe(false);
     expect(wakes(named("architect: spec #5"), "lead-dev")).toBe(false);
     expect(wakes(named("all: standup"), "lead-dev")).toBe(false);
+  });
+
+  it("wakes every employee of a named role, and only the named employee (#62)", () => {
+    const named = (/** @type {string} */ text) => ({ ...line, broadcast: true, text });
+    expect(wakes(named("qa-tester: #9 is in QA"), "qa-tester@2")).toBe(true);
+    expect(wakes(named("qa-tester@2: take #9"), "qa-tester@2")).toBe(true);
+    expect(wakes(named("@qa-tester@2 take #9"), "qa-tester@2")).toBe(true);
+    expect(wakes(named("qa-tester@2: take #9"), "qa-tester")).toBe(false);
+    expect(wakes(named("qa-tester@3: take #9"), "qa-tester@2")).toBe(false);
   });
 });

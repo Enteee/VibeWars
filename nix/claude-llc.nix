@@ -476,16 +476,15 @@ in
             exit 2
           fi
           shift || true
-          role="''${employee%%@*}"
 
           root="$DEVENV_ROOT/.bots"
           export VIBEWARS_BOT_ROOT="$root"
           state="$root/agents/$employee"
           mkdir -p "$state"
           between="$state/between-turns"
-          # The context of the turn's last call (#321), in the role's bus
+          # The context of the turn's last call (#321), in the employee's bus
           # directory, which its jail sees: `tg wait` reads it there.
-          export VIBEWARS_CONTEXT_FILE="$root/bus/$role/context.json"
+          export VIBEWARS_CONTEXT_FILE="$root/bus/$employee/context.json"
           # However the loop ends, Ctrl-C and a killed window included, it is
           # no longer between turns.
           trap 'rm -f "$between"' EXIT
@@ -515,7 +514,7 @@ in
             if [ "$turn" -eq 3 ]; then
               # Claude's usage limit: not this agent's fault, so it neither
               # counts toward the five nor resets them.
-              limitPause="$(${node} ${llcScripts}/agent-loop.mjs limited "$role" "$state" "$limitPause")" || limitPause=300
+              limitPause="$(${node} ${llcScripts}/agent-loop.mjs limited "$employee" "$state" "$limitPause")" || limitPause=300
               echo "claude-llc-agent: Claude usage limit reached; next turn for $employee in ''${limitPause}s."
               echo "claude-llc-agent: messages do not wake it. Ctrl-C now to stop for good."
               ${node} ${llcScripts}/agent-loop.mjs sleep "$limitPause" || stopped
@@ -524,7 +523,7 @@ in
                 failures=0
                 failed=0
                 limitPause=0
-                ${node} ${llcScripts}/agent-loop.mjs resumed "$role" || true
+                ${node} ${llcScripts}/agent-loop.mjs resumed "$employee" || true
               else
                 failures=$(( failures + 1 ))
                 failed=1
@@ -535,13 +534,13 @@ in
                 echo "claude-llc-agent: $employee failed five runs in a row."
                 echo "claude-llc-agent: not restarting. Fix the cause, then:"
                 echo "claude-llc-agent:   claude-llc-agent $employee"
-                ${node} ${llcScripts}/agent-loop.mjs gave-up "$role" || true
+                ${node} ${llcScripts}/agent-loop.mjs gave-up "$employee" || true
                 exit 1
               fi
 
               echo "claude-llc-agent: next turn for $employee in ''${pause}s, or when a message arrives."
               echo "claude-llc-agent: Ctrl-C now to stop for good."
-              ${node} ${llcScripts}/agent-loop.mjs wait "$role" "$pause" || stopped
+              ${node} ${llcScripts}/agent-loop.mjs wait "$employee" "$pause" || stopped
             fi
             # The marker goes before the reboot check, not after: a reboot
             # requested between the two would otherwise see this agent
