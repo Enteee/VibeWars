@@ -13,3 +13,9 @@ strictPeerDependencies: false
 minimumReleaseAge: 10080
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
+
+# Temporary (#107): rolldown@1.2.15 is already in the lockfile on main but was
+# published Oct 21, so `pnpm add` re-resolution trips minimumReleaseAge until
+# Oct 28. Exactly this version, nothing else. Remove on/after Oct 28.
+minimumReleaseAgeExclude:
+  - rolldown@1.2.15
