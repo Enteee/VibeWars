@@ -150,7 +150,7 @@ an attack skill, which is a swing, turns your attack on its foe.
 is an attack skill, is followed by 0.75 s in which you neither move,
 swing, nor start another cast. A move held through it walks the moment
 it ends. A skill with an activation time pressed during it waits and
-starts the tick it ends (a later press replaces it; Esc drops it); an
+starts the tick it ends (a later press replaces it; a move or Esc drops it); an
 instant skill goes off at once. A cancelled or interrupted cast has no
 aftercast.
 

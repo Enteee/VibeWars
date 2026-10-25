@@ -382,6 +382,10 @@ export class MatchSimulation {
    * dropped by `requestSkill`, and the client sends only changes. An
    * instant skill waits for the next step to resolve, but it has no cast
    * to walk out of, so a move leaves it alone.
+   *
+   * A move in the aftercast drops the skill queued for after it, so the
+   * held direction walks when it ends instead of being swallowed by the
+   * queued cast (#317).
    */
   public setInputDirection(id: string, direction: Vec2): void {
     const record = this.#participants.get(id);
@@ -390,6 +394,7 @@ export class MatchSimulation {
       if (record.inputDirection.x !== 0 || record.inputDirection.y !== 0) {
         record.combatant.attack = undefined;
         this.#cancelCast(record);
+        record.combatant.cast.clearQueue();
       }
     }
   }
