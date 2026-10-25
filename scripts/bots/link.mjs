@@ -366,7 +366,11 @@ function takeOutbox(dir, role, take) {
         text = outbox.readSmall(name, OUTBOX_MAX_BYTES);
       } catch (error) {
         refused(role, `outbox/${name}`, error);
-        outbox.remove(name);
+        try {
+          outbox.remove(name);
+        } catch (removal) {
+          refused(role, `outbox/${name} (remove)`, removal);
+        }
         continue;
       }
       /** @type {unknown} */

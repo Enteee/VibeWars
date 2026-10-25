@@ -1837,6 +1837,23 @@ function refused(role, site, error) {
 }
 
 /**
+ * Removes a request already refused. A jail can make that fail (a mode it
+ * set), and it must not stop the rest of the spool.
+ *
+ * @param {string} role
+ * @param {import("./jail-fs.mjs").JailDir} req
+ * @param {string} name
+ * @returns {void}
+ */
+function dropRefused(role, req, name) {
+  try {
+    req.remove(name);
+  } catch (error) {
+    refused(role, `request ${name} (remove)`, error);
+  }
+}
+
+/**
  * @param {string} role
  * @param {import("./jail-fs.mjs").JailDir} req
  * @param {import("./jail-fs.mjs").JailDir} res
@@ -1849,7 +1866,7 @@ async function serveSpool(role, req, res) {
     const id = name.replace(/\.json$/, "");
     if (!REQUEST_ID.test(id)) {
       refused(role, `request ${JSON.stringify(name)}`, "not a request id");
-      req.remove(name);
+      dropRefused(role, req, name);
       continue;
     }
     /** @type {string} */
@@ -1858,7 +1875,7 @@ async function serveSpool(role, req, res) {
       text = req.readSmall(name, REQUEST_MAX_BYTES);
     } catch (error) {
       refused(role, `request ${name}`, error);
-      req.remove(name);
+      dropRefused(role, req, name);
       continue;
     }
     /** @type {unknown} */

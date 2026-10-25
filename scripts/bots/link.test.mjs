@@ -377,6 +377,23 @@ describe("the company sidecar", () => {
     });
   }, 20_000);
 
+  it("survives what a jail plants in its outbox, and still delivers the next message", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    co.present("architect");
+    const outbox = path.join(co.bus, "manager", "outbox");
+    fs.mkdirSync(path.join(outbox, "evil.json"), { recursive: true });
+    fs.chmodSync(path.join(outbox, "evil.json"), 0o000);
+    fs.writeFileSync(path.join(outbox, "a b.json"), "{}");
+    co.start();
+
+    co.send("manager", "architect", "still here");
+
+    await until(() => co.inbox("architect").length === 1, "the inbox");
+    expect(co.inbox("architect")[0]).toMatchObject({ text: "still here" });
+    fs.chmodSync(path.join(outbox, "evil.json"), 0o700);
+  }, 20_000);
+
   it("resends a message Telegram refuses for its entities as plain text", async () => {
     const telegram = await fakeTelegram();
     telegram.refuseEntities();
