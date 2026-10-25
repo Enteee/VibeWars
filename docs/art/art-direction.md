@@ -34,6 +34,7 @@ the code and `scripts/assets/icons.mjs` copy them.
 | `ink`         | `#d7dee8` | Text, neutral icons                 |
 | `ink-dim`     | `#7d8899` | Secondary text                      |
 | `dead`        | `#4a5464` | Corpses (hollow circle, no bars)    |
+| `edge`        | `#0b0f14` | Body outline, weapon-mark casing    |
 
 ### Signals (arena)
 
@@ -96,6 +97,7 @@ so the silhouette identifies the profession and the colour only supports it.
 | Area flash  | Caster's team colour ring at the area's true radius   |
 | Swing flash | Attacker's team colour arc between it and its target  |
 | Projectile  | Weapon silhouette, tinted the shooter's team colour   |
+| Weapon mark | `ink` line in the facing direction, tip by weapon     |
 
 The status plates differ in outline as well as colour. Hex purple and
 enchantment teal are close for a deuteranope (simulated ΔE ≈ 18); diamond
@@ -151,6 +153,49 @@ colour and the outline keeps them off the floor.
 Drawn at 32×12 px, over the actors and under the HUD: a shot is
 gameplay information, and the player has to see where it will land in time
 to step aside. Projectiles stay on under reduced motion.
+
+### Player mark
+
+The body is a circle at the collision radius, r = 14 (#166). Everything on
+it is drawn in code. `node scripts/assets/player-mark.mjs` draws the
+reference sheet [`player-mark.svg`](player-mark.svg) at true size and at 4×.
+
+![Player mark reference sheet](player-mark.svg)
+
+Outward from the centre:
+
+| Ring     | Radius         | Style                                |
+| -------- | -------------- | ------------------------------------ |
+| Body     | 0 … r          | Team colour fill                     |
+| Edge     | r − 1.5 … r    | 1.5 px `edge` `#0b0f14`, living only |
+| Self rim | r − 3 … r − 1  | 2 px `ink`, your own body only       |
+| Weapon   | centre … r + 3 | See below, living only               |
+| Target   | r + 4 … r + 6  | 2 px `target`, your target only      |
+
+**The weapon mark** (#188) points where the player faces. It is a line from
+the centre with a tip that names the weapon family, and nothing reaches past
+**r + 3**, so it never touches the target ring. It is drawn twice: a 4 px
+`edge` casing first, then a 2 px `ink` core, both round-capped. Without the
+casing the ink line vanishes over the bright body: `ink` is 1.5:1 on `friend`
+and 1.9:1 on `foe`; the `edge` casing is 9.7:1 and 7.6:1.
+
+| Family  | Weapons      | Tip (world units, tip point T at r + 3)                                              |
+| ------- | ------------ | ------------------------------------------------------------------------------------ |
+| blade   | sword, spear | none, the plain line                                                                 |
+| axe     | axe, scythe  | one-sided filled triangle: T, 6 back along the line, and 5 out to the left at 2 back |
+| hammer  | hammer       | crossbar through T, 8 long, perpendicular                                            |
+| daggers | daggers      | the line forks 5 before T into two 6-unit prongs at ±30°                             |
+| bow     | bows         | arc of radius 5 over 140°, apex at T, bulging outward                                |
+| caster  | wand, staff  | filled orb of radius 3 whose outer edge is T; the line stops at its centre           |
+| unarmed | unarmed      | no mark at all                                                                       |
+
+Why not the first draft: a symmetric axe wedge and a dagger V at the line end
+read as an arrowhead and a fletching, and tips at r + 4 and beyond crossed
+the target ring on the one body you look at most.
+
+In Phaser: one `beginPath`, the strokes as `moveTo`/`lineTo`, one
+`strokePath` per colour, plus one `fillPoints` per colour for the axe and
+the orb. That is two or three calls per actor, whatever the family.
 
 ### Skill type badges
 
