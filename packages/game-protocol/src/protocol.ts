@@ -10,7 +10,7 @@
  * mid-match. It only ever rejects; there is no code path per version
  * (ADR-0016).
  */
-export const PROTOCOL_VERSION = 12 as const;
+export const PROTOCOL_VERSION = 13 as const;
 
 /** What a client is told when its `protocolVersion` does not match. */
 export const PROTOCOL_MISMATCH_MESSAGE =
@@ -142,7 +142,7 @@ export interface UseSkillIntent {
 
 /**
  * Attack `targetId` with the equipped weapon until told otherwise: walk
- * into reach, then swing (#160). Moving, `CancelAttackIntent` or the
+ * into reach, then swing (#160). Moving, `CancelIntent` or the
  * target dying ends it.
  */
 export interface AttackIntent {
@@ -150,9 +150,12 @@ export interface AttackIntent {
   readonly targetId: string;
 }
 
-/** Stop the attack in progress, if there is one. */
-export interface CancelAttackIntent {
-  readonly kind: "cancel-attack";
+/**
+ * Cancel Action, Esc in GW1 (#300): stop the cast and the attack in
+ * progress, whichever are running.
+ */
+export interface CancelIntent {
+  readonly kind: "cancel";
 }
 
 /**
@@ -284,7 +287,7 @@ export const QUICK_MATCH_MAX_PLAYERS = 8;
  * server-side validator.
  */
 export type ClientIntent =
-  MoveIntent | StopIntent | TargetIntent | UseSkillIntent | AttackIntent | CancelAttackIntent;
+  MoveIntent | StopIntent | TargetIntent | UseSkillIntent | AttackIntent | CancelIntent;
 
 /**
  * Validate an arbitrary network payload as a `ClientIntent`, or reject it.
@@ -345,8 +348,8 @@ export function parseClientIntent(value: unknown): ClientIntent | undefined {
     return { kind: "attack", targetId: record.targetId };
   }
 
-  if (record.kind === "cancel-attack" && hasOnlyKeys(record, ["kind"])) {
-    return { kind: "cancel-attack" };
+  if (record.kind === "cancel" && hasOnlyKeys(record, ["kind"])) {
+    return { kind: "cancel" };
   }
 
   return undefined;

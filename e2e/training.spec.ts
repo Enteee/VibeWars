@@ -450,3 +450,27 @@ test("(19) a move mid-cast cancels it: logged, and the cast never lands (#279)",
   await expect(page.locator('.training-log-row[data-tone="damage"]')).toHaveCount(0);
   await expect(meter(page, "damage")).toHaveText("0");
 });
+
+test("(20) the casting slot is lit, and Esc cancels the cast and flashes it (#300)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  await takeControl(page);
+  const slot = page.locator(".training-skill").first();
+  await page.keyboard.press("1");
+  await expect(slot).toHaveClass(/is-casting/);
+
+  // Fireball takes a second; Esc well inside it gives it up, and the arena
+  // stays armed: there was a cast to cancel, so Esc did not release it.
+  await page.keyboard.press("Escape");
+  await expect(slot).toHaveClass(/is-cancelled/);
+  await expect(slot).not.toHaveClass(/is-casting/);
+  await expect(page.locator(".training")).toHaveClass(/is-armed/);
+  await expect(page.locator(".training-log")).toContainText(/cancels Fireball/);
+  // The flash is 400 ms, then the slot is plain again.
+  await expect(slot).not.toHaveClass(/is-cancelled/);
+  await expect(page.locator('.training-log-row[data-tone="damage"]')).toHaveCount(0);
+
+  // With nothing running, Esc releases the arena as before.
+  await releaseControl(page);
+});

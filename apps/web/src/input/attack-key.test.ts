@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { MatchSnapshot, PlayerSnapshot } from "../net/match-connection.js";
-import { attackKeyIntents, isAttacking } from "./attack-key.js";
+import { attackKeyIntents, isAttacking, isCasting } from "./attack-key.js";
 
 function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
   return {
@@ -76,5 +76,14 @@ describe("isAttacking", () => {
   it("is whether self has an attack target", () => {
     expect(isAttacking(snapshot([player("me", { attackTargetSessionId: "x" })]))).toBe(true);
     expect(isAttacking(snapshot([player("me")]))).toBe(false);
+  });
+});
+
+describe("isCasting", () => {
+  it("is whether self has a cast with an activation time running (#300)", () => {
+    const casting = { castingSkillId: "fireball", castRemaining: 1, castTotal: 2 };
+    expect(isCasting(snapshot([player("me", casting)]))).toBe(true);
+    expect(isCasting(snapshot([player("me"), player("other", casting)]))).toBe(false);
+    expect(isCasting(snapshot([player("me", { castingSkillId: "barrage" })]))).toBe(false);
   });
 });

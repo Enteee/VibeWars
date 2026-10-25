@@ -4,7 +4,7 @@ import type { WallDescriptor } from "@vibewars/game-protocol";
 import { attachMatchSounds } from "./audio/match-sounds.js";
 import { saveMuted } from "./audio/mute-preference.js";
 import { soundPlayer } from "./audio/sound-player.js";
-import { attackKeyIntents, isAttacking } from "./input/attack-key.js";
+import { attackKeyIntents, isAttacking, isCasting } from "./input/attack-key.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { attachNameReveal } from "./input/name-reveal.js";
 import { nextTabTarget } from "./input/tab-target.js";
@@ -32,6 +32,7 @@ import {
   updateHud,
   updateRecharges,
 } from "./ui/hud.js";
+import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 
 /**
  * The in-match view: a Phaser viewport for the arena plus the DOM HUD,
@@ -246,8 +247,10 @@ export async function startMatchView(
       return;
     }
     if (event.key === "Escape") {
-      if (!event.repeat && isAttacking(connection.getSnapshot())) {
-        connection.sendIntent({ kind: "cancel-attack" });
+      // Cancel Action (#300): the cast and the attack, whichever run.
+      const snapshot = connection.getSnapshot();
+      if (!event.repeat && (isCasting(snapshot) || isAttacking(snapshot))) {
+        connection.sendIntent({ kind: "cancel" });
       }
       return;
     }
@@ -279,6 +282,18 @@ export async function startMatchView(
 
   connection.onCombat((message) => {
     showCombatFeedback(scene, message, latestMatch);
+    // A cast of ours that never went off flashes its slot (#300).
+    const buttons = hud.skillBar.querySelectorAll("button");
+    for (const flash of slotFlashes(
+      message.events,
+      connection.selfSessionId,
+      connection.skillBar,
+    )) {
+      const button = buttons[flash.slot];
+      if (button !== undefined) {
+        flashSlot(button, flash.kind);
+      }
+    }
   });
   // A key that does nothing reads as a broken game; say why (issue #51).
   connection.onCastRefused((message) => {

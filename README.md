@@ -32,7 +32,7 @@ code.
 | `Tab`           | Target the next nearest enemy       |
 | `Shift` `Tab`   | Target the previous one             |
 | `Space`         | Attack your target with your weapon |
-| `Esc`           | Stop attacking                      |
+| `Esc`           | Cancel your cast and your attack    |
 | `M`             | Mute or unmute the sound            |
 | `F10`           | Leave the match (asks first)        |
 

@@ -114,6 +114,8 @@ export interface CombatMessage {
     readonly kind: string;
     readonly targetId?: string;
     readonly amount?: number;
+    /** The skill an `interrupted` or `cancelled` cast was (#300). */
+    readonly skillId?: string;
   }[];
 }
 
