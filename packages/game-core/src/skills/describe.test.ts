@@ -101,7 +101,12 @@ describe("describeSkill", () => {
     const line = described.effects.map((effect) => effect.text).join(" ");
 
     expect(line).toContain("Bleeding");
-    expect(line).toContain("health lost per second");
+    expect(line).toContain("−3 Health degeneration");
+  });
+
+  it("words a status's pips as GW1 does", () => {
+    expect(describeStatus("bleeding")).toContain("−3 Health degeneration");
+    expect(describeStatus("regeneration")).toContain("+4 Health regeneration");
   });
 
   it("flags whether a skill scales at all", () => {

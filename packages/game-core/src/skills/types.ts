@@ -200,6 +200,8 @@ export interface Combatant {
   readonly maxHealth: number;
   energy: number;
   readonly maxEnergy: number;
+  /** Energy regeneration before statuses, in pips (`ENERGY_PER_PIP`). */
+  readonly baseEnergyPips: number;
   adrenaline: number;
   /** Attribute ranks by attribute id; absent means rank 0. */
   readonly attributeRanks: ReadonlyMap<string, number>;

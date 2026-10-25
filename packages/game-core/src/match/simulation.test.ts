@@ -4,7 +4,9 @@ import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import { segment } from "../geometry.js";
 import type { MatchRules } from "../match-rules.js";
+import { BASE_ENERGY_PIPS_BY_PROFESSION } from "../equipment/armor.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { ENERGY_PER_PIP } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
@@ -14,6 +16,8 @@ const DT = 1 / RULES.tickRateHz;
 const FIREBALL = "elementalist.fireball";
 const ORISON = "monk.orison-of-healing";
 const BARRAGE = "ranger.barrage";
+/** An elementalist's energy regeneration, per second. */
+const CASTER_REGEN = BASE_ENERGY_PIPS_BY_PROFESSION.elementalist * ENERGY_PER_PIP;
 const MATCH: MatchRules = { scoreToWin: 2, timeLimitSeconds: 600, respawnSeconds: 8 };
 
 function spec(id: string, team: number, spawn: Vec2, extra: Partial<ParticipantSpec> = {}) {
@@ -25,6 +29,7 @@ function spec(id: string, team: number, spawn: Vec2, extra: Partial<ParticipantS
     equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
     spawn,
     facing: 0,
+    baseEnergyPips: BASE_ENERGY_PIPS_BY_PROFESSION.elementalist,
     ...extra,
   };
 }
@@ -56,12 +61,53 @@ function participant(sim: MatchSimulation, id: string) {
 }
 
 describe("MatchSimulation step", () => {
-  it("regenerates energy at the ruleset's rate", () => {
-    const sim = duel();
+  it.each([
+    ["warrior", 2],
+    ["ranger", 3],
+    ["monk", 4],
+  ] as const)(
+    "regenerates a %s's %i energy pips, a third of an energy each a second",
+    (profession, pips) => {
+      expect(BASE_ENERGY_PIPS_BY_PROFESSION[profession]).toBe(pips);
+      const sim = new MatchSimulation({
+        seed: "regen",
+        participants: [
+          spec("a", 0, vec2(0, 0), { baseEnergyPips: BASE_ENERGY_PIPS_BY_PROFESSION[profession] }),
+        ],
+      });
+      const a = participant(sim, "a");
+      a.combatant.energy = 0;
+      stepFor(sim, 3);
+      expect(a.combatant.energy).toBeCloseTo(pips, 6);
+    },
+  );
+
+  it("regenerates up to max energy and no further, and never below 0", () => {
+    const sim = new MatchSimulation({
+      seed: "regen",
+      participants: [
+        spec("up", 0, vec2(0, 0)),
+        spec("down", 1, vec2(200, 0), { baseEnergyPips: -2 }),
+      ],
+    });
+    const up = participant(sim, "up");
+    const down = participant(sim, "down");
+    up.combatant.energy = up.combatant.maxEnergy - 0.1;
+    down.combatant.energy = 0.1;
+    stepFor(sim, 2);
+    expect(up.combatant.energy).toBe(up.combatant.maxEnergy);
+    expect(down.combatant.energy).toBe(0);
+  });
+
+  it("clamps the energy pips to 10", () => {
+    const sim = new MatchSimulation({
+      seed: "regen",
+      participants: [spec("a", 0, vec2(0, 0), { baseEnergyPips: 14 })],
+    });
     const a = participant(sim, "a");
     a.combatant.energy = 0;
-    stepFor(sim, 1);
-    expect(a.combatant.energy).toBeCloseTo(RULES.resources.energyRegenPerSecond, 6);
+    stepFor(sim, 3);
+    expect(a.combatant.energy).toBeCloseTo(10, 6);
   });
 
   it("casts through requestSkill, resolves after the activation time, and logs it", () => {
@@ -498,8 +544,8 @@ describe("reset policies", () => {
   it("on-death: back afterSeconds after dying, even with no match rules", () => {
     const { sim, d } = dummy({ kind: "on-death", afterSeconds: 2 });
     dirty(d);
-    d.combatant.health = 1;
-    // Burning kills it in its third tick, at 0.15 s.
+    d.combatant.health = 1.5;
+    // Burning, 0.7 a tick, kills it in its third tick, at 0.15 s.
     stepFor(sim, 1);
     expect(d.combatant.dead).toBe(true);
     stepFor(sim, 1.1);
@@ -562,6 +608,7 @@ describe("rearm", () => {
     equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
     maxHealth,
     maxEnergy: 30,
+    baseEnergyPips: 4,
   });
 
   it("keeps the health fraction, not the health: more max health is no free heal", () => {
@@ -679,10 +726,7 @@ describe("moving cancels a cast (#279)", () => {
     expect(participant(sim, "b").combatant.health).toBe(participant(sim, "b").combatant.maxHealth);
     expect(a.combatant.cast.rechargeRemaining.has(FIREBALL)).toBe(false);
     // Fireball's 10 energy stays spent; 2.5 s of regeneration since.
-    expect(a.combatant.energy).toBeCloseTo(
-      a.combatant.maxEnergy - 10 + RULES.resources.energyRegenPerSecond * 2.5,
-      6,
-    );
+    expect(a.combatant.energy).toBeCloseTo(a.combatant.maxEnergy - 10 + CASTER_REGEN * 2.5, 6);
     // Not recharging, so it can be cast again at once.
     expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
   });
@@ -802,10 +846,7 @@ describe("Cancel Action cancels the cast and the attack (#300)", () => {
     ]);
     expect(participant(sim, "b").combatant.health).toBe(participant(sim, "b").combatant.maxHealth);
     expect(a.combatant.cast.rechargeRemaining.has(FIREBALL)).toBe(false);
-    expect(a.combatant.energy).toBeCloseTo(
-      a.combatant.maxEnergy - 10 + RULES.resources.energyRegenPerSecond * 2.5,
-      6,
-    );
+    expect(a.combatant.energy).toBeCloseTo(a.combatant.maxEnergy - 10 + CASTER_REGEN * 2.5, 6);
   });
 
   it("one press clears a cast and an attack together", () => {

@@ -250,6 +250,8 @@ export function resolveForDisplay(character: StoredCharacter): ResolvedLoadout {
 export interface GearSummary {
   readonly maxHealth: number;
   readonly maxEnergy: number;
+  /** Energy regeneration in pips: the primary profession's. */
+  readonly baseEnergyPips: number;
   readonly armor: number;
   readonly weaponName: string;
   readonly damageRange: string;
@@ -284,6 +286,7 @@ export function summariseGear(character: StoredCharacter): GearSummary {
   return {
     maxHealth: resolved.maxHealth,
     maxEnergy: resolved.maxEnergy,
+    baseEnergyPips: resolved.baseEnergyPips,
     armor: resolved.equipment.baseArmor,
     weaponName: mainHand.weapon.name,
     damageRange: `${String(mainHand.weapon.damageMin)}–${String(mainHand.weapon.damageMax)}`,

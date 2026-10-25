@@ -67,7 +67,7 @@ function alert(text) {
     fs.mkdirSync(outbox, { recursive: true });
     const file = `${String(Date.now())}-${NAME}.json`;
     const tmp = path.join(outbox, `.${file}.part`);
-    fs.writeFileSync(tmp, JSON.stringify({ to: "all", text }));
+    fs.writeFileSync(tmp, JSON.stringify({ to: "all", text, nudge: null }));
     fs.renameSync(tmp, path.join(outbox, file));
   } catch (error) {
     say(`── could not tell the company: ${error instanceof Error ? error.message : "failed"} ──\n`);
