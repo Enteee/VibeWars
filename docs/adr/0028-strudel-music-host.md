@@ -36,7 +36,36 @@ edges, which #366 §1 lists:
   `<iframe sandbox="allow-scripts" allow="autoplay">` with no
   `allow-same-origin`, so the host has an opaque origin. The game and the
   host talk only by `postMessage`. A beat pasted from a stranger cannot read
-  the game's storage, session or DOM.
+  the game's storage, session or DOM, **but only while the host runs inside
+  that sandbox.**
+- **The host refuses to run anywhere else.** `music-host.html` is an
+  ordinary page on the game's origin. Another site can open it with
+  `window.open`, or frame it without a sandbox. Either way it then runs
+  with the game's origin and storage, and a pattern posted to it would be
+  XSS on the game. GitHub Pages cannot send a CSP `sandbox` header, and a
+  `<meta>` CSP cannot sandbox. So:
+  1. **Guard.** Before it installs a message listener or evaluates
+     anything, the host checks `self.origin === "null" && window.parent !== window`,
+     which means it is sandboxed and framed. If the check fails, it stops.
+     It relies on that check alone: never on `document.referrer`, the URL
+     or a query parameter, all of which the opener controls.
+  2. **Host side.** The host accepts a message only when
+     `event.source === window.parent`.
+  3. **Game side.** The game accepts a message only when
+     `event.source === iframe.contentWindow`. Origin checks are useless on
+     either side, because the host's origin is `"null"`, the same as every
+     other sandboxed frame.
+  4. **No `allow-same-origin`.** It is forbidden on the iframe. The
+     `sandbox` attribute is exactly `allow-scripts`.
+  5. **Tests.** Step 4 adds a test that a top-level load of
+     `music-host.html` evaluates nothing and answers no message. The same
+     step asserts the iframe's `sandbox` attribute is exactly
+     `allow-scripts`.
+- **Any site can frame the host, and that is harmless only because of 1 and 2.** With `Access-Control-Allow-Origin: *` and an opaque origin, any site
+  can put `music-host.html` in its own sandboxed frame and drive it. There
+  it runs with an opaque origin, can reach nothing of ours, and is no more
+  than a copy of Strudel. Adding `allow-same-origin`, or weakening the
+  guard, turns this into the XSS above.
 - **Wiring.** The host wires `@strudel/core`, `mini`, `tonal`, `transpiler`
   and `webaudio` by hand: `evalScope`, `registerSynthSounds`, our own
   `samples(…)`, and `webaudioRepl({ transpiler, setInterval, clearInterval })`.
@@ -227,7 +256,10 @@ What we cut to stay within budget:
    `blockExoticSubdeps` refuses. The spike installed with both settings
    overridden on the command line. That is not acceptable for a real
    dependency change, and is left to CI/CD.
-5. **Vite 8 deprecates `build.rollupOptions`**, and ESLint fails on it. The
+5. **The spike's host has no origin guard.** It checks `event.source`, but
+   it would evaluate a pattern if opened top-level. Review caught this. Step
+   4 must not lift the host without adding the guard from the Decision.
+6. **Vite 8 deprecates `build.rollupOptions`**, and ESLint fails on it. The
    second entry goes under `build.rolldownOptions.input`.
 
 ## Consequences
@@ -242,6 +274,9 @@ What we cut to stay within budget:
   `Access-Control-Allow-Origin: *` on static files, or music silently never
   starts. Step 4 adds an e2e test that the host reports `ready` from the LAN
   server build.
+- `music-host.html` opened on its own shows nothing and does nothing. It
+  is not a page for people, and its guard is the security boundary, so a
+  change to the guard needs the same review as a change to the sandbox.
 - A hidden-tab regression cannot be caught by Playwright, which never hides
   a page. It needs headful Chromium and a CDP tab switch, as in the spike.
 - Intensity reacts within a quarter second, but not on the beat unless the
