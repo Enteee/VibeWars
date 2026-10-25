@@ -477,7 +477,7 @@ export function createTrainingPanel(): TrainingPanel {
   };
   // On the stage, never on `window`: typing in the name field or the
   // library search bubbles up past the stage and can never move anyone.
-  let detachMovement = attachKeyboardMoveInput(stage, keymap, onMove);
+  const detachMovement = attachKeyboardMoveInput(stage, keymap, onMove);
 
   const onStageKeyDown = (event: KeyboardEvent): void => {
     // Ctrl, Alt and Meta are the browser's, armed or not (#302).
@@ -564,11 +564,7 @@ export function createTrainingPanel(): TrainingPanel {
   const onStageBlur = (): void => {
     root.classList.remove("is-armed");
     hint.textContent = HINT_IDLE;
-    // A key held while focus left will never send its keyup here: let go
-    // of everything, rather than walk on forever.
-    detachMovement();
-    detachMovement = attachKeyboardMoveInput(stage, keymap, onMove);
-    onMove({ x: 0, y: 0 });
+    // The move input lets go of any held key itself, on the same blur.
   };
 
   stage.addEventListener("keydown", onStageKeyDown);

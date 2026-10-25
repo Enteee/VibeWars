@@ -162,13 +162,38 @@ describe("attachKeyboardMoveInput", () => {
     expect(onChange).toHaveBeenLastCalledWith({ x: 1, y: 0 });
   });
 
-  it("the returned cleanup function removes both listeners", () => {
+  it("losing focus stops a held move, whose keyup will never come", () => {
+    const { target, dispatch } = createFakeTarget();
+    const onChange = vi.fn();
+    attachKeyboardMoveInput(target, DEFAULT_KEYMAP, onChange);
+
+    dispatch("keydown", "ArrowRight");
+    dispatch("blur", "");
+    expect(onChange).toHaveBeenLastCalledWith(ZERO);
+
+    // Pressed again after focus returns, it moves again.
+    dispatch("keydown", "ArrowRight");
+    expect(onChange).toHaveBeenLastCalledWith({ x: 1, y: 0 });
+  });
+
+  it("a blur with nothing held sends nothing", () => {
+    const { target, dispatch } = createFakeTarget();
+    const onChange = vi.fn();
+    attachKeyboardMoveInput(target, DEFAULT_KEYMAP, onChange);
+
+    dispatch("blur", "");
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("the returned cleanup function removes every listener", () => {
     const { target, dispatch } = createFakeTarget();
     const onChange = vi.fn();
     const cleanup = attachKeyboardMoveInput(target, DEFAULT_KEYMAP, onChange);
 
     cleanup();
     dispatch("keydown", "ArrowRight");
+    dispatch("blur", "");
 
     expect(onChange).not.toHaveBeenCalled();
   });

@@ -43,7 +43,9 @@ const MOVE_ACTIONS: ReadonlySet<KeyAction> = new Set([
  * Codes are tracked, not actions, so with two keys on one action (W and
  * ArrowUp) letting go of one while the other is held keeps moving. A
  * press with Ctrl, Alt or Meta held is the browser's and moves nobody;
- * a release always counts.
+ * a release always counts. Losing focus releases everything: a key held
+ * across an alt-tab or a leave-page dialog never sends its keyup, and
+ * would otherwise walk the player on forever.
  */
 export function attachKeyboardMoveInput(
   target: Pick<EventTarget, "addEventListener" | "removeEventListener">,
@@ -83,11 +85,18 @@ export function attachKeyboardMoveInput(
     update();
   };
 
+  const handleBlur = (): void => {
+    pressed.clear();
+    update();
+  };
+
   target.addEventListener("keydown", handleKeyDown);
   target.addEventListener("keyup", handleKeyUp);
+  target.addEventListener("blur", handleBlur);
 
   return () => {
     target.removeEventListener("keydown", handleKeyDown);
     target.removeEventListener("keyup", handleKeyUp);
+    target.removeEventListener("blur", handleBlur);
   };
 }
