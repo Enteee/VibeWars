@@ -79,10 +79,7 @@ describe("createLocalConnection", () => {
     let steps = 0;
     connection.onCombat((message) => {
       combat.push(...message.events.map((event) => event.kind));
-      // The Fireball only, not the punches that follow it (Q17).
-      if (message.skillId === "elementalist.fireball") {
-        areas.push(message.area);
-      }
+      areas.push(message.area);
     });
     connection.onStep(() => {
       steps += 1;
@@ -104,15 +101,15 @@ describe("createLocalConnection", () => {
   });
 
   it("reports a swing as its attacker's, with no skill", () => {
-    const { connection } = targetDummy();
+    const { setup, connection } = targetDummy();
     const swings: CombatMessage[] = [];
     connection.onCombat((message) => {
       if (message.skillId === "") {
         swings.push(message);
       }
     });
-    // Having cast at it, the player walks over and punches it (Q17).
-    connection.sendIntent({ kind: "use-skill", slot: 0 });
+    // No key for it until #160: ask the simulation directly.
+    expect(setup.simulation.requestAttack(SELF_ID, "dummy")).toEqual({ ok: true });
     for (let i = 0; i < 400 && swings.length === 0; i += 1) {
       connection.advance(TICK_SECONDS);
     }

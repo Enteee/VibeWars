@@ -153,9 +153,7 @@ describe("armor-ladder, headless", () => {
       expect(sim.requestSkill("player", 0)?.check).toEqual({ ok: true });
       // Fireball lands at 1 s and recharges for 7: 9 s clears both.
       for (let i = 0; i < Math.round(9 / DT); i += 1) {
-        // Fireball only: having cast at it, the player walks over and
-        // punches it too (Q17), and that is not what this measures.
-        for (const entry of sim.step(DT).log.filter((logged) => logged.cause === "skill")) {
+        for (const entry of sim.step(DT).log) {
           for (const event of entry.events) {
             if (event.kind === "damage") {
               dealt[event.targetId] = (dealt[event.targetId] ?? 0) + event.amount;

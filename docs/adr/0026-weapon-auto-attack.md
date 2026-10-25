@@ -24,7 +24,10 @@ Q20 on #157.
 `MatchSimulation.requestAttack(id, targetId)` sets it, refused with the
 same reasons a cast at that target would get unless the target is a
 living enemy. `cancelAttack` clears it, and so does any non-zero
-movement direction: in GW1, moving cancels the attack.
+movement direction: in GW1, moving cancels the attack. That holds at the
+attack step too, not only in `setInputDirection`: an attack asked for
+while a direction is already held is dropped there, before approach could
+move the player a second time in the same tick.
 
 **One step per tick, after cast resolution and before behaviour.** It
 drops an attack whose target is gone, dead or no longer an enemy. It
@@ -64,17 +67,17 @@ the target, ordered as an area orders them (`nearestFirst`).
 already credits damage by `sourceId`, so meters count weapon damage
 unchanged.
 
-**Skills interrupt and resume (Q17).** Beginning a cast resets
-`swingElapsed` to 0: the swing in progress is lost. A skill that
-resolves on a living enemy sets the attack to that enemy, which both
-starts and resumes it. Any other skill, and an interrupted cast, leave
-the existing attack to resume. This applies only to participants with no
-behaviour: a dummy attacks when its behaviour says so (#162). Otherwise
-every caster dummy would walk up and punch its target.
+**Skills interrupt and resume.** Beginning a cast resets `swingElapsed`
+to 0: the swing in progress is lost. When the skill resolves, or is
+interrupted, the attack resumes on the target it had.
 
-**Adrenaline comes from attacks only (Q19).** +3 per landed swing that
-damaged someone else, however many it cleaved, and +3 per attack skill
-that did. Spell damage no longer builds it.
+**Adrenaline** is +3 per landed swing that damaged someone else, however
+many it cleaved, as a damaging skill already gives.
+
+**Deferred to #160**, which ships the attack key, cancel and HUD: a
+skill used on an enemy starting or switching the attack to it (Q17), and
+adrenaline coming from attacks only (Q19). Both change live play, and
+neither should land before a player can see and stop an attack.
 
 **Ranged weapons resolve instantly** until #159 adds projectiles.
 
@@ -98,10 +101,7 @@ complete:
 
 ## Consequences
 
-- A player who casts at an enemy then walks up to it and swings. That is
-  GW1, and it changes headless numbers that counted every damage event
-  after a cast. The armor ladder now counts only `cause: "skill"`.
-- Weapon entries reach players before #160 puts attacks on the wire,
-  through Q17. The server and the training connection send them as the
-  attacker's, with no skill, and the combat log reads them as "Attack".
-  Until #160, moving is the only way to stop one.
+- Nothing calls `requestAttack` in live play until #160, so matches play
+  as before. The server and the training connection already send a
+  swing's entry as the attacker's, with no skill, and the combat log
+  reads it as "Attack".

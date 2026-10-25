@@ -591,27 +591,10 @@ export class MatchSimulation {
         ? undefined
         : { x: origin.x, y: origin.y, radius: skill.area.radius };
 
-    // Adrenaline comes from attacks only, weapon hits and attack skills
-    // (Q19): a Fireball no longer charges a warrior's next Backbreaker.
-    if (skill.type === "attack") {
-      this.#gainAdrenaline(record, events);
-    }
+    this.#gainAdrenaline(record, events);
     this.#recordDeaths(events);
-
-    // Cast at an enemy, the caster goes on to attack it, as in GW1 (Q17).
-    // Anything else leaves the attack it had, which resumes now. Not for
-    // a behaviour: a dummy attacks only when its behaviour says so (#162),
-    // or every caster dummy would walk up and punch its target.
-    const enemy = targetRecord?.combatant;
-    if (
-      record.behaviour === undefined &&
-      skill.target !== "self" &&
-      enemy !== undefined &&
-      !enemy.dead &&
-      enemy.team !== record.combatant.team
-    ) {
-      record.combatant.attack = { targetId: enemy.id, swingElapsed: 0 };
-    }
+    // An attack in progress resumes on its own target: the cast only
+    // paused it. Switching it to the skill's target arrives with #160.
 
     record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds);
     this.#log.push({
@@ -644,14 +627,21 @@ export class MatchSimulation {
       record.combatant.attack = undefined;
       return;
     }
+    // Moving cancels, as in GW1. `setInputDirection` cancels on the way in,
+    // but an attack asked for while a direction is already held would
+    // otherwise approach on top of the walk, at twice the speed.
+    if (record.inputDirection.x !== 0 || record.inputDirection.y !== 0) {
+      record.combatant.attack = undefined;
+      return;
+    }
     if (record.combatant.cast.isCasting) {
       return;
     }
 
     const { weapon } = record.combatant.equipment.mainHand;
     if (!distanceWithinRange(record.position, target.position, weapon.range)) {
-      // Approach: the only movement the simulation chooses. Never while a
-      // direction is held, because holding one cancelled the attack.
+      // Approach: the only movement the simulation chooses, and never on
+      // top of the player's own.
       this.advanceMovement(record, sub(target.position, record.position), dt);
       return;
     }
