@@ -211,9 +211,12 @@ afterEach(() => {
  * copies it to `context-at-start.json` before printing anything, and
  * `stale` is what the last turn left in it.
  *
- * @param {{ lines: string[], code?: number, session?: string, stale?: string }} fake
+ * `plant` makes the context file, or `plantAs` next to it, a symlink to
+ * that path, as an agent could.
+ *
+ * @param {{ lines: string[], code?: number, session?: string, stale?: string, plant?: string, plantAs?: string }} fake
  */
-function turn({ lines, code = 0, session, stale }) {
+function turn({ lines, code = 0, session, stale, plant, plantAs = "context.json" }) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "agent-turn-test-"));
   dirs.push(dir);
   const state = path.join(dir, "state");
@@ -222,9 +225,14 @@ function turn({ lines, code = 0, session, stale }) {
   fs.writeFileSync(out, lines.map((l) => `${l}\n`).join(""));
   const bot = path.join(dir, "claude-bot");
   const contextFile = path.join(dir, "bus", "context.json");
-  if (stale !== undefined) {
+  if (stale !== undefined || plant !== undefined) {
     fs.mkdirSync(path.dirname(contextFile));
+  }
+  if (stale !== undefined) {
     fs.writeFileSync(contextFile, stale);
+  }
+  if (plant !== undefined) {
+    fs.symlinkSync(plant, path.join(path.dirname(contextFile), plantAs));
   }
   const atStart = path.join(dir, "context-at-start.json");
   fs.writeFileSync(
@@ -251,6 +259,7 @@ function turn({ lines, code = 0, session, stale }) {
     session: fs.existsSync(sessionFile) ? fs.readFileSync(sessionFile, "utf8").trim() : null,
     context: json(contextFile),
     contextAtStart: json(atStart),
+    contextIsLink: fs.existsSync(contextFile) && fs.lstatSync(contextFile).isSymbolicLink(),
     /** @param {string} name @returns {string | null} a file the run left in its state */
     file: (name) =>
       fs.existsSync(path.join(state, name))
@@ -418,6 +427,42 @@ describe("agent-turn.mjs and the context ceiling (#321)", () => {
 
     expect(run.code).toBe(3);
     expect(run.session).toBe(SESSION_ID);
+  });
+
+  it("replaces a symlink the agent planted at the context file, never writing through it", () => {
+    const outside = path.join(
+      fs.mkdtempSync(path.join(os.tmpdir(), "agent-turn-host-")),
+      "host-file",
+    );
+    dirs.push(path.dirname(outside));
+    fs.writeFileSync(outside, "the host's\n");
+
+    const run = turn({
+      lines: [JSON.stringify(INIT), over, JSON.stringify(RESULT)],
+      plant: outside,
+    });
+
+    expect(fs.readFileSync(outside, "utf8")).toBe("the host's\n");
+    expect(run.context).toEqual({ tokens: 134_000, ceiling: 120_000 });
+    expect(run.contextIsLink).toBe(false);
+  });
+
+  it("never writes through a symlink planted at a temporary name", () => {
+    const outside = path.join(
+      fs.mkdtempSync(path.join(os.tmpdir(), "agent-turn-host-")),
+      "host-file",
+    );
+    dirs.push(path.dirname(outside));
+    fs.writeFileSync(outside, "the host's\n");
+
+    const run = turn({
+      lines: [JSON.stringify(INIT), over, JSON.stringify(RESULT)],
+      plant: outside,
+      plantAs: "context.json.part",
+    });
+
+    expect(fs.readFileSync(outside, "utf8")).toBe("the host's\n");
+    expect(run.context).toEqual({ tokens: 134_000, ceiling: 120_000 });
   });
 
   it("starts each turn at 0, so the last session's context turns no one away", () => {

@@ -30,6 +30,7 @@
  */
 
 import { spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -63,8 +64,34 @@ const CONTEXT_FILE = process.env.VIBEWARS_CONTEXT_FILE ?? "";
  * @returns {void}
  */
 function saveContext(tokens) {
-  if (CONTEXT_FILE !== "") {
-    writeAtomically(CONTEXT_FILE, `${JSON.stringify({ tokens, ceiling: CONTEXT_CEILING })}\n`);
+  if (CONTEXT_FILE === "") {
+    return;
+  }
+  // The file is in the agent's own bus directory, which its jail can
+  // write, and this runs on the host. So the temporary file gets a name
+  // the agent cannot guess and is created, never opened: a symlink planted
+  // there is refused, not followed onto a host file. The rename then
+  // replaces whatever is at the final name, a symlink included, without
+  // following it.
+  // A write that fails costs the agent its notice, never the turn.
+  const part = `${CONTEXT_FILE}.${randomBytes(8).toString("hex")}.part`;
+  try {
+    const fd = fs.openSync(
+      part,
+      fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_NOFOLLOW,
+      0o644,
+    );
+    try {
+      fs.writeSync(fd, `${JSON.stringify({ tokens, ceiling: CONTEXT_CEILING })}\n`);
+    } finally {
+      fs.closeSync(fd);
+    }
+    fs.renameSync(part, CONTEXT_FILE);
+  } catch (error) {
+    fs.rmSync(part, { force: true });
+    console.error(
+      `agent-turn: could not write ${CONTEXT_FILE}: ${error instanceof Error ? error.message : "?"}`,
+    );
   }
 }
 
