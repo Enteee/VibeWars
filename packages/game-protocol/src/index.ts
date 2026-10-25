@@ -30,6 +30,8 @@ export type {
   StopIntent,
   TargetIntent,
   UseSkillIntent,
+  AttackIntent,
+  CancelAttackIntent,
   CastRefusedMessage,
   RechargeMessage,
   RechargeSlot,
