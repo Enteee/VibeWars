@@ -166,11 +166,25 @@ async function measureSyncLatency(
   return latencies;
 }
 
-/** Drive continuous movement and skill use, the way a real match looks. */
+/**
+ * Drive continuous movement, skill use and weapon attacks, the way a real
+ * match looks.
+ *
+ * Half the bots stand still and auto-attack the enemy next to them in seat
+ * order, so they approach along a path every tick. Moving cancels an
+ * attack, so a bench that only moves never reaches path finding, and could
+ * not catch a regression there (#267).
+ */
 function driveInputs(participants: readonly Participant[], seed: string): () => void {
   const rng = createRng(seedFromString(seed));
   const timer = setInterval(() => {
-    for (const participant of participants) {
+    for (const [i, participant] of participants.entries()) {
+      const enemy = participants[i ^ 1];
+      if (i % 4 < 2 && enemy !== undefined) {
+        participant.room.send("intent", { kind: "stop" });
+        participant.room.send("intent", { kind: "attack", targetId: enemy.sessionId });
+        continue;
+      }
       const angle = rng.nextFloat() * Math.PI * 2;
       participant.room.send("intent", {
         kind: "move",
