@@ -385,6 +385,46 @@ export function companyLines(facts, { rows, width }) {
  */
 
 /**
+ * @typedef {object} InboxRow
+ * @property {number} ts
+ * @property {string} to the inbox it was read from
+ * @property {string} from
+ * @property {string} kind
+ * @property {string} text
+ */
+
+/**
+ * One row per message, not one per inbox it reached (#189). A broadcast,
+ * or the operator writing in General, lands the same line in every inbox;
+ * those copies (same time, sender, kind and text) become one row to
+ * `all`. `tg send` has one recipient, so two or more can only be that.
+ *
+ * @param {readonly InboxRow[]} rows in any order
+ * @returns {FeedLine[]} oldest first
+ */
+export function groupFeed(rows) {
+  /** @type {Map<string, { ts: number, from: string, text: string, to: Set<string> }>} */
+  const messages = new Map();
+  for (const row of rows) {
+    const key = JSON.stringify([row.ts, row.from, row.kind, row.text]);
+    const message = messages.get(key);
+    if (message === undefined) {
+      messages.set(key, { ts: row.ts, from: row.from, text: row.text, to: new Set([row.to]) });
+    } else {
+      message.to.add(row.to);
+    }
+  }
+  return [...messages.values()]
+    .map(({ ts, from, text, to }) => ({
+      ts,
+      from,
+      to: to.size >= 2 ? "all" : ([...to][0] ?? "?"),
+      text,
+    }))
+    .sort((a, b) => a.ts - b.ts);
+}
+
+/**
  * The TELEGRAM pane: the newest messages that fit, oldest at the top,
  * each on one line cut to the pane's full width.
  *

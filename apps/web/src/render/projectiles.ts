@@ -78,6 +78,22 @@ export function projectileHeading(shot: RenderableProjectile): number {
   return Math.atan2(shot.to.y - shot.from.y, shot.to.x - shot.from.x);
 }
 
+/**
+ * How long an ended shot takes to fade (#238, art direction "How a shot
+ * ends"): it holds where it stopped, on a wall or the aim point, so the
+ * player sees it land rather than vanish mid-air.
+ */
+export const SHOT_FADE_SECONDS = 0.12;
+
+/** An ended shot's opacity at `now`: 1 when it ends, 0 when faded, `undefined` once it should go. */
+export function shotFadeAlpha(endedAt: number, now: number): number | undefined {
+  const age = now - endedAt;
+  if (age > SHOT_FADE_SECONDS) {
+    return undefined;
+  }
+  return Math.max(0, Math.min(1, 1 - age / SHOT_FADE_SECONDS));
+}
+
 /** How far past the last server time the clock runs on its own: a few patches. */
 const MAX_EXTRAPOLATION_SECONDS = 0.25;
 
@@ -90,7 +106,7 @@ export class MatchClock {
   #elapsed = 0;
   #observedAt = 0;
 
-  /** Note the server's clock, read at local time \`now\` (seconds). */
+  /** Note the server's clock, read at local time `now` (seconds). */
   public observe(elapsed: number, now: number): void {
     if (elapsed !== this.#elapsed) {
       this.#elapsed = elapsed;

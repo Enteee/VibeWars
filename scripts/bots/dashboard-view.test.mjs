@@ -5,7 +5,14 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { boardLines, companyLines, cut, doneOrder, feedLines } from "./dashboard-view.mjs";
+import {
+  boardLines,
+  companyLines,
+  cut,
+  doneOrder,
+  feedLines,
+  groupFeed,
+} from "./dashboard-view.mjs";
 /** @typedef {{ state: "up" | "stale" | "down" | "crash-looping", line: string }} HubLine */
 
 const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
@@ -257,5 +264,52 @@ describe("cut", () => {
     expect(cut("abcdef", 4)).toBe("abc…");
     expect(cut("abc", 4)).toBe("abc");
     expect(cut("abc", 0)).toBe("");
+  });
+});
+
+describe("groupFeed (#189)", () => {
+  /**
+   * @param {number} ts
+   * @param {string} to
+   * @param {string} [from]
+   * @param {string} [kind]
+   * @param {string} [text]
+   */
+  const row = (ts, to, from = "manager", kind = "peer", text = "standup") => ({
+    ts,
+    to,
+    from,
+    kind,
+    text,
+  });
+  const ROLES = ["architect", "developer-1", "developer-2", "lead-dev", "qa-tester"];
+
+  it("makes one broadcast, copied into every inbox, one row to all", () => {
+    expect(groupFeed(ROLES.map((role) => row(10, role)))).toEqual([
+      { ts: 10, from: "manager", to: "all", text: "standup" },
+    ]);
+  });
+
+  it("keeps the same words at a different time as two messages", () => {
+    expect(groupFeed([row(10, "architect"), row(11, "architect")])).toHaveLength(2);
+  });
+
+  it("keeps a message to one role addressed to that role", () => {
+    expect(groupFeed([row(10, "lead-dev")])).toEqual([
+      { ts: 10, from: "manager", to: "lead-dev", text: "standup" },
+    ]);
+  });
+
+  it("never merges a link notice into a broadcast at the same moment", () => {
+    const rows = [
+      ...ROLES.map((role) => row(10, role)),
+      row(10, "qa-tester", "link", "link", "delivered, but qa-tester is not running"),
+    ];
+    expect(groupFeed(rows).map((line) => line.to)).toEqual(["all", "qa-tester"]);
+  });
+
+  it("puts rows in time order whatever order the inboxes were read in", () => {
+    const rows = [row(30, "architect", "a"), row(10, "lead-dev", "b"), row(20, "qa-tester", "c")];
+    expect(groupFeed(rows).map((line) => line.ts)).toEqual([10, 20, 30]);
   });
 });
