@@ -243,6 +243,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       ),
       maxHealth: resolved.maxHealth,
       maxEnergy: resolved.maxEnergy,
+      baseEnergyPips: resolved.baseEnergyPips,
     });
     const seat: Seat = {
       playerId,

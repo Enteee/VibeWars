@@ -33,15 +33,30 @@ export type StatusId =
   | "regeneration"
   | "armor-boost";
 
+/** Health one pip of regeneration or degeneration is worth, per second (GW1). */
+export const HEALTH_PER_PIP = 2;
+/** Energy one pip of regeneration is worth, per second (GW1). */
+export const ENERGY_PER_PIP = 1 / 3;
+/** The most pips a net regeneration or degeneration can reach, either way (GW1). */
+export const MAX_PIPS = 10;
+
+/** A net pip count as it applies: clamped to `MAX_PIPS` either way. */
+export function clampPips(pips: number): number {
+  return Math.max(-MAX_PIPS, Math.min(MAX_PIPS, pips));
+}
+
 export interface StatusDefinition {
   readonly id: StatusId;
   readonly name: string;
   readonly category: StatusCategory;
   /**
-   * Health change per second while active. Negative drains, positive
-   * regenerates. Applied continuously by the status tick, not in lumps.
+   * Health regeneration while active, in GW1 pips (`HEALTH_PER_PIP`):
+   * negative degenerates. Every status's pips sum, clamped to
+   * `MAX_PIPS` either way, and apply continuously, not in lumps.
    */
-  readonly healthPerSecond: number;
+  readonly healthPips: number;
+  /** Energy regeneration while active, in pips (`ENERGY_PER_PIP`), summed with the base. */
+  readonly energyPips: number;
   /** Flat armor modifier while active. */
   readonly armorModifier: number;
   /** Movement speed multiplier while active (1 = unaffected). */
@@ -78,7 +93,8 @@ function define(
     id,
     name,
     category,
-    healthPerSecond: 0,
+    healthPips: 0,
+    energyPips: 0,
     armorModifier: 0,
     moveSpeedMultiplier: 1,
     attackMissChance: 0,
@@ -90,23 +106,24 @@ function define(
 }
 
 /**
- * Status definitions. Numbers are this project's own tuning, chosen to
+ * Status definitions. Pip counts are GW1's; the other numbers are this
+ * project's own tuning, chosen to
  * preserve each effect's *mechanical identity* (bleeding is a slow drain,
  * burning a fast one, deep wound a healing-reduction, blind an attack
  * denial) rather than to replicate any specific proprietary value table.
  */
 export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = {
-  bleeding: define("bleeding", "Bleeding", "condition", { healthPerSecond: -3 }),
-  burning: define("burning", "Burning", "condition", { healthPerSecond: -7 }),
-  poison: define("poison", "Poison", "condition", { healthPerSecond: -4 }),
+  bleeding: define("bleeding", "Bleeding", "condition", { healthPips: -3 }),
+  burning: define("burning", "Burning", "condition", { healthPips: -7 }),
+  poison: define("poison", "Poison", "condition", { healthPips: -4 }),
   crippled: define("crippled", "Crippled", "condition", { moveSpeedMultiplier: 0.5 }),
   blind: define("blind", "Blind", "condition", { attackMissChance: 0.9 }),
   weakness: define("weakness", "Weakness", "condition", { armorModifier: -20 }),
   "deep-wound": define("deep-wound", "Deep Wound", "condition", { maxHealthMultiplier: 0.8 }),
   dazed: define("dazed", "Dazed", "condition", { castTimeMultiplier: 2 }),
 
-  "life-drain": define("life-drain", "Life Drain", "hex", { healthPerSecond: -2 }),
-  regeneration: define("regeneration", "Regeneration", "enchantment", { healthPerSecond: 4 }),
+  "life-drain": define("life-drain", "Life Drain", "hex", { healthPips: -2 }),
+  regeneration: define("regeneration", "Regeneration", "enchantment", { healthPips: 4 }),
   // The slow is Armor of Earth's price: without it, +24 armor is free.
   "armor-boost": define("armor-boost", "Armor Boost", "enchantment", {
     armorModifier: 24,
@@ -237,7 +254,10 @@ export class StatusSet {
 /* -------------------------------------------------------------------------- */
 
 export interface StatusModifiers {
-  readonly healthPerSecond: number;
+  /** Every status's health pips, summed and not yet clamped. */
+  readonly healthPips: number;
+  /** Every status's energy pips, summed and not yet clamped. */
+  readonly energyPips: number;
   readonly armorModifier: number;
   readonly moveSpeedMultiplier: number;
   readonly attackMissChance: number;
@@ -249,7 +269,7 @@ export interface StatusModifiers {
 /**
  * Collapse every active status into one set of modifiers.
  *
- * Additive effects (health-per-second, armor) sum; multiplicative ones
+ * Additive effects (health and energy pips, armor) sum; multiplicative ones
  * (move speed, max health, cast time) multiply; miss chance takes the
  * worst rather than compounding, so two blinding effects cannot push a
  * player past certain failure in a way that feels arbitrary.
@@ -257,7 +277,8 @@ export interface StatusModifiers {
  * strongest slow-down count, and they multiply.
  */
 export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusModifiers {
-  let healthPerSecond = 0;
+  let healthPips = 0;
+  let energyPips = 0;
   let armorModifier = 0;
   let moveSpeedMultiplier = 1;
   let attackMissChance = 0;
@@ -268,7 +289,8 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
 
   for (const status of statuses) {
     const def = getStatusDefinition(status.id);
-    healthPerSecond += def.healthPerSecond;
+    healthPips += def.healthPips;
+    energyPips += def.energyPips;
     armorModifier += def.armorModifier;
     moveSpeedMultiplier *= def.moveSpeedMultiplier;
     attackMissChance = Math.max(attackMissChance, def.attackMissChance);
@@ -279,7 +301,8 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
   }
 
   return {
-    healthPerSecond,
+    healthPips,
+    energyPips,
     armorModifier,
     moveSpeedMultiplier,
     attackMissChance,

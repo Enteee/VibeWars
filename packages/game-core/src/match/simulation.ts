@@ -33,7 +33,13 @@ import { canActivate, hasAftercast, payCost, type ActivationCheck } from "../ski
 import { CastState, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
 import { applySkillEffects, type CombatEvent } from "../skills/effects.js";
-import { STATUS_DEFINITIONS, StatusSet } from "../skills/status.js";
+import {
+  aggregateModifiers,
+  clampPips,
+  ENERGY_PER_PIP,
+  STATUS_DEFINITIONS,
+  StatusSet,
+} from "../skills/status.js";
 import { resolveTargets } from "../skills/targeting.js";
 import {
   advanceStatuses,
@@ -101,6 +107,8 @@ export interface ParticipantSpec {
   readonly maxHealth?: number;
   /** Defaults to the ruleset's base energy. */
   readonly maxEnergy?: number;
+  /** Energy regeneration before statuses, in pips. Defaults to 0: none, as a dummy needs. */
+  readonly baseEnergyPips?: number;
   /** Health to start (and reset) at, as a fraction of max. Defaults to 1. */
   readonly startHealthFraction?: number;
   /** Omitted: driven from outside, like a player. */
@@ -205,10 +213,10 @@ function degenerationSources(combatant: Combatant): {
   const draining = new Set<string>();
   const healing = new Set<string>();
   for (const status of combatant.statuses.active) {
-    const perSecond = STATUS_DEFINITIONS[status.id].healthPerSecond;
-    if (perSecond < 0) {
+    const pips = STATUS_DEFINITIONS[status.id].healthPips;
+    if (pips < 0) {
       draining.add(status.sourceId);
-    } else if (perSecond > 0) {
+    } else if (pips > 0) {
       healing.add(status.sourceId);
     }
   }
@@ -409,6 +417,7 @@ export class MatchSimulation {
       equipment: loadout.equipment,
       maxHealth: loadout.maxHealth,
       maxEnergy: loadout.maxEnergy,
+      baseEnergyPips: loadout.baseEnergyPips,
     });
     record.combatant.health = record.combatant.maxHealth * fraction;
     record.combatant.dead = before.dead;
@@ -688,11 +697,16 @@ export class MatchSimulation {
         this.#advanceWalk(record, dt);
       }
 
-      // Energy regenerates continuously; adrenaline is earned by acting,
-      // not by waiting, so it deliberately does not tick up here.
+      // Energy regenerates continuously, at the base pips plus every
+      // status's, clamped (GW1); adrenaline is earned by acting, not by
+      // waiting, so it deliberately does not tick up here.
+      const energyPips = clampPips(
+        record.combatant.baseEnergyPips +
+          aggregateModifiers(record.combatant.statuses.active).energyPips,
+      );
       record.combatant.energy = Math.min(
         record.combatant.maxEnergy,
-        record.combatant.energy + this.#ruleset.resources.energyRegenPerSecond * dt,
+        Math.max(0, record.combatant.energy + energyPips * ENERGY_PER_PIP * dt),
       );
 
       const sources = degenerationSources(record.combatant);
@@ -1503,6 +1517,7 @@ export class MatchSimulation {
       maxHealth,
       energy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
       maxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
+      baseEnergyPips: spec.baseEnergyPips ?? 0,
       adrenaline: 0,
       attributeRanks: spec.attributeRanks,
       team: spec.team,

@@ -1,14 +1,14 @@
 import type { CombatEvent } from "./effects.js";
-import { aggregateModifiers } from "./status.js";
+import { aggregateModifiers, clampPips, HEALTH_PER_PIP } from "./status.js";
 import type { Combatant, Skill } from "./types.js";
 
 /**
  * Per-tick status processing (brief §13's "durations", §12's degeneration).
  *
- * Health change from statuses is applied *continuously* — `healthPerSecond
- * * dt` — rather than in once-per-second lumps, so a 3-health-per-second
- * bleed and a 20Hz tick produce smooth, predictable degeneration instead
- * of visible stair-stepping. Fractional health is carried in the
+ * Health change from statuses is applied *continuously* — the net pips,
+ * clamped, times `HEALTH_PER_PIP * dt` — rather than in once-per-second
+ * lumps, so a −3 bleed and a 20Hz tick produce smooth, predictable
+ * degeneration instead of visible stair-stepping. Fractional health is carried in the
  * combatant's health value and only ever observed rounded at the UI layer.
  */
 export function advanceStatuses(combatant: Combatant, dt: number): CombatEvent[] {
@@ -19,8 +19,9 @@ export function advanceStatuses(combatant: Combatant, dt: number): CombatEvent[]
 
   const modifiers = aggregateModifiers(combatant.statuses.active);
 
-  if (modifiers.healthPerSecond !== 0) {
-    const delta = modifiers.healthPerSecond * dt;
+  const pips = clampPips(modifiers.healthPips);
+  if (pips !== 0) {
+    const delta = pips * HEALTH_PER_PIP * dt;
     const effectiveMax = combatant.maxHealth * modifiers.maxHealthMultiplier;
     const next = Math.min(effectiveMax, Math.max(0, combatant.health + delta));
     const applied = next - combatant.health;

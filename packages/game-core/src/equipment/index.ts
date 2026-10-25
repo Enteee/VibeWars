@@ -32,7 +32,14 @@ export {
 } from "./offhands.js";
 
 export type { ArmorPiece, ArmorSet } from "./armor.js";
-export { BASE_ARMOR_BY_PROFESSION, armorPieces, bareArmorSet, baseArmorFor } from "./armor.js";
+export {
+  BASE_ARMOR_BY_PROFESSION,
+  BASE_ENERGY_PIPS_BY_PROFESSION,
+  armorPieces,
+  bareArmorSet,
+  baseArmorFor,
+  baseEnergyPipsFor,
+} from "./armor.js";
 
 export type {
   AttributeRuneTier,

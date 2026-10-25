@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { MAX_ATTRIBUTE_RANK, isAffordable } from "../attributes.js";
+import { baseEnergyPipsFor } from "../equipment/armor.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { getAttribute } from "../professions.js";
@@ -124,6 +125,7 @@ function arena(played: TrainingScenario, seed: string): MatchSimulation {
         equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
         spawn: map.playerSpawn,
         facing: 0,
+        baseEnergyPips: baseEnergyPipsFor("elementalist"),
       },
       ...scenarioParticipants(played, map.playerSpawn),
     ],
