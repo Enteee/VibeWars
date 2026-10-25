@@ -14,7 +14,7 @@ async function main(): Promise<void> {
 
   await server.listen(config.port, config.host, undefined, () => {
     console.info(
-      `[server] vibewars listening on ${config.host}:${String(config.port)} (devMode=${String(config.devMode)})`,
+      `[server] VibeWars listening on ${config.host}:${String(config.port)} (devMode=${String(config.devMode)})`,
     );
   });
 }

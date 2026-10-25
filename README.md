@@ -1,4 +1,4 @@
-# vibewars
+# VibeWars
 
 [![Latest release](https://img.shields.io/github/v/release/Enteee/VibeWars?style=flat&label=release)](https://github.com/Enteee/VibeWars/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/Enteee/VibeWars/ci.yml?branch=main&style=flat&label=CI)](https://github.com/Enteee/VibeWars/actions/workflows/ci.yml?query=branch%3Amain)
