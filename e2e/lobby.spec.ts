@@ -224,6 +224,11 @@ test("a player who quits early is told the match still runs, until it ends", asy
     await expect(host.locator("#viewport canvas")).toBeVisible();
     await expect(guest.locator("#viewport canvas")).toBeVisible();
 
+    // The canvas shows before the join resolves, and Escape only leaves once
+    // the match view listens for it; "in match" is set right after that.
+    await expect(host.locator("#status")).toHaveText("in match");
+    await expect(guest.locator("#status")).toHaveText("in match");
+
     // The host quits; the guest is still fighting.
     await host.keyboard.press("Escape");
     const running = host.locator(".lobby-running");
