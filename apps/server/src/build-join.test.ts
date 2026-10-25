@@ -263,6 +263,7 @@ describe("joining with a build", () => {
    * without it, builds could be validated, stored, displayed, and still
    * have no effect on a single point of damage.
    */
+  // Game time: two ranks × (two 4 s walks + an 8 s Fireball wait + joins) ≈ 34 s worst case.
   it("scales damage by the attribute ranks the build asked for", async () => {
     const fireballOnly = (rank: number): PlayerBuild => ({
       name: `Fire ${String(rank)}`,
@@ -298,8 +299,8 @@ describe("joining with a build", () => {
           await new Promise((resolve) => setTimeout(resolve, 50));
         }
       };
-      await walk(attacker, 500, 320);
-      await walk(victim, 540, 320);
+      // The two clients steer independently, so they walk at once.
+      await Promise.all([walk(attacker, 500, 320), walk(victim, 540, 320)]);
       attacker.send("intent", { kind: "stop" });
       victim.send("intent", { kind: "stop" });
 
@@ -330,5 +331,5 @@ describe("joining with a build", () => {
     // exact figures are pinned in game-core's scaling tests; what is
     // asserted here is only that the build reached the simulation.
     expect(strong).toBeGreaterThan(weak);
-  });
+  }, 40_000);
 });
