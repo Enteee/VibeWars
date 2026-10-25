@@ -9,6 +9,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     name: sessionId,
     x: 0,
     y: 0,
+    facing: 0,
     targetSessionId: undefined,
     attackTargetSessionId: undefined,
     health: 500,
