@@ -151,6 +151,36 @@ describe("attachMatchMusic", () => {
     expect(levels(changes)).toEqual([3]);
   });
 
+  it("peaks for the last two alive, though the side filled in after the first snapshot", () => {
+    const { changes, at } = setup();
+    const far = ENGAGE_RANGE * 3;
+    const roster = (players: PlayerSnapshot[]): MatchSnapshot => ({
+      ...snapshot(),
+      players,
+    });
+    // Alone at first: the others are still joining.
+    at(0, roster([player(ME), player("foe", { team: 1, x: far })]));
+    at(
+      DIRECT_INTERVAL_MS,
+      roster([
+        player(ME),
+        player("ally"),
+        player("foe", { team: 1, x: far }),
+        player("foe-2", { team: 1, x: far }),
+      ]),
+    );
+    at(
+      DIRECT_INTERVAL_MS,
+      roster([
+        player(ME),
+        player("ally", { dead: true }),
+        player("foe", { team: 1, x: far }),
+        player("foe-2", { team: 1, x: far, dead: true }),
+      ]),
+    );
+    expect(levels(changes)).toEqual([0, 3]);
+  });
+
   it("holds while the connection is down", () => {
     const { music, changes, at } = setup();
     at(0);

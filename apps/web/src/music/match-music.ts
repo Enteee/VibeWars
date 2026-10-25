@@ -107,6 +107,9 @@ export function attachMatchMusic(
   let disposed = false;
 
   connection.onCombat((message) => {
+    if (disposed || !online) {
+      return;
+    }
     const at = now();
     for (const hit of hitsForCombat(message, connection.selfSessionId)) {
       (hit === "dealt" ? dealt : taken).push(at);
@@ -128,10 +131,12 @@ export function attachMatchMusic(
         return;
       }
       lastAsked = at;
-      if (teamSize === null) {
-        const self = next.players.find((p) => p.sessionId === next.selfSessionId);
-        teamSize =
-          self === undefined ? null : next.players.filter((p) => p.team === self.team).length;
+      // Players join a running match one by one, so the first snapshot
+      // may hold only some of the side: the largest count seen is the size.
+      const self = next.players.find((p) => p.sessionId === next.selfSessionId);
+      if (self !== undefined) {
+        const side = next.players.filter((p) => p.team === self.team).length;
+        teamSize = Math.max(teamSize ?? 0, side);
       }
       const input: MusicInput = {
         ...fromSnapshot(next, screen, teamSize),
