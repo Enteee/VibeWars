@@ -41,7 +41,6 @@ export interface LobbyConnection {
   setReady(ready: boolean): void;
   selectMap(mapId: string): void;
   startMatch(): void;
-  returnToLobby(): void;
   onChange(handler: () => void): void;
   onMatchStarting(handler: (message: LobbyMatchStartingMessage) => void): void;
   onStartRejected(handler: (message: { reason: string }) => void): void;
@@ -137,9 +136,6 @@ function wrap(room: Room<unknown, DecodedLobbyState>): LobbyConnection {
     },
     startMatch() {
       room.send("start-match", {});
-    },
-    returnToLobby() {
-      room.send("return-to-lobby", {});
     },
     onChange(handler) {
       room.onStateChange(handler);

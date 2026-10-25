@@ -132,6 +132,15 @@ export class LobbyRoom extends Room {
    */
   readonly #builds = new Map<string, unknown>();
 
+  /**
+   * Counts the matches this lobby opened, so a room from an earlier one
+   * that only goes away later cannot end the current one.
+   */
+  #matchNumber = 0;
+
+  /** Set once this room is gone, so a match ending later finds nobody to reset. */
+  #disposed = false;
+
   public override onCreate(options: unknown): void {
     this.autoDispose = true;
     this.maxMessagesPerSecond = MAX_MESSAGES_PER_SECOND;
@@ -168,9 +177,6 @@ export class LobbyRoom extends Room {
     });
     this.onMessage("start-match", (client) => {
       void this.handleStartMatch(client);
-    });
-    this.onMessage("return-to-lobby", () => {
-      this.returnToLobby();
     });
 
     console.info(`[lobby] created code=${this.state.code} roomId=${this.roomId}`);
@@ -230,7 +236,10 @@ export class LobbyRoom extends Room {
   }
 
   /**
-   * Put the lobby back into its waiting state after a match.
+   * Put the lobby back into its waiting state once its match is over.
+   *
+   * The match room says when (#44): no client can, so a non-host cannot
+   * reset a lobby mid-match, and nobody waits on the host to come back.
    *
    * Without this a lobby is single-use: brief §46 requires that players
    * can "return to the lobby" and "immediately play another match", so
@@ -239,8 +248,8 @@ export class LobbyRoom extends Room {
    * assignments are kept because re-picking sides every round would be
    * tedious.
    */
-  public returnToLobby(): void {
-    if (this.state.phase === "waiting") {
+  private returnToLobby(): void {
+    if (this.state.phase !== "in-match") {
       return;
     }
     this.state.phase = "waiting";
@@ -302,7 +311,13 @@ export class LobbyRoom extends Room {
 
     let reservations: Awaited<ReturnType<typeof openLobbyMatch>>;
     try {
-      reservations = await openLobbyMatch(mapId, seated);
+      this.#matchNumber += 1;
+      const matchNumber = this.#matchNumber;
+      reservations = await openLobbyMatch(mapId, seated, () => {
+        if (!this.#disposed && matchNumber === this.#matchNumber) {
+          this.returnToLobby();
+        }
+      });
     } catch (error: unknown) {
       console.error(`[lobby] ${this.state.code} could not open its match`, error);
       this.state.phase = "waiting";
@@ -362,6 +377,7 @@ export class LobbyRoom extends Room {
   }
 
   public override onDispose(): void {
+    this.#disposed = true;
     console.info(`[lobby] ${this.state.code} disposed`);
   }
 }

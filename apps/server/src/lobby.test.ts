@@ -1,4 +1,5 @@
-import { Client } from "@colyseus/sdk";
+import { matchMaker } from "@colyseus/core";
+import { Client, type Room } from "@colyseus/sdk";
 import { createRng, seedFromString } from "@vibewars/game-core";
 import {
   PROTOCOL_MISMATCH_MESSAGE,
@@ -8,10 +9,12 @@ import {
   ROOM_LOBBY,
   isLobbyCode,
   normalizeLobbyCode,
+  type LobbyMatchStartingMessage,
 } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { generateLobbyCode, sanitizeName } from "./rooms/lobby-room.js";
+import { MatchRoom } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
 
@@ -447,7 +450,7 @@ describe("playing more than one match in a lobby", () => {
     await server.gracefullyShutdown(false);
   });
 
-  /** Drive a lobby from fresh to a started match. */
+  /** Drive a lobby from fresh to a started match that both players are in. */
   async function startAMatch() {
     const host = await new Client(endpoint).create(ROOM_LOBBY, {
       protocolVersion: PROTOCOL_VERSION,
@@ -460,6 +463,11 @@ describe("playing more than one match in a lobby", () => {
     host.send("choose-team", { team: 0 });
     guest.send("choose-team", { team: 1 });
     await waitFor(() => host.state.players.get(guest.sessionId)?.team === 1, { label: "teams" });
+    return { host, guest, matches: await startAgain(host, guest) };
+  }
+
+  /** Ready both players, start, and walk each into the match. */
+  async function startAgain(host: Room, guest: Room): Promise<Room[]> {
     host.send("ready", { ready: true });
     guest.send("ready", { ready: true });
     await waitFor(
@@ -469,27 +477,108 @@ describe("playing more than one match in a lobby", () => {
       { label: "both ready" },
     );
 
+    const starting = [host, guest].map(
+      (room) =>
+        new Promise<LobbyMatchStartingMessage>((resolve) => {
+          room.onMessage("match-starting", resolve);
+        }),
+    );
     host.send("start-match", {});
+    const messages = await Promise.all(starting);
     await waitFor(() => host.state.phase === "in-match", { label: "match to start" });
-    return { host, guest };
+    return Promise.all(
+      messages.map(({ reservation }) => new Client(endpoint).consumeSeatReservation(reservation)),
+    );
   }
 
-  it("returns to waiting so a second match can be started", async () => {
-    const { host, guest } = await startAMatch();
-
-    host.send("return-to-lobby", {});
+  /** Everyone leaves the match, which is how one that never finished ends. */
+  async function leaveTheMatch(host: Room, matches: readonly Room[]): Promise<void> {
+    await Promise.all(matches.map((match) => match.leave()));
     await waitFor(() => host.state.phase === "waiting", { label: "return to waiting" });
+  }
+
+  /** Finish a match now, rather than after ten minutes of play. */
+  function finish(match: Room): void {
+    const room = matchMaker.getLocalRoomById(match.roomId);
+    if (!(room instanceof MatchRoom)) throw new Error("no match room");
+    room.endMatch();
+  }
+
+  it("returns to waiting the moment its match finishes, with readiness cleared and teams kept", async () => {
+    const { host, guest, matches } = await startAMatch();
+    const [match] = matches;
+    if (match === undefined) throw new Error("no match");
+
+    finish(match);
+    await waitFor(() => host.state.phase === "waiting", { label: "return to waiting" });
+
+    expect(host.state.players.get(host.sessionId)?.ready).toBe(false);
+    expect(host.state.players.get(guest.sessionId)?.ready).toBe(false);
+    expect(host.state.players.get(host.sessionId)?.team).toBe(0);
+    expect(host.state.players.get(guest.sessionId)?.team).toBe(1);
+
+    await Promise.all(matches.map((room) => room.leave()));
+    await guest.leave();
+    await host.leave();
+  });
+
+  it("lets its match finish quietly when the lobby itself is already gone", async () => {
+    const { host, guest, matches } = await startAMatch();
+    const [match] = matches;
+    if (match === undefined) throw new Error("no match");
+    await guest.leave();
+    await host.leave();
+
+    finish(match);
+    await waitFor(() => matches.every((room) => room.state.phase === "finished"), {
+      label: "the match to finish",
+    });
+    await Promise.all(matches.map((room) => room.leave()));
+  });
+
+  it("returns to waiting by itself once its match is over", async () => {
+    const { host, guest, matches } = await startAMatch();
+
+    await leaveTheMatch(host, matches);
 
     expect(host.state.phase).toBe("waiting");
     await guest.leave();
     await host.leave();
   });
 
-  it("clears readiness on return, so nobody is dragged into a match they did not confirm", async () => {
-    const { host, guest } = await startAMatch();
+  it("stays in its match while anyone is still playing it", async () => {
+    const { host, guest, matches } = await startAMatch();
+    const [hostMatch, guestMatch] = matches;
 
-    host.send("return-to-lobby", {});
+    // The host walking out early must not end the match for the guest.
+    await hostMatch?.leave();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(host.state.phase).toBe("in-match");
+
+    await guestMatch?.leave();
     await waitFor(() => host.state.phase === "waiting", { label: "return to waiting" });
+    await guest.leave();
+    await host.leave();
+  });
+
+  it("will not let a member reset a lobby whose match is still on (#44)", async () => {
+    const { host, guest, matches } = await startAMatch();
+
+    // There is no client message for it any more: an unregistered type
+    // gets its sender dropped, and the match carries on.
+    guest.send("return-to-lobby", {});
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(host.state.phase).toBe("in-match");
+    expect(host.state.players.get(host.sessionId)?.ready).toBe(true);
+
+    await leaveTheMatch(host, matches);
+    await host.leave();
+  });
+
+  it("clears readiness on return, so nobody is dragged into a match they did not confirm", async () => {
+    const { host, guest, matches } = await startAMatch();
+
+    await leaveTheMatch(host, matches);
 
     expect(host.state.players.get(host.sessionId)?.ready).toBe(false);
     expect(host.state.players.get(guest.sessionId)?.ready).toBe(false);
@@ -499,10 +588,9 @@ describe("playing more than one match in a lobby", () => {
   });
 
   it("keeps team assignments, so sides do not have to be re-picked every round", async () => {
-    const { host, guest } = await startAMatch();
+    const { host, guest, matches } = await startAMatch();
 
-    host.send("return-to-lobby", {});
-    await waitFor(() => host.state.phase === "waiting", { label: "return to waiting" });
+    await leaveTheMatch(host, matches);
 
     expect(host.state.players.get(host.sessionId)?.team).toBe(0);
     expect(host.state.players.get(guest.sessionId)?.team).toBe(1);
@@ -512,24 +600,13 @@ describe("playing more than one match in a lobby", () => {
   });
 
   it("can actually start a second match after returning", async () => {
-    const { host, guest } = await startAMatch();
+    const { host, guest, matches } = await startAMatch();
 
-    host.send("return-to-lobby", {});
-    await waitFor(() => host.state.phase === "waiting", { label: "return to waiting" });
-
-    host.send("ready", { ready: true });
-    guest.send("ready", { ready: true });
-    await waitFor(
-      () =>
-        host.state.players.get(host.sessionId)?.ready === true &&
-        host.state.players.get(guest.sessionId)?.ready === true,
-      { label: "both ready again" },
-    );
-
-    host.send("start-match", {});
-    await waitFor(() => host.state.phase === "in-match", { label: "second match to start" });
+    await leaveTheMatch(host, matches);
+    const second = await startAgain(host, guest);
 
     expect(host.state.phase).toBe("in-match");
+    await leaveTheMatch(host, second);
     await guest.leave();
     await host.leave();
   });

@@ -275,6 +275,7 @@ interface PendingSeat extends LobbySeat {
 interface Seating {
   readonly seats: readonly PendingSeat[];
   readonly joinDeadlineSeconds: number;
+  readonly onOver: () => void;
 }
 
 /**
@@ -292,6 +293,10 @@ const pendingSeatings = new Map<string, Seating>();
  * client can reserve a seat in it; it is private, so Quick Match never
  * finds it.
  *
+ * `onOver` runs once, when the match finishes or its room goes away
+ * first (everyone left, or nobody came), so the lobby can take its
+ * players back without trusting any of them to say so (#44).
+ *
  * If a reservation fails, the error goes to the caller. The room it
  * leaves is empty, and disposes itself once the reservations made in it
  * lapse.
@@ -299,11 +304,12 @@ const pendingSeatings = new Map<string, Seating>();
 export async function openLobbyMatch(
   mapId: string,
   seats: readonly LobbySeat[],
+  onOver: () => void,
   joinDeadlineSeconds = LOBBY_MATCH_JOIN_DEADLINE_SECONDS,
 ): Promise<matchMaker.ISeatReservation[]> {
   const seating = randomUUID();
   const pending = seats.map((seat) => ({ ...seat, sessionId: randomUUID() }));
-  pendingSeatings.set(seating, { seats: pending, joinDeadlineSeconds });
+  pendingSeatings.set(seating, { seats: pending, joinDeadlineSeconds, onOver });
   const room = await matchMaker
     .createRoom(ROOM_MATCH, { mapId, seating })
     .finally(() => pendingSeatings.delete(seating));
@@ -353,6 +359,8 @@ export class MatchRoom extends Room {
    * as players arrive.
    */
   #seats: Map<string, { readonly team: 0 | 1; readonly name: string; used: boolean }> | undefined;
+  /** The opening lobby's `onOver`, until it has run; Quick Match has none. */
+  #onOver: (() => void) | undefined;
 
   /**
    * Rolling tick-duration samples in milliseconds (brief §26).
@@ -426,6 +434,7 @@ export class MatchRoom extends Room {
       await this.setPrivate(true);
       this.maxClients = pending.seats.length;
       this.seatReservationTimeout = pending.joinDeadlineSeconds;
+      this.#onOver = pending.onOver;
       this.#seats = new Map(
         pending.seats.map((seat) => [
           seat.sessionId,
@@ -616,8 +625,12 @@ export class MatchRoom extends Room {
     }
   }
 
-  /** The match just finished: say so, once, to everyone. */
-  private endMatch(): void {
+  /**
+   * The match just finished: say so, once, to everyone. The tick calls it
+   * when the rules say so; tests call it to skip ten minutes of play.
+   */
+  public endMatch(): void {
+    this.over();
     const outcome = this.#sim.outcome;
     this.state.phase = "finished";
     this.state.winningTeam = outcome.winningTeam ?? -1;
@@ -837,7 +850,20 @@ export class MatchRoom extends Room {
   }
 
   public override onDispose(): void {
+    this.over();
     console.info("[match] disposed");
+  }
+
+  /** Tell the opening lobby, once, that this match is over. */
+  private over(): void {
+    const onOver = this.#onOver;
+    this.#onOver = undefined;
+    try {
+      onOver?.();
+    } catch (error: unknown) {
+      // The lobby's trouble; it must not stop this tick or dispose.
+      console.error("[match] the lobby failed to take its players back", error);
+    }
   }
 }
 

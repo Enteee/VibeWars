@@ -207,6 +207,9 @@ async function runScenario(
       name: `bench-${String(i)}`,
       build: undefined,
     })),
+    () => {
+      /* no lobby to tell */
+    },
   );
   for (const reservation of reservations) {
     const room = await new Client(endpoint).consumeSeatReservation(reservation);
