@@ -12,6 +12,7 @@ import {
 } from "./net/lobby-client.js";
 import { startMatchView, type MatchView } from "./match-view.js";
 import { music } from "./music/play-music.js";
+import { STRESS_BUILD, startStress, stressMs } from "./music/stress.js";
 import {
   CharacterRepository,
   TeamRepository,
@@ -70,6 +71,11 @@ async function openStore(): Promise<KeyValueStore> {
 async function main(): Promise<void> {
   const screenRoot = requireElement("#screens");
   const viewport = requireElement("#viewport");
+
+  const stress = stressMs(window.location.search, STRESS_BUILD);
+  if (stress !== null) {
+    startStress(stress);
+  }
 
   const store = await openStore();
   const characters = new CharacterRepository(store);

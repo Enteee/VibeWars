@@ -4,6 +4,21 @@ import { MAX_SOURCE_LENGTH, parseGameToHost, parseHostToGame } from "./host-prot
 
 const track = { trackId: "first-light", source: 's("bd")', phraseCycles: 8 };
 
+const stats = {
+  type: "stats",
+  ticks: 10,
+  lateTicks: 1,
+  maxTickGapMs: 160.5,
+  maxTickWorkMs: 12.3,
+  skippedMs: 50,
+  events: 7,
+  lateEvents: 0,
+  baseLatencyMs: 10,
+  outputLatencyMs: 32,
+  glitches: null,
+  glitchMs: null,
+};
+
 describe("parseGameToHost", () => {
   it("accepts every message the game sends", () => {
     for (const message of [
@@ -16,6 +31,7 @@ describe("parseGameToHost", () => {
       { type: "setVolume", gain: 0.5, rampSeconds: 0.3 },
       { type: "evaluate", source: 's("hh*8")' },
       { type: "ping", seq: 7 },
+      { type: "measure" },
     ]) {
       expect(parseGameToHost(message), message.type).toEqual(message);
     }
@@ -60,6 +76,8 @@ describe("parseHostToGame", () => {
       { type: "error", message: "Unexpected token (3:0)", line: 3 },
       { type: "error", message: "the source does not end in a pattern" },
       { type: "pong", seq: 3 },
+      stats,
+      { ...stats, glitches: 2, glitchMs: 21.3 },
     ]) {
       expect(parseHostToGame(message), message.type).toEqual(message);
     }
@@ -74,6 +92,11 @@ describe("parseHostToGame", () => {
       { type: "error", message: "x".repeat(501) },
       { type: "error", message: "x", line: 0 },
       { type: "pong" },
+      { ...stats, ticks: -1 },
+      { ...stats, skippedMs: Number.POSITIVE_INFINITY },
+      { ...stats, lateEvents: "0" },
+      { ...stats, glitches: undefined },
+      { type: "stats" },
       // The host never sends a game message back.
       { type: "load", ...track },
     ]) {

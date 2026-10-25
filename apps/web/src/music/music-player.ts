@@ -3,6 +3,7 @@ import {
   type GameToHost,
   type HostToGame,
   type MusicLevel,
+  type MusicStats,
 } from "./host-protocol.js";
 import { musicHostUrl } from "./music-urls.js";
 
@@ -42,6 +43,8 @@ export interface MusicPlayer {
   stop(): void;
   onNowPlaying(handler: (trackId: string) => void): void;
   onError(handler: (error: MusicError) => void): void;
+  /** Each second's stats, from a host that measures (`measure` in the deps). */
+  onStats(handler: (stats: MusicStats) => void): void;
 }
 
 /** The host as the player sees it: an iframe in the page, or a test's fake. */
@@ -63,6 +66,8 @@ export interface MusicPlayerDeps {
   readonly now: () => number;
   /** Call `tick` every `ms` until the returned function is called. */
   readonly every: (ms: number, tick: () => void) => () => void;
+  /** Ask every host to count what the music costs (`?musicstats`, #420). */
+  readonly measure: boolean;
 }
 
 /** A track switch fades over this many cycles (#366 §3.1). */
@@ -86,6 +91,7 @@ function supersedes(later: GameToHost, earlier: GameToHost): boolean {
 export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
   const nowPlaying: ((trackId: string) => void)[] = [];
   const errors: ((error: MusicError) => void)[] = [];
+  const statsHandlers: ((stats: MusicStats) => void)[] = [];
   let gestured = false;
   let frame: MusicFrame | undefined;
   let ready = false;
@@ -158,6 +164,13 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
             : { message: message.message, line: message.line },
         );
         return;
+      case "stats": {
+        const { type: _type, ...stats } = message;
+        for (const handler of statsHandlers) {
+          handler(stats);
+        }
+        return;
+      }
       case "evaluated":
         return;
     }
@@ -169,6 +182,7 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     }
     frame = deps.createFrame(receive);
     queue = [
+      ...(deps.measure ? [{ type: "measure" } as const] : []),
       { type: "setVolume", gain: volume, rampSeconds: 0 },
       { type: "setIntensity", level: intensity },
       ...queue.filter((message) => message.type !== "setVolume" && message.type !== "setIntensity"),
@@ -236,6 +250,9 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     onError(handler) {
       errors.push(handler);
     },
+    onStats(handler) {
+      statsHandlers.push(handler);
+    },
   };
 }
 
@@ -277,11 +294,20 @@ export function createHostFrame(url: string, receive: (message: HostToGame) => v
   };
 }
 
+/** Whether the page asked to measure the music: `?musicstats` (#420). */
+export function measuringMusic(search: string): boolean {
+  return new URLSearchParams(search).has("musicstats");
+}
+
 let shared: MusicPlayer | undefined;
 
 /** The page's one music player. */
 export function musicPlayer(): MusicPlayer {
-  shared ??= createMusicPlayer({
+  if (shared !== undefined) {
+    return shared;
+  }
+  const measure = measuringMusic(location.search);
+  shared = createMusicPlayer({
     createFrame: (receive) => createHostFrame(musicHostUrl(import.meta.env.BASE_URL), receive),
     gestures: window,
     now: () => performance.now(),
@@ -291,6 +317,13 @@ export function musicPlayer(): MusicPlayer {
         window.clearInterval(id);
       };
     },
+    measure,
   });
+  if (measure) {
+    // For scripts/music-stress.mjs, which reads the last second's stats.
+    shared.onStats((stats) => {
+      Object.assign(window, { __musicStats: stats });
+    });
+  }
   return shared;
 }
