@@ -1,5 +1,5 @@
 import { Client, type Room } from "@colyseus/sdk";
-import type { PlayerBuild } from "@vibewars/game-core";
+import { isOffhandId, type PlayerBuild } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   ROOM_MATCH,
@@ -87,6 +87,7 @@ export interface DecodedPlayer {
   readonly adrenaline: number;
   readonly armor: number;
   readonly weaponId: string;
+  readonly offhandId: string;
   readonly team: number;
   readonly dead: boolean;
   readonly castingSkillId: string;
@@ -135,6 +136,8 @@ function snapshotFrom(room: LiveMatchRoom): MatchSnapshot {
       adrenaline: player.adrenaline,
       armor: player.armor,
       weaponId: player.weaponId === "" ? undefined : player.weaponId,
+      // "" is none; an id this client does not know draws nothing either.
+      offhandId: isOffhandId(player.offhandId) ? player.offhandId : undefined,
       team: player.team,
       dead: player.dead,
       castingSkillId: player.castingSkillId === "" ? undefined : player.castingSkillId,

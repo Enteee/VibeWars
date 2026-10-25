@@ -1,4 +1,4 @@
-import { Vec, type Vec2 } from "@vibewars/game-core";
+import { Vec, type OffhandId, type Vec2 } from "@vibewars/game-core";
 
 import type { RenderableProjectile } from "./projectiles.js";
 
@@ -22,6 +22,8 @@ export interface RenderableActor {
   readonly facing: number;
   /** Picks the weapon mark's tip (#188); `undefined` draws none. */
   readonly weaponId: string | undefined;
+  /** Picks the off-hand mark (#276); `undefined` draws none. */
+  readonly offhandId: OffhandId | undefined;
   readonly radius: number;
   readonly team: "ally" | "enemy" | "self";
   readonly health: number;
@@ -290,4 +292,80 @@ export function healthFraction(actor: RenderableActor): number {
  */
 export function nameLabelBottom(actor: RenderableActor): number {
   return actor.position.y - actor.radius - (actor.dead ? 4 : 22);
+}
+
+/** The shield: an arc on the body's centre, 45° to 105° left of the facing, at r + 3.5 (#275). */
+const SHIELD_FROM = (45 * Math.PI) / 180;
+const SHIELD_TO = (105 * Math.PI) / 180;
+/** The focus: a ring of radius 1.75 centred 75° left of the facing, at r + 3.5 (#275). */
+const FOCUS_ANGLE = (75 * Math.PI) / 180;
+const FOCUS_RADIUS = 1.75;
+/** Both off-hand marks' centrelines sit this far past the body's edge. */
+const OFFHAND_REACH = 3.5;
+
+/**
+ * The off-hand mark (#276, docs/art/art-direction.md "Player mark"), cased
+ * like the weapon mark: an `edge` stroke `casing` px wide under an `ink`
+ * stroke `core` px wide, both along the same centreline.
+ */
+export type OffhandMarkLayout =
+  /** The shield: a circular arc on the body's centre, clockwise from `from` to `to`. */
+  | {
+      readonly kind: "arc";
+      readonly x: number;
+      readonly y: number;
+      readonly radius: number;
+      readonly from: number;
+      readonly to: number;
+      readonly casing: number;
+      readonly core: number;
+    }
+  /** The focus: a small ring off the body. */
+  | {
+      readonly kind: "ring";
+      readonly x: number;
+      readonly y: number;
+      readonly radius: number;
+      readonly casing: number;
+      readonly core: number;
+    };
+
+/**
+ * The off-hand mark of a body of radius `r` at (`x`, `y`), facing `facing`
+ * radians, on its left: in screen coordinates, y down, that is the facing
+ * minus the angle. `undefined` for no off-hand: nothing to draw.
+ */
+export function offhandMarkLayout(
+  x: number,
+  y: number,
+  r: number,
+  facing: number,
+  offhandId: OffhandId | undefined,
+): OffhandMarkLayout | undefined {
+  switch (offhandId) {
+    case undefined:
+      return undefined;
+    case "shield":
+      return {
+        kind: "arc",
+        x,
+        y,
+        radius: r + OFFHAND_REACH,
+        from: facing - SHIELD_TO,
+        to: facing - SHIELD_FROM,
+        casing: 5,
+        core: 3,
+      };
+    case "focus": {
+      const angle = facing - FOCUS_ANGLE;
+      return {
+        kind: "ring",
+        x: x + Math.cos(angle) * (r + OFFHAND_REACH),
+        y: y + Math.sin(angle) * (r + OFFHAND_REACH),
+        radius: FOCUS_RADIUS,
+        casing: 3,
+        core: 1.5,
+      };
+    }
+  }
 }

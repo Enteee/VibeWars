@@ -19,6 +19,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     adrenaline: 0,
     armor: 60,
     weaponId: undefined,
+    offhandId: undefined,
     team: 0,
     dead: false,
     castingSkillId: undefined,

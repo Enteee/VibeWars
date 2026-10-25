@@ -111,6 +111,7 @@ function toPlayerSnapshot(participant: Participant, name: string): PlayerSnapsho
     adrenaline: combatant.adrenaline,
     armor: combatant.equipment.baseArmor,
     weaponId: combatant.equipment.mainHand.weapon.id,
+    offhandId: combatant.equipment.offhandId,
     team: combatant.team,
     dead: combatant.dead,
     castingSkillId: activeCast?.skillId,

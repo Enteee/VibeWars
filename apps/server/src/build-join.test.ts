@@ -34,6 +34,7 @@ interface PlayerView {
   readonly x: number;
   readonly y: number;
   readonly targetSessionId: string;
+  readonly offhandId: string;
 }
 
 interface MatchView {
@@ -61,6 +62,16 @@ const LEGAL_BUILD: PlayerBuild = {
     null,
   ],
   equipment: defaultBuildEquipment("elementalist"),
+};
+
+/** A legal warrior with the house sword and shield. */
+const SHIELD_BUILD: PlayerBuild = {
+  name: "Shield Wall",
+  primaryProfession: "warrior",
+  secondaryProfession: undefined,
+  attributes: [{ attributeId: "warrior.swordsmanship", rank: 9 }],
+  skillBar: ["warrior.swift-chop", null, null, null, null, null, null, null],
+  equipment: defaultBuildEquipment("warrior"),
 };
 
 describe("joining with a build", () => {
@@ -115,6 +126,20 @@ describe("joining with a build", () => {
     // pass for the wrong reason — the server would refuse it and hand
     // back the house loadout.
     expect(validatePlayerBuild(LEGAL_BUILD, MINIMAL_GW_INSPIRED_PVP_V1.attributes)).toEqual([]);
+    expect(validatePlayerBuild(SHIELD_BUILD, MINIMAL_GW_INSPIRED_PVP_V1.attributes)).toEqual([]);
+  });
+
+  it("shows the off-hand the resolved build holds, and none for none (#276)", async () => {
+    const shield = await joinWith(SHIELD_BUILD);
+    expect(shield.room.state.players.get(shield.room.sessionId)?.offhandId).toBe("shield");
+    await shield.room.leave(true);
+
+    const empty = await joinWith({
+      ...LEGAL_BUILD,
+      equipment: { ...LEGAL_BUILD.equipment, offHand: null },
+    });
+    expect(empty.room.state.players.get(empty.room.sessionId)?.offhandId).toBe("");
+    await empty.room.leave(true);
   });
 
   it("grants the requested skills when the build is legal", async () => {

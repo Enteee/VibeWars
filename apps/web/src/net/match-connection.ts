@@ -1,3 +1,4 @@
+import type { OffhandId } from "@vibewars/game-core";
 import type { CastRefusedMessage, ClientIntent, MapDescriptor } from "@vibewars/game-protocol";
 
 /**
@@ -32,6 +33,8 @@ export interface PlayerSnapshot {
   readonly armor: number;
   /** Equipped weapon class id, or `undefined` if the server sent none. */
   readonly weaponId: string | undefined;
+  /** The off-hand whose mark the arena draws (#276); `undefined` for none, or one this client does not know. */
+  readonly offhandId: OffhandId | undefined;
   readonly team: number;
   readonly dead: boolean;
   readonly castingSkillId: string | undefined;

@@ -131,6 +131,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     adrenaline: 0,
     armor: 60,
     weaponId: undefined,
+    offhandId: undefined,
     team: sessionId === ME ? 0 : 1,
     dead: false,
     castingSkillId: undefined,
