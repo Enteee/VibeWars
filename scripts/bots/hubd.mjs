@@ -88,6 +88,7 @@ import {
   rebootAllowed,
 } from "./reboot.mjs";
 import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
+import { dueNudges, scheduleReader } from "./schedule.mjs";
 import { applyStaff, parseStaff, roleOf, staffAllowed, staffReader } from "./staff.mjs";
 import {
   RESTRICTED_PATHS,
@@ -1017,13 +1018,15 @@ function writeAtomic(file, contents) {
  *
  * @param {string} name what the file is about, for whoever lists the outbox
  * @param {string} text
+ * @param {{ to?: string, nudge?: string | null }} [addressed] a role instead of
+ *   everyone, and the scheduled nudge this is (#537)
  * @returns {void}
  */
-function tellCompany(name, text) {
+function tellCompany(name, text, { to = "all", nudge = null } = {}) {
   const outbox = path.join(ROOT, "bus", SYSTEM, "outbox");
   fs.mkdirSync(outbox, { recursive: true });
   const file = `${String(Date.now())}-${name}.json`;
-  writeAtomic(path.join(outbox, file), JSON.stringify({ to: "all", text }));
+  writeAtomic(path.join(outbox, file), JSON.stringify({ to, text, nudge }));
 }
 
 /**
@@ -2281,6 +2284,33 @@ function readStaffed() {
   staffed = readStaff();
 }
 
+/** `schedule.json` in the checkout hubd serves, read the way `scheduleReader` reads it. */
+const readSchedule = scheduleReader(
+  path.join(REPO_DIR, "scripts", "bots", "schedule.json"),
+  (problem) => {
+    console.error(`hubd: schedule.json: ${problem}; still on the last good schedule`);
+  },
+);
+
+/** When each scheduled nudge was last sent, and when hubd began counting. */
+const nudgesSent = new Map();
+const nudgesSince = Date.now();
+
+/**
+ * Send the nudges that are due (#537). link decides per employee whether one
+ * is still unread; hubd only keeps the clock.
+ *
+ * @returns {void}
+ */
+function sendNudges() {
+  const schedule = readSchedule();
+  const now = Date.now();
+  for (const nudge of dueNudges({ now, schedule, lastSent: nudgesSent, since: nudgesSince })) {
+    nudgesSent.set(nudge.id, now);
+    tellCompany(`nudge-${nudge.id}`, nudge.text, { to: nudge.to, nudge: nudge.id });
+  }
+}
+
 /**
  * Spools named like an employee that nobody is employed under: a fired
  * employee's, or one made by hand. Their requests are answered, refused.
@@ -2502,9 +2532,11 @@ async function main() {
   // The dashboard's budget line. Free to ask (see `budgetExhausted`), and
   // it is also what lifts `limitedUntil` once GitHub resets the budget.
   const BUDGET_CHECK_MS = 60_000;
+  const NUDGE_CHECK_MS = 10_000;
   await budgetExhausted();
   await syncSkills(cfg);
   let lastBudgetCheck = Date.now();
+  let lastNudgeCheck = 0;
   /** @param {string} why */
   const stop = (why) => {
     console.error(`hubd: stopping on ${why}`);
@@ -2548,6 +2580,10 @@ async function main() {
       } catch (error) {
         console.error(`hubd: board: ${error instanceof Error ? error.message : "failed"}`);
       }
+    }
+    if (Date.now() - lastNudgeCheck > NUDGE_CHECK_MS) {
+      lastNudgeCheck = Date.now();
+      sendNudges();
     }
     if (Date.now() - lastBudgetCheck > BUDGET_CHECK_MS) {
       await budgetExhausted();
