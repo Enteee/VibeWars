@@ -216,6 +216,7 @@ describe("the off-hand on the wire (#276)", () => {
       facing: 0,
       targetSessionId: "",
       attackTargetSessionId: "",
+      walking: false,
       health: 500,
       maxHealth: 500,
       energy: 20,

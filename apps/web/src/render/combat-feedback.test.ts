@@ -19,6 +19,7 @@ function player(sessionId: string): PlayerSnapshot {
     facing: 0,
     targetSessionId: undefined,
     attackTargetSessionId: undefined,
+    walking: false,
     health: 400,
     maxHealth: 500,
     energy: 20,

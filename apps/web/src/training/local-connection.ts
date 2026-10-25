@@ -118,6 +118,7 @@ function toPlayerSnapshot(
     facing: participant.facing,
     targetSessionId: participant.targetId,
     attackTargetSessionId: combatant.attack?.targetId,
+    walking: participant.walkGoal !== undefined,
     health: Math.round(combatant.health),
     maxHealth: combatant.maxHealth,
     energy: Math.round(combatant.energy),

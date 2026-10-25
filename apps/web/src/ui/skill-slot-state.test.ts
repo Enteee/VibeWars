@@ -25,6 +25,7 @@ function self(cast: Partial<PlayerSnapshot>): PlayerSnapshot {
     facing: 0,
     targetSessionId: undefined,
     attackTargetSessionId: undefined,
+    walking: false,
     health: 500,
     maxHealth: 500,
     energy: 20,

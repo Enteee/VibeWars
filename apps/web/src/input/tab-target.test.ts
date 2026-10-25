@@ -12,6 +12,7 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     facing: 0,
     targetSessionId: undefined,
     attackTargetSessionId: undefined,
+    walking: false,
     health: 500,
     maxHealth: 500,
     energy: 20,

@@ -130,6 +130,18 @@ describe("createLocalConnection", () => {
     expect(self()?.attackTargetSessionId).toBeUndefined();
   });
 
+  it("reports a walk to a clicked point until cancel ends it (#342)", () => {
+    const { connection } = targetDummy();
+    const self = () => connection.getSnapshot().players.find((p) => p.sessionId === SELF_ID);
+    expect(self()?.walking).toBe(false);
+    connection.sendIntent({ kind: "walk-to", x: 40, y: 40 });
+    expect(self()?.walking).toBe(true);
+    connection.advance(TICK_SECONDS);
+    expect(self()?.walking).toBe(true);
+    connection.sendIntent({ kind: "cancel" });
+    expect(self()?.walking).toBe(false);
+  });
+
   it("says why an attack was refused, as the server does", () => {
     const { connection } = targetDummy();
     const refusals: CastRefusedMessage[] = [];
