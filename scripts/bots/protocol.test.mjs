@@ -39,6 +39,7 @@ import {
   planSends,
   readInbox,
   retryDelay,
+  skipNudge,
   routeInbound,
   visible,
   wakes,
@@ -186,6 +187,7 @@ describe("routeInbound", () => {
       topicId: MANAGER_TOPIC,
       messageId: 42,
       broadcast: false,
+      nudge: null,
     });
   });
 
@@ -229,6 +231,7 @@ describe("routeInbound in the Support topic (#131)", () => {
         topicId: SUPPORT_TOPIC,
         messageId: 932,
         broadcast: false,
+        nudge: null,
       },
       whichRole: null,
     });
@@ -961,6 +964,7 @@ describe("routeAnswer", () => {
           topicId: OPERATOR_TOPIC,
           messageId: 0,
           broadcast: false,
+          nudge: null,
         },
       },
     ]);
@@ -1304,6 +1308,7 @@ describe("readInbox", () => {
       topicId: null,
       messageId: 0,
       broadcast: false,
+      nudge: null,
     });
   });
 
@@ -1444,17 +1449,21 @@ describe("formatLine cannot be made to forge a line", () => {
 });
 
 describe("deliverSystem (#23)", () => {
-  const ROLES_HERE = ["manager", "qa-tester"];
+  const ROLES_HERE = new Map([
+    ["manager", "manager"],
+    ["manager@2", "manager"],
+    ["qa-tester", "qa-tester"],
+  ]);
 
   it("puts a system message in every employee's inbox and mirrors it to General", () => {
     const delivered = deliverSystem(
-      { text: "hubd is crash-looping: boom" },
+      { to: "all", text: "hubd is crash-looping: boom", nudge: null },
       {
         employees: ROLES_HERE,
         now: 5,
       },
     );
-    expect(delivered.deliveries.map((d) => d.employee)).toEqual(ROLES_HERE);
+    expect(delivered.deliveries.map((d) => d.employee)).toEqual([...ROLES_HERE.keys()]);
     expect(delivered.deliveries[0]?.line).toEqual({
       ts: 5,
       from: "system",
@@ -1463,6 +1472,7 @@ describe("deliverSystem (#23)", () => {
       topicId: null,
       messageId: 0,
       broadcast: false,
+      nudge: null,
     });
     expect(delivered.mirror).toEqual({
       from: SYSTEM,
@@ -1473,11 +1483,32 @@ describe("deliverSystem (#23)", () => {
   });
 
   it("sends nothing for an empty or shapeless entry", () => {
-    expect(deliverSystem({ text: "  " }, { employees: ROLES_HERE, now: 1 })).toEqual({
+    expect(
+      deliverSystem({ to: "all", text: "  ", nudge: null }, { employees: ROLES_HERE, now: 1 }),
+    ).toEqual({
       deliveries: [],
       mirror: null,
     });
     expect(deliverSystem(null, { employees: ROLES_HERE, now: 1 }).mirror).toBeNull();
+  });
+
+  it("sends a scheduled nudge to a role only, mirrored to that role (#537)", () => {
+    const delivered = deliverSystem(
+      { to: "manager", text: "Groom", nudge: "groom-backlog" },
+      { employees: ROLES_HERE, now: 5 },
+    );
+    expect(delivered.deliveries.map((d) => d.employee)).toEqual(["manager", "manager@2"]);
+    expect(delivered.deliveries[0]?.line).toMatchObject({ from: "system", nudge: "groom-backlog" });
+    expect(delivered.mirror).toEqual({ from: SYSTEM, to: "manager", text: "Groom" });
+    expect(mirrorTopic({ from: SYSTEM, to: "manager", text: "x" })).toBe("bots");
+  });
+
+  it("delivers nothing, and mirrors nothing, to a role nobody is employed in or a malformed entry", () => {
+    const none = { deliveries: [], mirror: null };
+    const context = { employees: ROLES_HERE, now: 5 };
+    expect(deliverSystem({ to: "architect", text: "x", nudge: null }, context)).toEqual(none);
+    expect(deliverSystem({ text: "x" }, context)).toEqual(none);
+    expect(deliverSystem({ to: "all", text: "x", nudge: 3 }, context)).toEqual(none);
   });
 
   it("heads the mirror with the System style, apart from every role", () => {
@@ -1490,11 +1521,32 @@ describe("deliverSystem (#23)", () => {
   });
 });
 
+describe("skipNudge (#537)", () => {
+  /** @param {string | null} nudge */
+  const line = (nudge) => ({
+    ts: 1,
+    from: "system",
+    kind: /** @type {const} */ ("link"),
+    text: "Groom",
+    topicId: null,
+    messageId: 0,
+    broadcast: false,
+    nudge,
+  });
+
+  it("skips only when the same entry is still unread", () => {
+    expect(skipNudge([line("groom-backlog")], "groom-backlog")).toBe(true);
+    expect(skipNudge([line("other"), line(null)], "groom-backlog")).toBe(false);
+    expect(skipNudge([], "groom-backlog")).toBe(false);
+    expect(skipNudge([line(null)], null)).toBe(false);
+  });
+});
+
 describe("a system announcement wakes tg wait (#345)", () => {
   it("is a link line, which wakes every role", () => {
     const { deliveries } = deliverSystem(
-      { text: "Company reboot by 12:05: new hubd." },
-      { employees: ["developer-1"], now: 1 },
+      { to: "all", text: "Company reboot by 12:05: new hubd.", nudge: null },
+      { employees: new Map([["developer-1", "developer-1"]]), now: 1 },
     );
     const delivered = deliveries[0]?.line;
     expect(delivered).toBeDefined();
@@ -1514,6 +1566,7 @@ describe("wakes", () => {
     topicId: null,
     messageId: 0,
     broadcast: false,
+    nudge: null,
   };
 
   it("wakes on everything but a plain broadcast", () => {

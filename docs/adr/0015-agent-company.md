@@ -99,6 +99,15 @@ Backlog`, judged against the card's column in hubd's copy of the board
   a bounded fork bomb and a CPU burner in one jail must leave the other
   agents and hubd running.
 
+**Scheduled nudges (#537).** `scripts/bots/schedule.json` lists fixed messages
+hubd sends to a role on an interval (the manager grooms the Backlog every
+30 min). hubd keeps the clock and writes the system outbox
+`{ to, text, nudge }`; link delivers each as a `link` line from `system`,
+mirrored as a directed message in Bots, and skips an employee that still has
+an unread nudge of the same entry, so they never pile up. Changing the
+schedule is a pull request; hubd re-reads the file, keeping the last good copy
+if it is bad.
+
 ## Consequences
 
 - **The parts of the shared `.git` that git executes are read-only in

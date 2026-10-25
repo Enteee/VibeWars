@@ -61,6 +61,22 @@ reads on the fill and on the empty track alike.
 | `hud-health` | `#3a6a3e` | Health bar fill | 4.7:1       |
 | `hud-energy` | `#2f6787` | Energy bar fill | 4.6:1       |
 
+### Target frame
+
+The match HUD's target frame (#484) is three rows of fixed size, so the
+HUD never jumps when a row has nothing to show:
+
+| Row    | Shows                                                                                                 |
+| ------ | ----------------------------------------------------------------------------------------------------- |
+| Header | Profession icons, the name in `ink`, the "attacking" swords                                           |
+| Health | A `hud-health` bar labelled with the percentage, rounded down; `412 / 480` added for you and allies   |
+| Cast   | While the target casts: the type badge, the skill's name, and a 6 px bar filling in `ink`, never blue |
+
+A foe shows the percentage alone, as GW1 shows a foe's bar alone. A dead
+target has an empty track edged in `dead`. An interrupted cast keeps the
+row for 400 ms with a `damage` ✕ and edge, a cancelled one dimmed, as the
+skill slot does (#300). Armor is in the frame's hover title.
+
 ### Professions (menus only)
 
 Never used in the arena: there, colour means team.

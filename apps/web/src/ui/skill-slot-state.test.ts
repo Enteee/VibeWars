@@ -3,6 +3,7 @@ import { getSkill, segment, vec2 } from "@vibewars/game-core";
 import type { PlayerSnapshot, SkillSlot } from "@vibewars/game-session";
 
 import {
+  castFailures,
   castFill,
   castingSlot,
   flashSlot,
@@ -129,6 +130,25 @@ describe("outOfRange", () => {
       false,
       false,
       false,
+    ]);
+  });
+});
+
+describe("castFailures (#484)", () => {
+  it("is this caster's interrupted and cancelled casts, in order, and no one else's", () => {
+    expect(
+      castFailures(
+        [
+          { kind: "interrupted", targetId: "foe", skillId: "ranger.troll-unguent" },
+          { kind: "interrupted", targetId: "me", skillId: "meteor" },
+          { kind: "damage", targetId: "foe", amount: 10 },
+          { kind: "cancelled", targetId: "foe", skillId: "unknown" },
+        ],
+        "foe",
+      ),
+    ).toEqual([
+      { skillId: "ranger.troll-unguent", kind: "interrupted" },
+      { skillId: "unknown", kind: "cancelled" },
     ]);
   });
 });
