@@ -2,6 +2,7 @@
  * Tokens per role from the agents' session logs (#50): each reply counted
  * once, only the window's, and only the bytes appended since last time.
  */
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -9,7 +10,14 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { createUsageReader, formatCount, parseUsageLine, summarize } from "./claude-usage.mjs";
+import {
+  CHUNK_BYTES,
+  MAX_LINE_BYTES,
+  createUsageReader,
+  formatCount,
+  parseUsageLine,
+  summarize,
+} from "./claude-usage.mjs";
 
 const FIXTURE = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -207,5 +215,95 @@ describe("createUsageReader", () => {
     const reader = createUsageReader(boxes, ["manager"]);
     fs.writeFileSync(log, `${reply("old", now - WINDOW - HOUR)}\n${reply("new", now)}\n`);
     expect(ids(reader)).toEqual(["manager:new"]);
+  });
+});
+
+describe("createUsageReader, on a tree the jail controls (#329)", () => {
+  /** @type {string} */
+  let boxes;
+  /** @type {string} */
+  let outside;
+  /** @type {string} */
+  let projects;
+  const now = Date.now();
+
+  beforeEach(() => {
+    boxes = fs.mkdtempSync(path.join(os.tmpdir(), "claude-usage-"));
+    outside = fs.mkdtempSync(path.join(os.tmpdir(), "claude-usage-host-"));
+    projects = path.join(boxes, "manager", "config", "projects");
+    fs.mkdirSync(path.join(projects, "-some-project"), { recursive: true });
+    fs.writeFileSync(path.join(outside, "host.jsonl"), `${reply("host", now)}\n`);
+  });
+
+  afterEach(() => {
+    fs.rmSync(boxes, { recursive: true, force: true });
+    fs.rmSync(outside, { recursive: true, force: true });
+  });
+
+  /** @param {ReturnType<typeof createUsageReader>} reader */
+  const ids = (reader) => (reader.read(now - WINDOW) ?? []).map((r) => `${r.role}:${r.id}`).sort();
+
+  /** @param {string} line */
+  const ok = (line) => {
+    fs.writeFileSync(path.join(projects, "-some-project", "ok.jsonl"), `${line}\n`);
+  };
+
+  it("does not follow a symlinked projects directory", () => {
+    fs.rmSync(projects, { recursive: true });
+    fs.symlinkSync(outside, projects);
+    expect(ids(createUsageReader(boxes, ["manager"]))).toEqual([]);
+  });
+
+  it("does not follow a symlinked project directory or log", () => {
+    fs.symlinkSync(outside, path.join(projects, "-linked"));
+    fs.symlinkSync(
+      path.join(outside, "host.jsonl"),
+      path.join(projects, "-some-project", "x.jsonl"),
+    );
+    ok(reply("m1", now));
+    expect(ids(createUsageReader(boxes, ["manager"]))).toEqual(["manager:m1"]);
+  });
+
+  it("skips a .jsonl that is a directory or a FIFO", () => {
+    fs.mkdirSync(path.join(projects, "-some-project", "dir.jsonl"));
+    execFileSync("mkfifo", [path.join(projects, "-some-project", "fifo.jsonl")]);
+    ok(reply("m1", now));
+    expect(ids(createUsageReader(boxes, ["manager"]))).toEqual(["manager:m1"]);
+  });
+
+  it("reads a huge sparse log a chunk at a time, and the role's other logs still count", () => {
+    const huge = path.join(projects, "-some-project", "huge.jsonl");
+    fs.writeFileSync(huge, "");
+    fs.truncateSync(huge, 64 * 1024 ** 3);
+    ok(reply("m1", now));
+    const reader = createUsageReader(boxes, ["manager"]);
+    const started = Date.now();
+    expect(ids(reader)).toEqual(["manager:m1"]);
+    expect(ids(reader)).toEqual(["manager:m1"]);
+    expect(Date.now() - started).toBeLessThan(5000);
+  });
+
+  it("drops a line longer than MAX_LINE_BYTES and reads the one after it", () => {
+    const log = path.join(projects, "-some-project", "long.jsonl");
+    fs.writeFileSync(log, Buffer.alloc(MAX_LINE_BYTES + CHUNK_BYTES, 0x61));
+    fs.appendFileSync(log, `\n${reply("after", now)}\n`);
+    const reader = createUsageReader(boxes, ["manager"]);
+    const reads = Math.ceil(fs.statSync(log).size / CHUNK_BYTES);
+    for (let i = 1; i < reads; i++) {
+      expect(ids(reader)).toEqual([]);
+    }
+    expect(ids(reader)).toEqual(["manager:after"]);
+  });
+
+  it.skipIf(process.getuid?.() === 0)("skips an unreadable directory, not the whole role", () => {
+    const locked = path.join(projects, "-locked");
+    fs.mkdirSync(locked);
+    fs.chmodSync(locked, 0);
+    ok(reply("m1", now));
+    try {
+      expect(ids(createUsageReader(boxes, ["manager"]))).toEqual(["manager:m1"]);
+    } finally {
+      fs.chmodSync(locked, 0o700);
+    }
   });
 });

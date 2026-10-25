@@ -11,6 +11,10 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { openJailDir } from "./jail-fs.mjs";
+
+/** @typedef {import("./jail-fs.mjs").JailDir} JailDir */
+
 /** The plan's rolling window, which the main figures cover. */
 export const WINDOW_MS = 5 * 60 * 60 * 1000;
 
@@ -166,28 +170,94 @@ export function formatCount(n) {
 }
 
 /**
+ * The most bytes read from one log in one refresh, so a log the jail made
+ * huge, even a sparse 64 GiB one, never stalls the pane; the rest is read on
+ * the refreshes after.
+ */
+export const CHUNK_BYTES = 4 * 1024 * 1024;
+
+/** A line longer than this is no reply; it is dropped, not kept in memory. */
+export const MAX_LINE_BYTES = 16 * 1024 * 1024;
+
+/** Deep enough for `<project>/<session>/subagents/<agent>.jsonl`. */
+const MAX_DEPTH = 4;
+
+/** Entries looked at per role and refresh, so a million empty dirs cost little. */
+const MAX_ENTRIES = 20_000;
+
+const { O_NOFOLLOW, O_NONBLOCK, O_RDONLY } = fs.constants;
+
+/**
  * Where one log file has been read up to.
  *
  * @typedef {object} Cursor
  * @property {number} ino
  * @property {number} offset bytes read, the unfinished last line included
  * @property {Buffer} partial that unfinished last line, completed next time
+ * @property {boolean} skipping inside a line over `MAX_LINE_BYTES`, dropped
+ *   up to its end
  */
 
 /**
- * Every `.jsonl` under `dir`, at any depth, so subagents' logs count too.
+ * Every `.jsonl` below `<boxes>/<role>/config/projects`, at most
+ * `MAX_DEPTH` deep, so subagents' logs count too. That tree is the jail's
+ * (#329): each directory is opened refusing a symlink and pinned by its
+ * descriptor, and one that cannot be opened or listed is skipped, not the
+ * role.
  *
- * @param {string} dir
- * @returns {string[]}
+ * @param {string} config the role's `config`, which the jail cannot replace
+ * @param {(dir: JailDir, name: string, rel: string) => void} visit called
+ *   with each log's directory, name, and path below `projects`
  */
-function logFiles(dir) {
+function walkLogs(config, visit) {
+  let entries = 0;
+  /**
+   * @param {JailDir} dir
+   * @param {string} rel
+   * @param {number} depth
+   */
+  function walk(dir, rel, depth) {
+    /** @type {fs.Dirent[]} */
+    let listed;
+    try {
+      listed = fs.readdirSync(`/proc/self/fd/${String(dir.fd)}`, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of listed) {
+      if (++entries > MAX_ENTRIES) {
+        return;
+      }
+      const at = rel === "" ? entry.name : `${rel}/${entry.name}`;
+      if (entry.isDirectory() && depth < MAX_DEPTH) {
+        /** @type {JailDir} */
+        let sub;
+        try {
+          sub = openJailDir(`/proc/self/fd/${String(dir.fd)}`, entry.name);
+        } catch {
+          continue;
+        }
+        try {
+          walk(sub, at, depth + 1);
+        } finally {
+          sub.close();
+        }
+      } else if (entry.isFile() && entry.name.endsWith(".jsonl")) {
+        visit(dir, entry.name, at);
+      }
+    }
+  }
+  /** @type {JailDir} */
+  let projects;
   try {
-    return fs
-      .readdirSync(dir, { recursive: true, encoding: "utf8" })
-      .filter((name) => name.endsWith(".jsonl"))
-      .map((name) => path.join(dir, name));
+    projects = openJailDir(config, "projects");
   } catch {
-    return [];
+    return;
+  }
+  try {
+    walk(projects, "", 0);
+  } finally {
+    projects.close();
   }
 }
 
@@ -206,63 +276,75 @@ export function createUsageReader(boxes, roles) {
   const kept = new Map();
 
   /**
-   * Read what was appended to `file` since last time.
+   * Read at most `CHUNK_BYTES` of what was appended to `name` since last
+   * time.
    *
-   * @param {string} file
+   * @param {JailDir} dir
+   * @param {string} name
+   * @param {string} key the file's cursor
    * @param {string} role
    * @param {number} since replies before this are not kept
    */
-  function readFile(file, role, since) {
-    let stat;
-    try {
-      stat = fs.statSync(file);
-    } catch {
-      cursors.delete(file);
-      return;
-    }
-    let cursor = cursors.get(file);
-    if (cursor === undefined && stat.mtimeMs < since) {
-      // Nothing in it is new enough, and a write would change its mtime.
-      return;
-    }
-    if (cursor?.ino !== stat.ino || stat.size < cursor.offset) {
-      // New, replaced or cut short: read it from the start.
-      cursor = { ino: stat.ino, offset: 0, partial: Buffer.alloc(0) };
-    }
-    if (stat.size === cursor.offset) {
-      cursors.set(file, cursor);
-      return;
-    }
-    const appended = Buffer.alloc(stat.size - cursor.offset);
+  function readFile(dir, name, key, role, since) {
+    /** @type {number} */
     let fd;
     try {
-      fd = fs.openSync(file, "r");
-      fs.readSync(fd, appended, 0, appended.length, cursor.offset);
+      // O_NONBLOCK: a FIFO the jail swapped in must not hang the host.
+      fd = fs.openSync(dir.at(name), O_RDONLY | O_NOFOLLOW | O_NONBLOCK);
     } catch {
       return;
+    }
+    try {
+      const stat = fs.fstatSync(fd);
+      if (!stat.isFile()) {
+        return;
+      }
+      let cursor = cursors.get(key);
+      if (cursor === undefined && stat.mtimeMs < since) {
+        // Nothing in it is new enough, and a write would change its mtime.
+        return;
+      }
+      if (cursor?.ino !== stat.ino || stat.size < cursor.offset) {
+        // New, replaced or cut short: read it from the start.
+        cursor = { ino: stat.ino, offset: 0, partial: Buffer.alloc(0), skipping: false };
+      }
+      cursors.set(key, cursor);
+      if (stat.size === cursor.offset) {
+        return;
+      }
+      const chunk = Buffer.alloc(Math.min(stat.size - cursor.offset, CHUNK_BYTES));
+      const got = fs.readSync(fd, chunk, 0, chunk.length, cursor.offset);
+      cursor.offset += got;
+      let bytes = Buffer.concat([cursor.partial, chunk.subarray(0, got)]);
+      if (cursor.skipping) {
+        const lineEnd = bytes.indexOf(0x0a);
+        if (lineEnd === -1) {
+          cursor.partial = Buffer.alloc(0);
+          return;
+        }
+        cursor.skipping = false;
+        bytes = bytes.subarray(lineEnd + 1);
+      }
+      // Split on the byte, not the decoded text, so a character cut in two
+      // by the writer is decoded whole next time.
+      const end = bytes.lastIndexOf(0x0a);
+      for (const line of bytes
+        .subarray(0, end + 1)
+        .toString("utf8")
+        .split("\n")) {
+        const record = line === "" ? null : parseUsageLine(line);
+        if (record !== null && record.ts >= since) {
+          kept.set(record.id, { ...record, role });
+        }
+      }
+      const rest = bytes.subarray(end + 1);
+      cursor.skipping = rest.length > MAX_LINE_BYTES;
+      cursor.partial = cursor.skipping ? Buffer.alloc(0) : Buffer.from(rest);
+    } catch {
+      // Unreadable now; tried again next refresh.
     } finally {
-      if (fd !== undefined) {
-        fs.closeSync(fd);
-      }
+      fs.closeSync(fd);
     }
-    const bytes = Buffer.concat([cursor.partial, appended]);
-    // Split on the byte, not the decoded text, so a character cut in two
-    // by the writer is decoded whole next time.
-    const end = bytes.lastIndexOf(0x0a);
-    for (const line of bytes
-      .subarray(0, end + 1)
-      .toString("utf8")
-      .split("\n")) {
-      const record = line === "" ? null : parseUsageLine(line);
-      if (record !== null && record.ts >= since) {
-        kept.set(record.id, { ...record, role });
-      }
-    }
-    cursors.set(file, {
-      ino: stat.ino,
-      offset: stat.size,
-      partial: Buffer.from(bytes.subarray(end + 1)),
-    });
   }
 
   return {
@@ -277,9 +359,18 @@ export function createUsageReader(boxes, roles) {
       if (!fs.existsSync(boxes)) {
         return null;
       }
+      /** @type {Set<string>} */
+      const seen = new Set();
       for (const role of roles) {
-        for (const file of logFiles(path.join(boxes, role, "config", "projects"))) {
-          readFile(file, role, since);
+        walkLogs(path.join(boxes, role, "config"), (dir, name, rel) => {
+          const key = `${role}/${rel}`;
+          seen.add(key);
+          readFile(dir, name, key, role, since);
+        });
+      }
+      for (const key of cursors.keys()) {
+        if (!seen.has(key)) {
+          cursors.delete(key);
         }
       }
       for (const [id, record] of kept) {
