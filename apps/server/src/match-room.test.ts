@@ -1,3 +1,4 @@
+import { matchMaker } from "@colyseus/core";
 import { Client } from "@colyseus/sdk";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
 import { loadMap } from "@vibewars/game-maps";
@@ -10,7 +11,7 @@ import {
 } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { DEFAULT_MAP_ID, DEFAULT_SKILL_BAR } from "./rooms/match-room.js";
+import { DEFAULT_MAP_ID, DEFAULT_SKILL_BAR, MatchRoom } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
 
@@ -177,6 +178,63 @@ describe("match room", () => {
     expect(player?.y).toBeCloseTo(FIRST_SPAWN.y, 1);
 
     await room.leave();
+  });
+
+  it("never places a Quick Match player in a match that has ended (#249)", async () => {
+    const first = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+      protocolVersion: PROTOCOL_VERSION,
+    });
+    try {
+      await waitFor(() => first.state.players.has(first.sessionId), { label: "the first player" });
+      let ended = 0;
+      first.onMessage("match-ended", () => {
+        ended += 1;
+      });
+      const room = matchMaker.getLocalRoomById(first.roomId);
+      if (!(room instanceof MatchRoom)) throw new Error("no match room");
+      // Twice at once, as a tick during the lock would: it ends once.
+      await Promise.all([room.endMatch(), room.endMatch()]);
+      await waitFor(() => first.state.phase === "finished", { label: "the match to end" });
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      expect(ended).toBe(1);
+
+      const second = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+        protocolVersion: PROTOCOL_VERSION,
+      });
+      try {
+        await waitFor(() => second.state.players.has(second.sessionId), {
+          label: "the second player",
+        });
+        expect(second.roomId).not.toBe(first.roomId);
+        expect(second.state.phase).toBe("active");
+      } finally {
+        await second.leave();
+      }
+    } finally {
+      await first.leave();
+    }
+  });
+
+  it("keeps a player inside the map's edge (#244)", async () => {
+    // qa-tester's repro: from the first spawn, (80, 200), left for 3 s then
+    // up for 3 s used to end at (-460, -340), off everyone's screen.
+    const client = new Client(endpoint);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
+    const radius = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
+    const self = () => room.state.players.get(room.sessionId);
+    try {
+      await waitFor(() => self() !== undefined, { label: "self to appear" });
+      room.send("intent", { kind: "move", dirX: -1, dirY: 0 });
+      await waitFor(() => self()?.x === radius, { timeoutMs: 3000, label: "the left edge" });
+      room.send("intent", { kind: "move", dirX: 0, dirY: -1 });
+      await waitFor(() => self()?.y === radius, { timeoutMs: 3000, label: "the top edge" });
+      // Still pushing: it stays put rather than creeping off.
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(self()?.x).toBe(radius);
+      expect(self()?.y).toBe(radius);
+    } finally {
+      await room.leave();
+    }
   });
 
   it("syncs where a player faces, to two decimals (#187)", async () => {

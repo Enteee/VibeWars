@@ -34,6 +34,10 @@ export function usesGraphql(kind, argv) {
   if (kind === "push" || kind === "reboot" || kind === "board") {
     return false;
   }
+  // `alerts` is one REST read (#184).
+  if (kind === "alerts") {
+    return false;
+  }
   // A review is recorded locally and mirrored as a PR comment.
   if (kind === "review") {
     return true;

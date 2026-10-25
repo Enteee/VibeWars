@@ -38,6 +38,33 @@ export const ROLES = [
   "qa-tester",
 ];
 
+/**
+ * Who may read code-scanning alerts (#184): today's nine roles, named
+ * here rather than taken from ROLES. An open alert is an unfixed
+ * vulnerability, the one thing hub reads that is not public, so a role
+ * added to ROLES later, such as #131's public-facing support agent, gets
+ * none until someone decides here that it should.
+ */
+const ALERT_READERS = Object.freeze([
+  "manager",
+  "architect",
+  "developer-1",
+  "developer-2",
+  "asset-designer",
+  "cicd-engineer",
+  "lead-dev",
+  "perf-sec-qa",
+  "qa-tester",
+]);
+
+/**
+ * @param {string} role
+ * @returns {boolean}
+ */
+export function mayReadAlerts(role) {
+  return ALERT_READERS.includes(role);
+}
+
 /** Roles that implement and therefore push branches and open pull requests. */
 const IMPLEMENTERS = [
   "developer-1",
@@ -103,6 +130,7 @@ export const GATE_PATHS = [
   "scripts/bots/restart.mjs",
   "scripts/bots/supervisor.mjs",
   "scripts/bots/hub.mjs",
+  "scripts/bots/hub-alerts.mjs",
   "nix/claude-bot.nix",
   "nix/claude-llc.nix",
   ".github/CODEOWNERS",
@@ -581,6 +609,15 @@ function authorizeAs(role, request, acting) {
   }
   if (request.kind === "board") {
     return authorizeBoard(argv);
+  }
+  if (request.kind === "alerts") {
+    // A read for the company's own roles, a developer included, so it can
+    // see what CodeQL says about its pull request (#184). Deny by default:
+    // see ALERT_READERS. hubd parses the words and checks a named PR is
+    // visible.
+    return mayReadAlerts(role)
+      ? { allow: true }
+      : { allow: false, reason: `${role} may not read code-scanning alerts` };
   }
   if (request.kind !== "gh") {
     return { allow: false, reason: `unknown request kind "${request.kind}"` };

@@ -22,7 +22,7 @@ import process from "node:process";
 import { readBoardState } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { formatSpend, readSpend } from "./hub-spend.mjs";
-import { boardLines, companyLines, feedLines } from "./dashboard-view.mjs";
+import { boardLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
 
 const ROOT = process.env.VIBEWARS_BOT_ROOT ?? path.join(process.cwd(), ".bots");
 const BUS = path.join(ROOT, "bus");
@@ -98,10 +98,10 @@ function hired() {
  * reads like a conversation rather than nine separate logs.
  *
  * @param {number} limit
- * @returns {{ ts: number, to: string, from: string, text: string }[]}
+ * @returns {import("./dashboard-view.mjs").FeedLine[]} one row per message (#189)
  */
 function feed(limit) {
-  /** @type {{ ts: number, to: string, from: string, text: string }[]} */
+  /** @type {import("./dashboard-view.mjs").InboxRow[]} */
   const lines = [];
   for (const role of ROLES) {
     let contents;
@@ -122,6 +122,7 @@ function feed(limit) {
           ts: typeof record.ts === "number" ? record.ts : 0,
           to: role,
           from: typeof record.from === "string" ? record.from : "?",
+          kind: typeof record.kind === "string" ? record.kind : "",
           text: typeof record.text === "string" ? record.text : "",
         });
       } catch {
@@ -129,7 +130,8 @@ function feed(limit) {
       }
     }
   }
-  return lines.sort((a, b) => a.ts - b.ts).slice(-limit);
+  // Group first: slicing first would fill the pane with one broadcast's copies.
+  return groupFeed(lines).slice(-limit);
 }
 
 /* -------------------------------------------------------------------------- */

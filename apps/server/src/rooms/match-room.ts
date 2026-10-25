@@ -110,6 +110,10 @@ export const PlayerState = schema(
 export const ProjectileState = schema(
   {
     id: t.number(),
+    /** Who shot it, so a client can tint it by side (#161). */
+    attackerId: t.string(),
+    /** The weapon it left, as released: a swap mid-flight changes nothing. */
+    weaponId: t.string(),
     x0: t.number(),
     y0: t.number(),
     x1: t.number(),
@@ -380,6 +384,11 @@ export class MatchRoom extends Room {
   #sim = new MatchSimulation({ seed: 0 });
 
   #nextSpawnIndex = 0;
+  /**
+   * Set the moment `endMatch` starts, before its lock is awaited: the
+   * tick keeps running meanwhile and would end the match a second time.
+   */
+  #ending = false;
 
   /**
    * The recharges each player was last told, and the match time they were
@@ -677,15 +686,33 @@ export class MatchRoom extends Room {
     }
 
     if (result.phase === "finished") {
-      this.endMatch();
+      void this.endMatch().catch((error: unknown) => {
+        console.error("[match] could not end the match", error);
+      });
     }
   }
 
   /**
    * The match just finished: say so, once, to everyone. The tick calls it
    * when the rules say so; tests call it to skip ten minutes of play.
+   *
+   * Locked first (#249): matchmaking must stop offering the room before
+   * anyone hears the match is over, or a Quick Match places a newcomer in
+   * a frozen, finished one. An explicit lock, so a leaving player does not
+   * reopen it. Players still here keep the result and can reconnect.
    */
-  public endMatch(): void {
+  public async endMatch(): Promise<void> {
+    if (this.#ending) {
+      return;
+    }
+    this.#ending = true;
+    try {
+      await this.lock();
+    } catch (error: unknown) {
+      // Still end it: a match that never says it is over is worse than
+      // one Quick Match might still offer.
+      console.error("[match] could not lock the finished room", error);
+    }
     this.over();
     const outcome = this.#sim.outcome;
     this.state.phase = "finished";
@@ -739,6 +766,8 @@ export class MatchRoom extends Room {
         this.state.projectiles.push(
           new ProjectileState({
             id: projectile.id,
+            attackerId: projectile.attackerId,
+            weaponId: projectile.weaponSnapshot.mainHand.weapon.id,
             x0: projectile.from.x,
             y0: projectile.from.y,
             x1: projectile.aimPoint.x,

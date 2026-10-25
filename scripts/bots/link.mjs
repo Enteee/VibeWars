@@ -803,6 +803,13 @@ function describe(error) {
 }
 
 /**
+ * No preview card under a message (#125): the company's messages carry
+ * several issue and PR links, and the card for the first one is often
+ * bigger than the text. An edit is rendered afresh, so it needs this too.
+ */
+const NO_LINK_PREVIEW = { is_disabled: true };
+
+/**
  * Send one planned batch: a new message, or an edit of a posted question.
  * A posted question's message id is recorded, so its buttons can be matched.
  *
@@ -818,6 +825,7 @@ async function sendBatch(company, batch) {
       message_id: batch.edit,
       text: batch.text,
       entities: batch.entities,
+      link_preview_options: NO_LINK_PREVIEW,
     });
     return;
   }
@@ -826,6 +834,7 @@ async function sendBatch(company, batch) {
       chat_id: company.chatId,
       text: batch.text,
       entities: batch.entities,
+      link_preview_options: NO_LINK_PREVIEW,
       ...(batch.topicId === null ? {} : { message_thread_id: batch.topicId }),
       ...(batch.replyMarkup === undefined ? {} : { reply_markup: batch.replyMarkup }),
       ...(batch.replyTo === undefined ? {} : { reply_parameters: { message_id: batch.replyTo } }),

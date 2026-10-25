@@ -63,6 +63,10 @@ export interface MatchSnapshot {
  */
 export interface ProjectileSnapshot {
   readonly id: number;
+  /** The shooter's session id, for the side's tint. */
+  readonly attackerId: string;
+  /** The weapon at release, which picks the sprite. */
+  readonly weaponId: string;
   readonly from: { readonly x: number; readonly y: number };
   readonly to: { readonly x: number; readonly y: number };
   readonly launchedAt: number;
