@@ -15,7 +15,7 @@ import { attachNameReveal } from "./input/name-reveal.js";
 import { nextTabTarget } from "./input/tab-target.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
 import { attachMatchMusic } from "./music/match-music.js";
-import { MUSIC_MODE, music } from "./music/play-music.js";
+import { music } from "./music/play-music.js";
 import { TRACKS } from "./music/tracks/index.js";
 import { connectToMatch, type MatchTarget } from "./net/match-client.js";
 import {
@@ -40,6 +40,7 @@ import {
   updateHud,
   updateRecharges,
 } from "./ui/hud.js";
+import { attachJukeboxPopover } from "./ui/jukebox.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 
 /**
@@ -185,7 +186,7 @@ export async function startMatchView(
   const matchSounds = attachMatchSounds(connection, sounds);
   const matchMusic = attachMatchMusic(connection, {
     screen: "match",
-    mode: MUSIC_MODE,
+    mode: () => music().mode(),
     tracks: TRACKS,
     onChange: (state) => {
       music().follow(state);
@@ -199,6 +200,7 @@ export async function startMatchView(
   };
   renderMute(hud, sounds.muted);
   hud.mute.addEventListener("click", toggleMute);
+  const jukebox = attachJukeboxPopover(hud.music, parent);
   // Esc cancels an attack now, so leaving is a button that asks first (#160).
   const leave = renderLeave(hud, callbacks.onLeave);
 
@@ -414,6 +416,8 @@ export async function startMatchView(
       hud.scoreboard.remove();
       hud.result.remove();
       hud.mute.remove();
+      jukebox.dispose();
+      hud.music.remove();
       hud.leave.remove();
       viewport.destroy();
       await connection.disconnect();

@@ -127,3 +127,58 @@ test("the game's own scripts carry no Strudel engine", async ({ page, request })
     expect(body, url).not.toMatch(/superdough|webaudioRepl|evalScope/);
   }
 });
+
+/** The ids of every track the host said it started. */
+function playedTracks(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const seen = (window as unknown as { musicMessages: unknown[] }).musicMessages;
+    return seen.flatMap((message) =>
+      typeof message === "object" &&
+      message !== null &&
+      "type" in message &&
+      message.type === "playing" &&
+      "trackId" in message
+        ? [String(message.trackId)]
+        : [],
+    );
+  });
+}
+
+test("a pinned track is what plays after a reload (#372)", async ({ page }) => {
+  await recordMessages(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "music", exact: true }).click();
+  await page
+    .locator(".jukebox-row", { hasText: "Ember Deep" })
+    .getByRole("button", { name: "pin" })
+    .click();
+  await expect(page.locator(".jukebox-mode")).toHaveValue("pinned");
+
+  await page.reload();
+  await expect(page.locator(".roster")).toBeVisible();
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
+  await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toEqual(["ember-deep"]);
+});
+
+test("Off plays nothing after a click, and the music mute survives a reload (#372)", async ({
+  page,
+}) => {
+  await recordMessages(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "music", exact: true }).click();
+  await page.locator(".jukebox-mode").selectOption("off");
+  await page.locator(".jukebox-mute").click();
+  await expect(page.locator(".jukebox-mute")).toHaveAttribute("aria-pressed", "true");
+
+  await page.reload();
+  await expect(page.locator(".roster")).toBeVisible();
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
+  await expect(page.locator("iframe.music-host")).toHaveCount(1);
+  // Long enough for a track to have started, had one been asked for.
+  await page.waitForTimeout(4_000);
+  expect(await playedTracks(page)).toEqual([]);
+
+  await page.getByRole("button", { name: "music", exact: true }).click();
+  await expect(page.locator(".jukebox-mode")).toHaveValue("off");
+  await expect(page.locator(".jukebox-mute")).toHaveAttribute("aria-pressed", "true");
+});

@@ -29,6 +29,7 @@ async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
       page.locator(".hud-scoreboard"),
       page.locator(".hud-result"),
       page.locator(".hud-mute"),
+      page.locator(".hud-music"),
       page.locator(".hud-leave"),
     ],
   });
