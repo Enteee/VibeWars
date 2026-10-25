@@ -26,6 +26,7 @@ import {
   scheduleLevel,
   type LevelChange,
 } from "./transitions.js";
+import { within } from "./within.js";
 import { workerTimers } from "./worker-timers.js";
 
 /**
@@ -47,6 +48,8 @@ const LIMITER_DB = -1;
 const SWITCH_POLL_MS = 100;
 /** Longer error messages are cut; the protocol refuses very long ones. */
 const MAX_ERROR_LENGTH = 300;
+/** How long the audio context may take to start before the host gives up on it. */
+const AUDIO_START_MS = 3_000;
 
 /** A track as it plays: its pattern, unshifted, and where it started. */
 interface Playing {
@@ -175,9 +178,14 @@ export async function startEngine(): Promise<void> {
     if (bus !== undefined) {
       return;
     }
-    await initAudio();
+    // Without audio activation in this frame these never settle; bounded,
+    // the message fails with `error` and the next one tries again.
+    await within(
+      initAudio().then(() => getAudioContext().resume()),
+      AUDIO_START_MS,
+      "the browser did not let music start",
+    );
     const context = getAudioContext();
-    await context.resume();
     // superdough → music bus → limiter → speakers (#366 §3.1).
     bus = context.createGain();
     bus.gain.value = volume;

@@ -34,7 +34,19 @@ export default defineConfig({
   // samples are cross-origin fetches with `Origin: null` (ADR-0028).
   preview: { cors: { origin: "*" } },
   server: {
-    cors: { origin: "*" },
+    // Only the opaque host's `Origin: null` may read cross-origin. Any
+    // site's sandboxed frame sends that too, so the dev server serves
+    // nothing outside the code the game is built from: never the repo
+    // root, where `.bots/` keeps the company's logs (CVE-2025-24010).
+    cors: { origin: "null" },
+    fs: {
+      strict: true,
+      allow: [
+        fileURLToPath(new URL(".", import.meta.url)),
+        fileURLToPath(new URL("../../packages", import.meta.url)),
+        fileURLToPath(new URL("../../node_modules", import.meta.url)),
+      ],
+    },
     port: 5173,
     strictPort: true,
     // No proxy to the game server. The client addresses it directly via

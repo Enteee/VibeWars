@@ -53,7 +53,7 @@ test("music starts on the first click, in a sandboxed frame, with no console err
   await expect(host).toHaveCount(1);
   // Exactly this: `allow-same-origin` would hand a pasted beat the game's storage.
   await expect(host).toHaveAttribute("sandbox", "allow-scripts");
-  await expect.poll(() => messageTypes(page), { timeout: 3_000 }).toContain("playing");
+  await expect.poll(() => messageTypes(page), { timeout: 5_000 }).toContain("playing");
   expect(errors).toEqual([]);
 });
 
