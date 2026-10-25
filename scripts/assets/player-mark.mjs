@@ -220,7 +220,8 @@ FAMILIES.forEach(({ family, label }, i) => {
   );
 
   const cx = LEFT + COL * i + COL / 2;
-  parts.push(text(cx, DY + 18, family), text(cx, DY + 30, label));
+  parts.push(text(cx, DY + 18, family));
+  if (label !== family) parts.push(text(cx, DY + 30, label));
   // Rows 1-4: true size.
   parts.push(actor(cx, DY + 90, { team: C.foe, facing: 0, family }));
   parts.push(actor(cx, DY + 140, { team: C.friend, facing: diag, family }));
