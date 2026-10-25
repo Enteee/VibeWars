@@ -445,7 +445,8 @@ server, now enforced by the host:
   drops every lobby and match message from anyone else. Before that
   first state, a peer in the room can answer faster than the host and
   pose as it. That peer had to know the code, so it is someone invited
-  (see above), and the lobby it fakes holds nothing but names.
+  (see above), and the lobby it fakes holds nothing but names. In the
+  same window it can also fail the join with a `lobby-note` refusal.
 - `hello.build` is capped in values and depth by `parsePeerHello`, then
   goes through the same `resolveJoinLoadout` and `validatePlayerBuild`
   join check as the server: an illegal build gets the house loadout.
