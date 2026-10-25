@@ -1,5 +1,8 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import { KEYMAP_PRESETS, codeLabel, type Keymap } from "../apps/web/src/input/keymap.js";
+import { key, skillKey } from "./keys.js";
+
 /**
  * The Training Ground (#2 §Verification, cases 1–10): a live arena in the
  * character editor, running the match simulation in the tab.
@@ -12,13 +15,18 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 const WIDE = { width: 1500, height: 950 };
 
 /** A new elementalist with Fireball on the bar, in a wide editor. */
-async function openTraining(page: Page): Promise<Locator> {
+async function openTraining(
+  page: Page,
+  keymap: Keymap = KEYMAP_PRESETS.vibewars,
+): Promise<Locator> {
   await page.setViewportSize(WIDE);
   await page.goto("/");
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator(".editor-row select").first().selectOption("elementalist");
   await page.locator(".skill-box", { hasText: "Fireball" }).click();
-  await expect(page.locator(".training-skill")).toHaveText(["1Fireball"]);
+  await expect(page.locator(".training-skill")).toHaveText([
+    `${codeLabel(skillKey(0, keymap))}Fireball`,
+  ]);
   const canvas = page.locator(".training canvas");
   await expect(canvas).toBeVisible();
   return canvas;
@@ -57,7 +65,7 @@ const meter = (page: Page, name: string): Locator => page.locator(`[data-meter="
 
 async function castFireballAndLand(page: Page): Promise<void> {
   await takeControl(page);
-  await page.keyboard.press("1");
+  await page.keyboard.press(skillKey(0));
   // The hit arrives once the cast completes, as a damage row naming the skill.
   await expect(page.locator('.training-log-row[data-tone="damage"]').first()).toContainText(
     "Fireball",
@@ -86,12 +94,12 @@ test("(2) the arena ignores the keyboard until it is clicked", async ({ page }) 
 
   // The direct regression test for #2 §6.4: a key pressed with the arena
   // never clicked goes nowhere.
-  await holdKey(page, "w", 500);
+  await holdKey(page, key("move-up"), 500);
   await page.waitForTimeout(200);
   expect(await arenaShot(page, canvas)).toEqual(first);
 
   await takeControl(page);
-  await holdKey(page, "w", 500);
+  await holdKey(page, key("move-up"), 500);
   await releaseControl(page);
   expect(await arenaShot(page, canvas)).not.toEqual(first);
 });
@@ -171,7 +179,10 @@ test("(7) editing the build re-arms the arena in place", async ({ page }) => {
     "Fireball",
   );
   await expect(meter(page, "damage")).toHaveText("0");
-  await expect(page.locator(".training-skill")).toHaveText(["1Fireball", "2Armor of Earth"]);
+  await expect(page.locator(".training-skill")).toHaveText([
+    `${codeLabel(skillKey(0))}Fireball`,
+    `${codeLabel(skillKey(1))}Armor of Earth`,
+  ]);
   expect(await canvasHandle.evaluate((node) => node.isConnected)).toBe(true);
 });
 
@@ -193,7 +204,7 @@ test("(8) leaving the editor leaves no arena behind", async ({ page }) => {
   // The survivor is alive, not a leftover frame.
   const before = await arenaShot(page, canvas);
   await takeControl(page);
-  await holdKey(page, "d", 500);
+  await holdKey(page, key("move-right"), 500);
   await releaseControl(page);
   expect(await arenaShot(page, canvas)).not.toEqual(before);
 });
@@ -228,7 +239,10 @@ test("(11) every skill button shows its skill-type badge, as the HUD does", asyn
   await openTraining(page);
   await page.locator(".skill-box", { hasText: "Armor of Earth" }).click();
   const buttons = page.locator(".training-skill");
-  await expect(buttons).toHaveText(["1Fireball", "2Armor of Earth"]);
+  await expect(buttons).toHaveText([
+    `${codeLabel(skillKey(0))}Fireball`,
+    `${codeLabel(skillKey(1))}Armor of Earth`,
+  ]);
   for (const [index, type] of ["Spell", "Enchantment"].entries()) {
     const badges = buttons.nth(index).locator(".skill-type-badge");
     await expect(badges).toHaveCount(1);
@@ -303,7 +317,7 @@ test("(14) in Weapon DPS, Space swings and the meter's weapon row counts it (#16
   await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
   await takeControl(page);
 
-  await page.keyboard.press(" ");
+  await page.keyboard.press(key("attack"));
   // "weapon / skills": the weapon's share is no longer 0.
   await expect(meter(page, "weapon / skills")).not.toHaveText(/^0 \//, { timeout: 3000 });
   // Named for the weapon that swung, by the character who swung it.
@@ -336,7 +350,7 @@ test("(16) Tab targets in the arena and never leaves it for the name field (#268
   // The repro: Tab used to move focus to the name field, and Space then
   // typed into it.
   await page.keyboard.press("Tab");
-  await page.keyboard.press(" ");
+  await page.keyboard.press(key("attack"));
   await expect(page.locator(".training-stage")).toBeFocused();
   await expect(name).toHaveValue(original);
   // The Space was the arena's: a swing at the dummy Tab picked.
@@ -393,7 +407,7 @@ async function nameBands(page: Page, canvas: Locator): Promise<Buffer[]> {
   );
 }
 
-test("(18) names show only on the target, under the cursor, and under Ctrl (#253)", async ({
+test("(18) names show only on the target, under the cursor, and under Shift (#253, #302)", async ({
   page,
 }) => {
   const canvas = await openTraining(page);
@@ -411,10 +425,10 @@ test("(18) names show only on the target, under the cursor, and under Ctrl (#253
   await page.keyboard.press("Tab");
   await expect.poll(named).toBe(1);
 
-  // Ctrl shows every name, and letting go hides all but the target's.
-  await page.keyboard.down("Control");
+  // Shift shows every name, and letting go hides all but the target's.
+  await page.keyboard.down(key("show-names"));
   await expect.poll(named).toBe(LADDER.length);
-  await page.keyboard.up("Control");
+  await page.keyboard.up(key("show-names"));
   await expect.poll(named).toBe(1);
 
   // The cursor over a dummy shows that one too. Two lie on the target
@@ -432,4 +446,22 @@ test("(18) names show only on the target, under the cursor, and under Ctrl (#253
   // The cursor leaving the arena takes its name with it.
   await page.mouse.move(1, 1);
   await expect.poll(named).toBe(1);
+});
+
+test("(19) a stored Classic keymap casts on the number row (#302)", async ({ page }) => {
+  // The server-served build stores under the plain `vibewars` namespace.
+  await page.addInitScript((classic) => {
+    localStorage.setItem("vibewars.keymap", JSON.stringify(classic));
+  }, KEYMAP_PRESETS.classic);
+  await openTraining(page, KEYMAP_PRESETS.classic);
+  await expect(page.locator(".training-skill-key").first()).toHaveText("1");
+  await takeControl(page);
+  await expect(page.locator(".training-hint")).toHaveText(
+    "WASD move · 1–8 cast · tab/click to target · space attack · esc to release",
+  );
+
+  await page.keyboard.press(skillKey(0, KEYMAP_PRESETS.classic));
+  await expect(page.locator('.training-log-row[data-tone="damage"]').first()).toContainText(
+    "Fireball",
+  );
 });

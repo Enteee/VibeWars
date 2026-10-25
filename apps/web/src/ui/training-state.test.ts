@@ -2,16 +2,17 @@ import { describe, expect, it } from "vitest";
 
 import { TRAINING_SCENARIOS } from "@vibewars/game-core";
 
+import { DEFAULT_KEYMAP, KEYMAP_PRESETS } from "../input/keymap.js";
 import { newCharacter, setProfessions, setRank, setSkill } from "./build-editor.js";
 import {
   SCENARIO_STORAGE_KEY,
+  armedHint,
   buildSignature,
   loadScenarioChoice,
   overlayMessage,
   resolveScenarioId,
   saveScenarioChoice,
   shouldRestoreFocus,
-  slotForKey,
 } from "./training-state.js";
 
 const elementalist = setProfessions(newCharacter("c1"), "elementalist", undefined);
@@ -53,15 +54,14 @@ describe("buildSignature", () => {
   });
 });
 
-describe("slotForKey", () => {
-  it("maps 1–8 to slots that exist, and nothing else", () => {
-    expect(slotForKey("1", 2)).toBe(0);
-    expect(slotForKey("2", 2)).toBe(1);
-    expect(slotForKey("3", 2)).toBeUndefined();
-    expect(slotForKey("8", 8)).toBe(7);
-    expect(slotForKey("9", 8)).toBeUndefined();
-    expect(slotForKey("0", 8)).toBeUndefined();
-    expect(slotForKey("w", 8)).toBeUndefined();
+describe("armedHint (#302)", () => {
+  it("names the keymap's keys: arrows and Q–F by default, WASD and 1–8 in Classic", () => {
+    expect(armedHint(DEFAULT_KEYMAP)).toBe(
+      "arrows move · Q–F cast · tab/click to target · space attack · esc to release",
+    );
+    expect(armedHint(KEYMAP_PRESETS.classic)).toBe(
+      "WASD move · 1–8 cast · tab/click to target · space attack · esc to release",
+    );
   });
 });
 

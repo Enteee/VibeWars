@@ -1,42 +1,48 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { attachKeyboardMoveInput, computeMoveDirection } from "./keyboard-move.js";
+import { DEFAULT_KEYMAP, KEYMAP_PRESETS } from "./keymap.js";
 import { ZERO, length } from "@vibewars/game-core";
 
 describe("computeMoveDirection", () => {
-  it("returns ZERO for no keys pressed", () => {
+  it("returns ZERO for no actions held", () => {
     expect(computeMoveDirection(new Set())).toBe(ZERO);
   });
 
-  it("moves in the cardinal direction for a single key", () => {
-    expect(computeMoveDirection(new Set(["d"]))).toEqual({ x: 1, y: 0 });
-    expect(computeMoveDirection(new Set(["a"]))).toEqual({ x: -1, y: 0 });
-    expect(computeMoveDirection(new Set(["w"]))).toEqual({ x: 0, y: -1 });
-    expect(computeMoveDirection(new Set(["s"]))).toEqual({ x: 0, y: 1 });
+  it("moves in the cardinal direction for a single action", () => {
+    expect(computeMoveDirection(new Set(["move-right"]))).toEqual({ x: 1, y: 0 });
+    expect(computeMoveDirection(new Set(["move-left"]))).toEqual({ x: -1, y: 0 });
+    expect(computeMoveDirection(new Set(["move-up"]))).toEqual({ x: 0, y: -1 });
+    expect(computeMoveDirection(new Set(["move-down"]))).toEqual({ x: 0, y: 1 });
   });
 
-  it("cancels out opposite keys back to ZERO", () => {
-    expect(computeMoveDirection(new Set(["a", "d"]))).toBe(ZERO);
-    expect(computeMoveDirection(new Set(["w", "s"]))).toBe(ZERO);
-    expect(computeMoveDirection(new Set(["w", "a", "s", "d"]))).toBe(ZERO);
+  it("cancels out opposite actions back to ZERO", () => {
+    expect(computeMoveDirection(new Set(["move-left", "move-right"]))).toBe(ZERO);
+    expect(computeMoveDirection(new Set(["move-up", "move-down"]))).toBe(ZERO);
+    expect(computeMoveDirection(new Set(["move-up", "move-left", "move-down", "move-right"]))).toBe(
+      ZERO,
+    );
   });
 
   it("normalizes a diagonal combination to unit length", () => {
-    const diagonal = computeMoveDirection(new Set(["w", "d"]));
+    const diagonal = computeMoveDirection(new Set(["move-up", "move-right"]));
     expect(length(diagonal)).toBeCloseTo(1, 10);
     expect(diagonal.x).toBeGreaterThan(0);
     expect(diagonal.y).toBeLessThan(0);
   });
 
-  it("ignores keys outside WASD", () => {
-    expect(computeMoveDirection(new Set(["shift", "q", "d"]))).toEqual({ x: 1, y: 0 });
+  it("ignores actions that are not movement", () => {
+    expect(computeMoveDirection(new Set(["show-names", "skill-1", "move-right"]))).toEqual({
+      x: 1,
+      y: 0,
+    });
   });
 });
 
 /** Minimal fake EventTarget — exercises the real listener logic without jsdom. */
 function createFakeTarget(): {
   target: EventTarget;
-  dispatch: (type: string, key: string) => void;
+  dispatch: (type: string, code: string, modifiers?: { ctrlKey?: boolean }) => void;
 } {
   const handlers = new Map<string, Set<(event: Event) => void>>();
   const target: EventTarget = {
@@ -53,8 +59,14 @@ function createFakeTarget(): {
   // An arrow function, not a method: it has no own `this`, so destructuring
   // `dispatch` out of the returned object below cannot lose a binding it
   // never had.
-  const dispatch = (type: string, key: string): void => {
-    const event = { key } as unknown as Event;
+  const dispatch = (type: string, code: string, modifiers: { ctrlKey?: boolean } = {}): void => {
+    const event = {
+      code,
+      ctrlKey: false,
+      altKey: false,
+      metaKey: false,
+      ...modifiers,
+    } as unknown as Event;
     for (const listener of handlers.get(type) ?? []) {
       listener(event);
     }
@@ -66,9 +78,9 @@ describe("attachKeyboardMoveInput", () => {
   it("calls onChange when a key is first pressed", () => {
     const { target, dispatch } = createFakeTarget();
     const onChange = vi.fn();
-    attachKeyboardMoveInput(target, onChange);
+    attachKeyboardMoveInput(target, DEFAULT_KEYMAP, onChange);
 
-    dispatch("keydown", "d");
+    dispatch("keydown", "ArrowRight");
 
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith({ x: 1, y: 0 });
@@ -77,11 +89,11 @@ describe("attachKeyboardMoveInput", () => {
   it("does not call onChange again for OS key-repeat of an already-pressed key", () => {
     const { target, dispatch } = createFakeTarget();
     const onChange = vi.fn();
-    attachKeyboardMoveInput(target, onChange);
+    attachKeyboardMoveInput(target, DEFAULT_KEYMAP, onChange);
 
-    dispatch("keydown", "d");
-    dispatch("keydown", "d");
-    dispatch("keydown", "d");
+    dispatch("keydown", "ArrowRight");
+    dispatch("keydown", "ArrowRight");
+    dispatch("keydown", "ArrowRight");
 
     expect(onChange).toHaveBeenCalledTimes(1);
   });
@@ -89,43 +101,63 @@ describe("attachKeyboardMoveInput", () => {
   it("calls onChange with ZERO once the only pressed key is released", () => {
     const { target, dispatch } = createFakeTarget();
     const onChange = vi.fn();
-    attachKeyboardMoveInput(target, onChange);
+    attachKeyboardMoveInput(target, DEFAULT_KEYMAP, onChange);
 
-    dispatch("keydown", "d");
-    dispatch("keyup", "d");
+    dispatch("keydown", "ArrowRight");
+    dispatch("keyup", "ArrowRight");
 
     expect(onChange).toHaveBeenLastCalledWith(ZERO);
   });
 
-  it("is case-insensitive (uppercase from Shift-chorded input still counts)", () => {
+  it("does not move on a skill key: W casts in the default keymap (#302)", () => {
     const { target, dispatch } = createFakeTarget();
     const onChange = vi.fn();
-    attachKeyboardMoveInput(target, onChange);
+    attachKeyboardMoveInput(target, DEFAULT_KEYMAP, onChange);
 
-    dispatch("keydown", "D");
-
-    expect(onChange).toHaveBeenCalledWith({ x: 1, y: 0 });
-  });
-
-  it("ignores irrelevant keys entirely", () => {
-    const { target, dispatch } = createFakeTarget();
-    const onChange = vi.fn();
-    attachKeyboardMoveInput(target, onChange);
-
-    dispatch("keydown", "Shift");
-    dispatch("keyup", "Shift");
+    dispatch("keydown", "KeyW");
+    dispatch("keydown", "ShiftLeft");
+    dispatch("keyup", "ShiftLeft");
 
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("leaves a press with Ctrl held to the browser, but always hears the release", () => {
+    const { target, dispatch } = createFakeTarget();
+    const onChange = vi.fn();
+    attachKeyboardMoveInput(target, DEFAULT_KEYMAP, onChange);
+
+    dispatch("keydown", "ArrowUp", { ctrlKey: true });
+    expect(onChange).not.toHaveBeenCalled();
+
+    dispatch("keydown", "ArrowUp");
+    dispatch("keyup", "ArrowUp", { ctrlKey: true });
+    expect(onChange).toHaveBeenLastCalledWith(ZERO);
+  });
+
+  it("keeps moving while the second key on one action is still held (Classic)", () => {
+    const { target, dispatch } = createFakeTarget();
+    const onChange = vi.fn();
+    attachKeyboardMoveInput(target, KEYMAP_PRESETS.classic, onChange);
+
+    dispatch("keydown", "KeyW");
+    dispatch("keydown", "ArrowUp");
+    dispatch("keyup", "KeyW");
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenLastCalledWith({ x: 0, y: -1 });
+
+    // W and the down arrow cancel out, as W and S do.
+    dispatch("keydown", "ArrowDown");
+    expect(onChange).toHaveBeenLastCalledWith(ZERO);
   });
 
   it("recomputes direction correctly across overlapping key holds", () => {
     const { target, dispatch } = createFakeTarget();
     const onChange = vi.fn();
-    attachKeyboardMoveInput(target, onChange);
+    attachKeyboardMoveInput(target, DEFAULT_KEYMAP, onChange);
 
-    dispatch("keydown", "w");
-    dispatch("keydown", "d");
-    dispatch("keyup", "w");
+    dispatch("keydown", "ArrowUp");
+    dispatch("keydown", "ArrowRight");
+    dispatch("keyup", "ArrowUp");
 
     expect(onChange).toHaveBeenLastCalledWith({ x: 1, y: 0 });
   });
@@ -133,10 +165,10 @@ describe("attachKeyboardMoveInput", () => {
   it("the returned cleanup function removes both listeners", () => {
     const { target, dispatch } = createFakeTarget();
     const onChange = vi.fn();
-    const cleanup = attachKeyboardMoveInput(target, onChange);
+    const cleanup = attachKeyboardMoveInput(target, DEFAULT_KEYMAP, onChange);
 
     cleanup();
-    dispatch("keydown", "d");
+    dispatch("keydown", "ArrowRight");
 
     expect(onChange).not.toHaveBeenCalled();
   });

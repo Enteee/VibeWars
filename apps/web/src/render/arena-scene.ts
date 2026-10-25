@@ -468,7 +468,7 @@ export class ArenaScene extends Phaser.Scene {
 
   /**
    * Names above the bars (#53), shown only where `nameShown` says (#253):
-   * your target, the body under the cursor, everyone while Ctrl is held.
+   * your target, the body under the cursor, everyone while the names key is held.
    * Every actor keeps its label, hidden or not, so showing one is a
    * visibility flip, never a new texture. A corpse keeps its name, greyed,
    * so a player can still see who went down.
