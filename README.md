@@ -29,6 +29,8 @@ code.
 | `W` `A` `S` `D` | Move                                |
 | Left click      | Target (click empty space to clear) |
 | `1`–`9`, `0`    | Use the matching skill-bar slot     |
+| `Tab`           | Target the next nearest enemy       |
+| `Shift` `Tab`   | Target the previous one             |
 | `Space`         | Attack your target with your weapon |
 | `Esc`           | Stop attacking                      |
 | `M`             | Mute or unmute the sound            |

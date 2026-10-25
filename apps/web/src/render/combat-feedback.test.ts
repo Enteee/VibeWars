@@ -42,7 +42,10 @@ const SNAPSHOT: MatchSnapshot = {
 };
 
 /** The texts a scene would have been asked to float, for these events. */
-function floated(events: { kind: string; targetId?: string; amount?: number }[]): string[] {
+function floated(
+  events: { kind: string; targetId?: string; amount?: number }[],
+  cause: CombatMessage["cause"] = "skill",
+): string[] {
   const texts: FloatingText[] = [];
   showCombatFeedback(
     {
@@ -50,7 +53,12 @@ function floated(events: { kind: string; targetId?: string; amount?: number }[])
       addAreaFlash: () => undefined,
       addSwingFlash: () => undefined,
     },
-    { casterSessionId: "me", cause: "skill", skillId: "elementalist.fireball", events },
+    {
+      casterSessionId: "me",
+      cause,
+      skillId: cause === "skill" ? "elementalist.fireball" : "",
+      events,
+    },
     SNAPSHOT,
   );
   return texts.map((text) => text.text);
@@ -104,6 +112,34 @@ describe("showCombatFeedback", () => {
 
   it("skips events about nobody it can see", () => {
     expect(floated([{ kind: "damage", targetId: "gone", amount: 5 }])).toEqual([]);
+  });
+
+  it("floats no degeneration ticks, which the health bar already shows (#54)", () => {
+    // Burning and poison together: 11 hp/s, about 1 a tick at 20 Hz.
+    const tick = [{ kind: "damage", targetId: "them", amount: 0.55 * 2 }];
+    expect(floated(tick, "degeneration")).toEqual([]);
+    // Dying of it still says so.
+    expect(floated([{ kind: "death", targetId: "them" }], "degeneration")).toEqual(["defeated"]);
+    // A real hit still floats.
+    expect(floated([{ kind: "damage", targetId: "them", amount: 91 }])).toEqual(["−91"]);
+  });
+
+  it("anchors each number to whoever it happened to, so a burst can stack (#54)", () => {
+    const texts: FloatingText[] = [];
+    showCombatFeedback(
+      { addFloatingText: (text) => texts.push(text), addAreaFlash: () => undefined },
+      {
+        casterSessionId: "me",
+        cause: "skill",
+        skillId: "elementalist.fireball",
+        events: [
+          { kind: "damage", targetId: "them", amount: 5 },
+          { kind: "heal", targetId: "me", amount: 5 },
+        ],
+      },
+      SNAPSHOT,
+    );
+    expect(texts.map((text) => text.anchorId)).toEqual(["them", "me"]);
   });
 });
 

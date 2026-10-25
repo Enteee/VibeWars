@@ -5,6 +5,7 @@ import { floatingCueFor, type FloatingCue } from "../ui/combat-readouts.js";
 import {
   ACTOR_RADIUS,
   AREA_FLASH_SECONDS,
+  FLOATING_TEXT_SECONDS,
   SWING_FLASH_GAP,
   SWING_FLASH_SECONDS,
   teamColour,
@@ -106,7 +107,15 @@ export function showCombatFeedback(
     });
   }
 
+  // A degeneration tick lands every sim tick, about a point each: as
+  // numbers they would fill the stack and push out the hits that matter.
+  // The health bar shows them, as GW1 does. A death by bleeding still says so.
+  const ticking = message.cause === "degeneration";
+
   for (const event of message.events) {
+    if (ticking && (event.kind === "damage" || event.kind === "heal")) {
+      continue;
+    }
     const subject = snapshot.players.find((p) => p.sessionId === event.targetId);
     if (subject === undefined) {
       continue;
@@ -120,11 +129,12 @@ export function showCombatFeedback(
     nextFloatingId += 1;
     scene.addFloatingText({
       id: nextFloatingId,
+      anchorId: subject.sessionId,
       text: cue.text,
       position: vec2(subject.x, subject.y - 24),
       colour: COLOURS[cue.tone],
+      remainingSeconds: FLOATING_TEXT_SECONDS,
       weight: message.cause === "weapon" ? "light" : "normal",
-      remainingSeconds: 1.2,
     });
   }
 }

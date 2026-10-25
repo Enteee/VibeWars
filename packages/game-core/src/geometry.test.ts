@@ -6,6 +6,7 @@ import {
   distancePointToSegment,
   distanceSegmentToSegment,
   distanceWithinRange,
+  firstHit,
   hasLineOfSight,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
@@ -232,6 +233,28 @@ describe("distanceSegmentToSegment", () => {
     expect(distanceSegmentToSegment(segment(vec2(14, 20), vec2(14, 80)), wall)).toBeCloseTo(14);
     expect(distanceSegmentToSegment(segment(vec2(3, 110), vec2(40, 140)), wall)).toBeCloseTo(
       Math.hypot(3, 10),
+    );
+  });
+});
+
+describe("firstHit", () => {
+  it("is undefined with nothing in the way", () => {
+    expect(firstHit(vec2(0, 0), vec2(100, 0), [])).toBeUndefined();
+    // Parallel and apart.
+    expect(
+      firstHit(vec2(0, 0), vec2(100, 0), [segment(vec2(0, 10), vec2(100, 10))]),
+    ).toBeUndefined();
+  });
+
+  it("is the crossing nearest the start", () => {
+    const near = segment(vec2(30, -10), vec2(30, 10));
+    const far = segment(vec2(70, -10), vec2(70, 10));
+    expect(firstHit(vec2(0, 0), vec2(100, 0), [far, near])).toEqual(vec2(30, 0));
+  });
+
+  it("counts a grazed endpoint", () => {
+    expect(firstHit(vec2(0, 0), vec2(100, 0), [segment(vec2(50, 0), vec2(50, 20))])).toEqual(
+      vec2(50, 0),
     );
   });
 });
