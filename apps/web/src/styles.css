@@ -1459,6 +1459,10 @@ body {
   font-size: 0.85rem;
   letter-spacing: 0.04em;
   text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
+  /* A plate, so the dim ink holds 4.5:1 over walls and bodies too. */
+  align-self: flex-start;
+  padding: 0.15rem 0.5rem;
+  background: rgb(14 17 22 / 85%);
 }
 
 .hud-hint[hidden] {
