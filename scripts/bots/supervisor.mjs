@@ -27,6 +27,7 @@ import { parseAlive } from "./hub-health.mjs";
 import { releaseLock, takeLock } from "./instance-lock.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { betweenTurns, drainStep, parseReboot } from "./reboot.mjs";
+import { roleOf } from "./staff.mjs";
 
 const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
 
@@ -53,10 +54,13 @@ function tmux(args) {
   return typeof result.stdout === "string" ? result.stdout : "";
 }
 
-/** @returns {string[]} the roles with a window in the session */
-function runningRoles() {
+/**
+ * @returns {string[]} the employees with a window in the session, each
+ *   named by its employee id (#62)
+ */
+function runningEmployees() {
   const windows = tmux(["list-windows", "-t", SESSION, "-F", "#{window_name}"]).split("\n");
-  return ROLES.filter((role) => windows.includes(role));
+  return windows.filter((name) => ROLES.includes(roleOf(name) ?? ""));
 }
 
 /**
@@ -135,7 +139,7 @@ async function main() {
     }
 
     if (drain !== null && reboot !== null) {
-      const running = runningRoles();
+      const running = runningEmployees();
       const step = drainStep({
         now: Date.now(),
         reboot,

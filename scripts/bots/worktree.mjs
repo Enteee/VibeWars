@@ -1,19 +1,20 @@
 #!/usr/bin/env node
 /**
- * `worktree.mjs <repo> <role>` — make sure a role's worktree is attached
- * before its jail starts (#69).
+ * `worktree.mjs <repo> <employee>` — make sure an employee's worktree is
+ * attached before its jail starts (#69). An employee is a role's bare name
+ * or `<role>@<n>` (#62); each has its own worktree and branch prefix.
  *
  * A jail sees the shared `.git` but only its own worktree, and git cannot
  * tell "invisible" from "deleted": one `git worktree prune` in a jail once
  * removed the admin dir of every other agent's worktree. So the jail gets
- * `.git/worktrees` read-only, except its own `.git/worktrees/<role>`, and
+ * `.git/worktrees` read-only, except its own `.git/worktrees/<employee>`, and
  * creating or repairing a worktree is the host's job, done here by
  * claude-bot before it starts bwrap:
  *
  *   - no worktree: `git worktree add` it, detached at GitHub's main, fetched
- *     by URL first. Never on `bot/<role>`: agents work on
- *     `bot/<role>/<topic>`, and while any of those exist git cannot create
- *     a branch named `bot/<role>` (#71, #72);
+ *     by URL first. Never on `bot/<employee>`: agents work on
+ *     `bot/<employee>/<topic>`, and while any of those exist git cannot create
+ *     a branch named `bot/<employee>` (#71, #72);
  *   - a worktree whose admin dir is gone: recreate `gitdir`, `commondir` and
  *     `HEAD`, then rebuild the index with a mixed `git reset`. Never
  *     `--hard`: the agent's uncommitted files are the point of keeping the
@@ -26,9 +27,9 @@
  *     cannot run devenv, so without the link every agent commit fails in the
  *     hook.
  *
- * Everything under `.bots/wt/<role>` and `.git/worktrees/<role>` is the
+ * Everything under `.bots/wt/<employee>` and `.git/worktrees/<employee>` is the
  * agent's to write, so nothing is read from there: the admin dir is derived
- * from the role name, every link is written fresh rather than through
+ * from the employee id, every link is written fresh rather than through
  * whatever is at its path (a planted symlink would otherwise aim a host
  * write anywhere), and git runs hardened (git-hardening.mjs), including
  * against the filter drivers the shared config names: both the checkout
@@ -42,6 +43,7 @@ import { fileURLToPath } from "node:url";
 
 import { FILTER_KEYS, GIT_ENV, GIT_HARDENING, filterPins } from "./git-hardening.mjs";
 import { obj } from "./protocol.mjs";
+import { roleOf } from "./staff.mjs";
 
 /**
  * @param {string} cwd
@@ -189,11 +191,11 @@ function mainCommit(repo, remote, done) {
 }
 
 /**
- * Attaches `<repo>/.bots/wt/<role>` to `<repo>/.git/worktrees/<role>`,
+ * Attaches `<repo>/.bots/wt/<employee>` to `<repo>/.git/worktrees/<employee>`,
  * creating or repairing whichever half is missing.
  *
  * @param {string} repo the operator's checkout
- * @param {string} role
+ * @param {string} employee
  * @param {{ remote?: string, store?: string, hookConfig?: string }} [options] `remote`: where to
  *   fetch `main` from; omitted, nothing is fetched and the existing
  *   `origin/main` is used. `store`: the prefix a hook config must resolve
@@ -201,13 +203,13 @@ function mainCommit(repo, remote, done) {
  *   store file to link as the hook config
  * @returns {string[]} what was done, one line each; empty if nothing was needed
  */
-export function ensureWorktree(repo, role, options = {}) {
-  if (!/^[a-z0-9][a-z0-9-]*$/.test(role)) {
-    throw new Error(`not a role name: ${role}`);
+export function ensureWorktree(repo, employee, options = {}) {
+  if (roleOf(employee) === null) {
+    throw new Error(`not an employee id: ${employee}`);
   }
-  const worktree = path.join(repo, ".bots", "wt", role);
+  const worktree = path.join(repo, ".bots", "wt", employee);
   const dotGit = path.join(worktree, ".git");
-  const admin = path.join(repo, ".git", "worktrees", role);
+  const admin = path.join(repo, ".git", "worktrees", employee);
   const pins = filterPins(run(repo, ["config", "--get-regexp", FILTER_KEYS]).stdout);
   /** @type {string[]} */
   const done = [];
@@ -235,7 +237,7 @@ export function ensureWorktree(repo, role, options = {}) {
     throw new Error(`${admin} is not a directory; move it aside and start again`);
   }
   if (adminStat === undefined) {
-    // HEAD went with the admin dir. The role's newest branch is the best
+    // HEAD went with the admin dir. The employee's newest branch is the best
     // guess at what it had checked out, and the agent can switch from there.
     // With none, main, detached, as for a new worktree.
     const newest = git(repo, [
@@ -243,7 +245,7 @@ export function ensureWorktree(repo, role, options = {}) {
       "--sort=-committerdate",
       "--count=1",
       "--format=%(refname)",
-      `refs/heads/bot/${role}`,
+      `refs/heads/bot/${employee}`,
     ]).trim();
     const head = newest === "" ? mainCommit(repo, options.remote, done) : `ref: ${newest}`;
     fs.mkdirSync(admin);
@@ -268,9 +270,9 @@ export function ensureWorktree(repo, role, options = {}) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const [repo, role, hookConfig] = process.argv.slice(2);
-  if (repo === undefined || role === undefined) {
-    process.stderr.write("usage: worktree.mjs <repo> <role> [hook-config]\n");
+  const [repo, employee, hookConfig] = process.argv.slice(2);
+  if (repo === undefined || employee === undefined) {
+    process.stderr.write("usage: worktree.mjs <repo> <employee> [hook-config]\n");
     process.exit(2);
   }
   // GitHub's main, by URL, as the reboot fetches it. VIBEWARS_GIT_REMOTE is
@@ -283,12 +285,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     process.env.VIBEWARS_GIT_REMOTE ??
     (typeof slug === "string" && slug !== "" ? `git@github.com:${slug}.git` : undefined);
   try {
-    for (const line of ensureWorktree(repo, role, { remote, hookConfig })) {
+    for (const line of ensureWorktree(repo, employee, { remote, hookConfig })) {
       process.stdout.write(`claude-bot: ${line}\n`);
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`claude-bot: ${role}: ${message}\n`);
+    process.stderr.write(`claude-bot: ${employee}: ${message}\n`);
     process.exit(1);
   }
 }

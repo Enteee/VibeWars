@@ -289,9 +289,10 @@ describe("claude-llc-agent", () => {
   /**
    * @param {(keyof typeof RUNS)[]} plan
    * @param {Record<string, string>} [env]
-   * @returns {{ code: number | null, calls: string[], runs: number, stdout: string, notes: string[], contextFile: string }}
+   * @param {string} [employee]
+   * @returns {{ code: number | null, calls: string[], runs: number, stdout: string, notes: string[], contextFile: string, ran: string, dir: string }}
    */
-  function run(plan, env = {}) {
+  function run(plan, env = {}, employee = "developer-1") {
     const dir = scratch();
     const scripts = path.join(dir, "scripts");
     const bin = path.join(dir, "bin");
@@ -323,6 +324,7 @@ describe("claude-llc-agent", () => {
         `n=$(( $(cat ${count}) + 1 )); echo "$n" >${count}`,
         `echo "\${VIBEWARS_KICKOFF_NOTE-}" >>${notes}`,
         `echo "$VIBEWARS_CONTEXT_FILE" >${contextFile}`,
+        `echo "$1" >${path.join(dir, "ran")}`,
         'case "$n" in',
         cases,
         "  *) exit 1 ;;",
@@ -333,7 +335,7 @@ describe("claude-llc-agent", () => {
     );
     const script = path.join(dir, "claude-llc-agent");
     fs.writeFileSync(script, loopScript(scripts));
-    const result = spawnSync("bash", [script, "developer-1"], {
+    const result = spawnSync("bash", [script, employee], {
       encoding: "utf8",
       timeout: 30_000,
       env: { ...process.env, DEVENV_ROOT: dir, PATH: `${bin}:${process.env.PATH ?? ""}`, ...env },
@@ -345,6 +347,8 @@ describe("claude-llc-agent", () => {
       stdout: result.stdout,
       notes: fs.existsSync(notes) ? fs.readFileSync(notes, "utf8").split("\n").slice(0, -1) : [],
       contextFile: path.relative(dir, fs.readFileSync(contextFile, "utf8").trim()),
+      ran: fs.readFileSync(path.join(dir, "ran"), "utf8").trim(),
+      dir,
     };
   }
 
@@ -392,6 +396,15 @@ describe("claude-llc-agent", () => {
 
   it("names the role's context file in its bus directory, where tg wait reads it (#321)", () => {
     expect(run(["fail"]).contextFile).toBe(".bots/bus/developer-1/context.json");
+  });
+
+  it("runs a second employee under its own id and state, on its role's bus (#62)", () => {
+    const result = run(["fail"], {}, "developer-1@2");
+
+    expect(result.ran).toBe("developer-1@2");
+    expect(fs.readdirSync(path.join(result.dir, ".bots", "agents"))).toEqual(["developer-1@2"]);
+    expect(result.contextFile).toBe(".bots/bus/developer-1/context.json");
+    expect(result.stdout).toContain("next turn for developer-1@2 in 0s");
   });
 
   it("neither counts a limit as a failure nor lets it reset the count", () => {

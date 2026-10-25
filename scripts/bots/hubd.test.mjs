@@ -19,7 +19,8 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { parseAlive } from "./hub-health.mjs";
-import { parseStaff } from "./staff.mjs";
+import { ROLES } from "./hub-policy.mjs";
+import { parseStaff, seedStaff } from "./staff.mjs";
 
 const HUBD = path.join(path.dirname(fileURLToPath(import.meta.url)), "hubd.mjs");
 const HUB = path.join(path.dirname(fileURLToPath(import.meta.url)), "hub.mjs");
@@ -171,6 +172,30 @@ const commit = (message, cwd) =>
   sh(["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", message], cwd);
 
 /**
+ * Writes a staff.json employing every role's first seat, as the first boot
+ * does, and `more` besides (#62).
+ *
+ * @param {string} root
+ * @param {string[]} more further employee ids, such as `developer-1@2`
+ * @returns {void}
+ */
+function employ(root, more) {
+  const staff = seedStaff(ROLES, 1);
+  for (const id of more) {
+    const [role = id] = id.split("@");
+    staff.employees[id] = {
+      role,
+      hiredAt: 1,
+      by: "manager",
+      reason: "test",
+      state: "working",
+      readyAt: null,
+    };
+  }
+  fs.writeFileSync(path.join(root, "staff.json"), JSON.stringify(staff));
+}
+
+/**
  * Start a daemon with its own root and fake GitHub.
  *
  * @param {number} remaining the GraphQL budget GitHub claims to have left
@@ -205,6 +230,7 @@ async function startHubd(remaining, before) {
     }),
   );
 
+  employ(root, []);
   before?.({ root, repo, remote: path.join(dir, "remote.git") });
   const env = {
     ...process.env,
@@ -229,6 +255,14 @@ async function startHubd(remaining, before) {
   return {
     root,
     hub,
+    /**
+     * Employs every role's first seat and these further employees.
+     *
+     * @param {string[]} more
+     */
+    employ(...more) {
+      employ(root, more);
+    },
     repo,
     remote: path.join(dir, "remote.git"),
     /**
@@ -840,6 +874,7 @@ describe("hubd answering issue and PR reads from REST", () => {
             {
               env: {
                 PATH: process.env.PATH ?? "",
+                VIBEWARS_BOT_EMPLOYEE: "developer-1",
                 VIBEWARS_BOT_ROLE: "developer-1",
                 VIBEWARS_HUB: path.join(hubd.hub, "developer-1"),
               },
@@ -1110,6 +1145,56 @@ describe("hubd and what a jail plants in its spool (#329)", () => {
     expect(fs.existsSync(path.join(req, "00000000000002-1.json"))).toBe(false);
     expect(fs.readdirSync(path.join(hubd.hub, "developer-1", "res"))).not.toContain("a.b.json");
     expect(contents(target)).toEqual({ victim: "the operator's\n" });
+  }, 20_000);
+});
+
+describe("hubd serving one spool per employee (#62)", () => {
+  it("gives a second employee its role's permissions, and its own push prefix", async () => {
+    const hubd = await startHubd(5000);
+    hubd.employ("developer-1@2");
+
+    const read = await hubd.request("developer-1@2", "board", ["ls", "Ready"]);
+    expect(read.code, String(read.reason)).toBe(0);
+    const merge = await hubd.request("developer-1@2", "gh", ["pr", "merge", "22"]);
+    expect(merge.allow).toBe(false);
+
+    const theirs = await hubd.request("developer-1@2", "push", ["bot/developer-1/x"]);
+    expect(theirs).toMatchObject({
+      allow: false,
+      reason: "developer-1@2 may only push branches under bot/developer-1@2/",
+    });
+    const bare = await hubd.request("developer-1", "push", ["bot/developer-1@2/x"]);
+    expect(String(bare.reason)).toBe("developer-1 may only push branches under bot/developer-1/");
+
+    const audit = fs.readFileSync(path.join(hubd.hub, "audit.jsonl"), "utf8");
+    expect(audit).toContain('"employee":"developer-1@2","role":"developer-1"');
+  }, 20_000);
+
+  it("refuses a spool nobody is employed under, and serves a hire at once", async () => {
+    const hubd = await startHubd(5000);
+    // Made by hand, or left by a fired employee: hubd makes no spool for it.
+    expect(fs.existsSync(path.join(hubd.hub, "qa-tester@2"))).toBe(false);
+    fs.mkdirSync(path.join(hubd.hub, "qa-tester@2", "req"), { recursive: true });
+
+    const stranger = await hubd.request("qa-tester@2", "board", ["ls"]);
+    expect(stranger).toEqual({ allow: false, reason: 'unknown employee "qa-tester@2"', code: 77 });
+
+    // hubd makes the spool again only once it has read the new staff.
+    fs.rmSync(path.join(hubd.hub, "qa-tester@2"), { recursive: true });
+    hubd.employ("qa-tester@2");
+    const hired = await hubd.request("qa-tester@2", "board", ["ls"]);
+    expect(hired.code, String(hired.reason)).toBe(0);
+  }, 20_000);
+
+  it("keeps serving the employees it knows while staff.json is broken", async () => {
+    const hubd = await startHubd(5000);
+    await hubd.until(() => fs.existsSync(path.join(hubd.hub, "architect", "req")), "a spool");
+    fs.writeFileSync(path.join(hubd.root, "staff.json"), "{");
+    await hubd.until(() => hubd.stderr().includes("staff.json: "), "hubd to read the broken staff");
+
+    const answer = await hubd.request("architect", "board", ["ls"]);
+    expect(answer.code).toBe(0);
+    expect(hubd.stderr()).toMatch(/hubd: staff\.json: .*; still serving manager, /);
   }, 20_000);
 });
 
@@ -1622,12 +1707,15 @@ describe("hubd scheduling a company reboot", () => {
       ready: [],
     });
 
-    for (const role of ["qa-tester", "qa-tester", "developer-1"]) {
-      const ready = await hubd.request(role, "reboot", ["ready"]);
-      expect(ready.code, role).toBe(0);
+    // Kept per employee (#62): two employees of one role are two agents to wait for.
+    hubd.employ("developer-1@2");
+    for (const employee of ["qa-tester", "qa-tester", "developer-1", "developer-1@2"]) {
+      await hubd.until(() => fs.existsSync(path.join(hubd.hub, employee, "req")), employee);
+      const ready = await hubd.request(employee, "reboot", ["ready"]);
+      expect(ready.code, employee).toBe(0);
     }
     expect(JSON.parse(fs.readFileSync(record, "utf8"))).toMatchObject({
-      ready: ["qa-tester", "developer-1"],
+      ready: ["qa-tester", "developer-1", "developer-1@2"],
     });
 
     const again = await hubd.request("manager", "reboot", ["request", "again"]);
@@ -1766,7 +1854,7 @@ describe("hubd hiring and firing", () => {
   it("refuses anyone but the manager, and a malformed staff.json", async () => {
     const hubd = await startHubd(5000);
     employ(hubd, 9);
-    const answer = await hubd.request("lead-dev", "staff", ["hire", "qa-tester", "x"]);
+    const answer = await hubd.request("qa-tester", "staff", ["hire", "qa-tester", "x"]);
     expect(answer.allow).toBe(false);
 
     fs.writeFileSync(path.join(hubd.root, "staff.json"), JSON.stringify({ employees: {} }));

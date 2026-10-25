@@ -35,7 +35,7 @@ hub <gh command...>          GitHub, e.g. `hub issue list`, `hub pr create`
 hub push <branch>            push your branch
 hub approve <pr> --sha <commit> [note]          reviewers only; <commit> is
 hub request-changes <pr> --sha <commit> <note>  the head you reviewed
-hub whoami                   your role, and what you are allowed to do
+hub whoami                   who you are (employee, role), and what you may do
 ```
 
 `hub` is GitHub. There is no `gh` and no network credential in here: `hub`
@@ -95,7 +95,8 @@ left half-done.
   `git fetch https://github.com/Enteee/VibeWars.git main:refs/remotes/origin/main`.
 - Never run `git worktree` or `git gc`: other worktrees are invisible in
   here, so git would treat them as deleted. Worktrees are the host's job.
-- Commit on your own branch, `bot/<your-role>/<something>`. Never force-push.
+- Commit on your own branch, `bot/<you>/<something>`, where `<you>` is the
+  employee `hub whoami` names (`qa-tester`, or `qa-tester@2`). Never force-push.
   You cannot push to `main` and neither can anyone else — `main` only ever
   changes through a merged pull request.
 - **Message a role only when it must act.** The board is the state: don't

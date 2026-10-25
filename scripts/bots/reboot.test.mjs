@@ -128,6 +128,13 @@ describe("drainStep", () => {
     expect(drainStep({ ...base, between: ["architect"] }).stop).toBe(false);
   });
 
+  it("waits for each employee of a role, not for the role (#62)", () => {
+    const two = { ...base, running: ["manager", "developer-1", "developer-1@2"] };
+    const one = { ...reboot, ready: ["manager", "developer-1"] };
+    expect(drainStep({ ...two, reboot: one }).stop).toBe(false);
+    expect(drainStep({ ...two, reboot: one, between: ["developer-1@2"] }).stop).toBe(true);
+  });
+
   it("stops at the deadline whoever is still busy", () => {
     expect(drainStep({ ...base, now: reboot.deadline }).stop).toBe(true);
   });
@@ -268,7 +275,7 @@ describe("bootNote", () => {
 });
 
 describe("betweenTurns", () => {
-  it("is the roles whose loop has written its marker, and no others", () => {
+  it("is the employees whose loop has written its marker, and no others", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "reboot-test-"));
     dirs.push(root);
     fs.mkdirSync(path.join(root, "agents", "manager"), { recursive: true });
@@ -277,6 +284,12 @@ describe("betweenTurns", () => {
     fs.mkdirSync(path.join(root, "agents", "architect"), { recursive: true });
     fs.writeFileSync(path.join(root, "agents", "architect", "session-id"), "abc\n");
 
-    expect(betweenTurns(root, ["manager", "architect", "developer-1"])).toEqual(["manager"]);
+    fs.mkdirSync(path.join(root, "agents", "architect@2"), { recursive: true });
+    fs.writeFileSync(path.join(root, "agents", "architect@2", "between-turns"), "");
+
+    expect(betweenTurns(root, ["manager", "architect", "architect@2", "developer-1"])).toEqual([
+      "manager",
+      "architect@2",
+    ]);
   });
 });

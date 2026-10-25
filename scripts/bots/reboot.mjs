@@ -34,7 +34,8 @@ export const INFLIGHT_GRACE_MS = 60_000;
  *   ready: string[],
  * }} Reboot
  *
- * `ready` lists the roles that ran `company ready`.
+ * `ready` lists the employees that ran `company ready` (#62): two
+ * employees of one role are two agents to wait for.
  */
 
 /**
@@ -102,7 +103,7 @@ export function rebootAllowed({ bootSha, changedPaths, lastRebootAt, now, pendin
 /**
  * One step of the drain: stop the company now, or keep waiting?
  *
- * The company is drained once every running agent has run `company ready`
+ * The company is drained once every running employee has run `company ready`
  * or is between turns, or once the deadline passes. Its restart loop starts
  * no new turn while a reboot is pending, so an agent between turns stays
  * there. Then it stops as
@@ -120,7 +121,7 @@ export function rebootAllowed({ bootSha, changedPaths, lastRebootAt, now, pendin
  * @returns {{ stop: boolean, drainedAt: number | null }}
  */
 export function drainStep({ now, reboot, running, between, inflight, drainedAt }) {
-  const everyone = running.every((role) => reboot.ready.includes(role) || between.includes(role));
+  const everyone = running.every((id) => reboot.ready.includes(id) || between.includes(id));
   const drained = drainedAt ?? (everyone || now >= reboot.deadline ? now : null);
   if (drained === null) {
     return { stop: false, drainedAt: null };
@@ -173,15 +174,15 @@ export function announcement(reboot, subjects) {
 }
 
 /**
- * The roles whose restart loop is between turns: it has created
- * `.bots/agents/<role>/between-turns` and not yet started the next turn.
+ * The employees whose restart loop is between turns: it has created
+ * `.bots/agents/<employee>/between-turns` and not yet started the next turn.
  *
  * @param {string} root the company's state directory
- * @param {readonly string[]} roles
+ * @param {readonly string[]} employees
  * @returns {string[]}
  */
-export function betweenTurns(root, roles) {
-  return roles.filter((role) => fs.existsSync(path.join(root, "agents", role, "between-turns")));
+export function betweenTurns(root, employees) {
+  return employees.filter((id) => fs.existsSync(path.join(root, "agents", id, "between-turns")));
 }
 
 /** `COMPANY_PATHS` as git pathspecs, for `git log -- ...`. */

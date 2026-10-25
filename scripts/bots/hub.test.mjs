@@ -80,7 +80,12 @@ function stubHubd(answer, seen = []) {
 function hub(spool, args) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [HUB, ...args], {
-      env: { PATH: process.env.PATH ?? "", VIBEWARS_BOT_ROLE: "developer-1", VIBEWARS_HUB: spool },
+      env: {
+        PATH: process.env.PATH ?? "",
+        VIBEWARS_BOT_EMPLOYEE: "developer-1",
+        VIBEWARS_BOT_ROLE: "developer-1",
+        VIBEWARS_HUB: spool,
+      },
       stdio: ["ignore", "pipe", "inherit"],
     });
     /** @type {Buffer[]} */
@@ -103,7 +108,12 @@ function hub(spool, args) {
 function hubIntoHead(spool, args) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [HUB, ...args], {
-      env: { PATH: process.env.PATH ?? "", VIBEWARS_BOT_ROLE: "developer-1", VIBEWARS_HUB: spool },
+      env: {
+        PATH: process.env.PATH ?? "",
+        VIBEWARS_BOT_EMPLOYEE: "developer-1",
+        VIBEWARS_BOT_ROLE: "developer-1",
+        VIBEWARS_HUB: spool,
+      },
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stderr = "";
@@ -177,13 +187,27 @@ describe("hub writing a large answer to a pipe", () => {
 describe("hub whoami", () => {
   /**
    * @param {string} role
+   * @param {string} [employee] the role's bare seat unless named
    * @returns {string}
    */
-  const whoami = (role) =>
+  const whoami = (role, employee = role) =>
     spawnSync(process.execPath, [HUB, "whoami"], {
-      env: { PATH: process.env.PATH ?? "", VIBEWARS_BOT_ROLE: role, VIBEWARS_HUB: "/nonexistent" },
+      env: {
+        PATH: process.env.PATH ?? "",
+        VIBEWARS_BOT_EMPLOYEE: employee,
+        VIBEWARS_BOT_ROLE: role,
+        VIBEWARS_HUB: "/nonexistent",
+      },
       encoding: "utf8",
     }).stdout;
+
+  it("names the employee and its role, and pushes under the employee (#62)", () => {
+    const said = whoami("qa-tester", "qa-tester@2");
+    expect(said.startsWith("employee: qa-tester@2\nrole: qa-tester\n")).toBe(true);
+    expect(whoami("developer-1", "developer-1@2")).toContain(
+      "yes  push branches (bot/developer-1@2/*)",
+    );
+  });
 
   it("says only the manager may close and reopen", () => {
     expect(whoami("manager")).toContain("yes  close and reopen issues and pull requests");

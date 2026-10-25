@@ -14,7 +14,7 @@
  *   hub approve <pr> --sha <commit> [note]          reviewers only
  *   hub request-changes <pr> --sha <commit> <note>  reviewers only
  *     <commit> is the head you reviewed; a verdict on a moved head is refused
- *   hub whoami                       your role and what it may do
+ *   hub whoami                       who you are, your role, and what it may do
  *   hub board ls|show|changes ...    hubd's copy of the board, as JSON (what
  *                                    `board` reads; see hub-board.mjs)
  *   company reboot "<reason>"        manager only; also: company reboot --abort
@@ -39,10 +39,12 @@ import { inlineBodyFile } from "./hub-body.mjs";
 import { splitFilter } from "./hub-filter.mjs";
 import { ROLES, authorize } from "./hub-policy.mjs";
 
+// The employee (`qa-tester@2`) is who pushes; the role is what it may do (#62).
+const EMPLOYEE = process.env.VIBEWARS_BOT_EMPLOYEE;
 const ROLE = process.env.VIBEWARS_BOT_ROLE;
 const SPOOL = process.env.VIBEWARS_HUB;
 
-if (ROLE === undefined || SPOOL === undefined) {
+if (EMPLOYEE === undefined || ROLE === undefined || SPOOL === undefined) {
   console.error("hub: not running inside a claude-bot sandbox");
   process.exit(1);
 }
@@ -61,6 +63,7 @@ if (argv.length === 0) {
 const ACTING = (process.env.VIBEWARS_ACTING ?? "").split(",").filter((hat) => hat !== "");
 
 if (argv[0] === "whoami") {
+  console.log(`employee: ${EMPLOYEE}`);
   console.log(`role: ${ROLE}`);
   console.log("");
   // Probed rather than hard-coded, so this can never drift from the policy
@@ -82,8 +85,12 @@ if (argv[0] === "whoami") {
     const verdict = authorize(ROLE, { kind: "gh", argv: probe }, { acting: ACTING });
     console.log(`  ${verdict.allow ? "yes" : "no "}  ${label}`);
   }
-  const pushes = authorize(ROLE, { kind: "push", argv: [`bot/${ROLE}/x`] }, { acting: ACTING });
-  console.log(`  ${pushes.allow ? "yes" : "no "}  push branches (bot/${ROLE}/*)`);
+  const pushes = authorize(
+    ROLE,
+    { kind: "push", argv: [`bot/${EMPLOYEE}/x`] },
+    { acting: ACTING, employee: EMPLOYEE },
+  );
+  console.log(`  ${pushes.allow ? "yes" : "no "}  push branches (bot/${EMPLOYEE}/*)`);
   const reviews = authorize(
     ROLE,
     { kind: "review", argv: ["approve", "1", "--sha", "0000000"] },
@@ -190,7 +197,7 @@ if (request.kind === "gh") {
 // Refused locally where possible. The daemon checks again — it must, since it
 // is the only side that is trustworthy — but failing here gives the agent an
 // immediate, specific reason instead of a round trip ending in "denied".
-const local = authorize(ROLE, request, { acting: ACTING });
+const local = authorize(ROLE, request, { acting: ACTING, employee: EMPLOYEE });
 if (!local.allow) {
   console.error(`hub: refused — ${local.reason ?? "not allowed"}`);
   console.error("hub: this is someone else's job; ask them on Telegram.");

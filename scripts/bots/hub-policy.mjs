@@ -573,21 +573,27 @@ function permits(roles, role) {
  * reviews and the agent has to actually do both passes rather than one
  * glance counting twice.
  *
+ * A push is the one thing that is not only the role's (#62): it goes under
+ * the pusher's own employee prefix, `bot/qa-tester@2/`, whichever hat allows
+ * it, so two employees of one role never share a branch. `employee` is that
+ * id, and a push without one is refused.
+ *
  * @param {string} role
  * @param {{ kind: string, argv: string[] }} request
- * @param {{ acting?: string[] }} [options]
+ * @param {{ acting?: string[], employee?: string }} [options]
  * @returns {{ allow: boolean, reason?: string, guards?: string[], as?: string }}
  */
 export function authorize(role, request, options = {}) {
   const acting = options.acting ?? [];
-  const direct = authorizeAs(role, request, acting);
+  const { employee } = options;
+  const direct = authorizeAs(role, request, acting, employee);
   // Hiring and firing is the manager's own; no hat lends it (#380).
   if (direct.allow || request.kind === "staff") {
     return direct;
   }
 
   for (const hat of acting) {
-    const borrowed = authorizeAs(hat, request, acting);
+    const borrowed = authorizeAs(hat, request, acting, employee);
     if (borrowed.allow) {
       return { ...borrowed, as: hat };
     }
@@ -599,16 +605,17 @@ export function authorize(role, request, options = {}) {
  * @param {string} role
  * @param {{ kind: string, argv: string[] }} request
  * @param {string[]} acting the hats the requesting role holds
+ * @param {string | undefined} employee who is asking: a push's prefix
  * @returns {{ allow: boolean, reason?: string, guards?: string[] }}
  */
-function authorizeAs(role, request, acting) {
+function authorizeAs(role, request, acting, employee) {
   if (!ROLES.includes(role)) {
     return { allow: false, reason: `unknown role "${role}"` };
   }
   const argv = Array.isArray(request.argv) ? request.argv : [];
 
   if (request.kind === "push") {
-    return authorizePush(role, argv);
+    return authorizePush(role, argv, employee);
   }
   if (request.kind === "review") {
     return authorizeReview(role, argv, acting);
@@ -932,11 +939,12 @@ function authorizeBoard(argv) {
  * A push is the one operation that can rewrite shared history, so it is
  * checked by shape rather than by allowlist.
  *
- * @param {string} role
+ * @param {string} role the hat the push is allowed under
  * @param {string[]} argv `[branch, ...flags]`
+ * @param {string | undefined} employee the pusher, whose prefix the branch must have
  * @returns {{ allow: boolean, reason?: string, guards?: string[] }}
  */
-function authorizePush(role, argv) {
+function authorizePush(role, argv, employee) {
   const scope = PUSH_SCOPES[role];
   if (!IMPLEMENTERS.includes(role) && scope === undefined) {
     return { allow: false, reason: `role "${role}" does not push branches` };
@@ -954,12 +962,12 @@ function authorizePush(role, argv) {
     return { allow: false, reason: "nobody pushes to main; merge through a pull request" };
   }
 
-  const mine = `bot/${role}/`;
+  if (employee === undefined) {
+    return { allow: false, reason: "a push needs the pusher's employee id" };
+  }
+  const mine = `bot/${employee}/`;
   if (!branch.startsWith(mine)) {
-    return {
-      allow: false,
-      reason: `role "${role}" may only push branches under ${mine}`,
-    };
+    return { allow: false, reason: `${employee} may only push branches under ${mine}` };
   }
 
   // A colon in a refspec means "push this local ref to that remote ref",

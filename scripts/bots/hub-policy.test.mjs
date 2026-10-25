@@ -30,8 +30,9 @@ const gh = (role, argv) => authorize(role, { kind: "gh", argv });
 /**
  * @param {string} role
  * @param {string[]} argv
+ * @param {string} [employee] the role's bare seat unless named
  */
-const push = (role, argv) => authorize(role, { kind: "push", argv });
+const push = (role, argv, employee = role) => authorize(role, { kind: "push", argv }, { employee });
 /**
  * @param {string} role
  * @param {string[]} argv
@@ -311,6 +312,25 @@ describe("pushing", () => {
     expect(push("developer-1", ["bot/architect/whatever"])).toMatchObject({ allow: false });
   });
 
+  it("puts each employee under its own prefix, not its role's (#62)", () => {
+    expect(push("developer-1", ["bot/developer-1@2/x"], "developer-1@2")).toMatchObject({
+      allow: true,
+    });
+    expect(push("developer-1", ["bot/developer-1/x"], "developer-1@2")).toStrictEqual({
+      allow: false,
+      reason: "developer-1@2 may only push branches under bot/developer-1@2/",
+    });
+    // The bare seat's prefix is a prefix of nothing else's: the slash ends it.
+    expect(push("developer-1", ["bot/developer-1@2/x"])).toMatchObject({ allow: false });
+  });
+
+  it("refuses a push that does not say who is pushing", () => {
+    expect(authorize("developer-1", { kind: "push", argv: ["bot/developer-1/x"] })).toStrictEqual({
+      allow: false,
+      reason: "a push needs the pusher's employee id",
+    });
+  });
+
   it("refuses a refspec, which would sidestep the branch check entirely", () => {
     // `git push origin bot/developer-1/x:main` ends up on main while passing
     // a naive prefix test.
@@ -578,9 +598,14 @@ describe("borrowed hats", () => {
     expect(
       authorize("lead-dev", { kind: "gh", argv: ["pr", "merge", "22"] }, acting),
     ).toMatchObject({ allow: true, as: "qa-tester" });
+    // A borrowed hat lends the right to push, never another prefix (#62).
+    const pushing = { ...acting, employee: "lead-dev" };
     expect(
-      authorize("lead-dev", { kind: "push", argv: ["bot/perf-sec-qa/x"] }, acting),
+      authorize("lead-dev", { kind: "push", argv: ["bot/lead-dev/x"] }, pushing),
     ).toMatchObject({ allow: true, as: "perf-sec-qa" });
+    expect(
+      authorize("lead-dev", { kind: "push", argv: ["bot/perf-sec-qa/x"] }, pushing),
+    ).toMatchObject({ allow: false });
   });
 
   it("names which hat it allowed, so the audit log can record it", () => {

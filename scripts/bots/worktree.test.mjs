@@ -319,6 +319,21 @@ describe("ensureWorktree", () => {
 
   it("refuses a role name that could leave .git/worktrees", () => {
     const { repo, store } = setup();
-    expect(() => ensureWorktree(repo, "../x", { store })).toThrow("not a role name");
+    expect(() => ensureWorktree(repo, "../x", { store })).toThrow("not an employee id");
+    expect(() => ensureWorktree(repo, "dev@1", { store })).toThrow("not an employee id");
+  });
+
+  it("gives a second employee its own worktree, and its own branches back (#62)", () => {
+    const { repo, store } = setup();
+    ensureWorktree(repo, "dev", { store });
+    const second = path.join(repo, ".bots", "wt", "dev@2");
+    ensureWorktree(repo, "dev@2", { store });
+    expect(fs.existsSync(path.join(repo, ".git", "worktrees", "dev@2"))).toBe(true);
+
+    sh(["switch", "-q", "-c", "bot/dev@2/mine"], second);
+    sh(["branch", "bot/dev/theirs"], repo);
+    fs.rmSync(path.join(repo, ".git", "worktrees", "dev@2"), { recursive: true });
+    ensureWorktree(repo, "dev@2", { store });
+    expect(sh(["branch", "--show-current"], second)).toBe("bot/dev@2/mine");
   });
 });
