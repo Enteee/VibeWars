@@ -58,6 +58,8 @@ export const FLOATING_TEXT_SECONDS = 1.2;
 const FLOATING_TEXT_RISE_PER_SECOND = 24;
 /** A 13px line of text, plus a pixel so neighbours never touch. */
 export const FLOATING_TEXT_LINE = 14;
+/** The most texts one actor carries at once; a steady stream would otherwise build a tower. */
+export const FLOATING_TEXT_STACK = 4;
 
 /** How high a floating text has risen by now. */
 export function floatingTextY(text: FloatingText): number {
@@ -70,16 +72,20 @@ export function floatingTextY(text: FloatingText): number {
  * same actor (#54). Several hits landing together used to draw on one
  * spot as an unreadable smear. Each one that would overlap lifts the new
  * text a line above it, so a burst reads as a short column of numbers.
+ *
+ * Nothing, once the actor already carries `FLOATING_TEXT_STACK` texts:
+ * the new one is dropped rather than stacked out of sight.
  */
 export function placeFloatingText(
   existing: readonly FloatingText[],
   incoming: FloatingText,
-): FloatingText {
+): FloatingText | undefined {
+  const sameAnchor = existing.filter((text) => text.anchorId === incoming.anchorId);
+  if (sameAnchor.length >= FLOATING_TEXT_STACK) {
+    return undefined;
+  }
   // Lowest first: lifting past one can only reach those above it.
-  const ys = existing
-    .filter((text) => text.anchorId === incoming.anchorId)
-    .map(floatingTextY)
-    .sort((a, b) => b - a);
+  const ys = sameAnchor.map(floatingTextY).sort((a, b) => b - a);
   let y = floatingTextY(incoming);
   for (const other of ys) {
     if (Math.abs(other - y) < FLOATING_TEXT_LINE) {

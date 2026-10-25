@@ -78,7 +78,10 @@ export class ArenaScene extends Phaser.Scene {
 
   /** Queue a floating number/label above a world position. */
   public addFloatingText(text: FloatingText): void {
-    this.floatingTexts.push(placeFloatingText(this.floatingTexts, text));
+    const placed = placeFloatingText(this.floatingTexts, text);
+    if (placed !== undefined) {
+      this.floatingTexts.push(placed);
+    }
   }
 
   /** Flash where an area skill landed. */

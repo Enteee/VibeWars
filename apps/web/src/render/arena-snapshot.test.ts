@@ -6,6 +6,7 @@ import {
   AREA_FLASH_SECONDS,
   FLOATING_TEXT_LINE,
   FLOATING_TEXT_SECONDS,
+  FLOATING_TEXT_STACK,
   areaFlashAlpha,
   decayAreaFlashes,
   floatingTextY,
@@ -174,7 +175,10 @@ describe("placeFloatingText", () => {
   const burst = (texts: FloatingText[]): number[] => {
     const placed: FloatingText[] = [];
     for (const incoming of texts) {
-      placed.push(placeFloatingText(placed, incoming));
+      const next = placeFloatingText(placed, incoming);
+      if (next !== undefined) {
+        placed.push(next);
+      }
     }
     return placed.map(floatingTextY);
   };
@@ -200,5 +204,25 @@ describe("placeFloatingText", () => {
 
   it("makes no room for numbers over somebody else", () => {
     expect(burst([text("a"), text("b")])).toEqual([100, 100]);
+  });
+
+  it("never stacks more than FLOATING_TEXT_STACK over one actor, even from a stream", () => {
+    // A status ticking at 20 Hz for one text lifetime: 24 texts.
+    let live: FloatingText[] = [];
+    let tallest = 0;
+    for (let tick = 0; tick < 24; tick += 1) {
+      for (const floating of live) {
+        floating.remainingSeconds -= 0.05;
+      }
+      live = live.filter((floating) => floating.remainingSeconds > 0);
+      const placed = placeFloatingText(live, text("b"));
+      if (placed !== undefined) {
+        live.push(placed);
+      }
+      expect(live.length).toBeLessThanOrEqual(FLOATING_TEXT_STACK);
+      tallest = Math.max(tallest, ...live.map((floating) => 100 - floatingTextY(floating)));
+    }
+    // A column of FLOATING_TEXT_STACK lines, plus how far one rises in its life.
+    expect(tallest).toBeLessThanOrEqual((FLOATING_TEXT_STACK - 1) * FLOATING_TEXT_LINE + 24 * 1.2);
   });
 });
