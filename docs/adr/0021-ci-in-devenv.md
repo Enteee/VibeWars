@@ -56,6 +56,8 @@ is the required status check.
 - CI and a developer's shell run the same tools at the same versions, and a
   `devenv update` moves both.
 - A hook failure turns `git hooks` red; its log names the hook that failed.
+- A push to a pull request cancels the run it supersedes. Main runs are
+  grouped by commit, so a merge never cancels or replaces another merge's run.
 - The first run after a `devenv.lock` or `nix/**` change builds or downloads
   the shell; later runs restore it. The Actions cache is 10 GB per
   repository, and the shell (Chromium included) is a large share of it.
