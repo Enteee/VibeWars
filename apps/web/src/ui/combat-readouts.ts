@@ -153,6 +153,10 @@ export class StatusTickBatcher {
     const rows = this.advance(entry.atSeconds, nameOf);
     for (const event of entry.events) {
       if (entry.cause !== "degeneration") {
+        // A skill or a swing can finish off someone still ticking too.
+        if (event.kind === "death") {
+          rows.push(...this.#close((open) => open.targetId === event.targetId, nameOf));
+        }
         rows.push(combatEventToRow(entry, event, nameOf));
         continue;
       }

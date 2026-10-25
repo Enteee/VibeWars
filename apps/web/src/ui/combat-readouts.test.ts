@@ -326,6 +326,16 @@ describe("StatusTickBatcher (#151)", () => {
     expect(texts(rows)).toEqual(["degeneration hits Caster dummy for 4", "Caster dummy dies"]);
   });
 
+  it("also writes the ticks before a death by a skill", () => {
+    const batcher = new StatusTickBatcher();
+    batcher.push(tick(0, [{ kind: "damage", targetId: "dummy", amount: 2 }]), nameOf);
+    const finish = entry([{ kind: "death", targetId: "dummy" }], { atSeconds: 0.5 });
+    expect(texts(batcher.push(finish, nameOf))).toEqual([
+      "degeneration hits Caster dummy for 2",
+      "Caster dummy dies",
+    ]);
+  });
+
   it("writes no row for a second that sums to nothing", () => {
     const batcher = new StatusTickBatcher();
     const crumb: CombatEvent = { kind: "damage", targetId: "dummy", amount: 0.002 };
