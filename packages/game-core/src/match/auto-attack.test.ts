@@ -685,13 +685,13 @@ describe("aftercast (#317)", () => {
     expect(get(match, "a").combatant.cast.queuedSlot).toBeUndefined();
   });
 
-  it("cancelling the attack drops the queue", () => {
+  it("Cancel Action drops the queue", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
     match.setTarget("a", "d");
     match.requestSkill("a", 1);
     stepFor(match, 0.75);
     match.requestSkill("a", 0);
-    match.cancelAttack("a");
+    match.cancelAction("a");
     stepFor(match, AFTERCAST + DT);
     expect(get(match, "a").combatant.cast.isCasting).toBe(false);
   });

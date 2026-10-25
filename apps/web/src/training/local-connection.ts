@@ -219,8 +219,8 @@ export function createLocalConnection(options: {
         }
         return;
       }
-      case "cancel-attack":
-        simulation.cancelAttack(selfId);
+      case "cancel":
+        simulation.cancelAction(selfId);
         return;
     }
   };

@@ -177,7 +177,11 @@ describe("parseClientIntent — attack", () => {
       kind: "attack",
       targetId: "abc123",
     });
-    expect(parseClientIntent({ kind: "cancel-attack" })).toEqual({ kind: "cancel-attack" });
+    expect(parseClientIntent({ kind: "cancel" })).toEqual({ kind: "cancel" });
+  });
+
+  it("rejects the cancel-attack kind that cancel replaced (#300)", () => {
+    expect(parseClientIntent({ kind: "cancel-attack" })).toBeUndefined();
   });
 
   it("rejects an attack without a real target id", () => {
@@ -189,6 +193,6 @@ describe("parseClientIntent — attack", () => {
 
   it("rejects either with a field it does not name", () => {
     expect(parseClientIntent({ kind: "attack", targetId: "a", slot: 0 })).toBeUndefined();
-    expect(parseClientIntent({ kind: "cancel-attack", targetId: "a" })).toBeUndefined();
+    expect(parseClientIntent({ kind: "cancel", targetId: "a" })).toBeUndefined();
   });
 });

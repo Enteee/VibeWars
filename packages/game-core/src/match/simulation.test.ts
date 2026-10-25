@@ -744,3 +744,65 @@ describe("moving cancels a cast (#279)", () => {
     expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([["damage"]]);
   });
 });
+
+describe("Cancel Action cancels the cast and the attack (#300)", () => {
+  it("mid-cast it cancels as moving does: paid for, no effect, no recharge, logged", () => {
+    const sim = duel();
+    const a = participant(sim, "a");
+    sim.setTarget("a", "b");
+    sim.requestSkill("a", 0);
+    stepFor(sim, 0.5);
+
+    sim.cancelAction("a");
+    expect(a.combatant.cast.isCasting).toBe(false);
+    const log = stepFor(sim, 2);
+
+    expect(log).toEqual([
+      {
+        tick: 10,
+        atSeconds: expect.closeTo(0.5, 6) as number,
+        cause: "skill",
+        sourceId: "a",
+        skillId: FIREBALL,
+        weaponId: undefined,
+        area: undefined,
+        events: [{ kind: "cancelled", targetId: "a", skillId: FIREBALL }],
+      },
+    ]);
+    expect(participant(sim, "b").combatant.health).toBe(participant(sim, "b").combatant.maxHealth);
+    expect(a.combatant.cast.rechargeRemaining.has(FIREBALL)).toBe(false);
+    expect(a.combatant.energy).toBeCloseTo(
+      a.combatant.maxEnergy - 10 + RULES.resources.energyRegenPerSecond * 2.5,
+      6,
+    );
+  });
+
+  it("one press clears a cast and an attack together", () => {
+    const sim = duel();
+    const a = participant(sim, "a");
+    sim.setTarget("a", "b");
+    expect(sim.requestAttack("a", "b")).toEqual({ ok: true });
+    sim.requestSkill("a", 0);
+    stepFor(sim, 0.25);
+    expect(a.combatant.cast.isCasting).toBe(true);
+    expect(a.combatant.attack).toBeDefined();
+
+    sim.cancelAction("a");
+
+    expect(a.combatant.cast.isCasting).toBe(false);
+    expect(a.combatant.attack).toBeUndefined();
+  });
+
+  it("with nothing running it does nothing and logs nothing", () => {
+    const sim = duel();
+    const a = participant(sim, "a");
+    stepFor(sim, 0.25);
+    const energy = a.combatant.energy;
+
+    sim.cancelAction("a");
+
+    expect(stepFor(sim, DT)).toEqual([]);
+    expect(a.combatant.energy).toBeGreaterThanOrEqual(energy);
+    expect(a.combatant.attack).toBeUndefined();
+  });
+});

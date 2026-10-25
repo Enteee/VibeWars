@@ -9,7 +9,12 @@ import {
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";
 import { saveMuted } from "../audio/mute-preference.js";
 import { soundPlayer } from "../audio/sound-player.js";
-import { attackClickIntents, attackKeyIntents, isAttacking } from "../input/attack-key.js";
+import {
+  attackClickIntents,
+  attackKeyIntents,
+  isAttacking,
+  isCasting,
+} from "../input/attack-key.js";
 import { createDoubleClick } from "../input/double-click.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
 import { attachNameReveal } from "../input/name-reveal.js";
@@ -48,6 +53,7 @@ import {
 import { describeRefusal, MESSAGE_SECONDS } from "./hud.js";
 import { skillBadgeHtml } from "./icons.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
+import { castingSlot, flashSlot, slotFlashes } from "./skill-slot-state.js";
 import {
   buildSignature,
   loadScenarioChoice,
@@ -363,8 +369,11 @@ export function createTrainingPanel(): TrainingPanel {
     const slots = session?.connection.skillBar ?? [];
     const recharges = session?.connection.getRecharges() ?? [];
     const reducedMotion = prefersReducedMotion();
+    const casting = castingSlot(slots, self);
     skillButtons.forEach((button, index) => {
       const slot = slots[index];
+      // The casting slot is lit, as on the match HUD (#300).
+      button.classList.toggle("is-casting", index === casting);
       // A hint, not a gate: the simulation still decides.
       const unaffordable =
         slot !== undefined &&
@@ -411,6 +420,12 @@ export function createTrainingPanel(): TrainingPanel {
     connection.onCombat((combat) => {
       if (viewport !== undefined && latestMatch !== undefined) {
         showCombatFeedback(viewport.scene, combat, latestMatch);
+      }
+      for (const failed of slotFlashes(combat.events, SELF_ID, connection.skillBar)) {
+        const button = skillButtons[failed.slot];
+        if (button !== undefined) {
+          flashSlot(button, failed.kind);
+        }
       }
     });
     connection.onCastRefused((refusal) => {
@@ -484,9 +499,10 @@ export function createTrainingPanel(): TrainingPanel {
       if (event.repeat) {
         return;
       }
-      // An attack in progress is cancelled first (#160).
-      if (session !== undefined && isAttacking(session.connection.getSnapshot())) {
-        session.connection.sendIntent({ kind: "cancel-attack" });
+      // A cast or an attack in progress is cancelled first (#160, #300).
+      const snapshot = session?.connection.getSnapshot();
+      if (snapshot !== undefined && (isCasting(snapshot) || isAttacking(snapshot))) {
+        session?.connection.sendIntent({ kind: "cancel" });
         return;
       }
       // Releases control; never navigates away from the editor.
