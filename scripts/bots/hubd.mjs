@@ -44,6 +44,7 @@ import {
   parseRateLimit,
   usesGraphql,
 } from "./hub-budget.mjs";
+import { alertRows, alertsFailure, alertsPath, parseAlerts, renderAlerts } from "./hub-alerts.mjs";
 import { hasFilter } from "./hub-filter.mjs";
 import {
   approvalsSatisfied,
@@ -1174,6 +1175,13 @@ async function checkVisibility(kind, argv, cfg) {
 
   if (kind === "review") {
     named = [{ group: "pr", selector: String(argv[1]) }];
+  } else if (kind === "alerts") {
+    // A pull request's alerts describe it: the same visibility as `pr view`.
+    const plan = parseAlerts(argv);
+    if ("error" in plan || plan.pr === null) {
+      return { ok: true };
+    }
+    named = [{ group: "pr", selector: String(plan.pr) }];
   } else if (kind === "gh" && namesItem(argv)) {
     const parsed = selectorsOf(argv);
     if ("error" in parsed) {
@@ -1482,6 +1490,33 @@ async function reboot(role, argv, cfg) {
 }
 
 /**
+ * `hub alerts` (#184): one REST read of the code-scanning alerts, rendered.
+ * A failure says what failed, and never reads as "no alerts".
+ *
+ * @param {string[]} argv
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
+ */
+async function serveAlerts(argv, cfg) {
+  const plan = parseAlerts(argv);
+  if ("error" in plan) {
+    return { code: 2, stdout: "", stderr: `hub alerts: ${plan.error}\n` };
+  }
+  const result = await gh(["api", alertsPath(plan, cfg.repo)]);
+  if (result.code !== 0) {
+    return { code: 1, stdout: "", stderr: alertsFailure(result.code, result.stderr, plan) };
+  }
+  /** @type {unknown} */
+  let parsed;
+  try {
+    parsed = JSON.parse(result.stdout);
+  } catch {
+    return { code: 1, stdout: "", stderr: "code scanning did not answer JSON\n" };
+  }
+  return { code: 0, stdout: renderAlerts(alertRows(parsed), plan), stderr: "" };
+}
+
+/**
  * Serve a request the policy has already allowed.
  *
  * @param {{ role: string, kind: string, argv: string[] }} request
@@ -1552,6 +1587,12 @@ async function serve(request, verdict, acting) {
     noteHint(pinned, result.code, cfg);
     audit({ role, kind, argv, decision: "allowed", code: result.code, sha: guarded.sha });
     return { allow: true, ...result };
+  }
+
+  if (kind === "alerts") {
+    const answered = await serveAlerts(argv, cfg);
+    audit({ role, kind, argv, decision: "allowed", code: answered.code });
+    return { allow: true, ...answered };
   }
 
   if (kind === "review") {

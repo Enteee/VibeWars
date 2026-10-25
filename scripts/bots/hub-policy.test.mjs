@@ -10,7 +10,14 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { ROLES, authorize, parseMerge, parseReview, touchesGate } from "./hub-policy.mjs";
+import {
+  ROLES,
+  authorize,
+  mayReadAlerts,
+  parseMerge,
+  parseReview,
+  touchesGate,
+} from "./hub-policy.mjs";
 
 /** A reviewed commit, as `--sha` names it. */
 const SHA = "b02a5cc7";
@@ -726,5 +733,16 @@ describe("board reads", () => {
     expect(authorize("developer-1", { kind: "board", argv: ["move", "14", "Done"] }).allow).toBe(
       false,
     );
+  });
+
+  it("lets every role read code-scanning alerts (#184)", () => {
+    for (const role of ROLES) {
+      expect(authorize(role, { kind: "alerts", argv: ["--pr", "183"] }).allow, role).toBe(true);
+    }
+  });
+
+  it("names its alert readers: a role added to ROLES later reads none (#184)", () => {
+    expect(mayReadAlerts("support")).toBe(false);
+    expect(ROLES.every((role) => mayReadAlerts(role))).toBe(true);
   });
 });
