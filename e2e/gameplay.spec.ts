@@ -81,6 +81,14 @@ async function startLobbyMatch(host: Page, guests: readonly Page[]): Promise<Loc
   return host.locator("#viewport canvas");
 }
 
+/** Leave by the button, which leaves for good: a closed page is held for its reconnection. */
+async function leaveMatch(page: Page): Promise<void> {
+  const leave = page.locator(".hud-leave");
+  await leave.getByRole("button", { name: "leave match" }).click();
+  await leave.getByRole("button", { name: "yes" }).click();
+  await expect(page.locator(".hud-bar-health")).toHaveCount(0);
+}
+
 /** Energy as the HUD reports it, e.g. "50 / 50 en" -> 50. */
 async function readEnergy(page: Page): Promise<number> {
   const text = (await page.locator(".hud-bar-energy .hud-bar-label").textContent()) ?? "";
@@ -244,6 +252,75 @@ test("Space attacks the nearest enemy with the weapon, and moving stops it (#160
   await opponent.close();
 });
 
+/**
+ * A page screenshot of the arena round `world`, `half` units each way.
+ * One world unit is one canvas pixel (arena-viewport.ts), so a world point
+ * is the canvas's own offset plus itself.
+ */
+async function spotShot(
+  page: Page,
+  canvas: Locator,
+  world: { readonly x: number; readonly y: number },
+  half = 20,
+): Promise<Buffer> {
+  const box = await canvas.boundingBox();
+  expect(box, "the arena canvas has no box").not.toBeNull();
+  return page.screenshot({
+    clip: {
+      x: (box?.x ?? 0) + world.x - half,
+      y: (box?.y ?? 0) + world.y - half,
+      width: 2 * half,
+      height: 2 * half,
+    },
+  });
+}
+
+test("clicking the ground walks there, round a wall, and stops (#310)", async ({ page }) => {
+  const canvas = await startSoloMatch(page);
+  // Behind the top wall (x 440 to 464, y 0 to 260) from the first spawn, (80, 200).
+  const goal = { x: 520, y: 150 };
+  const empty = await spotShot(page, canvas, goal);
+
+  await canvas.click({ position: goal });
+  // The marker there fades in 0.4 s; the walk round the wall takes about 3 s.
+  await page.waitForTimeout(600);
+  await expect
+    .poll(async () => (await spotShot(page, canvas, goal)).equals(empty), { timeout: 10_000 })
+    .toBe(false);
+
+  // Arrived, it stays.
+  await page.waitForTimeout(600);
+  const there = await spotShot(page, canvas, goal);
+  await page.waitForTimeout(700);
+  expect((await spotShot(page, canvas, goal)).equals(there), "the hero should stop there").toBe(
+    true,
+  );
+});
+
+test("clicking the ground keeps the target, and Space attacks it from there (#310)", async ({
+  browser,
+  page,
+}) => {
+  // A lobby of two, for the reason the tests above give.
+  const opponent = await browser.newPage();
+  const canvas = await startLobbyMatch(page, [opponent]);
+  const target = page.locator(".hud-target-text");
+  await page.keyboard.press("Tab");
+  await expect(target).toHaveText(/^target: /);
+  const before = await readTargetHealth(page);
+
+  // Open ground, short of the top wall and away from both spawns.
+  await canvas.click({ position: { x: 260, y: 120 } });
+  await page.waitForTimeout(300);
+  await expect(target).toHaveText(/^target: /);
+
+  await page.keyboard.press(" ");
+  await expect(page.locator(".hud-attacking")).toBeVisible();
+  await expect.poll(() => readTargetHealth(page), { timeout: 20_000 }).toBeLessThan(before);
+  await expect(target).toHaveText(/^target: /);
+  await opponent.close();
+});
+
 test("Esc cancels the attack; leaving the match is a button that asks first (#160)", async ({
   browser,
   page,
@@ -332,8 +409,8 @@ test("Tab targets the nearest enemy, and the hint goes for good (#55)", async ({
   // The browser kept its focus where it was: Tab is the game's now.
   expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
 
-  // Cleared again, the hint stays gone.
-  await page.locator("#viewport canvas").click({ position: { x: 5, y: 5 } });
+  // Cleared again, when the target leaves, the hint stays gone.
+  await leaveMatch(opponent);
   await expect(page.locator(".hud-target-text")).toHaveText("no target");
   await expect(hint).toBeHidden();
   await opponent.close();
@@ -421,7 +498,8 @@ test("the target panel shows the target's professions before its name (#281)", a
   await expect(icons.first()).toHaveAttribute("alt", "Warrior");
   await expect(icons.first()).toHaveAttribute("src", /icons\/profession\/warrior\.svg$/);
 
-  await page.locator("#viewport canvas").click({ position: { x: 5, y: 5 } });
+  // Gone with the target, when it leaves.
+  await leaveMatch(opponent);
   await expect(icons).toHaveCount(0);
   await opponent.close();
 });

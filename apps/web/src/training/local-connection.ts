@@ -222,6 +222,9 @@ export function createLocalConnection(options: {
       case "cancel-attack":
         simulation.cancelAttack(selfId);
         return;
+      case "walk-to":
+        simulation.walkTo(selfId, vec2(intent.x, intent.y));
+        return;
     }
   };
 

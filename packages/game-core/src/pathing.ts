@@ -1,5 +1,10 @@
-import { distancePointToSegment, distanceSegmentToSegmentXY, type Segment } from "./geometry.js";
-import { distance, vec2, type Vec2 } from "./vec2.js";
+import {
+  closestPointOnSegment,
+  distancePointToSegment,
+  distanceSegmentToSegmentXY,
+  type Segment,
+} from "./geometry.js";
+import { add, distance, scale, sub, vec2, type Vec2 } from "./vec2.js";
 
 /**
  * Paths around walls, for the weapon attack's approach (#211, ADR-0026).
@@ -15,6 +20,8 @@ import { distance, vec2, type Vec2 } from "./vec2.js";
 /** The corners a body can stand on, and which of them see each other. Built once per map. */
 export interface NavGraph {
   readonly walls: readonly Segment[];
+  /** The map's size; `undefined` for a field with no edge. */
+  readonly bounds: { readonly width: number; readonly height: number } | undefined;
   readonly clearance: number;
   readonly nodes: readonly Vec2[];
   /** For each node, the nodes a body can walk to in a straight line. */
@@ -108,7 +115,88 @@ export function buildNavGraph(
   const edges = nodes.map((node, i) =>
     nodes.flatMap((other, j) => (i !== j && isClear(graph, node, other) ? [j] : [])),
   );
-  return { walls, clearance, nodes, edges };
+  return { walls, bounds, clearance, nodes, edges };
+}
+
+/**
+ * Whether a body can stand at `point`: on the map, clear of every wall,
+ * and not inside one. Every wall is a closed outline (a map's rectangle
+ * or polygon), so a ray to the right that crosses an odd number of sides
+ * starts inside one, however far away its sides are.
+ */
+function isStandable(graph: NavGraph, point: Vec2): boolean {
+  const { bounds, clearance } = graph;
+  if (
+    bounds !== undefined &&
+    (point.x < clearance ||
+      point.y < clearance ||
+      point.x > bounds.width - clearance ||
+      point.y > bounds.height - clearance)
+  ) {
+    return false;
+  }
+  let crossings = 0;
+  for (const wall of graph.walls) {
+    if (distancePointToSegment(point, wall) < clearance) {
+      return false;
+    }
+    const { a, b } = wall;
+    if (a.y > point.y !== b.y > point.y) {
+      const x = a.x + ((point.y - a.y) / (b.y - a.y)) * (b.x - a.x);
+      if (x > point.x) {
+        crossings += 1;
+      }
+    }
+  }
+  return crossings % 2 === 0;
+}
+
+/**
+ * The nearest spot to `point` a body fits on, for a walk to aim at (#310).
+ * That is `point` itself if a body fits there, once pulled onto the map.
+ * A point inside a wall, or too close to one, is pushed straight out of
+ * the nearest side, clear of it by the clearance and a unit, as corner
+ * nodes are. If that lands too close to another wall, the nearest
+ * corner node is used instead. On a map with no such spot, `point` comes
+ * back pulled onto the map, for the path finder to refuse.
+ */
+export function nearestStandable(graph: NavGraph, point: Vec2): Vec2 {
+  const { bounds, clearance } = graph;
+  const onMap =
+    bounds === undefined
+      ? point
+      : vec2(
+          Math.min(Math.max(point.x, clearance), bounds.width - clearance),
+          Math.min(Math.max(point.y, clearance), bounds.height - clearance),
+        );
+  if (isStandable(graph, onMap)) {
+    return onMap;
+  }
+  let best = onMap;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  const consider = (candidate: Vec2): void => {
+    const away = distance(onMap, candidate);
+    if (away < bestDistance && isStandable(graph, candidate)) {
+      best = candidate;
+      bestDistance = away;
+    }
+  };
+  const offset = clearance + 1;
+  for (const wall of graph.walls) {
+    const along = sub(wall.b, wall.a);
+    const span = Math.hypot(along.x, along.y);
+    if (span === 0) {
+      continue;
+    }
+    const normal = vec2(-along.y / span, along.x / span);
+    const foot = closestPointOnSegment(onMap, wall);
+    consider(add(foot, scale(normal, offset)));
+    consider(add(foot, scale(normal, -offset)));
+  }
+  for (const node of graph.nodes) {
+    consider(node);
+  }
+  return best;
 }
 
 /** Finds paths on one graph, reusing its own scratch from one query to the next. */

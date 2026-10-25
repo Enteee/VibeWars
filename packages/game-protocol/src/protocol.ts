@@ -10,7 +10,7 @@
  * mid-match. It only ever rejects; there is no code path per version
  * (ADR-0016).
  */
-export const PROTOCOL_VERSION = 13 as const;
+export const PROTOCOL_VERSION = 14 as const;
 
 /** What a client is told when its `protocolVersion` does not match. */
 export const PROTOCOL_MISMATCH_MESSAGE =
@@ -166,6 +166,18 @@ export interface CancelAttackIntent {
 }
 
 /**
+ * Walk to a point on the ground, round walls, and stop there (#310): a
+ * left-click on the ground. In world units. Any finite point is a fair
+ * request: the server walks to the nearest spot on the map a body fits
+ * on, since only it knows the map.
+ */
+export interface WalkToIntent {
+  readonly kind: "walk-to";
+  readonly x: number;
+  readonly y: number;
+}
+
+/**
  * Sent as `"cast-refused"` to the caster alone when the server turns down a
  * `UseSkillIntent` or an `AttackIntent`, so a key that did nothing can say
  * why (issue #51). Advisory only: the refusal has already happened, and
@@ -294,7 +306,13 @@ export const QUICK_MATCH_MAX_PLAYERS = 8;
  * server-side validator.
  */
 export type ClientIntent =
-  MoveIntent | StopIntent | TargetIntent | UseSkillIntent | AttackIntent | CancelAttackIntent;
+  | MoveIntent
+  | StopIntent
+  | TargetIntent
+  | UseSkillIntent
+  | AttackIntent
+  | CancelAttackIntent
+  | WalkToIntent;
 
 /**
  * Validate an arbitrary network payload as a `ClientIntent`, or reject it.
@@ -357,6 +375,17 @@ export function parseClientIntent(value: unknown): ClientIntent | undefined {
 
   if (record.kind === "cancel-attack" && hasOnlyKeys(record, ["kind"])) {
     return { kind: "cancel-attack" };
+  }
+
+  if (
+    record.kind === "walk-to" &&
+    hasOnlyKeys(record, ["kind", "x", "y"]) &&
+    typeof record.x === "number" &&
+    typeof record.y === "number" &&
+    Number.isFinite(record.x) &&
+    Number.isFinite(record.y)
+  ) {
+    return { kind: "walk-to", x: record.x, y: record.y };
   }
 
   return undefined;

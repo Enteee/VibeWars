@@ -16,7 +16,7 @@ import {
 
 describe("protocol constants", () => {
   it("pins a protocol version", () => {
-    expect(PROTOCOL_VERSION).toBe(13);
+    expect(PROTOCOL_VERSION).toBe(14);
   });
 
   it("gives every capacity refusal its own code (#282)", () => {
@@ -190,5 +190,33 @@ describe("parseClientIntent — attack", () => {
   it("rejects either with a field it does not name", () => {
     expect(parseClientIntent({ kind: "attack", targetId: "a", slot: 0 })).toBeUndefined();
     expect(parseClientIntent({ kind: "cancel-attack", targetId: "a" })).toBeUndefined();
+  });
+});
+
+describe("parseClientIntent — walk-to (#310)", () => {
+  it("accepts any finite point, off the map included: the server pulls it on", () => {
+    expect(parseClientIntent({ kind: "walk-to", x: 120.5, y: 40 })).toEqual({
+      kind: "walk-to",
+      x: 120.5,
+      y: 40,
+    });
+    expect(parseClientIntent({ kind: "walk-to", x: -1e6, y: 1e6 })).toEqual({
+      kind: "walk-to",
+      x: -1e6,
+      y: 1e6,
+    });
+  });
+
+  it("rejects NaN, Infinity, strings and missing coordinates", () => {
+    expect(parseClientIntent({ kind: "walk-to", x: Number.NaN, y: 0 })).toBeUndefined();
+    expect(
+      parseClientIntent({ kind: "walk-to", x: 0, y: Number.POSITIVE_INFINITY }),
+    ).toBeUndefined();
+    expect(parseClientIntent({ kind: "walk-to", x: "1", y: 0 })).toBeUndefined();
+    expect(parseClientIntent({ kind: "walk-to", x: 1 })).toBeUndefined();
+  });
+
+  it("rejects a field it does not name", () => {
+    expect(parseClientIntent({ kind: "walk-to", x: 1, y: 2, z: 3 })).toBeUndefined();
   });
 });

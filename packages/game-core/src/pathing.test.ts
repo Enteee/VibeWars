@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { distanceSegmentToSegment, segment, type Segment } from "./geometry.js";
-import { buildNavGraph, createPathFinder, type NavGraph } from "./pathing.js";
+import {
+  distancePointToSegment,
+  distanceSegmentToSegment,
+  segment,
+  type Segment,
+} from "./geometry.js";
+import { buildNavGraph, createPathFinder, nearestStandable, type NavGraph } from "./pathing.js";
 import { createRng, type SimulationRng } from "./rng.js";
 import { add, distance, dot, scale, sub, vec2, type Vec2 } from "./vec2.js";
 
@@ -110,6 +115,49 @@ describe("createPathFinder", () => {
     const path = createPathFinder(graph).find(corner, vec2(340, 280)) ?? [];
     expect(path.length).toBeGreaterThan(0);
     expect(distance(path[0] ?? corner, corner)).toBeGreaterThan(1);
+  });
+});
+
+describe("nearestStandable (#310)", () => {
+  const graph = buildNavGraph(ARENA_ALPHA, ARENA_BOUNDS, CLEARANCE);
+
+  it("returns a free point unchanged", () => {
+    expect(nearestStandable(graph, vec2(200, 150))).toEqual(vec2(200, 150));
+  });
+
+  it("pushes a point inside a wall out of its nearest side, clear by the clearance", () => {
+    // The top wall is x 440-464: 444 is nearest its left side.
+    expect(nearestStandable(graph, vec2(444, 100))).toEqual(vec2(440 - CLEARANCE - 1, 100));
+    expect(nearestStandable(graph, vec2(462, 100))).toEqual(vec2(464 + CLEARANCE + 1, 100));
+    // The low wall is y 300-324, and 30 units from its ends: out of the top.
+    expect(nearestStandable(graph, vec2(360, 310))).toEqual(vec2(360, 300 - CLEARANCE - 1));
+  });
+
+  it("pushes a point too near a wall away from it", () => {
+    expect(nearestStandable(graph, vec2(430, 100))).toEqual(vec2(440 - CLEARANCE - 1, 100));
+  });
+
+  it("pulls a point off the map back onto it", () => {
+    expect(nearestStandable(graph, vec2(-50, 150))).toEqual(vec2(CLEARANCE, 150));
+    expect(nearestStandable(graph, vec2(2000, 900))).toEqual(
+      vec2(ARENA_BOUNDS.width - CLEARANCE, ARENA_BOUNDS.height - CLEARANCE),
+    );
+  });
+
+  it("finds a spot that fits, and that the path finder reaches, for any click", () => {
+    const finder = createPathFinder(graph);
+    const rng = createRng(310);
+    for (let i = 0; i < 400; i += 1) {
+      const click = vec2(rng.nextFloat() * 1100 - 70, rng.nextFloat() * 780 - 70);
+      const spot = nearestStandable(graph, click);
+      expect(ARENA_ALPHA.every((wall) => distancePointToSegment(spot, wall) >= CLEARANCE)).toBe(
+        true,
+      );
+      expect(
+        finder.find(vec2(80, 320), spot),
+        `${String(click.x)},${String(click.y)}`,
+      ).toBeDefined();
+    }
   });
 });
 
@@ -262,7 +310,7 @@ function referenceBuildNavGraph(
   const edges = nodes.map((node, i) =>
     nodes.flatMap((other, j) => (i !== j && refIsClear(graph, node, other) ? [j] : [])),
   );
-  return { walls, clearance, nodes, edges };
+  return { walls, bounds, clearance, nodes, edges };
 }
 
 /**
