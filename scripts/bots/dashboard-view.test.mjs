@@ -1,0 +1,243 @@
+/**
+ * What the dashboard's panes say (#165), without a terminal: counts for
+ * the columns nobody waits on, as many cards as fit for the rest, the
+ * last three done, and never a line wider than the pane.
+ */
+import { describe, expect, it } from "vitest";
+
+import { boardLines, companyLines, cut, doneOrder, feedLines } from "./dashboard-view.mjs";
+
+const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
+const EVERYONE = new Set(["architect", "manager", "developer-1", "lead-dev", "qa-tester"]);
+
+/**
+ * Colour codes are not columns on screen.
+ *
+ * @param {string} line
+ * @returns {string}
+ */
+function plain(line) {
+  return line
+    .split("\u001B")
+    .map((part, index) => (index === 0 ? part : part.replace(/^\[[0-9;]*m/, "")))
+    .join("");
+}
+
+/**
+ * @param {string} line
+ * @returns {number}
+ */
+function columnsOf(line) {
+  return Array.from(plain(line)).length;
+}
+
+/**
+ * @param {Record<string, number>} counts cards per column
+ * @param {(column: string, index: number) => Partial<{ number: number, title: string, rev: number }>} [shape]
+ */
+function snapshot(counts, shape = () => ({})) {
+  let next = 1;
+  const cards = Object.entries(counts).flatMap(([column, count]) =>
+    Array.from({ length: count }, (_, index) => {
+      const number = next++;
+      const { title = `${column} card ${String(index)}`, rev = 1, ...rest } = shape(column, index);
+      return {
+        rev,
+        item: { status: column, content: { number: rest.number ?? number, title } },
+      };
+    }),
+  );
+  return { at: 0, sweptAt: 0, cards };
+}
+
+describe("boardLines", () => {
+  it("shows Backlog and Ready as one count line each, however tall the pane", () => {
+    const lines = boardLines(snapshot({ Backlog: 17, Ready: 10 }), COLUMNS, EVERYONE, {
+      rows: 200,
+      width: 60,
+    }).map(plain);
+    expect(
+      lines.filter((line) => line.includes("Backlog card") || line.includes("Ready card")),
+    ).toEqual([]);
+    expect(lines.find((line) => line.startsWith("Backlog"))).toMatch(/Backlog\s+17$/);
+    expect(lines.find((line) => line.startsWith("Ready"))).toMatch(/Ready\s+10$/);
+  });
+
+  it("shows exactly the three most recently done, by rev then number, and no count", () => {
+    const board = snapshot({ Done: 6 }, (_, index) => ({
+      number: 100 + index,
+      rev: [5, 9, 9, 2, 7, 1][index],
+    }));
+    const lines = boardLines(board, COLUMNS, EVERYONE, { rows: 40, width: 60 }).map(plain);
+    const at = lines.indexOf("Done (last 3)");
+    expect(lines.slice(at + 1).map((line) => line.trim().slice(0, 4))).toEqual([
+      "#102",
+      "#101",
+      "#104",
+    ]);
+  });
+
+  it("shows what there is when fewer than three are done", () => {
+    const lines = boardLines(snapshot({ Done: 1 }), COLUMNS, EVERYONE, { rows: 40, width: 60 });
+    expect(lines.map(plain).slice(-2)).toEqual(["Done (last 3)", "  #1    Done card 0"]);
+  });
+
+  it("orders done cards by rev, ties by the higher number", () => {
+    const order = doneOrder([
+      { number: 1, title: "", rev: 3 },
+      { number: 5, title: "", rev: 3 },
+      { number: 2, title: "", rev: 8 },
+    ]).map((card) => card.number);
+    expect(order).toEqual([2, 5, 1]);
+  });
+
+  it("fills the pane, cuts with … +N more, and keeps every column visible", () => {
+    const rows = 16;
+    const lines = boardLines(
+      snapshot({ "In Progress": 9, "In Review": 4, QA: 3, Done: 3 }),
+      COLUMNS,
+      EVERYONE,
+      { rows, width: 60 },
+    ).map(plain);
+    expect(lines).toHaveLength(rows);
+    // 16 rows: a header, six column lines, three done; six left. One card
+    // each, then a "more" line each, then the rest to In Progress.
+    for (const column of ["In Progress", "In Review", "QA"]) {
+      const at = lines.findIndex((line) => line.startsWith(column));
+      expect(lines[at + 1], column).toContain(`${column} card 0`);
+      expect(lines[at + 2], column).toMatch(/^ {2}… \+\d+ more$/);
+    }
+    const more = lines
+      .filter((line) => line.includes("more"))
+      .map((line) => Number(/\+(\d+)/.exec(line)?.[1]));
+    const cardsShown = lines.filter(
+      (line) => / card \d/.test(line) && !line.includes("Done card"),
+    ).length;
+    expect(cardsShown + more.reduce((a, b) => a + b, 0)).toBe(9 + 4 + 3);
+  });
+
+  it("lists every card when they fit, with no more line", () => {
+    const lines = boardLines(snapshot({ "In Progress": 2, QA: 1 }), COLUMNS, EVERYONE, {
+      rows: 40,
+      width: 60,
+    }).map(plain);
+    expect(lines.filter((line) => / card \d/.test(line))).toHaveLength(3);
+    expect(lines.some((line) => line.includes("more"))).toBe(false);
+  });
+
+  it("never prints a line wider than the pane, however long the title", () => {
+    const long = "A title that goes on and on ".repeat(10);
+    for (const width of [30, 44, 80]) {
+      const lines = boardLines(
+        snapshot({ Backlog: 2, "In Progress": 3, QA: 2, Done: 3 }, () => ({ title: long })),
+        COLUMNS,
+        new Set(),
+        { rows: 30, width },
+      );
+      for (const line of lines) {
+        expect(columnsOf(line), line).toBeLessThanOrEqual(width);
+      }
+    }
+  });
+
+  it("neutralises control characters in a title", () => {
+    const lines = boardLines(
+      snapshot({ QA: 1 }, () => ({ title: "evil\u001B[2J\nline" })),
+      COLUMNS,
+      EVERYONE,
+      { rows: 20, width: 80 },
+    );
+    const card = lines.find((line) => line.includes("evil")) ?? "";
+    expect(card).toBe("  #1    evil␛[2J⏎line");
+  });
+
+  it("says nobody is hired to move a stuck column", () => {
+    const lines = boardLines(snapshot({ "In Review": 1 }), COLUMNS, new Set(), {
+      rows: 20,
+      width: 80,
+    });
+    expect(lines.map(plain).find((line) => line.startsWith("In Review"))).toMatch(
+      /<- nobody hired to move this$/,
+    );
+  });
+
+  it("shows only counts in a tiny pane", () => {
+    const lines = boardLines(snapshot({ "In Progress": 3, Done: 3 }), COLUMNS, EVERYONE, {
+      rows: 7,
+      width: 60,
+    }).map(plain);
+    expect(lines).toHaveLength(7);
+    expect(lines.some((line) => / card \d/.test(line))).toBe(false);
+    expect(lines.at(-1)).toBe("Done 3");
+  });
+
+  it("says when the board is empty, has no snapshot, or is not set up", () => {
+    expect(boardLines(snapshot({}), COLUMNS, EVERYONE, { rows: 20, width: 80 }).at(-1)).toContain(
+      "tell the architect",
+    );
+    expect(boardLines(null, COLUMNS, EVERYONE, { rows: 20, width: 80 })[0]).toContain(
+      "no snapshot yet",
+    );
+    expect(boardLines(null, null, EVERYONE, { rows: 20, width: 80 })[0]).toContain(
+      "not set up yet",
+    );
+  });
+});
+
+describe("companyLines", () => {
+  const roles = ["manager", "architect", "developer-1", "developer-2", "lead-dev"];
+  const budget = { remaining: 4210, limit: 5000, resetAt: 0, spend: "GRAPHQL  ~380/h" };
+
+  it("is the roster, then the GitHub budget", () => {
+    const lines = companyLines(
+      { roles, live: new Set(["manager", "architect"]), budget },
+      { rows: 30, width: 40 },
+    ).map(plain);
+    expect(lines[0]).toBe("ROSTER 2/5 hired");
+    expect(lines).toContain("  not hired yet: developer-1, developer…");
+    expect(lines.some((line) => line.startsWith("GITHUB GraphQL 4210/5000"))).toBe(true);
+    for (const line of lines) {
+      expect(columnsOf(line)).toBeLessThanOrEqual(40);
+    }
+  });
+
+  it("cuts an overflow with … +N lines", () => {
+    const lines = companyLines({ roles, live: new Set(), budget: null }, { rows: 4, width: 40 });
+    expect(lines).toHaveLength(4);
+    expect(lines.at(-1)).toMatch(/^… \+\d+ lines$/);
+  });
+});
+
+describe("feedLines", () => {
+  it("is the newest that fit, one line each, cut to the width", () => {
+    const feed = Array.from({ length: 10 }, (_, i) => ({
+      ts: 0,
+      from: "manager",
+      to: "developer-1",
+      text: `message ${String(i)} ${"x".repeat(100)}`,
+    }));
+    const lines = feedLines(feed, { rows: 3, width: 50 }).map(plain);
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toMatch(/^--:-- manager -> developer-1: message 7 x+…$/);
+    for (const line of lines) {
+      expect(columnsOf(line)).toBe(50);
+    }
+  });
+
+  it("neutralises agent text, and says when nothing was said", () => {
+    const [line] = feedLines([{ ts: 0, from: "a\u001B", to: "b", text: "x\ny" }], {
+      rows: 5,
+      width: 80,
+    });
+    expect(plain(line ?? "")).toBe("--:-- a␛ -> b: x⏎y");
+    expect(feedLines([], { rows: 5, width: 80 })).toEqual(["(nothing said yet)"]);
+  });
+});
+
+describe("cut", () => {
+  it("ends a cut line in …, and leaves a short one alone", () => {
+    expect(cut("abcdef", 4)).toBe("abc…");
+    expect(cut("abc", 4)).toBe("abc");
+    expect(cut("abc", 0)).toBe("");
+  });
+});
