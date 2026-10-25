@@ -4,6 +4,7 @@ import type { CombatMessage, MatchSnapshot } from "../net/match-connection.js";
 import { floatingCueFor, type FloatingCue } from "../ui/combat-readouts.js";
 import {
   AREA_FLASH_SECONDS,
+  FLOATING_TEXT_SECONDS,
   teamColour,
   type AreaFlash,
   type FloatingText,
@@ -64,10 +65,11 @@ export function showCombatFeedback(
     nextFloatingId += 1;
     scene.addFloatingText({
       id: nextFloatingId,
+      anchorId: subject.sessionId,
       text: cue.text,
       position: vec2(subject.x, subject.y - 24),
       colour: COLOURS[cue.tone],
-      remainingSeconds: 1.2,
+      remainingSeconds: FLOATING_TEXT_SECONDS,
     });
   }
 }

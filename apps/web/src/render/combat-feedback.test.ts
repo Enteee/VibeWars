@@ -66,6 +66,23 @@ describe("showCombatFeedback", () => {
   it("skips events about nobody it can see", () => {
     expect(floated([{ kind: "damage", targetId: "gone", amount: 5 }])).toEqual([]);
   });
+
+  it("anchors each number to whoever it happened to, so a burst can stack (#54)", () => {
+    const texts: FloatingText[] = [];
+    showCombatFeedback(
+      { addFloatingText: (text) => texts.push(text), addAreaFlash: () => undefined },
+      {
+        casterSessionId: "me",
+        skillId: "elementalist.fireball",
+        events: [
+          { kind: "damage", targetId: "them", amount: 5 },
+          { kind: "heal", targetId: "me", amount: 5 },
+        ],
+      },
+      SNAPSHOT,
+    );
+    expect(texts.map((text) => text.anchorId)).toEqual(["them", "me"]);
+  });
 });
 
 describe("showCombatFeedback and areas", () => {

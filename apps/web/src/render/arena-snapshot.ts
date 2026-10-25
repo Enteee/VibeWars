@@ -44,11 +44,50 @@ export type RenderableWall = RectRenderableWall | PolygonRenderableWall;
 /** A short-lived floating number or label above an actor. */
 export interface FloatingText {
   readonly id: number;
+  /** The actor it floats over; only texts over the same actor make room for each other. */
+  readonly anchorId: string;
   readonly text: string;
+  /** Where it starts; it rises from here as it ages. */
   readonly position: Vec2;
   readonly colour: number;
   /** Seconds of life remaining; the scene fades and removes it. */
   remainingSeconds: number;
+}
+
+export const FLOATING_TEXT_SECONDS = 1.2;
+const FLOATING_TEXT_RISE_PER_SECOND = 24;
+/** A 13px line of text, plus a pixel so neighbours never touch. */
+export const FLOATING_TEXT_LINE = 14;
+
+/** How high a floating text has risen by now. */
+export function floatingTextY(text: FloatingText): number {
+  const age = FLOATING_TEXT_SECONDS - text.remainingSeconds;
+  return text.position.y - FLOATING_TEXT_RISE_PER_SECOND * age;
+}
+
+/**
+ * Where a new floating text starts so it covers none already over the
+ * same actor (#54). Several hits landing together used to draw on one
+ * spot as an unreadable smear. Each one that would overlap lifts the new
+ * text a line above it, so a burst reads as a short column of numbers.
+ */
+export function placeFloatingText(
+  existing: readonly FloatingText[],
+  incoming: FloatingText,
+): FloatingText {
+  // Lowest first: lifting past one can only reach those above it.
+  const ys = existing
+    .filter((text) => text.anchorId === incoming.anchorId)
+    .map(floatingTextY)
+    .sort((a, b) => b - a);
+  let y = floatingTextY(incoming);
+  for (const other of ys) {
+    if (Math.abs(other - y) < FLOATING_TEXT_LINE) {
+      y = other - FLOATING_TEXT_LINE;
+    }
+  }
+  const lift = floatingTextY(incoming) - y;
+  return { ...incoming, position: Vec.add(incoming.position, { x: 0, y: -lift }) };
 }
 
 /**

@@ -6,8 +6,10 @@ import {
   EMPTY_SNAPSHOT,
   areaFlashAlpha,
   decayAreaFlashes,
+  floatingTextY,
   healthFraction,
   nameLabelBottom,
+  placeFloatingText,
   teamColour,
   type AreaFlash,
 } from "./arena-snapshot.js";
@@ -76,7 +78,7 @@ export class ArenaScene extends Phaser.Scene {
 
   /** Queue a floating number/label above a world position. */
   public addFloatingText(text: FloatingText): void {
-    this.floatingTexts.push(text);
+    this.floatingTexts.push(placeFloatingText(this.floatingTexts, text));
   }
 
   /** Flash where an area skill landed. */
@@ -308,8 +310,9 @@ export class ArenaScene extends Phaser.Scene {
         continue;
       }
 
-      // Drift upward and fade as it ages, so overlapping hits stay readable.
-      object.y -= 24 * dt;
+      // Drift upward and fade as it ages; placeFloatingText relies on
+      // this rise to find room for the next one.
+      object.y = floatingTextY(floating);
       object.setAlpha(Math.min(1, floating.remainingSeconds));
       survivors.push(floating);
     }
