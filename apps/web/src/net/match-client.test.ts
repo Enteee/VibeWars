@@ -166,7 +166,7 @@ describe("createMatchConnection", () => {
     room.emitDrop(1006);
     room.emitReconnect();
     room.state = { ...room.state, elapsedSeconds: 42 };
-    room.emit("combat", { casterSessionId: "x", skillId: "s", events: [] });
+    room.emit("combat", { entries: [{ casterSessionId: "x", skillId: "s", events: [] }] });
     connection.sendIntent({ kind: "stop" });
 
     expect(connection.getSnapshot().elapsedSeconds).toBe(42);
@@ -209,5 +209,38 @@ describe("professionFrom (#281)", () => {
     expect(professionFrom("monk")).toBe("monk");
     expect(professionFrom("")).toBeUndefined();
     expect(professionFrom("bogus")).toBeUndefined();
+  });
+});
+
+describe("a tick's combat batch (#288)", () => {
+  const entry = (casterSessionId: string): CombatMessage => ({
+    casterSessionId,
+    cause: "skill",
+    skillId: "s",
+    weaponId: "",
+    events: [{ kind: "damage", targetId: "t", amount: 10 }],
+  });
+
+  it("hands each entry to the handler, in order", () => {
+    const { room, connection } = connect();
+    const seen: string[] = [];
+    connection.onCombat((message) => seen.push(message.casterSessionId));
+
+    room.emit("combat", { entries: [entry("a"), entry("b"), entry("c")] });
+
+    expect(seen).toEqual(["a", "b", "c"]);
+  });
+
+  it("drops a malformed batch without throwing", () => {
+    const { room, connection } = connect();
+    const seen: CombatMessage[] = [];
+    connection.onCombat((message) => seen.push(message));
+
+    for (const malformed of [{}, { entries: 5 }, null, "combat"]) {
+      expect(() => {
+        room.emit("combat", malformed);
+      }).not.toThrow();
+    }
+    expect(seen).toEqual([]);
   });
 });
