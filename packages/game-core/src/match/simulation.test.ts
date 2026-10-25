@@ -293,6 +293,39 @@ describe("walls", () => {
   });
 });
 
+describe("the map's edge (#244)", () => {
+  const R = RULES.collision.playerRadius;
+  // Arena Alpha's size, no walls.
+  const bounds = { width: 960, height: 640 };
+  const walker = (bounded: boolean) =>
+    new MatchSimulation({
+      seed: "edge",
+      bounds: bounded ? bounds : undefined,
+      participants: [spec("a", 0, vec2(480, 320))],
+    });
+  const walk = (sim: MatchSimulation, direction: Vec2, seconds: number) => {
+    sim.setInputDirection("a", direction);
+    stepFor(sim, seconds);
+    return participant(sim, "a").position;
+  };
+
+  it("stops a body at each of the four edges, the other axis unchanged", () => {
+    expect(walk(walker(true), vec2(-1, 0), 5)).toEqual(vec2(R, 320));
+    expect(walk(walker(true), vec2(1, 0), 5)).toEqual(vec2(960 - R, 320));
+    expect(walk(walker(true), vec2(0, -1), 5)).toEqual(vec2(480, R));
+    expect(walk(walker(true), vec2(0, 1), 5)).toEqual(vec2(480, 640 - R));
+  });
+
+  it("stops a body walking into a corner in the corner", () => {
+    expect(walk(walker(true), vec2(-1, -1), 5)).toEqual(vec2(R, R));
+  });
+
+  it("lets a body wander off with no bounds, as the headless tools want", () => {
+    const position = walk(walker(false), vec2(-1, 0), 5);
+    expect(position.x).toBeLessThan(0);
+  });
+});
+
 describe("match end", () => {
   it("finishes once on the deciding kill, then stops stepping", () => {
     const sim = duel({ ...MATCH, scoreToWin: 1 });
