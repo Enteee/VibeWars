@@ -409,6 +409,75 @@ describe("hubd and the GraphQL budget", () => {
     expect(printed(after).card).toMatchObject({ number: 8, status: "Done" });
   }, 20_000);
 
+  it("keeps the sign-off to the architect, refusing and auditing the rest (#349)", async () => {
+    const hubd = await startHubd(5000);
+    /** @param {string} option */
+    const move = (option) => [
+      "project",
+      "item-edit",
+      "--id",
+      "PVTI_8",
+      "--project-id",
+      "PVT_2",
+      "--field-id",
+      "F_status",
+      "--single-select-option-id",
+      option,
+    ];
+
+    await hubd.request("manager", "gh", BOARD_READ);
+    // Withdrawing a sign-off: the manager may, a developer may not.
+    expect((await hubd.request("developer-1", "gh", move("o_backlog"))).code).toBe(77);
+    expect((await hubd.request("manager", "gh", move("o_backlog"))).code).toBe(0);
+    expect(printed(await hubd.request("manager", "board", ["show", "8"])).card).toMatchObject({
+      status: "Backlog",
+    });
+    // The sign-off: only the architect.
+    const refused = await hubd.request("manager", "gh", move("o_ready"));
+    expect(refused.code).toBe(77);
+    expect(String(refused.reason)).toContain(
+      "only the architect moves a card from Backlog to Ready",
+    );
+    expect((await hubd.request("developer-1", "gh", move("o_ready"))).code).toBe(77);
+    expect((await hubd.request("architect", "gh", move("o_ready"))).code).toBe(0);
+    expect(printed(await hubd.request("manager", "board", ["show", "8"])).card).toMatchObject({
+      status: "Ready",
+    });
+    // The architect makes no other move.
+    expect((await hubd.request("architect", "gh", move("o_done"))).code).toBe(77);
+    expect(fs.readFileSync(path.join(hubd.hub, "audit.jsonl"), "utf8")).toContain(
+      '"decision":"refused-by-guard"',
+    );
+  }, 30_000);
+
+  it("refuses an item-edit that is not a Status move (#349)", async () => {
+    const hubd = await startHubd(5000);
+
+    const field = await hubd.request("manager", "gh", [
+      "project",
+      "item-edit",
+      "--id",
+      "PVTI_8",
+      "--project-id",
+      "PVT_2",
+      "--field-id",
+      "F_other",
+      "--single-select-option-id",
+      "o_done",
+    ]);
+    const title = await hubd.request("manager", "gh", [
+      "project",
+      "item-edit",
+      "--id",
+      "PVTI_8",
+      "--title",
+      "x",
+    ]);
+
+    expect(field.code).toBe(77);
+    expect(title.code).toBe(77);
+  }, 20_000);
+
   it("re-reads only the one issue an item-add put on the board", async () => {
     const hubd = await startHubd(5000);
 

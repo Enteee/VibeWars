@@ -54,7 +54,7 @@ Backlog -> Ready -> In Progress -> In Review -> QA -> Done
 ```
 
 An issue's column is the single source of truth for what should happen to it
-next. Move a card the moment its state changes, not in a batch later: your
+next. `Backlog -> Ready` is the architect's move, and only theirs. Move a card the moment its state changes, not in a batch later: your
 colleagues poll the board to find their work, and a stale column means someone
 sits idle or two people do the same thing.
 

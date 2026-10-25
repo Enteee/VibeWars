@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   approvalsSatisfied,
+  boardMoveAllowed,
   checksSatisfied,
   explainGuard,
   pathsOutside,
@@ -337,5 +338,80 @@ describe("pathsWithin", () => {
 
   it("allows a push that changes nothing", () => {
     expect(pathsWithin(SKILLS, [])).toEqual({ ok: true, outside: [] });
+  });
+});
+
+describe("boardMoveAllowed (#349)", () => {
+  /**
+   * @param {string} role
+   * @param {string} from
+   * @param {string} to
+   */
+  const ok = (role, from, to) => boardMoveAllowed({ role, from, to }).ok;
+
+  it("lets only the architect sign a card off into Ready", () => {
+    expect(ok("architect", "Backlog", "Ready")).toBe(true);
+    expect(ok("architect", "", "Ready")).toBe(true);
+    for (const role of ["manager", "developer-1", "lead-dev", "qa-tester"]) {
+      expect(ok(role, "Backlog", "Ready"), role).toBe(false);
+      expect(ok(role, "", "Ready"), role).toBe(false);
+    }
+    expect(boardMoveAllowed({ role: "manager", from: "Backlog", to: "Ready" })).toEqual({
+      ok: false,
+      reason:
+        "only the architect moves a card from Backlog to Ready: that move is the sign-off. Ask the architect.",
+    });
+  });
+
+  it("lets the architect and the manager withdraw a sign-off or file a card", () => {
+    for (const role of ["architect", "manager"]) {
+      expect(ok(role, "Ready", "Backlog"), role).toBe(true);
+      expect(ok(role, "", "Backlog"), role).toBe(true);
+    }
+    expect(ok("developer-1", "Ready", "Backlog")).toBe(false);
+    expect(ok("developer-1", "", "Backlog")).toBe(false);
+  });
+
+  it("lets only the manager close a card nobody worked on", () => {
+    expect(ok("manager", "Backlog", "Done")).toBe(true);
+    expect(ok("developer-1", "Backlog", "Done")).toBe(false);
+  });
+
+  it("lets nobody skip Ready", () => {
+    for (const role of ["manager", "architect", "developer-1", "lead-dev"]) {
+      for (const to of ["In Progress", "In Review", "QA"]) {
+        expect(ok(role, "Backlog", to), `${role} ${to}`).toBe(false);
+        expect(ok(role, "", to), `${role} ${to}`).toBe(false);
+      }
+    }
+  });
+
+  it("lets only the manager send a started card back to the Backlog", () => {
+    expect(ok("manager", "In Progress", "Backlog")).toBe(true);
+    expect(ok("developer-1", "In Progress", "Backlog")).toBe(false);
+    expect(ok("developer-1", "Done", "")).toBe(false);
+  });
+
+  it("holds the architect to the two architect moves", () => {
+    for (const [from, to] of [
+      ["Ready", "In Progress"],
+      ["Ready", "Done"],
+      ["Backlog", "Done"],
+      ["In Review", "Ready"],
+      ["QA", "Done"],
+    ]) {
+      expect(ok("architect", from ?? "", to ?? ""), `${String(from)} -> ${String(to)}`).toBe(false);
+    }
+  });
+
+  it("leaves every other move to the roles that may edit an item", () => {
+    expect(ok("developer-1", "Ready", "In Progress")).toBe(true);
+    expect(ok("qa-tester", "QA", "Done")).toBe(true);
+    expect(ok("developer-1", "In Progress", "Ready")).toBe(true);
+  });
+
+  it("is a no-op for the same column", () => {
+    expect(ok("developer-1", "Backlog", "Backlog")).toBe(true);
+    expect(ok("architect", "Done", "Done")).toBe(true);
   });
 });

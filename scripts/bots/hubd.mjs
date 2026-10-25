@@ -23,6 +23,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { GIT_ENV, GIT_HARDENING } from "./git-hardening.mjs";
 import {
   HINT_DELAY_MS,
+  flagValue,
   ISSUE_ITEMS_QUERY,
   ITEM_QUERY,
   answerBoard,
@@ -50,6 +51,7 @@ import { openJailDir, withJailDir } from "./jail-fs.mjs";
 import { hasFilter } from "./hub-filter.mjs";
 import {
   approvalsSatisfied,
+  boardMoveAllowed,
   checksSatisfied,
   explainGuard,
   pathsOutside,
@@ -987,6 +989,55 @@ async function reread(target, cfg) {
 }
 
 /**
+ * Why this `project item-edit` is refused, or `null` if it may run (#349).
+ *
+ * Roles only move cards: another field, a title or a body is refused for
+ * everyone. The move is judged by `boardMoveAllowed` between the card's
+ * column in hubd's copy, re-read once if the copy is stale or lacks the
+ * card, and the column the request names.
+ *
+ * @param {string} role
+ * @param {string[]} argv
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string | null>}
+ */
+async function refuseCardEdit(role, argv, cfg) {
+  const ids = cfg.board;
+  if (ids === null) {
+    return "the board's Status field is not known; run claude-llc-init";
+  }
+  const id = flagValue(argv, "--id");
+  if (
+    id === null ||
+    flagValue(argv, "--field-id") !== ids.fieldId ||
+    argv.some((word) => /^--(title|body)(=|$)/.test(word))
+  ) {
+    return "hub only moves a card between columns: edit its Status, nothing else";
+  }
+  const optionId = flagValue(argv, "--single-select-option-id");
+  const to = argv.includes("--clear")
+    ? ""
+    : ([...ids.options].find(([, option]) => option === optionId)?.[0] ?? null);
+  if (to === null) {
+    return "that is not a column of the board";
+  }
+  const lookup = () => board?.cards.find((card) => card.item.id === id);
+  if (board === null || board.stale || lookup() === undefined) {
+    await freshBoard(cfg);
+    if (board === null || board.stale || lookup() === undefined) {
+      await reread({ kind: "item", id }, cfg);
+    }
+  }
+  const card = lookup();
+  if (card === undefined || board?.stale === true) {
+    return "could not tell which column that card is in; try again";
+  }
+  const status = card.item.status;
+  const decision = boardMoveAllowed({ role, from: typeof status === "string" ? status : "", to });
+  return decision.ok ? null : decision.reason;
+}
+
+/**
  * Bring the copy up to date with a `gh project ...` command hubd just ran.
  *
  * @param {string[]} argv
@@ -1720,6 +1771,14 @@ async function serve(request, verdict, acting) {
     if (state !== null) {
       audit({ role, kind, argv, decision: "allowed", code: 0, cached: true });
       return { allow: true, code: 0, stdout: `${JSON.stringify(listing(state))}\n`, stderr: "" };
+    }
+  }
+
+  if (kind === "gh" && argv[0] === "project" && argv[1] === "item-edit") {
+    const refused = await refuseCardEdit(role, argv, cfg);
+    if (refused !== null) {
+      audit({ role, kind, argv, decision: "refused-by-guard", reason: refused });
+      return { allow: false, reason: refused, code: 77 };
     }
   }
 

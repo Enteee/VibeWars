@@ -197,3 +197,69 @@ export function explainGuard(guard, result) {
   }
   return parts.length === 0 ? guard : `${guard} — ${parts.join("; ")}`;
 }
+
+/** Columns a card cannot reach from the Backlog without the architect's sign-off. */
+const SIGNED_OFF = new Set(["In Progress", "In Review", "QA"]);
+
+/**
+ * May this role move a card between these columns (#349)? The column is the
+ * architect's sign-off: a card leaves the Backlog for Ready only by the
+ * architect's hand, and the architect makes no other move. Everything else
+ * stays with the roles `hub-policy.mjs` lets edit an item.
+ *
+ * @param {{ role: string, from: string, to: string }} move column names; `""`
+ *   is no column
+ * @returns {{ ok: true } | { ok: false, reason: string }}
+ */
+export function boardMoveAllowed({ role, from, to }) {
+  if (from === to) {
+    return { ok: true };
+  }
+  const label = (/** @type {string} */ column) => (column === "" ? "no column" : column);
+  const unsigned = from === "Backlog" || from === "";
+  if (role === "architect") {
+    return (unsigned && to === "Ready") ||
+      (from === "Ready" && to === "Backlog") ||
+      (from === "" && to === "Backlog")
+      ? { ok: true }
+      : {
+          ok: false,
+          reason: `the architect only signs off (Backlog -> Ready) or withdraws a sign-off (Ready -> Backlog), not ${label(from)} -> ${label(to)}`,
+        };
+  }
+  if (unsigned && to === "Ready") {
+    return {
+      ok: false,
+      reason:
+        "only the architect moves a card from Backlog to Ready: that move is the sign-off. Ask the architect.",
+    };
+  }
+  if ((from === "Ready" && to === "Backlog") || (from === "" && to === "Backlog")) {
+    return role === "manager"
+      ? { ok: true }
+      : { ok: false, reason: `only the architect or the manager moves a card to the Backlog` };
+  }
+  if (unsigned && to === "Done") {
+    return role === "manager"
+      ? { ok: true }
+      : {
+          ok: false,
+          reason: "only the manager closes a card that was never worked on. Ask the manager.",
+        };
+  }
+  if (unsigned && SIGNED_OFF.has(to)) {
+    return {
+      ok: false,
+      reason: `a card must be signed off into Ready by the architect before it can go to ${to}`,
+    };
+  }
+  if ((to === "Backlog" || to === "") && !unsigned) {
+    return role === "manager"
+      ? { ok: true }
+      : {
+          ok: false,
+          reason: `only the manager moves a card back to ${label(to)}. Ask the manager.`,
+        };
+  }
+  return { ok: true };
+}
