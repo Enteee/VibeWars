@@ -78,23 +78,26 @@ describe("canRaise", () => {
   });
 
   it("refuses to raise when the remaining budget cannot cover the next rank", () => {
-    // Spend almost everything across several attributes, then check the
-    // editor will not let the player overspend.
+    // 12/12/3 spends GW1's 200 points exactly (97 + 97 + 6), so the
+    // editor will not let the player raise anything further.
     let character = newCharacter("c1");
     character = setProfessions(character, "warrior", "monk");
     character = setRank(character, "warrior.strength", MAX_ATTRIBUTE_RANK);
-    character = setRank(character, "warrior.axe-mastery", MAX_ATTRIBUTE_RANK);
     character = setRank(character, "warrior.swordsmanship", MAX_ATTRIBUTE_RANK);
+    character = setRank(character, "warrior.tactics", 3);
 
-    const before = remainingPoints(character);
-    expect(before).toBeLessThan(cumulativeNextRankCost());
+    expect(remainingPoints(character)).toBe(0);
     expect(canRaise(character, "warrior.tactics")).toBe(false);
+    expect(canRaise(character, "warrior.axe-mastery")).toBe(false);
   });
 
-  function cumulativeNextRankCost(): number {
-    // Cost of a 12th rank, the most expensive single step.
-    return MAX_ATTRIBUTE_RANK;
-  }
+  it("counts points left from game-core's table: 12/10/8 leaves 5", () => {
+    let character = newCharacter("c1");
+    character = setRank(character, "warrior.strength", 12);
+    character = setRank(character, "warrior.swordsmanship", 10);
+    character = setRank(character, "warrior.tactics", 8);
+    expect(remainingPoints(character)).toBe(200 - (97 + 61 + 37));
+  });
 });
 
 describe("setProfessions", () => {

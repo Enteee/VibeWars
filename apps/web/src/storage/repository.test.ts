@@ -127,12 +127,12 @@ describe("CharacterRepository", () => {
     expect(problems[0]).toMatch(/^3 saved characters/);
   });
 
-  it("discards a pre-equipment character even though its schemaVersion is 1", async () => {
-    // The version number was reset to 1, which the pre-equipment shape
-    // also carried. The structural guard, not the number, is what turns
+  it("discards a pre-equipment character even though it carries the current schemaVersion", async () => {
+    // A record can carry the current version number and still have an
+    // old shape. The structural guard, not the number, is what turns
     // such a record away, and it must still be discarded, not upgraded.
     const store = createMemoryStore();
-    const { equipment: _dropped, ...preEquipment } = character({ id: "old", schemaVersion: 1 });
+    const { equipment: _dropped, ...preEquipment } = character({ id: "old" });
     await store.put("characters", "old", preEquipment);
 
     const { characters, problems } = await new CharacterRepository(store).list();

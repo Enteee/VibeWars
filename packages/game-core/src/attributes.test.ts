@@ -11,6 +11,13 @@ import {
 } from "./attributes.js";
 
 describe("cumulativeCostForRank", () => {
+  it("is GW1's table: rank 12 costs 97 points", () => {
+    const table = Array.from({ length: MAX_ATTRIBUTE_RANK + 1 }, (_, rank) =>
+      cumulativeCostForRank(rank),
+    );
+    expect(table).toEqual([0, 1, 3, 6, 10, 15, 21, 28, 37, 48, 61, 77, 97]);
+  });
+
   it("costs nothing to stay at rank 0", () => {
     expect(cumulativeCostForRank(0)).toBe(0);
   });
@@ -73,6 +80,14 @@ describe("isAffordable", () => {
 
   it("is true for an empty allocation against a zero budget", () => {
     expect(isAffordable([], 0)).toBe(true);
+  });
+
+  it("buys GW1's classic splits out of 200: 12/12/3 exactly, not 12/12/4; 10/10/10 leaves 17", () => {
+    const split = (...ranks: number[]) =>
+      ranks.map((rank, index) => ({ attributeId: String(index), rank }));
+    expect(totalCost(split(12, 12, 3))).toBe(200);
+    expect(isAffordable(split(12, 12, 4), 200)).toBe(false);
+    expect(200 - totalCost(split(10, 10, 10))).toBe(17);
   });
 });
 
