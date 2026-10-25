@@ -40,6 +40,7 @@ export type {
   UseSkillIntent,
   AttackIntent,
   CancelIntent,
+  WalkToIntent,
   CastRefusedMessage,
   RechargeMessage,
   RechargeSlot,

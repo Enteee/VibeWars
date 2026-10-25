@@ -324,13 +324,21 @@ export async function startMatchView(
     updateRecharges(hud, connection.skillBar, connection.getRecharges());
   });
 
-  // A double-click on an enemy attacks it, as Space would (#298).
+  // A body is targeted, and a double-click on an enemy attacks it, as
+  // Space would (#298). The ground is walked to, and the target kept, as
+  // in GW1 (#310).
   const doubleClick = createDoubleClick();
   const offPointer = viewport.onPointerDown((world) => {
     const hit = actorAtPoint(latestArena, world);
-    connection.sendIntent({ kind: "target", targetSessionId: hit?.id ?? null });
-    if (doubleClick.press(hit?.id, performance.now())) {
-      for (const intent of attackClickIntents(latestMatch, hit?.id)) {
+    const double = doubleClick.press(hit?.id, performance.now());
+    if (hit === undefined) {
+      connection.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
+      viewport.scene.showWalkMarker(world);
+      return;
+    }
+    connection.sendIntent({ kind: "target", targetSessionId: hit.id });
+    if (double) {
+      for (const intent of attackClickIntents(latestMatch, hit.id)) {
         connection.sendIntent(intent);
       }
     }

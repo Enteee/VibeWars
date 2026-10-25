@@ -21,7 +21,10 @@ export interface ArenaViewport {
   readonly scene: ArenaScene;
   /** Called once per rendered frame; returns the unsubscribe. */
   onFrame(handler: (deltaSeconds: number) => void): () => void;
-  /** A click or tap on the arena, in world units; returns the unsubscribe. */
+  /**
+   * A left click or a tap on the arena, in world units; returns the
+   * unsubscribe. Other buttons do nothing yet, and their menus stay.
+   */
   onPointerDown(handler: (world: Vec2) => void): () => void;
   /**
    * The cursor moved over the arena, in world units, or left it
@@ -95,7 +98,9 @@ export async function createArenaViewport(
     },
     onPointerDown(handler) {
       const onDown = (pointer: Phaser.Input.Pointer): void => {
-        handler(vec2(pointer.worldX, pointer.worldY));
+        if (pointer.button === 0) {
+          handler(vec2(pointer.worldX, pointer.worldY));
+        }
       };
       scene.input.on("pointerdown", onDown);
       return () => {

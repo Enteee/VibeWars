@@ -282,6 +282,27 @@ describe("match room", () => {
     await room.leave();
   });
 
+  it("walks a player to a clicked point over ticks, and stops there (#310)", async () => {
+    const client = new Client(endpoint);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
+    const self = () => room.state.players.get(room.sessionId);
+    try {
+      await waitFor(() => self() !== undefined, { label: "self to appear" });
+      const goal = { x: FIRST_SPAWN.x + 120, y: FIRST_SPAWN.y + 40 };
+      room.send("intent", { kind: "walk-to", ...goal });
+      await waitFor(() => Math.hypot((self()?.x ?? 0) - goal.x, (self()?.y ?? 0) - goal.y) <= 1, {
+        timeoutMs: 3000,
+        label: "player to arrive",
+      });
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      const arrived = { x: self()?.x, y: self()?.y };
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      expect({ x: self()?.x, y: self()?.y }).toEqual(arrived);
+    } finally {
+      await room.leave();
+    }
+  });
+
   it("ignores a malformed intent rather than crashing the room", async () => {
     const client = new Client(endpoint);
     const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });

@@ -1,6 +1,12 @@
 import Phaser from "phaser";
 
-import { PROFESSIONS, isStatusId, type ProfessionId, type StatusId } from "@vibewars/game-core";
+import {
+  PROFESSIONS,
+  isStatusId,
+  type ProfessionId,
+  type StatusId,
+  type Vec2,
+} from "@vibewars/game-core";
 
 import { professionIcon } from "../ui/icons.js";
 import { prefersReducedMotion } from "../ui/recharge-overlay.js";
@@ -33,6 +39,13 @@ import {
   shotFadeAlpha,
 } from "./projectiles.js";
 import { STATUS_ICON, STATUS_ICON_SIZE, statusRowLayout } from "./status-icons.js";
+import {
+  decayWalkMarker,
+  walkMarkerAlpha,
+  walkMarkerAt,
+  walkMarkerTicks,
+  type WalkMarker,
+} from "./walk-marker.js";
 import { weaponFamily, weaponLineLayout } from "./weapon-line.js";
 import type {
   ArenaSnapshot,
@@ -97,6 +110,7 @@ export class ArenaScene extends Phaser.Scene {
   private floatingTexts: FloatingText[] = [];
   private areaFlashes: AreaFlash[] = [];
   private swingFlashes: SwingFlash[] = [];
+  private walkMarker: WalkMarker | undefined;
   /**
    * One sprite per shot, by projectile id: in flight, or ended and fading
    * at its end point since `endedAt` (scene seconds).
@@ -145,6 +159,11 @@ export class ArenaScene extends Phaser.Scene {
   /** Flash where an area skill landed. */
   public addAreaFlash(flash: AreaFlash): void {
     this.areaFlashes.push(flash);
+  }
+
+  /** Mark where you clicked the floor to walk, replacing the last mark (#310). */
+  public showWalkMarker(point: Vec2): void {
+    this.walkMarker = walkMarkerAt(point);
   }
 
   /** Flash a melee swing; off under reduced motion, where the damage number says enough. */
@@ -199,6 +218,10 @@ export class ArenaScene extends Phaser.Scene {
       g.fillCircle(flash.position.x, flash.position.y, flash.radius);
       g.lineStyle(2, flash.colour, alpha);
       g.strokeCircle(flash.position.x, flash.position.y, flash.radius);
+    }
+    this.walkMarker = decayWalkMarker(this.walkMarker, deltaMs / 1000);
+    if (this.walkMarker !== undefined) {
+      this.drawWalkMarker(g, this.walkMarker);
     }
     for (const actor of this.snapshot.actors) {
       this.drawActor(g, actor);
@@ -293,6 +316,24 @@ export class ArenaScene extends Phaser.Scene {
         shape.map((point) => new Phaser.Math.Vector2(point.x, point.y)),
         true,
       );
+    }
+  }
+
+  /** The walk marker (#310): cased like the weapon mark, a 4 px `edge` under a 2 px `ink` core. */
+  private drawWalkMarker(g: Phaser.GameObjects.Graphics, marker: WalkMarker): void {
+    const alpha = walkMarkerAlpha(marker, prefersReducedMotion());
+    const ticks = walkMarkerTicks(marker);
+    for (const [width, colour] of [
+      [4, BODY_EDGE],
+      [2, SELF_RIM],
+    ] as const) {
+      g.lineStyle(width, colour, alpha);
+      g.beginPath();
+      for (const [from, to] of ticks) {
+        g.moveTo(from.x, from.y);
+        g.lineTo(to.x, to.y);
+      }
+      g.strokePath();
     }
   }
 

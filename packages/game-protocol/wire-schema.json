@@ -111,6 +111,13 @@
                 { "name": "kind", "optional": false, "type": { "literal": "use-skill" } },
                 { "name": "slot", "optional": false, "type": "number" }
               ]
+            },
+            {
+              "properties": [
+                { "name": "kind", "optional": false, "type": { "literal": "walk-to" } },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
             }
           ]
         }
@@ -645,6 +652,13 @@
             { "name": "kind", "optional": false, "type": { "literal": "use-skill" } },
             { "name": "slot", "optional": false, "type": "number" }
           ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "walk-to" } },
+            { "name": "x", "optional": false, "type": "number" },
+            { "name": "y", "optional": false, "type": "number" }
+          ]
         }
       ]
     },
@@ -699,6 +713,13 @@
                 "properties": [
                   { "name": "kind", "optional": false, "type": { "literal": "use-skill" } },
                   { "name": "slot", "optional": false, "type": "number" }
+                ]
+              },
+              {
+                "properties": [
+                  { "name": "kind", "optional": false, "type": { "literal": "walk-to" } },
+                  { "name": "x", "optional": false, "type": "number" },
+                  { "name": "y", "optional": false, "type": "number" }
                 ]
               }
             ]
@@ -1414,6 +1435,13 @@
       "properties": [
         { "name": "kind", "optional": false, "type": { "literal": "use-skill" } },
         { "name": "slot", "optional": false, "type": "number" }
+      ]
+    },
+    "WalkToIntent": {
+      "properties": [
+        { "name": "kind", "optional": false, "type": { "literal": "walk-to" } },
+        { "name": "x", "optional": false, "type": "number" },
+        { "name": "y", "optional": false, "type": "number" }
       ]
     },
     "WallDescriptor": {
