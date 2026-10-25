@@ -9,13 +9,23 @@ import { expect, test, type Page } from "@playwright/test";
  * `Access-Control-Allow-Origin` on static files or the host never starts.
  */
 
-/** Every message the page receives, from the music host or anyone else. */
+/**
+ * Every message the page receives, from the music host or anyone else; and
+ * apart, those from this page's own host frame, which is all the game hears.
+ * A host torn down by a reload can still have a message land in the new
+ * page, from a window the game no longer knows.
+ */
 async function recordMessages(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const seen: unknown[] = [];
-    Object.assign(window, { musicMessages: seen });
+    const fromHost: unknown[] = [];
+    Object.assign(window, { musicMessages: seen, hostMessages: fromHost });
     addEventListener("message", (event: MessageEvent) => {
       seen.push(event.data);
+      const host = document.querySelector<HTMLIFrameElement>("iframe.music-host");
+      if (host !== null && event.source === host.contentWindow) {
+        fromHost.push(event.data);
+      }
     });
   });
 }
@@ -128,10 +138,10 @@ test("the game's own scripts carry no Strudel engine", async ({ page, request })
   }
 });
 
-/** The ids of every track the host said it started. */
+/** The ids of every track this page's host said it started. */
 function playedTracks(page: Page): Promise<string[]> {
   return page.evaluate(() => {
-    const seen = (window as unknown as { musicMessages: unknown[] }).musicMessages;
+    const seen = (window as unknown as { hostMessages: unknown[] }).hostMessages;
     return seen.flatMap((message) =>
       typeof message === "object" &&
       message !== null &&
@@ -183,17 +193,40 @@ test("Off plays nothing after a click, and the music mute survives a reload (#37
   await expect(page.locator(".jukebox-mute")).toHaveAttribute("aria-pressed", "true");
 });
 
+interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 test("the now-playing toast at a match start covers none of the HUD (#372)", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("/");
+  await expect(page.getByRole("button", { name: "quick match" })).toBeVisible();
+  // The toast hides after a few seconds, which a busy page can spend before
+  // a locator gets to it: note where it is the moment it shows.
+  await page.evaluate(() => {
+    const toast = document.querySelector<HTMLElement>(".now-playing");
+    if (toast === null) {
+      throw new Error("no now-playing toast");
+    }
+    const observer = new MutationObserver(() => {
+      if (!toast.hidden) {
+        observer.disconnect();
+        Object.assign(window, { toastBox: toast.getBoundingClientRect().toJSON() as unknown });
+      }
+    });
+    observer.observe(toast, { attributes: true, attributeFilter: ["hidden"] });
+  });
   // The click that starts the match is the one that starts the music.
   await page.getByRole("button", { name: "quick match" }).click();
   await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
 
-  const toast = page.locator(".now-playing");
-  await expect(toast).toBeVisible({ timeout: 5_000 });
-  const box = await toast.boundingBox();
-  expect(box).not.toBeNull();
+  const toastBox = (): Promise<Box | null> =>
+    page.evaluate(() => (window as { toastBox?: Box }).toastBox ?? null);
+  await expect.poll(toastBox, { timeout: 5_000 }).not.toBeNull();
+  const box = await toastBox();
   for (const part of [".hud-skills", ".hud-bar-health", ".hud-scoreboard", ".hud-mute"]) {
     const other = await page.locator(part).boundingBox();
     expect(other, part).not.toBeNull();
