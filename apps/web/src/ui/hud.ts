@@ -1,4 +1,10 @@
-import { getProfession, getWeapon, type ActivationRejection } from "@vibewars/game-core";
+import {
+  getProfession,
+  getSkill,
+  getWeapon,
+  type ActivationRejection,
+  type AttackWeaponClass,
+} from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
 import type {
   MatchSnapshot,
@@ -225,6 +231,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "skill-not-on-bar": "That skill is not on your bar.",
   "still-recharging": "That skill is recharging.",
   "already-casting": "You are already using a skill.",
+  "wrong-weapon": "You need another weapon for that.",
   "insufficient-energy": "Not enough energy.",
   "insufficient-adrenaline": "Not enough adrenaline.",
   "no-target": "Select a target first.",
@@ -242,6 +249,18 @@ const ATTACK_REFUSALS: Readonly<Partial<Record<ActivationRejection, string>>> = 
   "invalid-target-ally": "You can only attack an enemy.",
 };
 
+/** An attack skill refused for the weapon in hand names the one it needs (ADR-0029). */
+const NEEDS: Readonly<Record<AttackWeaponClass, string>> = {
+  axe: "Needs an axe.",
+  sword: "Needs a sword.",
+  hammer: "Needs a hammer.",
+  daggers: "Needs daggers.",
+  scythe: "Needs a scythe.",
+  spear: "Needs a spear.",
+  bow: "Needs a bow.",
+  melee: "Needs a melee weapon.",
+};
+
 /**
  * The line for a refusal as the server sent it. A reason this client does
  * not know (wrong data, not old data) still says something.
@@ -250,6 +269,10 @@ export function describeRefusal(refusal: CastRefusedMessage): string {
   const { reason } = refusal;
   if (!isRejection(reason)) {
     return refusal.kind === "attack" ? "You cannot attack now." : "You cannot use that skill now.";
+  }
+  if (refusal.kind === "skill" && reason === "wrong-weapon") {
+    const needed = getSkill(refusal.skillId)?.attack?.weapon;
+    return needed === undefined ? REFUSALS[reason] : NEEDS[needed];
   }
   return (refusal.kind === "attack" ? ATTACK_REFUSALS[reason] : undefined) ?? REFUSALS[reason];
 }

@@ -112,9 +112,23 @@ export type SkillEffect =
 /**
  * What kind of skill this is, as GW1 names it. Shown to the player as a
  * badge, so a skill's nature reads by shape rather than by colour (#75).
- * Nothing in the rules keys on it yet.
+ * An attack skill is also a blow of its weapon (ADR-0029).
  */
 export type SkillType = "attack" | "spell" | "enchantment" | "hex" | "skill";
+
+/**
+ * The weapon an attack skill needs (ADR-0029). `melee` is any of the six
+ * melee weapons, not fists; `bow` is any of the five bows.
+ */
+export type AttackWeaponClass =
+  "axe" | "sword" | "hammer" | "daggers" | "scythe" | "spear" | "bow" | "melee";
+
+/** What makes an attack skill a blow of its weapon (ADR-0029). */
+export interface AttackSkillRule {
+  readonly weapon: AttackWeaponClass;
+  /** Added to the weapon's roll before armor; `undefined`: no bonus. */
+  readonly bonusDamage: Magnitude | undefined;
+}
 
 export interface Skill {
   readonly id: string;
@@ -140,6 +154,8 @@ export interface Skill {
   readonly target: TargetRule;
   /** Who else is caught once it lands. `undefined`: only the target. */
   readonly area: AreaRule | undefined;
+  /** Set exactly when `type === "attack"` (ADR-0029). */
+  readonly attack: AttackSkillRule | undefined;
   readonly effects: readonly SkillEffect[];
 }
 

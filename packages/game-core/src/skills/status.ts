@@ -60,6 +60,12 @@ export interface StatusDefinition {
    * interruptible, so that rule would do nothing (ADR-0019).
    */
   readonly castTimeMultiplier: number;
+  /**
+   * Multiplier on how long the bearer's attacks take, swings and attack
+   * skills alike; <1 is faster (ADR-0029). No status sets it yet: it is the
+   * hook attack-speed skills plug into.
+   */
+  readonly attackDurationMultiplier: number;
 }
 
 function define(
@@ -78,6 +84,7 @@ function define(
     attackMissChance: 0,
     maxHealthMultiplier: 1,
     castTimeMultiplier: 1,
+    attackDurationMultiplier: 1,
     ...overrides,
   };
 }
@@ -236,6 +243,7 @@ export interface StatusModifiers {
   readonly attackMissChance: number;
   readonly maxHealthMultiplier: number;
   readonly castTimeMultiplier: number;
+  readonly attackDurationMultiplier: number;
 }
 
 /**
@@ -245,6 +253,8 @@ export interface StatusModifiers {
  * (move speed, max health, cast time) multiply; miss chance takes the
  * worst rather than compounding, so two blinding effects cannot push a
  * player past certain failure in a way that feels arbitrary.
+ * Attack duration is GW1's rule: only the strongest speed-up and the
+ * strongest slow-down count, and they multiply.
  */
 export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusModifiers {
   let healthPerSecond = 0;
@@ -253,6 +263,8 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
   let attackMissChance = 0;
   let maxHealthMultiplier = 1;
   let castTimeMultiplier = 1;
+  let attackFaster = 1;
+  let attackSlower = 1;
 
   for (const status of statuses) {
     const def = getStatusDefinition(status.id);
@@ -262,6 +274,8 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
     attackMissChance = Math.max(attackMissChance, def.attackMissChance);
     maxHealthMultiplier *= def.maxHealthMultiplier;
     castTimeMultiplier *= def.castTimeMultiplier;
+    attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
+    attackSlower = Math.max(attackSlower, def.attackDurationMultiplier);
   }
 
   return {
@@ -271,5 +285,6 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
     attackMissChance,
     maxHealthMultiplier,
     castTimeMultiplier,
+    attackDurationMultiplier: attackFaster * attackSlower,
   };
 }

@@ -19,6 +19,7 @@ export {
   allowsOffhand,
   getWeapon,
   isWeaponId,
+  wieldsFor,
 } from "./weapons.js";
 
 export type { Offhand, OffhandId, OffhandKind } from "./offhands.js";

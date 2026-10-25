@@ -132,6 +132,17 @@ describe("describeRefusal", () => {
     expect(describeRefusal(attack("invalid-target-dead"))).toBe("Your target is dead.");
   });
 
+  it("names the weapon an attack skill needs", () => {
+    const refused = (skillId: string): CastRefusedMessage => ({
+      kind: "skill",
+      slot: 0,
+      skillId,
+      reason: "wrong-weapon",
+    });
+    expect(describeRefusal(refused("warrior.swift-chop"))).toBe("Needs an axe.");
+    expect(describeRefusal(refused("ranger.barrage"))).toBe("Needs a bow.");
+  });
+
   it("still says something for a reason this client does not know", () => {
     expect(describeRefusal(cast("time-travel"))).toBe("You cannot use that skill now.");
     expect(describeRefusal(attack("time-travel"))).toBe("You cannot attack now.");

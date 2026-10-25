@@ -1,4 +1,5 @@
 import type { SkillBar } from "../build.js";
+import { wieldsFor } from "../equipment/weapons.js";
 import { distanceWithinRange, hasLineOfSight, type Segment } from "../geometry.js";
 import type { Vec2 } from "../vec2.js";
 
@@ -20,6 +21,7 @@ export type ActivationRejection =
   | "skill-not-on-bar"
   | "still-recharging"
   | "already-casting"
+  | "wrong-weapon"
   | "insufficient-energy"
   | "insufficient-adrenaline"
   | "no-target"
@@ -99,6 +101,14 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   }
   if ((request.rechargeRemaining.get(skill.id) ?? 0) > 0) {
     return reject("still-recharging");
+  }
+  // An attack skill is a blow of its weapon (ADR-0029): checked before the
+  // cost, so the player is told what is wrong rather than what it costs.
+  if (
+    skill.attack !== undefined &&
+    !wieldsFor(caster.equipment.mainHand.weapon.id, skill.attack.weapon)
+  ) {
+    return reject("wrong-weapon");
   }
 
   if (skill.cost !== undefined) {

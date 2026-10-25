@@ -15,9 +15,10 @@ import type { AttributeRules } from "./ruleset.js";
  * The skill bar a player gets when they bring no build of their own.
  *
  * Quick match and a first-time player both land here, so it is chosen to
- * be immediately playable: damage, a heal, a self-buff, an interrupt, a
+ * be immediately playable: damage, heals, a self-buff, a hex, a
  * condition and a cure — enough for a real fight with counterplay on the
- * very first join, without visiting the editor.
+ * very first join, without visiting the editor. Every attack skill on it
+ * is a sword's, to go with the house sword (ADR-0029).
  *
  * It is NOT a legal single-character build (no character has access to
  * all six of these professions' attributes), which is deliberate: it is
@@ -28,7 +29,7 @@ export const DEFAULT_SKILL_BAR: SkillBar = [
   "elementalist.fireball",
   "monk.orison-of-healing",
   "warrior.sever-artery-lite",
-  "ranger.broad-head-arrow",
+  "necromancer.blood-renewal-lite",
   "elementalist.armor-of-earth",
   "monk.mend-affliction",
   "necromancer.faintheartedness",
@@ -40,7 +41,7 @@ const DEFAULT_ATTRIBUTE_RANKS: ReadonlyMap<string, number> = new Map([
   ["elementalist.fire-magic", 12],
   ["monk.healing-prayers", 12],
   ["warrior.swordsmanship", 12],
-  ["ranger.marksmanship", 12],
+  ["necromancer.blood-magic", 12],
   ["necromancer.curses", 12],
   ["ranger.wilderness-survival", 12],
 ]);

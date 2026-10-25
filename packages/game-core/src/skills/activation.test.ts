@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { WEAPONS, type WeaponId } from "../equipment/weapons.js";
 import { segment } from "../geometry.js";
 import { vec2 } from "../vec2.js";
 import { canActivate, hasAftercast, payCost, type ActivationRequest } from "./activation.js";
+import { getSkill } from "./catalog.js";
 import { makeCombatant } from "./testing.js";
 import type { Skill } from "./types.js";
 
@@ -17,6 +20,7 @@ const SPELL: Skill = {
   range: 400,
   target: "single-enemy",
   area: undefined,
+  attack: undefined,
   effects: [{ kind: "damage", amount: { flat: 50 } }],
 };
 
@@ -226,5 +230,76 @@ describe("hasAftercast (#317)", () => {
   it("never follows an attack skill, or an instant one like a shout", () => {
     expect(hasAftercast({ ...SPELL, type: "attack" })).toBe(false);
     expect(hasAftercast({ ...SPELL, type: "skill", activationSeconds: 0 })).toBe(false);
+  });
+});
+
+describe("canActivate, an attack skill's weapon (ADR-0029)", () => {
+  function holding(weaponId: WeaponId) {
+    return makeCombatant({
+      id: "caster",
+      team: 0,
+      energy: 50,
+      equipment: {
+        ...unarmedResolvedEquipment(60),
+        mainHand: { weapon: WEAPONS[weaponId], attributeId: undefined, requirementMet: true },
+      },
+    });
+  }
+
+  function check(skill: Skill | undefined, weaponId: WeaponId) {
+    if (skill === undefined) {
+      throw new Error("missing skill");
+    }
+    return canActivate(
+      request({
+        skill,
+        skillBar: [skill.id],
+        caster: holding(weaponId),
+        targetPosition: vec2(40, 0),
+      }),
+    );
+  }
+
+  const MELEE: Skill = {
+    ...SPELL,
+    id: "test.melee-attack",
+    type: "attack",
+    cost: undefined,
+    activationSeconds: 0,
+    range: 100,
+    attack: { weapon: "melee", bonusDamage: undefined },
+    effects: [],
+  };
+
+  it("refuses Swift Chop with a sword, before anything else is wrong with it", () => {
+    expect(check(getSkill("warrior.swift-chop"), "sword")).toEqual({
+      ok: false,
+      reason: "wrong-weapon",
+    });
+    expect(check(getSkill("warrior.swift-chop"), "axe")).toEqual({ ok: true });
+  });
+
+  it("refuses Barrage with a staff, and takes any bow", () => {
+    expect(check(getSkill("ranger.barrage"), "staff")).toEqual({
+      ok: false,
+      reason: "wrong-weapon",
+    });
+    expect(check(getSkill("ranger.barrage"), "hornbow")).toEqual({ ok: true });
+  });
+
+  it("refuses a melee attack skill bare-handed, and takes any melee weapon", () => {
+    expect(check(MELEE, "unarmed")).toEqual({ ok: false, reason: "wrong-weapon" });
+    expect(check(MELEE, "spear")).toEqual({ ok: true });
+    expect(check(MELEE, "longbow")).toEqual({ ok: false, reason: "wrong-weapon" });
+  });
+
+  it("checks the weapon before the cost", () => {
+    const caster = holding("sword");
+    caster.energy = 0;
+    const skill = getSkill("warrior.swift-chop");
+    expect(skill && canActivate(request({ skill, skillBar: [skill.id], caster }))).toEqual({
+      ok: false,
+      reason: "wrong-weapon",
+    });
   });
 });

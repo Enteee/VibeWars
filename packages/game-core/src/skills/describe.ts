@@ -114,6 +114,9 @@ export function describeStatus(id: string): string {
   if (definition.castTimeMultiplier !== 1) {
     parts.push(`cast times ${String(definition.castTimeMultiplier)}× longer`);
   }
+  if (definition.attackDurationMultiplier !== 1) {
+    parts.push(`attacks take ${String(definition.attackDurationMultiplier)}× as long`);
+  }
   return parts.length === 0 ? definition.name : parts.join(", ");
 }
 
