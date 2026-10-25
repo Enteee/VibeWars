@@ -1,10 +1,11 @@
 /**
  * The restarter, run for real against a scratch checkout and a local bare
- * remote. `devenv`, `tmux`, `pkill` and `pgrep` are stand-ins on PATH: the
- * real ones would build nix shells and kill processes this test does not own.
+ * remote. `devenv`, `tmux`, `pkill` and `pgrep` are stand-ins: the real
+ * ones would build nix shells and kill processes this test does not own.
  */
 
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { once } from "node:events";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -55,7 +56,12 @@ function commit(message, cwd) {
  * An operator checkout booted at one commit, a remote whose main is one
  * company commit ahead of it, and a reboot handed over by the supervisor.
  *
- * @param {{ failBuild?: boolean, signed?: boolean }} [options]
+ * The tmux stand-in keeps a session up until `kill-session` has run
+ * `survive` times more than once, and lists `panePid` as its one pane. The
+ * devenv stand-in's `claude-llc up` fails, as the real one does, while that
+ * session is up, and also the first `failUp` times it runs.
+ *
+ * @param {{ failBuild?: boolean, signed?: boolean, survive?: number, failUp?: number, panePid?: number }} [options]
  */
 function setup(options = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "restart-test-"));
@@ -112,11 +118,34 @@ function setup(options = {}) {
   const fake = (/** @type {string} */ name, /** @type {string} */ body) => {
     fs.writeFileSync(path.join(bin, name), `#!/bin/sh\n${body}\n`, { mode: 0o755 });
   };
+  const alive = path.join(dir, "session-up");
+  const kills = path.join(dir, "kills");
+  const ups = path.join(dir, "ups");
+  fs.writeFileSync(alive, "");
   fake(
     "devenv",
-    `echo "devenv $PWD $* rebooted=$VIBEWARS_REBOOTED" >>${calls}\n[ -e scripts/bots/new.mjs ] && echo "saw the new main in $PWD" >>${calls}\n${options.failBuild === true ? 'case "$*" in *--help*) exit 1 ;; esac' : ""}`,
+    [
+      `echo "devenv $PWD $* rebooted=$VIBEWARS_REBOOTED" >>${calls}`,
+      `[ -e scripts/bots/new.mjs ] && echo "saw the new main in $PWD" >>${calls}`,
+      options.failBuild === true ? 'case "$*" in *--help*) exit 1 ;; esac' : "",
+      'case "$*" in *" up") ;; *) exit 0 ;; esac',
+      `[ -e ${alive} ] && exit 1`,
+      `n=$(($(cat ${ups} 2>/dev/null || echo 0) + 1)); echo $n >${ups}`,
+      `[ $n -le ${String(options.failUp ?? 0)} ] && exit 1`,
+      "exit 0",
+    ].join("\n"),
   );
-  fake("tmux", `echo "tmux $*" >>${calls}`);
+  fake(
+    "tmux",
+    [
+      `echo "tmux $*" >>${calls}`,
+      'case "$1" in',
+      `  has-session) [ -e ${alive} ] ;;`,
+      `  kill-session) n=$(($(cat ${kills} 2>/dev/null || echo 0) + 1)); echo $n >${kills}; [ $n -gt ${String(options.survive ?? 0)} ] && rm -f ${alive}; exit 0 ;;`,
+      `  list-panes) echo ${String(options.panePid ?? 0)} ;;`,
+      "esac",
+    ].join("\n"),
+  );
   fake("pkill", `echo "pkill $*" >>${calls}`);
   fake("pgrep", "exit 1");
 
@@ -129,6 +158,7 @@ function setup(options = {}) {
         DEVENV_ROOT: repo,
         VIBEWARS_BOT_ROOT: root,
         VIBEWARS_LLC_SESSION: "restart-test",
+        VIBEWARS_TMUX: path.join(bin, "tmux"),
         VIBEWARS_GIT_REMOTE: remote,
         GIT_CONFIG_GLOBAL: "/dev/null",
       },
@@ -223,6 +253,67 @@ describe("the restarter", () => {
       `devenv ${company.repo} shell --refresh-eval-cache -- claude-llc up rebooted=1`,
     );
   });
+});
+
+describe("the restarter, when the old session will not go (#315)", () => {
+  /** @type {import("node:child_process").ChildProcess[]} */
+  const children = [];
+  afterEach(() => {
+    for (const child of children.splice(0)) {
+      child.kill("SIGKILL");
+    }
+  });
+
+  /** @returns {string[]} the messages the restarter left in the manager's outbox */
+  const outbox = (/** @type {string} */ root) => {
+    const dir = path.join(root, "bus", "manager", "outbox");
+    return fs.existsSync(dir)
+      ? fs.readdirSync(dir).map((name) => fs.readFileSync(path.join(dir, name), "utf8"))
+      : [];
+  };
+
+  it("kills the processes in a session that survives kill-session, then starts the company", async () => {
+    const pane = spawn("sleep", ["60"]);
+    children.push(pane);
+    const exited = once(pane, "exit");
+    const company = setup({ survive: 1, panePid: pane.pid });
+
+    const result = company.restart();
+
+    expect(result.code).toBe(0);
+    expect((await exited)[1]).toBe("SIGKILL");
+    expect(result.calls.filter((c) => c === "tmux kill-session -t restart-test")).toHaveLength(2);
+    expect(fs.readFileSync(path.join(company.root, "hub", "reboot.log"), "utf8")).toMatch(
+      /restart-test survived kill-session \(attempt 1\); killing its panes/,
+    );
+    expect(outbox(company.root)).toEqual([]);
+  }, 20_000);
+
+  it("tries once more when claude-llc up fails, and says nothing when that works", () => {
+    const company = setup({ failUp: 1 });
+
+    const result = company.restart();
+
+    expect(result.code).toBe(0);
+    const ups = result.calls.filter((c) => c.endsWith("claude-llc up rebooted=1"));
+    expect(ups).toHaveLength(2);
+    expect(outbox(company.root)).toEqual([]);
+  }, 20_000);
+
+  it("tells everyone on Telegram when the company does not come back up twice", () => {
+    const company = setup({ survive: 99 });
+
+    const result = company.restart();
+
+    expect(result.code).toBe(1);
+    const log = fs.readFileSync(path.join(company.root, "hub", "reboot.log"), "utf8");
+    expect(log).toMatch(/tmux session restart-test would not stop/);
+    expect(log).toMatch(/did not come back up \(exit 1\), twice/);
+    const messages = outbox(company.root).map((m) => obj(JSON.parse(m)));
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toMatchObject({ to: "all" });
+    expect(String(messages[0]?.text)).toMatch(/^Company reboot FAILED/);
+  }, 30_000);
 });
 
 describe("the restarter, against a checkout an agent has tampered with", () => {

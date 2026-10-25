@@ -131,30 +131,15 @@ let
       cat ${llcUsage}
     }
 
-        # The hub window (#23), last in the session: hubd on top, the
-        # supervisor below, each under run-forever, which shows its output,
-        # restarts it whenever it exits and tells everyone if it crash-loops.
-        # This is the only way either daemon starts. Index 99 keeps it last
-        # however many role windows open after it, and it opens first so
-        # hubd is answering before any agent asks it anything.
+        # The hub window (#23), last in the session: hubd and the supervisor,
+        # each under run-forever. This is the only way either daemon starts,
+        # and it opens first so hubd is answering before any agent asks it
+        # anything. scripts/bots/hub-window.mjs has the rest.
+        export VIBEWARS_TMUX="${tmux}"
+        export VIBEWARS_LLC_RESTART="${restarter}"
         hub_window() {
           mkdir -p "$VIBEWARS_BOT_ROOT/hub"
-          # A pane gets the tmux server's environment, not this script's,
-          # so what the daemons read is passed on explicitly: hubd needs
-          # DEVENV_ROOT, and gh and git on PATH.
-          hub_env=(-e "DEVENV_ROOT=$DEVENV_ROOT" -e "VIBEWARS_BOT_ROOT=$VIBEWARS_BOT_ROOT"
-            -e "VIBEWARS_BOT_BUS=$VIBEWARS_BOT_ROOT/bus" -e "VIBEWARS_LLC_SESSION=$SESSION"
-            -e "VIBEWARS_LLC_RESTART=${restarter}" -e "PATH=$PATH")
-          hubd_pane="$(${tmux} new-window -d -P -F '#{pane_id}' -t "$SESSION:99" -n hub \
-            -c "$DEVENV_ROOT" "''${hub_env[@]}" \
-            "${node} ${llcScripts}/run-forever.mjs hubd -- ${node} ${llcScripts}/hubd.mjs")"
-          supervisor_pane="$(${tmux} split-window -v -P -F '#{pane_id}' -t "$hubd_pane" \
-            -c "$DEVENV_ROOT" "''${hub_env[@]}" \
-            "${node} ${llcScripts}/run-forever.mjs supervisor -- ${node} ${llcScripts}/supervisor.mjs")"
-          ${tmux} select-pane -t "$hubd_pane" -T HUBD
-          ${tmux} select-pane -t "$supervisor_pane" -T SUPERVISOR
-          ${tmux} set-option -w -t "$SESSION:hub" pane-border-status top
-          ${tmux} set-option -w -t "$SESSION:hub" pane-border-format " #[bold]#{pane_title}#[nobold] "
+          ${node} ${llcScripts}/hub-window.mjs open
           echo "claude-llc: hubd and supervisor started in the hub window (logs: .bots/hub/)"
         }
 
@@ -235,12 +220,20 @@ let
         # 409 Conflict and a deaf agent. So a running session is joined, never
         # duplicated.
         if ${tmux} has-session -t "$SESSION" 2>/dev/null; then
+          # A reboot's restarter stopped the session before it ran this. If
+          # it is still here, joining it would bring the company back on the
+          # old code and call that a reboot (#315): fail, so the restarter
+          # stops it again and says so.
+          if [ -n "''${VIBEWARS_REBOOTED-}" ]; then
+            echo "claude-llc: $SESSION is still running after the restarter stopped it; not joining it." >&2
+            exit 1
+          fi
           echo "claude-llc: $SESSION is already running; attaching to it."
 
           # run-forever brings a daemon back on its own, but not its window:
           # if someone closed it, open it again, or you attach to a company
           # whose GitHub access silently does not work.
-          if ! ${tmux} list-windows -t "$SESSION" -F '#{window_name}' | grep -qx hub; then
+          if ! ${node} ${llcScripts}/hub-window.mjs check; then
             echo "claude-llc: the hub window was gone; opening it again."
             stop_daemons
             hub_window

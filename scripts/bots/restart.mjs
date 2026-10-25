@@ -56,6 +56,8 @@ function required(name) {
 const REPO = required("DEVENV_ROOT");
 const ROOT = required("VIBEWARS_BOT_ROOT");
 const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
+/** The tmux the session runs on, as claude-llc passes it: not whatever is on PATH. */
+const TMUX = required("VIBEWARS_TMUX");
 const REBOOTING = path.join(ROOT, "rebooting.json");
 const LOG = path.join(ROOT, "hub", "reboot.log");
 const CHECK = path.join(ROOT, "reboot-check");
@@ -64,6 +66,10 @@ const MIRROR = path.join(ROOT, "hub", ".git-mirror");
 
 /** How long the company gets to exit before what is left is killed. */
 const STOP_TIMEOUT_MS = 15_000;
+/** How long the tmux session gets to go after each kill-session, which is synchronous. */
+const SESSION_TIMEOUT_MS = 1_000;
+/** Kill-session, then its panes' processes, then once more both. */
+const SESSION_ATTEMPTS = 3;
 
 /**
  * @param {string} line
@@ -89,6 +95,11 @@ function run(file, args, options = {}) {
   });
   const stdout = typeof result.stdout === "string" ? result.stdout : "";
   const stderr = typeof result.stderr === "string" ? result.stderr : "";
+  // A command that could not even start must not pass for one that ran and
+  // found nothing to do (#315).
+  if (result.error !== undefined) {
+    log(`${file} ${args.join(" ")}: ${result.error.message}`);
+  }
   if (stderr.trim() !== "") {
     log(`${file} ${args.join(" ")}: ${stderr.trim()}`);
   }
@@ -168,9 +179,51 @@ function running(pattern) {
   return run("pgrep", ["-f", pattern]).code === 0;
 }
 
+/** @returns {boolean} */
+function sessionUp() {
+  return run(TMUX, ["has-session", "-t", SESSION]).code === 0;
+}
+
+/**
+ * Kill the tmux session, and check that it is gone (#315): a session that
+ * survives is the old company, and `claude-llc up` would join it. Each
+ * attempt that leaves it standing kills the processes in its panes, which
+ * closes them, and the session with its last one.
+ *
+ * @returns {Promise<boolean>} whether it is gone
+ */
+async function stopSession() {
+  for (let attempt = 1; attempt <= SESSION_ATTEMPTS; attempt += 1) {
+    run(TMUX, ["kill-session", "-t", SESSION]);
+    const until = Date.now() + SESSION_TIMEOUT_MS;
+    while (Date.now() < until && sessionUp()) {
+      await sleep(250);
+    }
+    if (!sessionUp()) {
+      return true;
+    }
+    log(
+      `tmux session ${SESSION} survived kill-session (attempt ${String(attempt)}); killing its panes`,
+    );
+    const panes = run(TMUX, ["list-panes", "-s", "-t", SESSION, "-F", "#{pane_pid}"]);
+    for (const pid of panes.stdout
+      .split("\n")
+      .map(Number)
+      .filter((n) => n > 0)) {
+      try {
+        process.kill(pid, "SIGKILL");
+      } catch {
+        // Gone already.
+      }
+    }
+  }
+  log(`tmux session ${SESSION} would not stop`);
+  return false;
+}
+
 /** @returns {Promise<void>} */
 async function stopCompany() {
-  run("tmux", ["kill-session", "-t", SESSION]);
+  await stopSession();
   // The jails are recognised by their worktree binds, which no other
   // process on the machine carries.
   // The run-forever loops first, so stopping a daemon does not restart it
@@ -337,11 +390,39 @@ async function main() {
   );
   fs.rmSync(REBOOTING, { force: true });
 
-  const started = devenv(["claude-llc", "up"], REPO);
+  // Once more if it fails, from a stopped company again: whatever made it
+  // fail may have left half a company running (#315).
+  let started = devenv(["claude-llc", "up"], REPO);
   if (started !== 0) {
-    log(`the company did not come back up (exit ${String(started)})`);
+    log(
+      `the company did not come back up (exit ${String(started)}); stopping it and trying once more`,
+    );
+    await stopCompany();
+    started = devenv(["claude-llc", "up"], REPO);
+  }
+  if (started !== 0) {
+    log(`the company did not come back up (exit ${String(started)}), twice`);
+    tellEveryone(
+      `Company reboot FAILED: claude-llc up exited ${String(started)} twice. Operator: claude-llc stop, then devenv shell --refresh-eval-cache -- claude-llc. Log: .bots/hub/reboot.log`,
+    );
     process.exitCode = 1;
   }
+}
+
+/**
+ * A broadcast from the manager's outbox, as `claude-llc reboot --abort`
+ * sends one: the Telegram sidecar delivers it, to the agents and the
+ * operator, as soon as one is running.
+ *
+ * @param {string} text
+ * @returns {void}
+ */
+function tellEveryone(text) {
+  const outbox = path.join(ROOT, "bus", "manager", "outbox");
+  const name = `${String(Date.now())}-restarter.json`;
+  fs.mkdirSync(outbox, { recursive: true });
+  fs.writeFileSync(path.join(outbox, `.${name}.part`), JSON.stringify({ to: "all", text }));
+  fs.renameSync(path.join(outbox, `.${name}.part`), path.join(outbox, name));
 }
 
 try {
