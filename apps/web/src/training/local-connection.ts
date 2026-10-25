@@ -93,14 +93,17 @@ export function skillSlotsFor(skillBar: readonly string[]): SkillSlot[] {
   });
 }
 
-function toPlayerSnapshot(participant: Participant): PlayerSnapshot {
+function toPlayerSnapshot(participant: Participant, name: string): PlayerSnapshot {
   const { combatant } = participant;
   const activeCast = combatant.cast.activeCast;
   return {
     sessionId: participant.id,
+    name,
     x: participant.position.x,
     y: participant.position.y,
+    facing: participant.facing,
     targetSessionId: participant.targetId,
+    attackTargetSessionId: combatant.attack?.targetId,
     health: Math.round(combatant.health),
     maxHealth: combatant.maxHealth,
     energy: Math.round(combatant.energy),
@@ -121,8 +124,10 @@ export function createLocalConnection(options: {
   readonly simulation: MatchSimulation;
   readonly selfId: string;
   readonly map: MapDescriptor;
+  /** What to call each participant: dummies by label, the player by their name. */
+  readonly nameOf: (id: string) => string;
 }): LocalMatchConnection {
-  const { simulation, selfId, map } = options;
+  const { simulation, selfId, map, nameOf } = options;
   let skillBar = skillSlotsFor(simulation.get(selfId)?.skillBar ?? []);
   let accumulator = 0;
   let closed = false;
@@ -143,11 +148,12 @@ export function createLocalConnection(options: {
       // an area skill says where it landed, for the flash (#5).
       const casterSessionId =
         (entry.cause === "degeneration" ? entry.events[0]?.targetId : entry.sourceId) ?? "";
+      const { cause } = entry;
       const skillId = entry.skillId ?? "";
       const message: CombatMessage =
         entry.area === undefined
-          ? { casterSessionId, skillId, events: entry.events }
-          : { casterSessionId, skillId, events: entry.events, area: entry.area };
+          ? { casterSessionId, cause, skillId, events: entry.events }
+          : { casterSessionId, cause, skillId, events: entry.events, area: entry.area };
       for (const handler of combatHandlers) {
         handler(message);
       }
@@ -171,7 +177,8 @@ export function createLocalConnection(options: {
       case "use-skill": {
         const request = simulation.requestSkill(selfId, intent.slot);
         if (request !== undefined && !request.check.ok) {
-          const message = {
+          const message: CastRefusedMessage = {
+            kind: "skill",
             slot: intent.slot,
             skillId: request.skillId,
             reason: request.check.reason,
@@ -182,6 +189,19 @@ export function createLocalConnection(options: {
         }
         return;
       }
+      case "attack": {
+        const check = simulation.requestAttack(selfId, intent.targetId);
+        if (check !== undefined && !check.ok) {
+          const message: CastRefusedMessage = { kind: "attack", reason: check.reason };
+          for (const handler of refusalHandlers) {
+            handler(message);
+          }
+        }
+        return;
+      }
+      case "cancel-attack":
+        simulation.cancelAttack(selfId);
+        return;
     }
   };
 
@@ -199,13 +219,24 @@ export function createLocalConnection(options: {
     getSnapshot(): MatchSnapshot {
       return {
         selfSessionId: selfId,
-        players: [...simulation.participants()].map(toPlayerSnapshot),
+        players: [...simulation.participants()].map((participant) =>
+          toPlayerSnapshot(participant, nameOf(participant.id)),
+        ),
         scoreTeam0: simulation.score.byTeam.get(0) ?? 0,
         scoreTeam1: simulation.score.byTeam.get(1) ?? 0,
         elapsedSeconds: simulation.elapsedSeconds,
         phase: simulation.phase,
         winningTeam: simulation.outcome.winningTeam,
         endReason: simulation.outcome.reason,
+        projectiles: simulation.projectiles.map((shot) => ({
+          id: shot.id,
+          attackerId: shot.attackerId,
+          weaponId: shot.weaponSnapshot.mainHand.weapon.id,
+          from: shot.from,
+          to: shot.aimPoint,
+          launchedAt: simulation.elapsedSeconds - shot.elapsed,
+          flightSeconds: shot.flightSeconds,
+        })),
       };
     },
     onCombat(handler) {
@@ -213,6 +244,14 @@ export function createLocalConnection(options: {
     },
     onCastRefused(handler) {
       refusalHandlers.push(handler);
+    },
+    getRecharges() {
+      // Straight from the simulation: there is no wire to extrapolate over.
+      const cast = simulation.get(selfId)?.combatant.cast;
+      return skillBar.map((slot) => ({
+        remaining: cast?.rechargeRemaining.get(slot.id) ?? 0,
+        total: cast?.rechargeTotal.get(slot.id) ?? 0,
+      }));
     },
     onStep(handler) {
       stepHandlers.push(handler);

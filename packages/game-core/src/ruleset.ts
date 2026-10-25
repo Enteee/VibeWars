@@ -72,6 +72,18 @@ export interface CombatRules {
   readonly baseEnergy: number;
   /** Floor on maximum health, so stacked rune penalties cannot reach zero. */
   readonly minimumMaxHealth: number;
+  /**
+   * How far past its body a projectile's target may be when it lands and
+   * still be hit. Large enough that a point-blank shot cannot be dodged,
+   * small enough that reversing dodges a longbow at range.
+   */
+  readonly projectileTolerance: number;
+  /**
+   * How much of a target's recent movement a shot is led by. Long enough
+   * that tapping back and forth averages out to standing still, short
+   * enough that a real change of course shows.
+   */
+  readonly trackWindowSeconds: number;
 }
 
 export interface Ruleset {
@@ -115,6 +127,8 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
     baseHealth: 500,
     baseEnergy: 50,
     minimumMaxHealth: 100,
+    projectileTolerance: 10,
+    trackWindowSeconds: 0.6,
   }),
   attributes: Object.freeze({
     // Enough to max two attributes (12+12=24 ranks -> 2*78=156 points) with

@@ -1,5 +1,6 @@
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { tallyCombat, type CombatLogEntry } from "../match/combat-log.js";
+import { spawnFacing } from "../match/facing.js";
 import { MatchSimulation } from "../match/simulation.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import type { CombatEvent } from "../skills/effects.js";
@@ -68,6 +69,13 @@ export function runHeadlessMatch(options: HeadlessMatchOptions): HeadlessMatchRe
       // Armor at the reference level, so damage lands at its stated amount.
       equipment: unarmedResolvedEquipment(ruleset.combat.armorReferenceLevel),
       spawn: fighter.position,
+      facing: spawnFacing(
+        fighter.position,
+        options.fighters
+          .filter((other) => other.team !== fighter.team)
+          .map((other) => other.position),
+        options.fighters.map((other) => other.position),
+      ),
       behaviour: {
         kind: "cast-loop",
         skillIds: fighter.skillBar,

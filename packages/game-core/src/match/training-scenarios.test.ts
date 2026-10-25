@@ -122,8 +122,9 @@ function arena(played: TrainingScenario, seed: string): MatchSimulation {
         attributeRanks: new Map([["elementalist.fire-magic", 12]]),
         equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
         spawn: map.playerSpawn,
+        facing: 0,
       },
-      ...scenarioParticipants(played),
+      ...scenarioParticipants(played, map.playerSpawn),
     ],
   });
 }
@@ -153,7 +154,9 @@ describe("armor-ladder, headless", () => {
       expect(sim.requestSkill("player", 0)?.check).toEqual({ ok: true });
       // Fireball lands at 1 s and recharges for 7: 9 s clears both.
       for (let i = 0; i < Math.round(9 / DT); i += 1) {
-        for (const entry of sim.step(DT).log) {
+        // The Fireball alone: it also turns the player on the dummy with
+        // their weapon, and the swings are not what this measures.
+        for (const entry of sim.step(DT).log.filter((logged) => logged.cause === "skill")) {
           for (const event of entry.events) {
             if (event.kind === "damage") {
               dealt[event.targetId] = (dealt[event.targetId] ?? 0) + event.amount;

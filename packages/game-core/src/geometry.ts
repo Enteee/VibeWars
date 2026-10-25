@@ -102,6 +102,22 @@ export function segmentsIntersect(s1: Segment, s2: Segment): boolean {
   return false;
 }
 
+/**
+ * The shortest distance between two segments: 0 if they touch or cross,
+ * otherwise the nearest of their four endpoints to the other segment.
+ */
+export function distanceSegmentToSegment(s: Segment, t: Segment): number {
+  if (segmentsIntersect(s, t)) {
+    return 0;
+  }
+  return Math.min(
+    distancePointToSegment(s.a, t),
+    distancePointToSegment(s.b, t),
+    distancePointToSegment(t.a, s),
+    distancePointToSegment(t.b, s),
+  );
+}
+
 function cross(a: Vec2, b: Vec2): number {
   return a.x * b.y - a.y * b.x;
 }
@@ -138,6 +154,42 @@ export function hasLineOfSight(from: Vec2, to: Vec2, blockers: readonly Segment[
     }
   }
   return true;
+}
+
+/**
+ * Where the segment `from -> to` first meets one of `blockers`: the
+ * meeting point nearest `from`, or `undefined` if it meets none. Touching
+ * counts, a grazed endpoint included, by the same conservative rule as
+ * `hasLineOfSight`.
+ */
+export function firstHit(from: Vec2, to: Vec2, blockers: readonly Segment[]): Vec2 | undefined {
+  const path = segment(from, to);
+  const r = sub(to, from);
+  const lengthSq = dot(r, r);
+  let nearest: number | undefined;
+  for (const blocker of blockers) {
+    if (!segmentsIntersect(path, blocker)) {
+      continue;
+    }
+    const s = sub(blocker.b, blocker.a);
+    const denominator = cross(r, s);
+    let t: number;
+    if (Math.abs(denominator) > 1e-12) {
+      t = cross(sub(blocker.a, from), s) / denominator;
+    } else if (lengthSq < 1e-12) {
+      t = 0;
+    } else {
+      // Collinear and overlapping: the first of the blocker's points on the path.
+      const ta = dot(sub(blocker.a, from), r) / lengthSq;
+      const tb = dot(sub(blocker.b, from), r) / lengthSq;
+      t = Math.max(0, Math.min(ta, tb));
+    }
+    t = Math.max(0, Math.min(1, t));
+    if (nearest === undefined || t < nearest) {
+      nearest = t;
+    }
+  }
+  return nearest === undefined ? undefined : add(from, scale(r, nearest));
 }
 
 export function distanceWithinRange(a: Vec2, b: Vec2, range: number): boolean {

@@ -95,6 +95,16 @@ describe("CastState recharge", () => {
     expect(state.rechargeRemaining.has("skill.a")).toBe(false);
   });
 
+  it("records the duration a recharge started with, until it completes (#152)", () => {
+    const state = new CastState();
+    state.startRecharge("skill.a", 5);
+    expect(state.rechargeTotal.get("skill.a")).toBe(5);
+    state.advance(2);
+    expect(state.rechargeTotal.get("skill.a")).toBe(5);
+    state.advance(3.5);
+    expect(state.rechargeTotal.has("skill.a")).toBe(false);
+  });
+
   it("tracks several skills' recharges independently", () => {
     const state = new CastState();
     state.startRecharge("skill.a", 1);

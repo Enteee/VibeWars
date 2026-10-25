@@ -34,6 +34,9 @@ import type { PlayerBuild } from "@vibewars/game-core";
  * machinery than the problem has (brief §30).
  */
 
+/** Shown on the lobby or the menu once the SDK has stopped retrying a dropped match. */
+const LOST_MATCH_NOTICE = "Lost the connection to the match.";
+
 function requireElement(selector: string): HTMLElement {
   const element = document.querySelector<HTMLElement>(selector);
   if (element === null) {
@@ -136,6 +139,9 @@ async function main(): Promise<void> {
   };
 
   const showMenu = (): void => {
+    // Every way back to the menu passes through here, so the status bar
+    // never keeps saying where the player was. Error paths set theirs after.
+    setStatus("ready", "offline");
     disposeBuildEditor();
     showViewport(false);
     void (async () => {
@@ -162,8 +168,8 @@ async function main(): Promise<void> {
         },
         // Straight into a match with no lobby — how the game worked before
         // Sprint 19, kept because it is the fastest way to try the game.
-        onQuickMatch: () => {
-          void enterMatch({ kind: "quick" });
+        onQuickMatch: (name) => {
+          void enterMatch({ kind: "quick", name });
         },
         onNewCharacter: () => {
           showCharacterEditor(newCharacter(crypto.randomUUID()));
@@ -388,10 +394,14 @@ async function main(): Promise<void> {
     if (match !== undefined || enteringMatch) {
       return;
     }
+    // Every way back here (leaving, a finished match, a lost connection)
+    // passes through this, so the status bar stops saying "in match".
+    const snapshot = lobby.getSnapshot();
+    setStatus(`lobby ${snapshot.code}`, "online");
     showViewport(false);
     renderLobbyScreen(
       screenRoot,
-      lobby.getSnapshot(),
+      snapshot,
       {
         onSelectMap: (mapId) => {
           lobby?.selectMap(mapId);
@@ -427,13 +437,14 @@ async function main(): Promise<void> {
     try {
       lobby = await connect();
     } catch (error) {
-      setStatus("could not join", "error");
       menuNotice = isProtocolMismatch(error)
         ? PROTOCOL_MISMATCH_MESSAGE
         : error instanceof LobbyNotFoundError
           ? "No lobby with that code. Check the code and try again."
           : "Could not connect to the server.";
       showMenu();
+      // After showMenu, which would put the status back to "ready".
+      setStatus("could not join", "error");
       return;
     }
 
@@ -451,9 +462,34 @@ async function main(): Promise<void> {
     renderLobby();
   };
 
+  /**
+   * Back to where the player came from: the lobby if there is one, else
+   * the menu, with `notice` on it. A no-op once the match is gone, so a
+   * lost connection racing a leave click exits once.
+   */
+  const exitMatch = async (notice?: string): Promise<void> => {
+    const leaving = match;
+    if (leaving === undefined) {
+      return;
+    }
+    match = undefined;
+    await leaving.dispose();
+    enteringMatch = false;
+    // The lobby goes back to waiting by itself once the match is over
+    // (#44), so another can start straight away (brief §46).
+    if (lobby !== undefined) {
+      lobbyNotice = notice ?? lobbyNotice;
+      renderLobby();
+    } else {
+      menuNotice = notice ?? menuNotice;
+      showMenu();
+    }
+  };
+
   const enterMatch = async (target: MatchTarget): Promise<void> => {
     enteringMatch = true;
     menuNotice = undefined;
+    lobbyNotice = undefined;
     showViewport(true);
     setStatus("entering match…", "offline");
     try {
@@ -470,24 +506,14 @@ async function main(): Promise<void> {
             } else if (state === "online") {
               setStatus("in match", "online");
             } else {
+              // The SDK has given up: the arena is frozen for good, so
+              // there is nothing to stay for.
               setStatus("disconnected", "error");
+              void exitMatch(LOST_MATCH_NOTICE);
             }
           },
           onLeave: () => {
-            void (async () => {
-              await match?.dispose();
-              match = undefined;
-              enteringMatch = false;
-              // Returning from a match puts the lobby back into its
-              // waiting phase so another match can be started
-              // immediately (brief §46).
-              lobby?.returnToLobby();
-              if (lobby !== undefined) {
-                renderLobby();
-              } else {
-                showMenu();
-              }
-            })();
+            void exitMatch();
           },
         },
         { target, build },
@@ -495,17 +521,16 @@ async function main(): Promise<void> {
       setStatus("in match", "online");
     } catch (error) {
       console.error("[web] could not enter match", error);
-      setStatus("match failed", "error");
       if (isProtocolMismatch(error)) {
         menuNotice = PROTOCOL_MISMATCH_MESSAGE;
       }
       enteringMatch = false;
       showMenu();
+      setStatus("match failed", "error");
     }
   };
 
   showMenu();
-  setStatus("ready", "offline");
 }
 
 main().catch((error: unknown) => {

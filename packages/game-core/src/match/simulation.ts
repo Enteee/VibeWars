@@ -1,6 +1,8 @@
 import type { ResolvedEquipment, ResolvedLoadout } from "../equipment/resolve.js";
 import {
   distanceWithinRange,
+  firstHit,
+  hasLineOfSight,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
 } from "../geometry.js";
@@ -16,6 +18,7 @@ import {
   type MatchScore,
 } from "../match-rules.js";
 import { clampInputDirection, integrateMovement } from "../movement.js";
+import { buildNavGraph, findPath, type NavGraph } from "../pathing.js";
 import { createRng, seedFromString, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { canActivate, payCost, type ActivationCheck } from "../skills/activation.js";
@@ -30,8 +33,14 @@ import {
   moveSpeedMultiplier,
 } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
-import { resolveSwing } from "../skills/weapon-attack.js";
-import { sub, ZERO, type Vec2 } from "../vec2.js";
+import {
+  leadAimPoint,
+  PositionHistory,
+  trackTarget,
+  type Projectile,
+} from "../skills/projectile.js";
+import { blindMisses, landBlow, resolveSwing, weaponSnapshotOf } from "../skills/weapon-attack.js";
+import { add, distance, normalize, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import {
   createCursor,
   decide,
@@ -41,6 +50,7 @@ import {
   type ResetPolicy,
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
+import { directionAngle } from "./facing.js";
 
 /**
  * One match, steppable, with no transport attached (ADR-0017).
@@ -55,7 +65,8 @@ import type { CombatLogEntry } from "./combat-log.js";
  * Order within a tick, per participant, in the order they were added:
  * reset policy, respawn countdown (if dead), movement, energy regeneration, statuses,
  * cast resolution, the weapon attack (approach or swing), then the
- * participant's behaviour, if it has one. Player-driven participants have
+ * participant's behaviour, if it has one. Projectiles already in flight
+ * advance, and land, before anyone acts. Player-driven participants have
  * none: their intents arrive between steps, through `setInputDirection`,
  * `setTarget`, `requestSkill`, `requestAttack` and `cancelAttack`.
  */
@@ -67,6 +78,8 @@ export interface ParticipantSpec {
   readonly attributeRanks: ReadonlyMap<string, number>;
   readonly equipment: ResolvedEquipment;
   readonly spawn: Vec2;
+  /** Where it faces at the start and after every reset, in radians (`atan2`, 0 = +x). */
+  readonly facing: number;
   /** Defaults to the ruleset's base health. */
   readonly maxHealth?: number;
   /** Defaults to the ruleset's base energy. */
@@ -85,6 +98,12 @@ export interface Participant {
   readonly skillBar: readonly string[];
   readonly spawn: Vec2;
   position: Vec2;
+  /**
+   * Where it faces, in radians, `atan2` convention, in (−π, π], 0 = +x.
+   * Where it last pushed, or at what it is casting at or swinging at,
+   * whichever came last in the step. The dead keep the facing they died with.
+   */
+  facing: number;
   inputDirection: Vec2;
   targetId: string | undefined;
   respawnInSeconds: number;
@@ -101,6 +120,12 @@ export interface MatchSimulationOptions {
   readonly matchRules?: MatchRules | undefined;
   /** Omitted or `[]`: nothing collides with a wall or blocks line of sight. */
   readonly walls?: readonly Segment[];
+  /**
+   * The map's size: no body leaves it, and an attack's approach never
+   * paths outside it (#211). Omitted: an open field with no edge
+   * (headless tools).
+   */
+  readonly bounds?: { readonly width: number; readonly height: number } | undefined;
   readonly participants?: readonly ParticipantSpec[];
 }
 
@@ -127,6 +152,8 @@ interface ParticipantRecord extends Participant {
   readonly cursor: BehaviourCursor;
   /** `on-interval`: seconds since the last reset. */
   sinceReset: number;
+  /** Where it ended its last ticks: what a projectile leads. */
+  readonly history: PositionHistory;
 }
 
 /**
@@ -159,15 +186,29 @@ function degenerationSources(combatant: Combatant): {
   return { draining: only(draining), healing: only(healing) };
 }
 
-/** How far short of its interval a swing may be and still land; see `#advanceAttack`. */
+/** How far short of its interval a swing or a flight may be and still land; see `#advanceAttack`. */
 const SWING_EPSILON = 1e-9;
+
+/** Turn to face `point`; one exactly underfoot has no direction, so facing stays. */
+function faceToward(record: Participant, point: Vec2): void {
+  const dx = point.x - record.position.x;
+  const dy = point.y - record.position.y;
+  if (dx !== 0 || dy !== 0) {
+    record.facing = directionAngle(dx, dy);
+  }
+}
 
 export class MatchSimulation {
   readonly #ruleset: Ruleset;
   readonly #matchRules: MatchRules | undefined;
   readonly #walls: readonly Segment[];
+  readonly #bounds: { readonly width: number; readonly height: number } | undefined;
+  /** Corners an approach can path through, built once from the walls (#211). */
+  readonly #nav: NavGraph;
   readonly #rng: SimulationRng;
   readonly #participants = new Map<string, ParticipantRecord>();
+  #projectiles: Projectile[] = [];
+  #nextProjectileId = 1;
 
   #tick = 0;
   #elapsedSeconds = 0;
@@ -180,6 +221,8 @@ export class MatchSimulation {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
     this.#matchRules = options.matchRules;
     this.#walls = options.walls ?? [];
+    this.#bounds = options.bounds;
+    this.#nav = buildNavGraph(this.#walls, options.bounds, this.#ruleset.collision.playerRadius);
     this.#rng = createRng(
       typeof options.seed === "string" ? seedFromString(options.seed) : options.seed,
     );
@@ -207,6 +250,11 @@ export class MatchSimulation {
 
   public get score(): MatchScore {
     return this.#score;
+  }
+
+  /** Ranged weapons' shots in flight, oldest first. */
+  public get projectiles(): readonly Readonly<Projectile>[] {
+    return this.#projectiles;
   }
 
   public get(id: string): Participant | undefined {
@@ -238,6 +286,7 @@ export class MatchSimulation {
       skillBar: spec.skillBar,
       spawn: spec.spawn,
       position: spec.spawn,
+      facing: spec.facing,
       inputDirection: ZERO,
       targetId: undefined,
       respawnInSeconds: 0,
@@ -245,6 +294,7 @@ export class MatchSimulation {
       behaviour: spec.behaviour,
       cursor: createCursor(),
       sinceReset: 0,
+      history: new PositionHistory(this.#historyLength()),
     };
     this.#participants.set(spec.id, record);
     return record;
@@ -316,8 +366,8 @@ export class MatchSimulation {
    * target starts a fresh one. Refused, with the reason a cast at it
    * would get, unless the target is a living enemy and the attacker is
    * alive. Range and line of sight are not checked: approach closes the
-   * one, and the other is out of scope, as it is for a skill after
-   * activation.
+   * one, and a ranged swing checks the other as it is released, so an
+   * attack can start behind a corner and walk out.
    */
   public requestAttack(id: string, targetId: string): ActivationCheck | undefined {
     const record = this.#participants.get(id);
@@ -377,6 +427,10 @@ export class MatchSimulation {
    * With no target, an enemy-targeted skill targets the nearest living
    * enemy first, picked exactly as a behaviour picks one. That target
    * stays selected, whether or not the cast is then allowed.
+   *
+   * An ally-targeted skill with nothing or an enemy selected goes to the
+   * caster, as in GW1 (#52). The enemy stays selected, so a monk can heal
+   * themself mid-fight without losing the target.
    */
   public requestSkill(id: string, slot: number): SkillRequest | undefined {
     const record = this.#participants.get(id);
@@ -402,7 +456,8 @@ export class MatchSimulation {
       );
     }
 
-    const check = this.#check(record, skill, record.targetId);
+    const castTargetId = skill.target === "self" ? id : this.#castTarget(record, skill);
+    const check = this.#check(record, skill, castTargetId);
     if (!check.ok) {
       return { skillId: skill.id, check };
     }
@@ -415,7 +470,7 @@ export class MatchSimulation {
     }
     record.combatant.cast.beginCast(
       skill.id,
-      skill.target === "self" ? id : record.targetId,
+      castTargetId,
       effectiveActivationSeconds(skill, record.combatant),
     );
     return { skillId: skill.id, check };
@@ -431,6 +486,7 @@ export class MatchSimulation {
     this.#elapsedSeconds += dt;
     this.#log = [];
     this.checkMatchEnd();
+    this.#advanceProjectiles(dt);
 
     for (const record of this.#participants.values()) {
       if (this.#resetDue(record, dt)) {
@@ -486,6 +542,9 @@ export class MatchSimulation {
       }
 
       this.#advanceAttack(record, dt);
+      this.#faceCastTarget(record);
+      // Walked or approached: either way, it is what a shot leads.
+      record.history.push(record.position);
 
       // Behaviours act after their own cast resolves, so a dummy can
       // finish one cast and begin the next within the same tick.
@@ -501,7 +560,18 @@ export class MatchSimulation {
     return { tick: this.#tick, elapsedSeconds: this.#elapsedSeconds, phase: this.phase, log };
   }
 
+  /** Who a targeted skill lands on: the selection, or the caster for an ally skill with no ally selected. */
+  #castTarget(record: ParticipantRecord, skill: Skill): string | undefined {
+    if (skill.target !== "single-ally") {
+      return record.targetId;
+    }
+    const selected =
+      record.targetId === undefined ? undefined : this.#participants.get(record.targetId);
+    return selected?.combatant.team === record.combatant.team ? selected.id : record.id;
+  }
+
   /** The one activation check, for a cast and for a behaviour asking whether it could. */
+
   #check(record: ParticipantRecord, skill: Skill, targetId: string | undefined): ActivationCheck {
     const target = targetId === undefined ? undefined : this.#participants.get(targetId);
     return canActivate({
@@ -591,10 +661,19 @@ export class MatchSimulation {
         ? undefined
         : { x: origin.x, y: origin.y, radius: skill.area.radius };
 
-    this.#gainAdrenaline(record, events);
+    // Only attack skills earn adrenaline, as weapon hits do: a spell is
+    // paid for in energy, and earning both would make casters the best
+    // adrenaline builders.
+    if (skill.type === "attack") {
+      this.#gainAdrenaline(record, events);
+    }
     this.#recordDeaths(events);
-    // An attack in progress resumes on its own target: the cast only
-    // paused it. Switching it to the skill's target arrives with #160.
+    // A skill on an enemy turns on them with the weapon, as in GW1: it
+    // starts an attack, or switches one to them. Any other skill leaves
+    // the attack in progress to resume on its own target.
+    if (primary !== undefined && this.#attackCheck(record, primary.id).ok) {
+      record.combatant.attack = { targetId: primary.id, swingElapsed: 0 };
+    }
 
     record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds);
     this.#log.push({
@@ -639,12 +718,25 @@ export class MatchSimulation {
     }
 
     const { weapon } = record.combatant.equipment.mainHand;
-    if (!distanceWithinRange(record.position, target.position, weapon.range)) {
-      // Approach: the only movement the simulation chooses, and never on
-      // top of the player's own.
-      this.advanceMovement(record, sub(target.position, record.position), dt);
+    if (
+      !distanceWithinRange(record.position, target.position, weapon.range) ||
+      !hasLineOfSight(record.position, target.position, this.#walls)
+    ) {
+      // Approach until in reach and in sight, round walls (#211): the only
+      // movement the simulation chooses, and never on top of the
+      // player's own. Replanned every tick, so a target that moves, or a
+      // shove, is simply where the next plan starts.
+      const path = findPath(this.#nav, record.position, target.position);
+      const next = path?.[0];
+      if (next === undefined) {
+        record.combatant.attack = undefined;
+        this.#logWeapon(record.id, [{ kind: "attack-unreachable", targetId: target.id }]);
+        return;
+      }
+      this.advanceMovement(record, sub(next, record.position), dt);
       return;
     }
+    faceToward(record, target.position);
 
     attack.swingElapsed += dt;
     // Within a hair: twenty-odd additions of 0.05 fall just short of
@@ -654,7 +746,10 @@ export class MatchSimulation {
     }
     attack.swingElapsed = Math.max(0, attack.swingElapsed - weapon.attackIntervalSeconds);
 
-    // Ranged weapons land at once until projectiles exist (#159).
+    if (weapon.projectileSpeed !== undefined) {
+      this.#release(record, target, weapon.projectileSpeed, dt);
+      return;
+    }
     const events = resolveSwing({
       attacker: record.combatant,
       target,
@@ -664,11 +759,116 @@ export class MatchSimulation {
     });
     this.#gainAdrenaline(record, events);
     this.#recordDeaths(events);
+    this.#logWeapon(record.id, events);
+  }
+
+  /**
+   * A ranged swing lands as a shot leaving the bow, led ahead of the
+   * target. Blind is rolled now, as GW1 does: a blinded shot misses at
+   * once and nothing flies. Then line of sight, once: a wall in the way
+   * spends the swing and nothing flies either, and the next swing looks
+   * again. Melee is never checked; its reach is shorter than any gap.
+   */
+  #release(record: ParticipantRecord, target: ParticipantRecord, speed: number, dt: number): void {
+    if (blindMisses(record.combatant, this.#rng)) {
+      this.#logWeapon(record.id, [{ kind: "attack-missed", targetId: target.id }]);
+      return;
+    }
+    if (!hasLineOfSight(record.position, target.position, this.#walls)) {
+      this.#logWeapon(record.id, [{ kind: "attack-obstructed", targetId: target.id }]);
+      return;
+    }
+    const from = record.position;
+    const tracked = trackTarget(target.history.samples(), dt, target.position);
+    const leadPoint = leadAimPoint(from, tracked.position, tracked.velocity, speed);
+    // Along the whole flight, once: the path is fixed from here (#215). A
+    // shot led round a corner, or at a target stepping behind a pillar,
+    // stops at the wall, a unit short of it so it lands on the near side.
+    const impact = firstHit(from, leadPoint, this.#walls);
+    const aimPoint =
+      impact === undefined
+        ? leadPoint
+        : distance(from, impact) <= 1
+          ? from
+          : add(impact, scale(normalize(sub(from, impact)), 1));
+    this.#projectiles.push({
+      id: this.#nextProjectileId,
+      attackerId: record.id,
+      targetId: target.id,
+      from,
+      aimPoint,
+      obstructed: impact !== undefined,
+      speed,
+      flightSeconds: distance(from, aimPoint) / speed,
+      elapsed: 0,
+      weaponSnapshot: weaponSnapshotOf(record.combatant),
+    });
+    this.#nextProjectileId += 1;
+  }
+
+  /** Fly every shot in flight one tick, and land those that arrive, in release order. */
+  #advanceProjectiles(dt: number): void {
+    const landed: Projectile[] = [];
+    const flying: Projectile[] = [];
+    for (const projectile of this.#projectiles) {
+      projectile.elapsed += dt;
+      (projectile.elapsed >= projectile.flightSeconds - SWING_EPSILON ? landed : flying).push(
+        projectile,
+      );
+    }
+    this.#projectiles = flying;
+    for (const projectile of landed) {
+      this.#land(projectile);
+    }
+  }
+
+  /**
+   * A shot lands at its aim point, and hits whoever it was aimed at if
+   * they are still there: alive, and within their body plus the
+   * tolerance. Anyone else is dodged. Its attacker may have died since;
+   * the shot lands all the same, as in GW1, but the dead earn no
+   * adrenaline. A target that died in flight is not there to be hit or
+   * to dodge, so nothing happens.
+   */
+  #land(projectile: Projectile): void {
+    if (projectile.obstructed) {
+      // It hit the wall; where the target is now has nothing to do with it.
+      this.#logWeapon(projectile.attackerId, [
+        { kind: "attack-obstructed", targetId: projectile.targetId },
+      ]);
+      return;
+    }
+    const target = this.#participants.get(projectile.targetId);
+    if (target === undefined || target.combatant.dead) {
+      return;
+    }
+    const reach = this.#ruleset.collision.playerRadius + this.#ruleset.combat.projectileTolerance;
+    const events: CombatEvent[] = [];
+    if (distance(target.position, projectile.aimPoint) <= reach) {
+      landBlow(
+        projectile.weaponSnapshot,
+        target.combatant,
+        this.#rng,
+        this.#ruleset.combat,
+        events,
+      );
+    } else {
+      events.push({ kind: "attack-dodged", targetId: target.id });
+    }
+    const attacker = this.#participants.get(projectile.attackerId);
+    if (attacker !== undefined && !attacker.combatant.dead) {
+      this.#gainAdrenaline(attacker, events);
+    }
+    this.#recordDeaths(events);
+    this.#logWeapon(projectile.attackerId, events);
+  }
+
+  #logWeapon(sourceId: string, events: readonly CombatEvent[]): void {
     this.#log.push({
       tick: this.#tick,
       atSeconds: this.#elapsedSeconds,
       cause: "weapon",
-      sourceId: record.id,
+      sourceId,
       skillId: undefined,
       area: undefined,
       events,
@@ -790,6 +990,10 @@ export class MatchSimulation {
   }
 
   private advanceMovement(record: ParticipantRecord, direction: Vec2, dt: number): void {
+    // Where it pushes, even into a wall.
+    if (direction.x !== 0 || direction.y !== 0) {
+      record.facing = directionAngle(direction.x, direction.y);
+    }
     const radius = this.#ruleset.collision.playerRadius;
     let position = integrateMovement(
       record.position,
@@ -809,15 +1013,42 @@ export class MatchSimulation {
       position = resolveCircleCircleCollision(position, radius, other.position, radius);
     }
 
-    // Walls resolve last so a player squeezed between a blocker and a
-    // wall ends up outside the wall rather than inside it — being pushed
-    // through level geometry is far worse than overlapping a teammate
-    // for one tick.
+    // Walls resolve after bodies so a player squeezed between a blocker
+    // and a wall ends up outside the wall rather than inside it — being
+    // pushed through level geometry is far worse than overlapping a
+    // teammate for one tick.
     for (const wallSegment of this.#walls) {
       position = resolveCircleSegmentCollision(position, radius, wallSegment);
     }
 
+    // The map's edge last (#244), so nobody walks off it out of sight.
+    // Every wall that meets an edge on today's maps is perpendicular to it,
+    // so this slides a body along the wall's face, never into it.
+    const bounds = this.#bounds;
+    if (bounds !== undefined) {
+      position = vec2(
+        Math.min(Math.max(position.x, radius), bounds.width - radius),
+        Math.min(Math.max(position.y, radius), bounds.height - radius),
+      );
+    }
+
     record.position = position;
+  }
+
+  /**
+   * Casting at somebody else turns you to them, after any walking this
+   * step, so a caster strafing mid-cast still faces the cast. A self-cast,
+   * or a target that is gone, leaves facing alone.
+   */
+  #faceCastTarget(record: ParticipantRecord): void {
+    const targetId = record.combatant.cast.activeCast?.targetId;
+    if (targetId === undefined || targetId === record.id) {
+      return;
+    }
+    const target = this.#participants.get(targetId);
+    if (target !== undefined) {
+      faceToward(record, target.position);
+    }
   }
 
   /**
@@ -834,11 +1065,21 @@ export class MatchSimulation {
     record.combatant.statuses.removeByCategory("hex");
     record.combatant.statuses.removeByCategory("enchantment");
     record.position = record.spawn;
+    record.facing = record.spec.facing;
     record.inputDirection = ZERO;
     record.respawnInSeconds = 0;
     record.combatant.cast.cancelCast();
     record.combatant.attack = undefined;
     record.sinceReset = 0;
+    record.history.clear();
+  }
+
+  /** Ticks in the ruleset's tracking window: at least two, or there is no motion to fit. */
+  #historyLength(): number {
+    return Math.max(
+      2,
+      Math.round(this.#ruleset.combat.trackWindowSeconds * this.#ruleset.tickRateHz),
+    );
   }
 
   #combatant(spec: ParticipantSpec): Combatant {

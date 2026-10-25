@@ -16,9 +16,9 @@ import {
   // decides *whether* to honour a build; this one turns the gear in an
   // already-accepted build into numbers.
   resolveLoadout as resolveLoadout_,
+  spawnFacing,
   validatePlayerBuild,
   vec2,
-  type CombatEvent,
   type CombatLogEntry,
   type BuildEquipment,
   type Participant,
@@ -35,13 +35,21 @@ import {
   parseClientIntent,
   type CastRefusedMessage,
   type MapDescriptor,
+  type RechargeMessage,
+  type RechargeSlot,
   type ServerHello,
   type WallDescriptor,
 } from "@vibewars/game-protocol";
 import type { StepContext } from "colyseus";
 
 import { sanitizeName } from "./lobby-room.js";
-import { assertProtocolVersion, field } from "./options.js";
+import {
+  FLOOD_MESSAGES_PER_SECOND,
+  assertProtocolVersion,
+  field,
+  messageBudget,
+} from "./options.js";
+import { rechargePredicted, rechargeSlots } from "./recharge.js";
 
 /**
  * The match simulation room: authoritative movement, targeting and combat
@@ -60,7 +68,14 @@ export const PlayerState = schema(
     name: t.string(),
     x: t.number().default(0),
     y: t.number().default(0),
+    /** Where the player faces, radians, `atan2` convention; to 2 decimals (#187). */
+    facing: t.number().default(0),
     targetSessionId: t.string().default(""),
+    /**
+     * Who this player is attacking with their weapon, or `""`. Public, as
+     * in GW1: everyone can see who is swinging at whom.
+     */
+    attackTargetSessionId: t.string().default(""),
 
     health: t.number().default(0),
     maxHealth: t.number().default(0),
@@ -86,10 +101,36 @@ export const PlayerState = schema(
   "PlayerState",
 );
 
+/**
+ * A ranged weapon's shot in flight, as it was released: the client flies
+ * it from `(x0, y0)` to `(x1, y1)` over `flightSeconds` from
+ * `launchedAt`. Written once at release and removed when it lands, so a
+ * shot costs no traffic while it flies.
+ */
+export const ProjectileState = schema(
+  {
+    id: t.number(),
+    /** Who shot it, so a client can tint it by side (#161). */
+    attackerId: t.string(),
+    /** The weapon it left, as released: a swap mid-flight changes nothing. */
+    weaponId: t.string(),
+    x0: t.number(),
+    y0: t.number(),
+    x1: t.number(),
+    y1: t.number(),
+    /** The match clock (`elapsedSeconds`) at release. */
+    launchedAt: t.number(),
+    flightSeconds: t.number(),
+  },
+  "ProjectileState",
+);
+
 export const MatchState = schema(
   {
     protocolVersion: t.number().default(PROTOCOL_VERSION),
     players: t.map(PlayerState),
+    /** Weapon shots in flight, oldest first. */
+    projectiles: t.array(ProjectileState),
 
     /** Kills scored by team 0 and team 1 (brief §22's match rules). */
     scoreTeam0: t.number().default(0),
@@ -172,7 +213,6 @@ const DEFAULT_EQUIPMENT: BuildEquipment = defaultBuildEquipment("warrior");
 interface ResolvedJoinLoadout {
   readonly skillBar: readonly string[];
   readonly attributeRanks: ReadonlyMap<string, number>;
-  readonly buildName: string | undefined;
   readonly primaryProfession: ProfessionId;
   readonly equipment: BuildEquipment;
 }
@@ -180,7 +220,6 @@ interface ResolvedJoinLoadout {
 const HOUSE_LOADOUT: ResolvedJoinLoadout = {
   skillBar: DEFAULT_SKILL_BAR,
   attributeRanks: DEFAULT_ATTRIBUTE_RANKS,
-  buildName: undefined,
   primaryProfession: "warrior",
   equipment: DEFAULT_EQUIPMENT,
 };
@@ -232,7 +271,6 @@ function resolveLoadout(options: unknown): ResolvedJoinLoadout {
   return {
     skillBar,
     attributeRanks: attributeRanksOf(build),
-    buildName: build.name,
     primaryProfession: build.primaryProfession,
     equipment: build.equipment,
   };
@@ -258,9 +296,11 @@ const RECONNECT_WINDOW_SECONDS = 30;
  */
 export const LOBBY_MATCH_JOIN_DEADLINE_SECONDS = 30;
 
-/** One player a lobby seats in its match: their team, and the build they asked for. */
+/** One player a lobby seats in its match: their team, name, and the build they asked for. */
 export interface LobbySeat {
   readonly team: 0 | 1;
+  /** The name the lobby showed, so a player is the same person on both screens. */
+  readonly name: string;
   /** Unparsed: the match validates it like any other requested build. */
   readonly build: unknown;
 }
@@ -273,6 +313,7 @@ interface PendingSeat extends LobbySeat {
 interface Seating {
   readonly seats: readonly PendingSeat[];
   readonly joinDeadlineSeconds: number;
+  readonly onOver: () => void;
 }
 
 /**
@@ -290,6 +331,10 @@ const pendingSeatings = new Map<string, Seating>();
  * client can reserve a seat in it; it is private, so Quick Match never
  * finds it.
  *
+ * `onOver` runs once, when the match finishes or its room goes away
+ * first (everyone left, or nobody came), so the lobby can take its
+ * players back without trusting any of them to say so (#44).
+ *
  * If a reservation fails, the error goes to the caller. The room it
  * leaves is empty, and disposes itself once the reservations made in it
  * lapse.
@@ -297,11 +342,12 @@ const pendingSeatings = new Map<string, Seating>();
 export async function openLobbyMatch(
   mapId: string,
   seats: readonly LobbySeat[],
+  onOver: () => void,
   joinDeadlineSeconds = LOBBY_MATCH_JOIN_DEADLINE_SECONDS,
 ): Promise<matchMaker.ISeatReservation[]> {
   const seating = randomUUID();
   const pending = seats.map((seat) => ({ ...seat, sessionId: randomUUID() }));
-  pendingSeatings.set(seating, { seats: pending, joinDeadlineSeconds });
+  pendingSeatings.set(seating, { seats: pending, joinDeadlineSeconds, onOver });
   const room = await matchMaker
     .createRoom(ROOM_MATCH, { mapId, seating })
     .finally(() => pendingSeatings.delete(seating));
@@ -340,10 +386,21 @@ export class MatchRoom extends Room {
   #nextSpawnIndex = 0;
 
   /**
-   * A lobby's match: each seat's team, and whether it was taken. Absent
-   * for Quick Match, which alternates teams as players arrive.
+   * The recharges each player was last told, and the match time they were
+   * told at, so only what their countdown cannot predict is sent (#152).
    */
-  #seats: Map<string, { readonly team: 0 | 1; used: boolean }> | undefined;
+  readonly #rechargesSent = new Map<string, { slots: RechargeSlot[]; at: number }>();
+  /** How many intents each client may still have handled (#43). */
+  readonly #budget = messageBudget("match");
+
+  /**
+   * A lobby's match: each seat's team, its player's lobby name, and
+   * whether it was taken. Absent for Quick Match, which alternates teams
+   * as players arrive.
+   */
+  #seats: Map<string, { readonly team: 0 | 1; readonly name: string; used: boolean }> | undefined;
+  /** The opening lobby's `onOver`, until it has run; Quick Match has none. */
+  #onOver: (() => void) | undefined;
 
   /**
    * Rolling tick-duration samples in milliseconds (brief §26).
@@ -400,6 +457,7 @@ export class MatchRoom extends Room {
 
   public override async onCreate(options?: unknown): Promise<void> {
     this.autoDispose = true;
+    this.maxMessagesPerSecond = FLOOD_MESSAGES_PER_SECOND;
 
     const seating = field(options, "seating");
     if (seating === undefined) {
@@ -416,8 +474,12 @@ export class MatchRoom extends Room {
       await this.setPrivate(true);
       this.maxClients = pending.seats.length;
       this.seatReservationTimeout = pending.joinDeadlineSeconds;
+      this.#onOver = pending.onOver;
       this.#seats = new Map(
-        pending.seats.map((seat) => [seat.sessionId, { team: seat.team, used: false }]),
+        pending.seats.map((seat) => [
+          seat.sessionId,
+          { team: seat.team, name: seat.name, used: false },
+        ]),
       );
     }
 
@@ -435,9 +497,13 @@ export class MatchRoom extends Room {
       ruleset: RULESET,
       matchRules: DEFAULT_MATCH_RULES,
       walls: this.#wallSegments,
+      bounds: { width: this.#map.width, height: this.#map.height },
     });
 
     this.onMessage("intent", (client, message: unknown) => {
+      if (!this.#budget.take(client.sessionId, this.clock.currentTime)) {
+        return;
+      }
       const intent = parseClientIntent(message);
       if (intent === undefined) {
         // Malformed or malicious payload: nothing is applied and the
@@ -470,6 +536,7 @@ export class MatchRoom extends Room {
           // broken game, and why it did nothing is nobody else's business.
           if (request !== undefined && !request.check.ok) {
             const message: CastRefusedMessage = {
+              kind: "skill",
               slot: intent.slot,
               skillId: request.skillId,
               reason: request.check.reason,
@@ -478,6 +545,19 @@ export class MatchRoom extends Room {
           }
           return;
         }
+        case "attack": {
+          const check = this.#sim.requestAttack(client.sessionId, intent.targetId);
+          if (check !== undefined && !check.ok) {
+            const message: CastRefusedMessage = { kind: "attack", reason: check.reason };
+            client.send("cast-refused", message);
+          }
+          this.mirrorAttack(client.sessionId);
+          return;
+        }
+        case "cancel-attack":
+          this.#sim.cancelAttack(client.sessionId);
+          this.mirrorAttack(client.sessionId);
+          return;
       }
     });
 
@@ -522,6 +602,14 @@ export class MatchRoom extends Room {
     };
   }
 
+  /** Mirror an attack change onto the schema at once, as `applyTarget` does. */
+  private mirrorAttack(sessionId: string): void {
+    const player = this.state.players.get(sessionId);
+    if (player !== undefined) {
+      player.attackTargetSessionId = this.#sim.get(sessionId)?.combatant.attack?.targetId ?? "";
+    }
+  }
+
   /**
    * Apply a target selection; the simulation decides whether it is valid
    * (brief §5). Mirrored onto the schema at once rather than at the next
@@ -545,20 +633,18 @@ export class MatchRoom extends Room {
    * where it landed and how far it reached, for the flash (#5). This is
    * not part of `game-protocol`, so the field is additive.
    */
-  private broadcastCombatEvents(
-    casterSessionId: string,
-    skillId: string,
-    events: readonly CombatEvent[],
-    area: CombatLogEntry["area"],
-  ): void {
+  private broadcastCombatEvents(casterSessionId: string, entry: CombatLogEntry): void {
+    const { cause, events, area } = entry;
     if (events.length === 0) {
       return;
     }
+    // `cause` says what this was; `skillId` is `""` unless it was a skill.
+    const skillId = entry.skillId ?? "";
     this.broadcast(
       "combat",
       area === undefined
-        ? { casterSessionId, skillId, events }
-        : { casterSessionId, skillId, events, area },
+        ? { casterSessionId, cause, skillId, events }
+        : { casterSessionId, cause, skillId, events, area },
     );
   }
 
@@ -580,13 +666,9 @@ export class MatchRoom extends Room {
       // weapon swing goes out as its attacker's, with no skill.
       const casterSessionId =
         entry.cause === "degeneration" ? entry.events[0]?.targetId : entry.sourceId;
-      this.broadcastCombatEvents(
-        casterSessionId ?? "",
-        entry.skillId ?? "",
-        entry.events,
-        entry.area,
-      );
+      this.broadcastCombatEvents(casterSessionId ?? "", entry);
     }
+    this.syncProjectiles();
 
     for (const [sessionId, player] of this.state.players) {
       const participant = this.#sim.get(sessionId);
@@ -594,14 +676,21 @@ export class MatchRoom extends Room {
         this.syncPlayer(player, participant);
       }
     }
+    for (const client of this.clients) {
+      this.sendRecharges(client, false);
+    }
 
     if (result.phase === "finished") {
       this.endMatch();
     }
   }
 
-  /** The match just finished: say so, once, to everyone. */
-  private endMatch(): void {
+  /**
+   * The match just finished: say so, once, to everyone. The tick calls it
+   * when the rules say so; tests call it to skip ten minutes of play.
+   */
+  public endMatch(): void {
+    this.over();
     const outcome = this.#sim.outcome;
     this.state.phase = "finished";
     this.state.winningTeam = outcome.winningTeam ?? -1;
@@ -617,10 +706,63 @@ export class MatchRoom extends Room {
     );
   }
 
+  /**
+   * Tell one player their own recharges, when they changed in a way the
+   * client's countdown cannot know, or always with `force` (on join and
+   * reconnect). Never broadcast: an opponent's recharges are private.
+   */
+  private sendRecharges(client: Client, force: boolean): void {
+    const participant = this.#sim.get(client.sessionId);
+    if (participant === undefined) {
+      return;
+    }
+    const now = this.#sim.elapsedSeconds;
+    const slots = rechargeSlots(participant.skillBar, participant.combatant.cast);
+    const sent = this.#rechargesSent.get(client.sessionId);
+    if (!force && sent !== undefined && rechargePredicted(sent.slots, now - sent.at, slots)) {
+      return;
+    }
+    this.#rechargesSent.set(client.sessionId, { slots, at: now });
+    const message: RechargeMessage = { slots };
+    client.send("recharge", message);
+  }
+
+  /** Add the shots released this tick and drop those that landed; leave the rest alone. */
+  private syncProjectiles(): void {
+    const flying = this.#sim.projectiles;
+    const ids = new Set(flying.map((projectile) => projectile.id));
+    for (let i = this.state.projectiles.length - 1; i >= 0; i -= 1) {
+      const shown = this.state.projectiles[i];
+      if (shown !== undefined && !ids.has(shown.id)) {
+        this.state.projectiles.splice(i, 1);
+      }
+    }
+    const shownIds = new Set(this.state.projectiles.map((projectile) => projectile.id));
+    for (const projectile of flying) {
+      if (!shownIds.has(projectile.id)) {
+        this.state.projectiles.push(
+          new ProjectileState({
+            id: projectile.id,
+            attackerId: projectile.attackerId,
+            weaponId: projectile.weaponSnapshot.mainHand.weapon.id,
+            x0: projectile.from.x,
+            y0: projectile.from.y,
+            x1: projectile.aimPoint.x,
+            y1: projectile.aimPoint.y,
+            launchedAt: this.#sim.elapsedSeconds - projectile.elapsed,
+            flightSeconds: projectile.flightSeconds,
+          }),
+        );
+      }
+    }
+  }
+
   /** Copy simulation state onto the synchronized schema object. */
   private syncPlayer(player: InstanceType<typeof PlayerState>, sim: Participant): void {
     player.x = sim.position.x;
     player.y = sim.position.y;
+    // Rounded, so jitter under a centiradian never costs a patch.
+    player.facing = Math.round(sim.facing * 100) / 100;
     player.health = Math.round(sim.combatant.health);
     player.maxHealth = sim.combatant.maxHealth;
     player.energy = Math.round(sim.combatant.energy);
@@ -629,6 +771,7 @@ export class MatchRoom extends Room {
     player.dead = sim.combatant.dead;
     player.armor = sim.combatant.equipment.baseArmor;
     player.weaponId = sim.combatant.equipment.mainHand.weapon.id;
+    player.attackTargetSessionId = sim.combatant.attack?.targetId ?? "";
 
     const activeCast = sim.combatant.cast.activeCast;
     player.castingSkillId = activeCast?.skillId ?? "";
@@ -648,30 +791,37 @@ export class MatchRoom extends Room {
   }
 
   /**
-   * The team a joining player plays on. In a lobby's match that is the
-   * team of the seat the lobby reserved for their session, and the seat
-   * is spent. Only the session id counts, which the server chose, never
+   * The team and name a joining player plays under. In a lobby's match
+   * those are the team and lobby name of the seat the lobby reserved for
+   * their session, and the seat is spent. Only the session id counts, which the server chose, never
    * the join options, which a client did: a seat that lapsed or that a
    * dropped player gave up is free again, and a stranger joining into it
    * is refused.
    * In Quick Match, teams alternate as players join so a 1v1 is
    * adversarial by default.
    */
-  private claimTeam(sessionId: string): number {
+  private claimSeat(sessionId: string, options: unknown): { team: number; name: string } {
     if (this.#seats === undefined) {
-      return [...this.#sim.participants()].length % 2;
+      return {
+        team: [...this.#sim.participants()].length % 2,
+        // The player's chosen name is client-supplied, so it goes through
+        // the same sanitiser the lobby uses before anyone else sees it.
+        name: sanitizeName(field(options, "name"), `player-${sessionId.slice(0, 4)}`),
+      };
     }
     const seat = this.#seats.get(sessionId);
     if (seat === undefined || seat.used) {
       throw new Error("This match is for its lobby's players only.");
     }
     seat.used = true;
-    return seat.team;
+    // The lobby already sanitised and showed this name; a seated player
+    // cannot rename themselves on the way in.
+    return { team: seat.team, name: seat.name };
   }
 
   public override onJoin(client: Client, options?: unknown): void {
     assertProtocolVersion(options);
-    const team = this.claimTeam(client.sessionId);
+    const { team, name } = this.claimSeat(client.sessionId, options);
     const spawn = this.nextSpawnPoint(team);
     const loadout = resolveLoadout(options);
 
@@ -695,15 +845,18 @@ export class MatchRoom extends Room {
       attributeRanks: resolved.attributeRanks,
       equipment: resolved.equipment,
       spawn,
+      facing: spawnFacing(
+        spawn,
+        this.#map.spawnPoints.filter((point) => point.team !== team).map((point) => point.position),
+        this.#map.spawnPoints.map((point) => point.position),
+      ),
       maxHealth: resolved.maxHealth,
       maxEnergy: resolved.maxEnergy,
     });
 
     const player = new PlayerState({
       sessionId: client.sessionId,
-      // A build name is client-supplied, so it goes through the same
-      // sanitiser the lobby uses before any other player ever sees it.
-      name: sanitizeName(loadout.buildName, `player-${client.sessionId.slice(0, 4)}`),
+      name,
       x: spawn.x,
       y: spawn.y,
       team,
@@ -732,6 +885,7 @@ export class MatchRoom extends Room {
         };
       }),
     });
+    this.sendRecharges(client, true);
 
     console.info(
       `[match] join sessionId=${client.sessionId} team=${String(team)} size=${String(this.state.players.size)}`,
@@ -748,6 +902,8 @@ export class MatchRoom extends Room {
   private removePlayer(sessionId: string): void {
     this.state.players.delete(sessionId);
     this.#sim.remove(sessionId);
+    this.#rechargesSent.delete(sessionId);
+    this.#budget.forget(sessionId);
 
     for (const player of this.state.players.values()) {
       if (player.targetSessionId === sessionId) {
@@ -782,8 +938,9 @@ export class MatchRoom extends Room {
     );
 
     try {
-      await this.allowReconnection(client, RECONNECT_WINDOW_SECONDS);
+      const returned = await this.allowReconnection(client, RECONNECT_WINDOW_SECONDS);
       console.info(`[match] ${client.sessionId} reconnected`);
+      this.sendRecharges(returned, true);
     } catch {
       // Window expired, or the room is shutting down.
       this.removePlayer(client.sessionId);
@@ -792,7 +949,20 @@ export class MatchRoom extends Room {
   }
 
   public override onDispose(): void {
+    this.over();
     console.info("[match] disposed");
+  }
+
+  /** Tell the opening lobby, once, that this match is over. */
+  private over(): void {
+    const onOver = this.#onOver;
+    this.#onOver = undefined;
+    try {
+      onOver?.();
+    } catch (error: unknown) {
+      // The lobby's trouble; it must not stop this tick or dispose.
+      console.error("[match] the lobby failed to take its players back", error);
+    }
   }
 }
 

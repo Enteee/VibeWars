@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
 
+import type { CastRefusedMessage } from "@vibewars/game-protocol";
+
+import type { PlayerSnapshot } from "../net/match-connection.js";
+
 import {
   describeOutcome,
   describeRefusal,
   formatClock,
+  isAttackingTarget,
   muteButtonState,
   skillSlotHtml,
+  targetHintDismissed,
 } from "./hud.js";
 
 describe("formatClock", () => {
@@ -48,18 +54,99 @@ describe("describeOutcome", () => {
   });
 });
 
+describe("targetHintDismissed", () => {
+  const self = (targetSessionId: string | undefined): PlayerSnapshot => ({
+    sessionId: "me",
+    name: "me",
+    x: 0,
+    y: 0,
+    facing: 0,
+    targetSessionId,
+    attackTargetSessionId: undefined,
+    health: 500,
+    maxHealth: 500,
+    energy: 20,
+    maxEnergy: 50,
+    adrenaline: 0,
+    armor: 60,
+    weaponId: undefined,
+    team: 0,
+    dead: false,
+    castingSkillId: undefined,
+    castRemaining: 0,
+    castTotal: 0,
+    statuses: [],
+  });
+
+  it("keeps the hint up with no target, takes it down for good at the first one", () => {
+    expect(targetHintDismissed(false, self(undefined))).toBe(false);
+    expect(targetHintDismissed(false, undefined)).toBe(false);
+    const dismissed = targetHintDismissed(false, self("foe"));
+    expect(dismissed).toBe(true);
+    // Clearing the target later does not bring it back.
+    expect(targetHintDismissed(dismissed, self(undefined))).toBe(true);
+  });
+});
+
 describe("describeRefusal", () => {
+  const cast = (reason: string): CastRefusedMessage => ({
+    kind: "skill",
+    slot: 0,
+    skillId: "elementalist.fireball",
+    reason,
+  });
+  const attack = (reason: string): CastRefusedMessage => ({ kind: "attack", reason });
+
   it("says why a cast was refused, in one short line", () => {
-    expect(describeRefusal("out-of-range")).toBe("Target is out of range.");
-    expect(describeRefusal("no-line-of-sight")).toBe("Target is not in line of sight.");
-    expect(describeRefusal("no-target")).toBe("Select a target first.");
-    expect(describeRefusal("insufficient-energy")).toBe("Not enough energy.");
+    expect(describeRefusal(cast("out-of-range"))).toBe("Target is out of range.");
+    expect(describeRefusal(cast("no-line-of-sight"))).toBe("Target is not in line of sight.");
+    expect(describeRefusal(cast("no-target"))).toBe("Select a target first.");
+    expect(describeRefusal(cast("insufficient-energy"))).toBe("Not enough energy.");
+  });
+
+  it("talks about the weapon, not a skill, when an attack is refused", () => {
+    expect(describeRefusal(attack("invalid-target-ally"))).toBe("You can only attack an enemy.");
+    expect(describeRefusal(attack("invalid-target-self"))).toBe("You cannot attack yourself.");
+    expect(describeRefusal(attack("invalid-target-dead"))).toBe("Your target is dead.");
   });
 
   it("still says something for a reason this client does not know", () => {
-    expect(describeRefusal("time-travel")).toBe("You cannot use that skill now.");
+    expect(describeRefusal(cast("time-travel"))).toBe("You cannot use that skill now.");
+    expect(describeRefusal(attack("time-travel"))).toBe("You cannot attack now.");
     // Not fooled by what every object has.
-    expect(describeRefusal("toString")).toBe("You cannot use that skill now.");
+    expect(describeRefusal(cast("toString"))).toBe("You cannot use that skill now.");
+  });
+});
+
+describe("isAttackingTarget", () => {
+  const player = (sessionId: string, attackTargetSessionId?: string): PlayerSnapshot => ({
+    sessionId,
+    name: sessionId,
+    x: 0,
+    y: 0,
+    facing: 0,
+    targetSessionId: undefined,
+    attackTargetSessionId,
+    health: 500,
+    maxHealth: 500,
+    energy: 20,
+    maxEnergy: 50,
+    adrenaline: 0,
+    armor: 60,
+    weaponId: undefined,
+    team: 0,
+    dead: false,
+    castingSkillId: undefined,
+    castRemaining: 0,
+    castTotal: 0,
+    statuses: [],
+  });
+
+  it("is whether self swings at the target the panel shows", () => {
+    expect(isAttackingTarget(player("me", "dummy"), player("dummy"))).toBe(true);
+    expect(isAttackingTarget(player("me", "other"), player("dummy"))).toBe(false);
+    expect(isAttackingTarget(player("me"), player("dummy"))).toBe(false);
+    expect(isAttackingTarget(player("me", "dummy"), undefined)).toBe(false);
   });
 });
 

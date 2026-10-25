@@ -16,11 +16,14 @@ export { ZERO, length, normalize, vec2 } from "./vec2.js";
 export { clampInputDirection, integrateMovement } from "./movement.js";
 
 export type { Segment } from "./geometry.js";
+export { buildNavGraph, findPath, type NavGraph } from "./pathing.js";
 export {
   circleIntersectsSegment,
   closestPointOnSegment,
   distancePointToSegment,
+  distanceSegmentToSegment,
   distanceWithinRange,
+  firstHit,
   hasLineOfSight,
   resolveCircleCircleCollision,
   resolveCircleSegmentCollision,
@@ -100,6 +103,7 @@ export type {
   StepResult,
 } from "./match/simulation.js";
 export { MatchSimulation } from "./match/simulation.js";
+export { facingToward, spawnFacing } from "./match/facing.js";
 
 export type { CombatCause, CombatLogEntry, CombatTally } from "./match/combat-log.js";
 export { CombatMeter, tallyCombat } from "./match/combat-log.js";

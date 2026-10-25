@@ -27,6 +27,7 @@ async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
       page.locator(".hud-scoreboard"),
       page.locator(".hud-result"),
       page.locator(".hud-mute"),
+      page.locator(".hud-leave"),
     ],
   });
 }
@@ -199,7 +200,7 @@ test("an enemy skill with nothing targeted targets the nearest enemy", async ({
   // when earlier tests' ghosts fill one (#41).
   const opponent = await browser.newPage();
   await startLobbyMatch(page, [opponent]);
-  const target = page.locator(".hud-target");
+  const target = page.locator(".hud-target-text");
   await expect(target).toHaveText("no target");
 
   // Slot 1 is Fireball. Whether it is then in range or not, the target
@@ -208,4 +209,153 @@ test("an enemy skill with nothing targeted targets the nearest enemy", async ({
 
   await expect(target).toHaveText(/^target: /);
   await opponent.close();
+});
+
+/** The target's health as the target panel says it, e.g. "… — 480/480 hp" -> 480. */
+async function readTargetHealth(page: Page): Promise<number> {
+  const text = (await page.locator(".hud-target-text").textContent()) ?? "";
+  const match = /— (\d+)\//.exec(text);
+  expect(match, `could not read target health from ${JSON.stringify(text)}`).not.toBeNull();
+  return Number(match?.[1] ?? NaN);
+}
+
+test("Space attacks the nearest enemy with the weapon, and moving stops it (#160)", async ({
+  browser,
+  page,
+}) => {
+  // A lobby of two, for the reason the test above gives.
+  const opponent = await browser.newPage();
+  await startLobbyMatch(page, [opponent]);
+  const attacking = page.locator(".hud-attacking");
+  await expect(attacking).toBeHidden();
+
+  // Nothing targeted: Space picks the nearest enemy, as an enemy skill does.
+  await page.keyboard.press(" ");
+  await expect(page.locator(".hud-target-text")).toHaveText(/^target: /);
+  await expect(attacking).toBeVisible();
+  await expect(attacking).toHaveText("attacking");
+  const before = await readTargetHealth(page);
+
+  // The attacker walks into reach and swings; the target gets hurt.
+  await expect.poll(() => readTargetHealth(page), { timeout: 20_000 }).toBeLessThan(before);
+
+  await page.keyboard.press("w");
+  await expect(attacking).toBeHidden();
+  await opponent.close();
+});
+
+test("Esc cancels the attack; leaving the match is a button that asks first (#160)", async ({
+  browser,
+  page,
+}) => {
+  const opponent = await browser.newPage();
+  await startLobbyMatch(page, [opponent]);
+  const attacking = page.locator(".hud-attacking");
+
+  await page.keyboard.press(" ");
+  await expect(attacking).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(attacking).toBeHidden();
+  // Esc no longer leaves: still in the match.
+  await expect(page.locator(".hud-bar-health")).toBeVisible();
+
+  const leave = page.locator(".hud-leave");
+  await leave.getByRole("button", { name: "leave match" }).click();
+  await expect(leave).toContainText("leave?");
+  await leave.getByRole("button", { name: "no" }).click();
+  await expect(leave.getByRole("button", { name: "leave match" })).toBeVisible();
+
+  await leave.getByRole("button", { name: "leave match" }).click();
+  await leave.getByRole("button", { name: "yes" }).click();
+  await expect(page.locator(".hud-bar-health")).toHaveCount(0);
+  await opponent.close();
+});
+
+test("Tab targets the nearest enemy, and the hint goes for good (#55)", async ({
+  browser,
+  page,
+}) => {
+  // A lobby of two, for the reason the test above gives.
+  const opponent = await browser.newPage();
+  await startLobbyMatch(page, [opponent]);
+  const hint = page.locator(".hud-hint");
+  await expect(hint).toHaveText("Click an enemy or press Tab to target");
+  await expect(hint).toBeVisible();
+
+  await page.keyboard.press("Tab");
+  await expect(page.locator(".hud-target-text")).toHaveText(/^target: /);
+  await expect(hint).toBeHidden();
+  // The browser kept its focus where it was: Tab is the game's now.
+  expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+
+  // Cleared again, the hint stays gone.
+  await page.locator("#viewport canvas").click({ position: { x: 5, y: 5 } });
+  await expect(page.locator(".hud-target-text")).toHaveText("no target");
+  await expect(hint).toBeHidden();
+  await opponent.close();
+});
+
+test("a recharging skill shows the clock-wipe and the seconds left, then clears (#152)", async ({
+  page,
+}) => {
+  await startQuickMatch(page);
+
+  // Slot 5 of the house bar is Armor of Earth: self-cast, so it needs no
+  // target, and it recharges in 15 s.
+  await page.keyboard.press("5");
+  const slot = page.locator(".hud-skill").nth(4);
+  const overlay = slot.locator(".recharge-overlay");
+  await expect(overlay).toHaveCount(1);
+  expect(Number(await overlay.locator(".recharge-seconds").textContent())).toBeGreaterThan(0);
+  const recharge = await overlay.evaluate((node) => node.style.getPropertyValue("--recharge"));
+  expect(Number(recharge)).toBeGreaterThan(0);
+  // No other slot started recharging.
+  await expect(page.locator(".hud-skill .recharge-overlay")).toHaveCount(1);
+
+  await expect(overlay).toHaveCount(0, { timeout: 20_000 });
+});
+
+/** The page's WebSockets, oldest first, recorded by `recordSockets`. */
+interface SocketLog {
+  vibewarsSockets: WebSocket[];
+}
+
+/**
+ * Record every WebSocket the page opens, so a test can cut one. Test-side
+ * only: Playwright's routeWebSocket rejects the protocols argument the
+ * Colyseus SDK passes, so the constructor is wrapped instead.
+ */
+async function recordSockets(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const log = window as unknown as SocketLog;
+    log.vibewarsSockets = [];
+    const Native = window.WebSocket;
+    window.WebSocket = class extends Native {
+      constructor(url: string | URL, protocols?: string | string[]) {
+        super(url, protocols);
+        log.vibewarsSockets.push(this);
+      }
+    };
+  });
+}
+
+test("a match lost for good returns to the menu and says why (#195)", async ({ page }) => {
+  await recordSockets(page);
+  const canvas = await startQuickMatch(page);
+
+  // The match's socket is the newest. A plain close (1000) is neither a
+  // code the SDK retries nor a consented leave: exactly what the SDK
+  // reports once it has given up retrying.
+  await page.evaluate(() => {
+    (window as unknown as SocketLog).vibewarsSockets.at(-1)?.close(1000, "e2e: lost for good");
+  });
+
+  const notice = page.getByText("Lost the connection to the match.");
+  await expect(notice).toBeVisible();
+  await expect(page.getByRole("button", { name: "quick match" })).toBeVisible();
+  await expect(canvas).toBeHidden();
+
+  // A new match works, and the notice is gone with the menu.
+  await startQuickMatch(page);
+  await expect(notice).toHaveCount(0);
 });

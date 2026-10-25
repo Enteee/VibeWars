@@ -10,7 +10,7 @@
  * mid-match. It only ever rejects; there is no code path per version
  * (ADR-0016).
  */
-export const PROTOCOL_VERSION = 3 as const;
+export const PROTOCOL_VERSION = 8 as const;
 
 /** What a client is told when its `protocolVersion` does not match. */
 export const PROTOCOL_MISMATCH_MESSAGE =
@@ -110,17 +110,58 @@ export interface UseSkillIntent {
 }
 
 /**
- * Sent as `"cast-refused"` to the caster alone when the server turns down a
- * `UseSkillIntent`, so a key that did nothing can say why (issue #51).
- * Advisory only: the refusal has already happened, and nothing about the
- * match state rides on this message.
+ * Attack `targetId` with the equipped weapon until told otherwise: walk
+ * into reach, then swing (#160). Moving, `CancelAttackIntent` or the
+ * target dying ends it.
  */
-export interface CastRefusedMessage {
-  /** The slot the client asked for. */
+export interface AttackIntent {
+  readonly kind: "attack";
+  readonly targetId: string;
+}
+
+/** Stop the attack in progress, if there is one. */
+export interface CancelAttackIntent {
+  readonly kind: "cancel-attack";
+}
+
+/**
+ * Sent as `"cast-refused"` to the caster alone when the server turns down a
+ * `UseSkillIntent` or an `AttackIntent`, so a key that did nothing can say
+ * why (issue #51). Advisory only: the refusal has already happened, and
+ * nothing about the match state rides on this message.
+ */
+export type CastRefusedMessage =
+  | {
+      readonly kind: "skill";
+      /** The slot the client asked for. */
+      readonly slot: number;
+      readonly skillId: string;
+      /** game-core's `ActivationRejection`, e.g. `"out-of-range"`. */
+      readonly reason: string;
+    }
+  | {
+      readonly kind: "attack";
+      /** Why the attack was refused, from the same vocabulary. */
+      readonly reason: string;
+    };
+
+/** One recharging slot of a `RechargeMessage`. */
+export interface RechargeSlot {
   readonly slot: number;
-  readonly skillId: string;
-  /** game-core's `ActivationRejection`, e.g. `"out-of-range"`. */
-  readonly reason: string;
+  readonly remainingSeconds: number;
+  /** What the recharge started with, so a modified one still draws a true wipe. */
+  readonly totalSeconds: number;
+}
+
+/**
+ * Sent as `"recharge"` to one player alone: their own recharges are
+ * nobody else's business, so they never ride the shared state (#152). A
+ * full replacement list; a slot absent from it is ready. Sent on join and
+ * whenever the recharges change in a way the client cannot predict by
+ * counting down; the countdown itself is the client's to extrapolate.
+ */
+export interface RechargeMessage {
+  readonly slots: readonly RechargeSlot[];
 }
 
 /** Options a client passes when creating or joining a match room. */
@@ -129,6 +170,8 @@ export interface MatchJoinOptions {
   readonly protocolVersion: number;
   /** The arena the first joiner asks for; later joiners get the room's. */
   readonly mapId?: string;
+  /** Display name the player asks for; the server sanitises it. */
+  readonly name?: string;
   /**
    * The build the player asks to play. Untyped on purpose: this package has
    * no game-core dependency, and the server parses and validates whatever
@@ -209,7 +252,8 @@ export const QUICK_MATCH_MAX_PLAYERS = 8;
  * requires touching this type, which forces a protocol-version decision and a
  * server-side validator.
  */
-export type ClientIntent = MoveIntent | StopIntent | TargetIntent | UseSkillIntent;
+export type ClientIntent =
+  MoveIntent | StopIntent | TargetIntent | UseSkillIntent | AttackIntent | CancelAttackIntent;
 
 /**
  * Validate an arbitrary network payload as a `ClientIntent`, or reject it.
@@ -260,7 +304,25 @@ export function parseClientIntent(value: unknown): ClientIntent | undefined {
     return { kind: "use-skill", slot: record.slot };
   }
 
+  // Newer than the rest, and strict: nothing but the fields they name.
+  if (
+    record.kind === "attack" &&
+    hasOnlyKeys(record, ["kind", "targetId"]) &&
+    typeof record.targetId === "string" &&
+    record.targetId !== ""
+  ) {
+    return { kind: "attack", targetId: record.targetId };
+  }
+
+  if (record.kind === "cancel-attack" && hasOnlyKeys(record, ["kind"])) {
+    return { kind: "cancel-attack" };
+  }
+
   return undefined;
+}
+
+function hasOnlyKeys(record: Record<string, unknown>, keys: readonly string[]): boolean {
+  return Object.keys(record).every((key) => keys.includes(key));
 }
 
 /* -------------------------------------------------------------------------- */

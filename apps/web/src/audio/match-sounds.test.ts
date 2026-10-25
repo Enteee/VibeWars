@@ -15,9 +15,12 @@ const ME = "me";
 function snapshot(castingSkillId: string | undefined): MatchSnapshot {
   const me: PlayerSnapshot = {
     sessionId: ME,
+    name: ME,
     x: 0,
     y: 0,
+    facing: 0,
     targetSessionId: undefined,
+    attackTargetSessionId: undefined,
     health: 100,
     maxHealth: 100,
     energy: 20,
@@ -41,6 +44,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     phase: "active",
     winningTeam: undefined,
     endReason: undefined,
+    projectiles: [],
   };
 }
 
@@ -72,7 +76,12 @@ describe("attachMatchSounds", () => {
     sounds.snapshot(snapshot("heal"));
     sounds.snapshot(snapshot(undefined));
     sounds.snapshot(snapshot("fireball"));
-    combat({ casterSessionId: "foe", skillId: "x", events: [{ kind: "damage", targetId: ME }] });
+    combat({
+      casterSessionId: "foe",
+      cause: "skill",
+      skillId: "x",
+      events: [{ kind: "damage", targetId: ME }],
+    });
     refused();
     expect(played).toEqual(["cast-self", "hit-taken", "refused"]);
   });

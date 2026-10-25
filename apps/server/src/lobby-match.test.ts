@@ -23,7 +23,11 @@ import { findFreePort, waitFor } from "./testing/harness.js";
 
 /** What a test reads of a match room's decoded state. */
 interface MatchView {
-  readonly players: ReadonlyMap<string, { readonly team: number; readonly name: string }>;
+  readonly phase: string;
+  readonly players: ReadonlyMap<
+    string,
+    { readonly team: number; readonly name: string; readonly weaponId: string }
+  >;
 }
 
 /** What a test reads of a lobby's decoded state. */
@@ -32,7 +36,7 @@ interface LobbyView {
   readonly players: ReadonlyMap<string, { readonly team: number; readonly ready: boolean }>;
 }
 
-/** A legal build whose name shows up in the match, so a test can see it arrived. */
+/** A legal build whose weapon shows up in the match, so a test can see it arrived. */
 const pyro = (name: string): PlayerBuild => ({
   name,
   primaryProfession: "elementalist",
@@ -72,20 +76,23 @@ describe("a lobby's own match", () => {
 
   /**
    * A lobby whose members pick `teams` (`null` spectates) and ready up.
-   * The first member hosts. `builds[i]`, when given, is what member `i`
-   * joins the lobby with.
+   * The first member hosts. `builds[i]` and `names[i]`, when given, are
+   * what member `i` joins the lobby with.
    */
   async function lobby(
     teams: readonly (number | null)[],
     builds: readonly (PlayerBuild | undefined)[] = [],
+    names: readonly (string | undefined)[] = [],
   ): Promise<Member[]> {
     const members: Member[] = [];
     for (const [i, team] of teams.entries()) {
       const host = members[0];
       const build = builds[i];
+      const name = names[i];
       const options = {
         protocolVersion: PROTOCOL_VERSION,
         ...(build === undefined ? {} : { build }),
+        ...(name === undefined ? {} : { name }),
       };
       const room =
         host === undefined
@@ -204,8 +211,21 @@ describe("a lobby's own match", () => {
     await waitFor(() => match.state.players.get(match.sessionId) !== undefined, {
       label: "own player in state",
     });
-    expect(match.state.players.get(match.sessionId)?.name).toBe("Lobby Pyro");
+    // The house loadout is a warrior's; only the build carries this weapon.
+    expect(match.state.players.get(match.sessionId)?.weaponId).toBe(
+      defaultBuildEquipment("elementalist").mainHand.weaponId,
+    );
     await leaveAll([match, ...members.map(({ room }) => room)]);
+  });
+
+  it("names each member in the match as the lobby named them (#53)", async () => {
+    const members = await lobby([0, 1], [], ["Hostess", "Guesty"]);
+    const matches = await Promise.all((await start(members)).map(take));
+    const [first] = matches;
+    await waitFor(() => first?.state.players.size === 2, { label: "both in the match" });
+    const names = matches.map((match) => first?.state.players.get(match.sessionId)?.name);
+    expect(names).toEqual(["Hostess", "Guesty"]);
+    await leaveAll([...matches, ...members.map(({ room }) => room)]);
   });
 
   it("sends a spectator no seat, and leaves them in the lobby", async () => {
@@ -256,9 +276,12 @@ describe("a lobby's own match", () => {
     const [came, neverCame] = await openLobbyMatch(
       DEFAULT_MAP_ID,
       [
-        { team: 0, build: undefined },
-        { team: 1, build: undefined },
+        { team: 0, name: "a", build: undefined },
+        { team: 1, name: "b", build: undefined },
       ],
+      () => {
+        /* no lobby to tell */
+      },
       1,
     );
     if (came === undefined || neverCame === undefined) {
@@ -277,6 +300,37 @@ describe("a lobby's own match", () => {
     ).rejects.toThrow();
     expect(seated.state.players.size).toBe(1);
     await seated.leave();
+  });
+
+  it("names a seated player by their lobby name, whatever they join with (#53)", async () => {
+    const [came, renamed] = await openLobbyMatch(
+      DEFAULT_MAP_ID,
+      [
+        { team: 0, name: "Hostess", build: undefined },
+        { team: 1, name: "Guesty", build: undefined },
+      ],
+      () => {
+        /* no lobby to tell */
+      },
+      1,
+    );
+    if (came === undefined || renamed === undefined) {
+      throw new Error("no seats");
+    }
+    const seated = await new Client(endpoint).consumeSeatReservation<MatchView>(came);
+    // Let the second seat's own reservation lapse, then join that seat's
+    // session asking for another player's name.
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const impostor = await new Client(endpoint).consumeSeatReservation<MatchView>(
+      await matchMaker.reserveSeatFor(
+        await matchMaker.getRoomById(came.roomId),
+        { protocolVersion: PROTOCOL_VERSION, name: "Impostor" },
+        { sessionId: renamed.sessionId },
+      ),
+    );
+    await waitFor(() => seated.state.players.size === 2, { label: "both in the match" });
+    expect(seated.state.players.get(impostor.sessionId)?.name).toBe("Guesty");
+    await leaveAll([seated, impostor]);
   });
 
   it("refuses a client that tries to open a seated match of its own", async () => {
@@ -302,6 +356,68 @@ describe("a lobby's own match", () => {
     });
     expect(quick.roomId).not.toBe(seat.reservation.roomId);
     await leaveAll([quick, seated, ...members.map(({ room }) => room)]);
+  });
+
+  /** Open a two-seat lobby match with `onOver`, and walk both players in. */
+  async function seatTwo(onOver: () => void) {
+    const reservations = await openLobbyMatch(
+      DEFAULT_MAP_ID,
+      [
+        { team: 0, name: "a", build: undefined },
+        { team: 1, name: "b", build: undefined },
+      ],
+      onOver,
+    );
+    const players = await Promise.all(
+      reservations.map((reservation) =>
+        new Client(endpoint).consumeSeatReservation<MatchView>(reservation),
+      ),
+    );
+    const roomId = reservations[0]?.roomId ?? "";
+    // Finish it now, rather than after ten minutes of play.
+    const finish = (): void => {
+      const room = localRoom(roomId);
+      if (!(room instanceof MatchRoom)) throw new Error("no match room");
+      room.endMatch();
+    };
+    return { players, finish, roomId };
+  }
+
+  it("tells its lobby the match is over once: at the finish, not again at dispose (#44)", async () => {
+    let calls = 0;
+    const { players, finish, roomId } = await seatTwo(() => {
+      calls += 1;
+    });
+    expect(calls).toBe(0);
+
+    finish();
+    expect(calls).toBe(1);
+
+    await leaveAll(players);
+    await waitFor(() => localRoom(roomId) === undefined, { label: "disposed" });
+    expect(calls).toBe(1);
+  });
+
+  it("tells its lobby when everyone left before the finish", async () => {
+    let calls = 0;
+    const { players } = await seatTwo(() => {
+      calls += 1;
+    });
+
+    await leaveAll(players);
+    await waitFor(() => calls === 1, { label: "onOver at dispose" });
+  });
+
+  it("finishes the match even if its lobby throws on hearing it", async () => {
+    const { players, finish } = await seatTwo(() => {
+      throw new Error("the lobby is broken");
+    });
+
+    finish();
+    await waitFor(() => players.every((player) => player.state.phase === "finished"), {
+      label: "everyone sees the finish",
+    });
+    await leaveAll(players);
   });
 
   it("lets an unclaimed seat lapse at the join deadline, and then disposes the empty match", async () => {

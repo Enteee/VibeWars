@@ -1,15 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import type { MatchSnapshot, PlayerSnapshot } from "../net/match-connection.js";
+import type { CombatMessage, MatchSnapshot, PlayerSnapshot } from "../net/match-connection.js";
 import { teamColour, type AreaFlash, type FloatingText } from "./arena-snapshot.js";
-import { showCombatFeedback } from "./combat-feedback.js";
+import { showCombatFeedback, swingFlashFor } from "./combat-feedback.js";
 
 function player(sessionId: string): PlayerSnapshot {
   return {
     sessionId,
+    name: sessionId,
     x: 100,
     y: 100,
+    facing: 0,
     targetSessionId: undefined,
+    attackTargetSessionId: undefined,
     health: 400,
     maxHealth: 500,
     energy: 20,
@@ -35,14 +38,27 @@ const SNAPSHOT: MatchSnapshot = {
   phase: "active",
   winningTeam: undefined,
   endReason: undefined,
+  projectiles: [],
 };
 
 /** The texts a scene would have been asked to float, for these events. */
-function floated(events: { kind: string; targetId?: string; amount?: number }[]): string[] {
+function floated(
+  events: { kind: string; targetId?: string; amount?: number }[],
+  cause: CombatMessage["cause"] = "skill",
+): string[] {
   const texts: FloatingText[] = [];
   showCombatFeedback(
-    { addFloatingText: (text) => texts.push(text), addAreaFlash: () => undefined },
-    { casterSessionId: "me", skillId: "elementalist.fireball", events },
+    {
+      addFloatingText: (text) => texts.push(text),
+      addAreaFlash: () => undefined,
+      addSwingFlash: () => undefined,
+    },
+    {
+      casterSessionId: "me",
+      cause,
+      skillId: cause === "skill" ? "elementalist.fireball" : "",
+      events,
+    },
     SNAPSHOT,
   );
   return texts.map((text) => text.text);
@@ -62,8 +78,72 @@ describe("showCombatFeedback", () => {
     expect(floated([{ kind: "attack-missed", targetId: "them" }])).toEqual(["miss"]);
   });
 
+  it("floats a dodged and an obstructed shot as words", () => {
+    expect(
+      floated([
+        { kind: "attack-dodged", targetId: "them" },
+        { kind: "attack-obstructed", targetId: "them" },
+      ]),
+    ).toEqual(["dodge", "obstructed"]);
+  });
+
+  it("weighs weapon swings lighter than skills, so they never drown a skill number", () => {
+    const weights = (cause: CombatMessage["cause"]): string[] => {
+      const texts: FloatingText[] = [];
+      showCombatFeedback(
+        {
+          addFloatingText: (text) => texts.push(text),
+          addAreaFlash: () => undefined,
+          addSwingFlash: () => undefined,
+        },
+        {
+          casterSessionId: "me",
+          cause,
+          skillId: cause === "skill" ? "elementalist.fireball" : "",
+          events: [{ kind: "damage", targetId: "them", amount: 12 }],
+        },
+        SNAPSHOT,
+      );
+      return texts.map((text) => text.weight);
+    };
+    expect(weights("weapon")).toEqual(["light"]);
+    expect(weights("skill")).toEqual(["normal"]);
+  });
+
   it("skips events about nobody it can see", () => {
     expect(floated([{ kind: "damage", targetId: "gone", amount: 5 }])).toEqual([]);
+  });
+
+  it("floats no degeneration ticks, which the health bar already shows (#54)", () => {
+    // Burning and poison together: 11 hp/s, about 1 a tick at 20 Hz.
+    const tick = [{ kind: "damage", targetId: "them", amount: 0.55 * 2 }];
+    expect(floated(tick, "degeneration")).toEqual([]);
+    // Dying of it still says so.
+    expect(floated([{ kind: "death", targetId: "them" }], "degeneration")).toEqual(["defeated"]);
+    // A real hit still floats.
+    expect(floated([{ kind: "damage", targetId: "them", amount: 91 }])).toEqual(["−91"]);
+  });
+
+  it("anchors each number to whoever it happened to, so a burst can stack (#54)", () => {
+    const texts: FloatingText[] = [];
+    showCombatFeedback(
+      {
+        addFloatingText: (text) => texts.push(text),
+        addAreaFlash: () => undefined,
+        addSwingFlash: () => undefined,
+      },
+      {
+        casterSessionId: "me",
+        cause: "skill",
+        skillId: "elementalist.fireball",
+        events: [
+          { kind: "damage", targetId: "them", amount: 5 },
+          { kind: "heal", targetId: "me", amount: 5 },
+        ],
+      },
+      SNAPSHOT,
+    );
+    expect(texts.map((text) => text.anchorId)).toEqual(["them", "me"]);
   });
 });
 
@@ -76,8 +156,18 @@ describe("showCombatFeedback and areas", () => {
   function flashed(casterSessionId: string, area?: { x: number; y: number; radius: number }) {
     const flashes: AreaFlash[] = [];
     showCombatFeedback(
-      { addFloatingText: () => undefined, addAreaFlash: (flash) => flashes.push(flash) },
-      { casterSessionId, skillId: "elementalist.fireball", events: [], ...(area && { area }) },
+      {
+        addFloatingText: () => undefined,
+        addAreaFlash: (flash) => flashes.push(flash),
+        addSwingFlash: () => undefined,
+      },
+      {
+        casterSessionId,
+        cause: "skill",
+        skillId: "elementalist.fireball",
+        events: [],
+        ...(area && { area }),
+      },
       snapshot,
     );
     return flashes;
@@ -94,5 +184,58 @@ describe("showCombatFeedback and areas", () => {
 
   it("flashes nothing for a skill with no area", () => {
     expect(flashed("them")).toEqual([]);
+  });
+});
+
+describe("swingFlashFor (#161)", () => {
+  const snapshot = (weaponId: string): MatchSnapshot => ({
+    ...SNAPSHOT,
+    players: [
+      { ...player("me"), x: 100, y: 100, weaponId },
+      { ...player("them"), x: 100, y: 200, team: 1 },
+    ],
+  });
+  const swing = (cause: CombatMessage["cause"], kind = "damage"): CombatMessage => ({
+    casterSessionId: "me",
+    cause,
+    skillId: "",
+    events: [{ kind, targetId: "them", amount: 30 }],
+  });
+
+  it("flashes one arc around a melee attacker, toward its target", () => {
+    const flash = swingFlashFor(swing("weapon"), snapshot("sword"));
+    expect(flash?.centre).toEqual({ x: 100, y: 100 });
+    expect(flash?.angle).toBeCloseTo(Math.PI / 2, 9);
+    expect(flash?.radius).toBe(20);
+    expect(flash?.colour).toBe(teamColour("ally"));
+    expect(flash?.own).toBe(true);
+    // A miss swings too.
+    expect(swingFlashFor(swing("weapon", "attack-missed"), snapshot("daggers"))).toBeDefined();
+  });
+
+  it("flashes nothing for a bow, whose shot is the feedback, or for a skill", () => {
+    expect(swingFlashFor(swing("weapon"), snapshot("longbow"))).toBeUndefined();
+    expect(swingFlashFor(swing("weapon"), snapshot("wand"))).toBeUndefined();
+    expect(swingFlashFor(swing("skill"), snapshot("sword"))).toBeUndefined();
+  });
+
+  it("hands the scene one arc for a melee hit, and none for a bow's", () => {
+    const record = (weaponId: string): number => {
+      let arcs = 0;
+      showCombatFeedback(
+        {
+          addFloatingText: () => undefined,
+          addAreaFlash: () => undefined,
+          addSwingFlash: () => {
+            arcs += 1;
+          },
+        },
+        swing("weapon"),
+        snapshot(weaponId),
+      );
+      return arcs;
+    };
+    expect(record("axe")).toBe(1);
+    expect(record("shortbow")).toBe(0);
   });
 });

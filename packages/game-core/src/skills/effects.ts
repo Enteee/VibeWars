@@ -42,7 +42,13 @@ export type CombatEvent =
   /** An interrupt that found nothing to interrupt — a wasted cast. */
   | { readonly kind: "interrupt-missed"; readonly targetId: string }
   /** A blinded attack skill that swung and missed: paid for, no effect. */
-  | { readonly kind: "attack-missed"; readonly targetId: string };
+  | { readonly kind: "attack-missed"; readonly targetId: string }
+  /** A projectile that landed where its target would have been, had it kept moving. */
+  | { readonly kind: "attack-dodged"; readonly targetId: string }
+  /** A ranged swing released with a wall in the way: nothing flies (GW1's "Obstructed"). */
+  | { readonly kind: "attack-obstructed"; readonly targetId: string }
+  /** An attack with no way round the walls to its target: it ends (#211). */
+  | { readonly kind: "attack-unreachable"; readonly targetId: string };
 
 /**
  * Apply an already-mitigated amount, clamping at 0 and flagging death

@@ -4,12 +4,19 @@ import { vec2 } from "@vibewars/game-core";
 
 import {
   AREA_FLASH_SECONDS,
+  FLOATING_TEXT_LINE,
+  FLOATING_TEXT_SECONDS,
+  FLOATING_TEXT_STACK,
   areaFlashAlpha,
   decayAreaFlashes,
+  floatingTextY,
   actorAtPoint,
   healthFraction,
+  nameLabelBottom,
+  placeFloatingText,
   teamColour,
   type ArenaSnapshot,
+  type FloatingText,
   type RenderableActor,
 } from "./arena-snapshot.js";
 
@@ -29,7 +36,10 @@ function actor(
 ): RenderableActor {
   return {
     id,
+    name: id,
     position: vec2(x, y),
+    facing: 0,
+    weaponId: undefined,
     radius,
     team: "ally",
     health: 500,
@@ -43,32 +53,62 @@ function actor(
 
 describe("actorAtPoint", () => {
   it("returns undefined when there are no actors", () => {
-    const snapshot: ArenaSnapshot = { actors: [], walls: [], targetId: undefined };
+    const snapshot: ArenaSnapshot = {
+      actors: [],
+      walls: [],
+      targetId: undefined,
+      projectiles: [],
+      clock: 0,
+    };
     expect(actorAtPoint(snapshot, vec2(0, 0))).toBeUndefined();
   });
 
   it("hits an actor when the point is within its radius", () => {
     const self = actor("a", 100, 100, 14);
-    const snapshot: ArenaSnapshot = { actors: [self], walls: [], targetId: undefined };
+    const snapshot: ArenaSnapshot = {
+      actors: [self],
+      walls: [],
+      targetId: undefined,
+      projectiles: [],
+      clock: 0,
+    };
     expect(actorAtPoint(snapshot, vec2(105, 100))?.id).toBe("a");
   });
 
   it("misses when the point is outside every actor's radius", () => {
     const self = actor("a", 100, 100, 14);
-    const snapshot: ArenaSnapshot = { actors: [self], walls: [], targetId: undefined };
+    const snapshot: ArenaSnapshot = {
+      actors: [self],
+      walls: [],
+      targetId: undefined,
+      projectiles: [],
+      clock: 0,
+    };
     expect(actorAtPoint(snapshot, vec2(200, 200))).toBeUndefined();
   });
 
   it("hits exactly at the radius boundary", () => {
     const self = actor("a", 0, 0, 10);
-    const snapshot: ArenaSnapshot = { actors: [self], walls: [], targetId: undefined };
+    const snapshot: ArenaSnapshot = {
+      actors: [self],
+      walls: [],
+      targetId: undefined,
+      projectiles: [],
+      clock: 0,
+    };
     expect(actorAtPoint(snapshot, vec2(10, 0))?.id).toBe("a");
   });
 
   it("picks the closest actor when two overlap the point", () => {
     const near = actor("near", 100, 100, 20);
     const far = actor("far", 110, 100, 20);
-    const snapshot: ArenaSnapshot = { actors: [far, near], walls: [], targetId: undefined };
+    const snapshot: ArenaSnapshot = {
+      actors: [far, near],
+      walls: [],
+      targetId: undefined,
+      projectiles: [],
+      clock: 0,
+    };
     expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("near");
   });
 });
@@ -81,13 +121,21 @@ describe("actorAtPoint and the dead", () => {
       actors: [corpse, living],
       walls: [],
       targetId: undefined,
+      projectiles: [],
+      clock: 0,
     };
     expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("living");
   });
 
   it("returns undefined when the only actor under the point is dead", () => {
     const corpse = actor("corpse", 100, 100, 20, { dead: true });
-    const snapshot: ArenaSnapshot = { actors: [corpse], walls: [], targetId: undefined };
+    const snapshot: ArenaSnapshot = {
+      actors: [corpse],
+      walls: [],
+      targetId: undefined,
+      projectiles: [],
+      clock: 0,
+    };
     expect(actorAtPoint(snapshot, vec2(100, 100))).toBeUndefined();
   });
 });
@@ -133,5 +181,89 @@ describe("area flashes", () => {
     const [older] = decayAreaFlashes([flash], 0.1);
     expect(older?.radius).toBe(81);
     expect(flash.remainingSeconds).toBe(AREA_FLASH_SECONDS);
+  });
+});
+
+describe("nameLabelBottom", () => {
+  it("keeps a living actor's name clear of its health and cast bars", () => {
+    const living = actor("a", 100, 100);
+    // The cast bar's top is 19 above the circle; the name sits above that.
+    expect(nameLabelBottom(living)).toBeLessThan(100 - 14 - 19);
+  });
+
+  it("lowers a corpse's name, which has no bars to clear", () => {
+    expect(nameLabelBottom(actor("a", 100, 100, 14, { dead: true }))).toBeGreaterThan(
+      nameLabelBottom(actor("a", 100, 100)),
+    );
+  });
+});
+
+describe("placeFloatingText", () => {
+  let nextId = 0;
+  const text = (anchorId: string, remainingSeconds = FLOATING_TEXT_SECONDS): FloatingText => {
+    nextId += 1;
+    return {
+      id: nextId,
+      anchorId,
+      text: "−10",
+      position: vec2(100, 100),
+      colour: 0xff7b72,
+      weight: "normal",
+      remainingSeconds,
+    };
+  };
+  /** Add texts one by one, as the scene does, and say where each one is now. */
+  const burst = (texts: FloatingText[]): number[] => {
+    const placed: FloatingText[] = [];
+    for (const incoming of texts) {
+      const next = placeFloatingText(placed, incoming);
+      if (next !== undefined) {
+        placed.push(next);
+      }
+    }
+    return placed.map(floatingTextY);
+  };
+
+  it("stacks hits landing together a line apart, newest on top (#54)", () => {
+    expect(burst([text("b"), text("b"), text("b")])).toEqual([
+      100,
+      100 - FLOATING_TEXT_LINE,
+      100 - 2 * FLOATING_TEXT_LINE,
+    ]);
+  });
+
+  it("leaves a number alone once the last one has risen out of its way", () => {
+    // A second old: risen 24px, well clear of a fresh number.
+    expect(burst([text("b", FLOATING_TEXT_SECONDS - 1), text("b")])).toEqual([76, 100]);
+  });
+
+  it("lifts past an old number only as far as it has to", () => {
+    // Half a second old: risen 12px, so the new one goes a line above it.
+    const ys = burst([text("b", FLOATING_TEXT_SECONDS - 0.5), text("b")]);
+    expect(ys[1]).toBeCloseTo(88 - FLOATING_TEXT_LINE, 6);
+  });
+
+  it("makes no room for numbers over somebody else", () => {
+    expect(burst([text("a"), text("b")])).toEqual([100, 100]);
+  });
+
+  it("never stacks more than FLOATING_TEXT_STACK over one actor, even from a stream", () => {
+    // A status ticking at 20 Hz for one text lifetime: 24 texts.
+    let live: FloatingText[] = [];
+    let tallest = 0;
+    for (let tick = 0; tick < 24; tick += 1) {
+      for (const floating of live) {
+        floating.remainingSeconds -= 0.05;
+      }
+      live = live.filter((floating) => floating.remainingSeconds > 0);
+      const placed = placeFloatingText(live, text("b"));
+      if (placed !== undefined) {
+        live.push(placed);
+      }
+      expect(live.length).toBeLessThanOrEqual(FLOATING_TEXT_STACK);
+      tallest = Math.max(tallest, ...live.map((floating) => 100 - floatingTextY(floating)));
+    }
+    // A column of FLOATING_TEXT_STACK lines, plus how far one rises in its life.
+    expect(tallest).toBeLessThanOrEqual((FLOATING_TEXT_STACK - 1) * FLOATING_TEXT_LINE + 24 * 1.2);
   });
 });

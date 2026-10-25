@@ -19,6 +19,7 @@ export interface ActiveCast {
 export class CastState {
   #activeCast: ActiveCast | undefined;
   readonly #rechargeRemaining = new Map<string, number>();
+  readonly #rechargeTotal = new Map<string, number>();
 
   public get activeCast(): ActiveCast | undefined {
     return this.#activeCast;
@@ -30,6 +31,15 @@ export class CastState {
 
   public get rechargeRemaining(): ReadonlyMap<string, number> {
     return this.#rechargeRemaining;
+  }
+
+  /**
+   * The duration each running recharge started with, keyed like
+   * `rechargeRemaining`: what a recharge display measures progress
+   * against, so a modified recharge still draws a true wipe (#152).
+   */
+  public get rechargeTotal(): ReadonlyMap<string, number> {
+    return this.#rechargeTotal;
   }
 
   public beginCast(skillId: string, targetId: string | undefined, activationSeconds: number): void {
@@ -55,6 +65,7 @@ export class CastState {
   public startRecharge(skillId: string, rechargeSeconds: number): void {
     if (rechargeSeconds > 0) {
       this.#rechargeRemaining.set(skillId, rechargeSeconds);
+      this.#rechargeTotal.set(skillId, rechargeSeconds);
     }
   }
 
@@ -69,6 +80,7 @@ export class CastState {
       const next = remaining - dt;
       if (next <= 0) {
         this.#rechargeRemaining.delete(skillId);
+        this.#rechargeTotal.delete(skillId);
       } else {
         this.#rechargeRemaining.set(skillId, next);
       }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
+import { segment, type Segment } from "../geometry.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import { tallyCombat, type CombatLogEntry } from "./combat-log.js";
@@ -34,6 +35,7 @@ function swordsman(id: string, spawn: Vec2): ParticipantSpec {
     equipment: wielding(WEAPONS.sword, "warrior.swordsmanship"),
     maxEnergy: 1000,
     spawn,
+    facing: 0,
   };
 }
 
@@ -47,6 +49,7 @@ function dummy(id: string, spawn: Vec2): ParticipantSpec {
     equipment: unarmedResolvedEquipment(60),
     maxHealth: 1e6,
     spawn,
+    facing: 0,
   };
 }
 
@@ -212,7 +215,7 @@ describe("skills and the swing", () => {
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
   });
 
-  it("a skill at another enemy resumes the attack on its own target, and starts none", () => {
+  it("a skill at another enemy switches the attack to them once it lands", () => {
     const match = sim(
       swordsman("a", vec2(0, 0)),
       dummy("d", vec2(40, 0)),
@@ -221,15 +224,45 @@ describe("skills and the swing", () => {
     match.requestAttack("a", "d");
     match.setTarget("a", "e");
     match.requestSkill("a", 0);
+    // Still on d while the Fireball is in the air: a cast only pauses.
+    stepFor(match, 0.5);
+    expect(get(match, "a").combatant.attack?.targetId).toBe("d");
+    stepFor(match, 0.6);
+    expect(get(match, "a").combatant.attack).toEqual({
+      targetId: "e",
+      swingElapsed: expect.any(Number) as number,
+    });
+  });
+
+  it("a skill at an enemy starts an attack on them, and the swordsman walks in", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
+    match.setTarget("a", "d");
+    match.requestSkill("a", 0);
+    stepFor(match, 0.9);
+    expect(get(match, "a").combatant.attack).toBeUndefined();
+    stepFor(match, 0.2);
+    expect(get(match, "a").combatant.attack?.targetId).toBe("d");
+    stepFor(match, 1);
+    expect(get(match, "a").position.x).toBeGreaterThan(0);
+  });
+
+  it("an interrupted cast at an enemy starts nothing, and resumes the attack in progress", () => {
+    const match = sim(
+      swordsman("a", vec2(0, 0)),
+      dummy("d", vec2(40, 0)),
+      dummy("e", vec2(0, 300)),
+    );
+    match.setTarget("a", "e");
+    match.requestSkill("a", 0);
+    get(match, "a").combatant.cast.cancelCast();
+    stepFor(match, 1.1);
+    expect(get(match, "a").combatant.attack).toBeUndefined();
+
+    match.requestAttack("a", "d");
+    match.requestSkill("a", 0);
+    get(match, "a").combatant.cast.cancelCast();
     stepFor(match, 1.1);
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
-
-    const fresh = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
-    fresh.setTarget("a", "d");
-    fresh.requestSkill("a", 0);
-    stepFor(fresh, 1.1);
-    expect(get(fresh, "a").combatant.attack).toBeUndefined();
-    expect(get(fresh, "a").position).toEqual(vec2(0, 0));
   });
 });
 
@@ -251,7 +284,7 @@ describe("moving", () => {
 });
 
 describe("adrenaline", () => {
-  it("a landed swing gives +3, as a damaging skill does", () => {
+  it("a landed swing gives +3, as a damaging attack skill does", () => {
     const hit = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     hit.requestAttack("a", "d");
     stepFor(hit, 1.4);
@@ -262,6 +295,17 @@ describe("adrenaline", () => {
     expect(chop.requestSkill("a", 2)?.check).toEqual({ ok: true });
     stepFor(chop, DT);
     expect(get(chop, "a").combatant.adrenaline).toBe(RULES.resources.adrenalinePerHit);
+  });
+
+  it("a damaging spell gives none (Q19)", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
+    match.setTarget("a", "d");
+    expect(match.requestSkill("a", 0)?.check).toEqual({ ok: true });
+    const log = stepFor(match, 1.1);
+    expect(
+      log.some((entry) => entry.cause === "skill" && entry.events.some((e) => e.kind === "damage")),
+    ).toBe(true);
+    expect(get(match, "a").combatant.adrenaline).toBe(0);
   });
 });
 
@@ -305,5 +349,80 @@ describe("the log", () => {
     const first = run();
     expect(swings(first).length).toBeGreaterThan(5);
     expect(run()).toEqual(first);
+  });
+});
+
+describe("the approach on Arena Alpha (#211)", () => {
+  /** A rectangle's four sides, as a map's rect wall becomes. */
+  function rect(x: number, y: number, width: number, height: number): Segment[] {
+    const a = vec2(x, y);
+    const b = vec2(x + width, y);
+    const c = vec2(x + width, y + height);
+    const d = vec2(x, y + height);
+    return [segment(a, b), segment(b, c), segment(c, d), segment(d, a)];
+  }
+
+  /** Arena Alpha's three walls (packages/game-maps/maps/arena-alpha). */
+  const WALLS = [...rect(440, 0, 24, 260), ...rect(440, 380, 24, 260), ...rect(300, 300, 120, 24)];
+
+  function arena(walls: readonly Segment[], ...participants: ParticipantSpec[]): MatchSimulation {
+    return new MatchSimulation({
+      seed: "arena",
+      walls,
+      bounds: { width: 960, height: 640 },
+      participants,
+    });
+  }
+
+  function archer(id: string, spawn: Vec2): ParticipantSpec {
+    return {
+      ...swordsman(id, spawn),
+      skillBar: [],
+      attributeRanks: new Map([["ranger.marksmanship", 12]]),
+      equipment: wielding(WEAPONS.longbow, "ranger.marksmanship"),
+    };
+  }
+
+  it("walks a sword from one spawn round the walls to the other, and hits", () => {
+    const match = arena(WALLS, swordsman("a", vec2(80, 320)), dummy("d", vec2(880, 320)));
+    match.requestAttack("a", "d");
+
+    // The shortest way round, by hand (pathing.test.ts), at full speed.
+    const pathLength = Math.hypot(205, 19) + 150 + Math.hypot(445, 19);
+    const allowed = pathLength / RULES.movement.maxSpeedUnitsPerSecond + 1;
+    let seconds = 0;
+    while (distance(get(match, "a").position, vec2(880, 320)) > WEAPONS.sword.range) {
+      match.step(DT);
+      seconds += DT;
+      expect(seconds).toBeLessThanOrEqual(allowed);
+    }
+    const hits = swings(stepFor(match, WEAPONS.sword.attackIntervalSeconds * 2 + DT));
+    expect(hits.some((entry) => entry.events.some((event) => event.kind === "damage"))).toBe(true);
+  });
+
+  it("walks a bow out from behind the central wall until it sees, then shoots", () => {
+    // In range already, but the wall is in the way.
+    const match = arena(WALLS, archer("a", vec2(400, 150)), dummy("d", vec2(520, 150)));
+    match.requestAttack("a", "d");
+
+    const log = stepFor(match, 6);
+    const kinds = swings(log).flatMap((entry) => entry.events.map((event) => event.kind));
+    expect(kinds).not.toContain("attack-obstructed");
+    expect(kinds).toContain("damage");
+    expect(get(match, "a").position).not.toEqual(vec2(400, 150));
+  });
+
+  it("gives up on a target walled in, once, and says so", () => {
+    const boxed = [...WALLS, ...rect(600, 400, 120, 120)];
+    const match = arena(boxed, swordsman("a", vec2(80, 320)), dummy("d", vec2(660, 460)));
+    match.requestAttack("a", "d");
+
+    const log = stepFor(match, 2);
+    const unreachable = swings(log).filter((entry) =>
+      entry.events.some((event) => event.kind === "attack-unreachable"),
+    );
+    expect(unreachable).toHaveLength(1);
+    expect(get(match, "a").combatant.attack).toBeUndefined();
+    expect(get(match, "a").position).toEqual(vec2(80, 320));
   });
 });

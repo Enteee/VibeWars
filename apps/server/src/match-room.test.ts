@@ -5,11 +5,12 @@ import {
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   ROOM_MATCH,
+  type RechargeMessage,
   type ServerHello,
 } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { DEFAULT_MAP_ID } from "./rooms/match-room.js";
+import { DEFAULT_MAP_ID, DEFAULT_SKILL_BAR } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
 
@@ -178,6 +179,46 @@ describe("match room", () => {
     await room.leave();
   });
 
+  it("keeps a player inside the map's edge (#244)", async () => {
+    // qa-tester's repro: from the first spawn, (80, 200), left for 3 s then
+    // up for 3 s used to end at (-460, -340), off everyone's screen.
+    const client = new Client(endpoint);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
+    const radius = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
+    const self = () => room.state.players.get(room.sessionId);
+    try {
+      await waitFor(() => self() !== undefined, { label: "self to appear" });
+      room.send("intent", { kind: "move", dirX: -1, dirY: 0 });
+      await waitFor(() => self()?.x === radius, { timeoutMs: 3000, label: "the left edge" });
+      room.send("intent", { kind: "move", dirX: 0, dirY: -1 });
+      await waitFor(() => self()?.y === radius, { timeoutMs: 3000, label: "the top edge" });
+      // Still pushing: it stays put rather than creeping off.
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(self()?.x).toBe(radius);
+      expect(self()?.y).toBe(radius);
+    } finally {
+      await room.leave();
+    }
+  });
+
+  it("syncs where a player faces, to two decimals (#187)", async () => {
+    const client = new Client(endpoint);
+    const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
+    await waitFor(() => room.state.players.has(room.sessionId), { label: "self to appear" });
+
+    try {
+      room.send("intent", { kind: "move", dirX: 0, dirY: 1 });
+      // Rounded to 1.57 on the server, but the schema sends a float32,
+      // so it arrives as 1.5700000524...
+      await waitFor(
+        () => Math.abs((room.state.players.get(room.sessionId)?.facing ?? 0) - 1.57) < 1e-6,
+        { timeoutMs: 2000, label: "player to face +y" },
+      );
+    } finally {
+      await room.leave();
+    }
+  });
+
   it("stops moving once a stop intent is sent", async () => {
     const client = new Client(endpoint);
     const room = await client.joinOrCreate(ROOM_MATCH, { protocolVersion: PROTOCOL_VERSION });
@@ -310,5 +351,46 @@ describe("match room", () => {
     expect(roomA.state.players.get(roomA.sessionId)?.targetSessionId).toBe("");
 
     await roomA.leave();
+  });
+
+  describe("recharges (#152)", () => {
+    /** Join, and keep every `recharge` message this client is sent. */
+    async function joinCounting() {
+      const room = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
+        protocolVersion: PROTOCOL_VERSION,
+      });
+      const received: RechargeMessage[] = [];
+      room.onMessage("recharge", (message: RechargeMessage) => {
+        received.push(message);
+      });
+      return { room, received };
+    }
+
+    it("tells the caster alone, once, and nothing more while it counts down", async () => {
+      const caster = await joinCounting();
+      const other = await joinCounting();
+      // On join, each is told their bar is ready.
+      await waitFor(() => caster.received.length === 1 && other.received.length === 1, {
+        label: "join messages",
+      });
+      expect(caster.received[0]?.slots).toEqual([]);
+
+      // Armor of Earth: self-targeted, so it fires with nobody in range.
+      const slot = DEFAULT_SKILL_BAR.indexOf("elementalist.armor-of-earth");
+      caster.room.send("intent", { kind: "use-skill", slot });
+      await waitFor(() => caster.received.length === 2, { label: "the recharge" });
+      const [started] = caster.received[1]?.slots ?? [];
+      expect(started?.slot).toBe(slot);
+      expect(started?.totalSeconds).toBe(15);
+      expect(started?.remainingSeconds).toBeGreaterThan(14);
+
+      // A second of plain countdown is the client's to predict.
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      expect(caster.received).toHaveLength(2);
+      expect(other.received).toHaveLength(1);
+
+      await caster.room.leave();
+      await other.room.leave();
+    });
   });
 });

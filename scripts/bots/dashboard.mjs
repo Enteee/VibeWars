@@ -9,35 +9,25 @@
  * The company is designed to run on a partial roster, but a pipeline that
  * silently stops at `In Review` because there is no reviewer looks identical
  * to a pipeline where everyone is just slow, and the difference matters.
+ *
+ * The dashboard window is three tmux panes, each running this with its
+ * section: `board`, `company` or `feed` (#165). No argument is `board`,
+ * which is also what running `claude-llc-dash` by hand shows. What each
+ * pane says is `dashboard-view.mjs`; this file reads and draws.
  */
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import { setTimeout as sleep } from "node:timers/promises";
 
 import { readBoardState } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { formatSpend, readSpend } from "./hub-spend.mjs";
-import { visible } from "./protocol.mjs";
+import { boardLines, companyLines, feedLines } from "./dashboard-view.mjs";
 
 const ROOT = process.env.VIBEWARS_BOT_ROOT ?? path.join(process.cwd(), ".bots");
 const BUS = path.join(ROOT, "bus");
 const HUB = path.join(ROOT, "hub");
-const REFRESH_MS = 20_000;
-
-/**
- * Which roles each column needs before work can leave it. Used to explain a
- * stalled board rather than to enforce anything.
- *
- * @type {Record<string, string[] | undefined>}
- */
-const COLUMN_OWNERS = {
-  Backlog: ["architect", "manager"],
-  Ready: ["developer-1", "developer-2"],
-  "In Progress": ["developer-1", "developer-2"],
-  "In Review": ["lead-dev"],
-  QA: ["perf-sec-qa", "qa-tester"],
-};
+const REFRESH_MS = 10_000;
 
 /**
  * A JSON file hubd writes, or `null` before it has written one.
@@ -58,15 +48,6 @@ function hubFile(name) {
   } catch {
     return null;
   }
-}
-
-/**
- * @param {number} at epoch milliseconds
- * @returns {string}
- */
-function hhmm(at) {
-  const time = new Date(at);
-  return `${String(time.getHours()).padStart(2, "0")}:${String(time.getMinutes()).padStart(2, "0")}`;
 }
 
 /**
@@ -153,121 +134,99 @@ function feed(limit) {
 
 /* -------------------------------------------------------------------------- */
 
-function render() {
-  const cfg = company();
-  const live = hired();
-  const absent = ROLES.filter((role) => !live.has(role));
+/** @typedef {"board" | "company" | "feed"} Section */
 
-  process.stdout.write("\u001B[2J\u001B[H");
-  console.log("VibeWars — the company");
-  console.log("=".repeat(72));
-  console.log("");
+/** @type {readonly Section[]} */
+const SECTIONS = ["board", "company", "feed"];
 
-  /* the board ------------------------------------------------------------- */
-  if (cfg === null) {
-    console.log("board: not set up yet — run claude-llc-init");
-  } else {
-    // hubd's copy of the board (hub-board.mjs); one in another shape is
-    // hubd's to discard, and shows here as no snapshot.
-    const snapshot = readBoardState(hubFile("board.json"));
-    /** @type {Record<string, { number: number, title: string }[]>} */
-    const byColumn = {};
-    for (const { item } of snapshot?.cards ?? []) {
-      const row = obj(item);
-      const content = obj(row.content);
-      const column = typeof row.status === "string" && row.status !== "" ? row.status : "(none)";
-      byColumn[column] ??= [];
-      byColumn[column].push({
-        number: typeof content.number === "number" ? content.number : 0,
-        title: typeof content.title === "string" ? content.title : "",
-      });
-    }
-
-    // The copy is only swept when someone reads the board, so an old sweep
-    // means a quiet company, not a broken dashboard.
-    console.log(
-      snapshot === null
-        ? "BOARD  (no snapshot yet — hubd writes one on the first board read)"
-        : `BOARD  as of ${hhmm(snapshot.at)}, read whole ${hhmm(snapshot.sweptAt)}`,
-    );
-    let total = 0;
-    for (const column of cfg.columns) {
-      const cards = byColumn[column] ?? [];
-      total += cards.length;
-      const owners = COLUMN_OWNERS[column] ?? [];
-      const blocked = owners.length > 0 && owners.every((role) => !live.has(role));
-      const note = cards.length > 0 && blocked ? "  <- nobody hired to move this" : "";
-      console.log(`  ${column.padEnd(13)} ${String(cards.length).padStart(3)}${note}`);
-      for (const card of cards.slice(0, 3)) {
-        console.log(`      #${String(card.number).padEnd(4)} ${card.title.slice(0, 48)}`);
-      }
-    }
-    if (total === 0) {
-      console.log("      (empty — tell the architect what you want built)");
-    }
+/**
+ * @param {string | undefined} arg
+ * @returns {Section}
+ */
+function sectionOf(arg) {
+  const found = SECTIONS.find((section) => section === arg);
+  if (arg !== undefined && found === undefined) {
+    throw new Error(`dashboard: unknown section ${arg}; one of ${SECTIONS.join(", ")}`);
   }
-
-  /* the GitHub budget ----------------------------------------------------- */
-  const budget = hubFile("ratelimit.json");
-  console.log("");
-  if (
-    budget === null ||
-    typeof budget.remaining !== "number" ||
-    typeof budget.limit !== "number" ||
-    typeof budget.resetAt !== "number"
-  ) {
-    console.log("GITHUB  budget unknown (hubd has not checked yet)");
-  } else {
-    const empty = budget.remaining === 0;
-    console.log(
-      `GITHUB  GraphQL ${String(budget.remaining)}/${String(budget.limit)} left, ` +
-        `resets ${hhmm(budget.resetAt)}${empty ? "  <- RATE-LIMITED, agents are waiting" : ""}`,
-    );
-    // Where it went, measured by hubd (#97).
-    console.log(formatSpend(readSpend(budget.spend)));
-  }
-
-  /* the roster ------------------------------------------------------------ */
-  console.log("");
-  console.log(`ROSTER  ${String(live.size)}/${String(ROLES.length)} hired`);
-  const columns = 3;
-  for (let i = 0; i < ROLES.length; i += columns) {
-    const row = ROLES.slice(i, i + columns)
-      .map((role) => `${live.has(role) ? "+" : "-"} ${role.padEnd(16)}`)
-      .join(" ");
-    console.log(`  ${row}`);
-  }
-  if (absent.length > 0) {
-    console.log("");
-    console.log(`  not hired yet: ${absent.join(", ")}`);
-    console.log("  (rate-limited? provision the rest later with: claude-bot <role>)");
-  }
-
-  /* the conversation ------------------------------------------------------ */
-  console.log("");
-  console.log("TELEGRAM");
-  const recent = feed(12);
-  if (recent.length === 0) {
-    console.log("  (nothing said yet)");
-  }
-  for (const line of recent) {
-    const when = line.ts === 0 ? "--:--" : new Date(line.ts).toISOString().slice(11, 16);
-    // Agent-written text, printed into the operator's tmux; see `visible`.
-    console.log(
-      `  ${when} ${visible(line.from)} -> ${visible(line.to)}: ${visible(line.text).slice(0, 44)}`,
-    );
-  }
-
-  console.log("");
-  console.log("=".repeat(72));
-  console.log("claude-llc stop  |  ctrl-b <n> to switch window  |  refreshes every 20s");
+  return found ?? "board";
 }
 
-for (;;) {
-  try {
-    render();
-  } catch (error) {
-    console.error(`dashboard: ${error instanceof Error ? error.message : "failed"}`);
+/** @returns {import("./dashboard-view.mjs").Budget | null} */
+function budget() {
+  const raw = hubFile("ratelimit.json");
+  if (
+    raw === null ||
+    typeof raw.remaining !== "number" ||
+    typeof raw.limit !== "number" ||
+    typeof raw.resetAt !== "number"
+  ) {
+    return null;
   }
-  await sleep(REFRESH_MS);
+  // Where it went, measured by hubd (#97).
+  return {
+    remaining: raw.remaining,
+    limit: raw.limit,
+    resetAt: raw.resetAt,
+    spend: formatSpend(readSpend(raw.spend)),
+  };
+}
+
+/**
+ * @param {Section} section
+ * @param {import("./dashboard-view.mjs").Pane} pane
+ * @returns {string[]}
+ */
+function linesOf(section, pane) {
+  switch (section) {
+    case "board": {
+      const cfg = company();
+      // hubd's copy of the board (hub-board.mjs); one in another shape is
+      // hubd's to discard, and shows here as no snapshot.
+      return boardLines(readBoardState(hubFile("board.json")), cfg?.columns ?? null, hired(), pane);
+    }
+    case "company":
+      return companyLines({ roles: ROLES, live: hired(), budget: budget() }, pane);
+    case "feed":
+      return feedLines(feed(pane.rows), pane);
+  }
+}
+
+/**
+ * One whole screen, drawn from the top. No newline after the last line:
+ * on the bottom row it would scroll the pane by one.
+ *
+ * @param {Section} section
+ */
+function render(section) {
+  // Not a TTY, as when piped: an ordinary terminal's size.
+  const pane = { rows: process.stdout.rows || 24, width: process.stdout.columns || 80 };
+  let lines;
+  try {
+    lines = linesOf(section, pane);
+  } catch (error) {
+    // A broken section shows in its own pane and leaves the others alone.
+    lines = [
+      `dashboard: ${error instanceof Error ? error.message : "failed"}`.slice(0, pane.width),
+    ];
+  }
+  process.stdout.write(`\u001B[H\u001B[2J${lines.join("\n")}`);
+}
+
+const section = sectionOf(process.argv[2]);
+/** @type {() => void} */
+let wake = () => undefined;
+// A resized pane redraws at once, at its new size, rather than wrapping
+// until the next refresh.
+process.on("SIGWINCH", () => {
+  wake();
+});
+for (;;) {
+  render(section);
+  await new Promise((resolve) => {
+    const timer = setTimeout(resolve, REFRESH_MS);
+    wake = () => {
+      clearTimeout(timer);
+      resolve(undefined);
+    };
+  });
 }

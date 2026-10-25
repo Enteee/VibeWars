@@ -14,10 +14,10 @@ import type { SoundId } from "./sound-ids.js";
  */
 export function soundsForCombat(message: CombatMessage, selfId: string): SoundId[] {
   const mine = message.casterSessionId === selfId;
-  // A status tick (burning, Regeneration) comes with no skill, up to 20
-  // times a second: a chime per tick drowns everything. Its health shows
-  // on the bar; only a death it causes is worth a sound.
-  const tick = message.skillId === "";
+  // A status tick (burning, Regeneration) comes up to 20 times a second:
+  // a chime per tick drowns everything. Its health shows on the bar; only
+  // a death it causes is worth a sound.
+  const tick = message.cause === "degeneration";
   const sounds: SoundId[] = [];
   for (const event of message.events) {
     if (tick && event.kind !== "death") {

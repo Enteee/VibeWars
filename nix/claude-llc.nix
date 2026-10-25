@@ -31,9 +31,9 @@ let
   '';
 
   # The org chart, in the order the windows are created: dashboard 0, then
-  # the manager 1 and the architect 2. The session opens on the manager,
-  # because the operator hands feature requests to the manager, who files
-  # them; the architect then specs them.
+  # the manager 1 and the architect 2. The session opens on the dashboard,
+  # which says what the company is doing at a glance (#165); the manager,
+  # where feature requests go, is one window over.
   roles = [
     "manager"
     "architect"
@@ -70,9 +70,10 @@ let
       claude-llc --help
 
     One tmux window per employee plus a dashboard. The session opens on the
-    manager's window, because that is where you describe what you want built:
-    say it to the manager and it becomes issues, which the architect specs and
-    the board carries to main without you.
+    dashboard: the board, the company and the Telegram feed. Window 1 is the
+    manager, where you describe what you want built: say it to the manager and
+    it becomes issues, which the architect specs and the board carries to main
+    without you.
 
     Running it again attaches to the company already running rather than
     starting a second one. Bottom-right of the status bar has clickable
@@ -295,8 +296,25 @@ let
         # The session. One window per employee, each running claude-bot, which
         # builds the sandbox and starts that role's Telegram sidecar.
         # ------------------------------------------------------------------------
+        # The dashboard is three titled panes (#165): BOARD and COMPANY side
+        # by side, the TELEGRAM feed full width along the bottom. Each runs
+        # dashboard.mjs with its section and redraws when its pane resizes.
         ${tmux} new-session -d -s "$SESSION" -n dashboard -c "$DEVENV_ROOT" \
-          "${node} ${llcScripts}/dashboard.mjs"
+          "${node} ${llcScripts}/dashboard.mjs board"
+        board_pane="$(${tmux} display-message -p -t "$SESSION:dashboard" '#{pane_id}')"
+        feed_pane="$(${tmux} split-window -v -l 30% -t "$board_pane" -P -F '#{pane_id}' \
+          -c "$DEVENV_ROOT" "${node} ${llcScripts}/dashboard.mjs feed")"
+        company_pane="$(${tmux} split-window -h -l 40% -t "$board_pane" -P -F '#{pane_id}' \
+          -c "$DEVENV_ROOT" "${node} ${llcScripts}/dashboard.mjs company")"
+        ${tmux} select-pane -t "$feed_pane" -T TELEGRAM
+        ${tmux} select-pane -t "$company_pane" -T COMPANY
+        ${tmux} select-pane -t "$board_pane" -T BOARD
+        # The 16 ANSI colours only, so a light terminal reads them too.
+        ${tmux} set-option -w -t "$SESSION:dashboard" pane-border-status top
+        ${tmux} set-option -w -t "$SESSION:dashboard" pane-border-format " #[bold]#{pane_title}#[nobold] "
+        ${tmux} set-option -w -t "$SESSION:dashboard" pane-border-lines heavy
+        ${tmux} set-option -w -t "$SESSION:dashboard" pane-border-style fg=blue
+        ${tmux} set-option -w -t "$SESSION:dashboard" pane-active-border-style fg=cyan
 
         for role in $ready; do
           if [ "$role" = manager ] && [ -n "$note" ]; then
@@ -322,21 +340,22 @@ let
         # ----------------------------------------------------------------------
         ${tmux} set-option -t "$SESSION" mouse on
         ${tmux} set-option -t "$SESSION" status-interval 5
+        ${tmux} set-option -t "$SESSION" status-style "bg=blue,fg=white"
+        ${tmux} set-option -t "$SESSION" window-status-format " #I:#W "
+        ${tmux} set-option -t "$SESSION" window-status-current-format " #I:#W "
+        ${tmux} set-option -t "$SESSION" window-status-current-style "bg=cyan,fg=black,bold"
         ${tmux} set-option -t "$SESSION" status-left "#[bold] VibeWars LLC #[default]"
         ${tmux} set-option -t "$SESSION" status-right \
           "#[range=user|detach] detach #[norange]|#[range=user|stop] stop #[norange] "
         ${tmux} source-file ${llcTmuxConf}
 
+        # Opens on the dashboard, a reboot's `claude-llc up` included: the
+        # operator comes back to what the company is doing.
+        ${tmux} select-window -t "$SESSION:dashboard"
+
         if [ "$attach" = 0 ]; then
           echo "claude-llc: the company is up; attach with claude-llc"
           exit 0
-        fi
-
-        # Opens on the manager, which is where you type.
-        if ${tmux} select-window -t "$SESSION:manager" 2>/dev/null; then
-          :
-        else
-          ${tmux} select-window -t "$SESSION:dashboard"
         fi
 
         exec ${tmux} attach-session -t "$SESSION"

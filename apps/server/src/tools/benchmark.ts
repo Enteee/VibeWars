@@ -204,8 +204,12 @@ async function runScenario(
     DEFAULT_MAP_ID,
     Array.from({ length: playerCount }, (_, i) => ({
       team: i % 2 === 0 ? 0 : 1,
+      name: `bench-${String(i)}`,
       build: undefined,
     })),
+    () => {
+      /* no lobby to tell */
+    },
   );
   for (const reservation of reservations) {
     const room = await new Client(endpoint).consumeSeatReservation(reservation);

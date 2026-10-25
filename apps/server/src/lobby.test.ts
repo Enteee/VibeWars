@@ -1,4 +1,5 @@
-import { Client } from "@colyseus/sdk";
+import { matchMaker } from "@colyseus/core";
+import { Client, type Room } from "@colyseus/sdk";
 import { createRng, seedFromString } from "@vibewars/game-core";
 import {
   PROTOCOL_MISMATCH_MESSAGE,
@@ -8,10 +9,12 @@ import {
   ROOM_LOBBY,
   isLobbyCode,
   normalizeLobbyCode,
+  type LobbyMatchStartingMessage,
 } from "@vibewars/game-protocol";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { generateLobbyCode, sanitizeName } from "./rooms/lobby-room.js";
+import { MatchRoom } from "./rooms/match-room.js";
 import { createGameServer, type GameServer } from "./server.js";
 import { findFreePort, waitFor } from "./testing/harness.js";
 
@@ -39,6 +42,148 @@ describe("sanitizeName", () => {
 
   it("clamps a very long name so one player cannot flood the screen", () => {
     expect(sanitizeName("x".repeat(500), "fallback")).toHaveLength(16);
+  });
+
+  // #174: names are drawn over every player's head, so anything that
+  // draws nothing, rearranges the line, or draws outside it goes.
+  it("strips bidi controls, so a name cannot reverse itself or what follows", () => {
+    expect(sanitizeName("\u202enimda", "fallback")).toBe("nimda");
+    const bidi = [
+      ...["\u202a", "\u202b", "\u202c", "\u202d", "\u202e"],
+      ...["\u2066", "\u2067", "\u2068", "\u2069"],
+      ...["\u200e", "\u200f", "\u061c"],
+    ];
+    for (const control of bidi) {
+      expect(sanitizeName(`a${control}b`, "fallback")).toBe("ab");
+    }
+  });
+
+  it("strips zero-width and other invisible characters", () => {
+    // The ZWJ between two letters is kept (#192); everything else here goes.
+    expect(sanitizeName("a\u200bb\u200dc\ufeff\u2060\u00ad", "fallback")).toBe("ab\u200dc");
+    expect(sanitizeName("\u200b\u200c\u200d\u2060", "fallback")).toBe("fallback");
+    expect(sanitizeName("a\u2028b\u2029c", "fallback")).toBe("abc");
+  });
+
+  it("strips the characters that are blank by design: Hangul fillers and the braille blank", () => {
+    for (const blank of ["\u115f", "\u1160", "\u3164", "\uffa0", "\u2800"]) {
+      expect(sanitizeName(`a${blank}b`, "fallback")).toBe("ab");
+      expect(sanitizeName(blank.repeat(3), "fallback")).toBe("fallback");
+    }
+  });
+
+  it("reads only the head of a huge name, and still cleans it", () => {
+    const huge = `\u202eEllie${"\u0301".repeat(1_000_000)}`;
+    expect(sanitizeName(huge, "fallback")).toBe("Elli\u00e9\u0301\u0301");
+  });
+
+  it("strips C1 controls", () => {
+    expect(sanitizeName("\u0085x\u009f", "fallback")).toBe("x");
+  });
+
+  it("keeps at most two combining marks on a letter, and none with nothing to sit on", () => {
+    // NFC first folds one mark into the letter: é, then two more.
+    expect(sanitizeName(`e${"\u0301".repeat(15)}`, "fallback")).toBe("\u00e9\u0301\u0301");
+    expect(sanitizeName("\u0301abc", "fallback")).toBe("abc");
+    expect(sanitizeName(" \u0301 \u0301abc", "fallback")).toBe("abc");
+  });
+
+  it("normalises to NFC, so an accented letter is one character", () => {
+    expect(sanitizeName("e\u0301", "fallback")).toBe("\u00e9");
+  });
+
+  it("collapses runs of whitespace", () => {
+    expect(sanitizeName("a    b", "fallback")).toBe("a b");
+    expect(sanitizeName("a\t\n b", "fallback")).toBe("a b");
+  });
+
+  it("clamps in code points, so an emoji is never cut in half", () => {
+    const name = sanitizeName(`${"x".repeat(15)}\u{1f600}\u{1f600}`, "fallback");
+    expect(name).toBe(`${"x".repeat(15)}\u{1f600}`);
+    expect(Array.from(name)).toHaveLength(16);
+    expect(name).not.toMatch(/\p{Cs}/u);
+  });
+
+  it("drops a lone surrogate the client sent", () => {
+    expect(sanitizeName("a\ud800b", "fallback")).toBe("ab");
+  });
+
+  it("does not end on a space the clamp exposed", () => {
+    expect(sanitizeName(`${"x".repeat(15)} y`, "fallback")).toBe("x".repeat(15));
+  });
+
+  // #192: the format characters real names need survive where they belong.
+  describe("joiners and flags", () => {
+    const ZWJ = String.fromCodePoint(0x200d);
+    const ZWNJ = String.fromCodePoint(0x200c);
+    const MAN = String.fromCodePoint(0x1f468);
+    const WOMAN = String.fromCodePoint(0x1f469);
+    const GIRL = String.fromCodePoint(0x1f467);
+    const BOY = String.fromCodePoint(0x1f466);
+    const FAMILY = [MAN, WOMAN, GIRL, BOY].join(ZWJ);
+    const BLACK_FLAG = String.fromCodePoint(0x1f3f4);
+    const CANCEL_TAG = String.fromCodePoint(0xe007f);
+    /** Tag characters spelling `letters`, as a subdivision flag does. */
+    const tags = (letters: string) =>
+      Array.from(letters, (letter) =>
+        String.fromCodePoint(0xe0000 + (letter.codePointAt(0) ?? 0)),
+      ).join("");
+    const ENGLAND = `${BLACK_FLAG}${tags("gbeng")}${CANCEL_TAG}`;
+    const graphemes = (name: string) =>
+      Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(name));
+
+    it("keeps a family emoji whole, as one grapheme", () => {
+      expect(sanitizeName(FAMILY, "fallback")).toBe(FAMILY);
+      expect(graphemes(FAMILY)).toHaveLength(1);
+    });
+
+    it("keeps the England flag", () => {
+      expect(sanitizeName(ENGLAND, "fallback")).toBe(ENGLAND);
+    });
+
+    it("keeps a ZWNJ inside a Persian name, and strips one at an edge or by a space", () => {
+      // می‌خواهم: mim, yeh, ZWNJ, then the rest of the word.
+      const before = String.fromCodePoint(0x0645, 0x06cc);
+      const after = String.fromCodePoint(0x062e, 0x0648, 0x0627, 0x0647, 0x0645);
+      expect(sanitizeName(`${before}${ZWNJ}${after}`, "fallback")).toBe(`${before}${ZWNJ}${after}`);
+      expect(sanitizeName(`${ZWNJ}${before}`, "fallback")).toBe(before);
+      expect(sanitizeName(`${before}${ZWNJ}`, "fallback")).toBe(before);
+      expect(sanitizeName(`${before} ${ZWNJ}${after}`, "fallback")).toBe(`${before} ${after}`);
+    });
+
+    it("strips a run of joiners, a stray tag, and an incomplete or overlong flag", () => {
+      expect(sanitizeName(`a${ZWJ}${ZWJ}b`, "fallback")).toBe("ab");
+      expect(sanitizeName(`a${tags("g")}`, "fallback")).toBe("a");
+      expect(sanitizeName(`${BLACK_FLAG}${tags("gbeng")}`, "fallback")).toBe(BLACK_FLAG);
+      expect(sanitizeName(`${BLACK_FLAG}${tags("abcdefg")}${CANCEL_TAG}`, "fallback")).toBe(
+        BLACK_FLAG,
+      );
+    });
+
+    it("cuts a chain of ten faces down to its first", () => {
+      expect(sanitizeName(Array(10).fill(MAN).join(ZWJ), "fallback")).toBe(MAN);
+    });
+
+    it("cuts any grapheme of more than 12 code points down to its first", () => {
+      const skinTone = String.fromCodePoint(0x1f3fb);
+      expect(sanitizeName(`a${skinTone.repeat(100)}`, "fallback")).toBe("a");
+      const leadingJamo = String.fromCodePoint(0x1100);
+      expect(sanitizeName(leadingJamo.repeat(120), "fallback")).toBe(leadingJamo);
+      // A family in four skin tones is 11 code points, and stays.
+      const tones = [0x1f3fb, 0x1f3fc, 0x1f3fd, 0x1f3fe].map((tone) => String.fromCodePoint(tone));
+      const toned = [MAN, WOMAN, GIRL, BOY].map((face, i) => `${face}${tones[i] ?? ""}`).join(ZWJ);
+      expect(sanitizeName(toned, "fallback")).toBe(toned);
+    });
+
+    it("clamps in whole graphemes, 48 code points in all: twenty families are six", () => {
+      expect(sanitizeName(FAMILY.repeat(20), "fallback")).toBe(FAMILY.repeat(6));
+    });
+
+    it("bounds a name of many wide graphemes, not just each one", () => {
+      // Eleven code points each, under the per-grapheme cap: four fit in 48.
+      const swatches = `a${String.fromCodePoint(0x1f3fb).repeat(10)}`;
+      expect(sanitizeName(swatches.repeat(11), "fallback")).toBe(swatches.repeat(4));
+    });
   });
 });
 
@@ -380,7 +525,7 @@ describe("playing more than one match in a lobby", () => {
     await server.gracefullyShutdown(false);
   });
 
-  /** Drive a lobby from fresh to a started match. */
+  /** Drive a lobby from fresh to a started match that both players are in. */
   async function startAMatch() {
     const host = await new Client(endpoint).create(ROOM_LOBBY, {
       protocolVersion: PROTOCOL_VERSION,
@@ -393,6 +538,11 @@ describe("playing more than one match in a lobby", () => {
     host.send("choose-team", { team: 0 });
     guest.send("choose-team", { team: 1 });
     await waitFor(() => host.state.players.get(guest.sessionId)?.team === 1, { label: "teams" });
+    return { host, guest, matches: await startAgain(host, guest) };
+  }
+
+  /** Ready both players, start, and walk each into the match. */
+  async function startAgain(host: Room, guest: Room): Promise<Room[]> {
     host.send("ready", { ready: true });
     guest.send("ready", { ready: true });
     await waitFor(
@@ -402,27 +552,108 @@ describe("playing more than one match in a lobby", () => {
       { label: "both ready" },
     );
 
+    const starting = [host, guest].map(
+      (room) =>
+        new Promise<LobbyMatchStartingMessage>((resolve) => {
+          room.onMessage("match-starting", resolve);
+        }),
+    );
     host.send("start-match", {});
+    const messages = await Promise.all(starting);
     await waitFor(() => host.state.phase === "in-match", { label: "match to start" });
-    return { host, guest };
+    return Promise.all(
+      messages.map(({ reservation }) => new Client(endpoint).consumeSeatReservation(reservation)),
+    );
   }
 
-  it("returns to waiting so a second match can be started", async () => {
-    const { host, guest } = await startAMatch();
-
-    host.send("return-to-lobby", {});
+  /** Everyone leaves the match, which is how one that never finished ends. */
+  async function leaveTheMatch(host: Room, matches: readonly Room[]): Promise<void> {
+    await Promise.all(matches.map((match) => match.leave()));
     await waitFor(() => host.state.phase === "waiting", { label: "return to waiting" });
+  }
+
+  /** Finish a match now, rather than after ten minutes of play. */
+  function finish(match: Room): void {
+    const room = matchMaker.getLocalRoomById(match.roomId);
+    if (!(room instanceof MatchRoom)) throw new Error("no match room");
+    room.endMatch();
+  }
+
+  it("returns to waiting the moment its match finishes, with readiness cleared and teams kept", async () => {
+    const { host, guest, matches } = await startAMatch();
+    const [match] = matches;
+    if (match === undefined) throw new Error("no match");
+
+    finish(match);
+    await waitFor(() => host.state.phase === "waiting", { label: "return to waiting" });
+
+    expect(host.state.players.get(host.sessionId)?.ready).toBe(false);
+    expect(host.state.players.get(guest.sessionId)?.ready).toBe(false);
+    expect(host.state.players.get(host.sessionId)?.team).toBe(0);
+    expect(host.state.players.get(guest.sessionId)?.team).toBe(1);
+
+    await Promise.all(matches.map((room) => room.leave()));
+    await guest.leave();
+    await host.leave();
+  });
+
+  it("lets its match finish quietly when the lobby itself is already gone", async () => {
+    const { host, guest, matches } = await startAMatch();
+    const [match] = matches;
+    if (match === undefined) throw new Error("no match");
+    await guest.leave();
+    await host.leave();
+
+    finish(match);
+    await waitFor(() => matches.every((room) => room.state.phase === "finished"), {
+      label: "the match to finish",
+    });
+    await Promise.all(matches.map((room) => room.leave()));
+  });
+
+  it("returns to waiting by itself once its match is over", async () => {
+    const { host, guest, matches } = await startAMatch();
+
+    await leaveTheMatch(host, matches);
 
     expect(host.state.phase).toBe("waiting");
     await guest.leave();
     await host.leave();
   });
 
-  it("clears readiness on return, so nobody is dragged into a match they did not confirm", async () => {
-    const { host, guest } = await startAMatch();
+  it("stays in its match while anyone is still playing it", async () => {
+    const { host, guest, matches } = await startAMatch();
+    const [hostMatch, guestMatch] = matches;
 
-    host.send("return-to-lobby", {});
+    // The host walking out early must not end the match for the guest.
+    await hostMatch?.leave();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(host.state.phase).toBe("in-match");
+
+    await guestMatch?.leave();
     await waitFor(() => host.state.phase === "waiting", { label: "return to waiting" });
+    await guest.leave();
+    await host.leave();
+  });
+
+  it("will not let a member reset a lobby whose match is still on (#44)", async () => {
+    const { host, guest, matches } = await startAMatch();
+
+    // There is no client message for it any more: an unregistered type
+    // gets its sender dropped, and the match carries on.
+    guest.send("return-to-lobby", {});
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(host.state.phase).toBe("in-match");
+    expect(host.state.players.get(host.sessionId)?.ready).toBe(true);
+
+    await leaveTheMatch(host, matches);
+    await host.leave();
+  });
+
+  it("clears readiness on return, so nobody is dragged into a match they did not confirm", async () => {
+    const { host, guest, matches } = await startAMatch();
+
+    await leaveTheMatch(host, matches);
 
     expect(host.state.players.get(host.sessionId)?.ready).toBe(false);
     expect(host.state.players.get(guest.sessionId)?.ready).toBe(false);
@@ -432,10 +663,9 @@ describe("playing more than one match in a lobby", () => {
   });
 
   it("keeps team assignments, so sides do not have to be re-picked every round", async () => {
-    const { host, guest } = await startAMatch();
+    const { host, guest, matches } = await startAMatch();
 
-    host.send("return-to-lobby", {});
-    await waitFor(() => host.state.phase === "waiting", { label: "return to waiting" });
+    await leaveTheMatch(host, matches);
 
     expect(host.state.players.get(host.sessionId)?.team).toBe(0);
     expect(host.state.players.get(guest.sessionId)?.team).toBe(1);
@@ -445,24 +675,13 @@ describe("playing more than one match in a lobby", () => {
   });
 
   it("can actually start a second match after returning", async () => {
-    const { host, guest } = await startAMatch();
+    const { host, guest, matches } = await startAMatch();
 
-    host.send("return-to-lobby", {});
-    await waitFor(() => host.state.phase === "waiting", { label: "return to waiting" });
-
-    host.send("ready", { ready: true });
-    guest.send("ready", { ready: true });
-    await waitFor(
-      () =>
-        host.state.players.get(host.sessionId)?.ready === true &&
-        host.state.players.get(guest.sessionId)?.ready === true,
-      { label: "both ready again" },
-    );
-
-    host.send("start-match", {});
-    await waitFor(() => host.state.phase === "in-match", { label: "second match to start" });
+    await leaveTheMatch(host, matches);
+    const second = await startAgain(host, guest);
 
     expect(host.state.phase).toBe("in-match");
+    await leaveTheMatch(host, second);
     await guest.leave();
     await host.leave();
   });

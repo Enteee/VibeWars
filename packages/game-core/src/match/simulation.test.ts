@@ -11,6 +11,7 @@ import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 const FIREBALL = "elementalist.fireball";
+const ORISON = "monk.orison-of-healing";
 const MATCH: MatchRules = { scoreToWin: 2, timeLimitSeconds: 600, respawnSeconds: 8 };
 
 function spec(id: string, team: number, spawn: Vec2, extra: Partial<ParticipantSpec> = {}) {
@@ -21,6 +22,7 @@ function spec(id: string, team: number, spawn: Vec2, extra: Partial<ParticipantS
     attributeRanks: new Map([["elementalist.fire-magic", 12]]),
     equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
     spawn,
+    facing: 0,
     ...extra,
   };
 }
@@ -78,8 +80,8 @@ describe("MatchSimulation step", () => {
         events: [{ kind: "damage", targetId: "b", amount: 91 }],
       },
     ]);
-    // Adrenaline only for damage to someone else.
-    expect(participant(sim, "a").combatant.adrenaline).toBe(RULES.resources.adrenalinePerHit);
+    // A spell earns no adrenaline, whatever it hits; only attacks do.
+    expect(participant(sim, "a").combatant.adrenaline).toBe(0);
   });
 
   it("says why a cast was refused, and nothing for an empty slot", () => {
@@ -114,6 +116,44 @@ describe("MatchSimulation step", () => {
     sim.setTarget("ally", "far");
     sim.requestSkill("ally", 0);
     expect(participant(sim, "ally").targetId).toBe("far");
+  });
+
+  it("an ally skill with an enemy or nothing selected heals the caster (#52)", () => {
+    const monk = (id: string, team: number, spawn: Vec2) =>
+      spec(id, team, spawn, {
+        skillBar: [ORISON],
+        attributeRanks: new Map([["monk.healing-prayers", 12]]),
+      });
+    const sim = new MatchSimulation({
+      seed: "orison",
+      participants: [
+        monk("a", 0, vec2(0, 0)),
+        monk("ally", 0, vec2(50, 0)),
+        monk("b", 1, vec2(200, 0)),
+      ],
+    });
+    const healed = (log: CombatLogEntry[]) =>
+      log.flatMap((entry) => entry.events).filter((event) => event.kind === "heal");
+    for (const id of ["a", "ally", "b"]) {
+      participant(sim, id).combatant.health = 100;
+    }
+
+    // An enemy selected: the heal is the caster's, and the enemy stays selected.
+    sim.setTarget("a", "b");
+    expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
+    expect(healed(stepFor(sim, 3.5)).map((event) => event.targetId)).toEqual(["a"]);
+    expect(participant(sim, "a").targetId).toBe("b");
+
+    // Nothing selected: still the caster, and nothing gets selected.
+    sim.setTarget("a", undefined);
+    expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
+    expect(healed(stepFor(sim, 3.5)).map((event) => event.targetId)).toEqual(["a"]);
+    expect(participant(sim, "a").targetId).toBeUndefined();
+
+    // An ally selected: the ally, as before.
+    sim.setTarget("a", "ally");
+    expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
+    expect(healed(stepFor(sim, 3.5)).map((event) => event.targetId)).toEqual(["ally"]);
   });
 
   it("removing a participant clears every target that pointed at them", () => {
@@ -250,6 +290,39 @@ describe("walls", () => {
     expect(participant(sim, "a").position.x).toBeLessThanOrEqual(
       100 - RULES.collision.playerRadius + 1e-6,
     );
+  });
+});
+
+describe("the map's edge (#244)", () => {
+  const R = RULES.collision.playerRadius;
+  // Arena Alpha's size, no walls.
+  const bounds = { width: 960, height: 640 };
+  const walker = (bounded: boolean) =>
+    new MatchSimulation({
+      seed: "edge",
+      bounds: bounded ? bounds : undefined,
+      participants: [spec("a", 0, vec2(480, 320))],
+    });
+  const walk = (sim: MatchSimulation, direction: Vec2, seconds: number) => {
+    sim.setInputDirection("a", direction);
+    stepFor(sim, seconds);
+    return participant(sim, "a").position;
+  };
+
+  it("stops a body at each of the four edges, the other axis unchanged", () => {
+    expect(walk(walker(true), vec2(-1, 0), 5)).toEqual(vec2(R, 320));
+    expect(walk(walker(true), vec2(1, 0), 5)).toEqual(vec2(960 - R, 320));
+    expect(walk(walker(true), vec2(0, -1), 5)).toEqual(vec2(480, R));
+    expect(walk(walker(true), vec2(0, 1), 5)).toEqual(vec2(480, 640 - R));
+  });
+
+  it("stops a body walking into a corner in the corner", () => {
+    expect(walk(walker(true), vec2(-1, -1), 5)).toEqual(vec2(R, R));
+  });
+
+  it("lets a body wander off with no bounds, as the headless tools want", () => {
+    const position = walk(walker(false), vec2(-1, 0), 5);
+    expect(position.x).toBeLessThan(0);
   });
 });
 

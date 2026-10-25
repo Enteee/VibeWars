@@ -22,10 +22,10 @@ the server decides what happens (brief §12, §32).
 
 ## Resources
 
-| Resource   | How you get it                                                   | What it gates     |
-| ---------- | ---------------------------------------------------------------- | ----------------- |
-| Energy     | Regenerates 2/second, up to 50                                   | Most skills       |
-| Adrenaline | +3 each time your skill or weapon swing damages an enemy, max 25 | Adrenaline skills |
+| Resource   | How you get it                                                                             | What it gates     |
+| ---------- | ------------------------------------------------------------------------------------------ | ----------------- |
+| Energy     | Regenerates 2/second, up to 50                                                             | Most skills       |
+| Adrenaline | +3 each time your attack skill or weapon swing damages an enemy (spells earn none), max 25 | Adrenaline skills |
 
 The split is deliberate. Energy rewards patience; adrenaline rewards
 staying in the fight and landing hits. An adrenaline skill you cannot
@@ -121,9 +121,9 @@ maximum, not the raw one.
 
 ## Weapon attacks
 
-Select a foe and attack it (Space, from #160): your character walks into weapon reach, then
+Select a foe and attack it (Space; with nothing selected, the nearest foe): your character walks into weapon reach and sight, round walls if it has to, then
 swings at the weapon's own interval until the foe dies, you move, or you
-cancel. Reach is checked exactly as a skill's range is, so wherever you
+cancel (Esc). A foe with no way to them ends the attack with "can't reach". Reach is checked exactly as a skill's range is, so wherever you
 can swing you can also use a melee skill. The first hit lands one full
 interval after you arrive. See [ADR-0026](../adr/0026-weapon-auto-attack.md).
 
@@ -134,11 +134,29 @@ damage. Daggers sometimes strike twice; a scythe also hits up to two foes
 adjacent to its target.
 
 **Skills interrupt and resume.** Starting a skill loses the swing in
-progress. When the skill is done, you go back to attacking the same
-target.
+progress. When a skill on a foe lands, you attack that foe, whether or
+not you were attacking before, and whoever you were. Any other skill,
+or a cast that is interrupted, goes back to the attack in progress.
+
+**Ranged weapons fire projectiles** (bows, spears, wands, staves). The
+shot is aimed where the target will be if it keeps moving as it has over
+the last `trackWindowSeconds` (0.6 s, a least-squares fit of its
+positions), and lands there after its flight time. If the target is
+still within its body plus `projectileTolerance` (10 units) of that
+point, it is hit with the weapon and rank the shot was released with;
+otherwise it dodged. So walking steadily in any direction, sideways
+included, does not dodge: stopping, turning or reversing after the
+release does. Tapping back and forth averages out to standing still and
+is hit; strafing in longer swings is a real change of course and dodges
+most shots. At 40 units a shot lands too soon to dodge. Blind is rolled at release, so
+a blinded shot misses at once and nothing flies. A shot still lands if
+its archer dies, and does nothing to a target that died in flight. Line of sight is checked once, at release: with a wall in the way the
+shot is "obstructed", nothing flies, and the next swing looks again.
+A shot whose flight would cross a wall stops at it and is "obstructed"
+too, so stepping behind a pillar dodges it. Shots fly through bodies.
+Melee swings are never obstructed.
 
 Not modelled: critical hits, attack-speed changes, block and evade.
-Ranged weapons hit at once for now; dodgeable projectiles are next (#159).
 
 ## Positioning
 

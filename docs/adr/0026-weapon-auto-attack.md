@@ -31,9 +31,9 @@ move the player a second time in the same tick.
 
 **One step per tick, after cast resolution and before behaviour.** It
 drops an attack whose target is gone, dead or no longer an enemy. It
-does nothing while casting. Out of reach, it steers straight at the
-target through the same movement code as input, so collision, walls and
-cripple apply (Q16). In reach, it advances the swing. A swing lands when
+does nothing while casting. Out of reach or out of sight, it approaches
+the target through the same movement code as input, so collision, walls
+and cripple apply (Q16). In reach and in sight, it advances the swing. A swing lands when
 `swingElapsed` reaches the weapon's interval, and keeps the remainder, so
 the rate stays exact at 20 Hz. The first hit lands one full interval
 after arriving.
@@ -43,6 +43,31 @@ uses.** It is not `range + target radius`. Weapon reach equals melee-skill
 reach (ADR-0012), and a different test would reopen the band where you
 can swing at someone but not Swift Chop them. Bodies collide at 28
 units, so 40 is always reachable.
+
+**The approach paths round walls (#211).** It first steered straight at
+the target. That failed QA: on Arena Alpha the teams spawn either side
+of the central wall, so Space at spawn walked a hero into the wall for
+good, and a bow stood behind it firing "obstructed" forever. Now it
+follows a visibility graph over wall corners (`pathing.ts`). Each wall
+endpoint offers the spots just off it, diagonally, that a body fits on,
+inside the map's bounds. Two spots are joined when a body walks from one
+to the other without coming closer to a wall than its radius. The graph
+is built once per map. Every tick the approach replans from where the
+hero stands, with A*, and walks toward the first waypoint, so a target
+that moves or a shove costs nothing extra. Every weapon approaches until
+it is in reach **and** in line of sight. Obstruction is checked at
+release, along the whole flight path (#215): the path is fixed then, so
+a shot led round a corner or at a target stepping behind a pillar is cut
+short at the wall and lands as `attack-obstructed`. Pillar-dancing, the
+GW1 counter to rangers, works. If there is no path, the
+attack ends with `attack-unreachable` ("can't reach"); today's maps have
+no such place, but an attack must never loop. Rejected alternatives:
+
+- a grid with A*, which needs a resolution choice and is coarser for no
+  gain on walls made of segments;
+- a navmesh, which is far more than a few rectangles need;
+- refusing Space when the straight line is blocked, which would make the
+  main key useless at spawn.
 
 **One function resolves a landed swing**, `resolveSwing` in
 `skills/weapon-attack.ts`, so #159's projectiles land through the same
@@ -79,7 +104,9 @@ skill used on an enemy starting or switching the attack to it (Q17), and
 adrenaline coming from attacks only (Q19). Both change live play, and
 neither should land before a player can see and stop an attack.
 
-**Ranged weapons resolve instantly** until #159 adds projectiles.
+**Ranged weapons fire projectiles** (#159): the swing landing releases a
+shot led ahead of the target, which hits or is dodged when it lands
+(`MatchSimulation.projectiles`, `skills/projectile.ts`).
 
 ## Simplifications
 
@@ -92,8 +119,9 @@ complete:
 - **Attack skills do not ride the weapon.** They keep their own damage,
   and count as attacks only for blind and adrenaline. Making them weapon
   damage plus a bonus is a later epic.
-- **No line of sight for weapons**, as for skills after activation.
-  Approach keeps walking at an invisible or walled-off target.
+- **Pathing is for the attack's approach only.** Player movement, and
+  skills cast out of range, do not path. Planning ignores other bodies;
+  collision handles shoves, and the next plan starts from there.
 - **Armor does not read the attack state.** ADR-0019 removed Brawler's
   Insignia because "while attacking" was never true. It now can be, but
   restoring the insignia is a follow-up. The gap is recorded in

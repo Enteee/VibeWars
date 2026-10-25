@@ -17,6 +17,13 @@ async function openMenu(page: Page, playerName: string): Promise<void> {
   await page.locator(".screen-menu input.field-input").first().fill(playerName);
 }
 
+/** Quit the match with the HUD's leave button, which asks first (#160). */
+async function leaveMatch(page: Page): Promise<void> {
+  const leave = page.locator(".hud-leave");
+  await leave.getByRole("button", { name: "leave match" }).click();
+  await leave.getByRole("button", { name: "yes" }).click();
+}
+
 /** Host a lobby and return the code the host is told to read out. */
 async function hostLobby(page: Page, playerName: string): Promise<string> {
   await openMenu(page, playerName);
@@ -87,6 +94,28 @@ test("a wrong code does not drop the player into someone else's lobby", async ({
     await hostContext.close();
     await guestContext.close();
   }
+});
+
+test("leaving a lobby puts the status bar back to ready", async ({ page }) => {
+  // The status used to keep saying "lobby CODE" on the menu (#206).
+  const code = await hostLobby(page, "Host");
+  await expect(page.locator("#status")).toHaveText(`lobby ${code}`);
+
+  await page.getByRole("button", { name: "leave" }).click();
+  await expect(page.getByRole("heading", { name: "vibewars" })).toBeVisible();
+  await expect(page.locator("#status")).toHaveText("ready");
+});
+
+test("a code with no lobby keeps 'could not join' in the status bar", async ({ page }) => {
+  // Back on the menu, but the error must not be reset to "ready".
+  await openMenu(page, "Lost");
+  await page.locator("input.code-input").fill("ZZZZ");
+  await page.getByRole("button", { name: "join", exact: true }).click();
+
+  await expect(page.locator(".screen-connection-problem")).toHaveText(
+    "No lobby with that code. Check the code and try again.",
+  );
+  await expect(page.locator("#status")).toHaveText("could not join");
 });
 
 test("the host starts a match and both players enter the arena", async ({ browser }) => {
@@ -176,6 +205,66 @@ test("a lobby match shows the score, the clock and both fighters", async ({ brow
   }
 });
 
+test("a player who quits early is told the match still runs, until it ends", async ({
+  browser,
+}) => {
+  // Back from a running match, the lobby used to look open and say "in
+  // match" in the status bar, while the server refused every click (#200).
+  const hostContext = await browser.newContext();
+  const guestContext = await browser.newContext();
+  const host = await hostContext.newPage();
+  const guest = await guestContext.newPage();
+
+  try {
+    const code = await hostLobby(host, "Host");
+
+    await openMenu(guest, "Guest");
+    await guest.locator("input.code-input").fill(code);
+    await guest.getByRole("button", { name: "join", exact: true }).click();
+    await expect(guest.locator(".screen-lobby")).toBeVisible();
+
+    await host.getByRole("button", { name: "join team 1" }).click();
+    await guest.getByRole("button", { name: "join team 2" }).click();
+    await host.getByRole("button", { name: "ready", exact: true }).click();
+    await guest.getByRole("button", { name: "ready", exact: true }).click();
+    await host.getByRole("button", { name: "start match" }).click();
+    await expect(host.locator("#viewport canvas")).toBeVisible();
+    await expect(guest.locator("#viewport canvas")).toBeVisible();
+
+    // The canvas shows before the join resolves, and the leave button only
+    // exists once the match view is up; "in match" is set right after that.
+    await expect(host.locator("#status")).toHaveText("in match");
+    await expect(guest.locator("#status")).toHaveText("in match");
+
+    // The host quits; the guest is still fighting.
+    await leaveMatch(host);
+    const running = host.locator(".lobby-running");
+    await expect(running).toHaveText(
+      "A match is still running. The lobby opens again when it ends.",
+    );
+    await expect(host.locator("#status")).toHaveText(`lobby ${code}`);
+    // Readiness is only cleared once the match is over, so it still reads "not ready".
+    await expect(host.getByRole("button", { name: "not ready" })).toBeDisabled();
+    await expect(host.getByRole("button", { name: "start match" })).toBeDisabled();
+    await expect(host.getByRole("button", { name: "join team 2" })).toBeDisabled();
+    // The server would drop a map change too, so the picker is locked as well.
+    await expect(host.locator(".lobby-map select")).toBeDisabled();
+    await expect(host.getByRole("button", { name: "leave" })).toBeEnabled();
+
+    // The last player leaves, the match is over, and the lobby opens.
+    await leaveMatch(guest);
+    await expect(running).toHaveCount(0);
+    await expect(guest.locator("#status")).toHaveText(`lobby ${code}`);
+    const ready = host.getByRole("button", { name: "ready", exact: true });
+    await expect(ready).toBeEnabled();
+    await expect(host.locator(".lobby-map select")).toBeEnabled();
+    await ready.click();
+    await expect(host.getByRole("button", { name: "not ready" })).toBeVisible();
+  } finally {
+    await hostContext.close();
+    await guestContext.close();
+  }
+});
 /**
  * Make this page behave like a tab left open across a deploy: every
  * create or join it makes claims a protocol version the server does not

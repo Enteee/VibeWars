@@ -45,6 +45,9 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "interrupted":
     case "interrupt-missed":
     case "attack-missed":
+    case "attack-dodged":
+    case "attack-obstructed":
+    case "attack-unreachable":
       return "control";
     case "death":
       return "death";
@@ -94,6 +97,12 @@ export function describeCombatEvent(
       return `${by} finds nothing to interrupt on ${target}`;
     case "attack-missed":
       return `${by} misses ${target}`;
+    case "attack-dodged":
+      return `${target} dodges ${by}`;
+    case "attack-obstructed":
+      return `${by} is obstructed on the way to ${target}`;
+    case "attack-unreachable":
+      return `${by} can't reach ${target}`;
   }
 }
 
@@ -218,6 +227,11 @@ export interface FloatingCue {
  * types, because the match view gets its events off the wire.
  */
 export function floatingCueFor(kind: string, amount: number | undefined): FloatingCue | undefined {
+  // A status ticks every sim tick, mostly for under a point; a "−0" tells
+  // the player nothing, and twenty a second would bury the real hits.
+  if ((kind === "damage" || kind === "heal") && Math.round(amount ?? 0) === 0) {
+    return undefined;
+  }
   switch (kind) {
     case "damage":
       // The sign says damage or heal; the colour only backs it up, so a
@@ -232,6 +246,15 @@ export function floatingCueFor(kind: string, amount: number | undefined): Floati
       // A blinded swing paid for and wasted: over the target, so the
       // attacker sees where it went (#6).
       return { text: "miss", tone: "neutral" };
+    case "attack-dodged":
+      // A shot that landed where the target would have been (#159).
+      return { text: "dodge", tone: "neutral" };
+    case "attack-obstructed":
+      // A wall between the bow and its target at release (#160).
+      return { text: "obstructed", tone: "neutral" };
+    case "attack-unreachable":
+      // No way round the walls; the attack has ended (#211).
+      return { text: "can't reach", tone: "neutral" };
     case "death":
       return { text: "defeated", tone: "damage" };
     default:

@@ -36,6 +36,41 @@ function button(label: string, className: string, onClick: () => void): HTMLButt
 /** The teams a player can pick. Two for now; the map decides capacity. */
 export const SELECTABLE_TEAMS = [0, 1] as const;
 
+export const MATCH_RUNNING_NOTICE = "A match is still running. The lobby opens again when it ends.";
+
+/**
+ * Which lobby controls work right now. Apart from the DOM so the rules
+ * can be tested without one.
+ *
+ * Outside "waiting" the server refuses every change but leaving (#44),
+ * so those controls are disabled. While the lobby's match runs, a line
+ * also says why: a player who quit early would otherwise face a lobby
+ * that looks open and ignores them. It goes once the phase is back to
+ * "waiting". "starting" gets no line, because no match is running yet.
+ */
+export interface LobbyControls {
+  readonly running: string | undefined;
+  readonly mapDisabled: boolean;
+  readonly teamsDisabled: boolean;
+  readonly readyDisabled: boolean;
+  readonly startDisabled: boolean;
+}
+
+export function lobbyControls(snapshot: LobbySnapshot): LobbyControls {
+  const waiting = snapshot.phase === "waiting";
+  const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
+  const assigned = snapshot.players.filter((p) => p.team >= 0);
+  return {
+    running: snapshot.phase === "in-match" ? MATCH_RUNNING_NOTICE : undefined,
+    mapDisabled: !waiting,
+    teamsDisabled: !waiting,
+    // Readiness is meaningless without a team, so the control is disabled
+    // rather than silently doing nothing when pressed.
+    readyDisabled: !waiting || self === undefined || self.team < 0,
+    startDisabled: !waiting || assigned.length === 0 || !assigned.every((p) => p.ready),
+  };
+}
+
 export function renderLobbyScreen(
   root: HTMLElement,
   snapshot: LobbySnapshot,
@@ -45,6 +80,7 @@ export function renderLobbyScreen(
 ): void {
   root.replaceChildren();
   const panel = h("div", "screen screen-lobby");
+  const controls = lobbyControls(snapshot);
 
   const header = h("div", "lobby-header");
   header.appendChild(h("span", "lobby-code-label", "lobby code"));
@@ -66,6 +102,7 @@ export function renderLobbyScreen(
       select.appendChild(option);
     }
     select.value = snapshot.mapId;
+    select.disabled = controls.mapDisabled;
     select.addEventListener("change", () => {
       callbacks.onSelectMap(select.value);
     });
@@ -104,11 +141,11 @@ export function renderLobbyScreen(
       column.appendChild(row);
     }
 
-    column.appendChild(
-      button(`join team ${String(team + 1)}`, "", () => {
-        callbacks.onChooseTeam(team);
-      }),
-    );
+    const join = button(`join team ${String(team + 1)}`, "", () => {
+      callbacks.onChooseTeam(team);
+    });
+    join.disabled = controls.teamsDisabled;
+    column.appendChild(join);
     teams.appendChild(column);
   }
   panel.appendChild(teams);
@@ -120,19 +157,21 @@ export function renderLobbyScreen(
     );
   }
 
+  // Nothing went wrong, so this is not a `screen-problem`.
+  if (controls.running !== undefined) {
+    panel.appendChild(h("div", "screen-info lobby-running", controls.running));
+  }
+
   const actions = h("div", "menu-row");
 
   const readyLabel = self?.ready === true ? "not ready" : "ready";
   const readyButton = button(readyLabel, "", callbacks.onToggleReady);
-  // Readiness is meaningless without a team, so the control is disabled
-  // rather than silently doing nothing when pressed.
-  readyButton.disabled = self === undefined || self.team < 0;
+  readyButton.disabled = controls.readyDisabled;
   actions.appendChild(readyButton);
 
   if (snapshot.isHost) {
-    const assigned = snapshot.players.filter((p) => p.team >= 0);
     const start = button("start match", "primary", callbacks.onStart);
-    start.disabled = assigned.length === 0 || !assigned.every((p) => p.ready);
+    start.disabled = controls.startDisabled;
     actions.appendChild(start);
   }
 

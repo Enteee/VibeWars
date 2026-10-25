@@ -13,10 +13,16 @@ import type { CastRefusedMessage, ClientIntent, MapDescriptor } from "@vibewars/
 
 export interface PlayerSnapshot {
   readonly sessionId: string;
+  /** The display name the server settled on; never the session id. */
+  readonly name: string;
   readonly x: number;
   readonly y: number;
+  /** Where the player faces, radians, `atan2` convention, 0 = +x (#187). */
+  readonly facing: number;
   /** Who this player is targeting, or `undefined` for no target. */
   readonly targetSessionId: string | undefined;
+  /** Who this player is attacking with their weapon, or `undefined` (#160). */
+  readonly attackTargetSessionId: string | undefined;
   readonly health: number;
   readonly maxHealth: number;
   readonly energy: number;
@@ -47,6 +53,24 @@ export interface MatchSnapshot {
   readonly winningTeam: number | undefined;
   /** "score", "time", or `undefined` while active. */
   readonly endReason: string | undefined;
+  /** Weapon shots in flight, oldest first (#160). */
+  readonly projectiles: readonly ProjectileSnapshot[];
+}
+
+/**
+ * A ranged weapon's shot, as released: it flies from `from` to `to` over
+ * `flightSeconds`, starting at `launchedAt` on the match clock.
+ */
+export interface ProjectileSnapshot {
+  readonly id: number;
+  /** The shooter's session id, for the side's tint. */
+  readonly attackerId: string;
+  /** The weapon at release, which picks the sprite. */
+  readonly weaponId: string;
+  readonly from: { readonly x: number; readonly y: number };
+  readonly to: { readonly x: number; readonly y: number };
+  readonly launchedAt: number;
+  readonly flightSeconds: number;
 }
 
 /** One slot of the server-assigned skill bar. */
@@ -59,8 +83,18 @@ export interface SkillSlot {
   readonly rechargeSeconds: number;
 }
 
+/** One slot's recharge: `remaining` is 0 when the skill is ready. */
+export interface SlotRecharge {
+  readonly remaining: number;
+  /** What the recharge started with, for the wipe's proportion. */
+  readonly total: number;
+}
+
 export interface CombatMessage {
   readonly casterSessionId: string;
+  /** What this was. Read this, never `skillId === ""`, to tell them apart. */
+  readonly cause: "skill" | "weapon" | "degeneration";
+  /** The skill, when `cause` is `"skill"`; `""` otherwise. */
   readonly skillId: string;
   /** Where an area skill landed, and how far it reached (#5). */
   readonly area?: { readonly x: number; readonly y: number; readonly radius: number };
@@ -84,5 +118,7 @@ export interface MatchConnection {
   onCombat(handler: (message: CombatMessage) => void): void;
   /** Why the server refused one of this player's casts, sent to them alone. */
   onCastRefused(handler: (message: CastRefusedMessage) => void): void;
+  /** This player's recharges right now, one entry per skill-bar slot (#152). */
+  getRecharges(): readonly SlotRecharge[];
   disconnect(): Promise<void>;
 }

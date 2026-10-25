@@ -4,19 +4,31 @@ import type { WallDescriptor } from "@vibewars/game-protocol";
 import { attachMatchSounds } from "./audio/match-sounds.js";
 import { saveMuted } from "./audio/mute-preference.js";
 import { soundPlayer } from "./audio/sound-player.js";
+import { attackKeyIntents, isAttacking } from "./input/attack-key.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
+import { nextTabTarget } from "./input/tab-target.js";
+import { skillSlotForKeyDown } from "./input/skill-keys.js";
 import { connectToMatch, type MatchTarget } from "./net/match-client.js";
 import type { MatchConnection, MatchSnapshot } from "./net/match-connection.js";
-import { actorAtPoint, type ArenaSnapshot, type RenderableWall } from "./render/arena-snapshot.js";
+import {
+  ACTOR_RADIUS,
+  actorAtPoint,
+  teamColour,
+  type ArenaSnapshot,
+  type RenderableWall,
+} from "./render/arena-snapshot.js";
 import { createArenaViewport } from "./render/arena-viewport.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
+import { projectileSprite } from "./render/projectiles.js";
 import {
   createHud,
   describeRefusal,
   flashMessage,
+  renderLeave,
   renderMute,
   renderSkillBar,
   updateHud,
+  updateRecharges,
 } from "./ui/hud.js";
 
 /**
@@ -67,14 +79,31 @@ export function toArenaSnapshot(
 
   return {
     walls,
+    clock: match.elapsedSeconds,
+    projectiles: match.projectiles.map((shot) => {
+      const shooter = match.players.find((player) => player.sessionId === shot.attackerId);
+      return {
+        id: shot.id,
+        sprite: projectileSprite(shot.weaponId),
+        from: shot.from,
+        to: shot.to,
+        launchedAt: shot.launchedAt,
+        flightSeconds: shot.flightSeconds,
+        // Tinted by side; a shooter who has left counts as the other side.
+        colour: teamColour(shooter !== undefined && shooter.team === self?.team ? "ally" : "enemy"),
+      };
+    }),
     // Render the target the *server* confirmed, not whatever was last
     // clicked — a click is only a request (brief §32).
     targetId: self?.targetSessionId,
     actors: match.players.map((player) => {
       return {
         id: player.sessionId,
+        name: player.name,
         position: { x: player.x, y: player.y },
-        radius: 14,
+        facing: player.facing,
+        weaponId: player.weaponId,
+        radius: ACTOR_RADIUS,
         team:
           player.sessionId === match.selfSessionId
             ? ("self" as const)
@@ -136,6 +165,8 @@ export async function startMatchView(
   };
   renderMute(hud, sounds.muted);
   hud.mute.addEventListener("click", toggleMute);
+  // Esc cancels an attack now, so leaving is a button that asks first (#160).
+  renderLeave(hud, callbacks.onLeave);
 
   const detachMovement = attachKeyboardMoveInput(window, (direction) => {
     if (direction.x === 0 && direction.y === 0) {
@@ -146,8 +177,39 @@ export async function startMatchView(
   });
 
   const handleKeyDown = (event: KeyboardEvent): void => {
+    if (event.key === "Tab") {
+      // Never the browser's focus cycle, during a match (#55).
+      event.preventDefault();
+      if (!event.repeat) {
+        const current = latestMatch.players.find(
+          (player) => player.sessionId === connection.selfSessionId,
+        )?.targetSessionId;
+        const next = nextTabTarget(
+          latestMatch.players,
+          connection.selfSessionId,
+          current,
+          event.shiftKey ? -1 : 1,
+        );
+        if (next !== undefined && next !== current) {
+          connection.sendIntent({ kind: "target", targetSessionId: next });
+        }
+      }
+      return;
+    }
+    if (event.key === " ") {
+      // Held Space auto-repeats; one attack is all it means (#160).
+      if (!event.repeat && !isTyping(event.target)) {
+        event.preventDefault();
+        for (const intent of attackKeyIntents(connection.getSnapshot())) {
+          connection.sendIntent(intent);
+        }
+      }
+      return;
+    }
     if (event.key === "Escape") {
-      callbacks.onLeave();
+      if (!event.repeat && isAttacking(connection.getSnapshot())) {
+        connection.sendIntent({ kind: "cancel-attack" });
+      }
       return;
     }
     if (event.key === "m" || event.key === "M") {
@@ -156,11 +218,8 @@ export async function startMatchView(
       }
       return;
     }
-    if (!/^[0-9]$/.test(event.key)) {
-      return;
-    }
-    const slot = event.key === "0" ? 9 : Number.parseInt(event.key, 10) - 1;
-    if (slot < connection.skillBar.length) {
+    const slot = skillSlotForKeyDown(event, connection.skillBar.length);
+    if (slot !== undefined) {
       useSkill(slot);
     }
   };
@@ -179,7 +238,7 @@ export async function startMatchView(
   });
   // A key that does nothing reads as a broken game; say why (issue #51).
   connection.onCastRefused((message) => {
-    flashMessage(hud, describeRefusal(message.reason));
+    flashMessage(hud, describeRefusal(message));
   });
 
   const offFrame = viewport.onFrame(() => {
@@ -195,6 +254,7 @@ export async function startMatchView(
     // permanently blank: the server tracked all three and the HUD could
     // draw all three, and nothing connected them.
     updateHud(hud, self, target, connection.skillBar, latestMatch);
+    updateRecharges(hud, connection.skillBar, connection.getRecharges());
   });
 
   const offPointer = viewport.onPointerDown((world) => {
@@ -217,6 +277,7 @@ export async function startMatchView(
       hud.scoreboard.remove();
       hud.result.remove();
       hud.mute.remove();
+      hud.leave.remove();
       viewport.destroy();
       await connection.disconnect();
     },
