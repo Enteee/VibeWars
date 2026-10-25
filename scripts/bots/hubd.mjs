@@ -66,7 +66,7 @@ import {
   renderView,
 } from "./hub-rest.mjs";
 import { BOARD_QUERY, costBetween, parseBoardPage, recordSpend } from "./hub-spend.mjs";
-import { obj } from "./protocol.mjs";
+import { SYSTEM, obj } from "./protocol.mjs";
 import {
   COMPANY_PATHSPECS,
   DRAIN_MS,
@@ -811,6 +811,21 @@ function writeAtomic(file, contents) {
 }
 
 /**
+ * Tell the whole company through the sidecar's system outbox. It arrives as a
+ * `link` line, which wakes a `tg wait`; an ordinary broadcast would not (#323).
+ *
+ * @param {string} name what the file is about, for whoever lists the outbox
+ * @param {string} text
+ * @returns {void}
+ */
+function tellCompany(name, text) {
+  const outbox = path.join(ROOT, "bus", SYSTEM, "outbox");
+  fs.mkdirSync(outbox, { recursive: true });
+  const file = `${String(Date.now())}-${name}.json`;
+  writeAtomic(path.join(outbox, file), JSON.stringify({ to: "all", text }));
+}
+
+/**
  * Take `next` as the board, and write it down for the dashboard and the
  * next start.
  *
@@ -1420,8 +1435,8 @@ async function changedSince(sha, cfg) {
  * A company reboot (#21): schedule it, abort it, or mark a role ready for
  * it. hubd only checks and records it, in `.bots/reboot.json`; the
  * supervisor, which watches the agents' restart loops, drains the company
- * and starts the restarter. What a schedule or an abort answers is the announcement, which
- * `company` broadcasts.
+ * and starts the restarter. A schedule or an abort is announced to everyone
+ * through the system outbox, so it wakes every `tg wait` (#323).
  *
  * @param {string} role
  * @param {string[]} argv `["request", reason]`, `["abort"]` or `["ready"]`
@@ -1438,12 +1453,9 @@ async function reboot(role, argv, cfg) {
     audit({ role, kind, argv, decision: "allowed" });
     if (argv[0] === "abort") {
       fs.rmSync(REBOOT, { force: true });
-      return {
-        allow: true,
-        code: 0,
-        stdout: `The company reboot is aborted (${role}). Carry on.\n`,
-        stderr: "",
-      };
+      const aborted = `The company reboot is aborted (${role}). Carry on.`;
+      tellCompany("reboot-aborted", aborted);
+      return { allow: true, code: 0, stdout: `${aborted}\n`, stderr: "" };
     }
     if (!pending.ready.includes(role)) {
       writeAtomic(REBOOT, JSON.stringify({ ...pending, ready: [...pending.ready, role] }));
@@ -1483,12 +1495,9 @@ async function reboot(role, argv, cfg) {
   };
   writeAtomic(REBOOT, JSON.stringify(scheduled));
   audit({ role, kind, argv, decision: "allowed" });
-  return {
-    allow: true,
-    code: 0,
-    stdout: `${announcement(scheduled, changed.subjects)}\n`,
-    stderr: "",
-  };
+  const announced = announcement(scheduled, changed.subjects);
+  tellCompany("reboot", announced);
+  return { allow: true, code: 0, stdout: `${announced}\n`, stderr: "" };
 }
 
 /**

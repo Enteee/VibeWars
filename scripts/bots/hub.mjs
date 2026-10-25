@@ -300,14 +300,5 @@ for (;;) {
   }
   process.stdout.write(stdout);
   process.exitCode = code;
-  if (request.kind === "reboot" && request.argv[0] !== "ready" && code === 0) {
-    // What hubd answers a scheduled or aborted reboot is the announcement:
-    // it goes to everyone, the operator included, as an ordinary broadcast.
-    const told = spawnSync("tg", ["broadcast", stdout.trim()], { stdio: "inherit" });
-    if (told.status !== 0) {
-      console.error("company: could not broadcast this; tell everyone with tg broadcast");
-      process.exitCode = 1;
-    }
-  }
   break;
 }

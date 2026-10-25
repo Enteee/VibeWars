@@ -122,3 +122,51 @@ describe("tg wait, under the ceiling or without a context file", () => {
     expect(wait(env, 1).stdout).toBe("(nothing new in 1s)\n");
   });
 });
+
+describe("tg wait, and General broadcasts (#323)", () => {
+  /**
+   * @param {string} text
+   * @param {boolean} broadcast
+   * @returns {string}
+   */
+  const line = (text, broadcast) =>
+    `${JSON.stringify({ ts: 1, from: "manager", kind: "peer", text, broadcast })}\n`;
+
+  /**
+   * @param {Record<string, string | undefined>} env
+   * @param {string[]} args
+   */
+  const tg = (env, args) =>
+    spawnSync(process.execPath, [TG, ...args], { env, encoding: "utf8" }).stdout;
+
+  it("times out on a plain broadcast, says so, and leaves it unread", () => {
+    const { dir, env } = bus();
+    fs.appendFileSync(path.join(dir, "inbox.jsonl"), line("FYI #9 merged", true));
+
+    expect(tg(env, ["wait", "--timeout", "1"])).toBe(
+      "(nothing for you in 1s; 1 General messages queued, tg inbox shows them)\n",
+    );
+    expect(tg(env, ["inbox"])).toContain("FYI #9 merged");
+  });
+
+  it("is ended by a later directed line, which prints both in order", () => {
+    const { dir, env } = bus();
+    const inbox = path.join(dir, "inbox.jsonl");
+    fs.appendFileSync(inbox, line("FYI #9 merged", true));
+    fs.appendFileSync(inbox, line("developer-1: take #12", true));
+    fs.appendFileSync(inbox, line("direct", false));
+
+    const out = tg(env, ["wait", "--timeout", "1"]);
+
+    expect(out.indexOf("FYI #9 merged")).toBeGreaterThan(-1);
+    expect(out.indexOf("FYI #9 merged")).toBeLessThan(out.indexOf("take #12"));
+    expect(out.indexOf("take #12")).toBeLessThan(out.indexOf("direct"));
+  });
+
+  it("--all wakes on a plain broadcast", () => {
+    const { dir, env } = bus();
+    fs.appendFileSync(path.join(dir, "inbox.jsonl"), line("FYI #9 merged", true));
+
+    expect(tg(env, ["wait", "--timeout", "1", "--all"])).toContain("FYI #9 merged");
+  });
+});

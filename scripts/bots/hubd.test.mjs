@@ -1235,6 +1235,14 @@ describe("hubd scheduling a company reboot", () => {
     expect(asked.code, String(asked.reason)).toBe(0);
     // The announcement company broadcasts, with what the reboot loads.
     expect(String(asked.stdout)).toMatch(/load #21\. It loads: change\./);
+    // And it wakes everyone, through the system outbox, once.
+    const outbox = path.join(hubd.root, "bus", "_system", "outbox");
+    const sent = fs.readdirSync(outbox).filter((n) => n.endsWith(".json"));
+    expect(sent).toHaveLength(1);
+    expect(JSON.parse(fs.readFileSync(path.join(outbox, sent[0] ?? ""), "utf8"))).toEqual({
+      to: "all",
+      text: String(asked.stdout).trim(),
+    });
     expect(JSON.parse(fs.readFileSync(record, "utf8"))).toMatchObject({
       reason: "load #21",
       by: "manager",
