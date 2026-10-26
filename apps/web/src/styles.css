@@ -939,11 +939,6 @@ body {
   flex: 1 1 auto;
 }
 
-.editor-problem {
-  color: #ffb3ae;
-  font-size: 0.85rem;
-}
-
 /* --- screen bar, inline confirmation, problems chip, toast (#566) ------- */
 
 .screen-bar {
@@ -1192,7 +1187,34 @@ body {
   box-shadow: 0 6px 20px rgb(0 0 0 / 45%);
 }
 
+/* Share (#572): one line of build text and Copy, under ⋯. */
+.editor-share {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 0.3rem);
+  right: 0;
+  display: flex;
+  gap: 0.3rem;
+  width: min(28rem, 80vw);
+  padding: 0.4rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 45%);
+}
+
+.editor-share-line {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.4rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-family: ui-monospace, "SFMono-Regular", "Menlo", monospace;
+  font-size: 0.8rem;
+}
+
 .editor-more[hidden],
+.editor-share[hidden],
 .problems-list[hidden] {
   display: none;
 }
@@ -1213,6 +1235,20 @@ body {
   border: 1px solid var(--line);
   border-left: 3px solid var(--accent);
   box-shadow: 0 10px 28px rgb(0 0 0 / 50%);
+}
+
+/* Why an import failed, listed as the problems chip lists it (#572). */
+.toast:has(.toast-problems) {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.toast .toast-problems {
+  position: static;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
 }
 
 /* --- options (#423) ----------------------------------------------------- */
@@ -1624,47 +1660,6 @@ body {
   margin-top: 0.35rem;
   color: var(--ink-dim);
   font-size: 0.9rem;
-}
-
-/* --- build sharing ------------------------------------------------------ */
-
-.editor-share {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #2a3350;
-}
-
-.editor-transfer {
-  width: 100%;
-  box-sizing: border-box;
-  resize: vertical;
-  padding: 0.5rem;
-  border: 1px solid #2a3350;
-  border-radius: 4px;
-  background: #0d1220;
-  color: #d7def0;
-  font-family: ui-monospace, "SFMono-Regular", "Menlo", monospace;
-  font-size: 0.8rem;
-  line-height: 1.4;
-}
-
-.editor-share-status {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.85rem;
-  min-height: 1.2em;
-}
-
-.editor-share-status.is-ok {
-  color: #9fe0a8;
-}
-
-.editor-share-status.is-error {
-  color: #ffb3ae;
 }
 
 /* --- build editor: two columns + skill library ------------------------- */
@@ -2633,6 +2628,40 @@ body {
 
 /* --- character roster on the entry screen ------------------------------ */
 
+/* Two columns (#579): who you play as on the left, Play on the right;
+   one above the other on a narrow window. */
+.screen.screen-menu {
+  width: min(960px, 100%);
+}
+
+.menu-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (width <= 45rem) {
+  .menu-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.menu-play {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.menu-column-title {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.78rem;
+  font-weight: normal;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .roster {
   display: flex;
   flex-direction: column;
@@ -2643,44 +2672,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-}
-
-.roster-row {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 0.45rem 0.6rem;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: var(--panel);
-  cursor: pointer;
-}
-
-.roster-row:hover {
-  border-color: var(--ink-dim);
-}
-
-/* Which character you take into the next match. */
-.roster-row.is-active {
-  border-color: var(--accent);
-  background: rgb(89 194 255 / 10%);
-}
-
-.roster-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.roster-name {
-  font-size: 0.9rem;
-}
-
-.roster-sub {
-  color: var(--ink-dim);
-  font-size: 0.75rem;
 }
 
 .roster-edit {

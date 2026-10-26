@@ -14,6 +14,7 @@ import {
   budgetSegments,
   canRaise,
   decodeDragSource,
+  describeProfessionChange,
   editorProblems,
   encodeDragSource,
   equipTarget,
@@ -179,6 +180,34 @@ describe("rank pips (#565)", () => {
     );
     expect(segments.reduce((sum, segment) => sum + segment.points, 0)).toBe(
       MINIMAL_GW_INSPIRED_PVP_V1.attributes.attributePointBudget - remainingPoints(character),
+    );
+  });
+});
+
+describe("describeProfessionChange (#569)", () => {
+  it("lists exactly what setProfessions dropped: ranks with points, skills, gear", () => {
+    let monk = setProfessions(newCharacter("c1"), "warrior", "monk");
+    monk = setRank(monk, "monk.healing-prayers", 9);
+    monk = setRank(monk, "warrior.strength", 8);
+    monk = setSkill(monk, 0, "monk.orison-of-healing");
+    const ranger = setProfessions(monk, "warrior", "ranger");
+    expect(describeProfessionChange(monk, ranger)).toEqual([
+      "Healing Prayers 9 (48 points back)",
+      "Orison of Healing from the bar",
+    ]);
+  });
+
+  it("names a swapped weapon and off-hand (#614)", () => {
+    const warrior = setProfessions(newCharacter("c1"), "warrior", undefined);
+    const mesmer = setProfessions(warrior, "mesmer", undefined);
+    expect(describeProfessionChange(warrior, mesmer)).toEqual(["Sword → Wand", "Shield → Focus"]);
+  });
+
+  it("is empty when nothing was dropped", () => {
+    let warrior = setProfessions(newCharacter("c1"), "warrior", "monk");
+    warrior = setRank(warrior, "warrior.strength", 8);
+    expect(describeProfessionChange(warrior, setProfessions(warrior, "warrior", "ranger"))).toEqual(
+      [],
     );
   });
 });
