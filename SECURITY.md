@@ -73,6 +73,12 @@ channels, as often as they like.
 - **Identity.** There are no accounts, passwords or tokens. A player is a
   peer in one room. Anyone can pick any name, and two players can share
   one. Do not build anything that relies on a name meaning a person.
+- **The character a lobby lists** (#580). Each peer says what character it
+  brings, by name and professions, and the lobby shows that. Nothing ties it
+  to the build the peer then sends in its match `hello`, so a peer can be
+  listed as a Monk and play a Warrior. The build is checked, and an illegal
+  one gets the house loadout. Its label is not checked. Do not use the
+  lobby's character for anything but display.
 - **Look-alike names.** A name may use letters from any script, so a
   Cyrillic "а" can pass for a Latin "a". There is no confusable detection.
   A ZWJ or ZWNJ between two letters is kept, because Persian and Indic
