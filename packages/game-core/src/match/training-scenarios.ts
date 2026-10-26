@@ -3,7 +3,8 @@ import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/r
 import { WEAPONS, type WeaponId } from "../equipment/weapons.js";
 import type { MissingMechanic } from "../skills/coverage.js";
 import { vec2, type Vec2 } from "../vec2.js";
-import type { Behaviour } from "./behaviour.js";
+import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import type { Behaviour, ResetPolicy } from "./behaviour.js";
 import { facingToward } from "./facing.js";
 import type { ParticipantSpec } from "./simulation.js";
 
@@ -28,6 +29,8 @@ import type { ParticipantSpec } from "./simulation.js";
  */
 export type TrainingMechanic =
   | "spell-damage"
+  | "conditions"
+  | "movement"
   | "armor"
   | "interrupts"
   | "auto-attacks"
@@ -65,6 +68,8 @@ export interface TrainingDummy {
    * unarmed.
    */
   readonly weapon?: WeaponId;
+  /** When it is put back as it started; without one, never. */
+  readonly reset?: ResetPolicy;
 }
 
 export interface TrainingScenario {
@@ -100,6 +105,21 @@ function target(id: string, label: string, position: Vec2, armor: number): Train
   };
 }
 
+/** An immortal longbow dummy that shoots the player (#111), as dodge-drill's. */
+function archer(id: string, label: string, position: Vec2): TrainingDummy {
+  return {
+    ...target(id, label, position, 60),
+    attributeRanks: { "ranger.marksmanship": 12 },
+    behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
+    weapon: "longbow",
+  };
+}
+
+/** Walking a lane from the top of the hall to the bottom and back (#111). */
+function lane(x: number): Behaviour {
+  return { kind: "patrol", waypoints: [vec2(x, 90), vec2(x, 330)], loop: true };
+}
+
 /** A dummy's gear: its armor, and its weapon if it has one. */
 function dummyEquipment(dummy: TrainingDummy): ResolvedEquipment {
   const unarmed = unarmedResolvedEquipment(dummy.armor);
@@ -129,6 +149,23 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     exercises: ["spell-damage"],
     knobs: [],
     dummies: [target("dummy", "Caster dummy (60 armor)", vec2(380, 210), 60)],
+  },
+  {
+    id: "time-to-kill",
+    label: "Time to kill",
+    teaches: "Your sustained output: how long a 500-health caster lasts, again and again.",
+    mapId: "training-hall",
+    exercises: ["spell-damage", "auto-attacks"],
+    knobs: [],
+    // Mortal, and back at full health 2 s after each death, so the meter
+    // reads kill after kill.
+    dummies: [
+      {
+        ...target("dummy", "Caster dummy (60 armor, mortal)", vec2(380, 210), 60),
+        maxHealth: MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth,
+        reset: { kind: "on-death", afterSeconds: 2 },
+      },
+    ],
   },
   {
     id: "armor-ladder",
@@ -176,6 +213,67 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
           targeting: { kind: "self" },
           gapSeconds: 0,
           firstLegal: true,
+        },
+      },
+    ],
+  },
+  {
+    id: "blind-denial",
+    label: "Blind",
+    teaches: "That a blinded attacker misses nine blows in ten: two archers, one of them blind.",
+    mapId: "training-hall",
+    exercises: ["auto-attacks", "conditions"],
+    knobs: [],
+    // Two longbows in reach of the spawn at (100, 210), as dodge-drill's
+    // archer. The blind one renews its own Blind before it runs out.
+    dummies: [
+      {
+        ...archer("blinded", "Blinded archer", vec2(480, 150)),
+        behaviour: {
+          kind: "parallel",
+          behaviours: [
+            { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
+            {
+              kind: "apply-status-cadence",
+              statusId: "blind",
+              durationSeconds: 10,
+              everySeconds: 5,
+              targeting: { kind: "self" },
+            },
+          ],
+        },
+      },
+      archer("control", "Archer (not blind)", vec2(480, 270)),
+    ],
+  },
+  {
+    id: "kiting-and-cripple",
+    label: "Kiting and Cripple",
+    teaches: "Leading a moving target, and that a crippled one walks at half speed.",
+    mapId: "training-hall",
+    exercises: ["movement", "conditions"],
+    knobs: [],
+    // Up and down two lanes in spell range of the spawn at (100, 210);
+    // the second keeps itself crippled.
+    dummies: [
+      {
+        ...target("runner", "Runner (60 armor)", vec2(380, 90), 60),
+        behaviour: lane(380),
+      },
+      {
+        ...target("crippled", "Crippled runner (60 armor)", vec2(460, 90), 60),
+        behaviour: {
+          kind: "parallel",
+          behaviours: [
+            lane(460),
+            {
+              kind: "apply-status-cadence",
+              statusId: "crippled",
+              durationSeconds: 10,
+              everySeconds: 5,
+              targeting: { kind: "self" },
+            },
+          ],
         },
       },
     ],
@@ -302,5 +400,6 @@ export function scenarioParticipants(
     maxHealth: dummy.maxHealth,
     baseEnergyPips: dummy.baseEnergyPips,
     behaviour: dummy.behaviour,
+    reset: dummy.reset,
   }));
 }
