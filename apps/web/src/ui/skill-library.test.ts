@@ -1,7 +1,13 @@
-import { IMPLEMENTED_SKILLS, getSkill } from "@vibewars/game-core";
+import { IMPLEMENTED_SKILLS, describeSkill, getSkill } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { filterEliteSkills, filterSkillsByName, groupSkillsByAttribute } from "./skill-library.js";
+import {
+  filterEliteSkills,
+  filterSkillsByText,
+  filterSkillsByType,
+  groupSkillsByAttribute,
+  skillTypesOf,
+} from "./skill-library.js";
 
 /**
  * The library's filtering and grouping, tested without a DOM — the same
@@ -19,16 +25,16 @@ function skills(...ids: string[]) {
   });
 }
 
-describe("filterSkillsByName", () => {
+describe("filterSkillsByText", () => {
   it("returns everything for an empty or blank query", () => {
-    expect(filterSkillsByName(IMPLEMENTED_SKILLS, "")).toHaveLength(IMPLEMENTED_SKILLS.length);
-    expect(filterSkillsByName(IMPLEMENTED_SKILLS, "   ")).toHaveLength(IMPLEMENTED_SKILLS.length);
+    expect(filterSkillsByText(IMPLEMENTED_SKILLS, "")).toHaveLength(IMPLEMENTED_SKILLS.length);
+    expect(filterSkillsByText(IMPLEMENTED_SKILLS, "   ")).toHaveLength(IMPLEMENTED_SKILLS.length);
   });
 
   it("matches a substring, not just a prefix", () => {
     // Players search for "arrow" or "heal" far more than a skill's
     // opening letters.
-    const matched = filterSkillsByName(IMPLEMENTED_SKILLS, "arrow");
+    const matched = filterSkillsByText(IMPLEMENTED_SKILLS, "arrow");
 
     expect(matched.length).toBeGreaterThan(0);
     for (const skill of matched) {
@@ -36,16 +42,26 @@ describe("filterSkillsByName", () => {
     }
   });
 
+  it("matches the description's text too (#567)", () => {
+    const matched = filterSkillsByText(IMPLEMENTED_SKILLS, "knocks down");
+    expect(matched.length).toBeGreaterThan(0);
+    for (const skill of matched) {
+      expect(skill.name.toLowerCase()).not.toContain("knocks down");
+      const lines = describeSkill(skill).effects.map((effect) => effect.text.toLowerCase());
+      expect(lines.some((line) => line.includes("knocks down"))).toBe(true);
+    }
+  });
+
   it("ignores case and surrounding whitespace", () => {
-    const lower = filterSkillsByName(IMPLEMENTED_SKILLS, "fireball");
-    const shouty = filterSkillsByName(IMPLEMENTED_SKILLS, "  FIREBALL ");
+    const lower = filterSkillsByText(IMPLEMENTED_SKILLS, "fireball");
+    const shouty = filterSkillsByText(IMPLEMENTED_SKILLS, "  FIREBALL ");
 
     expect(shouty).toEqual(lower);
     expect(lower.length).toBe(1);
   });
 
   it("returns nothing for a query that matches nothing", () => {
-    expect(filterSkillsByName(IMPLEMENTED_SKILLS, "zzzz")).toEqual([]);
+    expect(filterSkillsByText(IMPLEMENTED_SKILLS, "zzzz")).toEqual([]);
   });
 });
 
@@ -81,6 +97,28 @@ describe("groupSkillsByAttribute", () => {
 
   it("returns no groups for no skills", () => {
     expect(groupSkillsByAttribute([])).toEqual([]);
+  });
+});
+
+describe("filterSkillsByType (#567)", () => {
+  const listed = skills("warrior.backbreaker", "elementalist.fireball", "monk.orison-of-healing");
+
+  it("lists everything with no chip on", () => {
+    expect(filterSkillsByType(listed, new Set())).toEqual(listed);
+  });
+
+  it("lists the skills of every chip that is on, in order", () => {
+    expect(filterSkillsByType(listed, new Set(["spell"])).map((skill) => skill.id)).toEqual([
+      "elementalist.fireball",
+      "monk.orison-of-healing",
+    ]);
+    expect(
+      filterSkillsByType(listed, new Set(["attack", "spell"])).map((skill) => skill.id),
+    ).toEqual(listed.map((skill) => skill.id));
+  });
+
+  it("offers a chip only for a type the skills have, in the given order", () => {
+    expect(skillTypesOf(listed, ["hex", "spell", "attack"])).toEqual(["spell", "attack"]);
   });
 });
 

@@ -354,7 +354,7 @@ test("a saved character can be chosen and is taken into a match", async ({ page 
 
   await page.locator(".editor-row select").first().selectOption("elementalist");
   await pip(page.locator(".editor-attribute").first(), 1).click();
-  await page.locator(".skill-box").first().click();
+  await page.locator(".skill-box").first().locator(".skill-box-equip").click();
   await page.getByRole("button", { name: "save", exact: true }).click();
 
   // Saving returns to the entry screen, where the roster is. Clicking the
@@ -423,8 +423,11 @@ test("a second elite replaces the first on the bar, framed in gold, into the mat
   await expect(page.locator(".skill-box:not(.is-elite)")).toHaveCount(0);
   await page.locator(".skill-elite-filter input").uncheck();
 
-  await page.locator(".skill-box", { hasText: "Barrage" }).click();
-  await page.locator(".skill-box", { hasText: "Troll Unguent" }).click();
+  await page.locator(".skill-box", { hasText: "Barrage" }).locator(".skill-box-equip").click();
+  await page
+    .locator(".skill-box", { hasText: "Troll Unguent" })
+    .locator(".skill-box-equip")
+    .click();
   const slots = page.locator(".skill-slot");
   await expect(slots.nth(0)).toHaveClass(/is-elite/);
 
@@ -585,8 +588,11 @@ test("a skill can be dragged from the library onto a bar slot", async ({ page })
 test("dragging one slot onto another swaps them instead of losing a skill", async ({ page }) => {
   await openElementalist(page);
 
-  await page.locator(".skill-box", { hasText: "Fireball" }).click();
-  await page.locator(".skill-box", { hasText: "Orison of Healing" }).click();
+  await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
+  await page
+    .locator(".skill-box", { hasText: "Orison of Healing" })
+    .locator(".skill-box-equip")
+    .click();
   await expect(page.locator(".skill-slot").nth(0)).toContainText("Fireball");
   await expect(page.locator(".skill-slot").nth(1)).toContainText("Orison");
 
@@ -598,7 +604,7 @@ test("dragging one slot onto another swaps them instead of losing a skill", asyn
 
 test("a skill can be removed from the bar", async ({ page }) => {
   await openElementalist(page);
-  await page.locator(".skill-box", { hasText: "Fireball" }).click();
+  await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
   await expect(page.locator(".skill-slot").nth(0)).toContainText("Fireball");
 
   await page.locator(".skill-slot").nth(0).locator(".skill-slot-clear").click();
@@ -871,7 +877,9 @@ test("the skill library keeps its scroll through an equip, a rank, a profession 
   // Short, so even a two-profession library scrolls.
   await page.setViewportSize({ width: 1500, height: 500 });
   await openElementalist(page);
-  const top = await scrollLibrary(page, 100);
+  // Further down than the group the reshuffle below removes is tall, so
+  // the library has room to hold Fireball in place.
+  const top = await scrollLibrary(page, 200);
   expect(top).toBeGreaterThan(0);
 
   // A box already in view, so the click itself scrolls nothing.
@@ -884,7 +892,7 @@ test("the skill library keeps its scroll through an equip, a rank, a profession 
     });
     return box?.dataset.skillId ?? "";
   });
-  await page.locator(`.skill-box[data-skill-id="${inView}"]`).click();
+  await page.locator(`.skill-box[data-skill-id="${inView}"]`).locator(".skill-box-equip").click();
   await expect(page.locator(`.skill-box[data-skill-id="${inView}"]`)).toHaveClass(/is-equipped/);
   expect(await libraryScroll(page)).toBe(top);
 
@@ -1044,7 +1052,7 @@ async function fullBar(page: Page): Promise<void> {
   await newCharacter(page);
   await page.locator(".editor-row select").nth(1).selectOption("elementalist");
   for (let slot = 0; slot < 8; slot++) {
-    await page.locator(".skill-box:not(.is-equipped)").first().click();
+    await page.locator(".skill-box:not(.is-equipped)").first().locator(".skill-box-equip").click();
   }
   await expect(page.locator(".skill-slot.is-empty")).toHaveCount(0);
 }
@@ -1064,12 +1072,12 @@ test("the bar's slots carry the keymap's keys, and a library skill says where it
 
   const first = page.locator(".skill-box").first();
   await expect(first.locator(".skill-box-equip")).toHaveText(`Equip → ${slotLabel(0)}`);
-  await first.click();
-  // On the bar now: where, and no Equip; a second click moves nothing.
+  await first.locator(".skill-box-equip").click();
+  // On the bar now: where, and no Equip; a click on the card moves nothing.
   await expect(first.locator(".skill-box-on")).toHaveText(`on ${slotLabel(0)}`);
   await expect(first.locator(".skill-box-equip")).toBeHidden();
   const before = await barNames(page);
-  await first.click();
+  await first.locator(".skill-box-card").click();
   expect(await barNames(page)).toEqual(before);
   await expect(page.locator(".skill-box").nth(1).locator(".skill-box-equip")).toHaveText(
     `Equip → ${slotLabel(1)}`,
@@ -1143,7 +1151,7 @@ test("a skill key over a library skill equips it to that key's slot, but not whi
   const other = page.locator(".skill-box:not(.is-equipped)").first();
   const otherName = (await other.locator(".skill-box-name").textContent()) ?? "";
   await page.mouse.move(0, 0);
-  await other.focus();
+  await other.locator(".skill-box-card").focus();
   await page.keyboard.press(skillKey(3));
   await expect(page.locator(".skill-slot").nth(3).locator(".skill-slot-name")).toHaveText(
     otherName,
@@ -1164,4 +1172,88 @@ test("a skill key over a library skill equips it to that key's slot, but not whi
   await page.keyboard.press(skillKey(6));
   await expect(page.locator(".skill-slot").nth(6)).toHaveClass(/is-empty/);
   await expect(page.getByText("Discard changes?")).toBeVisible();
+});
+
+test("a library card opens its details inline with Enter, one at a time, its rank marked (#567)", async ({
+  page,
+}) => {
+  await openElementalist(page);
+  await pip(page.locator(".editor-attribute", { hasText: "Fire Magic" }), 3).click();
+  const fireball = page.locator('.skill-box[data-skill-id="elementalist.fireball"]');
+  // The number that matters at this rank, on the card itself.
+  await expect(fireball.locator(".skill-box-headline")).toHaveText(/^\d+ damage$/);
+
+  const card = fireball.locator(".skill-box-card");
+  await card.focus();
+  await page.keyboard.press("Enter");
+  await expect(card).toHaveAttribute("aria-expanded", "true");
+  const details = fireball.locator(".skill-box-details");
+  await expect(details).toBeVisible();
+  await expect(details.locator(".tip-effect").first()).toContainText("damage");
+  await expect(details.locator(".skill-scale-step")).toHaveCount(13);
+  await expect(details.locator(".skill-scale-step.is-current")).toHaveText("3");
+  // Opening the details equips nothing.
+  await expect(fireball).not.toHaveClass(/is-equipped/);
+
+  // Another card closes the first.
+  const other = page.locator('.skill-box[data-skill-id="monk.orison-of-healing"]');
+  await other.locator(".skill-box-card").click();
+  await expect(other.locator(".skill-box-details")).toBeVisible();
+  await expect(details).toBeHidden();
+  await expect(page.locator(".skill-box.is-open")).toHaveCount(1);
+
+  // A filter that takes the open card away closes it.
+  await page.locator(".skill-search").fill("fireball");
+  await expect(page.locator(".skill-box.is-open")).toHaveCount(0);
+  await page.locator(".skill-search").fill("");
+  await expect(page.locator(".skill-box.is-open")).toHaveCount(0);
+});
+
+test("Tab reaches the bar's slots and the library's cards (#567)", async ({ page }) => {
+  await openElementalist(page);
+  const slot = page.locator(".skill-slot").first();
+  await slot.focus();
+  await page.keyboard.press("Enter");
+  await expect(slot).toHaveClass(/is-selected/);
+  await page.keyboard.press("Tab");
+  await expect(page.locator(".skill-slot").nth(1)).toBeFocused();
+
+  const firstCard = page.locator(".skill-box-card").first();
+  await page.locator(".skill-search").focus();
+  // Past the elite toggle and the type chips, on to the first card.
+  for (let press = 0; press < 20; press++) {
+    if (await firstCard.evaluate((node) => node === document.activeElement)) {
+      break;
+    }
+    await page.keyboard.press("Tab");
+  }
+  await expect(firstCard).toBeFocused();
+});
+
+test("type chips filter the library, several at once, and search reads the text (#567)", async ({
+  page,
+}) => {
+  await openElementalist(page);
+  const names = page.locator(".skill-library .skill-box-name");
+  const all = await names.count();
+  const hex = page.locator(".skill-type-chip", { hasText: /^hex$/ });
+  const enchantment = page.locator(".skill-type-chip", { hasText: /^enchantment$/ });
+  await enchantment.click();
+  await expect(enchantment).toHaveAttribute("aria-pressed", "true");
+  const enchantments = await names.count();
+  expect(enchantments).toBeGreaterThan(0);
+  expect(enchantments).toBeLessThan(all);
+  await expect(names).toContainText(["Armor of Earth"]);
+
+  await hex.click();
+  expect(await names.count()).toBeGreaterThanOrEqual(enchantments);
+  await enchantment.click();
+  await hex.click();
+  expect(await names.count()).toBe(all);
+
+  // "heals" is in Orison of Healing's text, not its name.
+  await page.locator(".skill-search").fill("heals");
+  await expect(names).toContainText(["Orison of Healing"]);
+  await page.locator(".skill-search").fill("zzzz");
+  await expect(page.locator(".skill-library-empty")).toBeVisible();
 });
