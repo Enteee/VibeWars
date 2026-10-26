@@ -86,7 +86,13 @@ export function renderSkillDescription(
   row(stats, "cost", description.cost);
   row(stats, "cast", description.castTime);
   row(stats, "recharge", description.recharge);
-  row(stats, "target", `${description.targetText}, ${description.rangeText}`);
+  row(
+    stats,
+    "target",
+    description.rangeText === undefined
+      ? description.targetText
+      : `${description.targetText}, ${description.rangeText}`,
+  );
   node.appendChild(stats);
 }
 

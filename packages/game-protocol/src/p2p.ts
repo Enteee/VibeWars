@@ -75,6 +75,9 @@ export const MAX_WIRE_RANKS = 16;
 /** The highest rank an attribute reaches, runes included (game-core's MAX_EFFECTIVE_RANK). */
 export const MAX_WIRE_RANK = 15;
 
+/** The most net pips either way (game-core's MAX_PIPS, #504). */
+export const MAX_WIRE_PIPS = 10;
+
 /** The most walls a map holds, and points a polygon wall holds. */
 export const MAX_WIRE_WALLS = 1024;
 export const MAX_WIRE_POINTS = 256;
@@ -210,6 +213,12 @@ export interface WirePlayer {
   /** Seconds left lying down from a knockdown (#468); 0 standing. */
   readonly knockdownRemaining: number;
   /**
+   * Net health and energy regeneration (+) or degeneration (−), in pips,
+   * as the host applies them (#504): integers in ±`MAX_WIRE_PIPS`, 0 dead.
+   */
+  readonly healthPips: number;
+  readonly energyPips: number;
+  /**
    * The swing under way (#560): seconds into it, and its whole length, the
    * hit landing at the end. `swingTotal` is 0 when not attacking. The
    * weapon mark's pose follows them; nothing is predicted.
@@ -302,6 +311,8 @@ export interface WireCombat {
   readonly attributeId: string;
   /** Where an area skill landed, and how far it reached (#5). */
   readonly area: { readonly x: number; readonly y: number; readonly radius: number } | null;
+  /** A weapon swing that struck twice, so the off hand stabs too (#561); `false` otherwise. */
+  readonly doubleStrike: boolean;
   readonly events: readonly WireCombatEvent[];
 }
 
@@ -419,6 +430,10 @@ function isNumber(value: unknown): value is number {
 
 function isCount(value: unknown): value is number {
   return isNumber(value) && Number.isInteger(value) && value >= 0;
+}
+
+function isPips(value: unknown): value is number {
+  return isNumber(value) && Number.isInteger(value) && Math.abs(value) <= MAX_WIRE_PIPS;
 }
 
 /** A skill-bar slot index. */
@@ -685,7 +700,9 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isNumber(raw.castTotal) ||
     !isNumber(raw.swingElapsed) ||
     !isNumber(raw.swingTotal) ||
-    !isNumber(raw.knockdownRemaining)
+    !isNumber(raw.knockdownRemaining) ||
+    !isPips(raw.healthPips) ||
+    !isPips(raw.energyPips)
   ) {
     return undefined;
   }
@@ -719,6 +736,8 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         swingElapsed: raw.swingElapsed,
         swingTotal: raw.swingTotal,
         knockdownRemaining: raw.knockdownRemaining,
+        healthPips: raw.healthPips,
+        energyPips: raw.energyPips,
         statuses,
       };
 }
@@ -844,7 +863,9 @@ function parseWireCombat(value: unknown): WireCombat | undefined {
     !isString(raw.skillId) ||
     !isString(raw.weaponId) ||
     !isString(raw.attributeId) ||
-    (raw.cause === "attribute") !== (raw.attributeId !== "")
+    (raw.cause === "attribute") !== (raw.attributeId !== "") ||
+    typeof raw.doubleStrike !== "boolean" ||
+    (raw.doubleStrike && raw.cause !== "weapon")
   ) {
     return undefined;
   }
@@ -859,6 +880,7 @@ function parseWireCombat(value: unknown): WireCombat | undefined {
         weaponId: raw.weaponId,
         attributeId: raw.attributeId,
         area,
+        doubleStrike: raw.doubleStrike,
         events,
       };
 }

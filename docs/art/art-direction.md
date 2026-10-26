@@ -404,8 +404,12 @@ half wind, full wind, half strike, hit, early and late recovery.
   for the static mark. A pose that crosses it is a bug in `weapon-pose.ts`.
 - **The swing flash stays.** The arc at r + 6 still marks the hit for
   everyone; the weapon motion adds to it, it does not replace it.
-- **Fists and daggers alternate hands.** A thrown spear is gone from
-  release until halfway through recovery, then slides back in and fades.
+- **Fists and daggers alternate hands.** A double strike (#561) stabs
+  with both: the off hand lands 90 ms after the main hand, and the next
+  swing is the main hand's again. The host says which swings struck twice
+  only on the hit, so the off hand's wind-up and strike fit in those 90 ms.
+  A thrown spear is gone from release until halfway through recovery, then
+  slides back in and fades.
 - **Reduced motion.** Every mark stays at rest, as the swing flash does:
   the damage number reports the hit, so the motion is decoration.
 
@@ -492,7 +496,7 @@ hotkey.
 | `interrupted`  | `damage`, steady  | 0.6 alpha                 | `damage` `✕` | 400 ms                |
 | `cancelled`    | `ink-dim`, steady | 0.6 alpha                 | none         | 400 ms                |
 | `cast fill`    | as `casting`      | `ink` 18% from the bottom | none         | while it casts        |
-| `out of range` | none              | cost struck through       | `ink` `↔`    | while it cannot reach |
+| `out of range` | none              | as is                     | `ink` `↔`    | while it cannot reach |
 
 - **Casting** pulses its opacity from 0.65 to 1 over 700 ms. Under reduced
   motion the ring is steady.
@@ -505,9 +509,9 @@ hotkey.
   the cast does. It is not the recharge wipe, which is a dark clock sweep.
   It moves under reduced motion too: it is information, not decoration.
 - **Out of range** (#485): with a target selected, a slot whose skill cannot
-  reach it (too far, or a wall in the way) has its cost struck through and a
-  `↔` in `ink` after it. In the Training Ground row, which shows no cost, the
-  `↔` follows the name. A shape, never only a colour, and a hint, not a gate:
+  reach it (too far, or a wall in the way) shows a `↔` in `ink` after its cost,
+  which stays as it is: a struck cost would read as unaffordable. In the
+  Training Ground row, which shows no cost, the `↔` follows the name. A shape, never only a colour, and a hint, not a gate:
   it combines with the unaffordable dimming.
 - **The `✕` must win at a glance.** On the HUD it is about half the slot's
   height (1.9rem), centred over the name and cased in `bg`. In the Training

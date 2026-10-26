@@ -98,11 +98,11 @@ describe("describeSkill", () => {
     expect(describeSkill(skill("warrior.sever-artery-lite")).cost).toContain("adrenaline");
   });
 
-  it("says Self for a self-cast rather than inventing a range", () => {
+  it("says Self once for a self-cast, with no range of its own", () => {
     const described = describeSkill(skill("elementalist.armor-of-earth"));
 
     expect(described.targetText).toBe("Self");
-    expect(described.rangeText).toBe("Self");
+    expect(described.rangeText).toBeUndefined();
   });
 
   it("says Another ally for a skill that cannot target its caster (#503)", () => {

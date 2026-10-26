@@ -13,6 +13,7 @@ import {
   MAX_LOBBY_PLAYERS,
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_COMBATS,
+  MAX_WIRE_PIPS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_STATUSES,
   MAX_WIRE_STATUS_INDEX,
@@ -116,6 +117,9 @@ function player(index: number): WirePlayer {
     swingElapsed: rounded(3),
     swingTotal: rounded(3),
     knockdownRemaining: rounded(2),
+    // The longest a pip count is on the wire.
+    healthPips: -MAX_WIRE_PIPS,
+    energyPips: -MAX_WIRE_PIPS,
     statuses: WIRE_STATUSES,
   };
 }
@@ -224,6 +228,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       weaponId: WEAPON_ID,
       attributeId: ATTRIBUTE_ID,
       area: { x: FLOAT, y: FLOAT, radius: 200 },
+      doubleStrike: false,
       events: Array.from({ length: 6 }, (_, i) => hit(i + 1, extra)).flat(),
     };
     // Each swing twice, each striking three foes.
@@ -234,6 +239,8 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       weaponId: WEAPON_ID,
       attributeId: ATTRIBUTE_ID,
       area: null,
+      // `false` is a byte longer than `true`: the worst case on the wire.
+      doubleStrike: false,
       events: [0, 1, 2].flatMap((foe) => [...hit(foe, extra), ...hit(foe, extra)]),
     }));
     return [area, ...swings];

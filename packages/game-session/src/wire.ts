@@ -223,6 +223,7 @@ export function wireCombat(log: readonly CombatLogEntry[]): WireCombat[] {
         weaponId: entry.weaponId ?? "",
         attributeId: entry.attributeId ?? "",
         area: entry.area ?? null,
+        doubleStrike: entry.doubleStrike,
         events: entry.events.map(wireEvent),
       },
     ];
@@ -278,6 +279,7 @@ export function combatMessage(combat: WireCombat): CombatMessage {
     skillId: combat.skillId,
     weaponId: combat.weaponId,
     attributeId: combat.attributeId,
+    doubleStrike: combat.doubleStrike,
     events,
   };
   return combat.area === null ? message : { ...message, area: combat.area };
@@ -334,6 +336,8 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     swingElapsed: player.swingElapsed,
     swingTotal: player.swingTotal,
     knockdownRemaining: player.knockdownRemaining,
+    healthPips: player.healthPips,
+    energyPips: player.energyPips,
     statuses,
   };
 }

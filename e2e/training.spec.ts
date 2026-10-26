@@ -971,3 +971,14 @@ test("(34) Backbreaker lays the melee dummy flat until it rises (#545)", async (
   // Up again after its 4 s, drawn from the snapshot alone.
   await expect.poll(pixel, { timeout: 15_000 }).toEqual(standing);
 });
+
+test("(35) the bars show net regeneration as arrows: an Elementalist's 4 energy pips (#504)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  const energy = page.locator(".training-bar-energy .vital-pips");
+  await expect(energy).toHaveText("››››");
+  await expect(energy).toHaveClass(/is-regen/);
+  // Full health and nothing on you: no health arrows.
+  await expect(page.locator(".training-bar-health .vital-pips")).toBeHidden();
+});

@@ -610,3 +610,74 @@ test("the target frame shows the target's health and the skill it casts, filling
   await expect(cast).toBeHidden({ timeout: 5_000 });
   await opponent.close();
 });
+
+test("the HUD's energy bar shows its regeneration as arrows (#504)", async ({ page }) => {
+  await startSoloMatch(page);
+  // The house build is an Elementalist's 4 pips (join-loadout.ts).
+  await expect(page.locator(".hud-bar-energy .vital-pips")).toHaveText("››››");
+  await expect(page.locator(".hud-bar-health .vital-pips")).toBeHidden();
+});
+
+test("an RMB drag pans; a left click then walks to the panned point; letting go comes back (#442)", async ({
+  page,
+}) => {
+  // Narrow and tall, so the arena is wider than the view and the pan has
+  // room: every arena today fits a 16:9 window's view across.
+  await page.setViewportSize({ width: 600, height: 900 });
+  const canvas = await startSoloMatch(page);
+  const stage = page.locator("#viewport");
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+  const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  const cameraX = async (): Promise<number> =>
+    Number(((await stage.getAttribute("data-camera")) ?? "").split(",")[0]);
+
+  // The pointer at the centre leans the camera nowhere; then Close.
+  await page.mouse.move(centre.x, centre.y);
+  for (const _ of [1, 2]) {
+    await page.waitForTimeout(200);
+    await page.mouse.wheel(0, -100);
+  }
+  await expect(stage).toHaveAttribute("data-zoom-step", "Close");
+  // Right, to the middle of arena-alpha (960 wide), clear of its edges.
+  await page.keyboard.down(key("move-right"));
+  await expect.poll(cameraX, { timeout: 15_000 }).toBeGreaterThan(400);
+  await page.keyboard.up(key("move-right"));
+  let last = NaN;
+  await expect
+    .poll(
+      async () => {
+        const now = await cameraX();
+        const settled = now === last;
+        last = now;
+        return settled;
+      },
+      { intervals: [300] },
+    )
+    .toBe(true);
+  const { zoom } = await projection(stage, canvas);
+  const before = await cameraX();
+
+  // Hold RMB and drag 100 px right: the view looks right by 100 px.
+  await page.mouse.down({ button: "right" });
+  await page.mouse.move(centre.x + 50, centre.y, { steps: 5 });
+  await page.mouse.move(centre.x + 100, centre.y, { steps: 5 });
+  const panned = before + 100 / zoom;
+  await expect.poll(cameraX).toBeGreaterThan(panned - 3);
+  expect(await cameraX()).toBeLessThan(panned + 3);
+
+  // RMB still held, a left click walks to the point under the pointer,
+  // 100 px right of the panned centre; the view keeps its offset from you.
+  const goal = panned + 100 / zoom;
+  await page.mouse.down({ button: "left" });
+  await page.mouse.up({ button: "left" });
+  await expect.poll(cameraX, { timeout: 10_000 }).toBeGreaterThan(goal + 100 / zoom - 3);
+
+  // Let go, the pointer back at the centre: the view is on you, at the goal, within 1 s.
+  await page.mouse.up({ button: "right" });
+  await page.mouse.move(centre.x, centre.y);
+  await expect.poll(cameraX, { timeout: 1_000 }).toBeLessThan(goal + 5);
+  expect(await cameraX()).toBeGreaterThan(goal - 5);
+});

@@ -39,6 +39,8 @@ export interface CombatLogEntry {
   readonly attributeId: string | undefined;
   /** Where an area skill landed, and how far it reached. */
   readonly area: { readonly x: number; readonly y: number; readonly radius: number } | undefined;
+  /** A weapon swing that struck twice (#561); `false` on every other entry. */
+  readonly doubleStrike: boolean;
   readonly events: readonly CombatEvent[];
 }
 

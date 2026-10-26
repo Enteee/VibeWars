@@ -1,7 +1,8 @@
 import type { Intensity } from "../music/director.js";
 
 /**
- * The now-playing toast (#372): "♪ <title>", top left in a match, bottom left on a menu, for a few
+ * The now-playing toast (#372): "♪ <title>", top left in a match, bottom left on a menu, bottom
+ * right in the build editor with the Training Ground (#591), for a few
  * seconds whenever the track changes. Not in a fight: at intensity 2 or
  * more the player has better things to read.
  */

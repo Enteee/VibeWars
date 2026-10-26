@@ -243,18 +243,21 @@ function handsPose(
   geometry: WeaponMarkGeometry,
   q: Pose,
   hit: number,
+  offHand: Pose | undefined,
 ): WeaponMarkLayout {
-  // Each hit is the other hand's: even hits the right, odd the left.
+  // Each hit is the other hand's: even hits the right, odd the left. The
+  // other hand moves only for a double strike's second stab (#561).
   const rightActive = hit % 2 === 0;
   const place = (line: readonly Point[]): Point[] => {
     const right = isRight(line);
-    if (right !== rightActive) {
+    const hand = right === rightActive ? q : offHand;
+    if (hand === undefined) {
       return [...line];
     }
     // The left hand mirrors the right across the facing.
     return right
-      ? transform(line, m.pivot, q)
-      : transform(line, p(m.pivot.x, -m.pivot.y), { ...q, dy: -q.dy });
+      ? transform(line, m.pivot, hand)
+      : transform(line, p(m.pivot.x, -m.pivot.y), { ...hand, dy: -hand.dy });
   };
   return {
     strokes: geometry.strokes.map(place),
@@ -323,20 +326,22 @@ function bowPose(
 
 /**
  * The mark of `weaponId` at `clip`, in the local frame. `hit` counts the
- * hits so far, so two-handed fists and daggers alternate hands. At rest it
- * is the static `WEAPON_MARK_GEOMETRY`.
+ * hits so far, so two-handed fists and daggers alternate hands; `offHand`
+ * is the other hand's clip in a double strike, which only they show. At
+ * rest it is the static `WEAPON_MARK_GEOMETRY`.
  */
 export function weaponPose(
   weaponId: WeaponMarkId,
   clip: AttackClip,
   hit: number,
+  offHand?: AttackClip,
 ): WeaponMarkLayout {
   const m = WEAPON_MOTION[weaponId];
   const geometry = WEAPON_MARK_GEOMETRY[weaponId];
   const q = poseOf(m, clip);
   switch (m.motion) {
     case "hands":
-      return handsPose(m, geometry, q, hit);
+      return handsPose(m, geometry, q, hit, offHand === undefined ? undefined : poseOf(m, offHand));
     case "accent":
       return accentPose(m, geometry, q);
     case "bow":

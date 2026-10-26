@@ -39,6 +39,8 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    healthPips: 0,
+    energyPips: 0,
     statuses: [],
     ...extra,
   };
@@ -74,6 +76,7 @@ function hit(caster: string, target: string): CombatMessage {
     skillId: "x",
     weaponId: "",
     attributeId: "",
+    doubleStrike: false,
     events: [{ kind: "damage", targetId: target, amount: 9, critical: false }],
   };
 }

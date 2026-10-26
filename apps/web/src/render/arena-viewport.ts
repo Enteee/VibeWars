@@ -6,10 +6,10 @@ import type { ArenaScene } from "./arena-scene.js";
 import { WHEEL_IDLE, feedWheel, type CameraView, type Cover, type Size } from "./camera-rig.js";
 import { buttonChanges, type MouseButton } from "./pointer-buttons.js";
 
-/** One mouse button going down or up over the arena (#438). */
+/** One mouse button going down or up over the arena (#438), or moving while held (#442). */
 export interface ButtonEvent {
   readonly button: MouseButton;
-  readonly phase: "down" | "up";
+  readonly phase: "down" | "up" | "move";
   /** Where, in world units. */
   readonly world: Vec2;
   /** Where, in CSS pixels from the canvas's top-left corner. */
@@ -25,8 +25,9 @@ export interface ArenaViewport {
    * A mouse button went down or up over the arena, a chorded press
    * included (#438); returns the unsubscribe. Only a press that began
    * over the arena counts, and its release arrives wherever the pointer
-   * is by then. A tap is the left button. The browser's menu does not
-   * open over the arena.
+   * is by then. While it is held, every pointer move is a `"move"` of it
+   * (#442). A tap is the left button. The browser's menu does not open
+   * over the arena.
    */
   onButton(handler: (event: ButtonEvent) => void): () => void;
   /**
@@ -136,12 +137,19 @@ export async function createArenaViewport(parent: HTMLElement): Promise<ArenaVie
       const canvas = game.canvas;
       let held = 0;
       let last: { world: Vec2; screen: Vec2 } = { world: vec2(0, 0), screen: vec2(0, 0) };
-      const emit = (pressed: readonly MouseButton[], released: readonly MouseButton[]): void => {
+      const emit = (
+        pressed: readonly MouseButton[],
+        released: readonly MouseButton[],
+        moved: readonly MouseButton[],
+      ): void => {
         for (const button of pressed) {
           handler({ button, phase: "down", ...last });
         }
         for (const button of released) {
           handler({ button, phase: "up", ...last });
+        }
+        for (const button of moved) {
+          handler({ button, phase: "move", ...last });
         }
       };
       const onPointer = (event: PointerEvent): void => {
@@ -159,16 +167,19 @@ export async function createArenaViewport(parent: HTMLElement): Promise<ArenaVie
           screen: vec2(event.clientX - bounds.left, event.clientY - bounds.top),
         };
         const { pressed, released } = buttonChanges(held, event.buttons);
+        // What was held before and still is: it moved, if this was a move.
+        const moved =
+          event.type === "pointermove" ? buttonChanges(0, held & event.buttons).pressed : [];
         held = event.buttons & 7;
         if (event.type === "pointerdown") {
           canvas.setPointerCapture(event.pointerId);
         }
-        emit(pressed, released);
+        emit(pressed, released, moved);
       };
       const releaseAll = (): void => {
         const { released } = buttonChanges(held, 0);
         held = 0;
-        emit([], released);
+        emit([], released, []);
       };
       const onContextMenu = (event: MouseEvent): void => {
         event.preventDefault();

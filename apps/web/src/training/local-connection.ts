@@ -4,6 +4,7 @@ import {
   drainAccumulator,
   swingProgress,
   type MatchSimulation,
+  type NetPips,
   type Participant,
   type ProfessionId,
   type ResolvedLoadout,
@@ -59,6 +60,7 @@ function toPlayerSnapshot(
   participant: Participant,
   name: string,
   professions: Professions,
+  pips: NetPips,
 ): PlayerSnapshot {
   const { combatant } = participant;
   const activeCast = combatant.cast.activeCast;
@@ -90,6 +92,8 @@ function toPlayerSnapshot(
     swingElapsed: swing.elapsed,
     swingTotal: swing.total,
     knockdownRemaining: combatant.knockdownRemaining,
+    healthPips: pips.health,
+    energyPips: pips.energy,
     statuses: wireStatuses(combatant.statuses.active).map((status) => status.id),
   };
 }
@@ -134,11 +138,10 @@ export function createLocalConnection(options: {
       const skillId = entry.skillId ?? "";
       const weaponId = entry.weaponId ?? "";
       const attributeId = entry.attributeId ?? "";
-      const events = entry.events;
+      const { doubleStrike, events } = entry;
+      const base = { casterSessionId, cause, skillId, weaponId, attributeId, doubleStrike, events };
       const message: CombatMessage =
-        entry.area === undefined
-          ? { casterSessionId, cause, skillId, weaponId, attributeId, events }
-          : { casterSessionId, cause, skillId, weaponId, attributeId, events, area: entry.area };
+        entry.area === undefined ? base : { ...base, area: entry.area };
       for (const handler of combatHandlers) {
         handler(message);
       }
@@ -176,7 +179,12 @@ export function createLocalConnection(options: {
       return {
         selfSessionId: selfId,
         players: [...simulation.participants()].map((participant) =>
-          toPlayerSnapshot(participant, nameOf(participant.id), professionsOf(participant.id)),
+          toPlayerSnapshot(
+            participant,
+            nameOf(participant.id),
+            professionsOf(participant.id),
+            simulation.pips(participant),
+          ),
         ),
         scoreTeam0: simulation.score.byTeam.get(0) ?? 0,
         scoreTeam1: simulation.score.byTeam.get(1) ?? 0,

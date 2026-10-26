@@ -6,7 +6,15 @@ import { hitsForCombat, soundsForCombat, soundsForSnapshot } from "./combat-soun
 const ME = "me";
 
 function message(casterSessionId: string, events: CombatMessage["events"]): CombatMessage {
-  return { casterSessionId, cause: "skill", skillId: "x", weaponId: "", attributeId: "", events };
+  return {
+    casterSessionId,
+    cause: "skill",
+    skillId: "x",
+    weaponId: "",
+    attributeId: "",
+    doubleStrike: false,
+    events,
+  };
 }
 
 describe("soundsForCombat", () => {
@@ -79,6 +87,7 @@ describe("soundsForCombat", () => {
       skillId: "",
       weaponId: "",
       attributeId: "",
+      doubleStrike: false,
       events: [{ kind: "damage", targetId: ME, amount: 1, critical: false }],
     };
     const regen: CombatMessage = {
@@ -87,6 +96,7 @@ describe("soundsForCombat", () => {
       skillId: "",
       weaponId: "",
       attributeId: "",
+      doubleStrike: false,
       events: [{ kind: "heal", targetId: ME, amount: 1 }],
     };
     const fatal: CombatMessage = {
@@ -95,6 +105,7 @@ describe("soundsForCombat", () => {
       skillId: "",
       weaponId: "",
       attributeId: "",
+      doubleStrike: false,
       events: [
         { kind: "damage", targetId: ME, amount: 1, critical: false },
         { kind: "death", targetId: ME },
@@ -112,6 +123,7 @@ describe("soundsForCombat", () => {
       skillId: "",
       weaponId: "sword",
       attributeId: "",
+      doubleStrike: false,
       events: [{ kind: "damage", targetId: "foe", amount: 12, critical: false }],
     };
     expect(soundsForCombat(swing, ME)).toEqual(["hit-dealt"]);
@@ -156,6 +168,7 @@ describe("hitsForCombat (#370)", () => {
       skillId: "",
       weaponId: "",
       attributeId: "",
+      doubleStrike: false,
       events: [{ kind: "damage", targetId: ME, amount: 1, critical: false }],
     };
     const elsewhere = message("foe", [
@@ -195,6 +208,8 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    healthPips: 0,
+    energyPips: 0,
     statuses: [],
     ...extra,
   };

@@ -177,6 +177,7 @@ describe("MatchSimulation step", () => {
         skillId: FIREBALL,
         weaponId: undefined,
         area: undefined,
+        doubleStrike: false,
         events: [],
       },
     ]);
@@ -190,6 +191,7 @@ describe("MatchSimulation step", () => {
         weaponId: undefined,
         // Fireball's splash, centred on b, who stands alone in it.
         area: { x: 200, y: 0, radius: 81 },
+        doubleStrike: false,
         events: [{ kind: "damage", targetId: "b", amount: 91, critical: false }],
       },
     ]);
@@ -346,6 +348,7 @@ describe("previously uncovered branches", () => {
         cause: "degeneration",
         sourceId: "b",
         skillId: undefined,
+        doubleStrike: false,
         events: [
           {
             kind: "damage",
@@ -848,6 +851,7 @@ describe("moving cancels a cast (#279)", () => {
         skillId: FIREBALL,
         weaponId: undefined,
         area: undefined,
+        doubleStrike: false,
         events: [{ kind: "cancelled", targetId: "a", skillId: FIREBALL }],
       },
     ]);
@@ -974,6 +978,7 @@ describe("Cancel Action cancels the cast and the attack (#300)", () => {
         skillId: FIREBALL,
         weaponId: undefined,
         area: undefined,
+        doubleStrike: false,
         events: [{ kind: "cancelled", targetId: "a", skillId: FIREBALL }],
       },
     ]);

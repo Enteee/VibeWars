@@ -67,6 +67,7 @@ import {
 } from "./combat-readouts.js";
 import { describeRefusal, MESSAGE_SECONDS } from "./hud.js";
 import { isEliteSkill, skillBadgeHtml } from "./icons.js";
+import { pipsElement, renderPips } from "./pips.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import {
   castFill,
@@ -130,12 +131,19 @@ const TAKES_KEYBOARD = "input, textarea, select, [contenteditable]:not([contente
 /** Thrown when there is nothing to train on; the editor then stays two columns. */
 export class TrainingUnavailableError extends Error {}
 
-function vitalBar(kind: string): { root: HTMLElement; fill: HTMLElement; label: HTMLElement } {
+function vitalBar(kind: string): {
+  root: HTMLElement;
+  fill: HTMLElement;
+  label: HTMLElement;
+  pips: HTMLElement;
+} {
   const root = h("div", `training-bar training-bar-${kind}`);
   const fill = h("div", "training-bar-fill");
   const label = h("span", "training-bar-label");
-  root.append(fill, label);
-  return { root, fill, label };
+  // Net regeneration or degeneration, as on the match HUD (#504).
+  const pips = pipsElement();
+  root.append(fill, label, pips);
+  return { root, fill, label, pips };
 }
 
 interface Session {
@@ -398,6 +406,8 @@ export function createTrainingPanel(): TrainingPanel {
     health.label.textContent = `${String(self.health)} / ${String(self.maxHealth)}`;
     energy.fill.style.width = fraction(self.energy, self.maxEnergy);
     energy.label.textContent = `${String(self.energy)} / ${String(self.maxEnergy)}`;
+    renderPips(health.pips, self.healthPips);
+    renderPips(energy.pips, self.energyPips);
     adrenaline.textContent =
       `adrenaline ${String(self.adrenaline)}` +
       (self.attackTargetSessionId === undefined ? "" : " · attacking");
@@ -716,7 +726,7 @@ export function createTrainingPanel(): TrainingPanel {
       session.sounds.snapshot(latestMatch);
       session.music.snapshot(latestMatch);
       const self = latestMatch.players.find((player) => player.sessionId === SELF_ID);
-      follow.frame(deltaSeconds, self === undefined ? undefined : { x: self.x, y: self.y });
+      follow.frame(deltaSeconds, self);
       latestArena = withNames(
         toArenaSnapshot(latestMatch, session.walls),
         created.pointerWorld(),
@@ -730,22 +740,25 @@ export function createTrainingPanel(): TrainingPanel {
         paintMeter();
       }
     });
-    offPointer = created.onButton(({ button, phase, world }) => {
+    // As in a match (#438, #442): the left button walks, a right click
+    // picks, a right drag pans.
+    follow.onSecondaryClick((world) => {
       if (session === undefined) {
         return;
       }
-      // As in a match (#438): the left button walks, the right one picks.
-      if (button === "right" && phase === "up") {
-        const intents = secondaryClickIntents(
-          session.connection.getSnapshot(),
-          latestArena,
-          world,
-          doubleClick,
-          performance.now(),
-        );
-        for (const intent of intents) {
-          session.connection.sendIntent(intent);
-        }
+      const intents = secondaryClickIntents(
+        session.connection.getSnapshot(),
+        latestArena,
+        world,
+        doubleClick,
+        performance.now(),
+      );
+      for (const intent of intents) {
+        session.connection.sendIntent(intent);
+      }
+    });
+    offPointer = created.onButton(({ button, phase, world }) => {
+      if (session === undefined) {
         return;
       }
       // The stage's capturing listener ran first, so this click's arming

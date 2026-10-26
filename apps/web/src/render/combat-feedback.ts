@@ -26,6 +26,8 @@ export interface FloatingTextSink {
   addFloatingText(text: FloatingText): void;
   addAreaFlash(flash: AreaFlash): void;
   addSwingFlash(flash: SwingFlash): void;
+  /** An actor's swing struck twice: its off hand stabs too (#561). */
+  struckTwice(actorId: string): void;
 }
 
 const COLOURS: Record<FloatingCue["tone"], number> = {
@@ -90,6 +92,9 @@ export function showCombatFeedback(
   if (swing !== undefined) {
     nextSwingId += 1;
     scene.addSwingFlash({ id: nextSwingId, ...swing });
+  }
+  if (message.doubleStrike) {
+    scene.struckTwice(message.casterSessionId);
   }
 
   if (message.area !== undefined) {

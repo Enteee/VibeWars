@@ -7,6 +7,7 @@ import {
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_RADIUS,
+  MAX_WIRE_PIPS,
   MAX_WIRE_RANK,
   MAX_WIRE_RANKS,
   MAX_WIRE_SLOTS,
@@ -121,6 +122,8 @@ const player: WirePlayer = {
   swingElapsed: 0.4,
   swingTotal: 1.75,
   knockdownRemaining: 2.5,
+  healthPips: -3,
+  energyPips: 4,
   statuses: [3],
 };
 
@@ -163,6 +166,7 @@ const combat: WireCombat = {
   weaponId: "",
   attributeId: "",
   area: { x: 300, y: 200, radius: 80 },
+  doubleStrike: false,
   events: [
     {
       kind: "damage",
@@ -196,7 +200,7 @@ const combat: WireCombat = {
 
 const combatBatch: WireCombatBatch = [
   combat,
-  { ...combat, cause: "weapon", skillId: "", weaponId: "sword", area: null },
+  { ...combat, cause: "weapon", skillId: "", weaponId: "daggers", area: null, doubleStrike: true },
   {
     ...combat,
     cause: "attribute",
@@ -412,6 +416,14 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
       { ...snapshot, players: [{ ...player, [field]: undefined }] },
     ],
   ),
+  ...(["healthPips", "energyPips"] as const).flatMap(
+    (field): [string, (value: unknown) => unknown, unknown][] =>
+      [undefined, 1.5, MAX_WIRE_PIPS + 1, -MAX_WIRE_PIPS - 1, "3"].map((value) => [
+        `snapshot with a player's ${field} ${String(value)} (#504)`,
+        parseWireSnapshotPart,
+        { ...snapshot, players: [{ ...player, [field]: value }] },
+      ]),
+  ),
   [
     "snapshot with a player missing knockdownRemaining (#545)",
     parseWireSnapshotPart,
@@ -597,6 +609,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     [{ ...combatBatch[2], attributeId: "" }],
   ],
   ["a skill combat with an attribute", parseWireCombatBatch, [{ ...combat, attributeId: "x" }]],
+  [
+    "combat with no double-strike flag (#561)",
+    parseWireCombatBatch,
+    [{ ...combat, doubleStrike: undefined }],
+  ],
+  [
+    "a skill combat that struck twice (#561)",
+    parseWireCombatBatch,
+    [{ ...combat, doubleStrike: true }],
+  ],
 ];
 
 describe("the P2P channels (#82)", () => {

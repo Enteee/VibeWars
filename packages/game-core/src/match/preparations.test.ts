@@ -55,7 +55,7 @@ function swing(attacker: Combatant, target: Combatant, seed = 1): CombatEvent[] 
     rng: createRng(seed),
     rules: RULES.combat,
     exposed: NOWHERE,
-  });
+  }).events;
 }
 
 describe("Apply Poison on a blow (#525)", () => {
