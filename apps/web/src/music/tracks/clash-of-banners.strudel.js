@@ -20,10 +20,10 @@ let whistle = arrange([8, tune], [8, tune.add(2)], [8, tune.rev()], [8, tune.add
 stack(
   // 0: sixteenth-note string pulse on the root, a bass line
   n("0 0 [0 7] 0 0 [0 7] 0 0 0 [0 7] 0 [4 3] 0 0 [2 0]".add("<0 0 1 0 0 0 -1 0 0 2 0 0 -2 0 0 3>")).scale("a2:dorian")
-    .s("sawtooth").decay(.1).sustain(0).release(.05).gain(.45).lpf(ref(() => 600 + INTENSITY * 500)).orbit(2),
+    .s("sawtooth").decay(.1).sustain(0).release(.05).gain(.45).lpf(ref(() => 600 + INTENSITY * 500)).roomsize(6).orbit(2),
   chord(P).voicing().mode("below:e4")
     .s("supersaw").unison(3).detune(.2).attack(.1).release(.6).gain(.22)
-    .lpf(1400).room(.4).orbit(2),
+    .lpf(1400).room(.4).roomsize(6).orbit(2),
   s("timp:1 ~ ~ ~ timp:1 ~ ~ ~").gain(.5).room(.3),
   // 1: frame drums drive the offbeat, the lute stabs
   layer(1, stack(
@@ -34,10 +34,10 @@ stack(
     s("taiko:0 ~ taiko:1 taiko:0 ~ taiko:1 taiko:0 ~").gain(.8).room(.3),
     s("~ ~ snare:0 ~ ~ ~ snare:1 ~").gain(.4),
     n("[0 ~ ~ 0 ~ ~ 2 ~] [~ ~ 4 ~ ~ 2 ~ ~]".add("<0 2 0 3 4 0 -2 0>")).scale("a3:dorian")
-      .s("sawtooth").attack(.01).release(.2).gain(.5).lpf(1000).lpenv(2).lpd(.15).room(.3).orbit(2))),
+      .s("sawtooth").attack(.01).release(.2).gain(.5).lpf(1000).lpenv(2).lpd(.15).room(.3).roomsize(6).orbit(2))),
   // 3: crash on the bar, the whistle screams the tune
   layer(3, stack(
     s("crash:1 ~ ~ ~ ~ ~ ~ ~").gain(.35),
     n(whistle).scale("a3:dorian")
-      .s("whistle").gain(.5).attack(.02).release(.3).lpf(2800).room(.4).orbit(2)))
+      .s("whistle").gain(.5).attack(.02).release(.3).lpf(2800).room(.4).roomsize(6).orbit(2)))
 ).postgain(.31)

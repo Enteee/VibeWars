@@ -30,6 +30,7 @@ import { crossfade, isTempoMark } from "./crossfade.js";
 import { catchUpTick, leadClock } from "./lead-clock.js";
 import { makeLayer, type TrackClock } from "./layer.js";
 import { reverbPins } from "./reverb-pins.js";
+import { startAudioStress } from "./audio-stress.js";
 import { createMeasurement, readAudio } from "./stats.js";
 import { createUnderrunProbe } from "./underruns.js";
 import { suspendWhileHidden } from "./visibility.js";
@@ -420,6 +421,9 @@ export async function startEngine(): Promise<void> {
         return;
       case "measure":
         measurement.start();
+        return;
+      case "audioStress":
+        await startAudioStress(context, message.ms);
         return;
     }
   };

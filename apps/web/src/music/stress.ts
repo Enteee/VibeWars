@@ -29,3 +29,19 @@ export function startStress(ms: number): void {
     }
   }, STRESS_PERIOD_MS);
 }
+
+/** The longest `?audiostress=` busy wait per render quantum: a quantum is 2.67 ms at 48 kHz. */
+export const MAX_AUDIO_STRESS_MS = 5;
+
+/**
+ * The busy wait per 128-frame render quantum `?audiostress=` asks for in a
+ * stress build, or `null` (#519). 2.5 ms is about 95 % of the budget at
+ * 48 kHz: the audio thread just keeps up, or just does not.
+ */
+export function audioStressMs(search: string, stressBuild: boolean): number | null {
+  if (!stressBuild) {
+    return null;
+  }
+  const asked = Number(new URLSearchParams(search).get("audiostress"));
+  return Number.isFinite(asked) && asked > 0 ? Math.min(asked, MAX_AUDIO_STRESS_MS) : null;
+}

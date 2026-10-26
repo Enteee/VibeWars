@@ -40,4 +40,4 @@ stack(
     s("~ ~ frame:0 ~ ~ ~ frame:0 ~").gain(.4),
     n("<0 0 0 0 0 0 0 0>*2".add("<0 0 -1 0 0 0 -2 0>")).scale("g3:mixolydian")
       .s("sawtooth").attack(.05).release(.4).gain(.18).lpf(1000).lpenv(2).lpd(.3).roomsize(6).orbit(2)))
-).postgain(.5)
+).postgain(.45)

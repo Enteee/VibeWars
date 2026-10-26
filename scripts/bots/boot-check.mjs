@@ -1,41 +1,28 @@
 #!/usr/bin/env node
 /**
  * `boot-check.mjs <running>` — does the company about to start run the
- * checkout's scripts?
+ * checkout's code?
  *
  * claude-llc runs this at every boot with `<running>`, the store copy of
- * `scripts/bots` its own evaluation staged. devenv's evaluation cache does
- * not track `scripts/bots` (ADR-0014), so a shell can hand claude-llc an
- * older checkout's copy, and a reboot onto new company code would then
- * record that code as loaded when it is not.
+ * `scripts/bots` its own evaluation staged, which holds the build's
+ * `build-manifest.json` (fingerprint.mjs). claude-llc has already rebuilt
+ * itself once if that manifest was stale; what is still stale now is a file
+ * nix cannot see, and a reboot onto new company code would otherwise record
+ * that code as loaded when it is not.
  *
  * When the two differ, it says so on stderr (the operator's terminal, or the
  * reboot log when the restarter started it), and in `.bots/boot.json`'s
  * note, which reaches the manager's first prompt. It does not refuse to
- * start: a company on old code still beats no company. The decisions are in
- * reboot.mjs (`scriptDrift`, `bootNote`).
+ * start: a company on old code still beats no company. The note is
+ * reboot.mjs's `bootNote`.
  */
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
+import { diff, manifest, readManifest } from "./fingerprint.mjs";
 import { obj } from "./protocol.mjs";
-import { bootNote, isStagedScript, scriptDrift } from "./reboot.mjs";
-
-/**
- * @param {string} dir
- * @returns {Record<string, string>} the staged scripts in `dir`, by name
- */
-function scripts(dir) {
-  /** @type {Record<string, string>} */
-  const out = {};
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.isFile() && isStagedScript(entry.name)) {
-      out[entry.name] = fs.readFileSync(path.join(dir, entry.name), "utf8");
-    }
-  }
-  return out;
-}
+import { bootNote } from "./reboot.mjs";
 
 const running = process.argv[2];
 const repo = process.env.DEVENV_ROOT;
@@ -44,7 +31,7 @@ if (running === undefined || repo === undefined || root === undefined) {
   throw new Error("usage: boot-check.mjs <running scripts dir>; claude-llc starts this");
 }
 
-const drift = scriptDrift(scripts(path.join(repo, "scripts", "bots")), scripts(running));
+const drift = diff(manifest(repo), readManifest(running));
 if (drift.length > 0) {
   const file = path.join(root, "boot.json");
   const boot = obj(JSON.parse(fs.readFileSync(file, "utf8")));

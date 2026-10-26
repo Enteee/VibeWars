@@ -593,9 +593,17 @@ slash): Strudel does not derive it from the map's URL.
   below −5 dBFS, before the host's music bus.
 - Measured on an offline render of eight cycles: layers rise by 1–3 LU per
   level, so a fight sounds bigger without getting louder than a cue.
-- The checker's worst-case summed gain stays at or below 1.5 at every level,
-  and is a pessimistic bound, not a loudness: a track at 1.5 renders at about
-  −9 dBFS peak. Keep one `.postgain()` per track.
+- The checker's summed gain of everything sounding at once stays at or below
+  2 at every level (provisional, #508), and is a pessimistic bound, not a
+  loudness. Keep one `.postgain()` per track.
+- The checker also prices what the audio thread must do (#508): a DSP cost per
+  level, at most 90 (provisional). A supersaw costs its `unison` voices, a
+  `vowel` five filters, and a chord pad is five notes that overlap their
+  release with the next chord: prefer fewer notes, `unison(2)` and a
+  `lpq` over `vowel`. `pnpm music:check <id>` names who sounds at the peak.
+- Every track uses one reverb: `.room(x).roomsize(6).orbit(2)` on the wet
+  voices, nothing else on orbit 2 (`MUSIC_ROOMS`). Orbit 1 is the default
+  room.
 
 ### Never in the music
 

@@ -233,8 +233,12 @@ describe("MatchSimulation step", () => {
         monk("b", 1, vec2(200, 0)),
       ],
     });
+    // The skill's heals: by now, natural regeneration heals them all too.
     const healed = (log: CombatLogEntry[]) =>
-      log.flatMap((entry) => entry.events).filter((event) => event.kind === "heal");
+      log
+        .filter((entry) => entry.cause === "skill")
+        .flatMap((entry) => entry.events)
+        .filter((event) => event.kind === "heal");
     for (const id of ["a", "ally", "b"]) {
       participant(sim, id).combatant.health = 100;
     }
@@ -568,7 +572,8 @@ describe("reset policies", () => {
   it("never: the dead stay dead without match rules, and the damaged stay damaged", () => {
     const { sim, d } = dummy({ kind: "never" });
     d.combatant.health = 10;
-    stepFor(sim, 30);
+    // Short of natural regeneration's 5 s, which would heal it (#460).
+    stepFor(sim, 4.5);
     expect(d.combatant.health).toBe(10);
     d.combatant.health = 1;
     dirty(d);

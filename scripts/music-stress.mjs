@@ -29,9 +29,25 @@
  *                                with VITE_VIBEWARS_STRESS=on for `?stress=`
  *   --only <text>               only the loads whose name contains this
  *   --rows                       print every second, not only the totals
+ *   --pulse                      render to a real-time stream: start a user
+ *                                PulseAudio with a null sink for the run.
+ *                                Without a sound device a browser's audio
+ *                                clock may be a fake that never underruns.
+ *   --json <file>                write the totals per browser and load, and
+ *                                whether each browser's readings are
+ *                                validated (#519), to this file
+ *
+ * `audiostress` loads (#519) busy-wait that many ms in every render quantum
+ * of the music's audio thread (`?audiostress=`, 2.5 ms is about 95 % of the
+ * budget at 48 kHz), on the menu, music alone. A browser whose underrunMs
+ * does not stay near 0 at 0 and rise with the stress is *unvalidated*: its
+ * numbers are printed and marked, and nobody tunes from them.
  *
  * Browsers: VIBEWARS_CHROMIUM (as for e2e), VIBEWARS_FIREFOX (a Playwright
- * Firefox build; the default is Playwright's own).
+ * Firefox build; the default is Playwright's own, which must match the
+ * pinned @playwright/test). Firefox runs with its content sandbox off
+ * (MOZ_DISABLE_CONTENT_SANDBOX), as Chromium runs --no-sandbox: the jail and
+ * the runner have no user namespaces for it.
  */
 /* global window, addEventListener -- in page.evaluate and addInitScript, which run in the page */
 import { spawn } from "node:child_process";
@@ -44,6 +60,8 @@ import { parseArgs } from "node:util";
 
 import { chromium, devices, firefox } from "@playwright/test";
 
+import { validated } from "./music-stress-validation.mjs";
+
 const PORT = 4319;
 const { values: options } = parseArgs({
   options: {
@@ -52,6 +70,8 @@ const { values: options } = parseArgs({
     url: { type: "string" },
     rows: { type: "boolean", default: false },
     only: { type: "string" },
+    pulse: { type: "boolean", default: false },
+    json: { type: "string" },
   },
 });
 const SECONDS = Number(options.seconds);
@@ -69,6 +89,7 @@ const CROSSFADE_TO = "last-stand";
  *
  * @typedef {{
  *   name: string, browser: "chromium" | "firefox", cpu: number, stress: number,
+ *   audioStress?: number,
  *   screen: "training" | "match" | "menu",
  * }} Load
  */
@@ -85,6 +106,16 @@ const LOADS = [
   { name: "no stress", browser: "firefox", cpu: 1, stress: 0, screen: "training" },
   { name: "stress=40", browser: "firefox", cpu: 1, stress: 40, screen: "training" },
   { name: "menu, stress=40", browser: "firefox", cpu: 1, stress: 40, screen: "menu" },
+  ...["chromium", "firefox"].flatMap((browser) =>
+    [0, 1.5, 2.5].map((audioStress) => ({
+      name: `audiostress ${String(audioStress)}`,
+      browser: /** @type {"chromium" | "firefox"} */ (browser),
+      cpu: 1,
+      stress: 0,
+      audioStress,
+      screen: /** @type {const} */ ("menu"),
+    })),
+  ),
 ];
 
 /**
@@ -150,6 +181,7 @@ function launch(browser) {
   return firefox.launch({
     ...(executablePath === undefined ? {} : { executablePath }),
     firefoxUserPrefs: { "media.autoplay.default": 0 },
+    env: { ...process.env, MOZ_DISABLE_CONTENT_SANDBOX: "1" },
   });
 }
 
@@ -182,7 +214,9 @@ async function measure(url, load) {
         }
       });
     });
-    const query = `?musicstats${load.stress > 0 ? `&stress=${String(load.stress)}` : ""}`;
+    const query =
+      `?musicstats${load.stress > 0 ? `&stress=${String(load.stress)}` : ""}` +
+      ((load.audioStress ?? 0) > 0 ? `&audiostress=${String(load.audioStress)}` : "");
     await page.goto(`${url}${query}`);
     await page.locator(".roster").waitFor();
     if (load.screen !== "menu") {
@@ -206,6 +240,10 @@ async function measure(url, load) {
     if (load.cpu > 1) {
       const cdp = await context.newCDPSession(page);
       await cdp.send("Emulation.setCPUThrottlingRate", { rate: load.cpu });
+    }
+    if ((load.audioStress ?? 0) > 0) {
+      // The worklet times a spin once when it loads: let that stall pass.
+      await sleep(3000);
     }
     const start = await page.evaluate(() => {
       const control = /** @type {{ __music: { intensity: (level: number) => void } }} */ (
@@ -277,6 +315,30 @@ function play(page) {
 const fixed = (value) => (Number.isInteger(value) ? String(value) : value.toFixed(1));
 
 /**
+ * What a load adds up to; the same numbers the printed line and the JSON show.
+ *
+ * @param {Stats[]} rows
+ */
+function totals(rows) {
+  const sum = (/** @type {keyof Stats} */ key) =>
+    rows.reduce((total, row) => total + (row[key] ?? 0), 0);
+  const max = (/** @type {keyof Stats} */ key) =>
+    rows.reduce((most, row) => Math.max(most, row[key] ?? 0), 0);
+  return {
+    seconds: rows.length,
+    ticks: sum("ticks"),
+    lateTicks: sum("lateTicks"),
+    maxTickGapMs: max("maxTickGapMs"),
+    maxTickWorkMs: max("maxTickWorkMs"),
+    skippedMs: sum("skippedMs"),
+    // `null` where the browser cannot say.
+    underruns: rows.some((row) => row.underrunMs === null) ? null : sum("underruns"),
+    underrunMs: rows.some((row) => row.underrunMs === null) ? null : sum("underrunMs"),
+    maxReductionDb: Math.min(0, ...rows.map((row) => row.maxReductionDb)),
+  };
+}
+
+/**
  * @param {Load} load
  * @param {Stats[]} rows
  */
@@ -330,6 +392,47 @@ function report(load, rows) {
   );
 }
 
+/**
+ * A user PulseAudio with a null sink, so the browsers render to a real-time
+ * stream. Everything lives in a temp directory, and stops with the run.
+ *
+ * @returns {Promise<() => void>}
+ */
+async function startPulse() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "music-pulse-"));
+  const socket = path.join(dir, "native");
+  const child = spawn(
+    "pulseaudio",
+    [
+      "-n",
+      "--daemonize=no",
+      "--exit-idle-time=-1",
+      "--load=module-null-sink",
+      `--load=module-native-protocol-unix socket=${socket}`,
+    ],
+    {
+      stdio: ["ignore", "ignore", "inherit"],
+      env: { ...process.env, PULSE_RUNTIME_PATH: dir, XDG_RUNTIME_DIR: dir },
+    },
+  );
+  for (let waited = 0; waited < 50 && !fs.existsSync(socket); waited += 1) {
+    if (child.exitCode !== null) {
+      break;
+    }
+    await sleep(100);
+  }
+  if (!fs.existsSync(socket)) {
+    child.kill();
+    throw new Error("pulseaudio did not come up; is it in the dev shell?");
+  }
+  process.env.PULSE_SERVER = `unix:${socket}`;
+  return () => {
+    child.kill();
+    fs.rmSync(dir, { recursive: true, force: true });
+  };
+}
+
+const stopPulse = options.pulse ? await startPulse() : undefined;
 const served =
   options.url === undefined
     ? await serve()
@@ -339,14 +442,41 @@ const served =
           // Someone else's server: theirs to stop.
         },
       };
+/** @type {Record<string, { validated: boolean, loads: unknown[] }>} */
+const result = {};
 try {
   for (const load of LOADS.filter(
     (l) =>
       (options.browser === undefined || l.browser === options.browser) &&
       (options.only === undefined || l.name.includes(options.only)),
   )) {
-    report(load, await measure(served.url, load));
+    const rows = await measure(served.url, load);
+    report(load, rows);
+    const entry = (result[load.browser] ??= { validated: false, loads: [] });
+    entry.loads.push({
+      name: load.name,
+      screen: load.screen,
+      cpu: load.cpu,
+      stress: load.stress,
+      audioStress: load.audioStress ?? 0,
+      ...totals(rows),
+    });
+  }
+  for (const [browser, entry] of Object.entries(result)) {
+    // Only the audiostress loads: the other loads also have none.
+    entry.validated = validated(
+      /** @type {{ name: string, audioStress: number, underrunMs: number | null }[]} */ (
+        entry.loads
+      ).filter((reading) => reading.name.startsWith("audiostress")),
+    );
+    console.log(
+      `\n${browser}: underrun readings ${entry.validated ? "validated" : "UNVALIDATED, do not tune from them"}`,
+    );
+  }
+  if (options.json !== undefined) {
+    fs.writeFileSync(options.json, `${JSON.stringify({ browsers: result }, null, 2)}\n`);
   }
 } finally {
   served.stop();
+  stopPulse?.();
 }

@@ -143,7 +143,14 @@ if (group === "api" && sub === "graphql" && argv.some((word) => word.includes("i
   process.exit(0);
 }
 // A new issue, a card added with its id asked for, and a card re-read by id (#517).
-if (group === "issue" && sub === "create") { console.log("https://github.com/Enteee/VibeWars/issues/11"); process.exit(0); }
+// Each create a new number, from 11 (#550).
+if (group === "issue" && sub === "create") {
+  const counter = path.join(state, "issues-created");
+  const created = fs.existsSync(counter) ? Number(fs.readFileSync(counter, "utf8")) : 0;
+  fs.writeFileSync(counter, String(created + 1));
+  console.log("https://github.com/Enteee/VibeWars/issues/" + String(11 + created));
+  process.exit(0);
+}
 if (group === "project" && sub === "item-add" && argv.includes("--format")) {
   console.log(JSON.stringify({ id: "PVTI_" + /(\\d+)$/.exec(argv[argv.indexOf("--url") + 1])[1] }));
   process.exit(0);
@@ -281,6 +288,8 @@ async function startHubd(remaining, before) {
     // Short, for the test of a child that never returns (#496).
     HUBD_CHILD_TIMEOUT_MS: "1500",
     HUBD_HEARTBEAT_MS: "200",
+    // Short, so a batch of new issues reaches the manager in the test (#550).
+    HUBD_NEW_ISSUES_WINDOW_MS: "4000",
   };
   const child = spawn(process.execPath, [HUBD], { env, stdio: ["ignore", "ignore", "pipe"] });
   running.push({ child, dir });
@@ -749,6 +758,74 @@ describe("hubd and the GraphQL budget", () => {
     expect(created).toMatchObject({ code: 0 });
     expect(String(created.stderr)).toContain("#11 was created but is not in Backlog");
     expect(String(created.stderr)).toContain("Run: board move 11 Backlog");
+  }, 20_000);
+
+  /**
+   * What hubd told the manager through the system outbox (#550).
+   *
+   * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+   * @returns {{ to: unknown, text: unknown }[]}
+   */
+  const toManager = (hubd) => {
+    const outbox = path.join(hubd.root, "bus", "_system", "outbox");
+    return fs.existsSync(outbox)
+      ? fs
+          .readdirSync(outbox)
+          .filter((name) => name.includes("new-issues"))
+          .map((name) => readJson(path.join(outbox, name)))
+          .map((message) => ({ to: message.to, text: message.text }))
+      : [];
+  };
+
+  it("tells the manager, once its minute is up, about an issue a colleague filed (#550)", async () => {
+    const hubd = await startHubd(5000);
+    await hubd.request("developer-1", "board", ["ls"]);
+
+    await hubd.request("architect", "gh", ["issue", "create", "--title", "Music: loop"]);
+    expect(toManager(hubd)).toEqual([]);
+
+    await until(() => toManager(hubd).length > 0, "the manager to be told");
+    expect(toManager(hubd)).toEqual([
+      { to: "manager", text: "#11 Music: loop is new in Backlog: rank it." },
+    ]);
+  }, 20_000);
+
+  it("names two issues filed in one window in one message (#550)", async () => {
+    const hubd = await startHubd(5000);
+    await hubd.request("developer-1", "board", ["ls"]);
+
+    await hubd.request("architect", "gh", ["issue", "create", "--title", "Music: a"]);
+    await hubd.request("cicd-engineer", "gh", ["issue", "create", "--title=Perf: b"]);
+
+    await until(() => toManager(hubd).length > 0, "the manager to be told");
+    expect(toManager(hubd)).toEqual([
+      { to: "manager", text: "2 new in Backlog, rank them: #11 Music: a; #12 Perf: b" },
+    ]);
+  }, 20_000);
+
+  it("says an issue it could not land is not on the board (#550)", async () => {
+    const hubd = await startHubd(5000);
+    fs.writeFileSync(path.join(hubd.state, "edit-fails"), "");
+    await hubd.request("developer-1", "board", ["ls"]);
+
+    await hubd.request("cicd-engineer", "gh", ["issue", "create", "-t", "CI: c"]);
+
+    await until(() => toManager(hubd).length > 0, "the manager to be told");
+    expect(toManager(hubd)).toEqual([
+      { to: "manager", text: "#11 CI: c is not on the board: add it." },
+    ]);
+  }, 20_000);
+
+  it("does not tell the manager about an issue the manager filed (#550)", async () => {
+    const hubd = await startHubd(5000);
+    await hubd.request("developer-1", "board", ["ls"]);
+
+    await hubd.request("manager", "gh", ["issue", "create", "--title", "t"]);
+    await hubd.request("architect", "gh", ["issue", "create", "--title", "u"]);
+
+    // The architect's issue arrives; by then the manager's would have too.
+    await until(() => toManager(hubd).length > 0, "the manager to be told");
+    expect(toManager(hubd)).toEqual([{ to: "manager", text: "#12 u is new in Backlog: rank it." }]);
   }, 20_000);
 
   it("lands an added card that has no column, and leaves one that has (#517)", async () => {
