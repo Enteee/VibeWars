@@ -311,6 +311,11 @@ covers what a jail would create, which a deny-list would miss.
 operator's or hubd's job. Known gap: `objects/info/alternates` can be
 planted; objects are content-addressed, so that is no code-execution path.
 
+Residual: `HEAD` itself is now safe from rewriting, but a symbolic `HEAD`
+resolves through `refs/heads/<branch>`, which a jail can still move. Treat
+`HEAD` like any other local ref: host code that starts from it starts from
+an agent-chosen commit.
+
 **Open: #93.** Peer text mirrored to Telegram keeps its line breaks and
 bidi characters, so an agent can type a line that looks like another
 sender's header, such as `📋 Manager → 👤 Operator`. Until #93 lands,
