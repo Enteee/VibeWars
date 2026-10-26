@@ -1132,6 +1132,8 @@ async function cameraSettled(page: Page): Promise<void> {
 }
 
 test("(37) a name keeps its screen size at every zoom (#456)", async ({ page }) => {
+  // A walk and four waits for a still camera, each a second or more.
+  test.setTimeout(90_000);
   const canvas = await openTraining(page);
   await page.locator("select.training-scenario").selectOption("armor-ladder");
   await expect(page.locator(".training-log")).toContainText("── Armor ladder ──");
@@ -1148,6 +1150,12 @@ test("(37) a name keeps its screen size at every zoom (#456)", async ({ page }) 
     await page.mouse.wheel(0, deltaY);
     await page.mouse.move(1, 1);
   };
+
+  // Nearer the ladder first: from the spawn, Default shows the stage up
+  // to x 333, and the first dummy's name, at 360, would be cut by its edge.
+  await wholeMap(page);
+  await walkTo(page, canvas, { x: 250, y: 210 });
+  await wheel(-100);
 
   // Nobody named, at Default and at Wide.
   await page.mouse.move(1, 1);
