@@ -352,7 +352,7 @@ const JUDGING_WORKFLOWS = ["ci.yml", "dependency-review.yml"];
  *
  * @param {string} sha
  * @param {ReturnType<typeof company>} cfg
- * @returns {Promise<{ jobs: { name: string, status: string, conclusion: string | null }[] } | { error: string } | { refusal: string }>}
+ * @returns {Promise<{ runs: { name: string, status: string, conclusion: string | null }[][] } | { error: string } | { refusal: string }>}
  */
 async function restJobs(sha, cfg) {
   /** @param {string} rel */
@@ -368,7 +368,7 @@ async function restJobs(sha, cfg) {
     }
   };
 
-  /** @type {{ name: string, status: string, conclusion: string | null }[]} */
+  /** @type {{ name: string, status: string, conclusion: string | null }[][]} */
   const jobs = [];
   for (const file of JUDGING_WORKFLOWS) {
     const listed = await read(
@@ -394,10 +394,10 @@ async function restJobs(sha, cfg) {
       if ("error" in parsed) {
         return parsed;
       }
-      jobs.push(...parsed.jobs);
+      jobs.push(parsed.jobs);
     }
   }
-  return { jobs };
+  return { runs: jobs };
 }
 
 /** The most pages of comments or reviews hubd reads for one view. */
@@ -847,7 +847,7 @@ async function evaluateGuards(guards, argv) {
           reason: `could not read CI jobs for #${pr} at ${sha.slice(0, 7)}: ${read.error}`,
         };
       }
-      const verdict = jobsSatisfied(read.jobs, cfg.expectedChecks);
+      const verdict = jobsSatisfied(read.runs, cfg.expectedChecks);
       if (!verdict.ok) {
         return { ok: false, reason: explainGuard("checks", verdict) };
       }

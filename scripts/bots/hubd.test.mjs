@@ -2044,8 +2044,18 @@ describe("hubd recording verdicts and merging", () => {
     const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
 
     expect(answer.allow).toBe(false);
-    expect(String(answer.reason)).toMatch(/carried by more than one job: ci/);
+    expect(String(answer.reason)).toMatch(/failing: ci \(failure\)/);
     expect(hubd.calls("pr merge")).toBe(0);
+  }, 20_000);
+
+  it("merges after a close and reopen made a second green run of the commit", async () => {
+    const hubd = await approved(5000);
+    ran(hubd, "abc1234def");
+    hubd.addRun("abc1234def", "ci.yml", { id: 101, jobs: [job("ci")] });
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(answer.code, String(answer.reason)).toBe(0);
   }, 20_000);
 
   it("refuses a job two jobs share a name with, and a missing one", async () => {

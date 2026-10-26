@@ -69,30 +69,41 @@ export function judgingRuns(runs, target) {
  * the function takes an expected set. The CI/CD engineer can edit
  * `.github/workflows/`, so a job deleted to turn a pull request green leaves
  * a run with no failures. The expected set is named in `.bots/company.json`
- * and a missing job is treated exactly like a failing one. A name that two
- * jobs carry is refused too: one passing must never shadow the other.
+ * and a name no run carries is treated exactly like a failing job.
  *
- * @param {{ name: string, status: string, conclusion: string | null }[]} jobs
- *   The jobs of the judging runs, latest attempt.
+ * Within one run a name must be carried by exactly one job. Across the runs
+ * of a commit, every job that carries an expected name must have succeeded:
+ * a second pull request's green run for the same commit (#123) cannot
+ * stand in for a red real one, and a close and reopen, which makes a second
+ * green run, still merges.
+ *
+ * @param {{ name: string, status: string, conclusion: string | null }[][]} runs
+ *   The jobs of each judging run, latest attempt.
  * @param {string[]} expected Job names that must be present and successful.
  * @returns {{ ok: boolean, missing: string[], failing: string[], pending: string[], ambiguous: string[] }}
  */
-export function jobsSatisfied(jobs, expected) {
+export function jobsSatisfied(runs, expected) {
   const missing = [];
   const failing = [];
   const pending = [];
   const ambiguous = [];
   for (const name of expected) {
-    const named = jobs.filter((job) => job.name === name);
-    const [job] = named;
-    if (job === undefined) {
+    const carried = runs.map((jobs) => jobs.filter((job) => job.name === name));
+    if (carried.every((jobs) => jobs.length === 0)) {
       missing.push(name);
-    } else if (named.length > 1) {
+    }
+    if (carried.some((jobs) => jobs.length > 1)) {
       ambiguous.push(name);
-    } else if (job.status !== "completed") {
-      pending.push(name);
-    } else if (job.conclusion !== "success") {
-      failing.push(`${name} (${String(job.conclusion)})`);
+    }
+    for (const job of carried.flat()) {
+      if (job.status !== "completed") {
+        pending.push(name);
+      } else if (job.conclusion === "cancelled") {
+        // A run a reopen superseded: its latest attempt must be re-run.
+        failing.push(`${name} (cancelled; re-run that run or push a new commit)`);
+      } else if (job.conclusion !== "success") {
+        failing.push(`${name} (${String(job.conclusion)})`);
+      }
     }
   }
   return {
@@ -102,8 +113,8 @@ export function jobsSatisfied(jobs, expected) {
       pending.length === 0 &&
       ambiguous.length === 0,
     missing,
-    failing,
-    pending,
+    failing: [...new Set(failing)],
+    pending: [...new Set(pending)],
     ambiguous,
   };
 }

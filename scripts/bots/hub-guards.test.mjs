@@ -104,26 +104,23 @@ describe("jobsSatisfied", () => {
   const all = REQUIRED.map((name) => job(name));
 
   it("passes when every expected job succeeded", () => {
-    expect(jobsSatisfied(all, REQUIRED)).toMatchObject({ ok: true });
+    expect(jobsSatisfied([all], REQUIRED)).toMatchObject({ ok: true });
   });
 
   it("fails an empty run, which is what deleting every job produces", () => {
-    expect(jobsSatisfied([], REQUIRED)).toMatchObject({ ok: false, missing: REQUIRED });
+    expect(jobsSatisfied([[]], REQUIRED)).toMatchObject({ ok: false, missing: REQUIRED });
   });
 
   it("fails when an expected job is missing but others pass", () => {
-    const verdict = jobsSatisfied(
-      all.filter((j) => j.name !== "e2e"),
-      REQUIRED,
-    );
+    const verdict = jobsSatisfied([all.filter((j) => j.name !== "e2e")], REQUIRED);
 
     expect(verdict).toMatchObject({ ok: false, missing: ["e2e"] });
   });
 
-  it("names the conclusion of a failed, skipped or cancelled job", () => {
-    for (const conclusion of ["failure", "skipped", "cancelled"]) {
+  it("names the conclusion of a failed or skipped job", () => {
+    for (const conclusion of ["failure", "skipped"]) {
       const verdict = jobsSatisfied(
-        [...all.slice(1), job(REQUIRED[0] ?? "", conclusion)],
+        [[...all.slice(1), job(REQUIRED[0] ?? "", conclusion)]],
         REQUIRED,
       );
 
@@ -136,7 +133,7 @@ describe("jobsSatisfied", () => {
 
   it("fails while a job is still running", () => {
     const verdict = jobsSatisfied(
-      [...all.slice(1), job(REQUIRED[0] ?? "", null, "in_progress")],
+      [[...all.slice(1), job(REQUIRED[0] ?? "", null, "in_progress")]],
       REQUIRED,
     );
 
@@ -144,13 +141,45 @@ describe("jobsSatisfied", () => {
   });
 
   it("refuses a name two jobs carry, so a passing one cannot shadow a failing one", () => {
-    const verdict = jobsSatisfied([...all, job("e2e", "failure")], REQUIRED);
+    const verdict = jobsSatisfied([[...all, job("e2e", "failure")]], REQUIRED);
 
     expect(verdict).toMatchObject({ ok: false, ambiguous: ["e2e"] });
   });
 
+  it("refuses a second run's failing job beside a green real one, and the reverse", () => {
+    const red = all.map((j) => (j.name === "e2e" ? job("e2e", "failure") : j));
+
+    expect(jobsSatisfied([all, red], REQUIRED)).toMatchObject({
+      ok: false,
+      failing: ["e2e (failure)"],
+    });
+    expect(jobsSatisfied([red, all], REQUIRED)).toMatchObject({
+      ok: false,
+      failing: ["e2e (failure)"],
+    });
+  });
+
+  it("passes two green runs of one commit, which is what a close and reopen makes", () => {
+    expect(jobsSatisfied([all, all], REQUIRED)).toMatchObject({ ok: true });
+  });
+
+  it("blocks a cancelled superseded run, and says how to clear it", () => {
+    const cancelled = all.map((j) => (j.name === "e2e" ? job("e2e", "cancelled") : j));
+    const verdict = jobsSatisfied([cancelled, all], REQUIRED);
+
+    expect(verdict).toMatchObject({ ok: false });
+    expect(verdict.failing[0]).toMatch(/^e2e \(cancelled; re-run that run or push a new commit\)$/);
+  });
+
+  it("takes an expected name from whichever run carries it", () => {
+    const ci = all.slice(0, 2);
+    const rest = all.slice(2);
+
+    expect(jobsSatisfied([ci, rest], REQUIRED)).toMatchObject({ ok: true });
+  });
+
   it("passes with no expectations", () => {
-    expect(jobsSatisfied([], [])).toMatchObject({ ok: true });
+    expect(jobsSatisfied([[]], [])).toMatchObject({ ok: true });
   });
 });
 

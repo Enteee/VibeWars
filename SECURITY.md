@@ -344,11 +344,13 @@ side branch runs with `GITHUB_TOKEN` and can post a check run, or a commit
 status, for any commit in the repository, under any name. The merge guard
 therefore reads neither. It reads the **jobs** of the `pull_request` run of
 `ci.yml` and of `dependency-review.yml` for the pinned head commit, and
-requires exactly one successful job for each expected name. Jobs exist only
-because a workflow executed, so no API can create one. Every such run counts,
-not the newest: a second pull request with the same head and a base of its
-own choosing gets its own green run for that commit, and its jobs repeat the
-expected names, so the merge is refused. A run tests the merge of the head
+requires each expected name to be carried by exactly one job in a run, and every
+job that carries one to have succeeded. Jobs exist only because a workflow
+executed, so no API can create one. Every such run counts, not the newest: a
+second pull request with the same head and a base of its own choosing gets
+its own green run for that commit, which cannot stand in for a red real one. A close and reopen makes a
+second green run, which passes; a cancelled superseded run blocks until it is
+re-run or the branch gets a new commit. A run tests the merge of the head
 into its PR's base, using the head's own workflow files, so reviewing gate
 files stays load-bearing. Since #116 only cicd-engineer may push them. A test pins `EXPECTED_CHECKS` to the
 job names the two files define.
