@@ -39,7 +39,12 @@ function company(ids) {
  */
 const panes = (ids) => ids.map((employee, i) => ({ pane: `%${String(i)}`, employee }));
 
-const idle = { between: [], rebooting: false, started: new Map() };
+const idle = {
+  between: [],
+  rebooting: false,
+  started: new Map(),
+  holdoffMs: RESTART_HOLDOFF_MS,
+};
 
 describe("reconcile (#383)", () => {
   it("does nothing when the panes are the staff", () => {
