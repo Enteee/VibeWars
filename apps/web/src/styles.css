@@ -259,10 +259,13 @@ body {
   color: var(--ink-dim);
 }
 
+/* As wide as its slots, not the HUD: the knockdown drain fills this box
+   and must end at the last slot (#545). */
 .hud-skills {
   display: flex;
   gap: 0.35rem;
   flex-wrap: wrap;
+  width: fit-content;
 }
 
 .hud-skill {
