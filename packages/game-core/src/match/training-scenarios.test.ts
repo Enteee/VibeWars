@@ -65,7 +65,10 @@ describe("every training scenario", () => {
         expect(dummy.position.x, where).toBeLessThanOrEqual(map.width);
         expect(dummy.position.y, where).toBeGreaterThanOrEqual(0);
         expect(dummy.position.y, where).toBeLessThanOrEqual(map.height);
-        expect(distance(dummy.position, map.playerSpawn), where).toBeLessThanOrEqual(RANGE_SPELL);
+        // In reach of a spell from the spawn, unless reaching it is the lesson.
+        if (!scenario.exercises.includes("range")) {
+          expect(distance(dummy.position, map.playerSpawn), where).toBeLessThanOrEqual(RANGE_SPELL);
+        }
 
         // Its ranks are a character's ranks: real attributes, in bounds,
         // affordable.
@@ -330,6 +333,101 @@ describe("weapon-dps, headless", () => {
     const average = hits.reduce((sum, hit) => sum + hit, 0) / hits.length;
     expect(average).toBeGreaterThanOrEqual(sword.damageMin * scale);
     expect(average).toBeLessThanOrEqual(sword.damageMax * scale);
+  });
+});
+
+/**
+ * The pillar in `training-pillars` (250–290 by 170–250), as segments:
+ * copied, since `game-core` must not import `game-maps`. The other two
+ * pillars are far from these scenarios.
+ */
+const PILLAR = [
+  { a: vec2(250, 170), b: vec2(290, 170) },
+  { a: vec2(290, 170), b: vec2(290, 250) },
+  { a: vec2(290, 250), b: vec2(250, 250) },
+  { a: vec2(250, 250), b: vec2(250, 170) },
+];
+
+/** `scenario` on the pillars map, with the player holding Fireball at Fire Magic 12. */
+function pillarArena(played: TrainingScenario, seed: string): MatchSimulation {
+  const map = MAPS["training-pillars"];
+  if (map === undefined) {
+    throw new Error("no training-pillars");
+  }
+  return new MatchSimulation({
+    seed,
+    walls: PILLAR,
+    participants: [
+      {
+        id: "player",
+        team: PLAYER_TEAM,
+        skillBar: [FIREBALL],
+        attributeRanks: new Map([["elementalist.fire-magic", 12]]),
+        equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+        spawn: map.playerSpawn,
+        facing: 0,
+        baseEnergyPips: baseEnergyPipsFor("elementalist"),
+      },
+      ...scenarioParticipants(played, map.playerSpawn),
+    ],
+  });
+}
+
+/** Run `sim` for up to `seconds`: who Fireball damaged, and when it first landed. */
+function fireballHits(sim: MatchSimulation, seconds: number): { hit: Set<string>; at?: number } {
+  const hit = new Set<string>();
+  let at: number | undefined;
+  for (let i = 0; i < Math.round(seconds / DT); i += 1) {
+    for (const entry of sim.step(DT).log) {
+      if (entry.skillId !== FIREBALL) {
+        continue;
+      }
+      for (const event of entry.events) {
+        if (event.kind === "damage") {
+          hit.add(event.targetId);
+          at ??= i * DT;
+        }
+      }
+    }
+  }
+  return at === undefined ? { hit } : { hit, at };
+}
+
+describe("aoe-line-of-sight, headless (#111)", () => {
+  it("a Fireball at the front burns the three in front of the pillar, not the two behind", () => {
+    const sim = pillarArena(scenario("aoe-line-of-sight"), "pillar");
+    // The two behind are inside the splash by straight-line distance.
+    const radius = getSkill(FIREBALL)?.area?.radius ?? 0;
+    for (const id of ["behind-north", "behind-south"]) {
+      const behind = scenario("aoe-line-of-sight").dummies.find((dummy) => dummy.id === id);
+      expect(distance(behind?.position ?? vec2(0, 0), vec2(235, 210))).toBeLessThan(radius);
+    }
+    sim.setTarget("player", "front");
+    expect(sim.requestSkill("player", 0)?.check).toEqual({ ok: true });
+    expect([...fireballHits(sim, 3).hit].sort()).toEqual(["front", "front-north", "front-south"]);
+  });
+});
+
+describe("obstacles-and-los, headless (#111)", () => {
+  it("a Fireball at the one behind the pillar walks out of its shadow, then lands", () => {
+    const sim = pillarArena(scenario("obstacles-and-los"), "hidden");
+    sim.setTarget("player", "hidden");
+    const asked = sim.requestSkill("player", 0);
+    expect(asked?.queued).toBe(true);
+    const { hit } = fireballHits(sim, 10);
+    expect([...hit]).toEqual(["hidden"]);
+    // Off the line the pillar blocks.
+    expect(Math.abs((sim.get("player")?.position.y ?? 210) - 210)).toBeGreaterThan(30);
+  });
+
+  it("a Fireball at the far one, in plain sight, walks into range, then lands", () => {
+    const sim = pillarArena(scenario("obstacles-and-los"), "far");
+    sim.setTarget("player", "far");
+    expect(sim.requestSkill("player", 0)?.queued).toBe(true);
+    const { hit } = fireballHits(sim, 10);
+    expect([...hit]).toEqual(["far"]);
+    // 446 away at the start, spell range 420.
+    expect(distance(sim.get("player")?.position ?? vec2(0, 0), vec2(90, 210))).toBeGreaterThan(20);
   });
 });
 
