@@ -60,6 +60,7 @@ import {
   PositionHistory,
   trackTarget,
   type Projectile,
+  type SkillHit,
 } from "../skills/projectile.js";
 import {
   attackDurationSeconds,
@@ -71,6 +72,7 @@ import {
   PLAIN_BLOW,
   resolveAttackSkill,
   resolveSwing,
+  skillBlow,
   weaponSnapshotOf,
 } from "../skills/weapon-attack.js";
 import { add, distance, normalize, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
@@ -880,7 +882,7 @@ export class MatchSimulation {
       const wasInAftercast = record.combatant.cast.inAftercast;
       const completed = record.combatant.cast.advance(dt);
       if (completed !== undefined) {
-        this.resolveCast(record, completed);
+        this.resolveCast(record, completed, dt);
       }
       // A skill pressed during the aftercast goes off the tick it ends. A
       // refusal now is dropped: nobody is pressing a key at this moment.
@@ -1011,7 +1013,7 @@ export class MatchSimulation {
   }
 
   /** Resolve a cast that has finished its activation time. */
-  private resolveCast(record: ParticipantRecord, cast: ActiveCast): void {
+  private resolveCast(record: ParticipantRecord, cast: ActiveCast, dt: number): void {
     const { skillId, targetId } = cast;
     const skill = getSkill(skillId);
     if (skill === undefined) {
@@ -1021,10 +1023,13 @@ export class MatchSimulation {
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
     const primary = skill.target === "self" ? record : targetRecord;
     const exposed = this.#exposedTo(record);
+    const speed = record.combatant.equipment.mainHand.weapon.projectileSpeed;
     const resolve =
       skill.attack === undefined
         ? applySkillEffects
-        : (resolution: SkillResolution) => resolveAttackSkill(resolution, exposed);
+        : speed === undefined
+          ? (resolution: SkillResolution) => resolveAttackSkill(resolution, exposed)
+          : (resolution: SkillResolution) => this.#releaseSkill(record, resolution, speed, dt);
     const events = resolve({
       skill,
       caster: record.combatant,
@@ -1382,7 +1387,10 @@ export class MatchSimulation {
     record.outOfCombatSeconds = 0;
 
     if (weapon.projectileSpeed !== undefined) {
-      this.#release(record, target, weapon.projectileSpeed, dt);
+      const missed = this.#release(record, target, weapon.projectileSpeed, dt, undefined);
+      if (missed.length > 0) {
+        this.#logWeapon(record.id, weapon.id, missed);
+      }
       return;
     }
     const events = resolveSwing({
@@ -1420,24 +1428,50 @@ export class MatchSimulation {
   }
 
   /**
+   * A ranged weapon's attack skill (#416): a shot at each victim the
+   * skill picked, each with its own blind roll and its own flight, the
+   * skill riding it. What happens now is only what stopped a shot from
+   * flying; the rest lands with the shot.
+   */
+  #releaseSkill(
+    record: ParticipantRecord,
+    resolution: SkillResolution,
+    speed: number,
+    dt: number,
+  ): CombatEvent[] {
+    const skillHit = {
+      skill: resolution.skill,
+      blow: skillBlow(resolution.skill, record.combatant),
+    };
+    return resolution.targets.flatMap((victim) => {
+      const target = this.#participants.get(victim.id);
+      return target === undefined || victim.dead
+        ? []
+        : this.#release(record, target, speed, dt, skillHit);
+    });
+  }
+
+  /**
    * A ranged swing lands as a shot leaving the bow, led ahead of the
    * target. Blind is rolled now, as GW1 does: a blinded shot misses at
    * once and nothing flies. Then line of sight, once: a wall in the way
    * spends the swing and nothing flies either, and the next swing looks
    * again. Melee is never checked; its reach is shorter than any gap.
+   * Returns the miss or the obstruction, for the caller to log; nothing
+   * when the shot flies.
    */
-  #release(record: ParticipantRecord, target: ParticipantRecord, speed: number, dt: number): void {
+  #release(
+    record: ParticipantRecord,
+    target: ParticipantRecord,
+    speed: number,
+    dt: number,
+    skillHit: SkillHit | undefined,
+  ): CombatEvent[] {
     if (blindMisses(record.combatant, this.#rng)) {
-      this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, [
-        { kind: "attack-missed", targetId: target.id },
-      ]);
-      return;
+      return [{ kind: "attack-missed", targetId: target.id }];
     }
     if (!hasLineOfSight(record.position, target.position, this.#walls)) {
-      this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, [
-        { kind: "attack-obstructed", targetId: target.id },
-      ]);
-      return;
+      return [{ kind: "attack-obstructed", targetId: target.id }];
     }
     const from = record.position;
     const tracked = trackTarget(target.history.samples(), dt, target.position);
@@ -1463,8 +1497,10 @@ export class MatchSimulation {
       flightSeconds: distance(from, aimPoint) / speed,
       elapsed: 0,
       weaponSnapshot: weaponSnapshotOf(record.combatant),
+      skillHit,
     });
     this.#nextProjectileId += 1;
+    return [];
   }
 
   /** Fly every shot in flight one tick, and land those that arrive, in release order. */
@@ -1491,13 +1527,18 @@ export class MatchSimulation {
    * adrenaline. A target that died in flight is not there to be hit or
    * to dodge, so nothing happens. A hit carries the attacker's
    * preparation as it is on landing (#525).
+   *
+   * A shot carrying an attack skill (#416) lands its bonus with the blow
+   * and its riders after it, only on a hit: a caster who finished before
+   * it arrived is not interrupted. Blocked, it lands the skill's
+   * `onBlocked` instead, which earns no adrenaline; an `unblockable`
+   * skill (Wild Throw) rolls no block. With its attacker gone from the
+   * match, the blow lands and the riders do not.
    */
   #land(projectile: Projectile): void {
     if (projectile.obstructed) {
       // It hit the wall; where the target is now has nothing to do with it.
-      this.#logWeapon(projectile.attackerId, projectile.weaponSnapshot.mainHand.weapon.id, [
-        { kind: "attack-obstructed", targetId: projectile.targetId },
-      ]);
+      this.#logShot(projectile, [{ kind: "attack-obstructed", targetId: projectile.targetId }]);
       return;
     }
     const target = this.#participants.get(projectile.targetId);
@@ -1507,15 +1548,32 @@ export class MatchSimulation {
     const reach = this.#ruleset.collision.playerRadius + this.#ruleset.combat.projectileTolerance;
     const events: CombatEvent[] = [];
     const attacker = this.#participants.get(projectile.attackerId);
+    const { skillHit } = projectile;
+    const riders = (effects: Skill["effects"]): CombatEvent[] =>
+      skillHit === undefined || attacker === undefined
+        ? []
+        : applySkillEffects({
+            skill: { ...skillHit.skill, effects },
+            caster: attacker.combatant,
+            targets: [target.combatant],
+            rng: this.#rng,
+            rules: this.#ruleset.combat,
+          });
+    let blocked = false;
     if (distance(target.position, projectile.aimPoint) > reach) {
       events.push({ kind: "attack-dodged", targetId: target.id });
-    } else if (blocks(target.combatant, "projectile", this.#rng)) {
+    } else if (
+      skillHit?.skill.attack?.unblockable !== true &&
+      blocks(target.combatant, "projectile", this.#rng)
+    ) {
+      blocked = true;
       events.push({ kind: "attack-blocked", targetId: target.id });
+      events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
     } else {
       const critical = landBlow(
         projectile.weaponSnapshot,
         target.combatant,
-        PLAIN_BLOW,
+        skillHit?.blow ?? PLAIN_BLOW,
         // A shot crits only on its roll, never for where it came from.
         false,
         this.#rng,
@@ -1536,13 +1594,33 @@ export class MatchSimulation {
           ),
         );
       }
+      events.push(...riders(skillHit?.skill.effects ?? []));
     }
-    if (attacker !== undefined && !attacker.combatant.dead) {
+    if (attacker !== undefined && !attacker.combatant.dead && !blocked) {
       this.#gainAdrenaline(attacker, events);
     }
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
-    this.#logWeapon(projectile.attackerId, projectile.weaponSnapshot.mainHand.weapon.id, events);
+    this.#logShot(projectile, events);
+  }
+
+  /** A shot's entry: its skill's, if it carries one (#416), else its weapon's. */
+  #logShot(projectile: Projectile, events: readonly CombatEvent[]): void {
+    const { skillHit } = projectile;
+    if (skillHit === undefined) {
+      this.#logWeapon(projectile.attackerId, projectile.weaponSnapshot.mainHand.weapon.id, events);
+      return;
+    }
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: projectile.attackerId,
+      skillId: skillHit.skill.id,
+      weaponId: undefined,
+      area: undefined,
+      events,
+    });
   }
 
   /** A weapon entry, named for the weapon that swung or shot (#162). */
