@@ -42,7 +42,9 @@ describe("redact", () => {
     expect(redact("curl -H 'x' Bearer abcdefghij1234")).toBe("curl -H 'x' Bearer [redacted]");
     expect(
       redact(
-        "a\n-----BEGIN OPENSSH PRIVATE KEY-----\nAAAA\nBBBB\n-----END OPENSSH PRIVATE KEY-----\nb",
+        "a\n-----BEGIN OPENSSH " +
+          "PRIVATE KEY-----\nAAAA\nBBBB\n-----END OPENSSH " +
+          "PRIVATE KEY-----\nb",
       ),
     ).toBe("a\n[redacted]\nb");
   });
@@ -67,7 +69,7 @@ describe("peekWriter", () => {
       writer.line(`line ${String(i)}`);
     }
     writer.line("x".repeat(MAX_LINE + 50));
-    writer.line("-----BEGIN RSA PRIVATE KEY----- MIIE");
+    writer.line("-----BEGIN RSA " + "PRIVATE KEY----- MIIE");
     writer.line("next line survives");
     writer.line("after");
     writer.finish("between");
