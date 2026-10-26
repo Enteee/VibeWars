@@ -1708,7 +1708,7 @@
               "properties": [
                 { "name": "amount", "optional": false, "type": { "union": ["null", "number"] } },
                 {
-                  "name": "critical",
+                  "name": "crit",
                   "optional": false,
                   "type": { "union": ["null", { "literal": false }, { "literal": true }] }
                 },
@@ -1768,7 +1768,7 @@
                 "properties": [
                   { "name": "amount", "optional": false, "type": { "union": ["null", "number"] } },
                   {
-                    "name": "critical",
+                    "name": "crit",
                     "optional": false,
                     "type": { "union": ["null", { "literal": false }, { "literal": true }] }
                   },
@@ -1798,7 +1798,7 @@
       "properties": [
         { "name": "amount", "optional": false, "type": { "union": ["null", "number"] } },
         {
-          "name": "critical",
+          "name": "crit",
           "optional": false,
           "type": { "union": ["null", { "literal": false }, { "literal": true }] }
         },

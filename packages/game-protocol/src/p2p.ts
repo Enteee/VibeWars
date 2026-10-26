@@ -208,8 +208,12 @@ export interface WireCombatEvent {
   readonly statusId: string | null;
   /** How long an applied status lasts. */
   readonly durationSeconds: number | null;
-  /** Whether a damage event was a critical hit (#533); `null` for any other kind. */
-  readonly critical: boolean | null;
+  /**
+   * Whether a damage event was a critical hit (#533); `null` for any other
+   * kind. Short because every event carries it, and the worst-case combat
+   * batch must fit in one message.
+   */
+  readonly crit: boolean | null;
 }
 
 /** One cast, swing or status tick, and what it did. */
@@ -684,7 +688,7 @@ function parseCombatEvent(value: unknown): WireCombatEvent | undefined {
     isNullableString(raw.skillId) &&
     isNullableString(raw.statusId) &&
     (raw.durationSeconds === null || isNumber(raw.durationSeconds)) &&
-    (raw.critical === null || typeof raw.critical === "boolean")
+    (raw.crit === null || typeof raw.crit === "boolean")
     ? {
         kind: raw.kind,
         targetId: raw.targetId,
@@ -692,7 +696,7 @@ function parseCombatEvent(value: unknown): WireCombatEvent | undefined {
         skillId: raw.skillId,
         statusId: raw.statusId,
         durationSeconds: raw.durationSeconds,
-        critical: raw.critical,
+        crit: raw.crit,
       }
     : undefined;
 }

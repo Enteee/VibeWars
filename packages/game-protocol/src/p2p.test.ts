@@ -145,7 +145,7 @@ const combat: WireCombat = {
       skillId: null,
       statusId: null,
       durationSeconds: null,
-      critical: true,
+      crit: true,
     },
     {
       kind: "interrupted",
@@ -154,7 +154,7 @@ const combat: WireCombat = {
       skillId: "healing-breeze",
       statusId: null,
       durationSeconds: null,
-      critical: null,
+      crit: null,
     },
     {
       kind: "status-applied",
@@ -163,7 +163,7 @@ const combat: WireCombat = {
       skillId: null,
       statusId: "burning",
       durationSeconds: 3,
-      critical: null,
+      crit: null,
     },
   ],
 };
@@ -390,7 +390,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
           skillId: null,
           statusId: null,
           durationSeconds: null,
-          critical: false,
+          crit: false,
         })),
       },
     ],
@@ -408,7 +408,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "combat with a critical that is not a boolean",
     parseWireCombatBatch,
-    [{ ...combat, events: [{ ...combat.events[0], critical: "yes" }] }],
+    [{ ...combat, events: [{ ...combat.events[0], crit: "yes" }] }],
   ],
   [
     "skill bar with too many slots",

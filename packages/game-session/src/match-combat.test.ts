@@ -628,7 +628,7 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     const crit = { kind: "damage", targetId: "b", amount: 31, critical: true } as const;
     const heal = { kind: "heal", targetId: "a", amount: 5 } as const;
     const [wired] = wireCombat([entry({ events: [crit, heal] })]);
-    expect(wired?.events.map((event) => event.critical)).toEqual([true, null]);
+    expect(wired?.events.map((event) => event.crit)).toEqual([true, null]);
     expect(wired === undefined ? undefined : combatMessage(wired).events).toEqual([crit, heal]);
   });
 });
