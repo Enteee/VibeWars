@@ -47,6 +47,11 @@ interface Ping {
 interface TeamCalls {
   target: { readonly targetId: string; readonly callerId: string } | null;
   pings: Ping[];
+  /**
+   * The team's own: one counter for both would let a team read how often,
+   * and when, the other pinged from the gaps in its ids.
+   */
+  nextPingId: number;
 }
 
 const TEAMS: readonly Team[] = [0, 1];
@@ -56,12 +61,11 @@ export function createCallBoard(bounds: {
   readonly height: number;
 }): CallBoard {
   const teams: Record<Team, TeamCalls> = {
-    0: { target: null, pings: [] },
-    1: { target: null, pings: [] },
+    0: { target: null, pings: [], nextPingId: 1 },
+    1: { target: null, pings: [], nextPingId: 1 },
   };
   /** When each player last called or pinged. */
   const lastCall = new Map<string, number>();
-  let nextPingId = 1;
 
   const clamp = (value: number, max: number): number => Math.min(max, Math.max(0, value));
 
@@ -85,13 +89,13 @@ export function createCallBoard(bounds: {
       }
       lastCall.set(callerId, now);
       const ping: Ping = {
-        id: nextPingId,
+        id: calls.nextPingId,
         x: clamp(call.x, bounds.width),
         y: clamp(call.y, bounds.height),
         byId: callerId,
         at: now,
       };
-      nextPingId += 1;
+      calls.nextPingId += 1;
       calls.pings = [...calls.pings, ping].slice(-MAX_WIRE_PINGS);
       return true;
     },

@@ -78,6 +78,16 @@ describe("createCallBoard (#443)", () => {
     );
   });
 
+  it("numbers each team's pings on its own, so the gaps tell nothing of the other's", () => {
+    const board = createCallBoard(BOUNDS);
+    board.call(0, "a", { kind: "ping", x: 1, y: 1 }, 0, foeB);
+    board.call(1, "b", { kind: "ping", x: 2, y: 2 }, 0, foeB);
+    board.call(1, "d", { kind: "ping", x: 3, y: 3 }, 0, foeB);
+    board.call(0, "c", { kind: "ping", x: 4, y: 4 }, 0, foeB);
+    expect(board.view(0, 0).pings.map((ping) => ping.id)).toEqual([1, 2]);
+    expect(board.view(1, 0).pings.map((ping) => ping.id)).toEqual([1, 2]);
+  });
+
   it("lets the last of two calls in one tick win", () => {
     const board = createCallBoard(BOUNDS);
     const foes = (id: string): boolean => id === "b" || id === "e";
