@@ -224,6 +224,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       weaponId: WEAPON_ID,
       attributeId: ATTRIBUTE_ID,
       area: { x: FLOAT, y: FLOAT, radius: 200 },
+      doubleStrike: false,
       events: Array.from({ length: 6 }, (_, i) => hit(i + 1, extra)).flat(),
     };
     // Each swing twice, each striking three foes.
@@ -234,6 +235,8 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       weaponId: WEAPON_ID,
       attributeId: ATTRIBUTE_ID,
       area: null,
+      // `false` is a byte longer than `true`: the worst case on the wire.
+      doubleStrike: false,
       events: [0, 1, 2].flatMap((foe) => [...hit(foe, extra), ...hit(foe, extra)]),
     }));
     return [area, ...swings];

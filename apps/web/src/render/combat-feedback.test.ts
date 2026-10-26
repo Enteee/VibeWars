@@ -72,6 +72,7 @@ function floated(
       skillId: cause === "skill" ? "elementalist.fireball" : "",
       weaponId: cause === "weapon" ? "sword" : "",
       attributeId: "",
+      doubleStrike: false,
       events,
     },
     SNAPSHOT,
@@ -123,6 +124,7 @@ describe("showCombatFeedback", () => {
           skillId: cause === "skill" ? "elementalist.fireball" : "",
           weaponId: cause === "weapon" ? "sword" : "",
           attributeId: "",
+          doubleStrike: false,
           events: [{ kind: "damage", targetId: "them", amount: 12, critical }],
         },
         SNAPSHOT,
@@ -156,6 +158,7 @@ describe("showCombatFeedback", () => {
         skillId: "elementalist.fireball",
         weaponId: "",
         attributeId: "",
+        doubleStrike: false,
         events: [
           { kind: "damage", targetId: "them", amount: 30, critical: false },
           { kind: "damage", targetId: "them", amount: 20, critical: false },
@@ -211,6 +214,7 @@ describe("showCombatFeedback", () => {
         skillId: "elementalist.fireball",
         weaponId: "",
         attributeId: "",
+        doubleStrike: false,
         events: [
           { kind: "damage", targetId: "them", amount: 5, critical: false },
           { kind: "heal", targetId: "me", amount: 5 },
@@ -242,6 +246,7 @@ describe("showCombatFeedback and areas", () => {
         skillId: "elementalist.fireball",
         weaponId: "",
         attributeId: "",
+        doubleStrike: false,
         events: [],
         ...(area && { area }),
       },
@@ -281,6 +286,7 @@ describe("swingFlashFor (#161)", () => {
     skillId: "",
     weaponId: cause === "weapon" ? "sword" : "",
     attributeId: "",
+    doubleStrike: false,
     events: [
       kind === "damage"
         ? { kind, targetId: "them", amount: 30, critical: false }

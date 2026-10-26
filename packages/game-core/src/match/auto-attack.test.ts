@@ -468,6 +468,7 @@ describe("the log", () => {
     match.requestAttack("a", "d");
     const [entry] = swings(stepFor(match, 1.4));
     expect(entry?.events.map((event) => event.kind)).toEqual(["damage", "damage"]);
+    expect(entry?.doubleStrike).toBe(true);
     const total = (entry?.events ?? []).reduce(
       (sum, event) => sum + (event.kind === "damage" ? event.amount : 0),
       0,
@@ -475,6 +476,33 @@ describe("the log", () => {
     expect(tallyCombat(entry === undefined ? [] : [entry]).damageByActor.get("a")).toBe(total);
     // Two hits, one swing: adrenaline once.
     expect(get(match, "a").combatant.adrenaline).toBe(3);
+  });
+
+  it("says which swings struck twice; an attack skill never does (#561, ADR-0029)", () => {
+    // A sword that always strikes twice, so Opening Cut can ride it.
+    const always: Weapon = {
+      ...WEAPONS.sword,
+      doubleStrike: { attributeId: "warrior.swordsmanship", baseChance: 1, perRank: 0 },
+    };
+    const match = sim(
+      { ...swordsman("a", vec2(0, 0)), equipment: wielding(always, "warrior.swordsmanship") },
+      dummy("d", vec2(40, 0)),
+    );
+    match.setTarget("a", "d");
+    get(match, "a").combatant.adrenaline = 3;
+    expect(match.requestSkill("a", 2)?.check).toEqual({ ok: true });
+    const log = stepFor(match, 3);
+    const cut = log.filter((entry) => entry.skillId === OPENING_CUT);
+    expect(cut.length).toBeGreaterThan(0);
+    expect(cut.every((entry) => !entry.doubleStrike)).toBe(true);
+    expect(swings(log).length).toBeGreaterThan(0);
+    expect(swings(log).every((entry) => entry.doubleStrike)).toBe(true);
+
+    const single = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
+    single.requestAttack("a", "d");
+    const plain = swings(stepFor(single, 3));
+    expect(plain.length).toBeGreaterThan(0);
+    expect(plain.every((entry) => !entry.doubleStrike)).toBe(true);
   });
 
   it("two runs from one seed write the same log", () => {
