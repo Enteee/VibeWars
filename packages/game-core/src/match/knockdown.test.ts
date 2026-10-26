@@ -6,6 +6,7 @@ import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { describeSkill } from "../skills/describe.js";
 import { applyEffects } from "../skills/effects.js";
+import { blockChanceOf } from "../skills/tick.js";
 import { getSkill } from "../skills/catalog.js";
 import { makeCombatant, withStatusDefinitions } from "../skills/testing.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -272,5 +273,21 @@ describe("the knockdown effect", () => {
     ctx.target.statuses.removeByCategory("hex");
     ctx.target.statuses.removeByCategory("enchantment");
     expect(ctx.target.knockdownRemaining).toBe(4);
+  });
+});
+
+describe("a knocked-down character can't block (#610)", () => {
+  it("blocks again on the tick its knockdown ends: that counts down before any blow", () => {
+    const match = new MatchSimulation({
+      seed: "rising-block",
+      participants: [hammerer("a", vec2(0, 0)), caster("v", vec2(40, 0))],
+    });
+    const v = get(match, "v").combatant;
+    v.statuses.apply("guardian", 60, "monk");
+    v.knockdownRemaining = DT;
+    expect(blockChanceOf(v, "melee")).toBe(0);
+    match.step(DT);
+    expect(v.knockdownRemaining).toBe(0);
+    expect(blockChanceOf(v, "melee")).toBe(0.5);
   });
 });

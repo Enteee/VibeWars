@@ -15,3 +15,19 @@ declare class TextEncoder {
 }
 /** A host that would send an oversized message says so (#403). */
 declare const console: { error(...data: unknown[]): void };
+/** A rejoin is proven with an HMAC of the token, not the token itself (#593). */
+interface SubtleHmacKey {
+  readonly type: string;
+}
+declare const crypto: {
+  readonly subtle: {
+    importKey(
+      format: "raw",
+      keyData: Uint8Array,
+      algorithm: { readonly name: "HMAC"; readonly hash: "SHA-256" },
+      extractable: false,
+      keyUsages: readonly "sign"[],
+    ): Promise<SubtleHmacKey>;
+    sign(algorithm: "HMAC", key: SubtleHmacKey, data: Uint8Array): Promise<ArrayBuffer>;
+  };
+};

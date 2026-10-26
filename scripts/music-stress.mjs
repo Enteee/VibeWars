@@ -181,7 +181,14 @@ function launch(browser) {
   return firefox.launch({
     ...(executablePath === undefined ? {} : { executablePath }),
     firefoxUserPrefs: { "media.autoplay.default": 0 },
-    env: { ...process.env, MOZ_DISABLE_CONTENT_SANDBOX: "1" },
+    env: {
+      ...process.env,
+      MOZ_DISABLE_CONTENT_SANDBOX: "1",
+      // Firefox dlopens libpulse; a Nix build does not find it by itself.
+      ...(process.env.VIBEWARS_PULSE_LIB === undefined
+        ? {}
+        : { LD_LIBRARY_PATH: process.env.VIBEWARS_PULSE_LIB }),
+    },
   });
 }
 
@@ -220,6 +227,14 @@ async function measure(url, load) {
         const data = /** @type {unknown} */ (event.data);
         if (typeof data === "object" && data !== null && "type" in data && data.type === "stats") {
           seen.push(data);
+        } else if (
+          typeof data === "object" &&
+          data !== null &&
+          "type" in data &&
+          data.type === "error"
+        ) {
+          // The music host reports failures by message; surface them as a warning.
+          console.warn(`music host error: ${JSON.stringify(data)}`);
         }
       });
     });

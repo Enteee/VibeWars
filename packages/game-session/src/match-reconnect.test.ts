@@ -1,7 +1,13 @@
 import { DEFAULT_SKILL_BAR } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { hello, playerIn, self, startMatch } from "./match-harness.test-support.js";
+import {
+  answerChallenges,
+  hello,
+  playerIn,
+  self,
+  startMatch,
+} from "./match-harness.test-support.js";
 
 /**
  * Network robustness (brief §25), over P2P (#375).
@@ -12,7 +18,8 @@ import { hello, playerIn, self, startMatch } from "./match-harness.test-support.
  * character and their position for a window, and can walk back in.
  *
  * In P2P a drop is a peer leaving the transport, and a returning player
- * is a new peer that proves who it was with its rejoin token.
+ * is a new peer that proves who it was with its rejoin token, without
+ * sending it (#593).
  */
 describe("reconnection over P2P (#375)", () => {
   it("holds a dropped player's slot instead of deleting them immediately", async () => {
@@ -45,9 +52,7 @@ describe("reconnection over P2P (#375)", () => {
     await transport.leave();
     await match.step(0.4);
 
-    const { connection: resumed } = await match.join(
-      hello({ rejoin: { playerId: dropper.selfSessionId, token: dropper.rejoinToken } }),
-    );
+    const { connection: resumed } = await match.rejoin(dropper);
     await match.step(0.05);
 
     expect(resumed.selfSessionId).toBe(dropper.selfSessionId);
@@ -73,9 +78,7 @@ describe("reconnection over P2P (#375)", () => {
 
     await transport.leave();
     await match.step(2);
-    const { connection: resumed } = await match.join(
-      hello({ rejoin: { playerId: caster.selfSessionId, token: caster.rejoinToken } }),
-    );
+    const { connection: resumed } = await match.rejoin(caster);
     await match.step(1);
 
     // Three seconds on: two away, one back.
@@ -165,9 +168,7 @@ describe("reconnection over P2P (#375)", () => {
     const { connection: dropper } = await match.join();
     await match.step(0.05);
 
-    const { connection: resumed } = await match.join(
-      hello({ rejoin: { playerId: dropper.selfSessionId, token: dropper.rejoinToken } }),
-    );
+    const { connection: resumed } = await match.rejoin(dropper);
     await match.step(0.8);
 
     expect(resumed.selfSessionId).toBe(dropper.selfSessionId);
@@ -183,12 +184,10 @@ describe("reconnection over P2P (#375)", () => {
     await match.step(0.05);
     const welcomes: unknown[] = [];
     transport.on("welcome", (data) => welcomes.push(data));
+    // Even holding the victim's token, it is not asked to prove it.
+    answerChallenges(transport, victim.rejoinToken);
 
-    transport.send(
-      "hello",
-      hello({ rejoin: { playerId: victim.selfSessionId, token: victim.rejoinToken } }),
-      "host",
-    );
+    transport.send("hello", hello({ rejoin: { playerId: victim.selfSessionId } }), "host");
     await match.step(0.3);
 
     expect(welcomes).toEqual([]);

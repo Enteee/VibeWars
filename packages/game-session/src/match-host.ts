@@ -21,9 +21,11 @@ import {
   parseClientIntent,
   parsePeerBye,
   parsePeerHello,
+  parsePeerRejoinProof,
   type MapDescriptor,
   type PeerHello,
   type PeerRefuse,
+  type PeerRejoinChallenge,
   type PeerWelcome,
   type RechargeSlot,
   type WireEnded,
@@ -36,6 +38,7 @@ import { packCombat } from "./combat-batches.js";
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 import { sanitizeName } from "./names.js";
 import { rechargePredicted, rechargeSlots } from "./recharge.js";
+import { rejoinProof } from "./rejoin-proof.js";
 import { spawnPoint, type SpawnPoint } from "./spawn-points.js";
 import { MAX_MESSAGE_BYTES, type Transport } from "./transport.js";
 import { skillBarSlots, wireCombat } from "./wire.js";
@@ -80,9 +83,10 @@ export interface MatchHostOptions {
   readonly seed: string;
   readonly matchRules: MatchRules;
   /**
-   * In [0, 1), for rejoin tokens; injected so a test is reproducible. A
-   * token is all that stands between a seat and whoever guesses it, so in
-   * a page this must come from `crypto.getRandomValues`, never `Math.random`.
+   * In [0, 1), for rejoin tokens and challenges; injected so a test is
+   * reproducible. A token is all that stands between a seat and whoever
+   * guesses it, so in a page this must come from `crypto.getRandomValues`,
+   * never `Math.random`.
    */
   readonly random: () => number;
   readonly maxPlayers: number;
@@ -120,12 +124,19 @@ interface Seat {
   readonly secondaryProfession: ProfessionId | undefined;
   /** The peer playing it; `undefined` while it is dropped. */
   peerId: string | undefined;
-  /** What the peer sends in `PeerHello.rejoin` to take the seat back. */
+  /** What the peer proves it holds, by `rejoinProof`, to take the seat back. */
   token: string;
   /** The match time it dropped at, while it is dropped. */
   droppedAt: number | undefined;
   /** The recharges the peer was last told, and when, so only news is sent (#152). */
   recharges: { readonly slots: RechargeSlot[]; readonly at: number } | undefined;
+}
+
+/** A rejoin hello the host has challenged, waiting for its proof (#593). */
+interface Challenge {
+  readonly playerId: string;
+  readonly nonce: string;
+  readonly hello: PeerHello;
 }
 
 function round(value: number, places: number): number {
@@ -157,13 +168,20 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   const departed = new Set<string>();
   /** The planned peers that have not said hello yet, while they are in the room. */
   const awaited = new Set(planned?.keys());
+  /** At most one per peer: a new rejoin hello kills the old nonce. */
+  const challenges = new Map<string, Challenge>();
+  /**
+   * The proof being checked for each peer, until it leaves the room: only
+   * the latest of a peer's proofs may seat it.
+   */
+  const proving = new Map<string, object>();
   let seated = 0;
   let accumulator = 0;
   let finished = false;
 
   const nowMs = (): number => sim.elapsedSeconds * 1000;
 
-  /** 128 random bits as 32 hex digits. */
+  /** 128 random bits as 32 hex digits: a rejoin token, or a challenge's nonce. */
   const newToken = (): string =>
     Array.from({ length: 32 }, () => Math.floor(random() * 16).toString(16)).join("");
 
@@ -287,23 +305,29 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       refuse(from, "match-over", MATCH_OVER_MESSAGE);
       return;
     }
+    challenges.delete(from);
     const { rejoin } = hello;
     const held = rejoin === null ? undefined : seats.get(rejoin.playerId);
-    const current = seatOfPeer.get(from);
-    if (
-      held !== undefined &&
-      held.token === rejoin?.token &&
-      (current === undefined || current === held)
-    ) {
-      // The player may be back before the host has seen its old peer go:
-      // the token is the proof, and the old peer is forgotten. That old
-      // peer may be this one, when only the guest saw the connection drop.
-      if (held.peerId !== undefined) {
-        seatOfPeer.delete(held.peerId);
-      }
-      welcome(held, from);
+    if (held !== undefined && claimable(held, from)) {
+      // Asked, not told: the token never crosses the wire again, so a
+      // peer posing as this host learns nothing it could take the seat with.
+      const challenge: PeerRejoinChallenge = { playerId: held.playerId, nonce: newToken() };
+      challenges.set(from, { ...challenge, hello });
+      transport.send("rejoin-challenge", challenge, from);
       return;
     }
+    join(hello, from);
+  });
+
+  /** Whether `peerId` may take `seat`: it plays no other seat. */
+  const claimable = (seat: Seat, peerId: string): boolean => {
+    const current = seatOfPeer.get(peerId);
+    return current === undefined || current === seat;
+  };
+
+  /** A hello that is not, or failed to be, a rejoin: a fresh join, if this peer may have one. */
+  const join = (hello: PeerHello, from: string): void => {
+    const current = seatOfPeer.get(from);
     if (current !== undefined) {
       // Already seated, and not asking for its own seat back.
       return;
@@ -317,7 +341,72 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
     awaited.delete(from);
     seatNew(hello, from, plan);
+  };
+
+  transport.on("rejoin-proof", (data, from) => {
+    if (!budget.take(from, nowMs()) || departed.has(from)) {
+      return;
+    }
+    const proof = parsePeerRejoinProof(data);
+    // Single use: taken before anything is awaited, so a second proof for
+    // the same nonce finds nothing.
+    const challenge = challenges.get(from);
+    challenges.delete(from);
+    if (proof === undefined || challenge === undefined) {
+      return;
+    }
+    const attempt = {};
+    proving.set(from, attempt);
+    void prove(challenge, proof.playerId, proof.proof, from, attempt).finally(() => {
+      if (proving.get(from) === attempt) {
+        proving.delete(from);
+      }
+    });
   });
+
+  /** Seat `from` back in the challenged seat if its proof holds, else treat it as a fresh hello. */
+  const prove = async (
+    challenge: Challenge,
+    playerId: string,
+    proof: string,
+    from: string,
+    attempt: object,
+  ): Promise<void> => {
+    const before = seats.get(challenge.playerId);
+    const token = before?.token;
+    const expected =
+      token === undefined
+        ? undefined
+        : await rejoinProof(token, challenge.nonce, challenge.playerId, from);
+    // The match went on while the proof was checked: look again. A peer
+    // that left or said bye meanwhile is not seated, nor told anything.
+    if (proving.get(from) !== attempt || departed.has(from)) {
+      return;
+    }
+    if (finished) {
+      refuse(from, "match-over", MATCH_OVER_MESSAGE);
+      return;
+    }
+    const held = seats.get(challenge.playerId);
+    if (
+      held === undefined ||
+      held !== before ||
+      held.token !== token ||
+      playerId !== challenge.playerId ||
+      proof !== expected ||
+      !claimable(held, from)
+    ) {
+      join(challenge.hello, from);
+      return;
+    }
+    // The player may be back before the host has seen its old peer go:
+    // the proof is the proof, and the old peer is forgotten. That old peer
+    // may be this one, when only the guest saw the connection drop.
+    if (held.peerId !== undefined) {
+      seatOfPeer.delete(held.peerId);
+    }
+    welcome(held, from);
+  };
 
   transport.on("intent", (data, from) => {
     const seat = seatOfPeer.get(from);
@@ -361,6 +450,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     budget.forget(peerId);
     departed.delete(peerId);
     awaited.delete(peerId);
+    challenges.delete(peerId);
+    proving.delete(peerId);
     const seat = seatOfPeer.get(peerId);
     if (seat === undefined) {
       return;

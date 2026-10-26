@@ -131,6 +131,10 @@ effect, so nothing that removes conditions or enchantments stands you
 up. It counts down before anyone acts, so it lasts its full duration
 whoever lands it, and you act again on the tick it ends.
 
+A knocked-down character can't block: Guardian does nothing while you
+are down, and an attack skill's if-blocked rider never fires against
+you. Blocking works again the moment you stand.
+
 ## Conditions, hexes and enchantments
 
 All three are timed status effects sharing one lifecycle, parameterised
@@ -176,6 +180,23 @@ Degeneration applies **continuously** (`pips × 2 × dt`), not in once-per-
 second lumps, so a bleed at 20 Hz drains smoothly instead of
 stair-stepping. Regeneration correctly caps at the deep-wound-_reduced_
 maximum, not the raw one.
+
+## Skill types
+
+A skill's type is its badge on the slot, in the library and in the
+Training Ground, and some types play by rules of their own (#465).
+
+**Stances** are yours alone, and only one is up at a time. Using a
+stance ends the one you are in, the same one included, which restarts
+at its full duration. A stance is not an enchantment: enchantment removal
+leaves it alone, and stance removal leaves your enchantments. Sprint
+(Warrior, 13 s) moves you 25% faster; Dash (Assassin, 3 s) 50% faster.
+A stance and crippled multiply, as every movement change does.
+
+Wild Throw (Paragon spear attack, 7 adrenaline) deals +17 damage, cannot
+be blocked, and ends the stance of the foe it hits. It does not yet
+disable your other attack skills for 3 s: that waits for disabled skills
+(#469).
 
 ## Weapon attacks
 
@@ -267,7 +288,7 @@ its riders, so a blocked Distracting Blow interrupts nothing; an attack
 skill's cost and recharge are still spent. "block" floats over the
 target. Swift Chop is the exception that proves it: blocked, it still
 deals its flat damage and a 20 s Deep Wound. Spells are never blocked,
-and shields do not block, as in GW1.
+and shields do not block, as in GW1. Wild Throw cannot be blocked at all.
 
 Not modelled: evade. Attack-speed changes have
 a hook (only the strongest speed-up and slow-down count), but no skill
