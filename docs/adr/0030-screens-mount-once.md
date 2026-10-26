@@ -36,10 +36,14 @@ No virtual DOM and no framework.
   else in the container is removed. `create` builds structure and
   listeners, `update` fills in what can change. The screens' own copies of
   `h()` and `button()` are gone.
+- The kit also holds the parts a screen bar is made of (#566):
+  `screenBar`, `inlineConfirm` in place of `window.confirm()`,
+  `problemsChip` and `toast`.
 - `mountBuildEditor(root, character, callbacks)` returns `{ dispose() }`.
   It builds the three columns once. Each region is
-  `mountX(parent, context)` returning `{ update(character) }`: header, professions,
-  attributes, skill bar, gear, problems and actions, share, library. One
+  `mountX(parent, context)` returning `{ update(character) }`: the command bar
+  (#566: name, professions, budget, problems, Save, ⋯), attributes, skill bar,
+  gear, share, library. One
   `commit(next)` sets the character and calls every region's `update`.
   The lists (attributes, bar slots, library groups and boxes, runes) go
   through `syncList`.
