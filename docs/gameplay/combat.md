@@ -367,6 +367,7 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
 - **Soul Reaping** (Necromancer). When anyone else, ally or foe, dies
   within spirit range (850), you gain energy equal to your rank, up to
   your maximum, at most 3 times in any 15 s. Not while you are dead.
+  The gain floats over you, and the Training log names Soul Reaping.
 
 The others have no effect yet.
 

@@ -70,6 +70,7 @@ function hit(caster: string, target: string): CombatMessage {
     cause: "skill",
     skillId: "x",
     weaponId: "",
+    attributeId: "",
     events: [{ kind: "damage", targetId: target, amount: 9, critical: false }],
   };
 }

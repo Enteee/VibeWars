@@ -254,11 +254,13 @@ export interface WireCombatEvent {
 /** One cast, swing or status tick, and what it did. */
 export interface WireCombat {
   readonly casterId: string;
-  readonly cause: "skill" | "weapon" | "degeneration";
+  readonly cause: "skill" | "weapon" | "degeneration" | "attribute";
   /** The skill, when `cause` is `"skill"`; `""` otherwise. */
   readonly skillId: string;
   /** The weapon, when `cause` is `"weapon"`; `""` otherwise. */
   readonly weaponId: string;
+  /** The primary attribute, when `cause` is `"attribute"`; `""` otherwise (#633). */
+  readonly attributeId: string;
   /** Where an area skill landed, and how far it reached (#5). */
   readonly area: { readonly x: number; readonly y: number; readonly radius: number } | null;
   readonly events: readonly WireCombatEvent[];
@@ -773,9 +775,11 @@ function parseWireCombat(value: unknown): WireCombat | undefined {
   if (
     raw === undefined ||
     !isString(raw.casterId) ||
-    !isOneOf(raw.cause, ["skill", "weapon", "degeneration"] as const) ||
+    !isOneOf(raw.cause, ["skill", "weapon", "degeneration", "attribute"] as const) ||
     !isString(raw.skillId) ||
-    !isString(raw.weaponId)
+    !isString(raw.weaponId) ||
+    !isString(raw.attributeId) ||
+    (raw.cause === "attribute") !== (raw.attributeId !== "")
   ) {
     return undefined;
   }
@@ -788,6 +792,7 @@ function parseWireCombat(value: unknown): WireCombat | undefined {
         cause: raw.cause,
         skillId: raw.skillId,
         weaponId: raw.weaponId,
+        attributeId: raw.attributeId,
         area,
         events,
       };

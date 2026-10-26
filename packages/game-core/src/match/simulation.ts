@@ -352,6 +352,12 @@ export class MatchSimulation {
    * move cancelled since the last one, stamped with when it happened.
    */
   #log: CombatLogEntry[] = [];
+  /**
+   * Soul Reaping's gains this step (#633), reported after everything
+   * else in it: a death is recorded before the entry that holds it is
+   * logged, and the gain reads after the death.
+   */
+  #reaped: CombatLogEntry[] = [];
 
   public constructor(options: MatchSimulationOptions) {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
@@ -593,6 +599,7 @@ export class MatchSimulation {
         sourceId: record.id,
         skillId: cast.skillId,
         weaponId: undefined,
+        attributeId: undefined,
         area: undefined,
         events: [{ kind: "cancelled", targetId: record.id, skillId: cast.skillId }],
       });
@@ -873,6 +880,7 @@ export class MatchSimulation {
           sourceId: drained ? sources.draining : sources.healing,
           skillId: undefined,
           weaponId: undefined,
+          attributeId: undefined,
           area: undefined,
           events: statusEvents,
         });
@@ -918,8 +926,9 @@ export class MatchSimulation {
       }
     }
 
-    const log = this.#log;
+    const log = this.#log.concat(this.#reaped);
     this.#log = [];
+    this.#reaped = [];
     this.#healthLost(log);
     return this.#result(log);
   }
@@ -1114,6 +1123,7 @@ export class MatchSimulation {
       sourceId: record.id,
       skillId: skill.id,
       weaponId: undefined,
+      attributeId: undefined,
       area,
       events,
     });
@@ -1326,6 +1336,7 @@ export class MatchSimulation {
           sourceId: record.id,
           skillId: skill.id,
           weaponId: undefined,
+          attributeId: undefined,
           area: undefined,
           events: [unreachable],
         });
@@ -1709,6 +1720,7 @@ export class MatchSimulation {
       sourceId: projectile.attackerId,
       skillId: skillHit.skill.id,
       weaponId: undefined,
+      attributeId: undefined,
       area,
       events,
     });
@@ -1723,6 +1735,7 @@ export class MatchSimulation {
       sourceId,
       skillId: undefined,
       weaponId,
+      attributeId: undefined,
       area: undefined,
       events,
     });
@@ -1815,7 +1828,21 @@ export class MatchSimulation {
       const triggers = soulReapingTrigger(combatant.soulReapingTriggers, this.#elapsedSeconds);
       if (triggers !== undefined) {
         combatant.soulReapingTriggers = triggers;
-        combatant.energy = Math.min(combatant.maxEnergy, combatant.energy + rank);
+        const applied = Math.min(rank, combatant.maxEnergy - combatant.energy);
+        if (applied > 0) {
+          combatant.energy += applied;
+          this.#reaped.push({
+            tick: this.#tick,
+            atSeconds: this.#elapsedSeconds,
+            cause: "attribute",
+            sourceId: record.id,
+            skillId: undefined,
+            weaponId: undefined,
+            attributeId: SOUL_REAPING_ATTRIBUTE,
+            area: undefined,
+            events: [{ kind: "energy-gain", targetId: record.id, amount: applied }],
+          });
+        }
       }
     }
   }

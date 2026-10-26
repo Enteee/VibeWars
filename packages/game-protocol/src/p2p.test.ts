@@ -154,6 +154,7 @@ const combat: WireCombat = {
   cause: "skill",
   skillId: "fireball",
   weaponId: "",
+  attributeId: "",
   area: { x: 300, y: 200, radius: 80 },
   events: [
     {
@@ -189,6 +190,24 @@ const combat: WireCombat = {
 const combatBatch: WireCombatBatch = [
   combat,
   { ...combat, cause: "weapon", skillId: "", weaponId: "sword", area: null },
+  {
+    ...combat,
+    cause: "attribute",
+    skillId: "",
+    attributeId: "necromancer.soul-reaping",
+    area: null,
+    events: [
+      {
+        kind: "energy-gain",
+        targetId: "peer-1",
+        amount: 12,
+        skillId: null,
+        statusId: null,
+        durationSeconds: null,
+        crit: null,
+      },
+    ],
+  },
 ];
 
 const skillBar: WireSkillBar = {
@@ -542,6 +561,12 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { kind: "start-rejected", reason: "x".repeat(MAX_WIRE_TEXT + 1) },
   ],
   ["match-start without a match", parseWireMatchStart, { mapId: "isle" }],
+  [
+    "an attribute combat with no attribute",
+    parseWireCombatBatch,
+    [{ ...combatBatch[2], attributeId: "" }],
+  ],
+  ["a skill combat with an attribute", parseWireCombatBatch, [{ ...combat, attributeId: "x" }]],
 ];
 
 describe("the P2P channels (#82)", () => {

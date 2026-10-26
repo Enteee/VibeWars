@@ -481,11 +481,13 @@ export interface SkillBarMessage {
 export interface CombatMessage<Event> {
   readonly casterSessionId: string;
   /** What this was. Read this, never `skillId === ""`, to tell them apart. */
-  readonly cause: "skill" | "weapon" | "degeneration";
+  readonly cause: "skill" | "weapon" | "degeneration" | "attribute";
   /** The skill, when `cause` is `"skill"`; `""` otherwise. */
   readonly skillId: string;
   /** The weapon, when `cause` is `"weapon"`; `""` otherwise (#162). */
   readonly weaponId: string;
+  /** The primary attribute, when `cause` is `"attribute"`; `""` otherwise (#633). */
+  readonly attributeId: string;
   /** Where an area skill landed, and how far it reached (#5). */
   readonly area?: { readonly x: number; readonly y: number; readonly radius: number };
   readonly events: readonly Event[];

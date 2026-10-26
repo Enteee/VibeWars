@@ -133,4 +133,27 @@ describe("Soul Reaping (#530)", () => {
     combatant.energy = 0;
     expect(kill(match, "a2")).toBe(0);
   });
+
+  it('logs each gain as an "attribute" entry after the death, and none at full energy (#633)', () => {
+    const match = withNecromancer(...NEARBY);
+    doom(match, "f1");
+    const { log } = match.step(DT);
+    const reaped = log.filter((entry) => entry.cause === "attribute");
+    expect(reaped).toEqual([
+      expect.objectContaining({
+        sourceId: "n",
+        skillId: undefined,
+        weaponId: undefined,
+        attributeId: "necromancer.soul-reaping",
+        events: [{ kind: "energy-gain", targetId: "n", amount: 12 }],
+      }),
+    ]);
+    const death = log.findIndex((entry) => entry.events.some((event) => event.kind === "death"));
+    expect(death).toBeGreaterThanOrEqual(0);
+    expect(log.findIndex((entry) => entry.cause === "attribute")).toBeGreaterThan(death);
+
+    get(match, "n").combatant.energy = 100;
+    doom(match, "f2");
+    expect(match.step(DT).log.filter((entry) => entry.cause === "attribute")).toEqual([]);
+  });
 });

@@ -126,6 +126,7 @@ export function wireCombat(log: readonly CombatLogEntry[]): WireCombat[] {
         cause: entry.cause,
         skillId: entry.skillId ?? "",
         weaponId: entry.weaponId ?? "",
+        attributeId: entry.attributeId ?? "",
         area: entry.area ?? null,
         events: entry.events.map(wireEvent),
       },
@@ -181,6 +182,7 @@ export function combatMessage(combat: WireCombat): CombatMessage {
     cause: combat.cause,
     skillId: combat.skillId,
     weaponId: combat.weaponId,
+    attributeId: combat.attributeId,
     events,
   };
   return combat.area === null ? message : { ...message, area: combat.area };
