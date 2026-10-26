@@ -4,26 +4,24 @@
  *
  * Over budget, a message is ignored rather than its sender dropped. A
  * burst is what an honest client sends after a network stall: everything
- * it queued arrives at once. Dropping it there left the player connected
- * but deaf, because Colyseus stops reading a client it drops and only
- * closes the socket once our `onLeave` (the whole reconnection window)
- * is over. Ignoring instead keeps the handlers' cost bounded for a
- * flooder and costs an honest player nothing it could still use.
+ * it queued arrives at once, and dropping it there would leave the player
+ * connected but deaf for the whole reconnection window. Ignoring instead
+ * keeps the handlers' cost bounded for a flooder and costs an honest
+ * player nothing it could still use.
  */
 
 /**
  * How many messages per second one client may have handled, sustained
  * (#43). Every handler runs as the message arrives, outside the tick, so
- * without a limit one client could spend the whole room's tick budget.
+ * without a limit one client could spend the host's whole tick budget.
  * Real play peaks near 25 a second.
  */
 export const MESSAGES_PER_SECOND = 60;
 
 /**
  * How many may be handled at once: what an honest client queues behind a
- * network stall and then sends in one go. A server gives up on a silent
- * socket after about 9 s (Colyseus pings every 3 s, twice), and 9 s of
- * frantic play is about 225 messages.
+ * network stall and then sends in one go: 9 s of frantic play, a long
+ * stall to come back from, is about 225 messages.
  */
 export const MESSAGE_BURST = 300;
 

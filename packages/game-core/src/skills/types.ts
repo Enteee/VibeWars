@@ -260,7 +260,7 @@ export interface AreaRule {
 /**
  * What the skill engine needs to know about a combatant. Deliberately a
  * narrow interface rather than the full match entity: the engine does not
- * know about Colyseus schema objects, sessions, or rendering.
+ * know about wire messages, peers, or rendering.
  */
 export interface Combatant {
   readonly id: string;

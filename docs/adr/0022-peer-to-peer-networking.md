@@ -2,10 +2,11 @@
 
 ## Status
 
-Proposed (2026-10-25), by #82, the first phase of epic #15. Accepted when
-the last phase deletes `apps/server`. It will then supersede
-[ADR-0002](0002-networking.md) and [ADR-0009](0009-production-deployment.md),
-and amend [ADR-0001](0001-architecture.md).
+Accepted (2026-10-26), by #404, the last phase of epic #15, which deletes
+`apps/server`. Proposed (2026-10-25) by #82, its first phase. It
+supersedes [ADR-0002](0002-networking.md) and
+[ADR-0009](0009-production-deployment.md), and amends
+[ADR-0001](0001-architecture.md).
 
 ## Context
 

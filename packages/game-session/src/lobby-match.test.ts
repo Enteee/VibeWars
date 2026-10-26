@@ -1,4 +1,4 @@
-import { DEFAULT_MATCH_RULES } from "@vibewars/game-core";
+import { DEFAULT_MATCH_RULES, defaultBuildEquipment, type PlayerBuild } from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -12,7 +12,7 @@ import {
 } from "./lobby-harness.test-support.js";
 import { MatchRefusedError, connectMatch } from "./match-client.js";
 import { MATCH_FULL_MESSAGE, RECONNECT_WINDOW_SECONDS } from "./match-host.js";
-import { hello, playerIn, self, settle, until } from "./match-harness.test-support.js";
+import { hello, playerIn, self, settle, toJson, until } from "./match-harness.test-support.js";
 
 /**
  * A lobby's own match (#379), ported from the server's
@@ -65,6 +65,33 @@ describe("a lobby's own match", () => {
     await lobby.step(0.05);
     expect(self(mine)?.name).toBe("Host");
     expect(playerIn(mine.getSnapshot(), theirs.selfSessionId)?.name).toBe("Guest 1");
+  });
+
+  it("plays each member with the build they bring to the lobby's match", async () => {
+    const pyro: PlayerBuild = {
+      name: "Lobby Pyro",
+      primaryProfession: "elementalist",
+      secondaryProfession: undefined,
+      attributes: [{ attributeId: "elementalist.fire-magic", rank: 12 }],
+      skillBar: ["elementalist.fireball", null, null, null, null, null, null, null],
+      equipment: defaultBuildEquipment("elementalist"),
+    };
+    const { lobby, members } = await lobbyOf([0, 1]);
+    await start(lobby);
+    const guest = at(members, 1);
+    const starting = guest.starts.at(-1);
+    if (starting === undefined) {
+      throw new Error("the guest was handed no match");
+    }
+    const match = await connectMatch({
+      transport: starting.transport,
+      hostId: "host",
+      hello: hello({ build: toJson(pyro) }),
+      timeoutMs: 1000,
+    });
+    await lobby.step(0.05);
+    // The house loadout is a warrior's; only the build carries this weapon.
+    expect(self(match)?.weaponId).toBe(defaultBuildEquipment("elementalist").mainHand.weaponId);
   });
 
   it("seats each member on the team the lobby gave them, not one the host picks", async () => {

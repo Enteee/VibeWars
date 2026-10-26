@@ -113,11 +113,10 @@ Honest limits:
 
 ```text
 apps/
-  server/   The old Colyseus game server; no client uses it since #403, #404 deletes it
   web/      Browser client (HTML/CSS shell + Phaser 4 viewport)
 packages/
   game-core/      Pure domain logic: combat, skills, geometry, rules
-  game-protocol/  The client/server wire contract
+  game-protocol/  The peer-to-peer wire contract
   game-maps/      Declarative arenas + loader/validator
   game-data/      GW1 reference-skill import pipeline + dev CLI
   game-session/   Peer-to-peer match sessions over a Transport (#15)
@@ -146,7 +145,7 @@ so their peers are tabs of one browser and need no relay (see
 
 ```sh
 pnpm run ci       # format + lint + typecheck + test + build
-pnpm run test     # 583 tests: unit, integration, fuzz, headless simulation
+pnpm run test     # unit, integration, fuzz, benchmark, headless simulation
 pnpm run test:e2e # 19 browser tests in a real Chromium (needs one installed)
 pnpm run ci:full  # both of the above
 ```

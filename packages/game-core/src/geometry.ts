@@ -80,7 +80,7 @@ export function circleIntersectsSegment(center: Vec2, radius: number, seg: Segme
  * This is deliberately a pure "resolve one circle against one segment"
  * function with no knowledge of a tick, a room, or multiple walls — the
  * caller (the simulation) applies it once per wall per entity per tick, so
- * the geometry stays testable in complete isolation from Colyseus.
+ * the geometry stays testable in complete isolation from the network.
  */
 export function resolveCircleSegmentCollision(center: Vec2, radius: number, seg: Segment): Vec2 {
   const closest = closestPointOnSegment(center, seg);

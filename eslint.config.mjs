@@ -10,7 +10,7 @@ import tseslint from "typescript-eslint";
 /**
  * Type-aware linting is enabled repo-wide. It is slower than syntactic
  * linting, but it is the only way to catch the mistakes that actually matter
- * here — floating promises in the server loop, unsafe `any` leaking in from
+ * here — floating promises in the host's tick loop, unsafe `any` leaking in from
  * untyped network payloads, and unchecked union narrowing in the skill engine.
  *
  * Rules are never disabled globally (brief §41). Where an exception is
@@ -52,7 +52,7 @@ export default defineConfig([
       // The brief forbids `any` shortcuts; these are errors, not warnings.
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-non-null-assertion": "error",
-      // An unawaited promise in a fixed-tick server is silent state corruption.
+      // An unawaited promise in a fixed-tick host is silent state corruption.
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/no-misused-promises": "error",
       "@typescript-eslint/no-unused-vars": [
@@ -75,7 +75,6 @@ export default defineConfig([
 
   {
     files: [
-      "apps/server/**/*.ts",
       "packages/**/*.ts",
       "*.config.ts",
       "*.config.mjs",
@@ -146,8 +145,7 @@ export default defineConfig([
     },
   },
 
-  // The client plays peer to peer (#403): nothing in it talks to Colyseus.
-  // Nor does it reach the game-maps root, whose loader reads `maps/` with
+  // The client never reaches the game-maps root, whose loader reads `maps/` with
   // node:fs and kills the page under vite dev (#646): only its subpaths.
   {
     files: ["apps/web/src/**/*.ts"],
@@ -168,10 +166,6 @@ export default defineConfig([
           ],
           patterns: [
             {
-              group: ["@colyseus/*"],
-              message: "apps/web plays over a Transport; Colyseus is the old server's.",
-            },
-            {
               group: ["trystero", "trystero/*", "@trystero-p2p/*"],
               message:
                 "Only apps/web/src/net/transport/trystero.ts (and its test) imports Trystero.",
@@ -183,9 +177,11 @@ export default defineConfig([
   },
 
   // A session runs in a page, a worker and Node alike, and is handed its
-  // Transport (#15): no Node built-ins, and no transport library.
+  // Transport (#15): no Node built-ins, and no transport library. Its
+  // tools/ are Node programs outside the build (the wire snapshot).
   {
     files: ["packages/game-session/src/**/*.ts"],
+    ignores: ["packages/game-session/src/tools/**"],
     rules: {
       "no-restricted-imports": [
         "error",

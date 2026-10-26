@@ -16,9 +16,9 @@ import type {
  * snapshot/intent interface the renderer, the HUD and the input handler are
  * written against (ADR-0001).
  *
- * Implemented by `apps/web`'s Colyseus client, the Training Ground's local
- * simulation (#2 §4.3) and, over a `Transport`, this package's P2P
- * client (#375). It lives here so all three share it.
+ * Implemented by the Training Ground's local simulation (#2 §4.3) and,
+ * over a `Transport`, this package's P2P client (#375). It lives here so
+ * both share it.
  */
 
 export interface PlayerSnapshot {

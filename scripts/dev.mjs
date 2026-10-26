@@ -2,25 +2,20 @@
 /**
  * `pnpm run dev` — the whole game, reloading as you edit.
  *
- * Three watchers, because the client and the server want different kinds
- * of reload:
+ * Two watchers. There is no server: the game plays peer to peer in the
+ * browser (ADR-0022), so the client is the whole game.
  *
- *   1. tsc --build --watch   rebuilds packages/ and apps/server on change
- *   2. node --watch          restarts the game server when its dist changes
- *   3. vite                  serves the client, reloading it on save
+ *   1. tsc --build --watch   rebuilds packages/ on change
+ *   2. vite                  serves the client, reloading it on save
  *
  * The client reloads the page on save rather than hot-patching modules:
  * nothing in it declares an `import.meta.hot` boundary, so Vite falls
  * back to a full refresh. That is the honest description — it is not
- * state-preserving HMR, and since the authoritative state lives on the
- * server a refreshed client just reconnects to the match anyway.
- *
- * Editing the *server* restarts it, which does end any match in progress.
- * Unavoidable: the simulation is the process.
+ * state-preserving HMR, and a refresh ends a match the page was hosting.
  *
  * A plain script rather than a `concurrently` dependency: it is short, it
  * gives prefixed interleaved output, and it guarantees that killing this
- * process kills all three children rather than orphaning them.
+ * process kills both children rather than orphaning them.
  *
  * Typed with JSDoc because `scripts/` is linted with the same type-aware
  * rules as the rest of the repo, and ADR-0008 bans `any`.
@@ -31,15 +26,14 @@ import process from "node:process";
 // plain .mjs, where the lint config does not assume Node globals exist.
 import { setTimeout } from "node:timers";
 
-const SERVER_PORT = process.env.PORT ?? "2567";
 const CLIENT_PORT = process.env.VIBEWARS_CLIENT_PORT ?? "5173";
 
 /** @type {Record<string, string>} */
-const COLOURS = { tsc: "[36m", server: "[32m", client: "[35m" };
+const COLOURS = { tsc: "[36m", client: "[35m" };
 const RESET = "[0m";
 
 /**
- * Prefix every line so three interleaved streams stay readable.
+ * Prefix every line so the interleaved streams stay readable.
  *
  * @param {string} name
  * @param {import("node:stream").Readable | null} stream
@@ -124,36 +118,24 @@ for (const signal of SIGNALS) {
 }
 
 process.stdout.write(
-  `\nvibewars dev\n` +
-    `  client  http://localhost:${CLIENT_PORT}   (reloads on save)\n` +
-    `  server  ws://localhost:${SERVER_PORT}     (restarts on change)\n\n`,
+  `\nvibewars dev\n` + `  client  http://localhost:${CLIENT_PORT}   (reloads on save)\n\n`,
 );
 
-// Only the server's project graph: that transitively builds game-core,
-// game-protocol and game-maps. Building apps/web here too would emit a
-// second copy of the client that Vite does not use.
+// Only the packages: building apps/web here too would emit a second copy
+// of the client that Vite does not use. game-session references
+// game-core and game-protocol; game-maps and game-data stand alone.
 //
 // `--preserveWatchOutput` stops tsc clearing the screen on every rebuild,
-// which would wipe the other two streams' output.
+// which would wipe the other stream's output.
 start("tsc", "pnpm", [
   "exec",
   "tsc",
   "--build",
-  "apps/server/tsconfig.build.json",
+  "packages/game-session/tsconfig.build.json",
+  "packages/game-maps/tsconfig.build.json",
+  "packages/game-data/tsconfig.build.json",
   "--watch",
   "--preserveWatchOutput",
 ]);
 
-start("server", "node", ["--watch", "apps/server/dist/main.js"], {
-  PORT: SERVER_PORT,
-  HOST: "127.0.0.1",
-  VIBEWARS_DEV: "1",
-  VIBEWARS_DEV_ORIGIN: `http://localhost:${CLIENT_PORT}`,
-  // The server must not also serve a stale built client: in dev that is
-  // Vite's job, and serving both is how you end up debugging a bundle
-  // from an hour ago.
-  VIBEWARS_WEB_ROOT: "none",
-});
-
-// The client plays peer to peer (#403); it never talks to the server.
 start("client", "pnpm", ["--filter", "@vibewars/web", "exec", "vite", "--port", CLIENT_PORT]);

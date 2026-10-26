@@ -9,5 +9,5 @@
     "emitDeclarationOnly": false
   },
   "include": ["src/**/*.ts"],
-  "exclude": []
+  "exclude": ["src/tools/**"]
 }

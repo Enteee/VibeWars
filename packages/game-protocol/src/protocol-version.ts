@@ -4,10 +4,10 @@
 
 /**
  * Generated: the hash of `wire-schema.json`. Never edit by hand; run
- * `pnpm run wire:snapshot`. Every client sends it as `protocolVersion`
- * on every create and join, and both rooms refuse a join whose value is
+ * `pnpm run wire:snapshot`. Every peer sends it as `protocolVersion`
+ * in its hello and lobby join, and a host refuses one whose value is
  * absent or different (`PROTOCOL_MISMATCH_MESSAGE`), so a stale tab
  * fails loudly at join time instead of desynchronising mid-match. It
  * only ever rejects; there is no code path per version (ADR-0016).
  */
-export const PROTOCOL_VERSION = "b4983797a04b";
+export const PROTOCOL_VERSION = "e6633e2d507c";

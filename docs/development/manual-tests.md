@@ -47,8 +47,29 @@ show that two browsers that share nothing find each other.
 6. The host closes its tab. The guest is on the menu with "The host
    closed the lobby."
 
-Pass: every step as written. Two networks and a hidden host tab in
-Firefox are phase 5's QA (Q46).
+Pass: every step as written.
+
+## Phase 5 of P2P: across networks and browsers (Q46)
+
+Code: everything under `apps/web/src/net/` and `packages/game-session`
+(#404, which deleted the server).
+
+Run on the Pages `/next/` build after #404 merges, and record each run in
+the table below: date, browsers and networks, and result.
+
+1. **Two networks.** Host on a home network; join from a phone on its
+   mobile hotspot, a different NAT. Play one match to its end. There is no
+   TURN (ADR-0022), so a failure here is filed as a bug against #15 with
+   both network types; it does not reopen #404.
+2. **A hidden Firefox host.** Host in Firefox. During a match, hide its tab
+   behind another for 5 minutes or more. Pass: the joiner sees normal
+   speed throughout, never one tick a second.
+3. **Chromium hosts, Firefox joins.** Play one match to its end.
+
+A failure in 2 or 3 is a bug.
+
+| Date | Check | Host (browser, network) | Joiner (browser, network) | Result |
+| ---- | ----- | ----------------------- | ------------------------- | ------ |
 
 ## Music under load, on a phone
 

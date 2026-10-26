@@ -9,9 +9,13 @@
     "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
   "references": [
-    { "path": "../game-core/tsconfig.build.json" },
-    { "path": "../game-protocol/tsconfig.build.json" }
+    {
+      "path": "../game-core/tsconfig.build.json"
+    },
+    {
+      "path": "../game-protocol/tsconfig.build.json"
+    }
   ],
   "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.test.ts", "src/**/*.test-support.ts"]
+  "exclude": ["src/**/*.test.ts", "src/**/*.test-support.ts", "src/tools/**"]
 }

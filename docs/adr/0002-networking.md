@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted (2026-10-23)
+Superseded by [ADR-0022](0022-peer-to-peer-networking.md) (2026-10-26): #404
+deleted the Colyseus server; one player's browser hosts each match. Accepted
+(2026-10-23).
 
 ## Context
 

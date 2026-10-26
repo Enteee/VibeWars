@@ -7,7 +7,6 @@
     { "path": "./packages/game-maps/tsconfig.build.json" },
     { "path": "./packages/game-data/tsconfig.build.json" },
     { "path": "./packages/game-session/tsconfig.build.json" },
-    { "path": "./apps/server/tsconfig.build.json" },
     { "path": "./apps/web/tsconfig.build.json" }
   ]
 }

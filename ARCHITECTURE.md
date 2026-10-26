@@ -7,37 +7,38 @@ for rationale and trade-offs.
 ## Big picture
 
 ```text
-                 ┌──────────────────────────┐
-                 │        apps/web          │
-                 │  HTML/CSS shell + Phaser │
-                 │  4 viewport (rendering   │
-                 │  only — no game rules)   │
-                 └────────────┬─────────────┘
-                              │ Colyseus client (@colyseus/sdk)
-                              │ sends: ClientIntent (move/stop/target/use-skill)
-                              │ receives: authoritative room state
-                 ┌────────────▼─────────────┐
-                 │       apps/server        │
-                 │  Colyseus 0.18 rooms.    │
-                 │  Owns ALL authoritative  │
-                 │  state. Never trusts a   │
-                 │  client-sent outcome.    │
-                 └────────────┬─────────────┘
-                              │ uses
-                 ┌────────────▼─────────────┐
+  ┌───────────────────────────────┐        ┌─────────────────────────┐
+  │  host's browser (apps/web)    │        │ a joiner's browser      │
+  │                               │        │ (apps/web)              │
+  │  MatchHost / LobbyHost        │        │                         │
+  │  (game-session): ALL          │◄──────►│ connectMatch/joinLobby  │
+  │  authoritative state, ticked  │ Trans- │ sends: ClientIntent     │
+  │  by a Worker clock            │ port   │ receives: snapshots,    │
+  │                               │(WebRTC │ combat, skill bar       │
+  │  its own player: a local peer │ via    │                         │
+  │  Phaser 4 viewport (renders   │ Trys-  │ Phaser 4 viewport       │
+  │  only, no game rules)         │ tero)  │                         │
+  └───────────────┬───────────────┘        └────────────┬────────────┘
+                  │ uses                                 │ uses
+                  └────────────────┬─────────────────────┘
+                 ┌─────────────────▼────────┐
                  │      packages/*          │
                  │  game-core    domain     │
                  │  game-protocol wire      │
+                 │  game-session P2P        │
                  │  game-maps    arenas     │
                  │  game-data    reference  │
-                 │  game-session P2P (wip)  │
                  └──────────────────────────┘
 ```
+
+There is no game server ([ADR-0022](docs/adr/0022-peer-to-peer-networking.md)).
+The page is a static site (GitHub Pages); one player's browser hosts the
+lobby and its match, and public Nostr relays only introduce the peers.
 
 Dependencies point one way only (ADR-0001). `game-core` depends on nothing
 else in the workspace and never touches a socket, a renderer or a clock.
 That is what makes combat testable headlessly — and it is why the duel
-runner can simulate a real fight with no server and no browser running.
+runner can simulate a real fight with no network and no browser running.
 
 ## The packages
 
@@ -60,16 +61,16 @@ Everything that decides what happens in a fight.
   Built once per match from the walls and the map bounds.
 - `ruleset.ts` — the versioned ruleset (brief §11). Tick rate, movement
   speed, collision radius, attribute budget and the resource economy live
-  here as _data_, so the live server and the headless runner cannot drift
+  here as _data_, so the live host and the headless runner cannot drift
   into describing different games.
 - `professions.ts`, `attributes.ts`, `character.ts` — 10 professions with
   4–5 attributes each, the attribute cost curve and point budget, and
   character validation.
 - `build.ts` — a character plus their skill bar, and the validation the
-  **server** applies when a client claims one at join time. It lives here
-  rather than in the web client precisely because the server is the thing
-  that must enforce it; a second copy of the rules in the client would be
-  the obvious way to get the two quietly disagreeing.
+  **host** applies when a peer claims one at join time. It lives here so
+  the host, the build editor and the Training Ground run one copy of the
+  rules; a second copy would be the obvious way to get them quietly
+  disagreeing.
 - `equipment/` — weapons, off-hands, armor, runes and insignias as static
   catalogs, plus resolving a build's equipment into the numbers a fight
   uses (ADR-0012). `weapons.ts` is the one table of weapon damage, speed,
@@ -120,28 +121,27 @@ see "Honest coverage" below.
 ### `packages/game-protocol` — the wire contract
 
 The closed set of messages a client may send (`ClientIntent`), the
-lobby-code alphabet and validation, and the protocol version both sides
-check at join time. Shared by both apps so neither can drift.
+peer-to-peer messages host and peers exchange, one per `CHANNELS` entry,
+with a validator each (`src/p2p.ts`), the lobby-code alphabet, and the
+protocol version a host checks at join time.
 
 The version is not written by hand (#303). `wire-schema.json` is a committed,
-generated description of everything that crosses the socket: the Colyseus
-state classes, fields in their encoded order; every type this package exports
-and game-core's `CombatEvent`, structurally; every literal constant it exports
-(close codes, room names, limits); and the message tables, `ClientMessages`
-and `ServerMessages`, each name to its payload. Both sides send only through
-helpers typed by those tables (`apps/server/src/rooms/wire.ts`,
-`apps/web/src/net/wire.ts`), so the tables are what crosses the socket.
-`PROTOCOL_VERSION` is the first 12 hex digits of its sha256, generated into
+generated description of everything that crosses between peers: the channel
+names; every type this package exports and game-core's `CombatEvent`,
+structurally; every literal constant it exports (limits, refusal reasons);
+and the status table a snapshot indexes into (#632). `PROTOCOL_VERSION` is
+the first 12 hex digits of its sha256, generated into
 `src/protocol-version.ts`. A wire change changes the snapshot and so the
 version, and two wire changes always conflict on that one line.
-`pnpm run wire:snapshot` regenerates both files; a test in the server suite
-fails a change that did not. A change in meaning with no change in shape bumps
-`SEMANTICS_REVISION` in the generator by hand.
+`pnpm run wire:snapshot` regenerates both files, with game-session's
+`src/tools/wire-snapshot.ts`; its test fails a change that did not. A change
+in meaning with no change in shape bumps `SEMANTICS_REVISION` in the
+generator by hand.
 
-### `packages/game-session` — peer-to-peer sessions (in progress)
+### `packages/game-session` — peer-to-peer sessions
 
-The start of epic #15 ([ADR-0022](docs/adr/0022-peer-to-peer-networking.md),
-Proposed): a lobby and its match hosted in one player's browser. It holds
+Epic #15 ([ADR-0022](docs/adr/0022-peer-to-peer-networking.md)): a lobby and
+its match hosted in one player's browser. It holds
 the `Transport` interface every peer-to-peer transport implements, and an
 in-memory one for tests (`@vibewars/game-session/testing`); `MatchHost` and
 `connectMatch` (#375); and `LobbyHost` and `joinLobby` (#379). The lobby's
@@ -154,8 +154,8 @@ messages, one per `CHANNELS` entry, and their validators are in
 into frames of `MAX_MESSAGE_BYTES` (`packSnapshot`, #662; `packCombat`, #601),
 and no message relies on Trystero's chunking.
 
-It also holds what the server's rooms, the Training Ground and a P2P host
-share (#375), so the three cannot drift: `MatchConnection` and the snapshot
+It also holds what the Training Ground and a P2P host share (#375), so the
+two cannot drift: `MatchConnection` and the snapshot
 types the client draws, `MessageBudget` (a token bucket per client on
 inbound messages, #43: over budget, a message is ignored rather than its
 sender dropped), `sanitizeName`, `spawnPoint`, and `recharge.ts` (when a
@@ -175,71 +175,23 @@ Map geometry is original (brief §41) — see ADR-0006 for the format.
 
 The GW1 skill-corpus ingestion pipeline (ADR-0004). It parses public
 reference data, preserves provenance, and emits a normalized bundle that is
-committed to the repository. **The game server never calls this package at
+committed to the repository. **The game never calls this package at
 runtime.** It also hosts the developer CLI, because the coverage report
 needs both the corpus and `game-core`, and this is the only package where
 both are legitimately in scope.
 
 ## The apps
 
-### `apps/server`
-
-- `main.ts` — the process entry point. One process serves both the static
-  client and the game WebSocket, so a LAN host runs one container behind one
-  URL (ADR-0009).
-- `config.ts` — `loadConfig()`: every `VIBEWARS_*` setting, resolved once
-  from the environment, each with a LAN-friendly default (brief §27).
-- `server.ts` — builds (but does not start) the Colyseus server via
-  `defineServer`/`defineRoom`, so tests can boot it on an ephemeral port
-  (ADR-0002).
-- `http-gate.ts` — runs before Colyseus sees an HTTP request. It deletes the
-  forwarding headers, since we run behind no proxy and a client could forge
-  them, and rate-limits, per address, the matchmaking calls that reserve a
-  seat (#265).
-- `rooms/lobby-room.ts` — lobby codes, team assignment, ready state, map
-  selection, and the handoff into a match.
-- `rooms/match-room.ts` — the authoritative match: a fixed 20 Hz tick that
-  steps game-core's `MatchSimulation`, feeds it the players' intents, and
-  syncs the result to the schema and the `combat` broadcast.
-- `rooms/room-budget.ts` — at most `VIBEWARS_MAX_ROOMS` rooms per server,
-  match and lobby rooms together (#114).
-- `rooms/client-budget.ts` — the server-wide seat cap and the per-address
-  seat cap (#265): the same counter as the room budget, counting seats
-  instead of rooms.
-- `rooms/options.ts` — `field()`, which reads one field off a client message
-  safely, the protocol-version check on join, and each room's
-  `MessageBudget` (game-session).
-
-  Every client message is treated as hostile until validated. Reading a field
-  off an inbound message goes through `field()`, which tolerates `null` and
-  non-objects, because `(message as {team?: unknown}).team` throws on `null`
-  and _did_ crash the server during fuzzing.
-
-- `log-safe.ts` — `quote()`, the only way a value a client chose reaches a
-  log line, so it cannot end the line or forge another. `log-safe.test.ts`
-  enforces it (#115).
-- `testing/harness.ts` — boots a real server on a real port for integration
-  tests.
-- `tools/benchmark.ts` — load benchmarks at realistic team sizes, against a
-  real server over real WebSockets (brief §26). It reports numbers; it tunes
-  nothing.
-- `tools/wire-snapshot.ts` — generates game-protocol's `wire-schema.json` and
-  `protocol-version.ts` (#303). Run by `pnpm run wire:snapshot`.
-- `rooms/wire.ts` — `send` and `broadcast`, typed by the protocol's
-  `ServerMessages`: the only way a room sends, which `wire-snapshot.test.ts`
-  checks.
-
-The room and seat budgets are made per server by `createGameServer`, never as
-module globals, because the tests run several servers in one process. The
-caps' values and the threat they answer are in [SECURITY.md](SECURITY.md#known-open-gaps),
-gap 6.
-
 ### `apps/web`
 
 - `main.ts` — the app-shell state machine (menu → builders → lobby → match).
 - `match-view.ts` — owns a live match's lifetime, including full teardown.
-- `net/` — Colyseus clients for the lobby and match rooms, with automatic
-  reconnection.
+- `net/` — the P2P side of the shell. `transport/` is the `Transport`:
+  Trystero over WebRTC, with public Nostr relays to introduce peers, or a
+  `BroadcastChannel` between tabs for the browser tests; `host-clock.ts`
+  ticks a host from a Worker, so a hidden tab keeps time. `session.ts` runs
+  game-session's lobby and match sessions over it: host or join by code, and
+  a dropped peer rejoins inside `RECONNECT_WINDOW_SECONDS` (#515).
 - `render/arena-snapshot.ts` — plain data: actors, walls, target. Phaser-free
   **on purpose**, so it is testable in Node; importing Phaser into a test
   crashes it.
@@ -262,33 +214,30 @@ gap 6.
   migrated (ADR-0016). Browser-local only: no accounts, no database, no
   cloud.
 
-## Deploy targets
+## Deploy target
 
-- **The container** (`containers.prod`, ADR-0009): one process serves the
-  built client and the game server. The client no longer uses the server
-  (#403); phase 5 (#404) deletes it, and this target with it.
-- **GitHub Pages** (`.github/workflows/pages.yml`, #103): the client alone,
-  as a static site, built with `VIBEWARS_BASE` (a sub-path). `/next/`
-  follows `main`, and the root follows the latest release. Online play is
-  peer to peer over Trystero (#15, #403): one player's browser hosts the
-  lobby and its match, and no server is involved.
-  Each base path gets its own storage namespace (`storage/namespace.ts`), so
-  the two builds on one origin never read each other's saves.
-
-ADR-0009 is superseded once #404 deletes the server and the container.
+**GitHub Pages** (`.github/workflows/pages.yml`, #103): the client alone, as
+a static site, built with `VIBEWARS_BASE` (a sub-path). `/next/` follows
+`main`, and the root follows the latest release. Online play is peer to peer
+over Trystero (#15, #403): one player's browser hosts the lobby and its
+match, and no server is involved. Each base path gets its own storage
+namespace (`storage/namespace.ts`), so the two builds on one origin never
+read each other's saves. Local play is `pnpm run dev`.
 
 ## Two rules worth stating plainly
 
 **The client sends intent, never outcomes** (brief §12, §32, §33). It may
 say "I want to use skill 3 on that player". It may never say "I hit for 91
-damage". Damage, health, position, cooldowns and energy are server-owned.
+damage". Damage, health, position, cooldowns and energy are the host's.
+The host is trusted for outcomes (ADR-0022), and every peer still validates
+what the host sends.
 
 **The Training Ground measures; it never decides** (ADR-0020). The
 character editor runs the real `MatchSimulation` in the browser, against
 dummies, so a player can see what a build does. Nothing it computes is sent
-anywhere, and a networked match is decided only on the server. It is
+anywhere, and a networked match is decided only by its host. It is
 trustworthy only because it is the identical code, so a game rule belongs in
-`MatchSimulation`, never in `MatchRoom`.
+`MatchSimulation`, never in `MatchHost`.
 
 **Honest coverage** (brief §9). The catalog holds 12 skills: 9 of the 16
 in the imported reference corpus, plus 3 of this project's own design. The
@@ -302,22 +251,25 @@ would look better and be a lie.
 
 ## Testing shape
 
-583 headless tests in four layers, plus a browser suite:
+Headless tests in five layers, plus a browser suite:
 
 - **Unit** (`packages/*/src/*.test.ts`) — pure functions, no I/O.
-- **Integration** (`apps/server/src/*.test.ts`) — a real Colyseus server on
-  a real ephemeral port, joined by real `@colyseus/sdk` clients over real
-  WebSockets. Deliberately not mocked: a mocked transport would not have
-  caught the dependency-resolution bug in ADR-0002, and `reconnect.test.ts`
-  only means something over a socket that can actually drop.
-- **Fuzz** (`apps/server/src/fuzz.test.ts`) — hostile and malformed inbound
-  messages plus a seeded corpus. The rule it enforces is brief §27: the
-  server must never crash on client input. It has already caught one real
-  crash.
+- **Integration** (`packages/game-session/src/*.test.ts`) — a host and its
+  peers over the in-memory `Transport`, which delivers a microtask later and
+  copies every message, so a handler that sends while handling is caught.
+  Peers drop, rejoin and are partitioned on purpose (`match-reconnect`,
+  `lobby-match`).
+- **Fuzz** (`game-protocol/src/protocol-fuzz.test.ts`,
+  `game-session/src/match-hostile.test.ts`, `lobby-hostile.test.ts`) —
+  hostile and malformed peer messages plus a seeded corpus. The rule they
+  enforce is brief §27: a host must never crash on a peer's input.
+- **Benchmark** (`game-session/src/benchmark.test.ts`) — a host's tick at 1v1,
+  4v4 and 8v8 under load, against its 50 ms budget
+  ([benchmarks](docs/development/benchmarks.md)).
 - **Headless simulation** (`tools/headless-match.test.ts`) — whole fights,
-  deterministically, with no server.
+  deterministically, with no network.
 - **Browser** (`e2e/*.spec.ts`, Playwright) — a real Chromium against the
-  real production server: host a lobby, join it from a second browser
+  built client, its peers tabs of one browser over `BroadcastChannel`: host a lobby, join it from a second browser
   context, start a match, move, cast. Movement is asserted by comparing
   rendered frames rather than through a test-only hook, so the test
   cannot pass against a code path players never run. This layer found two

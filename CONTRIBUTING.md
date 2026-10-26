@@ -13,7 +13,7 @@ command below is a plain `pnpm` script underneath (see `package.json`).
 ## Everyday commands
 
 ```sh
-pnpm run dev           # client on :5173 + game server on :2567, both reloading
+pnpm run dev           # the client on :5173, reloading as you edit
 pnpm run build         # build every package/app
 pnpm run test          # the headless suite
 pnpm run test:e2e      # browser tests (Playwright; needs a Chromium)
@@ -32,13 +32,9 @@ pnpm run bench:ticks   # time MatchSimulation.step on a dense field: p50/p95/max
 
 ### How `pnpm run dev` is wired
 
-`scripts/dev.mjs` runs three watchers: `tsc --build --watch` for the
-packages and the server, `node --watch` for the server process, and Vite
-for the client.
-
-The client plays peer to peer (#15, #403) and never talks to the game
-server, which `scripts/dev.mjs` still starts until phase 5 deletes it.
-Two tabs of the dev client on one machine find each other over the public
+`scripts/dev.mjs` runs two watchers: `tsc --build --watch` for the
+packages, and Vite for the client. There is no server: the client plays
+peer to peer (#15, ADR-0022). Two tabs of the dev client on one machine find each other over the public
 Nostr relays, as two browsers anywhere do.
 
 ## Before opening a PR
@@ -55,10 +51,11 @@ Concretely:
 - New pure logic (domain math, protocol validation, config parsing) gets
   unit tests in `packages/*/src/*.test.ts` or `apps/*/src/*.test.ts`,
   colocated with the code.
-- New server behavior that touches the network gets a real integration test
-  against a real Colyseus room (see `apps/server/src/server.test.ts`) — not
-  a mock of Colyseus. A mocked transport would not have caught the
-  dependency-duplication bug in ADR-0002; don't reintroduce that risk.
+- New session behaviour that touches the network gets an integration test in
+  `packages/game-session`: a real `MatchHost` or `LobbyHost` and real
+  clients over the in-memory `Transport` (see `match-host-room.test.ts`),
+  which delivers asynchronously and can drop and partition peers. Not a mock
+  of the host: the host is the code under test.
 - New behaviour in the application shell (`apps/web/src/main.ts`) — how
   screens and connections are sequenced — gets a browser test in `e2e/`.
   Both bugs ADR-0011 describes lived there, were invisible to every

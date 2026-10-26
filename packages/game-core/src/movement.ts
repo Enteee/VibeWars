@@ -1,9 +1,9 @@
 import { ZERO, add, clampLength, normalize, scale, type Vec2 } from "./vec2.js";
 
 /**
- * Pure movement integration — no Colyseus, no clock, no I/O.
+ * Pure movement integration — no network, no clock, no I/O.
  *
- * The server's fixed-tick loop (ADR-0003) calls this once per tick with the
+ * The host's fixed-tick loop (ADR-0003) calls this once per tick with the
  * player's last-known authoritative position and their currently-requested
  * input direction; the client never supplies a position (brief §32).
  */

@@ -6,68 +6,6 @@
 export const PROTOCOL_MISMATCH_MESSAGE =
   "This tab is running an outdated version of VibeWars. Reload the page.";
 
-/**
- * The error code of a room the server would not create because it holds as
- * many as it can (#114). Matchmaking hands it to the client with
- * `SERVER_FULL_MESSAGE`. An HTTP status, because Colyseus answers the
- * matchmaking request with the error's code as its status: 503, Service
- * Unavailable, which a full server is.
- */
-export const ROOM_LIMIT = 503;
-
-/** What a player is told when the server holds all the rooms it can. */
-export const SERVER_FULL_MESSAGE = "The server is full. Try again in a minute.";
-
-/**
- * The error code of a join refused because the server holds as many
- * players as it can (#265). Told on the socket, after matchmaking, so it
- * need not be an HTTP status; the player sees `SERVER_FULL_MESSAGE`.
- */
-export const CLIENT_LIMIT = 4503;
-
-/**
- * The error code of a matchmaking request refused because one network
- * address sent too many at once (#265, #282). An HTTP status, 429 Too Many
- * Requests, because the HTTP gate answers the request with it; the player
- * sees `RATE_LIMIT_MESSAGE`.
- */
-export const RATE_LIMIT = 429;
-
-/** What a player is told when their network sent too many requests at once. */
-export const RATE_LIMIT_MESSAGE = "Too many requests from your network. Try again in a moment.";
-
-/**
- * The error code of a join refused because one network address holds too
- * many sockets (#265). Told on the socket, after matchmaking, like
- * `CLIENT_LIMIT`, so it need not be an HTTP status.
- */
-export const ADDRESS_LIMIT = 4429;
-
-/** What a player is told when their network address is over its share. */
-export const ADDRESS_LIMIT_MESSAGE =
-  "Too many connections from your network. Close other VibeWars tabs and try again.";
-
-/**
- * Colyseus room name for the match simulation room.
- *
- * Players normally arrive here from a lobby (`ROOM_LOBBY`), but joining
- * `ROOM_MATCH` directly is also a supported path: it is Quick Match, a
- * deliberate product feature for jumping straight into an arena. That is
- * why the room starts moving players immediately rather than waiting in a
- * staging state.
- */
-export const ROOM_MATCH = "match" as const;
-
-/**
- * Colyseus room name for the pre-match lobby (brief §25).
- *
- * The lobby is where a host creates a game, shares its code, and players
- * gather, pick teams and ready up before the match starts. Lobby state is
- * server-owned and volatile: when the server restarts, lobbies are gone,
- * which is intentional (brief §3).
- */
-export const ROOM_LOBBY = "lobby" as const;
-
 /** Lobby phases, in order. A lobby only ever moves forward through these. */
 export type LobbyPhase = "waiting" | "starting" | "in-match";
 
@@ -216,95 +154,8 @@ export interface RechargeMessage {
   readonly slots: readonly RechargeSlot[];
 }
 
-/** Options a client passes when creating or joining a match room. */
-export interface MatchJoinOptions {
-  /** Must equal `PROTOCOL_VERSION`, or the join is refused. */
-  readonly protocolVersion: string;
-  /** The arena the first joiner asks for; later joiners get the room's. */
-  readonly mapId?: string;
-  /** Display name the player asks for; the server sanitises it. */
-  readonly name?: string;
-  /**
-   * The build the player asks to play. Untyped on purpose: this package has
-   * no game-core dependency, and the server parses and validates whatever
-   * arrives before trusting any of it (brief §32).
-   */
-  readonly build?: unknown;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Lobby messages                                                              */
-/* -------------------------------------------------------------------------- */
-
-/** Options a client passes when creating or joining a lobby. */
-export interface LobbyJoinOptions {
-  /** Must equal `PROTOCOL_VERSION`, or the join is refused. */
-  readonly protocolVersion: string;
-  /** Omitted when creating; required (and validated) when joining. */
-  readonly code?: string;
-  /** Display name the player asks for; the server sanitises it. */
-  readonly name?: string;
-  /**
-   * The build this player will ask to play when the lobby's match starts.
-   * The lobby joins the match on the player's behalf, so the build
-   * travels with them here, untyped for the same reason as in
-   * `MatchJoinOptions`.
-   */
-  readonly build?: unknown;
-}
-
-/** Pick a team slot, or `null` to become a spectator. */
-export interface LobbyChooseTeamMessage {
-  readonly team: number | null;
-}
-
-/** Toggle this player's ready state. */
-export interface LobbyReadyMessage {
-  readonly ready: boolean;
-}
-
-/** Host-only: change which map the match will use. */
-export interface LobbySelectMapMessage {
-  readonly mapId: string;
-}
-
-/** Host-only: start the lobby's match. Carries nothing. */
-export type LobbyStartMatchMessage = Record<string, never>;
-
-/** Sent as `"start-rejected"` to the host alone when the match cannot start. */
-export interface LobbyStartRejectedMessage {
-  /** Why, in words the host is shown as they are. */
-  readonly reason: string;
-}
-
-/**
- * Sent to each player on a team, and only to them, when the host starts
- * the match. Spectators get nothing and stay in the lobby.
- */
-export interface LobbyMatchStartingMessage {
-  readonly mapId: string;
-  /** This player's seat, reserved by the lobby. Never shared with anyone else. */
-  readonly reservation: MatchSeatReservation;
-}
-
-/**
- * A seat the server reserved in a match room, as Colyseus describes it;
- * a client takes it with `consumeSeatReservation`. Opaque to the game.
- */
-export interface MatchSeatReservation {
-  readonly name: string;
-  readonly roomId: string;
-  readonly sessionId: string;
-  readonly processId?: string;
-  readonly publicAddress?: string;
-  readonly devMode?: boolean;
-}
-
 /** The maximum players a single lobby accepts (brief §4: not hardcoded to 8). */
 export const MAX_LOBBY_PLAYERS = 16;
-
-/** How many players one Quick Match room holds before a new one opens. */
-export const QUICK_MATCH_MAX_PLAYERS = 8;
 
 /**
  * Every message a client is allowed to send during a match.
@@ -403,19 +254,6 @@ function hasOnlyKeys(record: Record<string, unknown>, keys: readonly string[]): 
   return Object.keys(record).every((key) => keys.includes(key));
 }
 
-/* -------------------------------------------------------------------------- */
-/* Server -> client                                                            */
-/* -------------------------------------------------------------------------- */
-
-/** Sent once on join, before any state patch. */
-export interface ServerHello {
-  /** `PROTOCOL_VERSION`. */
-  readonly protocolVersion: string;
-  readonly sessionId: string;
-  /** Fixed simulation step in milliseconds; clients interpolate against it. */
-  readonly tickIntervalMs: number;
-}
-
 /**
  * The wire shape of a map's static geometry, sent once on join (brief §19's
  * "renderer turns the map description into minimalist graphics").
@@ -460,19 +298,6 @@ export interface SkillBarSlot {
 }
 
 /**
- * Sent as `"skill-bar"` on join: the bar the server resolved for
- * this player, every slot in its place, `null` where it is empty (#347).
- */
-export interface SkillBarMessage {
-  readonly slots: readonly (SkillBarSlot | null)[];
-  /**
-   * Attribute id to effective rank, as the server resolved the build,
-   * house loadout included: what the HUD's tooltips describe (#485).
-   */
-  readonly ranks: Readonly<Record<string, number>>;
-}
-
-/**
  * One resolution in a `"combat"` batch: a cast, a status tick or a
  * weapon swing, and everything it did. Generic over the event so this
  * package stays dependency-free; the server and the client both
@@ -498,45 +323,4 @@ export interface CombatMessage<Event> {
 /** What one `"combat"` broadcast carries: a tick's entries, in combat-log order (#288). */
 export interface CombatBatchMessage<Event> {
   readonly entries: readonly CombatMessage<Event>[];
-}
-
-/** Broadcast as `"match-ended"`, once, when the match finishes. */
-export interface MatchEndedMessage {
-  /** The winning team, or `null` for a draw. */
-  readonly winningTeam: number | null;
-  readonly reason: "score" | "time" | null;
-  readonly scoreTeam0: number;
-  readonly scoreTeam1: number;
-}
-
-/* -------------------------------------------------------------------------- */
-/* The message tables                                                          */
-/* -------------------------------------------------------------------------- */
-
-/**
- * What a client may send, by message name, to its payload. Both sides send
- * through helpers typed by these tables, never a raw `send("name", ...)`,
- * so the wire schema snapshot that hashes them is what really crosses the
- * socket (#303). The server still parses every client payload as
- * `unknown` (brief §32); this says what a well-formed one is.
- */
-export interface ClientMessages {
-  readonly intent: ClientIntent;
-  readonly "choose-team": LobbyChooseTeamMessage;
-  readonly ready: LobbyReadyMessage;
-  readonly "select-map": LobbySelectMapMessage;
-  readonly "start-match": LobbyStartMatchMessage;
-}
-
-/** What the server sends, by message name, to its payload; `Event` as in `CombatMessage`. */
-export interface ServerMessages<Event> {
-  readonly hello: ServerHello;
-  readonly map: MapDescriptor;
-  readonly "skill-bar": SkillBarMessage;
-  readonly recharge: RechargeMessage;
-  readonly "cast-refused": CastRefusedMessage;
-  readonly combat: CombatBatchMessage<Event>;
-  readonly "match-ended": MatchEndedMessage;
-  readonly "match-starting": LobbyMatchStartingMessage;
-  readonly "start-rejected": LobbyStartRejectedMessage;
 }
