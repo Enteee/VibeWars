@@ -1505,6 +1505,13 @@ body {
   background: rgb(89 194 255 / 12%);
 }
 
+/* The slot the next equip goes to (#564). An outline, so it reads on an
+   empty dashed slot and a filled one alike. */
+.skill-slot.is-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .skill-slot-index {
   color: var(--accent);
   font-size: 0.7rem;
@@ -1624,6 +1631,37 @@ body {
 
 .skill-box-name {
   font-size: 0.82rem;
+}
+
+/* Says where a click equips the skill (#564): "Equip → 6", or why not. */
+.skill-box-equip {
+  align-self: flex-start;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.skill-box-equip:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.skill-box-equip:disabled {
+  color: var(--ink-dim);
+  cursor: default;
+}
+
+.skill-box-on {
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+}
+
+.skill-box-on:empty {
+  display: none;
 }
 
 .skill-library-empty {
