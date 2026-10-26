@@ -7,8 +7,9 @@ name: CodeQL
 # perf-sec-qa triages them, and the manager files an issue per real one.
 #
 # Advisory, and it must stay unable to fail a pull request: hubd refuses a
-# merge while any check on the head is failing or pending, required or not
-# (see audit.yml). Two check runs appear, and both are neutralised:
+# merge unless every job of this workflow's pull_request run succeeded
+# (EVERY_JOB_WORKFLOWS in hubd.mjs). Two check runs appear, and both are
+# neutralised:
 #
 # - this job: `continue-on-error` on the CodeQL steps, so an extraction or
 #   upload failure concludes as success rather than blocking unrelated work;

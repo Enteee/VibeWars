@@ -557,88 +557,46 @@ export function renderView(group, item, comments) {
 }
 
 /**
- * gh's bucket for a check run, from REST's status and conclusion: what
- * `gh pr checks --json bucket` would say, so the merge guard reads one
- * vocabulary whichever API answered.
+ * The runs of one workflow on one commit, from `actions/workflows/{id}/runs`.
  *
- * @param {Json} run
- * @returns {string}
+ * A first page that does not hold every run, or anything that is not the
+ * shape GitHub sends, is an error: an answer that cannot be read must never
+ * pass as "no run" (#46).
+ *
+ * @param {unknown} answer the parsed answer
+ * @returns {{ runs: Record<string, unknown>[] } | { error: string }}
  */
-function runBucket(run) {
-  if (run.status !== "completed") {
-    return "pending";
+export function runsFromRest(answer) {
+  const body = rec(answer);
+  if (!Array.isArray(body.workflow_runs) || typeof body.total_count !== "number") {
+    return { error: "the workflow-runs answer is not one" };
   }
-  switch (run.conclusion) {
-    case "success":
-      return "pass";
-    case "neutral":
-    case "skipped":
-      return "skipping";
-    case "cancelled":
-      return "cancel";
-    default:
-      return "fail";
+  if (body.total_count > body.workflow_runs.length) {
+    return { error: `${String(body.total_count)} workflow runs, more than one page` };
   }
+  return { runs: body.workflow_runs.map(rec) };
 }
 
-/** @type {Record<string, string>} */
-const STATUS_BUCKET = { success: "pass", pending: "pending", failure: "fail", error: "fail" };
-
 /**
- * The checks on one commit, from `commits/{sha}/check-runs` and
- * `commits/{sha}/status`, as `{ name, conclusion }` in gh's buckets.
+ * The jobs of one workflow run, from `actions/runs/{id}/jobs?filter=latest`,
+ * under the same rule: unreadable or paginated-beyond-read is an error.
  *
- * A re-run is a new check run under the same name in the same check
- * suite; the newest (highest id) there is the one that counts, as in gh.
- * Runs in different suites, and statuses, are separate sources and stay
- * separate entries: any workflow on any branch can post a run for any
- * commit, so one must never stand in for another. `checksSatisfied`
- * refuses a name that more than one source reports.
- *
- * Anything that is not the shape GitHub sends, or a first page that does
- * not hold every run or status, is an error: an answer that cannot be
- * read must never pass as "no checks".
- *
- * @param {unknown} checkRuns the parsed check-runs answer
- * @param {unknown} status the parsed combined-status answer
- * @returns {{ checks: { name: string, conclusion: string }[] } | { error: string }}
+ * @param {unknown} answer the parsed answer
+ * @returns {{ jobs: { name: string, status: string, conclusion: string | null }[] } | { error: string }}
  */
-export function checksFromRest(checkRuns, status) {
-  const runs = rec(checkRuns);
-  const statuses = rec(status);
-  if (!Array.isArray(runs.check_runs) || typeof runs.total_count !== "number") {
-    return { error: "the check-runs answer is not one" };
+export function jobsFromRest(answer) {
+  const body = rec(answer);
+  if (!Array.isArray(body.jobs) || typeof body.total_count !== "number") {
+    return { error: "the jobs answer is not one" };
   }
-  if (!Array.isArray(statuses.statuses) || typeof statuses.total_count !== "number") {
-    return { error: "the status answer is not one" };
+  if (body.total_count > body.jobs.length) {
+    return { error: `${String(body.total_count)} jobs, more than one page` };
   }
-  if (runs.total_count > runs.check_runs.length) {
-    return { error: `${String(runs.total_count)} check runs, more than one page` };
-  }
-  if (statuses.total_count > statuses.statuses.length) {
-    return { error: `${String(statuses.total_count)} statuses, more than one page` };
-  }
-
-  /** Newest run per check suite and name. @type {Map<string, { name: string, id: number, conclusion: string }>} */
-  const latest = new Map();
-  for (const run of runs.check_runs.map(rec)) {
-    const suite = rec(run.check_suite).id;
-    if (typeof suite !== "number" || typeof run.id !== "number") {
-      return { error: "a check run without an id or a check suite" };
-    }
-    const name = str(run.name);
-    const key = `${String(suite)}\n${name}`;
-    const seen = latest.get(key);
-    if (seen === undefined || run.id > seen.id) {
-      latest.set(key, { name, id: run.id, conclusion: runBucket(run) });
-    }
-  }
-  const checks = [...latest.values()].map(({ name, conclusion }) => ({ name, conclusion }));
-  for (const entry of statuses.statuses.map(rec)) {
-    checks.push({
-      name: str(entry.context),
-      conclusion: STATUS_BUCKET[str(entry.state)] ?? "fail",
-    });
-  }
-  return { checks };
+  return {
+    jobs: body.jobs.map(rec).map((job) => ({
+      name: str(job.name),
+      status: str(job.status),
+      conclusion: typeof job.conclusion === "string" ? job.conclusion : null,
+    })),
+  };
 }

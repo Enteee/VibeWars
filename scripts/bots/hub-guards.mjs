@@ -21,49 +21,102 @@
  */
 
 /**
- * Were the checks we expect to exist actually run, and did they pass?
+ * The workflow runs that judged a commit, or why none can.
+ *
+ * Check runs and commit statuses are not evidence: any `GITHUB_TOKEN` with
+ * `checks: write` can create one for any commit under any name (#123). A job
+ * of a workflow run exists only because the workflow ran, and no API creates
+ * one. So the merge gate reads jobs, and this picks the runs they belong to.
+ *
+ * A run counts when it ran for exactly this commit, on a pull request, from
+ * this repository, out of the named workflow file. It returns **every** such
+ * run, not the newest: a second pull request with the same head and a base
+ * of its choosing gets its own green run for the same commit, and must not
+ * stand in for the real one. With both runs read, the expected job names
+ * appear twice and `jobsSatisfied` refuses them. A re-run is one run, so a
+ * legitimate retry is unaffected.
+ *
+ * @param {Record<string, unknown>[]} runs `workflow_runs` rows, as GitHub sends them
+ * @param {{ sha: string, repo: string, file: string }} target
+ * @returns {{ ok: true, ids: number[] } | { ok: false, reason: string }}
+ */
+export function judgingRuns(runs, target) {
+  const path = `.github/workflows/${target.file}`;
+  const mine = runs.filter((run) => {
+    const repository = /** @type {{ full_name?: unknown } | null} */ (run.repository);
+    return (
+      run.head_sha === target.sha &&
+      run.event === "pull_request" &&
+      typeof run.path === "string" &&
+      (run.path === path || run.path.startsWith(`${path}@`)) &&
+      repository?.full_name === target.repo &&
+      typeof run.id === "number"
+    );
+  });
+  if (mine.length === 0) {
+    return { ok: false, reason: `${target.file} has not run on this commit yet` };
+  }
+  if (mine.some((run) => run.status !== "completed")) {
+    return { ok: false, reason: `${target.file} is still running on this commit` };
+  }
+  // A run cancelled while queued has no jobs at all, and a second pull
+  // request's green run would then carry every expected name by itself.
+  // Every run must have ended well; a superseded one is re-run, or the
+  // branch gets a new commit.
+  const bad = mine.find((run) => run.conclusion !== "success");
+  if (bad !== undefined) {
+    return {
+      ok: false,
+      reason: `${target.file} run ${String(bad.id)} ended ${String(bad.conclusion)}; re-run it or push a new commit`,
+    };
+  }
+  return { ok: true, ids: mine.map((run) => Number(run.id)) };
+}
+
+/**
+ * Were the jobs we expect run, and did they pass?
  *
  * Asking "did everything pass" is not enough, and this is the whole reason
- * the function exists. The CI/CD engineer can edit `.github/workflows/`, so an
- * agent under pressure to turn a red pull request green can do it by deleting
- * the check instead of fixing the code — and a pull request with no checks at
- * all reports no failures. So the expected set is named in
- * `.bots/company.json` and a missing check is treated exactly like a failing
- * one.
+ * the function takes an expected set. The CI/CD engineer can edit
+ * `.github/workflows/`, so a job deleted to turn a pull request green leaves
+ * a run with no failures. The expected set is named in `.bots/company.json`
+ * and a name no run carries is treated exactly like a failing job.
  *
- * A name more than one source reports is refused as ambiguous rather
- * than letting one entry win: a passing run some other workflow posted,
- * or a commit status, must never shadow a failing real one (#96).
+ * Within one run a name must be carried by exactly one job. Across the runs
+ * of a commit, every job that carries an expected name must have succeeded:
+ * a second pull request's green run for the same commit (#123) cannot
+ * stand in for a red real one, and a close and reopen, which makes a second
+ * green run, still merges.
  *
- * @param {{ name: string, conclusion: string }[]} checks One entry per
- *   source, as `checksFromRest` reads them, in gh's buckets.
- * @param {string[]} expected Check names that must be present and passing.
+ * @param {{ name: string, status: string, conclusion: string | null }[][]} runs
+ *   The jobs of each judging run, latest attempt.
+ * @param {string[]} expected Job names that must be present and successful.
  * @returns {{ ok: boolean, missing: string[], failing: string[], pending: string[], ambiguous: string[] }}
  */
-export function checksSatisfied(checks, expected) {
-  const seen = new Map(checks.map((check) => [check.name, check.conclusion]));
-  const ambiguous = [...seen.keys()]
-    .filter((name) => checks.filter((check) => check.name === name).length > 1)
-    .sort();
-  for (const name of ambiguous) {
-    seen.delete(name);
-  }
-
-  const missing = expected.filter((name) => !seen.has(name) && !ambiguous.includes(name));
+export function jobsSatisfied(runs, expected) {
+  const missing = [];
   const failing = [];
   const pending = [];
-
-  for (const [name, conclusion] of seen) {
-    if (conclusion === "pass" || conclusion === "skipping") {
-      continue;
+  const ambiguous = [];
+  for (const name of expected) {
+    const carried = runs.map((jobs) => jobs.filter((job) => job.name === name));
+    if (carried.every((jobs) => jobs.length === 0)) {
+      missing.push(name);
     }
-    if (conclusion === "pending") {
-      pending.push(name);
-    } else {
-      failing.push(name);
+    if (carried.some((jobs) => jobs.length > 1)) {
+      ambiguous.push(name);
+    }
+    for (const job of carried.flat()) {
+      if (job.status !== "completed") {
+        pending.push(name);
+      } else if (job.conclusion === "cancelled") {
+        // A run a reopen superseded: its latest attempt must be re-run.
+        failing.push(`${name} (cancelled; re-run that run or push a new commit)`);
+      } else if (job.conclusion !== "success") {
+        failing.push(`${name} (${String(job.conclusion)})`);
+      }
     }
   }
-
   return {
     ok:
       missing.length === 0 &&
@@ -71,9 +124,37 @@ export function checksSatisfied(checks, expected) {
       pending.length === 0 &&
       ambiguous.length === 0,
     missing,
-    failing: failing.sort(),
-    pending: pending.sort(),
+    failing: [...new Set(failing)],
+    pending: [...new Set(pending)],
     ambiguous,
+  };
+}
+
+/**
+ * Did every job of these runs succeed?
+ *
+ * For the workflows the gate does not name job by job (the repeated e2e
+ * specs, CodeQL): they used to block a merge while failing or pending, and
+ * still do. A run with no jobs at all is no evidence, so it is missing.
+ *
+ * @param {{ name: string, status: string, conclusion: string | null }[][]} runs
+ * @returns {{ ok: boolean, missing: string[], failing: string[], pending: string[] }}
+ */
+export function everyJobSucceeded(runs) {
+  const jobs = runs.flat();
+  const pending = jobs.filter((job) => job.status !== "completed").map((job) => job.name);
+  const failing = jobs
+    .filter((job) => job.status === "completed" && job.conclusion !== "success")
+    .map((job) => `${job.name} (${String(job.conclusion)})`);
+  const missing = runs.map((run, index) =>
+    run.length === 0 ? `a run with no jobs (#${String(index + 1)})` : "",
+  );
+  const none = missing.filter((entry) => entry !== "");
+  return {
+    ok: pending.length === 0 && failing.length === 0 && none.length === 0,
+    missing: none,
+    failing,
+    pending,
   };
 }
 
@@ -187,7 +268,7 @@ export function explainGuard(guard, result) {
     parts.push(`still running: ${result.pending.join(", ")}`);
   }
   if (result.ambiguous !== undefined && result.ambiguous.length > 0) {
-    parts.push(`reported by more than one source: ${result.ambiguous.join(", ")}`);
+    parts.push(`carried by more than one job: ${result.ambiguous.join(", ")}`);
   }
   if (result.stale !== undefined && result.stale.length > 0) {
     parts.push(`stale, cast against an older commit: ${result.stale.join(", ")}`);
