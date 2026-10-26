@@ -1473,7 +1473,13 @@ describe("hubd and what a jail plants in its spool (#329)", () => {
     fs.symlinkSync(path.join(target, "victim"), path.join(req, "00000000000002-1.json"));
 
     await hubd.request("developer-1", "gh", ["issue", "view", "7"]);
-    await hubd.until(() => !fs.existsSync(path.join(req, "a.b.json")), "the bad id to go");
+    await hubd.until(
+      () =>
+        hubd.stderr().includes('developer-1: refused request "a.b.json": not a request id') &&
+        hubd.stderr().includes("developer-1: refused request 00000000000002-1.json"),
+      "both refusals",
+    );
+    expect(fs.existsSync(path.join(req, "a.b.json"))).toBe(false);
 
     expect(hubd.stderr()).toContain('developer-1: refused request "a.b.json": not a request id');
     expect(hubd.stderr()).toContain("developer-1: refused request 00000000000002-1.json");
