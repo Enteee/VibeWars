@@ -322,7 +322,7 @@ describe("networked combat", () => {
     await roomB.leave();
   });
 
-  it("doubles a dazed player's cast, and syncs the doubled total for the cast bar", async () => {
+  it("doubles a dazed player's spell, and syncs the doubled total for the cast bar", async () => {
     // Broad Head Arrow needs a bow (ADR-0029): A is a ranger.
     const roomA = await new Client(endpoint).joinOrCreate(ROOM_MATCH, {
       protocolVersion: PROTOCOL_VERSION,
@@ -356,9 +356,10 @@ describe("networked combat", () => {
       },
     );
 
+    // A spell: dazed slows spells only (#524).
     roomB.send("intent", {
       kind: "use-skill",
-      slot: DEFAULT_SKILL_BAR.indexOf("ranger.troll-unguent"),
+      slot: DEFAULT_SKILL_BAR.indexOf("monk.orison-of-healing"),
     });
     await waitFor(() => (roomB.state.players.get(roomB.sessionId)?.castingSkillId ?? "") !== "", {
       timeoutMs: 4000,
@@ -366,9 +367,9 @@ describe("networked combat", () => {
     });
 
     const me = roomB.state.players.get(roomB.sessionId);
-    expect(me?.castingSkillId).toBe("ranger.troll-unguent");
-    expect(me?.castTotal).toBe(6);
-    expect(me?.castRemaining).toBeGreaterThan(3);
+    expect(me?.castingSkillId).toBe("monk.orison-of-healing");
+    expect(me?.castTotal).toBe(2);
+    expect(me?.castRemaining).toBeGreaterThan(1);
 
     await roomA.leave();
     await roomB.leave();
