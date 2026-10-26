@@ -5,7 +5,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ROLES } from "./hub-policy.mjs";
 import {
@@ -571,5 +571,46 @@ describe("withStaffLock (#383)", () => {
       "qa-tester",
       "qa-tester@3",
     ]);
+  });
+});
+
+describe("withStaffLock, a lock left behind (#742)", () => {
+  /** @returns {string} */
+  function staffFile() {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "staff-lock-"));
+    dirs.push(dir);
+    return path.join(dir, "staff.json");
+  }
+
+  it("breaks a lock whose holder is gone, and says so", () => {
+    const file = staffFile();
+    const gone = spawnSync(process.execPath, ["-e", ""]);
+    fs.mkdirSync(`${file}.lock`);
+    fs.writeFileSync(`${file}.lock/pid`, String(gone.pid));
+    const said = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    expect(withStaffLock(file, () => "ran")).toBe("ran");
+    expect(said).toHaveBeenCalledWith(expect.stringContaining(`pid ${String(gone.pid)} is gone`));
+    said.mockRestore();
+    expect(fs.existsSync(`${file}.lock`)).toBe(false);
+  });
+
+  it("waits for a live holder, then names its pid", () => {
+    const file = staffFile();
+    fs.mkdirSync(`${file}.lock`);
+    fs.writeFileSync(`${file}.lock/pid`, String(process.pid));
+    expect(() => withStaffLock(file, () => "ran", 100)).toThrow(`by pid ${String(process.pid)}`);
+    expect(fs.existsSync(`${file}.lock`)).toBe(true);
+  });
+
+  it("breaks a lock with no pid only once it is old", () => {
+    const file = staffFile();
+    fs.mkdirSync(`${file}.lock`);
+    expect(() => withStaffLock(file, () => "ran", 100)).toThrow("is held");
+    const old = new Date(Date.now() - 60_000);
+    fs.utimesSync(`${file}.lock`, old, old);
+    const said = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    expect(withStaffLock(file, () => "ran")).toBe("ran");
+    said.mockRestore();
+    expect(fs.existsSync(`${file}.lock`)).toBe(false);
   });
 });
