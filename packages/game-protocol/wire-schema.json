@@ -663,6 +663,7 @@
     "LOBBY_CODE_ALPHABET": { "literal": "ACDEFGHJKMNPQRTWXY34679" },
     "LOBBY_CODE_LENGTH": { "literal": 6 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },
+    "MAX_SNAPSHOT_PARTS": { "literal": 8 },
     "MAX_WIRE_COMBATS": { "literal": 64 },
     "MAX_WIRE_EVENTS": { "literal": 64 },
     "MAX_WIRE_JSON_DEPTH": { "literal": 16 },
@@ -2161,6 +2162,121 @@
           "optional": false,
           "type": { "union": ["null", { "literal": "score" }, { "literal": "time" }] }
         },
+        {
+          "name": "phase",
+          "optional": false,
+          "type": { "union": [{ "literal": "active" }, { "literal": "finished" }] }
+        },
+        {
+          "name": "players",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "adrenaline", "optional": false, "type": "number" },
+                { "name": "armor", "optional": false, "type": "number" },
+                {
+                  "name": "attackTargetId",
+                  "optional": false,
+                  "type": { "union": ["null", "string"] }
+                },
+                { "name": "castRemaining", "optional": false, "type": "number" },
+                { "name": "castTotal", "optional": false, "type": "number" },
+                {
+                  "name": "castingSkillId",
+                  "optional": false,
+                  "type": { "union": ["null", "string"] }
+                },
+                { "name": "dead", "optional": false, "type": "boolean" },
+                { "name": "energy", "optional": false, "type": "number" },
+                { "name": "facing", "optional": false, "type": "number" },
+                { "name": "health", "optional": false, "type": "number" },
+                { "name": "id", "optional": false, "type": "string" },
+                { "name": "maxEnergy", "optional": false, "type": "number" },
+                { "name": "maxHealth", "optional": false, "type": "number" },
+                { "name": "name", "optional": false, "type": "string" },
+                { "name": "offhandId", "optional": false, "type": { "union": ["null", "string"] } },
+                {
+                  "name": "primaryProfession",
+                  "optional": false,
+                  "type": { "union": ["null", "string"] }
+                },
+                {
+                  "name": "secondaryProfession",
+                  "optional": false,
+                  "type": { "union": ["null", "string"] }
+                },
+                { "name": "statuses", "optional": false, "type": { "array": "number" } },
+                { "name": "swingElapsed", "optional": false, "type": "number" },
+                { "name": "swingTotal", "optional": false, "type": "number" },
+                { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } },
+                {
+                  "name": "team",
+                  "optional": false,
+                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                },
+                { "name": "walking", "optional": false, "type": "boolean" },
+                { "name": "weaponId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "projectiles",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "attackerId", "optional": false, "type": "string" },
+                { "name": "flightSeconds", "optional": false, "type": "number" },
+                {
+                  "name": "from",
+                  "optional": false,
+                  "type": {
+                    "properties": [
+                      { "name": "x", "optional": false, "type": "number" },
+                      { "name": "y", "optional": false, "type": "number" }
+                    ]
+                  }
+                },
+                { "name": "id", "optional": false, "type": "number" },
+                { "name": "launchedAt", "optional": false, "type": "number" },
+                { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
+                {
+                  "name": "to",
+                  "optional": false,
+                  "type": {
+                    "properties": [
+                      { "name": "x", "optional": false, "type": "number" },
+                      { "name": "y", "optional": false, "type": "number" }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        { "name": "score", "optional": false, "type": { "tuple": ["number", "number"] } },
+        { "name": "tick", "optional": false, "type": "number" },
+        {
+          "name": "winningTeam",
+          "optional": false,
+          "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }] }
+        }
+      ]
+    },
+    "WireSnapshotPart": {
+      "properties": [
+        { "name": "elapsedSeconds", "optional": false, "type": "number" },
+        {
+          "name": "endReason",
+          "optional": false,
+          "type": { "union": ["null", { "literal": "score" }, { "literal": "time" }] }
+        },
+        { "name": "part", "optional": false, "type": "number" },
+        { "name": "parts", "optional": false, "type": "number" },
         {
           "name": "phase",
           "optional": false,

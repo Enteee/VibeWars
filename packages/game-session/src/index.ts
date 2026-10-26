@@ -6,6 +6,7 @@
 
 export { MAX_MESSAGE_BYTES, messageBytes, sizeChecked } from "./transport.js";
 export { packCombat } from "./combat-batches.js";
+export { packSnapshot, snapshotAssembler } from "./snapshot-parts.js";
 export type { Transport } from "./transport.js";
 
 export type {

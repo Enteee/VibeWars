@@ -2,7 +2,7 @@ import type {
   PeerHello,
   PeerWelcome,
   WireCombatBatch,
-  WireSnapshot,
+  WireSnapshotPart,
 } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
@@ -10,7 +10,7 @@ import { createMemoryNetwork } from "./memory-transport.js";
 
 declare const welcome: PeerWelcome;
 declare const hello: PeerHello;
-declare const snapshot: WireSnapshot;
+declare const snapshot: WireSnapshotPart;
 declare const combat: WireCombatBatch;
 
 /**

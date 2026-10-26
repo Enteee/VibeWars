@@ -8,7 +8,7 @@ import {
   MAX_WIRE_COMBATS,
   parsePeerHello,
   parseWireCombatBatch,
-  parseWireSnapshot,
+  parseWireSnapshotPart,
   type CastRefusedMessage,
 } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
@@ -430,7 +430,7 @@ describe("networked combat (P2P)", () => {
     let tick = -1;
     const sent: { tick: number; message: unknown }[] = [];
     spy.on("snapshot", (data) => {
-      tick = parseWireSnapshot(data)?.tick ?? tick;
+      tick = parseWireSnapshotPart(data)?.tick ?? tick;
     });
     spy.on("combat", (data) => {
       sent.push({ tick, message: data });

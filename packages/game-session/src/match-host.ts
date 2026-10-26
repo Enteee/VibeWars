@@ -41,6 +41,7 @@ import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budg
 import { sanitizeName } from "./names.js";
 import { rechargePredicted, rechargeSlots } from "./recharge.js";
 import { rejoinProof } from "./rejoin-proof.js";
+import { packSnapshot } from "./snapshot-parts.js";
 import { spawnPoint, type SpawnPoint } from "./spawn-points.js";
 import { MAX_MESSAGE_BYTES, type Transport } from "./transport.js";
 import { sameSkillBar, skillBarSlots, statusWireIndex, wireCombat, wireStatuses } from "./wire.js";
@@ -562,7 +563,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   const tick = (): void => {
     const result = sim.step(TICK_SECONDS);
     expireDropped();
-    transport.send("snapshot", snapshot());
+    for (const part of packSnapshot(snapshot(), MAX_MESSAGE_BYTES)) {
+      transport.send("snapshot", part);
+    }
     for (const batch of packCombat(wireCombat(result.log), MAX_MESSAGE_BYTES, MAX_WIRE_COMBATS)) {
       transport.send("combat", batch);
     }

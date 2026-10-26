@@ -9,7 +9,7 @@ import {
   parseWireCombatBatch,
   parseWireEnded,
   parseWireSkillBar,
-  parseWireSnapshot,
+  parseWireSnapshotPart,
   type CastRefusedMessage,
   type Channel,
   type ClientIntent,
@@ -33,6 +33,7 @@ import type {
 } from "./match-connection.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { rejoinProof } from "./rejoin-proof.js";
+import { snapshotAssembler } from "./snapshot-parts.js";
 import type { Transport } from "./transport.js";
 import { combatMessage, matchSnapshot, playerSnapshots } from "./wire.js";
 
@@ -179,7 +180,13 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   /** The match clock: the latest snapshot's, or before the first, the welcome's. */
   const elapsed = (): number => latest?.wire.elapsedSeconds ?? welcomed?.elapsedSeconds ?? 0;
 
-  fromHost("snapshot", parseWireSnapshot, (snapshot) => {
+  // A tick's snapshot comes in parts (#662); what follows sees it whole.
+  const assemble = snapshotAssembler();
+  fromHost("snapshot", parseWireSnapshotPart, (part) => {
+    const snapshot = assemble(part);
+    if (snapshot === undefined) {
+      return;
+    }
     // Only ever forward: one late or replayed is dropped.
     if (latest !== undefined && snapshot.tick <= latest.wire.tick) {
       return;
