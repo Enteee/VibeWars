@@ -247,6 +247,7 @@ describe("companyLines", () => {
         budget,
         hub,
         reboot: null,
+        build: null,
         claude: null,
         nudges: noNudges,
       },
@@ -272,6 +273,7 @@ describe("companyLines", () => {
           budget: null,
           hub: health,
           reboot: null,
+          build: null,
           claude: null,
           nudges: noNudges,
         },
@@ -291,6 +293,7 @@ describe("companyLines", () => {
         budget: null,
         hub,
         reboot: null,
+        build: null,
         claude: null,
         nudges: noNudges,
       },
@@ -328,6 +331,7 @@ describe("companyLines", () => {
         budget: null,
         hub,
         reboot: null,
+        build: null,
         claude,
         nudges: noNudges,
       },
@@ -375,6 +379,7 @@ describe("companyLines", () => {
         budget: null,
         hub,
         reboot: null,
+        build: null,
         claude,
         nudges: noNudges,
       },
@@ -398,6 +403,7 @@ describe("companyLines", () => {
         budget: null,
         hub,
         reboot: null,
+        build: null,
         claude: null,
         nudges: noNudges,
       },
@@ -425,6 +431,7 @@ describe("companyLines", () => {
           budget: null,
           hub,
           reboot: null,
+          build: null,
           claude: null,
           nudges: noNudges,
         },
@@ -532,6 +539,43 @@ describe("companyLines", () => {
     });
   });
 
+  describe("the build (#557)", () => {
+    /** @param {import("./dashboard-view.mjs").CompanyFacts["build"]} build */
+    const pane = (build) =>
+      companyLines(
+        {
+          roles,
+          live: new Set(),
+          stale: new Map(),
+          staff: null,
+          budget: null,
+          hub,
+          reboot: null,
+          build,
+          claude: null,
+          nudges: noNudges,
+        },
+        { rows: 30, width: 80 },
+      );
+
+    it("is the first line, plain when current and red when STALE", () => {
+      const current = pane({ line: "build: 0123abcd (current)", stale: false });
+      expect(current[0]).toBe("build: 0123abcd (current)");
+      const stale = pane({
+        line: "build: 0123abcd STALE: differs in nix/claude-llc.nix (HEAD 89abcdef)",
+        stale: true,
+      });
+      expect(stale[0]).toContain("\x1b[1;31m");
+      expect(plain(stale[0] ?? "")).toBe(
+        "build: 0123abcd STALE: differs in nix/claude-llc.nix (HEAD 89abcdef)",
+      );
+    });
+
+    it("is not there when the dashboard runs from the checkout", () => {
+      expect(pane(null).map(plain)[0]).not.toMatch(/^build:/);
+    });
+  });
+
   describe("the reboot (#345)", () => {
     const deadline = new Date(2026, 9, 25, 12, 41).getTime();
     const record = {
@@ -558,6 +602,7 @@ describe("companyLines", () => {
           budget: null,
           hub,
           reboot,
+          build: null,
           claude: null,
           nudges: noNudges,
         },
@@ -590,6 +635,7 @@ describe("companyLines", () => {
           budget: null,
           hub,
           reboot: { record: { ...record, ready: [] }, between: [], now: deadline - 30_000 },
+          build: null,
           claude: null,
           nudges: noNudges,
         },
@@ -630,6 +676,7 @@ describe("companyLines", () => {
             budget: null,
             hub,
             reboot,
+            build: null,
             claude: null,
             nudges: noNudges,
           },

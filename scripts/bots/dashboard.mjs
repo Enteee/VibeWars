@@ -18,7 +18,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 
+import { buildLine, head, manifest, readManifest } from "./fingerprint.mjs";
 import { readBoardState } from "./hub-board.mjs";
 import { WINDOW_MS, createUsageReader, summarize } from "./claude-usage.mjs";
 import { ROLES } from "./hub-policy.mjs";
@@ -91,6 +93,25 @@ function reboot(live) {
   return pending === null
     ? null
     : { record: pending, between: betweenTurns(ROOT, [...live]), now: Date.now() };
+}
+
+/**
+ * The build this dashboard runs, which is the company's (claude-llc starts
+ * it from the same store copy), against the checkout (#557). `null` when it
+ * runs from the checkout itself, which has no build manifest.
+ *
+ * @returns {import("./dashboard-view.mjs").CompanyFacts["build"]}
+ */
+function build() {
+  /** @type {import("./fingerprint.mjs").Manifest} */
+  let built;
+  try {
+    built = readManifest(path.dirname(fileURLToPath(import.meta.url)));
+  } catch {
+    return null;
+  }
+  const repo = process.env.DEVENV_ROOT ?? path.dirname(ROOT);
+  return buildLine({ build: built, checkout: manifest(repo), head: head(repo) });
 }
 
 /** @returns {{ project: number, owner: string, columns: string[], maxAgents: number | null } | null} */
@@ -384,6 +405,7 @@ function linesOf(section, pane) {
           budget: budget(),
           hub: hub(),
           reboot: reboot(live),
+          build: build(),
           claude: claude(),
           nudges: nudges(staff, now),
         },
