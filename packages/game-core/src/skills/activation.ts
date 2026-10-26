@@ -5,7 +5,7 @@ import { EXPERTISE_ATTRIBUTE, expertiseEnergyCost } from "../primary-attributes.
 import type { Vec2 } from "../vec2.js";
 
 import { getStatusDefinition } from "./status.js";
-import { isSpell, type Combatant, type Skill } from "./types.js";
+import { isSpell, type Combatant, type Skill, type TargetRule } from "./types.js";
 
 /**
  * Skill activation validation (brief §32: the server validates skill
@@ -59,6 +59,35 @@ export interface ActivationRequest {
   readonly losBlockers: readonly Segment[];
 }
 
+/**
+ * Why `rule` refuses `target` for `caster`, by who each is, or `undefined`
+ * when it allows it (#599). Liveness and range are not its business: the
+ * activation check and the skill bar's range mark both ask this, so they
+ * cannot disagree about who a skill may be cast on.
+ */
+export function targetRuleAllows(
+  rule: TargetRule,
+  caster: Pick<Combatant, "id" | "team">,
+  target: Pick<Combatant, "id" | "team">,
+): ActivationRejection | undefined {
+  const isSelf = target.id === caster.id;
+  const isAlly = !isSelf && target.team === caster.team;
+  const isEnemy = target.team !== caster.team;
+
+  switch (rule) {
+    case "self":
+    case "single-any":
+      return undefined;
+    case "single-enemy":
+      return isEnemy ? undefined : isSelf ? "invalid-target-self" : "invalid-target-ally";
+    case "single-ally":
+      // "Ally" includes yourself: self-healing is a normal, intended play.
+      return isAlly || isSelf ? undefined : "invalid-target-enemy";
+    case "single-other-ally":
+      return isAlly ? undefined : isSelf ? "invalid-target-self" : "invalid-target-enemy";
+  }
+}
+
 /** Validate a target against a skill's targeting rule. */
 function checkTarget(request: ActivationRequest): ActivationCheck {
   const { skill, caster, target } = request;
@@ -75,21 +104,8 @@ function checkTarget(request: ActivationRequest): ActivationCheck {
     return reject("invalid-target-dead");
   }
 
-  const isSelf = target.id === caster.id;
-  const isAlly = !isSelf && target.team === caster.team;
-  const isEnemy = target.team !== caster.team;
-
-  switch (skill.target) {
-    case "single-enemy":
-      return isEnemy ? OK : reject(isSelf ? "invalid-target-self" : "invalid-target-ally");
-    case "single-ally":
-      // "Ally" includes yourself: self-healing is a normal, intended play.
-      return isAlly || isSelf ? OK : reject("invalid-target-enemy");
-    case "single-other-ally":
-      return isAlly ? OK : reject(isSelf ? "invalid-target-self" : "invalid-target-enemy");
-    case "single-any":
-      return OK;
-  }
+  const refused = targetRuleAllows(skill.target, caster, target);
+  return refused === undefined ? OK : reject(refused);
 }
 
 export function canActivate(request: ActivationRequest): ActivationCheck {

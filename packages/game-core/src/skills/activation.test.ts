@@ -4,7 +4,13 @@ import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type WeaponId } from "../equipment/weapons.js";
 import { segment } from "../geometry.js";
 import { vec2 } from "../vec2.js";
-import { canActivate, hasAftercast, payCost, type ActivationRequest } from "./activation.js";
+import {
+  canActivate,
+  hasAftercast,
+  payCost,
+  targetRuleAllows,
+  type ActivationRequest,
+} from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { makeCombatant } from "./testing.js";
 import type { Skill } from "./types.js";
@@ -224,6 +230,33 @@ describe("canActivate", () => {
       ok: false,
       reason: "insufficient-energy",
     });
+  });
+});
+
+describe("targetRuleAllows (#599)", () => {
+  const caster = { id: "me", team: 0 };
+  const targets = [
+    { id: "me", team: 0 },
+    { id: "ally", team: 0 },
+    { id: "foe", team: 1 },
+  ];
+  const verdicts = (rule: Parameters<typeof targetRuleAllows>[0]) =>
+    targets.map((target) => targetRuleAllows(rule, caster, target));
+
+  it("says, for self, an ally and a foe, why each rule refuses them", () => {
+    expect(verdicts("self")).toEqual([undefined, undefined, undefined]);
+    expect(verdicts("single-any")).toEqual([undefined, undefined, undefined]);
+    expect(verdicts("single-enemy")).toEqual([
+      "invalid-target-self",
+      "invalid-target-ally",
+      undefined,
+    ]);
+    expect(verdicts("single-ally")).toEqual([undefined, undefined, "invalid-target-enemy"]);
+    expect(verdicts("single-other-ally")).toEqual([
+      "invalid-target-self",
+      undefined,
+      "invalid-target-enemy",
+    ]);
   });
 });
 
