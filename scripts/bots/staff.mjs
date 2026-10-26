@@ -357,28 +357,47 @@ const LOCK_WAIT_MS = 5_000;
  * Run `change`, which reads, modifies and writes `file`, while holding the
  * one lock of `staff.json`. hubd and the supervisor both write it, and a
  * read-modify-write of one that runs between the other's read and rename
- * would lose that change. The lock is a directory: `mkdir` is atomic. One
- * left behind by a crash is removed by hand: taking it over would let two
- * waiters steal it from each other.
+ * would lose that change. The lock is a directory: `mkdir` is atomic, and
+ * it holds a `pid` file with the holder's pid. A lock whose holder is gone
+ * (killed between `mkdir` and the release) is broken by the next caller, so
+ * a crash cannot block every start and every hire.
+ *
+ * Accepted race: a breaker that read a dead pid could delete a lock a third
+ * process took in the microseconds between that read and the delete. That
+ * needs a holder to have died and two contenders at the same instant, and is
+ * far rarer than the deadlock this prevents.
  *
  * @template T
  * @param {string} file `staff.json`
  * @param {() => T} change
+ * @param {number} [waitMs] how long to wait for a live holder
  * @returns {T}
  */
-export function withStaffLock(file, change) {
+export function withStaffLock(file, change, waitMs = LOCK_WAIT_MS) {
   const lock = `${file}.lock`;
-  const give = Date.now() + LOCK_WAIT_MS;
+  const give = Date.now() + waitMs;
   for (;;) {
     try {
       fs.mkdirSync(lock);
+      try {
+        fs.writeFileSync(path.join(lock, "pid"), String(process.pid));
+      } catch (error) {
+        fs.rmSync(lock, { recursive: true, force: true });
+        throw error;
+      }
       break;
     } catch (error) {
       if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) {
         throw error;
       }
+      const dead = deadHolder(lock, LOCK_WAIT_MS);
+      if (dead !== null) {
+        console.error(`staff: broke stale lock ${lock} (${dead})`);
+        fs.rmSync(lock, { recursive: true, force: true });
+        continue;
+      }
       if (Date.now() > give) {
-        throw new Error(`${lock} is held; if no process holds it, remove it`, {
+        throw new Error(`${lock} is held${heldBy(lock)}; if no process holds it, remove it`, {
           cause: error,
         });
       }
@@ -388,7 +407,51 @@ export function withStaffLock(file, change) {
   try {
     return change();
   } finally {
-    fs.rmdirSync(lock);
+    fs.rmSync(lock, { recursive: true, force: true });
+  }
+}
+
+/**
+ * @param {string} lock
+ * @returns {number | null} the pid in the lock, if it holds one
+ */
+function lockPid(lock) {
+  try {
+    const pid = Number(fs.readFileSync(path.join(lock, "pid"), "utf8"));
+    return Number.isInteger(pid) && pid > 0 ? pid : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @param {string} lock
+ * @returns {string} " by pid <n>", or nothing
+ */
+function heldBy(lock) {
+  const pid = lockPid(lock);
+  return pid === null ? "" : ` by pid ${String(pid)}`;
+}
+
+/**
+ * @param {string} lock
+ * @param {number} youngMs a lock with no pid younger than this is being taken
+ * @returns {string | null} why the lock's holder is gone, or null while it may be there
+ */
+function deadHolder(lock, youngMs) {
+  const pid = lockPid(lock);
+  try {
+    if (pid === null) {
+      // Between mkdir and writing the pid, a live holder looks like this.
+      return Date.now() - fs.statSync(lock).mtimeMs > youngMs ? "it never recorded a pid" : null;
+    }
+    process.kill(pid, 0);
+    return null;
+  } catch (error) {
+    if (pid !== null && error instanceof Error && "code" in error && error.code === "ESRCH") {
+      return `pid ${String(pid)} is gone`;
+    }
+    return null;
   }
 }
 
