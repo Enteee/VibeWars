@@ -100,6 +100,8 @@ left half-done.
   `git fetch https://github.com/Enteee/VibeWars.git main:refs/remotes/origin/main`.
 - Never run `git worktree` or `git gc`: other worktrees are invisible in
   here, so git would treat them as deleted. Worktrees are the host's job.
+  Deleting a branch that is packed (not loose) fails with "Device or resource
+  busy": ask the operator.
 - Commit on your own branch, `bot/<you>/<something>`, where `<you>` is the
   employee `hub whoami` names (`qa-tester`, or `qa-tester@2`). Never force-push.
   You cannot push to `main` and neither can anyone else — `main` only ever

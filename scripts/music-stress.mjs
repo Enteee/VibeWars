@@ -185,9 +185,15 @@ function launch(browser) {
       ...process.env,
       MOZ_DISABLE_CONTENT_SANDBOX: "1",
       // Firefox dlopens libpulse; a Nix build does not find it by itself.
+      // It is put in front of the inherited path, not instead of it, which
+      // other libraries may need; an empty entry would mean the cwd.
       ...(process.env.VIBEWARS_PULSE_LIB === undefined
         ? {}
-        : { LD_LIBRARY_PATH: process.env.VIBEWARS_PULSE_LIB }),
+        : {
+            LD_LIBRARY_PATH: [process.env.VIBEWARS_PULSE_LIB, process.env.LD_LIBRARY_PATH]
+              .filter(Boolean)
+              .join(":"),
+          }),
     },
   });
 }

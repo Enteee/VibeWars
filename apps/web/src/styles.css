@@ -2245,7 +2245,8 @@ body {
   font-size: 0.72rem;
 }
 
-.skill-box {
+.skill-box,
+.skill-locked-box {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -2257,8 +2258,34 @@ body {
   cursor: grab;
 }
 
-.skill-box:hover {
+.skill-box:hover,
+.skill-locked-box:hover {
   border-color: var(--accent);
+}
+
+/* A skill of a profession you do not have (#568): its details, no Equip, no drag. */
+.skill-locked-box {
+  cursor: default;
+}
+
+.skill-box-needs {
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+}
+
+.skill-locked {
+  margin-top: 0.6rem;
+}
+
+.skill-locked > summary {
+  cursor: pointer;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+
+.skill-locked[hidden] {
+  display: none;
 }
 
 /* Already on the bar: still draggable (to move it), but visibly spent. */
@@ -2299,7 +2326,8 @@ body {
   display: none;
 }
 
-.skill-box.is-open {
+.skill-box.is-open,
+.skill-locked-box.is-open {
   border-color: var(--accent);
 }
 
@@ -2431,6 +2459,7 @@ body {
 .training-skill.is-elite,
 .skill-slot.is-elite,
 .skill-box.is-elite,
+.skill-locked-box.is-elite,
 .skill-tip.is-elite {
   margin: -2px;
   border: 3px double var(--elite);
@@ -2833,10 +2862,89 @@ body {
   bottom: 4px;
 }
 
+/* A profession field (#568): a button that opens its grid, styled like the fields beside it. */
+.editor-profession-field {
+  position: relative;
+}
+
 .editor-profession {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  min-width: 8.5rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.editor-profession[aria-expanded="true"] {
+  border-color: var(--accent);
+}
+
+/* The grid the field opens: one cell per profession, what it brings, what it keeps. */
+.profession-grid {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(11rem, 1fr));
+  gap: 0.3rem;
+  width: max-content;
+  max-width: min(36rem, 90vw);
+  padding: 0.4rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 45%);
+}
+
+.profession-grid[hidden] {
+  display: none;
+}
+
+.profession-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.4rem 0.5rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.profession-cell:hover,
+.profession-cell:focus-visible {
+  border-color: var(--ink-dim);
+}
+
+.profession-cell.is-current {
+  border-color: var(--accent);
+}
+
+.profession-cell-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.profession-cell-attributes {
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+
+.profession-cell-keeps {
+  font-size: 0.8rem;
+}
+
+.profession-cell-keeps.is-loss {
+  color: #ffa657;
 }
 
 .profession-icon {

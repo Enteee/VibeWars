@@ -6,6 +6,7 @@ import {
   filterSkillsByText,
   filterSkillsByType,
   groupSkillsByAttribute,
+  lockedSkills,
   skillTypesOf,
 } from "./skill-library.js";
 
@@ -137,5 +138,34 @@ describe("filterEliteSkills (#459)", () => {
       "warrior.backbreaker",
       "ranger.barrage",
     ]);
+  });
+});
+
+describe("lockedSkills (#568)", () => {
+  it("lists every skill of a profession you do not have, and none of yours", () => {
+    const locked = lockedSkills(IMPLEMENTED_SKILLS, "elementalist", "monk");
+    expect(locked.length).toBeGreaterThan(0);
+    expect(locked.length).toBe(
+      IMPLEMENTED_SKILLS.filter((s) => s.profession !== "elementalist" && s.profession !== "monk")
+        .length,
+    );
+    expect(locked.some((skill) => skill.profession === "ranger")).toBe(true);
+    expect(locked.some((skill) => ["elementalist", "monk"].includes(skill.profession))).toBe(false);
+  });
+
+  it("locks the secondary's skills too once there is none, in catalogue order", () => {
+    const locked = lockedSkills(IMPLEMENTED_SKILLS, "elementalist", undefined);
+    expect(locked.some((skill) => skill.profession === "monk")).toBe(true);
+    const order = IMPLEMENTED_SKILLS.filter((skill) => locked.includes(skill));
+    expect(locked).toEqual(order);
+  });
+
+  it("goes through the search and type filters like the rest of the library", () => {
+    const locked = filterSkillsByText(
+      lockedSkills(IMPLEMENTED_SKILLS, "warrior", undefined),
+      "arrow",
+    );
+    expect(locked.length).toBeGreaterThan(0);
+    expect(locked.every((skill) => skill.profession !== "warrior")).toBe(true);
   });
 });

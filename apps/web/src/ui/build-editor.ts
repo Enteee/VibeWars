@@ -81,6 +81,7 @@ import {
   filterSkillsByText,
   filterSkillsByType,
   groupSkillsByAttribute,
+  lockedSkills,
   skillTypesOf,
 } from "./skill-library.js";
 import { createSkillTooltip, renderSkillDescription, type SkillTooltip } from "./skill-tooltip.js";
@@ -258,6 +259,62 @@ export function setProfessions(
       accessible,
     ),
   };
+}
+
+/** One cell of a profession picker's grid (#568). */
+export interface ProfessionChoice {
+  /** `undefined` is the secondary's "(none)". */
+  readonly id: ProfessionId | undefined;
+  readonly name: string;
+  /** The attributes it brings, by name; a primary's own attribute starred. */
+  readonly attributes: readonly string[];
+  /** How many of the bar's skills stay if it is picked, of how many there are. */
+  readonly keeps: number;
+  readonly of: number;
+  readonly current: boolean;
+}
+
+const filled = (bar: StoredCharacter["skillBar"]): number => bar.filter((id) => id !== null).length;
+
+/**
+ * The cells of the `which` profession picker (#568): every profession
+ * but the other picker's (the same twice is not offered), the
+ * secondary's "(none)" first, each with what it brings and what it keeps.
+ * "Keeps" runs `setProfessions` on a copy and counts the bar: one rule
+ * for what a change drops, not two.
+ */
+export function professionChoices(
+  character: StoredCharacter,
+  which: "primary" | "secondary",
+): ProfessionChoice[] {
+  const of = filled(character.skillBar);
+  const choice = (id: ProfessionId | undefined): ProfessionChoice => {
+    const next =
+      which === "primary"
+        ? id === undefined
+          ? character
+          : setProfessions(character, id, character.secondaryProfession)
+        : setProfessions(character, character.primaryProfession, id);
+    const attributes =
+      id === undefined
+        ? []
+        : PROFESSIONS[id].attributes
+            // A secondary brings everything but its primary attribute.
+            .filter((attribute) => which === "primary" || !attribute.isPrimary)
+            .map((attribute) => `${attribute.name}${attribute.isPrimary ? " ★" : ""}`);
+    return {
+      id,
+      name: id === undefined ? "(none)" : PROFESSIONS[id].name,
+      attributes,
+      keeps: filled(next.skillBar),
+      of,
+      current:
+        (which === "primary" ? character.primaryProfession : character.secondaryProfession) === id,
+    };
+  };
+  const other = which === "primary" ? character.secondaryProfession : character.primaryProfession;
+  const ids = (Object.keys(PROFESSIONS) as ProfessionId[]).filter((id) => id !== other);
+  return [...(which === "secondary" ? [choice(undefined)] : []), ...ids.map(choice)];
 }
 
 /**
@@ -851,16 +908,24 @@ function mountCommandBar(
 
   const professions = h("div", "editor-row editor-professions");
   professions.dataset.cause = "professions";
-  const primary = professionPicker("primary", false, (value) => {
-    const character = context.current();
-    if (value !== undefined) {
-      context.commit(setProfessions(character, value, character.secondaryProfession));
-    }
-  });
-  const secondary = professionPicker("secondary", true, (value) => {
-    const character = context.current();
-    context.commit(setProfessions(character, character.primaryProfession, value));
-  });
+  const primary = professionPicker(
+    "primary",
+    () => professionChoices(context.current(), "primary"),
+    (value) => {
+      const character = context.current();
+      if (value !== undefined) {
+        context.commit(setProfessions(character, value, character.secondaryProfession));
+      }
+    },
+  );
+  const secondary = professionPicker(
+    "secondary",
+    () => professionChoices(context.current(), "secondary"),
+    (value) => {
+      const character = context.current();
+      context.commit(setProfessions(character, character.primaryProfession, value));
+    },
+  );
   professions.append(primary.element, secondary.element);
 
   const budget = h("span", "editor-budget");
@@ -984,51 +1049,126 @@ function mountCommandBar(
 
 /* --- professions ----------------------------------------------------------- */
 
+/**
+ * A profession field (#568): a button with the chosen profession's icon
+ * and name, which opens a grid of every profession it may be. Each cell
+ * says what the profession brings and how many of the bar's skills it
+ * keeps, so a change is chosen knowing what it costs. Esc, a click
+ * outside, or the button again closes it.
+ */
 function professionPicker(
-  label: string,
-  includeNone: boolean,
+  which: "primary" | "secondary",
+  choices: () => readonly ProfessionChoice[],
   onChange: (value: ProfessionId | undefined) => void,
 ): { readonly element: HTMLElement; update(selected: ProfessionId | undefined): void } {
-  const wrapper = h("label", "editor-field");
-  wrapper.appendChild(h("span", "editor-label", label));
-  // An <option> cannot hold an image, so the chosen profession's icon
-  // sits beside the picker. Menus only: in the arena, colour means team.
-  const picker = h("span", "editor-profession");
+  const wrapper = h("div", "editor-field editor-profession-field");
+  wrapper.appendChild(h("span", "editor-label", which));
+  // Menus only: in the arena, colour means team.
   const icon = document.createElement("img");
   icon.className = "profession-icon";
   icon.alt = "";
-  const select = document.createElement("select");
-  if (includeNone) {
-    const none = document.createElement("option");
-    none.value = "";
-    none.textContent = "(none)";
-    select.appendChild(none);
-  }
-  for (const id of Object.keys(PROFESSIONS) as ProfessionId[]) {
-    const option = document.createElement("option");
-    option.value = id;
-    option.textContent = PROFESSIONS[id].name;
-    select.appendChild(option);
-  }
-  select.addEventListener("change", () => {
-    onChange(select.value === "" ? undefined : (select.value as ProfessionId));
+  const name = h("span", "editor-profession-name");
+  const opener = button("", "editor-profession", () => {
+    if (grid.hidden) {
+      open();
+    } else {
+      close();
+    }
   });
-  picker.appendChild(select);
-  wrapper.appendChild(picker);
+  opener.dataset.which = which;
+  opener.setAttribute("aria-haspopup", "dialog");
+  opener.setAttribute("aria-expanded", "false");
+  opener.setAttribute("aria-label", `${which} profession`);
+  opener.append(icon, name);
+  const grid = h("div", "profession-grid");
+  grid.setAttribute("role", "dialog");
+  grid.setAttribute("aria-label", `choose a ${which} profession`);
+  grid.hidden = true;
+  wrapper.append(opener, grid);
+
+  const onOutside = (event: PointerEvent): void => {
+    if (event.target instanceof Node && !wrapper.contains(event.target)) {
+      close();
+    }
+  };
+  const close = (): void => {
+    grid.hidden = true;
+    // Built afresh on every open, from the character as it is then.
+    grid.replaceChildren();
+    opener.setAttribute("aria-expanded", "false");
+    document.removeEventListener("pointerdown", onOutside, { capture: true });
+  };
+  const open = (): void => {
+    grid.replaceChildren(
+      ...choices().map((choice) => {
+        const cell = button("", "profession-cell", () => {
+          close();
+          opener.focus();
+          if (!choice.current) {
+            onChange(choice.id);
+          }
+        });
+        cell.dataset.profession = choice.id ?? "none";
+        cell.classList.toggle("is-current", choice.current);
+        if (choice.current) {
+          cell.setAttribute("aria-current", "true");
+        }
+        const head = h("span", "profession-cell-head");
+        if (choice.id !== undefined) {
+          const glyph = document.createElement("img");
+          glyph.className = "profession-icon";
+          glyph.alt = "";
+          glyph.src = professionIcon(choice.id);
+          head.appendChild(glyph);
+        }
+        head.appendChild(h("span", "profession-cell-name", choice.name));
+        cell.appendChild(head);
+        if (choice.attributes.length > 0) {
+          cell.appendChild(h("span", "profession-cell-attributes", choice.attributes.join(" · ")));
+        }
+        if (choice.of > 0) {
+          const keeps = h(
+            "span",
+            "profession-cell-keeps",
+            `keeps ${String(choice.keeps)} of ${String(choice.of)} skills`,
+          );
+          keeps.classList.toggle("is-loss", choice.keeps < choice.of);
+          cell.appendChild(keeps);
+        }
+        return cell;
+      }),
+    );
+    grid.hidden = false;
+    opener.setAttribute("aria-expanded", "true");
+    document.addEventListener("pointerdown", onOutside, { capture: true });
+    (grid.querySelector<HTMLElement>(".is-current") ?? grid.querySelector("button"))?.focus();
+  };
+  grid.addEventListener("keydown", (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      // The grid's, not the editor's: Esc here closes it and nothing else.
+      event.preventDefault();
+      event.stopPropagation();
+      close();
+      opener.focus();
+    }
+  });
+
   return {
     element: wrapper,
     update(selected) {
-      select.value = selected ?? "";
+      const text = selected === undefined ? "(none)" : PROFESSIONS[selected].name;
+      if (name.textContent !== text) {
+        name.textContent = text;
+      }
+      opener.dataset.value = selected ?? "none";
       if (selected === undefined) {
-        icon.remove();
+        icon.hidden = true;
         return;
       }
+      icon.hidden = false;
       const src = professionIcon(selected);
       if (icon.getAttribute("src") !== src) {
         icon.src = src;
-      }
-      if (!icon.isConnected) {
-        picker.prepend(icon);
       }
     },
   };
@@ -1638,6 +1778,72 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     return box;
   };
 
+  /**
+   * A locked card (#568): a skill of a profession you do not have, tagged
+   * with the one it needs. It opens its details, but has no Equip and
+   * does not drag.
+   */
+  const createLockedBox = (skill: Skill): HTMLElement => {
+    const box = h("div", "skill-locked-box");
+    box.dataset.skillId = skill.id;
+    box.classList.toggle("is-elite", skill.elite);
+    const card = button("", "skill-box-card", () => {
+      open = open === skill.id ? undefined : skill.id;
+      render(context.current());
+    });
+    card.setAttribute("aria-expanded", "false");
+    card.appendChild(h("span", "skill-box-name", skill.name));
+    card.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
+    card.appendChild(h("span", "skill-box-cost"));
+    card.appendChild(h("span", "skill-box-headline"));
+    box.appendChild(card);
+    box.appendChild(h("span", "skill-box-needs", `needs ${PROFESSIONS[skill.profession].name}`));
+    const details = h("div", "skill-box-details");
+    details.hidden = true;
+    box.appendChild(details);
+    box.addEventListener("mouseenter", () => {
+      tooltip.show(box, describeSkill(skill, ranksOf(context.current())));
+    });
+    box.addEventListener("mouseleave", () => {
+      tooltip.hide();
+    });
+    return box;
+  };
+
+  /** A card's cost, headline and open details, as of `ranks`: the same for a locked card. */
+  const paintCard = (box: HTMLElement, skill: Skill, ranks: ReadonlyMap<string, number>): void => {
+    const description = describeSkill(skill, ranks);
+    const cost = box.querySelector(".skill-box-cost");
+    if (cost !== null && cost.textContent !== description.cost) {
+      cost.textContent = description.cost;
+    }
+    const headline = box.querySelector(".skill-box-headline");
+    const headlineText = description.headline ?? "";
+    if (headline !== null && headline.textContent !== headlineText) {
+      headline.textContent = headlineText;
+    }
+    const isOpen = open === skill.id;
+    box.classList.toggle("is-open", isOpen);
+    box.querySelector(".skill-box-card")?.setAttribute("aria-expanded", String(isOpen));
+    const details = box.querySelector<HTMLElement>(".skill-box-details");
+    if (details !== null) {
+      details.hidden = !isOpen;
+      if (isOpen) {
+        renderDetails(details, description, ranks);
+      } else if (details.childElementCount > 0) {
+        details.replaceChildren();
+      }
+    }
+  };
+
+  // Below the groups, collapsed: what other professions would bring (#568).
+  const locked = document.createElement("details");
+  locked.className = "skill-locked";
+  const lockedSummary = document.createElement("summary");
+  locked.appendChild(lockedSummary);
+  const lockedBoxes = h("div", "skill-group-boxes");
+  locked.appendChild(lockedBoxes);
+
   const createGroup = (): HTMLElement => {
     const section = h("div", "skill-group");
     const header = h("div", "skill-group-header");
@@ -1654,16 +1860,17 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
       target === undefined
         ? "pick a slot"
         : `Equip → ${context.slotLabel(target.slot)}${target.replaces ? " (replace)" : ""}`;
-    const equippable = equippableSkills(character);
-    const matches = filterSkillsByType(
-      filterSkillsByText(
-        eliteOnly.checked ? filterEliteSkills(equippable) : equippable,
-        search.value,
-      ),
-      types,
+    const filtered = (list: readonly Skill[]): readonly Skill[] =>
+      filterSkillsByType(
+        filterSkillsByText(eliteOnly.checked ? filterEliteSkills(list) : list, search.value),
+        types,
+      );
+    const matches = filtered(equippableSkills(character));
+    const lockedMatches = filtered(
+      lockedSkills(IMPLEMENTED_SKILLS, character.primaryProfession, character.secondaryProfession),
     );
     // A card the filters took away closes; it does not reopen on its own.
-    if (!matches.some((skill) => skill.id === open)) {
+    if (![...matches, ...lockedMatches].some((skill) => skill.id === open)) {
       open = undefined;
     }
     const groups = groupSkillsByAttribute(matches);
@@ -1716,28 +1923,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
                   onLabel.textContent = text;
                 }
               }
-              const description = describeSkill(skill, ranks);
-              const cost = box.querySelector(".skill-box-cost");
-              if (cost !== null && cost.textContent !== description.cost) {
-                cost.textContent = description.cost;
-              }
-              const headline = box.querySelector(".skill-box-headline");
-              const headlineText = description.headline ?? "";
-              if (headline !== null && headline.textContent !== headlineText) {
-                headline.textContent = headlineText;
-              }
-              const isOpen = open === skill.id;
-              box.classList.toggle("is-open", isOpen);
-              box.querySelector(".skill-box-card")?.setAttribute("aria-expanded", String(isOpen));
-              const details = box.querySelector<HTMLElement>(".skill-box-details");
-              if (details !== null) {
-                details.hidden = !isOpen;
-                if (isOpen) {
-                  renderDetails(details, description, ranks);
-                } else if (details.childElementCount > 0) {
-                  details.replaceChildren();
-                }
-              }
+              paintCard(box, skill, ranks);
             },
           );
         }
@@ -1746,6 +1932,17 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     if (groups.length === 0) {
       groupHost.appendChild(emptyNote);
     }
+    lockedSummary.textContent = `Other professions (${String(lockedMatches.length)})`;
+    syncList(
+      lockedBoxes,
+      lockedMatches,
+      (skill) => skill.id,
+      createLockedBox,
+      (box, skill) => {
+        paintCard(box, skill, ranks);
+      },
+    );
+    locked.hidden = lockedMatches.length === 0;
   };
 
   search.addEventListener("input", () => {
@@ -1755,7 +1952,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     render(context.current());
   });
 
-  return { elements: [filters, chips, groupHost], update: render };
+  return { elements: [filters, chips, groupHost, locked], update: render };
 }
 
 /* -------------------------------------------------------------------------- */
