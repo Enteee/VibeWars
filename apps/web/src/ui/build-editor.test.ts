@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_ATTRIBUTE_RANK, MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
+import {
+  MAX_ATTRIBUTE_RANK,
+  MINIMAL_GW_INSPIRED_PVP_V1,
+  accessibleAttributeIds,
+  primaryAttributeOf,
+} from "@vibewars/game-core";
 
 import { SKILL_BAR_SLOTS, validateBuild } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
@@ -16,6 +21,7 @@ import {
   setSkill,
   swapSkillSlots,
 } from "./build-editor.js";
+import { setWeapon } from "./gear-editor.js";
 
 /**
  * The editor's *rules* are tested here; its DOM rendering is covered by
@@ -137,20 +143,52 @@ describe("setProfessions", () => {
     expect(cleared.secondaryProfession).toBeUndefined();
   });
 
-  it("keeps the weapon, because a weapon is a choice and not a permission", () => {
-    // Attributes and skills are gated by profession; weapons are gated
-    // by requirement. Someone who deliberately took a hammer onto a
-    // mesmer has made a bad build, and the editor should not overrule it.
+  it("swaps a weapon nothing can govern for the new primary's default (#614)", () => {
     const warrior = setProfessions(newCharacter("c1"), "warrior", undefined);
-    const switched = setProfessions(warrior, "mesmer", undefined);
-    expect(switched.equipment.mainHand.weaponId).toBe(warrior.equipment.mainHand.weaponId);
+    expect(warrior.equipment.mainHand.weaponId).toBe("sword");
+
+    const mesmer = setProfessions(warrior, "mesmer", undefined);
+    expect(mesmer.equipment.mainHand).toEqual({
+      weaponId: "wand",
+      requirementAttributeId: primaryAttributeOf("mesmer").id,
+    });
+    expect(mesmer.equipment.offHand?.offhandId).toBe("focus");
+    expect(validateBuild(mesmer)).toEqual([]);
+  });
+
+  it("gives a Warrior turned Assassin daggers and no off-hand (#614)", () => {
+    const warrior = setProfessions(newCharacter("c1"), "warrior", undefined);
+    const assassin = setProfessions(warrior, "assassin", undefined);
+    expect(assassin.equipment.mainHand.weaponId).toBe("daggers");
+    expect(assassin.equipment.offHand).toBeNull();
+  });
+
+  it("keeps a weapon the new pair can still govern, because it is a choice (#614)", () => {
+    // Swordsmanship is still on the bar through the secondary: a weapon
+    // is a choice, and only one no attribute can govern is swapped.
+    const warrior = setProfessions(newCharacter("c1"), "warrior", "assassin");
+    const swapped = setProfessions(warrior, "assassin", "warrior");
+    expect(swapped.equipment.mainHand.weaponId).toBe("sword");
+  });
+
+  it("keeps a wand and re-points its nomination (#614)", () => {
+    const elementalist = setProfessions(newCharacter("c1"), "elementalist", undefined);
+    expect(elementalist.equipment.mainHand.weaponId).toBe("wand");
+
+    const monk = setProfessions(elementalist, "monk", undefined);
+    expect(monk.equipment.mainHand.weaponId).toBe("wand");
+    expect(accessibleAttributeIds("monk", undefined)).toContain(
+      monk.equipment.mainHand.requirementAttributeId,
+    );
   });
 
   it("drops an off-hand the new professions cannot link", () => {
-    const warrior = setProfessions(newCharacter("c1"), "warrior", undefined);
+    // Fists are never swapped, so the shield is reconciled on its own.
+    const warrior = setWeapon(setProfessions(newCharacter("c1"), "warrior", undefined), "unarmed");
     expect(warrior.equipment.offHand).not.toBeNull();
 
     const switched = setProfessions(warrior, "mesmer", undefined);
+    expect(switched.equipment.mainHand.weaponId).toBe("unarmed");
     expect(switched.equipment.offHand).toBeNull();
   });
 
