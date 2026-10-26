@@ -2573,7 +2573,9 @@ body {
 /* The now-playing toast: top left, just under the top bar, where a match has
    nothing (the skill bar is along the bottom, the scoreboard in the middle
    and the buttons on the right). On a menu screen that corner is the title,
-   so there it sits bottom left (#501). */
+   so there it sits bottom left (#501). In the build editor with the Training
+   Ground it sits bottom right, over the foot of the library, because bottom
+   left is the Training log you watch while you test a build (#591). */
 .now-playing {
   position: fixed;
   left: 1rem;
@@ -2589,6 +2591,11 @@ body {
 body:has(#screens:not([style*="none"])) .now-playing {
   top: auto;
   bottom: 1rem;
+}
+
+body:has(.editor-layout.has-training) .now-playing {
+  left: auto;
+  right: 1rem;
 }
 
 .now-playing[hidden] {
