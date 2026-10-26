@@ -146,9 +146,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
-    // Knockdown is Sprint 15; the elite's bonus damage is implemented, and
-    // this is the catalog's one adrenaline-cost skill, which is what makes
-    // it worth including now.
+    // GW1: +1...16 damage and a knockdown, 4 s with 8 Strength or more and
+    // 2 s below. A PvP Backbreaker has the Strength, so it is a flat 4 s (#544).
     attack: {
       weapon: "hammer",
       weaponDamage: 1,
@@ -157,7 +156,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
       onBlocked: [],
     },
-    effects: [],
+    effects: [{ kind: "knockdown", durationSeconds: 4 }],
   },
   {
     id: "necromancer.blood-renewal-lite",

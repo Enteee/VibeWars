@@ -29,6 +29,7 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     statuses: new StatusSet(),
     cast: new CastState(),
     attack: undefined,
+    knockdownRemaining: 0,
     // Armor at the reference level, so an unconfigured test combatant
     // takes damage for exactly its stated amount. A test that wants to
     // exercise mitigation says so explicitly.
@@ -46,12 +47,30 @@ export function withAttackDuration<T>(
   multipliers: Partial<Record<StatusId, number>>,
   fn: () => T,
 ): T {
+  const overrides: Partial<Record<StatusId, Partial<StatusDefinition>>> = {};
+  for (const [id, multiplier] of Object.entries(multipliers)) {
+    if (isStatusId(id)) {
+      overrides[id] = { attackDurationMultiplier: multiplier };
+    }
+  }
+  return withStatusDefinitions(overrides, fn);
+}
+
+/**
+ * Run `fn` with these statuses' definitions changed: how a test reaches
+ * a hook no catalog status uses yet, `preventsKnockdown` say, or makes
+ * a chance certain.
+ */
+export function withStatusDefinitions<T>(
+  overrides: Partial<Record<StatusId, Partial<StatusDefinition>>>,
+  fn: () => T,
+): T {
   const table: Record<StatusId, StatusDefinition> = STATUS_DEFINITIONS;
   const saved = { ...table };
   try {
-    for (const [id, multiplier] of Object.entries(multipliers)) {
+    for (const [id, override] of Object.entries(overrides)) {
       if (isStatusId(id)) {
-        table[id] = { ...table[id], attackDurationMultiplier: multiplier };
+        table[id] = { ...table[id], ...override, id };
       }
     }
     return fn();

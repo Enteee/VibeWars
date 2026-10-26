@@ -212,7 +212,7 @@ export interface WireCombatEvent {
   readonly skillId: string | null;
   /** The status applied, removed or expired. */
   readonly statusId: string | null;
-  /** How long an applied status lasts. */
+  /** How long an applied status or a knockdown lasts. */
   readonly durationSeconds: number | null;
   /**
    * Whether a damage event was a critical hit (#533); `null` for any other

@@ -262,6 +262,9 @@ function degenerationSources(combatant: Combatant): {
 /** How far short of its interval a swing or a flight may be and still land; see `#advanceAttack`. */
 const SWING_EPSILON = 1e-9;
 
+/** How close to zero a knockdown may be and count as over: 4 s in 0.05 s ticks leaves a float crumb. */
+const KNOCKDOWN_EPSILON = 1e-9;
+
 /** At most this many push-out passes per move; see `advanceMovement`. */
 const MOVEMENT_RELAX_PASSES = 4;
 
@@ -491,13 +494,18 @@ export class MatchSimulation {
    * to walk out of, so a move leaves it alone.
    *
    * Any direction, none included (`stop`), ends a click-to-walk (#310).
+   *
+   * Knocked down, nothing moves (#468), but the direction is still kept:
+   * it mirrors the keyboard, so a key held through the knockdown walks on
+   * the tick the body rises. There is nothing to interrupt while down.
    */
   public setInputDirection(id: string, direction: Vec2): void {
     const record = this.#participants.get(id);
     if (record !== undefined) {
       record.inputDirection = clampInputDirection(direction);
       record.walkGoal = undefined;
-      if (record.inputDirection.x !== 0 || record.inputDirection.y !== 0) {
+      const moving = record.inputDirection.x !== 0 || record.inputDirection.y !== 0;
+      if (moving && record.combatant.knockdownRemaining <= 0) {
         this.#moveInterrupts(record);
       }
     }
@@ -512,13 +520,15 @@ export class MatchSimulation {
    * to the nearest one that it can. A goal with no way there at all is
    * no walk; the hero only stops.
    *
+   * Knocked down, the click is refused, not kept for rising (#468).
+   *
    * Only the point is kept here. The next step settles it, once however
    * many clicks arrived since: settling costs a path search, and a client
    * may send hundreds of clicks a second.
    */
   public walkTo(id: string, point: Vec2): void {
     const record = this.#participants.get(id);
-    if (record === undefined || record.combatant.dead) {
+    if (record === undefined || record.combatant.dead || record.combatant.knockdownRemaining > 0) {
       return;
     }
     record.inputDirection = ZERO;
@@ -787,6 +797,12 @@ export class MatchSimulation {
     this.#tick += 1;
     this.#elapsedSeconds += dt;
     this.checkMatchEnd();
+    // Every knockdown counts down before anyone acts, so one lasts its
+    // full duration whoever lands it, and the tick it ends is one its
+    // bearer acts in again (#468).
+    for (const record of this.#participants.values()) {
+      this.#advanceKnockdown(record.combatant, dt);
+    }
     this.#advanceProjectiles(dt);
 
     for (const record of this.#participants.values()) {
@@ -802,9 +818,13 @@ export class MatchSimulation {
         continue;
       }
 
+      // Knocked down, it does nothing at all; its statuses and recharges
+      // run on (#468). Read here, so one landed earlier this tick counts.
+      const down = record.combatant.knockdownRemaining > 0;
+
       // The aftercast holds the body still; a held direction or a clicked
       // point is kept for after it.
-      if (!record.combatant.cast.inAftercast) {
+      if (!down && !record.combatant.cast.inAftercast) {
         this.advanceMovement(record, record.inputDirection, dt);
         this.#advanceWalk(record, dt);
       }
@@ -870,15 +890,17 @@ export class MatchSimulation {
         }
       }
 
-      this.#advancePendingSkill(record, dt);
-      this.#advanceAttack(record, dt);
-      this.#faceCastTarget(record);
+      if (!down) {
+        this.#advancePendingSkill(record, dt);
+        this.#advanceAttack(record, dt);
+        this.#faceCastTarget(record);
+      }
       // Walked or approached: either way, it is what a shot leads.
       record.history.push(record.position);
 
       // Behaviours act after their own cast resolves, so a dummy can
       // finish one cast and begin the next within the same tick.
-      if (record.behaviour !== undefined) {
+      if (record.behaviour !== undefined && !down) {
         this.#act(record, record.behaviour, dt);
       }
     }
@@ -1042,6 +1064,7 @@ export class MatchSimulation {
       );
     }
     this.#recordDeaths(events);
+    this.#recordKnockdowns(events);
     // An attack skill is a swing, so it turns on its target with the
     // weapon: it starts an attack, or switches one to them. Any other skill
     // leaves the attack alone (#317): one in progress resumes on its own
@@ -1371,6 +1394,7 @@ export class MatchSimulation {
     });
     this.#gainAdrenaline(record, events);
     this.#recordDeaths(events);
+    this.#recordKnockdowns(events);
     this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events);
   }
 
@@ -1504,6 +1528,7 @@ export class MatchSimulation {
       this.#gainAdrenaline(attacker, events);
     }
     this.#recordDeaths(events);
+    this.#recordKnockdowns(events);
     this.#logWeapon(projectile.attackerId, projectile.weaponSnapshot.mainHand.weapon.id, events);
   }
 
@@ -1526,6 +1551,9 @@ export class MatchSimulation {
     const target = this.#participants.get(targetId)?.combatant;
     if (record.combatant.dead) {
       return { ok: false, reason: "caster-dead" };
+    }
+    if (record.combatant.knockdownRemaining > 0) {
+      return { ok: false, reason: "caster-knocked-down" };
     }
     if (target === undefined) {
       return { ok: false, reason: "no-target" };
@@ -1578,8 +1606,39 @@ export class MatchSimulation {
         victim.pendingSkill = undefined;
         victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
+        victim.combatant.knockdownRemaining = 0;
         victim.respawnInSeconds = this.#respawnSeconds(victim);
         this.recordDeath(victim.combatant.team);
+      }
+    }
+  }
+
+  /** Count `combatant`'s knockdown down by `dt`, to exactly 0 at the end. */
+  #advanceKnockdown(combatant: Combatant, dt: number): void {
+    if (combatant.knockdownRemaining > 0) {
+      combatant.knockdownRemaining -= dt;
+      if (combatant.knockdownRemaining <= KNOCKDOWN_EPSILON) {
+        combatant.knockdownRemaining = 0;
+      }
+    }
+  }
+
+  /**
+   * Everyone knocked down in `events` stops where they are (#468): the
+   * skill effect already ended their cast and attack; this drops what
+   * only the simulation keeps, a walk and a skill walking in. Neither
+   * comes back on rising. A held direction stays: it is the keyboard's
+   * state, not an action, and walks again on rising.
+   */
+  #recordKnockdowns(events: readonly CombatEvent[]): void {
+    for (const event of events) {
+      if (event.kind !== "knocked-down") {
+        continue;
+      }
+      const victim = this.#participants.get(event.targetId);
+      if (victim !== undefined) {
+        victim.walkGoal = undefined;
+        victim.pendingSkill = undefined;
       }
     }
   }
@@ -1757,6 +1816,7 @@ export class MatchSimulation {
     record.combatant.cast.cancelCast();
     record.combatant.cast.endAftercast();
     record.combatant.attack = undefined;
+    record.combatant.knockdownRemaining = 0;
     record.pendingSkill = undefined;
     record.sinceReset = 0;
     record.outOfCombatSeconds = 0;
@@ -1787,6 +1847,7 @@ export class MatchSimulation {
       statuses: new StatusSet(),
       cast: new CastState(),
       attack: undefined,
+      knockdownRemaining: 0,
       equipment: spec.equipment,
     };
   }
