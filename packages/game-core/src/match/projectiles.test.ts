@@ -447,3 +447,162 @@ describe("walls along the flight (#215)", () => {
     expect(land(match).events.some((event) => event.kind === "damage")).toBe(true);
   });
 });
+
+describe("ranged attack skills fly (#416)", () => {
+  const BROAD_HEAD = "ranger.broad-head-arrow";
+  const BARRAGE = "ranger.barrage";
+
+  /** The archer with Broad Head Arrow and Barrage, and the energy for them. */
+  function skilled(spawn: Vec2): ParticipantSpec {
+    return { ...archer(spawn), skillBar: [BROAD_HEAD, BARRAGE], maxEnergy: 1000 };
+  }
+
+  function foe(id: string, spawn: Vec2): ParticipantSpec {
+    return { ...target(spawn), id };
+  }
+
+  function skillSim(...foes: ParticipantSpec[]): MatchSimulation {
+    return new MatchSimulation({
+      seed: "skill-arrow",
+      participants: [skilled(vec2(0, 0)), ...foes],
+    });
+  }
+
+  /**
+   * Use the skill in `slot` at `target`, with the target walking `walking`
+   * for the last second before the release, and return the entry its
+   * release logged.
+   */
+  function shoot(match: MatchSimulation, slot: number, walking: Vec2 = ZERO): CombatLogEntry {
+    match.setTarget("archer", "target");
+    expect(match.requestSkill("archer", slot)?.check).toEqual({ ok: true });
+    const walkFrom = match.elapsedSeconds + LONGBOW.attackIntervalSeconds / 2 - 1;
+    for (let i = 0; i < 200; i += 1) {
+      if (match.elapsedSeconds >= walkFrom) {
+        match.setInputDirection("target", walking);
+      }
+      const released = match.step(DT).log.find((entry) => entry.cause === "skill");
+      if (released !== undefined) {
+        return released;
+      }
+    }
+    throw new Error("nothing was released");
+  }
+
+  /** Step until a skill's shot lands, and return what it did. */
+  function landSkill(match: MatchSimulation): CombatLogEntry {
+    for (let i = 0; i < 200; i += 1) {
+      const entry = match
+        .step(DT)
+        .log.find((logged) => logged.cause === "skill" && logged.sourceId === "archer");
+      if (entry !== undefined) {
+        return entry;
+      }
+    }
+    throw new Error("nothing landed");
+  }
+
+  const kinds = (entry: CombatLogEntry) => entry.events.map((event) => event.kind);
+
+  it("Broad Head Arrow flies: nothing lands at the release, the blow and Daze land with the arrow", () => {
+    const match = skillSim(target(vec2(300, 0)));
+    const released = shoot(match, 0);
+    expect(released.events).toEqual([]);
+    expect(match.projectiles).toHaveLength(1);
+    expect(match.projectiles[0]?.skillHit?.skill.id).toBe(BROAD_HEAD);
+    expect(get(match, "archer").combatant.cast.rechargeRemaining.has(BROAD_HEAD)).toBe(true);
+    expect(get(match, "target").combatant.statuses.has("dazed")).toBe(false);
+
+    const landed = landSkill(match);
+    expect(landed).toMatchObject({ cause: "skill", skillId: BROAD_HEAD, sourceId: "archer" });
+    expect(kinds(landed)).toEqual(["damage", "interrupt-missed", "status-applied"]);
+    expect(get(match, "target").combatant.statuses.has("dazed")).toBe(true);
+  });
+
+  it("interrupts a cast still going when the arrow lands", () => {
+    const match = skillSim(target(vec2(300, 0)));
+    shoot(match, 0);
+    get(match, "target").combatant.cast.beginCast("elementalist.fireball", "archer", 2);
+    expect(kinds(landSkill(match))).toContain("interrupted");
+    expect(get(match, "target").combatant.cast.isCasting).toBe(false);
+  });
+
+  it("does not interrupt a cast that finished before the arrow arrived", () => {
+    const match = skillSim(target(vec2(300, 0)));
+    shoot(match, 0);
+    get(match, "target").combatant.cast.beginCast("elementalist.fireball", "archer", 2 * DT);
+    const landed = landSkill(match);
+    expect(kinds(landed)).not.toContain("interrupted");
+    expect(kinds(landed)).toContain("status-applied");
+  });
+
+  it("a target that steps aside dodges it: no blow and no Daze", () => {
+    const match = skillSim(target(vec2(300, 0)));
+    shoot(match, 0, UP);
+    match.setInputDirection("target", DOWN);
+    expect(landSkill(match).events).toEqual([{ kind: "attack-dodged", targetId: "target" }]);
+    expect(get(match, "target").combatant.statuses.has("dazed")).toBe(false);
+  });
+
+  it("a wall along the flight stops it: obstructed, no Daze", () => {
+    const match = new MatchSimulation({
+      seed: "pillar",
+      walls: [
+        { a: vec2(200, 5), b: vec2(220, 5) },
+        { a: vec2(220, 5), b: vec2(220, 100) },
+        { a: vec2(220, 100), b: vec2(200, 100) },
+        { a: vec2(200, 100), b: vec2(200, 5) },
+      ],
+      participants: [skilled(vec2(0, 0)), target(vec2(300, -200))],
+    });
+    shoot(match, 0, UP);
+    expect(match.projectiles[0]?.obstructed).toBe(true);
+    expect(landSkill(match).events).toEqual([{ kind: "attack-obstructed", targetId: "target" }]);
+    expect(get(match, "target").combatant.statuses.has("dazed")).toBe(false);
+  });
+
+  it("Barrage releases an arrow at each adjacent foe, each flying and landing on its own", () => {
+    const match = skillSim(
+      target(vec2(300, 0)),
+      foe("north", vec2(300, 30)),
+      foe("south", vec2(300, -30)),
+    );
+    shoot(match, 1);
+    expect(match.projectiles.map((projectile) => projectile.targetId).sort()).toEqual([
+      "north",
+      "south",
+      "target",
+    ]);
+    // "north" steps away and dodges; the other two are hit.
+    match.setInputDirection("north", UP);
+    const landed: CombatLogEntry[] = [];
+    for (let i = 0; i < 200 && landed.length < 3; i += 1) {
+      landed.push(...match.step(DT).log.filter((entry) => entry.skillId === BARRAGE));
+    }
+    const outcome = Object.fromEntries(
+      landed.flatMap((entry) => entry.events.map((event) => [event.targetId, event.kind])),
+    );
+    expect(outcome).toEqual({ north: "attack-dodged", south: "damage", target: "damage" });
+  });
+
+  it("blocked, it lands no riders and earns no adrenaline", () => {
+    // The first seed whose arrow is blocked: half are.
+    for (let seed = 0; seed < 20; seed += 1) {
+      const match = new MatchSimulation({
+        seed: `block-${String(seed)}`,
+        participants: [skilled(vec2(0, 0)), target(vec2(300, 0))],
+      });
+      get(match, "target").combatant.statuses.apply("guardian", 1000, "target");
+      shoot(match, 0);
+      const landed = landSkill(match);
+      if (!kinds(landed).includes("attack-blocked")) {
+        continue;
+      }
+      expect(kinds(landed)).toEqual(["attack-blocked"]);
+      expect(get(match, "target").combatant.statuses.has("dazed")).toBe(false);
+      expect(get(match, "archer").combatant.adrenaline).toBe(0);
+      return;
+    }
+    throw new Error("no seed blocked the arrow");
+  });
+});
