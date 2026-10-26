@@ -82,6 +82,14 @@ function startMatch(plan: MatchPlan) {
  * message budget counts on it, and its match runs on it.
  */
 export async function hostLobby(name: string): Promise<HostedLobby> {
+  // Best effort: a page going away tells its guests, rather than leaving
+  // them to wait out a dropped host's reconnect window (#515). Added
+  // before the room exists, so it runs before a transport's own pagehide
+  // leave, while there is still a room to say it in.
+  const onPageHide = (): void => {
+    void close();
+  };
+  window.addEventListener("pagehide", onPageHide);
   const code = generateLobbyCode(secureRandom);
   const room = joinRoom(code);
   const host = createLobbyHost({ transport: room, code, mapIds: arenaIds(), startMatch });
@@ -98,12 +106,6 @@ export async function hostLobby(name: string): Promise<HostedLobby> {
     stopClock();
     await host.close();
   };
-  // Best effort: a page going away tells its guests, rather than leaving
-  // them to notice the host's peer drop out.
-  const onPageHide = (): void => {
-    void close();
-  };
-  window.addEventListener("pagehide", onPageHide);
   try {
     const lobby = await joinLobby({
       transport: host.local,
