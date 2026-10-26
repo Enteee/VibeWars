@@ -454,11 +454,13 @@ server, now enforced by the host:
   (`MAX_RECEIVE_BYTES` in `relays.ts`), so Trystero drops an oversized
   message before decoding it, and a peer cannot make another allocate an
   unbounded buffer. The same number is also one budget for the whole room's
-  messages over 16 KiB, which Trystero sends in chunks. A peer that sends
-  one chunk every two minutes holds that budget, which stalls every other
-  large message. Review rule: keep every game message under 16 KiB. A
-  snapshot is about 4.6 KB at eight players; the host splits a tick's
-  combat into batches of at most 16 KiB each (#601).
+  messages that do not fit one 16 KiB frame with their 36-byte header,
+  which Trystero sends in chunks. A peer that sends one chunk every two
+  minutes holds that budget, which stalls every other large message.
+  Review rule: keep every game message within `MAX_MESSAGE_BYTES` (16 KiB
+  less that header). A snapshot is about 4.6 KB at eight players; the host
+  splits a tick's combat into batches of at most `MAX_MESSAGE_BYTES` each
+  (#601).
 
 What a later step must add before P2P play can merge:
 
