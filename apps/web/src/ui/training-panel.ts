@@ -82,21 +82,26 @@ import {
   saveScenarioChoice,
   shouldRestoreFocus,
 } from "./training-state.js";
+import { h } from "./kit.js";
 
 /**
  * The Training Ground: a live arena beside the build editor (#2 §6).
  *
- * The editor re-renders its whole subtree on every change, so this panel
- * is created once and *moved* into each new render with `attach`. The
- * Phaser game inside it lives as long as the editor does: switching
- * scenarios swaps the simulation and resizes the game, and editing the
- * build re-arms the player in place. Nothing here ever recreates it.
+ * Created and attached once per editor (ADR-0030). The Phaser game inside
+ * it lives as long as the editor does: switching scenarios swaps the
+ * simulation and resizes the game, and editing the build re-arms the
+ * player in place. Nothing here ever recreates it.
  */
 
 export interface TrainingPanel {
   readonly root: HTMLElement;
-  /** Re-parent after a re-render. */
   attach(parent: HTMLElement): void;
+  /**
+   * Hand the keyboard back to the arena after an edit, if the player had
+   * it and the edit left focus on nothing: a click on a skill box, say.
+   * A focused control, such as the `+` just pressed, keeps it.
+   */
+  refocus(): void;
   setBuild(character: StoredCharacter): void;
   setDisplayName(name: string): void;
   dispose(): void;
@@ -112,8 +117,8 @@ const HINT_IDLE = "click the arena to take control";
 
 /**
  * Clicking one of these takes the keyboard, so it takes arena control
- * away. Clicking anything else outside the panel (an attribute `+`, a
- * skill box) re-renders the editor and hands control back.
+ * away. Clicking anything else outside the panel (a skill box, say) edits
+ * the build, and `refocus` hands control back.
  */
 const TAKES_KEYBOARD = "input, textarea, select, [contenteditable]:not([contenteditable='false'])";
 
@@ -127,17 +132,6 @@ function hasWebGl(): boolean {
   } catch {
     return false;
   }
-}
-
-function h(tag: string, className?: string, text?: string): HTMLElement {
-  const node = document.createElement(tag);
-  if (className !== undefined) {
-    node.className = className;
-  }
-  if (text !== undefined) {
-    node.textContent = text;
-  }
-  return node;
 }
 
 function vitalBar(kind: string): { root: HTMLElement; fill: HTMLElement; label: HTMLElement } {
@@ -770,6 +764,8 @@ export function createTrainingPanel(): TrainingPanel {
     root,
     attach(parent) {
       parent.appendChild(root);
+    },
+    refocus() {
       const active = document.activeElement;
       if (shouldRestoreFocus(armed, active === null || active === document.body)) {
         stage.focus({ preventScroll: true });

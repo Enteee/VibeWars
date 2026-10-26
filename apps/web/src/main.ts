@@ -23,7 +23,7 @@ import {
   type KeyValueStore,
 } from "./storage/repository.js";
 import type { StoredCharacter, StoredTeam } from "./storage/schema.js";
-import { disposeBuildEditor, newCharacter, renderBuildEditor } from "./ui/build-editor.js";
+import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
 import { disposeJukeboxScreen, renderJukeboxScreen } from "./ui/jukebox.js";
 import { disposeOptionsScreen, renderOptionsScreen } from "./ui/options-screen.js";
 import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
@@ -141,11 +141,15 @@ async function main(): Promise<void> {
     }
   };
 
+  /** The open build editor; every way out of it passes through `showMenu`. */
+  let editor: BuildEditorView | undefined;
+
   const showMenu = (): void => {
     // Every way back to the menu passes through here, so the status bar
     // never keeps saying where the player was. Error paths set theirs after.
     setStatus("ready", "offline");
-    disposeBuildEditor();
+    editor?.dispose();
+    editor = undefined;
     disposeOptionsScreen();
     disposeJukeboxScreen();
     showViewport(false);
@@ -215,9 +219,6 @@ async function main(): Promise<void> {
   };
 
   const showCharacterEditor = (character: StoredCharacter): void => {
-    const rerender = (next: StoredCharacter): void => {
-      renderBuildEditor(screenRoot, next, editorCallbacks, rerender);
-    };
     const editorCallbacks = {
       onSave: (saved: StoredCharacter) => {
         void (async () => {
@@ -247,7 +248,8 @@ async function main(): Promise<void> {
         showMenu();
       },
     };
-    rerender(character);
+    editor?.dispose();
+    editor = mountBuildEditor(screenRoot, character, editorCallbacks);
   };
 
   const showTeams = async (): Promise<void> => {

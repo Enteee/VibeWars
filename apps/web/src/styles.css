@@ -1574,6 +1574,12 @@ body {
   gap: 0.3rem;
 }
 
+/* The keyed list of a group's boxes (#563): no box of its own, so the
+   boxes lay out in the group as they did before it existed. */
+.skill-group-boxes {
+  display: contents;
+}
+
 .skill-group-header {
   display: flex;
   justify-content: space-between;
