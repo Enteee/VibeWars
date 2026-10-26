@@ -387,8 +387,8 @@ The build editor says under a primary's row what it does at its rank
 ("Fast Casting 12: spells cast 43% faster"), and a skill tooltip for a
 known character shows the cost and activation Expertise and Fast
 Casting make of it, the base in brackets: "5 energy (10)",
-"1.1s (2s)" (#531). The HUD skill bar's own numbers stay base, as in
-GW1.
+"1.1s (2s)" (#531). The HUD skill bar shows the energy a skill costs
+the caster now, Expertise included (#528), with no base beside it.
 
 ## Positioning
 
