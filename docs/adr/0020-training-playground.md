@@ -4,6 +4,8 @@
 
 Accepted (2026-10-24). Builds on [ADR-0017](0017-shared-match-simulation.md).
 Keeps [ADR-0003](0003-simulation.md) intact: only the pump is new.
+The editor no longer re-renders ([ADR-0030](0030-screens-mount-once.md)):
+the panel is attached once, and `refocus()` replaced re-attaching.
 
 ## Context
 

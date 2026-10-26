@@ -2,6 +2,7 @@ import { SOURCE_URL } from "../source.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
 import { createCharacterDot, equippedCount, professionLabel } from "./character-preview.js";
+import { button, h } from "./kit.js";
 
 /**
  * The main menu and lobby screens (brief §21).
@@ -24,26 +25,6 @@ export interface MenuCallbacks {
   readonly onEditCharacter: (id: string) => void;
   /** Called when the player picks who to play; re-renders the list. */
   readonly onSelectCharacter: (id: string | undefined) => void;
-}
-
-function h(tag: string, className?: string, text?: string): HTMLElement {
-  const node = document.createElement(tag);
-  if (className !== undefined) {
-    node.className = className;
-  }
-  if (text !== undefined) {
-    node.textContent = text;
-  }
-  return node;
-}
-
-function button(label: string, className: string, onClick: () => void): HTMLButtonElement {
-  const node = document.createElement("button");
-  node.type = "button";
-  node.className = className;
-  node.textContent = label;
-  node.addEventListener("click", onClick);
-  return node;
 }
 
 const NAME_STORAGE_KEY = `${STORAGE_NAMESPACE}.playerName`;

@@ -27,6 +27,8 @@ import {
   type InsigniaEffect,
   type InsigniaId,
   type ProfessionId,
+  type Skill,
+  type SkillDescription,
 } from "@vibewars/game-core";
 
 import { NoWebGlError } from "../render/arena-viewport.js";
@@ -63,15 +65,13 @@ import {
 } from "./icons.js";
 import { filterSkillsByName, groupSkillsByAttribute } from "./skill-library.js";
 import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
+import { button, h, syncList } from "./kit.js";
 import { createTrainingPanel, type TrainingPanel } from "./training-panel.js";
 
 /**
  * The character/build editor (brief §17).
  *
- * Plain DOM, rebuilt from state on every change. The builds here are
- * small enough (a dozen attributes, eight skill slots) that a full
- * re-render is simpler and less bug-prone than diffing, and it guarantees
- * what is shown always matches the model.
+ * Plain DOM, mounted once; each region updates in place (ADR-0030).
  */
 
 export interface BuildEditorCallbacks {
@@ -285,295 +285,315 @@ export function applySkillDrop(
 /* Rendering                                                                   */
 /* -------------------------------------------------------------------------- */
 
-function h(tag: string, className?: string, text?: string): HTMLElement {
-  const node = document.createElement(tag);
-  if (className !== undefined) {
-    node.className = className;
-  }
-  if (text !== undefined) {
-    node.textContent = text;
-  }
-  return node;
+/** What every region of the editor shares. */
+interface EditorContext {
+  /** The character as it stands, the name typed so far included. */
+  readonly current: () => StoredCharacter;
+  /** Make `next` the character, and have every region show it. */
+  readonly commit: (next: StoredCharacter) => void;
+  /** One tooltip for the whole editor. */
+  readonly tooltip: SkillTooltip;
+}
+
+/** A part of the editor, built once, that shows whatever character it is given. */
+interface Region {
+  update(character: StoredCharacter): void;
+}
+
+export interface BuildEditorView {
+  /** Tear down the tooltip and the Training Ground; call when leaving the editor. */
+  dispose(): void;
 }
 
 /**
- * One tooltip for the whole editor, created lazily and reused.
- *
- * The editor re-renders on every change, so a tooltip owned by the
- * render would be destroyed and rebuilt constantly — and any tooltip
- * visible at that moment would be orphaned on screen.
+ * Mount the editor into `root`, once per open (ADR-0030). Every change
+ * goes through one `commit`, which updates each region in place, so the
+ * library keeps its scroll, the pressed control keeps focus, and a drag
+ * or a hover survives a change made elsewhere. Reopening starts afresh:
+ * the skills tab, an empty search.
  */
-let sharedTooltip: SkillTooltip | undefined;
-
-function tooltipInstance(): SkillTooltip {
-  sharedTooltip ??= createSkillTooltip();
-  return sharedTooltip;
-}
-
-/**
- * The library's name filter, kept outside the render.
- *
- * Re-rendering on every attribute click would otherwise clear what the
- * player had typed mid-search.
- */
-let librarySearch = "";
-
-/**
- * Which library the right-hand column is showing.
- *
- * Module-level for the same reason as the search text: the panel
- * re-renders on every change, and a tab that reset itself whenever you
- * equipped something would be unusable.
- */
-let activeLibrary: "skills" | "gear" = "skills";
-
-/**
- * The Training Ground arena, created once and moved into every render,
- * for the same reason as the tooltip: a Phaser game rebuilt on every `+`
- * click would lose its WebGL context and leak (#2 §6.2).
- *
- * `disposeBuildEditor` is the one place it is torn down. That is enough
- * because every way out of the editor (save, delete, duplicate, close)
- * goes through `main.ts`'s `showMenu()`, which calls it.
- */
-let sharedTraining: TrainingPanel | undefined;
-
-/**
- * Why the arena could not be created, set once so it is not retried on
- * every render. With no WebGL, a notice takes the arena's place (#655).
- */
-let trainingUnavailable: "no-webgl" | "unavailable" | undefined;
-
-function trainingInstance(): TrainingPanel | undefined {
-  if (sharedTraining === undefined && trainingUnavailable === undefined) {
-    try {
-      sharedTraining = createTrainingPanel();
-    } catch (error) {
-      trainingUnavailable = error instanceof NoWebGlError ? "no-webgl" : "unavailable";
-      console.warn("[web] training ground unavailable", error);
-    }
-  }
-  return sharedTraining;
-}
-
-/** Drops the shared tooltip and the training arena; call when leaving the editor. */
-export function disposeBuildEditor(): void {
-  sharedTooltip?.dispose();
-  sharedTooltip = undefined;
-  sharedTraining?.dispose();
-  sharedTraining = undefined;
-  librarySearch = "";
-  // Re-entering the editor should land on the skill library, not on
-  // whichever tab happened to be open when it was last closed.
-  activeLibrary = "skills";
-}
-
-export function renderBuildEditor(
+export function mountBuildEditor(
   root: HTMLElement,
-  character: StoredCharacter,
+  initial: StoredCharacter,
   callbacks: BuildEditorCallbacks,
-  rerender: (next: StoredCharacter) => void,
-): void {
-  const tooltip = tooltipInstance();
-  tooltip.hide();
+): BuildEditorView {
+  let character = initial;
+  const tooltip = createSkillTooltip();
+  const regions: Region[] = [];
 
   root.replaceChildren();
   const layout = h("div", "editor-layout");
   root.appendChild(layout);
-  // Moving the existing panel in, in the same task as the re-render, so
-  // the canvas is never detached across a paint.
-  const training = trainingInstance();
+
+  // The Training Ground arena (#2 §6), created once per editor: a Phaser
+  // game must never be rebuilt on a `+` click, or it loses its WebGL
+  // context and leaks.
+  let training: TrainingPanel | undefined;
+  try {
+    training = createTrainingPanel();
+  } catch (error) {
+    console.warn("[web] training ground unavailable", error);
+    // No WebGL: the arena's column says so (#655). Mounted once, so it
+    // stays through every edit.
+    if (error instanceof NoWebGlError) {
+      layout.classList.add("has-training");
+      const column = h("section", "training");
+      column.appendChild(noWebGlNotice());
+      layout.appendChild(column);
+    }
+  }
   if (training !== undefined) {
     layout.classList.add("has-training");
     training.attach(layout);
-    training.setBuild(character);
     training.setDisplayName(character.name);
-  } else if (trainingUnavailable === "no-webgl") {
-    layout.classList.add("has-training");
-    const placeholder = h("section", "training");
-    placeholder.appendChild(noWebGlNotice());
-    layout.appendChild(placeholder);
   }
+
+  const update = (): void => {
+    for (const region of regions) {
+      region.update(character);
+    }
+    training?.setBuild(character);
+  };
+
+  const context: EditorContext = {
+    current: () => character,
+    commit: (next) => {
+      character = next;
+      tooltip.hide();
+      update();
+      training?.refocus();
+    },
+    tooltip,
+  };
+
   const panel = h("div", "editor");
   layout.appendChild(panel);
+  regions.push(
+    mountHeader(panel, context, (name) => {
+      // Typing is no change any other region shows, so it updates none:
+      // the arena hears about the new name directly.
+      character = { ...character, name };
+      training?.setDisplayName(name);
+    }),
+    mountProfessions(panel, context),
+    mountAttributes(panel, context),
+    mountSkillBar(panel, context),
+    mountGear(panel, context),
+    mountActions(panel, context, callbacks),
+    mountShare(panel, context),
+    mountLibrary(layout, context),
+  );
+  update();
 
+  return {
+    dispose() {
+      tooltip.dispose();
+      training?.dispose();
+    },
+  };
+}
+
+/* --- header ---------------------------------------------------------------- */
+
+function mountHeader(
+  panel: HTMLElement,
+  context: EditorContext,
+  onName: (name: string) => void,
+): Region {
   const header = h("div", "editor-header");
   const nameInput = document.createElement("input");
   nameInput.className = "editor-name";
-  nameInput.value = character.name;
+  nameInput.value = context.current().name;
   nameInput.addEventListener("input", () => {
-    character = { ...character, name: nameInput.value };
-    // The name field never re-renders (it would drop the caret), so the
-    // arena hears about a new name directly.
-    training?.setDisplayName(nameInput.value);
+    onName(nameInput.value);
   });
   header.appendChild(nameInput);
   panel.appendChild(header);
+  return {
+    update(character) {
+      // Only an import changes the name from outside the field; setting
+      // an unchanged value would still move the caret to the end.
+      if (nameInput.value !== character.name) {
+        nameInput.value = character.name;
+      }
+    },
+  };
+}
 
-  // --- professions ---------------------------------------------------
-  const professionRow = h("div", "editor-row");
-  const professionIds = Object.keys(PROFESSIONS) as ProfessionId[];
+/* --- professions ----------------------------------------------------------- */
 
-  const makeProfessionSelect = (
-    label: string,
-    selected: ProfessionId | undefined,
-    includeNone: boolean,
-    onChange: (value: ProfessionId | undefined) => void,
-  ): HTMLElement => {
-    const wrapper = h("label", "editor-field");
-    wrapper.appendChild(h("span", "editor-label", label));
-    // An <option> cannot hold an image, so the chosen profession's icon
-    // sits beside the picker. Menus only: in the arena, colour means team.
-    const picker = h("span", "editor-profession");
-    if (selected !== undefined) {
-      const icon = document.createElement("img");
-      icon.className = "profession-icon";
-      icon.src = professionIcon(selected);
-      icon.alt = "";
-      picker.appendChild(icon);
+function mountProfessions(panel: HTMLElement, context: EditorContext): Region {
+  const row = h("div", "editor-row");
+  const primary = professionPicker("primary", false, (value) => {
+    const character = context.current();
+    if (value !== undefined) {
+      context.commit(setProfessions(character, value, character.secondaryProfession));
     }
-    const select = document.createElement("select");
-    if (includeNone) {
-      const none = document.createElement("option");
-      none.value = "";
-      none.textContent = "(none)";
-      select.appendChild(none);
-    }
-    for (const id of professionIds) {
-      const option = document.createElement("option");
-      option.value = id;
-      option.textContent = PROFESSIONS[id].name;
-      select.appendChild(option);
-    }
-    select.value = selected ?? "";
-    select.addEventListener("change", () => {
-      onChange(select.value === "" ? undefined : (select.value as ProfessionId));
-    });
-    picker.appendChild(select);
-    wrapper.appendChild(picker);
-    return wrapper;
+  });
+  const secondary = professionPicker("secondary", true, (value) => {
+    const character = context.current();
+    context.commit(setProfessions(character, character.primaryProfession, value));
+  });
+  row.append(primary.element, secondary.element);
+  panel.appendChild(row);
+  return {
+    update(character) {
+      primary.update(character.primaryProfession);
+      secondary.update(character.secondaryProfession);
+    },
+  };
+}
+
+function professionPicker(
+  label: string,
+  includeNone: boolean,
+  onChange: (value: ProfessionId | undefined) => void,
+): { readonly element: HTMLElement; update(selected: ProfessionId | undefined): void } {
+  const wrapper = h("label", "editor-field");
+  wrapper.appendChild(h("span", "editor-label", label));
+  // An <option> cannot hold an image, so the chosen profession's icon
+  // sits beside the picker. Menus only: in the arena, colour means team.
+  const picker = h("span", "editor-profession");
+  const icon = document.createElement("img");
+  icon.className = "profession-icon";
+  icon.alt = "";
+  const select = document.createElement("select");
+  if (includeNone) {
+    const none = document.createElement("option");
+    none.value = "";
+    none.textContent = "(none)";
+    select.appendChild(none);
+  }
+  for (const id of Object.keys(PROFESSIONS) as ProfessionId[]) {
+    const option = document.createElement("option");
+    option.value = id;
+    option.textContent = PROFESSIONS[id].name;
+    select.appendChild(option);
+  }
+  select.addEventListener("change", () => {
+    onChange(select.value === "" ? undefined : (select.value as ProfessionId));
+  });
+  picker.appendChild(select);
+  wrapper.appendChild(picker);
+  return {
+    element: wrapper,
+    update(selected) {
+      select.value = selected ?? "";
+      if (selected === undefined) {
+        icon.remove();
+        return;
+      }
+      const src = professionIcon(selected);
+      if (icon.getAttribute("src") !== src) {
+        icon.src = src;
+      }
+      if (!icon.isConnected) {
+        picker.prepend(icon);
+      }
+    },
+  };
+}
+
+/* --- attributes ------------------------------------------------------------ */
+
+function rankOf(character: StoredCharacter, attributeId: string): number {
+  return character.attributes.find((a) => a.attributeId === attributeId)?.rank ?? 0;
+}
+
+function mountAttributes(panel: HTMLElement, context: EditorContext): Region {
+  const points = h("div", "editor-points");
+  const list = h("div", "editor-attributes");
+  panel.append(points, list);
+
+  const step = (attributeId: string, by: number) => () => {
+    const character = context.current();
+    context.commit(setRank(character, attributeId, rankOf(character, attributeId) + by));
   };
 
-  professionRow.appendChild(
-    makeProfessionSelect("primary", character.primaryProfession, false, (value) => {
-      if (value !== undefined) {
-        rerender(setProfessions(character, value, character.secondaryProfession));
-      }
-    }),
-  );
-  professionRow.appendChild(
-    makeProfessionSelect("secondary", character.secondaryProfession, true, (value) => {
-      rerender(setProfessions(character, character.primaryProfession, value));
-    }),
-  );
-  panel.appendChild(professionRow);
-
-  // --- attributes ----------------------------------------------------
-  const points = remainingPoints(character);
-  panel.appendChild(h("div", "editor-points", `${String(points)} attribute points remaining`));
-
-  const attributeList = h("div", "editor-attributes");
-  for (const attributeId of accessibleAttributeIds(
-    character.primaryProfession,
-    character.secondaryProfession,
-  )) {
-    const definition = getAttribute(attributeId);
-    if (definition === undefined) {
-      continue;
-    }
-    const rank = character.attributes.find((a) => a.attributeId === attributeId)?.rank ?? 0;
-
+  const create = (attributeId: string): HTMLElement => {
     const row = h("div", "editor-attribute");
-    const name = h(
-      "span",
-      "editor-attribute-name",
-      `${definition.name}${definition.isPrimary ? " ★" : ""}`,
-    );
-    // What the primary does at this rank (#531), under its name.
-    const effect = describePrimaryAttribute(attributeId, rank);
-    if (effect !== undefined) {
-      name.appendChild(h("span", "editor-attribute-effect", effect));
-    }
-    row.appendChild(name);
+    row.appendChild(h("span", "editor-attribute-name"));
+    row.appendChild(button("−", "", step(attributeId, -1)));
+    row.appendChild(h("span", "editor-attribute-rank"));
+    row.appendChild(button("+", "", step(attributeId, 1)));
+    return row;
+  };
 
-    const minus = document.createElement("button");
-    minus.type = "button";
-    minus.textContent = "−";
-    minus.disabled = rank <= 0;
-    minus.addEventListener("click", () => {
-      rerender(setRank(character, attributeId, rank - 1));
-    });
+  return {
+    update(character) {
+      points.textContent = `${String(remainingPoints(character))} attribute points remaining`;
+      const shown = accessibleAttributeIds(
+        character.primaryProfession,
+        character.secondaryProfession,
+      ).filter((attributeId) => getAttribute(attributeId) !== undefined);
+      syncList(
+        list,
+        shown,
+        (attributeId) => attributeId,
+        create,
+        (row, attributeId) => {
+          const definition = getAttribute(attributeId);
+          const rank = rankOf(character, attributeId);
+          const [name, minus, rankText, plus] = Array.from(row.children);
+          if (name !== undefined) {
+            name.textContent = `${definition?.name ?? attributeId}${definition?.isPrimary === true ? " ★" : ""}`;
+            // What the primary does at this rank (#531), under its name.
+            const effect = describePrimaryAttribute(attributeId, rank);
+            if (effect !== undefined) {
+              name.appendChild(h("span", "editor-attribute-effect", effect));
+            }
+          }
+          if (rankText !== undefined) {
+            rankText.textContent = String(rank);
+          }
+          if (minus instanceof HTMLButtonElement) {
+            minus.disabled = rank <= 0;
+          }
+          if (plus instanceof HTMLButtonElement) {
+            plus.disabled = !canRaise(character, attributeId);
+          }
+        },
+      );
+    },
+  };
+}
 
-    const plus = document.createElement("button");
-    plus.type = "button";
-    plus.textContent = "+";
-    plus.disabled = !canRaise(character, attributeId);
-    plus.addEventListener("click", () => {
-      rerender(setRank(character, attributeId, rank + 1));
-    });
+/* --- skill bar ------------------------------------------------------------- */
 
-    row.appendChild(minus);
-    row.appendChild(h("span", "editor-attribute-rank", String(rank)));
-    row.appendChild(plus);
-    attributeList.appendChild(row);
-  }
-  panel.appendChild(attributeList);
-
-  // --- skill bar -----------------------------------------------------
+function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
+  const { tooltip } = context;
   // Boxes rather than dropdowns: a bar is a spatial thing, and ordering
   // it by picking from eight identical `<select>`s never matched how
   // players think about it.
-  const available = equippableSkills(character);
-  const ranks = new Map(character.attributes.map((a) => [a.attributeId, a.rank]));
-  const equippedIds = new Set(character.skillBar.filter((id): id is string => id !== null));
-
-  const skillSection = h("div", "editor-skills");
-  skillSection.appendChild(h("div", "editor-label", "skill bar"));
-  skillSection.appendChild(
+  const section = h("div", "editor-skills");
+  section.appendChild(h("div", "editor-label", "skill bar"));
+  section.appendChild(
     h("div", "editor-hint", "Drag skills from the right, or click one to equip it."),
   );
+  const grid = h("div", "skill-bar-grid");
+  section.appendChild(grid);
+  panel.appendChild(section);
 
-  const barGrid = h("div", "skill-bar-grid");
-  character.skillBar.forEach((skillId, slot) => {
+  /** What each filled slot's tooltip shows, as of the last update. */
+  const described = new Map<number, SkillDescription>();
+  /** What each slot's contents were built from, so an unchanged slot is left alone. */
+  const built = new Map<number, string>();
+
+  const create = (slot: number): HTMLElement => {
     const cell = h("div", "skill-slot");
     cell.dataset.slot = String(slot);
-    cell.appendChild(h("span", "skill-slot-index", String(slot + 1)));
-
-    const skill = skillId === null ? undefined : available.find((s) => s.id === skillId);
-    if (skill === undefined) {
-      cell.classList.add("is-empty");
-      cell.appendChild(h("span", "skill-slot-empty", "empty"));
-    } else {
-      const description = describeSkill(skill, ranks);
-      cell.appendChild(h("span", "skill-slot-name", skill.name));
-      cell.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
-      cell.appendChild(h("span", "skill-slot-cost", description.cost));
-      cell.draggable = true;
-      cell.addEventListener("dragstart", (event: DragEvent) => {
-        event.dataTransfer?.setData("text/plain", encodeDragSource({ from: "slot", slot }));
-      });
-      cell.addEventListener("mouseenter", () => {
+    cell.addEventListener("dragstart", (event: DragEvent) => {
+      event.dataTransfer?.setData("text/plain", encodeDragSource({ from: "slot", slot }));
+    });
+    cell.addEventListener("mouseenter", () => {
+      const description = described.get(slot);
+      if (description !== undefined) {
         tooltip.show(cell, description);
-      });
-      cell.addEventListener("mouseleave", () => {
-        tooltip.hide();
-      });
-
-      const clear = document.createElement("button");
-      clear.type = "button";
-      clear.className = "skill-slot-clear";
-      clear.textContent = "×";
-      clear.title = `Remove ${skill.name}`;
-      clear.addEventListener("click", (event) => {
-        // Without this the click also lands on the cell, which would
-        // immediately re-equip whatever the library had selected.
-        event.stopPropagation();
-        tooltip.hide();
-        rerender(setSkill(character, slot, null));
-      });
-      cell.appendChild(clear);
-    }
-
+      }
+    });
+    cell.addEventListener("mouseleave", () => {
+      tooltip.hide();
+    });
     cell.addEventListener("dragover", (event: DragEvent) => {
       event.preventDefault();
       cell.classList.add("is-drop-target");
@@ -584,69 +604,110 @@ export function renderBuildEditor(
     cell.addEventListener("drop", (event: DragEvent) => {
       event.preventDefault();
       cell.classList.remove("is-drop-target");
-      const raw = event.dataTransfer?.getData("text/plain") ?? "";
-      const source = decodeDragSource(raw);
+      const source = decodeDragSource(event.dataTransfer?.getData("text/plain") ?? "");
       if (source === undefined) {
         // Something unrelated was dragged in. Do nothing, loudly nowhere.
         return;
       }
-      tooltip.hide();
-      rerender(applySkillDrop(character, source, slot));
+      context.commit(applySkillDrop(context.current(), source, slot));
     });
+    return cell;
+  };
 
-    barGrid.appendChild(cell);
-  });
-  skillSection.appendChild(barGrid);
-  panel.appendChild(skillSection);
+  return {
+    update(character) {
+      const available = equippableSkills(character);
+      const ranks = new Map(character.attributes.map((a) => [a.attributeId, a.rank]));
+      const slots = character.skillBar.map((_, slot) => slot);
+      syncList(grid, slots, String, create, (cell, slot) => {
+        const skillId = character.skillBar[slot] ?? null;
+        const skill = skillId === null ? undefined : available.find((s) => s.id === skillId);
+        const description = skill === undefined ? undefined : describeSkill(skill, ranks);
+        if (description === undefined) {
+          described.delete(slot);
+        } else {
+          described.set(slot, description);
+        }
+        const signature = skill === undefined ? "" : `${skill.id}|${description?.cost ?? ""}`;
+        if (built.get(slot) === signature) {
+          return;
+        }
+        built.set(slot, signature);
+        cell.replaceChildren(h("span", "skill-slot-index", String(slot + 1)));
+        cell.classList.toggle("is-empty", skill === undefined);
+        cell.draggable = skill !== undefined;
+        if (skill === undefined || description === undefined) {
+          cell.appendChild(h("span", "skill-slot-empty", "empty"));
+          return;
+        }
+        cell.appendChild(h("span", "skill-slot-name", skill.name));
+        cell.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
+        cell.appendChild(h("span", "skill-slot-cost", description.cost));
+        const clear = document.createElement("button");
+        clear.type = "button";
+        clear.className = "skill-slot-clear";
+        clear.textContent = "×";
+        clear.title = `Remove ${skill.name}`;
+        clear.addEventListener("click", (event) => {
+          // Without this the click also lands on the cell, which would
+          // immediately re-equip whatever the library had selected.
+          event.stopPropagation();
+          context.commit(setSkill(context.current(), slot, null));
+        });
+        cell.appendChild(clear);
+      });
+    },
+  };
+}
 
-  renderGear(panel, () => character, rerender);
+/* --- validation and actions ------------------------------------------------ */
 
-  // --- validation + actions ------------------------------------------
-  const problems = validateBuild(character);
-  if (problems.length > 0) {
-    const list = h("div", "editor-problems");
-    for (const problem of problems) {
-      list.appendChild(h("div", "editor-problem", `${problem.field}: ${problem.message}`));
-    }
-    panel.appendChild(list);
-  }
-
+function mountActions(
+  panel: HTMLElement,
+  context: EditorContext,
+  callbacks: BuildEditorCallbacks,
+): Region {
+  const problems = h("div", "editor-problems");
   const actions = h("div", "editor-actions");
-
-  const save = document.createElement("button");
-  save.type = "button";
-  save.textContent = "save";
-  // An invalid build cannot be saved — brief §23 requires validation
-  // before saving, and allowing a save here would just move the failure
-  // to load time.
-  save.disabled = problems.length > 0;
-  save.addEventListener("click", () => {
-    callbacks.onSave({ ...character, name: nameInput.value, updatedAt: Date.now() });
+  const save = button("save", "", () => {
+    callbacks.onSave({ ...context.current(), updatedAt: Date.now() });
   });
-
-  const duplicate = document.createElement("button");
-  duplicate.type = "button";
-  duplicate.textContent = "duplicate";
-  duplicate.addEventListener("click", () => {
-    callbacks.onDuplicate(character);
-  });
-
-  const remove = document.createElement("button");
-  remove.type = "button";
-  remove.textContent = "delete";
-  remove.addEventListener("click", () => {
-    callbacks.onDelete(character.id);
-  });
-
-  const close = document.createElement("button");
-  close.type = "button";
-  close.textContent = "close";
-  close.addEventListener("click", callbacks.onClose);
-
-  actions.append(save, duplicate, remove, close);
+  actions.append(
+    save,
+    button("duplicate", "", () => {
+      callbacks.onDuplicate(context.current());
+    }),
+    button("delete", "", () => {
+      callbacks.onDelete(context.current().id);
+    }),
+    button("close", "", callbacks.onClose),
+  );
   panel.appendChild(actions);
 
-  // --- share -----------------------------------------------------------
+  return {
+    update(character) {
+      const found = validateBuild(character);
+      problems.replaceChildren(
+        ...found.map((problem) =>
+          h("div", "editor-problem", `${problem.field}: ${problem.message}`),
+        ),
+      );
+      if (found.length === 0) {
+        problems.remove();
+      } else if (!problems.isConnected) {
+        actions.before(problems);
+      }
+      // An invalid build cannot be saved — brief §23 requires validation
+      // before saving, and allowing a save here would just move the failure
+      // to load time.
+      save.disabled = found.length > 0;
+    },
+  };
+}
+
+/* --- share ----------------------------------------------------------------- */
+
+function mountShare(panel: HTMLElement, context: EditorContext): Region {
   // A textarea rather than a clipboard-only button: clipboard access is
   // permission-gated and fails silently in some browsers, and a build you
   // can see is one you can paste into chat by hand when it does.
@@ -663,208 +724,278 @@ export function renderBuildEditor(
   const shareStatus = h("div", "editor-share-status");
   share.appendChild(shareStatus);
 
-  const setStatus = (message: string, ok: boolean): void => {
-    shareStatus.replaceChildren();
-    shareStatus.className = ok ? "editor-share-status is-ok" : "editor-share-status is-error";
-    shareStatus.appendChild(h("div", undefined, message));
-  };
-
-  const shareActions = h("div", "editor-actions");
-
-  const exportButton = document.createElement("button");
-  exportButton.type = "button";
-  exportButton.textContent = "export";
-  exportButton.addEventListener("click", () => {
-    transfer.value = exportBuild({ ...character, name: nameInput.value });
+  const exportButton = button("export", "", () => {
+    transfer.value = exportBuild(context.current());
     transfer.select();
-    setStatus("Build copied into the box above — select it and copy.", true);
+    shareStatus.className = "editor-share-status is-ok";
+    shareStatus.replaceChildren(
+      h("div", undefined, "Build copied into the box above — select it and copy."),
+    );
   });
 
-  const importButton = document.createElement("button");
-  importButton.type = "button";
-  importButton.textContent = "import";
-  importButton.addEventListener("click", () => {
-    const result = importBuild(transfer.value, character.id, Date.now());
+  const importButton = button("import", "", () => {
+    const result = importBuild(transfer.value, context.current().id, Date.now());
     if (!result.ok) {
       // Every problem at once. Someone fixing a pasted build should not
       // have to discover its faults one round trip at a time.
-      shareStatus.replaceChildren();
       shareStatus.className = "editor-share-status is-error";
-      shareStatus.appendChild(h("div", undefined, "Could not import this build:"));
-      for (const problem of result.problems) {
-        shareStatus.appendChild(h("div", "editor-problem", problem));
-      }
+      shareStatus.replaceChildren(
+        h("div", undefined, "Could not import this build:"),
+        ...result.problems.map((problem) => h("div", "editor-problem", problem)),
+      );
       return;
     }
     // Loaded into the editor, not saved: the player sees exactly what
     // arrived and chooses to keep it. An import that silently overwrote
-    // the open character would be a bad surprise.
-    rerender(result.character);
+    // the open character would be a bad surprise. The import worked, so
+    // an earlier error or export note no longer holds.
+    shareStatus.className = "editor-share-status";
+    shareStatus.replaceChildren();
+    context.commit(result.character);
   });
 
+  const shareActions = h("div", "editor-actions");
   shareActions.append(exportButton, importButton);
   share.appendChild(shareActions);
   panel.appendChild(share);
+  // Nothing here shows the character; export reads it when pressed.
+  return { update: () => undefined };
+}
 
-  // --- library (right column) -----------------------------------------
+/* --- library (right column) ------------------------------------------------ */
+
+type LibraryTab = "skills" | "gear";
+
+function mountLibrary(layout: HTMLElement, context: EditorContext): Region {
   const library = h("aside", "skill-library");
   layout.appendChild(library);
 
   // Two libraries in one column rather than two columns: the panel is
   // already the full height of the editor, and a second permanent column
   // would squeeze the character sheet for something you only use while
-  // picking one kind of thing.
+  // picking one kind of thing. Both are kept, built and up to date; only
+  // the open one is in the page, and each keeps its own scroll.
+  const skills = mountSkillLibrary(context);
+  const gear = mountGearLibrary(context);
+  const bodies: Readonly<Record<LibraryTab, readonly HTMLElement[]>> = {
+    skills: skills.elements,
+    gear: gear.elements,
+  };
+  const scrolled: Record<LibraryTab, number> = { skills: 0, gear: 0 };
+  let active: LibraryTab = "skills";
+
   const tabs = h("div", "library-tabs");
-  for (const tab of ["skills", "gear"] as const) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "library-tab";
-    button.textContent = tab;
-    if (activeLibrary === tab) {
-      button.classList.add("is-active");
-    }
-    button.addEventListener("click", () => {
-      if (activeLibrary !== tab) {
-        activeLibrary = tab;
-        rerender(character);
+  const tabButtons = (["skills", "gear"] as const).map((tab) => {
+    const node = button(tab, "library-tab", () => {
+      if (active === tab) {
+        return;
+      }
+      scrolled[active] = library.scrollTop;
+      for (const element of bodies[active]) {
+        element.remove();
+      }
+      active = tab;
+      library.append(...bodies[tab]);
+      library.scrollTop = scrolled[tab];
+      for (const [other, otherButton] of tabButtons) {
+        otherButton.classList.toggle("is-active", other === tab);
       }
     });
-    tabs.appendChild(button);
-  }
-  library.appendChild(tabs);
+    node.classList.toggle("is-active", tab === active);
+    tabs.appendChild(node);
+    return [tab, node] as const;
+  });
+  library.append(tabs, ...bodies[active]);
 
-  if (activeLibrary === "gear") {
-    renderGearLibrary(library, () => character, rerender);
-    return;
-  }
+  // Dropping worn things back onto the library takes them off: a bar skill
+  // on the skills tab, gear on the gear tab. The gesture players reach for
+  // after dragging something out of a slot.
+  library.addEventListener("dragover", (event: DragEvent) => {
+    event.preventDefault();
+  });
+  library.addEventListener("drop", (event: DragEvent) => {
+    event.preventDefault();
+    const raw = event.dataTransfer?.getData("text/plain") ?? "";
+    if (active === "skills") {
+      const source = decodeDragSource(raw);
+      if (source?.from === "slot") {
+        context.commit(setSkill(context.current(), source.slot, null));
+      }
+      return;
+    }
+    const source = decodeGearDrag(raw);
+    if (source !== undefined) {
+      context.commit(applyGearDrop(context.current(), source, { kind: "library" }));
+    }
+  });
 
+  return {
+    update(character) {
+      skills.update(character);
+      gear.update(character);
+    },
+  };
+}
+
+/** A library tab's body: the elements it puts under the tabs. */
+interface LibraryBody extends Region {
+  readonly elements: readonly HTMLElement[];
+}
+
+function mountSkillLibrary(context: EditorContext): LibraryBody {
+  const { tooltip } = context;
   const search = document.createElement("input");
   search.className = "field-input skill-search";
   search.type = "search";
   search.placeholder = "filter by name";
-  search.value = librarySearch;
-  search.addEventListener("input", () => {
-    librarySearch = search.value;
-    // Only the list is rebuilt, so focus and caret position survive —
-    // a full re-render would drop focus after every keystroke.
-    renderGroups();
-  });
-  library.appendChild(search);
-
   const groupHost = h("div", "skill-groups");
-  library.appendChild(groupHost);
-
   const emptyNote = h(
     "div",
     "skill-library-empty",
     "No skill matches. Note that only skills your professions can access are listed.",
   );
 
-  function renderGroups(): void {
-    groupHost.replaceChildren();
-    const matches = filterSkillsByName(available, librarySearch);
-    if (matches.length === 0) {
-      groupHost.appendChild(emptyNote);
-      return;
-    }
+  const ranksOf = (character: StoredCharacter): Map<string, number> =>
+    new Map(character.attributes.map((a) => [a.attributeId, a.rank]));
 
-    for (const group of groupSkillsByAttribute(matches)) {
-      const section = h("div", "skill-group");
-      const header = h("div", "skill-group-header");
-      header.appendChild(h("span", "skill-group-name", group.attributeName));
-      // The rank is shown here because it is exactly what makes every
-      // skill under this heading better — the reason to group this way.
-      // "No Attribute" skills have none to show.
-      if (group.attributeId !== undefined) {
-        const rank = ranks.get(group.attributeId) ?? 0;
-        header.appendChild(h("span", "skill-group-rank", `rank ${String(rank)}`));
-      }
-      section.appendChild(header);
-
-      for (const skill of group.skills) {
-        const description = describeSkill(skill, ranks);
-        const box = h("div", "skill-box");
-        box.draggable = true;
-        box.dataset.skillId = skill.id;
-        if (equippedIds.has(skill.id)) {
-          box.classList.add("is-equipped");
-        }
-        box.appendChild(h("span", "skill-box-name", skill.name));
-        box.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
-        box.appendChild(h("span", "skill-box-cost", description.cost));
-
-        box.addEventListener("dragstart", (event: DragEvent) => {
-          event.dataTransfer?.setData(
-            "text/plain",
-            encodeDragSource({ from: "library", skillId: skill.id }),
-          );
-        });
-        box.addEventListener("mouseenter", () => {
-          tooltip.show(box, description);
-        });
-        box.addEventListener("mouseleave", () => {
-          tooltip.hide();
-        });
-        // Click-to-equip alongside dragging: dragging is the nicer
-        // gesture but a poor only option on a trackpad, and it gives
-        // the behaviour something testable to assert against.
-        box.addEventListener("click", () => {
-          const firstEmpty = character.skillBar.indexOf(null);
-          const slot = firstEmpty === -1 ? 0 : firstEmpty;
-          tooltip.hide();
-          rerender(setSkill(character, slot, skill.id));
-        });
-
-        section.appendChild(box);
-      }
-      groupHost.appendChild(section);
-    }
-  }
-
-  renderGroups();
-
-  // Dropping a bar skill back onto the library unequips it, which is the
-  // gesture players reach for after dragging one out of a slot.
-  library.addEventListener("dragover", (event: DragEvent) => {
-    event.preventDefault();
-  });
-  library.addEventListener("drop", (event: DragEvent) => {
-    event.preventDefault();
-    const source = decodeDragSource(event.dataTransfer?.getData("text/plain") ?? "");
-    if (source?.from === "slot") {
+  const createBox = (skill: Skill): HTMLElement => {
+    const box = h("div", "skill-box");
+    box.draggable = true;
+    box.dataset.skillId = skill.id;
+    box.appendChild(h("span", "skill-box-name", skill.name));
+    box.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
+    box.appendChild(h("span", "skill-box-cost"));
+    box.addEventListener("dragstart", (event: DragEvent) => {
+      event.dataTransfer?.setData(
+        "text/plain",
+        encodeDragSource({ from: "library", skillId: skill.id }),
+      );
+    });
+    box.addEventListener("mouseenter", () => {
+      tooltip.show(box, describeSkill(skill, ranksOf(context.current())));
+    });
+    box.addEventListener("mouseleave", () => {
       tooltip.hide();
-      rerender(setSkill(character, source.slot, null));
+    });
+    // Click-to-equip alongside dragging: dragging is the nicer
+    // gesture but a poor only option on a trackpad, and it gives
+    // the behaviour something testable to assert against.
+    box.addEventListener("click", () => {
+      const character = context.current();
+      const firstEmpty = character.skillBar.indexOf(null);
+      context.commit(setSkill(character, firstEmpty === -1 ? 0 : firstEmpty, skill.id));
+    });
+    return box;
+  };
+
+  const createGroup = (): HTMLElement => {
+    const section = h("div", "skill-group");
+    const header = h("div", "skill-group-header");
+    header.appendChild(h("span", "skill-group-name"));
+    section.appendChild(header);
+    section.appendChild(h("div", "skill-group-boxes"));
+    return section;
+  };
+
+  const render = (character: StoredCharacter): void => {
+    const ranks = ranksOf(character);
+    const equipped = new Set(character.skillBar.filter((id): id is string => id !== null));
+    const matches = filterSkillsByName(equippableSkills(character), search.value);
+    const groups = groupSkillsByAttribute(matches);
+    syncList(
+      groupHost,
+      groups,
+      (group) => group.attributeId ?? group.attributeName,
+      createGroup,
+      (section, group) => {
+        const [header, boxes] = Array.from(section.children);
+        const name = header?.querySelector(".skill-group-name");
+        if (name !== null && name !== undefined) {
+          name.textContent = group.attributeName;
+        }
+        // The rank is shown here because it is exactly what makes every
+        // skill under this heading better — the reason to group this way.
+        // "No Attribute" skills have none to show.
+        let rank = header?.querySelector(".skill-group-rank");
+        if (group.attributeId === undefined) {
+          rank?.remove();
+        } else {
+          if (rank === null || rank === undefined) {
+            rank = h("span", "skill-group-rank");
+            header?.appendChild(rank);
+          }
+          rank.textContent = `rank ${String(ranks.get(group.attributeId) ?? 0)}`;
+        }
+        if (boxes instanceof HTMLElement) {
+          syncList(
+            boxes,
+            group.skills,
+            (skill) => skill.id,
+            createBox,
+            (box, skill) => {
+              box.classList.toggle("is-equipped", equipped.has(skill.id));
+              const cost = box.querySelector(".skill-box-cost");
+              const text = describeSkill(skill, ranks).cost;
+              if (cost !== null && cost.textContent !== text) {
+                cost.textContent = text;
+              }
+            },
+          );
+        }
+      },
+    );
+    if (groups.length === 0) {
+      groupHost.appendChild(emptyNote);
     }
+  };
+
+  search.addEventListener("input", () => {
+    render(context.current());
   });
+
+  return { elements: [search, groupHost], update: render };
 }
 
 /* -------------------------------------------------------------------------- */
 /* Gear                                                                        */
 /* -------------------------------------------------------------------------- */
 
-/** A labelled `<select>`, the shape this file already uses for professions. */
-function selectRow(
-  label: string,
-  options: readonly { readonly value: string; readonly label: string }[],
-  selected: string,
-  onChange: (value: string) => void,
-): HTMLElement {
+/** A labelled `<select>`, the shape this file already uses for professions, kept and refilled. */
+function mountSelectRow(onChange: (value: string) => void): {
+  readonly element: HTMLElement;
+  update(
+    label: string,
+    options: readonly { readonly value: string; readonly label: string }[],
+    selected: string,
+  ): void;
+} {
   const field = h("label", "editor-field");
-  field.appendChild(h("span", "editor-field-label", label));
-
+  const caption = h("span", "editor-field-label");
   const select = document.createElement("select");
-  for (const option of options) {
-    const node = document.createElement("option");
-    node.value = option.value;
-    node.textContent = option.label;
-    node.selected = option.value === selected;
-    select.appendChild(node);
-  }
   select.addEventListener("change", () => {
     onChange(select.value);
   });
-  field.appendChild(select);
-  return field;
+  field.append(caption, select);
+  let filled = "";
+  return {
+    element: field,
+    update(label, options, selected) {
+      caption.textContent = label;
+      const signature = JSON.stringify(options);
+      if (signature !== filled) {
+        filled = signature;
+        select.replaceChildren(
+          ...options.map((option) => {
+            const node = document.createElement("option");
+            node.value = option.value;
+            node.textContent = option.label;
+            return node;
+          }),
+        );
+      }
+      select.value = selected;
+    },
+  };
 }
 
 /** A weapon or off-hand icon (#419), named for a screen reader and a hover. */
@@ -880,6 +1011,25 @@ function gearIconImg(icon: GearIcon | undefined): HTMLImageElement | undefined {
   return img;
 }
 
+/** What a gear slot shows; see `mountGearSlot`. */
+interface GearSlotState {
+  readonly filled: string | undefined;
+  readonly icon?: GearIcon | undefined;
+  readonly detail?: string | undefined;
+  readonly disabledNote?: string | undefined;
+  readonly dragSource?: GearDragSource | undefined;
+  readonly onClear?: (() => void) | undefined;
+}
+
+/** Put `node` in or take it out, never moving it when it is already where it should be. */
+function present(node: HTMLElement, shown: boolean, place: (node: HTMLElement) => void): void {
+  if (!shown) {
+    node.remove();
+  } else if (!node.isConnected) {
+    place(node);
+  }
+}
+
 /**
  * A gear slot: a drop target that shows what is in it.
  *
@@ -888,77 +1038,79 @@ function gearIconImg(icon: GearIcon | undefined): HTMLImageElement | undefined {
  * loadout is a thing you assemble, and two different interaction models
  * for assembling one would be two things to learn.
  */
-function gearSlot(options: {
-  readonly label: string;
-  readonly filled: string | undefined;
-  readonly icon?: GearIcon | undefined;
-  readonly detail?: string | undefined;
-  readonly disabledNote?: string | undefined;
-  readonly dragSource?: GearDragSource | undefined;
-  readonly onDrop: (source: GearDragSource) => void;
-  readonly onClear?: (() => void) | undefined;
-  readonly onHide?: (() => void) | undefined;
-}): HTMLElement {
+function mountGearSlot(
+  label: string,
+  context: EditorContext,
+  onDrop: (source: GearDragSource) => void,
+): { readonly element: HTMLElement; update(state: GearSlotState): void } {
+  let state: GearSlotState = { filled: undefined };
+  const disabled = (): boolean => state.disabledNote !== undefined;
+
   const cell = h("div", "gear-slot");
-  const disabled = options.disabledNote !== undefined;
-  if (disabled) {
-    cell.classList.add("is-disabled");
-  } else if (options.filled === undefined) {
-    cell.classList.add("is-empty");
-  }
-
-  cell.appendChild(h("span", "gear-slot-label", options.label));
   const name = h("span", "gear-slot-name");
-  const slotIcon = disabled ? undefined : gearIconImg(options.icon);
-  if (slotIcon !== undefined) {
-    name.appendChild(slotIcon);
-  }
-  name.appendChild(document.createTextNode(options.disabledNote ?? options.filled ?? "empty"));
-  cell.appendChild(name);
-  if (options.detail !== undefined && !disabled) {
-    cell.appendChild(h("span", "gear-slot-detail", options.detail));
-  }
+  const detail = h("span", "gear-slot-detail");
+  const clear = button("×", "gear-slot-clear", () => {
+    state.onClear?.();
+  });
+  clear.title = `clear ${label}`;
+  cell.append(h("span", "gear-slot-label", label), name);
+  let shownName = "";
 
-  if (!disabled && options.dragSource !== undefined) {
-    const source = options.dragSource;
-    cell.draggable = true;
-    cell.addEventListener("dragstart", (event: DragEvent) => {
-      event.dataTransfer?.setData("text/plain", encodeGearDrag(source));
-    });
-  }
+  cell.addEventListener("dragstart", (event: DragEvent) => {
+    if (state.dragSource !== undefined && !disabled()) {
+      event.dataTransfer?.setData("text/plain", encodeGearDrag(state.dragSource));
+    }
+  });
+  cell.addEventListener("dragover", (event: DragEvent) => {
+    if (disabled()) {
+      return;
+    }
+    event.preventDefault();
+    cell.classList.add("is-drop-target");
+  });
+  cell.addEventListener("dragleave", () => {
+    cell.classList.remove("is-drop-target");
+  });
+  cell.addEventListener("drop", (event: DragEvent) => {
+    if (disabled()) {
+      return;
+    }
+    event.preventDefault();
+    cell.classList.remove("is-drop-target");
+    context.tooltip.hide();
+    const decoded = decodeGearDrag(event.dataTransfer?.getData("text/plain") ?? "");
+    // A skill dropped here decodes to nothing and is ignored, which is
+    // the same do-nothing-loudly-nowhere behaviour the skill bar has.
+    if (decoded !== undefined) {
+      onDrop(decoded);
+    }
+  });
 
-  if (!disabled) {
-    cell.addEventListener("dragover", (event: DragEvent) => {
-      event.preventDefault();
-      cell.classList.add("is-drop-target");
-    });
-    cell.addEventListener("dragleave", () => {
-      cell.classList.remove("is-drop-target");
-    });
-    cell.addEventListener("drop", (event: DragEvent) => {
-      event.preventDefault();
-      cell.classList.remove("is-drop-target");
-      options.onHide?.();
-      const decoded = decodeGearDrag(event.dataTransfer?.getData("text/plain") ?? "");
-      // A skill dropped here decodes to nothing and is ignored, which is
-      // the same do-nothing-loudly-nowhere behaviour the skill bar has.
-      if (decoded !== undefined) {
-        options.onDrop(decoded);
+  return {
+    element: cell,
+    update(next) {
+      state = next;
+      const off = disabled();
+      cell.classList.toggle("is-disabled", off);
+      cell.classList.toggle("is-empty", !off && next.filled === undefined);
+      const icon = off ? undefined : next.icon;
+      const text = next.disabledNote ?? next.filled ?? "empty";
+      const signature = `${icon?.src ?? ""}|${text}`;
+      if (signature !== shownName) {
+        shownName = signature;
+        const img = gearIconImg(icon);
+        name.replaceChildren(...(img === undefined ? [] : [img]), document.createTextNode(text));
       }
-    });
-  }
-
-  if (options.onClear !== undefined && options.filled !== undefined && !disabled) {
-    const clear = document.createElement("button");
-    clear.type = "button";
-    clear.className = "gear-slot-clear";
-    clear.textContent = "×";
-    clear.title = `clear ${options.label}`;
-    clear.addEventListener("click", options.onClear);
-    cell.appendChild(clear);
-  }
-
-  return cell;
+      detail.textContent = next.detail ?? "";
+      present(detail, next.detail !== undefined && !off, (node) => {
+        name.after(node);
+      });
+      cell.draggable = !off && next.dragSource !== undefined;
+      present(clear, next.onClear !== undefined && next.filled !== undefined && !off, (node) => {
+        cell.appendChild(node);
+      });
+    },
+  };
 }
 
 /**
@@ -975,20 +1127,8 @@ function gearSlot(options: {
  * a number, and a player weighing +3 Swordsmanship against 75 health
  * needs to see both sides of the trade as they make it.
  */
-function renderGear(
-  panel: HTMLElement,
-  // A getter, not the value. `renderBuildEditor` reassigns its local
-  // `character` as the name field is typed into, and every other control
-  // in this file is an inline closure that therefore sees the live
-  // binding. Taking a snapshot here instead would mean a gear change
-  // silently reverted the name — and, worse, that a second gear change
-  // discarded the first.
-  current: () => StoredCharacter,
-  rerender: (next: StoredCharacter) => void,
-): void {
-  const character = current();
-  const tooltip = tooltipInstance();
-
+function mountGear(panel: HTMLElement, context: EditorContext): Region {
+  const { current, commit } = context;
   const section = h("div", "editor-gear");
   section.appendChild(h("div", "editor-label", "equipment"));
   section.appendChild(
@@ -996,52 +1136,14 @@ function renderGear(
   );
 
   const drop = (target: GearDropTarget) => (source: GearDragSource) => {
-    tooltip.hide();
-    rerender(applyGearDrop(current(), source, target));
+    commit(applyGearDrop(current(), source, target));
   };
 
   // --- weapon and off-hand -------------------------------------------
-  const weapon = getWeapon(character.equipment.mainHand.weaponId);
-  const offHand = character.equipment.offHand;
-  const offhandDefinition = offHand === null ? undefined : getOffhand(offHand.offhandId);
-  const twoHanded = !canEquipOffhand(character);
-
   const handsGrid = h("div", "gear-hands");
-  handsGrid.appendChild(
-    gearSlot({
-      label: "weapon",
-      filled: weapon?.name,
-      icon: weaponIcon(character.equipment.mainHand.weaponId),
-      detail:
-        weapon === undefined
-          ? undefined
-          : `${String(weapon.damageMin)}–${String(weapon.damageMax)} · ${weapon.attackIntervalSeconds.toFixed(2)}s`,
-      dragSource: { from: "hand", hand: "mainHand" },
-      onDrop: drop({ kind: "main-hand" }),
-    }),
-  );
-  handsGrid.appendChild(
-    gearSlot({
-      label: "off-hand",
-      filled: offhandDefinition?.name,
-      icon: offHand === null ? undefined : offhandIcon(offHand.offhandId),
-      detail:
-        offhandDefinition === undefined
-          ? undefined
-          : `+${String(offhandDefinition.baseBonus + offhandDefinition.metRequirementBonus)} ${offhandDefinition.kind}`,
-      // Said in the slot itself rather than left for the player to
-      // discover by dragging a shield onto it and seeing nothing happen.
-      disabledNote: twoHanded ? "both hands full" : undefined,
-      dragSource: offHand === null ? undefined : { from: "hand", hand: "offHand" },
-      onDrop: drop({ kind: "off-hand" }),
-      onClear:
-        offHand === null
-          ? undefined
-          : () => {
-              rerender(setOffhand(current(), null));
-            },
-    }),
-  );
+  const weaponSlot = mountGearSlot("weapon", context, drop({ kind: "main-hand" }));
+  const offhandSlot = mountGearSlot("off-hand", context, drop({ kind: "off-hand" }));
+  handsGrid.append(weaponSlot.element, offhandSlot.element);
   section.appendChild(handsGrid);
 
   // --- attribute nominations ------------------------------------------
@@ -1049,111 +1151,148 @@ function renderGear(
   // always Swordsmanship, and offering a one-option dropdown would imply
   // otherwise.
   const linkRow = h("div", "editor-row");
-  let anyLinks = false;
-
-  if (weapon?.requirement.kind === "chosen") {
-    const choices = weaponAttributeChoices(character);
-    if (choices.length > 0) {
-      anyLinks = true;
-      linkRow.appendChild(
-        selectRow(
-          `${weapon.name.toLowerCase()} attribute`,
-          choices.map((id) => ({ value: id, label: getAttribute(id)?.name ?? id })),
-          character.equipment.mainHand.requirementAttributeId ?? "",
-          (value) => {
-            rerender(setRequirementAttribute(current(), "mainHand", value));
-          },
-        ),
-      );
-    }
-  }
-
-  if (offHand !== null) {
-    const choices = offhandAttributeChoices(character, offHand.offhandId);
-    if (choices.length > 0) {
-      anyLinks = true;
-      linkRow.appendChild(
-        selectRow(
-          `${offhandDefinition?.name.toLowerCase() ?? "off-hand"} attribute`,
-          choices.map((id) => ({ value: id, label: getAttribute(id)?.name ?? id })),
-          offHand.requirementAttributeId ?? "",
-          (value) => {
-            rerender(setRequirementAttribute(current(), "offHand", value));
-          },
-        ),
-      );
-    }
-  }
-  if (anyLinks) {
-    section.appendChild(linkRow);
-  }
+  const weaponLink = mountSelectRow((value) => {
+    commit(setRequirementAttribute(current(), "mainHand", value));
+  });
+  const offhandLink = mountSelectRow((value) => {
+    commit(setRequirementAttribute(current(), "offHand", value));
+  });
 
   // --- armor ----------------------------------------------------------
   const armorHeader = h("div", "editor-subheader");
   armorHeader.appendChild(h("span", "editor-label", "armor"));
-  const clear = document.createElement("button");
-  clear.type = "button";
-  clear.className = "editor-clear-armor";
-  clear.textContent = "clear upgrades";
-  clear.addEventListener("click", () => {
-    rerender(clearArmorUpgrades(current()));
-  });
-  armorHeader.appendChild(clear);
+  armorHeader.appendChild(
+    button("clear upgrades", "editor-clear-armor", () => {
+      commit(clearArmorUpgrades(current()));
+    }),
+  );
   section.appendChild(armorHeader);
 
   const armorGrid = h("div", "armor-grid");
-  for (const slot of ARMOR_SLOTS) {
-    const piece = character.equipment.armor[slot];
+  const armorSlots = ARMOR_SLOTS.map((slot) => {
     const row = h("div", "armor-row");
     row.appendChild(h("span", "armor-slot-name", slot));
-
-    const insignia = piece.insigniaId === null ? undefined : getInsignia(piece.insigniaId);
-    row.appendChild(
-      gearSlot({
-        label: "insignia",
-        filled: insignia?.name,
-        detail: piece.insigniaId === null ? undefined : insigniaAmountNote(piece.insigniaId, slot),
-        dragSource:
-          piece.insigniaId === null ? undefined : { from: "armor-slot", slot, part: "insignia" },
-        onDrop: drop({ kind: "armor", slot, part: "insignia" }),
-        onClear: () => {
-          rerender(setInsignia(current(), slot, null));
-        },
-      }),
+    const insignia = mountGearSlot(
+      "insignia",
+      context,
+      drop({ kind: "armor", slot, part: "insignia" }),
     );
-
-    row.appendChild(
-      gearSlot({
-        label: "rune",
-        filled: piece.rune === null ? undefined : runeDisplayName(piece.rune),
-        dragSource: piece.rune === null ? undefined : { from: "armor-slot", slot, part: "rune" },
-        onDrop: drop({ kind: "armor", slot, part: "rune" }),
-        onClear: () => {
-          rerender(setRune(current(), slot, null));
-        },
-      }),
-    );
-
+    const rune = mountGearSlot("rune", context, drop({ kind: "armor", slot, part: "rune" }));
+    row.append(insignia.element, rune.element);
     armorGrid.appendChild(row);
-  }
+    return { slot, insignia, rune };
+  });
   section.appendChild(armorGrid);
 
   // --- the summary ------------------------------------------------------
-  const summary = summariseGear(character);
   const stats = h("div", "gear-stats");
-  stats.appendChild(statLine("health", String(summary.maxHealth)));
-  stats.appendChild(statLine("energy", String(summary.maxEnergy)));
-  stats.appendChild(statLine("energy regen", `${String(summary.baseEnergyPips)} pips`));
-  stats.appendChild(statLine("armor", String(summary.armor)));
+  section.appendChild(stats);
+  panel.appendChild(section);
+
+  return {
+    update(character) {
+      const weapon = getWeapon(character.equipment.mainHand.weaponId);
+      const offHand = character.equipment.offHand;
+      const offhandDefinition = offHand === null ? undefined : getOffhand(offHand.offhandId);
+      weaponSlot.update({
+        filled: weapon?.name,
+        icon: weaponIcon(character.equipment.mainHand.weaponId),
+        detail:
+          weapon === undefined
+            ? undefined
+            : `${String(weapon.damageMin)}–${String(weapon.damageMax)} · ${weapon.attackIntervalSeconds.toFixed(2)}s`,
+        dragSource: { from: "hand", hand: "mainHand" },
+      });
+      offhandSlot.update({
+        filled: offhandDefinition?.name,
+        icon: offHand === null ? undefined : offhandIcon(offHand.offhandId),
+        detail:
+          offhandDefinition === undefined
+            ? undefined
+            : `+${String(offhandDefinition.baseBonus + offhandDefinition.metRequirementBonus)} ${offhandDefinition.kind}`,
+        // Said in the slot itself rather than left for the player to
+        // discover by dragging a shield onto it and seeing nothing happen.
+        disabledNote: canEquipOffhand(character) ? undefined : "both hands full",
+        dragSource: offHand === null ? undefined : { from: "hand", hand: "offHand" },
+        onClear: () => {
+          commit(setOffhand(current(), null));
+        },
+      });
+
+      const weaponChoices =
+        weapon?.requirement.kind === "chosen" ? weaponAttributeChoices(character) : [];
+      const offhandChoices =
+        offHand === null ? [] : offhandAttributeChoices(character, offHand.offhandId);
+      const attributeOptions = (ids: readonly string[]) =>
+        ids.map((id) => ({ value: id, label: getAttribute(id)?.name ?? id }));
+      if (weapon !== undefined && weaponChoices.length > 0) {
+        weaponLink.update(
+          `${weapon.name.toLowerCase()} attribute`,
+          attributeOptions(weaponChoices),
+          character.equipment.mainHand.requirementAttributeId ?? "",
+        );
+      }
+      if (offHand !== null && offhandChoices.length > 0) {
+        offhandLink.update(
+          `${offhandDefinition?.name.toLowerCase() ?? "off-hand"} attribute`,
+          attributeOptions(offhandChoices),
+          offHand.requirementAttributeId ?? "",
+        );
+      }
+      present(weaponLink.element, weaponChoices.length > 0, (node) => {
+        linkRow.prepend(node);
+      });
+      present(offhandLink.element, offhandChoices.length > 0, (node) => {
+        linkRow.appendChild(node);
+      });
+      present(linkRow, linkRow.children.length > 0, (node) => {
+        handsGrid.after(node);
+      });
+
+      for (const { slot, insignia, rune } of armorSlots) {
+        const piece = character.equipment.armor[slot];
+        insignia.update({
+          filled: piece.insigniaId === null ? undefined : getInsignia(piece.insigniaId)?.name,
+          detail:
+            piece.insigniaId === null ? undefined : insigniaAmountNote(piece.insigniaId, slot),
+          dragSource:
+            piece.insigniaId === null ? undefined : { from: "armor-slot", slot, part: "insignia" },
+          onClear: () => {
+            commit(setInsignia(current(), slot, null));
+          },
+        });
+        rune.update({
+          filled: piece.rune === null ? undefined : runeDisplayName(piece.rune),
+          dragSource: piece.rune === null ? undefined : { from: "armor-slot", slot, part: "rune" },
+          onClear: () => {
+            commit(setRune(current(), slot, null));
+          },
+        });
+      }
+
+      stats.replaceChildren(...statLines(character));
+    },
+  };
+}
+
+/** The summary's lines; nothing in them takes focus, so they are rebuilt. */
+function statLines(character: StoredCharacter): HTMLElement[] {
+  const summary = summariseGear(character);
+  const lines = [
+    statLine("health", String(summary.maxHealth)),
+    statLine("energy", String(summary.maxEnergy)),
+    statLine("energy regen", `${String(summary.baseEnergyPips)} pips`),
+    statLine("armor", String(summary.armor)),
+  ];
   if (!summary.requirementMet) {
     // Said out loud rather than left for the player to discover by
     // dying: an unmet requirement costs two thirds of the damage.
-    stats.appendChild(
+    lines.push(
       h("div", "gear-warning", "requirement not met — this weapon deals a third of its damage"),
     );
   }
   for (const bonus of summary.runeBonuses) {
-    stats.appendChild(
+    lines.push(
       statLine(
         getAttribute(bonus.attributeId)?.name ?? bonus.attributeId,
         `+${String(bonus.bonus)}`,
@@ -1161,10 +1300,10 @@ function renderGear(
     );
   }
   for (const line of summary.conditionalArmor) {
-    stats.appendChild(h("div", "gear-stat-note", line));
+    lines.push(h("div", "gear-stat-note", line));
   }
   if (summary.flatPhysicalReduction > 0) {
-    stats.appendChild(
+    lines.push(
       h(
         "div",
         "gear-stat-note",
@@ -1172,9 +1311,7 @@ function renderGear(
       ),
     );
   }
-  section.appendChild(stats);
-
-  panel.appendChild(section);
+  return lines;
 }
 
 function statLine(label: string, value: string): HTMLElement {
@@ -1208,41 +1345,19 @@ function insigniaAmountNote(insigniaId: InsigniaId, slot: ArmorSlot): string {
  * same markup, same gestures, same click-to-equip fallback. A player
  * who has learned to build a skill bar already knows how to use this.
  */
-function renderGearLibrary(
-  library: HTMLElement,
-  current: () => StoredCharacter,
-  rerender: (next: StoredCharacter) => void,
-): void {
-  const character = current();
-  const equippedWeapon = character.equipment.mainHand.weaponId;
-  const equippedOffhand = character.equipment.offHand?.offhandId;
-  const wornInsignias = new Set(
-    ARMOR_SLOTS.map((slot) => character.equipment.armor[slot].insigniaId).filter(
-      (id): id is InsigniaId => id !== null,
-    ),
-  );
-  const wornRunes = new Set(
-    ARMOR_SLOTS.map((slot) => character.equipment.armor[slot].rune)
-      .filter((rune) => rune !== null)
-      .map((rune) => encodeRune(rune)),
-  );
-
+function mountGearLibrary(context: EditorContext): LibraryBody {
+  const { current, commit } = context;
   const host = h("div", "skill-groups");
-  library.appendChild(host);
 
   function box(options: {
     readonly name: string;
     readonly icon?: GearIcon | undefined;
     readonly detail: string;
-    readonly equipped: boolean;
     readonly drag: GearDragSource;
     readonly onClick: () => void;
   }): HTMLElement {
     const node = h("div", "skill-box gear-box");
     node.draggable = true;
-    if (options.equipped) {
-      node.classList.add("is-equipped");
-    }
     const name = h("span", "skill-box-name");
     const icon = gearIconImg(options.icon);
     if (icon !== undefined) {
@@ -1272,84 +1387,96 @@ function renderGearLibrary(
 
   // --- weapons ---------------------------------------------------------
   const weapons = group("weapons");
-  for (const weapon of ALL_WEAPONS) {
-    weapons.appendChild(
-      box({
-        name: weapon.name,
-        icon: weaponIcon(weapon.id),
-        detail: `${String(weapon.damageMin)}–${String(weapon.damageMax)} · ${weapon.attackIntervalSeconds.toFixed(2)}s`,
-        equipped: weapon.id === equippedWeapon,
-        drag: { from: "weapon-library", weaponId: weapon.id },
-        onClick: () => {
-          rerender(setWeapon(current(), weapon.id));
-        },
-      }),
-    );
-  }
+  const weaponBoxes = ALL_WEAPONS.map((weapon) => {
+    const node = box({
+      name: weapon.name,
+      icon: weaponIcon(weapon.id),
+      detail: `${String(weapon.damageMin)}–${String(weapon.damageMax)} · ${weapon.attackIntervalSeconds.toFixed(2)}s`,
+      drag: { from: "weapon-library", weaponId: weapon.id },
+      onClick: () => {
+        commit(setWeapon(current(), weapon.id));
+      },
+    });
+    weapons.appendChild(node);
+    return { id: weapon.id, node };
+  });
 
   // --- off-hands -------------------------------------------------------
   const offhands = group("off-hands");
-  for (const offhand of ALL_OFFHANDS) {
-    offhands.appendChild(
-      box({
-        name: offhand.name,
-        icon: offhandIcon(offhand.id),
-        detail: `+${String(offhand.baseBonus + offhand.metRequirementBonus)} ${offhand.kind}`,
-        equipped: offhand.id === equippedOffhand,
-        drag: { from: "offhand-library", offhandId: offhand.id },
-        onClick: () => {
-          rerender(setOffhand(current(), offhand.id));
-        },
-      }),
-    );
-  }
+  const offhandBoxes = ALL_OFFHANDS.map((offhand) => {
+    const node = box({
+      name: offhand.name,
+      icon: offhandIcon(offhand.id),
+      detail: `+${String(offhand.baseBonus + offhand.metRequirementBonus)} ${offhand.kind}`,
+      drag: { from: "offhand-library", offhandId: offhand.id },
+      onClick: () => {
+        commit(setOffhand(current(), offhand.id));
+      },
+    });
+    offhands.appendChild(node);
+    return { id: offhand.id, node };
+  });
 
   // --- insignias -------------------------------------------------------
   const insignias = group("insignias");
-  for (const insignia of ALL_INSIGNIAS) {
-    insignias.appendChild(
-      box({
-        name: insignia.name,
-        detail: insigniaLibraryNote(insignia.effect),
-        equipped: wornInsignias.has(insignia.id),
-        drag: { from: "insignia-library", insigniaId: insignia.id },
-        onClick: () => {
-          const next = current();
-          rerender(setInsignia(next, firstFreeArmorSlot(next, "insignia"), insignia.id));
-        },
-      }),
-    );
-  }
+  const insigniaBoxes = ALL_INSIGNIAS.map((insignia) => {
+    const node = box({
+      name: insignia.name,
+      detail: insigniaLibraryNote(insignia.effect),
+      drag: { from: "insignia-library", insigniaId: insignia.id },
+      onClick: () => {
+        const next = current();
+        commit(setInsignia(next, firstFreeArmorSlot(next, "insignia"), insignia.id));
+      },
+    });
+    insignias.appendChild(node);
+    return { id: insignia.id, node };
+  });
 
   // --- runes -----------------------------------------------------------
+  // Which runes there are depends on the primary profession, so this list
+  // is the one that changes.
   const runes = group("runes");
-  for (const choice of runeChoices(character)) {
-    runes.appendChild(
-      box({
-        name: choice.label,
-        detail: "",
-        equipped: wornRunes.has(choice.key),
-        drag: { from: "rune-library", rune: choice.rune },
-        onClick: () => {
-          const next = current();
-          rerender(setRune(next, firstFreeArmorSlot(next, "rune"), choice.rune));
-        },
-      }),
-    );
-  }
+  const runeBoxes = h("div", "skill-group-boxes");
+  runes.appendChild(runeBoxes);
 
-  // Dropping worn gear back onto the library takes it off — the gesture
-  // players reach for after dragging something out of a slot.
-  library.addEventListener("dragover", (event: DragEvent) => {
-    event.preventDefault();
-  });
-  library.addEventListener("drop", (event: DragEvent) => {
-    event.preventDefault();
-    const source = decodeGearDrag(event.dataTransfer?.getData("text/plain") ?? "");
-    if (source !== undefined) {
-      rerender(applyGearDrop(current(), source, { kind: "library" }));
-    }
-  });
+  return {
+    elements: [host],
+    update(character) {
+      for (const { id, node } of weaponBoxes) {
+        node.classList.toggle("is-equipped", id === character.equipment.mainHand.weaponId);
+      }
+      for (const { id, node } of offhandBoxes) {
+        node.classList.toggle("is-equipped", id === character.equipment.offHand?.offhandId);
+      }
+      const worn = ARMOR_SLOTS.map((slot) => character.equipment.armor[slot]);
+      const wornInsignias = new Set(worn.map((piece) => piece.insigniaId));
+      for (const { id, node } of insigniaBoxes) {
+        node.classList.toggle("is-equipped", wornInsignias.has(id));
+      }
+      const wornRunes = new Set(
+        worn.flatMap((piece) => (piece.rune === null ? [] : [encodeRune(piece.rune)])),
+      );
+      syncList(
+        runeBoxes,
+        runeChoices(character),
+        (choice) => choice.key,
+        (choice) =>
+          box({
+            name: choice.label,
+            detail: "",
+            drag: { from: "rune-library", rune: choice.rune },
+            onClick: () => {
+              const next = current();
+              commit(setRune(next, firstFreeArmorSlot(next, "rune"), choice.rune));
+            },
+          }),
+        (node, choice) => {
+          node.classList.toggle("is-equipped", wornRunes.has(choice.key));
+        },
+      );
+    },
+  };
 }
 
 /** A one-line summary of what an insignia does, for the library list. */
