@@ -231,12 +231,12 @@ let
       break
     done
     check "auto-gc never prunes worktrees" "$(git config gc.worktreePruneExpire)" "never"
-    # #83: the operator's checkout state is read-only, whether or not the file exists.
+    # #83: HEAD is the operator's, and everything else at the top of .git is
+    # the jail's own scratch, so only what the host reads can be refused.
     refused "writing .git/HEAD" "touch '$common/HEAD'"
-    refused "writing .git/index" "touch '$common/index'"
-    refused "creating .git/MERGE_HEAD" "touch '$common/MERGE_HEAD'"
-    refused "creating .git/rebase-merge" "mkdir '$common/rebase-merge'"
-    refused "creating .git/packed-refs.lock" "touch '$common/packed-refs.lock'"
+    refused "rewriting .git/packed-refs" "[ -e '$common/packed-refs' ] && touch '$common/packed-refs'"
+    check ".git is the jail's own tmpfs" \
+      "$(awk -v p="$common" '$5 == p { print $9 }' /proc/self/mountinfo)" "tmpfs"
     own="$(git rev-parse --absolute-git-dir)"
     check "this worktree's admin dir is writable" \
       "$("$SHELL" -c "touch '$own/smoke-$$' && rm '$own/smoke-$$' && echo writable" 2>&1)" \
@@ -723,31 +723,34 @@ let
         # work in here, which is why playwright.config.ts passes --no-sandbox;
         # this jail is the sandbox.
         #
-        # The operator's .git is read-only by default, and writable only where
-        # a jail needs it (#83): objects, refs, logs/refs and this employee's
-        # own admin dir under worktrees (#69). The rest is the operator's own
-        # checkout state, which the host acts on: HEAD and index, MERGE_HEAD,
-        # rebase-merge/ and sequencer/ (whose todo files run `exec` lines),
-        # and what the host EXECUTES (#61): config (fsmonitor, hooksPath,
-        # filter and diff drivers, insteadOf, sshCommand), hooks, and info
-        # (attributes, which select those drivers). A deny-list would miss
-        # what a jail creates, so this is an allow-list. The order matters:
-        # bwrap applies binds in sequence, so the rw binds go after the ro
-        # one. --bind, not -try: a missing one fails the start rather than
-        # leaving a hole, so hooks, info and logs/refs are made here first.
+        # The operator's .git is read-only by default, and shared only where a
+        # jail needs it (#83). It is a fresh tmpfs, and onto it go: HEAD,
+        # config, hooks, info and packed-refs read-only (the host acts on HEAD
+        # and EXECUTES what config, hooks and info name, #61), objects, refs and
+        # logs/refs read-write (commits, branches, their reflogs), worktrees
+        # read-only except this employee's own admin dir (#69). Everything else
+        # at the top (index, MERGE_HEAD, rebase-merge/, sequencer/, whose todo
+        # files run `exec` lines) is the jail's private scratch: git still
+        # works in it, and the host never sees a byte. A deny-list could not
+        # cover what a jail creates; a read-only .git with writable parts could
+        # not either, since git takes .git/packed-refs.lock to delete ANY ref
+        # (even a pseudo-ref such as CHERRY_PICK_HEAD, which a rebase leaves
+        # behind when it fails), and would break every rebase. The order
+        # matters: bwrap applies binds in sequence. --ro-bind, not -try: a
+        # missing one fails the start rather than leaving a hole, so hooks,
+        # info and logs/refs are made here first.
         # Branches never write tracking config: autoSetupMerge is off for
         # every git in the jail, through the environment.
         #
-        # .git/worktrees is read-only, except this employee's own admin dir
-        # (#69). A jail sees only its own worktree, so to git every other one
-        # looks deleted, and one `git worktree prune` in a jail once removed
-        # the admin dir of every other agent's worktree. Now that fails with
-        # EROFS, and so does writing another worktree's HEAD or index.
+        # A jail sees only its own worktree, so to git every other one looks
+        # deleted, and one `git worktree prune` in a jail once removed the
+        # admin dir of every other agent's worktree. Now that fails with EROFS,
+        # and so does writing another worktree's HEAD or index.
         # gc.worktreePruneExpire keeps an auto-gc from even trying, and
-        # gc.auto=0 stops it writing gc.pid or packed-refs at the top level.
-        # Known cost: packed-refs cannot be rewritten (its lock lives at the
-        # top level), so deleting a PACKED branch fails with EROFS. Known gap:
-        # objects/info/alternates can be planted; objects are content-
+        # gc.auto=0 stops it packing.
+        # Known cost: packed-refs is read-only, so deleting a ref that is
+        # PACKED fails ("Device or resource busy"); a loose one is fine. Known
+        # gap: objects/info/alternates can be planted; objects are content-
         # addressed, so there is no code-execution path through it.
         # ----------------------------------------------------------------------
         mkdir -p "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/info" "$DEVENV_ROOT/.git/logs/refs"
@@ -808,7 +811,13 @@ let
           --bind "$boxDir/claude.json" "$HOME/.claude.json" \
           --bind "$creds" "$HOME/.claude/.credentials.json" \
           --ro-bind-try "$HOME/.config/git" "$HOME/.config/git" \
-          --ro-bind "$DEVENV_ROOT/.git" "$DEVENV_ROOT/.git" \
+          --tmpfs "$DEVENV_ROOT/.git" \
+          --ro-bind "$DEVENV_ROOT/.git/HEAD" "$DEVENV_ROOT/.git/HEAD" \
+          --ro-bind "$DEVENV_ROOT/.git/config" "$DEVENV_ROOT/.git/config" \
+          --ro-bind "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/hooks" \
+          --ro-bind "$DEVENV_ROOT/.git/info" "$DEVENV_ROOT/.git/info" \
+          --ro-bind-try "$DEVENV_ROOT/.git/packed-refs" "$DEVENV_ROOT/.git/packed-refs" \
+          --ro-bind "$DEVENV_ROOT/.git/worktrees" "$DEVENV_ROOT/.git/worktrees" \
           --bind "$DEVENV_ROOT/.git/objects" "$DEVENV_ROOT/.git/objects" \
           --bind "$DEVENV_ROOT/.git/refs" "$DEVENV_ROOT/.git/refs" \
           --bind "$DEVENV_ROOT/.git/logs/refs" "$DEVENV_ROOT/.git/logs/refs" \
