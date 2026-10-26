@@ -6,23 +6,53 @@
  * Trystero gives each action, and each room event, one handler slot. The
  * adapter owns every slot and fans out to its own handler sets, so any
  * number of listeners can come and go.
+ *
+ * It says what keeps a join from working (#707): `peer-unreachable` when
+ * Trystero found a peer and exchanged SDP but never connected, and
+ * `no-relay` when, `RELAY_CHECK_MS` in and with nobody met, not one
+ * relay socket is open.
  */
 import { CHANNELS, normalizeLobbyCode } from "@vibewars/game-protocol";
 import type { Channel } from "@vibewars/game-protocol";
 import type { Transport } from "@vibewars/game-session";
-import { joinRoom, selfId } from "trystero/nostr";
+import { getRelaySockets, joinRoom, selfId } from "trystero/nostr";
 import type { DataPayload, MessageAction } from "trystero/nostr";
 
 import { HandlerSets } from "./handler-sets.js";
 import { oversizedCheck } from "./oversized.js";
-import { APP_ID, MAX_RECEIVE_BYTES, NOSTR_RELAYS, RELAY_REDUNDANCY } from "./relays.js";
+import {
+  APP_ID,
+  MAX_RECEIVE_BYTES,
+  NOSTR_RELAYS,
+  RELAY_CHECK_MS,
+  RELAY_REDUNDANCY,
+} from "./relays.js";
+
+/** What the adapter takes from Trystero; the unit test hands in fakes. */
+export interface TrysteroDeps {
+  readonly joinRoom: typeof joinRoom;
+  readonly selfId: string;
+  /** Every relay's socket, by URL. */
+  readonly relaySockets: () => Readonly<Record<string, { readonly readyState: number }>>;
+}
+
+/** Trystero itself. `getRelaySockets` is untyped there; this is its shape. */
+const TRYSTERO: TrysteroDeps = {
+  joinRoom,
+  selfId,
+  relaySockets: getRelaySockets as TrysteroDeps["relaySockets"],
+};
+
+/** Trystero's `onJoinError` text when SDP went both ways and no connection came of it. */
+const SDP_EXCHANGED = "after exchanging SDP";
+
+/** `WebSocket.OPEN`, which a fake socket in the unit test does not carry. */
+const SOCKET_OPEN = 1;
 
 /** Join the room for lobby code `code`. `deps` is for the unit test; the app passes nothing. */
-export function joinTrysteroRoom(
-  code: string,
-  deps: { joinRoom: typeof joinRoom; selfId: string } = { joinRoom, selfId },
-): Transport {
+export function joinTrysteroRoom(code: string, deps: TrysteroDeps = TRYSTERO): Transport {
   const roomId = normalizeLobbyCode(code);
+  const handlers = new HandlerSets();
   const room = deps.joinRoom(
     {
       appId: APP_ID,
@@ -36,10 +66,23 @@ export function joinTrysteroRoom(
       // connect timeout, and told it couldn't reach the host (#15).
       onJoinError: (details) => {
         console.warn("trystero transport: could not join", details.error);
+        // Only this one: a wrong password cannot come from a typo, since
+        // the code is the room and the password both.
+        if (details.error.includes(SDP_EXCHANGED)) {
+          handlers.trouble("peer-unreachable");
+        }
       },
     },
   );
-  const handlers = new HandlerSets();
+  let met = false;
+  const relayCheck = setTimeout(() => {
+    const open = Object.values(deps.relaySockets()).some(
+      (socket) => socket.readyState === SOCKET_OPEN,
+    );
+    if (!met && !open) {
+      handlers.trouble("no-relay");
+    }
+  }, RELAY_CHECK_MS);
   const oversized = oversizedCheck("trystero transport");
 
   // Every action up front: one made lazily would miss what arrived first.
@@ -54,6 +97,7 @@ export function joinTrysteroRoom(
     actions.set(channel, action);
   }
   room.onPeerJoin = (peerId) => {
+    met = true;
     handlers.joined(peerId);
   };
   room.onPeerLeave = (peerId) => {
@@ -81,7 +125,9 @@ export function joinTrysteroRoom(
     on: (channel, handler) => handlers.on(channel, handler),
     onPeerJoin: (handler) => handlers.onPeerJoin(handler),
     onPeerLeave: (handler) => handlers.onPeerLeave(handler),
+    onTrouble: (handler) => handlers.onTrouble(handler),
     async leave() {
+      clearTimeout(relayCheck);
       handlers.clear();
       await room.leave();
     },

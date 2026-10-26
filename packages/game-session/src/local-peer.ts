@@ -105,6 +105,8 @@ export function createLocalPeer(remote: Transport): { host: Transport; local: Tr
         offLocal();
       };
     },
+    // The room's trouble is the host's; between the two there is none.
+    onTrouble: (handler) => remote.onTrouble(handler),
     async leave() {
       if (hostLeft) {
         return;
@@ -128,6 +130,7 @@ export function createLocalPeer(remote: Transport): { host: Transport; local: Tr
     on: (channel, handler) => subscribe(handlersOf(toLocal, channel), handler),
     onPeerJoin: (handler) => subscribe(localJoins, handler),
     onPeerLeave: (handler) => subscribe(localLeaves, handler),
+    onTrouble: () => () => undefined,
     leave() {
       if (!localLeft) {
         localLeft = true;

@@ -150,6 +150,23 @@ export function transportContract(
       t.expect(got).toEqual([1]);
     });
 
+    room(
+      "takes a trouble handler and gives back its remover; a healthy room says none (#707)",
+      async (n) => {
+        const [a, b] = [n.join(), n.join()];
+        const troubles: string[] = [];
+        const off = a.onTrouble((trouble) => troubles.push(trouble));
+        b.onTrouble((trouble) => troubles.push(trouble));
+        await n.settle();
+        a.send("intent", 1);
+        await n.settle();
+        off();
+        await b.leave();
+        await n.settle();
+        t.expect(troubles).toEqual([]);
+      },
+    );
+
     room("copies a message: mutating it after send changes nothing received", async (n) => {
       const [a, b, c] = [n.join(), n.join(), n.join()];
       const [atB, atC] = [inbox(b), inbox(c)];

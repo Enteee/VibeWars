@@ -6,7 +6,8 @@
  * Every message is copied with `structuredClone` per receiver, so no two
  * peers ever share an object. `partition` cuts two peers off from each
  * other, as a dropped connection does, and `heal` joins them again;
- * `blip` is a drop only one side notices.
+ * `blip` is a drop only one side notices, and `trouble` what a real
+ * network would say was wrong (#707).
  *
  * It keeps more order than the `Transport` contract asks: the others see
  * a peer leave before its `leave()` resolves, where a real network tells
@@ -14,7 +15,7 @@
  */
 import type { Channel } from "@vibewars/game-protocol";
 
-import type { Transport } from "./transport.js";
+import type { Transport, TransportTrouble } from "./transport.js";
 
 type Handler = (data: unknown, from: string) => void;
 type PeerHandler = (peerId: string) => void;
@@ -34,6 +35,8 @@ export interface MemoryNetwork {
    * side notices a connection drop. Nothing is lost, and `peer` sees nothing.
    */
   blip(observer: string, peer: string): void;
+  /** `peer` is told `trouble`, as a real transport says it, a microtask from now. */
+  trouble(peer: string, trouble: TransportTrouble): void;
 }
 
 interface Peer {
@@ -42,6 +45,7 @@ interface Peer {
   readonly handlers: Map<Channel, Set<Handler>>;
   readonly joins: Set<PeerHandler>;
   readonly leaves: Set<PeerHandler>;
+  readonly troubles: Set<(trouble: TransportTrouble) => void>;
 }
 
 /** Call each of `handlers`, as they are now: one may remove itself. */
@@ -119,6 +123,7 @@ export function createMemoryNetwork(): MemoryNetwork {
       handlers: new Map(),
       joins: new Set(),
       leaves: new Set(),
+      troubles: new Set(),
     };
     peers.set(peerId, self);
     for (const other of peers.keys()) {
@@ -157,6 +162,7 @@ export function createMemoryNetwork(): MemoryNetwork {
       },
       onPeerJoin: (handler) => subscribe(self.joins, handler),
       onPeerLeave: (handler) => subscribe(self.leaves, handler),
+      onTrouble: (handler) => subscribe(self.troubles, handler),
       leave() {
         if (self.left) {
           return Promise.resolve();
@@ -193,6 +199,14 @@ export function createMemoryNetwork(): MemoryNetwork {
           announce(a, b, "joins");
         }
       }
+    },
+    trouble(peer, trouble) {
+      queueMicrotask(() => {
+        const one = peers.get(peer);
+        if (one !== undefined && !one.left) {
+          fire(one.troubles, trouble);
+        }
+      });
     },
     blip(observer, peer) {
       queueMicrotask(() => {

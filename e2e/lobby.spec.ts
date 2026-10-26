@@ -102,7 +102,9 @@ test("a second player joins with the code and both see each other", async ({ bro
   }
 });
 
-test("a wrong code finds no lobby after the 10 s wait, and says so once", async ({ browser }) => {
+test("a wrong code says Connecting…, finds no lobby after the 20 s wait, and says so once (#707)", async ({
+  browser,
+}) => {
   // A code is its own room: a wrong one must never land the guest in the
   // host's lobby, even with a lobby open next door.
   test.setTimeout(60_000);
@@ -117,9 +119,15 @@ test("a wrong code finds no lobby after the 10 s wait, and says so once", async 
     await guest.locator("input.code-input").fill(wrong);
     await guest.getByRole("button", { name: "Join", exact: true }).click();
     await expect(guest.locator("#status")).toHaveText("connecting…");
+    // Not at once: only a join that is taking a while says so.
+    const connecting = guest.locator(".menu-connecting");
+    await expect(connecting).toBeHidden();
+    await expect(connecting).toHaveText("Connecting…");
+    await expect(connecting).toBeVisible({ timeout: 5_000 });
 
     const problem = guest.locator(".screen-connection-problem");
-    await expect(problem).toHaveText(NO_ANSWER, { timeout: 15_000 });
+    await expect(problem).toHaveText(NO_ANSWER, { timeout: 25_000 });
+    await expect(connecting).toBeHidden();
     await expect(problem).toHaveCount(1);
     // In the Play column, right above the button to try again with (#579).
     await expect(

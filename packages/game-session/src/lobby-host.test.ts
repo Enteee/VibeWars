@@ -24,7 +24,7 @@ import { canStart } from "./lobby-host.js";
 import { settle } from "./match-harness.test-support.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { createMemoryNetwork } from "./memory-transport.js";
-import type { Transport } from "./transport.js";
+import type { Transport, TransportTrouble } from "./transport.js";
 
 /**
  * The server's lobby-room tests (`apps/server/src/lobby.test.ts`), ported
@@ -501,7 +501,30 @@ describe("joining by code", () => {
     const transport = lobby.network.join();
     await expect(
       joinLobby({ transport, code: "WXYKMN", name: "Lost", character: null, timeoutMs: 50 }),
-    ).rejects.toEqual(new LobbyNoAnswerError(50));
+    ).rejects.toEqual(new LobbyNoAnswerError(50, null));
+  });
+
+  it("says the last trouble its transport told it before the timeout, none if none (#707)", async () => {
+    const lobby = await openLobby();
+    const failure = (peerId: string, troubles: readonly TransportTrouble[]): Promise<unknown> => {
+      const joining = joinLobby({
+        transport: lobby.network.join(peerId),
+        code: "WXYKMN",
+        name: peerId,
+        character: null,
+        timeoutMs: 50,
+      });
+      for (const trouble of troubles) {
+        lobby.network.trouble(peerId, trouble);
+      }
+      return joining.catch((error: unknown) => error);
+    };
+
+    const told = await failure("told", ["no-relay", "peer-unreachable"]);
+    expect(told).toBeInstanceOf(LobbyNoAnswerError);
+    expect(told instanceof LobbyNoAnswerError && told.trouble).toBe("peer-unreachable");
+    const untold = await failure("untold", []);
+    expect(untold instanceof LobbyNoAnswerError && untold.trouble).toBeNull();
   });
 
   it("accepts a lower-case or spaced code, because players mistype them", async () => {
