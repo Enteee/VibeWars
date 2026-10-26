@@ -40,7 +40,7 @@ function run(tmux, args) {
   const result = spawnSync(tmux, args, { encoding: "utf8" });
   return {
     ok: result.status === 0,
-    stdout: result.stdout ?? "",
+    stdout: result.error === undefined ? result.stdout : "",
     stderr: result.error === undefined ? result.stderr : result.error.message,
   };
 }
