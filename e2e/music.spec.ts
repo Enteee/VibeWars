@@ -210,19 +210,22 @@ test("the now-playing toast at a match start covers none of the HUD (#372)", asy
   await page.goto("./");
   await expect(page.getByRole("button", { name: "host a lobby" })).toBeVisible();
   // The toast hides after a few seconds, which a busy page can spend before
-  // a locator gets to it: note where it is the moment it shows.
+  // a locator gets to it: note where it is, every frame it shows in the
+  // match. It first shows on the lobby screen, bottom left (#556), and moves
+  // top left once the screens give way to the match.
   await page.evaluate(() => {
     const toast = document.querySelector<HTMLElement>(".now-playing");
-    if (toast === null) {
-      throw new Error("no now-playing toast");
+    const screens = document.querySelector<HTMLElement>("#screens");
+    if (toast === null || screens === null) {
+      throw new Error("no now-playing toast or #screens");
     }
-    const observer = new MutationObserver(() => {
-      if (!toast.hidden) {
-        observer.disconnect();
+    const note = (): void => {
+      if (!toast.hidden && screens.style.display === "none") {
         Object.assign(window, { toastBox: toast.getBoundingClientRect().toJSON() as unknown });
       }
-    });
-    observer.observe(toast, { attributes: true, attributeFilter: ["hidden"] });
+      requestAnimationFrame(note);
+    };
+    note();
   });
   // The click that hosts the lobby is the one that starts the music.
   await startSoloMatch(page);
