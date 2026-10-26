@@ -27,5 +27,13 @@ export const NOSTR_RELAYS: readonly string[] = [
 /** How many of `NOSTR_RELAYS` a peer connects to at once. */
 export const RELAY_REDUNDANCY = 4;
 
+/**
+ * How long after joining a room a peer that has met nobody checks its
+ * relays (#707): if not one socket is open then, it says `no-relay`.
+ * Before `JOIN_TIMEOUT_MS` (20 s), so the joiner hears it in time; long
+ * enough for a slow relay, which can take 5 s to open.
+ */
+export const RELAY_CHECK_MS = 15_000;
+
 /** The largest message a peer accepts from another (#15). */
 export const MAX_RECEIVE_BYTES = 64 * 1024;

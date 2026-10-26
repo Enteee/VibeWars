@@ -205,6 +205,16 @@ async function saveCharacters(page: Page, names: readonly string[]): Promise<voi
 /** The team editor's member rows, and their names. */
 const memberRows = (page: Page) => page.locator(".team-grid .team-row");
 const memberNames = (page: Page) => page.locator(".team-grid .team-row-name");
+/** The team list's rows (#581), and what each says: "Duo · 2 members". */
+const teamRows = (page: Page) => page.locator(".team-list .selectable-row");
+async function teamList(page: Page): Promise<string[]> {
+  return teamRows(page).evaluateAll((rows) =>
+    rows.map(
+      (row) =>
+        `${row.querySelector(".selectable-row-name")?.textContent ?? ""} · ${row.querySelector(".selectable-row-subtitle")?.textContent ?? ""}`,
+    ),
+  );
+}
 
 test("a new team is stored only on Save, which stays on the editor (#573)", async ({ page }) => {
   await saveCharacters(page, ["Alpha"]);
@@ -235,7 +245,30 @@ test("a new team is stored only on Save, which stays on the editor (#573)", asyn
 
   await page.reload();
   await page.getByRole("button", { name: "teams" }).click();
-  await expect(page.locator(".entity-name")).toHaveText(["Duo (1 members)"]);
+  await expect.poll(() => teamList(page)).toEqual(["Duo · 1 member"]);
+});
+
+test("the team list: an empty one offers New team; a row shows its members and opens on Enter (#581)", async ({
+  page,
+}) => {
+  await saveCharacters(page, ["Alpha", "Bravo"]);
+  await page.getByRole("button", { name: "teams" }).click();
+  // Empty: the one New team is where the rows would be.
+  await expect(page.locator(".empty-state")).toContainText("No teams yet.");
+  await expect(page.getByRole("button", { name: "new team" })).toHaveCount(1);
+  await page.locator(".empty-state").getByRole("button", { name: "new team" }).click();
+  await page.getByLabel("team name").fill("Duo");
+  await page.getByRole("button", { name: "add Alpha" }).click();
+  await page.getByRole("button", { name: "add Bravo" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.getByRole("button", { name: "back" }).click();
+
+  await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members"]);
+  await expect(teamRows(page).locator(".team-list-dots .character-dot")).toHaveCount(2);
+  await expect(page.locator(".empty-state")).toHaveCount(0);
+  await teamRows(page).first().getByRole("button").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("team name")).toHaveValue("Duo");
 });
 
 test("team edits stay on screen until Save; Back and Delete ask first (#573)", async ({ page }) => {
@@ -273,21 +306,21 @@ test("team edits stay on screen until Save; Back and Delete ask first (#573)", a
   await expect(memberNames(page)).toHaveText(["Alpha"]);
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "discard" }).click();
-  await expect(page.locator(".entity-name")).toHaveText(["GvG Practice (2 members)"]);
+  await expect.poll(() => teamList(page)).toEqual(["GvG Practice · 2 members"]);
 
   // Duplicate.
-  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
+  await teamRows(page).first().getByRole("button").click();
   await page.getByRole("button", { name: "duplicate" }).click();
-  await expect(page.locator(".entity-name")).toHaveText([/2 members/, /2 members/]);
+  await expect(teamRows(page)).toHaveCount(2);
 
   // Delete asks; cancel keeps the team.
-  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
+  await teamRows(page).first().getByRole("button").click();
   await page.getByRole("button", { name: "delete" }).click();
   await expect(page.getByText(/^Delete .*\?$/)).toBeVisible();
   await page.getByRole("button", { name: "cancel" }).click();
   await page.getByRole("button", { name: "delete" }).click();
   await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
-  await expect(page.locator(".entity-name")).toHaveText([/2 members/]);
+  await expect(teamRows(page)).toHaveCount(1);
 });
 
 test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places left (#574)", async ({
@@ -546,7 +579,7 @@ test("Share copies a team as one line; pasted on Teams it opens unsaved, missing
 
   await page.getByRole("button", { name: "back" }).click();
   await page.getByRole("button", { name: "discard" }).click();
-  await expect(page.locator(".entity-name")).toHaveText(["Duo (2 members)", "Duo (2 members)"]);
+  await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members", "Duo · 2 members"]);
 
   // On the build editor a team code is not imported.
   await page.getByRole("button", { name: "back" }).click();
@@ -1015,6 +1048,50 @@ test("a rune dropped on an armor piece shows what it costs", async ({ page }) =>
   // +3 Swordsmanship, paid for with 75 health — both halves on screen.
   await expect(health).toHaveText("425");
   await expect(page.locator(".gear-stats")).toContainText("+3");
+});
+
+test("the library follows your clicks; an insignia goes to the selected piece (#570)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  const gearTab = page.locator(".library-tab", { hasText: "gear" });
+  const skillsTab = page.locator(".library-tab", { hasText: "skills" });
+
+  // A hand clicked opens the gear tab, its group at the top.
+  await page.locator(".gear-slot").nth(1).click();
+  await expect(gearTab).toHaveClass(/is-active/);
+  const library = page.locator(".skill-library");
+  const offhands = page.locator('.skill-group[data-group="off-hands"]');
+  const top = async (locator: Locator): Promise<number> =>
+    (await locator.boundingBox())?.y ?? Number.NaN;
+  await expect.poll(async () => (await top(offhands)) - (await top(library))).toBeLessThan(20);
+
+  // A bar slot clicked opens the skills tab.
+  await page.locator(".skill-slot").first().click();
+  await expect(skillsTab).toHaveClass(/is-active/);
+  await page.keyboard.press("Escape");
+
+  // No piece picked: an insignia goes to the first free one, and says so.
+  await gearTab.click();
+  const survivor = page.locator(".gear-box").filter({ hasText: "Survivor Insignia" }).first();
+  await expect(survivor.locator(".gear-box-target")).toHaveText("→ head");
+  await survivor.click();
+  const insigniaOn = (slot: string): Locator =>
+    page.locator(`.armor-row[data-slot="${slot}"] .gear-slot`).first();
+  await expect(insigniaOn("head")).toContainText("Survivor");
+
+  // The legs picked: outlined, and the next insignia goes there.
+  const legs = page.locator('.armor-row[data-slot="legs"]');
+  await legs.locator(".armor-slot-name").click();
+  await expect(legs).toHaveClass(/is-selected/);
+  await expect(survivor.locator(".gear-box-target")).toHaveText("→ legs");
+  await survivor.click();
+  await expect(insigniaOn("legs")).toContainText("Survivor");
+  await expect(insigniaOn("chest")).toContainText("empty");
+
+  // Switching the tab by hand lets the piece go.
+  await skillsTab.click();
+  await expect(legs).not.toHaveClass(/is-selected/);
 });
 
 test("dragging worn gear back to the library takes it off", async ({ page }) => {

@@ -746,6 +746,7 @@ describe("a P2P host against peers claiming a dropped player's seat (#593)", () 
         guestTransport.on(channel, (data, from) => handler(data, asHost(from))),
       onPeerJoin: (handler) => guestTransport.onPeerJoin((peerId) => handler(asHost(peerId))),
       onPeerLeave: (handler) => guestTransport.onPeerLeave((peerId) => handler(asHost(peerId))),
+      onTrouble: (handler) => guestTransport.onTrouble(handler),
       leave: () => guestTransport.leave(),
     };
     await settle();

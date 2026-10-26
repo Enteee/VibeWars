@@ -38,6 +38,12 @@ export interface MenuCallbacks {
   readonly onSelectCharacter: (id: string | undefined) => void;
 }
 
+/**
+ * How long a join runs before the menu says it is still connecting
+ * (#707): a join may take up to 20 s, which should not look like a hang.
+ */
+export const CONNECTING_NOTICE_MS = 3000;
+
 const NAME_STORAGE_KEY = `${STORAGE_NAMESPACE}.playerName`;
 
 /** Remember the player's chosen name so they do not retype it every session. */
@@ -242,8 +248,18 @@ export function renderMenu(
     // "why didn't my code work" moment.
     codeInput.value = codeInput.value.toUpperCase();
   });
+  // Shown once a join has run a while; the lobby, or the menu again with
+  // why it failed, replaces this screen when it ends.
+  const connecting = h("p", "menu-connecting", "Connecting…");
+  connecting.setAttribute("role", "status");
+  connecting.hidden = true;
   const join = (): void => {
     callbacks.onJoinLobby(codeInput.value, nameInput.value);
+    setTimeout(() => {
+      if (panel.isConnected) {
+        connecting.hidden = false;
+      }
+    }, CONNECTING_NOTICE_MS);
   };
   codeInput.addEventListener("keydown", (event: KeyboardEvent) => {
     if (event.key === "Enter") {
@@ -253,6 +269,7 @@ export function renderMenu(
   joinRow.appendChild(codeInput);
   joinRow.appendChild(button("Join", "primary", join));
   play.appendChild(joinRow);
+  play.appendChild(connecting);
   // Under host and join, so it is read before either (#541, SECURITY.md).
   play.appendChild(h("p", "menu-peer-notice", PEER_IP_NOTICE));
   columns.appendChild(play);
@@ -272,19 +289,31 @@ export interface TeamListCallbacks {
   readonly onPasteTeam: (text: string) => void;
 }
 
+/** "1 member", "3 members". */
+export function memberCount(count: number): string {
+  return `${String(count)} ${count === 1 ? "member" : "members"}`;
+}
+
+/**
+ * The teams, one selectable row each (#581): a press opens it in the team
+ * editor. Each row shows its member count and its members' dots; an
+ * empty list says so where the rows would be, with "New team".
+ */
 export function renderTeamList(
   root: HTMLElement,
   teams: readonly StoredTeam[],
+  characters: readonly StoredCharacter[],
   problems: readonly string[],
   callbacks: TeamListCallbacks,
 ): void {
   root.replaceChildren();
-  const panel = h("div", "screen");
+  const panel = h("div", "screen team-list");
   panel.appendChild(
     screenBar({
       back: { label: "Back", onBack: callbacks.onBack },
       title: [h("h2", "screen-title", "Teams")],
-      actions: [button("New team", "primary", callbacks.onNew)],
+      // An empty list holds the one "New team" itself.
+      actions: teams.length === 0 ? [] : [button("New team", "primary", callbacks.onNew)],
     }).element,
   );
 
@@ -293,21 +322,29 @@ export function renderTeamList(
   }
 
   if (teams.length === 0) {
-    panel.appendChild(h("p", "screen-empty", "No teams yet."));
+    panel.appendChild(emptyState("No teams yet.", "New team", callbacks.onNew));
   }
 
   const list = h("div", "entity-list");
   for (const team of teams) {
-    const row = h("div", "entity-row");
-    row.appendChild(
-      h("span", "entity-name", `${team.name} (${String(team.members.length)} members)`),
-    );
-    row.appendChild(
-      button("Edit", "", () => {
-        callbacks.onEdit(team.id);
+    // A member whose character is gone has no dot; the editor shows it.
+    const dots = h("span", "team-list-dots");
+    for (const member of team.members) {
+      const character = characters.find((c) => c.id === member.characterId);
+      if (character !== undefined) {
+        dots.appendChild(createCharacterDot(character));
+      }
+    }
+    list.appendChild(
+      selectableRow({
+        name: team.name,
+        subtitle: memberCount(team.members.length),
+        miniBar: dots,
+        onSelect: () => {
+          callbacks.onEdit(team.id);
+        },
       }),
     );
-    list.appendChild(row);
   }
   panel.appendChild(list);
 

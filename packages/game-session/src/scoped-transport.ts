@@ -35,6 +35,7 @@ export function scopeTransport(transport: Transport): Transport {
     on: (channel, handler) => track(transport.on(channel, handler)),
     onPeerJoin: (handler) => track(transport.onPeerJoin(handler)),
     onPeerLeave: (handler) => track(transport.onPeerLeave(handler)),
+    onTrouble: (handler) => track(transport.onTrouble(handler)),
     leave() {
       left = true;
       for (const remove of removers) {

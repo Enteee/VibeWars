@@ -172,6 +172,28 @@ test("a pinned track is what plays after a reload (#372)", async ({ page }) => {
   await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toEqual(["ember-deep"]);
 });
 
+test("tracks are selectable rows: Enter previews and keeps focus; no dead editor button (#581)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await page.getByRole("button", { name: "Music", exact: true }).click();
+  const row = page.locator(".jukebox-row", { hasText: "Ember Deep" });
+  const play = row.locator(".selectable-row-choose");
+  await play.focus();
+  await page.keyboard.press("Enter");
+  await expect(row).toHaveClass(/is-selected/);
+  await expect(play).toHaveAttribute("aria-pressed", "true");
+  await expect(play).toBeFocused();
+  // Tab goes on to the row's Pin, which belongs to the same track.
+  await page.keyboard.press("Tab");
+  await expect(row.getByRole("button", { name: "pin" })).toBeFocused();
+  await play.focus();
+  await page.keyboard.press("Enter");
+  await expect(play).toHaveAttribute("aria-pressed", "false");
+  // The beat editor (#373) has not landed: no button that does nothing.
+  await expect(page.getByRole("button", { name: "open in editor" })).toHaveCount(0);
+});
+
 test("Off plays nothing after a click, and the music mute survives a reload (#372, #424)", async ({
   page,
 }) => {

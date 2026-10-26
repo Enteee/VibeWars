@@ -59,9 +59,15 @@ a host-authoritative star, not lockstep and not a mesh.**
   trusts a client. The host's browser now is that server. That is fine for
   a game among friends or on a LAN, and wrong for strangers. Matchmaking
   between strangers is out of scope for that reason.
-- **Some networks cannot connect.** The joiner sees "Couldn't connect to
-  the host — your network may block peer-to-peer connections." It does not
-  hang. TURN can be added later as one `rtcConfig` field.
+- **Some networks cannot connect.** The joiner is told how far it got
+  (#707): "Couldn't reach the lobby servers" with no relay, "Found the
+  lobby, but couldn't connect to its host" when the connection itself
+  failed, and "No lobby answered that code" otherwise. It does not hang.
+  TURN can be added later as one `rtcConfig` field.
+- **Firefox gathers no ICE candidates on a page loaded over `::1`**,
+  where `localhost` resolves first. Dev and preview listen on `127.0.0.1`,
+  and a `localhost` or `[::1]` page that cannot reach its host says to
+  open `127.0.0.1` (#707).
 - **When the host leaves, the match ends** for everyone, with
   `WireEnded { endReason: "host-left" }`. There is no host migration.
 - **Public relays are a dependency.** If every configured relay is down,
