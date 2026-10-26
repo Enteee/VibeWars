@@ -42,6 +42,7 @@ import {
   updateRecharges,
 } from "./ui/hud.js";
 import { attachJukeboxPopover } from "./ui/jukebox.js";
+import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 
 /**
@@ -336,7 +337,10 @@ export async function startMatchView(
       }
     }
   };
+  const reconnectOverlay = mountReconnectOverlay(parent);
+  const reconnectCountdown = attachReconnectCountdown(reconnectOverlay);
   connection.onConnectionChange((state) => {
+    reconnectCountdown.connectionChanged(state);
     matchSounds.connectionChanged(state);
     matchMusic.connectionChanged(state);
     callbacks.onConnectionChange?.(state);
@@ -428,6 +432,8 @@ export async function startMatchView(
       detachMovement();
       matchSounds.dispose();
       matchMusic.dispose();
+      reconnectCountdown.dispose();
+      reconnectOverlay.destroy();
       // The scoreboard, result and mute button sit beside the HUD root, in
       // the shared viewport, so they go one by one or pile up per match.
       hud.root.remove();
