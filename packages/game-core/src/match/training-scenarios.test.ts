@@ -55,7 +55,8 @@ describe("every training scenario", () => {
         return;
       }
       expect(scenario.dummies.length).toBeGreaterThan(0);
-      expect(scenario.dummies.length).toBeLessThanOrEqual(8);
+      // Eight in the arena at most, the player included (ADR-0020).
+      expect(scenario.dummies.length).toBeLessThanOrEqual(7);
       expect(new Set(scenario.dummies.map((dummy) => dummy.id)).size).toBe(scenario.dummies.length);
 
       for (const dummy of scenario.dummies) {
@@ -399,5 +400,84 @@ describe("block, headless (#534)", () => {
     expect(blocked).toBeGreaterThan(0);
     expect(blocked / (landed + blocked)).toBeGreaterThan(0.25);
     expect(blocked / (landed + blocked)).toBeLessThan(0.6);
+  });
+});
+
+describe("the area scenarios, headless (#111)", () => {
+  /** Run `sim` for `seconds`: who took damage from `skillId`, and who took any at all. */
+  function hits(
+    sim: MatchSimulation,
+    skillId: string,
+    seconds: number,
+  ): { bySkill: Set<string>; anyDamage: Set<string> } {
+    const bySkill = new Set<string>();
+    const anyDamage = new Set<string>();
+    for (let i = 0; i < Math.round(seconds / DT); i += 1) {
+      for (const entry of sim.step(DT).log) {
+        for (const event of entry.events) {
+          if (event.kind === "damage") {
+            anyDamage.add(event.targetId);
+            if (entry.skillId === skillId) {
+              bySkill.add(event.targetId);
+            }
+          }
+        }
+      }
+    }
+    return { bySkill, anyDamage };
+  }
+
+  const FIVE = ["centre", "east", "north", "south", "west"];
+
+  it("aoe-cluster: a Fireball at the centre burns exactly the five, not the stragglers", () => {
+    const sim = arena(scenario("aoe-cluster"), "cluster");
+    sim.setTarget("player", "centre");
+    expect(sim.requestSkill("player", 0)?.check).toEqual({ ok: true });
+    expect([...hits(sim, FIREBALL, 3).bySkill].sort()).toEqual(FIVE);
+  });
+
+  it("aoe-friendly-fire: the same Fireball burns the five, and the ally in it takes nothing", () => {
+    const sim = arena(scenario("aoe-friendly-fire"), "friendly");
+    sim.setTarget("player", "centre");
+    expect(sim.requestSkill("player", 0)?.check).toEqual({ ok: true });
+    const { bySkill, anyDamage } = hits(sim, FIREBALL, 3);
+    expect([...bySkill].sort()).toEqual(FIVE);
+    expect(anyDamage.has("ally")).toBe(false);
+  });
+
+  it("aoe-cap: Barrage at the centre of seven hits exactly six", () => {
+    const played = scenario("aoe-cap");
+    const map = MAPS[played.mapId];
+    if (map === undefined) {
+      throw new Error(`no map ${played.mapId}`);
+    }
+    const sim = new MatchSimulation({
+      seed: "cap",
+      participants: [
+        {
+          id: "player",
+          team: PLAYER_TEAM,
+          skillBar: ["ranger.barrage"],
+          attributeRanks: new Map([["ranger.marksmanship", 12]]),
+          equipment: {
+            ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+            mainHand: {
+              weapon: WEAPONS.longbow,
+              attributeId: "ranger.marksmanship",
+              requirementMet: true,
+            },
+          },
+          spawn: map.playerSpawn,
+          facing: 0,
+          baseEnergyPips: baseEnergyPipsFor("ranger"),
+        },
+        ...scenarioParticipants(played, map.playerSpawn),
+      ],
+    });
+    sim.setTarget("player", "centre");
+    expect(sim.requestSkill("player", 0)?.check).toEqual({ ok: true });
+    const { bySkill } = hits(sim, "ranger.barrage", 4);
+    expect(bySkill.size).toBe(6);
+    expect(bySkill.has("centre")).toBe(true);
   });
 });
