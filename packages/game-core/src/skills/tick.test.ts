@@ -16,7 +16,7 @@ describe("advanceStatuses health change", () => {
   it("applies degeneration continuously, not in once-per-second lumps", () => {
     const c = makeCombatant({ id: "c", health: 500 });
     c.statuses.apply("bleeding", 10, "a"); // -3 pips, 6 HP/s
-    advanceStatuses(c, 0.05); // one 20Hz tick
+    advanceStatuses(c, 0.05, 0); // one 20Hz tick
     expect(c.health).toBeCloseTo(500 - 6 * 0.05, 10);
   });
 
@@ -24,7 +24,7 @@ describe("advanceStatuses health change", () => {
     const c = makeCombatant({ id: "c", health: 500 });
     c.statuses.apply("bleeding", 10, "a");
     for (let i = 0; i < 20; i += 1) {
-      advanceStatuses(c, 0.05);
+      advanceStatuses(c, 0.05, 0);
     }
     expect(c.health).toBeCloseTo(494, 6);
   });
@@ -32,7 +32,7 @@ describe("advanceStatuses health change", () => {
   it("counts a pip as 2 HP/s: +4 regeneration heals 8 a second", () => {
     const c = makeCombatant({ id: "c", health: 100 });
     c.statuses.apply("regeneration", 10, "a");
-    advanceStatuses(c, 1);
+    advanceStatuses(c, 1, 0);
     expect(c.health).toBeCloseTo(100 + 4 * HEALTH_PER_PIP, 10);
   });
 
@@ -41,7 +41,7 @@ describe("advanceStatuses health change", () => {
     c.statuses.apply("burning", 10, "a");
     c.statuses.apply("bleeding", 10, "a");
     c.statuses.apply("poison", 10, "a");
-    advanceStatuses(c, 1);
+    advanceStatuses(c, 1, 0);
     expect(c.health).toBeCloseTo(480, 10);
   });
 
@@ -49,7 +49,7 @@ describe("advanceStatuses health change", () => {
     const c = makeCombatant({ id: "c", health: 300 });
     c.statuses.apply("regeneration", 10, "a");
     c.statuses.apply("poison", 10, "a");
-    const events = advanceStatuses(c, 1);
+    const events = advanceStatuses(c, 1, 0);
     expect(c.health).toBe(300);
     expect(events.some((e) => e.kind === "damage" || e.kind === "heal")).toBe(false);
   });
@@ -58,7 +58,7 @@ describe("advanceStatuses health change", () => {
     const c = makeCombatant({ id: "c", health: 498, maxHealth: 500 });
     c.statuses.apply("regeneration", 10, "a"); // +4 pips, 8 HP/s
     for (let i = 0; i < 40; i += 1) {
-      advanceStatuses(c, 0.05);
+      advanceStatuses(c, 0.05, 0);
     }
     expect(c.health).toBe(500);
   });
@@ -66,7 +66,7 @@ describe("advanceStatuses health change", () => {
   it("kills a combatant whose degeneration reaches zero health", () => {
     const c = makeCombatant({ id: "c", health: 1 });
     c.statuses.apply("burning", 10, "a");
-    const events = advanceStatuses(c, 1);
+    const events = advanceStatuses(c, 1, 0);
     expect(c.dead).toBe(true);
     expect(c.health).toBe(0);
     expect(events).toContainEqual({ kind: "death", targetId: "c" });
@@ -75,23 +75,23 @@ describe("advanceStatuses health change", () => {
   it("emits a damage event for degeneration and a heal event for regeneration", () => {
     const bleeding = makeCombatant({ id: "b", health: 500 });
     bleeding.statuses.apply("bleeding", 10, "a");
-    expect(advanceStatuses(bleeding, 1).some((e) => e.kind === "damage")).toBe(true);
+    expect(advanceStatuses(bleeding, 1, 0).some((e) => e.kind === "damage")).toBe(true);
 
     const regen = makeCombatant({ id: "r", health: 100 });
     regen.statuses.apply("regeneration", 10, "a");
-    expect(advanceStatuses(regen, 1).some((e) => e.kind === "heal")).toBe(true);
+    expect(advanceStatuses(regen, 1, 0).some((e) => e.kind === "heal")).toBe(true);
   });
 
   it("does nothing at all for a dead combatant", () => {
     const c = makeCombatant({ id: "c", health: 0, dead: true });
     c.statuses.apply("bleeding", 10, "a");
-    expect(advanceStatuses(c, 1)).toEqual([]);
+    expect(advanceStatuses(c, 1, 0)).toEqual([]);
   });
 
   it("emits no health event when no status changes health", () => {
     const c = makeCombatant({ id: "c" });
     c.statuses.apply("crippled", 10, "a");
-    const events = advanceStatuses(c, 1);
+    const events = advanceStatuses(c, 1, 0);
     expect(events.some((e) => e.kind === "damage" || e.kind === "heal")).toBe(false);
   });
 });
@@ -100,7 +100,7 @@ describe("advanceStatuses expiry", () => {
   it("emits status-expired when a status runs out", () => {
     const c = makeCombatant({ id: "c" });
     c.statuses.apply("bleeding", 1, "a");
-    const events = advanceStatuses(c, 1.5);
+    const events = advanceStatuses(c, 1.5, 0);
     expect(events).toContainEqual({
       kind: "status-expired",
       targetId: "c",
@@ -112,9 +112,9 @@ describe("advanceStatuses expiry", () => {
   it("stops degeneration once the condition expires", () => {
     const c = makeCombatant({ id: "c", health: 500 });
     c.statuses.apply("bleeding", 1, "a");
-    advanceStatuses(c, 1);
+    advanceStatuses(c, 1, 0);
     const healthAfterExpiry = c.health;
-    advanceStatuses(c, 5);
+    advanceStatuses(c, 5, 0);
     expect(c.health).toBe(healthAfterExpiry);
   });
 });
@@ -135,7 +135,7 @@ describe("effectiveMaxHealth", () => {
     c.statuses.apply("deep-wound", 100, "a");
     c.statuses.apply("regeneration", 100, "a");
     for (let i = 0; i < 100; i += 1) {
-      advanceStatuses(c, 0.05);
+      advanceStatuses(c, 0.05, 0);
     }
     expect(c.health).toBeLessThanOrEqual(400);
   });
@@ -207,7 +207,7 @@ describe("death by degeneration", () => {
     const c = makeCombatant({ id: "c", health: 2 });
     c.statuses.apply("burning", 10, "a");
 
-    const events = advanceStatuses(c, 1);
+    const events = advanceStatuses(c, 1, 0);
 
     expect(events.some((e) => e.kind === "death")).toBe(true);
     expect(c.dead).toBe(true);
@@ -216,6 +216,6 @@ describe("death by degeneration", () => {
   it("emits no death event on a tick that merely damages", () => {
     const c = makeCombatant({ id: "c", health: 500 });
     c.statuses.apply("burning", 10, "a");
-    expect(advanceStatuses(c, 1).some((e) => e.kind === "death")).toBe(false);
+    expect(advanceStatuses(c, 1, 0).some((e) => e.kind === "death")).toBe(false);
   });
 });
