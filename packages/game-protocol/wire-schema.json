@@ -261,6 +261,7 @@
                                       { "literal": "blood-ritual" },
                                       { "literal": "burning" },
                                       { "literal": "crippled" },
+                                      { "literal": "dash" },
                                       { "literal": "dazed" },
                                       { "literal": "deep-wound" },
                                       { "literal": "guardian" },
@@ -268,6 +269,7 @@
                                       { "literal": "malaise" },
                                       { "literal": "poison" },
                                       { "literal": "regeneration" },
+                                      { "literal": "sprint" },
                                       { "literal": "weakness" }
                                     ]
                                   }
@@ -385,6 +387,7 @@
                                       { "literal": "blood-ritual" },
                                       { "literal": "burning" },
                                       { "literal": "crippled" },
+                                      { "literal": "dash" },
                                       { "literal": "dazed" },
                                       { "literal": "deep-wound" },
                                       { "literal": "guardian" },
@@ -392,6 +395,7 @@
                                       { "literal": "malaise" },
                                       { "literal": "poison" },
                                       { "literal": "regeneration" },
+                                      { "literal": "sprint" },
                                       { "literal": "weakness" }
                                     ]
                                   }
@@ -417,6 +421,7 @@
                                       { "literal": "blood-ritual" },
                                       { "literal": "burning" },
                                       { "literal": "crippled" },
+                                      { "literal": "dash" },
                                       { "literal": "dazed" },
                                       { "literal": "deep-wound" },
                                       { "literal": "guardian" },
@@ -424,6 +429,7 @@
                                       { "literal": "malaise" },
                                       { "literal": "poison" },
                                       { "literal": "regeneration" },
+                                      { "literal": "sprint" },
                                       { "literal": "weakness" }
                                     ]
                                   }
@@ -897,6 +903,7 @@
                   { "literal": "blood-ritual" },
                   { "literal": "burning" },
                   { "literal": "crippled" },
+                  { "literal": "dash" },
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
                   { "literal": "guardian" },
@@ -904,6 +911,7 @@
                   { "literal": "malaise" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
+                  { "literal": "sprint" },
                   { "literal": "weakness" }
                 ]
               }
@@ -981,6 +989,7 @@
                   { "literal": "blood-ritual" },
                   { "literal": "burning" },
                   { "literal": "crippled" },
+                  { "literal": "dash" },
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
                   { "literal": "guardian" },
@@ -988,6 +997,7 @@
                   { "literal": "malaise" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
+                  { "literal": "sprint" },
                   { "literal": "weakness" }
                 ]
               }
@@ -1009,6 +1019,7 @@
                   { "literal": "blood-ritual" },
                   { "literal": "burning" },
                   { "literal": "crippled" },
+                  { "literal": "dash" },
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
                   { "literal": "guardian" },
@@ -1016,6 +1027,7 @@
                   { "literal": "malaise" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
+                  { "literal": "sprint" },
                   { "literal": "weakness" }
                 ]
               }

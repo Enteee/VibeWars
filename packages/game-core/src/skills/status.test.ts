@@ -180,6 +180,37 @@ describe("StatusSet apply/remove", () => {
   });
 });
 
+describe("StatusSet stances, one at a time (#523)", () => {
+  it("a new stance ends the one that is up", () => {
+    const set = new StatusSet();
+    set.apply("sprint", 13, "a");
+    set.apply("dash", 3, "a");
+    expect(set.active.map((status) => status.id)).toEqual(["dash"]);
+  });
+
+  it("the same stance again restarts at its full duration, shorter or not", () => {
+    const set = new StatusSet();
+    set.apply("sprint", 13, "a");
+    set.advance(10);
+    set.apply("sprint", 13, "a");
+    expect(set.get("sprint")?.remainingSeconds).toBe(13);
+    set.apply("sprint", 5, "a");
+    expect(set.get("sprint")?.remainingSeconds).toBe(5);
+  });
+
+  it("leaves the other categories alone, and they leave it alone", () => {
+    const set = new StatusSet();
+    set.apply("regeneration", 10, "a");
+    set.apply("bleeding", 10, "b");
+    set.apply("sprint", 13, "a");
+    set.apply("dash", 3, "a");
+    expect(set.countByCategory("enchantment")).toBe(1);
+    expect(set.countByCategory("condition")).toBe(1);
+    set.removeByCategory("enchantment");
+    expect(set.has("dash")).toBe(true);
+  });
+});
+
 describe("StatusSet duration advance", () => {
   it("counts durations down", () => {
     const set = new StatusSet();

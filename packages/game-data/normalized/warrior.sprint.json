@@ -1,0 +1,24 @@
+{
+  "id": "warrior.sprint",
+  "name": "Sprint",
+  "profession": "warrior",
+  "attribute": "Strength",
+  "type": "Stance.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 0,
+  "rechargeSeconds": 15,
+  "description": "For 8...13...14 seconds, you move 25% faster.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Warrior/39-Sprint",
+    "fetchedAt": "2026-10-26T03:27:08.767Z"
+  },
+  "unmapped": {}
+}

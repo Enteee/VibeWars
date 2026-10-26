@@ -10,15 +10,24 @@
  * - `condition`  — negative, applied by foes, removed by condition removal.
  * - `hex`        — negative, applied by foes, removed by hex removal.
  * - `enchantment`— positive, applied by allies, removed by enchantment removal/strip.
+ * - `stance`     — positive, on yourself only, ended by stance removal (#465).
  *
  * Re-application does not stack duration (GW1-style): the longer of the
  * existing and incoming duration wins. That single rule is why a spammed
- * short condition cannot out-last one well-timed long one.
+ * short condition cannot out-last one well-timed long one. An exclusive
+ * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time.
  */
 
 import type { Combatant } from "./types.js";
 
-export type StatusCategory = "condition" | "hex" | "enchantment";
+export type StatusCategory = "condition" | "hex" | "enchantment" | "stance";
+
+/**
+ * Categories of which a combatant has at most one at a time (GW1): a new
+ * one ends whichever is up, the same one included, and starts at its full
+ * duration.
+ */
+export const EXCLUSIVE_CATEGORIES: ReadonlySet<StatusCategory> = new Set(["stance"]);
 
 export type StatusId =
   // Conditions (brief §12's starting set).
@@ -36,7 +45,10 @@ export type StatusId =
   | "regeneration"
   | "blood-ritual"
   | "armor-boost"
-  | "guardian";
+  | "guardian"
+  // Stances.
+  | "sprint"
+  | "dash";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -152,6 +164,9 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   guardian: define("guardian", "Guardian", "enchantment", {
     block: { chance: 0.5, against: "all" },
   }),
+
+  sprint: define("sprint", "Sprint", "stance", { moveSpeedMultiplier: 1.25 }),
+  dash: define("dash", "Dash", "stance", { moveSpeedMultiplier: 1.5 }),
 };
 
 export interface ActiveStatus {
@@ -202,11 +217,17 @@ export class StatusSet {
   /**
    * Apply (or refresh) a status. Durations do not stack — the longer of
    * the existing and incoming duration wins, so re-applying a shorter
-   * one never shortens a longer one already running.
+   * one never shortens a longer one already running. In an exclusive
+   * category the new one replaces every one of its category, itself
+   * included, at the incoming duration (a stance, #523).
    */
   public apply(id: StatusId, durationSeconds: number, sourceId: string): void {
     if (durationSeconds <= 0) {
       return;
+    }
+    const { category } = getStatusDefinition(id);
+    if (EXCLUSIVE_CATEGORIES.has(category)) {
+      this.removeByCategory(category);
     }
     const existing = this.#statuses.get(id);
     if (existing !== undefined && existing.remainingSeconds >= durationSeconds) {
