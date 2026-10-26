@@ -285,6 +285,7 @@ describe("headless combat simulation", () => {
     ]);
     const far = actor(makeCombatant({ id: "far", team: 0 }), [], 100);
     expect(tryCast(necro, "necromancer.blood-ritual", far)).toBe("out-of-range");
+    expect(tryCast(necro, "necromancer.blood-ritual", necro)).toBe("invalid-target-self");
 
     const ally = actor(makeCombatant({ id: "ally", team: 0 }), [], 30);
     expect(tryCast(necro, "necromancer.blood-ritual", ally)).toBeUndefined();

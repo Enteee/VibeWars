@@ -272,13 +272,13 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     activationSeconds: 1,
     rechargeSeconds: 2,
-    // A touch skill: the ally must be at hand.
+    // A touch skill: the ally must be at hand, and not the caster, or
+    // it would be a free +3 energy for the Necromancer.
     range: RANGE_MELEE,
-    target: "single-ally",
+    target: "single-other-ally",
     area: undefined,
     attack: undefined,
-    // GW1's energy-regeneration enchantment (#503), at its rank-12
-    // duration. Left out: in GW1 it cannot target its caster.
+    // GW1's energy-regeneration enchantment (#503), at its rank-12 duration.
     effects: [
       { kind: "sacrifice-health", percentOfMax: 17 },
       { kind: "apply-status", statusId: "blood-ritual", durationSeconds: 13 },

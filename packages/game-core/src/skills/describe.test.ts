@@ -96,6 +96,10 @@ describe("describeSkill", () => {
     expect(described.rangeText).toBe("Self");
   });
 
+  it("says Another ally for a skill that cannot target its caster (#503)", () => {
+    expect(describeSkill(skill("necromancer.blood-ritual")).targetText).toBe("Another ally");
+  });
+
   it("explains what an applied status does, not just its name", () => {
     const described = describeSkill(skill("warrior.sever-artery-lite"));
     const line = described.effects.map((effect) => effect.text).join(" ");
