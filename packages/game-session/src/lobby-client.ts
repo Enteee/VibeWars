@@ -11,7 +11,9 @@ import {
   type WireLobbyState,
 } from "@vibewars/game-protocol";
 
+import { lobbyCharacter } from "./lobby-character.js";
 import type {
+  LobbyCharacter,
   LobbyClosedReason,
   LobbyConnection,
   LobbySnapshot,
@@ -56,6 +58,8 @@ export interface JoinLobbyOptions {
   readonly transport: Transport;
   readonly code: string;
   readonly name: string;
+  /** The selected character's name and professions; `null` brings the house loadout. */
+  readonly character: LobbyCharacter | null;
   /** How long to wait for a state that lists this player. */
   readonly timeoutMs: number;
 }
@@ -68,7 +72,11 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const { transport, timeoutMs } = options;
   const selfId = transport.selfId;
   const code = normalizeLobbyCode(options.code);
-  const join: PeerLobbyJoin = { protocolVersion: PROTOCOL_VERSION, name: options.name };
+  const join: PeerLobbyJoin = {
+    protocolVersion: PROTOCOL_VERSION,
+    name: options.name,
+    character: options.character,
+  };
   const unsubscribe: (() => void)[] = [];
   let hostId: string | undefined;
   let latest: WireLobbyState | undefined;
@@ -126,6 +134,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       team: player.team,
       ready: player.ready,
       isHost: player.isHost,
+      character: lobbyCharacter(player.character),
     })),
     isHost: state.players.some((player) => player.id === selfId && player.isHost),
   });

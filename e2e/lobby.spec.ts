@@ -269,3 +269,63 @@ test("a player who quits early is told the match still runs, until it ends", asy
     await context.close();
   }
 });
+
+test("Copy puts the lobby code on the clipboard and says so (#580)", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  const code = await hostLobby(page, "Host");
+  await page.getByRole("button", { name: "Copy", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Copied");
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(code);
+});
+
+test("a refused clipboard leaves the code selected, to copy by hand (#580)", async ({ page }) => {
+  await page.addInitScript(() => {
+    navigator.clipboard.writeText = () =>
+      Promise.reject(new DOMException("Write permission denied.", "NotAllowedError"));
+  });
+  const code = await hostLobby(page, "Host");
+  await page.getByRole("button", { name: "Copy", exact: true }).click();
+  await expect(page.locator(".toast")).toContainText("copy it by hand");
+  expect(await page.evaluate(() => window.getSelection()?.toString())).toBe(code);
+});
+
+test("each row shows the character a player brings, and Start says who it waits for (#580)", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+
+  try {
+    // The host plays a saved character; the guest, the house loadout.
+    // Both pages share one storage, so the guest picks its own after the
+    // host is in.
+    await host.goto("./");
+    await host.getByRole("button", { name: "new character" }).click();
+    await host.locator("input.editor-name").fill("Cynn");
+    await host.getByRole("button", { name: "Save", exact: true }).click();
+    await host.locator(".roster").getByText("Cynn", { exact: true }).click();
+    const code = await hostLobby(host, "Host");
+    await guest.goto("./");
+    await guest.locator(".roster").getByText("Default loadout", { exact: true }).click();
+    await joinLobby(guest, "Guest", code);
+
+    await host.getByRole("button", { name: "join team 1" }).click();
+    await guest.getByRole("button", { name: "join team 2" }).click();
+    const hostRow = guest.locator(".lobby-team").nth(0).locator(".lobby-slot");
+    const guestRow = host.locator(".lobby-team").nth(1).locator(".lobby-slot");
+    await expect(hostRow.locator(".lobby-character")).toHaveText("Cynn · Warrior");
+    await expect(guestRow.locator(".lobby-character")).toHaveText("Default loadout");
+    await expect(guestRow.locator(".lobby-ready")).toHaveText("Not ready");
+
+    await host.getByRole("button", { name: "Ready", exact: true }).click();
+    await expect(host.locator(".lobby-waiting")).toHaveText("Waiting for Guest to ready up");
+    await expect(host.getByRole("button", { name: "start match" })).toBeDisabled();
+
+    await guest.getByRole("button", { name: "Ready", exact: true }).click();
+    await expect(guestRow.locator(".lobby-ready")).toHaveText("Ready");
+    await expect(host.locator(".lobby-waiting")).toHaveCount(0);
+    await expect(host.getByRole("button", { name: "start match" })).toBeEnabled();
+  } finally {
+    await context.close();
+  }
+});

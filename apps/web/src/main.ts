@@ -1,5 +1,5 @@
 import { sizeClass } from "@vibewars/game-maps/size-class";
-import type { LobbyConnection, MatchStarting } from "@vibewars/game-session";
+import type { LobbyCharacter, LobbyConnection, MatchStarting } from "@vibewars/game-session";
 
 import { ARENA_MAPS } from "./net/maps.js";
 import {
@@ -152,6 +152,22 @@ async function main(): Promise<void> {
     }
   };
 
+  /**
+   * The character the lobby lists this player with (#580): the selected
+   * one's name and professions, or `null` for the house loadout, read
+   * the way `activeBuild` reads the build it plays with.
+   */
+  const lobbyCharacter = async (): Promise<LobbyCharacter | null> => {
+    const build = await activeBuild();
+    return build === undefined
+      ? null
+      : {
+          name: build.name,
+          primary: build.primaryProfession,
+          secondary: build.secondaryProfession ?? null,
+        };
+  };
+
   /** The open build editor; every way out of it passes through `showMenu`. */
   let editor: BuildEditorView | undefined;
 
@@ -191,12 +207,12 @@ async function main(): Promise<void> {
       {
         onCreateLobby: (name) => {
           void enterLobby(name, async () => {
-            hosted = await hostLobby(name);
+            hosted = await hostLobby(name, await lobbyCharacter());
             return hosted.lobby;
           });
         },
         onJoinLobby: (code, name) => {
-          void enterLobby(name, () => joinLobbyByCode(code, name));
+          void enterLobby(name, async () => joinLobbyByCode(code, name, await lobbyCharacter()));
         },
         onManageTeams: () => {
           void showTeams();

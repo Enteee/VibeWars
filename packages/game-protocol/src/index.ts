@@ -109,6 +109,7 @@ export type {
   WireSkillBar,
   WireEnded,
   PeerLobbyJoin,
+  WireLobbyCharacter,
   WireLobbyPlayer,
   WireLobbyState,
   WireLobbyCommand,

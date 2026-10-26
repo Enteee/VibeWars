@@ -2,7 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import type { LobbySnapshot } from "@vibewars/game-session";
 
-import { MATCH_RUNNING_NOTICE, displayLobbyCode, lobbyControls, mapLabel } from "./lobby-screen.js";
+import {
+  DEFAULT_LOADOUT,
+  MATCH_RUNNING_NOTICE,
+  characterLine,
+  displayLobbyCode,
+  lobbyControls,
+  mapLabel,
+  waitingFor,
+} from "./lobby-screen.js";
 
 function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
   return {
@@ -12,8 +20,8 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
     mapId: "arena",
     hostId: "host-peer",
     players: [
-      { sessionId: "host", name: "Host", team: 0, ready: true, isHost: true },
-      { sessionId: "guest", name: "Guest", team: 1, ready: true, isHost: false },
+      { sessionId: "host", name: "Host", team: 0, ready: true, isHost: true, character: null },
+      { sessionId: "guest", name: "Guest", team: 1, ready: true, isHost: false, character: null },
     ],
     isHost: true,
   };
@@ -55,8 +63,22 @@ describe("lobbyControls", () => {
     const controls = lobbyControls({
       ...waiting,
       players: [
-        { sessionId: "host", name: "Host", team: null, ready: false, isHost: true },
-        { sessionId: "guest", name: "Guest", team: 1, ready: false, isHost: false },
+        {
+          sessionId: "host",
+          name: "Host",
+          team: null,
+          ready: false,
+          isHost: true,
+          character: null,
+        },
+        {
+          sessionId: "guest",
+          name: "Guest",
+          team: 1,
+          ready: false,
+          isHost: false,
+          character: null,
+        },
       ],
     });
     expect(controls.readyDisabled).toBe(true);
@@ -75,5 +97,70 @@ describe("mapLabel (#444)", () => {
     expect(mapLabel({ id: "arena-long-hall", name: "Long Hall", size: "large" })).toBe(
       "Long Hall (large)",
     );
+  });
+});
+
+describe("waitingFor (#580)", () => {
+  const player = (name: string, team: 0 | 1 | null, ready: boolean) => ({
+    sessionId: name,
+    name,
+    team,
+    ready,
+    isHost: false,
+    character: null,
+  });
+
+  it("names everyone on a team who is not ready, in lobby order", () => {
+    expect(
+      waitingFor({
+        ...snapshot("waiting"),
+        players: [
+          player("Host", 0, true),
+          player("Mhenlo", 0, false),
+          player("Watcher", null, false),
+          player("Cynn", 1, false),
+        ],
+      }),
+    ).toBe("Waiting for Mhenlo, Cynn to ready up");
+  });
+
+  it("asks for someone on a team when nobody is on one", () => {
+    expect(waitingFor({ ...snapshot("waiting"), players: [player("Host", null, false)] })).toBe(
+      "Waiting for someone to join a team",
+    );
+  });
+
+  it("waits for nobody once everyone on a team is ready, or a match is on", () => {
+    expect(waitingFor(snapshot("waiting"))).toBeUndefined();
+    expect(
+      waitingFor({ ...snapshot("in-match"), players: [player("Mhenlo", 0, false)] }),
+    ).toBeUndefined();
+  });
+
+  it("agrees with Start: it names someone exactly when Start is disabled while waiting", () => {
+    for (const players of [
+      [player("A", 0, true)],
+      [player("A", 0, false)],
+      [player("A", null, false)],
+      [player("A", 0, true), player("B", 1, false)],
+    ]) {
+      const lobby = { ...snapshot("waiting"), players };
+      expect(waitingFor(lobby) !== undefined).toBe(lobbyControls(lobby).startDisabled);
+    }
+  });
+});
+
+describe("characterLine (#580)", () => {
+  it("gives the character name, then its professions", () => {
+    expect(characterLine({ name: "Mhenlo", primary: "monk", secondary: "elementalist" })).toBe(
+      "Mhenlo · Monk / Elementalist",
+    );
+    expect(characterLine({ name: "Cynn", primary: "elementalist", secondary: null })).toBe(
+      "Cynn · Elementalist",
+    );
+  });
+
+  it("calls the house build the default loadout", () => {
+    expect(characterLine(null)).toBe(DEFAULT_LOADOUT);
   });
 });

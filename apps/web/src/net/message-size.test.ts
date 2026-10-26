@@ -341,7 +341,8 @@ describe("every message fits in one Trystero chunk (#403)", () => {
     expect(messageBytes(proof)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 
-  it("a lobby state: every seat taken, longest names", () => {
+  it("a lobby state: every seat taken, longest names, each bringing a character (#580)", () => {
+    const professions = Object.keys(PROFESSIONS);
     const state: WireLobbyState = {
       code: "ACDEFG",
       phase: "in-match",
@@ -354,6 +355,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         team: i % 3 === 0 ? null : i % 3 === 1 ? 0 : 1,
         ready: true,
         isHost: i === 0,
+        character: { name: NAME, primary: longest(professions), secondary: longest(professions) },
       })),
     };
     expect(messageBytes(state)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);

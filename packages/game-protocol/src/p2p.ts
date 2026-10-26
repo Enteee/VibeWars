@@ -390,6 +390,20 @@ export interface PeerLobbyJoin {
   readonly protocolVersion: string;
   /** As the player typed it, cut to `MAX_WIRE_TEXT`; the host sanitises it. */
   readonly name: string;
+  readonly character: WireLobbyCharacter | null;
+}
+
+/**
+ * The character a lobby member brings (#580), for the others to see:
+ * `null` is the house loadout. What it plays with is the match `hello`'s
+ * build; this is only its name and professions.
+ */
+export interface WireLobbyCharacter {
+  /** In a join, cut to `MAX_WIRE_TEXT`; the host sanitises it. */
+  readonly name: string;
+  /** A `ProfessionId`, which the host checks. */
+  readonly primary: string;
+  readonly secondary: string | null;
 }
 
 /** One lobby member, as `lobby-state` lists them. */
@@ -402,6 +416,7 @@ export interface WireLobbyPlayer {
   readonly ready: boolean;
   /** The host's own player: the one who picks the map and starts. */
   readonly isHost: boolean;
+  readonly character: WireLobbyCharacter | null;
 }
 
 /** Lobby host to every peer, on every change: the whole lobby, not a delta. */
@@ -1061,13 +1076,37 @@ export function parseRecharge(value: unknown): RechargeMessage | undefined {
   return slots === undefined ? undefined : { slots };
 }
 
+/** A lobby character; `null` is the house loadout, a missing one is malformed. */
+function parseLobbyCharacter(value: unknown): WireLobbyCharacter | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  const raw = fields(value);
+  return raw !== undefined &&
+    typeof raw.name === "string" &&
+    isString(raw.primary) &&
+    isNullableString(raw.secondary)
+    ? { name: raw.name.slice(0, MAX_WIRE_TEXT), primary: raw.primary, secondary: raw.secondary }
+    : undefined;
+}
+
 /** The `"lobby-join"` channel. */
 export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
   const raw = fields(value);
-  if (raw === undefined || !isString(raw.protocolVersion) || typeof raw.name !== "string") {
+  const character = parseLobbyCharacter(raw?.character);
+  if (
+    raw === undefined ||
+    !isString(raw.protocolVersion) ||
+    typeof raw.name !== "string" ||
+    character === undefined
+  ) {
     return undefined;
   }
-  return { protocolVersion: raw.protocolVersion, name: raw.name.slice(0, MAX_WIRE_TEXT) };
+  return {
+    protocolVersion: raw.protocolVersion,
+    name: raw.name.slice(0, MAX_WIRE_TEXT),
+    character,
+  };
 }
 
 function parseLobbyTeam(value: unknown): 0 | 1 | null | undefined {
@@ -1077,13 +1116,15 @@ function parseLobbyTeam(value: unknown): 0 | 1 | null | undefined {
 function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
   const raw = fields(value);
   const team = parseLobbyTeam(raw?.team);
+  const character = parseLobbyCharacter(raw?.character);
   return raw !== undefined &&
     isString(raw.id) &&
     isString(raw.name) &&
     team !== undefined &&
     typeof raw.ready === "boolean" &&
-    typeof raw.isHost === "boolean"
-    ? { id: raw.id, name: raw.name, team, ready: raw.ready, isHost: raw.isHost }
+    typeof raw.isHost === "boolean" &&
+    character !== undefined
+    ? { id: raw.id, name: raw.name, team, ready: raw.ready, isHost: raw.isHost, character }
     : undefined;
 }
 

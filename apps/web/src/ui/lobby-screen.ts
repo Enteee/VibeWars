@@ -1,11 +1,15 @@
 import { LOBBY_CODE_LENGTH } from "@vibewars/game-protocol";
-import type { LobbySnapshot } from "@vibewars/game-session";
+import type { LobbyCharacter, LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
-import { button, h, inlineConfirm, screenBar, type InlineConfirm } from "./kit.js";
+import type { RenderableActor } from "../render/arena-snapshot.js";
+import { createProfessionDot, professionLabel } from "./character-preview.js";
+import { button, h, inlineConfirm, screenBar, toast, type InlineConfirm } from "./kit.js";
 
 /**
- * The lobby screen (brief §21's lobby layout): the shareable code, both
- * team rosters, ready state, map, and the host's start button.
+ * The lobby screen (brief §21's lobby layout, #580): the bar holds Leave,
+ * the shareable code with Copy, the map and Start; below it, both team
+ * rosters with each player's character and ready state, and who Start is
+ * waiting for.
  */
 
 export interface LobbyScreenCallbacks {
@@ -60,6 +64,63 @@ export function lobbyControls(snapshot: LobbySnapshot): LobbyControls {
   };
 }
 
+/**
+ * Why Start is disabled while the lobby waits (#580), naming the players
+ * it waits for; `undefined` when it is not waiting on anyone.
+ */
+export function waitingFor(snapshot: LobbySnapshot): string | undefined {
+  if (snapshot.phase !== "waiting") {
+    return undefined;
+  }
+  const assigned = snapshot.players.filter((p) => p.team !== null);
+  if (assigned.length === 0) {
+    return "Waiting for someone to join a team";
+  }
+  const notReady = assigned.filter((p) => !p.ready).map((p) => p.name);
+  return notReady.length === 0 ? undefined : `Waiting for ${notReady.join(", ")} to ready up`;
+}
+
+/** "Mhenlo · Monk / Elementalist", or "Default loadout" for the house build (#580). */
+export function characterLine(character: LobbyCharacter | null): string {
+  if (character === null) {
+    return DEFAULT_LOADOUT;
+  }
+  const professions = professionLabel(character.primary, character.secondary ?? undefined);
+  return `${character.name} · ${professions}`;
+}
+
+export const DEFAULT_LOADOUT = "Default loadout";
+export const COPIED = "Copied";
+export const COPY_BY_HAND = "Could not copy: the code is selected, copy it by hand";
+
+/**
+ * Copy the code to the clipboard, and say so. A browser may refuse the
+ * clipboard, or not offer one off https: the code is then selected, so
+ * the player's own copy takes it, and the toast says to.
+ */
+async function copyCode(code: string, shown: HTMLElement): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(code);
+    toast(COPIED);
+  } catch {
+    const selection = window.getSelection();
+    selection?.selectAllChildren(shown);
+    toast(COPY_BY_HAND);
+  }
+}
+
+/** How the arena will paint `player` for whoever is looking: you, your side, or theirs. */
+function dotTeam(
+  player: LobbyPlayerSnapshot,
+  self: LobbyPlayerSnapshot | undefined,
+): RenderableActor["team"] {
+  if (player.sessionId === self?.sessionId) {
+    return "self";
+  }
+  // A spectator watches team 1 as its own side, so the two still differ.
+  return player.team === (self?.team ?? 0) ? "ally" : "enemy";
+}
+
 /** An arena the host may pick, and how big it plays (#444). */
 export interface LobbyMap {
   readonly id: string;
@@ -99,7 +160,41 @@ export function renderLobbyScreen(
   header.appendChild(h("span", "lobby-code-label", "Lobby code"));
   // The code is the one thing a host reads aloud, so it gets the most
   // visual weight on the screen.
-  header.appendChild(h("span", "lobby-code", displayLobbyCode(snapshot.code)));
+  const code = h("span", "lobby-code", displayLobbyCode(snapshot.code));
+  header.appendChild(code);
+  header.appendChild(
+    button("Copy", "lobby-copy", () => {
+      void copyCode(displayLobbyCode(snapshot.code), code);
+    }),
+  );
+
+  // Only the host may change the map, so everyone else sees it as a
+  // label rather than a control they would be refused on clicking.
+  let mapPart: HTMLElement;
+  if (snapshot.isHost && availableMaps.length > 1) {
+    mapPart = h("label", "lobby-map");
+    mapPart.appendChild(h("span", "field-label", "Map"));
+    const select = document.createElement("select");
+    for (const map of availableMaps) {
+      const option = document.createElement("option");
+      option.value = map.id;
+      option.textContent = mapLabel(map);
+      select.appendChild(option);
+    }
+    select.value = snapshot.mapId;
+    select.disabled = controls.mapDisabled;
+    select.addEventListener("change", () => {
+      callbacks.onSelectMap(select.value);
+    });
+    mapPart.appendChild(select);
+  } else {
+    const current = availableMaps.find((map) => map.id === snapshot.mapId);
+    mapPart = h(
+      "div",
+      "lobby-map",
+      `Map: ${current === undefined ? snapshot.mapId : mapLabel(current)}`,
+    );
+  }
 
   const readyLabel = self?.ready === true ? "Not ready" : "Ready";
   const readyButton = button(readyLabel, "", callbacks.onToggleReady);
@@ -138,67 +233,42 @@ export function renderLobbyScreen(
       },
     },
     title: [header],
+    status: [mapPart],
     actions,
   });
   panel.appendChild(bar);
-
-  // Only the host may change the map, so everyone else sees it as a
-  // label rather than a control they would be refused on clicking.
-  if (snapshot.isHost && availableMaps.length > 1) {
-    const mapRow = h("label", "lobby-map");
-    mapRow.appendChild(h("span", "field-label", "Map"));
-    const select = document.createElement("select");
-    for (const map of availableMaps) {
-      const option = document.createElement("option");
-      option.value = map.id;
-      option.textContent = mapLabel(map);
-      select.appendChild(option);
-    }
-    select.value = snapshot.mapId;
-    select.disabled = controls.mapDisabled;
-    select.addEventListener("change", () => {
-      callbacks.onSelectMap(select.value);
-    });
-    mapRow.appendChild(select);
-    panel.appendChild(mapRow);
-  } else {
-    const current = availableMaps.find((map) => map.id === snapshot.mapId);
-    panel.appendChild(
-      h("div", "lobby-map", `Map: ${current === undefined ? snapshot.mapId : mapLabel(current)}`),
-    );
-  }
 
   if (notice !== undefined) {
     panel.appendChild(h("div", "screen-problem", notice));
   }
 
+  // Everyone sees it, not only the host: a guest who is the one being
+  // waited for should know.
+  const waiting = waitingFor(snapshot);
+  if (waiting !== undefined) {
+    panel.appendChild(h("div", "screen-info lobby-waiting", waiting));
+  }
+
   const teams = h("div", "lobby-teams");
   for (const team of SELECTABLE_TEAMS) {
     const column = h("div", "lobby-team");
-    column.appendChild(h("h3", "lobby-team-title", `Team ${String(team + 1)}`));
+    const title = h("div", "lobby-team-header");
+    title.appendChild(h("h3", "lobby-team-title", `Team ${String(team + 1)}`));
+    const join = button("Join", "lobby-join", () => {
+      callbacks.onChooseTeam(team);
+    });
+    join.setAttribute("aria-label", `Join team ${String(team + 1)}`);
+    join.disabled = controls.teamsDisabled || self?.team === team;
+    title.appendChild(join);
+    column.appendChild(title);
 
     const members = snapshot.players.filter((p) => p.team === team);
     if (members.length === 0) {
       column.appendChild(h("div", "lobby-slot-empty", "Empty"));
     }
     for (const member of members) {
-      const row = h("div", "lobby-slot");
-      row.appendChild(
-        h(
-          "span",
-          member.ready ? "lobby-player is-ready" : "lobby-player",
-          `${member.name}${member.isHost ? " (host)" : ""}`,
-        ),
-      );
-      row.appendChild(h("span", "lobby-ready", member.ready ? "Ready" : "…"));
-      column.appendChild(row);
+      column.appendChild(playerRow(member, self));
     }
-
-    const join = button(`Join team ${String(team + 1)}`, "", () => {
-      callbacks.onChooseTeam(team);
-    });
-    join.disabled = controls.teamsDisabled;
-    column.appendChild(join);
     teams.appendChild(column);
   }
   panel.appendChild(teams);
@@ -219,4 +289,34 @@ export function renderLobbyScreen(
   if (wasAsking && snapshot.isHost && othersHere && snapshot.phase === "waiting") {
     askToClose();
   }
+}
+
+/** One player on a team: dot, name, the character they bring, and a ready pill. */
+function playerRow(
+  member: LobbyPlayerSnapshot,
+  self: LobbyPlayerSnapshot | undefined,
+): HTMLElement {
+  const row = h("div", "lobby-slot");
+  const { character } = member;
+  row.appendChild(
+    character === null
+      ? h("span", "character-dot is-house", "?")
+      : createProfessionDot(
+          character.primary,
+          character.secondary ?? undefined,
+          dotTeam(member, self),
+        ),
+  );
+  const text = h("span", "lobby-slot-text");
+  text.appendChild(h("span", "lobby-player", `${member.name}${member.isHost ? " (host)" : ""}`));
+  text.appendChild(h("span", "lobby-character", characterLine(character)));
+  row.appendChild(text);
+  row.appendChild(
+    h(
+      "span",
+      member.ready ? "lobby-ready is-ready" : "lobby-ready",
+      member.ready ? "Ready" : "Not ready",
+    ),
+  );
+  return row;
 }

@@ -253,7 +253,11 @@ const recharge: RechargeMessage = {
 };
 
 /** Each parser, with the one fixture it must round-trip. */
-const lobbyJoin: PeerLobbyJoin = { protocolVersion: PROTOCOL_VERSION, name: "Mhenlo" };
+const lobbyJoin: PeerLobbyJoin = {
+  protocolVersion: PROTOCOL_VERSION,
+  name: "Mhenlo",
+  character: { name: "Mhenlo Healer", primary: "monk", secondary: "elementalist" },
+};
 
 const lobbyState: WireLobbyState = {
   code: "ACDEFG",
@@ -262,8 +266,15 @@ const lobbyState: WireLobbyState = {
   hostId: "peer-1",
   matchId: "match-2",
   players: [
-    { id: "peer-1/local", name: "Host", team: 0, ready: true, isHost: true },
-    { id: "peer-3", name: "Watcher", team: null, ready: false, isHost: false },
+    {
+      id: "peer-1/local",
+      name: "Host",
+      team: 0,
+      ready: true,
+      isHost: true,
+      character: { name: "Cynn", primary: "elementalist", secondary: null },
+    },
+    { id: "peer-3", name: "Watcher", team: null, ready: false, isHost: false, character: null },
   ],
 };
 
@@ -291,6 +302,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["calls", parseWireCalls, calls],
   ["calls with none", parseWireCalls, { target: null, pings: [] }],
   ["lobby-join", parsePeerLobbyJoin, lobbyJoin],
+  ["lobby-join on the house loadout", parsePeerLobbyJoin, { ...lobbyJoin, character: null }],
   ["lobby-state", parseWireLobbyState, lobbyState],
   ["waiting lobby-state", parseWireLobbyState, { ...lobbyState, phase: "waiting", matchId: null }],
   ["choose-team", parseWireLobbyCommand, { kind: "choose-team", team: 1 }],
@@ -611,6 +623,21 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { slots: [{ slot: 0, remainingSeconds: NaN, totalSeconds: 5 }] },
   ],
   ["lobby-join without a name", parsePeerLobbyJoin, { protocolVersion: PROTOCOL_VERSION }],
+  [
+    "lobby-join without a character",
+    parsePeerLobbyJoin,
+    { protocolVersion: PROTOCOL_VERSION, name: "Mhenlo" },
+  ],
+  [
+    "lobby-join with a character of no primary",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, character: { name: "Mhenlo Healer", secondary: null } },
+  ],
+  [
+    "lobby-state with a player of no character",
+    parseWireLobbyState,
+    { ...lobbyState, players: [{ ...lobbyState.players[1], character: undefined }] },
+  ],
   ["lobby-state of an unknown phase", parseWireLobbyState, { ...lobbyState, phase: "over" }],
   ["lobby-state without a host", parseWireLobbyState, { ...lobbyState, hostId: undefined }],
   ["lobby-state with a long code", parseWireLobbyState, { ...lobbyState, code: long }],
@@ -699,6 +726,14 @@ describe("the P2P validators (#82)", () => {
   it("cut a hello's long name to MAX_WIRE_TEXT: shortening it is the host's job", () => {
     const named = parsePeerHello({ ...hello, name: "x".repeat(5000) });
     expect(named?.name).toBe("x".repeat(MAX_WIRE_TEXT));
+  });
+
+  it("cut a lobby-join's long character name to MAX_WIRE_TEXT, like its own (#580)", () => {
+    const named = parsePeerLobbyJoin({
+      ...lobbyJoin,
+      character: { name: "x".repeat(5000), primary: "monk", secondary: null },
+    });
+    expect(named?.character?.name).toBe("x".repeat(MAX_WIRE_TEXT));
   });
 
   it("read a hello's version even when the rest of it is malformed", () => {
