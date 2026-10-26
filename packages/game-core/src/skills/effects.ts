@@ -1,3 +1,4 @@
+import { DIVINE_FAVOR_ATTRIBUTE, divineFavorBonusHeal } from "../primary-attributes.js";
 import { getSkill } from "./catalog.js";
 import { mitigate, spellDamage } from "./damage.js";
 import { resolveMagnitude } from "./scaling.js";
@@ -319,9 +320,24 @@ export interface SkillResolution {
  */
 export function applySkillEffects(resolution: SkillResolution): CombatEvent[] {
   const { skill, caster, targets, rng, rules } = resolution;
-  return skill.effects.flatMap((effect) =>
+  const events = skill.effects.flatMap((effect) =>
     effectActsOnCaster(effect)
       ? applyEffect(effect, { caster, target: targets[0], rng, rules })
       : targets.flatMap((target) => applyEffect(effect, { caster, target, rng, rules })),
   );
+  // Divine Favor (#529): once a cast, on the primary target only, after
+  // the spell's own effects, through the same heal path.
+  const primary = targets[0];
+  if (primary !== undefined) {
+    applyHeal(
+      primary,
+      divineFavorBonusHeal(
+        caster.attributeRanks.get(DIVINE_FAVOR_ATTRIBUTE) ?? 0,
+        skill,
+        primary.team === caster.team,
+      ),
+      events,
+    );
+  }
+  return events;
 }
