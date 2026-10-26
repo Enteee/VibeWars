@@ -426,9 +426,9 @@ describe("the track checker budgets the audio thread (#508)", () => {
   });
 
   it("counts a tail that still sounds when the next voice begins", async () => {
-    const notes = 'note("c3 d3 e3 f3").s("sine").gain(5)';
+    const notes = 'note("c3 d3 e3 f3").s("sine").gain(3)';
     expect(await problemsOf(`${notes}.release(4)`)).toEqual([
-      "dsp level 0: summed gain 6.00 is over 2, it will clip",
+      "dsp level 0: summed gain 3.60 is over 2, it will clip",
     ]);
     expect(await problemsOf(`${notes}.release(.01)`)).toEqual([]);
   });
