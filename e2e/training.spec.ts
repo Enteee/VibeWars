@@ -911,9 +911,7 @@ test("(32) the casting slot fills as the cast goes, hovering it shows its toolti
   expect(await fill()).toBe(0);
 });
 
-test("(34) Backbreaker on the melee dummy knocks it down, as the log says (#545)", async ({
-  page,
-}) => {
+test("(34) Backbreaker lays the melee dummy flat until it rises (#545)", async ({ page }) => {
   await page.setViewportSize(WIDE);
   await page.goto("./");
   await page.getByRole("button", { name: "new character" }).click();
@@ -933,11 +931,25 @@ test("(34) Backbreaker on the melee dummy knocks it down, as the log says (#545)
   await page.mouse.dblclick(dummy.x, dummy.y, { button: "right" });
   // Backbreaker costs 9 adrenaline, one strike a blow: about 16 s of
   // swinging, in game time, which runs slower than wall time under load (#327).
-  await expect(page.locator(".training-adrenaline")).toContainText(/adrenaline (9|1\d)/, {
+  await expect(page.locator(".training-adrenaline")).toContainText(/adrenaline ([9]|[1-9]\d)/, {
     timeout: 40_000,
   });
+
+  // One pixel inside the standing disc, across the dummy's facing (it
+  // faces the player, along x): body colour while it stands, floor once
+  // it lies flattened along its facing. Read where the camera is now.
+  const probe = (await trainingView(page, canvas)).onPage({ x: 136, y: 210 + 0.8 * 14 });
+  const pixel = (): Promise<Buffer> =>
+    page.screenshot({
+      clip: { x: Math.round(probe.x), y: Math.round(probe.y), width: 1, height: 1 },
+    });
+  const standing = await pixel();
+
   await page.keyboard.press(skillKey(0));
   await expect(page.locator(".training-log")).toContainText(
     /Backbreaker \(.+\) knocks down Melee dummy \(60 armor\) \(4 s\)/,
   );
+  expect(await pixel()).not.toEqual(standing);
+  // Up again after its 4 s, drawn from the snapshot alone.
+  await expect.poll(pixel, { timeout: 15_000 }).toEqual(standing);
 });
