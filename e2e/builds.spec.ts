@@ -336,7 +336,7 @@ test("a member opens in the build editor and comes back to the unsaved team (#57
   const before = await alphaCells.count();
   await page.getByRole("button", { name: "Alpha", exact: true }).click();
   await expect(page.locator("input.editor-name")).toHaveValue("Alpha");
-  await page.locator(".skill-box").first().click();
+  await page.locator(".skill-box").first().locator(".skill-box-equip").click();
   await page.getByRole("button", { name: "save", exact: true }).click();
 
   // The team as it was left, still unsaved, with Alpha's new bar.
