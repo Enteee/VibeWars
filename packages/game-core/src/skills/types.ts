@@ -271,6 +271,11 @@ export interface Combatant {
    */
   knockdownRemaining: number;
   /**
+   * Match times Soul Reaping last triggered (#530), at most the 3 that can
+   * still count against the next. Kept across a respawn.
+   */
+  soulReapingTriggers: readonly number[];
+  /**
    * Weapon, armor and rune effects, already resolved (ADR-0012).
    *
    * Readonly, and resolved once before this combatant was built. Gear is
