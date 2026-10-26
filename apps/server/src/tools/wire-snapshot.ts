@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { Metadata } from "@colyseus/schema";
+import { WIRE_STATUS_IDS } from "@vibewars/game-session";
 import * as prettier from "prettier";
 import ts from "typescript";
 
@@ -72,6 +73,9 @@ export async function generateWireFiles(): Promise<WireFiles> {
         exportedType(checker, moduleOf(program, wire), "ServerMessage"),
       ),
     },
+    // A snapshot names a status by its index here (#632), so another
+    // table must be another version.
+    statusIds: WIRE_STATUS_IDS,
     // The version cannot hash itself.
     constants: describeConstants(checker, protocol, ["PROTOCOL_VERSION"]),
     types: sortKeys({

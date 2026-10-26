@@ -5,7 +5,13 @@ import { resolveMagnitude } from "./scaling.js";
 import { getStatusDefinition, scaledStatusDuration, type StatusId } from "./status.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
-import type { Combatant, Skill, SkillContext, SkillEffect } from "./types.js";
+import {
+  isSpell,
+  type Combatant,
+  type Skill,
+  type SkillContext,
+  type SkillEffect,
+} from "./types.js";
 
 /**
  * Effect application (brief §6's composable effect list).
@@ -168,6 +174,41 @@ function knockDown(target: Combatant, durationSeconds: number): void {
   target.attack = undefined;
 }
 
+/**
+ * Interrupt the cast `target` has in progress: the one path every
+ * interrupt takes, an interrupt effect's and daze's (#546). As in GW1,
+ * the interrupted skill recharges as if it had been used: its cost is
+ * spent and its recharge starts (ADR-0029). Returns whether there was a
+ * cast to interrupt.
+ */
+function interruptCast(target: Combatant, events: CombatEvent[]): boolean {
+  const cancelled = target.cast.cancelCast();
+  if (cancelled === undefined) {
+    return false;
+  }
+  const skill = getSkill(cancelled.skillId);
+  if (skill !== undefined) {
+    target.cast.startRecharge(skill.id, skill.rechargeSeconds);
+  }
+  events.push({ kind: "interrupted", targetId: target.id, skillId: cancelled.skillId });
+  return true;
+}
+
+/**
+ * Daze's interrupt (#546, GW1): a spell `target` is casting is
+ * interrupted. A signet, a shout, an attack skill or no cast at all is
+ * left alone, and nothing is said: this is a side effect, not an
+ * interrupt that can miss. Called as a status that `interruptsSpells` is
+ * applied, and as an attack lands on its bearer.
+ */
+export function interruptIfCastingSpell(target: Combatant, events: CombatEvent[]): void {
+  const cast = target.cast.activeCast;
+  const skill = cast === undefined ? undefined : getSkill(cast.skillId);
+  if (skill !== undefined && isSpell(skill.type)) {
+    interruptCast(target, events);
+  }
+}
+
 export function applyEffect(effect: SkillEffect, context: SkillContext): CombatEvent[] {
   const events: CombatEvent[] = [];
   const { caster, target } = context;
@@ -227,6 +268,10 @@ export function applyEffect(effect: SkillEffect, context: SkillContext): CombatE
         statusId: effect.statusId,
         durationSeconds,
       });
+      // Applying Dazed interrupts a spell, even on a target already dazed.
+      if (getStatusDefinition(effect.statusId).interruptsSpells) {
+        interruptIfCastingSpell(target, events);
+      }
       return events;
     }
 
@@ -244,22 +289,13 @@ export function applyEffect(effect: SkillEffect, context: SkillContext): CombatE
       if (target === undefined || target.dead) {
         return events;
       }
-      const cancelled = target.cast.cancelCast();
-      if (cancelled === undefined) {
+      if (!interruptCast(target, events)) {
         // Nothing was being cast: the interrupt is simply wasted. Emitted
         // explicitly so a combat log can show the miss — landing an
         // interrupt is a timing skill, and silently swallowing failures
         // would hide exactly the feedback that teaches it.
         events.push({ kind: "interrupt-missed", targetId: target.id });
-        return events;
       }
-      // As in GW1, the interrupted skill recharges as if it had been used:
-      // its cost is spent and its recharge starts (ADR-0029).
-      const skill = getSkill(cancelled.skillId);
-      if (skill !== undefined) {
-        target.cast.startRecharge(skill.id, skill.rechargeSeconds);
-      }
-      events.push({ kind: "interrupted", targetId: target.id, skillId: cancelled.skillId });
       return events;
     }
 

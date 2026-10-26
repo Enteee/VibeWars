@@ -60,7 +60,7 @@ describe("interrupt mechanic", () => {
     expect(victim.cast.isCasting).toBe(true);
 
     // Ranger interrupts mid-cast.
-    const events = applyEffects(getSkill("ranger.broad-head-arrow")?.effects ?? [], {
+    const events = applyEffects(getSkill("warrior.distracting-blow")?.effects ?? [], {
       caster: ranger,
       target: victim,
       rng: createRng(1),
@@ -85,7 +85,7 @@ describe("interrupt mechanic", () => {
     const ranger = makeCombatant({ id: "ranger", team: 0 });
     const victim = makeCombatant({ id: "victim", team: 1 });
 
-    const events = applyEffects(getSkill("ranger.broad-head-arrow")?.effects ?? [], {
+    const events = applyEffects(getSkill("warrior.distracting-blow")?.effects ?? [], {
       caster: ranger,
       target: victim,
       rng: createRng(1),
@@ -120,7 +120,7 @@ describe("interrupt mechanic", () => {
     }
     expect(victim.statuses.has("regeneration")).toBe(true);
 
-    const events = applyEffects(getSkill("ranger.broad-head-arrow")?.effects ?? [], {
+    const events = applyEffects(getSkill("warrior.distracting-blow")?.effects ?? [], {
       caster: ranger,
       target: victim,
       rng: createRng(1),
@@ -140,7 +140,7 @@ describe("interrupt mechanic", () => {
     const energyAfterPaying = victim.energy;
     expect(energyAfterPaying).toBe(45);
 
-    applyEffects(getSkill("ranger.broad-head-arrow")?.effects ?? [], {
+    applyEffects(getSkill("warrior.distracting-blow")?.effects ?? [], {
       caster: ranger,
       target: victim,
       rng: createRng(1),
@@ -270,5 +270,59 @@ describe("an interrupted skill (ADR-0029)", () => {
     expect(victim.cast.rechargeRemaining.get("ranger.troll-unguent")).toBe(
       getSkill("ranger.troll-unguent")?.rechargeSeconds,
     );
+  });
+});
+
+describe("applying Dazed (#546)", () => {
+  const daze = (victim: Combatant) =>
+    applyEffects(getSkill("ranger.broad-head-arrow")?.effects ?? [], {
+      caster: makeCombatant({ id: "ranger", team: 0 }),
+      target: victim,
+      rng: createRng(1),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
+    });
+
+  it("interrupts a spell being cast: Broad Head Arrow shuts a spell-caster down", () => {
+    const victim = makeCombatant({ id: "victim", team: 1 });
+    cast(victim, "necromancer.faintheartedness", undefined);
+    const events = daze(victim);
+    expect(events.map((event) => event.kind)).toEqual(["status-applied", "interrupted"]);
+    expect(events).toContainEqual({
+      kind: "interrupted",
+      targetId: "victim",
+      skillId: "necromancer.faintheartedness",
+    });
+    expect(victim.cast.isCasting).toBe(false);
+    expect(victim.cast.rechargeRemaining.has("necromancer.faintheartedness")).toBe(true);
+  });
+
+  it("interrupts again a target already dazed", () => {
+    const victim = makeCombatant({ id: "victim", team: 1 });
+    victim.statuses.apply("dazed", 10, "ranger");
+    cast(victim, "monk.orison-of-healing", victim);
+    expect(daze(victim)).toContainEqual({
+      kind: "interrupted",
+      targetId: "victim",
+      skillId: "monk.orison-of-healing",
+    });
+    expect(victim.cast.isCasting).toBe(false);
+  });
+
+  it("leaves a signet or a non-spell skill alone, and says nothing about it", () => {
+    for (const skillId of ["warrior.healing-signet", "ranger.troll-unguent"]) {
+      const victim = makeCombatant({ id: "victim", team: 1 });
+      cast(victim, skillId, victim);
+      expect(
+        daze(victim).map((event) => event.kind),
+        skillId,
+      ).toEqual(["status-applied"]);
+      expect(victim.cast.isCasting, skillId).toBe(true);
+      expect(victim.statuses.has("dazed"), skillId).toBe(true);
+    }
+  });
+
+  it("dazes a target that is not casting, with no wasted interrupt", () => {
+    const victim = makeCombatant({ id: "victim", team: 1 });
+    expect(daze(victim).map((event) => event.kind)).toEqual(["status-applied"]);
   });
 });

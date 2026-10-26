@@ -1,5 +1,5 @@
 import { DEFAULT_MATCH_RULES } from "@vibewars/game-core";
-import { MAX_WIRE_SLOTS, type WirePlayer } from "@vibewars/game-protocol";
+import { MAX_WIRE_SLOTS, MAX_WIRE_STATUS_INDEX, type WirePlayer } from "@vibewars/game-protocol";
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import {
@@ -12,7 +12,7 @@ import type { PlayerSnapshot } from "./match-connection.js";
 import { MATCH_FULL_MESSAGE, MATCH_OVER_MESSAGE, RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { hello, self, settle, startMatch, until } from "./match-harness.test-support.js";
 import { createMemoryNetwork } from "./memory-transport.js";
-import { playerSnapshot } from "./wire.js";
+import { WIRE_STATUS_IDS, playerSnapshot, statusFromWire, statusWireIndex } from "./wire.js";
 
 /**
  * What a P2P client believes, and from whom (#375): only the host, only
@@ -76,6 +76,38 @@ describe("connectMatch", () => {
     }
     await settle();
     expect(connection.getSnapshot()).toEqual(before);
+  });
+
+  it("names statuses by their wire index, and drops a snapshot with an index past the table (#632)", async () => {
+    const match = startMatch();
+    const { connection, transport } = await match.join();
+    await match.step(0.05);
+    const before = connection.getSnapshot();
+    const send = (tick: number, statuses: number[]): void => {
+      match.hostTransport.send(
+        "snapshot",
+        {
+          tick,
+          elapsedSeconds: tick,
+          score: [0, 0],
+          phase: "active",
+          winningTeam: null,
+          endReason: null,
+          players: [{ ...WIRE_PLAYER, statuses }],
+          projectiles: [],
+        },
+        transport.selfId,
+      );
+    };
+    send(10_000, [statusWireIndex("burning"), WIRE_STATUS_IDS.length]);
+    await settle();
+    expect(connection.getSnapshot()).toEqual(before);
+
+    send(10_001, [statusWireIndex("burning"), statusWireIndex("weakness")]);
+    await settle();
+    expect(connection.getSnapshot().players.map((player) => player.statuses)).toEqual([
+      ["burning", "weakness"],
+    ]);
   });
 
   it("is refused for another protocol version, with the host's reason", async () => {
@@ -237,41 +269,62 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
 
   it("convert field for field, null to undefined", () => {
     const wire: WirePlayer = {
-      id: "p1",
-      name: "Mhenlo",
-      team: 1,
-      x: 1,
-      y: 2,
-      facing: 0.5,
-      targetId: null,
-      attackTargetId: "p2",
-      walking: true,
-      health: 400,
-      maxHealth: 480,
-      energy: 10,
-      maxEnergy: 30,
-      adrenaline: 2,
-      armor: 60,
-      weaponId: "staff",
-      offhandId: null,
-      primaryProfession: "monk",
-      secondaryProfession: "no-such-profession",
-      dead: false,
-      castingSkillId: null,
-      castRemaining: 0,
-      castTotal: 0,
-      statuses: ["burning"],
+      ...WIRE_PLAYER,
+      statuses: [statusWireIndex("burning")],
     };
     const snapshot = playerSnapshot(wire);
     for (const [wireKey, snapshotKey] of Object.entries(FIELDS)) {
       const sent = wire[wireKey as keyof WirePlayer];
-      const got = snapshot[snapshotKey];
-      // A profession this client does not know draws as none, as the server's does.
-      const expected = wireKey === "secondaryProfession" ? undefined : (sent ?? undefined);
+      const got = snapshot?.[snapshotKey];
+      // A profession this client does not know draws as none, as the server's
+      // does; a status is its index on the wire (#632).
+      const expected =
+        wireKey === "secondaryProfession"
+          ? undefined
+          : wireKey === "statuses"
+            ? ["burning"]
+            : (sent ?? undefined);
       expect(got, wireKey).toEqual(expected);
     }
   });
+
+  it("map every status to its index and back (#632)", () => {
+    expect(WIRE_STATUS_IDS.length).toBeLessThanOrEqual(MAX_WIRE_STATUS_INDEX + 1);
+    for (const id of WIRE_STATUS_IDS) {
+      expect(statusFromWire(statusWireIndex(id))).toBe(id);
+    }
+    expect(statusFromWire(WIRE_STATUS_IDS.length)).toBeUndefined();
+    expect(playerSnapshot({ ...WIRE_PLAYER, statuses: [WIRE_STATUS_IDS.length] })).toBeUndefined();
+  });
 });
+
+/** A valid player, as a host sends it. */
+const WIRE_PLAYER: WirePlayer = {
+  id: "p1",
+  name: "Mhenlo",
+  team: 1,
+  x: 1,
+  y: 2,
+  facing: 0.5,
+  targetId: null,
+  attackTargetId: "p2",
+  walking: true,
+  health: 400,
+  maxHealth: 480,
+  energy: 10,
+  maxEnergy: 30,
+  adrenaline: 2,
+  armor: 60,
+  weaponId: "staff",
+  offhandId: null,
+  primaryProfession: "monk",
+  secondaryProfession: "no-such-profession",
+  dead: false,
+  castingSkillId: null,
+  castRemaining: 0,
+  castTotal: 0,
+  statuses: [],
+};
 
 /**
  * A guest whose connection to the host drops (#515): the host holds the
