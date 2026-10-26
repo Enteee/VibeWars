@@ -13,6 +13,7 @@ import {
   isAttackingTarget,
   muteButtonState,
   skillSlotHtml,
+  castRowSkill,
   targetCast,
   targetHealthLabel,
   targetHealthPercent,
@@ -113,6 +114,23 @@ describe("targetCast (#484)", () => {
         player({ castingSkillId: "ranger.troll-unguent", castRemaining: 0, castTotal: 0 }),
       ),
     ).toBeUndefined();
+  });
+});
+
+describe("castRowSkill (#727)", () => {
+  it("gives the skill's icon, type badge and name", () => {
+    const skill = castRowSkill("ranger.troll-unguent");
+    expect(skill.icon).toBe("/icons/skill/ranger.troll-unguent.svg");
+    expect(skill.badgeHtml).toContain("skill-type-badge");
+    expect(skill.name).toBe("Troll Unguent");
+  });
+
+  it("shows an unknown skill on the bare plate, with no badge, by its id", () => {
+    expect(castRowSkill("mystery.skill")).toEqual({
+      icon: "/icons/skill/unknown.svg",
+      badgeHtml: "",
+      name: "mystery.skill",
+    });
   });
 });
 

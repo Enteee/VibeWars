@@ -169,6 +169,37 @@ test("spending attribute points updates the remaining budget", async ({ page }) 
   await expect(budget).not.toHaveText(before);
 });
 
+/** Whether `icon` loaded a picture, not a broken image. */
+async function loaded(icon: Locator): Promise<boolean> {
+  return icon.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0);
+}
+
+test("the library, the bar and the tooltip show each skill's icon (#727)", async ({ page }) => {
+  await newCharacter(page);
+  await chooseProfession(page, "primary", "elementalist");
+  const box = page.locator(".skill-box", { hasText: "Armor of Earth" });
+  const rowIcon = box.locator(".skill-box-card img.skill-icon");
+  await expect(rowIcon).toHaveAttribute(
+    "src",
+    /\/icons\/skill\/elementalist\.armor-of-earth\.svg$/,
+  );
+  await expect(rowIcon).toHaveAttribute("width", "24");
+  expect(await loaded(rowIcon)).toBe(true);
+
+  await box.locator(".skill-box-equip").click();
+  const slots = page.locator(".skill-slot");
+  const slotIcon = slots.first().locator("img.skill-icon");
+  await expect(slotIcon).toHaveAttribute("src", /elementalist\.armor-of-earth\.svg$/);
+  await expect(slotIcon).toHaveAttribute("width", "48");
+  expect(await loaded(slotIcon)).toBe(true);
+  await expect(slots.nth(1).locator("img.skill-icon")).toHaveCount(0);
+
+  await box.hover();
+  const tipIcon = page.locator(".skill-tip .tip-header img.skill-icon");
+  await expect(tipIcon).toHaveAttribute("src", /elementalist\.armor-of-earth\.svg$/);
+  await expect(page.locator(".skill-tip .tip-title")).toHaveText("Armor of Earth");
+});
+
 test("12/12/3 spends all 200 points, GW1's split (#470)", async ({ page }) => {
   await newCharacter(page);
 
