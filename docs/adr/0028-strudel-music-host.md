@@ -291,8 +291,8 @@ otherwise they are printed marked unvalidated and nobody tunes from them.
 It never fails on bad numbers, only on a crash. A headless runner is not a
 phone.
 
-**First numbers, 2026-10-26** (workflow run 40267554400 on `main`, after
-#612: Firefox only ran once it had `libpulse`). Both browsers kept the
+**First numbers, 2026-10-26** (workflow run 40267554400 on `main`, after the
+fix in #612: Firefox only ran once it had `libpulse`). Both browsers kept the
 scheduler on time: 600 ticks in 60 s, no skipped music, at every load
 except CPU 6x (Chromium: 5 late ticks on the editor, 26 in a match, max tick
 work 190 and 284 ms; no skipped music). Underruns did **not** validate in either browser, because the baseline
