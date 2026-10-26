@@ -121,6 +121,12 @@ test("a wrong code finds no lobby after the 10 s wait, and says so once", async 
     const problem = guest.locator(".screen-connection-problem");
     await expect(problem).toHaveText(NO_ANSWER, { timeout: 15_000 });
     await expect(problem).toHaveCount(1);
+    // In the Play column, right above the button to try again with (#579).
+    await expect(
+      guest.locator(".menu-play .screen-connection-problem + .menu-row").getByRole("button", {
+        name: "Host a lobby",
+      }),
+    ).toBeVisible();
     // Back on the menu, but the error must not be reset to "ready".
     await expect(guest.locator("#status")).toHaveText("could not join");
     await expect(host.locator(".screen-lobby")).not.toContainText("Guest");

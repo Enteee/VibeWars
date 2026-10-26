@@ -1,9 +1,15 @@
 import { SOURCE_URL } from "../source.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
+import { validateBuild } from "../storage/build-validation.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
-import { createCharacterDot, equippedCount, professionLabel } from "./character-preview.js";
-import { button, h, listenForPaste, screenBar } from "./kit.js";
+import {
+  createCharacterDot,
+  equippedCount,
+  miniSkillBar,
+  professionLabel,
+} from "./character-preview.js";
+import { button, emptyState, h, listenForPaste, screenBar, selectableRow } from "./kit.js";
 
 /** What every peer in a lobby learns about you (#541): WebRTC connects you directly. */
 export const PEER_IP_NOTICE =
@@ -82,7 +88,18 @@ export function savePlayerName(name: string): void {
   }
 }
 
-/** Render the main menu. */
+/** "Elementalist / Monk · 5/8 skills", and says so when the build is illegal. */
+export function rosterSubtitle(character: StoredCharacter): string {
+  const professions = professionLabel(character.primaryProfession, character.secondaryProfession);
+  const skills = `${String(equippedCount(character))}/${String(character.skillBar.length)} skills`;
+  const invalid = validateBuild(character).length > 0 ? " · invalid build" : "";
+  return `${professions} · ${skills}${invalid}`;
+}
+
+/**
+ * Render the main menu (#579): your characters on the left, Play on the
+ * right, and Teams, Options and Music in the screen bar.
+ */
 export function renderMenu(
   root: HTMLElement,
   callbacks: MenuCallbacks,
@@ -95,7 +112,14 @@ export function renderMenu(
 
   // No way back from here, so Esc has nothing to do but cancel (#578).
   panel.appendChild(
-    screenBar({ title: [h("h1", "screen-title", "VibeWars")], actions: [] }).element,
+    screenBar({
+      title: [h("h1", "screen-title", "VibeWars")],
+      actions: [
+        button("Teams", "", callbacks.onManageTeams),
+        button("Options", "", callbacks.onOptions),
+        button("Music", "", callbacks.onMusic),
+      ],
+    }).element,
   );
   const subtitle = h(
     "p",
@@ -110,28 +134,16 @@ export function renderMenu(
   source.setAttribute("rel", "noopener");
   subtitle.appendChild(source);
   panel.appendChild(subtitle);
-  if (connectionNotice !== undefined) {
-    panel.appendChild(h("div", "screen-problem screen-connection-problem", connectionNotice));
-  }
 
-  const nameField = h("label", "field");
-  nameField.appendChild(h("span", "field-label", "Your name"));
-  const nameInput = document.createElement("input");
-  nameInput.className = "field-input";
-  nameInput.placeholder = "Player";
-  nameInput.value = loadPlayerName();
-  nameInput.addEventListener("input", () => {
-    savePlayerName(nameInput.value);
-  });
-  nameField.appendChild(nameInput);
-  panel.appendChild(nameField);
+  const columns = h("div", "menu-columns");
+  panel.appendChild(columns);
 
   // --- your characters --------------------------------------------------
   // The roster lives here rather than behind a "characters" button: it is
   // the thing you pick before every match, so hiding it one click away
   // made the build editor feel optional when it is not.
-  const roster = h("div", "roster");
-  roster.appendChild(h("span", "field-label", "Play as"));
+  const roster = h("section", "roster");
+  roster.appendChild(h("h2", "menu-column-title", "Play as"));
 
   for (const problem of characterProblems) {
     roster.appendChild(h("div", "screen-problem", problem));
@@ -141,78 +153,90 @@ export function renderMenu(
   const activeExists = characters.some((c) => c.id === active);
 
   const list = h("div", "roster-list");
+  /** Choose who to play, and keep the focus on the row a key chose. */
+  const choose = (id: string | undefined): void => {
+    saveActiveCharacterId(id);
+    callbacks.onSelectCharacter(id);
+    root.querySelector<HTMLElement>(".roster .selectable-row.is-selected button")?.focus();
+  };
 
   // The house loadout is a roster entry too, so "what am I playing?" has
   // exactly one answer visible in one place.
-  const houseRow = h("div", "roster-row");
-  if (!activeExists) {
-    houseRow.classList.add("is-active");
-  }
-  const houseDot = h("span", "character-dot is-house", "?");
-  houseRow.appendChild(houseDot);
-  const houseText = h("div", "roster-text");
-  houseText.appendChild(h("span", "roster-name", "Default loadout"));
-  houseText.appendChild(h("span", "roster-sub", "Eight ready-made skills, no build needed"));
-  houseRow.appendChild(houseText);
-  houseRow.addEventListener("click", () => {
-    saveActiveCharacterId(undefined);
-    callbacks.onSelectCharacter(undefined);
-  });
-  list.appendChild(houseRow);
+  list.appendChild(
+    selectableRow({
+      dot: h("span", "character-dot is-house", "?"),
+      name: "Default loadout",
+      subtitle: "Eight ready-made skills, no build needed",
+      selected: !activeExists,
+      onSelect: () => {
+        choose(undefined);
+      },
+    }),
+  );
 
   for (const character of characters) {
-    const row = h("div", "roster-row");
-    if (character.id === active) {
-      row.classList.add("is-active");
-    }
-    row.appendChild(createCharacterDot(character));
-
-    const text = h("div", "roster-text");
-    text.appendChild(h("span", "roster-name", character.name));
-    const equipped = equippedCount(character);
-    text.appendChild(
-      h(
-        "span",
-        "roster-sub",
-        `${professionLabel(character.primaryProfession, character.secondaryProfession)} · ` +
-          `${String(equipped)}/${String(character.skillBar.length)} skills`,
-      ),
+    list.appendChild(
+      selectableRow({
+        dot: createCharacterDot(character),
+        name: character.name,
+        subtitle: rosterSubtitle(character),
+        miniBar: miniSkillBar(character),
+        selected: character.id === active,
+        // Beside the row, not in it: editing never also chooses.
+        actions: [
+          button("Edit", "roster-edit", () => {
+            callbacks.onEditCharacter(character.id);
+          }),
+        ],
+        onSelect: () => {
+          choose(character.id);
+        },
+      }),
     );
-    row.appendChild(text);
-
-    row.addEventListener("click", () => {
-      saveActiveCharacterId(character.id);
-      callbacks.onSelectCharacter(character.id);
-    });
-
-    const edit = button("Edit", "roster-edit", () => {
-      callbacks.onEditCharacter(character.id);
-    });
-    // Editing must not also select; the row's own click would otherwise
-    // fire and change who you are playing as a side effect.
-    edit.addEventListener("click", (event) => {
-      event.stopPropagation();
-    });
-    row.appendChild(edit);
-
-    list.appendChild(row);
   }
   roster.appendChild(list);
-  roster.appendChild(button("New character", "", callbacks.onNewCharacter));
-  panel.appendChild(roster);
+  roster.appendChild(
+    characters.length === 0
+      ? emptyState("No characters yet.", "New character", callbacks.onNewCharacter)
+      : button("New character", "", callbacks.onNewCharacter),
+  );
+  columns.appendChild(roster);
+
+  // --- play -------------------------------------------------------------
+  const play = h("section", "menu-play");
+  play.appendChild(h("h2", "menu-column-title", "Play"));
+
+  const nameField = h("label", "field");
+  nameField.appendChild(h("span", "field-label", "Your name (other players see it)"));
+  const nameInput = document.createElement("input");
+  nameInput.className = "field-input";
+  nameInput.placeholder = "Player";
+  nameInput.value = loadPlayerName();
+  nameInput.addEventListener("input", () => {
+    savePlayerName(nameInput.value);
+  });
+  nameField.appendChild(nameInput);
+  play.appendChild(nameField);
+
+  // Why the last try failed, right above the buttons to try again with.
+  if (connectionNotice !== undefined) {
+    play.appendChild(h("div", "screen-problem screen-connection-problem", connectionNotice));
+  }
 
   const hostRow = h("div", "menu-row");
-  const host = button("Host a lobby", "primary", () => {
-    callbacks.onCreateLobby(nameInput.value);
-  });
-  hostRow.appendChild(host);
-  panel.appendChild(hostRow);
+  hostRow.appendChild(
+    button("Host a lobby", "primary", () => {
+      callbacks.onCreateLobby(nameInput.value);
+    }),
+  );
+  play.appendChild(hostRow);
 
   const joinRow = h("div", "menu-row");
   const codeInput = document.createElement("input");
   codeInput.className = "field-input code-input";
   codeInput.placeholder = "CODE";
   codeInput.maxLength = 8;
+  codeInput.setAttribute("aria-label", "Lobby code");
   codeInput.addEventListener("input", () => {
     // Codes are always upper case; doing it as they type avoids a
     // "why didn't my code work" moment.
@@ -226,18 +250,12 @@ export function renderMenu(
       join();
     }
   });
-  const joinButton = button("Join", "primary", join);
   joinRow.appendChild(codeInput);
-  joinRow.appendChild(joinButton);
-  panel.appendChild(joinRow);
+  joinRow.appendChild(button("Join", "primary", join));
+  play.appendChild(joinRow);
   // Under host and join, so it is read before either (#541, SECURITY.md).
-  panel.appendChild(h("p", "menu-peer-notice", PEER_IP_NOTICE));
-
-  const manageRow = h("div", "menu-row");
-  manageRow.appendChild(button("Teams", "", callbacks.onManageTeams));
-  manageRow.appendChild(button("Options", "", callbacks.onOptions));
-  manageRow.appendChild(button("Music", "", callbacks.onMusic));
-  panel.appendChild(manageRow);
+  play.appendChild(h("p", "menu-peer-notice", PEER_IP_NOTICE));
+  columns.appendChild(play);
 
   root.appendChild(panel);
 }

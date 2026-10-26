@@ -51,7 +51,7 @@ test("Close leaves at once without edits, and asks before it discards them (#566
   await expect(page.getByText("Discard changes?")).toBeVisible();
   await page.getByRole("button", { name: "discard" }).click();
   await expect(page.locator(".roster")).toBeVisible();
-  await expect(page.locator(".roster-row", { hasText: "Draft" })).toHaveCount(0);
+  await expect(page.locator(".selectable-row", { hasText: "Draft" })).toHaveCount(0);
 });
 
 test("Delete in the ⋯ menu always asks, and cancel keeps the character (#566)", async ({
@@ -61,7 +61,7 @@ test("Delete in the ⋯ menu always asks, and cancel keeps the character (#566)"
   await page.locator("input.editor-name").fill("Doomed");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await page
-    .locator(".roster-row", { hasText: "Doomed" })
+    .locator(".selectable-row", { hasText: "Doomed" })
     .getByRole("button", { name: "edit" })
     .click();
 
@@ -76,7 +76,7 @@ test("Delete in the ⋯ menu always asks, and cancel keeps the character (#566)"
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
   await expect(page.locator(".roster")).toBeVisible();
-  await expect(page.locator(".roster-row", { hasText: "Doomed" })).toHaveCount(0);
+  await expect(page.locator(".selectable-row", { hasText: "Doomed" })).toHaveCount(0);
 });
 
 test("the problems chip says what is wrong in a sentence and shows where (#566)", async ({
@@ -571,10 +571,10 @@ test("a saved character can be chosen and is taken into a match", async ({ page 
 
   // Saving returns to the entry screen, where the roster is. Clicking the
   // row is how a player chooses who to play.
-  const row = page.locator(".roster-row", { hasText: "Pyro" });
+  const row = page.locator(".selectable-row", { hasText: "Pyro" });
   await expect(row).toBeVisible();
   await row.click();
-  await expect(row).toHaveClass(/is-active/);
+  await expect(row).toHaveClass(/is-selected/);
 
   await startSoloMatch(page);
   await expect(page.locator("#viewport canvas")).toBeVisible();
@@ -596,7 +596,7 @@ test("in a match, an empty slot's key does nothing; the next key casts its own s
     .locator(".skill-box", { hasText: "Armor of Earth" })
     .dragTo(page.locator(".skill-slot").nth(2));
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.locator(".roster-row", { hasText: "Gap" }).click();
+  await page.locator(".selectable-row", { hasText: "Gap" }).click();
   await startSoloMatch(page);
   const energy = page.locator(".hud-bar-energy .hud-bar-label");
   await expect(energy).toContainText("en");
@@ -655,7 +655,7 @@ test("a second elite replaces the first on the bar, framed in gold, into the mat
   await expect(page.locator(".skill-slot.is-elite")).toHaveCount(1);
 
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.locator(".roster-row", { hasText: "Elite" }).click();
+  await page.locator(".selectable-row", { hasText: "Elite" }).click();
   await startSoloMatch(page);
   const hud = page.locator(".hud-skills .hud-skill");
   await expect(hud.nth(3)).toContainText("Broad Head Arrow");
@@ -678,7 +678,7 @@ test("in a match, Glyph of Lesser Energy shows Armor of Earth's discounted cost,
     .locator(".skill-box", { hasText: "Armor of Earth" })
     .dragTo(page.locator(".skill-slot").nth(1));
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.locator(".roster-row", { hasText: "Glyph" }).click();
+  await page.locator(".selectable-row", { hasText: "Glyph" }).click();
   await startSoloMatch(page);
   const armor = page.locator(".hud-skills .hud-skill").nth(1).locator(".hud-skill-cost");
   await expect(armor).toHaveText("10e");
@@ -1059,7 +1059,7 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
   // The real assertion: gear came back from IndexedDB, not from memory.
   await page.reload();
   await page
-    .locator(".roster-row")
+    .locator(".selectable-row")
     .filter({ hasText: "Gear Keeper" })
     .getByRole("button", { name: "edit" })
     .click();
