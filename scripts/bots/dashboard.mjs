@@ -15,6 +15,7 @@
  * which is also what running `claude-llc-dash` by hand shows. What each
  * pane says is `dashboard-view.mjs`; this file reads and draws.
  */
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -28,6 +29,7 @@ import { formatSpend, readSpend } from "./hub-spend.mjs";
 import { readRoster } from "./presence.mjs";
 import { betweenTurns, parseReboot } from "./reboot.mjs";
 import { parseSchedule } from "./schedule.mjs";
+import { readSidecar, sidecarDown } from "./sidecar.mjs";
 import { unreadOf } from "./unread.mjs";
 import { boardLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
 import { hubHealth, parseAlive, parseRestarts } from "./hub-health.mjs";
@@ -321,6 +323,19 @@ function hub() {
 }
 
 /**
+ * The Telegram sidecar (#583): down if no `link.mjs serve` runs, or if
+ * its heartbeat is too old, which is a hung one.
+ *
+ * @returns {import("./dashboard-view.mjs").TelegramFacts}
+ */
+function telegram() {
+  const now = Date.now();
+  const record = readSidecar(BUS);
+  const running = spawnSync("pgrep", ["-f", "link.mjs serve"]).status === 0;
+  return { down: !running || sidecarDown(now, record), lastSeen: record?.lastSeen ?? null, now };
+}
+
+/**
  * Each agent's Claude config dir is `<boxes>/<role>/config`, and its logs
  * are under that; `claude-llc` says where `<boxes>` is (#50).
  */
@@ -408,6 +423,7 @@ function linesOf(section, pane) {
           build: build(),
           claude: claude(),
           nudges: nudges(staff, now),
+          telegram: telegram(),
         },
         pane,
       );
