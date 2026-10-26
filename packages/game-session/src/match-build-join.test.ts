@@ -341,3 +341,57 @@ describe("joining a P2P match with a build (#375)", () => {
     expect(strong).toBeGreaterThan(weak);
   });
 });
+
+/** An elementalist/monk with the glyph and two spells it can cheapen (#637). */
+const GLYPH_BUILD: PlayerBuild = {
+  ...LEGAL_BUILD,
+  skillBar: [
+    "elementalist.glyph-of-lesser-energy",
+    "elementalist.armor-of-earth",
+    "monk.orison-of-healing",
+    ...nulls(5),
+  ],
+};
+
+describe("the bar follows what its skills cost (#637)", () => {
+  /** Join with `build`, and gather every `skill-bar` sent after the welcome. */
+  async function watchBars(build: PlayerBuild) {
+    const match = startMatch();
+    const { connection, transport } = await match.join(hello({ build: toJson(build) }));
+    const bars: unknown[] = [];
+    transport.on("skill-bar", (data) => {
+      bars.push(data);
+    });
+    return { match, connection, bars };
+  }
+
+  const costs = (connection: PeerMatchConnection): number[] =>
+    connection.skillBar.slice(0, 3).map((slot) => slot?.energyCost ?? -1);
+
+  it("sends the glyph's discount, and the full costs once both spells used it", async () => {
+    const { match, connection, bars } = await watchBars(GLYPH_BUILD);
+    expect(costs(connection)).toEqual([5, 10, 5]);
+
+    connection.sendIntent({ kind: "use-skill", slot: 0 });
+    await match.step(1.5);
+    // A glyph is no spell: its own cost stays; 16 off takes both to 0.
+    expect(bars).toHaveLength(1);
+    expect(costs(connection)).toEqual([5, 0, 0]);
+
+    connection.sendIntent({ kind: "use-skill", slot: 1 });
+    await match.step(1.5);
+    // One spell left on the glyph: the costs are the same, so nothing goes.
+    expect(bars).toHaveLength(1);
+
+    connection.sendIntent({ kind: "use-skill", slot: 2 });
+    await match.step(1.5);
+    expect(bars).toHaveLength(2);
+    expect(costs(connection)).toEqual([5, 10, 5]);
+  });
+
+  it("sends nothing more while no cost changes", async () => {
+    const { match, bars } = await watchBars(GLYPH_BUILD);
+    await match.step(100 * TICK_SECONDS);
+    expect(bars).toEqual([]);
+  });
+});

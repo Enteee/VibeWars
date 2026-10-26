@@ -10,6 +10,7 @@ import {
   outOfRange,
   paintCastFill,
   SLOT_FLASH_MS,
+  slotAffordable,
   slotFlashes,
 } from "./skill-slot-state.js";
 
@@ -231,5 +232,20 @@ describe("flashSlot", () => {
     expect(slotButton.classList.contains("is-cancelled")).toBe(true);
     vi.advanceTimersByTime(100);
     expect(slotButton.classList.contains("is-cancelled")).toBe(false);
+  });
+});
+
+describe("slotAffordable (#637)", () => {
+  it("reads the bar's cost, so a discounted spell lights", () => {
+    const poor = self({ energy: 3 });
+    expect(slotAffordable(slot("fireball"), poor)).toBe(false);
+    // The host's next bar, with Glyph of Lesser Energy up.
+    expect(slotAffordable({ ...slot("fireball"), energyCost: 0 }, poor)).toBe(true);
+  });
+
+  it("asks adrenaline of an adrenal skill, not energy", () => {
+    const rush = { ...slot("rush"), energyCost: 0, adrenalineCost: 4 };
+    expect(slotAffordable(rush, self({ adrenaline: 3 }))).toBe(false);
+    expect(slotAffordable(rush, self({ adrenaline: 4 }))).toBe(true);
   });
 });

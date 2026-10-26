@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { WEAPONS } from "@vibewars/game-core";
 
+import { REST_FRAME } from "./attack-clock.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
 import { WEAPON_MARK_GEOMETRY } from "./weapon-mark-geometry.js";
 
@@ -12,7 +13,7 @@ const ONE_HANDED = ["sword", "axe", "spear", "wand"];
 const BOWS = ["shortbow", "longbow", "flatbow", "recurve-bow", "hornbow"];
 
 const pointsOf = (id: string, x = 0, y = 0, r = R, facing = 0) => {
-  const { strokes, fills, strings } = weaponMarkLayout(x, y, r, facing, id);
+  const { strokes, fills, strings } = weaponMarkLayout(x, y, r, facing, id, REST_FRAME);
   return [...strokes, ...fills, ...strings].flat();
 };
 
@@ -74,7 +75,7 @@ describe("weapon mark geometry", () => {
 
 describe("weaponMarkLayout", () => {
   it("rotates to the facing and translates to the body", () => {
-    const [shaft] = weaponMarkLayout(100, 50, R, Math.PI / 2, "spear").strokes;
+    const [shaft] = weaponMarkLayout(100, 50, R, Math.PI / 2, "spear", REST_FRAME).strokes;
     // The spear's local (12.5, 7.5): forward is +y on screen, right is −x.
     const tip = shaft?.[1];
     expect(tip?.x).toBeCloseTo(100 - 7.5, 9);
@@ -92,7 +93,12 @@ describe("weaponMarkLayout", () => {
 
   it("draws nothing for no weapon or one it does not know", () => {
     for (const id of [undefined, "trebuchet"]) {
-      expect(weaponMarkLayout(0, 0, R, 0, id)).toEqual({ strokes: [], fills: [], strings: [] });
+      expect(weaponMarkLayout(0, 0, R, 0, id, REST_FRAME)).toEqual({
+        strokes: [],
+        fills: [],
+        strings: [],
+        alpha: 1,
+      });
     }
   });
 });

@@ -28,6 +28,7 @@ import {
   type PeerRejoinChallenge,
   type PeerWelcome,
   type RechargeSlot,
+  type SkillBarSlot,
   type WireEnded,
   type WirePlayer,
   type WireSkillBar,
@@ -41,7 +42,7 @@ import { rechargePredicted, rechargeSlots } from "./recharge.js";
 import { rejoinProof } from "./rejoin-proof.js";
 import { spawnPoint, type SpawnPoint } from "./spawn-points.js";
 import { MAX_MESSAGE_BYTES, type Transport } from "./transport.js";
-import { skillBarSlots, statusWireIndex, wireCombat, wireStatuses } from "./wire.js";
+import { sameSkillBar, skillBarSlots, statusWireIndex, wireCombat, wireStatuses } from "./wire.js";
 
 /**
  * A match hosted in one player's browser (#15, #375): the same
@@ -130,6 +131,8 @@ interface Seat {
   droppedAt: number | undefined;
   /** The recharges the peer was last told, and when, so only news is sent (#152). */
   recharges: { readonly slots: RechargeSlot[]; readonly at: number } | undefined;
+  /** The bar the peer was last sent, so it goes again only when it changes (#637). */
+  skillBar: readonly (SkillBarSlot | null)[] | undefined;
 }
 
 /** A rejoin hello the host has challenged, waiting for its proof (#593). */
@@ -205,13 +208,35 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     transport.send("recharge", { slots }, seat.peerId);
   };
 
+  /**
+   * Send `seat`'s peer its bar when it changed since the last one, or
+   * whenever `force`, as on a welcome (#637). Costs follow the bearer,
+   * so a glyph going up or being spent, or a respawn, sends it again.
+   */
+  const sendSkillBar = (seat: Seat, force: boolean): void => {
+    if (seat.peerId === undefined) {
+      return;
+    }
+    const participant = sim.get(seat.playerId);
+    const slots =
+      participant === undefined ? [] : skillBarSlots(participant.skillBar, participant.combatant);
+    if (!force && seat.skillBar !== undefined && sameSkillBar(seat.skillBar, slots)) {
+      return;
+    }
+    seat.skillBar = slots;
+    const bar: WireSkillBar = {
+      slots,
+      ranks: Object.fromEntries(participant?.combatant.attributeRanks ?? []),
+    };
+    transport.send("skill-bar", bar, seat.peerId);
+  };
+
   /** Seat `peerId` in `seat`, as a new player or one coming back, and tell it so. */
   const welcome = (seat: Seat, peerId: string): void => {
     seat.peerId = peerId;
     seat.droppedAt = undefined;
     seat.token = newToken();
     seatOfPeer.set(peerId, seat);
-    const participant = sim.get(seat.playerId);
     const message: PeerWelcome = {
       protocolVersion: PROTOCOL_VERSION,
       playerId: seat.playerId,
@@ -221,13 +246,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       map: map.descriptor,
     };
     transport.send("welcome", message, peerId);
-    const bar: WireSkillBar = {
-      slots: skillBarSlots(participant?.skillBar ?? [], {
-        attributeRanks: participant?.combatant.attributeRanks ?? new Map(),
-      }),
-      ranks: Object.fromEntries(participant?.combatant.attributeRanks ?? []),
-    };
-    transport.send("skill-bar", bar, peerId);
+    sendSkillBar(seat, true);
     sendRecharges(seat, true);
   };
 
@@ -283,6 +302,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       token: "",
       droppedAt: undefined,
       recharges: undefined,
+      skillBar: undefined,
     };
     seats.set(playerId, seat);
     welcome(seat, peerId);
@@ -462,6 +482,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     seat.peerId = undefined;
     seat.droppedAt = sim.elapsedSeconds;
     seat.recharges = undefined;
+    seat.skillBar = undefined;
     // Frozen, not left running into a wall while away.
     sim.setInputDirection(seat.playerId, ZERO);
     sim.get(seat.playerId)?.combatant.cast.cancelCast();
@@ -542,6 +563,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       transport.send("combat", batch);
     }
     for (const seat of seats.values()) {
+      sendSkillBar(seat, false);
       sendRecharges(seat, false);
     }
     if (result.phase === "finished") {

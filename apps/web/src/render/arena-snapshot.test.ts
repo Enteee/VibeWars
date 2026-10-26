@@ -47,6 +47,7 @@ function actor(
     position: vec2(x, y),
     facing: 0,
     weaponId: undefined,
+    attackTargetId: undefined,
     offhandId: undefined,
     profession: undefined,
     radius,

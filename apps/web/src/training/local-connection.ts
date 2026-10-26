@@ -2,9 +2,6 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   applyIntent,
   drainAccumulator,
-  energyCostOf,
-  getSkill,
-  type Combatant,
   type MatchSimulation,
   type Participant,
   type ProfessionId,
@@ -14,6 +11,8 @@ import {
 } from "@vibewars/game-core";
 import type { CastRefusedMessage, ClientIntent, MapDescriptor } from "@vibewars/game-protocol";
 import {
+  sameSkillBar,
+  skillBarSlots,
   wireStatuses,
   type CombatMessage,
   type MatchConnection,
@@ -45,30 +44,6 @@ export interface LocalMatchConnection extends MatchConnection {
 
 /** One simulation tick, at the ruleset's rate, exactly as the server steps. */
 export const TICK_SECONDS = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
-
-/**
- * The bar the HUD draws, from skill ids, gaps kept, as the server sends it
- * on join: energy costs are what `bearer` pays (#528).
- */
-export function skillSlotsFor(
-  skillBar: SkillBar,
-  bearer: Pick<Combatant, "attributeRanks">,
-): (SkillSlot | null)[] {
-  return skillBar.map((skillId) => {
-    if (skillId === null) {
-      return null;
-    }
-    const skill = getSkill(skillId);
-    return {
-      id: skillId,
-      name: skill?.name ?? skillId,
-      energyCost: skill === undefined ? 0 : energyCostOf(skill, bearer),
-      adrenalineCost: skill?.cost?.kind === "adrenaline" ? skill.cost.amount : 0,
-      activationSeconds: skill?.activationSeconds ?? 0,
-      rechargeSeconds: skill?.rechargeSeconds ?? 0,
-    };
-  });
-}
 
 /** A participant's professions, as a snapshot carries them (#281). */
 export interface Professions {
@@ -124,11 +99,13 @@ export function createLocalConnection(options: {
   readonly professionsOf: (id: string) => Professions;
 }): LocalMatchConnection {
   const { simulation, selfId, map, nameOf, professionsOf } = options;
-  const selfBar = (bar: SkillBar) =>
-    skillSlotsFor(bar, {
-      attributeRanks: simulation.get(selfId)?.combatant.attributeRanks ?? new Map(),
-    });
-  let skillBar = selfBar(simulation.get(selfId)?.skillBar ?? []);
+  // The bar as the host would send it: costs follow the player, glyph and
+  // all, and it changes only when a slot does (#637).
+  const selfBar = (): (SkillSlot | null)[] => {
+    const self = simulation.get(selfId);
+    return self === undefined ? [] : skillBarSlots(self.skillBar, self.combatant);
+  };
+  let skillBar = selfBar();
   let accumulator = 0;
   let closed = false;
   const stepHandlers: ((result: StepResult) => void)[] = [];
@@ -238,11 +215,15 @@ export function createLocalConnection(options: {
       accumulator = drained.remainder;
       for (let i = 0; i < drained.ticks; i += 1) {
         deliver(simulation.step(TICK_SECONDS));
+        const next = selfBar();
+        if (!sameSkillBar(skillBar, next)) {
+          skillBar = next;
+        }
       }
     },
     rearm(loadout, nextBar) {
       simulation.rearm(selfId, loadout, nextBar);
-      skillBar = selfBar(nextBar);
+      skillBar = selfBar();
     },
     disconnect() {
       closed = true;
