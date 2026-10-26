@@ -231,6 +231,12 @@ let
       break
     done
     check "auto-gc never prunes worktrees" "$(git config gc.worktreePruneExpire)" "never"
+    # #83: the operator's checkout state is read-only, whether or not the file exists.
+    refused "writing .git/HEAD" "touch '$common/HEAD'"
+    refused "writing .git/index" "touch '$common/index'"
+    refused "creating .git/MERGE_HEAD" "touch '$common/MERGE_HEAD'"
+    refused "creating .git/rebase-merge" "mkdir '$common/rebase-merge'"
+    refused "creating .git/packed-refs.lock" "touch '$common/packed-refs.lock'"
     own="$(git rev-parse --absolute-git-dir)"
     check "this worktree's admin dir is writable" \
       "$("$SHELL" -c "touch '$own/smoke-$$' && rm '$own/smoke-$$' && echo writable" 2>&1)" \
@@ -240,7 +246,14 @@ let
       "$("$SHELL" -c "c=\$(git commit-tree -m smoke 'HEAD^{tree}' -p HEAD) &&
         git update-ref 'refs/heads/$branch' \"\$c\" && echo committed" 2>&1)" \
       "committed"
+    check "the branch has a reflog entry" \
+      "$(test -s "$common/logs/refs/heads/$branch" && echo logged)" "logged"
     git update-ref -d "refs/heads/$branch" >/dev/null 2>&1 || true
+    check "a loose branch is deletable" \
+      "$(git rev-parse --verify --quiet "refs/heads/$branch" || echo gone)" "gone"
+    check "git fetch still works" \
+      "$("$SHELL" -c "git fetch --quiet '$common' HEAD:refs/smoke/fetch-$ && echo fetched" 2>&1)" "fetched"
+    git update-ref -d "refs/smoke/fetch-$" >/dev/null 2>&1 || true
 
     # #358: the launch line has the kernel kill a jailed process before any
     # host process, and runs it at lower priority than the host's own. The
@@ -710,27 +723,34 @@ let
         # work in here, which is why playwright.config.ts passes --no-sandbox;
         # this jail is the sandbox.
         #
-        # The operator's .git is bound read-write, because a worktree commits
-        # into it, but the parts of it the host EXECUTES are masked read-only on
-        # top (issue #61): config (fsmonitor, hooksPath, filter and diff
-        # drivers, insteadOf, sshCommand), hooks, and info (attributes, which
-        # select those drivers). Every git command the operator, claude-llc or
-        # hubd runs in the checkout reads them, so a jail that could write them
-        # could run code on the host. --ro-bind, not -try: a missing one fails
-        # the start rather than leaving a hole, so they are made here first.
-        # Branches therefore never write tracking config: autoSetupMerge is
-        # off for every git in the jail, through the environment.
+        # The operator's .git is read-only by default, and writable only where
+        # a jail needs it (#83): objects, refs, logs/refs and this employee's
+        # own admin dir under worktrees (#69). The rest is the operator's own
+        # checkout state, which the host acts on: HEAD and index, MERGE_HEAD,
+        # rebase-merge/ and sequencer/ (whose todo files run `exec` lines),
+        # and what the host EXECUTES (#61): config (fsmonitor, hooksPath,
+        # filter and diff drivers, insteadOf, sshCommand), hooks, and info
+        # (attributes, which select those drivers). A deny-list would miss
+        # what a jail creates, so this is an allow-list. The order matters:
+        # bwrap applies binds in sequence, so the rw binds go after the ro
+        # one. --bind, not -try: a missing one fails the start rather than
+        # leaving a hole, so hooks, info and logs/refs are made here first.
+        # Branches never write tracking config: autoSetupMerge is off for
+        # every git in the jail, through the environment.
         #
-        # .git/worktrees is read-only too, except this role's own admin dir
+        # .git/worktrees is read-only, except this employee's own admin dir
         # (#69). A jail sees only its own worktree, so to git every other one
         # looks deleted, and one `git worktree prune` in a jail once removed
         # the admin dir of every other agent's worktree. Now that fails with
-        # EROFS, and so does writing another worktree's HEAD or index. The
-        # order matters: bwrap applies binds in sequence, so the rw bind of
-        # the role's own dir goes after the ro one. gc.worktreePruneExpire
-        # keeps an auto-gc from even trying.
+        # EROFS, and so does writing another worktree's HEAD or index.
+        # gc.worktreePruneExpire keeps an auto-gc from even trying, and
+        # gc.auto=0 stops it writing gc.pid or packed-refs at the top level.
+        # Known cost: packed-refs cannot be rewritten (its lock lives at the
+        # top level), so deleting a PACKED branch fails with EROFS. Known gap:
+        # objects/info/alternates can be planted; objects are content-
+        # addressed, so there is no code-execution path through it.
         # ----------------------------------------------------------------------
-        mkdir -p "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/info"
+        mkdir -p "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/info" "$DEVENV_ROOT/.git/logs/refs"
 
         if [ "$smoke" = "1" ]; then
           jailCommand=(${jailSmoke})
@@ -788,11 +808,10 @@ let
           --bind "$boxDir/claude.json" "$HOME/.claude.json" \
           --bind "$creds" "$HOME/.claude/.credentials.json" \
           --ro-bind-try "$HOME/.config/git" "$HOME/.config/git" \
-          --bind "$DEVENV_ROOT/.git" "$DEVENV_ROOT/.git" \
-          --ro-bind "$DEVENV_ROOT/.git/config" "$DEVENV_ROOT/.git/config" \
-          --ro-bind "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/hooks" \
-          --ro-bind "$DEVENV_ROOT/.git/info" "$DEVENV_ROOT/.git/info" \
-          --ro-bind "$DEVENV_ROOT/.git/worktrees" "$DEVENV_ROOT/.git/worktrees" \
+          --ro-bind "$DEVENV_ROOT/.git" "$DEVENV_ROOT/.git" \
+          --bind "$DEVENV_ROOT/.git/objects" "$DEVENV_ROOT/.git/objects" \
+          --bind "$DEVENV_ROOT/.git/refs" "$DEVENV_ROOT/.git/refs" \
+          --bind "$DEVENV_ROOT/.git/logs/refs" "$DEVENV_ROOT/.git/logs/refs" \
           --bind "$DEVENV_ROOT/.git/worktrees/$employee" "$DEVENV_ROOT/.git/worktrees/$employee" \
           --ro-bind "$VIBEWARS_BOT_BUS" "$VIBEWARS_BOT_BUS" \
           --bind "$VIBEWARS_BOT_BUS/$employee" "$VIBEWARS_BOT_BUS/$employee" \
@@ -817,11 +836,13 @@ let
           --setenv VIBEWARS_BOARD "$boardIds" \
           --setenv VIBEWARS_ACTING "$acting" \
           --setenv VIBEWARS_ENV "development" \
-          --setenv GIT_CONFIG_COUNT 2 \
+          --setenv GIT_CONFIG_COUNT 3 \
           --setenv GIT_CONFIG_KEY_0 branch.autoSetupMerge \
           --setenv GIT_CONFIG_VALUE_0 false \
           --setenv GIT_CONFIG_KEY_1 gc.worktreePruneExpire \
           --setenv GIT_CONFIG_VALUE_1 never \
+          --setenv GIT_CONFIG_KEY_2 gc.auto \
+          --setenv GIT_CONFIG_VALUE_2 0 \
           "''${chromiumEnv[@]}" \
           -- "''${jailCommand[@]}"
   '';
