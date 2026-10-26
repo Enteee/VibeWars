@@ -217,7 +217,9 @@ export async function startMatchView(
   // Once per match, for the skill bar's line-of-sight hint (#485).
   const wallSegments = allWallSegments(connection.map.walls);
   const camera =
-    viewport === undefined ? undefined : attachFollowCamera(viewport, parent, connection.map);
+    viewport === undefined
+      ? undefined
+      : attachFollowCamera(viewport, parent, connection.map, () => viewport.size());
 
   const hud = createHud(parent);
   // The ally you watch (#443), top right: yours alone.

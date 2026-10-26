@@ -9,6 +9,10 @@ import type { Vec2 } from "@vibewars/game-core";
  * width and crops its top and bottom, a narrower one its full height and
  * crops the sides. A bigger window shows the same world, sharper.
  *
+ * The box is fitted to `scaleTo`, a match's canvas, not always to the
+ * canvas drawn on (#709): the Training Ground's smaller stage shows less
+ * of the world at a match's scale, rather than all of it shrunk.
+ *
  * Type imports only, so the e2e specs can import `zoomFor` to find a world
  * point on the canvas.
  */
@@ -76,6 +80,8 @@ export interface CameraInput {
   readonly self: Vec2;
   /** The canvas, CSS px. */
   readonly viewport: Size;
+  /** The canvas whose view box sets the zoom, CSS px: a match's (#709). */
+  readonly scaleTo: Size;
   /** Screen px on the canvas; `undefined` when off it. */
   readonly pointer: Vec2 | undefined;
   readonly reducedMotion: boolean;
@@ -142,8 +148,8 @@ export function clampToLeash(offset: Vec2, viewport: Size, zoom: number): Vec2 {
  * drag, as far as the leash lets it. The offset is from you, so it holds
  * while you walk.
  */
-export function panBy(rig: CameraRig, deltaPx: Vec2, viewport: Size): CameraRig {
-  const zoom = zoomForHeight(rig.height, viewport);
+export function panBy(rig: CameraRig, deltaPx: Vec2, viewport: Size, scaleTo: Size): CameraRig {
+  const zoom = zoomForHeight(rig.height, scaleTo);
   const offset = clampToLeash(
     { x: rig.offset.x + deltaPx.x / zoom, y: rig.offset.y + deltaPx.y / zoom },
     viewport,
@@ -193,7 +199,7 @@ export function stepCamera(
 
   const target = viewHeight(rig.step);
   const height = rig.height + (target - rig.height) * ease(ZOOM_RATE);
-  const zoom = zoomForHeight(height, input.viewport);
+  const zoom = zoomForHeight(height, input.scaleTo);
 
   // Lean toward the pointer; with it off the canvas, or a pan held, back to centre.
   const want =

@@ -22,8 +22,9 @@ import {
  * owns the right button (#442): a drag pans, a click goes to
  * `onSecondaryClick`.
  *
- * The stage carries `data-zoom-step` and `data-camera="<x>,<y>"` for the
- * e2e specs, written only when they change.
+ * The stage carries `data-zoom-step`, `data-zoom` (CSS px per world
+ * unit) and `data-camera="<x>,<y>"` for the e2e specs, written only when
+ * they change.
  */
 /** Where you are, and whether you are dead. */
 export interface Body extends Vec2 {
@@ -52,6 +53,8 @@ export function attachFollowCamera(
   viewport: ArenaViewport,
   stage: HTMLElement,
   arena: Size,
+  /** The canvas whose view box sets the zoom: a match's (#709). */
+  scaleTo: () => Size,
 ): FollowCamera {
   let rig = createCameraRig();
   let bounds = arena;
@@ -74,7 +77,7 @@ export function attachFollowCamera(
     switch (outcome.kind) {
       case "pan-start":
       case "pan-move":
-        rig = panBy(rig, outcome.delta, viewport.size());
+        rig = panBy(rig, outcome.delta, viewport.size(), scaleTo());
         break;
       case "click":
         rig = releasePan(rig);
@@ -110,6 +113,7 @@ export function attachFollowCamera(
         {
           self: { x: self.x, y: self.y },
           viewport: viewport.size(),
+          scaleTo: scaleTo(),
           pointer: viewport.pointerScreen(),
           reducedMotion: prefersReducedMotion(),
           arena: bounds,
@@ -120,6 +124,7 @@ export function attachFollowCamera(
       rig = stepped.rig;
       viewport.setCamera(stepped.view, cover);
       mark("zoomStep", VIEW_STEPS[rig.step]?.name ?? "");
+      mark("zoom", stepped.view.zoom.toFixed(4));
       mark("camera", `${String(Math.round(stepped.view.x))},${String(Math.round(stepped.view.y))}`);
     },
     onSecondaryClick(handler) {
@@ -137,6 +142,7 @@ export function attachFollowCamera(
       offWheel();
       offButton();
       delete stage.dataset.zoomStep;
+      delete stage.dataset.zoom;
       delete stage.dataset.camera;
     },
   };

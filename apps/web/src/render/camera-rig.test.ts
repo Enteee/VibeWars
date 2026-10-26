@@ -26,9 +26,11 @@ const FRAME = 1 / 60;
 /** A big arena, so nothing is clamped unless a test walks to its edge. */
 const BIG = { width: 10_000, height: 10_000 };
 
+/** A match's camera: the canvas sets its own zoom, unless a test says otherwise. */
 const input = (overrides: Partial<CameraInput> = {}): CameraInput => ({
   self: { x: 5_000, y: 5_000 },
-  viewport: { width: 1280, height: 720 },
+  viewport: overrides.viewport ?? { width: 1280, height: 720 },
+  scaleTo: overrides.viewport ?? { width: 1280, height: 720 },
   pointer: undefined,
   reducedMotion: false,
   arena: BIG,
@@ -188,14 +190,18 @@ describe("the RMB pan (#442)", () => {
     for (let step = 0; step < VIEW_STEPS.length; step += 1) {
       const settled = run({ ...createCameraRig(), step }, input(), 120).rig;
       const zoom = zoomFor(step, VIEWPORT);
-      const right = stepCamera(panBy(settled, { x: 100, y: 0 }, VIEWPORT), input(), FRAME);
+      const right = stepCamera(
+        panBy(settled, { x: 100, y: 0 }, VIEWPORT, VIEWPORT),
+        input(),
+        FRAME,
+      );
       expect(right.view.x, VIEW_STEPS[step]?.name).toBeCloseTo(5_000 + 100 / zoom, 6);
       for (const drag of [
         { x: 10_000, y: 0 },
         { x: -10_000, y: 10_000 },
         { x: 0, y: -10_000 },
       ]) {
-        const { view } = stepCamera(panBy(settled, drag, VIEWPORT), input(), FRAME);
+        const { view } = stepCamera(panBy(settled, drag, VIEWPORT, VIEWPORT), input(), FRAME);
         const at = onScreen(input().self, view);
         expect(at.x).toBeGreaterThanOrEqual(LEASH_MARGIN_PX - 1e-6);
         expect(at.x).toBeLessThanOrEqual(VIEWPORT.width - LEASH_MARGIN_PX + 1e-6);
@@ -207,7 +213,7 @@ describe("the RMB pan (#442)", () => {
 
   it("holds its offset while you walk, with no look-ahead", () => {
     const settled = run(createCameraRig(), input(), 1).rig;
-    const panned = panBy(settled, { x: 120, y: -40 }, VIEWPORT);
+    const panned = panBy(settled, { x: 120, y: -40 }, VIEWPORT, VIEWPORT);
     const pointer = { x: 1200, y: 100 };
     const here = run(panned, input({ pointer }), 30);
     expect(here.view.x - 5_000).toBeCloseTo(120 / here.view.zoom, 6);
@@ -219,7 +225,7 @@ describe("the RMB pan (#442)", () => {
 
   it("glides back once let go: under 1 u within 1 s at 60 Hz", () => {
     const settled = run(createCameraRig(), input(), 1).rig;
-    const panned = run(panBy(settled, { x: 300, y: 200 }, VIEWPORT), input(), 1).rig;
+    const panned = run(panBy(settled, { x: 300, y: 200 }, VIEWPORT, VIEWPORT), input(), 1).rig;
     expect(Math.hypot(panned.offset.x, panned.offset.y)).toBeGreaterThan(100);
     const back = run(releasePan(panned), input(), 60).rig;
     expect(Math.hypot(back.offset.x, back.offset.y)).toBeLessThan(1);
@@ -227,7 +233,7 @@ describe("the RMB pan (#442)", () => {
 
   it("snaps back in one step with reduced motion", () => {
     const settled = run(createCameraRig(), input(), 1).rig;
-    const panned = panBy(settled, { x: 300, y: 200 }, VIEWPORT);
+    const panned = panBy(settled, { x: 300, y: 200 }, VIEWPORT, VIEWPORT);
     const reduced = input({ reducedMotion: true });
     expect(stepCamera(panned, reduced, FRAME).rig.offset).not.toEqual({ x: 0, y: 0 });
     const back = stepCamera(releasePan(panned), reduced, FRAME).rig;
@@ -235,13 +241,13 @@ describe("the RMB pan (#442)", () => {
   });
 
   it("drops at once, held or not, when you die", () => {
-    const panned = panBy(createCameraRig(), { x: 300, y: 200 }, VIEWPORT);
+    const panned = panBy(createCameraRig(), { x: 300, y: 200 }, VIEWPORT, VIEWPORT);
     expect(dropPan(panned)).toMatchObject({ offset: { x: 0, y: 0 }, panning: false });
   });
 
   it("shrinks to the leash when you zoom in mid-pan", () => {
     const wide = run({ ...createCameraRig(), step: VIEW_STEPS.length - 1 }, input(), 120).rig;
-    const panned = panBy(wide, { x: 10_000, y: 0 }, VIEWPORT);
+    const panned = panBy(wide, { x: 10_000, y: 0 }, VIEWPORT, VIEWPORT);
     const closed = run({ ...panned, step: 0 }, input(), 120);
     const at = onScreen(input().self, closed.view);
     expect(at.x).toBeGreaterThanOrEqual(LEASH_MARGIN_PX - 1e-6);
@@ -252,7 +258,11 @@ describe("the RMB pan (#442)", () => {
     const corner = { x: 10, y: 10 };
     const at0 = input({ arena, self: corner });
     const settled = run(createCameraRig(), at0, 120).rig;
-    const { view } = stepCamera(panBy(settled, { x: -10_000, y: -10_000 }, VIEWPORT), at0, FRAME);
+    const { view } = stepCamera(
+      panBy(settled, { x: -10_000, y: -10_000 }, VIEWPORT, VIEWPORT),
+      at0,
+      FRAME,
+    );
     const at = onScreen(corner, view);
     expect(at.x).toBeGreaterThanOrEqual(0);
     expect(at.x).toBeLessThan(LEASH_MARGIN_PX);
@@ -284,5 +294,37 @@ describe("feedWheel", () => {
   it("starts again when the wheel turns back", () => {
     const half = feedWheel(WHEEL_IDLE, 30, 0, 0).state;
     expect(feedWheel(half, -30, 0, 10).notch).toBeUndefined();
+  });
+});
+
+describe("a small canvas at a match's scale (#709)", () => {
+  const STAGE = { width: 384, height: 288 };
+  const WINDOW = { width: 1280, height: 720 };
+  const small = (overrides: Partial<CameraInput> = {}): CameraInput =>
+    input({ viewport: STAGE, scaleTo: WINDOW, ...overrides });
+
+  it("draws every step at the window's zoom, so it shows less of the world", () => {
+    for (let step = 0; step < VIEW_STEPS.length; step += 1) {
+      const { view } = run({ ...createCameraRig(), step }, small(), 120);
+      expect(view.zoom, VIEW_STEPS[step]?.name).toBeCloseTo(zoomFor(step, WINDOW), 9);
+    }
+  });
+
+  it("leashes a pan to the small canvas, not the window", () => {
+    const settled = run(createCameraRig(), small(), 1).rig;
+    const zoom = zoomFor(DEFAULT_STEP, WINDOW);
+    const right = stepCamera(panBy(settled, { x: 100, y: 0 }, STAGE, WINDOW), small(), FRAME);
+    expect(right.view.x).toBeCloseTo(5_000 + 100 / zoom, 6);
+    const far = stepCamera(panBy(settled, { x: 10_000, y: 10_000 }, STAGE, WINDOW), small(), FRAME);
+    expect(far.view.x - 5_000).toBeCloseTo((STAGE.width / 2 - LEASH_MARGIN_PX) / zoom, 6);
+    expect(far.view.y - 5_000).toBeCloseTo((STAGE.height / 2 - LEASH_MARGIN_PX) / zoom, 6);
+  });
+
+  it("stops at the arena's edge by what the small canvas shows", () => {
+    const arena = { width: 1_000, height: 700 };
+    const { view } = run(createCameraRig(), small({ arena, self: { x: 10, y: 10 } }), 1);
+    const zoom = zoomFor(DEFAULT_STEP, WINDOW);
+    expect(view.x).toBeCloseTo(STAGE.width / 2 / zoom, 6);
+    expect(view.y).toBeCloseTo(STAGE.height / 2 / zoom, 6);
   });
 });
