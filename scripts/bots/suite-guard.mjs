@@ -28,7 +28,13 @@ export const DENY_REASON =
 const SUITE_SCRIPTS = new Set(["ci", "ci:full", "test", "test:e2e"]);
 
 /** Run before the command they wrap; their own arguments are skipped. */
-const WRAPPERS = new Set(["timeout", "nice", "env", "command", "exec", "time", "nohup"]);
+const WRAPPERS = new Set(["timeout", "nice", "env", "command", "exec", "time", "nohup", "xargs"]);
+
+/** Wrapper options that take a value: `xargs -I {}`, `timeout -s KILL`, `env -u NAME`. */
+const WRAPPER_VALUE_OPTIONS = new Set(["-I", "-n", "-P", "-L", "-d", "-E", "-s", "-a", "-u", "-k"]);
+
+/** Shells whose `-c` string is a command line of its own: `bash -c 'pnpm test'`. */
+const SHELLS = new Set(["sh", "bash", "zsh", "dash"]);
 
 /** Shell reserved words that can stand before a command: `for …; do pnpm run ci; done`. */
 const KEYWORDS = new Set(["do", "then", "else", "elif", "while", "until", "if", "!", "{"]);
@@ -71,18 +77,23 @@ const VITEST_VALUE_OPTIONS = new Set([
 
 /**
  * The simple commands in a shell line: heredoc bodies dropped, each quoted
- * string one word `Q` (a commit message that names `pnpm run ci` runs
- * nothing), then split on `&&`, `||`, `;`, `|`, `&`, newlines and the
- * parentheses and backticks of subshells. Good enough for the habit, not a
- * parser.
+ * string one placeholder word (a commit message that names `pnpm run ci`
+ * runs nothing), then split on `&&`, `||`, `;`, `|`, `&`, newlines and
+ * the parentheses and backticks of subshells. Good enough for the habit,
+ * not a parser.
  *
  * @param {string} line
+ * @param {string[]} quoted collects each quoted string's text, unquoted;
+ *   placeholder `\0<i>` stands for `quoted[i]`
  * @returns {string[][]}
  */
-function simpleCommands(line) {
+function simpleCommands(line, quoted) {
   return line
     .replace(/<<-?\s*(['"]?)(\w+)\1[^\n]*\n[\s\S]*?\n\s*\2(?=\n|$)/g, "")
-    .replace(/"(?:[^"\\]|\\.)*"|'[^']*'/g, " Q ")
+    .replace(/"((?:[^"\\]|\\.)*)"|'([^']*)'/g, (_, double, single) => {
+      quoted.push(double === undefined ? String(single) : String(double).replace(/\\(.)/g, "$1"));
+      return ` \0${String(quoted.length - 1)} `;
+    })
     .split(/&&|\|\||[;|&\n()`]|\$\(/)
     .map((part) => part.split(/\s+/).filter((word) => word !== ""))
     .filter((words) => words.length > 0);
@@ -108,7 +119,7 @@ function unwrap(words) {
       // A wrapper's options, and timeout's duration, before the command.
       let i = 0;
       while (i < tail.length && (tail[i]?.startsWith("-") || /^\d/.test(tail[i] ?? ""))) {
-        i += 1;
+        i += WRAPPER_VALUE_OPTIONS.has(tail[i] ?? "") ? 2 : 1;
       }
       rest = tail.slice(i);
     } else {
@@ -198,18 +209,42 @@ export function suiteGuard(command, role) {
   if (role === undefined || role === "cicd-engineer" || !ROLES.includes(role)) {
     return "allow";
   }
-  for (const words of simpleCommands(command)) {
-    const run = suiteRun(words);
-    if (run === undefined) {
-      continue;
-    }
+  for (const { filtered, e2e } of suiteRuns(command)) {
     // A developer may still run the one vitest file it edits.
-    const oneFile = run.filtered && !isE2e(words);
-    if (role === "qa-tester" ? !run.filtered : !oneFile) {
+    const oneFile = filtered && !e2e;
+    if (role === "qa-tester" ? !filtered : !oneFile) {
       return "deny";
     }
   }
   return "allow";
+}
+
+/**
+ * Every suite run in a command line, including those inside
+ * `bash -c '…'` and `eval …`.
+ *
+ * @param {string} command
+ * @returns {{ filtered: boolean, e2e: boolean }[]}
+ */
+function suiteRuns(command) {
+  /** @type {string[]} */
+  const quoted = [];
+  /** @param {string} word */
+  const text = (word) => (/^\0\d+$/.test(word) ? (quoted[Number(word.slice(1))] ?? "") : word);
+  return simpleCommands(command, quoted).flatMap((words) => {
+    const [head = "", ...args] = unwrap(words);
+    if (path.basename(head) === "eval") {
+      return suiteRuns(args.map(text).join(" "));
+    }
+    if (SHELLS.has(path.basename(head))) {
+      // `-c`, `-ec`, `-lc`: the first word that is not an option is the line.
+      const runsLine = args.some((arg) => /^-[a-z]*c[a-z]*$/.test(arg));
+      const line = args.find((arg) => !arg.startsWith("-"));
+      return runsLine && line !== undefined ? suiteRuns(text(line)) : [];
+    }
+    const run = suiteRun(words);
+    return run === undefined ? [] : [{ filtered: run.filtered, e2e: isE2e(words) }];
+  });
 }
 
 /**

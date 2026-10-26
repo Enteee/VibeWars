@@ -43,6 +43,14 @@ describe("suiteGuard for an implementer", () => {
     "while pnpm test; do :; done",
     "{ pnpm run ci; }",
     "! pnpm run test:e2e",
+    'sh -c "pnpm run ci"',
+    "bash -c 'pnpm test'",
+    "timeout 600 bash -lc 'cd apps/web && npx vitest run'",
+    'bash -c "echo \\"x\\"; pnpm run ci"',
+    "echo x | xargs pnpm run ci",
+    "echo x | xargs -I {} -n 1 -P 2 pnpm run ci",
+    "eval pnpm run ci",
+    "eval 'pnpm run ci'",
   ])("denies %j", (command) => {
     expect(suiteGuard(command, "asset-designer")).toBe("deny");
   });
@@ -64,6 +72,10 @@ describe("suiteGuard for an implementer", () => {
     "node scripts/p2p-smoke.mjs",
     "for f in a.test.ts b.test.ts; do npx vitest run $f; done",
     "if [ -f package.json ]; then pnpm run lint; fi",
+    "bash -c 'pnpm run lint'",
+    "bash scripts/x.sh pnpm-run-ci",
+    "git commit -m \"bash -c 'pnpm run ci'\"",
+    "eval echo pnpm run ci",
   ])("allows %j", (command) => {
     expect(suiteGuard(command, "asset-designer")).toBe("allow");
   });
