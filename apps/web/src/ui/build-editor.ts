@@ -130,6 +130,67 @@ export function setRank(
   return { ...character, attributes, updatedAt: Date.now() };
 }
 
+/** Points the next rank of `attributeId` costs, or `undefined` at the cap. */
+export function nextRankCost(character: StoredCharacter, attributeId: string): number | undefined {
+  const rank = rankOf(character, attributeId);
+  return rank >= MAX_ATTRIBUTE_RANK
+    ? undefined
+    : cumulativeCostForRank(rank + 1) - cumulativeCostForRank(rank);
+}
+
+/**
+ * The rank clicking pip `pip` (1 to 12) asks for: that rank, except the
+ * current top pip, which lowers by one so a rank can go back to zero.
+ */
+export function pipTarget(character: StoredCharacter, attributeId: string, pip: number): number {
+  return pip === rankOf(character, attributeId) ? pip - 1 : pip;
+}
+
+/**
+ * What moving `attributeId` to `rank` would cost (negative: refund) and
+ * the points it would leave, which are below zero when it is unaffordable.
+ */
+export function rankChange(
+  character: StoredCharacter,
+  attributeId: string,
+  rank: number,
+): { readonly cost: number; readonly left: number } {
+  const cost = cumulativeCostForRank(rank) - cumulativeCostForRank(rankOf(character, attributeId));
+  return { cost, left: remainingPoints(character) - cost };
+}
+
+/**
+ * Move `attributeId` to `rank`, or refuse with the points it is short by.
+ * Lowering is always allowed, past a weapon requirement too: the gear and
+ * the problems say what that breaks.
+ */
+export function trySetRank(
+  character: StoredCharacter,
+  attributeId: string,
+  rank: number,
+): { readonly character: StoredCharacter } | { readonly needs: number } {
+  const clamped = Math.max(0, Math.min(MAX_ATTRIBUTE_RANK, rank));
+  const { left } = rankChange(character, attributeId, clamped);
+  if (left < 0 && clamped > rankOf(character, attributeId)) {
+    return { needs: -left };
+  }
+  return { character: setRank(character, attributeId, clamped) };
+}
+
+/** One budget bar segment: the points one attribute's ranks cost. */
+export interface BudgetSegment {
+  readonly attributeId: string;
+  readonly points: number;
+}
+
+/** The spent budget split by attribute, in the order the rows are listed. */
+export function budgetSegments(character: StoredCharacter): BudgetSegment[] {
+  return accessibleAttributeIds(character.primaryProfession, character.secondaryProfession)
+    .map((attributeId) => ({ attributeId, rank: rankOf(character, attributeId) }))
+    .filter((a) => a.rank > 0)
+    .map((a) => ({ attributeId: a.attributeId, points: cumulativeCostForRank(a.rank) }));
+}
+
 /**
  * Change profession, dropping anything the new combination can no longer
  * access.
@@ -561,59 +622,194 @@ function rankOf(character: StoredCharacter, attributeId: string): number {
 }
 
 function mountAttributes(panel: HTMLElement, context: EditorContext): Region {
+  const budget = MINIMAL_GW_INSPIRED_PVP_V1.attributes.attributePointBudget;
   const points = h("div", "editor-points");
+  const pointsText = h("div", "editor-points-text");
+  const bar = h("div", "editor-budget");
+  points.append(pointsText, bar);
   const list = h("div", "editor-attributes");
   panel.append(points, list);
 
-  const step = (attributeId: string, by: number) => () => {
+  /** The pip under the pointer, previewed on its row and the points line. */
+  let hover: { readonly attributeId: string; readonly pip: number } | undefined;
+  /** A pip the budget could not pay for, until the next change. */
+  let refused: { readonly attributeId: string; readonly needs: number } | undefined;
+
+  const request = (attributeId: string, rank: number): void => {
     const character = context.current();
-    context.commit(setRank(character, attributeId, rankOf(character, attributeId) + by));
+    if (rank < 0 || rank > MAX_ATTRIBUTE_RANK || rank === rankOf(character, attributeId)) {
+      return;
+    }
+    const result = trySetRank(character, attributeId, rank);
+    if ("needs" in result) {
+      refused = { attributeId, needs: result.needs };
+      render(character);
+      return;
+    }
+    context.commit(result.character);
   };
 
   const create = (attributeId: string): HTMLElement => {
+    // One focusable control per row, so Tab walks attributes and not pips.
     const row = h("div", "editor-attribute");
-    row.appendChild(h("span", "editor-attribute-name"));
-    row.appendChild(button("−", "", step(attributeId, -1)));
-    row.appendChild(h("span", "editor-attribute-rank"));
-    row.appendChild(button("+", "", step(attributeId, 1)));
+    row.tabIndex = 0;
+    row.setAttribute("role", "slider");
+    row.setAttribute("aria-valuemin", "0");
+    row.setAttribute("aria-valuemax", String(MAX_ATTRIBUTE_RANK));
+    row.addEventListener("keydown", (event) => {
+      const rank = rankOf(context.current(), attributeId);
+      const wanted =
+        event.key === "ArrowRight"
+          ? rank + 1
+          : event.key === "ArrowLeft"
+            ? rank - 1
+            : event.key === "Home"
+              ? 0
+              : undefined;
+      if (wanted !== undefined) {
+        event.preventDefault();
+        request(attributeId, wanted);
+      }
+    });
+
+    const pips = h("span", "attribute-pips");
+    for (let pip = 1; pip <= MAX_ATTRIBUTE_RANK; pip += 1) {
+      const node = h("span", "attribute-pip");
+      node.dataset.pip = String(pip);
+      node.addEventListener("click", () => {
+        request(attributeId, pipTarget(context.current(), attributeId, pip));
+      });
+      node.addEventListener("mouseenter", () => {
+        hover = { attributeId, pip };
+        render(context.current());
+      });
+      pips.appendChild(node);
+    }
+    pips.addEventListener("mouseleave", () => {
+      hover = undefined;
+      render(context.current());
+    });
+
+    row.append(
+      h("span", "editor-attribute-name"),
+      pips,
+      h("span", "editor-attribute-rank"),
+      h("span", "editor-attribute-next"),
+      h("span", "editor-attribute-needs"),
+    );
     return row;
+  };
+
+  const attributeName = (attributeId: string): string =>
+    getAttribute(attributeId)?.name ?? attributeId;
+
+  const render = (character: StoredCharacter): void => {
+    const shown = accessibleAttributeIds(
+      character.primaryProfession,
+      character.secondaryProfession,
+    ).filter((attributeId) => getAttribute(attributeId) !== undefined);
+    // A row and its budget segment share a colour, so the bar reads back
+    // to the rows without a legend.
+    const colour = (attributeId: string): string =>
+      `hsl(${String(Math.round((200 + (shown.indexOf(attributeId) * 360) / shown.length) % 360))} 55% 60%)`;
+    const bonuses = new Map(
+      summariseGear(character).runeBonuses.map((rune) => [rune.attributeId, rune.bonus]),
+    );
+    const preview =
+      hover === undefined
+        ? undefined
+        : {
+            attributeId: hover.attributeId,
+            rank: pipTarget(character, hover.attributeId, hover.pip),
+          };
+
+    if (preview === undefined) {
+      pointsText.textContent = `${String(remainingPoints(character))} attribute points remaining`;
+    } else {
+      const { cost, left } = rankChange(character, preview.attributeId, preview.rank);
+      const label = `${attributeName(preview.attributeId)} ${String(preview.rank)}`;
+      pointsText.textContent =
+        left < 0
+          ? `${label}: needs ${String(-left)} more points`
+          : `${label}: ${cost >= 0 ? `costs ${String(cost)}` : `refunds ${String(-cost)}`}, ${String(left)} left`;
+    }
+
+    syncList(
+      bar,
+      budgetSegments(character),
+      (segment) => segment.attributeId,
+      () => h("span", "editor-budget-segment"),
+      (node, segment) => {
+        node.style.width = `${String((segment.points / budget) * 100)}%`;
+        node.style.background = colour(segment.attributeId);
+        node.title = `${attributeName(segment.attributeId)}: ${String(segment.points)} points`;
+      },
+    );
+
+    syncList(
+      list,
+      shown,
+      (attributeId) => attributeId,
+      create,
+      (row, attributeId) => {
+        const definition = getAttribute(attributeId);
+        const rank = rankOf(character, attributeId);
+        const bonus = bonuses.get(attributeId);
+        row.style.setProperty("--attribute-colour", colour(attributeId));
+        row.setAttribute("aria-label", attributeName(attributeId));
+        row.setAttribute("aria-valuenow", String(rank));
+
+        const name = row.querySelector(".editor-attribute-name");
+        if (name !== null) {
+          name.textContent = `${attributeName(attributeId)}${definition?.isPrimary === true ? " ★" : ""}`;
+          // What the primary does at this rank (#531), under its name.
+          const effect = describePrimaryAttribute(attributeId, rank);
+          if (effect !== undefined) {
+            name.appendChild(h("span", "editor-attribute-effect", effect));
+          }
+        }
+
+        const previewed = preview?.attributeId === attributeId ? preview.rank : undefined;
+        for (const pip of Array.from(row.querySelectorAll<HTMLElement>(".attribute-pip"))) {
+          const at = Number(pip.dataset.pip);
+          pip.classList.toggle("is-on", at <= rank);
+          pip.classList.toggle(
+            "is-dim",
+            at > rank && rankChange(character, attributeId, at).left < 0,
+          );
+          pip.classList.toggle("is-preview", previewed !== undefined && at <= previewed);
+          pip.classList.toggle("is-lost", previewed !== undefined && at > previewed && at <= rank);
+        }
+
+        const rankText = row.querySelector(".editor-attribute-rank");
+        if (rankText !== null) {
+          // Runes raise the rank past what points bought (#565): not a pip
+          // to click, so a suffix after it.
+          rankText.textContent = String(rank);
+          if (bonus !== undefined) {
+            rankText.appendChild(h("span", "editor-attribute-bonus", ` +${String(bonus)}`));
+          }
+        }
+        const next = row.querySelector(".editor-attribute-next");
+        if (next !== null) {
+          const cost = nextRankCost(character, attributeId);
+          next.textContent = cost === undefined ? "max" : `next: ${String(cost)} pts`;
+        }
+        const needs = row.querySelector(".editor-attribute-needs");
+        if (needs !== null) {
+          needs.textContent =
+            refused?.attributeId === attributeId
+              ? `needs ${String(refused.needs)} more points`
+              : "";
+        }
+      },
+    );
   };
 
   return {
     update(character) {
-      points.textContent = `${String(remainingPoints(character))} attribute points remaining`;
-      const shown = accessibleAttributeIds(
-        character.primaryProfession,
-        character.secondaryProfession,
-      ).filter((attributeId) => getAttribute(attributeId) !== undefined);
-      syncList(
-        list,
-        shown,
-        (attributeId) => attributeId,
-        create,
-        (row, attributeId) => {
-          const definition = getAttribute(attributeId);
-          const rank = rankOf(character, attributeId);
-          const [name, minus, rankText, plus] = Array.from(row.children);
-          if (name !== undefined) {
-            name.textContent = `${definition?.name ?? attributeId}${definition?.isPrimary === true ? " ★" : ""}`;
-            // What the primary does at this rank (#531), under its name.
-            const effect = describePrimaryAttribute(attributeId, rank);
-            if (effect !== undefined) {
-              name.appendChild(h("span", "editor-attribute-effect", effect));
-            }
-          }
-          if (rankText !== undefined) {
-            rankText.textContent = String(rank);
-          }
-          if (minus instanceof HTMLButtonElement) {
-            minus.disabled = rank <= 0;
-          }
-          if (plus instanceof HTMLButtonElement) {
-            plus.disabled = !canRaise(character, attributeId);
-          }
-        },
-      );
+      refused = undefined;
+      render(character);
     },
   };
 }

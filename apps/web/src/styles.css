@@ -546,6 +546,81 @@ body {
   text-align: center;
 }
 
+/* Each row's colour, shared with its segment of the budget bar (#565). */
+.editor-attribute {
+  border-left: 3px solid var(--attribute-colour, var(--line));
+}
+
+.editor-attribute:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.attribute-pips {
+  display: flex;
+  gap: 2px;
+}
+
+.attribute-pip {
+  width: 0.7rem;
+  height: 0.9rem;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.attribute-pip.is-on {
+  background: var(--attribute-colour, var(--accent));
+}
+
+.attribute-pip.is-dim {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.attribute-pip.is-preview {
+  border-color: var(--ink);
+}
+
+.attribute-pip.is-preview:not(.is-on) {
+  background: var(--cast-fill-shade);
+}
+
+.attribute-pip.is-lost {
+  opacity: 0.5;
+}
+
+.editor-attribute-bonus {
+  color: var(--accent);
+}
+
+.editor-attribute-next,
+.editor-attribute-needs {
+  color: var(--ink-dim);
+  font-size: 0.85em;
+  min-width: 9ch;
+}
+
+.editor-attribute-needs {
+  color: var(--damage);
+}
+
+.editor-attribute-needs:empty {
+  display: none;
+}
+
+.editor-budget {
+  display: flex;
+  height: 0.5rem;
+  margin-top: 0.25rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.editor-budget-segment {
+  height: 100%;
+}
+
 .editor-slot-index {
   color: var(--ink-dim);
   min-width: 1.5ch;
