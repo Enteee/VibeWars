@@ -5,6 +5,7 @@ import {
   RANGE_MELEE,
   RANGE_SPELL,
 } from "../distances.js";
+import { WEAPONS } from "../equipment/weapons.js";
 import type { Skill } from "./types.js";
 
 /**
@@ -104,6 +105,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 1, atTwelve: 16 } },
       // "If Swift Chop is blocked, target foe takes 1...16 damage and
       // suffers a Deep Wound for 20 seconds."
+      unblockable: false,
       onBlocked: [
         {
           kind: "damage",
@@ -139,6 +141,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weapon: "bow",
       weaponDamage: 1,
       bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 12 } },
+      unblockable: false,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -164,6 +167,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       bonusDamage: {
         scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 16 },
       },
+      unblockable: false,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -221,7 +225,13 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     // A swing of any melee weapon that deals no damage: still an attack,
     // so blind makes it miss, and a miss interrupts nothing.
-    attack: { weapon: "melee", weaponDamage: 0, bonusDamage: undefined, onBlocked: [] },
+    attack: {
+      weapon: "melee",
+      weaponDamage: 0,
+      bonusDamage: undefined,
+      unblockable: false,
+      onBlocked: [],
+    },
     whileActivating: undefined,
     effects: [{ kind: "interrupt" }],
   },
@@ -237,7 +247,13 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     range: RANGE_LONG,
     target: "single-enemy",
     area: undefined,
-    attack: { weapon: "bow", weaponDamage: 1, bonusDamage: undefined, onBlocked: [] },
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      unblockable: false,
+      onBlocked: [],
+    },
     whileActivating: undefined,
     // The real elite: Daze the target, and interrupt them if they were
     // casting. Both halves are now genuinely implementable — this is the
@@ -407,10 +423,79 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       bonusDamage: {
         scaling: { attributeId: "warrior.swordsmanship", atZero: 5, atTwelve: 20 },
       },
+      unblockable: false,
       onBlocked: [],
     },
     whileActivating: undefined,
     effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 15 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Stances (#523): one at a time, a new one ends the old                  */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "warrior.sprint",
+    name: "Sprint",
+    type: "stance",
+    profession: "warrior",
+    attributeId: "warrior.strength",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 0,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // "For 8...13...14 seconds, you move 25% faster": 13 s, its rank-12
+    // value, until durations scale with ranks.
+    effects: [{ kind: "apply-status", statusId: "sprint", durationSeconds: 13 }],
+  },
+  {
+    id: "assassin.dash",
+    name: "Dash",
+    type: "stance",
+    profession: "assassin",
+    // GW1's "No Attribute": any assassin can use it.
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 0,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    effects: [{ kind: "apply-status", statusId: "dash", durationSeconds: 3 }],
+  },
+  {
+    id: "paragon.wild-throw",
+    name: "Wild Throw",
+    type: "attack",
+    profession: "paragon",
+    attributeId: "paragon.spear-mastery",
+    cost: { kind: "adrenaline", amount: 7 },
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: WEAPONS.spear.range,
+    target: "single-enemy",
+    area: undefined,
+    // "All of your non-spear attack skills are disabled for 3 seconds"
+    // waits for disabled skills (#469). It never matters to a bar with
+    // only spear attacks.
+    attack: {
+      weapon: "spear",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 17 },
+      },
+      unblockable: true,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    // "...and any Stance being used by your target ends."
+    effects: [{ kind: "remove-status", category: "stance", count: 1 }],
   },
 
   /* ---------------------------------------------------------------------- */

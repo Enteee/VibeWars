@@ -10,18 +10,28 @@
  * - `condition`  — negative, applied by foes, removed by condition removal.
  * - `hex`        — negative, applied by foes, removed by hex removal.
  * - `enchantment`— positive, applied by allies, removed by enchantment removal/strip.
+ * - `stance`     — positive, on yourself only, ended by stance removal (#465).
  * - `shout`      — a shout's lingering effect (#524); no removal touches it.
  * - `skill-effect`— none of GW1's removable kinds: Healing Signet's armor
  *   loss while it is activated. No removal touches it either.
  *
  * Re-application does not stack duration (GW1-style): the longer of the
  * existing and incoming duration wins. That single rule is why a spammed
- * short condition cannot out-last one well-timed long one.
+ * short condition cannot out-last one well-timed long one. An exclusive
+ * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time.
  */
 
 import type { Combatant } from "./types.js";
 
-export type StatusCategory = "condition" | "hex" | "enchantment" | "shout" | "skill-effect";
+export type StatusCategory =
+  "condition" | "hex" | "enchantment" | "stance" | "shout" | "skill-effect";
+
+/**
+ * Categories of which a combatant has at most one at a time (GW1): a new
+ * one ends whichever is up, the same one included, and starts at its full
+ * duration.
+ */
+export const EXCLUSIVE_CATEGORIES: ReadonlySet<StatusCategory> = new Set(["stance"]);
 
 export type StatusId =
   // Conditions (brief §12's starting set).
@@ -40,6 +50,9 @@ export type StatusId =
   | "blood-ritual"
   | "armor-boost"
   | "guardian"
+  // Stances.
+  | "sprint"
+  | "dash"
   // Shouts and skill effects (#524).
   | "watch-yourself"
   | "healing-signet-armor";
@@ -169,6 +182,10 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   guardian: define("guardian", "Guardian", "enchantment", {
     block: { chance: 0.5, against: "all" },
   }),
+
+  sprint: define("sprint", "Sprint", "stance", { moveSpeedMultiplier: 1.25 }),
+  dash: define("dash", "Dash", "stance", { moveSpeedMultiplier: 1.5 }),
+
   // "Watch Yourself!" at rank 12: +5...21 armor, ending after 1...3 attacks.
   "watch-yourself": define("watch-yourself", "Watch Yourself!", "shout", {
     armorModifier: 21,
@@ -229,11 +246,17 @@ export class StatusSet {
   /**
    * Apply (or refresh) a status. Durations do not stack — the longer of
    * the existing and incoming duration wins, so re-applying a shorter
-   * one never shortens a longer one already running.
+   * one never shortens a longer one already running. In an exclusive
+   * category the new one replaces every one of its category, itself
+   * included, at the incoming duration (a stance, #523).
    */
   public apply(id: StatusId, durationSeconds: number, sourceId: string): void {
     if (durationSeconds <= 0) {
       return;
+    }
+    const { category } = getStatusDefinition(id);
+    if (EXCLUSIVE_CATEGORIES.has(category)) {
+      this.removeByCategory(category);
     }
     const existing = this.#statuses.get(id);
     if (existing !== undefined && existing.remainingSeconds >= durationSeconds) {

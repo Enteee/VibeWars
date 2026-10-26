@@ -1,3 +1,4 @@
+import { FAST_CASTING_ATTRIBUTE, fastCastingMultiplier } from "../primary-attributes.js";
 import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
 import {
@@ -124,13 +125,22 @@ export function clampMoveSpeed(raw: number): number {
 /**
  * How long this caster takes to cast this skill. Dazed doubles a spell's;
  * a signet or any other skill that is not a spell casts at normal speed,
- * as in GW1 (#524). An instant skill stays instant (0 × 2 = 0).
+ * as in GW1 (#524). An instant skill stays instant (0 × 2 = 0). Fast
+ * Casting multiplies in too (#527), judged on the skill's own activation.
  */
 export function effectiveActivationSeconds(skill: Skill, caster: Combatant): number {
   if (!isSpell(skill.type)) {
     return skill.activationSeconds;
   }
-  return skill.activationSeconds * aggregateModifiers(caster.statuses.active).castTimeMultiplier;
+  const fastCasting = fastCastingMultiplier(
+    caster.attributeRanks.get(FAST_CASTING_ATTRIBUTE) ?? 0,
+    skill,
+  );
+  return (
+    skill.activationSeconds *
+    aggregateModifiers(caster.statuses.active).castTimeMultiplier *
+    fastCasting
+  );
 }
 
 /** The chance in [0, 1] that the bearer's attacks miss (blind). */
@@ -156,8 +166,15 @@ export function combinedBlockChance(
   return 1 - unblocked;
 }
 
-/** The chance in [0, 1] that the bearer blocks an attack of this kind (#534). */
+/**
+ * The chance in [0, 1] that the bearer blocks an attack of this kind
+ * (#534). None while knocked down, as in GW1 (#610): 0, so no block is
+ * rolled at all.
+ */
 export function blockChanceOf(combatant: Combatant, kind: "melee" | "projectile"): number {
+  if (combatant.knockdownRemaining > 0) {
+    return 0;
+  }
   return combinedBlockChance(
     combatant.statuses.active.flatMap((status) => getStatusDefinition(status.id).block ?? []),
     kind,

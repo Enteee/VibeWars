@@ -131,26 +131,9 @@ effect, so nothing that removes conditions or enchantments stands you
 up. It counts down before anyone acts, so it lasts its full duration
 whoever lands it, and you act again on the tick it ends.
 
-## Skill types
-
-Every skill has a type, shown as a badge on its slot and named first in
-its tooltip ("Signet.", "Hex Spell."). Spells, enchantments and hexes
-are **spells**; attacks, signets, shouts and plain skills are not, and
-every rule that "affects spells" (dazed, so far) leaves them alone.
-
-**Signets** usually cost nothing, so they work at 0 energy. Healing
-Signet (Warrior, Tactics) heals you after a 2 s cast, and for those 2 s
-you have −40 armor: the penalty ends with the cast, whether it goes off,
-is cancelled, interrupted or knocked out of your hands.
-
-**Shouts** are instant: no cast bar, no target, and nothing to
-interrupt. Each ally **in earshot**, 350 units round the shouter and the
-shouter included, gets its effect; a dead ally or one just outside does
-not. "Watch Yourself!" (Warrior, Tactics, 4 adrenaline) gives +21 armor
-for 10 s, and it ends early on each ally after 3 incoming attacks that
-hit or are blocked; a miss, a dodge or an obstructed arrow does not
-count. Earshot is GW1's ratio of earshot to cast range (about 1,010 to
-1,250) applied to the 420-unit spell range.
+A knocked-down character can't block: Guardian does nothing while you
+are down, and an attack skill's if-blocked rider never fires against
+you. Blocking works again the moment you stand.
 
 ## Conditions, hexes and enchantments
 
@@ -200,6 +183,41 @@ Degeneration applies **continuously** (`pips × 2 × dt`), not in once-per-
 second lumps, so a bleed at 20 Hz drains smoothly instead of
 stair-stepping. Regeneration correctly caps at the deep-wound-_reduced_
 maximum, not the raw one.
+
+## Skill types
+
+A skill's type is its badge on the slot, in the library and in the
+Training Ground, and is named first in its tooltip ("Signet.", "Hex
+Spell."). Some types play by rules of their own (#465). Spells,
+enchantments and hexes are **spells**; attacks, signets, shouts, stances
+and plain skills are not, and every rule that "affects spells" (dazed
+and Fast Casting, so far) leaves them alone.
+
+**Stances** are yours alone, and only one is up at a time. Using a
+stance ends the one you are in, the same one included, which restarts
+at its full duration. A stance is not an enchantment: enchantment removal
+leaves it alone, and stance removal leaves your enchantments. Sprint
+(Warrior, 13 s) moves you 25% faster; Dash (Assassin, 3 s) 50% faster.
+A stance and crippled multiply, as every movement change does.
+
+Wild Throw (Paragon spear attack, 7 adrenaline) deals +17 damage, cannot
+be blocked, and ends the stance of the foe it hits. It does not yet
+disable your other attack skills for 3 s: that waits for disabled skills
+(#469).
+
+**Signets** usually cost nothing, so they work at 0 energy. Healing
+Signet (Warrior, Tactics) heals you after a 2 s cast, and for those 2 s
+you have −40 armor: the penalty ends with the cast, whether it goes off,
+is cancelled, interrupted or knocked out of your hands.
+
+**Shouts** are instant: no cast bar, no target, and nothing to
+interrupt. Each ally **in earshot**, 350 units round the shouter and the
+shouter included, gets its effect; a dead ally or one just outside does
+not. "Watch Yourself!" (Warrior, Tactics, 4 adrenaline) gives +21 armor
+for 10 s, and it ends early on each ally after 3 incoming attacks that
+hit or are blocked; a miss, a dodge or an obstructed arrow does not
+count. Earshot is GW1's ratio of earshot to cast range (about 1,010 to
+1,250) applied to the 420-unit spell range.
 
 ## Weapon attacks
 
@@ -282,11 +300,29 @@ its riders, so a blocked Distracting Blow interrupts nothing; an attack
 skill's cost and recharge are still spent. "block" floats over the
 target. Swift Chop is the exception that proves it: blocked, it still
 deals its flat damage and a 20 s Deep Wound. Spells are never blocked,
-and shields do not block, as in GW1.
+and shields do not block, as in GW1. Wild Throw cannot be blocked at all.
 
 Not modelled: evade. Attack-speed changes have
 a hook (only the strongest speed-up and slow-down count), but no skill
 uses it yet.
+
+## Primary attributes
+
+Each profession's primary attribute does something of its own, as in
+GW1 PvP (#473). Only a primary can hold its rank, and runes count.
+
+- **Fast Casting** (Mesmer). Spells, enchantments and hexes activate in
+  2^(−rank/15) of the time: ×0.574 at rank 12, and still faster above
+  it. Every Mesmer spell; another profession's only if its own
+  activation is 2 s or more, so a Mesmer/Necromancer casts Malaise in
+  1.15 s but Faintheartedness in 1 s as usual. It multiplies with dazed
+  (rank 12 and dazed: ×1.149). Aftercast and recharge are unchanged;
+  attack skills and other non-spells too.
+- **Critical Strikes** (Assassin). +1% critical chance a rank on weapon
+  blows, and every crit gives the striker energy: 1 at ranks 1–7, 2 at
+  8–12, 3 at 13 and above.
+
+The others have no effect yet.
 
 ## Positioning
 

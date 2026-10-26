@@ -117,6 +117,21 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/372-Echo",
   },
+  {
+    id: "warrior.sprint",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/39-Sprint",
+  },
+  {
+    id: "assassin.dash",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/705-Dash",
+  },
+  {
+    id: "paragon.wild-throw",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1131-Wild_Throw",
+  },
 ];
 
 function packageRoot(): string {

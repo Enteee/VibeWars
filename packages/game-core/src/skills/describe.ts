@@ -168,6 +168,15 @@ function describeEffect(
         magnitude: undefined,
       };
     case "apply-status":
+      // A stance is yours alone and one at a time (#523), so it reads as
+      // what it is rather than as something applied.
+      if (findStatusDefinition(effect.statusId)?.category === "stance") {
+        return {
+          text:
+            `Stance. For ${seconds(effect.durationSeconds)}, ` + describeStatus(effect.statusId),
+          magnitude: undefined,
+        };
+      }
       return {
         text:
           `Applies ${statusName(effect.statusId)} for ${seconds(effect.durationSeconds)} ` +
@@ -175,6 +184,9 @@ function describeEffect(
         magnitude: undefined,
       };
     case "remove-status": {
+      if (effect.category === "stance") {
+        return { text: "Ends the target's stance", magnitude: undefined };
+      }
       const plural = effect.count === 1 ? "" : "s";
       return {
         text: `Removes ${String(effect.count)} ${effect.category}${plural}`,
@@ -201,6 +213,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
   hex: "Hex Spell.",
   signet: "Signet.",
   shout: "Shout.",
+  stance: "Stance.",
   skill: "Skill.",
 };
 

@@ -383,6 +383,25 @@ describe("status modifiers in the match", () => {
     expect(stepFor(sim, 1.5)).toEqual([]);
     expect(stepFor(sim, 0.5).map((entry) => entry.skillId)).toEqual([FIREBALL]);
   });
+
+  it("a Mesmer with Fast Casting 12 lands a 2 s Malaise in 1.15 s (#527)", () => {
+    const malaise = "necromancer.malaise";
+    const sim = new MatchSimulation({
+      seed: "fast-casting",
+      participants: [
+        spec("a", 0, vec2(0, 0), {
+          skillBar: [malaise],
+          attributeRanks: new Map([["mesmer.fast-casting", 12]]),
+        }),
+        spec("b", 1, vec2(200, 0)),
+      ],
+    });
+    sim.setTarget("a", "b");
+    sim.requestSkill("a", 0);
+    expect(participant(sim, "a").combatant.cast.activeCast?.totalSeconds).toBeCloseTo(1.149, 3);
+    expect(stepFor(sim, 1.1)).toEqual([]);
+    expect(stepFor(sim, 0.1).map((entry) => entry.skillId)).toEqual([malaise]);
+  });
 });
 
 describe("walls", () => {
