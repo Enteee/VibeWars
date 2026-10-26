@@ -171,6 +171,32 @@ function archer(id: string, label: string, position: Vec2): TrainingDummy {
   };
 }
 
+/**
+ * An immortal caster that walks to within 250 of the player and burns
+ * them with Fireball whenever it can (#111): survivability's hunter.
+ */
+function hunter(id: string, label: string, position: Vec2): TrainingDummy {
+  return {
+    ...target(id, label, position, 60),
+    skillBar: ["elementalist.fireball"],
+    attributeRanks: { "elementalist.fire-magic": 12 },
+    baseEnergyPips: baseEnergyPipsFor("elementalist"),
+    behaviour: {
+      kind: "parallel",
+      behaviours: [
+        { kind: "chase", targeting: { kind: "nearest-enemy" }, standOffUnits: 250 },
+        {
+          kind: "cast-loop",
+          skillIds: ["elementalist.fireball"],
+          targeting: { kind: "nearest-enemy" },
+          gapSeconds: 0,
+          firstLegal: true,
+        },
+      ],
+    },
+  };
+}
+
 /** Walking a lane from the top of the hall to the bottom and back (#111). */
 function lane(x: number): Behaviour {
   return { kind: "patrol", waypoints: [vec2(x, 90), vec2(x, 330)], loop: true };
@@ -463,6 +489,24 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
           firstLegal: true,
         },
       },
+    ],
+  },
+  {
+    id: "survivability",
+    label: "Survivability",
+    teaches:
+      "How long you last against three casters, and that armor is your biggest lever: at 80 a Fireball takes 30% less than at 60.",
+    mapId: "training-hall",
+    exercises: ["spell-damage", "armor", "movement"],
+    knobs: [],
+    // Immortal, so only the player's time to die is measured; the player
+    // is back 3 s after each death, as everywhere in training. They start
+    // inside their 250 of the spawn at (100, 210), so they burn at once
+    // and walk only after a player who backs away.
+    dummies: [
+      hunter("hunter-north", "Hunter north", vec2(300, 110)),
+      hunter("hunter-centre", "Hunter centre", vec2(320, 210)),
+      hunter("hunter-south", "Hunter south", vec2(300, 310)),
     ],
   },
   {

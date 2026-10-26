@@ -282,6 +282,52 @@ describe("condition-pressure, headless (#111)", () => {
   });
 });
 
+describe("survivability, headless (#111)", () => {
+  /** What the hunters deal in 30 s to a player who stands still at `armor`. */
+  function damageTaken(armor: number): { damage: number; hits: number } {
+    const played = scenario("survivability");
+    const spawn = MAPS["training-hall"]?.playerSpawn ?? vec2(0, 0);
+    const sim = new MatchSimulation({
+      seed: "survive",
+      participants: [
+        {
+          id: "player",
+          team: PLAYER_TEAM,
+          skillBar: [],
+          attributeRanks: new Map(),
+          equipment: unarmedResolvedEquipment(armor),
+          spawn,
+          facing: 0,
+          // Immortal here, so the two armors are compared over the same 30 s.
+          maxHealth: 10000,
+        },
+        ...scenarioParticipants(played, spawn),
+      ],
+    });
+    let damage = 0;
+    let hits = 0;
+    for (let i = 0; i < Math.round(30 / DT); i += 1) {
+      for (const entry of sim.step(DT).log) {
+        for (const event of entry.events) {
+          if (event.kind === "damage" && event.targetId === "player") {
+            damage += event.amount;
+            hits += 1;
+          }
+        }
+      }
+    }
+    return { damage, hits };
+  }
+
+  it("the hunters close in and burn a still player; at 80 armor each burns about 0.71 of 60's", () => {
+    const monk = damageTaken(60);
+    const warrior = damageTaken(80);
+    expect(monk.hits).toBeGreaterThanOrEqual(6);
+    expect(warrior.hits).toBe(monk.hits);
+    expect(warrior.damage / monk.damage).toBeCloseTo(Math.SQRT1_2, 1);
+  });
+});
+
 describe("blind-denial, headless (#111)", () => {
   it("the blinded archer misses about nine in ten; the other hits every time", () => {
     const sim = armedArena(scenario("blind-denial"), "blind", WEAPONS.sword);
