@@ -184,14 +184,31 @@ test("the library, the bar and the tooltip show each skill's icon (#727)", async
     /\/icons\/skill\/elementalist\.armor-of-earth\.svg$/,
   );
   await expect(rowIcon).toHaveAttribute("width", "24");
-  expect(await loaded(rowIcon)).toBe(true);
+  await expect.poll(() => loaded(rowIcon)).toBe(true);
+
+  // A headline sits beside the cost, not on a third line under the icon:
+  // the row is no taller than it was (#581).
+  const card = page
+    .locator(".skill-box-card", { has: page.locator(".skill-box-headline:not(:empty)") })
+    .first();
+  const cost = await card.locator(".skill-box-cost").boundingBox();
+  const headline = await card.locator(".skill-box-headline").boundingBox();
+  const cardIcon = await card.locator("img.skill-icon").boundingBox();
+  expect(cost).not.toBeNull();
+  expect(headline).not.toBeNull();
+  expect(cardIcon).not.toBeNull();
+  if (cost !== null && headline !== null && cardIcon !== null) {
+    expect(Math.abs(headline.y - cost.y)).toBeLessThan(4);
+    expect(headline.x).toBeGreaterThan(cost.x);
+    expect(headline.y + headline.height).toBeLessThanOrEqual(cardIcon.y + cardIcon.height + 10);
+  }
 
   await box.locator(".skill-box-equip").click();
   const slots = page.locator(".skill-slot");
   const slotIcon = slots.first().locator("img.skill-icon");
   await expect(slotIcon).toHaveAttribute("src", /elementalist\.armor-of-earth\.svg$/);
   await expect(slotIcon).toHaveAttribute("width", "48");
-  expect(await loaded(slotIcon)).toBe(true);
+  await expect.poll(() => loaded(slotIcon)).toBe(true);
   await expect(slots.nth(1).locator("img.skill-icon")).toHaveCount(0);
 
   await box.hover();

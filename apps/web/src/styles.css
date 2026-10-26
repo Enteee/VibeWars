@@ -2431,14 +2431,23 @@ body {
 }
 
 /* The icon on the left (#727), beside the two lines of text, so the row
-   is no taller than it was (#581). */
+   is no taller than it was (#581). Every cell is placed, none left to
+   auto-placement: the name over the cost and the headline. */
 .skill-box-card .skill-icon {
-  grid-row: 1 / span 2;
+  grid-area: 1 / 1 / 3 / 2;
   align-self: center;
 }
 
 .skill-box-card .skill-box-name {
-  grid-column: 2 / -1;
+  grid-area: 1 / 2 / 2 / -1;
+}
+
+.skill-box-card .skill-box-cost {
+  grid-area: 2 / 2;
+}
+
+.skill-box-card .skill-box-headline {
+  grid-area: 2 / 3;
 }
 
 .skill-box-headline {
