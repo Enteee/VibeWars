@@ -169,11 +169,11 @@ function describeEffect(
       };
     case "apply-status":
       // A stance is yours alone and one at a time (#523), so it reads as
-      // what it is rather than as something applied.
+      // what it is rather than as something applied. The type line already
+      // says "Stance." (#524).
       if (findStatusDefinition(effect.statusId)?.category === "stance") {
         return {
-          text:
-            `Stance. For ${seconds(effect.durationSeconds)}, ` + describeStatus(effect.statusId),
+          text: `For ${seconds(effect.durationSeconds)}, ` + describeStatus(effect.statusId),
           magnitude: undefined,
         };
       }
