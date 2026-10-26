@@ -261,10 +261,13 @@ test("a toast goes with its screen; one the next screen raises stays (#710)", as
   const code = await page.getByLabel("team to share").inputValue();
   await page.keyboard.press("Escape");
 
-  // Back at once, well inside the toast's 5 s.
+  // A fresh Saved, then back at once: well inside the toast's 5 s, so
+  // only the screen change can take it.
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
   await page.getByRole("button", { name: "back" }).click();
+  await expect(page.locator(".toast")).toHaveCount(0, { timeout: 1_000 });
   await expect.poll(() => teamList(page)).toEqual(["Duo · 1 member"]);
-  await expect(page.locator(".toast")).toHaveCount(0);
 
   // A pasted team's note is raised once the team editor is up, so it stays.
   await paste(page.locator(".screen"), code);
