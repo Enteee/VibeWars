@@ -146,6 +146,14 @@ describe("describeCombatEvent", () => {
     expect(logToneOf("attack-unreachable")).toBe("control");
   });
 
+  it("says who knocked whom down, and for how long (#544)", () => {
+    const down: CombatEvent = { kind: "knocked-down", targetId: "dummy", durationSeconds: 4 };
+    expect(
+      describeCombatEvent(entry([down], { skillId: "warrior.backbreaker" }), down, nameOf),
+    ).toBe("Backbreaker (Pyro) knocks down Caster dummy (4 s)");
+    expect(logToneOf("knocked-down")).toBe("control");
+  });
+
   it("says a caster who moved cancels their own cast (#279)", () => {
     const cancelled: CombatEvent = {
       kind: "cancelled",

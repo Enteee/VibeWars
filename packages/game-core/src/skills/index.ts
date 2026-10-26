@@ -61,6 +61,7 @@ export type {
   EnergyGainEffect,
   HealEffect,
   InterruptEffect,
+  KnockdownEffect,
   Magnitude,
   RemoveStatusEffect,
   ResourceKind,
@@ -72,6 +73,8 @@ export type {
   SkillType,
   TargetRule,
 } from "./types.js";
+
+export { KNOCKDOWN_SECONDS } from "./types.js";
 
 export { makeCombatant } from "./testing.js";
 

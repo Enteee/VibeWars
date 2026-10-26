@@ -50,6 +50,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "attack-dodged":
     case "attack-obstructed":
     case "attack-unreachable":
+    case "knocked-down":
       return "control";
     case "death":
       return "death";
@@ -112,6 +113,8 @@ export function describeCombatEvent(
       return `${by} is obstructed on the way to ${target}`;
     case "attack-unreachable":
       return `${by} can't reach ${target}`;
+    case "knocked-down":
+      return `${by} knocks down ${target} (${formatAmount(event.durationSeconds)} s)`;
   }
 }
 

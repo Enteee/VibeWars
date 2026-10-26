@@ -85,6 +85,8 @@ export interface StatusDefinition {
    * hook attack-speed skills plug into.
    */
   readonly attackDurationMultiplier: number;
+  /** While active, a knockdown does nothing to the bearer (#468). No status sets it yet. */
+  readonly preventsKnockdown: boolean;
 }
 
 function define(
@@ -105,6 +107,7 @@ function define(
     maxHealthMultiplier: 1,
     castTimeMultiplier: 1,
     attackDurationMultiplier: 1,
+    preventsKnockdown: false,
     ...overrides,
   };
 }
