@@ -2,7 +2,7 @@ import { MAX_EFFECTIVE_RANK } from "../attributes.js";
 import type { ProfessionId } from "../professions.js";
 import type { CombatRules } from "../ruleset.js";
 import type { StatusId } from "../skills/status.js";
-import { armorPieces, baseArmorFor } from "./armor.js";
+import { armorPieces, baseArmorFor, baseEnergyPipsFor } from "./armor.js";
 import { getInsignia, perSlotAmount, type ArmorCondition } from "./insignias.js";
 import type { BuildEquipment } from "./loadout.js";
 import { getOffhand, type OffhandId } from "./offhands.js";
@@ -52,6 +52,8 @@ export interface ResolvedEquipment {
 export interface ResolvedLoadout {
   readonly maxHealth: number;
   readonly maxEnergy: number;
+  /** Energy regeneration before any status, in pips: the primary profession's. */
+  readonly baseEnergyPips: number;
   /** Allocated ranks plus rune bonuses, clamped to `MAX_EFFECTIVE_RANK`. */
   readonly attributeRanks: ReadonlyMap<string, number>;
   readonly equipment: ResolvedEquipment;
@@ -252,6 +254,7 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
   return {
     maxHealth: Math.max(rules.minimumMaxHealth, rules.baseHealth + runes.healthDelta),
     maxEnergy: Math.max(1, rules.baseEnergy + energyDelta),
+    baseEnergyPips: baseEnergyPipsFor(input.primaryProfession),
     attributeRanks,
     equipment: {
       mainHand: resolvedWeapon,

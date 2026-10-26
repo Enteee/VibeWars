@@ -186,23 +186,23 @@ describe("networked combat (P2P)", () => {
     // the server's were not: step back out of it first.
     await walkTo(match, a, { x: 150, y: 500 }, 10);
 
-    // Nobody targeted yet: the nearest enemy is picked, and shown, but
-    // is beyond spell range.
+    // Nobody targeted yet: the nearest enemy is picked, and shown. Beyond
+    // spell range, Fireball walks in rather than being refused (#499):
+    // cancelled before it gets there.
     a.sendIntent({ kind: "use-skill", slot: FIREBALL });
-    await until(match, () => toA.length === 1, "the first refusal");
-    expect(toA[0]).toEqual({
-      kind: "skill",
-      slot: FIREBALL,
-      skillId: "elementalist.fireball",
-      reason: "out-of-range",
-    });
     await until(match, () => self(a)?.targetSessionId === b.selfSessionId, "the auto-target");
+    a.sendIntent({ kind: "cancel" });
 
     // Fireball at yourself.
     await target(match, a, a.selfSessionId);
     a.sendIntent({ kind: "use-skill", slot: FIREBALL });
-    await until(match, () => toA.length === 2, "the second refusal");
-    expect(toA[1]?.reason).toBe("invalid-target-self");
+    await until(match, () => toA.length === 1, "the refusal");
+    expect(toA[0]).toEqual({
+      kind: "skill",
+      slot: FIREBALL,
+      skillId: "elementalist.fireball",
+      reason: "invalid-target-self",
+    });
 
     // Nothing was cast, and the opponent heard nothing.
     expect(self(a)?.castingSkillId).toBeUndefined();

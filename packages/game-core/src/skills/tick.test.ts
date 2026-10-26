@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { getSkill } from "./catalog.js";
+import { HEALTH_PER_PIP } from "./status.js";
 import {
   advanceStatuses,
   attackMissChanceOf,
@@ -14,9 +15,9 @@ import { makeCombatant } from "./testing.js";
 describe("advanceStatuses health change", () => {
   it("applies degeneration continuously, not in once-per-second lumps", () => {
     const c = makeCombatant({ id: "c", health: 500 });
-    c.statuses.apply("bleeding", 10, "a"); // -3/s
+    c.statuses.apply("bleeding", 10, "a"); // -3 pips, 6 HP/s
     advanceStatuses(c, 0.05); // one 20Hz tick
-    expect(c.health).toBeCloseTo(500 - 3 * 0.05, 10);
+    expect(c.health).toBeCloseTo(500 - 6 * 0.05, 10);
   });
 
   it("accumulates degeneration correctly across many ticks", () => {
@@ -25,12 +26,37 @@ describe("advanceStatuses health change", () => {
     for (let i = 0; i < 20; i += 1) {
       advanceStatuses(c, 0.05);
     }
-    expect(c.health).toBeCloseTo(497, 6);
+    expect(c.health).toBeCloseTo(494, 6);
+  });
+
+  it("counts a pip as 2 HP/s: +4 regeneration heals 8 a second", () => {
+    const c = makeCombatant({ id: "c", health: 100 });
+    c.statuses.apply("regeneration", 10, "a");
+    advanceStatuses(c, 1);
+    expect(c.health).toBeCloseTo(100 + 4 * HEALTH_PER_PIP, 10);
+  });
+
+  it("clamps stacked degeneration to 10 pips: burning, bleeding and poison (-14) drain 20 HP/s", () => {
+    const c = makeCombatant({ id: "c", health: 500 });
+    c.statuses.apply("burning", 10, "a");
+    c.statuses.apply("bleeding", 10, "a");
+    c.statuses.apply("poison", 10, "a");
+    advanceStatuses(c, 1);
+    expect(c.health).toBeCloseTo(480, 10);
+  });
+
+  it("does nothing when regeneration cancels degeneration: +4 against poison's -4", () => {
+    const c = makeCombatant({ id: "c", health: 300 });
+    c.statuses.apply("regeneration", 10, "a");
+    c.statuses.apply("poison", 10, "a");
+    const events = advanceStatuses(c, 1);
+    expect(c.health).toBe(300);
+    expect(events.some((e) => e.kind === "damage" || e.kind === "heal")).toBe(false);
   });
 
   it("applies regeneration up to, but never past, maximum health", () => {
     const c = makeCombatant({ id: "c", health: 498, maxHealth: 500 });
-    c.statuses.apply("regeneration", 10, "a"); // +4/s
+    c.statuses.apply("regeneration", 10, "a"); // +4 pips, 8 HP/s
     for (let i = 0; i < 40; i += 1) {
       advanceStatuses(c, 0.05);
     }

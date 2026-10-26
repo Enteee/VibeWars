@@ -26,8 +26,8 @@ stack(
   chord(P).voicing().mode("below:g4")
     .s("supersaw").unison(2).detune(.3).attack(1.6).release(2.5).gain(.15)
     .lpf(sine.range(500, 1400).slow(12)).room(.85).roomsize(6).orbit(2),
-  n(flute).scale("e4:dorian")
-    .s("recorder").gain(.6).attack(.12).release(.7).room(.8).roomsize(6).orbit(2),
+  n(flute).scale("e3:dorian")
+    .s("recorder").gain(.6).attack(.12).release(.7).lpf(2800).room(.8).roomsize(6).orbit(2),
   // 1: pizzicato in seven, hand drum in five - the jungle moves
   layer(1, stack(
     n("0 2 4 1 3 5 2").chord(P).voicing().mode("above:e3").fast(4/7*4/4)

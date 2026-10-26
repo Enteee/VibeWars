@@ -1,5 +1,8 @@
+import { readFileSync } from "node:fs";
+
 import { expect, test, type Page, type Locator } from "@playwright/test";
 
+import { projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
 
 /**
@@ -266,14 +269,14 @@ test("an enemy skill with nothing targeted targets the nearest enemy", async ({
   // stays picked.
   await page.keyboard.press(key("skill-1"));
 
-  await expect(target).toHaveText(/^target: /);
+  await expect(target).not.toHaveText("no target");
   await opponent.close();
 });
 
-/** The target's health as the target panel says it, e.g. "… — 480/480 hp" -> 480. */
+/** A foe's health as the target frame says it, in percent, e.g. "85%" -> 85 (#484). */
 async function readTargetHealth(page: Page): Promise<number> {
-  const text = (await page.locator(".hud-target-text").textContent()) ?? "";
-  const match = /— (\d+)\//.exec(text);
+  const text = (await page.locator(".hud-target-health .hud-bar-label").textContent()) ?? "";
+  const match = /^(\d+)%/.exec(text);
   expect(match, `could not read target health from ${JSON.stringify(text)}`).not.toBeNull();
   return Number(match?.[1] ?? NaN);
 }
@@ -290,7 +293,7 @@ test("Space attacks the nearest enemy with the weapon, and moving stops it (#160
 
   // Nothing targeted: Space picks the nearest enemy, as an enemy skill does.
   await page.keyboard.press(key("attack"));
-  await expect(page.locator(".hud-target-text")).toHaveText(/^target: /);
+  await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
   await expect(attacking).toBeVisible();
   await expect(attacking).toHaveText("attacking");
   const before = await readTargetHealth(page);
@@ -303,26 +306,25 @@ test("Space attacks the nearest enemy with the weapon, and moving stops it (#160
   await opponent.close();
 });
 
-/**
- * A page screenshot of the arena round `world`, `half` units each way.
- * One world unit is one canvas pixel (arena-viewport.ts), so a world point
- * is the canvas's own offset plus itself.
- */
+/** Where `world` is on the match's canvas, through its camera (#440). */
+async function matchPoint(
+  page: Page,
+  canvas: Locator,
+  world: { readonly x: number; readonly y: number },
+): Promise<{ x: number; y: number }> {
+  return (await projection(page.locator("#viewport"), canvas)).onCanvas(world);
+}
+
+/** A page screenshot of the arena round `world`, `half` canvas px each way. */
 async function spotShot(
   page: Page,
   canvas: Locator,
   world: { readonly x: number; readonly y: number },
   half = 20,
 ): Promise<Buffer> {
-  const box = await canvas.boundingBox();
-  expect(box, "the arena canvas has no box").not.toBeNull();
+  const at = (await projection(page.locator("#viewport"), canvas)).onPage(world);
   return page.screenshot({
-    clip: {
-      x: (box?.x ?? 0) + world.x - half,
-      y: (box?.y ?? 0) + world.y - half,
-      width: 2 * half,
-      height: 2 * half,
-    },
+    clip: { x: at.x - half, y: at.y - half, width: 2 * half, height: 2 * half },
   });
 }
 
@@ -332,7 +334,7 @@ test("clicking the ground walks there, round a wall, and stops (#310)", async ({
   const goal = { x: 520, y: 150 };
   const empty = await spotShot(page, canvas, goal);
 
-  await canvas.click({ position: goal });
+  await canvas.click({ position: await matchPoint(page, canvas, goal) });
   // The marker there fades in 0.4 s; the walk round the wall takes about 3 s.
   await page.waitForTimeout(600);
   await expect
@@ -357,18 +359,18 @@ test("clicking the ground keeps the target, and Space attacks it from there (#31
   const canvas = await startLobbyMatch(page, [opponent]);
   const target = page.locator(".hud-target-text");
   await page.keyboard.press("Tab");
-  await expect(target).toHaveText(/^target: /);
+  await expect(target).not.toHaveText("no target");
   const before = await readTargetHealth(page);
 
   // Open ground, short of the top wall and away from both spawns.
-  await canvas.click({ position: { x: 260, y: 120 } });
+  await canvas.click({ position: await matchPoint(page, canvas, { x: 260, y: 120 }) });
   await page.waitForTimeout(300);
-  await expect(target).toHaveText(/^target: /);
+  await expect(target).not.toHaveText("no target");
 
   await page.keyboard.press(" ");
   await expect(page.locator(".hud-attacking")).toBeVisible();
   await expect.poll(() => readTargetHealth(page), { timeout: 20_000 }).toBeLessThan(before);
-  await expect(target).toHaveText(/^target: /);
+  await expect(target).not.toHaveText("no target");
   await opponent.close();
 });
 
@@ -455,7 +457,7 @@ test("Tab targets the nearest enemy, and the hint goes for good (#55)", async ({
   await expect(hint).toBeVisible();
 
   await page.keyboard.press("Tab");
-  await expect(page.locator(".hud-target-text")).toHaveText(/^target: /);
+  await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
   await expect(hint).toBeHidden();
   // The browser kept its focus where it was: Tab is the game's now.
   expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
@@ -544,13 +546,98 @@ test("the target panel shows the target's professions before its name (#281)", a
   await expect(icons).toHaveCount(0);
 
   await page.keyboard.press("Tab");
-  await expect(page.locator(".hud-target-text")).toHaveText(/^target: /);
-  await expect(icons).toHaveCount(1);
+  await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
+  // The profession, then the weapon it carries (#419).
+  await expect(icons).toHaveCount(2);
   await expect(icons.first()).toHaveAttribute("alt", "Warrior");
   await expect(icons.first()).toHaveAttribute("src", /icons\/profession\/warrior\.svg$/);
+  await expect(icons.nth(1)).toHaveAttribute("src", /icons\/weapon\/[a-z-]+\.svg$/);
 
   // Gone with the target, when it leaves.
   await leaveMatch(opponent);
   await expect(icons).toHaveCount(0);
+  await opponent.close();
+});
+
+test("at Close, the arena's bottom edge stops above the skill bar, not under it (#440)", async ({
+  page,
+}) => {
+  const arena = JSON.parse(
+    readFileSync(
+      new URL("../packages/game-maps/maps/arena-alpha/map.json", import.meta.url),
+      "utf8",
+    ),
+  ) as { readonly height: number };
+  await page.goto("/");
+  await page.getByRole("button", { name: "host a lobby" }).click();
+  await expect(page.locator(".lobby-map select")).toHaveValue("arena-alpha");
+  await page.getByRole("button", { name: "join team 1" }).click();
+  await page.getByRole("button", { name: "ready", exact: true }).click();
+  await page.getByRole("button", { name: "start match" }).click();
+  await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+  const stage = page.locator("#viewport");
+  const canvas = page.locator("#viewport canvas");
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+
+  // The pointer at the centre leans the camera nowhere.
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  for (const _ of [1, 2]) {
+    await page.waitForTimeout(200);
+    await page.mouse.wheel(0, -100);
+  }
+  await expect(stage).toHaveAttribute("data-zoom-step", "Close");
+
+  // Down until the camera stops: you are at the bottom wall.
+  await page.keyboard.down(key("move-down"));
+  let last = "";
+  await expect
+    .poll(
+      async () => {
+        const now = (await stage.getAttribute("data-camera")) ?? "";
+        const stopped = now === last;
+        last = now;
+        return stopped;
+      },
+      { intervals: [500], timeout: 15_000 },
+    )
+    .toBe(true);
+  await page.keyboard.up(key("move-down"));
+
+  const edge = (await projection(stage, canvas)).onPage({ x: 0, y: arena.height }).y;
+  const bars = await page.locator(".hud-bars").boundingBox();
+  expect(Math.abs(edge - (bars?.y ?? 0))).toBeLessThan(2);
+});
+
+test("the target frame shows the target's health and the skill it casts, filling, then clears (#484)", async ({
+  browser,
+  page,
+}) => {
+  const opponent = await browser.newPage();
+  await startLobbyMatch(page, [opponent]);
+  const health = page.locator(".hud-target-health");
+  const cast = page.locator(".hud-target-cast");
+  await expect(health).toBeHidden();
+  await expect(cast).toBeHidden();
+
+  // A foe at full health: the percentage alone.
+  await page.keyboard.press("Tab");
+  await expect(health).toHaveText("100%");
+  await expect(cast).toBeHidden();
+
+  // Slot 8 is Troll Unguent: a 3 s self cast, so it needs no target.
+  await opponent.keyboard.press(key("skill-8"));
+  await expect(cast).toBeVisible();
+  await expect(cast.locator(".hud-target-cast-name")).toHaveText("Troll Unguent");
+  await expect(cast.locator(".skill-type-badge")).toHaveCount(1);
+  const fill = cast.locator(".hud-target-cast-fill");
+  const width = (): Promise<number> => fill.evaluate((node) => node.getBoundingClientRect().width);
+  const early = await width();
+  await expect.poll(width).toBeGreaterThan(early);
+
+  // The frame it ends, the row clears.
+  await expect(cast).toBeHidden({ timeout: 5_000 });
   await opponent.close();
 });

@@ -7,6 +7,7 @@ import {
 } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
 import type {
+  CombatMessage,
   MatchSnapshot,
   PlayerSnapshot,
   SkillSlot,
@@ -15,9 +16,9 @@ import type {
 
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
-import { attackingIcon, professionIcon, skillBadgeHtml, soundIcon } from "./icons.js";
+import { attackingIcon, professionIcon, skillBadgeHtml, soundIcon, weaponIcon } from "./icons.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
-import { castingSlot } from "./skill-slot-state.js";
+import { castFailures, castingSlot, flashSlot } from "./skill-slot-state.js";
 
 /**
  * The player's heads-up display: health/energy, skill bar, and status
@@ -36,6 +37,8 @@ function describeWeaponName(weaponId: string): string {
 
 export interface HudElements {
   readonly root: HTMLElement;
+  /** Health, energy and statuses, then the skill bar: from its top down, the HUD hides the arena. */
+  readonly bars: HTMLElement;
   readonly healthFill: HTMLElement;
   readonly healthText: HTMLElement;
   readonly energyFill: HTMLElement;
@@ -52,8 +55,17 @@ export interface HudElements {
   readonly targetPanel: HTMLElement;
   /** The target's primary and secondary profession icons, before its name (#281). */
   readonly targetProfessions: HTMLElement;
-  /** Who is targeted, as text, inside the target panel. */
+  /** The target's name, or "no target", in the panel's header. */
   readonly targetText: HTMLElement;
+  /** The target's health bar (#484), labelled with its percentage. */
+  readonly targetHealth: HTMLElement;
+  readonly targetHealthFill: HTMLElement;
+  readonly targetHealthText: HTMLElement;
+  /** What the target is casting (#484): badge, name and a filling bar. */
+  readonly targetCast: HTMLElement;
+  readonly targetCastBadge: HTMLElement;
+  readonly targetCastName: HTMLElement;
+  readonly targetCastFill: HTMLElement;
   /** Crossed swords and "attacking", shown while self attacks the target (#160). */
   readonly attacking: HTMLElement;
   readonly scoreboard: HTMLElement;
@@ -139,15 +151,27 @@ export function createHud(parent: HTMLElement): HudElements {
   parent.appendChild(music);
   const leave = element("div", "hud-leave", parent);
 
+  // Three rows (#484): who, how hurt, and what they are casting. The cast
+  // row keeps its space when empty, so the HUD never jumps.
   const targetPanel = element("div", "hud-target", root);
-  const targetProfessions = element("span", "hud-target-professions", targetPanel);
-  const targetText = element("span", "hud-target-text", targetPanel);
-  const attacking = element("span", "hud-attacking", targetPanel);
+  const targetHeader = element("div", "hud-target-header", targetPanel);
+  const targetProfessions = element("span", "hud-target-professions", targetHeader);
+  const targetText = element("span", "hud-target-text", targetHeader);
+  const attacking = element("span", "hud-attacking", targetHeader);
   const swords = attacking.appendChild(document.createElement("img"));
   swords.src = attackingIcon();
   swords.alt = "";
   attacking.append("attacking");
   attacking.hidden = true;
+  const targetHealth = element("div", "hud-bar hud-target-health", targetPanel);
+  const targetHealthFill = element("div", "hud-bar-fill", targetHealth);
+  const targetHealthText = element("span", "hud-bar-label", targetHealth);
+  targetHealth.hidden = true;
+  const targetCast = element("div", "hud-target-cast", targetPanel);
+  const targetCastBadge = element("span", "hud-target-cast-badge", targetCast);
+  const targetCastName = element("span", "hud-target-cast-name", targetCast);
+  const targetCastBar = element("span", "hud-target-cast-bar", targetCast);
+  const targetCastFill = element("span", "hud-target-cast-fill", targetCastBar);
 
   const bars = element("div", "hud-bars", root);
 
@@ -169,6 +193,7 @@ export function createHud(parent: HTMLElement): HudElements {
 
   return {
     root,
+    bars,
     healthFill,
     healthText,
     energyFill,
@@ -182,6 +207,13 @@ export function createHud(parent: HTMLElement): HudElements {
     targetPanel,
     targetProfessions,
     targetText,
+    targetHealth,
+    targetHealthFill,
+    targetHealthText,
+    targetCast,
+    targetCastBadge,
+    targetCastName,
+    targetCastFill,
     attacking,
     scoreboard,
     result,
@@ -412,15 +444,54 @@ export function describeOutcome(
   return winningTeam === selfTeam ? `Victory${why}` : `Defeat${why}`;
 }
 
-/** The target panel's line. */
-export function describeTarget(target: PlayerSnapshot | undefined): string {
-  return target === undefined
-    ? "no target"
-    : `target: ${target.name} — ${String(Math.round(target.health))}/${String(
-        Math.round(target.maxHealth),
-      )} hp · armor ${String(target.armor)}${
-        target.weaponId === undefined ? "" : ` · ${describeWeaponName(target.weaponId)}`
-      }${target.dead ? " (dead)" : ""}`;
+/**
+ * The target's health as a whole percentage of its current maximum (#484),
+ * rounded down, except that the living never read 0%: 1 hp of 480 is 1%.
+ */
+export function targetHealthPercent(target: PlayerSnapshot): number {
+  if (target.dead || target.maxHealth <= 0 || target.health <= 0) {
+    return 0;
+  }
+  return Math.max(1, Math.min(100, Math.floor((target.health / target.maxHealth) * 100)));
+}
+
+/**
+ * The label on the target's health bar (#484): the percentage, which is
+ * what players call, and for yourself and allies the hit points as well.
+ * A foe, or anyone to a spectator, shows the percentage alone, as GW1
+ * shows a foe's bar alone.
+ */
+export function targetHealthLabel(target: PlayerSnapshot, selfTeam: number | undefined): string {
+  const percent = `${String(targetHealthPercent(target))}%`;
+  if (target.dead) {
+    return `${percent} · dead`;
+  }
+  return target.team === selfTeam
+    ? `${percent} · ${String(Math.round(target.health))} / ${String(Math.round(target.maxHealth))}`
+    : percent;
+}
+
+/** What the target frame's cast row shows (#484). */
+export interface TargetCast {
+  /** The skill's id, which picks its type badge: none for an unknown one. */
+  readonly skillId: string;
+  /** Its name, or its id if this client does not know it. */
+  readonly name: string;
+  /** How far the cast has run, 0 to 1. */
+  readonly progress: number;
+}
+
+/** What the target is casting, or undefined: nothing, or an instant skill. */
+export function targetCast(target: PlayerSnapshot): TargetCast | undefined {
+  if (target.castingSkillId === undefined || target.castTotal <= 0) {
+    return undefined;
+  }
+  const skill = getSkill(target.castingSkillId);
+  return {
+    skillId: target.castingSkillId,
+    name: skill?.name ?? target.castingSkillId,
+    progress: Math.max(0, Math.min(1, 1 - target.castRemaining / target.castTotal)),
+  };
 }
 
 /** Whether self's weapon is swinging at the target the panel shows. */
@@ -511,9 +582,19 @@ export function targetProfessionIcons(target: PlayerSnapshot | undefined): Profe
   );
 }
 
+/**
+ * The target's weapon icon (#419), after its professions: what to watch
+ * for in the fight. None for no target, no weapon or one this client does
+ * not know.
+ */
+export function targetWeaponIcon(target: PlayerSnapshot | undefined): ProfessionIcon | undefined {
+  return target?.weaponId === undefined ? undefined : weaponIcon(target.weaponId);
+}
+
 /** Replace the icons only when the target or its professions changed, never every frame. */
 function renderTargetProfessions(container: HTMLElement, target: PlayerSnapshot | undefined): void {
-  const icons = targetProfessionIcons(target);
+  const weapon = targetWeaponIcon(target);
+  const icons = [...targetProfessionIcons(target), ...(weapon === undefined ? [] : [weapon])];
   const key = icons.map((icon) => icon.name).join(" / ");
   if (container.dataset.professions === key) {
     return;
@@ -529,6 +610,84 @@ function renderTargetProfessions(container: HTMLElement, target: PlayerSnapshot 
       return img;
     }),
   );
+}
+
+/** Paint the cast row's badge and name, only when the skill changes. */
+function setTargetCastSkill(hud: HudElements, skillId: string): void {
+  if (hud.targetCast.dataset.skill === skillId) {
+    return;
+  }
+  hud.targetCast.dataset.skill = skillId;
+  hud.targetCastBadge.innerHTML = skillBadgeHtml(skillId);
+  hud.targetCastName.textContent = getSkill(skillId)?.name ?? skillId;
+}
+
+function isFlashing(row: HTMLElement): boolean {
+  return row.classList.contains("is-interrupted") || row.classList.contains("is-cancelled");
+}
+
+/**
+ * Paint the target's cast, or clear the row the frame it ends. A flash
+ * still running for this target keeps the row as it failed; one for an
+ * earlier target is cleared, since it belongs to someone no longer shown.
+ */
+function renderTargetCast(hud: HudElements, target: PlayerSnapshot | undefined): void {
+  const row = hud.targetCast;
+  if (isFlashing(row)) {
+    if (target !== undefined && row.dataset.target === target.sessionId) {
+      return;
+    }
+    row.classList.remove("is-interrupted", "is-cancelled");
+  }
+  const cast = target === undefined ? undefined : targetCast(target);
+  row.classList.toggle("is-active", cast !== undefined);
+  if (target === undefined || cast === undefined) {
+    return;
+  }
+  row.dataset.target = target.sessionId;
+  setTargetCastSkill(hud, cast.skillId);
+  hud.targetCastFill.style.width = `${String(cast.progress * 100)}%`;
+}
+
+/**
+ * Flash the cast row when the target's cast is interrupted or cancelled
+ * (#484), as a failed slot flashes (#300), however the snapshot that
+ * ends the cast and this message are ordered.
+ */
+export function flashTargetCast(
+  hud: HudElements,
+  events: CombatMessage["events"],
+  targetId: string | undefined,
+): void {
+  if (targetId === undefined) {
+    return;
+  }
+  for (const failure of castFailures(events, targetId)) {
+    hud.targetCast.dataset.target = targetId;
+    setTargetCastSkill(hud, failure.skillId);
+    hud.targetCast.classList.add("is-active");
+    flashSlot(hud.targetCast, failure.kind);
+  }
+}
+
+/** The target frame (#484): header, health bar and cast row. */
+function renderTarget(
+  hud: HudElements,
+  self: PlayerSnapshot,
+  target: PlayerSnapshot | undefined,
+): void {
+  renderTargetProfessions(hud.targetProfessions, target);
+  hud.targetText.textContent = target === undefined ? "no target" : target.name;
+  hud.attacking.hidden = !isAttackingTarget(self, target);
+  // Armor on hover: a number to look up, not to read at a glance.
+  hud.targetPanel.title = target === undefined ? "" : `armor ${String(target.armor)}`;
+  hud.targetHealth.hidden = target === undefined;
+  if (target !== undefined) {
+    hud.targetHealth.classList.toggle("is-dead", target.dead);
+    hud.targetHealthFill.style.width = `${String(targetHealthPercent(target))}%`;
+    hud.targetHealthText.textContent = targetHealthLabel(target, self.team);
+  }
+  renderTargetCast(hud, target);
 }
 
 export function updateHud(
@@ -568,9 +727,7 @@ export function updateHud(
   hud.statusList.textContent =
     self.statuses.length > 0 ? self.statuses.join(" · ") : "no active effects";
 
-  renderTargetProfessions(hud.targetProfessions, target);
-  hud.targetText.textContent = describeTarget(target);
-  hud.attacking.hidden = !isAttackingTarget(self, target);
+  renderTarget(hud, self, target);
 
   // Grey out skills the player cannot currently afford. The server is
   // still the authority on whether a cast is legal — this is a hint, not

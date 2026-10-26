@@ -61,6 +61,22 @@ reads on the fill and on the empty track alike.
 | `hud-health` | `#3a6a3e` | Health bar fill | 4.7:1       |
 | `hud-energy` | `#2f6787` | Energy bar fill | 4.6:1       |
 
+### Target frame
+
+The match HUD's target frame (#484) is three rows of fixed size, so the
+HUD never jumps when a row has nothing to show:
+
+| Row    | Shows                                                                                                 |
+| ------ | ----------------------------------------------------------------------------------------------------- |
+| Header | Profession icons, the name in `ink`, the "attacking" swords                                           |
+| Health | A `hud-health` bar labelled with the percentage, rounded down; `412 / 480` added for you and allies   |
+| Cast   | While the target casts: the type badge, the skill's name, and a 6 px bar filling in `ink`, never blue |
+
+A foe shows the percentage alone, as GW1 shows a foe's bar alone. A dead
+target has an empty track edged in `dead`. An interrupted cast keeps the
+row for 400 ms with a `damage` ✕ and edge, a cancelled one dimmed, as the
+skill slot does (#300). Armor is in the frame's hover title.
+
 ### Professions (menus only)
 
 Never used in the arena: there, colour means team.
@@ -366,6 +382,17 @@ the same 8v8 clump both ways:
 
 ![Name label study](name-label-study.svg)
 
+### Weapon and off-hand icons
+
+The pickers and the target frame (#419) show a weapon or off-hand as its arena
+mark, turned to point up and fitted to the 24 grid, so what you pick is what
+you spot in the fight. Drawn from the same geometry as the arena
+(`weapon-mark-geometry.ts`): a 2-unit `ink` core (2.3 px at 28 px) in a
+3.6-unit `edge` casing, bow strings in the thin 1-unit weight, filled heads
+cased thinner. No body disc. Unarmed is the two fists. The shield is its arc
+and the focus its ring, scaled up (the ring in the same weight, or its hole
+closes). Ink, never team colour: an icon in a menu names a thing, not a side.
+
 ### Skill type badges
 
 The corner badge on a skill slot. Ink on the slot, except the two that leave a
@@ -463,8 +490,10 @@ generator. Never hand-edit an output file; change the script and re-run.
 | Status     | `apps/web/public/icons/status/`     |
 | UI         | `apps/web/public/icons/ui/`         |
 | Projectile | `apps/web/public/icons/projectile/` |
+| Weapon     | `apps/web/public/icons/weapon/`     |
+| Off-hand   | `apps/web/public/icons/offhand/`    |
 
-Each file is a flat SVG of 150–450 bytes with colours baked in, because Phaser
+Each file is a flat SVG of 150–1,200 bytes with colours baked in, because Phaser
 rasterises SVG textures without CSS. Projectiles are the one exception: white,
 for the scene to tint. Load it in Phaser with
 `this.load.svg(key, url, { width, height })` at the size you draw it (24×24

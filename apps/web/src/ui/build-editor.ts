@@ -47,7 +47,13 @@ import {
   type GearDragSource,
   type GearDropTarget,
 } from "./gear-editor.js";
-import { professionIcon, skillTypeBadgeHtml } from "./icons.js";
+import {
+  offhandIcon,
+  professionIcon,
+  skillTypeBadgeHtml,
+  weaponIcon,
+  type GearIcon,
+} from "./icons.js";
 import { filterSkillsByName, groupSkillsByAttribute } from "./skill-library.js";
 import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
 import { createTrainingPanel, type TrainingPanel } from "./training-panel.js";
@@ -807,6 +813,19 @@ function selectRow(
   return field;
 }
 
+/** A weapon or off-hand icon (#419), named for a screen reader and a hover. */
+function gearIconImg(icon: GearIcon | undefined): HTMLImageElement | undefined {
+  if (icon === undefined) {
+    return undefined;
+  }
+  const img = document.createElement("img");
+  img.className = "gear-icon";
+  img.src = icon.src;
+  img.alt = icon.name;
+  img.title = icon.name;
+  return img;
+}
+
 /**
  * A gear slot: a drop target that shows what is in it.
  *
@@ -818,6 +837,7 @@ function selectRow(
 function gearSlot(options: {
   readonly label: string;
   readonly filled: string | undefined;
+  readonly icon?: GearIcon | undefined;
   readonly detail?: string | undefined;
   readonly disabledNote?: string | undefined;
   readonly dragSource?: GearDragSource | undefined;
@@ -834,7 +854,13 @@ function gearSlot(options: {
   }
 
   cell.appendChild(h("span", "gear-slot-label", options.label));
-  cell.appendChild(h("span", "gear-slot-name", options.disabledNote ?? options.filled ?? "empty"));
+  const name = h("span", "gear-slot-name");
+  const slotIcon = disabled ? undefined : gearIconImg(options.icon);
+  if (slotIcon !== undefined) {
+    name.appendChild(slotIcon);
+  }
+  name.appendChild(document.createTextNode(options.disabledNote ?? options.filled ?? "empty"));
+  cell.appendChild(name);
   if (options.detail !== undefined && !disabled) {
     cell.appendChild(h("span", "gear-slot-detail", options.detail));
   }
@@ -931,6 +957,7 @@ function renderGear(
     gearSlot({
       label: "weapon",
       filled: weapon?.name,
+      icon: weaponIcon(character.equipment.mainHand.weaponId),
       detail:
         weapon === undefined
           ? undefined
@@ -943,6 +970,7 @@ function renderGear(
     gearSlot({
       label: "off-hand",
       filled: offhandDefinition?.name,
+      icon: offHand === null ? undefined : offhandIcon(offHand.offhandId),
       detail:
         offhandDefinition === undefined
           ? undefined
@@ -1061,6 +1089,7 @@ function renderGear(
   const stats = h("div", "gear-stats");
   stats.appendChild(statLine("health", String(summary.maxHealth)));
   stats.appendChild(statLine("energy", String(summary.maxEnergy)));
+  stats.appendChild(statLine("energy regen", `${String(summary.baseEnergyPips)} pips`));
   stats.appendChild(statLine("armor", String(summary.armor)));
   if (!summary.requirementMet) {
     // Said out loud rather than left for the player to discover by
@@ -1149,6 +1178,7 @@ function renderGearLibrary(
 
   function box(options: {
     readonly name: string;
+    readonly icon?: GearIcon | undefined;
     readonly detail: string;
     readonly equipped: boolean;
     readonly drag: GearDragSource;
@@ -1159,7 +1189,13 @@ function renderGearLibrary(
     if (options.equipped) {
       node.classList.add("is-equipped");
     }
-    node.appendChild(h("span", "skill-box-name", options.name));
+    const name = h("span", "skill-box-name");
+    const icon = gearIconImg(options.icon);
+    if (icon !== undefined) {
+      name.appendChild(icon);
+    }
+    name.appendChild(document.createTextNode(options.name));
+    node.appendChild(name);
     node.appendChild(h("span", "skill-box-cost", options.detail));
     node.addEventListener("dragstart", (event: DragEvent) => {
       event.dataTransfer?.setData("text/plain", encodeGearDrag(options.drag));
@@ -1186,6 +1222,7 @@ function renderGearLibrary(
     weapons.appendChild(
       box({
         name: weapon.name,
+        icon: weaponIcon(weapon.id),
         detail: `${String(weapon.damageMin)}–${String(weapon.damageMax)} · ${weapon.attackIntervalSeconds.toFixed(2)}s`,
         equipped: weapon.id === equippedWeapon,
         drag: { from: "weapon-library", weaponId: weapon.id },
@@ -1202,6 +1239,7 @@ function renderGearLibrary(
     offhands.appendChild(
       box({
         name: offhand.name,
+        icon: offhandIcon(offhand.id),
         detail: `+${String(offhand.baseBonus + offhand.metRequirementBonus)} ${offhand.kind}`,
         equipped: offhand.id === equippedOffhand,
         drag: { from: "offhand-library", offhandId: offhand.id },

@@ -24,9 +24,9 @@ stack(
   chord(P).voicing().mode("below:d4")
     .s("supersaw").unison(2).detune(.2).attack(.5).release(1.2).gain(.22).lpf(1600).room(.6).roomsize(6).orbit(2),
   note(P.rootNotes(2)).s("triangle").attack(.04).release(1).gain(.5),
-  n(tune).scale("bb4:major")
+  n(tune).scale("bb3:major")
     .s("sawtooth").attack(.1).release(.6).gain(.5)
-    .lpf(1100).lpenv(3).lpa(.1).lpd(.6).room(.7).roomsize(6).orbit(2),
+    .lpf(500).lpenv(3).lpa(.1).lpd(.6).room(.7).roomsize(6).orbit(2),
   s("bells:1 ~ ~ ~ ~ ~ ~ ~").slow(2).gain(.3).room(.9).roomsize(6).orbit(2),
   // 1: banners snap in the wind
   layer(1, stack(

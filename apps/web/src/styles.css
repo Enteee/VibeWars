@@ -99,10 +99,109 @@ body {
   pointer-events: auto;
 }
 
+/* The target frame (#484): header, health bar, cast row. Its size never
+   changes with what it shows, so the bars under it never jump. */
 .hud-target {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
   color: var(--ink-dim);
   letter-spacing: 0.04em;
+}
+
+.hud-target-header {
   min-height: 1.1em;
+}
+
+.hud-target-text {
+  color: var(--ink);
+}
+
+/* Hidden with no target, but its space kept. */
+.hud-target-health[hidden] {
+  display: block;
+  visibility: hidden;
+}
+
+.hud-target-health .hud-bar-fill {
+  background: #3a6a3e;
+}
+
+/* A corpse: an empty track in the corpse colour. */
+.hud-target-health.is-dead {
+  border-color: #4a5464;
+}
+
+.hud-target-health.is-dead .hud-bar-label {
+  color: var(--ink-dim);
+}
+
+/* Only while the target casts; the row's space is always kept. */
+.hud-target-cast {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 220px;
+  height: 16px;
+  visibility: hidden;
+}
+
+.hud-target-cast.is-active {
+  visibility: visible;
+}
+
+.hud-target-cast-badge {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+}
+
+.hud-target-cast-badge .skill-type-badge {
+  position: static;
+}
+
+.hud-target-cast-name {
+  flex: 0 1 auto;
+  overflow: hidden;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* In ink, as the arena cast bar is: blue would mean a friend. */
+.hud-target-cast-bar {
+  position: relative;
+  flex: 1 0 60px;
+  height: 6px;
+  background: #11161d;
+  border: 1px solid var(--line);
+}
+
+.hud-target-cast-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: var(--ink);
+}
+
+/* A failed cast, as a failed slot shows it (#300): a cross, or dimmed. */
+.hud-target-cast.is-interrupted .hud-target-cast-name::after {
+  content: " ✕";
+  color: var(--damage);
+  font-weight: 700;
+}
+
+.hud-target-cast.is-interrupted .hud-target-cast-bar {
+  border-color: var(--damage);
+}
+
+.hud-target-cast.is-interrupted > *,
+.hud-target-cast.is-cancelled > * {
+  opacity: 0.6;
+}
+
+.hud-target-cast.is-interrupted .hud-target-cast-name {
+  opacity: 1;
 }
 
 /* The target's professions, before its name, at the panel's line height (#281). */
@@ -1761,6 +1860,14 @@ body {
   background: var(--panel);
   border-color: var(--accent);
   color: var(--ink);
+}
+
+/* A weapon or off-hand icon (#419): ink on the panel, the arena silhouette. */
+.gear-icon {
+  width: 1.4em;
+  height: 1.4em;
+  margin-right: 0.35em;
+  vertical-align: -0.3em;
 }
 
 .gear-box .skill-box-name {

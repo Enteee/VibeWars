@@ -117,7 +117,8 @@ describe("an attack skill pressed out of reach", () => {
       queued: true,
     });
     const a = get(match, "a");
-    expect(a.combatant.attack).toMatchObject({ targetId: "d", pendingSkillSlot: 0 });
+    expect(a.combatant.attack).toMatchObject({ targetId: "d" });
+    expect(a.pendingSkill).toEqual({ slot: 0, targetId: "d", unreachableSeconds: 0 });
 
     stepFor(match, 0.5);
     expect(a.position.x).toBeGreaterThan(50);
@@ -130,7 +131,7 @@ describe("an attack skill pressed out of reach", () => {
       getSkill(SWIFT_CHOP)?.range ?? 0,
     );
     expect(a.combatant.energy).toBe(95);
-    expect(a.combatant.attack?.pendingSkillSlot).toBeUndefined();
+    expect(a.pendingSkill).toBeUndefined();
 
     const chops = uses(stepFor(match, 1), SWIFT_CHOP);
     expect(chops).toHaveLength(1);
@@ -172,7 +173,8 @@ describe("an attack skill pressed out of reach", () => {
     expect(match.requestSkill("a", 1)?.check).toEqual({ ok: true });
     const a = get(match, "a");
     expect(a.combatant.cast.activeCast?.skillId).toBe(FIREBALL);
-    expect(a.combatant.attack).toMatchObject({ targetId: "d", pendingSkillSlot: undefined });
+    expect(a.combatant.attack).toMatchObject({ targetId: "d" });
+    expect(a.pendingSkill).toBeUndefined();
     const log = stepFor(match, 6);
     expect(uses(log, FIREBALL)).toHaveLength(1);
     expect(uses(log, SWIFT_CHOP)).toEqual([]);
@@ -200,10 +202,8 @@ describe("an attack skill pressed out of reach", () => {
     get(match, "a").combatant.energy = 0;
     const log = stepFor(match, 4);
     expect(uses(log, SWIFT_CHOP)).toEqual([]);
-    expect(get(match, "a").combatant.attack).toMatchObject({
-      targetId: "d",
-      pendingSkillSlot: undefined,
-    });
+    expect(get(match, "a").combatant.attack).toMatchObject({ targetId: "d" });
+    expect(get(match, "a").pendingSkill).toBeUndefined();
     expect(log.some((entry) => entry.cause === "weapon")).toBe(true);
   });
 
@@ -217,14 +217,5 @@ describe("an attack skill pressed out of reach", () => {
     const gap = distance(get(match, "r").position, get(match, "d").position);
     expect(gap).toBeLessThanOrEqual(barrageRange);
     expect(gap).toBeGreaterThan(barrageRange - RULES.movement.maxSpeedUnitsPerSecond * DT - 1e-6);
-  });
-
-  it("a spell out of range is still refused, and nobody walks", () => {
-    const match = sim(axeman("a", vec2(0, 0)), dummy("d", vec2(800, 0)));
-    match.setTarget("a", "d");
-    expect(match.requestSkill("a", 1)?.check).toEqual({ ok: false, reason: "out-of-range" });
-    expect(get(match, "a").combatant.attack).toBeUndefined();
-    stepFor(match, 0.5);
-    expect(get(match, "a").position).toEqual(vec2(0, 0));
   });
 });

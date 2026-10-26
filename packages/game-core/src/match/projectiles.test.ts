@@ -195,6 +195,7 @@ describe("ranged weapons fire projectiles", () => {
       {
         maxHealth: RULES.combat.baseHealth,
         maxEnergy: RULES.combat.baseEnergy,
+        baseEnergyPips: 0,
         attributeRanks: new Map(),
         equipment: unarmedResolvedEquipment(60),
       },

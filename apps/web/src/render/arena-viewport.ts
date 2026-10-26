@@ -3,19 +3,8 @@ import type Phaser from "phaser";
 import { vec2, type Vec2 } from "@vibewars/game-core";
 
 import type { ArenaScene } from "./arena-scene.js";
+import { WHEEL_IDLE, feedWheel, type CameraView, type Cover, type Size } from "./camera-rig.js";
 import { buttonChanges, type MouseButton } from "./pointer-buttons.js";
-
-/**
- * How the arena fills its parent element.
- *
- * Not cosmetic: world units are screen pixels at scale 1, so `resize` in a
- * narrow column shows only the top-left corner of the map. `fit` gives the
- * game a fixed world-sized canvas and scales it to the parent, which also
- * keeps `pointer.worldX/worldY` in world units with no transform math.
- */
-export type ArenaScaleMode =
-  | { readonly mode: "resize" } // the match view
-  | { readonly mode: "fit"; readonly width: number; readonly height: number }; // a fixed world, scaled to fit
 
 /** One mouse button going down or up over the arena (#438). */
 export interface ButtonEvent {
@@ -41,19 +30,27 @@ export interface ArenaViewport {
    */
   onButton(handler: (event: ButtonEvent) => void): () => void;
   /**
-   * The cursor moved over the arena, in world units, or left it
-   * (`undefined`), so a name shown under it does not stay (#253).
-   * Returns the unsubscribe.
+   * A wheel notch over the canvas: `1` down, `-1` up (#440). Over the
+   * canvas only, the page neither scrolls nor zooms, Ctrl held or not, so
+   * a trackpad pinch never zooms the page. Returns the unsubscribe.
    */
-  onPointerMove(handler: (world: Vec2 | undefined) => void): () => void;
+  onWheelNotch(handler: (direction: -1 | 1) => void): () => void;
+  /**
+   * The world point under the cursor through the camera as it is now, or
+   * `undefined` off the canvas: a still cursor over a moving camera is
+   * over a new point every frame, so a name under it follows (#253).
+   */
+  pointerWorld(): Vec2 | undefined;
+  /** The cursor on the canvas, CSS px, or `undefined` off it. */
+  pointerScreen(): Vec2 | undefined;
+  /** The canvas, CSS px. */
+  size(): Size;
+  /** Point the camera, with what the HUD covers; the scene draws through it from this frame. */
+  setCamera(view: CameraView, cover: Cover): void;
+  /** The arena's bounds, for the grid, its edge and the camera's clamp. */
+  setArenaBounds(width: number, height: number): void;
   /** Re-measure the parent, after the layout around it changed. */
   refreshScale(): void;
-  /**
-   * A new world size for a `fit` viewport, e.g. another training map.
-   * Resizes the game rather than replacing it: recreating a Phaser game
-   * is the leak-prone thing this whole module exists to avoid.
-   */
-  setWorldSize(width: number, height: number): void;
   destroy(): void;
 }
 
@@ -62,10 +59,7 @@ export interface ArenaViewport {
  * scene exists. Only this and `ArenaScene` touch Phaser (ADR-0010); the
  * callers wire a connection to it.
  */
-export async function createArenaViewport(
-  parent: HTMLElement,
-  scale: ArenaScaleMode,
-): Promise<ArenaViewport> {
+export async function createArenaViewport(parent: HTMLElement): Promise<ArenaViewport> {
   // Loaded on first use, not at import: the build editor imports this
   // module through the training panel, and its pure functions are tested
   // in node, where Phaser cannot even be imported.
@@ -77,15 +71,9 @@ export async function createArenaViewport(
     type: Phaser.AUTO,
     parent,
     backgroundColor: "#0e1116",
-    scale:
-      scale.mode === "resize"
-        ? { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH }
-        : {
-            mode: Phaser.Scale.FIT,
-            autoCenter: Phaser.Scale.CENTER_BOTH,
-            width: scale.width,
-            height: scale.height,
-          },
+    // The canvas is its parent's size in CSS px; the camera decides how
+    // much world that shows (camera-rig.ts).
+    scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
     scene: [ArenaScene],
   });
 
@@ -97,6 +85,17 @@ export async function createArenaViewport(
       }
     });
   });
+
+  /** The cursor on the canvas, game px, which RESIZE makes CSS px. */
+  let pointer: Vec2 | undefined;
+  const onMove = (moved: Phaser.Input.Pointer): void => {
+    pointer = vec2(moved.x, moved.y);
+  };
+  const onOut = (): void => {
+    pointer = undefined;
+  };
+  scene.input.on("pointermove", onMove);
+  scene.input.on("gameout", onOut);
 
   return {
     scene,
@@ -169,27 +168,46 @@ export async function createArenaViewport(
         window.removeEventListener("blur", releaseAll);
       };
     },
-    onPointerMove(handler) {
-      const onMove = (pointer: Phaser.Input.Pointer): void => {
-        handler(vec2(pointer.worldX, pointer.worldY));
+    onWheelNotch(handler) {
+      let wheel = WHEEL_IDLE;
+      const onWheel = (event: WheelEvent): void => {
+        event.preventDefault();
+        const fed = feedWheel(wheel, event.deltaY, event.deltaMode, event.timeStamp);
+        wheel = fed.state;
+        if (fed.notch !== undefined) {
+          handler(fed.notch);
+        }
       };
-      const onOut = (): void => {
-        handler(undefined);
-      };
-      scene.input.on("pointermove", onMove);
-      scene.input.on("gameout", onOut);
+      game.canvas.addEventListener("wheel", onWheel, { passive: false });
       return () => {
-        scene.input.off("pointermove", onMove);
-        scene.input.off("gameout", onOut);
+        game.canvas.removeEventListener("wheel", onWheel);
       };
+    },
+    pointerWorld() {
+      if (pointer === undefined) {
+        return undefined;
+      }
+      const world = scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
+      return vec2(world.x, world.y);
+    },
+    pointerScreen() {
+      return pointer;
+    },
+    size() {
+      return { width: game.scale.width, height: game.scale.height };
+    },
+    setCamera(view, cover) {
+      scene.setCamera(view, cover);
+    },
+    setArenaBounds(width, height) {
+      scene.setArenaBounds(width, height);
     },
     refreshScale() {
       game.scale.refresh();
     },
-    setWorldSize(width, height) {
-      game.scale.setGameSize(width, height);
-    },
     destroy() {
+      scene.input.off("pointermove", onMove);
+      scene.input.off("gameout", onOut);
       game.destroy(true);
     },
   };

@@ -172,8 +172,8 @@ describe("status-driven combat scenarios", () => {
     for (let i = 0; i < 100; i += 1) {
       advanceStatuses(victim, TICK);
     }
-    // 5 seconds of -3/s bleed.
-    expect(victim.health).toBeCloseTo(healthAfterHit - 15, 5);
+    // 5 seconds of a -3 pip bleed: 6 HP/s.
+    expect(victim.health).toBeCloseTo(healthAfterHit - 30, 5);
   });
 
   it("condition removal cures the bleed and stops the degeneration", () => {

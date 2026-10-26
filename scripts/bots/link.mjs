@@ -40,6 +40,7 @@ import { fileURLToPath } from "node:url";
 import { ROLES } from "./hub-policy.mjs";
 import { takeLock } from "./instance-lock.mjs";
 import { openJailDir, withJailDir } from "./jail-fs.mjs";
+import { unreadOf } from "./unread.mjs";
 import { readRoster } from "./presence.mjs";
 import {
   SUPPORT_BUSY,
@@ -52,6 +53,7 @@ import {
   formatMirror,
   formatQuestion,
   inboxesOf,
+  skipNudge,
   isReadyOutboxEntry,
   mirrorTopic,
   obj,
@@ -759,13 +761,18 @@ async function drainOutboxes(company, mirror) {
 function drainSystem(company, mirror) {
   return takeOutbox(path.join(company.at.bus, SYSTEM), SYSTEM, (_name, payload) => {
     const delivered = deliverSystem(payload, {
-      employees: [...company.employees().keys()],
+      employees: company.employees(),
       now: Date.now(),
     });
+    let sent = 0;
     for (const { employee, line } of delivered.deliveries) {
+      if (line.nudge !== null && skipNudge(unreadOf(company.at.bus, employee), line.nudge)) {
+        continue;
+      }
       appendInbox(company.at.bus, employee, line);
+      sent += 1;
     }
-    if (delivered.mirror !== null) {
+    if (delivered.mirror !== null && sent > 0) {
       mirror.push({ peer: delivered.mirror });
     }
   });

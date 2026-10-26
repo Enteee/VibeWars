@@ -11,8 +11,9 @@ tick, for every living player, in the order they joined:
 2. energy regenerates
 3. status effects tick (degeneration, regeneration, expiry)
 4. an in-progress cast advances; if it completes, its effects apply
-5. the weapon attack walks into reach or swings
-6. a training dummy's behaviour acts
+5. a skill pressed out of range walks in, or goes off on arrival
+6. the weapon attack walks into reach or swings
+7. a training dummy's behaviour acts
 
 Then state is synchronised to clients.
 
@@ -24,8 +25,17 @@ the server decides what happens (brief §12, §32).
 
 | Resource   | How you get it                                                                             | What it gates     |
 | ---------- | ------------------------------------------------------------------------------------------ | ----------------- |
-| Energy     | Regenerates 2/second, up to 50                                                             | Most skills       |
+| Energy     | Regenerates by profession, up to 50: see below                                             | Most skills       |
 | Adrenaline | +3 each time your attack skill or weapon swing damages an enemy (spells earn none), max 25 | Adrenaline skills |
+
+Regeneration and degeneration count in **pips**, as in GW1. One health
+pip is 2 HP/s and one energy pip ⅓ energy/s. Every status's pips sum
+(Bleeding −3, Burning −7, Poison −4, Life Drain −2, Regeneration +4), and
+the net is clamped to ±10 before it applies: burning, bleeding and poison
+together (−14) drain 20 HP/s, not 28. Energy is the primary profession's
+base pips plus any status's, clamped the same way: Warrior and Paragon 2
+(⅔/s), Ranger 3 (1/s), every caster, Assassin and Dervish 4 (1⅓/s). The
+build editor shows the base as "energy regen".
 
 The split is deliberate. Energy rewards patience; adrenaline rewards
 staying in the fight and landing hits. An adrenaline skill you cannot
@@ -62,6 +72,16 @@ mid-fight, and the server logs which one happened.
 Order matters for that reason too: cost is checked before range, so a
 player who is both broke and too far away is told the more actionable
 thing.
+
+**Out of range walks in.** When range or line of sight is all that
+fails, the press is not refused: your character walks toward the target,
+round walls, and the skill goes off the moment it is in range and in
+sight, checked all over again, as in GW1. Nothing is paid and no recharge
+starts until then, and there is no cast bar on the way. Moving, Esc,
+attacking someone else, using another skill, the target dying, or half a
+second with no way to them ("can't reach") drops it. A weapon attack
+already running pauses for the walk and resumes on its own target after
+the cast. A self-target skill never walks.
 
 A cast in progress can be **given up**: by moving, or by Esc (Cancel
 Action, which also stops your weapon attack). A cancelled skill stays
@@ -124,7 +144,7 @@ lands, so a miss still costs energy or adrenaline and starts the
 recharge, and the missed foe gets none of the skill's riders. Spells are
 unaffected.
 
-Degeneration applies **continuously** (`rate × dt`), not in once-per-
+Degeneration applies **continuously** (`pips × 2 × dt`), not in once-per-
 second lumps, so a bleed at 20 Hz drains smoothly instead of
 stair-stepping. Regeneration correctly caps at the deep-wound-_reduced_
 maximum, not the raw one.

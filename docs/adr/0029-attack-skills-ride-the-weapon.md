@@ -70,16 +70,19 @@ attack skill. Adrenaline as for any hit.
 swings and attack skills alike. As in GW1, only the strongest speed-up and
 the strongest slow-down count, and they multiply. No status sets it yet.
 
-**Out of reach.** An attack skill pressed out of range or out of sight
-of its target is walked into, as Space is (Q49, #415). The press is
-checked as any is, and accepted when range or sight is all that fails: the
-attack turns on the target with the skill as `AttackState.pendingSkillSlot`,
-and the approach walks to the skill's range rather than the weapon's, so
-Barrage stops at its own. In reach and in sight, it goes off through the
-same check as a press; nothing is paid, and no recharge starts, until then.
-Refused on arrival, it is dropped and the attack carries on. Whatever drops
-the attack drops it too (moving, Escape, a new target, the target dying or
-proving unreachable), and another skill pressed replaces it.
+**Out of reach.** Any skill with a target, pressed out of range or out of
+sight of it, is walked into, as Space is (Q49, #415; every skill since
+Q61, #499). The press is checked as any is, and accepted when range or
+sight is all that fails: it becomes the participant's `pendingSkill`, and
+the approach walks to the skill's range, not the weapon's, so Barrage
+stops at its own. In range and in sight, it goes off through the same
+check as a press; nothing is paid, and no recharge starts, until then.
+Refused on arrival, it is dropped without a word. An attack skill also
+turns the attack on its target; any other skill pauses a running attack,
+which resumes on its own target after the cast. Moving, Escape, Space on
+anyone else, the target dying or turning invalid, or the walk proving
+unreachable drops it, and another skill used replaces it. A self-target
+skill never walks.
 
 **Interrupts.** An interrupted skill, attack or not, starts its recharge
 as if it had been used, as in GW1. Before, it could be cast again at once.

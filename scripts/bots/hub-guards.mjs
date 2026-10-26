@@ -263,3 +263,23 @@ export function boardMoveAllowed({ role, from, to }) {
   }
   return { ok: true };
 }
+
+/**
+ * May `role` land a card, new to the board, in `to` (#517)? An issue is
+ * judged as a move out of no column. A pull request is not signed off (its
+ * issue is), so the manager may put it anywhere but Ready.
+ *
+ * @param {{ role: string, to: string, pull: boolean }} landing
+ * @returns {{ ok: true } | { ok: false, reason: string }}
+ */
+export function landingAllowed({ role, to, pull }) {
+  if (!pull) {
+    return boardMoveAllowed({ role, from: "", to });
+  }
+  if (role !== "manager") {
+    return { ok: false, reason: "only the manager puts a pull request on the board" };
+  }
+  return to === "Ready"
+    ? { ok: false, reason: "a pull request is never in Ready: its issue is the one signed off" }
+    : { ok: true };
+}

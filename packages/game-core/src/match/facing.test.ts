@@ -66,6 +66,7 @@ function swordsman(id: string, team: number, spawn: Vec2): ParticipantSpec {
     ]),
     equipment,
     maxEnergy: 1000,
+    baseEnergyPips: 0,
     maxHealth: 1e6,
     spawn,
     facing: START,
@@ -161,6 +162,7 @@ describe("facing in the match (#187)", () => {
         equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
         maxHealth: 500,
         maxEnergy: 30,
+        baseEnergyPips: 0,
       },
       [],
     );
