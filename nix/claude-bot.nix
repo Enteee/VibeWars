@@ -252,8 +252,8 @@ let
     check "a loose branch is deletable" \
       "$(git rev-parse --verify --quiet "refs/heads/$branch" || echo gone)" "gone"
     check "git fetch still works" \
-      "$("$SHELL" -c "git fetch --quiet '$common' HEAD:refs/smoke/fetch-$ && echo fetched" 2>&1)" "fetched"
-    git update-ref -d "refs/smoke/fetch-$" >/dev/null 2>&1 || true
+      "$("$SHELL" -c "git fetch --quiet '$common' HEAD:refs/smoke/fetch-$$ && echo fetched" 2>&1)" "fetched"
+    git update-ref -d "refs/smoke/fetch-$$" >/dev/null 2>&1 || true
 
     # #358: the launch line has the kernel kill a jailed process before any
     # host process, and runs it at lower priority than the host's own. The
