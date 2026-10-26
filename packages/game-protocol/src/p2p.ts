@@ -44,6 +44,8 @@ export const CHANNELS = [
   "match-start",
   "rejoin-challenge",
   "rejoin-proof",
+  "call",
+  "calls",
 ] as const;
 
 export type Channel = (typeof CHANNELS)[number];
@@ -74,6 +76,12 @@ export const MAX_WIRE_RANKS = 16;
 
 /** The highest rank an attribute reaches, runes included (game-core's MAX_EFFECTIVE_RANK). */
 export const MAX_WIRE_RANK = 15;
+
+/** The most pings a team's calls carry at once, the newest kept (#443). */
+export const MAX_WIRE_PINGS = 8;
+
+/** The most net pips either way (game-core's MAX_PIPS, #504). */
+export const MAX_WIRE_PIPS = 10;
 
 /** The most walls a map holds, and points a polygon wall holds. */
 export const MAX_WIRE_WALLS = 1024;
@@ -210,6 +218,12 @@ export interface WirePlayer {
   /** Seconds left lying down from a knockdown (#468); 0 standing. */
   readonly knockdownRemaining: number;
   /**
+   * Net health and energy regeneration (+) or degeneration (−), in pips,
+   * as the host applies them (#504): integers in ±`MAX_WIRE_PIPS`, 0 dead.
+   */
+  readonly healthPips: number;
+  readonly energyPips: number;
+  /**
    * The swing under way (#560): seconds into it, and its whole length, the
    * hit landing at the end. `swingTotal` is 0 when not attacking. The
    * weapon mark's pose follows them; nothing is predicted.
@@ -331,6 +345,36 @@ export type WireCombatBatch = readonly WireCombat[];
  */
 export type PeerBye = Readonly<Record<string, never>>;
 
+/**
+ * Client to host (#443): call a foe for your team, or ping a spot. Not a
+ * `ClientIntent`: it changes nothing in the simulation, only what your
+ * team is shown.
+ */
+export type PeerCall =
+  | { readonly kind: "target"; readonly targetId: string }
+  | { readonly kind: "ping"; readonly x: number; readonly y: number };
+
+/** One ping, as its team is shown it. */
+export interface WirePing {
+  readonly id: number;
+  readonly x: number;
+  readonly y: number;
+  /** Who pinged. */
+  readonly byId: string;
+  /** Seconds left of it, when sent. */
+  readonly remaining: number;
+}
+
+/**
+ * Host to each seated peer of one team, never the other (#443): the foe
+ * that team has called, if any, and its live pings, at most
+ * `MAX_WIRE_PINGS`. Sent whenever either changes, and after a welcome.
+ */
+export interface WireCalls {
+  readonly target: { readonly targetId: string; readonly callerId: string } | null;
+  readonly pings: readonly WirePing[];
+}
+
 /** Host to every client, once: the match is over. */
 export interface WireEnded {
   readonly winningTeam: 0 | 1 | null;
@@ -421,6 +465,10 @@ function isNumber(value: unknown): value is number {
 
 function isCount(value: unknown): value is number {
   return isNumber(value) && Number.isInteger(value) && value >= 0;
+}
+
+function isPips(value: unknown): value is number {
+  return isNumber(value) && Number.isInteger(value) && Math.abs(value) <= MAX_WIRE_PIPS;
 }
 
 /** A skill-bar slot index. */
@@ -577,6 +625,48 @@ export function parsePeerRejoinProof(value: unknown): PeerRejoinProof | undefine
     : undefined;
 }
 
+export function parsePeerCall(value: unknown): PeerCall | undefined {
+  const raw = fields(value);
+  if (raw?.kind === "target") {
+    return isString(raw.targetId) ? { kind: "target", targetId: raw.targetId } : undefined;
+  }
+  if (raw?.kind === "ping") {
+    return isNumber(raw.x) && isNumber(raw.y) ? { kind: "ping", x: raw.x, y: raw.y } : undefined;
+  }
+  return undefined;
+}
+
+function parseWirePing(value: unknown): WirePing | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    isCount(raw.id) &&
+    isNumber(raw.x) &&
+    isNumber(raw.y) &&
+    isString(raw.byId) &&
+    isNumber(raw.remaining) &&
+    raw.remaining >= 0
+    ? { id: raw.id, x: raw.x, y: raw.y, byId: raw.byId, remaining: raw.remaining }
+    : undefined;
+}
+
+export function parseWireCalls(value: unknown): WireCalls | undefined {
+  const raw = fields(value);
+  if (raw === undefined) {
+    return undefined;
+  }
+  const target = fields(raw.target);
+  const pings = parseArray(raw.pings, MAX_WIRE_PINGS, parseWirePing);
+  if (pings === undefined) {
+    return undefined;
+  }
+  if (raw.target === null) {
+    return { target: null, pings };
+  }
+  return target !== undefined && isString(target.targetId) && isString(target.callerId)
+    ? { target: { targetId: target.targetId, callerId: target.callerId }, pings }
+    : undefined;
+}
+
 export function parsePeerBye(value: unknown): PeerBye | undefined {
   const raw = fields(value);
   return raw !== undefined && Object.keys(raw).length === 0 ? {} : undefined;
@@ -687,7 +777,9 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isNumber(raw.castTotal) ||
     !isNumber(raw.swingElapsed) ||
     !isNumber(raw.swingTotal) ||
-    !isNumber(raw.knockdownRemaining)
+    !isNumber(raw.knockdownRemaining) ||
+    !isPips(raw.healthPips) ||
+    !isPips(raw.energyPips)
   ) {
     return undefined;
   }
@@ -721,6 +813,8 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         swingElapsed: raw.swingElapsed,
         swingTotal: raw.swingTotal,
         knockdownRemaining: raw.knockdownRemaining,
+        healthPips: raw.healthPips,
+        energyPips: raw.energyPips,
         statuses,
       };
 }

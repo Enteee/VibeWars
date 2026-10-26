@@ -1,5 +1,5 @@
 export type { ActivationCheck, ActivationRejection, ActivationRequest } from "./activation.js";
-export { canActivate, energyCostOf, payCost } from "./activation.js";
+export { canActivate, energyCostOf, payCost, targetRuleAllows } from "./activation.js";
 
 export type { ActiveCast } from "./cast-state.js";
 export { CastState } from "./cast-state.js";
@@ -52,7 +52,10 @@ export {
   effectiveActivationSeconds,
   effectiveMaxHealth,
   moveSpeedMultiplier,
+  naturalHealthPips,
+  netPips,
 } from "./tick.js";
+export type { NetPips } from "./tick.js";
 
 export type {
   ApplyStatusEffect,

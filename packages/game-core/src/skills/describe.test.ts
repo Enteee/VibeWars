@@ -98,11 +98,11 @@ describe("describeSkill", () => {
     expect(describeSkill(skill("warrior.sever-artery-lite")).cost).toContain("adrenaline");
   });
 
-  it("says Self for a self-cast rather than inventing a range", () => {
+  it("says Self once for a self-cast, with no range of its own", () => {
     const described = describeSkill(skill("elementalist.armor-of-earth"));
 
     expect(described.targetText).toBe("Self");
-    expect(described.rangeText).toBe("Self");
+    expect(described.rangeText).toBeUndefined();
   });
 
   it("says Another ally for a skill that cannot target its caster (#503)", () => {
@@ -141,6 +141,17 @@ describe("describeSkill", () => {
     expect(describeSkill(skill("elementalist.fireball")).scalesWithAttribute).toBe(true);
     // A pure interrupt has nothing to scale, and must not claim it does.
     expect(describeSkill(skill("ranger.broad-head-arrow")).scalesWithAttribute).toBe(false);
+  });
+
+  it("leads with the number that matters at these ranks (#567)", () => {
+    const healing = skill("monk.orison-of-healing");
+    expect(describeSkill(healing).headline).toBe("heals 20");
+    expect(describeSkill(healing, new Map([["monk.healing-prayers", 12]])).headline).toBe(
+      "heals 60",
+    );
+    expect(describeSkill(skill("elementalist.fireball")).headline).toMatch(/^\d+ damage$/);
+    // Nothing to count: no headline rather than a made-up one.
+    expect(describeSkill(skill("ranger.broad-head-arrow")).headline).toBeUndefined();
   });
 
   it("produces a line for every effect of every catalog skill", () => {

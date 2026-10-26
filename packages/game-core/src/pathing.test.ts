@@ -1,13 +1,21 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  closestPointOnSegment,
   distancePointToSegment,
   distanceSegmentToSegment,
   segment,
   type Segment,
 } from "./geometry.js";
-import { buildNavGraph, createPathFinder, nearestStandable, type NavGraph } from "./pathing.js";
+import {
+  buildNavGraph,
+  createPathFinder,
+  nearestStandable,
+  walkIsClear,
+  type NavGraph,
+} from "./pathing.js";
 import { createRng, type SimulationRng } from "./rng.js";
+import { DENSE_FIELD } from "./tools/tick-bench.js";
 import { add, distance, dot, scale, sub, vec2, type Vec2 } from "./vec2.js";
 
 const CLEARANCE = 14;
@@ -501,5 +509,161 @@ describe("the path finder against the reference (#267)", () => {
     expect(finder.find(...b)).toEqual(createPathFinder(graph).find(...b));
     expect(finder.find(...a)).toEqual(first);
     expect(first).toEqual(referenceFindPath(graph, ...a));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The scan of all walls (#542): `isStandable` and `nearestStandable` as they
+// were before the wall grid, which must give every answer they gave.
+// ---------------------------------------------------------------------------
+
+function scanIsStandable(graph: NavGraph, point: Vec2): boolean {
+  const { bounds, clearance } = graph;
+  if (
+    bounds !== undefined &&
+    (point.x < clearance ||
+      point.y < clearance ||
+      point.x > bounds.width - clearance ||
+      point.y > bounds.height - clearance)
+  ) {
+    return false;
+  }
+  let crossings = 0;
+  for (const wall of graph.walls) {
+    if (distancePointToSegment(point, wall) < clearance) {
+      return false;
+    }
+    const { a, b } = wall;
+    if (a.y > point.y !== b.y > point.y) {
+      const x = a.x + ((point.y - a.y) / (b.y - a.y)) * (b.x - a.x);
+      if (x > point.x) {
+        crossings += 1;
+      }
+    }
+  }
+  return crossings % 2 === 0;
+}
+
+function scanNearestStandable(graph: NavGraph, point: Vec2): Vec2 {
+  const { bounds, clearance } = graph;
+  const onMap =
+    bounds === undefined
+      ? point
+      : vec2(
+          Math.min(Math.max(point.x, clearance), bounds.width - clearance),
+          Math.min(Math.max(point.y, clearance), bounds.height - clearance),
+        );
+  if (scanIsStandable(graph, onMap)) {
+    return onMap;
+  }
+  let best = onMap;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  const consider = (candidate: Vec2): void => {
+    const away = distance(onMap, candidate);
+    if (away < bestDistance && scanIsStandable(graph, candidate)) {
+      best = candidate;
+      bestDistance = away;
+    }
+  };
+  const offset = clearance + 1;
+  for (const wall of graph.walls) {
+    const along = sub(wall.b, wall.a);
+    const span = Math.hypot(along.x, along.y);
+    if (span === 0) {
+      continue;
+    }
+    const normal = vec2(-along.y / span, along.x / span);
+    const foot = closestPointOnSegment(onMap, wall);
+    consider(add(foot, scale(normal, offset)));
+    consider(add(foot, scale(normal, -offset)));
+  }
+  for (const node of graph.nodes) {
+    consider(node);
+  }
+  return best;
+}
+
+describe("the wall grid against a scan of every wall (#542)", () => {
+  const FIELDS = [
+    ...MAPS,
+    { name: "dense field", walls: DENSE_FIELD.walls, bounds: DENSE_FIELD.bounds },
+  ];
+  const QUERIES = 2000;
+
+  it("calls a walk clear exactly when the scan does, for 2000 random walks a map", () => {
+    let clear = 0;
+    let blocked = 0;
+    for (const map of FIELDS) {
+      const bounds = "edgeless" in map ? undefined : map.bounds;
+      const graph = buildNavGraph(map.walls, bounds, CLEARANCE);
+      const rng = createRng(0x542 + map.name.length);
+      for (let i = 0; i < QUERIES; i += 1) {
+        const from = samplePoint(rng, graph, map.walls, map.bounds);
+        const to = samplePoint(rng, graph, map.walls, map.bounds);
+        const direct = walkIsClear(graph, from, to);
+        expect(direct, `${map.name}: ${JSON.stringify([from, to])}`).toBe(
+          refIsClear(graph, from, to),
+        );
+        if (direct) {
+          clear += 1;
+        } else {
+          blocked += 1;
+        }
+      }
+    }
+    // Both answers came up, plenty of times.
+    expect(clear).toBeGreaterThan(QUERIES);
+    expect(blocked).toBeGreaterThan(QUERIES);
+  });
+
+  it("finds the same nearest standable spot as the scan, for 2000 random points a map", () => {
+    let moved = 0;
+    for (const map of FIELDS) {
+      const bounds = "edgeless" in map ? undefined : map.bounds;
+      const graph = buildNavGraph(map.walls, bounds, CLEARANCE);
+      const rng = createRng(0x5420 + map.name.length);
+      for (let i = 0; i < QUERIES; i += 1) {
+        const point = samplePoint(rng, graph, map.walls, map.bounds);
+        const spot = nearestStandable(graph, point);
+        expect(spot, `${map.name}: ${JSON.stringify(point)}`).toEqual(
+          scanNearestStandable(graph, point),
+        );
+        if (spot.x !== point.x || spot.y !== point.y) {
+          moved += 1;
+        }
+      }
+    }
+    // Plenty of points were inside or too near a wall, which is where the ray counts.
+    expect(moved).toBeGreaterThan(QUERIES);
+  });
+
+  it("answers a field with no walls, and a walk or point off the grid, as the scan does", () => {
+    const empty = buildNavGraph([], undefined, CLEARANCE);
+    expect(createPathFinder(empty).find(vec2(-5000, 3), vec2(9000, -7))).toEqual([vec2(9000, -7)]);
+    expect(nearestStandable(empty, vec2(-1e6, 1e6))).toEqual(vec2(-1e6, 1e6));
+    const pillar = buildNavGraph(rect(100, 100, 50, 50), undefined, CLEARANCE);
+    // Left of the grid, level with the pillar: the ray crosses both its sides.
+    expect(nearestStandable(pillar, vec2(-500, 125))).toEqual(vec2(-500, 125));
+    // Inside it, further than the clearance from every side, so only the
+    // ray says so: pushed out, as the scan pushes it.
+    expect(nearestStandable(pillar, vec2(125, 125))).not.toEqual(vec2(125, 125));
+    expect(nearestStandable(pillar, vec2(125, 125))).toEqual(
+      scanNearestStandable(pillar, vec2(125, 125)),
+    );
+  });
+
+  it("finds every dense-field pillar's middle inside it, by the ray alone", () => {
+    const graph = buildNavGraph(DENSE_FIELD.walls, DENSE_FIELD.bounds, CLEARANCE);
+    // Each pillar's four sides, top side first: its middle is 40 in from (a.x, a.y).
+    for (let i = 0; i < DENSE_FIELD.walls.length; i += 4) {
+      const top = DENSE_FIELD.walls[i];
+      if (top === undefined) {
+        continue;
+      }
+      const middle = vec2(top.a.x + 40, top.a.y + 40);
+      const spot = nearestStandable(graph, middle);
+      expect(spot, JSON.stringify(middle)).not.toEqual(middle);
+      expect(spot, JSON.stringify(middle)).toEqual(scanNearestStandable(graph, middle));
+    }
   });
 });

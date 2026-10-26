@@ -25,6 +25,7 @@ import {
   soundIcon,
   weaponIcon,
 } from "./icons.js";
+import { pipsElement, renderPips } from "./pips.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import {
   castFailures,
@@ -58,8 +59,11 @@ export interface HudElements {
   readonly bars: HTMLElement;
   readonly healthFill: HTMLElement;
   readonly healthText: HTMLElement;
+  /** Net regeneration or degeneration arrows in the bar (#504). */
+  readonly healthPips: HTMLElement;
   readonly energyFill: HTMLElement;
   readonly energyText: HTMLElement;
+  readonly energyPips: HTMLElement;
   readonly adrenalineText: HTMLElement;
   readonly statusList: HTMLElement;
   readonly skillBar: HTMLElement;
@@ -80,6 +84,7 @@ export interface HudElements {
   readonly targetHealth: HTMLElement;
   readonly targetHealthFill: HTMLElement;
   readonly targetHealthText: HTMLElement;
+  readonly targetHealthPips: HTMLElement;
   /** What the target is casting (#484): badge, name and a filling bar. */
   readonly targetCast: HTMLElement;
   readonly targetCastBadge: HTMLElement;
@@ -185,6 +190,7 @@ export function createHud(parent: HTMLElement): HudElements {
   const targetHealth = element("div", "hud-bar hud-target-health", targetPanel);
   const targetHealthFill = element("div", "hud-bar-fill", targetHealth);
   const targetHealthText = element("span", "hud-bar-label", targetHealth);
+  const targetHealthPips = targetHealth.appendChild(pipsElement());
   targetHealth.hidden = true;
   const targetCast = element("div", "hud-target-cast", targetPanel);
   const targetCastBadge = element("span", "hud-target-cast-badge", targetCast);
@@ -197,10 +203,12 @@ export function createHud(parent: HTMLElement): HudElements {
   const healthRow = element("div", "hud-bar hud-bar-health", bars);
   const healthFill = element("div", "hud-bar-fill", healthRow);
   const healthText = element("span", "hud-bar-label", healthRow);
+  const healthPips = healthRow.appendChild(pipsElement());
 
   const energyRow = element("div", "hud-bar hud-bar-energy", bars);
   const energyFill = element("div", "hud-bar-fill", energyRow);
   const energyText = element("span", "hud-bar-label", energyRow);
+  const energyPips = energyRow.appendChild(pipsElement());
 
   const adrenalineText = element("div", "hud-adrenaline", bars);
   const statusList = element("div", "hud-statuses", bars);
@@ -215,8 +223,10 @@ export function createHud(parent: HTMLElement): HudElements {
     bars,
     healthFill,
     healthText,
+    healthPips,
     energyFill,
     energyText,
+    energyPips,
     adrenalineText,
     statusList,
     skillBar,
@@ -230,6 +240,7 @@ export function createHud(parent: HTMLElement): HudElements {
     targetHealth,
     targetHealthFill,
     targetHealthText,
+    targetHealthPips,
     targetCast,
     targetCastBadge,
     targetCastName,
@@ -716,6 +727,7 @@ function renderTarget(
     hud.targetHealth.classList.toggle("is-dead", target.dead);
     hud.targetHealthFill.style.width = `${String(targetHealthPercent(target))}%`;
     hud.targetHealthText.textContent = targetHealthLabel(target, self.team);
+    renderPips(hud.targetHealthPips, target.healthPips);
   }
   renderTargetCast(hud, target);
 }
@@ -748,6 +760,8 @@ export function updateHud(
 
   setBar(hud.healthFill, hud.healthText, self.health, self.maxHealth, "hp");
   setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, "en");
+  renderPips(hud.healthPips, self.healthPips);
+  renderPips(hud.energyPips, self.energyPips);
   // Armor and weapon alongside adrenaline: both are now numbers that
   // change what a fight does, so hiding them would be the HUD lying by
   // omission.

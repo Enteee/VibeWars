@@ -611,6 +611,13 @@ test("the target frame shows the target's health and the skill it casts, filling
   await opponent.close();
 });
 
+test("the HUD's energy bar shows its regeneration as arrows (#504)", async ({ page }) => {
+  await startSoloMatch(page);
+  // The house build is an Elementalist's 4 pips (join-loadout.ts).
+  await expect(page.locator(".hud-bar-energy .vital-pips")).toHaveText("››››");
+  await expect(page.locator(".hud-bar-health .vital-pips")).toBeHidden();
+});
+
 test("an RMB drag pans; a left click then walks to the panned point; letting go comes back (#442)", async ({
   page,
 }) => {
@@ -673,4 +680,37 @@ test("an RMB drag pans; a left click then walks to the panned point; letting go 
   await page.mouse.move(centre.x, centre.y);
   await expect.poll(cameraX, { timeout: 1_000 }).toBeLessThan(goal + 5);
   expect(await cameraX()).toBeGreaterThan(goal - 5);
+});
+
+test("a wheel click on a foe calls it for your team, and the other team never sees it (#443)", async ({
+  page,
+}) => {
+  const arena = JSON.parse(
+    readFileSync(
+      new URL("../packages/game-maps/maps/arena-alpha/map.json", import.meta.url),
+      "utf8",
+    ),
+  ) as {
+    readonly spawnPoints: readonly {
+      readonly team: number;
+      readonly position: { readonly x: number; readonly y: number };
+    }[];
+  };
+  const foeSpawn = arena.spawnPoints.find((spawn) => spawn.team === 1)?.position;
+  if (foeSpawn === undefined) {
+    throw new Error("arena-alpha has no team 1 spawn");
+  }
+  const opponent = await page.context().newPage();
+  const canvas = await startLobbyMatch(page, [opponent]);
+  const stage = page.locator("#viewport");
+  await expect(stage).toHaveAttribute("data-called", "");
+
+  // The opponent stands on team 1's first spawn.
+  const foe = (await projection(stage, canvas)).onPage(foeSpawn);
+  await page.mouse.click(foe.x, foe.y, { button: "middle" });
+  await expect(stage).toHaveAttribute("data-called", /^\S+$/);
+  // The called side hears nothing of it.
+  await page.waitForTimeout(500);
+  await expect(opponent.locator("#viewport")).toHaveAttribute("data-called", "");
+  await opponent.close();
 });

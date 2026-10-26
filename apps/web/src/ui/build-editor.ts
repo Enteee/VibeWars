@@ -18,6 +18,7 @@ import {
   getOffhand,
   getSkill,
   getWeapon,
+  IMPLEMENTED_SKILLS,
   perSlotAmount,
   reconcileEquipment,
   runeDisplayName,
@@ -30,6 +31,7 @@ import {
   type ProfessionId,
   type Skill,
   type SkillDescription,
+  type SkillType,
 } from "@vibewars/game-core";
 
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
@@ -69,12 +71,19 @@ import {
 import {
   offhandIcon,
   professionIcon,
+  SKILL_TYPE_NAME,
   skillTypeBadgeHtml,
   weaponIcon,
   type GearIcon,
 } from "./icons.js";
-import { filterEliteSkills, filterSkillsByName, groupSkillsByAttribute } from "./skill-library.js";
-import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
+import {
+  filterEliteSkills,
+  filterSkillsByText,
+  filterSkillsByType,
+  groupSkillsByAttribute,
+  skillTypesOf,
+} from "./skill-library.js";
+import { createSkillTooltip, renderSkillDescription, type SkillTooltip } from "./skill-tooltip.js";
 import {
   button,
   h,
@@ -1235,7 +1244,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
   const section = h("div", "editor-skills");
   section.appendChild(h("div", "editor-label", "skill bar"));
   section.appendChild(
-    h("div", "editor-hint", "Click a slot, then a skill to equip it there. Or drag."),
+    h("div", "editor-hint", "Click a slot, then a skill's Equip to put it there. Or drag."),
   );
   const grid = h("div", "skill-bar-grid");
   grid.dataset.cause = "bar";
@@ -1494,12 +1503,43 @@ interface LibraryBody extends Region {
   readonly elements: readonly HTMLElement[];
 }
 
+/**
+ * A card's inline details (#567): its description at your rank, and the
+ * 0-12 scale of its attribute with your rank marked.
+ */
+function renderDetails(
+  node: HTMLElement,
+  description: SkillDescription,
+  ranks: ReadonlyMap<string, number>,
+): void {
+  renderSkillDescription(node, description, { title: false });
+  const { attributeId, attributeName } = description;
+  if (attributeId === undefined || attributeName === undefined) {
+    return;
+  }
+  const rank = ranks.get(attributeId) ?? 0;
+  const scale = h("div", "skill-scale");
+  scale.setAttribute("role", "img");
+  scale.setAttribute(
+    "aria-label",
+    `${attributeName} rank ${String(rank)} of ${String(MAX_ATTRIBUTE_RANK)}`,
+  );
+  for (let step = 0; step <= MAX_ATTRIBUTE_RANK; step++) {
+    const mark = h("span", "skill-scale-step", String(step));
+    mark.classList.toggle("is-current", step === rank);
+    mark.classList.toggle("is-reached", step < rank);
+    scale.appendChild(mark);
+  }
+  node.appendChild(scale);
+}
+
 function mountSkillLibrary(context: EditorContext): LibraryBody {
   const { tooltip } = context;
   const search = document.createElement("input");
   search.className = "field-input skill-search";
   search.type = "search";
-  search.placeholder = "filter by name";
+  search.placeholder = "search names and text";
+  search.setAttribute("aria-label", "search skills");
   // The library's "Elite" toggle (#459): only elite skills listed.
   const eliteOnly = document.createElement("input");
   eliteOnly.type = "checkbox";
@@ -1508,6 +1548,27 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   // On the search's own row, so the library is no taller for it.
   const filters = h("div", "skill-filters");
   filters.append(search, eliteFilter);
+  // One chip per type the catalogue has (#567); several may be on.
+  const types = new Set<SkillType>();
+  const chips = h("div", "skill-type-chips");
+  for (const type of skillTypesOf(
+    IMPLEMENTED_SKILLS,
+    Object.keys(SKILL_TYPE_NAME) as SkillType[],
+  )) {
+    const chip = button(SKILL_TYPE_NAME[type].toLowerCase(), "skill-type-chip", () => {
+      if (types.has(type)) {
+        types.delete(type);
+      } else {
+        types.add(type);
+      }
+      chip.setAttribute("aria-pressed", String(types.has(type)));
+      render(context.current());
+    });
+    chip.setAttribute("aria-pressed", "false");
+    chips.appendChild(chip);
+  }
+  /** The card whose details are open; one at a time (#567). */
+  let open: string | undefined;
   const groupHost = h("div", "skill-groups");
   const emptyNote = h(
     "div",
@@ -1531,42 +1592,48 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     }
   };
 
+  /**
+   * A card (#567): a button with the name, type, cost and the number that
+   * matters at your rank, which opens its details inline; then Equip, or
+   * where it is on the bar. Dragging the card equips too.
+   */
   const createBox = (skill: Skill): HTMLElement => {
     const box = h("div", "skill-box");
     box.draggable = true;
-    // Focusable, so a skill key over it equips it to that slot (#564).
-    box.tabIndex = 0;
     box.dataset.skillId = skill.id;
     box.classList.toggle("is-elite", skill.elite);
-    box.appendChild(h("span", "skill-box-name", skill.name));
-    box.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
-    box.appendChild(h("span", "skill-box-cost"));
-    const equip = button("", "skill-box-equip", () => {
-      equipFromLibrary(skill);
+    const card = button("", "skill-box-card", () => {
+      open = open === skill.id ? undefined : skill.id;
+      render(context.current());
     });
-    // The box's own click does the same; one equip, not two.
-    equip.addEventListener("click", (event) => {
-      event.stopPropagation();
-    });
-    box.appendChild(equip);
+    card.setAttribute("aria-expanded", "false");
+    card.appendChild(h("span", "skill-box-name", skill.name));
+    card.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
+    card.appendChild(h("span", "skill-box-cost"));
+    card.appendChild(h("span", "skill-box-headline"));
+    box.appendChild(card);
+    box.appendChild(
+      button("", "skill-box-equip", () => {
+        equipFromLibrary(skill);
+      }),
+    );
     box.appendChild(h("span", "skill-box-on"));
+    const details = h("div", "skill-box-details");
+    details.hidden = true;
+    box.appendChild(details);
     box.addEventListener("dragstart", (event: DragEvent) => {
       event.dataTransfer?.setData(
         "text/plain",
         encodeDragSource({ from: "library", skillId: skill.id }),
       );
     });
+    // The hover tooltip stays beside the inline details (#549 Q3), as in
+    // GW1's skill window.
     box.addEventListener("mouseenter", () => {
       tooltip.show(box, describeSkill(skill, ranksOf(context.current())));
     });
     box.addEventListener("mouseleave", () => {
       tooltip.hide();
-    });
-    // Click-to-equip alongside dragging: dragging is the nicer
-    // gesture but a poor only option on a trackpad, and it gives
-    // the behaviour something testable to assert against.
-    box.addEventListener("click", () => {
-      equipFromLibrary(skill);
     });
     return box;
   };
@@ -1588,10 +1655,17 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
         ? "pick a slot"
         : `Equip → ${context.slotLabel(target.slot)}${target.replaces ? " (replace)" : ""}`;
     const equippable = equippableSkills(character);
-    const matches = filterSkillsByName(
-      eliteOnly.checked ? filterEliteSkills(equippable) : equippable,
-      search.value,
+    const matches = filterSkillsByType(
+      filterSkillsByText(
+        eliteOnly.checked ? filterEliteSkills(equippable) : equippable,
+        search.value,
+      ),
+      types,
     );
+    // A card the filters took away closes; it does not reopen on its own.
+    if (!matches.some((skill) => skill.id === open)) {
+      open = undefined;
+    }
     const groups = groupSkillsByAttribute(matches);
     syncList(
       groupHost,
@@ -1642,10 +1716,27 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
                   onLabel.textContent = text;
                 }
               }
+              const description = describeSkill(skill, ranks);
               const cost = box.querySelector(".skill-box-cost");
-              const text = describeSkill(skill, ranks).cost;
-              if (cost !== null && cost.textContent !== text) {
-                cost.textContent = text;
+              if (cost !== null && cost.textContent !== description.cost) {
+                cost.textContent = description.cost;
+              }
+              const headline = box.querySelector(".skill-box-headline");
+              const headlineText = description.headline ?? "";
+              if (headline !== null && headline.textContent !== headlineText) {
+                headline.textContent = headlineText;
+              }
+              const isOpen = open === skill.id;
+              box.classList.toggle("is-open", isOpen);
+              box.querySelector(".skill-box-card")?.setAttribute("aria-expanded", String(isOpen));
+              const details = box.querySelector<HTMLElement>(".skill-box-details");
+              if (details !== null) {
+                details.hidden = !isOpen;
+                if (isOpen) {
+                  renderDetails(details, description, ranks);
+                } else if (details.childElementCount > 0) {
+                  details.replaceChildren();
+                }
               }
             },
           );
@@ -1664,7 +1755,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     render(context.current());
   });
 
-  return { elements: [filters, groupHost], update: render };
+  return { elements: [filters, chips, groupHost], update: render };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2057,8 +2148,8 @@ function insigniaAmountNote(insigniaId: InsigniaId, slot: ArmorSlot): string {
  * The gear library: everything you could equip, grouped and draggable.
  *
  * Deliberately the same box-and-drag vocabulary as the skill library —
- * same markup, same gestures, same click-to-equip fallback. A player
- * who has learned to build a skill bar already knows how to use this.
+ * same markup, same gestures. A player who has learned to build a skill
+ * bar already knows how to use this.
  */
 function mountGearLibrary(context: EditorContext): LibraryBody {
   const { current, commit } = context;
@@ -2084,9 +2175,8 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
     node.addEventListener("dragstart", (event: DragEvent) => {
       event.dataTransfer?.setData("text/plain", encodeGearDrag(options.drag));
     });
-    // Click-to-equip alongside dragging, for the same reason the skill
-    // library has it: dragging is the nicer gesture and a poor only
-    // option on a trackpad.
+    // Click-to-equip alongside dragging, as the skill library's Equip:
+    // dragging is the nicer gesture and a poor only option on a trackpad.
     node.addEventListener("click", options.onClick);
     return node;
   }

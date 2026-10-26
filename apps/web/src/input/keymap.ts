@@ -27,6 +27,8 @@ export type KeyAction =
   | "move-right"
   | "target-next"
   | "attack"
+  | "call-target"
+  | "ping"
   | "show-names"
   | "mute";
 
@@ -46,6 +48,8 @@ export const KEY_ACTIONS: readonly KeyAction[] = [
   "move-right",
   "target-next",
   "attack",
+  "call-target",
+  "ping",
   "show-names",
   "mute",
 ];
@@ -62,6 +66,10 @@ export const MAX_CODES_PER_ACTION = 2;
 const SHARED = {
   "target-next": ["Tab"],
   attack: ["Space"],
+  // The wheel click does both (#443); a key is for a mouse without one,
+  // so none is taken from anything else by default.
+  "call-target": [],
+  ping: [],
   "show-names": ["ShiftLeft", "ShiftRight"],
   mute: ["KeyM"],
 } as const satisfies Partial<Keymap>;

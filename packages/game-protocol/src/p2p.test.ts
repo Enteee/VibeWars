@@ -5,8 +5,10 @@ import {
   MAX_WIRE_COMBATS,
   MAX_WIRE_EVENTS,
   MAX_SNAPSHOT_PARTS,
+  MAX_WIRE_PINGS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_RADIUS,
+  MAX_WIRE_PIPS,
   MAX_WIRE_RANK,
   MAX_WIRE_RANKS,
   MAX_WIRE_SLOTS,
@@ -19,6 +21,8 @@ import {
   helloProtocolVersion,
   parseCastRefused,
   parsePeerBye,
+  parsePeerCall,
+  parseWireCalls,
   parsePeerHello,
   parsePeerRefuse,
   parsePeerRejoinChallenge,
@@ -121,6 +125,8 @@ const player: WirePlayer = {
   swingElapsed: 0.4,
   swingTotal: 1.75,
   knockdownRemaining: 2.5,
+  healthPips: -3,
+  energyPips: 4,
   statuses: [3],
 };
 
@@ -261,6 +267,9 @@ const lobbyState: WireLobbyState = {
   ],
 };
 
+const ping = { id: 3, x: 200, y: 150.5, byId: "peer-1", remaining: 2.6 };
+const calls = { target: { targetId: "peer-2", callerId: "peer-1" }, pings: [ping] };
+
 const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["hello", parsePeerHello, hello],
   ["rejoining hello", parsePeerHello, { ...hello, rejoin: { playerId: "peer-2" } }],
@@ -277,6 +286,10 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["refused attack", parseCastRefused, { kind: "attack", reason: "no-weapon" }],
   ["recharge", parseRecharge, recharge],
   ["bye", parsePeerBye, {}],
+  ["call on a foe", parsePeerCall, { kind: "target", targetId: "peer-2" }],
+  ["ping", parsePeerCall, { kind: "ping", x: 120.5, y: 40 }],
+  ["calls", parseWireCalls, calls],
+  ["calls with none", parseWireCalls, { target: null, pings: [] }],
   ["lobby-join", parsePeerLobbyJoin, lobbyJoin],
   ["lobby-state", parseWireLobbyState, lobbyState],
   ["waiting lobby-state", parseWireLobbyState, { ...lobbyState, phase: "waiting", matchId: null }],
@@ -294,6 +307,32 @@ const long = "x".repeat(MAX_WIRE_STRING + 1);
 
 /** One malformed message per rule. */
 const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
+  ["a call of an unknown kind (#443)", parsePeerCall, { kind: "focus", targetId: "peer-2" }],
+  ["a call with no target (#443)", parsePeerCall, { kind: "target" }],
+  ["a ping at NaN (#443)", parsePeerCall, { kind: "ping", x: Number.NaN, y: 0 }],
+  ["a ping with a string for y (#443)", parsePeerCall, { kind: "ping", x: 0, y: "0" }],
+  [
+    "a call with a target id past the cap (#443)",
+    parsePeerCall,
+    { kind: "target", targetId: "x".repeat(MAX_WIRE_STRING + 1) },
+  ],
+  [
+    "calls with one ping too many (#443)",
+    parseWireCalls,
+    { target: null, pings: Array.from({ length: MAX_WIRE_PINGS + 1 }, () => ping) },
+  ],
+  ["calls with no pings (#443)", parseWireCalls, { target: null }],
+  [
+    "calls with a target and no caller (#443)",
+    parseWireCalls,
+    { ...calls, target: { targetId: "peer-2" } },
+  ],
+  [
+    "calls with a ping running backwards (#443)",
+    parseWireCalls,
+    { target: null, pings: [{ ...ping, remaining: -1 }] },
+  ],
+
   ["not an object", parsePeerHello, "hello"],
   ["an array", parsePeerHello, [hello]],
   ["null", parseWireSnapshotPart, null],
@@ -412,6 +451,14 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
       parseWireSnapshotPart,
       { ...snapshot, players: [{ ...player, [field]: undefined }] },
     ],
+  ),
+  ...(["healthPips", "energyPips"] as const).flatMap(
+    (field): [string, (value: unknown) => unknown, unknown][] =>
+      [undefined, 1.5, MAX_WIRE_PIPS + 1, -MAX_WIRE_PIPS - 1, "3"].map((value) => [
+        `snapshot with a player's ${field} ${String(value)} (#504)`,
+        parseWireSnapshotPart,
+        { ...snapshot, players: [{ ...player, [field]: value }] },
+      ]),
   ),
   [
     "snapshot with a player missing knockdownRemaining (#545)",

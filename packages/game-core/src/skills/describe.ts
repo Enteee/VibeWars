@@ -63,10 +63,17 @@ export interface SkillDescription {
   readonly cost: string;
   readonly castTime: string;
   readonly recharge: string;
-  readonly rangeText: string;
+  /** Absent when the skill has no reach of its own (a self skill). */
+  readonly rangeText: string | undefined;
   readonly targetText: string;
   /** True when at least one effect scales with an attribute. */
   readonly scalesWithAttribute: boolean;
+  /**
+   * The one number that matters at these ranks, which a library card
+   * leads with (#567): "91 damage", "heals 45", "+5 energy". An effect the
+   * attribute scales wins over a flat one; `undefined` with no number.
+   */
+  readonly headline: string | undefined;
 }
 
 function describeMagnitude(
@@ -240,6 +247,30 @@ function describeEffect(
   }
 }
 
+/** `effect`'s number, as a card's headline puts it; `undefined` without one. */
+function headlineOf(
+  effect: SkillEffect,
+  ranks: ReadonlyMap<string, number>,
+): { readonly text: string; readonly scales: boolean } | undefined {
+  switch (effect.kind) {
+    case "damage":
+    case "heal":
+    case "energy-gain": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      const amount = String(magnitude.current);
+      const text =
+        effect.kind === "damage"
+          ? `${amount} damage`
+          : effect.kind === "heal"
+            ? `heals ${amount}`
+            : `+${amount} energy`;
+      return { text, scales: magnitude.attributeId !== undefined };
+    }
+    default:
+      return undefined;
+  }
+}
+
 const TYPE_TEXT: Record<SkillType, string> = {
   attack: "Attack.",
   spell: "Spell.",
@@ -279,7 +310,10 @@ const AREA_WHO: Record<AreaRule["affects"], string> = {
  * Who and how far: "Allies in earshot, 350 radius" for a shout, which
  * reaches round its caster rather than at a target (#524).
  */
-function targetAndRange(skill: Skill): { readonly target: string; readonly range: string } {
+function targetAndRange(skill: Skill): {
+  readonly target: string;
+  readonly range: string | undefined;
+} {
   const area = skill.area;
   if (skill.target === "self" && area?.origin === "caster") {
     const where = AREA_TEXT.get(area.radius) ?? `within ${String(area.radius)}`;
@@ -287,7 +321,7 @@ function targetAndRange(skill: Skill): { readonly target: string; readonly range
   }
   return {
     target: TARGET_TEXT[skill.target],
-    range: skill.target === "self" ? "Self" : `${String(skill.range)} range`,
+    range: skill.target === "self" ? undefined : `${String(skill.range)} range`,
   };
 }
 
@@ -356,6 +390,8 @@ export function describeSkill(
     ...projectile,
   ];
   const { target, range } = targetAndRange(skill);
+  const numbers = skill.effects.flatMap((effect) => headlineOf(effect, ranks) ?? []);
+  const headline = (numbers.find((number) => number.scales) ?? numbers[0])?.text;
   return {
     id: skill.id,
     name: skill.name,
@@ -373,6 +409,7 @@ export function describeSkill(
     rangeText: range,
     targetText: target,
     scalesWithAttribute: effects.some((effect) => effect.magnitude?.attributeId !== undefined),
+    headline,
   };
 }
 

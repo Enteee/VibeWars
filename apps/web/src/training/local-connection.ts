@@ -4,17 +4,25 @@ import {
   drainAccumulator,
   swingProgress,
   type MatchSimulation,
+  type NetPips,
   type Participant,
   type ProfessionId,
   type ResolvedLoadout,
   type SkillBar,
   type StepResult,
 } from "@vibewars/game-core";
-import type { CastRefusedMessage, ClientIntent, MapDescriptor } from "@vibewars/game-protocol";
+import type {
+  CastRefusedMessage,
+  ClientIntent,
+  MapDescriptor,
+  PeerCall,
+} from "@vibewars/game-protocol";
 import {
+  createCallBoard,
   sameSkillBar,
   skillBarSlots,
   wireStatuses,
+  type CallsSnapshot,
   type CombatMessage,
   type MatchConnection,
   type MatchSnapshot,
@@ -59,6 +67,7 @@ function toPlayerSnapshot(
   participant: Participant,
   name: string,
   professions: Professions,
+  pips: NetPips,
 ): PlayerSnapshot {
   const { combatant } = participant;
   const activeCast = combatant.cast.activeCast;
@@ -90,6 +99,8 @@ function toPlayerSnapshot(
     swingElapsed: swing.elapsed,
     swingTotal: swing.total,
     knockdownRemaining: combatant.knockdownRemaining,
+    healthPips: pips.health,
+    energyPips: pips.energy,
     statuses: wireStatuses(combatant.statuses.active).map((status) => status.id),
   };
 }
@@ -116,6 +127,11 @@ export function createLocalConnection(options: {
   const stepHandlers: ((result: StepResult) => void)[] = [];
   const combatHandlers: ((message: CombatMessage) => void)[] = [];
   const refusalHandlers: ((message: CastRefusedMessage) => void)[] = [];
+  // The host's own call board, for your team alone, so the controls can be
+  // learned here (#443).
+  const calls = createCallBoard(map);
+  const alive = (id: string): boolean => simulation.get(id)?.combatant.dead === false;
+  const selfTeam = (): 0 | 1 => (simulation.get(selfId)?.combatant.team === 1 ? 1 : 0);
 
   const deliver = (result: StepResult): void => {
     for (const handler of stepHandlers) {
@@ -156,9 +172,27 @@ export function createLocalConnection(options: {
     }
   };
 
+  const sendCall = (call: PeerCall): void => {
+    if (closed || !alive(selfId)) {
+      return;
+    }
+    const team = selfTeam();
+    const isLiveEnemy = (targetId: string): boolean =>
+      alive(targetId) && simulation.get(targetId)?.combatant.team !== team;
+    calls.call(team, selfId, call, simulation.elapsedSeconds, isLiveEnemy);
+  };
+
+  const getCalls = (): CallsSnapshot => {
+    const now = simulation.elapsedSeconds;
+    calls.step(now, alive);
+    return calls.view(selfTeam(), now);
+  };
+
   return {
     simulation,
     selfSessionId: selfId,
+    sendCall,
+    getCalls,
     map,
     get skillBar() {
       return skillBar;
@@ -175,7 +209,12 @@ export function createLocalConnection(options: {
       return {
         selfSessionId: selfId,
         players: [...simulation.participants()].map((participant) =>
-          toPlayerSnapshot(participant, nameOf(participant.id), professionsOf(participant.id)),
+          toPlayerSnapshot(
+            participant,
+            nameOf(participant.id),
+            professionsOf(participant.id),
+            simulation.pips(participant),
+          ),
         ),
         scoreTeam0: simulation.score.byTeam.get(0) ?? 0,
         scoreTeam1: simulation.score.byTeam.get(1) ?? 0,

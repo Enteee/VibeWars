@@ -1,5 +1,8 @@
 import { Vec, type OffhandId, type ProfessionId, type Vec2 } from "@vibewars/game-core";
 
+import type { CallsSnapshot } from "@vibewars/game-session";
+
+import type { RenderablePing } from "./call-marks.js";
 import type { RenderableProjectile } from "./projectiles.js";
 
 /**
@@ -204,6 +207,12 @@ export interface ArenaSnapshot {
   readonly hoverId: string | undefined;
   /** The names key is held (Shift by default, #302): every name shows (#253). */
   readonly showAllNames: boolean;
+  /** The foe your team has called (#443): a chevron over it. */
+  readonly calledId: string | undefined;
+  /** The ally you watch (#443): brackets round it. Yours alone. */
+  readonly watchedId: string | undefined;
+  /** Your team's pings on the floor (#443). */
+  readonly pings: readonly RenderablePing[];
 }
 
 export const EMPTY_SNAPSHOT: ArenaSnapshot = {
@@ -214,7 +223,28 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   clock: 0,
   hoverId: undefined,
   showAllNames: false,
+  calledId: undefined,
+  watchedId: undefined,
+  pings: [],
 };
+
+/** `snapshot` with your team's calls and the ally you watch on it (#443). */
+export function withCalls(
+  snapshot: ArenaSnapshot,
+  calls: CallsSnapshot,
+  watchedId: string | undefined,
+): ArenaSnapshot {
+  return {
+    ...snapshot,
+    calledId: calls.target?.targetId,
+    watchedId,
+    pings: calls.pings.map((ping) => ({
+      id: ping.id,
+      position: { x: ping.x, y: ping.y },
+      remaining: ping.remaining,
+    })),
+  };
+}
 
 /**
  * Two hues, for two sides (docs/art/art-direction.md): `friend` blue and

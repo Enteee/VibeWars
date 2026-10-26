@@ -57,6 +57,8 @@ function self(cast: Partial<PlayerSnapshot>): PlayerSnapshot {
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    healthPips: 0,
+    energyPips: 0,
     statuses: [],
     ...cast,
   };
@@ -185,6 +187,14 @@ describe("outOfRange", () => {
     const bar = [slot(ORISON)];
     expect(outOfRange(bar, self({}), foe(range + 1), [])).toEqual([false]);
     expect(outOfRange(bar, self({}), foe(range + 1, { team: 0 }), [])).toEqual([true]);
+  });
+
+  it("marks no skill the target is wrong for: walking closer would not help (#599)", () => {
+    const BLOOD_RITUAL = "necromancer.blood-ritual";
+    const ally = (x: number) => self({ sessionId: "ally", x, team: 0 });
+    expect(outOfRange([slot(BLOOD_RITUAL)], self({}), foe(1000), [])).toEqual([false]);
+    expect(outOfRange([slot(BLOOD_RITUAL)], self({}), ally(1000), [])).toEqual([true]);
+    expect(outOfRange([slot(FIREBALL)], self({}), ally(1000), [])).toEqual([false]);
   });
 
   it("marks nothing with no target, or a dead one", () => {

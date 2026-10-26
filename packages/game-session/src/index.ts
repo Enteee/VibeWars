@@ -9,7 +9,11 @@ export { packCombat } from "./combat-batches.js";
 export { packSnapshot, snapshotAssembler } from "./snapshot-parts.js";
 export type { Transport } from "./transport.js";
 
+export { NO_CALLS } from "./match-connection.js";
+export { CALL_INTERVAL_SECONDS, PING_SECONDS, createCallBoard } from "./calls.js";
+export type { CallBoard } from "./calls.js";
 export type {
+  CallsSnapshot,
   CombatBatchMessage,
   CombatMessage,
   MatchConnection,

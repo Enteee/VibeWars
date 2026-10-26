@@ -29,7 +29,7 @@ async function openTraining(
   await page.goto("./");
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator(".editor-row select").first().selectOption("elementalist");
-  await page.locator(".skill-box", { hasText: "Fireball" }).click();
+  await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
   await expect(page.locator(FILLED_SLOTS)).toHaveText([
     `${codeLabel(skillKey(0, keymap))}Fireball`,
   ]);
@@ -176,7 +176,10 @@ test("(7) editing the build re-arms the arena in place", async ({ page }) => {
   await castFireballAndLand(page);
   const canvasHandle = await page.locator(".training canvas").elementHandle();
 
-  await page.locator(".skill-box", { hasText: "Armor of Earth" }).click();
+  await page
+    .locator(".skill-box", { hasText: "Armor of Earth" })
+    .locator(".skill-box-equip")
+    .click();
 
   // In place: a divider, the earlier rows kept, the meter restarted, and
   // the very same canvas.
@@ -243,7 +246,10 @@ test("(10) on a narrow screen the columns stack: training, editor, library", asy
 
 test("(11) every skill button shows its skill-type badge, as the HUD does", async ({ page }) => {
   await openTraining(page);
-  await page.locator(".skill-box", { hasText: "Armor of Earth" }).click();
+  await page
+    .locator(".skill-box", { hasText: "Armor of Earth" })
+    .locator(".skill-box-equip")
+    .click();
   const buttons = page.locator(FILLED_SLOTS);
   await expect(buttons).toHaveText([
     `${codeLabel(skillKey(0))}Fireball`,
@@ -537,7 +543,10 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
   await page.goto("./");
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator(".editor-row select").first().selectOption("ranger");
-  await page.locator(".skill-box", { hasText: "Troll Unguent" }).click();
+  await page
+    .locator(".skill-box", { hasText: "Troll Unguent" })
+    .locator(".skill-box-equip")
+    .click();
   await expect(page.locator(FILLED_SLOTS)).toHaveText([`${codeLabel(skillKey(0))}Troll Unguent`]);
   await takeControl(page);
   const slot = page.locator(FILLED_SLOTS).first();
@@ -793,7 +802,7 @@ test("(29) an attack skill pressed out of reach walks in, then lands (#415)", as
   await page.locator(".gear-box").filter({ hasText: "Axe" }).first().click();
   await expect(page.locator(".gear-slot").first()).toContainText("Axe");
   await page.getByRole("button", { name: "skills", exact: true }).click();
-  await page.locator(".skill-box", { hasText: "Swift Chop" }).click();
+  await page.locator(".skill-box", { hasText: "Swift Chop" }).locator(".skill-box-equip").click();
   await expect(page.locator(FILLED_SLOTS)).toHaveText([`${codeLabel(skillKey(0))}Swift Chop`]);
   const canvas = page.locator(".training canvas");
   await page.locator("select.training-scenario").selectOption("weapon-dps");
@@ -862,7 +871,7 @@ test("(31) a slot out of reach of the target is marked, and the mark goes once i
   await page.locator(".gear-box").filter({ hasText: "Axe" }).first().click();
   await expect(page.locator(".gear-slot").first()).toContainText("Axe");
   await page.getByRole("button", { name: "skills", exact: true }).click();
-  await page.locator(".skill-box", { hasText: "Swift Chop" }).click();
+  await page.locator(".skill-box", { hasText: "Swift Chop" }).locator(".skill-box-equip").click();
   const canvas = page.locator(".training canvas");
   await page.locator("select.training-scenario").selectOption("weapon-dps");
   await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
@@ -894,7 +903,10 @@ test("(32) the casting slot fills as the cast goes, hovering it shows its toolti
   await page.goto("/");
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator(".editor-row select").first().selectOption("ranger");
-  await page.locator(".skill-box", { hasText: "Troll Unguent" }).click();
+  await page
+    .locator(".skill-box", { hasText: "Troll Unguent" })
+    .locator(".skill-box-equip")
+    .click();
   await expect(page.locator(FILLED_SLOTS)).toHaveText([`${codeLabel(skillKey(0))}Troll Unguent`]);
   await takeControl(page);
   const slot = page.locator(FILLED_SLOTS).first();
@@ -926,7 +938,7 @@ test("(34) Backbreaker lays the melee dummy flat until it rises (#545)", async (
   await page.locator(".gear-box").filter({ hasText: "Hammer" }).first().click();
   await expect(page.locator(".gear-slot").first()).toContainText("Hammer");
   await page.getByRole("button", { name: "skills", exact: true }).click();
-  await page.locator(".skill-box", { hasText: "Backbreaker" }).click();
+  await page.locator(".skill-box", { hasText: "Backbreaker" }).locator(".skill-box-equip").click();
   const canvas = page.locator(".training canvas");
   await page.locator("select.training-scenario").selectOption("weapon-dps");
   await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
@@ -958,4 +970,15 @@ test("(34) Backbreaker lays the melee dummy flat until it rises (#545)", async (
   expect(await pixel()).not.toEqual(standing);
   // Up again after its 4 s, drawn from the snapshot alone.
   await expect.poll(pixel, { timeout: 15_000 }).toEqual(standing);
+});
+
+test("(35) the bars show net regeneration as arrows: an Elementalist's 4 energy pips (#504)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  const energy = page.locator(".training-bar-energy .vital-pips");
+  await expect(energy).toHaveText("››››");
+  await expect(energy).toHaveClass(/is-regen/);
+  // Full health and nothing on you: no health arrows.
+  await expect(page.locator(".training-bar-health .vital-pips")).toBeHidden();
 });

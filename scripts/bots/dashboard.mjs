@@ -28,7 +28,7 @@ import { ROLES } from "./hub-policy.mjs";
 import { formatSpend, readSpend } from "./hub-spend.mjs";
 import { readRoster } from "./presence.mjs";
 import { betweenTurns, parseReboot } from "./reboot.mjs";
-import { parseSchedule } from "./schedule.mjs";
+import { ownNudges, parseOwnSchedules, parseSchedule } from "./schedule.mjs";
 import { readSidecar, sidecarDown } from "./sidecar.mjs";
 import { unreadOf } from "./unread.mjs";
 import { boardLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
@@ -244,12 +244,21 @@ function feed(limit) {
  * @returns {import("./dashboard-view.mjs").NudgeFacts}
  */
 function nudges(staff, now) {
+  /** hubd writes `schedules.json`; one that is not readable shows no own schedules. */
+  const own = () => {
+    try {
+      return parseOwnSchedules(fs.readFileSync(path.join(HUB, "schedules.json"), "utf8"));
+    } catch {
+      return [];
+    }
+  };
   /** @type {import("./dashboard-view.mjs").NudgeFacts["schedule"]} */
   let schedule;
   try {
-    schedule = parseSchedule(
-      fs.readFileSync(path.join(import.meta.dirname, "schedule.json"), "utf8"),
-    );
+    schedule = [
+      ...parseSchedule(fs.readFileSync(path.join(import.meta.dirname, "schedule.json"), "utf8")),
+      ...ownNudges(own()),
+    ];
   } catch (error) {
     schedule = error instanceof Error ? error.message : String(error);
   }

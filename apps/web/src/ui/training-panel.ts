@@ -13,7 +13,12 @@ import { setGlobalMute } from "../audio/global-mute.js";
 import { soundPlayer } from "../audio/sound-player.js";
 import { attackKeyIntents, hasActionToCancel } from "../input/attack-key.js";
 import { createDoubleClick } from "../input/double-click.js";
-import { secondaryClickIntents } from "../input/mouse-intents.js";
+import {
+  callTargetCall,
+  middleClickAction,
+  pingCall,
+  secondaryClickIntents,
+} from "../input/mouse-intents.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
 import {
@@ -33,6 +38,7 @@ import { music } from "../music/play-music.js";
 import { TRACKS } from "../music/tracks/index.js";
 import {
   EMPTY_SNAPSHOT,
+  withCalls,
   withNames,
   type ArenaSnapshot,
   type RenderableWall,
@@ -67,6 +73,8 @@ import {
 } from "./combat-readouts.js";
 import { describeRefusal, MESSAGE_SECONDS } from "./hud.js";
 import { isEliteSkill, skillBadgeHtml } from "./icons.js";
+import { createAllyWatch } from "./ally-watch.js";
+import { pipsElement, renderPips } from "./pips.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import {
   castFill,
@@ -130,12 +138,19 @@ const TAKES_KEYBOARD = "input, textarea, select, [contenteditable]:not([contente
 /** Thrown when there is nothing to train on; the editor then stays two columns. */
 export class TrainingUnavailableError extends Error {}
 
-function vitalBar(kind: string): { root: HTMLElement; fill: HTMLElement; label: HTMLElement } {
+function vitalBar(kind: string): {
+  root: HTMLElement;
+  fill: HTMLElement;
+  label: HTMLElement;
+  pips: HTMLElement;
+} {
   const root = h("div", `training-bar training-bar-${kind}`);
   const fill = h("div", "training-bar-fill");
   const label = h("span", "training-bar-label");
-  root.append(fill, label);
-  return { root, fill, label };
+  // Net regeneration or degeneration, as on the match HUD (#504).
+  const pips = pipsElement();
+  root.append(fill, label, pips);
+  return { root, fill, label, pips };
 }
 
 interface Session {
@@ -182,6 +197,8 @@ export function createTrainingPanel(): TrainingPanel {
   const teaches = h("p", "training-teaches");
 
   const stage = h("div", "training-stage");
+  // The ally you watch (#443), in the stage's corner, as on the match HUD.
+  const allyWatch = createAllyWatch(stage);
   stage.tabIndex = 0;
   stage.setAttribute("role", "application");
   stage.setAttribute("aria-label", "training arena");
@@ -398,6 +415,8 @@ export function createTrainingPanel(): TrainingPanel {
     health.label.textContent = `${String(self.health)} / ${String(self.maxHealth)}`;
     energy.fill.style.width = fraction(self.energy, self.maxEnergy);
     energy.label.textContent = `${String(self.energy)} / ${String(self.maxEnergy)}`;
+    renderPips(health.pips, self.healthPips);
+    renderPips(energy.pips, self.energyPips);
     adrenaline.textContent =
       `adrenaline ${String(self.adrenaline)}` +
       (self.attackTargetSessionId === undefined ? "" : " · attacking");
@@ -571,6 +590,20 @@ export function createTrainingPanel(): TrainingPanel {
       }
       return;
     }
+    if (action === "call-target" || action === "ping") {
+      // For a mouse without a wheel click (#443).
+      const snapshot = session?.connection.getSnapshot();
+      const call =
+        snapshot === undefined || event.repeat
+          ? undefined
+          : action === "call-target"
+            ? callTargetCall(snapshot)
+            : pingCall(snapshot, viewport?.pointerWorld());
+      if (call !== undefined) {
+        session?.connection.sendCall(call);
+      }
+      return;
+    }
     if (action === "mute") {
       if (!event.repeat) {
         // No HUD here, so the message line says what the mute key did.
@@ -717,12 +750,22 @@ export function createTrainingPanel(): TrainingPanel {
       session.music.snapshot(latestMatch);
       const self = latestMatch.players.find((player) => player.sessionId === SELF_ID);
       follow.frame(deltaSeconds, self);
-      latestArena = withNames(
-        toArenaSnapshot(latestMatch, session.walls),
-        created.pointerWorld(),
-        nameReveal.held(),
+      allyWatch.update(latestMatch);
+      latestArena = withCalls(
+        withNames(
+          toArenaSnapshot(latestMatch, session.walls),
+          created.pointerWorld(),
+          nameReveal.held(),
+        ),
+        connection.getCalls(),
+        allyWatch.watchedId,
       );
       created.scene.setSnapshot(latestArena);
+      // For the e2e specs: who your team has called.
+      const called = latestArena.calledId ?? "";
+      if (stage.dataset.called !== called) {
+        stage.dataset.called = called;
+      }
       paintVitals(latestMatch);
       sinceMeterPaint += deltaSeconds;
       if (sinceMeterPaint >= METER_PAINT_SECONDS) {
@@ -749,6 +792,16 @@ export function createTrainingPanel(): TrainingPanel {
     });
     offPointer = created.onButton(({ button, phase, world }) => {
       if (session === undefined) {
+        return;
+      }
+      // A wheel click calls a foe, watches an ally, or pings the ground (#443).
+      if (button === "middle" && phase === "down") {
+        const action = middleClickAction(session.connection.getSnapshot(), latestArena, world);
+        if (action.kind === "call") {
+          session.connection.sendCall(action.call);
+        } else if (action.kind === "watch") {
+          allyWatch.toggle(action.allyId);
+        }
         return;
       }
       // The stage's capturing listener ran first, so this click's arming
@@ -799,6 +852,8 @@ export function createTrainingPanel(): TrainingPanel {
       offPointer?.();
       camera?.dispose();
       camera = undefined;
+      allyWatch.dispose();
+      delete stage.dataset.called;
       nameReveal.detach();
       detachMovement();
       stage.removeEventListener("keydown", onStageKeyDown);

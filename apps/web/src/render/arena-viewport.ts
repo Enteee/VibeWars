@@ -184,11 +184,18 @@ export async function createArenaViewport(parent: HTMLElement): Promise<ArenaVie
       const onContextMenu = (event: MouseEvent): void => {
         event.preventDefault();
       };
+      // A wheel click is a call (#443), never the browser's autoscroll.
+      const onMouseDown = (event: MouseEvent): void => {
+        if (event.button === 1) {
+          event.preventDefault();
+        }
+      };
       canvas.addEventListener("pointerdown", onPointer);
       canvas.addEventListener("pointermove", onPointer);
       canvas.addEventListener("pointerup", onPointer);
       canvas.addEventListener("pointercancel", releaseAll);
       canvas.addEventListener("contextmenu", onContextMenu);
+      canvas.addEventListener("mousedown", onMouseDown);
       window.addEventListener("blur", releaseAll);
       return () => {
         canvas.removeEventListener("pointerdown", onPointer);
@@ -196,6 +203,7 @@ export async function createArenaViewport(parent: HTMLElement): Promise<ArenaVie
         canvas.removeEventListener("pointerup", onPointer);
         canvas.removeEventListener("pointercancel", releaseAll);
         canvas.removeEventListener("contextmenu", onContextMenu);
+        canvas.removeEventListener("mousedown", onMouseDown);
         window.removeEventListener("blur", releaseAll);
       };
     },

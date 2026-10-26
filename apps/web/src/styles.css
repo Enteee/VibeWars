@@ -1869,16 +1869,12 @@ body {
 }
 
 /* Out of reach of the target (#485): a shape, not only a colour. The cost
-   is struck through and a `↔` follows it; the Training Ground row has no
-   cost, so the glyph follows the name. A hint, not a gate. */
-.hud-skill.is-out-of-range .hud-skill-cost {
-  text-decoration: line-through;
-}
-
+   is left as it is and a `↔` follows it (a struck cost would read as
+   unaffordable); the Training Ground row has no cost, so the glyph follows
+   the name. A hint, not a gate. */
 .hud-skill.is-out-of-range .hud-skill-cost::after,
 .training-skill.is-out-of-range .training-skill-name::after {
   content: "↔";
-  /* Inline-block, so the strike-through stops at the cost. */
   display: inline-block;
   margin-left: 0.3em;
   color: var(--ink);
@@ -2216,6 +2212,106 @@ body {
 
 .skill-box-name {
   font-size: 0.82rem;
+}
+
+/* The card itself (#567): a button that opens the details, laid out as the
+   box was, with the number that matters at your rank beside the cost. */
+.skill-box-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.6rem;
+  padding: 0 1.2rem 0 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.skill-box-card .skill-box-name {
+  flex: 1 0 100%;
+}
+
+.skill-box-headline {
+  color: var(--accent);
+  font-size: 0.72rem;
+}
+
+.skill-box-headline:empty {
+  display: none;
+}
+
+.skill-box.is-open {
+  border-color: var(--accent);
+}
+
+/* The inline details (#567): the tooltip's lines, in the card's flow. */
+.skill-box-details {
+  margin-top: 0.3rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid var(--line);
+  cursor: default;
+}
+
+/* 0 to 12, your rank marked, the ranks below it filled. */
+.skill-scale {
+  display: grid;
+  grid-template-columns: repeat(13, 1fr);
+  gap: 2px;
+  margin-top: 0.4rem;
+}
+
+.skill-scale-step {
+  padding: 0.1rem 0;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink-dim);
+  font-size: 0.62rem;
+  text-align: center;
+}
+
+.skill-scale-step.is-reached {
+  background: rgb(89 194 255 / 12%);
+}
+
+.skill-scale-step.is-current {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: bold;
+}
+
+.skill-type-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+/* Scroll anchoring holds a skill where it is on screen through a reshuffle
+   (#563), so it must not pick the controls above the list as its anchor:
+   they never move, and the list would jump under them. */
+.library-tabs,
+.skill-filters,
+.skill-type-chips {
+  overflow-anchor: none;
+}
+
+.skill-type-chip {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-dim);
+  font-family: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.skill-type-chip[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* Says where a click equips the skill (#564): "Equip → 6", or why not. */
@@ -2805,7 +2901,9 @@ body {
 /* The now-playing toast: top left, just under the top bar, where a match has
    nothing (the skill bar is along the bottom, the scoreboard in the middle
    and the buttons on the right). On a menu screen that corner is the title,
-   so there it sits bottom left (#501). */
+   so there it sits bottom left (#501). In the build editor with the Training
+   Ground it sits bottom right, over the foot of the library, because bottom
+   left is the Training log you watch while you test a build (#591). */
 .now-playing {
   position: fixed;
   left: 1rem;
@@ -2823,6 +2921,67 @@ body:has(#screens:not([style*="none"])) .now-playing {
   bottom: 1rem;
 }
 
+body:has(.editor-layout.has-training) .now-playing {
+  left: auto;
+  right: 1rem;
+}
+
 .now-playing[hidden] {
   display: none;
+}
+
+/*
+ * The ally you watch (#443): name and health, top right, under the match
+ * buttons and the music button (.hud-music, 3.2rem + 2.2rem), live.
+ * Yours alone.
+ */
+.ally-watch {
+  position: absolute;
+  top: 6rem;
+  right: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.35rem 0.5rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  pointer-events: none;
+}
+
+.ally-watch[hidden] {
+  display: none;
+}
+
+.ally-watch .ally-watch-health {
+  width: 9rem;
+}
+
+.ally-watch-health .hud-bar-fill {
+  background: #3a6a3e;
+}
+
+.ally-watch.is-dead .hud-bar-label {
+  color: var(--ink-dim);
+}
+
+/*
+ * Net regeneration and degeneration arrows (#504), GW1 style: at the bar's
+ * right end, clear of its centred label. Right for regeneration, left for
+ * degeneration, up to ten.
+ */
+.vital-pips {
+  position: absolute;
+  inset: 0 4px 0 auto;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 15px;
+  letter-spacing: -2px;
+  color: var(--ink);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
+  pointer-events: none;
+}
+
+.vital-pips.is-degen {
+  color: #ff9b94;
 }

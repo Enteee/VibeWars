@@ -196,3 +196,37 @@ describe("natural health regeneration (#460)", () => {
     });
   });
 });
+
+describe("net pips (#504)", () => {
+  it("are what the tick applies: +1 after 5 s out of combat with nothing else", () => {
+    const sim = pair();
+    stepFor(sim, 5);
+    expect(sim.pips(get(sim, "a"))).toEqual({ health: 1, energy: 4 });
+    const [applied] = pipsNextTick(sim, "a");
+    expect(applied).toBeCloseTo(1, 9);
+  });
+
+  it("sum every status with natural regeneration and the base, then clamp at ±10", () => {
+    const sim = pair();
+    const a = get(sim, "a").combatant;
+    a.statuses.apply("regeneration", 60, "a");
+    a.statuses.apply("blood-ritual", 60, "a");
+    expect(sim.pips(get(sim, "a"))).toEqual({ health: 4, energy: 7 });
+    a.statuses.apply("burning", 60, "b");
+    a.statuses.apply("bleeding", 60, "b");
+    a.statuses.apply("poison", 60, "b");
+    a.statuses.apply("life-drain", 60, "b");
+    // 4 − 7 − 3 − 4 − 2 = −12: clamped.
+    expect(sim.pips(get(sim, "a")).health).toBe(-10);
+    const [applied] = pipsNextTick(sim, "a");
+    expect(applied).toBeCloseTo(-10, 9);
+  });
+
+  it("are none for the dead", () => {
+    const sim = pair();
+    const a = get(sim, "a").combatant;
+    a.statuses.apply("regeneration", 60, "a");
+    a.dead = true;
+    expect(sim.pips(get(sim, "a"))).toEqual({ health: 0, energy: 0 });
+  });
+});

@@ -105,6 +105,10 @@ if (argv[0] === "whoami") {
   console.log(`  ${reboots.allow ? "yes" : "no "}  reboot the company (company reboot)`);
   const staff = authorize(ROLE, { kind: "staff", argv: ["hire", "x", "x"] }, { acting: ACTING });
   console.log(`  ${staff.allow ? "yes" : "no "}  hire and fire (company hire, company fire)`);
+  const schedules = authorize(ROLE, { kind: "schedule", argv: ["ls"] }, { acting: ACTING });
+  console.log(
+    `  ${schedules.allow ? "yes" : "no "}  keep recurring reminders to yourself (hub schedule)`,
+  );
   const ranks = authorize(ROLE, { kind: "rank", argv: ["1", "top"] }, { acting: ACTING });
   console.log(`  ${ranks.allow ? "yes" : "no "}  order the board (board rank)`);
 
@@ -135,6 +139,9 @@ if (argv[0] === "push") {
   // Code-scanning alerts on main or a pull request (#184): a hub verb,
   // because gh has none and `gh api` is refused.
   request = { kind: "alerts", argv: argv.slice(1) };
+} else if (argv[0] === "schedule") {
+  // Your own recurring reminders (#678): add, ls, rm. hubd checks the words.
+  request = { kind: "schedule", argv: argv.slice(1) };
 } else if (argv[0] === "board" && argv[1] === "rank") {
   // The manager ordering the board (#351), for `board rank`.
   request = { kind: "rank", argv: argv.slice(2) };

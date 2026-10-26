@@ -11,7 +11,12 @@ import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { loadLayoutLabeller } from "./input/key-labels.js";
 import { actionForCode, isShortcut } from "./input/keymap.js";
 import { loadKeymap } from "./input/keymap-preference.js";
-import { secondaryClickIntents } from "./input/mouse-intents.js";
+import {
+  callTargetCall,
+  middleClickAction,
+  pingCall,
+  secondaryClickIntents,
+} from "./input/mouse-intents.js";
 import { attachNameReveal } from "./input/name-reveal.js";
 import { nextTabTarget } from "./input/tab-target.js";
 import { skillSlotForKeyDown } from "./input/skill-keys.js";
@@ -20,6 +25,7 @@ import { music } from "./music/play-music.js";
 import { TRACKS } from "./music/tracks/index.js";
 import {
   ACTOR_RADIUS,
+  withCalls,
   withNames,
   teamColour,
   type ArenaSnapshot,
@@ -41,6 +47,7 @@ import {
   updateHud,
   updateRecharges,
 } from "./ui/hud.js";
+import { createAllyWatch } from "./ui/ally-watch.js";
 import { noWebGlNotice } from "./ui/arena-notice.js";
 import { attachJukeboxPopover } from "./ui/jukebox.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
@@ -107,6 +114,10 @@ export function toArenaSnapshot(
     // Whose names show is the caller's to say (`withNames`, #253).
     hoverId: undefined,
     showAllNames: false,
+    // Your team's calls and the ally you watch are the caller's (`withCalls`, #443).
+    calledId: undefined,
+    watchedId: undefined,
+    pings: [],
     actors: match.players.map((player) => {
       return {
         id: player.sessionId,
@@ -209,6 +220,8 @@ export async function startMatchView(
     viewport === undefined ? undefined : attachFollowCamera(viewport, parent, connection.map);
 
   const hud = createHud(parent);
+  // The ally you watch (#443), top right: yours alone.
+  const allyWatch = createAllyWatch(parent);
   // The arena's edge stops below the scoreboard and above the bars, not
   // under them (#440). From the bars, as the lines above them come and go.
   const measureCover = (): void => {
@@ -347,6 +360,16 @@ export async function startMatchView(
       }
     } else if (action === "mute") {
       toggleMute();
+    } else if (action === "call-target" || action === "ping") {
+      // For a mouse without a wheel click (#443).
+      const snapshot = connection.getSnapshot();
+      const call =
+        action === "call-target"
+          ? callTargetCall(snapshot)
+          : pingCall(snapshot, viewport?.pointerWorld());
+      if (call !== undefined) {
+        connection.sendCall(call);
+      }
     } else {
       const slot = skillSlotForKeyDown(event, keymap, connection.skillBar);
       if (slot !== undefined) {
@@ -421,12 +444,18 @@ export async function startMatchView(
     // Hover is hit-tested every frame, through the camera as it is now, so
     // a body that walks under a still cursor, or a camera that moves under
     // it, shows the right name.
-    latestArena = withNames(
-      toArenaSnapshot(latestMatch, walls),
-      viewport?.pointerWorld(),
-      nameReveal.held(),
+    allyWatch.update(latestMatch);
+    latestArena = withCalls(
+      withNames(toArenaSnapshot(latestMatch, walls), viewport?.pointerWorld(), nameReveal.held()),
+      connection.getCalls(),
+      allyWatch.watchedId,
     );
     viewport?.scene.setSnapshot(latestArena);
+    // For the e2e specs: who your team has called.
+    const called = latestArena.calledId ?? "";
+    if (parent.dataset.called !== called) {
+      parent.dataset.called = called;
+    }
 
     const target = latestMatch.players.find((p) => p.sessionId === self?.targetSessionId);
     // `latestMatch` carries the score, clock and outcome. Omitting it
@@ -446,6 +475,14 @@ export async function startMatchView(
     if (button === "left" && phase === "down") {
       connection.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
       viewport.scene.showWalkMarker(world);
+    } else if (button === "middle" && phase === "down") {
+      // A wheel click calls a foe, watches an ally, or pings the ground (#443).
+      const action = middleClickAction(latestMatch, latestArena, world);
+      if (action.kind === "call") {
+        connection.sendCall(action.call);
+      } else if (action.kind === "watch") {
+        allyWatch.toggle(action.allyId);
+      }
     }
   });
   // An RMB drag pans; a click picks (#442).
@@ -472,6 +509,8 @@ export async function startMatchView(
       offPointer?.();
       coverObserver.disconnect();
       camera?.dispose();
+      allyWatch.dispose();
+      delete parent.dataset.called;
       nameReveal.detach();
       window.removeEventListener("keydown", handleKeyDown);
       detachMovement();

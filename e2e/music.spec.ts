@@ -248,3 +248,44 @@ test("the now-playing toast at a match start covers none of the HUD (#372)", asy
     }
   }
 });
+
+test("the now-playing toast in the build editor stays off the Training panel (#591)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("./");
+  await expect(page.getByRole("button", { name: "new character" })).toBeVisible();
+  // The toast hides after a few seconds: note its box every frame it shows
+  // while the Training Ground is up.
+  await page.evaluate(() => {
+    const toast = document.querySelector<HTMLElement>(".now-playing");
+    if (toast === null) {
+      throw new Error("no now-playing toast");
+    }
+    const note = (): void => {
+      if (!toast.hidden && document.querySelector(".editor-layout.has-training") !== null) {
+        Object.assign(window, { toastBox: toast.getBoundingClientRect().toJSON() as unknown });
+      }
+      requestAnimationFrame(note);
+    };
+    note();
+  });
+  // The click that opens the editor is the one that starts the music.
+  await page.getByRole("button", { name: "new character" }).click();
+  await expect(page.locator(".training-log")).toBeVisible();
+
+  const toastBox = (): Promise<Box | null> =>
+    page.evaluate(() => (window as { toastBox?: Box }).toastBox ?? null);
+  await expect.poll(toastBox, { timeout: 5_000 }).not.toBeNull();
+  const box = await toastBox();
+  const log = await page.locator(".training").boundingBox();
+  expect(log).not.toBeNull();
+  if (box !== null && log !== null) {
+    const overlaps =
+      box.x < log.x + log.width &&
+      log.x < box.x + box.width &&
+      box.y < log.y + log.height &&
+      log.y < box.y + box.height;
+    expect(overlaps, "the toast overlaps the Training panel").toBe(false);
+  }
+});

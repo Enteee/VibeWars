@@ -312,3 +312,33 @@ describe("the bar with Glyph of Lesser Energy up (#637)", () => {
     expect(fireball()?.energyCost).toBe(10);
   });
 });
+
+describe("calls in the Training Ground (#443)", () => {
+  it("calls the dummy and pings for your team, and the ping runs out", () => {
+    const { connection } = targetDummy();
+    connection.sendCall({ kind: "target", targetId: "dummy" });
+    expect(connection.getCalls().target).toEqual({ targetId: "dummy", callerId: SELF_ID });
+    // A second later, past the one-a-second limit; tick by tick, as the frame loop does.
+    for (let i = 0; i < 20; i += 1) {
+      connection.advance(TICK_SECONDS);
+    }
+    connection.sendCall({ kind: "ping", x: 100, y: 100 });
+    expect(connection.getCalls().pings.map(({ x, y }) => [x, y])).toEqual([[100, 100]]);
+    for (let i = 0; i < 60; i += 1) {
+      connection.advance(TICK_SECONDS);
+    }
+    expect(connection.getCalls().pings).toEqual([]);
+  });
+
+  it("calls nothing while you are dead", () => {
+    const { connection, setup } = targetDummy();
+    const self = setup.simulation.get(SELF_ID);
+    if (self === undefined) {
+      throw new Error("no player");
+    }
+    self.combatant.dead = true;
+    connection.sendCall({ kind: "target", targetId: "dummy" });
+    connection.sendCall({ kind: "ping", x: 100, y: 100 });
+    expect(connection.getCalls()).toEqual({ target: null, pings: [] });
+  });
+});

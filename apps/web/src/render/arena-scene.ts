@@ -50,6 +50,14 @@ import {
   type WalkMarker,
 } from "./walk-marker.js";
 import { AttackClock, REST_FRAME, shownFrame } from "./attack-clock.js";
+import {
+  PING_HEAD_RADIUS,
+  PING_PIN_HEIGHT,
+  callChevron,
+  pingRing,
+  watchBrackets,
+  type RenderablePing,
+} from "./call-marks.js";
 import { lyingPose } from "./lying-pose.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
 import type {
@@ -71,6 +79,8 @@ import type {
 const WALL_FILL = 0x202836;
 const WALL_STROKE = 0x3b4759;
 const TARGET_RING = 0xffd866;
+/** The `condition` orange: your team's called foe wears its chevron (#443). */
+const CALL_CHEVRON = 0xffa657;
 /**
  * The target ring's radius past the body's edge (operator Q26): its 2 px
  * stroke spans r + 8 … r + 10, clear of the weapon mark (r + 7.5) and the
@@ -278,6 +288,9 @@ export class ArenaScene extends Phaser.Scene {
     this.walkMarker = decayWalkMarker(this.walkMarker, deltaMs / 1000);
     if (this.walkMarker !== undefined) {
       this.drawWalkMarker(g, this.walkMarker);
+    }
+    for (const ping of this.snapshot.pings) {
+      this.drawPing(g, ping);
     }
     for (const actor of this.snapshot.actors) {
       this.drawActor(g, actor);
@@ -556,6 +569,55 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * A ping (#443): a `friend` pin on the spot, cased in `edge`, and a ring
+   * that grows from it and fades. Under the actors, as the walk marker is.
+   */
+  private drawPing(g: Phaser.GameObjects.Graphics, ping: RenderablePing): void {
+    const { x, y } = ping.position;
+    const ring = pingRing(ping.remaining, prefersReducedMotion());
+    const friend = teamColour("ally");
+    g.lineStyle(2, friend, ring.alpha);
+    g.strokeCircle(x, y, ring.radius);
+    const head = y - PING_PIN_HEIGHT;
+    for (const [width, colour] of [
+      [4, BODY_EDGE],
+      [2, friend],
+    ] as const) {
+      g.lineStyle(width, colour, 1);
+      g.lineBetween(x, y, x, head);
+    }
+    g.fillStyle(friend, 1);
+    g.fillCircle(x, head, PING_HEAD_RADIUS);
+    g.lineStyle(1.5, BODY_EDGE, 1);
+    g.strokeCircle(x, head, PING_HEAD_RADIUS);
+  }
+
+  /** Your team's called foe (#443): a `condition` chevron over it, cased like the weapon mark. */
+  private drawCallChevron(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
+    const points = callChevron(actor.position, actor.radius);
+    for (const [width, colour] of [
+      [5, BODY_EDGE],
+      [3, CALL_CHEVRON],
+    ] as const) {
+      g.lineStyle(width, colour, 1);
+      g.strokePoints(points.map(({ x, y }) => new Phaser.Math.Vector2(x, y)));
+    }
+  }
+
+  /** The ally you watch (#443): four `ink` corner brackets, cased in `edge`. */
+  private drawWatchBrackets(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
+    for (const [width, colour] of [
+      [4, BODY_EDGE],
+      [2, SELF_RIM],
+    ] as const) {
+      g.lineStyle(width, colour, 1);
+      for (const bracket of watchBrackets(actor.position, actor.radius)) {
+        g.strokePoints(bracket.map(({ x, y }) => new Phaser.Math.Vector2(x, y)));
+      }
+    }
+  }
+
   private drawSwingFlash(g: Phaser.GameObjects.Graphics, flash: SwingFlash): void {
     const alpha = swingFlashAlpha(flash);
     const { x, y } = flash.centre;
@@ -662,6 +724,12 @@ export class ArenaScene extends Phaser.Scene {
     if (actor.id === this.snapshot.targetId) {
       g.lineStyle(2, TARGET_RING, 1);
       g.strokeCircle(x, y, actor.radius + TARGET_RING_OFFSET);
+    }
+    if (actor.id === this.snapshot.calledId) {
+      this.drawCallChevron(g, actor);
+    }
+    if (actor.id === this.snapshot.watchedId) {
+      this.drawWatchBrackets(g, actor);
     }
 
     this.drawHealthBar(g, actor);
