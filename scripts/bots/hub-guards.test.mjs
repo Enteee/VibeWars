@@ -64,6 +64,15 @@ describe("judgingRuns", () => {
     }
   });
 
+  it("blocks a run that was cancelled or failed, even with jobs missing", () => {
+    for (const conclusion of ["cancelled", "failure", null]) {
+      const verdict = judged([run({ id: 1, conclusion }), run({ id: 2 })]);
+
+      expect(verdict).toMatchObject({ ok: false });
+      expect(verdict).toHaveProperty("reason", expect.stringMatching(/^ci\.yml run 1 ended /));
+    }
+  });
+
   it("accepts the path GitHub gives with a ref suffix", () => {
     expect(judged([run({ path: ".github/workflows/ci.yml@refs/pull/9/merge" })])).toMatchObject({
       ok: true,

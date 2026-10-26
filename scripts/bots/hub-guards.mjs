@@ -59,6 +59,17 @@ export function judgingRuns(runs, target) {
   if (mine.some((run) => run.status !== "completed")) {
     return { ok: false, reason: `${target.file} is still running on this commit` };
   }
+  // A run cancelled while queued has no jobs at all, and a second pull
+  // request's green run would then carry every expected name by itself.
+  // Every run must have ended well; a superseded one is re-run, or the
+  // branch gets a new commit.
+  const bad = mine.find((run) => run.conclusion !== "success");
+  if (bad !== undefined) {
+    return {
+      ok: false,
+      reason: `${target.file} run ${String(bad.id)} ended ${String(bad.conclusion)}; re-run it or push a new commit`,
+    };
+  }
   return { ok: true, ids: mine.map((run) => Number(run.id)) };
 }
 

@@ -349,7 +349,7 @@ job that carries one to have succeeded. Jobs exist only because a workflow
 executed, so no API can create one. Every such run counts, not the newest: a
 second pull request with the same head and a base of its own choosing gets
 its own green run for that commit, which cannot stand in for a red real one. A close and reopen makes a
-second green run, which passes; a cancelled superseded run blocks until it is
+second green run, which passes; a run that ended cancelled or failed, even with no jobs, blocks until it is
 re-run or the branch gets a new commit. A run tests the merge of the head
 into its PR's base, using the head's own workflow files, so reviewing gate
 files stays load-bearing. Since #116 only cicd-engineer may push them. A test pins `EXPECTED_CHECKS` to the

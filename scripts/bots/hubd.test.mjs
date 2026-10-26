@@ -337,6 +337,7 @@ async function startHubd(remaining, before) {
               repository: { full_name: "Enteee/VibeWars" },
               run_number: 1,
               status: "completed",
+              conclusion: "success",
               ...planted.run,
             },
           ],
@@ -2056,6 +2057,19 @@ describe("hubd recording verdicts and merging", () => {
     const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
 
     expect(answer.code, String(answer.reason)).toBe(0);
+  }, 20_000);
+
+  it("refuses a real run cancelled while queued, beside a second PR's green run", async () => {
+    const hubd = await approved(5000);
+    ran(hubd, "abc1234def", []);
+    hubd.setCi("abc1234def", "ci.yml", { id: 100, jobs: [], run: { conclusion: "cancelled" } });
+    hubd.addRun("abc1234def", "ci.yml", { id: 101, jobs: [job("ci")] });
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(answer.allow).toBe(false);
+    expect(String(answer.reason)).toMatch(/ci\.yml run 100 ended cancelled/);
+    expect(hubd.calls("pr merge")).toBe(0);
   }, 20_000);
 
   it("refuses a job two jobs share a name with, and a missing one", async () => {
