@@ -383,6 +383,24 @@ issue (#84), gate PRs included, but never with `--delete-branch`. A
 misbehaving manager can stall the pipeline this way; it cannot destroy
 work or merge anything.
 
+**Self-reminders (#678).** The manager, the architect and lead-dev may
+each keep up to five recurring reminders to themselves (`hub schedule`,
+every 15 minutes to 7 days, 500 characters). They go to their owner only,
+prefixed `(your schedule <name>)`, and the dashboard lists them. Accepted
+risk: an agent that has read injected text can store it as a reminder,
+and it comes back every session. The prefix marks it as the agent's own
+note, never the operator's word or the company's.
+
+**Peek (#19).** `agent-turn.mjs` on the host records each employee's
+recent output under `$VIBEWARS_BOT_ROOT/peek` (mode 700, files 600),
+bound read-only into the manager's jail and no other. No jail holds a
+tmux socket, which would let it type into another agent's pane. Each
+line is `visible()`d and shown behind a `name │` gutter, so a colleague's
+output cannot pass for a message. Secret redaction (tokens, `Bearer`,
+private-key blocks) is best-effort, not a boundary. A key body that is
+indented or line-numbered, as a file read prints it, is not recognised
+as one.
+
 Every finding here so far came from **reading a gate with a hostile
 agent in mind**: #26, #39, #47, #57, #61, #67, #73. A change to any file in
 `GATE_PATHS` gets that review, from `perf-sec-qa` and `lead-dev` both.
