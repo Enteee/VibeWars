@@ -2,7 +2,9 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   applyIntent,
   drainAccumulator,
+  energyCostOf,
   getSkill,
+  type Combatant,
   type MatchSimulation,
   type Participant,
   type ProfessionId,
@@ -43,8 +45,14 @@ export interface LocalMatchConnection extends MatchConnection {
 /** One simulation tick, at the ruleset's rate, exactly as the server steps. */
 export const TICK_SECONDS = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
 
-/** The bar the HUD draws, from skill ids, gaps kept, as the server sends it on join. */
-export function skillSlotsFor(skillBar: SkillBar): (SkillSlot | null)[] {
+/**
+ * The bar the HUD draws, from skill ids, gaps kept, as the server sends it
+ * on join: energy costs are what `bearer` pays (#528).
+ */
+export function skillSlotsFor(
+  skillBar: SkillBar,
+  bearer: Pick<Combatant, "attributeRanks">,
+): (SkillSlot | null)[] {
   return skillBar.map((skillId) => {
     if (skillId === null) {
       return null;
@@ -53,7 +61,7 @@ export function skillSlotsFor(skillBar: SkillBar): (SkillSlot | null)[] {
     return {
       id: skillId,
       name: skill?.name ?? skillId,
-      energyCost: skill?.cost?.kind === "energy" ? skill.cost.amount : 0,
+      energyCost: skill === undefined ? 0 : energyCostOf(skill, bearer),
       adrenalineCost: skill?.cost?.kind === "adrenaline" ? skill.cost.amount : 0,
       activationSeconds: skill?.activationSeconds ?? 0,
       rechargeSeconds: skill?.rechargeSeconds ?? 0,
@@ -115,7 +123,11 @@ export function createLocalConnection(options: {
   readonly professionsOf: (id: string) => Professions;
 }): LocalMatchConnection {
   const { simulation, selfId, map, nameOf, professionsOf } = options;
-  let skillBar = skillSlotsFor(simulation.get(selfId)?.skillBar ?? []);
+  const selfBar = (bar: SkillBar) =>
+    skillSlotsFor(bar, {
+      attributeRanks: simulation.get(selfId)?.combatant.attributeRanks ?? new Map(),
+    });
+  let skillBar = selfBar(simulation.get(selfId)?.skillBar ?? []);
   let accumulator = 0;
   let closed = false;
   const stepHandlers: ((result: StepResult) => void)[] = [];
@@ -227,7 +239,7 @@ export function createLocalConnection(options: {
     },
     rearm(loadout, nextBar) {
       simulation.rearm(selfId, loadout, nextBar);
-      skillBar = skillSlotsFor(nextBar);
+      skillBar = selfBar(nextBar);
     },
     disconnect() {
       closed = true;

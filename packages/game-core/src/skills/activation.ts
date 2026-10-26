@@ -149,9 +149,10 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
 /**
  * The energy `skill` costs `caster`, after everything that changes it:
  * Expertise so far (#528). The one number both the check and the spend
- * use, so they cannot round apart. 0 for a skill with no energy cost.
+ * use, so they cannot round apart, and what the skill bar shows. 0 for a
+ * skill with no energy cost.
  */
-export function energyCostOf(skill: Skill, caster: Combatant): number {
+export function energyCostOf(skill: Skill, caster: Pick<Combatant, "attributeRanks">): number {
   if (skill.cost?.kind !== "energy") {
     return 0;
   }
