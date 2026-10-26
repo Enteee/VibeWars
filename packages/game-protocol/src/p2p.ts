@@ -207,6 +207,13 @@ export interface WirePlayer {
   /** Seconds left lying down from a knockdown (#468); 0 standing. */
   readonly knockdownRemaining: number;
   /**
+   * The swing under way (#560): seconds into it, and its whole length, the
+   * hit landing at the end. `swingTotal` is 0 when not attacking. The
+   * weapon mark's pose follows them; nothing is predicted.
+   */
+  readonly swingElapsed: number;
+  readonly swingTotal: number;
+  /**
    * Each status as its index in the sorted status-id table (#632), which
    * `wire-schema.json` carries, so a build with another table is refused
    * at join.
@@ -657,6 +664,8 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isNullableString(raw.castingSkillId) ||
     !isNumber(raw.castRemaining) ||
     !isNumber(raw.castTotal) ||
+    !isNumber(raw.swingElapsed) ||
+    !isNumber(raw.swingTotal) ||
     !isNumber(raw.knockdownRemaining)
   ) {
     return undefined;
@@ -688,6 +697,8 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         castingSkillId: raw.castingSkillId,
         castRemaining: raw.castRemaining,
         castTotal: raw.castTotal,
+        swingElapsed: raw.swingElapsed,
+        swingTotal: raw.swingTotal,
         knockdownRemaining: raw.knockdownRemaining,
         statuses,
       };

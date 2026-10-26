@@ -28,6 +28,8 @@ function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
+    swingElapsed: 0,
+    swingTotal: 0,
     knockdownRemaining,
     statuses: [],
   };

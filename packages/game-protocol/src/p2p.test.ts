@@ -117,6 +117,8 @@ const player: WirePlayer = {
   castingSkillId: "healing-breeze",
   castRemaining: 0.75,
   castTotal: 1,
+  swingElapsed: 0.4,
+  swingTotal: 1.75,
   knockdownRemaining: 2.5,
   statuses: [3],
 };
@@ -389,6 +391,13 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireSnapshot,
     { ...snapshot, players: [{ ...player, castTotal: undefined }] },
   ],
+  ...(["swingElapsed", "swingTotal"] as const).map(
+    (field): [string, (value: unknown) => unknown, unknown] => [
+      `snapshot with a player without ${field} (#560)`,
+      parseWireSnapshot,
+      { ...snapshot, players: [{ ...player, [field]: undefined }] },
+    ],
+  ),
   [
     "snapshot with a player missing knockdownRemaining (#545)",
     parseWireSnapshot,

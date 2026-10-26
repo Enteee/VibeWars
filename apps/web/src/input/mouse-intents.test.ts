@@ -35,6 +35,8 @@ function player(sessionId: string, team: number, x: number): PlayerSnapshot {
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
+    swingElapsed: 0,
+    swingTotal: 0,
     knockdownRemaining: 0,
     statuses: [],
   };
@@ -59,7 +61,8 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     position: vec2(x, 0),
     facing: 0,
     weaponId: undefined,
-    attackTargetId: undefined,
+    swingElapsed: 0,
+    swingTotal: 0,
     offhandId: undefined,
     profession: undefined,
     radius: 14,

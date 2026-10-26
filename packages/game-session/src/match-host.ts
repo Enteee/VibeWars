@@ -7,6 +7,7 @@ import {
   resolveJoinLoadout,
   resolveLoadout,
   spawnFacing,
+  swingProgress,
   type MatchRules,
   type Participant,
   type ProfessionId,
@@ -491,6 +492,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   const wirePlayer = (participant: Participant, seat: Seat): WirePlayer => {
     const { combatant } = participant;
     const cast = combatant.cast.activeCast;
+    const swing = swingProgress(combatant);
     return {
       id: participant.id,
       name: seat.name,
@@ -515,6 +517,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       castingSkillId: cast?.skillId ?? null,
       castRemaining: cast?.remainingSeconds ?? 0,
       castTotal: cast?.totalSeconds ?? 0,
+      swingElapsed: round(swing.elapsed, 3),
+      swingTotal: round(swing.total, 3),
       knockdownRemaining: round(combatant.knockdownRemaining, 2),
       statuses: wireStatuses(combatant.statuses.active).map((status) => statusWireIndex(status.id)),
     };

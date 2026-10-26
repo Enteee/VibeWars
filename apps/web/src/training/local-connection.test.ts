@@ -4,6 +4,7 @@ import { getTrainingScenario } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
 import type { CombatMessage } from "@vibewars/game-session";
 
+import { AttackClock } from "../render/attack-clock.js";
 import { setProfessions, setRank, setSkill, newCharacter } from "../ui/build-editor.js";
 import { slotAffordable } from "../ui/skill-slot-state.js";
 import { TICK_SECONDS, NO_PROFESSIONS, createLocalConnection } from "./local-connection.js";
@@ -99,6 +100,50 @@ describe("createLocalConnection", () => {
 
     connection.sendIntent({ kind: "cancel" });
     expect(self()?.attackTargetSessionId).toBeUndefined();
+  });
+
+  it("plays each sword swing's strike to its end on the tick the host lands it, the first included (#560)", () => {
+    // A warrior, whose house weapon is a sword: a melee hit lands the tick its swing ends.
+    const { connection } = targetDummy(setSkill(newCharacter("c1"), 0, "warrior.sprint"));
+    let swings = 0;
+    connection.onCombat((message) => {
+      if (message.cause === "weapon") {
+        swings += 1;
+      }
+    });
+    connection.sendIntent({ kind: "attack", targetId: "dummy" });
+    const clock = new AttackClock();
+    const phases: string[] = [];
+    let hits = 0;
+    for (let i = 0; i < 400 && hits < 3; i += 1) {
+      const before = swings;
+      connection.advance(TICK_SECONDS);
+      const snapshot = connection.getSnapshot();
+      const self = snapshot.players.find((player) => player.sessionId === SELF_ID);
+      clock.observe(
+        snapshot.elapsedSeconds,
+        self?.swingElapsed ?? 0,
+        self?.swingTotal ?? 0,
+        "sword",
+      );
+      const frame = clock.frame(snapshot.elapsedSeconds, "sword");
+      if (swings > before) {
+        hits += 1;
+        // The tick before was the strike, and now it has landed.
+        expect(phases.at(-1), `hit ${String(hits)}`).toBe("strike");
+        expect(["hold", "recover"]).toContain(frame.clip.phase);
+        expect("sinceHit" in frame.clip ? frame.clip.sinceHit : Infinity).toBeLessThan(
+          TICK_SECONDS,
+        );
+        expect(frame.hit).toBe(hits);
+        // The first swing wound up like every other.
+        expect(phases).toContain("wind-up");
+        phases.length = 0;
+      } else {
+        phases.push(frame.clip.phase);
+      }
+    }
+    expect(hits).toBe(3);
   });
 
   it("reports a walk to a clicked point until cancel ends it (#342)", () => {

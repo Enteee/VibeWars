@@ -254,8 +254,8 @@ const status = {
   guardian: [
     "enchantment",
     (c) =>
-      `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" ${stroke(c, 2)} stroke-linejoin="round"/>` +
-      `<path d="M9.5 14L15 8.5" ${stroke(c, 2.2)} stroke-linecap="round"/>`,
+      `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" ${stroke(c, 2)}/>` +
+      `<path d="M9.5 14L15 8.5" ${stroke(c, 2.2)}/>`,
   ],
   // Shout: a shield with a warning mark, armor called for (#524).
   "watch-yourself": [

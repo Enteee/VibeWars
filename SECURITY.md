@@ -486,8 +486,8 @@ What a later step must add before P2P play can merge:
 - **In the web client (#403):** `MatchClient` drops every
   message that does not come from `hostId`, since any peer can send to any
   other directly. The app must take `hostId` from the lobby it joined,
-  never from a message a peer can send. The lobby screen also says,
-  before anyone hosts or joins, that the others will see your IP address.
+  never from a message a peer can send. The main menu says, under the
+  host and join buttons, that the others will see your IP address.
 - **Host bandwidth.** An 8-player snapshot measured 4.6 KB in #375, about
   5 Mbit/s of host upload at the tick rate, against the 1–2 KB that
   ADR-0022 assumed. This is a limit on who can host, not an exploit, but

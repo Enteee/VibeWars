@@ -37,7 +37,12 @@ import {
   type ArenaSnapshot,
   type RenderableWall,
 } from "../render/arena-snapshot.js";
-import { createArenaViewport, type ArenaViewport } from "../render/arena-viewport.js";
+import {
+  NoWebGlError,
+  createArenaViewport,
+  hasWebGl,
+  type ArenaViewport,
+} from "../render/arena-viewport.js";
 import { attachFollowCamera, type FollowCamera } from "../render/follow-camera.js";
 import { showCombatFeedback } from "../render/combat-feedback.js";
 import type { StoredCharacter } from "../storage/schema.js";
@@ -122,17 +127,8 @@ const HINT_IDLE = "click the arena to take control";
  */
 const TAKES_KEYBOARD = "input, textarea, select, [contenteditable]:not([contenteditable='false'])";
 
-/** Thrown when the arena cannot run here; the editor then stays two columns. */
+/** Thrown when there is nothing to train on; the editor then stays two columns. */
 export class TrainingUnavailableError extends Error {}
-
-function hasWebGl(): boolean {
-  try {
-    const canvas = document.createElement("canvas");
-    return (canvas.getContext("webgl2") ?? canvas.getContext("webgl")) !== null;
-  } catch {
-    return false;
-  }
-}
 
 function vitalBar(kind: string): { root: HTMLElement; fill: HTMLElement; label: HTMLElement } {
   const root = h("div", `training-bar training-bar-${kind}`);
@@ -155,8 +151,9 @@ interface Session {
 }
 
 export function createTrainingPanel(): TrainingPanel {
+  // Up front, before any DOM: the editor shows the notice instead (#655).
   if (!hasWebGl()) {
-    throw new TrainingUnavailableError("no WebGL");
+    throw new NoWebGlError("no WebGL");
   }
 
   const storage = (): Storage => window.localStorage;

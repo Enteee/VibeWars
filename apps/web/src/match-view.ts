@@ -25,7 +25,7 @@ import {
   type ArenaSnapshot,
   type RenderableWall,
 } from "./render/arena-snapshot.js";
-import { createArenaViewport } from "./render/arena-viewport.js";
+import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
 import { attachFollowCamera } from "./render/follow-camera.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
 import { projectileSprite } from "./render/projectiles.js";
@@ -41,6 +41,7 @@ import {
   updateHud,
   updateRecharges,
 } from "./ui/hud.js";
+import { noWebGlNotice } from "./ui/arena-notice.js";
 import { attachJukeboxPopover } from "./ui/jukebox.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
@@ -91,8 +92,6 @@ export function toArenaSnapshot(
       const shooter = match.players.find((player) => player.sessionId === shot.attackerId);
       return {
         id: shot.id,
-        shooterId: shot.attackerId,
-        weaponShot: shot.skillId === undefined,
         sprite: projectileSprite(shooter?.weaponId, shot.skillId),
         from: shot.from,
         to: shot.to,
@@ -115,7 +114,8 @@ export function toArenaSnapshot(
         position: { x: player.x, y: player.y },
         facing: player.facing,
         weaponId: player.weaponId,
-        attackTargetId: player.attackTargetSessionId,
+        swingElapsed: player.swingElapsed,
+        swingTotal: player.swingTotal,
         offhandId: player.offhandId,
         profession: player.primaryProfession,
         radius: ACTOR_RADIUS,
@@ -153,32 +153,66 @@ function isTyping(target: EventTarget | null): boolean {
   );
 }
 
+/**
+ * Calls `handler` once per animation frame with the seconds since the
+ * last, for a match with no arena to drive the frames (#655). Returns the
+ * stop.
+ */
+function animationFrames(handler: (deltaSeconds: number) => void): () => void {
+  let last: number | undefined;
+  let request = 0;
+  const step = (now: number): void => {
+    handler(last === undefined ? 0 : (now - last) / 1000);
+    last = now;
+    request = requestAnimationFrame(step);
+  };
+  request = requestAnimationFrame(step);
+  return () => {
+    cancelAnimationFrame(request);
+  };
+}
+
 export async function startMatchView(
   parent: HTMLElement,
   callbacks: MatchViewCallbacks,
   options: MatchViewOptions,
 ): Promise<MatchView> {
-  const viewport = await createArenaViewport(parent);
-  const { scene } = viewport;
+  // With no WebGL there is no arena, said plainly where it would be
+  // (#655). The match itself goes on: the HUD still shows it, and a host
+  // keeps hosting for its peers.
+  let viewport: ArenaViewport | undefined;
+  let notice: HTMLElement | undefined;
+  try {
+    viewport = await createArenaViewport(parent);
+  } catch (error) {
+    if (!(error instanceof NoWebGlError)) {
+      throw error;
+    }
+    console.warn("[web] no arena in this match", error);
+    notice = noWebGlNotice();
+    parent.appendChild(notice);
+  }
 
   let connection: MatchConnection;
   try {
     connection = await options.connect();
   } catch (error) {
     // Refused, or the host never answered: no arena to leave behind.
-    viewport.destroy();
+    viewport?.destroy();
+    notice?.remove();
     throw error;
   }
   const walls = connection.map.walls.map(toRenderableWall);
   // Once per match, for the skill bar's line-of-sight hint (#485).
   const wallSegments = allWallSegments(connection.map.walls);
-  const camera = attachFollowCamera(viewport, parent, connection.map);
+  const camera =
+    viewport === undefined ? undefined : attachFollowCamera(viewport, parent, connection.map);
 
   const hud = createHud(parent);
   // The arena's edge stops below the scoreboard and above the bars, not
   // under them (#440). From the bars, as the lines above them come and go.
   const measureCover = (): void => {
-    camera.setCover({
+    camera?.setCover({
       top: hud.scoreboard.offsetTop + hud.scoreboard.offsetHeight,
       bottom: hud.root.offsetHeight - hud.bars.offsetTop,
     });
@@ -353,7 +387,9 @@ export async function startMatchView(
   });
 
   connection.onCombat((message) => {
-    showCombatFeedback(scene, message, latestMatch);
+    if (viewport !== undefined) {
+      showCombatFeedback(viewport.scene, message, latestMatch);
+    }
     // A cast of ours that never went off flashes its slot (#300).
     const buttons = hud.skillBar.querySelectorAll("button");
     for (const flash of slotFlashes(
@@ -375,22 +411,22 @@ export async function startMatchView(
     flashMessage(hud, describeRefusal(message));
   });
 
-  const offFrame = viewport.onFrame((deltaSeconds) => {
+  const onFrame = (deltaSeconds: number): void => {
     latestMatch = connection.getSnapshot();
     matchSounds.snapshot(latestMatch);
     matchMusic.snapshot(latestMatch);
     guardUnload(latestMatch.phase !== "finished");
     const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
-    camera.frame(deltaSeconds, self === undefined ? undefined : { x: self.x, y: self.y });
+    camera?.frame(deltaSeconds, self === undefined ? undefined : { x: self.x, y: self.y });
     // Hover is hit-tested every frame, through the camera as it is now, so
     // a body that walks under a still cursor, or a camera that moves under
     // it, shows the right name.
     latestArena = withNames(
       toArenaSnapshot(latestMatch, walls),
-      viewport.pointerWorld(),
+      viewport?.pointerWorld(),
       nameReveal.held(),
     );
-    scene.setSnapshot(latestArena);
+    viewport?.scene.setSnapshot(latestArena);
 
     const target = latestMatch.players.find((p) => p.sessionId === self?.targetSessionId);
     // `latestMatch` carries the score, clock and outcome. Omitting it
@@ -399,13 +435,14 @@ export async function startMatchView(
     // draw all three, and nothing connected them.
     updateHud(hud, self, target, connection.skillBar, wallSegments, latestMatch);
     updateRecharges(hud, connection.skillBar, connection.getRecharges());
-  });
+  };
+  const offFrame = viewport?.onFrame(onFrame) ?? animationFrames(onFrame);
 
   // A misclick must never move you (#438): the left button only walks,
   // bodies included, and keeps the target; the right one picks, on its
   // release, so a later drag can pan instead.
   const doubleClick = createDoubleClick();
-  const offPointer = viewport.onButton(({ button, phase, world }) => {
+  const offPointer = viewport?.onButton(({ button, phase, world }) => {
     if (button === "left" && phase === "down") {
       connection.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
       viewport.scene.showWalkMarker(world);
@@ -430,9 +467,9 @@ export async function startMatchView(
       disposed = true;
       offFrame();
       guardUnload(false);
-      offPointer();
+      offPointer?.();
       coverObserver.disconnect();
-      camera.dispose();
+      camera?.dispose();
       nameReveal.detach();
       window.removeEventListener("keydown", handleKeyDown);
       detachMovement();
@@ -451,7 +488,8 @@ export async function startMatchView(
       jukebox.dispose();
       hud.music.remove();
       hud.leave.remove();
-      viewport.destroy();
+      viewport?.destroy();
+      notice?.remove();
       await connection.disconnect();
     },
   };

@@ -56,6 +56,13 @@ export interface PlayerSnapshot {
   readonly castRemaining: number;
   /** The current cast's whole length, dazed included; 0 when not casting. */
   readonly castTotal: number;
+  /**
+   * The swing under way (#560): seconds into it, and its whole length, the
+   * hit landing at the end. `swingTotal` is 0 when not attacking. The
+   * weapon mark's pose follows them; nothing is predicted.
+   */
+  readonly swingElapsed: number;
+  readonly swingTotal: number;
   /** Seconds left lying down from a knockdown (#468); 0 standing. Drawn from this, never from the event. */
   readonly knockdownRemaining: number;
   readonly statuses: readonly string[];

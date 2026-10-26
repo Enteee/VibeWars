@@ -252,6 +252,10 @@ swings at the weapon's own interval until the foe dies, you move, or you
 cancel (Esc). A foe with no way to them for half a second ends the attack with "can't reach". Reach is checked exactly as a skill's range is, so wherever you
 can swing you can also use a melee skill. The first hit lands one full
 interval after you arrive. See [ADR-0026](../adr/0026-weapon-auto-attack.md).
+The held weapon follows the host's swing timer, which every snapshot carries:
+it winds up so its strike ends on the hit, the first swing included, holds
+its pose while the swing is paused, and eases back to rest when a swing is
+cut short (#560).
 
 Each hit is the weapon's damage range, scaled by your rank in its
 attribute (exactly the stated damage at 12) and cut to a third if you do

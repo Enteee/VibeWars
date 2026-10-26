@@ -43,8 +43,6 @@ describe("projectileSprite", () => {
 describe("projectilePosition", () => {
   const shot: RenderableProjectile = {
     id: 1,
-    shooterId: "ranger",
-    weaponShot: true,
     sprite: "arrow",
     from: vec2(0, 0),
     to: vec2(100, 50),

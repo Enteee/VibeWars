@@ -2082,6 +2082,8 @@
           "type": { "union": ["null", "string"] }
         },
         { "name": "statuses", "optional": false, "type": { "array": "number" } },
+        { "name": "swingElapsed", "optional": false, "type": "number" },
+        { "name": "swingTotal", "optional": false, "type": "number" },
         { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } },
         {
           "name": "team",
@@ -2207,6 +2209,8 @@
                   "type": { "union": ["null", "string"] }
                 },
                 { "name": "statuses", "optional": false, "type": { "array": "number" } },
+                { "name": "swingElapsed", "optional": false, "type": "number" },
+                { "name": "swingTotal", "optional": false, "type": "number" },
                 { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } },
                 {
                   "name": "team",

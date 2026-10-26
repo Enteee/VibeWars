@@ -50,6 +50,13 @@ function longest(values: readonly string[]): string {
 
 /** A float with every digit a double prints. */
 const FLOAT = 1000 / 3;
+/**
+ * The longest a field the host rounds to `places` prints as (match-host.ts),
+ * as `facing` is: such a field never carries every digit.
+ */
+function rounded(places: number): number {
+  return Math.round(FLOAT * 10 ** places) / 10 ** places;
+}
 /** A peer id: Trystero's are 20 characters; the host's own player adds `/local`. */
 const PEER_ID = "abcdefghijklmnopqrst/local";
 /** A name as long in bytes as `sanitizeName` lets through: 16 three-code-point graphemes. */
@@ -97,7 +104,9 @@ function player(index: number): WirePlayer {
     castingSkillId: SKILL_ID,
     castRemaining: FLOAT,
     castTotal: FLOAT,
-    knockdownRemaining: FLOAT,
+    swingElapsed: rounded(3),
+    swingTotal: rounded(3),
+    knockdownRemaining: rounded(2),
     statuses: WIRE_STATUSES,
   };
 }

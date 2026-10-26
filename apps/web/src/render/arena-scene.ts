@@ -164,7 +164,7 @@ export class ArenaScene extends Phaser.Scene {
   private readonly unknownStatuses = new Set<string>();
   /** Each attacker's swing, which its weapon mark plays (#558), by actor id. */
   private readonly attackClocks = new Map<string, AttackClock>();
-  /** The scene clock at the last frame, seconds: what hits are stamped with. */
+  /** The scene clock at the last frame, seconds, which the match clock runs on from. */
   private now = 0;
   /** Read once a frame: under reduced motion every mark stays at rest. */
   private reducedMotion = false;
@@ -212,23 +212,6 @@ export class ArenaScene extends Phaser.Scene {
     this.walkMarker = walkMarkerAt(point);
   }
 
-  /**
-   * A weapon hit landed, or a shot left: `attackerId`'s strike ends now
-   * (#558). Stamped on the scene clock, never the snapshot's.
-   */
-  public addWeaponHit(attackerId: string): void {
-    const actor = this.snapshot.actors.find((a) => a.id === attackerId);
-    if (actor?.weaponId === undefined || !isWeaponId(actor.weaponId)) {
-      return;
-    }
-    let clock = this.attackClocks.get(attackerId);
-    if (clock === undefined) {
-      clock = new AttackClock();
-      this.attackClocks.set(attackerId, clock);
-    }
-    clock.hit(this.now, actor.weaponId);
-  }
-
   /** Flash a melee swing; off under reduced motion, where the damage number says enough. */
   public addSwingFlash(flash: SwingFlash): void {
     if (!prefersReducedMotion()) {
@@ -271,6 +254,7 @@ export class ArenaScene extends Phaser.Scene {
     g.clear();
     this.now = time / 1000;
     this.reducedMotion = prefersReducedMotion();
+    this.clock.observe(this.snapshot.clock, this.now);
     this.observeAttacks();
     this.drawGrid(g);
     for (const wall of this.snapshot.walls) {
@@ -304,15 +288,21 @@ export class ArenaScene extends Phaser.Scene {
     this.updateEdgeMarkers();
   }
 
-  /** Tell each attack clock who its actor attacks; forget those who left. */
+  /** Hand each attack clock its actor's swing timer; forget those who left. */
   private observeAttacks(): void {
     const present = new Set<string>();
     for (const actor of this.snapshot.actors) {
       present.add(actor.id);
-      const clock = this.attackClocks.get(actor.id);
-      if (clock !== undefined && actor.weaponId !== undefined && isWeaponId(actor.weaponId)) {
-        clock.observe(this.now, actor.dead ? undefined : actor.attackTargetId, actor.weaponId);
+      if (actor.weaponId === undefined || !isWeaponId(actor.weaponId)) {
+        continue;
       }
+      let clock = this.attackClocks.get(actor.id);
+      if (clock === undefined) {
+        clock = new AttackClock();
+        this.attackClocks.set(actor.id, clock);
+      }
+      const total = actor.dead ? 0 : actor.swingTotal;
+      clock.observe(this.snapshot.clock, actor.swingElapsed, total, actor.weaponId);
     }
     for (const id of this.attackClocks.keys()) {
       if (!present.has(id)) {
@@ -469,7 +459,7 @@ export class ArenaScene extends Phaser.Scene {
           ? REST_FRAME
           : shownFrame(
               this.attackClocks.get(actor.id),
-              this.now,
+              this.clock.read(this.now),
               actor.weaponId,
               this.reducedMotion,
             );
@@ -587,7 +577,6 @@ export class ArenaScene extends Phaser.Scene {
    * Under reduced motion it goes at once.
    */
   private updateProjectiles(now: number): void {
-    this.clock.observe(this.snapshot.clock, now);
     const clock = this.clock.read(now);
     const flying = new Set<number>();
     const sent = new Set(this.snapshot.projectiles.map((shot) => shot.id));
@@ -609,10 +598,6 @@ export class ArenaScene extends Phaser.Scene {
         image.setRotation(projectileHeading(shot));
         image.setTint(shot.colour);
         this.projectileImages.set(shot.id, { image, to: shot.to, endedAt: undefined });
-        // A weapon's shot leaving is its shooter's release (#558).
-        if (shot.weaponShot) {
-          this.addWeaponHit(shot.shooterId);
-        }
       } else {
         shown.image.setPosition(position.x, position.y);
       }

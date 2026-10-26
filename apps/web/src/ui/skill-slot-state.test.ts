@@ -54,6 +54,8 @@ function self(cast: Partial<PlayerSnapshot>): PlayerSnapshot {
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
+    swingElapsed: 0,
+    swingTotal: 0,
     knockdownRemaining: 0,
     statuses: [],
     ...cast,

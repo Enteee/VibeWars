@@ -55,11 +55,31 @@ export interface ArenaViewport {
 }
 
 /**
+ * Thrown by `createArenaViewport` where the browser has no WebGL (#655).
+ * There is no canvas-renderer fallback: the scene's tints draw only on
+ * WebGL, so the caller says so plainly instead of showing an empty arena.
+ */
+export class NoWebGlError extends Error {}
+
+/** Whether this browser can make a WebGL context at all. */
+export function hasWebGl(): boolean {
+  try {
+    const canvas = document.createElement("canvas");
+    return (canvas.getContext("webgl2") ?? canvas.getContext("webgl")) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Start a Phaser game in `parent` with the arena scene, resolved once the
  * scene exists. Only this and `ArenaScene` touch Phaser (ADR-0010); the
- * callers wire a connection to it.
+ * callers wire a connection to it. Throws `NoWebGlError` without WebGL.
  */
 export async function createArenaViewport(parent: HTMLElement): Promise<ArenaViewport> {
+  if (!hasWebGl()) {
+    throw new NoWebGlError("no WebGL");
+  }
   // Loaded on first use, not at import: the build editor imports this
   // module through the training panel, and its pure functions are tested
   // in node, where Phaser cannot even be imported.
@@ -68,7 +88,7 @@ export async function createArenaViewport(parent: HTMLElement): Promise<ArenaVie
     import("./arena-scene.js"),
   ]);
   const game = new Phaser.Game({
-    type: Phaser.AUTO,
+    type: Phaser.WEBGL,
     parent,
     backgroundColor: "#0e1116",
     // The canvas is its parent's size in CSS px; the camera decides how

@@ -76,6 +76,27 @@ body {
   height: 100%;
 }
 
+/* No WebGL, no arena: the reason sits where it would be (#655), in the
+   editor as the Training Ground column's text, in a match boxed and
+   centred under the HUD. */
+.arena-notice {
+  margin: 0;
+  color: var(--ink-dim);
+  line-height: 1.4;
+}
+
+#viewport > .arena-notice {
+  max-width: 32rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 /* --------------------------------------------------------------------------
    HUD — plain DOM over the canvas (brief §21). Pinned to the bottom so the
    arena stays unobstructed; everything is geometry and text, no imagery.
@@ -414,6 +435,14 @@ body {
   gap: 0.5rem;
   flex-wrap: wrap;
   align-items: center;
+}
+
+/* One muted line under host and join (#541): read, not clicked through. */
+.menu-peer-notice {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .screen button {
