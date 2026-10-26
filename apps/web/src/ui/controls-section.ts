@@ -14,6 +14,7 @@ import {
 import { loadKeymap, saveKeymap } from "../input/keymap-preference.js";
 
 import type { OptionsSection } from "./options-sections.js";
+import { h } from "./kit.js";
 
 /**
  * Controls (#309, #423): pick a preset, or rebind any action, and every
@@ -204,17 +205,6 @@ export class KeysEditor {
   #isCapturing(cell: KeyCell): boolean {
     return this.#capturing?.action === cell.action && this.#capturing.index === cell.index;
   }
-}
-
-function h(tag: string, className?: string, text?: string): HTMLElement {
-  const node = document.createElement(tag);
-  if (className !== undefined) {
-    node.className = className;
-  }
-  if (text !== undefined) {
-    node.textContent = text;
-  }
-  return node;
 }
 
 /**
