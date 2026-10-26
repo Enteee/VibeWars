@@ -477,9 +477,9 @@ server, now enforced by the host:
   which Trystero sends in chunks. A peer that sends one chunk every two
   minutes holds that budget, which stalls every other large message.
   Review rule: keep every game message within `MAX_MESSAGE_BYTES` (16 KiB
-  less that header). A snapshot is about 4.6 KB at eight players; the host
-  splits a tick's combat into batches of at most `MAX_MESSAGE_BYTES` each
-  (#601).
+  less that header). The host splits a tick's snapshot into parts
+  (`packSnapshot`, #662) and its combat into batches (#601), each of at
+  most `MAX_MESSAGE_BYTES`.
 
 What a later step must add before P2P play can merge:
 

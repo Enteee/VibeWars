@@ -11,7 +11,9 @@ import {
 } from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
+  MAX_SNAPSHOT_PARTS,
   MAX_WIRE_COMBATS,
+  MAX_WIRE_PROJECTILES,
   MAX_WIRE_STATUSES,
   MAX_WIRE_STATUS_INDEX,
   PROTOCOL_VERSION,
@@ -27,8 +29,15 @@ import {
   type WireProjectile,
   type WireSkillBar,
   type WireSnapshot,
+  type WireSnapshotPart,
 } from "@vibewars/game-protocol";
-import { MAX_MESSAGE_BYTES, messageBytes, packCombat, sanitizeName } from "@vibewars/game-session";
+import {
+  MAX_MESSAGE_BYTES,
+  messageBytes,
+  packCombat,
+  packSnapshot,
+  sanitizeName,
+} from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
 import { ARENA_MAPS, hostMap } from "./maps.js";
@@ -169,18 +178,38 @@ const NECRO_ELE_ATTRIBUTES = [
 ];
 
 describe("every message fits in one Trystero chunk (#403)", () => {
-  it("a snapshot: 8 players, longest names, 32 statuses at the largest index, casting, attacking; 32 projectiles", () => {
-    const snapshot: WireSnapshot = {
+  /** The worst snapshot: `players` and `projectiles` at their worst. */
+  function worstSnapshot(players: number, projectiles: number): WireSnapshot {
+    return {
       tick: 1_000_000,
       elapsedSeconds: FLOAT,
       score: [15, 15],
       phase: "finished",
       winningTeam: 1,
       endReason: "score",
-      players: Array.from({ length: 8 }, (_, i) => player(i)),
-      projectiles: Array.from({ length: 32 }, (_, i) => projectile(i)),
+      players: Array.from({ length: players }, (_, i) => player(i)),
+      projectiles: Array.from({ length: projectiles }, (_, i) => projectile(i)),
     };
-    expect(messageBytes(snapshot)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+  }
+
+  // A snapshot is split by bytes into parts (#662), so the limit that
+  // matters is one player and the header in one part: the next field a
+  // player grows comes out of this headroom.
+  it("a snapshot part: one player, longest name, 32 statuses at the largest index, casting, attacking, with 4 KiB to spare", () => {
+    const part: WireSnapshotPart = {
+      ...worstSnapshot(1, 0),
+      part: MAX_SNAPSHOT_PARTS - 1,
+      parts: MAX_SNAPSHOT_PARTS,
+    };
+    expect(messageBytes(part)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES - 4 * 1024);
+  });
+
+  it("a snapshot of 8 such players and 256 projectiles packs into MAX_SNAPSHOT_PARTS parts or fewer", () => {
+    const parts = packSnapshot(worstSnapshot(8, MAX_WIRE_PROJECTILES), MAX_MESSAGE_BYTES);
+    expect(parts.length).toBeLessThanOrEqual(MAX_SNAPSHOT_PARTS);
+    for (const part of parts) {
+      expect(messageBytes(part)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+    }
   });
 
   /**

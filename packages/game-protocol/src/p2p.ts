@@ -88,6 +88,9 @@ export const MAX_WIRE_COMBATS = 64;
 /** The most shots in flight one snapshot carries. */
 export const MAX_WIRE_PROJECTILES = 256;
 
+/** The most `"snapshot"` messages one tick's snapshot is split into (#662). */
+export const MAX_SNAPSHOT_PARTS = 8;
+
 /**
  * The deepest nesting, and the most values in all, an opaque JSON field
  * such as a hello's build may hold. A real build is a few levels deep and
@@ -238,7 +241,10 @@ export interface WireProjectile {
   readonly flightSeconds: number;
 }
 
-/** Host to every client, each tick: the whole match, not a delta. */
+/**
+ * The whole match at one tick, not a delta: what a client assembles from
+ * that tick's `WireSnapshotPart`s. Never sent as it is.
+ */
 export interface WireSnapshot {
   /** Only ever grows; a client drops a snapshot whose tick is not above the last it kept. */
   readonly tick: number;
@@ -250,6 +256,19 @@ export interface WireSnapshot {
   readonly players: readonly WirePlayer[];
   /** Oldest first. */
   readonly projectiles: readonly WireProjectile[];
+}
+
+/**
+ * Host to every client, each tick: one of the `parts` a `WireSnapshot`
+ * is split into so that each fits one Trystero frame (#662). Every part
+ * repeats the header; `players` and `projectiles` are this part's run of
+ * the whole lists, players first, in order.
+ */
+export interface WireSnapshotPart extends WireSnapshot {
+  /** Which part this is, from 0. */
+  readonly part: number;
+  /** How many parts this tick's snapshot has, 1 to `MAX_SNAPSHOT_PARTS`. */
+  readonly parts: number;
 }
 
 /** One thing a combat resolution did, flattened so this package needs no game-core. */
@@ -732,11 +751,23 @@ function parseProjectile(value: unknown): WireProjectile | undefined {
       };
 }
 
-export function parseWireSnapshot(value: unknown): WireSnapshot | undefined {
+export function parseWireSnapshotPart(value: unknown): WireSnapshotPart | undefined {
   const raw = fields(value);
-  const score = raw === undefined ? undefined : parseArray(raw.score, 2, parseScore);
+  const snapshot = raw === undefined ? undefined : parseSnapshot(raw);
+  return raw === undefined ||
+    snapshot === undefined ||
+    !isCount(raw.parts) ||
+    raw.parts < 1 ||
+    raw.parts > MAX_SNAPSHOT_PARTS ||
+    !isCount(raw.part) ||
+    raw.part >= raw.parts
+    ? undefined
+    : { ...snapshot, part: raw.part, parts: raw.parts };
+}
+
+function parseSnapshot(raw: Fields): WireSnapshot | undefined {
+  const score = parseArray(raw.score, 2, parseScore);
   if (
-    raw === undefined ||
     !isCount(raw.tick) ||
     !isNumber(raw.elapsedSeconds) ||
     score?.length !== 2 ||

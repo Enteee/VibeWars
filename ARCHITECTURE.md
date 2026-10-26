@@ -150,7 +150,9 @@ host is its match's host, and seats only the peers the lobby put on a team.
 leaving the match does not leave the lobby. It compiles with
 no DOM and no Node types, and may not import `node:*` or `trystero`. Its
 messages, one per `CHANNELS` entry, and their validators are in
-`game-protocol`'s `src/p2p.ts`.
+`game-protocol`'s `src/p2p.ts`. Every per-tick host message is packed by bytes
+into frames of `MAX_MESSAGE_BYTES` (`packSnapshot`, #662; `packCombat`, #601),
+and no message relies on Trystero's chunking.
 
 It also holds what the server's rooms, the Training Ground and a P2P host
 share (#375), so the three cannot drift: `MatchConnection` and the snapshot
