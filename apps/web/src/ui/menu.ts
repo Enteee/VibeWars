@@ -1,8 +1,9 @@
 import { SOURCE_URL } from "../source.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
+import { looksLikeTeam } from "../storage/team-transfer.js";
 import { createCharacterDot, equippedCount, professionLabel } from "./character-preview.js";
-import { button, h, screenBar } from "./kit.js";
+import { button, h, listenForPaste, screenBar } from "./kit.js";
 
 /** What every peer in a lobby learns about you (#541): WebRTC connects you directly. */
 export const PEER_IP_NOTICE =
@@ -249,6 +250,8 @@ export interface TeamListCallbacks {
   readonly onNew: () => void;
   readonly onEdit: (id: string) => void;
   readonly onBack: () => void;
+  /** A team code was pasted on the list (#577). */
+  readonly onPasteTeam: (text: string) => void;
 }
 
 export function renderTeamList(
@@ -291,4 +294,19 @@ export function renderTeamList(
   panel.appendChild(list);
 
   root.appendChild(panel);
+
+  // A team code pasted on the list opens that team (#577); a single build
+  // code is not a team, and is ignored. The list has no dispose, so the
+  // listener stops itself once the list is off screen.
+  const stopPaste = listenForPaste((text) => {
+    if (!panel.isConnected) {
+      stopPaste();
+      return false;
+    }
+    if (!looksLikeTeam(text)) {
+      return false;
+    }
+    callbacks.onPasteTeam(text);
+    return true;
+  });
 }

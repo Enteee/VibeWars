@@ -16,6 +16,7 @@ import {
   isTeamUnsaved,
   markedCells,
   memberSkillCells,
+  pastedTeam,
   placesLeft,
   teamEditorProblems,
   topAttributes,
@@ -53,6 +54,15 @@ describe("isTeamUnsaved (#573)", () => {
 
   it("is false again once an edit is undone", () => {
     expect(isTeamUnsaved(opened, moveMember(moveMember(opened, 0, 1), 1, -1))).toBe(false);
+  });
+});
+
+describe("pastedTeam (#577)", () => {
+  it("is unsaved and not stored, so Save stores it and Back asks", () => {
+    const state = pastedTeam({ ...addMember(newTeam("t1"), "a"), name: "Duo" });
+
+    expect(state.stored).toBe(false);
+    expect(isTeamUnsaved(state.opened, state.team)).toBe(true);
   });
 });
 
