@@ -131,6 +131,10 @@ effect, so nothing that removes conditions or enchantments stands you
 up. It counts down before anyone acts, so it lasts its full duration
 whoever lands it, and you act again on the tick it ends.
 
+A knocked-down character can't block: Guardian does nothing while you
+are down, and an attack skill's if-blocked rider never fires against
+you. Blocking works again the moment you stand.
+
 ## Conditions, hexes and enchantments
 
 All three are timed status effects sharing one lifecycle, parameterised
