@@ -338,7 +338,7 @@ test("a member opens in the build editor and comes back to the unsaved team (#57
   await page.getByRole("button", { name: "Alpha", exact: true }).click();
   await expect(page.locator("input.editor-name")).toHaveValue("Alpha");
   await page.locator(".skill-box").first().locator(".skill-box-equip").click();
-  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
 
   // The team as it was left, still unsaved, with Alpha's new bar.
   await expect(page.getByLabel("team name")).toHaveValue("Trip");
@@ -349,7 +349,7 @@ test("a member opens in the build editor and comes back to the unsaved team (#57
   // Deleted from the build editor: the row is a missing character.
   await page.getByRole("button", { name: "Bravo", exact: true }).click();
   await page.getByRole("button", { name: "more actions" }).click();
-  await page.getByRole("button", { name: "delete", exact: true }).click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
   await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
   await expect(memberNames(page)).toHaveText(["(missing character)", "Alpha"]);
   await expect(page.getByLabel("team name")).toHaveValue("Trip");
