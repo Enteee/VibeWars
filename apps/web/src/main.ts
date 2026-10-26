@@ -29,7 +29,8 @@ import { disposeOptionsScreen, renderOptionsScreen } from "./ui/options-screen.j
 import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
-import { addMember, duplicateTeam, moveMember, newTeam, removeMember } from "./ui/team-builder.js";
+import { duplicateTeam, newTeam } from "./ui/team-builder.js";
+import { mountTeamEditor, type TeamEditorView } from "./ui/team-editor.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
 import type { PlayerBuild } from "@vibewars/game-core";
 
@@ -253,22 +254,19 @@ async function main(): Promise<void> {
   };
 
   const showTeams = async (): Promise<void> => {
+    teamEditor?.dispose();
+    teamEditor = undefined;
     const [teamList, characterList] = await Promise.all([teams.list(), characters.list()]);
     renderTeamList(screenRoot, teamList.teams, teamList.problems, {
+      // A new team is stored only once it is saved (#573).
       onNew: () => {
-        void (async () => {
-          await teams.save(newTeam(crypto.randomUUID()));
-          await showTeams();
-        })();
+        showTeamEditor(newTeam(crypto.randomUUID()), characterList.characters, false);
       },
       onEdit: (id) => {
-        // The team editor UI is the same list screen for now; editing a
-        // team means adding/removing members, which needs characters to
-        // exist first.
         void (async () => {
           const team = await teams.load(id);
           if (team !== undefined) {
-            showTeamEditor(team, characterList.characters);
+            showTeamEditor(team, characterList.characters, true);
           }
         })();
       },
@@ -276,128 +274,39 @@ async function main(): Promise<void> {
     });
   };
 
-  const showTeamEditor = (team: StoredTeam, available: readonly StoredCharacter[]): void => {
-    // Rendered inline rather than in its own module: the team editor is
-    // a list with add/remove buttons, and splitting it out would be more
-    // indirection than content.
-    const saveTeam = async (next: StoredTeam): Promise<void> => {
-      await teams.save({ ...next, updatedAt: Date.now() });
-      await showTeams();
-    };
+  /** The open team editor; every way out of it passes through `showTeams`. */
+  let teamEditor: TeamEditorView | undefined;
 
-    screenRoot.replaceChildren();
-    const panel = document.createElement("div");
-    panel.className = "screen";
-
-    const title = document.createElement("h2");
-    title.className = "screen-title";
-    title.textContent = "edit team";
-    panel.appendChild(title);
-
-    const nameInput = document.createElement("input");
-    nameInput.className = "field-input";
-    nameInput.value = team.name;
-    panel.appendChild(nameInput);
-
-    const list = document.createElement("div");
-    list.className = "entity-list";
-    team.members.forEach((member, index) => {
-      const row = document.createElement("div");
-      row.className = "entity-row";
-      const named = available.find((c) => c.id === member.characterId);
-      const label = document.createElement("span");
-      label.className = "entity-name";
-      label.textContent = `${String(index + 1)}. ${named?.name ?? "(missing character)"}`;
-      row.appendChild(label);
-
-      // Reordering matters: a team's order is its slot assignment, and
-      // `moveMember` already clamps at the ends.
-      const up = document.createElement("button");
-      up.type = "button";
-      up.textContent = "↑";
-      up.disabled = index === 0;
-      up.addEventListener("click", () => {
-        void saveTeam(moveMember({ ...team, name: nameInput.value }, index, -1));
-      });
-      row.appendChild(up);
-
-      const down = document.createElement("button");
-      down.type = "button";
-      down.textContent = "↓";
-      down.disabled = index === team.members.length - 1;
-      down.addEventListener("click", () => {
-        void saveTeam(moveMember({ ...team, name: nameInput.value }, index, 1));
-      });
-      row.appendChild(down);
-
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.textContent = "remove";
-      remove.addEventListener("click", () => {
-        void saveTeam(removeMember({ ...team, name: nameInput.value }, index));
-      });
-      row.appendChild(remove);
-      list.appendChild(row);
-    });
-    panel.appendChild(list);
-
-    const addRow = document.createElement("div");
-    addRow.className = "menu-row";
-    const select = document.createElement("select");
-    for (const character of available) {
-      const option = document.createElement("option");
-      option.value = character.id;
-      option.textContent = character.name;
-      select.appendChild(option);
-    }
-    addRow.appendChild(select);
-
-    const add = document.createElement("button");
-    add.type = "button";
-    add.textContent = "add member";
-    add.disabled = available.length === 0;
-    add.addEventListener("click", () => {
-      void saveTeam(addMember({ ...team, name: nameInput.value }, select.value));
-    });
-    addRow.appendChild(add);
-    panel.appendChild(addRow);
-
-    const actions = document.createElement("div");
-    actions.className = "menu-row";
-    const save = document.createElement("button");
-    save.type = "button";
-    save.className = "primary";
-    save.textContent = "save";
-    save.addEventListener("click", () => {
-      void saveTeam({ ...team, name: nameInput.value });
-    });
-
-    const duplicate = document.createElement("button");
-    duplicate.type = "button";
-    duplicate.textContent = "duplicate";
-    duplicate.addEventListener("click", () => {
-      void saveTeam(duplicateTeam({ ...team, name: nameInput.value }, crypto.randomUUID()));
-    });
-
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.textContent = "delete";
-    remove.addEventListener("click", () => {
-      void (async () => {
-        await teams.delete(team.id);
-        await showTeams();
-      })();
-    });
-    const back = document.createElement("button");
-    back.type = "button";
-    back.textContent = "back";
-    back.addEventListener("click", () => {
-      void showTeams();
-    });
-    actions.append(save, duplicate, remove, back);
-    panel.appendChild(actions);
-
-    screenRoot.appendChild(panel);
+  const showTeamEditor = (
+    team: StoredTeam,
+    available: readonly StoredCharacter[],
+    stored: boolean,
+  ): void => {
+    teamEditor?.dispose();
+    teamEditor = mountTeamEditor(
+      screenRoot,
+      team,
+      available,
+      {
+        onSave: (saved) => teams.save(saved),
+        onDuplicate: (source) => {
+          void (async () => {
+            await teams.save(duplicateTeam(source, crypto.randomUUID()));
+            await showTeams();
+          })();
+        },
+        onDelete: (id) => {
+          void (async () => {
+            await teams.delete(id);
+            await showTeams();
+          })();
+        },
+        onClose: () => {
+          void showTeams();
+        },
+      },
+      stored,
+    );
   };
 
   const renderLobby = (): void => {
