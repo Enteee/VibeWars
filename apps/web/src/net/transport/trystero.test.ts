@@ -9,8 +9,14 @@ import type {
 } from "trystero/nostr";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { APP_ID, MAX_RECEIVE_BYTES, NOSTR_RELAYS, RELAY_REDUNDANCY } from "./relays.js";
-import { joinTrysteroRoom } from "./trystero.js";
+import {
+  APP_ID,
+  MAX_RECEIVE_BYTES,
+  NOSTR_RELAYS,
+  RELAY_CHECK_MS,
+  RELAY_REDUNDANCY,
+} from "./relays.js";
+import { joinTrysteroRoom, type TrysteroDeps } from "./trystero.js";
 
 /** A Trystero room with no network: the test plays the remote peers. */
 function fakeRoom(options: { sendFails?: boolean } = {}) {
@@ -49,8 +55,13 @@ function fakeRoom(options: { sendFails?: boolean } = {}) {
     joins.push({ config, roomId, callbacks });
     return room as unknown as Room;
   };
+  /** Each relay's socket state, as the test sets it: 1 is open. */
+  const sockets: Record<string, { readyState: number }> = {};
+  const deps: TrysteroDeps = { joinRoom, selfId: "me", relaySockets: () => sockets };
   return {
     joinRoom,
+    deps,
+    sockets,
     joins,
     sent,
     room,
@@ -72,13 +83,13 @@ describe("the Trystero transport (#392)", () => {
 
   it("makes an action for every channel up front", () => {
     const fake = fakeRoom();
-    joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    joinTrysteroRoom("A7KQ", fake.deps);
     expect([...fake.actions.keys()]).toEqual([...CHANNELS]);
   });
 
   it("joins the normalised code's room with the app id, password, size cap and relays", () => {
     const fake = fakeRoom();
-    const transport = joinTrysteroRoom(" a7-kq ", { joinRoom: fake.joinRoom, selfId: "me" });
+    const transport = joinTrysteroRoom(" a7-kq ", fake.deps);
     expect(transport.selfId).toBe("me");
     expect(fake.joins).toHaveLength(1);
     const [join] = fake.joins;
@@ -93,7 +104,7 @@ describe("the Trystero transport (#392)", () => {
 
   it("fans one channel out to every handler, and stops calling a removed one", () => {
     const fake = fakeRoom();
-    const transport = joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    const transport = joinTrysteroRoom("A7KQ", fake.deps);
     const got: string[] = [];
     transport.on("intent", (data, from) => got.push(`first ${String(data)} ${from}`));
     const off = transport.on("intent", (data, from) => got.push(`second ${String(data)} ${from}`));
@@ -107,7 +118,7 @@ describe("the Trystero transport (#392)", () => {
   it("drops a message over MAX_MESSAGE_BYTES before any handler sees it (#403)", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const fake = fakeRoom();
-    const transport = joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    const transport = joinTrysteroRoom("A7KQ", fake.deps);
     const got: unknown[] = [];
     transport.on("intent", (data) => got.push(data));
     fake.receive("intent", "x".repeat(MAX_MESSAGE_BYTES), "peer");
@@ -117,7 +128,7 @@ describe("the Trystero transport (#392)", () => {
 
   it("fans joins and leaves out to every handler", () => {
     const fake = fakeRoom();
-    const transport = joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    const transport = joinTrysteroRoom("A7KQ", fake.deps);
     const seen: string[] = [];
     transport.onPeerJoin((id) => seen.push(`+${id}`));
     const off = transport.onPeerJoin((id) => seen.push(`again +${id}`));
@@ -131,7 +142,7 @@ describe("the Trystero transport (#392)", () => {
 
   it("sends to one peer with `to`, and to all without", () => {
     const fake = fakeRoom();
-    const transport = joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    const transport = joinTrysteroRoom("A7KQ", fake.deps);
     transport.send("intent", { kind: "stop" }, "peer");
     transport.send("snapshot", { tick: 1 });
     expect(fake.sent).toEqual([
@@ -143,7 +154,7 @@ describe("the Trystero transport (#392)", () => {
   it("swallows a send that fails, with a warning naming the channel and target", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const fake = fakeRoom({ sendFails: true });
-    const transport = joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    const transport = joinTrysteroRoom("A7KQ", fake.deps);
     expect(() => transport.send("intent", 1, "peer")).not.toThrow();
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     expect(warn).toHaveBeenCalledTimes(1);
@@ -153,7 +164,7 @@ describe("the Trystero transport (#392)", () => {
   it("warns on a join error and does not retry", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const fake = fakeRoom();
-    joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    joinTrysteroRoom("A7KQ", fake.deps);
     fake.joins[0]?.callbacks?.onJoinError?.({
       error: "incorrect password",
       appId: APP_ID,
@@ -164,9 +175,76 @@ describe("the Trystero transport (#392)", () => {
     expect(fake.joins).toHaveLength(1);
   });
 
+  it("says peer-unreachable when SDP was exchanged and nothing connected, not for a password (#707)", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const fake = fakeRoom();
+    const transport = joinTrysteroRoom("A7KQ", fake.deps);
+    const troubles: string[] = [];
+    transport.onTrouble((trouble) => troubles.push(trouble));
+    const joinError = (error: string) => {
+      fake.joins[0]?.callbacks?.onJoinError?.({
+        error,
+        appId: APP_ID,
+        roomId: "A7KQ",
+        peerId: "p",
+      });
+    };
+    joinError("incorrect password for overlapping room");
+    expect(troubles).toEqual([]);
+    joinError(
+      "could not connect to peer p after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers",
+    );
+    expect(troubles).toEqual(["peer-unreachable"]);
+  });
+
+  it("says no-relay when no relay socket is open at the check and nobody was met (#707)", async () => {
+    vi.useFakeTimers();
+    try {
+      /** What a transport says by the check, its fake set up by `setUp`. */
+      const said = (setUp: (fake: ReturnType<typeof fakeRoom>) => void): string[] => {
+        const fake = fakeRoom();
+        const transport = joinTrysteroRoom("A7KQ", fake.deps);
+        const troubles: string[] = [];
+        transport.onTrouble((trouble) => troubles.push(trouble));
+        setUp(fake);
+        vi.advanceTimersByTime(RELAY_CHECK_MS);
+        return troubles;
+      };
+      const closed = { readyState: 3 };
+      const open = { readyState: 1 };
+      expect(
+        said((fake) => {
+          fake.sockets["wss://a"] = closed;
+        }),
+      ).toEqual(["no-relay"]);
+      expect(
+        said((fake) => {
+          fake.sockets["wss://a"] = closed;
+          fake.sockets["wss://b"] = open;
+        }),
+      ).toEqual([]);
+      expect(
+        said((fake) => {
+          fake.room.onPeerJoin?.("host");
+        }),
+      ).toEqual([]);
+
+      // Left before the check: nothing is said.
+      const fake = fakeRoom();
+      const transport = joinTrysteroRoom("A7KQ", fake.deps);
+      const troubles: string[] = [];
+      transport.onTrouble((trouble) => troubles.push(trouble));
+      await transport.leave();
+      vi.advanceTimersByTime(RELAY_CHECK_MS);
+      expect(troubles).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("leaves the room and delivers nothing after leave()", async () => {
     const fake = fakeRoom();
-    const transport = joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    const transport = joinTrysteroRoom("A7KQ", fake.deps);
     const got: unknown[] = [];
     transport.on("intent", (data) => got.push(data));
     transport.onPeerJoin((id) => got.push(`+${id}`));

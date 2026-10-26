@@ -34,16 +34,27 @@ export type Json<T> = T extends string | number | boolean | null
  * - `leave()` resolves once this peer has left: nothing is delivered to it
  *   afterwards, and what it sends afterwards goes nowhere. The others see
  *   it leave soon after, each on its own schedule; nothing waits for them.
+ * - `onTrouble` says why a join may be failing (#707): no relay to find
+ *   peers through, or a peer found but not reached. Only a real network
+ *   has these; the memory and BroadcastChannel transports never say it.
  * - `selfId` lasts one page load. It is never a player's identity across a
  *   reconnect: a returning player proves who it was with its rejoin token,
  *   without sending it (#593).
  */
+/**
+ * What may be keeping a peer from reaching the others (#707): `no-relay`,
+ * not one relay to find them through; `peer-unreachable`, a peer found
+ * and offered a connection, which never connected.
+ */
+export type TransportTrouble = "no-relay" | "peer-unreachable";
+
 export interface Transport {
   readonly selfId: string;
   send<T>(channel: Channel, data: Json<T>, to?: string): void;
   on(channel: Channel, handler: (data: unknown, from: string) => void): () => void;
   onPeerJoin(handler: (peerId: string) => void): () => void;
   onPeerLeave(handler: (peerId: string) => void): () => void;
+  onTrouble(handler: (trouble: TransportTrouble) => void): () => void;
   leave(): Promise<void>;
 }
 
@@ -91,6 +102,7 @@ export function sizeChecked(transport: Transport): Transport {
     on: (channel, handler) => transport.on(channel, handler),
     onPeerJoin: (handler) => transport.onPeerJoin(handler),
     onPeerLeave: (handler) => transport.onPeerLeave(handler),
+    onTrouble: (handler) => transport.onTrouble(handler),
     leave: () => transport.leave(),
   };
 }

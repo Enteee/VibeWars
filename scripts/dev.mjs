@@ -118,7 +118,7 @@ for (const signal of SIGNALS) {
 }
 
 process.stdout.write(
-  `\nvibewars dev\n` + `  client  http://localhost:${CLIENT_PORT}   (reloads on save)\n\n`,
+  `\nvibewars dev\n` + `  client  http://127.0.0.1:${CLIENT_PORT}   (reloads on save)\n\n`,
 );
 
 // Only the packages: building apps/web here too would emit a second copy

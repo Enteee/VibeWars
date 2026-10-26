@@ -135,7 +135,7 @@ headlessly. See [ARCHITECTURE.md](ARCHITECTURE.md).
 pnpm run dev      # the whole game, reloading as you edit
 ```
 
-Opens the client on <http://localhost:5173>. Editing the client reloads
+Opens the client on <http://127.0.0.1:5173>. Editing the client reloads
 the page; editing any package rebuilds it. Ctrl-C stops all the watchers.
 Two tabs of it can play each other: one hosts, the other joins.
 
