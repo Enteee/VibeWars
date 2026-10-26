@@ -2,11 +2,11 @@ import type { LobbyConnection, MatchStarting } from "@vibewars/game-session";
 
 import { ARENA_MAPS } from "./net/maps.js";
 import {
-  HOST_CLOSED_MESSAGE,
   connectMatchFor,
   hostLobby,
   joinFailureNotice,
   joinLobbyByCode,
+  lobbyClosedNotice,
   matchFailureNotice,
   type HostedLobby,
 } from "./net/session.js";
@@ -486,15 +486,16 @@ async function main(): Promise<void> {
       // Only players on a team are sent this; a spectator stays here.
       void enterMatch(name, start);
     });
-    lobby.onClosed(() => {
+    lobby.onClosed((reason) => {
       // From the lobby or from its match: either way, it is over.
       lobby = undefined;
       hosted = undefined;
+      const notice = lobbyClosedNotice(reason);
       if (match !== undefined) {
-        void exitMatch(HOST_CLOSED_MESSAGE);
+        void exitMatch(notice);
       } else {
         enteringMatch = false;
-        menuNotice = HOST_CLOSED_MESSAGE;
+        menuNotice = notice;
         showMenu();
       }
     });

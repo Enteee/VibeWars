@@ -28,6 +28,13 @@ export interface LobbySnapshot {
   readonly isHost: boolean;
 }
 
+/**
+ * Why a lobby closed: the host closed it or left, or its peer was gone
+ * for the whole reconnect window, which this side cannot tell from its
+ * own connection dropping.
+ */
+export type LobbyClosedReason = "host-left" | "connection-lost";
+
 /** The lobby's match is on, and this player is seated in it. */
 export interface MatchStarting {
   readonly mapId: string;
@@ -50,7 +57,7 @@ export interface LobbyConnection {
   onMatchStarting(handler: (start: MatchStarting) => void): void;
   /** The host's own player alone: why the start it asked for did not happen. */
   onStartRejected(handler: (reason: string) => void): void;
-  /** The host closed the lobby, or left: it is over for everyone. */
-  onClosed(handler: (reason: "host-left") => void): void;
+  /** The lobby is over for this player, and why. */
+  onClosed(handler: (reason: LobbyClosedReason) => void): void;
   disconnect(): Promise<void>;
 }

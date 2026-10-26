@@ -89,8 +89,8 @@ own development was verified that way; see
   planning tool — see the limits below.
 - **Match rules**: score, clock, victory conditions.
 - **Robustness**: a dropped player's character stays in the match for
-  30 seconds (rejoining it is #515); hostile input cannot crash the
-  host (fuzz-tested).
+  30 seconds, and the player rejoins it if their connection is back in
+  time; hostile input cannot crash the host (fuzz-tested).
 
 Honest limits:
 
