@@ -553,6 +553,18 @@ export function applyGearDrop(
   return character;
 }
 
+/**
+ * Where click-to-equip puts an insignia or rune (#570): the armor piece
+ * the player selected, or with none selected the first free one.
+ */
+export function armorTarget(
+  character: StoredCharacter,
+  part: "insignia" | "rune",
+  selected: ArmorSlot | undefined,
+): ArmorSlot {
+  return selected ?? firstFreeArmorSlot(character, part);
+}
+
 /** The first armor slot with nothing of this kind in it, for click-to-equip. */
 export function firstFreeArmorSlot(
   character: StoredCharacter,

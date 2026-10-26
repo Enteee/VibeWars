@@ -1012,6 +1012,50 @@ test("a rune dropped on an armor piece shows what it costs", async ({ page }) =>
   await expect(stats).toContainText("+3");
 });
 
+test("the library follows your clicks; an insignia goes to the selected piece (#570)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  const gearTab = page.locator(".library-tab", { hasText: "gear" });
+  const skillsTab = page.locator(".library-tab", { hasText: "skills" });
+
+  // A hand clicked opens the gear tab, its group at the top.
+  await page.locator(".gear-slot").nth(1).click();
+  await expect(gearTab).toHaveClass(/is-active/);
+  const library = page.locator(".skill-library");
+  const offhands = page.locator('.skill-group[data-group="off-hands"]');
+  const top = async (locator: Locator): Promise<number> =>
+    (await locator.boundingBox())?.y ?? Number.NaN;
+  await expect.poll(async () => (await top(offhands)) - (await top(library))).toBeLessThan(20);
+
+  // A bar slot clicked opens the skills tab.
+  await page.locator(".skill-slot").first().click();
+  await expect(skillsTab).toHaveClass(/is-active/);
+  await page.keyboard.press("Escape");
+
+  // No piece picked: an insignia goes to the first free one, and says so.
+  await gearTab.click();
+  const survivor = page.locator(".gear-box").filter({ hasText: "Survivor Insignia" }).first();
+  await expect(survivor.locator(".gear-box-target")).toHaveText("→ head");
+  await survivor.click();
+  const insigniaOn = (slot: string): Locator =>
+    page.locator(`.armor-row[data-slot="${slot}"] .gear-slot`).first();
+  await expect(insigniaOn("head")).toContainText("Survivor");
+
+  // The legs picked: outlined, and the next insignia goes there.
+  const legs = page.locator('.armor-row[data-slot="legs"]');
+  await legs.locator(".armor-slot-name").click();
+  await expect(legs).toHaveClass(/is-selected/);
+  await expect(survivor.locator(".gear-box-target")).toHaveText("→ legs");
+  await survivor.click();
+  await expect(insigniaOn("legs")).toContainText("Survivor");
+  await expect(insigniaOn("chest")).toContainText("empty");
+
+  // Switching the tab by hand lets the piece go.
+  await skillsTab.click();
+  await expect(legs).not.toHaveClass(/is-selected/);
+});
+
 test("dragging worn gear back to the library takes it off", async ({ page }) => {
   await newCharacter(page);
   await openGearLibrary(page);
