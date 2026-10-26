@@ -26,8 +26,8 @@ Manager Telegram topic, so nothing needs a typeable pane.
 
 **One turn is one `claude -p` process.** `claude-bot` runs `claude -p
 --output-format stream-json --verbose`, with `--dangerously-skip-permissions`
-(print mode cannot ask) and `--disallowedTools AskUserQuestion` (nobody can
-answer; questions go through `tg ask`). It exits when the agent ends its
+(print mode cannot ask) and `--tools` with a fixed list that omits `AskUserQuestion` (nobody can
+answer; questions go through `tg ask`; #753). It exits when the agent ends its
 turn, which is exactly the moment the TUI used to sit idle.
 
 **`claude-llc-agent` loops over turns.** Each turn runs through

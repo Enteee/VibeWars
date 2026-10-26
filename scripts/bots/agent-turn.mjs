@@ -41,6 +41,7 @@ import {
   backgroundedIdsOf,
   contextOf,
   formatLine,
+  mcpServersOf,
   parseEvent,
   runFailed,
   sessionIdOf,
@@ -281,6 +282,16 @@ lines.on("line", (line) => {
   }
   // The first init only: claude prints one, so a second is forged.
   const id = seen.init ? null : sessionIdOf(event);
+  const mcp = id === null ? [] : mcpServersOf(event);
+  if (mcp.length > 0) {
+    // An open channel to outside hub's checks: not one more call (#753).
+    child.kill();
+    show(
+      `agent-turn: the jail has MCP servers (${mcp.join(", ")}); refusing to run: see #753`,
+      "err",
+    );
+    quit(1, "between");
+  }
   if (id !== null) {
     seen.init = true;
     saveSession(id);

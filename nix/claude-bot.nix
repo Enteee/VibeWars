@@ -794,12 +794,22 @@ let
         else
           # Print mode cannot show a permission prompt, so the skip is
           # required, and nobody can answer AskUserQuestion: questions go
-          # through `tg ask`. --disallowedTools takes several values, so an
-          # option has to follow it, or it would swallow the prompt.
+          # through `tg ask`. --tools takes several values, so an option has to
+          # follow it, or it would swallow the prompt (#753).
+          #
+          # The tools are the ones the roles use: Bash and the file tools for the
+          # work; Agent, SendMessage and TaskStop for subagents; Monitor to wait on
+          # a command; Skill for the company's skills; ToolSearch, which reaches
+          # WebFetch and WebSearch. The rest (Workflow, cron and wakeup tools,
+          # worktrees, notebooks, remote triggers) each cost a long description on
+          # every call and have no use here: hub schedule replaces cron, and
+          # worktrees are the host's job. --strict-mcp-config with no --mcp-config
+          # leaves no MCP server, so no claude.ai connector can load.
           jailCommand=(${jailInit} claude
             -p --output-format stream-json --verbose
             --dangerously-skip-permissions
-            --disallowedTools AskUserQuestion
+            --strict-mcp-config
+            --tools Bash Read Edit Write Agent SendMessage TaskStop Monitor Skill ToolSearch WebFetch WebSearch
             --model "$model"
             --append-system-prompt "$briefing"
             "''${resumeFlag[@]}"
@@ -880,6 +890,8 @@ let
           --setenv VIBEWARS_BOARD "$boardIds" \
           --setenv VIBEWARS_ACTING "$acting" \
           --setenv VIBEWARS_ENV "development" \
+          --setenv ENABLE_CLAUDEAI_MCP_SERVERS false \
+          --setenv CLAUDE_CODE_DISABLE_BUNDLED_SKILLS 1 \
           --setenv GIT_CONFIG_COUNT 3 \
           --setenv GIT_CONFIG_KEY_0 branch.autoSetupMerge \
           --setenv GIT_CONFIG_VALUE_0 false \

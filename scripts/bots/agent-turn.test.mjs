@@ -28,6 +28,18 @@ const SESSION_ID = "11111111-2222-3333-4444-555555555555";
 /** @type {Record<string, string>} */
 const EVENTS = {
   init: JSON.stringify({ type: "system", subtype: "init", session_id: SESSION_ID }),
+  initWithMcp: JSON.stringify({
+    type: "system",
+    subtype: "init",
+    session_id: SESSION_ID,
+    mcp_servers: [{ name: "claude.ai Claude Docs", status: "connected" }],
+  }),
+  initNoMcp: JSON.stringify({
+    type: "system",
+    subtype: "init",
+    session_id: SESSION_ID,
+    mcp_servers: [],
+  }),
   wait: JSON.stringify({
     type: "assistant",
     message: {
@@ -80,7 +92,7 @@ const EVENTS = {
  *
  * @param {string[]} events keys of EVENTS
  * @param {string} [peekDir] where `peek` is recorded, if anywhere
- * @returns {{ code: number | null, stdout: string, cursor: string, log: string }}
+ * @returns {{ code: number | null, stdout: string, stderr: string, cursor: string, log: string }}
  */
 function turn(events, peekDir = "") {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "agent-turn-test-"));
@@ -114,6 +126,7 @@ function turn(events, peekDir = "") {
   return {
     code: result.status,
     stdout: result.stdout,
+    stderr: result.stderr,
     cursor: fs.readFileSync(path.join(bus, "cursor"), "utf8"),
     log: fs.existsSync(logFile) ? fs.readFileSync(logFile, "utf8") : "",
   };
@@ -193,5 +206,22 @@ describe("what the manager can peek at (#19)", () => {
 
     expect(result.code).toBe(3);
     expect(row(dir).state).toBe("limited");
+  });
+});
+
+describe("an MCP server in the jail (#753)", () => {
+  it("stops the turn at once, naming it", () => {
+    const result = turn(["initWithMcp", "result"]);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain(
+      "agent-turn: the jail has MCP servers (claude.ai Claude Docs); refusing to run: see #753",
+    );
+  });
+
+  it("runs a turn whose init lists none", () => {
+    const result = turn(["initNoMcp", "result"]);
+
+    expect(result.code).toBe(0);
   });
 });

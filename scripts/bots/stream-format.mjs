@@ -236,6 +236,22 @@ export function sessionIdOf(event) {
 }
 
 /**
+ * The MCP servers a run started with (#753): the jail has none, so any is a
+ * channel nobody opened on purpose.
+ *
+ * @param {Record<string, unknown> | null} event
+ * @returns {string[]} their names; empty for any event but an init, and for an init without
+ */
+export function mcpServersOf(event) {
+  if (event?.type !== "system" || event.subtype !== "init" || !Array.isArray(event.mcp_servers)) {
+    return [];
+  }
+  return /** @type {unknown[]} */ (event.mcp_servers).map((server) =>
+    typeof server === "object" && server !== null && "name" in server ? String(server.name) : "?",
+  );
+}
+
+/**
  * How big the context was for the call this `assistant` event came from
  * (#321): everything the model read, fresh, from the cache and into it.
  * A subagent's calls, which carry the tool call that started it, are its
