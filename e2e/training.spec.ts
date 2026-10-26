@@ -419,6 +419,9 @@ test("(17) after Esc releases the arena, Tab is the browser's again (#268)", asy
   await expect(page.locator(".training-stage")).not.toBeFocused();
 });
 
+/** The armor ladder's dummies' ids, in `LADDER`'s order (training-scenarios.ts). */
+const LADDER_IDS = ["armor-40", "armor-60", "armor-70", "armor-80", "armor-84", "armor-104"];
+
 /** The armor ladder's six still dummies, in world units (training-scenarios.ts). */
 const LADDER = [
   { x: 360, y: 90 },
@@ -435,21 +438,29 @@ function trainingView(page: Page, canvas: Locator): Promise<Projection> {
 }
 
 /**
- * The band a dummy's name is drawn in, as screenshots: 11 px text whose
- * bottom sits 36 above the body's centre (`nameLabelBottom`), and narrower
- * than the 100 between columns, so a neighbour's name never reaches it.
- * Labels are Phaser text, not DOM, so a pixel diff is the only way to see one.
+ * Whose names the arena draws (#253), from the stage's `data-names` hook:
+ * names keep their screen size at every zoom (#456), so on the crowded
+ * ladder one overlaps its neighbour's column and a pixel band per dummy
+ * cannot say whose a name is.
  */
-async function nameBands(page: Page, canvas: Locator): Promise<Buffer[]> {
-  const view = await trainingView(page, canvas);
-  return Promise.all(
-    LADDER.map((dummy) => {
-      const corner = view.onPage({ x: dummy.x - 30, y: dummy.y - 52 });
-      return page.screenshot({
-        clip: { ...corner, width: 60 * view.zoom, height: 16 * view.zoom },
-      });
-    }),
-  );
+async function shownNames(page: Page): Promise<string[]> {
+  const value = (await page.locator(".training-stage").getAttribute("data-names")) ?? "";
+  return value === "" ? [] : value.split(",");
+}
+
+/**
+ * The band a dummy's name is drawn in, as a screenshot: 11 px text at
+ * every zoom (#456), whose bottom sits 3 px over the cast bar's top, 19
+ * world units over the body's 14 radius (`nameLabelBottom`). Labels are
+ * Phaser text, not DOM, so a pixel diff is the only way to see one.
+ */
+async function nameBand(
+  page: Page,
+  canvas: Locator,
+  dummy: { readonly x: number; readonly y: number },
+): Promise<Buffer> {
+  const bar = (await trainingView(page, canvas)).onPage({ x: dummy.x, y: dummy.y - 14 - 19 });
+  return page.screenshot({ clip: { x: bar.x - 40, y: bar.y - 3 - 20, width: 80, height: 22 } });
 }
 
 test("(18) names show only on the target, under the cursor, and under Shift (#253, #302)", async ({
@@ -461,10 +472,11 @@ test("(18) names show only on the target, under the cursor, and under Shift (#25
   await takeControl(page);
 
   // No target, and the cursor on the empty corner takeControl clicked:
-  // these bands hold no name.
-  const blank = await nameBands(page, canvas);
-  const named = async (): Promise<number> =>
-    (await nameBands(page, canvas)).filter((band, i) => !band.equals(blank[i] ?? band)).length;
+  // no name.
+  const named = async (): Promise<number> => (await shownNames(page)).length;
+  await expect.poll(named).toBe(0);
+  const [first] = LADDER;
+  const blank = await nameBand(page, canvas, first);
 
   // Tab picks one dummy: its name, and only its, appears.
   await page.keyboard.press("Tab");
@@ -478,14 +490,13 @@ test("(18) names show only on the target, under the cursor, and under Shift (#25
 
   // The cursor over a dummy shows that one too. Two lie on the target
   // or the cursor, whichever dummy Tab picked, unless they are the same.
-  const [first] = LADDER;
   const over = (await trainingView(page, canvas)).onPage(first);
   await page.mouse.move(over.x, over.y);
-  await expect.poll(named).toBeGreaterThanOrEqual(1);
+  await expect.poll(() => shownNames(page)).toContain(LADDER_IDS[0]);
   const withHover = await named();
   expect(withHover === 1 || withHover === 2).toBe(true);
-  const hovered = (await nameBands(page, canvas))[0];
-  expect(hovered?.equals(blank[0] ?? Buffer.alloc(0))).toBe(false);
+  // And it is drawn.
+  expect((await nameBand(page, canvas, first)).equals(blank)).toBe(false);
 
   // The cursor leaving the arena takes its name with it.
   await page.mouse.move(1, 1);
@@ -725,9 +736,7 @@ test("(26) left click walks, even onto a dummy, and never targets; right click t
   // No target yet, and the cursor off the arena: no name shows. Shot armed
   // throughout, as Esc would first stop the walk rather than release.
   await page.mouse.move(1, 1);
-  const blank = await nameBands(page, canvas);
-  const named = async (): Promise<number> =>
-    (await nameBands(page, canvas)).filter((band, i) => !band.equals(blank[i] ?? band)).length;
+  const named = async (): Promise<number> => (await shownNames(page)).length;
   const shot = (): Promise<Buffer> =>
     canvas.screenshot({ mask: [page.locator(".training-overlay")] });
   const start = await shot();
@@ -745,7 +754,7 @@ test("(26) left click walks, even onto a dummy, and never targets; right click t
   const moved = (await trainingView(page, canvas)).onPage(first);
   await page.mouse.click(moved.x, moved.y, { button: "right" });
   await page.mouse.move(1, 1);
-  await expect.poll(named).toBe(1);
+  await expect.poll(() => shownNames(page)).toEqual([LADDER_IDS[0]]);
   await expect(page.locator(".training-adrenaline")).not.toContainText("attacking");
 });
 
@@ -757,9 +766,7 @@ test("(27) a right click on the ground moves nobody and keeps the target (#438)"
   await expect(page.locator(".training-log")).toContainText("── Armor ladder ──");
   await takeControl(page);
   await page.mouse.move(1, 1);
-  const blank = await nameBands(page, canvas);
-  const named = async (): Promise<number> =>
-    (await nameBands(page, canvas)).filter((band, i) => !band.equals(blank[i] ?? band)).length;
+  const named = async (): Promise<number> => (await shownNames(page)).length;
 
   await page.keyboard.press("Tab");
   await expect.poll(named).toBe(1);
@@ -982,4 +989,93 @@ test("(35) the bars show net regeneration as arrows: an Elementalist's 4 energy 
   await expect(energy).toHaveClass(/is-regen/);
   // Full health and nothing on you: no health arrows.
   await expect(page.locator(".training-bar-health .vital-pips")).toBeHidden();
+});
+
+/**
+ * The rows of `named` that differ from `blank`, two shots of one band:
+ * how tall the ink is that appeared between them, in screen px.
+ */
+async function inkHeight(page: Page, blank: Buffer, named: Buffer): Promise<number> {
+  return page.evaluate(
+    async ([before, after]) => {
+      const pixels = async (base64: string): Promise<ImageData> => {
+        const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+        const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+        const context = new OffscreenCanvas(bitmap.width, bitmap.height).getContext("2d");
+        if (context === null) {
+          throw new Error("no 2d context");
+        }
+        context.drawImage(bitmap, 0, 0);
+        return context.getImageData(0, 0, bitmap.width, bitmap.height);
+      };
+      const [{ data: a }, { data: b, width }] = await Promise.all([pixels(before), pixels(after)]);
+      const rows: number[] = [];
+      for (let i = 0; i < a.length; i += 4) {
+        if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) {
+          rows.push(Math.floor(i / 4 / width));
+        }
+      }
+      return rows.length === 0 ? 0 : Math.max(...rows) - Math.min(...rows) + 1;
+    },
+    [blank.toString("base64"), named.toString("base64")] as const,
+  );
+}
+
+/** Wait out a wheel's zoom ease and the camera's lean: `data-camera` holds still. */
+async function cameraSettled(page: Page): Promise<void> {
+  const stage = page.locator(".training-stage");
+  await page.waitForTimeout(600);
+  await expect
+    .poll(async () => {
+      const before = await stage.getAttribute("data-camera");
+      await page.waitForTimeout(200);
+      return before === (await stage.getAttribute("data-camera"));
+    })
+    .toBe(true);
+}
+
+test("(36) a name keeps its screen size at every zoom (#456)", async ({ page }) => {
+  const canvas = await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("armor-ladder");
+  await expect(page.locator(".training-log")).toContainText("── Armor ladder ──");
+  await takeControl(page);
+  const stage = page.locator(".training-stage");
+  const [first] = LADDER;
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
+  }
+  /** One wheel notch over the arena's corner, then the cursor off it. */
+  const wheel = async (deltaY: number): Promise<void> => {
+    await page.mouse.move(box.x + 8, box.y + box.height - 8);
+    await page.mouse.wheel(0, deltaY);
+    await page.mouse.move(1, 1);
+  };
+
+  // Nobody named, at Default and at Wide.
+  await page.mouse.move(1, 1);
+  await expect(stage).toHaveAttribute("data-zoom-step", "Default");
+  await cameraSettled(page);
+  const blankDefault = await nameBand(page, canvas, first);
+  await wheel(100);
+  await expect(stage).toHaveAttribute("data-zoom-step", "Wide");
+  await cameraSettled(page);
+  const blankWide = await nameBand(page, canvas, first);
+
+  // Target the first dummy: its name, alone, at Wide, then at Default.
+  const dummy = (await trainingView(page, canvas)).onPage(first);
+  await page.mouse.click(dummy.x, dummy.y, { button: "right" });
+  await page.mouse.move(1, 1);
+  await expect.poll(() => shownNames(page)).toEqual([LADDER_IDS[0]]);
+  await cameraSettled(page);
+  const wide = await inkHeight(page, blankWide, await nameBand(page, canvas, first));
+  await page.waitForTimeout(200);
+  await wheel(-100);
+  await expect(stage).toHaveAttribute("data-zoom-step", "Default");
+  await cameraSettled(page);
+  const near = await inkHeight(page, blankDefault, await nameBand(page, canvas, first));
+
+  // An 11 px name, not one the zoom shrank to a few pixels.
+  expect(near).toBeGreaterThanOrEqual(7);
+  expect(Math.abs(wide - near)).toBeLessThanOrEqual(1);
 });
