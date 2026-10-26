@@ -38,6 +38,7 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { FILTER_KEYS, GIT_ENV, GIT_HARDENING, filterPins } from "./git-hardening.mjs";
+import { hostPath } from "./host-path.mjs";
 import { api } from "./link.mjs";
 import { obj, parseRegistry } from "./protocol.mjs";
 import { COMPANY_PATHSPECS, fastForwardDecision } from "./reboot.mjs";
@@ -115,7 +116,10 @@ function run(file, args, options = {}) {
 /**
  * `devenv shell`, as the operator would start it from a fresh terminal:
  * without the variables of the devenv shell this process inherited, so the
- * new shell is built from the checkout it runs in and nothing else.
+ * new shell is built from the checkout it runs in and nothing else. That
+ * includes PATH: devenv prepends to the PATH it finds, so starting it with
+ * this one would nest every reboot's shell inside the last, until PATH is
+ * too long for tmux and the company cannot come up (host-path.mjs).
  *
  * Always with `--refresh-eval-cache`. devenv's evaluation cache only tracks
  * the .nix and devenv files, not `scripts/bots`, which enters the store as a
@@ -147,6 +151,7 @@ function devenv(args, cwd) {
               name !== "IN_NIX_SHELL",
           ),
         ),
+        PATH: hostPath(process.env.PATH ?? ""),
         // The boot record is already written; claude-llc must not replace it.
         VIBEWARS_REBOOTED: "1",
       },

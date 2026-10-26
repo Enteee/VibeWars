@@ -240,7 +240,9 @@ describe("rune encoding", () => {
 
 describe("the gear summary", () => {
   it("reports the plain numbers for a bare character", () => {
-    const summary = summariseGear(setWeapon(monk(), "wand"));
+    // Off-hand cleared explicitly: becoming a Monk swaps the Sword for
+    // the Monk default, a Wand with a Focus (#614).
+    const summary = summariseGear(setOffhand(setWeapon(monk(), "wand"), null));
     expect(summary.maxHealth).toBe(BASE_HEALTH);
     expect(summary.maxEnergy).toBe(BASE_ENERGY);
     expect(summary.armor).toBe(60);

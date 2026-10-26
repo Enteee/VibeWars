@@ -214,6 +214,9 @@ let
               for name in $(compgen -e); do
                 case "$name" in DEVENV_* | IN_NIX_SHELL) unset "$name" ;; esac
               done
+              # And the host's PATH: devenv prepends to the one it finds, so
+              # this shell's entries would come along (host-path.mjs).
+              PATH="$(${node} ${llcScripts}/host-path.mjs)"
               export VIBEWARS_LLC_REEXEC=1
               exec devenv shell --refresh-eval-cache -- claude-llc "$@"
             elif [ "$stale" = 3 ]; then

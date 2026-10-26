@@ -24,7 +24,7 @@ afterEach(() => {
 /**
  * @param {string} command
  * @param {string} windows what list-windows prints, one `index name` a line
- * @param {{ failNewWindow?: boolean }} [options]
+ * @param {{ failNewWindow?: boolean, path?: string }} [options]
  * @returns {{ code: number | null, stderr: string, calls: string[] }}
  */
 function hubWindow(command, windows, options = {}) {
@@ -48,7 +48,7 @@ function hubWindow(command, windows, options = {}) {
   );
   const result = spawnSync(process.execPath, [HUB_WINDOW, command], {
     env: {
-      PATH: process.env.PATH ?? "",
+      PATH: options.path ?? process.env.PATH ?? "",
       VIBEWARS_TMUX: tmux,
       VIBEWARS_LLC_SESSION: "hub-test",
       DEVENV_ROOT: dir,
@@ -108,6 +108,18 @@ describe("hub-window open", () => {
 
     expect(open).toMatch(/-e VIBEWARS_TMUX=\S+\/tmux /);
     expect(open).toMatch(/-e VIBEWARS_LLC_RESTART=\/restarter /);
+  });
+
+  it("hands them each PATH entry once, so nested nix shells cannot make tmux refuse it", () => {
+    const base = process.env.PATH ?? "";
+    const open = hubWindow("open", "", { path: `${base}:${base}:${base}` }).calls.find((c) =>
+      c.startsWith("new-window"),
+    );
+
+    const passed = open?.match(/-e PATH=(\S*) /)?.[1] ?? "";
+    const entries = passed.split(":");
+    expect(entries.length).toBeGreaterThan(0);
+    expect(new Set(entries).size).toBe(entries.length);
   });
 
   it("fails loudly when tmux will not open it", () => {

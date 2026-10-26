@@ -17,7 +17,8 @@
  *   hub whoami                       who you are, your role, and what it may do
  *   hub board ls|show|changes ...    hubd's copy of the board, as JSON (what
  *                                    `board` reads; see hub-board.mjs)
- *   company reboot "<reason>"        manager only; also: company reboot --abort
+ *   company reboot "<reason>"        manager only; also: company reboot --abort,
+ *                                    company reboot --workday
  *   company ready                    your work is saved; the reboot may go ahead
  *   company hire <role> "<reason>"   manager only; prints the new employee id
  *   company fire <employee> "<reason>"  manager only
@@ -152,11 +153,16 @@ if (argv[0] === "push") {
   } else if (verb === "reboot" && rest.length > 0) {
     request = {
       kind: "reboot",
-      argv: rest.length === 1 && rest[0] === "--abort" ? ["abort"] : ["request", rest.join(" ")],
+      argv:
+        rest.length === 1 && rest[0] === "--abort"
+          ? ["abort"]
+          : rest.length === 1 && rest[0] === "--workday"
+            ? ["workday"]
+            : ["request", rest.join(" ")],
     };
   } else {
     console.error(
-      'company: usage: company reboot "<reason>" | company reboot --abort | company ready\n' +
+      'company: usage: company reboot "<reason>" | company reboot --abort | company reboot --workday | company ready\n' +
         '       company hire <role> "<reason>" | company fire <employee> "<reason>"',
     );
     process.exit(2);

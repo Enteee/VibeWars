@@ -673,7 +673,9 @@ describe("company reboot", () => {
   it("is requested and aborted by the manager only", () => {
     expect(reboot("manager", ["request", "load #21"])).toMatchObject({ allow: true });
     expect(reboot("manager", ["abort"])).toMatchObject({ allow: true });
+    expect(reboot("manager", ["workday"])).toMatchObject({ allow: true });
     for (const role of ROLES.filter((r) => r !== "manager")) {
+      expect(reboot(role, ["workday"]), role).toMatchObject({ allow: false });
       expect(reboot(role, ["request", "x"]), role).toMatchObject({ allow: false });
       expect(reboot(role, ["abort"]), role).toMatchObject({ allow: false });
     }
@@ -687,7 +689,14 @@ describe("company reboot", () => {
   });
 
   it("needs a reason, and nothing else", () => {
-    for (const argv of [["request"], ["request", " "], ["request", "a", "b"], ["abort", "x"], []]) {
+    for (const argv of [
+      ["request"],
+      ["request", " "],
+      ["request", "a", "b"],
+      ["abort", "x"],
+      ["workday", "x"],
+      [],
+    ]) {
       expect(reboot("manager", argv), argv.join(" ")).toMatchObject({ allow: false });
     }
   });

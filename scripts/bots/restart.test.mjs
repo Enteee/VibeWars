@@ -128,6 +128,7 @@ function setup(options = {}) {
     [
       `echo "devenv $PWD $* rebooted=$VIBEWARS_REBOOTED" >>${calls}`,
       `[ -n "$TELEGRAM_MANAGER_TOKEN" ] && echo "devenv saw the bot token" >>${calls}`,
+      `case ":$PATH:" in *:/nix/store/*) echo "devenv saw a store PATH" >>${calls} ;; esac`,
       `[ -e scripts/bots/new.mjs ] && echo "saw the new main in $PWD" >>${calls}`,
       `[ -e ${path.join(root, "rebooting.json")} ] && echo "rebooting.json is there for: $*" >>${calls}`,
       options.failBuild === true ? 'case "$*" in *--help*) exit 1 ;; esac' : "",
@@ -194,7 +195,7 @@ function setup(options = {}) {
     return outcome(child.exitCode);
   };
 
-  return { dir, repo, remote, root, boot, target, restart, restartAsync };
+  return { dir, bin, repo, remote, root, boot, target, restart, restartAsync };
 }
 
 describe("the restarter", () => {
@@ -224,6 +225,21 @@ describe("the restarter", () => {
     });
     expect(fs.existsSync(path.join(company.root, "rebooting.json"))).toBe(false);
     expect(fs.existsSync(path.join(company.root, "reboot-check"))).toBe(false);
+  });
+
+  it("starts devenv on the host's PATH, so reboots do not nest shells until tmux refuses it", () => {
+    const company = setup();
+    const store = "/nix/store/0000-from-the-last-devenv-shell/bin";
+
+    const result = company.restart({
+      PATH: [company.bin, store, process.env.PATH ?? ""].join(path.delimiter),
+    });
+
+    expect(result.code).toBe(0);
+    expect(result.calls).toContain(
+      `devenv ${company.repo} shell --refresh-eval-cache -- claude-llc up rebooted=1`,
+    );
+    expect(result.calls).not.toContain("devenv saw a store PATH");
   });
 
   it("keeps rebooting.json until its own up has run, which reboot-wait lets through (#557)", () => {

@@ -8,6 +8,7 @@ import {
   COOLDOWN_MS,
   DRAIN_MS,
   INFLIGHT_GRACE_MS,
+  announcement,
   betweenTurns,
   bootNote,
   drainStep,
@@ -52,6 +53,7 @@ describe("rebootAllowed", () => {
     lastRebootAt: NOW - COOLDOWN_MS,
     now: NOW,
     pending: null,
+    workday: null,
   };
 
   it("allows a reboot that loads new company code", () => {
@@ -87,6 +89,78 @@ describe("rebootAllowed", () => {
     expect(rebootAllowed({ ...base, changedPaths: null })).toMatchObject({ ok: false });
     expect(rebootAllowed({ ...base, bootSha: null })).toMatchObject({ ok: false });
     expect(rebootAllowed({ ...base, lastRebootAt: null })).toMatchObject({ ok: false });
+  });
+});
+
+describe("rebootAllowed --workday (#640)", () => {
+  const MIN = 60_000;
+  const quiet = {
+    bootSha: "abc12345def",
+    changedPaths: [],
+    lastRebootAt: NOW - 700 * MIN,
+    now: NOW,
+    pending: null,
+    workday: { sentAt: NOW - 10 * MIN },
+  };
+  const reasonOf = (/** @type {ReturnType<typeof rebootAllowed>} */ answer) =>
+    "reason" in answer ? answer.reason : "";
+
+  it("allows it 10 minutes after the nudge, with no company code changes", () => {
+    expect(rebootAllowed(quiet)).toEqual({ ok: true });
+  });
+
+  it("allows it when git could not say what changed", () => {
+    expect(rebootAllowed({ ...quiet, changedPaths: null })).toEqual({ ok: true });
+  });
+
+  it("refuses 3 hours after the nudge, naming when the next workday ends", () => {
+    const answer = rebootAllowed({ ...quiet, workday: { sentAt: NOW - 180 * MIN } });
+    expect(answer).toMatchObject({ ok: false });
+    expect(reasonOf(answer)).toMatch(/more than 2 hours ago; the next workday ends at \d\d:\d\d/);
+  });
+
+  it("refuses once the company has booted since the nudge", () => {
+    const answer = rebootAllowed({
+      ...quiet,
+      lastRebootAt: NOW - 40 * MIN,
+      workday: { sentAt: NOW - 100 * MIN },
+    });
+    expect(reasonOf(answer)).toMatch(/booted since/);
+  });
+
+  it("refuses before any nudge was sent", () => {
+    expect(rebootAllowed({ ...quiet, workday: { sentAt: null } })).toMatchObject({ ok: false });
+  });
+
+  it("still honours the cooldown and a pending reboot", () => {
+    expect(
+      rebootAllowed({ ...quiet, lastRebootAt: NOW - COOLDOWN_MS + 1, workday: { sentAt: NOW } }),
+    ).toMatchObject({ ok: false });
+    const pending = {
+      requestedAt: NOW - 1000,
+      reason: "x",
+      by: "manager",
+      deadline: NOW + DRAIN_MS,
+      bootSha: "abc",
+      ready: [],
+    };
+    expect(reasonOf(rebootAllowed({ ...quiet, pending }))).toMatch(/already scheduled/);
+  });
+
+  it("opens the announcement with the end of the workday", () => {
+    const text = announcement(
+      {
+        requestedAt: NOW,
+        reason: "workday",
+        by: "manager",
+        deadline: NOW,
+        bootSha: "a",
+        ready: [],
+      },
+      [],
+    );
+    expect(text.startsWith("End of the workday. ")).toBe(true);
+    expect(text).toContain("no new company code");
   });
 });
 
