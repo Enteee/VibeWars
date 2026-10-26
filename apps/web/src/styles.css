@@ -493,6 +493,16 @@ body {
   border: 1px solid var(--line);
 }
 
+/* The team editor (#573): the name takes the room, the controls sit together. */
+.team-members .entity-name {
+  flex: 1 1 auto;
+}
+
+.team-members .entity-row.is-missing .entity-name {
+  color: var(--ink-dim);
+  font-style: italic;
+}
+
 /* --- build editor ------------------------------------------------------- */
 
 .editor {

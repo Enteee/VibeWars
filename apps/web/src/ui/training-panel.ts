@@ -726,7 +726,7 @@ export function createTrainingPanel(): TrainingPanel {
       session.sounds.snapshot(latestMatch);
       session.music.snapshot(latestMatch);
       const self = latestMatch.players.find((player) => player.sessionId === SELF_ID);
-      follow.frame(deltaSeconds, self === undefined ? undefined : { x: self.x, y: self.y });
+      follow.frame(deltaSeconds, self);
       latestArena = withNames(
         toArenaSnapshot(latestMatch, session.walls),
         created.pointerWorld(),
@@ -740,22 +740,25 @@ export function createTrainingPanel(): TrainingPanel {
         paintMeter();
       }
     });
-    offPointer = created.onButton(({ button, phase, world }) => {
+    // As in a match (#438, #442): the left button walks, a right click
+    // picks, a right drag pans.
+    follow.onSecondaryClick((world) => {
       if (session === undefined) {
         return;
       }
-      // As in a match (#438): the left button walks, the right one picks.
-      if (button === "right" && phase === "up") {
-        const intents = secondaryClickIntents(
-          session.connection.getSnapshot(),
-          latestArena,
-          world,
-          doubleClick,
-          performance.now(),
-        );
-        for (const intent of intents) {
-          session.connection.sendIntent(intent);
-        }
+      const intents = secondaryClickIntents(
+        session.connection.getSnapshot(),
+        latestArena,
+        world,
+        doubleClick,
+        performance.now(),
+      );
+      for (const intent of intents) {
+        session.connection.sendIntent(intent);
+      }
+    });
+    offPointer = created.onButton(({ button, phase, world }) => {
+      if (session === undefined) {
         return;
       }
       // The stage's capturing listener ran first, so this click's arming
