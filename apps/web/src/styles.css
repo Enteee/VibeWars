@@ -2049,19 +2049,25 @@ body {
   width: 9rem;
 }
 
-/* The now-playing toast: bottom left, clear of every screen's title (#501).
-   It only shows out of a fight (intensity under 2), so the HUD gradient
-   behind it is calm. */
+/* The now-playing toast: top left, just under the top bar, where a match has
+   nothing (the skill bar is along the bottom, the scoreboard in the middle
+   and the buttons on the right). On a menu screen that corner is the title,
+   so there it sits bottom left (#501). */
 .now-playing {
   position: fixed;
   left: 1rem;
-  bottom: 1rem;
+  top: 2.9rem;
   z-index: 10;
   padding: 0.4rem 0.8rem;
   background: rgb(14 17 22 / 90%);
   border: 1px solid var(--line);
   color: var(--ink);
   pointer-events: none;
+}
+
+body:has(#screens:not([style*="none"])) .now-playing {
+  top: auto;
+  bottom: 1rem;
 }
 
 .now-playing[hidden] {
