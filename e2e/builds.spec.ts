@@ -490,6 +490,75 @@ test("Share keeps the line selected when the clipboard is refused (#572)", async
   await expect(page.locator(".toast")).toBeHidden();
 });
 
+test("Share copies a team as one line; pasted on Teams it opens unsaved, missing builds created (#577)", async ({
+  page,
+}) => {
+  await saveCharacters(page, ["Alpha", "Bravo"]);
+  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "new team" }).click();
+  await page.getByLabel("team name").fill("Duo");
+  await page.getByRole("button", { name: "add Alpha" }).click();
+  await page.getByRole("button", { name: "add Bravo" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+
+  await page.getByRole("button", { name: "Share", exact: true }).click();
+  const line = page.getByLabel("team to share");
+  await expect(line).toBeFocused();
+  const code = await line.inputValue();
+  expect(code).toContain("vibewars.team");
+  expect(code).not.toContain("\n");
+  await page.keyboard.press("Escape");
+  await expect(line).toBeHidden();
+
+  // Bravo is deleted: the team cannot be shared, as it cannot be saved.
+  await page.getByRole("button", { name: "Bravo", exact: true }).click();
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
+  await expect(memberNames(page)).toHaveText(["Alpha", "(missing character)"]);
+  const share = page.getByRole("button", { name: "Share", exact: true });
+  await expect(share).toBeDisabled();
+  await expect(share).toHaveAttribute("title", /missing/);
+  await page.getByRole("button", { name: "back" }).click();
+
+  // On the list, a build code is not a team and is ignored; the team code
+  // opens the team unsaved, Bravo created again and Alpha reused.
+  const build = JSON.stringify((JSON.parse(code) as { members: unknown[] }).members[0]);
+  await paste(page.locator(".screen"), build);
+  await expect(page.locator(".toast")).toBeHidden();
+  await paste(page.locator(".screen"), code);
+  await expect(page.locator(".toast")).toHaveText(
+    "Created 1 character: Bravo. Reused 1. Save to keep the team.",
+  );
+  await expect(page.getByLabel("team name")).toHaveValue("Duo");
+  await expect(memberNames(page)).toHaveText(["Alpha", "Bravo"]);
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+
+  // With edits pending, a pasted team asks first.
+  await page.getByLabel("team name").fill("Edited");
+  await paste(page.locator(".team-editor"), code);
+  await expect(page.getByText("Discard your edits and open the pasted team?")).toBeVisible();
+  await page.getByRole("button", { name: "keep editing" }).click();
+  await expect(page.getByLabel("team name")).toHaveValue("Edited");
+
+  await page.getByRole("button", { name: "back" }).click();
+  await page.getByRole("button", { name: "discard" }).click();
+  await expect(page.locator(".entity-name")).toHaveText(["Duo (2 members)", "Duo (2 members)"]);
+
+  // On the build editor a team code is not imported.
+  await page.getByRole("button", { name: "back" }).click();
+  await page.getByRole("button", { name: "new character" }).click();
+  await page.locator("input.editor-name").fill("Scratch");
+  await paste(page.locator(".editor"), code);
+  await expect(page.locator(".toast")).toHaveText(
+    "That is a team code. Paste it on the Teams screen.",
+  );
+  await expect(page.locator("input.editor-name")).toHaveValue("Scratch");
+});
+
 test("a saved character can be chosen and is taken into a match", async ({ page }) => {
   // The whole point of the build editor: what you build is what you play.
   await newCharacter(page);
@@ -1468,6 +1537,33 @@ test("the profession grid says what each keeps, and a cell picks it (#568)", asy
   await chooseProfession(page, "secondary", "ranger");
   await expect(professionField(page, "secondary")).toHaveAttribute("data-value", "ranger");
   await expect(page.locator(".skill-slot", { hasText: "Orison of Healing" })).toHaveCount(0);
+});
+
+test("a profession change toasts what it removed, and Undo puts it back (#569)", async ({
+  page,
+}) => {
+  await openElementalist(page);
+  await page
+    .locator(".skill-box", { hasText: "Orison of Healing" })
+    .locator(".skill-box-equip")
+    .click();
+  const orison = page.locator(".skill-slot", { hasText: "Orison of Healing" });
+  await expect(orison).toHaveCount(1);
+
+  await chooseProfession(page, "secondary", "ranger");
+  const toast = page.locator(".toast");
+  await expect(toast.locator(".toast-text")).toHaveText("Removed: Orison of Healing from the bar");
+  await expect(orison).toHaveCount(0);
+  await toast.getByRole("button", { name: "Undo" }).click();
+  await expect(toast).toBeHidden();
+  await expect(professionField(page, "secondary")).toHaveAttribute("data-value", "monk");
+  await expect(orison).toHaveCount(1);
+
+  // Any other edit takes the Undo away.
+  await chooseProfession(page, "secondary", "ranger");
+  await expect(toast).toBeVisible();
+  await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
+  await expect(toast).toBeHidden();
 });
 
 test("other professions' skills are listed, locked, with what they need (#568)", async ({

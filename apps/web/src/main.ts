@@ -24,16 +24,19 @@ import {
   type KeyValueStore,
 } from "./storage/repository.js";
 import type { StoredCharacter } from "./storage/schema.js";
+import { importTeam, importedTeamSummary, type TeamImportResult } from "./storage/team-transfer.js";
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
 import { disposeJukeboxScreen, renderJukeboxScreen } from "./ui/jukebox.js";
 import { disposeOptionsScreen, renderOptionsScreen } from "./ui/options-screen.js";
 import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
+import { toast } from "./ui/kit.js";
 import { duplicateTeam, newTeam } from "./ui/team-builder.js";
 import {
   mountTeamEditor,
   openedTeam,
+  pastedTeam,
   type TeamEditorState,
   type TeamEditorView,
 } from "./ui/team-editor.js";
@@ -282,7 +285,46 @@ async function main(): Promise<void> {
         })();
       },
       onBack: showMenu,
+      onPasteTeam: (text) => {
+        if (importingTeam) {
+          return;
+        }
+        const result = importTeam(
+          text,
+          characterList.characters,
+          () => crypto.randomUUID(),
+          Date.now(),
+        );
+        if (!result.ok) {
+          toast("Could not import", { problems: result.problems });
+          return;
+        }
+        void openPastedTeam(result);
+      },
     });
+  };
+
+  /**
+   * A pasted team (#577): its new characters are stored, since a team
+   * only references characters, and the team opens unsaved. A second
+   * paste while that is under way is ignored: it would be matched against
+   * the characters as they were, and store its members twice.
+   */
+  let importingTeam = false;
+  const openPastedTeam = async (
+    imported: Extract<TeamImportResult, { ok: true }>,
+  ): Promise<void> => {
+    importingTeam = true;
+    try {
+      for (const character of imported.created) {
+        await characters.save(character);
+      }
+      const { characters: now } = await characters.list();
+      showTeamEditor(pastedTeam(imported.team), now);
+      toast(importedTeamSummary(imported));
+    } finally {
+      importingTeam = false;
+    }
   };
 
   /** The open team editor; every way out of it passes through `showTeams`. */
@@ -308,6 +350,12 @@ async function main(): Promise<void> {
       },
       onClose: () => {
         void showTeams();
+      },
+      onImportTeam: (imported) => {
+        if (importingTeam) {
+          return;
+        }
+        void openPastedTeam(imported);
       },
       // The build editor comes back to this team as it was left (#576),
       // with the characters as they are now: an edited bar shows, a
