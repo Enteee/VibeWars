@@ -296,7 +296,7 @@ phone.
 scheduler on time: 600 ticks in 60 s, no skipped music, at every load
 except CPU 6x (Chromium: 5 late ticks on the editor, 26 in a match, max tick
 work 190 and 284 ms; no skipped music). Underruns did **not** validate in either browser, because the baseline
-failed: with no stress Firefox read 22 s (98 ms) and Chromium 1 s (1252 ms),
+failed: at audio stress 0 Firefox read 22 underruns, 98 ms, and Chromium 1 underrun, 1252 ms,
 over the 10 ms bound for clock noise. Both did rise from 1.5 to 2.5 ms of
 worklet load (Firefox 169, then 436 ms; Chromium 0, then 1986 ms). A shared
 runner's null sink underruns by itself, so these readings stay marked
