@@ -428,6 +428,15 @@ server, now enforced by the host:
   player whose state it changes.
 - A returning player proves who they were with their rejoin token, never
   with their peer id: `selfId` lasts one page load.
+- A peer id is not a credential either way. Trystero's peer id is a
+  string the peer itself puts in its signalling, so a modified client can
+  announce any id. When the host's peer drops mid-match (#515), a guest
+  sends its rejoin token to whichever peer comes back as the host's id.
+  An invited peer that announces itself under that id in the window
+  receives the token, can take that guest's held seat at the real host,
+  and feeds the guest its own snapshots meanwhile. It needs a real drop
+  and the lobby code. Rejoining by challenge, so the token never crosses
+  the wire again, closes it (#593).
 - `MatchHost` (#375) parses every intent with `parseClientIntent`, the
   server's own parser, and counts the server's per-client message budget
   (gap 3) per peer. The budget covers every channel, `hello` and `bye`
