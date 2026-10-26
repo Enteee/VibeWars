@@ -44,7 +44,7 @@ export interface FollowCamera {
    * `Default`, and the view snaps there with no glide.
    */
   restart(arena: Size): void;
-  /** What the HUD covers from now on, kept clear by the edge markers; none until this is called. */
+  /** What the HUD covers from now on; none until this is called. */
   setCover(next: Cover): void;
   dispose(): void;
 }
@@ -57,8 +57,9 @@ export function attachFollowCamera(
   scaleTo: () => Size,
 ): FollowCamera {
   let rig = createCameraRig();
+  let bounds = arena;
   let cover = NO_COVER;
-  viewport.setArenaBounds(arena.width, arena.height);
+  viewport.setArenaBounds(bounds.width, bounds.height);
   const offWheel = viewport.onWheelNotch((direction) => {
     rig = wheelNotch(rig, direction);
   });
@@ -115,6 +116,8 @@ export function attachFollowCamera(
           scaleTo: scaleTo(),
           pointer: viewport.pointerScreen(),
           reducedMotion: prefersReducedMotion(),
+          arena: bounds,
+          cover,
         },
         deltaSeconds,
       );
@@ -128,6 +131,7 @@ export function attachFollowCamera(
       onClick = handler;
     },
     restart(next) {
+      bounds = next;
       viewport.setArenaBounds(next.width, next.height);
       rig = createCameraRig();
     },
