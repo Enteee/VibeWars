@@ -2,26 +2,24 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { Metadata } from "@colyseus/schema";
-import { WIRE_STATUS_IDS } from "@vibewars/game-session";
+import { CHANNELS } from "@vibewars/game-protocol";
 import * as prettier from "prettier";
 import ts from "typescript";
 
-import { LobbyPlayer, LobbyState } from "../rooms/lobby-room.js";
-import { MatchState, PlayerState, ProjectileState } from "../rooms/match-room.js";
+import { WIRE_STATUS_IDS } from "../wire.js";
 
 /**
  * The wire schema snapshot (#303): a canonical description of everything
- * that crosses the socket, committed as `wire-schema.json`, and
+ * that crosses between peers, committed as `wire-schema.json`, and
  * `PROTOCOL_VERSION`, the hash of it. A wire change changes the snapshot,
  * so it changes the version, and a stale tab is refused at join with no
  * human step. Two PRs that change the wire both rewrite the one version
  * line, so they always conflict. `wire-snapshot.test.ts` fails a change
  * that did not regenerate.
  *
- * It lives here because this is the one package that sees game-protocol,
- * game-core and the Colyseus schemas together; the files it writes land
- * in game-protocol, which keeps no dependencies.
+ * It lives here because this is the package that sees game-protocol and
+ * game-core together; the files it writes land in game-protocol, which
+ * keeps no dependencies. It is a Node tool, outside the package's build.
  */
 
 /**
@@ -40,12 +38,9 @@ const REPO = path.resolve(HERE, "../../../..");
 const PROTOCOL = path.join(REPO, "packages/game-protocol");
 export const SCHEMA_FILE = path.join(PROTOCOL, "wire-schema.json");
 export const VERSION_FILE = path.join(PROTOCOL, "src/protocol-version.ts");
-const TSCONFIG = path.join(REPO, "apps/server/tsconfig.json");
-/** Where the server's message table, and the helpers typed by it, live. */
-const WIRE_FILE = path.join(HERE, "../rooms/wire.ts");
-
-/** The Colyseus state classes, roots first. A nested schema must be listed. */
-const STATE = [MatchState, PlayerState, ProjectileState, LobbyState, LobbyPlayer];
+const TSCONFIG = path.join(REPO, "packages/game-session/tsconfig.json");
+/** Between game-core's shapes and the wire's: it imports both packages. */
+const WIRE_FILE = path.join(HERE, "../wire.ts");
 
 /** The two files, as they must be committed. */
 export interface WireFiles {
@@ -65,14 +60,8 @@ export async function generateWireFiles(): Promise<WireFiles> {
   const core = moduleOf(program, wire, "@vibewars/game-core");
   const snapshot: Json = {
     semanticsRevision: SEMANTICS_REVISION,
-    state: describeState(STATE),
-    messages: {
-      clientToServer: describeMessages(checker, exportedType(checker, protocol, "ClientMessages")),
-      serverToClient: describeMessages(
-        checker,
-        exportedType(checker, moduleOf(program, wire), "ServerMessage"),
-      ),
-    },
+    // One message per channel; each channel's payload is a type below.
+    channels: CHANNELS,
     // A snapshot names a status by its index here (#632), so another
     // table must be another version.
     statusIds: WIRE_STATUS_IDS,
@@ -99,8 +88,8 @@ function versionSource(version: string): string {
 
 /**
  * Generated: the hash of \`wire-schema.json\`. Never edit by hand; run
- * \`pnpm run wire:snapshot\`. Every client sends it as \`protocolVersion\`
- * on every create and join, and both rooms refuse a join whose value is
+ * \`pnpm run wire:snapshot\`. Every peer sends it as \`protocolVersion\`
+ * in its hello and lobby join, and a host refuses one whose value is
  * absent or different (\`PROTOCOL_MISMATCH_MESSAGE\`), so a stale tab
  * fails loudly at join time instead of desynchronising mid-match. It
  * only ever rejects; there is no code path per version (ADR-0016).
@@ -204,20 +193,6 @@ export function describeConstants(
     }
   }
   return sortKeys(described);
-}
-
-/** A message table: each name to its payload, as written and as a shape. */
-export function describeMessages(checker: ts.TypeChecker, table: ts.Type): Record<string, Json> {
-  const described: Record<string, Json> = {};
-  const properties = [...checker.getPropertiesOfType(table)];
-  for (const property of properties.sort((a, b) => compare(a.name, b.name))) {
-    const type = checker.getTypeOfSymbol(property);
-    described[property.name] = {
-      payload: checker.typeToString(type),
-      shape: describeType(checker, type),
-    };
-  }
-  return described;
 }
 
 const PRIMITIVES: readonly (readonly [ts.TypeFlags, string])[] = [
@@ -328,49 +303,6 @@ function union(members: readonly Json[]): Json {
     .map(([, member]) => member);
   const [only] = unique;
   return unique.length === 1 && only !== undefined ? only : { union: unique };
-}
-
-/** What `schema()` returns: a class Colyseus has put its metadata on, by its name. */
-interface SchemaClass {
-  readonly name: string;
-}
-
-/**
- * Each state class's fields, in declared order: the order is part of the
- * encoding (a field travels as its index), so it is never sorted.
- */
-export function describeState(classes: readonly SchemaClass[]): Record<string, Json> {
-  const described: Record<string, Json> = {};
-  for (const schema of classes) {
-    const fields = Metadata.getFields(schema) as Record<string, unknown>;
-    described[schema.name] = Object.entries(fields).map(([name, type]) => ({
-      name,
-      type: describeField(type, classes),
-    }));
-  }
-  return described;
-}
-
-function describeField(type: unknown, classes: readonly SchemaClass[]): Json {
-  if (typeof type === "string") {
-    return type;
-  }
-  if (typeof type === "function") {
-    const nested = classes.find((schema) => schema === type);
-    if (nested === undefined) {
-      throw new Error(`state schema ${type.name} is not in the snapshot's list`);
-    }
-    return { schema: nested.name };
-  }
-  if (typeof type === "object" && type !== null) {
-    const entries: [string, unknown][] = Object.entries(type);
-    const [entry] = entries;
-    if (entries.length === 1 && entry !== undefined) {
-      const [collection, child] = entry;
-      return { [collection]: describeField(child, classes) };
-    }
-  }
-  throw new Error(`no wire description for state field type ${String(type)}`);
 }
 
 function sortKeys(record: Record<string, Json>): Record<string, Json> {

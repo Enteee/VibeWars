@@ -1,13 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  ADDRESS_LIMIT,
-  CLIENT_LIMIT,
   LOBBY_CODE_ALPHABET,
   LOBBY_CODE_LENGTH,
-  RATE_LIMIT,
-  ROOM_LIMIT,
-  ROOM_MATCH,
   isLobbyCode,
   normalizeLobbyCode,
   parseClientIntent,
@@ -17,15 +12,6 @@ import { PROTOCOL_VERSION } from "./protocol-version.js";
 describe("protocol constants", () => {
   it("derives the protocol version from the wire schema", () => {
     expect(PROTOCOL_VERSION).toMatch(/^[0-9a-f]{12}$/);
-  });
-
-  it("gives every capacity refusal its own code (#282)", () => {
-    const codes = [ROOM_LIMIT, CLIENT_LIMIT, RATE_LIMIT, ADDRESS_LIMIT];
-    expect(new Set(codes).size).toBe(codes.length);
-  });
-
-  it("names the match room", () => {
-    expect(ROOM_MATCH).toBe("match");
   });
 });
 

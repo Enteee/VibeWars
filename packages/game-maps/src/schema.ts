@@ -3,9 +3,7 @@ import { z } from "zod";
 /**
  * Declarative map format (ADR-0006), validated with zod rather than
  * hand-rolled checks: map data is exactly the kind of "strongly validated
- * declarative representation" zod exists for, and it is already present in
- * this monorepo's dependency tree via Colyseus's auth packages — using the
- * same version here (`zod@4.6.7`) avoids adding a second copy.
+ * declarative representation" zod exists for.
  *
  * A wall is a rectangle *or* an arbitrary polygon; both reduce to the same
  * `Segment[]` the collision/LOS engine in `@vibewars/game-core` consumes

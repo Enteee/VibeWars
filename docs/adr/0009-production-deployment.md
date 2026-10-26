@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted (2026-10-23); container build to be validated on a devenv-capable
+Superseded by [ADR-0022](0022-peer-to-peer-networking.md) (2026-10-26): #404
+deleted the server and `containers.prod`; the game is the static GitHub
+Pages build. Accepted (2026-10-23); container build to be validated on a devenv-capable
 machine (see ADR-0007's sandbox caveat — this cannot be executed from inside
 the current sandbox).
 

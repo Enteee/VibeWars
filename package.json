@@ -11,7 +11,7 @@
   },
   "scripts": {
     "build": "pnpm -r --filter \"./packages/**\" --filter \"./apps/**\" run build",
-    "typecheck": "tsc --build tsconfig.build.json && tsc -p tsconfig.json --noEmit && pnpm -r exec tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc --build tsconfig.build.json && tsc -p tsconfig.json --noEmit && pnpm -r exec tsc -p tsconfig.json --noEmit && tsc -p packages/game-session/src/tools/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc --build tsconfig.build.json && eslint .",
@@ -23,7 +23,7 @@
     "music:check": "pnpm --filter @vibewars/web run music:check",
     "test:e2e": "playwright test",
     "bench:ticks": "BENCH_TICKS=400 vitest run packages/game-core/src/tools/tick-bench.test.ts packages/game-maps/src/map-bench.test.ts",
-    "wire:snapshot": "tsc --build tsconfig.build.json && WIRE_SNAPSHOT=write vitest run apps/server/src/tools/wire-snapshot.test.ts",
+    "wire:snapshot": "tsc --build tsconfig.build.json && WIRE_SNAPSHOT=write vitest run packages/game-session/src/tools/wire-snapshot.test.ts",
     "ci": "pnpm run format:check && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build",
     "ci:full": "pnpm run ci && pnpm run test:e2e"
   },

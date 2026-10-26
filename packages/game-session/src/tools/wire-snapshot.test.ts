@@ -1,16 +1,13 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-
-import { schema, t } from "@colyseus/schema";
+import { CHANNELS } from "@vibewars/game-protocol";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import {
   SCHEMA_FILE,
   VERSION_FILE,
   describeConstants,
-  describeState,
   describeTypes,
   generateWireFiles,
   moduleOf,
@@ -18,8 +15,6 @@ import {
   versionOf,
   type WireFiles,
 } from "./wire-snapshot.js";
-
-const ROOMS = path.join(path.dirname(fileURLToPath(import.meta.url)), "../rooms");
 
 /** `WIRE_SNAPSHOT=write` is `pnpm run wire:snapshot`: regenerate, then check as CI does. */
 const WRITE = process.env.WIRE_SNAPSHOT === "write";
@@ -50,40 +45,11 @@ describe("the wire schema snapshot (#303)", () => {
     expect(await generateWireFiles()).toEqual(generated);
   }, 60_000);
 
-  it("is what the rooms send: every send goes through the typed helpers", () => {
-    const raw: string[] = [];
-    for (const file of roomSources()) {
-      if (path.basename(file.name) !== "wire.ts") {
-        for (const match of file.source.matchAll(/\.(?:send|broadcast)\(/g)) {
-          raw.push(`${file.name}: ${match[0]}`);
-        }
-      }
-    }
-    expect(raw, "send through rooms/wire.ts, so the snapshot sees the payload").toEqual([]);
-  });
-
-  it("holds every message the rooms handle, and no other", () => {
-    const handled = new Set<string>();
-    for (const file of roomSources()) {
-      for (const match of file.source.matchAll(/\.onMessage\(\s*"([^"]+)"/g)) {
-        handled.add(match[1] ?? "");
-      }
-    }
-    const snapshot = JSON.parse(generated.schema) as {
-      messages: { clientToServer: Record<string, unknown> };
-    };
-    expect(handled.size).toBeGreaterThan(0);
-    expect(new Set(Object.keys(snapshot.messages.clientToServer))).toEqual(handled);
+  it("names every channel peers send on", () => {
+    const snapshot = JSON.parse(generated.schema) as { channels: readonly string[] };
+    expect(snapshot.channels).toEqual(CHANNELS);
   });
 });
-
-/** The rooms' sources, tests aside. */
-function roomSources(): { name: string; source: string }[] {
-  return fs
-    .readdirSync(ROOMS)
-    .filter((file) => file.endsWith(".ts") && !file.endsWith(".test.ts"))
-    .map((file) => ({ name: file, source: fs.readFileSync(path.join(ROOMS, file), "utf8") }));
-}
 
 describe("what changes the hash", () => {
   /** The hash of one module's exported types, as the snapshot describes them. */
@@ -149,13 +115,5 @@ describe("what changes the hash", () => {
       );
     expect(json("null | string")).toMatch(/^[0-9a-f]{12}$/);
     expect(json("null | string")).not.toBe(json("null | number"));
-  });
-
-  it("a state schema's fields reordered do", () => {
-    const ab = schema({ a: t.string(), b: t.number() }, "Fixture");
-    const ba = schema({ b: t.number(), a: t.string() }, "Fixture");
-    expect(versionOf(JSON.stringify(describeState([ab])))).not.toBe(
-      versionOf(JSON.stringify(describeState([ba]))),
-    );
   });
 });

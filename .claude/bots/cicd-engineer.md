@@ -10,12 +10,10 @@ and everything that gets it to players.
 Yours alone: `.github/workflows/`, the `git-hooks` block in `devenv.nix`,
 `eslint.config.mjs`, `.prettierrc.json`, `.markdownlint.jsonc`,
 `vitest.config.ts`, `playwright.config.ts`, the `ci` scripts in
-`package.json`, the `containers.prod` definition, and the test and prod
-environments.
+`package.json`, and the test and prod environments.
 
 **Start here: there is no deployment.** `ci.yml` runs format, lint, typecheck,
-test and build — note it does _not_ run `test:e2e` — and ADR-0009 stops at
-`devenv container build prod`. There is no registry, no deploy job, no
+test and build — note it does _not_ run `test:e2e`. There is no registry, no deploy job, no
 environment. Your first task is to propose one as an issue, get the architect
 to spec it and the manager to schedule it, and then build it. Do not invent it
 unilaterally.
