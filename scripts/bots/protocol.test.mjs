@@ -1457,7 +1457,7 @@ describe("deliverSystem (#23)", () => {
 
   it("puts a system message in every employee's inbox and mirrors it to General", () => {
     const delivered = deliverSystem(
-      { to: "all", text: "hubd is crash-looping: boom", nudge: null },
+      { to: "all", text: "hubd is crash-looping: boom", nudge: null, direct: false },
       {
         employees: ROLES_HERE,
         now: 5,
@@ -1484,7 +1484,10 @@ describe("deliverSystem (#23)", () => {
 
   it("sends nothing for an empty or shapeless entry", () => {
     expect(
-      deliverSystem({ to: "all", text: "  ", nudge: null }, { employees: ROLES_HERE, now: 1 }),
+      deliverSystem(
+        { to: "all", text: "  ", nudge: null, direct: false },
+        { employees: ROLES_HERE, now: 1 },
+      ),
     ).toEqual({
       deliveries: [],
       mirror: null,
@@ -1494,7 +1497,7 @@ describe("deliverSystem (#23)", () => {
 
   it("sends a scheduled nudge to a role only, mirrored to that role (#537)", () => {
     const delivered = deliverSystem(
-      { to: "manager", text: "Groom", nudge: "groom-backlog" },
+      { to: "manager", text: "Groom", nudge: "groom-backlog", direct: false },
       { employees: ROLES_HERE, now: 5 },
     );
     expect(delivered.deliveries.map((d) => d.employee)).toEqual(["manager", "manager@2"]);
@@ -1505,7 +1508,7 @@ describe("deliverSystem (#23)", () => {
 
   it("sends to one employee of a role, mirrored to its role (#383)", () => {
     const delivered = deliverSystem(
-      { to: "manager@2", text: "Stop", nudge: null },
+      { to: "manager@2", text: "Stop", nudge: null, direct: false },
       { employees: ROLES_HERE, now: 5 },
     );
     expect(delivered.deliveries.map((d) => d.employee)).toEqual(["manager@2"]);
@@ -1515,9 +1518,34 @@ describe("deliverSystem (#23)", () => {
   it("delivers nothing, and mirrors nothing, to a role nobody is employed in or a malformed entry", () => {
     const none = { deliveries: [], mirror: null };
     const context = { employees: ROLES_HERE, now: 5 };
-    expect(deliverSystem({ to: "architect", text: "x", nudge: null }, context)).toEqual(none);
+    expect(
+      deliverSystem({ to: "architect", text: "x", nudge: null, direct: false }, context),
+    ).toEqual(none);
     expect(deliverSystem({ text: "x" }, context)).toEqual(none);
-    expect(deliverSystem({ to: "all", text: "x", nudge: 3 }, context)).toEqual(none);
+    expect(deliverSystem({ to: "all", text: "x", nudge: 3, direct: false }, context)).toEqual(none);
+  });
+
+  it("sends a direct one to exactly that employee, seat 1 too, and mirrors nothing (#736)", () => {
+    const context = { employees: ROLES_HERE, now: 5 };
+    const seatOne = deliverSystem(
+      { to: "manager", text: "CI: PASS", nudge: null, direct: true },
+      context,
+    );
+    expect(seatOne.deliveries.map((d) => d.employee)).toEqual(["manager"]);
+    expect(seatOne.mirror).toBeNull();
+    const seatTwo = deliverSystem(
+      { to: "manager@2", text: "x", nudge: null, direct: true },
+      context,
+    );
+    expect(seatTwo).toMatchObject({ deliveries: [{ employee: "manager@2" }], mirror: null });
+    const none = { deliveries: [], mirror: null };
+    expect(
+      deliverSystem({ to: "architect", text: "x", nudge: null, direct: true }, context),
+    ).toEqual(none);
+    expect(deliverSystem({ to: "manager", text: "x", nudge: null }, context)).toEqual(none);
+    expect(deliverSystem({ to: "manager", text: "x", nudge: null, direct: 1 }, context)).toEqual(
+      none,
+    );
   });
 
   it("heads the mirror with the System style, apart from every role", () => {
@@ -1554,7 +1582,7 @@ describe("skipNudge (#537)", () => {
 describe("a system announcement wakes tg wait (#345)", () => {
   it("is a link line, which wakes every role", () => {
     const { deliveries } = deliverSystem(
-      { to: "all", text: "Company reboot by 12:05: new hubd.", nudge: null },
+      { to: "all", text: "Company reboot by 12:05: new hubd.", nudge: null, direct: false },
       { employees: new Map([["developer-1", "developer-1"]]), now: 1 },
     );
     const delivered = deliveries[0]?.line;

@@ -197,7 +197,7 @@ const NUDGES = path.join(HUB, "nudges.json");
 /** `blocked.json`: the column each Blocked card came from, by project item id (#639). */
 const BLOCKED = path.join(HUB, "blocked.json");
 /** The CI watches agents asked for (#736), hubd's alone. */
-const WATCHES = path.join(ROOT, "watches.json");
+const WATCHES = path.join(HUB, "watches.json");
 const LOCK = path.join(HUB, "hubd.lock");
 
 /**
@@ -1160,15 +1160,16 @@ function writeAtomic(file, contents) {
  *
  * @param {string} name what the file is about, for whoever lists the outbox
  * @param {string} text
- * @param {{ to?: string, nudge?: string | null }} [addressed] a role instead of
- *   everyone, and the scheduled nudge this is (#537)
+ * @param {{ to?: string, nudge?: string | null, direct?: boolean }} [addressed] a role
+ *   instead of everyone, the scheduled nudge this is (#537), and whether it is
+ *   for exactly the employee `to` names, in its inbox only (#736)
  * @returns {void}
  */
-function tellCompany(name, text, { to = "all", nudge = null } = {}) {
+function tellCompany(name, text, { to = "all", nudge = null, direct = false } = {}) {
   const outbox = path.join(ROOT, "bus", SYSTEM, "outbox");
   fs.mkdirSync(outbox, { recursive: true });
   const file = `${String(Date.now())}-${name}.json`;
-  writeAtomic(path.join(outbox, file), JSON.stringify({ to, text, nudge }));
+  writeAtomic(path.join(outbox, file), JSON.stringify({ to, text, nudge, direct }));
 }
 
 /**
@@ -2371,7 +2372,7 @@ function loadWatches() {
     tellCompany(
       "watches-discarded",
       "hub watch: hubd could not read its watches file and discarded it; register your watches again.",
-      { to: owner },
+      { to: owner, direct: true },
     );
   }
 }
@@ -2393,7 +2394,7 @@ function finishWatch(watch, text) {
     return;
   }
   keepWatches(watches.filter((kept) => kept.id !== watch.id));
-  tellCompany(`watch-${watch.id}`, text, { to: watch.employee });
+  tellCompany(`watch-${watch.id}`, text, { to: watch.employee, direct: true });
 }
 
 /**
@@ -2582,6 +2583,7 @@ async function pollWatches(cfg) {
         );
         tellCompany(`watch-${watched.id}`, supersededMessage(watched, pull.sha), {
           to: watched.employee,
+          direct: true,
         });
       }
       continue;

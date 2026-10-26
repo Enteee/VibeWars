@@ -2224,6 +2224,7 @@ describe("hubd scheduling a company reboot", () => {
       to: "all",
       text: String(asked.stdout).trim(),
       nudge: null,
+      direct: false,
     });
     expect(JSON.parse(fs.readFileSync(record, "utf8"))).toMatchObject({
       reason: "load #21",
@@ -2529,7 +2530,9 @@ describe("hubd watching CI for an agent (#736)", () => {
     hubd.setCi(sha, "codeql.yml", { id: 500, jobs: [job("analyze")] });
   };
   /**
-   * What the system outbox holds for one employee, in order.
+   * What the system outbox holds for exactly one employee, in order. Only
+   * `direct` entries count: a watch's answer is that employee's alone, and
+   * never mirrored to Telegram.
    *
    * @param {Awaited<ReturnType<typeof startHubd>>} hubd
    * @param {string} to
@@ -2545,11 +2548,11 @@ describe("hubd watching CI for an agent (#736)", () => {
       .filter((name) => name.endsWith(".json"))
       .sort()
       .map((name) => readJson(path.join(outbox, name)))
-      .filter((message) => message.to === to)
+      .filter((message) => message.to === to && message.direct === true)
       .map((message) => String(message.text));
   };
   /** @param {Awaited<ReturnType<typeof startHubd>>} hubd */
-  const watchesFile = (hubd) => path.join(hubd.root, "watches.json");
+  const watchesFile = (hubd) => path.join(hubd.hub, "watches.json");
 
   it("answers at once, then tells the asker once when CI passes, with the note", async () => {
     const hubd = await startHubd(5000);
@@ -2637,8 +2640,9 @@ describe("hubd watching CI for an agent (#736)", () => {
 
   it("keeps its watches over a restart, and ends one past its cap", async () => {
     const hubd = await startHubd(5000, ({ root }) => {
+      fs.mkdirSync(path.join(root, "hub"), { recursive: true });
       fs.writeFileSync(
-        path.join(root, "watches.json"),
+        path.join(root, "hub", "watches.json"),
         JSON.stringify([
           {
             id: "wabc123",
@@ -2661,8 +2665,9 @@ describe("hubd watching CI for an agent (#736)", () => {
 
   it("discards a watches file in another shape, and tells whoever it names", async () => {
     const hubd = await startHubd(5000, ({ root }) => {
+      fs.mkdirSync(path.join(root, "hub"), { recursive: true });
       fs.writeFileSync(
-        path.join(root, "watches.json"),
+        path.join(root, "hub", "watches.json"),
         JSON.stringify([{ id: "w1", employee: "developer-2", pr: "9" }]),
       );
     });
