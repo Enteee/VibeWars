@@ -21,6 +21,7 @@ import {
   helloProtocolVersion,
   parseClientIntent,
   parsePeerBye,
+  parsePeerCall,
   parsePeerHello,
   parsePeerRejoinProof,
   type MapDescriptor,
@@ -36,6 +37,7 @@ import {
   type WireSnapshot,
 } from "@vibewars/game-protocol";
 
+import { createCallBoard, type Team } from "./calls.js";
 import { packCombat } from "./combat-batches.js";
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 import { sanitizeName } from "./names.js";
@@ -180,6 +182,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    * the latest of a peer's proofs may seat it.
    */
   const proving = new Map<string, object>();
+  /** Each team's called foe and pings (#443), shown to that team alone. */
+  const calls = createCallBoard(map.bounds);
   let seated = 0;
   let accumulator = 0;
   let finished = false;
@@ -233,6 +237,19 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     transport.send("skill-bar", bar, seat.peerId);
   };
 
+  /** `team`'s calls to every seated peer of it, each its own: never a broadcast (#443). */
+  const sendCalls = (team: Team): void => {
+    const view = calls.view(team, sim.elapsedSeconds);
+    for (const seat of seats.values()) {
+      if (seat.team === team && seat.peerId !== undefined) {
+        transport.send("calls", view, seat.peerId);
+      }
+    }
+  };
+
+  /** Alive and in the match. */
+  const isAlive = (id: string): boolean => sim.get(id)?.combatant.dead === false;
+
   /** Seat `peerId` in `seat`, as a new player or one coming back, and tell it so. */
   const welcome = (seat: Seat, peerId: string): void => {
     seat.peerId = peerId;
@@ -250,6 +267,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     transport.send("welcome", message, peerId);
     sendSkillBar(seat, true);
     sendRecharges(seat, true);
+    // A rejoin sees the call its team has up.
+    transport.send("calls", calls.view(seat.team, sim.elapsedSeconds), peerId);
   };
 
   const seatNew = (
@@ -449,6 +468,23 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
   });
 
+  transport.on("call", (data, from) => {
+    const seat = seatOfPeer.get(from);
+    if (seat === undefined || finished || !budget.take(from, nowMs())) {
+      return;
+    }
+    const call = parsePeerCall(data);
+    // The dead call nothing; a malformed one is dropped without a word.
+    if (call === undefined || !isAlive(seat.playerId)) {
+      return;
+    }
+    const isLiveEnemy = (targetId: string): boolean =>
+      isAlive(targetId) && sim.get(targetId)?.combatant.team !== seat.team;
+    if (calls.call(seat.team, seat.playerId, call, sim.elapsedSeconds, isLiveEnemy)) {
+      sendCalls(seat.team);
+    }
+  });
+
   /** Forget `seat`'s player, and every target on them. */
   const free = (seat: Seat): void => {
     if (seat.peerId !== undefined) {
@@ -564,6 +600,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   const tick = (): void => {
     const result = sim.step(TICK_SECONDS);
     expireDropped();
+    for (const team of calls.step(sim.elapsedSeconds, isAlive)) {
+      sendCalls(team);
+    }
     for (const part of packSnapshot(snapshot(), MAX_MESSAGE_BYTES)) {
       transport.send("snapshot", part);
     }

@@ -6,6 +6,7 @@ import {
   parsePeerRejoinChallenge,
   parsePeerWelcome,
   parseRecharge,
+  parseWireCalls,
   parseWireCombatBatch,
   parseWireEnded,
   parseWireSkillBar,
@@ -14,22 +15,26 @@ import {
   type Channel,
   type ClientIntent,
   type PeerBye,
+  type PeerCall,
   type PeerHello,
   type PeerRefuse,
   type PeerRejoinProof,
   type PeerWelcome,
   type RechargeSlot,
+  type WireCalls,
   type WireEnded,
   type WireSkillBar,
   type WireSnapshot,
 } from "@vibewars/game-protocol";
 
-import type {
-  CombatMessage,
-  MatchConnection,
-  MatchSnapshot,
-  PlayerSnapshot,
-  SlotRecharge,
+import {
+  NO_CALLS,
+  type CallsSnapshot,
+  type CombatMessage,
+  type MatchConnection,
+  type MatchSnapshot,
+  type PlayerSnapshot,
+  type SlotRecharge,
 } from "./match-connection.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { rejoinProof } from "./rejoin-proof.js";
@@ -108,6 +113,8 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     { readonly wire: WireSnapshot; readonly players: readonly PlayerSnapshot[] } | undefined;
   let ended: WireEnded | undefined;
   let recharges: Recharges = { slots: [], at: 0 };
+  /** Your team's calls as last sent, and the match time they came at (#443). */
+  let calls: { readonly wire: WireCalls; readonly at: number } | undefined;
   let lost = false;
   /** When the host's peer went, by `Date.now`, while waiting for it back. */
   let droppedAt: number | undefined;
@@ -212,6 +219,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   });
   fromHost("recharge", parseRecharge, (message) => {
     recharges = { slots: message.slots, at: elapsed() };
+  });
+  fromHost("calls", parseWireCalls, (message) => {
+    calls = { wire: message, at: elapsed() };
   });
   fromHost("ended", parseWireEnded, (message) => {
     if (message.endReason === "host-left") {
@@ -347,6 +357,24 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 total: entry.totalSeconds,
               };
         });
+      },
+      sendCall(call: PeerCall) {
+        if (!lost && droppedAt === undefined) {
+          transport.send("call", call, hostId);
+        }
+      },
+      getCalls(): CallsSnapshot {
+        if (calls === undefined) {
+          return NO_CALLS;
+        }
+        // Counted down on the match clock, as recharges are.
+        const passed = elapsed() - calls.at;
+        return {
+          target: calls.wire.target,
+          pings: calls.wire.pings.flatMap((ping) =>
+            ping.remaining - passed > 0 ? [{ ...ping, remaining: ping.remaining - passed }] : [],
+          ),
+        };
       },
       async disconnect() {
         stop();
