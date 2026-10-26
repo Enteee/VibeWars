@@ -196,6 +196,15 @@ enchantments and hexes are **spells**; attacks, signets, shouts, stances
 and plain skills are not, and every rule that "affects spells" (dazed
 and Fast Casting, so far) leaves them alone.
 
+**Elite skills** wear a doubled gold frame wherever a skill is drawn,
+and their tooltip says "Elite" before the type (#459). A bar holds at most
+one: Barrage, Backbreaker and Broad Head Arrow, so far. In the build
+editor, placing a second elite takes the first one's place on the bar
+and says so ("Broad Head Arrow replaced Barrage: only one elite skill per
+bar."); the library's Elite toggle lists only elites. A bar with two
+elites, from an import or storage, cannot be saved, and a match plays the
+house loadout instead.
+
 **Stances** are yours alone, and only one is up at a time. Using a
 stance ends the one you are in, the same one included, which restarts
 at its full duration. A stance is not an enchantment: enchantment removal

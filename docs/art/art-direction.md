@@ -513,6 +513,15 @@ hotkey.
   height (1.9rem), centred over the name and cased in `bg`. In the Training
   Ground row it sits at the right end, at row height.
 
+### Elite frame
+
+An elite skill (#459) wears a **doubled** frame in `elite` `#d4a72c`, 3 px
+(`border: double`), wherever a skill is drawn: HUD slot, Training Ground
+row, build-editor slot, library box and tooltip. Doubled rather than only
+gold, so it reads in greyscale (#78). It is the slot's border, so the
+state rings above sit inside it; a negative margin keeps the slot's size.
+Gold is `elite` only, not `target` (`#ffd866`), which stays in the arena.
+
 ### UI controls
 
 Buttons and indicators in the HUD and menus. Ink on the panel. The states of one control

@@ -4,6 +4,10 @@ import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
 import { createCharacterDot, equippedCount, professionLabel } from "./character-preview.js";
 import { button, h } from "./kit.js";
 
+/** What every peer in a lobby learns about you (#541): WebRTC connects you directly. */
+export const PEER_IP_NOTICE =
+  "Online play connects you straight to the other players, so they can see your IP address.";
+
 /**
  * The main menu and lobby screens (brief §21).
  *
@@ -222,6 +226,8 @@ export function renderMenu(
   joinRow.appendChild(codeInput);
   joinRow.appendChild(joinButton);
   panel.appendChild(joinRow);
+  // Under host and join, so it is read before either (#541, SECURITY.md).
+  panel.appendChild(h("p", "menu-peer-notice", PEER_IP_NOTICE));
 
   const manageRow = h("div", "menu-row");
   manageRow.appendChild(button("teams", "", callbacks.onManageTeams));

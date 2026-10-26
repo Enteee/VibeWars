@@ -13,6 +13,8 @@
   --recharge-shade: rgb(0 0 0 / 55%);
   /* A cast's progress on its slot: --ink at low alpha (#485). */
   --cast-fill-shade: rgb(215 222 232 / 18%);
+  /* An elite skill's frame (#459). */
+  --elite: #d4a72c;
   font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 
@@ -74,6 +76,27 @@ body {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+/* No WebGL, no arena: the reason sits where it would be (#655), in the
+   editor as the Training Ground column's text, in a match boxed and
+   centred under the HUD. */
+.arena-notice {
+  margin: 0;
+  color: var(--ink-dim);
+  line-height: 1.4;
+}
+
+#viewport > .arena-notice {
+  max-width: 32rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 /* --------------------------------------------------------------------------
@@ -411,6 +434,14 @@ body {
   gap: 0.5rem;
   flex-wrap: wrap;
   align-items: center;
+}
+
+/* One muted line under host and join (#541): read, not clicked through. */
+.menu-peer-notice {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .screen button {
@@ -1641,6 +1672,13 @@ body {
 
 /* --- the bar itself ---------------------------------------------------- */
 
+/* What the last change did to the bar, e.g. an elite replaced (#459). */
+.editor-notice {
+  margin-top: 0.4rem;
+  color: var(--ink);
+  font-size: 0.8rem;
+}
+
 .skill-bar-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1732,6 +1770,27 @@ body {
   width: 100%;
 }
 
+.skill-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.skill-filters .skill-search {
+  flex: 1;
+  min-width: 0;
+}
+
+.skill-elite-filter {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
 .skill-groups {
   display: flex;
   flex-direction: column;
@@ -1815,6 +1874,19 @@ body {
   box-shadow: 0 6px 20px rgb(0 0 0 / 45%);
   /* The tooltip must never eat the drag the player is performing. */
   pointer-events: none;
+}
+
+/* An elite skill, wherever it is drawn (#459): a doubled gold frame, so it
+   reads in greyscale too. The negative margin pays for the wider border,
+   so an elite takes the same room as any other skill. After the :hover
+   rules on purpose: the frame stays gold. */
+.hud-skill.is-elite,
+.training-skill.is-elite,
+.skill-slot.is-elite,
+.skill-box.is-elite,
+.skill-tip.is-elite {
+  margin: -2px;
+  border: 3px double var(--elite);
 }
 
 .tip-title {

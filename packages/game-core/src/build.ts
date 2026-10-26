@@ -48,6 +48,9 @@ export interface PlayerBuild {
   readonly equipment: BuildEquipment;
 }
 
+/** GW1's elite rule (#459), as `validatePlayerBuild` reports it. */
+export const ONE_ELITE_PER_BAR = "Only one elite skill per bar";
+
 export interface BuildProblem {
   readonly field: string;
   readonly message: string;
@@ -132,6 +135,7 @@ export function validatePlayerBuild(build: PlayerBuild, rules: AttributeRules): 
   );
 
   const seen = new Set<string>();
+  const elites = new Set<string>();
   build.skillBar.forEach((skillId, index) => {
     if (skillId === null) {
       return;
@@ -160,7 +164,15 @@ export function validatePlayerBuild(build: PlayerBuild, rules: AttributeRules): 
       });
     }
     seen.add(skillId);
+    if (skill.elite) {
+      elites.add(skillId);
+    }
   });
+  // Counted by id, so the same elite twice is the duplicate above and
+  // not an elite problem as well.
+  if (elites.size > 1) {
+    problems.push({ field: "skillBar", message: ONE_ELITE_PER_BAR });
+  }
 
   return problems;
 }

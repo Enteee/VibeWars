@@ -46,8 +46,13 @@ export interface EffectDescription {
 export interface SkillDescription {
   readonly id: string;
   readonly name: string;
-  /** What kind of skill it is, as GW1 words it: "Signet.", "Hex Spell." (#524). */
+  /**
+   * What kind of skill it is, as GW1 words it: "Signet.", "Hex Spell."
+   * (#524), "Elite Attack." (#459).
+   */
   readonly typeText: string;
+  /** Drawn with the gold frame (#459). */
+  readonly elite: boolean;
   /** `undefined` for a "No Attribute" skill (#445). */
   readonly attributeId: string | undefined;
   /** e.g. "Fire Magic", or the raw id if the attribute is unknown; `undefined` with no attribute. */
@@ -354,7 +359,8 @@ export function describeSkill(
   return {
     id: skill.id,
     name: skill.name,
-    typeText: TYPE_TEXT[skill.type],
+    typeText: skill.elite ? `Elite ${TYPE_TEXT[skill.type]}` : TYPE_TEXT[skill.type],
+    elite: skill.elite,
     attributeId: skill.attributeId,
     attributeName:
       skill.attributeId === undefined
