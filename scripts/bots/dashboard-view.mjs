@@ -18,6 +18,7 @@ import { DRAIN_MS, clock } from "./reboot.mjs";
  * @type {Record<string, string[] | undefined>}
  */
 export const COLUMN_OWNERS = {
+  Blocked: ["manager"],
   Backlog: ["architect", "manager"],
   Ready: ["developer-1", "developer-2"],
   "In Progress": ["developer-1", "developer-2"],
@@ -27,6 +28,7 @@ export const COLUMN_OWNERS = {
 
 /** Too many cards to list, and nobody waits on them: a count is enough. */
 const COUNT_ONLY = new Set(["Backlog", "Ready"]);
+const BLOCKED = "Blocked";
 const DONE = "Done";
 const DONE_SHOWN = 3;
 
@@ -40,6 +42,7 @@ const TINY_WIDTH = 30;
  * @type {Record<string, string>}
  */
 const COLUMN_COLOURS = {
+  Blocked: "31",
   Backlog: "37",
   Ready: "34",
   "In Progress": "36",
@@ -201,12 +204,14 @@ function cardLine(card, width) {
  *
  * @param {{ at: number, sweptAt: number, cards: readonly { rev: number, item: unknown }[] } | null} snapshot
  *   hubd's board copy, or null before its first sweep
- * @param {readonly string[] | null} columns the board's columns, or null before claude-llc-init
+ * @param {readonly string[] | null} boardColumns the board's columns, or null before claude-llc-init;
+ *   Blocked, last on the board, is shown first
  * @param {ReadonlySet<string>} live the roles with an employee running right now
  * @param {Pane} pane
  * @returns {string[]}
  */
-export function boardLines(snapshot, columns, live, { rows, width }) {
+export function boardLines(snapshot, boardColumns, live, { rows, width }) {
+  const columns = boardColumns === null ? null : blockedFirst(boardColumns);
   if (columns === null) {
     return [cut("board: not set up yet — run claude-llc-init", width)].slice(0, rows);
   }
@@ -723,4 +728,15 @@ export function feedLines(feed, { rows, width }) {
     const who = `${visible(line.from)} -> ${visible(line.to)}`;
     return paint(when, "2") + " " + cut(`${who}: ${visible(line.text)}`, width - when.length - 1);
   });
+}
+
+/**
+ * Blocked is the last option on GitHub's board, but the first thing the
+ * operator should see (#639).
+ *
+ * @param {readonly string[]} columns
+ * @returns {string[]}
+ */
+function blockedFirst(columns) {
+  return [...columns.filter((c) => c === BLOCKED), ...columns.filter((c) => c !== BLOCKED)];
 }

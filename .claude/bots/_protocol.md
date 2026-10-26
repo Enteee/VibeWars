@@ -63,6 +63,8 @@ next. `Backlog -> Ready` is the architect's move, and only theirs. Move a card t
 colleagues poll the board to find their work, and a stale column means someone
 sits idle or two people do the same thing.
 
+Blocked: outside the flow, the manager's alone.
+
 `board` reads cost no GitHub budget; a move shows at once. Use `board ls
 <column>` or `board show <issue>`, never `hub project item-list`.
 

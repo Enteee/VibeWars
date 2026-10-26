@@ -1034,8 +1034,11 @@ export function arrivals(known, changes, column) {
   return { arrived, known: next };
 }
 
-/** The board's columns, in workflow order. */
-export const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
+/** The board's columns, in workflow order, then Blocked, which is outside the flow. */
+export const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done", "Blocked"];
+
+/** `board ls` prints Blocked above Backlog (#639), though GitHub lists it last. */
+const LISTED = ["Blocked", ...COLUMNS.filter((column) => column !== "Blocked")];
 
 /** Done cards a bare `board ls` shows; the rest are a `board ls Done` away. */
 export const DONE_SHOWN = 5;
@@ -1058,7 +1061,7 @@ export function boardLines(cards, fold) {
   const line = (card) => `  #${String(card.number ?? "-").padEnd(4)} ${card.title}`;
   /** @type {string[]} */
   const lines = [];
-  for (const column of COLUMNS) {
+  for (const column of LISTED) {
     const group = cards.filter((card) => card.status === column);
     if (group.length === 0) {
       continue;
@@ -1146,4 +1149,71 @@ export function readBoardState(value) {
     removed.push({ id: removal.id, number: removal.number, rev: removal.rev });
   }
   return { format: BOARD_FORMAT_VERSION, epoch, rev, floor, sweptAt, at, stale, cards, removed };
+}
+
+/**
+ * What `claude-llc-init` does about the Status field's options (#639).
+ * Replacing the option set gives every option a new id and clears every
+ * card's column, so it is only done on a board with no cards. Otherwise the
+ * operator adds the missing options by hand, which keeps their ids.
+ *
+ * @param {{ current: readonly string[], wanted: readonly string[], items: number }} board
+ * @returns {{ kind: "ok" } | { kind: "replace" } | { kind: "refuse", message: string }}
+ */
+export function columnsPlan({ current, wanted, items }) {
+  if (current.length === wanted.length && wanted.every((name) => current.includes(name))) {
+    return { kind: "ok" };
+  }
+  if (items === 0) {
+    return { kind: "replace" };
+  }
+  const missing = wanted.filter((name) => !current.includes(name));
+  return {
+    kind: "refuse",
+    message: `the board's columns are ${current.join(", ")}; add the missing option(s) ${missing.join(", ")} by hand in the Status field's settings (Project → Settings → Status), then run claude-llc-init again`,
+  };
+}
+
+/**
+ * The record of where each Blocked card came from (#639), after a move.
+ * Into Blocked it notes the column the card left; out of it, it forgets.
+ *
+ * @param {Readonly<Record<string, string>>} origins project item id -> column
+ * @param {{ id: string, before: string, after: string }} move
+ * @returns {Record<string, string>}
+ */
+export function blockedAfterMove(origins, { id, before, after }) {
+  const { [id]: _gone, ...rest } = origins;
+  return after === "Blocked" && before !== "Blocked" ? { ...rest, [id]: before } : rest;
+}
+
+/**
+ * The record with every card that is no longer in Blocked dropped, such as
+ * one moved out in GitHub's UI.
+ *
+ * @param {Readonly<Record<string, string>>} origins
+ * @param {readonly { item: { id: string, status?: unknown } }[]} cards
+ * @returns {Record<string, string>}
+ */
+export function blockedSwept(origins, cards) {
+  const blocked = new Set(
+    cards.filter((card) => card.item.status === "Blocked").map((card) => card.item.id),
+  );
+  return Object.fromEntries(Object.entries(origins).filter(([id]) => blocked.has(id)));
+}
+
+/**
+ * `blocked.json` as a record, or `null` if it is not one: an object of strings.
+ *
+ * @param {unknown} raw
+ * @returns {Record<string, string> | null}
+ */
+export function readBlocked(raw) {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+    return null;
+  }
+  const entries = Object.entries(raw);
+  return entries.every(([, value]) => typeof value === "string")
+    ? Object.fromEntries(entries.map(([id, value]) => [id, String(value)]))
+    : null;
 }
