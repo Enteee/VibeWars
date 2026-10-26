@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  gaveUpText,
   LIMIT_MAX,
   PAUSE_MAX,
   PAUSE_MIN,
@@ -145,6 +146,13 @@ describe("hasUnread", () => {
     expect(hasUnread(dir)).toBe(true);
     fs.writeFileSync(path.join(dir, "cursor"), "0\n");
     expect(hasUnread(dir)).toBe(true);
+  });
+});
+
+describe("gaveUpText (#384)", () => {
+  it("tells the manager's loop keeps trying, and every other that it stopped", () => {
+    expect(gaveUpText("manager")).toMatch(/keeps trying/);
+    expect(gaveUpText("developer-1@2")).toMatch(/is stopped.*claude-llc-agent developer-1@2/);
   });
 });
 
@@ -322,6 +330,10 @@ describe("claude-llc-agent", () => {
         "const args = process.argv.slice(2);",
         `fs.appendFileSync(${JSON.stringify(calls)}, args.join(" ") + "\\n");`,
         'if (args[0] === "pause") console.log("0");',
+        // The waits stand for the loop's life: this many and the loop is stopped.
+        'if (args[0] === "wait" && fs.readFileSync(' +
+          JSON.stringify(calls) +
+          ', "utf8").split("\\n").filter((l) => l.startsWith("wait ")).length > Number(process.env.STOP_AFTER_WAITS ?? 1e9)) process.exit(1);',
         'if (args[0] === "limited") console.log(String(Number(args[3]) + 1));',
       ].join("\n"),
     );
@@ -398,6 +410,18 @@ describe("claude-llc-agent", () => {
     ]);
     expect(result.calls.at(-1)).toBe("gave-up developer-1");
     expect(result.stdout).toContain("Claude usage limit reached; next turn for developer-1 in 1s.");
+  });
+
+  it("never gives up on the manager: it says so once and keeps trying (#384)", () => {
+    const result = run(
+      ["fail", "fail", "fail", "fail", "fail", "fail", "fail", "ok"],
+      { STOP_AFTER_WAITS: "7" },
+      "manager",
+    );
+
+    expect(result.code).toBe(0);
+    expect(result.runs).toBe(8);
+    expect(result.calls.filter((call) => call.startsWith("gave-up"))).toEqual(["gave-up manager"]);
   });
 
   it("gives the reboot note to the first turn only (#321)", () => {

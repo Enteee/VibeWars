@@ -344,6 +344,9 @@ let
             exit 0
             ;;
           stop)
+            # Before the session goes: the supervisor must not restart the
+            # manager into a company being stopped (#384).
+            touch "$VIBEWARS_BOT_ROOT/stopping"
             ${tmux} kill-session -t "=$SESSION" 2>/dev/null && echo "stopped $SESSION" || echo "$SESSION was not running"
             stop_daemons
             echo "stopped hubd and supervisor"
@@ -503,6 +506,7 @@ let
         # The dashboard is three titled panes (#165): BOARD and COMPANY side
         # by side, the TELEGRAM feed full width along the bottom. Each runs
         # dashboard.mjs with its section and redraws when its pane resizes.
+        rm -f "$VIBEWARS_BOT_ROOT/stopping"
         ${tmux} new-session -d -s "$SESSION" -n dashboard -c "$DEVENV_ROOT" \
           "${node} ${llcScripts}/dashboard.mjs board"
         # Which build this company runs, for `claude-llc status` and an
@@ -686,7 +690,14 @@ in
               fi
               pause="$(${node} ${llcScripts}/agent-loop.mjs pause "$pause" $(( SECONDS - started )) "$failed")"
 
-              if [ "$failures" -ge 5 ]; then
+              # The manager never gives up (#384): it says so once, at the
+              # fifth failure, and keeps trying at the longest pause.
+              if [ "$failures" -ge 5 ] && [ "$employee" = manager ]; then
+                if [ "$failures" -eq 5 ]; then
+                  echo "claude-llc-agent: $employee failed five runs in a row; it keeps trying."
+                  ${node} ${llcScripts}/agent-loop.mjs gave-up "$employee" || true
+                fi
+              elif [ "$failures" -ge 5 ]; then
                 echo "claude-llc-agent: $employee failed five runs in a row."
                 echo "claude-llc-agent: not restarting. Fix the cause, then:"
                 echo "claude-llc-agent:   claude-llc-agent $employee"

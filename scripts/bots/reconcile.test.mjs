@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { FIRE_DEADLINE_MS, RESTART_HOLDOFF_MS, descendants, reconcile } from "./reconcile.mjs";
+import {
+  FIRE_DEADLINE_MS,
+  MANAGER_BACKOFF_MS,
+  MANAGER_WINDOW_MS,
+  RESTART_HOLDOFF_MS,
+  descendants,
+  managerAction,
+  reconcile,
+} from "./reconcile.mjs";
 import { applyStaff, roleOf } from "./staff.mjs";
 
 const NOW = 1_800_000_000_000;
@@ -128,6 +136,14 @@ describe("reconcile (#383)", () => {
     expect(plan.start).toEqual([]);
   });
 
+  it("leaves a missing manager to managerAction", () => {
+    const plan = reconcile(company(["manager", "qa-tester"]), panes(["qa-tester"]), {
+      now: NOW,
+      ...idle,
+    });
+    expect(plan.start).toEqual([]);
+  });
+
   it("does nothing during a reboot", () => {
     const staff = company(["qa-tester", "qa-tester@2"]);
     const plan = reconcile(staff, panes(["qa-tester", "stray"]), {
@@ -151,5 +167,33 @@ describe("descendants", () => {
     for (const root of [0, 1, -1, Number.NaN, 1.5]) {
       expect(descendants(listing, root)).toEqual([]);
     }
+  });
+});
+
+describe("managerAction (#384)", () => {
+  const down = { reboot: false, stopping: false, paneAlive: false, now: NOW };
+  const ago = (/** @type {number[]} */ ...ms) => ms.map((m) => NOW - m);
+
+  it("does nothing during a reboot, a stop, or while the manager runs", () => {
+    expect(managerAction({ ...down, reboot: true, recentRestarts: [] })).toBe("none");
+    expect(managerAction({ ...down, stopping: true, recentRestarts: [] })).toBe("none");
+    expect(managerAction({ ...down, paneAlive: true, recentRestarts: [] })).toBe("none");
+  });
+
+  it("starts a dead manager at once, three times within ten minutes", () => {
+    expect(managerAction({ ...down, recentRestarts: [] })).toBe("start");
+    expect(managerAction({ ...down, recentRestarts: ago(1000) })).toBe("start");
+    expect(managerAction({ ...down, recentRestarts: ago(1000, 2000) })).toBe("start");
+  });
+
+  it("backs off from the fourth: no sooner than five minutes after the last, telling once", () => {
+    const three = ago(MANAGER_WINDOW_MS - 1, 2000, 1000);
+    expect(managerAction({ ...down, recentRestarts: three })).toBe("none");
+    const spaced = ago(MANAGER_WINDOW_MS - 1, 2 * MANAGER_BACKOFF_MS, MANAGER_BACKOFF_MS);
+    expect(managerAction({ ...down, recentRestarts: spaced })).toBe("start-backoff");
+    expect(managerAction({ ...down, recentRestarts: [...spaced, NOW - MANAGER_BACKOFF_MS] })).toBe(
+      "start",
+    );
+    expect(managerAction({ ...down, recentRestarts: [...spaced, NOW - 1000] })).toBe("none");
   });
 });

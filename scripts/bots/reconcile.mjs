@@ -11,6 +11,18 @@ export const FIRE_DEADLINE_MS = 10 * 60_000;
 /** How long after starting an employee the supervisor waits before starting it again. */
 export const RESTART_HOLDOFF_MS = 60_000;
 
+/** Restarts of the manager within this window count towards the backoff. */
+export const MANAGER_WINDOW_MS = 10 * 60_000;
+
+/** The restarts within the window after which they are at least this far apart. */
+export const MANAGER_BACKOFF_AFTER = 3;
+
+/** The least time between manager restarts once they are backing off. */
+export const MANAGER_BACKOFF_MS = 5 * 60_000;
+
+/** The id of the one manager, whom `reconcile` leaves to `managerAction`. */
+const MANAGER = "manager";
+
 /**
  * @typedef {{ pane: string, employee: string }} Pane
  *   `employee` is the id the pane was started for, `""` while it is being set up
@@ -22,7 +34,7 @@ export const RESTART_HOLDOFF_MS = 60_000;
  * What to do now so the panes match `staff`.
  *
  * - A working employee with no pane is started, unless it was started
- *   within `RESTART_HOLDOFF_MS`.
+ *   within `RESTART_HOLDOFF_MS`. Not the manager: `managerAction` does.
  * - A firing employee is left alone until it has run `company ready`, is
  *   between turns, or `FIRE_DEADLINE_MS` passed since the fire; then its
  *   pane is killed and it is forgotten. One with no pane is forgotten.
@@ -53,7 +65,11 @@ export function reconcile(staff, panes, { now, between, rebooting, started }) {
   for (const [id, employee] of Object.entries(staff.employees)) {
     if (employee.state === "working") {
       const last = started.get(id);
-      if (!running.has(id) && (last === undefined || now - last >= RESTART_HOLDOFF_MS)) {
+      if (
+        id !== MANAGER &&
+        !running.has(id) &&
+        (last === undefined || now - last >= RESTART_HOLDOFF_MS)
+      ) {
         plan.start.push(id);
       }
       continue;
@@ -90,6 +106,38 @@ export function reconcile(staff, panes, { now, between, rebooting, started }) {
     }
   }
   return plan;
+}
+
+/**
+ * What to do about the manager (#384): a company without one cannot be
+ * steered, so outside a reboot and a `claude-llc stop` one always runs. A
+ * dead pane is started again at once, three times within ten minutes; the
+ * fourth and later restarts wait at least five minutes after the last (until
+ * then: `none`), and the first of those is `start-backoff`, which says so.
+ *
+ * @param {{
+ *   reboot: boolean,
+ *   stopping: boolean,
+ *   paneAlive: boolean,
+ *   recentRestarts: readonly number[],
+ *   now: number,
+ * }} state `recentRestarts` are the times of the restarts within
+ *   `MANAGER_WINDOW_MS` of `now`
+ * @returns {"none" | "start" | "start-backoff"}
+ *   `start-backoff` is the restart that tells the company it is backing off
+ */
+export function managerAction({ reboot, stopping, paneAlive, recentRestarts, now }) {
+  if (reboot || stopping || paneAlive) {
+    return "none";
+  }
+  if (recentRestarts.length < MANAGER_BACKOFF_AFTER) {
+    return "start";
+  }
+  const last = Math.max(...recentRestarts);
+  if (now - last < MANAGER_BACKOFF_MS) {
+    return "none";
+  }
+  return recentRestarts.length === MANAGER_BACKOFF_AFTER ? "start-backoff" : "start";
 }
 
 /**
