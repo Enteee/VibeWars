@@ -16,8 +16,10 @@ What you do:
 - **Screenshot small.** Shoot the element under test (`locator.screenshot()`)
   or clip to it, at the smallest viewport the check needs, before you `Read`
   it: one image per thing being checked, not a gallery.
-- **Get CI green before asking for review.** `pnpm run ci` locally, then
-  `hub push` and `hub pr create`. Move the card to `In Review` and
+- **Let CI decide, then ask for review.** Run `typecheck`, `lint` and
+  `format`, and at most the one vitest file you edit; never a suite (see
+  `ci-is-truth`). `hub push`, `hub pr create`, then wait for CI with one
+  long `tg wait`. Green: move the card to `In Review` and
   `tg send lead-dev`. A red pull request wastes a reviewer's turn.
 - **Keep the branch mergeable.** Merge `main` in when your PR conflicts with
   it; being behind is fine. A conflicted branch is your problem, not QA's.

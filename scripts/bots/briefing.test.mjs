@@ -91,3 +91,22 @@ describe("briefing.mjs", () => {
     expect(briefing("models", "# Role: manager\n").code).toBe(2);
   });
 });
+
+describe("the briefings in .claude/bots (#735)", () => {
+  const BOTS = path.join(path.dirname(fileURLToPath(import.meta.url)), "../../.claude/bots");
+  const briefs = fs.readdirSync(BOTS).filter((name) => name.endsWith(".md"));
+
+  it("include every role and the protocol", () => {
+    expect(briefs).toContain("_protocol.md");
+    expect(briefs).toContain("developer-1.md");
+  });
+
+  // CI runs the suites (ci-is-truth): a brief, read every turn, never
+  // tells an agent to run one locally.
+  it.each(briefs)("%s names no suite command to run", (name) => {
+    const text = fs.readFileSync(path.join(BOTS, name), "utf8");
+    for (const command of ["pnpm run ci", "ci:full", "test:e2e"]) {
+      expect(text, command).not.toContain(command);
+    }
+  });
+});

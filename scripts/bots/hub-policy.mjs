@@ -131,6 +131,7 @@ export const GATE_PATHS = [
   "scripts/bots/git-hardening.mjs",
   "scripts/bots/reboot.mjs",
   "scripts/bots/staff.mjs",
+  "scripts/bots/start-employee.mjs",
   "scripts/bots/restart.mjs",
   "scripts/bots/supervisor.mjs",
   "scripts/bots/agent-turn.mjs",
