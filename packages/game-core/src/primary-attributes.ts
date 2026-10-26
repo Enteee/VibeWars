@@ -97,3 +97,14 @@ export function divineFavorBonusHeal(rank: number, skill: Skill, targetIsAlly: b
   // 3.2 × rank in whole numbers, so no float lands a hair under an integer.
   return Math.floor((16 * rank) / 5);
 }
+
+/** The Paragon's primary. */
+export const LEADERSHIP_ATTRIBUTE = "paragon.leadership";
+
+/**
+ * Energy Leadership gives for one shout (#625): 1 for each ally it
+ * affected, the shouter included, up to 1 for every 2 ranks.
+ */
+export function leadershipEnergy(rank: number, alliesAffected: number): number {
+  return Math.min(alliesAffected, Math.floor(rank / 2));
+}

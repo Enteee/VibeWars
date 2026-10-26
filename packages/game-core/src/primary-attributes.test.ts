@@ -5,6 +5,7 @@ import {
   divineFavorBonusHeal,
   expertiseEnergyCost,
   fastCastingMultiplier,
+  leadershipEnergy,
   strengthArmorPenetration,
 } from "./primary-attributes.js";
 import { unarmedResolvedEquipment } from "./equipment/resolve.js";
@@ -196,5 +197,20 @@ describe("Divine Favor (#529)", () => {
     const foe = makeCombatant({ id: "f", team: 1, health: 100 });
     cast({ ...orison, target: "single-enemy", effects: [] }, [foe]);
     expect(foe.health).toBe(100);
+  });
+});
+
+describe("leadershipEnergy (#625)", () => {
+  it.each([
+    [0, 1, 0],
+    [0, 8, 0],
+    [1, 3, 0],
+    [2, 1, 1],
+    [2, 3, 1],
+    [12, 1, 1],
+    [12, 3, 3],
+    [12, 8, 6],
+  ])("rank %i, %i allies affected: %i energy", (rank, allies, energy) => {
+    expect(leadershipEnergy(rank, allies)).toBe(energy);
   });
 });

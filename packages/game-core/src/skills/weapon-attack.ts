@@ -17,6 +17,7 @@ import {
   applyDamage,
   applyEffect,
   applySkillEffects,
+  gainEnergy,
   type CombatEvent,
   type SkillResolution,
 } from "./effects.js";
@@ -148,16 +149,7 @@ export function criticalChance(snapshot: WeaponSnapshot, rules: CombatRules): nu
  * fell, gains none.
  */
 export function gainCriticalEnergy(attacker: Combatant, rank: number, events: CombatEvent[]): void {
-  const amount = criticalStrikesEnergy(rank);
-  if (attacker.dead || amount <= 0) {
-    return;
-  }
-  const applied = Math.min(amount, attacker.maxEnergy - attacker.energy);
-  if (applied <= 0) {
-    return;
-  }
-  attacker.energy += applied;
-  events.push({ kind: "energy-gain", targetId: attacker.id, amount: applied });
+  gainEnergy(attacker, criticalStrikesEnergy(rank), events);
 }
 
 /**

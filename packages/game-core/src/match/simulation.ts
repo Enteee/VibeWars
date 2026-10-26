@@ -27,6 +27,7 @@ import {
   type NavGraph,
   type PathFinder,
 } from "../pathing.js";
+import { LEADERSHIP_ATTRIBUTE, leadershipEnergy } from "../primary-attributes.js";
 import { createRng, seedFromString, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import {
@@ -38,7 +39,12 @@ import {
 } from "../skills/activation.js";
 import { CastState, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
-import { applySkillEffects, type CombatEvent, type SkillResolution } from "../skills/effects.js";
+import {
+  applySkillEffects,
+  gainEnergy,
+  type CombatEvent,
+  type SkillResolution,
+} from "../skills/effects.js";
 import {
   aggregateModifiers,
   clampPips,
@@ -1019,6 +1025,23 @@ export class MatchSimulation {
     return attackDurationSeconds(record.combatant, base) / 2;
   }
 
+  /**
+   * Leadership's energy for a shout (#625): one for each ally the shout
+   * reached, the shouter included, however many events each got, up to
+   * the rank's cap. Pushed onto the shout's own events, so its log entry
+   * carries the gain.
+   */
+  #gainLeadershipEnergy(record: ParticipantRecord, events: CombatEvent[]): void {
+    const team = record.combatant.team;
+    const affected = new Set(
+      events
+        .map((event) => event.targetId)
+        .filter((id) => this.#participants.get(id)?.combatant.team === team),
+    );
+    const rank = record.combatant.attributeRanks.get(LEADERSHIP_ATTRIBUTE) ?? 0;
+    gainEnergy(record.combatant, leadershipEnergy(rank, affected.size), events);
+  }
+
   /** Resolve a cast that has finished its activation time. */
   private resolveCast(record: ParticipantRecord, cast: ActiveCast, dt: number): void {
     const { skillId, targetId } = cast;
@@ -1081,6 +1104,9 @@ export class MatchSimulation {
         record,
         events.filter((event) => event.kind !== "damage" || !blocked.has(event.targetId)),
       );
+    }
+    if (skill.type === "shout") {
+      this.#gainLeadershipEnergy(record, events);
     }
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);

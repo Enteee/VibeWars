@@ -122,6 +122,22 @@ function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): vo
 }
 
 /**
+ * Give energy, clamped so it can never exceed maximum energy. The dead
+ * gain none, and a gain that fills nothing is no event.
+ */
+export function gainEnergy(target: Combatant, amount: number, events: CombatEvent[]): void {
+  if (amount <= 0 || target.dead) {
+    return;
+  }
+  const applied = Math.min(amount, target.maxEnergy - target.energy);
+  if (applied <= 0) {
+    return;
+  }
+  target.energy += applied;
+  events.push({ kind: "energy-gain", targetId: target.id, amount: applied });
+}
+
+/**
  * Whether a knockdown would land on `target`: alive, standing, and with
  * nothing active that prevents it. One on someone already down does
  * nothing, however long it would have lasted (GW1).
@@ -177,16 +193,7 @@ export function applyEffect(effect: SkillEffect, context: SkillContext): CombatE
     }
 
     case "energy-gain": {
-      const amount = resolveMagnitude(effect.amount, caster);
-      if (amount <= 0) {
-        return events;
-      }
-      const applied = Math.min(amount, caster.maxEnergy - caster.energy);
-      if (applied <= 0) {
-        return events;
-      }
-      caster.energy += applied;
-      events.push({ kind: "energy-gain", targetId: caster.id, amount: applied });
+      gainEnergy(caster, resolveMagnitude(effect.amount, caster), events);
       return events;
     }
 
