@@ -797,23 +797,34 @@ test("(26) left click walks, even onto a dummy, and never targets; right click t
   await wholeMap(page);
   const [first] = LADDER;
 
-  // No target yet, and the cursor off the arena: no name shows. Shot armed
-  // throughout, as Esc would first stop the walk rather than release.
+  // The cursor off the arena. Shot armed throughout, as Esc first stops
+  // the walk rather than release.
   await page.mouse.move(1, 1);
-  const blank = await nameBands(page, canvas);
-  const named = async (): Promise<number> =>
-    (await nameBands(page, canvas)).filter((band, i) => !band.equals(blank[i] ?? band)).length;
   const shot = (): Promise<Buffer> =>
     canvas.screenshot({ mask: [page.locator(".training-overlay")] });
-  const start = await shot();
+  const start = await stillArena(page, canvas);
 
   // A left click on the dummy walks toward it, and targets nobody.
   const dummy = (await trainingView(page, canvas)).onPage(first);
   await page.mouse.click(dummy.x, dummy.y);
   await page.mouse.move(1, 1);
   await page.waitForTimeout(300);
-  expect(await named()).toBe(0);
   expect((await shot()).equals(start), "the hero should be walking").toBe(false);
+
+  // The view follows the walk (#721), so the walk is stopped and the
+  // camera left to settle before the names are read. No band shows the
+  // name Shift shows there: nobody is targeted.
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".training")).toHaveClass(/is-armed/);
+  await stillArena(page, canvas);
+  const blank = await nameBands(page, canvas);
+  await page.keyboard.down(key("show-names"));
+  await page.waitForTimeout(300);
+  const everyName = await nameBands(page, canvas);
+  await page.keyboard.up(key("show-names"));
+  expect(blank.filter((band, i) => band.equals(everyName[i] ?? Buffer.alloc(0)))).toHaveLength(0);
+  const named = async (): Promise<number> =>
+    (await nameBands(page, canvas)).filter((band, i) => !band.equals(blank[i] ?? band)).length;
 
   // A right click on it targets it: its name shows with the cursor gone.
   // Through the camera as it is now: it has followed the walk.
@@ -831,7 +842,9 @@ test("(27) a right click on the ground moves nobody and keeps the target (#438)"
   await page.locator("select.training-scenario").selectOption("armor-ladder");
   await expect(page.locator(".training-log")).toContainText("── Armor ladder ──");
   await takeControl(page);
+  // The cursor leaving the arena eases the camera's lean home (#721).
   await page.mouse.move(1, 1);
+  await stillArena(page, canvas);
   const blank = await nameBands(page, canvas);
   const named = async (): Promise<number> =>
     (await nameBands(page, canvas)).filter((band, i) => !band.equals(blank[i] ?? band)).length;
@@ -847,8 +860,9 @@ test("(27) a right click on the ground moves nobody and keeps the target (#438)"
   await page.mouse.click(ground.x, ground.y, { button: "right" });
   await page.mouse.move(1, 1);
   await releaseControl(page);
+  const after = await stillArena(page, canvas);
   expect(await named()).toBe(1);
-  expect((await stillArena(page, canvas)).equals(before), "nobody should have moved").toBe(true);
+  expect(after.equals(before), "nobody should have moved").toBe(true);
 });
 
 test("(28) a left click while the right button is held still walks (#438)", async ({ page }) => {
@@ -885,6 +899,8 @@ test("(29) an attack skill pressed out of reach walks in, then lands (#415)", as
   await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
   await takeControl(page);
   await wholeMap(page);
+  // Near enough that the view, which follows you (#721), shows the dummy.
+  await walkTo(page, canvas, { x: 250, y: 210 });
 
   // Target the bow-range dummy, at (480, 210), far out of an axe's reach.
   const dummy = (await trainingView(page, canvas)).onPage({ x: 480, y: 210 });
@@ -906,27 +922,15 @@ test("(30) a spell pressed out of range walks in, then goes off (#499)", async (
   await takeControl(page);
   await wholeMap(page);
 
-  // Walk to the top-left corner, about 500 from the bow-range dummy at
-  // (480, 210): out of Fireball's 420. Arrived once the arena holds still.
-  const corner = (await trainingView(page, canvas)).onPage({ x: 20, y: 20 });
-  await page.mouse.click(corner.x, corner.y);
-  const mask = { mask: [page.locator(".training-overlay")] };
-  let last = await canvas.screenshot(mask);
-  await expect
-    .poll(
-      async () => {
-        const next = await canvas.screenshot(mask);
-        const still = next.equals(last);
-        last = next;
-        return still;
-      },
-      { timeout: 20_000, intervals: [500] },
-    )
-    .toBe(true);
-
-  // Through the camera as it is now: it has followed the walk.
+  // Target the bow-range dummy, at (480, 210), from where the view, which
+  // follows you (#721), shows it.
+  await walkTo(page, canvas, { x: 250, y: 210 });
   const dummy = (await trainingView(page, canvas)).onPage({ x: 480, y: 210 });
   await page.mouse.click(dummy.x, dummy.y, { button: "right" });
+
+  // A left click walks and keeps the target (#438): to the top-left
+  // corner, about 500 from the dummy, out of Fireball's 420.
+  await walkTo(page, canvas, { x: 20, y: 20 });
   await page.keyboard.press(skillKey(0));
 
   // Not refused: the hero walks back in and casts. In game time, which
@@ -956,6 +960,8 @@ test("(31) a slot out of reach of the target is marked, and the mark goes once i
   await takeControl(page);
   await wholeMap(page);
   const slot = page.locator(FILLED_SLOTS).first();
+  // Near enough that the view, which follows you (#721), shows the dummy.
+  await walkTo(page, canvas, { x: 250, y: 210 });
   // No target, no mark.
   await expect(slot).not.toHaveClass(/is-out-of-range/);
 
