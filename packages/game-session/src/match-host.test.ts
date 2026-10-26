@@ -46,6 +46,7 @@ describe("a P2P match (#375)", () => {
       id: i % 2 === 0 ? "burning" : "regeneration",
       remainingSeconds: i,
       attacksLeft: undefined,
+      spellsLeft: undefined,
       sourceId: remote.selfSessionId,
     }));
     vi.spyOn(StatusSet.prototype, "active", "get").mockReturnValue(many);

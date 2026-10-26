@@ -21,7 +21,13 @@ const ORDER: readonly StatusCategory[] = [
 ];
 
 function status(id: StatusId, remainingSeconds: number): ActiveStatus {
-  return { id, remainingSeconds, attacksLeft: undefined, sourceId: "caster" };
+  return {
+    id,
+    remainingSeconds,
+    attacksLeft: undefined,
+    spellsLeft: undefined,
+    sourceId: "caster",
+  };
 }
 
 function rank(entry: ActiveStatus): number {
