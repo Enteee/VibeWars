@@ -128,7 +128,10 @@ export function clampMoveSpeed(raw: number): number {
  * as in GW1 (#524). An instant skill stays instant (0 × 2 = 0). Fast
  * Casting multiplies in too (#527), judged on the skill's own activation.
  */
-export function effectiveActivationSeconds(skill: Skill, caster: Combatant): number {
+export function effectiveActivationSeconds(
+  skill: Skill,
+  caster: Pick<Combatant, "attributeRanks" | "statuses">,
+): number {
   if (!isSpell(skill.type)) {
     return skill.activationSeconds;
   }
