@@ -132,6 +132,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     profession: "paragon",
     url: "https://www.gw-memorial.net/skills/Paragon/1131-Wild_Throw",
   },
+  {
+    id: "ranger.apply-poison",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/122-Apply_Poison",
+  },
 ];
 
 function packageRoot(): string {

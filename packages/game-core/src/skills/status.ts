@@ -11,6 +11,7 @@
  * - `hex`        — negative, applied by foes, removed by hex removal.
  * - `enchantment`— positive, applied by allies, removed by enchantment removal/strip.
  * - `stance`     — positive, on yourself only, ended by stance removal (#465).
+ * - `preparation`— on yourself only; changes your attacks while it lasts (#525).
  * - `shout`      — a shout's lingering effect (#524); no removal touches it.
  * - `skill-effect`— none of GW1's removable kinds: Healing Signet's armor
  *   loss while it is activated. No removal touches it either.
@@ -21,17 +22,17 @@
  * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time.
  */
 
-import type { Combatant } from "./types.js";
+import type { Combatant, SkillEffect } from "./types.js";
 
 export type StatusCategory =
-  "condition" | "hex" | "enchantment" | "stance" | "shout" | "skill-effect";
+  "condition" | "hex" | "enchantment" | "stance" | "preparation" | "shout" | "skill-effect";
 
 /**
  * Categories of which a combatant has at most one at a time (GW1): a new
  * one ends whichever is up, the same one included, and starts at its full
  * duration.
  */
-export const EXCLUSIVE_CATEGORIES: ReadonlySet<StatusCategory> = new Set(["stance"]);
+export const EXCLUSIVE_CATEGORIES: ReadonlySet<StatusCategory> = new Set(["stance", "preparation"]);
 
 export type StatusId =
   // Conditions (brief §12's starting set).
@@ -53,6 +54,8 @@ export type StatusId =
   // Stances.
   | "sprint"
   | "dash"
+  // Preparations.
+  | "apply-poison"
   // Shouts and skill effects (#524).
   | "watch-yourself"
   | "healing-signet-armor";
@@ -126,6 +129,13 @@ export interface StatusDefinition {
    * bearer's own status, so allies sharing a shout wear theirs out apart.
    */
   readonly endsAfterAttacks: number | undefined;
+  /**
+   * Effects on whoever the bearer's physical attacks hit while it lasts
+   * (#525): a preparation's rider, as Apply Poison's poison. Applied
+   * where a blow lands, swing, attack skill or arrow alike, never on a
+   * miss or a block.
+   */
+  readonly onAttackHit: readonly SkillEffect[];
 }
 
 function define(
@@ -149,6 +159,7 @@ function define(
     preventsKnockdown: false,
     block: undefined,
     endsAfterAttacks: undefined,
+    onAttackHit: [],
     ...overrides,
   };
 }
@@ -193,6 +204,12 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   }),
   "healing-signet-armor": define("healing-signet-armor", "Healing Signet", "skill-effect", {
     armorModifier: -40,
+  }),
+
+  // "Enemies struck by your physical attacks become poisoned for
+  // 3...13...15 seconds": 13 s, its rank-12 value.
+  "apply-poison": define("apply-poison", "Apply Poison", "preparation", {
+    onAttackHit: [{ kind: "apply-status", statusId: "poison", durationSeconds: 13 }],
   }),
 };
 
@@ -268,6 +285,11 @@ export class StatusSet {
       attacksLeft: getStatusDefinition(id).endsAfterAttacks,
       sourceId,
     });
+  }
+
+  /** Remove every status, of every category: what a respawn leaves. */
+  public clear(): void {
+    this.#statuses.clear();
   }
 
   /** Remove one status by id. Returns whether anything was removed. */

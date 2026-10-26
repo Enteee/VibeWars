@@ -64,7 +64,9 @@ area picks, as Barrage's) takes one blow: blind may miss it, and then it
 gets none of the riders; otherwise the weapon's roll, times the attribute
 multiplier, plus the bonus, is one damage packet of the weapon's type and
 armor penetration, mitigated once. No double strike and no cleave on an
-attack skill. Adrenaline as for any hit.
+attack skill. Adrenaline as for any hit. A blow that hits also carries
+the attacker's statuses' `onAttackHit` riders (a preparation, #525), in
+one place for swings, arrows and attack skills alike: `attackHitRiders`.
 
 **Attack speed.** `StatusDefinition.attackDurationMultiplier` scales
 swings and attack skills alike. As in GW1, only the strongest speed-up and

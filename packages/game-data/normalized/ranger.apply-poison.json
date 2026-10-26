@@ -1,0 +1,24 @@
+{
+  "id": "ranger.apply-poison",
+  "name": "Apply Poison",
+  "profession": "ranger",
+  "attribute": "Wilderness Survival",
+  "type": "Preparation.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 15
+  },
+  "activationSeconds": 2,
+  "rechargeSeconds": 12,
+  "description": "For 24 seconds, enemies struck by your physical attacks become poisoned for 3...13...15 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/122-Apply_Poison",
+    "fetchedAt": "2026-10-26T04:29:59.686Z"
+  },
+  "unmapped": {}
+}

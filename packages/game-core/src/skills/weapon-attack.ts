@@ -1,5 +1,6 @@
 import { AREA_ADJACENT } from "../distances.js";
 import type { ResolvedWeapon } from "../equipment/resolve.js";
+import { isPhysicalDamage } from "../equipment/types.js";
 import type { Weapon } from "../equipment/weapons.js";
 import {
   CRITICAL_STRIKES_ATTRIBUTE,
@@ -14,12 +15,13 @@ import { distance } from "../vec2.js";
 import { mitigate, weaponAttributeMultiplier, type DamagePacket } from "./damage.js";
 import {
   applyDamage,
+  applyEffect,
   applySkillEffects,
   type CombatEvent,
   type SkillResolution,
 } from "./effects.js";
 import { resolveMagnitude } from "./scaling.js";
-import { aggregateModifiers } from "./status.js";
+import { aggregateModifiers, getStatusDefinition } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
 import { attackMissChanceOf, blockChanceOf } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
@@ -271,6 +273,30 @@ export function landBlow(
   return critical;
 }
 
+/**
+ * What the attacker's statuses add to a blow of `weapon` that hit
+ * `victim` (#525): every active status's `onAttackHit`, as Apply
+ * Poison's poison. Read when the blow lands, so a preparation that ran
+ * out mid-swing or mid-flight adds nothing. Physical attacks only, as GW1
+ * says: a wand's or a staff's bolt carries none.
+ */
+export function attackHitRiders(
+  attacker: Combatant,
+  victim: Combatant,
+  weapon: Weapon,
+  rng: SimulationRng,
+  rules: CombatRules,
+): CombatEvent[] {
+  if (!isPhysicalDamage(weapon.damageType)) {
+    return [];
+  }
+  return attacker.statuses.active.flatMap(({ id }) =>
+    getStatusDefinition(id).onAttackHit.flatMap((effect) =>
+      applyEffect(effect, { caster: attacker, target: victim, rng, rules }),
+    ),
+  );
+}
+
 /** One blow on one victim: blind first, then block, then the crit and damage rolls. */
 function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
   const { attacker, rng, rules } = swing;
@@ -290,6 +316,7 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
   if (landBlow(snapshot, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
     gainCriticalEnergy(attacker, snapshot.criticalStrikes, events);
   }
+  events.push(...attackHitRiders(attacker, victim, snapshot.mainHand.weapon, rng, rules));
   attackReached(victim, events);
 }
 
@@ -357,6 +384,7 @@ export function resolveAttackSkill(
     if (landBlow(snapshot, victim, blow, exposed(victim), rng, rules, events)) {
       gainCriticalEnergy(caster, snapshot.criticalStrikes, events);
     }
+    events.push(...attackHitRiders(caster, victim, snapshot.mainHand.weapon, rng, rules));
     attackReached(victim, events);
     hit.push(victim);
   }

@@ -36,6 +36,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   dash: icon("dash"),
   "watch-yourself": icon("watch-yourself"),
   "healing-signet-armor": icon("healing-signet-armor"),
+  "apply-poison": icon("apply-poison"),
 };
 
 /** Drawn size of one icon, in world pixels. */

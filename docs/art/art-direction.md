@@ -49,6 +49,7 @@ the code and `scripts/assets/icons.mjs` copy them.
 | `hex`         | `#d2a8ff` | Hex markers                              |
 | `enchantment` | `#56d4dd` | Enchantment markers                      |
 | `stance`      | `#f778ba` | Stance markers                           |
+| `preparation` | `#e3b341` | Preparation markers                      |
 
 ### HUD bars
 
@@ -112,6 +113,7 @@ so the silhouette identifies the profession and the colour only supports it.
 | Hex          | Diamond plate, glyph inside                           |
 | Enchantment  | Rounded-square plate, glyph inside                    |
 | Stance       | Pentagon plate, point up, glyph inside                |
+| Preparation  | Triangle plate, point up, glyph inside                |
 | Shout        | `ink` hexagon plate, glyph inside                     |
 | Skill effect | `ink-dim` wide capsule plate, glyph inside            |
 | Area flash   | Caster's team colour ring at the area's true radius   |
@@ -130,6 +132,13 @@ an actor, so the shape settles it.
 | ------------- | ---------------------------------------------- |
 | `sprint`      | Two forward chevrons: move 25% faster          |
 | `dash`        | Arrowhead trailing three lines: run 50% faster |
+
+The preparation triangle (amber, point up) is the fifth outline. Its amber
+sits near `target` yellow, but a plate is never a ring round an actor.
+
+| Preparation status | Glyph                                        |
+| ------------------ | -------------------------------------------- |
+| `apply-poison`     | One drop: your attacks poison (Apply Poison) |
 
 ### Area flash
 
@@ -408,7 +417,7 @@ closes). Ink, never team colour: an icon in a menu names a thing, not a side.
 
 The corner badge on a skill slot. Ink on the slot, except the two that leave a
 marker on someone, which carry that marker's colour. A stance marks you, so
-it carries the stance colour too.
+it carries the stance colour too, and a preparation its amber.
 
 | Type        | Badge                     |
 | ----------- | ------------------------- |
@@ -417,6 +426,7 @@ it carries the stance colour too.
 | Enchantment | Solid teal ring           |
 | Hex         | Broken purple ring        |
 | Stance      | Pink pentagon ring        |
+| Preparation | Amber triangle ring       |
 | Signet      | Ring with a seal on top   |
 | Shout       | Mouth and two sound waves |
 | Skill       | Square                    |
