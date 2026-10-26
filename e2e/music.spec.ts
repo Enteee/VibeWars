@@ -194,6 +194,40 @@ test("tracks are selectable rows: Enter previews and keeps focus; no dead editor
   await expect(page.getByRole("button", { name: "open in editor" })).toHaveCount(0);
 });
 
+test("in the HUD ♪ popover, pinning a track narrows neither its row nor its button (#710)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("./");
+  await startSoloMatch(page);
+  await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+  await page.locator(".hud-music").click();
+  const popover = page.locator(".hud-jukebox");
+  const pinned = popover.locator(".jukebox-row", { hasText: "Ember Deep" });
+  await pinned.getByRole("button", { name: "pin" }).click();
+  await expect(pinned.locator(".jukebox-pin")).toHaveText("Pinned");
+
+  const widths = (selector: string): Promise<number[]> =>
+    popover
+      .locator(selector)
+      .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().width));
+  const rows = await widths(".jukebox-row");
+  expect(rows.length).toBeGreaterThan(1);
+  const pinWidth = (await pinned.locator(".jukebox-pin").boundingBox())?.width ?? 0;
+  for (const width of rows) {
+    expect(Math.abs(width - (rows[0] ?? 0))).toBeLessThanOrEqual(1);
+  }
+  for (const width of await widths(".jukebox-pin")) {
+    expect(Math.abs(width - pinWidth)).toBeLessThanOrEqual(1);
+  }
+  // The title gives way: every button stays on its row's line.
+  for (const row of await popover.locator(".jukebox-row").all()) {
+    const play = await row.locator(".jukebox-play").boundingBox();
+    const pin = await row.locator(".jukebox-pin").boundingBox();
+    expect(play !== null && pin !== null && pin.y < play.y + play.height).toBe(true);
+  }
+});
+
 test("Off plays nothing after a click, and the music mute survives a reload (#372, #424)", async ({
   page,
 }) => {

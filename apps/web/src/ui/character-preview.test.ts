@@ -19,7 +19,7 @@ function character(skillBar: (string | null)[]): StoredCharacter {
 }
 
 describe("miniSkillCells (#578)", () => {
-  it("gives eight cells with each skill's name and type, null where empty", () => {
+  it("gives eight cells with each skill's name and icon, null where empty (#727)", () => {
     const cells = miniSkillCells(
       character([
         "monk.orison-of-healing",
@@ -33,15 +33,18 @@ describe("miniSkillCells (#578)", () => {
       ]),
     );
     expect(cells).toHaveLength(8);
-    expect(cells[0]).toEqual({ name: "Orison of Healing", type: "spell" });
+    expect(cells[0]).toEqual({
+      name: "Orison of Healing",
+      icon: "/icons/skill/monk.orison-of-healing.svg",
+    });
     expect(cells[1]).toBeNull();
-    expect(cells[2]).toEqual({ name: "Backbreaker", type: "attack" });
+    expect(cells[2]).toEqual({ name: "Backbreaker", icon: "/icons/skill/warrior.backbreaker.svg" });
   });
 
-  it("shows an unknown id by its id, with no type, and pads a short bar", () => {
+  it("shows an unknown id by its id, on the bare plate, and pads a short bar", () => {
     const cells = miniSkillCells(character(["gone.skill"]));
     expect(cells).toHaveLength(8);
-    expect(cells[0]).toEqual({ name: "gone.skill", type: undefined });
+    expect(cells[0]).toEqual({ name: "gone.skill", icon: "/icons/skill/unknown.svg" });
     expect(cells.slice(1).every((cell) => cell === null)).toBe(true);
   });
 });

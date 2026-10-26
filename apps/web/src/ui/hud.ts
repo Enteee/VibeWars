@@ -22,6 +22,7 @@ import {
   isEliteSkill,
   professionIcon,
   skillBadgeHtml,
+  skillIcon,
   skillIconHtml,
   soundIcon,
   weaponIcon,
@@ -86,8 +87,9 @@ export interface HudElements {
   readonly targetHealthFill: HTMLElement;
   readonly targetHealthText: HTMLElement;
   readonly targetHealthPips: HTMLElement;
-  /** What the target is casting (#484): badge, name and a filling bar. */
+  /** What the target is casting (#484): icon (#727), badge, name and a filling bar. */
   readonly targetCast: HTMLElement;
+  readonly targetCastIcon: HTMLImageElement;
   readonly targetCastBadge: HTMLElement;
   readonly targetCastName: HTMLElement;
   readonly targetCastFill: HTMLElement;
@@ -194,6 +196,11 @@ export function createHud(parent: HTMLElement): HudElements {
   const targetHealthPips = targetHealth.appendChild(pipsElement());
   targetHealth.hidden = true;
   const targetCast = element("div", "hud-target-cast", targetPanel);
+  const targetCastIcon = targetCast.appendChild(document.createElement("img"));
+  targetCastIcon.className = "skill-icon hud-target-cast-icon";
+  targetCastIcon.alt = "";
+  targetCastIcon.width = TARGET_CAST_ICON_PX;
+  targetCastIcon.height = TARGET_CAST_ICON_PX;
   const targetCastBadge = element("span", "hud-target-cast-badge", targetCast);
   const targetCastName = element("span", "hud-target-cast-name", targetCast);
   const targetCastBar = element("span", "hud-target-cast-bar", targetCast);
@@ -243,6 +250,7 @@ export function createHud(parent: HTMLElement): HudElements {
     targetHealthText,
     targetHealthPips,
     targetCast,
+    targetCastIcon,
     targetCastBadge,
     targetCastName,
     targetCastFill,
@@ -512,6 +520,9 @@ export function targetHealthLabel(target: PlayerSnapshot, selfTeam: number | und
     : percent;
 }
 
+/** The target frame's cast row icon, px (#727). */
+const TARGET_CAST_ICON_PX = 20;
+
 /** What the target frame's cast row shows (#484). */
 export interface TargetCast {
   /** The skill's id, which picks its type badge: none for an unknown one. */
@@ -653,14 +664,34 @@ function renderTargetProfessions(container: HTMLElement, target: PlayerSnapshot 
   );
 }
 
-/** Paint the cast row's badge and name, only when the skill changes. */
+/** What the cast row shows of a skill (#727): its icon, its type badge's markup and its name. */
+export interface CastRowSkill {
+  /** The bare plate for a skill this client does not know. */
+  readonly icon: string;
+  /** Empty for a skill this client does not know. */
+  readonly badgeHtml: string;
+  /** Its id, for a skill this client does not know. */
+  readonly name: string;
+}
+
+export function castRowSkill(skillId: string): CastRowSkill {
+  return {
+    icon: skillIcon(skillId),
+    badgeHtml: skillBadgeHtml(skillId),
+    name: getSkill(skillId)?.name ?? skillId,
+  };
+}
+
+/** Paint the cast row's icon, badge and name, only when the skill changes. */
 function setTargetCastSkill(hud: HudElements, skillId: string): void {
   if (hud.targetCast.dataset.skill === skillId) {
     return;
   }
   hud.targetCast.dataset.skill = skillId;
-  hud.targetCastBadge.innerHTML = skillBadgeHtml(skillId);
-  hud.targetCastName.textContent = getSkill(skillId)?.name ?? skillId;
+  const skill = castRowSkill(skillId);
+  hud.targetCastIcon.src = skill.icon;
+  hud.targetCastBadge.innerHTML = skill.badgeHtml;
+  hud.targetCastName.textContent = skill.name;
 }
 
 function isFlashing(row: HTMLElement): boolean {

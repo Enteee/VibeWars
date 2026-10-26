@@ -169,6 +169,54 @@ test("spending attribute points updates the remaining budget", async ({ page }) 
   await expect(budget).not.toHaveText(before);
 });
 
+/** Whether `icon` loaded a picture, not a broken image. */
+async function loaded(icon: Locator): Promise<boolean> {
+  return icon.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0);
+}
+
+test("the library, the bar and the tooltip show each skill's icon (#727)", async ({ page }) => {
+  await newCharacter(page);
+  await chooseProfession(page, "primary", "elementalist");
+  const box = page.locator(".skill-box", { hasText: "Armor of Earth" });
+  const rowIcon = box.locator(".skill-box-card img.skill-icon");
+  await expect(rowIcon).toHaveAttribute(
+    "src",
+    /\/icons\/skill\/elementalist\.armor-of-earth\.svg$/,
+  );
+  await expect(rowIcon).toHaveAttribute("width", "24");
+  await expect.poll(() => loaded(rowIcon)).toBe(true);
+
+  // A headline sits beside the cost, not on a third line under the icon:
+  // the row is no taller than it was (#581).
+  const card = page
+    .locator(".skill-box-card", { has: page.locator(".skill-box-headline:not(:empty)") })
+    .first();
+  const cost = await card.locator(".skill-box-cost").boundingBox();
+  const headline = await card.locator(".skill-box-headline").boundingBox();
+  const cardIcon = await card.locator("img.skill-icon").boundingBox();
+  expect(cost).not.toBeNull();
+  expect(headline).not.toBeNull();
+  expect(cardIcon).not.toBeNull();
+  if (cost !== null && headline !== null && cardIcon !== null) {
+    expect(Math.abs(headline.y - cost.y)).toBeLessThan(4);
+    expect(headline.x).toBeGreaterThan(cost.x);
+    expect(headline.y + headline.height).toBeLessThanOrEqual(cardIcon.y + cardIcon.height + 10);
+  }
+
+  await box.locator(".skill-box-equip").click();
+  const slots = page.locator(".skill-slot");
+  const slotIcon = slots.first().locator("img.skill-icon");
+  await expect(slotIcon).toHaveAttribute("src", /elementalist\.armor-of-earth\.svg$/);
+  await expect(slotIcon).toHaveAttribute("width", "48");
+  await expect.poll(() => loaded(slotIcon)).toBe(true);
+  await expect(slots.nth(1).locator("img.skill-icon")).toHaveCount(0);
+
+  await box.hover();
+  const tipIcon = page.locator(".skill-tip .tip-header img.skill-icon");
+  await expect(tipIcon).toHaveAttribute("src", /elementalist\.armor-of-earth\.svg$/);
+  await expect(page.locator(".skill-tip .tip-title")).toHaveText("Armor of Earth");
+});
+
 test("12/12/3 spends all 200 points, GW1's split (#470)", async ({ page }) => {
   await newCharacter(page);
 
@@ -246,6 +294,33 @@ test("a new team is stored only on Save, which stays on the editor (#573)", asyn
   await page.reload();
   await page.getByRole("button", { name: "teams" }).click();
   await expect.poll(() => teamList(page)).toEqual(["Duo · 1 member"]);
+});
+
+test("a toast goes with its screen; one the next screen raises stays (#710)", async ({ page }) => {
+  await saveCharacters(page, ["Alpha"]);
+  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "new team" }).click();
+  await page.getByLabel("team name").fill("Duo");
+  await page.getByRole("button", { name: "add Alpha" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+
+  await page.getByRole("button", { name: "Share", exact: true }).click();
+  const code = await page.getByLabel("team to share").inputValue();
+  await page.keyboard.press("Escape");
+
+  // A fresh Saved, then back at once: well inside the toast's 5 s, so
+  // only the screen change can take it.
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+  await page.getByRole("button", { name: "back" }).click();
+  await expect(page.locator(".toast")).toHaveCount(0, { timeout: 1_000 });
+  await expect.poll(() => teamList(page)).toEqual(["Duo · 1 member"]);
+
+  // A pasted team's note is raised once the team editor is up, so it stays.
+  await paste(page.locator(".screen"), code);
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+  await expect(page.locator(".toast")).toHaveText("Reused 1. Save to keep the team.");
 });
 
 test("the team list: an empty one offers New team; a row shows its members and opens on Enter (#581)", async ({
