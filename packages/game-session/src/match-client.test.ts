@@ -10,7 +10,7 @@ import {
 } from "./match-client.js";
 import type { PlayerSnapshot } from "./match-connection.js";
 import { MATCH_FULL_MESSAGE, MATCH_OVER_MESSAGE, RECONNECT_WINDOW_SECONDS } from "./match-host.js";
-import { hello, self, settle, startMatch } from "./match-harness.test-support.js";
+import { hello, self, settle, startMatch, until } from "./match-harness.test-support.js";
 import { createMemoryNetwork } from "./memory-transport.js";
 import { playerSnapshot } from "./wire.js";
 
@@ -289,7 +289,10 @@ describe("connectMatch, when the host's peer drops", () => {
     vi.useRealTimers();
   });
 
-  /** A remote guest in a match, its states as they change, and every hello the host hears. */
+  /**
+   * A remote guest in a match, its states as they change, every hello the
+   * host hears, and everything the guest sends from the drop on.
+   */
   async function dropped(match = startMatch()) {
     const { connection, transport } = await match.join();
     await match.step(0.05);
@@ -298,25 +301,27 @@ describe("connectMatch, when the host's peer drops", () => {
     const hellos: unknown[] = [];
     match.hostTransport.on("hello", (data) => hellos.push(data));
     const token = connection.rejoinToken;
+    const sent = vi.spyOn(transport, "send");
     match.network.partition("host", transport.selfId);
     await settle();
-    return { match, connection, transport, states, hellos, token };
+    return { match, connection, transport, states, hellos, token, sent };
   }
 
   it("is reconnecting, then back in the same seat when the host is back in 10 s", async () => {
-    const { match, connection, states, hellos, token } = await dropped();
+    const { match, connection, states, hellos, token, sent } = await dropped();
     expect(states).toEqual(["reconnecting"]);
 
     vi.advanceTimersByTime(10_000);
     match.network.heal();
-    await settle();
+    await until(() => states.length === 2);
 
     expect(states).toEqual(["reconnecting", "online"]);
     expect(hellos).toEqual([
-      expect.objectContaining({
-        rejoin: { playerId: connection.selfSessionId, token },
-      }),
+      expect.objectContaining({ rejoin: { playerId: connection.selfSessionId } }),
     ]);
+    // Asked and proven: the token itself never went back on the wire (#593).
+    expect(sent.mock.calls.map(([channel]) => channel)).toEqual(["hello", "rejoin-proof"]);
+    expect(JSON.stringify(sent.mock.calls)).not.toContain(token);
     // A new token with the welcome, for the next drop.
     expect(connection.rejoinToken).not.toBe(token);
     // The same connection carries on: intents go through and snapshots come.
@@ -337,7 +342,7 @@ describe("connectMatch, when the host's peer drops", () => {
     // The host never sees the guest go, so its rejoin hello comes from a
     // peer the host still has seated.
     match.network.blip(transport.selfId, "host");
-    await settle();
+    await until(() => states.length === 2);
 
     expect(states).toEqual(["reconnecting", "online"]);
     expect(connection.rejoinToken).not.toBe(token);
@@ -387,15 +392,16 @@ describe("connectMatch, when the host's peer drops", () => {
   it("gets its own window for each drop", async () => {
     const { match, transport, states } = await dropped();
     match.network.heal();
-    await settle();
+    await until(() => states.length === 2);
     vi.advanceTimersByTime(WINDOW_MS - 1000);
 
     match.network.partition("host", transport.selfId);
     await settle();
     vi.advanceTimersByTime(WINDOW_MS - 1000);
     expect(states).toEqual(["reconnecting", "online", "reconnecting"]);
+    // The second rejoin proves the token the first one's welcome issued.
     match.network.heal();
-    await settle();
+    await until(() => states.length === 4);
     expect(states).toEqual(["reconnecting", "online", "reconnecting", "online"]);
   });
 

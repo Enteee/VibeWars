@@ -3,6 +3,7 @@ import {
   PROTOCOL_VERSION,
   parseCastRefused,
   parsePeerRefuse,
+  parsePeerRejoinChallenge,
   parsePeerWelcome,
   parseRecharge,
   parseWireCombatBatch,
@@ -15,6 +16,7 @@ import {
   type PeerBye,
   type PeerHello,
   type PeerRefuse,
+  type PeerRejoinProof,
   type PeerWelcome,
   type RechargeSlot,
   type WireEnded,
@@ -29,6 +31,7 @@ import type {
   SlotRecharge,
 } from "./match-connection.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
+import { rejoinProof } from "./rejoin-proof.js";
 import type { Transport } from "./transport.js";
 import { combatMessage, matchSnapshot } from "./wire.js";
 
@@ -39,8 +42,8 @@ import { combatMessage, matchSnapshot } from "./wire.js";
  *
  * The host's peer going without a word is a drop, not the end (#515): the
  * connection is `reconnecting` for the host's own `RECONNECT_WINDOW_SECONDS`,
- * and when the peer is back it asks for the seat again with its rejoin
- * token. Only `ended` with `host-left`, a refusal, or the window running
+ * and when the peer is back it asks for the seat again, and proves it
+ * holds the rejoin token without sending it (#593). Only `ended` with `host-left`, a refusal, or the window running
  * out make it `lost`.
  */
 
@@ -74,8 +77,8 @@ export class MatchTimeoutError extends Error {
 /** A P2P match: a `MatchConnection`, plus what it takes to come back after a drop. */
 export interface PeerMatchConnection extends MatchConnection {
   /**
-   * What to send in `PeerHello.rejoin` to take this seat back. The host
-   * issues a new one with every welcome, a rejoin's too.
+   * What this peer proves it holds to take this seat back; it never goes on
+   * the wire. The host issues a new one with every welcome, a rejoin's too.
    */
   readonly rejoinToken: string;
 }
@@ -217,15 +220,29 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         loseHost();
         return;
       }
-      // The token proves the seat is this player's; the host answers with
-      // a welcome, or a refusal once the match is over.
-      const rejoin: PeerHello = {
-        ...hello,
-        rejoin: { playerId: welcomed.playerId, token: welcomed.rejoinToken },
-      };
+      // The host challenges, the token answers it; then a welcome, or a
+      // refusal once the match is over.
+      const rejoin: PeerHello = { ...hello, rejoin: { playerId: welcomed.playerId } };
       transport.send("hello", rejoin, hostId);
     }),
   );
+  fromHost("rejoin-challenge", parsePeerRejoinChallenge, (challenge) => {
+    const seat = welcomed;
+    if (droppedAt === undefined || lost || challenge.playerId !== seat?.playerId) {
+      return;
+    }
+    // A peer posing as the host may have sent this: the proof names this
+    // peer's own id, so it seats nobody else.
+    void rejoinProof(seat.rejoinToken, challenge.nonce, seat.playerId, transport.selfId).then(
+      (proof) => {
+        if (droppedAt === undefined || lost || welcomed !== seat) {
+          return;
+        }
+        const message: PeerRejoinProof = { playerId: seat.playerId, proof };
+        transport.send("rejoin-proof", message, hostId);
+      },
+    );
+  });
 
   const stop = (): void => {
     clearTimeout(reconnectTimer);

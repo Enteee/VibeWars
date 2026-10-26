@@ -8,7 +8,13 @@
  * the build.
  */
 import { DEFAULT_MATCH_RULES, segment, type MatchRules } from "@vibewars/game-core";
-import { PROTOCOL_VERSION, type JsonValue, type PeerHello } from "@vibewars/game-protocol";
+import {
+  PROTOCOL_VERSION,
+  parsePeerRejoinChallenge,
+  type JsonValue,
+  type PeerHello,
+  type PeerRejoinProof,
+} from "@vibewars/game-protocol";
 
 import { createLocalPeer } from "./local-peer.js";
 import { connectMatch, type PeerMatchConnection } from "./match-client.js";
@@ -21,6 +27,7 @@ import {
   type PlannedSeats,
 } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
+import { rejoinProof } from "./rejoin-proof.js";
 import type { Transport } from "./transport.js";
 
 export const TICK_SECONDS = 1 / RULESET.tickRateHz;
@@ -61,6 +68,45 @@ export async function settle(): Promise<void> {
   }
 }
 
+// Real time and a real event-loop turn, which the tests' fake timers leave alone.
+declare const performance: { now(): number };
+declare function setImmediate(callback: () => void): unknown;
+
+/**
+ * Wait until `condition` holds, for at most a second of real time. A
+ * rejoin proof is an HMAC on `crypto.subtle`, which resolves on the event
+ * loop rather than on a microtask, so `settle` alone cannot wait for it.
+ */
+export async function until(condition: () => boolean): Promise<void> {
+  const deadline = performance.now() + 1000;
+  while (!condition()) {
+    if (performance.now() > deadline) {
+      throw new Error("until: the condition never held");
+    }
+    await settle();
+    await new Promise<void>((resolve) => {
+      setImmediate(resolve);
+    });
+  }
+}
+
+/**
+ * Answer every rejoin challenge `transport` hears from the host with a
+ * proof of `token`, as a returning player's page would.
+ */
+export function answerChallenges(transport: Transport, token: string, hostId = "host"): void {
+  transport.on("rejoin-challenge", (data, from) => {
+    const challenge = parsePeerRejoinChallenge(data);
+    if (challenge === undefined || from !== hostId) {
+      return;
+    }
+    void rejoinProof(token, challenge.nonce, challenge.playerId, transport.selfId).then((proof) => {
+      const message: PeerRejoinProof = { playerId: challenge.playerId, proof };
+      transport.send("rejoin-proof", message, hostId);
+    });
+  });
+}
+
 export function hello(
   overrides: Partial<{ name: string; build: JsonValue; rejoin: PeerHello["rejoin"] }> = {},
 ): PeerHello {
@@ -83,6 +129,13 @@ export interface TestMatch {
   step(seconds: number): Promise<void>;
   /** A remote peer joining with `hello`; resolves once it is in. */
   join(peerHello?: PeerHello): Promise<{ connection: PeerMatchConnection; transport: Transport }>;
+  /**
+   * `dropped`'s player back as a new peer, proving it holds its token;
+   * resolves once it is in.
+   */
+  rejoin(
+    dropped: PeerMatchConnection,
+  ): Promise<{ connection: PeerMatchConnection; transport: Transport }>;
   /** The host's own player joining, through `createLocalPeer`. */
   joinLocal(peerHello?: PeerHello): Promise<PeerMatchConnection>;
 }
@@ -128,6 +181,18 @@ export function startMatch(
         transport,
         hostId: "host",
         hello: peerHello,
+        timeoutMs: 1000,
+      });
+      return { connection, transport };
+    },
+    async rejoin(dropped) {
+      const transport = network.join();
+      answerChallenges(transport, dropped.rejoinToken);
+      await settle();
+      const connection = await connectMatch({
+        transport,
+        hostId: "host",
+        hello: hello({ rejoin: { playerId: dropped.selfSessionId } }),
         timeoutMs: 1000,
       });
       return { connection, transport };

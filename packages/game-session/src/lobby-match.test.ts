@@ -12,7 +12,7 @@ import {
 } from "./lobby-harness.test-support.js";
 import { MatchRefusedError, connectMatch } from "./match-client.js";
 import { MATCH_FULL_MESSAGE, RECONNECT_WINDOW_SECONDS } from "./match-host.js";
-import { hello, playerIn, self, settle } from "./match-harness.test-support.js";
+import { hello, playerIn, self, settle, until } from "./match-harness.test-support.js";
 
 /**
  * A lobby's own match (#379), ported from the server's
@@ -255,12 +255,14 @@ describe("a lobby, when the host's peer drops during its match", () => {
     const { lobby, members } = await lobbyOf([0, 1]);
     await start(lobby);
     const guest = at(members, 1);
-    await play(guest, "Guest 1");
+    const match = await play(guest, "Guest 1");
+    const states: string[] = [];
+    match.onConnectionChange((state) => states.push(state));
     const closed: string[] = [];
     guest.connection.onClosed((reason) => closed.push(reason));
     lobby.network.partition("host", guest.transport.selfId);
     await settle();
-    return { lobby, guest, closed };
+    return { lobby, guest, closed, states };
   }
 
   it("closes only once the window has run out", async () => {
@@ -273,12 +275,12 @@ describe("a lobby, when the host's peer drops during its match", () => {
   });
 
   it("joins the lobby again when the host is back in time, and stays open", async () => {
-    const { lobby, guest, closed } = await inMatch();
+    const { lobby, guest, closed, states } = await inMatch();
     expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host"]);
 
     vi.advanceTimersByTime(10_000);
     lobby.network.heal();
-    await settle();
+    await until(() => states.includes("online"));
     vi.advanceTimersByTime(WINDOW_MS);
 
     expect(closed).toEqual([]);

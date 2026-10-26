@@ -15,6 +15,8 @@ import {
   PROTOCOL_VERSION,
   type JsonValue,
   type PeerHello,
+  type PeerRejoinChallenge,
+  type PeerRejoinProof,
   type PeerWelcome,
   type WireCombat,
   type WireCombatBatch,
@@ -269,9 +271,16 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       protocolVersion: PROTOCOL_VERSION,
       name: NAME,
       build: JSON.parse(JSON.stringify(build)) as JsonValue,
-      rejoin: { playerId: `${PEER_ID}0`, token: "x".repeat(64) },
+      rejoin: { playerId: `${PEER_ID}0` },
     };
     expect(messageBytes(hello)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+  });
+
+  it("a rejoin's challenge and proof (#593)", () => {
+    const challenge: PeerRejoinChallenge = { playerId: `${PEER_ID}0`, nonce: "f".repeat(32) };
+    const proof: PeerRejoinProof = { playerId: `${PEER_ID}0`, proof: "f".repeat(64) };
+    expect(messageBytes(challenge)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+    expect(messageBytes(proof)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 
   it("a lobby state: every seat taken, longest names", () => {
