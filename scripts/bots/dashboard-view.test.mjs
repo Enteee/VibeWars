@@ -299,6 +299,7 @@ describe("companyLines", () => {
           budget: null,
           hub,
           reboot: null,
+          build: null,
           claude: null,
           nudges: noNudges,
           telegram,
@@ -590,6 +591,7 @@ describe("companyLines", () => {
           build,
           claude: null,
           nudges: noNudges,
+          telegram: telegramUp,
         },
         { rows: 30, width: 80 },
       );
