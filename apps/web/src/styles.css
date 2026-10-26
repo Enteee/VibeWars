@@ -621,7 +621,7 @@ body {
   display: none;
 }
 
-.editor-budget {
+.attribute-budget {
   display: flex;
   height: 0.5rem;
   margin-top: 0.25rem;
@@ -629,7 +629,7 @@ body {
   border: 1px solid var(--line);
 }
 
-.editor-budget-segment {
+.attribute-budget-segment {
   height: 100%;
 }
 

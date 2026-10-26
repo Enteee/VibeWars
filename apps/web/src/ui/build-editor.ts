@@ -930,7 +930,7 @@ function mountAttributes(panel: HTMLElement, context: EditorContext): Region {
   const budget = MINIMAL_GW_INSPIRED_PVP_V1.attributes.attributePointBudget;
   const points = h("div", "editor-points");
   const pointsText = h("div", "editor-points-text");
-  const bar = h("div", "editor-budget");
+  const bar = h("div", "attribute-budget");
   points.append(pointsText, bar);
   const list = h("div", "editor-attributes");
   list.dataset.cause = "attributes";
@@ -1044,7 +1044,7 @@ function mountAttributes(panel: HTMLElement, context: EditorContext): Region {
       bar,
       budgetSegments(character),
       (segment) => segment.attributeId,
-      () => h("span", "editor-budget-segment"),
+      () => h("span", "attribute-budget-segment"),
       (node, segment) => {
         node.style.width = `${String((segment.points / budget) * 100)}%`;
         node.style.background = colour(segment.attributeId);

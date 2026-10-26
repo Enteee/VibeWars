@@ -185,7 +185,7 @@ test("12/12/3 spends all 200 points, GW1's split (#470)", async ({ page }) => {
   await expect(pip(row(2), 4)).toHaveClass(/is-dim/);
   await expect(pip(row(3), 1)).toHaveClass(/is-dim/);
   // The budget bar is the 200 points, split three ways.
-  await expect(page.locator(".editor-budget-segment")).toHaveCount(3);
+  await expect(page.locator(".attribute-budget-segment")).toHaveCount(3);
 });
 
 test("a team can be created and persists", async ({ page }) => {
