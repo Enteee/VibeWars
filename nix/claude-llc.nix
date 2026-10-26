@@ -577,6 +577,9 @@ in
           # The context of the turn's last call (#321), in the employee's bus
           # directory, which its jail sees: `tg wait` reads it there.
           export VIBEWARS_CONTEXT_FILE="$root/bus/$employee/context.json"
+          # Every line the turn prints, for the manager's `peek` (#19).
+          mkdir -p "$root/peek" && chmod 700 "$root/peek"
+          export VIBEWARS_PEEK_DIR="$root/peek"
           # However the loop ends, Ctrl-C and a killed window included, it is
           # no longer between turns.
           trap 'rm -f "$between"' EXIT
