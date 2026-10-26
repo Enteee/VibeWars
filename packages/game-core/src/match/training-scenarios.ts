@@ -27,7 +27,13 @@ import type { ParticipantSpec } from "./simulation.js";
  * claiming one compiles, and the gate test then fails and says why.
  */
 export type TrainingMechanic =
-  "spell-damage" | "armor" | "interrupts" | "auto-attacks" | "dodging" | MissingMechanic;
+  | "spell-damage"
+  | "armor"
+  | "interrupts"
+  | "auto-attacks"
+  | "dodging"
+  | "blocking"
+  | MissingMechanic;
 
 /** One setting a scenario offers, generated into the editor's sub-controls. */
 export interface TrainingKnob {
@@ -208,6 +214,37 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
         baseEnergyPips: 0,
         behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
         weapon: "longbow",
+      },
+    ],
+  },
+  {
+    id: "block",
+    label: "Block",
+    teaches: "That Guardian turns half your blows aside, and a spell goes through it (#534).",
+    mapId: "training-hall",
+    exercises: ["auto-attacks", "blocking"],
+    knobs: [],
+    // In melee reach of the spawn at (100, 210), as weapon-dps's.
+    dummies: [
+      {
+        id: "guardian",
+        label: "Guardian dummy (60 armor)",
+        team: 1,
+        position: vec2(136, 210),
+        armor: 60,
+        maxHealth: IMMORTAL,
+        skillBar: ["monk.guardian"],
+        attributeRanks: { "monk.protection-prayers": 12 },
+        // A monk: it keeps Guardian up all session, recasting it as soon
+        // as it recharges, 1 s of every 7 without it.
+        baseEnergyPips: baseEnergyPipsFor("monk"),
+        behaviour: {
+          kind: "cast-loop",
+          skillIds: ["monk.guardian"],
+          targeting: { kind: "self" },
+          gapSeconds: 0,
+          firstLegal: true,
+        },
       },
     ],
   },

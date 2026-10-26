@@ -118,7 +118,8 @@ complete:
 
 - **No crits.** `criticalMultiplier` stays data.
 - ~~**No attack-speed modifiers**~~: the hook exists since ADR-0029.
-- **No block or evade.**
+- ~~**No block**~~: Guardian blocks since #534. **No evade**: GW1 merged
+  it into block.
 - ~~**Attack skills do not ride the weapon.**~~ They do since ADR-0029.
 - **Pathing is for approaches only**: the attack's, and since ADR-0029
   any targeted skill's pressed out of range (#415, #499). Player movement

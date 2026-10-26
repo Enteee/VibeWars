@@ -262,6 +262,7 @@
                                       { "literal": "crippled" },
                                       { "literal": "dazed" },
                                       { "literal": "deep-wound" },
+                                      { "literal": "guardian" },
                                       { "literal": "life-drain" },
                                       { "literal": "malaise" },
                                       { "literal": "poison" },
@@ -269,6 +270,16 @@
                                       { "literal": "weakness" }
                                     ]
                                   }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                {
+                                  "name": "kind",
+                                  "optional": false,
+                                  "type": { "literal": "attack-blocked" }
                                 },
                                 { "name": "targetId", "optional": false, "type": "string" }
                               ]
@@ -375,6 +386,7 @@
                                       { "literal": "crippled" },
                                       { "literal": "dazed" },
                                       { "literal": "deep-wound" },
+                                      { "literal": "guardian" },
                                       { "literal": "life-drain" },
                                       { "literal": "malaise" },
                                       { "literal": "poison" },
@@ -406,6 +418,7 @@
                                       { "literal": "crippled" },
                                       { "literal": "dazed" },
                                       { "literal": "deep-wound" },
+                                      { "literal": "guardian" },
                                       { "literal": "life-drain" },
                                       { "literal": "malaise" },
                                       { "literal": "poison" },
@@ -884,6 +897,7 @@
                   { "literal": "crippled" },
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
+                  { "literal": "guardian" },
                   { "literal": "life-drain" },
                   { "literal": "malaise" },
                   { "literal": "poison" },
@@ -892,6 +906,12 @@
                 ]
               }
             },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "attack-blocked" } },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
         },
@@ -961,6 +981,7 @@
                   { "literal": "crippled" },
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
+                  { "literal": "guardian" },
                   { "literal": "life-drain" },
                   { "literal": "malaise" },
                   { "literal": "poison" },
@@ -988,6 +1009,7 @@
                   { "literal": "crippled" },
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
+                  { "literal": "guardian" },
                   { "literal": "life-drain" },
                   { "literal": "malaise" },
                   { "literal": "poison" },

@@ -64,6 +64,7 @@ import {
 import {
   attackDurationSeconds,
   blindMisses,
+  blocks,
   landBlow,
   PLAIN_BLOW,
   resolveAttackSkill,
@@ -1444,7 +1445,11 @@ export class MatchSimulation {
     }
     const reach = this.#ruleset.collision.playerRadius + this.#ruleset.combat.projectileTolerance;
     const events: CombatEvent[] = [];
-    if (distance(target.position, projectile.aimPoint) <= reach) {
+    if (distance(target.position, projectile.aimPoint) > reach) {
+      events.push({ kind: "attack-dodged", targetId: target.id });
+    } else if (blocks(target.combatant, "projectile", this.#rng)) {
+      events.push({ kind: "attack-blocked", targetId: target.id });
+    } else {
       landBlow(
         projectile.weaponSnapshot,
         target.combatant,
@@ -1453,8 +1458,6 @@ export class MatchSimulation {
         this.#ruleset.combat,
         events,
       );
-    } else {
-      events.push({ kind: "attack-dodged", targetId: target.id });
     }
     const attacker = this.#participants.get(projectile.attackerId);
     if (attacker !== undefined && !attacker.combatant.dead) {
@@ -1503,11 +1506,18 @@ export class MatchSimulation {
    * Adrenaline is earned by landing damage on someone else, never by
    * waiting, which makes adrenaline skills a reward for staying in the
    * fight rather than a second energy pool. Once per resolution, however
-   * many it hit.
+   * many it hit. A blocked blow earns nothing (#534), not even the damage
+   * an attack skill deals when blocked, as Swift Chop's.
    */
   #gainAdrenaline(record: ParticipantRecord, events: readonly CombatEvent[]): void {
+    const blocked = new Set(
+      events.filter((event) => event.kind === "attack-blocked").map((event) => event.targetId),
+    );
     const dealtDamage = events.some(
-      (event) => event.kind === "damage" && event.targetId !== record.combatant.id,
+      (event) =>
+        event.kind === "damage" &&
+        event.targetId !== record.combatant.id &&
+        !blocked.has(event.targetId),
     );
     if (dealtDamage) {
       record.combatant.adrenaline = Math.min(

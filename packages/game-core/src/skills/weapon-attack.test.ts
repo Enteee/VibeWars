@@ -6,9 +6,10 @@ import { createRng, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
-import { mitigate, weaponAttributeMultiplier } from "./damage.js";
+import { mitigate, spellDamage, weaponAttributeMultiplier } from "./damage.js";
 import type { CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
+import { blockChanceOf, combinedBlockChance } from "./tick.js";
 import {
   attackDurationSeconds,
   doubleStrikeChance,
@@ -280,6 +281,159 @@ describe("resolveAttackSkill (ADR-0029)", () => {
       "b",
       "c",
     ]);
+  });
+});
+
+describe("block (#534)", () => {
+  const guardian = { chance: 0.5, against: "all" } as const;
+
+  it("combines sources as 1 − ∏(1 − p), and only against their kind of attack", () => {
+    expect(combinedBlockChance([], "melee")).toBe(0);
+    expect(combinedBlockChance([guardian], "melee")).toBe(0.5);
+    expect(combinedBlockChance([guardian, guardian], "melee")).toBe(0.75);
+    expect(combinedBlockChance([{ chance: 0.5, against: "melee" }], "projectile")).toBe(0);
+    expect(combinedBlockChance([{ chance: 0.5, against: "projectile" }], "projectile")).toBe(0.5);
+    expect(combinedBlockChance([{ chance: 1, against: "all" }], "projectile")).toBe(1);
+  });
+
+  it("Guardian blocks about half of 2000 swings, each an attack-blocked that deals nothing", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    const target = foe("dummy");
+    target.combatant.statuses.apply("guardian", 1e6, "monk");
+    expect(blockChanceOf(target.combatant, "melee")).toBe(0.5);
+    expect(blockChanceOf(target.combatant, "projectile")).toBe(0.5);
+    const rng = createRng(5);
+    let blocked = 0;
+    for (let i = 0; i < 2000; i += 1) {
+      const events = resolveSwing({ attacker: sword, target, candidates: [], rng, rules: RULES });
+      expect(events).toHaveLength(1);
+      if (events[0]?.kind === "attack-blocked") {
+        expect(events[0]).toEqual({ kind: "attack-blocked", targetId: "dummy" });
+        blocked += 1;
+      } else {
+        expect(events[0]?.kind).toBe("damage");
+      }
+    }
+    expect(blocked / 2000).toBeGreaterThan(0.46);
+    expect(blocked / 2000).toBeLessThan(0.54);
+  });
+
+  it("a blind attacker's miss is a miss: no block roll is drawn", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    sword.statuses.apply("blind", 10, "foe");
+    const target = foe("dummy");
+    target.combatant.statuses.apply("guardian", 10, "monk");
+    let floats = 0;
+    const rng = Object.assign(createRng(1), {
+      nextFloat: () => {
+        floats += 1;
+        return 0.1;
+      },
+    });
+    const events = resolveSwing({ attacker: sword, target, candidates: [], rng, rules: RULES });
+    expect(events).toEqual([{ kind: "attack-missed", targetId: "dummy" }]);
+    expect(floats).toBe(1);
+  });
+
+  describe("an attack skill", () => {
+    /** Floats under 0.5 block a Guardian; damage rolls are all 10. */
+    const blocking = (): SimulationRng =>
+      Object.assign(createRng(1), { nextInt: () => 10, nextFloat: () => 0.25 });
+
+    function resolveBlocked(
+      skillId: string,
+      weapon: Weapon,
+      attributeId: string,
+      target: Combatant,
+    ) {
+      const skill = getSkill(skillId);
+      if (skill === undefined) {
+        throw new Error(`missing ${skillId}`);
+      }
+      target.statuses.apply("guardian", 10, "monk");
+      return resolveAttackSkill({
+        skill,
+        caster: attacker(weapon, attributeId),
+        targets: [target],
+        rng: blocking(),
+        rules: RULES,
+      });
+    }
+
+    const victim = (): Combatant =>
+      makeCombatant({ id: "t", team: 1, health: 1e6, maxHealth: 1e6 });
+
+    it("blocked, deals no damage and lands none of its riders", () => {
+      const target = victim();
+      const events = resolveBlocked(
+        "warrior.sever-artery-lite",
+        WEAPONS.sword,
+        "warrior.swordsmanship",
+        target,
+      );
+      expect(events).toEqual([{ kind: "attack-blocked", targetId: "t" }]);
+      expect(target.statuses.has("bleeding")).toBe(false);
+      expect(target.health).toBe(target.maxHealth);
+    });
+
+    it("Distracting Blow, blocked, interrupts nothing", () => {
+      const target = victim();
+      target.cast.beginCast("ranger.troll-unguent", target.id, 3);
+      const events = resolveBlocked(
+        "warrior.distracting-blow",
+        WEAPONS.sword,
+        "warrior.swordsmanship",
+        target,
+      );
+      expect(events).toEqual([{ kind: "attack-blocked", targetId: "t" }]);
+      expect(target.cast.isCasting).toBe(true);
+    });
+
+    it("Swift Chop, blocked, still deals its flat damage and inflicts a Deep Wound", () => {
+      const target = victim();
+      const events = resolveBlocked(
+        "warrior.swift-chop",
+        WEAPONS.axe,
+        "warrior.axe-mastery",
+        target,
+      );
+      expect(events).toEqual([
+        { kind: "attack-blocked", targetId: "t" },
+        { kind: "damage", targetId: "t", amount: mitigate(spellDamage(16), target, RULES) },
+        { kind: "status-applied", targetId: "t", statusId: "deep-wound", durationSeconds: 20 },
+      ]);
+    });
+
+    it("Barrage: each arrow rolls its own block", () => {
+      const skill = getSkill("ranger.barrage");
+      if (skill === undefined) {
+        throw new Error("missing barrage");
+      }
+      const targets = ["a", "b", "c"].map((id) =>
+        makeCombatant({ id, team: 1, health: 1e6, maxHealth: 1e6 }),
+      );
+      for (const target of targets) {
+        target.statuses.apply("guardian", 10, "monk");
+      }
+      // Block, land, block.
+      const floats = [0.1, 0.9, 0.1];
+      const rng = Object.assign(createRng(1), {
+        nextInt: () => 10,
+        nextFloat: () => floats.shift() ?? 0.9,
+      });
+      const events = resolveAttackSkill({
+        skill,
+        caster: attacker(WEAPONS.longbow, "ranger.marksmanship"),
+        targets,
+        rng,
+        rules: RULES,
+      });
+      expect(events.map((event) => `${event.kind}:${event.targetId}`)).toEqual([
+        "attack-blocked:a",
+        "damage:b",
+        "attack-blocked:c",
+      ]);
+    });
   });
 });
 

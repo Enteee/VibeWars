@@ -623,4 +623,10 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     expect(fireball?.area).toEqual({ x: 1, y: 2, radius: 81 });
     expect(fireball?.skillId).toBe("elementalist.fireball");
   });
+
+  it("carries a blocked attack across (#534)", () => {
+    const blocked = { kind: "attack-blocked", targetId: "b" } as const;
+    const [wired] = wireCombat([entry({ events: [blocked] })]);
+    expect(wired === undefined ? undefined : combatMessage(wired).events).toEqual([blocked]);
+  });
 });

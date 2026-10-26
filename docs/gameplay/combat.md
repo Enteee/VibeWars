@@ -221,7 +221,19 @@ A shot whose flight would cross a wall stops at it and is "obstructed"
 too, so stepping behind a pillar dodges it. Shots fly through bodies.
 Melee swings are never obstructed.
 
-Not modelled: critical hits, block and evade. Attack-speed changes have
+**Block** (#534). Guardian gives its ally a 50% chance to block attacks;
+several block sources combine as 1 − ∏(1 − p), so two 50% sources make
+75%. Each blow rolls its own block, after blind (a blinded miss is a
+miss, with no block roll) and before the damage roll: every swing of a
+double strike, every arrow of Barrage. A shot rolls it when it lands. A
+blocked attack deals no damage, earns no adrenaline and lands none of
+its riders, so a blocked Distracting Blow interrupts nothing; an attack
+skill's cost and recharge are still spent. "block" floats over the
+target. Swift Chop is the exception that proves it: blocked, it still
+deals its flat damage and a 20 s Deep Wound. Spells are never blocked,
+and shields do not block, as in GW1.
+
+Not modelled: critical hits and evade. Attack-speed changes have
 a hook (only the strongest speed-up and slow-down count), but no skill
 uses it yet.
 

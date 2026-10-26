@@ -98,7 +98,8 @@ as if it had been used, as in GW1. Before, it could be cast again at once.
 ## Simplifications
 
 - A ranged attack skill lands at the hit, with no flight (child 3).
-- No crits, block or evade; no per-skill aftercast overrides.
+- No crits or evade; no per-skill aftercast overrides. Block came with
+  #534: a blocked attack skill is paid for and does only its `onBlocked`.
 
 ## Consequences
 

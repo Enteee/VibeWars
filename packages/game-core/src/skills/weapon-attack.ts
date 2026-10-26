@@ -14,7 +14,7 @@ import {
 import { resolveMagnitude } from "./scaling.js";
 import { aggregateModifiers } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
-import { attackMissChanceOf } from "./tick.js";
+import { attackMissChanceOf, blockChanceOf } from "./tick.js";
 import type { Combatant } from "./types.js";
 
 /**
@@ -120,6 +120,25 @@ export function blindMisses(attacker: Combatant, rng: SimulationRng): boolean {
   return chance > 0 && rng.nextFloat() < chance;
 }
 
+/** Whether a blow of this weapon is a projectile or a melee blow, as a block sees it. */
+export function blowKind(weapon: Weapon): "melee" | "projectile" {
+  return weapon.projectileSpeed === undefined ? "melee" : "projectile";
+}
+
+/**
+ * Whether `victim` blocks a blow of this kind (#534), rolled after blind
+ * and before the damage roll. Rolled only when there is a chance to
+ * block, as blind is, so a fight without blocking keeps its random stream.
+ */
+export function blocks(
+  victim: Combatant,
+  kind: "melee" | "projectile",
+  rng: SimulationRng,
+): boolean {
+  const chance = blockChanceOf(victim, kind);
+  return chance > 0 && rng.nextFloat() < chance;
+}
+
 /**
  * What an attack skill makes of a blow (ADR-0029): the weapon's roll times
  * `weaponDamage`, plus `bonus`.
@@ -161,7 +180,7 @@ export function landBlow(
   applyDamage(victim, mitigate(packet, victim, rules), events);
 }
 
-/** One blow on one victim: blind first, then the damage roll. */
+/** One blow on one victim: blind first, then block, then the damage roll. */
 function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
   const { attacker, rng, rules } = swing;
   if (victim.dead) {
@@ -169,6 +188,10 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
   }
   if (blindMisses(attacker, rng)) {
     events.push({ kind: "attack-missed", targetId: victim.id });
+    return;
+  }
+  if (blocks(victim, "melee", rng)) {
+    events.push({ kind: "attack-blocked", targetId: victim.id });
     return;
   }
   landBlow(weaponSnapshotOf(attacker), victim, PLAIN_BLOW, rng, rules, events);
@@ -179,7 +202,7 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
  * cleave included, in the order they happened.
  *
  * A double strike is a second, identical swing at once, with its own
- * blind and damage rolls; it is rolled only for a weapon that can, for
+ * blind, block and damage rolls; it is rolled only for a weapon that can, for
  * the same reason as the miss.
  */
 export function resolveSwing(swing: Swing): CombatEvent[] {
@@ -201,8 +224,10 @@ export function resolveSwing(swing: Swing): CombatEvent[] {
  * Resolve an attack skill at its hit (ADR-0029): one blow of the weapon on
  * each victim, the primary first, with the skill's bonus added before
  * armor. A victim the blow misses (blind) gets none of the skill's
- * riders; the ones it hits get them all. No double strike and no cleave:
- * an area, as Barrage's, is already the skill's own.
+ * riders; the ones it hits get them all. A victim that blocks gets the
+ * skill's `onBlocked` effects instead (#534). No double strike and no
+ * cleave: an area, as Barrage's, is already the skill's own, and each of
+ * its blows rolls its own block.
  */
 export function resolveAttackSkill(resolution: SkillResolution): CombatEvent[] {
   const { skill, caster, rng, rules } = resolution;
@@ -212,8 +237,10 @@ export function resolveAttackSkill(resolution: SkillResolution): CombatEvent[] {
     bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
   };
   const snapshot = weaponSnapshotOf(caster);
+  const kind = blowKind(snapshot.mainHand.weapon);
   const events: CombatEvent[] = [];
   const hit: Combatant[] = [];
+  const blocked: Combatant[] = [];
   for (const victim of resolution.targets) {
     if (victim.dead) {
       continue;
@@ -222,8 +249,23 @@ export function resolveAttackSkill(resolution: SkillResolution): CombatEvent[] {
       events.push({ kind: "attack-missed", targetId: victim.id });
       continue;
     }
+    if (blocks(victim, kind, rng)) {
+      events.push({ kind: "attack-blocked", targetId: victim.id });
+      blocked.push(victim);
+      continue;
+    }
     landBlow(snapshot, victim, blow, rng, rules, events);
     hit.push(victim);
   }
-  return [...events, ...applySkillEffects({ ...resolution, targets: hit })];
+  return [
+    ...events,
+    ...applySkillEffects({ ...resolution, targets: hit }),
+    ...(blocked.length === 0 || skill.attack === undefined
+      ? []
+      : applySkillEffects({
+          ...resolution,
+          skill: { ...skill, effects: skill.attack.onBlocked },
+          targets: blocked,
+        })),
+  ];
 }

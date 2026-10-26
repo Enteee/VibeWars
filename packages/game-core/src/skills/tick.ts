@@ -1,6 +1,12 @@
 import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
-import { aggregateModifiers, clampPips, HEALTH_PER_PIP } from "./status.js";
+import {
+  aggregateModifiers,
+  clampPips,
+  getStatusDefinition,
+  HEALTH_PER_PIP,
+  type BlockRule,
+} from "./status.js";
 import type { Combatant, Skill } from "./types.js";
 
 /**
@@ -127,4 +133,30 @@ export function effectiveActivationSeconds(skill: Skill, caster: Combatant): num
 /** The chance in [0, 1] that the bearer's attacks miss (blind). */
 export function attackMissChanceOf(combatant: Combatant): number {
   return aggregateModifiers(combatant.statuses.active).attackMissChance;
+}
+
+/**
+ * The chance in [0, 1] that `blocks` together block an attack of this
+ * kind (#534). Several sources combine as 1 − ∏(1 − p): two 50% blocks
+ * are 75%.
+ */
+export function combinedBlockChance(
+  blocks: readonly BlockRule[],
+  kind: "melee" | "projectile",
+): number {
+  let unblocked = 1;
+  for (const block of blocks) {
+    if (block.against === "all" || block.against === kind) {
+      unblocked *= 1 - block.chance;
+    }
+  }
+  return 1 - unblocked;
+}
+
+/** The chance in [0, 1] that the bearer blocks an attack of this kind (#534). */
+export function blockChanceOf(combatant: Combatant, kind: "melee" | "projectile"): number {
+  return combinedBlockChance(
+    combatant.statuses.active.flatMap((status) => getStatusDefinition(status.id).block ?? []),
+    kind,
+  );
 }

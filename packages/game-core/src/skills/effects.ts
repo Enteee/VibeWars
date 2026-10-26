@@ -54,6 +54,11 @@ export type CombatEvent =
   | { readonly kind: "interrupt-missed"; readonly targetId: string }
   /** A blinded attack skill that swung and missed: paid for, no effect. */
   | { readonly kind: "attack-missed"; readonly targetId: string }
+  /**
+   * An attack its target blocked (#534): no damage, no adrenaline, no
+   * riders; an attack skill's own if-blocked effects follow it.
+   */
+  | { readonly kind: "attack-blocked"; readonly targetId: string }
   /** A projectile that landed where its target would have been, had it kept moving. */
   | { readonly kind: "attack-dodged"; readonly targetId: string }
   /** A ranged swing released with a wall in the way: nothing flies (GW1's "Obstructed"). */
