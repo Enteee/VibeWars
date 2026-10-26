@@ -326,6 +326,27 @@ describe("connectMatch, when the host's peer drops", () => {
     expect(self(connection)?.x).toBeGreaterThan(x);
   });
 
+  it("is back in its seat when only it saw the drop, and the host still holds it there", async () => {
+    const match = startMatch();
+    const { connection, transport } = await match.join();
+    await match.step(0.05);
+    const states: string[] = [];
+    connection.onConnectionChange((state) => states.push(state));
+    const token = connection.rejoinToken;
+
+    // The host never sees the guest go, so its rejoin hello comes from a
+    // peer the host still has seated.
+    match.network.blip(transport.selfId, "host");
+    await settle();
+
+    expect(states).toEqual(["reconnecting", "online"]);
+    expect(connection.rejoinToken).not.toBe(token);
+    const x = self(connection)?.x ?? 0;
+    connection.sendIntent({ kind: "move", dirX: 1, dirY: 0 });
+    await match.step(0.3);
+    expect(self(connection)?.x).toBeGreaterThan(x);
+  });
+
   it("is lost once the window runs out, and asks nothing when the host is back after it", async () => {
     const { match, states, hellos } = await dropped();
 

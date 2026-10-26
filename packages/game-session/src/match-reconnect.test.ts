@@ -173,4 +173,29 @@ describe("reconnection over P2P (#375)", () => {
     expect(resumed.selfSessionId).toBe(dropper.selfSessionId);
     expect(playerIn(watcher.getSnapshot(), dropper.selfSessionId)).toBeDefined();
   });
+
+  it("does not let a seated player take a second seat with another player's token", async () => {
+    // Only the host's own seat comes back to a peer it has seated: the
+    // one-sided drop (#515), not a way to hold two characters.
+    const match = startMatch();
+    const { connection: victim } = await match.join();
+    const { connection: thief, transport } = await match.join();
+    await match.step(0.05);
+    const welcomes: unknown[] = [];
+    transport.on("welcome", (data) => welcomes.push(data));
+
+    transport.send(
+      "hello",
+      hello({ rejoin: { playerId: victim.selfSessionId, token: victim.rejoinToken } }),
+      "host",
+    );
+    await match.step(0.3);
+
+    expect(welcomes).toEqual([]);
+    expect(thief.selfSessionId).not.toBe(victim.selfSessionId);
+    const x = self(victim)?.x ?? 0;
+    victim.sendIntent({ kind: "move", dirX: 1, dirY: 0 });
+    await match.step(0.3);
+    expect(self(victim)?.x).toBeGreaterThan(x);
+  });
 });

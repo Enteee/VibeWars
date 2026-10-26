@@ -264,7 +264,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
 
   transport.on("hello", (data, from) => {
     // Charged like an intent: every hello may send a whole map back.
-    if (!budget.take(from, nowMs()) || seatOfPeer.has(from) || departed.has(from)) {
+    if (!budget.take(from, nowMs()) || departed.has(from)) {
       return;
     }
     // Checked first: a client of another version, or of none, is told so
@@ -283,13 +283,23 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
     const { rejoin } = hello;
     const held = rejoin === null ? undefined : seats.get(rejoin.playerId);
-    if (held !== undefined && held.token === rejoin?.token) {
+    const current = seatOfPeer.get(from);
+    if (
+      held !== undefined &&
+      held.token === rejoin?.token &&
+      (current === undefined || current === held)
+    ) {
       // The player may be back before the host has seen its old peer go:
-      // the token is the proof, and the old peer is forgotten.
+      // the token is the proof, and the old peer is forgotten. That old
+      // peer may be this one, when only the guest saw the connection drop.
       if (held.peerId !== undefined) {
         seatOfPeer.delete(held.peerId);
       }
       welcome(held, from);
+      return;
+    }
+    if (current !== undefined) {
+      // Already seated, and not asking for its own seat back.
       return;
     }
     // A wrong or expired token is a fresh join, and only for a peer the
