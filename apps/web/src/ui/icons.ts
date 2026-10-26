@@ -117,6 +117,14 @@ export function skillBadgeHtml(skillId: string): string {
   return type === undefined ? "" : skillTypeBadgeHtml(type);
 }
 
+/**
+ * Whether a bar's skill wears the elite frame (#459), by id, beside its
+ * badge. A skill this client does not know is not.
+ */
+export function isEliteSkill(skillId: string): boolean {
+  return getSkill(skillId)?.elite === true;
+}
+
 /** The HUD's mute button (#112): what the sound is now, not what a click does. */
 export function soundIcon(muted: boolean): string {
   return iconUrl("ui", muted ? "sound-off" : "sound-on");

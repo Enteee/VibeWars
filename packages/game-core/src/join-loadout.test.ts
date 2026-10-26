@@ -63,9 +63,31 @@ describe("resolveJoinLoadout", () => {
       refused: { kind: "empty-bar", build: expect.objectContaining({ name: "Flame Caller" }) },
     });
   });
+
+  it("gives the house loadout for a bar with two elites (#459)", () => {
+    const twoElites = resolveJoinLoadout(
+      {
+        ...LEGAL,
+        primaryProfession: "warrior",
+        secondaryProfession: "ranger",
+        attributes: [],
+        skillBar: ["ranger.barrage", "warrior.backbreaker", null, null, null, null, null, null],
+        equipment: defaultBuildEquipment("warrior"),
+      },
+      RULES,
+    );
+    expect(twoElites.loadout).toBe(HOUSE_LOADOUT);
+    expect(twoElites.refused?.kind).toBe("illegal");
+  });
 });
 
 describe("HOUSE_LOADOUT", () => {
+  it("holds no elite, so it is legal under the one-elite rule (#459)", () => {
+    for (const id of HOUSE_LOADOUT.skillBar) {
+      expect(id === null ? false : getSkill(id)?.elite, String(id)).toBe(false);
+    }
+  });
+
   it("regenerates 4 energy pips, a caster's, though it wears a warrior's kit (#502)", () => {
     expect(HOUSE_LOADOUT.primaryProfession).toBe("warrior");
     expect(HOUSE_LOADOUT.baseEnergyPips).toBe(4);

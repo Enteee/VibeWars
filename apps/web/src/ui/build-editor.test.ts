@@ -19,6 +19,7 @@ import {
   remainingPoints,
   setProfessions,
   setRank,
+  equipSkill,
   setSkill,
   swapSkillSlots,
 } from "./build-editor.js";
@@ -280,7 +281,7 @@ describe("skill bar drag and drop", () => {
   });
 
   it("equips from the library on drop", () => {
-    const after = applySkillDrop(
+    const { character: after } = applySkillDrop(
       newCharacter("c1"),
       { from: "library", skillId: "elementalist.fireball" },
       2,
@@ -290,14 +291,14 @@ describe("skill bar drag and drop", () => {
   });
 
   it("moves rather than duplicates when dragging a library skill already on the bar", () => {
-    const after = applySkillDrop(warrior(), { from: "library", skillId: "a" }, 4);
+    const { character: after } = applySkillDrop(warrior(), { from: "library", skillId: "a" }, 4);
 
     expect(after.skillBar[4]).toBe("a");
     expect(after.skillBar.filter((id) => id === "a")).toHaveLength(1);
   });
 
   it("swaps when the drag came from another slot", () => {
-    const after = applySkillDrop(warrior(), { from: "slot", slot: 0 }, 1);
+    const { character: after } = applySkillDrop(warrior(), { from: "slot", slot: 0 }, 1);
 
     expect(after.skillBar.slice(0, 2)).toEqual(["b", "a"]);
   });
@@ -326,5 +327,67 @@ describe("equipTarget (#564)", () => {
       slot: 6,
       replaces: false,
     });
+  });
+});
+
+describe("one elite per bar (#459)", () => {
+  /** A warrior/ranger holding Barrage in slot 1 and Sprint in slot 2. */
+  const withBarrage = (): StoredCharacter => ({
+    ...newCharacter("c1"),
+    secondaryProfession: "ranger",
+    skillBar: ["ranger.barrage", "warrior.sprint", null, null, null, null, null, null],
+  });
+
+  it("replaces the elite already on the bar, and says so", () => {
+    const { character, notice } = equipSkill(withBarrage(), 3, "ranger.broad-head-arrow");
+    expect(character.skillBar.slice(0, 4)).toEqual([
+      null,
+      "warrior.sprint",
+      null,
+      "ranger.broad-head-arrow",
+    ]);
+    expect(notice).toBe("Broad Head Arrow replaced Barrage: only one elite skill per bar.");
+  });
+
+  it("replaces in the elite's own slot without a notice", () => {
+    const { character, notice } = equipSkill(withBarrage(), 0, "warrior.backbreaker");
+    expect(character.skillBar.slice(0, 2)).toEqual(["warrior.backbreaker", "warrior.sprint"]);
+    expect(notice).toBeUndefined();
+  });
+
+  it("moves an elite between slots, or equips a non-elite, without a notice", () => {
+    const moved = equipSkill(withBarrage(), 5, "ranger.barrage");
+    expect(moved.character.skillBar[5]).toBe("ranger.barrage");
+    expect(moved.character.skillBar[0]).toBeNull();
+    expect(moved.notice).toBeUndefined();
+    const plain = equipSkill(withBarrage(), 4, "ranger.troll-unguent");
+    expect(plain.character.skillBar[0]).toBe("ranger.barrage");
+    expect(plain.notice).toBeUndefined();
+  });
+
+  it("follows the same rule when an elite is dropped from the library", () => {
+    const { character, notice } = applySkillDrop(
+      withBarrage(),
+      { from: "library", skillId: "warrior.backbreaker" },
+      1,
+    );
+    expect(character.skillBar.slice(0, 2)).toEqual([null, "warrior.backbreaker"]);
+    expect(notice).toBe("Backbreaker replaced Barrage: only one elite skill per bar.");
+  });
+
+  it("never lets setSkill leave two elites on the bar", () => {
+    const character = setSkill(withBarrage(), 7, "warrior.backbreaker");
+    expect(validateBuild(character)).toEqual([]);
+  });
+
+  it("refuses to save a two-elite bar that arrived from storage or an import", () => {
+    // The editor's save button is disabled while validateBuild reports anything.
+    const stored: StoredCharacter = {
+      ...withBarrage(),
+      skillBar: ["ranger.barrage", "warrior.backbreaker", null, null, null, null, null, null],
+    };
+    expect(validateBuild(stored).map((problem) => problem.message)).toEqual([
+      "Only one elite skill per bar",
+    ]);
   });
 });

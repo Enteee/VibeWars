@@ -13,6 +13,7 @@ const SPELL: Skill = {
   id: "test.spell",
   name: "Test Spell",
   type: "spell",
+  elite: false,
   profession: "elementalist",
   attributeId: "elementalist.fire-magic",
   cost: { kind: "energy", amount: 10 },

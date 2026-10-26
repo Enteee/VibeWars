@@ -16,6 +16,7 @@ import {
   getAttribute,
   getInsignia,
   getOffhand,
+  getSkill,
   getWeapon,
   perSlotAmount,
   reconcileEquipment,
@@ -72,7 +73,7 @@ import {
   weaponIcon,
   type GearIcon,
 } from "./icons.js";
-import { filterSkillsByName, groupSkillsByAttribute } from "./skill-library.js";
+import { filterEliteSkills, filterSkillsByName, groupSkillsByAttribute } from "./skill-library.js";
 import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
 import { button, h, syncList } from "./kit.js";
 import { createTrainingPanel, type TrainingPanel } from "./training-panel.js";
@@ -208,6 +209,25 @@ function fitWeapon(
   };
 }
 
+/**
+ * The slot of the elite that equipping `skillId` into `slot` pushes off
+ * the bar (#459), or -1. Only one elite per bar, and the new one wins:
+ * the one already in `slot` is simply replaced, and an elite moving
+ * between slots displaces nothing.
+ */
+export function displacedEliteSlot(
+  character: StoredCharacter,
+  slot: number,
+  skillId: string | null,
+): number {
+  if (skillId === null || getSkill(skillId)?.elite !== true) {
+    return -1;
+  }
+  return character.skillBar.findIndex(
+    (id, index) => index !== slot && id !== null && id !== skillId && getSkill(id)?.elite === true,
+  );
+}
+
 export function setSkill(
   character: StoredCharacter,
   slot: number,
@@ -222,8 +242,35 @@ export function setSkill(
       skillBar[existing] = null;
     }
   }
+  const displaced = displacedEliteSlot(character, slot, skillId);
+  if (displaced >= 0) {
+    skillBar[displaced] = null;
+  }
   skillBar[slot] = skillId;
   return { ...character, skillBar, updatedAt: Date.now() };
+}
+
+/** A change to the bar, and what to tell the player about it, if anything (#459). */
+export interface SkillChange {
+  readonly character: StoredCharacter;
+  readonly notice: string | undefined;
+}
+
+/**
+ * `setSkill`, with what to tell the player when an elite took another
+ * elite's place (#459); `undefined` when nothing needs saying.
+ */
+export function equipSkill(character: StoredCharacter, slot: number, skillId: string): SkillChange {
+  const displaced = character.skillBar[displacedEliteSlot(character, slot, skillId)];
+  const next = setSkill(character, slot, skillId);
+  if (displaced === undefined || displaced === null) {
+    return { character: next, notice: undefined };
+  }
+  const name = (id: string): string => getSkill(id)?.name ?? id;
+  return {
+    character: next,
+    notice: `${name(skillId)} replaced ${name(displaced)}: only one elite skill per bar.`,
+  };
 }
 
 /**
@@ -279,15 +326,15 @@ export function decodeDragSource(raw: string): SkillDragSource | undefined {
   return undefined;
 }
 
-/** Apply a completed drag onto `targetSlot`. */
+/** Apply a completed drag onto `targetSlot`, with `equipSkill`'s notice. */
 export function applySkillDrop(
   character: StoredCharacter,
   source: SkillDragSource,
   targetSlot: number,
-): StoredCharacter {
+): SkillChange {
   return source.from === "library"
-    ? setSkill(character, targetSlot, source.skillId)
-    : swapSkillSlots(character, source.slot, targetSlot);
+    ? equipSkill(character, targetSlot, source.skillId)
+    : { character: swapSkillSlots(character, source.slot, targetSlot), notice: undefined };
 }
 
 /**
@@ -317,14 +364,18 @@ interface EditorContext {
   readonly current: () => StoredCharacter;
   /** Make `next` the character, and have every region show it. */
   readonly commit: (next: StoredCharacter) => void;
+  /** `commit` a change to the bar, showing its notice until the next change (#459). */
+  readonly equip: (change: SkillChange) => void;
+  /** What the last change has to tell the player. */
+  readonly notice: () => string | undefined;
   /** One tooltip for the whole editor. */
   readonly tooltip: SkillTooltip;
   /** The bar slot picked for the next equip (#564), if any. */
   readonly selected: () => number | undefined;
   /** Pick a bar slot, or none; every region shows it. */
   readonly select: (slot: number | undefined) => void;
-  /** Put `skillId` in `slot`; the pick, used, is let go. */
-  readonly equip: (skillId: string, slot: number) => void;
+  /** Equip `skillId` to `slot`, as `equip` does; the pick, used, is let go. */
+  readonly equipTo: (skillId: string, slot: number) => void;
   /** A bar slot's key, from the player's keymap, as the arena's bar labels it. */
   readonly slotLabel: (slot: number) => string;
 }
@@ -392,6 +443,7 @@ export function mountBuildEditor(
     training?.setBuild(character);
   };
 
+  let notice: string | undefined;
   let selected: number | undefined;
   // Read once per open, as the arena's bar does; labels by code until the
   // browser says what the layout is.
@@ -405,7 +457,7 @@ export function mountBuildEditor(
     }
   });
 
-  const commit = (next: StoredCharacter): void => {
+  const commit = (next: StoredCharacter, said: string | undefined): void => {
     // Another profession is another bar to build: the pick goes.
     if (
       next.primaryProfession !== character.primaryProfession ||
@@ -414,6 +466,7 @@ export function mountBuildEditor(
       selected = undefined;
     }
     character = next;
+    notice = said;
     tooltip.hide();
     update();
     training?.refocus();
@@ -421,16 +474,23 @@ export function mountBuildEditor(
 
   const context: EditorContext = {
     current: () => character,
-    commit,
+    commit: (next) => {
+      commit(next, undefined);
+    },
+    equip: (change) => {
+      commit(change.character, change.notice);
+    },
+    notice: () => notice,
     tooltip,
     selected: () => selected,
     select: (slot) => {
       selected = slot;
       update();
     },
-    equip: (skillId, slot) => {
+    equipTo: (skillId, slot) => {
       selected = undefined;
-      commit(setSkill(character, slot, skillId));
+      const change = equipSkill(character, slot, skillId);
+      commit(change.character, change.notice);
     },
     slotLabel: (slot) => {
       const action = SKILL_ACTIONS[slot];
@@ -464,7 +524,7 @@ export function mountBuildEditor(
       return;
     }
     event.preventDefault();
-    context.equip(skillId, slot);
+    context.equipTo(skillId, slot);
   };
   document.addEventListener("keydown", onKeyDown);
 
@@ -676,6 +736,8 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
   );
   const grid = h("div", "skill-bar-grid");
   section.appendChild(grid);
+  const notice = h("div", "editor-notice");
+  notice.setAttribute("role", "status");
   panel.appendChild(section);
 
   /** What each filled slot's tooltip shows, as of the last update. */
@@ -726,13 +788,20 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
         // Something unrelated was dragged in. Do nothing, loudly nowhere.
         return;
       }
-      context.commit(applySkillDrop(context.current(), source, slot));
+      context.equip(applySkillDrop(context.current(), source, slot));
     });
     return cell;
   };
 
   return {
     update(character) {
+      const said = context.notice();
+      if (said === undefined) {
+        notice.remove();
+      } else {
+        notice.textContent = said;
+        section.appendChild(notice);
+      }
       const available = equippableSkills(character);
       const ranks = new Map(character.attributes.map((a) => [a.attributeId, a.rank]));
       const slots = character.skillBar.map((_, slot) => slot);
@@ -757,6 +826,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
         built.set(slot, signature);
         cell.replaceChildren(h("span", "skill-slot-index", label));
         cell.classList.toggle("is-empty", skill === undefined);
+        cell.classList.toggle("is-elite", skill?.elite === true);
         cell.draggable = skill !== undefined;
         if (skill === undefined || description === undefined) {
           cell.appendChild(h("span", "skill-slot-empty", "empty"));
@@ -970,6 +1040,14 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   search.className = "field-input skill-search";
   search.type = "search";
   search.placeholder = "filter by name";
+  // The library's "Elite" toggle (#459): only elite skills listed.
+  const eliteOnly = document.createElement("input");
+  eliteOnly.type = "checkbox";
+  const eliteFilter = h("label", "skill-elite-filter");
+  eliteFilter.append(eliteOnly, " Elite");
+  // On the search's own row, so the library is no taller for it.
+  const filters = h("div", "skill-filters");
+  filters.append(search, eliteFilter);
   const groupHost = h("div", "skill-groups");
   const emptyNote = h(
     "div",
@@ -989,7 +1067,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     const character = context.current();
     const target = equipTarget(character.skillBar, context.selected());
     if (target !== undefined && !character.skillBar.includes(skill.id)) {
-      context.equip(skill.id, target.slot);
+      context.equipTo(skill.id, target.slot);
     }
   };
 
@@ -999,6 +1077,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     // Focusable, so a skill key over it equips it to that slot (#564).
     box.tabIndex = 0;
     box.dataset.skillId = skill.id;
+    box.classList.toggle("is-elite", skill.elite);
     box.appendChild(h("span", "skill-box-name", skill.name));
     box.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
     box.appendChild(h("span", "skill-box-cost"));
@@ -1048,7 +1127,11 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
       target === undefined
         ? "pick a slot"
         : `Equip → ${context.slotLabel(target.slot)}${target.replaces ? " (replace)" : ""}`;
-    const matches = filterSkillsByName(equippableSkills(character), search.value);
+    const equippable = equippableSkills(character);
+    const matches = filterSkillsByName(
+      eliteOnly.checked ? filterEliteSkills(equippable) : equippable,
+      search.value,
+    );
     const groups = groupSkillsByAttribute(matches);
     syncList(
       groupHost,
@@ -1117,8 +1200,11 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   search.addEventListener("input", () => {
     render(context.current());
   });
+  eliteOnly.addEventListener("change", () => {
+    render(context.current());
+  });
 
-  return { elements: [search, groupHost], update: render };
+  return { elements: [filters, groupHost], update: render };
 }
 
 /* -------------------------------------------------------------------------- */
