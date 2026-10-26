@@ -134,11 +134,10 @@ export function createLocalConnection(options: {
       const skillId = entry.skillId ?? "";
       const weaponId = entry.weaponId ?? "";
       const attributeId = entry.attributeId ?? "";
-      const events = entry.events;
+      const { doubleStrike, events } = entry;
+      const base = { casterSessionId, cause, skillId, weaponId, attributeId, doubleStrike, events };
       const message: CombatMessage =
-        entry.area === undefined
-          ? { casterSessionId, cause, skillId, weaponId, attributeId, events }
-          : { casterSessionId, cause, skillId, weaponId, attributeId, events, area: entry.area };
+        entry.area === undefined ? base : { ...base, area: entry.area };
       for (const handler of combatHandlers) {
         handler(message);
       }

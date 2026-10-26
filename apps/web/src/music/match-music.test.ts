@@ -74,6 +74,7 @@ function hit(caster: string, target: string): CombatMessage {
     skillId: "x",
     weaponId: "",
     attributeId: "",
+    doubleStrike: false,
     events: [{ kind: "damage", targetId: target, amount: 9, critical: false }],
   };
 }

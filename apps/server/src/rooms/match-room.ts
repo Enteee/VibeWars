@@ -310,7 +310,7 @@ export async function openLobbyMatch(
  * flash (#5).
  */
 function combatEntry(entry: CombatLogEntry): CombatMessage<CombatEvent> | undefined {
-  const { cause, events, area } = entry;
+  const { cause, events, area, doubleStrike } = entry;
   if (events.length === 0) {
     return undefined;
   }
@@ -324,9 +324,8 @@ function combatEntry(entry: CombatLogEntry): CombatMessage<CombatEvent> | undefi
   const skillId = entry.skillId ?? "";
   const weaponId = entry.weaponId ?? "";
   const attributeId = entry.attributeId ?? "";
-  return area === undefined
-    ? { casterSessionId, cause, skillId, weaponId, attributeId, events }
-    : { casterSessionId, cause, skillId, weaponId, attributeId, events, area };
+  const message = { casterSessionId, cause, skillId, weaponId, attributeId, doubleStrike, events };
+  return area === undefined ? message : { ...message, area };
 }
 
 /**

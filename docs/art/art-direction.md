@@ -404,8 +404,12 @@ half wind, full wind, half strike, hit, early and late recovery.
   for the static mark. A pose that crosses it is a bug in `weapon-pose.ts`.
 - **The swing flash stays.** The arc at r + 6 still marks the hit for
   everyone; the weapon motion adds to it, it does not replace it.
-- **Fists and daggers alternate hands.** A thrown spear is gone from
-  release until halfway through recovery, then slides back in and fades.
+- **Fists and daggers alternate hands.** A double strike (#561) stabs
+  with both: the off hand lands 90 ms after the main hand, and the next
+  swing is the main hand's again. The host says which swings struck twice
+  only on the hit, so the off hand's wind-up and strike fit in those 90 ms.
+  A thrown spear is gone from release until halfway through recovery, then
+  slides back in and fades.
 - **Reduced motion.** Every mark stays at rest, as the swing flash does:
   the damage number reports the hit, so the motion is decoration.
 

@@ -349,9 +349,13 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
  *
  * A double strike is a second, identical swing at once, with its own
  * blind, block, crit and damage rolls; it is rolled only for a weapon that can, for
- * the same reason as the miss.
+ * the same reason as the miss. `doubleStrike` says it struck twice, missed
+ * blows included, so the off hand can stab after the main one (#561).
  */
-export function resolveSwing(swing: Swing): CombatEvent[] {
+export function resolveSwing(swing: Swing): {
+  readonly events: CombatEvent[];
+  readonly doubleStrike: boolean;
+} {
   const { weapon } = swing.attacker.equipment.mainHand;
   const victims = victimsOf(swing, weapon);
   const chance = doubleStrikeChance(swing.attacker, weapon);
@@ -363,7 +367,7 @@ export function resolveSwing(swing: Swing): CombatEvent[] {
       strike(swing, victim, events);
     }
   }
-  return events;
+  return { events, doubleStrike: strikes === 2 };
 }
 
 /**

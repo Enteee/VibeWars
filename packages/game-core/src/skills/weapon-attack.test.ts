@@ -74,7 +74,7 @@ describe("resolveSwing", () => {
         rng,
         rules: RULES,
         exposed: NOWHERE,
-      });
+      }).events;
       expect(events).toHaveLength(1);
       for (const amount of rolled(events)) {
         seen.add(amount);
@@ -106,7 +106,7 @@ describe("resolveSwing", () => {
             rng,
             rules: RULES,
             exposed: NOWHERE,
-          }),
+          }).events,
         );
         expect(dealt).toBeGreaterThanOrEqual(Math.round(19 * factor));
         expect(dealt).toBeLessThanOrEqual(Math.round(35 * factor));
@@ -127,7 +127,7 @@ describe("resolveSwing", () => {
         rng,
         rules: RULES,
         exposed: NOWHERE,
-      });
+      }).events;
       expect(events).toHaveLength(1);
       if (events[0]?.kind === "attack-missed") {
         expect(events[0]).toEqual({ kind: "attack-missed", targetId: "dummy" });
@@ -158,7 +158,7 @@ describe("resolveSwing", () => {
           rng,
           rules: RULES,
           exposed: NOWHERE,
-        }),
+        }).events,
       );
       expect(hits.length === 1 || hits.length === 2).toBe(true);
       if (hits.length === 2) {
@@ -166,6 +166,34 @@ describe("resolveSwing", () => {
       }
     }
     expect(Math.abs(doubles / swings - chance)).toBeLessThan(0.03);
+  });
+
+  it("says a swing struck twice, a blinded blow's miss included (#561)", () => {
+    const daggers = attacker(WEAPONS.daggers, "assassin.dagger-mastery");
+    daggers.statuses.apply("blind", 1e6, "someone");
+    const rng = createRng(561);
+    let doubles = 0;
+    let missedDoubles = 0;
+    for (let i = 0; i < 1000; i += 1) {
+      const { events, doubleStrike } = resolveSwing({
+        attacker: daggers,
+        target: foe("dummy"),
+        candidates: [],
+        rng,
+        rules: RULES,
+        exposed: NOWHERE,
+      });
+      const blows = events.filter(
+        (event) => event.kind === "damage" || event.kind === "attack-missed",
+      );
+      expect(doubleStrike).toBe(blows.length === 2);
+      if (doubleStrike) {
+        doubles += 1;
+        missedDoubles += blows.some((event) => event.kind === "attack-missed") ? 1 : 0;
+      }
+    }
+    expect(doubles).toBeGreaterThan(0);
+    expect(missedDoubles).toBeGreaterThan(0);
   });
 
   it("a scythe cleaves into exactly cleaveTargets adjacent foes, nearest first", () => {
@@ -187,7 +215,7 @@ describe("resolveSwing", () => {
       rng: createRng(5),
       rules: RULES,
       exposed: NOWHERE,
-    });
+    }).events;
     const hit = events.flatMap((event) => (event.kind === "damage" ? [event.targetId] : []));
     expect(WEAPONS.scythe.cleaveTargets).toBe(2);
     expect(hit).toEqual(["target", "near", "mid"]);
@@ -205,7 +233,7 @@ describe("resolveSwing", () => {
         rng: createRng(6),
         rules: RULES,
         exposed: NOWHERE,
-      }),
+      }).events,
     ).toEqual([]);
   });
 });
@@ -295,7 +323,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
           rng: fixed(10),
           rules: RULES,
           exposed: NOWHERE,
-        });
+        }).events;
       expect(damages(swing(12))).toEqual(damages(swing(0)));
     });
 
@@ -407,7 +435,7 @@ describe("block (#534)", () => {
         rng,
         rules: RULES,
         exposed: NOWHERE,
-      });
+      }).events;
       expect(events).toHaveLength(1);
       if (events[0]?.kind === "attack-blocked") {
         expect(events[0]).toEqual({ kind: "attack-blocked", targetId: "dummy" });
@@ -433,7 +461,7 @@ describe("block (#534)", () => {
         rng,
         rules: RULES,
         exposed: NOWHERE,
-      });
+      }).events;
 
     target.combatant.knockdownRemaining = 2;
     expect(blockChanceOf(target.combatant, "melee")).toBe(0);
@@ -470,7 +498,7 @@ describe("block (#534)", () => {
       rng,
       rules: RULES,
       exposed: NOWHERE,
-    });
+    }).events;
     expect(events).toEqual([{ kind: "attack-missed", targetId: "dummy" }]);
     expect(floats).toBe(1);
   });
@@ -614,7 +642,7 @@ describe("critical hits (#533)", () => {
       rng,
       rules: RULES,
       exposed,
-    });
+    }).events;
 
   const plain = (amount: number, weapon: Weapon) =>
     mitigate(
@@ -875,7 +903,7 @@ describe("daze (#546)", () => {
       rng: createRng(1),
       rules: RULES,
       exposed: NOWHERE,
-    });
+    }).events;
 
   it("a swing landing on a dazed spell-caster interrupts the spell, before the damage", () => {
     const target = dazedCasting("elementalist.fireball");
@@ -930,7 +958,7 @@ describe("daze (#546)", () => {
         rng: createRng(seed),
         rules: RULES,
         exposed: NOWHERE,
-      });
+      }).events;
       if (events[0]?.kind === "attack-missed") {
         expect(events.map((event) => event.kind)).toEqual(["attack-missed"]);
         expect(target.combatant.cast.isCasting).toBe(true);
@@ -953,7 +981,7 @@ describe("daze (#546)", () => {
         rng: createRng(seed),
         rules: RULES,
         exposed: NOWHERE,
-      });
+      }).events;
       if (events[0]?.kind === "attack-blocked") {
         expect(events.map((event) => event.kind)).not.toContain("interrupted");
         expect(target.combatant.cast.isCasting).toBe(true);

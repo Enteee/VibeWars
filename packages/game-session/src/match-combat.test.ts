@@ -616,6 +616,7 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     weaponId: "sword",
     attributeId: undefined,
     area: undefined,
+    doubleStrike: false,
     events: [{ kind: "damage", targetId: "b", amount: 12, critical: false }],
     ...overrides,
   });
@@ -658,10 +659,23 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
       skillId: "",
       weaponId: "",
       attributeId: "",
+      doubleStrike: false,
       events: [{ kind: "damage", targetId: "b", amount: 2, critical: false }],
     });
     expect(fireball?.area).toEqual({ x: 1, y: 2, radius: 81 });
     expect(fireball?.skillId).toBe("elementalist.fireball");
+  });
+
+  it("carries a double strike over the wire, and a single one as such (#561)", () => {
+    const sent = wireCombat([
+      entry({ weaponId: "daggers", doubleStrike: true }),
+      entry({ weaponId: "daggers" }),
+    ]);
+    const received = parseWireCombatBatch(JSON.parse(JSON.stringify(sent)));
+    expect(received?.map(combatMessage).map((message) => message.doubleStrike)).toEqual([
+      true,
+      false,
+    ]);
   });
 
   it("carries a knockdown and how long it lasts, and drops one with no duration (#544)", () => {

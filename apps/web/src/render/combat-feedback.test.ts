@@ -65,6 +65,7 @@ function floated(
       addFloatingText: (text) => texts.push(text),
       addAreaFlash: () => undefined,
       addSwingFlash: () => undefined,
+      struckTwice: () => undefined,
     },
     {
       casterSessionId: "me",
@@ -72,6 +73,7 @@ function floated(
       skillId: cause === "skill" ? "elementalist.fireball" : "",
       weaponId: cause === "weapon" ? "sword" : "",
       attributeId: "",
+      doubleStrike: false,
       events,
     },
     SNAPSHOT,
@@ -116,6 +118,7 @@ describe("showCombatFeedback", () => {
           addFloatingText: (text) => texts.push(text),
           addAreaFlash: () => undefined,
           addSwingFlash: () => undefined,
+          struckTwice: () => undefined,
         },
         {
           casterSessionId: "me",
@@ -123,6 +126,7 @@ describe("showCombatFeedback", () => {
           skillId: cause === "skill" ? "elementalist.fireball" : "",
           weaponId: cause === "weapon" ? "sword" : "",
           attributeId: "",
+          doubleStrike: false,
           events: [{ kind: "damage", targetId: "them", amount: 12, critical }],
         },
         SNAPSHOT,
@@ -149,6 +153,7 @@ describe("showCombatFeedback", () => {
         addFloatingText: (text) => texts.push(text),
         addAreaFlash: () => undefined,
         addSwingFlash: () => undefined,
+        struckTwice: () => undefined,
       },
       {
         casterSessionId: "me",
@@ -156,6 +161,7 @@ describe("showCombatFeedback", () => {
         skillId: "elementalist.fireball",
         weaponId: "",
         attributeId: "",
+        doubleStrike: false,
         events: [
           { kind: "damage", targetId: "them", amount: 30, critical: false },
           { kind: "damage", targetId: "them", amount: 20, critical: false },
@@ -204,6 +210,7 @@ describe("showCombatFeedback", () => {
         addFloatingText: (text) => texts.push(text),
         addAreaFlash: () => undefined,
         addSwingFlash: () => undefined,
+        struckTwice: () => undefined,
       },
       {
         casterSessionId: "me",
@@ -211,6 +218,7 @@ describe("showCombatFeedback", () => {
         skillId: "elementalist.fireball",
         weaponId: "",
         attributeId: "",
+        doubleStrike: false,
         events: [
           { kind: "damage", targetId: "them", amount: 5, critical: false },
           { kind: "heal", targetId: "me", amount: 5 },
@@ -235,6 +243,7 @@ describe("showCombatFeedback and areas", () => {
         addFloatingText: () => undefined,
         addAreaFlash: (flash) => flashes.push(flash),
         addSwingFlash: () => undefined,
+        struckTwice: () => undefined,
       },
       {
         casterSessionId,
@@ -242,6 +251,7 @@ describe("showCombatFeedback and areas", () => {
         skillId: "elementalist.fireball",
         weaponId: "",
         attributeId: "",
+        doubleStrike: false,
         events: [],
         ...(area && { area }),
       },
@@ -281,6 +291,7 @@ describe("swingFlashFor (#161)", () => {
     skillId: "",
     weaponId: cause === "weapon" ? "sword" : "",
     attributeId: "",
+    doubleStrike: false,
     events: [
       kind === "damage"
         ? { kind, targetId: "them", amount: 30, critical: false }
@@ -315,6 +326,7 @@ describe("swingFlashFor (#161)", () => {
           addSwingFlash: () => {
             arcs += 1;
           },
+          struckTwice: () => undefined,
         },
         swing("weapon"),
         snapshot(weaponId),
@@ -323,5 +335,19 @@ describe("swingFlashFor (#161)", () => {
     };
     expect(record("axe")).toBe(1);
     expect(record("shortbow")).toBe(0);
+  });
+
+  it("tells the scene whose swing struck twice, and nobody's for a single one (#561)", () => {
+    const told: string[] = [];
+    const sink = {
+      addFloatingText: () => undefined,
+      addAreaFlash: () => undefined,
+      addSwingFlash: () => undefined,
+      struckTwice: (actorId: string) => told.push(actorId),
+    };
+    showCombatFeedback(sink, swing("weapon"), snapshot("daggers"));
+    expect(told).toEqual([]);
+    showCombatFeedback(sink, { ...swing("weapon"), doubleStrike: true }, snapshot("daggers"));
+    expect(told).toEqual(["me"]);
   });
 });
