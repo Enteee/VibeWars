@@ -417,7 +417,7 @@ export async function startMatchView(
     matchMusic.snapshot(latestMatch);
     guardUnload(latestMatch.phase !== "finished");
     const self = latestMatch.players.find((p) => p.sessionId === connection.selfSessionId);
-    camera?.frame(deltaSeconds, self === undefined ? undefined : { x: self.x, y: self.y });
+    camera?.frame(deltaSeconds, self);
     // Hover is hit-tested every frame, through the camera as it is now, so
     // a body that walks under a still cursor, or a camera that moves under
     // it, shows the right name.
@@ -446,17 +446,19 @@ export async function startMatchView(
     if (button === "left" && phase === "down") {
       connection.sendIntent({ kind: "walk-to", x: world.x, y: world.y });
       viewport.scene.showWalkMarker(world);
-    } else if (button === "right" && phase === "up") {
-      const intents = secondaryClickIntents(
-        latestMatch,
-        latestArena,
-        world,
-        doubleClick,
-        performance.now(),
-      );
-      for (const intent of intents) {
-        connection.sendIntent(intent);
-      }
+    }
+  });
+  // An RMB drag pans; a click picks (#442).
+  camera?.onSecondaryClick((world) => {
+    const intents = secondaryClickIntents(
+      latestMatch,
+      latestArena,
+      world,
+      doubleClick,
+      performance.now(),
+    );
+    for (const intent of intents) {
+      connection.sendIntent(intent);
     }
   });
 

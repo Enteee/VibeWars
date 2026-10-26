@@ -4,12 +4,16 @@ import { LONG_BOW_RANGE } from "@vibewars/game-core";
 
 import {
   DEFAULT_STEP,
+  LEASH_MARGIN_PX,
   VIEW_ASPECT,
   VIEW_STEPS,
   WHEEL_IDLE,
   WHEEL_LOCKOUT_MS,
   createCameraRig,
+  dropPan,
   feedWheel,
+  panBy,
+  releasePan,
   stepCamera,
   wheelNotch,
   zoomFor,
@@ -166,6 +170,94 @@ describe("stepCamera", () => {
     const jumped = stepCamera(settled, input({ pointer, self: { x: 5_300, y: 5_000 } }), FRAME);
     expect(jumped.view.x).toBe(5_300);
     expect(jumped.rig.lead).toEqual({ x: 0, y: 0 });
+  });
+});
+
+describe("the RMB pan (#442)", () => {
+  const VIEWPORT = { width: 1280, height: 720 };
+  /** Where you are on the canvas, CSS px, through `view`. */
+  const onScreen = (
+    self: { x: number; y: number },
+    view: { x: number; y: number; zoom: number },
+  ) => ({
+    x: (self.x - view.x) * view.zoom + VIEWPORT.width / 2,
+    y: (self.y - view.y) * view.zoom + VIEWPORT.height / 2,
+  });
+
+  it("looks the way you drag, and keeps you 48 px inside the canvas at every zoom", () => {
+    for (let step = 0; step < VIEW_STEPS.length; step += 1) {
+      const settled = run({ ...createCameraRig(), step }, input(), 120).rig;
+      const zoom = zoomFor(step, VIEWPORT);
+      const right = stepCamera(panBy(settled, { x: 100, y: 0 }, VIEWPORT), input(), FRAME);
+      expect(right.view.x, VIEW_STEPS[step]?.name).toBeCloseTo(5_000 + 100 / zoom, 6);
+      for (const drag of [
+        { x: 10_000, y: 0 },
+        { x: -10_000, y: 10_000 },
+        { x: 0, y: -10_000 },
+      ]) {
+        const { view } = stepCamera(panBy(settled, drag, VIEWPORT), input(), FRAME);
+        const at = onScreen(input().self, view);
+        expect(at.x).toBeGreaterThanOrEqual(LEASH_MARGIN_PX - 1e-6);
+        expect(at.x).toBeLessThanOrEqual(VIEWPORT.width - LEASH_MARGIN_PX + 1e-6);
+        expect(at.y).toBeGreaterThanOrEqual(LEASH_MARGIN_PX - 1e-6);
+        expect(at.y).toBeLessThanOrEqual(VIEWPORT.height - LEASH_MARGIN_PX + 1e-6);
+      }
+    }
+  });
+
+  it("holds its offset while you walk, with no look-ahead", () => {
+    const settled = run(createCameraRig(), input(), 1).rig;
+    const panned = panBy(settled, { x: 120, y: -40 }, VIEWPORT);
+    const pointer = { x: 1200, y: 100 };
+    const here = run(panned, input({ pointer }), 30);
+    expect(here.view.x - 5_000).toBeCloseTo(120 / here.view.zoom, 6);
+    const there = run(here.rig, input({ pointer, self: { x: 5_100, y: 4_950 } }), 30);
+    expect(there.view.x - here.view.x).toBeCloseTo(100, 6);
+    expect(there.view.y - here.view.y).toBeCloseTo(-50, 6);
+    expect(there.rig.lead).toEqual({ x: 0, y: 0 });
+  });
+
+  it("glides back once let go: under 1 u within 1 s at 60 Hz", () => {
+    const settled = run(createCameraRig(), input(), 1).rig;
+    const panned = run(panBy(settled, { x: 300, y: 200 }, VIEWPORT), input(), 1).rig;
+    expect(Math.hypot(panned.offset.x, panned.offset.y)).toBeGreaterThan(100);
+    const back = run(releasePan(panned), input(), 60).rig;
+    expect(Math.hypot(back.offset.x, back.offset.y)).toBeLessThan(1);
+  });
+
+  it("snaps back in one step with reduced motion", () => {
+    const settled = run(createCameraRig(), input(), 1).rig;
+    const panned = panBy(settled, { x: 300, y: 200 }, VIEWPORT);
+    const reduced = input({ reducedMotion: true });
+    expect(stepCamera(panned, reduced, FRAME).rig.offset).not.toEqual({ x: 0, y: 0 });
+    const back = stepCamera(releasePan(panned), reduced, FRAME).rig;
+    expect(back.offset).toEqual({ x: 0, y: 0 });
+  });
+
+  it("drops at once, held or not, when you die", () => {
+    const panned = panBy(createCameraRig(), { x: 300, y: 200 }, VIEWPORT);
+    expect(dropPan(panned)).toMatchObject({ offset: { x: 0, y: 0 }, panning: false });
+  });
+
+  it("shrinks to the leash when you zoom in mid-pan", () => {
+    const wide = run({ ...createCameraRig(), step: VIEW_STEPS.length - 1 }, input(), 120).rig;
+    const panned = panBy(wide, { x: 10_000, y: 0 }, VIEWPORT);
+    const closed = run({ ...panned, step: 0 }, input(), 120);
+    const at = onScreen(input().self, closed.view);
+    expect(at.x).toBeGreaterThanOrEqual(LEASH_MARGIN_PX - 1e-6);
+  });
+
+  it("keeps you on screen at the arena's corner, nearer the edge than the leash if it must", () => {
+    const arena = { width: 3_000, height: 3_000 };
+    const corner = { x: 10, y: 10 };
+    const at0 = input({ arena, self: corner });
+    const settled = run(createCameraRig(), at0, 120).rig;
+    const { view } = stepCamera(panBy(settled, { x: -10_000, y: -10_000 }, VIEWPORT), at0, FRAME);
+    const at = onScreen(corner, view);
+    expect(at.x).toBeGreaterThanOrEqual(0);
+    expect(at.x).toBeLessThan(LEASH_MARGIN_PX);
+    expect(at.y).toBeGreaterThanOrEqual(0);
+    expect(at.y).toBeLessThan(LEASH_MARGIN_PX);
   });
 });
 
