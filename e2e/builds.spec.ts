@@ -320,6 +320,41 @@ test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places le
   await expect(memberNames(page)).toHaveText(["Alpha", "Bravo", "Charlie"]);
 });
 
+test("a member opens in the build editor and comes back to the unsaved team (#576)", async ({
+  page,
+}) => {
+  await saveCharacters(page, ["Alpha", "Bravo"]);
+  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "new team" }).click();
+  await page.getByLabel("team name").fill("Trip");
+  await page.getByRole("button", { name: "add Alpha" }).click();
+  await page.getByRole("button", { name: "add Bravo" }).click();
+  await memberRows(page).nth(1).getByRole("button", { name: "move up" }).click();
+  await expect(memberNames(page)).toHaveText(["Bravo", "Alpha"]);
+
+  // Equip one skill on Alpha in the build editor, and save.
+  const alphaCells = memberRows(page).nth(1).locator(".team-skill:not(.is-empty)");
+  const before = await alphaCells.count();
+  await page.getByRole("button", { name: "Alpha", exact: true }).click();
+  await expect(page.locator("input.editor-name")).toHaveValue("Alpha");
+  await page.locator(".skill-box").first().locator(".skill-box-equip").click();
+  await page.getByRole("button", { name: "save", exact: true }).click();
+
+  // The team as it was left, still unsaved, with Alpha's new bar.
+  await expect(page.getByLabel("team name")).toHaveValue("Trip");
+  await expect(memberNames(page)).toHaveText(["Bravo", "Alpha"]);
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+  await expect(alphaCells).toHaveCount(before + 1);
+
+  // Deleted from the build editor: the row is a missing character.
+  await page.getByRole("button", { name: "Bravo", exact: true }).click();
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "delete", exact: true }).click();
+  await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
+  await expect(memberNames(page)).toHaveText(["(missing character)", "Alpha"]);
+  await expect(page.getByLabel("team name")).toHaveValue("Trip");
+});
+
 test("a build exports to text and imports back", async ({ page }) => {
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Shared Build");

@@ -23,7 +23,7 @@ import {
   openIndexedDbStore,
   type KeyValueStore,
 } from "./storage/repository.js";
-import type { StoredCharacter, StoredTeam } from "./storage/schema.js";
+import type { StoredCharacter } from "./storage/schema.js";
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
 import { disposeJukeboxScreen, renderJukeboxScreen } from "./ui/jukebox.js";
 import { disposeOptionsScreen, renderOptionsScreen } from "./ui/options-screen.js";
@@ -31,7 +31,12 @@ import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
 import { duplicateTeam, newTeam } from "./ui/team-builder.js";
-import { mountTeamEditor, type TeamEditorView } from "./ui/team-editor.js";
+import {
+  mountTeamEditor,
+  openedTeam,
+  type TeamEditorState,
+  type TeamEditorView,
+} from "./ui/team-editor.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
 import type { PlayerBuild } from "@vibewars/game-core";
 
@@ -224,18 +229,19 @@ async function main(): Promise<void> {
     );
   };
 
-  const showCharacterEditor = (character: StoredCharacter): void => {
+  /** The build editor for `character`; every way out of it goes `back`. */
+  const showCharacterEditor = (character: StoredCharacter, back: () => void = showMenu): void => {
     const editorCallbacks = {
       onSave: (saved: StoredCharacter) => {
         void (async () => {
           await characters.save(saved);
-          showMenu();
+          back();
         })();
       },
       onDelete: (id: string) => {
         void (async () => {
           await characters.delete(id);
-          showMenu();
+          back();
         })();
       },
       onDuplicate: (source: StoredCharacter) => {
@@ -247,13 +253,13 @@ async function main(): Promise<void> {
         };
         void (async () => {
           await characters.save(copy);
-          showMenu();
+          back();
         })();
       },
-      onClose: () => {
-        showMenu();
-      },
+      onClose: back,
     };
+    teamEditor?.dispose();
+    teamEditor = undefined;
     editor?.dispose();
     editor = mountBuildEditor(screenRoot, character, editorCallbacks);
   };
@@ -265,13 +271,13 @@ async function main(): Promise<void> {
     renderTeamList(screenRoot, teamList.teams, teamList.problems, {
       // A new team is stored only once it is saved (#573).
       onNew: () => {
-        showTeamEditor(newTeam(crypto.randomUUID()), characterList.characters, false);
+        showTeamEditor(openedTeam(newTeam(crypto.randomUUID()), false), characterList.characters);
       },
       onEdit: (id) => {
         void (async () => {
           const team = await teams.load(id);
           if (team !== undefined) {
-            showTeamEditor(team, characterList.characters, true);
+            showTeamEditor(openedTeam(team, true), characterList.characters);
           }
         })();
       },
@@ -282,36 +288,45 @@ async function main(): Promise<void> {
   /** The open team editor; every way out of it passes through `showTeams`. */
   let teamEditor: TeamEditorView | undefined;
 
-  const showTeamEditor = (
-    team: StoredTeam,
-    available: readonly StoredCharacter[],
-    stored: boolean,
-  ): void => {
+  const showTeamEditor = (state: TeamEditorState, available: readonly StoredCharacter[]): void => {
+    editor?.dispose();
+    editor = undefined;
     teamEditor?.dispose();
-    teamEditor = mountTeamEditor(
-      screenRoot,
-      team,
-      available,
-      {
-        onSave: (saved) => teams.save(saved),
-        onDuplicate: (source) => {
-          void (async () => {
-            await teams.save(duplicateTeam(source, crypto.randomUUID()));
-            await showTeams();
-          })();
-        },
-        onDelete: (id) => {
-          void (async () => {
-            await teams.delete(id);
-            await showTeams();
-          })();
-        },
-        onClose: () => {
-          void showTeams();
-        },
+    teamEditor = mountTeamEditor(screenRoot, state, available, {
+      onSave: (saved) => teams.save(saved),
+      onDuplicate: (source) => {
+        void (async () => {
+          await teams.save(duplicateTeam(source, crypto.randomUUID()));
+          await showTeams();
+        })();
       },
-      stored,
-    );
+      onDelete: (id) => {
+        void (async () => {
+          await teams.delete(id);
+          await showTeams();
+        })();
+      },
+      onClose: () => {
+        void showTeams();
+      },
+      // The build editor comes back to this team as it was left (#576),
+      // with the characters as they are now: an edited bar shows, a
+      // deleted member is missing.
+      onOpenMember: (characterId, left) => {
+        void (async () => {
+          const member = await characters.load(characterId);
+          if (member === undefined) {
+            return;
+          }
+          showCharacterEditor(member, () => {
+            void (async () => {
+              const { characters: now } = await characters.list();
+              showTeamEditor(left, now);
+            })();
+          });
+        })();
+      },
+    });
   };
 
   const renderLobby = (): void => {
