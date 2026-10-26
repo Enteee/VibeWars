@@ -276,7 +276,8 @@ describe("a lobby, when the host's peer drops during its match", () => {
 
   it("joins the lobby again when the host is back in time, and stays open", async () => {
     const { lobby, guest, closed, states } = await inMatch();
-    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host"]);
+    // Its seat is held while it is away (#596).
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host", "Guest 1"]);
 
     vi.advanceTimersByTime(10_000);
     lobby.network.heal();
