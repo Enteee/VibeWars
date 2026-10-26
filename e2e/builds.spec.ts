@@ -579,7 +579,7 @@ test("Share copies a team as one line; pasted on Teams it opens unsaved, missing
 
   await page.getByRole("button", { name: "back" }).click();
   await page.getByRole("button", { name: "discard" }).click();
-  await expect(page.locator(".entity-name")).toHaveText(["Duo (2 members)", "Duo (2 members)"]);
+  await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members", "Duo · 2 members"]);
 
   // On the build editor a team code is not imported.
   await page.getByRole("button", { name: "back" }).click();
