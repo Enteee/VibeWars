@@ -172,6 +172,11 @@ describe("describeCombatEvent", () => {
       describeCombatEvent(entry([down], { skillId: "warrior.backbreaker" }), down, nameOf),
     ).toBe("Backbreaker (Pyro) knocks down Caster dummy (4 s)");
     expect(logToneOf("knocked-down")).toBe("control");
+    expect(floatingCueFor("knocked-down", undefined, false)).toEqual({
+      text: "Knocked down",
+      tone: "neutral",
+      critical: false,
+    });
   });
 
   it("says a caster who moved cancels their own cast (#279)", () => {

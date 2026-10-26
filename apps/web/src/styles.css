@@ -282,10 +282,13 @@ body {
   color: var(--ink-dim);
 }
 
+/* As wide as its slots, not the HUD: the knockdown drain fills this box
+   and must end at the last slot (#545). */
 .hud-skills {
   display: flex;
   gap: 0.35rem;
   flex-wrap: wrap;
+  width: fit-content;
 }
 
 .hud-skill {
@@ -1308,6 +1311,34 @@ body {
   background: linear-gradient(
     to top,
     var(--cast-fill-shade) calc(var(--cast-fill, 0) * 100%),
+    transparent 0
+  );
+  pointer-events: none;
+}
+
+/* Knocked down (#545): the whole bar greys out, and the time left drains
+   from right to left across it as one fill, the cast fill's shade. Lit
+   again the moment the body rises. Information, so it moves under reduced
+   motion too. */
+.hud-skills.is-knocked-down,
+.training-skills.is-knocked-down {
+  position: relative;
+}
+
+.hud-skills.is-knocked-down > *,
+.training-skills.is-knocked-down > * {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+
+.hud-skills.is-knocked-down::after,
+.training-skills.is-knocked-down::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    var(--cast-fill-shade) calc(var(--knockdown-fill, 0) * 100%),
     transparent 0
   );
   pointer-events: none;

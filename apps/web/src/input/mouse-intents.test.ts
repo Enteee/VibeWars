@@ -37,6 +37,7 @@ function player(sessionId: string, team: number, x: number): PlayerSnapshot {
     castTotal: 0,
     swingElapsed: 0,
     swingTotal: 0,
+    knockdownRemaining: 0,
     statuses: [],
   };
 }
@@ -69,6 +70,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     health: 500,
     maxHealth: 500,
     dead: false,
+    knockedDown: false,
     castProgress: undefined,
     statuses: [],
   };

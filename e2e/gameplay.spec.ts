@@ -109,6 +109,13 @@ test("a match renders the arena and a populated HUD", async ({ page }) => {
   await expect(page.locator(".hud-skills .hud-skill")).toHaveCount(8);
   await expect(page.locator(".hud-target")).toContainText("no target");
   expect(await readEnergy(page)).toBeGreaterThan(0);
+  // The bar is as wide as its slots, so a knockdown drain over it ends at
+  // the last one, not out over the floor (#545).
+  const bar = await page.locator(".hud-skills").boundingBox();
+  const last = await page.locator(".hud-skills .hud-skill").last().boundingBox();
+  expect(bar !== null && last !== null && bar.x + bar.width - (last.x + last.width)).toBeLessThan(
+    2,
+  );
 });
 
 test("hovering a slot shows its tooltip at the host's ranks, above the bar (#485)", async ({
