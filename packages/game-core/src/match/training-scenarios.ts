@@ -199,6 +199,35 @@ function hunter(id: string, label: string, position: Vec2): TrainingDummy {
   };
 }
 
+/**
+ * An ally at 150 of 500 for the player to keep alive (#111), and an
+ * immortal caster that burns it with Fireball whenever it can.
+ */
+function patient(id: string, label: string, position: Vec2, armor: number): TrainingDummy {
+  return {
+    ...target(id, label, position, armor),
+    team: PLAYER_TEAM,
+    maxHealth: MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth,
+    startHealthFraction: 0.3,
+    reset: { kind: "on-death", afterSeconds: 2 },
+  };
+}
+function burner(id: string, label: string, position: Vec2, patientId: string): TrainingDummy {
+  return {
+    ...target(id, label, position, 60),
+    skillBar: ["elementalist.fireball"],
+    attributeRanks: { "elementalist.fire-magic": 12 },
+    baseEnergyPips: baseEnergyPipsFor("elementalist"),
+    behaviour: {
+      kind: "cast-loop",
+      skillIds: ["elementalist.fireball"],
+      targeting: { kind: "fixed", participantId: patientId },
+      gapSeconds: 0,
+      firstLegal: true,
+    },
+  };
+}
+
 /** Walking a lane from the top of the hall to the bottom and back (#111). */
 function lane(x: number): Behaviour {
   return { kind: "patrol", waypoints: [vec2(x, 90), vec2(x, 330)], loop: true };
@@ -319,6 +348,23 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
       target("armor-80", "Warrior (80)", vec2(460, 90), 80),
       target("armor-84", "Warded caster (84)", vec2(460, 210), 84),
       target("armor-104", "Warded warrior (104)", vec2(460, 330), 104),
+    ],
+  },
+  {
+    id: "healing-throughput",
+    label: "Healing throughput",
+    teaches:
+      "What your heals are worth against real pressure, and that armor is a healer's friend: the same Fireball takes 91 off a monk and 64 off a warrior.",
+    mapId: "training-hall",
+    exercises: ["spell-damage", "armor"],
+    knobs: [],
+    // Two allies 120 apart, wider than Fireball's splash, so each takes
+    // only its own caster's. Each is back at 150 2 s after a death.
+    dummies: [
+      patient("monk", "Monk ally (60 armor)", vec2(300, 150), 60),
+      patient("warrior", "Warrior ally (80 armor)", vec2(300, 270), 80),
+      burner("monk-burner", "Burner (on the monk)", vec2(460, 150), "monk"),
+      burner("warrior-burner", "Burner (on the warrior)", vec2(460, 270), "warrior"),
     ],
   },
   {

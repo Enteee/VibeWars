@@ -347,6 +347,27 @@ describe("condition-removal, headless (#111)", () => {
   });
 });
 
+describe("healing-throughput, headless (#111)", () => {
+  it("each burner's Fireball takes 91 off the monk and 64 off the warrior, and nobody else", () => {
+    const sim = arena(scenario("healing-throughput"), "throughput");
+    const taken = new Map<string, number[]>();
+    for (let i = 0; i < Math.round(20 / DT); i += 1) {
+      for (const entry of sim.step(DT).log) {
+        for (const event of entry.events) {
+          if (event.kind === "damage" && entry.skillId === FIREBALL) {
+            taken.set(event.targetId, [...(taken.get(event.targetId) ?? []), event.amount]);
+          }
+        }
+      }
+    }
+    expect([...taken.keys()].sort()).toEqual(["monk", "warrior"]);
+    // Both start at 150, so the monk takes one whole Fireball and the
+    // warrior two; the killing blow takes only what is left.
+    expect(taken.get("monk")?.[0]).toBe(91);
+    expect(taken.get("warrior")?.slice(0, 2)).toEqual([64, 64]);
+  });
+});
+
 describe("survivability, headless (#111)", () => {
   /** What the hunters deal in 30 s to a player who stands still at `armor`. */
   function damageTaken(armor: number): { damage: number; hits: number } {
