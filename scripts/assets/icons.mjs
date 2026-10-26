@@ -189,6 +189,14 @@ const status = {
     "enchantment",
     (c) => `<path d="M7 6h10v5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" fill="${c}"/>`,
   ],
+  // Enchantment: a drop with a plus cut out, blood paying for energy (#503).
+  "blood-ritual": [
+    "enchantment",
+    (c) =>
+      `<path fill-rule="evenodd" d="M12 4.5C14.5 8 17 10.5 17 14a5 5 0 0 1-10 0c0-3.5 2.5-6 5-9.5zM11 11.5h2v2.5h2.5v2H13v2.5h-2V16H8.5v-2H11z" fill="${c}"/>`,
+  ],
+  // Hex: a bolt in outline, the energy draining out (#503).
+  malaise: ["hex", (c) => `<path d="M13 4.5L7.5 13h4l-1 6.5L16.5 11h-4z" ${stroke(c, 2)}/>`],
 };
 
 // ---------------------------------------------------------------------------
