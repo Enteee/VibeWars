@@ -2626,6 +2626,31 @@ function maybePollWatches() {
 }
 
 /**
+ * Every open pull request, page by page, so a flood of outsiders' cannot
+ * push the company's off the first page.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<unknown[] | undefined>} `undefined` if any page cannot be read
+ */
+async function openPulls(cfg) {
+  /** @type {unknown[]} */
+  const rows = [];
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const answer = await rest(`pulls?state=open&per_page=100&page=${String(page)}`, cfg);
+    if (!Array.isArray(answer)) {
+      return undefined;
+    }
+    /** @type {unknown[]} */
+    const got = answer;
+    rows.push(...got);
+    if (got.length < 100) {
+      return rows;
+    }
+  }
+  return undefined;
+}
+
+/**
  * Why a card may not go to In Review (#736), or `null`: every open pull
  * request that closes it must be green, by the merge gate's own verdict.
  *
@@ -2644,7 +2669,12 @@ async function refuseInReview(item, cfg) {
     const sha = await headSha(String(number));
     pulls = sha === null ? null : [{ number, sha }];
   } else {
-    pulls = closingPulls(await rest("pulls?state=open&per_page=100", cfg), number);
+    // Only pull requests the company may see: an outsider's "Closes #N"
+    // must not be able to hold any card out of In Review.
+    const seen = await viewer(cfg);
+    const closing = closingPulls(await openPulls(cfg), number);
+    pulls =
+      seen === null || closing === null ? null : closing.filter((pull) => isVisible(pull, seen));
   }
   if (pulls === null) {
     return `could not read the pull requests for #${String(number)}; try again`;

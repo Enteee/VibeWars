@@ -134,7 +134,9 @@ export function listWatches(watches, now) {
  *
  * @param {unknown} pulls REST `pulls?state=open`
  * @param {number} issue
- * @returns {{ number: number, sha: string }[] | null} `null` if the answer is not a list of pulls
+ * @returns {{ number: number, sha: string, url: string, author: { login: string } }[] | null}
+ *   `null` if the answer is not a list of pulls. hubd keeps only the ones the
+ *   company may see, so an outsider's PR cannot hold a card back.
  */
 export function closingPulls(pulls, issue) {
   if (!Array.isArray(pulls)) {
@@ -144,7 +146,7 @@ export function closingPulls(pulls, issue) {
     `\\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?):?\\s+#${String(issue)}(?!\\d)`,
     "i",
   );
-  /** @type {{ number: number, sha: string }[]} */
+  /** @type {{ number: number, sha: string, url: string, author: { login: string } }[]} */
   const found = [];
   for (const raw of /** @type {unknown[]} */ (pulls)) {
     const pull = /** @type {Record<string, unknown>} */ (
@@ -153,15 +155,24 @@ export function closingPulls(pulls, issue) {
     const head = /** @type {Record<string, unknown>} */ (
       typeof pull.head === "object" && pull.head !== null ? pull.head : {}
     );
+    const user = /** @type {Record<string, unknown>} */ (
+      typeof pull.user === "object" && pull.user !== null ? pull.user : {}
+    );
     if (
       typeof pull.number !== "number" ||
       typeof head.sha !== "string" ||
-      typeof pull.body !== "string"
+      typeof pull.body !== "string" ||
+      typeof pull.html_url !== "string"
     ) {
       continue;
     }
     if (closes.test(pull.body)) {
-      found.push({ number: pull.number, sha: head.sha });
+      found.push({
+        number: pull.number,
+        sha: head.sha,
+        url: pull.html_url,
+        author: { login: typeof user.login === "string" ? user.login : "" },
+      });
     }
   }
   return found;
@@ -269,5 +280,5 @@ export function supersededMessage(watch, sha) {
  * @returns {string}
  */
 function withNote(text, watch) {
-  return watch.note === null ? text : `${text}\nnote: ${watch.note}`;
+  return watch.note === null ? text : `${text}\nyour note: ${watch.note}`;
 }

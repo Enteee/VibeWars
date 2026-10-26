@@ -79,7 +79,20 @@ describe("listWatches (#736)", () => {
 
 describe("closingPulls (#736)", () => {
   /** @param {number} number @param {string | null} body */
-  const pull = (number, body) => ({ number, body, head: { sha: `sha${String(number)}` } });
+  const pull = (number, body) => ({
+    number,
+    body,
+    head: { sha: `sha${String(number)}` },
+    html_url: `u${String(number)}`,
+    user: { login: "Enteee" },
+  });
+  /** @param {number} number */
+  const found = (number) => ({
+    number,
+    sha: `sha${String(number)}`,
+    url: `u${String(number)}`,
+    author: { login: "Enteee" },
+  });
 
   it("finds the open pull requests whose body closes the issue, by any closing keyword", () => {
     expect(
@@ -94,11 +107,7 @@ describe("closingPulls (#736)", () => {
         ],
         727,
       ),
-    ).toEqual([
-      { number: 1, sha: "sha1" },
-      { number: 2, sha: "sha2" },
-      { number: 5, sha: "sha5" },
-    ]);
+    ).toEqual([found(1), found(2), found(5)]);
   });
 
   it("says when the answer is not a list", () => {
@@ -160,7 +169,7 @@ describe("the messages a watch sends (#736)", () => {
         "  ```",
         "  Error: boom",
         "  ```",
-        "note: then QA",
+        "your note: then QA",
       ].join("\n"),
     );
   });

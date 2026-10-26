@@ -2570,7 +2570,7 @@ describe("hubd watching CI for an agent (#736)", () => {
     ran(hubd, "abc1234def");
     await hubd.until(() => told(hubd, "developer-1").length > 0, "the watch to answer");
     await sleep(800);
-    expect(told(hubd, "developer-1")).toEqual(["CI on #9 @ abc1234: PASS.\nnote: then QA"]);
+    expect(told(hubd, "developer-1")).toEqual(["CI on #9 @ abc1234: PASS.\nyour note: then QA"]);
     expect(JSON.parse(fs.readFileSync(watchesFile(hubd), "utf8"))).toEqual([]);
   }, 30_000);
 
@@ -2713,19 +2713,40 @@ describe("hubd and the In Review gate (#736)", () => {
       });
     }
   };
+  /**
+   * An open pull request as REST lists it.
+   *
+   * @param {number} number
+   * @param {string} body
+   * @param {string} sha
+   * @param {string} login
+   */
+  const pull = (number, body, sha, login) => ({
+    number,
+    body,
+    head: { sha },
+    html_url: `https://github.com/Enteee/VibeWars/pull/${String(number)}`,
+    user: { login },
+  });
   /** @param {Awaited<ReturnType<typeof startHubd>>} hubd */
   const openPull = (hubd) => {
     fs.writeFileSync(
       path.join(hubd.state, "pulls.json"),
       JSON.stringify([
-        { number: 9, body: "Polish.\n\nCloses #8\n", head: { sha: "abc1234def" } },
-        { number: 12, body: "Closes #80", head: { sha: "0000000000" } },
+        pull(9, "Polish.\n\nCloses #8\n", "abc1234def", "Enteee"),
+        pull(12, "Closes #80", "0000000000", "Enteee"),
       ]),
     );
   };
 
-  it("refuses a card no open pull request closes", async () => {
+  it("refuses a card no open pull request of the company's closes", async () => {
     const hubd = await startHubd(5000);
+    // An outsider's PR that says it closes #8 does not count: it could
+    // otherwise hold any card out of In Review.
+    fs.writeFileSync(
+      path.join(hubd.state, "pulls.json"),
+      JSON.stringify([pull(13, "Closes #8", "abc1234def", "drive-by")]),
+    );
     await hubd.request("developer-1", "gh", BOARD_READ);
     const refused = await hubd.request("developer-1", "gh", TO_REVIEW);
     expect(refused.code).toBe(77);
