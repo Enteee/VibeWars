@@ -22,6 +22,8 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import { uniquePath } from "./host-path.mjs";
+
 export const HUB_INDEX = "99";
 export const HUB_NAME = "hub";
 
@@ -84,7 +86,8 @@ export function openHubWindow(tmux, session) {
   const scripts = path.dirname(fileURLToPath(import.meta.url));
   // A pane gets the tmux server's environment, not this script's, so what
   // the daemons read is passed on explicitly: hubd needs DEVENV_ROOT, and gh
-  // and git on PATH.
+  // and git on PATH. Each PATH entry once: tmux refuses a command over 16 KB,
+  // and a PATH from nested nix shells repeats most of itself (host-path.mjs).
   const env = [
     `DEVENV_ROOT=${root}`,
     `VIBEWARS_BOT_ROOT=${botRoot}`,
@@ -92,7 +95,7 @@ export function openHubWindow(tmux, session) {
     `VIBEWARS_LLC_SESSION=${session}`,
     `VIBEWARS_LLC_RESTART=${required("VIBEWARS_LLC_RESTART")}`,
     `VIBEWARS_TMUX=${tmux}`,
-    `PATH=${process.env.PATH ?? ""}`,
+    `PATH=${uniquePath(process.env.PATH ?? "")}`,
   ].flatMap((pair) => ["-e", pair]);
   const daemon = (/** @type {string} */ name) =>
     `${node} ${scripts}/run-forever.mjs ${name} -- ${node} ${scripts}/${name}.mjs`;
