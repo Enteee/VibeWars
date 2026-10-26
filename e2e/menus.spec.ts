@@ -108,3 +108,45 @@ test("#578: a host with others in the lobby is asked before Leave or Esc closes 
     await context.close();
   }
 });
+
+test("#579: the roster's rows are buttons: Enter or Space chooses, Edit sits beside", async ({
+  page,
+}) => {
+  await openMenu(page);
+  // No characters: the default loadout, chosen, and the way to make one.
+  const roster = page.locator(".roster");
+  await expect(roster.locator(".selectable-row")).toHaveCount(1);
+  await expect(roster.locator(".selectable-row.is-selected")).toContainText("Default loadout");
+  await expect(roster.locator(".empty-state")).toContainText("No characters yet.");
+  await roster.getByRole("button", { name: "New character" }).click();
+  await page.locator("input.editor-name").fill("Pyro");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+
+  await expect(roster.locator(".empty-state")).toHaveCount(0);
+  const pyro = roster.locator(".selectable-row", { hasText: "Pyro" });
+  await expect(pyro.locator(".mini-skill")).toHaveCount(8);
+  const choosePyro = pyro.locator(".selectable-row-choose");
+  await choosePyro.focus();
+  await page.keyboard.press("Enter");
+  await expect(pyro).toHaveClass(/is-selected/);
+  await expect(choosePyro).toBeFocused();
+
+  const house = roster.locator(".selectable-row", { hasText: "Default loadout" });
+  await house.locator(".selectable-row-choose").focus();
+  await page.keyboard.press(" ");
+  await expect(house).toHaveClass(/is-selected/);
+  await expect(pyro).not.toHaveClass(/is-selected/);
+
+  // Edit opens the editor and chooses nobody.
+  await pyro.getByRole("button", { name: "Edit", exact: true }).click();
+  await expect(page.locator("input.editor-name")).toHaveValue("Pyro");
+  await page.keyboard.press("Escape");
+  await expect(house).toHaveClass(/is-selected/);
+
+  // Teams, Options and Music are in the screen bar.
+  for (const name of ["Teams", "Options", "Music"]) {
+    await expect(
+      page.locator(".screen-menu .screen-bar").getByRole("button", { name, exact: true }),
+    ).toBeVisible();
+  }
+});
