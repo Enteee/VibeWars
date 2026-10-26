@@ -249,6 +249,15 @@ describe("toast (#566)", () => {
     expect(undo).toHaveBeenCalledOnce();
     expect(body.children).toHaveLength(0);
   });
+
+  it("hands back a dismiss that takes down its own toast, not a newer one", () => {
+    const dismissFirst = toast("Removed Barrage.", { undo: vi.fn() });
+    toast("Copied.");
+    dismissFirst();
+    expect(body.children).toHaveLength(1);
+    toast("Removed Barrage.", { undo: vi.fn() })();
+    expect(body.children).toHaveLength(0);
+  });
 });
 
 describe("inlineConfirm (#566)", () => {

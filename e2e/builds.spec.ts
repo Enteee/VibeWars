@@ -1426,6 +1426,33 @@ test("the profession grid says what each keeps, and a cell picks it (#568)", asy
   await expect(page.locator(".skill-slot", { hasText: "Orison of Healing" })).toHaveCount(0);
 });
 
+test("a profession change toasts what it removed, and Undo puts it back (#569)", async ({
+  page,
+}) => {
+  await openElementalist(page);
+  await page
+    .locator(".skill-box", { hasText: "Orison of Healing" })
+    .locator(".skill-box-equip")
+    .click();
+  const orison = page.locator(".skill-slot", { hasText: "Orison of Healing" });
+  await expect(orison).toHaveCount(1);
+
+  await chooseProfession(page, "secondary", "ranger");
+  const toast = page.locator(".toast");
+  await expect(toast.locator(".toast-text")).toHaveText("Removed: Orison of Healing from the bar");
+  await expect(orison).toHaveCount(0);
+  await toast.getByRole("button", { name: "Undo" }).click();
+  await expect(toast).toBeHidden();
+  await expect(professionField(page, "secondary")).toHaveAttribute("data-value", "monk");
+  await expect(orison).toHaveCount(1);
+
+  // Any other edit takes the Undo away.
+  await chooseProfession(page, "secondary", "ranger");
+  await expect(toast).toBeVisible();
+  await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
+  await expect(toast).toBeHidden();
+});
+
 test("other professions' skills are listed, locked, with what they need (#568)", async ({
   page,
 }) => {
