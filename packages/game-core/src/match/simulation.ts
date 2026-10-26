@@ -65,6 +65,7 @@ import {
   attackDurationSeconds,
   blindMisses,
   blocks,
+  gainCriticalEnergy,
   landBlow,
   PLAIN_BLOW,
   resolveAttackSkill,
@@ -1479,12 +1480,13 @@ export class MatchSimulation {
     }
     const reach = this.#ruleset.collision.playerRadius + this.#ruleset.combat.projectileTolerance;
     const events: CombatEvent[] = [];
+    const attacker = this.#participants.get(projectile.attackerId);
     if (distance(target.position, projectile.aimPoint) > reach) {
       events.push({ kind: "attack-dodged", targetId: target.id });
     } else if (blocks(target.combatant, "projectile", this.#rng)) {
       events.push({ kind: "attack-blocked", targetId: target.id });
     } else {
-      landBlow(
+      const critical = landBlow(
         projectile.weaponSnapshot,
         target.combatant,
         PLAIN_BLOW,
@@ -1494,8 +1496,10 @@ export class MatchSimulation {
         this.#ruleset.combat,
         events,
       );
+      if (critical && attacker !== undefined) {
+        gainCriticalEnergy(attacker.combatant, projectile.weaponSnapshot.criticalStrikes, events);
+      }
     }
-    const attacker = this.#participants.get(projectile.attackerId);
     if (attacker !== undefined && !attacker.combatant.dead) {
       this.#gainAdrenaline(attacker, events);
     }
