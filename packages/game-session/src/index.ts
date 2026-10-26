@@ -41,6 +41,7 @@ export {
 export type { ConnectMatchOptions, PeerMatchConnection } from "./match-client.js";
 export { generateLobbyCode } from "./lobby-codes.js";
 export type {
+  LobbyClosedReason,
   LobbyConnection,
   LobbyPlayerSnapshot,
   LobbySnapshot,

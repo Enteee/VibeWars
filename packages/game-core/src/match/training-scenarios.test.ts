@@ -322,3 +322,31 @@ describe("dodge-drill, headless", () => {
     ).toBe(0);
   });
 });
+
+describe("block, headless (#534)", () => {
+  it("keeps Guardian up, so about half the player's sword swings are blocked", () => {
+    const sim = armedArena(scenario("block"), "block", WEAPONS.sword);
+    expect(sim.requestAttack("player", "guardian")).toEqual({ ok: true });
+    let guarded = 0;
+    let landed = 0;
+    let blocked = 0;
+    const ticks = Math.round(60 / DT);
+    for (let i = 0; i < ticks; i += 1) {
+      for (const entry of sim.step(DT).log) {
+        if (entry.cause !== "weapon" || entry.sourceId !== "player") {
+          continue;
+        }
+        for (const event of entry.events) {
+          landed += event.kind === "damage" ? 1 : 0;
+          blocked += event.kind === "attack-blocked" ? 1 : 0;
+        }
+      }
+      guarded += sim.get("guardian")?.combatant.statuses.has("guardian") === true ? 1 : 0;
+    }
+    // Up 6 s of every 7: it recasts as soon as Guardian recharges.
+    expect(guarded / ticks).toBeGreaterThan(0.8);
+    expect(blocked).toBeGreaterThan(0);
+    expect(blocked / (landed + blocked)).toBeGreaterThan(0.25);
+    expect(blocked / (landed + blocked)).toBeLessThan(0.6);
+  });
+});

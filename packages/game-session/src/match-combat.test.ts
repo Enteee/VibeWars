@@ -644,6 +644,12 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     ]);
   });
 
+  it("carries a blocked attack across (#534)", () => {
+    const blocked = { kind: "attack-blocked", targetId: "b" } as const;
+    const [wired] = wireCombat([entry({ events: [blocked] })]);
+    expect(wired === undefined ? undefined : combatMessage(wired).events).toEqual([blocked]);
+  });
+
   it("carries a critical hit across, and only on damage (#533)", () => {
     const crit = { kind: "damage", targetId: "b", amount: 31, critical: true } as const;
     const heal = { kind: "heal", targetId: "a", amount: 5 } as const;

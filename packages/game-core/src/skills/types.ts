@@ -150,6 +150,11 @@ export interface AttackSkillRule {
   readonly weaponDamage: number;
   /** Added to the weapon's roll before armor; `undefined`: no bonus. */
   readonly bonusDamage: Magnitude | undefined;
+  /**
+   * What a blocked blow does to its target instead of the skill's
+   * `effects` (#534): Swift Chop's damage and Deep Wound. Usually none.
+   */
+  readonly onBlocked: readonly SkillEffect[];
 }
 
 export interface Skill {

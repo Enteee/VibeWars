@@ -11,7 +11,13 @@ import {
   type WireLobbyState,
 } from "@vibewars/game-protocol";
 
-import type { LobbyConnection, LobbySnapshot, MatchStarting } from "./lobby-connection.js";
+import type {
+  LobbyClosedReason,
+  LobbyConnection,
+  LobbySnapshot,
+  MatchStarting,
+} from "./lobby-connection.js";
+import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { scopeTransport } from "./scoped-transport.js";
 import type { Transport } from "./transport.js";
 
@@ -19,6 +25,11 @@ import type { Transport } from "./transport.js";
  * A lobby on another peer's browser, as the lobby screen sees every
  * lobby: a `LobbyConnection` (#379). The host is the peer that sends the
  * first state listing this player; from then on, only its messages count.
+ *
+ * During a match, the host's peer going is a drop the match waits out
+ * (#515), so the lobby waits as long before it closes, and when the peer
+ * is back, joins again: the host dropped this player from the lobby as it
+ * went, and the match's end would otherwise find nobody to return to.
  */
 
 /** Nobody answered: a wrong code, or a host that cannot be reached. */
@@ -67,11 +78,15 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const changeHandlers: (() => void)[] = [];
   const startingHandlers: ((start: MatchStarting) => void)[] = [];
   const rejectedHandlers: ((reason: string) => void)[] = [];
-  const closedHandlers: ((reason: "host-left") => void)[] = [];
+  const closedHandlers: ((reason: LobbyClosedReason) => void)[] = [];
   /** Until the join settles: how a refusal or the timeout ends it. */
   let failJoin: ((error: Error) => void) | undefined;
+  /** When the host's peer went mid-match, by `Date.now`, while waiting for it back. */
+  let droppedAt: number | undefined;
+  let closeTimer: unknown;
 
   const stop = (): void => {
+    clearTimeout(closeTimer);
     for (const off of unsubscribe.splice(0)) {
       off();
     }
@@ -81,7 +96,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     closedHandlers.length = 0;
   };
 
-  const close = (): void => {
+  const close = (reason: LobbyClosedReason): void => {
     if (closed) {
       return;
     }
@@ -89,7 +104,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     const handlers = [...closedHandlers];
     stop();
     for (const handler of handlers) {
-      handler("host-left");
+      handler(reason);
     }
   };
 
@@ -209,7 +224,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           if (failJoin !== undefined) {
             failJoin(new LobbyRefusedError(note.reason));
           } else if (note.reason === "host-left") {
-            close();
+            close("host-left");
           }
         }
       }),
@@ -240,12 +255,33 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         // Said to every peer in the room: until one answers, any might host.
         if (hostId === undefined) {
           transport.send("lobby-join", join, peerId);
+          return;
         }
+        if (peerId !== hostId || droppedAt === undefined) {
+          return;
+        }
+        clearTimeout(closeTimer);
+        // Measured on the clock: a hidden tab's timer may fire late.
+        const late = Date.now() - droppedAt >= RECONNECT_WINDOW_SECONDS * 1000;
+        droppedAt = undefined;
+        if (late) {
+          close("connection-lost");
+          return;
+        }
+        transport.send("lobby-join", join, hostId);
       }),
       transport.onPeerLeave((peerId) => {
-        if (peerId === hostId) {
-          close();
+        if (peerId !== hostId || droppedAt !== undefined) {
+          return;
         }
+        if (latest?.phase !== "in-match") {
+          close("host-left");
+          return;
+        }
+        droppedAt = Date.now();
+        closeTimer = setTimeout(() => {
+          close("connection-lost");
+        }, RECONNECT_WINDOW_SECONDS * 1000);
       }),
     );
     // And to those already here, in case their joins were told before now.

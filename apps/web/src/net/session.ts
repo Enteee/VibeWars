@@ -15,6 +15,7 @@ import {
   createMatchHost,
   generateLobbyCode,
   joinLobby,
+  type LobbyClosedReason,
   type LobbyConnection,
   type MatchPlan,
   type MatchStarting,
@@ -42,6 +43,8 @@ export const NO_ANSWER_MESSAGE =
   "No lobby answered that code. Check it; if it is right, your network may be blocking peer-to-peer connections.";
 export const LOBBY_FULL_MESSAGE = "That lobby is full.";
 export const HOST_CLOSED_MESSAGE = "The host closed the lobby.";
+/** True whichever side dropped: a guest cannot tell its own drop from the host's. */
+export const CONNECTION_LOST_MESSAGE = "Lost the connection to the host.";
 
 /** A lobby hosted in this tab, and how to end it for everyone. */
 export interface HostedLobby {
@@ -82,6 +85,14 @@ function startMatch(plan: MatchPlan) {
  * message budget counts on it, and its match runs on it.
  */
 export async function hostLobby(name: string): Promise<HostedLobby> {
+  // Best effort: a page going away tells its guests, rather than leaving
+  // them to wait out a dropped host's reconnect window (#515). Added
+  // before the room exists, so it runs before a transport's own pagehide
+  // leave, while there is still a room to say it in.
+  const onPageHide = (): void => {
+    void close();
+  };
+  window.addEventListener("pagehide", onPageHide);
   const code = generateLobbyCode(secureRandom);
   const room = joinRoom(code);
   const host = createLobbyHost({ transport: room, code, mapIds: arenaIds(), startMatch });
@@ -98,12 +109,6 @@ export async function hostLobby(name: string): Promise<HostedLobby> {
     stopClock();
     await host.close();
   };
-  // Best effort: a page going away tells its guests, rather than leaving
-  // them to notice the host's peer drop out.
-  const onPageHide = (): void => {
-    void close();
-  };
-  window.addEventListener("pagehide", onPageHide);
   try {
     const lobby = await joinLobby({
       transport: host.local,
@@ -145,6 +150,16 @@ export function joinFailureNotice(error: unknown): string {
     }
   }
   return "Could not join the lobby.";
+}
+
+/** What the menu says when the lobby closed for `reason`. */
+export function lobbyClosedNotice(reason: LobbyClosedReason): string {
+  switch (reason) {
+    case "host-left":
+      return HOST_CLOSED_MESSAGE;
+    case "connection-lost":
+      return CONNECTION_LOST_MESSAGE;
+  }
 }
 
 /** What the player is told when the match would not let them in. */

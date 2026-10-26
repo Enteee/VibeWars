@@ -1,5 +1,5 @@
 import { DEFAULT_MATCH_RULES } from "@vibewars/game-core";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   openLobby,
@@ -11,7 +11,7 @@ import {
   type TestLobby,
 } from "./lobby-harness.test-support.js";
 import { MatchRefusedError, connectMatch } from "./match-client.js";
-import { MATCH_FULL_MESSAGE } from "./match-host.js";
+import { MATCH_FULL_MESSAGE, RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { hello, playerIn, self, settle } from "./match-harness.test-support.js";
 
 /**
@@ -233,6 +233,70 @@ describe("a lobby's own match", () => {
     await seat(members, [0, 1, 0, 1]);
     await start(lobby);
     expect(members.map((who) => who.starts.length)).toEqual([2, 2, 2, 2]);
+  });
+});
+
+/**
+ * The lobby around a match whose host's peer drops (#515): it waits out
+ * the match's window before it closes, and a guest whose host comes back
+ * is in the lobby again for the match's end.
+ */
+describe("a lobby, when the host's peer drops during its match", () => {
+  const WINDOW_MS = RECONNECT_WINDOW_SECONDS * 1000;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  async function inMatch() {
+    const { lobby, members } = await lobbyOf([0, 1]);
+    await start(lobby);
+    const guest = at(members, 1);
+    await play(guest, "Guest 1");
+    const closed: string[] = [];
+    guest.connection.onClosed((reason) => closed.push(reason));
+    lobby.network.partition("host", guest.transport.selfId);
+    await settle();
+    return { lobby, guest, closed };
+  }
+
+  it("closes only once the window has run out", async () => {
+    const { closed } = await inMatch();
+
+    vi.advanceTimersByTime(WINDOW_MS - 1);
+    expect(closed).toEqual([]);
+    vi.advanceTimersByTime(1);
+    expect(closed).toEqual(["connection-lost"]);
+  });
+
+  it("joins the lobby again when the host is back in time, and stays open", async () => {
+    const { lobby, guest, closed } = await inMatch();
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host"]);
+
+    vi.advanceTimersByTime(10_000);
+    lobby.network.heal();
+    await settle();
+    vi.advanceTimersByTime(WINDOW_MS);
+
+    expect(closed).toEqual([]);
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host", "Guest 1"]);
+    expect(guest.connection.getSnapshot().players.map(({ name }) => name)).toEqual([
+      "Host",
+      "Guest 1",
+    ]);
+  });
+
+  it("closes when the host is back only after the window, as a late timer would find it", async () => {
+    const { lobby, closed } = await inMatch();
+
+    vi.setSystemTime(Date.now() + WINDOW_MS + 1000);
+    lobby.network.heal();
+    await settle();
+
+    expect(closed).toEqual(["connection-lost"]);
   });
 });
 

@@ -293,7 +293,7 @@ describe("canActivate, an attack skill's weapon (ADR-0029)", () => {
     cost: undefined,
     activationSeconds: 0,
     range: 100,
-    attack: { weapon: "melee", weaponDamage: 1, bonusDamage: undefined },
+    attack: { weapon: "melee", weaponDamage: 1, bonusDamage: undefined, onBlocked: [] },
     effects: [],
   };
 

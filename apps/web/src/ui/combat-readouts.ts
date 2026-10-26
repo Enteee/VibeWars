@@ -47,6 +47,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "cancelled":
     case "interrupt-missed":
     case "attack-missed":
+    case "attack-blocked":
     case "attack-dodged":
     case "attack-obstructed":
     case "attack-unreachable":
@@ -107,6 +108,8 @@ export function describeCombatEvent(
       return `${by} finds nothing to interrupt on ${target}`;
     case "attack-missed":
       return `${by} misses ${target}`;
+    case "attack-blocked":
+      return `${target} blocks ${by}`;
     case "attack-dodged":
       return `${target} dodges ${by}`;
     case "attack-obstructed":
@@ -414,6 +417,9 @@ export function floatingCueFor(
       // A blinded swing paid for and wasted: over the target, so the
       // attacker sees where it went (#6).
       return { text: "miss", tone: "neutral", critical: false };
+    case "attack-blocked":
+      // Guardian and the like turned the blow aside (#534).
+      return { text: "block", tone: "neutral", critical: false };
     case "attack-dodged":
       // A shot that landed where the target would have been (#159).
       return { text: "dodge", tone: "neutral", critical: false };
