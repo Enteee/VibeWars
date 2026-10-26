@@ -40,6 +40,8 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    healthPips: 0,
+    energyPips: 0,
     statuses: [],
   };
   return {

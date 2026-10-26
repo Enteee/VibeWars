@@ -68,6 +68,9 @@ export interface PlayerSnapshot {
   readonly swingTotal: number;
   /** Seconds left lying down from a knockdown (#468); 0 standing. Drawn from this, never from the event. */
   readonly knockdownRemaining: number;
+  /** Net health and energy pips as the host applies them (#504): ±10, 0 dead. Drawn, never derived. */
+  readonly healthPips: number;
+  readonly energyPips: number;
   readonly statuses: readonly string[];
 }
 

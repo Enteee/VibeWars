@@ -8,6 +8,7 @@ import {
   MAX_WIRE_PINGS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_RADIUS,
+  MAX_WIRE_PIPS,
   MAX_WIRE_RANK,
   MAX_WIRE_RANKS,
   MAX_WIRE_SLOTS,
@@ -124,6 +125,8 @@ const player: WirePlayer = {
   swingElapsed: 0.4,
   swingTotal: 1.75,
   knockdownRemaining: 2.5,
+  healthPips: -3,
+  energyPips: 4,
   statuses: [3],
 };
 
@@ -448,6 +451,14 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
       parseWireSnapshotPart,
       { ...snapshot, players: [{ ...player, [field]: undefined }] },
     ],
+  ),
+  ...(["healthPips", "energyPips"] as const).flatMap(
+    (field): [string, (value: unknown) => unknown, unknown][] =>
+      [undefined, 1.5, MAX_WIRE_PIPS + 1, -MAX_WIRE_PIPS - 1, "3"].map((value) => [
+        `snapshot with a player's ${field} ${String(value)} (#504)`,
+        parseWireSnapshotPart,
+        { ...snapshot, players: [{ ...player, [field]: value }] },
+      ]),
   ),
   [
     "snapshot with a player missing knockdownRemaining (#545)",

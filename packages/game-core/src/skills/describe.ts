@@ -63,7 +63,8 @@ export interface SkillDescription {
   readonly cost: string;
   readonly castTime: string;
   readonly recharge: string;
-  readonly rangeText: string;
+  /** Absent when the skill has no reach of its own (a self skill). */
+  readonly rangeText: string | undefined;
   readonly targetText: string;
   /** True when at least one effect scales with an attribute. */
   readonly scalesWithAttribute: boolean;
@@ -279,7 +280,10 @@ const AREA_WHO: Record<AreaRule["affects"], string> = {
  * Who and how far: "Allies in earshot, 350 radius" for a shout, which
  * reaches round its caster rather than at a target (#524).
  */
-function targetAndRange(skill: Skill): { readonly target: string; readonly range: string } {
+function targetAndRange(skill: Skill): {
+  readonly target: string;
+  readonly range: string | undefined;
+} {
   const area = skill.area;
   if (skill.target === "self" && area?.origin === "caster") {
     const where = AREA_TEXT.get(area.radius) ?? `within ${String(area.radius)}`;
@@ -287,7 +291,7 @@ function targetAndRange(skill: Skill): { readonly target: string; readonly range
   }
   return {
     target: TARGET_TEXT[skill.target],
-    range: skill.target === "self" ? "Self" : `${String(skill.range)} range`,
+    range: skill.target === "self" ? undefined : `${String(skill.range)} range`,
   };
 }
 

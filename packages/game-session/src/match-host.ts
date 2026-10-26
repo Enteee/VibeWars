@@ -530,6 +530,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     const { combatant } = participant;
     const cast = combatant.cast.activeCast;
     const swing = swingProgress(combatant);
+    const pips = sim.pips(participant);
     return {
       id: participant.id,
       name: seat.name,
@@ -557,6 +558,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       swingElapsed: round(swing.elapsed, 3),
       swingTotal: round(swing.total, 3),
       knockdownRemaining: round(combatant.knockdownRemaining, 2),
+      healthPips: pips.health,
+      energyPips: pips.energy,
       statuses: wireStatuses(combatant.statuses.active).map((status) => statusWireIndex(status.id)),
     };
   };

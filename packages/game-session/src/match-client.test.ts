@@ -265,6 +265,8 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
     swingElapsed: "swingElapsed",
     swingTotal: "swingTotal",
     knockdownRemaining: "knockdownRemaining",
+    healthPips: "healthPips",
+    energyPips: "energyPips",
     statuses: "statuses",
   } as const satisfies Record<keyof WirePlayer, keyof PlayerSnapshot>;
 
@@ -335,6 +337,8 @@ const WIRE_PLAYER: WirePlayer = {
   swingElapsed: 0.5,
   swingTotal: 1.75,
   knockdownRemaining: 0,
+  healthPips: 0,
+  energyPips: 0,
   statuses: [],
 };
 

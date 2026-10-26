@@ -13,6 +13,7 @@ import {
   MAX_LOBBY_PLAYERS,
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_COMBATS,
+  MAX_WIRE_PIPS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_STATUSES,
   MAX_WIRE_STATUS_INDEX,
@@ -116,6 +117,9 @@ function player(index: number): WirePlayer {
     swingElapsed: rounded(3),
     swingTotal: rounded(3),
     knockdownRemaining: rounded(2),
+    // The longest a pip count is on the wire.
+    healthPips: -MAX_WIRE_PIPS,
+    energyPips: -MAX_WIRE_PIPS,
     statuses: WIRE_STATUSES,
   };
 }

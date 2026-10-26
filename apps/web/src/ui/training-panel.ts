@@ -74,6 +74,7 @@ import {
 import { describeRefusal, MESSAGE_SECONDS } from "./hud.js";
 import { isEliteSkill, skillBadgeHtml } from "./icons.js";
 import { createAllyWatch } from "./ally-watch.js";
+import { pipsElement, renderPips } from "./pips.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import {
   castFill,
@@ -137,12 +138,19 @@ const TAKES_KEYBOARD = "input, textarea, select, [contenteditable]:not([contente
 /** Thrown when there is nothing to train on; the editor then stays two columns. */
 export class TrainingUnavailableError extends Error {}
 
-function vitalBar(kind: string): { root: HTMLElement; fill: HTMLElement; label: HTMLElement } {
+function vitalBar(kind: string): {
+  root: HTMLElement;
+  fill: HTMLElement;
+  label: HTMLElement;
+  pips: HTMLElement;
+} {
   const root = h("div", `training-bar training-bar-${kind}`);
   const fill = h("div", "training-bar-fill");
   const label = h("span", "training-bar-label");
-  root.append(fill, label);
-  return { root, fill, label };
+  // Net regeneration or degeneration, as on the match HUD (#504).
+  const pips = pipsElement();
+  root.append(fill, label, pips);
+  return { root, fill, label, pips };
 }
 
 interface Session {
@@ -407,6 +415,8 @@ export function createTrainingPanel(): TrainingPanel {
     health.label.textContent = `${String(self.health)} / ${String(self.maxHealth)}`;
     energy.fill.style.width = fraction(self.energy, self.maxEnergy);
     energy.label.textContent = `${String(self.energy)} / ${String(self.maxEnergy)}`;
+    renderPips(health.pips, self.healthPips);
+    renderPips(energy.pips, self.energyPips);
     adrenaline.textContent =
       `adrenaline ${String(self.adrenaline)}` +
       (self.attackTargetSessionId === undefined ? "" : " · attacking");
