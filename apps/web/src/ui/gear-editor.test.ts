@@ -1,4 +1,4 @@
-import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
+import { MINIMAL_GW_INSPIRED_PVP_V1, getWeapon } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { validateBuild } from "../storage/build-validation.js";
@@ -330,10 +330,27 @@ describe("the gear summary", () => {
     // A monk holding a hammer is legal and bad; the editor says so
     // rather than letting them find out in a match.
     const unskilled = setWeapon(monk(), "hammer");
-    expect(summariseGear(unskilled).requirementMet).toBe(false);
+    expect(summariseGear(unskilled).unmetRequirement).toEqual({
+      attributeId: "warrior.hammer-mastery",
+      rank: 9,
+    });
 
     const trained = setRank(setWeapon(warrior(), "hammer"), "warrior.hammer-mastery", 9);
-    expect(summariseGear(trained).requirementMet).toBe(true);
+    expect(summariseGear(trained).unmetRequirement).toBeUndefined();
+  });
+
+  it("shows the damage an unmet requirement actually deals, a third (#571)", () => {
+    const hammer = getWeapon("hammer");
+    if (hammer === undefined) {
+      throw new Error("no hammer");
+    }
+    const trained = setRank(setWeapon(warrior(), "hammer"), "warrior.hammer-mastery", 9);
+    expect(summariseGear(trained).damageRange).toBe(
+      `${String(hammer.damageMin)}–${String(hammer.damageMax)}`,
+    );
+    expect(summariseGear(setWeapon(monk(), "hammer")).damageRange).toBe(
+      `${String(Math.round(hammer.damageMin / 3))}–${String(Math.round(hammer.damageMax / 3))}`,
+    );
   });
 
   it("charges for all five superior runes, and still stays above the floor", () => {

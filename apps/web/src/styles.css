@@ -2865,11 +2865,41 @@ body {
   font-size: 0.78rem;
 }
 
+/* The derived stats (#571), under the arena or atop the middle column. */
+.editor-stats {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 1rem;
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.editor > .editor-stats {
+  margin-bottom: 0.8rem;
+}
+
+.editor-stat-label {
+  color: var(--ink-dim);
+}
+
+.editor-stat-value {
+  margin: 0;
+  text-align: right;
+}
+
 /* Loud on purpose: an unmet weapon requirement costs two thirds of your
    damage, and a player should not have to discover that by losing. */
-.gear-warning {
+.editor-stat-value.is-unmet {
   color: var(--damage);
-  font-size: 0.8rem;
+}
+
+.editor-stat-needs {
+  font-size: 0.78rem;
 }
 
 /* --- library tabs --------------------------------------------------------- */
