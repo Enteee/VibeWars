@@ -624,6 +624,26 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     expect(fireball?.skillId).toBe("elementalist.fireball");
   });
 
+  it("carries a knockdown and how long it lasts, and drops one with no duration (#544)", () => {
+    const wire = wireCombat([
+      entry({
+        cause: "skill",
+        skillId: "warrior.backbreaker",
+        weaponId: undefined,
+        events: [{ kind: "knocked-down", targetId: "b", durationSeconds: 4 }],
+      }),
+    ]).map((combat) => ({
+      sent: combatMessage(combat).events,
+      broken: combatMessage({
+        ...combat,
+        events: combat.events.map((event) => ({ ...event, durationSeconds: null })),
+      }).events,
+    }));
+    expect(wire).toEqual([
+      { sent: [{ kind: "knocked-down", targetId: "b", durationSeconds: 4 }], broken: [] },
+    ]);
+  });
+
   it("carries a blocked attack across (#534)", () => {
     const blocked = { kind: "attack-blocked", targetId: "b" } as const;
     const [wired] = wireCombat([entry({ events: [blocked] })]);

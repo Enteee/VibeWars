@@ -177,6 +177,45 @@ describe("ranged weapons fire projectiles", () => {
     expect(shooter.adrenaline).toBe(0);
   });
 
+  describe("Critical Strikes (#606)", () => {
+    /** Critical Strikes 13, and Marksmanship so high every arrow crits. */
+    function critter(): MatchSimulation {
+      return new MatchSimulation({
+        seed: "arrow",
+        participants: [
+          {
+            ...archer(vec2(0, 0)),
+            attributeRanks: new Map([
+              ["ranger.marksmanship", 80],
+              ["assassin.critical-strikes", 13],
+            ]),
+          },
+          target(vec2(300, 0)),
+        ],
+      });
+    }
+
+    it("a critical arrow gives its archer 3 energy", () => {
+      const match = critter();
+      fire(match);
+      const shooter = get(match, "archer").combatant;
+      shooter.energy = 0;
+      expect(land(match).events).toMatchObject([
+        { kind: "damage", critical: true },
+        { kind: "energy-gain", targetId: "archer", amount: 3 },
+      ]);
+    });
+
+    it("gives an archer who died in flight none", () => {
+      const match = critter();
+      fire(match);
+      kill(match, "archer");
+      const { events } = land(match);
+      expect(events).toMatchObject([{ kind: "damage", critical: true }]);
+      expect(events.some((event) => event.kind === "energy-gain")).toBe(false);
+    });
+  });
+
   it("does nothing to a target that died in flight", () => {
     const match = sim();
     fire(match);

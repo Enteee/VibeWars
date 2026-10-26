@@ -18,6 +18,7 @@ import type { Combatant, Skill } from "./types.js";
 
 export type ActivationRejection =
   | "caster-dead"
+  | "caster-knocked-down"
   | "skill-not-on-bar"
   | "still-recharging"
   | "already-casting"
@@ -94,6 +95,9 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
 
   if (caster.dead) {
     return reject("caster-dead");
+  }
+  if (caster.knockdownRemaining > 0) {
+    return reject("caster-knocked-down");
   }
   if (!request.skillBar.includes(skill.id)) {
     return reject("skill-not-on-bar");

@@ -220,6 +220,14 @@ async function measure(url, load) {
         const data = /** @type {unknown} */ (event.data);
         if (typeof data === "object" && data !== null && "type" in data && data.type === "stats") {
           seen.push(data);
+        } else if (
+          typeof data === "object" &&
+          data !== null &&
+          "type" in data &&
+          data.type === "error"
+        ) {
+          // The music host reports failures by message; surface them as a warning.
+          console.warn(`music host error: ${JSON.stringify(data)}`);
         }
       });
     });

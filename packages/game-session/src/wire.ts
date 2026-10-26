@@ -76,6 +76,13 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
         statusId: event.statusId,
         durationSeconds: event.durationSeconds,
       };
+    case "knocked-down":
+      return {
+        ...none,
+        kind: event.kind,
+        targetId: event.targetId,
+        durationSeconds: event.durationSeconds,
+      };
     case "status-removed":
     case "status-expired":
       return { ...none, kind: event.kind, targetId: event.targetId, statusId: event.statusId };
@@ -136,6 +143,8 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
       return isStatusId(statusId) && durationSeconds !== null
         ? { kind: event.kind, targetId, statusId, durationSeconds }
         : undefined;
+    case "knocked-down":
+      return durationSeconds === null ? undefined : { kind: event.kind, targetId, durationSeconds };
     case "status-removed":
     case "status-expired":
       return isStatusId(statusId) ? { kind: event.kind, targetId, statusId } : undefined;

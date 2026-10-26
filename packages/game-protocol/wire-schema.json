@@ -248,6 +248,17 @@
                                 {
                                   "name": "kind",
                                   "optional": false,
+                                  "type": { "literal": "knocked-down" }
+                                },
+                                { "name": "targetId", "optional": false, "type": "string" }
+                              ]
+                            },
+                            {
+                              "properties": [
+                                { "name": "durationSeconds", "optional": false, "type": "number" },
+                                {
+                                  "name": "kind",
+                                  "optional": false,
                                   "type": { "literal": "status-applied" }
                                 },
                                 {
@@ -881,6 +892,13 @@
           "properties": [
             { "name": "amount", "optional": false, "type": "number" },
             { "name": "kind", "optional": false, "type": { "literal": "sacrifice" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "durationSeconds", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "knocked-down" } },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
         },
