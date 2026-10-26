@@ -642,10 +642,93 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
   );
 });
 
+/* --- the editor updates in place (#563, ADR-0030) ------------------------- */
+
+const libraryScroll = (page: Page): Promise<number> =>
+  page.locator(".skill-library").evaluate((node) => node.scrollTop);
+
+/** Scroll the library to `top`, and say where it settled. */
+async function scrollLibrary(page: Page, top: number): Promise<number> {
+  return page.locator(".skill-library").evaluate((node, to) => {
+    node.scrollTop = to;
+    return node.scrollTop;
+  }, top);
+}
+
+test("the skill library keeps its scroll through an equip, a rank, a profession and a tab (#563)", async ({
+  page,
+}) => {
+  // Short, so even a two-profession library scrolls.
+  await page.setViewportSize({ width: 1500, height: 500 });
+  await openElementalist(page);
+  const top = await scrollLibrary(page, 100);
+  expect(top).toBeGreaterThan(0);
+
+  // A box already in view, so the click itself scrolls nothing.
+  const inView = await page.locator(".skill-library").evaluate((library) => {
+    const frame = library.getBoundingClientRect();
+    const boxes = Array.from(library.querySelectorAll<HTMLElement>(".skill-box"));
+    const box = boxes.find((node) => {
+      const rect = node.getBoundingClientRect();
+      return rect.top >= frame.top && rect.bottom <= frame.bottom;
+    });
+    return box?.dataset.skillId ?? "";
+  });
+  await page.locator(`.skill-box[data-skill-id="${inView}"]`).click();
+  await expect(page.locator(`.skill-box[data-skill-id="${inView}"]`)).toHaveClass(/is-equipped/);
+  expect(await libraryScroll(page)).toBe(top);
+
+  await page
+    .locator(".editor-attribute", { hasText: "Fire Magic" })
+    .getByRole("button", { name: "+" })
+    .click();
+  await expect(page.locator(".editor-attribute", { hasText: "Fire Magic" })).toContainText("1");
+  expect(await libraryScroll(page)).toBe(top);
+
+  // A new secondary reshuffles the groups around Fireball, which stays: the
+  // library holds it where it was on screen rather than jumping to the top.
+  const fireball = page.locator('.skill-box[data-skill-id="elementalist.fireball"]');
+  const onScreen = async (): Promise<number> => (await fireball.boundingBox())?.y ?? Number.NaN;
+  const before = await onScreen();
+  await page.locator(".editor-row select").nth(1).selectOption("warrior");
+  await expect(page.locator(".skill-group", { hasText: "TACTICS" })).toHaveCount(1);
+  expect(Math.abs((await onScreen()) - before)).toBeLessThanOrEqual(1);
+  const reshuffled = await libraryScroll(page);
+
+  // Each tab keeps its own place. The tabs scroll with the list, so they
+  // are pressed in place: a real click would first scroll them into view.
+  const tab = (name: string) => page.getByRole("button", { name, exact: true });
+  await tab("gear").dispatchEvent("click");
+  await expect(page.locator(".gear-box").first()).toBeVisible();
+  const gearTop = await scrollLibrary(page, 120);
+  await tab("skills").dispatchEvent("click");
+  expect(await libraryScroll(page)).toBe(reshuffled);
+  await tab("gear").dispatchEvent("click");
+  expect(await libraryScroll(page)).toBe(gearTop);
+});
+
+test("a pressed control keeps the keyboard, so Tab goes on from it (#563)", async ({ page }) => {
+  await openElementalist(page);
+  const fire = page.locator(".editor-attribute", { hasText: "Fire Magic" });
+  const plus = fire.getByRole("button", { name: "+" });
+  await plus.click();
+  await expect(fire).toContainText("1");
+  await expect(plus).toBeFocused();
+  // Space presses it again: it is the same button, not a rebuilt one.
+  await page.keyboard.press("Space");
+  await expect(fire.locator(".editor-attribute-rank")).toHaveText("2");
+  // Shift+Tab steps back to Fire Magic's own "−", enabled now: the
+  // keyboard goes on from where it was, not from the top of the page.
+  await page.keyboard.press("Shift+Tab");
+  await expect(fire.getByRole("button", { name: "−" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(fire.locator(".editor-attribute-rank")).toHaveText("1");
+});
+
 test("the library remembers which tab you were on while you build", async ({ page }) => {
   await newCharacter(page);
   await openGearLibrary(page);
-  // Equipping re-renders the whole editor; the tab must not snap back.
+  // Equipping updates the editor; the tab must not snap back.
   await equipFromLibrary(page, "Axe");
   await expect(page.locator(".library-tab.is-active")).toHaveText("gear");
 });
