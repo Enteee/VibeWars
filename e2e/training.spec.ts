@@ -297,11 +297,8 @@ test("(11) every skill button shows its skill-type badge, as the HUD does", asyn
     .locator(".skill-box", { hasText: "Armor of Earth" })
     .locator(".skill-box-equip")
     .click();
+  await expectFilledSlots(page, ["Fireball", "Armor of Earth"]);
   const buttons = page.locator(FILLED_SLOTS);
-  await expect(buttons).toHaveText([
-    `${codeLabel(skillKey(0))}Fireball`,
-    `${codeLabel(skillKey(1))}Armor of Earth`,
-  ]);
   for (const [index, type] of ["Spell", "Enchantment"].entries()) {
     const badges = buttons.nth(index).locator(".skill-type-badge");
     await expect(badges).toHaveCount(1);
@@ -365,7 +362,8 @@ test("(13) a recharging skill shows the clock-wipe and the seconds left, then cl
   // Fireball recharges in 7 s of game time, which runs slower than wall
   // time when the CPU is loaded (#327).
   await expect(overlay).toHaveCount(0, { timeout: 20_000 });
-  await expect(slot).not.toHaveAttribute("aria-label");
+  // Named by its skill again: the bar shows no name (#719).
+  await expect(slot).toHaveAttribute("aria-label", "Fireball");
   await expect(slot).not.toHaveClass(/\bis-recharging\b/);
 });
 
