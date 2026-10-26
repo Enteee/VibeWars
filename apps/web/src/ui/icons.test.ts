@@ -1,4 +1,6 @@
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import {
   ALL_OFFHANDS,
   ALL_WEAPONS,
+  IMPLEMENTED_SKILLS,
   PROFESSIONS,
   type ProfessionId,
   type SkillType,
@@ -19,11 +22,15 @@ import {
   offhandIcon,
   professionIcon,
   skillBadgeHtml,
+  skillIcon,
+  skillIconHtml,
   skillTypeBadgeHtml,
   skillTypeIcon,
   soundIcon,
   weaponIcon,
 } from "./icons.js";
+
+import { SKILL_ICONS } from "../../../../scripts/assets/skill-icon-table.mjs";
 
 const PUBLIC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../public");
 
@@ -85,5 +92,72 @@ describe("icons", () => {
   it("gives a known skill its type badge, and an unknown one none", () => {
     expect(skillBadgeHtml("elementalist.fireball")).toBe(skillTypeBadgeHtml("spell"));
     expect(skillBadgeHtml("nobody.unknown")).toBe("");
+  });
+});
+
+describe("skill icons (#719)", () => {
+  const SKILL_DIR = path.join(PUBLIC, "icons", "skill");
+  const ids = IMPLEMENTED_SKILLS.map((skill) => skill.id);
+
+  it("has a file under public/ for every implemented skill", () => {
+    for (const id of ids) {
+      expect(fs.existsSync(path.join(PUBLIC, skillIcon(id))), id).toBe(true);
+    }
+  });
+
+  it("has a row in the generator table for every implemented skill, and none for another", () => {
+    expect(Object.keys(SKILL_ICONS).sort()).toEqual([...ids].sort());
+  });
+
+  it("has no file for a skill that is not implemented", () => {
+    const files = fs.readdirSync(SKILL_DIR).map((file) => file.replace(/\.svg$/, ""));
+    expect(files.filter((id) => id !== "unknown" && !ids.includes(id))).toEqual([]);
+  });
+
+  it("gives every skill its own picture: no two share a glyph and a modifier", () => {
+    const seen = new Map<string, string>();
+    for (const [id, row] of Object.entries(
+      SKILL_ICONS as Record<string, { glyph: string; modifier?: string }>,
+    )) {
+      const key = `${row.glyph}/${row.modifier ?? "-"}`;
+      expect(seen.get(key), `${id} repeats ${seen.get(key) ?? ""}`).toBeUndefined();
+      seen.set(key, id);
+    }
+  });
+
+  it("keeps every icon small", () => {
+    for (const file of fs.readdirSync(SKILL_DIR)) {
+      expect(fs.statSync(path.join(SKILL_DIR, file)).size, file).toBeLessThanOrEqual(2000);
+    }
+  });
+
+  it("shows an unknown skill the bare plate", () => {
+    expect(skillIcon("nobody.unknown")).toBe("/icons/skill/unknown.svg");
+    expect(fs.existsSync(path.join(PUBLIC, skillIcon("nobody.unknown")))).toBe(true);
+  });
+
+  it("is decorative markup of the size asked", () => {
+    expect(skillIconHtml("elementalist.fireball", 48)).toBe(
+      '<img class="skill-icon" src="/icons/skill/elementalist.fireball.svg" alt="" width="48" height="48">',
+    );
+  });
+
+  it("matches what the generator writes now", () => {
+    const out = fs.mkdtempSync(path.join(os.tmpdir(), "vw-icons-"));
+    try {
+      execFileSync("node", [path.resolve(PUBLIC, "../../../scripts/assets/icons.mjs")], {
+        env: { ...process.env, VIBEWARS_ICONS_OUT: out },
+        stdio: "ignore",
+      });
+      const fresh = fs.readdirSync(path.join(out, "skill")).sort();
+      expect(fresh).toEqual(fs.readdirSync(SKILL_DIR).sort());
+      for (const file of fresh) {
+        expect(fs.readFileSync(path.join(SKILL_DIR, file), "utf8"), file).toBe(
+          fs.readFileSync(path.join(out, "skill", file), "utf8"),
+        );
+      }
+    } finally {
+      fs.rmSync(out, { recursive: true, force: true });
+    }
   });
 });

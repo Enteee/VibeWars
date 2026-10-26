@@ -1011,6 +1011,11 @@ async function dragGear(page: Page, fromSelector: string, toSelector: string): P
   );
 }
 
+/** A derived stat's value under the arena (#571). */
+function stat(page: Page, key: string): Locator {
+  return page.locator(`.editor-stat-value[data-stat="${key}"]`);
+}
+
 /** Click a library entry by its visible name. */
 async function equipFromLibrary(page: Page, name: string): Promise<void> {
   await page.locator(".gear-box").filter({ hasText: name }).first().click();
@@ -1021,17 +1026,17 @@ test("gear is equipped from a library, like skills are", async ({ page }) => {
   await openGearLibrary(page);
 
   const weaponSlot = page.locator(".gear-slot").first();
-  const stats = page.locator(".gear-stats");
+  const armor = stat(page, "armor");
 
   // A new character is a warrior: sword and shield, 80 + 8 armor.
   await expect(weaponSlot).toContainText("Sword");
-  await expect(stats).toContainText("88");
+  await expect(armor).toHaveText("88");
 
   await equipFromLibrary(page, "Hammer");
   await expect(weaponSlot).toContainText("Hammer");
   // A hammer needs both hands, so the shield comes off and armor falls
   // back to the warrior's own 80.
-  await expect(stats).toContainText("80");
+  await expect(armor).toHaveText("80");
   await expect(page.locator(".gear-slot").nth(1)).toContainText("both hands full");
 });
 
@@ -1052,8 +1057,8 @@ test("a rune dropped on an armor piece shows what it costs", async ({ page }) =>
   await newCharacter(page);
   await openGearLibrary(page);
 
-  const stats = page.locator(".gear-stats");
-  await expect(stats).toContainText("500");
+  const health = stat(page, "health");
+  await expect(health).toHaveText("500");
 
   const runeBox = page
     .locator(".gear-box")
@@ -1068,8 +1073,8 @@ test("a rune dropped on an armor piece shows what it costs", async ({ page }) =>
   const headRune = page.locator(".armor-row").first().locator(".gear-slot").nth(1);
   await expect(headRune).toContainText("Superior Rune of Swordsmanship");
   // +3 Swordsmanship, paid for with 75 health — both halves on screen.
-  await expect(stats).toContainText("425");
-  await expect(stats).toContainText("+3");
+  await expect(health).toHaveText("425");
+  await expect(page.locator(".gear-stats")).toContainText("+3");
 });
 
 test("the library follows your clicks; an insignia goes to the selected piece (#570)", async ({
@@ -1143,12 +1148,23 @@ test("an unmet weapon requirement is called out before the match, not during", a
   await openGearLibrary(page);
 
   await equipFromLibrary(page, "Hammer");
-  await expect(page.locator(".gear-warning")).toBeVisible();
+  // The damage line says what is actually dealt, a third, in red (#571).
+  const damage = stat(page, "damage");
+  await expect(damage).toHaveText("6–12 · 1.75s needs Hammer Mastery 9");
+  await expect(damage).toHaveClass(/is-unmet/);
+  const red = await damage.evaluate((node) => getComputedStyle(node).color);
+  // Marked, to show the line is updated in place, not rebuilt.
+  await damage.evaluate((node) => {
+    node.dataset.marked = "yes";
+  });
 
-  // Train the attribute the hammer needs and the warning goes away.
+  // Train the attribute the hammer needs and the full damage is back.
   const hammerRow = page.locator(".editor-attribute").filter({ hasText: "Hammer Mastery" });
   await pip(hammerRow, 9).click();
-  await expect(page.locator(".gear-warning")).toHaveCount(0);
+  await expect(damage).toHaveText("19–35 · 1.75s");
+  await expect(damage).not.toHaveClass(/is-unmet/);
+  await expect(damage).not.toHaveCSS("color", red);
+  await expect(damage).toHaveAttribute("data-marked", "yes");
 });
 
 test("a chosen weapon and insignia survive a reload", async ({ page }) => {

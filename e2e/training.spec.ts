@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { KEYMAP_PRESETS, codeLabel, type Keymap } from "../apps/web/src/input/keymap.js";
+import { DEFAULT_STEP, zoomFor } from "../apps/web/src/render/camera-rig.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { startSoloMatch } from "./helpers/peers.js";
@@ -59,6 +60,30 @@ async function releaseControl(page: Page): Promise<void> {
 async function takeControl(page: Page): Promise<void> {
   await page.locator(".training-stage").click({ position: { x: 12, y: 12 } });
   await expect(page.locator(".training")).toHaveClass(/is-armed/);
+}
+
+/**
+ * Step out to Wide and wait for the camera to settle. The stage draws at
+ * a match's scale (#709), so at Default it shows only part of a training
+ * map; at Wide, in the `WIDE` window, the whole of one fits.
+ */
+async function wholeMap(page: Page): Promise<void> {
+  const stage = page.locator(".training-stage");
+  await stage.hover();
+  await page.mouse.wheel(0, 100);
+  await expect(stage).toHaveAttribute("data-zoom-step", "Wide");
+  let last = "";
+  await expect
+    .poll(
+      async () => {
+        const now = `${String(await stage.getAttribute("data-zoom"))} ${String(await stage.getAttribute("data-camera"))}`;
+        const settled = now === last;
+        last = now;
+        return settled;
+      },
+      { intervals: [250] },
+    )
+    .toBe(true);
 }
 
 async function holdKey(page: Page, key: string, ms: number): Promise<void> {
@@ -522,6 +547,7 @@ test("(20) a double right click on a far enemy attacks it: you walk there and sw
   await page.locator("select.training-scenario").selectOption("weapon-dps");
   await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
   await takeControl(page);
+  await wholeMap(page);
 
   // The bow-range dummy, at (480, 210): far out of a sword's reach.
   const dummy = (await trainingView(page, canvas)).onPage({ x: 480, y: 210 });
@@ -624,6 +650,7 @@ test("(23) Esc stops a walk to a clicked point, and the next Esc releases the ar
 }) => {
   const canvas = await openTraining(page);
   await takeControl(page);
+  await wholeMap(page);
   // Empty ground in the far corner, a long walk from the spawn.
   const corner = (await trainingView(page, canvas)).onPage({ x: 520, y: 30 });
   await page.mouse.click(corner.x, corner.y);
@@ -720,6 +747,7 @@ test("(26) left click walks, even onto a dummy, and never targets; right click t
   await page.locator("select.training-scenario").selectOption("armor-ladder");
   await expect(page.locator(".training-log")).toContainText("── Armor ladder ──");
   await takeControl(page);
+  await wholeMap(page);
   const [first] = LADDER;
 
   // No target yet, and the cursor off the arena: no name shows. Shot armed
@@ -809,6 +837,7 @@ test("(29) an attack skill pressed out of reach walks in, then lands (#415)", as
   await page.locator("select.training-scenario").selectOption("weapon-dps");
   await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
   await takeControl(page);
+  await wholeMap(page);
 
   // Target the bow-range dummy, at (480, 210), far out of an axe's reach.
   const dummy = (await trainingView(page, canvas)).onPage({ x: 480, y: 210 });
@@ -828,6 +857,7 @@ test("(30) a spell pressed out of range walks in, then goes off (#499)", async (
   await page.locator("select.training-scenario").selectOption("weapon-dps");
   await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
   await takeControl(page);
+  await wholeMap(page);
 
   // Walk to the top-left corner, about 500 from the bow-range dummy at
   // (480, 210): out of Fireball's 420. Arrived once the arena holds still.
@@ -877,6 +907,7 @@ test("(31) a slot out of reach of the target is marked, and the mark goes once i
   await page.locator("select.training-scenario").selectOption("weapon-dps");
   await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
   await takeControl(page);
+  await wholeMap(page);
   const slot = page.locator(FILLED_SLOTS).first();
   // No target, no mark.
   await expect(slot).not.toHaveClass(/is-out-of-range/);
@@ -982,4 +1013,27 @@ test("(35) the bars show net regeneration as arrows: an Elementalist's 4 energy 
   await expect(energy).toHaveClass(/is-regen/);
   // Full health and nothing on you: no health arrows.
   await expect(page.locator(".training-bar-health .vital-pips")).toBeHidden();
+});
+
+test("(36) the arena draws at a match's scale: the stage shows less of the world, not all of it shrunk (#709)", async ({
+  page,
+}) => {
+  const size = { width: 1280, height: 720 };
+  await page.setViewportSize(size);
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  const stage = page.locator(".training-stage");
+  await expect(page.locator(".training canvas")).toBeVisible();
+  // What a match's canvas, the window under the top bar, shows at Default.
+  const topbar = (await page.locator("#topbar").boundingBox())?.height ?? 0;
+  const match = { width: size.width, height: size.height - topbar };
+  await expect(stage).toHaveAttribute("data-zoom", zoomFor(DEFAULT_STEP, match).toFixed(4));
+  const box = await stage.boundingBox();
+  expect(box?.height ?? Infinity).toBeLessThan(size.height / 2);
+
+  // A step still steps it, at the match's zoom for that step.
+  await stage.hover();
+  await page.mouse.wheel(0, 100);
+  await expect(stage).toHaveAttribute("data-zoom-step", "Wide");
+  await expect(stage).toHaveAttribute("data-zoom", zoomFor(DEFAULT_STEP + 1, match).toFixed(4));
 });

@@ -109,6 +109,19 @@ export function skillTypeBadgeHtml(type: SkillType): string {
 }
 
 /**
+ * A skill's own icon (#719), by id: a profession plate, one glyph for its
+ * effect, a modifier. An id this client does not know gets the bare plate.
+ */
+export function skillIcon(skillId: string): string {
+  return iconUrl("skill", getSkill(skillId) === undefined ? "unknown" : skillId);
+}
+
+/** A skill's icon as markup, `size` px square. Decorative: the name sits beside it. */
+export function skillIconHtml(skillId: string, size: number): string {
+  return `<img class="skill-icon" src="${skillIcon(skillId)}" alt="" width="${String(size)}" height="${String(size)}">`;
+}
+
+/**
  * The badge for a skill on a bar, by id: the HUD and the Training Ground
  * both show it (#150). A skill this client does not know gets none.
  */

@@ -110,7 +110,15 @@ import {
   scheduleReader,
 } from "./schedule.mjs";
 import { createIssueBatch, newIssueMessage, WINDOW_MS } from "./new-issues.mjs";
-import { applyStaff, parseStaff, roleOf, staffAllowed, staffReader } from "./staff.mjs";
+import {
+  applyStaff,
+  markReady,
+  parseStaff,
+  roleOf,
+  staffAllowed,
+  staffReader,
+  withStaffLock,
+} from "./staff.mjs";
 import {
   RESTRICTED_PATHS,
   ROLES,
@@ -2056,6 +2064,28 @@ async function changedSince(sha, cfg) {
 }
 
 /**
+ * An employee being fired ran `company ready`: record it in `staff.json`, so
+ * the supervisor stops it (#383).
+ *
+ * @param {string} employee
+ * @returns {boolean} whether `employee` is being fired
+ */
+function readyToStop(employee) {
+  try {
+    return withStaffLock(STAFF, () => {
+      const marked = markReady(parseStaff(fs.readFileSync(STAFF, "utf8")), employee, Date.now());
+      if (marked === null) {
+        return false;
+      }
+      writeAtomic(STAFF, `${JSON.stringify(marked, null, 2)}\n`);
+      return true;
+    });
+  } catch {
+    return false;
+  }
+}
+
+/**
  * A company reboot (#21): schedule it, abort it, or mark an employee ready
  * for it. hubd only checks and records it, in `.bots/reboot.json`; the
  * supervisor, which watches the agents' restart loops, drains the company
@@ -2071,6 +2101,10 @@ async function changedSince(sha, cfg) {
 async function reboot(employee, role, argv, cfg) {
   const kind = "reboot";
   const pending = readReboot();
+  if (argv[0] === "ready" && readyToStop(employee) && pending === null) {
+    audit({ role, kind, argv, decision: "allowed" });
+    return { allow: true, code: 0, stdout: "Noted. You are being stopped now.\n", stderr: "" };
+  }
   if (argv[0] === "ready" || argv[0] === "abort") {
     if (pending === null) {
       return { allow: true, code: 1, stdout: "", stderr: "company: no reboot is scheduled\n" };
@@ -2130,6 +2164,20 @@ async function reboot(employee, role, argv, cfg) {
 }
 
 /**
+ * What a fired employee is told (#383).
+ *
+ * @param {string} reason
+ * @returns {string}
+ */
+function stopNotice(reason) {
+  return (
+    `You're being stopped (${reason}). WIP-commit and push your branch, move your In ` +
+    "Progress card back to Ready with a comment naming the branch and its state, then " +
+    "run `company ready`."
+  );
+}
+
+/**
  * `company hire` and `company fire` (#380). hubd checks the request and
  * records it in `.bots/staff.json`; nothing starts or stops until the
  * supervisor reconciles that file (#383). An accepted change is told to
@@ -2141,6 +2189,23 @@ async function reboot(employee, role, argv, cfg) {
  * @returns {Record<string, unknown>}
  */
 function staff(role, argv, cfg) {
+  try {
+    // Read to write under one lock: the supervisor also writes staff.json.
+    return withStaffLock(STAFF, () => recordStaff(role, argv, cfg));
+  } catch (error) {
+    const reason = `staff.json: ${error instanceof Error ? error.message : String(error)}`;
+    audit({ role, kind: "staff", argv, decision: "refused", reason });
+    return { allow: false, reason, code: 77 };
+  }
+}
+
+/**
+ * @param {string} role
+ * @param {string[]} argv
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Record<string, unknown>}
+ */
+function recordStaff(role, argv, cfg) {
   const kind = "staff";
   /** @param {string} reason */
   const refuse = (reason) => {
@@ -2183,6 +2248,9 @@ function staff(role, argv, cfg) {
   );
   audit({ role, kind, argv, decision: "allowed" });
   tellCompany(kind, `${verb === "hire" ? "Hired" : "Firing"} ${allowed.employee}: ${reason}`);
+  if (verb === "fire") {
+    tellCompany("staff-stop", stopNotice(reason), { to: allowed.employee });
+  }
   return {
     allow: true,
     code: 0,

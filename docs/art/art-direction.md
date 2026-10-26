@@ -512,6 +512,41 @@ lime.
 | Shout       | Mouth and two sound waves |
 | Skill       | Square                    |
 
+### Skill icons
+
+One icon per implemented skill (#719), on the 24 grid, in
+`apps/web/public/icons/skill/<skill-id>.svg`. The approved study is
+`skill-icon-study.svg` (`scripts/assets/skill-icon-study.mjs`).
+
+An icon is a **profession plate**, **one glyph** and an optional **modifier**.
+The type badge (the table above) and the elite frame are drawn by the UI around
+it, not baked in, so one file serves every screen.
+
+| Layer    | Carries         | Rule                                                                       |
+| -------- | --------------- | -------------------------------------------------------------------------- |
+| Plate    | Profession      | Rounded square, the profession colour at 30% over `plate`, a 1 unit rim    |
+|          |                 | in full, its silhouette as a 20% watermark                                 |
+| Glyph    | Primary effect  | One shape from the table below, `ink` with a `bg` casing, in the box 3..21 |
+| Modifier | How it bends it | Bottom right, on a dark disc, `ink`: up, down, less, area, clock, stun,    |
+|          |                 | bleed, self                                                                |
+
+- **Shape first.** Glyph and modifier are `ink` only; the plate's hue is
+  decoration, so every icon reads with the colour taken out.
+- **Every skill is its own picture.** A row in `scripts/assets/skill-icon-table.mjs`
+  names a skill's glyph and modifier, and a test fails if two rows match. Start
+  from the glyph for the skill's primary effect; the modifier tells apart the
+  ones that share it (heal, energy and armor repeat).
+- **The glyph leaves the plate showing** and keeps clear of the bottom right
+  corner, which the modifier owns.
+- **Sizes.** 48 px on the combat bar and in the build editor, 24 px in library
+  rows, 20 px inline, 16 px the floor.
+- **Unknown skill id.** A bare plate with no glyph (`unknown.svg`).
+- **Glyph vocabulary** (grows by effect, not by skill): heal, fireball (comet),
+  axe, sword, hammer, spear, arrow, volley, interrupt (burst), speed (chevrons
+  right), slow (chevrons left), dash, energy (bolt), mountain (earth), cleanse
+  (drop, struck through), armor (shield), flask. A new primary effect adds a
+  glyph; a new skill adds a row.
+
 ### Skill slot states
 
 A skill slot says what its cast is doing (#300). Every state is one 2 px ring
@@ -616,6 +651,7 @@ generator. Never hand-edit an output file; change the script and re-run.
 | ---------- | ----------------------------------- |
 | Profession | `apps/web/public/icons/profession/` |
 | Skill type | `apps/web/public/icons/skill-type/` |
+| Skill      | `apps/web/public/icons/skill/`      |
 | Status     | `apps/web/public/icons/status/`     |
 | UI         | `apps/web/public/icons/ui/`         |
 | Projectile | `apps/web/public/icons/projectile/` |
@@ -628,6 +664,7 @@ for the scene to tint. Load it in Phaser with
 `this.load.svg(key, url, { width, height })` at the size you draw it (24×24
 for icons, 32×12 for projectiles), and in HTML with a plain `<img>`.
 
+Adding a skill: add its row to `scripts/assets/skill-icon-table.mjs` and re-run.
 Adding a status, profession, skill type or UI control: add one entry to the
 matching table in the generator, re-run it, and add a row to this page.
 
