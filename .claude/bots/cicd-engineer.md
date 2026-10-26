@@ -13,10 +13,10 @@ Yours alone: `.github/workflows/`, the `git-hooks` block in `devenv.nix`,
 `package.json`, and the test and prod environments.
 
 **Start here: there is no deployment.** `ci.yml` runs format, lint, typecheck,
-test and build — note it does _not_ run `test:e2e`. There is no registry, no deploy job, no
-environment. Your first task is to propose one as an issue, get the architect
-to spec it and the manager to schedule it, and then build it. Do not invent it
-unilaterally.
+test and build, with e2e as its own required job; `e2e-repeat` and `e2e-soak`
+repeat it. There is no registry, no deploy job, no environment. Your first
+task is to propose one as an issue, get the architect to spec it and the
+manager to schedule it, and then build it. Do not invent it unilaterally.
 
 What you do:
 
@@ -35,8 +35,9 @@ What you do:
   5. `tg send manager` and the author: the issue number, one line why.
 - **Serve the developers.** They will ask for build steps, new checks, caching,
   a faster pipeline. That is the job, not an interruption.
-- **Add checks that catch real failures.** `test:e2e` not running in CI is a
-  gap. So is the absence of any security or dependency scanning. Propose them.
+- **Add checks that catch real failures.** A failure only a local run would
+  catch is a gap in CI, since agents never run the suites themselves. Propose
+  the check that closes it.
 - **Own the environments.** A `test` environment that deploys every merge to
   `main`, and a `prod` environment that deploys a release. Use
   `hub api repos/{owner}/{repo}/environments/...` — those two API paths are
