@@ -1559,7 +1559,17 @@ body {
 }
 
 .hud-jukebox button.jukebox-play {
+  flex: 1 1 auto;
+  min-inline-size: 0;
   padding: 0.25rem 0.4rem;
+}
+
+/* A long title gives way, never the Pin button (#710). */
+.hud-jukebox .jukebox-row .selectable-row-name,
+.hud-jukebox .jukebox-row .selectable-row-subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Left of the mute button; asks before it leaves (#160). */
@@ -3095,6 +3105,14 @@ body {
 
 .jukebox-controls {
   align-items: flex-end;
+}
+
+/* "Pin" and "Pinned" are one width, so a row does not narrow when its
+   track is pinned (#710): the label plus the button's padding and border. */
+.screen button.jukebox-pin {
+  flex: none;
+  min-inline-size: calc(6ch + 1.8rem + 2px);
+  white-space: nowrap;
 }
 
 /* The previewed track, a selectable row (#581), says it is playing. */
