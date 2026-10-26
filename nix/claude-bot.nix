@@ -238,7 +238,7 @@ let
     refused "writing .git/HEAD" "touch '$common/HEAD'"
     refused "rewriting .git/packed-refs" "[ -e '$common/packed-refs' ] && touch '$common/packed-refs'"
     check ".git is the jail's own tmpfs" \
-      "$(awk -v p="$common" '$5 == p { print $9 }' /proc/self/mountinfo)" "tmpfs"
+      "$(awk -v p="$common" '$5 == p { for (i = 7; $i != "-"; i++); print $(i + 1) }' /proc/self/mountinfo)" "tmpfs"
     own="$(git rev-parse --absolute-git-dir)"
     check "this worktree's admin dir is writable" \
       "$("$SHELL" -c "touch '$own/smoke-$$' && rm '$own/smoke-$$' && echo writable" 2>&1)" \
@@ -762,11 +762,12 @@ let
         # host pack-refs would delete loose refs from the shared refs/ and
         # leave jails reading the old packed values (their own branch rewinds).
         # Hence no auto-gc, no ref packing, no maintenance on the operator
-        # checkout, and the file exists before the ro-bind below.
+        # checkout (written only when different: claude-bot runs in every window
+        # at once, and each set takes config.lock), and the file exists before the ro-bind below.
         [ -e "$DEVENV_ROOT/.git/packed-refs" ] || printf '# pack-refs with: peeled fully-peeled sorted \n' > "$DEVENV_ROOT/.git/packed-refs"
-        ${pkgs.git}/bin/git -C "$DEVENV_ROOT" config gc.auto 0
-        ${pkgs.git}/bin/git -C "$DEVENV_ROOT" config gc.packRefs false
-        ${pkgs.git}/bin/git -C "$DEVENV_ROOT" config maintenance.auto false
+        [ "$(${pkgs.git}/bin/git -C "$DEVENV_ROOT" config --get gc.auto)" = 0 ] || ${pkgs.git}/bin/git -C "$DEVENV_ROOT" config gc.auto 0
+        [ "$(${pkgs.git}/bin/git -C "$DEVENV_ROOT" config --get gc.packRefs)" = false ] || ${pkgs.git}/bin/git -C "$DEVENV_ROOT" config gc.packRefs false
+        [ "$(${pkgs.git}/bin/git -C "$DEVENV_ROOT" config --get maintenance.auto)" = false ] || ${pkgs.git}/bin/git -C "$DEVENV_ROOT" config maintenance.auto false
 
         if [ "$smoke" = "1" ]; then
           jailCommand=(${jailSmoke})
