@@ -512,6 +512,33 @@ lime.
 | Shout       | Mouth and two sound waves |
 | Skill       | Square                    |
 
+### Skill icons (study, not decided)
+
+One icon per skill (#719), drawn on the 24 grid, generated as
+`apps/web/public/icons/skill/<skill-id>.svg` by `icons.mjs`. Every icon is five
+layers; the study is `skill-icon-study.svg`.
+
+| Layer    | Carries         | Rule                                                                              |
+| -------- | --------------- | --------------------------------------------------------------------------------- |
+| Tile     | Profession      | Rounded square, the profession colour at 30% over `plate`, a 1 unit rim in full   |
+| Glyph    | Primary effect  | One shape from a closed vocabulary, `ink` with an `edge` casing, in the box 4..18 |
+| Modifier | How it bends it | Bottom right: up (boost), down (drain), bar (less). Optional                      |
+| Badge    | Skill type      | Top right, on a dark disc, the table above                                        |
+| Frame    | Elite           | The doubled gold frame, outside the tile                                          |
+
+- **Shape first.** Take the hue away and the glyph plus the badge still name the
+  skill's job. The same glyph may serve many skills (heal, energy); the badge,
+  the modifier and the tile tell them apart, and a test fails if two skills
+  render identically, so every skill has its own row.
+- **The glyph leaves the plate showing**, and stays clear of the top right
+  corner, which the badge owns.
+- **Sizes.** 48 px on the combat bar and in the build editor, 24 px in library
+  rows, 16 px the floor. The hotkey sits top left of a bar slot; no name, and
+  the cost is in the tooltip.
+- **The vocabulary grows by effect**, not by skill: add a glyph when a new
+  primary effect appears, then give each skill a row naming its glyph and
+  modifier.
+
 ### Skill slot states
 
 A skill slot says what its cast is doing (#300). Every state is one 2 px ring
