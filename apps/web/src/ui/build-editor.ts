@@ -319,6 +319,52 @@ export function professionChoices(
 }
 
 /**
+ * What a profession change from `before` to `after` dropped (#569), one
+ * line each, in the order the editor shows them: attribute ranks with
+ * the points they give back, skills taken off the bar, then gear that
+ * was swapped or removed. Empty when nothing was dropped.
+ */
+export function describeProfessionChange(
+  before: StoredCharacter,
+  after: StoredCharacter,
+): string[] {
+  const ranks = before.attributes
+    .filter((a) => a.rank > rankOf(after, a.attributeId))
+    .map((a) => {
+      const name = getAttribute(a.attributeId)?.name ?? a.attributeId;
+      const back =
+        cumulativeCostForRank(a.rank) - cumulativeCostForRank(rankOf(after, a.attributeId));
+      return `${name} ${String(a.rank)} (${String(back)} points back)`;
+    });
+  const skills = before.skillBar
+    .filter((id, slot): id is string => id !== null && after.skillBar[slot] !== id)
+    .map((id) => `${getSkill(id)?.name ?? id} from the bar`);
+
+  const was = before.equipment;
+  const now = after.equipment;
+  const gear: string[] = [];
+  if (was.mainHand.weaponId !== now.mainHand.weaponId) {
+    const name = (id: string): string => getWeapon(id)?.name ?? id;
+    gear.push(`${name(was.mainHand.weaponId)} → ${name(now.mainHand.weaponId)}`);
+  }
+  if (was.offHand !== null && was.offHand.offhandId !== now.offHand?.offhandId) {
+    const name = (id: string): string => getOffhand(id)?.name ?? id;
+    gear.push(
+      now.offHand === null
+        ? name(was.offHand.offhandId)
+        : `${name(was.offHand.offhandId)} → ${name(now.offHand.offhandId)}`,
+    );
+  }
+  for (const slot of ARMOR_SLOTS) {
+    const rune = was.armor[slot].rune;
+    if (rune !== null && now.armor[slot].rune === null) {
+      gear.push(runeDisplayName(rune));
+    }
+  }
+  return [...ranks, ...skills, ...gear];
+}
+
+/**
  * `equipment` with its weapon swapped for `primary`'s default when no
  * attribute in `accessible` can govern it (#614): a Warrior's Sword on
  * an Assassin becomes Daggers, so Dagger Mastery works at once. A weapon
@@ -644,6 +690,8 @@ interface EditorContext {
   readonly current: () => StoredCharacter;
   /** Make `next` the character, and have every region show it. */
   readonly commit: (next: StoredCharacter) => void;
+  /** `commit` new professions, toasting what they dropped with an Undo (#569). */
+  readonly changeProfessions: (primary: ProfessionId, secondary: ProfessionId | undefined) => void;
   /** `commit` a change to the bar, showing its notice until the next change (#459). */
   readonly equip: (change: SkillChange) => void;
   /** What the last change has to tell the player. */
@@ -732,7 +780,16 @@ export function mountBuildEditor(
     }
   });
 
+  // The Undo of the last profession change (#569): one step, and gone
+  // with the next edit of any kind.
+  let dismissUndo: (() => void) | undefined;
+  const dropUndo = (): void => {
+    dismissUndo?.();
+    dismissUndo = undefined;
+  };
+
   const commit = (next: StoredCharacter, said: string | undefined): void => {
+    dropUndo();
     // Another profession is another bar to build: the pick goes.
     if (
       next.primaryProfession !== character.primaryProfession ||
@@ -751,6 +808,19 @@ export function mountBuildEditor(
     current: () => character,
     commit: (next) => {
       commit(next, undefined);
+    },
+    changeProfessions: (primary, secondary) => {
+      const before = character;
+      const after = setProfessions(before, primary, secondary);
+      commit(after, undefined);
+      const removed = describeProfessionChange(before, after);
+      if (removed.length > 0) {
+        dismissUndo = toast(`Removed: ${removed.join(", ")}`, {
+          undo: () => {
+            commit(before, undefined);
+          },
+        });
+      }
     },
     equip: (change) => {
       commit(change.character, change.notice);
@@ -777,6 +847,7 @@ export function mountBuildEditor(
   const bar = mountCommandBar(layout, context, initial, callbacks, (name) => {
     // Typing changes nothing another region shows but the bar's own
     // marker: the arena hears about the new name directly.
+    dropUndo();
     character = { ...character, name };
     training?.setDisplayName(name);
     bar.update(character);
@@ -854,6 +925,7 @@ export function mountBuildEditor(
   return {
     dispose() {
       disposed = true;
+      dropUndo();
       document.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("paste", onPaste);
       bar.dispose();
@@ -919,9 +991,8 @@ function mountCommandBar(
     "primary",
     () => professionChoices(context.current(), "primary"),
     (value) => {
-      const character = context.current();
       if (value !== undefined) {
-        context.commit(setProfessions(character, value, character.secondaryProfession));
+        context.changeProfessions(value, context.current().secondaryProfession);
       }
     },
   );
@@ -929,8 +1000,7 @@ function mountCommandBar(
     "secondary",
     () => professionChoices(context.current(), "secondary"),
     (value) => {
-      const character = context.current();
-      context.commit(setProfessions(character, character.primaryProfession, value));
+      context.changeProfessions(context.current().primaryProfession, value);
     },
   );
   professions.append(primary.element, secondary.element);

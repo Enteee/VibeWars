@@ -433,11 +433,13 @@ export function dismissToast(): void {
  * A short note at the bottom centre (#566): "Saved", or what a change
  * removed with an Undo. One at a time: a new one replaces the old.
  * `problems` lists why something failed, as a problems chip lists them.
+ * Returns a dismiss that takes down this toast only, not one that
+ * replaced it.
  */
 export function toast(
   text: string,
   options: { readonly undo?: () => void; readonly problems?: readonly string[] } = {},
-): void {
+): () => void {
   dismissToast();
   const element = h("div", "toast");
   element.setAttribute("role", "status");
@@ -458,4 +460,9 @@ export function toast(
   }
   document.body.appendChild(element);
   shownToast = { element, timer: setTimeout(dismissToast, TOAST_SECONDS * 1000) };
+  return () => {
+    if (shownToast?.element === element) {
+      dismissToast();
+    }
+  };
 }
