@@ -258,8 +258,8 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // The real elite: Daze the target, and interrupt them if they were
     // casting. Both halves are now genuinely implementable — this is the
     // archetypal "shut down a caster" skill the whole interrupt mechanic
-    // exists for. (The real arrow also flies slower; projectile travel
-    // time is Sprint 21.)
+    // exists for. Both land with the arrow (#416). (The real arrow also
+    // flies slower; per-skill arrow speeds are not modelled.)
     effects: [
       { kind: "interrupt" },
       { kind: "apply-status", statusId: "dazed", durationSeconds: 17 },

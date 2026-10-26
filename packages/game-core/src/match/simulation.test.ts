@@ -872,7 +872,8 @@ describe("moving cancels a cast (#279)", () => {
     held.setInputDirection("a", vec2(0, 1));
     expect(held.requestSkill("a", 0)?.check).toEqual({ ok: true });
     const log = stepFor(held, WEAPONS.longbow.attackIntervalSeconds);
-    expect(log.map((entry) => entry.skillId)).toEqual([BARRAGE]);
+    // Its release, then its arrow landing (#416): Barrage alone either way.
+    expect([...new Set(log.map((entry) => entry.skillId))]).toEqual([BARRAGE]);
     expect(participant(held, "a").position).toEqual(vec2(0, 0));
 
     const moved = archer();
