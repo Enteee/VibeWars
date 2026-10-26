@@ -120,13 +120,17 @@ export interface StatusDefinition {
   /** Multiplier on the bearer's maximum health (deep wound's signature). */
   readonly maxHealthMultiplier: number;
   /**
-   * Multiplier on the bearer's spell cast time; >1 is a penalty. Dazed is
-   * the one that sets it: here it doubles cast time, where the reference
-   * makes casting easy to interrupt. Every cast in this game is already
-   * interruptible, so that rule would do nothing (ADR-0019). A signet or
-   * any other skill that is not a spell ignores it (#524).
+   * Multiplier on the bearer's spell cast time; >1 is a penalty. Dazed
+   * doubles it. A signet or any other skill that is not a spell ignores
+   * it (#524).
    */
   readonly castTimeMultiplier: number;
+  /**
+   * GW1's daze (#546): applying it interrupts a spell the bearer is
+   * casting, and so does every attack that lands on the bearer while it
+   * lasts. Anything that is not a spell is left alone.
+   */
+  readonly interruptsSpells: boolean;
   /**
    * Multiplier on how long the bearer's attacks take, swings and attack
    * skills alike; <1 is faster (ADR-0029). No status sets it yet: it is the
@@ -181,6 +185,7 @@ function define(
     attackMissChance: 0,
     maxHealthMultiplier: 1,
     castTimeMultiplier: 1,
+    interruptsSpells: false,
     attackDurationMultiplier: 1,
     preventsKnockdown: false,
     block: undefined,
@@ -206,7 +211,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   blind: define("blind", "Blind", "condition", { attackMissChance: 0.9 }),
   weakness: define("weakness", "Weakness", "condition", { armorModifier: -20 }),
   "deep-wound": define("deep-wound", "Deep Wound", "condition", { maxHealthMultiplier: 0.8 }),
-  dazed: define("dazed", "Dazed", "condition", { castTimeMultiplier: 2 }),
+  dazed: define("dazed", "Dazed", "condition", { castTimeMultiplier: 2, interruptsSpells: true }),
 
   "life-drain": define("life-drain", "Life Drain", "hex", { healthPips: -2 }),
   malaise: define("malaise", "Malaise", "hex", { energyPips: -1 }),

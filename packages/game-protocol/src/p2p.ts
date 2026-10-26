@@ -57,6 +57,12 @@ export const MAX_WIRE_TEXT = 256;
 /** The most statuses one player carries in a snapshot. */
 export const MAX_WIRE_STATUSES = 32;
 
+/**
+ * The largest status index a snapshot may carry (#632): a bound of its
+ * own, so this package needs no status catalogue.
+ */
+export const MAX_WIRE_STATUS_INDEX = 1023;
+
 /** The most events one combat message carries. */
 export const MAX_WIRE_EVENTS = 64;
 
@@ -198,7 +204,12 @@ export interface WirePlayer {
   readonly castRemaining: number;
   /** The current cast's whole length, dazed included; 0 when not casting. */
   readonly castTotal: number;
-  readonly statuses: readonly string[];
+  /**
+   * Each status as its index in the sorted status-id table (#632), which
+   * `wire-schema.json` carries, so a build with another table is refused
+   * at join.
+   */
+  readonly statuses: readonly number[];
 }
 
 /** A ranged weapon's shot in flight, from `from` to `to` over `flightSeconds` from `launchedAt` (#160). */
@@ -414,6 +425,10 @@ function parseArray<T>(
     parsed.push(one);
   }
   return parsed;
+}
+
+function parseStatusIndex(value: unknown): number | undefined {
+  return isCount(value) && value <= MAX_WIRE_STATUS_INDEX ? value : undefined;
 }
 
 function parseString(value: unknown): string | undefined {
@@ -637,7 +652,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
   ) {
     return undefined;
   }
-  const statuses = parseArray(raw.statuses, MAX_WIRE_STATUSES, parseString);
+  const statuses = parseArray(raw.statuses, MAX_WIRE_STATUSES, parseStatusIndex);
   return statuses === undefined
     ? undefined
     : {

@@ -17,6 +17,7 @@ import {
   applyDamage,
   applyEffect,
   applySkillEffects,
+  interruptIfCastingSpell,
   type CombatEvent,
   type SkillResolution,
 } from "./effects.js";
@@ -242,6 +243,10 @@ export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
  * added after, unmultiplied. A melee blow at an `exposed` victim always
  * crits; a projectile never does that way, however it lands. Returns
  * whether the blow crit.
+ *
+ * A dazed victim casting a spell is interrupted first, before the
+ * damage (#546): every landed attack comes here, a swing, an attack
+ * skill or an arrow, and a miss or a block never does.
  */
 export function landBlow(
   snapshot: WeaponSnapshot,
@@ -252,6 +257,9 @@ export function landBlow(
   rules: CombatRules,
   events: CombatEvent[],
 ): boolean {
+  if (victim.statuses.active.some(({ id }) => getStatusDefinition(id).interruptsSpells)) {
+    interruptIfCastingSpell(victim, events);
+  }
   const { weapon, requirementMet } = snapshot.mainHand;
   const rolledCritical = rng.nextFloat() < criticalChance(snapshot, rules);
   const critical = rolledCritical || (exposed && weapon.projectileSpeed === undefined);

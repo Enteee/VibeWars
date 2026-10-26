@@ -48,6 +48,7 @@ describe("status definitions", () => {
         def.attackMissChance !== 0 ||
         def.maxHealthMultiplier !== 1 ||
         def.castTimeMultiplier !== 1 ||
+        def.interruptsSpells ||
         def.attackDurationMultiplier !== 1 ||
         def.block !== undefined ||
         def.onAttackHit.length > 0 ||

@@ -630,6 +630,28 @@
       }
     }
   },
+  "statusIds": [
+    "apply-poison",
+    "armor-boost",
+    "bleeding",
+    "blind",
+    "blood-ritual",
+    "burning",
+    "crippled",
+    "dash",
+    "dazed",
+    "deep-wound",
+    "glyph-of-lesser-energy",
+    "guardian",
+    "healing-signet-armor",
+    "life-drain",
+    "malaise",
+    "poison",
+    "regeneration",
+    "sprint",
+    "watch-yourself",
+    "weakness"
+  ],
   "constants": {
     "ADDRESS_LIMIT": { "literal": 4429 },
     "ADDRESS_LIMIT_MESSAGE": {
@@ -650,6 +672,7 @@
     "MAX_WIRE_RANKS": { "literal": 16 },
     "MAX_WIRE_SLOTS": { "literal": 8 },
     "MAX_WIRE_STATUSES": { "literal": 32 },
+    "MAX_WIRE_STATUS_INDEX": { "literal": 1023 },
     "MAX_WIRE_STRING": { "literal": 64 },
     "MAX_WIRE_TEXT": { "literal": 256 },
     "MAX_WIRE_WALLS": { "literal": 1024 },
@@ -2044,7 +2067,7 @@
           "optional": false,
           "type": { "union": ["null", "string"] }
         },
-        { "name": "statuses", "optional": false, "type": { "array": "string" } },
+        { "name": "statuses", "optional": false, "type": { "array": "number" } },
         { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } },
         {
           "name": "team",
@@ -2168,7 +2191,7 @@
                   "optional": false,
                   "type": { "union": ["null", "string"] }
                 },
-                { "name": "statuses", "optional": false, "type": { "array": "string" } },
+                { "name": "statuses", "optional": false, "type": { "array": "number" } },
                 { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } },
                 {
                   "name": "team",

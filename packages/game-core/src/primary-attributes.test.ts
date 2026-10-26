@@ -5,6 +5,7 @@ import {
   divineFavorBonusHeal,
   expertiseEnergyCost,
   fastCastingMultiplier,
+  soulReapingTrigger,
   strengthArmorPenetration,
 } from "./primary-attributes.js";
 import { unarmedResolvedEquipment } from "./equipment/resolve.js";
@@ -196,5 +197,15 @@ describe("Divine Favor (#529)", () => {
     const foe = makeCombatant({ id: "f", team: 1, health: 100 });
     cast({ ...orison, target: "single-enemy", effects: [] }, [foe]);
     expect(foe.health).toBe(100);
+  });
+});
+
+describe("soulReapingTrigger (#530)", () => {
+  it("triggers while fewer than 3 fall in the last 15 s, and drops older times", () => {
+    expect(soulReapingTrigger([], 1)).toEqual([1]);
+    expect(soulReapingTrigger([1, 2], 3)).toEqual([1, 2, 3]);
+    expect(soulReapingTrigger([1, 2, 3], 10)).toBeUndefined();
+    expect(soulReapingTrigger([1, 2, 3], 16)).toEqual([2, 3, 16]);
+    expect(soulReapingTrigger([1, 2, 3], 16.05)).toEqual([2, 3, 16.05]);
   });
 });
