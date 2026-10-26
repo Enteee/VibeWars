@@ -66,6 +66,8 @@ import {
   effectiveActivationSeconds,
   naturalHealthPips,
   moveSpeedMultiplier,
+  netPips,
+  type NetPips,
 } from "../skills/tick.js";
 import { isSpell, type Combatant, type Skill } from "../skills/types.js";
 import {
@@ -173,6 +175,12 @@ export interface Participant {
   pendingSkill: PendingSkill | undefined;
   targetId: string | undefined;
   respawnInSeconds: number;
+  /**
+   * Seconds since it was last in combat, by GW1's list (#460): lost
+   * health, swung or used an attack skill, began a cast at a foe, or was
+   * the target of a foe's as it began. What natural regeneration waits on.
+   */
+  readonly outOfCombatSeconds: number;
 }
 
 /** A skill walking in to its target (#499). */
@@ -232,11 +240,6 @@ interface ParticipantRecord extends Participant {
   readonly cursor: BehaviourCursor;
   /** `on-interval`: seconds since the last reset. */
   sinceReset: number;
-  /**
-   * Seconds since it was last in combat, by GW1's list (#460): lost
-   * health, swung or used an attack skill, began a cast at a foe, or was
-   * the target of a foe's as it began. What natural regeneration waits on.
-   */
   outOfCombatSeconds: number;
   /** Where it ended its last ticks: what a projectile leads. */
   readonly history: PositionHistory;
@@ -414,6 +417,15 @@ export class MatchSimulation {
 
   public get(id: string): Participant | undefined {
     return this.#participants.get(id);
+  }
+
+  /** A participant's net pips as they stand (#504): what the next tick applies, natural regeneration included. */
+  public pips(participant: Participant): NetPips {
+    const { combatant, outOfCombatSeconds } = participant;
+    return netPips(
+      combatant,
+      naturalHealthPips(combatant, outOfCombatSeconds, this.#ruleset.resources),
+    );
   }
 
   public participants(): IterableIterator<Participant> {
@@ -893,28 +905,30 @@ export class MatchSimulation {
         this.#advanceWalk(record, dt);
       }
 
-      // Energy regenerates continuously, at the base pips plus every
-      // status's, clamped (GW1); adrenaline is earned by acting, not by
-      // waiting, so it deliberately does not tick up here.
+      // Degeneration its statuses' own regeneration does not cancel is
+      // health lost, so natural regeneration stops before it would.
       const modifiers = aggregateModifiers(record.combatant.statuses.active);
-      const energyPips = clampPips(record.combatant.baseEnergyPips + modifiers.energyPips);
+      record.outOfCombatSeconds += dt;
+      if (clampPips(modifiers.healthPips) < 0) {
+        record.outOfCombatSeconds = 0;
+      }
+      const natural = naturalHealthPips(
+        record.combatant,
+        record.outOfCombatSeconds,
+        this.#ruleset.resources,
+      );
+
+      // Energy regenerates continuously, at the net pips (GW1); adrenaline
+      // is earned by acting, not by waiting, so it deliberately does not
+      // tick up here.
+      const energyPips = netPips(record.combatant, natural).energy;
       record.combatant.energy = Math.min(
         record.combatant.maxEnergy,
         Math.max(0, record.combatant.energy + energyPips * ENERGY_PER_PIP * dt),
       );
 
-      // Degeneration its statuses' own regeneration does not cancel is
-      // health lost, so natural regeneration stops before it would.
-      record.outOfCombatSeconds += dt;
-      if (clampPips(modifiers.healthPips) < 0) {
-        record.outOfCombatSeconds = 0;
-      }
       const sources = degenerationSources(record.combatant);
-      const statusEvents = advanceStatuses(
-        record.combatant,
-        dt,
-        naturalHealthPips(record.combatant, record.outOfCombatSeconds, this.#ruleset.resources),
-      );
+      const statusEvents = advanceStatuses(record.combatant, dt, natural);
       if (statusEvents.length > 0) {
         const drained = statusEvents.some((event) => event.kind === "damage");
         this.#log.push({

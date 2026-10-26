@@ -37,6 +37,12 @@ base pips plus any status's, clamped the same way: Warrior and Paragon 2
 (⅔/s), Ranger 3 (1/s), every caster, Assassin and Dervish 4 (1⅓/s). The
 build editor shows the base as "energy regen".
 
+Your health and energy bars, and your target's health bar, show the net
+as arrows at the bar's right end (#504): one per pip, pointing right for
+regeneration and left for degeneration, none at 0 or when dead. The host
+sends the clamped net it applies, so the arrows never disagree with what
+the bar does.
+
 **Natural regeneration** heals anyone wounded who stays out of combat,
 as in GW1: after 5 s, +1 health pip, one more every 2 s, up to +7
 (14 HP/s) at 17 s. It sums with the statuses' pips before the ±10
