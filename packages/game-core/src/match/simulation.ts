@@ -38,7 +38,7 @@ import {
 } from "../skills/activation.js";
 import { CastState, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
-import { applySkillEffects, type CombatEvent } from "../skills/effects.js";
+import { applySkillEffects, type CombatEvent, type SkillResolution } from "../skills/effects.js";
 import {
   aggregateModifiers,
   clampPips,
@@ -81,7 +81,7 @@ import {
   type ResetPolicy,
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
-import { directionAngle } from "./facing.js";
+import { directionAngle, showsBackTo } from "./facing.js";
 import { steerAround } from "./steering.js";
 
 /**
@@ -996,7 +996,11 @@ export class MatchSimulation {
 
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
     const primary = skill.target === "self" ? record : targetRecord;
-    const resolve = skill.attack === undefined ? applySkillEffects : resolveAttackSkill;
+    const exposed = this.#exposedTo(record);
+    const resolve =
+      skill.attack === undefined
+        ? applySkillEffects
+        : (resolution: SkillResolution) => resolveAttackSkill(resolution, exposed);
     const events = resolve({
       skill,
       caster: record.combatant,
@@ -1023,9 +1027,18 @@ export class MatchSimulation {
 
     // Only attack skills earn adrenaline, as weapon hits do: a spell is
     // paid for in energy, and earning both would make casters the best
-    // adrenaline builders.
+    // adrenaline builders. A blocked blow earns nothing, not even the
+    // damage its `onBlocked` deals, as Swift Chop's (#534). An attack
+    // skill strikes each victim once, so damage on one that blocked is
+    // all `onBlocked`'s.
     if (skill.type === "attack") {
-      this.#gainAdrenaline(record, events);
+      const blocked = new Set(
+        events.filter((event) => event.kind === "attack-blocked").map((event) => event.targetId),
+      );
+      this.#gainAdrenaline(
+        record,
+        events.filter((event) => event.kind !== "damage" || !blocked.has(event.targetId)),
+      );
     }
     this.#recordDeaths(events);
     // An attack skill is a swing, so it turns on its target with the
@@ -1353,10 +1366,31 @@ export class MatchSimulation {
       candidates: weapon.cleaveTargets === 0 ? [] : [...this.#participants.values()],
       rng: this.#rng,
       rules: this.#ruleset.combat,
+      exposed: this.#exposedTo(record),
     });
     this.#gainAdrenaline(record, events);
     this.#recordDeaths(events);
     this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events);
+  }
+
+  /**
+   * Whether a victim shows `attacker` its back while moving (#533): facing
+   * more than 90° away from the attacker, read the moment the blow lands,
+   * and its last step moved it. A melee blow at such a victim always crits.
+   */
+  #exposedTo(attacker: ParticipantRecord): (victim: Combatant) => boolean {
+    return (victim) => {
+      const record = this.#participants.get(victim.id);
+      if (record === undefined) {
+        return false;
+      }
+      const [before, after] = record.history.samples().slice(-2);
+      const moving =
+        before !== undefined &&
+        after !== undefined &&
+        (before.x !== after.x || before.y !== after.y);
+      return moving && showsBackTo(record.position, record.facing, attacker.position);
+    };
   }
 
   /**
@@ -1454,6 +1488,8 @@ export class MatchSimulation {
         projectile.weaponSnapshot,
         target.combatant,
         PLAIN_BLOW,
+        // A shot crits only on its roll, never for where it came from.
+        false,
         this.#rng,
         this.#ruleset.combat,
         events,
@@ -1506,18 +1542,13 @@ export class MatchSimulation {
    * Adrenaline is earned by landing damage on someone else, never by
    * waiting, which makes adrenaline skills a reward for staying in the
    * fight rather than a second energy pool. Once per resolution, however
-   * many it hit. A blocked blow earns nothing (#534), not even the damage
-   * an attack skill deals when blocked, as Swift Chop's.
+   * many it hit. A blocked blow deals no damage, so it earns nothing
+   * (#534); a double strike with one blow blocked still earns it for the
+   * other.
    */
   #gainAdrenaline(record: ParticipantRecord, events: readonly CombatEvent[]): void {
-    const blocked = new Set(
-      events.filter((event) => event.kind === "attack-blocked").map((event) => event.targetId),
-    );
     const dealtDamage = events.some(
-      (event) =>
-        event.kind === "damage" &&
-        event.targetId !== record.combatant.id &&
-        !blocked.has(event.targetId),
+      (event) => event.kind === "damage" && event.targetId !== record.combatant.id,
     );
     if (dealtDamage) {
       record.combatant.adrenaline = Math.min(

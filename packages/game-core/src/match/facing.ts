@@ -48,3 +48,12 @@ export function spawnFacing(
   const toward = mean(otherTeamSpawns) ?? mean(allSpawns) ?? spawn;
   return facingToward(spawn, toward);
 }
+
+/**
+ * Whether a body at `position`, facing `facing`, shows its back to `from`:
+ * `from` lies more than 90° off where it looks (#533). Exactly 90°, side
+ * on, is not the back.
+ */
+export function showsBackTo(position: Vec2, facing: number, from: Vec2): boolean {
+  return Math.cos(facing) * (from.x - position.x) + Math.sin(facing) * (from.y - position.y) < 0;
+}

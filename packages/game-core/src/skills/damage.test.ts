@@ -272,13 +272,23 @@ describe("spell damage through the effect system", () => {
     // existing catalog changes against the targets it was tuned on.
     const target = defender(RULES.armorReferenceLevel);
     const events = applyEffects([{ kind: "damage", amount: { flat: 91 } }], context(target));
-    expect(events).toContainEqual({ kind: "damage", targetId: "defender", amount: 91 });
+    expect(events).toContainEqual({
+      kind: "damage",
+      targetId: "defender",
+      amount: 91,
+      critical: false,
+    });
   });
 
   it("reduces it against an armored target", () => {
     const target = defender(80);
     const events = applyEffects([{ kind: "damage", amount: { flat: 91 } }], context(target));
-    expect(events).toContainEqual({ kind: "damage", targetId: "defender", amount: 64 });
+    expect(events).toContainEqual({
+      kind: "damage",
+      targetId: "defender",
+      amount: 64,
+      critical: false,
+    });
   });
 
   it("does not let armor save a target from their own sacrifice", () => {

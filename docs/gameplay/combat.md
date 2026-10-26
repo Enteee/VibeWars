@@ -221,10 +221,21 @@ A shot whose flight would cross a wall stops at it and is "obstructed"
 too, so stepping behind a pillar dodges it. Shots fly through bodies.
 Melee swings are never obstructed.
 
+**Critical hits.** Any weapon blow can crit: a swing, each blow of a
+double strike, each cleave victim, an attack skill, a landing shot.
+Spells and degeneration never do. The chance is 1% plus 1.37% per rank
+in the weapon's mastery (the attribute its requirement names; caster
+weapons and fists get only the 1%). A crit skips the damage roll and
+hits for the weapon's maximum times √2 (a scythe's times 1.1), after
+the attribute and an unmet requirement; an attack skill's bonus is
+added unmultiplied. A melee blow at a target that is moving with its
+back to you (facing more than 90° away) always crits. A crit floats
+larger, with a "!", and the log says "a critical hit".
+
 **Block** (#534). Guardian gives its ally a 50% chance to block attacks;
 several block sources combine as 1 − ∏(1 − p), so two 50% sources make
 75%. Each blow rolls its own block, after blind (a blinded miss is a
-miss, with no block roll) and before the damage roll: every swing of a
+miss, with no block roll) and before the crit and damage rolls: every swing of a
 double strike, every arrow of Barrage. A shot rolls it when it lands. A
 blocked attack deals no damage, earns no adrenaline and lands none of
 its riders, so a blocked Distracting Blow interrupts nothing; an attack
@@ -233,7 +244,7 @@ target. Swift Chop is the exception that proves it: blocked, it still
 deals its flat damage and a 20 s Deep Wound. Spells are never blocked,
 and shields do not block, as in GW1.
 
-Not modelled: critical hits and evade. Attack-speed changes have
+Not modelled: evade. Attack-speed changes have
 a hook (only the strongest speed-up and slow-down count), but no skill
 uses it yet.
 

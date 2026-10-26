@@ -18,7 +18,7 @@ function hit(atSeconds: number, sourceId: string | undefined, amount: number): C
     skillId: undefined,
     weaponId: undefined,
     area: undefined,
-    events: [{ kind: "damage", targetId: "target", amount }],
+    events: [{ kind: "damage", targetId: "target", amount, critical: false }],
   };
 }
 
@@ -81,7 +81,7 @@ describe("tallyCombat", () => {
         ...hit(3, "a", 0),
         events: [
           { kind: "heal", targetId: "a", amount: 40 },
-          { kind: "damage", targetId: "a", amount: 5 },
+          { kind: "damage", targetId: "a", amount: 5, critical: false },
         ],
       },
     ]);

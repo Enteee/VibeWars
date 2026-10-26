@@ -119,7 +119,10 @@ describe("the swing", () => {
       expect(entry).toMatchObject({ sourceId: "a", skillId: undefined, area: undefined });
       for (const event of entry.events) {
         expect(event.kind).toBe("damage");
-        if (event.kind === "damage") {
+        if (event.kind === "damage" && event.critical) {
+          // A crit (#533): the maximum × √2.
+          expect(event.amount).toBe(31);
+        } else if (event.kind === "damage") {
           expect(event.amount).toBeGreaterThanOrEqual(15);
           expect(event.amount).toBeLessThanOrEqual(22);
         }
@@ -345,6 +348,31 @@ describe("block (#534)", () => {
     expect(landed).toBeGreaterThan(0);
     expect(blocked).toBeGreaterThan(0);
     expect(get(match, "a").combatant.adrenaline).toBe(landed * RULES.resources.adrenalinePerHit);
+  });
+
+  it("a double strike with one blow blocked and one landed earns adrenaline for the landed one", () => {
+    const always: Weapon = {
+      ...WEAPONS.daggers,
+      doubleStrike: { attributeId: "assassin.dagger-mastery", baseChance: 1, perRank: 0 },
+    };
+    const match = sim(
+      { ...swordsman("a", vec2(0, 0)), equipment: wielding(always, "assassin.dagger-mastery") },
+      dummy("d", vec2(40, 0)),
+    );
+    guarded(match, "d");
+    match.requestAttack("a", "d");
+    // Every swing until one is half blocked: at 50% a blow, one comes soon.
+    for (let i = 0; i < 2000; i += 1) {
+      const before = get(match, "a").combatant.adrenaline;
+      const seen = kinds(swings(match.step(DT).log)).sort();
+      if (seen.length === 2 && seen[0] === "attack-blocked" && seen[1] === "damage") {
+        expect(get(match, "a").combatant.adrenaline).toBe(
+          before + RULES.resources.adrenalinePerHit,
+        );
+        return;
+      }
+    }
+    throw new Error("no half-blocked double strike in 100 s");
   });
 
   it("an arrow rolls its block on landing", () => {
