@@ -221,9 +221,10 @@ test("activating a self-cast skill spends energy and applies its effect", async 
 
   await page.keyboard.press(key("skill-5"));
 
-  // The enchantment appearing is the server's word that the cast
-  // resolved; energy alone could just be a client-side guess.
-  await expect(page.locator(".hud-statuses")).not.toContainText("no active effects");
+  // The enchantment appearing is the host's word that the cast
+  // resolved; energy alone could just be a client-side guess. Named, so a
+  // status decoded from the wrong index (#632) fails here.
+  await expect(page.locator(".hud-statuses")).toHaveText("armor-boost");
   expect(await readEnergy(page)).toBeLessThan(before);
 });
 

@@ -28,12 +28,13 @@ import type {
   CombatMessage,
   MatchConnection,
   MatchSnapshot,
+  PlayerSnapshot,
   SlotRecharge,
 } from "./match-connection.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { rejoinProof } from "./rejoin-proof.js";
 import type { Transport } from "./transport.js";
-import { combatMessage, matchSnapshot } from "./wire.js";
+import { combatMessage, matchSnapshot, playerSnapshots } from "./wire.js";
 
 /**
  * A match on another peer's browser, as the match view sees every match:
@@ -102,7 +103,8 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   const unsubscribe: (() => void)[] = [];
   let welcomed: PeerWelcome | undefined;
   let skillBar: WireSkillBar | undefined;
-  let latest: WireSnapshot | undefined;
+  let latest:
+    { readonly wire: WireSnapshot; readonly players: readonly PlayerSnapshot[] } | undefined;
   let ended: WireEnded | undefined;
   let recharges: Recharges = { slots: [], at: 0 };
   let lost = false;
@@ -175,12 +177,17 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   };
 
   /** The match clock: the latest snapshot's, or before the first, the welcome's. */
-  const elapsed = (): number => latest?.elapsedSeconds ?? welcomed?.elapsedSeconds ?? 0;
+  const elapsed = (): number => latest?.wire.elapsedSeconds ?? welcomed?.elapsedSeconds ?? 0;
 
   fromHost("snapshot", parseWireSnapshot, (snapshot) => {
     // Only ever forward: one late or replayed is dropped.
-    if (latest === undefined || snapshot.tick > latest.tick) {
-      latest = snapshot;
+    if (latest !== undefined && snapshot.tick <= latest.wire.tick) {
+      return;
+    }
+    // One naming a status this build has no index for is malformed (#632).
+    const players = playerSnapshots(snapshot);
+    if (players !== undefined) {
+      latest = { wire: snapshot, players };
     }
   });
   fromHost("combat", parseWireCombatBatch, (batch) => {
@@ -301,7 +308,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 endReason: undefined,
                 projectiles: [],
               }
-            : matchSnapshot(latest, welcome.playerId);
+            : matchSnapshot(latest.wire, latest.players, welcome.playerId);
         // An `ended` may land before the snapshot that says so.
         return ended === undefined
           ? snapshot
