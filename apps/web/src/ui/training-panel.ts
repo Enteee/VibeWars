@@ -61,7 +61,7 @@ import {
   type MeterTotals,
 } from "./combat-readouts.js";
 import { describeRefusal, MESSAGE_SECONDS } from "./hud.js";
-import { skillBadgeHtml } from "./icons.js";
+import { isEliteSkill, skillBadgeHtml } from "./icons.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import { castFill, flashSlot, outOfRange, paintCastFill, slotFlashes } from "./skill-slot-state.js";
 import { createSlotTooltips } from "./slot-tooltip.js";
@@ -375,6 +375,7 @@ export function createTrainingPanel(): TrainingPanel {
       // The ranks read at hover, so a rearm shows at once.
       slotTips.bind(button, index, slot.id, () => session?.connection.ranks ?? new Map());
       button.insertAdjacentHTML("beforeend", skillBadgeHtml(slot.id));
+      button.classList.toggle("is-elite", isEliteSkill(slot.id));
       button.append(h("span", "training-skill-name", slot.name));
       return button;
     });

@@ -17,7 +17,14 @@ import type {
 
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
-import { attackingIcon, professionIcon, skillBadgeHtml, soundIcon, weaponIcon } from "./icons.js";
+import {
+  attackingIcon,
+  isEliteSkill,
+  professionIcon,
+  skillBadgeHtml,
+  soundIcon,
+  weaponIcon,
+} from "./icons.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import {
   castFailures,
@@ -388,6 +395,7 @@ export function renderSkillBar(
       return;
     }
     button.innerHTML = skillSlotHtml(slot);
+    button.classList.toggle("is-elite", isEliteSkill(slot.id));
     const nameNode = button.querySelector(".hud-skill-name");
     const costNode = button.querySelector(".hud-skill-cost");
     if (nameNode !== null) {

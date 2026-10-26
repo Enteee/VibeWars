@@ -1,7 +1,7 @@
 import { IMPLEMENTED_SKILLS, getSkill } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { filterSkillsByName, groupSkillsByAttribute } from "./skill-library.js";
+import { filterEliteSkills, filterSkillsByName, groupSkillsByAttribute } from "./skill-library.js";
 
 /**
  * The library's filtering and grouping, tested without a DOM — the same
@@ -81,5 +81,23 @@ describe("groupSkillsByAttribute", () => {
 
   it("returns no groups for no skills", () => {
     expect(groupSkillsByAttribute([])).toEqual([]);
+  });
+});
+
+describe("filterEliteSkills (#459)", () => {
+  it("keeps Barrage, Backbreaker and Broad Head Arrow, and drops Fireball", () => {
+    const ids = filterEliteSkills(IMPLEMENTED_SKILLS).map((skill) => skill.id);
+    expect(ids).toEqual(
+      expect.arrayContaining(["ranger.barrage", "warrior.backbreaker", "ranger.broad-head-arrow"]),
+    );
+    expect(ids).not.toContain("elementalist.fireball");
+  });
+
+  it("keeps the library's order, so the toggle does not reshuffle it", () => {
+    const listed = skills("warrior.backbreaker", "elementalist.fireball", "ranger.barrage");
+    expect(filterEliteSkills(listed).map((skill) => skill.id)).toEqual([
+      "warrior.backbreaker",
+      "ranger.barrage",
+    ]);
   });
 });

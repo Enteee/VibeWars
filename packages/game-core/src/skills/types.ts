@@ -184,6 +184,11 @@ export interface Skill {
   readonly name: string;
   readonly type: SkillType;
   /**
+   * A GW1 elite skill (#459): drawn with a gold frame, and at most one
+   * per bar (`validatePlayerBuild`).
+   */
+  readonly elite: boolean;
+  /**
    * The profession this skill belongs to, and therefore who may equip it:
    * a character whose primary or secondary it is (brief §6's skill shape).
    *

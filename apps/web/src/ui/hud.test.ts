@@ -4,6 +4,7 @@ import type { CastRefusedMessage } from "@vibewars/game-protocol";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 
 import { DEFAULT_KEYMAP } from "../input/keymap.js";
+import { isEliteSkill } from "./icons.js";
 
 import {
   describeOutcome,
@@ -297,6 +298,16 @@ describe("skillSlotHtml", () => {
 
   it("has no badge for a skill this client does not know", () => {
     expect(skillSlotHtml(slot("nobody.unknown"))).not.toContain("skill-type-badge");
+  });
+});
+
+describe("isEliteSkill (#459)", () => {
+  it("frames Barrage, Backbreaker and Broad Head Arrow, not Fireball or an unknown skill", () => {
+    for (const id of ["ranger.barrage", "warrior.backbreaker", "ranger.broad-head-arrow"]) {
+      expect(isEliteSkill(id), id).toBe(true);
+    }
+    expect(isEliteSkill("elementalist.fireball")).toBe(false);
+    expect(isEliteSkill("nobody.unknown")).toBe(false);
   });
 });
 

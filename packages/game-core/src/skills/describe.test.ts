@@ -205,6 +205,17 @@ describe("formatScalingRange", () => {
   });
 });
 
+describe("elite skills (#459)", () => {
+  it("says Elite before the type, as GW1 does, and only for an elite", () => {
+    const barrage = describeSkill(skill("ranger.barrage"));
+    expect(barrage.typeText).toBe("Elite Attack.");
+    expect(barrage.elite).toBe(true);
+    const fireball = describeSkill(skill("elementalist.fireball"));
+    expect(fireball.typeText).toBe("Spell.");
+    expect(fireball.elite).toBe(false);
+  });
+});
+
 describe("signets and shouts (#524)", () => {
   it("names the type first, as GW1 does", () => {
     expect(describeSkill(skill("warrior.healing-signet")).typeText).toBe("Signet.");

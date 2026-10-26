@@ -16,6 +16,7 @@ import {
   getAttribute,
   getInsignia,
   getOffhand,
+  getSkill,
   getWeapon,
   perSlotAmount,
   reconcileEquipment,
@@ -59,7 +60,7 @@ import {
   weaponIcon,
   type GearIcon,
 } from "./icons.js";
-import { filterSkillsByName, groupSkillsByAttribute } from "./skill-library.js";
+import { filterEliteSkills, filterSkillsByName, groupSkillsByAttribute } from "./skill-library.js";
 import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
 import { createTrainingPanel, type TrainingPanel } from "./training-panel.js";
 
@@ -197,6 +198,25 @@ function fitWeapon(
   };
 }
 
+/**
+ * The slot of the elite that equipping `skillId` into `slot` pushes off
+ * the bar (#459), or -1. Only one elite per bar, and the new one wins:
+ * the one already in `slot` is simply replaced, and an elite moving
+ * between slots displaces nothing.
+ */
+export function displacedEliteSlot(
+  character: StoredCharacter,
+  slot: number,
+  skillId: string | null,
+): number {
+  if (skillId === null || getSkill(skillId)?.elite !== true) {
+    return -1;
+  }
+  return character.skillBar.findIndex(
+    (id, index) => index !== slot && id !== null && id !== skillId && getSkill(id)?.elite === true,
+  );
+}
+
 export function setSkill(
   character: StoredCharacter,
   slot: number,
@@ -211,8 +231,33 @@ export function setSkill(
       skillBar[existing] = null;
     }
   }
+  const displaced = displacedEliteSlot(character, slot, skillId);
+  if (displaced >= 0) {
+    skillBar[displaced] = null;
+  }
   skillBar[slot] = skillId;
   return { ...character, skillBar, updatedAt: Date.now() };
+}
+
+/**
+ * `setSkill`, with what to tell the player when an elite took another
+ * elite's place (#459); `undefined` when nothing needs saying.
+ */
+export function equipSkill(
+  character: StoredCharacter,
+  slot: number,
+  skillId: string,
+): { readonly character: StoredCharacter; readonly notice: string | undefined } {
+  const displaced = character.skillBar[displacedEliteSlot(character, slot, skillId)];
+  const next = setSkill(character, slot, skillId);
+  if (displaced === undefined || displaced === null) {
+    return { character: next, notice: undefined };
+  }
+  const name = (id: string): string => getSkill(id)?.name ?? id;
+  return {
+    character: next,
+    notice: `${name(skillId)} replaced ${name(displaced)}: only one elite skill per bar.`,
+  };
 }
 
 /**
@@ -268,15 +313,15 @@ export function decodeDragSource(raw: string): SkillDragSource | undefined {
   return undefined;
 }
 
-/** Apply a completed drag onto `targetSlot`. */
+/** Apply a completed drag onto `targetSlot`, with `equipSkill`'s notice. */
 export function applySkillDrop(
   character: StoredCharacter,
   source: SkillDragSource,
   targetSlot: number,
-): StoredCharacter {
+): { readonly character: StoredCharacter; readonly notice: string | undefined } {
   return source.from === "library"
-    ? setSkill(character, targetSlot, source.skillId)
-    : swapSkillSlots(character, source.slot, targetSlot);
+    ? equipSkill(character, targetSlot, source.skillId)
+    : { character: swapSkillSlots(character, source.slot, targetSlot), notice: undefined };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -325,6 +370,24 @@ let librarySearch = "";
  */
 let activeLibrary: "skills" | "gear" = "skills";
 
+/** The library's "Elite" toggle (#459): only elite skills listed. */
+let eliteOnly = false;
+
+/**
+ * What the last equip has to tell the player (#459), shown by the next
+ * render and gone after it: it is about that one change.
+ */
+let barNotice: string | undefined;
+
+/** Re-render with `barNotice` set for that one render. */
+function rerenderWithNotice(
+  rerender: (next: StoredCharacter) => void,
+  change: { readonly character: StoredCharacter; readonly notice: string | undefined },
+): void {
+  barNotice = change.notice;
+  rerender(change.character);
+}
+
 /**
  * The Training Ground arena, created once and moved into every render,
  * for the same reason as the tooltip: a Phaser game rebuilt on every `+`
@@ -359,6 +422,8 @@ export function disposeBuildEditor(): void {
   sharedTraining?.dispose();
   sharedTraining = undefined;
   librarySearch = "";
+  eliteOnly = false;
+  barNotice = undefined;
   // Re-entering the editor should land on the skill library, not on
   // whichever tab happened to be open when it was last closed.
   activeLibrary = "skills";
@@ -536,6 +601,7 @@ export function renderBuildEditor(
       cell.appendChild(h("span", "skill-slot-empty", "empty"));
     } else {
       const description = describeSkill(skill, ranks);
+      cell.classList.toggle("is-elite", skill.elite);
       cell.appendChild(h("span", "skill-slot-name", skill.name));
       cell.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
       cell.appendChild(h("span", "skill-slot-cost", description.cost));
@@ -582,12 +648,18 @@ export function renderBuildEditor(
         return;
       }
       tooltip.hide();
-      rerender(applySkillDrop(character, source, slot));
+      rerenderWithNotice(rerender, applySkillDrop(character, source, slot));
     });
 
     barGrid.appendChild(cell);
   });
   skillSection.appendChild(barGrid);
+  if (barNotice !== undefined) {
+    const notice = h("div", "editor-notice", barNotice);
+    notice.setAttribute("role", "status");
+    skillSection.appendChild(notice);
+    barNotice = undefined;
+  }
   panel.appendChild(skillSection);
 
   renderGear(panel, () => character, rerender);
@@ -742,6 +814,17 @@ export function renderBuildEditor(
   });
   library.appendChild(search);
 
+  const eliteToggle = h("label", "skill-elite-filter");
+  const eliteBox = document.createElement("input");
+  eliteBox.type = "checkbox";
+  eliteBox.checked = eliteOnly;
+  eliteBox.addEventListener("change", () => {
+    eliteOnly = eliteBox.checked;
+    renderGroups();
+  });
+  eliteToggle.append(eliteBox, " Elite");
+  library.appendChild(eliteToggle);
+
   const groupHost = h("div", "skill-groups");
   library.appendChild(groupHost);
 
@@ -753,7 +836,10 @@ export function renderBuildEditor(
 
   function renderGroups(): void {
     groupHost.replaceChildren();
-    const matches = filterSkillsByName(available, librarySearch);
+    const matches = filterSkillsByName(
+      eliteOnly ? filterEliteSkills(available) : available,
+      librarySearch,
+    );
     if (matches.length === 0) {
       groupHost.appendChild(emptyNote);
       return;
@@ -780,6 +866,7 @@ export function renderBuildEditor(
         if (equippedIds.has(skill.id)) {
           box.classList.add("is-equipped");
         }
+        box.classList.toggle("is-elite", skill.elite);
         box.appendChild(h("span", "skill-box-name", skill.name));
         box.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
         box.appendChild(h("span", "skill-box-cost", description.cost));
@@ -803,7 +890,7 @@ export function renderBuildEditor(
           const firstEmpty = character.skillBar.indexOf(null);
           const slot = firstEmpty === -1 ? 0 : firstEmpty;
           tooltip.hide();
-          rerender(setSkill(character, slot, skill.id));
+          rerenderWithNotice(rerender, equipSkill(character, slot, skill.id));
         });
 
         section.appendChild(box);

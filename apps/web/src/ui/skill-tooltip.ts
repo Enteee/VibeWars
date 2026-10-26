@@ -42,6 +42,7 @@ export function createSkillTooltip(placement: SkillTooltipPlacement = "beside"):
 
   const render = (description: SkillDescription): void => {
     node.replaceChildren();
+    node.classList.toggle("is-elite", description.elite);
 
     const title = document.createElement("div");
     title.className = "tip-title";
