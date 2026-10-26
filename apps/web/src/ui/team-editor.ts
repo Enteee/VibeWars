@@ -9,6 +9,12 @@ import {
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
 import {
+  exportTeam,
+  importTeam,
+  looksLikeTeam,
+  type TeamImportResult,
+} from "../storage/team-transfer.js";
+import {
   createCharacterDot,
   equippedCount,
   professionBadge,
@@ -19,8 +25,10 @@ import {
   button,
   h,
   inlineConfirm,
+  listenForPaste,
   problemsChip,
   screenBar,
+  shareLine,
   syncList,
   toast,
   type InlineConfirm,
@@ -44,7 +52,9 @@ import {
  * screen; nothing is stored until Save, which `validateTeam` gates. Back
  * with unsaved edits, and Delete always, ask inline first. A member's name
  * opens them in the build editor, and the way back hands the editor its
- * own state again (#576), so nothing unsaved is lost on the trip.
+ * own state again (#576), so nothing unsaved is lost on the trip. Share
+ * copies the team as a code; a team code pasted here opens that team
+ * instead, unsaved (#577).
  */
 
 /** Everything the editor holds that is not stored, to leave and come back to. */
@@ -62,6 +72,14 @@ export function openedTeam(team: StoredTeam, stored: boolean): TeamEditorState {
   return { opened: team, team, stored };
 }
 
+/**
+ * The editor's state for a pasted team (#577): nothing stored, and every
+ * part of it unsaved, as if pasted into a blank team, so Back asks first.
+ */
+export function pastedTeam(team: StoredTeam): TeamEditorState {
+  return { opened: { ...team, name: "", members: [] }, team, stored: false };
+}
+
 export interface TeamEditorCallbacks {
   /** Store the team; the editor stays open once it has. */
   readonly onSave: (team: StoredTeam) => Promise<void>;
@@ -71,6 +89,8 @@ export interface TeamEditorCallbacks {
   readonly onClose: () => void;
   /** Open a member in the build editor; `state` is what to come back to. */
   readonly onOpenMember: (characterId: string, state: TeamEditorState) => void;
+  /** Store a pasted team's new characters and open it, unsaved (#577). */
+  readonly onImportTeam: (imported: Extract<TeamImportResult, { ok: true }>) => void;
 }
 
 export interface TeamEditorView {
@@ -325,6 +345,16 @@ export function mountTeamEditor(
   const duplicate = button("Duplicate", "", () => {
     callbacks.onDuplicate(team);
   });
+  // Share (#577): the team, every build inline, as one line with Copy.
+  const share = shareLine("team to share");
+  const shareButton = button("Share", "", () => {
+    const text = exportTeam(team, characters);
+    if (text !== undefined) {
+      share.show(text);
+    }
+  });
+  const shareWrap = h("span", "editor-more-wrap");
+  shareWrap.append(shareButton, share.element);
   const remove = button("Delete", "", () => {
     ask(
       remove,
@@ -341,9 +371,14 @@ export function mountTeamEditor(
     back: { label: "Back", onBack: close },
     title: [h("h2", "screen-title", "Edit team")],
     status: [chip.element, unsaved],
-    actions: [save, duplicate, remove],
-    // Esc closes the problem list, then clears the counter's marks, before it is Back.
+    actions: [save, shareWrap, duplicate, remove],
+    // Esc puts away Share and the problem list, then clears the counter's
+    // marks, before it is Back.
     putAway: () => {
+      if (share.isOpen()) {
+        share.hide();
+        return true;
+      }
       if (chip.isOpen()) {
         chip.close();
         return true;
@@ -569,6 +604,15 @@ export function mountTeamEditor(
     save.title = firstBlocking?.text ?? "save this team";
     duplicate.disabled = !isStored || isTeamUnsaved(opened, team);
     duplicate.title = duplicate.disabled ? "Save first to duplicate" : "duplicate this team";
+    // A team that cannot be saved cannot be shared: a member is missing.
+    const missing = team.members.some((m) => !characters.some((c) => c.id === m.characterId));
+    shareButton.disabled = missing;
+    shareButton.title = missing
+      ? "A member's character is missing: remove it to share"
+      : "share this team as one line";
+    if (missing) {
+      share.hide();
+    }
     // A new team has nothing to delete: Back leaves it.
     remove.disabled = !isStored;
 
@@ -706,18 +750,53 @@ export function mountTeamEditor(
 
   update();
 
-  // A press anywhere else puts the problem list away.
+  // A press anywhere else puts the problem list and Share away.
   const onPointerDown = (event: PointerEvent): void => {
-    if (event.target instanceof Node && !chip.element.contains(event.target)) {
+    if (!(event.target instanceof Node)) {
+      return;
+    }
+    if (!chip.element.contains(event.target)) {
       chip.close();
+    }
+    if (!shareWrap.contains(event.target)) {
+      share.hide();
     }
   };
   document.addEventListener("pointerdown", onPointerDown);
+
+  // A team code pasted anywhere but a field opens that team, unsaved
+  // (#577); edits here are only discarded once the player says so. A
+  // single build code is not a team, and is ignored.
+  const stopPaste = listenForPaste((text) => {
+    if (!looksLikeTeam(text)) {
+      return false;
+    }
+    const result = importTeam(text, characters, () => crypto.randomUUID(), Date.now());
+    if (!result.ok) {
+      toast("Could not import", { problems: result.problems });
+      return true;
+    }
+    if (!isTeamUnsaved(opened, team)) {
+      callbacks.onImportTeam(result);
+      return true;
+    }
+    ask(
+      back,
+      "Discard your edits and open the pasted team?",
+      "Discard",
+      () => {
+        callbacks.onImportTeam(result);
+      },
+      "Keep editing",
+    );
+    return true;
+  });
 
   return {
     dispose() {
       disposed = true;
       document.removeEventListener("pointerdown", onPointerDown);
+      stopPaste();
     },
   };
 }

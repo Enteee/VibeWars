@@ -107,6 +107,46 @@ describe("lobby host", () => {
     expect(playersOf(guest)[1]?.name).toBe("evilname that go");
   });
 
+  it("lists the character a joiner brings to everyone, and the house loadout as null (#580)", async () => {
+    const lobby = await openLobby();
+    const guest = await lobby.join("Guest", {
+      name: "Mhenlo",
+      primary: "monk",
+      secondary: "elementalist",
+    });
+    for (const member of [lobby.host, guest]) {
+      expect(member.connection.getSnapshot().players.map(({ character }) => character)).toEqual([
+        null,
+        { name: "Mhenlo", primary: "monk", secondary: "elementalist" },
+      ]);
+    }
+  });
+
+  it("lists a character no build could be as the house loadout, and sanitises its name (#580)", async () => {
+    const lobby = await openLobby();
+    for (const [primary, secondary] of [
+      ["pirate", null],
+      ["monk", "pirate"],
+      ["monk", "monk"],
+      ["elementalist", null],
+    ] as const) {
+      const peer = await rawPeer(lobby);
+      peer.transport.send("lobby-join", {
+        protocolVersion: PROTOCOL_VERSION,
+        name: primary,
+        character: { name: "  \u202eCynn\u0000  ", primary, secondary },
+      });
+    }
+    await settle();
+    expect(lobby.host.connection.getSnapshot().players.map(({ character }) => character)).toEqual([
+      null,
+      null,
+      null,
+      null,
+      { name: "Cynn", primary: "elementalist", secondary: null },
+    ]);
+  });
+
   it("lets a second player join with the code and does not make them host", async () => {
     const { lobby, guest } = await hostAndGuest();
     await settle();
@@ -249,7 +289,13 @@ describe("lobby host", () => {
       await lobby.join(`Guest ${String(i)}`);
     }
     await expect(
-      joinLobby({ transport: lobby.network.join(), code: CODE, name: "Late", timeoutMs: 1000 }),
+      joinLobby({
+        transport: lobby.network.join(),
+        code: CODE,
+        name: "Late",
+        character: null,
+        timeoutMs: 1000,
+      }),
     ).rejects.toEqual(new LobbyRefusedError("lobby-full"));
     expect(playersOf(lobby.host)).toHaveLength(16);
   });
@@ -454,7 +500,7 @@ describe("joining by code", () => {
     const lobby = await openLobby();
     const transport = lobby.network.join();
     await expect(
-      joinLobby({ transport, code: "WXYKMN", name: "Lost", timeoutMs: 50 }),
+      joinLobby({ transport, code: "WXYKMN", name: "Lost", character: null, timeoutMs: 50 }),
     ).rejects.toEqual(new LobbyNoAnswerError(50, null));
   });
 
@@ -465,6 +511,7 @@ describe("joining by code", () => {
         transport: lobby.network.join(peerId),
         code: "WXYKMN",
         name: peerId,
+        character: null,
         timeoutMs: 50,
       });
       for (const trouble of troubles) {
@@ -486,6 +533,7 @@ describe("joining by code", () => {
       transport: lobby.network.join(),
       code: " acd-efg ",
       name: "Typist",
+      character: null,
       timeoutMs: 1000,
     });
     expect(connection.getSnapshot().code).toBe(CODE);
@@ -494,7 +542,7 @@ describe("joining by code", () => {
   it("gives up with no-answer when nobody in the room hosts", async () => {
     const lonely = createMemoryNetwork().join();
     await expect(
-      joinLobby({ transport: lonely, code: CODE, name: "Alone", timeoutMs: 50 }),
+      joinLobby({ transport: lonely, code: CODE, name: "Alone", character: null, timeoutMs: 50 }),
     ).rejects.toBeInstanceOf(LobbyNoAnswerError);
   });
 

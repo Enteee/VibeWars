@@ -63,7 +63,12 @@ export type ImportResult =
  * yours the moment it was saved.
  */
 export function exportBuild(character: StoredCharacter): string {
-  const payload: ExportedBuild = {
+  return JSON.stringify(buildPayload(character));
+}
+
+/** What `exportBuild` writes, as an object: a team code holds one per member (#577). */
+export function buildPayload(character: StoredCharacter): ExportedBuild {
+  return {
     format: BUILD_FORMAT,
     formatVersion: BUILD_FORMAT_VERSION,
     name: character.name,
@@ -76,7 +81,6 @@ export function exportBuild(character: StoredCharacter): string {
     skillBar: [...character.skillBar],
     equipment: character.equipment,
   };
-  return JSON.stringify(payload);
 }
 
 /**
@@ -162,6 +166,15 @@ export function importBuild(text: string, id: string, now: number): ImportResult
     };
   }
 
+  return readBuild(parsed, id, now);
+}
+
+/**
+ * Validate and adopt one parsed build: what `importBuild` does after
+ * parsing the text, and what a team code's every member goes through
+ * (#577), so both read builds the one way.
+ */
+export function readBuild(parsed: unknown, id: string, now: number): ImportResult {
   if (typeof parsed !== "object" || parsed === null) {
     return { ok: false, problems: ["A build must be a JSON object."] };
   }

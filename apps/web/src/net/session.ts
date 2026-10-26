@@ -15,6 +15,7 @@ import {
   createMatchHost,
   generateLobbyCode,
   joinLobby,
+  type LobbyCharacter,
   type LobbyClosedReason,
   type LobbyConnection,
   type MatchPlan,
@@ -88,12 +89,15 @@ function startMatch(plan: MatchPlan) {
 
 /**
  * Host a lobby in this tab: a fresh code, its room, the lobby host on it,
- * and this player joined to it as one more peer.
+ * and this player joined to it as one more peer, bringing `character`.
  *
  * One clock runs the whole lobby, from now until `close()`: the lobby's
  * message budget counts on it, and its match runs on it.
  */
-export async function hostLobby(name: string): Promise<HostedLobby> {
+export async function hostLobby(
+  name: string,
+  character: LobbyCharacter | null,
+): Promise<HostedLobby> {
   // Best effort: a page going away tells its guests, rather than leaving
   // them to wait out a dropped host's reconnect window (#515). Added
   // before the room exists, so it runs before a transport's own pagehide
@@ -123,6 +127,7 @@ export async function hostLobby(name: string): Promise<HostedLobby> {
       transport: host.local,
       code,
       name,
+      character,
       timeoutMs: JOIN_TIMEOUT_MS,
     });
     return { lobby, close };
@@ -132,11 +137,15 @@ export async function hostLobby(name: string): Promise<HostedLobby> {
   }
 }
 
-/** Join the lobby `code` names, hosted on another peer's browser. */
-export async function joinLobbyByCode(code: string, name: string): Promise<LobbyConnection> {
+/** Join the lobby `code` names, hosted on another peer's browser, bringing `character`. */
+export async function joinLobbyByCode(
+  code: string,
+  name: string,
+  character: LobbyCharacter | null,
+): Promise<LobbyConnection> {
   const room = joinRoom(code);
   try {
-    return await joinLobby({ transport: room, code, name, timeoutMs: JOIN_TIMEOUT_MS });
+    return await joinLobby({ transport: room, code, name, character, timeoutMs: JOIN_TIMEOUT_MS });
   } catch (error) {
     await room.leave();
     throw error;

@@ -47,12 +47,14 @@ export {
 export type { ConnectMatchOptions, PeerMatchConnection } from "./match-client.js";
 export { generateLobbyCode } from "./lobby-codes.js";
 export type {
+  LobbyCharacter,
   LobbyClosedReason,
   LobbyConnection,
   LobbyPlayerSnapshot,
   LobbySnapshot,
   MatchStarting,
 } from "./lobby-connection.js";
+export { UNNAMED_CHARACTER, lobbyCharacter } from "./lobby-character.js";
 export { canStart, createLobbyHost } from "./lobby-host.js";
 export type { LobbyHost, LobbyHostOptions, MatchPlan } from "./lobby-host.js";
 export { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
