@@ -715,3 +715,61 @@ describe("the area scenarios, headless (#111)", () => {
     expect(bySkill.has("centre")).toBe(true);
   });
 });
+
+describe("energy-management, headless (#111)", () => {
+  it("a whole number of ticks long, so the arena can stop on the last one", () => {
+    const limit = scenario("energy-management").timeLimitSeconds ?? 0;
+    expect(limit).toBe(60);
+    expect(Number.isInteger(limit * RULES.tickRateHz)).toBe(true);
+  });
+
+  it("a ranger spamming Barrage runs dry, and then fires only as fast as energy comes back", () => {
+    const played = scenario("energy-management");
+    const map = MAPS[played.mapId];
+    if (map === undefined) {
+      throw new Error(`no map ${played.mapId}`);
+    }
+    const sim = new MatchSimulation({
+      seed: "energy",
+      participants: [
+        {
+          id: "player",
+          team: PLAYER_TEAM,
+          skillBar: ["ranger.barrage"],
+          attributeRanks: new Map([["ranger.marksmanship", 12]]),
+          equipment: {
+            ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+            mainHand: {
+              weapon: WEAPONS.longbow,
+              attributeId: "ranger.marksmanship",
+              requirementMet: true,
+            },
+          },
+          spawn: map.playerSpawn,
+          facing: 0,
+          baseEnergyPips: baseEnergyPipsFor("ranger"),
+        },
+        ...scenarioParticipants(played, map.playerSpawn),
+      ],
+    });
+    sim.setTarget("player", "dummy");
+    const barrages: number[] = [];
+    let lowest = Infinity;
+    const ticks = Math.round((played.timeLimitSeconds ?? 0) / DT);
+    for (let i = 0; i < ticks; i += 1) {
+      sim.requestSkill("player", 0);
+      for (const entry of sim.step(DT).log) {
+        if (entry.skillId === "ranger.barrage" && entry.events.some((e) => e.kind === "damage")) {
+          barrages.push(i * DT);
+        }
+      }
+      lowest = Math.min(lowest, sim.get("player")?.combatant.energy ?? Infinity);
+    }
+    // On a full bar, one each swing of the bow (2.4 s); dry, one per 5
+    // energy at a ranger's 3 pips, 1 a second: every 5 s.
+    const gap = (from: number): number => (barrages[from + 1] ?? 0) - (barrages[from] ?? 0);
+    expect(lowest).toBeLessThan(5);
+    expect(gap(0)).toBeCloseTo(2.4, 5);
+    expect(gap(barrages.length - 2)).toBeCloseTo(5, 5);
+  });
+});

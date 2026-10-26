@@ -49,6 +49,14 @@ export interface LocalMatchConnection extends MatchConnection {
   onStep(handler: (result: StepResult) => void): void;
   /** Swap the player's build in place; the skill bar follows. */
   rearm(loadout: ResolvedLoadout, skillBar: SkillBar): void;
+  /**
+   * Hold after `ticks` more ticks (#111): the clock stops, to the tick,
+   * and the player's intents are dropped, until this is called again.
+   * `undefined` runs on for good.
+   */
+  runFor(ticks: number | undefined): void;
+  /** Whether a `runFor` budget has run out. */
+  readonly held: boolean;
 }
 
 /** One simulation tick, at the ruleset's rate, exactly as the server steps. */
@@ -124,6 +132,9 @@ export function createLocalConnection(options: {
   let skillBar = selfBar();
   let accumulator = 0;
   let closed = false;
+  /** Ticks left before the clock holds; `undefined` for no limit. */
+  let ticksLeft: number | undefined;
+  const held = (): boolean => ticksLeft === 0;
   const stepHandlers: ((result: StepResult) => void)[] = [];
   const combatHandlers: ((message: CombatMessage) => void)[] = [];
   const refusalHandlers: ((message: CastRefusedMessage) => void)[] = [];
@@ -161,7 +172,7 @@ export function createLocalConnection(options: {
   };
 
   const sendIntent = (intent: ClientIntent): void => {
-    if (closed) {
+    if (closed || held()) {
       return;
     }
     const refusal = applyIntent(simulation, selfId, intent);
@@ -256,13 +267,24 @@ export function createLocalConnection(options: {
       }
       const drained = drainAccumulator(accumulator, elapsedSeconds, TICK_SECONDS);
       accumulator = drained.remainder;
-      for (let i = 0; i < drained.ticks; i += 1) {
+      for (let i = 0; i < drained.ticks && !held(); i += 1) {
+        if (ticksLeft !== undefined) {
+          ticksLeft -= 1;
+        }
         deliver(simulation.step(TICK_SECONDS));
         const next = selfBar();
         if (!sameSkillBar(skillBar, next)) {
           skillBar = next;
         }
       }
+    },
+    runFor(ticks) {
+      ticksLeft = ticks;
+      // Time spent held is not owed when the clock starts again.
+      accumulator = 0;
+    },
+    get held() {
+      return held();
     },
     rearm(loadout, nextBar) {
       simulation.rearm(selfId, loadout, nextBar);

@@ -247,6 +247,31 @@ describe("createLocalConnection", () => {
     expect(connection.ranks.get("elementalist.fire-magic")).toBe(11);
   });
 
+  it("holds to the tick when a runFor budget runs out, and drops intents until rerun (#111)", () => {
+    const { connection } = targetDummy();
+    let steps = 0;
+    connection.onStep(() => {
+      steps += 1;
+    });
+    connection.runFor(3);
+    // One long frame: still exactly three ticks.
+    connection.advance(TICK_SECONDS * 10);
+    expect(steps).toBe(3);
+    expect(connection.held).toBe(true);
+    const before = connection.getSnapshot().players.find((p) => p.sessionId === SELF_ID);
+    connection.sendIntent({ kind: "move", dirX: 0, dirY: 1 });
+    connection.advance(TICK_SECONDS * 4);
+    expect(steps).toBe(3);
+
+    // Run again: the held frames are not owed, and the dropped move never happened.
+    connection.runFor(undefined);
+    expect(connection.held).toBe(false);
+    connection.advance(TICK_SECONDS * 2.5);
+    expect(steps).toBe(5);
+    const after = connection.getSnapshot().players.find((p) => p.sessionId === SELF_ID);
+    expect(after?.y).toBe(before?.y);
+  });
+
   it("does nothing once disconnected", async () => {
     const { connection } = targetDummy();
     let steps = 0;

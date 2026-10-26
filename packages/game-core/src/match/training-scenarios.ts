@@ -84,6 +84,12 @@ export interface TrainingScenario {
   readonly exercises: readonly TrainingMechanic[];
   readonly knobs: readonly TrainingKnob[];
   readonly dummies: readonly TrainingDummy[];
+  /**
+   * A run that stops (#111): the arena holds this many seconds after it
+   * starts or is reset, and the meter reads the whole run. Without one,
+   * it runs on.
+   */
+  readonly timeLimitSeconds?: number;
 }
 
 /** The player's team. Dummies on any other team are enemies. */
@@ -228,6 +234,18 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
         reset: { kind: "on-death", afterSeconds: 2 },
       },
     ],
+  },
+  {
+    id: "energy-management",
+    label: "Energy management",
+    teaches:
+      "That energy, not recharge, is the real cap on output: cast all you can for 60 s and read how much of the minute you ran dry.",
+    mapId: "training-hall",
+    exercises: ["spell-damage", "auto-attacks"],
+    knobs: [],
+    // Immortal and inert, so all the run measures is the player's bar.
+    dummies: [target("dummy", "Caster dummy (60 armor)", vec2(380, 210), 60)],
+    timeLimitSeconds: 60,
   },
   {
     id: "condition-pressure",

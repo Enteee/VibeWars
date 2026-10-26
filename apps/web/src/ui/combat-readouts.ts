@@ -22,9 +22,13 @@ export interface LogRow {
   readonly tone: LogTone;
 }
 
+/** Far below a tenth of a second, far above the float error of summed ticks. */
+const TICK_DRIFT = 1e-6;
+
 /** `m:ss.t`, the session clock as the log shows it. */
 export function formatSimClock(seconds: number): string {
-  const tenths = Math.max(0, Math.floor(seconds * 10));
+  // Summed tick by tick, the clock runs a hair slow: 1200 ticks are 59.99999…
+  const tenths = Math.max(0, Math.floor(seconds * 10 + TICK_DRIFT));
   const minutes = Math.floor(tenths / 600);
   const rest = (tenths % 600) / 10;
   return `${String(minutes)}:${rest.toFixed(1).padStart(4, "0")}`;
@@ -371,8 +375,18 @@ export interface MeterRow {
   readonly value: string;
 }
 
-export function meterRows(totals: MeterTotals): readonly MeterRow[] {
-  return [
+/**
+ * `m:ss`, whole seconds rounded up, for a countdown: it reads 0:00 only
+ * once the time is up.
+ */
+export function formatCountdown(seconds: number): string {
+  const whole = Math.max(0, Math.ceil(seconds - TICK_DRIFT));
+  return `${String(Math.floor(whole / 60))}:${String(whole % 60).padStart(2, "0")}`;
+}
+
+/** The meter, and how long a timed run has left (#111). */
+export function meterRows(totals: MeterTotals, timeLimitSeconds?: number): readonly MeterRow[] {
+  const rows = [
     { label: "dps", value: formatRate(perSecond(totals.damage, totals.seconds)) },
     { label: "hps", value: formatRate(perSecond(totals.healing, totals.seconds)) },
     { label: "damage", value: formatAmount(totals.damage) },
@@ -384,6 +398,9 @@ export function meterRows(totals: MeterTotals): readonly MeterRow[] {
     { label: "taken", value: formatAmount(totals.taken) },
     { label: "time", value: formatSimClock(totals.seconds) },
   ];
+  return timeLimitSeconds === undefined
+    ? rows
+    : [...rows, { label: "time left", value: formatCountdown(timeLimitSeconds - totals.seconds) }];
 }
 
 export interface FloatingCue {

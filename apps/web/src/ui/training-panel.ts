@@ -256,6 +256,8 @@ export function createTrainingPanel(): TrainingPanel {
   /** Gathers status ticks into a row a second (#151); one per session. */
   let ticks = new StatusTickBatcher();
   let sinceMeterPaint = 0;
+  /** Whether a timed run has stopped and said so (#111); a restart clears it. */
+  let timeUp = false;
   let latestMatch: MatchSnapshot | undefined;
   let latestArena: ArenaSnapshot = EMPTY_SNAPSHOT;
   let messageTimer: ReturnType<typeof setTimeout> | undefined;
@@ -304,7 +306,7 @@ export function createTrainingPanel(): TrainingPanel {
 
   const paintMeter = (): void => {
     meter.replaceChildren(
-      ...meterRows(totals).flatMap((row) => {
+      ...meterRows(totals, session?.scenario.timeLimitSeconds).flatMap((row) => {
         const value = h("dd", "training-meter-value", row.value);
         value.dataset.meter = row.label;
         return [h("dt", "training-meter-label", row.label), value];
@@ -315,6 +317,10 @@ export function createTrainingPanel(): TrainingPanel {
   const restartMeter = (label: string): void => {
     totals = EMPTY_TOTALS;
     sinceMeterPaint = 0;
+    // A timed run starts with its meter: the clock runs again, to the tick.
+    timeUp = false;
+    const limit = session?.scenario.timeLimitSeconds;
+    session?.connection.runFor(limit === undefined ? undefined : Math.round(limit / TICK_SECONDS));
     paintMeter();
     // The gathered ticks belong before the line, not after it.
     const now = session?.connection.simulation.elapsedSeconds ?? 0;
@@ -745,6 +751,15 @@ export function createTrainingPanel(): TrainingPanel {
       const { connection } = session;
       connection.advance(deltaSeconds);
       appendLog(ticks.advance(connection.simulation.elapsedSeconds, nameOf));
+      if (connection.held && !timeUp) {
+        // The arena and the meter hold where the run ended; Reset reruns it.
+        timeUp = true;
+        const now = connection.simulation.elapsedSeconds;
+        const limit = String(session.scenario.timeLimitSeconds ?? 0);
+        appendLog([...ticks.flush(now, nameOf), dividerRow(`time: ${limit} s`, now)]);
+        flash("Time is up. Reset to run it again.");
+        paintMeter();
+      }
       latestMatch = connection.getSnapshot();
       session.sounds.snapshot(latestMatch);
       session.music.snapshot(latestMatch);

@@ -19,6 +19,7 @@ import {
   shouldStickToBottom,
   StatusTickBatcher,
   type LogRow,
+  type MeterRow,
 } from "./combat-readouts.js";
 
 const NAMES = new Map([
@@ -321,6 +322,25 @@ describe("formatAmount, formatRate and meterRows", () => {
       ],
     );
     expect(meterRows(EMPTY_TOTALS)[0]).toEqual({ label: "dps", value: "0.0" });
+  });
+
+  it("count a timed run down in whole seconds, to 0:00 and no further (#111)", () => {
+    const left = (seconds: number): MeterRow | undefined =>
+      meterRows({ ...EMPTY_TOTALS, seconds }, 60).at(-1);
+    expect(left(0)).toEqual({ label: "time left", value: "1:00" });
+    expect(left(17.95)).toEqual({ label: "time left", value: "0:43" });
+    expect(left(18)).toEqual({ label: "time left", value: "0:42" });
+    // Summed tick by tick: 1200 × 0.05 is a hair off 60.
+    expect(left(Array.from({ length: 1200 }, () => 0.05).reduce((a, b) => a + b))?.value).toBe(
+      "0:00",
+    );
+    expect(left(61)?.value).toBe("0:00");
+    // And the clock beside it reads the minute, not 0:59.9.
+    expect(meterRows({ ...EMPTY_TOTALS, seconds: 59.99999999 }, 60)).toContainEqual({
+      label: "time",
+      value: "1:00.0",
+    });
+    expect(meterRows(EMPTY_TOTALS).some((row) => row.label === "time left")).toBe(false);
   });
 });
 
