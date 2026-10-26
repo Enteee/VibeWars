@@ -1,3 +1,4 @@
+import { FAST_CASTING_ATTRIBUTE, fastCastingMultiplier } from "../primary-attributes.js";
 import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
 import {
@@ -124,10 +125,19 @@ export function clampMoveSpeed(raw: number): number {
 /**
  * How long this caster takes to cast this skill. Dazed doubles it; an
  * instant skill stays instant (0 × 2 = 0), the one place dazed visibly
- * does nothing.
+ * does nothing. Fast Casting multiplies in too (#527), judged on the
+ * skill's own activation, before dazed.
  */
 export function effectiveActivationSeconds(skill: Skill, caster: Combatant): number {
-  return skill.activationSeconds * aggregateModifiers(caster.statuses.active).castTimeMultiplier;
+  const fastCasting = fastCastingMultiplier(
+    caster.attributeRanks.get(FAST_CASTING_ATTRIBUTE) ?? 0,
+    skill,
+  );
+  return (
+    skill.activationSeconds *
+    aggregateModifiers(caster.statuses.active).castTimeMultiplier *
+    fastCasting
+  );
 }
 
 /** The chance in [0, 1] that the bearer's attacks miss (blind). */

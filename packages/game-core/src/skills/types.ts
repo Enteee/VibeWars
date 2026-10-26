@@ -134,6 +134,15 @@ export type SkillEffect =
 export type SkillType = "attack" | "spell" | "enchantment" | "hex" | "skill";
 
 /**
+ * Whether a skill of this type is a spell, as GW1's rules that "affect
+ * spells" mean it: enchantments and hexes are spells (#527). Every such
+ * rule asks this, never the type directly.
+ */
+export function isSpell(type: SkillType): boolean {
+  return type === "spell" || type === "enchantment" || type === "hex";
+}
+
+/**
  * The weapon an attack skill needs (ADR-0029). `melee` is any of the six
  * melee weapons, not fists; `bow` is any of the five bows.
  */

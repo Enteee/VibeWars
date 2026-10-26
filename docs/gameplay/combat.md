@@ -264,6 +264,24 @@ Not modelled: evade. Attack-speed changes have
 a hook (only the strongest speed-up and slow-down count), but no skill
 uses it yet.
 
+## Primary attributes
+
+Each profession's primary attribute does something of its own, as in
+GW1 PvP (#473). Only a primary can hold its rank, and runes count.
+
+- **Fast Casting** (Mesmer). Spells, enchantments and hexes activate in
+  2^(−rank/15) of the time: ×0.574 at rank 12, and still faster above
+  it. Every Mesmer spell; another profession's only if its own
+  activation is 2 s or more, so a Mesmer/Necromancer casts Malaise in
+  1.15 s but Faintheartedness in 1 s as usual. It multiplies with dazed
+  (rank 12 and dazed: ×1.149). Aftercast and recharge are unchanged;
+  attack skills and other non-spells too.
+- **Critical Strikes** (Assassin). +1% critical chance a rank on weapon
+  blows, and every crit gives the striker energy: 1 at ranks 1–7, 2 at
+  8–12, 3 at 13 and above.
+
+The others have no effect yet.
+
 ## Positioning
 
 - **Body blocking**: living players are solid. A front line can deny
