@@ -49,6 +49,7 @@ the code and `scripts/assets/icons.mjs` copy them.
 | `hex`         | `#d2a8ff` | Hex markers                              |
 | `enchantment` | `#56d4dd` | Enchantment markers                      |
 | `stance`      | `#f778ba` | Stance markers                           |
+| `preparation` | `#e3b341` | Preparation markers                      |
 
 ### HUD bars
 
@@ -112,6 +113,7 @@ so the silhouette identifies the profession and the colour only supports it.
 | Hex         | Diamond plate, glyph inside                           |
 | Enchantment | Rounded-square plate, glyph inside                    |
 | Stance      | Pentagon plate, point up, glyph inside                |
+| Preparation | Triangle plate, point up, glyph inside                |
 | Area flash  | Caster's team colour ring at the area's true radius   |
 | Swing flash | Attacker's team colour arc between it and its target  |
 | Projectile  | Weapon silhouette, tinted the shooter's team colour   |
@@ -128,6 +130,13 @@ an actor, so the shape settles it.
 | ------------- | ---------------------------------------------- |
 | `sprint`      | Two forward chevrons: move 25% faster          |
 | `dash`        | Arrowhead trailing three lines: run 50% faster |
+
+The preparation triangle (amber, point up) is the fifth outline. Its amber
+sits near `target` yellow, but a plate is never a ring round an actor.
+
+| Preparation status | Glyph                                        |
+| ------------------ | -------------------------------------------- |
+| `apply-poison`     | One drop: your attacks poison (Apply Poison) |
 
 ### Area flash
 
@@ -406,16 +415,17 @@ closes). Ink, never team colour: an icon in a menu names a thing, not a side.
 
 The corner badge on a skill slot. Ink on the slot, except the two that leave a
 marker on someone, which carry that marker's colour. A stance marks you, so
-it carries the stance colour too.
+it carries the stance colour too, and a preparation its amber.
 
-| Type        | Badge              |
-| ----------- | ------------------ |
-| Attack      | Blade              |
-| Spell       | Four-point star    |
-| Enchantment | Solid teal ring    |
-| Hex         | Broken purple ring |
-| Stance      | Pink pentagon ring |
-| Skill       | Square             |
+| Type        | Badge               |
+| ----------- | ------------------- |
+| Attack      | Blade               |
+| Spell       | Four-point star     |
+| Enchantment | Solid teal ring     |
+| Hex         | Broken purple ring  |
+| Stance      | Pink pentagon ring  |
+| Preparation | Amber triangle ring |
+| Skill       | Square              |
 
 ### Skill slot states
 

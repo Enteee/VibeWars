@@ -131,7 +131,8 @@ export type SkillEffect =
  * badge, so a skill's nature reads by shape rather than by colour (#75).
  * An attack skill is also a blow of its weapon (ADR-0029).
  */
-export type SkillType = "attack" | "spell" | "enchantment" | "hex" | "stance" | "skill";
+export type SkillType =
+  "attack" | "spell" | "enchantment" | "hex" | "stance" | "preparation" | "skill";
 
 /**
  * Whether a skill of this type is a spell, as GW1's rules that "affect

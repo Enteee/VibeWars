@@ -63,6 +63,7 @@ import {
 } from "../skills/projectile.js";
 import {
   attackDurationSeconds,
+  attackHitRiders,
   blindMisses,
   blocks,
   gainCriticalEnergy,
@@ -1488,7 +1489,8 @@ export class MatchSimulation {
    * tolerance. Anyone else is dodged. Its attacker may have died since;
    * the shot lands all the same, as in GW1, but the dead earn no
    * adrenaline. A target that died in flight is not there to be hit or
-   * to dodge, so nothing happens.
+   * to dodge, so nothing happens. A hit carries the attacker's
+   * preparation as it is on landing (#525).
    */
   #land(projectile: Projectile): void {
     if (projectile.obstructed) {
@@ -1522,6 +1524,17 @@ export class MatchSimulation {
       );
       if (critical && attacker !== undefined) {
         gainCriticalEnergy(attacker.combatant, projectile.weaponSnapshot.criticalStrikes, events);
+      }
+      if (attacker !== undefined) {
+        events.push(
+          ...attackHitRiders(
+            attacker.combatant,
+            target.combatant,
+            projectile.weaponSnapshot.mainHand.weapon,
+            this.#rng,
+            this.#ruleset.combat,
+          ),
+        );
       }
     }
     if (attacker !== undefined && !attacker.combatant.dead) {

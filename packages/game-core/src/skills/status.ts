@@ -11,6 +11,7 @@
  * - `hex`        — negative, applied by foes, removed by hex removal.
  * - `enchantment`— positive, applied by allies, removed by enchantment removal/strip.
  * - `stance`     — positive, on yourself only, ended by stance removal (#465).
+ * - `preparation`— on yourself only; changes your attacks while it lasts (#525).
  *
  * Re-application does not stack duration (GW1-style): the longer of the
  * existing and incoming duration wins. That single rule is why a spammed
@@ -18,16 +19,16 @@
  * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time.
  */
 
-import type { Combatant } from "./types.js";
+import type { Combatant, SkillEffect } from "./types.js";
 
-export type StatusCategory = "condition" | "hex" | "enchantment" | "stance";
+export type StatusCategory = "condition" | "hex" | "enchantment" | "stance" | "preparation";
 
 /**
  * Categories of which a combatant has at most one at a time (GW1): a new
  * one ends whichever is up, the same one included, and starts at its full
  * duration.
  */
-export const EXCLUSIVE_CATEGORIES: ReadonlySet<StatusCategory> = new Set(["stance"]);
+export const EXCLUSIVE_CATEGORIES: ReadonlySet<StatusCategory> = new Set(["stance", "preparation"]);
 
 export type StatusId =
   // Conditions (brief §12's starting set).
@@ -48,7 +49,9 @@ export type StatusId =
   | "guardian"
   // Stances.
   | "sprint"
-  | "dash";
+  | "dash"
+  // Preparations.
+  | "apply-poison";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -112,6 +115,13 @@ export interface StatusDefinition {
   readonly preventsKnockdown: boolean;
   /** The bearer's chance to block attacks; `undefined`: none. */
   readonly block: BlockRule | undefined;
+  /**
+   * Effects on whoever the bearer's physical attacks hit while it lasts
+   * (#525): a preparation's rider, as Apply Poison's poison. Applied
+   * where a blow lands, swing, attack skill or arrow alike, never on a
+   * miss or a block.
+   */
+  readonly onAttackHit: readonly SkillEffect[];
 }
 
 function define(
@@ -134,6 +144,7 @@ function define(
     attackDurationMultiplier: 1,
     preventsKnockdown: false,
     block: undefined,
+    onAttackHit: [],
     ...overrides,
   };
 }
@@ -170,6 +181,12 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
 
   sprint: define("sprint", "Sprint", "stance", { moveSpeedMultiplier: 1.25 }),
   dash: define("dash", "Dash", "stance", { moveSpeedMultiplier: 1.5 }),
+
+  // "Enemies struck by your physical attacks become poisoned for
+  // 3...13...15 seconds": 13 s, its rank-12 value.
+  "apply-poison": define("apply-poison", "Apply Poison", "preparation", {
+    onAttackHit: [{ kind: "apply-status", statusId: "poison", durationSeconds: 13 }],
+  }),
 };
 
 export interface ActiveStatus {

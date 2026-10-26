@@ -135,7 +135,21 @@ export function describeStatus(id: string): string {
     const what = BLOCKED_ATTACKS[definition.block.against];
     parts.push(`${String(Math.round(definition.block.chance * 100))}% chance to block ${what}`);
   }
+  for (const effect of definition.onAttackHit) {
+    parts.push(describeAttackHit(effect));
+  }
   return parts.length === 0 ? definition.name : parts.join(", ");
+}
+
+/** A preparation's rider (#525), as its tooltip says it: "your attacks …". */
+function describeAttackHit(effect: SkillEffect): string {
+  if (effect.kind === "apply-status") {
+    return (
+      `foes your physical attacks hit get ${statusName(effect.statusId)} ` +
+      `for ${seconds(effect.durationSeconds)}`
+    );
+  }
+  return `your physical attacks: ${describeEffect(effect, new Map()).text}`;
 }
 
 function describeEffect(
@@ -161,14 +175,25 @@ function describeEffect(
         magnitude: undefined,
       };
     case "apply-status":
-      // A stance is yours alone and one at a time (#523), so it reads as
-      // what it is rather than as something applied.
-      if (findStatusDefinition(effect.statusId)?.category === "stance") {
-        return {
-          text:
-            `Stance. For ${seconds(effect.durationSeconds)}, ` + describeStatus(effect.statusId),
-          magnitude: undefined,
-        };
+      // A stance or a preparation is yours alone and one at a time
+      // (#523, #525), so it reads as what it is rather than as something
+      // applied.
+      switch (findStatusDefinition(effect.statusId)?.category) {
+        case "stance":
+          return {
+            text:
+              `Stance. For ${seconds(effect.durationSeconds)}, ` + describeStatus(effect.statusId),
+            magnitude: undefined,
+          };
+        case "preparation":
+          return {
+            text:
+              `Preparation. For ${seconds(effect.durationSeconds)}, ` +
+              describeStatus(effect.statusId),
+            magnitude: undefined,
+          };
+        default:
+          break;
       }
       return {
         text:

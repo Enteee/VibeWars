@@ -198,6 +198,13 @@ be blocked, and ends the stance of the foe it hits. It does not yet
 disable your other attack skills for 3 s: that waits for disabled skills
 (#469).
 
+**Preparations** change your attacks while they last, and only one is up
+at a time, as with stances (#525). Apply Poison (Ranger, 15 energy, 2 s
+cast, 24 s) poisons for 13 s every foe your physical attacks hit:
+swings, arrows and attack skills, each victim of Barrage. A miss or a
+block poisons nobody, nor does a wand's or staff's bolt. An arrow
+poisons if the preparation is still up when it lands.
+
 ## Weapon attacks
 
 Select a foe and attack it (Space; with nothing selected, the nearest foe): your character walks into weapon reach and sight, round walls if it has to, then

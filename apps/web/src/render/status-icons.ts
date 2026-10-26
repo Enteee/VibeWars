@@ -33,6 +33,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   guardian: icon("guardian"),
   sprint: icon("sprint"),
   dash: icon("dash"),
+  "apply-poison": icon("apply-poison"),
 };
 
 /** Drawn size of one icon, in world pixels. */

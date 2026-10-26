@@ -266,6 +266,7 @@
                                   "optional": false,
                                   "type": {
                                     "union": [
+                                      { "literal": "apply-poison" },
                                       { "literal": "armor-boost" },
                                       { "literal": "bleeding" },
                                       { "literal": "blind" },
@@ -392,6 +393,7 @@
                                   "optional": false,
                                   "type": {
                                     "union": [
+                                      { "literal": "apply-poison" },
                                       { "literal": "armor-boost" },
                                       { "literal": "bleeding" },
                                       { "literal": "blind" },
@@ -426,6 +428,7 @@
                                   "optional": false,
                                   "type": {
                                     "union": [
+                                      { "literal": "apply-poison" },
                                       { "literal": "armor-boost" },
                                       { "literal": "bleeding" },
                                       { "literal": "blind" },
@@ -917,6 +920,7 @@
               "optional": false,
               "type": {
                 "union": [
+                  { "literal": "apply-poison" },
                   { "literal": "armor-boost" },
                   { "literal": "bleeding" },
                   { "literal": "blind" },
@@ -1003,6 +1007,7 @@
               "optional": false,
               "type": {
                 "union": [
+                  { "literal": "apply-poison" },
                   { "literal": "armor-boost" },
                   { "literal": "bleeding" },
                   { "literal": "blind" },
@@ -1033,6 +1038,7 @@
               "optional": false,
               "type": {
                 "union": [
+                  { "literal": "apply-poison" },
                   { "literal": "armor-boost" },
                   { "literal": "bleeding" },
                   { "literal": "blind" },
