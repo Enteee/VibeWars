@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { REST_FRAME } from "./attack-clock.js";
 import { LYING_WIDTH, lyingPose } from "./lying-pose.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
 
@@ -42,6 +43,7 @@ describe("lyingPose (#545)", () => {
           weapon.r,
           weapon.facing,
           id,
+          REST_FRAME,
         );
         for (const p of [...strokes, ...fills, ...strings].flat()) {
           expect(Math.hypot(p.x, p.y), `${id} at ${String(facing)}`).toBeLessThanOrEqual(R + 5.5);

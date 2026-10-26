@@ -59,6 +59,7 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
     position: vec2(x, 0),
     facing: 0,
     weaponId: undefined,
+    attackTargetId: undefined,
     offhandId: undefined,
     profession: undefined,
     radius: 14,
