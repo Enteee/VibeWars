@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   criticalStrikesEnergy,
   expertiseEnergyCost,
+  fastCastingMultiplier,
   strengthArmorPenetration,
 } from "./primary-attributes.js";
 import { unarmedResolvedEquipment } from "./equipment/resolve.js";
@@ -107,5 +108,32 @@ describe("strengthArmorPenetration (#528)", () => {
     expect(strengthArmorPenetration(12, 0)).toBeCloseTo(0.12);
     expect(strengthArmorPenetration(12, 0.1)).toBe(0.1);
     expect(strengthArmorPenetration(0, 0.1)).toBe(0.1);
+  });
+});
+
+describe("fastCastingMultiplier (#527)", () => {
+  const malaise = getSkill("necromancer.malaise");
+  if (malaise === undefined) {
+    throw new Error("catalog skill missing");
+  }
+
+  it.each([
+    [0, 1],
+    [12, 0.574],
+    [15, 0.5],
+    [16, 0.477],
+  ])("at rank %i multiplies a 2 s spell by %f", (rank, multiplier) => {
+    expect(fastCastingMultiplier(rank, malaise)).toBeCloseTo(multiplier, 3);
+  });
+
+  it("judges another profession's spell on its base activation", () => {
+    expect(fastCastingMultiplier(12, { ...malaise, activationSeconds: 1.75 })).toBe(1);
+    expect(fastCastingMultiplier(12, { ...malaise, activationSeconds: 3 })).toBeCloseTo(0.574, 3);
+  });
+
+  it("counts enchantments and plain spells, not skills", () => {
+    expect(fastCastingMultiplier(12, { ...malaise, type: "enchantment" })).toBeLessThan(1);
+    expect(fastCastingMultiplier(12, { ...malaise, type: "spell" })).toBeLessThan(1);
+    expect(fastCastingMultiplier(12, { ...malaise, type: "skill" })).toBe(1);
   });
 });

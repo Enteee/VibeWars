@@ -419,6 +419,37 @@ describe("block (#534)", () => {
     expect(blocked / 2000).toBeLessThan(0.54);
   });
 
+  it("a knocked-down target blocks nothing, and blocks again once it stands (#610)", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    const target = foe("dummy");
+    target.combatant.statuses.apply("guardian", 1e6, "monk");
+    const rng = createRng(610);
+    const swing = () =>
+      resolveSwing({
+        attacker: sword,
+        target,
+        candidates: [],
+        rng,
+        rules: RULES,
+        exposed: NOWHERE,
+      });
+
+    target.combatant.knockdownRemaining = 2;
+    expect(blockChanceOf(target.combatant, "melee")).toBe(0);
+    expect(blockChanceOf(target.combatant, "projectile")).toBe(0);
+    for (let i = 0; i < 20; i += 1) {
+      expect(swing().map((event) => event.kind)).toEqual(["damage"]);
+    }
+
+    target.combatant.knockdownRemaining = 0;
+    expect(blockChanceOf(target.combatant, "melee")).toBe(0.5);
+    let blocked = 0;
+    for (let i = 0; i < 20; i += 1) {
+      blocked += swing().filter((event) => event.kind === "attack-blocked").length;
+    }
+    expect(blocked).toBeGreaterThan(0);
+  });
+
   it("a blind attacker's miss is a miss: no block roll is drawn", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
     sword.statuses.apply("blind", 10, "foe");
@@ -518,6 +549,19 @@ describe("block (#534)", () => {
         },
         { kind: "status-applied", targetId: "t", statusId: "deep-wound", durationSeconds: 20 },
       ]);
+    });
+
+    it("Swift Chop at a knocked-down Guardian connects: no if-blocked rider (#610)", () => {
+      const target = victim();
+      target.knockdownRemaining = 2;
+      const events = resolveBlocked(
+        "warrior.swift-chop",
+        WEAPONS.axe,
+        "warrior.axe-mastery",
+        target,
+      );
+      expect(events.map((event) => event.kind)).toEqual(["damage"]);
+      expect(target.statuses.has("deep-wound")).toBe(false);
     });
 
     it("Barrage: each arrow rolls its own block", () => {

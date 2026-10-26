@@ -131,7 +131,16 @@ export type SkillEffect =
  * badge, so a skill's nature reads by shape rather than by colour (#75).
  * An attack skill is also a blow of its weapon (ADR-0029).
  */
-export type SkillType = "attack" | "spell" | "enchantment" | "hex" | "skill";
+export type SkillType = "attack" | "spell" | "enchantment" | "hex" | "stance" | "skill";
+
+/**
+ * Whether a skill of this type is a spell, as GW1's rules that "affect
+ * spells" mean it: enchantments and hexes are spells (#527). Every such
+ * rule asks this, never the type directly.
+ */
+export function isSpell(type: SkillType): boolean {
+  return type === "spell" || type === "enchantment" || type === "hex";
+}
 
 /**
  * The weapon an attack skill needs (ADR-0029). `melee` is any of the six
@@ -150,6 +159,8 @@ export interface AttackSkillRule {
   readonly weaponDamage: number;
   /** Added to the weapon's roll before armor; `undefined`: no bonus. */
   readonly bonusDamage: Magnitude | undefined;
+  /** Whether no block stops it (Wild Throw's "This attack cannot be blocked"). */
+  readonly unblockable: boolean;
   /**
    * What a blocked blow does to its target instead of the skill's
    * `effects` (#534): Swift Chop's damage and Deep Wound. Usually none.

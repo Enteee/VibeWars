@@ -27,6 +27,7 @@ export const SKILL_TYPE_NAME: Readonly<Record<SkillType, string>> = {
   spell: "Spell",
   enchantment: "Enchantment",
   hex: "Hex",
+  stance: "Stance",
   skill: "Skill",
 };
 

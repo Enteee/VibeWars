@@ -48,6 +48,7 @@ the code and `scripts/assets/icons.mjs` copy them.
 | `condition`   | `#ffa657` | Condition markers                        |
 | `hex`         | `#d2a8ff` | Hex markers                              |
 | `enchantment` | `#56d4dd` | Enchantment markers                      |
+| `stance`      | `#f778ba` | Stance markers                           |
 
 ### HUD bars
 
@@ -110,6 +111,7 @@ so the silhouette identifies the profession and the colour only supports it.
 | Condition   | Circle plate, glyph inside                            |
 | Hex         | Diamond plate, glyph inside                           |
 | Enchantment | Rounded-square plate, glyph inside                    |
+| Stance      | Pentagon plate, point up, glyph inside                |
 | Area flash  | Caster's team colour ring at the area's true radius   |
 | Swing flash | Attacker's team colour arc between it and its target  |
 | Projectile  | Weapon silhouette, tinted the shooter's team colour   |
@@ -118,7 +120,14 @@ so the silhouette identifies the profession and the colour only supports it.
 
 The status plates differ in outline as well as colour. Hex purple and
 enchantment teal are close for a deuteranope (simulated ΔE ≈ 18); diamond
-against square is not.
+against square is not. The stance pentagon (pink, point up) differs from all
+three by its outline; its pink sits next to `foe` red, but a plate is never
+an actor, so the shape settles it.
+
+| Stance status | Glyph                                          |
+| ------------- | ---------------------------------------------- |
+| `sprint`      | Two forward chevrons: move 25% faster          |
+| `dash`        | Arrowhead trailing three lines: run 50% faster |
 
 ### Area flash
 
@@ -396,7 +405,8 @@ closes). Ink, never team colour: an icon in a menu names a thing, not a side.
 ### Skill type badges
 
 The corner badge on a skill slot. Ink on the slot, except the two that leave a
-marker on someone, which carry that marker's colour.
+marker on someone, which carry that marker's colour. A stance marks you, so
+it carries the stance colour too.
 
 | Type        | Badge              |
 | ----------- | ------------------ |
@@ -404,6 +414,7 @@ marker on someone, which carry that marker's colour.
 | Spell       | Four-point star    |
 | Enchantment | Solid teal ring    |
 | Hex         | Broken purple ring |
+| Stance      | Pink pentagon ring |
 | Skill       | Square             |
 
 ### Skill slot states
