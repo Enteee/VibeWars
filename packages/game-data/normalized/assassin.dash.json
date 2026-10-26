@@ -1,0 +1,24 @@
+{
+  "id": "assassin.dash",
+  "name": "Dash",
+  "profession": "assassin",
+  "attribute": "No Attribute",
+  "type": "Stance.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 0,
+  "rechargeSeconds": 8,
+  "description": "For 3 seconds, you run 50% faster.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Assassin/705-Dash",
+    "fetchedAt": "2026-10-26T03:27:08.836Z"
+  },
+  "unmapped": {}
+}

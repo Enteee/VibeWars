@@ -1,0 +1,24 @@
+{
+  "id": "paragon.wild-throw",
+  "name": "Wild Throw",
+  "profession": "paragon",
+  "attribute": "Spear Mastery",
+  "type": "Spear attack.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "adrenaline",
+    "amount": 7
+  },
+  "activationSeconds": 0,
+  "rechargeSeconds": 0,
+  "description": "If this attack hits, it deals +5...17...20 damage, and any Stance being used by your target ends. This attack cannot be blocked. All of your non-spear attack skills are disabled for 3 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Paragon/1131-Wild_Throw",
+    "fetchedAt": "2026-10-26T03:27:08.904Z"
+  },
+  "unmapped": {}
+}

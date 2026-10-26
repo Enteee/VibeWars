@@ -289,7 +289,8 @@ export function resolveSwing(swing: Swing): CombatEvent[] {
  * each victim, the primary first, with the skill's bonus added before
  * armor. A victim the blow misses (blind) gets none of the skill's
  * riders; the ones it hits get them all. A victim that blocks gets the
- * skill's `onBlocked` effects instead (#534). No double strike and no
+ * skill's `onBlocked` effects instead (#534); an `unblockable` one rolls
+ * no block at all (Wild Throw, #523). No double strike and no
  * cleave: an area, as Barrage's, is already the skill's own, and each of
  * its blows rolls its own block and its own crit.
  */
@@ -316,7 +317,7 @@ export function resolveAttackSkill(
       events.push({ kind: "attack-missed", targetId: victim.id });
       continue;
     }
-    if (blocks(victim, kind, rng)) {
+    if (skill.attack?.unblockable !== true && blocks(victim, kind, rng)) {
       events.push({ kind: "attack-blocked", targetId: victim.id });
       blocked.push(victim);
       continue;

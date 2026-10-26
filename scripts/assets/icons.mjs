@@ -30,6 +30,7 @@ const C = {
   condition: "#ffa657",
   hex: "#d2a8ff",
   enchantment: "#56d4dd",
+  stance: "#f778ba",
   warrior: "#e3b341",
   ranger: "#8fd36b",
   monk: "#9ecbff",
@@ -115,6 +116,9 @@ const skillType = {
   enchantment: () => `<circle cx="12" cy="12" r="8" ${stroke(C.enchantment, 3)}/>`,
   // Broken ring: something bad stays on you (brief §20: hex = ring/marker).
   hex: () => `<circle cx="12" cy="12" r="8" ${stroke(C.hex, 3)} stroke-dasharray="6 4.566"/>`,
+  // Pentagon ring, point up: a posture you hold. Solid like the enchantment
+  // ring, but five-sided, so the two never merge at 16 px.
+  stance: () => `<path d="M12 3.5l8 6-3 10H7l-3-10z" ${stroke(C.stance, 3)}/>`,
   // Plain square: a skill with no other type.
   skill: () => `<rect x="6" y="6" width="12" height="12" rx="1" fill="${C.ink}"/>`,
 };
@@ -122,14 +126,17 @@ const skillType = {
 // ---------------------------------------------------------------------------
 // Statuses: the markers under an actor in the arena. The plate gives the
 // category by colour *and* outline (condition = circle, hex = diamond,
-// enchantment = rounded square), and the glyph gives the status.
+// enchantment = rounded square, stance = pentagon), and the glyph gives the status.
 // ---------------------------------------------------------------------------
 
 /** @typedef {(colour: string) => string} Glyph */
-/** @typedef {"condition" | "hex" | "enchantment"} Category */
+/** @typedef {"condition" | "hex" | "enchantment" | "stance"} Category */
 
 /** @type {Record<Category, (glyph: Glyph) => string>} */
 const plates = {
+  stance: (glyph) =>
+    `<path d="M12 1L23 9l-4 14H5L1 9z" fill="${C.stance}" stroke="${C.stance}" stroke-width="1" stroke-linejoin="round"/>` +
+    glyph(C.plate),
   condition: (glyph) => `<circle cx="12" cy="12" r="11" fill="${C.condition}"/>` + glyph(C.plate),
   hex: (glyph) => `<path d="M12 0.5L23.5 12 12 23.5 0.5 12z" fill="${C.hex}"/>` + glyph(C.plate),
   enchantment: (glyph) =>
@@ -184,6 +191,15 @@ const status = {
   ],
   // Enchantment: plus, health coming back.
   regeneration: ["enchantment", (c) => `<path d="M12 6v12M6 12h12" ${stroke(c, 3)}/>`],
+  // Stance: two chevrons, forward: move 25% faster.
+  sprint: ["stance", (c) => `<path d="M7 9l4.5 5L7 19M12.5 9l4.5 5-4.5 5" ${stroke(c, 2.5)}/>`],
+  // Stance: an arrowhead trailing speed lines: run 50% faster.
+  dash: [
+    "stance",
+    (c) =>
+      `<path d="M20 14l-7-5v10z" fill="${c}"/>` +
+      `<path d="M5 11h5M5 17h5M3.5 14h7" ${stroke(c, 2)}/>`,
+  ],
   // Enchantment: a small shield.
   "armor-boost": [
     "enchantment",
