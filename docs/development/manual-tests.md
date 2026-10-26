@@ -49,6 +49,28 @@ show that two browsers that share nothing find each other.
 
 Pass: every step as written.
 
+## A real join, pair by pair: `scripts/p2p-smoke.mjs`
+
+Code: `scripts/p2p-smoke.mjs` (#707). Needs the internet; not in CI.
+
+`node scripts/p2p-smoke.mjs` builds the client with the Trystero
+transport, serves it on `127.0.0.1`, and for each pair hosts a lobby in
+one browser context and joins it from another, as a second window does:
+Firefox↔Firefox, Firefox↔Firefox with a private window's strict tracking
+protection, Chromium↔Chromium and Firefox↔Chromium. For each side it prints
+the relay sockets open, every peer connection's last state and the local
+candidate types it gathered (`host(mdns)`, `srflx`), what Trystero logged,
+and the notice the joiner was shown. It exits 0 only if every pair joined.
+
+`--url <client>` measures a client already served, such as `pnpm run dev`
+at the address it prints; `--pairs` picks pairs. Browsers come from
+`VIBEWARS_CHROMIUM` and `VIBEWARS_FIREFOX`, as for the music stress run.
+
+When a join fails, the joiner is told how far it got (#707): "Couldn't
+reach the lobby servers" when no relay socket opened, "Found the lobby, but
+couldn't connect to its host" when Trystero exchanged SDP and nothing
+connected, and the old "No lobby answered that code" otherwise.
+
 ## Phase 5 of P2P: across networks and browsers (Q46)
 
 Code: everything under `apps/web/src/net/` and `packages/game-session`
