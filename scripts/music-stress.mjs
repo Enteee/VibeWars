@@ -180,7 +180,12 @@ function launch(browser) {
   const executablePath = process.env.VIBEWARS_FIREFOX;
   return firefox.launch({
     ...(executablePath === undefined ? {} : { executablePath }),
-    firefoxUserPrefs: { "media.autoplay.default": 0 },
+    firefoxUserPrefs: {
+      "media.autoplay.default": 0,
+      "media.autoplay.blocking_policy": 0,
+      "media.autoplay.block-webaudio": false,
+      "media.block-autoplay-until-in-foreground": false,
+    },
     env: { ...process.env, MOZ_DISABLE_CONTENT_SANDBOX: "1" },
   });
 }
