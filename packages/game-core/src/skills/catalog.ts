@@ -246,6 +246,45 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "life-drain", durationSeconds: 13 }],
   },
   {
+    id: "necromancer.malaise",
+    name: "Malaise",
+    type: "hex",
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 2,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    // GW1's energy-degeneration hex (#503), at its rank-12 duration.
+    // Left out: the caster's own -1 health degeneration while it lasts,
+    // and the damage that ends it when the foe's energy reaches 0.
+    effects: [{ kind: "apply-status", statusId: "malaise", durationSeconds: 24 }],
+  },
+  {
+    id: "necromancer.blood-ritual",
+    name: "Blood Ritual",
+    type: "enchantment",
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 1,
+    rechargeSeconds: 2,
+    // A touch skill: the ally must be at hand.
+    range: RANGE_MELEE,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    // GW1's energy-regeneration enchantment (#503), at its rank-12
+    // duration. Left out: in GW1 it cannot target its caster.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 17 },
+      { kind: "apply-status", statusId: "blood-ritual", durationSeconds: 13 },
+    ],
+  },
+  {
     id: "elementalist.armor-of-earth",
     name: "Armor of Earth",
     type: "enchantment",

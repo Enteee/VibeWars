@@ -107,6 +107,8 @@ describe("describeSkill", () => {
   it("words a status's pips as GW1 does", () => {
     expect(describeStatus("bleeding")).toContain("−3 Health degeneration");
     expect(describeStatus("regeneration")).toContain("+4 Health regeneration");
+    expect(describeStatus("malaise")).toContain("−1 Energy degeneration");
+    expect(describeStatus("blood-ritual")).toContain("+3 Energy regeneration");
   });
 
   it("flags whether a skill scales at all", () => {

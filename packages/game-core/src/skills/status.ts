@@ -30,7 +30,9 @@ export type StatusId =
   | "dazed"
   // Hexes / enchantments implemented so far.
   | "life-drain"
+  | "malaise"
   | "regeneration"
+  | "blood-ritual"
   | "armor-boost";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
@@ -123,7 +125,9 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   dazed: define("dazed", "Dazed", "condition", { castTimeMultiplier: 2 }),
 
   "life-drain": define("life-drain", "Life Drain", "hex", { healthPips: -2 }),
+  malaise: define("malaise", "Malaise", "hex", { energyPips: -1 }),
   regeneration: define("regeneration", "Regeneration", "enchantment", { healthPips: 4 }),
+  "blood-ritual": define("blood-ritual", "Blood Ritual", "enchantment", { energyPips: 3 }),
   // The slow is Armor of Earth's price: without it, +24 armor is free.
   "armor-boost": define("armor-boost", "Armor Boost", "enchantment", {
     armorModifier: 24,
