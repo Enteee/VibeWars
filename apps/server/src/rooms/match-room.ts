@@ -119,6 +119,8 @@ export const PlayerState = schema(
     castRemaining: t.number().default(0),
     /** The current cast's whole length, dazed included; 0 when not casting. */
     castTotal: t.number().default(0),
+    /** Seconds left lying down from a knockdown (#468); 0 standing. */
+    knockdownRemaining: t.number().default(0),
     /** Active condition/hex/enchantment ids, for status markers. */
     statuses: t.array("string"),
   },
@@ -734,6 +736,7 @@ export class MatchRoom extends Room {
     player.castingSkillId = activeCast?.skillId ?? "";
     player.castRemaining = activeCast?.remainingSeconds ?? 0;
     player.castTotal = activeCast?.totalSeconds ?? 0;
+    player.knockdownRemaining = sim.combatant.knockdownRemaining;
 
     const statusIds = wireStatuses(sim.combatant.statuses.active).map((s) => s.id);
     // Only rewrite the array when it actually changed: every assignment

@@ -50,6 +50,7 @@ function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
     castTotal: 0,
     swingElapsed: 0,
     swingTotal: 0,
+    knockdownRemaining: 0,
     statuses: [],
     ...fields,
   };
@@ -195,6 +196,7 @@ describe("targetHintDismissed", () => {
     castTotal: 0,
     swingElapsed: 0,
     swingTotal: 0,
+    knockdownRemaining: 0,
     statuses: [],
   });
 
@@ -276,6 +278,7 @@ describe("isAttackingTarget", () => {
     castTotal: 0,
     swingElapsed: 0,
     swingTotal: 0,
+    knockdownRemaining: 0,
     statuses: [],
   });
 
@@ -359,6 +362,7 @@ describe("targetProfessionIcons (#281)", () => {
     castTotal: 0,
     swingElapsed: 0,
     swingTotal: 0,
+    knockdownRemaining: 0,
     statuses: [],
   });
 

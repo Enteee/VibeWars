@@ -73,6 +73,7 @@ import {
   flashSlot,
   outOfRange,
   paintCastFill,
+  paintKnockdown,
   slotAffordable,
   slotFlashes,
 } from "./skill-slot-state.js";
@@ -407,6 +408,8 @@ export function createTrainingPanel(): TrainingPanel {
     const target = match.players.find((player) => player.sessionId === self.targetSessionId);
     const far = outOfRange(slots, self, target, session?.wallSegments ?? []);
     slotTips.casting(fill?.slot);
+    // Greyed while you lie knocked down, as on the match HUD (#545).
+    paintKnockdown(skills, self.knockdownRemaining);
     skillButtons.forEach((button, index) => {
       const slot = slots[index] ?? null;
       if (slot === null) {

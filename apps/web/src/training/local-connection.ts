@@ -89,6 +89,7 @@ function toPlayerSnapshot(
     castTotal: activeCast?.totalSeconds ?? 0,
     swingElapsed: swing.elapsed,
     swingTotal: swing.total,
+    knockdownRemaining: combatant.knockdownRemaining,
     statuses: wireStatuses(combatant.statuses.active).map((status) => status.id),
   };
 }
