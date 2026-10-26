@@ -697,6 +697,8 @@
         { "literal": "recharge" },
         { "literal": "refuse" },
         { "literal": "refused" },
+        { "literal": "rejoin-challenge" },
+        { "literal": "rejoin-proof" },
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
         { "literal": "welcome" }
@@ -1264,12 +1266,7 @@
           "type": {
             "union": [
               "null",
-              {
-                "properties": [
-                  { "name": "playerId", "optional": false, "type": "string" },
-                  { "name": "token", "optional": false, "type": "string" }
-                ]
-              }
+              { "properties": [{ "name": "playerId", "optional": false, "type": "string" }] }
             ]
           }
         }
@@ -1295,6 +1292,18 @@
             ]
           }
         }
+      ]
+    },
+    "PeerRejoinChallenge": {
+      "properties": [
+        { "name": "nonce", "optional": false, "type": "string" },
+        { "name": "playerId", "optional": false, "type": "string" }
+      ]
+    },
+    "PeerRejoinProof": {
+      "properties": [
+        { "name": "playerId", "optional": false, "type": "string" },
+        { "name": "proof", "optional": false, "type": "string" }
       ]
     },
     "PeerWelcome": {
