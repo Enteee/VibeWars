@@ -5,6 +5,12 @@
       "to": "manager",
       "everyMinutes": 30,
       "text": "Groom the Backlog: re-rank by value, finish started features first, add unboarded issues, check No Status."
+    },
+    {
+      "id": "workday",
+      "to": "manager",
+      "everyMinutes": 720,
+      "text": "End of the workday. Summarise the last 12 hours to the operator, list every Blocked card, then run: company reboot --workday"
     }
   ]
 }
