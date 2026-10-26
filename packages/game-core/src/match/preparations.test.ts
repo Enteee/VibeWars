@@ -206,6 +206,27 @@ describe("Apply Poison in the match (#525)", () => {
     expect(get(match, "d").combatant.statuses.has("poison")).toBe(false);
   });
 
+  it("ends with its ranger's death: the first arrow after the respawn poisons nobody", () => {
+    const match = new MatchSimulation({
+      seed: "prep",
+      participants: [archer("a", vec2(0, 0)), dummy("d", vec2(600, 0))],
+      matchRules: { scoreToWin: 10, timeLimitSeconds: 600, respawnSeconds: 1 },
+    });
+    const ranger = get(match, "a").combatant;
+    ranger.statuses.apply("apply-poison", 24, "a");
+    ranger.statuses.apply("burning", 10, "d");
+    ranger.health = 0.2;
+    stepFor(match, DT);
+    expect(ranger.dead).toBe(true);
+    stepFor(match, 1.5);
+    expect(ranger.dead).toBe(false);
+    expect(ranger.statuses.active).toEqual([]);
+    match.requestAttack("a", "d");
+    const landed = stepFor(match, 5).flatMap((entry) => entry.events);
+    expect(landed.some((event) => event.kind === "damage" && event.targetId === "d")).toBe(true);
+    expect(get(match, "d").combatant.statuses.has("poison")).toBe(false);
+  });
+
   it("is a preparation: one at a time, and its tooltip says what it does", () => {
     expect(EXCLUSIVE_CATEGORIES.has(getStatusDefinition("apply-poison").category)).toBe(true);
     expect(getStatusDefinition("apply-poison").category).toBe("preparation");

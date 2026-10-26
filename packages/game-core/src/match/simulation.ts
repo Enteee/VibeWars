@@ -1896,9 +1896,7 @@ export class MatchSimulation {
     record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);
     record.combatant.energy = record.combatant.maxEnergy;
     record.combatant.adrenaline = 0;
-    record.combatant.statuses.removeByCategory("condition");
-    record.combatant.statuses.removeByCategory("hex");
-    record.combatant.statuses.removeByCategory("enchantment");
+    record.combatant.statuses.clear();
     record.position = record.spawn;
     record.facing = record.spec.facing;
     record.inputDirection = ZERO;

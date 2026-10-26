@@ -256,6 +256,11 @@ export class StatusSet {
     this.#statuses.set(id, { id, remainingSeconds: durationSeconds, sourceId });
   }
 
+  /** Remove every status, of every category: what a respawn leaves. */
+  public clear(): void {
+    this.#statuses.clear();
+  }
+
   /** Remove one status by id. Returns whether anything was removed. */
   public remove(id: StatusId): boolean {
     return this.#statuses.delete(id);
