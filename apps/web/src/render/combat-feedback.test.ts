@@ -35,6 +35,8 @@ function player(sessionId: string): PlayerSnapshot {
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
+    swingElapsed: 0,
+    swingTotal: 0,
     statuses: [],
   };
 }
@@ -62,7 +64,6 @@ function floated(
       addFloatingText: (text) => texts.push(text),
       addAreaFlash: () => undefined,
       addSwingFlash: () => undefined,
-      addWeaponHit: () => undefined,
     },
     {
       casterSessionId: "me",
@@ -108,7 +109,6 @@ describe("showCombatFeedback", () => {
           addFloatingText: (text) => texts.push(text),
           addAreaFlash: () => undefined,
           addSwingFlash: () => undefined,
-          addWeaponHit: () => undefined,
         },
         {
           casterSessionId: "me",
@@ -142,7 +142,6 @@ describe("showCombatFeedback", () => {
         addFloatingText: (text) => texts.push(text),
         addAreaFlash: () => undefined,
         addSwingFlash: () => undefined,
-        addWeaponHit: () => undefined,
       },
       {
         casterSessionId: "me",
@@ -198,7 +197,6 @@ describe("showCombatFeedback", () => {
         addFloatingText: (text) => texts.push(text),
         addAreaFlash: () => undefined,
         addSwingFlash: () => undefined,
-        addWeaponHit: () => undefined,
       },
       {
         casterSessionId: "me",
@@ -230,7 +228,6 @@ describe("showCombatFeedback and areas", () => {
         addFloatingText: () => undefined,
         addAreaFlash: (flash) => flashes.push(flash),
         addSwingFlash: () => undefined,
-        addWeaponHit: () => undefined,
       },
       {
         casterSessionId,
@@ -311,7 +308,6 @@ describe("swingFlashFor (#161)", () => {
           addSwingFlash: () => {
             arcs += 1;
           },
-          addWeaponHit: () => undefined,
         },
         swing("weapon"),
         snapshot(weaponId),
@@ -320,27 +316,5 @@ describe("swingFlashFor (#161)", () => {
     };
     expect(record("axe")).toBe(1);
     expect(record("shortbow")).toBe(0);
-  });
-
-  it("tells the scene a melee hit landed, for the weapon's swing; a bow's shot tells it instead (#558)", () => {
-    const record = (weaponId: string, cause: CombatMessage["cause"] = "weapon"): string[] => {
-      const hits: string[] = [];
-      showCombatFeedback(
-        {
-          addFloatingText: () => undefined,
-          addAreaFlash: () => undefined,
-          addSwingFlash: () => undefined,
-          addWeaponHit: (attackerId) => {
-            hits.push(attackerId);
-          },
-        },
-        swing(cause),
-        snapshot(weaponId),
-      );
-      return hits;
-    };
-    expect(record("axe")).toEqual(["me"]);
-    expect(record("shortbow")).toEqual([]);
-    expect(record("axe", "skill")).toEqual([]);
   });
 });

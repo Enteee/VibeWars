@@ -205,6 +205,13 @@ export interface WirePlayer {
   /** The current cast's whole length, dazed included; 0 when not casting. */
   readonly castTotal: number;
   /**
+   * The swing under way (#560): seconds into it, and its whole length, the
+   * hit landing at the end. `swingTotal` is 0 when not attacking. The
+   * weapon mark's pose follows them; nothing is predicted.
+   */
+  readonly swingElapsed: number;
+  readonly swingTotal: number;
+  /**
    * Each status as its index in the sorted status-id table (#632), which
    * `wire-schema.json` carries, so a build with another table is refused
    * at join.
@@ -654,7 +661,9 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     typeof raw.dead !== "boolean" ||
     !isNullableString(raw.castingSkillId) ||
     !isNumber(raw.castRemaining) ||
-    !isNumber(raw.castTotal)
+    !isNumber(raw.castTotal) ||
+    !isNumber(raw.swingElapsed) ||
+    !isNumber(raw.swingTotal)
   ) {
     return undefined;
   }
@@ -685,6 +694,8 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         castingSkillId: raw.castingSkillId,
         castRemaining: raw.castRemaining,
         castTotal: raw.castTotal,
+        swingElapsed: raw.swingElapsed,
+        swingTotal: raw.swingTotal,
         statuses,
       };
 }

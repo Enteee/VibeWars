@@ -22,6 +22,7 @@ export type { CombatEvent } from "./effects.js";
 export type { Projectile } from "./projectile.js";
 export { leadAimPoint } from "./projectile.js";
 export type { WeaponSnapshot } from "./weapon-attack.js";
+export { swingProgress } from "./weapon-attack.js";
 export { applyEffect, applyEffects } from "./effects.js";
 
 export { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";

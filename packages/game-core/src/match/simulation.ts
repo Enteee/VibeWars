@@ -88,6 +88,7 @@ import {
   resolveAttackSkill,
   resolveSwing,
   skillBlow,
+  swingIntervalSeconds,
   weaponSnapshotOf,
 } from "../skills/weapon-attack.js";
 import { add, distance, normalize, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
@@ -1465,7 +1466,7 @@ export class MatchSimulation {
     }
 
     attack.swingElapsed += dt;
-    const interval = attackDurationSeconds(record.combatant, weapon.attackIntervalSeconds);
+    const interval = swingIntervalSeconds(record.combatant);
     // Within a hair: twenty-odd additions of 0.05 fall just short of
     // 1.75, and a swing a whole tick late would make the rate drift.
     if (attack.swingElapsed < interval - SWING_EPSILON) {

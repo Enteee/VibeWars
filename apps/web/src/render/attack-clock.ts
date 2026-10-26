@@ -1,29 +1,30 @@
-import { WEAPONS, type WeaponId } from "@vibewars/game-core";
+import type { WeaponId } from "@vibewars/game-core";
 
 import { REST_CLIP, WEAPON_MOTION, type AttackClip, type SwingClip } from "./weapon-pose.js";
 
 /**
- * One actor's attack, as the weapon mark plays it (#536 step 1, #558):
- * anchored on the hits the client sees and predicted between them, on the
- * scene clock, never the snapshot's, so it does not stutter on a late
- * snapshot. The swing timer is not on the wire yet (#560).
+ * One actor's attack, as the weapon mark plays it (#536, #560): a function
+ * of the host's swing timer, on the match clock. Each snapshot says how far
+ * into its swing the actor is and how long that swing is (`swingElapsed`,
+ * `swingTotal`, 0 when not attacking); the hit lands at its end. Nothing
+ * is predicted.
  *
- * - A melee hit is the weapon's combat message; a ranged one is its shot's
- *   first appearance. Either ends a strike, then hold and recover play.
- * - While the actor attacks, the next wind-up starts at
- *   `lastHit + interval − (windUp + strike)`, so its strike ends on the
- *   next hit.
- * - A predicted hit that does not come within the strike plus
- *   `HIT_GRACE_SECONDS` eases back to rest over the recover time, as does a
- *   swing cut short by the attack ending or a switch of target. Never a snap.
- * - A hit nobody predicted, the first of an attack or after a switch,
- *   plays strike → hold → recover from the hit.
+ * - The wind-up starts `windUp + strike` before the end, so the strike
+ *   ends on the hit. The first swing of an attack winds up like any other.
+ * - Between snapshots the swing runs on with the match clock, up to its
+ *   end, and never steps back: a swing the host paused (a cast, a walk
+ *   into reach) holds its pose until the host runs it on.
+ * - The elapsed time falling back ends the swing: a hit, when the host's
+ *   timer could have run out since the last snapshot, and hold and recover
+ *   play from it; otherwise a reset (a switch of target, a skill used),
+ *   which eases from wherever the swing was back to rest over the recover
+ *   time, as an attack that stops does. Never a snap.
  *
  * No Phaser here, so it is tested in Node.
  */
 
-/** How late a predicted hit may be before the swing gives up on it. */
-export const HIT_GRACE_SECONDS = 0.1;
+/** The wire rounds the swing timer to the millisecond (`match-host.ts`): less is noise. */
+const WIRE_EPSILON = 0.002;
 
 /** A clip, and which hit it belongs to, so two-handed weapons alternate hands. */
 export interface AttackFrame {
@@ -33,57 +34,67 @@ export interface AttackFrame {
 
 export const REST_FRAME: AttackFrame = { clip: REST_CLIP, hit: 0 };
 
+/** A wind-up or a strike, and the hit it leads to. */
+interface SwingFrame extends AttackFrame {
+  readonly clip: SwingClip;
+}
+
 const unit = (t: number): number => Math.max(0, Math.min(1, t));
 
 export class AttackClock {
-  /** When the last hit was seen; `undefined` before the first. */
-  #lastHit: number | undefined;
+  /** The swing under way: when it started on the match clock, and its length. */
+  #swing: { readonly start: number; readonly total: number } | undefined;
+  /** The last snapshot's reading of it. */
+  #observed: { readonly at: number; readonly elapsed: number } | undefined;
+  /** How far into the swing the mark has been shown, which it never goes back from. */
+  #shown = 0;
   #hits = 0;
-  /** The last hit was not predicted, so its strike plays after it. */
-  #delayed = false;
-  /** The next swing is predicted from the last hit. */
-  #predicting = false;
-  /** Who the actor attacks, as the snapshot last said. */
-  #target: string | undefined;
+  /** When the last hit landed; `undefined` before the first. */
+  #lastHit: number | undefined;
   /** A swing that stopped short, easing back to rest from where it was. */
   #settle: { readonly at: number; readonly from: SwingClip; readonly hit: number } | undefined;
 
-  /** Note who the actor attacks at `at`: a stop or a switch ends the swing under way. */
-  public observe(at: number, target: string | undefined, weaponId: WeaponId): void {
-    if (target === this.#target) {
+  /**
+   * A snapshot taken at match time `at` says the actor is `elapsed` into a
+   * swing of `total` seconds; `total` 0 when it does not attack. The same
+   * snapshot seen again is ignored.
+   */
+  public observe(at: number, elapsed: number, total: number, weaponId: WeaponId): void {
+    const last = this.#observed;
+    if (last?.at === at) {
       return;
     }
-    const was = this.#target;
-    this.#target = target;
-    if (was === undefined) {
-      // The attack's first hit may have come before the snapshot said so.
-      this.#predicting =
-        this.#lastHit !== undefined && at - this.#lastHit < WEAPONS[weaponId].attackIntervalSeconds;
+    this.#observed = total > 0 ? { at, elapsed } : undefined;
+    const swing = this.#swing;
+    if (swing === undefined || last === undefined) {
+      this.#begin(at, elapsed, total);
       return;
     }
-    const { clip, hit } = this.#swing(at, weaponId);
-    if (clip.phase === "wind-up" || (clip.phase === "strike" && !clip.fromRest)) {
-      this.#settle = { at, from: clip, hit };
+    if (total > 0 && elapsed >= last.elapsed - WIRE_EPSILON) {
+      // The same swing, run on or paused; an attack-speed change only
+      // stretches it.
+      this.#swing = { start: at - elapsed, total };
+      return;
     }
-    this.#predicting = false;
+    if (last.elapsed + (at - last.at) >= swing.total - WIRE_EPSILON) {
+      this.#hits += 1;
+      this.#lastHit = swing.start + swing.total;
+      this.#settle = undefined;
+    } else {
+      const shown = this.#swingFrame(at, weaponId);
+      if (shown !== undefined) {
+        this.#settle = { at, from: shown.clip, hit: shown.hit };
+      }
+    }
+    this.#begin(at, elapsed, total);
   }
 
-  /** A hit landed, or a shot left, at `at`. */
-  public hit(at: number, weaponId: WeaponId): void {
-    const { clip } = this.frame(at, weaponId);
-    const anchored = clip.phase === "wind-up" || (clip.phase === "strike" && !clip.fromRest);
-    this.#lastHit = at;
-    this.#delayed = !anchored;
-    this.#hits += 1;
-    this.#settle = undefined;
-    this.#predicting = this.#target !== undefined;
-  }
-
-  /** Where the swing is at `at`. */
+  /** Where the swing is at match time `at`. */
   public frame(at: number, weaponId: WeaponId): AttackFrame {
+    const m = WEAPON_MOTION[weaponId];
     const settle = this.#settle;
     if (settle !== undefined) {
-      const progress = (at - settle.at) / WEAPON_MOTION[weaponId].recover;
+      const progress = (at - settle.at) / m.recover;
       if (progress < 1) {
         return {
           clip: { phase: "settle", progress: unit(progress), from: settle.from },
@@ -91,53 +102,48 @@ export class AttackClock {
         };
       }
     }
-    return this.#swing(at, weaponId);
-  }
-
-  #swing(at: number, weaponId: WeaponId): AttackFrame {
-    const lastHit = this.#lastHit;
-    if (lastHit === undefined) {
-      return REST_FRAME;
+    const swing = this.#swingFrame(at, weaponId);
+    if (swing !== undefined) {
+      return swing;
     }
-    const m = WEAPON_MOTION[weaponId];
     const hit = this.#hits;
-    const holdAt = lastHit + (this.#delayed ? m.strike : 0);
-    if (at < holdAt) {
-      const progress = unit((at - lastHit) / m.strike);
-      return { clip: { phase: "strike", progress, fromRest: true }, hit };
-    }
-    const sinceHit = at - holdAt;
-    if (sinceHit < m.hold) {
-      return { clip: { phase: "hold", progress: unit(sinceHit / m.hold), sinceHit }, hit };
-    }
-    if (sinceHit < m.hold + m.recover) {
-      const progress = unit((sinceHit - m.hold) / m.recover);
-      return { clip: { phase: "recover", progress, sinceHit }, hit };
-    }
-    if (!this.#predicting) {
-      return { clip: REST_CLIP, hit };
-    }
-    // The next swing belongs to the next hit.
-    const next = lastHit + WEAPONS[weaponId].attackIntervalSeconds;
-    const strikeAt = next - m.strike;
-    const windAt = strikeAt - m.windUp;
-    if (at < windAt) {
-      return { clip: REST_CLIP, hit };
-    }
-    if (at < strikeAt) {
-      return { clip: { phase: "wind-up", progress: unit((at - windAt) / m.windUp) }, hit: hit + 1 };
-    }
-    if (at < next + HIT_GRACE_SECONDS) {
-      const progress = unit((at - strikeAt) / m.strike);
-      return { clip: { phase: "strike", progress, fromRest: false }, hit: hit + 1 };
-    }
-    // The hit never came: back to rest from the end of the strike.
-    const progress = (at - next - HIT_GRACE_SECONDS) / m.recover;
-    if (progress < 1) {
-      const from: SwingClip = { phase: "strike", progress: 1, fromRest: false };
-      return { clip: { phase: "settle", progress: unit(progress), from }, hit: hit + 1 };
+    if (this.#lastHit !== undefined) {
+      const sinceHit = Math.max(0, at - this.#lastHit);
+      if (sinceHit < m.hold) {
+        return { clip: { phase: "hold", progress: unit(sinceHit / m.hold), sinceHit }, hit };
+      }
+      if (sinceHit < m.hold + m.recover) {
+        const progress = unit((sinceHit - m.hold) / m.recover);
+        return { clip: { phase: "recover", progress, sinceHit }, hit };
+      }
     }
     return { clip: REST_CLIP, hit };
+  }
+
+  #begin(at: number, elapsed: number, total: number): void {
+    this.#swing = total > 0 ? { start: at - elapsed, total } : undefined;
+    this.#shown = elapsed;
+  }
+
+  /** The wind-up or strike at `at`, belonging to the next hit; `undefined` before the wind-up. */
+  #swingFrame(at: number, weaponId: WeaponId): SwingFrame | undefined {
+    const swing = this.#swing;
+    if (swing === undefined) {
+      return undefined;
+    }
+    const elapsed = Math.min(swing.total, Math.max(this.#shown, at - swing.start));
+    this.#shown = elapsed;
+    const m = WEAPON_MOTION[weaponId];
+    const strikeAt = swing.total - m.strike;
+    const windAt = strikeAt - m.windUp;
+    if (elapsed < windAt) {
+      return undefined;
+    }
+    const hit = this.#hits + 1;
+    if (elapsed < strikeAt) {
+      return { clip: { phase: "wind-up", progress: unit((elapsed - windAt) / m.windUp) }, hit };
+    }
+    return { clip: { phase: "strike", progress: unit((elapsed - strikeAt) / m.strike) }, hit };
   }
 }
 

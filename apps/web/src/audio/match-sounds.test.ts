@@ -37,6 +37,8 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     castingSkillId,
     castRemaining: castingSkillId === undefined ? 0 : 1,
     castTotal: castingSkillId === undefined ? 0 : 1,
+    swingElapsed: 0,
+    swingTotal: 0,
     statuses: [],
   };
   return {

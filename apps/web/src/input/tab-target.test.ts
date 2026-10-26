@@ -28,6 +28,8 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
+    swingElapsed: 0,
+    swingTotal: 0,
     statuses: [],
     ...overrides,
   };

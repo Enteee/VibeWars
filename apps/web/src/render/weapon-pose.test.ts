@@ -26,8 +26,7 @@ function everyClip(id: WeaponId): AttackClip[] {
   const m = WEAPON_MOTION[id];
   const swings: SwingClip[] = STEPS.flatMap((progress) => [
     { phase: "wind-up", progress },
-    { phase: "strike", progress, fromRest: false },
-    { phase: "strike", progress, fromRest: true },
+    { phase: "strike", progress },
   ]);
   return [
     REST_CLIP,
