@@ -282,6 +282,71 @@ describe("condition-pressure, headless (#111)", () => {
   });
 });
 
+describe("condition-removal, headless (#111)", () => {
+  /** A monk at the spawn with Orison of Healing and Mend Affliction, both at 12. */
+  function monkArena(): MatchSimulation {
+    const played = scenario("condition-removal");
+    const map = MAPS[played.mapId];
+    if (map === undefined) {
+      throw new Error(`no map ${played.mapId}`);
+    }
+    return new MatchSimulation({
+      seed: "removal",
+      participants: [
+        {
+          id: "player",
+          team: PLAYER_TEAM,
+          skillBar: ["monk.orison-of-healing", "monk.mend-affliction"],
+          attributeRanks: new Map([
+            ["monk.healing-prayers", 12],
+            ["monk.protection-prayers", 12],
+          ]),
+          equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+          spawn: map.playerSpawn,
+          facing: 0,
+          baseEnergyPips: baseEnergyPipsFor("monk"),
+        },
+        ...scenarioParticipants(played, map.playerSpawn),
+      ],
+    });
+  }
+
+  function run(sim: MatchSimulation, seconds: number): void {
+    for (let i = 0; i < Math.round(seconds / DT); i += 1) {
+      sim.step(DT);
+    }
+  }
+
+  it("Mend Affliction takes two of the five off, and they are back within 10 s", () => {
+    const sim = monkArena();
+    const conditions = (): number =>
+      sim.get("ally")?.combatant.statuses.countByCategory("condition") ?? NaN;
+    run(sim, 0.5);
+    expect(sim.get("ally")?.combatant.health).toBeLessThanOrEqual(200);
+    expect(conditions()).toBe(5);
+
+    sim.setTarget("player", "ally");
+    expect(sim.requestSkill("player", 1)?.check).toEqual({ ok: true });
+    run(sim, 1.5);
+    expect(conditions()).toBe(3);
+
+    run(sim, 9);
+    expect(conditions()).toBe(5);
+  });
+
+  it("heals stop at 400, deep wound's cap", () => {
+    const sim = monkArena();
+    sim.setTarget("player", "ally");
+    let most = 0;
+    for (let i = 0; i < Math.round(30 / DT); i += 1) {
+      sim.requestSkill("player", 0);
+      sim.step(DT);
+      most = Math.max(most, sim.get("ally")?.combatant.health ?? 0);
+    }
+    expect(most).toBe(400);
+  });
+});
+
 describe("survivability, headless (#111)", () => {
   /** What the hunters deal in 30 s to a player who stands still at `armor`. */
   function damageTaken(armor: number): { damage: number; hits: number } {
