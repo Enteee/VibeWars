@@ -352,25 +352,6 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     ],
   },
   {
-    id: "aoe-line-of-sight",
-    label: "Area: line of sight",
-    teaches:
-      "That a splash stops at walls: the three in front of the pillar burn, the two behind it do not.",
-    mapId: "training-pillars",
-    exercises: ["spell-damage", "line-of-sight"],
-    knobs: [],
-    // The pillar is 250–290 by 170–250. Hit "front", against its west
-    // face: the two behind its east face are 72 away, inside Fireball's
-    // 81, but the pillar stands between.
-    dummies: [
-      target("front", "In front (60 armor)", vec2(235, 210), 60),
-      target("front-north", "In front, north (60 armor)", vec2(220, 170), 60),
-      target("front-south", "In front, south (60 armor)", vec2(220, 250), 60),
-      target("behind-north", "Behind, north (60 armor)", vec2(305, 190), 60),
-      target("behind-south", "Behind, south (60 armor)", vec2(305, 230), 60),
-    ],
-  },
-  {
     id: "obstacles-and-los",
     label: "Sight and range",
     teaches:
@@ -485,6 +466,25 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     dummies: [
       ...CLUSTER,
       { ...target("ally", "Ally (60 armor)", vec2(415, 245), 60), team: PLAYER_TEAM },
+    ],
+  },
+  {
+    id: "aoe-line-of-sight",
+    label: "Area: line of sight",
+    teaches:
+      "That a splash stops at walls: the three in front of the pillar burn, the two behind it do not.",
+    mapId: "training-pillars",
+    exercises: ["spell-damage", "area-damage", "line-of-sight"],
+    knobs: [],
+    // The pillar is 250–290 by 170–250. Hit "front", against its west
+    // face: the two behind its east face are 72 away, inside Fireball's
+    // 81, but the pillar stands between.
+    dummies: [
+      target("front", "In front (60 armor)", vec2(235, 210), 60),
+      target("front-north", "In front, north (60 armor)", vec2(220, 170), 60),
+      target("front-south", "In front, south (60 armor)", vec2(220, 250), 60),
+      target("behind-north", "Behind, north (60 armor)", vec2(305, 190), 60),
+      target("behind-south", "Behind, south (60 armor)", vec2(305, 230), 60),
     ],
   },
 ];
