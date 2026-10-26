@@ -213,6 +213,9 @@ test("a new team is stored only on Save, which stays on the editor (#573)", asyn
   const save = page.getByRole("button", { name: "save", exact: true });
   await expect(save).toBeDisabled();
   await expect(save).toHaveAttribute("title", "A team needs at least one member.");
+  // Nothing stored to copy or delete, so neither can store a half-made team.
+  await expect(page.getByRole("button", { name: "duplicate" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "delete" })).toBeDisabled();
   await page.getByRole("button", { name: "back" }).click();
   await expect(page.getByText("No teams yet.")).toBeVisible();
 
@@ -226,6 +229,7 @@ test("a new team is stored only on Save, which stays on the editor (#573)", asyn
   await expect(page.locator(".toast")).toHaveText("Saved");
   await expect(page.getByLabel("team name")).toBeVisible();
   await expect(page.locator(".editor-unsaved")).toBeHidden();
+  await expect(page.getByRole("button", { name: "duplicate" })).toBeEnabled();
 
   await page.reload();
   await page.getByRole("button", { name: "teams" }).click();
@@ -265,6 +269,9 @@ test("team edits stay on screen until Save; Back and Delete ask first (#573)", a
     .click();
   await expect(memberNames(page)).toHaveText(["1. Alpha"]);
   await expect(page.locator(".editor-unsaved")).toBeVisible();
+  const duplicate = page.getByRole("button", { name: "duplicate" });
+  await expect(duplicate).toBeDisabled();
+  await expect(duplicate).toHaveAttribute("title", "Save first to duplicate");
   await page.getByRole("button", { name: "back" }).click();
   await expect(page.getByText("Discard changes?")).toBeVisible();
   await page.getByRole("button", { name: "keep editing" }).click();

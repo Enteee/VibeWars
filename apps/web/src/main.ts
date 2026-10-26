@@ -260,13 +260,13 @@ async function main(): Promise<void> {
     renderTeamList(screenRoot, teamList.teams, teamList.problems, {
       // A new team is stored only once it is saved (#573).
       onNew: () => {
-        showTeamEditor(newTeam(crypto.randomUUID()), characterList.characters);
+        showTeamEditor(newTeam(crypto.randomUUID()), characterList.characters, false);
       },
       onEdit: (id) => {
         void (async () => {
           const team = await teams.load(id);
           if (team !== undefined) {
-            showTeamEditor(team, characterList.characters);
+            showTeamEditor(team, characterList.characters, true);
           }
         })();
       },
@@ -277,26 +277,36 @@ async function main(): Promise<void> {
   /** The open team editor; every way out of it passes through `showTeams`. */
   let teamEditor: TeamEditorView | undefined;
 
-  const showTeamEditor = (team: StoredTeam, available: readonly StoredCharacter[]): void => {
+  const showTeamEditor = (
+    team: StoredTeam,
+    available: readonly StoredCharacter[],
+    stored: boolean,
+  ): void => {
     teamEditor?.dispose();
-    teamEditor = mountTeamEditor(screenRoot, team, available, {
-      onSave: (saved) => teams.save(saved),
-      onDuplicate: (source) => {
-        void (async () => {
-          await teams.save(duplicateTeam(source, crypto.randomUUID()));
-          await showTeams();
-        })();
+    teamEditor = mountTeamEditor(
+      screenRoot,
+      team,
+      available,
+      {
+        onSave: (saved) => teams.save(saved),
+        onDuplicate: (source) => {
+          void (async () => {
+            await teams.save(duplicateTeam(source, crypto.randomUUID()));
+            await showTeams();
+          })();
+        },
+        onDelete: (id) => {
+          void (async () => {
+            await teams.delete(id);
+            await showTeams();
+          })();
+        },
+        onClose: () => {
+          void showTeams();
+        },
       },
-      onDelete: (id) => {
-        void (async () => {
-          await teams.delete(id);
-          await showTeams();
-        })();
-      },
-      onClose: () => {
-        void showTeams();
-      },
-    });
+      stored,
+    );
   };
 
   const renderLobby = (): void => {

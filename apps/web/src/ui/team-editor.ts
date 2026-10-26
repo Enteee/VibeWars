@@ -96,9 +96,12 @@ export function mountTeamEditor(
   initial: StoredTeam,
   characters: readonly StoredCharacter[],
   callbacks: TeamEditorCallbacks,
+  /** False for a new team, which nothing has stored yet. */
+  stored: boolean,
 ): TeamEditorView {
   let team = initial;
   let opened = initial;
+  let isStored = stored;
   let asking: InlineConfirm | undefined;
   let disposed = false;
 
@@ -140,17 +143,29 @@ export function mountTeamEditor(
   const save = button("save", "primary", () => {
     const saving = { ...team, updatedAt: Date.now() };
     save.disabled = true;
-    void callbacks.onSave(saving).then(() => {
-      if (disposed) {
-        return;
-      }
-      opened = saving;
-      // Edits made while it was storing stay, and stay unsaved.
-      team = { ...team, updatedAt: saving.updatedAt };
-      toast("Saved");
-      update();
-    });
+    callbacks.onSave(saving).then(
+      () => {
+        if (disposed) {
+          return;
+        }
+        opened = saving;
+        isStored = true;
+        // Edits made while it was storing stay, and stay unsaved.
+        team = { ...team, updatedAt: saving.updatedAt };
+        toast("Saved");
+        update();
+      },
+      (error: unknown) => {
+        if (disposed) {
+          return;
+        }
+        toast(`Not saved: ${error instanceof Error ? error.message : String(error)}`);
+        update();
+      },
+    );
   });
+  // Duplicate copies the stored team: with edits pending it would store
+  // them unchecked, under the copy, and drop them from this one.
   const duplicate = button("duplicate", "", () => {
     callbacks.onDuplicate(team);
   });
@@ -224,6 +239,10 @@ export function mountTeamEditor(
     const firstBlocking = problems.find((problem) => problem.blocking);
     save.disabled = firstBlocking !== undefined;
     save.title = firstBlocking?.text ?? "save this team";
+    duplicate.disabled = !isStored || isTeamUnsaved(opened, team);
+    duplicate.title = duplicate.disabled ? "Save first to duplicate" : "duplicate this team";
+    // A new team has nothing to delete: Back leaves it.
+    remove.disabled = !isStored;
 
     const last = team.members.length - 1;
     syncList(
