@@ -50,6 +50,14 @@ describe("canActivate", () => {
     expect(canActivate(request({ caster }))).toEqual({ ok: false, reason: "caster-dead" });
   });
 
+  it("rejects a knocked-down caster (#544)", () => {
+    const caster = makeCombatant({ id: "caster", knockdownRemaining: 2 });
+    expect(canActivate(request({ caster }))).toEqual({
+      ok: false,
+      reason: "caster-knocked-down",
+    });
+  });
+
   it("rejects a skill the caster does not have equipped", () => {
     expect(canActivate(request({ skillBar: ["some.other.skill"] }))).toEqual({
       ok: false,

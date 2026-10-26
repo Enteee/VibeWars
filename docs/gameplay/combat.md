@@ -115,6 +115,22 @@ starts its recharge, as if it had been used, as in GW1. That is what makes
 interrupts so valuable: they do not just delay a skill, they burn the
 opponent's resources.
 
+## Knockdown
+
+A knockdown puts its target on the ground for its duration (Backbreaker:
+4 s on a hit, nothing on a miss). Lying down you cannot move, attack or
+use skills: a cast in progress fails, paid for and recharging, and a
+skill queued or walking in, a walk and the auto-attack all end. Clicks,
+skills and Space while down are refused, not saved for rising; press
+Space again to attack once you are up. A movement key held through the
+knockdown walks you off the moment you stand.
+
+A knockdown on someone already down does nothing; the instant they
+rise, the next one lands. It is not an interrupt, and it is not a status
+effect, so nothing that removes conditions or enchantments stands you
+up. It counts down before anyone acts, so it lasts its full duration
+whoever lands it, and you act again on the tick it ends.
+
 ## Conditions, hexes and enchantments
 
 All three are timed status effects sharing one lifecycle, parameterised

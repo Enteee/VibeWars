@@ -1,6 +1,11 @@
 import { AREA_ADJACENT } from "../distances.js";
 import type { ResolvedWeapon } from "../equipment/resolve.js";
 import type { Weapon } from "../equipment/weapons.js";
+import {
+  CRITICAL_STRIKES_ATTRIBUTE,
+  CRITICAL_STRIKES_CHANCE_PER_RANK,
+  criticalStrikesEnergy,
+} from "../primary-attributes.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { distance } from "../vec2.js";
@@ -97,29 +102,58 @@ function victimsOf(swing: Swing, weapon: Weapon): readonly Combatant[] {
 }
 
 /**
- * What a blow is struck with: the weapon and the attacker's rank in its
- * attribute. A projectile carries the one it was released with, so gear
- * swapped in flight changes nothing.
+ * What a blow is struck with: the weapon, the attacker's rank in its
+ * attribute and in Critical Strikes. A projectile carries the one it was
+ * released with, so gear swapped in flight changes nothing.
  */
 export interface WeaponSnapshot {
   readonly mainHand: ResolvedWeapon;
   readonly rank: number;
+  readonly criticalStrikes: number;
 }
 
 export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
   const { mainHand } = attacker.equipment;
-  return { mainHand, rank: rankIn(attacker, mainHand.attributeId) };
+  return {
+    mainHand,
+    rank: rankIn(attacker, mainHand.attributeId),
+    criticalStrikes: rankIn(attacker, CRITICAL_STRIKES_ATTRIBUTE),
+  };
 }
 
 /**
  * The chance a blow of this snapshot crits (#533): the base chance plus a
  * share per rank in the weapon's mastery, the attribute its requirement
- * names. A caster weapon's nominated attribute is no mastery, and fists
- * have none, so both crit at the base chance.
+ * names, plus Critical Strikes' (#606). A caster weapon's nominated
+ * attribute is no mastery, and fists have none, so both crit at the base
+ * chance and Critical Strikes'.
  */
 export function criticalChance(snapshot: WeaponSnapshot, rules: CombatRules): number {
   const mastery = snapshot.mainHand.weapon.requirement.kind === "fixed" ? snapshot.rank : 0;
-  return Math.min(1, rules.criticalBaseChance + rules.criticalChancePerRank * mastery);
+  return Math.min(
+    1,
+    rules.criticalBaseChance +
+      rules.criticalChancePerRank * mastery +
+      CRITICAL_STRIKES_CHANCE_PER_RANK * snapshot.criticalStrikes,
+  );
+}
+
+/**
+ * Critical Strikes' energy for a critical blow (#606), up to the
+ * attacker's maximum. A dead attacker, as one whose arrow lands after it
+ * fell, gains none.
+ */
+export function gainCriticalEnergy(attacker: Combatant, rank: number, events: CombatEvent[]): void {
+  const amount = criticalStrikesEnergy(rank);
+  if (attacker.dead || amount <= 0) {
+    return;
+  }
+  const applied = Math.min(amount, attacker.maxEnergy - attacker.energy);
+  if (applied <= 0) {
+    return;
+  }
+  attacker.energy += applied;
+  events.push({ kind: "energy-gain", targetId: attacker.id, amount: applied });
 }
 
 /**
@@ -174,7 +208,8 @@ export const PLAIN_BLOW: BlowRule = { weaponDamage: 1, bonus: 0 };
  * depend on who stands where, deterministically. A crit takes the weapon's maximum times its
  * `criticalMultiplier` instead of rolling; an attack skill's bonus is
  * added after, unmultiplied. A melee blow at an `exposed` victim always
- * crits; a projectile never does that way, however it lands.
+ * crits; a projectile never does that way, however it lands. Returns
+ * whether the blow crit.
  */
 export function landBlow(
   snapshot: WeaponSnapshot,
@@ -184,7 +219,7 @@ export function landBlow(
   rng: SimulationRng,
   rules: CombatRules,
   events: CombatEvent[],
-): void {
+): boolean {
   const { weapon, requirementMet } = snapshot.mainHand;
   const rolledCritical = rng.nextFloat() < criticalChance(snapshot, rules);
   const critical = rolledCritical || (exposed && weapon.projectileSpeed === undefined);
@@ -203,6 +238,7 @@ export function landBlow(
     armorPenetration: weapon.armorPenetration,
   };
   applyDamage(victim, mitigate(packet, victim, rules), critical, events);
+  return critical;
 }
 
 /** One blow on one victim: blind first, then block, then the crit and damage rolls. */
@@ -219,15 +255,10 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
     events.push({ kind: "attack-blocked", targetId: victim.id });
     return;
   }
-  landBlow(
-    weaponSnapshotOf(attacker),
-    victim,
-    PLAIN_BLOW,
-    swing.exposed(victim),
-    rng,
-    rules,
-    events,
-  );
+  const snapshot = weaponSnapshotOf(attacker);
+  if (landBlow(snapshot, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
+    gainCriticalEnergy(attacker, snapshot.criticalStrikes, events);
+  }
 }
 
 /**
@@ -291,7 +322,9 @@ export function resolveAttackSkill(
       blocked.push(victim);
       continue;
     }
-    landBlow(snapshot, victim, blow, exposed(victim), rng, rules, events);
+    if (landBlow(snapshot, victim, blow, exposed(victim), rng, rules, events)) {
+      gainCriticalEnergy(caster, snapshot.criticalStrikes, events);
+    }
     hit.push(victim);
   }
   return [

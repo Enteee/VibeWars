@@ -191,6 +191,11 @@ function describeEffect(
         text: "Interrupts the target's current cast, if they are casting",
         magnitude: undefined,
       };
+    case "knockdown":
+      return {
+        text: `Knocks down for ${seconds(effect.durationSeconds)}`,
+        magnitude: undefined,
+      };
   }
 }
 

@@ -1,7 +1,7 @@
 import { getSkill } from "./catalog.js";
 import { mitigate, spellDamage } from "./damage.js";
 import { resolveMagnitude } from "./scaling.js";
-import { scaledStatusDuration, type StatusId } from "./status.js";
+import { getStatusDefinition, scaledStatusDuration, type StatusId } from "./status.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import type { Combatant, Skill, SkillContext, SkillEffect } from "./types.js";
@@ -70,7 +70,13 @@ export type CombatEvent =
   /** A ranged swing released with a wall in the way: nothing flies (GW1's "Obstructed"). */
   | { readonly kind: "attack-obstructed"; readonly targetId: string }
   /** An attack with no way round the walls to its target: it ends (#211). */
-  | { readonly kind: "attack-unreachable"; readonly targetId: string };
+  | { readonly kind: "attack-unreachable"; readonly targetId: string }
+  /** Knocked down (#468): unable to act for `durationSeconds`. */
+  | {
+      readonly kind: "knocked-down";
+      readonly targetId: string;
+      readonly durationSeconds: number;
+    };
 
 /**
  * Apply an already-mitigated amount, clamping at 0 and flagging death
@@ -112,6 +118,37 @@ function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): vo
   }
   target.health += applied;
   events.push({ kind: "heal", targetId: target.id, amount: applied });
+}
+
+/**
+ * Whether a knockdown would land on `target`: alive, standing, and with
+ * nothing active that prevents it. One on someone already down does
+ * nothing, however long it would have lasted (GW1).
+ */
+function canBeKnockedDown(target: Combatant): boolean {
+  return (
+    !target.dead &&
+    target.knockdownRemaining <= 0 &&
+    !target.statuses.active.some((status) => getStatusDefinition(status.id).preventsKnockdown)
+  );
+}
+
+/**
+ * Put `target` on the ground and end what it was doing, as death does:
+ * a cast fails, paid for and recharging, a queued skill and the
+ * auto-attack are dropped. Not an interrupt, so it says nothing of the
+ * cast. Whatever the simulation keeps besides, a walk or a skill walking
+ * in, it drops on the `knocked-down` event.
+ */
+function knockDown(target: Combatant, durationSeconds: number): void {
+  target.knockdownRemaining = durationSeconds;
+  const cancelled = target.cast.cancelCast();
+  const skill = cancelled === undefined ? undefined : getSkill(cancelled.skillId);
+  if (skill !== undefined) {
+    target.cast.startRecharge(skill.id, skill.rechargeSeconds);
+  }
+  target.cast.clearQueue();
+  target.attack = undefined;
 }
 
 export function applyEffect(effect: SkillEffect, context: SkillContext): CombatEvent[] {
@@ -217,6 +254,19 @@ export function applyEffect(effect: SkillEffect, context: SkillContext): CombatE
       events.push({ kind: "interrupted", targetId: target.id, skillId: cancelled.skillId });
       return events;
     }
+
+    case "knockdown": {
+      if (target === undefined || !canBeKnockedDown(target)) {
+        return events;
+      }
+      knockDown(target, effect.durationSeconds);
+      events.push({
+        kind: "knocked-down",
+        targetId: target.id,
+        durationSeconds: effect.durationSeconds,
+      });
+      return events;
+    }
   }
 }
 
@@ -241,6 +291,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "apply-status":
     case "remove-status":
     case "interrupt":
+    case "knockdown":
       return false;
   }
 }

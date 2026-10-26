@@ -99,6 +99,19 @@ export interface InterruptEffect {
   readonly kind: "interrupt";
 }
 
+/**
+ * Knock the target down (#468): for `durationSeconds` it cannot move,
+ * attack or use skills, and whatever it was doing ends. Not an
+ * interrupt, and not a status: `Combatant.knockdownRemaining`.
+ */
+export interface KnockdownEffect {
+  readonly kind: "knockdown";
+  readonly durationSeconds: number;
+}
+
+/** How long "knocks down" lasts when a skill names no duration (GW1). */
+export const KNOCKDOWN_SECONDS = 2;
+
 export type SkillEffect =
   | DamageEffect
   | HealEffect
@@ -106,7 +119,8 @@ export type SkillEffect =
   | SacrificeHealthEffect
   | ApplyStatusEffect
   | RemoveStatusEffect
-  | InterruptEffect;
+  | InterruptEffect
+  | KnockdownEffect;
 
 /* -------------------------------------------------------------------------- */
 /* Skills                                                                      */
@@ -226,6 +240,12 @@ export interface Combatant {
    * `cast` because a cast pauses it and resets its swing.
    */
   attack: AttackState | undefined;
+  /**
+   * Seconds left lying down from a knockdown (#468); `0` standing. A
+   * state of its own rather than a status, so nothing that removes
+   * statuses can stand anyone up.
+   */
+  knockdownRemaining: number;
   /**
    * Weapon, armor and rune effects, already resolved (ADR-0012).
    *

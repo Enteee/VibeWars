@@ -271,6 +271,7 @@ export function renderMute(hud: HudElements, muted: boolean): void {
  */
 const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "caster-dead": "You are dead.",
+  "caster-knocked-down": "You are knocked down.",
   "skill-not-on-bar": "That skill is not on your bar.",
   "still-recharging": "That skill is recharging.",
   "already-casting": "You are already using a skill.",

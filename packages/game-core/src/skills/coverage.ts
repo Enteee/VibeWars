@@ -37,7 +37,7 @@ export type MissingMechanic =
 /** What each missing mechanic would mean to build, in one line. */
 export const MISSING_MECHANIC_DESCRIPTIONS: Readonly<Record<MissingMechanic, string>> =
   Object.freeze({
-    knockdown: "a control state that interrupts and immobilises for a duration",
+    knockdown: "a control state that stops a combatant acting for a duration",
     "ground-targeting": "casting at a point on the ground rather than at a target",
     "persistent-ground-area": "an area that stays on the ground and acts on whoever is in it",
     "skill-bar-mutation": "a skill that replaces itself with a different skill at runtime",
