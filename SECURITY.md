@@ -427,16 +427,26 @@ server, now enforced by the host:
   connection, never from a field in the payload. A message names no other
   player whose state it changes.
 - A returning player proves who they were with their rejoin token, never
-  with their peer id: `selfId` lasts one page load.
+  with their peer id: `selfId` lasts one page load. The token crosses
+  the wire once, in the host's `welcome`, and never back (#593). A
+  rejoin is a challenge: the guest names its seat, the host sends a fresh
+  128-bit nonce, and the guest answers with an HMAC-SHA-256 keyed by the
+  token over the nonce, the seat and the guest's own peer id
+  (`game-session/src/rejoin-proof.ts`). The host checks it against the
+  `from` the proof arrives on. A nonce is good for one proof, and a new
+  hello from the same peer kills the old one.
 - A peer id is not a credential either way. Trystero's peer id is a
   string the peer itself puts in its signalling, so a modified client can
   announce any id. When the host's peer drops mid-match (#515), a guest
-  sends its rejoin token to whichever peer comes back as the host's id.
-  An invited peer that announces itself under that id in the window
-  receives the token, can take that guest's held seat at the real host,
-  and feeds the guest its own snapshots meanwhile. It needs a real drop
-  and the lobby code. Rejoining by challenge, so the token never crosses
-  the wire again, closes it (#593).
+  answers a challenge from whichever peer comes back as the host's id.
+  An invited peer that announces itself under that id in the window can
+  feed the guest its own snapshots, but learns only a nonce and a proof
+  bound to the guest's peer id, which the real host refuses from anyone
+  else, so it cannot take the guest's seat. What remains is a live relay:
+  a peer that poses as the host's id to the guest and as the guest's id
+  to the real host, both at once, while both are up. That needs two
+  spoofed ids, the lobby code and a real drop, and we accept it.
+  Authenticating the host to its guests is out of scope.
 - `MatchHost` (#375) parses every intent with `parseClientIntent`, the
   server's own parser, and counts the server's per-client message budget
   (gap 3) per peer. The budget covers every channel, `hello` and `bye`

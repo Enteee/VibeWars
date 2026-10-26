@@ -19,6 +19,8 @@ import {
   parsePeerBye,
   parsePeerHello,
   parsePeerRefuse,
+  parsePeerRejoinChallenge,
+  parsePeerRejoinProof,
   parsePeerWelcome,
   parseRecharge,
   parseWireCombatBatch,
@@ -57,6 +59,11 @@ const hello: PeerHello = {
 
 /** 128 bits of hex, as the host makes them; repeated so it reads as no secret. */
 const TOKEN = "0f".repeat(16);
+
+const challenge = { playerId: "peer-2", nonce: TOKEN };
+
+/** An HMAC-SHA-256 as hex, as a returning guest sends it. */
+const proof = { playerId: "peer-2", proof: "a1".repeat(32) };
 
 const welcome: PeerWelcome = {
   protocolVersion: PROTOCOL_VERSION,
@@ -220,7 +227,9 @@ const lobbyState: WireLobbyState = {
 
 const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["hello", parsePeerHello, hello],
-  ["rejoining hello", parsePeerHello, { ...hello, rejoin: { playerId: "peer-2", token: TOKEN } }],
+  ["rejoining hello", parsePeerHello, { ...hello, rejoin: { playerId: "peer-2" } }],
+  ["rejoin-challenge", parsePeerRejoinChallenge, challenge],
+  ["rejoin-proof", parsePeerRejoinProof, proof],
   ["welcome", parsePeerWelcome, welcome],
   ["refuse", parsePeerRefuse, refuse],
   ["snapshot", parseWireSnapshot, snapshot],
@@ -258,16 +267,23 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["hello without a rejoin", parsePeerHello, { ...hello, rejoin: undefined }],
   ["hello with an undefined in its build", parsePeerHello, { ...hello, build: { x: undefined } }],
   ["hello with a NaN in its build", parsePeerHello, { ...hello, build: [NaN] }],
+  ["hello with a rejoin but no player", parsePeerHello, { ...hello, rejoin: { token: TOKEN } }],
+  ["hello rejoining a long player id", parsePeerHello, { ...hello, rejoin: { playerId: long } }],
+  ["challenge with a short nonce", parsePeerRejoinChallenge, { ...challenge, nonce: "0f" }],
+  ["challenge with a long nonce", parsePeerRejoinChallenge, { ...challenge, nonce: `${TOKEN}0` }],
   [
-    "hello with a short rejoin token",
-    parsePeerHello,
-    { ...hello, rejoin: { playerId: "peer-2", token: "abc" } },
+    "challenge with an uppercase nonce",
+    parsePeerRejoinChallenge,
+    { ...challenge, nonce: TOKEN.toUpperCase() },
   ],
-  [
-    "hello with an uppercase rejoin token",
-    parsePeerHello,
-    { ...hello, rejoin: { playerId: "peer-2", token: TOKEN.toUpperCase() } },
-  ],
+  ["challenge without a player", parsePeerRejoinChallenge, { nonce: TOKEN }],
+  ["challenge with a long player id", parsePeerRejoinChallenge, { ...challenge, playerId: long }],
+  ["proof with a short proof", parsePeerRejoinProof, { ...proof, proof: TOKEN }],
+  ["proof with a long proof", parsePeerRejoinProof, { ...proof, proof: `${proof.proof}a` }],
+  ["proof in upper case", parsePeerRejoinProof, { ...proof, proof: proof.proof.toUpperCase() }],
+  ["proof without a proof", parsePeerRejoinProof, { playerId: "peer-2" }],
+  ["proof without a player", parsePeerRejoinProof, { proof: proof.proof }],
+  ["proof with a numeric proof", parsePeerRejoinProof, { ...proof, proof: 7 }],
   ["welcome without a rejoin token", parsePeerWelcome, { ...welcome, rejoinToken: undefined }],
   ["welcome with a zero tick", parsePeerWelcome, { ...welcome, tickIntervalMs: 0 }],
   ["welcome with an infinite tick", parsePeerWelcome, { ...welcome, tickIntervalMs: Infinity }],
@@ -539,6 +555,11 @@ describe("the P2P validators (#82)", () => {
       ...snapshot,
       players: [player],
     });
+  });
+
+  it("drop a token from a hello's rejoin: a rejoin is proven, never told (#593)", () => {
+    const parsed = parsePeerHello({ ...hello, rejoin: { playerId: "peer-2", token: TOKEN } });
+    expect(parsed?.rejoin).toEqual({ playerId: "peer-2" });
   });
 
   it("cut a hello's long name to MAX_WIRE_TEXT: shortening it is the host's job", () => {

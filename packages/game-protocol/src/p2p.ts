@@ -42,6 +42,8 @@ export const CHANNELS = [
   "lobby-cmd",
   "lobby-note",
   "match-start",
+  "rejoin-challenge",
+  "rejoin-proof",
 ] as const;
 
 export type Channel = (typeof CHANNELS)[number];
@@ -95,8 +97,11 @@ export const MAX_WIRE_JSON_VALUES = 4096;
 export type JsonValue =
   null | boolean | number | string | readonly JsonValue[] | { readonly [key: string]: JsonValue };
 
-/** A rejoin token: 128 random bits, as 32 lowercase hex digits. */
+/** A rejoin token, or a rejoin challenge's nonce: 128 random bits, as 32 lowercase hex digits. */
 const REJOIN_TOKEN = /^[0-9a-f]{32}$/;
+
+/** A rejoin proof: an HMAC-SHA-256, as 64 lowercase hex digits. */
+const REJOIN_PROOF = /^[0-9a-f]{64}$/;
 
 /** Client to host, first: who is joining, and with what build. */
 export interface PeerHello {
@@ -110,18 +115,37 @@ export interface PeerHello {
   /** Opaque here: the host validates it by the build-join rules. */
   readonly build: JsonValue;
   /**
-   * The seat this peer held before it dropped, and the token the host gave
-   * it for that seat; `null` for a fresh join. A peer id lasts one page
-   * load, so this is how a returning player is known.
+   * The seat this peer held before it dropped; `null` for a fresh join. A
+   * peer id lasts one page load, so this is how a returning player is
+   * known. It carries no token: the host answers with a
+   * `PeerRejoinChallenge`, and the token never leaves the guest (#593).
    */
-  readonly rejoin: { readonly playerId: string; readonly token: string } | null;
+  readonly rejoin: { readonly playerId: string } | null;
+}
+
+/** Host to a peer asking for a held seat back: prove it with this nonce. */
+export interface PeerRejoinChallenge {
+  readonly playerId: string;
+  /** 128 fresh random bits, as 32 lowercase hex digits. */
+  readonly nonce: string;
+}
+
+/** Peer to host: the answer to a `PeerRejoinChallenge`. */
+export interface PeerRejoinProof {
+  readonly playerId: string;
+  /**
+   * HMAC-SHA-256 keyed by the seat's rejoin token over the nonce, the
+   * player id and the peer's own id (`rejoinProof` in game-session), as
+   * 64 lowercase hex digits.
+   */
+  readonly proof: string;
 }
 
 /** Host to one client: it is in, as `playerId`, on `map`. */
 export interface PeerWelcome {
   readonly protocolVersion: string;
   readonly playerId: string;
-  /** What this peer sends in `PeerHello.rejoin` to take its seat back after a drop. */
+  /** What this peer proves it holds to take its seat back after a drop; never sent back. */
   readonly rejoinToken: string;
   readonly tickIntervalMs: number;
   /**
@@ -400,9 +424,7 @@ function parseRejoin(value: unknown): PeerHello["rejoin"] | undefined {
     return null;
   }
   const raw = fields(value);
-  return raw !== undefined && isString(raw.playerId) && isRejoinToken(raw.token)
-    ? { playerId: raw.playerId, token: raw.token }
-    : undefined;
+  return raw !== undefined && isString(raw.playerId) ? { playerId: raw.playerId } : undefined;
 }
 
 /**
@@ -480,6 +502,23 @@ export function parsePeerHello(value: unknown): PeerHello | undefined {
         build,
         rejoin,
       };
+}
+
+export function parsePeerRejoinChallenge(value: unknown): PeerRejoinChallenge | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.playerId) && isRejoinToken(raw.nonce)
+    ? { playerId: raw.playerId, nonce: raw.nonce }
+    : undefined;
+}
+
+export function parsePeerRejoinProof(value: unknown): PeerRejoinProof | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    isString(raw.playerId) &&
+    typeof raw.proof === "string" &&
+    REJOIN_PROOF.test(raw.proof)
+    ? { playerId: raw.playerId, proof: raw.proof }
+    : undefined;
 }
 
 export function parsePeerBye(value: unknown): PeerBye | undefined {

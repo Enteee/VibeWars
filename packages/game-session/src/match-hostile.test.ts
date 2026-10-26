@@ -1,9 +1,17 @@
 import { HOUSE_LOADOUT } from "@vibewars/game-core";
-import { PROTOCOL_VERSION, type JsonValue } from "@vibewars/game-protocol";
+import {
+  PROTOCOL_VERSION,
+  parsePeerRefuse,
+  parsePeerRejoinChallenge,
+  type JsonValue,
+  type PeerHello,
+  type PeerRejoinChallenge,
+  type PeerRejoinProof,
+} from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import { MESSAGE_BURST } from "./intent-budget.js";
-import { MatchRefusedError, type PeerMatchConnection } from "./match-client.js";
+import { MatchRefusedError, connectMatch, type PeerMatchConnection } from "./match-client.js";
 import { RECONNECT_WINDOW_SECONDS, RULESET } from "./match-host.js";
 import {
   hello,
@@ -11,8 +19,10 @@ import {
   self,
   settle,
   startMatch,
+  until,
   type TestMatch,
 } from "./match-harness.test-support.js";
+import { rejoinProof } from "./rejoin-proof.js";
 import type { Transport } from "./transport.js";
 
 /**
@@ -276,9 +286,7 @@ describe("the P2P seat limit (#375)", () => {
     await match.step(TICK);
     expect(await refusal(match.join())).toBeInstanceOf(MatchRefusedError);
 
-    const { connection: resumed } = await match.join(
-      hello({ rejoin: { playerId: dropper.selfSessionId, token: dropper.rejoinToken } }),
-    );
+    const { connection: resumed } = await match.rejoin(dropper);
     expect(resumed.selfSessionId).toBe(dropper.selfSessionId);
     expect(await refusal(match.join())).toBeInstanceOf(MatchRefusedError);
 
@@ -602,5 +610,193 @@ describe("a P2P host survives hostile peers (#375)", () => {
     }
     await settle();
     expect(refusals).toBe(MESSAGE_BURST);
+  });
+});
+
+/**
+ * A rejoin is a challenge (#593): peer ids are self-declared, so whoever
+ * the guest takes for its host may be lying. What it learns must never
+ * let it take the guest's seat at the real host.
+ */
+describe("a P2P host against peers claiming a dropped player's seat (#593)", () => {
+  /** What one peer hears from the host, by channel. */
+  function overhear(transport: Transport) {
+    const heard = {
+      challenges: [] as PeerRejoinChallenge[],
+      welcomes: 0,
+      refusals: [] as string[],
+    };
+    transport.on("rejoin-challenge", (data) => {
+      const challenge = parsePeerRejoinChallenge(data);
+      if (challenge !== undefined) {
+        heard.challenges.push(challenge);
+      }
+    });
+    transport.on("welcome", () => {
+      heard.welcomes += 1;
+    });
+    transport.on("refuse", (data) => {
+      heard.refusals.push(parsePeerRefuse(data)?.reason ?? "malformed");
+    });
+    return heard;
+  }
+
+  /** Two seats, both taken, and the second player dropped: a stranger can only take theirs. */
+  async function droppedSeat() {
+    const match = startMatch({ maxPlayers: 2 });
+    const { watcher, other: dropped, otherTransport } = await twoInAMatch(match);
+    await otherTransport.leave();
+    await match.step(TICK);
+    const thief = match.network.join();
+    await settle();
+    return { match, watcher, dropped, thief, heard: overhear(thief) };
+  }
+
+  const claim = (playerId: string): PeerHello => hello({ rejoin: { playerId } });
+
+  it("does not seat a peer whose proof is not of the seat's token", async () => {
+    const { watcher, dropped, thief, heard } = await droppedSeat();
+
+    thief.send("hello", claim(dropped.selfSessionId), "host");
+    await settle();
+    const [challenge] = heard.challenges;
+    // It has the nonce, under its own id, but no token to key it with.
+    const guess = await rejoinProof(
+      "0".repeat(32),
+      challenge?.nonce ?? "",
+      dropped.selfSessionId,
+      thief.selfId,
+    );
+    const proof: PeerRejoinProof = { playerId: dropped.selfSessionId, proof: guess };
+    thief.send("rejoin-proof", proof, "host");
+    await until(() => heard.refusals.length > 0);
+
+    expect(heard.welcomes).toBe(0);
+    expect(heard.refusals).toEqual(["match-full"]);
+    expect(playerIn(watcher.getSnapshot(), dropped.selfSessionId)).toBeDefined();
+  });
+
+  it("ignores a proof it never asked for, even a right one", async () => {
+    const { match, dropped, thief, heard } = await droppedSeat();
+
+    const right = await rejoinProof(
+      dropped.rejoinToken,
+      "0f".repeat(16),
+      dropped.selfSessionId,
+      thief.selfId,
+    );
+    const proof: PeerRejoinProof = { playerId: dropped.selfSessionId, proof: right };
+    thief.send("rejoin-proof", proof, "host");
+    await match.step(TICK);
+
+    expect(heard).toEqual({ challenges: [], welcomes: 0, refusals: [] });
+  });
+
+  it("takes each nonce once, and only the latest of a peer's", async () => {
+    // The thief holds the token here, the worst case: the nonce still rules.
+    const { match, dropped, thief, heard } = await droppedSeat();
+    const prove = async (nonce: string): Promise<PeerRejoinProof> => ({
+      playerId: dropped.selfSessionId,
+      proof: await rejoinProof(dropped.rejoinToken, nonce, dropped.selfSessionId, thief.selfId),
+    });
+
+    thief.send("hello", claim(dropped.selfSessionId), "host");
+    await settle();
+    thief.send("hello", claim(dropped.selfSessionId), "host");
+    await settle();
+    const [stale, latest] = heard.challenges;
+    expect(stale?.nonce).not.toBe(latest?.nonce);
+
+    // The first nonce died with the second hello.
+    thief.send("rejoin-proof", await prove(stale?.nonce ?? ""), "host");
+    await until(() => heard.refusals.length === 1);
+    expect(heard.welcomes).toBe(0);
+
+    // Taking the stale proof used up the latest challenge too. A fresh one
+    // seats it, and the same proof again does nothing.
+    thief.send("hello", claim(dropped.selfSessionId), "host");
+    await settle();
+    const fresh = heard.challenges.at(-1)?.nonce ?? "";
+    const proof = await prove(fresh);
+    thief.send("rejoin-proof", proof, "host");
+    thief.send("rejoin-proof", proof, "host");
+    await until(() => heard.welcomes > 0);
+    await match.step(TICK);
+    expect(heard.welcomes).toBe(1);
+  });
+
+  it("refuses a guest's proof that a peer posing as the host relays from its own id", async () => {
+    // The guest takes whoever claims the host's id for its host: here,
+    // after the real host drops, the impostor.
+    const match = startMatch({ maxPlayers: 2 });
+    await match.join();
+    const guestTransport = match.network.join();
+    let impostorId: string | undefined;
+    const asHost = (from: string): string => (from === impostorId ? "host" : from);
+    const guestView: Transport = {
+      selfId: guestTransport.selfId,
+      send: (channel, data, to) => {
+        guestTransport.send(
+          channel,
+          data,
+          to === "host" && impostorId !== undefined ? impostorId : to,
+        );
+      },
+      on: (channel, handler) =>
+        guestTransport.on(channel, (data, from) => handler(data, asHost(from))),
+      onPeerJoin: (handler) => guestTransport.onPeerJoin((peerId) => handler(asHost(peerId))),
+      onPeerLeave: (handler) => guestTransport.onPeerLeave((peerId) => handler(asHost(peerId))),
+      leave: () => guestTransport.leave(),
+    };
+    await settle();
+    const guest = await connectMatch({
+      transport: guestView,
+      hostId: "host",
+      hello: hello(),
+      timeoutMs: 1000,
+    });
+    const states: string[] = [];
+    guest.onConnectionChange((state) => states.push(state));
+    match.network.partition("host", guestTransport.selfId);
+    await settle();
+    expect(states).toEqual(["reconnecting"]);
+
+    // The impostor: what the guest sends it goes on to the real host,
+    // what the host asks goes back to the guest, all from its own id.
+    const impostor = match.network.join();
+    impostorId = impostor.selfId;
+    const heard = overhear(impostor);
+    const relayed: unknown[] = [];
+    impostor.on("hello", (data, from) => {
+      if (from === guestTransport.selfId) {
+        relayed.push(data);
+        impostor.send("hello", data as PeerHello, "host");
+      }
+    });
+    impostor.on("rejoin-proof", (data, from) => {
+      if (from === guestTransport.selfId) {
+        relayed.push(data);
+        impostor.send("rejoin-proof", data as PeerRejoinProof, "host");
+      }
+    });
+    impostor.on("rejoin-challenge", (data, from) => {
+      if (from === "host") {
+        impostor.send("rejoin-challenge", data as PeerRejoinChallenge, guestTransport.selfId);
+      }
+    });
+    await until(() => heard.refusals.length > 0);
+
+    // The guest answered, as it must: it cannot tell. No token went by.
+    expect(relayed).toHaveLength(2);
+    expect(JSON.stringify(relayed)).not.toContain(guest.rejoinToken);
+    expect(heard.welcomes).toBe(0);
+    expect(heard.refusals).toEqual(["match-full"]);
+
+    // The seat is still the guest's, once the real host is back.
+    impostorId = undefined;
+    await impostor.leave();
+    match.network.heal();
+    await until(() => states.includes("online"));
+    expect(guest.selfSessionId).toBe("player-2");
   });
 });

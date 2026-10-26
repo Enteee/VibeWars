@@ -35,7 +35,8 @@ export type Json<T> = T extends string | number | boolean | null
  *   afterwards, and what it sends afterwards goes nowhere. The others see
  *   it leave soon after, each on its own schedule; nothing waits for them.
  * - `selfId` lasts one page load. It is never a player's identity across a
- *   reconnect: a returning player proves who it was with its rejoin token.
+ *   reconnect: a returning player proves who it was with its rejoin token,
+ *   without sending it (#593).
  */
 export interface Transport {
   readonly selfId: string;
