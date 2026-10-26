@@ -231,3 +231,27 @@ describe("signets and shouts (#524)", () => {
     );
   });
 });
+
+describe("describeSkill at a primary attribute's rank (#531)", () => {
+  it("shows Expertise's cost with the base in brackets", () => {
+    const broadHead = skill("ranger.broad-head-arrow");
+    expect(describeSkill(broadHead, new Map([["ranger.expertise", 12]])).cost).toBe(
+      "5 energy (10)",
+    );
+  });
+
+  it("shows Fast Casting's activation with the base in brackets", () => {
+    const malaise = skill("necromancer.malaise");
+    expect(describeSkill(malaise, new Map([["mesmer.fast-casting", 12]])).castTime).toBe(
+      "1.1s (2s)",
+    );
+  });
+
+  it("shows the base alone when the rank changes nothing", () => {
+    const broadHead = skill("ranger.broad-head-arrow");
+    const fireball = skill("elementalist.fireball");
+    expect(describeSkill(broadHead, new Map()).cost).toBe("10 energy");
+    expect(describeSkill(fireball, new Map([["ranger.expertise", 12]])).cost).toBe("10 energy");
+    expect(describeSkill(fireball, new Map([["mesmer.fast-casting", 12]])).castTime).toBe("1s");
+  });
+});

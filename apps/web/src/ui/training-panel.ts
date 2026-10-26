@@ -5,7 +5,7 @@ import {
   type Segment,
   type TrainingScenario,
 } from "@vibewars/game-core";
-import { allWallSegments } from "@vibewars/game-maps";
+import { allWallSegments } from "@vibewars/game-maps/geometry";
 import type { MatchSnapshot, SkillSlot } from "@vibewars/game-session";
 
 import { attachMatchSounds, type MatchSounds } from "../audio/match-sounds.js";

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   criticalStrikesEnergy,
+  describePrimaryAttribute,
   divineFavorBonusHeal,
   expertiseEnergyCost,
   fastCastingMultiplier,
@@ -223,5 +224,43 @@ describe("leadershipEnergy (#625)", () => {
     [12, 8, 6],
   ])("rank %i, %i allies affected: %i energy", (rank, allies, energy) => {
     expect(leadershipEnergy(rank, allies)).toBe(energy);
+  });
+});
+
+describe("describePrimaryAttribute (#531)", () => {
+  it.each([
+    ["mesmer.fast-casting", 12, "spells cast 43% faster"],
+    ["mesmer.fast-casting", 15, "spells cast 50% faster"],
+    ["ranger.expertise", 12, "attack and Ranger skills cost 48% less energy"],
+    ["ranger.expertise", 15, "attack and Ranger skills cost 60% less energy"],
+    ["warrior.strength", 12, "attack skills 12% armor penetration"],
+    ["warrior.strength", 15, "attack skills 15% armor penetration"],
+    ["monk.divine-favor", 12, "Monk spells on allies heal +38"],
+    ["monk.divine-favor", 15, "Monk spells on allies heal +48"],
+    ["assassin.critical-strikes", 12, "+12% critical chance, +2 energy per critical"],
+    ["assassin.critical-strikes", 15, "+15% critical chance, +3 energy per critical"],
+    ["necromancer.soul-reaping", 12, "+12 energy when someone nearby dies (3 per 15 s)"],
+    ["necromancer.soul-reaping", 15, "+15 energy when someone nearby dies (3 per 15 s)"],
+    ["paragon.leadership", 12, "up to 6 energy per shout, 1 per ally affected"],
+    ["paragon.leadership", 15, "up to 7 energy per shout, 1 per ally affected"],
+  ])("says what %s does at rank %i", (attributeId, rank, text) => {
+    expect(describePrimaryAttribute(attributeId, rank)).toBe(text);
+  });
+
+  it.each([
+    "mesmer.fast-casting",
+    "ranger.expertise",
+    "warrior.strength",
+    "monk.divine-favor",
+    "assassin.critical-strikes",
+    "necromancer.soul-reaping",
+    "paragon.leadership",
+  ])("says nothing for %s at rank 0", (attributeId) => {
+    expect(describePrimaryAttribute(attributeId, 0)).toBeUndefined();
+  });
+
+  it("says nothing for a secondary, nor a primary with no effect yet", () => {
+    expect(describePrimaryAttribute("mesmer.domination-magic", 12)).toBeUndefined();
+    expect(describePrimaryAttribute("ritualist.spawning-power", 12)).toBeUndefined();
   });
 });

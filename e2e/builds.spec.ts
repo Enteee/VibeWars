@@ -390,6 +390,24 @@ test("hovering a skill shows a tooltip whose numbers follow the attribute", asyn
   expect(Number(atRank)).toBeGreaterThan(Number(atZero));
 });
 
+test("the primary attribute's row says what it does at its rank (#531)", async ({ page }) => {
+  await newCharacter(page);
+  await page.locator(".editor-row select").first().selectOption("mesmer");
+
+  const fastCasting = page.locator(".editor-attribute", { hasText: "Fast Casting" });
+  await expect(fastCasting.locator(".editor-attribute-effect")).toHaveCount(0);
+  for (let i = 0; i < 11; i += 1) {
+    await fastCasting.getByRole("button", { name: "+" }).click();
+  }
+  await expect(fastCasting.locator(".editor-attribute-effect")).toHaveText(
+    "spells cast 40% faster",
+  );
+  await fastCasting.getByRole("button", { name: "+" }).click();
+  await expect(fastCasting.locator(".editor-attribute-effect")).toHaveText(
+    "spells cast 43% faster",
+  );
+});
+
 test("a skill can be dragged from the library onto a bar slot", async ({ page }) => {
   await openElementalist(page);
 
