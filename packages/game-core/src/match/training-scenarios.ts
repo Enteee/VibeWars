@@ -30,6 +30,8 @@ export type TrainingMechanic =
   | "spell-damage"
   | "armor"
   | "interrupts"
+  | "line-of-sight"
+  | "range"
   | "auto-attacks"
   | "dodging"
   | "blocking"
@@ -215,6 +217,41 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
         behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
         weapon: "longbow",
       },
+    ],
+  },
+  {
+    id: "aoe-line-of-sight",
+    label: "Area: line of sight",
+    teaches:
+      "That a splash stops at walls: the three in front of the pillar burn, the two behind it do not.",
+    mapId: "training-pillars",
+    exercises: ["spell-damage", "line-of-sight"],
+    knobs: [],
+    // The pillar is 250–290 by 170–250. Hit "front", against its west
+    // face: the two behind its east face are 72 away, inside Fireball's
+    // 81, but the pillar stands between.
+    dummies: [
+      target("front", "In front (60 armor)", vec2(235, 210), 60),
+      target("front-north", "In front, north (60 armor)", vec2(220, 170), 60),
+      target("front-south", "In front, south (60 armor)", vec2(220, 250), 60),
+      target("behind-north", "Behind, north (60 armor)", vec2(305, 190), 60),
+      target("behind-south", "Behind, south (60 armor)", vec2(305, 230), 60),
+    ],
+  },
+  {
+    id: "obstacles-and-los",
+    label: "Sight and range",
+    teaches:
+      "That seeing a foe is not reaching it: a skill at one behind the pillar walks round it, and at one out of range walks in.",
+    mapId: "training-pillars",
+    exercises: ["spell-damage", "line-of-sight", "range"],
+    knobs: [],
+    // From the spawn at (90, 210): one hidden behind the pillar, in
+    // range; one in plain sight past the pillar's south face, 446 away,
+    // past spell range (420).
+    dummies: [
+      target("hidden", "Behind the pillar (60 armor)", vec2(330, 210), 60),
+      target("far", "Out of range (60 armor)", vec2(520, 330), 60),
     ],
   },
   {
