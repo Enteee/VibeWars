@@ -2599,12 +2599,13 @@ body:has(.editor-layout.has-training) .now-playing {
 }
 
 /*
- * The ally you watch (#443): name and health, top right under the match
- * buttons, live. Yours alone.
+ * The ally you watch (#443): name and health, top right, under the match
+ * buttons and the music button (.hud-music, 3.2rem + 2.2rem), live.
+ * Yours alone.
  */
 .ally-watch {
   position: absolute;
-  top: 3rem;
+  top: 6rem;
   right: 0.9rem;
   display: flex;
   flex-direction: column;
