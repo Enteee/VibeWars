@@ -9,8 +9,6 @@ import { MAX_WIRE_PINGS, type PeerCall, type WireCalls } from "@vibewars/game-pr
 
 /** How long a ping stays up, seconds. */
 export const PING_SECONDS = 2.6;
-/** One call or ping a second, per player; the rest is dropped without a word. */
-export const CALL_INTERVAL_SECONDS = 1;
 
 export type Team = 0 | 1;
 
@@ -64,30 +62,22 @@ export function createCallBoard(bounds: {
     0: { target: null, pings: [], nextPingId: 1 },
     1: { target: null, pings: [], nextPingId: 1 },
   };
-  /** When each player last called or pinged. */
-  const lastCall = new Map<string, number>();
 
   const clamp = (value: number, max: number): number => Math.min(max, Math.max(0, value));
 
   return {
     call(team, callerId, call, now, isLiveEnemy) {
-      const last = lastCall.get(callerId);
-      if (last !== undefined && now - last < CALL_INTERVAL_SECONDS) {
-        return false;
-      }
       const calls = teams[team];
       if (call.kind === "target") {
         if (!isLiveEnemy(call.targetId)) {
           return false;
         }
-        lastCall.set(callerId, now);
         calls.target = { targetId: call.targetId, callerId };
         return true;
       }
       if (!Number.isFinite(call.x) || !Number.isFinite(call.y)) {
         return false;
       }
-      lastCall.set(callerId, now);
       const ping: Ping = {
         id: calls.nextPingId,
         x: clamp(call.x, bounds.width),

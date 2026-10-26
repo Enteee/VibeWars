@@ -78,7 +78,7 @@ export const MAX_WIRE_RANKS = 16;
 export const MAX_WIRE_RANK = 15;
 
 /** The most pings a team's calls carry at once, the newest kept (#443). */
-export const MAX_WIRE_PINGS = 8;
+export const MAX_WIRE_PINGS = 32;
 
 /** The most net pips either way (game-core's MAX_PIPS, #504). */
 export const MAX_WIRE_PIPS = 10;
@@ -368,7 +368,7 @@ export interface WirePing {
 /**
  * Host to each seated peer of one team, never the other (#443): the foe
  * that team has called, if any, and its live pings, at most
- * `MAX_WIRE_PINGS`. Sent whenever either changes, and after a welcome.
+ * `MAX_WIRE_PINGS`. Sent on the tick either changes (#730), and after a welcome.
  */
 export interface WireCalls {
   readonly target: { readonly targetId: string; readonly callerId: string } | null;

@@ -184,6 +184,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   const proving = new Map<string, object>();
   /** Each team's called foe and pings (#443), shown to that team alone. */
   const calls = createCallBoard(map.bounds);
+  /**
+   * The teams a call changed since the last tick (#730). Their views go out
+   * once, in `tick`, so a peer flooding calls costs one send per teammate
+   * per tick, whatever it sends.
+   */
+  const callsDirty = new Set<Team>();
   let seated = 0;
   let accumulator = 0;
   let finished = false;
@@ -481,7 +487,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     const isLiveEnemy = (targetId: string): boolean =>
       isAlive(targetId) && sim.get(targetId)?.combatant.team !== seat.team;
     if (calls.call(seat.team, seat.playerId, call, sim.elapsedSeconds, isLiveEnemy)) {
-      sendCalls(seat.team);
+      callsDirty.add(seat.team);
     }
   });
 
@@ -604,8 +610,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     const result = sim.step(TICK_SECONDS);
     expireDropped();
     for (const team of calls.step(sim.elapsedSeconds, isAlive)) {
+      callsDirty.add(team);
+    }
+    for (const team of callsDirty) {
       sendCalls(team);
     }
+    callsDirty.clear();
     for (const part of packSnapshot(snapshot(), MAX_MESSAGE_BYTES)) {
       transport.send("snapshot", part);
     }

@@ -1,7 +1,11 @@
-import { parseWireCalls, type JsonValue, type WireCalls } from "@vibewars/game-protocol";
+import {
+  MAX_WIRE_PINGS,
+  parseWireCalls,
+  type JsonValue,
+  type WireCalls,
+} from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
-import { CALL_INTERVAL_SECONDS } from "./calls.js";
 import { MESSAGE_BURST } from "./intent-budget.js";
 import type { PeerMatchConnection } from "./match-client.js";
 import { TICK_SECONDS, settle, startMatch, type TestMatch } from "./match-harness.test-support.js";
@@ -82,7 +86,6 @@ describe("calls through the P2P host (#443)", () => {
     await match.step(TICK_SECONDS);
     expect(c.connection.getCalls().target).toBeNull();
 
-    await match.step(CALL_INTERVAL_SECONDS);
     a.connection.sendCall({ kind: "target", targetId: b.connection.selfSessionId });
     await settle();
     await match.step(TICK_SECONDS);
@@ -108,22 +111,32 @@ describe("calls through the P2P host (#443)", () => {
     expect(back.getCalls().target?.targetId).toBe(b.connection.selfSessionId);
   });
 
-  it("keeps a flood to one call a second, and inside the message budget", async () => {
+  it("shows a flood's newest pings, and ignores what is over the message budget (#730)", async () => {
     const match = startMatch();
     const { a, c } = await fourInAMatch(match);
-    // The whole burst at one match time: one gets through.
+    // The whole burst at one match time: the budget lets at most a burst through.
     for (let i = 0; i < MESSAGE_BURST * 3; i += 1) {
       a.connection.sendCall({ kind: "ping", x: i, y: i });
     }
     await settle();
     await match.step(TICK_SECONDS);
-    expect(c.connection.getCalls().pings).toHaveLength(1);
-    // The flood spent the budget; it refills, and the limit lets one more through.
-    await match.step(CALL_INTERVAL_SECONDS);
-    a.connection.sendCall({ kind: "ping", x: 1, y: 1 });
+    const { pings } = c.connection.getCalls();
+    expect(pings).toHaveLength(MAX_WIRE_PINGS);
+    expect(Math.max(...pings.map((ping) => ping.x))).toBeLessThan(MESSAGE_BURST);
+  });
+
+  it("sends a team its calls once a tick, however many came in (#730)", async () => {
+    const match = startMatch();
+    const { a, c } = await fourInAMatch(match);
+    const before = c.heard.length;
+    for (let i = 0; i < 5; i += 1) {
+      a.connection.sendCall({ kind: "ping", x: i, y: i });
+    }
     await settle();
+    expect(c.heard).toHaveLength(before);
     await match.step(TICK_SECONDS);
-    expect(c.connection.getCalls().pings).toHaveLength(2);
+    expect(c.heard).toHaveLength(before + 1);
+    expect(c.connection.getCalls().pings).toHaveLength(5);
   });
 
   it("drops a malformed call without a word, and keeps the peer", async () => {
@@ -144,7 +157,6 @@ describe("calls through the P2P host (#443)", () => {
     await match.step(TICK_SECONDS);
     expect(c.connection.getCalls()).toEqual({ target: null, pings: [] });
 
-    await match.step(CALL_INTERVAL_SECONDS);
     a.connection.sendCall({ kind: "target", targetId: b.connection.selfSessionId });
     await settle();
     await match.step(TICK_SECONDS);
