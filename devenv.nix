@@ -1,5 +1,15 @@
 { pkgs, config, ... }:
 
+let
+  # Only Playwright's Firefox, for scripts/music-stress.mjs (#519).
+  playwrightFirefox = pkgs.playwright-driver.selectBrowsers {
+    withFirefox = true;
+    withChromium = false;
+    withChromiumHeadlessShell = false;
+    withWebkit = false;
+    withFfmpeg = false;
+  };
+in
 {
   name = "vibewars";
 
@@ -53,12 +63,25 @@
     # re-run it and get the committed bytes.
     pkgs.sox
     pkgs.ffmpeg-headless
+    # scripts/music-stress.mjs (#519): Firefox is the browser that crackles,
+    # and its Playwright build only talks to the Playwright release it was
+    # made for, so package.json pins @playwright/test to nixpkgs' version
+    # (1.63.0). Firefox only: the e2e suite stays Chromium-only. No browser is
+    # ever downloaded at runtime. PulseAudio gives both browsers a null sink,
+    # so they render to a real-time stream (`music-stress.mjs --pulse`).
+    playwrightFirefox
+    pkgs.pulseaudio
   ];
 
   env.VIBEWARS_ENV = "development";
   env.VIBEWARS_CHROMIUM = "${pkgs.chromium}/bin/chromium";
 
   enterShell = ''
+    # The revision in the directory name is the Playwright release's, so a
+    # glob finds it. Unset if the browser is missing: the script then says so.
+    for firefox in ${playwrightFirefox}/firefox-*/firefox/firefox; do
+      [ -x "$firefox" ] && export VIBEWARS_FIREFOX="$firefox"
+    done
     echo "vibewars dev shell — node $(node --version), pnpm $(pnpm --version)"
   '';
 

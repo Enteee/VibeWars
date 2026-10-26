@@ -278,6 +278,23 @@ Firefox could not be measured here: in this sandbox it has no audio
 output. Its numbers come from the phone check in
 `docs/development/manual-tests.md`.
 
+### 8. Underruns in Chromium and Firefox, validated (#519)
+
+`.github/workflows/music-measure.yml` runs `scripts/music-stress.mjs --pulse`
+for each browser on a push to `main` that touches the music, or on demand:
+a PulseAudio null sink gives both a real-time output, and `?audiostress=<ms>`
+(stress build only) makes an AudioWorklet busy-wait that long in every
+render quantum (2.5 ms is about 95 % of the 2.67 ms budget at 48 kHz). A
+browser's readings are **validated** when `underrunMs` stays near 0 with no
+stress and rises from 1.5 to 2.5 ms (`scripts/music-stress-validation.mjs`);
+otherwise they are printed marked unvalidated and nobody tunes from them.
+It never fails on bad numbers, only on a crash. A headless runner is not a
+phone.
+
+**Numbers: pending the first green run of that workflow**, which is to be
+linked here with both browsers' tables at intensity 0 and 3, SFX on and off.
+Until then the `music:check` budgets (#514) stay provisional.
+
 ## The scheduler works ahead
 
 Strudel's cyclist queries slots up to 0.2 s past its clock and skips every

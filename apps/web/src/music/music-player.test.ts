@@ -38,6 +38,7 @@ function setup(overrides: Partial<MusicPlayerDeps> = {}) {
     gestures,
     now: () => now,
     measure: false,
+    audioStress: null,
     every: (ms, callback) => {
       expect(ms).toBe(HEARTBEAT_MS);
       tick = callback;
