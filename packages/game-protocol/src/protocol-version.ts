@@ -10,4 +10,4 @@
  * fails loudly at join time instead of desynchronising mid-match. It
  * only ever rejects; there is no code path per version (ADR-0016).
  */
-export const PROTOCOL_VERSION = "572b35d6c5ab";
+export const PROTOCOL_VERSION = "872c32ed936a";

@@ -54,7 +54,7 @@ import {
   naturalHealthPips,
   moveSpeedMultiplier,
 } from "../skills/tick.js";
-import type { Combatant, Skill } from "../skills/types.js";
+import { isSpell, type Combatant, type Skill } from "../skills/types.js";
 import {
   leadAimPoint,
   PositionHistory,
@@ -754,6 +754,7 @@ export class MatchSimulation {
     }
 
     payCost(skill, record.combatant);
+    this.#useGlyph(record, skill);
     // The swing in progress is lost, as in GW1; the attack itself resumes
     // once the skill is done.
     if (record.combatant.attack !== undefined) {
@@ -779,6 +780,34 @@ export class MatchSimulation {
       record.walkGoal = undefined;
     }
     return { skillId: skill.id, check };
+  }
+
+  /**
+   * A spell starting, paid for, uses up one of the next spells an active
+   * glyph holds (#526): an interrupt or a cancel after this does not give
+   * it back, as in GW1. A glyph spent logs its end.
+   */
+  #useGlyph(record: ParticipantRecord, skill: Skill): void {
+    if (!isSpell(skill.type)) {
+      return;
+    }
+    const ended = record.combatant.statuses.countSpellStarted();
+    if (ended.length > 0) {
+      this.#log.push({
+        tick: this.#tick,
+        atSeconds: this.#elapsedSeconds,
+        cause: "skill",
+        sourceId: record.id,
+        skillId: skill.id,
+        weaponId: undefined,
+        area: undefined,
+        events: ended.map((statusId) => ({
+          kind: "status-expired",
+          targetId: record.id,
+          statusId,
+        })),
+      });
+    }
   }
 
   /**

@@ -4,7 +4,8 @@ import { distanceWithinRange, hasLineOfSight, type Segment } from "../geometry.j
 import { EXPERTISE_ATTRIBUTE, expertiseEnergyCost } from "../primary-attributes.js";
 import type { Vec2 } from "../vec2.js";
 
-import type { Combatant, Skill } from "./types.js";
+import { getStatusDefinition } from "./status.js";
+import { isSpell, type Combatant, type Skill } from "./types.js";
 
 /**
  * Skill activation validation (brief §32: the server validates skill
@@ -119,7 +120,7 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   }
 
   if (skill.cost !== undefined) {
-    if (skill.cost.kind === "energy" && caster.energy < energyCostOf(skill, caster)) {
+    if (skill.cost.kind === "energy" && caster.energy < energyToPay(skill, caster)) {
       return reject("insufficient-energy");
     }
     if (skill.cost.kind === "adrenaline" && caster.adrenaline < skill.cost.amount) {
@@ -147,10 +148,9 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
 }
 
 /**
- * The energy `skill` costs `caster`, after everything that changes it:
- * Expertise so far (#528). The one number both the check and the spend
- * use, so they cannot round apart, and what the skill bar shows. 0 for a
- * skill with no energy cost.
+ * The energy `skill` costs `caster`, after everything that lasts the
+ * match: Expertise so far (#528). What the skill bar shows. 0 for a skill
+ * with no energy cost.
  */
 export function energyCostOf(skill: Skill, caster: Pick<Combatant, "attributeRanks">): number {
   if (skill.cost?.kind !== "energy") {
@@ -158,6 +158,26 @@ export function energyCostOf(skill: Skill, caster: Pick<Combatant, "attributeRan
   }
   const expertise = caster.attributeRanks.get(EXPERTISE_ATTRIBUTE) ?? 0;
   return expertiseEnergyCost(expertise, skill, skill.cost.amount);
+}
+
+/**
+ * The energy `skill` costs `caster` right now: `energyCostOf`, less what
+ * an active glyph takes off a spell (#526), never below 0. The one number
+ * both the check and the spend use, so they cannot disagree.
+ */
+export function energyToPay(
+  skill: Skill,
+  caster: Pick<Combatant, "attributeRanks" | "statuses">,
+): number {
+  const cost = energyCostOf(skill, caster);
+  if (!isSpell(skill.type)) {
+    return cost;
+  }
+  const reduction = caster.statuses.active.reduce(
+    (sum, { id }) => sum + (getStatusDefinition(id).nextSpells?.costReduction ?? 0),
+    0,
+  );
+  return Math.max(0, cost - reduction);
 }
 
 /**
@@ -171,7 +191,7 @@ export function payCost(skill: Skill, caster: Combatant): void {
     return;
   }
   if (skill.cost.kind === "energy") {
-    caster.energy -= energyCostOf(skill, caster);
+    caster.energy -= energyToPay(skill, caster);
     return;
   }
   caster.adrenaline -= skill.cost.amount;

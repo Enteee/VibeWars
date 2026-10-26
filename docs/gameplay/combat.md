@@ -212,6 +212,15 @@ swings, arrows and attack skills, each victim of Barrage. A miss or a
 block poisons nobody, nor does a wand's or staff's bolt. An arrow
 poisons if the preparation is still up when it lands.
 
+**Glyphs** change your next spells, then are gone, and only one is up at
+a time (#526). Glyph of Lesser Energy (Elementalist, 5 energy, 1 s cast,
+15 s) makes your next 2 spells cost 16 less energy, never below 0: a
+spell you could not otherwise afford goes off. A spell uses its charge
+when it starts, so one interrupted or cancelled afterwards has still used
+it; one refused, or queued behind an aftercast, uses it only once it
+starts. Signets, shouts, stances and attacks leave it alone. The 16 is
+its rank-12 number; Energy Storage scaling comes with #532.
+
 **Signets** usually cost nothing, so they work at 0 energy. Healing
 Signet (Warrior, Tactics) heals you after a 2 s cast, and for those 2 s
 you have −40 armor: the penalty ends with the cast, whether it goes off,
