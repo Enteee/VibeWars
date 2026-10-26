@@ -505,19 +505,25 @@ test("(19) a move mid-cast cancels it: logged, and the cast never lands (#279)",
 test("(20) a double right click on a far enemy attacks it: you walk there and swing (#298, #438)", async ({
   page,
 }) => {
-  const canvas = await openTraining(page);
+  // A new character is a warrior with a Sword: the walk has to happen. An
+  // elementalist's Wand (#614) reaches this dummy from the spawn point.
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await expect(page.locator(".editor-row select").first()).toHaveValue("warrior");
+  const canvas = page.locator(".training canvas");
   await page.locator("select.training-scenario").selectOption("weapon-dps");
   await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
   await takeControl(page);
 
-  // The bow-range dummy, at (480, 210): far out of a wand's reach.
+  // The bow-range dummy, at (480, 210): far out of a sword's reach.
   const dummy = (await trainingView(page, canvas)).onPage({ x: 480, y: 210 });
   await page.mouse.dblclick(dummy.x, dummy.y, { button: "right" });
 
   await expect(page.locator(".training-adrenaline")).toContainText("· attacking");
   // Only a body that walked the whole way there can land this. The walk
   // is in game time, which runs slower than wall time under load (#327).
-  await expect(page.locator(".training-log")).toContainText(/Wand \(.+\) hits Bow-range dummy/, {
+  await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Bow-range dummy/, {
     timeout: 20_000,
   });
 });
