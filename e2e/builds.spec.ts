@@ -248,6 +248,33 @@ test("a new team is stored only on Save, which stays on the editor (#573)", asyn
   await expect.poll(() => teamList(page)).toEqual(["Duo · 1 member"]);
 });
 
+test("a toast goes with its screen; one the next screen raises stays (#710)", async ({ page }) => {
+  await saveCharacters(page, ["Alpha"]);
+  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "new team" }).click();
+  await page.getByLabel("team name").fill("Duo");
+  await page.getByRole("button", { name: "add Alpha" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+
+  await page.getByRole("button", { name: "Share", exact: true }).click();
+  const code = await page.getByLabel("team to share").inputValue();
+  await page.keyboard.press("Escape");
+
+  // A fresh Saved, then back at once: well inside the toast's 5 s, so
+  // only the screen change can take it.
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+  await page.getByRole("button", { name: "back" }).click();
+  await expect(page.locator(".toast")).toHaveCount(0, { timeout: 1_000 });
+  await expect.poll(() => teamList(page)).toEqual(["Duo · 1 member"]);
+
+  // A pasted team's note is raised once the team editor is up, so it stays.
+  await paste(page.locator(".screen"), code);
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+  await expect(page.locator(".toast")).toHaveText("Reused 1. Save to keep the team.");
+});
+
 test("the team list: an empty one offers New team; a row shows its members and opens on Enter (#581)", async ({
   page,
 }) => {
