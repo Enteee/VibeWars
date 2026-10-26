@@ -49,13 +49,13 @@ import { SKILL_BAR_SLOTS, equippableSkills, validateBuild } from "../storage/bui
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
 import { noWebGlNotice } from "./arena-notice.js";
 import {
+  armorTarget,
   canEquipOffhand,
   clearArmorUpgrades,
   applyGearDrop,
   decodeGearDrag,
   encodeGearDrag,
   encodeRune,
-  firstFreeArmorSlot,
   offhandAttributeChoices,
   runeChoices,
   setInsignia,
@@ -654,6 +654,12 @@ interface EditorContext {
   readonly selected: () => number | undefined;
   /** Pick a bar slot, or none; every region shows it. */
   readonly select: (slot: number | undefined) => void;
+  /** The armor piece picked for the next insignia or rune (#570), if any. */
+  readonly piece: () => ArmorSlot | undefined;
+  /** Pick an armor piece, or none; every region shows it. */
+  readonly selectPiece: (slot: ArmorSlot | undefined) => void;
+  /** Open a library tab, scrolled to one of its groups if given (#570). */
+  readonly showLibrary: (tab: LibraryTab, group?: string) => void;
   /** Equip `skillId` to `slot`, as `equip` does; the pick, used, is let go. */
   readonly equipTo: (skillId: string, slot: number) => void;
   /** A bar slot's key, from the player's keymap, as the arena's bar labels it. */
@@ -720,6 +726,7 @@ export function mountBuildEditor(
 
   let notice: string | undefined;
   let selected: number | undefined;
+  let piece: ArmorSlot | undefined;
   // Read once per open, as the arena's bar does; labels by code until the
   // browser says what the layout is.
   const keymap = loadKeymap();
@@ -733,12 +740,13 @@ export function mountBuildEditor(
   });
 
   const commit = (next: StoredCharacter, said: string | undefined): void => {
-    // Another profession is another bar to build: the pick goes.
+    // Another profession is another bar to build: the picks go.
     if (
       next.primaryProfession !== character.primaryProfession ||
       next.secondaryProfession !== character.secondaryProfession
     ) {
       selected = undefined;
+      piece = undefined;
     }
     character = next;
     notice = said;
@@ -761,6 +769,14 @@ export function mountBuildEditor(
     select: (slot) => {
       selected = slot;
       update();
+    },
+    piece: () => piece,
+    selectPiece: (slot) => {
+      piece = slot;
+      update();
+    },
+    showLibrary: (tab, group) => {
+      library.show(tab, group);
     },
     equipTo: (skillId, slot) => {
       selected = undefined;
@@ -789,12 +805,13 @@ export function mountBuildEditor(
 
   const panel = h("div", "editor");
   layout.appendChild(panel);
+  const library = mountLibrary(layout, context);
   regions.push(
     bar,
     mountAttributes(panel, context),
     mountSkillBar(panel, context),
     mountGear(panel, context),
-    mountLibrary(layout, context),
+    library,
   );
   update();
 
@@ -1029,6 +1046,10 @@ function mountCommandBar(
     }
     if (context.selected() !== undefined) {
       context.select(undefined);
+      return true;
+    }
+    if (context.piece() !== undefined) {
+      context.selectPiece(undefined);
       return true;
     }
     return false;
@@ -1454,6 +1475,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
     cell.setAttribute("role", "button");
     const toggle = (): void => {
       context.select(context.selected() === slot ? undefined : slot);
+      context.showLibrary("skills");
     };
     cell.addEventListener("click", toggle);
     cell.addEventListener("keydown", (event: KeyboardEvent) => {
@@ -1558,7 +1580,12 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
 
 type LibraryTab = "skills" | "gear";
 
-function mountLibrary(layout: HTMLElement, context: EditorContext): Region {
+interface LibraryRegion extends Region {
+  /** Open `tab`, scrolled to the group named `group` if given. */
+  show(tab: LibraryTab, group?: string): void;
+}
+
+function mountLibrary(layout: HTMLElement, context: EditorContext): LibraryRegion {
   const library = h("aside", "skill-library");
   layout.appendChild(library);
 
@@ -1577,20 +1604,27 @@ function mountLibrary(layout: HTMLElement, context: EditorContext): Region {
   let active: LibraryTab = "skills";
 
   const tabs = h("div", "library-tabs");
+  const open = (tab: LibraryTab): void => {
+    if (active === tab) {
+      return;
+    }
+    scrolled[active] = library.scrollTop;
+    for (const element of bodies[active]) {
+      element.remove();
+    }
+    active = tab;
+    library.append(...bodies[tab]);
+    library.scrollTop = scrolled[tab];
+    for (const [other, otherButton] of tabButtons) {
+      otherButton.classList.toggle("is-active", other === tab);
+    }
+  };
   const tabButtons = (["skills", "gear"] as const).map((tab) => {
     const node = button(tab, "library-tab", () => {
-      if (active === tab) {
-        return;
-      }
-      scrolled[active] = library.scrollTop;
-      for (const element of bodies[active]) {
-        element.remove();
-      }
-      active = tab;
-      library.append(...bodies[tab]);
-      library.scrollTop = scrolled[tab];
-      for (const [other, otherButton] of tabButtons) {
-        otherButton.classList.toggle("is-active", other === tab);
+      // Switched by hand, the gear tab no longer serves the picked piece.
+      if (active !== tab) {
+        open(tab);
+        context.selectPiece(undefined);
       }
     });
     node.classList.toggle("is-active", tab === active);
@@ -1625,6 +1659,16 @@ function mountLibrary(layout: HTMLElement, context: EditorContext): Region {
     update(character) {
       skills.update(character);
       gear.update(character);
+    },
+    show(tab, group) {
+      open(tab);
+      const heading = [...library.querySelectorAll<HTMLElement>(".skill-group")].find(
+        (node) => node.dataset.group === group,
+      );
+      if (heading !== undefined) {
+        library.scrollTop +=
+          heading.getBoundingClientRect().top - library.getBoundingClientRect().top;
+      }
     },
   };
 }
@@ -2032,6 +2076,7 @@ function mountGearSlot(
   label: string,
   context: EditorContext,
   onDrop: (source: GearDragSource) => void,
+  onClick?: () => void,
 ): { readonly element: HTMLElement; update(state: GearSlotState): void } {
   let state: GearSlotState = { filled: undefined };
   const disabled = (): boolean => state.disabledNote !== undefined;
@@ -2042,7 +2087,14 @@ function mountGearSlot(
   const clear = button("×", "gear-slot-clear", () => {
     state.onClear?.();
   });
+  // Clearing is not a click on the slot itself.
+  clear.addEventListener("click", (event) => {
+    event.stopPropagation();
+  });
   clear.title = `clear ${label}`;
+  if (onClick !== undefined) {
+    cell.addEventListener("click", onClick);
+  }
   cell.append(h("span", "gear-slot-label", label), name);
   let shownName = "";
 
@@ -2132,8 +2184,13 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
 
   // --- weapon and off-hand -------------------------------------------
   const handsGrid = h("div", "gear-hands");
-  const weaponSlot = mountGearSlot("weapon", context, drop({ kind: "main-hand" }));
-  const offhandSlot = mountGearSlot("off-hand", context, drop({ kind: "off-hand" }));
+  // A hand clicked opens what can go in it (#570).
+  const weaponSlot = mountGearSlot("weapon", context, drop({ kind: "main-hand" }), () => {
+    context.showLibrary("gear", "weapons");
+  });
+  const offhandSlot = mountGearSlot("off-hand", context, drop({ kind: "off-hand" }), () => {
+    context.showLibrary("gear", "off-hands");
+  });
   weaponSlot.element.dataset.cause = "equipment.mainHand";
   offhandSlot.element.dataset.cause = "equipment.offHand";
   handsGrid.append(weaponSlot.element, offhandSlot.element);
@@ -2165,6 +2222,26 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
   const armorSlots = ARMOR_SLOTS.map((slot) => {
     const row = h("div", "armor-row");
     row.dataset.cause = `equipment.armor.${slot}`;
+    row.dataset.slot = slot;
+    // A piece clicked is picked for the library's next insignia or rune
+    // (#570), and the library opens on them; again lets go.
+    row.tabIndex = 0;
+    row.setAttribute("role", "button");
+    row.setAttribute("aria-label", `${slot} armor`);
+    const toggle = (): void => {
+      const picking = context.piece() !== slot;
+      context.selectPiece(picking ? slot : undefined);
+      if (picking) {
+        context.showLibrary("gear", "insignias");
+      }
+    };
+    row.addEventListener("click", toggle);
+    row.addEventListener("keydown", (event: KeyboardEvent) => {
+      if (event.target === row && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        toggle();
+      }
+    });
     row.appendChild(h("span", "armor-slot-name", slot));
     const insignia = mountGearSlot(
       "insignia",
@@ -2174,7 +2251,7 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
     const rune = mountGearSlot("rune", context, drop({ kind: "armor", slot, part: "rune" }));
     row.append(insignia.element, rune.element);
     armorGrid.appendChild(row);
-    return { slot, insignia, rune };
+    return { slot, row, insignia, rune };
   });
   section.appendChild(armorGrid);
 
@@ -2243,7 +2320,9 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
         handsGrid.after(node);
       });
 
-      for (const { slot, insignia, rune } of armorSlots) {
+      for (const { slot, row, insignia, rune } of armorSlots) {
+        row.classList.toggle("is-selected", context.piece() === slot);
+        row.setAttribute("aria-pressed", String(context.piece() === slot));
         const piece = character.equipment.armor[slot];
         insignia.update({
           filled: piece.insigniaId === null ? undefined : getInsignia(piece.insigniaId)?.name,
@@ -2371,6 +2450,7 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
 
   function group(name: string): HTMLElement {
     const section = h("div", "skill-group");
+    section.dataset.group = name;
     const header = h("div", "skill-group-header");
     header.appendChild(h("span", "skill-group-name", name));
     section.appendChild(header);
@@ -2410,6 +2490,12 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
     return { id: offhand.id, node };
   });
 
+  // A click on an insignia or rune says which piece it goes to (#570).
+  const targetNote = (): HTMLElement => h("span", "gear-box-target");
+  const showTarget = (note: HTMLElement, character: StoredCharacter, part: "insignia" | "rune") => {
+    note.textContent = `→ ${armorTarget(character, part, context.piece())}`;
+  };
+
   // --- insignias -------------------------------------------------------
   const insignias = group("insignias");
   const insigniaBoxes = ALL_INSIGNIAS.map((insignia) => {
@@ -2419,11 +2505,13 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
       drag: { from: "insignia-library", insigniaId: insignia.id },
       onClick: () => {
         const next = current();
-        commit(setInsignia(next, firstFreeArmorSlot(next, "insignia"), insignia.id));
+        commit(setInsignia(next, armorTarget(next, "insignia", context.piece()), insignia.id));
       },
     });
+    const target = targetNote();
+    node.appendChild(target);
     insignias.appendChild(node);
-    return { id: insignia.id, node };
+    return { id: insignia.id, node, target };
   });
 
   // --- runes -----------------------------------------------------------
@@ -2444,8 +2532,9 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
       }
       const worn = ARMOR_SLOTS.map((slot) => character.equipment.armor[slot]);
       const wornInsignias = new Set(worn.map((piece) => piece.insigniaId));
-      for (const { id, node } of insigniaBoxes) {
+      for (const { id, node, target } of insigniaBoxes) {
         node.classList.toggle("is-equipped", wornInsignias.has(id));
+        showTarget(target, character, "insignia");
       }
       const wornRunes = new Set(
         worn.flatMap((piece) => (piece.rune === null ? [] : [encodeRune(piece.rune)])),
@@ -2454,18 +2543,25 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
         runeBoxes,
         runeChoices(character),
         (choice) => choice.key,
-        (choice) =>
-          box({
+        (choice) => {
+          const node = box({
             name: choice.label,
             detail: "",
             drag: { from: "rune-library", rune: choice.rune },
             onClick: () => {
               const next = current();
-              commit(setRune(next, firstFreeArmorSlot(next, "rune"), choice.rune));
+              commit(setRune(next, armorTarget(next, "rune", context.piece()), choice.rune));
             },
-          }),
+          });
+          node.appendChild(targetNote());
+          return node;
+        },
         (node, choice) => {
           node.classList.toggle("is-equipped", wornRunes.has(choice.key));
+          const target = node.querySelector<HTMLElement>(".gear-box-target");
+          if (target !== null) {
+            showTarget(target, character, "rune");
+          }
         },
       );
     },

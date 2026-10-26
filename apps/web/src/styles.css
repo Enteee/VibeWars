@@ -2793,6 +2793,23 @@ body {
   gap: 0.5rem;
 }
 
+/* The piece the next insignia or rune goes to (#570), outlined as a
+   picked bar slot is. */
+.armor-row {
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.armor-row.is-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.gear-box-target {
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+}
+
 .armor-slot-name {
   color: var(--ink-dim);
   font-size: 0.76rem;

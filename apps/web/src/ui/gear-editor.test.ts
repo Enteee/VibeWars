@@ -12,6 +12,7 @@ import {
   decodeRune,
   encodeGearDrag,
   encodeRune,
+  armorTarget,
   firstFreeArmorSlot,
   offhandAttributeChoices,
   runeChoices,
@@ -483,5 +484,13 @@ describe("gear drag and drop", () => {
       tier: "minor",
     });
     expect(firstFreeArmorSlot(character, "rune")).toBe("chest");
+  });
+
+  it("puts a click on the selected piece, else the first free one (#570)", () => {
+    const character = setInsignia(warrior(), "head", "survivor");
+    expect(armorTarget(character, "insignia", undefined)).toBe("chest");
+    expect(armorTarget(character, "insignia", "legs")).toBe("legs");
+    // A selected piece takes the click even when it is already filled.
+    expect(armorTarget(character, "insignia", "head")).toBe("head");
   });
 });
