@@ -264,6 +264,57 @@ describe("weapon-dps, headless", () => {
   });
 });
 
+describe("fireball-dodge, headless", () => {
+  /**
+   * Three Fireballs land on a player who walks round the caster as `turn`
+   * says, as dodge-drill's player does: a tangent walk drifts outward, and
+   * a fourth would find the player out of range. How many of the three hit.
+   */
+  function hitsOutOfThree(turn: (released: boolean) => 0 | 1 | -1): number {
+    const sim = armedArena(scenario("fireball-dodge"), "fireball", WEAPONS.sword);
+    let landed = 0;
+    let hits = 0;
+    let flying = 0;
+    for (let i = 0; i < Math.round(60 / DT) && landed < 3; i += 1) {
+      const released = sim.projectiles.length > flying;
+      flying = sim.projectiles.length;
+      const from = sim.get("pyro")?.position ?? vec2(0, 0);
+      const at = sim.get("player")?.position ?? vec2(0, 0);
+      const way = turn(released);
+      sim.setInputDirection("player", vec2(-(at.y - from.y) * way, (at.x - from.x) * way));
+      for (const entry of sim.step(DT).log) {
+        if (entry.skillId !== "elementalist.fireball") {
+          continue;
+        }
+        for (const event of entry.events) {
+          if (event.kind === "damage" || event.kind === "attack-dodged") {
+            landed += 1;
+            hits += event.kind === "damage" ? 1 : 0;
+          }
+        }
+      }
+    }
+    expect(landed).toBe(3);
+    return hits;
+  }
+
+  it("burns a player who stands still, every time", () => {
+    expect(hitsOutOfThree(() => 0)).toBe(3);
+  });
+
+  it("never burns a player who turns round as each Fireball leaves", () => {
+    let way: 1 | -1 = 1;
+    expect(
+      hitsOutOfThree((released) => {
+        if (released) {
+          way = way === 1 ? -1 : 1;
+        }
+        return way;
+      }),
+    ).toBe(0);
+  });
+});
+
 describe("dodge-drill, headless", () => {
   /**
    * Ten of the archer's shots land on a player who walks round it as

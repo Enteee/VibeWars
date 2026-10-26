@@ -48,6 +48,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    projectile: undefined,
     effects: [
       {
         kind: "heal",
@@ -78,6 +79,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    // Slower than any arrow: a second's flight at full range, so a foe who
+    // sees it leave can step out of where it is led to.
+    projectile: { speed: RANGE_SPELL },
     effects: [
       {
         kind: "damage",
@@ -115,6 +119,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       ],
     },
     whileActivating: undefined,
+    projectile: undefined,
     effects: [],
   },
   {
@@ -145,6 +150,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    projectile: undefined,
     effects: [],
   },
   {
@@ -171,6 +177,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    projectile: undefined,
     effects: [{ kind: "knockdown", durationSeconds: 4 }],
   },
   {
@@ -187,6 +194,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    projectile: undefined,
     // An *original* skill, not an import: the corpus's sacrifice skills
     // all also need hexes or regeneration, so none of them could be
     // implemented honestly yet. This one exists to exercise the
@@ -233,6 +241,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    projectile: undefined,
     effects: [{ kind: "interrupt" }],
   },
   {
@@ -255,6 +264,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    projectile: undefined,
     // The real elite: Daze the target. Applying Dazed interrupts a spell
     // by itself (#546), so it still shuts a caster down, a spell-caster
     // only. It lands with the arrow (#416). (The real arrow also flies
@@ -275,6 +285,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    projectile: undefined,
     // A hex combining attack-slowing with health degeneration. The
     // degeneration is modelled by the hex's own healthPerSecond; the
     // attack-speed half awaits weapon attacks (Sprint 15/21).
@@ -294,6 +305,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    projectile: undefined,
     // GW1's energy-degeneration hex (#503), at its rank-12 duration.
     // Left out: the caster's own -1 health degeneration while it lasts,
     // and the damage that ends it when the foe's energy reaches 0.
@@ -315,6 +327,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    projectile: undefined,
     // GW1's energy-regeneration enchantment (#503), at its rank-12 duration.
     effects: [
       { kind: "sacrifice-health", percentOfMax: 17 },
@@ -335,6 +348,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    projectile: undefined,
     // A self-enchantment: real armor gain, and the real movement penalty
     // that makes it a genuine trade-off rather than a free buff.
     effects: [{ kind: "apply-status", statusId: "armor-boost", durationSeconds: 30 }],
@@ -353,6 +367,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    projectile: undefined,
     // Strong self-regeneration behind a long 3s cast — the canonical
     // "interrupt me" target, which is exactly why it pairs well with the
     // interrupt skills above in a test and in play.
@@ -372,6 +387,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    projectile: undefined,
     // Original design, not an import: the corpus's condition-removal
     // skills all also need enchantment-stripping or per-removal scaling
     // the engine does not express yet. This exercises the remove-status
@@ -392,6 +408,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    projectile: undefined,
     // A 50% chance to block attacks (#534), at its rank-12 duration.
     effects: [{ kind: "apply-status", statusId: "guardian", durationSeconds: 6 }],
   },
@@ -423,6 +440,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    projectile: undefined,
     effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 15 }],
   },
 
@@ -444,6 +462,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    projectile: undefined,
     // "For 8...13...14 seconds, you move 25% faster": 13 s, its rank-12
     // value, until durations scale with ranks.
     effects: [{ kind: "apply-status", statusId: "sprint", durationSeconds: 13 }],
@@ -463,6 +482,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    projectile: undefined,
     effects: [{ kind: "apply-status", statusId: "dash", durationSeconds: 3 }],
   },
   {
@@ -490,6 +510,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
+    projectile: undefined,
     // "...and any Stance being used by your target ends."
     effects: [{ kind: "remove-status", category: "stance", count: 1 }],
   },
@@ -514,6 +535,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     attack: undefined,
     // "You have -40 armor while using this skill."
     whileActivating: "healing-signet-armor",
+    projectile: undefined,
     effects: [
       {
         kind: "heal",
@@ -542,6 +564,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     },
     attack: undefined,
     whileActivating: undefined,
+    projectile: undefined,
     // +21 armor for 10 seconds, ending after 3 incoming attacks: its
     // rank-12 numbers, in the status.
     effects: [{ kind: "apply-status", statusId: "watch-yourself", durationSeconds: 10 }],
@@ -565,6 +588,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
+    projectile: undefined,
     // "For 24 seconds, enemies struck by your physical attacks become
     // poisoned for 3...13...15 seconds": the poison is the status's
     // `onAttackHit`.

@@ -460,9 +460,9 @@ describe("networked combat", () => {
         Math.hypot((shot?.x0 ?? 0) - (me?.x ?? 0), (shot?.y0 ?? 0) - (me?.y ?? 0)),
       ).toBeLessThan(1);
       expect(shot?.flightSeconds).toBeGreaterThan(0);
-      // Who shot it and with what, for the client's tint and sprite (#161).
+      // Who shot it, for the client's tint and sprite (#161); no spell (#535).
       expect(shot?.attackerId).toBe(caster.sessionId);
-      expect(shot?.weaponId).toBe(defaultBuildEquipment("elementalist").mainHand.weaponId);
+      expect(shot?.skillId).toBe("");
       expect(shot?.launchedAt).toBeLessThanOrEqual(victim.state.elapsedSeconds);
 
       const id = shot?.id;

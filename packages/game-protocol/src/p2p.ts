@@ -205,7 +205,12 @@ export interface WirePlayer {
 export interface WireProjectile {
   readonly id: number;
   readonly attackerId: string;
-  readonly weaponId: string;
+  /**
+   * The spell it carries (#535); `null` for a weapon's shot, which is
+   * drawn from its shooter's weapon. Once weapons swap mid-match (#489),
+   * an arrow in flight takes the new weapon's sprite; that is acceptable.
+   */
+  readonly skillId: string | null;
   readonly from: { readonly x: number; readonly y: number };
   readonly to: { readonly x: number; readonly y: number };
   /** The match clock (`elapsedSeconds`) at release. */
@@ -669,7 +674,7 @@ function parseProjectile(value: unknown): WireProjectile | undefined {
     raw === undefined ||
     !isCount(raw.id) ||
     !isString(raw.attackerId) ||
-    !isString(raw.weaponId) ||
+    !isNullableString(raw.skillId) ||
     !isNumber(raw.launchedAt) ||
     !isNumber(raw.flightSeconds) ||
     raw.flightSeconds <= 0
@@ -683,7 +688,7 @@ function parseProjectile(value: unknown): WireProjectile | undefined {
     : {
         id: raw.id,
         attackerId: raw.attackerId,
-        weaponId: raw.weaponId,
+        skillId: raw.skillId,
         from,
         to,
         launchedAt: raw.launchedAt,

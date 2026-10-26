@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
-import { hasLineOfSight } from "../geometry.js";
+import { hasLineOfSight, type Segment } from "../geometry.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { getSkill } from "../skills/catalog.js";
 import type { Projectile } from "../skills/projectile.js";
 import { vec2, ZERO, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -636,5 +637,161 @@ describe("ranged attack skills fly (#416)", () => {
       return;
     }
     throw new Error("no seed blocked the arrow");
+  });
+});
+
+describe("Fireball flies (#535)", () => {
+  const FIREBALL = "elementalist.fireball";
+  const FIREBALL_SPEED = getSkill(FIREBALL)?.projectile?.speed ?? 0;
+
+  /** An Elementalist at rank 12 Fire Magic with Fireball, and the energy for it. */
+  function elementalist(spawn: Vec2): ParticipantSpec {
+    return {
+      id: "caster",
+      team: 0,
+      skillBar: [FIREBALL],
+      attributeRanks: new Map([["elementalist.fire-magic", 12]]),
+      equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+      maxEnergy: 1000,
+      spawn,
+      facing: 0,
+    };
+  }
+
+  function fireSim(
+    foes: readonly ParticipantSpec[] = [target(vec2(300, 0))],
+    walls: readonly Segment[] = [],
+  ): MatchSimulation {
+    return new MatchSimulation({
+      seed: "fireball",
+      walls,
+      participants: [elementalist(vec2(0, 0)), ...foes],
+    });
+  }
+
+  /**
+   * Cast Fireball at `target`, with the target walking `walking` from the
+   * start of the cast, and return the entry its completion logged.
+   */
+  function cast(match: MatchSimulation, walking: Vec2 = ZERO): CombatLogEntry {
+    match.setTarget("caster", "target");
+    match.setInputDirection("target", walking);
+    expect(match.requestSkill("caster", 0)?.check).toEqual({ ok: true });
+    for (let i = 0; i < 100; i += 1) {
+      const completed = match.step(DT).log.find((entry) => entry.skillId === FIREBALL);
+      if (completed !== undefined) {
+        return completed;
+      }
+    }
+    throw new Error("the cast never completed");
+  }
+
+  /** Step until the Fireball lands, and return what it did. */
+  function landFireball(match: MatchSimulation): CombatLogEntry {
+    for (let i = 0; i < 200; i += 1) {
+      const entry = match.step(DT).log.find((logged) => logged.skillId === FIREBALL);
+      if (entry !== undefined) {
+        return entry;
+      }
+    }
+    throw new Error("nothing landed");
+  }
+
+  const health = (match: MatchSimulation, id: string) => get(match, id).combatant.health;
+
+  it("lands its damage and splash when it arrives, not at cast completion", () => {
+    const match = fireSim([target(vec2(300, 0)), { ...target(vec2(330, 0)), id: "beside" }]);
+    const completed = cast(match);
+    expect(completed.events).toEqual([]);
+    expect(completed.area).toBeUndefined();
+    expect(match.projectiles).toHaveLength(1);
+    expect(match.projectiles[0]?.skillHit).toMatchObject({
+      kind: "spell",
+      caster: { id: "caster" },
+    });
+    expect(match.projectiles[0]?.flightSeconds).toBeCloseTo(300 / FIREBALL_SPEED, 9);
+    expect(health(match, "target")).toBe(1e6);
+    expect(get(match, "caster").combatant.cast.rechargeRemaining.has(FIREBALL)).toBe(true);
+
+    const landed = landFireball(match);
+    expect(landed.atSeconds - completed.atSeconds).toBeGreaterThanOrEqual(
+      300 / FIREBALL_SPEED - DT,
+    );
+    expect(landed.events.map((event) => [event.kind, event.targetId])).toEqual([
+      ["damage", "target"],
+      ["damage", "beside"],
+    ]);
+    expect(landed.area).toMatchObject({ x: 300, y: 0 });
+    expect(health(match, "target")).toBeLessThan(1e6);
+    expect(health(match, "beside")).toBeLessThan(1e6);
+  });
+
+  it("a target that sidesteps takes nothing, and nobody where it lands is splashed", () => {
+    const match = fireSim([target(vec2(300, 0)), { ...target(vec2(300, -300)), id: "beside" }]);
+    cast(match, UP);
+    match.setInputDirection("target", DOWN);
+    // Someone standing exactly where it lands is not caught: a miss splashes nobody.
+    const aimPoint = match.projectiles[0]?.aimPoint;
+    expect(aimPoint).toBeDefined();
+    get(match, "beside").position = aimPoint ?? ZERO;
+
+    expect(landFireball(match).events).toEqual([{ kind: "attack-dodged", targetId: "target" }]);
+    expect(health(match, "target")).toBe(1e6);
+    expect(health(match, "beside")).toBe(1e6);
+  });
+
+  it("a wall along the flight stops it: obstructed, no damage", () => {
+    const match = fireSim(
+      [target(vec2(300, -200))],
+      [
+        { a: vec2(200, 5), b: vec2(220, 5) },
+        { a: vec2(220, 5), b: vec2(220, 100) },
+        { a: vec2(220, 100), b: vec2(200, 100) },
+        { a: vec2(200, 100), b: vec2(200, 5) },
+      ],
+    );
+    cast(match, UP);
+    expect(match.projectiles[0]?.obstructed).toBe(true);
+    expect(landFireball(match).events).toEqual([{ kind: "attack-obstructed", targetId: "target" }]);
+    expect(health(match, "target")).toBe(1e6);
+  });
+
+  it("still lands if its caster dies in flight", () => {
+    const match = fireSim();
+    cast(match);
+    kill(match, "caster");
+    expect(landFireball(match).events.map((event) => event.kind)).toEqual(["damage"]);
+    expect(health(match, "target")).toBeLessThan(1e6);
+  });
+
+  it("does nothing if its target dies in flight", () => {
+    const match = fireSim();
+    cast(match);
+    kill(match, "target");
+    for (let i = 0; i < Math.ceil(1 / DT); i += 1) {
+      expect(match.step(DT).log.filter((entry) => entry.skillId === FIREBALL)).toEqual([]);
+    }
+    expect(match.projectiles).toHaveLength(0);
+  });
+
+  it("is not blinded: a blind caster's Fireball still flies", () => {
+    const match = fireSim();
+    get(match, "caster").combatant.statuses.apply("blind", 1000, "target");
+    cast(match);
+    expect(match.projectiles).toHaveLength(1);
+    expect(landFireball(match).events.map((event) => event.kind)).toEqual(["damage"]);
+  });
+
+  it("interrupted before it completes, nothing flies", () => {
+    const match = fireSim();
+    match.setTarget("caster", "target");
+    expect(match.requestSkill("caster", 0)?.check).toEqual({ ok: true });
+    match.step(DT);
+    get(match, "caster").combatant.cast.cancelCast();
+    for (let i = 0; i < Math.ceil(2 / DT); i += 1) {
+      match.step(DT);
+      expect(match.projectiles).toHaveLength(0);
+    }
+    expect(health(match, "target")).toBe(1e6);
   });
 });

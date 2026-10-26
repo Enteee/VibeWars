@@ -76,6 +76,15 @@ describe("describeSkill", () => {
     expect(described.rangeText).toContain("range");
   });
 
+  it("says a flying spell can be dodged (#535)", () => {
+    expect(describeSkill(skill("elementalist.fireball")).effects.map((e) => e.text)).toContain(
+      "Projectile: can be dodged",
+    );
+    expect(describeSkill(skill("monk.orison-of-healing")).effects.map((e) => e.text)).not.toContain(
+      "Projectile: can be dodged",
+    );
+  });
+
   it("says Instant rather than 0s", () => {
     const instant = IMPLEMENTED_SKILLS.find((s) => s.activationSeconds === 0);
     expect(instant).toBeDefined();
@@ -142,7 +151,8 @@ describe("describeSkill", () => {
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
         entry.effects.length +
           (entry.attack?.onBlocked.length ?? 0) +
-          (entry.whileActivating === undefined ? 0 : 1),
+          (entry.whileActivating === undefined ? 0 : 1) +
+          (entry.projectile === undefined ? 0 : 1),
       );
       for (const line of described.effects) {
         expect(line.text.length, `${entry.id} has an empty description line`).toBeGreaterThan(0);

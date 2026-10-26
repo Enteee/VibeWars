@@ -176,7 +176,11 @@ describe("an attack skill pressed out of reach", () => {
     expect(a.combatant.attack).toMatchObject({ targetId: "d" });
     expect(a.pendingSkill).toBeUndefined();
     const log = stepFor(match, 6);
-    expect(uses(log, FIREBALL)).toHaveLength(1);
+    // One Fireball: its release, then its landing (#535).
+    expect(uses(log, FIREBALL).map((entry) => entry.events.map((event) => event.kind))).toEqual([
+      [],
+      ["damage"],
+    ]);
     expect(uses(log, SWIFT_CHOP)).toEqual([]);
     expect(log.some((entry) => entry.cause === "weapon")).toBe(true);
   });

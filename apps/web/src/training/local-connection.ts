@@ -202,7 +202,7 @@ export function createLocalConnection(options: {
         projectiles: simulation.projectiles.map((shot) => ({
           id: shot.id,
           attackerId: shot.attackerId,
-          weaponId: shot.weaponSnapshot.mainHand.weapon.id,
+          skillId: shot.skillHit?.kind === "spell" ? shot.skillHit.skill.id : undefined,
           from: shot.from,
           to: shot.aimPoint,
           launchedAt: simulation.elapsedSeconds - shot.elapsed,
