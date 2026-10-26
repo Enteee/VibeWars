@@ -465,6 +465,11 @@ export interface SkillBarSlot {
  */
 export interface SkillBarMessage {
   readonly slots: readonly (SkillBarSlot | null)[];
+  /**
+   * Attribute id to effective rank, as the server resolved the build,
+   * house loadout included: what the HUD's tooltips describe (#485).
+   */
+  readonly ranks: Readonly<Record<string, number>>;
 }
 
 /**

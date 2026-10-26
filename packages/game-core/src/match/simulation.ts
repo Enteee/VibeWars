@@ -43,6 +43,7 @@ import {
   aggregateModifiers,
   clampPips,
   ENERGY_PER_PIP,
+  scaledStatusDuration,
   STATUS_DEFINITIONS,
   StatusSet,
 } from "../skills/status.js";
@@ -964,7 +965,7 @@ export class MatchSimulation {
       if (target !== undefined && !target.combatant.dead) {
         target.combatant.statuses.apply(
           application.statusId,
-          application.durationSeconds,
+          scaledStatusDuration(target.combatant, application.statusId, application.durationSeconds),
           record.id,
         );
       }

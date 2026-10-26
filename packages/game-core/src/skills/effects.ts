@@ -1,7 +1,7 @@
 import { getSkill } from "./catalog.js";
 import { mitigate, spellDamage } from "./damage.js";
 import { resolveMagnitude } from "./scaling.js";
-import type { StatusId } from "./status.js";
+import { scaledStatusDuration, type StatusId } from "./status.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import type { Combatant, Skill, SkillContext, SkillEffect } from "./types.js";
@@ -169,12 +169,13 @@ export function applyEffect(effect: SkillEffect, context: SkillContext): CombatE
       if (target === undefined || target.dead) {
         return events;
       }
-      target.statuses.apply(effect.statusId, effect.durationSeconds, caster.id);
+      const durationSeconds = scaledStatusDuration(target, effect.statusId, effect.durationSeconds);
+      target.statuses.apply(effect.statusId, durationSeconds, caster.id);
       events.push({
         kind: "status-applied",
         targetId: target.id,
         statusId: effect.statusId,
-        durationSeconds: effect.durationSeconds,
+        durationSeconds,
       });
       return events;
     }

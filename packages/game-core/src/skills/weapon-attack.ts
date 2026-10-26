@@ -150,8 +150,9 @@ export const PLAIN_BLOW: BlowRule = { weaponDamage: 1, bonus: 0 };
  * says, mitigated once by the victim's armor. One that deals nothing
  * still connected, so an attack skill's riders go on.
  *
- * The crit roll is drawn for every blow, so the random stream does not
- * depend on who stands where. A crit takes the weapon's maximum times its
+ * The crit roll is drawn for every blow; a crit, rolled or because the
+ * victim is exposed, then skips the damage roll, so the stream does
+ * depend on who stands where, deterministically. A crit takes the weapon's maximum times its
  * `criticalMultiplier` instead of rolling; an attack skill's bonus is
  * added after, unmultiplied. A melee blow at an `exposed` victim always
  * crits; a projectile never does that way, however it lands.

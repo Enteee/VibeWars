@@ -40,6 +40,10 @@ jobs:
 
       - uses: ./.github/actions/devenv
 
+      # The client imports the workspace packages by their built output.
+      - name: Build packages
+        run: devenv shell -- pnpm exec tsc --build tsconfig.build.json
+
       - name: Measure
         env:
           BROWSER: ${{ matrix.browser }}

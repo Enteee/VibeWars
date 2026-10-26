@@ -1,3 +1,4 @@
+import { allWallSegments } from "@vibewars/game-maps";
 import type { WallDescriptor } from "@vibewars/game-protocol";
 import type { MatchConnection, MatchSnapshot } from "@vibewars/game-session";
 
@@ -162,6 +163,8 @@ export async function startMatchView(
     throw error;
   }
   const walls = connection.map.walls.map(toRenderableWall);
+  // Once per match, for the skill bar's line-of-sight hint (#485).
+  const wallSegments = allWallSegments(connection.map.walls);
   const camera = attachFollowCamera(viewport, parent, connection.map);
 
   const hud = createHud(parent);
@@ -180,7 +183,7 @@ export async function startMatchView(
   const useSkill = (slot: number): void => {
     connection.sendIntent({ kind: "use-skill", slot });
   };
-  renderSkillBar(hud, connection.skillBar, useSkill);
+  renderSkillBar(hud, connection.skillBar, connection.ranks, useSkill);
   // Read once per match: a keymap changed elsewhere applies from the next.
   const keymap = loadKeymap();
   renderKeyLabels(hud, keymap);
@@ -384,7 +387,7 @@ export async function startMatchView(
     // here left the scoreboard, the match clock and the victory banner
     // permanently blank: the server tracked all three and the HUD could
     // draw all three, and nothing connected them.
-    updateHud(hud, self, target, connection.skillBar, latestMatch);
+    updateHud(hud, self, target, connection.skillBar, wallSegments, latestMatch);
     updateRecharges(hud, connection.skillBar, connection.getRecharges());
   });
 
@@ -428,6 +431,7 @@ export async function startMatchView(
       // The scoreboard, result and mute button sit beside the HUD root, in
       // the shared viewport, so they go one by one or pile up per match.
       hud.root.remove();
+      hud.slotTips.dispose();
       hud.scoreboard.remove();
       hud.result.remove();
       hud.mute.remove();
