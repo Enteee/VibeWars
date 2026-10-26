@@ -1,7 +1,13 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { BUILD_FORMAT, BUILD_FORMAT_VERSION, exportBuild, importBuild } from "./build-transfer.js";
+import {
+  BUILD_FORMAT,
+  BUILD_FORMAT_VERSION,
+  exportBuild,
+  importBuild,
+  looksLikeBuild,
+} from "./build-transfer.js";
 import { SKILL_BAR_SLOTS } from "./build-validation.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "./schema.js";
 
@@ -26,6 +32,21 @@ const VALID: StoredCharacter = {
   equipment: defaultBuildEquipment("elementalist"),
   updatedAt: 1_700_000_000_000,
 };
+
+describe("looksLikeBuild", () => {
+  it("takes a build, whole or clipped, so a broken one fails out loud", () => {
+    const text = exportBuild(VALID);
+
+    expect(looksLikeBuild(text)).toBe(true);
+    expect(looksLikeBuild(text.slice(0, 40))).toBe(true);
+  });
+
+  it("ignores any other text", () => {
+    expect(looksLikeBuild("gg, well played")).toBe(false);
+    expect(looksLikeBuild('{"hero":"someone else\'s format"}')).toBe(false);
+    expect(looksLikeBuild(BUILD_FORMAT)).toBe(false);
+  });
+});
 
 describe("build export", () => {
   it("round-trips a valid build", () => {
@@ -53,6 +74,13 @@ describe("build export", () => {
     }
     expect(result.character.id).toBe("local-2");
     expect(result.character.updatedAt).toBe(42);
+  });
+
+  it("is one line, so a chat client does not reflow it (#572)", () => {
+    const text = exportBuild(VALID);
+
+    expect(text).not.toMatch(/[\r\n]/);
+    expect(importBuild(text, "local-2", 42).ok).toBe(true);
   });
 
   it("does not leak local identity into the shared text", () => {

@@ -432,13 +432,22 @@ export function dismissToast(): void {
 /**
  * A short note at the bottom centre (#566): "Saved", or what a change
  * removed with an Undo. One at a time: a new one replaces the old.
+ * `problems` lists why something failed, as a problems chip lists them.
  */
-export function toast(text: string, options: { readonly undo?: () => void } = {}): void {
+export function toast(
+  text: string,
+  options: { readonly undo?: () => void; readonly problems?: readonly string[] } = {},
+): void {
   dismissToast();
   const element = h("div", "toast");
   element.setAttribute("role", "status");
   element.appendChild(h("span", "toast-text", text));
-  const { undo } = options;
+  const { undo, problems = [] } = options;
+  if (problems.length > 0) {
+    const list = h("ul", "problems-list toast-problems");
+    list.append(...problems.map((problem) => h("li", "is-blocking", problem)));
+    element.appendChild(list);
+  }
   if (undo !== undefined) {
     element.appendChild(
       button("Undo", "", () => {

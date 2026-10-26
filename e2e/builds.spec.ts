@@ -407,56 +407,87 @@ test("a member opens in the build editor and comes back to the unsaved team (#57
   await expect(page.getByLabel("team name")).toHaveValue("Trip");
 });
 
-test("a build exports to text and imports back", async ({ page }) => {
+/** Paste `text` onto `target`, as Ctrl+V with it on the clipboard does. */
+async function paste(target: Locator, text: string): Promise<void> {
+  await target.evaluate((element, pasted) => {
+    const data = new DataTransfer();
+    data.setData("text/plain", pasted);
+    element.dispatchEvent(
+      new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }),
+    );
+  }, text);
+}
+
+test("⋯ Share copies the build as one line, and a paste on the editor imports it (#572)", async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Shared Build");
 
-  await page.getByRole("button", { name: "export" }).click();
-  const exported = await page.locator("textarea.editor-transfer").inputValue();
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "Share", exact: true }).click();
+  const line = page.getByLabel("build to share");
+  await expect(line).toBeFocused();
+  const exported = await line.inputValue();
   expect(exported).toContain("vibewars.character");
   expect(exported).toContain("Shared Build");
+  expect(exported).not.toContain("\n");
 
-  // Reopen a *different* character, then import the text into it. This is
-  // the real flow: someone pastes a build they were sent.
+  await page.getByRole("button", { name: "Copy", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Copied");
+  await expect(line).toBeHidden();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(exported);
+
+  // Someone pastes a build they were sent into a different character.
   // Named but never saved: Close asks first (#566).
   await page.getByRole("button", { name: "close" }).click();
   await page.getByRole("button", { name: "discard" }).click();
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator("input.editor-name").fill("Scratch");
 
-  // A clipped paste first, then the whole text: once the import works,
-  // the earlier error must not still say it failed.
-  await page.locator("textarea.editor-transfer").fill(exported.slice(0, 40));
-  await page.getByRole("button", { name: "Import", exact: true }).click();
-  await expect(page.locator(".editor-share-status")).toContainText("Could not import");
+  // Into the name field it is only typing.
+  await paste(page.locator("input.editor-name"), exported);
+  await expect(page.locator("input.editor-name")).toHaveValue("Scratch");
 
-  await page.locator("textarea.editor-transfer").fill(exported);
-  await page.getByRole("button", { name: "Import", exact: true }).click();
+  // Text that is not a build is ignored.
+  await paste(page.locator(".editor"), "gg, well played");
+  await expect(page.locator(".toast")).toBeHidden();
 
+  // A clipped build says why it failed, then the whole one imports, unsaved.
+  await paste(page.locator(".editor"), exported.slice(0, 40));
+  await expect(page.locator(".toast .toast-text")).toHaveText("Could not import");
+  await expect(page.locator(".toast-problems li")).toContainText(["not valid JSON"]);
+  await expect(page.locator("input.editor-name")).toHaveValue("Scratch");
+
+  await paste(page.locator(".editor"), exported);
+  await expect(page.locator(".toast")).toHaveText("Imported Shared Build");
   await expect(page.locator("input.editor-name")).toHaveValue("Shared Build");
-  await expect(page.locator(".editor-share-status .editor-problem")).toHaveCount(0);
-  await expect(page.locator(".editor-share-status")).toBeEmpty();
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
 });
 
-test("a mangled build is refused with a readable reason", async ({ page }) => {
+test("Share keeps the line selected when the clipboard is refused (#572)", async ({ page }) => {
   await newCharacter(page);
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: () => Promise.reject(new Error("denied")) },
+    });
+  });
 
-  await page.locator("textarea.editor-transfer").fill('{"format":"vibewars.character"');
-  await page.getByRole("button", { name: "Import", exact: true }).click();
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "Share", exact: true }).click();
+  await page.getByRole("button", { name: "Copy", exact: true }).click();
 
-  // The failure a player will actually hit: a chat client clipped the
-  // message. It must say so, not throw and leave a blank screen.
-  await expect(page.locator(".editor-share-status")).toContainText("Could not import");
-  await expect(page.locator("input.editor-name")).toBeVisible();
-});
-
-test("a build from another game is refused", async ({ page }) => {
-  await newCharacter(page);
-
-  await page.locator("textarea.editor-transfer").fill('{"hero":"someone else\'s format"}');
-  await page.getByRole("button", { name: "Import", exact: true }).click();
-
-  await expect(page.locator(".editor-share-status")).toContainText("does not look like");
+  const line = page.getByLabel("build to share");
+  await expect(line).toBeFocused();
+  expect(
+    await line.evaluate(
+      (input: HTMLInputElement) =>
+        input.selectionStart === 0 && input.selectionEnd === input.value.length,
+    ),
+  ).toBe(true);
+  await expect(page.locator(".toast")).toBeHidden();
 });
 
 test("a saved character can be chosen and is taken into a match", async ({ page }) => {

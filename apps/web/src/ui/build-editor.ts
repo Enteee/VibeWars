@@ -44,7 +44,7 @@ import {
 } from "../input/keymap.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { NoWebGlError } from "../render/arena-viewport.js";
-import { exportBuild, importBuild } from "../storage/build-transfer.js";
+import { exportBuild, importBuild, looksLikeBuild } from "../storage/build-transfer.js";
 import { SKILL_BAR_SLOTS, equippableSkills, validateBuild } from "../storage/build-validation.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
 import { noWebGlNotice } from "./arena-notice.js";
@@ -92,6 +92,7 @@ import {
   problemsChip,
   screenBar,
   syncList,
+  toast,
   type ChipProblem,
   type InlineConfirm,
 } from "./kit.js";
@@ -793,7 +794,6 @@ export function mountBuildEditor(
     mountAttributes(panel, context),
     mountSkillBar(panel, context),
     mountGear(panel, context),
-    mountShare(panel, context),
     mountLibrary(layout, context),
   );
   update();
@@ -826,10 +826,36 @@ export function mountBuildEditor(
   };
   document.addEventListener("keydown", onKeyDown);
 
+  // A build pasted anywhere but a field imports it (#572), unsaved: the
+  // player sees what arrived and chooses to keep it. Other text is
+  // ignored; a broken build says why.
+  const onPaste = (event: ClipboardEvent): void => {
+    const target = event.target;
+    const text = event.clipboardData?.getData("text/plain") ?? "";
+    if (
+      (target instanceof Element && target.closest(TAKES_TYPING) !== null) ||
+      !looksLikeBuild(text)
+    ) {
+      return;
+    }
+    event.preventDefault();
+    const result = importBuild(text, context.current().id, Date.now());
+    if (!result.ok) {
+      // Every problem at once: someone fixing a pasted build should not
+      // discover its faults one round trip at a time.
+      toast("Could not import", { problems: result.problems });
+      return;
+    }
+    context.commit(result.character);
+    toast(`Imported ${result.character.name}`);
+  };
+  document.addEventListener("paste", onPaste);
+
   return {
     dispose() {
       disposed = true;
       document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("paste", onPaste);
       bar.dispose();
       tooltip.dispose();
       training?.dispose();
@@ -848,7 +874,7 @@ interface CommandBar extends Region {
 /**
  * The command bar (#566): Close, the name and professions, the point
  * budget, the problems chip, an unsaved marker, Save, and ⋯ with
- * Duplicate and Delete. Close with unsaved edits, and Delete always, ask
+ * Share (#572), Duplicate and Delete. Close with unsaved edits, and Delete always, ask
  * in the bar first.
  */
 function mountCommandBar(
@@ -930,7 +956,40 @@ function mountCommandBar(
     menu.hidden = true;
     more.setAttribute("aria-expanded", "false");
   };
+
+  // Share (#572): the build as one line, selected, with Copy. The line
+  // stays selected when the clipboard is refused, so it copies by hand.
+  const share = h("div", "editor-share");
+  share.hidden = true;
+  const line = document.createElement("input");
+  line.className = "editor-share-line";
+  line.readOnly = true;
+  line.spellcheck = false;
+  line.setAttribute("aria-label", "build to share");
+  const selectLine = (): void => {
+    line.focus();
+    line.select();
+    // Selecting scrolls to the end; the start says whose build it is.
+    line.scrollLeft = 0;
+  };
+  const copy = button("Copy", "", () => {
+    // `clipboard` is missing outside a secure context; the promise turns
+    // that into a refusal like any other.
+    Promise.resolve()
+      .then(() => navigator.clipboard.writeText(line.value))
+      .then(() => {
+        share.hidden = true;
+        toast("Copied");
+      }, selectLine);
+  });
+  share.append(line, copy);
   menu.append(
+    button("Share", "", () => {
+      closeMenu();
+      line.value = exportBuild(context.current());
+      share.hidden = false;
+      selectLine();
+    }),
     // An edited character duplicates as edited, as it always has.
     button("Duplicate", "", () => {
       closeMenu();
@@ -951,13 +1010,17 @@ function mountCommandBar(
     }),
   );
   const moreWrap = h("span", "editor-more-wrap");
-  moreWrap.append(more, menu);
+  moreWrap.append(more, menu, share);
 
-  // Esc puts away the ⋯ menu, the problem list and then the pick (#564)
-  // before it is Close.
+  // Esc puts away the ⋯ menu, Share, the problem list and then the pick
+  // (#564) before it is Close.
   const putAway = (): boolean => {
     if (!menu.hidden) {
       closeMenu();
+      return true;
+    }
+    if (!share.hidden) {
+      share.hidden = true;
       return true;
     }
     if (chip.isOpen()) {
@@ -988,6 +1051,7 @@ function mountCommandBar(
     }
     if (!moreWrap.contains(target)) {
       closeMenu();
+      share.hidden = true;
     }
     if (!chip.element.contains(target)) {
       chip.close();
@@ -1023,7 +1087,7 @@ function mountCommandBar(
       save.title = firstBlocking?.text ?? "Save this character";
     },
     isOpen() {
-      return asking?.isOpen() === true || !menu.hidden || chip.isOpen();
+      return asking?.isOpen() === true || !menu.hidden || !share.hidden || chip.isOpen();
     },
     dispose() {
       document.removeEventListener("pointerdown", onPointerDown);
@@ -1488,63 +1552,6 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
       });
     },
   };
-}
-
-/* --- share ----------------------------------------------------------------- */
-
-function mountShare(panel: HTMLElement, context: EditorContext): Region {
-  // A textarea rather than a clipboard-only button: clipboard access is
-  // permission-gated and fails silently in some browsers, and a build you
-  // can see is one you can paste into chat by hand when it does.
-  const share = h("div", "editor-share");
-  share.appendChild(h("div", "editor-label", "Share build"));
-
-  const transfer = document.createElement("textarea");
-  transfer.className = "editor-transfer";
-  transfer.rows = 6;
-  transfer.spellcheck = false;
-  transfer.placeholder = "Paste a build here to import it, or press export to share this one.";
-  share.appendChild(transfer);
-
-  const shareStatus = h("div", "editor-share-status");
-  share.appendChild(shareStatus);
-
-  const exportButton = button("Export", "", () => {
-    transfer.value = exportBuild(context.current());
-    transfer.select();
-    shareStatus.className = "editor-share-status is-ok";
-    shareStatus.replaceChildren(
-      h("div", undefined, "Build copied into the box above — select it and copy."),
-    );
-  });
-
-  const importButton = button("Import", "", () => {
-    const result = importBuild(transfer.value, context.current().id, Date.now());
-    if (!result.ok) {
-      // Every problem at once. Someone fixing a pasted build should not
-      // have to discover its faults one round trip at a time.
-      shareStatus.className = "editor-share-status is-error";
-      shareStatus.replaceChildren(
-        h("div", undefined, "Could not import this build:"),
-        ...result.problems.map((problem) => h("div", "editor-problem", problem)),
-      );
-      return;
-    }
-    // Loaded into the editor, not saved: the player sees exactly what
-    // arrived and chooses to keep it. An import that silently overwrote
-    // the open character would be a bad surprise. The import worked, so
-    // an earlier error or export note no longer holds.
-    shareStatus.className = "editor-share-status";
-    shareStatus.replaceChildren();
-    context.commit(result.character);
-  });
-
-  const shareActions = h("div", "editor-actions");
-  shareActions.append(exportButton, importButton);
-  share.appendChild(shareActions);
-  panel.appendChild(share);
-  // Nothing here shows the character; export reads it when pressed.
-  return { update: () => undefined };
 }
 
 /* --- library (right column) ------------------------------------------------ */

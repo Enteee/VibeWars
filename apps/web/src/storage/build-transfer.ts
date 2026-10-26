@@ -27,7 +27,7 @@ import {
  * base64 code. A player who hits a problem can read what they pasted,
  * and anyone can see exactly what a build contains before importing it —
  * worth more than a shorter string for a game played among friends on a
- * LAN.
+ * LAN. It is one line, so a chat client does not reflow it (#572).
  */
 
 /** Marks a blob as ours, so a stray paste fails with a useful message. */
@@ -76,7 +76,16 @@ export function exportBuild(character: StoredCharacter): string {
     skillBar: [...character.skillBar],
     equipment: character.equipment,
   };
-  return JSON.stringify(payload, null, 2);
+  return JSON.stringify(payload);
+}
+
+/**
+ * Whether pasted text is meant as a build, so a paste on the editor
+ * imports it (#572). A clipped or broken build still counts, so its
+ * import fails out loud; any other text is ignored.
+ */
+export function looksLikeBuild(text: string): boolean {
+  return text.includes(`"${BUILD_FORMAT}"`);
 }
 
 function isProfessionId(value: unknown): value is ProfessionId {
