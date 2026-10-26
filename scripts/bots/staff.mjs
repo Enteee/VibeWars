@@ -378,7 +378,7 @@ export function withStaffLock(file, change) {
         throw error;
       }
       if (Date.now() > give) {
-        throw new Error(`${lock} is held; if no process is changing staff.json, remove it`, {
+        throw new Error(`${lock} is held; if no process holds it, remove it`, {
           cause: error,
         });
       }

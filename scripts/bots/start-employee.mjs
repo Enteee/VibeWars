@@ -40,7 +40,7 @@ function run(tmux, args) {
   const result = spawnSync(tmux, args, { encoding: "utf8" });
   return {
     ok: result.status === 0,
-    stdout: result.stdout,
+    stdout: result.stdout ?? "",
     stderr: result.error === undefined ? result.stderr : result.error.message,
   };
 }
@@ -59,7 +59,7 @@ export function startEmployee(employee, { tmux, session, root, cwd, note }) {
   if (role === null) {
     throw new Error(`not an employee id: ${employee}`);
   }
-  return withStaffLock(path.join(root, "start-employee"), () => {
+  return withStaffLock(path.join(root, "start-pane"), () => {
     const panes = run(tmux, ["list-panes", "-s", "-t", `=${session}`, "-F", "#{@employee}"]);
     if (panes.stdout.split("\n").includes(employee)) {
       return "already";
