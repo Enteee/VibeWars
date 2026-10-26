@@ -343,6 +343,17 @@ Step 4 builds to these budgets, and QA (step 8) checks them.
 | Game page script time, music on minus off (median of ≥ 5 runs) | **≤ 1 percentage point** | below noise            |
 | Sound palette                                                  | 3 MB                     | –                      |
 | Worker-backed timers                                           | **required**             | –                      |
+| Audio-thread DSP cost of what sounds at once (`music:check`)   | **90** (provisional)     | 39 to 90, per level    |
+| Reverb                                                         | one room: orbit 2 6 s    | –                      |
+
+The DSP cost and the room are checked by `pnpm music:check` (#508), with no
+audio device. A voice costs what superdough builds for it (a supersaw its
+`unison` voices, each filter, `vowel` a bank of five, a worklet effect two),
+for as long as it sounds, release included, and each orbit with a wet voice adds
+a cost per second of its `roomsize`. The ceiling and the weights are
+provisional until #507 can say which cost plays without underruns in Firefox.
+Every track uses the same reverb (`MUSIC_ROOMS` in `cost.mjs`), so a track
+switch never rebuilds the impulse response.
 
 What we cut to stay within budget:
 
