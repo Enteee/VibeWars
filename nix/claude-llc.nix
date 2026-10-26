@@ -86,7 +86,7 @@ let
       claude-llc reboot --abort  cancel a reboot the manager scheduled
       claude-llc --help
 
-    One tmux window per employee plus a dashboard. The session opens on the
+    One tmux window per role (a pane per employee) plus a dashboard. The session opens on the
     dashboard: the board, the company and the Telegram feed. Window 1 is the
     manager, where you describe what you want built: say it to the manager and
     it becomes issues, which the architect specs and the board carries to main
@@ -173,6 +173,58 @@ let
           echo "claude-llc: hubd and supervisor started in the hub window (logs: .bots/hub/)"
         }
 
+        # One employee's pane (#383), the only way an agent starts. A role's
+        # employees share a window named for the role, tiled, each pane titled
+        # with the employee id; the window opens with the role's first
+        # employee and closes with its last. The pane's `@employee` option is
+        # what the supervisor identifies it by, since a program may retitle it.
+        # If VIBEWARS_KICKOFF_NOTE is set, this agent gets the reboot note.
+        # One at a time and never twice: the boot loop and the supervisor may
+        # both start the same employee, and two agents must not share a worktree.
+        start_employee() {
+          local employee="$1"
+          if ! [[ "$employee" =~ ^[a-z][a-z0-9-]*(@[2-9]|@[1-9][0-9]+)?$ ]]; then
+            echo "claude-llc: not an employee id: $employee" >&2
+            return 1
+          fi
+          (
+            ${pkgs.util-linux}/bin/flock 9
+            if ${tmux} list-panes -s -t "=$SESSION" -F '#{@employee}' | grep -qxF "$employee"; then
+              echo "claude-llc: $employee already has a pane" >&2
+              exit 0
+            fi
+            start_employee_pane "$employee"
+          ) 9>"$VIBEWARS_BOT_ROOT/start-employee.lock"
+        }
+
+        start_employee_pane() {
+          local employee="$1" pane
+          local role="''${employee%%@*}"
+          local env=()
+          if [ -n "''${VIBEWARS_KICKOFF_NOTE-}" ]; then
+            env=(-e "VIBEWARS_KICKOFF_NOTE=$VIBEWARS_KICKOFF_NOTE")
+          fi
+          if ${tmux} list-windows -t "=$SESSION" -F '#{window_name}' | grep -qxF "$role"; then
+            pane="$(${tmux} split-window -d -P -F '#{pane_id}' -t "=$SESSION:=$role" \
+              -c "$DEVENV_ROOT" "''${env[@]}" "claude-llc-agent $employee")"
+            ${tmux} select-layout -t "=$SESSION:=$role" tiled
+          else
+            pane="$(${tmux} new-window -d -P -F '#{pane_id}' -t "$SESSION:" -n "$role" \
+              -c "$DEVENV_ROOT" "''${env[@]}" "claude-llc-agent $employee")"
+            ${tmux} set-option -w -t "=$SESSION:=$role" automatic-rename off
+            ${tmux} set-option -w -t "=$SESSION:=$role" allow-rename off
+            ${tmux} set-option -w -t "=$SESSION:=$role" pane-border-status top
+            ${tmux} set-option -w -t "=$SESSION:=$role" pane-border-format " #[bold]#{@employee}#[nobold] "
+          fi
+          # An empty pane id would make the next commands act on the current pane.
+          if [ -z "$pane" ]; then
+            echo "claude-llc: could not open a pane for $employee" >&2
+            return 1
+          fi
+          ${tmux} set-option -p -t "$pane" @employee "$employee"
+          ${tmux} select-pane -t "$pane" -T "$employee"
+        }
+
         # The loops first, so stopping a daemon does not restart it.
         stop_daemons() {
           pkill -f run-forever.mjs 2>/dev/null || true
@@ -200,7 +252,7 @@ let
         reexec="''${VIBEWARS_LLC_REEXEC-}"
         unset VIBEWARS_LLC_REEXEC
         case "''${1-}" in
-          -h | --help) ;;
+          -h | --help | start-employee) ;;
           *)
             stale=0
             differ="$(${node} ${llcScripts}/fingerprint.mjs check ${llcScripts} "$DEVENV_ROOT" 2>&1)" || stale=$?
@@ -256,6 +308,19 @@ let
             ;;
           up)
             attach=0
+            ;;
+          start-employee)
+            # The supervisor's way to start a hired employee (#383).
+            if [ -z "''${2-}" ]; then
+              echo "claude-llc: usage: claude-llc start-employee <employee>" >&2
+              exit 2
+            fi
+            if ! ${tmux} has-session -t "=$SESSION" 2>/dev/null; then
+              echo "claude-llc: $SESSION is not running" >&2
+              exit 1
+            fi
+            start_employee "$2"
+            exit 0
             ;;
           reboot)
             if [ "''${2-}" != "--abort" ]; then
@@ -370,14 +435,12 @@ let
         # shellcheck disable=SC2086 # one word per role
         ${node} ${llcScripts}/staff.mjs seed $seed || exit 1
         ${node} ${llcScripts}/staff.mjs check || exit 1
-        # The roles whose first seat is employed, in roster order. Further
-        # seats (role@2...) start once the supervisor reconciles (#383).
+        # Who staff.json employs and is not firing, roles in roster order.
         ready=""
         for role in ${lib.concatStringsSep " " roles}; do
-          if ${lib.getExe pkgs.jq} -e --arg r "$role" '.employees | has($r)' \
-            "$VIBEWARS_BOT_ROOT/staff.json" >/dev/null; then
-            ready="$ready $role"
-          fi
+          ready="$ready $(${lib.getExe pkgs.jq} -r --arg r "$role" \
+            '.employees | to_entries | map(select(.value.role == $r and .value.state == "working")) | map(.key) | sort[]' \
+            "$VIBEWARS_BOT_ROOT/staff.json")"
         done
 
         # Replace refs live under .git/refs, which every jail can write, and
@@ -434,8 +497,8 @@ let
 
 
         # ------------------------------------------------------------------------
-        # The session. One window per employee, each running claude-bot, which
-        # builds the sandbox and starts that role's Telegram sidecar.
+        # The session. One window per role, a pane per employee, each running
+        # claude-bot, which builds the sandbox and starts the Telegram sidecar.
         # ------------------------------------------------------------------------
         # The dashboard is three titled panes (#165): BOARD and COMPANY side
         # by side, the TELEGRAM feed full width along the bottom. Each runs
@@ -462,13 +525,11 @@ let
         ${tmux} set-option -w -t "$SESSION:dashboard" pane-active-border-style fg=cyan
         hub_window
 
-        for role in $ready; do
-          if [ "$role" = manager ] && [ -n "$note" ]; then
-            ${tmux} new-window -t "$SESSION" -n "$role" -c "$DEVENV_ROOT" \
-              -e "VIBEWARS_KICKOFF_NOTE=$note" "claude-llc-agent $role"
+        for employee in $ready; do
+          if [ "$employee" = manager ] && [ -n "$note" ]; then
+            VIBEWARS_KICKOFF_NOTE="$note" start_employee "$employee"
           else
-            ${tmux} new-window -t "$SESSION" -n "$role" -c "$DEVENV_ROOT" \
-              "claude-llc-agent $role"
+            start_employee "$employee"
           fi
         done
 
