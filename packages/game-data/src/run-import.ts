@@ -48,6 +48,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Monk/175-Orison_of_Healing",
   },
   {
+    id: "monk.guardian",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/183-Guardian",
+  },
+  {
     id: "elementalist.fireball",
     profession: "elementalist",
     url: "https://www.gw-memorial.net/skills/Elementalist/416-Fireball",

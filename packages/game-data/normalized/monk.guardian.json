@@ -1,0 +1,24 @@
+{
+  "id": "monk.guardian",
+  "name": "Guardian",
+  "profession": "monk",
+  "attribute": "Protection Prayers",
+  "type": "Enchantment Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 1,
+  "rechargeSeconds": 6,
+  "description": "For 2...6...7 seconds, target ally has a 50% chance to block attacks.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Monk/183-Guardian",
+    "fetchedAt": "2026-10-26T02:15:45.929Z"
+  },
+  "unmapped": {}
+}

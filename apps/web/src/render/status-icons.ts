@@ -30,6 +30,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   regeneration: icon("regeneration"),
   "blood-ritual": icon("blood-ritual"),
   "armor-boost": icon("armor-boost"),
+  guardian: icon("guardian"),
 };
 
 /** Drawn size of one icon, in world pixels. */

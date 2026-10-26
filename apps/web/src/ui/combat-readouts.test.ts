@@ -64,6 +64,7 @@ describe("logToneOf", () => {
       "interrupted",
       "interrupt-missed",
       "attack-missed",
+      "attack-blocked",
       "attack-dodged",
     ];
     expect(kinds.map(logToneOf)).toEqual([
@@ -75,6 +76,7 @@ describe("logToneOf", () => {
       "status",
       "status",
       "status",
+      "control",
       "control",
       "control",
       "control",
@@ -179,6 +181,9 @@ describe("describeCombatEvent", () => {
     );
     expect(shot({ kind: "attack-missed", targetId: "dummy" })).toBe(
       "Longbow (Pyro) misses Caster dummy",
+    );
+    expect(shot({ kind: "attack-blocked", targetId: "dummy" })).toBe(
+      "Caster dummy blocks Longbow (Pyro)",
     );
     expect(shot({ kind: "attack-dodged", targetId: "dummy" })).toBe(
       "Caster dummy dodges Longbow (Pyro)",
@@ -338,6 +343,11 @@ describe("floatingCueFor", () => {
     });
     expect(floatingCueFor("attack-dodged", undefined, false)).toEqual({
       text: "dodge",
+      tone: "neutral",
+      critical: false,
+    });
+    expect(floatingCueFor("attack-blocked", undefined, false)).toEqual({
+      text: "block",
       tone: "neutral",
       critical: false,
     });

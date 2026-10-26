@@ -1,6 +1,6 @@
 import { DEFAULT_MATCH_RULES } from "@vibewars/game-core";
 import { MAX_WIRE_SLOTS, type WirePlayer } from "@vibewars/game-protocol";
-import { describe, expect, expectTypeOf, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import {
   HostLeftError,
@@ -9,7 +9,7 @@ import {
   connectMatch,
 } from "./match-client.js";
 import type { PlayerSnapshot } from "./match-connection.js";
-import { MATCH_FULL_MESSAGE, MATCH_OVER_MESSAGE } from "./match-host.js";
+import { MATCH_FULL_MESSAGE, MATCH_OVER_MESSAGE, RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { hello, self, settle, startMatch } from "./match-harness.test-support.js";
 import { createMemoryNetwork } from "./memory-transport.js";
 import { playerSnapshot } from "./wire.js";
@@ -130,16 +130,6 @@ describe("connectMatch", () => {
     await match.host.close("host-left");
     await settle();
     expect(states.sort()).toEqual(["local:lost", "remote:lost"]);
-  });
-
-  it("is lost when the host's peer goes, without a word", async () => {
-    const match = startMatch();
-    const { connection, transport } = await match.join();
-    const states: string[] = [];
-    connection.onConnectionChange((state) => states.push(state));
-    match.network.partition("host", transport.selfId);
-    await settle();
-    expect(states).toEqual(["lost"]);
   });
 
   it("shows the result once the match ends", async () => {
@@ -280,5 +270,141 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
       const expected = wireKey === "secondaryProfession" ? undefined : (sent ?? undefined);
       expect(got, wireKey).toEqual(expected);
     }
+  });
+});
+
+/**
+ * A guest whose connection to the host drops (#515): the host holds the
+ * seat for its window, so the guest waits as long, and asks for it back
+ * with its token when the host's peer is there again.
+ */
+describe("connectMatch, when the host's peer drops", () => {
+  const WINDOW_MS = RECONNECT_WINDOW_SECONDS * 1000;
+
+  beforeEach(() => {
+    // Only the clock: the memory transport delivers on microtasks.
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** A remote guest in a match, its states as they change, and every hello the host hears. */
+  async function dropped(match = startMatch()) {
+    const { connection, transport } = await match.join();
+    await match.step(0.05);
+    const states: string[] = [];
+    connection.onConnectionChange((state) => states.push(state));
+    const hellos: unknown[] = [];
+    match.hostTransport.on("hello", (data) => hellos.push(data));
+    const token = connection.rejoinToken;
+    match.network.partition("host", transport.selfId);
+    await settle();
+    return { match, connection, transport, states, hellos, token };
+  }
+
+  it("is reconnecting, then back in the same seat when the host is back in 10 s", async () => {
+    const { match, connection, states, hellos, token } = await dropped();
+    expect(states).toEqual(["reconnecting"]);
+
+    vi.advanceTimersByTime(10_000);
+    match.network.heal();
+    await settle();
+
+    expect(states).toEqual(["reconnecting", "online"]);
+    expect(hellos).toEqual([
+      expect.objectContaining({
+        rejoin: { playerId: connection.selfSessionId, token },
+      }),
+    ]);
+    // A new token with the welcome, for the next drop.
+    expect(connection.rejoinToken).not.toBe(token);
+    // The same connection carries on: intents go through and snapshots come.
+    const x = self(connection)?.x ?? 0;
+    connection.sendIntent({ kind: "move", dirX: 1, dirY: 0 });
+    await match.step(0.3);
+    expect(self(connection)?.x).toBeGreaterThan(x);
+  });
+
+  it("is back in its seat when only it saw the drop, and the host still holds it there", async () => {
+    const match = startMatch();
+    const { connection, transport } = await match.join();
+    await match.step(0.05);
+    const states: string[] = [];
+    connection.onConnectionChange((state) => states.push(state));
+    const token = connection.rejoinToken;
+
+    // The host never sees the guest go, so its rejoin hello comes from a
+    // peer the host still has seated.
+    match.network.blip(transport.selfId, "host");
+    await settle();
+
+    expect(states).toEqual(["reconnecting", "online"]);
+    expect(connection.rejoinToken).not.toBe(token);
+    const x = self(connection)?.x ?? 0;
+    connection.sendIntent({ kind: "move", dirX: 1, dirY: 0 });
+    await match.step(0.3);
+    expect(self(connection)?.x).toBeGreaterThan(x);
+  });
+
+  it("is lost once the window runs out, and asks nothing when the host is back after it", async () => {
+    const { match, states, hellos } = await dropped();
+
+    vi.advanceTimersByTime(WINDOW_MS - 1);
+    expect(states).toEqual(["reconnecting"]);
+    vi.advanceTimersByTime(1);
+    expect(states).toEqual(["reconnecting", "lost"]);
+
+    match.network.heal();
+    await settle();
+    expect(hellos).toEqual([]);
+    expect(states).toEqual(["reconnecting", "lost"]);
+  });
+
+  it("measures the window on the clock, so a timer firing late does not stretch it", async () => {
+    const { match, states, hellos } = await dropped();
+
+    // A hidden tab: 31 s have passed, and the timer has not run.
+    vi.setSystemTime(Date.now() + WINDOW_MS + 1000);
+    match.network.heal();
+    await settle();
+
+    expect(hellos).toEqual([]);
+    expect(states).toEqual(["reconnecting", "lost"]);
+  });
+
+  it("is lost when the host turns the rejoin away because the match is over", async () => {
+    const match = startMatch({ matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: 0.5 } });
+    const { states } = await dropped(match);
+
+    await match.step(1);
+    match.network.heal();
+    await settle();
+
+    expect(states).toEqual(["reconnecting", "lost"]);
+  });
+
+  it("gets its own window for each drop", async () => {
+    const { match, transport, states } = await dropped();
+    match.network.heal();
+    await settle();
+    vi.advanceTimersByTime(WINDOW_MS - 1000);
+
+    match.network.partition("host", transport.selfId);
+    await settle();
+    vi.advanceTimersByTime(WINDOW_MS - 1000);
+    expect(states).toEqual(["reconnecting", "online", "reconnecting"]);
+    match.network.heal();
+    await settle();
+    expect(states).toEqual(["reconnecting", "online", "reconnecting", "online"]);
+  });
+
+  it("leaves while reconnecting without waiting for the window", async () => {
+    const { connection, states } = await dropped();
+
+    await connection.disconnect();
+    vi.advanceTimersByTime(WINDOW_MS);
+
+    expect(states).toEqual(["reconnecting"]);
   });
 });

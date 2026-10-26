@@ -84,6 +84,12 @@ function statusName(id: string): string {
   return findStatusDefinition(id)?.name ?? id;
 }
 
+const BLOCKED_ATTACKS: Record<"all" | "melee" | "projectile", string> = {
+  all: "attacks",
+  melee: "melee attacks",
+  projectile: "projectiles",
+};
+
 /** What a status actually does, so a tooltip does not just name it. */
 export function describeStatus(id: string): string {
   const definition = findStatusDefinition(id);
@@ -124,6 +130,10 @@ export function describeStatus(id: string): string {
   }
   if (definition.attackDurationMultiplier !== 1) {
     parts.push(`attacks take ${String(definition.attackDurationMultiplier)}× as long`);
+  }
+  if (definition.block !== undefined) {
+    const what = BLOCKED_ATTACKS[definition.block.against];
+    parts.push(`${String(Math.round(definition.block.chance * 100))}% chance to block ${what}`);
   }
   return parts.length === 0 ? definition.name : parts.join(", ");
 }
@@ -191,7 +201,12 @@ export function describeSkill(
   skill: Skill,
   ranks: ReadonlyMap<string, number> = new Map(),
 ): SkillDescription {
-  const effects = skill.effects.map((effect) => describeEffect(effect, ranks));
+  // An attack skill's if-blocked effects (#534), after the ones a hit gets.
+  const onBlocked = (skill.attack?.onBlocked ?? []).map((effect) => {
+    const { text, magnitude } = describeEffect(effect, ranks);
+    return { text: `If blocked: ${text.charAt(0).toLowerCase()}${text.slice(1)}`, magnitude };
+  });
+  const effects = [...skill.effects.map((effect) => describeEffect(effect, ranks)), ...onBlocked];
   return {
     id: skill.id,
     name: skill.name,

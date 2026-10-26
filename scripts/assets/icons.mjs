@@ -197,6 +197,13 @@ const status = {
   ],
   // Hex: a bolt in outline, the energy draining out (#503).
   malaise: ["hex", (c) => `<path d="M13 4.5L7.5 13h4l-1 6.5L16.5 11h-4z" ${stroke(c, 2)}/>`],
+  // Enchantment: a shield in outline with a blow glancing off it, block (#534).
+  guardian: [
+    "enchantment",
+    (c) =>
+      `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" ${stroke(c, 2)} stroke-linejoin="round"/>` +
+      `<path d="M9.5 14L15 8.5" ${stroke(c, 2.2)} stroke-linecap="round"/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------

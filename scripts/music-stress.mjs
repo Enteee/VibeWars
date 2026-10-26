@@ -202,6 +202,15 @@ async function measure(url, load) {
         : { viewport: device.viewport, userAgent: device.userAgent },
     );
     const page = await context.newPage();
+    // What the page says: an audio context that will not start says so here.
+    page.on("console", (message) => {
+      if (message.type() === "error" || message.type() === "warning") {
+        console.log(`[${load.browser} ${message.type()}] ${message.text()}`);
+      }
+    });
+    page.on("pageerror", (error) => {
+      console.log(`[${load.browser} pageerror] ${error.message}`);
+    });
     // Every stats message, so no second is missed or read twice.
     await page.addInitScript(() => {
       /** @type {unknown[]} */

@@ -90,12 +90,19 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
-    // The real skill's block-interaction and Deep Wound rider need
-    // blocking; the bonus damage is implemented faithfully.
     attack: {
       weapon: "axe",
       weaponDamage: 1,
       bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 1, atTwelve: 16 } },
+      // "If Swift Chop is blocked, target foe takes 1...16 damage and
+      // suffers a Deep Wound for 20 seconds."
+      onBlocked: [
+        {
+          kind: "damage",
+          amount: { scaling: { attributeId: "warrior.axe-mastery", atZero: 1, atTwelve: 16 } },
+        },
+        { kind: "apply-status", statusId: "deep-wound", durationSeconds: 20 },
+      ],
     },
     effects: [],
   },
@@ -123,6 +130,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weapon: "bow",
       weaponDamage: 1,
       bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 12 } },
+      onBlocked: [],
     },
     effects: [],
   },
@@ -147,6 +155,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       bonusDamage: {
         scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 16 },
       },
+      onBlocked: [],
     },
     effects: [],
   },
@@ -201,7 +210,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     // A swing of any melee weapon that deals no damage: still an attack,
     // so blind makes it miss, and a miss interrupts nothing.
-    attack: { weapon: "melee", weaponDamage: 0, bonusDamage: undefined },
+    attack: { weapon: "melee", weaponDamage: 0, bonusDamage: undefined, onBlocked: [] },
     effects: [{ kind: "interrupt" }],
   },
   {
@@ -216,7 +225,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     range: RANGE_LONG,
     target: "single-enemy",
     area: undefined,
-    attack: { weapon: "bow", weaponDamage: 1, bonusDamage: undefined },
+    attack: { weapon: "bow", weaponDamage: 1, bonusDamage: undefined, onBlocked: [] },
     // The real elite: Daze the target, and interrupt them if they were
     // casting. Both halves are now genuinely implementable — this is the
     // archetypal "shut down a caster" skill the whole interrupt mechanic
@@ -339,6 +348,22 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "remove-status", category: "condition", count: 2 }],
   },
   {
+    id: "monk.guardian",
+    name: "Guardian",
+    type: "enchantment",
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 1,
+    rechargeSeconds: 6,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    // A 50% chance to block attacks (#534), at its rank-12 duration.
+    effects: [{ kind: "apply-status", statusId: "guardian", durationSeconds: 6 }],
+  },
+  {
     id: "warrior.sever-artery-lite",
     name: "Opening Cut",
     type: "attack",
@@ -362,6 +387,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       bonusDamage: {
         scaling: { attributeId: "warrior.swordsmanship", atZero: 5, atTwelve: 20 },
       },
+      onBlocked: [],
     },
     effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 15 }],
   },

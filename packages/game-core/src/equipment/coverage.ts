@@ -25,8 +25,7 @@ export type MissingGearMechanic =
   | "profession-insignias"
   | "weapon-upgrades"
   | "per-piece-armor-ratings"
-  | "armor-damage-type-resistance"
-  | "shield-block";
+  | "armor-damage-type-resistance";
 
 export interface GearOmission {
   readonly mechanic: MissingGearMechanic;
@@ -113,16 +112,6 @@ export const GEAR_OMISSIONS: readonly GearOmission[] = Object.freeze([
       "it, so the seam exists — but no profession carries an inherent resistance, and this " +
       "project models only the physical/untyped split rather than the full elemental spread.",
     affects: ["stalwart"],
-  },
-  {
-    mechanic: "shield-block",
-    description: "a shield giving a chance to block an incoming attack outright",
-    kind: "gap",
-    reason:
-      "Shields grant armor only. Blocking needs an attack pipeline to interrupt, which " +
-      "arrives with weapon auto-attacks; the swing's draw protocol already reserves a roll " +
-      "for it so that adding it later cannot change existing seeds.",
-    affects: ["shield"],
   },
 ]);
 
