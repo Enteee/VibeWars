@@ -28,6 +28,7 @@ import type {
   MatchSnapshot,
   SlotRecharge,
 } from "./match-connection.js";
+import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import type { Transport } from "./transport.js";
 import { combatMessage, matchSnapshot } from "./wire.js";
 
@@ -35,6 +36,12 @@ import { combatMessage, matchSnapshot } from "./wire.js";
  * A match on another peer's browser, as the match view sees every match:
  * a `MatchConnection` (#375). Everything comes from `hostId` alone, and
  * through its validator first; anything else, from anyone, is dropped.
+ *
+ * The host's peer going without a word is a drop, not the end (#515): the
+ * connection is `reconnecting` for the host's own `RECONNECT_WINDOW_SECONDS`,
+ * and when the peer is back it asks for the seat again with its rejoin
+ * token. Only `ended` with `host-left`, a refusal, or the window running
+ * out make it `lost`.
  */
 
 /** The host turned this player away, and said why. */
@@ -66,7 +73,10 @@ export class MatchTimeoutError extends Error {
 
 /** A P2P match: a `MatchConnection`, plus what it takes to come back after a drop. */
 export interface PeerMatchConnection extends MatchConnection {
-  /** What to send in `PeerHello.rejoin` to take this seat back. */
+  /**
+   * What to send in `PeerHello.rejoin` to take this seat back. The host
+   * issues a new one with every welcome, a rejoin's too.
+   */
   readonly rejoinToken: string;
 }
 
@@ -93,6 +103,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   let ended: WireEnded | undefined;
   let recharges: Recharges = { slots: [], at: 0 };
   let lost = false;
+  /** When the host's peer went, by `Date.now`, while waiting for it back. */
+  let droppedAt: number | undefined;
+  let reconnectTimer: unknown;
   /** Set once `connectMatch` has resolved or rejected. */
   let settled = false;
   let onLostWhileJoining: () => void = () => undefined;
@@ -119,18 +132,43 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     );
   };
 
+  const tell = (state: "online" | "reconnecting" | "lost"): void => {
+    for (const handler of [...connectionHandlers]) {
+      handler(state);
+    }
+  };
+
   const loseHost = (): void => {
     if (lost) {
       return;
     }
     lost = true;
+    clearTimeout(reconnectTimer);
+    droppedAt = undefined;
     if (!settled) {
       onLostWhileJoining();
       return;
     }
-    for (const handler of connectionHandlers) {
-      handler("lost");
+    tell("lost");
+  };
+
+  /**
+   * The host's peer went. Before the welcome, the join fails, as before;
+   * in a match, its seat is held for the window, so wait that long. The
+   * window is measured on the clock, so a hidden tab's late timer does
+   * not stretch it.
+   */
+  const dropHost = (): void => {
+    if (lost || droppedAt !== undefined) {
+      return;
     }
+    if (!settled) {
+      loseHost();
+      return;
+    }
+    droppedAt = Date.now();
+    reconnectTimer = setTimeout(loseHost, RECONNECT_WINDOW_SECONDS * 1000);
+    tell("reconnecting");
   };
 
   /** The match clock: the latest snapshot's, or before the first, the welcome's. */
@@ -168,12 +206,29 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   unsubscribe.push(
     transport.onPeerLeave((peerId) => {
       if (peerId === hostId) {
-        loseHost();
+        dropHost();
       }
+    }),
+    transport.onPeerJoin((peerId) => {
+      if (peerId !== hostId || droppedAt === undefined || welcomed === undefined) {
+        return;
+      }
+      if (Date.now() - droppedAt >= RECONNECT_WINDOW_SECONDS * 1000) {
+        loseHost();
+        return;
+      }
+      // The token proves the seat is this player's; the host answers with
+      // a welcome, or a refusal once the match is over.
+      const rejoin: PeerHello = {
+        ...hello,
+        rejoin: { playerId: welcomed.playerId, token: welcomed.rejoinToken },
+      };
+      transport.send("hello", rejoin, hostId);
     }),
   );
 
   const stop = (): void => {
+    clearTimeout(reconnectTimer);
     for (const off of unsubscribe.splice(0)) {
       off();
     }
@@ -201,14 +256,16 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
 
     const connection = (welcome: PeerWelcome, bar: WireSkillBar): PeerMatchConnection => ({
       selfSessionId: welcome.playerId,
-      rejoinToken: welcome.rejoinToken,
+      get rejoinToken() {
+        return (welcomed ?? welcome).rejoinToken;
+      },
       map: welcome.map,
       skillBar: bar.slots,
       onConnectionChange(handler) {
         connectionHandlers.push(handler);
       },
       sendIntent(intent: ClientIntent) {
-        if (!lost) {
+        if (!lost && droppedAt === undefined) {
           transport.send("intent", intent, hostId);
         }
       },
@@ -275,6 +332,15 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     };
 
     fromHost("welcome", parsePeerWelcome, (message) => {
+      // Back in the same seat after a drop: the same connection carries on.
+      if (droppedAt !== undefined && message.playerId === welcomed?.playerId) {
+        // Its token is the one the next drop needs.
+        welcomed = message;
+        clearTimeout(reconnectTimer);
+        droppedAt = undefined;
+        tell("online");
+        return;
+      }
       if (welcomed !== undefined) {
         return;
       }
@@ -295,6 +361,11 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
       ready();
     });
     fromHost("refuse", parsePeerRefuse, (refusal) => {
+      // A rejoin turned away: the match is over, or the seat is gone.
+      if (droppedAt !== undefined) {
+        loseHost();
+        return;
+      }
       fail(new MatchRefusedError(refusal));
     });
 
