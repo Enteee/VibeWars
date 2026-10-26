@@ -153,6 +153,8 @@ const REBOOT = path.join(ROOT, "reboot.json");
 const STAFF = path.join(ROOT, "staff.json");
 /** The heartbeat, `{ ts, inFlight }`: see `heartbeat`. */
 const ALIVE = path.join(HUB, "hubd.alive");
+/** `nudges.json`: when hubd began counting and what it sent, for the dashboard (#547). */
+const NUDGES = path.join(HUB, "nudges.json");
 const LOCK = path.join(HUB, "hubd.lock");
 
 /**
@@ -2447,6 +2449,7 @@ const readSchedule = scheduleReader(
 );
 
 /** When each scheduled nudge was last sent, and when hubd began counting. */
+/** @type {Map<string, number>} */
 const nudgesSent = new Map();
 const nudgesSince = Date.now();
 
@@ -2462,7 +2465,17 @@ function sendNudges() {
   for (const nudge of dueNudges({ now, schedule, lastSent: nudgesSent, since: nudgesSince })) {
     nudgesSent.set(nudge.id, now);
     tellCompany(`nudge-${nudge.id}`, nudge.text, { to: nudge.to, nudge: nudge.id });
+    writeNudges();
   }
+}
+
+/**
+ * hubd's nudge clock as the dashboard reads it (#547). Never read back here.
+ *
+ * @returns {void}
+ */
+function writeNudges() {
+  writeAtomic(NUDGES, JSON.stringify({ since: nudgesSince, sent: Object.fromEntries(nudgesSent) }));
 }
 
 /**
@@ -2714,6 +2727,7 @@ async function main() {
     });
   }
 
+  writeNudges();
   for (;;) {
     readStaffed();
     /** @type {[string, string | null][]} */

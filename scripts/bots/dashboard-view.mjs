@@ -288,8 +288,18 @@ export function boardLines(snapshot, columns, live, { rows, width }) {
  * @property {Budget | null} budget null before hubd has checked
  * @property {ReturnType<typeof import("./hub-health.mjs").hubHealth>} hub hubd, as its heartbeat and restarts say (#23)
  * @property {ClaudeUsage | null} claude null before any agent has logged (#50)
+ * @property {NudgeFacts} nudges the scheduled nudges and how they are doing (#547)
  * @property {{ record: import("./reboot.mjs").Reboot, between: readonly string[], now: number } | { rebooting: string } | null} reboot
  *   the pending reboot with the roles between turns, or the reason of the one handed to the restarter (#345)
+ */
+
+/**
+ * @typedef {object} NudgeFacts
+ * @property {readonly import("./schedule.mjs").Nudge[] | string} schedule `schedule.json`, or what is wrong with it
+ * @property {number | null} since when hubd began counting, null if it never wrote `nudges.json`
+ * @property {ReadonlyMap<string, number>} sent when hubd last sent each nudge
+ * @property {ReadonlyMap<string, readonly string[]>} unread the employees who have each nudge unread
+ * @property {number} now epoch milliseconds
  */
 
 /**
@@ -531,6 +541,41 @@ function rebootSection({ reboot, roles, live }, width) {
 }
 
 /**
+ * The scheduled nudges (#547): when each last went, when it is next due, and
+ * who has not read it. No schedule is no section.
+ *
+ * @param {CompanyFacts} facts
+ * @param {number} width
+ * @returns {string[]}
+ */
+export function nudgeLines({ nudges: { schedule, since, sent, unread, now } }, width) {
+  if (typeof schedule === "string") {
+    return [cut(`nudges: schedule.json: ${visible(schedule)}`, width)];
+  }
+  if (schedule.length === 0) {
+    return [];
+  }
+  return [
+    "nudges",
+    ...schedule.flatMap((nudge) => {
+      const last = sent.get(nudge.id);
+      const base = last ?? since;
+      const due = base === null ? null : base + nudge.everyMinutes * 60_000;
+      const next = due === null ? "—" : due < now - 60_000 ? "overdue" : hhmm(due);
+      const who = unread.get(nudge.id) ?? [];
+      const head = [
+        `${nudge.id} → ${nudge.to}`,
+        `every ${String(nudge.everyMinutes)}m`,
+        `last ${last === undefined ? (since === null ? "—" : "never") : hhmm(last)}`,
+        `next ${next}`,
+        ...(who.length > 0 ? [`unread: ${who.join(", ")}`] : []),
+      ].join(" · ");
+      return [cut(`  ${head}`, width), cut(`    ${visible(nudge.text)}`, width)];
+    }),
+  ];
+}
+
+/**
  * The COMPANY pane's sections, in order. A new one is a
  * function here rather than a pane, as #23's hub line and #50's tokens are.
  *
@@ -542,6 +587,7 @@ export const COMPANY_SECTIONS = [
   hubSection,
   githubSection,
   claudeSection,
+  nudgeLines,
 ];
 
 /**

@@ -42,6 +42,7 @@ describe("status definitions", () => {
       const def = getStatusDefinition(id);
       const hasEffect =
         def.healthPips !== 0 ||
+        def.energyPips !== 0 ||
         def.armorModifier !== 0 ||
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
@@ -73,7 +74,17 @@ describe("status definitions", () => {
         ]),
       ),
     ).toEqual({ bleeding: -3, burning: -7, poison: -4, "life-drain": -2, regeneration: 4 });
-    expect(ALL_STATUS_IDS.every((id) => getStatusDefinition(id).energyPips === 0)).toBe(true);
+  });
+
+  it("counts energy in GW1's pips", () => {
+    expect(
+      Object.fromEntries(
+        ALL_STATUS_IDS.filter((id) => getStatusDefinition(id).energyPips !== 0).map((id) => [
+          id,
+          getStatusDefinition(id).energyPips,
+        ]),
+      ),
+    ).toEqual({ malaise: -1, "blood-ritual": 3 });
   });
 
   it("makes enchantments beneficial and hexes/conditions detrimental", () => {

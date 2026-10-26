@@ -17,7 +17,7 @@ let verse = cat(
   "4 ~ ~ ~ 5 ~ 4 ~ ~ 2 ~ ~ 1 ~ 0 ~",
   "~ ~ 1 ~ ~ ~ 2 ~ ~ ~ 1 ~ 0 ~ ~ ~").slow(2)
 let lead = arrange([8, verse], [8, verse.add(2)], [8, verse.rev()], [8, verse.add(-1)],
-  [8, verse.add(3)], [8, verse.rev().add(2)], [8, verse.add(-1).rev()], [8, verse])
+  [8, verse.add(2)], [8, verse.rev().add(2)], [8, verse.add(-1).rev()], [8, verse])
 
 stack(
   // 0: drone and choir
@@ -26,8 +26,8 @@ stack(
   chord(P).voicing().mode("below:e5")
     .s("sawtooth").vowel("a").attack(1.2).release(2.5).gain(.16)
     .lpf(2500).room(.9).roomsize(8).orbit(2),
-  n(lead).scale("e5:spanish")
-    .s("whistle").gain(.55).attack(.1).release(.9).room(.8).roomsize(8).orbit(2),
+  n(lead).scale("e4:spanish")
+    .s("whistle").gain(.55).attack(.1).release(.9).lpf(2800).room(.8).roomsize(8).orbit(2),
   // 1: glass bells, a slow pulse
   layer(1, stack(
     n("<[0 ~ 2 ~ 4 ~ 2 ~] [1 ~ 3 ~ 5 ~ 3 ~]>".add("<0 0 2 0 -1 0 3 0>")).scale("e4:spanish")

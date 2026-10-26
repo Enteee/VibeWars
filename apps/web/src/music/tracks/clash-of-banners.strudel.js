@@ -34,10 +34,10 @@ stack(
     s("taiko:0 ~ taiko:1 taiko:0 ~ taiko:1 taiko:0 ~").gain(.8).room(.3),
     s("~ ~ snare:0 ~ ~ ~ snare:1 ~").gain(.4),
     n("[0 ~ ~ 0 ~ ~ 2 ~] [~ ~ 4 ~ ~ 2 ~ ~]".add("<0 2 0 3 4 0 -2 0>")).scale("a3:dorian")
-      .s("sawtooth").attack(.01).release(.2).gain(.5).lpf(1500).lpenv(2).lpd(.15).room(.3).orbit(2))),
+      .s("sawtooth").attack(.01).release(.2).gain(.5).lpf(1000).lpenv(2).lpd(.15).room(.3).orbit(2))),
   // 3: crash on the bar, the whistle screams the tune
   layer(3, stack(
     s("crash:1 ~ ~ ~ ~ ~ ~ ~").gain(.35),
-    n(whistle).scale("a4:dorian")
-      .s("whistle").gain(.5).attack(.02).release(.3).room(.4).orbit(2)))
+    n(whistle).scale("a3:dorian")
+      .s("whistle").gain(.5).attack(.02).release(.3).lpf(2800).room(.4).orbit(2)))
 ).postgain(.31)

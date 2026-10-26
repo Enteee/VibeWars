@@ -99,6 +99,41 @@ describe("MatchSimulation step", () => {
     expect(down.combatant.energy).toBe(0);
   });
 
+  it.each([
+    ["Blood Ritual", ["blood-ritual"], 3 + 3],
+    ["Malaise", ["malaise"], 3 - 1],
+    ["both, which sum", ["blood-ritual", "malaise"], 3 + 3 - 1],
+  ] as const)(
+    "under %s, a ranger regenerates its pips plus the statuses' over 3 s",
+    (_, ids, pips) => {
+      const sim = new MatchSimulation({
+        seed: "regen",
+        participants: [
+          spec("a", 0, vec2(0, 0), { baseEnergyPips: BASE_ENERGY_PIPS_BY_PROFESSION.ranger }),
+        ],
+      });
+      const a = participant(sim, "a");
+      for (const id of ids) {
+        a.combatant.statuses.apply(id, 10, "a");
+      }
+      a.combatant.energy = 0;
+      stepFor(sim, 3);
+      expect(a.combatant.energy).toBeCloseTo(pips, 6);
+    },
+  );
+
+  it("drains no energy below 0 under Malaise", () => {
+    const sim = new MatchSimulation({
+      seed: "regen",
+      participants: [spec("a", 0, vec2(0, 0), { baseEnergyPips: 0 })],
+    });
+    const a = participant(sim, "a");
+    a.combatant.statuses.apply("malaise", 10, "a");
+    a.combatant.energy = 0.1;
+    stepFor(sim, 2);
+    expect(a.combatant.energy).toBe(0);
+  });
+
   it("clamps the energy pips to 10", () => {
     const sim = new MatchSimulation({
       seed: "regen",
@@ -349,7 +384,10 @@ describe("walls", () => {
       participants: [spec("a", 0, vec2(0, 0)), spec("b", 1, vec2(200, 0))],
     });
     sim.setTarget("a", "b");
-    expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: false, reason: "no-line-of-sight" });
+    // Out of sight, the skill is not refused: it walks round to see (#499).
+    expect(sim.requestSkill("a", 0)).toMatchObject({ check: { ok: true }, queued: true });
+    expect(participant(sim, "a").pendingSkill).toBeDefined();
+    sim.cancelAction("a");
 
     sim.setInputDirection("a", vec2(1, 0));
     stepFor(sim, 2);

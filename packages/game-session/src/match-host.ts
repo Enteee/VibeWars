@@ -370,7 +370,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       facing: round(participant.facing, 2),
       targetId: participant.targetId ?? null,
       attackTargetId: combatant.attack?.targetId ?? null,
-      walking: participant.walkGoal !== undefined,
+      walking: participant.walkGoal !== undefined || participant.pendingSkill !== undefined,
       health: Math.round(combatant.health),
       maxHealth: combatant.maxHealth,
       energy: Math.round(combatant.energy),

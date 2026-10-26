@@ -256,6 +256,29 @@ describe("a P2P match host, as the match room (#375)", () => {
     expect(stopped).toBeLessThan(goal.x);
   });
 
+  it("shows a spell walking in as walking, and cancel drops it unpaid (#499)", async () => {
+    const match = startMatch();
+    const { connection: a } = await match.join();
+    const { connection: b } = await match.join();
+    // Back off from the foe across the way, past Fireball range.
+    a.sendIntent({ kind: "walk-to", x: 50, y: FIRST_SPAWN.y });
+    await settle();
+    await match.step(5);
+    expect(self(a)?.x).toBeLessThan(100);
+
+    a.sendIntent({ kind: "target", targetSessionId: b.selfSessionId });
+    a.sendIntent({ kind: "use-skill", slot: DEFAULT_SKILL_BAR.indexOf("elementalist.fireball") });
+    await landAndTick(match);
+    expect(self(a)?.walking).toBe(true);
+
+    a.sendIntent({ kind: "cancel" });
+    await landAndTick(match);
+    expect(self(a)?.walking).toBe(false);
+    await match.step(3);
+    expect(self(a)?.castingSkillId).toBeUndefined();
+    expect(self(a)?.energy).toBe(self(a)?.maxEnergy);
+  });
+
   it("ignores a malformed intent rather than crashing the room", async () => {
     const match = startMatch();
     const { connection, transport } = await match.join();

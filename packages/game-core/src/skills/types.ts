@@ -46,6 +46,8 @@ export type TargetRule =
   | "self"
   | "single-enemy"
   | "single-ally"
+  /** An ally other than the caster (GW1's "Cannot target self"). */
+  | "single-other-ally"
   /** Any single target including self; the caster chooses. */
   | "single-any";
 

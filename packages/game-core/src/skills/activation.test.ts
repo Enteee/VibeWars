@@ -158,6 +158,23 @@ describe("canActivate", () => {
     expect(canActivate(request({ skill: healSkill, target }))).toEqual({ ok: true });
   });
 
+  it("allows an other-ally skill on an ally, never on yourself or a foe (#503)", () => {
+    const otherAlly: Skill = { ...SPELL, target: "single-other-ally" };
+    const caster = makeCombatant({ id: "same", team: 0 });
+    expect(
+      canActivate(request({ skill: otherAlly, target: makeCombatant({ id: "ally", team: 0 }) })),
+    ).toEqual({ ok: true });
+    expect(
+      canActivate(
+        request({ skill: otherAlly, caster, target: makeCombatant({ id: "same", team: 0 }) }),
+      ),
+    ).toEqual({ ok: false, reason: "invalid-target-self" });
+    expect(canActivate(request({ skill: otherAlly }))).toEqual({
+      ok: false,
+      reason: "invalid-target-enemy",
+    });
+  });
+
   it("ignores target rules entirely for a self-targeted skill", () => {
     const selfSkill: Skill = { ...SPELL, target: "self" };
     expect(

@@ -16,7 +16,7 @@ import type {
 
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
-import { attackingIcon, professionIcon, skillBadgeHtml, soundIcon } from "./icons.js";
+import { attackingIcon, professionIcon, skillBadgeHtml, soundIcon, weaponIcon } from "./icons.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import { castFailures, castingSlot, flashSlot } from "./skill-slot-state.js";
 
@@ -582,9 +582,19 @@ export function targetProfessionIcons(target: PlayerSnapshot | undefined): Profe
   );
 }
 
+/**
+ * The target's weapon icon (#419), after its professions: what to watch
+ * for in the fight. None for no target, no weapon or one this client does
+ * not know.
+ */
+export function targetWeaponIcon(target: PlayerSnapshot | undefined): ProfessionIcon | undefined {
+  return target?.weaponId === undefined ? undefined : weaponIcon(target.weaponId);
+}
+
 /** Replace the icons only when the target or its professions changed, never every frame. */
 function renderTargetProfessions(container: HTMLElement, target: PlayerSnapshot | undefined): void {
-  const icons = targetProfessionIcons(target);
+  const weapon = targetWeaponIcon(target);
+  const icons = [...targetProfessionIcons(target), ...(weapon === undefined ? [] : [weapon])];
   const key = icons.map((icon) => icon.name).join(" / ");
   if (container.dataset.professions === key) {
     return;

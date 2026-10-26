@@ -29,7 +29,13 @@ import {
 } from "../pathing.js";
 import { createRng, seedFromString, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
-import { canActivate, hasAftercast, payCost, type ActivationCheck } from "../skills/activation.js";
+import {
+  canActivate,
+  hasAftercast,
+  payCost,
+  type ActivationCheck,
+  type ActivationRejection,
+} from "../skills/activation.js";
 import { CastState, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
 import { applySkillEffects, type CombatEvent } from "../skills/effects.js";
@@ -136,8 +142,22 @@ export interface Participant {
    * point as clicked.
    */
   walkGoal: Vec2 | undefined;
+  /**
+   * A targeted skill pressed out of range or out of sight, being walked
+   * to (#415, #499); `undefined` when there is none. It goes off on
+   * arrival, and nothing is paid until then.
+   */
+  pendingSkill: PendingSkill | undefined;
   targetId: string | undefined;
   respawnInSeconds: number;
+}
+
+/** A skill walking in to its target (#499). */
+export interface PendingSkill {
+  readonly slot: number;
+  readonly targetId: string;
+  /** As an attack's: how long the walk has got nowhere (#218). */
+  unreachableSeconds: number;
 }
 
 export interface MatchSimulationOptions {
@@ -174,8 +194,8 @@ export interface SkillRequest {
   readonly check: ActivationCheck;
   /**
    * Pressed during an aftercast, it goes off when the aftercast ends
-   * (#317); an attack skill pressed out of reach, when it is walked into
-   * reach (#415).
+   * (#317); a targeted skill pressed out of range or out of sight, when
+   * it is walked into range (#415, #499).
    */
   readonly queued?: true;
 }
@@ -250,6 +270,19 @@ const STALL_FRACTION = 0.1;
 
 /** A walk this close to its goal has arrived (#310). */
 const ARRIVE_UNITS = 1;
+
+/**
+ * Refusals that mean the target is gone, or no longer one the skill can be
+ * used on: a skill walking in to it is dropped (#499). Any other waits for
+ * the arrival, where it is checked again.
+ */
+const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
+  "no-target",
+  "invalid-target-dead",
+  "invalid-target-self",
+  "invalid-target-ally",
+  "invalid-target-enemy",
+]);
 
 /** How a step toward a waypoint went; see `#stepToward`. */
 type PathStep = "moved" | "stalled" | "held";
@@ -373,6 +406,7 @@ export class MatchSimulation {
       facing: spec.facing,
       inputDirection: ZERO,
       walkGoal: undefined,
+      pendingSkill: undefined,
       targetId: undefined,
       respawnInSeconds: 0,
       spec,
@@ -426,6 +460,7 @@ export class MatchSimulation {
     record.combatant.health = record.combatant.maxHealth * fraction;
     record.combatant.dead = before.dead;
     record.skillBar = skillBar;
+    record.pendingSkill = undefined;
   }
 
   /** Put a participant back as they started, exactly as a respawn does. */
@@ -484,13 +519,14 @@ export class MatchSimulation {
   }
 
   /**
-   * Moving cancels the attack and a cast with a cast time, as in GW1
-   * (#279). In the aftercast it drops the skill queued for after it, so
-   * the walk goes when the aftercast ends instead of being swallowed by
-   * the queued cast (#317).
+   * Moving cancels the attack, a skill walking in (#499) and a cast with
+   * a cast time, as in GW1 (#279). In the aftercast it drops the skill
+   * queued for after it, so the walk goes when the aftercast ends instead
+   * of being swallowed by the queued cast (#317).
    */
   #moveInterrupts(record: ParticipantRecord): void {
     record.combatant.attack = undefined;
+    record.pendingSkill = undefined;
     this.#cancelCast(record);
     record.combatant.cast.clearQueue();
   }
@@ -499,14 +535,15 @@ export class MatchSimulation {
    * Cancel Action, Esc in GW1 (#300): stop the cast, the attack and a
    * walk to a clicked point (#310) in one press, whichever are running.
    * The cast ends as walking ends it, paid for and not recharging. A skill
-   * queued for after the aftercast is dropped too (#317). With none of
-   * these, nothing happens.
+   * queued for after the aftercast, or walking in (#499), is dropped too
+   * (#317). With none of these, nothing happens.
    */
   public cancelAction(id: string): void {
     const record = this.#participants.get(id);
     if (record !== undefined) {
       this.#cancelCast(record);
       record.combatant.attack = undefined;
+      record.pendingSkill = undefined;
       record.combatant.cast.clearQueue();
       record.walkGoal = undefined;
     }
@@ -545,7 +582,8 @@ export class MatchSimulation {
    * attack can start behind a corner and walk out.
    *
    * An attack allowed ends a click-to-walk, and its approach takes over
-   * (#310); one refused leaves the walk going.
+   * (#310); one refused leaves the walk going. One at anyone but the
+   * target of a skill walking in drops that skill (#499).
    */
   public requestAttack(id: string, targetId: string): ActivationCheck | undefined {
     const record = this.#participants.get(id);
@@ -555,13 +593,11 @@ export class MatchSimulation {
     const check = this.#attackCheck(record, targetId);
     if (check.ok) {
       record.walkGoal = undefined;
+      if (record.pendingSkill?.targetId !== targetId) {
+        record.pendingSkill = undefined;
+      }
       if (record.combatant.attack?.targetId !== targetId) {
-        record.combatant.attack = {
-          targetId,
-          swingElapsed: 0,
-          unreachableSeconds: 0,
-          pendingSkillSlot: undefined,
-        };
+        record.combatant.attack = { targetId, swingElapsed: 0, unreachableSeconds: 0 };
       }
     }
     return check;
@@ -637,24 +673,26 @@ export class MatchSimulation {
 
     const castTargetId = skill.target === "self" ? id : this.#castTarget(record, skill);
     const check = this.#check(record, skill, castTargetId);
-    // An attack skill out of reach or out of sight walks in and goes off
-    // there, as Space does (#415). Range and line of sight are checked
-    // last, so everything else has passed; it is all checked again on
-    // arrival. A spell out of range does not path (ADR-0026).
+    // Out of range or out of sight, a skill walks in and goes off there,
+    // as Space does (#415, operator Q61). Range and line of sight are
+    // checked last, so everything else has passed; it is all checked
+    // again on arrival. An attack skill turns on its target with the
+    // weapon as it goes; any other leaves the attack to pause and resume.
     if (
       !check.ok &&
       (check.reason === "out-of-range" || check.reason === "no-line-of-sight") &&
-      skill.attack !== undefined &&
       castTargetId !== undefined
     ) {
       record.walkGoal = undefined;
       record.combatant.cast.clearQueue();
-      record.combatant.attack = {
-        targetId: castTargetId,
-        swingElapsed: 0,
-        unreachableSeconds: 0,
-        pendingSkillSlot: slot,
-      };
+      record.pendingSkill = { slot, targetId: castTargetId, unreachableSeconds: 0 };
+      if (skill.attack !== undefined) {
+        record.combatant.attack = {
+          targetId: castTargetId,
+          swingElapsed: 0,
+          unreachableSeconds: 0,
+        };
+      }
       return { skillId: skill.id, check: { ok: true }, queued: true };
     }
     return this.#useSkill(record, slot, skill, castTargetId, check);
@@ -663,7 +701,7 @@ export class MatchSimulation {
   /**
    * The rest of `requestSkill`, once its target is known and `check`
    * made: queue it behind an aftercast, or pay for it and begin it. Also
-   * how a pending attack skill goes off on arrival (#415).
+   * how a skill walking in goes off on arrival (#415, #499).
    */
   #useSkill(
     record: ParticipantRecord,
@@ -675,10 +713,8 @@ export class MatchSimulation {
     if (!check.ok) {
       return { skillId: skill.id, check };
     }
-    // Another skill, accepted, drops one pending: the press replaces it.
-    if (record.combatant.attack !== undefined) {
-      record.combatant.attack.pendingSkillSlot = undefined;
-    }
+    // Another skill, accepted, drops one walking in: the press replaces it.
+    record.pendingSkill = undefined;
     // During an aftercast a skill with an activation time, or an attack
     // skill, which takes its weapon's, waits for it to end, as in GW1
     // (#317): checked now, so one that could never go off is refused at
@@ -798,6 +834,7 @@ export class MatchSimulation {
         }
       }
 
+      this.#advancePendingSkill(record, dt);
       this.#advanceAttack(record, dt);
       this.#faceCastTarget(record);
       // Walked or approached: either way, it is what a shot leads.
@@ -950,12 +987,7 @@ export class MatchSimulation {
       primary !== undefined &&
       this.#attackCheck(record, primary.id).ok
     ) {
-      record.combatant.attack = {
-        targetId: primary.id,
-        swingElapsed: 0,
-        unreachableSeconds: 0,
-        pendingSkillSlot: undefined,
-      };
+      record.combatant.attack = { targetId: primary.id, swingElapsed: 0, unreachableSeconds: 0 };
     }
     if (hasAftercast(skill)) {
       record.combatant.cast.beginAftercast(this.#ruleset.combat.aftercastSeconds);
@@ -979,25 +1011,60 @@ export class MatchSimulation {
   }
 
   /**
-   * Another `dt` of the attack getting nowhere. Once it has lasted
-   * `unreachableAfterSeconds` (#218), the attack ends and says so.
+   * One tick of an approach (ADR-0026): walk until `target` is within
+   * `reach` and in sight, round walls (#211), then face it. The only
+   * movement the simulation chooses, and never on top of the player's
+   * own. Replanned every tick, so a target that moves, or a shove, is
+   * simply where the next plan starts.
    *
-   * @returns whether the attack ended
+   * `progress` counts how long it has got nowhere; at
+   * `unreachableAfterSeconds` (#218) the approach gives up, and the
+   * caller ends what it was walking for.
    */
-  #unreachableFor(record: ParticipantRecord, targetId: string, dt: number): boolean {
-    const attack = record.combatant.attack;
-    if (attack === undefined) {
-      return true;
+  #approach(
+    record: ParticipantRecord,
+    target: ParticipantRecord,
+    reach: number,
+    progress: { unreachableSeconds: number },
+    dt: number,
+  ): "arrived" | "walking" | "unreachable" {
+    if (
+      distanceWithinRange(record.position, target.position, reach) &&
+      hasLineOfSight(record.position, target.position, this.#walls)
+    ) {
+      faceToward(record, target.position);
+      return "arrived";
     }
-    attack.unreachableSeconds += dt;
-    if (attack.unreachableSeconds < this.#ruleset.combat.unreachableAfterSeconds - SWING_EPSILON) {
-      return false;
+    const next = this.#paths.find(record.position, target.position)?.[0];
+    if (next === undefined) {
+      // No way there, this tick. It has to last before the approach ends
+      // (#218); meanwhile, steer straight at the target, which is what
+      // usually shoves a squeezed body back out (#211).
+      if (this.#stalledFor(progress, dt)) {
+        return "unreachable";
+      }
+      this.advanceMovement(record, sub(target.position, record.position), dt);
+      return "walking";
     }
-    record.combatant.attack = undefined;
-    this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, [
-      { kind: "attack-unreachable", targetId },
-    ]);
-    return true;
+    // A path that leads nowhere counts as none: an approach that cannot
+    // move, boxed in or with a body in a doorway, ends as unreachable
+    // too. One held is neither lost nor progress.
+    const step = this.#stepToward(record, next, target.id, false, dt);
+    if (step === "stalled") {
+      return this.#stalledFor(progress, dt) ? "unreachable" : "walking";
+    }
+    if (step === "moved") {
+      progress.unreachableSeconds = 0;
+    }
+    return "walking";
+  }
+
+  /** Another `dt` of an approach getting nowhere; whether it has now lasted too long (#218). */
+  #stalledFor(progress: { unreachableSeconds: number }, dt: number): boolean {
+    progress.unreachableSeconds += dt;
+    return (
+      progress.unreachableSeconds >= this.#ruleset.combat.unreachableAfterSeconds - SWING_EPSILON
+    );
   }
 
   /**
@@ -1103,9 +1170,72 @@ export class MatchSimulation {
   }
 
   /**
+   * The step of a skill walking in (#415, #499): drop it once its target
+   * is no longer one it could be used on, or on a move; wait out a cast
+   * and an aftercast; walk to the skill's own range, not the weapon's
+   * (Barrage stops short of a longbow's); then use it as if pressed now,
+   * checked all over again. Refused there (Energy Burn took the energy on
+   * the way), it is dropped without a word, and a running attack resumes.
+   *
+   * A walk that gets nowhere for `unreachableAfterSeconds` drops it and
+   * says so; an attack skill's ends its attack too, as Space's would.
+   */
+  #advancePendingSkill(record: ParticipantRecord, dt: number): void {
+    const pending = record.pendingSkill;
+    if (pending === undefined) {
+      return;
+    }
+    const skillId = record.skillBar[pending.slot];
+    const skill = skillId === undefined || skillId === null ? undefined : getSkill(skillId);
+    const target = this.#participants.get(pending.targetId);
+    const moving =
+      record.inputDirection.x !== 0 ||
+      record.inputDirection.y !== 0 ||
+      record.walkGoal !== undefined;
+    if (skill === undefined || target === undefined || moving) {
+      record.pendingSkill = undefined;
+      return;
+    }
+    const check = this.#check(record, skill, target.id);
+    if (!check.ok && TARGET_REJECTIONS.has(check.reason)) {
+      record.pendingSkill = undefined;
+      return;
+    }
+    if (record.combatant.cast.isCasting || record.combatant.cast.inAftercast) {
+      return;
+    }
+
+    const approach = this.#approach(record, target, skill.range, pending, dt);
+    if (approach === "unreachable") {
+      record.pendingSkill = undefined;
+      const unreachable: CombatEvent = { kind: "attack-unreachable", targetId: target.id };
+      if (skill.attack === undefined) {
+        this.#log.push({
+          tick: this.#tick,
+          atSeconds: this.#elapsedSeconds,
+          cause: "skill",
+          sourceId: record.id,
+          skillId: skill.id,
+          weaponId: undefined,
+          area: undefined,
+          events: [unreachable],
+        });
+      } else {
+        record.combatant.attack = undefined;
+        this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, [unreachable]);
+      }
+      return;
+    }
+    if (approach === "arrived") {
+      record.pendingSkill = undefined;
+      this.#useSkill(record, pending.slot, skill, target.id, this.#check(record, skill, target.id));
+    }
+  }
+
+  /**
    * The attack step (ADR-0026): drop an attack whose target is no longer
-   * a living enemy, pause while casting and through the aftercast, walk
-   * into reach, then swing, or use the attack skill pending (#415).
+   * a living enemy, pause while casting, through the aftercast and while
+   * a skill walks in (#499), walk into reach, then swing.
    *
    * The swing timer keeps the remainder past each interval rather than
    * zeroing, so the rate stays exact at 20 Hz. A target that steps out of
@@ -1135,59 +1265,21 @@ export class MatchSimulation {
       record.combatant.attack = undefined;
       return;
     }
-    if (record.combatant.cast.isCasting || record.combatant.cast.inAftercast) {
+    if (
+      record.combatant.cast.isCasting ||
+      record.combatant.cast.inAftercast ||
+      record.pendingSkill !== undefined
+    ) {
       return;
     }
 
     const { weapon } = record.combatant.equipment.mainHand;
-    // A pending attack skill walks to its own range, not the weapon's:
-    // Barrage stops at its own, short of a longbow's (#415).
-    const pendingSkillId =
-      attack.pendingSkillSlot === undefined ? undefined : record.skillBar[attack.pendingSkillSlot];
-    const pending =
-      pendingSkillId === undefined || pendingSkillId === null
-        ? undefined
-        : getSkill(pendingSkillId);
-    const reach = pending === undefined ? weapon.range : pending.range;
-    if (
-      !distanceWithinRange(record.position, target.position, reach) ||
-      !hasLineOfSight(record.position, target.position, this.#walls)
-    ) {
-      // Approach until in reach and in sight, round walls (#211): the only
-      // movement the simulation chooses, and never on top of the
-      // player's own. Replanned every tick, so a target that moves, or a
-      // shove, is simply where the next plan starts.
-      const next = this.#paths.find(record.position, target.position)?.[0];
-      if (next === undefined) {
-        // No way there, this tick. It has to last before the attack ends
-        // (#218); meanwhile, steer straight at the target, which is what
-        // usually shoves a squeezed body back out (#211).
-        if (this.#unreachableFor(record, target.id, dt)) {
-          return;
-        }
-        this.advanceMovement(record, sub(target.position, record.position), dt);
-        return;
-      }
-      // A path that leads nowhere counts as none: an approach that cannot
-      // move, boxed in or with a body in a doorway, ends as unreachable
-      // too. One held is neither lost nor progress.
-      const step = this.#stepToward(record, next, target.id, false, dt);
-      if (step === "stalled") {
-        this.#unreachableFor(record, target.id, dt);
-      } else if (step === "moved") {
-        attack.unreachableSeconds = 0;
-      }
-      return;
+    const approach = this.#approach(record, target, weapon.range, attack, dt);
+    if (approach === "unreachable") {
+      record.combatant.attack = undefined;
+      this.#logWeapon(record.id, weapon.id, [{ kind: "attack-unreachable", targetId: target.id }]);
     }
-    faceToward(record, target.position);
-
-    // Arrived: the pending skill goes off as if pressed now, checked all
-    // over again. Refused (Energy Burn took the energy on the way), it is
-    // dropped and the attack carries on as an auto-attack.
-    if (pending !== undefined && attack.pendingSkillSlot !== undefined) {
-      const slot = attack.pendingSkillSlot;
-      attack.pendingSkillSlot = undefined;
-      this.#useSkill(record, slot, pending, target.id, this.#check(record, pending, target.id));
+    if (approach !== "arrived") {
       return;
     }
 
@@ -1388,6 +1480,7 @@ export class MatchSimulation {
       const victim = this.#participants.get(event.targetId);
       if (victim !== undefined) {
         victim.combatant.attack = undefined;
+        victim.pendingSkill = undefined;
         victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
         victim.respawnInSeconds = this.#respawnSeconds(victim);
@@ -1569,6 +1662,7 @@ export class MatchSimulation {
     record.combatant.cast.cancelCast();
     record.combatant.cast.endAftercast();
     record.combatant.attack = undefined;
+    record.pendingSkill = undefined;
     record.sinceReset = 0;
     record.history.clear();
   }
