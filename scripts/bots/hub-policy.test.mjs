@@ -738,6 +738,19 @@ describe("company hire and fire", () => {
   });
 });
 
+describe("company load (#747)", () => {
+  it("is the manager's only, takes no words, and no hat lends it", () => {
+    expect(authorize("manager", { kind: "load", argv: [] })).toEqual({ allow: true });
+    expect(authorize("manager", { kind: "load", argv: ["x"] })).toMatchObject({ allow: false });
+    for (const role of ROLES.filter((r) => r !== "manager")) {
+      expect(authorize(role, { kind: "load", argv: [] }), role).toMatchObject({ allow: false });
+    }
+    expect(
+      authorize("lead-dev", { kind: "load", argv: [] }, { acting: ["manager"] }),
+    ).toMatchObject({ allow: false });
+  });
+});
+
 describe("closing and reopening", () => {
   /**
    * The reason a refused command gives; fails if it was allowed.

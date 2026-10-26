@@ -101,7 +101,8 @@ Backlog`, judged against the card's column in hubd's copy of the board
 
 **Scheduled nudges (#537).** `scripts/bots/schedule.json` lists fixed messages
 hubd sends to a role on an interval (the manager grooms the Backlog every
-30 min). hubd keeps the clock and writes the system outbox
+30 min, and reviews staffing every 2 h from `company load`, the dashboard's
+numbers as text, #747). hubd keeps the clock and writes the system outbox
 `{ to, text, nudge }`; link delivers each as a `link` line from `system`,
 mirrored as a directed message in Bots, and skips an employee that still has
 an unread nudge of the same entry, so they never pile up. Changing the

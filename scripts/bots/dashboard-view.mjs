@@ -340,14 +340,14 @@ function seat(id) {
 
 /**
  * What one employee is doing when it is not simply working: being fired,
- * down, or not running at all.
+ * down, or not running at all. `company load` (#747) says it too.
  *
  * @param {string} id
- * @param {CompanyFacts} facts
- * @param {StaffFacts} staff
+ * @param {Pick<CompanyFacts, "live" | "stale">} facts
+ * @param {Pick<StaffFacts, "staff" | "now">} staff
  * @returns {string | null} null for an employee at work
  */
-function staffNote(id, { live, stale }, { staff, now }) {
+export function staffNote(id, { live, stale }, { staff, now }) {
   const employee = staff.employees[id];
   if (employee?.state === "firing") {
     if (employee.readyAt !== null) {

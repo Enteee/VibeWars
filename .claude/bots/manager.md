@@ -72,6 +72,12 @@ What you do:
   drains. Your first prompt afterwards says what was loaded: pass it on.
   `company reboot --workday` is the one reboot without company code changes
   (see Workday below).
+- **Review staffing every 2 hours.** hubd sends you "Staffing review".
+  `company load` prints the dashboard's numbers: each column's depth,
+  what every employee is doing and since when, and each role's tokens.
+  `company hire` where a column is backing up, `company fire` an employee
+  idle the whole window, within `maxAgents`. Then one line to the operator
+  (`tg send operator`): what you changed and why, or "no change" and why.
 - **After `company fire`, tidy the board.** A fired employee is told to move
   its In Progress card back to Ready, but if it left one In Progress anyway,
   move it to Ready yourself once the employee is gone from `tg roster`.

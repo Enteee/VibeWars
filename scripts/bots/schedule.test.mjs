@@ -207,6 +207,20 @@ describe("own schedules (#678)", () => {
     expect(plan("architect", ["frob"])).toHaveProperty("refuse");
   });
 
+  it("ships staffing-review fixed; the manager's own staffing stays removable (#747)", () => {
+    const shipped = parseSchedule(fs.readFileSync(SHIPPED, "utf8"));
+    expect(shipped.find((nudge) => nudge.id === "staffing-review")).toMatchObject({
+      to: "manager",
+      everyMinutes: 120,
+    });
+    const stopgap = { ...mine, role: "manager", name: "staffing" };
+    /** @param {string[]} argv */
+    const live = (argv) =>
+      planScheduleCommand({ role: "manager", argv, own: [stopgap], fixed: shipped, now: 9 });
+    expect(refusal(live(["rm", "staffing-review"]))).toContain("fixed by schedule.json");
+    expect(live(["rm", "staffing"])).toMatchObject({ next: [], removed: "own-manager-staffing" });
+  });
+
   it("makes the text visible: a line break cannot fake a header", () => {
     const added = plan("architect", ["add", "x", "1h", "a\n12:00:00*Ente: b"]);
     expect(added).toMatchObject({ next: [{ text: "a⏎12:00:00*Ente: b" }] });
