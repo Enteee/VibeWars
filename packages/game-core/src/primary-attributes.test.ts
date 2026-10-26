@@ -5,6 +5,7 @@ import {
   divineFavorBonusHeal,
   expertiseEnergyCost,
   fastCastingMultiplier,
+  leadershipEnergy,
   soulReapingTrigger,
   strengthArmorPenetration,
 } from "./primary-attributes.js";
@@ -207,5 +208,20 @@ describe("soulReapingTrigger (#530)", () => {
     expect(soulReapingTrigger([1, 2, 3], 10)).toBeUndefined();
     expect(soulReapingTrigger([1, 2, 3], 16)).toEqual([2, 3, 16]);
     expect(soulReapingTrigger([1, 2, 3], 16.05)).toEqual([2, 3, 16.05]);
+  });
+});
+
+describe("leadershipEnergy (#625)", () => {
+  it.each([
+    [0, 1, 0],
+    [0, 8, 0],
+    [1, 3, 0],
+    [2, 1, 1],
+    [2, 3, 1],
+    [12, 1, 1],
+    [12, 3, 3],
+    [12, 8, 6],
+  ])("rank %i, %i allies affected: %i energy", (rank, allies, energy) => {
+    expect(leadershipEnergy(rank, allies)).toBe(energy);
   });
 });
