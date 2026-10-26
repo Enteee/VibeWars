@@ -23,12 +23,28 @@ let
   # hub was unreachable. A list that has to be kept in step with the imports is
   # a list that will drift, so the whole directory goes in and the tests are
   # filtered out.
+  #
+  # With them goes `build-manifest.json`: what this build was built from
+  # (#557). Every claude-llc compares it with the checkout and rebuilds
+  # itself when they differ, because a shell keeps the store paths it was
+  # entered with, and a `git pull` changes nothing about them. The inputs are
+  # copied into a tree laid out as the checkout is, so the build and the
+  # runtime check run fingerprint.mjs's one function over one layout.
   llcScripts = pkgs.runCommand "vibewars-llc-scripts" { } ''
     mkdir -p $out
     for f in ${../scripts/bots}/*.mjs; do
       case "$f" in *.test.mjs) continue ;; esac
       cp "$f" "$out/$(basename "$f")"
     done
+
+    tree="$(mktemp -d)"
+    mkdir -p "$tree/scripts/bots" "$tree/nix"
+    cp ${../scripts/bots}/*.mjs "$tree/scripts/bots/"
+    cp ${../nix}/*.nix "$tree/nix/"
+    cp ${../devenv.nix} "$tree/devenv.nix"
+    cp ${../devenv.yaml} "$tree/devenv.yaml"
+    cp ${../devenv.lock} "$tree/devenv.lock"
+    ${node} $out/fingerprint.mjs manifest "$tree" >$out/build-manifest.json
   '';
 
   # The org chart, in the order the windows are created: dashboard 0, then
@@ -164,6 +180,50 @@ let
           pkill -f supervisor.mjs 2>/dev/null || true
         }
 
+        # The build the running company was started from, against the
+        # checkout: one `build: ...` line, and exit 3 if it is stale (#557).
+        running_build() {
+          local build
+          build="$(${tmux} show-environment -t "=$SESSION" VIBEWARS_LLC_BUILD 2>/dev/null)" || {
+            echo "build: unknown (the session does not say)"
+            return 0
+          }
+          ${node} ${llcScripts}/fingerprint.mjs status "''${build#*=}" "$DEVENV_ROOT"
+        }
+
+        # A shell keeps the store paths it was entered with, so a claude-llc
+        # typed after a `git pull` or a merged reboot builds the company from
+        # old code (#557). If this build is not the checkout's, rebuild from
+        # the checkout and run that instead, once: the guard survives `devenv
+        # shell`, and is unset here so it never reaches the session, where a
+        # reboot's restarter must be free to rebuild too.
+        reexec="''${VIBEWARS_LLC_REEXEC-}"
+        unset VIBEWARS_LLC_REEXEC
+        case "''${1-}" in
+          -h | --help) ;;
+          *)
+            stale=0
+            differ="$(${node} ${llcScripts}/fingerprint.mjs check ${llcScripts} "$DEVENV_ROOT" 2>&1)" || stale=$?
+            if [ "$stale" = 3 ] && [ -z "$reexec" ]; then
+              count="$(printf '%s\n' "$differ" | wc -l)"
+              if [ "$count" = 1 ]; then files="1 file differs"; else files="$count files differ"; fi
+              echo "claude-llc: this build is stale ($files), rebuilding from the checkout" >&2
+              # As the restarter's devenv(): a shell built from the checkout
+              # and nothing else. VIBEWARS_REBOOTED stays, if it is set.
+              cd "$DEVENV_ROOT"
+              for name in $(compgen -e); do
+                case "$name" in DEVENV_* | IN_NIX_SHELL) unset "$name" ;; esac
+              done
+              export VIBEWARS_LLC_REEXEC=1
+              exec devenv shell --refresh-eval-cache -- claude-llc "$@"
+            elif [ "$stale" = 3 ]; then
+              echo "claude-llc: still stale after a rebuild: $(printf '%s\n' "$differ" | paste -sd ' '); running anyway" >&2
+            elif [ "$stale" != 0 ]; then
+              echo "claude-llc: warning: could not compare this build with the checkout: $differ" >&2
+            fi
+            ;;
+        esac
+
         attach=1
 
         case "''${1-}" in
@@ -175,13 +235,20 @@ let
             if ${tmux} has-session -t "=$SESSION" 2>/dev/null; then
               echo "session $SESSION is up:"
               ${tmux} list-windows -t "=$SESSION" -F '  #{window_index} #{window_name}'
+              echo "  $(running_build)"
             else
               echo "session $SESSION is not running"
             fi
             for d in hubd supervisor; do
               if pgrep -f "run-forever.mjs $d" >/dev/null 2>&1; then echo "  $d: running (restarted on exit)"; else echo "  $d: stopped"; fi
             done
-            if pgrep -f "link.mjs serve" >/dev/null 2>&1; then echo "  telegram: running"; else echo "  telegram: stopped"; fi
+            # Running, and its heartbeat fresh: a hung sidecar is stopped too (#583).
+            # Red when it is not, since every agent message waits on it.
+            if pgrep -f "link.mjs serve" >/dev/null 2>&1 && ${node} ${llcScripts}/sidecar.mjs fresh "$VIBEWARS_BOT_ROOT/bus"; then
+              echo "  telegram: running"
+            else
+              printf "  \033[1;31mtelegram: stopped\033[0m\n"
+            fi
             exit 0
             ;;
           up)
@@ -223,6 +290,13 @@ let
             ;;
         esac
 
+        # A reboot in progress has the company stopped on purpose. Starting
+        # one into that gap is how a reboot ended up on the old code
+        # (#557): wait for it instead, then join what it brought up, or say
+        # it failed. The restarter's own `up` is let through.
+        waited=0
+        ${node} ${llcScripts}/reboot-wait.mjs || waited=$?
+
         if [ ! -e "$VIBEWARS_BOT_ROOT/company.json" ]; then
           echo "claude-llc: the company has not been set up yet." >&2
           echo "claude-llc: run claude-llc-init first." >&2
@@ -243,6 +317,9 @@ let
             exit 1
           fi
           echo "claude-llc: $SESSION is already running; attaching to it."
+          if ! line="$(running_build)"; then
+            echo "claude-llc: the running company's $line" >&2
+          fi
 
           # run-forever brings a daemon back on its own, but not its window:
           # if someone closed it, open it again, or you attach to a company
@@ -257,6 +334,15 @@ let
             exit 0
           fi
           exec ${tmux} attach-session -t "$SESSION"
+        fi
+
+        # The reboot this waited for did not bring the company up. Never
+        # start one in its place: the operator runs claude-llc again, on
+        # purpose, once they have read why.
+        if [ "$waited" = 4 ]; then
+          echo "claude-llc: the reboot did not bring the company back up: $(${lib.getExe pkgs.jq} -r '.note // "no note"' "$VIBEWARS_BOT_ROOT/boot.json" 2>/dev/null || echo "boot.json unreadable")" >&2
+          echo "claude-llc: run claude-llc again to start it." >&2
+          exit 1
         fi
 
         # ------------------------------------------------------------------------
@@ -353,6 +439,9 @@ let
         # dashboard.mjs with its section and redraws when its pane resizes.
         ${tmux} new-session -d -s "$SESSION" -n dashboard -c "$DEVENV_ROOT" \
           "${node} ${llcScripts}/dashboard.mjs board"
+        # Which build this company runs, for `claude-llc status` and an
+        # attach from a newer checkout (#557).
+        ${tmux} set-environment -t "$SESSION" VIBEWARS_LLC_BUILD ${llcScripts}
         board_pane="$(${tmux} display-message -p -t "$SESSION:dashboard" '#{pane_id}')"
         feed_pane="$(${tmux} split-window -v -l 30% -t "$board_pane" -P -F '#{pane_id}' \
           -c "$DEVENV_ROOT" "${node} ${llcScripts}/dashboard.mjs feed")"

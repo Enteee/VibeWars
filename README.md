@@ -6,20 +6,24 @@
 [![License: AGPL v3](https://img.shields.io/github/license/Enteee/VibeWars?style=flat&label=license)](LICENSE)
 
 Team arena PvP in the browser, after Guild Wars 1: two professions,
-eight skills on the bar, and real-time fights on a 20 Hz server.
+eight skills on the bar, and real-time fights at 20 Hz, hosted by one
+player's browser.
 
-**[▶ Try it now](https://enteee.github.io/VibeWars/next/)** — build a
-character and test it on dummies in the Training Ground, right in your
-browser. Matches against other players need a server; see
+**[▶ Play it now](https://enteee.github.io/VibeWars/next/)** — build a
+character, test it on dummies in the Training Ground, then host a lobby
+and send its code to your friends. Nothing to install; see
 [Play it](#play-it).
 
 ![The character editor, with the Training Ground on the left: a Fireball has just hit a caster dummy](docs/media/readme-arena.png)
 
 A browser-based, minimalist, multiplayer PvP arena game mechanically
 inspired by Guild Wars 1 PvP — original implementation, original
-geometric visuals, no proprietary GW1 assets or code. Built for LAN
-parties: one host runs the server, friends open a URL and type a short
-lobby code. No accounts, no database, no cloud.
+geometric visuals, no proprietary GW1 assets or code. Peer to peer: one
+player hosts a lobby in their browser tab, which runs the match, and
+friends type its short code. No accounts, no database, no game server.
+Peers find each other through public Nostr relays (Trystero) and then
+talk over WebRTC, so the players in a lobby can see each other's IP
+address.
 
 See [`docs/product/master-brief.md`](docs/product/master-brief.md) for
 the full product brief and sprint roadmap, and [`docs/adr/`](docs/adr/)
@@ -28,16 +32,13 @@ for the decisions behind this repository (start with
 
 ## Play it
 
-```sh
-devenv shell          # Node 24 + pnpm, dependencies installed for you
-pnpm run build
-node apps/server/dist/main.js
-```
-
-The server listens on `0.0.0.0:2567` and serves the built client
-automatically — no configuration needed. Everyone on the LAN opens
-`http://<host-ip>:2567`, one person hosts a lobby, the rest type the
-code.
+Open the GitHub Pages build:
+[the latest release](https://enteee.github.io/VibeWars/) or
+[the latest `main`](https://enteee.github.io/VibeWars/next/). One person
+picks **host a lobby** and reads out the code; the others type it
+and pick **join**. The host's tab runs the match, so it has to stay open: if
+it closes, the lobby ends for everyone. The two builds keep separate
+saved characters.
 
 | Key             | Action                              |
 | --------------- | ----------------------------------- |
@@ -54,13 +55,9 @@ code.
 
 To leave a match, press `F10` or use **leave match** at the top right; it asks first.
 
-To try the character editor and the roster without hosting anything,
-open the static build on GitHub Pages:
-[the latest release](https://enteee.github.io/VibeWars/) or
-[the latest `main`](https://enteee.github.io/VibeWars/next/). Online play
-is disabled there, because it needs the server above (or `pnpm run dev`)
-until peer-to-peer play lands (#15). The two keep separate saved
-characters.
+To play your own build, run `pnpm run dev` (see
+[Development](#development)), or `pnpm run build` and serve
+`apps/web/dist` from any static web server.
 
 If `devenv` is unavailable, any Node 24 with `pnpm@10` works — every
 command is a plain `pnpm` script (see `package.json`). This repository's
@@ -69,7 +66,7 @@ own development was verified that way; see
 
 ## What works today
 
-- **Real-time authoritative combat** on a fixed 20 Hz server tick:
+- **Real-time authoritative combat** on a fixed 20 Hz tick, run by the host:
   movement, collision, body blocking, line of sight, targeting, casting
   with cast and recharge times, energy and adrenaline economies.
 - **Mechanics**: 8 conditions, hexes, enchantments, interrupts, health
@@ -84,16 +81,16 @@ own development was verified that way; see
   repeatable matches.
 - **Character builder** with profession/attribute rules and versioned
   browser-local persistence. Pick a character on the menu and you take
-  that build into the match — the server validates it and falls back to a
+  that build into the match — the host validates it and falls back to a
   default loadout if it is illegal, so a build is a request, never a
   claim.
 - **Team builder** for planning a roster: create, rename, add, remove,
   reorder, duplicate and delete, at any team size. A team is a local
   planning tool — see the limits below.
 - **Match rules**: score, clock, victory conditions.
-- **Robustness**: a dropped player keeps their slot for 30 seconds and
-  reconnects to the same character; hostile input cannot crash the
-  server (fuzz-tested).
+- **Robustness**: a dropped player's character stays in the match for
+  30 seconds (rejoining it is #515); hostile input cannot crash the
+  host (fuzz-tested).
 
 Honest limits:
 
@@ -114,14 +111,14 @@ Honest limits:
 
 ```text
 apps/
-  server/   Authoritative Colyseus game server
+  server/   The old Colyseus game server; no client uses it since #403, #404 deletes it
   web/      Browser client (HTML/CSS shell + Phaser 4 viewport)
 packages/
   game-core/      Pure domain logic: combat, skills, geometry, rules
   game-protocol/  The client/server wire contract
   game-maps/      Declarative arenas + loader/validator
   game-data/      GW1 reference-skill import pipeline + dev CLI
-  game-session/   Peer-to-peer match sessions over a Transport (in progress, #15)
+  game-session/   Peer-to-peer match sessions over a Transport (#15)
 docs/
   product/master-brief.md   Product brief and sprint roadmap
   adr/                      Architectural Decision Records
@@ -137,13 +134,13 @@ headlessly. See [ARCHITECTURE.md](ARCHITECTURE.md).
 pnpm run dev      # the whole game, reloading as you edit
 ```
 
-Opens the client on <http://localhost:5173> with the game server on 2567.
-Editing the client reloads the page; editing the server or any package
-rebuilds and restarts it. Ctrl-C stops all three watchers.
+Opens the client on <http://localhost:5173>. Editing the client reloads
+the page; editing any package rebuilds it. Ctrl-C stops all the watchers.
+Two tabs of it can play each other: one hosts, the other joins.
 
-Use `pnpm run build && node apps/server/dist/main.js` instead when you
-want the real single-port setup — that is what LAN guests connect to, and
-it is what the browser tests run against.
+The browser tests build the client with `VITE_VIBEWARS_TRANSPORT=broadcast`,
+so their peers are tabs of one browser and need no relay (see
+[environment variables](docs/development/environment-variables.md)).
 
 ```sh
 pnpm run ci       # format + lint + typecheck + test + build

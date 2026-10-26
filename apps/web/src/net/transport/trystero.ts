@@ -14,6 +14,7 @@ import { joinRoom, selfId } from "trystero/nostr";
 import type { DataPayload, MessageAction } from "trystero/nostr";
 
 import { HandlerSets } from "./handler-sets.js";
+import { oversizedCheck } from "./oversized.js";
 import { APP_ID, MAX_RECEIVE_BYTES, NOSTR_RELAYS, RELAY_REDUNDANCY } from "./relays.js";
 
 /** Join the room for lobby code `code`. `deps` is for the unit test; the app passes nothing. */
@@ -39,13 +40,16 @@ export function joinTrysteroRoom(
     },
   );
   const handlers = new HandlerSets();
+  const oversized = oversizedCheck("trystero transport");
 
   // Every action up front: one made lazily would miss what arrived first.
   const actions = new Map<Channel, MessageAction>();
   for (const channel of CHANNELS) {
     const action = room.makeAction(channel);
     action.onMessage = (data, context) => {
-      handlers.message(channel, data, context.peerId);
+      if (!oversized(data, context.peerId)) {
+        handlers.message(channel, data, context.peerId);
+      }
     };
     actions.set(channel, action);
   }

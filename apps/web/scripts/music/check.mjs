@@ -14,7 +14,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { allowedSounds, checkTrack, MAX_FORM_CYCLES } from "./analyse.mjs";
+import {
+  allowedSounds,
+  checkTrack,
+  MAX_DSP_COST,
+  MAX_FORM_CYCLES,
+  MAX_PEAK_GAIN,
+} from "./analyse.mjs";
 import { checkManifest } from "./manifest.mjs";
 
 /** @typedef {import("./manifest.mjs").ManifestEntry} ManifestEntry */
@@ -119,7 +125,9 @@ for (const track of tracks) {
     console.log(
       `key: ${a.outsideKey.length ? `outside ${a.outsideKey.join(" ")}` : "every note is in key"}`,
     );
-    console.log(`worst-case summed gain: ${a.peakGain.toFixed(2)}`);
+    console.log(
+      `sounding: gain ${a.peakGain.toFixed(2)} (max ${String(MAX_PEAK_GAIN)}), DSP cost ${a.dspCost === null ? "?" : a.dspCost.toFixed(0)} (max ${String(MAX_DSP_COST)})`,
+    );
     console.log(
       `register: ${a.registers
         .map(

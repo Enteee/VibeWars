@@ -40,6 +40,7 @@ export {
   findStatusDefinition,
   getStatusDefinition,
   isStatusId,
+  scaledStatusDuration,
 } from "./status.js";
 
 export {

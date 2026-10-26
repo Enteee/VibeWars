@@ -289,8 +289,17 @@ export function boardLines(snapshot, columns, live, { rows, width }) {
  * @property {ReturnType<typeof import("./hub-health.mjs").hubHealth>} hub hubd, as its heartbeat and restarts say (#23)
  * @property {ClaudeUsage | null} claude null before any agent has logged (#50)
  * @property {NudgeFacts} nudges the scheduled nudges and how they are doing (#547)
+ * @property {TelegramFacts} telegram whether the Telegram sidecar is up (#583)
  * @property {{ record: import("./reboot.mjs").Reboot, between: readonly string[], now: number } | { rebooting: string } | null} reboot
  *   the pending reboot with the roles between turns, or the reason of the one handed to the restarter (#345)
+ * @property {{ line: string, stale: boolean } | null} build the build the company runs, against the checkout; null when the dashboard runs from the checkout (#557)
+ */
+
+/**
+ * @typedef {object} TelegramFacts
+ * @property {boolean} down no `link.mjs serve` running, or its heartbeat too old
+ * @property {number | null} lastSeen its last heartbeat, epoch ms; null if there is none
+ * @property {number} now epoch milliseconds
  */
 
 /**
@@ -541,6 +550,21 @@ function rebootSection({ reboot, roles, live }, width) {
 }
 
 /**
+ * The build the company runs (#557): a STALE one is red, as a reboot is,
+ * because it is the company not running what the checkout says.
+ *
+ * @param {CompanyFacts} facts
+ * @param {number} width
+ * @returns {string[]}
+ */
+function buildSection({ build }, width) {
+  if (build === null) {
+    return [];
+  }
+  return [build.stale ? paint(cut(build.line, width), "1;31") : cut(build.line, width)];
+}
+
+/**
  * The scheduled nudges (#547): when each last went, when it is next due, and
  * who has not read it. No schedule is no section.
  *
@@ -576,13 +600,34 @@ export function nudgeLines({ nudges: { schedule, since, sent, unread, now } }, w
 }
 
 /**
+ * The Telegram sidecar, only when it is down, and first (#583): every
+ * agent's messages wait on it, and nothing else in the pane says so.
+ *
+ * @param {CompanyFacts} facts
+ * @param {number} width
+ * @returns {string[]}
+ */
+function telegramSection({ telegram: { down, lastSeen, now } }, width) {
+  if (!down) {
+    return [];
+  }
+  const seen =
+    lastSeen === null
+      ? "no heartbeat"
+      : `last seen ${String(Math.round((now - lastSeen) / 1000))} s ago`;
+  return [paint(cut(`TELEGRAM DOWN (${seen}): claude-llc status`, width), "1;31")];
+}
+
+/**
  * The COMPANY pane's sections, in order. A new one is a
  * function here rather than a pane, as #23's hub line and #50's tokens are.
  *
  * @type {readonly ((facts: CompanyFacts, width: number) => string[])[]}
  */
 export const COMPANY_SECTIONS = [
+  telegramSection,
   rebootSection,
+  buildSection,
   staffSection,
   hubSection,
   githubSection,

@@ -278,6 +278,23 @@ Firefox could not be measured here: in this sandbox it has no audio
 output. Its numbers come from the phone check in
 `docs/development/manual-tests.md`.
 
+### 8. Underruns in Chromium and Firefox, validated (#519)
+
+`.github/workflows/music-measure.yml` runs `scripts/music-stress.mjs --pulse`
+for each browser on a push to `main` that touches the music, or on demand:
+a PulseAudio null sink gives both a real-time output, and `?audiostress=<ms>`
+(stress build only) makes an AudioWorklet busy-wait that long in every
+render quantum (2.5 ms is about 95 % of the 2.67 ms budget at 48 kHz). A
+browser's readings are **validated** when `underrunMs` stays near 0 with no
+stress and rises from 1.5 to 2.5 ms (`scripts/music-stress-validation.mjs`);
+otherwise they are printed marked unvalidated and nobody tunes from them.
+It never fails on bad numbers, only on a crash. A headless runner is not a
+phone.
+
+**Numbers: pending the first green run of that workflow**, which is to be
+linked here with both browsers' tables at intensity 0 and 3, SFX on and off.
+Until then the `music:check` budgets (#514) stay provisional.
+
 ## The scheduler works ahead
 
 Strudel's cyclist queries slots up to 0.2 s past its clock and skips every
@@ -343,6 +360,17 @@ Step 4 builds to these budgets, and QA (step 8) checks them.
 | Game page script time, music on minus off (median of ≥ 5 runs) | **≤ 1 percentage point** | below noise            |
 | Sound palette                                                  | 3 MB                     | –                      |
 | Worker-backed timers                                           | **required**             | –                      |
+| Audio-thread DSP cost of what sounds at once (`music:check`)   | **90** (provisional)     | 39 to 90, per level    |
+| Reverb                                                         | one room: orbit 2 6 s    | –                      |
+
+The DSP cost and the room are checked by `pnpm music:check` (#508), with no
+audio device. A voice costs what superdough builds for it (a supersaw its
+`unison` voices, each filter, `vowel` a bank of five, a worklet effect two),
+for as long as it sounds, release included, and each orbit with a wet voice adds
+a cost per second of its `roomsize`. The ceiling and the weights are
+provisional until #507 can say which cost plays without underruns in Firefox.
+Every track uses the same reverb (`MUSIC_ROOMS` in `cost.mjs`), so a track
+switch never rebuilds the impulse response.
 
 What we cut to stay within budget:
 

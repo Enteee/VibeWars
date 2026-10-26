@@ -1,0 +1,70 @@
+name: music measure
+
+# How the music holds up in Chromium and Firefox on a real-time (null sink)
+# audio output, with the audio thread loaded on purpose (#519, ADR-0028
+# measurement 8). Information, never a gate: timing on a shared runner says
+# nothing about a phone. Not on pull requests and not a required check; it
+# fails only if the script crashes or a browser does not start, never on bad
+# numbers.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - apps/web/src/music/**
+      - apps/web/public/music/**
+      - scripts/music-stress.mjs
+      - scripts/music-stress-validation.mjs
+      - .github/workflows/music-measure.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  measure:
+    name: music-measure (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    # One browser per job, in parallel: 60 s per load, a dozen loads.
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox]
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: ./.github/actions/devenv
+
+      - name: Measure
+        env:
+          BROWSER: ${{ matrix.browser }}
+        run: |
+          devenv shell -- node scripts/music-stress.mjs --pulse \
+            --browser "$BROWSER" --json "music-measure-$BROWSER.json"
+
+      - name: Summary
+        if: success()
+        env:
+          BROWSER: ${{ matrix.browser }}
+        run: |
+          file="music-measure-$BROWSER.json"
+          {
+            echo "## $BROWSER"
+            echo
+            echo "Validated: $(jq -r ".browsers.$BROWSER.validated" "$file") (a headless runner is not a phone)"
+            echo
+            echo "| load | underruns | underrun ms | max reduction dB | late ticks | skipped ms |"
+            echo "| --- | --- | --- | --- | --- | --- |"
+            jq -r ".browsers.$BROWSER.loads[] | \"| \(.name) (\(.screen)) | \(.underruns // \"n/a\") | \(.underrunMs // \"n/a\") | \(.maxReductionDb) | \(.lateTicks) | \(.skippedMs) |\"" "$file"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: success()
+        with:
+          name: music-measure-${{ matrix.browser }}
+          path: music-measure-${{ matrix.browser }}.json

@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { startSoloMatch } from "./helpers/peers.js";
+
 /**
  * Music (#371, ADR-0028): the Strudel engine in a sandboxed iframe, made
  * on the first click. Audio output itself is not asserted; what the host
@@ -53,7 +55,7 @@ test("music starts on the first click, in a sandboxed frame, with no console err
   page.on("pageerror", (error) => errors.push(error.message));
   await recordMessages(page);
 
-  await page.goto("/");
+  await page.goto("./");
   await expect(page.locator(".roster")).toBeVisible();
   await expect(page.locator("iframe")).toHaveCount(0);
 
@@ -77,7 +79,7 @@ test("music-host.html opened on its own loads no engine and runs nothing posted 
   page.on("request", (request) => requests.push(request.url()));
   await recordMessages(page);
 
-  await page.goto("/music-host.html");
+  await page.goto("./music-host.html");
   await page.evaluate((source) => {
     for (const message of [
       { type: "evaluate", source },
@@ -96,12 +98,12 @@ test("music-host.html opened on its own loads no engine and runs nothing posted 
 test("music-host.html framed without a sandbox runs nothing either", async ({ page }) => {
   const requests: string[] = [];
   page.on("request", (request) => requests.push(request.url()));
-  await page.goto("/");
+  await page.goto("./");
   await page.evaluate(
     (source) =>
       new Promise<void>((resolve) => {
         const frame = document.createElement("iframe");
-        frame.src = "/music-host.html";
+        frame.src = "music-host.html";
         frame.addEventListener("load", () => {
           frame.contentWindow?.postMessage({ type: "evaluate", source }, "*");
           resolve();
@@ -123,7 +125,7 @@ test("music-host.html framed without a sandbox runs nothing either", async ({ pa
 });
 
 test("the game's own scripts carry no Strudel engine", async ({ page, request }) => {
-  await page.goto("/");
+  await page.goto("./");
   const scripts = await page.evaluate(() =>
     [
       ...document.querySelectorAll<HTMLScriptElement>("script[src]"),
@@ -156,7 +158,7 @@ function playedTracks(page: Page): Promise<string[]> {
 
 test("a pinned track is what plays after a reload (#372)", async ({ page }) => {
   await recordMessages(page);
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "music", exact: true }).click();
   await page
     .locator(".jukebox-row", { hasText: "Ember Deep" })
@@ -174,7 +176,7 @@ test("Off plays nothing after a click, and the music mute survives a reload (#37
   page,
 }) => {
   await recordMessages(page);
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "music", exact: true }).click();
   await page.locator(".jukebox-mode").selectOption("off");
   // The music's mute lives in Options → Sound, a link away.
@@ -205,25 +207,28 @@ interface Box {
 
 test("the now-playing toast at a match start covers none of the HUD (#372)", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto("/");
-  await expect(page.getByRole("button", { name: "quick match" })).toBeVisible();
+  await page.goto("./");
+  await expect(page.getByRole("button", { name: "host a lobby" })).toBeVisible();
   // The toast hides after a few seconds, which a busy page can spend before
-  // a locator gets to it: note where it is the moment it shows.
+  // a locator gets to it: note where it is, every frame it shows in the
+  // match. It first shows on the lobby screen, bottom left (#556), and moves
+  // top left once the screens give way to the match.
   await page.evaluate(() => {
     const toast = document.querySelector<HTMLElement>(".now-playing");
-    if (toast === null) {
-      throw new Error("no now-playing toast");
+    const screens = document.querySelector<HTMLElement>("#screens");
+    if (toast === null || screens === null) {
+      throw new Error("no now-playing toast or #screens");
     }
-    const observer = new MutationObserver(() => {
-      if (!toast.hidden) {
-        observer.disconnect();
+    const note = (): void => {
+      if (!toast.hidden && screens.style.display === "none") {
         Object.assign(window, { toastBox: toast.getBoundingClientRect().toJSON() as unknown });
       }
-    });
-    observer.observe(toast, { attributes: true, attributeFilter: ["hidden"] });
+      requestAnimationFrame(note);
+    };
+    note();
   });
-  // The click that starts the match is the one that starts the music.
-  await page.getByRole("button", { name: "quick match" }).click();
+  // The click that hosts the lobby is the one that starts the music.
+  await startSoloMatch(page);
   await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
 
   const toastBox = (): Promise<Box | null> =>

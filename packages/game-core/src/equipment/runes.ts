@@ -63,6 +63,11 @@ export interface UniversalRune {
   readonly name: string;
   /** `true` when the rune comes in minor/major/superior; `false` for a single grade. */
   readonly tiered: boolean;
+  /**
+   * `true` when every copy worn counts (Vitae). A rune that does not
+   * stack counts once, at the best tier worn (GW1).
+   */
+  readonly stacks: boolean;
   /** Restricted to this primary profession, or `undefined` for anyone. */
   readonly requiresPrimary: ProfessionId | undefined;
   /** Effect by tier. A non-tiered rune has the same entry under every key. */
@@ -81,16 +86,23 @@ function tiered(
     id,
     name,
     tiered: true,
+    stacks: false,
     requiresPrimary,
     byTier: Object.freeze({ minor, major, superior }),
   });
 }
 
-function flat(id: UniversalRuneId, name: string, effect: RuneEffect): UniversalRune {
+function flat(
+  id: UniversalRuneId,
+  name: string,
+  effect: RuneEffect,
+  stacks = false,
+): UniversalRune {
   return Object.freeze({
     id,
     name,
     tiered: false,
+    stacks,
     requiresPrimary: undefined,
     byTier: Object.freeze({ minor: effect, major: effect, superior: effect }),
   });
@@ -118,7 +130,7 @@ export const UNIVERSAL_RUNES: Readonly<Record<UniversalRuneId, UniversalRune>> =
     { kind: "health", amount: 50 },
   ),
 
-  vitae: flat("vitae", "Rune of Vitae", { kind: "health", amount: 10 }),
+  vitae: flat("vitae", "Rune of Vitae", { kind: "health", amount: 10 }, true),
 
   // Rescaled from the reference data's +1/+2/+3. That was sized for a
   // much smaller energy pool; against this game's 50 energy regenerating

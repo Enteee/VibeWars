@@ -1,8 +1,9 @@
 /**
  * How the host runs git near anything an agent can write.
  *
- * Shared by hubd and the reboot's restarter, the two host processes that
- * run git with the operator's authority.
+ * Shared by hubd, the reboot's restarter, and fingerprint.mjs (HEAD for
+ * `claude-llc status` and the dashboard): the host processes that run git
+ * with the operator's authority.
  */
 
 /**

@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { ROLES } from "./hub-policy.mjs";
+import { readSidecar } from "./sidecar.mjs";
 import { seedStaff } from "./staff.mjs";
 
 const LINK = path.join(path.dirname(fileURLToPath(import.meta.url)), "link.mjs");
@@ -377,6 +378,21 @@ async function until(condition, label, ms = 8000) {
 }
 
 describe("the company sidecar", () => {
+  it("writes a heartbeat into the bus as it starts, and removes it as it stops (#583)", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    const heartbeat = path.join(co.bus, "sidecar.json");
+    const before = Date.now();
+    const { child, exited } = co.start();
+
+    await until(() => fs.existsSync(heartbeat), "the heartbeat");
+    expect(readSidecar(co.bus)?.lastSeen).toBeGreaterThanOrEqual(before);
+
+    child.kill("SIGTERM");
+    await exited;
+    expect(fs.existsSync(heartbeat)).toBe(false);
+  }, 20_000);
+
   it("delivers a peer message straight into the inbox, then mirrors it to Bots", async () => {
     const telegram = await fakeTelegram();
     const co = company(telegram.url);

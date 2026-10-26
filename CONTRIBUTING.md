@@ -35,17 +35,10 @@ pnpm run ci            # format:check + lint + typecheck + test + build, in orde
 packages and the server, `node --watch` for the server process, and Vite
 for the client.
 
-Because Vite serves the client on a different port from the game server,
-the client is pointed at the server explicitly through
-`VITE_VIBEWARS_SERVER` rather than guessing from the page origin, and the
-server allows that one origin cross-origin — but **only** when
-`VIBEWARS_DEV=1`. Production serves the client from the game server, so
-it is same-origin and none of this applies.
-
-Proxying through Vite instead would have been the obvious approach and
-does not work: Colyseus opens its WebSocket at `/<processId>/<roomId>`,
-a root-level path that cannot be told apart from Vite's own HMR socket
-without guessing.
+The client plays peer to peer (#15, #403) and never talks to the game
+server, which `scripts/dev.mjs` still starts until phase 5 deletes it.
+Two tabs of the dev client on one machine find each other over the public
+Nostr relays, as two browsers anywhere do.
 
 ## Before opening a PR
 

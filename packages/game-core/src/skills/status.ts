@@ -16,6 +16,8 @@
  * short condition cannot out-last one well-timed long one.
  */
 
+import type { Combatant } from "./types.js";
+
 export type StatusCategory = "condition" | "hex" | "enchantment";
 
 export type StatusId =
@@ -251,6 +253,21 @@ export class StatusSet {
     }
     return expired;
   }
+}
+
+/**
+ * How long a status lasts on `target`: its nominal duration, shortened
+ * by the target's condition-duration runes (a Rune of Restoration takes
+ * bleeding to 80%). Every path that puts a status on a combatant asks
+ * this first, so a rune cannot work for skills and not for dummies. The
+ * scale is the wearer's, never the caster's.
+ */
+export function scaledStatusDuration(
+  target: Pick<Combatant, "equipment">,
+  statusId: StatusId,
+  durationSeconds: number,
+): number {
+  return durationSeconds * (target.equipment.statusDurationScale.get(statusId) ?? 1);
 }
 
 /* -------------------------------------------------------------------------- */

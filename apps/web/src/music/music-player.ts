@@ -6,6 +6,7 @@ import {
   type MusicStats,
 } from "./host-protocol.js";
 import { musicHostUrl } from "./music-urls.js";
+import { STRESS_BUILD, audioStressMs } from "./stress.js";
 
 /**
  * The game's side of the music (#371, ADR-0028): a facade over the
@@ -68,6 +69,8 @@ export interface MusicPlayerDeps {
   readonly every: (ms: number, tick: () => void) => () => void;
   /** Ask every host to count what the music costs (`?musicstats`, #420). */
   readonly measure: boolean;
+  /** Ask every host to busy-wait this long per render quantum (`?audiostress=`, #519), or `null`. */
+  readonly audioStress: number | null;
 }
 
 /** A track switch fades over this many cycles (#366 §3.1). */
@@ -183,6 +186,9 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     frame = deps.createFrame(receive);
     queue = [
       ...(deps.measure ? [{ type: "measure" } as const] : []),
+      ...(deps.audioStress === null
+        ? []
+        : [{ type: "audioStress", ms: deps.audioStress } as const]),
       { type: "setVolume", gain: volume, rampSeconds: 0 },
       { type: "setIntensity", level: intensity },
       ...queue.filter((message) => message.type !== "setVolume" && message.type !== "setIntensity"),
@@ -318,6 +324,7 @@ export function musicPlayer(): MusicPlayer {
       };
     },
     measure,
+    audioStress: audioStressMs(location.search, STRESS_BUILD),
   });
   if (measure) {
     // For scripts/music-stress.mjs, which reads the last second's stats.

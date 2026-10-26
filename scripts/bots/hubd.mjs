@@ -95,6 +95,7 @@ import {
 } from "./reboot.mjs";
 import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
 import { dueNudges, scheduleReader } from "./schedule.mjs";
+import { createIssueBatch, newIssueMessage, WINDOW_MS } from "./new-issues.mjs";
 import { applyStaff, parseStaff, roleOf, staffAllowed, staffReader } from "./staff.mjs";
 import {
   RESTRICTED_PATHS,
@@ -2333,6 +2334,7 @@ async function serve(request, verdict, acting) {
   }
   noteHint(argv, result.code, cfg);
   const hint = await land(role, ghArgv, result, column, cfg, target);
+  noteNewIssue(role, ghArgv, result, hint, cfg);
   if (hint !== "") {
     result = { ...result, stderr: `${result.stderr}${hint}\n` };
   }
@@ -2447,6 +2449,51 @@ const readSchedule = scheduleReader(
     console.error(`hubd: schedule.json: ${problem}; still on the last good schedule`);
   },
 );
+
+/**
+ * Issues colleagues filed, for the manager to rank (#550). In memory only:
+ * a restart drops a pending batch, and the groom nudge catches it.
+ */
+const newIssues = createIssueBatch({
+  windowMs: Number(process.env.HUBD_NEW_ISSUES_WINDOW_MS ?? WINDOW_MS),
+});
+
+/**
+ * Queue an issue someone other than the manager just created, landed in
+ * Backlog or not (#550). The manager knows about their own.
+ *
+ * @param {string} role
+ * @param {string[]} argv
+ * @param {{ code: number, stdout: string }} result
+ * @param {string} hint what `land` printed; "" when the card landed
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {void}
+ */
+function noteNewIssue(role, argv, result, hint, cfg) {
+  if (role === "manager" || argv[0] !== "issue" || argv[1] !== "create") {
+    return;
+  }
+  const plan = planLanding(argv, result, cfg.repo);
+  const number = plan.kind === "add" ? selectorNumber(plan.url, cfg.repo) : null;
+  if (number === null) {
+    return;
+  }
+  const title = flagValue(argv, "--title") ?? flagValue(argv, "-t") ?? "";
+  newIssues.add({ number, title, landed: hint === "" }, Date.now());
+}
+
+/**
+ * Tell the manager about a batch whose minute is up (#550).
+ *
+ * @returns {void}
+ */
+function sendNewIssues() {
+  const now = Date.now();
+  const issues = newIssues.take(now);
+  if (issues.length > 0) {
+    tellCompany(`new-issues-${String(now)}`, newIssueMessage(issues), { to: "manager" });
+  }
+}
 
 /** When each scheduled nudge was last sent, and when hubd began counting. */
 /** @type {Map<string, number>} */
@@ -2749,6 +2796,7 @@ async function main() {
         console.error(`hubd: board: ${error instanceof Error ? error.message : "failed"}`);
       }
     }
+    sendNewIssues();
     if (Date.now() - lastNudgeCheck > NUDGE_CHECK_MS) {
       lastNudgeCheck = Date.now();
       sendNudges();

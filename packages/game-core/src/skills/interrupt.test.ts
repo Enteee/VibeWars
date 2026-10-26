@@ -170,7 +170,7 @@ describe("status-driven combat scenarios", () => {
     expect(victim.statuses.has("bleeding")).toBe(true);
 
     for (let i = 0; i < 100; i += 1) {
-      advanceStatuses(victim, TICK);
+      advanceStatuses(victim, TICK, 0);
     }
     // 5 seconds of a -3 pip bleed: 6 HP/s.
     expect(victim.health).toBeCloseTo(healthAfterHit - 30, 5);
@@ -194,7 +194,7 @@ describe("status-driven combat scenarios", () => {
 
     const healthAfterCure = ally.health;
     for (let i = 0; i < 100; i += 1) {
-      advanceStatuses(ally, TICK);
+      advanceStatuses(ally, TICK, 0);
     }
     expect(ally.health).toBe(healthAfterCure);
   });
@@ -248,7 +248,7 @@ describe("status-driven combat scenarios", () => {
 
     expect(victim.statuses.countByCategory("hex")).toBe(1);
     for (let i = 0; i < 100; i += 1) {
-      advanceStatuses(victim, TICK);
+      advanceStatuses(victim, TICK, 0);
     }
     expect(victim.health).toBeLessThan(500);
   });

@@ -17,7 +17,7 @@ import { createLocalPeer } from "./local-peer.js";
 import type { MatchHost, PlannedSeats } from "./match-host.js";
 import { sanitizeName } from "./names.js";
 import { scopeTransport } from "./scoped-transport.js";
-import type { Transport } from "./transport.js";
+import { sizeChecked, type Transport } from "./transport.js";
 
 /**
  * The pre-match lobby, hosted in one player's browser (#15, #379): the
@@ -86,7 +86,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   if (defaultMap === undefined) {
     throw new Error("a lobby needs at least one map");
   }
-  const { host: transport, local } = createLocalPeer(options.transport);
+  // Its match is on a scope of this room, so this checks every message the
+  // host sends, the match's too.
+  const { host: transport, local } = createLocalPeer(sizeChecked(options.transport));
   /** In the order they joined, which is the order they are listed in. */
   const members = new Map<string, Member>();
   const budget = new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, () => undefined);

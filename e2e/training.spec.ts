@@ -1,6 +1,8 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { KEYMAP_PRESETS, codeLabel, type Keymap } from "../apps/web/src/input/keymap.js";
+import { STORAGE_NAMESPACE } from "./helpers/base.js";
+import { startSoloMatch } from "./helpers/peers.js";
 import { projection, type Projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
 
@@ -24,7 +26,7 @@ async function openTraining(
   keymap: Keymap = KEYMAP_PRESETS.vibewars,
 ): Promise<Locator> {
   await page.setViewportSize(WIDE);
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator(".editor-row select").first().selectOption("elementalist");
   await page.locator(".skill-box", { hasText: "Fireball" }).click();
@@ -192,7 +194,7 @@ test("(7) editing the build re-arms the arena in place", async ({ page }) => {
 
 test("(8) leaving the editor leaves no arena behind", async ({ page }) => {
   await page.setViewportSize(WIDE);
-  await page.goto("/");
+  await page.goto("./");
   for (let i = 0; i < 3; i += 1) {
     await page.getByRole("button", { name: "new character" }).click();
     await expect(page.locator(".training canvas")).toBeVisible();
@@ -213,9 +215,9 @@ test("(8) leaving the editor leaves no arena behind", async ({ page }) => {
   expect(await arenaShot(page, canvas)).not.toEqual(before);
 });
 
-test("(9) a quick match is unaffected", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("button", { name: "quick match" }).click();
+test("(9) a match is unaffected", async ({ page }) => {
+  await page.goto("./");
+  await startSoloMatch(page);
   await expect(page.locator("#viewport canvas")).toHaveCount(1);
   await expect(page.locator(".hud-skills .hud-skill")).toHaveCount(8);
   await expect(page.locator(".training")).toHaveCount(0);
@@ -501,7 +503,7 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
   // Troll Unguent: a 3 s self-cast, so a slow runner still has the whole
   // window to see the ring and press Esc inside it.
   await page.setViewportSize(WIDE);
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator(".editor-row select").first().selectOption("ranger");
   await page.locator(".skill-box", { hasText: "Troll Unguent" }).click();
@@ -532,10 +534,12 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
 });
 
 test("(22) a stored Classic keymap casts on the number row (#302)", async ({ page }) => {
-  // The server-served build stores under the plain `vibewars` namespace.
-  await page.addInitScript((classic) => {
-    localStorage.setItem("vibewars.keymap", JSON.stringify(classic));
-  }, KEYMAP_PRESETS.classic);
+  await page.addInitScript(
+    ({ key, classic }) => {
+      localStorage.setItem(key, JSON.stringify(classic));
+    },
+    { key: `${STORAGE_NAMESPACE}.keymap`, classic: KEYMAP_PRESETS.classic },
+  );
   await openTraining(page, KEYMAP_PRESETS.classic);
   await expect(page.locator(".training-skill-key").first()).toHaveText("1");
   await takeControl(page);
@@ -751,7 +755,7 @@ test("(28) a left click while the right button is held still walks (#438)", asyn
 
 test("(29) an attack skill pressed out of reach walks in, then lands (#415)", async ({ page }) => {
   await page.setViewportSize(WIDE);
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "new character" }).click();
   // A new character is a warrior; Swift Chop needs an axe.
   await page.getByRole("button", { name: "gear", exact: true }).click();
