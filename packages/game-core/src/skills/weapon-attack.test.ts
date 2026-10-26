@@ -467,6 +467,78 @@ describe("critical hits (#533)", () => {
     expect(draws).toBe(1);
   });
 
+  describe("Critical Strikes (#606)", () => {
+    const always = (): boolean => true;
+    /** Daggers at `mastery`, and Critical Strikes at `criticalStrikes`. */
+    const assassin = (criticalStrikes: number, mastery = 12): Combatant =>
+      makeCombatant({
+        id: "attacker",
+        equipment: wielding(WEAPONS.daggers, "assassin.dagger-mastery"),
+        attributeRanks: new Map([
+          ["assassin.dagger-mastery", mastery],
+          ["assassin.critical-strikes", criticalStrikes],
+        ]),
+        energy: 10,
+        maxEnergy: 25,
+      });
+    /** No double strike, no rolled crit: only an exposed victim crits. */
+    const single = fixed(0.99);
+
+    it("adds 1% a rank to the crit chance", () => {
+      expect(criticalChance(weaponSnapshotOf(assassin(12)), RULES)).toBeCloseTo(0.2944, 9);
+    });
+
+    it("gives 2 energy a crit at rank 12, as an energy-gain", () => {
+      const who = assassin(12);
+      expect(swingAt(who, single, always)).toMatchObject([
+        { kind: "damage", critical: true },
+        { kind: "energy-gain", targetId: "attacker", amount: 2 },
+      ]);
+      expect(who.energy).toBe(12);
+    });
+
+    it("counts each crit of a double strike", () => {
+      const who = assassin(12);
+      const events = swingAt(who, fixed(0), always);
+      expect(events.filter((event) => event.kind === "energy-gain")).toHaveLength(2);
+      expect(who.energy).toBe(14);
+    });
+
+    it("gives no more than the attacker's maximum, and nothing once full", () => {
+      const who = assassin(13);
+      who.energy = 24;
+      expect(swingAt(who, single, always)).toMatchObject([
+        { kind: "damage" },
+        { kind: "energy-gain", amount: 1 },
+      ]);
+      expect(swingAt(who, single, always)).toEqual([expect.objectContaining({ kind: "damage" })]);
+      expect(who.energy).toBe(25);
+    });
+
+    it("gives nothing for a blow that does not crit, nor at rank 0", () => {
+      expect(swingAt(assassin(12), single)).toEqual([
+        expect.objectContaining({ kind: "damage", critical: false }),
+      ]);
+      expect(swingAt(assassin(0), single, always)).toEqual([
+        expect.objectContaining({ kind: "damage", critical: true }),
+      ]);
+    });
+
+    it("gives energy for an attack skill's crit", () => {
+      const who = assassin(8);
+      const swiftChop = getSkill("warrior.swift-chop");
+      if (swiftChop === undefined) {
+        throw new Error("missing skill");
+      }
+      const target = makeCombatant({ id: "t", team: 1, health: 1e6, maxHealth: 1e6 });
+      const events = resolveAttackSkill(
+        { skill: swiftChop, caster: who, targets: [target], rng: single, rules: RULES },
+        always,
+      );
+      expect(events).toContainEqual({ kind: "energy-gain", targetId: "attacker", amount: 2 });
+    });
+  });
+
   it("never crits a spell", () => {
     const target = makeCombatant({ id: "t", team: 1 });
     const events = applyEffect(
