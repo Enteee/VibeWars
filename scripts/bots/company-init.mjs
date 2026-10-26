@@ -9,7 +9,7 @@
  * Runs on the host, with the real credential. Four things:
  *
  *  1. adopt (or create) the Projects v2 board and give its Status field the
- *     six columns this company's workflow uses
+ *     seven columns this company's workflow uses
  *  2. link the board to the repository
  *  3. protect `main` with a ruleset — newly possible now that the repository
  *     is public, and the one piece of enforcement that does not depend on our
@@ -23,9 +23,8 @@ import path from "node:path";
 import process from "node:process";
 import { createInterface } from "node:readline/promises";
 
+import { COLUMNS, columnsPlan } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
-
-const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
 
 /**
  * The checks a pull request must carry before QA may merge it.
@@ -201,14 +200,37 @@ function readStatus() {
 }
 
 let status = readStatus();
-const wanted = COLUMNS.join("|");
-if (status.options.map((option) => option.name).join("|") === wanted) {
+const itemList = gh([
+  "project",
+  "item-list",
+  String(projectNumber),
+  "--owner",
+  OWNER,
+  "--format",
+  "json",
+  "--limit",
+  "1",
+]);
+if (itemList.code !== 0) {
+  console.error(`claude-llc-init: could not read the board's cards\n${itemList.stderr}`);
+  process.exit(1);
+}
+const listedItems = obj(parse(itemList.stdout)).items;
+const plan = columnsPlan({
+  current: status.options.map((option) => option.name),
+  wanted: COLUMNS,
+  items: Array.isArray(listedItems) ? listedItems.length : 0,
+});
+if (plan.kind === "refuse") {
+  console.error(`claude-llc-init: ${plan.message}`);
+  process.exit(1);
+} else if (plan.kind === "ok") {
   say("columns", "already correct");
 } else {
   // A fresh board comes with Todo / In Progress / Done. Replacing the option
-  // set is the only way to get our six; `gh` has no field-edit, so this is
-  // GraphQL. Done before any issue is on the board, so nothing is unassigned
-  // by it.
+  // set is the only way to get ours; `gh` has no field-edit, so this is
+  // GraphQL. Refused above once a card is on the board, because it would
+  // clear every card's column.
   const options = COLUMNS.map(
     (name) => `{name: ${JSON.stringify(name)}, color: GRAY, description: ""}`,
   ).join(", ");

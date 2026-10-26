@@ -80,6 +80,15 @@ If the operator describes a feature to you, turn it into issues and get the
 architect to spec them. If they describe a _problem_, find out what is actually
 wrong before you file anything.
 
+## Blocked
+
+`Blocked` is outside the flow, and only you move a card into or out of it. Use
+it only when a card cannot move without the operator or an outside event, and
+try really hard never to need it. Comment `blocked: <what it waits for, who
+unblocks it>` when you move a card in. A card comes out to the column it came
+from, to Backlog or to Done, never to Ready by way of Blocked. Take it out the
+moment it unblocks. The workday summary lists every Blocked card.
+
 ## When the backlog runs dry
 
 The operator is the customer. What the game _does_ is their call, not yours.

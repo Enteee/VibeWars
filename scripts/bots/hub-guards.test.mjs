@@ -417,6 +417,62 @@ describe("boardMoveAllowed (#349)", () => {
   });
 });
 
+describe("boardMoveAllowed: Blocked (#639)", () => {
+  /**
+   * @param {string} role
+   * @param {string} from
+   * @param {string} to
+   * @param {string | null} [blockedFrom]
+   */
+  const ok = (role, from, to, blockedFrom = null) =>
+    boardMoveAllowed({ role, from, to, blockedFrom }).ok;
+  const working = ["Backlog", "Ready", "In Progress", "In Review", "QA"];
+
+  it("refuses every role but the manager, in and out", () => {
+    for (const role of ["architect", "developer-1", "lead-dev", "qa-tester", "cicd-engineer"]) {
+      for (const from of working) {
+        expect(ok(role, from, "Blocked"), `${role} ${from}`).toBe(false);
+      }
+      for (const to of ["Backlog", "Done", "QA"]) {
+        expect(ok(role, "Blocked", to, "QA"), `${role} ${to}`).toBe(false);
+      }
+    }
+    expect(boardMoveAllowed({ role: "developer-1", from: "QA", to: "Blocked" })).toEqual({
+      ok: false,
+      reason: "only the manager moves a card to or from Blocked. Ask the manager.",
+    });
+  });
+
+  it("lets the manager block a card from each working column, not from Done or nowhere", () => {
+    for (const from of working) {
+      expect(ok("manager", from, "Blocked"), from).toBe(true);
+    }
+    expect(ok("manager", "Done", "Blocked")).toBe(false);
+    expect(ok("manager", "", "Blocked")).toBe(false);
+  });
+
+  it("lets a Blocked card out to its origin, the Backlog or Done only", () => {
+    expect(ok("manager", "Blocked", "In Review", "In Review")).toBe(true);
+    expect(ok("manager", "Blocked", "Backlog", "QA")).toBe(true);
+    expect(ok("manager", "Blocked", "Done", "QA")).toBe(true);
+    expect(ok("manager", "Blocked", "Ready", "QA")).toBe(false);
+    expect(ok("manager", "Blocked", "In Progress", "QA")).toBe(false);
+    expect(ok("manager", "Blocked", "", "QA")).toBe(false);
+  });
+
+  it("lets a card with no record out to the Backlog or Done only", () => {
+    expect(ok("manager", "Blocked", "Backlog")).toBe(true);
+    expect(ok("manager", "Blocked", "Done")).toBe(true);
+    expect(ok("manager", "Blocked", "QA")).toBe(false);
+    expect(ok("manager", "Blocked", "Ready")).toBe(false);
+  });
+
+  it("does not let Blocked bypass the sign-off: Backlog -> Blocked -> Ready", () => {
+    expect(ok("manager", "Backlog", "Blocked")).toBe(true);
+    expect(ok("manager", "Blocked", "Ready", "Backlog")).toBe(false);
+  });
+});
+
 describe("landingAllowed (#517)", () => {
   const ok = (/** @type {string} */ role, /** @type {string} */ to, /** @type {boolean} */ pull) =>
     landingAllowed({ role, to, pull }).ok;

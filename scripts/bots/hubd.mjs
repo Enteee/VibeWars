@@ -29,6 +29,9 @@ import {
   ITEM_QUERY,
   answerBoard,
   applyFacts,
+  blockedAfterMove,
+  blockedSwept,
+  readBlocked,
   itemNumber,
   LANDING_COLUMN,
   listing,
@@ -156,6 +159,8 @@ const STAFF = path.join(ROOT, "staff.json");
 const ALIVE = path.join(HUB, "hubd.alive");
 /** `nudges.json`: when hubd began counting and what it sent, for the dashboard (#547). */
 const NUDGES = path.join(HUB, "nudges.json");
+/** `blocked.json`: the column each Blocked card came from, by project item id (#639). */
+const BLOCKED = path.join(HUB, "blocked.json");
 const LOCK = path.join(HUB, "hubd.lock");
 
 /**
@@ -1003,6 +1008,13 @@ let board = null;
  */
 let boardSet = new Set();
 /**
+ * Where each Blocked card came from, by project item id (#639): the one
+ * place its way back is written down. `blocked.json` keeps it across starts.
+ *
+ * @type {Record<string, string>}
+ */
+let blockedOrigins = {};
+/**
  * Issues to re-read once GitHub's workflows have had their turn: number → due.
  *
  * @type {Map<number, number>}
@@ -1052,6 +1064,45 @@ function keepBoard(next, cfg) {
   board = next;
   boardSet = boardNumbers(listing(next), cfg.repo);
   writeAtomic(BOARD_SNAPSHOT, JSON.stringify(next));
+  keepBlocked(blockedSwept(blockedOrigins, next.cards));
+}
+
+/**
+ * Take `next` as the record of where Blocked cards came from, and write it
+ * down if it changed.
+ *
+ * @param {Record<string, string>} next
+ */
+function keepBlocked(next) {
+  if (JSON.stringify(next) === JSON.stringify(blockedOrigins)) {
+    return;
+  }
+  blockedOrigins = next;
+  writeAtomic(BLOCKED, JSON.stringify(next));
+}
+
+/**
+ * `blocked.json` as the last hubd left it. A file in any other shape is
+ * deleted: a Blocked card without a record comes out to the Backlog or Done.
+ */
+function loadBlocked() {
+  if (!fs.existsSync(BLOCKED)) {
+    return;
+  }
+  /** @type {unknown} */
+  let raw = null;
+  try {
+    raw = JSON.parse(fs.readFileSync(BLOCKED, "utf8"));
+  } catch {
+    // Not JSON: discarded below, like any other shape.
+  }
+  const origins = readBlocked(raw);
+  if (origins === null) {
+    fs.rmSync(BLOCKED, { force: true });
+    console.error("hubd: blocked.json is not a record of columns; discarded");
+    return;
+  }
+  blockedOrigins = origins;
 }
 
 /**
@@ -1261,8 +1312,24 @@ async function refuseCardEdit(role, argv, cfg) {
     return "could not tell which column that card is in; try again";
   }
   const status = card.item.status;
-  const decision = boardMoveAllowed({ role, from: typeof status === "string" ? status : "", to });
+  const decision = boardMoveAllowed({
+    role,
+    from: typeof status === "string" ? status : "",
+    to,
+    blockedFrom: blockedOrigins[id] ?? null,
+  });
   return decision.ok ? null : decision.reason;
+}
+
+/**
+ * The column a card is in, in hubd's copy; `""` for none.
+ *
+ * @param {string} id project item id
+ * @returns {string}
+ */
+function columnOf(id) {
+  const status = board?.cards.find((card) => card.item.id === id)?.item.status;
+  return typeof status === "string" ? status : "";
 }
 
 /**
@@ -2326,11 +2393,21 @@ async function serve(request, verdict, acting) {
     }
   }
 
+  const movedId =
+    kind === "gh" && argv[0] === "project" && argv[1] === "item-edit"
+      ? flagValue(argv, "--id")
+      : null;
+  const before = movedId === null ? "" : columnOf(movedId);
   let result = await gh(pinRepo(ghArgv, cfg));
   // An item just added, moved or archived must show up on the next read,
   // not when the copy happens to be swept.
   if (argv[0] === "project") {
     await afterProjectCommand(ghArgv, result, cfg);
+    if (movedId !== null && result.code === 0) {
+      keepBlocked(
+        blockedAfterMove(blockedOrigins, { id: movedId, before, after: columnOf(movedId) }),
+      );
+    }
   }
   noteHint(argv, result.code, cfg);
   const hint = await land(role, ghArgv, result, column, cfg, target);
@@ -2732,6 +2809,7 @@ async function main() {
   health.sha = readBoot()?.sha.slice(0, 7) ?? null;
   // A restart costs no sweep the board's age does not call for.
   loadBoard(cfg);
+  loadBlocked();
   readStaffed();
   heartbeat();
   const heartbeatMs = Number(process.env.HUBD_HEARTBEAT_MS ?? HEARTBEAT_MS);

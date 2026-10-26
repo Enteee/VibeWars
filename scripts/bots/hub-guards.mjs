@@ -201,19 +201,57 @@ export function explainGuard(guard, result) {
 /** Columns a card cannot reach from the Backlog without the architect's sign-off. */
 const SIGNED_OFF = new Set(["In Progress", "In Review", "QA"]);
 
+const BLOCKED = "Blocked";
+
+/** Columns a card may be Blocked from. */
+const BLOCKABLE = new Set(["Backlog", "Ready", "In Progress", "In Review", "QA"]);
+
+/**
+ * Blocked (#639) sits outside the flow and is the manager's alone. A card goes
+ * in from any working column, and comes out to where it came from, to Backlog
+ * or to Done: never to Ready (the architect's sign-off) by way of Blocked.
+ *
+ * @param {{ role: string, from: string, to: string, blockedFrom: string | null }} move
+ * @returns {{ ok: true } | { ok: false, reason: string }}
+ */
+function blockedMoveAllowed({ role, from, to, blockedFrom }) {
+  if (role !== "manager") {
+    return {
+      ok: false,
+      reason: "only the manager moves a card to or from Blocked. Ask the manager.",
+    };
+  }
+  if (to === BLOCKED) {
+    return BLOCKABLE.has(from)
+      ? { ok: true }
+      : { ok: false, reason: `a card in ${from === "" ? "no column" : from} cannot be Blocked` };
+  }
+  if (to === "Backlog" || to === "Done" || to === blockedFrom) {
+    return { ok: true };
+  }
+  return {
+    ok: false,
+    reason: `a Blocked card goes back to ${blockedFrom === null ? "" : `${blockedFrom}, to `}Backlog or to Done, not to ${to === "" ? "no column" : to}`,
+  };
+}
+
 /**
  * May this role move a card between these columns (#349)? The column is the
  * architect's sign-off: a card leaves the Backlog for Ready only by the
  * architect's hand, and the architect makes no other move. Everything else
  * stays with the roles `hub-policy.mjs` lets edit an item.
  *
- * @param {{ role: string, from: string, to: string }} move column names; `""`
- *   is no column
+ * @param {{ role: string, from: string, to: string, blockedFrom?: string | null }} move
+ *   column names; `""` is no column. `blockedFrom` is the column a Blocked card
+ *   came from, or null when hubd has no record of it (#639)
  * @returns {{ ok: true } | { ok: false, reason: string }}
  */
-export function boardMoveAllowed({ role, from, to }) {
+export function boardMoveAllowed({ role, from, to, blockedFrom = null }) {
   if (from === to) {
     return { ok: true };
+  }
+  if (from === BLOCKED || to === BLOCKED) {
+    return blockedMoveAllowed({ role, from, to, blockedFrom });
   }
   const label = (/** @type {string} */ column) => (column === "" ? "no column" : column);
   const unsigned = from === "Backlog" || from === "";
@@ -275,6 +313,9 @@ export function boardMoveAllowed({ role, from, to }) {
 export function landingAllowed({ role, to, pull }) {
   if (!pull) {
     return boardMoveAllowed({ role, from: "", to });
+  }
+  if (to === BLOCKED) {
+    return { ok: false, reason: "a card is Blocked from a column it is already in" };
   }
   if (role !== "manager") {
     return { ok: false, reason: "only the manager puts a pull request on the board" };

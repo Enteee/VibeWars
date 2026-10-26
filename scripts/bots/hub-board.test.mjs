@@ -11,10 +11,14 @@ import { describe, expect, it } from "vitest";
 import {
   BOARD_FORMAT_VERSION,
   BOARD_TTL_MS,
+  COLUMNS,
   answerBoard,
   applyFacts,
   arrivals,
+  blockedAfterMove,
+  blockedSwept,
   boardLines,
+  columnsPlan,
   itemAddTarget,
   listing,
   needsSweep,
@@ -29,6 +33,7 @@ import {
   rankCards,
   rankLine,
   rankTarget,
+  readBlocked,
   readBoardState,
   selectorNumber,
   sweep,
@@ -555,6 +560,46 @@ describe("boardLines", () => {
       ...done.slice(0, 5).map((c) => `  #${String(c.number)}  ${c.title}`),
     ]);
   });
+
+  it("prints Blocked first, above the Backlog (#639)", () => {
+    const lines = boardLines([card(1, "Backlog"), card(2, "Blocked"), card(3, "Done")], true);
+    expect(lines).toEqual([
+      "Blocked:",
+      "  #2    card 2",
+      "Backlog:",
+      "  #1    card 1",
+      "Done:",
+      "  #3    card 3",
+    ]);
+  });
+
+  it("gives the board a Blocked column, last, as GitHub adds it", () => {
+    expect(COLUMNS.at(-1)).toBe("Blocked");
+  });
+});
+
+describe("columnsPlan (#639)", () => {
+  const wanted = ["Backlog", "Ready", "Blocked"];
+
+  it("leaves an equal set alone, even on a populated board", () => {
+    expect(columnsPlan({ current: ["Blocked", "Ready", "Backlog"], wanted, items: 40 })).toEqual({
+      kind: "ok",
+    });
+  });
+
+  it("replaces the options of an empty board", () => {
+    expect(columnsPlan({ current: ["Todo", "Done"], wanted, items: 0 })).toEqual({
+      kind: "replace",
+    });
+  });
+
+  it("refuses a populated board that lacks an option, naming what to add", () => {
+    const plan = columnsPlan({ current: ["Backlog", "Ready"], wanted, items: 3 });
+    expect(plan.kind).toBe("refuse");
+    expect("message" in plan ? plan.message : "").toContain(
+      "add the missing option(s) Blocked by hand",
+    );
+  });
 });
 
 describe("ranking (#351)", () => {
@@ -750,5 +795,26 @@ describe("itemAddTarget (#517)", () => {
     expect(itemAddTarget(["--url", `${pull}/`])).toBeNull();
     expect(itemAddTarget(["--url", "https://example.com/Enteee/VibeWars/pull/1"])).toBeNull();
     expect(itemAddTarget(["project", "item-add", "2"])).toBeNull();
+  });
+});
+
+describe("the record of Blocked origins (#639)", () => {
+  it("notes the column a card leaves for Blocked, and forgets it on the way out", () => {
+    const into = blockedAfterMove({}, { id: "A", before: "QA", after: "Blocked" });
+    expect(into).toEqual({ A: "QA" });
+    expect(blockedAfterMove(into, { id: "A", before: "Blocked", after: "QA" })).toEqual({});
+    expect(blockedAfterMove(into, { id: "B", before: "Ready", after: "QA" })).toEqual(into);
+  });
+
+  it("drops the entry of a card no longer in Blocked, such as one moved in GitHub's UI", () => {
+    const cards = [{ item: { id: "A", status: "Blocked" } }, { item: { id: "B", status: "QA" } }];
+    expect(blockedSwept({ A: "QA", B: "Ready", C: "Ready" }, cards)).toEqual({ A: "QA" });
+  });
+
+  it("reads only an object of strings", () => {
+    expect(readBlocked({ A: "QA" })).toEqual({ A: "QA" });
+    expect(readBlocked({ A: 1 })).toBeNull();
+    expect(readBlocked([])).toBeNull();
+    expect(readBlocked(null)).toBeNull();
   });
 });

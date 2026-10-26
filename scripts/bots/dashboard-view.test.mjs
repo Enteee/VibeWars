@@ -112,6 +112,19 @@ describe("boardLines", () => {
     expect(lines.find((line) => line.startsWith("Ready"))).toMatch(/Ready\s+10$/);
   });
 
+  it("lists Blocked's cards first, under the header, in red (#639)", () => {
+    const lines = boardLines(snapshot({ Blocked: 2, QA: 1 }), [...COLUMNS, "Blocked"], EVERYONE, {
+      rows: 40,
+      width: 60,
+    });
+    expect(lines.map(plain).slice(1, 4)).toEqual([
+      "Blocked         2",
+      "  #1    Blocked card 0",
+      "  #2    Blocked card 1",
+    ]);
+    expect(lines[1]).toContain("\u001B[1;31m");
+  });
+
   it("shows exactly the three most recently done, by rev then number, and no count", () => {
     const board = snapshot({ Done: 6 }, (_, index) => ({
       number: 100 + index,
