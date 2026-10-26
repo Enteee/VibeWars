@@ -197,17 +197,46 @@ describe("armor-ladder, headless", () => {
 });
 
 describe("interrupt-timing", () => {
-  it("loops Troll Unguent on itself: a 3 s cast, again 10 s after it lands", () => {
-    const sim = arena(scenario("interrupt-timing"), "unguent");
-    const casts: number[] = [];
-    for (let i = 0; i < Math.round(25 / DT); i += 1) {
+  /** When `sourceId`'s `skillId` lands in `sim`, in seconds, over `seconds`. */
+  function landings(
+    sim: MatchSimulation,
+    sourceId: string,
+    skillId: string,
+    seconds: number,
+  ): number[] {
+    const at: number[] = [];
+    for (let i = 0; i < Math.round(seconds / DT); i += 1) {
       for (const entry of sim.step(DT).log) {
-        if (entry.cause === "skill" && entry.skillId === "ranger.troll-unguent") {
-          casts.push(Math.round(entry.atSeconds));
+        if (entry.cause === "skill" && entry.skillId === skillId && entry.sourceId === sourceId) {
+          at.push(entry.atSeconds);
         }
       }
     }
-    expect(casts).toEqual([3, 16]);
+    return at;
+  }
+
+  it("loops Troll Unguent on itself: a 3 s cast, again 10 s after it lands", () => {
+    const sim = arena(scenario("interrupt-timing"), "unguent");
+    expect(landings(sim, "unguent", "ranger.troll-unguent", 25).map(Math.round)).toEqual([3, 16]);
+  });
+
+  it("the dazed one's Malaise takes 4 s, not 2: one every 6 s with its recharge", () => {
+    const sim = arena(scenario("interrupt-timing"), "malaise");
+    const at = landings(sim, "dazed", "necromancer.malaise", 25);
+    // The first is asked for on the tick before the daze lands: 2 s.
+    expect(at[0]).toBeCloseTo(2, 0);
+    const gaps = at.slice(1).map((t, i) => t - (at[i] ?? 0));
+    expect(gaps).toHaveLength(3);
+    for (const gap of gaps) {
+      expect(gap).toBeCloseTo(6, 0);
+    }
+  });
+
+  it("an archer shooting the dazed one stops every Malaise", () => {
+    const sim = armedArena(scenario("interrupt-timing"), "archer", WEAPONS.longbow);
+    expect(sim.requestAttack("player", "dazed")).toEqual({ ok: true });
+    // Only the undazed first one, before an arrow has landed.
+    expect(landings(sim, "dazed", "necromancer.malaise", 25).map(Math.round)).toEqual([2]);
   });
 });
 
@@ -260,6 +289,55 @@ describe("time-to-kill, headless (#111)", () => {
   });
 });
 
+describe("physical-vs-untyped, headless (#111)", () => {
+  /** Every damage `targetId` takes in `seconds`, in order. */
+  function damageTo(sim: MatchSimulation, targetId: string, seconds: number): number[] {
+    const amounts: number[] = [];
+    for (let i = 0; i < Math.round(seconds / DT); i += 1) {
+      for (const entry of sim.step(DT).log) {
+        for (const event of entry.events) {
+          if (event.kind === "damage" && event.targetId === targetId) {
+            amounts.push(event.amount);
+          }
+        }
+      }
+    }
+    return amounts;
+  }
+
+  it("the same sword swings land softer on the guarded warrior", () => {
+    // One seed, so both runs roll the same swings.
+    const swings = (targetId: string): number[] => {
+      const sim = armedArena(scenario("physical-vs-untyped"), "physical", WEAPONS.sword);
+      expect(sim.requestAttack("player", targetId)).toEqual({ ok: true });
+      return damageTo(sim, targetId, 10);
+    };
+    const bare = swings("bare");
+    const guarded = swings("guarded");
+    expect(bare.length).toBeGreaterThan(5);
+    expect(guarded).toHaveLength(bare.length);
+    // +10 armor is a factor 2^(-10/40), then 3 off each hit.
+    const factor = armorMultiplier(90, RULES.combat) / armorMultiplier(80, RULES.combat);
+    guarded.forEach((amount, i) => {
+      expect(amount).toBeLessThan(bare[i] ?? 0);
+      // Within a point: both sides were rounded.
+      expect(Math.abs(amount - ((bare[i] ?? 0) * factor - 3))).toBeLessThanOrEqual(1);
+    });
+  });
+
+  it("a Fireball lands the same on both", () => {
+    const burn = (targetId: string): number[] => {
+      const sim = arena(scenario("physical-vs-untyped"), "untyped");
+      sim.setTarget("player", targetId);
+      expect(sim.requestSkill("player", 0)?.check).toEqual({ ok: true });
+      return damageTo(sim, targetId, 3);
+    };
+    const bare = burn("bare");
+    expect(bare).toHaveLength(1);
+    expect(burn("guarded")).toEqual(bare);
+  });
+});
+
 describe("condition-pressure, headless (#111)", () => {
   it("the loaded dummy loses 20 health a second and dies in 25 s; the clean one loses none", () => {
     const sim = arena(scenario("condition-pressure"), "conditions");
@@ -279,6 +357,71 @@ describe("condition-pressure, headless (#111)", () => {
       }
     }
     expect(diedAt).toBeCloseTo(25, 0);
+  });
+});
+
+describe("condition-removal, headless (#111)", () => {
+  /** A monk at the spawn with Orison of Healing and Mend Affliction, both at 12. */
+  function monkArena(): MatchSimulation {
+    const played = scenario("condition-removal");
+    const map = MAPS[played.mapId];
+    if (map === undefined) {
+      throw new Error(`no map ${played.mapId}`);
+    }
+    return new MatchSimulation({
+      seed: "removal",
+      participants: [
+        {
+          id: "player",
+          team: PLAYER_TEAM,
+          skillBar: ["monk.orison-of-healing", "monk.mend-affliction"],
+          attributeRanks: new Map([
+            ["monk.healing-prayers", 12],
+            ["monk.protection-prayers", 12],
+          ]),
+          equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+          spawn: map.playerSpawn,
+          facing: 0,
+          baseEnergyPips: baseEnergyPipsFor("monk"),
+        },
+        ...scenarioParticipants(played, map.playerSpawn),
+      ],
+    });
+  }
+
+  function run(sim: MatchSimulation, seconds: number): void {
+    for (let i = 0; i < Math.round(seconds / DT); i += 1) {
+      sim.step(DT);
+    }
+  }
+
+  it("Mend Affliction takes two of the five off, and they are back within 10 s", () => {
+    const sim = monkArena();
+    const conditions = (): number =>
+      sim.get("ally")?.combatant.statuses.countByCategory("condition") ?? NaN;
+    run(sim, 0.5);
+    expect(sim.get("ally")?.combatant.health).toBeLessThanOrEqual(200);
+    expect(conditions()).toBe(5);
+
+    sim.setTarget("player", "ally");
+    expect(sim.requestSkill("player", 1)?.check).toEqual({ ok: true });
+    run(sim, 1.5);
+    expect(conditions()).toBe(3);
+
+    run(sim, 9);
+    expect(conditions()).toBe(5);
+  });
+
+  it("heals stop at 400, deep wound's cap", () => {
+    const sim = monkArena();
+    sim.setTarget("player", "ally");
+    let most = 0;
+    for (let i = 0; i < Math.round(30 / DT); i += 1) {
+      sim.requestSkill("player", 0);
+      sim.step(DT);
+      most = Math.max(most, sim.get("ally")?.combatant.health ?? 0);
+    }
+    expect(most).toBe(400);
   });
 });
 

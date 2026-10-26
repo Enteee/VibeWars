@@ -60,6 +60,8 @@ export interface TrainingDummy {
   readonly armor: number;
   /** 10000 is "immortal": there is no invulnerable flag. */
   readonly maxHealth: number;
+  /** Health it starts, and is reset, at, as a fraction of max; without one, full. */
+  readonly startHealthFraction?: number;
   readonly skillBar: readonly string[];
   readonly attributeRanks: Readonly<Record<string, number>>;
   /** Energy regeneration, in pips: its profession's if it casts, else 0. */
@@ -71,6 +73,12 @@ export interface TrainingDummy {
    * unarmed.
    */
   readonly weapon?: WeaponId;
+  /**
+   * Its guard against physical hits only (#111): armor that counts
+   * against them, as a Stalwart insignia's, and a flat cut off each one
+   * after mitigation, as a Rune of Absorption's.
+   */
+  readonly physicalGuard?: { readonly armor: number; readonly reduction: number };
   /** When it is put back as it started; without one, never. */
   readonly reset?: ResetPolicy;
 }
@@ -143,7 +151,15 @@ const PACK: readonly TrainingDummy[] = [
 
 /** A dummy's gear: its armor, and its weapon if it has one. */
 function dummyEquipment(dummy: TrainingDummy): ResolvedEquipment {
-  const unarmed = unarmedResolvedEquipment(dummy.armor);
+  const guard = dummy.physicalGuard;
+  const unarmed: ResolvedEquipment =
+    guard === undefined
+      ? unarmedResolvedEquipment(dummy.armor)
+      : {
+          ...unarmedResolvedEquipment(dummy.armor),
+          conditionalArmor: [{ amount: guard.armor, condition: "vs-physical" }],
+          flatPhysicalReduction: guard.reduction,
+        };
   if (dummy.weapon === undefined) {
     return unarmed;
   }
@@ -230,6 +246,30 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     ],
   },
   {
+    id: "physical-vs-untyped",
+    label: "Physical vs untyped",
+    teaches:
+      "Why Stalwart and Absorption only sometimes bite: they blunt a weapon's physical hits and do nothing against a spell.",
+    mapId: "training-hall",
+    exercises: ["armor", "auto-attacks", "spell-damage"],
+    knobs: [],
+    // Two warriors at 80 armor. The guarded one wears a Stalwart insignia
+    // (+10 against physical) and a superior Rune of Absorption (3 off
+    // each physical hit): a sword lands softer on it, a Fireball the same.
+    dummies: [
+      target("bare", "Warrior (80 armor)", vec2(380, 150), 80),
+      {
+        ...target(
+          "guarded",
+          "Warrior, Stalwart + Absorption (80, +10 and -3 vs physical)",
+          vec2(380, 270),
+          80,
+        ),
+        physicalGuard: { armor: 10, reduction: 3 },
+      },
+    ],
+  },
+  {
     id: "condition-pressure",
     label: "Condition pressure",
     teaches:
@@ -265,6 +305,40 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     ],
   },
   {
+    id: "condition-removal",
+    label: "Condition removal",
+    teaches:
+      "That a condition removal takes off only what it says: an ally at 200 of 500 carries five conditions, and deep wound among them caps your heals at 400.",
+    mapId: "training-hall",
+    exercises: ["conditions"],
+    knobs: [],
+    // An ally, mortal, that keeps its five conditions on itself: each
+    // renewed every 10 s for 12, so one the player removes is back within
+    // 10 s, and the rest never lapse. Bleeding drains it, so it needs
+    // healing too; 2 s after a death it is back at 200.
+    dummies: [
+      {
+        ...target("ally", "Afflicted ally", vec2(300, 210), 60),
+        team: PLAYER_TEAM,
+        maxHealth: MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth,
+        startHealthFraction: 0.4,
+        reset: { kind: "on-death", afterSeconds: 2 },
+        behaviour: {
+          kind: "parallel",
+          behaviours: (["bleeding", "crippled", "blind", "weakness", "deep-wound"] as const).map(
+            (statusId): Behaviour => ({
+              kind: "apply-status-cadence",
+              statusId,
+              durationSeconds: 12,
+              everySeconds: 10,
+              targeting: { kind: "self" },
+            }),
+          ),
+        },
+      },
+    ],
+  },
+  {
     id: "armor-ladder",
     label: "Armor ladder",
     teaches: "The mitigation curve: the same hit against 40 to 104 armor, side by side.",
@@ -288,16 +362,17 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: "interrupt-timing",
     label: "Interrupt timing",
-    teaches: "That an interrupt is a timing skill: catch a 3 second cast before it lands.",
+    teaches:
+      "That an interrupt is a timing skill: catch a 3 second cast before it lands. A dazed caster's spells take twice as long, and any hit stops them.",
     mapId: "training-hall",
-    exercises: ["interrupts"],
+    exercises: ["interrupts", "conditions"],
     knobs: [],
     dummies: [
       {
         id: "unguent",
         label: "Troll Unguent dummy",
         team: 1,
-        position: vec2(380, 210),
+        position: vec2(380, 150),
         armor: 60,
         maxHealth: IMMORTAL,
         skillBar: ["ranger.troll-unguent"],
@@ -310,6 +385,34 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
           targeting: { kind: "self" },
           gapSeconds: 0,
           firstLegal: true,
+        },
+      },
+      {
+        ...target("dazed", "Dazed Malaise dummy", vec2(380, 270), 60),
+        skillBar: ["necromancer.malaise"],
+        attributeRanks: { "necromancer.curses": 12 },
+        baseEnergyPips: baseEnergyPipsFor("necromancer"),
+        // Kept dazed, hexing the player: Malaise's 2 s cast takes 4, and
+        // an attack that lands stops it. Daze slows spells only, so not
+        // the Unguent, which is a skill.
+        behaviour: {
+          kind: "parallel",
+          behaviours: [
+            {
+              kind: "apply-status-cadence",
+              statusId: "dazed",
+              durationSeconds: 10,
+              everySeconds: 5,
+              targeting: { kind: "self" },
+            },
+            {
+              kind: "cast-loop",
+              skillIds: ["necromancer.malaise"],
+              targeting: { kind: "nearest-enemy" },
+              gapSeconds: 0,
+              firstLegal: true,
+            },
+          ],
         },
       },
     ],
@@ -586,6 +689,7 @@ export function scenarioParticipants(
     spawn: dummy.position,
     facing: facingToward(dummy.position, playerSpawn),
     maxHealth: dummy.maxHealth,
+    startHealthFraction: dummy.startHealthFraction,
     baseEnergyPips: dummy.baseEnergyPips,
     behaviour: dummy.behaviour,
     reset: dummy.reset,
