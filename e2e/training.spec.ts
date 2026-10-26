@@ -1085,10 +1085,10 @@ test("(36) the arena draws at a match's scale: the stage shows less of the world
 
 /**
  * The rows of `named` where name ink appeared over `blank`, two shots of
- * one band: how tall the name is, in screen px. Only a bright pixel that
- * was not there counts (names are #d7dee8, the floor and grid are near
- * black), so a camera that moved a pixel between the shots shifts the
- * grid without counting as ink.
+ * one band: how tall the name is, in screen px. Only a pixel that was
+ * not there and is brighter than the grid (#1a212c) counts, so a camera
+ * that moved a pixel between the shots shifts the grid without counting
+ * as ink, while the name's anti-aliased top and bottom rows still do.
  */
 async function inkHeight(page: Page, blank: Buffer, named: Buffer): Promise<number> {
   return page.evaluate(
@@ -1106,7 +1106,7 @@ async function inkHeight(page: Page, blank: Buffer, named: Buffer): Promise<numb
       const [{ data: a }, { data: b, width }] = await Promise.all([pixels(before), pixels(after)]);
       const rows: number[] = [];
       for (let i = 0; i < a.length; i += 4) {
-        const bright = Math.max(b[i] ?? 0, b[i + 1] ?? 0, b[i + 2] ?? 0) > 110;
+        const bright = Math.max(b[i] ?? 0, b[i + 1] ?? 0, b[i + 2] ?? 0) > 60;
         const changed = a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2];
         if (bright && changed) {
           rows.push(Math.floor(i / 4 / width));
