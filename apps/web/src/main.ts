@@ -1,15 +1,15 @@
-import { PROTOCOL_MISMATCH_MESSAGE } from "@vibewars/game-protocol";
+import type { LobbyConnection, MatchStarting } from "@vibewars/game-session";
 
-import { httpOriginFrom, resolveEndpoint, type MatchTarget } from "./net/match-client.js";
-import { ONLINE_PLAY } from "./net/online.js";
+import { ARENA_MAPS } from "./net/maps.js";
 import {
-  LobbyNotFoundError,
-  capacityRefusal,
-  createLobby,
-  isProtocolMismatch,
+  HOST_CLOSED_MESSAGE,
+  connectMatchFor,
+  hostLobby,
+  joinFailureNotice,
   joinLobbyByCode,
-  type LobbyConnection,
-} from "./net/lobby-client.js";
+  matchFailureNotice,
+  type HostedLobby,
+} from "./net/session.js";
 import { startMatchView, type MatchView } from "./match-view.js";
 import { musicPlayer } from "./music/music-player.js";
 import { music } from "./music/play-music.js";
@@ -26,7 +26,7 @@ import type { StoredCharacter, StoredTeam } from "./storage/schema.js";
 import { disposeBuildEditor, newCharacter, renderBuildEditor } from "./ui/build-editor.js";
 import { disposeJukeboxScreen, renderJukeboxScreen } from "./ui/jukebox.js";
 import { disposeOptionsScreen, renderOptionsScreen } from "./ui/options-screen.js";
-import { renderLobbyScreen } from "./ui/lobby-screen.js";
+import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
 import { addMember, duplicateTeam, moveMember, newTeam, removeMember } from "./ui/team-builder.js";
@@ -42,7 +42,7 @@ import type { PlayerBuild } from "@vibewars/game-core";
  * machinery than the problem has (brief §30).
  */
 
-/** Shown on the lobby or the menu once the SDK has stopped retrying a dropped match. */
+/** Shown on the lobby or the menu once a match is lost for good. */
 const LOST_MATCH_NOTICE = "Lost the connection to the match.";
 
 function requireElement(selector: string): HTMLElement {
@@ -89,26 +89,12 @@ async function main(): Promise<void> {
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
 
-  const endpoint = resolveEndpoint(window.location);
-
-  // Fetched once: the server is the authority on which arenas exist. A
-  // build without online play has no server to ask, and no lobby to host.
-  let availableMaps: { id: string; name: string }[] = [];
-  if (ONLINE_PLAY) {
-    try {
-      const response = await fetch(`${httpOriginFrom(endpoint)}/api/maps`);
-      if (response.ok) {
-        const body = (await response.json()) as { maps: { id: string; name: string }[] };
-        availableMaps = body.maps;
-      }
-    } catch (error) {
-      // A missing map list only costs the host their picker; the match
-      // still runs on the server's default arena.
-      console.warn("[web] could not load the map list", error);
-    }
-  }
+  // The arenas a host can pick, built into the client (#403).
+  const availableMaps = ARENA_MAPS.map((map) => ({ id: map.id, name: map.name }));
 
   let lobby: LobbyConnection | undefined;
+  /** The lobby this tab hosts, while it hosts one: leaving it ends it for everyone. */
+  let hosted: HostedLobby | undefined;
   let match: MatchView | undefined;
   /**
    * Set synchronously the moment a match is requested.
@@ -120,7 +106,7 @@ async function main(): Promise<void> {
   let enteringMatch = false;
   let lobbyNotice: string | undefined;
   /**
-   * Why the last attempt to reach the server failed, shown on the menu
+   * Why the last attempt to reach a lobby failed, shown on the menu
    * the player lands back on. Cleared when they try again.
    */
   let menuNotice: string | undefined;
@@ -137,7 +123,7 @@ async function main(): Promise<void> {
    * editing a character takes effect on the next match instead of the
    * next time they happen to re-select it. An id pointing at a character
    * that no longer exists, or one that no longer validates, resolves to
-   * `undefined` and the server's house loadout.
+   * `undefined` and the host's house loadout.
    */
   const activeBuild = async (): Promise<PlayerBuild | undefined> => {
     const id = loadActiveCharacterId();
@@ -149,7 +135,7 @@ async function main(): Promise<void> {
       return character === undefined ? undefined : toPlayerBuild(character);
     } catch (error) {
       // A build that cannot be read is not worth failing the match over;
-      // the server would refuse an invalid one anyway.
+      // the host would refuse an invalid one anyway.
       console.warn("[web] could not load the selected character", error);
       return undefined;
     }
@@ -189,10 +175,13 @@ async function main(): Promise<void> {
       screenRoot,
       {
         onCreateLobby: (name) => {
-          void enterLobby(async () => createLobby(endpoint, name, await activeBuild()));
+          void enterLobby(name, async () => {
+            hosted = await hostLobby(name);
+            return hosted.lobby;
+          });
         },
         onJoinLobby: (code, name) => {
-          void enterLobby(async () => joinLobbyByCode(endpoint, code, name, await activeBuild()));
+          void enterLobby(name, () => joinLobbyByCode(code, name));
         },
         onManageTeams: () => {
           void showTeams();
@@ -201,11 +190,6 @@ async function main(): Promise<void> {
           renderOptionsScreen(screenRoot, { onBack: showMenu });
         },
         onMusic: showJukebox,
-        // Straight into a match with no lobby — how the game worked before
-        // Sprint 19, kept because it is the fastest way to try the game.
-        onQuickMatch: (name) => {
-          void enterMatch({ kind: "quick", name });
-        },
         onNewCharacter: () => {
           showCharacterEditor(newCharacter(crypto.randomUUID()));
         },
@@ -224,7 +208,6 @@ async function main(): Promise<void> {
           renderMenuWith(list, problems);
         },
       },
-      ONLINE_PLAY,
       list,
       problems,
       menuNotice,
@@ -432,7 +415,7 @@ async function main(): Promise<void> {
     // Every way back here (leaving, a finished match, a lost connection)
     // passes through this, so the status bar stops saying "in match".
     const snapshot = lobby.getSnapshot();
-    setStatus(`lobby ${snapshot.code}`, "online");
+    setStatus(`lobby ${displayLobbyCode(snapshot.code)}`, "online");
     showViewport(false);
     music().screen("lobby");
     renderLobbyScreen(
@@ -455,11 +438,7 @@ async function main(): Promise<void> {
           lobby?.startMatch();
         },
         onLeave: () => {
-          void (async () => {
-            await lobby?.disconnect();
-            lobby = undefined;
-            showMenu();
-          })();
+          void leaveLobby();
         },
       },
       lobbyNotice,
@@ -467,18 +446,30 @@ async function main(): Promise<void> {
     );
   };
 
-  const enterLobby = async (connect: () => Promise<LobbyConnection>): Promise<void> => {
+  /** Leave the lobby; a host's leaving ends it for everyone. */
+  const leaveLobby = async (notice?: string): Promise<void> => {
+    const leaving = lobby;
+    const ending = hosted;
+    lobby = undefined;
+    hosted = undefined;
+    await leaving?.disconnect();
+    await ending?.close();
+    menuNotice = notice;
+    showMenu();
+  };
+
+  const enterLobby = async (
+    name: string,
+    connect: () => Promise<LobbyConnection>,
+  ): Promise<void> => {
     setStatus("connecting…", "offline");
     menuNotice = undefined;
     try {
       lobby = await connect();
     } catch (error) {
-      menuNotice = isProtocolMismatch(error)
-        ? PROTOCOL_MISMATCH_MESSAGE
-        : (capacityRefusal(error) ??
-          (error instanceof LobbyNotFoundError
-            ? "No lobby with that code. Check the code and try again."
-            : "Could not connect to the server."));
+      console.warn("[web] could not join the lobby", error);
+      hosted = undefined;
+      menuNotice = joinFailureNotice(error);
       showMenu();
       // After showMenu, which would put the status back to "ready".
       setStatus("could not join", "error");
@@ -486,15 +477,26 @@ async function main(): Promise<void> {
     }
 
     lobbyNotice = undefined;
-    setStatus(`lobby ${lobby.getSnapshot().code}`, "online");
     lobby.onChange(renderLobby);
-    lobby.onStartRejected((message) => {
-      lobbyNotice = message.reason;
+    lobby.onStartRejected((reason) => {
+      lobbyNotice = reason;
       renderLobby();
     });
-    lobby.onMatchStarting((message) => {
+    lobby.onMatchStarting((start) => {
       // Only players on a team are sent this; a spectator stays here.
-      void enterMatch({ kind: "lobby", reservation: message.reservation });
+      void enterMatch(name, start);
+    });
+    lobby.onClosed(() => {
+      // From the lobby or from its match: either way, it is over.
+      lobby = undefined;
+      hosted = undefined;
+      if (match !== undefined) {
+        void exitMatch(HOST_CLOSED_MESSAGE);
+      } else {
+        enteringMatch = false;
+        menuNotice = HOST_CLOSED_MESSAGE;
+        showMenu();
+      }
     });
     renderLobby();
   };
@@ -523,7 +525,11 @@ async function main(): Promise<void> {
     }
   };
 
-  const enterMatch = async (target: MatchTarget): Promise<void> => {
+  const enterMatch = async (name: string, start: MatchStarting): Promise<void> => {
+    const from = lobby;
+    if (from === undefined) {
+      return;
+    }
     enteringMatch = true;
     menuNotice = undefined;
     lobbyNotice = undefined;
@@ -533,18 +539,15 @@ async function main(): Promise<void> {
       const build = await activeBuild();
       match = await startMatchView(
         viewport,
-        endpoint,
         {
           onConnectionChange: (state) => {
-            // The server holds a dropped player's slot, so "reconnecting"
-            // is a recoverable state worth showing rather than an error.
             if (state === "reconnecting") {
               setStatus("connection lost — reconnecting…", "error");
             } else if (state === "online") {
               setStatus("in match", "online");
             } else {
-              // The SDK has given up: the arena is frozen for good, so
-              // there is nothing to stay for.
+              // The host is gone: the arena is frozen for good, so there
+              // is nothing to stay for.
               setStatus("disconnected", "error");
               void exitMatch(LOST_MATCH_NOTICE);
             }
@@ -553,20 +556,19 @@ async function main(): Promise<void> {
             void exitMatch();
           },
         },
-        { target, build },
+        { connect: () => connectMatchFor(from, start, name, build) },
       );
       setStatus("in match", "online");
     } catch (error) {
       console.error("[web] could not enter match", error);
-      const refusal = capacityRefusal(error);
-      if (isProtocolMismatch(error)) {
-        menuNotice = PROTOCOL_MISMATCH_MESSAGE;
-      } else if (refusal !== undefined) {
-        menuNotice = refusal;
-      }
       enteringMatch = false;
-      showMenu();
-      setStatus("match failed", "error");
+      const notice = matchFailureNotice(error) ?? LOST_MATCH_NOTICE;
+      // Back to the lobby. If it closed while this was joining, closing it
+      // already took the player to the menu, and said why.
+      if (lobby !== undefined) {
+        lobbyNotice = notice;
+        renderLobby();
+      }
     }
   };
 

@@ -45,3 +45,46 @@ export interface Transport {
   onPeerLeave(handler: (peerId: string) => void): () => void;
   leave(): Promise<void>;
 }
+
+/**
+ * The largest message any peer sends (#403): Trystero splits anything
+ * longer into chunks and reassembles them against a budget for the whole
+ * room, so one peer's big transfer could stall everyone else's. No
+ * VibeWars message needs chunking; `message-size.test.ts` in apps/web
+ * builds the worst case of each and keeps it under this.
+ */
+export const MAX_MESSAGE_BYTES = 16 * 1024;
+
+/** `data`'s size as a transport sends it: the UTF-8 length of its JSON. */
+export function messageBytes(data: unknown): number {
+  return new TextEncoder().encode(JSON.stringify(data)).length;
+}
+
+/**
+ * `transport`, saying once per channel when it sends a message over
+ * `MAX_MESSAGE_BYTES`. That is a bug, not a case to handle: the message
+ * still goes, because a dropped snapshot fails silently and a big one
+ * fails loudly.
+ */
+export function sizeChecked(transport: Transport): Transport {
+  const reported = new Set<Channel>();
+  return {
+    selfId: transport.selfId,
+    send(channel, data, to) {
+      if (!reported.has(channel)) {
+        const bytes = messageBytes(data);
+        if (bytes > MAX_MESSAGE_BYTES) {
+          reported.add(channel);
+          console.error(
+            `game-session: a ${channel} message is ${String(bytes)} bytes, over MAX_MESSAGE_BYTES (${String(MAX_MESSAGE_BYTES)})`,
+          );
+        }
+      }
+      transport.send(channel, data, to);
+    },
+    on: (channel, handler) => transport.on(channel, handler),
+    onPeerJoin: (handler) => transport.onPeerJoin(handler),
+    onPeerLeave: (handler) => transport.onPeerLeave(handler),
+    leave: () => transport.leave(),
+  };
+}

@@ -1,4 +1,5 @@
 import { CHANNELS, type Channel } from "@vibewars/game-protocol";
+import { MAX_MESSAGE_BYTES } from "@vibewars/game-session";
 import type {
   DataPayload,
   JoinRoomCallbacks,
@@ -101,6 +102,17 @@ describe("the Trystero transport (#392)", () => {
     fake.receive("intent", 2, "peer");
     fake.receive("snapshot", 3, "peer");
     expect(got).toEqual(["first 1 peer", "second 1 peer", "first 2 peer"]);
+  });
+
+  it("drops a message over MAX_MESSAGE_BYTES before any handler sees it (#403)", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const fake = fakeRoom();
+    const transport = joinTrysteroRoom("A7KQ", { joinRoom: fake.joinRoom, selfId: "me" });
+    const got: unknown[] = [];
+    transport.on("intent", (data) => got.push(data));
+    fake.receive("intent", "x".repeat(MAX_MESSAGE_BYTES), "peer");
+    fake.receive("intent", "small", "peer");
+    expect(got).toEqual(["small"]);
   });
 
   it("fans joins and leaves out to every handler", () => {

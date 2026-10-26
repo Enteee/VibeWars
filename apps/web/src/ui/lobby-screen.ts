@@ -1,4 +1,5 @@
-import type { LobbySnapshot } from "../net/lobby-client.js";
+import { LOBBY_CODE_LENGTH } from "@vibewars/game-protocol";
+import type { LobbySnapshot } from "@vibewars/game-session";
 
 /**
  * The lobby screen (brief §21's lobby layout): the shareable code, both
@@ -7,7 +8,7 @@ import type { LobbySnapshot } from "../net/lobby-client.js";
 
 export interface LobbyScreenCallbacks {
   readonly onSelectMap: (mapId: string) => void;
-  readonly onChooseTeam: (team: number | null) => void;
+  readonly onChooseTeam: (team: 0 | 1 | null) => void;
   readonly onToggleReady: () => void;
   readonly onStart: () => void;
   readonly onLeave: () => void;
@@ -38,6 +39,12 @@ export const SELECTABLE_TEAMS = [0, 1] as const;
 
 export const MATCH_RUNNING_NOTICE = "A match is still running. The lobby opens again when it ends.";
 
+/** A lobby code as it is read aloud: `ABCDEF` as `ABC-DEF` (#379). */
+export function displayLobbyCode(code: string): string {
+  const half = LOBBY_CODE_LENGTH / 2;
+  return code.length === LOBBY_CODE_LENGTH ? `${code.slice(0, half)}-${code.slice(half)}` : code;
+}
+
 /**
  * Which lobby controls work right now. Apart from the DOM so the rules
  * can be tested without one.
@@ -59,14 +66,14 @@ export interface LobbyControls {
 export function lobbyControls(snapshot: LobbySnapshot): LobbyControls {
   const waiting = snapshot.phase === "waiting";
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
-  const assigned = snapshot.players.filter((p) => p.team >= 0);
+  const assigned = snapshot.players.filter((p) => p.team !== null);
   return {
     running: snapshot.phase === "in-match" ? MATCH_RUNNING_NOTICE : undefined,
     mapDisabled: !waiting,
     teamsDisabled: !waiting,
     // Readiness is meaningless without a team, so the control is disabled
     // rather than silently doing nothing when pressed.
-    readyDisabled: !waiting || self === undefined || self.team < 0,
+    readyDisabled: !waiting || self === undefined || self.team === null,
     startDisabled: !waiting || assigned.length === 0 || !assigned.every((p) => p.ready),
   };
 }
@@ -86,7 +93,7 @@ export function renderLobbyScreen(
   header.appendChild(h("span", "lobby-code-label", "lobby code"));
   // The code is the one thing a host reads aloud, so it gets the most
   // visual weight on the screen.
-  header.appendChild(h("span", "lobby-code", snapshot.code));
+  header.appendChild(h("span", "lobby-code", displayLobbyCode(snapshot.code)));
   panel.appendChild(header);
 
   // Only the host may change the map, so everyone else sees it as a
@@ -150,7 +157,7 @@ export function renderLobbyScreen(
   }
   panel.appendChild(teams);
 
-  const spectators = snapshot.players.filter((p) => p.team < 0);
+  const spectators = snapshot.players.filter((p) => p.team === null);
   if (spectators.length > 0) {
     panel.appendChild(
       h("div", "lobby-spectators", `spectating: ${spectators.map((p) => p.name).join(", ")}`),
