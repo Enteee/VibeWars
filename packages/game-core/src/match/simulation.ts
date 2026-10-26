@@ -493,15 +493,17 @@ export class MatchSimulation {
    *
    * Any direction, none included (`stop`), ends a click-to-walk (#310).
    *
-   * Knocked down, nothing moves (#468): the direction is refused, and on
-   * rising a held key walks only once it is pressed again.
+   * Knocked down, nothing moves (#468), but the direction is still kept:
+   * it mirrors the keyboard, so a key held through the knockdown walks on
+   * the tick the body rises. There is nothing to interrupt while down.
    */
   public setInputDirection(id: string, direction: Vec2): void {
     const record = this.#participants.get(id);
-    if (record !== undefined && record.combatant.knockdownRemaining <= 0) {
+    if (record !== undefined) {
       record.inputDirection = clampInputDirection(direction);
       record.walkGoal = undefined;
-      if (record.inputDirection.x !== 0 || record.inputDirection.y !== 0) {
+      const moving = record.inputDirection.x !== 0 || record.inputDirection.y !== 0;
+      if (moving && record.combatant.knockdownRemaining <= 0) {
         this.#moveInterrupts(record);
       }
     }
@@ -1381,6 +1383,7 @@ export class MatchSimulation {
     });
     this.#gainAdrenaline(record, events);
     this.#recordDeaths(events);
+    this.#recordKnockdowns(events);
     this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events);
   }
 
@@ -1509,6 +1512,7 @@ export class MatchSimulation {
       this.#gainAdrenaline(attacker, events);
     }
     this.#recordDeaths(events);
+    this.#recordKnockdowns(events);
     this.#logWeapon(projectile.attackerId, projectile.weaponSnapshot.mainHand.weapon.id, events);
   }
 
@@ -1604,8 +1608,9 @@ export class MatchSimulation {
   /**
    * Everyone knocked down in `events` stops where they are (#468): the
    * skill effect already ended their cast and attack; this drops what
-   * only the simulation keeps, a held direction, a walk and a skill
-   * walking in. None of it comes back on rising.
+   * only the simulation keeps, a walk and a skill walking in. Neither
+   * comes back on rising. A held direction stays: it is the keyboard's
+   * state, not an action, and walks again on rising.
    */
   #recordKnockdowns(events: readonly CombatEvent[]): void {
     for (const event of events) {
@@ -1614,7 +1619,6 @@ export class MatchSimulation {
       }
       const victim = this.#participants.get(event.targetId);
       if (victim !== undefined) {
-        victim.inputDirection = ZERO;
         victim.walkGoal = undefined;
         victim.pendingSkill = undefined;
       }

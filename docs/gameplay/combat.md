@@ -120,9 +120,10 @@ opponent's resources.
 A knockdown puts its target on the ground for its duration (Backbreaker:
 4 s on a hit, nothing on a miss). Lying down you cannot move, attack or
 use skills: a cast in progress fails, paid for and recharging, and a
-skill queued or walking in, a walk and the auto-attack all end. Keys and
-clicks while down are refused, not saved for rising; press Space again
-to attack once you are up.
+skill queued or walking in, a walk and the auto-attack all end. Clicks,
+skills and Space while down are refused, not saved for rising; press
+Space again to attack once you are up. A movement key held through the
+knockdown walks you off the moment you stand.
 
 A knockdown on someone already down does nothing; the instant they
 rise, the next one lands. It is not an interrupt, and it is not a status

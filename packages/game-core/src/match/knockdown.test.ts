@@ -119,12 +119,11 @@ describe("Backbreaker knocks down (#544)", () => {
     expect(stepFor(match, 3).filter((entry) => entry.skillId === FIREBALL)).toEqual([]);
   });
 
-  it("while down, moves, walks, attacks and skills are refused, and none of them come back on rising", () => {
+  it("while down, clicks, attacks and skills are refused, and none of them come back on rising", () => {
     const match = backbreakerMidCast();
     untilKnockedDown(match, "v");
     const at = get(match, "v").position;
 
-    match.setInputDirection("v", vec2(1, 0));
     match.walkTo("v", vec2(-300, 0));
     expect(match.requestAttack("v", "a")).toEqual({ ok: false, reason: "caster-knocked-down" });
     get(match, "v").combatant.cast.startRecharge(FIREBALL, 0);
@@ -156,15 +155,39 @@ describe("Backbreaker knocks down (#544)", () => {
     expect(get(match, "v").combatant.knockdownRemaining).toBe(0);
   });
 
-  it("a held direction is dropped: the risen body stands until the key is pressed again", () => {
+  it("a held direction walks on the rising tick: the key mirrors the keyboard, not an action", () => {
     const match = backbreakerMidCast();
     match.setInputDirection("v", vec2(0, 1));
     // Moving cancelled the Fireball; the knockdown still lands on the blow.
     untilKnockedDown(match, "v");
-    stepFor(match, 4.5);
     const at = get(match, "v").position;
-    stepFor(match, 0.5);
+    while (get(match, "v").combatant.knockdownRemaining > 0) {
+      expect(get(match, "v").position).toEqual(at);
+      match.step(DT);
+    }
+    expect(get(match, "v").position).not.toEqual(at);
+  });
+
+  it("a key released while down stands the risen body still", () => {
+    const match = backbreakerMidCast();
+    match.setInputDirection("v", vec2(0, 1));
+    untilKnockedDown(match, "v");
+    stepFor(match, 1);
+    match.setInputDirection("v", vec2(0, 0));
+    const at = get(match, "v").position;
+    stepFor(match, 4);
+    expect(get(match, "v").combatant.knockdownRemaining).toBe(0);
     expect(get(match, "v").position).toEqual(at);
+  });
+
+  it("a key pressed while down cancels nothing it lands on and walks on rising", () => {
+    const match = backbreakerMidCast();
+    untilKnockedDown(match, "v");
+    const at = get(match, "v").position;
+    match.setInputDirection("v", vec2(1, 0));
+    expect(get(match, "v").walkGoal).toBeUndefined();
+    stepFor(match, 4.5);
+    expect(get(match, "v").position.x).toBeGreaterThan(at.x);
   });
 
   it("on a miss (blind): nothing", () => {
