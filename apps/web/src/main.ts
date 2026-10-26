@@ -294,7 +294,7 @@ async function main(): Promise<void> {
     teamEditor?.dispose();
     teamEditor = undefined;
     const [teamList, characterList] = await Promise.all([teams.list(), characters.list()]);
-    renderTeamList(screenRoot, teamList.teams, teamList.problems, {
+    renderTeamList(screenRoot, teamList.teams, characterList.characters, teamList.problems, {
       // A new team is stored only once it is saved (#573).
       onNew: () => {
         showTeamEditor(openedTeam(newTeam(crypto.randomUUID()), false), characterList.characters);

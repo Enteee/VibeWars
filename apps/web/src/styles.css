@@ -376,8 +376,7 @@ body {
   color: var(--accent);
 }
 
-.screen-subtitle,
-.screen-empty {
+.screen-subtitle {
   margin: 0;
   color: var(--ink-dim);
 }
@@ -482,14 +481,12 @@ body {
   gap: 0.35rem;
 }
 
-.entity-row {
+/* A team row's members (#581), right of its name and count. */
+.team-list-dots {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.45rem 0.6rem;
-  background: var(--panel);
-  border: 1px solid var(--line);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.25rem;
 }
 
 /* The team editor (#574): the grid of members, and the picker beside it in
@@ -1550,19 +1547,8 @@ body {
   gap: 0.5rem;
 }
 
-/* Compact: the editor is a menu screen's business. */
-.hud-jukebox .jukebox-edit {
-  display: none;
-}
-
-.hud-jukebox .jukebox-row {
-  padding: 0.25rem 0.4rem;
-}
-
-/* Narrow: every row puts its meta under its title, not just the long ones. */
 .hud-jukebox button.jukebox-play {
-  flex-direction: column;
-  align-items: flex-start;
+  padding: 0.25rem 0.4rem;
 }
 
 /* Left of the mute button; asks before it leaves (#160). */
@@ -3100,35 +3086,10 @@ body {
   align-items: flex-end;
 }
 
-.screen .jukebox-play {
-  flex: 1;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.2rem 0.6rem;
-  padding: 0.3rem 0.4rem;
-  border-color: transparent;
-  background: none;
-  text-align: left;
-}
-
-.jukebox-row.is-previewing {
-  border-color: var(--accent);
-}
-
-.jukebox-row.is-previewing .jukebox-title::before {
+/* The previewed track, a selectable row (#581), says it is playing. */
+.jukebox-row.is-selected .selectable-row-name::before {
   content: "▶ ";
   color: var(--accent);
-}
-
-.jukebox-meta,
-.jukebox-edited {
-  color: var(--ink-dim);
-  font-size: 0.85rem;
-}
-
-.screen .jukebox-row .menu-row button {
-  padding: 0.3rem 0.6rem;
 }
 
 /* --- sound controls (#424): Options → Sound and the HUD's ♪ popover ------ */
