@@ -181,7 +181,13 @@ let
             for d in hubd supervisor; do
               if pgrep -f "run-forever.mjs $d" >/dev/null 2>&1; then echo "  $d: running (restarted on exit)"; else echo "  $d: stopped"; fi
             done
-            if pgrep -f "link.mjs serve" >/dev/null 2>&1; then echo "  telegram: running"; else echo "  telegram: stopped"; fi
+            # Running, and its heartbeat fresh: a hung sidecar is stopped too (#583).
+            # Red when it is not, since every agent message waits on it.
+            if pgrep -f "link.mjs serve" >/dev/null 2>&1 && ${node} ${llcScripts}/sidecar.mjs fresh "$VIBEWARS_BOT_ROOT/bus"; then
+              echo "  telegram: running"
+            else
+              printf "  \033[1;31mtelegram: stopped\033[0m\n"
+            fi
             exit 0
             ;;
           up)

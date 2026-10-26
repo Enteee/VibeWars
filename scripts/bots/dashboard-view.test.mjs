@@ -17,6 +17,8 @@ import {
 } from "./dashboard-view.mjs";
 /** @type {import("./dashboard-view.mjs").NudgeFacts} */
 const noNudges = { schedule: [], since: null, sent: new Map(), unread: new Map(), now: 0 };
+/** @type {import("./dashboard-view.mjs").TelegramFacts} */
+const telegramUp = { down: false, lastSeen: 0, now: 0 };
 /** @typedef {{ state: "up" | "stale" | "down" | "crash-looping", line: string }} HubLine */
 
 const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
@@ -249,6 +251,7 @@ describe("companyLines", () => {
         reboot: null,
         claude: null,
         nudges: noNudges,
+        telegram: telegramUp,
       },
       { rows: 30, width: 40 },
     ).map(plain);
@@ -274,11 +277,39 @@ describe("companyLines", () => {
           reboot: null,
           claude: null,
           nudges: noNudges,
+          telegram: telegramUp,
         },
         { rows: 30, width: 80 },
       ).find((line) => plain(line).startsWith("hub "));
     expect(hubLine(hub)).toContain("\x1b[1;32m");
     expect(hubLine({ state: "down", line: "hub ● down · restarts 0/h" })).toContain("\x1b[1;31m");
+  });
+
+  it("leads with TELEGRAM DOWN in red while the sidecar is down, and says nothing while it is up (#583)", () => {
+    /** @param {import("./dashboard-view.mjs").TelegramFacts} telegram */
+    const linesWith = (telegram) =>
+      companyLines(
+        {
+          roles,
+          live: new Set(),
+          stale: new Map(),
+          staff: null,
+          budget: null,
+          hub,
+          reboot: null,
+          claude: null,
+          nudges: noNudges,
+          telegram,
+        },
+        { rows: 30, width: 80 },
+      );
+    const down = linesWith({ down: true, lastSeen: 1_000, now: 46_000 });
+    expect(down[0]).toContain("\x1b[1;31m");
+    expect(plain(down[0] ?? "")).toBe("TELEGRAM DOWN (last seen 45 s ago): claude-llc status");
+    expect(plain(linesWith({ down: true, lastSeen: null, now: 0 })[0] ?? "")).toBe(
+      "TELEGRAM DOWN (no heartbeat): claude-llc status",
+    );
+    expect(linesWith(telegramUp).some((line) => plain(line).includes("TELEGRAM"))).toBe(false);
   });
 
   it("says the Claude usage is unknown before any agent has logged (#50)", () => {
@@ -293,6 +324,7 @@ describe("companyLines", () => {
         reboot: null,
         claude: null,
         nudges: noNudges,
+        telegram: telegramUp,
       },
       { rows: 30, width: 72 },
     ).map(plain);
@@ -330,6 +362,7 @@ describe("companyLines", () => {
         reboot: null,
         claude,
         nudges: noNudges,
+        telegram: telegramUp,
       },
       { rows: 40, width: 72 },
     ).map(plain);
@@ -377,6 +410,7 @@ describe("companyLines", () => {
         reboot: null,
         claude,
         nudges: noNudges,
+        telegram: telegramUp,
       },
       { rows: 40, width: 72 },
     );
@@ -400,6 +434,7 @@ describe("companyLines", () => {
         reboot: null,
         claude: null,
         nudges: noNudges,
+        telegram: telegramUp,
       },
       { rows: 4, width: 40 },
     );
@@ -427,6 +462,7 @@ describe("companyLines", () => {
           reboot: null,
           claude: null,
           nudges: noNudges,
+          telegram: telegramUp,
         },
         { rows: 40, width },
       );
@@ -560,6 +596,7 @@ describe("companyLines", () => {
           reboot,
           claude: null,
           nudges: noNudges,
+          telegram: telegramUp,
         },
         { rows, width },
       ).map(plain);
@@ -592,6 +629,7 @@ describe("companyLines", () => {
           reboot: { record: { ...record, ready: [] }, between: [], now: deadline - 30_000 },
           claude: null,
           nudges: noNudges,
+          telegram: telegramUp,
         },
         { rows: 30, width: 80 },
       );
@@ -632,6 +670,7 @@ describe("companyLines", () => {
             reboot,
             claude: null,
             nudges: noNudges,
+            telegram: telegramUp,
           },
           { rows: 30, width: 200 },
         ).map(plain);

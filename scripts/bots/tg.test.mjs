@@ -24,13 +24,17 @@ afterEach(() => {
 
 /**
  * An employee's bus directory, with `context` as its context.json if given
- * and `messages` in its inbox.
+ * and `messages` in its inbox. The sidecar's heartbeat is `sidecar`, epoch
+ * ms, fresh unless given; `null` for none (#583).
  *
- * @param {{ context?: unknown, messages?: string[], employee?: string }} [options]
+ * @param {{ context?: unknown, messages?: string[], employee?: string, sidecar?: number | null }} [options]
  */
-function bus({ context, messages = [], employee = "developer-1" } = {}) {
+function bus({ context, messages = [], employee = "developer-1", sidecar = Date.now() } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tg-test-"));
   dirs.push(root);
+  if (sidecar !== null) {
+    fs.writeFileSync(path.join(root, "sidecar.json"), JSON.stringify({ lastSeen: sidecar }));
+  }
   const dir = path.join(root, employee);
   fs.mkdirSync(dir);
   if (context !== undefined) {
@@ -261,5 +265,63 @@ describe("tg roster (#62)", () => {
     expect(lines).toContain("architect        stale");
     expect(lines).toContain("manager          not hired yet");
     expect(out).not.toContain("not an id");
+  });
+});
+
+describe("tg, while the Telegram sidecar is down (#583)", () => {
+  /**
+   * @param {Record<string, string | undefined>} env
+   * @param {string[]} args
+   */
+  const tg = (env, args) => spawnSync(process.execPath, [TG, ...args], { env, encoding: "utf8" });
+
+  it.each([
+    ["no heartbeat", null, "no heartbeat"],
+    ["a heartbeat 31 s old", 31_000, "last seen 31 s ago"],
+  ])("send exits 2 with %s, says so, and still queues the message", (_name, age, seen) => {
+    const { dir, env } = bus({ sidecar: age === null ? null : Date.now() - age });
+
+    const result = tg(env, ["send", "manager", "hello"]);
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toBe(
+      `tg: the Telegram sidecar is down (${seen}); your message is queued but nobody is reading. Tell the operator: claude-llc status\n`,
+    );
+    const queued = fs.readdirSync(path.join(dir, "outbox"));
+    expect(queued).toHaveLength(1);
+    expect(JSON.parse(fs.readFileSync(path.join(dir, "outbox", queued[0] ?? ""), "utf8"))).toEqual({
+      to: "manager",
+      text: "hello",
+    });
+  });
+
+  it("broadcast exits 2 too, and send with a fresh heartbeat exits 0", () => {
+    expect(tg(bus({ sidecar: null }).env, ["broadcast", "hi"]).status).toBe(2);
+    expect(tg(bus().env, ["send", "manager", "hello"]).status).toBe(0);
+  });
+
+  it("wait returns at once, exit 2, with what was already waiting printed first", () => {
+    const { env } = bus({ sidecar: null, messages: ["developer-1: are you there?"] });
+    const empty = bus({ sidecar: null }).env;
+
+    const started = Date.now();
+    const waiting = tg(env, ["wait", "--timeout", "20"]);
+    expect(waiting.status).toBe(0);
+    expect(waiting.stdout).toContain("are you there?");
+    const result = tg(empty, ["wait", "--timeout", "20"]);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toMatch(
+      /^tg: the Telegram sidecar is down \(no heartbeat\); nothing can arrive until it is back/,
+    );
+    expect(Date.now() - started).toBeLessThan(10_000);
+  });
+
+  it("inbox still works", () => {
+    const { env } = bus({ sidecar: null, messages: ["hello"] });
+
+    const result = tg(env, ["inbox"]);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("hello");
   });
 });

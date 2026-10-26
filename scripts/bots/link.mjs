@@ -42,6 +42,7 @@ import { takeLock } from "./instance-lock.mjs";
 import { openJailDir, withJailDir } from "./jail-fs.mjs";
 import { unreadOf } from "./unread.mjs";
 import { readRoster } from "./presence.mjs";
+import { HEARTBEAT_MS, SIDECAR_FILE, writeSidecar } from "./sidecar.mjs";
 import {
   SUPPORT_BUSY,
   SYSTEM,
@@ -948,7 +949,21 @@ async function serve() {
     console.error("[link] the company sidecar is already running");
     return;
   }
+  // The heartbeat every jail reads (#583), first thing, so a sidecar
+  // still starting up is not reported down. A failed write is said, not
+  // fatal: the sidecar matters more than its heartbeat.
+  const beat = () => {
+    try {
+      writeSidecar(at.bus, Date.now());
+    } catch (error) {
+      console.error(`[link] heartbeat: ${describe(error)}`);
+    }
+  };
+  beat();
+  const heartbeat = setInterval(beat, HEARTBEAT_MS);
   const release = () => {
+    clearInterval(heartbeat);
+    fs.rmSync(path.join(at.bus, SIDECAR_FILE), { force: true });
     fs.rmSync(lock, { force: true });
     process.exit(0);
   };

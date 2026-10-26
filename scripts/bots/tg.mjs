@@ -28,6 +28,9 @@
  *
  * `wait` is the important one: it is how an agent yields to a peer instead of
  * busy-polling or guessing.
+ *
+ * While the sidecar is down (sidecar.mjs), send, broadcast, ask and reply
+ * still queue but exit 2 with a warning, and wait returns at once, exit 2.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -50,6 +53,7 @@ import {
   readInbox,
   wakes,
 } from "./protocol.mjs";
+import { readSidecar, sidecarDown } from "./sidecar.mjs";
 import { roleOf } from "./staff.mjs";
 
 // Who this agent is (#62): the bus directory is the employee's, and what it
@@ -73,6 +77,31 @@ const ROSTER = path.join(BUS, "roster");
 const CONTEXT = path.join(DIR, "context.json");
 
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Exit 2, loudly, if the sidecar is down (#583): everything still queues
+ * and is sent once it is back, but an agent that believes its message went
+ * out waits for an answer that cannot come. That hid a whole outage.
+ *
+ * @param {string} consequence what being down means for this command
+ * @returns {void}
+ */
+function failIfSidecarDown(consequence) {
+  const record = readSidecar(BUS ?? "");
+  if (!sidecarDown(Date.now(), record)) {
+    return;
+  }
+  const seen =
+    record === null
+      ? "no heartbeat"
+      : `last seen ${String(Math.round((Date.now() - record.lastSeen) / 1000))} s ago`;
+  console.error(
+    `tg: the Telegram sidecar is down (${seen}); ${consequence}. Tell the operator: claude-llc status`,
+  );
+  process.exit(2);
+}
+
+const UNREAD = "your message is queued but nobody is reading";
 
 /**
  * Queue one message for the sidecar to send.
@@ -124,6 +153,7 @@ async function ask(text, options) {
     process.exit(2);
   }
   const name = queue({ kind: "ask", text, options });
+  failIfSidecarDown(UNREAD);
   const receipt = path.join(RECEIPTS, name);
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
@@ -228,6 +258,9 @@ async function wait(timeoutSeconds, all) {
     if (printed > 0) {
       return printed;
     }
+    // Checked every second, so a wait already blocking ends when the
+    // sidecar dies, not at its timeout.
+    failIfSidecarDown("nothing can arrive until it is back");
     // Waiting on would make every call of the next task re-read all of
     // this one (#321): end the turn here, and the next starts fresh.
     const over = overCeiling();
@@ -335,6 +368,7 @@ switch (command) {
     }
     queue({ to, text: words.join(" ") });
     console.log(`queued to ${to}`);
+    failIfSidecarDown(UNREAD);
     break;
   }
 
@@ -345,6 +379,7 @@ switch (command) {
     }
     queue({ to: "all", text: rest.join(" ") });
     console.log("queued to General");
+    failIfSidecarDown(UNREAD);
     break;
   }
   case "ask": {
@@ -397,6 +432,7 @@ switch (command) {
     }
     queue({ kind: "reply", text: words.join(" "), ...(replyTo === undefined ? {} : { replyTo }) });
     console.log("queued to Support");
+    failIfSidecarDown(UNREAD);
     break;
   }
 
