@@ -95,9 +95,10 @@ import {
   clock,
   parseReboot,
   rebootAllowed,
+  WORKDAY,
 } from "./reboot.mjs";
 import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
-import { dueNudges, scheduleReader } from "./schedule.mjs";
+import { dueNudges, parseNudgeClock, scheduleReader } from "./schedule.mjs";
 import { createIssueBatch, newIssueMessage, WINDOW_MS } from "./new-issues.mjs";
 import { applyStaff, parseStaff, roleOf, staffAllowed, staffReader } from "./staff.mjs";
 import {
@@ -1992,7 +1993,7 @@ async function changedSince(sha, cfg) {
  *
  * @param {string} employee who asks; `ready` is kept per employee (#62)
  * @param {string} role the employee's
- * @param {string[]} argv `["request", reason]`, `["abort"]` or `["ready"]`
+ * @param {string[]} argv `["request", reason]`, `["workday"]`, `["abort"]` or `["ready"]`
  * @param {ReturnType<typeof company>} cfg
  * @returns {Promise<Record<string, unknown>>}
  */
@@ -2023,13 +2024,17 @@ async function reboot(employee, role, argv, cfg) {
 
   const boot = readBoot();
   const now = Date.now();
-  const changed = boot === null ? null : await changedSince(boot.sha, cfg);
+  const workday = argv[0] === "workday";
+  const found = boot === null ? null : await changedSince(boot.sha, cfg);
+  // A workday reboot loads whatever main has, which may be nothing.
+  const changed = found ?? (workday ? { paths: [], subjects: [] } : null);
   const allowed = rebootAllowed({
     bootSha: boot?.sha ?? null,
     changedPaths: changed?.paths ?? null,
     lastRebootAt: boot?.at ?? null,
     now,
     pending,
+    workday: workday ? { sentAt: nudgesSent.get(WORKDAY) ?? null } : null,
   });
   if (!allowed.ok || boot === null || changed === null) {
     const reason = allowed.ok ? "the company's boot was not recorded" : allowed.reason;
@@ -2040,7 +2045,7 @@ async function reboot(employee, role, argv, cfg) {
   /** @type {import("./reboot.mjs").Reboot} */
   const scheduled = {
     requestedAt: now,
-    reason: argv[1] ?? "",
+    reason: workday ? WORKDAY : (argv[1] ?? ""),
     by: role,
     deadline: now + DRAIN_MS,
     bootSha: boot.sha,
@@ -2574,8 +2579,31 @@ function sendNewIssues() {
 
 /** When each scheduled nudge was last sent, and when hubd began counting. */
 /** @type {Map<string, number>} */
-const nudgesSent = new Map();
-const nudgesSince = Date.now();
+let nudgesSent = new Map();
+let nudgesSince = Date.now();
+
+/**
+ * Take the nudge clock the last hubd wrote, so a restart does not start every
+ * interval over (#640). Missing (the first start ever) or malformed (told
+ * once on stderr), it starts now.
+ *
+ * @returns {void}
+ */
+function loadNudges() {
+  let text;
+  try {
+    text = fs.readFileSync(NUDGES, "utf8");
+  } catch {
+    return;
+  }
+  try {
+    ({ since: nudgesSince, sent: nudgesSent } = parseNudgeClock(text));
+  } catch (error) {
+    console.error(
+      `hubd: nudges.json is unusable (${error instanceof Error ? error.message : String(error)}); the clock starts now`,
+    );
+  }
+}
 
 /**
  * Send the nudges that are due (#537). link decides per employee whether one
@@ -2594,7 +2622,7 @@ function sendNudges() {
 }
 
 /**
- * hubd's nudge clock as the dashboard reads it (#547). Never read back here.
+ * hubd's nudge clock, for the dashboard (#547) and the next start (`loadNudges`).
  *
  * @returns {void}
  */
@@ -2810,6 +2838,7 @@ async function main() {
   // A restart costs no sweep the board's age does not call for.
   loadBoard(cfg);
   loadBlocked();
+  loadNudges();
   readStaffed();
   heartbeat();
   const heartbeatMs = Number(process.env.HUBD_HEARTBEAT_MS ?? HEARTBEAT_MS);
