@@ -44,6 +44,7 @@ import { resolveTargets } from "../skills/targeting.js";
 import {
   advanceStatuses,
   effectiveActivationSeconds,
+  naturalHealthPips,
   moveSpeedMultiplier,
 } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
@@ -189,6 +190,12 @@ interface ParticipantRecord extends Participant {
   readonly cursor: BehaviourCursor;
   /** `on-interval`: seconds since the last reset. */
   sinceReset: number;
+  /**
+   * Seconds since it was last in combat, by GW1's list (#460): lost
+   * health, swung or used an attack skill, began a cast at a foe, or was
+   * the target of a foe's as it began. What natural regeneration waits on.
+   */
+  outOfCombatSeconds: number;
   /** Where it ended its last ticks: what a projectile leads. */
   readonly history: PositionHistory;
   /** How long the walk has got nowhere, as an attack's `unreachableSeconds` counts for its approach. */
@@ -379,6 +386,7 @@ export class MatchSimulation {
       behaviour: spec.behaviour,
       cursor: createCursor(),
       sinceReset: 0,
+      outOfCombatSeconds: 0,
       history: new PositionHistory(this.#historyLength()),
       walkStalledSeconds: 0,
       walkLeast: Number.POSITIVE_INFINITY,
@@ -703,6 +711,7 @@ export class MatchSimulation {
         ? effectiveActivationSeconds(skill, record.combatant)
         : this.#attackHitSeconds(record, skill);
     record.combatant.cast.beginCast(skill.id, castTargetId, activationSeconds);
+    this.#castBegun(record, skill, castTargetId);
     // Casting stops you (operator Q33): a key held as the cast begins
     // does not walk, and only the next move cancels the cast. An instant
     // has no cast, so it leaves the walk alone. A click-to-walk stops the
@@ -712,6 +721,22 @@ export class MatchSimulation {
       record.walkGoal = undefined;
     }
     return { skillId: skill.id, check };
+  }
+
+  /**
+   * A cast beginning puts its caster in combat if it is an attack skill
+   * or at a foe, and that foe too: cancelled or interrupted later, it
+   * still counted (GW1). A self-heal or a skill on an ally does not.
+   */
+  #castBegun(record: ParticipantRecord, skill: Skill, castTargetId: string | undefined): void {
+    const target = castTargetId === undefined ? undefined : this.#participants.get(castTargetId);
+    const atFoe = target !== undefined && target.combatant.team !== record.combatant.team;
+    if (skill.attack !== undefined || atFoe) {
+      record.outOfCombatSeconds = 0;
+    }
+    if (atFoe) {
+      target.outOfCombatSeconds = 0;
+    }
   }
 
   public step(dt: number): StepResult {
@@ -748,17 +773,25 @@ export class MatchSimulation {
       // Energy regenerates continuously, at the base pips plus every
       // status's, clamped (GW1); adrenaline is earned by acting, not by
       // waiting, so it deliberately does not tick up here.
-      const energyPips = clampPips(
-        record.combatant.baseEnergyPips +
-          aggregateModifiers(record.combatant.statuses.active).energyPips,
-      );
+      const modifiers = aggregateModifiers(record.combatant.statuses.active);
+      const energyPips = clampPips(record.combatant.baseEnergyPips + modifiers.energyPips);
       record.combatant.energy = Math.min(
         record.combatant.maxEnergy,
         Math.max(0, record.combatant.energy + energyPips * ENERGY_PER_PIP * dt),
       );
 
+      // Degeneration its statuses' own regeneration does not cancel is
+      // health lost, so natural regeneration stops before it would.
+      record.outOfCombatSeconds += dt;
+      if (clampPips(modifiers.healthPips) < 0) {
+        record.outOfCombatSeconds = 0;
+      }
       const sources = degenerationSources(record.combatant);
-      const statusEvents = advanceStatuses(record.combatant, dt);
+      const statusEvents = advanceStatuses(
+        record.combatant,
+        dt,
+        naturalHealthPips(record.combatant, record.outOfCombatSeconds, this.#ruleset.resources),
+      );
       if (statusEvents.length > 0) {
         const drained = statusEvents.some((event) => event.kind === "damage");
         this.#log.push({
@@ -812,7 +845,22 @@ export class MatchSimulation {
 
     const log = this.#log;
     this.#log = [];
+    this.#healthLost(log);
     return this.#result(log);
+  }
+
+  /** Losing health of any kind, a hit, a sacrifice or a drain, is being in combat. */
+  #healthLost(log: readonly CombatLogEntry[]): void {
+    for (const entry of log) {
+      for (const event of entry.events) {
+        if ((event.kind === "damage" || event.kind === "sacrifice") && event.amount > 0) {
+          const target = this.#participants.get(event.targetId);
+          if (target !== undefined) {
+            target.outOfCombatSeconds = 0;
+          }
+        }
+      }
+    }
   }
 
   #result(log: readonly CombatLogEntry[]): StepResult {
@@ -1199,6 +1247,7 @@ export class MatchSimulation {
       return;
     }
     attack.swingElapsed = Math.max(0, attack.swingElapsed - interval);
+    record.outOfCombatSeconds = 0;
 
     if (weapon.projectileSpeed !== undefined) {
       this.#release(record, target, weapon.projectileSpeed, dt);
@@ -1570,6 +1619,7 @@ export class MatchSimulation {
     record.combatant.cast.endAftercast();
     record.combatant.attack = undefined;
     record.sinceReset = 0;
+    record.outOfCombatSeconds = 0;
     record.history.clear();
   }
 

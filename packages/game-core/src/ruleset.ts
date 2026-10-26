@@ -40,6 +40,15 @@ export interface ResourceRules {
   readonly adrenalinePerHit: number;
   /** Adrenaline ceiling, so it cannot be banked indefinitely between fights. */
   readonly maxAdrenaline: number;
+  /**
+   * Natural health regeneration (GW1, #460): this long out of combat,
+   * below full health, and a combatant regenerates +1 health pip.
+   */
+  readonly naturalRegenDelaySeconds: number;
+  /** Then one more pip each this many seconds... */
+  readonly naturalRegenStepSeconds: number;
+  /** ...up to this many. It sums with every status's pips before the ±10 clamp. */
+  readonly naturalRegenMaxPips: number;
 }
 
 /**
@@ -120,6 +129,12 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
   resources: Object.freeze({
     adrenalinePerHit: 3,
     maxAdrenaline: 25,
+    // GW1's 5 s and +7 (14 HP/s); its wiki gives no step, so +7 arrives
+    // at 17 s. Retreating to heal is a GW1 decision, and the 5 s without
+    // combat already stops it mid-fight.
+    naturalRegenDelaySeconds: 5,
+    naturalRegenStepSeconds: 2,
+    naturalRegenMaxPips: 7,
   }),
   combat: Object.freeze({
     // 60 is every caster profession's base armor. Anchoring here is what
