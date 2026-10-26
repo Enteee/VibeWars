@@ -81,7 +81,7 @@ export type {
 export { resolveLoadout, unarmedResolvedEquipment } from "./resolve.js";
 
 export type { ReconcileContext } from "./reconcile.js";
-export { reconcileEquipment } from "./reconcile.js";
+export { reconcileEquipment, weaponReachable } from "./reconcile.js";
 
 export type { EquipmentProblem, EquipmentValidationContext } from "./validate.js";
 export { validateEquipment } from "./validate.js";

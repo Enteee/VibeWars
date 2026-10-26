@@ -907,16 +907,17 @@ function authorizeReboot(role, argv) {
   if (verb === "ready" && reason === undefined) {
     return { allow: true };
   }
-  if (verb !== "request" && verb !== "abort") {
+  if (verb !== "request" && verb !== "abort" && verb !== "workday") {
     return {
       allow: false,
-      reason: 'usage: company reboot "<reason>" | company reboot --abort | company ready',
+      reason:
+        'usage: company reboot "<reason>" | company reboot --abort | company reboot --workday | company ready',
     };
   }
   if (role !== "manager") {
     return { allow: false, reason: "only the manager reboots the company" };
   }
-  if (verb === "abort" && reason === undefined) {
+  if ((verb === "abort" || verb === "workday") && reason === undefined) {
     return { allow: true };
   }
   if (verb === "request" && reason !== undefined && reason.trim() !== "" && rest.length === 0) {
