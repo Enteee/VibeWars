@@ -47,6 +47,7 @@ import { NoWebGlError } from "../render/arena-viewport.js";
 import { exportBuild, importBuild, looksLikeBuild } from "../storage/build-transfer.js";
 import { SKILL_BAR_SLOTS, equippableSkills, validateBuild } from "../storage/build-validation.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
+import { looksLikeTeam } from "../storage/team-transfer.js";
 import { noWebGlNotice } from "./arena-notice.js";
 import {
   canEquipOffhand,
@@ -89,9 +90,12 @@ import {
   button,
   h,
   inlineConfirm,
+  listenForPaste,
   problemsChip,
   screenBar,
+  shareLine,
   syncList,
+  TAKES_TYPING,
   toast,
   type ChipProblem,
   type InlineConfirm,
@@ -316,6 +320,52 @@ export function professionChoices(
   const other = which === "primary" ? character.secondaryProfession : character.primaryProfession;
   const ids = (Object.keys(PROFESSIONS) as ProfessionId[]).filter((id) => id !== other);
   return [...(which === "secondary" ? [choice(undefined)] : []), ...ids.map(choice)];
+}
+
+/**
+ * What a profession change from `before` to `after` dropped (#569), one
+ * line each, in the order the editor shows them: attribute ranks with
+ * the points they give back, skills taken off the bar, then gear that
+ * was swapped or removed. Empty when nothing was dropped.
+ */
+export function describeProfessionChange(
+  before: StoredCharacter,
+  after: StoredCharacter,
+): string[] {
+  const ranks = before.attributes
+    .filter((a) => a.rank > rankOf(after, a.attributeId))
+    .map((a) => {
+      const name = getAttribute(a.attributeId)?.name ?? a.attributeId;
+      const back =
+        cumulativeCostForRank(a.rank) - cumulativeCostForRank(rankOf(after, a.attributeId));
+      return `${name} ${String(a.rank)} (${String(back)} points back)`;
+    });
+  const skills = before.skillBar
+    .filter((id, slot): id is string => id !== null && after.skillBar[slot] !== id)
+    .map((id) => `${getSkill(id)?.name ?? id} from the bar`);
+
+  const was = before.equipment;
+  const now = after.equipment;
+  const gear: string[] = [];
+  if (was.mainHand.weaponId !== now.mainHand.weaponId) {
+    const name = (id: string): string => getWeapon(id)?.name ?? id;
+    gear.push(`${name(was.mainHand.weaponId)} → ${name(now.mainHand.weaponId)}`);
+  }
+  if (was.offHand !== null && was.offHand.offhandId !== now.offHand?.offhandId) {
+    const name = (id: string): string => getOffhand(id)?.name ?? id;
+    gear.push(
+      now.offHand === null
+        ? name(was.offHand.offhandId)
+        : `${name(was.offHand.offhandId)} → ${name(now.offHand.offhandId)}`,
+    );
+  }
+  for (const slot of ARMOR_SLOTS) {
+    const rune = was.armor[slot].rune;
+    if (rune !== null && now.armor[slot].rune === null) {
+      gear.push(runeDisplayName(rune));
+    }
+  }
+  return [...ranks, ...skills, ...gear];
 }
 
 /**
@@ -644,6 +694,8 @@ interface EditorContext {
   readonly current: () => StoredCharacter;
   /** Make `next` the character, and have every region show it. */
   readonly commit: (next: StoredCharacter) => void;
+  /** `commit` new professions, toasting what they dropped with an Undo (#569). */
+  readonly changeProfessions: (primary: ProfessionId, secondary: ProfessionId | undefined) => void;
   /** `commit` a change to the bar, showing its notice until the next change (#459). */
   readonly equip: (change: SkillChange) => void;
   /** What the last change has to tell the player. */
@@ -659,9 +711,6 @@ interface EditorContext {
   /** A bar slot's key, from the player's keymap, as the arena's bar labels it. */
   readonly slotLabel: (slot: number) => string;
 }
-
-/** Elements that take typing, where a skill key is a letter, not an equip. */
-const TAKES_TYPING = "input, textarea, select, [contenteditable]:not([contenteditable='false'])";
 
 /** A part of the editor, built once, that shows whatever character it is given. */
 interface Region {
@@ -732,7 +781,16 @@ export function mountBuildEditor(
     }
   });
 
+  // The Undo of the last profession change (#569): one step, and gone
+  // with the next edit of any kind.
+  let dismissUndo: (() => void) | undefined;
+  const dropUndo = (): void => {
+    dismissUndo?.();
+    dismissUndo = undefined;
+  };
+
   const commit = (next: StoredCharacter, said: string | undefined): void => {
+    dropUndo();
     // Another profession is another bar to build: the pick goes.
     if (
       next.primaryProfession !== character.primaryProfession ||
@@ -751,6 +809,19 @@ export function mountBuildEditor(
     current: () => character,
     commit: (next) => {
       commit(next, undefined);
+    },
+    changeProfessions: (primary, secondary) => {
+      const before = character;
+      const after = setProfessions(before, primary, secondary);
+      commit(after, undefined);
+      const removed = describeProfessionChange(before, after);
+      if (removed.length > 0) {
+        dismissUndo = toast(`Removed: ${removed.join(", ")}`, {
+          undo: () => {
+            commit(before, undefined);
+          },
+        });
+      }
     },
     equip: (change) => {
       commit(change.character, change.notice);
@@ -777,6 +848,7 @@ export function mountBuildEditor(
   const bar = mountCommandBar(layout, context, initial, callbacks, (name) => {
     // Typing changes nothing another region shows but the bar's own
     // marker: the arena hears about the new name directly.
+    dropUndo();
     character = { ...character, name };
     training?.setDisplayName(name);
     bar.update(character);
@@ -828,34 +900,34 @@ export function mountBuildEditor(
 
   // A build pasted anywhere but a field imports it (#572), unsaved: the
   // player sees what arrived and chooses to keep it. Other text is
-  // ignored; a broken build says why.
-  const onPaste = (event: ClipboardEvent): void => {
-    const target = event.target;
-    const text = event.clipboardData?.getData("text/plain") ?? "";
-    if (
-      (target instanceof Element && target.closest(TAKES_TYPING) !== null) ||
-      !looksLikeBuild(text)
-    ) {
-      return;
+  // ignored; a broken build says why. A team code holds builds too, so it
+  // is told apart first (#577).
+  const stopPaste = listenForPaste((text) => {
+    if (looksLikeTeam(text)) {
+      toast("That is a team code. Paste it on the Teams screen.");
+      return true;
     }
-    event.preventDefault();
+    if (!looksLikeBuild(text)) {
+      return false;
+    }
     const result = importBuild(text, context.current().id, Date.now());
     if (!result.ok) {
       // Every problem at once: someone fixing a pasted build should not
       // discover its faults one round trip at a time.
       toast("Could not import", { problems: result.problems });
-      return;
+      return true;
     }
     context.commit(result.character);
     toast(`Imported ${result.character.name}`);
-  };
-  document.addEventListener("paste", onPaste);
+    return true;
+  });
 
   return {
     dispose() {
       disposed = true;
+      dropUndo();
       document.removeEventListener("keydown", onKeyDown);
-      document.removeEventListener("paste", onPaste);
+      stopPaste();
       bar.dispose();
       tooltip.dispose();
       training?.dispose();
@@ -919,9 +991,8 @@ function mountCommandBar(
     "primary",
     () => professionChoices(context.current(), "primary"),
     (value) => {
-      const character = context.current();
       if (value !== undefined) {
-        context.commit(setProfessions(character, value, character.secondaryProfession));
+        context.changeProfessions(value, context.current().secondaryProfession);
       }
     },
   );
@@ -929,8 +1000,7 @@ function mountCommandBar(
     "secondary",
     () => professionChoices(context.current(), "secondary"),
     (value) => {
-      const character = context.current();
-      context.commit(setProfessions(character, character.primaryProfession, value));
+      context.changeProfessions(context.current().primaryProfession, value);
     },
   );
   professions.append(primary.element, secondary.element);
@@ -957,38 +1027,12 @@ function mountCommandBar(
     more.setAttribute("aria-expanded", "false");
   };
 
-  // Share (#572): the build as one line, selected, with Copy. The line
-  // stays selected when the clipboard is refused, so it copies by hand.
-  const share = h("div", "editor-share");
-  share.hidden = true;
-  const line = document.createElement("input");
-  line.className = "editor-share-line";
-  line.readOnly = true;
-  line.spellcheck = false;
-  line.setAttribute("aria-label", "build to share");
-  const selectLine = (): void => {
-    line.focus();
-    line.select();
-    // Selecting scrolls to the end; the start says whose build it is.
-    line.scrollLeft = 0;
-  };
-  const copy = button("Copy", "", () => {
-    // `clipboard` is missing outside a secure context; the promise turns
-    // that into a refusal like any other.
-    Promise.resolve()
-      .then(() => navigator.clipboard.writeText(line.value))
-      .then(() => {
-        share.hidden = true;
-        toast("Copied");
-      }, selectLine);
-  });
-  share.append(line, copy);
+  // Share (#572): the build as one line, selected, with Copy.
+  const share = shareLine("build to share");
   menu.append(
     button("Share", "", () => {
       closeMenu();
-      line.value = exportBuild(context.current());
-      share.hidden = false;
-      selectLine();
+      share.show(exportBuild(context.current()));
     }),
     // An edited character duplicates as edited, as it always has.
     button("Duplicate", "", () => {
@@ -1010,7 +1054,7 @@ function mountCommandBar(
     }),
   );
   const moreWrap = h("span", "editor-more-wrap");
-  moreWrap.append(more, menu, share);
+  moreWrap.append(more, menu, share.element);
 
   // Esc puts away the ⋯ menu, Share, the problem list and then the pick
   // (#564) before it is Close.
@@ -1019,8 +1063,8 @@ function mountCommandBar(
       closeMenu();
       return true;
     }
-    if (!share.hidden) {
-      share.hidden = true;
+    if (share.isOpen()) {
+      share.hide();
       return true;
     }
     if (chip.isOpen()) {
@@ -1051,7 +1095,7 @@ function mountCommandBar(
     }
     if (!moreWrap.contains(target)) {
       closeMenu();
-      share.hidden = true;
+      share.hide();
     }
     if (!chip.element.contains(target)) {
       chip.close();
@@ -1087,7 +1131,7 @@ function mountCommandBar(
       save.title = firstBlocking?.text ?? "Save this character";
     },
     isOpen() {
-      return asking?.isOpen() === true || !menu.hidden || !share.hidden || chip.isOpen();
+      return asking?.isOpen() === true || !menu.hidden || share.isOpen() || chip.isOpen();
     },
     dispose() {
       document.removeEventListener("pointerdown", onPointerDown);

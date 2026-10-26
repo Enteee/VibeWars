@@ -433,11 +433,13 @@ export function dismissToast(): void {
  * A short note at the bottom centre (#566): "Saved", or what a change
  * removed with an Undo. One at a time: a new one replaces the old.
  * `problems` lists why something failed, as a problems chip lists them.
+ * Returns a dismiss that takes down this toast only, not one that
+ * replaced it.
  */
 export function toast(
   text: string,
   options: { readonly undo?: () => void; readonly problems?: readonly string[] } = {},
-): void {
+): () => void {
   dismissToast();
   const element = h("div", "toast");
   element.setAttribute("role", "status");
@@ -458,4 +460,85 @@ export function toast(
   }
   document.body.appendChild(element);
   shownToast = { element, timer: setTimeout(dismissToast, TOAST_SECONDS * 1000) };
+  return () => {
+    if (shownToast?.element === element) {
+      dismissToast();
+    }
+  };
+}
+
+/** Elements that take typing, where a key or a paste is the field's. */
+export const TAKES_TYPING =
+  "input, textarea, select, [contenteditable]:not([contenteditable='false'])";
+
+/**
+ * Hand text pasted anywhere but a field to `handle` (#572, #577); a
+ * paste it takes is not pasted elsewhere. Returns the way to stop.
+ */
+export function listenForPaste(handle: (text: string) => boolean): () => void {
+  const onPaste = (event: ClipboardEvent): void => {
+    const target = event.target;
+    if (target instanceof Element && target.closest(TAKES_TYPING) !== null) {
+      return;
+    }
+    if (handle(event.clipboardData?.getData("text/plain") ?? "")) {
+      event.preventDefault();
+    }
+  };
+  document.addEventListener("paste", onPaste);
+  return () => {
+    document.removeEventListener("paste", onPaste);
+  };
+}
+
+export interface ShareLine {
+  /** The line and its Copy, hidden until `show`. */
+  readonly element: HTMLElement;
+  show(text: string): void;
+  hide(): void;
+  isOpen(): boolean;
+}
+
+/**
+ * A code to share as one line, selected, with Copy (#572). Copy toasts
+ * "Copied"; when the clipboard is refused the line stays selected, so it
+ * copies by hand.
+ */
+export function shareLine(label: string): ShareLine {
+  const element = h("div", "editor-share");
+  element.hidden = true;
+  const line = document.createElement("input");
+  line.className = "editor-share-line";
+  line.readOnly = true;
+  line.spellcheck = false;
+  line.setAttribute("aria-label", label);
+  const selectLine = (): void => {
+    line.focus();
+    line.select();
+    // Selecting scrolls to the end; the start says whose code it is.
+    line.scrollLeft = 0;
+  };
+  const copy = button("Copy", "", () => {
+    // `clipboard` is missing outside a secure context; the promise turns
+    // that into a refusal like any other.
+    Promise.resolve()
+      .then(() => navigator.clipboard.writeText(line.value))
+      .then(() => {
+        element.hidden = true;
+        toast("Copied");
+      }, selectLine);
+  });
+  element.append(line, copy);
+  return {
+    element,
+    show(text) {
+      line.value = text;
+      element.hidden = false;
+      selectLine();
+    },
+    hide() {
+      element.hidden = true;
+    },
+    isOpen: () => !element.hidden,
+  };
 }

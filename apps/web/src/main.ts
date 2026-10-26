@@ -1,5 +1,5 @@
 import { sizeClass } from "@vibewars/game-maps/size-class";
-import type { LobbyConnection, MatchStarting } from "@vibewars/game-session";
+import type { LobbyCharacter, LobbyConnection, MatchStarting } from "@vibewars/game-session";
 
 import { ARENA_MAPS } from "./net/maps.js";
 import {
@@ -24,21 +24,28 @@ import {
   type KeyValueStore,
 } from "./storage/repository.js";
 import type { StoredCharacter } from "./storage/schema.js";
+import { importTeam, importedTeamSummary, type TeamImportResult } from "./storage/team-transfer.js";
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
 import { disposeJukeboxScreen, renderJukeboxScreen } from "./ui/jukebox.js";
 import { disposeOptionsScreen, renderOptionsScreen } from "./ui/options-screen.js";
 import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
+import { toast } from "./ui/kit.js";
 import { duplicateTeam, newTeam } from "./ui/team-builder.js";
 import {
   mountTeamEditor,
   openedTeam,
+  pastedTeam,
   type TeamEditorState,
   type TeamEditorView,
 } from "./ui/team-editor.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
-import type { PlayerBuild } from "@vibewars/game-core";
+import {
+  MINIMAL_GW_INSPIRED_PVP_V1,
+  resolveJoinLoadout,
+  type PlayerBuild,
+} from "@vibewars/game-core";
 
 /**
  * Application shell: owns which screen is showing and the connections
@@ -152,6 +159,25 @@ async function main(): Promise<void> {
     }
   };
 
+  /**
+   * The character the lobby lists this player with (#580): the selected
+   * one's name and professions, or `null` for the house loadout, read
+   * the way `activeBuild` reads the build it plays with. A build the host
+   * would refuse, an empty bar or an illegal one, plays the house loadout,
+   * so it is listed as that too.
+   */
+  const lobbyCharacter = async (): Promise<LobbyCharacter | null> => {
+    const build = await activeBuild();
+    return build === undefined ||
+      resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes).refused !== undefined
+      ? null
+      : {
+          name: build.name,
+          primary: build.primaryProfession,
+          secondary: build.secondaryProfession ?? null,
+        };
+  };
+
   /** The open build editor; every way out of it passes through `showMenu`. */
   let editor: BuildEditorView | undefined;
 
@@ -191,12 +217,12 @@ async function main(): Promise<void> {
       {
         onCreateLobby: (name) => {
           void enterLobby(name, async () => {
-            hosted = await hostLobby(name);
+            hosted = await hostLobby(name, await lobbyCharacter());
             return hosted.lobby;
           });
         },
         onJoinLobby: (code, name) => {
-          void enterLobby(name, () => joinLobbyByCode(code, name));
+          void enterLobby(name, async () => joinLobbyByCode(code, name, await lobbyCharacter()));
         },
         onManageTeams: () => {
           void showTeams();
@@ -282,7 +308,46 @@ async function main(): Promise<void> {
         })();
       },
       onBack: showMenu,
+      onPasteTeam: (text) => {
+        if (importingTeam) {
+          return;
+        }
+        const result = importTeam(
+          text,
+          characterList.characters,
+          () => crypto.randomUUID(),
+          Date.now(),
+        );
+        if (!result.ok) {
+          toast("Could not import", { problems: result.problems });
+          return;
+        }
+        void openPastedTeam(result);
+      },
     });
+  };
+
+  /**
+   * A pasted team (#577): its new characters are stored, since a team
+   * only references characters, and the team opens unsaved. A second
+   * paste while that is under way is ignored: it would be matched against
+   * the characters as they were, and store its members twice.
+   */
+  let importingTeam = false;
+  const openPastedTeam = async (
+    imported: Extract<TeamImportResult, { ok: true }>,
+  ): Promise<void> => {
+    importingTeam = true;
+    try {
+      for (const character of imported.created) {
+        await characters.save(character);
+      }
+      const { characters: now } = await characters.list();
+      showTeamEditor(pastedTeam(imported.team), now);
+      toast(importedTeamSummary(imported));
+    } finally {
+      importingTeam = false;
+    }
   };
 
   /** The open team editor; every way out of it passes through `showTeams`. */
@@ -308,6 +373,12 @@ async function main(): Promise<void> {
       },
       onClose: () => {
         void showTeams();
+      },
+      onImportTeam: (imported) => {
+        if (importingTeam) {
+          return;
+        }
+        void openPastedTeam(imported);
       },
       // The build editor comes back to this team as it was left (#576),
       // with the characters as they are now: an edited bar shows, a

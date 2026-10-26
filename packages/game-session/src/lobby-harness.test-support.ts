@@ -11,7 +11,7 @@
 import { DEFAULT_MATCH_RULES, type MatchRules } from "@vibewars/game-core";
 
 import { joinLobby } from "./lobby-client.js";
-import type { LobbyConnection, MatchStarting } from "./lobby-connection.js";
+import type { LobbyCharacter, LobbyConnection, MatchStarting } from "./lobby-connection.js";
 import { createLobbyHost, type LobbyHost, type MatchPlan } from "./lobby-host.js";
 import { connectMatch, type PeerMatchConnection } from "./match-client.js";
 import { ARENA, TICK_SECONDS, hello, settle } from "./match-harness.test-support.js";
@@ -40,8 +40,8 @@ export interface TestLobby {
   readonly host: Member;
   /** Each match the lobby started, with the plan it was started on. */
   readonly matches: { readonly plan: MatchPlan; readonly host: MatchHost }[];
-  /** A remote member joining as `name`; resolves once it is in. */
-  join(name?: string): Promise<Member>;
+  /** A remote member joining as `name` with `character`; resolves once it is in. */
+  join(name?: string, character?: LobbyCharacter | null): Promise<Member>;
   /** Run `seconds` of the lobby's match, a tick at a time, letting messages land between. */
   step(seconds: number): Promise<void>;
 }
@@ -79,16 +79,20 @@ export async function openLobby(
       return host;
     },
   });
-  const join = async (transport: Transport, name: string): Promise<Member> =>
-    member(await joinLobby({ transport, code: CODE, name, timeoutMs: 1000 }), transport);
-  const host = await join(lobby.local, "Host");
+  const join = async (
+    transport: Transport,
+    name: string,
+    character: LobbyCharacter | null,
+  ): Promise<Member> =>
+    member(await joinLobby({ transport, code: CODE, name, character, timeoutMs: 1000 }), transport);
+  const host = await join(lobby.local, "Host", null);
   return {
     network,
     lobby,
     room,
     host,
     matches,
-    join: (name = "Guest") => join(network.join(), name),
+    join: (name = "Guest", character = null) => join(network.join(), name, character),
     async step(seconds) {
       const ticks = Math.round(seconds / TICK_SECONDS);
       for (let i = 0; i < ticks; i += 1) {

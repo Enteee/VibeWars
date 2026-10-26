@@ -13,6 +13,8 @@ import {
 } from "@vibewars/game-protocol";
 
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
+import { lobbyCharacter } from "./lobby-character.js";
+import type { LobbyCharacter } from "./lobby-connection.js";
 import { createLocalPeer } from "./local-peer.js";
 import { RECONNECT_WINDOW_SECONDS, type MatchHost, type PlannedSeats } from "./match-host.js";
 import { sanitizeName } from "./names.js";
@@ -64,6 +66,7 @@ interface Member {
   name: string;
   team: 0 | 1 | null;
   ready: boolean;
+  character: LobbyCharacter | null;
 }
 
 /** Whether the lobby satisfies the rules for starting, and if not, why. */
@@ -122,6 +125,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       team: member.team,
       ready: member.ready,
       isHost: member.id === local.selfId,
+      character: member.character,
     })),
   });
 
@@ -231,6 +235,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       // team, to confirm again like everyone else when the match is over.
       away.delete(from);
       returning.name = sanitizeName(join.name, returning.name);
+      returning.character = lobbyCharacter(join.character);
       returning.ready = false;
       broadcast();
       return;
@@ -245,6 +250,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       name: sanitizeName(join.name, `player-${String(joined)}`),
       team: null,
       ready: false,
+      character: lobbyCharacter(join.character),
     });
     broadcast();
   });
