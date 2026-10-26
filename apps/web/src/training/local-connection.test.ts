@@ -220,7 +220,7 @@ describe("createLocalConnection", () => {
 
 describe("skillSlotsFor", () => {
   it("describes each skill as the server's join message does", () => {
-    expect(skillSlotsFor(["elementalist.fireball"])).toEqual([
+    expect(skillSlotsFor(["elementalist.fireball"], { attributeRanks: new Map() })).toEqual([
       {
         id: "elementalist.fireball",
         name: "Fireball",
@@ -230,5 +230,28 @@ describe("skillSlotsFor", () => {
         rechargeSeconds: 7,
       },
     ]);
+  });
+});
+
+describe("the bar a Ranger with Expertise sees (#528)", () => {
+  it("shows Broad Head Arrow at the 5 energy it costs, so 5 energy is enough", () => {
+    let character = setProfessions(newCharacter("c1"), "ranger", undefined);
+    character = setRank(character, "ranger.expertise", 12);
+    character = setSkill(character, 0, "ranger.broad-head-arrow");
+    const scenario = getTrainingScenario("target-dummy");
+    if (scenario === undefined) {
+      throw new Error("the target-dummy scenario is gone");
+    }
+    const setup = setupScenario(scenario, character);
+    const connection = createLocalConnection({
+      simulation: setup.simulation,
+      selfId: SELF_ID,
+      map: setup.map,
+      nameOf: (id) => id,
+      professionsOf: () => NO_PROFESSIONS,
+    });
+    const slot = connection.skillBar[0];
+    expect(slot?.id).toBe("ranger.broad-head-arrow");
+    expect(slot?.energyCost).toBe(5);
   });
 });

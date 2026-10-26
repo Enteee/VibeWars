@@ -6,6 +6,8 @@ import {
   CRITICAL_STRIKES_ATTRIBUTE,
   CRITICAL_STRIKES_CHANCE_PER_RANK,
   criticalStrikesEnergy,
+  STRENGTH_ATTRIBUTE,
+  strengthArmorPenetration,
 } from "../primary-attributes.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
@@ -189,16 +191,34 @@ export function blocks(
 }
 
 /**
+ * An attack reached `victim`, hit or blocked (#524): it counts against
+ * each of its statuses that ends after so many, once the blow is done,
+ * so the last attack one lasts for still meets it. A blind miss, a dodge
+ * or an obstructed shot never reaches it, and does not count.
+ */
+export function attackReached(victim: Combatant, events: CombatEvent[]): void {
+  for (const statusId of victim.statuses.countIncomingAttack()) {
+    events.push({ kind: "status-expired", targetId: victim.id, statusId });
+  }
+}
+
+/**
  * What an attack skill makes of a blow (ADR-0029): the weapon's roll times
  * `weaponDamage`, plus `bonus`.
  */
 export interface BlowRule {
   readonly weaponDamage: number;
   readonly bonus: number;
+  /**
+   * The Strength rank that gives the blow armor penetration (#528): the
+   * caster's for an attack skill, 0 for a plain swing, which Strength
+   * does not help.
+   */
+  readonly strengthRank: number;
 }
 
 /** A swing of the weapon and nothing else. */
-export const PLAIN_BLOW: BlowRule = { weaponDamage: 1, bonus: 0 };
+export const PLAIN_BLOW: BlowRule = { weaponDamage: 1, bonus: 0, strengthRank: 0 };
 
 /** The blow `skill` makes of `caster`'s weapon, its bonus at the caster's ranks. */
 export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
@@ -206,6 +226,7 @@ export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
   return {
     weaponDamage: skill.attack?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
     bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
+    strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),
   };
 }
 
@@ -246,7 +267,7 @@ export function landBlow(
       blow.bonus,
     type: weapon.damageType,
     source: "weapon",
-    armorPenetration: weapon.armorPenetration,
+    armorPenetration: strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
   };
   applyDamage(victim, mitigate(packet, victim, rules), critical, events);
   return critical;
@@ -288,6 +309,7 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
   }
   if (blocks(victim, "melee", rng)) {
     events.push({ kind: "attack-blocked", targetId: victim.id });
+    attackReached(victim, events);
     return;
   }
   const snapshot = weaponSnapshotOf(attacker);
@@ -295,6 +317,7 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
     gainCriticalEnergy(attacker, snapshot.criticalStrikes, events);
   }
   events.push(...attackHitRiders(attacker, victim, snapshot.mainHand.weapon, rng, rules));
+  attackReached(victim, events);
 }
 
 /**
@@ -354,6 +377,7 @@ export function resolveAttackSkill(
     }
     if (skill.attack?.unblockable !== true && blocks(victim, kind, rng)) {
       events.push({ kind: "attack-blocked", targetId: victim.id });
+      attackReached(victim, events);
       blocked.push(victim);
       continue;
     }
@@ -361,6 +385,7 @@ export function resolveAttackSkill(
       gainCriticalEnergy(caster, snapshot.criticalStrikes, events);
     }
     events.push(...attackHitRiders(caster, victim, snapshot.mainHand.weapon, rng, rules));
+    attackReached(victim, events);
     hit.push(victim);
   }
   return [

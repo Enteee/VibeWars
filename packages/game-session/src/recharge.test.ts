@@ -1,4 +1,4 @@
-import { CastState } from "@vibewars/game-core";
+import { CastState, StatusSet } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { RECHARGE_TOLERANCE_SECONDS, rechargePredicted, rechargeSlots } from "./recharge.js";
@@ -11,18 +11,18 @@ const recharging = (slot: number, remainingSeconds: number, totalSeconds = 10) =
 
 describe("rechargeSlots", () => {
   it("lists running recharges by bar slot, with the duration each started with", () => {
-    const cast = new CastState();
+    const cast = new CastState("p", new StatusSet());
     cast.startRecharge("b", 8);
     cast.advance(2);
     expect(rechargeSlots(["a", "b", "c"], cast)).toEqual([recharging(1, 6, 8)]);
   });
 
   it("is empty for a bar with nothing recharging", () => {
-    expect(rechargeSlots(["a", "b"], new CastState())).toEqual([]);
+    expect(rechargeSlots(["a", "b"], new CastState("p", new StatusSet()))).toEqual([]);
   });
 
   it("keeps an empty slot's index: the slots after it are where the bar has them (#347)", () => {
-    const cast = new CastState();
+    const cast = new CastState("p", new StatusSet());
     cast.startRecharge("c", 8);
     expect(rechargeSlots(["a", null, "c"], cast)).toEqual([recharging(2, 8, 8)]);
   });

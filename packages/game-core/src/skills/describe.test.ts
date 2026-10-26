@@ -140,7 +140,9 @@ describe("describeSkill", () => {
     for (const entry of IMPLEMENTED_SKILLS) {
       const described = describeSkill(entry);
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
-        entry.effects.length + (entry.attack?.onBlocked.length ?? 0),
+        entry.effects.length +
+          (entry.attack?.onBlocked.length ?? 0) +
+          (entry.whileActivating === undefined ? 0 : 1),
       );
       for (const line of described.effects) {
         expect(line.text.length, `${entry.id} has an empty description line`).toBeGreaterThan(0);
@@ -189,5 +191,32 @@ describe("formatScalingRange", () => {
         attributeId: undefined,
       }),
     ).toBeUndefined();
+  });
+});
+
+describe("signets and shouts (#524)", () => {
+  it("names the type first, as GW1 does", () => {
+    expect(describeSkill(skill("warrior.healing-signet")).typeText).toBe("Signet.");
+    expect(describeSkill(skill("warrior.watch-yourself")).typeText).toBe("Shout.");
+    expect(describeSkill(skill("necromancer.malaise")).typeText).toBe("Hex Spell.");
+  });
+
+  it("says Healing Signet is free and what it costs in armor while activating", () => {
+    const description = describeSkill(skill("warrior.healing-signet"));
+    expect(description.cost).toBe("Free");
+    expect(description.effects.map((effect) => effect.text)).toEqual([
+      "Heals for 82",
+      "While activating: -40 armor",
+    ]);
+  });
+
+  it("says a shout reaches allies in earshot, and when its effect ends", () => {
+    const description = describeSkill(skill("warrior.watch-yourself"));
+    expect(description.targetText).toBe("Allies in earshot");
+    expect(description.rangeText).toBe("350 radius");
+    expect(description.castTime).toBe("Instant");
+    expect(description.effects[0]?.text).toBe(
+      "Applies Watch Yourself! for 10s (+21 armor, ends after 3 incoming attacks)",
+    );
   });
 });

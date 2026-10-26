@@ -26,7 +26,7 @@ function cast(caster: Combatant, skillId: string, target: Combatant | undefined)
     throw new Error(`unknown skill ${skillId}`);
   }
   payCost(skill, caster);
-  caster.cast.beginCast(skill.id, target?.id, skill.activationSeconds);
+  caster.cast.beginCast(skill.id, target?.id, skill.activationSeconds, skill.whileActivating);
 }
 
 function resolve(caster: Combatant, target: Combatant | undefined): void {

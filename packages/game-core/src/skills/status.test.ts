@@ -341,3 +341,25 @@ describe("attack duration (ADR-0029)", () => {
     expect(getStatusDefinition("bleeding").attackDurationMultiplier).toBe(1);
   });
 });
+
+describe("StatusSet.countIncomingAttack (#524)", () => {
+  it("ends a status after its endsAfterAttacks, and leaves the others", () => {
+    const set = new StatusSet();
+    set.apply("watch-yourself", 10, "w");
+    set.apply("guardian", 10, "m");
+    expect(set.countIncomingAttack()).toEqual([]);
+    expect(set.countIncomingAttack()).toEqual([]);
+    expect(set.countIncomingAttack()).toEqual(["watch-yourself"]);
+    expect(set.has("watch-yourself")).toBe(false);
+    expect(set.has("guardian")).toBe(true);
+  });
+
+  it("starts the count again when the status is applied anew", () => {
+    const set = new StatusSet();
+    set.apply("watch-yourself", 5, "w");
+    set.countIncomingAttack();
+    set.countIncomingAttack();
+    set.apply("watch-yourself", 10, "w");
+    expect(set.get("watch-yourself")?.attacksLeft).toBe(3);
+  });
+});

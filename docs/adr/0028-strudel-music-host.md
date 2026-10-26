@@ -291,9 +291,17 @@ otherwise they are printed marked unvalidated and nobody tunes from them.
 It never fails on bad numbers, only on a crash. A headless runner is not a
 phone.
 
-**Numbers: pending the first green run of that workflow**, which is to be
-linked here with both browsers' tables at intensity 0 and 3, SFX on and off.
-Until then the `music:check` budgets (#514) stay provisional.
+**First numbers, 2026-10-26** (workflow run 40267554400 on `main`, after the
+fix in #612: Firefox only ran once it had `libpulse`). Both browsers kept the
+scheduler on time: 600 ticks in 60 s, no skipped music, at every load
+except CPU 6x (Chromium: 5 late ticks on the editor, 26 in a match, max tick
+work 190 and 284 ms; no skipped music). Underruns did **not** validate in either browser, because the baseline
+failed: at audio stress 0 Firefox read 22 underruns, 98 ms, and Chromium 1 underrun, 1252 ms,
+over the 10 ms bound for clock noise. Both did rise from 1.5 to 2.5 ms of
+worklet load (Firefox 169, then 436 ms; Chromium 0, then 1986 ms). A shared
+runner's null sink underruns by itself, so these readings stay marked
+unvalidated and the `music:check` budgets (#514) stay provisional. The tables are in
+that run's job summaries and `music-measure-*` artifacts.
 
 ## The scheduler works ahead
 

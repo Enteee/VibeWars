@@ -232,8 +232,9 @@ describe("Apply Poison in the match (#525)", () => {
     expect(getStatusDefinition("apply-poison").category).toBe("preparation");
     const skill = getSkill(APPLY_POISON);
     expect(skill?.type).toBe("preparation");
+    expect(skill && describeSkill(skill).typeText).toBe("Preparation.");
     expect(skill && describeSkill(skill).effects.map((effect) => effect.text)).toEqual([
-      "Preparation. For 24s, foes your physical attacks hit get Poison for 13s",
+      "For 24s, foes your physical attacks hit get Poison for 13s",
     ]);
   });
 

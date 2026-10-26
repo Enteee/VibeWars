@@ -8,7 +8,7 @@ import {
   HEALTH_PER_PIP,
   type BlockRule,
 } from "./status.js";
-import type { Combatant, Skill } from "./types.js";
+import { isSpell, type Combatant, type Skill } from "./types.js";
 
 /**
  * Per-tick status processing (brief §13's "durations", §12's degeneration).
@@ -123,12 +123,15 @@ export function clampMoveSpeed(raw: number): number {
 }
 
 /**
- * How long this caster takes to cast this skill. Dazed doubles it; an
- * instant skill stays instant (0 × 2 = 0), the one place dazed visibly
- * does nothing. Fast Casting multiplies in too (#527), judged on the
- * skill's own activation, before dazed.
+ * How long this caster takes to cast this skill. Dazed doubles a spell's;
+ * a signet or any other skill that is not a spell casts at normal speed,
+ * as in GW1 (#524). An instant skill stays instant (0 × 2 = 0). Fast
+ * Casting multiplies in too (#527), judged on the skill's own activation.
  */
 export function effectiveActivationSeconds(skill: Skill, caster: Combatant): number {
+  if (!isSpell(skill.type)) {
+    return skill.activationSeconds;
+  }
   const fastCasting = fastCastingMultiplier(
     caster.attributeRanks.get(FAST_CASTING_ATTRIBUTE) ?? 0,
     skill,

@@ -1,10 +1,12 @@
 import {
+  energyCostOf,
   getSkill,
   isOffhandId,
   isProfessionId,
   isStatusId,
   type CombatEvent,
   type CombatLogEntry,
+  type Combatant,
   type SkillBar,
 } from "@vibewars/game-core";
 import type {
@@ -29,8 +31,15 @@ import type {
  * messages, once validated, back into what the match view draws.
  */
 
-/** The bar a client draws, every slot in its place, `null` where it is empty (#347). */
-export function skillBarSlots(skillBar: SkillBar): (SkillBarSlot | null)[] {
+/**
+ * The bar a client draws, every slot in its place, `null` where it is
+ * empty (#347). Energy costs are what `bearer` pays, Expertise and all
+ * (#528).
+ */
+export function skillBarSlots(
+  skillBar: SkillBar,
+  bearer: Pick<Combatant, "attributeRanks">,
+): (SkillBarSlot | null)[] {
   return skillBar.map((skillId) => {
     if (skillId === null) {
       return null;
@@ -39,7 +48,7 @@ export function skillBarSlots(skillBar: SkillBar): (SkillBarSlot | null)[] {
     return {
       id: skillId,
       name: skill?.name ?? skillId,
-      energyCost: skill?.cost?.kind === "energy" ? skill.cost.amount : 0,
+      energyCost: skill === undefined ? 0 : energyCostOf(skill, bearer),
       adrenalineCost: skill?.cost?.kind === "adrenaline" ? skill.cost.amount : 0,
       activationSeconds: skill?.activationSeconds ?? 0,
       rechargeSeconds: skill?.rechargeSeconds ?? 0,

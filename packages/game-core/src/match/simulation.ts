@@ -65,6 +65,7 @@ import {
 import {
   attackDurationSeconds,
   attackHitRiders,
+  attackReached,
   blindMisses,
   blocks,
   gainCriticalEnergy,
@@ -762,7 +763,12 @@ export class MatchSimulation {
       skill.attack === undefined
         ? effectiveActivationSeconds(skill, record.combatant)
         : this.#attackHitSeconds(record, skill);
-    record.combatant.cast.beginCast(skill.id, castTargetId, activationSeconds);
+    record.combatant.cast.beginCast(
+      skill.id,
+      castTargetId,
+      activationSeconds,
+      skill.whileActivating,
+    );
     this.#castBegun(record, skill, castTargetId);
     // Casting stops you (operator Q33): a key held as the cast begins
     // does not walk, and only the next move cancels the cast. An instant
@@ -1568,6 +1574,7 @@ export class MatchSimulation {
     ) {
       blocked = true;
       events.push({ kind: "attack-blocked", targetId: target.id });
+      attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
     } else {
       const critical = landBlow(
@@ -1594,6 +1601,7 @@ export class MatchSimulation {
           ),
         );
       }
+      attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.effects ?? []));
     }
     if (attacker !== undefined && !attacker.combatant.dead && !blocked) {
@@ -1922,6 +1930,7 @@ export class MatchSimulation {
 
   #combatant(spec: ParticipantSpec): Combatant {
     const maxHealth = spec.maxHealth ?? this.#ruleset.combat.baseHealth;
+    const statuses = new StatusSet();
     return {
       id: spec.id,
       health: maxHealth * (spec.startHealthFraction ?? 1),
@@ -1933,8 +1942,8 @@ export class MatchSimulation {
       attributeRanks: spec.attributeRanks,
       team: spec.team,
       dead: false,
-      statuses: new StatusSet(),
-      cast: new CastState(),
+      statuses,
+      cast: new CastState(spec.id, statuses),
       attack: undefined,
       knockdownRemaining: 0,
       equipment: spec.equipment,

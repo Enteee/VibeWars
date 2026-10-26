@@ -16,6 +16,7 @@ import type { Combatant } from "./types.js";
  * will want it too.
  */
 export function makeCombatant(overrides: Partial<Combatant> & { id: string }): Combatant {
+  const statuses = overrides.statuses ?? new StatusSet();
   return {
     health: 500,
     maxHealth: 500,
@@ -26,8 +27,8 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     attributeRanks: new Map(),
     team: 0,
     dead: false,
-    statuses: new StatusSet(),
-    cast: new CastState(),
+    statuses,
+    cast: new CastState(overrides.id, statuses),
     attack: undefined,
     knockdownRemaining: 0,
     // Armor at the reference level, so an unconfigured test combatant

@@ -138,13 +138,15 @@ you. Blocking works again the moment you stand.
 ## Conditions, hexes and enchantments
 
 All three are timed status effects sharing one lifecycle, parameterised
-by category:
+by category, alongside two kinds no removal touches:
 
-| Category    | Who applies it | Removed by          |
-| ----------- | -------------- | ------------------- |
-| Condition   | Foes           | Condition removal   |
-| Hex         | Foes           | Hex removal         |
-| Enchantment | Allies/self    | Enchantment removal |
+| Category     | Who applies it | Removed by                  |
+| ------------ | -------------- | --------------------------- |
+| Condition    | Foes           | Condition removal           |
+| Hex          | Foes           | Hex removal                 |
+| Enchantment  | Allies/self    | Enchantment removal         |
+| Shout        | Allies/self    | Nothing; it runs out        |
+| Skill effect | Self           | Nothing; ends with the cast |
 
 **Durations do not stack.** Re-applying a status keeps the longer of the
 existing and incoming duration. That single rule is why spamming a short
@@ -166,7 +168,8 @@ number:
 
 **Dazed doubles cast time; it does not make you easier to interrupt.**
 That is the reference's dazed, and here it would do nothing: every cast
-is already interruptible. An instant skill stays instant. See
+is already interruptible. An instant skill stays instant, and only
+spells are slowed: a dazed Warrior's Healing Signet casts in 2 s. See
 [ADR-0019](../adr/0019-status-modifiers.md).
 
 **Blind makes attacks miss**: weapon swings, each blow rolled on its own,
@@ -184,7 +187,11 @@ maximum, not the raw one.
 ## Skill types
 
 A skill's type is its badge on the slot, in the library and in the
-Training Ground, and some types play by rules of their own (#465).
+Training Ground, and is named first in its tooltip ("Signet.", "Hex
+Spell."). Some types play by rules of their own (#465). Spells,
+enchantments and hexes are **spells**; attacks, signets, shouts, stances
+and plain skills are not, and every rule that "affects spells" (dazed
+and Fast Casting, so far) leaves them alone.
 
 **Stances** are yours alone, and only one is up at a time. Using a
 stance ends the one you are in, the same one included, which restarts
@@ -204,6 +211,20 @@ cast, 24 s) poisons for 13 s every foe your physical attacks hit:
 swings, arrows and attack skills, each victim of Barrage. A miss or a
 block poisons nobody, nor does a wand's or staff's bolt. An arrow
 poisons if the preparation is still up when it lands.
+
+**Signets** usually cost nothing, so they work at 0 energy. Healing
+Signet (Warrior, Tactics) heals you after a 2 s cast, and for those 2 s
+you have −40 armor: the penalty ends with the cast, whether it goes off,
+is cancelled, interrupted or knocked out of your hands.
+
+**Shouts** are instant: no cast bar, no target, and nothing to
+interrupt. Each ally **in earshot**, 350 units round the shouter and the
+shouter included, gets its effect; a dead ally or one just outside does
+not. "Watch Yourself!" (Warrior, Tactics, 4 adrenaline) gives +21 armor
+for 10 s, and it ends early on each ally after 3 incoming attacks that
+hit or are blocked; a miss, a dodge or an obstructed arrow does not
+count. Earshot is GW1's ratio of earshot to cast range (about 1,010 to
+1,250) applied to the 420-unit spell range.
 
 ## Weapon attacks
 
@@ -313,6 +334,13 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   1.15 s but Faintheartedness in 1 s as usual. It multiplies with dazed
   (rank 12 and dazed: ×1.149). Aftercast and recharge are unchanged;
   attack skills and other non-spells too.
+- **Strength** (Warrior). Attack skills ignore 1% of armor a rank (12%
+  at 12), unless the weapon has armor penetration of its own (a
+  hornbow's 10%), which stands instead; the two do not add. Plain swings
+  get none.
+- **Expertise** (Ranger). Attack skills and every Ranger skill cost 4%
+  less energy a rank (−48% at 12), rounded once, never below 0.
+  Adrenaline costs are untouched.
 - **Critical Strikes** (Assassin). +1% critical chance a rank on weapon
   blows, and every crit gives the striker energy: 1 at ranks 1–7, 2 at
   8–12, 3 at 13 and above.
