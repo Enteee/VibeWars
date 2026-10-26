@@ -5,6 +5,8 @@ import {
   CRITICAL_STRIKES_ATTRIBUTE,
   CRITICAL_STRIKES_CHANCE_PER_RANK,
   criticalStrikesEnergy,
+  STRENGTH_ATTRIBUTE,
+  strengthArmorPenetration,
 } from "../primary-attributes.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
@@ -193,10 +195,16 @@ export function blocks(
 export interface BlowRule {
   readonly weaponDamage: number;
   readonly bonus: number;
+  /**
+   * The Strength rank that gives the blow armor penetration (#528): the
+   * caster's for an attack skill, 0 for a plain swing, which Strength
+   * does not help.
+   */
+  readonly strengthRank: number;
 }
 
 /** A swing of the weapon and nothing else. */
-export const PLAIN_BLOW: BlowRule = { weaponDamage: 1, bonus: 0 };
+export const PLAIN_BLOW: BlowRule = { weaponDamage: 1, bonus: 0, strengthRank: 0 };
 
 /** The blow `skill` makes of `caster`'s weapon, its bonus at the caster's ranks. */
 export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
@@ -204,6 +212,7 @@ export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
   return {
     weaponDamage: skill.attack?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
     bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
+    strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),
   };
 }
 
@@ -244,7 +253,7 @@ export function landBlow(
       blow.bonus,
     type: weapon.damageType,
     source: "weapon",
-    armorPenetration: weapon.armorPenetration,
+    armorPenetration: strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
   };
   applyDamage(victim, mitigate(packet, victim, rules), critical, events);
   return critical;

@@ -251,6 +251,60 @@ describe("resolveAttackSkill (ADR-0029)", () => {
     expect(events).toEqual([{ kind: "damage", targetId: "t", amount: expected, critical: false }]);
   });
 
+  describe("Strength (#528)", () => {
+    /** A rank-12 wielder of `weapon` with `strength` ranks of Strength. */
+    const strong = (weapon: Weapon, attributeId: string, strength: number): Combatant =>
+      makeCombatant({
+        id: "attacker",
+        team: 0,
+        equipment: wielding(weapon, attributeId),
+        attributeRanks: new Map([
+          [attributeId, 12],
+          ["warrior.strength", strength],
+        ]),
+      });
+
+    const blowOf = (weapon: Weapon, bonus: number, penetration: number, target: Combatant) =>
+      mitigate(
+        {
+          amount: 10 * weaponAttributeMultiplier(12, RULES) + bonus,
+          type: weapon.damageType,
+          source: "weapon",
+          armorPenetration: penetration,
+        },
+        target,
+        RULES,
+      );
+
+    it("gives Swift Chop 1% armor penetration a rank: 12% at 12", () => {
+      const target = victim();
+      const events = resolve(swiftChop, strong(WEAPONS.axe, "warrior.axe-mastery", 12), [target]);
+      expect(damages(events)).toEqual([blowOf(WEAPONS.axe, 16, 0.12, target)]);
+      expect(blowOf(WEAPONS.axe, 16, 0.12, target)).toBeGreaterThan(
+        blowOf(WEAPONS.axe, 16, 0, target),
+      );
+    });
+
+    it("gives a plain swing nothing", () => {
+      const swing = (strength: number) =>
+        resolveSwing({
+          attacker: strong(WEAPONS.axe, "warrior.axe-mastery", strength),
+          target: foe("dummy"),
+          candidates: [],
+          rng: fixed(10),
+          rules: RULES,
+          exposed: NOWHERE,
+        });
+      expect(damages(swing(12))).toEqual(damages(swing(0)));
+    });
+
+    it("does not add to a hornbow's own 10%: Barrage keeps 10%", () => {
+      const target = victim();
+      const events = resolve(barrage, strong(WEAPONS.hornbow, "ranger.marksmanship", 12), [target]);
+      expect(damages(events)).toEqual([blowOf(WEAPONS.hornbow, 12, 0.1, target)]);
+    });
+  });
+
   it("lands its riders on whoever the blow hit", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
     const target = victim();

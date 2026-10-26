@@ -306,6 +306,13 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   1.15 s but Faintheartedness in 1 s as usual. It multiplies with dazed
   (rank 12 and dazed: ×1.149). Aftercast and recharge are unchanged;
   attack skills and other non-spells too.
+- **Strength** (Warrior). Attack skills ignore 1% of armor a rank (12%
+  at 12), unless the weapon has armor penetration of its own (a
+  hornbow's 10%), which stands instead; the two do not add. Plain swings
+  get none.
+- **Expertise** (Ranger). Attack skills and every Ranger skill cost 4%
+  less energy a rank (−48% at 12), rounded once, never below 0.
+  Adrenaline costs are untouched.
 - **Critical Strikes** (Assassin). +1% critical chance a rank on weapon
   blows, and every crit gives the striker energy: 1 at ranks 1–7, 2 at
   8–12, 3 at 13 and above.

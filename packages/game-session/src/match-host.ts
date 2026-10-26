@@ -222,7 +222,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     };
     transport.send("welcome", message, peerId);
     const bar: WireSkillBar = {
-      slots: skillBarSlots(participant?.skillBar ?? []),
+      slots: skillBarSlots(participant?.skillBar ?? [], {
+        attributeRanks: participant?.combatant.attributeRanks ?? new Map(),
+      }),
       ranks: Object.fromEntries(participant?.combatant.attributeRanks ?? []),
     };
     transport.send("skill-bar", bar, peerId);

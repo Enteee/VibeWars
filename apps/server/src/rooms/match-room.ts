@@ -17,6 +17,7 @@ import {
   MatchSimulation,
   ZERO,
   applyIntent,
+  energyCostOf,
   getSkill,
   resolveJoinLoadout,
   resolveLoadout,
@@ -852,7 +853,7 @@ export class MatchRoom extends Room {
         return {
           id: skillId,
           name: skill?.name ?? skillId,
-          energyCost: skill?.cost?.kind === "energy" ? skill.cost.amount : 0,
+          energyCost: skill === undefined ? 0 : energyCostOf(skill, sim.combatant),
           adrenalineCost: skill?.cost?.kind === "adrenaline" ? skill.cost.amount : 0,
           activationSeconds: skill?.activationSeconds ?? 0,
           rechargeSeconds: skill?.rechargeSeconds ?? 0,
