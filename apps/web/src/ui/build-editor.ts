@@ -1,4 +1,5 @@
 import {
+  describePrimaryAttribute,
   describeSkill,
   MAX_ATTRIBUTE_RANK,
   MINIMAL_GW_INSPIRED_PVP_V1,
@@ -438,9 +439,17 @@ export function renderBuildEditor(
     const rank = character.attributes.find((a) => a.attributeId === attributeId)?.rank ?? 0;
 
     const row = h("div", "editor-attribute");
-    row.appendChild(
-      h("span", "editor-attribute-name", `${definition.name}${definition.isPrimary ? " ★" : ""}`),
+    const name = h(
+      "span",
+      "editor-attribute-name",
+      `${definition.name}${definition.isPrimary ? " ★" : ""}`,
     );
+    // What the primary does at this rank (#531), under its name.
+    const effect = describePrimaryAttribute(attributeId, rank);
+    if (effect !== undefined) {
+      name.appendChild(h("span", "editor-attribute-effect", effect));
+    }
+    row.appendChild(name);
 
     const minus = document.createElement("button");
     minus.type = "button";

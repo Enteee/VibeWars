@@ -2,8 +2,10 @@ import { MAX_ATTRIBUTE_RANK } from "../attributes.js";
 import { AREA_ADJACENT, AREA_EARSHOT, AREA_IN_THE_AREA, AREA_NEARBY } from "../distances.js";
 import { getAttribute } from "../professions.js";
 
+import { energyCostOf } from "./activation.js";
 import { resolveMagnitudeAtRanks } from "./scaling.js";
-import { findStatusDefinition } from "./status.js";
+import { findStatusDefinition, StatusSet } from "./status.js";
+import { effectiveActivationSeconds } from "./tick.js";
 import type { AreaRule, Magnitude, Skill, SkillEffect, SkillType } from "./types.js";
 
 /**
@@ -284,12 +286,38 @@ function targetAndRange(skill: Skill): { readonly target: string; readonly range
   };
 }
 
+/** "5 energy (10)": what it costs at these ranks, the base in brackets when they differ. */
+function costText(skill: Skill, ranks: ReadonlyMap<string, number>): string {
+  if (skill.cost === undefined) {
+    return "Free";
+  }
+  if (skill.cost.kind === "adrenaline") {
+    return `${String(skill.cost.amount)} adrenaline`;
+  }
+  const cost = energyCostOf(skill, { attributeRanks: ranks });
+  const base = cost === skill.cost.amount ? "" : ` (${String(skill.cost.amount)})`;
+  return `${String(cost)} energy${base}`;
+}
+
+/** "1.1s (2s)": how long it activates at these ranks, with no status on, the base in brackets when they differ. */
+function castTimeText(skill: Skill, ranks: ReadonlyMap<string, number>): string {
+  if (skill.activationSeconds === 0) {
+    return "Instant";
+  }
+  const activation = seconds(
+    effectiveActivationSeconds(skill, { attributeRanks: ranks, statuses: new StatusSet() }),
+  );
+  const base = seconds(skill.activationSeconds);
+  return activation === base ? base : `${activation} (${base})`;
+}
+
 /**
  * Describe a skill at the given attribute ranks.
  *
  * `ranks` is normally the character being edited. An empty map describes
  * the skill at rank 0, which is what an unallocated character would
- * actually get — not a hypothetical "typical" value.
+ * actually get — not a hypothetical "typical" value. Cost and cast time
+ * are what a primary attribute makes of them at these ranks (#531).
  */
 export function describeSkill(
   skill: Skill,
@@ -332,11 +360,8 @@ export function describeSkill(
         ? undefined
         : (getAttribute(skill.attributeId)?.name ?? skill.attributeId),
     effects,
-    cost:
-      skill.cost === undefined
-        ? "Free"
-        : `${String(skill.cost.amount)} ${skill.cost.kind === "energy" ? "energy" : "adrenaline"}`,
-    castTime: skill.activationSeconds === 0 ? "Instant" : seconds(skill.activationSeconds),
+    cost: costText(skill, ranks),
+    castTime: castTimeText(skill, ranks),
     recharge: seconds(skill.rechargeSeconds),
     rangeText: range,
     targetText: target,
