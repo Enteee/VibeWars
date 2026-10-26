@@ -61,6 +61,7 @@ import {
   trackTarget,
   type Projectile,
   type SkillHit,
+  type SpellHit,
 } from "../skills/projectile.js";
 import {
   attackDurationSeconds,
@@ -1030,12 +1031,15 @@ export class MatchSimulation {
     const primary = skill.target === "self" ? record : targetRecord;
     const exposed = this.#exposedTo(record);
     const speed = record.combatant.equipment.mainHand.weapon.projectileSpeed;
+    const flight = skill.projectile;
     const resolve =
-      skill.attack === undefined
-        ? applySkillEffects
-        : speed === undefined
-          ? (resolution: SkillResolution) => resolveAttackSkill(resolution, exposed)
-          : (resolution: SkillResolution) => this.#releaseSkill(record, resolution, speed, dt);
+      flight !== undefined
+        ? (resolution: SkillResolution) => this.#releaseSpell(record, resolution, flight.speed, dt)
+        : skill.attack === undefined
+          ? applySkillEffects
+          : speed === undefined
+            ? (resolution: SkillResolution) => resolveAttackSkill(resolution, exposed)
+            : (resolution: SkillResolution) => this.#releaseSkill(record, resolution, speed, dt);
     const events = resolve({
       skill,
       caster: record.combatant,
@@ -1045,18 +1049,21 @@ export class MatchSimulation {
         casterPosition: record.position,
         primary,
         // Only an area looks past the primary: skip the copy every other
-        // cast would make for nothing.
-        candidates: skill.area === undefined ? [] : [...this.#participants.values()],
+        // cast would make for nothing. A flying spell's area is found
+        // where it lands, not here.
+        candidates:
+          skill.area === undefined || flight !== undefined ? [] : [...this.#participants.values()],
         losBlockers: this.#walls,
       }),
       rng: this.#rng,
       rules: this.#ruleset.combat,
     });
     // Where an area landed, for whoever draws it: nowhere, when an area
-    // centred on a target had no target to centre on.
+    // centred on a target had no target to centre on, or when it is still
+    // flying.
     const origin = skill.area?.origin === "caster" ? record.position : primary?.position;
     const area =
-      skill.area === undefined || origin === undefined
+      skill.area === undefined || origin === undefined || flight !== undefined
         ? undefined
         : { x: origin.x, y: origin.y, radius: skill.area.radius };
 
@@ -1445,7 +1452,8 @@ export class MatchSimulation {
     speed: number,
     dt: number,
   ): CombatEvent[] {
-    const skillHit = {
+    const skillHit: SkillHit = {
+      kind: "attack",
       skill: resolution.skill,
       blow: skillBlow(resolution.skill, record.combatant),
     };
@@ -1458,9 +1466,30 @@ export class MatchSimulation {
   }
 
   /**
+   * A flying spell (#535): one shot at the primary target, carrying the
+   * cast. Its effects, and anyone its area catches, land with it.
+   */
+  #releaseSpell(
+    record: ParticipantRecord,
+    resolution: SkillResolution,
+    speed: number,
+    dt: number,
+  ): CombatEvent[] {
+    const [primary] = resolution.targets;
+    const target = primary === undefined ? undefined : this.#participants.get(primary.id);
+    return target === undefined || target.combatant.dead
+      ? []
+      : this.#release(record, target, speed, dt, {
+          kind: "spell",
+          skill: resolution.skill,
+          caster: record.combatant,
+        });
+  }
+
+  /**
    * A ranged swing lands as a shot leaving the bow, led ahead of the
    * target. Blind is rolled now, as GW1 does: a blinded shot misses at
-   * once and nothing flies. Then line of sight, once: a wall in the way
+   * once and nothing flies; a spell is not blinded. Then line of sight, once: a wall in the way
    * spends the swing and nothing flies either, and the next swing looks
    * again. Melee is never checked; its reach is shorter than any gap.
    * Returns the miss or the obstruction, for the caller to log; nothing
@@ -1471,9 +1500,9 @@ export class MatchSimulation {
     target: ParticipantRecord,
     speed: number,
     dt: number,
-    skillHit: SkillHit | undefined,
+    skillHit: SkillHit | SpellHit | undefined,
   ): CombatEvent[] {
-    if (blindMisses(record.combatant, this.#rng)) {
+    if (skillHit?.kind !== "spell" && blindMisses(record.combatant, this.#rng)) {
       return [{ kind: "attack-missed", targetId: target.id }];
     }
     if (!hasLineOfSight(record.position, target.position, this.#walls)) {
@@ -1551,10 +1580,13 @@ export class MatchSimulation {
     if (target === undefined || target.combatant.dead) {
       return;
     }
-    const reach = this.#ruleset.collision.playerRadius + this.#ruleset.combat.projectileTolerance;
+    const { skillHit } = projectile;
+    if (skillHit?.kind === "spell") {
+      this.#landSpell(projectile, skillHit, target);
+      return;
+    }
     const events: CombatEvent[] = [];
     const attacker = this.#participants.get(projectile.attackerId);
-    const { skillHit } = projectile;
     const riders = (effects: Skill["effects"]): CombatEvent[] =>
       skillHit === undefined || attacker === undefined
         ? []
@@ -1566,7 +1598,7 @@ export class MatchSimulation {
             rules: this.#ruleset.combat,
           });
     let blocked = false;
-    if (distance(target.position, projectile.aimPoint) > reach) {
+    if (!this.#reaches(projectile, target)) {
       events.push({ kind: "attack-dodged", targetId: target.id });
     } else if (
       skillHit?.skill.attack?.unblockable !== true &&
@@ -1612,8 +1644,56 @@ export class MatchSimulation {
     this.#logShot(projectile, events);
   }
 
-  /** A shot's entry: its skill's, if it carries one (#416), else its weapon's. */
-  #logShot(projectile: Projectile, events: readonly CombatEvent[]): void {
+  /**
+   * A spell lands as it was cast (#535), centred on where its target is
+   * now: its effects on the target, its area around them. Its caster may
+   * have died since, and it lands all the same. Dodged, nothing happens
+   * to anyone, splash included.
+   */
+  #landSpell(projectile: Projectile, spell: SpellHit, target: ParticipantRecord): void {
+    if (!this.#reaches(projectile, target)) {
+      this.#logShot(projectile, [{ kind: "attack-dodged", targetId: target.id }]);
+      return;
+    }
+    const { skill, caster } = spell;
+    const events = applySkillEffects({
+      skill,
+      caster,
+      targets: resolveTargets({
+        skill,
+        caster,
+        casterPosition: projectile.from,
+        primary: target,
+        candidates: skill.area === undefined ? [] : [...this.#participants.values()],
+        losBlockers: this.#walls,
+      }),
+      rng: this.#rng,
+      rules: this.#ruleset.combat,
+    });
+    this.#recordDeaths(events);
+    this.#recordKnockdowns(events);
+    const area =
+      skill.area === undefined
+        ? undefined
+        : { x: target.position.x, y: target.position.y, radius: skill.area.radius };
+    this.#logShot(projectile, events, area);
+  }
+
+  /** Whether a shot landing now finds its target where it was aimed: their body plus the tolerance. */
+  #reaches(projectile: Projectile, target: ParticipantRecord): boolean {
+    const reach = this.#ruleset.collision.playerRadius + this.#ruleset.combat.projectileTolerance;
+    return distance(target.position, projectile.aimPoint) <= reach;
+  }
+
+  /**
+   * A shot's entry: its skill's, if it carries one (#416, #535), else its
+   * weapon's; with the area a spell's landing caught.
+   */
+  #logShot(
+    projectile: Projectile,
+    events: readonly CombatEvent[],
+    area?: CombatLogEntry["area"],
+  ): void {
     const { skillHit } = projectile;
     if (skillHit === undefined) {
       this.#logWeapon(projectile.attackerId, projectile.weaponSnapshot.mainHand.weapon.id, events);
@@ -1626,7 +1706,7 @@ export class MatchSimulation {
       sourceId: projectile.attackerId,
       skillId: skillHit.skill.id,
       weaponId: undefined,
-      area: undefined,
+      area,
       events,
     });
   }

@@ -207,6 +207,7 @@ describe("applySkillEffects", () => {
     },
     attack: undefined,
     whileActivating: undefined,
+    projectile: undefined,
     effects: [
       { kind: "sacrifice-health", percentOfMax: 10 },
       { kind: "damage", amount: { flat: 30 } },

@@ -23,6 +23,7 @@ const SPELL: Skill = {
   area: undefined,
   attack: undefined,
   whileActivating: undefined,
+  projectile: undefined,
   effects: [{ kind: "damage", amount: { flat: 50 } }],
 };
 

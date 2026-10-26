@@ -5,6 +5,7 @@ import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { segment, type Segment } from "../geometry.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { getSkill } from "../skills/catalog.js";
 import { applyEffects } from "../skills/effects.js";
 import { withAttackDuration } from "../skills/testing.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
@@ -66,6 +67,18 @@ function stepFor(match: MatchSimulation, seconds: number): CombatLogEntry[] {
     log.push(...match.step(DT).log);
   }
   return log;
+}
+
+/**
+ * How long a Fireball flies over `units`, in whole ticks: it lands this
+ * long after its cast resolves (#535).
+ */
+function fireballFlight(units: number): number {
+  const speed = getSkill(FIREBALL)?.projectile?.speed;
+  if (speed === undefined) {
+    throw new Error("Fireball does not fly");
+  }
+  return Math.ceil(units / speed / DT) * DT;
 }
 
 function swings(log: readonly CombatLogEntry[]): CombatLogEntry[] {
@@ -238,7 +251,10 @@ describe("skills and the swing", () => {
     match.requestSkill("a", 0);
     const log = stepFor(match, 1 + RULES.combat.aftercastSeconds + 1.5);
 
-    expect(log.find((entry) => entry.cause === "skill")?.events[0]?.targetId).toBe("e");
+    // The Fireball's release carries nothing; its landing hits e (#535).
+    const [released, landed] = log.filter((entry) => entry.cause === "skill");
+    expect(released?.events).toEqual([]);
+    expect(landed?.events[0]?.targetId).toBe("e");
     expect(swings(log)[0]?.events[0]?.targetId).toBe("d");
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
     expect(get(match, "a").targetId).toBe("e");
@@ -319,7 +335,8 @@ describe("adrenaline", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
     match.setTarget("a", "d");
     expect(match.requestSkill("a", 0)?.check).toEqual({ ok: true });
-    const log = stepFor(match, 1.1);
+    // Its 1 s cast, then its flight to d (#535).
+    const log = stepFor(match, 1.1 + fireballFlight(300));
     expect(
       log.some((entry) => entry.cause === "skill" && entry.events.some((e) => e.kind === "damage")),
     ).toBe(true);
@@ -431,7 +448,8 @@ describe("block (#534)", () => {
       expect(match.requestSkill("a", 0)?.check).toEqual({ ok: true });
       fireballs.push(...stepFor(match, 9).filter((entry) => entry.skillId === FIREBALL));
     }
-    expect(fireballs).toHaveLength(5);
+    // Each cast is two entries: its release, then its landing (#535).
+    expect(fireballs).toHaveLength(10);
     expect(kinds(fireballs).filter((kind) => kind === "damage")).toHaveLength(5);
     expect(kinds(fireballs)).not.toContain("attack-blocked");
   });

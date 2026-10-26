@@ -230,7 +230,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot {
 }
 
 function projectileSnapshot(shot: WireProjectile): ProjectileSnapshot {
-  return { ...shot };
+  return { ...shot, skillId: absent(shot.skillId) };
 }
 
 /** A validated wire snapshot as the match view draws it, for `selfId`. */

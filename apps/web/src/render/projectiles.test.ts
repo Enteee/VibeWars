@@ -14,24 +14,29 @@ import {
 
 describe("projectileSprite", () => {
   it("gives every bow an arrow, the spear a spear, wand and staff a bolt", () => {
-    expect(projectileSprite("flatbow")).toBe("arrow");
-    expect(projectileSprite("shortbow")).toBe("arrow");
-    expect(projectileSprite("longbow")).toBe("arrow");
-    expect(projectileSprite("recurve-bow")).toBe("arrow");
-    expect(projectileSprite("hornbow")).toBe("arrow");
-    expect(projectileSprite("spear")).toBe("spear");
-    expect(projectileSprite("wand")).toBe("bolt");
-    expect(projectileSprite("staff")).toBe("bolt");
+    expect(projectileSprite("flatbow", undefined)).toBe("arrow");
+    expect(projectileSprite("shortbow", undefined)).toBe("arrow");
+    expect(projectileSprite("longbow", undefined)).toBe("arrow");
+    expect(projectileSprite("recurve-bow", undefined)).toBe("arrow");
+    expect(projectileSprite("hornbow", undefined)).toBe("arrow");
+    expect(projectileSprite("spear", undefined)).toBe("spear");
+    expect(projectileSprite("wand", undefined)).toBe("bolt");
+    expect(projectileSprite("staff", undefined)).toBe("bolt");
   });
 
   it("gives a melee or unknown weapon a bolt rather than throwing", () => {
-    expect(projectileSprite("unarmed")).toBe("bolt");
-    expect(projectileSprite("sword")).toBe("bolt");
-    expect(projectileSprite("axe")).toBe("bolt");
-    expect(projectileSprite("hammer")).toBe("bolt");
-    expect(projectileSprite("daggers")).toBe("bolt");
-    expect(projectileSprite("scythe")).toBe("bolt");
-    expect(projectileSprite("trebuchet")).toBe("bolt");
+    expect(projectileSprite("unarmed", undefined)).toBe("bolt");
+    expect(projectileSprite("sword", undefined)).toBe("bolt");
+    expect(projectileSprite("axe", undefined)).toBe("bolt");
+    expect(projectileSprite("hammer", undefined)).toBe("bolt");
+    expect(projectileSprite("daggers", undefined)).toBe("bolt");
+    expect(projectileSprite("scythe", undefined)).toBe("bolt");
+    expect(projectileSprite("trebuchet", undefined)).toBe("bolt");
+  });
+
+  it("gives a flying spell a bolt, whatever its caster holds (#535)", () => {
+    expect(projectileSprite("longbow", "elementalist.fireball")).toBe("bolt");
+    expect(projectileSprite("spear", "elementalist.fireball")).toBe("bolt");
   });
 });
 

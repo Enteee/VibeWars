@@ -130,9 +130,12 @@ describe("a spell pressed out of range", () => {
     expect(a.combatant.energy).toBe(90);
     expect(a.pendingSkill).toBeUndefined();
 
-    const fireballs = uses(stepFor(match, 1.5), FIREBALL);
-    expect(fireballs).toHaveLength(1);
-    expect(fireballs[0]?.events.some((event) => event.kind === "damage")).toBe(true);
+    // Its 1 s cast, then about a second's flight across a spell's range
+    // (#535): the release carries nothing, the landing the damage.
+    const fireballs = uses(stepFor(match, 2.5), FIREBALL);
+    expect(fireballs).toHaveLength(2);
+    expect(fireballs[0]?.events).toEqual([]);
+    expect(fireballs[1]?.events.some((event) => event.kind === "damage")).toBe(true);
   });
 
   it("an ally heal walks to the ally and heals them", () => {
@@ -187,7 +190,10 @@ describe("a spell pressed out of range", () => {
     expect(twice.requestSkill("a", 0)?.queued).toBe(true);
     stepUntilCasting(twice, "a", FIREBALL, 3);
     expect(get(twice, "a").combatant.energy).toBe(90);
-    expect(uses(stepFor(twice, 5), FIREBALL)).toHaveLength(1);
+    // One Fireball: its release, then its landing (#535).
+    expect(
+      uses(stepFor(twice, 5), FIREBALL).map((entry) => entry.events.map((event) => event.kind)),
+    ).toEqual([[], ["damage"]]);
   });
 
   it("is dropped when its target dies", () => {
@@ -253,7 +259,11 @@ describe("a spell pressed out of range", () => {
     expect(distance(get(match, "a").position, vec2(-FAR, 0))).toBeLessThanOrEqual(RANGE_SPELL);
 
     const log = stepFor(match, 6);
-    expect(uses(log, FIREBALL)).toHaveLength(1);
+    // One Fireball: its release, then its landing (#535).
+    expect(uses(log, FIREBALL).map((entry) => entry.events.map((event) => event.kind))).toEqual([
+      [],
+      ["damage"],
+    ]);
     const hitsOnNear = log.filter(
       (entry) =>
         entry.cause === "weapon" &&

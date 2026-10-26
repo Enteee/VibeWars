@@ -301,10 +301,16 @@ export function describeSkill(
             magnitude: undefined,
           },
         ];
+  // A spell that flies (#535) lands only if it reaches its target.
+  const projectile =
+    skill.projectile === undefined
+      ? []
+      : [{ text: "Projectile: can be dodged", magnitude: undefined }];
   const effects = [
     ...skill.effects.map((effect) => describeEffect(effect, ranks)),
     ...onBlocked,
     ...whileActivating,
+    ...projectile,
   ];
   const { target, range } = targetAndRange(skill);
   return {
