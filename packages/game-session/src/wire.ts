@@ -101,12 +101,12 @@ export function wireStatuses(active: readonly ActiveStatus[]): ActiveStatus[] {
 
 /**
  * The bar a client draws, every slot in its place, `null` where it is
- * empty (#347). Energy costs are what `bearer` pays, Expertise and all
- * (#528).
+ * empty (#347). Energy costs are what `bearer` pays right now, Expertise
+ * (#528) and an active glyph (#637) and all.
  */
 export function skillBarSlots(
   skillBar: SkillBar,
-  bearer: Pick<Combatant, "attributeRanks">,
+  bearer: Pick<Combatant, "attributeRanks" | "statuses">,
 ): (SkillBarSlot | null)[] {
   return skillBar.map((skillId) => {
     if (skillId === null) {
@@ -122,6 +122,33 @@ export function skillBarSlots(
       rechargeSeconds: skill?.rechargeSeconds ?? 0,
     };
   });
+}
+
+/**
+ * Whether two bars draw the same, slot by slot, by value (#637): the host
+ * and the Training Ground send a bar again only when this says it changed.
+ */
+export function sameSkillBar(
+  a: readonly (SkillBarSlot | null)[],
+  b: readonly (SkillBarSlot | null)[],
+): boolean {
+  return (
+    a.length === b.length &&
+    a.every((slot, index) => {
+      const other = b[index];
+      if (slot === null || other === null || other === undefined) {
+        return slot === other;
+      }
+      return (
+        slot.id === other.id &&
+        slot.name === other.name &&
+        slot.energyCost === other.energyCost &&
+        slot.adrenalineCost === other.adrenalineCost &&
+        slot.activationSeconds === other.activationSeconds &&
+        slot.rechargeSeconds === other.rechargeSeconds
+      );
+    })
+  );
 }
 
 function wireEvent(event: CombatEvent): WireCombatEvent {

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { defaultBuildEquipment, validatePlayerBuild, type PlayerBuild } from "../build.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
-import { energyToPay } from "../skills/activation.js";
+import { energyCostOf, payCost } from "../skills/activation.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeSkill } from "../skills/describe.js";
 import { EXCLUSIVE_CATEGORIES, getStatusDefinition } from "../skills/status.js";
@@ -116,11 +116,22 @@ describe("Glyph of Lesser Energy (#526)", () => {
   it("a costlier spell costs 16 less, for the check and the payment both", () => {
     const caster = makeCombatant({ id: "e" });
     const dear: Skill = { ...skill(FIREBALL), cost: { kind: "energy", amount: 25 } };
-    expect(energyToPay(dear, caster)).toBe(25);
+    expect(energyCostOf(dear, caster)).toBe(25);
     caster.statuses.apply("glyph-of-lesser-energy", 15, "e");
-    expect(energyToPay(dear, caster)).toBe(9);
+    expect(energyCostOf(dear, caster)).toBe(9);
     // A glyph is no spell: it does not cheapen itself, nor a signet.
-    expect(energyToPay(skill(GLYPH), caster)).toBe(5);
+    expect(energyCostOf(skill(GLYPH), caster)).toBe(5);
+  });
+
+  it("shows on the bar what the payment takes, glyph and all (#637)", () => {
+    const caster = makeCombatant({ id: "e" });
+    const dear: Skill = { ...skill(FIREBALL), cost: { kind: "energy", amount: 25 } };
+    caster.statuses.apply("glyph-of-lesser-energy", 15, "e");
+    const shown = energyCostOf(dear, caster);
+    const before = caster.energy;
+    payCost(dear, caster);
+    expect(before - caster.energy).toBe(shown);
+    expect(shown).toBe(9);
   });
 
   it("lets a spell go off that the caster could not otherwise afford", () => {

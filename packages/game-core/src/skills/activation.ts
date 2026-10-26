@@ -120,7 +120,7 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   }
 
   if (skill.cost !== undefined) {
-    if (skill.cost.kind === "energy" && caster.energy < energyToPay(skill, caster)) {
+    if (skill.cost.kind === "energy" && caster.energy < energyCostOf(skill, caster)) {
       return reject("insufficient-energy");
     }
     if (skill.cost.kind === "adrenaline" && caster.adrenaline < skill.cost.amount) {
@@ -148,28 +148,20 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
 }
 
 /**
- * The energy `skill` costs `caster`, after everything that lasts the
- * match: Expertise so far (#528). What the skill bar shows. 0 for a skill
- * with no energy cost.
+ * The energy `skill` costs `caster` right now (#637): Expertise so far
+ * (#528), less what an active glyph takes off a spell (#526), never below
+ * 0. The one number the check, the spend and the skill bar use, so they
+ * cannot disagree. 0 for a skill with no energy cost.
  */
-export function energyCostOf(skill: Skill, caster: Pick<Combatant, "attributeRanks">): number {
+export function energyCostOf(
+  skill: Skill,
+  caster: Pick<Combatant, "attributeRanks" | "statuses">,
+): number {
   if (skill.cost?.kind !== "energy") {
     return 0;
   }
   const expertise = caster.attributeRanks.get(EXPERTISE_ATTRIBUTE) ?? 0;
-  return expertiseEnergyCost(expertise, skill, skill.cost.amount);
-}
-
-/**
- * The energy `skill` costs `caster` right now: `energyCostOf`, less what
- * an active glyph takes off a spell (#526), never below 0. The one number
- * both the check and the spend use, so they cannot disagree.
- */
-export function energyToPay(
-  skill: Skill,
-  caster: Pick<Combatant, "attributeRanks" | "statuses">,
-): number {
-  const cost = energyCostOf(skill, caster);
+  const cost = expertiseEnergyCost(expertise, skill, skill.cost.amount);
   if (!isSpell(skill.type)) {
     return cost;
   }
@@ -191,7 +183,7 @@ export function payCost(skill: Skill, caster: Combatant): void {
     return;
   }
   if (skill.cost.kind === "energy") {
-    caster.energy -= energyToPay(skill, caster);
+    caster.energy -= energyCostOf(skill, caster);
     return;
   }
   caster.adrenaline -= skill.cost.amount;
