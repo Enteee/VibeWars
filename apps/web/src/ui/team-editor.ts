@@ -303,17 +303,19 @@ export function mountTeamEditor(
 
     const order = h("span", "team-row-order");
     order.append(h("span", "team-row-index"), h("span", "team-row-handle", "⠿"));
+    // The top attribute ranks go under the professions, leaving the
+    // width to the eight cells.
     const who = h("span", "team-row-character");
     who.append(
       h("span", "team-row-dot"),
       h("span", "team-row-name"),
       h("span", "team-row-professions"),
+      h("span", "team-row-attributes"),
     );
     const skills = h("span", "team-row-skills");
     for (let slot = 0; slot < SKILL_BAR_SLOTS; slot += 1) {
       skills.appendChild(h("span", "team-skill"));
     }
-    const attributes = h("span", "team-row-attributes");
     const controls = h("span", "team-row-controls");
     // A team's order is its slot order in the lobby; `moveMember` clamps.
     const up = button("↑", "member-up", () => {
@@ -329,7 +331,7 @@ export function mountTeamEditor(
     });
     drop.setAttribute("aria-label", "remove");
     controls.append(up, down, drop);
-    row.append(order, who, skills, attributes, controls);
+    row.append(order, who, skills, controls);
 
     row.addEventListener("dragstart", (event: DragEvent) => {
       dragging = characterId;
@@ -473,7 +475,9 @@ export function mountTeamEditor(
           if (skills !== null) {
             fillSkills(skills, character);
           }
-          setText(".team-row-attributes", topAttributes(character).join(" · "));
+          const ranks = topAttributes(character).join(" · ");
+          setText(".team-row-attributes", ranks);
+          row.querySelector<HTMLElement>(".team-row-attributes")?.setAttribute("title", ranks);
         }
         for (const selector of [".member-up", ".member-down"]) {
           const control = row.querySelector<HTMLButtonElement>(selector);
