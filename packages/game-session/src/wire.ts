@@ -336,6 +336,8 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     swingElapsed: player.swingElapsed,
     swingTotal: player.swingTotal,
     knockdownRemaining: player.knockdownRemaining,
+    healthPips: player.healthPips,
+    energyPips: player.energyPips,
     statuses,
   };
 }

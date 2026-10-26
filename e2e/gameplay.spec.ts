@@ -611,6 +611,13 @@ test("the target frame shows the target's health and the skill it casts, filling
   await opponent.close();
 });
 
+test("the HUD's energy bar shows its regeneration as arrows (#504)", async ({ page }) => {
+  await startSoloMatch(page);
+  // The house build is an Elementalist's 4 pips (join-loadout.ts).
+  await expect(page.locator(".hud-bar-energy .vital-pips")).toHaveText("››››");
+  await expect(page.locator(".hud-bar-health .vital-pips")).toBeHidden();
+});
+
 test("an RMB drag pans; a left click then walks to the panned point; letting go comes back (#442)", async ({
   page,
 }) => {
