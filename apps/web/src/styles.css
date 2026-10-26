@@ -167,12 +167,16 @@ body {
   align-items: center;
   gap: 0.35rem;
   width: 220px;
-  height: 16px;
+  height: 20px;
   visibility: hidden;
 }
 
 .hud-target-cast.is-active {
   visibility: visible;
+}
+
+.hud-target-cast-icon {
+  flex: 0 0 auto;
 }
 
 .hud-target-cast-badge {
@@ -710,31 +714,31 @@ body {
   border-bottom-color: var(--elite);
 }
 
-:is(.team-skill, .mini-skill)[data-skill-type="enchantment"] {
+.team-skill[data-skill-type="enchantment"] {
   --skill-type-colour: #56d4dd;
 }
 
-:is(.team-skill, .mini-skill)[data-skill-type="glyph"] {
+.team-skill[data-skill-type="glyph"] {
   --skill-type-colour: #c3e88d;
 }
 
-:is(.team-skill, .mini-skill)[data-skill-type="hex"] {
+.team-skill[data-skill-type="hex"] {
   --skill-type-colour: #d2a8ff;
 }
 
-:is(.team-skill, .mini-skill)[data-skill-type="preparation"] {
+.team-skill[data-skill-type="preparation"] {
   --skill-type-colour: #e3b341;
 }
 
-:is(.team-skill, .mini-skill)[data-skill-type="stance"] {
+.team-skill[data-skill-type="stance"] {
   --skill-type-colour: #f778ba;
 }
 
-:is(.team-skill, .mini-skill)[data-skill-type="attack"],
-:is(.team-skill, .mini-skill)[data-skill-type="shout"],
-:is(.team-skill, .mini-skill)[data-skill-type="signet"],
-:is(.team-skill, .mini-skill)[data-skill-type="skill"],
-:is(.team-skill, .mini-skill)[data-skill-type="spell"] {
+.team-skill[data-skill-type="attack"],
+.team-skill[data-skill-type="shout"],
+.team-skill[data-skill-type="signet"],
+.team-skill[data-skill-type="skill"],
+.team-skill[data-skill-type="spell"] {
   --skill-type-colour: var(--ink);
 }
 
@@ -1132,18 +1136,21 @@ body {
   color: var(--ink-dim);
 }
 
-/* A character's eight skills at a glance (#578), each cell in its type's
-   colour, as the team grid edges them. */
+/* A character's eight skills at a glance (#578), each cell its skill's
+   16 px icon (#727). */
 .mini-skill-bar {
   display: grid;
   flex: 0 0 auto;
-  grid-template-columns: repeat(8, 0.7rem);
+  grid-template-columns: repeat(8, 16px);
   gap: 2px;
 }
 
 .mini-skill {
-  height: 0.7rem;
-  background: var(--skill-type-colour, var(--ink-dim));
+  height: 16px;
+}
+
+.mini-skill .skill-icon {
+  display: block;
 }
 
 .mini-skill.is-empty {
@@ -2248,6 +2255,11 @@ body {
   font-size: 0.7rem;
 }
 
+/* The skill's icon on top, its name and cost under it (#727). */
+.skill-slot .skill-icon {
+  display: block;
+}
+
 .skill-slot-name {
   font-size: 0.85rem;
   line-height: 1.2;
@@ -2415,8 +2427,8 @@ body {
 /* The card itself (#567): a button that opens the details, laid out as the
    box was, with the number that matters at your rank beside the cost. */
 .skill-box-card {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 24px auto 1fr;
   align-items: baseline;
   gap: 0.1rem 0.6rem;
   padding: 0 1.2rem 0 0;
@@ -2428,8 +2440,24 @@ body {
   cursor: pointer;
 }
 
+/* The icon on the left (#727), beside the two lines of text, so the row
+   is no taller than it was (#581). Every cell is placed, none left to
+   auto-placement: the name over the cost and the headline. */
+.skill-box-card .skill-icon {
+  grid-area: 1 / 1 / 3 / 2;
+  align-self: center;
+}
+
 .skill-box-card .skill-box-name {
-  flex: 1 0 100%;
+  grid-area: 1 / 2 / 2 / -1;
+}
+
+.skill-box-card .skill-box-cost {
+  grid-area: 2 / 2;
+}
+
+.skill-box-card .skill-box-headline {
+  grid-area: 2 / 3;
 }
 
 .skill-box-headline {
@@ -2578,6 +2606,17 @@ body {
 .skill-tip.is-elite {
   margin: -2px;
   border: 3px double var(--elite);
+}
+
+/* The skill's icon, its name and type beside it (#727). */
+.tip-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tip-header .skill-icon {
+  flex: 0 0 auto;
 }
 
 .tip-title {
