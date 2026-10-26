@@ -67,7 +67,6 @@ jobs:
         id: built
         env:
           REPO_NAME: ${{ github.event.repository.name }}
-          VITE_VIBEWARS_ONLINE: "off"
         run: |
           base="/$REPO_NAME/"
           if [ "$TARGET" = next ]; then
