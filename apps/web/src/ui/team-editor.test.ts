@@ -2,11 +2,19 @@ import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
-import { MAX_TEAM_SIZE, addMember, moveMember, newTeam, removeMember } from "./team-builder.js";
+import {
+  MAX_TEAM_SIZE,
+  addMember,
+  moveMember,
+  newTeam,
+  removeMember,
+  teamCounters,
+} from "./team-builder.js";
 import {
   addableCharacters,
   dragMember,
   isTeamUnsaved,
+  markedCells,
   memberSkillCells,
   placesLeft,
   teamEditorProblems,
@@ -172,5 +180,36 @@ describe("dragMember (#574)", () => {
   it("leaves the team as it is for a drop on itself or off the end", () => {
     expect(dragMember(team, 1, 1)).toBe(team);
     expect(order(dragMember(team, -1, 2))).toEqual(order(team));
+  });
+});
+
+describe("markedCells (#575)", () => {
+  const withBar = (id: string, bar: readonly (string | null)[]): StoredCharacter => ({
+    ...character(id),
+    skillBar: Array.from({ length: 8 }, (_, slot) => bar[slot] ?? null),
+  });
+  const roster = [
+    withBar("a", ["warrior.distracting-blow", "warrior.backbreaker"]),
+    withBar("b", [null, "monk.mend-affliction", "warrior.distracting-blow"]),
+  ];
+  const team = addMember(addMember(newTeam("t1"), "a"), "b");
+  const counters = teamCounters(team.members, roster);
+
+  it("marks exactly a counter's cells", () => {
+    expect(markedCells({ kind: "counter", id: "interrupt" }, counters, team, roster)).toEqual(
+      new Set(["a:0", "b:2"]),
+    );
+    expect(markedCells({ kind: "counter", id: "empty" }, counters, team, roster)).toEqual(
+      new Set(["a:2", "a:3", "a:4", "a:5", "a:6", "a:7", "b:0", "b:3", "b:4", "b:5", "b:6", "b:7"]),
+    );
+  });
+
+  it("finds every copy of a skill on the team", () => {
+    expect(
+      markedCells({ kind: "skill", skillId: "warrior.distracting-blow" }, counters, team, roster),
+    ).toEqual(new Set(["a:0", "b:2"]));
+    expect(
+      markedCells({ kind: "skill", skillId: "monk.mend-affliction" }, counters, team, roster),
+    ).toEqual(new Set(["b:1"]));
   });
 });

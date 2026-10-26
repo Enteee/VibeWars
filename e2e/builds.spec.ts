@@ -320,6 +320,58 @@ test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places le
   await expect(memberNames(page)).toHaveText(["Alpha", "Bravo", "Charlie"]);
 });
 
+test("team counters mark their cells; a cell finds its skill on the team (#575)", async ({
+  page,
+}) => {
+  const bars: Record<string, readonly string[]> = {
+    Alpha: ["Distracting Blow", "Backbreaker", "Watch Yourself!"],
+    Bravo: ["Distracting Blow"],
+  };
+  for (const [name, skills] of Object.entries(bars)) {
+    await newCharacter(page);
+    await page.locator("input.editor-name").fill(name);
+    for (const skill of skills) {
+      await page
+        .locator(".skill-box", { hasText: skill })
+        .first()
+        .locator(".skill-box-equip")
+        .click();
+    }
+    await page.getByRole("button", { name: "save", exact: true }).click();
+    await expect(page.locator(".roster")).toContainText(name);
+  }
+  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "new team" }).click();
+  await page.getByRole("button", { name: "add Alpha" }).click();
+  await page.getByRole("button", { name: "add Bravo" }).click();
+
+  const counter = (id: string) => page.locator(`.team-counter[data-counter="${id}"]`);
+  const marked = page.locator(".team-skill.is-marked");
+  await expect(counter("interrupt").locator(".team-counter-count")).toHaveText("2");
+  await expect(counter("healing")).toHaveClass(/is-lacking/);
+  await expect(counter("defence")).not.toHaveClass(/is-lacking/);
+
+  // A counter marks exactly its cells; again clears it.
+  await counter("interrupt").click();
+  await expect(marked).toHaveCount(2);
+  await expect(marked).toHaveText([/Distracting Blow/, /Distracting Blow/]);
+  await counter("knockdown").click();
+  await expect(marked).toHaveText([/Backbreaker/]);
+  await counter("knockdown").click();
+  await expect(marked).toHaveCount(0);
+  await expect(page.locator(".team-grid")).not.toHaveClass(/is-highlighting/);
+
+  // A cell finds every copy of its skill, and takes over from a counter.
+  await counter("empty").click();
+  await expect(marked).toHaveCount(12);
+  await memberRows(page).nth(1).locator(".team-skill").first().click();
+  await expect(marked).toHaveCount(2);
+  await expect(counter("empty")).toHaveAttribute("aria-pressed", "false");
+  await page.keyboard.press("Escape");
+  await expect(marked).toHaveCount(0);
+  await expect(page.locator(".team-editor")).toBeVisible();
+});
+
 test("a member opens in the build editor and comes back to the unsaved team (#576)", async ({
   page,
 }) => {

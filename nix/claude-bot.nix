@@ -66,6 +66,15 @@ let
     '';
   };
 
+  # `peek [employee]`: what a colleague's pane shows, read from files the
+  # host records (#19). The manager's jail only; see roleTools.
+  peek = pkgs.writeShellApplication {
+    name = "peek";
+    text = ''
+      exec ${node} ${botScripts}/peek.mjs "$@"
+    '';
+  };
+
   tg = pkgs.writeShellApplication {
     name = "tg";
     text = ''
@@ -274,6 +283,7 @@ let
   # jail only because /nix/store is bind-mounted, so adding a role's tools
   # costs nothing for the other eight.
   roleTools = {
+    manager = [ peek ];
     asset-designer = with pkgs; [
       imagemagick
       inkscape
@@ -393,6 +403,7 @@ let
       tg send <role> <text>      message one agent (mirrored into 🤖 Bots)
       tg send operator <text>    manager only: answer the operator in 📋 Manager
       tg broadcast <text>        message everyone, in General
+      peek [employee]            manager only: what a colleague's pane shows
 
     first-time setup:
       claude-bot-setup <token-file>
@@ -583,6 +594,9 @@ let
         # Main's skills, which hubd exports here after each fetch (#27). Made
         # now so the bind below has something to bind before hubd's first run.
         mkdir -p "$VIBEWARS_BOT_ROOT/skills-main"
+        # What agent-turn records for the manager's `peek` (#19). Host-written
+        # only, and bound into the manager's jail alone.
+        mkdir -p "$VIBEWARS_BOT_ROOT/peek" && chmod 700 "$VIBEWARS_BOT_ROOT/peek"
         chmod 700 "$VIBEWARS_BOT_ROOT"
 
         # claude-bot works standalone, without the company having been set up,
@@ -707,6 +721,12 @@ let
           skillsBind=(--ro-bind "$drafts" "$HOME/.claude/skills")
         else
           skillsBind=(--ro-bind "$VIBEWARS_BOT_ROOT/skills-main" "$HOME/.claude/skills")
+        fi
+        # The manager reads what the others print, never writes it and never
+        # touches a tmux socket (#19).
+        peekBind=()
+        if [ "$role" = "manager" ]; then
+          peekBind=(--ro-bind "$VIBEWARS_BOT_ROOT/peek" "$VIBEWARS_BOT_ROOT/peek" --setenv VIBEWARS_PEEK_DIR "$VIBEWARS_BOT_ROOT/peek")
         fi
 
         # ----------------------------------------------------------------------
@@ -842,6 +862,7 @@ let
           --bind "$VIBEWARS_BOT_ROOT/hub/$employee" "$VIBEWARS_BOT_ROOT/hub/$employee" \
           --bind "$worktree" "$worktree" \
           "''${skillsBind[@]}" \
+          "''${peekBind[@]}" \
           --chdir "$worktree" \
           --setenv HOME "$HOME" \
           --setenv USER "$USER" \
