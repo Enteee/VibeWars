@@ -188,46 +188,4 @@ in
     # for a hook is making sure nobody commits a skill/map data file that
     # fails schema validation once that validator exists (Sprint 6/9).
   };
-
-  # ---------------------------------------------------------------------------
-  # Production container (brief §27, docs/adr/0009-production-deployment.md).
-  #
-  # One process serves both the built web client and the Colyseus game
-  # server. `copyToRoot` stages the build output next to a `node_modules`
-  # tree at the same relative depth the monorepo already has, so Node's
-  # normal upward node_modules resolution works unmodified.
-  #
-  # This intentionally ships the *whole* installed `node_modules` (including
-  # devDependencies), not a pruned `pnpm deploy` output. `pnpm deploy --legacy`
-  # was tried and produces a node_modules tree that **fails the exact same
-  # integration test this ADR's networking fix was verified against** — a
-  # fresh join reproducibly closes with "seat reservation expired" even
-  # though only one physical @colyseus/core copy is present, so the cause is
-  # some other difference in how `pnpm deploy` re-resolves the dependency
-  # graph, not (this time) the duplicate-module bug from ADR-0002. Shipping
-  # the already-tested root tree is slower to build and larger, but it is the
-  # one tree actually proven to work; pruning devDependencies out of the
-  # image is tracked as a Sprint 26/27 optimization, not attempted blind.
-  # ---------------------------------------------------------------------------
-  containers.prod = {
-    name = "vibewars";
-    startupCommand = [
-      "${pkgs.nodejs_24}/bin/node"
-      "/app/apps/server/dist/main.js"
-    ];
-    copyToRoot = pkgs.runCommand "vibewars-prod-root" { } ''
-      mkdir -p $out/app
-      cp -r ${./node_modules} $out/app/node_modules
-      cp ${./package.json} $out/app/package.json
-      mkdir -p $out/app/apps/server $out/app/apps/web
-      cp -r ${./apps/server/dist} $out/app/apps/server/dist
-      cp ${./apps/server/package.json} $out/app/apps/server/package.json
-      cp -r ${./apps/web/dist} $out/app/apps/web/dist
-      mkdir -p $out/app/packages/game-core $out/app/packages/game-protocol
-      cp -r ${./packages/game-core/dist} $out/app/packages/game-core/dist
-      cp ${./packages/game-core/package.json} $out/app/packages/game-core/package.json
-      cp -r ${./packages/game-protocol/dist} $out/app/packages/game-protocol/dist
-      cp ${./packages/game-protocol/package.json} $out/app/packages/game-protocol/package.json
-    '';
-  };
 }
