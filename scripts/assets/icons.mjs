@@ -16,10 +16,12 @@ import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { SKILL_ICONS } from "./skill-icon-table.mjs";
 import { WEAPON_MARK_GEOMETRY } from "../../apps/web/src/render/weapon-mark-geometry.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const outDir = join(root, "apps", "web", "public", "icons");
+// The stale-output test in apps/web runs this into a scratch directory.
+const outDir = process.env.VIBEWARS_ICONS_OUT ?? join(root, "apps", "web", "public", "icons");
 
 /** The palette. Mirrors the tokens table in docs/art/art-direction.md. */
 const C = {
@@ -483,6 +485,126 @@ const offhandShapes = {
   ],
 };
 
+// ---------------------------------------------------------------------------
+// Skill icons (#719): one per implemented skill. A profession plate with its
+// silhouette as a faint watermark, one glyph from the vocabulary below for the
+// skill's primary effect, and a modifier at the bottom right. The type badge
+// and the elite frame are drawn by the UI around the icon, not baked in. The
+// glyph and modifier are `ink` only: no hue carries a meaning here, only the
+// plate's profession tint, which the shapes never depend on.
+// ---------------------------------------------------------------------------
+
+/** @param {string} d */
+const inkFill = (d) =>
+  `<path d="${d}" fill="${C.ink}" stroke="${C.bg}" stroke-width="1" stroke-linejoin="round"/>`;
+/** @param {string} d @param {number} [w] */
+const inkLine = (d, w = 2.2) => `<path d="${d}" ${stroke(C.ink, w)}/>`;
+
+/** A burst of `n` points around the centre, alternating two radii. @param {number} n */
+const burst = (n) =>
+  Array.from({ length: n * 2 }, (_, i) => {
+    const a = (Math.PI * i) / n - Math.PI / 2;
+    const r = i % 2 === 0 ? 9.5 : 4.5;
+    return `${i === 0 ? "M" : "L"}${(12 + r * Math.cos(a)).toFixed(2)} ${(12 + r * Math.sin(a)).toFixed(2)}`;
+  }).join("") + "Z";
+
+/** Glyphs, drawn in the box 3..21; the plate scales them to leave the corner free. */
+const skillGlyph = {
+  heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
+  fireball: () =>
+    `<circle cx="15" cy="9" r="5" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M10.5 12.5L4 19M9 8.5L3.5 11M14 14L11 20"),
+  axe: () =>
+    inkLine("M5 20L16 7", 2.4) + inkFill("M11 3.5C17 2.5 21.5 5 21 9C20.5 13 16.5 15 14 12.5Z"),
+  sword: () =>
+    inkLine("M5.5 18.5L19 5", 2.6) + inkLine("M7 11.5L12.5 17", 2.4) + inkLine("M4 20l2-2", 2.6),
+  hammer: () =>
+    inkLine("M5 20L14 11", 2.4) +
+    `<rect x="11" y="3.5" width="10" height="7" rx="1" transform="rotate(45 16 7)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>`,
+  spear: () => inkLine("M12 21V9", 2.4) + inkFill("M12 2.5L16.5 10H7.5Z"),
+  arrow: () => inkLine("M4 20L15 9", 2.2) + inkFill("M21 3L11.5 6L18 12.5Z"),
+  volley: () =>
+    [-4.5, 0, 4.5]
+      .map(
+        (d) =>
+          `<g transform="translate(${String(d)},${String(-d)})">${inkLine("M4 18L15 7M10 6.5H15.5V12", 2)}</g>`,
+      )
+      .join(""),
+  interrupt: () => inkFill(burst(6)),
+  speed: () => inkLine("M4 4L10 12L4 20M11 4L17 12L11 20", 2.5),
+  slow: () => inkLine("M20 4L14 12L20 20M13 4L7 12L13 20", 2.5),
+  dash: () => inkLine("M3 7H11M2 12H9M3 17H11", 2) + inkLine("M13 4L21 12L13 20", 2.6),
+  energy: () => inkFill("M13 2L5 13.5H11L10 22L19 10H13Z"),
+  mountain: () => inkFill("M2 20L9.5 6L13.5 13L16.5 9L22 20Z"),
+  cleanse: () =>
+    `<path d="M12 3C12 3 5.5 11 5.5 15A6.5 6.5 0 0 0 18.5 15C18.5 11 12 3 12 3Z" ${stroke(C.ink, 2)}/>` +
+    inkLine("M4 4L20 20", 2.4),
+  armor: () => inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z"),
+  flask: () =>
+    `<path d="M9.5 3H14.5M10.5 3V9L4.5 19Q3.5 21 6 21H18Q20.5 21 19.5 19L13.5 9V3" ${stroke(C.ink, 2)}/>` +
+    inkFill("M7.5 15H16.5L19 19.5H5Z"),
+};
+
+/** Modifiers, drawn around the bottom right corner on a dark disc. */
+const skillModifier = {
+  up: () => inkLine("M19 21V15M16.5 17.5L19 15L21.5 17.5", 1.7),
+  down: () => inkLine("M19 15V21M16.5 18.5L19 21L21.5 18.5", 1.7),
+  less: () => inkLine("M16.5 18H21.5", 2),
+  area: () => `<circle cx="19" cy="18" r="3.4" ${stroke(C.ink, 1.6)}/>`,
+  clock: () =>
+    `<circle cx="19" cy="18" r="3.6" ${stroke(C.ink, 1.5)}/>` + inkLine("M19 16V18H20.8", 1.4),
+  stun: () =>
+    [16.2, 19, 21.8]
+      .map((x) => `<circle cx="${String(x)}" cy="18" r="1.15" fill="${C.ink}"/>`)
+      .join(""),
+  bleed: () =>
+    `<path d="M19 14.6C19 14.6 15.8 18 15.8 19.8A3.2 3.2 0 0 0 22.2 19.8C22.2 18 19 14.6 19 14.6Z" fill="${C.ink}"/>`,
+  self: () =>
+    `<circle cx="19" cy="18" r="3.4" ${stroke(C.ink, 1.5)}/><circle cx="19" cy="18" r="1.2" fill="${C.ink}"/>`,
+};
+
+/**
+ * The tile colour: the profession's hue, 30% of the way from the plate.
+ * @param {string} hex
+ */
+function plateTint(hex) {
+  const rgb = (/** @type {string} */ h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const a = rgb(C.plate);
+  const b = rgb(hex);
+  return `#${a
+    .map((v, i) =>
+      Math.round(v + ((b[i] ?? 0) - v) * 0.3)
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("")}`;
+}
+
+/**
+ * @param {string} id e.g. `elementalist.fireball`
+ * @param {{ glyph: string, modifier?: string }} row
+ */
+function skillIcon(id, row) {
+  const name = /** @type {keyof typeof profession} */ (id.slice(0, id.indexOf(".")));
+  const hue = C[name];
+  /** @type {Record<string, (() => string) | undefined>} */
+  const glyphs = skillGlyph;
+  /** @type {Record<string, (() => string) | undefined>} */
+  const modifiers = skillModifier;
+  const glyph = glyphs[row.glyph];
+  if (glyph === undefined) throw new Error(`${id}: no glyph "${row.glyph}"`);
+  const modifier = row.modifier === undefined ? "" : modifiers[row.modifier];
+  if (modifier === undefined) throw new Error(`${id}: no modifier "${String(row.modifier)}"`);
+  return svg(
+    `<rect x="1" y="1" width="22" height="22" rx="3.5" fill="${plateTint(hue)}" stroke="${hue}" stroke-width="1"/>` +
+      `<g opacity="0.2" transform="translate(3,3) scale(0.75)">${profession[name]()}</g>` +
+      `<g transform="translate(1.2,1.2) scale(0.88)">${glyph()}</g>` +
+      (modifier === ""
+        ? ""
+        : `<circle cx="19" cy="18" r="4.6" fill="${C.bg}" fill-opacity="0.85"/>${modifier()}`),
+  );
+}
+
 /** @type {Record<string, Record<string, string>>} */
 const families = {
   profession: Object.fromEntries(Object.entries(profession).map(([k, f]) => [k, svg(f())])),
@@ -494,6 +616,13 @@ const families = {
       fitIcon(s, { maxScale: 3, scaleStrokes: scaled }),
     ]),
   ),
+  skill: {
+    // What a skill id this client does not know shows: a bare plate, no glyph.
+    unknown: svg(
+      `<rect x="1" y="1" width="22" height="22" rx="3.5" fill="${C.plate}" stroke="${C.inkDim}" stroke-width="1"/>`,
+    ),
+    ...Object.fromEntries(Object.entries(SKILL_ICONS).map(([id, row]) => [id, skillIcon(id, row)])),
+  },
   ui: Object.fromEntries(Object.entries(ui).map(([k, f]) => [k, svg(f())])),
   projectile: Object.fromEntries(
     Object.entries(projectile).map(([k, d]) => [k, projectileSprite(d)]),

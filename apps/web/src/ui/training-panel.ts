@@ -108,6 +108,8 @@ import { h } from "./kit.js";
 
 export interface TrainingPanel {
   readonly root: HTMLElement;
+  /** Under the arena, for the editor's derived stats (#571). */
+  readonly statsSlot: HTMLElement;
   attach(parent: HTMLElement): void;
   /**
    * Hand the keyboard back to the arena after an edit, if the player had
@@ -229,7 +231,8 @@ export function createTrainingPanel(): TrainingPanel {
   newest.hidden = true;
   log.append(logRowsEl, newest);
 
-  root.append(controls, teaches, stage, hint, message, vitals, skills, meter, log);
+  const statsSlot = h("div", "training-stats-slot");
+  root.append(controls, teaches, stage, hint, message, statsSlot, vitals, skills, meter, log);
 
   /* --- state ----------------------------------------------------------- */
 
@@ -824,6 +827,7 @@ export function createTrainingPanel(): TrainingPanel {
 
   return {
     root,
+    statsSlot,
     attach(parent) {
       parent.appendChild(root);
     },

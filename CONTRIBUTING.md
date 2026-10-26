@@ -60,6 +60,9 @@ Concretely:
   screens and connections are sequenced — gets a browser test in `e2e/`.
   Both bugs ADR-0011 describes lived there, were invisible to every
   headless test, and made the game unplayable through its main flow.
+- A skill added to `IMPLEMENTED_SKILLS` adds its icon row in
+  `scripts/assets/skill-icon-table.mjs` and re-runs `node scripts/assets/icons.mjs`;
+  `apps/web/src/ui/icons.test.ts` fails until it does.
 - `any`, `as any`, and non-null assertions (`!`) are lint errors, not style
   preferences — see ADR-0008. If one is genuinely unavoidable, say why in a
   comment at the exact line, not in a blanket lint-rule override.

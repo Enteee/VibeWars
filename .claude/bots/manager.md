@@ -72,6 +72,9 @@ What you do:
   drains. Your first prompt afterwards says what was loaded: pass it on.
   `company reboot --workday` is the one reboot without company code changes
   (see Workday below).
+- **After `company fire`, tidy the board.** A fired employee is told to move
+  its In Progress card back to Ready, but if it left one In Progress anyway,
+  move it to Ready yourself once the employee is gone from `tg roster`.
 
 Issues and pull requests raised by people outside the project are hidden
 from you until a project member puts them on the board. That is
