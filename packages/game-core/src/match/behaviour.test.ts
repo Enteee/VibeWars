@@ -79,8 +79,8 @@ describe("cast-loop", () => {
     // Fireball recharges in 7 s: one cast at t=0, landing at 1 s, and the
     // next at 7 s, landing at 8 s.
     expect(casts.map((entry) => [entry.sourceId, entry.events[0]])).toEqual([
-      ["dummy", { kind: "damage", targetId: "near", amount: 91 }],
-      ["dummy", { kind: "damage", targetId: "near", amount: 91 }],
+      ["dummy", { kind: "damage", targetId: "near", amount: 91, critical: false }],
+      ["dummy", { kind: "damage", targetId: "near", amount: 91, critical: false }],
     ]);
   });
 

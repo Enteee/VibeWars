@@ -5,7 +5,7 @@ import { WEAPONS } from "../equipment/weapons.js";
 import { segment } from "../geometry.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
-import { directionAngle, facingToward, spawnFacing } from "./facing.js";
+import { directionAngle, facingToward, showsBackTo, spawnFacing } from "./facing.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
@@ -169,5 +169,59 @@ describe("facing in the match (#187)", () => {
     expect(facing(sim, "a")).toBeCloseTo(Math.PI, 9);
     sim.resetParticipant("a");
     expect(facing(sim, "a")).toBe(START);
+  });
+});
+
+describe("showsBackTo (#533)", () => {
+  it("is the back past 90° off the facing, and not side on or in front", () => {
+    const at = vec2(0, 0);
+    expect(showsBackTo(at, 0, vec2(-10, 0))).toBe(true);
+    expect(showsBackTo(at, 0, vec2(-10, 9))).toBe(true);
+    expect(showsBackTo(at, 0, vec2(0, 10))).toBe(false);
+    expect(showsBackTo(at, 0, vec2(10, 0))).toBe(false);
+    expect(showsBackTo(at, Math.PI, vec2(10, 0))).toBe(true);
+  });
+});
+
+describe("a blow from behind a moving target always crits (#533)", () => {
+  /** `a`, unskilled with a sword so its own crit chance is 1%, swings at `b` 40 ahead of it, facing away. */
+  function chase(): MatchSimulation {
+    const unskilled = { ...swordsman("a", 0, vec2(0, 0)), attributeRanks: new Map() };
+    const sim = new MatchSimulation({
+      seed: "behind",
+      participants: [unskilled, { ...swordsman("b", 1, vec2(40, 0)), facing: 0 }],
+    });
+    sim.requestAttack("a", "b");
+    return sim;
+  }
+
+  function swingsOver(sim: MatchSimulation, seconds: number): boolean[] {
+    const critical: boolean[] = [];
+    for (let i = 0; i < Math.round(seconds / DT); i += 1) {
+      for (const entry of sim.step(DT).log) {
+        for (const event of entry.events) {
+          if (entry.cause === "weapon" && event.kind === "damage") {
+            critical.push(event.critical);
+          }
+        }
+      }
+    }
+    return critical;
+  }
+
+  it("crits every swing at a target walking away", () => {
+    const sim = chase();
+    // Crippled, so the chase catches it.
+    sim.get("b")?.combatant.statuses.apply("crippled", 1e6, "a");
+    sim.setInputDirection("b", vec2(1, 0));
+    const swings = swingsOver(sim, 8);
+    expect(swings.length).toBeGreaterThanOrEqual(3);
+    expect(swings.every(Boolean)).toBe(true);
+  });
+
+  it("does not crit for the back of a target standing still", () => {
+    const swings = swingsOver(chase(), 8);
+    expect(swings.length).toBeGreaterThan(3);
+    expect(swings.some(Boolean)).toBe(false);
   });
 });

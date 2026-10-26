@@ -48,9 +48,22 @@ export function skillBarSlots(skillBar: SkillBar): (SkillBarSlot | null)[] {
 }
 
 function wireEvent(event: CombatEvent): WireCombatEvent {
-  const none = { amount: null, skillId: null, statusId: null, durationSeconds: null };
+  const none = {
+    amount: null,
+    skillId: null,
+    statusId: null,
+    durationSeconds: null,
+    crit: null,
+  };
   switch (event.kind) {
     case "damage":
+      return {
+        ...none,
+        kind: event.kind,
+        targetId: event.targetId,
+        amount: event.amount,
+        crit: event.critical,
+      };
     case "heal":
     case "energy-gain":
     case "sacrifice":
@@ -105,12 +118,15 @@ export function wireCombat(log: readonly CombatLogEntry[]): WireCombat[] {
 
 /** A wire event back as game-core's, or `undefined` for one this client does not know. */
 function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
-  const { targetId, amount, skillId, statusId, durationSeconds } = event;
+  const { targetId, amount, skillId, statusId, durationSeconds, crit } = event;
   if (targetId === null) {
     return undefined;
   }
   switch (event.kind) {
     case "damage":
+      return amount === null || crit === null
+        ? undefined
+        : { kind: event.kind, targetId, amount, critical: crit };
     case "heal":
     case "energy-gain":
     case "sacrifice":

@@ -116,7 +116,7 @@ shot led ahead of the target, which hits or is dodged when it lands
 All of these are deliberate, for a game that is fun before it is
 complete:
 
-- **No crits.** `criticalMultiplier` stays data.
+- ~~**No crits.**~~ Weapon blows crit since #490 (#533).
 - ~~**No attack-speed modifiers**~~: the hook exists since ADR-0029.
 - **No block or evade.**
 - ~~**Attack skills do not ride the weapon.**~~ They do since ADR-0029.

@@ -200,6 +200,7 @@
                             {
                               "properties": [
                                 { "name": "amount", "optional": false, "type": "number" },
+                                { "name": "critical", "optional": false, "type": "boolean" },
                                 {
                                   "name": "kind",
                                   "optional": false,
@@ -842,6 +843,7 @@
         {
           "properties": [
             { "name": "amount", "optional": false, "type": "number" },
+            { "name": "critical", "optional": false, "type": "boolean" },
             { "name": "kind", "optional": false, "type": { "literal": "damage" } },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
@@ -1723,6 +1725,11 @@
               "properties": [
                 { "name": "amount", "optional": false, "type": { "union": ["null", "number"] } },
                 {
+                  "name": "crit",
+                  "optional": false,
+                  "type": { "union": ["null", { "literal": false }, { "literal": true }] }
+                },
+                {
                   "name": "durationSeconds",
                   "optional": false,
                   "type": { "union": ["null", "number"] }
@@ -1778,6 +1785,11 @@
                 "properties": [
                   { "name": "amount", "optional": false, "type": { "union": ["null", "number"] } },
                   {
+                    "name": "crit",
+                    "optional": false,
+                    "type": { "union": ["null", { "literal": false }, { "literal": true }] }
+                  },
+                  {
                     "name": "durationSeconds",
                     "optional": false,
                     "type": { "union": ["null", "number"] }
@@ -1802,6 +1814,11 @@
     "WireCombatEvent": {
       "properties": [
         { "name": "amount", "optional": false, "type": { "union": ["null", "number"] } },
+        {
+          "name": "crit",
+          "optional": false,
+          "type": { "union": ["null", { "literal": false }, { "literal": true }] }
+        },
         { "name": "durationSeconds", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "kind", "optional": false, "type": "string" },
         { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },

@@ -87,7 +87,7 @@ describe("attachMatchSounds", () => {
       cause: "skill",
       skillId: "x",
       weaponId: "",
-      events: [{ kind: "damage", targetId: ME, amount: 1 }],
+      events: [{ kind: "damage", targetId: ME, amount: 1, critical: false }],
     });
     refused();
     expect(played).toEqual(["cast-self", "hit-taken", "refused"]);

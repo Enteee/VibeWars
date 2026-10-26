@@ -88,6 +88,12 @@ const BODY_EDGE_WIDTH = 1.5;
 const DEAD_COLOUR = 0x4a5464;
 /** How opaque a weapon swing's number is at most: present, never louder than a skill (#160). */
 const LIGHT_TEXT_ALPHA = 0.8;
+/** A floating text's size by weight: a critical hit is the loudest number on screen (#533). */
+const FLOATING_FONT_SIZE: Readonly<Record<FloatingText["weight"], string>> = {
+  light: "11px",
+  normal: "13px",
+  critical: "17px",
+};
 const INK = "#d7dee8";
 /**
  * The outline under every floating number and cue: `BODY_EDGE` as a CSS
@@ -738,7 +744,8 @@ export class ArenaScene extends Phaser.Scene {
       let object = this.floatingTextObjects.get(floating.id);
       if (object === undefined) {
         object = this.add.text(floating.position.x, floating.position.y, floating.text, {
-          fontSize: floating.weight === "light" ? "11px" : "13px",
+          fontSize: FLOATING_FONT_SIZE[floating.weight],
+          fontStyle: floating.weight === "critical" ? "bold" : "normal",
           fontFamily: "ui-monospace, monospace",
           color: `#${floating.colour.toString(16).padStart(6, "0")}`,
           stroke: TEXT_EDGE,

@@ -221,7 +221,18 @@ A shot whose flight would cross a wall stops at it and is "obstructed"
 too, so stepping behind a pillar dodges it. Shots fly through bodies.
 Melee swings are never obstructed.
 
-Not modelled: critical hits, block and evade. Attack-speed changes have
+**Critical hits.** Any weapon blow can crit: a swing, each blow of a
+double strike, each cleave victim, an attack skill, a landing shot.
+Spells and degeneration never do. The chance is 1% plus 1.37% per rank
+in the weapon's mastery (the attribute its requirement names; caster
+weapons and fists get only the 1%). A crit skips the damage roll and
+hits for the weapon's maximum times √2 (a scythe's times 1.1), after
+the attribute and an unmet requirement; an attack skill's bonus is
+added unmultiplied. A melee blow at a target that is moving with its
+back to you (facing more than 90° away) always crits. A crit floats
+larger, with a "!", and the log says "a critical hit".
+
+Not modelled: block and evade. Attack-speed changes have
 a hook (only the strongest speed-up and slow-down count), but no skill
 uses it yet.
 

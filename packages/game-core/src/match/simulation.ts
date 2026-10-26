@@ -38,7 +38,7 @@ import {
 } from "../skills/activation.js";
 import { CastState, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
-import { applySkillEffects, type CombatEvent } from "../skills/effects.js";
+import { applySkillEffects, type CombatEvent, type SkillResolution } from "../skills/effects.js";
 import {
   aggregateModifiers,
   clampPips,
@@ -80,7 +80,7 @@ import {
   type ResetPolicy,
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
-import { directionAngle } from "./facing.js";
+import { directionAngle, showsBackTo } from "./facing.js";
 import { steerAround } from "./steering.js";
 
 /**
@@ -995,7 +995,11 @@ export class MatchSimulation {
 
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
     const primary = skill.target === "self" ? record : targetRecord;
-    const resolve = skill.attack === undefined ? applySkillEffects : resolveAttackSkill;
+    const exposed = this.#exposedTo(record);
+    const resolve =
+      skill.attack === undefined
+        ? applySkillEffects
+        : (resolution: SkillResolution) => resolveAttackSkill(resolution, exposed);
     const events = resolve({
       skill,
       caster: record.combatant,
@@ -1352,10 +1356,31 @@ export class MatchSimulation {
       candidates: weapon.cleaveTargets === 0 ? [] : [...this.#participants.values()],
       rng: this.#rng,
       rules: this.#ruleset.combat,
+      exposed: this.#exposedTo(record),
     });
     this.#gainAdrenaline(record, events);
     this.#recordDeaths(events);
     this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events);
+  }
+
+  /**
+   * Whether a victim shows `attacker` its back while moving (#533): facing
+   * more than 90° away from the attacker, read the moment the blow lands,
+   * and its last step moved it. A melee blow at such a victim always crits.
+   */
+  #exposedTo(attacker: ParticipantRecord): (victim: Combatant) => boolean {
+    return (victim) => {
+      const record = this.#participants.get(victim.id);
+      if (record === undefined) {
+        return false;
+      }
+      const [before, after] = record.history.samples().slice(-2);
+      const moving =
+        before !== undefined &&
+        after !== undefined &&
+        (before.x !== after.x || before.y !== after.y);
+      return moving && showsBackTo(record.position, record.facing, attacker.position);
+    };
   }
 
   /**
@@ -1449,6 +1474,8 @@ export class MatchSimulation {
         projectile.weaponSnapshot,
         target.combatant,
         PLAIN_BLOW,
+        // A shot crits only on its roll, never for where it came from.
+        false,
         this.#rng,
         this.#ruleset.combat,
         events,
