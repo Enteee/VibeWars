@@ -61,6 +61,12 @@ export const MAX_WIRE_EVENTS = 64;
 /** The most slots a skill bar or a recharge list holds. */
 export const MAX_WIRE_SLOTS = 8;
 
+/** The most attributes a skill bar's ranks name. */
+export const MAX_WIRE_RANKS = 16;
+
+/** The highest rank an attribute reaches, runes included (game-core's MAX_EFFECTIVE_RANK). */
+export const MAX_WIRE_RANK = 15;
+
 /** The most walls a map holds, and points a polygon wall holds. */
 export const MAX_WIRE_WALLS = 1024;
 export const MAX_WIRE_POINTS = 256;
@@ -226,6 +232,8 @@ export interface WireCombat {
 /** Host to one client: its bar, every slot in its place, `null` where empty (#347). */
 export interface WireSkillBar {
   readonly slots: readonly (SkillBarSlot | null)[];
+  /** Attribute id to effective rank, as the host resolved the build (#485). */
+  readonly ranks: Readonly<Record<string, number>>;
 }
 
 /**
@@ -761,9 +769,36 @@ function parseSlot(value: unknown): SkillBarSlot | null | undefined {
     : undefined;
 }
 
+/** An attribute id, `<profession>.<attribute>`: never `__proto__` or the like. */
+const ATTRIBUTE_ID = /^[a-z]+\.[a-z-]+$/;
+
+function parseRanks(value: unknown): Record<string, number> | undefined {
+  const raw = fields(value);
+  if (raw === undefined) {
+    return undefined;
+  }
+  const entries = Object.entries(raw);
+  if (entries.length > MAX_WIRE_RANKS) {
+    return undefined;
+  }
+  const ranks: Record<string, number> = {};
+  for (const [attributeId, rank] of entries) {
+    if (!isString(attributeId) || !ATTRIBUTE_ID.test(attributeId)) {
+      return undefined;
+    }
+    if (!isCount(rank) || rank > MAX_WIRE_RANK) {
+      return undefined;
+    }
+    ranks[attributeId] = rank;
+  }
+  return ranks;
+}
+
 export function parseWireSkillBar(value: unknown): WireSkillBar | undefined {
-  const slots = parseArray(fields(value)?.slots, MAX_WIRE_SLOTS, parseSlot);
-  return slots === undefined ? undefined : { slots };
+  const raw = fields(value);
+  const slots = parseArray(raw?.slots, MAX_WIRE_SLOTS, parseSlot);
+  const ranks = parseRanks(raw?.ranks);
+  return slots === undefined || ranks === undefined ? undefined : { slots, ranks };
 }
 
 export function parseWireEnded(value: unknown): WireEnded | undefined {

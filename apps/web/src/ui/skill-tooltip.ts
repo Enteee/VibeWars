@@ -27,7 +27,13 @@ function row(parent: HTMLElement, label: string, value: string): void {
   parent.appendChild(line);
 }
 
-export function createSkillTooltip(): SkillTooltip {
+/**
+ * Where the tooltip goes. `beside` the anchor suits a list; `above` suits
+ * a skill bar at the bottom of the screen, which it must never cover (#485).
+ */
+export type SkillTooltipPlacement = "beside" | "above";
+
+export function createSkillTooltip(placement: SkillTooltipPlacement = "beside"): SkillTooltip {
   const node = document.createElement("div");
   node.className = "skill-tip";
   node.setAttribute("role", "tooltip");
@@ -94,15 +100,21 @@ export function createSkillTooltip(): SkillTooltip {
     const tip = node.getBoundingClientRect();
     const margin = 8;
 
-    let left = box.left - tip.width - margin;
-    if (left < margin) {
-      // No room on the left; flip to the right of the anchor.
-      left = box.right + margin;
+    let left: number;
+    let top: number;
+    if (placement === "above") {
+      left = box.left + box.width / 2 - tip.width / 2;
+      top = box.top - tip.height - margin;
+    } else {
+      left = box.left - tip.width - margin;
+      if (left < margin) {
+        // No room on the left; flip to the right of the anchor.
+        left = box.right + margin;
+      }
+      top = box.top;
     }
     left = Math.min(left, window.innerWidth - tip.width - margin);
     left = Math.max(margin, left);
-
-    let top = box.top;
     top = Math.min(top, window.innerHeight - tip.height - margin);
     top = Math.max(margin, top);
 

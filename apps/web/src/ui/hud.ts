@@ -4,6 +4,7 @@ import {
   getWeapon,
   type ActivationRejection,
   type AttackWeaponClass,
+  type Segment,
 } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
 import type {
@@ -18,7 +19,14 @@ import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
 import { attackingIcon, professionIcon, skillBadgeHtml, soundIcon, weaponIcon } from "./icons.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
-import { castFailures, castingSlot, flashSlot } from "./skill-slot-state.js";
+import {
+  castFailures,
+  castFill,
+  flashSlot,
+  outOfRange,
+  paintCastFill,
+} from "./skill-slot-state.js";
+import { createSlotTooltips, type SlotTooltips } from "./slot-tooltip.js";
 
 /**
  * The player's heads-up display: health/energy, skill bar, and status
@@ -46,6 +54,8 @@ export interface HudElements {
   readonly adrenalineText: HTMLElement;
   readonly statusList: HTMLElement;
   readonly skillBar: HTMLElement;
+  /** The skill bar's hover tooltips (#485); `dispose` it with the HUD. */
+  readonly slotTips: SlotTooltips;
   /** One line above the skill bar, for why a key did nothing. */
   readonly message: HTMLElement;
   /** How to target, until the first target of the match (#55). */
@@ -201,6 +211,7 @@ export function createHud(parent: HTMLElement): HudElements {
     adrenalineText,
     statusList,
     skillBar,
+    slotTips: createSlotTooltips(),
     message,
     hint,
     hintDismissed: false,
@@ -358,6 +369,7 @@ export function skillSlotHtml(slot: SkillSlot): string {
 export function renderSkillBar(
   hud: HudElements,
   slots: readonly (SkillSlot | null)[],
+  ranks: ReadonlyMap<string, number>,
   onUse: (slot: number) => void,
 ): void {
   hud.skillBar.replaceChildren();
@@ -387,6 +399,7 @@ export function renderSkillBar(
     button.addEventListener("click", () => {
       onUse(index);
     });
+    hud.slotTips.bind(button, index, slot.id, () => ranks);
     hud.skillBar.appendChild(button);
   });
 }
@@ -695,6 +708,7 @@ export function updateHud(
   self: PlayerSnapshot | undefined,
   target: PlayerSnapshot | undefined,
   skillBar: readonly (SkillSlot | null)[],
+  walls: readonly Segment[],
   match?: MatchSnapshot,
 ): void {
   if (match !== undefined) {
@@ -729,18 +743,23 @@ export function updateHud(
 
   renderTarget(hud, self, target);
 
-  // Grey out skills the player cannot currently afford. The server is
-  // still the authority on whether a cast is legal — this is a hint, not
-  // a gate (brief §32).
+  // Grey out skills the player cannot currently afford, and mark those
+  // that cannot reach the target. The server is still the authority on
+  // whether a cast is legal — these are hints, not gates (brief §32).
   const buttons = hud.skillBar.querySelectorAll("button");
-  const casting = castingSlot(skillBar, self);
+  const fill = castFill(skillBar, self);
+  const far = outOfRange(skillBar, self, target, walls);
+  hud.slotTips.casting(fill?.slot);
   skillBar.forEach((slot, index) => {
     const button = buttons[index];
     if (button === undefined || slot === null) {
       return;
     }
-    // Lit for as long as the snapshot says it casts, however it ends (#300).
-    button.classList.toggle("is-casting", index === casting);
+    // Lit for as long as the snapshot says it casts, however it ends (#300),
+    // and filling as it goes (#485).
+    button.classList.toggle("is-casting", index === fill?.slot);
+    paintCastFill(button, index === fill?.slot ? fill.fraction : undefined);
+    button.classList.toggle("is-out-of-range", far[index] === true);
     const affordable =
       slot.adrenalineCost > 0
         ? self.adrenaline >= slot.adrenalineCost

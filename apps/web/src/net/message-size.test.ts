@@ -122,6 +122,18 @@ function hit(target: number): WireCombat["events"] {
   ];
 }
 
+/** The attributes of a Necromancer/Elementalist, the pair with the most. */
+const NECRO_ELE_ATTRIBUTES = [
+  "necromancer.blood-magic",
+  "necromancer.curses",
+  "necromancer.death-magic",
+  "necromancer.soul-reaping",
+  "elementalist.fire-magic",
+  "elementalist.water-magic",
+  "elementalist.air-magic",
+  "elementalist.earth-magic",
+];
+
 describe("every message fits in one Trystero chunk (#403)", () => {
   it("a snapshot: 8 players, longest names, every status, casting, attacking; 32 projectiles", () => {
     const snapshot: WireSnapshot = {
@@ -185,6 +197,8 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         activationSeconds: FLOAT,
         rechargeSeconds: FLOAT,
       })),
+      // Two digits each, as runes and headgear can make them.
+      ranks: Object.fromEntries(NECRO_ELE_ATTRIBUTES.map((attributeId) => [attributeId, 20])),
     };
     expect(messageBytes(welcome)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
     expect(messageBytes(bar)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
@@ -195,16 +209,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       name: NAME,
       primaryProfession: "necromancer",
       secondaryProfession: "elementalist",
-      attributes: [
-        "necromancer.blood-magic",
-        "necromancer.curses",
-        "necromancer.death-magic",
-        "necromancer.soul-reaping",
-        "elementalist.fire-magic",
-        "elementalist.water-magic",
-        "elementalist.air-magic",
-        "elementalist.earth-magic",
-      ].map((attributeId) => ({ attributeId, rank: 12 })),
+      attributes: NECRO_ELE_ATTRIBUTES.map((attributeId) => ({ attributeId, rank: 12 })),
       skillBar: [...SKILL_IDS].sort((a, b) => b.length - a.length).slice(0, 8),
       equipment: {
         mainHand: { weaponId: "staff", requirementAttributeId: "necromancer.soul-reaping" },

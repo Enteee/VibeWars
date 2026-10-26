@@ -3,11 +3,20 @@ import { segment, type Segment, type Vec2 } from "@vibewars/game-core";
 import type { Wall } from "./schema.js";
 
 /**
+ * A wall as either side of the wire holds it: a map file's `Wall`, or the
+ * read-only descriptor a client receives, which needs the same segments
+ * for its line-of-sight hints (#485).
+ */
+export type WallShape =
+  | Readonly<Extract<Wall, { kind: "rect" }>>
+  | { readonly kind: "polygon"; readonly points: readonly Vec2[] };
+
+/**
  * Reduce any wall shape to the segment list the collision/LOS engine in
  * `@vibewars/game-core` actually consumes (see that package's
  * `geometry.ts` for why segments are the one shared primitive).
  */
-export function wallToSegments(wall: Wall): Segment[] {
+export function wallToSegments(wall: WallShape): Segment[] {
   if (wall.kind === "rect") {
     const { x, y, width, height } = wall;
     const topLeft: Vec2 = { x, y };
@@ -38,6 +47,6 @@ export function wallToSegments(wall: Wall): Segment[] {
   return segments;
 }
 
-export function allWallSegments(walls: readonly Wall[]): Segment[] {
+export function allWallSegments(walls: readonly WallShape[]): Segment[] {
   return walls.flatMap(wallToSegments);
 }

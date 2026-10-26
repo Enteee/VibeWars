@@ -6,6 +6,8 @@ import {
   MAX_WIRE_EVENTS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_RADIUS,
+  MAX_WIRE_RANK,
+  MAX_WIRE_RANKS,
   MAX_WIRE_SLOTS,
   MAX_WIRE_STATUSES,
   MAX_WIRE_STRING,
@@ -182,6 +184,7 @@ const skillBar: WireSkillBar = {
     },
     null,
   ],
+  ranks: { "monk.healing-prayers": 12, "monk.divine-favor": 0 },
 };
 
 const ended: WireEnded = { winningTeam: null, endReason: "host-left" };
@@ -411,6 +414,45 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "skill bar with a string cost",
     parseWireSkillBar,
     { slots: [{ ...skillBar.slots[0], energyCost: "5" }] },
+  ],
+  ["skill bar without ranks", parseWireSkillBar, { slots: skillBar.slots }],
+  [
+    "skill bar with a fractional rank",
+    parseWireSkillBar,
+    { ...skillBar, ranks: { "monk.healing-prayers": 11.5 } },
+  ],
+  [
+    "skill bar with a rank past the most runes give",
+    parseWireSkillBar,
+    { ...skillBar, ranks: { "monk.healing-prayers": MAX_WIRE_RANK + 1 } },
+  ],
+  [
+    "skill bar with a negative rank",
+    parseWireSkillBar,
+    { ...skillBar, ranks: { "monk.healing-prayers": -1 } },
+  ],
+  [
+    "skill bar with an attribute id of another shape",
+    parseWireSkillBar,
+    { ...skillBar, ranks: { Healing: 3 } },
+  ],
+  [
+    "skill bar ranking __proto__",
+    parseWireSkillBar,
+    { ...skillBar, ranks: JSON.parse('{"__proto__": 3}') as unknown },
+  ],
+  [
+    "skill bar with too many ranks",
+    parseWireSkillBar,
+    {
+      ...skillBar,
+      ranks: Object.fromEntries(
+        Array.from({ length: MAX_WIRE_RANKS + 1 }, (_, i) => [
+          `monk.attribute-${"a".repeat(i + 1)}`,
+          1,
+        ]),
+      ),
+    },
   ],
   ["ended by an unknown reason", parseWireEnded, { ...ended, endReason: "forfeit" }],
   ["ended without a winner", parseWireEnded, { endReason: "score" }],

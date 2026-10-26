@@ -1,10 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getSkill, segment, vec2 } from "@vibewars/game-core";
 import type { PlayerSnapshot, SkillSlot } from "@vibewars/game-session";
 
 import {
   castFailures,
+  castFill,
   castingSlot,
   flashSlot,
+  outOfRange,
+  paintCastFill,
   SLOT_FLASH_MS,
   slotFlashes,
 } from "./skill-slot-state.js";
@@ -62,6 +66,79 @@ describe("castingSlot", () => {
     expect(castingSlot(BAR, undefined)).toBeUndefined();
     expect(castingSlot(BAR, self({ castingSkillId: "flare", castTotal: 0 }))).toBeUndefined();
     expect(castingSlot(BAR, self({ castingSkillId: "unknown", castTotal: 2 }))).toBeUndefined();
+  });
+});
+
+describe("castFill", () => {
+  it("rises from 0 to 1 over the cast", () => {
+    const at = (castRemaining: number) =>
+      castFill(BAR, self({ castingSkillId: "flare", castTotal: 2, castRemaining }));
+    expect(at(2)).toEqual({ slot: 1, fraction: 0 });
+    expect(at(1)).toEqual({ slot: 1, fraction: 0.5 });
+    expect(at(0)).toEqual({ slot: 1, fraction: 1 });
+  });
+
+  it("is nothing for an instant skill, or with no cast", () => {
+    expect(castFill(BAR, self({ castingSkillId: "flare", castTotal: 0 }))).toBeUndefined();
+    expect(castFill(BAR, self({}))).toBeUndefined();
+  });
+});
+
+describe("paintCastFill", () => {
+  /** Just enough of an element for `paintCastFill`, without jsdom. */
+  function button(): HTMLElement {
+    const properties = new Map<string, string>();
+    const style = {
+      getPropertyValue: (name: string) => properties.get(name) ?? "",
+      setProperty: (name: string, value: string) => properties.set(name, value),
+      removeProperty: (name: string) => properties.delete(name),
+    };
+    return { style } as unknown as HTMLElement;
+  }
+
+  it("sets --cast-fill while casting and clears it the frame the cast ends", () => {
+    const slotButton = button();
+    paintCastFill(slotButton, 0.25);
+    expect(slotButton.style.getPropertyValue("--cast-fill")).toBe("0.25");
+    paintCastFill(slotButton, undefined);
+    expect(slotButton.style.getPropertyValue("--cast-fill")).toBe("");
+  });
+});
+
+describe("outOfRange", () => {
+  // Fireball reaches an enemy; Armor of Earth is on its caster alone.
+  const FIREBALL = "elementalist.fireball";
+  const RANGE = getSkill(FIREBALL)?.range ?? 0;
+  const RANGED_BAR = [slot(FIREBALL), null, slot("elementalist.armor-of-earth")];
+  const foe = (x: number, more: Partial<PlayerSnapshot> = {}) =>
+    self({ sessionId: "foe", x, team: 1, ...more });
+
+  it("marks a targeted skill one unit past its range, not one unit inside it", () => {
+    expect(RANGE).toBeGreaterThan(0);
+    expect(outOfRange(RANGED_BAR, self({}), foe(RANGE - 1), [])).toEqual([false, false, false]);
+    expect(outOfRange(RANGED_BAR, self({}), foe(RANGE + 1), [])).toEqual([true, false, false]);
+  });
+
+  it("marks a targeted skill with a wall between caster and target", () => {
+    const wall = segment(vec2(50, -100), vec2(50, 100));
+    expect(outOfRange(RANGED_BAR, self({}), foe(100), [wall])).toEqual([true, false, false]);
+  });
+
+  it("marks no ally skill with a foe targeted, which the host casts on its caster", () => {
+    const ORISON = "monk.orison-of-healing";
+    const range = getSkill(ORISON)?.range ?? 0;
+    const bar = [slot(ORISON)];
+    expect(outOfRange(bar, self({}), foe(range + 1), [])).toEqual([false]);
+    expect(outOfRange(bar, self({}), foe(range + 1, { team: 0 }), [])).toEqual([true]);
+  });
+
+  it("marks nothing with no target, or a dead one", () => {
+    expect(outOfRange(RANGED_BAR, self({}), undefined, [])).toEqual([false, false, false]);
+    expect(outOfRange(RANGED_BAR, self({}), foe(RANGE + 1, { dead: true }), [])).toEqual([
+      false,
+      false,
+      false,
+    ]);
   });
 });
 

@@ -118,6 +118,11 @@ export interface MatchConnection {
    * its place, `null` where it is empty (#347).
    */
   readonly skillBar: readonly (SkillSlot | null)[];
+  /**
+   * Attribute id to effective rank, as the host resolved this player's
+   * build, house loadout included: what the bar's tooltips describe (#485).
+   */
+  readonly ranks: ReadonlyMap<string, number>;
   sendIntent(intent: ClientIntent): void;
   getSnapshot(): MatchSnapshot;
   onCombat(handler: (message: CombatMessage) => void): void;

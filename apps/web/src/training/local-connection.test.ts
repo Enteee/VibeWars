@@ -198,6 +198,14 @@ describe("createLocalConnection", () => {
     ]);
   });
 
+  it("describes the bar at the ranks it plays, rearmed or not (#485)", () => {
+    const { connection } = targetDummy();
+    expect(connection.ranks.get("elementalist.fire-magic")).toBe(9);
+    const arming = playerArming(setRank(pyro(), "elementalist.fire-magic", 11));
+    connection.rearm(arming.loadout, arming.skillBar);
+    expect(connection.ranks.get("elementalist.fire-magic")).toBe(11);
+  });
+
   it("does nothing once disconnected", async () => {
     const { connection } = targetDummy();
     let steps = 0;
