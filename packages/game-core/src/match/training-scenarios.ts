@@ -60,6 +60,8 @@ export interface TrainingDummy {
   readonly armor: number;
   /** 10000 is "immortal": there is no invulnerable flag. */
   readonly maxHealth: number;
+  /** Health it starts, and is reset, at, as a fraction of max; without one, full. */
+  readonly startHealthFraction?: number;
   readonly skillBar: readonly string[];
   readonly attributeRanks: Readonly<Record<string, number>>;
   /** Energy regeneration, in pips: its profession's if it casts, else 0. */
@@ -298,6 +300,40 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
             everySeconds: 5,
             targeting: { kind: "self" },
           })),
+        },
+      },
+    ],
+  },
+  {
+    id: "condition-removal",
+    label: "Condition removal",
+    teaches:
+      "That a condition removal takes off only what it says: an ally at 200 of 500 carries five conditions, and deep wound among them caps your heals at 400.",
+    mapId: "training-hall",
+    exercises: ["conditions"],
+    knobs: [],
+    // An ally, mortal, that keeps its five conditions on itself: each
+    // renewed every 10 s for 12, so one the player removes is back within
+    // 10 s, and the rest never lapse. Bleeding drains it, so it needs
+    // healing too; 2 s after a death it is back at 200.
+    dummies: [
+      {
+        ...target("ally", "Afflicted ally", vec2(300, 210), 60),
+        team: PLAYER_TEAM,
+        maxHealth: MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth,
+        startHealthFraction: 0.4,
+        reset: { kind: "on-death", afterSeconds: 2 },
+        behaviour: {
+          kind: "parallel",
+          behaviours: (["bleeding", "crippled", "blind", "weakness", "deep-wound"] as const).map(
+            (statusId): Behaviour => ({
+              kind: "apply-status-cadence",
+              statusId,
+              durationSeconds: 12,
+              everySeconds: 10,
+              targeting: { kind: "self" },
+            }),
+          ),
         },
       },
     ],
@@ -624,6 +660,7 @@ export function scenarioParticipants(
     spawn: dummy.position,
     facing: facingToward(dummy.position, playerSpawn),
     maxHealth: dummy.maxHealth,
+    startHealthFraction: dummy.startHealthFraction,
     baseEnergyPips: dummy.baseEnergyPips,
     behaviour: dummy.behaviour,
     reset: dummy.reset,

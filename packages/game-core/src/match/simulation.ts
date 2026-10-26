@@ -141,7 +141,7 @@ export interface ParticipantSpec {
   /** Energy regeneration before statuses, in pips. Defaults to 0: none, as a dummy needs. */
   readonly baseEnergyPips?: number;
   /** Health to start (and reset) at, as a fraction of max. Defaults to 1. */
-  readonly startHealthFraction?: number;
+  readonly startHealthFraction?: number | undefined;
   /** Omitted: driven from outside, like a player. */
   readonly behaviour?: Behaviour | undefined;
   /** Omitted: `never`. Death then follows the match rules' respawn. */
