@@ -63,7 +63,7 @@ if (group === "api" && sub !== "graphql") {
   if (rel === "issues/9") { console.log(JSON.stringify({ ...pull9, pull_request: {} })); process.exit(0); }
   if (rel === "pulls/9") { console.log(JSON.stringify(pull9)); process.exit(0); }
   // A commit's CI: the workflow runs and jobs the test planted, or none.
-  const runs = /^actions\\/workflows\\/([a-z.-]+)\\/runs\\?head_sha=([0-9a-f]+)/.exec(rel);
+  const runs = /^actions\\/workflows\\/([a-z0-9.-]+)\\/runs\\?head_sha=([0-9a-f]+)/.exec(rel);
   const jobs = /^actions\\/runs\\/(\\d+)\\/jobs/.exec(rel);
   if (runs !== null || jobs !== null) {
     if (fs.existsSync(path.join(state, "rest-fails"))) { console.error("HTTP 500: Server Error"); process.exit(1); }
@@ -1919,6 +1919,8 @@ describe("hubd recording verdicts and merging", () => {
     for (const [file, id, name] of [
       ["ci.yml", 100, "ci"],
       ["dependency-review.yml", 200, "other"],
+      ["e2e-repeat.yml", 400, "e2e-repeat (1)"],
+      ["codeql.yml", 500, "analyze"],
     ]) {
       hubd.setCi("abc1234def", file, {
         id,
@@ -1971,6 +1973,11 @@ describe("hubd recording verdicts and merging", () => {
   const ran = (hubd, sha, ciJobs = [job("ci")]) => {
     hubd.setCi(sha, "ci.yml", { id: 100, jobs: ciJobs });
     hubd.setCi(sha, "dependency-review.yml", { id: 200, jobs: [job("legacy")] });
+    hubd.setCi(sha, "e2e-repeat.yml", {
+      id: 400,
+      jobs: [job("e2e-repeat (1)"), job("e2e-repeat (2)")],
+    });
+    hubd.setCi(sha, "codeql.yml", { id: 500, jobs: [job("analyze")] });
   };
 
   it("reads the jobs of the commit it pinned, from REST, never gh pr checks", async () => {
@@ -2069,6 +2076,47 @@ describe("hubd recording verdicts and merging", () => {
 
     expect(answer.allow).toBe(false);
     expect(String(answer.reason)).toMatch(/ci\.yml run 100 ended cancelled/);
+    expect(hubd.calls("pr merge")).toBe(0);
+  }, 20_000);
+
+  it("keeps blocking on a red e2e-repeat job, though no expected name mentions it", async () => {
+    const hubd = await approved(5000);
+    ran(hubd, "abc1234def");
+    hubd.setCi("abc1234def", "e2e-repeat.yml", {
+      id: 400,
+      jobs: [job("e2e-repeat (1)"), job("e2e-repeat (2)", "failure")],
+      run: { conclusion: "failure" },
+    });
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(answer.allow).toBe(false);
+    expect(String(answer.reason)).toMatch(/e2e-repeat\.yml run 400 ended failure/);
+    expect(hubd.calls("pr merge")).toBe(0);
+  }, 20_000);
+
+  it("keeps blocking on a failed e2e-repeat job even when the run says success", async () => {
+    const hubd = await approved(5000);
+    ran(hubd, "abc1234def");
+    hubd.setCi("abc1234def", "e2e-repeat.yml", {
+      id: 400,
+      jobs: [job("e2e-repeat (2)", "failure")],
+    });
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(String(answer.reason)).toMatch(/failing: e2e-repeat \(2\) \(failure\)/);
+    expect(hubd.calls("pr merge")).toBe(0);
+  }, 20_000);
+
+  it("refuses while e2e-repeat or CodeQL has not run yet", async () => {
+    const hubd = await approved(5000);
+    ran(hubd, "abc1234def");
+    fs.rmSync(path.join(hubd.state, "runs-codeql.yml-abc1234def.json"));
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(String(answer.reason)).toMatch(/codeql\.yml has not run on this commit yet/);
     expect(hubd.calls("pr merge")).toBe(0);
   }, 20_000);
 

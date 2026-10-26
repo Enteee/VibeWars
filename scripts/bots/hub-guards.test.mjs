@@ -14,6 +14,7 @@ import { describe, expect, it } from "vitest";
 import {
   approvalsSatisfied,
   boardMoveAllowed,
+  everyJobSucceeded,
   jobsSatisfied,
   judgingRuns,
   explainGuard,
@@ -189,6 +190,35 @@ describe("jobsSatisfied", () => {
 
   it("passes with no expectations", () => {
     expect(jobsSatisfied([[]], [])).toMatchObject({ ok: true });
+  });
+});
+
+describe("everyJobSucceeded", () => {
+  /** @param {string} name @param {string | null} conclusion @param {string} status */
+  const job = (name, conclusion = "success", status = "completed") => ({
+    name,
+    status,
+    conclusion,
+  });
+
+  it("passes when every job of every run succeeded", () => {
+    expect(everyJobSucceeded([[job("a"), job("b")], [job("c")]])).toMatchObject({ ok: true });
+  });
+
+  it("fails a failed, skipped or cancelled job, and one still running, naming it", () => {
+    expect(everyJobSucceeded([[job("a"), job("b", "failure")]])).toMatchObject({
+      ok: false,
+      failing: ["b (failure)"],
+    });
+    expect(everyJobSucceeded([[job("a", "skipped")]])).toMatchObject({ ok: false });
+    expect(everyJobSucceeded([[job("a", null, "in_progress")]])).toMatchObject({
+      ok: false,
+      pending: ["a"],
+    });
+  });
+
+  it("does not take a run with no jobs for a pass", () => {
+    expect(everyJobSucceeded([[]])).toMatchObject({ ok: false });
   });
 });
 

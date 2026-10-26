@@ -352,7 +352,10 @@ its own green run for that commit, which cannot stand in for a red real one. A c
 second green run, which passes; a run that ended cancelled or failed, even with no jobs, blocks until it is
 re-run or the branch gets a new commit. A run tests the merge of the head
 into its PR's base, using the head's own workflow files, so reviewing gate
-files stays load-bearing. Since #116 only cicd-engineer may push them. A test pins `EXPECTED_CHECKS` to the
+files stays load-bearing. Since #116 only cicd-engineer may push them. The jobs of `e2e-repeat.yml` and `codeql.yml` are not named, but every one of
+them must succeed, as they did when the guard blocked on any failing check.
+Code scanning's own `CodeQL` check run is not a workflow job and no longer
+counts. A test pins `EXPECTED_CHECKS` to the
 job names the two files define.
 
 GitHub's own ruleset `required_status_checks` still matches by name, so the

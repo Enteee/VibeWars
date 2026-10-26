@@ -131,6 +131,34 @@ export function jobsSatisfied(runs, expected) {
 }
 
 /**
+ * Did every job of these runs succeed?
+ *
+ * For the workflows the gate does not name job by job (the repeated e2e
+ * specs, CodeQL): they used to block a merge while failing or pending, and
+ * still do. A run with no jobs at all is no evidence, so it is missing.
+ *
+ * @param {{ name: string, status: string, conclusion: string | null }[][]} runs
+ * @returns {{ ok: boolean, missing: string[], failing: string[], pending: string[] }}
+ */
+export function everyJobSucceeded(runs) {
+  const jobs = runs.flat();
+  const pending = jobs.filter((job) => job.status !== "completed").map((job) => job.name);
+  const failing = jobs
+    .filter((job) => job.status === "completed" && job.conclusion !== "success")
+    .map((job) => `${job.name} (${String(job.conclusion)})`);
+  const missing = runs.map((run, index) =>
+    run.length === 0 ? `a run with no jobs (#${String(index + 1)})` : "",
+  );
+  const none = missing.filter((entry) => entry !== "");
+  return {
+    ok: pending.length === 0 && failing.length === 0 && none.length === 0,
+    missing: none,
+    failing,
+    pending,
+  };
+}
+
+/**
  * Does this pull request carry a current sign-off from every required role?
  *
  * "Current" is the subtle part. An approval is cast against a specific commit;

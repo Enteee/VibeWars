@@ -67,6 +67,7 @@ import {
   approvalsSatisfied,
   boardMoveAllowed,
   landingAllowed,
+  everyJobSucceeded,
   jobsSatisfied,
   judgingRuns,
   explainGuard,
@@ -335,15 +336,21 @@ async function rest(rel, cfg) {
 }
 
 /**
- * The workflows whose jobs the merge gate reads: each runs on every pull
- * request, and each holds some of `expectedChecks`. A constant, never taken
- * from a request.
+ * The workflows whose jobs the merge gate reads. A constant, never taken
+ * from a request. Each runs on every pull request.
+ *
+ * - NAMED: the jobs `expectedChecks` names, which must exist and succeed.
+ * - EVERY_JOB: no job is named, but every job of the run must succeed. These
+ *   are the workflows that used to block a merge as a failing or pending
+ *   check: the repeated e2e specs, and CodeQL's job (whose steps are
+ *   `continue-on-error`, so it fails only when the run itself breaks).
  */
-const JUDGING_WORKFLOWS = ["ci.yml", "dependency-review.yml"];
+const NAMED_WORKFLOWS = ["ci.yml", "dependency-review.yml"];
+const EVERY_JOB_WORKFLOWS = ["e2e-repeat.yml", "codeql.yml"];
 
 /**
  * The jobs that judged one commit, read from the pull-request runs of the
- * workflows above for exactly that commit (#96, #123).
+ * given workflows for exactly that commit (#96, #123).
  *
  * Check runs and commit statuses are never read: any token with
  * `checks: write` can post one for any commit. A job exists only because a
@@ -352,9 +359,10 @@ const JUDGING_WORKFLOWS = ["ci.yml", "dependency-review.yml"];
  *
  * @param {string} sha
  * @param {ReturnType<typeof company>} cfg
+ * @param {string[]} files workflow files, by name under .github/workflows
  * @returns {Promise<{ runs: { name: string, status: string, conclusion: string | null }[][] } | { error: string } | { refusal: string }>}
  */
-async function restJobs(sha, cfg) {
+async function restJobs(sha, cfg, files) {
   /** @param {string} rel */
   const read = async (rel) => {
     const result = await gh(["api", `repos/${cfg.repo}/${rel}`]);
@@ -370,7 +378,7 @@ async function restJobs(sha, cfg) {
 
   /** @type {{ name: string, status: string, conclusion: string | null }[][]} */
   const jobs = [];
-  for (const file of JUDGING_WORKFLOWS) {
+  for (const file of files) {
     const listed = await read(
       `actions/workflows/${file}/runs?head_sha=${sha}&event=pull_request&per_page=100`,
     );
@@ -835,7 +843,8 @@ async function evaluateGuards(guards, argv) {
 
   for (const guard of guards) {
     if (guard === "checks-green") {
-      const read = await restJobs(sha, cfg);
+      const read = await restJobs(sha, cfg, NAMED_WORKFLOWS);
+      const every = "runs" in read ? await restJobs(sha, cfg, EVERY_JOB_WORKFLOWS) : read;
       if ("refusal" in read) {
         return { ok: false, reason: `${read.refusal} (#${pr} at ${sha.slice(0, 7)})` };
       }
@@ -847,9 +856,22 @@ async function evaluateGuards(guards, argv) {
           reason: `could not read CI jobs for #${pr} at ${sha.slice(0, 7)}: ${read.error}`,
         };
       }
+      if ("refusal" in every) {
+        return { ok: false, reason: `${every.refusal} (#${pr} at ${sha.slice(0, 7)})` };
+      }
+      if ("error" in every) {
+        return {
+          ok: false,
+          reason: `could not read CI jobs for #${pr} at ${sha.slice(0, 7)}: ${every.error}`,
+        };
+      }
       const verdict = jobsSatisfied(read.runs, cfg.expectedChecks);
       if (!verdict.ok) {
         return { ok: false, reason: explainGuard("checks", verdict) };
+      }
+      const rest = everyJobSucceeded(every.runs);
+      if (!rest.ok) {
+        return { ok: false, reason: explainGuard("checks", rest) };
       }
       continue;
     }
