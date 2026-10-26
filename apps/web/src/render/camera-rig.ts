@@ -47,8 +47,8 @@ export interface Size {
 }
 
 /**
- * Canvas px the HUD covers at the top and bottom edges, CSS px: at the
- * arena's edge, it stops above the skill bar, not under it.
+ * Canvas px the HUD covers at the top and bottom edges, CSS px: the
+ * off-screen edge markers keep clear of it.
  */
 export interface Cover {
   readonly top: number;
@@ -85,10 +85,6 @@ export interface CameraInput {
   /** Screen px on the canvas; `undefined` when off it. */
   readonly pointer: Vec2 | undefined;
   readonly reducedMotion: boolean;
-  /** The arena's bounds, world units from (0, 0). */
-  readonly arena: Size;
-  /** What the HUD covers; the clamp keeps the arena out from under it. */
-  readonly cover: Cover;
 }
 
 export interface CameraView {
@@ -168,25 +164,6 @@ export function dropPan(rig: CameraRig): CameraRig {
   return { ...rig, offset: { x: 0, y: 0 }, panning: false };
 }
 
-/**
- * The centre on one axis: the arena edge stops the camera where the arena
- * is bigger than the uncovered view, and the arena is centred in that
- * where it is smaller. `before` and `after` are the world units covered
- * at the low and high ends of the axis.
- */
-function clampAxis(
-  centre: number,
-  arena: number,
-  visible: number,
-  before: number,
-  after: number,
-): number {
-  if (arena <= visible - before - after) {
-    return arena / 2 + (after - before) / 2;
-  }
-  return Math.min(arena - visible / 2 + after, Math.max(visible / 2 - before, centre));
-}
-
 export function stepCamera(
   rig: CameraRig,
   input: CameraInput,
@@ -221,24 +198,11 @@ export function stepCamera(
     ? { x: 0, y: 0 }
     : clampToLeash({ x: rig.offset.x * held, y: rig.offset.y * held }, input.viewport, zoom);
 
-  // Clamped after the offset and the lead, so neither shows the void past
-  // the edge. That can bring you nearer the canvas edge than the leash
-  // does, at the arena's edge: you still stay on screen.
+  // Not clamped to the map (#721): pointing or dragging toward an edge
+  // looks past it, as anywhere else. Only the leash holds you on screen.
   const view = {
-    x: clampAxis(
-      input.self.x + offset.x + lead.x,
-      input.arena.width,
-      input.viewport.width / zoom,
-      0,
-      0,
-    ),
-    y: clampAxis(
-      input.self.y + offset.y + lead.y,
-      input.arena.height,
-      input.viewport.height / zoom,
-      input.cover.top / zoom,
-      input.cover.bottom / zoom,
-    ),
+    x: input.self.x + offset.x + lead.x,
+    y: input.self.y + offset.y + lead.y,
     zoom,
   };
   return {

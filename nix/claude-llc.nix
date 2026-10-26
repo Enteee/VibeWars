@@ -173,56 +173,11 @@ let
           echo "claude-llc: hubd and supervisor started in the hub window (logs: .bots/hub/)"
         }
 
-        # One employee's pane (#383), the only way an agent starts. A role's
-        # employees share a window named for the role, tiled, each pane titled
-        # with the employee id; the window opens with the role's first
-        # employee and closes with its last. The pane's `@employee` option is
-        # what the supervisor identifies it by, since a program may retitle it.
-        # If VIBEWARS_KICKOFF_NOTE is set, this agent gets the reboot note.
-        # One at a time and never twice: the boot loop and the supervisor may
-        # both start the same employee, and two agents must not share a worktree.
+        # One employee's pane (#383, #722), the only way an agent starts:
+        # start-employee.mjs has the rules. If VIBEWARS_KICKOFF_NOTE is set,
+        # this agent gets the reboot note.
         start_employee() {
-          local employee="$1"
-          if ! [[ "$employee" =~ ^[a-z][a-z0-9-]*(@[2-9]|@[1-9][0-9]+)?$ ]]; then
-            echo "claude-llc: not an employee id: $employee" >&2
-            return 1
-          fi
-          (
-            ${pkgs.util-linux}/bin/flock 9
-            if ${tmux} list-panes -s -t "=$SESSION" -F '#{@employee}' | grep -qxF "$employee"; then
-              echo "claude-llc: $employee already has a pane" >&2
-              exit 0
-            fi
-            start_employee_pane "$employee"
-          ) 9>"$VIBEWARS_BOT_ROOT/start-employee.lock"
-        }
-
-        start_employee_pane() {
-          local employee="$1" pane
-          local role="''${employee%%@*}"
-          local env=()
-          if [ -n "''${VIBEWARS_KICKOFF_NOTE-}" ]; then
-            env=(-e "VIBEWARS_KICKOFF_NOTE=$VIBEWARS_KICKOFF_NOTE")
-          fi
-          if ${tmux} list-windows -t "=$SESSION" -F '#{window_name}' | grep -qxF "$role"; then
-            pane="$(${tmux} split-window -d -P -F '#{pane_id}' -t "=$SESSION:=$role" \
-              -c "$DEVENV_ROOT" "''${env[@]}" "claude-llc-agent $employee")"
-            ${tmux} select-layout -t "=$SESSION:=$role" tiled
-          else
-            pane="$(${tmux} new-window -d -P -F '#{pane_id}' -t "$SESSION:" -n "$role" \
-              -c "$DEVENV_ROOT" "''${env[@]}" "claude-llc-agent $employee")"
-            ${tmux} set-option -w -t "=$SESSION:=$role" automatic-rename off
-            ${tmux} set-option -w -t "=$SESSION:=$role" allow-rename off
-            ${tmux} set-option -w -t "=$SESSION:=$role" pane-border-status top
-            ${tmux} set-option -w -t "=$SESSION:=$role" pane-border-format " #[bold]#{@employee}#[nobold] "
-          fi
-          # An empty pane id would make the next commands act on the current pane.
-          if [ -z "$pane" ]; then
-            echo "claude-llc: could not open a pane for $employee" >&2
-            return 1
-          fi
-          ${tmux} set-option -p -t "$pane" @employee "$employee"
-          ${tmux} select-pane -t "$pane" -T "$employee"
+          ${node} ${llcScripts}/start-employee.mjs "$1"
         }
 
         # The loops first, so stopping a daemon does not restart it.

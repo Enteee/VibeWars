@@ -45,6 +45,8 @@ in
 
   packages = [
     pkgs.jq
+    # The supervisor test (#722) runs a tmux server of its own, in CI too.
+    pkgs.tmux
     pkgs.git
     # Issues, PRs and release work against github.com/Enteee/Vibewars. Pinned
     # here rather than installed ad hoc so that anything scripted against it
