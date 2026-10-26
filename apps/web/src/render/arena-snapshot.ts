@@ -22,6 +22,8 @@ export interface RenderableActor {
   readonly facing: number;
   /** Picks the weapon mark's tip (#188); `undefined` draws none. */
   readonly weaponId: string | undefined;
+  /** Who it auto-attacks, which times its next swing (#558); `undefined`: nobody. */
+  readonly attackTargetId: string | undefined;
   /** Picks the off-hand mark (#276); `undefined` draws none. */
   readonly offhandId: OffhandId | undefined;
   /** The primary profession, whose glyph leads the name (#281); `undefined` draws none. */

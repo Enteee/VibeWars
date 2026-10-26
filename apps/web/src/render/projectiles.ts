@@ -56,6 +56,10 @@ export const PROJECTILE_HEIGHT = 12;
 /** A shot as the scene draws it. */
 export interface RenderableProjectile {
   readonly id: number;
+  /** Who shot it. */
+  readonly shooterId: string;
+  /** A weapon's shot, not a flying spell: its release ends a strike (#558). */
+  readonly weaponShot: boolean;
   readonly sprite: ProjectileSprite;
   readonly from: Vec2;
   readonly to: Vec2;

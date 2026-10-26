@@ -3,6 +3,7 @@ import Phaser from "phaser";
 import {
   PROFESSIONS,
   isStatusId,
+  isWeaponId,
   type ProfessionId,
   type StatusId,
   type Vec2,
@@ -48,6 +49,7 @@ import {
   walkMarkerTicks,
   type WalkMarker,
 } from "./walk-marker.js";
+import { AttackClock, shownFrame } from "./attack-clock.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
 import type {
   ArenaSnapshot,
@@ -159,6 +161,12 @@ export class ArenaScene extends Phaser.Scene {
   private nameGlyphs = new Map<string, Phaser.GameObjects.Image>();
   /** Status ids the server sent that this client has no icon for. */
   private readonly unknownStatuses = new Set<string>();
+  /** Each attacker's swing, which its weapon mark plays (#558), by actor id. */
+  private readonly attackClocks = new Map<string, AttackClock>();
+  /** The scene clock at the last frame, seconds: what hits are stamped with. */
+  private now = 0;
+  /** Read once a frame: under reduced motion every mark stays at rest. */
+  private reducedMotion = false;
 
   public constructor() {
     super(ArenaScene.KEY);
@@ -203,6 +211,23 @@ export class ArenaScene extends Phaser.Scene {
     this.walkMarker = walkMarkerAt(point);
   }
 
+  /**
+   * A weapon hit landed, or a shot left: `attackerId`'s strike ends now
+   * (#558). Stamped on the scene clock, never the snapshot's.
+   */
+  public addWeaponHit(attackerId: string): void {
+    const actor = this.snapshot.actors.find((a) => a.id === attackerId);
+    if (actor?.weaponId === undefined || !isWeaponId(actor.weaponId)) {
+      return;
+    }
+    let clock = this.attackClocks.get(attackerId);
+    if (clock === undefined) {
+      clock = new AttackClock();
+      this.attackClocks.set(attackerId, clock);
+    }
+    clock.hit(this.now, actor.weaponId);
+  }
+
   /** Flash a melee swing; off under reduced motion, where the damage number says enough. */
   public addSwingFlash(flash: SwingFlash): void {
     if (!prefersReducedMotion()) {
@@ -243,6 +268,9 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     g.clear();
+    this.now = time / 1000;
+    this.reducedMotion = prefersReducedMotion();
+    this.observeAttacks();
     this.drawGrid(g);
     for (const wall of this.snapshot.walls) {
       this.drawWall(g, wall);
@@ -273,6 +301,23 @@ export class ArenaScene extends Phaser.Scene {
     this.updateNameLabels();
     this.updateFloatingTexts(deltaMs / 1000);
     this.updateEdgeMarkers();
+  }
+
+  /** Tell each attack clock who its actor attacks; forget those who left. */
+  private observeAttacks(): void {
+    const present = new Set<string>();
+    for (const actor of this.snapshot.actors) {
+      present.add(actor.id);
+      const clock = this.attackClocks.get(actor.id);
+      if (clock !== undefined && actor.weaponId !== undefined && isWeaponId(actor.weaponId)) {
+        clock.observe(this.now, actor.dead ? undefined : actor.attackTargetId, actor.weaponId);
+      }
+    }
+    for (const id of this.attackClocks.keys()) {
+      if (!present.has(id)) {
+        this.attackClocks.delete(id);
+      }
+    }
   }
 
   /**
@@ -374,14 +419,22 @@ export class ArenaScene extends Phaser.Scene {
    */
   private drawWeaponMark(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
     const { x, y } = actor.position;
-    const { strokes, fills, strings } = weaponMarkLayout(
+    const frame =
+      actor.weaponId !== undefined && isWeaponId(actor.weaponId)
+        ? shownFrame(this.attackClocks.get(actor.id), this.now, actor.weaponId, this.reducedMotion)
+        : undefined;
+    if (frame === undefined) {
+      return;
+    }
+    const { strokes, fills, strings, alpha } = weaponMarkLayout(
       x,
       y,
       actor.radius,
       actor.facing,
       actor.weaponId,
+      frame,
     );
-    if (strokes.length === 0 && fills.length === 0) {
+    if ((strokes.length === 0 && fills.length === 0) || alpha <= 0) {
       return;
     }
     const trace = (
@@ -401,7 +454,7 @@ export class ArenaScene extends Phaser.Scene {
       }
     };
 
-    g.lineStyle(4, BODY_EDGE, 1);
+    g.lineStyle(4, BODY_EDGE, alpha);
     g.beginPath();
     for (const line of strokes) {
       trace(line, false);
@@ -411,13 +464,13 @@ export class ArenaScene extends Phaser.Scene {
     }
     g.strokePath();
 
-    g.lineStyle(2, SELF_RIM, 1);
+    g.lineStyle(2, SELF_RIM, alpha);
     g.beginPath();
     for (const line of strokes) {
       trace(line, false);
     }
     g.strokePath();
-    g.fillStyle(SELF_RIM, 1);
+    g.fillStyle(SELF_RIM, alpha);
     for (const shape of fills) {
       g.fillPoints(
         shape.map((point) => new Phaser.Math.Vector2(point.x, point.y)),
@@ -431,7 +484,7 @@ export class ArenaScene extends Phaser.Scene {
           [3, BODY_EDGE],
           [1, SELF_RIM],
         ] as const)) {
-      g.lineStyle(width, colour, 1);
+      g.lineStyle(width, colour, alpha);
       g.beginPath();
       for (const line of strings) {
         trace(line, false);
@@ -506,6 +559,10 @@ export class ArenaScene extends Phaser.Scene {
         image.setRotation(projectileHeading(shot));
         image.setTint(shot.colour);
         this.projectileImages.set(shot.id, { image, to: shot.to, endedAt: undefined });
+        // A weapon's shot leaving is its shooter's release (#558).
+        if (shot.weaponShot) {
+          this.addWeaponHit(shot.shooterId);
+        }
       } else {
         shown.image.setPosition(position.x, position.y);
       }
