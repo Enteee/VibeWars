@@ -105,21 +105,6 @@ function target(id: string, label: string, position: Vec2, armor: number): Train
   };
 }
 
-/** An immortal longbow dummy that shoots the player (#111), as dodge-drill's. */
-function archer(id: string, label: string, position: Vec2): TrainingDummy {
-  return {
-    ...target(id, label, position, 60),
-    attributeRanks: { "ranger.marksmanship": 12 },
-    behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
-    weapon: "longbow",
-  };
-}
-
-/** Walking a lane from the top of the hall to the bottom and back (#111). */
-function lane(x: number): Behaviour {
-  return { kind: "patrol", waypoints: [vec2(x, 90), vec2(x, 330)], loop: true };
-}
-
 /** A dummy's gear: its armor, and its weapon if it has one. */
 function dummyEquipment(dummy: TrainingDummy): ResolvedEquipment {
   const unarmed = unarmedResolvedEquipment(dummy.armor);
@@ -138,6 +123,21 @@ function dummyEquipment(dummy: TrainingDummy): ResolvedEquipment {
         attributeId === undefined || (dummy.attributeRanks[attributeId] ?? 0) >= requirement.rank,
     },
   };
+}
+
+/** An immortal longbow dummy that shoots the player (#111), as dodge-drill's. */
+function archer(id: string, label: string, position: Vec2): TrainingDummy {
+  return {
+    ...target(id, label, position, 60),
+    attributeRanks: { "ranger.marksmanship": 12 },
+    behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" } },
+    weapon: "longbow",
+  };
+}
+
+/** Walking a lane from the top of the hall to the bottom and back (#111). */
+function lane(x: number): Behaviour {
+  return { kind: "patrol", waypoints: [vec2(x, 90), vec2(x, 330)], loop: true };
 }
 
 export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
