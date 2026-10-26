@@ -1,0 +1,143 @@
+{
+  "id": "arena-long-hall",
+  "name": "Long Hall",
+  "width": 3200,
+  "height": 1100,
+  "walls": [
+    {
+      "kind": "rect",
+      "x": 0,
+      "y": 0,
+      "width": 500,
+      "height": 200
+    },
+    {
+      "kind": "rect",
+      "x": 2700,
+      "y": 900,
+      "width": 500,
+      "height": 200
+    },
+    {
+      "kind": "rect",
+      "x": 700,
+      "y": 0,
+      "width": 500,
+      "height": 200
+    },
+    {
+      "kind": "rect",
+      "x": 2000,
+      "y": 900,
+      "width": 500,
+      "height": 200
+    },
+    {
+      "kind": "rect",
+      "x": 1400,
+      "y": 0,
+      "width": 400,
+      "height": 200
+    },
+    {
+      "kind": "rect",
+      "x": 1400,
+      "y": 900,
+      "width": 400,
+      "height": 200
+    },
+    {
+      "kind": "rect",
+      "x": 900,
+      "y": 350,
+      "width": 100,
+      "height": 100
+    },
+    {
+      "kind": "rect",
+      "x": 2200,
+      "y": 650,
+      "width": 100,
+      "height": 100
+    },
+    {
+      "kind": "rect",
+      "x": 900,
+      "y": 650,
+      "width": 100,
+      "height": 100
+    },
+    {
+      "kind": "rect",
+      "x": 2200,
+      "y": 350,
+      "width": 100,
+      "height": 100
+    },
+    {
+      "kind": "rect",
+      "x": 1550,
+      "y": 500,
+      "width": 100,
+      "height": 100
+    }
+  ],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "position": {
+        "x": 160,
+        "y": 400
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 160,
+        "y": 550
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 160,
+        "y": 700
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 290,
+        "y": 550
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 3040,
+        "y": 700
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 3040,
+        "y": 550
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 3040,
+        "y": 400
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2910,
+        "y": 550
+      }
+    }
+  ]
+}

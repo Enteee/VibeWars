@@ -8,5 +8,6 @@ export type { MapData, PolygonWall, RectWall, SpawnPoint, Vec2Data, Wall } from 
 export { MapValidationError, mapDataSchema, validateMapData } from "./schema.js";
 
 export { allWallSegments, wallToSegments } from "./geometry.js";
+export { sizeClass, type SizeClass } from "./size-class.js";
 
 export { MapNotFoundError, listMapIds, loadAllMaps, loadMap } from "./loader.js";
