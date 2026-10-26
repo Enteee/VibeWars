@@ -57,12 +57,12 @@ export function armedHint(keymap: Keymap, label: KeyLabeller = codeLabel): strin
 }
 
 /**
- * Whether a re-render should hand the keyboard back to the arena.
+ * Whether an edit should hand the keyboard back to the arena.
  *
  * Only when the player had taken control and nothing else has taken
- * focus since: re-rendering detaches the stage, and Chromium moves focus
- * to `<body>` without reliably firing `blur`, so "armed" is the intent
- * and `activeElement` is the evidence. A focused name field wins.
+ * focus since: a click on something that cannot hold focus, such as a
+ * skill box, leaves it on `<body>`, so "armed" is the intent and
+ * `activeElement` is the evidence. A focused name field or button wins.
  */
 export function shouldRestoreFocus(armed: boolean, activeIsBodyOrNone: boolean): boolean {
   return armed && activeIsBodyOrNone;

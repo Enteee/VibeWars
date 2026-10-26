@@ -8,6 +8,7 @@ import { music, type MusicFollower } from "../music/play-music.js";
 import { TRACKS, type Track } from "../music/tracks/index.js";
 import { musicIcon } from "./icons.js";
 import { mountSoundControls, soundControlsDeps } from "./sound-controls.js";
+import { button, h } from "./kit.js";
 
 /**
  * The jukebox (#372, #366 §3.6): what plays. A menu screen, and the same
@@ -61,26 +62,6 @@ export function chooseMode(preference: MusicPreference, mode: MusicModeKind): Mu
   return mode === "pinned" && preference.pinnedTrackId === null
     ? preference
     : { ...preference, mode };
-}
-
-function h(tag: string, className?: string, text?: string): HTMLElement {
-  const node = document.createElement(tag);
-  if (className !== undefined) {
-    node.className = className;
-  }
-  if (text !== undefined) {
-    node.textContent = text;
-  }
-  return node;
-}
-
-function button(label: string, className: string, onClick: () => void): HTMLButtonElement {
-  const node = document.createElement("button");
-  node.type = "button";
-  node.className = className;
-  node.textContent = label;
-  node.addEventListener("click", onClick);
-  return node;
 }
 
 export interface JukeboxPanel {

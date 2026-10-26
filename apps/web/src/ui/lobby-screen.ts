@@ -1,6 +1,8 @@
 import { LOBBY_CODE_LENGTH } from "@vibewars/game-protocol";
 import type { LobbySnapshot } from "@vibewars/game-session";
 
+import { button, h } from "./kit.js";
+
 /**
  * The lobby screen (brief §21's lobby layout): the shareable code, both
  * team rosters, ready state, map, and the host's start button.
@@ -12,26 +14,6 @@ export interface LobbyScreenCallbacks {
   readonly onToggleReady: () => void;
   readonly onStart: () => void;
   readonly onLeave: () => void;
-}
-
-function h(tag: string, className?: string, text?: string): HTMLElement {
-  const node = document.createElement(tag);
-  if (className !== undefined) {
-    node.className = className;
-  }
-  if (text !== undefined) {
-    node.textContent = text;
-  }
-  return node;
-}
-
-function button(label: string, className: string, onClick: () => void): HTMLButtonElement {
-  const node = document.createElement("button");
-  node.type = "button";
-  node.className = className;
-  node.textContent = label;
-  node.addEventListener("click", onClick);
-  return node;
 }
 
 /** The teams a player can pick. Two for now; the map decides capacity. */
