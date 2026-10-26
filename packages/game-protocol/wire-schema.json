@@ -41,7 +41,7 @@
     "ProjectileState": [
       { "name": "id", "type": "number" },
       { "name": "attackerId", "type": "string" },
-      { "name": "weaponId", "type": "string" },
+      { "name": "skillId", "type": "string" },
       { "name": "x0", "type": "number" },
       { "name": "y0", "type": "number" },
       { "name": "x1", "type": "number" },
@@ -2073,6 +2073,7 @@
         },
         { "name": "id", "optional": false, "type": "number" },
         { "name": "launchedAt", "optional": false, "type": "number" },
+        { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
         {
           "name": "to",
           "optional": false,
@@ -2082,8 +2083,7 @@
               { "name": "y", "optional": false, "type": "number" }
             ]
           }
-        },
-        { "name": "weaponId", "optional": false, "type": "string" }
+        }
       ]
     },
     "WireSkillBar": {
@@ -2203,6 +2203,7 @@
                 },
                 { "name": "id", "optional": false, "type": "number" },
                 { "name": "launchedAt", "optional": false, "type": "number" },
+                { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
                 {
                   "name": "to",
                   "optional": false,
@@ -2212,8 +2213,7 @@
                       { "name": "y", "optional": false, "type": "number" }
                     ]
                   }
-                },
-                { "name": "weaponId", "optional": false, "type": "string" }
+                }
               ]
             }
           }

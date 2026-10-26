@@ -218,6 +218,38 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     ],
   },
   {
+    id: "fireball-dodge",
+    label: "Dodge the Fireball",
+    teaches:
+      "That a Fireball flies like an arrow: step aside as it leaves and nothing burns (#535).",
+    mapId: "training-hall",
+    exercises: ["dodging", "spell-damage"],
+    knobs: [],
+    // Inside Fireball's range of the spawn at (100, 210), far enough that
+    // the flight leaves time to turn.
+    dummies: [
+      {
+        id: "pyro",
+        label: "Fireball dummy",
+        team: 1,
+        position: vec2(480, 210),
+        armor: 60,
+        maxHealth: IMMORTAL,
+        skillBar: ["elementalist.fireball"],
+        attributeRanks: { "elementalist.fire-magic": 12 },
+        // An elementalist: it casts Fireball each time it recharges.
+        baseEnergyPips: baseEnergyPipsFor("elementalist"),
+        behaviour: {
+          kind: "cast-loop",
+          skillIds: ["elementalist.fireball"],
+          targeting: { kind: "nearest-enemy" },
+          gapSeconds: 0,
+          firstLegal: true,
+        },
+      },
+    ],
+  },
+  {
     id: "block",
     label: "Block",
     teaches: "That Guardian turns half your blows aside, and a spell goes through it (#534).",

@@ -6,8 +6,9 @@ import { segment } from "../geometry.js";
 import type { MatchRules } from "../match-rules.js";
 import { BASE_ENERGY_PIPS_BY_PROFESSION } from "../equipment/armor.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { getSkill } from "../skills/catalog.js";
 import { ENERGY_PER_PIP } from "../skills/status.js";
-import { vec2, type Vec2 } from "../vec2.js";
+import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 
@@ -51,6 +52,21 @@ function stepFor(sim: MatchSimulation, seconds: number): CombatLogEntry[] {
   }
   return log;
 }
+
+/**
+ * How long a Fireball flies over `units`, in whole ticks: it lands this
+ * long after its cast resolves (#535).
+ */
+function fireballFlight(units: number): number {
+  const speed = getSkill(FIREBALL)?.projectile?.speed;
+  if (speed === undefined) {
+    throw new Error("Fireball does not fly");
+  }
+  return Math.ceil(units / speed / DT) * DT;
+}
+
+/** A Fireball's flight across the duel's 200 units. */
+const FIREBALL_FLIGHT = fireballFlight(200);
 
 function participant(sim: MatchSimulation, id: string) {
   const found = sim.get(id);
@@ -151,6 +167,7 @@ describe("MatchSimulation step", () => {
     expect(sim.requestSkill("a", 0)).toEqual({ skillId: FIREBALL, check: { ok: true } });
 
     const log = stepFor(sim, 1);
+    // The cast resolves and the Fireball leaves the hand: nothing yet.
     expect(log).toEqual([
       {
         tick: 20,
@@ -158,6 +175,19 @@ describe("MatchSimulation step", () => {
         cause: "skill",
         sourceId: "a",
         skillId: FIREBALL,
+        weaponId: undefined,
+        area: undefined,
+        events: [],
+      },
+    ]);
+    expect(stepFor(sim, FIREBALL_FLIGHT)).toEqual([
+      {
+        tick: 30,
+        atSeconds: expect.closeTo(1.5, 6) as number,
+        cause: "skill",
+        sourceId: "a",
+        skillId: FIREBALL,
+        weaponId: undefined,
         // Fireball's splash, centred on b, who stands alone in it.
         area: { x: 200, y: 0, radius: 81 },
         events: [{ kind: "damage", targetId: "b", amount: 91, critical: false }],
@@ -280,7 +310,7 @@ describe("previously uncovered branches", () => {
     b.combatant.health = 1;
     sim.setTarget("a", "b");
     sim.requestSkill("a", 0);
-    stepFor(sim, 1);
+    stepFor(sim, 1 + FIREBALL_FLIGHT);
     expect(b.combatant.dead).toBe(true);
     b.position = vec2(300, 300);
     expect(b.respawnInSeconds).toBeGreaterThan(MATCH.respawnSeconds - 0.1);
@@ -532,14 +562,15 @@ describe("match end", () => {
     participant(sim, "b").combatant.health = 1;
     sim.setTarget("a", "b");
     sim.requestSkill("a", 0);
-    const results = Array.from({ length: 20 }, () => sim.step(DT));
-    expect(results.map((r) => r.phase).indexOf("finished")).toBe(19);
+    // The cast's 20 ticks, then the Fireball's 10 in flight.
+    const results = Array.from({ length: 30 }, () => sim.step(DT));
+    expect(results.map((r) => r.phase).indexOf("finished")).toBe(29);
     expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "score" });
 
     const after = sim.step(DT);
     expect(after).toEqual({
-      tick: 20,
-      elapsedSeconds: results[19]?.elapsedSeconds,
+      tick: 30,
+      elapsedSeconds: results[29]?.elapsedSeconds,
       phase: "finished",
       log: [],
     });
@@ -641,7 +672,7 @@ describe("reset policies", () => {
     d.combatant.health = 260;
     sim.setTarget("a", "d");
     sim.requestSkill("a", 0);
-    stepFor(sim, 1.05);
+    stepFor(sim, 1.05 + FIREBALL_FLIGHT);
     expectReset(d);
 
     d.combatant.health = 0;
@@ -841,9 +872,10 @@ describe("moving cancels a cast (#279)", () => {
     // whose approach walks.
     const log = stepFor(sim, 1 - DT);
     expect(a.position).toEqual(before);
-    log.push(...stepFor(sim, DT));
+    log.push(...stepFor(sim, DT + FIREBALL_FLIGHT));
 
-    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([["damage"]]);
+    // Its release, then the Fireball landing.
+    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([[], ["damage"]]);
     expect(a.combatant.cast.rechargeRemaining.has(FIREBALL)).toBe(true);
   });
 
@@ -893,9 +925,9 @@ describe("moving cancels a cast (#279)", () => {
     stepFor(sim, 0.5);
 
     sim.setInputDirection("a", vec2(0, 0));
-    const log = stepFor(sim, 0.5);
+    const log = stepFor(sim, 0.5 + FIREBALL_FLIGHT);
 
-    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([["damage"]]);
+    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([[], ["damage"]]);
   });
 
   it("being pushed out of another body mid-cast cancels nothing", () => {
@@ -912,9 +944,12 @@ describe("moving cancels a cast (#279)", () => {
     sim.setTarget("a", "b");
     sim.requestSkill("a", 0);
     const log = stepFor(sim, 1);
+    // Pushed off, a throws from further than the duel's 200 units.
+    const b = participant(sim, "b");
+    log.push(...stepFor(sim, fireballFlight(distance(a.position, b.position))));
 
     expect(a.position).not.toEqual(vec2(0, 0));
-    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([["damage"]]);
+    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([[], ["damage"]]);
   });
 });
 

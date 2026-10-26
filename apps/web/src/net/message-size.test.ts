@@ -58,6 +58,10 @@ const STATUS_IDS = Object.keys(STATUS_DEFINITIONS).slice(0, MAX_WIRE_STATUSES);
 const WEAPON_ID = longest(ALL_WEAPONS.map((weapon) => weapon.id));
 const OFFHAND_ID = longest(ALL_OFFHANDS.map((offhand) => offhand.id));
 const SKILL_ID = longest(SKILL_IDS);
+/** Only a spell that flies (#535) rides a projectile. */
+const FLYING_SKILL_ID = longest(
+  IMPLEMENTED_SKILLS.filter((skill) => skill.projectile !== undefined).map((skill) => skill.id),
+);
 const INSIGNIA_ID = longest(ALL_INSIGNIAS.map((insignia) => insignia.id));
 const bare = bareArmorSet();
 
@@ -94,7 +98,7 @@ function projectile(index: number): WireProjectile {
   return {
     id: 100_000 + index,
     attackerId: `${PEER_ID}${String(index % 8)}`,
-    weaponId: WEAPON_ID,
+    skillId: FLYING_SKILL_ID,
     from: { x: FLOAT, y: FLOAT },
     to: { x: FLOAT, y: FLOAT },
     launchedAt: FLOAT,

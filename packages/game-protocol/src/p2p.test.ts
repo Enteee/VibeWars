@@ -131,11 +131,20 @@ const snapshot: WireSnapshot = {
     {
       id: 7,
       attackerId: "peer-2",
-      weaponId: "longbow",
+      skillId: null,
       from: { x: 10, y: 20 },
       to: { x: 300, y: 20 },
       launchedAt: 1.9,
       flightSeconds: 0.6,
+    },
+    {
+      id: 8,
+      attackerId: "peer-1",
+      skillId: "elementalist.fireball",
+      from: { x: 300, y: 20 },
+      to: { x: 10, y: 20 },
+      launchedAt: 2,
+      flightSeconds: 0.7,
     },
   ],
 };
@@ -377,6 +386,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a projectile that never lands",
     parseWireSnapshot,
     { ...snapshot, projectiles: [{ ...snapshot.projectiles[0], flightSeconds: 0 }] },
+  ],
+  [
+    "snapshot with a projectile whose spell is not a string",
+    parseWireSnapshot,
+    { ...snapshot, projectiles: [{ ...snapshot.projectiles[0], skillId: 7 }] },
+  ],
+  [
+    "snapshot with a projectile that does not say whether it carries a spell",
+    parseWireSnapshot,
+    { ...snapshot, projectiles: [{ ...snapshot.projectiles[0], skillId: undefined }] },
   ],
   ["combat that is one entry, not a batch", parseWireCombatBatch, combat],
   [
