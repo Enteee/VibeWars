@@ -73,8 +73,12 @@ in
     pkgs.pulseaudio
   ];
 
-  env.VIBEWARS_ENV = "development";
-  env.VIBEWARS_CHROMIUM = "${pkgs.chromium}/bin/chromium";
+  env = {
+    VIBEWARS_ENV = "development";
+    VIBEWARS_CHROMIUM = "${pkgs.chromium}/bin/chromium";
+    # Playwright's Firefox loads libpulse at run time to reach PulseAudio.
+    VIBEWARS_PULSE_LIB = "${pkgs.pulseaudio}/lib";
+  };
 
   enterShell = ''
     # The revision in the directory name is the Playwright release's, so a
