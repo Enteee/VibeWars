@@ -256,7 +256,7 @@ describe("networked combat (P2P)", () => {
     expect(me?.castTotal).toBe(3);
   });
 
-  it("doubles a dazed player's cast, and syncs the doubled total for the cast bar", async () => {
+  it("doubles a dazed player's spell, and syncs the doubled total for the cast bar", async () => {
     // Broad Head Arrow needs a bow (ADR-0029): A is a ranger.
     const match = startMatch();
     const { connection: a } = await match.join(hello({ build: toJson(ARCHER) }));
@@ -269,13 +269,14 @@ describe("networked combat (P2P)", () => {
     a.sendIntent({ kind: "use-skill", slot: 0 });
     await until(match, () => self(b)?.statuses.includes("dazed") ?? false, "b dazed");
 
-    b.sendIntent({ kind: "use-skill", slot: DEFAULT_SKILL_BAR.indexOf("ranger.troll-unguent") });
+    // A spell: dazed slows spells only (#524).
+    b.sendIntent({ kind: "use-skill", slot: DEFAULT_SKILL_BAR.indexOf("monk.orison-of-healing") });
     await until(match, () => self(b)?.castingSkillId !== undefined, "b's cast to start");
 
     const me = self(b);
-    expect(me?.castingSkillId).toBe("ranger.troll-unguent");
-    expect(me?.castTotal).toBe(6);
-    expect(me?.castRemaining).toBeGreaterThan(3);
+    expect(me?.castingSkillId).toBe("monk.orison-of-healing");
+    expect(me?.castTotal).toBe(2);
+    expect(me?.castRemaining).toBeGreaterThan(1);
   });
 
   it("attacks with the weapon: shown to everyone, hits as cause weapon, cancel ends it", async () => {
