@@ -1,0 +1,22 @@
+name: oneoff firefox
+
+# Throwaway (never merged): one e2e spec in Playwright's Firefox, for #567.
+on:
+  push:
+    branches: [bot/cicd-engineer/oneoff-firefox-567]
+
+permissions:
+  contents: read
+
+jobs:
+  firefox:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: ./.github/actions/devenv
+      - name: Build packages
+        run: devenv shell -- pnpm exec tsc --build tsconfig.build.json
+      - name: Firefox drag spec
+        run: |
+          devenv shell -- bash -c 'echo "firefox: $VIBEWARS_FIREFOX"; pnpm exec playwright test e2e/builds.spec.ts -g "dragged from the library" --project firefox'

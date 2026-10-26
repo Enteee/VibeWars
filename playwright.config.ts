@@ -73,7 +73,16 @@ export default defineConfig({
     // own. Acceptable here: the only page ever loaded is our own client.
     launchOptions: { executablePath, args: ["--no-sandbox"] },
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "firefox",
+      use: {
+        ...devices["Desktop Firefox"],
+        launchOptions: { executablePath: process.env.VIBEWARS_FIREFOX ?? "" },
+      },
+    },
+  ],
   webServer: {
     command:
       "pnpm --filter @vibewars/web exec vite build --outDir dist-static && " +
