@@ -1503,6 +1503,15 @@ describe("deliverSystem (#23)", () => {
     expect(mirrorTopic({ from: SYSTEM, to: "manager", text: "x" })).toBe("bots");
   });
 
+  it("sends to one employee of a role, mirrored to its role (#383)", () => {
+    const delivered = deliverSystem(
+      { to: "manager@2", text: "Stop", nudge: null },
+      { employees: ROLES_HERE, now: 5 },
+    );
+    expect(delivered.deliveries.map((d) => d.employee)).toEqual(["manager@2"]);
+    expect(delivered.mirror).toEqual({ from: SYSTEM, to: "manager", text: "Stop" });
+  });
+
   it("delivers nothing, and mirrors nothing, to a role nobody is employed in or a malformed entry", () => {
     const none = { deliveries: [], mirror: null };
     const context = { employees: ROLES_HERE, now: 5 };

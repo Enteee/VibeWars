@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -11,6 +11,7 @@ import { ROLES } from "./hub-policy.mjs";
 import {
   COOLDOWN_MS,
   applyStaff,
+  markReady,
   nextEmployeeId,
   parseStaff,
   roleOf,
@@ -18,6 +19,8 @@ import {
   staffAllowed,
   staffReader,
   strangers,
+  withStaffLock,
+  withoutEmployees,
 } from "./staff.mjs";
 
 const STAFF = path.join(path.dirname(fileURLToPath(import.meta.url)), "staff.mjs");
@@ -426,5 +429,87 @@ describe("staffReader (#62)", () => {
     expect([...read().keys()]).toEqual(["manager", "qa-tester"]);
     expect(problems).toHaveLength(2);
     expect(problems[1]).toMatch(/; kept manager,qa-tester$/);
+  });
+});
+
+describe("markReady and withoutEmployees (#383)", () => {
+  const firing = applyStaff(
+    company(["qa-tester", "qa-tester@2"]),
+    fire("qa-tester@2"),
+    "qa-tester@2",
+    NOW,
+  );
+
+  it("stamps a firing employee once, and refuses one that is not being fired", () => {
+    const ready = markReady(firing, "qa-tester@2", NOW + 1);
+    expect(ready?.employees["qa-tester@2"]?.readyAt).toBe(NOW + 1);
+    expect(
+      markReady(ready ?? firing, "qa-tester@2", NOW + 2)?.employees["qa-tester@2"]?.readyAt,
+    ).toBe(NOW + 1);
+    expect(markReady(firing, "qa-tester", NOW)).toBeNull();
+    expect(markReady(firing, "nobody", NOW)).toBeNull();
+  });
+
+  it("drops the employees named and keeps the cooldown record", () => {
+    const left = withoutEmployees(firing, ["qa-tester@2"]);
+    expect(Object.keys(left.employees)).toEqual(["qa-tester"]);
+    expect(left.recent).toEqual(firing.recent);
+  });
+});
+
+describe("withStaffLock (#383)", () => {
+  /** @returns {string} */
+  function staffFile() {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "staff-lock-"));
+    dirs.push(dir);
+    return path.join(dir, "staff.json");
+  }
+
+  it("lets go afterwards, even after a throw", () => {
+    const file = staffFile();
+    expect(withStaffLock(file, () => fs.existsSync(`${file}.lock`))).toBe(true);
+    expect(fs.existsSync(`${file}.lock`)).toBe(false);
+    expect(() =>
+      withStaffLock(file, () => {
+        throw new Error("boom");
+      }),
+    ).toThrow("boom");
+    expect(fs.existsSync(`${file}.lock`)).toBe(false);
+  });
+
+  it("makes a writer wait, so a hire made meanwhile survives a forget", async () => {
+    const file = staffFile();
+    fs.writeFileSync(file, JSON.stringify(company(["qa-tester", "qa-tester@2"])));
+    // The other writer holds the lock for 300 ms between its read and its write.
+    const child = spawn(
+      process.execPath,
+      [
+        "-e",
+        `import(${JSON.stringify(STAFF)}).then(({ withStaffLock }) => {
+          const fs = require("node:fs");
+          withStaffLock(${JSON.stringify(file)}, () => {
+            const s = JSON.parse(fs.readFileSync(${JSON.stringify(file)}, "utf8"));
+            fs.writeFileSync(${JSON.stringify(`${file}.held`)}, "");
+            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 300);
+            s.employees["qa-tester@3"] = s.employees["qa-tester"];
+            fs.writeFileSync(${JSON.stringify(file)}, JSON.stringify(s));
+          });
+        })`,
+      ],
+      { stdio: "inherit" },
+    );
+    const exited = new Promise((resolve) => child.on("exit", resolve));
+    while (!fs.existsSync(`${file}.held`)) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    withStaffLock(file, () => {
+      const current = parseStaff(fs.readFileSync(file, "utf8"));
+      fs.writeFileSync(file, JSON.stringify(withoutEmployees(current, ["qa-tester@2"])));
+    });
+    expect(await exited).toBe(0);
+    expect(Object.keys(parseStaff(fs.readFileSync(file, "utf8")).employees).sort()).toEqual([
+      "qa-tester",
+      "qa-tester@3",
+    ]);
   });
 });

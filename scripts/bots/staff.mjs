@@ -8,7 +8,9 @@
  * role has. The first employee of a role is the bare role name, "seat 1";
  * further ones are `<role>@<n>`.
  *
- * hubd is the only writer of `staff.json`. Every decision about it is here,
+ * hubd writes `staff.json`, and the supervisor takes out the employees it
+ * has stopped (#383); both do it inside `withStaffLock`, so neither loses
+ * the other's change. Every decision about it is here,
  * as a pure function; the CLI at the bottom is what `claude-llc up` runs to
  * seed the file on the first boot and to check it on every boot.
  *
@@ -309,6 +311,85 @@ export function applyStaff(staff, request, employee, now) {
     { id: employee, change: request.verb, at: now },
   ];
   return { employees, recent };
+}
+
+/**
+ * `staff` with a firing employee marked ready: it ran `company ready`, so
+ * the supervisor may stop it (#383).
+ *
+ * @param {Staff} staff
+ * @param {string} employee
+ * @param {number} now
+ * @returns {Staff | null} `null` if `employee` is not being fired
+ */
+export function markReady(staff, employee, now) {
+  const current = staff.employees[employee];
+  if (current?.state !== "firing") {
+    return null;
+  }
+  return {
+    ...staff,
+    employees: { ...staff.employees, [employee]: { ...current, readyAt: current.readyAt ?? now } },
+  };
+}
+
+/**
+ * `staff` without the employees in `gone`: the supervisor stopped them (#383).
+ * Their entries in `recent` stay, for the cooldowns.
+ *
+ * @param {Staff} staff
+ * @param {readonly string[]} gone
+ * @returns {Staff}
+ */
+export function withoutEmployees(staff, gone) {
+  return {
+    ...staff,
+    employees: Object.fromEntries(
+      Object.entries(staff.employees).filter(([id]) => !gone.includes(id)),
+    ),
+  };
+}
+
+/** How long to wait for the lock before giving up. */
+const LOCK_WAIT_MS = 5_000;
+
+/**
+ * Run `change`, which reads, modifies and writes `file`, while holding the
+ * one lock of `staff.json`. hubd and the supervisor both write it, and a
+ * read-modify-write of one that runs between the other's read and rename
+ * would lose that change. The lock is a directory: `mkdir` is atomic. One
+ * left behind by a crash is removed by hand: taking it over would let two
+ * waiters steal it from each other.
+ *
+ * @template T
+ * @param {string} file `staff.json`
+ * @param {() => T} change
+ * @returns {T}
+ */
+export function withStaffLock(file, change) {
+  const lock = `${file}.lock`;
+  const give = Date.now() + LOCK_WAIT_MS;
+  for (;;) {
+    try {
+      fs.mkdirSync(lock);
+      break;
+    } catch (error) {
+      if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) {
+        throw error;
+      }
+      if (Date.now() > give) {
+        throw new Error(`${lock} is held; if no process is changing staff.json, remove it`, {
+          cause: error,
+        });
+      }
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 20);
+    }
+  }
+  try {
+    return change();
+  } finally {
+    fs.rmdirSync(lock);
+  }
 }
 
 /**
