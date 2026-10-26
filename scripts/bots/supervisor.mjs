@@ -28,7 +28,8 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 import { parseAlive } from "./hub-health.mjs";
 import { releaseLock, takeLock } from "./instance-lock.mjs";
-import { descendants, reconcile } from "./reconcile.mjs";
+import { tellCompany } from "./agent-loop.mjs";
+import { MANAGER_WINDOW_MS, descendants, managerAction, reconcile } from "./reconcile.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { betweenTurns, drainStep, parseReboot } from "./reboot.mjs";
 import { parseStaff, withoutEmployees, withStaffLock } from "./staff.mjs";
@@ -44,8 +45,18 @@ const STAFF = path.join(ROOT, "staff.json");
 const REBOOT = path.join(ROOT, "reboot.json");
 /** The same record, once handed to the restarter. */
 const REBOOTING = path.join(ROOT, "rebooting.json");
+/** Written by `claude-llc stop` before it kills the session, removed by `up`. */
+const STOPPING = path.join(ROOT, "stopping");
+/** When the manager was restarted, for the backoff and the dashboard. */
+const MANAGER_RESTARTS = path.join(ROOT, "manager-restarts.json");
 /** `claude-llc-restart`, which claude-llc passes in. */
 const RESTARTER = process.env.VIBEWARS_LLC_RESTART;
+
+/** How long after starting the supervisor leaves a missing manager to the boot. */
+const BOOT_GRACE_MS = 30_000;
+
+/** How long the restarts are kept, for the dashboard. */
+const RESTARTS_KEPT_MS = 24 * 60 * 60_000;
 
 /** How often to look at the reboot record and the agents. */
 const SAMPLE_MS = 5_000;
@@ -199,6 +210,62 @@ async function reconcilePanes(started) {
 }
 
 /**
+ * Keep one manager running (#384): start it again when its pane is gone, and
+ * tell the company. The restarts of the last day are in
+ * `manager-restarts.json`, `{ "restarts": [time, ...] }`, which only the
+ * supervisor writes; an unreadable file counts as no restarts.
+ *
+ * @param {number} since when this supervisor started
+ * @returns {void}
+ */
+function keepManager(since) {
+  const now = Date.now();
+  if (now - since < BOOT_GRACE_MS) {
+    return;
+  }
+  const record = readJson(MANAGER_RESTARTS);
+  const kept =
+    typeof record === "object" && record !== null && "restarts" in record
+      ? /** @type {unknown} */ (record.restarts)
+      : [];
+  /** @type {number[]} */
+  const restarts = Array.isArray(kept)
+    ? /** @type {unknown[]} */ (kept).flatMap((at) =>
+        typeof at === "number" && now - at < RESTARTS_KEPT_MS ? [at] : [],
+      )
+    : [];
+  const action = managerAction({
+    reboot: fs.existsSync(REBOOT) || fs.existsSync(REBOOTING),
+    stopping: fs.existsSync(STOPPING),
+    paneAlive: employeePanes().some(({ employee }) => employee === "manager"),
+    recentRestarts: restarts.filter((at) => now - at < MANAGER_WINDOW_MS),
+    now,
+  });
+  if (action === "none") {
+    return;
+  }
+  const result = spawnSync("claude-llc", ["start-employee", "manager"], { encoding: "utf8" });
+  if (result.status !== 0) {
+    console.error(`supervisor: could not start the manager: ${result.stderr}`);
+    return;
+  }
+  fs.writeFileSync(
+    `${MANAGER_RESTARTS}.part`,
+    `${JSON.stringify({ restarts: [...restarts, now] })}\n`,
+  );
+  fs.renameSync(`${MANAGER_RESTARTS}.part`, MANAGER_RESTARTS);
+  console.error("supervisor: the manager was not running; started it");
+  tellCompany(ROOT, "manager-restarted", "⚠️ System: manager was not running; restarted");
+  if (action === "start-backoff") {
+    tellCompany(
+      ROOT,
+      "manager-backoff",
+      "⚠️ System: manager keeps stopping; restarting it at most every 5 minutes",
+    );
+  }
+}
+
+/**
  * @param {string} file
  * @returns {unknown}
  */
@@ -270,10 +337,12 @@ async function main() {
   let drain = null;
   /** @type {Map<string, number>} */
   const started = new Map();
+  const since = Date.now();
 
   for (;;) {
     try {
       await reconcilePanes(started);
+      keepManager(since);
     } catch (error) {
       console.error(`supervisor: reconciling the panes failed: ${String(error)}`);
     }

@@ -8,7 +8,8 @@
  *   agent-loop.mjs wait <employee> <seconds>
  *       return after `seconds`, or sooner once the employee has unread mail
  *   agent-loop.mjs gave-up <employee>
- *       tell the company the loop has stopped for good
+ *       tell the company the loop has stopped for good; the manager's keeps
+ *       trying (#384), and the message says so
  *   agent-loop.mjs limited <employee> <state-dir> <previous>
  *       print how long to wait out Claude's usage limit (`limitPause`),
  *       and tell the company, once for all roles (#308)
@@ -214,7 +215,7 @@ function clock(until) {
  * @param {string} text
  * @returns {void}
  */
-function tellCompany(root, name, text) {
+export function tellCompany(root, name, text) {
   const outbox = path.join(root, "bus", SYSTEM, "outbox");
   fs.mkdirSync(outbox, { recursive: true });
   const file = `${String(Date.now())}-${name}.json`;
@@ -223,6 +224,22 @@ function tellCompany(root, name, text) {
     JSON.stringify({ to: "all", text, nudge: null }),
   );
   fs.renameSync(path.join(outbox, `.${file}.part`), path.join(outbox, file));
+}
+
+/**
+ * What the company is told when an employee's loop fails five runs in a row.
+ * The manager's loop does not stop, since a company without one cannot be
+ * steered (#384): it tries again at the longest pause.
+ *
+ * @param {string} employee
+ * @returns {string}
+ */
+export function gaveUpText(employee) {
+  return roleOf(employee) === "manager"
+    ? `${employee} failed five runs in a row. It keeps trying every ${String(PAUSE_MAX / 60)} minutes; ` +
+        "its window says why."
+    : `${employee} failed five runs in a row and is stopped. Its window says why; ` +
+        `restart it there with: claude-llc-agent ${employee}`;
 }
 
 /**
@@ -356,12 +373,7 @@ async function main() {
   }
   if (command === "gave-up") {
     const employee = employeeName(args[0]);
-    tellCompany(
-      env("VIBEWARS_BOT_ROOT"),
-      `${employee}-stopped`,
-      `${employee} failed five runs in a row and is stopped. Its window says why; ` +
-        `restart it there with: claude-llc-agent ${employee}`,
-    );
+    tellCompany(env("VIBEWARS_BOT_ROOT"), `${employee}-stopped`, gaveUpText(employee));
     return;
   }
   if (command === "limited") {
