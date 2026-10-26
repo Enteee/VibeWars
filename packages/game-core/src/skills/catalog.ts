@@ -255,15 +255,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       onBlocked: [],
     },
     whileActivating: undefined,
-    // The real elite: Daze the target, and interrupt them if they were
-    // casting. Both halves are now genuinely implementable — this is the
-    // archetypal "shut down a caster" skill the whole interrupt mechanic
-    // exists for. Both land with the arrow (#416). (The real arrow also
-    // flies slower; per-skill arrow speeds are not modelled.)
-    effects: [
-      { kind: "interrupt" },
-      { kind: "apply-status", statusId: "dazed", durationSeconds: 17 },
-    ],
+    // The real elite: Daze the target. Applying Dazed interrupts a spell
+    // by itself (#546), so it still shuts a caster down, a spell-caster
+    // only. It lands with the arrow (#416). (The real arrow also flies
+    // slower; per-skill arrow speeds are not modelled.)
+    effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 17 }],
   },
   {
     id: "necromancer.faintheartedness",

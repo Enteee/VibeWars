@@ -832,3 +832,135 @@ describe("attackDurationSeconds", () => {
     expect(attackDurationSeconds(sword, 1.33)).toBe(1.33);
   });
 });
+
+describe("daze (#546)", () => {
+  /** A dazed foe in the middle of `skillId`'s cast. */
+  function dazedCasting(skillId: string, dazed = true) {
+    const target = foe("caster");
+    const skill = getSkill(skillId);
+    if (skill === undefined) {
+      throw new Error(`unknown skill ${skillId}`);
+    }
+    target.combatant.cast.beginCast(skill.id, "attacker", 2, skill.whileActivating);
+    if (dazed) {
+      target.combatant.statuses.apply("dazed", 10, "attacker");
+    }
+    return target;
+  }
+
+  const swingAt = (target: ReturnType<typeof foe>, sword: Combatant) =>
+    resolveSwing({
+      attacker: sword,
+      target,
+      candidates: [],
+      rng: createRng(1),
+      rules: RULES,
+      exposed: NOWHERE,
+    });
+
+  it("a swing landing on a dazed spell-caster interrupts the spell, before the damage", () => {
+    const target = dazedCasting("elementalist.fireball");
+    const events = swingAt(target, attacker(WEAPONS.sword, "warrior.swordsmanship"));
+    expect(events.map((event) => event.kind).slice(0, 2)).toEqual(["interrupted", "damage"]);
+    expect(events[0]).toEqual({
+      kind: "interrupted",
+      targetId: "caster",
+      skillId: "elementalist.fireball",
+    });
+    expect(target.combatant.cast.isCasting).toBe(false);
+    // Interrupted, it recharges as if it had been used.
+    expect(target.combatant.cast.rechargeRemaining.has("elementalist.fireball")).toBe(true);
+  });
+
+  it("a hex or an enchantment is a spell too", () => {
+    for (const skillId of ["necromancer.faintheartedness", "monk.guardian"]) {
+      const target = dazedCasting(skillId);
+      swingAt(target, attacker(WEAPONS.sword, "warrior.swordsmanship"));
+      expect(target.combatant.cast.isCasting, skillId).toBe(false);
+    }
+  });
+
+  it("leaves a dazed signet or skill cast alone", () => {
+    for (const skillId of ["warrior.healing-signet", "ranger.troll-unguent"]) {
+      const target = dazedCasting(skillId);
+      const events = swingAt(target, attacker(WEAPONS.sword, "warrior.swordsmanship"));
+      expect(
+        events.map((event) => event.kind),
+        skillId,
+      ).not.toContain("interrupted");
+      expect(target.combatant.cast.isCasting, skillId).toBe(true);
+    }
+  });
+
+  it("does not interrupt a spell-caster who is not dazed", () => {
+    const target = dazedCasting("elementalist.fireball", false);
+    swingAt(target, attacker(WEAPONS.sword, "warrior.swordsmanship"));
+    expect(target.combatant.cast.isCasting).toBe(true);
+  });
+
+  it("a blind miss does not interrupt", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    sword.statuses.apply("blind", 10, "caster");
+    // The first seed whose swing misses: blind misses nine in ten.
+    for (let seed = 1; seed < 20; seed += 1) {
+      const target = dazedCasting("elementalist.fireball");
+      const events = resolveSwing({
+        attacker: sword,
+        target,
+        candidates: [],
+        rng: createRng(seed),
+        rules: RULES,
+        exposed: NOWHERE,
+      });
+      if (events[0]?.kind === "attack-missed") {
+        expect(events.map((event) => event.kind)).toEqual(["attack-missed"]);
+        expect(target.combatant.cast.isCasting).toBe(true);
+        return;
+      }
+    }
+    throw new Error("no seed missed");
+  });
+
+  it("a block does not interrupt", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    // The first seed whose swing Guardian blocks: half are.
+    for (let seed = 1; seed < 20; seed += 1) {
+      const target = dazedCasting("elementalist.fireball");
+      target.combatant.statuses.apply("guardian", 10, "caster");
+      const events = resolveSwing({
+        attacker: sword,
+        target,
+        candidates: [],
+        rng: createRng(seed),
+        rules: RULES,
+        exposed: NOWHERE,
+      });
+      if (events[0]?.kind === "attack-blocked") {
+        expect(events.map((event) => event.kind)).not.toContain("interrupted");
+        expect(target.combatant.cast.isCasting).toBe(true);
+        return;
+      }
+    }
+    throw new Error("no seed blocked");
+  });
+
+  it("an attack skill's blow interrupts too", () => {
+    const target = dazedCasting("elementalist.fireball");
+    const chop = getSkill("warrior.swift-chop");
+    if (chop === undefined) {
+      throw new Error("no Swift Chop");
+    }
+    const events = resolveAttackSkill(
+      {
+        skill: chop,
+        caster: attacker(WEAPONS.axe, "warrior.axe-mastery"),
+        targets: [target.combatant],
+        rng: createRng(1),
+        rules: RULES,
+      },
+      NOWHERE,
+    );
+    expect(events[0]?.kind).toBe("interrupted");
+    expect(target.combatant.cast.isCasting).toBe(false);
+  });
+});

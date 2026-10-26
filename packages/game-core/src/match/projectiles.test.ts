@@ -448,6 +448,33 @@ describe("walls along the flight (#215)", () => {
   });
 });
 
+describe("a landing arrow and daze (#546)", () => {
+  it("interrupts a dazed target casting a spell, before the damage", () => {
+    const match = sim();
+    fire(match);
+    const victim = get(match, "target").combatant;
+    victim.statuses.apply("dazed", 1000, "archer");
+    victim.cast.beginCast("elementalist.fireball", "archer", 10, undefined);
+    expect(
+      land(match)
+        .events.map((event) => event.kind)
+        .slice(0, 2),
+    ).toEqual(["interrupted", "damage"]);
+    expect(victim.cast.isCasting).toBe(false);
+  });
+
+  it("leaves a dazed target that steps aside casting", () => {
+    const match = sim();
+    fire(match, UP);
+    match.setInputDirection("target", DOWN);
+    const victim = get(match, "target").combatant;
+    victim.statuses.apply("dazed", 1000, "archer");
+    victim.cast.beginCast("elementalist.fireball", "archer", 10, undefined);
+    expect(land(match).events).toEqual([{ kind: "attack-dodged", targetId: "target" }]);
+    expect(victim.cast.isCasting).toBe(true);
+  });
+});
+
 describe("ranged attack skills fly (#416)", () => {
   const BROAD_HEAD = "ranger.broad-head-arrow";
   const BARRAGE = "ranger.barrage";
@@ -515,7 +542,7 @@ describe("ranged attack skills fly (#416)", () => {
 
     const landed = landSkill(match);
     expect(landed).toMatchObject({ cause: "skill", skillId: BROAD_HEAD, sourceId: "archer" });
-    expect(kinds(landed)).toEqual(["damage", "interrupt-missed", "status-applied"]);
+    expect(kinds(landed)).toEqual(["damage", "status-applied"]);
     expect(get(match, "target").combatant.statuses.has("dazed")).toBe(true);
   });
 
