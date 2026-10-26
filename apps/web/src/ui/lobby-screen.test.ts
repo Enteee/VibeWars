@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { LobbySnapshot } from "@vibewars/game-session";
 
-import { MATCH_RUNNING_NOTICE, displayLobbyCode, lobbyControls } from "./lobby-screen.js";
+import { MATCH_RUNNING_NOTICE, displayLobbyCode, lobbyControls, mapLabel } from "./lobby-screen.js";
 
 function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
   return {
@@ -67,5 +67,13 @@ describe("lobbyControls", () => {
 describe("displayLobbyCode", () => {
   it("reads a six-letter code as two halves, the way it is read aloud", () => {
     expect(displayLobbyCode("ACDEFG")).toBe("ACD-EFG");
+  });
+});
+
+describe("mapLabel (#444)", () => {
+  it("names an arena, then how big it plays", () => {
+    expect(mapLabel({ id: "arena-long-hall", name: "Long Hall", size: "large" })).toBe(
+      "Long Hall (large)",
+    );
   });
 });

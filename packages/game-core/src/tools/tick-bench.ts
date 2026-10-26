@@ -91,14 +91,17 @@ export interface TickBench {
   readonly moved: ReadonlyMap<string, { readonly from: Vec2; readonly to: Vec2 }>;
 }
 
-/** Run `ticks` steps of the dense field, timing each one on `now` (ms), e.g. `performance.now`. */
+/**
+ * Run `ticks` steps of `field`, `DENSE_FIELD` or an arena's (#444),
+ * timing each one on `now` (ms), e.g. `performance.now`.
+ */
 export function runTickBench(options: {
   readonly ticks: number;
   readonly seed: string;
   readonly now: () => number;
-  readonly field?: BenchField;
+  readonly field: BenchField;
 }): TickBench {
-  const field = options.field ?? DENSE_FIELD;
+  const { field } = options;
   const sim = benchMatch(field, options.seed);
   const dt = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
   const tickMs: number[] = [];

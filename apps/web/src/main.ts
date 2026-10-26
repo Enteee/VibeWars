@@ -1,3 +1,4 @@
+import { sizeClass } from "@vibewars/game-maps/size-class";
 import type { LobbyConnection, MatchStarting } from "@vibewars/game-session";
 
 import { ARENA_MAPS } from "./net/maps.js";
@@ -91,7 +92,11 @@ async function main(): Promise<void> {
   const teams = new TeamRepository(store);
 
   // The arenas a host can pick, built into the client (#403).
-  const availableMaps = ARENA_MAPS.map((map) => ({ id: map.id, name: map.name }));
+  const availableMaps = ARENA_MAPS.map((map) => ({
+    id: map.id,
+    name: map.name,
+    size: sizeClass(map),
+  }));
 
   let lobby: LobbyConnection | undefined;
   /** The lobby this tab hosts, while it hosts one: leaving it ends it for everyone. */

@@ -21,16 +21,18 @@ const WARM_UP = 50;
 describe("the tick bench (#542)", () => {
   it("runs the dense field: 252 wall segments, and every fighter moves", () => {
     expect(DENSE_FIELD.walls).toHaveLength(252);
-    const { tickMs, moved } = runTickBench({ ticks: 40, seed: "bench", now });
+    const { tickMs, moved } = runTickBench({ ticks: 40, seed: "bench", now, field: DENSE_FIELD });
     expect(tickMs).toHaveLength(40);
     for (const [id, { from, to }] of moved) {
       expect(Math.hypot(to.x - from.x, to.y - from.y), id).toBeGreaterThan(0);
     }
   });
 
+  // An arena's own bench is game-maps' (`map-bench.test.ts`, #444): game-core has no maps.
   const ticks = Number(process.env.BENCH_TICKS ?? "0");
-  it.runIf(ticks > WARM_UP)(`times ${String(ticks)} ticks`, () => {
-    const { tickMs } = runTickBench({ ticks, seed: "bench", now });
+  const dense = (process.env.BENCH_MAP ?? "dense") === "dense";
+  it.runIf(ticks > WARM_UP && dense)(`times ${String(ticks)} ticks`, () => {
+    const { tickMs } = runTickBench({ ticks, seed: "bench", now, field: DENSE_FIELD });
     const { p50, p95, max } = tickStats(tickMs.slice(WARM_UP));
     console.log(
       `ticks ${String(WARM_UP)}–${String(ticks)}: p50 ${p50.toFixed(3)} ms, p95 ${p95.toFixed(3)} ms, max ${max.toFixed(3)} ms`,

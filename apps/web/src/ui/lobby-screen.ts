@@ -60,12 +60,24 @@ export function lobbyControls(snapshot: LobbySnapshot): LobbyControls {
   };
 }
 
+/** An arena the host may pick, and how big it plays (#444). */
+export interface LobbyMap {
+  readonly id: string;
+  readonly name: string;
+  readonly size: string;
+}
+
+/** The arena as the picker names it: its name, then its size class, e.g. "Long Hall (large)". */
+export function mapLabel(map: LobbyMap): string {
+  return `${map.name} (${map.size})`;
+}
+
 export function renderLobbyScreen(
   root: HTMLElement,
   snapshot: LobbySnapshot,
   callbacks: LobbyScreenCallbacks,
   notice: string | undefined,
-  availableMaps: readonly { readonly id: string; readonly name: string }[] = [],
+  availableMaps: readonly LobbyMap[] = [],
 ): void {
   root.replaceChildren();
   const panel = h("div", "screen screen-lobby");
@@ -87,7 +99,7 @@ export function renderLobbyScreen(
     for (const map of availableMaps) {
       const option = document.createElement("option");
       option.value = map.id;
-      option.textContent = map.name;
+      option.textContent = mapLabel(map);
       select.appendChild(option);
     }
     select.value = snapshot.mapId;
@@ -99,7 +111,9 @@ export function renderLobbyScreen(
     panel.appendChild(mapRow);
   } else {
     const current = availableMaps.find((map) => map.id === snapshot.mapId);
-    panel.appendChild(h("div", "lobby-map", `map: ${current?.name ?? snapshot.mapId}`));
+    panel.appendChild(
+      h("div", "lobby-map", `map: ${current === undefined ? snapshot.mapId : mapLabel(current)}`),
+    );
   }
 
   if (notice !== undefined) {

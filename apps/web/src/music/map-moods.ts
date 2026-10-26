@@ -15,6 +15,11 @@ const MOODS: ReadonlyMap<string, readonly Mood[]> = new Map<string, readonly Moo
   ["arena-open", ["action", "adventurous"]],
   ["arena-pillars", ["dark"]],
   ["arena-split", ["mysterious"]],
+  // #444's arenas (asset-designer).
+  ["arena-ring", ["epic", "action"]],
+  ["arena-crossroads", ["action"]],
+  ["arena-long-hall", ["dark", "mysterious"]],
+  ["arena-canyon", ["adventurous", "epic"]],
 ]);
 
 /** Played where the table has nothing: a map this client does not know. */

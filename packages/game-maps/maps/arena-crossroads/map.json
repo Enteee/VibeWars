@@ -1,0 +1,136 @@
+{
+  "id": "arena-crossroads",
+  "name": "Crossroads",
+  "width": 2600,
+  "height": 2600,
+  "walls": [
+    {
+      "kind": "rect",
+      "x": 0,
+      "y": 0,
+      "width": 900,
+      "height": 900
+    },
+    {
+      "kind": "rect",
+      "x": 1700,
+      "y": 1700,
+      "width": 900,
+      "height": 900
+    },
+    {
+      "kind": "rect",
+      "x": 1700,
+      "y": 0,
+      "width": 900,
+      "height": 900
+    },
+    {
+      "kind": "rect",
+      "x": 0,
+      "y": 1700,
+      "width": 900,
+      "height": 900
+    },
+    {
+      "kind": "rect",
+      "x": 1200,
+      "y": 1000,
+      "width": 200,
+      "height": 80
+    },
+    {
+      "kind": "rect",
+      "x": 1200,
+      "y": 1520,
+      "width": 200,
+      "height": 80
+    },
+    {
+      "kind": "rect",
+      "x": 1000,
+      "y": 1260,
+      "width": 80,
+      "height": 80
+    },
+    {
+      "kind": "rect",
+      "x": 1520,
+      "y": 1260,
+      "width": 80,
+      "height": 80
+    },
+    {
+      "kind": "rect",
+      "x": 1260,
+      "y": 300,
+      "width": 80,
+      "height": 200
+    },
+    {
+      "kind": "rect",
+      "x": 1260,
+      "y": 2100,
+      "width": 80,
+      "height": 200
+    }
+  ],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "position": {
+        "x": 160,
+        "y": 1160
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 160,
+        "y": 1300
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 160,
+        "y": 1440
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 290,
+        "y": 1300
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2440,
+        "y": 1440
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2440,
+        "y": 1300
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2440,
+        "y": 1160
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2310,
+        "y": 1300
+      }
+    }
+  ]
+}

@@ -5,8 +5,9 @@
   "height": 640,
   "walls": [
     { "kind": "rect", "x": 440, "y": 0, "width": 24, "height": 260 },
-    { "kind": "rect", "x": 440, "y": 380, "width": 24, "height": 260 },
-    { "kind": "rect", "x": 300, "y": 300, "width": 120, "height": 24 }
+    { "kind": "rect", "x": 496, "y": 380, "width": 24, "height": 260 },
+    { "kind": "rect", "x": 300, "y": 300, "width": 120, "height": 24 },
+    { "kind": "rect", "x": 540, "y": 316, "width": 120, "height": 24 }
   ],
   "spawnPoints": [
     { "team": 0, "position": { "x": 80, "y": 200 } },

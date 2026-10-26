@@ -1,8 +1,12 @@
 import { allWallSegments } from "@vibewars/game-maps/geometry";
 import { validateMapData, type MapData } from "@vibewars/game-maps/schema";
 import arenaAlpha from "@vibewars/game-maps/maps/arena-alpha/map.json" with { type: "json" };
+import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
+import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
+import arenaLongHall from "@vibewars/game-maps/maps/arena-long-hall/map.json" with { type: "json" };
 import arenaOpen from "@vibewars/game-maps/maps/arena-open/map.json" with { type: "json" };
 import arenaPillars from "@vibewars/game-maps/maps/arena-pillars/map.json" with { type: "json" };
+import arenaRing from "@vibewars/game-maps/maps/arena-ring/map.json" with { type: "json" };
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
 import type { HostMap } from "@vibewars/game-session";
 
@@ -14,9 +18,17 @@ import type { HostMap } from "@vibewars/game-session";
  * Vite inlines the JSON, and it is validated here, at module load, as
  * `training/maps.ts` does for the training arenas.
  */
-export const ARENA_MAPS: readonly MapData[] = [arenaAlpha, arenaOpen, arenaPillars, arenaSplit].map(
-  (raw) => validateMapData(raw),
-);
+export const ARENA_MAPS: readonly MapData[] = [
+  // The small four, then #444's, smallest first.
+  arenaAlpha,
+  arenaOpen,
+  arenaPillars,
+  arenaSplit,
+  arenaRing,
+  arenaCrossroads,
+  arenaCanyon,
+  arenaLongHall,
+].map((raw) => validateMapData(raw));
 
 /** The arena a new lobby starts on, the server's default before (#403). */
 export const DEFAULT_ARENA_ID = "arena-alpha";
