@@ -36,6 +36,7 @@ import process from "node:process";
 import readline from "node:readline";
 
 import { withJailDir } from "./jail-fs.mjs";
+import { peekWriter } from "./peek.mjs";
 import {
   backgroundedIdsOf,
   contextOf,
@@ -54,6 +55,39 @@ if (state === undefined || separator !== "--" || command === undefined) {
 }
 const SESSION = path.join(state, "session-id");
 const ROLE = process.env.VIBEWARS_BOT_ROLE ?? path.basename(state);
+
+/**
+ * What the manager's `peek` reads (#19): every line this prints, as the pane
+ * shows it. Unset in tests that do not look.
+ */
+const PEEK_DIR = process.env.VIBEWARS_PEEK_DIR ?? "";
+const peek = PEEK_DIR === "" ? null : peekWriter(PEEK_DIR, ROLE);
+
+/**
+ * A line for the pane and for `peek`.
+ *
+ * @param {string} out
+ * @param {"out" | "err"} [stream]
+ * @returns {void}
+ */
+function show(out, stream = "out") {
+  if (stream === "out") {
+    process.stdout.write(`${out}\n`);
+  } else {
+    console.error(out);
+  }
+  peek?.line(out);
+}
+
+/**
+ * @param {number} code
+ * @param {"between" | "limited"} state
+ * @returns {never}
+ */
+function quit(code, state) {
+  peek?.finish(state);
+  process.exit(code);
+}
 
 /** How many raw lines of a failed run `last-failure.jsonl` keeps. */
 const FAILURE_LINES = 20;
@@ -182,6 +216,7 @@ if (CONTEXT_FILE !== "") {
 // So a file left from the last session never turns this one away.
 saveContext(0);
 const resume = savedSession();
+peek?.state("turn");
 const child = spawn(command, [...(resume === null ? [] : ["--resume", resume]), ...args], {
   stdio: ["inherit", "pipe", "inherit"],
 });
@@ -205,7 +240,7 @@ const rewind = { to: null };
  * @returns {void}
  */
 function backgrounded(command) {
-  console.log("⚠ tg wait went to the background; inbox rewound");
+  show("⚠ tg wait went to the background; inbox rewound");
   try {
     fs.appendFileSync(
       path.join(state, "backgrounded-waits.jsonl"),
@@ -261,7 +296,7 @@ lines.on("line", (line) => {
     saveContext(context);
   }
   for (const out of formatLine(line)) {
-    process.stdout.write(`${out}\n`);
+    show(out);
   }
 });
 
@@ -289,24 +324,26 @@ if (seen.limit !== null) {
   const { until } = seen.limit;
   writeAtomically(path.join(state, "limited-until"), until === null ? "" : `${String(until)}\n`);
   writeAtomically(path.join(state, "usage-limit-sample.json"), `${seen.limitLine}\n`);
-  console.error(`agent-turn: Claude usage limit reached; ${resetText(until)}`);
-  process.exit(3);
+  show(`agent-turn: Claude usage limit reached; ${resetText(until)}`, "err");
+  quit(3, "limited");
 }
 if (seen.context >= CONTEXT_CEILING) {
   fs.rmSync(SESSION, { force: true });
-  console.error(
+  show(
     `agent-turn: context ${kilo(seen.context)} >= ${kilo(CONTEXT_CEILING)}; next turn starts a fresh session`,
+    "err",
   );
 }
 if (!runFailed({ code, sawResult: seen.result })) {
-  process.exit(0);
+  quit(0, "between");
 }
 writeAtomically(path.join(state, "last-failure.jsonl"), recent.map((line) => `${line}\n`).join(""));
 if (!seen.init && resume !== null) {
   fs.rmSync(SESSION, { force: true });
-  console.error(`agent-turn: could not resume session ${resume}; the next turn starts a new one`);
+  show(`agent-turn: could not resume session ${resume}; the next turn starts a new one`, "err");
 }
-console.error(
+show(
   `agent-turn: the run failed (${code === null ? "killed by a signal" : `exit ${String(code)}`}${seen.result ? "" : ", no result"})`,
+  "err",
 );
-process.exit(1);
+quit(1, "between");
