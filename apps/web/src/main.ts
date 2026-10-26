@@ -400,7 +400,7 @@ async function main(): Promise<void> {
     } catch (error) {
       console.warn("[web] could not join the lobby", error);
       hosted = undefined;
-      menuNotice = joinFailureNotice(error);
+      menuNotice = joinFailureNotice(error, location);
       showMenu();
       // After showMenu, which would put the status back to "ready".
       setStatus("could not join", "error");

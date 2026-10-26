@@ -33,14 +33,23 @@ import { joinRoom } from "./transport/index.js";
  * lobby is here.
  */
 
-/** How long a joiner waits for the lobby host to answer. */
-export const JOIN_TIMEOUT_MS = 10_000;
+/**
+ * How long a joiner waits for the lobby host to answer: longer than
+ * Trystero's own 15 s for ICE (#707), so a slow but working path is not cut
+ * off before it gives up. The menu says "Connecting…" meanwhile.
+ */
+export const JOIN_TIMEOUT_MS = 20_000;
 /** How long a seated player waits for the match host to let them in. */
 const MATCH_TIMEOUT_MS = 10_000;
 
 /** #15's wording: a wrong code and an unreachable host cannot be told apart. */
 export const NO_ANSWER_MESSAGE =
   "No lobby answered that code. Check it; if it is right, your network may be blocking peer-to-peer connections.";
+/** No relay socket opened: the joiner never got as far as looking (#707). */
+export const NO_RELAY_MESSAGE = "Couldn't reach the lobby servers. Check your internet connection.";
+/** A host was found and offered a connection that never came up (#707). */
+export const PEER_UNREACHABLE_MESSAGE =
+  "Found the lobby, but couldn't connect to its host. One of your networks blocks direct connections.";
 export const LOBBY_FULL_MESSAGE = "That lobby is full.";
 export const HOST_CLOSED_MESSAGE = "The host closed the lobby.";
 /** True whichever side dropped: a guest cannot tell its own drop from the host's. */
@@ -134,10 +143,41 @@ export async function joinLobbyByCode(code: string, name: string): Promise<Lobby
   }
 }
 
-/** What the menu says when hosting or joining failed with `error`. */
-export function joinFailureNotice(error: unknown): string {
+/**
+ * The second line of `PEER_UNREACHABLE_MESSAGE` on a page that may have
+ * come over IPv6 loopback (#707): Firefox gathers no ICE candidates there,
+ * and `localhost` goes to `::1` first when something listens on it.
+ * Nothing redirects, since saved characters live with the origin and
+ * would seem lost.
+ */
+export function loopbackHint(port: string): string {
+  return `Firefox can't connect over IPv6 loopback (::1). Open http://127.0.0.1${port === "" ? "" : `:${port}`} instead.`;
+}
+
+/** Hostnames a page may have reached over `::1`. */
+const IPV6_LOOPBACK_NAMES: readonly string[] = ["localhost", "[::1]"];
+
+/**
+ * What the menu says when hosting or joining failed with `error`, on the
+ * page at `where` (the app passes `location`).
+ */
+export function joinFailureNotice(
+  error: unknown,
+  where: { readonly hostname: string; readonly port: string },
+): string {
   if (error instanceof LobbyNoAnswerError) {
-    return NO_ANSWER_MESSAGE;
+    // As far as the join got: past that, a wrong code and an unreachable
+    // host still cannot be told apart.
+    switch (error.trouble) {
+      case "no-relay":
+        return NO_RELAY_MESSAGE;
+      case "peer-unreachable":
+        return IPV6_LOOPBACK_NAMES.includes(where.hostname)
+          ? `${PEER_UNREACHABLE_MESSAGE}\n${loopbackHint(where.port)}`
+          : PEER_UNREACHABLE_MESSAGE;
+      case null:
+        return NO_ANSWER_MESSAGE;
+    }
   }
   if (error instanceof LobbyRefusedError) {
     switch (error.reason) {

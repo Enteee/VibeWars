@@ -7,7 +7,7 @@
 export { MAX_MESSAGE_BYTES, messageBytes, sizeChecked } from "./transport.js";
 export { packCombat } from "./combat-batches.js";
 export { packSnapshot, snapshotAssembler } from "./snapshot-parts.js";
-export type { Transport } from "./transport.js";
+export type { Transport, TransportTrouble } from "./transport.js";
 
 export { NO_CALLS } from "./match-connection.js";
 export { CALL_INTERVAL_SECONDS, PING_SECONDS, createCallBoard } from "./calls.js";

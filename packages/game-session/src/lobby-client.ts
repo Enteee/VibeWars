@@ -19,7 +19,7 @@ import type {
 } from "./lobby-connection.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { scopeTransport } from "./scoped-transport.js";
-import type { Transport } from "./transport.js";
+import type { Transport, TransportTrouble } from "./transport.js";
 
 /**
  * A lobby on another peer's browser, as the lobby screen sees every
@@ -34,9 +34,17 @@ import type { Transport } from "./transport.js";
 
 /** Nobody answered: a wrong code, or a host that cannot be reached. */
 export class LobbyNoAnswerError extends Error {
-  public constructor(timeoutMs: number) {
+  /**
+   * The last trouble the transport said before the timeout (#707): how
+   * far the join got, so the player is told which part failed. `null`
+   * when it said none.
+   */
+  public readonly trouble: TransportTrouble | null;
+
+  public constructor(timeoutMs: number, trouble: TransportTrouble | null) {
     super(`No lobby answered within ${String(timeoutMs / 1000)} s.`);
     this.name = "LobbyNoAnswerError";
+    this.trouble = trouble;
   }
 }
 
@@ -131,8 +139,10 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   });
 
   return new Promise((resolve, reject) => {
+    /** Until the join settles; trouble after it is the match's to handle (#596). */
+    let trouble: TransportTrouble | null = null;
     const timer = setTimeout(() => {
-      failJoin?.(new LobbyNoAnswerError(timeoutMs));
+      failJoin?.(new LobbyNoAnswerError(timeoutMs, trouble));
     }, timeoutMs);
     failJoin = (error) => {
       failJoin = undefined;
@@ -181,6 +191,11 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     };
 
     unsubscribe.push(
+      transport.onTrouble((said) => {
+        if (failJoin !== undefined) {
+          trouble = said;
+        }
+      }),
       transport.on("lobby-state", (data, from) => {
         // Only the host's, once it is known; before that, only a state the
         // sender says it hosts, and that lists this player.

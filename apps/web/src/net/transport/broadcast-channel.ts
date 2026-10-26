@@ -148,6 +148,8 @@ export function joinBroadcastRoom(code: string): Transport {
     on: (on, handler) => handlers.on(on, handler),
     onPeerJoin: (handler) => handlers.onPeerJoin(handler),
     onPeerLeave: (handler) => handlers.onPeerLeave(handler),
+    // One browser, no network: nothing to have trouble with.
+    onTrouble: (handler) => handlers.onTrouble(handler),
     leave() {
       if (!left) {
         post({ kind: "bye", from: selfId });

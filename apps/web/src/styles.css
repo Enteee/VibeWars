@@ -439,6 +439,17 @@ body {
 }
 
 /* One muted line under host and join (#541): read, not clicked through. */
+/* A failed join can say two things, a line each (#707). */
+.screen-connection-problem {
+  white-space: pre-line;
+}
+
+/* A join that is taking a while (#707). */
+.menu-connecting {
+  margin: 0;
+  color: var(--accent);
+}
+
 .menu-peer-notice {
   margin: 0;
   color: var(--ink-dim);

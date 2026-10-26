@@ -41,8 +41,16 @@ export default defineConfig({
   },
   // The music host has an opaque origin, so its own module scripts and
   // samples are cross-origin fetches with `Origin: null` (ADR-0028).
-  preview: { cors: { origin: "*" } },
+  preview: {
+    cors: { origin: "*" },
+    // Not `localhost`, which listens on `::1` first: Firefox gathers no
+    // ICE candidates on a page loaded over IPv6 loopback, so two Firefox
+    // windows there never connect (#707).
+    host: "127.0.0.1",
+  },
   server: {
+    // As `preview.host`: Firefox plays peer to peer only from 127.0.0.1 (#707).
+    host: "127.0.0.1",
     // Only the opaque host's `Origin: null` may read cross-origin. Any
     // site's sandboxed frame sends that too, so the dev server serves
     // nothing outside the code the game is built from: never the repo

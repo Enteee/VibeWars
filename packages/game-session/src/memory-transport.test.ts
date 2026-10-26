@@ -101,6 +101,22 @@ describe("the memory transport (#82)", () => {
     expect(seen).toEqual(["-b", "+b"]);
   });
 
+  it("tells one peer the trouble it is given, until the handler is removed (#707)", async () => {
+    const network = createMemoryNetwork();
+    const [a, b] = [network.join("a"), network.join("b")];
+    const atA: string[] = [];
+    const atB: string[] = [];
+    const off = a.onTrouble((trouble) => atA.push(trouble));
+    b.onTrouble((trouble) => atB.push(trouble));
+    network.trouble("a", "no-relay");
+    await Promise.resolve();
+    off();
+    network.trouble("a", "peer-unreachable");
+    await Promise.resolve();
+    expect(atA).toEqual(["no-relay"]);
+    expect(atB).toEqual([]);
+  });
+
   it("refuses a second peer with the same id", () => {
     const network = createMemoryNetwork();
     network.join("host");

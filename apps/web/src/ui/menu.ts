@@ -37,6 +37,12 @@ export interface MenuCallbacks {
   readonly onSelectCharacter: (id: string | undefined) => void;
 }
 
+/**
+ * How long a join runs before the menu says it is still connecting
+ * (#707): a join may take up to 20 s, which should not look like a hang.
+ */
+export const CONNECTING_NOTICE_MS = 3000;
+
 const NAME_STORAGE_KEY = `${STORAGE_NAMESPACE}.playerName`;
 
 /** Remember the player's chosen name so they do not retype it every session. */
@@ -241,8 +247,18 @@ export function renderMenu(
     // "why didn't my code work" moment.
     codeInput.value = codeInput.value.toUpperCase();
   });
+  // Shown once a join has run a while; the lobby, or the menu again with
+  // why it failed, replaces this screen when it ends.
+  const connecting = h("p", "menu-connecting", "Connecting…");
+  connecting.setAttribute("role", "status");
+  connecting.hidden = true;
   const join = (): void => {
     callbacks.onJoinLobby(codeInput.value, nameInput.value);
+    setTimeout(() => {
+      if (panel.isConnected) {
+        connecting.hidden = false;
+      }
+    }, CONNECTING_NOTICE_MS);
   };
   codeInput.addEventListener("keydown", (event: KeyboardEvent) => {
     if (event.key === "Enter") {
@@ -252,6 +268,7 @@ export function renderMenu(
   joinRow.appendChild(codeInput);
   joinRow.appendChild(button("Join", "primary", join));
   play.appendChild(joinRow);
+  play.appendChild(connecting);
   // Under host and join, so it is read before either (#541, SECURITY.md).
   play.appendChild(h("p", "menu-peer-notice", PEER_IP_NOTICE));
   columns.appendChild(play);
