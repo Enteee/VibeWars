@@ -670,6 +670,7 @@
     "MAX_WIRE_EVENTS": { "literal": 64 },
     "MAX_WIRE_JSON_DEPTH": { "literal": 16 },
     "MAX_WIRE_JSON_VALUES": { "literal": 4096 },
+    "MAX_WIRE_PINGS": { "literal": 8 },
     "MAX_WIRE_POINTS": { "literal": 256 },
     "MAX_WIRE_PROJECTILES": { "literal": 256 },
     "MAX_WIRE_RADIUS": { "literal": 200 },
@@ -725,6 +726,8 @@
     "Channel": {
       "union": [
         { "literal": "bye" },
+        { "literal": "call" },
+        { "literal": "calls" },
         { "literal": "combat" },
         { "literal": "ended" },
         { "literal": "hello" },
@@ -1299,6 +1302,23 @@
       ]
     },
     "PeerBye": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
+    "PeerCall": {
+      "union": [
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "ping" } },
+            { "name": "x", "optional": false, "type": "number" },
+            { "name": "y", "optional": false, "type": "number" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "target" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        }
+      ]
+    },
     "PeerHello": {
       "properties": [
         {
@@ -1809,6 +1829,40 @@
         }
       ]
     },
+    "WireCalls": {
+      "properties": [
+        {
+          "name": "pings",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "byId", "optional": false, "type": "string" },
+                { "name": "id", "optional": false, "type": "number" },
+                { "name": "remaining", "optional": false, "type": "number" },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "target",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "callerId", "optional": false, "type": "string" },
+                  { "name": "targetId", "optional": false, "type": "string" }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
     "WireCombat": {
       "properties": [
         {
@@ -2062,6 +2116,15 @@
       "properties": [
         { "name": "mapId", "optional": false, "type": "string" },
         { "name": "matchId", "optional": false, "type": "string" }
+      ]
+    },
+    "WirePing": {
+      "properties": [
+        { "name": "byId", "optional": false, "type": "string" },
+        { "name": "id", "optional": false, "type": "number" },
+        { "name": "remaining", "optional": false, "type": "number" },
+        { "name": "x", "optional": false, "type": "number" },
+        { "name": "y", "optional": false, "type": "number" }
       ]
     },
     "WirePlayer": {

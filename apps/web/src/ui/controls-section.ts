@@ -40,6 +40,8 @@ export const ACTION_NAMES: Readonly<Record<KeyAction, string>> = {
   "move-right": "Move right",
   "target-next": "Next target",
   attack: "Attack",
+  "call-target": "Call your target",
+  ping: "Ping under the pointer",
   "show-names": "Show names (hold)",
   mute: "Mute",
 };

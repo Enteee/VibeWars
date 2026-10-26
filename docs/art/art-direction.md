@@ -123,6 +123,9 @@ so the silhouette identifies the profession and the colour only supports it.
 | Projectile   | Weapon silhouette, tinted the shooter's team colour   |
 | Weapon mark  | `ink` weapon held in the hands, one shape per weapon  |
 | Walk marker  | `ink` cross of four ticks where you clicked the floor |
+| Called foe   | `condition` chevron pointing down, over its name      |
+| Ping         | `friend` pin on the spot, a `friend` ring growing off |
+| Watched ally | Four `ink` corner brackets round the body             |
 
 The status plates differ in outline as well as colour. Hex purple and
 enchantment teal are close for a deuteranope (simulated ΔE ≈ 18); diamond
@@ -205,6 +208,32 @@ team-coloured ring that fades in 0.4 s is the area flash, a yellow ring is
 your target, and a small ink ring beside a body is a focus. An × of ticks
 is the only shape here that is a point, not a thing, and the open centre
 shows exactly where you clicked.
+
+### Calls, pings and the watched ally
+
+A wheel click calls a foe for your team, pings the ground, or watches an
+ally (#443). Each has a shape nothing else in the arena has, so none can be
+taken for the target ring, the off-hand focus or the area flash.
+
+- **The called foe** wears a chevron pointing down at it, its tip 37 units
+  above the body's top edge, clear of the name label. The two arms are 6
+  units wide and 6 tall, a 3 px `condition` core on a 5 px `edge` casing.
+  `condition` because a call says "hurt this one", and orange is the
+  colour of what hurts; it is over the body, where no plate ever sits. Your
+  team sees it, you included; the other team never does. It goes when the
+  foe dies or leaves, or your team calls another.
+- **A ping** is a `friend` pin standing 14 units tall on the spot: a 2 px
+  needle on a 4 px `edge` casing, and a 3.5-unit head with an `edge` rim.
+  Round it, a 2 px `friend` ring grows from 6 to 26 units and fades out
+  over the ping's 2.6 s. The area flash is a ring at the area's true
+  radius, fading in 0.4 s, with nothing standing in it; a ping is small,
+  slow, and has its pin. Under the actors, as the walk marker is. Reduced
+  motion: the ring holds at 6 units, whole, until the ping goes.
+- **The watched ally** gets four `ink` corner brackets, a square r + 13
+  out, each arm 5 units, 2 px on a 4 px `edge` casing. Open at the middle
+  of every side, it is never a ring: not the target ring, not the focus.
+  Only you see it, so it is `ink`, the colour of "you". A corner panel
+  shows the ally's name and health.
 
 ### Damage and heal numbers
 

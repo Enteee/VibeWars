@@ -18,13 +18,22 @@ import { layoutLabeller, loadLayoutLabeller } from "./key-labels.js";
 const presets = Object.entries(KEYMAP_PRESETS);
 
 describe("the keymap presets (#302)", () => {
-  it.each(presets)("%s is a valid keymap that binds all sixteen actions", (_, map) => {
-    expect(parseKeymap(map)).toEqual(map);
-    expect(KEY_ACTIONS).toHaveLength(16);
-    for (const action of KEY_ACTIONS) {
-      expect(map[action].length).toBeGreaterThan(0);
-    }
-  });
+  it.each(presets)(
+    "%s is a valid keymap that binds every action but the two call keys (#443)",
+    (_, map) => {
+      expect(parseKeymap(map)).toEqual(map);
+      expect(KEY_ACTIONS).toHaveLength(18);
+      // The wheel click calls and pings; the keys are for a mouse without one.
+      const unbound = new Set(["call-target", "ping"]);
+      for (const action of KEY_ACTIONS) {
+        if (unbound.has(action)) {
+          expect(map[action], action).toEqual([]);
+        } else {
+          expect(map[action].length, action).toBeGreaterThan(0);
+        }
+      }
+    },
+  );
 
   it.each(presets)("%s binds no key the browser or the OS owns", (_, map) => {
     for (const codes of Object.values(map)) {

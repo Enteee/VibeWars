@@ -2594,3 +2594,37 @@ body:has(#screens:not([style*="none"])) .now-playing {
 .now-playing[hidden] {
   display: none;
 }
+
+/*
+ * The ally you watch (#443): name and health, top right under the match
+ * buttons, live. Yours alone.
+ */
+.ally-watch {
+  position: absolute;
+  top: 3rem;
+  right: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.35rem 0.5rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  pointer-events: none;
+}
+
+.ally-watch[hidden] {
+  display: none;
+}
+
+.ally-watch .ally-watch-health {
+  width: 9rem;
+}
+
+.ally-watch-health .hud-bar-fill {
+  background: #3a6a3e;
+}
+
+.ally-watch.is-dead .hud-bar-label {
+  color: var(--ink-dim);
+}

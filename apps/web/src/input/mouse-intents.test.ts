@@ -8,7 +8,12 @@ import {
   type RenderableActor,
 } from "../render/arena-snapshot.js";
 import { createDoubleClick } from "./double-click.js";
-import { secondaryClickIntents } from "./mouse-intents.js";
+import {
+  callTargetCall,
+  middleClickAction,
+  pingCall,
+  secondaryClickIntents,
+} from "./mouse-intents.js";
 
 function player(sessionId: string, team: number, x: number): PlayerSnapshot {
   return {
@@ -112,5 +117,55 @@ describe("secondaryClickIntents", () => {
     expect(secondaryClickIntents(MATCH, ARENA, vec2(200, 0), double, 200)).toEqual([
       { kind: "target", targetSessionId: "foe" },
     ]);
+  });
+});
+
+describe("middleClickAction (#443)", () => {
+  const dead = (id: string): MatchSnapshot => ({
+    ...MATCH,
+    players: MATCH.players.map((p) => (p.sessionId === id ? { ...p, dead: true } : p)),
+  });
+
+  it("calls a living foe, watches a living ally, and pings the ground", () => {
+    expect(middleClickAction(MATCH, ARENA, vec2(201, 2))).toEqual({
+      kind: "call",
+      call: { kind: "target", targetId: "foe" },
+    });
+    expect(middleClickAction(MATCH, ARENA, vec2(100, 0))).toEqual({
+      kind: "watch",
+      allyId: "ally",
+    });
+    expect(middleClickAction(MATCH, ARENA, vec2(150, 60))).toEqual({
+      kind: "call",
+      call: { kind: "ping", x: 150, y: 60 },
+    });
+  });
+
+  it("does nothing on yourself, on a corpse, or while you are dead", () => {
+    expect(middleClickAction(MATCH, ARENA, vec2(0, 0))).toEqual({ kind: "none" });
+    expect(middleClickAction(dead("foe"), ARENA, vec2(200, 0))).toEqual({ kind: "none" });
+    expect(middleClickAction(dead("me"), ARENA, vec2(150, 60))).toEqual({ kind: "none" });
+  });
+});
+
+describe("the call keys (#443)", () => {
+  const targeting = (targetId: string | undefined, selfDead = false): MatchSnapshot => ({
+    ...MATCH,
+    players: MATCH.players.map((p) =>
+      p.sessionId === "me" ? { ...p, targetSessionId: targetId, dead: selfDead } : p,
+    ),
+  });
+
+  it("calls your target when it is a living foe, and nothing else", () => {
+    expect(callTargetCall(targeting("foe"))).toEqual({ kind: "target", targetId: "foe" });
+    expect(callTargetCall(targeting("ally"))).toBeUndefined();
+    expect(callTargetCall(targeting(undefined))).toBeUndefined();
+    expect(callTargetCall(targeting("foe", true))).toBeUndefined();
+  });
+
+  it("pings under the pointer while you are alive and it is on the arena", () => {
+    expect(pingCall(MATCH, vec2(5, 6))).toEqual({ kind: "ping", x: 5, y: 6 });
+    expect(pingCall(MATCH, undefined)).toBeUndefined();
+    expect(pingCall(targeting(undefined, true), vec2(5, 6))).toBeUndefined();
   });
 });
