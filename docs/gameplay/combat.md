@@ -131,16 +131,39 @@ effect, so nothing that removes conditions or enchantments stands you
 up. It counts down before anyone acts, so it lasts its full duration
 whoever lands it, and you act again on the tick it ends.
 
+## Skill types
+
+Every skill has a type, shown as a badge on its slot and named first in
+its tooltip ("Signet.", "Hex Spell."). Spells, enchantments and hexes
+are **spells**; attacks, signets, shouts and plain skills are not, and
+every rule that "affects spells" (dazed, so far) leaves them alone.
+
+**Signets** usually cost nothing, so they work at 0 energy. Healing
+Signet (Warrior, Tactics) heals you after a 2 s cast, and for those 2 s
+you have −40 armor: the penalty ends with the cast, whether it goes off,
+is cancelled, interrupted or knocked out of your hands.
+
+**Shouts** are instant: no cast bar, no target, and nothing to
+interrupt. Each ally **in earshot**, 350 units round the shouter and the
+shouter included, gets its effect; a dead ally or one just outside does
+not. "Watch Yourself!" (Warrior, Tactics, 4 adrenaline) gives +21 armor
+for 10 s, and it ends early on each ally after 3 incoming attacks that
+hit or are blocked; a miss, a dodge or an obstructed arrow does not
+count. Earshot is GW1's ratio of earshot to cast range (about 1,010 to
+1,250) applied to the 420-unit spell range.
+
 ## Conditions, hexes and enchantments
 
 All three are timed status effects sharing one lifecycle, parameterised
-by category:
+by category, alongside two kinds no removal touches:
 
-| Category    | Who applies it | Removed by          |
-| ----------- | -------------- | ------------------- |
-| Condition   | Foes           | Condition removal   |
-| Hex         | Foes           | Hex removal         |
-| Enchantment | Allies/self    | Enchantment removal |
+| Category     | Who applies it | Removed by                  |
+| ------------ | -------------- | --------------------------- |
+| Condition    | Foes           | Condition removal           |
+| Hex          | Foes           | Hex removal                 |
+| Enchantment  | Allies/self    | Enchantment removal         |
+| Shout        | Allies/self    | Nothing; it runs out        |
+| Skill effect | Self           | Nothing; ends with the cast |
 
 **Durations do not stack.** Re-applying a status keeps the longer of the
 existing and incoming duration. That single rule is why spamming a short
@@ -162,7 +185,8 @@ number:
 
 **Dazed doubles cast time; it does not make you easier to interrupt.**
 That is the reference's dazed, and here it would do nothing: every cast
-is already interruptible. An instant skill stays instant. See
+is already interruptible. An instant skill stays instant, and only
+spells are slowed: a dazed Warrior's Healing Signet casts in 2 s. See
 [ADR-0019](../adr/0019-status-modifiers.md).
 
 **Blind makes attacks miss**: weapon swings, each blow rolled on its own,

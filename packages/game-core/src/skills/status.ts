@@ -10,6 +10,9 @@
  * - `condition`  — negative, applied by foes, removed by condition removal.
  * - `hex`        — negative, applied by foes, removed by hex removal.
  * - `enchantment`— positive, applied by allies, removed by enchantment removal/strip.
+ * - `shout`      — a shout's lingering effect (#524); no removal touches it.
+ * - `skill-effect`— none of GW1's removable kinds: Healing Signet's armor
+ *   loss while it is activated. No removal touches it either.
  *
  * Re-application does not stack duration (GW1-style): the longer of the
  * existing and incoming duration wins. That single rule is why a spammed
@@ -18,7 +21,7 @@
 
 import type { Combatant } from "./types.js";
 
-export type StatusCategory = "condition" | "hex" | "enchantment";
+export type StatusCategory = "condition" | "hex" | "enchantment" | "shout" | "skill-effect";
 
 export type StatusId =
   // Conditions (brief §12's starting set).
@@ -36,7 +39,10 @@ export type StatusId =
   | "regeneration"
   | "blood-ritual"
   | "armor-boost"
-  | "guardian";
+  | "guardian"
+  // Shouts and skill effects (#524).
+  | "watch-yourself"
+  | "healing-signet-armor";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -84,10 +90,11 @@ export interface StatusDefinition {
   /** Multiplier on the bearer's maximum health (deep wound's signature). */
   readonly maxHealthMultiplier: number;
   /**
-   * Multiplier on the bearer's cast time; >1 is a penalty. Dazed is the
-   * one that sets it: here it doubles cast time, where the reference
+   * Multiplier on the bearer's spell cast time; >1 is a penalty. Dazed is
+   * the one that sets it: here it doubles cast time, where the reference
    * makes casting easy to interrupt. Every cast in this game is already
-   * interruptible, so that rule would do nothing (ADR-0019).
+   * interruptible, so that rule would do nothing (ADR-0019). A signet or
+   * any other skill that is not a spell ignores it (#524).
    */
   readonly castTimeMultiplier: number;
   /**
@@ -100,6 +107,12 @@ export interface StatusDefinition {
   readonly preventsKnockdown: boolean;
   /** The bearer's chance to block attacks; `undefined`: none. */
   readonly block: BlockRule | undefined;
+  /**
+   * It ends after this many incoming attacks, each a hit or a block
+   * (#524); `undefined`: only its duration ends it. Counted on each
+   * bearer's own status, so allies sharing a shout wear theirs out apart.
+   */
+  readonly endsAfterAttacks: number | undefined;
 }
 
 function define(
@@ -122,6 +135,7 @@ function define(
     attackDurationMultiplier: 1,
     preventsKnockdown: false,
     block: undefined,
+    endsAfterAttacks: undefined,
     ...overrides,
   };
 }
@@ -155,12 +169,22 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   guardian: define("guardian", "Guardian", "enchantment", {
     block: { chance: 0.5, against: "all" },
   }),
+  // "Watch Yourself!" at rank 12: +5...21 armor, ending after 1...3 attacks.
+  "watch-yourself": define("watch-yourself", "Watch Yourself!", "shout", {
+    armorModifier: 21,
+    endsAfterAttacks: 3,
+  }),
+  "healing-signet-armor": define("healing-signet-armor", "Healing Signet", "skill-effect", {
+    armorModifier: -40,
+  }),
 };
 
 export interface ActiveStatus {
   readonly id: StatusId;
   /** Seconds of duration still remaining. */
   remainingSeconds: number;
+  /** Incoming attacks before it ends (`endsAfterAttacks`); `undefined`: no such limit. */
+  attacksLeft: number | undefined;
   /** Who applied it — needed so a future "when this ends, heal the caster"
    *  effect knows whom to credit. */
   readonly sourceId: string;
@@ -215,7 +239,12 @@ export class StatusSet {
     if (existing !== undefined && existing.remainingSeconds >= durationSeconds) {
       return;
     }
-    this.#statuses.set(id, { id, remainingSeconds: durationSeconds, sourceId });
+    this.#statuses.set(id, {
+      id,
+      remainingSeconds: durationSeconds,
+      attacksLeft: getStatusDefinition(id).endsAfterAttacks,
+      sourceId,
+    });
   }
 
   /** Remove one status by id. Returns whether anything was removed. */
@@ -243,6 +272,26 @@ export class StatusSet {
       this.#statuses.delete(id);
     }
     return removed;
+  }
+
+  /**
+   * An attack hit the bearer or was blocked (#524): one fewer for every
+   * status that ends after so many. Returns the ids that ended on it.
+   */
+  public countIncomingAttack(): StatusId[] {
+    const ended: StatusId[] = [];
+    for (const status of this.#statuses.values()) {
+      if (status.attacksLeft !== undefined) {
+        status.attacksLeft -= 1;
+        if (status.attacksLeft <= 0) {
+          ended.push(status.id);
+        }
+      }
+    }
+    for (const id of ended) {
+      this.#statuses.delete(id);
+    }
+    return ended;
   }
 
   public countByCategory(category: StatusCategory): number {

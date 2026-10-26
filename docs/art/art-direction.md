@@ -100,21 +100,23 @@ so the silhouette identifies the profession and the colour only supports it.
 
 ## Shapes
 
-| Thing       | Shape                                                 |
-| ----------- | ----------------------------------------------------- |
-| Actor       | Filled circle in team colour                          |
-| You         | Your team's circle plus an `ink` rim, 2 px inside     |
-| Target      | `target` ring, 9 px outside the actor                 |
-| Dead        | Hollow `dead` circle, no bars                         |
-| Cast        | Bar above the health bar, fills as the cast completes |
-| Condition   | Circle plate, glyph inside                            |
-| Hex         | Diamond plate, glyph inside                           |
-| Enchantment | Rounded-square plate, glyph inside                    |
-| Area flash  | Caster's team colour ring at the area's true radius   |
-| Swing flash | Attacker's team colour arc between it and its target  |
-| Projectile  | Weapon silhouette, tinted the shooter's team colour   |
-| Weapon mark | `ink` weapon held in the hands, one shape per weapon  |
-| Walk marker | `ink` cross of four ticks where you clicked the floor |
+| Thing        | Shape                                                 |
+| ------------ | ----------------------------------------------------- |
+| Actor        | Filled circle in team colour                          |
+| You          | Your team's circle plus an `ink` rim, 2 px inside     |
+| Target       | `target` ring, 9 px outside the actor                 |
+| Dead         | Hollow `dead` circle, no bars                         |
+| Cast         | Bar above the health bar, fills as the cast completes |
+| Condition    | Circle plate, glyph inside                            |
+| Hex          | Diamond plate, glyph inside                           |
+| Enchantment  | Rounded-square plate, glyph inside                    |
+| Shout        | `ink` hexagon plate, glyph inside                     |
+| Skill effect | `ink-dim` wide capsule plate, glyph inside            |
+| Area flash   | Caster's team colour ring at the area's true radius   |
+| Swing flash  | Attacker's team colour arc between it and its target  |
+| Projectile   | Weapon silhouette, tinted the shooter's team colour   |
+| Weapon mark  | `ink` weapon held in the hands, one shape per weapon  |
+| Walk marker  | `ink` cross of four ticks where you clicked the floor |
 
 The status plates differ in outline as well as colour. Hex purple and
 enchantment teal are close for a deuteranope (simulated ΔE ≈ 18); diamond
@@ -398,13 +400,15 @@ closes). Ink, never team colour: an icon in a menu names a thing, not a side.
 The corner badge on a skill slot. Ink on the slot, except the two that leave a
 marker on someone, which carry that marker's colour.
 
-| Type        | Badge              |
-| ----------- | ------------------ |
-| Attack      | Blade              |
-| Spell       | Four-point star    |
-| Enchantment | Solid teal ring    |
-| Hex         | Broken purple ring |
-| Skill       | Square             |
+| Type        | Badge                     |
+| ----------- | ------------------------- |
+| Attack      | Blade                     |
+| Spell       | Four-point star           |
+| Enchantment | Solid teal ring           |
+| Hex         | Broken purple ring        |
+| Signet      | Ring with a seal on top   |
+| Shout       | Mouth and two sound waves |
+| Skill       | Square                    |
 
 ### Skill slot states
 

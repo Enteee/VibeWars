@@ -286,7 +286,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
     /** A foe halfway through Troll Unguent's cast. */
     const casting = (): Combatant => {
       const target = victim();
-      target.cast.beginCast("ranger.troll-unguent", target.id, 3);
+      target.cast.beginCast("ranger.troll-unguent", target.id, 3, undefined);
       target.cast.advance(1);
       return target;
     };
@@ -435,7 +435,7 @@ describe("block (#534)", () => {
 
     it("Distracting Blow, blocked, interrupts nothing", () => {
       const target = victim();
-      target.cast.beginCast("ranger.troll-unguent", target.id, 3);
+      target.cast.beginCast("ranger.troll-unguent", target.id, 3, undefined);
       const events = resolveBlocked(
         "warrior.distracting-blow",
         WEAPONS.sword,

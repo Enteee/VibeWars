@@ -48,6 +48,12 @@ export function createSkillTooltip(placement: SkillTooltipPlacement = "beside"):
     title.textContent = description.name;
     node.appendChild(title);
 
+    // "Signet.", "Hex Spell.": what kind of skill, as GW1 words it (#524).
+    const type = document.createElement("div");
+    type.className = "tip-type";
+    type.textContent = description.typeText;
+    node.appendChild(type);
+
     // A "No Attribute" skill has no line here, as in GW1 (#445).
     if (description.attributeName !== undefined) {
       const attribute = document.createElement("div");

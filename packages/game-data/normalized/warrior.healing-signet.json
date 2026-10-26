@@ -1,0 +1,20 @@
+{
+  "id": "warrior.healing-signet",
+  "name": "Healing Signet",
+  "profession": "warrior",
+  "attribute": "Tactics",
+  "type": "Signet.",
+  "elite": false,
+  "campaign": "Core",
+  "activationSeconds": 2,
+  "rechargeSeconds": 4,
+  "description": "You gain 82...154...172 health. You have -40 armor while using this skill.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Warrior/65-Healing_Signet",
+    "fetchedAt": "2026-10-26T03:46:09.692Z"
+  },
+  "unmapped": {}
+}

@@ -22,6 +22,7 @@ const SPELL: Skill = {
   target: "single-enemy",
   area: undefined,
   attack: undefined,
+  whileActivating: undefined,
   effects: [{ kind: "damage", amount: { flat: 50 } }],
 };
 

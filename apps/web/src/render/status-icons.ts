@@ -4,7 +4,8 @@ import type { StatusId, Vec2 } from "@vibewars/game-core";
  * Status icons under an actor (#75, docs/art/art-direction.md).
  *
  * An icon's plate shape says its category (condition: circle, hex: diamond,
- * enchantment: rounded square) and is baked into the SVG, so the scene
+ * enchantment: rounded square, shout: hexagon, skill effect: wide capsule)
+ * and is baked into the SVG, so the scene
  * draws no plates of its own. Shape and glyph carry the meaning; colour
  * only backs them up, which is the point for a colour-blind player.
  *
@@ -31,6 +32,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "blood-ritual": icon("blood-ritual"),
   "armor-boost": icon("armor-boost"),
   guardian: icon("guardian"),
+  "watch-yourself": icon("watch-yourself"),
+  "healing-signet-armor": icon("healing-signet-armor"),
 };
 
 /** Drawn size of one icon, in world pixels. */

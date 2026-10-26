@@ -38,6 +38,16 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Warrior/71-Distracting_Blow",
   },
   {
+    id: "warrior.healing-signet",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/65-Healing_Signet",
+  },
+  {
+    id: "warrior.watch-yourself",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/56-Watch_Yourself!",
+  },
+  {
     id: "monk.contemplation-of-purity",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/154-Contemplation_of_Purity",
