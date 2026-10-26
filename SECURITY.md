@@ -418,6 +418,16 @@ private-key blocks) is best-effort, not a boundary. A key body that is
 indented or line-numbered, as a file read prints it, is not recognised
 as one.
 
+**Supervisor (#383).** `supervisor.mjs` on the host starts and stops
+employees as panes in the company's own tmux session, to match
+`staff.json`. It touches only panes of that session in a role's window,
+and stops one by killing the pane and its pid's descendants, never pid 1
+or itself. Only host processes write `staff.json`: hubd, for the
+manager's `company hire` and `company fire`, and the supervisor, to
+forget a fired employee. So an agent reaches the supervisor only through
+what hubd lets its role ask for. The reboot records and the lock sit in
+the host bot root, which no jail sees.
+
 Every finding here so far came from **reading a gate with a hostile
 agent in mind**: #26, #39, #47, #57, #61, #67, #73. A change to any file in
 `GATE_PATHS` gets that review, from `perf-sec-qa` and `lead-dev` both.
