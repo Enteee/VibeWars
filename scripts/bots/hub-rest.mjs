@@ -582,7 +582,7 @@ export function runsFromRest(answer) {
  * under the same rule: unreadable or paginated-beyond-read is an error.
  *
  * @param {unknown} answer the parsed answer
- * @returns {{ jobs: { name: string, status: string, conclusion: string | null }[] } | { error: string }}
+ * @returns {{ jobs: { id: number | null, name: string, status: string, conclusion: string | null }[] } | { error: string }}
  */
 export function jobsFromRest(answer) {
   const body = rec(answer);
@@ -594,6 +594,7 @@ export function jobsFromRest(answer) {
   }
   return {
     jobs: body.jobs.map(rec).map((job) => ({
+      id: typeof job.id === "number" ? job.id : null,
       name: str(job.name),
       status: str(job.status),
       conclusion: typeof job.conclusion === "string" ? job.conclusion : null,

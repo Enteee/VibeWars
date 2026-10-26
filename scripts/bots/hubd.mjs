@@ -66,6 +66,7 @@ import { hasFilter } from "./hub-filter.mjs";
 import {
   approvalsSatisfied,
   boardMoveAllowed,
+  commitRuns,
   landingAllowed,
   everyJobSucceeded,
   jobsSatisfied,
@@ -90,6 +91,17 @@ import {
 import { COMMENT_FIELDS, jsonFields, scrubJson, unknownField } from "./hub-strangers.mjs";
 import { BOARD_QUERY, costBetween, parseBoardPage, recordSpend } from "./hub-spend.mjs";
 import { HEARTBEAT_MS } from "./hub-health.mjs";
+import {
+  closingPulls,
+  ciMessage,
+  endedMessage,
+  failedSpecs,
+  listWatches,
+  parseWatches,
+  parseWatchRequest,
+  supersededMessage,
+  WATCH_CAP_MS,
+} from "./hub-watch.mjs";
 import { SYSTEM, obj } from "./protocol.mjs";
 import {
   COMPANY_PATHSPECS,
@@ -184,6 +196,8 @@ const SCHEDULES = path.join(HUB, "schedules.json");
 const NUDGES = path.join(HUB, "nudges.json");
 /** `blocked.json`: the column each Blocked card came from, by project item id (#639). */
 const BLOCKED = path.join(HUB, "blocked.json");
+/** The CI watches agents asked for (#736), hubd's alone. */
+const WATCHES = path.join(HUB, "watches.json");
 const LOCK = path.join(HUB, "hubd.lock");
 
 /**
@@ -379,7 +393,7 @@ const EVERY_JOB_WORKFLOWS = ["e2e-repeat.yml", "codeql.yml"];
  * @param {string} sha
  * @param {ReturnType<typeof company>} cfg
  * @param {string[]} files workflow files, by name under .github/workflows
- * @returns {Promise<{ runs: { name: string, status: string, conclusion: string | null }[][] } | { error: string } | { refusal: string }>}
+ * @returns {Promise<{ runs: { id: number | null, name: string, status: string, conclusion: string | null }[][] } | { error: string } | { refusal: string }>}
  */
 async function restJobs(sha, cfg, files) {
   /** @param {string} rel */
@@ -395,7 +409,7 @@ async function restJobs(sha, cfg, files) {
     }
   };
 
-  /** @type {{ name: string, status: string, conclusion: string | null }[][]} */
+  /** @type {{ id: number | null, name: string, status: string, conclusion: string | null }[][]} */
   const jobs = [];
   for (const file of files) {
     const listed = await read(
@@ -834,6 +848,59 @@ async function headSha(pr) {
 }
 
 /**
+ * Whether CI on `sha`, the head of `pr`, is green: the merge gate's verdict,
+ * which the In Review gate and `hub watch` (#736) share.
+ *
+ * @param {string} pr
+ * @param {string} sha
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ ok: true } | { ok: false, reason: string, unreadable: boolean }>}
+ */
+async function ciGreen(pr, sha, cfg) {
+  const read = await restJobs(sha, cfg, NAMED_WORKFLOWS);
+  const every = "runs" in read ? await restJobs(sha, cfg, EVERY_JOB_WORKFLOWS) : read;
+  if ("refusal" in read) {
+    return {
+      ok: false,
+      reason: `${read.refusal} (#${pr} at ${sha.slice(0, 7)})`,
+      unreadable: false,
+    };
+  }
+  if ("error" in read) {
+    // An unreadable answer is never an empty one (#46). If the budget
+    // is what ran out, handle() answers with the limit and its reset.
+    return {
+      ok: false,
+      reason: `could not read CI jobs for #${pr} at ${sha.slice(0, 7)}: ${read.error}`,
+      unreadable: true,
+    };
+  }
+  if ("refusal" in every) {
+    return {
+      ok: false,
+      reason: `${every.refusal} (#${pr} at ${sha.slice(0, 7)})`,
+      unreadable: false,
+    };
+  }
+  if ("error" in every) {
+    return {
+      ok: false,
+      reason: `could not read CI jobs for #${pr} at ${sha.slice(0, 7)}: ${every.error}`,
+      unreadable: true,
+    };
+  }
+  const verdict = jobsSatisfied(read.runs, cfg.expectedChecks);
+  if (!verdict.ok) {
+    return { ok: false, reason: explainGuard("checks", verdict), unreadable: false };
+  }
+  const rest = everyJobSucceeded(every.runs);
+  if (!rest.ok) {
+    return { ok: false, reason: explainGuard("checks", rest), unreadable: false };
+  }
+  return { ok: true };
+}
+
+/**
  * Evaluate the guards the policy attached to this request.
  *
  * An unrecognised guard is a refusal, never a pass. Adding a guard name in
@@ -862,35 +929,9 @@ async function evaluateGuards(guards, argv) {
 
   for (const guard of guards) {
     if (guard === "checks-green") {
-      const read = await restJobs(sha, cfg, NAMED_WORKFLOWS);
-      const every = "runs" in read ? await restJobs(sha, cfg, EVERY_JOB_WORKFLOWS) : read;
-      if ("refusal" in read) {
-        return { ok: false, reason: `${read.refusal} (#${pr} at ${sha.slice(0, 7)})` };
-      }
-      if ("error" in read) {
-        // An unreadable answer is never an empty one (#46). If the budget
-        // is what ran out, handle() answers with the limit and its reset.
-        return {
-          ok: false,
-          reason: `could not read CI jobs for #${pr} at ${sha.slice(0, 7)}: ${read.error}`,
-        };
-      }
-      if ("refusal" in every) {
-        return { ok: false, reason: `${every.refusal} (#${pr} at ${sha.slice(0, 7)})` };
-      }
-      if ("error" in every) {
-        return {
-          ok: false,
-          reason: `could not read CI jobs for #${pr} at ${sha.slice(0, 7)}: ${every.error}`,
-        };
-      }
-      const verdict = jobsSatisfied(read.runs, cfg.expectedChecks);
-      if (!verdict.ok) {
-        return { ok: false, reason: explainGuard("checks", verdict) };
-      }
-      const rest = everyJobSucceeded(every.runs);
-      if (!rest.ok) {
-        return { ok: false, reason: explainGuard("checks", rest) };
+      const green = await ciGreen(pr, sha, cfg);
+      if (!green.ok) {
+        return { ok: false, reason: green.reason };
       }
       continue;
     }
@@ -1119,15 +1160,16 @@ function writeAtomic(file, contents) {
  *
  * @param {string} name what the file is about, for whoever lists the outbox
  * @param {string} text
- * @param {{ to?: string, nudge?: string | null }} [addressed] a role instead of
- *   everyone, and the scheduled nudge this is (#537)
+ * @param {{ to?: string, nudge?: string | null, direct?: boolean }} [addressed] a role
+ *   instead of everyone, the scheduled nudge this is (#537), and whether it is
+ *   for exactly the employee `to` names, in its inbox only (#736)
  * @returns {void}
  */
-function tellCompany(name, text, { to = "all", nudge = null } = {}) {
+function tellCompany(name, text, { to = "all", nudge = null, direct = false } = {}) {
   const outbox = path.join(ROOT, "bus", SYSTEM, "outbox");
   fs.mkdirSync(outbox, { recursive: true });
   const file = `${String(Date.now())}-${name}.json`;
-  writeAtomic(path.join(outbox, file), JSON.stringify({ to, text, nudge }));
+  writeAtomic(path.join(outbox, file), JSON.stringify({ to, text, nudge, direct }));
 }
 
 /**
@@ -1398,7 +1440,10 @@ async function refuseCardEdit(role, argv, cfg) {
     to,
     blockedFrom: blockedOrigins[id] ?? null,
   });
-  return decision.ok ? null : decision.reason;
+  if (!decision.ok) {
+    return decision.reason;
+  }
+  return to === "In Review" ? refuseInReview(card.item, cfg) : null;
 }
 
 /**
@@ -2297,6 +2342,357 @@ function schedule(role, argv) {
   return { allow: true, code: 0, stdout: plan.stdout, stderr: "" };
 }
 
+/* -------------------------------------------------------------------------- */
+/* Watches (#736)                                                             */
+/* -------------------------------------------------------------------------- */
+
+/** @type {import("./hub-watch.mjs").Watch[]} */
+let watches = [];
+/** When the watches are next polled, epoch ms: at once after a start or a new watch. */
+let nextWatchPoll = 0;
+/** Whether a poll is running: one at a time, beside the requests it must not hold up. */
+let watchPolling = false;
+/** The pause between polls, doubled while GitHub cannot be read. */
+const WATCH_POLL_MS = Number(process.env.HUBD_WATCH_POLL_MS ?? 60_000);
+let watchPause = WATCH_POLL_MS;
+const WATCH_PAUSE_MAX_MS = 10 * 60_000;
+
+/** Read the watches a previous hubd left. One in another shape is discarded, and its owners told. */
+function loadWatches() {
+  if (!fs.existsSync(WATCHES)) {
+    return;
+  }
+  const parsed = parseWatches(fs.readFileSync(WATCHES, "utf8"));
+  if ("watches" in parsed) {
+    watches = parsed.watches;
+    return;
+  }
+  fs.rmSync(WATCHES, { force: true });
+  for (const owner of parsed.owners) {
+    tellCompany(
+      "watches-discarded",
+      "hub watch: hubd could not read its watches file and discarded it; register your watches again.",
+      { to: owner, direct: true },
+    );
+  }
+}
+
+/** @param {import("./hub-watch.mjs").Watch[]} next */
+function keepWatches(next) {
+  watches = next;
+  writeAtomic(WATCHES, JSON.stringify(watches));
+}
+
+/**
+ * End a watch with its one message, unless it was removed meanwhile.
+ *
+ * @param {import("./hub-watch.mjs").Watch} watch
+ * @param {string} text
+ */
+function finishWatch(watch, text) {
+  if (!watches.some((kept) => kept.id === watch.id)) {
+    return;
+  }
+  keepWatches(watches.filter((kept) => kept.id !== watch.id));
+  tellCompany(`watch-${watch.id}`, text, { to: watch.employee, direct: true });
+}
+
+/**
+ * `hub watch` for `employee`: register, list or remove its own watches.
+ *
+ * @param {string} employee
+ * @param {string} role
+ * @param {string[]} argv
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<Record<string, unknown>>}
+ */
+async function watch(employee, role, argv, cfg) {
+  const kind = "watch";
+  const plan = parseWatchRequest(argv);
+  if ("error" in plan) {
+    audit({ role, kind, argv, decision: "refused", reason: plan.error });
+    return { allow: false, reason: plan.error, code: 77 };
+  }
+  const own = watches.filter((kept) => kept.employee === employee);
+  if (plan.verb === "ls") {
+    audit({ role, kind, argv, decision: "allowed" });
+    return { allow: true, code: 0, stdout: listWatches(own, Date.now()), stderr: "" };
+  }
+  if (plan.verb === "rm") {
+    if (!own.some((kept) => kept.id === plan.id)) {
+      const reason = `you have no watch ${plan.id}; hub watch ls lists yours`;
+      audit({ role, kind, argv, decision: "refused", reason });
+      return { allow: false, reason, code: 77 };
+    }
+    keepWatches(watches.filter((kept) => kept.id !== plan.id));
+    audit({ role, kind, argv, decision: "allowed" });
+    return { allow: true, code: 0, stdout: `removed ${plan.id}\n`, stderr: "" };
+  }
+  const pr = String(plan.pr);
+  const visibility = await checkVisibility("review", ["approve", pr], cfg);
+  if (!visibility.ok) {
+    audit({ role, kind, argv, decision: "hidden", reason: visibility.reason });
+    return { allow: false, reason: visibility.reason, code: 77 };
+  }
+  const sha = await headSha(pr);
+  if (sha === null) {
+    return { allow: false, reason: `could not read pull request #${pr}`, code: 77 };
+  }
+  /** @type {import("./hub-watch.mjs").Watch} */
+  const added = {
+    id: `w${randomBytes(3).toString("hex")}`,
+    employee,
+    kind: "ci",
+    pr: plan.pr,
+    sha,
+    note: plan.note,
+    created: Date.now(),
+  };
+  // A second watch of the same pull request replaces the first: one answer, not two.
+  keepWatches([
+    ...watches.filter((kept) => kept.employee !== employee || kept.pr !== plan.pr),
+    added,
+  ]);
+  nextWatchPoll = 0;
+  audit({ role, kind, argv, decision: "allowed", sha });
+  return {
+    allow: true,
+    code: 0,
+    stdout: `watching #${pr} @ ${sha.slice(0, 7)} (${added.id}); the result arrives in your inbox\n`,
+    stderr: "",
+  };
+}
+
+/**
+ * A pull request's state and head, or `null` if it cannot be read.
+ *
+ * @param {number} pr
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ open: boolean, merged: boolean, sha: string } | null>}
+ */
+async function pullState(pr, cfg) {
+  const pull = obj(await rest(`pulls/${String(pr)}`, cfg));
+  const sha = obj(pull.head).sha;
+  if (typeof pull.state !== "string" || typeof sha !== "string") {
+    return null;
+  }
+  return {
+    open: pull.state === "open",
+    merged: pull.merged === true || typeof pull.merged_at === "string",
+    sha,
+  };
+}
+
+/**
+ * Where CI on `sha` stands: still going, or done with the merge gate's
+ * verdict and, when red, the jobs that failed and what an e2e job's log says.
+ *
+ * @param {number} pr
+ * @param {string} sha
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<{ kind: "pending" } | { kind: "unreadable" } | { kind: "done", verdict: { pass: true } | { pass: false, reason: string, failed: import("./hub-watch.mjs").FailedJob[] } }>}
+ */
+async function ciOutcome(pr, sha, cfg) {
+  /** @type {Record<string, unknown>[]} */
+  const finished = [];
+  for (const file of [...NAMED_WORKFLOWS, ...EVERY_JOB_WORKFLOWS]) {
+    const listed = runsFromRest(
+      await rest(
+        `actions/workflows/${file}/runs?head_sha=${sha}&event=pull_request&per_page=100`,
+        cfg,
+      ),
+    );
+    if ("error" in listed) {
+      return { kind: "unreadable" };
+    }
+    const mine = commitRuns(listed.runs, { sha, repo: cfg.repo, file });
+    if (mine.length === 0 || mine.some((run) => run.status !== "completed")) {
+      return { kind: "pending" };
+    }
+    finished.push(...mine);
+  }
+  const green = await ciGreen(String(pr), sha, cfg);
+  if (green.ok) {
+    return { kind: "done", verdict: { pass: true } };
+  }
+  if (green.unreadable) {
+    return { kind: "unreadable" };
+  }
+  /** @type {import("./hub-watch.mjs").FailedJob[]} */
+  const failed = [];
+  for (const run of finished) {
+    const read = jobsFromRest(
+      await rest(`actions/runs/${String(run.id)}/jobs?filter=latest&per_page=100`, cfg),
+    );
+    const jobs = "jobs" in read ? read.jobs : [];
+    const bad = jobs.filter(
+      (job) =>
+        job.status === "completed" && job.conclusion !== "success" && job.conclusion !== "skipped",
+    );
+    if (bad.length === 0 && run.conclusion !== "success") {
+      failed.push({
+        name: `${String(run.name ?? run.path)} (run ${String(run.id)})`,
+        conclusion: String(run.conclusion),
+        log: null,
+      });
+    }
+    for (const job of bad) {
+      let log = null;
+      if (job.name.startsWith("e2e") && job.id !== null) {
+        const answered = await ghRaw([
+          "api",
+          `repos/${cfg.repo}/actions/jobs/${String(job.id)}/logs`,
+        ]);
+        log = answered.code === 0 ? failedSpecs(answered.stdout) : null;
+      }
+      failed.push({ name: job.name, conclusion: job.conclusion, log });
+    }
+  }
+  return { kind: "done", verdict: { pass: false, reason: green.reason, failed } };
+}
+
+/**
+ * One pass over every watch. A head polled for two watches is read once.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<boolean>} whether everything could be read
+ */
+async function pollWatches(cfg) {
+  let readable = true;
+  /** @type {Map<number, Awaited<ReturnType<typeof pullState>>>} */
+  const pulls = new Map();
+  /** @type {Map<string, Awaited<ReturnType<typeof ciOutcome>>>} */
+  const outcomes = new Map();
+  for (const watched of [...watches]) {
+    if (!pulls.has(watched.pr)) {
+      pulls.set(watched.pr, await pullState(watched.pr, cfg));
+    }
+    const pull = pulls.get(watched.pr) ?? null;
+    if (pull !== null && !pull.open) {
+      finishWatch(watched, endedMessage(watched, pull.merged ? "merged" : "closed"));
+      continue;
+    }
+    if (pull !== null && pull.sha !== watched.sha) {
+      // A push cancels the run in progress, as CI's cancel-in-progress does:
+      // the new head is the one worth an answer.
+      if (watches.some((kept) => kept.id === watched.id)) {
+        keepWatches(
+          watches.map((kept) =>
+            kept.id === watched.id ? { ...kept, sha: pull.sha, created: Date.now() } : kept,
+          ),
+        );
+        tellCompany(`watch-${watched.id}`, supersededMessage(watched, pull.sha), {
+          to: watched.employee,
+          direct: true,
+        });
+      }
+      continue;
+    }
+    const outcome =
+      pull === null
+        ? { kind: /** @type {const} */ ("unreadable") }
+        : (outcomes.get(watched.sha) ?? (await ciOutcome(watched.pr, watched.sha, cfg)));
+    outcomes.set(watched.sha, outcome);
+    if (outcome.kind === "done") {
+      finishWatch(watched, ciMessage(watched, outcome.verdict));
+      continue;
+    }
+    if (outcome.kind === "unreadable") {
+      readable = false;
+    }
+    if (Date.now() - watched.created > WATCH_CAP_MS) {
+      finishWatch(watched, endedMessage(watched, "cap"));
+    }
+  }
+  return readable;
+}
+
+/** Start a poll if one is due and none is running. It never holds up a request. */
+function maybePollWatches() {
+  if (watchPolling || watches.length === 0 || Date.now() < nextWatchPoll) {
+    return;
+  }
+  watchPolling = true;
+  pollWatches(company())
+    .then((readable) => {
+      // GitHub unreadable: back off, but never drop a watch.
+      watchPause = readable ? WATCH_POLL_MS : Math.min(watchPause * 2, WATCH_PAUSE_MAX_MS);
+    })
+    .catch((/** @type {unknown} */ error) => {
+      console.error(`hubd: watch: ${error instanceof Error ? error.message : "failed"}`);
+    })
+    .finally(() => {
+      watchPolling = false;
+      nextWatchPoll = Date.now() + watchPause;
+    });
+}
+
+/**
+ * Every open pull request, page by page, so a flood of outsiders' cannot
+ * push the company's off the first page.
+ *
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<unknown[] | undefined>} `undefined` if any page cannot be read
+ */
+async function openPulls(cfg) {
+  /** @type {unknown[]} */
+  const rows = [];
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const answer = await rest(`pulls?state=open&per_page=100&page=${String(page)}`, cfg);
+    if (!Array.isArray(answer)) {
+      return undefined;
+    }
+    /** @type {unknown[]} */
+    const got = answer;
+    rows.push(...got);
+    if (got.length < 100) {
+      return rows;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Why a card may not go to In Review (#736), or `null`: every open pull
+ * request that closes it must be green, by the merge gate's own verdict.
+ *
+ * @param {import("./hub-board.mjs").Item} item
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string | null>}
+ */
+async function refuseInReview(item, cfg) {
+  const number = itemNumber(item, cfg.repo);
+  if (number === null) {
+    return "could not tell which issue that card is";
+  }
+  /** @type {{ number: number, sha: string }[] | null} */
+  let pulls;
+  if (obj(item.content).type === "PullRequest") {
+    const sha = await headSha(String(number));
+    pulls = sha === null ? null : [{ number, sha }];
+  } else {
+    // Only pull requests the company may see: an outsider's "Closes #N"
+    // must not be able to hold any card out of In Review.
+    const seen = await viewer(cfg);
+    const closing = closingPulls(await openPulls(cfg), number);
+    pulls =
+      seen === null || closing === null ? null : closing.filter((pull) => isVisible(pull, seen));
+  }
+  if (pulls === null) {
+    return `could not read the pull requests for #${String(number)}; try again`;
+  }
+  if (pulls.length === 0) {
+    return `no open PR closes #${String(number)}: open one whose body says "Closes #${String(number)}"`;
+  }
+  for (const pull of pulls) {
+    const green = await ciGreen(String(pull.number), pull.sha, cfg);
+    if (!green.ok) {
+      return `In Review needs green CI on PR #${String(pull.number)}: ${green.reason}. Run \`hub watch ci ${String(pull.number)}\` and move the card when it passes`;
+    }
+  }
+  return null;
+}
+
 /**
  * `hub alerts` (#184): one REST read of the code-scanning alerts, rendered.
  * A failure says what failed, and never reads as "no alerts".
@@ -2363,6 +2759,10 @@ async function serve(request, verdict, acting) {
 
   if (kind === "rank") {
     return rank(role, argv, cfg);
+  }
+
+  if (kind === "watch") {
+    return watch(employee, role, argv, cfg);
   }
 
   if (kind === "board") {
@@ -3062,6 +3462,7 @@ async function main() {
   loadBlocked();
   loadNudges();
   loadOwnSchedules();
+  loadWatches();
   readStaffed();
   heartbeat();
   const heartbeatMs = Number(process.env.HUBD_HEARTBEAT_MS ?? HEARTBEAT_MS);
@@ -3127,6 +3528,7 @@ async function main() {
       }
     }
     sendNewIssues();
+    maybePollWatches();
     if (Date.now() - lastNudgeCheck > NUDGE_CHECK_MS) {
       lastNudgeCheck = Date.now();
       sendNudges();

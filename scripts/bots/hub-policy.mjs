@@ -659,6 +659,12 @@ function authorizeAs(role, request, acting, employee) {
   if (request.kind === "board") {
     return authorizeBoard(argv);
   }
+  if (request.kind === "watch") {
+    // Every role may ask to be told when CI on a pull request ends (#736).
+    // hubd checks the words, the pull request's visibility, and that each
+    // employee lists and removes only its own watches.
+    return { allow: true };
+  }
   if (request.kind === "rank") {
     // The Backlog's order is the manager's to keep (#351). hubd checks the
     // words and the cards; roles never get GraphQL of their own.

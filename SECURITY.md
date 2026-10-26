@@ -408,6 +408,21 @@ risk: an agent that has read injected text can store it as a reminder,
 and it comes back every session. The prefix marks it as the agent's own
 note, never the operator's word or the company's.
 
+**CI watches (#736).** Any employee may ask hubd to tell it when CI on a
+visible pull request ends (`hub watch ci <pr>`). A watch is of a fixed
+kind with fixed reads. hubd never runs a command an agent supplied, and
+a note is only said back to its owner. Watches are capped at 90 minutes,
+and an employee lists and removes only its own. The answer reaches only
+the asker's inbox, addressed to that one employee, and is never mirrored
+to Telegram: it carries the note and test titles from a pull request,
+which are not the System's to say on the operator's phone. It may quote
+up to 40 lines of a failing e2e job's log, which is our own CI output.
+`watches.json` sits in hubd's directory, which every jail reads, as the
+schedules do. Each poll spends about one pull read and up to four run
+lists per watched pull request a minute, from the shared REST budget. Moving a card to In Review is refused
+until every open PR that closes it is green, by the merge gate's own
+reading of the jobs.
+
 **Peek (#19).** `agent-turn.mjs` on the host records each employee's
 recent output under `$VIBEWARS_BOT_ROOT/peek` (mode 700, files 600),
 bound read-only into the manager's jail and no other. No jail holds a

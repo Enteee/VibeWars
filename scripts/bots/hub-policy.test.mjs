@@ -839,6 +839,12 @@ describe("board reads", () => {
     }
   });
 
+  it("lets every role watch CI on a pull request (#736)", () => {
+    for (const role of ROLES) {
+      expect(authorize(role, { kind: "watch", argv: ["ci", "736"] }).allow, role).toBe(true);
+    }
+  });
+
   it("names its alert readers: a role added to ROLES later reads none (#184)", () => {
     expect(mayReadAlerts("support")).toBe(false);
     expect(ROLES.every((role) => mayReadAlerts(role))).toBe(true);

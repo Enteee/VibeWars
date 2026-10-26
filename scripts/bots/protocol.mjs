@@ -609,12 +609,17 @@ export const SYSTEM = "_system";
 export const SYSTEM_STYLE = Object.freeze({ emoji: "⚠️", name: "System" });
 
 /**
- * A system outbox entry, `{ to, text, nudge }`, as a `link` line in the
- * inbox of everyone it is for. `to` is `"all"`, a role or one employee (#383), and `nudge` the id
+ * A system outbox entry, `{ to, text, nudge, direct }`, as a `link` line in
+ * the inbox of everyone it is for. `to` is `"all"`, a role or one employee (#383), and `nudge` the id
  * of the scheduled nudge it is (#537) or `null`. To everyone it is a
  * broadcast in General; to a role it is mirrored as a message to that role.
  * An empty or malformed one goes nowhere; a role nobody is employed in gets
  * nothing, and nothing is mirrored.
+ *
+ * A `direct` one (#736) is for exactly the employee `to` names, even a
+ * seat-1 id that is also its role's name, and only its inbox: never
+ * mirrored, since it can carry text the employee chose and logs from a
+ * pull request, which are not the System's to say on the operator's phone.
  *
  * @param {unknown} raw the outbox file's contents
  * @param {{ employees: ReadonlyMap<string, string>, now: number }} context
@@ -622,11 +627,11 @@ export const SYSTEM_STYLE = Object.freeze({ emoji: "⚠️", name: "System" });
  * @returns {{ deliveries: { employee: string, line: InboxLine }[], mirror: Mirrored | null }}
  */
 export function deliverSystem(raw, context) {
-  const { text, to, nudge } = obj(raw);
+  const { text, to, nudge, direct } = obj(raw);
   if (typeof text !== "string" || text.trim() === "" || typeof to !== "string") {
     return { deliveries: [], mirror: null };
   }
-  if (nudge !== null && typeof nudge !== "string") {
+  if ((nudge !== null && typeof nudge !== "string") || typeof direct !== "boolean") {
     return { deliveries: [], mirror: null };
   }
   const recipients =
@@ -647,6 +652,11 @@ export function deliverSystem(raw, context) {
     broadcast: false,
     nudge,
   };
+  if (direct) {
+    return context.employees.has(to)
+      ? { deliveries: [{ employee: to, line }], mirror: null }
+      : { deliveries: [], mirror: null };
+  }
   return {
     deliveries: recipients.map((employee) => ({ employee, line })),
     mirror: { from: SYSTEM, to: context.employees.get(to) ?? to, text },
