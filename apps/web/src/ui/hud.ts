@@ -32,6 +32,7 @@ import {
   flashSlot,
   outOfRange,
   paintCastFill,
+  paintKnockdown,
   slotAffordable,
 } from "./skill-slot-state.js";
 import { createSlotTooltips, type SlotTooltips } from "./slot-tooltip.js";
@@ -766,6 +767,7 @@ export function updateHud(
   const fill = castFill(skillBar, self);
   const far = outOfRange(skillBar, self, target, walls);
   hud.slotTips.casting(fill?.slot);
+  paintKnockdown(hud.skillBar, self.knockdownRemaining);
   skillBar.forEach((slot, index) => {
     const button = buttons[index];
     if (button === undefined || slot === null) {

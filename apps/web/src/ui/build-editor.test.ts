@@ -14,7 +14,9 @@ import {
   budgetSegments,
   canRaise,
   decodeDragSource,
+  editorProblems,
   encodeDragSource,
+  isUnsaved,
   newCharacter,
   nextRankCost,
   pipTarget,
@@ -372,6 +374,67 @@ describe("skill bar drag and drop", () => {
     const { character: after } = applySkillDrop(warrior(), { from: "slot", slot: 0 }, 1);
 
     expect(after.skillBar.slice(0, 2)).toEqual(["b", "a"]);
+  });
+});
+
+describe("isUnsaved (#566)", () => {
+  const opened = newCharacter("c1");
+
+  it("is false for the character as opened, however late it was touched", () => {
+    expect(isUnsaved(opened, opened)).toBe(false);
+    expect(isUnsaved(opened, { ...opened, updatedAt: opened.updatedAt + 5000 })).toBe(false);
+  });
+
+  it("is true for a new name, a rank, a skill or a profession", () => {
+    expect(isUnsaved(opened, { ...opened, name: "Renamed" })).toBe(true);
+    expect(isUnsaved(opened, setRank(opened, "warrior.strength", 3))).toBe(true);
+    expect(isUnsaved(opened, setSkill(opened, 0, "warrior.sprint"))).toBe(true);
+    expect(isUnsaved(opened, setProfessions(opened, "warrior", "monk"))).toBe(true);
+  });
+
+  it("is false again once an edit is undone, whatever order the ranks were set in", () => {
+    const ranked = setRank(setRank(opened, "warrior.strength", 3), "warrior.tactics", 2);
+    const reordered = setRank(setRank(ranked, "warrior.strength", 0), "warrior.strength", 3);
+    expect(isUnsaved(ranked, reordered)).toBe(false);
+    expect(
+      isUnsaved(opened, setRank(setRank(opened, "warrior.strength", 3), "warrior.strength", 0)),
+    ).toBe(false);
+  });
+});
+
+describe("editorProblems (#566)", () => {
+  const texts = (character: StoredCharacter) =>
+    editorProblems(character).map((problem) => [problem.text, problem.blocking]);
+
+  it("says what blocks the save in a sentence, with no field prefix, and where", () => {
+    const nameless = { ...setSkill(newCharacter("c1"), 0, "warrior.sprint"), name: " " };
+    const [first] = editorProblems(nameless);
+    expect(first).toEqual({
+      text: "Give the character a name.",
+      blocking: true,
+      cause: { kind: "name" },
+    });
+  });
+
+  it("names the slot of a skill the professions cannot reach", () => {
+    const character = setSkill(newCharacter("c1"), 2, "elementalist.fireball");
+    const [first] = editorProblems(character);
+    expect(first?.text).toBe(
+      "Slot 3: Fireball is an Elementalist skill, which this character cannot access.",
+    );
+    expect(first?.cause).toEqual({ kind: "slot", slot: 2 });
+  });
+
+  it("lists unspent points and empty slots as hints that never block", () => {
+    const character = setSkill(newCharacter("c1"), 0, "warrior.sprint");
+    expect(texts(character)).toEqual([
+      [
+        `${String(MINIMAL_GW_INSPIRED_PVP_V1.attributes.attributePointBudget)} attribute points unspent.`,
+        false,
+      ],
+      ["7 empty skill slots.", false],
+    ]);
+    expect(validateBuild(character)).toEqual([]);
   });
 });
 

@@ -63,6 +63,51 @@ export function paintCastFill(button: HTMLElement, fraction: number | undefined)
 }
 
 /**
+ * How much of a knockdown is left (#545), from 1 as it lands to 0 as the
+ * body rises, or undefined standing. The wire carries only the time left,
+ * so the whole is the most `remaining` has been since it went down
+ * (`whole`, or undefined for none yet): a body already down cannot be
+ * knocked down again, so that is the knockdown's length.
+ */
+export function knockdownDrain(
+  remaining: number,
+  whole: number | undefined,
+): { whole: number; fraction: number } | undefined {
+  if (remaining <= 0) {
+    return undefined;
+  }
+  const length = Math.max(remaining, whole ?? 0);
+  return { whole: length, fraction: remaining / length };
+}
+
+/**
+ * Grey the whole skill bar while its owner lies knocked down, with the time
+ * left as a draining fill over it (#545); lit again the moment they rise.
+ * Read from the snapshot each frame, never the event, and written only on
+ * change.
+ */
+export function paintKnockdown(bar: HTMLElement, remaining: number): void {
+  const stored = bar.dataset.knockdownWhole;
+  const drain = knockdownDrain(remaining, stored === undefined ? undefined : Number(stored));
+  bar.classList.toggle("is-knocked-down", drain !== undefined);
+  if (drain === undefined) {
+    if (stored !== undefined) {
+      delete bar.dataset.knockdownWhole;
+      bar.style.removeProperty("--knockdown-fill");
+    }
+    return;
+  }
+  const whole = String(drain.whole);
+  if (stored !== whole) {
+    bar.dataset.knockdownWhole = whole;
+  }
+  const fill = String(drain.fraction);
+  if (bar.style.getPropertyValue("--knockdown-fill") !== fill) {
+    bar.style.setProperty("--knockdown-fill", fill);
+  }
+}
+
+/**
  * Whether `self` can pay for `slot` now: the bar's cost, which the host
  * sends again as a glyph's discount comes and goes (#637). A hint, not a
  * gate: the press still goes to the host (brief §32).

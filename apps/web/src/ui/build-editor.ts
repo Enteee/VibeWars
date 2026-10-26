@@ -66,7 +66,16 @@ import {
 } from "./icons.js";
 import { filterEliteSkills, filterSkillsByName, groupSkillsByAttribute } from "./skill-library.js";
 import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
-import { button, h, syncList } from "./kit.js";
+import {
+  button,
+  h,
+  inlineConfirm,
+  problemsChip,
+  screenBar,
+  syncList,
+  type ChipProblem,
+  type InlineConfirm,
+} from "./kit.js";
 import { createTrainingPanel, type TrainingPanel } from "./training-panel.js";
 
 /**
@@ -389,6 +398,149 @@ export function applySkillDrop(
     : { character: swapSkillSlots(character, source.slot, targetSlot), notice: undefined };
 }
 
+/** `value` as JSON with its keys sorted, so two equal builds compare equal. */
+function canonical(value: unknown): string {
+  return JSON.stringify(value, (_key, inner: unknown) =>
+    typeof inner === "object" && inner !== null && !Array.isArray(inner)
+      ? Object.fromEntries(Object.entries(inner).sort(([a], [b]) => a.localeCompare(b)))
+      : inner,
+  );
+}
+
+/**
+ * Whether `current` differs from the character as it was opened (#566).
+ * When it was last touched is no edit, and neither is the order the
+ * attribute ranks were set in.
+ */
+export function isUnsaved(opened: StoredCharacter, current: StoredCharacter): boolean {
+  const comparable = (character: StoredCharacter) => ({
+    ...character,
+    updatedAt: 0,
+    attributes: [...character.attributes].sort((a, b) =>
+      a.attributeId.localeCompare(b.attributeId),
+    ),
+  });
+  return canonical(comparable(opened)) !== canonical(comparable(current));
+}
+
+/** The part of the editor a problem is about, which its line jumps to. */
+export type ProblemCause =
+  | { readonly kind: "name" }
+  | { readonly kind: "professions" }
+  | { readonly kind: "attributes" }
+  | { readonly kind: "bar" }
+  | { readonly kind: "slot"; readonly slot: number }
+  | { readonly kind: "gear"; readonly field: string };
+
+/** One line of the problems chip, before it knows the page (#566). */
+export interface EditorProblem {
+  readonly text: string;
+  readonly blocking: boolean;
+  readonly cause: ProblemCause;
+}
+
+/** A message as a sentence: capitalised, with a full stop. */
+function sentence(message: string): string {
+  const capitalised = message.charAt(0).toUpperCase() + message.slice(1);
+  return /[.!?]$/.test(capitalised) ? capitalised : `${capitalised}.`;
+}
+
+const SLOT_FIELD = /^skillBar\[(\d+)\]$/;
+const DUPLICATE = " appears more than once on the bar";
+
+/**
+ * What stops this build saving, as plain sentences that say where (#566):
+ * `validateBuild`'s problems, with no `field:` prefix, then the hints
+ * that never block, unspent points and empty slots.
+ */
+export function editorProblems(character: StoredCharacter): EditorProblem[] {
+  const blocking = validateBuild(character).map((problem): EditorProblem => {
+    const slotMatch = SLOT_FIELD.exec(problem.field);
+    if (slotMatch !== null) {
+      const slot = Number(slotMatch[1]);
+      const duplicate = problem.message.endsWith(DUPLICATE)
+        ? problem.message.slice(0, -DUPLICATE.length)
+        : undefined;
+      const text =
+        duplicate === undefined
+          ? `Slot ${String(slot + 1)}: ${sentence(problem.message)}`
+          : `${getSkill(duplicate)?.name ?? duplicate} is on the bar more than once.`;
+      return { text, blocking: true, cause: { kind: "slot", slot } };
+    }
+    if (problem.field.startsWith("equipment")) {
+      return {
+        text: sentence(problem.message),
+        blocking: true,
+        cause: { kind: "gear", field: problem.field },
+      };
+    }
+    if (problem.field === "character" && problem.message === "name must not be empty") {
+      return { text: "Give the character a name.", blocking: true, cause: { kind: "name" } };
+    }
+    if (problem.field === "character" && problem.message.startsWith("secondary profession")) {
+      return { text: sentence(problem.message), blocking: true, cause: { kind: "professions" } };
+    }
+    if (problem.field === "character") {
+      return { text: sentence(problem.message), blocking: true, cause: { kind: "attributes" } };
+    }
+    return { text: sentence(problem.message), blocking: true, cause: { kind: "bar" } };
+  });
+
+  const hints: EditorProblem[] = [];
+  const unspent = remainingPoints(character);
+  if (unspent > 0) {
+    hints.push({
+      text: `${String(unspent)} attribute point${unspent === 1 ? "" : "s"} unspent.`,
+      blocking: false,
+      cause: { kind: "attributes" },
+    });
+  }
+  const empty = character.skillBar.filter((id) => id === null).length;
+  if (empty > 0) {
+    hints.push({
+      text: `${String(empty)} empty skill slot${empty === 1 ? "" : "s"}.`,
+      blocking: false,
+      cause: { kind: "bar" },
+    });
+  }
+  return [...blocking, ...hints];
+}
+
+/** The `data-cause` a problem's cause carries on the page. */
+function causeKey(cause: ProblemCause): string {
+  switch (cause.kind) {
+    case "slot":
+      return `slot-${String(cause.slot)}`;
+    case "gear":
+      return cause.field;
+    default:
+      return cause.kind;
+  }
+}
+
+/** How long a jumped-to cause stays highlighted. */
+const FLAG_MS = 1600;
+
+/** Scroll to the element `cause` is about, highlight it a moment, and focus it if it takes focus. */
+function showCause(scope: HTMLElement, cause: ProblemCause): void {
+  const key = causeKey(cause);
+  // An armor piece's problem without a mark of its own falls back to the gear.
+  const target =
+    scope.querySelector<HTMLElement>(`[data-cause="${key}"]`) ??
+    (cause.kind === "gear" ? scope.querySelector<HTMLElement>('[data-cause="equipment"]') : null);
+  if (target === null) {
+    return;
+  }
+  target.scrollIntoView({ block: "center", behavior: "smooth" });
+  target.classList.add("is-flagged");
+  setTimeout(() => {
+    target.classList.remove("is-flagged");
+  }, FLAG_MS);
+  if (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) {
+    target.focus({ preventScroll: true });
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* Rendering                                                                   */
 /* -------------------------------------------------------------------------- */
@@ -454,11 +606,6 @@ export function mountBuildEditor(
       layout.appendChild(column);
     }
   }
-  if (training !== undefined) {
-    layout.classList.add("has-training");
-    training.attach(layout);
-    training.setDisplayName(character.name);
-  }
 
   const update = (): void => {
     for (const region of regions) {
@@ -487,64 +634,112 @@ export function mountBuildEditor(
     tooltip,
   };
 
+  // Spans every column, the Training Ground's included (#566).
+  const bar = mountCommandBar(layout, context, initial, callbacks, (name) => {
+    // Typing changes nothing another region shows but the bar's own
+    // marker: the arena hears about the new name directly.
+    character = { ...character, name };
+    training?.setDisplayName(name);
+    bar.update(character);
+  });
+  if (training !== undefined) {
+    layout.classList.add("has-training");
+    training.attach(layout);
+    training.setDisplayName(character.name);
+  }
+
   const panel = h("div", "editor");
   layout.appendChild(panel);
   regions.push(
-    mountHeader(panel, context, (name) => {
-      // Typing is no change any other region shows, so it updates none:
-      // the arena hears about the new name directly.
-      character = { ...character, name };
-      training?.setDisplayName(name);
-    }),
-    mountProfessions(panel, context),
+    bar,
     mountAttributes(panel, context),
     mountSkillBar(panel, context),
     mountGear(panel, context),
-    mountActions(panel, context, callbacks),
     mountShare(panel, context),
     mountLibrary(layout, context),
   );
   update();
 
+  // Esc is Close (#566), unless something on the page used it already:
+  // the arena cancels or lets go with it, a search field clears with it.
+  const onKeyDown = (event: KeyboardEvent): void => {
+    const target = event.target;
+    if (
+      event.key !== "Escape" ||
+      event.defaultPrevented ||
+      event.repeat ||
+      target instanceof HTMLTextAreaElement ||
+      (target instanceof HTMLInputElement && target.type === "search")
+    ) {
+      return;
+    }
+    event.preventDefault();
+    bar.escape();
+  };
+  document.addEventListener("keydown", onKeyDown);
+
   return {
     dispose() {
+      document.removeEventListener("keydown", onKeyDown);
+      bar.dispose();
       tooltip.dispose();
       training?.dispose();
     },
   };
 }
 
-/* --- header ---------------------------------------------------------------- */
+/* --- command bar ----------------------------------------------------------- */
 
-function mountHeader(
-  panel: HTMLElement,
+interface CommandBar extends Region {
+  /** Esc: put away what is open, else Close. */
+  escape(): void;
+  dispose(): void;
+}
+
+/**
+ * The command bar (#566): Close, the name and professions, the point
+ * budget, the problems chip, an unsaved marker, Save, and ⋯ with
+ * Duplicate and Delete. Close with unsaved edits, and Delete always, ask
+ * in the bar first.
+ */
+function mountCommandBar(
+  layout: HTMLElement,
   context: EditorContext,
+  opened: StoredCharacter,
+  callbacks: BuildEditorCallbacks,
   onName: (name: string) => void,
-): Region {
-  const header = h("div", "editor-header");
+): CommandBar {
+  let asking: InlineConfirm | undefined;
+  const ask = (
+    anchor: HTMLElement,
+    question: string,
+    confirmLabel: string,
+    onConfirm: () => void,
+    cancelLabel: string,
+  ): void => {
+    asking?.dismiss();
+    asking = inlineConfirm(anchor, question, confirmLabel, onConfirm, cancelLabel);
+  };
+
+  const close = (): void => {
+    if (!isUnsaved(opened, context.current())) {
+      callbacks.onClose();
+      return;
+    }
+    ask(back, "Discard changes?", "discard", callbacks.onClose, "keep editing");
+  };
+
   const nameInput = document.createElement("input");
   nameInput.className = "editor-name";
-  nameInput.value = context.current().name;
+  nameInput.dataset.cause = "name";
+  nameInput.setAttribute("aria-label", "character name");
+  nameInput.value = opened.name;
   nameInput.addEventListener("input", () => {
     onName(nameInput.value);
   });
-  header.appendChild(nameInput);
-  panel.appendChild(header);
-  return {
-    update(character) {
-      // Only an import changes the name from outside the field; setting
-      // an unchanged value would still move the caret to the end.
-      if (nameInput.value !== character.name) {
-        nameInput.value = character.name;
-      }
-    },
-  };
-}
 
-/* --- professions ----------------------------------------------------------- */
-
-function mountProfessions(panel: HTMLElement, context: EditorContext): Region {
-  const row = h("div", "editor-row");
+  const professions = h("div", "editor-row editor-professions");
+  professions.dataset.cause = "professions";
   const primary = professionPicker("primary", false, (value) => {
     const character = context.current();
     if (value !== undefined) {
@@ -555,15 +750,125 @@ function mountProfessions(panel: HTMLElement, context: EditorContext): Region {
     const character = context.current();
     context.commit(setProfessions(character, character.primaryProfession, value));
   });
-  row.append(primary.element, secondary.element);
-  panel.appendChild(row);
+  professions.append(primary.element, secondary.element);
+
+  const budget = h("span", "editor-budget");
+  budget.title = "attribute points spent";
+  const chip = problemsChip([]);
+  const unsaved = h("span", "editor-unsaved", "● unsaved");
+
+  const save = button("save", "primary", () => {
+    callbacks.onSave({ ...context.current(), updatedAt: Date.now() });
+  });
+
+  const more = button("⋯", "editor-more-toggle", () => {
+    menu.hidden = !menu.hidden;
+    more.setAttribute("aria-expanded", String(!menu.hidden));
+  });
+  more.setAttribute("aria-label", "more actions");
+  more.setAttribute("aria-expanded", "false");
+  const menu = h("div", "editor-more");
+  menu.hidden = true;
+  const closeMenu = (): void => {
+    menu.hidden = true;
+    more.setAttribute("aria-expanded", "false");
+  };
+  menu.append(
+    // An edited character duplicates as edited, as it always has.
+    button("duplicate", "", () => {
+      closeMenu();
+      callbacks.onDuplicate(context.current());
+    }),
+    button("delete", "", () => {
+      closeMenu();
+      const { id, name } = context.current();
+      ask(
+        more,
+        `Delete ${name}?`,
+        "delete",
+        () => {
+          callbacks.onDelete(id);
+        },
+        "cancel",
+      );
+    }),
+  );
+  const moreWrap = h("span", "editor-more-wrap");
+  moreWrap.append(more, menu);
+
+  const { element, back } = screenBar({
+    back: { label: "close", onBack: close },
+    title: [nameInput, professions],
+    status: [budget, chip.element, unsaved],
+    actions: [save, moreWrap],
+  });
+  element.classList.add("editor-bar");
+  layout.appendChild(element);
+
+  // A press anywhere else puts the ⋯ menu and the problem list away.
+  const onPointerDown = (event: PointerEvent): void => {
+    const target = event.target;
+    if (!(target instanceof Node)) {
+      return;
+    }
+    if (!moreWrap.contains(target)) {
+      closeMenu();
+    }
+    if (!chip.element.contains(target)) {
+      chip.close();
+    }
+  };
+  document.addEventListener("pointerdown", onPointerDown);
+
+  const budgetTotal = MINIMAL_GW_INSPIRED_PVP_V1.attributes.attributePointBudget;
   return {
     update(character) {
+      // Only an import changes the name from outside the field; setting
+      // an unchanged value would still move the caret to the end.
+      if (nameInput.value !== character.name) {
+        nameInput.value = character.name;
+      }
       primary.update(character.primaryProfession);
       secondary.update(character.secondaryProfession);
+      budget.textContent = `${String(budgetTotal - remainingPoints(character))}/${String(budgetTotal)}`;
+      const problems = editorProblems(character);
+      chip.update(
+        problems.map((problem): ChipProblem => ({
+          text: problem.text,
+          blocking: problem.blocking,
+          jump: () => {
+            showCause(layout, problem.cause);
+          },
+        })),
+      );
+      unsaved.hidden = !isUnsaved(opened, character);
+      // An invalid build cannot be saved (brief §23); the button says why.
+      const firstBlocking = problems.find((problem) => problem.blocking);
+      save.disabled = firstBlocking !== undefined;
+      save.title = firstBlocking?.text ?? "save this character";
+    },
+    escape() {
+      if (asking?.isOpen() === true) {
+        asking.dismiss();
+        return;
+      }
+      if (!menu.hidden) {
+        closeMenu();
+        return;
+      }
+      if (chip.isOpen()) {
+        chip.close();
+        return;
+      }
+      close();
+    },
+    dispose() {
+      document.removeEventListener("pointerdown", onPointerDown);
     },
   };
 }
+
+/* --- professions ----------------------------------------------------------- */
 
 function professionPicker(
   label: string,
@@ -628,6 +933,7 @@ function mountAttributes(panel: HTMLElement, context: EditorContext): Region {
   const bar = h("div", "editor-budget");
   points.append(pointsText, bar);
   const list = h("div", "editor-attributes");
+  list.dataset.cause = "attributes";
   panel.append(points, list);
 
   /** The pip under the pointer, previewed on its row and the points line. */
@@ -827,6 +1133,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
     h("div", "editor-hint", "Drag skills from the right, or click one to equip it."),
   );
   const grid = h("div", "skill-bar-grid");
+  grid.dataset.cause = "bar";
   section.appendChild(grid);
   const notice = h("div", "editor-notice");
   notice.setAttribute("role", "status");
@@ -840,6 +1147,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
   const create = (slot: number): HTMLElement => {
     const cell = h("div", "skill-slot");
     cell.dataset.slot = String(slot);
+    cell.dataset.cause = `slot-${String(slot)}`;
     cell.addEventListener("dragstart", (event: DragEvent) => {
       event.dataTransfer?.setData("text/plain", encodeDragSource({ from: "slot", slot }));
     });
@@ -922,51 +1230,6 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
         });
         cell.appendChild(clear);
       });
-    },
-  };
-}
-
-/* --- validation and actions ------------------------------------------------ */
-
-function mountActions(
-  panel: HTMLElement,
-  context: EditorContext,
-  callbacks: BuildEditorCallbacks,
-): Region {
-  const problems = h("div", "editor-problems");
-  const actions = h("div", "editor-actions");
-  const save = button("save", "", () => {
-    callbacks.onSave({ ...context.current(), updatedAt: Date.now() });
-  });
-  actions.append(
-    save,
-    button("duplicate", "", () => {
-      callbacks.onDuplicate(context.current());
-    }),
-    button("delete", "", () => {
-      callbacks.onDelete(context.current().id);
-    }),
-    button("close", "", callbacks.onClose),
-  );
-  panel.appendChild(actions);
-
-  return {
-    update(character) {
-      const found = validateBuild(character);
-      problems.replaceChildren(
-        ...found.map((problem) =>
-          h("div", "editor-problem", `${problem.field}: ${problem.message}`),
-        ),
-      );
-      if (found.length === 0) {
-        problems.remove();
-      } else if (!problems.isConnected) {
-        actions.before(problems);
-      }
-      // An invalid build cannot be saved — brief §23 requires validation
-      // before saving, and allowing a save here would just move the failure
-      // to load time.
-      save.disabled = found.length > 0;
     },
   };
 }
@@ -1412,6 +1675,7 @@ function mountGearSlot(
 function mountGear(panel: HTMLElement, context: EditorContext): Region {
   const { current, commit } = context;
   const section = h("div", "editor-gear");
+  section.dataset.cause = "equipment";
   section.appendChild(h("div", "editor-label", "equipment"));
   section.appendChild(
     h("div", "editor-hint", "Drag gear from the right, or click a piece to equip it."),
@@ -1425,6 +1689,8 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
   const handsGrid = h("div", "gear-hands");
   const weaponSlot = mountGearSlot("weapon", context, drop({ kind: "main-hand" }));
   const offhandSlot = mountGearSlot("off-hand", context, drop({ kind: "off-hand" }));
+  weaponSlot.element.dataset.cause = "equipment.mainHand";
+  offhandSlot.element.dataset.cause = "equipment.offHand";
   handsGrid.append(weaponSlot.element, offhandSlot.element);
   section.appendChild(handsGrid);
 
@@ -1453,6 +1719,7 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
   const armorGrid = h("div", "armor-grid");
   const armorSlots = ARMOR_SLOTS.map((slot) => {
     const row = h("div", "armor-row");
+    row.dataset.cause = `equipment.armor.${slot}`;
     row.appendChild(h("span", "armor-slot-name", slot));
     const insignia = mountGearSlot(
       "insignia",

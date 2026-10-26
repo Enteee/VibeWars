@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { syncList } from "./kit.js";
+import { TOAST_SECONDS, chipLabel, dismissToast, inlineConfirm, syncList, toast } from "./kit.js";
 
 /**
  * Just enough of a container for `syncList`, without jsdom: an ordered
@@ -99,5 +99,191 @@ describe("syncList (#563)", () => {
     const [a, b, c] = list.children;
     sync(list, ["c", "a", "b"]);
     expect(list.children).toEqual([c, a, b]);
+  });
+});
+
+/**
+ * Just enough of the DOM for a toast and an inline confirmation (#566):
+ * elements in a tree, a click, the focus, and `document.body`.
+ */
+class FakeNode {
+  className = "";
+  textContent = "";
+  hidden = false;
+  type = "";
+  parent: FakeNode | undefined;
+  readonly children: FakeNode[] = [];
+  readonly #clicks: (() => void)[] = [];
+
+  setAttribute(): void {
+    // Roles and labels are not under test here.
+  }
+
+  append(...nodes: FakeNode[]): void {
+    for (const node of nodes) {
+      this.appendChild(node);
+    }
+  }
+
+  appendChild(node: FakeNode): FakeNode {
+    node.remove();
+    node.parent = this;
+    this.children.push(node);
+    return node;
+  }
+
+  after(node: FakeNode): void {
+    node.remove();
+    const parent = this.parent;
+    if (parent !== undefined) {
+      parent.children.splice(parent.children.indexOf(this) + 1, 0, node);
+      node.parent = parent;
+    }
+  }
+
+  remove(): void {
+    if (this.parent !== undefined) {
+      this.parent.children.splice(this.parent.children.indexOf(this), 1);
+      this.parent = undefined;
+    }
+  }
+
+  addEventListener(_type: string, listener: () => void): void {
+    this.#clicks.push(listener);
+  }
+
+  click(): void {
+    for (const listener of this.#clicks) {
+      listener();
+    }
+  }
+
+  focus(): void {
+    focusLog.push(this);
+  }
+
+  /** The button labelled `label` anywhere below. */
+  button(label: string): FakeNode {
+    const found = this.children.flatMap((child) =>
+      child.textContent === label
+        ? [child]
+        : child.children.length > 0
+          ? [child.button(label)]
+          : [],
+    )[0];
+    if (found === undefined) {
+      throw new Error(`no ${label} button`);
+    }
+    return found;
+  }
+}
+
+/** Every element focused, latest last. */
+const focusLog: FakeNode[] = [];
+let body = new FakeNode();
+
+describe("toast (#566)", () => {
+  beforeEach(() => {
+    body = new FakeNode();
+    vi.stubGlobal("document", { createElement: () => new FakeNode(), body });
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    dismissToast();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("shows one at a time: a new one replaces the old", () => {
+    toast("Saved.");
+    toast("Copied.");
+    expect(body.children).toHaveLength(1);
+    expect(body.children[0]?.children[0]?.textContent).toBe("Copied.");
+  });
+
+  it("goes after its seconds, and the replaced one's timer takes nothing down", () => {
+    toast("first");
+    vi.advanceTimersByTime(TOAST_SECONDS * 1000 - 100);
+    toast("second");
+    vi.advanceTimersByTime(200);
+    expect(body.children).toHaveLength(1);
+    vi.advanceTimersByTime(TOAST_SECONDS * 1000);
+    expect(body.children).toHaveLength(0);
+  });
+
+  it("offers Undo when asked, which undoes once and takes the toast down", () => {
+    const undo = vi.fn();
+    toast("Removed Barrage.", { undo });
+    body.button("undo").click();
+    expect(undo).toHaveBeenCalledOnce();
+    expect(body.children).toHaveLength(0);
+  });
+});
+
+describe("inlineConfirm (#566)", () => {
+  beforeEach(() => {
+    vi.stubGlobal("document", { createElement: () => new FakeNode(), body: new FakeNode() });
+    focusLog.length = 0;
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** An anchor button in a bar, and what asking in its place shows. */
+  function asking(onConfirm: () => void) {
+    const bar = new FakeNode();
+    const anchor = new FakeNode();
+    bar.appendChild(anchor);
+    const confirm = inlineConfirm(
+      anchor as unknown as HTMLElement,
+      "Delete Pyro?",
+      "delete",
+      onConfirm,
+    );
+    return { bar, anchor, confirm };
+  }
+
+  it("asks in the anchor's place, with the focus on cancel", () => {
+    const { bar, anchor } = asking(() => undefined);
+    expect(anchor.hidden).toBe(true);
+    const ask = bar.children[1];
+    expect(ask?.children.map((child) => child.textContent)).toEqual([
+      "Delete Pyro?",
+      "delete",
+      "cancel",
+    ]);
+    expect(focusLog.at(-1)?.textContent).toBe("cancel");
+  });
+
+  it("runs the action once on confirm, and puts the anchor back", () => {
+    const onConfirm = vi.fn();
+    const { bar, anchor, confirm } = asking(onConfirm);
+    bar.button("delete").click();
+    expect(onConfirm).toHaveBeenCalledOnce();
+    expect(anchor.hidden).toBe(false);
+    expect(bar.children).toEqual([anchor]);
+    expect(confirm.isOpen()).toBe(false);
+  });
+
+  it("does nothing on cancel or dismiss but put the anchor back", () => {
+    const onConfirm = vi.fn();
+    const first = asking(onConfirm);
+    first.bar.button("cancel").click();
+    expect(first.anchor.hidden).toBe(false);
+    expect(focusLog.at(-1)).toBe(first.anchor);
+    const second = asking(onConfirm);
+    second.confirm.dismiss();
+    expect(second.bar.children).toEqual([second.anchor]);
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+});
+
+describe("chipLabel (#566)", () => {
+  it("counts blocking problems first, then hints, else says ready", () => {
+    const problem = (blocking: boolean) => ({ text: "x", blocking });
+    expect(chipLabel([problem(true), problem(false), problem(true)])).toBe("2 problems");
+    expect(chipLabel([problem(true)])).toBe("1 problem");
+    expect(chipLabel([problem(false)])).toBe("1 hint");
+    expect(chipLabel([])).toBe("ready");
   });
 });

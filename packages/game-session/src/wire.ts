@@ -333,6 +333,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     castTotal: player.castTotal,
     swingElapsed: player.swingElapsed,
     swingTotal: player.swingTotal,
+    knockdownRemaining: player.knockdownRemaining,
     statuses,
   };
 }

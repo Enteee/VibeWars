@@ -282,10 +282,13 @@ body {
   color: var(--ink-dim);
 }
 
+/* As wide as its slots, not the HUD: the knockdown drain fills this box
+   and must end at the last slot (#545). */
 .hud-skills {
   display: flex;
   gap: 0.35rem;
   flex-wrap: wrap;
+  width: fit-content;
 }
 
 .hud-skill {
@@ -639,15 +642,200 @@ body {
   flex: 1 1 auto;
 }
 
-.editor-problems {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
 .editor-problem {
   color: #ffb3ae;
   font-size: 0.85rem;
+}
+
+/* --- screen bar, inline confirmation, problems chip, toast (#566) ------- */
+
+.screen-bar {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.screen-bar-title,
+.screen-bar-status,
+.screen-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.screen-bar-status {
+  flex: 1 1 auto;
+}
+
+.screen-bar-actions {
+  margin-left: auto;
+}
+
+.screen-bar button,
+.inline-confirm button,
+.toast button {
+  padding: 0.4rem 0.8rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.screen-bar button:hover:not(:disabled),
+.inline-confirm button:hover,
+.toast button:hover {
+  border-color: var(--accent);
+}
+
+.screen-bar button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.screen-bar button.primary:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.inline-confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Harm, not accent: the button that throws something away. */
+.inline-confirm button.danger {
+  border-color: var(--damage);
+  color: var(--damage);
+}
+
+.problems-chip {
+  position: relative;
+}
+
+.screen-bar .problems-chip-toggle {
+  padding: 0.2rem 0.7rem;
+  border-radius: 1rem;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+}
+
+.screen-bar .problems-chip-toggle.is-blocking {
+  border-color: var(--damage);
+  color: var(--damage);
+}
+
+.problems-list {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  width: max-content;
+  max-width: min(28rem, 80vw);
+  margin: 0;
+  padding: 0.4rem;
+  list-style: none;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 45%);
+}
+
+.problems-list li {
+  font-size: 0.85rem;
+}
+
+.problems-list li.is-blocking {
+  color: #ffb3ae;
+}
+
+.problems-list li.is-hint {
+  color: var(--ink-dim);
+}
+
+.screen-bar .problems-jump {
+  display: block;
+  width: 100%;
+  padding: 0.3rem 0.4rem;
+  background: none;
+  border-color: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+/* The cause a problem points at, for a moment after its line is pressed. */
+.is-flagged {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.editor-bar .editor-name {
+  width: 14rem;
+  max-width: 100%;
+}
+
+.editor-professions {
+  gap: 0.6rem;
+}
+
+.editor-budget {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.editor-unsaved {
+  color: #ffa657;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.editor-more-wrap {
+  position: relative;
+}
+
+.editor-more {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 0.3rem);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.4rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 45%);
+}
+
+.editor-more[hidden],
+.problems-list[hidden] {
+  display: none;
+}
+
+.toast {
+  position: fixed;
+  z-index: 60;
+  left: 50%;
+  bottom: 1.2rem;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: max-content;
+  max-width: min(34rem, calc(100vw - 2rem));
+  padding: 0.6rem 0.8rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 50%);
 }
 
 /* --- options (#423) ----------------------------------------------------- */
@@ -1095,8 +1283,19 @@ body {
 
 .editor-layout.has-training {
   grid-template-columns: minmax(20rem, 26rem) minmax(0, 1fr) minmax(16rem, 22rem);
-  grid-template-areas: "training editor library";
+  grid-template-areas:
+    "bar bar bar"
+    "training editor library";
   max-width: 92rem;
+}
+
+/* The command bar spans every column (#566). */
+.editor-layout > .editor-bar {
+  grid-column: 1 / -1;
+}
+
+.editor-layout.has-training > .editor-bar {
+  grid-area: bar;
 }
 
 .editor-layout.has-training > .training {
@@ -1123,6 +1322,7 @@ body {
   .editor-layout.has-training {
     grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
     grid-template-areas:
+      "bar bar"
       "training training"
       "editor library";
   }
@@ -1138,6 +1338,7 @@ body {
   .editor-layout.has-training {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
+      "bar"
       "training"
       "editor"
       "library";
@@ -1392,6 +1593,34 @@ body {
   background: linear-gradient(
     to top,
     var(--cast-fill-shade) calc(var(--cast-fill, 0) * 100%),
+    transparent 0
+  );
+  pointer-events: none;
+}
+
+/* Knocked down (#545): the whole bar greys out, and the time left drains
+   from right to left across it as one fill, the cast fill's shade. Lit
+   again the moment the body rises. Information, so it moves under reduced
+   motion too. */
+.hud-skills.is-knocked-down,
+.training-skills.is-knocked-down {
+  position: relative;
+}
+
+.hud-skills.is-knocked-down > *,
+.training-skills.is-knocked-down > * {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+
+.hud-skills.is-knocked-down::after,
+.training-skills.is-knocked-down::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    var(--cast-fill-shade) calc(var(--knockdown-fill, 0) * 100%),
     transparent 0
   );
   pointer-events: none;

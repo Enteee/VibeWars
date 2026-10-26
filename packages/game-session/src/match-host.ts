@@ -519,6 +519,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       castTotal: cast?.totalSeconds ?? 0,
       swingElapsed: round(swing.elapsed, 3),
       swingTotal: round(swing.total, 3),
+      knockdownRemaining: round(combatant.knockdownRemaining, 2),
       statuses: wireStatuses(combatant.statuses.active).map((status) => statusWireIndex(status.id)),
     };
   };

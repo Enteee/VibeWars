@@ -46,6 +46,20 @@ const ARCHER: PlayerBuild = {
   equipment: defaultBuildEquipment("ranger"),
 };
 
+/** A hammer warrior with Backbreaker, to knock a foe down (#545). */
+const HAMMERER: PlayerBuild = {
+  name: "Hammerer",
+  primaryProfession: "warrior",
+  secondaryProfession: undefined,
+  attributes: [{ attributeId: "warrior.hammer-mastery", rank: 12 }],
+  skillBar: ["warrior.backbreaker", null, null, null, null, null, null, null],
+  equipment: {
+    ...defaultBuildEquipment("warrior"),
+    mainHand: { weaponId: "hammer", requirementAttributeId: null },
+    offHand: null,
+  },
+};
+
 /** One tick of match time. */
 const TICK = 0.05;
 
@@ -277,6 +291,29 @@ describe("networked combat (P2P)", () => {
     expect(me?.castingSkillId).toBe("monk.orison-of-healing");
     expect(me?.castTotal).toBe(2);
     expect(me?.castRemaining).toBeGreaterThan(1);
+  });
+
+  it("sends a knockdown's time left on the victim, and 0 once it rises (#545)", async () => {
+    const match = startMatch();
+    const { connection: a } = await match.join(hello({ build: toJson(HAMMERER) }));
+    const { connection: b } = await match.join();
+    await match.step(TICK);
+    await closeDistance(match, a, b.selfSessionId, 60);
+    await target(match, a, b.selfSessionId);
+
+    // Backbreaker costs 9 adrenaline: one strike per hammer blow.
+    a.sendIntent({ kind: "attack", targetId: b.selfSessionId });
+    await until(match, () => (self(a)?.adrenaline ?? 0) >= 9, "the adrenaline", 30);
+    a.sendIntent({ kind: "use-skill", slot: 0 });
+    await until(
+      match,
+      () => (playerIn(a.getSnapshot(), b.selfSessionId)?.knockdownRemaining ?? 0) > 0,
+      "b knocked down, as a sees it",
+    );
+    expect(playerIn(a.getSnapshot(), b.selfSessionId)?.knockdownRemaining).toBeLessThanOrEqual(4);
+    expect(self(b)?.knockdownRemaining).toBeGreaterThan(0);
+
+    await until(match, () => self(b)?.knockdownRemaining === 0, "b to rise");
   });
 
   it("attacks with the weapon: shown to everyone, hits as cause weapon, cancel ends it", async () => {

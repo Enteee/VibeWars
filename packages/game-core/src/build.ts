@@ -60,6 +60,11 @@ export function isProfessionId(value: unknown): value is ProfessionId {
   return typeof value === "string" && Object.hasOwn(PROFESSIONS, value);
 }
 
+/** "an Elementalist", "a Monk". */
+function article(word: string): string {
+  return `${/^[AEIOU]/.test(word) ? "an" : "a"} ${word}`;
+}
+
 /** The character half of a build, for `validateCharacter`. */
 export function toCharacter(build: PlayerBuild, id: string): Character {
   return {
@@ -149,7 +154,7 @@ export function validatePlayerBuild(build: PlayerBuild, rules: AttributeRules): 
     if (!hasProfessionOf(skill, build)) {
       problems.push({
         field: `skillBar[${String(index)}]`,
-        message: `${skill.name} is a ${PROFESSIONS[skill.profession].name} skill, which this character cannot access`,
+        message: `${skill.name} is ${article(PROFESSIONS[skill.profession].name)} skill, which this character cannot access`,
       });
     }
     if (seen.has(skillId)) {
