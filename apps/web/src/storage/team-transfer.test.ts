@@ -159,7 +159,8 @@ describe("team import", () => {
 
   it("refuses no members, too many, and no name", () => {
     expect(!importTeam(code([]), [], ids(), 0).ok).toBe(true);
-    const many = Array.from({ length: MAX_TEAM_SIZE + 1 }, () => buildPayload(BOB));
+    // Invalid members, so a read of any of them would add a problem.
+    const many = Array.from({ length: MAX_TEAM_SIZE + 1 }, () => null);
     const tooMany = importTeam(code(many), [], ids(), 0);
     expect(!tooMany.ok && tooMany.problems).toEqual([
       `A team may not exceed ${String(MAX_TEAM_SIZE)} members.`,

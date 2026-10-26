@@ -149,7 +149,12 @@ export function importTeam(
     problems.push("A team needs at least one member.");
   }
   if (entries.length > MAX_TEAM_SIZE) {
-    problems.push(`A team may not exceed ${String(MAX_TEAM_SIZE)} members.`);
+    // Before any member is read: a crafted code with thousands of members
+    // must not run thousands of reads, nor list thousands of problems.
+    return {
+      ok: false,
+      problems: [...problems, `A team may not exceed ${String(MAX_TEAM_SIZE)} members.`],
+    };
   }
 
   const characters: StoredCharacter[] = [];

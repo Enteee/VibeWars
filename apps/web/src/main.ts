@@ -286,6 +286,9 @@ async function main(): Promise<void> {
       },
       onBack: showMenu,
       onPasteTeam: (text) => {
+        if (importingTeam) {
+          return;
+        }
         const result = importTeam(
           text,
           characterList.characters,
@@ -303,17 +306,25 @@ async function main(): Promise<void> {
 
   /**
    * A pasted team (#577): its new characters are stored, since a team
-   * only references characters, and the team opens unsaved.
+   * only references characters, and the team opens unsaved. A second
+   * paste while that is under way is ignored: it would be matched against
+   * the characters as they were, and store its members twice.
    */
+  let importingTeam = false;
   const openPastedTeam = async (
     imported: Extract<TeamImportResult, { ok: true }>,
   ): Promise<void> => {
-    for (const character of imported.created) {
-      await characters.save(character);
+    importingTeam = true;
+    try {
+      for (const character of imported.created) {
+        await characters.save(character);
+      }
+      const { characters: now } = await characters.list();
+      showTeamEditor(pastedTeam(imported.team), now);
+      toast(importedTeamSummary(imported));
+    } finally {
+      importingTeam = false;
     }
-    const { characters: now } = await characters.list();
-    showTeamEditor(pastedTeam(imported.team), now);
-    toast(importedTeamSummary(imported));
   };
 
   /** The open team editor; every way out of it passes through `showTeams`. */
@@ -341,6 +352,9 @@ async function main(): Promise<void> {
         void showTeams();
       },
       onImportTeam: (imported) => {
+        if (importingTeam) {
+          return;
+        }
         void openPastedTeam(imported);
       },
       // The build editor comes back to this team as it was left (#576),
