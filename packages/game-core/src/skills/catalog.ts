@@ -594,6 +594,30 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // `onAttackHit`.
     effects: [{ kind: "apply-status", statusId: "apply-poison", durationSeconds: 24 }],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Glyphs (#526): change your next spells, one at a time                  */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "elementalist.glyph-of-lesser-energy",
+    name: "Glyph of Lesser Energy",
+    type: "glyph",
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 15 seconds, your next 2 spells cost 10...16...18 less Energy to
+    // cast": the two spells and the 16 are the status's `nextSpells`.
+    effects: [{ kind: "apply-status", statusId: "glyph-of-lesser-energy", durationSeconds: 15 }],
+  },
 ];
 
 export const SKILLS_BY_ID: ReadonlyMap<string, Skill> = new Map(

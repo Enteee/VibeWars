@@ -51,7 +51,8 @@ describe("status definitions", () => {
         def.interruptsSpells ||
         def.attackDurationMultiplier !== 1 ||
         def.block !== undefined ||
-        def.onAttackHit.length > 0;
+        def.onAttackHit.length > 0 ||
+        def.nextSpells !== undefined;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
