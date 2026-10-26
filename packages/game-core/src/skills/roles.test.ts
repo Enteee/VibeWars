@@ -22,6 +22,8 @@ describe("skillRoles", () => {
     expect(rolesOf("monk.mend-affliction")).toContain("removal");
     expect(rolesOf("ranger.broad-head-arrow")).toEqual(["interrupt", "condition"]);
     expect(rolesOf("warrior.backbreaker")).toEqual(["knockdown"]);
+    // A preparation's roles are what it does to the foes it hits.
+    expect(rolesOf("ranger.apply-poison")).toEqual(["condition"]);
   });
 
   it("counts a protective status as defence, whatever its category", () => {

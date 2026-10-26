@@ -46,6 +46,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * What applying a status does for a team: hexes and conditions are
  * their own roles, any other status that raises armor or blocks is
  * defence, and one that interrupts a spell (Dazed) is an interrupt.
+ * What it does on each attack hit counts too: Apply Poison poisons.
  */
 function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   const roles: SkillRole[] = [];
@@ -55,7 +56,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     roles.push("defence");
   }
   if (status.interruptsSpells) roles.push("interrupt");
-  return roles;
+  return [...roles, ...status.onAttackHit.flatMap(effectRoles)];
 }
 
 /**
