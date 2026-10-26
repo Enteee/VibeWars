@@ -339,24 +339,19 @@ bus files, hub results, worktree files and each agent's own Claude logs.
 Host code that prints any string from it goes through `visible()`. #357 printed the model name
 from the logs raw, and was fixed before merge.
 
-**Open: forged CI checks.** A workflow pushed on a side branch runs with
-`GITHUB_TOKEN` and can post a check run, or a commit status, for any
-commit in the repository, under any name. Since #116, hubd refuses a
-workflow or action change from every role but cicd-engineer, so this is
-now one role's power, not every implementer's. The merge guard reads checks by name. Since #108, it keeps every check
-suite and every status as a separate source and refuses a name that more
-than one source reports. Two cases still pass:
+**Forged CI checks (fixed for hubd merges, #123).** A workflow pushed on a
+side branch runs with `GITHUB_TOKEN` and can post a check run, or a commit
+status, for any commit in the repository, under any name. The merge guard
+therefore reads neither. It reads the **jobs** of the `pull_request` run of
+`ci.yml` and of `dependency-review.yml` for the pinned head commit, and
+requires exactly one successful job for each expected name. Jobs exist only
+because a workflow executed, so no API can create one. Both runs use the PR
+head's own workflow files, so reviewing gate files stays load-bearing. Since
+#116 only cicd-engineer may push them. A test pins `EXPECTED_CHECKS` to the
+job names the two files define.
 
-- a forged check is the only one with its name, because CI has not created
-  its own run yet;
-- a forged run lands in the real run's own check suite and is newer. This
-  depends on GitHub behaviour we have not verified.
-
-The fix is to read the conclusions from the jobs of the `ci.yml`
-`pull_request` workflow run for that commit, never from check runs or
-statuses. Jobs exist only because a workflow executed, so the API cannot
-create them. That run still uses the PR head's own `ci.yml`, so reviewing
-gate files stays load-bearing either way.
+GitHub's own ruleset `required_status_checks` still matches by name, so the
+operator merging in the GitHub UI is not protected by this.
 
 **By design.** The manager may close and reopen any pull request or
 issue (#84), gate PRs included, but never with `--delete-branch`. A

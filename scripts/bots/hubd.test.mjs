@@ -62,13 +62,14 @@ if (group === "api" && sub !== "graphql") {
   if (rel.startsWith("pulls/9/reviews")) { console.log(JSON.stringify([{ user: { login: "drive-by" }, author_association: "NONE", body: "stranger review", state: "COMMENTED", submitted_at: "2026-10-24T12:30:00Z", html_url: "r" }])); process.exit(0); }
   if (rel === "issues/9") { console.log(JSON.stringify({ ...pull9, pull_request: {} })); process.exit(0); }
   if (rel === "pulls/9") { console.log(JSON.stringify(pull9)); process.exit(0); }
-  // A commit's checks: what the test planted for that SHA, or none.
-  const commit = /^commits\\/([0-9a-f]+)\\/(check-runs|status)/.exec(rel);
-  if (commit !== null) {
+  // A commit's CI: the workflow runs and jobs the test planted, or none.
+  const runs = /^actions\\/workflows\\/([a-z.-]+)\\/runs\\?head_sha=([0-9a-f]+)/.exec(rel);
+  const jobs = /^actions\\/runs\\/(\\d+)\\/jobs/.exec(rel);
+  if (runs !== null || jobs !== null) {
     if (fs.existsSync(path.join(state, "rest-fails"))) { console.error("HTTP 500: Server Error"); process.exit(1); }
-    const planted = path.join(state, commit[2] + "-" + commit[1] + ".json");
+    const planted = path.join(state, runs !== null ? "runs-" + runs[1] + "-" + runs[2] + ".json" : "jobs-" + jobs[1] + ".json");
     if (fs.existsSync(planted)) { console.log(fs.readFileSync(planted, "utf8")); process.exit(0); }
-    console.log(JSON.stringify(commit[2] === "status" ? { state: "pending", total_count: 0, statuses: [] } : { total_count: 0, check_runs: [] }));
+    console.log(JSON.stringify(runs !== null ? { total_count: 0, workflow_runs: [] } : { total_count: 0, jobs: [] }));
     process.exit(0);
   }
   // Code scanning: what the test planted, or no alerts.
@@ -315,27 +316,35 @@ async function startHubd(remaining, before) {
     repo,
     remote: path.join(dir, "remote.git"),
     /**
-     * What GitHub answers about one commit's checks.
+     * What GitHub answers about one commit's CI: a run of a workflow
+     * file, with its jobs.
      *
      * @param {string} sha
-     * @param {{ runs?: Record<string, unknown>[], statuses?: Record<string, unknown>[] }} checks
+     * @param {string} file
+     * @param {{ id: number, jobs: Record<string, unknown>[], run?: Record<string, unknown> }} planted
      */
-    setChecks(sha, checks) {
-      const runs = checks.runs ?? [];
+    setCi(sha, file, planted) {
       fs.writeFileSync(
-        path.join(state, `check-runs-${sha}.json`),
+        path.join(state, `runs-${file}-${sha}.json`),
         JSON.stringify({
-          total_count: runs.length,
-          check_runs: runs.map((run) => ({ check_suite: { id: 1 }, ...run })),
+          total_count: 1,
+          workflow_runs: [
+            {
+              id: planted.id,
+              head_sha: sha,
+              event: "pull_request",
+              path: `.github/workflows/${file}`,
+              repository: { full_name: "Enteee/VibeWars" },
+              run_number: 1,
+              status: "completed",
+              ...planted.run,
+            },
+          ],
         }),
       );
       fs.writeFileSync(
-        path.join(state, `status-${sha}.json`),
-        JSON.stringify({
-          state: "pending",
-          total_count: (checks.statuses ?? []).length,
-          statuses: checks.statuses ?? [],
-        }),
+        path.join(state, `jobs-${String(planted.id)}.json`),
+        JSON.stringify({ total_count: planted.jobs.length, jobs: planted.jobs }),
       );
     },
     /**
@@ -1884,8 +1893,17 @@ describe("hubd recording verdicts and merging", () => {
 
   it("merges exactly the pull request the guards checked, squashed, pinned to its head", async () => {
     const hubd = await startHubd(5000);
-    // Both sign-offs on the current head; the fake reports no checks and
-    // company.json expects none, so the gate is open.
+    // Both sign-offs on the current head and CI green on it, so the gate is open.
+    for (const [file, id, name] of [
+      ["ci.yml", 100, "ci"],
+      ["dependency-review.yml", 200, "other"],
+    ]) {
+      hubd.setCi("abc1234def", file, {
+        id,
+        jobs: [{ name, status: "completed", conclusion: "success" }],
+      });
+    }
+    hubd.expectChecks(["ci"]);
     for (const role of ["lead-dev", "perf-sec-qa"]) {
       fs.appendFileSync(
         path.join(hubd.hub, "approvals.jsonl"),
@@ -1915,55 +1933,94 @@ describe("hubd recording verdicts and merging", () => {
     hubd.expectChecks(["ci", "legacy"]);
     return hubd;
   };
-  const GREEN = {
-    runs: [{ id: 1, name: "ci", status: "completed", conclusion: "success" }],
-    statuses: [{ context: "legacy", state: "success" }],
+  /** @param {string} name @param {string} conclusion @param {string} status */
+  const job = (name, conclusion = "success", status = "completed") => ({
+    name,
+    status,
+    conclusion,
+  });
+  /**
+   * CI as it ran on a commit: `ci` in ci.yml, `legacy` in the other file.
+   *
+   * @param {Awaited<ReturnType<typeof approved>>} hubd
+   * @param {string} sha
+   * @param {Record<string, unknown>[]} ciJobs
+   */
+  const ran = (hubd, sha, ciJobs = [job("ci")]) => {
+    hubd.setCi(sha, "ci.yml", { id: 100, jobs: ciJobs });
+    hubd.setCi(sha, "dependency-review.yml", { id: 200, jobs: [job("legacy")] });
   };
 
-  it("reads the checks of the commit it pinned, from REST, never gh pr checks", async () => {
+  it("reads the jobs of the commit it pinned, from REST, never gh pr checks", async () => {
     const hubd = await approved(5000);
-    hubd.setChecks("abc1234def", GREEN);
+    ran(hubd, "abc1234def");
     // Whatever a newer head says must not matter: only the pinned SHA is read.
-    hubd.setChecks("fffffff000", {
-      runs: [{ id: 2, name: "ci", status: "completed", conclusion: "failure" }],
-    });
+    hubd.setCi("fffffff000", "ci.yml", { id: 300, jobs: [job("ci", "failure")] });
 
     const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
 
     expect(answer.code, String(answer.reason)).toBe(0);
-    expect(hubd.calls("api repos/Enteee/VibeWars/commits/abc1234def/check-runs")).toBe(1);
-    expect(hubd.calls("api repos/Enteee/VibeWars/commits/fffffff000")).toBe(0);
+    expect(hubd.calls("api repos/Enteee/VibeWars/actions/workflows/ci.yml/runs")).toBe(1);
+    expect(hubd.calls("api repos/Enteee/VibeWars/commits/")).toBe(0);
     expect(hubd.calls("pr checks")).toBe(0);
   }, 20_000);
 
-  it("refuses a check still running, from a mix of check runs and legacy statuses", async () => {
+  it("refuses when CI has not run, whatever check runs or statuses claim", async () => {
     const hubd = await approved(5000);
-    hubd.setChecks("abc1234def", {
-      runs: [{ id: 1, name: "ci", status: "in_progress", conclusion: null }],
-      statuses: [{ context: "legacy", state: "success" }],
-    });
 
     const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
 
     expect(answer.allow).toBe(false);
-    expect(String(answer.reason)).toMatch(/still running: ci/);
+    expect(String(answer.reason)).toMatch(/ci\.yml has not run on this commit yet/);
+    expect(hubd.calls("api repos/Enteee/VibeWars/commits/")).toBe(0);
     expect(hubd.calls("pr merge")).toBe(0);
   }, 20_000);
 
-  it("refuses a failing run that a passing status of the same name would shadow", async () => {
+  it("ignores a run from a push, or from another workflow file", async () => {
     const hubd = await approved(5000);
-    hubd.setChecks("abc1234def", {
-      runs: [{ id: 1, name: "ci", status: "completed", conclusion: "failure" }],
-      statuses: [
-        { context: "ci", state: "success" },
-        { context: "legacy", state: "success" },
-      ],
+    ran(hubd, "abc1234def");
+    hubd.setCi("abc1234def", "ci.yml", { id: 100, jobs: [job("ci")], run: { event: "push" } });
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(String(answer.reason)).toMatch(/ci\.yml has not run on this commit yet/);
+    expect(hubd.calls("pr merge")).toBe(0);
+  }, 20_000);
+
+  it("refuses a run still going", async () => {
+    const hubd = await approved(5000);
+    ran(hubd, "abc1234def");
+    hubd.setCi("abc1234def", "ci.yml", {
+      id: 100,
+      jobs: [job("ci", null, "in_progress")],
+      run: { status: "in_progress" },
     });
 
     const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
 
     expect(answer.allow).toBe(false);
-    expect(String(answer.reason)).toMatch(/reported by more than one source: ci/);
+    expect(String(answer.reason)).toMatch(/ci\.yml is still running/);
+    expect(hubd.calls("pr merge")).toBe(0);
+  }, 20_000);
+
+  it("refuses a failed or skipped job, naming it and its conclusion", async () => {
+    const hubd = await approved(5000);
+    ran(hubd, "abc1234def", [job("ci", "skipped")]);
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(answer.allow).toBe(false);
+    expect(String(answer.reason)).toMatch(/failing: ci \(skipped\)/);
+    expect(hubd.calls("pr merge")).toBe(0);
+  }, 20_000);
+
+  it("refuses a job two jobs share a name with, and a missing one", async () => {
+    const hubd = await approved(5000);
+    ran(hubd, "abc1234def", [job("ci"), job("ci", "failure")]);
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(String(answer.reason)).toMatch(/carried by more than one job: ci/);
     expect(hubd.calls("pr merge")).toBe(0);
   }, 20_000);
 
@@ -1990,7 +2047,7 @@ describe("hubd recording verdicts and merging", () => {
 
     expect(answer.allow).toBe(false);
     expect(String(answer.reason)).toBe(
-      "could not read checks for #9 at abc1234: HTTP 500: Server Error",
+      "could not read CI jobs for #9 at abc1234: HTTP 500: Server Error",
     );
   }, 20_000);
 });

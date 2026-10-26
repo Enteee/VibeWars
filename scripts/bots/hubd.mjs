@@ -67,13 +67,15 @@ import {
   approvalsSatisfied,
   boardMoveAllowed,
   landingAllowed,
-  checksSatisfied,
+  jobsSatisfied,
+  judgingRun,
   explainGuard,
   pathsOutside,
   pathsWithin,
 } from "./hub-guards.mjs";
 import {
-  checksFromRest,
+  jobsFromRest,
+  runsFromRest,
   ghIssue,
   ghPull,
   listPath,
@@ -333,36 +335,67 @@ async function rest(rel, cfg) {
 }
 
 /**
- * The checks on one commit, read from REST for exactly that commit (#96).
+ * The workflows whose jobs the merge gate reads: each runs on every pull
+ * request, and each holds some of `expectedChecks`. A constant, never taken
+ * from a request.
+ */
+const JUDGING_WORKFLOWS = ["ci.yml", "dependency-review.yml"];
+
+/**
+ * The jobs that judged one commit, read from the pull-request runs of the
+ * workflows above for exactly that commit (#96, #123).
  *
- * `gh pr checks` was GraphQL, so an exhausted budget read as "no checks"
- * and a merge was refused as "checks missing" while CI was green. It also
- * read the pull request's head *now*, not the commit the guards pinned.
- * This reads the pinned SHA and costs no GraphQL; when it cannot read, it
- * says why, and never answers "none".
+ * Check runs and commit statuses are never read: any token with
+ * `checks: write` can post one for any commit. A job exists only because a
+ * workflow ran. When anything cannot be read it says why, and never answers
+ * "none".
  *
  * @param {string} sha
  * @param {ReturnType<typeof company>} cfg
- * @returns {Promise<{ checks: { name: string, conclusion: string }[] } | { error: string }>}
+ * @returns {Promise<{ jobs: { name: string, status: string, conclusion: string | null }[] } | { error: string } | { refusal: string }>}
  */
-async function restChecks(sha, cfg) {
-  /** @type {unknown[]} */
-  const answers = [];
-  for (const rel of [
-    `commits/${sha}/check-runs?per_page=100`,
-    `commits/${sha}/status?per_page=100`,
-  ]) {
+async function restJobs(sha, cfg) {
+  /** @param {string} rel */
+  const read = async (rel) => {
     const result = await gh(["api", `repos/${cfg.repo}/${rel}`]);
     if (result.code !== 0) {
       return { error: result.stderr.trim().split("\n")[0] ?? "" };
     }
     try {
-      answers.push(JSON.parse(result.stdout));
+      return { answer: /** @type {unknown} */ (JSON.parse(result.stdout)) };
     } catch {
       return { error: `${rel.replace(/\?.*/, "")} did not answer JSON` };
     }
+  };
+
+  /** @type {{ name: string, status: string, conclusion: string | null }[]} */
+  const jobs = [];
+  for (const file of JUDGING_WORKFLOWS) {
+    const listed = await read(
+      `actions/workflows/${file}/runs?head_sha=${sha}&event=pull_request&per_page=100`,
+    );
+    if ("error" in listed) {
+      return listed;
+    }
+    const runs = runsFromRest(listed.answer);
+    if ("error" in runs) {
+      return runs;
+    }
+    const run = judgingRun(runs.runs, { sha, repo: cfg.repo, file });
+    if (!run.ok) {
+      return { refusal: run.reason };
+    }
+    const answered = await read(`actions/runs/${String(run.id)}/jobs?filter=latest&per_page=100`);
+    if ("error" in answered) {
+      return answered;
+    }
+    const parsed = jobsFromRest(answered.answer);
+    if ("error" in parsed) {
+      return parsed;
+    }
+    jobs.push(...parsed.jobs);
   }
-  return checksFromRest(answers[0], answers[1]);
+  return { jobs };
 }
 
 /** The most pages of comments or reviews hubd reads for one view. */
@@ -800,16 +833,19 @@ async function evaluateGuards(guards, argv) {
 
   for (const guard of guards) {
     if (guard === "checks-green") {
-      const read = await restChecks(sha, cfg);
+      const read = await restJobs(sha, cfg);
+      if ("refusal" in read) {
+        return { ok: false, reason: `${read.refusal} (#${pr} at ${sha.slice(0, 7)})` };
+      }
       if ("error" in read) {
         // An unreadable answer is never an empty one (#46). If the budget
         // is what ran out, handle() answers with the limit and its reset.
         return {
           ok: false,
-          reason: `could not read checks for #${pr} at ${sha.slice(0, 7)}: ${read.error}`,
+          reason: `could not read CI jobs for #${pr} at ${sha.slice(0, 7)}: ${read.error}`,
         };
       }
-      const verdict = checksSatisfied(read.checks, cfg.expectedChecks);
+      const verdict = jobsSatisfied(read.jobs, cfg.expectedChecks);
       if (!verdict.ok) {
         return { ok: false, reason: explainGuard("checks", verdict) };
       }
