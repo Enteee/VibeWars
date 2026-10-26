@@ -35,6 +35,7 @@ describe("parseGameToHost", () => {
       { type: "evaluate", source: 's("hh*8")' },
       { type: "ping", seq: 7 },
       { type: "measure" },
+      { type: "audioStress", ms: 2.5 },
     ]) {
       expect(parseGameToHost(message), message.type).toEqual(message);
     }

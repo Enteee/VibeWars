@@ -31,6 +31,11 @@ should keep its rate; a page-timer clock drops to about 1 a second.
 
 Code: `apps/web/src/music/host/` and `scripts/music-stress.mjs` (#420).
 
+In the dev shell (Playwright's Firefox as `VIBEWARS_FIREFOX`, PulseAudio),
+`node scripts/music-stress.mjs --pulse --json out.json` measures both
+browsers, including the `audiostress` loads that show whether a browser's
+underrun reading can be trusted (#519).
+
 The stress script measures Chromium with CPU throttling. A phone's real
 audio thread, Firefox for Android's included, can only be heard on a
 phone. `?musicstats` makes the music host count what it costs, and the

@@ -33,7 +33,9 @@ export type GameToHost =
   /** The watchdog's heartbeat; the host answers `pong` with the same `seq`. */
   | { readonly type: "ping"; readonly seq: number }
   /** Count what the music costs and report it every second (`?musicstats`, #420). */
-  | { readonly type: "measure" };
+  | { readonly type: "measure" }
+  /** Busy-wait this many ms in every render quantum of the music audio thread (`?audiostress=`, #519). */
+  | { readonly type: "audioStress"; readonly ms: number };
 
 /**
  * One second of the music's timing (#420), counted only after `measure`.
@@ -160,6 +162,8 @@ export function parseGameToHost(data: unknown): GameToHost | null {
         : null;
     case "measure":
       return { type: "measure" };
+    case "audioStress":
+      return finite(message.ms, 0, 5) ? { type: "audioStress", ms: message.ms } : null;
     default:
       return null;
   }
