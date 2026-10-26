@@ -23,6 +23,79 @@ async function newCharacter(page: Page): Promise<void> {
   await expect(page.locator("input.editor-name")).toBeVisible();
 }
 
+test("Close leaves at once without edits, and asks before it discards them (#566)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  await expect(page.locator(".editor-unsaved")).toBeHidden();
+  await page.getByRole("button", { name: "close" }).click();
+  await expect(page.locator(".roster")).toBeVisible();
+
+  await page.getByRole("button", { name: "new character" }).click();
+  await page.locator("input.editor-name").fill("Draft");
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+  await page.getByRole("button", { name: "close" }).click();
+  await expect(page.getByText("Discard changes?")).toBeVisible();
+  await page.getByRole("button", { name: "keep editing" }).click();
+  await expect(page.locator("input.editor-name")).toHaveValue("Draft");
+
+  // Esc is Close, and asks the same.
+  await page.getByRole("button", { name: "close" }).focus();
+  await page.keyboard.press("Escape");
+  await expect(page.getByText("Discard changes?")).toBeVisible();
+  await page.getByRole("button", { name: "discard" }).click();
+  await expect(page.locator(".roster")).toBeVisible();
+  await expect(page.locator(".roster-row", { hasText: "Draft" })).toHaveCount(0);
+});
+
+test("Delete in the ⋯ menu always asks, and cancel keeps the character (#566)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Doomed");
+  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page
+    .locator(".roster-row", { hasText: "Doomed" })
+    .getByRole("button", { name: "edit" })
+    .click();
+
+  const more = page.getByRole("button", { name: "more actions" });
+  await more.click();
+  await page.getByRole("button", { name: "delete", exact: true }).click();
+  await expect(page.getByText("Delete Doomed?")).toBeVisible();
+  await page.getByRole("button", { name: "cancel" }).click();
+  await expect(page.locator("input.editor-name")).toHaveValue("Doomed");
+
+  await more.click();
+  await page.getByRole("button", { name: "delete", exact: true }).click();
+  await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
+  await expect(page.locator(".roster")).toBeVisible();
+  await expect(page.locator(".roster-row", { hasText: "Doomed" })).toHaveCount(0);
+});
+
+test("the problems chip says what is wrong in a sentence and shows where (#566)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  const name = page.locator("input.editor-name");
+  await name.fill("");
+  const chip = page.locator(".problems-chip-toggle");
+  await expect(chip).toHaveText("1 problem");
+  const save = page.getByRole("button", { name: "save", exact: true });
+  await expect(save).toBeDisabled();
+  await expect(save).toHaveAttribute("title", "Give the character a name.");
+
+  await chip.click();
+  await page.getByRole("button", { name: "Give the character a name." }).click();
+  await expect(name).toBeFocused();
+  await expect(name).toHaveClass(/is-flagged/);
+
+  // Unspent points and empty slots are hints: they never block the save.
+  await name.fill("Ready");
+  await expect(chip).toHaveText("2 hints");
+  await expect(save).toBeEnabled();
+});
+
 test("a character can be created, named and saved", async ({ page }) => {
   await newCharacter(page);
 
@@ -133,7 +206,9 @@ test("a build exports to text and imports back", async ({ page }) => {
 
   // Reopen a *different* character, then import the text into it. This is
   // the real flow: someone pastes a build they were sent.
+  // Named but never saved: Close asks first (#566).
   await page.getByRole("button", { name: "close" }).click();
+  await page.getByRole("button", { name: "discard" }).click();
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator("input.editor-name").fill("Scratch");
 
@@ -956,6 +1031,9 @@ test("a picked slot is let go by a second click or Esc (#564)", async ({ page })
   await slot.click();
   await page.keyboard.press("Escape");
   await expect(page.locator(".skill-slot.is-selected")).toHaveCount(0);
+  // That Esc only let go: the editor is still open, and asks nothing.
+  await expect(page.locator("input.editor-name")).toBeVisible();
+  await expect(page.locator(".inline-confirm")).toHaveCount(0);
   await expect(page.locator(".skill-box").first().locator(".skill-box-equip")).toHaveText(
     `Equip → ${slotLabel(0)}`,
   );
@@ -992,4 +1070,13 @@ test("a skill key over a library skill equips it to that key's slot, but not whi
   await box.hover();
   await page.keyboard.press(skillKey(6));
   await expect(page.locator(".skill-slot").nth(6)).toHaveClass(/is-empty/);
+
+  // While Close asks about the unsaved edits, the key equips nothing.
+  await search.fill("");
+  await page.getByRole("button", { name: "close" }).click();
+  await expect(page.getByText("Discard changes?")).toBeVisible();
+  await box.hover();
+  await page.keyboard.press(skillKey(6));
+  await expect(page.locator(".skill-slot").nth(6)).toHaveClass(/is-empty/);
+  await expect(page.getByText("Discard changes?")).toBeVisible();
 });

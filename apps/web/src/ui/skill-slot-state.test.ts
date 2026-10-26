@@ -7,8 +7,10 @@ import {
   castFill,
   castingSlot,
   flashSlot,
+  knockdownDrain,
   outOfRange,
   paintCastFill,
+  paintKnockdown,
   SLOT_FLASH_MS,
   slotAffordable,
   slotFlashes,
@@ -54,6 +56,7 @@ function self(cast: Partial<PlayerSnapshot>): PlayerSnapshot {
     castTotal: 0,
     swingElapsed: 0,
     swingTotal: 0,
+    knockdownRemaining: 0,
     statuses: [],
     ...cast,
   };
@@ -105,6 +108,55 @@ describe("paintCastFill", () => {
     expect(slotButton.style.getPropertyValue("--cast-fill")).toBe("0.25");
     paintCastFill(slotButton, undefined);
     expect(slotButton.style.getPropertyValue("--cast-fill")).toBe("");
+  });
+});
+
+describe("knockdownDrain (#545)", () => {
+  it("is nothing standing, and full as a knockdown lands", () => {
+    expect(knockdownDrain(0, undefined)).toBeUndefined();
+    expect(knockdownDrain(0, 4)).toBeUndefined();
+    expect(knockdownDrain(4, undefined)).toEqual({ whole: 4, fraction: 1 });
+  });
+
+  it("drains against the most it has been since it went down", () => {
+    expect(knockdownDrain(1, 4)).toEqual({ whole: 4, fraction: 0.25 });
+    // A first snapshot taken a tick in reads full, not short.
+    expect(knockdownDrain(3.95, undefined)).toEqual({ whole: 3.95, fraction: 1 });
+  });
+});
+
+describe("paintKnockdown (#545)", () => {
+  /** Just enough of an element for `paintKnockdown`, without jsdom. */
+  function bar(): HTMLElement {
+    const properties = new Map<string, string>();
+    const classes = new Set<string>();
+    return {
+      dataset: {},
+      style: {
+        getPropertyValue: (name: string) => properties.get(name) ?? "",
+        setProperty: (name: string, value: string) => properties.set(name, value),
+        removeProperty: (name: string) => properties.delete(name),
+      },
+      classList: {
+        toggle: (name: string, on: boolean) => (on ? classes.add(name) : classes.delete(name)),
+        contains: (name: string) => classes.has(name),
+      },
+    } as unknown as HTMLElement;
+  }
+
+  it("greys the bar and drains it while down, and lights it the frame the body rises", () => {
+    const skills = bar();
+    paintKnockdown(skills, 4);
+    expect(skills.classList.contains("is-knocked-down")).toBe(true);
+    expect(skills.style.getPropertyValue("--knockdown-fill")).toBe("1");
+    paintKnockdown(skills, 1);
+    expect(skills.style.getPropertyValue("--knockdown-fill")).toBe("0.25");
+    paintKnockdown(skills, 0);
+    expect(skills.classList.contains("is-knocked-down")).toBe(false);
+    expect(skills.style.getPropertyValue("--knockdown-fill")).toBe("");
+    // The next knockdown measures itself, not the last one.
+    paintKnockdown(skills, 2);
+    expect(skills.style.getPropertyValue("--knockdown-fill")).toBe("1");
   });
 });
 

@@ -63,6 +63,8 @@ export interface PlayerSnapshot {
    */
   readonly swingElapsed: number;
   readonly swingTotal: number;
+  /** Seconds left lying down from a knockdown (#468); 0 standing. Drawn from this, never from the event. */
+  readonly knockdownRemaining: number;
   readonly statuses: readonly string[];
 }
 
