@@ -231,7 +231,7 @@ function mountControls(container: HTMLElement): () => void {
   );
 
   const pickerField = h("label", "field");
-  pickerField.appendChild(h("span", "field-label", "preset"));
+  pickerField.appendChild(h("span", "field-label", "Preset"));
   const picker = document.createElement("select");
   picker.className = "keys-preset";
   for (const [id, name] of Object.entries(PRESET_NAMES)) {
@@ -269,7 +269,7 @@ function mountControls(container: HTMLElement): () => void {
   const actions = h("div", "menu-row");
   const reset = document.createElement("button");
   reset.type = "button";
-  reset.textContent = "reset to VibeWars";
+  reset.textContent = "Reset to VibeWars";
   reset.addEventListener("click", () => {
     editor.reset();
     paint();

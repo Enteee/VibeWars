@@ -29,7 +29,7 @@ test("music muted in Options shows muted in the HUD popover, and mute all follow
   await page.goto("./");
   await page.getByRole("button", { name: "options" }).click();
   await page.getByLabel("Mute music").check();
-  await page.getByRole("button", { name: "back", exact: true }).click();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
 
   await startSoloMatch(page);
   await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");

@@ -111,7 +111,7 @@ test("(4) Back leaves Options for the menu; on a narrow screen the sections sit 
     expect(entry.y + entry.height).toBeLessThanOrEqual(pane.y);
   }
 
-  await page.getByRole("button", { name: "back", exact: true }).click();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
   await expect(page.locator(".options-screen")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "options" })).toBeVisible();
 });

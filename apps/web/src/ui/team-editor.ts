@@ -208,14 +208,14 @@ export function mountTeamEditor(
       callbacks.onClose();
       return;
     }
-    ask(back, "Discard changes?", "discard", callbacks.onClose, "keep editing");
+    ask(back, "Discard changes?", "Discard", callbacks.onClose, "Keep editing");
   };
 
   root.replaceChildren();
   const panel = h("div", "screen team-editor");
 
   const nameField = h("label", "field team-editor-name");
-  nameField.appendChild(h("span", "field-label", "team name"));
+  nameField.appendChild(h("span", "field-label", "Team name"));
   const nameInput = document.createElement("input");
   nameInput.className = "field-input";
   nameInput.value = team.name;
@@ -227,7 +227,7 @@ export function mountTeamEditor(
   const chip = problemsChip([]);
   const unsaved = h("span", "editor-unsaved", "● unsaved");
 
-  const save = button("save", "primary", () => {
+  const save = button("Save", "primary", () => {
     const saving = { ...team, updatedAt: Date.now() };
     save.disabled = true;
     callbacks.onSave(saving).then(
@@ -253,26 +253,34 @@ export function mountTeamEditor(
   });
   // Duplicate copies the stored team: with edits pending it would store
   // them unchecked, under the copy, and drop them from this one.
-  const duplicate = button("duplicate", "", () => {
+  const duplicate = button("Duplicate", "", () => {
     callbacks.onDuplicate(team);
   });
-  const remove = button("delete", "", () => {
+  const remove = button("Delete", "", () => {
     ask(
       remove,
       `Delete ${team.name.trim() === "" ? "this team" : team.name}?`,
-      "delete",
+      "Delete",
       () => {
         callbacks.onDelete(team.id);
       },
-      "cancel",
+      "Cancel",
     );
   });
 
   const { element: bar, back } = screenBar({
-    back: { label: "back", onBack: close },
-    title: [h("h2", "screen-title", "edit team")],
+    back: { label: "Back", onBack: close },
+    title: [h("h2", "screen-title", "Edit team")],
     status: [chip.element, unsaved],
     actions: [save, duplicate, remove],
+    // Esc closes the problem list before it is Back.
+    putAway: () => {
+      if (!chip.isOpen()) {
+        return false;
+      }
+      chip.close();
+      return true;
+    },
   });
   panel.append(bar, nameField);
 
@@ -407,7 +415,7 @@ export function mountTeamEditor(
     const pick = h("div", "team-pick");
     pick.dataset.characterId = characterId;
     pick.append(h("span", "team-row-dot"), h("span", "team-pick-text"));
-    const add = button("add", "team-pick-add", () => {
+    const add = button("Add", "team-pick-add", () => {
       commit(addMember(team, characterId));
     });
     pick.appendChild(add);
@@ -532,25 +540,6 @@ export function mountTeamEditor(
 
   update();
 
-  // Esc puts away what is open, else is Back (#566's rule), unless the
-  // page used it already.
-  const onKeyDown = (event: KeyboardEvent): void => {
-    if (event.key !== "Escape" || event.defaultPrevented || event.repeat) {
-      return;
-    }
-    event.preventDefault();
-    if (asking?.isOpen() === true) {
-      asking.dismiss();
-      return;
-    }
-    if (chip.isOpen()) {
-      chip.close();
-      return;
-    }
-    close();
-  };
-  document.addEventListener("keydown", onKeyDown);
-
   // A press anywhere else puts the problem list away.
   const onPointerDown = (event: PointerEvent): void => {
     if (event.target instanceof Node && !chip.element.contains(event.target)) {
@@ -562,7 +551,6 @@ export function mountTeamEditor(
   return {
     dispose() {
       disposed = true;
-      document.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("pointerdown", onPointerDown);
     },
   };

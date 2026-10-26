@@ -82,38 +82,123 @@ export function syncList<T>(
 
 /* --- screen bar, confirmations, problems, toasts (#566) ------------------- */
 
+/** A screen's way back, on the left of its bar. */
+export interface ScreenBarBack {
+  readonly label: string;
+  readonly onBack: () => void;
+}
+
 /** What a screen's bar holds, left to right. */
 export interface ScreenBarOptions {
-  /** The way back, on the left. */
-  readonly back: { readonly label: string; readonly onBack: () => void };
+  /** The way back, which Esc takes too. The main menu has none. */
+  readonly back?: ScreenBarBack;
   readonly title?: readonly HTMLElement[];
   readonly status?: readonly HTMLElement[];
   /** The screen's main actions, on the right. */
   readonly actions: readonly HTMLElement[];
+  /**
+   * Esc puts away what the screen has open before it goes back: a menu,
+   * a list, a pick. True when it put something away, so Esc stops there.
+   * An open inline confirmation is put away before this is asked.
+   */
+  readonly putAway?: () => boolean;
 }
+
+/** The newest screen bar: Esc serves it while it is on screen. */
+let liveBar: { readonly element: HTMLElement; readonly escape: () => void } | undefined;
+
+/** Whether `element` is in the page and nothing above it hides it. */
+function onScreen(element: HTMLElement): boolean {
+  for (let node: HTMLElement | null = element; node !== null; node = node.parentElement) {
+    if (node.hidden || node.style.display === "none") {
+      return false;
+    }
+  }
+  return element.isConnected;
+}
+
+/**
+ * The one Esc of every menu screen (#578): it cancels an open inline
+ * confirmation, else lets the screen put away what it has open, else goes
+ * back. On `window`, so it runs after anything on the page that wanted Esc
+ * first and said so: the Training Ground cancels with it, a key being
+ * rebound gives up with it. A search field and a text area keep their own.
+ * In a match the screens are hidden, so Esc keeps its in-match meaning.
+ */
+function onEscape(event: KeyboardEvent): void {
+  if (event.key !== "Escape" || event.defaultPrevented || event.repeat) {
+    return;
+  }
+  if (liveBar === undefined || !onScreen(liveBar.element)) {
+    return;
+  }
+  const target = event.target;
+  if (
+    target instanceof HTMLTextAreaElement ||
+    (target instanceof HTMLInputElement && target.type === "search")
+  ) {
+    return;
+  }
+  event.preventDefault();
+  if (cancelConfirm()) {
+    return;
+  }
+  liveBar.escape();
+}
+
+let listening = false;
 
 /**
  * A screen's bar (#566, #555): back on the left, then the title, a status
  * in the middle and the main actions on the right, wrapping on a narrow
  * window. `back` is returned so a screen can ask before leaving.
+ *
+ * Esc on the screen is the bar's (#578), until another bar replaces it.
  */
-export function screenBar(options: ScreenBarOptions): {
+export function screenBar(options: ScreenBarOptions & { readonly back: ScreenBarBack }): {
   readonly element: HTMLElement;
   readonly back: HTMLButtonElement;
+};
+export function screenBar(options: ScreenBarOptions): {
+  readonly element: HTMLElement;
+  readonly back: HTMLButtonElement | undefined;
+};
+export function screenBar(options: ScreenBarOptions): {
+  readonly element: HTMLElement;
+  readonly back: HTMLButtonElement | undefined;
 } {
   const element = h("div", "screen-bar");
-  const back = button(options.back.label, "screen-bar-back", options.back.onBack);
+  const back =
+    options.back === undefined
+      ? undefined
+      : button(options.back.label, "screen-bar-back", options.back.onBack);
   const part = (className: string, children: readonly HTMLElement[]): HTMLElement => {
     const node = h("div", className);
     node.append(...children);
     return node;
   };
+  if (back !== undefined) {
+    element.appendChild(back);
+  }
   element.append(
-    back,
     part("screen-bar-title", options.title ?? []),
     part("screen-bar-status", options.status ?? []),
     part("screen-bar-actions", options.actions),
   );
+
+  liveBar = {
+    element,
+    escape: () => {
+      if (options.putAway?.() === true) {
+        return;
+      }
+      options.back?.onBack();
+    },
+  };
+  if (!listening) {
+    listening = true;
+    window.addEventListener("keydown", onEscape);
+  }
   return { element, back };
 }
 
@@ -125,17 +210,31 @@ export interface InlineConfirm {
   dismiss(): void;
 }
 
+/** Each open confirmation, and its cancel, for Esc. */
+const openConfirms = new Map<HTMLElement, () => void>();
+
+/** Cancel the newest open confirmation on the page; false when there is none. */
+function cancelConfirm(): boolean {
+  const open = [...openConfirms].filter(([ask]) => ask.isConnected);
+  const newest = open.at(-1);
+  if (newest === undefined) {
+    return false;
+  }
+  newest[1]();
+  return true;
+}
+
 /**
  * Ask in place, never with `window.confirm()` (#566): `anchor` gives way
  * to "question, confirm, cancel" until one is pressed. Cancel has the
- * focus, so Enter on a stray press keeps what you have.
+ * focus, so Enter on a stray press keeps what you have. Esc cancels it.
  */
 export function inlineConfirm(
   anchor: HTMLElement,
   question: string,
   confirmLabel: string,
   onConfirm: () => void,
-  cancelLabel = "cancel",
+  cancelLabel = "Cancel",
 ): InlineConfirm {
   const ask = h("span", "inline-confirm");
   ask.setAttribute("role", "group");
@@ -145,13 +244,15 @@ export function inlineConfirm(
       return;
     }
     open = false;
+    openConfirms.delete(ask);
     ask.remove();
     anchor.hidden = false;
   };
-  const cancel = button(cancelLabel, "", () => {
+  const cancelAndRefocus = (): void => {
     dismiss();
     anchor.focus();
-  });
+  };
+  const cancel = button(cancelLabel, "", cancelAndRefocus);
   ask.append(
     h("span", "inline-confirm-question", question),
     button(confirmLabel, "danger", () => {
@@ -162,8 +263,66 @@ export function inlineConfirm(
   );
   anchor.hidden = true;
   anchor.after(ask);
+  openConfirms.set(ask, cancelAndRefocus);
   cancel.focus();
   return { isOpen: () => open, dismiss };
+}
+
+/**
+ * A choosable row in a list (#578): a real `<button>`, so Tab reaches it
+ * and Enter or Space choose it, with the dot, the name, a subtitle and a
+ * mini skill bar inside it. Its own actions sit after it, outside, so no
+ * button is ever inside another.
+ */
+export interface SelectableRowOptions {
+  readonly dot?: HTMLElement;
+  readonly name: string;
+  readonly subtitle?: string;
+  readonly miniBar?: HTMLElement;
+  readonly actions?: readonly HTMLElement[];
+  /** The one chosen in its list, such as who you play as. */
+  readonly selected?: boolean;
+  readonly onSelect: () => void;
+}
+
+export function selectableRow(options: SelectableRowOptions): HTMLElement {
+  const row = h("div", "selectable-row");
+  const choose = button("", "selectable-row-choose", options.onSelect);
+  choose.setAttribute("aria-pressed", String(options.selected === true));
+  row.classList.toggle("is-selected", options.selected === true);
+  if (options.dot !== undefined) {
+    choose.appendChild(options.dot);
+  }
+  const text = h("span", "selectable-row-text");
+  text.appendChild(h("span", "selectable-row-name", options.name));
+  if (options.subtitle !== undefined) {
+    text.appendChild(h("span", "selectable-row-subtitle", options.subtitle));
+  }
+  choose.appendChild(text);
+  if (options.miniBar !== undefined) {
+    choose.appendChild(options.miniBar);
+  }
+  row.appendChild(choose);
+  if (options.actions !== undefined && options.actions.length > 0) {
+    const actions = h("span", "selectable-row-actions");
+    actions.append(...options.actions);
+    row.appendChild(actions);
+  }
+  return row;
+}
+
+/**
+ * What an empty list shows (#578): what is missing, and the button that
+ * makes the first one, so the way forward is where the list would be.
+ */
+export function emptyState(
+  message: string,
+  actionLabel: string,
+  onAction: () => void,
+): HTMLElement {
+  const element = h("div", "empty-state");
+  element.append(h("p", "empty-state-message", message), button(actionLabel, "primary", onAction));
+  return element;
 }
 
 /** One line of a problems chip: a plain sentence, and where its cause is. */
@@ -182,7 +341,7 @@ export function chipLabel(problems: readonly ChipProblem[]): string {
   if (blocking > 0) {
     return count(blocking, "problem");
   }
-  return problems.length > 0 ? count(problems.length, "hint") : "ready";
+  return problems.length > 0 ? count(problems.length, "hint") : "Ready";
 }
 
 export interface ProblemsChip {
@@ -275,7 +434,7 @@ export function toast(text: string, options: { readonly undo?: () => void } = {}
   const { undo } = options;
   if (undo !== undefined) {
     element.appendChild(
-      button("undo", "", () => {
+      button("Undo", "", () => {
         dismissToast();
         undo();
       }),

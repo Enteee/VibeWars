@@ -1,7 +1,7 @@
 import { LOBBY_CODE_LENGTH } from "@vibewars/game-protocol";
 import type { LobbySnapshot } from "@vibewars/game-session";
 
-import { button, h } from "./kit.js";
+import { button, h, screenBar } from "./kit.js";
 
 /**
  * The lobby screen (brief §21's lobby layout): the shareable code, both
@@ -83,18 +83,36 @@ export function renderLobbyScreen(
   const panel = h("div", "screen screen-lobby");
   const controls = lobbyControls(snapshot);
 
+  const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
+
   const header = h("div", "lobby-header");
-  header.appendChild(h("span", "lobby-code-label", "lobby code"));
+  header.appendChild(h("span", "lobby-code-label", "Lobby code"));
   // The code is the one thing a host reads aloud, so it gets the most
   // visual weight on the screen.
   header.appendChild(h("span", "lobby-code", displayLobbyCode(snapshot.code)));
-  panel.appendChild(header);
+
+  const readyLabel = self?.ready === true ? "Not ready" : "Ready";
+  const readyButton = button(readyLabel, "", callbacks.onToggleReady);
+  readyButton.disabled = controls.readyDisabled;
+  const actions: HTMLElement[] = [readyButton];
+  if (snapshot.isHost) {
+    const start = button("Start match", "primary", callbacks.onStart);
+    start.disabled = controls.startDisabled;
+    actions.push(start);
+  }
+  panel.appendChild(
+    screenBar({
+      back: { label: "Leave", onBack: callbacks.onLeave },
+      title: [header],
+      actions,
+    }).element,
+  );
 
   // Only the host may change the map, so everyone else sees it as a
   // label rather than a control they would be refused on clicking.
   if (snapshot.isHost && availableMaps.length > 1) {
     const mapRow = h("label", "lobby-map");
-    mapRow.appendChild(h("span", "field-label", "map"));
+    mapRow.appendChild(h("span", "field-label", "Map"));
     const select = document.createElement("select");
     for (const map of availableMaps) {
       const option = document.createElement("option");
@@ -112,7 +130,7 @@ export function renderLobbyScreen(
   } else {
     const current = availableMaps.find((map) => map.id === snapshot.mapId);
     panel.appendChild(
-      h("div", "lobby-map", `map: ${current === undefined ? snapshot.mapId : mapLabel(current)}`),
+      h("div", "lobby-map", `Map: ${current === undefined ? snapshot.mapId : mapLabel(current)}`),
     );
   }
 
@@ -120,16 +138,14 @@ export function renderLobbyScreen(
     panel.appendChild(h("div", "screen-problem", notice));
   }
 
-  const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
-
   const teams = h("div", "lobby-teams");
   for (const team of SELECTABLE_TEAMS) {
     const column = h("div", "lobby-team");
-    column.appendChild(h("h3", "lobby-team-title", `team ${String(team + 1)}`));
+    column.appendChild(h("h3", "lobby-team-title", `Team ${String(team + 1)}`));
 
     const members = snapshot.players.filter((p) => p.team === team);
     if (members.length === 0) {
-      column.appendChild(h("div", "lobby-slot-empty", "empty"));
+      column.appendChild(h("div", "lobby-slot-empty", "Empty"));
     }
     for (const member of members) {
       const row = h("div", "lobby-slot");
@@ -140,11 +156,11 @@ export function renderLobbyScreen(
           `${member.name}${member.isHost ? " (host)" : ""}`,
         ),
       );
-      row.appendChild(h("span", "lobby-ready", member.ready ? "ready" : "…"));
+      row.appendChild(h("span", "lobby-ready", member.ready ? "Ready" : "…"));
       column.appendChild(row);
     }
 
-    const join = button(`join team ${String(team + 1)}`, "", () => {
+    const join = button(`Join team ${String(team + 1)}`, "", () => {
       callbacks.onChooseTeam(team);
     });
     join.disabled = controls.teamsDisabled;
@@ -156,7 +172,7 @@ export function renderLobbyScreen(
   const spectators = snapshot.players.filter((p) => p.team === null);
   if (spectators.length > 0) {
     panel.appendChild(
-      h("div", "lobby-spectators", `spectating: ${spectators.map((p) => p.name).join(", ")}`),
+      h("div", "lobby-spectators", `Spectating: ${spectators.map((p) => p.name).join(", ")}`),
     );
   }
 
@@ -164,22 +180,6 @@ export function renderLobbyScreen(
   if (controls.running !== undefined) {
     panel.appendChild(h("div", "screen-info lobby-running", controls.running));
   }
-
-  const actions = h("div", "menu-row");
-
-  const readyLabel = self?.ready === true ? "not ready" : "ready";
-  const readyButton = button(readyLabel, "", callbacks.onToggleReady);
-  readyButton.disabled = controls.readyDisabled;
-  actions.appendChild(readyButton);
-
-  if (snapshot.isHost) {
-    const start = button("start match", "primary", callbacks.onStart);
-    start.disabled = controls.startDisabled;
-    actions.appendChild(start);
-  }
-
-  actions.appendChild(button("leave", "", callbacks.onLeave));
-  panel.appendChild(actions);
 
   root.appendChild(panel);
 }

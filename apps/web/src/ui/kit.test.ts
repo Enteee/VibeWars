@@ -1,6 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { TOAST_SECONDS, chipLabel, dismissToast, inlineConfirm, syncList, toast } from "./kit.js";
+import {
+  TOAST_SECONDS,
+  chipLabel,
+  dismissToast,
+  emptyState,
+  inlineConfirm,
+  screenBar,
+  selectableRow,
+  syncList,
+  toast,
+} from "./kit.js";
 
 /**
  * Just enough of a container for `syncList`, without jsdom: an ordered
@@ -111,9 +121,27 @@ class FakeNode {
   textContent = "";
   hidden = false;
   type = "";
+  /** The page itself: what is below it is connected (#578). */
+  isPage = false;
+  readonly style = { display: "" };
+  readonly classList = { toggle: (): void => undefined };
   parent: FakeNode | undefined;
   readonly children: FakeNode[] = [];
   readonly #clicks: (() => void)[] = [];
+
+  readonly tag: string;
+
+  constructor(tag = "") {
+    this.tag = tag;
+  }
+
+  get parentElement(): FakeNode | null {
+    return this.parent ?? null;
+  }
+
+  get isConnected(): boolean {
+    return this.isPage || this.parent?.isConnected === true;
+  }
 
   setAttribute(): void {
     // Roles and labels are not under test here.
@@ -182,10 +210,13 @@ class FakeNode {
 const focusLog: FakeNode[] = [];
 let body = new FakeNode();
 
+/** What `createElement` makes: a node that knows its tag. */
+const createElement = (tag: string): FakeNode => new FakeNode(tag);
+
 describe("toast (#566)", () => {
   beforeEach(() => {
     body = new FakeNode();
-    vi.stubGlobal("document", { createElement: () => new FakeNode(), body });
+    vi.stubGlobal("document", { createElement, body });
     vi.useFakeTimers();
   });
   afterEach(() => {
@@ -214,7 +245,7 @@ describe("toast (#566)", () => {
   it("offers Undo when asked, which undoes once and takes the toast down", () => {
     const undo = vi.fn();
     toast("Removed Barrage.", { undo });
-    body.button("undo").click();
+    body.button("Undo").click();
     expect(undo).toHaveBeenCalledOnce();
     expect(body.children).toHaveLength(0);
   });
@@ -222,7 +253,7 @@ describe("toast (#566)", () => {
 
 describe("inlineConfirm (#566)", () => {
   beforeEach(() => {
-    vi.stubGlobal("document", { createElement: () => new FakeNode(), body: new FakeNode() });
+    vi.stubGlobal("document", { createElement, body: new FakeNode() });
     focusLog.length = 0;
   });
   afterEach(() => {
@@ -250,9 +281,9 @@ describe("inlineConfirm (#566)", () => {
     expect(ask?.children.map((child) => child.textContent)).toEqual([
       "Delete Pyro?",
       "delete",
-      "cancel",
+      "Cancel",
     ]);
-    expect(focusLog.at(-1)?.textContent).toBe("cancel");
+    expect(focusLog.at(-1)?.textContent).toBe("Cancel");
   });
 
   it("runs the action once on confirm, and puts the anchor back", () => {
@@ -268,7 +299,7 @@ describe("inlineConfirm (#566)", () => {
   it("does nothing on cancel or dismiss but put the anchor back", () => {
     const onConfirm = vi.fn();
     const first = asking(onConfirm);
-    first.bar.button("cancel").click();
+    first.bar.button("Cancel").click();
     expect(first.anchor.hidden).toBe(false);
     expect(focusLog.at(-1)).toBe(first.anchor);
     const second = asking(onConfirm);
@@ -284,6 +315,179 @@ describe("chipLabel (#566)", () => {
     expect(chipLabel([problem(true), problem(false), problem(true)])).toBe("2 problems");
     expect(chipLabel([problem(true)])).toBe("1 problem");
     expect(chipLabel([problem(false)])).toBe("1 hint");
-    expect(chipLabel([])).toBe("ready");
+    expect(chipLabel([])).toBe("Ready");
+  });
+});
+
+/** The kit's one Esc listener, caught the first time a screen bar adds it. */
+let escapeListener: ((event: KeyboardEvent) => void) | undefined;
+
+class FakeTextArea {
+  readonly value = "";
+}
+class FakeInput {
+  type = "text";
+}
+
+describe("screenBar's Esc (#578)", () => {
+  let page: FakeNode;
+  beforeEach(() => {
+    page = new FakeNode();
+    page.isPage = true;
+    vi.stubGlobal("document", { createElement, body: new FakeNode() });
+    vi.stubGlobal("window", {
+      addEventListener: (_type: string, listener: (event: KeyboardEvent) => void) => {
+        escapeListener = listener;
+      },
+    });
+    vi.stubGlobal("HTMLTextAreaElement", FakeTextArea);
+    vi.stubGlobal("HTMLInputElement", FakeInput);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** Press Esc on `target`; whether the page's default was prevented. */
+  function pressEscape(target: unknown = page): boolean {
+    let prevented = false;
+    const event = {
+      key: "Escape",
+      repeat: false,
+      target,
+      get defaultPrevented() {
+        return prevented;
+      },
+      preventDefault() {
+        prevented = true;
+      },
+    };
+    escapeListener?.(event as unknown as KeyboardEvent);
+    return prevented;
+  }
+
+  /** A screen with a bar on the page, and its back. */
+  function screen(putAway: () => boolean = () => false) {
+    const onBack = vi.fn();
+    const bar = screenBar({ back: { label: "Back", onBack }, actions: [], putAway });
+    page.appendChild(bar.element as unknown as FakeNode);
+    return { onBack, back: bar.back as unknown as FakeNode };
+  }
+
+  it("goes back from the newest bar on the page, as its back button does", () => {
+    const old = screen();
+    page.children.length = 0;
+    const current = screen();
+    expect(pressEscape()).toBe(true);
+    expect(current.onBack).toHaveBeenCalledOnce();
+    expect(old.onBack).not.toHaveBeenCalled();
+  });
+
+  it("does nothing while the screens are hidden, as in a match", () => {
+    const { onBack } = screen();
+    page.style.display = "none";
+    expect(pressEscape()).toBe(false);
+    expect(onBack).not.toHaveBeenCalled();
+  });
+
+  it("cancels an open inline confirmation instead of going back", () => {
+    const { onBack, back } = screen();
+    const onConfirm = vi.fn();
+    const confirm = inlineConfirm(back as unknown as HTMLElement, "Leave?", "Leave", onConfirm);
+    pressEscape();
+    expect(confirm.isOpen()).toBe(false);
+    expect(back.hidden).toBe(false);
+    expect(focusLog.at(-1)).toBe(back);
+    expect(onBack).not.toHaveBeenCalled();
+    expect(onConfirm).not.toHaveBeenCalled();
+    pressEscape();
+    expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it("lets the screen put away what it has open first", () => {
+    let open = true;
+    const { onBack } = screen(() => {
+      const was = open;
+      open = false;
+      return was;
+    });
+    pressEscape();
+    expect(onBack).not.toHaveBeenCalled();
+    pressEscape();
+    expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it("goes back from a text field, and leaves a search field's or a used Esc alone", () => {
+    const { onBack } = screen();
+    const search = new FakeInput();
+    search.type = "search";
+    expect(pressEscape(search)).toBe(false);
+    expect(pressEscape(new FakeTextArea())).toBe(false);
+    expect(onBack).not.toHaveBeenCalled();
+    escapeListener?.({
+      key: "Escape",
+      repeat: false,
+      defaultPrevented: true,
+      target: page,
+    } as unknown as KeyboardEvent);
+    expect(onBack).not.toHaveBeenCalled();
+    pressEscape(new FakeInput());
+    expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it("has nothing to go back to on a screen without a back, such as the main menu", () => {
+    const bar = screenBar({ actions: [] });
+    page.appendChild(bar.element as unknown as FakeNode);
+    expect(bar.back).toBeUndefined();
+    expect(() => pressEscape()).not.toThrow();
+  });
+});
+
+describe("selectableRow (#578)", () => {
+  beforeEach(() => {
+    vi.stubGlobal("document", { createElement, body: new FakeNode() });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("is a real button, chosen by a click, with its actions beside it, not inside", () => {
+    const onSelect = vi.fn();
+    const onEdit = vi.fn();
+    const edit = new FakeNode("button");
+    edit.textContent = "Edit";
+    edit.addEventListener("click", onEdit);
+    const row = selectableRow({
+      name: "Pyro",
+      subtitle: "Elementalist",
+      actions: [edit as unknown as HTMLElement],
+      onSelect,
+    }) as unknown as FakeNode;
+    const [choose, actions] = row.children;
+    // A <button type="button"> is in the Tab order, and Enter and Space
+    // press it, natively.
+    expect(choose?.tag).toBe("button");
+    expect(choose?.type).toBe("button");
+    expect(choose?.button("Pyro")).toBeDefined();
+    expect(actions?.children).toEqual([edit]);
+    choose?.click();
+    expect(onSelect).toHaveBeenCalledOnce();
+    expect(onEdit).not.toHaveBeenCalled();
+  });
+});
+
+describe("emptyState (#578)", () => {
+  beforeEach(() => {
+    vi.stubGlobal("document", { createElement, body: new FakeNode() });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("says what is missing next to the button that makes the first one", () => {
+    const onAction = vi.fn();
+    const state = emptyState("No teams yet.", "New team", onAction) as unknown as FakeNode;
+    expect(state.children.map((child) => child.textContent)).toEqual(["No teams yet.", "New team"]);
+    state.button("New team").click();
+    expect(onAction).toHaveBeenCalledOnce();
   });
 });
