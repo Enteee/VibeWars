@@ -84,6 +84,30 @@ describe("peekWriter", () => {
     expect(fs.statSync(path.join(dir, "developer-1.txt")).mode & 0o777).toBe(0o600);
   });
 
+  it("redacts a private key's body lines up to its END line, and no further", () => {
+    const dir = scratch();
+    const writer = peekWriter(dir, "developer-1");
+    const begin = "-----BEGIN RSA " + "PRIVATE KEY-----";
+    const end = "-----END RSA " + "PRIVATE KEY-----";
+    for (const line of [begin, "MIIEabc+/=", "QUJDRA==", end, "after"]) {
+      writer.line(line);
+    }
+    writer.line(begin);
+    writer.line("QUJDRA==");
+    writer.line("prose survives");
+    writer.finish("between");
+
+    const lines = fs.readFileSync(path.join(dir, "developer-1.txt"), "utf8").split("\n");
+    expect(lines.slice(0, 5)).toEqual([
+      "[redacted]",
+      "[redacted]",
+      "[redacted]",
+      "[redacted]",
+      "after",
+    ]);
+    expect(lines.slice(5, 8)).toEqual(["[redacted]", "[redacted]", "prose survives"]);
+  });
+
   it("throttles to one write a second, and finish always writes", () => {
     vi.useFakeTimers();
     vi.setSystemTime(1_000_000);

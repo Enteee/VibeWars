@@ -102,7 +102,8 @@ export function redact(text) {
  * `finish` always writes. Each line is made `visible()` (a colleague's
  * output is not to look like a message), then redacted. A line arrives
  * whole, cut to 200 characters by the stream formatter, so a private key
- * block is redacted from its BEGIN line to the end of that line.
+ * block is redacted from its BEGIN line, and across the following PEM body
+ * lines up to its END line.
  *
  * Nothing here throws once the writer exists: a write that fails costs the
  * recording, never the turn (as `saveContext` in agent-turn.mjs). The first
@@ -123,6 +124,10 @@ export function peekWriter(dir, employee, options = {}) {
 
   /** @type {string[]} */
   let lines = [];
+  // Inside a private key block that opened on an earlier line: its base64
+  // body lines are redacted until the END line, and the first line that is
+  // neither ends it (a lone BEGIN must not swallow what follows).
+  let inKey = false;
   /** @type {PeekState} */
   let state = "turn";
   let lastLineAt = now();
@@ -203,7 +208,16 @@ export function peekWriter(dir, employee, options = {}) {
     line(raw) {
       guarded(() => {
         for (const piece of stripAnsi(raw).split("\n")) {
-          const clean = redact(visible(piece));
+          let clean;
+          if (inKey && /^[A-Za-z0-9+/=]+$/.test(piece)) {
+            clean = "[redacted]";
+          } else if (inKey && /-----END [A-Z ]*PRIVATE KEY-----/.test(piece)) {
+            inKey = false;
+            clean = "[redacted]";
+          } else {
+            inKey = /-----BEGIN [A-Z ]*PRIVATE KEY-----(?!.*-----END)/.test(piece);
+            clean = redact(visible(piece));
+          }
           lines.push(clean.length > MAX_LINE ? clean.slice(0, MAX_LINE) : clean);
         }
         lines = lines.slice(-KEEP_LINES);
