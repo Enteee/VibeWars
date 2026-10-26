@@ -36,6 +36,7 @@ const CORPUS = [
   "mesmer.arcane-echo",
   "mesmer.echo",
   "monk.contemplation-of-purity",
+  "monk.guardian",
   "monk.orison-of-healing",
   "necromancer.contagion",
   "necromancer.faintheartedness",

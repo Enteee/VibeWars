@@ -85,6 +85,7 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
     case "death":
     case "interrupt-missed":
     case "attack-missed":
+    case "attack-blocked":
     case "attack-dodged":
     case "attack-obstructed":
     case "attack-unreachable":
@@ -144,6 +145,7 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
     case "death":
     case "interrupt-missed":
     case "attack-missed":
+    case "attack-blocked":
     case "attack-dodged":
     case "attack-obstructed":
     case "attack-unreachable":

@@ -108,6 +108,19 @@ describe("describeSkill", () => {
     expect(line).toContain("−3 Health degeneration");
   });
 
+  it("says what Swift Chop does when blocked, after what it does on a hit (#534)", () => {
+    const ranks = new Map([["warrior.axe-mastery", 12]]);
+    const lines = describeSkill(skill("warrior.swift-chop"), ranks).effects.map((e) => e.text);
+    expect(lines).toEqual([
+      "If blocked: deals 16 damage",
+      expect.stringContaining("If blocked: applies Deep Wound for 20s"),
+    ]);
+  });
+
+  it("says Guardian blocks half of all attacks (#534)", () => {
+    expect(describeStatus("guardian")).toBe("50% chance to block attacks");
+  });
+
   it("words a status's pips as GW1 does", () => {
     expect(describeStatus("bleeding")).toContain("−3 Health degeneration");
     expect(describeStatus("regeneration")).toContain("+4 Health regeneration");
@@ -127,7 +140,7 @@ describe("describeSkill", () => {
     for (const entry of IMPLEMENTED_SKILLS) {
       const described = describeSkill(entry);
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
-        entry.effects.length,
+        entry.effects.length + (entry.attack?.onBlocked.length ?? 0),
       );
       for (const line of described.effects) {
         expect(line.text.length, `${entry.id} has an empty description line`).toBeGreaterThan(0);

@@ -28,6 +28,7 @@ export { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";
 
 export type {
   ActiveStatus,
+  BlockRule,
   StatusCategory,
   StatusDefinition,
   StatusId,
@@ -46,6 +47,7 @@ export {
 export {
   advanceStatuses,
   attackMissChanceOf,
+  blockChanceOf,
   effectiveActivationSeconds,
   effectiveMaxHealth,
   moveSpeedMultiplier,

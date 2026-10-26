@@ -35,7 +35,8 @@ export type StatusId =
   | "malaise"
   | "regeneration"
   | "blood-ritual"
-  | "armor-boost";
+  | "armor-boost"
+  | "guardian";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -47,6 +48,16 @@ export const MAX_PIPS = 10;
 /** A net pip count as it applies: clamped to `MAX_PIPS` either way. */
 export function clampPips(pips: number): number {
   return Math.max(-MAX_PIPS, Math.min(MAX_PIPS, pips));
+}
+
+/**
+ * A chance to block incoming attacks (#534): a blocked attack does nothing.
+ * `against` says which attacks: melee blows, projectiles, or both. Spells
+ * are never blocked.
+ */
+export interface BlockRule {
+  readonly chance: number;
+  readonly against: "all" | "melee" | "projectile";
 }
 
 export interface StatusDefinition {
@@ -85,6 +96,8 @@ export interface StatusDefinition {
    * hook attack-speed skills plug into.
    */
   readonly attackDurationMultiplier: number;
+  /** The bearer's chance to block attacks; `undefined`: none. */
+  readonly block: BlockRule | undefined;
 }
 
 function define(
@@ -105,6 +118,7 @@ function define(
     maxHealthMultiplier: 1,
     castTimeMultiplier: 1,
     attackDurationMultiplier: 1,
+    block: undefined,
     ...overrides,
   };
 }
@@ -134,6 +148,9 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "armor-boost": define("armor-boost", "Armor Boost", "enchantment", {
     armorModifier: 24,
     moveSpeedMultiplier: 0.75,
+  }),
+  guardian: define("guardian", "Guardian", "enchantment", {
+    block: { chance: 0.5, against: "all" },
   }),
 };
 

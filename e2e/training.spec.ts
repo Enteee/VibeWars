@@ -333,6 +333,31 @@ test("(14) in Weapon DPS, Space swings and the meter's weapon row counts it (#16
   await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Melee dummy/);
 });
 
+test("(33) in Block, the Guardian dummy blocks some swings, and the log says so (#534)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("block");
+  await expect(page.locator(".training-log")).toContainText("── Block ──");
+  await takeControl(page);
+
+  await page.keyboard.press(key("attack"));
+  // It keeps Guardian up, and casts it on itself, logged as it lands.
+  await expect(page.locator(".training-log")).toContainText(
+    /Guardian dummy \(60 armor\) gains Guardian/,
+  );
+  // Half the swings: a handful is plenty to see one blocked and one land.
+  await expect(page.locator(".training-log")).toContainText(
+    /Guardian dummy \(60 armor\) blocks Sword \(.+\)/,
+    {
+      timeout: 20_000,
+    },
+  );
+  await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Guardian dummy/, {
+    timeout: 20_000,
+  });
+});
+
 test("(15) an empty bar is never dimmed, and Space still swings (#360)", async ({ page }) => {
   await openTraining(page);
   const overlay = page.locator(".training-overlay");

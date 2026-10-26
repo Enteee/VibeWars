@@ -64,6 +64,7 @@ import {
 import {
   attackDurationSeconds,
   blindMisses,
+  blocks,
   landBlow,
   PLAIN_BLOW,
   resolveAttackSkill,
@@ -1026,9 +1027,18 @@ export class MatchSimulation {
 
     // Only attack skills earn adrenaline, as weapon hits do: a spell is
     // paid for in energy, and earning both would make casters the best
-    // adrenaline builders.
+    // adrenaline builders. A blocked blow earns nothing, not even the
+    // damage its `onBlocked` deals, as Swift Chop's (#534). An attack
+    // skill strikes each victim once, so damage on one that blocked is
+    // all `onBlocked`'s.
     if (skill.type === "attack") {
-      this.#gainAdrenaline(record, events);
+      const blocked = new Set(
+        events.filter((event) => event.kind === "attack-blocked").map((event) => event.targetId),
+      );
+      this.#gainAdrenaline(
+        record,
+        events.filter((event) => event.kind !== "damage" || !blocked.has(event.targetId)),
+      );
     }
     this.#recordDeaths(events);
     // An attack skill is a swing, so it turns on its target with the
@@ -1469,7 +1479,11 @@ export class MatchSimulation {
     }
     const reach = this.#ruleset.collision.playerRadius + this.#ruleset.combat.projectileTolerance;
     const events: CombatEvent[] = [];
-    if (distance(target.position, projectile.aimPoint) <= reach) {
+    if (distance(target.position, projectile.aimPoint) > reach) {
+      events.push({ kind: "attack-dodged", targetId: target.id });
+    } else if (blocks(target.combatant, "projectile", this.#rng)) {
+      events.push({ kind: "attack-blocked", targetId: target.id });
+    } else {
       landBlow(
         projectile.weaponSnapshot,
         target.combatant,
@@ -1480,8 +1494,6 @@ export class MatchSimulation {
         this.#ruleset.combat,
         events,
       );
-    } else {
-      events.push({ kind: "attack-dodged", targetId: target.id });
     }
     const attacker = this.#participants.get(projectile.attackerId);
     if (attacker !== undefined && !attacker.combatant.dead) {
@@ -1530,7 +1542,9 @@ export class MatchSimulation {
    * Adrenaline is earned by landing damage on someone else, never by
    * waiting, which makes adrenaline skills a reward for staying in the
    * fight rather than a second energy pool. Once per resolution, however
-   * many it hit.
+   * many it hit. A blocked blow deals no damage, so it earns nothing
+   * (#534); a double strike with one blow blocked still earns it for the
+   * other.
    */
   #gainAdrenaline(record: ParticipantRecord, events: readonly CombatEvent[]): void {
     const dealtDamage = events.some(

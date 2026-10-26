@@ -327,6 +327,116 @@ describe("adrenaline", () => {
   });
 });
 
+describe("block (#534)", () => {
+  /** `defender` under a Guardian that outlasts the test. */
+  function guarded(match: MatchSimulation, defender: string): void {
+    get(match, defender).combatant.statuses.apply("guardian", 1e6, "monk");
+  }
+
+  function kinds(entries: readonly CombatLogEntry[]): string[] {
+    return entries.flatMap((entry) => entry.events.map((event) => event.kind));
+  }
+
+  it("a blocked swing deals nothing and earns no adrenaline; a landed one still earns +3", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
+    guarded(match, "d");
+    match.requestAttack("a", "d");
+    const seen = kinds(swings(stepFor(match, 7)));
+    const landed = seen.filter((kind) => kind === "damage").length;
+    const blocked = seen.filter((kind) => kind === "attack-blocked").length;
+    expect(landed + blocked).toBe(seen.length);
+    expect(landed).toBeGreaterThan(0);
+    expect(blocked).toBeGreaterThan(0);
+    expect(get(match, "a").combatant.adrenaline).toBe(landed * RULES.resources.adrenalinePerHit);
+  });
+
+  it("a double strike with one blow blocked and one landed earns adrenaline for the landed one", () => {
+    const always: Weapon = {
+      ...WEAPONS.daggers,
+      doubleStrike: { attributeId: "assassin.dagger-mastery", baseChance: 1, perRank: 0 },
+    };
+    const match = sim(
+      { ...swordsman("a", vec2(0, 0)), equipment: wielding(always, "assassin.dagger-mastery") },
+      dummy("d", vec2(40, 0)),
+    );
+    guarded(match, "d");
+    match.requestAttack("a", "d");
+    // Every swing until one is half blocked: at 50% a blow, one comes soon.
+    for (let i = 0; i < 2000; i += 1) {
+      const before = get(match, "a").combatant.adrenaline;
+      const seen = kinds(swings(match.step(DT).log)).sort();
+      if (seen.length === 2 && seen[0] === "attack-blocked" && seen[1] === "damage") {
+        expect(get(match, "a").combatant.adrenaline).toBe(
+          before + RULES.resources.adrenalinePerHit,
+        );
+        return;
+      }
+    }
+    throw new Error("no half-blocked double strike in 100 s");
+  });
+
+  it("an arrow rolls its block on landing", () => {
+    const archer: ParticipantSpec = {
+      ...swordsman("a", vec2(0, 0)),
+      attributeRanks: new Map([["ranger.marksmanship", 12]]),
+      equipment: wielding(WEAPONS.longbow, "ranger.marksmanship"),
+    };
+    const match = sim(archer, dummy("d", vec2(300, 0)));
+    guarded(match, "d");
+    match.requestAttack("a", "d");
+    const seen = kinds(swings(stepFor(match, 20)));
+    expect(seen).toContain("attack-blocked");
+    expect(seen).toContain("damage");
+  });
+
+  it("Swift Chop, blocked: cost and recharge spent, its flat damage and Deep Wound, no adrenaline", () => {
+    const axeman: ParticipantSpec = {
+      ...swordsman("a", vec2(0, 0)),
+      skillBar: ["warrior.swift-chop"],
+      attributeRanks: new Map([["warrior.axe-mastery", 12]]),
+      equipment: wielding(WEAPONS.axe, "warrior.axe-mastery"),
+    };
+    // The first seed whose chop is blocked.
+    for (let seed = 0; seed < 20; seed += 1) {
+      const match = new MatchSimulation({
+        seed: `block-${String(seed)}`,
+        participants: [axeman, dummy("d", vec2(40, 0))],
+      });
+      guarded(match, "d");
+      match.setTarget("a", "d");
+      const energy = get(match, "a").combatant.energy;
+      expect(match.requestSkill("a", 0)?.check).toEqual({ ok: true });
+      const chop = stepFor(match, 0.7).filter((entry) => entry.skillId === "warrior.swift-chop");
+      expect(chop).toHaveLength(1);
+      if (!kinds(chop).includes("attack-blocked")) {
+        continue;
+      }
+      expect(kinds(chop)).toEqual(["attack-blocked", "damage", "status-applied"]);
+      expect(get(match, "d").combatant.statuses.has("deep-wound")).toBe(true);
+      const caster = get(match, "a").combatant;
+      expect(caster.energy).toBeLessThan(energy);
+      expect(caster.cast.rechargeRemaining.has("warrior.swift-chop")).toBe(true);
+      expect(caster.adrenaline).toBe(0);
+      return;
+    }
+    throw new Error("no seed blocked the chop");
+  });
+
+  it("a spell is never blocked", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
+    guarded(match, "d");
+    match.setTarget("a", "d");
+    const fireballs: CombatLogEntry[] = [];
+    for (let cast = 0; cast < 5; cast += 1) {
+      expect(match.requestSkill("a", 0)?.check).toEqual({ ok: true });
+      fireballs.push(...stepFor(match, 9).filter((entry) => entry.skillId === FIREBALL));
+    }
+    expect(fireballs).toHaveLength(5);
+    expect(kinds(fireballs).filter((kind) => kind === "damage")).toHaveLength(5);
+    expect(kinds(fireballs)).not.toContain("attack-blocked");
+  });
+});
+
 describe("the log", () => {
   it("a double strike is one entry with two hits, both credited to the attacker", () => {
     const always: Weapon = {
