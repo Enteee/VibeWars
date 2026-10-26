@@ -12,6 +12,7 @@
  * - `enchantment`— positive, applied by allies, removed by enchantment removal/strip.
  * - `stance`     — positive, on yourself only, ended by stance removal (#465).
  * - `preparation`— on yourself only; changes your attacks while it lasts (#525).
+ * - `glyph`      — on yourself only; changes your next spells, then is gone (#526).
  * - `shout`      — a shout's lingering effect (#524); no removal touches it.
  * - `skill-effect`— none of GW1's removable kinds: Healing Signet's armor
  *   loss while it is activated. No removal touches it either.
@@ -25,14 +26,25 @@
 import type { Combatant, SkillEffect } from "./types.js";
 
 export type StatusCategory =
-  "condition" | "hex" | "enchantment" | "stance" | "preparation" | "shout" | "skill-effect";
+  | "condition"
+  | "hex"
+  | "enchantment"
+  | "stance"
+  | "preparation"
+  | "glyph"
+  | "shout"
+  | "skill-effect";
 
 /**
  * Categories of which a combatant has at most one at a time (GW1): a new
  * one ends whichever is up, the same one included, and starts at its full
  * duration.
  */
-export const EXCLUSIVE_CATEGORIES: ReadonlySet<StatusCategory> = new Set(["stance", "preparation"]);
+export const EXCLUSIVE_CATEGORIES: ReadonlySet<StatusCategory> = new Set([
+  "stance",
+  "preparation",
+  "glyph",
+]);
 
 export type StatusId =
   // Conditions (brief §12's starting set).
@@ -56,6 +68,8 @@ export type StatusId =
   | "dash"
   // Preparations.
   | "apply-poison"
+  // Glyphs.
+  | "glyph-of-lesser-energy"
   // Shouts and skill effects (#524).
   | "watch-yourself"
   | "healing-signet-armor";
@@ -140,6 +154,18 @@ export interface StatusDefinition {
    * miss or a block.
    */
   readonly onAttackHit: readonly SkillEffect[];
+  /**
+   * What it does to the bearer's next spells (#526): each costs
+   * `costReduction` less energy, and it ends once `count` spells have
+   * started. `undefined`: spells leave it alone.
+   */
+  readonly nextSpells: NextSpells | undefined;
+}
+
+/** A glyph's hold on the next spells: how many, and how much cheaper (#526). */
+export interface NextSpells {
+  readonly count: number;
+  readonly costReduction: number;
 }
 
 function define(
@@ -165,6 +191,7 @@ function define(
     block: undefined,
     endsAfterAttacks: undefined,
     onAttackHit: [],
+    nextSpells: undefined,
     ...overrides,
   };
 }
@@ -216,6 +243,12 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "apply-poison": define("apply-poison", "Apply Poison", "preparation", {
     onAttackHit: [{ kind: "apply-status", statusId: "poison", durationSeconds: 13 }],
   }),
+
+  // "Your next 2 spells cost 10...16...18 less Energy to cast": 16, its
+  // rank-12 value; Energy Storage scaling waits for #532.
+  "glyph-of-lesser-energy": define("glyph-of-lesser-energy", "Glyph of Lesser Energy", "glyph", {
+    nextSpells: { count: 2, costReduction: 16 },
+  }),
 };
 
 export interface ActiveStatus {
@@ -224,6 +257,8 @@ export interface ActiveStatus {
   remainingSeconds: number;
   /** Incoming attacks before it ends (`endsAfterAttacks`); `undefined`: no such limit. */
   attacksLeft: number | undefined;
+  /** Spells still to start before it ends (`nextSpells`); `undefined`: no such limit. */
+  spellsLeft: number | undefined;
   /** Who applied it — needed so a future "when this ends, heal the caster"
    *  effect knows whom to credit. */
   readonly sourceId: string;
@@ -288,6 +323,7 @@ export class StatusSet {
       id,
       remainingSeconds: durationSeconds,
       attacksLeft: getStatusDefinition(id).endsAfterAttacks,
+      spellsLeft: getStatusDefinition(id).nextSpells?.count,
       sourceId,
     });
   }
@@ -334,6 +370,26 @@ export class StatusSet {
       if (status.attacksLeft !== undefined) {
         status.attacksLeft -= 1;
         if (status.attacksLeft <= 0) {
+          ended.push(status.id);
+        }
+      }
+    }
+    for (const id of ended) {
+      this.#statuses.delete(id);
+    }
+    return ended;
+  }
+
+  /**
+   * A spell of the bearer's started (#526): one fewer for every status
+   * that holds the next spells. Returns the ids that ended on it.
+   */
+  public countSpellStarted(): StatusId[] {
+    const ended: StatusId[] = [];
+    for (const status of this.#statuses.values()) {
+      if (status.spellsLeft !== undefined) {
+        status.spellsLeft -= 1;
+        if (status.spellsLeft <= 0) {
           ended.push(status.id);
         }
       }

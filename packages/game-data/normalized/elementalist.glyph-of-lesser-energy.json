@@ -1,0 +1,24 @@
+{
+  "id": "elementalist.glyph-of-lesser-energy",
+  "name": "Glyph of Lesser Energy",
+  "profession": "elementalist",
+  "attribute": "Energy Storage",
+  "type": "Glyph.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "activationSeconds": 1,
+  "rechargeSeconds": 30,
+  "description": "For 15 seconds, your next 2 spells cost 10...16...18 less Energy to cast.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Elementalist/452-Glyph_of_Lesser_Energy",
+    "fetchedAt": "2026-10-26T05:20:30.030Z"
+  },
+  "unmapped": {}
+}

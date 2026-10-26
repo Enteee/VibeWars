@@ -148,6 +148,11 @@ export function describeStatus(id: string): string {
   for (const effect of definition.onAttackHit) {
     parts.push(describeAttackHit(effect));
   }
+  if (definition.nextSpells !== undefined) {
+    const { count, costReduction } = definition.nextSpells;
+    const spells = count === 1 ? "spell costs" : `${String(count)} spells cost`;
+    parts.push(`your next ${spells} ${String(costReduction)} less energy`);
+  }
   return parts.length === 0 ? definition.name : parts.join(", ");
 }
 
@@ -185,13 +190,13 @@ function describeEffect(
         magnitude: undefined,
       };
     case "apply-status":
-      // A stance or a preparation is yours alone and one at a time
-      // (#523, #525), so it reads as what it is rather than as something
-      // applied. The type line already says "Stance." or "Preparation."
-      // (#524).
+      // A stance, a preparation or a glyph is yours alone and one at a
+      // time (#523, #525, #526), so it reads as what it is rather than as
+      // something applied. The type line already says which (#524).
       switch (findStatusDefinition(effect.statusId)?.category) {
         case "stance":
         case "preparation":
+        case "glyph":
           return {
             text: `For ${seconds(effect.durationSeconds)}, ` + describeStatus(effect.statusId),
             magnitude: undefined,
@@ -237,6 +242,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
   shout: "Shout.",
   stance: "Stance.",
   preparation: "Preparation.",
+  glyph: "Glyph.",
   skill: "Skill.",
 };
 

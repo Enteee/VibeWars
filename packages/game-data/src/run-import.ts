@@ -137,6 +137,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     profession: "ranger",
     url: "https://www.gw-memorial.net/skills/Ranger/122-Apply_Poison",
   },
+  {
+    id: "elementalist.glyph-of-lesser-energy",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/452-Glyph_of_Lesser_Energy",
+  },
 ];
 
 function packageRoot(): string {
