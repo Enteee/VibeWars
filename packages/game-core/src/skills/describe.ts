@@ -67,6 +67,12 @@ export interface SkillDescription {
   readonly targetText: string;
   /** True when at least one effect scales with an attribute. */
   readonly scalesWithAttribute: boolean;
+  /**
+   * The one number that matters at these ranks, which a library card
+   * leads with (#567): "91 damage", "heals 45", "+5 energy". An effect the
+   * attribute scales wins over a flat one; `undefined` with no number.
+   */
+  readonly headline: string | undefined;
 }
 
 function describeMagnitude(
@@ -240,6 +246,30 @@ function describeEffect(
   }
 }
 
+/** `effect`'s number, as a card's headline puts it; `undefined` without one. */
+function headlineOf(
+  effect: SkillEffect,
+  ranks: ReadonlyMap<string, number>,
+): { readonly text: string; readonly scales: boolean } | undefined {
+  switch (effect.kind) {
+    case "damage":
+    case "heal":
+    case "energy-gain": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      const amount = String(magnitude.current);
+      const text =
+        effect.kind === "damage"
+          ? `${amount} damage`
+          : effect.kind === "heal"
+            ? `heals ${amount}`
+            : `+${amount} energy`;
+      return { text, scales: magnitude.attributeId !== undefined };
+    }
+    default:
+      return undefined;
+  }
+}
+
 const TYPE_TEXT: Record<SkillType, string> = {
   attack: "Attack.",
   spell: "Spell.",
@@ -356,6 +386,8 @@ export function describeSkill(
     ...projectile,
   ];
   const { target, range } = targetAndRange(skill);
+  const numbers = skill.effects.flatMap((effect) => headlineOf(effect, ranks) ?? []);
+  const headline = (numbers.find((number) => number.scales) ?? numbers[0])?.text;
   return {
     id: skill.id,
     name: skill.name,
@@ -373,6 +405,7 @@ export function describeSkill(
     rangeText: range,
     targetText: target,
     scalesWithAttribute: effects.some((effect) => effect.magnitude?.attributeId !== undefined),
+    headline,
   };
 }
 

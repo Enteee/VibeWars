@@ -143,6 +143,17 @@ describe("describeSkill", () => {
     expect(describeSkill(skill("ranger.broad-head-arrow")).scalesWithAttribute).toBe(false);
   });
 
+  it("leads with the number that matters at these ranks (#567)", () => {
+    const healing = skill("monk.orison-of-healing");
+    expect(describeSkill(healing).headline).toBe("heals 20");
+    expect(describeSkill(healing, new Map([["monk.healing-prayers", 12]])).headline).toBe(
+      "heals 60",
+    );
+    expect(describeSkill(skill("elementalist.fireball")).headline).toMatch(/^\d+ damage$/);
+    // Nothing to count: no headline rather than a made-up one.
+    expect(describeSkill(skill("ranger.broad-head-arrow")).headline).toBeUndefined();
+  });
+
   it("produces a line for every effect of every catalog skill", () => {
     // Guards the switch in `describeEffect`: a new effect kind that
     // nobody described would silently vanish from tooltips.

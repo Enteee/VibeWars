@@ -1,4 +1,10 @@
-import { PROFESSIONS, describeSkill, type Skill, type SkillDescription } from "@vibewars/game-core";
+import {
+  PROFESSIONS,
+  describeSkill,
+  type Skill,
+  type SkillDescription,
+  type SkillType,
+} from "@vibewars/game-core";
 
 /**
  * The skill library: the browsable, filterable list a player drags from
@@ -16,18 +22,45 @@ export interface SkillGroup {
   readonly skills: readonly Skill[];
 }
 
+/** What a search looks through for `skill`: its name and its description's lines. */
+function searchText(skill: Skill): string {
+  const { typeText, effects } = describeSkill(skill);
+  return [skill.name, typeText, ...effects.map((effect) => effect.text)].join("\n").toLowerCase();
+}
+
 /**
- * Filter by name, case- and whitespace-insensitively.
+ * Filter by name and description text (#567), case- and
+ * whitespace-insensitively: "knock" finds what knocks down.
  *
  * Matches a substring rather than a prefix: players look for "arrow" or
  * "heal" far more often than they type a skill's first letters.
  */
-export function filterSkillsByName(skills: readonly Skill[], query: string): readonly Skill[] {
+export function filterSkillsByText(skills: readonly Skill[], query: string): readonly Skill[] {
   const needle = query.trim().toLowerCase();
   if (needle === "") {
     return skills;
   }
-  return skills.filter((skill) => skill.name.toLowerCase().includes(needle));
+  return skills.filter((skill) => searchText(skill).includes(needle));
+}
+
+/**
+ * The library's type chips (#567): skills of any of `types`, in order.
+ * No chip on lists everything; several on list each of them.
+ */
+export function filterSkillsByType(
+  skills: readonly Skill[],
+  types: ReadonlySet<SkillType>,
+): readonly Skill[] {
+  return types.size === 0 ? skills : skills.filter((skill) => types.has(skill.type));
+}
+
+/** The types `skills` has, one chip each, in `order`. */
+export function skillTypesOf(
+  skills: readonly Skill[],
+  order: readonly SkillType[],
+): readonly SkillType[] {
+  const present = new Set(skills.map((skill) => skill.type));
+  return order.filter((type) => present.has(type));
 }
 
 /** The library's "Elite" toggle (#459): elite skills only, in order. */

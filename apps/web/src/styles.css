@@ -1976,6 +1976,106 @@ body {
   font-size: 0.82rem;
 }
 
+/* The card itself (#567): a button that opens the details, laid out as the
+   box was, with the number that matters at your rank beside the cost. */
+.skill-box-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.6rem;
+  padding: 0 1.2rem 0 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.skill-box-card .skill-box-name {
+  flex: 1 0 100%;
+}
+
+.skill-box-headline {
+  color: var(--accent);
+  font-size: 0.72rem;
+}
+
+.skill-box-headline:empty {
+  display: none;
+}
+
+.skill-box.is-open {
+  border-color: var(--accent);
+}
+
+/* The inline details (#567): the tooltip's lines, in the card's flow. */
+.skill-box-details {
+  margin-top: 0.3rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid var(--line);
+  cursor: default;
+}
+
+/* 0 to 12, your rank marked, the ranks below it filled. */
+.skill-scale {
+  display: grid;
+  grid-template-columns: repeat(13, 1fr);
+  gap: 2px;
+  margin-top: 0.4rem;
+}
+
+.skill-scale-step {
+  padding: 0.1rem 0;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink-dim);
+  font-size: 0.62rem;
+  text-align: center;
+}
+
+.skill-scale-step.is-reached {
+  background: rgb(89 194 255 / 12%);
+}
+
+.skill-scale-step.is-current {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: bold;
+}
+
+.skill-type-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+/* Scroll anchoring holds a skill where it is on screen through a reshuffle
+   (#563), so it must not pick the controls above the list as its anchor:
+   they never move, and the list would jump under them. */
+.library-tabs,
+.skill-filters,
+.skill-type-chips {
+  overflow-anchor: none;
+}
+
+.skill-type-chip {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-dim);
+  font-family: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.skill-type-chip[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* Says where a click equips the skill (#564): "Equip → 6", or why not. */
 .skill-box-equip {
   align-self: flex-start;

@@ -28,6 +28,69 @@ function row(parent: HTMLElement, label: string, value: string): void {
 }
 
 /**
+ * A skill's description into `node`: its type, attribute, effect lines
+ * with the span the attribute buys, and its cost, cast, recharge and
+ * target. The hover tooltip and a library card's inline details (#567)
+ * both show it; the card already names the skill, so it leaves the title.
+ */
+export function renderSkillDescription(
+  node: HTMLElement,
+  description: SkillDescription,
+  options: { readonly title: boolean } = { title: true },
+): void {
+  node.replaceChildren();
+  if (options.title) {
+    const title = document.createElement("div");
+    title.className = "tip-title";
+    title.textContent = description.name;
+    node.appendChild(title);
+  }
+
+  // "Signet.", "Hex Spell.": what kind of skill, as GW1 words it (#524).
+  const type = document.createElement("div");
+  type.className = "tip-type";
+  type.textContent = description.typeText;
+  node.appendChild(type);
+
+  // A "No Attribute" skill has no line here, as in GW1 (#445).
+  if (description.attributeName !== undefined) {
+    const attribute = document.createElement("div");
+    attribute.className = "tip-attribute";
+    attribute.textContent = description.attributeName;
+    node.appendChild(attribute);
+  }
+
+  const effects = document.createElement("div");
+  effects.className = "tip-effects";
+  for (const effect of description.effects) {
+    const line = document.createElement("div");
+    line.className = "tip-effect";
+    line.textContent = effect.text;
+
+    // The span the attribute buys, next to the value it currently has.
+    // Showing only the current number hides what another point would
+    // do; showing only the span hides what you actually have.
+    const span = effect.magnitude === undefined ? undefined : formatScalingRange(effect.magnitude);
+    if (span !== undefined) {
+      const scale = document.createElement("span");
+      scale.className = "tip-scale";
+      scale.textContent = ` (${span})`;
+      line.appendChild(scale);
+    }
+    effects.appendChild(line);
+  }
+  node.appendChild(effects);
+
+  const stats = document.createElement("div");
+  stats.className = "tip-stats";
+  row(stats, "cost", description.cost);
+  row(stats, "cast", description.castTime);
+  row(stats, "recharge", description.recharge);
+  row(stats, "target", `${description.targetText}, ${description.rangeText}`);
+  node.appendChild(stats);
+}
+
+/**
  * Where the tooltip goes. `beside` the anchor suits a list; `above` suits
  * a skill bar at the bottom of the screen, which it must never cover (#485).
  */
@@ -41,57 +104,8 @@ export function createSkillTooltip(placement: SkillTooltipPlacement = "beside"):
   document.body.appendChild(node);
 
   const render = (description: SkillDescription): void => {
-    node.replaceChildren();
     node.classList.toggle("is-elite", description.elite);
-
-    const title = document.createElement("div");
-    title.className = "tip-title";
-    title.textContent = description.name;
-    node.appendChild(title);
-
-    // "Signet.", "Hex Spell.": what kind of skill, as GW1 words it (#524).
-    const type = document.createElement("div");
-    type.className = "tip-type";
-    type.textContent = description.typeText;
-    node.appendChild(type);
-
-    // A "No Attribute" skill has no line here, as in GW1 (#445).
-    if (description.attributeName !== undefined) {
-      const attribute = document.createElement("div");
-      attribute.className = "tip-attribute";
-      attribute.textContent = description.attributeName;
-      node.appendChild(attribute);
-    }
-
-    const effects = document.createElement("div");
-    effects.className = "tip-effects";
-    for (const effect of description.effects) {
-      const line = document.createElement("div");
-      line.className = "tip-effect";
-      line.textContent = effect.text;
-
-      // The span the attribute buys, next to the value it currently has.
-      // Showing only the current number hides what another point would
-      // do; showing only the span hides what you actually have.
-      const span =
-        effect.magnitude === undefined ? undefined : formatScalingRange(effect.magnitude);
-      if (span !== undefined) {
-        const scale = document.createElement("span");
-        scale.className = "tip-scale";
-        scale.textContent = ` (${span})`;
-        line.appendChild(scale);
-      }
-      effects.appendChild(line);
-    }
-    node.appendChild(effects);
-
-    const stats = document.createElement("div");
-    stats.className = "tip-stats";
-    row(stats, "cost", description.cost);
-    row(stats, "cast", description.castTime);
-    row(stats, "recharge", description.recharge);
-    row(stats, "target", `${description.targetText}, ${description.rangeText}`);
-    node.appendChild(stats);
+    renderSkillDescription(node, description);
   };
 
   /**
