@@ -9,9 +9,10 @@ name: e2e repeat
 #
 # Its own workflow, not a job in ci.yml: the merge guard reads ci.yml's
 # pull_request job conclusions (#123). Not in EXPECTED_CHECKS and not in the
-# ruleset, but hubd still refuses a merge while any check on the head is
-# failing (hub-guards.mjs checksSatisfied), so a red run here blocks a merge
-# until the flake is fixed. That is the point.
+# ruleset, and since #123 hubd reads only the expected jobs, so a red run here
+# does NOT block a merge: it shows on the pull request and qa-tester reads it
+# (flake-check). Making it block means adding it to the merge guard (see the
+# follow-up on #123).
 #
 # Pull requests only. With no spec changed it passes rather than skips, so
 # it never sits pending.
