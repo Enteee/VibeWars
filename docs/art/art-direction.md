@@ -571,6 +571,9 @@ differ by shape, so the icon shows the current state at a glance.
 `attacking` has two blades, so at 16 px it never reads as the one-sword
 `attack` skill type badge.
 
+UI text is sentence case: "Edit team", "New character", "Save". A small
+uppercase field label is styled so by CSS; the words themselves stay sentence case.
+
 ## Sizes
 
 - Icons are drawn on a 24×24 grid with strokes of at least 2 units.

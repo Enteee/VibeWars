@@ -3,8 +3,8 @@ name: Pages
 # Publishes the web client as a static site on GitHub Pages (#103):
 #   next     every merge to main   -> https://<owner>.github.io/<repo>/next/
 #   release  a published release   -> https://<owner>.github.io/<repo>/
-# Both are built with online play off: there is no game server behind
-# Pages until #15. The Colyseus server and containers.prod are untouched.
+# Both are built with the web client alone: peer-to-peer play needs no
+# hosted backend (ADR-0022).
 #
 # Both targets write the one gh-pages branch, with plain git rather than a
 # deploy action, because the release must replace everything except next/.

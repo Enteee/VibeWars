@@ -798,31 +798,14 @@ export function mountBuildEditor(
   );
   update();
 
-  // Esc lets go of the pick (#564), else is Close (#566), unless something
-  // on the page used it already: the arena cancels or lets go with it, a
-  // search field clears with it. A skill key over a library skill, hovered
-  // or focused, equips it to that key's slot (#564). Not while typing, nor
-  // while the arena has the keyboard, nor while the bar asks something.
+  // A skill key over a library skill, hovered or focused, equips it to
+  // that key's slot (#564). Not while typing, nor while the arena has the
+  // keyboard, nor while the bar asks something. Esc is the bar's (#578).
   const onKeyDown = (event: KeyboardEvent): void => {
     if (event.defaultPrevented || event.repeat) {
       return;
     }
     const target = event.target;
-    if (event.key === "Escape") {
-      if (
-        target instanceof HTMLTextAreaElement ||
-        (target instanceof HTMLInputElement && target.type === "search")
-      ) {
-        return;
-      }
-      event.preventDefault();
-      if (selected !== undefined && !bar.isOpen()) {
-        context.select(undefined);
-        return;
-      }
-      bar.escape();
-      return;
-    }
     if (
       isShortcut(event) ||
       bar.isOpen() ||
@@ -885,8 +868,6 @@ export function mountBuildEditor(
 interface CommandBar extends Region {
   /** Whether a confirmation, the ⋯ menu or the problems list is open. */
   isOpen(): boolean;
-  /** Esc: put away what is open, else Close. */
-  escape(): void;
   dispose(): void;
 }
 
@@ -920,7 +901,7 @@ function mountCommandBar(
       callbacks.onClose();
       return;
     }
-    ask(back, "Discard changes?", "discard", callbacks.onClose, "keep editing");
+    ask(back, "Discard changes?", "Discard", callbacks.onClose, "Keep editing");
   };
 
   const nameInput = document.createElement("input");
@@ -955,11 +936,11 @@ function mountCommandBar(
   professions.append(primary.element, secondary.element);
 
   const budget = h("span", "editor-budget");
-  budget.title = "attribute points spent";
+  budget.title = "Attribute points spent";
   const chip = problemsChip([]);
   const unsaved = h("span", "editor-unsaved", "● unsaved");
 
-  const save = button("save", "primary", () => {
+  const save = button("Save", "primary", () => {
     callbacks.onSave({ ...context.current(), updatedAt: Date.now() });
   });
 
@@ -991,7 +972,7 @@ function mountCommandBar(
     // Selecting scrolls to the end; the start says whose build it is.
     line.scrollLeft = 0;
   };
-  const copy = button("copy", "", () => {
+  const copy = button("Copy", "", () => {
     // `clipboard` is missing outside a secure context; the promise turns
     // that into a refusal like any other.
     Promise.resolve()
@@ -1003,39 +984,61 @@ function mountCommandBar(
   });
   share.append(line, copy);
   menu.append(
-    button("share", "", () => {
+    button("Share", "", () => {
       closeMenu();
       line.value = exportBuild(context.current());
       share.hidden = false;
       selectLine();
     }),
     // An edited character duplicates as edited, as it always has.
-    button("duplicate", "", () => {
+    button("Duplicate", "", () => {
       closeMenu();
       callbacks.onDuplicate(context.current());
     }),
-    button("delete", "", () => {
+    button("Delete", "", () => {
       closeMenu();
       const { id, name } = context.current();
       ask(
         more,
         `Delete ${name}?`,
-        "delete",
+        "Delete",
         () => {
           callbacks.onDelete(id);
         },
-        "cancel",
+        "Cancel",
       );
     }),
   );
   const moreWrap = h("span", "editor-more-wrap");
   moreWrap.append(more, menu, share);
 
+  // Esc puts away the ⋯ menu, Share, the problem list and then the pick
+  // (#564) before it is Close.
+  const putAway = (): boolean => {
+    if (!menu.hidden) {
+      closeMenu();
+      return true;
+    }
+    if (!share.hidden) {
+      share.hidden = true;
+      return true;
+    }
+    if (chip.isOpen()) {
+      chip.close();
+      return true;
+    }
+    if (context.selected() !== undefined) {
+      context.select(undefined);
+      return true;
+    }
+    return false;
+  };
   const { element, back } = screenBar({
-    back: { label: "close", onBack: close },
+    back: { label: "Close", onBack: close },
     title: [nameInput, professions],
     status: [budget, chip.element, unsaved],
     actions: [save, moreWrap],
+    putAway,
   });
   element.classList.add("editor-bar");
   layout.appendChild(element);
@@ -1081,29 +1084,10 @@ function mountCommandBar(
       // An invalid build cannot be saved (brief §23); the button says why.
       const firstBlocking = problems.find((problem) => problem.blocking);
       save.disabled = firstBlocking !== undefined;
-      save.title = firstBlocking?.text ?? "save this character";
+      save.title = firstBlocking?.text ?? "Save this character";
     },
     isOpen() {
       return asking?.isOpen() === true || !menu.hidden || !share.hidden || chip.isOpen();
-    },
-    escape() {
-      if (asking?.isOpen() === true) {
-        asking.dismiss();
-        return;
-      }
-      if (!menu.hidden) {
-        closeMenu();
-        return;
-      }
-      if (!share.hidden) {
-        share.hidden = true;
-        return;
-      }
-      if (chip.isOpen()) {
-        chip.close();
-        return;
-      }
-      close();
     },
     dispose() {
       document.removeEventListener("pointerdown", onPointerDown);
@@ -1446,7 +1430,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
   // it by picking from eight identical `<select>`s never matched how
   // players think about it.
   const section = h("div", "editor-skills");
-  section.appendChild(h("div", "editor-label", "skill bar"));
+  section.appendChild(h("div", "editor-label", "Skill bar"));
   section.appendChild(
     h("div", "editor-hint", "Click a slot, then a skill's Equip to put it there. Or drag."),
   );
@@ -1547,7 +1531,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
         cell.classList.toggle("is-elite", skill?.elite === true);
         cell.draggable = skill !== undefined;
         if (skill === undefined || description === undefined) {
-          cell.appendChild(h("span", "skill-slot-empty", "empty"));
+          cell.appendChild(h("span", "skill-slot-empty", "Empty"));
           return;
         }
         cell.appendChild(h("span", "skill-slot-name", skill.name));
@@ -1685,7 +1669,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   const search = document.createElement("input");
   search.className = "field-input skill-search";
   search.type = "search";
-  search.placeholder = "search names and text";
+  search.placeholder = "Search names and text";
   search.setAttribute("aria-label", "search skills");
   // The library's "Elite" toggle (#459): only elite skills listed.
   const eliteOnly = document.createElement("input");
@@ -2137,7 +2121,7 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
   const { current, commit } = context;
   const section = h("div", "editor-gear");
   section.dataset.cause = "equipment";
-  section.appendChild(h("div", "editor-label", "equipment"));
+  section.appendChild(h("div", "editor-label", "Equipment"));
   section.appendChild(
     h("div", "editor-hint", "Drag gear from the right, or click a piece to equip it."),
   );
@@ -2169,9 +2153,9 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
 
   // --- armor ----------------------------------------------------------
   const armorHeader = h("div", "editor-subheader");
-  armorHeader.appendChild(h("span", "editor-label", "armor"));
+  armorHeader.appendChild(h("span", "editor-label", "Armor"));
   armorHeader.appendChild(
-    button("clear upgrades", "editor-clear-armor", () => {
+    button("Clear upgrades", "editor-clear-armor", () => {
       commit(clearArmorUpgrades(current()));
     }),
   );
@@ -2298,7 +2282,7 @@ function statLines(character: StoredCharacter): HTMLElement[] {
     // Said out loud rather than left for the player to discover by
     // dying: an unmet requirement costs two thirds of the damage.
     lines.push(
-      h("div", "gear-warning", "requirement not met — this weapon deals a third of its damage"),
+      h("div", "gear-warning", "Requirement not met — this weapon deals a third of its damage"),
     );
   }
   for (const bonus of summary.runeBonuses) {

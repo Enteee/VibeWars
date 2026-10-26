@@ -14,7 +14,7 @@ import {
 
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 import { createLocalPeer } from "./local-peer.js";
-import type { MatchHost, PlannedSeats } from "./match-host.js";
+import { RECONNECT_WINDOW_SECONDS, type MatchHost, type PlannedSeats } from "./match-host.js";
 import { sanitizeName } from "./names.js";
 import { scopeTransport } from "./scoped-transport.js";
 import { sizeChecked, type Transport } from "./transport.js";
@@ -61,7 +61,7 @@ export interface LobbyHost {
 
 interface Member {
   readonly id: string;
-  readonly name: string;
+  name: string;
   team: 0 | 1 | null;
   ready: boolean;
 }
@@ -91,6 +91,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const { host: transport, local } = createLocalPeer(sizeChecked(options.transport));
   /** In the order they joined, which is the order they are listed in. */
   const members = new Map<string, Member>();
+  /**
+   * Members whose peer left during a match (#596), and when, on the
+   * lobby's clock: their seat is held, team and all, for the match's
+   * reconnect window or until the match ends, whichever is first.
+   */
+  const away = new Map<string, number>();
   const budget = new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, () => undefined);
   let phase: LobbyPhase = "waiting";
   let mapId = defaultMap;
@@ -206,7 +212,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   };
 
   transport.on("lobby-join", (data, from) => {
-    if (closed || !budget.take(from, nowMs()) || members.has(from)) {
+    if (closed || !budget.take(from, nowMs()) || (members.has(from) && !away.has(from))) {
       return;
     }
     // Checked first: a peer of another version is told so, rather than
@@ -217,6 +223,16 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
     const join = parsePeerLobbyJoin(data);
     if (join === undefined) {
+      return;
+    }
+    const returning = members.get(from);
+    if (returning !== undefined) {
+      // Back from a drop during the match (#596): the seat it held, on its
+      // team, to confirm again like everyone else when the match is over.
+      away.delete(from);
+      returning.name = sanitizeName(join.name, returning.name);
+      returning.ready = false;
+      broadcast();
       return;
     }
     if (members.size >= MAX_LOBBY_PLAYERS) {
@@ -245,6 +261,19 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
   });
 
+  /** Forget the away members `gone` picks; whether there were any. */
+  const dropAway = (gone: (leftAt: number) => boolean): boolean => {
+    let dropped = false;
+    for (const [peerId, leftAt] of away) {
+      if (gone(leftAt)) {
+        away.delete(peerId);
+        members.delete(peerId);
+        dropped = true;
+      }
+    }
+    return dropped;
+  };
+
   const host: LobbyHost = {
     local,
     advance(seconds) {
@@ -252,6 +281,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         return;
       }
       elapsed += seconds;
+      // Not back within the match's own window: its seat there is gone too.
+      if (dropAway((leftAt) => nowMs() - leftAt >= RECONNECT_WINDOW_SECONDS * 1000)) {
+        broadcast();
+      }
       if (match === undefined) {
         return;
       }
@@ -264,6 +297,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         void match.room.leave();
         match = undefined;
         phase = "waiting";
+        // Whoever is still away is not coming back to this lobby.
+        dropAway(() => true);
         for (const member of members.values()) {
           member.ready = false;
         }
@@ -292,11 +327,18 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       void host.close();
       return;
     }
-    // A seated player's seat in the match follows the match's own
-    // reconnect window; the lobby entry goes now.
-    if (!closed && members.delete(peerId)) {
-      broadcast();
+    if (closed || !members.has(peerId)) {
+      return;
     }
+    // During a match a drop may be a blip (#515, #596): the entry stays,
+    // still listed, until the peer is back, the window runs out or the
+    // match ends. Outside one, it goes now.
+    if (match !== undefined) {
+      away.set(peerId, nowMs());
+      return;
+    }
+    members.delete(peerId);
+    broadcast();
   });
 
   return host;

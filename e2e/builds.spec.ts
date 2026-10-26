@@ -59,7 +59,7 @@ test("Delete in the ⋯ menu always asks, and cancel keeps the character (#566)"
 }) => {
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Doomed");
-  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await page
     .locator(".roster-row", { hasText: "Doomed" })
     .getByRole("button", { name: "edit" })
@@ -67,13 +67,13 @@ test("Delete in the ⋯ menu always asks, and cancel keeps the character (#566)"
 
   const more = page.getByRole("button", { name: "more actions" });
   await more.click();
-  await page.getByRole("button", { name: "delete", exact: true }).click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
   await expect(page.getByText("Delete Doomed?")).toBeVisible();
   await page.getByRole("button", { name: "cancel" }).click();
   await expect(page.locator("input.editor-name")).toHaveValue("Doomed");
 
   await more.click();
-  await page.getByRole("button", { name: "delete", exact: true }).click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
   await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
   await expect(page.locator(".roster")).toBeVisible();
   await expect(page.locator(".roster-row", { hasText: "Doomed" })).toHaveCount(0);
@@ -87,7 +87,7 @@ test("the problems chip says what is wrong in a sentence and shows where (#566)"
   await name.fill("");
   const chip = page.locator(".problems-chip-toggle");
   await expect(chip).toHaveText("1 problem");
-  const save = page.getByRole("button", { name: "save", exact: true });
+  const save = page.getByRole("button", { name: "Save", exact: true });
   await expect(save).toBeDisabled();
   await expect(save).toHaveAttribute("title", "Give the character a name.");
 
@@ -111,7 +111,7 @@ test("a character can be created, named and saved", async ({ page }) => {
 
   // A fresh character has no attributes spent and an empty bar, which is
   // a legal build — so it must be saveable.
-  const save = page.getByRole("button", { name: "save", exact: true });
+  const save = page.getByRole("button", { name: "Save", exact: true });
   await expect(save).toBeEnabled();
   await save.click();
 
@@ -121,7 +121,7 @@ test("a character can be created, named and saved", async ({ page }) => {
 test("a saved character survives a page reload", async ({ page }) => {
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Persistent");
-  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".roster")).toContainText("Persistent");
 
   // The real assertion: it came back from IndexedDB, not from memory.
@@ -150,7 +150,7 @@ test("a character shown in the roster survives leaving the page at once, even on
   `);
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Slow Disk");
-  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".roster")).toContainText("Slow Disk");
 
   await page.goto("./");
@@ -194,7 +194,7 @@ async function saveCharacters(page: Page, names: readonly string[]): Promise<voi
   for (const name of names) {
     await newCharacter(page);
     await page.locator("input.editor-name").fill(name);
-    await page.getByRole("button", { name: "save", exact: true }).click();
+    await page.getByRole("button", { name: "Save", exact: true }).click();
     // The roster re-renders only once the save has committed. Without
     // this wait, the next newCharacter's page.goto unloads the page
     // mid-write and the character is lost.
@@ -212,7 +212,7 @@ test("a new team is stored only on Save, which stays on the editor (#573)", asyn
   await page.getByRole("button", { name: "new team" }).click();
 
   // Nothing stored yet: Back leaves at once and the list is still empty.
-  const save = page.getByRole("button", { name: "save", exact: true });
+  const save = page.getByRole("button", { name: "Save", exact: true });
   await expect(save).toBeDisabled();
   await expect(save).toHaveAttribute("title", "A team needs at least one member.");
   // Nothing stored to copy or delete, so neither can store a half-made team.
@@ -257,7 +257,7 @@ test("team edits stay on screen until Save; Back and Delete ask first (#573)", a
   const up = memberRows(page).nth(1).getByRole("button", { name: "move up" });
   await up.click();
   await expect(memberNames(page)).toHaveText(["Bravo", "Alpha"]);
-  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Saved");
 
   // Remove a member: unsaved, and Back asks.
@@ -337,7 +337,7 @@ test("team counters mark their cells; a cell finds its skill on the team (#575)"
         .locator(".skill-box-equip")
         .click();
     }
-    await page.getByRole("button", { name: "save", exact: true }).click();
+    await page.getByRole("button", { name: "Save", exact: true }).click();
     await expect(page.locator(".roster")).toContainText(name);
   }
   await page.getByRole("button", { name: "teams" }).click();
@@ -390,7 +390,7 @@ test("a member opens in the build editor and comes back to the unsaved team (#57
   await page.getByRole("button", { name: "Alpha", exact: true }).click();
   await expect(page.locator("input.editor-name")).toHaveValue("Alpha");
   await page.locator(".skill-box").first().locator(".skill-box-equip").click();
-  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
 
   // The team as it was left, still unsaved, with Alpha's new bar.
   await expect(page.getByLabel("team name")).toHaveValue("Trip");
@@ -401,7 +401,7 @@ test("a member opens in the build editor and comes back to the unsaved team (#57
   // Deleted from the build editor: the row is a missing character.
   await page.getByRole("button", { name: "Bravo", exact: true }).click();
   await page.getByRole("button", { name: "more actions" }).click();
-  await page.getByRole("button", { name: "delete", exact: true }).click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
   await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
   await expect(memberNames(page)).toHaveText(["(missing character)", "Alpha"]);
   await expect(page.getByLabel("team name")).toHaveValue("Trip");
@@ -427,7 +427,7 @@ test("⋯ Share copies the build as one line, and a paste on the editor imports 
   await page.locator("input.editor-name").fill("Shared Build");
 
   await page.getByRole("button", { name: "more actions" }).click();
-  await page.getByRole("button", { name: "share", exact: true }).click();
+  await page.getByRole("button", { name: "Share", exact: true }).click();
   const line = page.getByLabel("build to share");
   await expect(line).toBeFocused();
   const exported = await line.inputValue();
@@ -435,7 +435,7 @@ test("⋯ Share copies the build as one line, and a paste on the editor imports 
   expect(exported).toContain("Shared Build");
   expect(exported).not.toContain("\n");
 
-  await page.getByRole("button", { name: "copy", exact: true }).click();
+  await page.getByRole("button", { name: "Copy", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Copied");
   await expect(line).toBeHidden();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(exported);
@@ -476,8 +476,8 @@ test("Share keeps the line selected when the clipboard is refused (#572)", async
   });
 
   await page.getByRole("button", { name: "more actions" }).click();
-  await page.getByRole("button", { name: "share", exact: true }).click();
-  await page.getByRole("button", { name: "copy", exact: true }).click();
+  await page.getByRole("button", { name: "Share", exact: true }).click();
+  await page.getByRole("button", { name: "Copy", exact: true }).click();
 
   const line = page.getByLabel("build to share");
   await expect(line).toBeFocused();
@@ -498,7 +498,7 @@ test("a saved character can be chosen and is taken into a match", async ({ page 
   await chooseProfession(page, "primary", "elementalist");
   await pip(page.locator(".editor-attribute").first(), 1).click();
   await page.locator(".skill-box").first().locator(".skill-box-equip").click();
-  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
 
   // Saving returns to the entry screen, where the roster is. Clicking the
   // row is how a player chooses who to play.
@@ -526,7 +526,7 @@ test("in a match, an empty slot's key does nothing; the next key casts its own s
   await page
     .locator(".skill-box", { hasText: "Armor of Earth" })
     .dragTo(page.locator(".skill-slot").nth(2));
-  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await page.locator(".roster-row", { hasText: "Gap" }).click();
   await startSoloMatch(page);
   const energy = page.locator(".hud-bar-energy .hud-bar-label");
@@ -585,7 +585,7 @@ test("a second elite replaces the first on the bar, framed in gold, into the mat
   await expect(slots.nth(3)).toContainText("Broad Head Arrow");
   await expect(page.locator(".skill-slot.is-elite")).toHaveCount(1);
 
-  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await page.locator(".roster-row", { hasText: "Elite" }).click();
   await startSoloMatch(page);
   const hud = page.locator(".hud-skills .hud-skill");
@@ -608,7 +608,7 @@ test("in a match, Glyph of Lesser Energy shows Armor of Earth's discounted cost,
   await page
     .locator(".skill-box", { hasText: "Armor of Earth" })
     .dragTo(page.locator(".skill-slot").nth(1));
-  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await page.locator(".roster-row", { hasText: "Glyph" }).click();
   await startSoloMatch(page);
   const armor = page.locator(".hud-skills .hud-skill").nth(1).locator(".hud-skill-cost");
@@ -721,7 +721,7 @@ test("a skill can be dragged from the library onto a bar slot", async ({ page })
   await openElementalist(page);
 
   const slot3 = page.locator(".skill-slot").nth(2);
-  await expect(slot3).toContainText("empty");
+  await expect(slot3).toContainText("Empty");
 
   await page.locator(".skill-box", { hasText: "Fireball" }).dragTo(slot3);
 
@@ -752,7 +752,7 @@ test("a skill can be removed from the bar", async ({ page }) => {
 
   await page.locator(".skill-slot").nth(0).locator(".skill-slot-clear").click();
 
-  await expect(page.locator(".skill-slot").nth(0)).toContainText("empty");
+  await expect(page.locator(".skill-slot").nth(0)).toContainText("Empty");
 });
 
 test("the in-match skill bar is not draggable", async ({ page }) => {
@@ -984,7 +984,7 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
   await openGearLibrary(page);
   await equipFromLibrary(page, "Axe");
   await equipFromLibrary(page, "Survivor Insignia");
-  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".roster")).toContainText("Gear Keeper");
 
   // The real assertion: gear came back from IndexedDB, not from memory.

@@ -22,6 +22,7 @@ import {
 } from "./lobby-harness.test-support.js";
 import { canStart } from "./lobby-host.js";
 import { settle } from "./match-harness.test-support.js";
+import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { createMemoryNetwork } from "./memory-transport.js";
 import type { Transport } from "./transport.js";
 
@@ -399,6 +400,52 @@ describe("playing more than one match in a lobby", () => {
     expect(lobby.matches.map(({ plan }) => plan.matchId)).toEqual(["match-1", "match-2"]);
     const second = [await play(lobby.host, "Host"), await play(guest, "Guest")];
     expect(second.map((match) => match.selfSessionId)).toHaveLength(2);
+  });
+
+  /** The guest's peer drops off the host's room, and the host's off the guest's. */
+  async function drop(lobby: TestLobby, guest: Member): Promise<void> {
+    lobby.network.partition("host", guest.transport.selfId);
+    await settle();
+  }
+
+  it("keeps the team of a guest who drops during the match and comes back (#596)", async () => {
+    const { lobby, guest } = await startAMatch({ timeLimitSeconds: 15 });
+    await drop(lobby, guest);
+    // Still listed while away: the seat is held.
+    expect(playersOf(lobby.host)).toEqual([
+      { name: "Host", team: 0, ready: true },
+      { name: "Guest", team: 1, ready: true },
+    ]);
+    await lobby.step(10);
+    lobby.network.heal();
+    await settle();
+    await lobby.step(6);
+    for (const who of [lobby.host, guest]) {
+      expect(who.connection.getSnapshot().phase).toBe("waiting");
+      expect(playersOf(who)).toEqual([
+        { name: "Host", team: 0, ready: false },
+        { name: "Guest", team: 1, ready: false },
+      ]);
+    }
+  });
+
+  it("lets go of a guest who drops and does not come back, when the match ends (#596)", async () => {
+    const { lobby, guest } = await startAMatch({ timeLimitSeconds: 5 });
+    await drop(lobby, guest);
+    // A second past the limit, so the end has landed.
+    await lobby.step(6);
+    expect(lobby.host.connection.getSnapshot().phase).toBe("waiting");
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host"]);
+  });
+
+  it("lets go of a guest away for the reconnect window, though the match goes on (#596)", async () => {
+    const { lobby, guest } = await startAMatch();
+    await drop(lobby, guest);
+    await lobby.step(RECONNECT_WINDOW_SECONDS - 1);
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host", "Guest"]);
+    await lobby.step(1);
+    expect(lobby.host.connection.getSnapshot().phase).toBe("in-match");
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host"]);
   });
 });
 
