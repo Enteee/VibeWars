@@ -1529,8 +1529,9 @@ export class MatchSimulation {
    * A shot carrying an attack skill (#416) lands its bonus with the blow
    * and its riders after it, only on a hit: a caster who finished before
    * it arrived is not interrupted. Blocked, it lands the skill's
-   * `onBlocked` instead, which earns no adrenaline. With its attacker
-   * gone from the match, the blow lands and the riders do not.
+   * `onBlocked` instead, which earns no adrenaline; an `unblockable`
+   * skill (Wild Throw) rolls no block. With its attacker gone from the
+   * match, the blow lands and the riders do not.
    */
   #land(projectile: Projectile): void {
     if (projectile.obstructed) {
@@ -1559,7 +1560,10 @@ export class MatchSimulation {
     let blocked = false;
     if (distance(target.position, projectile.aimPoint) > reach) {
       events.push({ kind: "attack-dodged", targetId: target.id });
-    } else if (blocks(target.combatant, "projectile", this.#rng)) {
+    } else if (
+      skillHit?.skill.attack?.unblockable !== true &&
+      blocks(target.combatant, "projectile", this.#rng)
+    ) {
       blocked = true;
       events.push({ kind: "attack-blocked", targetId: target.id });
       events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
