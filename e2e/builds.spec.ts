@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { codeLabel } from "../apps/web/src/input/keymap.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
@@ -21,6 +21,11 @@ async function newCharacter(page: Page): Promise<void> {
   await expect(page.locator(".roster")).toBeVisible();
   await page.getByRole("button", { name: "new character" }).click();
   await expect(page.locator("input.editor-name")).toBeVisible();
+}
+
+/** An attribute row's pip for `rank` (#565): clicking it sets that rank. */
+function pip(row: Locator, rank: number): Locator {
+  return row.locator(`.attribute-pip[data-pip="${String(rank)}"]`);
 }
 
 test("a character can be created, named and saved", async ({ page }) => {
@@ -81,10 +86,11 @@ test("a character shown in the roster survives leaving the page at once, even on
 test("spending attribute points updates the remaining budget", async ({ page }) => {
   await newCharacter(page);
 
-  const budget = page.locator(".editor-points");
+  const budget = page.locator(".editor-points-text");
   const before = (await budget.textContent()) ?? "";
 
-  await page.locator(".editor-attribute button", { hasText: "+" }).first().click();
+  await pip(page.locator(".editor-attribute").first(), 1).click();
+  await page.mouse.move(0, 0);
 
   await expect(budget).not.toHaveText(before);
 });
@@ -92,21 +98,21 @@ test("spending attribute points updates the remaining budget", async ({ page }) 
 test("12/12/3 spends all 200 points, GW1's split (#470)", async ({ page }) => {
   await newCharacter(page);
 
-  const plus = (row: number) =>
-    page.locator(".editor-attribute").nth(row).locator("button", { hasText: "+" });
-  for (const [row, rank] of [
+  const row = (index: number) => page.locator(".editor-attribute").nth(index);
+  for (const [index, rank] of [
     [0, 12],
     [1, 12],
     [2, 3],
   ] as const) {
-    for (let step = 0; step < rank; step += 1) {
-      await plus(row).click();
-    }
+    await pip(row(index), rank).click();
   }
+  await page.mouse.move(0, 0);
 
-  await expect(page.locator(".editor-points")).toHaveText("0 attribute points remaining");
-  await expect(plus(2)).toBeDisabled();
-  await expect(plus(3)).toBeDisabled();
+  await expect(page.locator(".editor-points-text")).toHaveText("0 attribute points remaining");
+  await expect(pip(row(2), 4)).toHaveClass(/is-dim/);
+  await expect(pip(row(3), 1)).toHaveClass(/is-dim/);
+  // The budget bar is the 200 points, split three ways.
+  await expect(page.locator(".editor-budget-segment")).toHaveCount(3);
 });
 
 test("a team can be created and persists", async ({ page }) => {
@@ -178,7 +184,7 @@ test("a saved character can be chosen and is taken into a match", async ({ page 
   await page.locator("input.editor-name").fill("Pyro");
 
   await page.locator(".editor-row select").first().selectOption("elementalist");
-  await page.locator(".editor-attribute button", { hasText: "+" }).first().click();
+  await pip(page.locator(".editor-attribute").first(), 1).click();
   await page.locator(".skill-box").first().click();
   await page.getByRole("button", { name: "save", exact: true }).click();
 
@@ -428,9 +434,7 @@ test("hovering a skill shows a tooltip whose numbers follow the attribute", asyn
   // the description is generated from the effects at the character's
   // actual ranks, not a static string.
   const fireRow = page.locator(".editor-attribute", { hasText: "Fire Magic" });
-  for (let i = 0; i < 8; i += 1) {
-    await fireRow.getByRole("button", { name: "+" }).click();
-  }
+  await pip(fireRow, 8).click();
   await page.locator(".skill-box", { hasText: "Fireball" }).hover();
   await expect(tip).toBeVisible();
   const atRank = /Deals (\d+) damage/.exec(await tip.innerText())?.[1];
@@ -444,13 +448,11 @@ test("the primary attribute's row says what it does at its rank (#531)", async (
 
   const fastCasting = page.locator(".editor-attribute", { hasText: "Fast Casting" });
   await expect(fastCasting.locator(".editor-attribute-effect")).toHaveCount(0);
-  for (let i = 0; i < 11; i += 1) {
-    await fastCasting.getByRole("button", { name: "+" }).click();
-  }
+  await pip(fastCasting, 11).click();
   await expect(fastCasting.locator(".editor-attribute-effect")).toHaveText(
     "spells cast 40% faster",
   );
-  await fastCasting.getByRole("button", { name: "+" }).click();
+  await pip(fastCasting, 12).click();
   await expect(fastCasting.locator(".editor-attribute-effect")).toHaveText(
     "spells cast 43% faster",
   );
@@ -710,9 +712,7 @@ test("an unmet weapon requirement is called out before the match, not during", a
 
   // Train the attribute the hammer needs and the warning goes away.
   const hammerRow = page.locator(".editor-attribute").filter({ hasText: "Hammer Mastery" });
-  for (let i = 0; i < 9; i += 1) {
-    await hammerRow.getByRole("button", { name: "+" }).click();
-  }
+  await pip(hammerRow, 9).click();
   await expect(page.locator(".gear-warning")).toHaveCount(0);
 });
 
@@ -775,11 +775,10 @@ test("the skill library keeps its scroll through an equip, a rank, a profession 
   await expect(page.locator(`.skill-box[data-skill-id="${inView}"]`)).toHaveClass(/is-equipped/);
   expect(await libraryScroll(page)).toBe(top);
 
-  await page
-    .locator(".editor-attribute", { hasText: "Fire Magic" })
-    .getByRole("button", { name: "+" })
-    .click();
-  await expect(page.locator(".editor-attribute", { hasText: "Fire Magic" })).toContainText("1");
+  await pip(page.locator(".editor-attribute", { hasText: "Fire Magic" }), 1).click();
+  await expect(
+    page.locator(".editor-attribute", { hasText: "Fire Magic" }).locator(".editor-attribute-rank"),
+  ).toHaveText("1");
   expect(await libraryScroll(page)).toBe(top);
 
   // A new secondary reshuffles the groups around Fireball, which stays: the
@@ -804,22 +803,70 @@ test("the skill library keeps its scroll through an equip, a rank, a profession 
   expect(await libraryScroll(page)).toBe(gearTop);
 });
 
-test("a pressed control keeps the keyboard, so Tab goes on from it (#563)", async ({ page }) => {
+test("a clicked attribute row keeps the keyboard: arrows step it, Home zeroes it (#563, #565)", async ({
+  page,
+}) => {
   await openElementalist(page);
-  const fire = page.locator(".editor-attribute", { hasText: "Fire Magic" });
-  const plus = fire.getByRole("button", { name: "+" });
-  await plus.click();
-  await expect(fire).toContainText("1");
-  await expect(plus).toBeFocused();
-  // Space presses it again: it is the same button, not a rebuilt one.
-  await page.keyboard.press("Space");
-  await expect(fire.locator(".editor-attribute-rank")).toHaveText("2");
-  // Shift+Tab steps back to Fire Magic's own "−", enabled now: the
-  // keyboard goes on from where it was, not from the top of the page.
-  await page.keyboard.press("Shift+Tab");
-  await expect(fire.getByRole("button", { name: "−" })).toBeFocused();
-  await page.keyboard.press("Enter");
-  await expect(fire.locator(".editor-attribute-rank")).toHaveText("1");
+  const fire = page.getByRole("slider", { name: "Fire Magic" });
+  const rank = fire.locator(".editor-attribute-rank");
+  await pip(fire, 3).click();
+  await expect(rank).toHaveText("3");
+  // The same row, not a rebuilt one, so it still has the keyboard.
+  await expect(fire).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(rank).toHaveText("4");
+  await expect(fire).toHaveAttribute("aria-valuenow", "4");
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
+  await expect(rank).toHaveText("2");
+  await page.keyboard.press("Home");
+  await expect(rank).toHaveText("0");
+  // Tab goes on from it to the next attribute, not from the top of the page.
+  await page.keyboard.press("Tab");
+  await expect(fire.locator("xpath=following-sibling::*[1]")).toBeFocused();
+});
+
+test("a pip sets its rank, the top pip lowers by one, and the next rank is priced (#565)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  const strength = page.locator(".editor-attribute", { hasText: "Strength" });
+  const rank = strength.locator(".editor-attribute-rank");
+  await expect(strength.locator(".editor-attribute-next")).toHaveText("next: 1 pts");
+  await pip(strength, 5).click();
+  await expect(rank).toHaveText("5");
+  await expect(strength.locator(".editor-attribute-next")).toHaveText("next: 6 pts");
+  await pip(strength, 5).click();
+  await expect(rank).toHaveText("4");
+  await pip(strength, 2).click();
+  await expect(rank).toHaveText("2");
+});
+
+test("hovering a pip previews its cost; one the points cannot pay for is refused (#565)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  const row = (index: number) => page.locator(".editor-attribute").nth(index);
+  // 12 and 12 spend 194 of 200: 6 left.
+  await pip(row(0), 12).click();
+  await pip(row(1), 12).click();
+  const points = page.locator(".editor-points-text");
+
+  const third = row(2);
+  await pip(third, 3).hover();
+  await expect(points).toHaveText(/: costs 6, 0 left$/);
+  await expect(third.locator(".attribute-pip.is-preview")).toHaveCount(3);
+
+  await expect(pip(third, 4)).toHaveClass(/is-dim/);
+  await pip(third, 4).click();
+  await expect(third.locator(".editor-attribute-needs")).toHaveText("needs 4 more points");
+  await expect(third.locator(".editor-attribute-rank")).toHaveText("0");
+
+  // Any change clears the refusal.
+  await pip(third, 3).click();
+  await expect(third.locator(".editor-attribute-needs")).toHaveText("");
+  await page.mouse.move(0, 0);
+  await expect(points).toHaveText("0 attribute points remaining");
 });
 
 test("the library remembers which tab you were on while you build", async ({ page }) => {
@@ -840,8 +887,8 @@ test("the editor still works beside a live arena, which none of it recreates", a
   const original = await arena.elementHandle();
 
   const fireRow = page.locator(".editor-attribute", { hasText: "Fire Magic" });
-  await fireRow.getByRole("button", { name: "+" }).click();
-  await expect(fireRow).toContainText("1");
+  await pip(fireRow, 1).click();
+  await expect(fireRow.locator(".editor-attribute-rank")).toHaveText("1");
 
   await page.locator("input.skill-search").fill("fire");
   await expect(page.locator(".skill-library .skill-box")).toHaveCount(1);
