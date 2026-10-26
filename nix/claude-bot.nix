@@ -177,6 +177,7 @@ let
         (*" $controller "*) ;;
         (*)
           echo "claude-bot: the systemd user manager does not have the $controller controller delegated; the jails would be uncapped, so no jail starts." >&2
+          echo "claude-bot: as root, put Delegate=cpu cpuset io memory pids in a user@.service drop-in and restart the user manager; see docs/development/agent-company-host.md" >&2
           exit 1
           ;;
       esac
@@ -502,6 +503,7 @@ let
         if [ -n "$tokenFile" ]; then
           if [ ! -r "$tokenFile" ]; then
             echo "claude-bot: vibewars.telegram.managerTokenFile is set to $tokenFile, which is not readable" >&2
+            echo "claude-bot: write the manager bot's token into it, mode 600, before running claude-llc; see docs/development/agent-company-host.md" >&2
             exit 1
           fi
           TELEGRAM_MANAGER_TOKEN="$(tr -d '[:space:]' < "$tokenFile")"
@@ -833,7 +835,7 @@ let
           --ro-bind /etc /etc \
           --ro-bind /bin /bin \
           --ro-bind /usr /usr \
-          --ro-bind /run/current-system /run/current-system \
+          --ro-bind-try /run/current-system /run/current-system \
           --proc /proc \
           --dev /dev \
           --tmpfs /dev/shm \
