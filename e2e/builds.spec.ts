@@ -950,3 +950,133 @@ test("the arena survives the editor collapsing to one column", async ({ page }) 
   expect(await original.evaluate((node) => node.isConnected)).toBe(true);
   await expect(arena).toBeVisible();
 });
+
+/** Slot `slot`'s key, as the editor's bar and its Equip label it (#564). */
+const slotLabel = (slot: number): string => codeLabel(skillKey(slot));
+
+/** A Warrior/Elementalist with all eight slots filled, by clicking the first eight skills. */
+async function fullBar(page: Page): Promise<void> {
+  await newCharacter(page);
+  await page.locator(".editor-row select").nth(1).selectOption("elementalist");
+  for (let slot = 0; slot < 8; slot++) {
+    await page.locator(".skill-box:not(.is-equipped)").first().click();
+  }
+  await expect(page.locator(".skill-slot.is-empty")).toHaveCount(0);
+}
+
+/** The names of the bar's filled slots, in slot order. */
+async function barNames(page: Page): Promise<string[]> {
+  return page.locator(".skill-slot .skill-slot-name").allTextContents();
+}
+
+test("the bar's slots carry the keymap's keys, and a library skill says where it goes (#564)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  const slots = page.locator(".skill-slot");
+  await expect(slots.nth(0).locator(".skill-slot-index")).toHaveText(slotLabel(0));
+  await expect(slots.nth(7).locator(".skill-slot-index")).toHaveText(slotLabel(7));
+
+  const first = page.locator(".skill-box").first();
+  await expect(first.locator(".skill-box-equip")).toHaveText(`Equip → ${slotLabel(0)}`);
+  await first.click();
+  // On the bar now: where, and no Equip; a second click moves nothing.
+  await expect(first.locator(".skill-box-on")).toHaveText(`on ${slotLabel(0)}`);
+  await expect(first.locator(".skill-box-equip")).toBeHidden();
+  const before = await barNames(page);
+  await first.click();
+  expect(await barNames(page)).toEqual(before);
+  await expect(page.locator(".skill-box").nth(1).locator(".skill-box-equip")).toHaveText(
+    `Equip → ${slotLabel(1)}`,
+  );
+});
+
+test("a full bar with no slot picked equips nothing; a picked slot is replaced (#564)", async ({
+  page,
+}) => {
+  await fullBar(page);
+  const before = await barNames(page);
+  const spare = page.locator(".skill-box:not(.is-equipped)").first();
+  const spareName = (await spare.locator(".skill-box-name").textContent()) ?? "";
+  await expect(spare.locator(".skill-box-equip")).toHaveText("pick a slot");
+  await expect(spare.locator(".skill-box-equip")).toBeDisabled();
+  // Slot 1 used to be overwritten silently; now nothing happens.
+  await spare.click();
+  expect(await barNames(page)).toEqual(before);
+
+  const third = page.locator(".skill-slot").nth(2);
+  await third.click();
+  await expect(third).toHaveClass(/is-selected/);
+  await expect(spare.locator(".skill-box-equip")).toHaveText(`Equip → ${slotLabel(2)} (replace)`);
+  await spare.locator(".skill-box-equip").click();
+  await expect(third.locator(".skill-slot-name")).toHaveText(spareName);
+  expect((await barNames(page)).filter((_, slot) => slot !== 2)).toEqual(
+    before.filter((_, slot) => slot !== 2),
+  );
+  // The pick is spent.
+  await expect(page.locator(".skill-slot.is-selected")).toHaveCount(0);
+});
+
+test("a picked slot is let go by a second click or Esc (#564)", async ({ page }) => {
+  await newCharacter(page);
+  const slot = page.locator(".skill-slot").nth(4);
+  await slot.click();
+  await expect(slot).toHaveClass(/is-selected/);
+  await expect(page.locator(".skill-box").first().locator(".skill-box-equip")).toHaveText(
+    `Equip → ${slotLabel(4)}`,
+  );
+  await slot.click();
+  await expect(slot).not.toHaveClass(/is-selected/);
+
+  await slot.click();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".skill-slot.is-selected")).toHaveCount(0);
+  // That Esc only let go: the editor is still open, and asks nothing.
+  await expect(page.locator("input.editor-name")).toBeVisible();
+  await expect(page.locator(".inline-confirm")).toHaveCount(0);
+  await expect(page.locator(".skill-box").first().locator(".skill-box-equip")).toHaveText(
+    `Equip → ${slotLabel(0)}`,
+  );
+
+  // Another profession is another bar: the pick goes with it.
+  await slot.click();
+  await page.locator(".editor-row select").first().selectOption("elementalist");
+  await expect(page.locator(".skill-slot.is-selected")).toHaveCount(0);
+});
+
+test("a skill key over a library skill equips it to that key's slot, but not while typing (#564)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  const box = page.locator(".skill-box").nth(1);
+  const name = (await box.locator(".skill-box-name").textContent()) ?? "";
+  await box.hover();
+  await page.keyboard.press(skillKey(5));
+  await expect(page.locator(".skill-slot").nth(5).locator(".skill-slot-name")).toHaveText(name);
+
+  // Focused from the keyboard, with the pointer elsewhere, likewise.
+  const other = page.locator(".skill-box:not(.is-equipped)").first();
+  const otherName = (await other.locator(".skill-box-name").textContent()) ?? "";
+  await page.mouse.move(0, 0);
+  await other.focus();
+  await page.keyboard.press(skillKey(3));
+  await expect(page.locator(".skill-slot").nth(3).locator(".skill-slot-name")).toHaveText(
+    otherName,
+  );
+
+  // Typed into the search, the same key is a letter.
+  const search = page.locator(".skill-search");
+  await search.focus();
+  await box.hover();
+  await page.keyboard.press(skillKey(6));
+  await expect(page.locator(".skill-slot").nth(6)).toHaveClass(/is-empty/);
+
+  // While Close asks about the unsaved edits, the key equips nothing.
+  await search.fill("");
+  await page.getByRole("button", { name: "close" }).click();
+  await expect(page.getByText("Discard changes?")).toBeVisible();
+  await box.hover();
+  await page.keyboard.press(skillKey(6));
+  await expect(page.locator(".skill-slot").nth(6)).toHaveClass(/is-empty/);
+  await expect(page.getByText("Discard changes?")).toBeVisible();
+});

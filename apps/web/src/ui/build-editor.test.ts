@@ -15,6 +15,7 @@ import {
   decodeDragSource,
   editorProblems,
   encodeDragSource,
+  equipTarget,
   isUnsaved,
   newCharacter,
   remainingPoints,
@@ -302,6 +303,32 @@ describe("skill bar drag and drop", () => {
     const { character: after } = applySkillDrop(warrior(), { from: "slot", slot: 0 }, 1);
 
     expect(after.skillBar.slice(0, 2)).toEqual(["b", "a"]);
+  });
+});
+
+describe("equipTarget (#564)", () => {
+  const full = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
+  it("goes to the first empty slot when none is picked", () => {
+    expect(equipTarget(["a", null, "c", null, null, null, null, null], undefined)).toEqual({
+      slot: 1,
+      replaces: false,
+    });
+  });
+
+  it("has nowhere to go on a full bar with none picked: nothing is overwritten", () => {
+    expect(equipTarget(full, undefined)).toBeUndefined();
+  });
+
+  it("goes to the picked slot, replacing what is there", () => {
+    expect(equipTarget(full, 5)).toEqual({ slot: 5, replaces: true });
+  });
+
+  it("goes to a picked empty slot over an earlier empty one", () => {
+    expect(equipTarget([null, null, null, null, null, null, null, null], 6)).toEqual({
+      slot: 6,
+      replaces: false,
+    });
   });
 });
 

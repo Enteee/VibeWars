@@ -32,6 +32,15 @@ import {
   type SkillDescription,
 } from "@vibewars/game-core";
 
+import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
+import {
+  SKILL_ACTIONS,
+  actionForCode,
+  actionLabel,
+  codeLabel,
+  isShortcut,
+} from "../input/keymap.js";
+import { loadKeymap } from "../input/keymap-preference.js";
 import { NoWebGlError } from "../render/arena-viewport.js";
 import { exportBuild, importBuild } from "../storage/build-transfer.js";
 import { SKILL_BAR_SLOTS, equippableSkills, validateBuild } from "../storage/build-validation.js";
@@ -337,6 +346,23 @@ export function applySkillDrop(
     : { character: swapSkillSlots(character, source.slot, targetSlot), notice: undefined };
 }
 
+/**
+ * Where an equip from the library goes (#564): the picked slot, whatever
+ * is in it, else the first empty one. A full bar with none picked has no
+ * place for it: the player picks the slot to give up, nothing is
+ * overwritten silently.
+ */
+export function equipTarget(
+  skillBar: readonly (string | null)[],
+  selected: number | undefined,
+): { readonly slot: number; readonly replaces: boolean } | undefined {
+  if (selected !== undefined) {
+    return { slot: selected, replaces: (skillBar[selected] ?? null) !== null };
+  }
+  const empty = skillBar.indexOf(null);
+  return empty === -1 ? undefined : { slot: empty, replaces: false };
+}
+
 /** `value` as JSON with its keys sorted, so two equal builds compare equal. */
 function canonical(value: unknown): string {
   return JSON.stringify(value, (_key, inner: unknown) =>
@@ -496,7 +522,18 @@ interface EditorContext {
   readonly notice: () => string | undefined;
   /** One tooltip for the whole editor. */
   readonly tooltip: SkillTooltip;
+  /** The bar slot picked for the next equip (#564), if any. */
+  readonly selected: () => number | undefined;
+  /** Pick a bar slot, or none; every region shows it. */
+  readonly select: (slot: number | undefined) => void;
+  /** Equip `skillId` to `slot`, as `equip` does; the pick, used, is let go. */
+  readonly equipTo: (skillId: string, slot: number) => void;
+  /** A bar slot's key, from the player's keymap, as the arena's bar labels it. */
+  readonly slotLabel: (slot: number) => string;
 }
+
+/** Elements that take typing, where a skill key is a letter, not an equip. */
+const TAKES_TYPING = "input, textarea, select, [contenteditable]:not([contenteditable='false'])";
 
 /** A part of the editor, built once, that shows whatever character it is given. */
 interface Region {
@@ -554,13 +591,34 @@ export function mountBuildEditor(
   };
 
   let notice: string | undefined;
+  let selected: number | undefined;
+  // Read once per open, as the arena's bar does; labels by code until the
+  // browser says what the layout is.
+  const keymap = loadKeymap();
+  let keyLabel: KeyLabeller = codeLabel;
+  let disposed = false;
+  void loadLayoutLabeller().then((label) => {
+    if (label !== undefined && !disposed) {
+      keyLabel = label;
+      update();
+    }
+  });
+
   const commit = (next: StoredCharacter, said: string | undefined): void => {
+    // Another profession is another bar to build: the pick goes.
+    if (
+      next.primaryProfession !== character.primaryProfession ||
+      next.secondaryProfession !== character.secondaryProfession
+    ) {
+      selected = undefined;
+    }
     character = next;
     notice = said;
     tooltip.hide();
     update();
     training?.refocus();
   };
+
   const context: EditorContext = {
     current: () => character,
     commit: (next) => {
@@ -571,6 +629,20 @@ export function mountBuildEditor(
     },
     notice: () => notice,
     tooltip,
+    selected: () => selected,
+    select: (slot) => {
+      selected = slot;
+      update();
+    },
+    equipTo: (skillId, slot) => {
+      selected = undefined;
+      const change = equipSkill(character, slot, skillId);
+      commit(change.character, change.notice);
+    },
+    slotLabel: (slot) => {
+      const action = SKILL_ACTIONS[slot];
+      return action === undefined ? "" : actionLabel(keymap, action, keyLabel);
+    },
   };
 
   // Spans every column, the Training Ground's included (#566).
@@ -599,26 +671,54 @@ export function mountBuildEditor(
   );
   update();
 
-  // Esc is Close (#566), unless something on the page used it already:
-  // the arena cancels or lets go with it, a search field clears with it.
+  // Esc lets go of the pick (#564), else is Close (#566), unless something
+  // on the page used it already: the arena cancels or lets go with it, a
+  // search field clears with it. A skill key over a library skill, hovered
+  // or focused, equips it to that key's slot (#564). Not while typing, nor
+  // while the arena has the keyboard, nor while the bar asks something.
   const onKeyDown = (event: KeyboardEvent): void => {
+    if (event.defaultPrevented || event.repeat) {
+      return;
+    }
     const target = event.target;
+    if (event.key === "Escape") {
+      if (
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLInputElement && target.type === "search")
+      ) {
+        return;
+      }
+      event.preventDefault();
+      if (selected !== undefined && !bar.isOpen()) {
+        context.select(undefined);
+        return;
+      }
+      bar.escape();
+      return;
+    }
     if (
-      event.key !== "Escape" ||
-      event.defaultPrevented ||
-      event.repeat ||
-      target instanceof HTMLTextAreaElement ||
-      (target instanceof HTMLInputElement && target.type === "search")
+      isShortcut(event) ||
+      bar.isOpen() ||
+      (target instanceof Element && target.closest(`${TAKES_TYPING}, .training`) !== null)
     ) {
       return;
     }
+    const action = actionForCode(keymap, event.code);
+    const slot = action === undefined ? -1 : SKILL_ACTIONS.indexOf(action);
+    const focused = document.activeElement?.closest<HTMLElement>(".skill-box");
+    const box = focused ?? layout.querySelector<HTMLElement>(".skill-box:hover");
+    const skillId = box?.dataset.skillId;
+    if (slot < 0 || skillId === undefined) {
+      return;
+    }
     event.preventDefault();
-    bar.escape();
+    context.equipTo(skillId, slot);
   };
   document.addEventListener("keydown", onKeyDown);
 
   return {
     dispose() {
+      disposed = true;
       document.removeEventListener("keydown", onKeyDown);
       bar.dispose();
       tooltip.dispose();
@@ -630,6 +730,8 @@ export function mountBuildEditor(
 /* --- command bar ----------------------------------------------------------- */
 
 interface CommandBar extends Region {
+  /** Whether a confirmation, the ⋯ menu or the problems list is open. */
+  isOpen(): boolean;
   /** Esc: put away what is open, else Close. */
   escape(): void;
   dispose(): void;
@@ -786,6 +888,9 @@ function mountCommandBar(
       save.disabled = firstBlocking !== undefined;
       save.title = firstBlocking?.text ?? "save this character";
     },
+    isOpen() {
+      return asking?.isOpen() === true || !menu.hidden || chip.isOpen();
+    },
     escape() {
       if (asking?.isOpen() === true) {
         asking.dismiss();
@@ -934,7 +1039,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
   const section = h("div", "editor-skills");
   section.appendChild(h("div", "editor-label", "skill bar"));
   section.appendChild(
-    h("div", "editor-hint", "Drag skills from the right, or click one to equip it."),
+    h("div", "editor-hint", "Click a slot, then a skill to equip it there. Or drag."),
   );
   const grid = h("div", "skill-bar-grid");
   grid.dataset.cause = "bar";
@@ -951,6 +1056,19 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
   const create = (slot: number): HTMLElement => {
     const cell = h("div", "skill-slot");
     cell.dataset.slot = String(slot);
+    // Pick the slot the next equip goes to (#564); again lets go.
+    cell.tabIndex = 0;
+    cell.setAttribute("role", "button");
+    const toggle = (): void => {
+      context.select(context.selected() === slot ? undefined : slot);
+    };
+    cell.addEventListener("click", toggle);
+    cell.addEventListener("keydown", (event: KeyboardEvent) => {
+      if (event.target === cell && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        toggle();
+      }
+    });
     cell.dataset.cause = `slot-${String(slot)}`;
     cell.addEventListener("dragstart", (event: DragEvent) => {
       event.dataTransfer?.setData("text/plain", encodeDragSource({ from: "slot", slot }));
@@ -996,7 +1114,11 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
       const available = equippableSkills(character);
       const ranks = new Map(character.attributes.map((a) => [a.attributeId, a.rank]));
       const slots = character.skillBar.map((_, slot) => slot);
+      const selected = context.selected();
       syncList(grid, slots, String, create, (cell, slot) => {
+        const isSelected = selected === slot;
+        cell.classList.toggle("is-selected", isSelected);
+        cell.setAttribute("aria-pressed", String(isSelected));
         const skillId = character.skillBar[slot] ?? null;
         const skill = skillId === null ? undefined : available.find((s) => s.id === skillId);
         const description = skill === undefined ? undefined : describeSkill(skill, ranks);
@@ -1005,12 +1127,13 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
         } else {
           described.set(slot, description);
         }
-        const signature = skill === undefined ? "" : `${skill.id}|${description?.cost ?? ""}`;
+        const label = context.slotLabel(slot);
+        const signature = `${label}|${skill === undefined ? "" : `${skill.id}|${description?.cost ?? ""}`}`;
         if (built.get(slot) === signature) {
           return;
         }
         built.set(slot, signature);
-        cell.replaceChildren(h("span", "skill-slot-index", String(slot + 1)));
+        cell.replaceChildren(h("span", "skill-slot-index", label));
         cell.classList.toggle("is-empty", skill === undefined);
         cell.classList.toggle("is-elite", skill?.elite === true);
         cell.draggable = skill !== undefined;
@@ -1028,7 +1151,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
         clear.title = `Remove ${skill.name}`;
         clear.addEventListener("click", (event) => {
           // Without this the click also lands on the cell, which would
-          // immediately re-equip whatever the library had selected.
+          // pick the slot as it empties.
           event.stopPropagation();
           context.commit(setSkill(context.current(), slot, null));
         });
@@ -1199,14 +1322,38 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   const ranksOf = (character: StoredCharacter): Map<string, number> =>
     new Map(character.attributes.map((a) => [a.attributeId, a.rank]));
 
+  /**
+   * A click on a library skill: to the picked slot or the first empty one,
+   * as its Equip says. One already on the bar stays where it is, and a
+   * full bar with no pick takes nothing (#564).
+   */
+  const equipFromLibrary = (skill: Skill): void => {
+    const character = context.current();
+    const target = equipTarget(character.skillBar, context.selected());
+    if (target !== undefined && !character.skillBar.includes(skill.id)) {
+      context.equipTo(skill.id, target.slot);
+    }
+  };
+
   const createBox = (skill: Skill): HTMLElement => {
     const box = h("div", "skill-box");
     box.draggable = true;
+    // Focusable, so a skill key over it equips it to that slot (#564).
+    box.tabIndex = 0;
     box.dataset.skillId = skill.id;
     box.classList.toggle("is-elite", skill.elite);
     box.appendChild(h("span", "skill-box-name", skill.name));
     box.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
     box.appendChild(h("span", "skill-box-cost"));
+    const equip = button("", "skill-box-equip", () => {
+      equipFromLibrary(skill);
+    });
+    // The box's own click does the same; one equip, not two.
+    equip.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+    box.appendChild(equip);
+    box.appendChild(h("span", "skill-box-on"));
     box.addEventListener("dragstart", (event: DragEvent) => {
       event.dataTransfer?.setData(
         "text/plain",
@@ -1223,9 +1370,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     // gesture but a poor only option on a trackpad, and it gives
     // the behaviour something testable to assert against.
     box.addEventListener("click", () => {
-      const character = context.current();
-      const firstEmpty = character.skillBar.indexOf(null);
-      context.equip(equipSkill(character, firstEmpty === -1 ? 0 : firstEmpty, skill.id));
+      equipFromLibrary(skill);
     });
     return box;
   };
@@ -1241,7 +1386,11 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
 
   const render = (character: StoredCharacter): void => {
     const ranks = ranksOf(character);
-    const equipped = new Set(character.skillBar.filter((id): id is string => id !== null));
+    const target = equipTarget(character.skillBar, context.selected());
+    const equipText =
+      target === undefined
+        ? "pick a slot"
+        : `Equip → ${context.slotLabel(target.slot)}${target.replaces ? " (replace)" : ""}`;
     const equippable = equippableSkills(character);
     const matches = filterSkillsByName(
       eliteOnly.checked ? filterEliteSkills(equippable) : equippable,
@@ -1279,7 +1428,24 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
             (skill) => skill.id,
             createBox,
             (box, skill) => {
-              box.classList.toggle("is-equipped", equipped.has(skill.id));
+              const on = character.skillBar.indexOf(skill.id);
+              box.classList.toggle("is-equipped", on >= 0);
+              // On the bar: where, and no Equip. Else where an equip goes.
+              const equip = box.querySelector<HTMLButtonElement>(".skill-box-equip");
+              const onLabel = box.querySelector(".skill-box-on");
+              if (equip !== null) {
+                equip.hidden = on >= 0;
+                equip.disabled = target === undefined;
+                if (equip.textContent !== equipText) {
+                  equip.textContent = equipText;
+                }
+              }
+              if (onLabel !== null) {
+                const text = on >= 0 ? `on ${context.slotLabel(on)}` : "";
+                if (onLabel.textContent !== text) {
+                  onLabel.textContent = text;
+                }
+              }
               const cost = box.querySelector(".skill-box-cost");
               const text = describeSkill(skill, ranks).cost;
               if (cost !== null && cost.textContent !== text) {
