@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * `supervisor` — drains the company for a reboot (#21).
+ * `supervisor` — starts and stops employees (#383), and drains the company
+ * for a reboot (#21).
  *
  * It used to keep the agents working, too. Each pane ran the interactive
  * Claude TUI, which ends a turn and then waits at its prompt for input
@@ -10,7 +11,9 @@
  * agent runs one turn per process (#146, ADR-0027): a turn that ends exits,
  * and claude-llc-agent starts the next. There is nothing left to nudge.
  *
- * What remains is the reboot: wait for each running agent to run `company
+ * It reconciles `staff.json` with the tmux panes every sample: a hired
+ * employee gets a pane in its role's window, a fired one is stopped once it
+ * has wrapped up (reconcile.mjs decides, this does it). The other job is the reboot: wait for each running agent to run `company
  * ready` or be between turns, then for any `hub` request in flight, and
  * then start the restarter, detached, because nothing inside the tmux
  * session survives the session being killed. Everything it needs is in
@@ -25,9 +28,10 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 import { parseAlive } from "./hub-health.mjs";
 import { releaseLock, takeLock } from "./instance-lock.mjs";
+import { descendants, reconcile } from "./reconcile.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { betweenTurns, drainStep, parseReboot } from "./reboot.mjs";
-import { roleOf } from "./staff.mjs";
+import { parseStaff, withoutEmployees } from "./staff.mjs";
 
 const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
 
@@ -35,6 +39,7 @@ const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
 const ROOT = process.env.VIBEWARS_BOT_ROOT ?? "";
 const HUB = path.join(ROOT, "hub");
 const LOCK = path.join(HUB, "supervisor.lock");
+const STAFF = path.join(ROOT, "staff.json");
 /** A reboot hubd accepted (see hubd.mjs and reboot.mjs). */
 const REBOOT = path.join(ROOT, "reboot.json");
 /** The same record, once handed to the restarter. */
@@ -44,6 +49,9 @@ const RESTARTER = process.env.VIBEWARS_LLC_RESTART;
 
 /** How often to look at the reboot record and the agents. */
 const SAMPLE_MS = 5_000;
+
+/** How long a stopped pane's processes get to exit before they are killed. */
+const KILL_GRACE_MS = 15_000;
 
 /**
  * @param {string[]} args
@@ -55,12 +63,128 @@ function tmux(args) {
 }
 
 /**
- * @returns {string[]} the employees with a window in the session, each
- *   named by its employee id (#62)
+ * The panes of the employees' windows (a window is named for the role, a
+ * pane carries its employee in the `@employee` option).
+ *
+ * @returns {{ pane: string, employee: string, pid: number }[]}
  */
+function employeePanes() {
+  const listing = tmux([
+    "list-panes",
+    ...["-s", "-t", `=${SESSION}`],
+    ...["-F", "#{window_name} #{pane_id} #{pane_pid} #{@employee}"],
+  ]);
+  return listing.split("\n").flatMap((line) => {
+    const [window, pane, pid, employee = ""] = line.split(" ");
+    return window !== undefined && pane !== undefined && ROLES.includes(window)
+      ? [{ pane, pid: Number(pid), employee }]
+      : [];
+  });
+}
+
+/** @returns {string[]} the employees with a pane, by id (#62) */
 function runningEmployees() {
-  const windows = tmux(["list-windows", "-t", SESSION, "-F", "#{window_name}"]).split("\n");
-  return windows.filter((name) => ROLES.includes(roleOf(name) ?? ""));
+  return employeePanes().flatMap(({ employee }) => (employee === "" ? [] : [employee]));
+}
+
+/**
+ * Stop a pane and everything its agent started, the jail included: the
+ * processes get `KILL_GRACE_MS` to exit before they are killed.
+ *
+ * @param {{ pane: string, pid: number }} stopped
+ * @returns {Promise<void>}
+ */
+async function stopPane({ pane, pid }) {
+  const ps = spawnSync("ps", ["-e", "-o", "pid=,ppid="], { encoding: "utf8" });
+  const processes = descendants(ps.stdout, pid).filter((p) => p !== process.pid);
+  tmux(["kill-pane", "-t", pane]);
+  for (const signal of ["SIGTERM", "SIGKILL"]) {
+    for (const p of processes) {
+      try {
+        process.kill(p, signal);
+      } catch {
+        // Gone already.
+      }
+    }
+    if (signal === "SIGTERM") {
+      await sleep(KILL_GRACE_MS);
+    }
+  }
+}
+
+/**
+ * Take a stopped employee's runtime directories away. Its worktree and
+ * branch stay: they are the work.
+ *
+ * @param {string} employee
+ */
+function clearEmployee(employee) {
+  for (const dir of [
+    path.join(HUB, employee),
+    path.join(ROOT, "bus", employee),
+    path.join(ROOT, "agents", employee),
+  ]) {
+    try {
+      fs.rmSync(dir, { recursive: true, force: true });
+    } catch (error) {
+      console.error(`supervisor: could not remove ${dir}: ${String(error)}`);
+    }
+  }
+}
+
+/**
+ * Make the panes match `staff.json`. A stop waits out the kill grace, so
+ * the sample loop does not run another reconcile meanwhile.
+ *
+ * @param {Map<string, number>} started when each employee was last started
+ * @returns {Promise<void>}
+ */
+async function reconcilePanes(started) {
+  let staff;
+  try {
+    staff = parseStaff(fs.readFileSync(STAFF, "utf8"));
+  } catch (error) {
+    console.error(
+      `supervisor: staff.json: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return;
+  }
+  const panes = employeePanes();
+  const running = panes.flatMap(({ employee }) => (employee === "" ? [] : [employee]));
+  const plan = reconcile(staff, panes, {
+    now: Date.now(),
+    between: betweenTurns(ROOT, running),
+    rebooting: fs.existsSync(REBOOT) || fs.existsSync(REBOOTING),
+    started,
+  });
+
+  for (const employee of plan.start) {
+    started.set(employee, Date.now());
+    const result = spawnSync("claude-llc", ["start-employee", employee], { encoding: "utf8" });
+    console.error(
+      result.status === 0
+        ? `supervisor: started ${employee}`
+        : `supervisor: could not start ${employee}: ${result.stderr}`,
+    );
+  }
+  await Promise.all(
+    plan.kill.map(async ({ pane, employee }) => {
+      const found = panes.find((candidate) => candidate.pane === pane);
+      console.error(`supervisor: stopping ${employee}`);
+      await stopPane({ pane, pid: found?.pid ?? 0 });
+    }),
+  );
+  if (plan.forget.length > 0) {
+    // Read again: hubd may have recorded a change while the panes stopped.
+    const current = parseStaff(fs.readFileSync(STAFF, "utf8"));
+    const next = withoutEmployees(current, plan.forget);
+    fs.writeFileSync(`${STAFF}.part`, `${JSON.stringify(next, null, 2)}\n`);
+    fs.renameSync(`${STAFF}.part`, STAFF);
+    for (const employee of plan.forget) {
+      clearEmployee(employee);
+      started.delete(employee);
+    }
+  }
 }
 
 /**
@@ -133,8 +257,16 @@ async function main() {
 
   /** @type {{ requestedAt: number, drainedAt: number | null } | null} */
   let drain = null;
+  /** @type {Map<string, number>} */
+  const started = new Map();
 
   for (;;) {
+    try {
+      await reconcilePanes(started);
+    } catch (error) {
+      console.error(`supervisor: reconciling the panes failed: ${String(error)}`);
+    }
+
     // Vanishing mid-drain is an abort; a new record is a new drain.
     const reboot = parseReboot(readJson(REBOOT));
     if (reboot === null) {

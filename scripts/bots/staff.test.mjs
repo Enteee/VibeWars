@@ -11,6 +11,7 @@ import { ROLES } from "./hub-policy.mjs";
 import {
   COOLDOWN_MS,
   applyStaff,
+  markReady,
   nextEmployeeId,
   parseStaff,
   roleOf,
@@ -18,6 +19,7 @@ import {
   staffAllowed,
   staffReader,
   strangers,
+  withoutEmployees,
 } from "./staff.mjs";
 
 const STAFF = path.join(path.dirname(fileURLToPath(import.meta.url)), "staff.mjs");
@@ -426,5 +428,30 @@ describe("staffReader (#62)", () => {
     expect([...read().keys()]).toEqual(["manager", "qa-tester"]);
     expect(problems).toHaveLength(2);
     expect(problems[1]).toMatch(/; kept manager,qa-tester$/);
+  });
+});
+
+describe("markReady and withoutEmployees (#383)", () => {
+  const firing = applyStaff(
+    company(["qa-tester", "qa-tester@2"]),
+    fire("qa-tester@2"),
+    "qa-tester@2",
+    NOW,
+  );
+
+  it("stamps a firing employee once, and refuses one that is not being fired", () => {
+    const ready = markReady(firing, "qa-tester@2", NOW + 1);
+    expect(ready?.employees["qa-tester@2"]?.readyAt).toBe(NOW + 1);
+    expect(
+      markReady(ready ?? firing, "qa-tester@2", NOW + 2)?.employees["qa-tester@2"]?.readyAt,
+    ).toBe(NOW + 1);
+    expect(markReady(firing, "qa-tester", NOW)).toBeNull();
+    expect(markReady(firing, "nobody", NOW)).toBeNull();
+  });
+
+  it("drops the employees named and keeps the cooldown record", () => {
+    const left = withoutEmployees(firing, ["qa-tester@2"]);
+    expect(Object.keys(left.employees)).toEqual(["qa-tester"]);
+    expect(left.recent).toEqual(firing.recent);
   });
 });

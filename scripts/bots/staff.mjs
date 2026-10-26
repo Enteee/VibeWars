@@ -8,7 +8,8 @@
  * role has. The first employee of a role is the bare role name, "seat 1";
  * further ones are `<role>@<n>`.
  *
- * hubd is the only writer of `staff.json`. Every decision about it is here,
+ * hubd writes `staff.json`; the supervisor only takes out the employees it
+ * has stopped (#383). Every decision about it is here,
  * as a pure function; the CLI at the bottom is what `claude-llc up` runs to
  * seed the file on the first boot and to check it on every boot.
  *
@@ -309,6 +310,43 @@ export function applyStaff(staff, request, employee, now) {
     { id: employee, change: request.verb, at: now },
   ];
   return { employees, recent };
+}
+
+/**
+ * `staff` with a firing employee marked ready: it ran `company ready`, so
+ * the supervisor may stop it (#383).
+ *
+ * @param {Staff} staff
+ * @param {string} employee
+ * @param {number} now
+ * @returns {Staff | null} `null` if `employee` is not being fired
+ */
+export function markReady(staff, employee, now) {
+  const current = staff.employees[employee];
+  if (current?.state !== "firing") {
+    return null;
+  }
+  return {
+    ...staff,
+    employees: { ...staff.employees, [employee]: { ...current, readyAt: current.readyAt ?? now } },
+  };
+}
+
+/**
+ * `staff` without the employees in `gone`: the supervisor stopped them (#383).
+ * Their entries in `recent` stay, for the cooldowns.
+ *
+ * @param {Staff} staff
+ * @param {readonly string[]} gone
+ * @returns {Staff}
+ */
+export function withoutEmployees(staff, gone) {
+  return {
+    ...staff,
+    employees: Object.fromEntries(
+      Object.entries(staff.employees).filter(([id]) => !gone.includes(id)),
+    ),
+  };
 }
 
 /**
