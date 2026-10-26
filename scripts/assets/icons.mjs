@@ -32,6 +32,8 @@ const C = {
   hex: "#d2a8ff",
   enchantment: "#56d4dd",
   stance: "#f778ba",
+  preparation: "#e3b341",
+  glyph: "#c3e88d",
   warrior: "#e3b341",
   ranger: "#8fd36b",
   monk: "#9ecbff",
@@ -128,6 +130,10 @@ const skillType = {
   // Pentagon ring, point up: a posture you hold. Solid like the enchantment
   // ring, but five-sided, so the two never merge at 16 px.
   stance: () => `<path d="M12 3.5l8 6-3 10H7l-3-10z" ${stroke(C.stance, 3)}/>`,
+  // Triangle ring, point up: your attacks are readied (#525).
+  preparation: () => `<path d="M12 3.5L21 20H3z" ${stroke(C.preparation, 3)}/>`,
+  // Triangle ring, point down: your next spells are readied (#526).
+  glyph: () => `<path d="M12 20.5L21 4H3z" ${stroke(C.glyph, 3)}/>`,
   // Plain square: a skill with no other type.
   skill: () => `<rect x="6" y="6" width="12" height="12" rx="1" fill="${C.ink}"/>`,
 };
@@ -135,12 +141,13 @@ const skillType = {
 // ---------------------------------------------------------------------------
 // Statuses: the markers under an actor in the arena. The plate gives the
 // category by colour *and* outline (condition = circle, hex = diamond,
-// enchantment = rounded square, stance = pentagon, shout = hexagon, skill
-// effect = wide capsule), and the glyph gives the status.
+// enchantment = rounded square, stance = pentagon, preparation = triangle
+// point up, glyph = triangle point down, shout = hexagon, skill effect =
+// wide capsule), and the glyph gives the status.
 // ---------------------------------------------------------------------------
 
 /** @typedef {(colour: string) => string} Glyph */
-/** @typedef {"condition" | "hex" | "enchantment" | "stance" | "shout" | "skill-effect"} Category */
+/** @typedef {"condition" | "hex" | "enchantment" | "stance" | "preparation" | "glyph" | "shout" | "skill-effect"} Category */
 
 /** @type {Record<Category, (glyph: Glyph) => string>} */
 const plates = {
@@ -151,6 +158,12 @@ const plates = {
   hex: (glyph) => `<path d="M12 0.5L23.5 12 12 23.5 0.5 12z" fill="${C.hex}"/>` + glyph(C.plate),
   enchantment: (glyph) =>
     `<rect x="1" y="1" width="22" height="22" rx="5" fill="${C.enchantment}"/>` + glyph(C.plate),
+  preparation: (glyph) =>
+    `<path d="M12 1L23.5 22H0.5z" fill="${C.preparation}" stroke="${C.preparation}" stroke-width="1" stroke-linejoin="round"/>` +
+    glyph(C.plate),
+  glyph: (glyph) =>
+    `<path d="M12 23L23.5 2H0.5z" fill="${C.glyph}" stroke="${C.glyph}" stroke-width="1" stroke-linejoin="round"/>` +
+    glyph(C.plate),
   shout: (glyph) =>
     `<path d="M6.5 2h11l5.5 10-5.5 10h-11L1 12z" fill="${C.ink}"/>` + glyph(C.plate),
   "skill-effect": (glyph) =>
@@ -213,6 +226,16 @@ const status = {
     (c) =>
       `<path d="M20 14l-7-5v10z" fill="${c}"/>` +
       `<path d="M5 11h5M5 17h5M3.5 14h7" ${stroke(c, 2)}/>`,
+  ],
+  // Preparation: one drop, your attacks poison (#525).
+  "apply-poison": [
+    "preparation",
+    (c) => `<path d="M12 8.5c-2 3-3 4.6-3 6.2a3 3 0 0 0 6 0c0-1.6-1-3.2-3-6.2z" fill="${c}"/>`,
+  ],
+  // Glyph: a bolt, your next spells cost less energy (#526).
+  "glyph-of-lesser-energy": [
+    "glyph",
+    (c) => `<path d="M13.5 4.5L8.5 11h3.5l-1.5 5 5-6.5H12z" fill="${c}"/>`,
   ],
   // Enchantment: a small shield.
   "armor-boost": [

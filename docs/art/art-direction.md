@@ -50,6 +50,7 @@ the code and `scripts/assets/icons.mjs` copy them.
 | `enchantment` | `#56d4dd` | Enchantment markers                      |
 | `stance`      | `#f778ba` | Stance markers                           |
 | `preparation` | `#e3b341` | Preparation markers                      |
+| `glyph`       | `#c3e88d` | Glyph markers                            |
 
 ### HUD bars
 
@@ -114,6 +115,7 @@ so the silhouette identifies the profession and the colour only supports it.
 | Enchantment  | Rounded-square plate, glyph inside                    |
 | Stance       | Pentagon plate, point up, glyph inside                |
 | Preparation  | Triangle plate, point up, glyph inside                |
+| Glyph        | Triangle plate, point down, glyph inside              |
 | Shout        | `ink` hexagon plate, glyph inside                     |
 | Skill effect | `ink-dim` wide capsule plate, glyph inside            |
 | Area flash   | Caster's team colour ring at the area's true radius   |
@@ -139,6 +141,14 @@ sits near `target` yellow, but a plate is never a ring round an actor.
 | Preparation status | Glyph                                        |
 | ------------------ | -------------------------------------------- |
 | `apply-poison`     | One drop: your attacks poison (Apply Poison) |
+
+The glyph triangle (lime, point down) is the preparation's turned over:
+one readies your attacks, the other your next spells. Its lime sits near
+`heal` green, but a plate is never a bar.
+
+| Glyph status             | Glyph                                     |
+| ------------------------ | ----------------------------------------- |
+| `glyph-of-lesser-energy` | A bolt: your next spells cost less energy |
 
 ### Area flash
 
@@ -417,7 +427,8 @@ closes). Ink, never team colour: an icon in a menu names a thing, not a side.
 
 The corner badge on a skill slot. Ink on the slot, except the two that leave a
 marker on someone, which carry that marker's colour. A stance marks you, so
-it carries the stance colour too, and a preparation its amber.
+it carries the stance colour too, a preparation its amber and a glyph its
+lime.
 
 | Type        | Badge                     |
 | ----------- | ------------------------- |
@@ -427,6 +438,7 @@ it carries the stance colour too, and a preparation its amber.
 | Hex         | Broken purple ring        |
 | Stance      | Pink pentagon ring        |
 | Preparation | Amber triangle ring       |
+| Glyph       | Lime triangle ring, down  |
 | Signet      | Ring with a seal on top   |
 | Shout       | Mouth and two sound waves |
 | Skill       | Square                    |
