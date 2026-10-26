@@ -38,6 +38,7 @@ function player(index: number): WirePlayer {
     castTotal: 0,
     swingElapsed: 0,
     swingTotal: 1.33,
+    knockdownRemaining: 0,
     statuses: Array.from({ length: MAX_WIRE_STATUSES }, (_, i) => i),
   };
 }

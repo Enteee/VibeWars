@@ -414,7 +414,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ),
   [
     "snapshot with a player missing knockdownRemaining (#545)",
-    parseWireSnapshot,
+    parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, knockdownRemaining: undefined }] },
   ],
   [
