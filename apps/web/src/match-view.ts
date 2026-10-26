@@ -125,6 +125,9 @@ export function toArenaSnapshot(
         health: player.health,
         maxHealth: player.maxHealth,
         dead: player.dead,
+        // From the snapshot, not the event, so a dropped event or a late
+        // joiner still draws it right, and it stands up the moment it is 0.
+        knockedDown: player.knockdownRemaining > 0,
         castProgress:
           // The server's total, not the skill's activation time: dazed
           // doubles a cast, and the bar must fill over the real one.

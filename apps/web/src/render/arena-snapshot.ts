@@ -31,6 +31,8 @@ export interface RenderableActor {
   readonly health: number;
   readonly maxHealth: number;
   readonly dead: boolean;
+  /** Lying down from a knockdown (#545): drawn flattened, the weapon dropped beside it. */
+  readonly knockedDown: boolean;
   /** Fraction of the current cast still remaining, or `undefined`. */
   readonly castProgress: number | undefined;
   readonly statuses: readonly string[];

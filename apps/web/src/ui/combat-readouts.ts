@@ -440,6 +440,9 @@ export function floatingCueFor(
     case "attack-unreachable":
       // No way round the walls; the attack has ended (#211).
       return { text: "can't reach", tone: "neutral", critical: false };
+    case "knocked-down":
+      // Once, as it lands; the lying pose says it for as long as it lasts (#545).
+      return { text: "Knocked down", tone: "neutral", critical: false };
     case "death":
       return { text: "defeated", tone: "damage", critical: false };
     default:

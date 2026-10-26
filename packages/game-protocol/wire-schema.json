@@ -36,6 +36,7 @@
       { "name": "castingSkillId", "type": "string" },
       { "name": "castRemaining", "type": "number" },
       { "name": "castTotal", "type": "number" },
+      { "name": "knockdownRemaining", "type": "number" },
       { "name": "statuses", "type": { "array": "string" } }
     ],
     "ProjectileState": [
@@ -2069,6 +2070,7 @@
         { "name": "facing", "optional": false, "type": "number" },
         { "name": "health", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
+        { "name": "knockdownRemaining", "optional": false, "type": "number" },
         { "name": "maxEnergy", "optional": false, "type": "number" },
         { "name": "maxHealth", "optional": false, "type": "number" },
         { "name": "name", "optional": false, "type": "string" },
@@ -2189,6 +2191,7 @@
                 { "name": "facing", "optional": false, "type": "number" },
                 { "name": "health", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "string" },
+                { "name": "knockdownRemaining", "optional": false, "type": "number" },
                 { "name": "maxEnergy", "optional": false, "type": "number" },
                 { "name": "maxHealth", "optional": false, "type": "number" },
                 { "name": "name", "optional": false, "type": "string" },

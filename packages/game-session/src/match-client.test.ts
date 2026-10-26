@@ -256,6 +256,7 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
     castingSkillId: "castingSkillId",
     castRemaining: "castRemaining",
     castTotal: "castTotal",
+    knockdownRemaining: "knockdownRemaining",
     statuses: "statuses",
   } as const satisfies Record<keyof WirePlayer, keyof PlayerSnapshot>;
 
@@ -323,6 +324,7 @@ const WIRE_PLAYER: WirePlayer = {
   castingSkillId: null,
   castRemaining: 0,
   castTotal: 0,
+  knockdownRemaining: 0,
   statuses: [],
 };
 

@@ -204,6 +204,8 @@ export interface WirePlayer {
   readonly castRemaining: number;
   /** The current cast's whole length, dazed included; 0 when not casting. */
   readonly castTotal: number;
+  /** Seconds left lying down from a knockdown (#468); 0 standing. */
+  readonly knockdownRemaining: number;
   /**
    * Each status as its index in the sorted status-id table (#632), which
    * `wire-schema.json` carries, so a build with another table is refused
@@ -650,7 +652,8 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     typeof raw.dead !== "boolean" ||
     !isNullableString(raw.castingSkillId) ||
     !isNumber(raw.castRemaining) ||
-    !isNumber(raw.castTotal)
+    !isNumber(raw.castTotal) ||
+    !isNumber(raw.knockdownRemaining)
   ) {
     return undefined;
   }
@@ -681,6 +684,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         castingSkillId: raw.castingSkillId,
         castRemaining: raw.castRemaining,
         castTotal: raw.castTotal,
+        knockdownRemaining: raw.knockdownRemaining,
         statuses,
       };
 }

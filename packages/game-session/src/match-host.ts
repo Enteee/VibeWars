@@ -494,6 +494,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       castingSkillId: cast?.skillId ?? null,
       castRemaining: cast?.remainingSeconds ?? 0,
       castTotal: cast?.totalSeconds ?? 0,
+      knockdownRemaining: round(combatant.knockdownRemaining, 2),
       statuses: wireStatuses(combatant.statuses.active).map((status) => statusWireIndex(status.id)),
     };
   };

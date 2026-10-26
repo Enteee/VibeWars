@@ -110,6 +110,7 @@ function toPlayerSnapshot(
     castingSkillId: activeCast?.skillId,
     castRemaining: activeCast?.remainingSeconds ?? 0,
     castTotal: activeCast?.totalSeconds ?? 0,
+    knockdownRemaining: combatant.knockdownRemaining,
     statuses: wireStatuses(combatant.statuses.active).map((status) => status.id),
   };
 }

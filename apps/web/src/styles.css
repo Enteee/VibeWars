@@ -1276,6 +1276,34 @@ body {
   pointer-events: none;
 }
 
+/* Knocked down (#545): the whole bar greys out, and the time left drains
+   from right to left across it as one fill, the cast fill's shade. Lit
+   again the moment the body rises. Information, so it moves under reduced
+   motion too. */
+.hud-skills.is-knocked-down,
+.training-skills.is-knocked-down {
+  position: relative;
+}
+
+.hud-skills.is-knocked-down > *,
+.training-skills.is-knocked-down > * {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+
+.hud-skills.is-knocked-down::after,
+.training-skills.is-knocked-down::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    var(--cast-fill-shade) calc(var(--knockdown-fill, 0) * 100%),
+    transparent 0
+  );
+  pointer-events: none;
+}
+
 /* Out of reach of the target (#485): a shape, not only a colour. The cost
    is struck through and a `↔` follows it; the Training Ground row has no
    cost, so the glyph follows the name. A hint, not a gate. */

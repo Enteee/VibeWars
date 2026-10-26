@@ -63,7 +63,14 @@ import {
 import { describeRefusal, MESSAGE_SECONDS } from "./hud.js";
 import { skillBadgeHtml } from "./icons.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
-import { castFill, flashSlot, outOfRange, paintCastFill, slotFlashes } from "./skill-slot-state.js";
+import {
+  castFill,
+  flashSlot,
+  outOfRange,
+  paintCastFill,
+  paintKnockdown,
+  slotFlashes,
+} from "./skill-slot-state.js";
 import { createSlotTooltips } from "./slot-tooltip.js";
 import {
   armedHint,
@@ -408,6 +415,8 @@ export function createTrainingPanel(): TrainingPanel {
     const target = match.players.find((player) => player.sessionId === self.targetSessionId);
     const far = outOfRange(slots, self, target, session?.wallSegments ?? []);
     slotTips.casting(fill?.slot);
+    // Greyed while you lie knocked down, as on the match HUD (#545).
+    paintKnockdown(skills, self.knockdownRemaining);
     skillButtons.forEach((button, index) => {
       const slot = slots[index] ?? null;
       if (slot === null) {

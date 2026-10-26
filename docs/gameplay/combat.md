@@ -125,6 +125,11 @@ skills and Space while down are refused, not saved for rising; press
 Space again to attack once you are up. A movement key held through the
 knockdown walks you off the moment you stand.
 
+You can see it: a knocked-down body is drawn lying flat along its
+facing, its weapon dropped beside it, and "Knocked down" floats over it
+as it lands. Your own skill bar greys out while you are down, with the
+time left draining across it, and lights up the moment you rise.
+
 A knockdown on someone already down does nothing; the instant they
 rise, the next one lands. It is not an interrupt, and it is not a status
 effect, so nothing that removes conditions or enchantments stands you

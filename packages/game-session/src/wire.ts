@@ -304,6 +304,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     castingSkillId: absent(player.castingSkillId),
     castRemaining: player.castRemaining,
     castTotal: player.castTotal,
+    knockdownRemaining: player.knockdownRemaining,
     statuses,
   };
 }

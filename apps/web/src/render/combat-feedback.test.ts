@@ -35,6 +35,7 @@ function player(sessionId: string): PlayerSnapshot {
     castingSkillId: undefined,
     castRemaining: 0,
     castTotal: 0,
+    knockdownRemaining: 0,
     statuses: [],
   };
 }
@@ -88,6 +89,12 @@ describe("showCombatFeedback", () => {
 
   it("floats a blinded attack's miss over its target", () => {
     expect(floated([{ kind: "attack-missed", targetId: "them" }])).toEqual(["miss"]);
+  });
+
+  it("floats 'Knocked down' once over whoever went down (#545)", () => {
+    expect(floated([{ kind: "knocked-down", targetId: "them", durationSeconds: 4 }])).toEqual([
+      "Knocked down",
+    ]);
   });
 
   it("floats a dodged and an obstructed shot as words", () => {

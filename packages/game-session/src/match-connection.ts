@@ -56,6 +56,8 @@ export interface PlayerSnapshot {
   readonly castRemaining: number;
   /** The current cast's whole length, dazed included; 0 when not casting. */
   readonly castTotal: number;
+  /** Seconds left lying down from a knockdown (#468); 0 standing. Drawn from this, never from the event. */
+  readonly knockdownRemaining: number;
   readonly statuses: readonly string[];
 }
 

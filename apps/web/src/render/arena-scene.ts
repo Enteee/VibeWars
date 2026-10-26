@@ -48,6 +48,7 @@ import {
   walkMarkerTicks,
   type WalkMarker,
 } from "./walk-marker.js";
+import { lyingPose } from "./lying-pose.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
 import type {
   ArenaSnapshot,
@@ -367,18 +368,54 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
+   * A knocked-down body (#545): the disc flattened along its facing, edged
+   * as a standing one is, with the weapon mark dropped beside it. The
+   * off-hand is not drawn: one dropped thing reads, two clutter.
+   */
+  private drawLyingBody(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
+    const { x, y } = actor.position;
+    const pose = lyingPose(x, y, actor.radius, actor.facing);
+    const outline = (points: readonly { readonly x: number; readonly y: number }[]) => {
+      const [first, ...rest] = points;
+      g.beginPath();
+      if (first !== undefined) {
+        g.moveTo(first.x, first.y);
+        for (const point of rest) {
+          g.lineTo(point.x, point.y);
+        }
+      }
+      g.closePath();
+    };
+    g.fillStyle(teamColour(actor.team), 1);
+    outline(pose.body);
+    g.fillPath();
+    g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+    g.strokePath();
+    if (actor.team === "self") {
+      g.lineStyle(2, SELF_RIM, 1);
+      outline(lyingPose(x, y, actor.radius - 2, actor.facing).body);
+      g.strokePath();
+    }
+    this.drawWeaponMark(g, actor, pose.weapon);
+  }
+
+  /**
    * The weapon mark (#188, #418): a 4 px `edge` casing, then a 2 px `ink` core,
    * so the line reads on either team's colour. The casing also outlines the
    * filled shapes, which the core then fills. Bow strings are one extra
    * pass, thinner: a 3 px casing under a 1 px core.
    */
-  private drawWeaponMark(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
-    const { x, y } = actor.position;
+  private drawWeaponMark(
+    g: Phaser.GameObjects.Graphics,
+    actor: RenderableActor,
+    // In the hands, unless it was dropped (#545).
+    at = { ...actor.position, r: actor.radius, facing: actor.facing },
+  ): void {
     const { strokes, fills, strings } = weaponMarkLayout(
-      x,
-      y,
-      actor.radius,
-      actor.facing,
+      at.x,
+      at.y,
+      at.r,
+      at.facing,
       actor.weaponId,
     );
     if (strokes.length === 0 && fills.length === 0) {
@@ -542,21 +579,25 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
 
-    g.fillStyle(teamColour(actor.team), 1);
-    g.fillCircle(x, y, actor.radius);
-    // Centred half its width in, so the edge stays inside the collision
-    // radius (#166) and only touches the self rim inside it.
-    g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
-    g.strokeCircle(x, y, actor.radius - BODY_EDGE_WIDTH / 2);
+    if (actor.knockedDown) {
+      this.drawLyingBody(g, actor);
+    } else {
+      g.fillStyle(teamColour(actor.team), 1);
+      g.fillCircle(x, y, actor.radius);
+      // Centred half its width in, so the edge stays inside the collision
+      // radius (#166) and only touches the self rim inside it.
+      g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+      g.strokeCircle(x, y, actor.radius - BODY_EDGE_WIDTH / 2);
 
-    if (actor.team === "self") {
-      g.lineStyle(2, SELF_RIM, 1);
-      g.strokeCircle(x, y, actor.radius - 2);
+      if (actor.team === "self") {
+        g.lineStyle(2, SELF_RIM, 1);
+        g.strokeCircle(x, y, actor.radius - 2);
+      }
+
+      // Off-hand, then weapon mark, then target ring: the order #275 gives.
+      this.drawOffhandMark(g, actor);
+      this.drawWeaponMark(g, actor);
     }
-
-    // Off-hand, then weapon mark, then target ring: the order #275 gives.
-    this.drawOffhandMark(g, actor);
-    this.drawWeaponMark(g, actor);
 
     if (actor.id === this.snapshot.targetId) {
       g.lineStyle(2, TARGET_RING, 1);

@@ -97,6 +97,7 @@ function player(index: number): WirePlayer {
     castingSkillId: SKILL_ID,
     castRemaining: FLOAT,
     castTotal: FLOAT,
+    knockdownRemaining: FLOAT,
     statuses: WIRE_STATUSES,
   };
 }

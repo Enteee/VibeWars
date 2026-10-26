@@ -910,3 +910,34 @@ test("(32) the casting slot fills as the cast goes, hovering it shows its toolti
   await expect(slot).not.toHaveClass(/is-casting/, { timeout: 10_000 });
   expect(await fill()).toBe(0);
 });
+
+test("(34) Backbreaker on the melee dummy knocks it down, as the log says (#545)", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  // A new character is a warrior; Backbreaker needs a hammer.
+  await page.getByRole("button", { name: "gear", exact: true }).click();
+  await page.locator(".gear-box").filter({ hasText: "Hammer" }).first().click();
+  await expect(page.locator(".gear-slot").first()).toContainText("Hammer");
+  await page.getByRole("button", { name: "skills", exact: true }).click();
+  await page.locator(".skill-box", { hasText: "Backbreaker" }).click();
+  const canvas = page.locator(".training canvas");
+  await page.locator("select.training-scenario").selectOption("weapon-dps");
+  await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
+  await takeControl(page);
+
+  // The melee dummy, at (136, 210), in reach from spawn.
+  const dummy = (await trainingView(page, canvas)).onPage({ x: 136, y: 210 });
+  await page.mouse.dblclick(dummy.x, dummy.y, { button: "right" });
+  // Backbreaker costs 9 adrenaline, one strike a blow: about 16 s of
+  // swinging, in game time, which runs slower than wall time under load (#327).
+  await expect(page.locator(".training-adrenaline")).toContainText(/adrenaline (9|1\d)/, {
+    timeout: 40_000,
+  });
+  await page.keyboard.press(skillKey(0));
+  await expect(page.locator(".training-log")).toContainText(
+    /Backbreaker \(.+\) knocks down Melee dummy \(60 armor\) \(4 s\)/,
+  );
+});
