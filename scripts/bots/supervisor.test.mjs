@@ -17,6 +17,9 @@ import { startEmployee } from "./start-employee.mjs";
 import { supervise } from "./supervisor.mjs";
 
 const HOLDOFF_MS = 1500;
+const SAMPLE_MS = 100;
+// The stub stamps its own exec time, a little after the supervisor stamps the start it holds off from.
+const MARGIN_MS = 2 * SAMPLE_MS;
 const SESSION = `vibewars-llc-test-${String(process.pid)}`;
 
 /** @type {{ dir: string, root: string, cwd: string, run: () => void, stop: () => Promise<void> } | null} */
@@ -147,7 +150,7 @@ beforeEach(() => {
         session: SESSION,
         tmux: "tmux",
         cwd,
-        sampleMs: 100,
+        sampleMs: SAMPLE_MS,
         killGraceMs: 300,
         holdoffMs: HOLDOFF_MS,
         restarter: undefined,
@@ -305,8 +308,8 @@ describe("the supervisor against a real tmux server (#722)", () => {
     // It crashes at once after each restart, so the starts keep coming.
     await until(() => starts("qa-tester").length === 3, "two restarts");
     const [first = 0, second = 0, third = 0] = starts("qa-tester");
-    expect(second - first).toBeGreaterThanOrEqual(HOLDOFF_MS);
-    expect(third - second).toBeGreaterThanOrEqual(HOLDOFF_MS);
+    expect(second - first).toBeGreaterThanOrEqual(HOLDOFF_MS - MARGIN_MS);
+    expect(third - second).toBeGreaterThanOrEqual(HOLDOFF_MS - MARGIN_MS);
   });
 
   it("kills a pane for nobody and leaves one still being set up", async () => {
