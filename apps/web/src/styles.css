@@ -557,6 +557,90 @@ body {
 .editor-attribute-rank {
   min-width: 2ch;
   text-align: center;
+  white-space: nowrap;
+}
+
+/*
+ * Each row's colour, shared with its segment of the budget bar (#565). A
+ * grid, so every row's pips line up under the one above.
+ */
+.editor-attribute {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 3ch 10ch;
+  column-gap: 0.5rem;
+  border-left: 3px solid var(--attribute-colour, var(--line));
+}
+
+.editor-attribute:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.attribute-pips {
+  display: flex;
+  gap: 2px;
+}
+
+.attribute-pip {
+  width: 0.4rem;
+  height: 0.8rem;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.attribute-pip.is-on {
+  background: var(--attribute-colour, var(--accent));
+}
+
+.attribute-pip.is-dim {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.attribute-pip.is-preview {
+  border-color: var(--ink);
+}
+
+.attribute-pip.is-preview:not(.is-on) {
+  background: var(--cast-fill-shade);
+}
+
+.attribute-pip.is-lost {
+  opacity: 0.5;
+}
+
+.editor-attribute-bonus {
+  color: var(--accent);
+}
+
+.editor-attribute-next,
+.editor-attribute-needs {
+  color: var(--ink-dim);
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.editor-attribute-needs {
+  grid-column: 1 / -1;
+  justify-self: end;
+  color: var(--damage);
+}
+
+.editor-attribute-needs:empty {
+  display: none;
+}
+
+.attribute-budget {
+  display: flex;
+  height: 0.5rem;
+  margin-top: 0.25rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.attribute-budget-segment {
+  height: 100%;
 }
 
 .editor-slot-index {
@@ -1753,6 +1837,13 @@ body {
   background: rgb(89 194 255 / 12%);
 }
 
+/* The slot the next equip goes to (#564). An outline, so it reads on an
+   empty dashed slot and a filled one alike. */
+.skill-slot.is-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .skill-slot-index {
   color: var(--accent);
   font-size: 0.7rem;
@@ -1893,6 +1984,37 @@ body {
 
 .skill-box-name {
   font-size: 0.82rem;
+}
+
+/* Says where a click equips the skill (#564): "Equip → 6", or why not. */
+.skill-box-equip {
+  align-self: flex-start;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.skill-box-equip:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.skill-box-equip:disabled {
+  color: var(--ink-dim);
+  cursor: default;
+}
+
+.skill-box-on {
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+}
+
+.skill-box-on:empty {
+  display: none;
 }
 
 .skill-library-empty {

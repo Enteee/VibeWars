@@ -29,7 +29,7 @@ test("the editor says the Training Ground needs WebGL, and keeps saying it", asy
   const notice = page.locator(".editor-layout .training .arena-notice");
   await expect(notice).toHaveText(NO_WEBGL_NOTICE);
   // An edit re-renders the editor; the notice must survive it.
-  await page.locator(".editor-attribute button", { hasText: "+" }).first().click();
+  await page.locator(".editor-attribute .attribute-pip").first().click();
   await expect(notice).toHaveText(NO_WEBGL_NOTICE);
   await expect(page.locator(".training-stage")).toHaveCount(0);
 });

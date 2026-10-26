@@ -4,6 +4,7 @@ import {
   CHANNELS,
   MAX_WIRE_COMBATS,
   MAX_WIRE_EVENTS,
+  MAX_SNAPSHOT_PARTS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_RADIUS,
   MAX_WIRE_RANK,
@@ -27,7 +28,7 @@ import {
   parseWireCombatBatch,
   parseWireEnded,
   parseWireSkillBar,
-  parseWireSnapshot,
+  parseWireSnapshotPart,
   parsePeerLobbyJoin,
   parseWireLobbyCommand,
   parseWireLobbyNote,
@@ -43,7 +44,7 @@ import type {
   WireEnded,
   WirePlayer,
   WireSkillBar,
-  WireSnapshot,
+  WireSnapshotPart,
   PeerLobbyJoin,
   WireLobbyState,
 } from "./p2p.js";
@@ -123,13 +124,15 @@ const player: WirePlayer = {
   statuses: [3],
 };
 
-const snapshot: WireSnapshot = {
+const snapshot: WireSnapshotPart = {
   tick: 42,
   elapsedSeconds: 2.1,
   score: [1, 0],
   phase: "active",
   winningTeam: null,
   endReason: null,
+  part: 0,
+  parts: 1,
   players: [player, { ...player, id: "peer-2", team: 1, targetId: "peer-1", statuses: [] }],
   projectiles: [
     {
@@ -264,7 +267,8 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["rejoin-proof", parsePeerRejoinProof, proof],
   ["welcome", parsePeerWelcome, welcome],
   ["refuse", parsePeerRefuse, refuse],
-  ["snapshot", parseWireSnapshot, snapshot],
+  ["snapshot", parseWireSnapshotPart, snapshot],
+  ["last of three snapshot parts", parseWireSnapshotPart, { ...snapshot, part: 2, parts: 3 }],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
   ["ended", parseWireEnded, ended],
@@ -291,7 +295,7 @@ const long = "x".repeat(MAX_WIRE_STRING + 1);
 const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["not an object", parsePeerHello, "hello"],
   ["an array", parsePeerHello, [hello]],
-  ["null", parseWireSnapshot, null],
+  ["null", parseWireSnapshotPart, null],
   ["hello without a name", parsePeerHello, { ...hello, name: undefined }],
   ["hello with a numeric version", parsePeerHello, { ...hello, protocolVersion: 2 }],
   ["bye with a field", parsePeerBye, { reason: "x" }],
@@ -339,41 +343,51 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parsePeerRefuse,
     { ...refuse, message: "x".repeat(MAX_WIRE_TEXT + 1) },
   ],
-  ["snapshot with a negative tick", parseWireSnapshot, { ...snapshot, tick: -1 }],
-  ["snapshot with a fractional tick", parseWireSnapshot, { ...snapshot, tick: 1.5 }],
-  ["snapshot with one score", parseWireSnapshot, { ...snapshot, score: [1] }],
-  ["snapshot with three scores", parseWireSnapshot, { ...snapshot, score: [1, 0, 0] }],
-  ["snapshot with an unknown phase", parseWireSnapshot, { ...snapshot, phase: "paused" }],
-  ["snapshot with team 2 winning", parseWireSnapshot, { ...snapshot, winningTeam: 2 }],
-  ["snapshot ended by host-left", parseWireSnapshot, { ...snapshot, endReason: "host-left" }],
+  ["snapshot without parts (#662)", parseWireSnapshotPart, { ...snapshot, parts: undefined }],
+  ["snapshot in zero parts", parseWireSnapshotPart, { ...snapshot, parts: 0 }],
+  [
+    "snapshot in too many parts",
+    parseWireSnapshotPart,
+    { ...snapshot, part: 0, parts: MAX_SNAPSHOT_PARTS + 1 },
+  ],
+  ["snapshot part past its parts", parseWireSnapshotPart, { ...snapshot, part: 1, parts: 1 }],
+  ["snapshot with a negative part", parseWireSnapshotPart, { ...snapshot, part: -1 }],
+  ["snapshot with a fractional part", parseWireSnapshotPart, { ...snapshot, part: 0.5, parts: 2 }],
+  ["snapshot with a negative tick", parseWireSnapshotPart, { ...snapshot, tick: -1 }],
+  ["snapshot with a fractional tick", parseWireSnapshotPart, { ...snapshot, tick: 1.5 }],
+  ["snapshot with one score", parseWireSnapshotPart, { ...snapshot, score: [1] }],
+  ["snapshot with three scores", parseWireSnapshotPart, { ...snapshot, score: [1, 0, 0] }],
+  ["snapshot with an unknown phase", parseWireSnapshotPart, { ...snapshot, phase: "paused" }],
+  ["snapshot with team 2 winning", parseWireSnapshotPart, { ...snapshot, winningTeam: 2 }],
+  ["snapshot ended by host-left", parseWireSnapshotPart, { ...snapshot, endReason: "host-left" }],
   [
     "snapshot with too many players",
-    parseWireSnapshot,
+    parseWireSnapshotPart,
     { ...snapshot, players: Array.from({ length: MAX_LOBBY_PLAYERS + 1 }, () => player) },
   ],
   [
     "snapshot with a player on team 2",
-    parseWireSnapshot,
+    parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, team: 2 }] },
   ],
   [
     "snapshot with an infinite health",
-    parseWireSnapshot,
+    parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, health: Infinity }] },
   ],
   [
     "snapshot with an absent target",
-    parseWireSnapshot,
+    parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, targetId: undefined }] },
   ],
   [
     "snapshot with a string for dead",
-    parseWireSnapshot,
+    parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, dead: "no" }] },
   ],
   [
     "snapshot with too many statuses",
-    parseWireSnapshot,
+    parseWireSnapshotPart,
     {
       ...snapshot,
       players: [{ ...player, statuses: Array.from({ length: MAX_WIRE_STATUSES + 1 }, () => 0) }],
@@ -382,36 +396,36 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ...[-1, 1.5, "crippled", MAX_WIRE_STATUS_INDEX + 1].map(
     (index): [string, (value: unknown) => unknown, unknown] => [
       `snapshot with status index ${String(index)}`,
-      parseWireSnapshot,
+      parseWireSnapshotPart,
       { ...snapshot, players: [{ ...player, statuses: [index] }] },
     ],
   ),
   [
     "snapshot with a player missing a field",
-    parseWireSnapshot,
+    parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, castTotal: undefined }] },
   ],
   ...(["swingElapsed", "swingTotal"] as const).map(
     (field): [string, (value: unknown) => unknown, unknown] => [
       `snapshot with a player without ${field} (#560)`,
-      parseWireSnapshot,
+      parseWireSnapshotPart,
       { ...snapshot, players: [{ ...player, [field]: undefined }] },
     ],
   ),
   [
     "snapshot with a player missing knockdownRemaining (#545)",
-    parseWireSnapshot,
+    parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, knockdownRemaining: undefined }] },
   ],
   [
     "snapshot with a string for walking",
-    parseWireSnapshot,
+    parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, walking: "yes" }] },
   ],
-  ["snapshot without projectiles", parseWireSnapshot, { ...snapshot, projectiles: undefined }],
+  ["snapshot without projectiles", parseWireSnapshotPart, { ...snapshot, projectiles: undefined }],
   [
     "snapshot with too many projectiles",
-    parseWireSnapshot,
+    parseWireSnapshotPart,
     {
       ...snapshot,
       projectiles: Array.from({ length: MAX_WIRE_PROJECTILES + 1 }, () => snapshot.projectiles[0]),
@@ -419,17 +433,17 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   [
     "snapshot with a projectile that never lands",
-    parseWireSnapshot,
+    parseWireSnapshotPart,
     { ...snapshot, projectiles: [{ ...snapshot.projectiles[0], flightSeconds: 0 }] },
   ],
   [
     "snapshot with a projectile whose spell is not a string",
-    parseWireSnapshot,
+    parseWireSnapshotPart,
     { ...snapshot, projectiles: [{ ...snapshot.projectiles[0], skillId: 7 }] },
   ],
   [
     "snapshot with a projectile that does not say whether it carries a spell",
-    parseWireSnapshot,
+    parseWireSnapshotPart,
     { ...snapshot, projectiles: [{ ...snapshot.projectiles[0], skillId: undefined }] },
   ],
   ["combat that is one entry, not a batch", parseWireCombatBatch, combat],
@@ -611,10 +625,12 @@ describe("the P2P validators (#82)", () => {
 
   it("ignore unknown fields, and drop them", () => {
     expect(parseWireEnded({ ...ended, cheat: true })).toEqual(ended);
-    expect(parseWireSnapshot({ ...snapshot, players: [{ ...player, godMode: true }] })).toEqual({
-      ...snapshot,
-      players: [player],
-    });
+    expect(parseWireSnapshotPart({ ...snapshot, players: [{ ...player, godMode: true }] })).toEqual(
+      {
+        ...snapshot,
+        players: [player],
+      },
+    );
   });
 
   it("drop a token from a hello's rejoin: a rejoin is proven, never told (#593)", () => {

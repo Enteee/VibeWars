@@ -11,18 +11,24 @@ import { SKILL_BAR_SLOTS, validateBuild } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import {
   applySkillDrop,
+  budgetSegments,
   canRaise,
   decodeDragSource,
   editorProblems,
   encodeDragSource,
+  equipTarget,
   isUnsaved,
   newCharacter,
+  nextRankCost,
+  pipTarget,
+  rankChange,
   remainingPoints,
   setProfessions,
   setRank,
   equipSkill,
   setSkill,
   swapSkillSlots,
+  trySetRank,
 } from "./build-editor.js";
 import { setWeapon } from "./gear-editor.js";
 
@@ -106,6 +112,73 @@ describe("canRaise", () => {
     character = setRank(character, "warrior.swordsmanship", 10);
     character = setRank(character, "warrior.tactics", 8);
     expect(remainingPoints(character)).toBe(200 - (97 + 61 + 37));
+  });
+});
+
+describe("rank pips (#565)", () => {
+  /** 12 Strength and 12 Swordsmanship: 194 of 200 points, 6 left. */
+  const nearlySpent = (): StoredCharacter =>
+    setRank(setRank(newCharacter("c1"), "warrior.strength", 12), "warrior.swordsmanship", 12);
+
+  it("sets the rank of the pip clicked, up or down", () => {
+    const character = setRank(newCharacter("c1"), "warrior.tactics", 5);
+    expect(pipTarget(character, "warrior.tactics", 9)).toBe(9);
+    expect(pipTarget(character, "warrior.tactics", 2)).toBe(2);
+    const raised = trySetRank(character, "warrior.tactics", 9);
+    expect("character" in raised && raised.character.attributes).toEqual([
+      { attributeId: "warrior.tactics", rank: 9 },
+    ]);
+  });
+
+  it("lowers by one when the top pip is clicked, down to zero", () => {
+    const character = setRank(newCharacter("c1"), "warrior.tactics", 5);
+    expect(pipTarget(character, "warrior.tactics", 5)).toBe(4);
+    const one = setRank(newCharacter("c1"), "warrior.tactics", 1);
+    expect(pipTarget(one, "warrior.tactics", 1)).toBe(0);
+  });
+
+  it("refuses a pip the points cannot pay for, saying how many more it needs", () => {
+    const character = nearlySpent();
+    // Tactics 4 costs 10; 6 are left.
+    expect(trySetRank(character, "warrior.tactics", 4)).toEqual({ needs: 4 });
+    const three = trySetRank(character, "warrior.tactics", 3);
+    expect("character" in three && remainingPoints(three.character)).toBe(0);
+  });
+
+  it("always lowers, however little is left", () => {
+    const lowered = trySetRank(nearlySpent(), "warrior.strength", 11);
+    expect("character" in lowered && remainingPoints(lowered.character)).toBe(26);
+  });
+
+  it("previews a pip's cost and what it would leave, a refund as a negative cost", () => {
+    const character = nearlySpent();
+    expect(rankChange(character, "warrior.tactics", 2)).toEqual({ cost: 3, left: 3 });
+    expect(rankChange(character, "warrior.tactics", 4)).toEqual({ cost: 10, left: -4 });
+    expect(rankChange(character, "warrior.strength", 10)).toEqual({ cost: -36, left: 42 });
+  });
+
+  it("prices the next rank, and has none at the cap", () => {
+    const character = setRank(newCharacter("c1"), "warrior.tactics", 11);
+    expect(nextRankCost(character, "warrior.tactics")).toBe(20);
+    expect(nextRankCost(character, "warrior.strength")).toBe(1);
+    expect(nextRankCost(nearlySpent(), "warrior.strength")).toBeUndefined();
+  });
+
+  it("splits the spent points into one budget segment per ranked attribute, in row order", () => {
+    let character = setProfessions(newCharacter("c1"), "warrior", "monk");
+    character = setRank(character, "monk.healing-prayers", 8);
+    character = setRank(character, "warrior.strength", 3);
+    character = setRank(character, "warrior.tactics", 10);
+    const segments = budgetSegments(character);
+    const rows = accessibleAttributeIds("warrior", "monk");
+    expect(segments.map((segment) => segment.attributeId)).toEqual(
+      rows.filter((id) =>
+        ["monk.healing-prayers", "warrior.strength", "warrior.tactics"].includes(id),
+      ),
+    );
+    expect(segments.reduce((sum, segment) => sum + segment.points, 0)).toBe(
+      MINIMAL_GW_INSPIRED_PVP_V1.attributes.attributePointBudget - remainingPoints(character),
+    );
   });
 });
 
@@ -302,6 +375,32 @@ describe("skill bar drag and drop", () => {
     const { character: after } = applySkillDrop(warrior(), { from: "slot", slot: 0 }, 1);
 
     expect(after.skillBar.slice(0, 2)).toEqual(["b", "a"]);
+  });
+});
+
+describe("equipTarget (#564)", () => {
+  const full = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
+  it("goes to the first empty slot when none is picked", () => {
+    expect(equipTarget(["a", null, "c", null, null, null, null, null], undefined)).toEqual({
+      slot: 1,
+      replaces: false,
+    });
+  });
+
+  it("has nowhere to go on a full bar with none picked: nothing is overwritten", () => {
+    expect(equipTarget(full, undefined)).toBeUndefined();
+  });
+
+  it("goes to the picked slot, replacing what is there", () => {
+    expect(equipTarget(full, 5)).toEqual({ slot: 5, replaces: true });
+  });
+
+  it("goes to a picked empty slot over an earlier empty one", () => {
+    expect(equipTarget([null, null, null, null, null, null, null, null], 6)).toEqual({
+      slot: 6,
+      replaces: false,
+    });
   });
 });
 
