@@ -30,6 +30,9 @@ const SUITE_SCRIPTS = new Set(["ci", "ci:full", "test", "test:e2e"]);
 /** Run before the command they wrap; their own arguments are skipped. */
 const WRAPPERS = new Set(["timeout", "nice", "env", "command", "exec", "time", "nohup"]);
 
+/** Shell reserved words that can stand before a command: `for …; do pnpm run ci; done`. */
+const KEYWORDS = new Set(["do", "then", "else", "elif", "while", "until", "if", "!", "{"]);
+
 /** pnpm and npm options that take a value, so the value is not the command. */
 const PACKAGE_VALUE_OPTIONS = new Set(["-C", "--dir", "--filter", "-F", "--prefix"]);
 
@@ -99,7 +102,7 @@ function unwrap(words) {
     if (first === undefined) {
       return rest;
     }
-    if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(first)) {
+    if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(first) || KEYWORDS.has(first)) {
       rest = tail;
     } else if (WRAPPERS.has(path.basename(first))) {
       // A wrapper's options, and timeout's duration, before the command.

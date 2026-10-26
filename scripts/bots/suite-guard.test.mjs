@@ -8,11 +8,12 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import { ROLES } from "./hub-policy.mjs";
 import { DENY_REASON, suiteGuard } from "./suite-guard.mjs";
 
 const GUARD = path.join(path.dirname(fileURLToPath(import.meta.url)), "suite-guard.mjs");
 
-describe("suiteGuard for a developer", () => {
+describe("suiteGuard for an implementer", () => {
   it.each([
     // The command that started it, on 2026-10-26.
     "timeout 590 npx playwright test --reporter=line --workers=4",
@@ -35,8 +36,15 @@ describe("suiteGuard for a developer", () => {
     "git fetch -q && timeout 300 pnpm run ci > /tmp/ci.log 2>&1; echo rc=$?",
     "(cd apps/web && npx vitest run)",
     "echo $(pnpm run ci)",
+    "for i in 1 2; do pnpm run ci; done",
+    "for i in $(seq 10); do npx playwright test; done",
+    "if true; then pnpm test; fi",
+    "if false; then :; else npx vitest run; fi",
+    "while pnpm test; do :; done",
+    "{ pnpm run ci; }",
+    "! pnpm run test:e2e",
   ])("denies %j", (command) => {
-    expect(suiteGuard(command, "developer-1")).toBe("deny");
+    expect(suiteGuard(command, "asset-designer")).toBe("deny");
   });
 
   it.each([
@@ -54,12 +62,14 @@ describe("suiteGuard for a developer", () => {
     "cat > /tmp/pr.md <<'EOF'\nRan `pnpm run ci` locally.\nnpx playwright test\nEOF\nhub pr create --body-file /tmp/pr.md",
     "grep -rn 'test:e2e' .claude/bots",
     "node scripts/p2p-smoke.mjs",
+    "for f in a.test.ts b.test.ts; do npx vitest run $f; done",
+    "if [ -f package.json ]; then pnpm run lint; fi",
   ])("allows %j", (command) => {
-    expect(suiteGuard(command, "developer-1")).toBe("allow");
+    expect(suiteGuard(command, "asset-designer")).toBe("allow");
   });
 
   it("holds for every role but qa-tester and cicd-engineer", () => {
-    for (const role of ["developer-2", "asset-designer", "manager", "lead-dev", "perf-sec-qa"]) {
+    for (const role of ROLES.filter((r) => r !== "qa-tester" && r !== "cicd-engineer")) {
       expect(suiteGuard("pnpm run ci", role), role).toBe("deny");
       expect(suiteGuard("npx vitest run apps/web/src/x.test.ts", role), role).toBe("allow");
     }
@@ -120,7 +130,7 @@ describe("the hook CLI", () => {
   const bash = (command) => JSON.stringify({ tool_name: "Bash", tool_input: { command } });
 
   it("denies with the documented hook output, exit 0", () => {
-    const result = hook(bash("pnpm run ci"), "developer-1");
+    const result = hook(bash("pnpm run ci"), "asset-designer");
     expect(result.code).toBe(0);
     expect(JSON.parse(result.stdout)).toEqual({
       hookSpecificOutput: {
@@ -132,11 +142,15 @@ describe("the hook CLI", () => {
   });
 
   it("allows with no output", () => {
-    expect(hook(bash("pnpm run lint"), "developer-1")).toEqual({ code: 0, stdout: "", stderr: "" });
+    expect(hook(bash("pnpm run lint"), "asset-designer")).toEqual({
+      code: 0,
+      stdout: "",
+      stderr: "",
+    });
   });
 
   it("allows what it cannot parse", () => {
-    expect(hook("not json", "developer-1")).toEqual({ code: 0, stdout: "", stderr: "" });
+    expect(hook("not json", "asset-designer")).toEqual({ code: 0, stdout: "", stderr: "" });
   });
 
   it("allows an unknown role, and says so on stderr", () => {
