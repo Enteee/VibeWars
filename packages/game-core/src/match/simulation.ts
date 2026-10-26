@@ -1858,9 +1858,9 @@ export class MatchSimulation {
       const triggers = soulReapingTrigger(combatant.soulReapingTriggers, this.#elapsedSeconds);
       if (triggers !== undefined) {
         combatant.soulReapingTriggers = triggers;
-        const applied = Math.min(rank, combatant.maxEnergy - combatant.energy);
-        if (applied > 0) {
-          combatant.energy += applied;
+        const events: CombatEvent[] = [];
+        gainEnergy(combatant, rank, events);
+        if (events.length > 0) {
           this.#reaped.push({
             tick: this.#tick,
             atSeconds: this.#elapsedSeconds,
@@ -1870,7 +1870,7 @@ export class MatchSimulation {
             weaponId: undefined,
             attributeId: SOUL_REAPING_ATTRIBUTE,
             area: undefined,
-            events: [{ kind: "energy-gain", targetId: record.id, amount: applied }],
+            events,
           });
         }
       }
