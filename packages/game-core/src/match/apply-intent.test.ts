@@ -47,12 +47,12 @@ describe("applyIntent", () => {
 
   it("returns the refusal for a cast or an attack the simulation turns down", () => {
     const sim = duel();
-    applyIntent(sim, "a", { kind: "target", targetSessionId: "b" });
+    applyIntent(sim, "a", { kind: "target", targetSessionId: "a" });
     expect(applyIntent(sim, "a", { kind: "use-skill", slot: 0 })).toEqual({
       kind: "skill",
       slot: 0,
       skillId: "elementalist.fireball",
-      reason: "out-of-range",
+      reason: "invalid-target-self",
     });
     expect(applyIntent(sim, "a", { kind: "attack", targetId: "a" })).toEqual({
       kind: "attack",
