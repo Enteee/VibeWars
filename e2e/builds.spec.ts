@@ -235,6 +235,44 @@ test("in a match, an empty slot's key does nothing; the next key casts its own s
   await expect(energy).not.toHaveText(full ?? "");
 });
 
+test("a second elite replaces the first on the bar, framed in gold, into the match (#459)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Elite");
+  await page.locator(".editor-row select").first().selectOption("ranger");
+
+  await expect(page.locator(".skill-box.is-elite", { hasText: "Barrage" })).toBeVisible();
+  await expect(page.locator(".skill-box.is-elite", { hasText: "Troll Unguent" })).toHaveCount(0);
+  await page.locator(".skill-elite-filter input").check();
+  await expect(page.locator(".skill-box:not(.is-elite)")).toHaveCount(0);
+  await page.locator(".skill-elite-filter input").uncheck();
+
+  await page.locator(".skill-box", { hasText: "Barrage" }).click();
+  await page.locator(".skill-box", { hasText: "Troll Unguent" }).click();
+  const slots = page.locator(".skill-slot");
+  await expect(slots.nth(0)).toHaveClass(/is-elite/);
+
+  await page
+    .locator(".skill-box", { hasText: "Broad Head Arrow" })
+    .dragTo(page.locator(".skill-slot").nth(3));
+  await expect(page.locator(".editor-notice")).toHaveText(
+    "Broad Head Arrow replaced Barrage: only one elite skill per bar.",
+  );
+  await expect(slots.nth(0)).toHaveClass(/is-empty/);
+  await expect(slots.nth(1)).toContainText("Troll Unguent");
+  await expect(slots.nth(3)).toContainText("Broad Head Arrow");
+  await expect(page.locator(".skill-slot.is-elite")).toHaveCount(1);
+
+  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.locator(".roster-row", { hasText: "Elite" }).click();
+  await startSoloMatch(page);
+  const hud = page.locator(".hud-skills .hud-skill");
+  await expect(hud.nth(3)).toContainText("Broad Head Arrow");
+  await expect(hud.nth(3)).toHaveClass(/is-elite/);
+  await expect(page.locator(".hud-skills .hud-skill.is-elite")).toHaveCount(1);
+});
+
 test("in a match, Glyph of Lesser Energy shows Armor of Earth's discounted cost, then the full one (#637)", async ({
   page,
 }) => {

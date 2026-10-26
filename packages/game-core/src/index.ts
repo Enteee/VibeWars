@@ -74,6 +74,7 @@ export { describePrimaryAttribute } from "./primary-attributes.js";
 
 export type { BuildProblem, PlayerBuild, SkillBar } from "./build.js";
 export {
+  ONE_ELITE_PER_BAR,
   SKILL_BAR_SLOTS,
   attributeRanksOf,
   defaultBuildEquipment,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { computeCoverage, missingMechanics } from "@vibewars/game-core";
+import { IMPLEMENTED_SKILLS, computeCoverage, missingMechanics } from "@vibewars/game-core";
 
 import { generateSkillBundle } from "./generate.js";
 
@@ -35,6 +35,17 @@ describe("coverage gate against the committed corpus", () => {
 
     for (const mechanic of grouped.keys()) {
       expect(implementedMechanics).not.toContain(mechanic);
+    }
+  });
+
+  it("marks a catalog skill elite exactly when the corpus does (#459)", () => {
+    const corpus = new Map(generateSkillBundle().skills.map((skill) => [skill.id, skill.elite]));
+    for (const skill of IMPLEMENTED_SKILLS) {
+      // Original designs have no corpus entry to agree with.
+      const elite = corpus.get(skill.id);
+      if (elite !== undefined) {
+        expect(skill.elite, skill.id).toBe(elite);
+      }
     }
   });
 });

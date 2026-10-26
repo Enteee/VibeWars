@@ -30,6 +30,11 @@ export function filterSkillsByName(skills: readonly Skill[], query: string): rea
   return skills.filter((skill) => skill.name.toLowerCase().includes(needle));
 }
 
+/** The library's "Elite" toggle (#459): elite skills only, in order. */
+export function filterEliteSkills(skills: readonly Skill[]): readonly Skill[] {
+  return skills.filter((skill) => skill.elite);
+}
+
 /**
  * Group by the attribute that drives the skill.
  *
