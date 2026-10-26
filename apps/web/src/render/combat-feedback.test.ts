@@ -65,6 +65,7 @@ function floated(
       addFloatingText: (text) => texts.push(text),
       addAreaFlash: () => undefined,
       addSwingFlash: () => undefined,
+      struckTwice: () => undefined,
     },
     {
       casterSessionId: "me",
@@ -117,6 +118,7 @@ describe("showCombatFeedback", () => {
           addFloatingText: (text) => texts.push(text),
           addAreaFlash: () => undefined,
           addSwingFlash: () => undefined,
+          struckTwice: () => undefined,
         },
         {
           casterSessionId: "me",
@@ -151,6 +153,7 @@ describe("showCombatFeedback", () => {
         addFloatingText: (text) => texts.push(text),
         addAreaFlash: () => undefined,
         addSwingFlash: () => undefined,
+        struckTwice: () => undefined,
       },
       {
         casterSessionId: "me",
@@ -207,6 +210,7 @@ describe("showCombatFeedback", () => {
         addFloatingText: (text) => texts.push(text),
         addAreaFlash: () => undefined,
         addSwingFlash: () => undefined,
+        struckTwice: () => undefined,
       },
       {
         casterSessionId: "me",
@@ -239,6 +243,7 @@ describe("showCombatFeedback and areas", () => {
         addFloatingText: () => undefined,
         addAreaFlash: (flash) => flashes.push(flash),
         addSwingFlash: () => undefined,
+        struckTwice: () => undefined,
       },
       {
         casterSessionId,
@@ -321,6 +326,7 @@ describe("swingFlashFor (#161)", () => {
           addSwingFlash: () => {
             arcs += 1;
           },
+          struckTwice: () => undefined,
         },
         swing("weapon"),
         snapshot(weaponId),
@@ -329,5 +335,19 @@ describe("swingFlashFor (#161)", () => {
     };
     expect(record("axe")).toBe(1);
     expect(record("shortbow")).toBe(0);
+  });
+
+  it("tells the scene whose swing struck twice, and nobody's for a single one (#561)", () => {
+    const told: string[] = [];
+    const sink = {
+      addFloatingText: () => undefined,
+      addAreaFlash: () => undefined,
+      addSwingFlash: () => undefined,
+      struckTwice: (actorId: string) => told.push(actorId),
+    };
+    showCombatFeedback(sink, swing("weapon"), snapshot("daggers"));
+    expect(told).toEqual([]);
+    showCombatFeedback(sink, { ...swing("weapon"), doubleStrike: true }, snapshot("daggers"));
+    expect(told).toEqual(["me"]);
   });
 });

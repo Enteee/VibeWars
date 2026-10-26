@@ -109,6 +109,27 @@ describe("weaponPose", () => {
     }
   });
 
+  it("moves the off hand too in a double strike, fists and daggers only (#561)", () => {
+    const hold: AttackClip = { phase: "hold", progress: 0, sinceHit: 0 };
+    const stab: AttackClip = { phase: "strike", progress: 0.5 };
+    const sides = (id: WeaponId, hit: number, offHand?: AttackClip) => {
+      const rest = pointsOf(weaponPose(id, REST_CLIP, 0));
+      return new Set(
+        pointsOf(weaponPose(id, hold, hit, offHand))
+          .map((q, i) => ({ q, rest: rest[i] }))
+          .filter(({ q, rest: r }) => r !== undefined && (q.x !== r.x || q.y !== r.y))
+          .map(({ rest: r }) => Math.sign(r?.y ?? 0)),
+      );
+    };
+    for (const id of ["unarmed", "daggers"] as const) {
+      expect(sides(id, 0, stab), id).toEqual(new Set([1, -1]));
+      expect(sides(id, 1, stab), id).toEqual(new Set([1, -1]));
+      expect(sides(id, 0), id).toEqual(new Set([1]));
+    }
+    // A sword has no off hand to move: the flag changes nothing.
+    expect(weaponPose("sword", hold, 0, stab)).toEqual(weaponPose("sword", hold, 0));
+  });
+
   it("lets the spear go at the release, and fades a new one in by the end of recovery", () => {
     const m = WEAPON_MOTION.spear;
     expect(weaponPose("spear", { phase: "hold", progress: 0, sinceHit: 0 }, 0).alpha).toBe(0);

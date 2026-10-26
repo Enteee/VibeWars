@@ -32,7 +32,7 @@ export function weaponMarkLayout(
   if (weaponId === undefined || !isWeaponId(weaponId)) {
     return NOTHING;
   }
-  const posed = weaponPose(weaponId, frame.clip, frame.hit);
+  const posed = weaponPose(weaponId, frame.clip, frame.hit, frame.offHand);
   const scale = r / WEAPON_MARK_RADIUS;
   const cos = Math.cos(facing);
   const sin = Math.sin(facing);
