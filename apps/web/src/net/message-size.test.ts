@@ -110,6 +110,7 @@ function hit(target: number): WireCombat["events"] {
       skillId: null,
       statusId: null,
       durationSeconds: null,
+      critical: true,
     },
     {
       kind: "status-applied",
@@ -118,6 +119,7 @@ function hit(target: number): WireCombat["events"] {
       skillId: null,
       statusId: longest(STATUS_IDS),
       durationSeconds: FLOAT,
+      critical: null,
     },
   ];
 }

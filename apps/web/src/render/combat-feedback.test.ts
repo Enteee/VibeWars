@@ -79,7 +79,7 @@ describe("showCombatFeedback", () => {
   it("signs damage with a real minus and heals with a plus, so colour is never needed", () => {
     expect(
       floated([
-        { kind: "damage", targetId: "them", amount: 91.4 },
+        { kind: "damage", targetId: "them", amount: 91.4, critical: false },
         { kind: "heal", targetId: "me", amount: 40 },
       ]),
     ).toEqual(["−91", "+40"]);
@@ -99,7 +99,7 @@ describe("showCombatFeedback", () => {
   });
 
   it("weighs weapon swings lighter than skills, so they never drown a skill number", () => {
-    const weights = (cause: CombatMessage["cause"]): string[] => {
+    const weights = (cause: CombatMessage["cause"], critical = false): string[] => {
       const texts: FloatingText[] = [];
       showCombatFeedback(
         {
@@ -112,7 +112,7 @@ describe("showCombatFeedback", () => {
           cause,
           skillId: cause === "skill" ? "elementalist.fireball" : "",
           weaponId: cause === "weapon" ? "sword" : "",
-          events: [{ kind: "damage", targetId: "them", amount: 12 }],
+          events: [{ kind: "damage", targetId: "them", amount: 12, critical }],
         },
         SNAPSHOT,
       );
@@ -120,6 +120,14 @@ describe("showCombatFeedback", () => {
     };
     expect(weights("weapon")).toEqual(["light"]);
     expect(weights("skill")).toEqual(["normal"]);
+    // A crit stands out of the stream of swings (#533).
+    expect(weights("weapon", true)).toEqual(["critical"]);
+  });
+
+  it('floats a critical hit with a "!" (#533)', () => {
+    expect(floated([{ kind: "damage", targetId: "them", amount: 31.1, critical: true }])).toEqual([
+      "−31!",
+    ]);
   });
 
   it("starts a number right of the bar, clear of the name (#262)", () => {
@@ -137,8 +145,8 @@ describe("showCombatFeedback", () => {
         skillId: "elementalist.fireball",
         weaponId: "",
         events: [
-          { kind: "damage", targetId: "them", amount: 30 },
-          { kind: "damage", targetId: "them", amount: 20 },
+          { kind: "damage", targetId: "them", amount: 30, critical: false },
+          { kind: "damage", targetId: "them", amount: 20, critical: false },
         ],
       },
       SNAPSHOT,
@@ -160,17 +168,21 @@ describe("showCombatFeedback", () => {
   });
 
   it("skips events about nobody it can see", () => {
-    expect(floated([{ kind: "damage", targetId: "gone", amount: 5 }])).toEqual([]);
+    expect(floated([{ kind: "damage", targetId: "gone", amount: 5, critical: false }])).toEqual([]);
   });
 
   it("floats no degeneration ticks, which the health bar already shows (#54)", () => {
     // Burning and poison together: 11 hp/s, about 1 a tick at 20 Hz.
-    const tick: CombatMessage["events"] = [{ kind: "damage", targetId: "them", amount: 0.55 * 2 }];
+    const tick: CombatMessage["events"] = [
+      { kind: "damage", targetId: "them", amount: 0.55 * 2, critical: false },
+    ];
     expect(floated(tick, "degeneration")).toEqual([]);
     // Dying of it still says so.
     expect(floated([{ kind: "death", targetId: "them" }], "degeneration")).toEqual(["defeated"]);
     // A real hit still floats.
-    expect(floated([{ kind: "damage", targetId: "them", amount: 91 }])).toEqual(["−91"]);
+    expect(floated([{ kind: "damage", targetId: "them", amount: 91, critical: false }])).toEqual([
+      "−91",
+    ]);
   });
 
   it("anchors each number to whoever it happened to, so a burst can stack (#54)", () => {
@@ -187,7 +199,7 @@ describe("showCombatFeedback", () => {
         skillId: "elementalist.fireball",
         weaponId: "",
         events: [
-          { kind: "damage", targetId: "them", amount: 5 },
+          { kind: "damage", targetId: "them", amount: 5, critical: false },
           { kind: "heal", targetId: "me", amount: 5 },
         ],
       },
@@ -255,7 +267,9 @@ describe("swingFlashFor (#161)", () => {
     skillId: "",
     weaponId: cause === "weapon" ? "sword" : "",
     events: [
-      kind === "damage" ? { kind, targetId: "them", amount: 30 } : { kind, targetId: "them" },
+      kind === "damage"
+        ? { kind, targetId: "them", amount: 30, critical: false }
+        : { kind, targetId: "them" },
     ],
   });
 

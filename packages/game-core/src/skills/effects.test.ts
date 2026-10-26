@@ -23,7 +23,12 @@ describe("damage effect", () => {
   it("emits a damage event with the amount actually applied", () => {
     const ctx = context();
     const events = applyEffect({ kind: "damage", amount: { flat: 100 } }, ctx);
-    expect(events).toContainEqual({ kind: "damage", targetId: "target", amount: 100 });
+    expect(events).toContainEqual({
+      kind: "damage",
+      targetId: "target",
+      amount: 100,
+      critical: false,
+    });
   });
 
   it("clamps health at zero rather than going negative", () => {
@@ -37,7 +42,12 @@ describe("damage effect", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 30 });
     const ctx = context(makeCombatant({ id: "caster" }), target);
     const events = applyEffect({ kind: "damage", amount: { flat: 100 } }, ctx);
-    expect(events).toContainEqual({ kind: "damage", targetId: "target", amount: 30 });
+    expect(events).toContainEqual({
+      kind: "damage",
+      targetId: "target",
+      amount: 30,
+      critical: false,
+    });
   });
 
   it("flags death and emits a death event when health reaches zero", () => {
@@ -211,9 +221,9 @@ describe("applySkillEffects", () => {
 
     expect(events).toEqual([
       { kind: "sacrifice", targetId: "caster", amount: 50 },
-      { kind: "damage", targetId: "a", amount: 30 },
-      { kind: "damage", targetId: "b", amount: 30 },
-      { kind: "damage", targetId: "c", amount: 30 },
+      { kind: "damage", targetId: "a", amount: 30, critical: false },
+      { kind: "damage", targetId: "b", amount: 30, critical: false },
+      { kind: "damage", targetId: "c", amount: 30, critical: false },
       { kind: "energy-gain", targetId: "caster", amount: 5 },
     ]);
     expect(caster.health).toBe(450);

@@ -820,7 +820,7 @@ describe("combatBatch (#288)", () => {
     skillId: undefined,
     weaponId: "sword",
     area: undefined,
-    events: [{ kind: "damage", targetId: "b", amount: 12 }],
+    events: [{ kind: "damage", targetId: "b", amount: 12, critical: false }],
     ...overrides,
   });
 
@@ -848,7 +848,7 @@ describe("combatBatch (#288)", () => {
           cause: "degeneration",
           sourceId: "a",
           weaponId: undefined,
-          events: [{ kind: "damage", targetId: "b", amount: 2 }],
+          events: [{ kind: "damage", targetId: "b", amount: 2, critical: false }],
         }),
         entry({
           cause: "skill",
@@ -862,7 +862,7 @@ describe("combatBatch (#288)", () => {
       cause: "degeneration",
       skillId: "",
       weaponId: "",
-      events: [{ kind: "damage", targetId: "b", amount: 2 }],
+      events: [{ kind: "damage", targetId: "b", amount: 2, critical: false }],
     });
     expect(fireball?.area).toEqual({ x: 1, y: 2, radius: 81 });
     expect(fireball?.skillId).toBe("elementalist.fireball");

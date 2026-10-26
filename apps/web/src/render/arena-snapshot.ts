@@ -62,9 +62,10 @@ export interface FloatingText {
   readonly colour: number;
   /**
    * `"light"` for weapon swings: smaller and fainter, so a stream of
-   * them never drowns a skill's number (#160).
+   * them never drowns a skill's number (#160). `"critical"` for a
+   * critical hit: larger and bold, so it stands out of that stream (#533).
    */
-  readonly weight: "normal" | "light";
+  readonly weight: "normal" | "light" | "critical";
   /** Seconds of life remaining; the scene fades and removes it. */
   remainingSeconds: number;
 }

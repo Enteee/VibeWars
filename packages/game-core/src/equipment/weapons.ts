@@ -152,7 +152,7 @@ function martial(
     projectileSpeed: undefined,
     armorPenetration: 0,
     cleaveTargets: 0,
-    criticalMultiplier: 1.41,
+    criticalMultiplier: Math.SQRT2,
     doubleStrike: undefined,
   };
   return Object.freeze({ ...base, ...overrides });
@@ -205,7 +205,7 @@ const UNARMED: Weapon = Object.freeze({
   projectileSpeed: undefined,
   armorPenetration: 0,
   cleaveTargets: 0,
-  criticalMultiplier: 1.41,
+  criticalMultiplier: Math.SQRT2,
   doubleStrike: undefined,
 } satisfies Weapon);
 
@@ -290,7 +290,7 @@ export const WEAPONS: Readonly<Record<WeaponId, Weapon>> = Object.freeze({
     {
       cleaveTargets: 2,
       // A lower critical multiplier than everything else, because a
-      // scythe's maximum is already enormous — 41 x 1.41 would be a
+      // scythe's maximum is already enormous — 41 x √2 would be a
       // one-shot. The reference data makes the same correction.
       criticalMultiplier: 1.1,
     },
@@ -324,7 +324,7 @@ export const WEAPONS: Readonly<Record<WeaponId, Weapon>> = Object.freeze({
     projectileSpeed: 900,
     armorPenetration: 0,
     cleaveTargets: 0,
-    criticalMultiplier: 1.41,
+    criticalMultiplier: Math.SQRT2,
     doubleStrike: undefined,
   } satisfies Weapon),
 
@@ -341,7 +341,7 @@ export const WEAPONS: Readonly<Record<WeaponId, Weapon>> = Object.freeze({
     projectileSpeed: 900,
     armorPenetration: 0,
     cleaveTargets: 0,
-    criticalMultiplier: 1.41,
+    criticalMultiplier: Math.SQRT2,
     doubleStrike: undefined,
   } satisfies Weapon),
 

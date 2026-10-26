@@ -74,6 +74,12 @@ export interface CombatRules {
   readonly damageRankSlopeOver: number;
   /** What base damage is multiplied by when a weapon's requirement is unmet. */
   readonly unmetRequirementMultiplier: number;
+  /**
+   * A weapon blow's chance to crit (#533): this, plus
+   * `criticalChancePerRank` per rank in the weapon's mastery attribute.
+   */
+  readonly criticalBaseChance: number;
+  readonly criticalChancePerRank: number;
   /** Health a character has before runes and insignias. */
   readonly baseHealth: number;
   /** Energy a character has before runes and insignias. */
@@ -149,6 +155,11 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
     // enough that nobody carries a hammer "for fun" on a caster, mild
     // enough that it is a trade-off rather than a lockout.
     unmetRequirementMultiplier: 1 / 3,
+    // Measured in GW1 by players, not a published formula: about 1% at
+    // rank 0, rising 1.37% a rank. GW1 adds the attacker's level against
+    // the target's; with no levels here, only the rank is left.
+    criticalBaseChance: 0.01,
+    criticalChancePerRank: 0.0137,
     baseHealth: 500,
     baseEnergy: 50,
     minimumMaxHealth: 100,

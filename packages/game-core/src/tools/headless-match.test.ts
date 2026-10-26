@@ -147,7 +147,12 @@ describe("runHeadlessMatch", () => {
     expect(run()).toEqual(first);
     // The first cast: one Fireball, the cluster, never the straggler.
     expect(first.events.slice(0, 3)).toEqual(
-      ["near", "left", "right"].map((targetId) => ({ kind: "damage", targetId, amount: 91 })),
+      ["near", "left", "right"].map((targetId) => ({
+        kind: "damage",
+        targetId,
+        amount: 91,
+        critical: false,
+      })),
     );
     expect(first.events.some((event) => event.targetId === "far")).toBe(false);
   });
