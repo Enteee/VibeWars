@@ -49,7 +49,8 @@ describe("status definitions", () => {
         def.maxHealthMultiplier !== 1 ||
         def.castTimeMultiplier !== 1 ||
         def.attackDurationMultiplier !== 1 ||
-        def.block !== undefined;
+        def.block !== undefined ||
+        def.onAttackHit.length > 0;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });

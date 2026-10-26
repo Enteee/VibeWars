@@ -573,6 +573,31 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // rank-12 numbers, in the status.
     effects: [{ kind: "apply-status", statusId: "watch-yourself", durationSeconds: 10 }],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Preparations (#525): ride your attacks, one at a time                  */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "ranger.apply-poison",
+    name: "Apply Poison",
+    type: "preparation",
+    profession: "ranger",
+    attributeId: "ranger.wilderness-survival",
+    cost: { kind: "energy", amount: 15 },
+    activationSeconds: 2,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 24 seconds, enemies struck by your physical attacks become
+    // poisoned for 3...13...15 seconds": the poison is the status's
+    // `onAttackHit`.
+    effects: [{ kind: "apply-status", statusId: "apply-poison", durationSeconds: 24 }],
+  },
 ];
 
 export const SKILLS_BY_ID: ReadonlyMap<string, Skill> = new Map(

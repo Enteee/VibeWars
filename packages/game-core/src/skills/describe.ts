@@ -142,7 +142,21 @@ export function describeStatus(id: string): string {
     const plural = definition.endsAfterAttacks === 1 ? "" : "s";
     parts.push(`ends after ${String(definition.endsAfterAttacks)} incoming attack${plural}`);
   }
+  for (const effect of definition.onAttackHit) {
+    parts.push(describeAttackHit(effect));
+  }
   return parts.length === 0 ? definition.name : parts.join(", ");
+}
+
+/** A preparation's rider (#525), as its tooltip says it: "your attacks …". */
+function describeAttackHit(effect: SkillEffect): string {
+  if (effect.kind === "apply-status") {
+    return (
+      `foes your physical attacks hit get ${statusName(effect.statusId)} ` +
+      `for ${seconds(effect.durationSeconds)}`
+    );
+  }
+  return `your physical attacks: ${describeEffect(effect, new Map()).text}`;
 }
 
 function describeEffect(
@@ -168,14 +182,19 @@ function describeEffect(
         magnitude: undefined,
       };
     case "apply-status":
-      // A stance is yours alone and one at a time (#523), so it reads as
-      // what it is rather than as something applied. The type line already
-      // says "Stance." (#524).
-      if (findStatusDefinition(effect.statusId)?.category === "stance") {
-        return {
-          text: `For ${seconds(effect.durationSeconds)}, ` + describeStatus(effect.statusId),
-          magnitude: undefined,
-        };
+      // A stance or a preparation is yours alone and one at a time
+      // (#523, #525), so it reads as what it is rather than as something
+      // applied. The type line already says "Stance." or "Preparation."
+      // (#524).
+      switch (findStatusDefinition(effect.statusId)?.category) {
+        case "stance":
+        case "preparation":
+          return {
+            text: `For ${seconds(effect.durationSeconds)}, ` + describeStatus(effect.statusId),
+            magnitude: undefined,
+          };
+        default:
+          break;
       }
       return {
         text:
@@ -214,6 +233,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
   signet: "Signet.",
   shout: "Shout.",
   stance: "Stance.",
+  preparation: "Preparation.",
   skill: "Skill.",
 };
 

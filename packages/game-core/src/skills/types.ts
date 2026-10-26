@@ -132,7 +132,15 @@ export type SkillEffect =
  * An attack skill is also a blow of its weapon (ADR-0029).
  */
 export type SkillType =
-  "attack" | "spell" | "enchantment" | "hex" | "signet" | "shout" | "stance" | "skill";
+  | "attack"
+  | "spell"
+  | "enchantment"
+  | "hex"
+  | "signet"
+  | "shout"
+  | "stance"
+  | "preparation"
+  | "skill";
 
 /**
  * Whether a skill of this type is a spell, as GW1's rules that "affect
