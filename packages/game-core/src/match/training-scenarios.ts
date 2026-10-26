@@ -71,6 +71,12 @@ export interface TrainingDummy {
    * unarmed.
    */
   readonly weapon?: WeaponId;
+  /**
+   * Its guard against physical hits only (#111): armor that counts
+   * against them, as a Stalwart insignia's, and a flat cut off each one
+   * after mitigation, as a Rune of Absorption's.
+   */
+  readonly physicalGuard?: { readonly armor: number; readonly reduction: number };
   /** When it is put back as it started; without one, never. */
   readonly reset?: ResetPolicy;
 }
@@ -143,7 +149,15 @@ const PACK: readonly TrainingDummy[] = [
 
 /** A dummy's gear: its armor, and its weapon if it has one. */
 function dummyEquipment(dummy: TrainingDummy): ResolvedEquipment {
-  const unarmed = unarmedResolvedEquipment(dummy.armor);
+  const guard = dummy.physicalGuard;
+  const unarmed: ResolvedEquipment =
+    guard === undefined
+      ? unarmedResolvedEquipment(dummy.armor)
+      : {
+          ...unarmedResolvedEquipment(dummy.armor),
+          conditionalArmor: [{ amount: guard.armor, condition: "vs-physical" }],
+          flatPhysicalReduction: guard.reduction,
+        };
   if (dummy.weapon === undefined) {
     return unarmed;
   }
@@ -226,6 +240,30 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
         ...target("dummy", "Caster dummy (60 armor, mortal)", vec2(380, 210), 60),
         maxHealth: MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth,
         reset: { kind: "on-death", afterSeconds: 2 },
+      },
+    ],
+  },
+  {
+    id: "physical-vs-untyped",
+    label: "Physical vs untyped",
+    teaches:
+      "Why Stalwart and Absorption only sometimes bite: they blunt a weapon's physical hits and do nothing against a spell.",
+    mapId: "training-hall",
+    exercises: ["armor", "auto-attacks", "spell-damage"],
+    knobs: [],
+    // Two warriors at 80 armor. The guarded one wears a Stalwart insignia
+    // (+10 against physical) and a superior Rune of Absorption (3 off
+    // each physical hit): a sword lands softer on it, a Fireball the same.
+    dummies: [
+      target("bare", "Warrior (80 armor)", vec2(380, 150), 80),
+      {
+        ...target(
+          "guarded",
+          "Warrior, Stalwart + Absorption (80, +10 and -3 vs physical)",
+          vec2(380, 270),
+          80,
+        ),
+        physicalGuard: { armor: 10, reduction: 3 },
       },
     ],
   },

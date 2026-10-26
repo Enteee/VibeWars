@@ -260,6 +260,55 @@ describe("time-to-kill, headless (#111)", () => {
   });
 });
 
+describe("physical-vs-untyped, headless (#111)", () => {
+  /** Every damage `targetId` takes in `seconds`, in order. */
+  function damageTo(sim: MatchSimulation, targetId: string, seconds: number): number[] {
+    const amounts: number[] = [];
+    for (let i = 0; i < Math.round(seconds / DT); i += 1) {
+      for (const entry of sim.step(DT).log) {
+        for (const event of entry.events) {
+          if (event.kind === "damage" && event.targetId === targetId) {
+            amounts.push(event.amount);
+          }
+        }
+      }
+    }
+    return amounts;
+  }
+
+  it("the same sword swings land softer on the guarded warrior", () => {
+    // One seed, so both runs roll the same swings.
+    const swings = (targetId: string): number[] => {
+      const sim = armedArena(scenario("physical-vs-untyped"), "physical", WEAPONS.sword);
+      expect(sim.requestAttack("player", targetId)).toEqual({ ok: true });
+      return damageTo(sim, targetId, 10);
+    };
+    const bare = swings("bare");
+    const guarded = swings("guarded");
+    expect(bare.length).toBeGreaterThan(5);
+    expect(guarded).toHaveLength(bare.length);
+    // +10 armor is a factor 2^(-10/40), then 3 off each hit.
+    const factor = armorMultiplier(90, RULES.combat) / armorMultiplier(80, RULES.combat);
+    guarded.forEach((amount, i) => {
+      expect(amount).toBeLessThan(bare[i] ?? 0);
+      // Within a point: both sides were rounded.
+      expect(Math.abs(amount - ((bare[i] ?? 0) * factor - 3))).toBeLessThanOrEqual(1);
+    });
+  });
+
+  it("a Fireball lands the same on both", () => {
+    const burn = (targetId: string): number[] => {
+      const sim = arena(scenario("physical-vs-untyped"), "untyped");
+      sim.setTarget("player", targetId);
+      expect(sim.requestSkill("player", 0)?.check).toEqual({ ok: true });
+      return damageTo(sim, targetId, 3);
+    };
+    const bare = burn("bare");
+    expect(bare).toHaveLength(1);
+    expect(burn("guarded")).toEqual(bare);
+  });
+});
+
 describe("condition-pressure, headless (#111)", () => {
   it("the loaded dummy loses 20 health a second and dies in 25 s; the clean one loses none", () => {
     const sim = arena(scenario("condition-pressure"), "conditions");
