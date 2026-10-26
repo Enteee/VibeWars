@@ -870,6 +870,42 @@ body {
   pointer-events: none;
 }
 
+/* Over the arena and the HUD while a guest reconnects (#602); it takes no
+   clicks, so the leave control under it still works. */
+.reconnect-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(14 17 22 / 50%);
+  pointer-events: none;
+}
+
+.reconnect-overlay[hidden] {
+  display: none;
+}
+
+.reconnect-overlay-box {
+  padding: 0.9rem 1.6rem;
+  background: rgb(14 17 22 / 92%);
+  border: 1px solid var(--line);
+  text-align: center;
+}
+
+.reconnect-overlay-title {
+  color: var(--ink);
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+}
+
+.reconnect-overlay-detail {
+  margin-top: 0.35rem;
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+}
+
 /* --- build sharing ------------------------------------------------------ */
 
 .editor-share {
