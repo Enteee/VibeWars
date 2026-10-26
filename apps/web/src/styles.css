@@ -1637,16 +1637,12 @@ body {
 }
 
 /* Out of reach of the target (#485): a shape, not only a colour. The cost
-   is struck through and a `↔` follows it; the Training Ground row has no
-   cost, so the glyph follows the name. A hint, not a gate. */
-.hud-skill.is-out-of-range .hud-skill-cost {
-  text-decoration: line-through;
-}
-
+   is left as it is and a `↔` follows it (a struck cost would read as
+   unaffordable); the Training Ground row has no cost, so the glyph follows
+   the name. A hint, not a gate. */
 .hud-skill.is-out-of-range .hud-skill-cost::after,
 .training-skill.is-out-of-range .training-skill-name::after {
   content: "↔";
-  /* Inline-block, so the strike-through stops at the cost. */
   display: inline-block;
   margin-left: 0.3em;
   color: var(--ink);
