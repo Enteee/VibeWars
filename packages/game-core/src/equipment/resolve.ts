@@ -6,7 +6,16 @@ import { armorPieces, baseArmorFor, baseEnergyPipsFor } from "./armor.js";
 import { getInsignia, perSlotAmount, type ArmorCondition } from "./insignias.js";
 import type { BuildEquipment } from "./loadout.js";
 import { getOffhand, type OffhandId } from "./offhands.js";
-import { ATTRIBUTE_RUNE_TIERS, getUniversalRune, type EquippedRune } from "./runes.js";
+import {
+  ATTRIBUTE_RUNE_TIERS,
+  RUNE_TIERS,
+  UNIVERSAL_RUNES,
+  getUniversalRune,
+  type EquippedRune,
+  type RuneEffect,
+  type RuneTier,
+  type UniversalRuneId,
+} from "./runes.js";
 import type { ArmorSlot, EquipmentRequirement } from "./types.js";
 import { getWeapon, type Weapon } from "./weapons.js";
 
@@ -98,6 +107,9 @@ interface RuneTotals {
  * "slot five superior runes of Swordsmanship" from being free, and why
  * `validateEquipment` reports a duplicate as a problem rather than
  * silently letting it happen.
+ *
+ * A universal rune counts once however many are worn, at the best tier
+ * worn, unless it `stacks` (GW1: two Runes of Clarity are 20%, not 36%).
  */
 function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId): RuneTotals {
   const bestBonusPerAttribute = new Map<string, number>();
@@ -105,6 +117,8 @@ function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId):
   let healthDelta = 0;
   let energyDelta = 0;
   let flatPhysicalReduction = 0;
+  const bestTierPerRune = new Map<UniversalRuneId, RuneTier>();
+  const worn: RuneEffect[] = [];
 
   for (const [slot, piece] of armorPieces(equipment.armor)) {
     if (piece.insigniaId !== null) {
@@ -141,7 +155,20 @@ function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId):
       continue;
     }
 
-    const effect = definition.byTier[rune.tier];
+    if (definition.stacks) {
+      worn.push(definition.byTier[rune.tier]);
+      continue;
+    }
+    const best = bestTierPerRune.get(definition.id);
+    if (best === undefined || RUNE_TIERS.indexOf(best) < RUNE_TIERS.indexOf(rune.tier)) {
+      bestTierPerRune.set(definition.id, rune.tier);
+    }
+  }
+
+  for (const [runeId, tier] of bestTierPerRune) {
+    worn.push(UNIVERSAL_RUNES[runeId].byTier[tier]);
+  }
+  for (const effect of worn) {
     switch (effect.kind) {
       case "health":
         healthDelta += effect.amount;
@@ -154,8 +181,9 @@ function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId):
         break;
       case "status-duration":
         for (const statusId of effect.statusIds) {
-          // Multiplicative across sources, so two reductions never reach
-          // zero duration — the same reason miss chance multiplies.
+          // Multiplicative across different runes, so two reductions
+          // never reach zero duration — the same reason miss chance
+          // multiplies. Two of the same rune count once, above.
           const current = statusDurationScale.get(statusId) ?? 1;
           statusDurationScale.set(statusId, current * (1 - effect.reduction));
         }

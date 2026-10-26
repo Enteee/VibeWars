@@ -19,7 +19,6 @@ export interface MenuCallbacks {
   readonly onOptions: () => void;
   /** Open the jukebox (#372). */
   readonly onMusic: () => void;
-  readonly onQuickMatch: (name: string) => void;
   /** Open the build editor on a new character. */
   readonly onNewCharacter: () => void;
   readonly onEditCharacter: (id: string) => void;
@@ -97,21 +96,10 @@ export function savePlayerName(name: string): void {
   }
 }
 
-/** Shown under the online controls of a build with no server behind it. */
-export const OFFLINE_HINT = "Online play isn't available in this build yet.";
-
-/**
- * Render the main menu.
- *
- * `onlinePlay` is `ONLINE_PLAY` from `net/online.ts`, passed in rather
- * than imported so the offline menu can be exercised without stubbing the
- * build environment. When it is false, every control that would open a
- * connection (host, join, Quick Match) is rendered disabled.
- */
+/** Render the main menu. */
 export function renderMenu(
   root: HTMLElement,
   callbacks: MenuCallbacks,
-  onlinePlay: boolean,
   characters: readonly StoredCharacter[] = [],
   characterProblems: readonly string[] = [],
   connectionNotice?: string,
@@ -228,7 +216,6 @@ export function renderMenu(
   const host = button("host a lobby", "primary", () => {
     callbacks.onCreateLobby(nameInput.value);
   });
-  host.disabled = !onlinePlay;
   hostRow.appendChild(host);
   panel.appendChild(hostRow);
 
@@ -251,9 +238,6 @@ export function renderMenu(
     }
   });
   const joinButton = button("join", "primary", join);
-  // The code field too: Enter in it calls `join` without the button.
-  codeInput.disabled = !onlinePlay;
-  joinButton.disabled = !onlinePlay;
   joinRow.appendChild(codeInput);
   joinRow.appendChild(joinButton);
   panel.appendChild(joinRow);
@@ -262,16 +246,7 @@ export function renderMenu(
   manageRow.appendChild(button("teams", "", callbacks.onManageTeams));
   manageRow.appendChild(button("options", "", callbacks.onOptions));
   manageRow.appendChild(button("music", "", callbacks.onMusic));
-  const quickMatch = button("quick match", "", () => {
-    callbacks.onQuickMatch(nameInput.value);
-  });
-  quickMatch.disabled = !onlinePlay;
-  manageRow.appendChild(quickMatch);
   panel.appendChild(manageRow);
-
-  if (!onlinePlay) {
-    panel.appendChild(h("p", "screen-empty menu-offline-hint", OFFLINE_HINT));
-  }
 
   root.appendChild(panel);
 }

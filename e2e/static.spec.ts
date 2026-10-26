@@ -2,12 +2,11 @@ import { expect, test, type Page } from "@playwright/test";
 
 /**
  * The static GitHub Pages build (#103): served under a sub-path, with no
- * game server behind it.
+ * game server behind it, and online play peer to peer (#403).
  *
- * Runs in its own Playwright project against `vite preview` of a build
- * made with `VIBEWARS_BASE=/VibeWars/next/ VITE_VIBEWARS_ONLINE=off`, the
- * same flags `pages.yml` deploys `next` with. `baseURL` already ends in
- * that path, so every `goto` here is relative to it.
+ * Every e2e test runs against this build (`playwright.config.ts`); these
+ * are the ones about the sub-path and the network. `baseURL` already ends
+ * in that path, so every `goto` here is relative to it.
  */
 
 interface Traffic {
@@ -55,37 +54,49 @@ test("the menu links to the source, as the AGPL asks of a networked game", async
   await expect(source).toHaveAttribute("target", "_blank");
 });
 
-test("online play is shown disabled, and nothing reaches for a server", async ({ page }) => {
+test("online play is on, and hosting a lobby reaches nothing but our own origin", async ({
+  page,
+  baseURL,
+}) => {
   const traffic = watchTraffic(page);
+  const ours = new URL(baseURL ?? "").origin;
+  const foreign: string[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.origin !== ours && url.protocol !== "data:" && url.protocol !== "blob:") {
+      foreign.push(request.url());
+    }
+  });
   await page.goto("./");
   await expect(page.locator(".roster")).toBeVisible();
 
-  await expect(page.getByRole("button", { name: "host a lobby" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "join", exact: true })).toBeDisabled();
-  await expect(page.getByPlaceholder("CODE")).toBeDisabled();
-  await expect(page.getByRole("button", { name: "quick match" })).toBeDisabled();
-  await expect(page.getByText("Online play isn't available in this build yet.")).toBeVisible();
-  // Building teams needs no server, so it stays available.
-  await expect(page.getByRole("button", { name: "teams" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "join", exact: true })).toBeEnabled();
+  await expect(page.getByPlaceholder("CODE")).toBeEnabled();
+  await expect(page.getByRole("button", { name: "quick match" })).toHaveCount(0);
+  await page.getByRole("button", { name: "host a lobby" }).click();
+  await expect(page.locator(".lobby-code")).toBeVisible();
 
   await page.waitForLoadState("networkidle");
   expect(traffic.online).toEqual([]);
+  expect(foreign).toEqual([]);
 });
 
 test("a disabled primary button looks as disabled as any other (#137)", async ({ page }) => {
   await page.goto("./");
-  const host = page.getByRole("button", { name: "host a lobby" });
-  const quick = page.getByRole("button", { name: "quick match" });
-  await expect(host).toBeDisabled();
-  await expect(quick).toBeDisabled();
-  await expect(host).toHaveClass(/\bprimary\b/);
-  await expect(quick).not.toHaveClass(/\bprimary\b/);
+  await page.getByRole("button", { name: "host a lobby" }).click();
+  // Nobody on a team: nothing to start, and nobody to be ready.
+  const start = page.getByRole("button", { name: "start match" });
+  const ready = page.getByRole("button", { name: "ready", exact: true });
+  await expect(start).toBeDisabled();
+  await expect(ready).toBeDisabled();
+  await expect(start).toHaveClass(/\bprimary\b/);
+  await expect(ready).not.toHaveClass(/\bprimary\b/);
 
   const look = (el: Element) => {
     const style = getComputedStyle(el);
     return { color: style.color, border: style.borderTopColor, opacity: style.opacity };
   };
-  expect(await host.evaluate(look)).toEqual(await quick.evaluate(look));
+  expect(await start.evaluate(look)).toEqual(await ready.evaluate(look));
 });
 
 test("a character saved under the sub-path survives a reload", async ({ page }) => {

@@ -13,7 +13,8 @@ import { validateEquipment } from "./validate.js";
 import { ALL_WEAPONS, WEAPONS, allowsOffhand, getWeapon } from "./weapons.js";
 import { ALL_INSIGNIAS } from "./insignias.js";
 import { ALL_OFFHANDS, SHIELD_REQUIREMENT_ATTRIBUTES } from "./offhands.js";
-import { ATTRIBUTE_RUNE_TIERS, UNIVERSAL_RUNES } from "./runes.js";
+import { resolveLoadout } from "./resolve.js";
+import { ATTRIBUTE_RUNE_TIERS, UNIVERSAL_RUNES, type RuneTier } from "./runes.js";
 import { ARMOR_SLOTS } from "./types.js";
 
 const PROFESSION_IDS = Object.keys(PROFESSIONS) as readonly ProfessionId[];
@@ -176,6 +177,41 @@ describe("the rune catalog", () => {
   it("gives a non-tiered rune the same effect at every tier", () => {
     expect(UNIVERSAL_RUNES.vitae.tiered).toBe(false);
     expect(UNIVERSAL_RUNES.vitae.byTier.minor).toEqual(UNIVERSAL_RUNES.vitae.byTier.superior);
+  });
+});
+
+describe("resolving universal runes", () => {
+  function maxHealthWearing(...runes: ["vigor" | "vitae", RuneTier][]): number {
+    const armor = { ...bareArmorSet() };
+    ARMOR_SLOTS.forEach((slot, index) => {
+      const worn = runes[index];
+      if (worn !== undefined) {
+        const [runeId, tier] = worn;
+        armor[slot] = { insigniaId: null, rune: { kind: "universal", runeId, tier } };
+      }
+    });
+    return resolveLoadout(
+      {
+        primaryProfession: "warrior",
+        allocatedRanks: new Map(),
+        equipment: {
+          mainHand: { weaponId: "sword", requirementAttributeId: null },
+          offHand: null,
+          armor,
+        },
+      },
+      MINIMAL_GW_INSPIRED_PVP_V1.combat,
+    ).maxHealth;
+  }
+
+  it("counts a rune that does not stack once, at the best tier worn (GW1)", () => {
+    const base = maxHealthWearing();
+    expect(maxHealthWearing(["vigor", "superior"], ["vigor", "minor"])).toBe(base + 50);
+    expect(maxHealthWearing(["vigor", "minor"], ["vigor", "superior"])).toBe(base + 50);
+  });
+
+  it("counts every Rune of Vitae, which stacks (GW1)", () => {
+    expect(maxHealthWearing(["vitae", "minor"], ["vitae", "minor"])).toBe(maxHealthWearing() + 20);
   });
 });
 
@@ -344,6 +380,31 @@ describe("validateEquipment", () => {
       contextFor("warrior"),
     );
     expect(problems.some((p) => p.message.includes("duplicates"))).toBe(true);
+  });
+
+  it("reports a duplicated universal rune that does not stack, and not Vitae, which does", () => {
+    const twoOf = (runeId: "clarity" | "vitae") => {
+      const rune = { kind: "universal", runeId, tier: "minor" } as const;
+      return validateEquipment(
+        {
+          mainHand: { weaponId: "sword", requirementAttributeId: null },
+          offHand: null,
+          armor: {
+            ...bareArmorSet(),
+            head: { insigniaId: null, rune },
+            chest: { insigniaId: null, rune },
+          },
+        },
+        contextFor("warrior"),
+      );
+    };
+    expect(twoOf("clarity")).toEqual([
+      {
+        field: "equipment.armor.chest",
+        message: "Rune of Clarity duplicates another rune of the same kind; only one applies",
+      },
+    ]);
+    expect(twoOf("vitae")).toEqual([]);
   });
 
   it("refuses an unknown weapon rather than quietly substituting one", () => {

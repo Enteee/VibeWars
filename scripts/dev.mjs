@@ -155,6 +155,5 @@ start("server", "node", ["--watch", "apps/server/dist/main.js"], {
   VIBEWARS_WEB_ROOT: "none",
 });
 
-start("client", "pnpm", ["--filter", "@vibewars/web", "exec", "vite", "--port", CLIENT_PORT], {
-  VITE_VIBEWARS_SERVER: `ws://localhost:${SERVER_PORT}`,
-});
+// The client plays peer to peer (#403); it never talks to the server.
+start("client", "pnpm", ["--filter", "@vibewars/web", "exec", "vite", "--port", CLIENT_PORT]);

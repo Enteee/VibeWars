@@ -4,6 +4,7 @@
  * memory transport for tests is `@vibewars/game-session/testing`.
  */
 
+export { MAX_MESSAGE_BYTES, messageBytes, sizeChecked } from "./transport.js";
 export type { Transport } from "./transport.js";
 
 export type {

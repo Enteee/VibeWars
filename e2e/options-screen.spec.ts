@@ -24,7 +24,7 @@ test("(1) Skill 1 bound to Z in Controls casts on Z, not Q, and survives a reloa
   page,
 }) => {
   await page.setViewportSize(WIDE);
-  await page.goto("/");
+  await page.goto("./");
   await openKeys(page);
   await expect(cell(page, "skill-1")).toHaveText("Q");
 
@@ -62,7 +62,7 @@ test("(1) Skill 1 bound to Z in Controls casts on Z, not Q, and survives a reloa
 });
 
 test("(2) taking a key from another action empties its cell and says so", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("./");
   await openKeys(page);
   await cell(page, "skill-2").click();
   await page.keyboard.press("q");
@@ -88,7 +88,7 @@ test("(2) taking a key from another action empties its cell and says so", async 
 test("(3) Space binds and stays bound: its keyup does not click the cell again", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("./");
   await openKeys(page);
   await cell(page, "mute").click();
   await page.keyboard.press("Space");
@@ -101,7 +101,7 @@ test("(4) Back leaves Options for the menu; on a narrow screen the sections sit 
   page,
 }) => {
   await page.setViewportSize({ width: 400, height: 800 });
-  await page.goto("/");
+  await page.goto("./");
   await openKeys(page);
   const entry = await page.locator('.options-entry[data-section="controls"]').boundingBox();
   const pane = await page.locator(".options-pane").boundingBox();

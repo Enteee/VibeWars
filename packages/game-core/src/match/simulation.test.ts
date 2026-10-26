@@ -680,6 +680,39 @@ describe("rearm", () => {
   });
 });
 
+describe("a dummy's status on a rune wearer (#464)", () => {
+  it("is shortened by the wearer's condition-duration rune, as a skill's is", () => {
+    const sim = new MatchSimulation({
+      seed: "rune",
+      participants: [
+        spec("a", 0, vec2(0, 0), {
+          equipment: {
+            ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+            statusDurationScale: new Map([["bleeding", 0.8]]),
+          },
+        }),
+        spec("b", 1, vec2(200, 0), {
+          behaviour: {
+            kind: "apply-status-cadence",
+            statusId: "bleeding",
+            durationSeconds: 10,
+            everySeconds: 60,
+            targeting: { kind: "nearest-enemy" },
+          },
+        }),
+      ],
+    });
+
+    sim.step(DT);
+
+    // Intents act after this tick has counted statuses down.
+    expect(participant(sim, "a").combatant.statuses.get("bleeding")?.remainingSeconds).toBeCloseTo(
+      8,
+      9,
+    );
+  });
+});
+
 describe("determinism", () => {
   it("two sims with the same seed and the same inputs write the same log", () => {
     const run = (): { log: CombatLogEntry[]; positions: Vec2[] } => {

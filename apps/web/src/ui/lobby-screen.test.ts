@@ -1,15 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import type { LobbySnapshot } from "../net/lobby-client.js";
+import type { LobbySnapshot } from "@vibewars/game-session";
 
-import { MATCH_RUNNING_NOTICE, lobbyControls } from "./lobby-screen.js";
+import { MATCH_RUNNING_NOTICE, displayLobbyCode, lobbyControls } from "./lobby-screen.js";
 
-function snapshot(phase: string): LobbySnapshot {
+function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
   return {
     selfSessionId: "host",
-    code: "ABCD",
+    code: "ACDEFG",
     phase,
     mapId: "arena",
+    hostId: "host-peer",
     players: [
       { sessionId: "host", name: "Host", team: 0, ready: true, isHost: true },
       { sessionId: "guest", name: "Guest", team: 1, ready: true, isHost: false },
@@ -54,11 +55,17 @@ describe("lobbyControls", () => {
     const controls = lobbyControls({
       ...waiting,
       players: [
-        { sessionId: "host", name: "Host", team: -1, ready: false, isHost: true },
+        { sessionId: "host", name: "Host", team: null, ready: false, isHost: true },
         { sessionId: "guest", name: "Guest", team: 1, ready: false, isHost: false },
       ],
     });
     expect(controls.readyDisabled).toBe(true);
     expect(controls.startDisabled).toBe(true);
+  });
+});
+
+describe("displayLobbyCode", () => {
+  it("reads a six-letter code as two halves, the way it is read aloud", () => {
+    expect(displayLobbyCode("ACDEFG")).toBe("ACD-EFG");
   });
 });

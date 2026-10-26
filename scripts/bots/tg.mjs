@@ -28,6 +28,10 @@
  *
  * `wait` is the important one: it is how an agent yields to a peer instead of
  * busy-polling or guessing.
+ *
+ * While the sidecar is down (sidecar.mjs), send, broadcast, ask and reply
+ * still queue but exit 2 with a warning; wait warns once, keeps waiting, and
+ * exits 2 at its timeout if the sidecar is still down.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -50,6 +54,7 @@ import {
   readInbox,
   wakes,
 } from "./protocol.mjs";
+import { readSidecar, sidecarDown } from "./sidecar.mjs";
 import { roleOf } from "./staff.mjs";
 
 // Who this agent is (#62): the bus directory is the employee's, and what it
@@ -73,6 +78,40 @@ const ROSTER = path.join(BUS, "roster");
 const CONTEXT = path.join(DIR, "context.json");
 
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Exit 2, loudly, if the sidecar is down (#583): everything still queues
+ * and is sent once it is back, but an agent that believes its message went
+ * out waits for an answer that cannot come. That hid a whole outage.
+ *
+ * @param {string} consequence what being down means for this command
+ * @returns {void}
+ */
+function failIfSidecarDown(consequence) {
+  const warning = sidecarWarning(consequence);
+  if (warning !== null) {
+    console.error(warning);
+    process.exit(2);
+  }
+}
+
+/**
+ * @param {string} consequence
+ * @returns {string | null} what to say if the sidecar is down, else null
+ */
+function sidecarWarning(consequence) {
+  const record = readSidecar(BUS ?? "");
+  if (!sidecarDown(Date.now(), record)) {
+    return null;
+  }
+  const seen =
+    record === null
+      ? "no heartbeat"
+      : `last seen ${String(Math.round((Date.now() - record.lastSeen) / 1000))} s ago`;
+  return `tg: the Telegram sidecar is down (${seen}); ${consequence}. Tell the operator: claude-llc status`;
+}
+
+const UNREAD = "your message is queued but nobody is reading";
 
 /**
  * Queue one message for the sidecar to send.
@@ -124,6 +163,7 @@ async function ask(text, options) {
     process.exit(2);
   }
   const name = queue({ kind: "ask", text, options });
+  failIfSidecarDown(UNREAD);
   const receipt = path.join(RECEIPTS, name);
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
@@ -223,6 +263,8 @@ function kilo(tokens) {
  */
 async function wait(timeoutSeconds, all) {
   const deadline = Date.now() + timeoutSeconds * 1000;
+  /** Whether this wait has said the sidecar is down, since it last was up. */
+  let warned = false;
   for (;;) {
     const printed = drain(false, true, all ? () => true : (line) => wakes(line, EMPLOYEE ?? ""));
     if (printed > 0) {
@@ -237,7 +279,18 @@ async function wait(timeoutSeconds, all) {
       );
       return 0;
     }
+    // Said once, and the wait goes on (#583): returning at once would
+    // turn every agent's loop into a busy loop for the whole outage.
+    const down = sidecarWarning("nothing can arrive until it is back");
+    if (down !== null && !warned) {
+      console.error(down);
+    }
+    warned = down !== null;
     if (Date.now() >= deadline) {
+      if (down !== null) {
+        console.log(`(nothing for you in ${String(timeoutSeconds)}s; the sidecar is still down)`);
+        process.exit(2);
+      }
       const queued = pending();
       console.log(
         queued === 0
@@ -335,6 +388,7 @@ switch (command) {
     }
     queue({ to, text: words.join(" ") });
     console.log(`queued to ${to}`);
+    failIfSidecarDown(UNREAD);
     break;
   }
 
@@ -345,6 +399,7 @@ switch (command) {
     }
     queue({ to: "all", text: rest.join(" ") });
     console.log("queued to General");
+    failIfSidecarDown(UNREAD);
     break;
   }
   case "ask": {
@@ -397,6 +452,7 @@ switch (command) {
     }
     queue({ kind: "reply", text: words.join(" "), ...(replyTo === undefined ? {} : { replyTo }) });
     console.log("queued to Support");
+    failIfSidecarDown(UNREAD);
     break;
   }
 

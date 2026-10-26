@@ -1,4 +1,4 @@
-# Server Environment Variables
+# Environment Variables
 
 The server (`apps/server`) is configured entirely through environment
 variables, resolved once at startup by `loadConfig()`
@@ -15,3 +15,13 @@ chosen so a LAN host needs zero configuration for the common case.
 `parsePort`/`parseBoolean`/`loadConfig` are unit tested in
 `apps/server/src/config.test.ts` — see that file for the exact accepted/
 rejected input shapes.
+
+## Web client build variables
+
+Read by Vite when it builds `apps/web`, not at runtime.
+
+| Variable                  | Default    | Meaning                                                                                                                                                                                                                                                          |
+| ------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VIBEWARS_BASE`           | `/`        | The sub-path the client is served under, as GitHub Pages deploys it (`/VibeWars/`, `/VibeWars/next/`). It also names the client's storage (`storage/namespace.ts`).                                                                                              |
+| `VITE_VIBEWARS_TRANSPORT` | `trystero` | How peers reach each other (#403): `trystero` over WebRTC and public Nostr relays, or `broadcast` over a BroadcastChannel, which only reaches tabs of one browser. e2e builds `broadcast`; every other build plays over Trystero. Anything else fails the build. |
+| `VITE_VIBEWARS_STRESS`    | unset      | `on` only in the build `scripts/music-stress.mjs` makes, the one where `?stress=` works (#420).                                                                                                                                                                  |

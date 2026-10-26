@@ -9,3 +9,9 @@ declare function structuredClone<T>(value: T): T;
 /** A match client gives up on a host that never answers, or that dropped and stayed away (#515). */
 declare function setTimeout(callback: () => void, ms: number): unknown;
 declare function clearTimeout(handle: unknown): void;
+/** A message's size on the wire is its UTF-8 length (#403). */
+declare class TextEncoder {
+  encode(input: string): Uint8Array;
+}
+/** A host that would send an oversized message says so (#403). */
+declare const console: { error(...data: unknown[]): void };
