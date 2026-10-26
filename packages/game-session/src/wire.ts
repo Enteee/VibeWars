@@ -1,23 +1,27 @@
 import {
   energyCostOf,
   getSkill,
+  getStatusDefinition,
   isOffhandId,
   isProfessionId,
   isStatusId,
   STATUS_DEFINITIONS,
+  type ActiveStatus,
   type CombatEvent,
   type CombatLogEntry,
   type Combatant,
   type SkillBar,
+  type StatusCategory,
   type StatusId,
 } from "@vibewars/game-core";
-import type {
-  SkillBarSlot,
-  WireCombat,
-  WireCombatEvent,
-  WirePlayer,
-  WireProjectile,
-  WireSnapshot,
+import {
+  MAX_WIRE_STATUSES,
+  type SkillBarSlot,
+  type WireCombat,
+  type WireCombatEvent,
+  type WirePlayer,
+  type WireProjectile,
+  type WireSnapshot,
 } from "@vibewars/game-protocol";
 
 import type {
@@ -56,6 +60,42 @@ export function statusWireIndex(id: StatusId): number {
 /** The status at `index` in `WIRE_STATUS_IDS`, or `undefined` past its end. */
 export function statusFromWire(index: number): StatusId | undefined {
   return WIRE_STATUS_IDS[index];
+}
+
+/**
+ * Which statuses a snapshot keeps first, lowest first: conditions and
+ * hexes are what a player removes and reacts to (GW1's monitor), an
+ * enchantment is what a foe strips.
+ */
+const WIRE_STATUS_RANK: Readonly<Record<StatusCategory, number>> = {
+  condition: 0,
+  hex: 1,
+  enchantment: 2,
+  stance: 3,
+  preparation: 4,
+  shout: 5,
+  "skill-effect": 6,
+};
+
+function wireStatusRank(id: StatusId): number {
+  return WIRE_STATUS_RANK[getStatusDefinition(id).category];
+}
+
+/**
+ * The statuses a snapshot carries for one player (#636): at most
+ * `MAX_WIRE_STATUSES`, by `WIRE_STATUS_RANK`, then the least time left,
+ * then the id. A client refuses a whole snapshot past the cap, so the rest
+ * stay off the wire; the simulation still applies them.
+ */
+export function wireStatuses(active: readonly ActiveStatus[]): ActiveStatus[] {
+  return [...active]
+    .sort(
+      (a, b) =>
+        wireStatusRank(a.id) - wireStatusRank(b.id) ||
+        a.remainingSeconds - b.remainingSeconds ||
+        (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+    )
+    .slice(0, MAX_WIRE_STATUSES);
 }
 
 /**

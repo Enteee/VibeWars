@@ -49,6 +49,7 @@ import {
   rechargeSlots,
   sanitizeName,
   spawnPoint,
+  wireStatuses,
 } from "@vibewars/game-session";
 import type { StepContext } from "colyseus";
 
@@ -732,7 +733,7 @@ export class MatchRoom extends Room {
     player.castRemaining = activeCast?.remainingSeconds ?? 0;
     player.castTotal = activeCast?.totalSeconds ?? 0;
 
-    const statusIds = sim.combatant.statuses.active.map((s) => s.id);
+    const statusIds = wireStatuses(sim.combatant.statuses.active).map((s) => s.id);
     // Only rewrite the array when it actually changed: every assignment
     // is a patch on the wire, and statuses change far less often than
     // positions do.

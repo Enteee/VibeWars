@@ -1,3 +1,5 @@
+import { StatusSet, type ActiveStatus } from "@vibewars/game-core";
+import { MAX_WIRE_STATUSES } from "@vibewars/game-protocol";
 import { describe, expect, it, vi } from "vitest";
 
 import { RULESET } from "./match-host.js";
@@ -34,5 +36,25 @@ describe("a P2P match (#375)", () => {
 
     expect(match.host.phase).toBe("finished");
     expect(send).not.toHaveBeenCalled();
+  });
+
+  it("sends at most 32 statuses a player, so 33 freeze no guest (#636)", async () => {
+    const match = startMatch();
+    const { connection: remote } = await match.join();
+    await match.step(0.05);
+    const many: ActiveStatus[] = Array.from({ length: MAX_WIRE_STATUSES + 1 }, (_, i) => ({
+      id: i % 2 === 0 ? "burning" : "regeneration",
+      remainingSeconds: i,
+      attacksLeft: undefined,
+      sourceId: remote.selfSessionId,
+    }));
+    vi.spyOn(StatusSet.prototype, "active", "get").mockReturnValue(many);
+    const before = remote.getSnapshot().elapsedSeconds;
+
+    await match.step(0.5);
+
+    expect(remote.getSnapshot().elapsedSeconds).toBeGreaterThan(before);
+    expect(self(remote)?.statuses).toHaveLength(MAX_WIRE_STATUSES);
+    vi.restoreAllMocks();
   });
 });
