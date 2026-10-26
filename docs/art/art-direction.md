@@ -373,6 +373,41 @@ Why it reads, and what it is not:
   In Phaser the shield is one `arc` path stroked twice, the focus one
   `strokeCircle` per colour: two calls per actor.
 
+### Weapon motion
+
+Every auto-attack plays on the held weapon mark (#536). The motion is a
+_pose_ on the shipped geometry: it turns and moves the mark about a pivot,
+scales one accent, flexes a bow. It adds no shape but a nocked arrow while a
+bow is drawn. Poses and timings are data in
+`apps/web/src/render/weapon-pose.ts`; `node scripts/assets/weapon-motion.mjs`
+draws [`weapon-motion.svg`](weapon-motion.svg) from `weaponPose()` itself, so
+the sheet cannot drift from the game. Each row is one weapon at 4×: rest,
+half wind, full wind, half strike, hit, early and late recovery.
+
+![Weapon motion reference sheet](weapon-motion.svg)
+
+- **Four phases.** Wind-up (the weapon cocks back, `easeInOut`), strike
+  (`easeOutCubic`, so it arrives fast and stops on the hit), hold (a beat on
+  impact, for the axe and hammer) and recovery (`easeInOut` back to rest).
+  Their sum fits inside the attack interval, so two swings never overlap and
+  the mark rests between them.
+- **The strike ends exactly on the hit** for melee and on the release for
+  ranged weapons: the pose at the hit is the sheet's "hit" column. A swing
+  nobody predicted strikes from rest.
+- **The wind-up is a tell.** A defender should read it: the hammer's 0.55 s
+  lift and the longbow's 0.85 s draw are slow on purpose (operator,
+  2026-10-25). A quick weapon (daggers 0.16 s, unarmed 0.22 s) gives
+  almost none.
+- **Never past r + 5.5.** The dashed circle on the sheet is the limit; the
+  4 px casing then ends by r + 7.5, short of the target ring (yellow), as
+  for the static mark. A pose that crosses it is a bug in `weapon-pose.ts`.
+- **The swing flash stays.** The arc at r + 6 still marks the hit for
+  everyone; the weapon motion adds to it, it does not replace it.
+- **Fists and daggers alternate hands.** A thrown spear is gone from
+  release until halfway through recovery, then slides back in and fades.
+- **Reduced motion.** Every mark stays at rest, as the swing flash does:
+  the damage number reports the hit, so the motion is decoration.
+
 ### Profession in the arena
 
 Decided (Q25, Q29, Q32): placement **A**. The primary glyph shows at 11 px

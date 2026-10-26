@@ -277,7 +277,11 @@ export interface WireCombat {
   readonly events: readonly WireCombatEvent[];
 }
 
-/** Host to one client: its bar, every slot in its place, `null` where empty (#347). */
+/**
+ * Host to one client: its bar, every slot in its place, `null` where empty
+ * (#347). On welcome, and again on the tick a slot changes, such as a cost
+ * a glyph lowers (#637).
+ */
 export interface WireSkillBar {
   readonly slots: readonly (SkillBarSlot | null)[];
   /** Attribute id to effective rank, as the host resolved the build (#485). */

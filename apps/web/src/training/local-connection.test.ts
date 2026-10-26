@@ -5,12 +5,8 @@ import type { CastRefusedMessage } from "@vibewars/game-protocol";
 import type { CombatMessage } from "@vibewars/game-session";
 
 import { setProfessions, setRank, setSkill, newCharacter } from "../ui/build-editor.js";
-import {
-  TICK_SECONDS,
-  NO_PROFESSIONS,
-  createLocalConnection,
-  skillSlotsFor,
-} from "./local-connection.js";
+import { slotAffordable } from "../ui/skill-slot-state.js";
+import { TICK_SECONDS, NO_PROFESSIONS, createLocalConnection } from "./local-connection.js";
 import { SELF_ID, playerArming, setupScenario } from "./scenario-setup.js";
 
 function pyro() {
@@ -19,12 +15,12 @@ function pyro() {
   return setSkill(character, 0, "elementalist.fireball");
 }
 
-function targetDummy() {
+function targetDummy(character = pyro()) {
   const scenario = getTrainingScenario("target-dummy");
   if (scenario === undefined) {
     throw new Error("the target-dummy scenario is gone");
   }
-  const setup = setupScenario(scenario, pyro());
+  const setup = setupScenario(scenario, character);
   return {
     setup,
     connection: createLocalConnection({
@@ -218,21 +214,6 @@ describe("createLocalConnection", () => {
   });
 });
 
-describe("skillSlotsFor", () => {
-  it("describes each skill as the server's join message does", () => {
-    expect(skillSlotsFor(["elementalist.fireball"], { attributeRanks: new Map() })).toEqual([
-      {
-        id: "elementalist.fireball",
-        name: "Fireball",
-        energyCost: 10,
-        adrenalineCost: 0,
-        activationSeconds: 1,
-        rechargeSeconds: 7,
-      },
-    ]);
-  });
-});
-
 describe("the bar a Ranger with Expertise sees (#528)", () => {
   it("shows Broad Head Arrow at the 5 energy it costs, so 5 energy is enough", () => {
     let character = setProfessions(newCharacter("c1"), "ranger", undefined);
@@ -253,5 +234,36 @@ describe("the bar a Ranger with Expertise sees (#528)", () => {
     const slot = connection.skillBar[0];
     expect(slot?.id).toBe("ranger.broad-head-arrow");
     expect(slot?.energyCost).toBe(5);
+  });
+});
+
+describe("the bar with Glyph of Lesser Energy up (#637)", () => {
+  it("costs Fireball what the glyph leaves, so 3 energy lights it, then the full 10 again", () => {
+    let character = pyro();
+    character = setRank(character, "elementalist.energy-storage", 9);
+    character = setSkill(character, 1, "elementalist.glyph-of-lesser-energy");
+    const { connection } = targetDummy(character);
+    const fireball = () => connection.skillBar[0];
+    // A tick at a time: one frame catches up only so far.
+    const run = (seconds: number): void => {
+      for (let t = 0; t < seconds; t += TICK_SECONDS) {
+        connection.advance(TICK_SECONDS);
+      }
+    };
+    expect(fireball()?.energyCost).toBe(10);
+
+    connection.sendIntent({ kind: "use-skill", slot: 1 });
+    run(1.5);
+    expect(fireball()?.energyCost).toBe(0);
+    const self = connection.getSnapshot().players.find((p) => p.sessionId === SELF_ID);
+    const slot = fireball();
+    if (self === undefined || slot === null || slot === undefined) {
+      throw new Error("no player or no Fireball");
+    }
+    expect(slotAffordable(slot, { ...self, energy: 3 })).toBe(true);
+
+    // The glyph's 15 s run out unused: the bar goes back.
+    run(15);
+    expect(fireball()?.energyCost).toBe(10);
   });
 });

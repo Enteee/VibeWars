@@ -1,4 +1,5 @@
 import {
+  StatusSet,
   getStatusDefinition,
   type ActiveStatus,
   type StatusCategory,
@@ -7,7 +8,7 @@ import {
 import { MAX_WIRE_STATUSES } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
-import { WIRE_STATUS_IDS, wireStatuses } from "./wire.js";
+import { WIRE_STATUS_IDS, sameSkillBar, skillBarSlots, wireStatuses } from "./wire.js";
 
 const ORDER: readonly StatusCategory[] = [
   "condition",
@@ -87,5 +88,47 @@ describe("wireStatuses (#636)", () => {
   it("is the same for the same statuses in any order", () => {
     const active = WIRE_STATUS_IDS.map((id, i) => status(id, i % 3));
     expect(wireStatuses([...active].reverse())).toEqual(wireStatuses(active));
+  });
+});
+
+describe("skillBarSlots", () => {
+  it("describes each skill as the host's skill-bar message does", () => {
+    const bearer = { attributeRanks: new Map<string, number>(), statuses: new StatusSet() };
+    expect(skillBarSlots(["elementalist.fireball", null], bearer)).toEqual([
+      {
+        id: "elementalist.fireball",
+        name: "Fireball",
+        energyCost: 10,
+        adrenalineCost: 0,
+        activationSeconds: 1,
+        rechargeSeconds: 7,
+      },
+      null,
+    ]);
+  });
+
+  it("costs a spell what the glyph leaves of it (#637)", () => {
+    const bearer = { attributeRanks: new Map<string, number>(), statuses: new StatusSet() };
+    bearer.statuses.apply("glyph-of-lesser-energy", 15, "e");
+    expect(skillBarSlots(["elementalist.fireball"], bearer)[0]?.energyCost).toBe(0);
+  });
+});
+
+describe("sameSkillBar (#637)", () => {
+  const bar = ["elementalist.fireball", null, "warrior.healing-signet"] as const;
+  const plain = () =>
+    skillBarSlots([...bar], { attributeRanks: new Map(), statuses: new StatusSet() });
+
+  it("holds for two bars built alike, gaps included", () => {
+    expect(sameSkillBar(plain(), plain())).toBe(true);
+  });
+
+  it("tells a changed cost, a moved gap and a different length apart", () => {
+    const glyphed = new StatusSet();
+    glyphed.apply("glyph-of-lesser-energy", 15, "e");
+    const cheaper = skillBarSlots([...bar], { attributeRanks: new Map(), statuses: glyphed });
+    expect(sameSkillBar(plain(), cheaper)).toBe(false);
+    expect(sameSkillBar(plain(), [...plain()].reverse())).toBe(false);
+    expect(sameSkillBar(plain(), plain().slice(0, 2))).toBe(false);
   });
 });

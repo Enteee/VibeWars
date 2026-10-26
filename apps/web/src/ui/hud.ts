@@ -32,6 +32,7 @@ import {
   flashSlot,
   outOfRange,
   paintCastFill,
+  slotAffordable,
 } from "./skill-slot-state.js";
 import { createSlotTooltips, type SlotTooltips } from "./slot-tooltip.js";
 
@@ -374,6 +375,13 @@ export function skillSlotHtml(slot: SkillSlot): string {
   );
 }
 
+/** A slot's price as the bar prints it: adrenaline strikes, or energy. */
+export function slotCostText(slot: SkillSlot): string {
+  return slot.adrenalineCost > 0
+    ? `${String(slot.adrenalineCost)}a`
+    : `${String(slot.energyCost)}e`;
+}
+
 export function renderSkillBar(
   hud: HudElements,
   slots: readonly (SkillSlot | null)[],
@@ -402,8 +410,7 @@ export function renderSkillBar(
       nameNode.textContent = slot.name;
     }
     if (costNode !== null) {
-      costNode.textContent =
-        slot.adrenalineCost > 0 ? `${String(slot.adrenalineCost)}a` : `${String(slot.energyCost)}e`;
+      costNode.textContent = slotCostText(slot);
     }
     button.addEventListener("click", () => {
       onUse(index);
@@ -769,10 +776,13 @@ export function updateHud(
     button.classList.toggle("is-casting", index === fill?.slot);
     paintCastFill(button, index === fill?.slot ? fill.fraction : undefined);
     button.classList.toggle("is-out-of-range", far[index] === true);
-    const affordable =
-      slot.adrenalineCost > 0
-        ? self.adrenaline >= slot.adrenalineCost
-        : self.energy >= slot.energyCost;
-    button.classList.toggle("is-unaffordable", !affordable);
+    // The host sends the bar again when a cost changes, as a glyph's
+    // discount comes and goes (#637): the number follows it.
+    const costNode = button.querySelector(".hud-skill-cost");
+    const cost = slotCostText(slot);
+    if (costNode !== null && costNode.textContent !== cost) {
+      costNode.textContent = cost;
+    }
+    button.classList.toggle("is-unaffordable", !slotAffordable(slot, self));
   });
 }

@@ -137,10 +137,18 @@ test("a build exports to text and imports back", async ({ page }) => {
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator("input.editor-name").fill("Scratch");
 
+  // A clipped paste first, then the whole text: once the import works,
+  // the earlier error must not still say it failed.
+  await page.locator("textarea.editor-transfer").fill(exported.slice(0, 40));
+  await page.getByRole("button", { name: "import", exact: true }).click();
+  await expect(page.locator(".editor-share-status")).toContainText("Could not import");
+
   await page.locator("textarea.editor-transfer").fill(exported);
   await page.getByRole("button", { name: "import", exact: true }).click();
 
   await expect(page.locator("input.editor-name")).toHaveValue("Shared Build");
+  await expect(page.locator(".editor-share-status .editor-problem")).toHaveCount(0);
+  await expect(page.locator(".editor-share-status")).toBeEmpty();
 });
 
 test("a mangled build is refused with a readable reason", async ({ page }) => {
@@ -263,6 +271,39 @@ test("a second elite replaces the first on the bar, framed in gold, into the mat
   await expect(hud.nth(3)).toContainText("Broad Head Arrow");
   await expect(hud.nth(3)).toHaveClass(/is-elite/);
   await expect(page.locator(".hud-skills .hud-skill.is-elite")).toHaveCount(1);
+});
+
+test("in a match, Glyph of Lesser Energy shows Armor of Earth's discounted cost, then the full one (#637)", async ({
+  page,
+}) => {
+  // Setup, then up to 45 s for the glyph's 15 s of game time under load.
+  test.setTimeout(90_000);
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Glyph");
+  await page.locator(".editor-row select").first().selectOption("elementalist");
+  await page
+    .locator(".skill-box", { hasText: "Glyph of Lesser Energy" })
+    .dragTo(page.locator(".skill-slot").nth(0));
+  await page
+    .locator(".skill-box", { hasText: "Armor of Earth" })
+    .dragTo(page.locator(".skill-slot").nth(1));
+  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.locator(".roster-row", { hasText: "Glyph" }).click();
+  await startSoloMatch(page);
+  const armor = page.locator(".hud-skills .hud-skill").nth(1).locator(".hud-skill-cost");
+  await expect(armor).toHaveText("10e");
+
+  // The glyph takes 16 off the next two spells: Armor of Earth is free.
+  await page.keyboard.press(skillKey(0));
+  await expect(armor).toHaveText("0e");
+  await page.keyboard.press(skillKey(1));
+  await expect(
+    page.locator(".hud-skills .hud-skill").nth(1).locator(".recharge-overlay"),
+  ).toHaveCount(1);
+  // One spell left on it: the cost holds until the glyph's 15 s run out, in
+  // game time, which runs slower than wall time under load (#327).
+  await expect(armor).toHaveText("0e");
+  await expect(armor).toHaveText("10e", { timeout: 45_000 });
 });
 
 test("a team supports every operation sprint 18 asks for", async ({ page }) => {
@@ -698,10 +739,93 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
   );
 });
 
+/* --- the editor updates in place (#563, ADR-0030) ------------------------- */
+
+const libraryScroll = (page: Page): Promise<number> =>
+  page.locator(".skill-library").evaluate((node) => node.scrollTop);
+
+/** Scroll the library to `top`, and say where it settled. */
+async function scrollLibrary(page: Page, top: number): Promise<number> {
+  return page.locator(".skill-library").evaluate((node, to) => {
+    node.scrollTop = to;
+    return node.scrollTop;
+  }, top);
+}
+
+test("the skill library keeps its scroll through an equip, a rank, a profession and a tab (#563)", async ({
+  page,
+}) => {
+  // Short, so even a two-profession library scrolls.
+  await page.setViewportSize({ width: 1500, height: 500 });
+  await openElementalist(page);
+  const top = await scrollLibrary(page, 100);
+  expect(top).toBeGreaterThan(0);
+
+  // A box already in view, so the click itself scrolls nothing.
+  const inView = await page.locator(".skill-library").evaluate((library) => {
+    const frame = library.getBoundingClientRect();
+    const boxes = Array.from(library.querySelectorAll<HTMLElement>(".skill-box"));
+    const box = boxes.find((node) => {
+      const rect = node.getBoundingClientRect();
+      return rect.top >= frame.top && rect.bottom <= frame.bottom;
+    });
+    return box?.dataset.skillId ?? "";
+  });
+  await page.locator(`.skill-box[data-skill-id="${inView}"]`).click();
+  await expect(page.locator(`.skill-box[data-skill-id="${inView}"]`)).toHaveClass(/is-equipped/);
+  expect(await libraryScroll(page)).toBe(top);
+
+  await page
+    .locator(".editor-attribute", { hasText: "Fire Magic" })
+    .getByRole("button", { name: "+" })
+    .click();
+  await expect(page.locator(".editor-attribute", { hasText: "Fire Magic" })).toContainText("1");
+  expect(await libraryScroll(page)).toBe(top);
+
+  // A new secondary reshuffles the groups around Fireball, which stays: the
+  // library holds it where it was on screen rather than jumping to the top.
+  const fireball = page.locator('.skill-box[data-skill-id="elementalist.fireball"]');
+  const onScreen = async (): Promise<number> => (await fireball.boundingBox())?.y ?? Number.NaN;
+  const before = await onScreen();
+  await page.locator(".editor-row select").nth(1).selectOption("warrior");
+  await expect(page.locator(".skill-group", { hasText: "TACTICS" })).toHaveCount(1);
+  expect(Math.abs((await onScreen()) - before)).toBeLessThanOrEqual(1);
+  const reshuffled = await libraryScroll(page);
+
+  // Each tab keeps its own place. The tabs scroll with the list, so they
+  // are pressed in place: a real click would first scroll them into view.
+  const tab = (name: string) => page.getByRole("button", { name, exact: true });
+  await tab("gear").dispatchEvent("click");
+  await expect(page.locator(".gear-box").first()).toBeVisible();
+  const gearTop = await scrollLibrary(page, 120);
+  await tab("skills").dispatchEvent("click");
+  expect(await libraryScroll(page)).toBe(reshuffled);
+  await tab("gear").dispatchEvent("click");
+  expect(await libraryScroll(page)).toBe(gearTop);
+});
+
+test("a pressed control keeps the keyboard, so Tab goes on from it (#563)", async ({ page }) => {
+  await openElementalist(page);
+  const fire = page.locator(".editor-attribute", { hasText: "Fire Magic" });
+  const plus = fire.getByRole("button", { name: "+" });
+  await plus.click();
+  await expect(fire).toContainText("1");
+  await expect(plus).toBeFocused();
+  // Space presses it again: it is the same button, not a rebuilt one.
+  await page.keyboard.press("Space");
+  await expect(fire.locator(".editor-attribute-rank")).toHaveText("2");
+  // Shift+Tab steps back to Fire Magic's own "−", enabled now: the
+  // keyboard goes on from where it was, not from the top of the page.
+  await page.keyboard.press("Shift+Tab");
+  await expect(fire.getByRole("button", { name: "−" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(fire.locator(".editor-attribute-rank")).toHaveText("1");
+});
+
 test("the library remembers which tab you were on while you build", async ({ page }) => {
   await newCharacter(page);
   await openGearLibrary(page);
-  // Equipping re-renders the whole editor; the tab must not snap back.
+  // Equipping updates the editor; the tab must not snap back.
   await equipFromLibrary(page, "Axe");
   await expect(page.locator(".library-tab.is-active")).toHaveText("gear");
 });

@@ -34,3 +34,4 @@ rewriting history.
 | [0027](0027-one-turn-per-process.md)          | Agents run one turn per process                        |
 | [0028](0028-strudel-music-host.md)            | Strudel music engine in a sandboxed host               |
 | [0029](0029-attack-skills-ride-the-weapon.md) | Attack skills ride the weapon                          |
+| [0030](0030-screens-mount-once.md)            | Screens mount once and update in place                 |
