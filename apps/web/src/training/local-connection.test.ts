@@ -117,6 +117,34 @@ describe("createLocalConnection", () => {
     expect(self()?.walking).toBe(false);
   });
 
+  it("reports a spell walking in as walking, so Esc drops it unpaid (#499)", () => {
+    const { setup, connection } = targetDummy();
+    const me = setup.simulation.get(SELF_ID);
+    const dummy = setup.simulation.get("dummy");
+    if (me === undefined || dummy === undefined) {
+      throw new Error("the target-dummy scenario lost a participant");
+    }
+    const self = () => connection.getSnapshot().players.find((p) => p.sessionId === SELF_ID);
+    // Opposite corners of the hall, past Fireball range.
+    me.position = { x: 20, y: 20 };
+    dummy.position = { x: 540, y: 400 };
+    const combat: string[] = [];
+    connection.onCombat((message) => combat.push(message.cause));
+
+    connection.sendIntent({ kind: "target", targetSessionId: "dummy" });
+    connection.sendIntent({ kind: "use-skill", slot: 0 });
+    connection.advance(TICK_SECONDS);
+    expect(self()?.walking).toBe(true);
+    connection.sendIntent({ kind: "cancel" });
+    expect(self()?.walking).toBe(false);
+    for (let i = 0; i < 200; i += 1) {
+      connection.advance(TICK_SECONDS);
+    }
+
+    expect(combat).not.toContain("skill");
+    expect(self()?.energy).toBe(self()?.maxEnergy);
+  });
+
   it("says why an attack was refused, as the server does", () => {
     const { connection } = targetDummy();
     const refusals: CastRefusedMessage[] = [];

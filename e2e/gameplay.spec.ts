@@ -567,9 +567,11 @@ test("the target panel shows the target's professions before its name (#281)", a
 
   await page.keyboard.press("Tab");
   await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
-  await expect(icons).toHaveCount(1);
+  // The profession, then the weapon it carries (#419).
+  await expect(icons).toHaveCount(2);
   await expect(icons.first()).toHaveAttribute("alt", "Warrior");
   await expect(icons.first()).toHaveAttribute("src", /icons\/profession\/warrior\.svg$/);
+  await expect(icons.nth(1)).toHaveAttribute("src", /icons\/weapon\/[a-z-]+\.svg$/);
 
   // Gone with the target, when it leaves.
   await leaveMatch(opponent);

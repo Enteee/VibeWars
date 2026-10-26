@@ -82,6 +82,8 @@ function checkTarget(request: ActivationRequest): ActivationCheck {
     case "single-ally":
       // "Ally" includes yourself: self-healing is a normal, intended play.
       return isAlly || isSelf ? OK : reject("invalid-target-enemy");
+    case "single-other-ally":
+      return isAlly ? OK : reject(isSelf ? "invalid-target-self" : "invalid-target-enemy");
     case "single-any":
       return OK;
   }

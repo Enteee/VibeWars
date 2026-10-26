@@ -157,7 +157,7 @@ export interface WirePlayer {
   readonly targetId: string | null;
   /** Who this player is attacking with their weapon (#160). */
   readonly attackTargetId: string | null;
-  /** Walking to a clicked point (#310, #342). */
+  /** Walking to a clicked point (#310, #342), or in to cast a skill pressed out of range (#499). */
   readonly walking: boolean;
   readonly health: number;
   readonly maxHealth: number;

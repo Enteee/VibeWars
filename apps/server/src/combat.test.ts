@@ -198,20 +198,15 @@ describe("networked combat", () => {
     const toB = refusals(roomB);
     const fireballSlot = DEFAULT_SKILL_BAR.indexOf("elementalist.fireball");
 
-    // Nobody targeted yet: the nearest enemy is picked, and shown, but
-    // the teams spawn far beyond spell range.
+    // Nobody targeted yet: the nearest enemy is picked, and shown. The
+    // teams spawn far beyond spell range, so Fireball walks in rather than
+    // being refused (#499): cancelled before it gets there.
     roomA.send("intent", { kind: "use-skill", slot: fireballSlot });
-    await waitFor(() => toA.length === 1, { label: "the first refusal" });
-    expect(toA[0]).toEqual({
-      kind: "skill",
-      slot: fireballSlot,
-      skillId: "elementalist.fireball",
-      reason: "out-of-range",
-    });
     await waitFor(
       () => roomA.state.players.get(roomA.sessionId)?.targetSessionId === roomB.sessionId,
       { label: "the auto-target" },
     );
+    roomA.send("intent", { kind: "cancel" });
 
     // Fireball at yourself.
     roomA.send("intent", { kind: "target", targetSessionId: roomA.sessionId });
@@ -220,8 +215,13 @@ describe("networked combat", () => {
       { label: "the self-target" },
     );
     roomA.send("intent", { kind: "use-skill", slot: fireballSlot });
-    await waitFor(() => toA.length === 2, { label: "the second refusal" });
-    expect(toA[1]?.reason).toBe("invalid-target-self");
+    await waitFor(() => toA.length === 1, { label: "the refusal" });
+    expect(toA[0]).toEqual({
+      kind: "skill",
+      slot: fireballSlot,
+      skillId: "elementalist.fireball",
+      reason: "invalid-target-self",
+    });
 
     // Nothing was cast, and the opponent heard nothing.
     expect(roomA.state.players.get(roomA.sessionId)?.castingSkillId).toBe("");

@@ -176,6 +176,7 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   self: "Self",
   "single-enemy": "One foe",
   "single-ally": "One ally",
+  "single-other-ally": "Another ally",
   "single-any": "Any one target",
 };
 

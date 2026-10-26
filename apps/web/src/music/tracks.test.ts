@@ -351,18 +351,6 @@ describe("manifest hygiene", () => {
   });
 });
 
-/**
- * Tracks not yet re-voiced for #449's register rule: #450 does them and
- * deletes this list. Until then they must fail it, so that it cannot rot.
- */
-const NOT_YET_REVOICED: readonly string[] = [
-  "clash-of-banners",
-  "glass-dunes",
-  "jungle-veil",
-  "victors-hymn",
-];
-const REGISTER_PROBLEM = /reaches|has no lpf|lpf reaches/;
-
 describe.each(TRACKS)("track $id", (track) => {
   // Evaluating up to 128 cycles at every level took 9 to 26 s for the densest tracks on a loaded runner.
   it("passes every rule at every intensity level", async () => {
@@ -370,11 +358,6 @@ describe.each(TRACKS)("track $id", (track) => {
       { ...track, colour: [...track.colour] },
       { cycles: CYCLES, allowedSounds: allowed },
     );
-    if (NOT_YET_REVOICED.includes(track.id)) {
-      expect(problems.filter((p) => !REGISTER_PROBLEM.test(p))).toEqual([]);
-      expect(problems.some((p) => REGISTER_PROBLEM.test(p))).toBe(true);
-    } else {
-      expect(problems).toEqual([]);
-    }
+    expect(problems).toEqual([]);
   }, 60_000);
 });
