@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { MAX_WIRE_PINGS } from "@vibewars/game-protocol";
 
-import { CALL_INTERVAL_SECONDS, PING_SECONDS, createCallBoard } from "./calls.js";
+import { PING_SECONDS, createCallBoard } from "./calls.js";
 
 const BOUNDS = { width: 960, height: 640 };
 /** b is team 0's living foe; everyone else is not. */
@@ -23,14 +23,13 @@ describe("createCallBoard (#443)", () => {
     expect(board.view(0, 0).target).toBeNull();
   });
 
-  it("drops a second call or ping within a second, from the same player only", () => {
+  it("accepts calls and pings back to back from one player (#730)", () => {
     const board = createCallBoard(BOUNDS);
     expect(board.call(0, "a", { kind: "ping", x: 10, y: 10 }, 0, foeB)).toBe(true);
-    expect(board.call(0, "a", { kind: "target", targetId: "b" }, 0.5, foeB)).toBe(false);
-    expect(board.call(0, "c", { kind: "ping", x: 20, y: 20 }, 0.5, foeB)).toBe(true);
-    expect(board.call(0, "a", { kind: "target", targetId: "b" }, CALL_INTERVAL_SECONDS, foeB)).toBe(
-      true,
-    );
+    expect(board.call(0, "a", { kind: "ping", x: 20, y: 20 }, 0, foeB)).toBe(true);
+    expect(board.call(0, "a", { kind: "target", targetId: "b" }, 0, foeB)).toBe(true);
+    expect(board.view(0, 0).pings.map((ping) => ping.id)).toEqual([1, 2]);
+    expect(board.view(0, 0).target).toEqual({ targetId: "b", callerId: "a" });
   });
 
   it("expires a ping after 2.6 s, counting it down on the way", () => {
@@ -66,10 +65,11 @@ describe("createCallBoard (#443)", () => {
     expect(board.call(0, "d", { kind: "ping", x: 0, y: Infinity }, 0, foeB)).toBe(false);
   });
 
-  it("keeps the newest 8 pings", () => {
+  it("keeps the newest 32 pings, from one player too", () => {
     const board = createCallBoard(BOUNDS);
+    expect(MAX_WIRE_PINGS).toBe(32);
     for (let i = 0; i < MAX_WIRE_PINGS + 3; i += 1) {
-      board.call(0, `p${String(i)}`, { kind: "ping", x: i, y: 0 }, 0, foeB);
+      board.call(0, "a", { kind: "ping", x: i, y: 0 }, 0, foeB);
     }
     const { pings } = board.view(0, 0);
     expect(pings).toHaveLength(MAX_WIRE_PINGS);
