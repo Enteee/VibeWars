@@ -337,7 +337,7 @@ test("team counters mark their cells; a cell finds its skill on the team (#575)"
         .locator(".skill-box-equip")
         .click();
     }
-    await page.getByRole("button", { name: "save", exact: true }).click();
+    await page.getByRole("button", { name: "Save", exact: true }).click();
     await expect(page.locator(".roster")).toContainText(name);
   }
   await page.getByRole("button", { name: "teams" }).click();

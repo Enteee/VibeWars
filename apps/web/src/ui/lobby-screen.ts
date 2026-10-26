@@ -1,7 +1,7 @@
 import { LOBBY_CODE_LENGTH } from "@vibewars/game-protocol";
 import type { LobbySnapshot } from "@vibewars/game-session";
 
-import { button, h, screenBar } from "./kit.js";
+import { button, h, inlineConfirm, screenBar, type InlineConfirm } from "./kit.js";
 
 /**
  * The lobby screen (brief §21's lobby layout): the shareable code, both
@@ -72,6 +72,13 @@ export function mapLabel(map: LobbyMap): string {
   return `${map.name} (${map.size})`;
 }
 
+/**
+ * A host's Leave, while it asks whether to close the lobby for everyone.
+ * Kept across renders: the lobby redraws on every change, and a guest
+ * pressing Ready must not answer the host's question for them.
+ */
+let closingLobby: InlineConfirm | undefined;
+
 export function renderLobbyScreen(
   root: HTMLElement,
   snapshot: LobbySnapshot,
@@ -79,6 +86,9 @@ export function renderLobbyScreen(
   notice: string | undefined,
   availableMaps: readonly LobbyMap[] = [],
 ): void {
+  const wasAsking = closingLobby?.isOpen() === true;
+  closingLobby?.dismiss();
+  closingLobby = undefined;
   root.replaceChildren();
   const panel = h("div", "screen screen-lobby");
   const controls = lobbyControls(snapshot);
@@ -96,17 +106,41 @@ export function renderLobbyScreen(
   readyButton.disabled = controls.readyDisabled;
   const actions: HTMLElement[] = [readyButton];
   if (snapshot.isHost) {
-    const start = button("Start match", "primary", callbacks.onStart);
+    const start = button("Start match", "primary", () => {
+      // Starting answers the question: the host is staying.
+      closingLobby?.dismiss();
+      callbacks.onStart();
+    });
     start.disabled = controls.startDisabled;
     actions.push(start);
   }
-  panel.appendChild(
-    screenBar({
-      back: { label: "Leave", onBack: callbacks.onLeave },
-      title: [header],
-      actions,
-    }).element,
-  );
+  // A host's lobby ends with it: with anyone else in it, Leave (or Esc)
+  // asks first, so one stray press does not send everyone to the menu.
+  const othersHere = snapshot.players.some((p) => p.sessionId !== snapshot.selfSessionId);
+  const askToClose = (): void => {
+    closingLobby = inlineConfirm(
+      back,
+      "Close the lobby for everyone?",
+      "Close lobby",
+      callbacks.onLeave,
+      "Stay",
+    );
+  };
+  const { element: bar, back } = screenBar({
+    back: {
+      label: "Leave",
+      onBack: () => {
+        if (snapshot.isHost && othersHere) {
+          askToClose();
+        } else {
+          callbacks.onLeave();
+        }
+      },
+    },
+    title: [header],
+    actions,
+  });
+  panel.appendChild(bar);
 
   // Only the host may change the map, so everyone else sees it as a
   // label rather than a control they would be refused on clicking.
@@ -182,4 +216,7 @@ export function renderLobbyScreen(
   }
 
   root.appendChild(panel);
+  if (wasAsking && snapshot.isHost && othersHere && snapshot.phase === "waiting") {
+    askToClose();
+  }
 }

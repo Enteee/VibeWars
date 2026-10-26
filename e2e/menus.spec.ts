@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { openPeers } from "./helpers/peers.js";
+
 /**
  * The screen bar every menu screen shares (#578): Esc is its Back, and
  * with an inline confirmation open, Esc cancels that instead.
@@ -70,4 +72,39 @@ test("#578: Esc with a confirmation open cancels it, and only then goes back", a
   await expect(discard).toBeVisible();
   await discard.click();
   await expect(page.getByRole("heading", { name: "Teams" })).toBeVisible();
+});
+
+test("#578: a host with others in the lobby is asked before Leave or Esc closes it", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+  try {
+    await openMenu(host);
+    await host.getByRole("button", { name: "Host a lobby" }).click();
+    const code = (await host.locator(".lobby-code").textContent())?.trim() ?? "";
+    await openMenu(guest);
+    await guest.locator("input.code-input").fill(code);
+    await guest.getByRole("button", { name: "Join", exact: true }).click();
+    await expect(host.locator(".lobby-spectators")).toContainText("player");
+
+    const question = host.getByText("Close the lobby for everyone?");
+    await host.keyboard.press("Escape");
+    await expect(question).toBeVisible();
+    // The lobby redraws on the guest's change; the question stays.
+    await guest.getByRole("button", { name: "Join team 2" }).click();
+    await expect(host.locator(".lobby-team").nth(1)).toContainText("player");
+    await expect(question).toBeVisible();
+    // Esc is "no", as on every screen.
+    await host.keyboard.press("Escape");
+    await expect(question).toHaveCount(0);
+    await expect(host.locator(".screen-lobby")).toBeVisible();
+
+    await host.getByRole("button", { name: "Leave", exact: true }).click();
+    await host.getByRole("button", { name: "Close lobby", exact: true }).click();
+    await expect(menuHeading(host)).toBeVisible();
+    await expect(menuHeading(guest)).toBeVisible();
+  } finally {
+    await context.close();
+  }
 });

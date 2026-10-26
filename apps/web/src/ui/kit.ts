@@ -213,10 +213,17 @@ export interface InlineConfirm {
 /** Each open confirmation, and its cancel, for Esc. */
 const openConfirms = new Map<HTMLElement, () => void>();
 
-/** Cancel the newest open confirmation on the page; false when there is none. */
+/**
+ * Cancel the newest open confirmation on the page; false when there is
+ * none. One a re-render took off the page is forgotten on the way.
+ */
 function cancelConfirm(): boolean {
-  const open = [...openConfirms].filter(([ask]) => ask.isConnected);
-  const newest = open.at(-1);
+  for (const ask of openConfirms.keys()) {
+    if (!ask.isConnected) {
+      openConfirms.delete(ask);
+    }
+  }
+  const newest = [...openConfirms].at(-1);
   if (newest === undefined) {
     return false;
   }
