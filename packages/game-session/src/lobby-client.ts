@@ -11,7 +11,12 @@ import {
   type WireLobbyState,
 } from "@vibewars/game-protocol";
 
-import type { LobbyConnection, LobbySnapshot, MatchStarting } from "./lobby-connection.js";
+import type {
+  LobbyClosedReason,
+  LobbyConnection,
+  LobbySnapshot,
+  MatchStarting,
+} from "./lobby-connection.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { scopeTransport } from "./scoped-transport.js";
 import type { Transport } from "./transport.js";
@@ -73,7 +78,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const changeHandlers: (() => void)[] = [];
   const startingHandlers: ((start: MatchStarting) => void)[] = [];
   const rejectedHandlers: ((reason: string) => void)[] = [];
-  const closedHandlers: ((reason: "host-left") => void)[] = [];
+  const closedHandlers: ((reason: LobbyClosedReason) => void)[] = [];
   /** Until the join settles: how a refusal or the timeout ends it. */
   let failJoin: ((error: Error) => void) | undefined;
   /** When the host's peer went mid-match, by `Date.now`, while waiting for it back. */
@@ -91,7 +96,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     closedHandlers.length = 0;
   };
 
-  const close = (): void => {
+  const close = (reason: LobbyClosedReason): void => {
     if (closed) {
       return;
     }
@@ -99,7 +104,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     const handlers = [...closedHandlers];
     stop();
     for (const handler of handlers) {
-      handler("host-left");
+      handler(reason);
     }
   };
 
@@ -219,7 +224,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           if (failJoin !== undefined) {
             failJoin(new LobbyRefusedError(note.reason));
           } else if (note.reason === "host-left") {
-            close();
+            close("host-left");
           }
         }
       }),
@@ -260,7 +265,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         const late = Date.now() - droppedAt >= RECONNECT_WINDOW_SECONDS * 1000;
         droppedAt = undefined;
         if (late) {
-          close();
+          close("connection-lost");
           return;
         }
         transport.send("lobby-join", join, hostId);
@@ -270,11 +275,13 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           return;
         }
         if (latest?.phase !== "in-match") {
-          close();
+          close("host-left");
           return;
         }
         droppedAt = Date.now();
-        closeTimer = setTimeout(close, RECONNECT_WINDOW_SECONDS * 1000);
+        closeTimer = setTimeout(() => {
+          close("connection-lost");
+        }, RECONNECT_WINDOW_SECONDS * 1000);
       }),
     );
     // And to those already here, in case their joins were told before now.

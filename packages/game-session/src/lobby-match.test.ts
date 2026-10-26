@@ -269,7 +269,7 @@ describe("a lobby, when the host's peer drops during its match", () => {
     vi.advanceTimersByTime(WINDOW_MS - 1);
     expect(closed).toEqual([]);
     vi.advanceTimersByTime(1);
-    expect(closed).toEqual(["host-left"]);
+    expect(closed).toEqual(["connection-lost"]);
   });
 
   it("joins the lobby again when the host is back in time, and stays open", async () => {
@@ -296,7 +296,7 @@ describe("a lobby, when the host's peer drops during its match", () => {
     lobby.network.heal();
     await settle();
 
-    expect(closed).toEqual(["host-left"]);
+    expect(closed).toEqual(["connection-lost"]);
   });
 });
 
