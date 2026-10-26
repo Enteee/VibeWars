@@ -182,17 +182,104 @@ test("12/12/3 spends all 200 points, GW1's split (#470)", async ({ page }) => {
   await expect(plus(3)).toBeDisabled();
 });
 
-test("a team can be created and persists", async ({ page }) => {
-  await page.goto("./");
+/** Save characters named `names` from the main menu, one after another. */
+async function saveCharacters(page: Page, names: readonly string[]): Promise<void> {
+  for (const name of names) {
+    await newCharacter(page);
+    await page.locator("input.editor-name").fill(name);
+    await page.getByRole("button", { name: "save", exact: true }).click();
+    // The roster re-renders only once the save has committed. Without
+    // this wait, the next newCharacter's page.goto unloads the page
+    // mid-write and the character is lost.
+    await expect(page.locator(".roster")).toContainText(name);
+  }
+}
+
+/** The team editor's member rows, as their labels. */
+const memberNames = (page: Page) => page.locator(".team-members .entity-name");
+
+test("a new team is stored only on Save, which stays on the editor (#573)", async ({ page }) => {
+  await saveCharacters(page, ["Alpha"]);
   await page.getByRole("button", { name: "teams" }).click();
-  await expect(page.getByRole("heading", { name: "teams" })).toBeVisible();
+  await page.getByRole("button", { name: "new team" }).click();
+
+  // Nothing stored yet: Back leaves at once and the list is still empty.
+  const save = page.getByRole("button", { name: "save", exact: true });
+  await expect(save).toBeDisabled();
+  await expect(save).toHaveAttribute("title", "A team needs at least one member.");
+  await page.getByRole("button", { name: "back" }).click();
+  await expect(page.getByText("No teams yet.")).toBeVisible();
 
   await page.getByRole("button", { name: "new team" }).click();
-  await expect(page.locator(".entity-name")).toContainText("members");
+  await page.getByLabel("team name").fill("");
+  await page.getByRole("button", { name: "add member" }).click();
+  await expect(save).toHaveAttribute("title", "Give the team a name.");
+  await page.getByLabel("team name").fill("Duo");
+  await expect(save).toBeEnabled();
+  await save.click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+  await expect(page.getByLabel("team name")).toBeVisible();
+  await expect(page.locator(".editor-unsaved")).toBeHidden();
 
   await page.reload();
   await page.getByRole("button", { name: "teams" }).click();
-  await expect(page.locator(".entity-name")).toContainText("members");
+  await expect(page.locator(".entity-name")).toHaveText(["Duo (1 members)"]);
+});
+
+test("team edits stay on screen until Save; Back and Delete ask first (#573)", async ({ page }) => {
+  await saveCharacters(page, ["Alpha", "Bravo"]);
+  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "new team" }).click();
+  await page.getByLabel("team name").fill("GvG Practice");
+
+  // Add both; an added character leaves the add list.
+  const picker = page.getByLabel("character to add");
+  await picker.selectOption({ label: "Alpha" });
+  await page.getByRole("button", { name: "add member" }).click();
+  await expect(picker.locator("option")).toHaveText(["Bravo"]);
+  await page.getByRole("button", { name: "add member" }).click();
+  await expect(memberNames(page)).toHaveText(["1. Alpha", "2. Bravo"]);
+  await expect(page.getByRole("button", { name: "add member" })).toBeDisabled();
+
+  // Reorder, still on the editor.
+  const up = page
+    .locator(".team-members .entity-row")
+    .nth(1)
+    .getByRole("button", { name: "move up" });
+  await up.click();
+  await expect(memberNames(page)).toHaveText(["1. Bravo", "2. Alpha"]);
+  await page.getByRole("button", { name: "save", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+
+  // Remove a member: unsaved, and Back asks.
+  await page
+    .locator(".team-members .entity-row")
+    .first()
+    .getByRole("button", { name: "remove" })
+    .click();
+  await expect(memberNames(page)).toHaveText(["1. Alpha"]);
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+  await page.getByRole("button", { name: "back" }).click();
+  await expect(page.getByText("Discard changes?")).toBeVisible();
+  await page.getByRole("button", { name: "keep editing" }).click();
+  await expect(memberNames(page)).toHaveText(["1. Alpha"]);
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "discard" }).click();
+  await expect(page.locator(".entity-name")).toHaveText(["GvG Practice (2 members)"]);
+
+  // Duplicate.
+  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
+  await page.getByRole("button", { name: "duplicate" }).click();
+  await expect(page.locator(".entity-name")).toHaveText([/2 members/, /2 members/]);
+
+  // Delete asks; cancel keeps the team.
+  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
+  await page.getByRole("button", { name: "delete" }).click();
+  await expect(page.getByText(/^Delete .*\?$/)).toBeVisible();
+  await page.getByRole("button", { name: "cancel" }).click();
+  await page.getByRole("button", { name: "delete" }).click();
+  await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
+  await expect(page.locator(".entity-name")).toHaveText([/2 members/]);
 });
 
 test("a build exports to text and imports back", async ({ page }) => {
@@ -379,62 +466,6 @@ test("in a match, Glyph of Lesser Energy shows Armor of Earth's discounted cost,
   // game time, which runs slower than wall time under load (#327).
   await expect(armor).toHaveText("0e");
   await expect(armor).toHaveText("10e", { timeout: 45_000 });
-});
-
-test("a team supports every operation sprint 18 asks for", async ({ page }) => {
-  // reorder and duplicate were implemented and unit-tested in
-  // team-builder.ts, but no button ever called them.
-  for (const name of ["Alpha", "Bravo"]) {
-    await newCharacter(page);
-    await page.locator("input.editor-name").fill(name);
-    await page.getByRole("button", { name: "save", exact: true }).click();
-    // The roster re-renders only once the save has committed. Without
-    // this wait, the next newCharacter's page.goto unloads the page
-    // mid-write, Alpha is lost, and selectOption below waits forever.
-    await expect(page.locator(".roster")).toContainText(name);
-  }
-
-  await page.getByRole("button", { name: "teams" }).click();
-  await page.getByRole("button", { name: "new team" }).click();
-  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
-
-  // rename
-  await page.locator("input.field-input").first().fill("GvG Practice");
-
-  // add two members
-  const picker = page.locator(".menu-row select");
-  await picker.selectOption({ label: "Alpha" });
-  await page.getByRole("button", { name: "add member" }).click();
-  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
-  await page.locator(".menu-row select").selectOption({ label: "Bravo" });
-  await page.getByRole("button", { name: "add member" }).click();
-  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
-
-  await expect(page.locator(".entity-list .entity-name").first()).toContainText("1. Alpha");
-
-  // reorder: Bravo moves to slot 1
-  await page.locator(".entity-list .entity-row").nth(1).getByRole("button", { name: "↑" }).click();
-  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
-  await expect(page.locator(".entity-list .entity-name").first()).toContainText("1. Bravo");
-
-  // duplicate. The team list says "(n members)"; the editor's rows do
-  // not, so these assertions cannot pass on the editor still on screen.
-  await page.getByRole("button", { name: "duplicate" }).click();
-  await expect(page.locator(".entity-name")).toHaveText([/2 members/, /2 members/]);
-
-  // remove a member
-  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
-  await page
-    .locator(".entity-list .entity-row")
-    .first()
-    .getByRole("button", { name: "remove" })
-    .click();
-  await page.locator(".entity-row").first().getByRole("button", { name: "edit" }).click();
-  await expect(page.locator(".entity-list .entity-row")).toHaveCount(1);
-
-  // delete the team
-  await page.getByRole("button", { name: "delete" }).click();
-  await expect(page.locator(".entity-name")).toHaveText([/members\)$/]);
 });
 
 /**
