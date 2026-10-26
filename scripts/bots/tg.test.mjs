@@ -300,20 +300,35 @@ describe("tg, while the Telegram sidecar is down (#583)", () => {
     expect(tg(bus().env, ["send", "manager", "hello"]).status).toBe(0);
   });
 
-  it("wait returns at once, exit 2, with what was already waiting printed first", () => {
+  it("wait prints what was already waiting, and exits 0, as ever", () => {
     const { env } = bus({ sidecar: null, messages: ["developer-1: are you there?"] });
-    const empty = bus({ sidecar: null }).env;
+
+    const result = tg(env, ["wait", "--timeout", "20"]);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("are you there?");
+  });
+
+  it("wait warns once, blocks to its timeout rather than busy-looping, then exits 2", () => {
+    const { env } = bus({ sidecar: null });
 
     const started = Date.now();
-    const waiting = tg(env, ["wait", "--timeout", "20"]);
-    expect(waiting.status).toBe(0);
-    expect(waiting.stdout).toContain("are you there?");
-    const result = tg(empty, ["wait", "--timeout", "20"]);
+    const result = tg(env, ["wait", "--timeout", "2"]);
+
+    expect(Date.now() - started).toBeGreaterThanOrEqual(2000);
     expect(result.status).toBe(2);
-    expect(result.stderr).toMatch(
-      /^tg: the Telegram sidecar is down \(no heartbeat\); nothing can arrive until it is back/,
+    expect(result.stderr).toBe(
+      "tg: the Telegram sidecar is down (no heartbeat); nothing can arrive until it is back. Tell the operator: claude-llc status\n",
     );
-    expect(Date.now() - started).toBeLessThan(10_000);
+    expect(result.stdout).toBe("(nothing for you in 2s; the sidecar is still down)\n");
+  });
+
+  it("wait past the context ceiling still says to end the turn while the sidecar is down", () => {
+    const { env } = bus({ sidecar: null, context: OVER });
+
+    const result = tg(env, ["wait", "--timeout", "20"]);
+
+    expect(result.stdout).toMatch(/END YOUR TURN/);
   });
 
   it("inbox still works", () => {

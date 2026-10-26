@@ -30,7 +30,8 @@
  * busy-polling or guessing.
  *
  * While the sidecar is down (sidecar.mjs), send, broadcast, ask and reply
- * still queue but exit 2 with a warning, and wait returns at once, exit 2.
+ * still queue but exit 2 with a warning; wait warns once, keeps waiting, and
+ * exits 2 at its timeout if the sidecar is still down.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -87,18 +88,27 @@ const CONTEXT = path.join(DIR, "context.json");
  * @returns {void}
  */
 function failIfSidecarDown(consequence) {
+  const warning = sidecarWarning(consequence);
+  if (warning !== null) {
+    console.error(warning);
+    process.exit(2);
+  }
+}
+
+/**
+ * @param {string} consequence
+ * @returns {string | null} what to say if the sidecar is down, else null
+ */
+function sidecarWarning(consequence) {
   const record = readSidecar(BUS ?? "");
   if (!sidecarDown(Date.now(), record)) {
-    return;
+    return null;
   }
   const seen =
     record === null
       ? "no heartbeat"
       : `last seen ${String(Math.round((Date.now() - record.lastSeen) / 1000))} s ago`;
-  console.error(
-    `tg: the Telegram sidecar is down (${seen}); ${consequence}. Tell the operator: claude-llc status`,
-  );
-  process.exit(2);
+  return `tg: the Telegram sidecar is down (${seen}); ${consequence}. Tell the operator: claude-llc status`;
 }
 
 const UNREAD = "your message is queued but nobody is reading";
@@ -253,14 +263,13 @@ function kilo(tokens) {
  */
 async function wait(timeoutSeconds, all) {
   const deadline = Date.now() + timeoutSeconds * 1000;
+  /** Whether this wait has said the sidecar is down, since it last was up. */
+  let warned = false;
   for (;;) {
     const printed = drain(false, true, all ? () => true : (line) => wakes(line, EMPLOYEE ?? ""));
     if (printed > 0) {
       return printed;
     }
-    // Checked every second, so a wait already blocking ends when the
-    // sidecar dies, not at its timeout.
-    failIfSidecarDown("nothing can arrive until it is back");
     // Waiting on would make every call of the next task re-read all of
     // this one (#321): end the turn here, and the next starts fresh.
     const over = overCeiling();
@@ -270,7 +279,18 @@ async function wait(timeoutSeconds, all) {
       );
       return 0;
     }
+    // Said once, and the wait goes on (#583): returning at once would
+    // turn every agent's loop into a busy loop for the whole outage.
+    const down = sidecarWarning("nothing can arrive until it is back");
+    if (down !== null && !warned) {
+      console.error(down);
+    }
+    warned = down !== null;
     if (Date.now() >= deadline) {
+      if (down !== null) {
+        console.log(`(nothing for you in ${String(timeoutSeconds)}s; the sidecar is still down)`);
+        process.exit(2);
+      }
       const queued = pending();
       console.log(
         queued === 0
