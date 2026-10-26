@@ -493,14 +493,246 @@ body {
   border: 1px solid var(--line);
 }
 
-/* The team editor (#573): the name takes the room, the controls sit together. */
-.team-members .entity-name {
-  flex: 1 1 auto;
+/* The team editor (#574): the grid of members, and the picker beside it in
+   a fixed column, so adding a member never moves the next Add button. */
+.screen.team-editor {
+  width: min(84rem, 100%);
 }
 
-.team-members .entity-row.is-missing .entity-name {
+.team-editor-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 12rem;
+  align-items: start;
+  gap: 1rem;
+}
+
+/* Below a 1280 window the picker goes under the grid, for good. */
+@media (width < 80rem) {
+  .team-editor-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The cells take the room there is; under their least, it scrolls sideways. */
+.team-grid-scroll {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.team-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: min-content;
+}
+
+.team-row {
+  display: grid;
+  grid-template-columns: 2.4rem 10rem repeat(8, minmax(4.5rem, 1fr)) auto;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.team-row[draggable="true"] {
+  cursor: grab;
+}
+
+.team-row.is-dragging {
+  opacity: 0.5;
+}
+
+.team-row.is-drop-target {
+  border-color: var(--accent);
+}
+
+.team-row-order {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--ink-dim);
+}
+
+.team-row-handle {
+  user-select: none;
+}
+
+.team-row.is-missing .team-row-handle {
+  visibility: hidden;
+}
+
+.team-row-character {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.4rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.team-row-dot {
+  grid-row: span 3;
+  display: inline-flex;
+}
+
+.team-row-name,
+.team-row-professions,
+.team-row-attributes {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-row-professions,
+.team-row-attributes {
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+}
+
+.team-row-skills {
+  display: contents;
+}
+
+/* A missing character has no bar: its name spans to the × alone. */
+.team-row.is-missing .team-row-character {
+  grid-column: 2 / -2;
+}
+
+.team-row.is-missing .team-row-skills {
+  display: none;
+}
+
+.team-row.is-missing .team-row-name {
   color: var(--ink-dim);
   font-style: italic;
+}
+
+.team-row-controls {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.screen .team-row-controls button {
+  padding: 0.25rem 0.5rem;
+}
+
+/* A bar cell, edged in its type badge's colour (icons/skill-type). */
+.team-skill {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 3.1rem;
+  padding: 0.2rem 0.3rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--skill-type-colour, var(--ink-dim));
+  font-size: 0.64rem;
+  line-height: 1.15;
+}
+
+/* Bottom right, beside the cost, so the name has the cell's width. */
+.team-skill .skill-type-badge {
+  top: auto;
+  bottom: 4px;
+}
+
+.team-skill.is-empty {
+  border: 1px dashed var(--line);
+}
+
+.team-skill.is-elite {
+  border-top-color: var(--elite);
+  border-right-color: var(--elite);
+  border-bottom-color: var(--elite);
+}
+
+.team-skill[data-skill-type="enchantment"] {
+  --skill-type-colour: #56d4dd;
+}
+
+.team-skill[data-skill-type="glyph"] {
+  --skill-type-colour: #c3e88d;
+}
+
+.team-skill[data-skill-type="hex"] {
+  --skill-type-colour: #d2a8ff;
+}
+
+.team-skill[data-skill-type="preparation"] {
+  --skill-type-colour: #e3b341;
+}
+
+.team-skill[data-skill-type="stance"] {
+  --skill-type-colour: #f778ba;
+}
+
+.team-skill[data-skill-type="attack"],
+.team-skill[data-skill-type="shout"],
+.team-skill[data-skill-type="signet"],
+.team-skill[data-skill-type="skill"],
+.team-skill[data-skill-type="spell"] {
+  --skill-type-colour: var(--ink);
+}
+
+.team-skill-name {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  /* Words wrap whole, hyphenated where the browser can; a word longer
+     than the cell breaks rather than hide its end. */
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+
+.team-skill-cost {
+  color: var(--ink-dim);
+}
+
+.team-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.team-picker-header {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+
+.team-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.team-pick {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.team-pick-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.team-pick-sub {
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+}
+
+.team-picker-empty {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
 }
 
 /* --- build editor ------------------------------------------------------- */

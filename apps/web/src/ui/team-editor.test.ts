@@ -3,7 +3,15 @@ import { describe, expect, it } from "vitest";
 
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
 import { MAX_TEAM_SIZE, addMember, moveMember, newTeam, removeMember } from "./team-builder.js";
-import { addableCharacters, isTeamUnsaved, teamEditorProblems } from "./team-editor.js";
+import {
+  addableCharacters,
+  dragMember,
+  isTeamUnsaved,
+  memberSkillCells,
+  placesLeft,
+  teamEditorProblems,
+  topAttributes,
+} from "./team-editor.js";
 
 function character(id: string): StoredCharacter {
   return {
@@ -78,5 +86,91 @@ describe("addableCharacters (#573)", () => {
   it("offers everyone not on the team yet, in roster order", () => {
     const team = addMember(newTeam("t1"), "b");
     expect(addableCharacters(team, roster).map((c) => c.id)).toEqual(["a", "c"]);
+  });
+});
+
+describe("placesLeft (#574)", () => {
+  it("counts down from the team size and stops at nought", () => {
+    expect(placesLeft(newTeam("t1"))).toBe(MAX_TEAM_SIZE);
+    expect(placesLeft(addMember(newTeam("t1"), "a"))).toBe(MAX_TEAM_SIZE - 1);
+    const members = Array.from({ length: MAX_TEAM_SIZE + 1 }, (_, index) => ({
+      characterId: `m${String(index)}`,
+    }));
+    expect(placesLeft({ ...newTeam("t1"), members })).toBe(0);
+  });
+});
+
+describe("memberSkillCells (#574)", () => {
+  it("gives eight cells: name, type and the HUD's cost, null where empty", () => {
+    const bar = [
+      "monk.orison-of-healing",
+      null,
+      "warrior.backbreaker",
+      null,
+      null,
+      null,
+      null,
+      null,
+    ];
+    const cells = memberSkillCells({ ...character("a"), skillBar: bar });
+    expect(cells).toHaveLength(8);
+    expect(cells[0]).toEqual({
+      skillId: "monk.orison-of-healing",
+      name: "Orison of Healing",
+      type: "spell",
+      cost: "5e",
+      elite: false,
+    });
+    expect(cells[1]).toBeNull();
+    expect(cells[2]).toMatchObject({ name: "Backbreaker", cost: "9a", elite: true });
+  });
+
+  it("shows what an illegal bar stores: an unknown id by its id, a short bar padded", () => {
+    const cells = memberSkillCells({ ...character("a"), skillBar: ["gone.skill"] });
+    expect(cells).toHaveLength(8);
+    expect(cells[0]).toEqual({
+      skillId: "gone.skill",
+      name: "gone.skill",
+      type: undefined,
+      cost: "",
+      elite: false,
+    });
+    expect(cells.slice(1).every((cell) => cell === null)).toBe(true);
+  });
+});
+
+describe("topAttributes (#574)", () => {
+  it("lists the three highest ranks, highest first, ties in stored order, no zeroes", () => {
+    const attributes = [
+      { attributeId: "warrior.strength", rank: 9 },
+      { attributeId: "warrior.hammer-mastery", rank: 12 },
+      { attributeId: "warrior.tactics", rank: 0 },
+      { attributeId: "warrior.axe-mastery", rank: 9 },
+      { attributeId: "warrior.swordsmanship", rank: 3 },
+    ];
+    expect(topAttributes({ ...character("a"), attributes })).toEqual([
+      "Hammer Mastery 12",
+      "Strength 9",
+      "Axe Mastery 9",
+    ]);
+  });
+});
+
+describe("dragMember (#574)", () => {
+  const team = ["a", "b", "c", "d"].reduce((t, id) => addMember(t, id), newTeam("t1"));
+  const order = (t: typeof team) => t.members.map((member) => member.characterId);
+
+  it("drags a row to the order the same number of ↑ or ↓ presses gives", () => {
+    expect(order(dragMember(team, 0, 2))).toEqual(order(moveMember(moveMember(team, 0, 1), 1, 1)));
+    expect(order(dragMember(team, 0, 2))).toEqual(["b", "c", "a", "d"]);
+    expect(order(dragMember(team, 3, 0))).toEqual(
+      order(moveMember(moveMember(moveMember(team, 3, -1), 2, -1), 1, -1)),
+    );
+    expect(order(dragMember(team, 3, 0))).toEqual(["d", "a", "b", "c"]);
+  });
+
+  it("leaves the team as it is for a drop on itself or off the end", () => {
+    expect(dragMember(team, 1, 1)).toBe(team);
+    expect(order(dragMember(team, -1, 2))).toEqual(order(team));
   });
 });

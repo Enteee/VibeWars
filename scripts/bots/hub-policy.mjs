@@ -38,6 +38,9 @@ export const ROLES = [
   "qa-tester",
 ];
 
+/** Who keeps recurring reminders to themselves (#678). No hat lends it. */
+export const SCHEDULERS = Object.freeze(["manager", "architect", "lead-dev"]);
+
 /**
  * Who may read code-scanning alerts (#184): today's nine roles, named
  * here rather than taken from ROLES. An open alert is an unfixed
@@ -607,8 +610,9 @@ export function authorize(role, request, options = {}) {
   const acting = options.acting ?? [];
   const { employee } = options;
   const direct = authorizeAs(role, request, acting, employee);
-  // Hiring and firing is the manager's own; no hat lends it (#380).
-  if (direct.allow || request.kind === "staff") {
+  // Hiring and firing is the manager's own; no hat lends it (#380). Nor does
+  // a hat lend a schedule (#678).
+  if (direct.allow || request.kind === "staff" || request.kind === "schedule") {
     return direct;
   }
 
@@ -645,6 +649,11 @@ function authorizeAs(role, request, acting, employee) {
   }
   if (request.kind === "staff") {
     return authorizeStaff(role, argv);
+  }
+  if (request.kind === "schedule") {
+    return SCHEDULERS.includes(role)
+      ? { allow: true }
+      : { allow: false, reason: "schedule: only manager, architect and lead-dev keep schedules" };
   }
   if (request.kind === "board") {
     return authorizeBoard(argv);

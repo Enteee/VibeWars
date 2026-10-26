@@ -202,8 +202,9 @@ async function saveCharacters(page: Page, names: readonly string[]): Promise<voi
   }
 }
 
-/** The team editor's member rows, as their labels. */
-const memberNames = (page: Page) => page.locator(".team-members .entity-name");
+/** The team editor's member rows, and their names. */
+const memberRows = (page: Page) => page.locator(".team-grid .team-row");
+const memberNames = (page: Page) => page.locator(".team-grid .team-row-name");
 
 test("a new team is stored only on Save, which stays on the editor (#573)", async ({ page }) => {
   await saveCharacters(page, ["Alpha"]);
@@ -222,7 +223,7 @@ test("a new team is stored only on Save, which stays on the editor (#573)", asyn
 
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("");
-  await page.getByRole("button", { name: "add member" }).click();
+  await page.getByRole("button", { name: "add Alpha" }).click();
   await expect(save).toHaveAttribute("title", "Give the team a name.");
   await page.getByLabel("team name").fill("Duo");
   await expect(save).toBeEnabled();
@@ -243,32 +244,25 @@ test("team edits stay on screen until Save; Back and Delete ask first (#573)", a
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("GvG Practice");
 
-  // Add both; an added character leaves the add list.
-  const picker = page.getByLabel("character to add");
-  await picker.selectOption({ label: "Alpha" });
-  await page.getByRole("button", { name: "add member" }).click();
-  await expect(picker.locator("option")).toHaveText(["Bravo"]);
-  await page.getByRole("button", { name: "add member" }).click();
-  await expect(memberNames(page)).toHaveText(["1. Alpha", "2. Bravo"]);
-  await expect(page.getByRole("button", { name: "add member" })).toBeDisabled();
+  // Add both; an added character leaves the picker.
+  const picks = page.locator(".team-picker .team-pick-name");
+  await expect(picks).toHaveText(["Bravo", "Alpha"]);
+  await page.getByRole("button", { name: "add Alpha" }).click();
+  await expect(picks).toHaveText(["Bravo"]);
+  await page.getByRole("button", { name: "add Bravo" }).click();
+  await expect(memberNames(page)).toHaveText(["Alpha", "Bravo"]);
+  await expect(page.locator(".team-picker-empty")).toBeVisible();
 
   // Reorder, still on the editor.
-  const up = page
-    .locator(".team-members .entity-row")
-    .nth(1)
-    .getByRole("button", { name: "move up" });
+  const up = memberRows(page).nth(1).getByRole("button", { name: "move up" });
   await up.click();
-  await expect(memberNames(page)).toHaveText(["1. Bravo", "2. Alpha"]);
+  await expect(memberNames(page)).toHaveText(["Bravo", "Alpha"]);
   await page.getByRole("button", { name: "save", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Saved");
 
   // Remove a member: unsaved, and Back asks.
-  await page
-    .locator(".team-members .entity-row")
-    .first()
-    .getByRole("button", { name: "remove" })
-    .click();
-  await expect(memberNames(page)).toHaveText(["1. Alpha"]);
+  await memberRows(page).first().getByRole("button", { name: "remove" }).click();
+  await expect(memberNames(page)).toHaveText(["Alpha"]);
   await expect(page.locator(".editor-unsaved")).toBeVisible();
   const duplicate = page.getByRole("button", { name: "duplicate" });
   await expect(duplicate).toBeDisabled();
@@ -276,7 +270,7 @@ test("team edits stay on screen until Save; Back and Delete ask first (#573)", a
   await page.getByRole("button", { name: "back" }).click();
   await expect(page.getByText("Discard changes?")).toBeVisible();
   await page.getByRole("button", { name: "keep editing" }).click();
-  await expect(memberNames(page)).toHaveText(["1. Alpha"]);
+  await expect(memberNames(page)).toHaveText(["Alpha"]);
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "discard" }).click();
   await expect(page.locator(".entity-name")).toHaveText(["GvG Practice (2 members)"]);
@@ -294,6 +288,36 @@ test("team edits stay on screen until Save; Back and Delete ask first (#573)", a
   await page.getByRole("button", { name: "delete" }).click();
   await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
   await expect(page.locator(".entity-name")).toHaveText([/2 members/]);
+});
+
+test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places left (#574)", async ({
+  page,
+}) => {
+  await saveCharacters(page, ["Alpha", "Bravo", "Charlie"]);
+  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "new team" }).click();
+
+  const header = page.locator(".team-picker-header");
+  await expect(header).toHaveText("16 places left");
+  await expect(page.locator(".team-pick-sub").first()).toHaveText(/^Warrior.* · \d\/8 skills$/);
+  for (const name of ["Alpha", "Bravo", "Charlie"]) {
+    await page.getByRole("button", { name: `add ${name}` }).click();
+  }
+  await expect(header).toHaveText("13 places left");
+  await expect(page.locator(".team-pick")).toHaveCount(0);
+
+  await expect(memberRows(page)).toHaveCount(3);
+  for (const row of await memberRows(page).all()) {
+    await expect(row.locator(".team-skill")).toHaveCount(8);
+  }
+  await expect(page.locator(".team-row-index")).toHaveText(["1", "2", "3"]);
+
+  // Dragging Alpha onto Charlie's place is two ↓ presses.
+  await memberRows(page).first().dragTo(memberRows(page).nth(2));
+  await expect(memberNames(page)).toHaveText(["Bravo", "Charlie", "Alpha"]);
+  await memberRows(page).nth(2).getByRole("button", { name: "move up" }).click();
+  await memberRows(page).nth(1).getByRole("button", { name: "move up" }).click();
+  await expect(memberNames(page)).toHaveText(["Alpha", "Bravo", "Charlie"]);
 });
 
 test("a build exports to text and imports back", async ({ page }) => {

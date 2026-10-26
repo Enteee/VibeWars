@@ -869,6 +869,20 @@ describe("nudgeLines (#547)", () => {
     ]);
   });
 
+  it("marks an own schedule with its role", () => {
+    const own = {
+      id: "own-architect-check-qa",
+      to: "architect",
+      everyMinutes: 120,
+      text: "(your schedule check-qa) Look.",
+    };
+    const shown = lines({ schedule: [groom, own], since: at("23:30") });
+    expect(shown[1]).toMatch(/^ {2}groom-backlog → manager · /);
+    expect(shown[3]).toMatch(
+      /^ {2}own-architect-check-qa → architect \(own, architect\) · every 120m/,
+    );
+  });
+
   it("counts a nudge never sent from hubd's start", () => {
     expect(lines({ schedule: [groom], since: at("23:30") })[1]).toBe(
       "  groom-backlog → manager · every 30m · last never · next 00:00",
