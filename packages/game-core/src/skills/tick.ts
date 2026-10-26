@@ -153,8 +153,15 @@ export function combinedBlockChance(
   return 1 - unblocked;
 }
 
-/** The chance in [0, 1] that the bearer blocks an attack of this kind (#534). */
+/**
+ * The chance in [0, 1] that the bearer blocks an attack of this kind
+ * (#534). None while knocked down, as in GW1 (#610): 0, so no block is
+ * rolled at all.
+ */
 export function blockChanceOf(combatant: Combatant, kind: "melee" | "projectile"): number {
+  if (combatant.knockdownRemaining > 0) {
+    return 0;
+  }
   return combinedBlockChance(
     combatant.statuses.active.flatMap((status) => getStatusDefinition(status.id).block ?? []),
     kind,
