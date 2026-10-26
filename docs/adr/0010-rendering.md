@@ -62,9 +62,11 @@ lists, and text input that the DOM already does well.
   `apps/web/dist/assets/index-*.js`). This is an acceptable one-time cost for
   a LAN game served from the same host as the match; it is tracked here so a
   future regression in bundle size has a baseline to compare against.
-- WebGL requires a GPU-capable browser context; Phaser 4 falls back to Canvas
-  automatically (`Phaser.AUTO`), which we rely on rather than forcing WebGL,
-  so the game degrades rather than failing to boot on a constrained device.
+- WebGL requires a GPU-capable browser context. The game asks for WebGL
+  (`Phaser.WEBGL`) and does not fall back to Canvas: the arena's tints
+  draw only on WebGL, and no CI covers a second renderer. Without WebGL the
+  arena's place says so plainly, in a match and in the Training Ground,
+  and the rest of the game works (#655).
 - Because the renderer only ever receives a plain snapshot object, headless
   simulation tests (brief §15) never need to construct a `Phaser.Game` at all.
 

@@ -31,9 +31,11 @@ import {
   type SkillDescription,
 } from "@vibewars/game-core";
 
+import { NoWebGlError } from "../render/arena-viewport.js";
 import { exportBuild, importBuild } from "../storage/build-transfer.js";
 import { SKILL_BAR_SLOTS, equippableSkills, validateBuild } from "../storage/build-validation.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
+import { noWebGlNotice } from "./arena-notice.js";
 import {
   canEquipOffhand,
   clearArmorUpgrades,
@@ -330,8 +332,15 @@ export function mountBuildEditor(
   try {
     training = createTrainingPanel();
   } catch (error) {
-    // No WebGL: the editor stays the two-column screen it always was.
-    console.info("[web] training ground unavailable", error);
+    console.warn("[web] training ground unavailable", error);
+    // No WebGL: the arena's column says so (#655). Mounted once, so it
+    // stays through every edit.
+    if (error instanceof NoWebGlError) {
+      layout.classList.add("has-training");
+      const column = h("section", "training");
+      column.appendChild(noWebGlNotice());
+      layout.appendChild(column);
+    }
   }
   if (training !== undefined) {
     layout.classList.add("has-training");
