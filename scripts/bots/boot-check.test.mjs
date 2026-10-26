@@ -1,6 +1,6 @@
 /**
  * The boot check, run for real against a scratch checkout, a scratch "store
- * copy" and a boot record, as claude-llc runs it.
+ * copy" with its build manifest and a boot record, as claude-llc runs it.
  */
 
 import { spawnSync } from "node:child_process";
@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { manifest } from "./fingerprint.mjs";
 import { obj } from "./protocol.mjs";
 
 const CHECK = path.join(path.dirname(fileURLToPath(import.meta.url)), "boot-check.mjs");
@@ -26,8 +27,8 @@ afterEach(() => {
 });
 
 /**
- * A checkout and a running copy holding the same scripts, and a boot record
- * a reboot onto `SHA` wrote.
+ * A checkout, a running copy built from it, and a boot record a reboot onto
+ * `SHA` wrote.
  */
 function setup() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "boot-check-test-"));
@@ -36,12 +37,15 @@ function setup() {
   const bots = path.join(repo, "scripts", "bots");
   const root = path.join(repo, ".bots");
   const running = path.join(dir, "store-scripts");
-  for (const d of [bots, root, running]) {
+  for (const d of [bots, path.join(repo, "nix"), root, running]) {
     fs.mkdirSync(d, { recursive: true });
   }
-  for (const d of [bots, running]) {
-    fs.writeFileSync(path.join(d, "hubd.mjs"), "same\n");
-  }
+  fs.writeFileSync(path.join(bots, "hubd.mjs"), "same\n");
+  fs.writeFileSync(path.join(repo, "nix", "claude-llc.nix"), "{ }\n");
+  fs.writeFileSync(
+    path.join(running, "build-manifest.json"),
+    `${JSON.stringify(manifest(repo))}\n`,
+  );
   fs.writeFileSync(
     path.join(root, "boot.json"),
     `${JSON.stringify({ sha: SHA, at: 1, previousSha: "f".repeat(40), updated: true, note: "Rebooted onto 01234567: company: a new thing." })}\n`,
@@ -58,11 +62,11 @@ function setup() {
     return { code: result.status, stderr: result.stderr, boot: obj(boot) };
   };
 
-  return { bots, running, check };
+  return { repo, bots, running, check };
 }
 
 describe("the boot check", () => {
-  it("leaves the boot record alone when the company runs the checkout's scripts", () => {
+  it("leaves the boot record alone when the company runs the checkout's code", () => {
     const company = setup();
     // A test that differs is not a script the company runs.
     fs.writeFileSync(path.join(company.bots, "hubd.test.mjs"), "new test\n");
@@ -86,9 +90,18 @@ describe("the boot check", () => {
     expect(result.code).toBe(0);
     expect(result.boot).toMatchObject({ sha: SHA, updated: false });
     expect(String(result.boot.note)).toMatch(
-      /^Rebooted, but its company code did NOT load\. WARNING: .*hub-spend\.mjs differs/,
+      /^Rebooted, but its company code did NOT load\. WARNING: .*scripts\/bots\/hub-spend\.mjs differs/,
     );
     expect(String(result.boot.note)).toContain(company.running);
     expect(result.stderr).toContain(String(result.boot.note));
+  });
+
+  it("names a .nix file the build differs in", () => {
+    const company = setup();
+    fs.writeFileSync(path.join(company.repo, "nix", "claude-llc.nix"), "{ changed = 1; }\n");
+
+    const result = company.check();
+
+    expect(String(result.boot.note)).toContain("nix/claude-llc.nix differs from the checkout");
   });
 });

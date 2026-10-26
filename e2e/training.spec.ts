@@ -777,3 +777,41 @@ test("(29) an attack skill pressed out of reach walks in, then lands (#415)", as
   });
   await expect(page.locator(".training-log")).not.toContainText("out of range");
 });
+
+test("(30) a spell pressed out of range walks in, then goes off (#499)", async ({ page }) => {
+  const canvas = await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("weapon-dps");
+  await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
+  await takeControl(page);
+
+  // Walk to the top-left corner, about 500 from the bow-range dummy at
+  // (480, 210): out of Fireball's 420. Arrived once the arena holds still.
+  const corner = (await trainingView(page, canvas)).onPage({ x: 20, y: 20 });
+  await page.mouse.click(corner.x, corner.y);
+  const mask = { mask: [page.locator(".training-overlay")] };
+  let last = await canvas.screenshot(mask);
+  await expect
+    .poll(
+      async () => {
+        const next = await canvas.screenshot(mask);
+        const still = next.equals(last);
+        last = next;
+        return still;
+      },
+      { timeout: 20_000, intervals: [500] },
+    )
+    .toBe(true);
+
+  // Through the camera as it is now: it has followed the walk.
+  const dummy = (await trainingView(page, canvas)).onPage({ x: 480, y: 210 });
+  await page.mouse.click(dummy.x, dummy.y, { button: "right" });
+  await page.keyboard.press(skillKey(0));
+
+  // Not refused: the hero walks back in and casts. In game time, which
+  // runs slower than wall time under load (#327).
+  await expect(page.locator('.training-log-row[data-tone="damage"]').first()).toContainText(
+    /Fireball.*Bow-range dummy/,
+    { timeout: 20_000 },
+  );
+  await expect(page.locator(".training-log")).not.toContainText("out of range");
+});

@@ -279,6 +279,40 @@ describe("headless combat simulation", () => {
     expect(ally.combatant.health).toBeGreaterThan(100);
   });
 
+  it("Blood Ritual sacrifices 17% of health and enchants a touched ally with +3 energy pips", () => {
+    const necro = actor(makeCombatant({ id: "necro", team: 0, health: 500, maxHealth: 500 }), [
+      "necromancer.blood-ritual",
+    ]);
+    const far = actor(makeCombatant({ id: "far", team: 0 }), [], 100);
+    expect(tryCast(necro, "necromancer.blood-ritual", far)).toBe("out-of-range");
+    expect(tryCast(necro, "necromancer.blood-ritual", necro)).toBe("invalid-target-self");
+
+    const ally = actor(makeCombatant({ id: "ally", team: 0 }), [], 30);
+    expect(tryCast(necro, "necromancer.blood-ritual", ally)).toBeUndefined();
+    for (let i = 0; i < 20; i += 1) {
+      tick(necro, ally);
+    }
+
+    expect(necro.combatant.health).toBe(415);
+    expect(ally.combatant.statuses.active.map((s) => [s.id, s.remainingSeconds])).toEqual([
+      ["blood-ritual", 13],
+    ]);
+  });
+
+  it("Malaise hexes a foe at spell range", () => {
+    const necro = actor(makeCombatant({ id: "necro", team: 0 }), ["necromancer.malaise"]);
+    const foe = actor(makeCombatant({ id: "foe", team: 1 }), [], 300);
+
+    expect(tryCast(necro, "necromancer.malaise", foe)).toBeUndefined();
+    for (let i = 0; i < 40; i += 1) {
+      tick(necro, foe);
+    }
+
+    expect(foe.combatant.statuses.active.map((s) => [s.id, s.remainingSeconds])).toEqual([
+      ["malaise", 24],
+    ]);
+  });
+
   it("a dead caster cannot act", () => {
     const ele = actor(makeCombatant({ id: "ele", team: 0, dead: true }), ["elementalist.fireball"]);
     const victim = actor(makeCombatant({ id: "victim", team: 1 }), [], 100);
@@ -366,6 +400,8 @@ describe("skill types", () => {
     expect(typeOf("elementalist.fireball")).toBe("spell");
     expect(typeOf("elementalist.armor-of-earth")).toBe("enchantment");
     expect(typeOf("necromancer.faintheartedness")).toBe("hex");
+    expect(typeOf("necromancer.malaise")).toBe("hex");
+    expect(typeOf("necromancer.blood-ritual")).toBe("enchantment");
     expect(typeOf("ranger.troll-unguent")).toBe("skill");
   });
 });

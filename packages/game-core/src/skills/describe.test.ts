@@ -96,6 +96,10 @@ describe("describeSkill", () => {
     expect(described.rangeText).toBe("Self");
   });
 
+  it("says Another ally for a skill that cannot target its caster (#503)", () => {
+    expect(describeSkill(skill("necromancer.blood-ritual")).targetText).toBe("Another ally");
+  });
+
   it("explains what an applied status does, not just its name", () => {
     const described = describeSkill(skill("warrior.sever-artery-lite"));
     const line = described.effects.map((effect) => effect.text).join(" ");
@@ -107,6 +111,8 @@ describe("describeSkill", () => {
   it("words a status's pips as GW1 does", () => {
     expect(describeStatus("bleeding")).toContain("−3 Health degeneration");
     expect(describeStatus("regeneration")).toContain("+4 Health regeneration");
+    expect(describeStatus("malaise")).toContain("−1 Energy degeneration");
+    expect(describeStatus("blood-ritual")).toContain("+3 Energy regeneration");
   });
 
   it("flags whether a skill scales at all", () => {

@@ -9,10 +9,11 @@ tick, for every living player, in the order they joined:
 
 1. movement integrates, then resolves against other players and walls
 2. energy regenerates
-3. status effects tick (degeneration, regeneration, expiry)
+3. status effects and natural regeneration tick (degeneration, regeneration, expiry)
 4. an in-progress cast advances; if it completes, its effects apply
-5. the weapon attack walks into reach or swings
-6. a training dummy's behaviour acts
+5. a skill pressed out of range walks in, or goes off on arrival
+6. the weapon attack walks into reach or swings
+7. a training dummy's behaviour acts
 
 Then state is synchronised to clients.
 
@@ -35,6 +36,18 @@ together (−14) drain 20 HP/s, not 28. Energy is the primary profession's
 base pips plus any status's, clamped the same way: Warrior and Paragon 2
 (⅔/s), Ranger 3 (1/s), every caster, Assassin and Dervish 4 (1⅓/s). The
 build editor shows the base as "energy regen".
+
+**Natural regeneration** heals anyone wounded who stays out of combat,
+as in GW1: after 5 s, +1 health pip, one more every 2 s, up to +7
+(14 HP/s) at 17 s. It sums with the statuses' pips before the ±10
+clamp. Being in combat is losing health of any kind (a hit, a sacrifice,
+degeneration your regeneration does not cancel), swinging a weapon or
+using an attack skill, beginning a cast at a foe, or being the foe a cast
+begins at, cancelled or not. Any of them puts it straight back to 0.
+Healing yourself or an ally does not, and nor does walking towards a
+target you mean to attack: only the swing counts. The dead regenerate
+nothing, a respawn starts the count again, and training dummies
+regenerate like anyone. The numbers are the ruleset's.
 
 The split is deliberate. Energy rewards patience; adrenaline rewards
 staying in the fight and landing hits. An adrenaline skill you cannot
@@ -71,6 +84,16 @@ mid-fight, and the server logs which one happened.
 Order matters for that reason too: cost is checked before range, so a
 player who is both broke and too far away is told the more actionable
 thing.
+
+**Out of range walks in.** When range or line of sight is all that
+fails, the press is not refused: your character walks toward the target,
+round walls, and the skill goes off the moment it is in range and in
+sight, checked all over again, as in GW1. Nothing is paid and no recharge
+starts until then, and there is no cast bar on the way. Moving, Esc,
+attacking someone else, using another skill, the target dying, or half a
+second with no way to them ("can't reach") drops it. A weapon attack
+already running pauses for the walk and resumes on its own target after
+the cast. A self-target skill never walks.
 
 A cast in progress can be **given up**: by moving, or by Esc (Cancel
 Action, which also stops your weapon attack). A cancelled skill stays

@@ -1,3 +1,4 @@
+import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
 import { aggregateModifiers, clampPips, HEALTH_PER_PIP } from "./status.js";
 import type { Combatant, Skill } from "./types.js";
@@ -10,8 +11,15 @@ import type { Combatant, Skill } from "./types.js";
  * lumps, so a −3 bleed and a 20Hz tick produce smooth, predictable
  * degeneration instead of visible stair-stepping. Fractional health is carried in the
  * combatant's health value and only ever observed rounded at the UI layer.
+ *
+ * `naturalPips` is natural regeneration (`naturalHealthPips`): not a
+ * status, but summed with theirs before the clamp, as GW1 does.
  */
-export function advanceStatuses(combatant: Combatant, dt: number): CombatEvent[] {
+export function advanceStatuses(
+  combatant: Combatant,
+  dt: number,
+  naturalPips: number,
+): CombatEvent[] {
   const events: CombatEvent[] = [];
   if (combatant.dead) {
     return events;
@@ -19,7 +27,7 @@ export function advanceStatuses(combatant: Combatant, dt: number): CombatEvent[]
 
   const modifiers = aggregateModifiers(combatant.statuses.active);
 
-  const pips = clampPips(modifiers.healthPips);
+  const pips = clampPips(modifiers.healthPips + naturalPips);
   if (pips !== 0) {
     const delta = pips * HEALTH_PER_PIP * dt;
     const effectiveMax = combatant.maxHealth * modifiers.maxHealthMultiplier;
@@ -47,6 +55,34 @@ export function advanceStatuses(combatant: Combatant, dt: number): CombatEvent[]
 
   return events;
 }
+
+/**
+ * Natural health regeneration, in pips, after this long out of combat
+ * (#460): none before the delay, +1 at it, one more each step, up to the
+ * cap. None at full health, so nothing shows a regeneration that heals
+ * nothing.
+ */
+export function naturalHealthPips(
+  combatant: Combatant,
+  outOfCombatSeconds: number,
+  rules: ResourceRules,
+): number {
+  if (combatant.dead || combatant.health >= effectiveMaxHealth(combatant)) {
+    return 0;
+  }
+  const past = outOfCombatSeconds - rules.naturalRegenDelaySeconds;
+  // Within a hair, as a swing is: a hundred additions of 0.05 fall just
+  // short of 5.
+  if (past < -PIP_EPSILON) {
+    return 0;
+  }
+  return Math.min(
+    rules.naturalRegenMaxPips,
+    1 + Math.floor((past + PIP_EPSILON) / rules.naturalRegenStepSeconds),
+  );
+}
+
+const PIP_EPSILON = 1e-6;
 
 /**
  * The bearer's effective maximum health, after multipliers such as deep

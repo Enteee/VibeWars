@@ -292,6 +292,7 @@ export function boardLines(snapshot, columns, live, { rows, width }) {
  * @property {TelegramFacts} telegram whether the Telegram sidecar is up (#583)
  * @property {{ record: import("./reboot.mjs").Reboot, between: readonly string[], now: number } | { rebooting: string } | null} reboot
  *   the pending reboot with the roles between turns, or the reason of the one handed to the restarter (#345)
+ * @property {{ line: string, stale: boolean } | null} build the build the company runs, against the checkout; null when the dashboard runs from the checkout (#557)
  */
 
 /**
@@ -549,6 +550,21 @@ function rebootSection({ reboot, roles, live }, width) {
 }
 
 /**
+ * The build the company runs (#557): a STALE one is red, as a reboot is,
+ * because it is the company not running what the checkout says.
+ *
+ * @param {CompanyFacts} facts
+ * @param {number} width
+ * @returns {string[]}
+ */
+function buildSection({ build }, width) {
+  if (build === null) {
+    return [];
+  }
+  return [build.stale ? paint(cut(build.line, width), "1;31") : cut(build.line, width)];
+}
+
+/**
  * The scheduled nudges (#547): when each last went, when it is next due, and
  * who has not read it. No schedule is no section.
  *
@@ -611,6 +627,7 @@ function telegramSection({ telegram: { down, lastSeen, now } }, width) {
 export const COMPANY_SECTIONS = [
   telegramSection,
   rebootSection,
+  buildSection,
   staffSection,
   hubSection,
   githubSection,
