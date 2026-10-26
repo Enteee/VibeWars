@@ -593,7 +593,7 @@ export function nudgeLines({ nudges: { schedule, since, sent, unread, now } }, w
       const next = due === null ? "—" : due < now - 60_000 ? "overdue" : hhmm(due);
       const who = unread.get(nudge.id) ?? [];
       const head = [
-        `${nudge.id} → ${nudge.to}`,
+        `${nudge.id} → ${nudge.to}${nudge.id.startsWith("own-") ? ` (own, ${nudge.to})` : ""}`,
         `every ${String(nudge.everyMinutes)}m`,
         `last ${last === undefined ? (since === null ? "—" : "never") : hhmm(last)}`,
         `next ${next}`,

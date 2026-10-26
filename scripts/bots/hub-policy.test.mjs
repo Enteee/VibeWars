@@ -844,3 +844,28 @@ describe("board reads", () => {
     expect(ROLES.every((role) => mayReadAlerts(role))).toBe(true);
   });
 });
+
+describe("hub schedule (#678)", () => {
+  /**
+   * @param {string} role
+   * @param {string[]} [acting]
+   */
+  const schedule = (role, acting = []) =>
+    authorize(role, { kind: "schedule", argv: ["ls"] }, { acting });
+
+  it("is kept by the manager, the architect and the lead-dev", () => {
+    for (const role of ["manager", "architect", "lead-dev"]) {
+      expect(schedule(role), role).toMatchObject({ allow: true });
+    }
+  });
+
+  it("is refused to every other role, and no hat lends it", () => {
+    for (const role of ["developer-1", "developer-2", "qa-tester", "cicd-engineer"]) {
+      expect(schedule(role), role).toMatchObject({
+        allow: false,
+        reason: "schedule: only manager, architect and lead-dev keep schedules",
+      });
+    }
+    expect(schedule("qa-tester", ["manager"])).toMatchObject({ allow: false });
+  });
+});

@@ -20,6 +20,8 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { parseAlive } from "./hub-health.mjs";
 import { ROLES } from "./hub-policy.mjs";
+import { obj } from "./protocol.mjs";
+import { parseNudgeClock } from "./schedule.mjs";
 import { parseStaff, seedStaff } from "./staff.mjs";
 
 const HUBD = path.join(path.dirname(fileURLToPath(import.meta.url)), "hubd.mjs");
@@ -2203,5 +2205,94 @@ describe("hubd hiring and firing", () => {
     const broken = await hubd.request("manager", "staff", ["hire", "qa-tester", "x"]);
     expect(String(broken.reason)).toBe("staff.json: staff.recent is missing");
     expect(told(hubd)).toEqual([]);
+  }, 20_000);
+});
+
+describe("hub schedule (#678)", () => {
+  /**
+   * What hubd has put in the system outbox: who it is for and what it says.
+   *
+   * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+   * @returns {{ to: string, text: string }[]}
+   */
+  const outbox = (hubd) => {
+    const dir = path.join(hubd.root, "bus", "_system", "outbox");
+    return fs.existsSync(dir)
+      ? fs.readdirSync(dir).map((name) => {
+          /** @type {unknown} */
+          const message = JSON.parse(fs.readFileSync(path.join(dir, name), "utf8"));
+          const { to, text } = obj(message);
+          return { to: String(to), text: String(text) };
+        })
+      : [];
+  };
+  /**
+   * @param {string} root
+   * @param {string} name
+   * @param {unknown} content
+   */
+  const seed = (root, name, content) => {
+    fs.mkdirSync(path.join(root, "hub"), { recursive: true });
+    fs.writeFileSync(path.join(root, "hub", name), JSON.stringify(content));
+  };
+  const own = {
+    role: "architect",
+    name: "check-qa",
+    everyMinutes: 15,
+    text: "Look at QA.",
+    addedAt: 1,
+  };
+
+  it("adds, lists and removes live, keeping the clock in step", async () => {
+    const hubd = await startHubd(5000);
+    const added = await hubd.request("architect", "schedule", [
+      "add",
+      "check-qa",
+      "2h",
+      "Look",
+      "at QA",
+    ]);
+    expect(added).toMatchObject({ allow: true, code: 0 });
+    const listed = await hubd.request("architect", "schedule", ["ls"]);
+    expect(String(listed.stdout)).toContain("check-qa  every 120m  own  Look at QA");
+    const clock = () => [
+      ...parseNudgeClock(fs.readFileSync(path.join(hubd.hub, "nudges.json"), "utf8")).sent.keys(),
+    ];
+    expect(clock()).toEqual(["own-architect-check-qa"]);
+    expect(fs.readFileSync(path.join(hubd.hub, "schedules.json"), "utf8")).toContain("check-qa");
+
+    // Another role neither sees it nor may keep one.
+    const other = await hubd.request("manager", "schedule", ["ls"]);
+    expect(String(other.stdout)).not.toContain("check-qa");
+    const refused = await hubd.request("developer-1", "schedule", ["ls"]);
+    expect(refused.allow).toBe(false);
+
+    await hubd.request("architect", "schedule", ["rm", "check-qa"]);
+    const after = await hubd.request("architect", "schedule", ["ls"]);
+    expect(String(after.stdout)).not.toContain("check-qa");
+    expect(clock()).toEqual([]);
+  }, 20_000);
+
+  it("sends a due own schedule to its role, prefixed, and reads it back at start", async () => {
+    const hubd = await startHubd(5000, ({ root }) => {
+      seed(root, "schedules.json", { schedules: [own] });
+      seed(root, "nudges.json", { since: 0, sent: {} });
+    });
+    await hubd.until(
+      () => outbox(hubd).some((m) => m.to === "architect"),
+      "the schedule to be delivered",
+    );
+    expect(outbox(hubd).find((m) => m.to === "architect")?.text).toBe(
+      "(your schedule check-qa) Look at QA.",
+    );
+  }, 30_000);
+
+  it("deletes a stale schedules.json and tells each scheduler once", async () => {
+    const hubd = await startHubd(5000, ({ root }) => {
+      seed(root, "schedules.json", { schedules: [{ ...own, role: "developer-1" }] });
+    });
+    expect(fs.existsSync(path.join(hubd.hub, "schedules.json"))).toBe(false);
+    const told = outbox(hubd).filter((m) => m.text.startsWith("Your own schedules were discarded"));
+    expect(told.map((m) => m.to).sort()).toEqual(["architect", "lead-dev", "manager"]);
   }, 20_000);
 });

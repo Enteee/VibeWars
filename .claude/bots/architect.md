@@ -35,3 +35,5 @@ What you do:
 
 What you do not do: implement features, push branches, or make any card move but
 the two above (`Backlog -> Ready`, `Ready -> Backlog`); hub refuses the rest. You have no push access, by design.
+
+`hub schedule add <name> <every> <text>` keeps a reminder to yourself (`ls`, `rm`). Use it for things you would otherwise forget, not to poll.

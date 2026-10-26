@@ -98,12 +98,20 @@ import {
   WORKDAY,
 } from "./reboot.mjs";
 import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
-import { dueNudges, parseNudgeClock, scheduleReader } from "./schedule.mjs";
+import {
+  dueNudges,
+  ownNudges,
+  parseNudgeClock,
+  parseOwnSchedules,
+  planScheduleCommand,
+  scheduleReader,
+} from "./schedule.mjs";
 import { createIssueBatch, newIssueMessage, WINDOW_MS } from "./new-issues.mjs";
 import { applyStaff, parseStaff, roleOf, staffAllowed, staffReader } from "./staff.mjs";
 import {
   RESTRICTED_PATHS,
   ROLES,
+  SCHEDULERS,
   authorize,
   parseMerge,
   parseReview,
@@ -158,6 +166,9 @@ const REBOOT = path.join(ROOT, "reboot.json");
 const STAFF = path.join(ROOT, "staff.json");
 /** The heartbeat, `{ ts, inFlight }`: see `heartbeat`. */
 const ALIVE = path.join(HUB, "hubd.alive");
+/** `schedules.json`: the schedulers' own recurring reminders to themselves (#678). Host-only. */
+const SCHEDULES = path.join(HUB, "schedules.json");
+
 /** `nudges.json`: when hubd began counting and what it sent, for the dashboard (#547). */
 const NUDGES = path.join(HUB, "nudges.json");
 /** `blocked.json`: the column each Blocked card came from, by project item id (#639). */
@@ -2121,6 +2132,44 @@ function staff(role, argv, cfg) {
 }
 
 /**
+ * `hub schedule add|ls|rm` (#678): the role's own recurring reminders. The
+ * change is live: memory and file are updated in one step, the clock is set
+ * or dropped at once, and `sendNudges` reads memory. Requests are served one
+ * at a time, so read, plan and write cannot interleave.
+ *
+ * @param {string} role
+ * @param {string[]} argv
+ * @returns {Record<string, unknown>}
+ */
+function schedule(role, argv) {
+  const kind = "schedule";
+  const plan = planScheduleCommand({
+    role,
+    argv,
+    own: ownSchedules,
+    fixed: readSchedule(),
+    now: Date.now(),
+  });
+  if ("refuse" in plan) {
+    audit({ role, kind, argv, decision: "refused", reason: plan.refuse });
+    return { allow: false, reason: plan.refuse, code: 77 };
+  }
+  if (plan.started !== undefined || plan.removed !== undefined) {
+    ownSchedules = plan.next;
+    writeAtomic(SCHEDULES, JSON.stringify({ schedules: ownSchedules }));
+    if (plan.started !== undefined) {
+      nudgesSent.set(plan.started, Date.now());
+    }
+    if (plan.removed !== undefined) {
+      nudgesSent.delete(plan.removed);
+    }
+    writeNudges();
+  }
+  audit({ role, kind, argv, decision: "allowed" });
+  return { allow: true, code: 0, stdout: plan.stdout, stderr: "" };
+}
+
+/**
  * `hub alerts` (#184): one REST read of the code-scanning alerts, rendered.
  * A failure says what failed, and never reads as "no alerts".
  *
@@ -2178,6 +2227,10 @@ async function serve(request, verdict, acting) {
 
   if (kind === "staff") {
     return staff(role, argv, cfg);
+  }
+
+  if (kind === "schedule") {
+    return schedule(role, argv);
   }
 
   if (kind === "rank") {
@@ -2605,6 +2658,40 @@ function loadNudges() {
   }
 }
 
+/** The schedulers' own schedules, in memory; `schedules.json` is their copy (#678). */
+/** @type {import("./schedule.mjs").OwnSchedule[]} */
+let ownSchedules = [];
+
+/**
+ * Take the own schedules the last hubd wrote. A file that is not the current
+ * shape is deleted and each scheduler told once; nothing is migrated.
+ *
+ * @returns {void}
+ */
+function loadOwnSchedules() {
+  let text;
+  try {
+    text = fs.readFileSync(SCHEDULES, "utf8");
+  } catch {
+    return;
+  }
+  try {
+    ownSchedules = parseOwnSchedules(text);
+  } catch (error) {
+    console.error(
+      `hubd: schedules.json is unusable (${error instanceof Error ? error.message : String(error)}); deleted`,
+    );
+    fs.rmSync(SCHEDULES, { force: true });
+    for (const role of SCHEDULERS) {
+      tellCompany(
+        `schedules-discarded-${role}`,
+        "Your own schedules were discarded (stored in an old shape); add them again.",
+        { to: role },
+      );
+    }
+  }
+}
+
 /**
  * Send the nudges that are due (#537). link decides per employee whether one
  * is still unread; hubd only keeps the clock.
@@ -2612,7 +2699,7 @@ function loadNudges() {
  * @returns {void}
  */
 function sendNudges() {
-  const schedule = readSchedule();
+  const schedule = [...readSchedule(), ...ownNudges(ownSchedules)];
   const now = Date.now();
   for (const nudge of dueNudges({ now, schedule, lastSent: nudgesSent, since: nudgesSince })) {
     nudgesSent.set(nudge.id, now);
@@ -2627,6 +2714,13 @@ function sendNudges() {
  * @returns {void}
  */
 function writeNudges() {
+  // An own schedule that no longer exists (its role left SCHEDULERS) loses its clock.
+  const live = new Set(ownNudges(ownSchedules).map((nudge) => nudge.id));
+  for (const id of nudgesSent.keys()) {
+    if (id.startsWith("own-") && !live.has(id)) {
+      nudgesSent.delete(id);
+    }
+  }
   writeAtomic(NUDGES, JSON.stringify({ since: nudgesSince, sent: Object.fromEntries(nudgesSent) }));
 }
 
@@ -2839,6 +2933,7 @@ async function main() {
   loadBoard(cfg);
   loadBlocked();
   loadNudges();
+  loadOwnSchedules();
   readStaffed();
   heartbeat();
   const heartbeatMs = Number(process.env.HUBD_HEARTBEAT_MS ?? HEARTBEAT_MS);

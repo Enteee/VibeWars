@@ -129,3 +129,5 @@ An empty board is not an invitation to invent a roadmap.
 - If there are no improvements worth doing and no approved features, the
   company is done for now. Say so once on Telegram and `tg wait`. Idle is fine;
   unwanted work is not.
+
+`hub schedule add <name> <every> <text>` keeps a reminder to yourself (`ls`, `rm`). Use it for things you would otherwise forget, not to poll.
