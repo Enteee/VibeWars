@@ -17,6 +17,7 @@ function hit(atSeconds: number, sourceId: string | undefined, amount: number): C
     sourceId,
     skillId: undefined,
     weaponId: undefined,
+    attributeId: undefined,
     area: undefined,
     events: [{ kind: "damage", targetId: "target", amount, critical: false }],
   };

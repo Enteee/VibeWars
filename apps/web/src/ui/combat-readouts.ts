@@ -1,5 +1,6 @@
 import {
   STATUS_DEFINITIONS,
+  getAttribute,
   getSkill,
   getWeapon,
   type CombatEvent,
@@ -64,24 +65,30 @@ function skillName(skillId: string | undefined): string | undefined {
 
 /** One event as a sentence a player can learn from. */
 export function describeCombatEvent(
-  entry: Pick<CombatLogEntry, "cause" | "sourceId" | "skillId" | "weaponId">,
+  entry: Pick<CombatLogEntry, "cause" | "sourceId" | "skillId" | "weaponId" | "attributeId">,
   event: CombatEvent,
   nameOf: (id: string) => string,
 ): string {
   const target = nameOf(event.targetId);
   const skill = skillName(entry.skillId);
   const source = entry.sourceId === undefined ? undefined : nameOf(entry.sourceId);
-  // "Fireball (You)", "Longbow (You)" for a weapon swing (#162), or, for
-  // a status tick, GW1's word for which way it went (#151): regeneration
-  // heals, degeneration hurts. The source, when exactly one is known.
+  // "Fireball (You)", "Longbow (You)" for a weapon swing (#162), "Soul
+  // Reaping (You)" for an attribute (#633), or, for a status tick, GW1's
+  // word for which way it went (#151): regeneration heals, degeneration
+  // hurts. The source, when exactly one is known.
+  const attribute =
+    entry.cause === "attribute"
+      ? (getAttribute(entry.attributeId ?? "")?.name ?? "an attribute")
+      : undefined;
   const what =
-    entry.cause === "weapon"
+    attribute ??
+    (entry.cause === "weapon"
       ? (getWeapon(entry.weaponId ?? "")?.name ?? "a weapon")
       : entry.cause === "degeneration"
         ? event.kind === "heal"
           ? "regeneration"
           : "degeneration"
-        : (skill ?? "a skill");
+        : (skill ?? "a skill"));
   const by = `${what}${source === undefined ? "" : ` (${source})`}`;
   switch (event.kind) {
     case "damage":
@@ -89,7 +96,7 @@ export function describeCombatEvent(
     case "heal":
       return `${by} heals ${target} for ${formatAmount(event.amount)}`;
     case "energy-gain":
-      return `${target} gains ${formatAmount(event.amount)} energy`;
+      return `${target} gains ${formatAmount(event.amount)} energy${attribute === undefined ? "" : ` from ${attribute}`}`;
     case "sacrifice":
       return `${target} sacrifices ${formatAmount(event.amount)} health`;
     case "death":
@@ -122,7 +129,10 @@ export function describeCombatEvent(
 }
 
 export function combatEventToRow(
-  entry: Pick<CombatLogEntry, "atSeconds" | "cause" | "sourceId" | "skillId" | "weaponId">,
+  entry: Pick<
+    CombatLogEntry,
+    "atSeconds" | "cause" | "sourceId" | "skillId" | "weaponId" | "attributeId"
+  >,
   event: CombatEvent,
   nameOf: (id: string) => string,
 ): LogRow {
@@ -249,6 +259,7 @@ export class StatusTickBatcher {
             sourceId: open.sourceId,
             skillId: undefined,
             weaponId: undefined,
+            attributeId: undefined,
           },
           open.kind === "damage"
             ? { kind: open.kind, targetId: open.targetId, amount: open.amount, critical: false }

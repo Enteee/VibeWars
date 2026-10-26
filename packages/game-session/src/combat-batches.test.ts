@@ -11,6 +11,7 @@ function entry(target: number, padding = 0): WireCombat {
     cause: "weapon",
     skillId: "",
     weaponId: "sword",
+    attributeId: "",
     area: null,
     events: [
       {

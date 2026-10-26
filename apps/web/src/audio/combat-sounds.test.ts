@@ -6,7 +6,7 @@ import { hitsForCombat, soundsForCombat, soundsForSnapshot } from "./combat-soun
 const ME = "me";
 
 function message(casterSessionId: string, events: CombatMessage["events"]): CombatMessage {
-  return { casterSessionId, cause: "skill", skillId: "x", weaponId: "", events };
+  return { casterSessionId, cause: "skill", skillId: "x", weaponId: "", attributeId: "", events };
 }
 
 describe("soundsForCombat", () => {
@@ -78,6 +78,7 @@ describe("soundsForCombat", () => {
       cause: "degeneration",
       skillId: "",
       weaponId: "",
+      attributeId: "",
       events: [{ kind: "damage", targetId: ME, amount: 1, critical: false }],
     };
     const regen: CombatMessage = {
@@ -85,6 +86,7 @@ describe("soundsForCombat", () => {
       cause: "degeneration",
       skillId: "",
       weaponId: "",
+      attributeId: "",
       events: [{ kind: "heal", targetId: ME, amount: 1 }],
     };
     const fatal: CombatMessage = {
@@ -92,6 +94,7 @@ describe("soundsForCombat", () => {
       cause: "degeneration",
       skillId: "",
       weaponId: "",
+      attributeId: "",
       events: [
         { kind: "damage", targetId: ME, amount: 1, critical: false },
         { kind: "death", targetId: ME },
@@ -108,6 +111,7 @@ describe("soundsForCombat", () => {
       cause: "weapon",
       skillId: "",
       weaponId: "sword",
+      attributeId: "",
       events: [{ kind: "damage", targetId: "foe", amount: 12, critical: false }],
     };
     expect(soundsForCombat(swing, ME)).toEqual(["hit-dealt"]);
@@ -151,6 +155,7 @@ describe("hitsForCombat (#370)", () => {
       cause: "degeneration",
       skillId: "",
       weaponId: "",
+      attributeId: "",
       events: [{ kind: "damage", targetId: ME, amount: 1, critical: false }],
     };
     const elsewhere = message("foe", [

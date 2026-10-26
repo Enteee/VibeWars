@@ -179,12 +179,14 @@
                         ]
                       }
                     },
+                    { "name": "attributeId", "optional": false, "type": "string" },
                     { "name": "casterSessionId", "optional": false, "type": "string" },
                     {
                       "name": "cause",
                       "optional": false,
                       "type": {
                         "union": [
+                          { "literal": "attribute" },
                           { "literal": "degeneration" },
                           { "literal": "skill" },
                           { "literal": "weapon" }
@@ -880,12 +882,14 @@
                     ]
                   }
                 },
+                { "name": "attributeId", "optional": false, "type": "string" },
                 { "name": "casterSessionId", "optional": false, "type": "string" },
                 {
                   "name": "cause",
                   "optional": false,
                   "type": {
                     "union": [
+                      { "literal": "attribute" },
                       { "literal": "degeneration" },
                       { "literal": "skill" },
                       { "literal": "weapon" }
@@ -1117,12 +1121,14 @@
             ]
           }
         },
+        { "name": "attributeId", "optional": false, "type": "string" },
         { "name": "casterSessionId", "optional": false, "type": "string" },
         {
           "name": "cause",
           "optional": false,
           "type": {
             "union": [
+              { "literal": "attribute" },
               { "literal": "degeneration" },
               { "literal": "skill" },
               { "literal": "weapon" }
@@ -1513,12 +1519,14 @@
                           ]
                         }
                       },
+                      { "name": "attributeId", "optional": false, "type": "string" },
                       { "name": "casterSessionId", "optional": false, "type": "string" },
                       {
                         "name": "cause",
                         "optional": false,
                         "type": {
                           "union": [
+                            { "literal": "attribute" },
                             { "literal": "degeneration" },
                             { "literal": "skill" },
                             { "literal": "weapon" }
@@ -1813,12 +1821,14 @@
             ]
           }
         },
+        { "name": "attributeId", "optional": false, "type": "string" },
         { "name": "casterId", "optional": false, "type": "string" },
         {
           "name": "cause",
           "optional": false,
           "type": {
             "union": [
+              { "literal": "attribute" },
               { "literal": "degeneration" },
               { "literal": "skill" },
               { "literal": "weapon" }
@@ -1873,12 +1883,14 @@
               ]
             }
           },
+          { "name": "attributeId", "optional": false, "type": "string" },
           { "name": "casterId", "optional": false, "type": "string" },
           {
             "name": "cause",
             "optional": false,
             "type": {
               "union": [
+                { "literal": "attribute" },
                 { "literal": "degeneration" },
                 { "literal": "skill" },
                 { "literal": "weapon" }

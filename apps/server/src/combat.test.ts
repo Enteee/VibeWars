@@ -820,6 +820,7 @@ describe("combatBatch (#288)", () => {
     sourceId: "a",
     skillId: undefined,
     weaponId: "sword",
+    attributeId: undefined,
     area: undefined,
     events: [{ kind: "damage", targetId: "b", amount: 12, critical: false }],
     ...overrides,
@@ -863,6 +864,7 @@ describe("combatBatch (#288)", () => {
       cause: "degeneration",
       skillId: "",
       weaponId: "",
+      attributeId: "",
       events: [{ kind: "damage", targetId: "b", amount: 2, critical: false }],
     });
     expect(fireball?.area).toEqual({ x: 1, y: 2, radius: 81 });

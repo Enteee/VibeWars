@@ -3,6 +3,7 @@ import {
   ALL_OFFHANDS,
   ALL_WEAPONS,
   IMPLEMENTED_SKILLS,
+  PROFESSIONS,
   STATUS_DEFINITIONS,
   bareArmorSet,
   type ArmorSet,
@@ -61,6 +62,9 @@ const WIRE_STATUSES = Array.from({ length: MAX_WIRE_STATUSES }, () => MAX_WIRE_S
 const WEAPON_ID = longest(ALL_WEAPONS.map((weapon) => weapon.id));
 const OFFHAND_ID = longest(ALL_OFFHANDS.map((offhand) => offhand.id));
 const SKILL_ID = longest(SKILL_IDS);
+const ATTRIBUTE_ID = longest(
+  Object.values(PROFESSIONS).flatMap((profession) => profession.attributes.map((a) => a.id)),
+);
 /** Only a spell that flies (#535) rides a projectile. */
 const FLYING_SKILL_ID = longest(
   IMPLEMENTED_SKILLS.filter((skill) => skill.projectile !== undefined).map((skill) => skill.id),
@@ -179,6 +183,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       cause: "skill",
       skillId: SKILL_ID,
       weaponId: WEAPON_ID,
+      attributeId: ATTRIBUTE_ID,
       area: { x: FLOAT, y: FLOAT, radius: 200 },
       events: Array.from({ length: 6 }, (_, i) => hit(i + 1, extra)).flat(),
     };
@@ -188,6 +193,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       cause: "weapon",
       skillId: SKILL_ID,
       weaponId: WEAPON_ID,
+      attributeId: ATTRIBUTE_ID,
       area: null,
       events: [0, 1, 2].flatMap((foe) => [...hit(foe, extra), ...hit(foe, extra)]),
     }));

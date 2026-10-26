@@ -35,6 +35,7 @@ function entry(events: CombatEvent[], extra: Partial<CombatLogEntry> = {}): Comb
     sourceId: "you",
     skillId: "elementalist.fireball",
     weaponId: undefined,
+    attributeId: undefined,
     area: undefined,
     events,
     ...extra,
@@ -125,6 +126,19 @@ describe("describeCombatEvent", () => {
     expect(describeCombatEvent({ ...swing, weaponId: undefined }, event, nameOf)).toBe(
       "a weapon (Pyro) hits Caster dummy for 18",
     );
+  });
+
+  it("says which attribute an attribute's energy came from (#633)", () => {
+    const event: CombatEvent = { kind: "energy-gain", targetId: "you", amount: 12 };
+    const reaped = entry([event], {
+      cause: "attribute",
+      skillId: undefined,
+      attributeId: "necromancer.soul-reaping",
+    });
+    expect(describeCombatEvent(reaped, event, nameOf)).toBe(
+      "Pyro gains 12 energy from Soul Reaping",
+    );
+    expect(describeCombatEvent(entry([event]), event, nameOf)).toBe("Pyro gains 12 energy");
   });
 
   it("names statuses and interrupted skills", () => {

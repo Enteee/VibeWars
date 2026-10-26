@@ -316,12 +316,14 @@ function combatEntry(entry: CombatLogEntry): CombatMessage<CombatEvent> | undefi
   // goes out as its attacker's, with no skill.
   const casterSessionId = (cause === "degeneration" ? events[0]?.targetId : entry.sourceId) ?? "";
   // `cause` says what this was; `skillId` is `""` unless it was a
-  // skill, and `weaponId` `""` unless it was a weapon (#162).
+  // skill, `weaponId` `""` unless it was a weapon (#162), and
+  // `attributeId` `""` unless it was an attribute (#633).
   const skillId = entry.skillId ?? "";
   const weaponId = entry.weaponId ?? "";
+  const attributeId = entry.attributeId ?? "";
   return area === undefined
-    ? { casterSessionId, cause, skillId, weaponId, events }
-    : { casterSessionId, cause, skillId, weaponId, events, area };
+    ? { casterSessionId, cause, skillId, weaponId, attributeId, events }
+    : { casterSessionId, cause, skillId, weaponId, attributeId, events, area };
 }
 
 /**

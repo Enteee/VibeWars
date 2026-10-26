@@ -11,16 +11,21 @@ import type { CombatEvent } from "../skills/effects.js";
  * this type formalises it and adds the tick, the time and the cause.
  */
 
-/** A cast, one participant's status tick, or one landed weapon swing. */
-export type CombatCause = "skill" | "degeneration" | "weapon";
+/**
+ * A cast, one participant's status tick, one landed weapon swing, or
+ * something a primary attribute did by itself, with no skill or swing
+ * behind it (#633): Soul Reaping's energy.
+ */
+export type CombatCause = "skill" | "degeneration" | "weapon" | "attribute";
 
-/** One *resolution*: a cast, one participant's status tick, or one swing. */
+/** One *resolution*: a cast, one participant's status tick, one swing, or an attribute's gain. */
 export interface CombatLogEntry {
   readonly tick: number;
   readonly atSeconds: number;
   readonly cause: CombatCause;
   /**
-   * Who is responsible. The caster for a skill, the attacker for a swing.
+   * Who is responsible. The caster for a skill, the attacker for a swing,
+   * the bearer for an attribute.
    * For degeneration, whoever applied the statuses behind it when there is
    * exactly one such source, and `undefined` when several statuses from
    * different sources summed into one number: that is genuinely shared,
@@ -30,6 +35,8 @@ export interface CombatLogEntry {
   readonly skillId: string | undefined;
   /** The weapon, on every `"weapon"` entry; `undefined` on every other (#162). */
   readonly weaponId: WeaponId | undefined;
+  /** The attribute, on every `"attribute"` entry; `undefined` on every other (#633). */
+  readonly attributeId: string | undefined;
   /** Where an area skill landed, and how far it reached. */
   readonly area: { readonly x: number; readonly y: number; readonly radius: number } | undefined;
   readonly events: readonly CombatEvent[];
