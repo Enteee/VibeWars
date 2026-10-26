@@ -49,13 +49,13 @@ const BIG = 4;
 
 /**
  * The seven key poses of #536, in order.
- * @type {readonly { label: string, clip: (fromRest: boolean) => import("../../apps/web/src/render/weapon-pose.ts").AttackClip }[]}
+ * @type {readonly { label: string, clip: () => import("../../apps/web/src/render/weapon-pose.ts").AttackClip }[]}
  */
 const POSES = [
   { label: "rest", clip: () => ({ phase: "rest" }) },
   { label: "half wind", clip: () => ({ phase: "wind-up", progress: 0.5 }) },
   { label: "full wind", clip: () => ({ phase: "wind-up", progress: 1 }) },
-  { label: "half strike", clip: () => ({ phase: "strike", progress: 0.5, fromRest: false }) },
+  { label: "half strike", clip: () => ({ phase: "strike", progress: 0.5 }) },
   { label: "hit", clip: () => ({ phase: "hold", progress: 0, sinceHit: 0 }) },
   { label: "early recover", clip: () => ({ phase: "recover", progress: 0.25, sinceHit: 0.1 }) },
   { label: "late recover", clip: () => ({ phase: "recover", progress: 0.75, sinceHit: 0.3 }) },
@@ -138,7 +138,7 @@ FAMILIES.forEach((family, row) => {
       `<g transform="translate(${f(cx)},${f(cy)}) scale(${String(BIG)})">` +
         `<circle r="${String(R)}" fill="${C.foe}"/>` +
         `<circle r="${f(R - 0.75)}" fill="none" stroke="${C.edge}" stroke-width="1.5"/>` +
-        mark(family, pose.clip(false)) +
+        mark(family, pose.clip()) +
         `<circle r="${f(R + LIMIT)}" fill="none" stroke="${C.ink}" stroke-width="0.4" stroke-dasharray="2 2" opacity="0.6"/>` +
         `<circle r="${f(R + TARGET_AT)}" fill="none" stroke="${C.target}" stroke-width="2"/>` +
         `</g>`,
