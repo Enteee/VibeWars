@@ -13,12 +13,13 @@ import {
   type StepResult,
 } from "@vibewars/game-core";
 import type { CastRefusedMessage, ClientIntent, MapDescriptor } from "@vibewars/game-protocol";
-import type {
-  CombatMessage,
-  MatchConnection,
-  MatchSnapshot,
-  PlayerSnapshot,
-  SkillSlot,
+import {
+  wireStatuses,
+  type CombatMessage,
+  type MatchConnection,
+  type MatchSnapshot,
+  type PlayerSnapshot,
+  type SkillSlot,
 } from "@vibewars/game-session";
 
 /**
@@ -109,7 +110,7 @@ function toPlayerSnapshot(
     castingSkillId: activeCast?.skillId,
     castRemaining: activeCast?.remainingSeconds ?? 0,
     castTotal: activeCast?.totalSeconds ?? 0,
-    statuses: combatant.statuses.active.map((status) => status.id),
+    statuses: wireStatuses(combatant.statuses.active).map((status) => status.id),
   };
 }
 

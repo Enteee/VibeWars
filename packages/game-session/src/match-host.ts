@@ -41,7 +41,7 @@ import { rechargePredicted, rechargeSlots } from "./recharge.js";
 import { rejoinProof } from "./rejoin-proof.js";
 import { spawnPoint, type SpawnPoint } from "./spawn-points.js";
 import { MAX_MESSAGE_BYTES, type Transport } from "./transport.js";
-import { skillBarSlots, statusWireIndex, wireCombat } from "./wire.js";
+import { skillBarSlots, statusWireIndex, wireCombat, wireStatuses } from "./wire.js";
 
 /**
  * A match hosted in one player's browser (#15, #375): the same
@@ -494,7 +494,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       castingSkillId: cast?.skillId ?? null,
       castRemaining: cast?.remainingSeconds ?? 0,
       castTotal: cast?.totalSeconds ?? 0,
-      statuses: combatant.statuses.active.map((status) => statusWireIndex(status.id)),
+      statuses: wireStatuses(combatant.statuses.active).map((status) => statusWireIndex(status.id)),
     };
   };
 
