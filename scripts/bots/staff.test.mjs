@@ -445,6 +445,7 @@ describe("the CLI claude-llc up runs", () => {
       to: "all",
       text: notice,
       nudge: null,
+      direct: false,
     });
 
     // Said once: the reset file is clean on the next boot.

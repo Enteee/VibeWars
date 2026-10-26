@@ -587,7 +587,7 @@ if (
       writeAtomic(
         outbox,
         `${String(Date.now())}-staff-reset.json`,
-        JSON.stringify({ to: "all", text: checked.notice, nudge: null }),
+        JSON.stringify({ to: "all", text: checked.notice, nudge: null, direct: false }),
       );
     }
   } else {
