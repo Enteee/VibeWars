@@ -69,7 +69,8 @@ export function paintCastFill(button: HTMLElement, fraction: number | undefined)
  * the press still goes to the host (brief §32).
  *
  * Nothing is out of range with no target, a dead one, or for a skill that
- * only targets its caster.
+ * only targets its caster. An ally skill with a foe selected is not either:
+ * the host casts it on the caster then, as the simulation's `#castTarget` does.
  */
 export function outOfRange(
   skillBar: readonly (SkillSlot | null)[],
@@ -87,6 +88,9 @@ export function outOfRange(
   return skillBar.map((slot) => {
     const skill = slot === null ? undefined : getSkill(slot.id);
     if (skill === undefined || skill.target === "self") {
+      return false;
+    }
+    if (skill.target === "single-ally" && target.team !== self.team) {
       return false;
     }
     if (!distanceWithinRange(from, to, skill.range)) {

@@ -124,6 +124,14 @@ describe("outOfRange", () => {
     expect(outOfRange(RANGED_BAR, self({}), foe(100), [wall])).toEqual([true, false, false]);
   });
 
+  it("marks no ally skill with a foe targeted, which the host casts on its caster", () => {
+    const ORISON = "monk.orison-of-healing";
+    const range = getSkill(ORISON)?.range ?? 0;
+    const bar = [slot(ORISON)];
+    expect(outOfRange(bar, self({}), foe(range + 1), [])).toEqual([false]);
+    expect(outOfRange(bar, self({}), foe(range + 1, { team: 0 }), [])).toEqual([true]);
+  });
+
   it("marks nothing with no target, or a dead one", () => {
     expect(outOfRange(RANGED_BAR, self({}), undefined, [])).toEqual([false, false, false]);
     expect(outOfRange(RANGED_BAR, self({}), foe(RANGE + 1, { dead: true }), [])).toEqual([
