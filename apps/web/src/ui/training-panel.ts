@@ -63,7 +63,14 @@ import {
 import { describeRefusal, MESSAGE_SECONDS } from "./hud.js";
 import { skillBadgeHtml } from "./icons.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
-import { castFill, flashSlot, outOfRange, paintCastFill, slotFlashes } from "./skill-slot-state.js";
+import {
+  castFill,
+  flashSlot,
+  outOfRange,
+  paintCastFill,
+  slotAffordable,
+  slotFlashes,
+} from "./skill-slot-state.js";
 import { createSlotTooltips } from "./slot-tooltip.js";
 import {
   armedHint,
@@ -418,8 +425,7 @@ export function createTrainingPanel(): TrainingPanel {
       paintCastFill(button, index === fill?.slot ? fill.fraction : undefined);
       button.classList.toggle("is-out-of-range", far[index] === true);
       // A hint, not a gate: the simulation still decides.
-      const unaffordable = self.energy < slot.energyCost || self.adrenaline < slot.adrenalineCost;
-      button.classList.toggle("is-unaffordable", unaffordable);
+      button.classList.toggle("is-unaffordable", !slotAffordable(slot, self));
       // The same wipe as the match HUD (#152).
       paintRecharge(button, recharges[index], slot.name, reducedMotion);
     });
