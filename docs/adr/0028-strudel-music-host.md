@@ -352,7 +352,7 @@ audio device. A voice costs what superdough builds for it (a supersaw its
 for as long as it sounds, release included, and each orbit with a wet voice adds
 a cost per second of its `roomsize`. The ceiling and the weights are
 provisional until #507 can say which cost plays without underruns in Firefox.
-Every track uses the same reverb (`MUSIC_ROOMS` in `analyse.mjs`), so a track
+Every track uses the same reverb (`MUSIC_ROOMS` in `cost.mjs`), so a track
 switch never rebuilds the impulse response.
 
 What we cut to stay within budget:

@@ -56,15 +56,10 @@ export const DSP_COST = {
  */
 const sets = (value, keys) => keys.some((k) => value[k] !== undefined);
 
-/**
- * Synth sustain level when a voice sets none (`synth.mjs`); samples hold at 1.
- */
-const SYNTH_SUSTAIN = 0.6;
-
 /** The gain node `synth.mjs` puts after every oscillator ("turn down"); supersaw peaks at 0.3 too. */
 const SYNTH_LEVEL = 0.3;
 
-/** Sounds `synth.mjs` builds, which have a sustain level of their own. */
+/** Sounds `synth.mjs` builds, which have the turn-down. */
 const SYNTHS = new Set(["sine", "triangle", "square", "sawtooth", "supersaw"]);
 
 /**
@@ -108,8 +103,10 @@ export function voiceCostOf(value) {
 
 /**
  * What the voice adds to the mix while it sounds: `gain × postgain × velocity`
- * (superdough's defaults where absent), at the level of its sustain, through
- * a synth's own turn-down.
+ * (superdough's defaults where absent), at the top of its envelope (1), through
+ * a synth's own turn-down. The envelope peak, not the sustain level: with an
+ * attack and no decay superdough sustains at 1, and every voice reaches 1 at
+ * its attack peak whatever it settles to.
  *
  * @param {Record<string, unknown>} value
  * @returns {number}
@@ -117,12 +114,8 @@ export function voiceCostOf(value) {
 export function voiceGainOf(value) {
   const num = (/** @type {unknown} */ v, /** @type {number} */ d) =>
     typeof v === "number" ? v : d;
-  const sustain = num(
-    value.sustain,
-    SYNTHS.has(typeof value.s === "string" ? value.s : "triangle") ? SYNTH_SUSTAIN : 1,
-  );
   const level = SYNTHS.has(typeof value.s === "string" ? value.s : "triangle") ? SYNTH_LEVEL : 1;
-  return num(value.gain, 0.8) * num(value.postgain, 1) * num(value.velocity, 1) * sustain * level;
+  return num(value.gain, 0.8) * num(value.postgain, 1) * num(value.velocity, 1) * level;
 }
 
 /**

@@ -56,7 +56,7 @@ export const BUILTIN_SOUNDS = new Set([
 
 /**
  * The tolerance for the summed-gain estimate. It counts every voice sounding
- * at the instant, at its sustain level and through a synth's own turn-down
+ * at the instant, at the top of its envelope and through a synth's own turn-down
  * (#508), not only voices that start together, so it is a different
  * quantity from the 1.5 of #366 §3.4. PROVISIONAL: #507's `maxReductionDb`
  * sets it again.

@@ -428,8 +428,16 @@ describe("the track checker budgets the audio thread (#508)", () => {
   it("counts a tail that still sounds when the next voice begins", async () => {
     const notes = 'note("c3 d3 e3 f3").s("sine").gain(5)';
     expect(await problemsOf(`${notes}.release(4)`)).toEqual([
-      "dsp level 0: summed gain 3.60 is over 2, it will clip",
+      "dsp level 0: summed gain 6.00 is over 2, it will clip",
     ]);
     expect(await problemsOf(`${notes}.release(.01)`)).toEqual([]);
+  });
+
+  it("counts a synth with an attack and no decay at full level, not at its default sustain", async () => {
+    // superdough sustains at 1 here, so four sawtooth notes of gain 2 add 4 × 2 × 0.3.
+    const chordOf = 'note("[c3,e3,g3,c4]").s("sawtooth").lpf(1200).gain(2)';
+    expect(await problemsOf(`${chordOf}.attack(.4).release(1)`)).toEqual([
+      "dsp level 0: summed gain 2.40 is over 2, it will clip",
+    ]);
   });
 });
