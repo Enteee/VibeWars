@@ -2049,13 +2049,13 @@ body {
   width: 9rem;
 }
 
-/* The now-playing toast: top left, just under the top bar. In a match that
-   corner is empty; the skill bar is along the bottom, the scoreboard in the
-   middle and the buttons on the right. */
+/* The now-playing toast: bottom left, clear of every screen's title (#501).
+   It only shows out of a fight (intensity under 2), so the HUD gradient
+   behind it is calm. */
 .now-playing {
   position: fixed;
   left: 1rem;
-  top: 2.9rem;
+  bottom: 1rem;
   z-index: 10;
   padding: 0.4rem 0.8rem;
   background: rgb(14 17 22 / 90%);
