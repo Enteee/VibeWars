@@ -68,7 +68,7 @@ import {
   boardMoveAllowed,
   landingAllowed,
   jobsSatisfied,
-  judgingRun,
+  judgingRuns,
   explainGuard,
   pathsOutside,
   pathsWithin,
@@ -381,19 +381,21 @@ async function restJobs(sha, cfg) {
     if ("error" in runs) {
       return runs;
     }
-    const run = judgingRun(runs.runs, { sha, repo: cfg.repo, file });
+    const run = judgingRuns(runs.runs, { sha, repo: cfg.repo, file });
     if (!run.ok) {
       return { refusal: run.reason };
     }
-    const answered = await read(`actions/runs/${String(run.id)}/jobs?filter=latest&per_page=100`);
-    if ("error" in answered) {
-      return answered;
+    for (const id of run.ids) {
+      const answered = await read(`actions/runs/${String(id)}/jobs?filter=latest&per_page=100`);
+      if ("error" in answered) {
+        return answered;
+      }
+      const parsed = jobsFromRest(answered.answer);
+      if ("error" in parsed) {
+        return parsed;
+      }
+      jobs.push(...parsed.jobs);
     }
-    const parsed = jobsFromRest(answered.answer);
-    if ("error" in parsed) {
-      return parsed;
-    }
-    jobs.push(...parsed.jobs);
   }
   return { jobs };
 }

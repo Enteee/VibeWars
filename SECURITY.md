@@ -345,9 +345,12 @@ status, for any commit in the repository, under any name. The merge guard
 therefore reads neither. It reads the **jobs** of the `pull_request` run of
 `ci.yml` and of `dependency-review.yml` for the pinned head commit, and
 requires exactly one successful job for each expected name. Jobs exist only
-because a workflow executed, so no API can create one. Both runs use the PR
-head's own workflow files, so reviewing gate files stays load-bearing. Since
-#116 only cicd-engineer may push them. A test pins `EXPECTED_CHECKS` to the
+because a workflow executed, so no API can create one. Every such run counts,
+not the newest: a second pull request with the same head and a base of its
+own choosing gets its own green run for that commit, and its jobs repeat the
+expected names, so the merge is refused. A run tests the merge of the head
+into its PR's base, using the head's own workflow files, so reviewing gate
+files stays load-bearing. Since #116 only cicd-engineer may push them. A test pins `EXPECTED_CHECKS` to the
 job names the two files define.
 
 GitHub's own ruleset `required_status_checks` still matches by name, so the

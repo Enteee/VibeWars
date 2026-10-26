@@ -348,6 +348,25 @@ async function startHubd(remaining, before) {
       );
     },
     /**
+     * A second pull request's run of the same workflow for the same commit.
+     *
+     * @param {string} sha
+     * @param {string} file
+     * @param {{ id: number, jobs: Record<string, unknown>[] }} planted
+     */
+    addRun(sha, file, planted) {
+      const listed = path.join(state, `runs-${file}-${sha}.json`);
+      /** @type {{ total_count: number, workflow_runs: Record<string, unknown>[] }} */
+      const body = JSON.parse(fs.readFileSync(listed, "utf8"));
+      body.workflow_runs.push({ ...body.workflow_runs[0], id: planted.id, run_number: 2 });
+      body.total_count = body.workflow_runs.length;
+      fs.writeFileSync(listed, JSON.stringify(body));
+      fs.writeFileSync(
+        path.join(state, `jobs-${String(planted.id)}.json`),
+        JSON.stringify({ total_count: planted.jobs.length, jobs: planted.jobs }),
+      );
+    },
+    /**
      * What GitHub answers a code-scanning read (#184).
      *
      * @param {{ code: number, stdout: string, stderr: string }} answer
@@ -2011,6 +2030,19 @@ describe("hubd recording verdicts and merging", () => {
 
     expect(answer.allow).toBe(false);
     expect(String(answer.reason)).toMatch(/failing: ci \(skipped\)/);
+    expect(hubd.calls("pr merge")).toBe(0);
+  }, 20_000);
+
+  it("refuses a second pull request's green run of the same commit beside a red real one", async () => {
+    const hubd = await approved(5000);
+    ran(hubd, "abc1234def", [job("ci", "failure")]);
+    // The same head opened against a base the attacker chose, tests removed.
+    hubd.addRun("abc1234def", "ci.yml", { id: 101, jobs: [job("ci")] });
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(answer.allow).toBe(false);
+    expect(String(answer.reason)).toMatch(/carried by more than one job: ci/);
     expect(hubd.calls("pr merge")).toBe(0);
   }, 20_000);
 

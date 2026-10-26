@@ -15,7 +15,7 @@ import {
   approvalsSatisfied,
   boardMoveAllowed,
   jobsSatisfied,
-  judgingRun,
+  judgingRuns,
   explainGuard,
   landingAllowed,
   pathsOutside,
@@ -39,11 +39,11 @@ const run = (over = {}) => ({
 });
 
 /** @param {Record<string, unknown>[]} runs */
-const judged = (runs) => judgingRun(runs, { sha: HEAD, repo: REPO, file: "ci.yml" });
+const judged = (runs) => judgingRuns(runs, { sha: HEAD, repo: REPO, file: "ci.yml" });
 
-describe("judgingRun", () => {
+describe("judgingRuns", () => {
   it("takes the completed pull_request run of this workflow on this commit", () => {
-    expect(judged([run()])).toEqual({ ok: true, id: 10 });
+    expect(judged([run()])).toEqual({ ok: true, ids: [10] });
   });
 
   it("blocks when CI has not run yet, which is what a forged check run looks like", () => {
@@ -77,14 +77,14 @@ describe("judgingRun", () => {
     });
   });
 
-  it("lets the highest run_number decide", () => {
-    expect(judged([run({ id: 1, run_number: 4 }), run({ id: 2, run_number: 6 })])).toEqual({
+  it("returns every run for the commit, so a second pull request's run cannot stand in", () => {
+    expect(judged([run({ id: 1 }), run({ id: 2, run_number: 6 })])).toEqual({
       ok: true,
-      id: 2,
+      ids: [1, 2],
     });
-    expect(
-      judged([run({ id: 1, run_number: 4 }), run({ id: 2, run_number: 6, status: "queued" })]),
-    ).toMatchObject({ ok: false });
+    expect(judged([run({ id: 1 }), run({ id: 2, status: "queued" })])).toMatchObject({
+      ok: false,
+    });
   });
 });
 

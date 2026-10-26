@@ -21,22 +21,26 @@
  */
 
 /**
- * The workflow run that judged a commit, or why none can.
+ * The workflow runs that judged a commit, or why none can.
  *
  * Check runs and commit statuses are not evidence: any `GITHUB_TOKEN` with
  * `checks: write` can create one for any commit under any name (#123). A job
  * of a workflow run exists only because the workflow ran, and no API creates
- * one. So the merge gate reads jobs, and this picks the run they belong to.
+ * one. So the merge gate reads jobs, and this picks the runs they belong to.
  *
  * A run counts when it ran for exactly this commit, on a pull request, from
- * this repository, out of the named workflow file. Of several the highest
- * `run_number` decides: a re-run is the same run, a newer push is a new one.
+ * this repository, out of the named workflow file. It returns **every** such
+ * run, not the newest: a second pull request with the same head and a base
+ * of its choosing gets its own green run for the same commit, and must not
+ * stand in for the real one. With both runs read, the expected job names
+ * appear twice and `jobsSatisfied` refuses them. A re-run is one run, so a
+ * legitimate retry is unaffected.
  *
  * @param {Record<string, unknown>[]} runs `workflow_runs` rows, as GitHub sends them
  * @param {{ sha: string, repo: string, file: string }} target
- * @returns {{ ok: true, id: number } | { ok: false, reason: string }}
+ * @returns {{ ok: true, ids: number[] } | { ok: false, reason: string }}
  */
-export function judgingRun(runs, target) {
+export function judgingRuns(runs, target) {
   const path = `.github/workflows/${target.file}`;
   const mine = runs.filter((run) => {
     const repository = /** @type {{ full_name?: unknown } | null} */ (run.repository);
@@ -46,20 +50,16 @@ export function judgingRun(runs, target) {
       typeof run.path === "string" &&
       (run.path === path || run.path.startsWith(`${path}@`)) &&
       repository?.full_name === target.repo &&
-      typeof run.id === "number" &&
-      typeof run.run_number === "number"
+      typeof run.id === "number"
     );
   });
   if (mine.length === 0) {
     return { ok: false, reason: `${target.file} has not run on this commit yet` };
   }
-  const run = mine.reduce((best, next) =>
-    Number(next.run_number) > Number(best.run_number) ? next : best,
-  );
-  if (run.status !== "completed") {
+  if (mine.some((run) => run.status !== "completed")) {
     return { ok: false, reason: `${target.file} is still running on this commit` };
   }
-  return { ok: true, id: Number(run.id) };
+  return { ok: true, ids: mine.map((run) => Number(run.id)) };
 }
 
 /**
