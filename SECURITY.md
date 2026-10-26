@@ -309,7 +309,11 @@ whose todo files run `exec` lines) is the jail's private scratch: git
 works in it and the host never sees it. A read-only `.git` with writable
 parts does not work: git takes `.git/packed-refs.lock` to delete any ref,
 a rebase included. Cost: `packed-refs` cannot be rewritten, so deleting a
-packed ref fails ("Device or resource busy"); a loose one is fine. Known
+packed ref fails ("Device or resource busy"); a loose one is fine. It is
+a file bind, which pins its inode, so the launcher sets `gc.auto=0`,
+`gc.packRefs=false` and `maintenance.auto=false` on the operator checkout
+(`--smoke` asserts it): the host must never pack refs while jails run, or
+they would read stale values. Known
 gap: `objects/info/alternates` can be planted; objects are
 content-addressed, so that is no code-execution path.
 `claude-bot --smoke <employee>` asserts the layout.

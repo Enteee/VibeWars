@@ -230,6 +230,8 @@ let
       refused "writing another worktree's HEAD" "touch '$other/HEAD'"
       break
     done
+    check "the host never repacks refs (packed-refs is a pinned file bind)" \
+      "$(git config gc.auto)/$(git config gc.packRefs)/$(git config maintenance.auto)" "0/false/false"
     check "auto-gc never prunes worktrees" "$(git config gc.worktreePruneExpire)" "never"
     # #83: HEAD is the operator's, and everything else at the top of .git is
     # the jail's own scratch, so only what the host reads can be refused.
@@ -748,12 +750,23 @@ let
         # and so does writing another worktree's HEAD or index.
         # gc.worktreePruneExpire keeps an auto-gc from even trying, and
         # gc.auto=0 stops it packing.
-        # Known cost: packed-refs is read-only, so deleting a ref that is
+        # Known cost: a host-side deletion of a packed branch shows in jails
+        # only after a restart. Known cost: packed-refs is read-only, so deleting a ref that is
         # PACKED fails ("Device or resource busy"); a loose one is fine. Known
         # gap: objects/info/alternates can be planted; objects are content-
         # addressed, so there is no code-execution path through it.
         # ----------------------------------------------------------------------
         mkdir -p "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/info" "$DEVENV_ROOT/.git/logs/refs"
+        # packed-refs is a FILE bind, which pins its inode, and git replaces it
+        # by rename. So the host must never rewrite it while a jail runs: a
+        # host pack-refs would delete loose refs from the shared refs/ and
+        # leave jails reading the old packed values (their own branch rewinds).
+        # Hence no auto-gc, no ref packing, no maintenance on the operator
+        # checkout, and the file exists before the ro-bind below.
+        [ -e "$DEVENV_ROOT/.git/packed-refs" ] || printf '# pack-refs with: peeled fully-peeled sorted \n' > "$DEVENV_ROOT/.git/packed-refs"
+        ${pkgs.git}/bin/git -C "$DEVENV_ROOT" config gc.auto 0
+        ${pkgs.git}/bin/git -C "$DEVENV_ROOT" config gc.packRefs false
+        ${pkgs.git}/bin/git -C "$DEVENV_ROOT" config maintenance.auto false
 
         if [ "$smoke" = "1" ]; then
           jailCommand=(${jailSmoke})
@@ -816,7 +829,7 @@ let
           --ro-bind "$DEVENV_ROOT/.git/config" "$DEVENV_ROOT/.git/config" \
           --ro-bind "$DEVENV_ROOT/.git/hooks" "$DEVENV_ROOT/.git/hooks" \
           --ro-bind "$DEVENV_ROOT/.git/info" "$DEVENV_ROOT/.git/info" \
-          --ro-bind-try "$DEVENV_ROOT/.git/packed-refs" "$DEVENV_ROOT/.git/packed-refs" \
+          --ro-bind "$DEVENV_ROOT/.git/packed-refs" "$DEVENV_ROOT/.git/packed-refs" \
           --ro-bind "$DEVENV_ROOT/.git/worktrees" "$DEVENV_ROOT/.git/worktrees" \
           --bind "$DEVENV_ROOT/.git/objects" "$DEVENV_ROOT/.git/objects" \
           --bind "$DEVENV_ROOT/.git/refs" "$DEVENV_ROOT/.git/refs" \
