@@ -270,6 +270,23 @@ async function measure(url, load) {
       return /** @type {{ musicStatsSeen: unknown[] }} */ (/** @type {unknown} */ (window))
         .musicStatsSeen.length;
     });
+    await sleep(3000);
+    for (const frame of page.frames()) {
+      const probe = await frame
+        .evaluate(async () => {
+          const context = new AudioContext();
+          const before = context.state;
+          await Promise.race([context.resume(), new Promise((r) => setTimeout(r, 2000))]);
+          return JSON.stringify({
+            href: location.href.slice(0, 40),
+            active: navigator.userActivation.hasBeenActive,
+            before,
+            after: context.state,
+          });
+        })
+        .catch((error) => `probe failed: ${String(error)}`);
+      console.log(`[${load.browser} frame probe] ${probe}`);
+    }
     const playing = load.screen === "match" ? play(page) : undefined;
     await sleep((SECONDS * 1000) / 2);
     await page.evaluate((trackId) => {
