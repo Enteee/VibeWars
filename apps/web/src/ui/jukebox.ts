@@ -8,7 +8,7 @@ import { music, type MusicFollower } from "../music/play-music.js";
 import { TRACKS, type Track } from "../music/tracks/index.js";
 import { musicIcon } from "./icons.js";
 import { mountSoundControls, soundControlsDeps } from "./sound-controls.js";
-import { button, h, screenBar } from "./kit.js";
+import { button, h, screenBar, selectableRow, syncList } from "./kit.js";
 
 /**
  * The jukebox (#372, #366 §3.6): what plays. A menu screen, and the same
@@ -17,7 +17,8 @@ import { button, h, screenBar } from "./kit.js";
  * and the popover, the one place for them in a match, shows them itself.
  *
  * Click a row to hear it; the preview lasts until another row is picked
- * or the jukebox closes. Every change is saved at once. The rules are
+ * or the jukebox closes. Rows are the shared selectable rows (#581),
+ * updated in place, so the pressed one keeps focus. Every change is saved at once. The rules are
  * plain functions, tested without a DOM; `jukeboxPanel` only draws them.
  */
 
@@ -119,36 +120,44 @@ export function jukeboxPanel(onClose: () => void, player: MusicFollower = music(
       pinnedOption.disabled = preference.pinnedTrackId === null;
     }
 
-    list.replaceChildren();
-    for (const row of jukeboxRows(TRACKS, preference, previewId)) {
-      const node = h("div", "entity-row jukebox-row");
-      node.dataset.trackId = row.id;
-      node.classList.toggle("is-previewing", row.previewing);
-      const play = button("", "jukebox-play", () => {
-        previewId = row.previewing ? null : row.id;
-        player.preview(previewId);
-        paint();
-      });
-      play.setAttribute("aria-pressed", row.previewing ? "true" : "false");
-      play.title = row.previewing ? "Stop the preview" : "Preview";
-      play.append(
-        h("span", "jukebox-title", row.title),
-        h("span", "jukebox-meta", `${row.moods} · ${row.bpm}`),
-        // Filled by the beat editor (#373) for a track the player changed.
-        h("span", "jukebox-edited"),
-      );
-      const pin = button(row.pinned ? "Pinned" : "Pin", "jukebox-pin", () => {
-        change(pinTrack(player.preference, row.id));
-      });
-      pin.disabled = row.pinned && preference.mode === "pinned";
-      const edit = button("Open in editor", "jukebox-edit", () => undefined);
-      // The beat editor (#373) enables this.
-      edit.disabled = true;
-      const actions = h("div", "menu-row");
-      actions.append(pin, edit);
-      node.append(play, actions);
-      list.appendChild(node);
-    }
+    syncList(
+      list,
+      jukeboxRows(TRACKS, preference, previewId),
+      (row) => row.id,
+      (row) => {
+        const node = selectableRow({
+          name: row.title,
+          subtitle: `${row.moods} · ${row.bpm}`,
+          actions: [
+            button("Pin", "jukebox-pin", () => {
+              change(pinTrack(player.preference, row.id));
+            }),
+          ],
+          onSelect: () => {
+            previewId = previewId === row.id ? null : row.id;
+            player.preview(previewId);
+            paint();
+          },
+        });
+        node.classList.add("jukebox-row");
+        node.dataset.trackId = row.id;
+        node.querySelector(".selectable-row-choose")?.classList.add("jukebox-play");
+        return node;
+      },
+      (node, row) => {
+        node.classList.toggle("is-selected", row.previewing);
+        const play = node.querySelector(".jukebox-play");
+        if (play instanceof HTMLElement) {
+          play.setAttribute("aria-pressed", String(row.previewing));
+          play.title = row.previewing ? "Stop the preview" : "Preview";
+        }
+        const pin = node.querySelector(".jukebox-pin");
+        if (pin instanceof HTMLButtonElement) {
+          pin.textContent = row.pinned ? "Pinned" : "Pin";
+          pin.disabled = row.pinned && preference.mode === "pinned";
+        }
+      },
+    );
   }
   paint();
 

@@ -269,19 +269,31 @@ export interface TeamListCallbacks {
   readonly onBack: () => void;
 }
 
+/** "1 member", "3 members". */
+export function memberCount(count: number): string {
+  return `${String(count)} ${count === 1 ? "member" : "members"}`;
+}
+
+/**
+ * The teams, one selectable row each (#581): a press opens it in the team
+ * editor. Each row shows its member count and its members' dots; an
+ * empty list says so where the rows would be, with "New team".
+ */
 export function renderTeamList(
   root: HTMLElement,
   teams: readonly StoredTeam[],
+  characters: readonly StoredCharacter[],
   problems: readonly string[],
   callbacks: TeamListCallbacks,
 ): void {
   root.replaceChildren();
-  const panel = h("div", "screen");
+  const panel = h("div", "screen team-list");
   panel.appendChild(
     screenBar({
       back: { label: "Back", onBack: callbacks.onBack },
       title: [h("h2", "screen-title", "Teams")],
-      actions: [button("New team", "primary", callbacks.onNew)],
+      // An empty list holds the one "New team" itself.
+      actions: teams.length === 0 ? [] : [button("New team", "primary", callbacks.onNew)],
     }).element,
   );
 
@@ -290,21 +302,29 @@ export function renderTeamList(
   }
 
   if (teams.length === 0) {
-    panel.appendChild(h("p", "screen-empty", "No teams yet."));
+    panel.appendChild(emptyState("No teams yet.", "New team", callbacks.onNew));
   }
 
   const list = h("div", "entity-list");
   for (const team of teams) {
-    const row = h("div", "entity-row");
-    row.appendChild(
-      h("span", "entity-name", `${team.name} (${String(team.members.length)} members)`),
-    );
-    row.appendChild(
-      button("Edit", "", () => {
-        callbacks.onEdit(team.id);
+    // A member whose character is gone has no dot; the editor shows it.
+    const dots = h("span", "team-list-dots");
+    for (const member of team.members) {
+      const character = characters.find((c) => c.id === member.characterId);
+      if (character !== undefined) {
+        dots.appendChild(createCharacterDot(character));
+      }
+    }
+    list.appendChild(
+      selectableRow({
+        name: team.name,
+        subtitle: memberCount(team.members.length),
+        miniBar: dots,
+        onSelect: () => {
+          callbacks.onEdit(team.id);
+        },
       }),
     );
-    list.appendChild(row);
   }
   panel.appendChild(list);
 
