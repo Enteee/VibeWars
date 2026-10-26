@@ -98,6 +98,28 @@ export function divineFavorBonusHeal(rank: number, skill: Skill, targetIsAlly: b
   return Math.floor((16 * rank) / 5);
 }
 
+/** The Necromancer's primary. */
+export const SOUL_REAPING_ATTRIBUTE = "necromancer.soul-reaping";
+
+/** Soul Reaping triggers at most this often in any `SOUL_REAPING_WINDOW_SECONDS`. */
+export const SOUL_REAPING_MAX_TRIGGERS = 3;
+
+/** The window `SOUL_REAPING_MAX_TRIGGERS` counts over. */
+export const SOUL_REAPING_WINDOW_SECONDS = 15;
+
+/**
+ * The trigger times after a death at `atSeconds` (#530), or `undefined`
+ * if it does not trigger: it does when fewer than 3 of `triggers` fall in
+ * (atSeconds − 15, atSeconds]. Older entries are dropped.
+ */
+export function soulReapingTrigger(
+  triggers: readonly number[],
+  atSeconds: number,
+): readonly number[] | undefined {
+  const recent = triggers.filter((at) => at > atSeconds - SOUL_REAPING_WINDOW_SECONDS);
+  return recent.length < SOUL_REAPING_MAX_TRIGGERS ? [...recent, atSeconds] : undefined;
+}
+
 /** The Paragon's primary. */
 export const LEADERSHIP_ATTRIBUTE = "paragon.leadership";
 

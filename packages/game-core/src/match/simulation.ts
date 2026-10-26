@@ -9,6 +9,7 @@ import {
   resolveCircleSegmentCollision,
 } from "../geometry.js";
 import type { Segment } from "../geometry.js";
+import { RANGE_SPIRIT } from "../distances.js";
 import {
   addKill,
   emptyScore,
@@ -27,7 +28,12 @@ import {
   type NavGraph,
   type PathFinder,
 } from "../pathing.js";
-import { LEADERSHIP_ATTRIBUTE, leadershipEnergy } from "../primary-attributes.js";
+import {
+  LEADERSHIP_ATTRIBUTE,
+  leadershipEnergy,
+  SOUL_REAPING_ATTRIBUTE,
+  soulReapingTrigger,
+} from "../primary-attributes.js";
 import { createRng, seedFromString, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import {
@@ -484,6 +490,7 @@ export class MatchSimulation {
     });
     record.combatant.health = record.combatant.maxHealth * fraction;
     record.combatant.dead = before.dead;
+    record.combatant.soulReapingTriggers = before.soulReapingTriggers;
     record.skillBar = skillBar;
     record.pendingSkill = undefined;
   }
@@ -1813,7 +1820,32 @@ export class MatchSimulation {
         victim.walkGoal = undefined;
         victim.combatant.knockdownRemaining = 0;
         victim.respawnInSeconds = this.#respawnSeconds(victim);
+        this.#reapSoul(victim);
         this.recordDeath(victim.combatant.team);
+      }
+    }
+  }
+
+  /**
+   * Soul Reaping (#530): every living Necromancer within spirit range of
+   * `victim` gains its rank in energy, up to its maximum, at most 3 times
+   * in any 15 s. The victim's own rank does nothing: it is dead.
+   */
+  #reapSoul(victim: ParticipantRecord): void {
+    for (const record of this.#participants.values()) {
+      const { combatant } = record;
+      const rank = combatant.attributeRanks.get(SOUL_REAPING_ATTRIBUTE) ?? 0;
+      if (
+        rank <= 0 ||
+        combatant.dead ||
+        !distanceWithinRange(record.position, victim.position, RANGE_SPIRIT)
+      ) {
+        continue;
+      }
+      const triggers = soulReapingTrigger(combatant.soulReapingTriggers, this.#elapsedSeconds);
+      if (triggers !== undefined) {
+        combatant.soulReapingTriggers = triggers;
+        combatant.energy = Math.min(combatant.maxEnergy, combatant.energy + rank);
       }
     }
   }
@@ -2052,6 +2084,7 @@ export class MatchSimulation {
       cast: new CastState(spec.id, statuses),
       attack: undefined,
       knockdownRemaining: 0,
+      soulReapingTriggers: [],
       equipment: spec.equipment,
     };
   }
