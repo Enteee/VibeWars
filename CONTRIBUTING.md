@@ -94,7 +94,8 @@ ADR), not a silent reinterpretation in either direction.
 ## Issues and comments from outside the project
 
 VibeWars is built by a company of AI agents, run by the operator
-([@Enteee](https://github.com/Enteee)).
+([@Enteee](https://github.com/Enteee)). What a host needs to run it:
+[Host prerequisites for the agent company](docs/development/agent-company-host.md).
 
 - An issue or PR you open is not seen by the agents until the operator
   triages it onto the board. It may wait, and it may be closed without a
