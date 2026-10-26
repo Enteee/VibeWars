@@ -10,6 +10,7 @@ import {
 } from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
+  MAX_WIRE_COMBATS,
   MAX_WIRE_STATUSES,
   PROTOCOL_VERSION,
   type JsonValue,
@@ -23,7 +24,7 @@ import {
   type WireSkillBar,
   type WireSnapshot,
 } from "@vibewars/game-protocol";
-import { MAX_MESSAGE_BYTES, messageBytes, sanitizeName } from "@vibewars/game-session";
+import { MAX_MESSAGE_BYTES, messageBytes, packCombat, sanitizeName } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
 import { ARENA_MAPS, hostMap } from "./maps.js";
@@ -99,10 +100,17 @@ function projectile(index: number): WireProjectile {
   };
 }
 
-/** A hit on `target`: the damage, and a status riding on it. Only an interrupt names a skill. */
-function hit(target: number): WireCombat["events"] {
+/**
+ * A hit on `target`: the damage, and a status riding on it. Only an
+ * interrupt names a skill. `extra` is spread on each event, to stand in
+ * for fields a later change adds.
+ */
+function hit(
+  target: number,
+  extra: Readonly<Record<string, JsonValue>> = {},
+): WireCombat["events"] {
   const targetId = `${PEER_ID}${String(target)}`;
-  return [
+  const events: WireCombat["events"] = [
     {
       kind: "damage",
       targetId,
@@ -122,6 +130,7 @@ function hit(target: number): WireCombat["events"] {
       crit: null,
     },
   ];
+  return events.map((event) => ({ ...event, ...extra }));
 }
 
 /** The attributes of a Necromancer/Elementalist, the pair with the most. */
@@ -152,14 +161,18 @@ describe("every message fits in one Trystero chunk (#403)", () => {
     expect(messageBytes(snapshot)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 
-  it("a combat batch: a Barrage-sized area on 6 foes, and a double-strike cleave from the other 7", () => {
+  /**
+   * The worst tick: a Barrage-sized area on 6 foes, and a double-strike
+   * cleave from the other 7. Each event gets `extra` spread on it.
+   */
+  function worstTick(extra: Readonly<Record<string, JsonValue>> = {}): WireCombatBatch {
     const area: WireCombat = {
       casterId: `${PEER_ID}0`,
       cause: "skill",
       skillId: SKILL_ID,
       weaponId: WEAPON_ID,
       area: { x: FLOAT, y: FLOAT, radius: 200 },
-      events: Array.from({ length: 6 }, (_, i) => hit(i + 1)).flat(),
+      events: Array.from({ length: 6 }, (_, i) => hit(i + 1, extra)).flat(),
     };
     // Each swing twice, each striking three foes.
     const swings: WireCombat[] = Array.from({ length: 7 }, (_, i) => ({
@@ -168,10 +181,31 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       skillId: SKILL_ID,
       weaponId: WEAPON_ID,
       area: null,
-      events: [0, 1, 2].flatMap((foe) => [...hit(foe), ...hit(foe)]),
+      events: [0, 1, 2].flatMap((foe) => [...hit(foe, extra), ...hit(foe, extra)]),
     }));
-    const batch: WireCombatBatch = [area, ...swings];
-    expect(messageBytes(batch)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+    return [area, ...swings];
+  }
+
+  /** Every message the host would send for `tick` (#601). */
+  const sent = (tick: WireCombatBatch) => packCombat(tick, MAX_MESSAGE_BYTES, MAX_WIRE_COMBATS);
+
+  it("combat: every message the host sends for the worst tick fits (#601)", () => {
+    const messages = sent(worstTick());
+    expect(messages.flat()).toEqual(worstTick());
+    for (const message of messages) {
+      expect(messageBytes(message)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+    }
+  });
+
+  it("combat: still fits once every event grows fields, as #534's block flag will", () => {
+    const grown = worstTick({ blocked: true, critical: true, padding: "x".repeat(40) });
+    expect(messageBytes(grown)).toBeGreaterThan(MAX_MESSAGE_BYTES);
+    const messages = sent(grown);
+    expect(messages.length).toBeGreaterThan(1);
+    expect(messages.flat()).toEqual(grown);
+    for (const message of messages) {
+      expect(messageBytes(message)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+    }
   });
 
   it("the join: a welcome on the largest arena, and a full skill bar", () => {

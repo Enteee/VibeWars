@@ -51,9 +51,14 @@ export interface Transport {
  * longer into chunks and reassembles them against a budget for the whole
  * room, so one peer's big transfer could stall everyone else's. No
  * VibeWars message needs chunking; `message-size.test.ts` in apps/web
- * builds the worst case of each and keeps it under this.
+ * builds the worst case of each and keeps it under this. The host packs
+ * a tick's combat into as many messages of this size as it takes
+ * (`packCombat`, #601). Trystero sends a message inline only while its
+ * 36-byte header plus the JSON fit one 16 KiB frame (`inlineHeaderSize`
+ * in `@trystero-p2p/core` dist/action-wire.mjs; we pass no metadata), so
+ * the limit is the frame less that header.
  */
-export const MAX_MESSAGE_BYTES = 16 * 1024;
+export const MAX_MESSAGE_BYTES = 16 * 1024 - 36;
 
 /** `data`'s size as a transport sends it: the UTF-8 length of its JSON. */
 export function messageBytes(data: unknown): number {
