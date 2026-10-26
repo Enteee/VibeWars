@@ -577,7 +577,7 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     skillId: undefined,
     weaponId: "sword",
     area: undefined,
-    events: [{ kind: "damage", targetId: "b", amount: 12 }],
+    events: [{ kind: "damage", targetId: "b", amount: 12, critical: false }],
     ...overrides,
   });
 
@@ -604,7 +604,7 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
         cause: "degeneration",
         sourceId: "a",
         weaponId: undefined,
-        events: [{ kind: "damage", targetId: "b", amount: 2 }],
+        events: [{ kind: "damage", targetId: "b", amount: 2, critical: false }],
       }),
       entry({
         cause: "skill",
@@ -618,7 +618,7 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
       cause: "degeneration",
       skillId: "",
       weaponId: "",
-      events: [{ kind: "damage", targetId: "b", amount: 2 }],
+      events: [{ kind: "damage", targetId: "b", amount: 2, critical: false }],
     });
     expect(fireball?.area).toEqual({ x: 1, y: 2, radius: 81 });
     expect(fireball?.skillId).toBe("elementalist.fireball");
@@ -642,5 +642,13 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     expect(wire).toEqual([
       { sent: [{ kind: "knocked-down", targetId: "b", durationSeconds: 4 }], broken: [] },
     ]);
+  });
+
+  it("carries a critical hit across, and only on damage (#533)", () => {
+    const crit = { kind: "damage", targetId: "b", amount: 31, critical: true } as const;
+    const heal = { kind: "heal", targetId: "a", amount: 5 } as const;
+    const [wired] = wireCombat([entry({ events: [crit, heal] })]);
+    expect(wired?.events.map((event) => event.crit)).toEqual([true, null]);
+    expect(wired === undefined ? undefined : combatMessage(wired).events).toEqual([crit, heal]);
   });
 });

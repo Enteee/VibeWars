@@ -119,7 +119,10 @@ describe("the swing", () => {
       expect(entry).toMatchObject({ sourceId: "a", skillId: undefined, area: undefined });
       for (const event of entry.events) {
         expect(event.kind).toBe("damage");
-        if (event.kind === "damage") {
+        if (event.kind === "damage" && event.critical) {
+          // A crit (#533): the maximum × √2.
+          expect(event.amount).toBe(31);
+        } else if (event.kind === "damage") {
           expect(event.amount).toBeGreaterThanOrEqual(15);
           expect(event.amount).toBeLessThanOrEqual(22);
         }

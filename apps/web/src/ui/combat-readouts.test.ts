@@ -85,14 +85,14 @@ describe("logToneOf", () => {
 
 describe("describeCombatEvent", () => {
   it("names the skill, the caster, the target and the amount", () => {
-    const event: CombatEvent = { kind: "damage", targetId: "dummy", amount: 63.6 };
+    const event: CombatEvent = { kind: "damage", targetId: "dummy", amount: 63.6, critical: false };
     expect(describeCombatEvent(entry([event]), event, nameOf)).toBe(
       "Fireball (Pyro) hits Caster dummy for 64",
     );
   });
 
   it("says degeneration for a status tick that hurts, regeneration for one that heals", () => {
-    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 3 };
+    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 3, critical: false };
     const heal: CombatEvent = { kind: "heal", targetId: "dummy", amount: 4 };
     const tick = (event: CombatEvent) =>
       entry([event], { cause: "degeneration", sourceId: undefined, skillId: undefined });
@@ -105,7 +105,7 @@ describe("describeCombatEvent", () => {
   });
 
   it("names a status tick's source when exactly one is known", () => {
-    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 3 };
+    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 3, critical: false };
     const tick = entry([hurt], { cause: "degeneration", skillId: undefined });
     expect(describeCombatEvent(tick, hurt, nameOf)).toBe(
       "degeneration (Pyro) hits Caster dummy for 3",
@@ -113,9 +113,13 @@ describe("describeCombatEvent", () => {
   });
 
   it("names a weapon swing for its weapon and attacker, and an unknown weapon plainly", () => {
-    const event: CombatEvent = { kind: "damage", targetId: "dummy", amount: 18 };
+    const event: CombatEvent = { kind: "damage", targetId: "dummy", amount: 18, critical: false };
     const swing = entry([event], { cause: "weapon", skillId: undefined, weaponId: "sword" });
     expect(describeCombatEvent(swing, event, nameOf)).toBe("Sword (Pyro) hits Caster dummy for 18");
+    const crit: CombatEvent = { ...event, amount: 31.1, critical: true };
+    expect(describeCombatEvent(swing, crit, nameOf)).toBe(
+      "Sword (Pyro) hits Caster dummy for 31, a critical hit",
+    );
     expect(describeCombatEvent({ ...swing, weaponId: undefined }, event, nameOf)).toBe(
       "a weapon (Pyro) hits Caster dummy for 18",
     );
@@ -164,7 +168,11 @@ describe("describeCombatEvent", () => {
       "Pyro cancels Fireball",
     );
     expect(logToneOf("cancelled")).toBe("control");
-    expect(floatingCueFor("cancelled", undefined)).toEqual({ text: "cancelled", tone: "neutral" });
+    expect(floatingCueFor("cancelled", undefined, false)).toEqual({
+      text: "cancelled",
+      tone: "neutral",
+      critical: false,
+    });
   });
 
   it("names a weapon entry for the weapon that swung or shot (#162)", () => {
@@ -174,7 +182,7 @@ describe("describeCombatEvent", () => {
         event,
         nameOf,
       );
-    expect(shot({ kind: "damage", targetId: "dummy", amount: 14 })).toBe(
+    expect(shot({ kind: "damage", targetId: "dummy", amount: 14, critical: false })).toBe(
       "Longbow (Pyro) hits Caster dummy for 14",
     );
     expect(shot({ kind: "attack-missed", targetId: "dummy" })).toBe(
@@ -235,15 +243,17 @@ describe("accumulate", () => {
     const totals = accumulate(
       EMPTY_TOTALS,
       [
-        entry([{ kind: "damage", targetId: "dummy", amount: 64 }]),
-        entry([{ kind: "damage", targetId: "you", amount: 10 }], { sourceId: "dummy" }),
+        entry([{ kind: "damage", targetId: "dummy", amount: 64, critical: false }]),
+        entry([{ kind: "damage", targetId: "you", amount: 10, critical: false }], {
+          sourceId: "dummy",
+        }),
         entry([{ kind: "heal", targetId: "you", amount: 30 }]),
         // Someone else's healing is not yours.
         entry([{ kind: "heal", targetId: "dummy", amount: 99 }], { sourceId: "dummy" }),
         // Hurting yourself is damage taken, not damage dealt.
-        entry([{ kind: "damage", targetId: "you", amount: 5 }]),
+        entry([{ kind: "damage", targetId: "you", amount: 5, critical: false }]),
         // A swing counts as damage, and as the weapon's share of it.
-        entry([{ kind: "damage", targetId: "dummy", amount: 12 }], {
+        entry([{ kind: "damage", targetId: "dummy", amount: 12, critical: false }], {
           cause: "weapon",
           skillId: undefined,
           weaponId: "sword",
@@ -291,37 +301,71 @@ describe("formatAmount, formatRate and meterRows", () => {
 
 describe("floatingCueFor", () => {
   it("signs damage with a real minus and heals with a plus", () => {
-    expect(floatingCueFor("damage", 63.6)).toEqual({ text: "−64", tone: "damage" });
-    expect(floatingCueFor("heal", 40)).toEqual({ text: "+40", tone: "heal" });
+    expect(floatingCueFor("damage", 63.6, false)).toEqual({
+      text: "−64",
+      tone: "damage",
+      critical: false,
+    });
+    expect(floatingCueFor("heal", 40, false)).toEqual({
+      text: "+40",
+      tone: "heal",
+      critical: false,
+    });
   });
 
   it("floats nothing for an amount that rounds to zero, like a status tick", () => {
-    expect(floatingCueFor("damage", 0.4)).toBeUndefined();
-    expect(floatingCueFor("heal", 0.2)).toBeUndefined();
-    expect(floatingCueFor("damage", 0.6)).toEqual({ text: "−1", tone: "damage" });
+    expect(floatingCueFor("damage", 0.4, false)).toBeUndefined();
+    expect(floatingCueFor("heal", 0.2, false)).toBeUndefined();
+    expect(floatingCueFor("damage", 0.6, false)).toEqual({
+      text: "−1",
+      tone: "damage",
+      critical: false,
+    });
   });
 
   it("calls out interrupts and deaths, and floats nothing for statuses", () => {
-    expect(floatingCueFor("interrupted", undefined)).toEqual({
+    expect(floatingCueFor("interrupted", undefined, false)).toEqual({
       text: "interrupted!",
       tone: "neutral",
+      critical: false,
     });
-    expect(floatingCueFor("death", undefined)).toEqual({ text: "defeated", tone: "damage" });
-    expect(floatingCueFor("status-applied", undefined)).toBeUndefined();
-    expect(floatingCueFor("something-new", 5)).toBeUndefined();
+    expect(floatingCueFor("death", undefined, false)).toEqual({
+      text: "defeated",
+      tone: "damage",
+      critical: false,
+    });
+    expect(floatingCueFor("status-applied", undefined, false)).toBeUndefined();
+    expect(floatingCueFor("something-new", 5, false)).toBeUndefined();
   });
 
   it("floats 'miss' over the target of a blinded attack", () => {
-    expect(floatingCueFor("attack-missed", undefined)).toEqual({ text: "miss", tone: "neutral" });
-    expect(floatingCueFor("attack-dodged", undefined)).toEqual({ text: "dodge", tone: "neutral" });
-    expect(floatingCueFor("attack-unreachable", undefined)).toEqual({
+    expect(floatingCueFor("attack-missed", undefined, false)).toEqual({
+      text: "miss",
+      tone: "neutral",
+      critical: false,
+    });
+    expect(floatingCueFor("attack-dodged", undefined, false)).toEqual({
+      text: "dodge",
+      tone: "neutral",
+      critical: false,
+    });
+    expect(floatingCueFor("attack-unreachable", undefined, false)).toEqual({
       text: "can't reach",
       tone: "neutral",
+      critical: false,
+    });
+  });
+
+  it('marks a critical hit with a "!" (#533)', () => {
+    expect(floatingCueFor("damage", 31.1, true)).toEqual({
+      text: "−31!",
+      tone: "damage",
+      critical: true,
     });
   });
 
   it("treats a missing amount as 0, so floats nothing for it", () => {
-    expect(floatingCueFor("damage", undefined)).toBeUndefined();
+    expect(floatingCueFor("damage", undefined, false)).toBeUndefined();
   });
 });
 
@@ -347,7 +391,7 @@ describe("StatusTickBatcher (#151)", () => {
   it("keeps the two directions on one target apart", () => {
     const batcher = new StatusTickBatcher();
     const both: CombatEvent[] = [
-      { kind: "damage", targetId: "dummy", amount: 0.5 },
+      { kind: "damage", targetId: "dummy", amount: 0.5, critical: false },
       { kind: "heal", targetId: "dummy", amount: 0.3 },
     ];
     ticks(0, 20, both).forEach((t) => batcher.push(t, nameOf));
@@ -360,8 +404,8 @@ describe("StatusTickBatcher (#151)", () => {
   it("gives each target its own row a second", () => {
     const batcher = new StatusTickBatcher();
     const two: CombatEvent[] = [
-      { kind: "damage", targetId: "dummy", amount: 0.5 },
-      { kind: "damage", targetId: "you", amount: 0.5 },
+      { kind: "damage", targetId: "dummy", amount: 0.5, critical: false },
+      { kind: "damage", targetId: "you", amount: 0.5, critical: false },
     ];
     const rows = ticks(0, 40, two).flatMap((t) => batcher.push(t, nameOf));
     expect(texts([...rows, ...batcher.flush(2, nameOf)])).toEqual([
@@ -374,7 +418,7 @@ describe("StatusTickBatcher (#151)", () => {
 
   it("writes the damage before the death it caused", () => {
     const batcher = new StatusTickBatcher();
-    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 2 };
+    const hurt: CombatEvent = { kind: "damage", targetId: "dummy", amount: 2, critical: false };
     batcher.push(tick(0, [hurt]), nameOf);
     const rows = batcher.push(tick(0.05, [hurt, { kind: "death", targetId: "dummy" }]), nameOf);
     expect(texts(rows)).toEqual(["degeneration hits Caster dummy for 4", "Caster dummy dies"]);
@@ -382,7 +426,10 @@ describe("StatusTickBatcher (#151)", () => {
 
   it("also writes the ticks before a death by a skill", () => {
     const batcher = new StatusTickBatcher();
-    batcher.push(tick(0, [{ kind: "damage", targetId: "dummy", amount: 2 }]), nameOf);
+    batcher.push(
+      tick(0, [{ kind: "damage", targetId: "dummy", amount: 2, critical: false }]),
+      nameOf,
+    );
     const finish = entry([{ kind: "death", targetId: "dummy" }], { atSeconds: 0.5 });
     expect(texts(batcher.push(finish, nameOf))).toEqual([
       "degeneration hits Caster dummy for 2",
@@ -392,14 +439,22 @@ describe("StatusTickBatcher (#151)", () => {
 
   it("writes no row for a second that sums to nothing", () => {
     const batcher = new StatusTickBatcher();
-    const crumb: CombatEvent = { kind: "damage", targetId: "dummy", amount: 0.002 };
+    const crumb: CombatEvent = {
+      kind: "damage",
+      targetId: "dummy",
+      amount: 0.002,
+      critical: false,
+    };
     ticks(0, 20, [crumb]).forEach((t) => batcher.push(t, nameOf));
     expect(batcher.advance(1, nameOf)).toEqual([]);
   });
 
   it("flushes before a divider, so the line comes after the ticks", () => {
     const batcher = new StatusTickBatcher();
-    batcher.push(tick(0, [{ kind: "damage", targetId: "dummy", amount: 3 }]), nameOf);
+    batcher.push(
+      tick(0, [{ kind: "damage", targetId: "dummy", amount: 3, critical: false }]),
+      nameOf,
+    );
     const rows = [...batcher.flush(0.5, nameOf), dividerRow("re-armed", 0.5)];
     expect(texts(rows)).toEqual(["degeneration hits Caster dummy for 3", "── re-armed ──"]);
   });
@@ -408,7 +463,7 @@ describe("StatusTickBatcher (#151)", () => {
     // Regeneration all the while, a skill hit mid-second, a death, a divider.
     const batcher = new StatusTickBatcher();
     const heal: CombatEvent = { kind: "heal", targetId: "you", amount: 0.2 };
-    const hit: CombatEvent = { kind: "damage", targetId: "dummy", amount: 30 };
+    const hit: CombatEvent = { kind: "damage", targetId: "dummy", amount: 30, critical: false };
     const rows: LogRow[] = [];
     for (let i = 0; i < 50; i += 1) {
       const at = i * 0.05;
@@ -430,7 +485,7 @@ describe("StatusTickBatcher (#151)", () => {
 
   it("passes skill entries straight through", () => {
     const batcher = new StatusTickBatcher();
-    const hit: CombatEvent = { kind: "damage", targetId: "dummy", amount: 63.6 };
+    const hit: CombatEvent = { kind: "damage", targetId: "dummy", amount: 63.6, critical: false };
     expect(texts(batcher.push(entry([hit]), nameOf))).toEqual([
       "Fireball (Pyro) hits Caster dummy for 64",
     ]);

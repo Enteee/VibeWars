@@ -84,7 +84,7 @@ export function describeCombatEvent(
   const by = `${what}${source === undefined ? "" : ` (${source})`}`;
   switch (event.kind) {
     case "damage":
-      return `${by} hits ${target} for ${formatAmount(event.amount)}`;
+      return `${by} hits ${target} for ${formatAmount(event.amount)}${event.critical ? ", a critical hit" : ""}`;
     case "heal":
       return `${by} heals ${target} for ${formatAmount(event.amount)}`;
     case "energy-gain":
@@ -247,7 +247,9 @@ export class StatusTickBatcher {
             skillId: undefined,
             weaponId: undefined,
           },
-          { kind: open.kind, targetId: open.targetId, amount: open.amount },
+          open.kind === "damage"
+            ? { kind: open.kind, targetId: open.targetId, amount: open.amount, critical: false }
+            : { kind: open.kind, targetId: open.targetId, amount: open.amount },
           nameOf,
         ),
       );
@@ -373,13 +375,19 @@ export function meterRows(totals: MeterTotals): readonly MeterRow[] {
 export interface FloatingCue {
   readonly text: string;
   readonly tone: "damage" | "heal" | "neutral";
+  /** A critical hit (#533): drawn larger, whatever dealt it. */
+  readonly critical: boolean;
 }
 
 /**
  * The floating text for a combat event, or `undefined` for none. Loose
  * types, because the match view gets its events off the wire.
  */
-export function floatingCueFor(kind: string, amount: number | undefined): FloatingCue | undefined {
+export function floatingCueFor(
+  kind: string,
+  amount: number | undefined,
+  critical: boolean,
+): FloatingCue | undefined {
   // A status ticks every sim tick, mostly for under a point; a "−0" tells
   // the player nothing, and twenty a second would bury the real hits.
   if ((kind === "damage" || kind === "heal") && Math.round(amount ?? 0) === 0) {
@@ -390,29 +398,33 @@ export function floatingCueFor(kind: string, amount: number | undefined): Floati
       // The sign says damage or heal; the colour only backs it up, so a
       // player who cannot tell the two colours apart loses nothing.
       // U+2212, a real minus, as wide as the plus.
-      return { text: `−${formatAmount(amount ?? 0)}`, tone: "damage" };
+      return {
+        text: `−${formatAmount(amount ?? 0)}${critical ? "!" : ""}`,
+        tone: "damage",
+        critical,
+      };
     case "heal":
-      return { text: `+${formatAmount(amount ?? 0)}`, tone: "heal" };
+      return { text: `+${formatAmount(amount ?? 0)}`, tone: "heal", critical: false };
     case "interrupted":
-      return { text: "interrupted!", tone: "neutral" };
+      return { text: "interrupted!", tone: "neutral", critical: false };
     case "cancelled":
       // The caster moved and gave the cast up (#279).
-      return { text: "cancelled", tone: "neutral" };
+      return { text: "cancelled", tone: "neutral", critical: false };
     case "attack-missed":
       // A blinded swing paid for and wasted: over the target, so the
       // attacker sees where it went (#6).
-      return { text: "miss", tone: "neutral" };
+      return { text: "miss", tone: "neutral", critical: false };
     case "attack-dodged":
       // A shot that landed where the target would have been (#159).
-      return { text: "dodge", tone: "neutral" };
+      return { text: "dodge", tone: "neutral", critical: false };
     case "attack-obstructed":
       // A wall between the bow and its target at release (#160).
-      return { text: "obstructed", tone: "neutral" };
+      return { text: "obstructed", tone: "neutral", critical: false };
     case "attack-unreachable":
       // No way round the walls; the attack has ended (#211).
-      return { text: "can't reach", tone: "neutral" };
+      return { text: "can't reach", tone: "neutral", critical: false };
     case "death":
-      return { text: "defeated", tone: "damage" };
+      return { text: "defeated", tone: "damage", critical: false };
     default:
       // Status applications/removals already show as markers on the
       // actor; adding text for them too would just be noise.

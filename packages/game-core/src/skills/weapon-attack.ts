@@ -46,6 +46,8 @@ export interface Swing {
   readonly candidates: readonly TargetCandidate[];
   readonly rng: SimulationRng;
   readonly rules: CombatRules;
+  /** Whether `victim` is moving with its back to the attacker: a melee blow then always crits. */
+  readonly exposed: (victim: Combatant) => boolean;
 }
 
 /**
@@ -110,6 +112,17 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
 }
 
 /**
+ * The chance a blow of this snapshot crits (#533): the base chance plus a
+ * share per rank in the weapon's mastery, the attribute its requirement
+ * names. A caster weapon's nominated attribute is no mastery, and fists
+ * have none, so both crit at the base chance.
+ */
+export function criticalChance(snapshot: WeaponSnapshot, rules: CombatRules): number {
+  const mastery = snapshot.mainHand.weapon.requirement.kind === "fixed" ? snapshot.rank : 0;
+  return Math.min(1, rules.criticalBaseChance + rules.criticalChancePerRank * mastery);
+}
+
+/**
  * Whether a blinded attacker's blow misses.
  *
  * Rolled only when there is a chance to miss, as for attack skills, so
@@ -133,20 +146,32 @@ export interface BlowRule {
 export const PLAIN_BLOW: BlowRule = { weaponDamage: 1, bonus: 0 };
 
 /**
- * A blow that connects: the damage roll as `blow` says, mitigated once by
- * the victim's armor. One that deals nothing still connected, so an
- * attack skill's riders go on.
+ * A blow that connects: the crit roll, then the damage roll as `blow`
+ * says, mitigated once by the victim's armor. One that deals nothing
+ * still connected, so an attack skill's riders go on.
+ *
+ * The crit roll is drawn for every blow; a crit, rolled or because the
+ * victim is exposed, then skips the damage roll, so the stream does
+ * depend on who stands where, deterministically. A crit takes the weapon's maximum times its
+ * `criticalMultiplier` instead of rolling; an attack skill's bonus is
+ * added after, unmultiplied. A melee blow at an `exposed` victim always
+ * crits; a projectile never does that way, however it lands.
  */
 export function landBlow(
   snapshot: WeaponSnapshot,
   victim: Combatant,
   blow: BlowRule,
+  exposed: boolean,
   rng: SimulationRng,
   rules: CombatRules,
   events: CombatEvent[],
 ): void {
   const { weapon, requirementMet } = snapshot.mainHand;
-  const base = rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
+  const rolledCritical = rng.nextFloat() < criticalChance(snapshot, rules);
+  const critical = rolledCritical || (exposed && weapon.projectileSpeed === undefined);
+  const base = critical
+    ? weapon.damageMax * weapon.criticalMultiplier
+    : rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
   const packet: DamagePacket = {
     amount:
       base *
@@ -158,10 +183,10 @@ export function landBlow(
     source: "weapon",
     armorPenetration: weapon.armorPenetration,
   };
-  applyDamage(victim, mitigate(packet, victim, rules), events);
+  applyDamage(victim, mitigate(packet, victim, rules), critical, events);
 }
 
-/** One blow on one victim: blind first, then the damage roll. */
+/** One blow on one victim: blind first, then the crit and damage rolls. */
 function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
   const { attacker, rng, rules } = swing;
   if (victim.dead) {
@@ -171,7 +196,15 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
     events.push({ kind: "attack-missed", targetId: victim.id });
     return;
   }
-  landBlow(weaponSnapshotOf(attacker), victim, PLAIN_BLOW, rng, rules, events);
+  landBlow(
+    weaponSnapshotOf(attacker),
+    victim,
+    PLAIN_BLOW,
+    swing.exposed(victim),
+    rng,
+    rules,
+    events,
+  );
 }
 
 /**
@@ -179,7 +212,7 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
  * cleave included, in the order they happened.
  *
  * A double strike is a second, identical swing at once, with its own
- * blind and damage rolls; it is rolled only for a weapon that can, for
+ * blind, crit and damage rolls; it is rolled only for a weapon that can, for
  * the same reason as the miss.
  */
 export function resolveSwing(swing: Swing): CombatEvent[] {
@@ -202,9 +235,13 @@ export function resolveSwing(swing: Swing): CombatEvent[] {
  * each victim, the primary first, with the skill's bonus added before
  * armor. A victim the blow misses (blind) gets none of the skill's
  * riders; the ones it hits get them all. No double strike and no cleave:
- * an area, as Barrage's, is already the skill's own.
+ * an area, as Barrage's, is already the skill's own. Each blow rolls its
+ * own crit.
  */
-export function resolveAttackSkill(resolution: SkillResolution): CombatEvent[] {
+export function resolveAttackSkill(
+  resolution: SkillResolution,
+  exposed: (victim: Combatant) => boolean,
+): CombatEvent[] {
   const { skill, caster, rng, rules } = resolution;
   const bonusDamage = skill.attack?.bonusDamage;
   const blow: BlowRule = {
@@ -222,7 +259,7 @@ export function resolveAttackSkill(resolution: SkillResolution): CombatEvent[] {
       events.push({ kind: "attack-missed", targetId: victim.id });
       continue;
     }
-    landBlow(snapshot, victim, blow, rng, rules, events);
+    landBlow(snapshot, victim, blow, exposed(victim), rng, rules, events);
     hit.push(victim);
   }
   return [...events, ...applySkillEffects({ ...resolution, targets: hit })];

@@ -121,7 +121,11 @@ export function showCombatFeedback(
       continue;
     }
 
-    const cue = floatingCueFor(event.kind, "amount" in event ? event.amount : undefined);
+    const cue = floatingCueFor(
+      event.kind,
+      "amount" in event ? event.amount : undefined,
+      event.kind === "damage" && event.critical,
+    );
     if (cue === undefined) {
       continue;
     }
@@ -134,7 +138,7 @@ export function showCombatFeedback(
       position: vec2(subject.x + FLOATING_TEXT_OFFSET_X, subject.y + FLOATING_TEXT_OFFSET_Y),
       colour: COLOURS[cue.tone],
       remainingSeconds: FLOATING_TEXT_SECONDS,
-      weight: message.cause === "weapon" ? "light" : "normal",
+      weight: cue.critical ? "critical" : message.cause === "weapon" ? "light" : "normal",
     });
   }
 }

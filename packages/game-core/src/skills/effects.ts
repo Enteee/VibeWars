@@ -20,7 +20,13 @@ import type { Combatant, Skill, SkillContext, SkillEffect } from "./types.js";
  */
 
 export type CombatEvent =
-  | { readonly kind: "damage"; readonly targetId: string; readonly amount: number }
+  | {
+      readonly kind: "damage";
+      readonly targetId: string;
+      readonly amount: number;
+      /** A weapon blow that crit (#533); `false` for everything else. */
+      readonly critical: boolean;
+    }
   | { readonly kind: "heal"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "energy-gain"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "sacrifice"; readonly targetId: string; readonly amount: number }
@@ -76,13 +82,18 @@ export type CombatEvent =
  * it. Callers state what kind of damage they are dealing; this function
  * only does the bookkeeping.
  */
-export function applyDamage(target: Combatant, amount: number, events: CombatEvent[]): void {
+export function applyDamage(
+  target: Combatant,
+  amount: number,
+  critical: boolean,
+  events: CombatEvent[],
+): void {
   if (amount <= 0 || target.dead) {
     return;
   }
   const applied = Math.min(amount, target.health);
   target.health -= applied;
-  events.push({ kind: "damage", targetId: target.id, amount: applied });
+  events.push({ kind: "damage", targetId: target.id, amount: applied, critical });
   // The guard above already returned for an already-dead target, so
   // reaching 0 here is always a *new* death — exactly one death event.
   if (target.health <= 0) {
@@ -147,7 +158,7 @@ export function applyEffect(effect: SkillEffect, context: SkillContext): CombatE
       // Spell damage respects armor. Before this, it did not — which is
       // why a warrior and a monk took identical Fireballs.
       const packet = spellDamage(resolveMagnitude(effect.amount, caster));
-      applyDamage(target, mitigate(packet, target, context.rules), events);
+      applyDamage(target, mitigate(packet, target, context.rules), false, events);
       return events;
     }
 

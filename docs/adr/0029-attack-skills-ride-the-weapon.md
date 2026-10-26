@@ -98,7 +98,8 @@ as if it had been used, as in GW1. Before, it could be cast again at once.
 ## Simplifications
 
 - A ranged attack skill lands at the hit, with no flight (child 3).
-- No crits, block or evade; no per-skill aftercast overrides.
+- ~~No crits~~ (attack skills crit since #490, #533), no block or evade; no
+  per-skill aftercast overrides.
 
 ## Consequences
 
