@@ -413,6 +413,14 @@ body {
   align-items: center;
 }
 
+/* One muted line under host and join (#541): read, not clicked through. */
+.menu-peer-notice {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
 .screen button {
   padding: 0.5rem 0.9rem;
   background: var(--panel);
