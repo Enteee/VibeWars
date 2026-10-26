@@ -230,6 +230,8 @@ test("in a match, an empty slot's key does nothing; the next key casts its own s
 test("in a match, Glyph of Lesser Energy shows Armor of Earth's discounted cost, then the full one (#637)", async ({
   page,
 }) => {
+  // Setup, then up to 45 s for the glyph's 15 s of game time under load.
+  test.setTimeout(90_000);
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Glyph");
   await page.locator(".editor-row select").first().selectOption("elementalist");
