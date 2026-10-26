@@ -26,6 +26,8 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
+import { GIT_ENV, GIT_HARDENING } from "./git-hardening.mjs";
+
 /** The exit code of `check` for a stale build. */
 export const STALE = 3;
 
@@ -160,7 +162,10 @@ export function readManifest(build) {
  * @returns {string} the checkout's HEAD, or `?`
  */
 export function head(root) {
-  const result = spawnSync("git", ["-C", root, "rev-parse", "HEAD"], { encoding: "utf8" });
+  const result = spawnSync("git", [...GIT_HARDENING, "-C", root, "rev-parse", "HEAD"], {
+    encoding: "utf8",
+    env: { ...process.env, ...GIT_ENV },
+  });
   return result.status === 0 ? result.stdout.trim() : "?";
 }
 
