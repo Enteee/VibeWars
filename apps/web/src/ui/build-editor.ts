@@ -29,9 +29,11 @@ import {
   type ProfessionId,
 } from "@vibewars/game-core";
 
+import { NoWebGlError } from "../render/arena-viewport.js";
 import { exportBuild, importBuild } from "../storage/build-transfer.js";
 import { SKILL_BAR_SLOTS, equippableSkills, validateBuild } from "../storage/build-validation.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
+import { noWebGlNotice } from "./arena-notice.js";
 import {
   canEquipOffhand,
   clearArmorUpgrades,
@@ -336,17 +338,19 @@ let activeLibrary: "skills" | "gear" = "skills";
  */
 let sharedTraining: TrainingPanel | undefined;
 
-/** Set once the arena could not be created, so it is not retried on every render. */
-let trainingUnavailable = false;
+/**
+ * Why the arena could not be created, set once so it is not retried on
+ * every render. With no WebGL, a notice takes the arena's place (#655).
+ */
+let trainingUnavailable: "no-webgl" | "unavailable" | undefined;
 
 function trainingInstance(): TrainingPanel | undefined {
-  if (sharedTraining === undefined && !trainingUnavailable) {
+  if (sharedTraining === undefined && trainingUnavailable === undefined) {
     try {
       sharedTraining = createTrainingPanel();
     } catch (error) {
-      // No WebGL: the editor stays the two-column screen it always was.
-      trainingUnavailable = true;
-      console.info("[web] training ground unavailable", error);
+      trainingUnavailable = error instanceof NoWebGlError ? "no-webgl" : "unavailable";
+      console.warn("[web] training ground unavailable", error);
     }
   }
   return sharedTraining;
@@ -384,6 +388,11 @@ export function renderBuildEditor(
     training.attach(layout);
     training.setBuild(character);
     training.setDisplayName(character.name);
+  } else if (trainingUnavailable === "no-webgl") {
+    layout.classList.add("has-training");
+    const placeholder = h("section", "training");
+    placeholder.appendChild(noWebGlNotice());
+    layout.appendChild(placeholder);
   }
   const panel = h("div", "editor");
   layout.appendChild(panel);

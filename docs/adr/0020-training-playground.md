@@ -86,8 +86,8 @@ trustworthy is that it is the identical code.**
   in one tab. `benchmark.test.ts` covers server tick time only.
   Scenarios are capped at 8 participants, and this cap is stated rather
   than claimed to be fine.
-- Without WebGL the editor stays the two-column screen it was, with no
-  error.
+- Without WebGL the arena's column says that it needs WebGL and how to
+  turn it on (#655).
 - The editor's lifecycle is now load-bearing. Any new way out of the
   editor that skips `showMenu()` leaks a Phaser game.
   `e2e/training.spec.ts` (8) is the guard.
