@@ -15,6 +15,7 @@ const ORDER: readonly StatusCategory[] = [
   "enchantment",
   "stance",
   "preparation",
+  "glyph",
   "shout",
   "skill-effect",
 ];
