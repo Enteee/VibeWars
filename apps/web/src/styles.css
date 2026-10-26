@@ -616,6 +616,62 @@ body {
   padding: 0.25rem 0.5rem;
 }
 
+/* What the bars hold (#575); one at 0 the team lacks is amber. */
+.team-counters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.6rem;
+}
+
+.screen .team-counter {
+  display: inline-flex;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+}
+
+.team-counter-count {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.screen .team-counter.is-lacking,
+.team-counter.is-lacking .team-counter-count {
+  border-color: #e3b341;
+  color: #e3b341;
+}
+
+.screen .team-counter[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.team-counter-mix {
+  margin-left: auto;
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+}
+
+/* A counter or a found skill marks its cells and dims the rest. */
+.team-skill[role="button"] {
+  cursor: pointer;
+}
+
+.team-grid.is-highlighting .team-skill:not(.is-marked) {
+  opacity: 0.3;
+}
+
+.team-skill.is-marked {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
 /* A bar cell, edged in its type badge's colour (icons/skill-type). */
 .team-skill {
   position: relative;

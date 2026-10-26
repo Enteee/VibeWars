@@ -6,151 +6,238 @@
  * no checks reports no failures, and an approval cast before the author
  * pushed three more commits still reads as an approval.
  */
+import fs from "node:fs";
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import {
   approvalsSatisfied,
   boardMoveAllowed,
-  checksSatisfied,
+  everyJobSucceeded,
+  jobsSatisfied,
+  judgingRuns,
   explainGuard,
   landingAllowed,
   pathsOutside,
   pathsWithin,
 } from "./hub-guards.mjs";
 
-const EXPECTED = ["format + lint + typecheck + test + build"];
+const HEAD = "abc1234def";
+const REPO = "Enteee/VibeWars";
 
-/**
- * @param {string} name
- * @param {string} conclusion
- */
-const check = (name, conclusion) => ({ name, conclusion });
+/** @param {Record<string, unknown>} over */
+const run = (over = {}) => ({
+  id: 10,
+  head_sha: HEAD,
+  event: "pull_request",
+  path: ".github/workflows/ci.yml",
+  repository: { full_name: REPO },
+  run_number: 5,
+  status: "completed",
+  conclusion: "success",
+  ...over,
+});
 
-describe("checksSatisfied", () => {
-  it("passes when every expected check ran and passed", () => {
-    expect(checksSatisfied([check(EXPECTED[0], "pass")], EXPECTED)).toMatchObject({ ok: true });
+/** @param {Record<string, unknown>[]} runs */
+const judged = (runs) => judgingRuns(runs, { sha: HEAD, repo: REPO, file: "ci.yml" });
+
+describe("judgingRuns", () => {
+  it("takes the completed pull_request run of this workflow on this commit", () => {
+    expect(judged([run()])).toEqual({ ok: true, ids: [10] });
   });
 
-  it("fails an empty check list, which is what deleting a job produces", () => {
-    // The whole reason this function takes an expected set. "Nothing failed"
-    // must not be the same answer as "everything passed".
-    const verdict = checksSatisfied([], EXPECTED);
-
-    expect(verdict.ok).toBe(false);
-    expect(verdict.missing).toStrictEqual(EXPECTED);
+  it("blocks when CI has not run yet, which is what a forged check run looks like", () => {
+    expect(judged([])).toEqual({
+      ok: false,
+      reason: "ci.yml has not run on this commit yet",
+    });
   });
 
-  it("fails when an expected check is missing but others pass", () => {
-    const verdict = checksSatisfied([check("some new job", "pass")], EXPECTED);
-
-    expect(verdict.ok).toBe(false);
-    expect(verdict.missing).toStrictEqual(EXPECTED);
+  it("ignores a push run, another path, another sha and another repository", () => {
+    for (const over of [
+      { event: "push" },
+      { path: ".github/workflows/forged.yml" },
+      { head_sha: "fffffff" },
+      { repository: { full_name: "evil/fork" } },
+    ]) {
+      expect(judged([run(over)])).toMatchObject({ ok: false });
+    }
   });
 
-  it("fails on a failing check", () => {
-    const verdict = checksSatisfied([check(EXPECTED[0], "fail")], EXPECTED);
+  it("blocks a run that was cancelled or failed, even with jobs missing", () => {
+    for (const conclusion of ["cancelled", "failure", null]) {
+      const verdict = judged([run({ id: 1, conclusion }), run({ id: 2 })]);
 
-    expect(verdict).toMatchObject({ ok: false, failing: EXPECTED });
+      expect(verdict).toMatchObject({ ok: false });
+      expect(verdict).toHaveProperty("reason", expect.stringMatching(/^ci\.yml run 1 ended /));
+    }
   });
 
-  it("fails while a check is still running, rather than merging early", () => {
-    const verdict = checksSatisfied([check(EXPECTED[0], "pending")], EXPECTED);
-
-    expect(verdict).toMatchObject({ ok: false, pending: EXPECTED });
+  it("accepts the path GitHub gives with a ref suffix", () => {
+    expect(judged([run({ path: ".github/workflows/ci.yml@refs/pull/9/merge" })])).toMatchObject({
+      ok: true,
+    });
   });
 
-  it("fails on an unexpected extra failing check", () => {
-    const verdict = checksSatisfied([check(EXPECTED[0], "pass"), check("e2e", "fail")], EXPECTED);
-
-    expect(verdict).toMatchObject({ ok: false, failing: ["e2e"] });
+  it("blocks while the run is still going", () => {
+    expect(judged([run({ status: "in_progress", conclusion: null })])).toEqual({
+      ok: false,
+      reason: "ci.yml is still running on this commit",
+    });
   });
 
-  it("refuses a name more than one source reports, rather than letting one win", () => {
-    const verdict = checksSatisfied(
-      [check(EXPECTED[0], "fail"), check(EXPECTED[0], "pass")],
-      EXPECTED,
-    );
-
-    expect(verdict).toMatchObject({ ok: false, ambiguous: EXPECTED, missing: [], failing: [] });
-    expect(explainGuard("checks", verdict)).toBe(
-      `checks — reported by more than one source: ${String(EXPECTED[0])}`,
-    );
-  });
-
-  it("tolerates a skipped check", () => {
-    expect(
-      checksSatisfied([check(EXPECTED[0], "pass"), check("deploy", "skipping")], EXPECTED),
-    ).toMatchObject({ ok: true });
-  });
-
-  it("passes with no expectations only when nothing is failing", () => {
-    expect(checksSatisfied([], [])).toMatchObject({ ok: true });
-    expect(checksSatisfied([check("x", "fail")], [])).toMatchObject({ ok: false });
+  it("returns every run for the commit, so a second pull request's run cannot stand in", () => {
+    expect(judged([run({ id: 1 }), run({ id: 2, run_number: 6 })])).toEqual({
+      ok: true,
+      ids: [1, 2],
+    });
+    expect(judged([run({ id: 1 }), run({ id: 2, status: "queued" })])).toMatchObject({
+      ok: false,
+    });
   });
 });
 
-describe("checksSatisfied, with the company's required checks", () => {
-  // company-init.mjs EXPECTED_CHECKS: the enterTest job, the aggregate of
-  // the per-hook jobs (#99), dependency review (#133) and e2e (#132).
+describe("jobsSatisfied", () => {
+  /** @param {string} name @param {string | null} conclusion @param {string} status */
+  const job = (name, conclusion = "success", status = "completed") => ({
+    name,
+    status,
+    conclusion,
+  });
   const REQUIRED = [
     "format + lint + typecheck + test + build",
     "git hooks",
     "dependency review",
     "e2e",
   ];
-  const build = check(REQUIRED[0], "pass");
-  const review = check("dependency review", "pass");
-  const e2e = check("e2e", "pass");
+  const all = REQUIRED.map((name) => job(name));
 
-  it("passes when all four ran and passed", () => {
-    expect(
-      checksSatisfied([build, check("git hooks", "pass"), review, e2e], REQUIRED),
-    ).toMatchObject({ ok: true });
+  it("passes when every expected job succeeded", () => {
+    expect(jobsSatisfied([all], REQUIRED)).toMatchObject({ ok: true });
   });
 
-  it("refuses a pull request with no git hooks check", () => {
-    const verdict = checksSatisfied([build, check("hook (eslint)", "pass"), review, e2e], REQUIRED);
-
-    expect(verdict).toMatchObject({ ok: false, missing: ["git hooks"] });
+  it("fails an empty run, which is what deleting every job produces", () => {
+    expect(jobsSatisfied([[]], REQUIRED)).toMatchObject({ ok: false, missing: REQUIRED });
   });
 
-  it("refuses a pull request whose git hooks check failed", () => {
-    const verdict = checksSatisfied(
-      [build, check("hook (eslint)", "fail"), check("git hooks", "fail"), review, e2e],
-      REQUIRED,
-    );
-
-    expect(verdict).toMatchObject({ ok: false, failing: ["git hooks", "hook (eslint)"] });
-  });
-
-  it("refuses a pull request with no dependency review check", () => {
-    const verdict = checksSatisfied([build, check("git hooks", "pass"), e2e], REQUIRED);
-
-    expect(verdict).toMatchObject({ ok: false, missing: ["dependency review"] });
-  });
-
-  it("refuses a pull request whose dependency review failed", () => {
-    const verdict = checksSatisfied(
-      [build, check("git hooks", "pass"), check("dependency review", "fail"), e2e],
-      REQUIRED,
-    );
-
-    expect(verdict).toMatchObject({ ok: false, failing: ["dependency review"] });
-  });
-
-  it("refuses a pull request with no e2e check", () => {
-    const verdict = checksSatisfied([build, check("git hooks", "pass"), review], REQUIRED);
+  it("fails when an expected job is missing but others pass", () => {
+    const verdict = jobsSatisfied([all.filter((j) => j.name !== "e2e")], REQUIRED);
 
     expect(verdict).toMatchObject({ ok: false, missing: ["e2e"] });
   });
 
-  it("refuses a pull request whose e2e check failed", () => {
-    const verdict = checksSatisfied(
-      [build, check("git hooks", "pass"), review, check("e2e", "fail")],
+  it("names the conclusion of a failed or skipped job", () => {
+    for (const conclusion of ["failure", "skipped"]) {
+      const verdict = jobsSatisfied(
+        [[...all.slice(1), job(REQUIRED[0] ?? "", conclusion)]],
+        REQUIRED,
+      );
+
+      expect(verdict).toMatchObject({
+        ok: false,
+        failing: [`${REQUIRED[0] ?? ""} (${conclusion})`],
+      });
+    }
+  });
+
+  it("fails while a job is still running", () => {
+    const verdict = jobsSatisfied(
+      [[...all.slice(1), job(REQUIRED[0] ?? "", null, "in_progress")]],
       REQUIRED,
     );
 
-    expect(verdict).toMatchObject({ ok: false, failing: ["e2e"] });
+    expect(verdict).toMatchObject({ ok: false, pending: [REQUIRED[0]] });
+  });
+
+  it("refuses a name two jobs carry, so a passing one cannot shadow a failing one", () => {
+    const verdict = jobsSatisfied([[...all, job("e2e", "failure")]], REQUIRED);
+
+    expect(verdict).toMatchObject({ ok: false, ambiguous: ["e2e"] });
+  });
+
+  it("refuses a second run's failing job beside a green real one, and the reverse", () => {
+    const red = all.map((j) => (j.name === "e2e" ? job("e2e", "failure") : j));
+
+    expect(jobsSatisfied([all, red], REQUIRED)).toMatchObject({
+      ok: false,
+      failing: ["e2e (failure)"],
+    });
+    expect(jobsSatisfied([red, all], REQUIRED)).toMatchObject({
+      ok: false,
+      failing: ["e2e (failure)"],
+    });
+  });
+
+  it("passes two green runs of one commit, which is what a close and reopen makes", () => {
+    expect(jobsSatisfied([all, all], REQUIRED)).toMatchObject({ ok: true });
+  });
+
+  it("blocks a cancelled superseded run, and says how to clear it", () => {
+    const cancelled = all.map((j) => (j.name === "e2e" ? job("e2e", "cancelled") : j));
+    const verdict = jobsSatisfied([cancelled, all], REQUIRED);
+
+    expect(verdict).toMatchObject({ ok: false });
+    expect(verdict.failing[0]).toMatch(/^e2e \(cancelled; re-run that run or push a new commit\)$/);
+  });
+
+  it("takes an expected name from whichever run carries it", () => {
+    const ci = all.slice(0, 2);
+    const rest = all.slice(2);
+
+    expect(jobsSatisfied([ci, rest], REQUIRED)).toMatchObject({ ok: true });
+  });
+
+  it("passes with no expectations", () => {
+    expect(jobsSatisfied([[]], [])).toMatchObject({ ok: true });
+  });
+});
+
+describe("everyJobSucceeded", () => {
+  /** @param {string} name @param {string | null} conclusion @param {string} status */
+  const job = (name, conclusion = "success", status = "completed") => ({
+    name,
+    status,
+    conclusion,
+  });
+
+  it("passes when every job of every run succeeded", () => {
+    expect(everyJobSucceeded([[job("a"), job("b")], [job("c")]])).toMatchObject({ ok: true });
+  });
+
+  it("fails a failed, skipped or cancelled job, and one still running, naming it", () => {
+    expect(everyJobSucceeded([[job("a"), job("b", "failure")]])).toMatchObject({
+      ok: false,
+      failing: ["b (failure)"],
+    });
+    expect(everyJobSucceeded([[job("a", "skipped")]])).toMatchObject({ ok: false });
+    expect(everyJobSucceeded([[job("a", null, "in_progress")]])).toMatchObject({
+      ok: false,
+      pending: ["a"],
+    });
+  });
+
+  it("does not take a run with no jobs for a pass", () => {
+    expect(everyJobSucceeded([[]])).toMatchObject({ ok: false });
+  });
+});
+
+describe("the expected checks are the jobs the workflows define", () => {
+  const dir = path.join(import.meta.dirname, "..", "..", ".github", "workflows");
+  /** @param {string} file */
+  const jobNames = (file) =>
+    [...fs.readFileSync(path.join(dir, file), "utf8").matchAll(/^ {4}name: (.+)$/gm)].map(
+      (m) => m[1] ?? "",
+    );
+  const source = fs.readFileSync(path.join(import.meta.dirname, "company-init.mjs"), "utf8");
+  const listed = /const EXPECTED_CHECKS = \[([^\]]*)\]/.exec(source)?.[1] ?? "";
+  const expected = [...listed.matchAll(/"([^"]+)"/g)].map((m) => m[1] ?? "");
+
+  it("renaming a job cannot silently block or bypass merges", () => {
+    const defined = [...jobNames("ci.yml"), ...jobNames("dependency-review.yml")];
+
+    expect(expected.length).toBeGreaterThan(0);
+    expect([...expected].sort()).toEqual([...defined].sort());
   });
 });
 

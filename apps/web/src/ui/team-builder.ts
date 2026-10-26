@@ -1,4 +1,8 @@
+import { SKILL_ROLES, getSkill, skillRoles, type SkillRole } from "@vibewars/game-core";
+
+import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import { TEAM_SCHEMA_VERSION, type StoredCharacter, type StoredTeam } from "../storage/schema.js";
+import { professionBadge } from "./character-preview.js";
 
 /**
  * The team builder (brief §18, §4).
@@ -104,4 +108,123 @@ export function validateTeam(
 /** Duplicate a team under a new id, so the original is untouched. */
 export function duplicateTeam(team: StoredTeam, newId: string): StoredTeam {
   return { ...team, id: newId, name: `${team.name} (copy)`, updatedAt: Date.now() };
+}
+
+/** One bar slot of one member: what a counter or a find-a-skill marks. */
+export interface TeamCell {
+  readonly characterId: string;
+  readonly slot: number;
+}
+
+export type TeamCounterId = SkillRole | "energy" | "adrenaline" | "empty";
+
+/** One counter above the team grid (#575), and the cells it counts. */
+export interface TeamCounter {
+  readonly id: TeamCounterId;
+  readonly label: string;
+  /** What it counts, for its tooltip. */
+  readonly title: string;
+  readonly cells: readonly TeamCell[];
+  /** Whether a team with none of it lacks something: the counter turns amber. */
+  readonly wanted: boolean;
+}
+
+const ROLE_COUNTERS: Readonly<Record<SkillRole, { label: string; title: string }>> = {
+  interrupt: { label: "interrupts", title: "skills that interrupt a foe's skill" },
+  healing: { label: "healing", title: "skills that heal" },
+  removal: { label: "removal", title: "skills that remove a condition or a hex" },
+  knockdown: { label: "knockdowns", title: "skills that knock a foe down" },
+  hex: { label: "hexes", title: "skills that hex a foe" },
+  condition: { label: "conditions", title: "skills that give a foe a condition" },
+  defence: { label: "defence", title: "skills that raise armor or block" },
+};
+
+/**
+ * What the team's bars hold, counted per copy (#575): the seven skill
+ * roles, energy and adrenaline skills, and the empty slots. A member
+ * whose character is gone counts nothing.
+ */
+export function teamCounters(
+  members: StoredTeam["members"],
+  characters: readonly StoredCharacter[],
+): TeamCounter[] {
+  const cells = new Map<TeamCounterId, TeamCell[]>();
+  const count = (id: TeamCounterId, cell: TeamCell): void => {
+    const list = cells.get(id) ?? [];
+    list.push(cell);
+    cells.set(id, list);
+  };
+  for (const member of members) {
+    const character = characters.find((c) => c.id === member.characterId);
+    if (character === undefined) {
+      continue;
+    }
+    for (let slot = 0; slot < SKILL_BAR_SLOTS; slot += 1) {
+      const cell = { characterId: character.id, slot };
+      const skillId = character.skillBar[slot] ?? null;
+      if (skillId === null) {
+        count("empty", cell);
+        continue;
+      }
+      const skill = getSkill(skillId);
+      if (skill === undefined) {
+        continue;
+      }
+      if (skill.cost !== undefined) {
+        count(skill.cost.kind, cell);
+      }
+      for (const role of skillRoles(skill)) {
+        count(role, cell);
+      }
+    }
+  }
+  return [
+    ...SKILL_ROLES.map((role) => ({
+      id: role,
+      ...ROLE_COUNTERS[role],
+      cells: cells.get(role) ?? [],
+      wanted: true,
+    })),
+    {
+      id: "energy",
+      label: "energy",
+      title: "skills that cost energy",
+      cells: cells.get("energy") ?? [],
+      wanted: false,
+    },
+    {
+      id: "adrenaline",
+      label: "adrenaline",
+      title: "skills that cost adrenaline",
+      cells: cells.get("adrenaline") ?? [],
+      wanted: false,
+    },
+    {
+      id: "empty",
+      label: "empty",
+      title: "empty bar slots",
+      cells: cells.get("empty") ?? [],
+      wanted: false,
+    },
+  ];
+}
+
+/** The team's professions as badges, most common first: "2 W/Mo · R". */
+export function professionMix(
+  members: StoredTeam["members"],
+  characters: readonly StoredCharacter[],
+): string {
+  const counts = new Map<string, number>();
+  for (const member of members) {
+    const character = characters.find((c) => c.id === member.characterId);
+    if (character === undefined) {
+      continue;
+    }
+    const badge = professionBadge(character.primaryProfession, character.secondaryProfession);
+    counts.set(badge, (counts.get(badge) ?? 0) + 1);
+  }
+  return [...counts]
+    .sort((a, b) => b[1] - a[1])
+    .map(([badge, n]) => (n === 1 ? badge : `${String(n)} ${badge}`))
+    .join(" · ");
 }

@@ -25,6 +25,9 @@ export type { WeaponSnapshot } from "./weapon-attack.js";
 export { swingProgress } from "./weapon-attack.js";
 export { applyEffect, applyEffects } from "./effects.js";
 
+export type { SkillRole } from "./roles.js";
+export { SKILL_ROLES, skillRoles } from "./roles.js";
+
 export { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";
 
 export type {

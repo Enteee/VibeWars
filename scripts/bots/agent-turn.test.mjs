@@ -71,6 +71,7 @@ const EVENTS = {
       content: [{ type: "tool_result", tool_use_id: "w1", content: "(nothing new in 540s)" }],
     },
   }),
+  limited: JSON.stringify({ type: "result", is_error: true, result: "Claude usage limit reached" }),
   result: JSON.stringify({ type: "result", subtype: "success", is_error: false, result: "ok" }),
 };
 
@@ -78,13 +79,14 @@ const EVENTS = {
  * Run a turn that prints these events; the inbox cursor starts at 100.
  *
  * @param {string[]} events keys of EVENTS
+ * @param {string} [peekDir] where `peek` is recorded, if anywhere
  * @returns {{ code: number | null, stdout: string, cursor: string, log: string }}
  */
-function turn(events) {
+function turn(events, peekDir = "") {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "agent-turn-test-"));
   dirs.push(dir);
   const bus = path.join(dir, "bus");
-  const state = path.join(dir, "state");
+  const state = path.join(dir, "developer-1");
   fs.mkdirSync(bus);
   fs.writeFileSync(path.join(bus, "cursor"), "100\n");
   const script = path.join(dir, "claude.mjs");
@@ -105,6 +107,7 @@ function turn(events) {
       ...process.env,
       VIBEWARS_BOT_ROLE: "developer-1",
       VIBEWARS_CONTEXT_FILE: path.join(bus, "context.json"),
+      ...(peekDir === "" ? {} : { VIBEWARS_PEEK_DIR: peekDir }),
     },
   });
   const logFile = path.join(state, "backgrounded-waits.jsonl");
@@ -144,5 +147,51 @@ describe("a tg wait that went to the background", () => {
     expect(result.stdout).not.toContain("went to the background");
     expect(result.log).toBe("");
     expect(result.cursor).toBe("500\n");
+  });
+});
+
+describe("what the manager can peek at (#19)", () => {
+  const peekDir = () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "agent-turn-peek-"));
+    dirs.push(dir);
+    return dir;
+  };
+  /** @param {string} dir */
+  const row = (dir) => {
+    /** @type {unknown} */
+    const parsed = JSON.parse(fs.readFileSync(path.join(dir, "developer-1.json"), "utf8"));
+    return /** @type {{ state: string }} */ (parsed);
+  };
+
+  it("gets the lines the pane got, and goes from turn to between turns", () => {
+    const dir = peekDir();
+    const result = turn(["init", "wait", "background", "swallow", "result"], dir);
+
+    const recorded = fs.readFileSync(path.join(dir, "developer-1.txt"), "utf8");
+    expect(result.stdout).toContain("⚠ tg wait went to the background; inbox rewound");
+    expect(recorded).toContain("⚠ tg wait went to the background; inbox rewound");
+    for (const line of result.stdout.trimEnd().split("\n")) {
+      expect(recorded).toContain(line);
+    }
+    expect(row(dir).state).toBe("between");
+  });
+
+  it("never costs the turn: a peek directory that cannot be written is only a notice", () => {
+    const dir = peekDir();
+    const blocked = path.join(dir, "file");
+    fs.writeFileSync(blocked, "");
+    const plain = turn(["init", "wait", "foreground", "result"]);
+    const withBadPeek = turn(["init", "wait", "foreground", "result"], blocked);
+
+    expect(withBadPeek.code).toBe(0);
+    expect(withBadPeek.stdout).toBe(plain.stdout);
+  });
+
+  it("says limited when the turn hit the usage limit", () => {
+    const dir = peekDir();
+    const result = turn(["init", "limited"], dir);
+
+    expect(result.code).toBe(3);
+    expect(row(dir).state).toBe("limited");
   });
 });

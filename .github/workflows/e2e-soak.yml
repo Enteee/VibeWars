@@ -5,10 +5,9 @@ name: e2e soak
 # changes. This catches the ones already on main, before they turn some
 # unrelated pull request red by chance.
 #
-# Deliberately not a pull request or push check. hubd refuses a pull request
-# on any failing check, but it reads checks only at the pull request's head
-# commit (hubd.mjs restChecks). A scheduled run posts its check on main's
-# head, which no guard reads, so this blocks nothing. A red run is for
+# Deliberately not a pull request or push check. hubd reads only the
+# workflow runs of the pull request's head commit (hubd.mjs restJobs). A
+# scheduled run is on main's head, which no guard reads, so this blocks nothing. A red run is for
 # cicd-engineer to triage and file as `Flaky e2e: <spec:line>`, not a gate.
 
 on:

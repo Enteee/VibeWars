@@ -3,8 +3,8 @@ name: Audit
 # `pnpm audit` over everything on main, dev dependencies included: the build
 # and e2e tooling run in CI with repository access too (#133).
 #
-# Deliberately not a pull request check. hubd refuses a pull request on any
-# failing check, so an advisory published today would block every pull
+# Deliberately not a pull request check. A required check that fails blocks
+# every pull request, so an advisory published today would block every pull
 # request, including ones that touch no dependency. A red run here is for
 # cicd-engineer and perf-sec-qa to act on (see SECURITY.md), not a gate.
 

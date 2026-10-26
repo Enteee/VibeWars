@@ -29,8 +29,12 @@ import {
   addMember,
   MAX_TEAM_SIZE,
   moveMember,
+  professionMix,
   removeMember,
+  teamCounters,
   validateTeam,
+  type TeamCounter,
+  type TeamCounterId,
 } from "./team-builder.js";
 
 /**
@@ -197,6 +201,42 @@ export function dragMember(team: StoredTeam, from: number, to: number): StoredTe
   return moved;
 }
 
+/**
+ * What the grid highlights (#575), one mode at a time: the cells a
+ * counter counts, or every copy of one skill (find-a-skill).
+ */
+export type TeamHighlight =
+  | { readonly kind: "counter"; readonly id: TeamCounterId }
+  | { readonly kind: "skill"; readonly skillId: string };
+
+/** A cell's key in `markedCells`: "characterId:slot". */
+export function cellKey(characterId: string, slot: number): string {
+  return `${characterId}:${String(slot)}`;
+}
+
+/** The cells `highlight` marks, by `cellKey`; the rest of the grid dims. */
+export function markedCells(
+  highlight: TeamHighlight,
+  counters: readonly TeamCounter[],
+  team: StoredTeam,
+  characters: readonly StoredCharacter[],
+): Set<string> {
+  if (highlight.kind === "counter") {
+    const counter = counters.find((c) => c.id === highlight.id);
+    return new Set(counter?.cells.map((cell) => cellKey(cell.characterId, cell.slot)));
+  }
+  const marked = new Set<string>();
+  for (const member of team.members) {
+    const character = characters.find((c) => c.id === member.characterId);
+    character?.skillBar.forEach((skillId, slot) => {
+      if (skillId === highlight.skillId) {
+        marked.add(cellKey(character.id, slot));
+      }
+    });
+  }
+  return marked;
+}
+
 export function mountTeamEditor(
   root: HTMLElement,
   initial: TeamEditorState,
@@ -207,7 +247,19 @@ export function mountTeamEditor(
   let opened = initial.opened;
   let isStored = initial.stored;
   let asking: InlineConfirm | undefined;
+  let highlight: TeamHighlight | undefined;
   let disposed = false;
+
+  /** Turn `next` on, or off if it is the one already on. */
+  const toggleHighlight = (next: TeamHighlight): void => {
+    const same =
+      highlight !== undefined &&
+      (next.kind === "counter"
+        ? highlight.kind === "counter" && highlight.id === next.id
+        : highlight.kind === "skill" && highlight.skillId === next.skillId);
+    highlight = same ? undefined : next;
+    update();
+  };
 
   const ask = (
     anchor: HTMLElement,
@@ -290,16 +342,42 @@ export function mountTeamEditor(
     title: [h("h2", "screen-title", "Edit team")],
     status: [chip.element, unsaved],
     actions: [save, duplicate, remove],
-    // Esc closes the problem list before it is Back.
+    // Esc closes the problem list, then clears the counter's marks, before it is Back.
     putAway: () => {
-      if (!chip.isOpen()) {
-        return false;
+      if (chip.isOpen()) {
+        chip.close();
+        return true;
       }
-      chip.close();
-      return true;
+      if (highlight !== undefined) {
+        highlight = undefined;
+        update();
+        return true;
+      }
+      return false;
     },
   });
   panel.append(bar, nameField);
+
+  // What the bars hold; a counter marks its cells in the grid (#575).
+  const counterBar = h("div", "team-counters");
+  const counterButtons = new Map<TeamCounterId, HTMLButtonElement>();
+  for (const counter of teamCounters([], characters)) {
+    const counterButton = button("", "team-counter", () => {
+      toggleHighlight({ kind: "counter", id: counter.id });
+    });
+    counterButton.dataset.counter = counter.id;
+    counterButton.title = counter.title;
+    counterButton.append(
+      h("span", "team-counter-label", counter.label),
+      h("span", "team-counter-count"),
+    );
+    counterButtons.set(counter.id, counterButton);
+    counterBar.appendChild(counterButton);
+  }
+  const mix = h("span", "team-counter-mix");
+  mix.title = "the team's professions";
+  counterBar.appendChild(mix);
+  panel.appendChild(counterBar);
 
   const body = h("div", "team-editor-body");
   // The grid scrolls sideways on a narrow window; the picker wraps below.
@@ -342,7 +420,22 @@ export function mountTeamEditor(
     );
     const skills = h("span", "team-row-skills");
     for (let slot = 0; slot < SKILL_BAR_SLOTS; slot += 1) {
-      skills.appendChild(h("span", "team-skill"));
+      const cell = h("span", "team-skill");
+      // A filled cell finds every copy of its skill on the team (#575).
+      const find = (): void => {
+        const skillId = cell.dataset.skillId;
+        if (skillId !== undefined) {
+          toggleHighlight({ kind: "skill", skillId });
+        }
+      };
+      cell.addEventListener("click", find);
+      cell.addEventListener("keydown", (event: KeyboardEvent) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          find();
+        }
+      });
+      skills.appendChild(cell);
     }
     const controls = h("span", "team-row-controls");
     // A team's order is its slot order in the lobby; `moveMember` clamps.
@@ -420,10 +513,16 @@ export function mountTeamEditor(
         node.dataset.skillType = cell.type;
       }
       node.replaceChildren();
-      node.title = cell === null ? "empty slot" : cell.name;
+      node.title = cell === null ? "empty slot" : `${cell.name}: find it on the team`;
       if (cell === null) {
+        delete node.dataset.skillId;
+        node.removeAttribute("role");
+        node.removeAttribute("tabindex");
         return;
       }
+      node.dataset.skillId = cell.skillId;
+      node.setAttribute("role", "button");
+      node.tabIndex = 0;
       if (cell.type !== undefined) {
         node.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(cell.type));
       }
@@ -521,6 +620,48 @@ export function mountTeamEditor(
         }
       },
     );
+
+    const counters = teamCounters(team.members, characters);
+    for (const counter of counters) {
+      const counterButton = counterButtons.get(counter.id);
+      if (counterButton === undefined) {
+        continue;
+      }
+      const count = counterButton.querySelector(".team-counter-count");
+      if (count !== null) {
+        count.textContent = String(counter.cells.length);
+      }
+      counterButton.classList.toggle("is-lacking", counter.wanted && counter.cells.length === 0);
+      counterButton.setAttribute(
+        "aria-pressed",
+        String(highlight?.kind === "counter" && highlight.id === counter.id),
+      );
+    }
+    mix.textContent = professionMix(team.members, characters);
+    const marked =
+      highlight === undefined ? undefined : markedCells(highlight, counters, team, characters);
+    list.classList.toggle("is-highlighting", marked !== undefined);
+    for (const row of Array.from(list.children)) {
+      if (!(row instanceof HTMLElement)) {
+        continue;
+      }
+      const characterId = row.dataset.characterId ?? "";
+      Array.from(row.querySelectorAll(".team-skill")).forEach((cell, slot) => {
+        const isMarked = marked?.has(cellKey(characterId, slot)) === true;
+        cell.classList.toggle("is-marked", isMarked);
+        if (cell.hasAttribute("role")) {
+          cell.setAttribute(
+            "aria-pressed",
+            String(
+              highlight?.kind === "skill" &&
+                highlight.skillId === cell.getAttribute("data-skill-id"),
+            ),
+          );
+        } else {
+          cell.removeAttribute("aria-pressed");
+        }
+      });
+    }
 
     const offered = addableCharacters(team, characters);
     const left = placesLeft(team);
