@@ -7,6 +7,8 @@
  * without waiting in real time (brief §35).
  */
 
+import type { StatusId, StatusSet } from "./status.js";
+
 export interface ActiveCast {
   readonly skillId: string;
   readonly targetId: string | undefined;
@@ -14,6 +16,8 @@ export interface ActiveCast {
   readonly totalSeconds: number;
   /** Seconds still remaining before the skill fires. */
   remainingSeconds: number;
+  /** The status its caster bears until it ends (`Skill.whileActivating`). */
+  readonly whileActivating: StatusId | undefined;
 }
 
 /**
@@ -23,11 +27,22 @@ export interface ActiveCast {
 const AFTERCAST_EPSILON = 1e-9;
 
 export class CastState {
+  readonly #ownerId: string;
+  readonly #statuses: StatusSet;
   #activeCast: ActiveCast | undefined;
   readonly #rechargeRemaining = new Map<string, number>();
   readonly #rechargeTotal = new Map<string, number>();
   #aftercastRemaining = 0;
   #queuedSlot: number | undefined;
+
+  /**
+   * `statuses` are the caster's own: a cast puts its `whileActivating`
+   * status on them as it begins, and takes it off as it ends (#524).
+   */
+  public constructor(ownerId: string, statuses: StatusSet) {
+    this.#ownerId = ownerId;
+    this.#statuses = statuses;
+  }
 
   public get activeCast(): ActiveCast | undefined {
     return this.#activeCast;
@@ -65,13 +80,37 @@ export class CastState {
     return this.#rechargeTotal;
   }
 
-  public beginCast(skillId: string, targetId: string | undefined, activationSeconds: number): void {
+  /**
+   * Begin casting. A `whileActivating` status lasts until the cast ends,
+   * which is what takes it off; an instant has no activation to bear it in.
+   */
+  public beginCast(
+    skillId: string,
+    targetId: string | undefined,
+    activationSeconds: number,
+    whileActivating: StatusId | undefined,
+  ): void {
+    const bears = activationSeconds > 0 ? whileActivating : undefined;
     this.#activeCast = {
       skillId,
       targetId,
       totalSeconds: activationSeconds,
       remainingSeconds: activationSeconds,
+      whileActivating: bears,
     };
+    if (bears !== undefined) {
+      this.#statuses.apply(bears, Number.POSITIVE_INFINITY, this.#ownerId);
+    }
+  }
+
+  /** The cast is over, however it ended: its `whileActivating` status goes with it. */
+  #endCast(): ActiveCast | undefined {
+    const cast = this.#activeCast;
+    this.#activeCast = undefined;
+    if (cast?.whileActivating !== undefined) {
+      this.#statuses.remove(cast.whileActivating);
+    }
+    return cast;
   }
 
   /**
@@ -80,9 +119,7 @@ export class CastState {
    * apply interrupt consequences.
    */
   public cancelCast(): ActiveCast | undefined {
-    const cancelled = this.#activeCast;
-    this.#activeCast = undefined;
-    return cancelled;
+    return this.#endCast();
   }
 
   public beginAftercast(seconds: number): void {
@@ -153,7 +190,6 @@ export class CastState {
       return undefined;
     }
 
-    this.#activeCast = undefined;
-    return cast;
+    return this.#endCast();
   }
 }

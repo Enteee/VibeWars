@@ -1,9 +1,10 @@
 import { MAX_ATTRIBUTE_RANK } from "../attributes.js";
+import { AREA_ADJACENT, AREA_EARSHOT, AREA_IN_THE_AREA, AREA_NEARBY } from "../distances.js";
 import { getAttribute } from "../professions.js";
 
 import { resolveMagnitudeAtRanks } from "./scaling.js";
 import { findStatusDefinition } from "./status.js";
-import type { Magnitude, Skill, SkillEffect } from "./types.js";
+import type { AreaRule, Magnitude, Skill, SkillEffect, SkillType } from "./types.js";
 
 /**
  * Human-readable skill descriptions, generated from the effect data
@@ -43,6 +44,8 @@ export interface EffectDescription {
 export interface SkillDescription {
   readonly id: string;
   readonly name: string;
+  /** What kind of skill it is, as GW1 words it: "Signet.", "Hex Spell." (#524). */
+  readonly typeText: string;
   /** `undefined` for a "No Attribute" skill (#445). */
   readonly attributeId: string | undefined;
   /** e.g. "Fire Magic", or the raw id if the attribute is unknown; `undefined` with no attribute. */
@@ -135,6 +138,10 @@ export function describeStatus(id: string): string {
     const what = BLOCKED_ATTACKS[definition.block.against];
     parts.push(`${String(Math.round(definition.block.chance * 100))}% chance to block ${what}`);
   }
+  if (definition.endsAfterAttacks !== undefined) {
+    const plural = definition.endsAfterAttacks === 1 ? "" : "s";
+    parts.push(`ends after ${String(definition.endsAfterAttacks)} incoming attack${plural}`);
+  }
   return parts.length === 0 ? definition.name : parts.join(", ");
 }
 
@@ -162,11 +169,11 @@ function describeEffect(
       };
     case "apply-status":
       // A stance is yours alone and one at a time (#523), so it reads as
-      // what it is rather than as something applied.
+      // what it is rather than as something applied. The type line already
+      // says "Stance." (#524).
       if (findStatusDefinition(effect.statusId)?.category === "stance") {
         return {
-          text:
-            `Stance. For ${seconds(effect.durationSeconds)}, ` + describeStatus(effect.statusId),
+          text: `For ${seconds(effect.durationSeconds)}, ` + describeStatus(effect.statusId),
           magnitude: undefined,
         };
       }
@@ -199,6 +206,25 @@ function describeEffect(
   }
 }
 
+const TYPE_TEXT: Record<SkillType, string> = {
+  attack: "Attack.",
+  spell: "Spell.",
+  enchantment: "Enchantment Spell.",
+  hex: "Hex Spell.",
+  signet: "Signet.",
+  shout: "Shout.",
+  stance: "Stance.",
+  skill: "Skill.",
+};
+
+/** GW1's words for the area radii (`distances.ts`). */
+const AREA_TEXT: ReadonlyMap<number, string> = new Map([
+  [AREA_ADJACENT, "adjacent"],
+  [AREA_NEARBY, "nearby"],
+  [AREA_IN_THE_AREA, "in the area"],
+  [AREA_EARSHOT, "in earshot"],
+]);
+
 const TARGET_TEXT: Record<Skill["target"], string> = {
   self: "Self",
   "single-enemy": "One foe",
@@ -206,6 +232,28 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-other-ally": "Another ally",
   "single-any": "Any one target",
 };
+
+const AREA_WHO: Record<AreaRule["affects"], string> = {
+  enemies: "Foes",
+  allies: "Allies",
+  all: "Everyone",
+};
+
+/**
+ * Who and how far: "Allies in earshot, 350 radius" for a shout, which
+ * reaches round its caster rather than at a target (#524).
+ */
+function targetAndRange(skill: Skill): { readonly target: string; readonly range: string } {
+  const area = skill.area;
+  if (skill.target === "self" && area?.origin === "caster") {
+    const where = AREA_TEXT.get(area.radius) ?? `within ${String(area.radius)}`;
+    return { target: `${AREA_WHO[area.affects]} ${where}`, range: `${String(area.radius)} radius` };
+  }
+  return {
+    target: TARGET_TEXT[skill.target],
+    range: skill.target === "self" ? "Self" : `${String(skill.range)} range`,
+  };
+}
 
 /**
  * Describe a skill at the given attribute ranks.
@@ -223,10 +271,26 @@ export function describeSkill(
     const { text, magnitude } = describeEffect(effect, ranks);
     return { text: `If blocked: ${text.charAt(0).toLowerCase()}${text.slice(1)}`, magnitude };
   });
-  const effects = [...skill.effects.map((effect) => describeEffect(effect, ranks)), ...onBlocked];
+  // A status borne while activating (#524): Healing Signet's armor loss.
+  const whileActivating =
+    skill.whileActivating === undefined
+      ? []
+      : [
+          {
+            text: `While activating: ${describeStatus(skill.whileActivating)}`,
+            magnitude: undefined,
+          },
+        ];
+  const effects = [
+    ...skill.effects.map((effect) => describeEffect(effect, ranks)),
+    ...onBlocked,
+    ...whileActivating,
+  ];
+  const { target, range } = targetAndRange(skill);
   return {
     id: skill.id,
     name: skill.name,
+    typeText: TYPE_TEXT[skill.type],
     attributeId: skill.attributeId,
     attributeName:
       skill.attributeId === undefined
@@ -239,8 +303,8 @@ export function describeSkill(
         : `${String(skill.cost.amount)} ${skill.cost.kind === "energy" ? "energy" : "adrenaline"}`,
     castTime: skill.activationSeconds === 0 ? "Instant" : seconds(skill.activationSeconds),
     recharge: seconds(skill.rechargeSeconds),
-    rangeText: skill.target === "self" ? "Self" : `${String(skill.range)} range`,
-    targetText: TARGET_TEXT[skill.target],
+    rangeText: range,
+    targetText: target,
     scalesWithAttribute: effects.some((effect) => effect.magnitude?.attributeId !== undefined),
   };
 }

@@ -276,11 +276,13 @@
                                       { "literal": "dazed" },
                                       { "literal": "deep-wound" },
                                       { "literal": "guardian" },
+                                      { "literal": "healing-signet-armor" },
                                       { "literal": "life-drain" },
                                       { "literal": "malaise" },
                                       { "literal": "poison" },
                                       { "literal": "regeneration" },
                                       { "literal": "sprint" },
+                                      { "literal": "watch-yourself" },
                                       { "literal": "weakness" }
                                     ]
                                   }
@@ -402,11 +404,13 @@
                                       { "literal": "dazed" },
                                       { "literal": "deep-wound" },
                                       { "literal": "guardian" },
+                                      { "literal": "healing-signet-armor" },
                                       { "literal": "life-drain" },
                                       { "literal": "malaise" },
                                       { "literal": "poison" },
                                       { "literal": "regeneration" },
                                       { "literal": "sprint" },
+                                      { "literal": "watch-yourself" },
                                       { "literal": "weakness" }
                                     ]
                                   }
@@ -436,11 +440,13 @@
                                       { "literal": "dazed" },
                                       { "literal": "deep-wound" },
                                       { "literal": "guardian" },
+                                      { "literal": "healing-signet-armor" },
                                       { "literal": "life-drain" },
                                       { "literal": "malaise" },
                                       { "literal": "poison" },
                                       { "literal": "regeneration" },
                                       { "literal": "sprint" },
+                                      { "literal": "watch-yourself" },
                                       { "literal": "weakness" }
                                     ]
                                   }
@@ -927,11 +933,13 @@
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
                   { "literal": "guardian" },
+                  { "literal": "healing-signet-armor" },
                   { "literal": "life-drain" },
                   { "literal": "malaise" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
                   { "literal": "sprint" },
+                  { "literal": "watch-yourself" },
                   { "literal": "weakness" }
                 ]
               }
@@ -1013,11 +1021,13 @@
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
                   { "literal": "guardian" },
+                  { "literal": "healing-signet-armor" },
                   { "literal": "life-drain" },
                   { "literal": "malaise" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
                   { "literal": "sprint" },
+                  { "literal": "watch-yourself" },
                   { "literal": "weakness" }
                 ]
               }
@@ -1043,11 +1053,13 @@
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
                   { "literal": "guardian" },
+                  { "literal": "healing-signet-armor" },
                   { "literal": "life-drain" },
                   { "literal": "malaise" },
                   { "literal": "poison" },
                   { "literal": "regeneration" },
                   { "literal": "sprint" },
+                  { "literal": "watch-yourself" },
                   { "literal": "weakness" }
                 ]
               }

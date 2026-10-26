@@ -108,7 +108,12 @@ describe("headless combat simulation", () => {
   }
 
   function actor(combatant: Combatant, skillBar: readonly string[], x = 0): SimActor {
-    return { combatant, cast: new CastState(), position: vec2(x, 0), skillBar };
+    return {
+      combatant,
+      cast: new CastState(combatant.id, combatant.statuses),
+      position: vec2(x, 0),
+      skillBar,
+    };
   }
 
   /** Try to start a cast; returns the rejection reason, or undefined on success. */
@@ -136,7 +141,12 @@ describe("headless combat simulation", () => {
       return check.reason;
     }
     payCost(skill, caster.combatant);
-    caster.cast.beginCast(skill.id, target?.combatant.id, skill.activationSeconds);
+    caster.cast.beginCast(
+      skill.id,
+      target?.combatant.id,
+      skill.activationSeconds,
+      skill.whileActivating,
+    );
     return undefined;
   }
 

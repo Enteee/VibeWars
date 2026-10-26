@@ -64,6 +64,7 @@ import {
 } from "../skills/projectile.js";
 import {
   attackDurationSeconds,
+  attackReached,
   blindMisses,
   blocks,
   gainCriticalEnergy,
@@ -761,7 +762,12 @@ export class MatchSimulation {
       skill.attack === undefined
         ? effectiveActivationSeconds(skill, record.combatant)
         : this.#attackHitSeconds(record, skill);
-    record.combatant.cast.beginCast(skill.id, castTargetId, activationSeconds);
+    record.combatant.cast.beginCast(
+      skill.id,
+      castTargetId,
+      activationSeconds,
+      skill.whileActivating,
+    );
     this.#castBegun(record, skill, castTargetId);
     // Casting stops you (operator Q33): a key held as the cast begins
     // does not walk, and only the next move cancels the cast. An instant
@@ -1566,6 +1572,7 @@ export class MatchSimulation {
     ) {
       blocked = true;
       events.push({ kind: "attack-blocked", targetId: target.id });
+      attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
     } else {
       const critical = landBlow(
@@ -1581,6 +1588,7 @@ export class MatchSimulation {
       if (critical && attacker !== undefined) {
         gainCriticalEnergy(attacker.combatant, projectile.weaponSnapshot.criticalStrikes, events);
       }
+      attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.effects ?? []));
     }
     if (attacker !== undefined && !attacker.combatant.dead && !blocked) {
@@ -1886,6 +1894,7 @@ export class MatchSimulation {
     record.combatant.statuses.removeByCategory("condition");
     record.combatant.statuses.removeByCategory("hex");
     record.combatant.statuses.removeByCategory("enchantment");
+    record.combatant.statuses.removeByCategory("shout");
     record.position = record.spawn;
     record.facing = record.spec.facing;
     record.inputDirection = ZERO;
@@ -1911,6 +1920,7 @@ export class MatchSimulation {
 
   #combatant(spec: ParticipantSpec): Combatant {
     const maxHealth = spec.maxHealth ?? this.#ruleset.combat.baseHealth;
+    const statuses = new StatusSet();
     return {
       id: spec.id,
       health: maxHealth * (spec.startHealthFraction ?? 1),
@@ -1922,8 +1932,8 @@ export class MatchSimulation {
       attributeRanks: spec.attributeRanks,
       team: spec.team,
       dead: false,
-      statuses: new StatusSet(),
-      cast: new CastState(),
+      statuses,
+      cast: new CastState(spec.id, statuses),
       attack: undefined,
       knockdownRemaining: 0,
       equipment: spec.equipment,

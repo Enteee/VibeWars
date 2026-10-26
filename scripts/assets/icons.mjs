@@ -27,6 +27,7 @@ const C = {
   plate: "#161b22",
   line: "#2b3440",
   ink: "#d7dee8",
+  inkDim: "#7d8899",
   condition: "#ffa657",
   hex: "#d2a8ff",
   enchantment: "#56d4dd",
@@ -116,6 +117,14 @@ const skillType = {
   enchantment: () => `<circle cx="12" cy="12" r="8" ${stroke(C.enchantment, 3)}/>`,
   // Broken ring: something bad stays on you (brief §20: hex = ring/marker).
   hex: () => `<circle cx="12" cy="12" r="8" ${stroke(C.hex, 3)} stroke-dasharray="6 4.566"/>`,
+  // Signet ring: a band with its seal on top (#524).
+  signet: () =>
+    `<circle cx="12" cy="14" r="6" ${stroke(C.ink, 2.5)}/>` +
+    `<path d="M12 2.5l3.5 3.5-3.5 3.5-3.5-3.5z" fill="${C.ink}"/>`,
+  // A mouth and two sound waves: a shout carries (#524).
+  shout: () =>
+    `<circle cx="6" cy="12" r="2.5" fill="${C.ink}"/>` +
+    `<path d="M11 8a5.5 5.5 0 0 1 0 8M15 4.5a10 10 0 0 1 0 15" ${stroke(C.ink, 2.5)}/>`,
   // Pentagon ring, point up: a posture you hold. Solid like the enchantment
   // ring, but five-sided, so the two never merge at 16 px.
   stance: () => `<path d="M12 3.5l8 6-3 10H7l-3-10z" ${stroke(C.stance, 3)}/>`,
@@ -126,11 +135,12 @@ const skillType = {
 // ---------------------------------------------------------------------------
 // Statuses: the markers under an actor in the arena. The plate gives the
 // category by colour *and* outline (condition = circle, hex = diamond,
-// enchantment = rounded square, stance = pentagon), and the glyph gives the status.
+// enchantment = rounded square, stance = pentagon, shout = hexagon, skill
+// effect = wide capsule), and the glyph gives the status.
 // ---------------------------------------------------------------------------
 
 /** @typedef {(colour: string) => string} Glyph */
-/** @typedef {"condition" | "hex" | "enchantment" | "stance"} Category */
+/** @typedef {"condition" | "hex" | "enchantment" | "stance" | "shout" | "skill-effect"} Category */
 
 /** @type {Record<Category, (glyph: Glyph) => string>} */
 const plates = {
@@ -141,6 +151,10 @@ const plates = {
   hex: (glyph) => `<path d="M12 0.5L23.5 12 12 23.5 0.5 12z" fill="${C.hex}"/>` + glyph(C.plate),
   enchantment: (glyph) =>
     `<rect x="1" y="1" width="22" height="22" rx="5" fill="${C.enchantment}"/>` + glyph(C.plate),
+  shout: (glyph) =>
+    `<path d="M6.5 2h11l5.5 10-5.5 10h-11L1 12z" fill="${C.ink}"/>` + glyph(C.plate),
+  "skill-effect": (glyph) =>
+    `<rect x="0.5" y="4" width="23" height="16" rx="8" fill="${C.inkDim}"/>` + glyph(C.plate),
 };
 
 /** @type {Record<string, [Category, Glyph]>} */
@@ -219,6 +233,21 @@ const status = {
     (c) =>
       `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" ${stroke(c, 2)} stroke-linejoin="round"/>` +
       `<path d="M9.5 14L15 8.5" ${stroke(c, 2.2)} stroke-linecap="round"/>`,
+  ],
+  // Shout: a shield with a warning mark, armor called for (#524).
+  "watch-yourself": [
+    "shout",
+    (c) =>
+      `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" ${stroke(c, 2)}/>` +
+      `<path d="M12 8.5v3.5" ${stroke(c, 2.2)}/><circle cx="12" cy="14.6" r="1.1" fill="${c}"/>`,
+  ],
+  // Skill effect: a shield struck through, armor lost while the signet is
+  // activated (#524).
+  "healing-signet-armor": [
+    "skill-effect",
+    (c) =>
+      `<path d="M8.5 6.5h7v4c0 2.2-1.8 3.7-3.5 4.8-1.7-1.1-3.5-2.6-3.5-4.8z" ${stroke(c, 1.8)}/>` +
+      `<path d="M6.5 16.5l11-11" ${stroke(c, 2)}/>`,
   ],
 };
 

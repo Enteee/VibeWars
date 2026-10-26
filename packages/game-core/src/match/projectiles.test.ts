@@ -522,7 +522,7 @@ describe("ranged attack skills fly (#416)", () => {
   it("interrupts a cast still going when the arrow lands", () => {
     const match = skillSim(target(vec2(300, 0)));
     shoot(match, 0);
-    get(match, "target").combatant.cast.beginCast("elementalist.fireball", "archer", 2);
+    get(match, "target").combatant.cast.beginCast("elementalist.fireball", "archer", 2, undefined);
     expect(kinds(landSkill(match))).toContain("interrupted");
     expect(get(match, "target").combatant.cast.isCasting).toBe(false);
   });
@@ -530,7 +530,12 @@ describe("ranged attack skills fly (#416)", () => {
   it("does not interrupt a cast that finished before the arrow arrived", () => {
     const match = skillSim(target(vec2(300, 0)));
     shoot(match, 0);
-    get(match, "target").combatant.cast.beginCast("elementalist.fireball", "archer", 2 * DT);
+    get(match, "target").combatant.cast.beginCast(
+      "elementalist.fireball",
+      "archer",
+      2 * DT,
+      undefined,
+    );
     const landed = landSkill(match);
     expect(kinds(landed)).not.toContain("interrupted");
     expect(kinds(landed)).toContain("status-applied");

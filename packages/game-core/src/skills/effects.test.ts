@@ -206,6 +206,7 @@ describe("applySkillEffects", () => {
       includesCaster: false,
     },
     attack: undefined,
+    whileActivating: undefined,
     effects: [
       { kind: "sacrifice-health", percentOfMax: 10 },
       { kind: "damage", amount: { flat: 30 } },

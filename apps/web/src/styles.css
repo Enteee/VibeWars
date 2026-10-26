@@ -1612,6 +1612,11 @@ body {
   color: var(--ink);
 }
 
+.tip-type {
+  color: var(--ink-dim);
+  font-size: 0.78rem;
+}
+
 .tip-attribute {
   margin-bottom: 0.4rem;
   color: var(--accent);

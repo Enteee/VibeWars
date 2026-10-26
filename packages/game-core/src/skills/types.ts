@@ -131,12 +131,14 @@ export type SkillEffect =
  * badge, so a skill's nature reads by shape rather than by colour (#75).
  * An attack skill is also a blow of its weapon (ADR-0029).
  */
-export type SkillType = "attack" | "spell" | "enchantment" | "hex" | "stance" | "skill";
+export type SkillType =
+  "attack" | "spell" | "enchantment" | "hex" | "signet" | "shout" | "stance" | "skill";
 
 /**
  * Whether a skill of this type is a spell, as GW1's rules that "affect
- * spells" mean it: enchantments and hexes are spells (#527). Every such
- * rule asks this, never the type directly.
+ * spells" mean it: enchantments and hexes are spells, signets, shouts and
+ * stances are not (#524, #527). Every such rule asks this, never the type
+ * directly.
  */
 export function isSpell(type: SkillType): boolean {
   return type === "spell" || type === "enchantment" || type === "hex";
@@ -199,6 +201,11 @@ export interface Skill {
   readonly area: AreaRule | undefined;
   /** Set exactly when `type === "attack"` (ADR-0029). */
   readonly attack: AttackSkillRule | undefined;
+  /**
+   * A status the caster bears while activating it, gone the moment the
+   * cast ends however it ends (#524): Healing Signet's armor loss.
+   */
+  readonly whileActivating: StatusId | undefined;
   readonly effects: readonly SkillEffect[];
 }
 

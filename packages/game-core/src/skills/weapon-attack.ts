@@ -189,6 +189,18 @@ export function blocks(
 }
 
 /**
+ * An attack reached `victim`, hit or blocked (#524): it counts against
+ * each of its statuses that ends after so many, once the blow is done,
+ * so the last attack one lasts for still meets it. A blind miss, a dodge
+ * or an obstructed shot never reaches it, and does not count.
+ */
+export function attackReached(victim: Combatant, events: CombatEvent[]): void {
+  for (const statusId of victim.statuses.countIncomingAttack()) {
+    events.push({ kind: "status-expired", targetId: victim.id, statusId });
+  }
+}
+
+/**
  * What an attack skill makes of a blow (ADR-0029): the weapon's roll times
  * `weaponDamage`, plus `bonus`.
  */
@@ -271,12 +283,14 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
   }
   if (blocks(victim, "melee", rng)) {
     events.push({ kind: "attack-blocked", targetId: victim.id });
+    attackReached(victim, events);
     return;
   }
   const snapshot = weaponSnapshotOf(attacker);
   if (landBlow(snapshot, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
     gainCriticalEnergy(attacker, snapshot.criticalStrikes, events);
   }
+  attackReached(victim, events);
 }
 
 /**
@@ -336,12 +350,14 @@ export function resolveAttackSkill(
     }
     if (skill.attack?.unblockable !== true && blocks(victim, kind, rng)) {
       events.push({ kind: "attack-blocked", targetId: victim.id });
+      attackReached(victim, events);
       blocked.push(victim);
       continue;
     }
     if (landBlow(snapshot, victim, blow, exposed(victim), rng, rules, events)) {
       gainCriticalEnergy(caster, snapshot.criticalStrikes, events);
     }
+    attackReached(victim, events);
     hit.push(victim);
   }
   return [
