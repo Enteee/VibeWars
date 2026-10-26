@@ -1046,8 +1046,11 @@ test("(36) the arena draws at a match's scale: the stage shows less of the world
 });
 
 /**
- * The rows of `named` that differ from `blank`, two shots of one band:
- * how tall the ink is that appeared between them, in screen px.
+ * The rows of `named` where name ink appeared over `blank`, two shots of
+ * one band: how tall the name is, in screen px. Only a bright pixel that
+ * was not there counts (names are #d7dee8, the floor and grid are near
+ * black), so a camera that moved a pixel between the shots shifts the
+ * grid without counting as ink.
  */
 async function inkHeight(page: Page, blank: Buffer, named: Buffer): Promise<number> {
   return page.evaluate(
@@ -1065,7 +1068,9 @@ async function inkHeight(page: Page, blank: Buffer, named: Buffer): Promise<numb
       const [{ data: a }, { data: b, width }] = await Promise.all([pixels(before), pixels(after)]);
       const rows: number[] = [];
       for (let i = 0; i < a.length; i += 4) {
-        if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) {
+        const bright = Math.max(b[i] ?? 0, b[i + 1] ?? 0, b[i + 2] ?? 0) > 110;
+        const changed = a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2];
+        if (bright && changed) {
           rows.push(Math.floor(i / 4 / width));
         }
       }
@@ -1131,5 +1136,6 @@ test("(37) a name keeps its screen size at every zoom (#456)", async ({ page }) 
 
   // An 11 px name, not one the zoom shrank to a few pixels.
   expect(near).toBeGreaterThanOrEqual(7);
+  expect(near).toBeLessThanOrEqual(14);
   expect(Math.abs(wide - near)).toBeLessThanOrEqual(1);
 });
