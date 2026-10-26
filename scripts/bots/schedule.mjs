@@ -105,6 +105,34 @@ export function parseSchedule(json) {
 }
 
 /**
+ * `nudges.json`, which hubd writes and reads back on its next start (#640),
+ * strictly: `{ since, sent }`, with numbers only.
+ *
+ * @param {string} json
+ * @returns {{ since: number, sent: Map<string, number> }}
+ */
+export function parseNudgeClock(json) {
+  /** @type {unknown} */
+  const raw = JSON.parse(json);
+  if (!isObject(raw)) {
+    throw new Error("nudge clock is not an object");
+  }
+  exactKeys(raw, ["since", "sent"], "nudges");
+  const { since, sent } = raw;
+  if (typeof since !== "number" || !Number.isFinite(since)) {
+    throw new Error("nudges.since is not a number");
+  }
+  if (!isObject(sent)) {
+    throw new Error("nudges.sent is not an object");
+  }
+  const entries = Object.entries(sent);
+  if (!entries.every(([, at]) => typeof at === "number" && Number.isFinite(at))) {
+    throw new Error("nudges.sent has a value that is not a number");
+  }
+  return { since, sent: new Map(entries.map(([id, at]) => [id, Number(at)])) };
+}
+
+/**
  * The nudges due now: those whose interval has run since they were last
  * sent. An entry never sent counts from `since`, hubd's start, so the first
  * nudge comes one interval after a (re)start.

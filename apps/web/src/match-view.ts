@@ -1,4 +1,4 @@
-import { allWallSegments } from "@vibewars/game-maps";
+import { allWallSegments } from "@vibewars/game-maps/geometry";
 import type { WallDescriptor } from "@vibewars/game-protocol";
 import type { MatchConnection, MatchSnapshot } from "@vibewars/game-session";
 

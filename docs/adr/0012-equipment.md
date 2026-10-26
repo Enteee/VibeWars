@@ -121,7 +121,11 @@ A test asserts this for all ten professions.
 Attributes and skills are gated by profession and are cleared, as they
 already were. Gear joins the same rule for nominations and runes, but
 the weapon class survives — deleting a deliberate choice would be the
-editor overruling the player.
+editor overruling the player. The one exception (#614, operator Q72): a
+weapon that no attribute of the new professions can govern, such as a
+Sword on an Assassin, becomes the new primary's default weapon, so the
+new primary's weapon attribute works at once. A weapon that is still
+reachable stays.
 
 ## Consequences
 

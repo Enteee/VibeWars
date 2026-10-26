@@ -20,7 +20,7 @@ const WIDE = { width: 1500, height: 950 };
 /** The bar's filled slots; an empty one keeps its place and its key (#347). */
 const FILLED_SLOTS = ".training-skill:not(.is-empty)";
 
-/** A new elementalist with Fireball on the bar, in a wide editor. */
+/** A new elementalist, holding its Wand (#614), with Fireball on the bar, in a wide editor. */
 async function openTraining(
   page: Page,
   keymap: Keymap = KEYMAP_PRESETS.vibewars,
@@ -330,7 +330,7 @@ test("(14) in Weapon DPS, Space swings and the meter's weapon row counts it (#16
   // the CPU is loaded (#327), so this waits the default.
   await expect(meter(page, "weapon / skills")).not.toHaveText(/^0 \//);
   // Named for the weapon that swung, by the character who swung it.
-  await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Melee dummy/);
+  await expect(page.locator(".training-log")).toContainText(/Wand \(.+\) hits Melee dummy/);
 });
 
 test("(33) in Block, the Guardian dummy blocks some swings, and the log says so (#534)", async ({
@@ -348,12 +348,12 @@ test("(33) in Block, the Guardian dummy blocks some swings, and the log says so 
   );
   // Half the swings: a handful is plenty to see one blocked and one land.
   await expect(page.locator(".training-log")).toContainText(
-    /Guardian dummy \(60 armor\) blocks Sword \(.+\)/,
+    /Guardian dummy \(60 armor\) blocks Wand \(.+\)/,
     {
       timeout: 20_000,
     },
   );
-  await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Guardian dummy/, {
+  await expect(page.locator(".training-log")).toContainText(/Wand \(.+\) hits Guardian dummy/, {
     timeout: 20_000,
   });
 });
@@ -397,7 +397,7 @@ test("(16) Tab targets in the arena and never leaves it for the name field (#268
   // game time, which runs slower than wall time under load (#327), so
   // this waits the default.
   await expect(meter(page, "weapon / skills")).not.toHaveText(/^0 \//);
-  await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Melee dummy/);
+  await expect(page.locator(".training-log")).toContainText(/Wand \(.+\) hits Melee dummy/);
 });
 
 test("(17) after Esc releases the arena, Tab is the browser's again (#268)", async ({ page }) => {
@@ -505,7 +505,13 @@ test("(19) a move mid-cast cancels it: logged, and the cast never lands (#279)",
 test("(20) a double right click on a far enemy attacks it: you walk there and swing (#298, #438)", async ({
   page,
 }) => {
-  const canvas = await openTraining(page);
+  // A new character is a warrior with a Sword: the walk has to happen. An
+  // elementalist's Wand (#614) reaches this dummy from the spawn point.
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await expect(page.locator(".editor-row select").first()).toHaveValue("warrior");
+  const canvas = page.locator(".training canvas");
   await page.locator("select.training-scenario").selectOption("weapon-dps");
   await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
   await takeControl(page);

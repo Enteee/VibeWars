@@ -21,6 +21,15 @@ import { named } from "./fingerprint.mjs";
  */
 export const COMPANY_PATHS = ["scripts/bots/", "nix/claude-", ".claude/bots/", "devenv.nix"];
 
+/** The reason a `company reboot --workday` records. */
+export const WORKDAY = "workday";
+
+/** How long after the workday nudge the manager may still reboot with it. */
+export const WORKDAY_WINDOW_MS = 2 * 60 * 60_000;
+
+/** The workday nudge's interval: the length of a workday. */
+export const WORKDAY_MS = 720 * 60_000;
+
 /** The shortest gap between two boots of the company. */
 export const COOLDOWN_MS = 30 * 60_000;
 
@@ -59,17 +68,23 @@ export function clock(ms) {
 /**
  * May a reboot be scheduled now?
  *
+ * `workday` is non-null for `company reboot --workday` (#640): it replaces
+ * the need for company code changes with the rule that the `workday` nudge
+ * was sent within the last two hours and the company has not booted since.
+ * The cooldown and a pending reboot still apply.
+ *
  * @param {{
  *   bootSha: string | null,
  *   changedPaths: string[] | null,
  *   lastRebootAt: number | null,
  *   now: number,
  *   pending: Reboot | null,
+ *   workday: { sentAt: number | null } | null,
  * }} input `changedPaths` is what `main` changed since `bootSha`, `null` if
  *   that could not be worked out
  * @returns {{ ok: true } | { ok: false, reason: string }}
  */
-export function rebootAllowed({ bootSha, changedPaths, lastRebootAt, now, pending }) {
+export function rebootAllowed({ bootSha, changedPaths, lastRebootAt, now, pending, workday }) {
   if (pending !== null) {
     return { ok: false, reason: `a reboot is already scheduled for ${clock(pending.deadline)}` };
   }
@@ -85,6 +100,9 @@ export function rebootAllowed({ bootSha, changedPaths, lastRebootAt, now, pendin
       reason: `the company booted at ${clock(lastRebootAt)}; the next reboot is possible at ${clock(lastRebootAt + COOLDOWN_MS)}`,
     };
   }
+  if (workday !== null) {
+    return workdayAllowed({ lastRebootAt, now, sentAt: workday.sentAt });
+  }
   if (changedPaths === null) {
     return {
       ok: false,
@@ -97,6 +115,27 @@ export function rebootAllowed({ bootSha, changedPaths, lastRebootAt, now, pendin
       reason:
         `main has no company code changes since ${bootSha.slice(0, 8)}. A reboot loads new ` +
         "company code; it is not a way to unstick agents.",
+    };
+  }
+  return { ok: true };
+}
+
+/**
+ * @param {{ lastRebootAt: number, now: number, sentAt: number | null }} input
+ * @returns {{ ok: true } | { ok: false, reason: string }}
+ */
+function workdayAllowed({ lastRebootAt, now, sentAt }) {
+  if (sentAt === null) {
+    return { ok: false, reason: "the end-of-workday message has not been sent yet" };
+  }
+  const next = `; the next workday ends at ${clock(sentAt + WORKDAY_MS)}`;
+  if (lastRebootAt >= sentAt) {
+    return { ok: false, reason: `the company has booted since the workday ended${next}` };
+  }
+  if (now - sentAt > WORKDAY_WINDOW_MS) {
+    return {
+      ok: false,
+      reason: `the workday ended at ${clock(sentAt)}, more than 2 hours ago${next}`,
     };
   }
   return { ok: true };
@@ -167,9 +206,11 @@ export function fastForwardDecision({ branch, dirty, fastForward }) {
  * @returns {string}
  */
 export function announcement(reboot, subjects) {
+  const why = reboot.reason === WORKDAY ? "End of the workday. Company reboot" : "Company reboot";
+  const loads = subjects.length === 0 ? "no new company code" : subjects.join("; ");
   return (
-    `Company reboot by ${clock(reboot.deadline)}: ${reboot.reason}. It loads: ` +
-    `${subjects.join("; ")}. Commit or WIP-commit your work, push it, then run ` +
+    `${why} by ${clock(reboot.deadline)}${reboot.reason === WORKDAY ? "" : `: ${reboot.reason}`}. It loads: ` +
+    `${loads}. Commit or WIP-commit your work, push it, then run ` +
     "`company ready`. Abort: `company reboot --abort` (manager), " +
     "`claude-llc reboot --abort` (operator)."
   );

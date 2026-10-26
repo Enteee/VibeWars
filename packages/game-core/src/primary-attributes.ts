@@ -64,6 +64,14 @@ export const FAST_CASTING_ATTRIBUTE = "mesmer.fast-casting";
 export const FAST_CASTING_MIN_FOREIGN_ACTIVATION_SECONDS = 2;
 
 /**
+ * What Fast Casting multiplies an activation it speeds up by, GW1's
+ * 2^(−rank/15): ×0.574 at rank 12.
+ */
+export function fastCastingSpeed(rank: number): number {
+  return 2 ** (-rank / 15);
+}
+
+/**
  * What Fast Casting multiplies this spell's activation by, GW1's
  * 2^(−rank/15): ×0.574 at rank 12, still shrinking above it. Every Mesmer
  * spell, and another profession's whose base activation is 2 s or more;
@@ -79,7 +87,7 @@ export function fastCastingMultiplier(rank: number, skill: Skill): number {
   ) {
     return 1;
   }
-  return 2 ** (-rank / 15);
+  return fastCastingSpeed(rank);
 }
 
 /** The Monk's primary. */
@@ -94,6 +102,11 @@ export function divineFavorBonusHeal(rank: number, skill: Skill, targetIsAlly: b
   if (skill.profession !== "monk" || !isSpell(skill.type) || !targetIsAlly) {
     return 0;
   }
+  return divineFavorHeal(rank);
+}
+
+/** Divine Favor's extra heal for a spell it applies to: floor(3.2 × rank). */
+export function divineFavorHeal(rank: number): number {
   // 3.2 × rank in whole numbers, so no float lands a hair under an integer.
   return Math.floor((16 * rank) / 5);
 }
@@ -106,6 +119,11 @@ export const SOUL_REAPING_MAX_TRIGGERS = 3;
 
 /** The window `SOUL_REAPING_MAX_TRIGGERS` counts over. */
 export const SOUL_REAPING_WINDOW_SECONDS = 15;
+
+/** Energy one Soul Reaping trigger gives, before the maximum caps it: the rank. */
+export function soulReapingEnergy(rank: number): number {
+  return rank;
+}
 
 /**
  * The trigger times after a death at `atSeconds` (#530), or `undefined`
@@ -129,4 +147,49 @@ export const LEADERSHIP_ATTRIBUTE = "paragon.leadership";
  */
 export function leadershipEnergy(rank: number, alliesAffected: number): number {
   return Math.min(alliesAffected, Math.floor(rank / 2));
+}
+
+/** A share in [0, 1] as a whole percentage, for a readout. */
+function percent(share: number): string {
+  return `${String(Math.round(share * 100))}%`;
+}
+
+/**
+ * What a primary attribute does at `rank`, in one line, for the build
+ * editor (#531): "spells cast 43% faster". Every number comes from the
+ * function the simulation uses. `undefined` at rank 0, and for an
+ * attribute with no effect of its own: every secondary, and a primary
+ * whose effect is not in yet.
+ */
+export function describePrimaryAttribute(attributeId: string, rank: number): string | undefined {
+  if (rank <= 0) {
+    return undefined;
+  }
+  switch (attributeId) {
+    case FAST_CASTING_ATTRIBUTE:
+      return `spells cast ${percent(1 - fastCastingSpeed(rank))} faster`;
+    case EXPERTISE_ATTRIBUTE:
+      return `attack and Ranger skills cost ${percent(EXPERTISE_COST_CUT_PER_RANK * rank)} less energy`;
+    case STRENGTH_ATTRIBUTE:
+      return `attack skills ${percent(strengthArmorPenetration(rank, 0))} armor penetration`;
+    case DIVINE_FAVOR_ATTRIBUTE:
+      return `Monk spells on allies heal +${String(divineFavorHeal(rank))}`;
+    case CRITICAL_STRIKES_ATTRIBUTE:
+      return (
+        `+${percent(CRITICAL_STRIKES_CHANCE_PER_RANK * rank)} critical chance, ` +
+        `+${String(criticalStrikesEnergy(rank))} energy per critical`
+      );
+    case SOUL_REAPING_ATTRIBUTE:
+      return (
+        `+${String(soulReapingEnergy(rank))} energy when someone nearby dies ` +
+        `(${String(SOUL_REAPING_MAX_TRIGGERS)} per ${String(SOUL_REAPING_WINDOW_SECONDS)} s)`
+      );
+    case LEADERSHIP_ATTRIBUTE:
+      return (
+        `up to ${String(leadershipEnergy(rank, Number.POSITIVE_INFINITY))} energy per shout, ` +
+        "1 per ally affected"
+      );
+    default:
+      return undefined;
+  }
 }

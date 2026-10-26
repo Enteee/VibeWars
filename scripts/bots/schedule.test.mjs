@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { dueNudges, parseSchedule, scheduleReader } from "./schedule.mjs";
+import { dueNudges, parseNudgeClock, parseSchedule, scheduleReader } from "./schedule.mjs";
 
 const SHIPPED = path.join(path.dirname(fileURLToPath(import.meta.url)), "schedule.json");
 
@@ -83,5 +83,50 @@ describe("scheduleReader (#537)", () => {
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("parseNudgeClock (#640)", () => {
+  const MIN = 60_000;
+  const clock = { since: 1000, sent: { workday: 5000, "groom-backlog": 9000 } };
+
+  it("reads back what hubd wrote", () => {
+    const read = parseNudgeClock(JSON.stringify(clock));
+    expect(read.since).toBe(1000);
+    expect([...read.sent]).toEqual([
+      ["workday", 5000],
+      ["groom-backlog", 9000],
+    ]);
+  });
+
+  it("refuses anything else, naming where", () => {
+    for (const bad of [
+      "[]",
+      '{"since":1}',
+      '{"since":"1","sent":{}}',
+      '{"since":1,"sent":[]}',
+      '{"since":1,"sent":{"a":"x"}}',
+      '{"since":1,"sent":{},"extra":1}',
+    ]) {
+      expect(() => parseNudgeClock(bad), bad).toThrow();
+    }
+    expect(() => parseNudgeClock("{")).toThrow();
+  });
+
+  it("keeps a restart from resending a nudge or forgetting one that is due", () => {
+    const now = 10_000_000_000;
+    const schedule = [
+      { id: "workday", to: "manager", everyMinutes: 720, text: "t" },
+      { id: "groom-backlog", to: "manager", everyMinutes: 720, text: "t" },
+    ];
+    const { since, sent } = parseNudgeClock(
+      JSON.stringify({
+        since: now - 5000 * MIN,
+        sent: { workday: now - 20 * MIN, "groom-backlog": now - 721 * MIN },
+      }),
+    );
+    expect(dueNudges({ now, schedule, lastSent: sent, since }).map((n) => n.id)).toEqual([
+      "groom-backlog",
+    ]);
   });
 });

@@ -1,4 +1,5 @@
 import {
+  describePrimaryAttribute,
   describeSkill,
   MAX_ATTRIBUTE_RANK,
   MINIMAL_GW_INSPIRED_PVP_V1,
@@ -8,8 +9,10 @@ import {
   ALL_OFFHANDS,
   ALL_WEAPONS,
   ARMOR_SLOTS,
+  allowsOffhand,
   cumulativeCostForRank,
   defaultBuildEquipment,
+  defaultEquipmentFor,
   getAttribute,
   getInsignia,
   getOffhand,
@@ -18,7 +21,9 @@ import {
   reconcileEquipment,
   runeDisplayName,
   totalCost,
+  weaponReachable,
   type ArmorSlot,
+  type BuildEquipment,
   type InsigniaEffect,
   type InsigniaId,
   type ProfessionId,
@@ -151,12 +156,44 @@ export function setProfessions(
     ...next,
     skillBar: next.skillBar.map((id) => (id !== null && stillEquippable.has(id) ? id : null)),
     // Gear follows the same drop-what-is-no-longer-reachable rule as
-    // attributes and skills. The weapon class itself survives — see
-    // `reconcileEquipment` for why that is deliberate.
-    equipment: reconcileEquipment(next.equipment, {
-      primaryProfession: primary,
-      accessibleAttributeIds: accessible,
-    }),
+    // attributes and skills, and a weapon nothing can govern any more
+    // becomes the new primary's default (#614).
+    equipment: fitWeapon(
+      reconcileEquipment(next.equipment, {
+        primaryProfession: primary,
+        accessibleAttributeIds: accessible,
+      }),
+      primary,
+      accessible,
+    ),
+  };
+}
+
+/**
+ * `equipment` with its weapon swapped for `primary`'s default when no
+ * attribute in `accessible` can govern it (#614): a Warrior's Sword on
+ * an Assassin becomes Daggers, so Dagger Mastery works at once. A weapon
+ * still reachable stays, because it is a choice. The off hand stays if
+ * the new weapon leaves a hand free and it survived reconciling, and is
+ * the default's otherwise.
+ */
+function fitWeapon(
+  equipment: BuildEquipment,
+  primary: ProfessionId,
+  accessible: ReadonlySet<string>,
+): BuildEquipment {
+  const weapon = getWeapon(equipment.mainHand.weaponId);
+  if (weapon === undefined || weaponReachable(weapon.requirement, accessible)) {
+    return equipment;
+  }
+  const fallback = defaultEquipmentFor(primary);
+  const fallbackWeapon = getWeapon(fallback.mainHand.weaponId);
+  const keepOffhand =
+    equipment.offHand !== null && fallbackWeapon !== undefined && allowsOffhand(fallbackWeapon);
+  return {
+    ...equipment,
+    mainHand: fallback.mainHand,
+    offHand: keepOffhand ? equipment.offHand : fallback.offHand,
   };
 }
 
@@ -438,9 +475,17 @@ export function renderBuildEditor(
     const rank = character.attributes.find((a) => a.attributeId === attributeId)?.rank ?? 0;
 
     const row = h("div", "editor-attribute");
-    row.appendChild(
-      h("span", "editor-attribute-name", `${definition.name}${definition.isPrimary ? " ★" : ""}`),
+    const name = h(
+      "span",
+      "editor-attribute-name",
+      `${definition.name}${definition.isPrimary ? " ★" : ""}`,
     );
+    // What the primary does at this rank (#531), under its name.
+    const effect = describePrimaryAttribute(attributeId, rank);
+    if (effect !== undefined) {
+      name.appendChild(h("span", "editor-attribute-effect", effect));
+    }
+    row.appendChild(name);
 
     const minus = document.createElement("button");
     minus.type = "button";

@@ -32,6 +32,7 @@ import {
   LEADERSHIP_ATTRIBUTE,
   leadershipEnergy,
   SOUL_REAPING_ATTRIBUTE,
+  soulReapingEnergy,
   soulReapingTrigger,
 } from "../primary-attributes.js";
 import { createRng, seedFromString, type SimulationRng } from "../rng.js";
@@ -1889,7 +1890,7 @@ export class MatchSimulation {
       if (triggers !== undefined) {
         combatant.soulReapingTriggers = triggers;
         const events: CombatEvent[] = [];
-        gainEnergy(combatant, rank, events);
+        gainEnergy(combatant, soulReapingEnergy(rank), events);
         if (events.length > 0) {
           this.#reaped.push({
             tick: this.#tick,

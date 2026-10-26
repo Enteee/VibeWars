@@ -20,12 +20,35 @@ import { allowsOffhand, getWeapon } from "./weapons.js";
  * attribute requirement, not by profession — anyone may hold anything
  * and simply swing it badly. A Mesmer who picks up a hammer has made a
  * bad choice, not an illegal one, and deleting their choice would be
- * the editor overruling them.
+ * the editor overruling them. Only a profession change swaps a weapon no
+ * attribute can govern any more (`weaponReachable`, #614); gear edits
+ * reconcile here too, and must never swap one.
  */
 
 export interface ReconcileContext {
   readonly accessibleAttributeIds: ReadonlySet<string>;
   readonly primaryProfession: string;
+}
+
+/**
+ * Whether any attribute in `accessibleAttributeIds` can govern a weapon
+ * with `requirement` (#614): its fixed attribute, or one of its
+ * candidates. A weapon no attribute governs (`unarmed`) always is. The
+ * build editor swaps a weapon that is not for its profession's default.
+ */
+export function weaponReachable(
+  requirement: EquipmentRequirement,
+  accessibleAttributeIds: ReadonlySet<string>,
+): boolean {
+  if (requirement.kind === "fixed") {
+    return accessibleAttributeIds.has(requirement.attributeId);
+  }
+  if (requirement.from === "any-accessible") {
+    return accessibleAttributeIds.size > 0;
+  }
+  return (
+    requirement.from.length === 0 || requirement.from.some((id) => accessibleAttributeIds.has(id))
+  );
 }
 
 /**

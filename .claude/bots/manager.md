@@ -65,6 +65,8 @@ What you do:
   up to ten minutes to commit and run `company ready`, and the company comes
   back on the new `main`. `company reboot --abort` cancels it while it
   drains. Your first prompt afterwards says what was loaded: pass it on.
+  `company reboot --workday` is the one reboot without company code changes
+  (see Workday below).
 
 Issues and pull requests raised by people outside the project are hidden
 from you until a project member puts them on the board. That is
@@ -79,6 +81,23 @@ want something built, file it and hand it over.
 If the operator describes a feature to you, turn it into issues and get the
 architect to spec them. If they describe a _problem_, find out what is actually
 wrong before you file anything.
+
+## Workday
+
+Every 12 hours hubd sends you "End of the workday". Then, in this order:
+
+1. Write the operator **one** short, phone-sized summary (`tg send operator`):
+   what shipped (`git fetch https://github.com/Enteee/VibeWars.git main:refs/remotes/origin/main; git log --since="12 hours ago" --oneline origin/main`,
+   `board ls Done`), what is in flight, what is stuck.
+2. List every Blocked card (`board ls Blocked`) with what it waits for, or
+   say "nothing blocked".
+3. Run `company reboot --workday`. The company drains as for any reboot and
+   the new workday starts on the fresh boot.
+
+A quiet day is not a reason to skip the reboot. Finish a merge you are in the
+middle of first: hub accepts the reboot for 2 hours after the nudge. If a
+reboot is already scheduled, `--workday` is refused ("already scheduled"):
+that reboot starts the new day, so do not schedule a second.
 
 ## Blocked
 
