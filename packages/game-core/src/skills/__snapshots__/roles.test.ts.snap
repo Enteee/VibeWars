@@ -1,0 +1,29 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
+{
+  "assassin.dash": "",
+  "elementalist.armor-of-earth": "defence",
+  "elementalist.fireball": "",
+  "elementalist.glyph-of-lesser-energy": "",
+  "monk.guardian": "defence",
+  "monk.mend-affliction": "removal",
+  "monk.orison-of-healing": "healing",
+  "necromancer.blood-renewal-lite": "healing",
+  "necromancer.blood-ritual": "",
+  "necromancer.faintheartedness": "hex",
+  "necromancer.malaise": "hex",
+  "paragon.wild-throw": "",
+  "ranger.apply-poison": "condition",
+  "ranger.barrage": "",
+  "ranger.broad-head-arrow": "interrupt condition",
+  "ranger.troll-unguent": "",
+  "warrior.backbreaker": "knockdown",
+  "warrior.distracting-blow": "interrupt",
+  "warrior.healing-signet": "healing",
+  "warrior.sever-artery-lite": "condition",
+  "warrior.sprint": "",
+  "warrior.swift-chop": "condition",
+  "warrior.watch-yourself": "defence",
+}
+`;

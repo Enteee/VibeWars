@@ -8,7 +8,9 @@ import {
   duplicateTeam,
   moveMember,
   newTeam,
+  professionMix,
   removeMember,
+  teamCounters,
   validateTeam,
 } from "./team-builder.js";
 
@@ -140,5 +142,64 @@ describe("duplicateTeam", () => {
     expect(copy.members).toEqual(original.members);
     expect(copy.name).not.toBe(original.name);
     expect(original.id).toBe("t1");
+  });
+});
+
+describe("teamCounters (#575)", () => {
+  const withBar = (id: string, bar: readonly (string | null)[]): StoredCharacter => ({
+    ...character(id),
+    skillBar: Array.from({ length: 8 }, (_, slot) => bar[slot] ?? null),
+  });
+  const roster = [
+    withBar("a", ["warrior.distracting-blow", "warrior.backbreaker", "ranger.broad-head-arrow"]),
+    withBar("b", ["warrior.distracting-blow", "monk.mend-affliction"]),
+  ];
+  const members = [{ characterId: "a" }, { characterId: "b" }, { characterId: "gone" }];
+  const counter = (id: string) => {
+    const found = teamCounters(members, roster).find((c) => c.id === id);
+    if (found === undefined) throw new Error(`no counter ${id}`);
+    return found;
+  };
+
+  it("counts every copy of a skill, in the cells that hold it", () => {
+    expect(counter("interrupt").cells).toEqual([
+      { characterId: "a", slot: 0 },
+      { characterId: "a", slot: 2 },
+      { characterId: "b", slot: 0 },
+    ]);
+    expect(counter("knockdown").cells).toEqual([{ characterId: "a", slot: 1 }]);
+    expect(counter("removal").cells).toEqual([{ characterId: "b", slot: 1 }]);
+  });
+
+  it("counts cost types and empty slots; a missing character counts nothing", () => {
+    expect(counter("energy").cells).toHaveLength(4);
+    expect(counter("adrenaline").cells).toEqual([{ characterId: "a", slot: 1 }]);
+    expect(counter("empty").cells).toHaveLength(5 + 6);
+  });
+
+  it("wants every skill role, but no cost type or empty slot", () => {
+    expect(counter("healing")).toMatchObject({ cells: [], wanted: true });
+    expect(counter("empty").wanted).toBe(false);
+    expect(teamCounters([], roster).map((c) => c.id)).toEqual([
+      "interrupt",
+      "healing",
+      "removal",
+      "knockdown",
+      "hex",
+      "condition",
+      "defence",
+      "energy",
+      "adrenaline",
+      "empty",
+    ]);
+  });
+
+  it("sums the professions, most common first", () => {
+    const monk: StoredCharacter = {
+      ...character("m"),
+      primaryProfession: "monk",
+      secondaryProfession: "ranger",
+    };
+    expect(professionMix([...members, { characterId: "m" }], [...roster, monk])).toBe("2 W · Mo/R");
   });
 });
