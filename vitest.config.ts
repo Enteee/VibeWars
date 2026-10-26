@@ -31,7 +31,7 @@ export default defineConfig({
     // tested without a live bot token.
     include: ["{apps,packages}/*/src/**/*.test.ts", "scripts/**/*.test.mjs"],
     reporters: ["default"],
-    // Networked combat tests drive a real server through multi-second
+    // Networked combat tests drive a whole session through multi-second
     // cast and recharge timers, so the 5s default is too tight for them.
     // Pure unit tests are unaffected — they finish in milliseconds either
     // way, and a generous ceiling only changes how long a genuine hang
