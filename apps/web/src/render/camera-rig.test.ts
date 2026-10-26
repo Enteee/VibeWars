@@ -5,6 +5,7 @@ import { LONG_BOW_RANGE } from "@vibewars/game-core";
 import {
   DEFAULT_STEP,
   LEASH_MARGIN_PX,
+  LOOK_AHEAD,
   VIEW_ASPECT,
   VIEW_STEPS,
   WHEEL_IDLE,
@@ -17,14 +18,11 @@ import {
   stepCamera,
   wheelNotch,
   zoomFor,
-  NO_COVER,
   type CameraInput,
   type CameraRig,
 } from "./camera-rig.js";
 
 const FRAME = 1 / 60;
-/** A big arena, so nothing is clamped unless a test walks to its edge. */
-const BIG = { width: 10_000, height: 10_000 };
 
 /** A match's camera: the canvas sets its own zoom, unless a test says otherwise. */
 const input = (overrides: Partial<CameraInput> = {}): CameraInput => ({
@@ -33,8 +31,6 @@ const input = (overrides: Partial<CameraInput> = {}): CameraInput => ({
   scaleTo: overrides.viewport ?? { width: 1280, height: 720 },
   pointer: undefined,
   reducedMotion: false,
-  arena: BIG,
-  cover: NO_COVER,
   ...overrides,
 });
 
@@ -120,49 +116,14 @@ describe("stepCamera", () => {
     expect(run(rig, input(), 120).view.zoom).toBeCloseTo(zoomFor(1, input().viewport));
   });
 
-  it("never shows past the arena's edge where the arena is bigger than the view", () => {
-    const arena = { width: 3_000, height: 2_000 };
+  it("looks past the map's edge as anywhere else: no clamp (#721)", () => {
+    const self = { x: 0, y: 0 };
     const pointer = { x: 0, y: 0 };
-    for (const step of [0, 1, 2]) {
-      let rig = createCameraRig();
-      while (rig.step > step) {
-        rig = wheelNotch(rig, -1);
-      }
-      const { view } = run(rig, input({ self: { x: 0, y: 0 }, arena, pointer }), 120);
-      const halfW = 1280 / 2 / view.zoom;
-      const halfH = 720 / 2 / view.zoom;
-      expect(view.x - halfW).toBeCloseTo(0);
-      expect(view.y - halfH).toBeCloseTo(0);
-    }
-  });
-
-  it("centres an arena smaller than the view on that axis", () => {
-    const arena = { width: 960, height: 640 };
-    const { view } = run(
-      createCameraRig(),
-      input({ self: { x: 80, y: 200 }, arena, pointer: { x: 0, y: 0 } }),
-      60,
-    );
-    expect(view).toMatchObject({ x: 480, y: 320 });
-  });
-
-  it("stops the arena's edge at the HUD, not under it", () => {
-    const arena = { width: 3_000, height: 2_000 };
-    const cover = { top: 40, bottom: 175 };
-    const close = wheelNotch(wheelNotch(createCameraRig(), -1), -1);
-    const atBottom = run(close, input({ self: { x: 1_500, y: 2_000 }, arena, cover }), 120).view;
-    // The arena's bottom edge, on screen, sits on the HUD's top.
-    expect(360 + (arena.height - atBottom.y) * atBottom.zoom).toBeCloseTo(720 - cover.bottom);
-    const atTop = run(close, input({ self: { x: 1_500, y: 0 }, arena, cover }), 120).view;
-    expect(360 + (0 - atTop.y) * atTop.zoom).toBeCloseTo(cover.top);
-  });
-
-  it("centres a small arena in what the HUD leaves uncovered", () => {
-    const arena = { width: 960, height: 640 };
-    const cover = { top: 40, bottom: 175 };
-    const { view } = run(createCameraRig(), input({ self: { x: 80, y: 200 }, arena, cover }), 60);
-    const middle = 360 + (arena.height / 2 - view.y) * view.zoom;
-    expect(middle).toBeCloseTo((cover.top + 720 - cover.bottom) / 2);
+    const { view } = run(createCameraRig(), input({ self, pointer, reducedMotion: true }), 2);
+    expect(view.x).toBeCloseTo((-640 * LOOK_AHEAD) / view.zoom, 9);
+    expect(view.y).toBeCloseTo((-360 * LOOK_AHEAD) / view.zoom, 9);
+    expect(view.x).toBeLessThan(0);
+    expect(view.y).toBeLessThan(0);
   });
 
   it("snaps when you jump: no glide from the old place", () => {
@@ -253,21 +214,20 @@ describe("the RMB pan (#442)", () => {
     expect(at.x).toBeGreaterThanOrEqual(LEASH_MARGIN_PX - 1e-6);
   });
 
-  it("keeps you on screen at the arena's corner, nearer the edge than the leash if it must", () => {
-    const arena = { width: 3_000, height: 3_000 };
-    const corner = { x: 10, y: 10 };
-    const at0 = input({ arena, self: corner });
+  it("pans past the map's corner by the full leash (#721)", () => {
+    const corner = { x: 0, y: 0 };
+    const at0 = input({ self: corner });
     const settled = run(createCameraRig(), at0, 120).rig;
     const { view } = stepCamera(
       panBy(settled, { x: -10_000, y: -10_000 }, VIEWPORT, VIEWPORT),
       at0,
       FRAME,
     );
+    expect(view.x).toBeCloseTo(-(VIEWPORT.width / 2 - LEASH_MARGIN_PX) / view.zoom, 6);
+    expect(view.y).toBeCloseTo(-(VIEWPORT.height / 2 - LEASH_MARGIN_PX) / view.zoom, 6);
     const at = onScreen(corner, view);
-    expect(at.x).toBeGreaterThanOrEqual(0);
-    expect(at.x).toBeLessThan(LEASH_MARGIN_PX);
-    expect(at.y).toBeGreaterThanOrEqual(0);
-    expect(at.y).toBeLessThan(LEASH_MARGIN_PX);
+    expect(at.x).toBeCloseTo(VIEWPORT.width - LEASH_MARGIN_PX, 6);
+    expect(at.y).toBeCloseTo(VIEWPORT.height - LEASH_MARGIN_PX, 6);
   });
 });
 
@@ -320,11 +280,8 @@ describe("a small canvas at a match's scale (#709)", () => {
     expect(far.view.y - 5_000).toBeCloseTo((STAGE.height / 2 - LEASH_MARGIN_PX) / zoom, 6);
   });
 
-  it("stops at the arena's edge by what the small canvas shows", () => {
-    const arena = { width: 1_000, height: 700 };
-    const { view } = run(createCameraRig(), small({ arena, self: { x: 10, y: 10 } }), 1);
-    const zoom = zoomFor(DEFAULT_STEP, WINDOW);
-    expect(view.x).toBeCloseTo(STAGE.width / 2 / zoom, 6);
-    expect(view.y).toBeCloseTo(STAGE.height / 2 / zoom, 6);
+  it("follows you at the map's corner, not centring the world (#721)", () => {
+    const { view } = run(createCameraRig(), small({ self: { x: 10, y: 10 } }), 1);
+    expect(view).toMatchObject({ x: 10, y: 10 });
   });
 });
