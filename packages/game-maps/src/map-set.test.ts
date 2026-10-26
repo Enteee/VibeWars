@@ -1,11 +1,14 @@
 import {
+  HOUSE_LOADOUT,
   LONG_BOW_RANGE,
+  MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
   buildNavGraph,
   createPathFinder,
   Vec,
   distancePointToSegment,
   nearestStandable,
+  resolveLoadout,
   type Segment,
   type Vec2,
 } from "@vibewars/game-core";
@@ -88,6 +91,53 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
           ).toBeDefined();
         }
       }
+    }
+  });
+
+  it("lets a fighter at each spawn reach the enemy across the arena and hit, without snagging", () => {
+    // Swords, so every hit is a walk into reach: on the longest arena, ~18 s.
+    const ruleset = MINIMAL_GW_INSPIRED_PVP_V1;
+    const resolved = resolveLoadout(
+      {
+        primaryProfession: HOUSE_LOADOUT.primaryProfession,
+        allocatedRanks: HOUSE_LOADOUT.attributeRanks,
+        equipment: HOUSE_LOADOUT.equipment,
+      },
+      ruleset.combat,
+    );
+    const team0 = map.spawnPoints.filter((spawn) => spawn.team === 0);
+    for (const [k, spawn] of team0.entries()) {
+      const across = turned(map, spawn.position);
+      const sim = new MatchSimulation({
+        seed: `reach-${String(k)}`,
+        ruleset,
+        walls,
+        bounds,
+        participants: [
+          { id: "a", team: 0, at: spawn.position },
+          { id: "b", team: 1, at: across },
+        ].map(({ id, team, at }) => ({
+          id,
+          team,
+          skillBar: [],
+          attributeRanks: resolved.attributeRanks,
+          equipment: resolved.equipment,
+          baseEnergyPips: HOUSE_LOADOUT.baseEnergyPips,
+          maxHealth: 1e7,
+          spawn: at,
+          facing: 0,
+        })),
+      });
+      sim.requestAttack("a", "b");
+      let hit = false;
+      for (let tick = 0; tick < 30 * ruleset.tickRateHz && !hit; tick += 1) {
+        hit = sim
+          .step(1 / ruleset.tickRateHz)
+          .log.some((entry) =>
+            entry.events.some((event) => event.kind === "damage" && event.targetId === "b"),
+          );
+      }
+      expect(hit, `from ${JSON.stringify(spawn.position)}`).toBe(true);
     }
   });
 
