@@ -55,7 +55,8 @@ describe("every training scenario", () => {
         return;
       }
       expect(scenario.dummies.length).toBeGreaterThan(0);
-      expect(scenario.dummies.length).toBeLessThanOrEqual(8);
+      // Eight in the arena at most, the player included (ADR-0020).
+      expect(scenario.dummies.length).toBeLessThanOrEqual(7);
       expect(new Set(scenario.dummies.map((dummy) => dummy.id)).size).toBe(scenario.dummies.length);
 
       for (const dummy of scenario.dummies) {
@@ -444,7 +445,7 @@ describe("the area scenarios, headless (#111)", () => {
     expect(anyDamage.has("ally")).toBe(false);
   });
 
-  it("aoe-cap: Barrage at the centre of eight hits exactly six", () => {
+  it("aoe-cap: Barrage at the centre of seven hits exactly six", () => {
     const played = scenario("aoe-cap");
     const map = MAPS[played.mapId];
     if (map === undefined) {

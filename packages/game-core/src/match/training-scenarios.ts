@@ -116,19 +116,19 @@ const CLUSTER: readonly TrainingDummy[] = [
 ];
 
 /**
- * Barrage's pack (#111): seven on a ring 36 round the centre, every one
- * adjacent to it (AREA_ADJACENT, 40), and at least 30 from each other.
+ * Barrage's pack (#111): six on a ring 36 round the centre, every one
+ * adjacent to it (AREA_ADJACENT, 40) and 36 from its neighbours. Seven,
+ * so one is spared: with the player, the arena's cap of eight (ADR-0020).
  */
 const PACK: readonly TrainingDummy[] = [
   target("centre", "Centre (60 armor)", CLUSTER_CENTRE, 60),
   ...[
     vec2(416, 210),
-    vec2(402, 238),
-    vec2(372, 245),
-    vec2(348, 226),
-    vec2(348, 194),
-    vec2(372, 175),
-    vec2(402, 182),
+    vec2(398, 241),
+    vec2(362, 241),
+    vec2(344, 210),
+    vec2(362, 179),
+    vec2(398, 179),
   ].map((position, i) =>
     target(`ring-${String(i + 1)}`, `Ring ${String(i + 1)} (60 armor)`, position, 60),
   ),
@@ -332,7 +332,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: "aoe-cap",
     label: "Area: the cap",
-    teaches: "That Barrage stops at six: eight packed together, and two are always spared.",
+    teaches: "That Barrage stops at six: seven packed together, and one is always spared.",
     mapId: "training-hall",
     exercises: ["auto-attacks", "area-damage"],
     knobs: [],
