@@ -118,6 +118,16 @@ describe("reconcile (#383)", () => {
     expect(plan.forget).toEqual([]);
   });
 
+  it("keeps the first pane of a working employee and kills the others", () => {
+    const plan = reconcile(
+      company(["qa-tester", "qa-tester@2"]),
+      panes(["qa-tester", "qa-tester@2", "qa-tester"]),
+      { now: NOW, ...idle },
+    );
+    expect(plan.kill).toEqual([{ pane: "%2", employee: "qa-tester" }]);
+    expect(plan.start).toEqual([]);
+  });
+
   it("does nothing during a reboot", () => {
     const staff = company(["qa-tester", "qa-tester@2"]);
     const plan = reconcile(staff, panes(["qa-tester", "stray"]), {
@@ -134,5 +144,12 @@ describe("descendants", () => {
     const listing = "  1 0\n 10 1\n 11 10\n 12 11\n 20 1\n";
     expect(descendants(listing, 10)).toEqual([10, 11, 12]);
     expect(descendants(listing, 99)).toEqual([99]);
+  });
+
+  it("finds nothing below a root that is not a pid above 1", () => {
+    const listing = "  1 0\n 10 1\n 11 10\n";
+    for (const root of [0, 1, -1, Number.NaN, 1.5]) {
+      expect(descendants(listing, root)).toEqual([]);
+    }
   });
 });

@@ -31,7 +31,7 @@ import { releaseLock, takeLock } from "./instance-lock.mjs";
 import { descendants, reconcile } from "./reconcile.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { betweenTurns, drainStep, parseReboot } from "./reboot.mjs";
-import { parseStaff, withoutEmployees } from "./staff.mjs";
+import { parseStaff, withoutEmployees, withStaffLock } from "./staff.mjs";
 
 const SESSION = process.env.VIBEWARS_LLC_SESSION ?? "vibewars-llc";
 
@@ -95,6 +95,11 @@ function runningEmployees() {
  * @returns {Promise<void>}
  */
 async function stopPane({ pane, pid }) {
+  if (!Number.isInteger(pid) || pid <= 1) {
+    console.error(`supervisor: pane ${pane} has no usable pid (${String(pid)}); not signalling`);
+    tmux(["kill-pane", "-t", pane]);
+    return;
+  }
   const ps = spawnSync("ps", ["-e", "-o", "pid=,ppid="], { encoding: "utf8" });
   const processes = descendants(ps.stdout, pid).filter((p) => p !== process.pid);
   tmux(["kill-pane", "-t", pane]);
@@ -171,15 +176,21 @@ async function reconcilePanes(started) {
     plan.kill.map(async ({ pane, employee }) => {
       const found = panes.find((candidate) => candidate.pane === pane);
       console.error(`supervisor: stopping ${employee}`);
-      await stopPane({ pane, pid: found?.pid ?? 0 });
+      if (found === undefined) {
+        return;
+      }
+      await stopPane(found);
     }),
   );
   if (plan.forget.length > 0) {
-    // Read again: hubd may have recorded a change while the panes stopped.
-    const current = parseStaff(fs.readFileSync(STAFF, "utf8"));
-    const next = withoutEmployees(current, plan.forget);
-    fs.writeFileSync(`${STAFF}.part`, `${JSON.stringify(next, null, 2)}\n`);
-    fs.renameSync(`${STAFF}.part`, STAFF);
+    // Read again, under the lock hubd takes: it may have recorded a change
+    // while the panes stopped.
+    withStaffLock(STAFF, () => {
+      const current = parseStaff(fs.readFileSync(STAFF, "utf8"));
+      const next = withoutEmployees(current, plan.forget);
+      fs.writeFileSync(`${STAFF}.part`, `${JSON.stringify(next, null, 2)}\n`);
+      fs.renameSync(`${STAFF}.part`, STAFF);
+    });
     for (const employee of plan.forget) {
       clearEmployee(employee);
       started.delete(employee);

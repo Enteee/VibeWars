@@ -19,6 +19,7 @@ import {
   staffAllowed,
   staffReader,
   strangers,
+  withStaffLock,
   withoutEmployees,
 } from "./staff.mjs";
 
@@ -453,5 +454,64 @@ describe("markReady and withoutEmployees (#383)", () => {
     const left = withoutEmployees(firing, ["qa-tester@2"]);
     expect(Object.keys(left.employees)).toEqual(["qa-tester"]);
     expect(left.recent).toEqual(firing.recent);
+  });
+});
+
+describe("withStaffLock (#383)", () => {
+  /** @returns {string} */
+  function staffFile() {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "staff-lock-"));
+    dirs.push(dir);
+    return path.join(dir, "staff.json");
+  }
+
+  it("runs one change at a time, and lets go afterwards, even after a throw", () => {
+    const file = staffFile();
+    expect(withStaffLock(file, () => fs.existsSync(`${file}.lock`))).toBe(true);
+    expect(fs.existsSync(`${file}.lock`)).toBe(false);
+    expect(() =>
+      withStaffLock(file, () => {
+        throw new Error("boom");
+      }),
+    ).toThrow("boom");
+    expect(fs.existsSync(`${file}.lock`)).toBe(false);
+  });
+
+  it("takes over a lock left behind long ago", () => {
+    const file = staffFile();
+    fs.mkdirSync(`${file}.lock`);
+    const old = new Date(Date.now() - 60_000);
+    fs.utimesSync(`${file}.lock`, old, old);
+    expect(withStaffLock(file, () => "ran")).toBe("ran");
+  });
+
+  it("keeps a hire another process recorded before a forget", () => {
+    const file = staffFile();
+    fs.writeFileSync(file, JSON.stringify(company(["qa-tester", "qa-tester@2"])));
+    // The other writer arrives while the lock is held and must wait for it.
+    const other = spawnSync(
+      process.execPath,
+      [
+        "-e",
+        `import(${JSON.stringify(STAFF)}).then(({ withStaffLock }) => {
+          const fs = require("node:fs");
+          withStaffLock(${JSON.stringify(file)}, () => {
+            const s = JSON.parse(fs.readFileSync(${JSON.stringify(file)}, "utf8"));
+            s.employees["qa-tester@3"] = s.employees["qa-tester"];
+            fs.writeFileSync(${JSON.stringify(file)}, JSON.stringify(s));
+          });
+        })`,
+      ],
+      { encoding: "utf8" },
+    );
+    expect(other.status).toBe(0);
+    withStaffLock(file, () => {
+      const current = parseStaff(fs.readFileSync(file, "utf8"));
+      fs.writeFileSync(file, JSON.stringify(withoutEmployees(current, ["qa-tester@2"])));
+    });
+    expect(Object.keys(parseStaff(fs.readFileSync(file, "utf8")).employees).sort()).toEqual([
+      "qa-tester",
+      "qa-tester@3",
+    ]);
   });
 });

@@ -110,7 +110,15 @@ import {
   scheduleReader,
 } from "./schedule.mjs";
 import { createIssueBatch, newIssueMessage, WINDOW_MS } from "./new-issues.mjs";
-import { applyStaff, markReady, parseStaff, roleOf, staffAllowed, staffReader } from "./staff.mjs";
+import {
+  applyStaff,
+  markReady,
+  parseStaff,
+  roleOf,
+  staffAllowed,
+  staffReader,
+  withStaffLock,
+} from "./staff.mjs";
 import {
   RESTRICTED_PATHS,
   ROLES,
@@ -2064,12 +2072,14 @@ async function changedSince(sha, cfg) {
  */
 function readyToStop(employee) {
   try {
-    const marked = markReady(parseStaff(fs.readFileSync(STAFF, "utf8")), employee, Date.now());
-    if (marked === null) {
-      return false;
-    }
-    writeAtomic(STAFF, `${JSON.stringify(marked, null, 2)}\n`);
-    return true;
+    return withStaffLock(STAFF, () => {
+      const marked = markReady(parseStaff(fs.readFileSync(STAFF, "utf8")), employee, Date.now());
+      if (marked === null) {
+        return false;
+      }
+      writeAtomic(STAFF, `${JSON.stringify(marked, null, 2)}\n`);
+      return true;
+    });
   } catch {
     return false;
   }
@@ -2179,6 +2189,23 @@ function stopNotice(reason) {
  * @returns {Record<string, unknown>}
  */
 function staff(role, argv, cfg) {
+  try {
+    // Read to write under one lock: the supervisor also writes staff.json.
+    return withStaffLock(STAFF, () => recordStaff(role, argv, cfg));
+  } catch (error) {
+    const reason = `staff.json: ${error instanceof Error ? error.message : String(error)}`;
+    audit({ role, kind: "staff", argv, decision: "refused", reason });
+    return { allow: false, reason, code: 77 };
+  }
+}
+
+/**
+ * @param {string} role
+ * @param {string[]} argv
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Record<string, unknown>}
+ */
+function recordStaff(role, argv, cfg) {
   const kind = "staff";
   /** @param {string} reason */
   const refuse = (reason) => {

@@ -26,7 +26,8 @@ export const RESTART_HOLDOFF_MS = 60_000;
  * - A firing employee is left alone until it has run `company ready`, is
  *   between turns, or `FIRE_DEADLINE_MS` passed since the fire; then its
  *   pane is killed and it is forgotten. One with no pane is forgotten.
- * - A pane for nobody in `staff` is killed.
+ * - A pane for nobody in `staff` is killed, and so is every pane after the
+ *   first of a working employee: two agents must not share a worktree.
  * - Nothing at all while a company reboot is pending or running: the reboot
  *   restarts everyone.
  *
@@ -73,9 +74,19 @@ export function reconcile(staff, panes, { now, between, rebooting, started }) {
     }
   }
 
+  const kept = new Set();
   for (const pane of panes) {
-    if (pane.employee !== "" && !(pane.employee in staff.employees)) {
+    const employee = staff.employees[pane.employee];
+    if (pane.employee === "") {
+      continue;
+    }
+    if (employee === undefined) {
       plan.kill.push(pane);
+    } else if (employee.state === "working") {
+      if (kept.has(pane.employee)) {
+        plan.kill.push(pane);
+      }
+      kept.add(pane.employee);
     }
   }
   return plan;
@@ -84,12 +95,17 @@ export function reconcile(staff, panes, { now, between, rebooting, started }) {
 /**
  * The processes below `root` in a `ps -e -o pid=,ppid=` listing, `root`
  * itself included: what a pane's agent left running (its jail, claude).
+ * Nothing for a `root` that is not a pid above 1.
  *
  * @param {string} listing
  * @param {number} root
  * @returns {number[]}
  */
 export function descendants(listing, root) {
+  // Process 0 and 1 are the root of everything: never a pane's agent.
+  if (!Number.isInteger(root) || root <= 1) {
+    return [];
+  }
   /** @type {Map<number, number[]>} */
   const children = new Map();
   for (const line of listing.split("\n")) {

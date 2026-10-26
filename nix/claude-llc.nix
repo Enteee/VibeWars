@@ -179,7 +179,25 @@ let
         # employee and closes with its last. The pane's `@employee` option is
         # what the supervisor identifies it by, since a program may retitle it.
         # If VIBEWARS_KICKOFF_NOTE is set, this agent gets the reboot note.
+        # One at a time and never twice: the boot loop and the supervisor may
+        # both start the same employee, and two agents must not share a worktree.
         start_employee() {
+          local employee="$1"
+          if ! [[ "$employee" =~ ^[a-z][a-z0-9-]*(@[2-9]|@[1-9][0-9]+)?$ ]]; then
+            echo "claude-llc: not an employee id: $employee" >&2
+            return 1
+          fi
+          (
+            ${pkgs.util-linux}/bin/flock 9
+            if ${tmux} list-panes -s -t "=$SESSION" -F '#{@employee}' | grep -qxF "$employee"; then
+              echo "claude-llc: $employee already has a pane" >&2
+              exit 0
+            fi
+            start_employee_pane "$employee"
+          ) 9>"$VIBEWARS_BOT_ROOT/start-employee.lock"
+        }
+
+        start_employee_pane() {
           local employee="$1" pane
           local role="''${employee%%@*}"
           local env=()
@@ -197,6 +215,11 @@ let
             ${tmux} set-option -w -t "=$SESSION:=$role" allow-rename off
             ${tmux} set-option -w -t "=$SESSION:=$role" pane-border-status top
             ${tmux} set-option -w -t "=$SESSION:=$role" pane-border-format " #[bold]#{@employee}#[nobold] "
+          fi
+          # An empty pane id would make the next commands act on the current pane.
+          if [ -z "$pane" ]; then
+            echo "claude-llc: could not open a pane for $employee" >&2
+            return 1
           fi
           ${tmux} set-option -p -t "$pane" @employee "$employee"
           ${tmux} select-pane -t "$pane" -T "$employee"
