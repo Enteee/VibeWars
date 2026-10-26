@@ -738,7 +738,10 @@ function mountShare(panel: HTMLElement, context: EditorContext): Region {
     }
     // Loaded into the editor, not saved: the player sees exactly what
     // arrived and chooses to keep it. An import that silently overwrote
-    // the open character would be a bad surprise.
+    // the open character would be a bad surprise. The import worked, so
+    // an earlier error or export note no longer holds.
+    shareStatus.className = "editor-share-status";
+    shareStatus.replaceChildren();
     context.commit(result.character);
   });
 

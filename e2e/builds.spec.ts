@@ -137,10 +137,18 @@ test("a build exports to text and imports back", async ({ page }) => {
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator("input.editor-name").fill("Scratch");
 
+  // A clipped paste first, then the whole text: once the import works,
+  // the earlier error must not still say it failed.
+  await page.locator("textarea.editor-transfer").fill(exported.slice(0, 40));
+  await page.getByRole("button", { name: "import", exact: true }).click();
+  await expect(page.locator(".editor-share-status")).toContainText("Could not import");
+
   await page.locator("textarea.editor-transfer").fill(exported);
   await page.getByRole("button", { name: "import", exact: true }).click();
 
   await expect(page.locator("input.editor-name")).toHaveValue("Shared Build");
+  await expect(page.locator(".editor-share-status .editor-problem")).toHaveCount(0);
+  await expect(page.locator(".editor-share-status")).toBeEmpty();
 });
 
 test("a mangled build is refused with a readable reason", async ({ page }) => {
