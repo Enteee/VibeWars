@@ -20,7 +20,7 @@ import { resolveMagnitude } from "./scaling.js";
 import { aggregateModifiers } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
 import { attackMissChanceOf, blockChanceOf } from "./tick.js";
-import type { Combatant } from "./types.js";
+import type { Combatant, Skill } from "./types.js";
 
 /**
  * Weapon auto-attack: what one swing does once it lands (ADR-0026).
@@ -198,6 +198,15 @@ export interface BlowRule {
 /** A swing of the weapon and nothing else. */
 export const PLAIN_BLOW: BlowRule = { weaponDamage: 1, bonus: 0 };
 
+/** The blow `skill` makes of `caster`'s weapon, its bonus at the caster's ranks. */
+export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
+  const bonusDamage = skill.attack?.bonusDamage;
+  return {
+    weaponDamage: skill.attack?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
+    bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
+  };
+}
+
 /**
  * A blow that connects: the crit roll, then the damage roll as `blow`
  * says, mitigated once by the victim's armor. One that deals nothing
@@ -292,17 +301,16 @@ export function resolveSwing(swing: Swing): CombatEvent[] {
  * skill's `onBlocked` effects instead (#534). No double strike and no
  * cleave: an area, as Barrage's, is already the skill's own, and each of
  * its blows rolls its own block and its own crit.
+ *
+ * A ranged weapon's attack skill does not come here: it flies, and its
+ * blow and riders land with the arrow (#416).
  */
 export function resolveAttackSkill(
   resolution: SkillResolution,
   exposed: (victim: Combatant) => boolean,
 ): CombatEvent[] {
   const { skill, caster, rng, rules } = resolution;
-  const bonusDamage = skill.attack?.bonusDamage;
-  const blow: BlowRule = {
-    weaponDamage: skill.attack?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
-    bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
-  };
+  const blow = skillBlow(skill, caster);
   const snapshot = weaponSnapshotOf(caster);
   const kind = blowKind(snapshot.mainHand.weapon);
   const events: CombatEvent[] = [];

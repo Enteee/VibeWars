@@ -237,6 +237,15 @@ A shot whose flight would cross a wall stops at it and is "obstructed"
 too, so stepping behind a pillar dodges it. Shots fly through bodies.
 Melee swings are never obstructed.
 
+**Ranged attack skills fly too** (#416). Broad Head Arrow and Barrage
+release their arrows at the hit, led like a swing's, and the skill's
+bonus and riders land with the arrow, only if it hits. So an interrupt
+lands late: a caster who finishes before Broad Head Arrow arrives is not
+interrupted, and one who steps aside dodges the Daze as well. The cost
+and recharge are spent at the release, whatever the arrow does. Barrage
+picks its foes at the release and sends each its own arrow, with its own
+blind roll and its own flight; each arrow that hits earns adrenaline.
+
 **Critical hits.** Any weapon blow can crit: a swing, each blow of a
 double strike, each cleave victim, an attack skill, a landing shot.
 Spells and degeneration never do. The chance is 1% plus 1.37% per rank

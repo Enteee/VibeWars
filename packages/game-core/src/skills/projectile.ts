@@ -1,5 +1,6 @@
 import { add, dot, lengthSquared, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
-import type { WeaponSnapshot } from "./weapon-attack.js";
+import type { Skill } from "./types.js";
+import type { BlowRule, WeaponSnapshot } from "./weapon-attack.js";
 
 /**
  * A ranged weapon's shot in flight (#159).
@@ -33,6 +34,18 @@ export interface Projectile {
   elapsed: number;
   /** The weapon and rank it was released with. */
   readonly weaponSnapshot: WeaponSnapshot;
+  /** The attack skill it carries (#416), or `undefined` for a swing's shot. */
+  readonly skillHit: SkillHit | undefined;
+}
+
+/**
+ * An attack skill riding a shot (#416): its blow, the bonus fixed at
+ * release, and the skill whose riders, or `onBlocked` effects, land
+ * with it.
+ */
+export interface SkillHit {
+  readonly skill: Skill;
+  readonly blow: BlowRule;
 }
 
 /**
