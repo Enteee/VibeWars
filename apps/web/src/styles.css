@@ -2599,6 +2599,40 @@ body {
 
 /* --- character roster on the entry screen ------------------------------ */
 
+/* Two columns (#579): who you play as on the left, Play on the right;
+   one above the other on a narrow window. */
+.screen.screen-menu {
+  width: min(960px, 100%);
+}
+
+.menu-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (width <= 45rem) {
+  .menu-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.menu-play {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.menu-column-title {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.78rem;
+  font-weight: normal;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .roster {
   display: flex;
   flex-direction: column;
@@ -2609,44 +2643,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-}
-
-.roster-row {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 0.45rem 0.6rem;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: var(--panel);
-  cursor: pointer;
-}
-
-.roster-row:hover {
-  border-color: var(--ink-dim);
-}
-
-/* Which character you take into the next match. */
-.roster-row.is-active {
-  border-color: var(--accent);
-  background: rgb(89 194 255 / 10%);
-}
-
-.roster-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.roster-name {
-  font-size: 0.9rem;
-}
-
-.roster-sub {
-  color: var(--ink-dim);
-  font-size: 0.75rem;
 }
 
 .roster-edit {
