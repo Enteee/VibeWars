@@ -914,6 +914,9 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   eliteOnly.type = "checkbox";
   const eliteFilter = h("label", "skill-elite-filter");
   eliteFilter.append(eliteOnly, " Elite");
+  // On the search's own row, so the library is no taller for it.
+  const filters = h("div", "skill-filters");
+  filters.append(search, eliteFilter);
   const groupHost = h("div", "skill-groups");
   const emptyNote = h(
     "div",
@@ -1027,7 +1030,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     render(context.current());
   });
 
-  return { elements: [search, eliteFilter, groupHost], update: render };
+  return { elements: [filters, groupHost], update: render };
 }
 
 /* -------------------------------------------------------------------------- */

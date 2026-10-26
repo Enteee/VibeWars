@@ -1543,8 +1543,20 @@ body {
   width: 100%;
 }
 
+.skill-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.skill-filters .skill-search {
+  flex: 1;
+  min-width: 0;
+}
+
 .skill-elite-filter {
   display: flex;
+  flex: none;
   align-items: center;
   gap: 0.3rem;
   color: var(--ink-dim);
