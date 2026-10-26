@@ -2,7 +2,7 @@ import { SOURCE_URL } from "../source.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
 import { createCharacterDot, equippedCount, professionLabel } from "./character-preview.js";
-import { button, h } from "./kit.js";
+import { button, h, screenBar } from "./kit.js";
 
 /** What every peer in a lobby learns about you (#541): WebRTC connects you directly. */
 export const PEER_IP_NOTICE =
@@ -92,7 +92,10 @@ export function renderMenu(
   root.replaceChildren();
   const panel = h("div", "screen screen-menu");
 
-  panel.appendChild(h("h1", "screen-title", "VibeWars"));
+  // No way back from here, so Esc has nothing to do but cancel (#578).
+  panel.appendChild(
+    screenBar({ title: [h("h1", "screen-title", "VibeWars")], actions: [] }).element,
+  );
   const subtitle = h(
     "p",
     "screen-subtitle",
@@ -111,10 +114,10 @@ export function renderMenu(
   }
 
   const nameField = h("label", "field");
-  nameField.appendChild(h("span", "field-label", "your name"));
+  nameField.appendChild(h("span", "field-label", "Your name"));
   const nameInput = document.createElement("input");
   nameInput.className = "field-input";
-  nameInput.placeholder = "player";
+  nameInput.placeholder = "Player";
   nameInput.value = loadPlayerName();
   nameInput.addEventListener("input", () => {
     savePlayerName(nameInput.value);
@@ -127,7 +130,7 @@ export function renderMenu(
   // the thing you pick before every match, so hiding it one click away
   // made the build editor feel optional when it is not.
   const roster = h("div", "roster");
-  roster.appendChild(h("span", "field-label", "play as"));
+  roster.appendChild(h("span", "field-label", "Play as"));
 
   for (const problem of characterProblems) {
     roster.appendChild(h("div", "screen-problem", problem));
@@ -181,7 +184,7 @@ export function renderMenu(
       callbacks.onSelectCharacter(character.id);
     });
 
-    const edit = button("edit", "roster-edit", () => {
+    const edit = button("Edit", "roster-edit", () => {
       callbacks.onEditCharacter(character.id);
     });
     // Editing must not also select; the row's own click would otherwise
@@ -194,11 +197,11 @@ export function renderMenu(
     list.appendChild(row);
   }
   roster.appendChild(list);
-  roster.appendChild(button("new character", "", callbacks.onNewCharacter));
+  roster.appendChild(button("New character", "", callbacks.onNewCharacter));
   panel.appendChild(roster);
 
   const hostRow = h("div", "menu-row");
-  const host = button("host a lobby", "primary", () => {
+  const host = button("Host a lobby", "primary", () => {
     callbacks.onCreateLobby(nameInput.value);
   });
   hostRow.appendChild(host);
@@ -222,7 +225,7 @@ export function renderMenu(
       join();
     }
   });
-  const joinButton = button("join", "primary", join);
+  const joinButton = button("Join", "primary", join);
   joinRow.appendChild(codeInput);
   joinRow.appendChild(joinButton);
   panel.appendChild(joinRow);
@@ -230,9 +233,9 @@ export function renderMenu(
   panel.appendChild(h("p", "menu-peer-notice", PEER_IP_NOTICE));
 
   const manageRow = h("div", "menu-row");
-  manageRow.appendChild(button("teams", "", callbacks.onManageTeams));
-  manageRow.appendChild(button("options", "", callbacks.onOptions));
-  manageRow.appendChild(button("music", "", callbacks.onMusic));
+  manageRow.appendChild(button("Teams", "", callbacks.onManageTeams));
+  manageRow.appendChild(button("Options", "", callbacks.onOptions));
+  manageRow.appendChild(button("Music", "", callbacks.onMusic));
   panel.appendChild(manageRow);
 
   root.appendChild(panel);
@@ -256,7 +259,13 @@ export function renderTeamList(
 ): void {
   root.replaceChildren();
   const panel = h("div", "screen");
-  panel.appendChild(h("h2", "screen-title", "teams"));
+  panel.appendChild(
+    screenBar({
+      back: { label: "Back", onBack: callbacks.onBack },
+      title: [h("h2", "screen-title", "Teams")],
+      actions: [button("New team", "primary", callbacks.onNew)],
+    }).element,
+  );
 
   for (const problem of problems) {
     panel.appendChild(h("div", "screen-problem", problem));
@@ -273,18 +282,13 @@ export function renderTeamList(
       h("span", "entity-name", `${team.name} (${String(team.members.length)} members)`),
     );
     row.appendChild(
-      button("edit", "", () => {
+      button("Edit", "", () => {
         callbacks.onEdit(team.id);
       }),
     );
     list.appendChild(row);
   }
   panel.appendChild(list);
-
-  const actions = h("div", "menu-row");
-  actions.appendChild(button("new team", "primary", callbacks.onNew));
-  actions.appendChild(button("back", "", callbacks.onBack));
-  panel.appendChild(actions);
 
   root.appendChild(panel);
 }

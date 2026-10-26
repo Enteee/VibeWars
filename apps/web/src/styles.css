@@ -373,7 +373,6 @@ body {
   margin: 0;
   font-size: 1.6rem;
   letter-spacing: 0.1em;
-  text-transform: lowercase;
   color: var(--accent);
 }
 
@@ -703,31 +702,31 @@ body {
   border-bottom-color: var(--elite);
 }
 
-.team-skill[data-skill-type="enchantment"] {
+:is(.team-skill, .mini-skill)[data-skill-type="enchantment"] {
   --skill-type-colour: #56d4dd;
 }
 
-.team-skill[data-skill-type="glyph"] {
+:is(.team-skill, .mini-skill)[data-skill-type="glyph"] {
   --skill-type-colour: #c3e88d;
 }
 
-.team-skill[data-skill-type="hex"] {
+:is(.team-skill, .mini-skill)[data-skill-type="hex"] {
   --skill-type-colour: #d2a8ff;
 }
 
-.team-skill[data-skill-type="preparation"] {
+:is(.team-skill, .mini-skill)[data-skill-type="preparation"] {
   --skill-type-colour: #e3b341;
 }
 
-.team-skill[data-skill-type="stance"] {
+:is(.team-skill, .mini-skill)[data-skill-type="stance"] {
   --skill-type-colour: #f778ba;
 }
 
-.team-skill[data-skill-type="attack"],
-.team-skill[data-skill-type="shout"],
-.team-skill[data-skill-type="signet"],
-.team-skill[data-skill-type="skill"],
-.team-skill[data-skill-type="spell"] {
+:is(.team-skill, .mini-skill)[data-skill-type="attack"],
+:is(.team-skill, .mini-skill)[data-skill-type="shout"],
+:is(.team-skill, .mini-skill)[data-skill-type="signet"],
+:is(.team-skill, .mini-skill)[data-skill-type="skill"],
+:is(.team-skill, .mini-skill)[data-skill-type="spell"] {
   --skill-type-colour: var(--ink);
 }
 
@@ -1067,6 +1066,86 @@ body {
   border-color: transparent;
   color: inherit;
   text-align: left;
+}
+
+/* A choosable row (#578): the button holds the dot, the text and the mini
+   bar; the row's own actions sit beside it, outside the button. */
+.selectable-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
+.screen button.selectable-row-choose {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 0.45rem 0.6rem;
+  border-radius: 4px;
+  text-align: left;
+}
+
+.selectable-row.is-selected .selectable-row-choose {
+  border-color: var(--accent);
+  background: rgb(89 194 255 / 10%);
+}
+
+.selectable-row-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.selectable-row-name {
+  font-size: 0.9rem;
+}
+
+.selectable-row-subtitle {
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+}
+
+.selectable-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.8rem;
+  border: 1px dashed var(--line);
+}
+
+.empty-state-message {
+  margin: 0;
+  color: var(--ink-dim);
+}
+
+/* A character's eight skills at a glance (#578), each cell in its type's
+   colour, as the team grid edges them. */
+.mini-skill-bar {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: repeat(8, 0.7rem);
+  gap: 2px;
+}
+
+.mini-skill {
+  height: 0.7rem;
+  background: var(--skill-type-colour, var(--ink-dim));
+}
+
+.mini-skill.is-empty {
+  background: none;
+  border: 1px dashed var(--line);
 }
 
 /* The cause a problem points at, for a moment after its line is pressed. */

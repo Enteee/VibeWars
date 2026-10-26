@@ -36,7 +36,7 @@ async function hostLobby(page: Page): Promise<string> {
 export async function startSoloMatch(page: Page): Promise<void> {
   await hostLobby(page);
   await page.getByRole("button", { name: "join team 1" }).click();
-  await page.getByRole("button", { name: "ready", exact: true }).click();
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
   await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
 }

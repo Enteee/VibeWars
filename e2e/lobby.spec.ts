@@ -45,7 +45,7 @@ async function hostLobby(page: Page, playerName: string): Promise<string> {
 async function joinLobby(page: Page, playerName: string, code: string): Promise<void> {
   await openMenu(page, playerName);
   await page.locator("input.code-input").fill(code);
-  await page.getByRole("button", { name: "join", exact: true }).click();
+  await page.getByRole("button", { name: "Join", exact: true }).click();
   await expect(page.locator(".screen-lobby")).toBeVisible();
 }
 
@@ -55,8 +55,8 @@ async function startTwoPlayerMatch(host: Page, guest: Page): Promise<string> {
   await joinLobby(guest, "Guest", code);
   await host.getByRole("button", { name: "join team 1" }).click();
   await guest.getByRole("button", { name: "join team 2" }).click();
-  await host.getByRole("button", { name: "ready", exact: true }).click();
-  await guest.getByRole("button", { name: "ready", exact: true }).click();
+  await host.getByRole("button", { name: "Ready", exact: true }).click();
+  await guest.getByRole("button", { name: "Ready", exact: true }).click();
   await host.getByRole("button", { name: "start match" }).click();
   return code;
 }
@@ -115,7 +115,7 @@ test("a wrong code finds no lobby after the 10 s wait, and says so once", async 
 
     await openMenu(guest, "Guest");
     await guest.locator("input.code-input").fill(wrong);
-    await guest.getByRole("button", { name: "join", exact: true }).click();
+    await guest.getByRole("button", { name: "Join", exact: true }).click();
     await expect(guest.locator("#status")).toHaveText("connecting…");
 
     const problem = guest.locator(".screen-connection-problem");
@@ -172,8 +172,8 @@ test("the host starts a match and both players enter the arena", async ({ browse
     await host.getByRole("button", { name: "join team 1" }).click();
     await guest.getByRole("button", { name: "join team 2" }).click();
 
-    await host.getByRole("button", { name: "ready", exact: true }).click();
-    await guest.getByRole("button", { name: "ready", exact: true }).click();
+    await host.getByRole("button", { name: "Ready", exact: true }).click();
+    await guest.getByRole("button", { name: "Ready", exact: true }).click();
 
     const start = host.getByRole("button", { name: "start match" });
     await expect(start).toBeEnabled();
@@ -260,7 +260,7 @@ test("a player who quits early is told the match still runs, until it ends", asy
     await leaveMatch(guest);
     await expect(running).toHaveCount(0);
     await expect(guest.locator("#status")).toHaveText(`lobby ${code}`);
-    const ready = host.getByRole("button", { name: "ready", exact: true });
+    const ready = host.getByRole("button", { name: "Ready", exact: true });
     await expect(ready).toBeEnabled();
     await expect(host.locator(".lobby-map select")).toBeEnabled();
     await ready.click();

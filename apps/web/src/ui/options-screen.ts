@@ -1,11 +1,13 @@
+import { h, screenBar } from "./kit.js";
 import { OPTIONS_SECTIONS } from "./options-sections.js";
 
 /**
  * The Options screen (#423): the sections of `OPTIONS_SECTIONS` listed on
  * the left, the selected one on the right. It opens on the first section,
  * or on the one asked for, as the jukebox's "sound settings" link does.
- * Back, or Esc, returns to the menu; a section that wants Esc for itself,
- * as Controls does while a key is being rebound, stops it first.
+ * Back, or Esc, returns to the menu (the screen bar's, #578); a section
+ * that wants Esc for itself, as Controls does while a key is being
+ * rebound, stops it first.
  */
 
 /** A section, as far as switching between them goes. */
@@ -75,10 +77,13 @@ export function renderOptionsScreen(
   panel.className = "screen options-screen";
   root.appendChild(panel);
 
-  const title = document.createElement("h2");
-  title.className = "screen-title";
-  title.textContent = "options";
-  panel.appendChild(title);
+  panel.appendChild(
+    screenBar({
+      back: { label: "Back", onBack: callbacks.onBack },
+      title: [h("h2", "screen-title", "Options")],
+      actions: [],
+    }).element,
+  );
 
   const body = document.createElement("div");
   body.className = "options-body";
@@ -89,15 +94,6 @@ export function renderOptionsScreen(
   pane.className = "options-pane";
   body.append(nav, pane);
   panel.appendChild(body);
-
-  const back = document.createElement("button");
-  back.type = "button";
-  back.textContent = "back";
-  back.addEventListener("click", callbacks.onBack);
-  const actions = document.createElement("div");
-  actions.className = "menu-row";
-  actions.appendChild(back);
-  panel.appendChild(actions);
 
   const switcher = new SectionSwitcher<HTMLElement>(pane, (container) => {
     container.replaceChildren();
@@ -132,17 +128,7 @@ export function renderOptionsScreen(
     }
   };
 
-  // Esc goes back, as the back button does. A section's own Esc, such as
-  // cancelling a rebind, is stopped inside it and never gets here.
-  const onDocumentKeydown = (event: KeyboardEvent): void => {
-    if (event.code === "Escape") {
-      event.preventDefault();
-      callbacks.onBack();
-    }
-  };
-  document.addEventListener("keydown", onDocumentKeydown);
   disposeCurrent = () => {
-    document.removeEventListener("keydown", onDocumentKeydown);
     switcher.close();
   };
 

@@ -1,6 +1,13 @@
-import { MINIMAL_GW_INSPIRED_PVP_V1, PROFESSIONS, type ProfessionId } from "@vibewars/game-core";
+import {
+  getSkill,
+  MINIMAL_GW_INSPIRED_PVP_V1,
+  PROFESSIONS,
+  type ProfessionId,
+  type SkillType,
+} from "@vibewars/game-core";
 
 import { teamColour } from "../render/arena-snapshot.js";
+import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
 
 /**
@@ -62,4 +69,46 @@ export function createCharacterDot(character: StoredCharacter): HTMLElement {
   dot.textContent = professionBadge(character.primaryProfession, character.secondaryProfession);
   dot.title = professionLabel(character.primaryProfession, character.secondaryProfession);
   return dot;
+}
+
+/** One cell of a mini skill bar: the skill's type, or `null` for an empty slot. */
+export interface MiniSkillCell {
+  readonly name: string;
+  /** `undefined` for an id this client does not know. */
+  readonly type: SkillType | undefined;
+}
+
+/** A character's eight slots as stored (#578); an illegal build still shows what it holds. */
+export function miniSkillCells(character: StoredCharacter): (MiniSkillCell | null)[] {
+  return Array.from({ length: SKILL_BAR_SLOTS }, (_, slot) => {
+    const skillId = character.skillBar[slot] ?? null;
+    if (skillId === null) {
+      return null;
+    }
+    const skill = getSkill(skillId);
+    return { name: skill?.name ?? skillId, type: skill?.type };
+  });
+}
+
+/**
+ * Eight small cells, each in its skill type's colour (#578), so a list row
+ * says what a character plays without opening it. The names are in the
+ * cells' titles and the bar's label.
+ */
+export function miniSkillBar(character: StoredCharacter): HTMLElement {
+  const bar = document.createElement("span");
+  bar.className = "mini-skill-bar";
+  bar.setAttribute("role", "img");
+  const cells = miniSkillCells(character);
+  bar.setAttribute("aria-label", cells.map((cell) => cell?.name ?? "empty").join(", "));
+  for (const cell of cells) {
+    const node = document.createElement("span");
+    node.className = cell === null ? "mini-skill is-empty" : "mini-skill";
+    if (cell?.type !== undefined) {
+      node.dataset.skillType = cell.type;
+    }
+    node.title = cell?.name ?? "Empty slot";
+    bar.appendChild(node);
+  }
+  return bar;
 }

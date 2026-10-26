@@ -70,7 +70,7 @@ test("online play is on, and hosting a lobby reaches nothing but our own origin"
   await page.goto("./");
   await expect(page.locator(".roster")).toBeVisible();
 
-  await expect(page.getByRole("button", { name: "join", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Join", exact: true })).toBeEnabled();
   await expect(page.getByPlaceholder("CODE")).toBeEnabled();
   await expect(page.getByRole("button", { name: "quick match" })).toHaveCount(0);
   await page.getByRole("button", { name: "host a lobby" }).click();
@@ -86,7 +86,7 @@ test("a disabled primary button looks as disabled as any other (#137)", async ({
   await page.getByRole("button", { name: "host a lobby" }).click();
   // Nobody on a team: nothing to start, and nobody to be ready.
   const start = page.getByRole("button", { name: "start match" });
-  const ready = page.getByRole("button", { name: "ready", exact: true });
+  const ready = page.getByRole("button", { name: "Ready", exact: true });
   await expect(start).toBeDisabled();
   await expect(ready).toBeDisabled();
   await expect(start).toHaveClass(/\bprimary\b/);
@@ -103,7 +103,7 @@ test("a character saved under the sub-path survives a reload", async ({ page }) 
   await page.goto("./");
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator("input.editor-name").fill("Pages Ranger");
-  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".roster")).toContainText("Pages Ranger");
 
   await page.reload();

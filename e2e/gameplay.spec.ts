@@ -73,12 +73,12 @@ async function startLobbyMatch(host: Page, guests: readonly Page[]): Promise<Loc
   for (const guest of guests) {
     await guest.goto("./");
     await guest.locator("input.code-input").fill(code);
-    await guest.getByRole("button", { name: "join", exact: true }).click();
+    await guest.getByRole("button", { name: "Join", exact: true }).click();
     await guest.getByRole("button", { name: "join team 2" }).click();
-    await guest.getByRole("button", { name: "ready", exact: true }).click();
+    await guest.getByRole("button", { name: "Ready", exact: true }).click();
   }
   await host.getByRole("button", { name: "join team 1" }).click();
-  await host.getByRole("button", { name: "ready", exact: true }).click();
+  await host.getByRole("button", { name: "Ready", exact: true }).click();
   await host.getByRole("button", { name: "start match" }).click();
 
   for (const page of [host, ...guests]) {
@@ -542,7 +542,7 @@ test("at Close, the arena's bottom edge stops above the skill bar, not under it 
   await page.getByRole("button", { name: "host a lobby" }).click();
   await expect(page.locator(".lobby-map select")).toHaveValue("arena-alpha");
   await page.getByRole("button", { name: "join team 1" }).click();
-  await page.getByRole("button", { name: "ready", exact: true }).click();
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
   await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
   const stage = page.locator("#viewport");

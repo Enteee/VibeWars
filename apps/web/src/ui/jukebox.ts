@@ -8,7 +8,7 @@ import { music, type MusicFollower } from "../music/play-music.js";
 import { TRACKS, type Track } from "../music/tracks/index.js";
 import { musicIcon } from "./icons.js";
 import { mountSoundControls, soundControlsDeps } from "./sound-controls.js";
-import { button, h } from "./kit.js";
+import { button, h, screenBar } from "./kit.js";
 
 /**
  * The jukebox (#372, #366 §3.6): what plays. A menu screen, and the same
@@ -80,7 +80,7 @@ export function jukeboxPanel(onClose: () => void, player: MusicFollower = music(
   const panel = h("div", "jukebox");
 
   const modeField = h("label", "field");
-  modeField.appendChild(h("span", "field-label", "music"));
+  modeField.appendChild(h("span", "field-label", "Music"));
   const modePicker = document.createElement("select");
   modePicker.className = "jukebox-mode";
   for (const mode of MUSIC_MODES) {
@@ -137,11 +137,11 @@ export function jukeboxPanel(onClose: () => void, player: MusicFollower = music(
         // Filled by the beat editor (#373) for a track the player changed.
         h("span", "jukebox-edited"),
       );
-      const pin = button(row.pinned ? "pinned" : "pin", "jukebox-pin", () => {
+      const pin = button(row.pinned ? "Pinned" : "Pin", "jukebox-pin", () => {
         change(pinTrack(player.preference, row.id));
       });
       pin.disabled = row.pinned && preference.mode === "pinned";
-      const edit = button("open in editor", "jukebox-edit", () => undefined);
+      const edit = button("Open in editor", "jukebox-edit", () => undefined);
       // The beat editor (#373) enables this.
       edit.disabled = true;
       const actions = h("div", "menu-row");
@@ -188,16 +188,16 @@ export function renderJukeboxScreen(
   disposeJukeboxScreen();
   root.replaceChildren();
   const screen = h("div", "screen jukebox-screen");
-  screen.appendChild(h("h2", "screen-title", "music"));
+  screen.appendChild(
+    screenBar({
+      back: { label: "Back", onBack: callbacks.onBack },
+      title: [h("h2", "screen-title", "Music")],
+      actions: [button("Sound settings", "jukebox-sound-settings", callbacks.onSoundSettings)],
+    }).element,
+  );
   screen.appendChild(h("p", "screen-subtitle", "Click a track to hear it. Changes save at once."));
   const panel = jukeboxPanel(callbacks.onBack);
   screen.appendChild(panel.element);
-  const actions = h("div", "menu-row");
-  actions.appendChild(button("back", "", callbacks.onBack));
-  actions.appendChild(
-    button("sound settings", "jukebox-sound-settings", callbacks.onSoundSettings),
-  );
-  screen.appendChild(actions);
   root.appendChild(screen);
   disposeScreen = () => {
     panel.dispose();
