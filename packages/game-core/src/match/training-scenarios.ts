@@ -204,6 +204,41 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     ],
   },
   {
+    id: "condition-pressure",
+    label: "Condition pressure",
+    teaches:
+      "That conditions are a kill clock: bleeding, poison and burning drain 20 health a second, the most there is, and adding more refreshes rather than stacks.",
+    mapId: "training-hall",
+    exercises: ["conditions"],
+    knobs: [],
+    // Both mortal, back 2 s after each death. The loaded one renews its
+    // own three before they run out: 3 + 4 + 7 pips, held at MAX_PIPS (10),
+    // so it dies in 25 s untouched, and whatever the player adds to it
+    // only refreshes what it has.
+    dummies: [
+      {
+        ...target("clean", "Clean dummy (mortal)", vec2(380, 150), 60),
+        maxHealth: MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth,
+        reset: { kind: "on-death", afterSeconds: 2 },
+      },
+      {
+        ...target("loaded", "Loaded dummy (mortal)", vec2(380, 270), 60),
+        maxHealth: MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth,
+        reset: { kind: "on-death", afterSeconds: 2 },
+        behaviour: {
+          kind: "parallel",
+          behaviours: (["bleeding", "poison", "burning"] as const).map((statusId): Behaviour => ({
+            kind: "apply-status-cadence",
+            statusId,
+            durationSeconds: 10,
+            everySeconds: 5,
+            targeting: { kind: "self" },
+          })),
+        },
+      },
+    ],
+  },
+  {
     id: "armor-ladder",
     label: "Armor ladder",
     teaches: "The mitigation curve: the same hit against 40 to 104 armor, side by side.",

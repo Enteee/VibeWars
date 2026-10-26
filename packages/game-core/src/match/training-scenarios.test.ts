@@ -260,6 +260,28 @@ describe("time-to-kill, headless (#111)", () => {
   });
 });
 
+describe("condition-pressure, headless (#111)", () => {
+  it("the loaded dummy loses 20 health a second and dies in 25 s; the clean one loses none", () => {
+    const sim = arena(scenario("condition-pressure"), "conditions");
+    const health = (id: string): number => sim.get(id)?.combatant.health ?? NaN;
+    const max = RULES.combat.baseHealth;
+    for (let i = 0; i < Math.round(10 / DT); i += 1) {
+      sim.step(DT);
+    }
+    expect(health("loaded")).toBeCloseTo(max - 200, -1);
+    expect(health("clean")).toBe(max);
+
+    let diedAt: number | undefined;
+    for (let i = Math.round(10 / DT); i < Math.round(40 / DT) && diedAt === undefined; i += 1) {
+      sim.step(DT);
+      if (sim.get("loaded")?.combatant.dead === true) {
+        diedAt = (i + 1) * DT;
+      }
+    }
+    expect(diedAt).toBeCloseTo(25, 0);
+  });
+});
+
 describe("blind-denial, headless (#111)", () => {
   it("the blinded archer misses about nine in ten; the other hits every time", () => {
     const sim = armedArena(scenario("blind-denial"), "blind", WEAPONS.sword);
