@@ -485,7 +485,6 @@ const offhandShapes = {
   ],
 };
 
-/** @type {Record<string, Record<string, string>>} */
 // ---------------------------------------------------------------------------
 // Skill icons (#719): one per implemented skill. A profession plate with its
 // silhouette as a faint watermark, one glyph from the vocabulary below for the
@@ -606,6 +605,7 @@ function skillIcon(id, row) {
   );
 }
 
+/** @type {Record<string, Record<string, string>>} */
 const families = {
   profession: Object.fromEntries(Object.entries(profession).map(([k, f]) => [k, svg(f())])),
   "skill-type": Object.fromEntries(Object.entries(skillType).map(([k, f]) => [k, svg(f())])),

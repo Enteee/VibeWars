@@ -8,6 +8,10 @@
 // drawn per skill: a profession tile, one glyph from a closed vocabulary, an
 // optional modifier mark, the type badge in the corner and, for an elite, the
 // doubled gold frame. Eight real skills are shown.
+//
+// The study is a snapshot of the approved layout. The shipped icons come from
+// icons.mjs and skill-icon-table.mjs, which are the source of truth; if they
+// disagree with this file, they win.
 
 import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
