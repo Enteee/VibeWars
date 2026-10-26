@@ -32,6 +32,10 @@ export const LOOK_AHEAD_RATE = 4;
 export const ZOOM_RATE = 11;
 /** A body that moves this far in one frame was put there, not walked: the view snaps. */
 export const SNAP_DISTANCE = 200;
+/** A pan keeps you at least this far inside the canvas edge, CSS px (#437 §3, #442). */
+export const LEASH_MARGIN_PX = 48;
+/** Per second, a released pan's way back to you: about 0.4 s. */
+export const RETURN_RATE = 7;
 
 export interface Size {
   readonly width: number;
@@ -59,6 +63,10 @@ export interface CameraRig {
   readonly height: number;
   /** World units, the eased look-ahead. */
   readonly lead: Vec2;
+  /** World units from you, set by the RMB pan (#442); leashed every frame. */
+  readonly offset: Vec2;
+  /** RMB is held in a pan: the offset holds and there is no look-ahead. */
+  readonly panning: boolean;
   /** Where `self` was last frame; `undefined` snaps the next one. */
   readonly last: Vec2 | undefined;
 }
@@ -89,6 +97,8 @@ export function createCameraRig(): CameraRig {
     step: DEFAULT_STEP,
     height: viewHeight(DEFAULT_STEP),
     lead: { x: 0, y: 0 },
+    offset: { x: 0, y: 0 },
+    panning: false,
     last: undefined,
   };
 }
@@ -111,6 +121,45 @@ export function zoomFor(step: number, viewport: Size): number {
 export function wheelNotch(rig: CameraRig, direction: -1 | 1): CameraRig {
   const step = Math.min(VIEW_STEPS.length - 1, Math.max(0, rig.step + direction));
   return step === rig.step ? rig : { ...rig, step };
+}
+
+/**
+ * `offset` cut to the leash: the camera's centre stays within
+ * `(viewport / 2 − LEASH_MARGIN_PX) / zoom` of you on each axis, so you
+ * stay `LEASH_MARGIN_PX` inside the canvas edge.
+ */
+export function clampToLeash(offset: Vec2, viewport: Size, zoom: number): Vec2 {
+  const lx = Math.max(0, (viewport.width / 2 - LEASH_MARGIN_PX) / zoom);
+  const ly = Math.max(0, (viewport.height / 2 - LEASH_MARGIN_PX) / zoom);
+  return {
+    x: Math.min(lx, Math.max(-lx, offset.x)),
+    y: Math.min(ly, Math.max(-ly, offset.y)),
+  };
+}
+
+/**
+ * An RMB drag of `deltaPx` screen px (#442): the view looks the way you
+ * drag, as far as the leash lets it. The offset is from you, so it holds
+ * while you walk.
+ */
+export function panBy(rig: CameraRig, deltaPx: Vec2, viewport: Size): CameraRig {
+  const zoom = zoomForHeight(rig.height, viewport);
+  const offset = clampToLeash(
+    { x: rig.offset.x + deltaPx.x / zoom, y: rig.offset.y + deltaPx.y / zoom },
+    viewport,
+    zoom,
+  );
+  return { ...rig, offset, panning: true };
+}
+
+/** RMB let go: the offset glides back to you, or snaps under reduced motion. */
+export function releasePan(rig: CameraRig): CameraRig {
+  return rig.panning ? { ...rig, panning: false } : rig;
+}
+
+/** Back on you at once, with no glide: you died. */
+export function dropPan(rig: CameraRig): CameraRig {
+  return { ...rig, offset: { x: 0, y: 0 }, panning: false };
 }
 
 /**
@@ -146,9 +195,9 @@ export function stepCamera(
   const height = rig.height + (target - rig.height) * ease(ZOOM_RATE);
   const zoom = zoomForHeight(height, input.viewport);
 
-  // Lean toward the pointer; with it off the canvas, back to centre.
+  // Lean toward the pointer; with it off the canvas, or a pan held, back to centre.
   const want =
-    input.pointer === undefined
+    input.pointer === undefined || rig.panning
       ? { x: 0, y: 0 }
       : {
           x: ((input.pointer.x - input.viewport.width / 2) * LOOK_AHEAD) / zoom,
@@ -159,11 +208,26 @@ export function stepCamera(
     ? { x: 0, y: 0 }
     : { x: rig.lead.x + (want.x - rig.lead.x) * k, y: rig.lead.y + (want.y - rig.lead.y) * k };
 
-  // Clamped after the lead, so leaning never shows the void past the edge.
+  // A held pan stays; a released one glides home. Leashed every frame,
+  // as a zoom in shrinks the leash. A snap drops it with the lead.
+  const held = rig.panning ? 1 : 1 - ease(RETURN_RATE);
+  const offset = snap
+    ? { x: 0, y: 0 }
+    : clampToLeash({ x: rig.offset.x * held, y: rig.offset.y * held }, input.viewport, zoom);
+
+  // Clamped after the offset and the lead, so neither shows the void past
+  // the edge. That can bring you nearer the canvas edge than the leash
+  // does, at the arena's edge: you still stay on screen.
   const view = {
-    x: clampAxis(input.self.x + lead.x, input.arena.width, input.viewport.width / zoom, 0, 0),
+    x: clampAxis(
+      input.self.x + offset.x + lead.x,
+      input.arena.width,
+      input.viewport.width / zoom,
+      0,
+      0,
+    ),
     y: clampAxis(
-      input.self.y + lead.y,
+      input.self.y + offset.y + lead.y,
       input.arena.height,
       input.viewport.height / zoom,
       input.cover.top / zoom,
@@ -171,7 +235,10 @@ export function stepCamera(
     ),
     zoom,
   };
-  return { rig: { step: rig.step, height, lead, last: input.self }, view };
+  return {
+    rig: { step: rig.step, height, lead, offset, panning: rig.panning, last: input.self },
+    view,
+  };
 }
 
 /** How many `deltaY` units one notch takes, so a trackpad's stream steps once, not ten times. */
