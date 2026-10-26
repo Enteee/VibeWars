@@ -38,7 +38,11 @@ import {
   type TeamEditorView,
 } from "./ui/team-editor.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
-import type { PlayerBuild } from "@vibewars/game-core";
+import {
+  MINIMAL_GW_INSPIRED_PVP_V1,
+  resolveJoinLoadout,
+  type PlayerBuild,
+} from "@vibewars/game-core";
 
 /**
  * Application shell: owns which screen is showing and the connections
@@ -155,11 +159,14 @@ async function main(): Promise<void> {
   /**
    * The character the lobby lists this player with (#580): the selected
    * one's name and professions, or `null` for the house loadout, read
-   * the way `activeBuild` reads the build it plays with.
+   * the way `activeBuild` reads the build it plays with. A build the host
+   * would refuse, an empty bar or an illegal one, plays the house loadout,
+   * so it is listed as that too.
    */
   const lobbyCharacter = async (): Promise<LobbyCharacter | null> => {
     const build = await activeBuild();
-    return build === undefined
+    return build === undefined ||
+      resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes).refused !== undefined
       ? null
       : {
           name: build.name,

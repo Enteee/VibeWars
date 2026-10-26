@@ -289,24 +289,29 @@ test("a refused clipboard leaves the code selected, to copy by hand (#580)", asy
   expect(await page.evaluate(() => window.getSelection()?.toString())).toBe(code);
 });
 
-test("each row shows the character a player brings, and Start says who it waits for (#580)", async ({
+test("each row shows the character a player brings, a refused build as Default loadout, and Start says who it waits for (#580)", async ({
   browser,
 }) => {
   const { context, pages } = await openPeers(browser, 2);
   const [host, guest] = pages as [Page, Page];
 
   try {
-    // The host plays a saved character; the guest, the house loadout.
-    // Both pages share one storage, so the guest picks its own after the
-    // host is in.
+    // The host plays a saved character with a skill; the guest one with an
+    // empty bar, which the host refuses, so it plays and lists as the
+    // house loadout. Both pages share one storage, so the guest picks its
+    // own after the host is in.
     await host.goto("./");
     await host.getByRole("button", { name: "new character" }).click();
     await host.locator("input.editor-name").fill("Cynn");
+    await host.locator(".skill-box").first().locator(".skill-box-equip").click();
+    await host.getByRole("button", { name: "Save", exact: true }).click();
+    await host.getByRole("button", { name: "new character" }).click();
+    await host.locator("input.editor-name").fill("Blank");
     await host.getByRole("button", { name: "Save", exact: true }).click();
     await host.locator(".roster").getByText("Cynn", { exact: true }).click();
     const code = await hostLobby(host, "Host");
     await guest.goto("./");
-    await guest.locator(".roster").getByText("Default loadout", { exact: true }).click();
+    await guest.locator(".roster").getByText("Blank", { exact: true }).click();
     await joinLobby(guest, "Guest", code);
 
     await host.getByRole("button", { name: "join team 1" }).click();

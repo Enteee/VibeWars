@@ -1408,12 +1408,11 @@ body {
   min-width: 0;
 }
 
+/* Wrapped, not cut: a team column is narrow, and the line is the point. */
 .lobby-character {
-  overflow: hidden;
   color: var(--ink-dim);
   font-size: 0.82rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .lobby-slot-empty {
@@ -2697,8 +2696,8 @@ body {
   border-radius: 50%;
   background: var(--dot-colour, var(--accent));
   color: #07111c;
-  font-size: 0.68rem;
-  letter-spacing: 0.02em;
+  /* Small enough that a two-profession badge, "Mo/E", fits the dot. */
+  font-size: 0.6rem;
   user-select: none;
 }
 
