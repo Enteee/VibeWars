@@ -83,14 +83,15 @@ function staffed() {
   ).sort();
 }
 
-/** @param {string} employee @returns {string[]} the stub's start log lines for it */
+/** @param {string} employee @returns {number[]} the stub's start times for it, in ms */
 function starts(employee) {
   const log = path.join(rig?.dir ?? "", "starts.log");
   return fs.existsSync(log)
     ? fs
         .readFileSync(log, "utf8")
         .split("\n")
-        .filter((line) => line === employee)
+        .filter((line) => line.startsWith(`${employee} `))
+        .map((line) => Number(line.split(" ")[1]) / 1e6)
     : [];
 }
 
@@ -118,7 +119,7 @@ beforeEach(() => {
     path.join(bin, "claude-llc-agent"),
     [
       "#!/bin/sh",
-      `echo "$1" >>${dir}/starts.log`,
+      `echo "$1 $(date +%s%N)" >>${dir}/starts.log`,
       `[ -e ${dir}/crash-$1 ] && exit 1`,
       "sleep 600 &",
       `echo $! >${dir}/child-$1`,
@@ -161,18 +162,22 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
-  await rig?.stop();
-  spawnSync("tmux", ["kill-server"], { encoding: "utf8" });
-  // The stubs' children outlive their panes unless the supervisor stopped them.
-  for (const file of fs.readdirSync(rig?.dir ?? "").filter((f) => f.startsWith("child-"))) {
-    try {
-      process.kill(Number(fs.readFileSync(path.join(rig?.dir ?? "", file), "utf8")), "SIGKILL");
-    } catch {
-      /* gone */
+  // rig is set only once the private server's environment is: without it,
+  // kill-server would name the caller's own server.
+  if (rig !== null) {
+    await rig.stop();
+    spawnSync("tmux", ["kill-server"], { encoding: "utf8" });
+    // The stubs' children outlive their panes unless the supervisor stopped them.
+    for (const file of fs.readdirSync(rig.dir).filter((f) => f.startsWith("child-"))) {
+      try {
+        process.kill(Number(fs.readFileSync(path.join(rig.dir, file), "utf8")), "SIGKILL");
+      } catch {
+        /* gone */
+      }
     }
+    fs.rmSync(rig.dir, { recursive: true, force: true });
+    rig = null;
   }
-  fs.rmSync(rig?.dir ?? "", { recursive: true, force: true });
-  rig = null;
   for (const [name, value] of [
     ["TMUX_TMPDIR", saved.tmpdir],
     ["TMUX", saved.tmux],
@@ -286,24 +291,22 @@ describe("the supervisor against a real tmux server (#722)", () => {
     writeStaff(["qa-tester", "developer-1"]);
     run();
     await until(() => panes().length === 2, "two panes");
-    expect(starts("qa-tester")).toHaveLength(1);
+    await until(() => starts("qa-tester").length === 1, "the first start");
 
-    // Killing its stub closes the pane; the holdoff keeps it from coming back at once.
+    // Killing its stub closes the pane; the holdoff keeps the restart a
+    // holdoff after the start before it.
     fs.writeFileSync(path.join(rig?.dir ?? "", "crash-qa-tester"), "");
     const pid = tmux(["list-panes", "-s", "-t", `=${SESSION}`, "-F", "#{@employee} #{pane_pid}"])
       .split("\n")
       .find((line) => line.startsWith("qa-tester "))
       ?.split(" ")[1];
     spawnSync("kill", [String(pid)]);
-    await until(() => !panes().includes("qa-tester qa-tester"), "the pane to close");
-    await new Promise((resolve) => setTimeout(resolve, HOLDOFF_MS / 3));
-    expect(starts("qa-tester")).toHaveLength(1);
 
-    // After the holdoff: started again, and it crashes at once, again and again.
-    await until(() => starts("qa-tester").length === 2, "the restart");
-    await new Promise((resolve) => setTimeout(resolve, HOLDOFF_MS / 3));
-    expect(starts("qa-tester")).toHaveLength(2);
-    await until(() => starts("qa-tester").length === 3, "the next restart, a holdoff later");
+    // It crashes at once after each restart, so the starts keep coming.
+    await until(() => starts("qa-tester").length === 3, "two restarts");
+    const [first = 0, second = 0, third = 0] = starts("qa-tester");
+    expect(second - first).toBeGreaterThanOrEqual(HOLDOFF_MS);
+    expect(third - second).toBeGreaterThanOrEqual(HOLDOFF_MS);
   });
 
   it("kills a pane for nobody and leaves one still being set up", async () => {
