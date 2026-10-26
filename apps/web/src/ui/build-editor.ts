@@ -73,6 +73,7 @@ import {
   offhandIcon,
   professionIcon,
   SKILL_TYPE_NAME,
+  skillIconHtml,
   skillTypeBadgeHtml,
   weaponIcon,
   type GearIcon,
@@ -587,6 +588,10 @@ function sentence(message: string): string {
   const capitalised = message.charAt(0).toUpperCase() + message.slice(1);
   return /[.!?]$/.test(capitalised) ? capitalised : `${capitalised}.`;
 }
+
+/** A skill icon on a bar slot, and in a library row, px (#727, art-direction sizes). */
+const SLOT_ICON_PX = 48;
+const LIBRARY_ICON_PX = 24;
 
 const SLOT_FIELD = /^skillBar\[(\d+)\]$/;
 const DUPLICATE = " appears more than once on the bar";
@@ -1604,6 +1609,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
           cell.appendChild(h("span", "skill-slot-empty", "Empty"));
           return;
         }
+        cell.insertAdjacentHTML("beforeend", skillIconHtml(skill.id, SLOT_ICON_PX));
         cell.appendChild(h("span", "skill-slot-name", skill.name));
         cell.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
         cell.appendChild(h("span", "skill-slot-cost", description.cost));
@@ -1830,6 +1836,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
       render(context.current());
     });
     card.setAttribute("aria-expanded", "false");
+    card.insertAdjacentHTML("beforeend", skillIconHtml(skill.id, LIBRARY_ICON_PX));
     card.appendChild(h("span", "skill-box-name", skill.name));
     card.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
     card.appendChild(h("span", "skill-box-cost"));
@@ -1875,6 +1882,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
       render(context.current());
     });
     card.setAttribute("aria-expanded", "false");
+    card.insertAdjacentHTML("beforeend", skillIconHtml(skill.id, LIBRARY_ICON_PX));
     card.appendChild(h("span", "skill-box-name", skill.name));
     card.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(skill.type));
     card.appendChild(h("span", "skill-box-cost"));

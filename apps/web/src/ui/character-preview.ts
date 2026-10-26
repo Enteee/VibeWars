@@ -3,12 +3,12 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   PROFESSIONS,
   type ProfessionId,
-  type SkillType,
 } from "@vibewars/game-core";
 
 import { teamColour, type RenderableActor } from "../render/arena-snapshot.js";
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
+import { skillIcon } from "./icons.js";
 
 /**
  * The little circle that stands for a character in a list.
@@ -83,11 +83,11 @@ export function createProfessionDot(
   return dot;
 }
 
-/** One cell of a mini skill bar: the skill's type, or `null` for an empty slot. */
+/** One cell of a mini skill bar: the skill's icon, or `null` for an empty slot. */
 export interface MiniSkillCell {
   readonly name: string;
-  /** `undefined` for an id this client does not know. */
-  readonly type: SkillType | undefined;
+  /** The bare plate for an id this client does not know (#727). */
+  readonly icon: string;
 }
 
 /** A character's eight slots as stored (#578); an illegal build still shows what it holds. */
@@ -98,12 +98,15 @@ export function miniSkillCells(character: StoredCharacter): (MiniSkillCell | nul
       return null;
     }
     const skill = getSkill(skillId);
-    return { name: skill?.name ?? skillId, type: skill?.type };
+    return { name: skill?.name ?? skillId, icon: skillIcon(skillId) };
   });
 }
 
+/** A mini skill bar's icon size, px (#727). */
+const MINI_SKILL_ICON_PX = 16;
+
 /**
- * Eight small cells, each in its skill type's colour (#578), so a list row
+ * Eight small cells, each its skill's icon (#578, #727), so a list row
  * says what a character plays without opening it. The names are in the
  * cells' titles and the bar's label.
  */
@@ -116,8 +119,14 @@ export function miniSkillBar(character: StoredCharacter): HTMLElement {
   for (const cell of cells) {
     const node = document.createElement("span");
     node.className = cell === null ? "mini-skill is-empty" : "mini-skill";
-    if (cell?.type !== undefined) {
-      node.dataset.skillType = cell.type;
+    if (cell !== null) {
+      const icon = document.createElement("img");
+      icon.className = "skill-icon";
+      icon.src = cell.icon;
+      icon.alt = "";
+      icon.width = MINI_SKILL_ICON_PX;
+      icon.height = MINI_SKILL_ICON_PX;
+      node.appendChild(icon);
     }
     node.title = cell?.name ?? "Empty slot";
     bar.appendChild(node);

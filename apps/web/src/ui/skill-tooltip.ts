@@ -1,5 +1,7 @@
 import { formatScalingRange, type SkillDescription } from "@vibewars/game-core";
 
+import { skillIconHtml } from "./icons.js";
+
 /**
  * The hover tooltip for a skill box.
  *
@@ -27,11 +29,15 @@ function row(parent: HTMLElement, label: string, value: string): void {
   parent.appendChild(line);
 }
 
+/** The tooltip header's skill icon, px (#727). */
+const TIP_ICON_PX = 48;
+
 /**
  * A skill's description into `node`: its type, attribute, effect lines
  * with the span the attribute buys, and its cost, cast, recharge and
  * target. The hover tooltip and a library card's inline details (#567)
- * both show it; the card already names the skill, so it leaves the title.
+ * both show it; the card already names the skill and shows its icon, so
+ * it leaves the header (#727).
  */
 export function renderSkillDescription(
   node: HTMLElement,
@@ -39,18 +45,25 @@ export function renderSkillDescription(
   options: { readonly title: boolean } = { title: true },
 ): void {
   node.replaceChildren();
-  if (options.title) {
-    const title = document.createElement("div");
-    title.className = "tip-title";
-    title.textContent = description.name;
-    node.appendChild(title);
-  }
-
   // "Signet.", "Hex Spell.": what kind of skill, as GW1 words it (#524).
   const type = document.createElement("div");
   type.className = "tip-type";
   type.textContent = description.typeText;
-  node.appendChild(type);
+  if (options.title) {
+    // The icon, with the name and type beside it (#727).
+    const header = document.createElement("div");
+    header.className = "tip-header";
+    header.insertAdjacentHTML("beforeend", skillIconHtml(description.id, TIP_ICON_PX));
+    const heading = document.createElement("div");
+    const title = document.createElement("div");
+    title.className = "tip-title";
+    title.textContent = description.name;
+    heading.append(title, type);
+    header.appendChild(heading);
+    node.appendChild(header);
+  } else {
+    node.appendChild(type);
+  }
 
   // A "No Attribute" skill has no line here, as in GW1 (#445).
   if (description.attributeName !== undefined) {
