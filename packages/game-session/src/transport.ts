@@ -51,7 +51,9 @@ export interface Transport {
  * longer into chunks and reassembles them against a budget for the whole
  * room, so one peer's big transfer could stall everyone else's. No
  * VibeWars message needs chunking; `message-size.test.ts` in apps/web
- * builds the worst case of each and keeps it under this.
+ * builds the worst case of each and keeps it under this. The host packs
+ * a tick's combat into as many messages of this size as it takes
+ * (`packCombat`, #601).
  */
 export const MAX_MESSAGE_BYTES = 16 * 1024;
 

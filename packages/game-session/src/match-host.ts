@@ -32,11 +32,12 @@ import {
   type WireSnapshot,
 } from "@vibewars/game-protocol";
 
+import { packCombat } from "./combat-batches.js";
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 import { sanitizeName } from "./names.js";
 import { rechargePredicted, rechargeSlots } from "./recharge.js";
 import { spawnPoint, type SpawnPoint } from "./spawn-points.js";
-import type { Transport } from "./transport.js";
+import { MAX_MESSAGE_BYTES, type Transport } from "./transport.js";
 import { skillBarSlots, wireCombat } from "./wire.js";
 
 /**
@@ -434,9 +435,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     const result = sim.step(TICK_SECONDS);
     expireDropped();
     transport.send("snapshot", snapshot());
-    const combat = wireCombat(result.log);
-    for (let i = 0; i < combat.length; i += MAX_WIRE_COMBATS) {
-      transport.send("combat", combat.slice(i, i + MAX_WIRE_COMBATS));
+    for (const batch of packCombat(wireCombat(result.log), MAX_MESSAGE_BYTES, MAX_WIRE_COMBATS)) {
+      transport.send("combat", batch);
     }
     for (const seat of seats.values()) {
       sendRecharges(seat, false);

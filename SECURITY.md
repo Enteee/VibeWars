@@ -457,7 +457,8 @@ server, now enforced by the host:
   messages over 16 KiB, which Trystero sends in chunks. A peer that sends
   one chunk every two minutes holds that budget, which stalls every other
   large message. Review rule: keep every game message under 16 KiB. A
-  snapshot is about 4.6 KB at eight players.
+  snapshot is about 4.6 KB at eight players; the host splits a tick's
+  combat into batches of at most 16 KiB each (#601).
 
 What a later step must add before P2P play can merge:
 
