@@ -109,6 +109,8 @@ import { h } from "./kit.js";
 
 export interface TrainingPanel {
   readonly root: HTMLElement;
+  /** Under the arena, for the editor's derived stats (#571). */
+  readonly statsSlot: HTMLElement;
   attach(parent: HTMLElement): void;
   /**
    * Hand the keyboard back to the arena after an edit, if the player had
@@ -230,7 +232,8 @@ export function createTrainingPanel(): TrainingPanel {
   newest.hidden = true;
   log.append(logRowsEl, newest);
 
-  root.append(controls, teaches, stage, hint, message, vitals, skills, meter, log);
+  const statsSlot = h("div", "training-stats-slot");
+  root.append(controls, teaches, stage, hint, message, statsSlot, vitals, skills, meter, log);
 
   /* --- state ----------------------------------------------------------- */
 
@@ -731,10 +734,18 @@ export function createTrainingPanel(): TrainingPanel {
       return;
     }
     viewport = created;
+    // At a match's scale (#709): the small stage shows less of the world
+    // instead of all of it shrunk. A match's canvas is the window under
+    // the top bar (#viewport), so that is the box the zoom comes from.
+    const topbar = document.getElementById("topbar");
     const follow = attachFollowCamera(
       created,
       stage,
       session === undefined ? firstMap : trainingMap(session.scenario),
+      () => ({
+        width: window.innerWidth,
+        height: window.innerHeight - (topbar?.offsetHeight ?? 0),
+      }),
     );
     camera = follow;
     // The one clock: Phaser's STEP. It stops when the game is
@@ -826,6 +837,7 @@ export function createTrainingPanel(): TrainingPanel {
 
   return {
     root,
+    statsSlot,
     attach(parent) {
       parent.appendChild(root);
     },

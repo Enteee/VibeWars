@@ -2335,7 +2335,7 @@ describe("hubd hiring and firing", () => {
     expect(fired.code, String(fired.reason)).toBe(0);
     expect(staff(hubd).employees["qa-tester"]).toMatchObject({ state: "firing" });
     expect(staff(hubd).recent.map((change) => change.id)).toEqual(["qa-tester@2", "qa-tester"]);
-    expect(told(hubd)).toEqual([
+    expect(told(hubd).filter((text) => !text.startsWith("You're being stopped"))).toEqual([
       "Hired qa-tester@2: QA column at 4",
       "Firing qa-tester: no QA work",
     ]);
@@ -2346,6 +2346,30 @@ describe("hubd hiring and firing", () => {
     await hubd.request("manager", "staff", ["hire", "architect", "x"]);
     const over = await hubd.request("manager", "staff", ["hire", "lead-dev", "x"]);
     expect(String(over.reason)).toBe("the company has 4 employees, maxAgents is 4");
+  }, 20_000);
+
+  it("tells a fired employee alone to wrap up, and records its company ready (#383)", async () => {
+    const hubd = await startHubd(5000);
+    employ(hubd, 4);
+    await hubd.request("manager", "staff", ["fire", "qa-tester", "no QA work"]);
+
+    const stop = told(hubd).find((text) => text.startsWith("You're being stopped"));
+    expect(stop).toContain("(no QA work)");
+    expect(stop).toContain("run `company ready`");
+    const outbox = path.join(hubd.root, "bus", "_system", "outbox");
+    const addressed = fs
+      .readdirSync(outbox)
+      .map((name) => obj(JSON.parse(fs.readFileSync(path.join(outbox, name), "utf8"))).to);
+    expect(addressed).toContain("qa-tester");
+
+    expect(staff(hubd).employees["qa-tester"]?.readyAt).toBeNull();
+    const ready = await hubd.request("qa-tester", "reboot", ["ready"]);
+    expect(ready.code).toBe(0);
+    expect(staff(hubd).employees["qa-tester"]?.readyAt).toBeTypeOf("number");
+
+    // Not firing, and no reboot pending: nothing to be ready for.
+    const working = await hubd.request("manager", "reboot", ["ready"]);
+    expect(working.code).toBe(1);
   }, 20_000);
 
   it("refuses every request while company.json has no maxAgents", async () => {

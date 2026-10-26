@@ -254,10 +254,11 @@ export interface GearSummary {
   readonly baseEnergyPips: number;
   readonly armor: number;
   readonly weaponName: string;
+  /** What a hit deals before armor: a third of the weapon's range with its requirement unmet. */
   readonly damageRange: string;
   readonly attackInterval: string;
-  /** `true` when the weapon's requirement is met at the character's ranks. */
-  readonly requirementMet: boolean;
+  /** The rank the weapon needs and the character lacks (#571); `undefined` when met. */
+  readonly unmetRequirement: { readonly attributeId: string; readonly rank: number } | undefined;
   /** Attribute ranks raised above what points bought, from runes. */
   readonly runeBonuses: readonly { readonly attributeId: string; readonly bonus: number }[];
   readonly conditionalArmor: readonly string[];
@@ -283,15 +284,24 @@ export function summariseGear(character: StoredCharacter): GearSummary {
   }
   runeBonuses.sort((a, b) => a.attributeId.localeCompare(b.attributeId));
 
+  const { weapon, attributeId, requirementMet } = mainHand;
+  // Unmet, every hit is scaled down (#571): the same multiplier the
+  // simulation applies, so the editor shows what a match deals.
+  const scale = requirementMet ? 1 : MINIMAL_GW_INSPIRED_PVP_V1.combat.unmetRequirementMultiplier;
+  const dealt = (damage: number): string => String(Math.round(damage * scale));
+
   return {
     maxHealth: resolved.maxHealth,
     maxEnergy: resolved.maxEnergy,
     baseEnergyPips: resolved.baseEnergyPips,
     armor: resolved.equipment.baseArmor,
-    weaponName: mainHand.weapon.name,
-    damageRange: `${String(mainHand.weapon.damageMin)}–${String(mainHand.weapon.damageMax)}`,
-    attackInterval: `${mainHand.weapon.attackIntervalSeconds.toFixed(2)}s`,
-    requirementMet: mainHand.requirementMet,
+    weaponName: weapon.name,
+    damageRange: `${dealt(weapon.damageMin)}–${dealt(weapon.damageMax)}`,
+    attackInterval: `${weapon.attackIntervalSeconds.toFixed(2)}s`,
+    unmetRequirement:
+      requirementMet || attributeId === undefined
+        ? undefined
+        : { attributeId, rank: weapon.requirement.rank },
     runeBonuses,
     conditionalArmor: resolved.equipment.conditionalArmor.map(
       (bonus) =>

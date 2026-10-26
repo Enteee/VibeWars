@@ -610,7 +610,7 @@ export const SYSTEM_STYLE = Object.freeze({ emoji: "⚠️", name: "System" });
 
 /**
  * A system outbox entry, `{ to, text, nudge }`, as a `link` line in the
- * inbox of everyone it is for. `to` is `"all"` or a role, and `nudge` the id
+ * inbox of everyone it is for. `to` is `"all"`, a role or one employee (#383), and `nudge` the id
  * of the scheduled nudge it is (#537) or `null`. To everyone it is a
  * broadcast in General; to a role it is mirrored as a message to that role.
  * An empty or malformed one goes nowhere; a role nobody is employed in gets
@@ -631,7 +631,9 @@ export function deliverSystem(raw, context) {
   }
   const recipients =
     to === "all" ? [...context.employees.keys()] : inboxesOf(to, context.employees);
-  if (recipients.length === 0 || (to !== "all" && !new Set(context.employees.values()).has(to))) {
+  const employed =
+    to === "all" || context.employees.has(to) || [...context.employees.values()].includes(to);
+  if (recipients.length === 0 || !employed) {
     return { deliveries: [], mirror: null };
   }
   /** @type {InboxLine} */
@@ -647,7 +649,7 @@ export function deliverSystem(raw, context) {
   };
   return {
     deliveries: recipients.map((employee) => ({ employee, line })),
-    mirror: { from: SYSTEM, to, text },
+    mirror: { from: SYSTEM, to: context.employees.get(to) ?? to, text },
   };
 }
 

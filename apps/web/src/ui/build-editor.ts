@@ -877,9 +877,13 @@ export function mountBuildEditor(
 
   const panel = h("div", "editor");
   layout.appendChild(panel);
+  // Under the arena, or with none at the top of the middle column (#571).
+  const stats = mountStats();
+  (training?.statsSlot ?? panel).appendChild(stats.element);
   const library = mountLibrary(layout, context);
   regions.push(
     bar,
+    stats,
     mountAttributes(panel, context),
     mountSkillBar(panel, context),
     mountGear(panel, context),
@@ -2300,8 +2304,9 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
   section.appendChild(armorGrid);
 
   // --- the summary ------------------------------------------------------
+  // What the gear adds beyond the headline stats, which sit under the
+  // arena (#571).
   const stats = h("div", "gear-stats");
-  section.appendChild(stats);
   panel.appendChild(section);
 
   return {
@@ -2387,27 +2392,58 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
         });
       }
 
-      stats.replaceChildren(...statLines(character));
+      const lines = statLines(character);
+      stats.replaceChildren(...lines);
+      present(stats, lines.length > 0, (node) => {
+        section.appendChild(node);
+      });
     },
   };
 }
 
-/** The summary's lines; nothing in them takes focus, so they are rebuilt. */
+/**
+ * The derived stats (#571): health, energy and its pips, armor, and what
+ * the weapon deals. Built once and updated in place. An unmet weapon
+ * requirement is said on the damage line, in red, with what it needs:
+ * a player should not have to discover it by losing.
+ */
+function mountStats(): Region & { readonly element: HTMLElement } {
+  const element = h("dl", "editor-stats");
+  element.setAttribute("aria-label", "derived stats");
+  const line = (key: string, label: string): HTMLElement => {
+    const value = h("dd", "editor-stat-value");
+    value.dataset.stat = key;
+    element.append(h("dt", "editor-stat-label", label), value);
+    return value;
+  };
+  const health = line("health", "health");
+  const energy = line("energy", "energy");
+  const armor = line("armor", "armor");
+  const damage = line("damage", "damage");
+  const needs = h("span", "editor-stat-needs");
+  return {
+    element,
+    update(character) {
+      const summary = summariseGear(character);
+      health.textContent = String(summary.maxHealth);
+      energy.textContent = `${String(summary.maxEnergy)} · ${String(summary.baseEnergyPips)} pips`;
+      armor.textContent = String(summary.armor);
+      damage.textContent = `${summary.damageRange} · ${summary.attackInterval}`;
+      const unmet = summary.unmetRequirement;
+      damage.classList.toggle("is-unmet", unmet !== undefined);
+      if (unmet !== undefined) {
+        const name = getAttribute(unmet.attributeId)?.name ?? unmet.attributeId;
+        needs.textContent = `needs ${name} ${String(unmet.rank)}`;
+        damage.append(" ", needs);
+      }
+    },
+  };
+}
+
+/** What the gear adds beyond the headline stats; nothing takes focus, so rebuilt. */
 function statLines(character: StoredCharacter): HTMLElement[] {
   const summary = summariseGear(character);
-  const lines = [
-    statLine("health", String(summary.maxHealth)),
-    statLine("energy", String(summary.maxEnergy)),
-    statLine("energy regen", `${String(summary.baseEnergyPips)} pips`),
-    statLine("armor", String(summary.armor)),
-  ];
-  if (!summary.requirementMet) {
-    // Said out loud rather than left for the player to discover by
-    // dying: an unmet requirement costs two thirds of the damage.
-    lines.push(
-      h("div", "gear-warning", "Requirement not met — this weapon deals a third of its damage"),
-    );
-  }
+  const lines: HTMLElement[] = [];
   for (const bonus of summary.runeBonuses) {
     lines.push(
       statLine(
