@@ -59,6 +59,20 @@ Numbers live in the ruleset (`game-core/src/ruleset.ts`), not scattered
 through the server, so the headless runner and the live match cannot
 drift apart.
 
+## Primary attributes
+
+Each profession's primary attribute does what it does in GW1 PvP, from
+its effective rank, runes included. Only a primary can hold the rank.
+
+- **Strength** (Warrior): attack skills ignore 1% of armor a rank (12%
+  at 12), unless the weapon has armor penetration of its own (a hornbow's
+  10%), which stands instead; the two do not add. Plain swings get none.
+- **Expertise** (Ranger): attack skills and every Ranger skill cost 4%
+  less energy a rank (−48% at 12), rounded once, never below 0.
+  Adrenaline costs are untouched.
+- **Critical Strikes** (Assassin): +1% critical chance a rank, and
+  energy on every critical hit (1, 2 or 3 at ranks 1–7, 8–12, 13+).
+
 ## Casting
 
 A skill has an **activation time** (cast) and a **recharge**. Activation

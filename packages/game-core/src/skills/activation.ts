@@ -1,6 +1,7 @@
 import type { SkillBar } from "../build.js";
 import { wieldsFor } from "../equipment/weapons.js";
 import { distanceWithinRange, hasLineOfSight, type Segment } from "../geometry.js";
+import { EXPERTISE_ATTRIBUTE, expertiseEnergyCost } from "../primary-attributes.js";
 import type { Vec2 } from "../vec2.js";
 
 import type { Combatant, Skill } from "./types.js";
@@ -118,7 +119,7 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   }
 
   if (skill.cost !== undefined) {
-    if (skill.cost.kind === "energy" && caster.energy < skill.cost.amount) {
+    if (skill.cost.kind === "energy" && caster.energy < energyCostOf(skill, caster)) {
       return reject("insufficient-energy");
     }
     if (skill.cost.kind === "adrenaline" && caster.adrenaline < skill.cost.amount) {
@@ -146,6 +147,19 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
 }
 
 /**
+ * The energy `skill` costs `caster`, after everything that changes it:
+ * Expertise so far (#528). The one number both the check and the spend
+ * use, so they cannot round apart. 0 for a skill with no energy cost.
+ */
+export function energyCostOf(skill: Skill, caster: Combatant): number {
+  if (skill.cost?.kind !== "energy") {
+    return 0;
+  }
+  const expertise = caster.attributeRanks.get(EXPERTISE_ATTRIBUTE) ?? 0;
+  return expertiseEnergyCost(expertise, skill, skill.cost.amount);
+}
+
+/**
  * Deduct a skill's cost from the caster. Call only after `canActivate`
  * returned ok — this deliberately does not re-check affordability, so a
  * caller that skips validation produces an obviously-wrong negative
@@ -156,7 +170,7 @@ export function payCost(skill: Skill, caster: Combatant): void {
     return;
   }
   if (skill.cost.kind === "energy") {
-    caster.energy -= skill.cost.amount;
+    caster.energy -= energyCostOf(skill, caster);
     return;
   }
   caster.adrenaline -= skill.cost.amount;
