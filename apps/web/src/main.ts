@@ -31,7 +31,7 @@ import { disposeOptionsScreen, renderOptionsScreen } from "./ui/options-screen.j
 import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
-import { toast } from "./ui/kit.js";
+import { dismissToast, toast } from "./ui/kit.js";
 import { duplicateTeam, newTeam } from "./ui/team-builder.js";
 import {
   mountTeamEditor,
@@ -129,7 +129,20 @@ async function main(): Promise<void> {
    */
   let menuNotice: string | undefined;
 
+  /**
+   * The first thing every screen change does (#710): a toast belongs to
+   * the screen that raised it, so it goes when that screen does. One the
+   * next screen raises while it mounts stays. A screen added later calls
+   * this first too, before anything mounts.
+   */
+  const leaveScreen = (): void => {
+    dismissToast();
+  };
+
   const showViewport = (visible: boolean): void => {
+    if (visible) {
+      leaveScreen();
+    }
     viewport.style.display = visible ? "block" : "none";
     screenRoot.style.display = visible ? "none" : "flex";
   };
@@ -182,6 +195,7 @@ async function main(): Promise<void> {
   let editor: BuildEditorView | undefined;
 
   const showMenu = (): void => {
+    leaveScreen();
     // Every way back to the menu passes through here, so the status bar
     // never keeps saying where the player was. Error paths set theirs after.
     setStatus("ready", "offline");
@@ -198,10 +212,12 @@ async function main(): Promise<void> {
   };
 
   const showJukebox = (): void => {
+    leaveScreen();
     disposeOptionsScreen();
     renderJukeboxScreen(screenRoot, {
       onBack: showMenu,
       onSoundSettings: () => {
+        leaveScreen();
         disposeJukeboxScreen();
         renderOptionsScreen(screenRoot, { onBack: showJukebox }, "sound");
       },
@@ -228,6 +244,7 @@ async function main(): Promise<void> {
           void showTeams();
         },
         onOptions: () => {
+          leaveScreen();
           renderOptionsScreen(screenRoot, { onBack: showMenu });
         },
         onMusic: showJukebox,
@@ -257,6 +274,7 @@ async function main(): Promise<void> {
 
   /** The build editor for `character`; every way out of it goes `back`. */
   const showCharacterEditor = (character: StoredCharacter, back: () => void = showMenu): void => {
+    leaveScreen();
     const editorCallbacks = {
       onSave: (saved: StoredCharacter) => {
         void (async () => {
@@ -291,6 +309,7 @@ async function main(): Promise<void> {
   };
 
   const showTeams = async (): Promise<void> => {
+    leaveScreen();
     teamEditor?.dispose();
     teamEditor = undefined;
     const [teamList, characterList] = await Promise.all([teams.list(), characters.list()]);
@@ -354,6 +373,7 @@ async function main(): Promise<void> {
   let teamEditor: TeamEditorView | undefined;
 
   const showTeamEditor = (state: TeamEditorState, available: readonly StoredCharacter[]): void => {
+    leaveScreen();
     editor?.dispose();
     editor = undefined;
     teamEditor?.dispose();
@@ -479,6 +499,9 @@ async function main(): Promise<void> {
     }
 
     lobbyNotice = undefined;
+    // Here and not in renderLobby, which every lobby change repaints:
+    // a "Copied" toast outlives a player joining.
+    leaveScreen();
     lobby.onChange(renderLobby);
     lobby.onStartRejected((reason) => {
       lobbyNotice = reason;
@@ -516,6 +539,7 @@ async function main(): Promise<void> {
     }
     match = undefined;
     await leaving.dispose();
+    leaveScreen();
     enteringMatch = false;
     // The lobby goes back to waiting by itself once the match is over
     // (#44), so another can start straight away (brief §46).

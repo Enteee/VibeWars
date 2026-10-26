@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { parseStaff } from "./staff.mjs";
 import { startEmployee } from "./start-employee.mjs";
-import { supervise } from "./supervisor.mjs";
+import { afterManagerStart, supervise } from "./supervisor.mjs";
 
 const HOLDOFF_MS = 1500;
 const SAMPLE_MS = 100;
@@ -219,8 +219,8 @@ describe("the supervisor against a real tmux server (#722)", () => {
 
     // Starting one that has a pane is a no-op.
     const where = { tmux: "tmux", session: SESSION, root: rig?.root ?? "", cwd: rig?.cwd ?? "" };
-    expect(startEmployee("qa-tester@2", where)).toBe("already");
-    expect(startEmployee("qa-tester@2", where)).toBe("already");
+    expect(startEmployee("qa-tester@2", where)).toBe("running");
+    expect(startEmployee("qa-tester@2", where)).toBe("running");
     expect(panes()).toHaveLength(4);
   });
 
@@ -351,5 +351,38 @@ describe("the supervisor against a real tmux server (#722)", () => {
     await new Promise((resolve) => setTimeout(resolve, 800));
     expect(panes()).toEqual([]);
     expect(starts("qa-tester")).toHaveLength(0);
+  });
+});
+
+describe("a start that found the pane already there (#728)", () => {
+  it("returns started, then running, and leaves one pane", () => {
+    const where = { tmux: "tmux", session: SESSION, root: rig?.root ?? "", cwd: rig?.cwd ?? "" };
+    expect(startEmployee("qa-tester", where)).toBe("started");
+    expect(startEmployee("qa-tester", where)).toBe("running");
+    expect(panes()).toEqual(["qa-tester qa-tester"]);
+  });
+
+  it("records and announces a manager start, but not a no-op one", () => {
+    const cfg = {
+      root: rig?.root ?? "",
+      session: SESSION,
+      tmux: "tmux",
+      cwd: rig?.cwd ?? "",
+      sampleMs: 100,
+      killGraceMs: 300,
+      holdoffMs: HOLDOFF_MS,
+      restarter: undefined,
+    };
+    const when = { restarts: [], now: Date.now(), action: /** @type {const} */ ("start") };
+    const record = path.join(cfg.root, "manager-restarts.json");
+    const outbox = path.join(cfg.root, "bus");
+
+    afterManagerStart(cfg, "running", when);
+    expect(fs.existsSync(record)).toBe(false);
+    expect(fs.existsSync(outbox)).toBe(false);
+
+    afterManagerStart(cfg, "started", when);
+    expect(JSON.parse(fs.readFileSync(record, "utf8"))).toEqual({ restarts: [when.now] });
+    expect(fs.existsSync(outbox)).toBe(true);
   });
 });

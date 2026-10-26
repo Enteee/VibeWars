@@ -207,8 +207,12 @@ async function reconcilePanes(cfg, started) {
   for (const employee of plan.start) {
     started.set(employee, Date.now());
     try {
-      startPane(cfg, employee);
-      console.error(`supervisor: started ${employee}`);
+      const outcome = startPane(cfg, employee);
+      console.error(
+        outcome === "started"
+          ? `supervisor: started ${employee}`
+          : `supervisor: ${employee} already has a pane`,
+      );
     } catch (error) {
       console.error(`supervisor: could not start ${employee}: ${String(error)}`);
     }
@@ -242,10 +246,10 @@ async function reconcilePanes(cfg, started) {
 /**
  * @param {Config} cfg
  * @param {string} employee
- * @returns {void}
+ * @returns {"started" | "running"}
  */
 function startPane(cfg, employee) {
-  startEmployee(employee, {
+  return startEmployee(employee, {
     tmux: cfg.tmux,
     session: cfg.session,
     root: cfg.root,
@@ -298,12 +302,33 @@ function keepManager(cfg, since) {
   if (action === "none") {
     return;
   }
+  /** @type {"started" | "running"} */
+  let outcome;
   try {
-    startPane(cfg, "manager");
+    outcome = startPane(cfg, "manager");
   } catch (error) {
     console.error(`supervisor: could not start the manager: ${String(error)}`);
     return;
   }
+  afterManagerStart(cfg, outcome, { restarts, now, action });
+}
+
+/**
+ * Record and announce a manager start, but only a real one: a pane that was
+ * already there (a `list-panes` that missed it) costs no backoff budget and
+ * tells nobody.
+ *
+ * @param {Config} cfg
+ * @param {"started" | "running"} outcome
+ * @param {{ restarts: number[], now: number, action: "start" | "start-backoff" }} when
+ * @returns {void}
+ */
+export function afterManagerStart(cfg, outcome, { restarts, now, action }) {
+  if (outcome === "running") {
+    console.error("supervisor: manager already has a pane; nothing started");
+    return;
+  }
+  const p = paths(cfg);
   fs.writeFileSync(
     `${p.managerRestarts}.part`,
     `${JSON.stringify({ restarts: [...restarts, now] })}\n`,
