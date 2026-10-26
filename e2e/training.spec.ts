@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { KEYMAP_PRESETS, codeLabel, type Keymap } from "../apps/web/src/input/keymap.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
+import { chooseProfession, professionField } from "./helpers/professions.js";
 import { startSoloMatch } from "./helpers/peers.js";
 import { projection, type Projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
@@ -28,7 +29,7 @@ async function openTraining(
   await page.setViewportSize(WIDE);
   await page.goto("./");
   await page.getByRole("button", { name: "new character" }).click();
-  await page.locator(".editor-row select").first().selectOption("elementalist");
+  await chooseProfession(page, "primary", "elementalist");
   await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
   await expect(page.locator(FILLED_SLOTS)).toHaveText([
     `${codeLabel(skillKey(0, keymap))}Fireball`,
@@ -516,7 +517,7 @@ test("(20) a double right click on a far enemy attacks it: you walk there and sw
   await page.setViewportSize(WIDE);
   await page.goto("./");
   await page.getByRole("button", { name: "new character" }).click();
-  await expect(page.locator(".editor-row select").first()).toHaveValue("warrior");
+  await expect(professionField(page, "primary")).toHaveAttribute("data-value", "warrior");
   const canvas = page.locator(".training canvas");
   await page.locator("select.training-scenario").selectOption("weapon-dps");
   await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
@@ -542,7 +543,7 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
   await page.setViewportSize(WIDE);
   await page.goto("./");
   await page.getByRole("button", { name: "new character" }).click();
-  await page.locator(".editor-row select").first().selectOption("ranger");
+  await chooseProfession(page, "primary", "ranger");
   await page
     .locator(".skill-box", { hasText: "Troll Unguent" })
     .locator(".skill-box-equip")
@@ -902,7 +903,7 @@ test("(32) the casting slot fills as the cast goes, hovering it shows its toolti
   await page.setViewportSize(WIDE);
   await page.goto("/");
   await page.getByRole("button", { name: "new character" }).click();
-  await page.locator(".editor-row select").first().selectOption("ranger");
+  await chooseProfession(page, "primary", "ranger");
   await page
     .locator(".skill-box", { hasText: "Troll Unguent" })
     .locator(".skill-box-equip")
