@@ -11,6 +11,7 @@ import {
   moveSpeedMultiplier,
 } from "./tick.js";
 import { makeCombatant } from "./testing.js";
+import type { Combatant, Skill } from "./types.js";
 
 describe("advanceStatuses health change", () => {
   it("applies degeneration continuously, not in once-per-second lumps", () => {
@@ -217,5 +218,45 @@ describe("death by degeneration", () => {
     const c = makeCombatant({ id: "c", health: 500 });
     c.statuses.apply("burning", 10, "a");
     expect(advanceStatuses(c, 1, 0).some((e) => e.kind === "death")).toBe(false);
+  });
+});
+
+describe("effectiveActivationSeconds with Fast Casting (#527)", () => {
+  const malaise = getSkill("necromancer.malaise");
+  const faintheartedness = getSkill("necromancer.faintheartedness");
+  const swiftChop = getSkill("warrior.swift-chop");
+  if (malaise === undefined || faintheartedness === undefined || swiftChop === undefined) {
+    throw new Error("catalog skill missing");
+  }
+  // No Mesmer spell is in the catalog yet: a 1 s hex of the Mesmer's.
+  const mesmerHex: Skill = { ...malaise, profession: "mesmer", activationSeconds: 1 };
+  const mesmer = (): Combatant =>
+    makeCombatant({ id: "c", attributeRanks: new Map([["mesmer.fast-casting", 12]]) });
+
+  it("casts a 2 s non-Mesmer spell in 1.149 s at rank 12", () => {
+    expect(malaise.activationSeconds).toBe(2);
+    expect(effectiveActivationSeconds(malaise, mesmer())).toBeCloseTo(1.149, 3);
+  });
+
+  it("leaves a 1 s non-Mesmer spell alone", () => {
+    expect(faintheartedness.activationSeconds).toBe(1);
+    expect(effectiveActivationSeconds(faintheartedness, mesmer())).toBe(1);
+  });
+
+  it("speeds a 1 s Mesmer spell to ×0.574", () => {
+    expect(effectiveActivationSeconds(mesmerHex, mesmer())).toBeCloseTo(0.574, 3);
+  });
+
+  it("composes with dazed: ×1.149", () => {
+    const c = mesmer();
+    c.statuses.apply("dazed", 10, "a");
+    expect(effectiveActivationSeconds(mesmerHex, c)).toBeCloseTo(1.149, 3);
+  });
+
+  it("leaves an attack skill and a rank-0 caster alone", () => {
+    expect(effectiveActivationSeconds(swiftChop, mesmer())).toBe(0);
+    const slowAttack: Skill = { ...swiftChop, profession: "mesmer", activationSeconds: 2 };
+    expect(effectiveActivationSeconds(slowAttack, mesmer())).toBe(2);
+    expect(effectiveActivationSeconds(mesmerHex, makeCombatant({ id: "c" }))).toBe(1);
   });
 });
