@@ -98,6 +98,11 @@ function restart() {
     console.error("supervisor: the reboot was aborted just before it started");
     return;
   }
+  // A plain claude-llc waits for a reboot at most 15 minutes from this
+  // record's mtime (reboot-wait.mjs), which the rename kept from the
+  // request: the reboot starts now.
+  const now = new Date();
+  fs.utimesSync(REBOOTING, now, now);
   if (RESTARTER === undefined) {
     console.error("supervisor: no restarter configured; restart claude-llc by hand");
     return;

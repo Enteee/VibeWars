@@ -129,6 +129,7 @@ function setup(options = {}) {
       `echo "devenv $PWD $* rebooted=$VIBEWARS_REBOOTED" >>${calls}`,
       `[ -n "$TELEGRAM_MANAGER_TOKEN" ] && echo "devenv saw the bot token" >>${calls}`,
       `[ -e scripts/bots/new.mjs ] && echo "saw the new main in $PWD" >>${calls}`,
+      `[ -e ${path.join(root, "rebooting.json")} ] && echo "rebooting.json is there for: $*" >>${calls}`,
       options.failBuild === true ? 'case "$*" in *--help*) exit 1 ;; esac' : "",
       'case "$*" in *" up") ;; *) exit 0 ;; esac',
       `[ -e ${alive} ] && exit 1`,
@@ -224,6 +225,22 @@ describe("the restarter", () => {
     expect(fs.existsSync(path.join(company.root, "rebooting.json"))).toBe(false);
     expect(fs.existsSync(path.join(company.root, "reboot-check"))).toBe(false);
   });
+
+  it("keeps rebooting.json until its own up has run, which reboot-wait lets through (#557)", () => {
+    const company = setup({ failUp: 1 });
+
+    const result = company.restart();
+
+    // A plain claude-llc waits while the record exists; the restarter's own
+    // up carries VIBEWARS_REBOOTED, both times, and so is not held.
+    expect(
+      result.calls.filter(
+        (c) => c === "rebooting.json is there for: shell --refresh-eval-cache -- claude-llc up",
+      ),
+    ).toHaveLength(2);
+    expect(result.calls.filter((c) => c.endsWith("claude-llc up rebooted=1"))).toHaveLength(2);
+    expect(fs.existsSync(path.join(company.root, "rebooting.json"))).toBe(false);
+  }, 20_000);
 
   it("logs, and touches nothing, when claude-llc did not say which tmux", () => {
     const company = setup();

@@ -144,7 +144,15 @@ clone` would close the remaining gap at the cost of a full checkout each.
   `builtins.path`, nor `builtins.hashFile` as an input), and every
   `claude-llc` boot compares the staged scripts with the checkout's
   (`boot-check.mjs`) and, if they differ, says so in the note the manager
-  is given in place of what the boot claims to have loaded.
+  is given in place of what the boot claims to have loaded. A shell also
+  keeps the store paths it was entered with, so a `claude-llc` typed in an
+  old terminal built a whole company from old code and raced a reboot in
+  progress (#557). The build now carries a manifest of the scripts, `.nix`
+  and devenv files it was built from (`fingerprint.mjs`); every
+  `claude-llc` compares it with the checkout and, if stale, re-execs itself
+  once under `devenv shell --refresh-eval-cache`. A plain `claude-llc`
+  waits while `.bots/rebooting.json` exists (`reboot-wait.mjs`), and
+  `claude-llc status` and the dashboard show the running build.
 - `devenv.yaml` gained `permittedUnfreePackages: [claude-code]`. devenv
   evaluates its own nixpkgs, so the host system's `allowUnfree` does not
   apply, and `claude-code` is unfree.

@@ -14,9 +14,7 @@ import {
   fastForwardDecision,
   parseReboot,
   isCompanyPath,
-  isStagedScript,
   rebootAllowed,
-  scriptDrift,
 } from "./reboot.mjs";
 
 const NOW = 1_800_000_000_000;
@@ -194,36 +192,6 @@ describe("parseReboot", () => {
     expect(parseReboot({ ...record, ready: [1] })).toBeNull();
     expect(parseReboot({ ...record, deadline: "2" })).toBeNull();
     expect(parseReboot(null)).toBeNull();
-  });
-});
-
-describe("isStagedScript", () => {
-  it("is what nix copies into the store: .mjs files, not their tests", () => {
-    expect(isStagedScript("hubd.mjs")).toBe(true);
-    expect(isStagedScript("hubd.test.mjs")).toBe(false);
-    expect(isStagedScript("README.md")).toBe(false);
-  });
-});
-
-describe("scriptDrift", () => {
-  it("is empty when the running copy is the checkout's", () => {
-    const scripts = { "hubd.mjs": "a", "reboot.mjs": "b" };
-    expect(scriptDrift(scripts, { ...scripts })).toEqual([]);
-  });
-
-  it("names changed, added and removed scripts, sorted", () => {
-    expect(
-      scriptDrift(
-        { "hubd.mjs": "new", "hub-spend.mjs": "x", "same.mjs": "s" },
-        { "hubd.mjs": "old", "gone.mjs": "y", "same.mjs": "s" },
-      ),
-    ).toEqual(["gone.mjs", "hub-spend.mjs", "hubd.mjs"]);
-  });
-
-  it("ignores tests and other files, which never run", () => {
-    expect(
-      scriptDrift({ "hubd.test.mjs": "new", "notes.md": "a" }, { "hubd.test.mjs": "old" }),
-    ).toEqual([]);
   });
 });
 

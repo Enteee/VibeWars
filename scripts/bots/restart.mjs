@@ -349,7 +349,6 @@ async function main() {
   if (!(await stopCompany())) {
     // `claude-llc up` would join the old company: better down and said so
     // than up on the old code and called a reboot (#315).
-    fs.rmSync(REBOOTING, { force: true });
     await tellOperator(
       `Reboot FAILED: tmux session ${SESSION} would not stop; the company was not restarted.`,
     );
@@ -413,7 +412,6 @@ async function main() {
     );
   };
   record(outcome);
-  fs.rmSync(REBOOTING, { force: true });
 
   // Once more if it fails, from a stopped company again: whatever made it
   // fail may have left half a company running (#315).
@@ -480,4 +478,9 @@ try {
 } catch (error) {
   log(`restart failed: ${error instanceof Error ? (error.stack ?? error.message) : "?"}`);
   process.exitCode = 1;
+} finally {
+  // Only now, with the company up or the failure recorded in boot.json: a
+  // plain claude-llc waits while it exists (reboot-wait.mjs, #557), so it
+  // cannot start the old build into the gap between the stop and the up.
+  fs.rmSync(REBOOTING, { force: true });
 }
