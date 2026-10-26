@@ -26,6 +26,8 @@ export interface FloatingTextSink {
   addFloatingText(text: FloatingText): void;
   addAreaFlash(flash: AreaFlash): void;
   addSwingFlash(flash: SwingFlash): void;
+  /** A melee hit landed: the attacker's strike ends now (#558). */
+  addWeaponHit(attackerId: string): void;
 }
 
 const COLOURS: Record<FloatingCue["tone"], number> = {
@@ -86,6 +88,13 @@ export function showCombatFeedback(
   message: CombatMessage,
   snapshot: MatchSnapshot,
 ): void {
+  // A swing, not a shot: a shot's release is its first appearance.
+  if (message.cause === "weapon") {
+    const attacker = snapshot.players.find((p) => p.sessionId === message.casterSessionId);
+    if (attacker !== undefined && isMelee(attacker.weaponId)) {
+      scene.addWeaponHit(attacker.sessionId);
+    }
+  }
   const swing = swingFlashFor(message, snapshot);
   if (swing !== undefined) {
     nextSwingId += 1;
