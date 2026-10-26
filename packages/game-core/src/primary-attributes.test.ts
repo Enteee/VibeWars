@@ -2,15 +2,18 @@ import { describe, expect, it } from "vitest";
 
 import {
   criticalStrikesEnergy,
+  divineFavorBonusHeal,
   expertiseEnergyCost,
   fastCastingMultiplier,
   strengthArmorPenetration,
 } from "./primary-attributes.js";
 import { unarmedResolvedEquipment } from "./equipment/resolve.js";
 import { WEAPONS, type Weapon } from "./equipment/weapons.js";
+import { createRng } from "./rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
 import { getSkill } from "./skills/catalog.js";
 import { canActivate, payCost } from "./skills/activation.js";
+import { applySkillEffects } from "./skills/effects.js";
 import { makeCombatant } from "./skills/testing.js";
 import type { Skill } from "./skills/types.js";
 import { vec2 } from "./vec2.js";
@@ -135,5 +138,63 @@ describe("fastCastingMultiplier (#527)", () => {
     expect(fastCastingMultiplier(12, { ...malaise, type: "enchantment" })).toBeLessThan(1);
     expect(fastCastingMultiplier(12, { ...malaise, type: "spell" })).toBeLessThan(1);
     expect(fastCastingMultiplier(12, { ...malaise, type: "skill" })).toBe(1);
+  });
+});
+
+describe("Divine Favor (#529)", () => {
+  const orison = skill("monk.orison-of-healing");
+
+  it("is floor(3.2 × rank) on a Monk spell at an ally: +38 at 12, 0 at 0", () => {
+    expect(divineFavorBonusHeal(12, orison, true)).toBe(38);
+    expect(divineFavorBonusHeal(15, orison, true)).toBe(48);
+    expect(divineFavorBonusHeal(0, orison, true)).toBe(0);
+    expect(divineFavorBonusHeal(12, skill("monk.guardian"), true)).toBe(38);
+  });
+
+  it("gives nothing for a Monk spell at a foe, or another profession's spell", () => {
+    expect(
+      divineFavorBonusHeal(12, { ...orison, target: "single-enemy", type: "hex" }, false),
+    ).toBe(0);
+    expect(divineFavorBonusHeal(12, skill("elementalist.armor-of-earth"), true)).toBe(0);
+  });
+
+  /** A rank-12 monk casting `used` at `targets`, the primary first. */
+  function cast(used: Skill, targets: ReturnType<typeof makeCombatant>[]) {
+    const monk = makeCombatant({
+      id: "m",
+      attributeRanks: new Map([["monk.divine-favor", 12]]),
+    });
+    return applySkillEffects({
+      skill: used,
+      caster: monk,
+      targets,
+      rng: createRng(529),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
+    });
+  }
+
+  it("heals the primary target of an area spell, and no one else", () => {
+    const hurt = (id: string) => makeCombatant({ id, health: 100 });
+    const area = {
+      ...orison,
+      area: {
+        radius: 300,
+        origin: "target" as const,
+        affects: "allies" as const,
+        maxTargets: undefined,
+        includesCaster: false,
+      },
+    };
+    const heals = cast(area, [hurt("primary"), hurt("other")]).filter(
+      (event) => event.kind === "heal",
+    );
+    expect(heals.map((event) => event.targetId)).toEqual(["primary", "other", "primary"]);
+    expect(heals.at(-1)).toMatchObject({ amount: 38 });
+  });
+
+  it("does not heal a foe hit by a Monk spell", () => {
+    const foe = makeCombatant({ id: "f", team: 1, health: 100 });
+    cast({ ...orison, target: "single-enemy", effects: [] }, [foe]);
+    expect(foe.health).toBe(100);
   });
 });

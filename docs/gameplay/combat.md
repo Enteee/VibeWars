@@ -334,6 +334,11 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
 - **Expertise** (Ranger). Attack skills and every Ranger skill cost 4%
   less energy a rank (−48% at 12), rounded once, never below 0.
   Adrenaline costs are untouched.
+- **Divine Favor** (Monk). A Monk spell cast on an ally, yourself
+  included, heals that ally another floor(3.2 × rank) when it lands: +38
+  at rank 12. Once a cast and on the target only, even for a spell that
+  also reaches others. An interrupted spell, a dead target or a Monk
+  spell at a foe gets nothing.
 - **Critical Strikes** (Assassin). +1% critical chance a rank on weapon
   blows, and every crit gives the striker energy: 1 at ranks 1–7, 2 at
   8–12, 3 at 13 and above.

@@ -81,3 +81,19 @@ export function fastCastingMultiplier(rank: number, skill: Skill): number {
   }
   return 2 ** (-rank / 15);
 }
+
+/** The Monk's primary. */
+export const DIVINE_FAVOR_ATTRIBUTE = "monk.divine-favor";
+
+/**
+ * The extra heal Divine Favor gives the ally a Monk spell is cast on, the
+ * caster included (#529): floor(3.2 × rank), +38 at rank 12. 0 for any
+ * other skill, and for a Monk spell cast at a foe.
+ */
+export function divineFavorBonusHeal(rank: number, skill: Skill, targetIsAlly: boolean): number {
+  if (skill.profession !== "monk" || !isSpell(skill.type) || !targetIsAlly) {
+    return 0;
+  }
+  // 3.2 × rank in whole numbers, so no float lands a hair under an integer.
+  return Math.floor((16 * rank) / 5);
+}
