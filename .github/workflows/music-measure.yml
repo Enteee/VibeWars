@@ -42,7 +42,7 @@ jobs:
 
       # The client imports the workspace packages by their built output.
       - name: Build packages
-        run: devenv shell -- tsc --build tsconfig.build.json
+        run: devenv shell -- pnpm exec tsc --build tsconfig.build.json
 
       - name: Measure
         env:
