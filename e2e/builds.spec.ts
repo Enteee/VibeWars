@@ -252,9 +252,10 @@ test("in a match, Glyph of Lesser Energy shows Armor of Earth's discounted cost,
   await expect(
     page.locator(".hud-skills .hud-skill").nth(1).locator(".recharge-overlay"),
   ).toHaveCount(1);
-  // One spell left on it: the cost holds until the glyph's 15 s run out.
+  // One spell left on it: the cost holds until the glyph's 15 s run out, in
+  // game time, which runs slower than wall time under load (#327).
   await expect(armor).toHaveText("0e");
-  await expect(armor).toHaveText("10e", { timeout: 20_000 });
+  await expect(armor).toHaveText("10e", { timeout: 45_000 });
 });
 
 test("a team supports every operation sprint 18 asks for", async ({ page }) => {
