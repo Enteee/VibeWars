@@ -29,7 +29,7 @@ afterEach(() => {
  *
  * @param {{ context?: unknown, messages?: string[], employee?: string, sidecar?: number | null }} [options]
  */
-function bus({ context, messages = [], employee = "developer-1", sidecar = Date.now() } = {}) {
+function bus({ context, messages = [], employee = "developer", sidecar = Date.now() } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tg-test-"));
   dirs.push(root);
   if (sidecar !== null) {
@@ -170,7 +170,7 @@ describe("tg wait, and General broadcasts (#323)", () => {
     const { dir, env } = bus();
     const inbox = path.join(dir, "inbox.jsonl");
     fs.appendFileSync(inbox, line("FYI #9 merged", true));
-    fs.appendFileSync(inbox, line("developer-1: take #12", true));
+    fs.appendFileSync(inbox, line("developer: take #12", true));
     fs.appendFileSync(inbox, line("direct", false));
 
     const out = tg(env, ["wait", "--timeout", "1"]);
@@ -181,16 +181,16 @@ describe("tg wait, and General broadcasts (#323)", () => {
   });
 
   it("wakes a further employee on its role's name and its own, not another's (#62)", () => {
-    const { dir, env } = bus({ employee: "developer-1@2" });
+    const { dir, env } = bus({ employee: "developer@2" });
     const inbox = path.join(dir, "inbox.jsonl");
-    fs.appendFileSync(inbox, line("developer-1@3: take #13", true));
+    fs.appendFileSync(inbox, line("developer@3: take #13", true));
     expect(tg(env, ["wait", "--timeout", "1"])).toMatch(/^\(nothing for you in 1s/);
 
-    fs.appendFileSync(inbox, line("developer-1: who takes #12?", true));
+    fs.appendFileSync(inbox, line("developer: who takes #12?", true));
     expect(tg(env, ["wait", "--timeout", "1"])).toContain("who takes #12?");
 
-    fs.appendFileSync(inbox, line("developer-1@2: take #12", true));
-    expect(tg(env, ["wait", "--timeout", "1"])).toContain("developer-1@2: take #12");
+    fs.appendFileSync(inbox, line("developer@2: take #12", true));
+    expect(tg(env, ["wait", "--timeout", "1"])).toContain("developer@2: take #12");
   });
 
   it("--all wakes on a plain broadcast", () => {
@@ -236,14 +236,14 @@ describe("tg wait, and a company reboot (#345)", () => {
 
 describe("tg roster (#62)", () => {
   it("lists every employee online, in seat order, and roles nobody runs", () => {
-    const { root, env } = bus({ employee: "developer-1@2" });
+    const { root, env } = bus({ employee: "developer@2" });
     const roster = path.join(root, "roster");
     fs.mkdirSync(roster);
     const now = Date.now();
     for (const [employee, lastSeen] of /** @type {const} */ ([
-      ["developer-1@10", now],
-      ["developer-1@2", now],
-      ["developer-1", now],
+      ["developer@10", now],
+      ["developer@2", now],
+      ["developer", now],
       ["architect", now - 120_000],
     ])) {
       fs.writeFileSync(
@@ -256,12 +256,12 @@ describe("tg roster (#62)", () => {
     const out = spawnSync(process.execPath, [TG, "roster"], { env, encoding: "utf8" }).stdout;
 
     const lines = out.split("\n");
-    expect(lines.filter((l) => l.startsWith("developer-1")).map((l) => l.split(/\s+/)[0])).toEqual([
-      "developer-1",
-      "developer-1@2",
-      "developer-1@10",
+    expect(lines.filter((l) => l.startsWith("developer")).map((l) => l.split(/\s+/)[0])).toEqual([
+      "developer",
+      "developer@2",
+      "developer@10",
     ]);
-    expect(out).toMatch(/^developer-1@2 +online, \d+s ago \(you\)$/m);
+    expect(out).toMatch(/^developer@2 +online, \d+s ago \(you\)$/m);
     expect(lines).toContain("architect        stale");
     expect(lines).toContain("manager          not hired yet");
     expect(out).not.toContain("not an id");
@@ -301,7 +301,7 @@ describe("tg, while the Telegram sidecar is down (#583)", () => {
   });
 
   it("wait prints what was already waiting, and exits 0, as ever", () => {
-    const { env } = bus({ sidecar: null, messages: ["developer-1: are you there?"] });
+    const { env } = bus({ sidecar: null, messages: ["developer: are you there?"] });
 
     const result = tg(env, ["wait", "--timeout", "20"]);
 

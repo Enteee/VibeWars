@@ -142,9 +142,8 @@ let
 
   # Every role that builds or tests the game. They get the Chromium devenv.nix
   # pins, from the same `pkgs`, on PATH and as VIBEWARS_CHROMIUM, which
-  # playwright.config.ts prefers. A case pattern, because the developers are
-  # numbered.
-  testRoles = "developer-* | asset-designer | cicd-engineer | lead-dev | perf-sec-qa | qa-tester";
+  # playwright.config.ts prefers, as a case pattern.
+  testRoles = "developer | asset-designer | cicd-engineer | lead-dev | perf-sec-qa | qa-tester";
   chromium = lib.getExe pkgs.chromium;
 
   # The jails' shared resource budget (#358, ADR-0015): one systemd user slice

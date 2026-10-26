@@ -152,7 +152,7 @@ describe("hasUnread", () => {
 describe("gaveUpText (#384)", () => {
   it("tells the manager's loop keeps trying, and every other that it stopped", () => {
     expect(gaveUpText("manager")).toMatch(/keeps trying/);
-    expect(gaveUpText("developer-1@2")).toMatch(/is stopped.*claude-llc-agent developer-1@2/);
+    expect(gaveUpText("developer@2")).toMatch(/is stopped.*claude-llc-agent developer@2/);
   });
 });
 
@@ -166,7 +166,7 @@ describe("agent-loop.mjs", () => {
 
   it("tells the whole company when a loop gives up, through the system outbox", () => {
     const root = scratch();
-    const result = spawnSync(process.execPath, [AGENT_LOOP, "gave-up", "developer-1"], {
+    const result = spawnSync(process.execPath, [AGENT_LOOP, "gave-up", "developer"], {
       encoding: "utf8",
       env: { ...process.env, VIBEWARS_BOT_ROOT: root },
     });
@@ -176,9 +176,7 @@ describe("agent-loop.mjs", () => {
     expect(files).toHaveLength(1);
     const message = obj(JSON.parse(fs.readFileSync(path.join(outbox, files[0] ?? ""), "utf8")));
     expect(message.to).toBe("all");
-    expect(message.text).toMatch(
-      /developer-1 failed five runs in a row.*claude-llc-agent developer-1/,
-    );
+    expect(message.text).toMatch(/developer failed five runs in a row.*claude-llc-agent developer/);
   });
 
   /**
@@ -216,8 +214,8 @@ describe("agent-loop.mjs", () => {
     const until = Math.floor(Date.now() / 1000) + 3600;
     fs.writeFileSync(path.join(state, "limited-until"), `${String(until)}\n`);
 
-    const first = loop(["limited", "developer-1", state, "0"], root);
-    const second = loop(["limited", "developer-2", state, "0"], root);
+    const first = loop(["limited", "developer", state, "0"], root);
+    const second = loop(["limited", "developer@2", state, "0"], root);
 
     expect(first.status).toBe(0);
     expect(Number(first.stdout.trim())).toBeGreaterThan(3600);
@@ -233,7 +231,7 @@ describe("agent-loop.mjs", () => {
     const state = scratch();
     fs.writeFileSync(path.join(state, "limited-until"), "");
 
-    const result = loop(["limited", "developer-1", state, "600"], root);
+    const result = loop(["limited", "developer", state, "600"], root);
 
     expect(result.stdout.trim()).toBe("1200");
     expect(outboxTexts(root)).toEqual([
@@ -247,16 +245,16 @@ describe("agent-loop.mjs", () => {
     expect(outboxTexts(root)).toEqual([]);
 
     const state = scratch();
-    loop(["limited", "developer-1", state, "0"], root);
+    loop(["limited", "developer", state, "0"], root);
     loop(["resumed", "qa-tester"], root);
-    loop(["resumed", "developer-1"], root);
+    loop(["resumed", "developer"], root);
 
     expect(outboxTexts(root).slice(1)).toEqual(["Claude usage limit over; agents are back."]);
     expect(fs.existsSync(path.join(root, "usage-limit.json"))).toBe(false);
   });
 
   it("refuses a name that is not an employee id", () => {
-    for (const name of ["../x", "developer-1@1", "developer-1@../x"]) {
+    for (const name of ["../x", "developer@1", "developer@../x"]) {
       const result = spawnSync(process.execPath, [AGENT_LOOP, "gave-up", name], {
         encoding: "utf8",
         env: { ...process.env, VIBEWARS_BOT_ROOT: scratch() },
@@ -267,12 +265,12 @@ describe("agent-loop.mjs", () => {
 
   it("names a further employee when its loop gives up (#62)", () => {
     const root = scratch();
-    spawnSync(process.execPath, [AGENT_LOOP, "gave-up", "developer-1@2"], {
+    spawnSync(process.execPath, [AGENT_LOOP, "gave-up", "developer@2"], {
       encoding: "utf8",
       env: { ...process.env, VIBEWARS_BOT_ROOT: root },
     });
     expect(outboxTexts(root)).toEqual([
-      expect.stringMatching(/^developer-1@2 failed .*claude-llc-agent developer-1@2$/),
+      expect.stringMatching(/^developer@2 failed .*claude-llc-agent developer@2$/),
     ]);
   });
 });
@@ -313,7 +311,7 @@ describe("claude-llc-agent", () => {
    * @param {string} [employee]
    * @returns {{ code: number | null, calls: string[], runs: number, stdout: string, notes: string[], contextFile: string, ran: string, dir: string }}
    */
-  function run(plan, env = {}, employee = "developer-1") {
+  function run(plan, env = {}, employee = "developer") {
     const dir = scratch();
     const scripts = path.join(dir, "scripts");
     const bin = path.join(dir, "bin");
@@ -397,7 +395,7 @@ describe("claude-llc-agent", () => {
       [0, 1, 2, 3, 4].map(
         (previous) =>
           /** @type {unknown} */ (
-            expect.stringMatching(`^limited developer-1 .+ ${String(previous)}$`)
+            expect.stringMatching(`^limited developer .+ ${String(previous)}$`)
           ),
       ),
     );
@@ -408,8 +406,8 @@ describe("claude-llc-agent", () => {
       "sleep 4",
       "sleep 5",
     ]);
-    expect(result.calls.at(-1)).toBe("gave-up developer-1");
-    expect(result.stdout).toContain("Claude usage limit reached; next turn for developer-1 in 1s.");
+    expect(result.calls.at(-1)).toBe("gave-up developer");
+    expect(result.stdout).toContain("Claude usage limit reached; next turn for developer in 1s.");
   });
 
   it("never gives up on the manager: it says so once and keeps trying (#384)", () => {
@@ -432,17 +430,17 @@ describe("claude-llc-agent", () => {
   });
 
   it("names the employee's context file in its bus directory, where tg wait reads it (#321)", () => {
-    expect(run(["fail"]).contextFile).toBe(".bots/bus/developer-1/context.json");
+    expect(run(["fail"]).contextFile).toBe(".bots/bus/developer/context.json");
   });
 
   it("runs a second employee under its own id, state and bus directory (#62)", () => {
-    const result = run(["fail"], {}, "developer-1@2");
+    const result = run(["fail"], {}, "developer@2");
 
-    expect(result.ran).toBe("developer-1@2");
-    expect(fs.readdirSync(path.join(result.dir, ".bots", "agents"))).toEqual(["developer-1@2"]);
-    expect(result.contextFile).toBe(".bots/bus/developer-1@2/context.json");
-    expect(result.stdout).toContain("next turn for developer-1@2 in 0s");
-    expect(result.calls).toContain("wait developer-1@2 0");
+    expect(result.ran).toBe("developer@2");
+    expect(fs.readdirSync(path.join(result.dir, ".bots", "agents"))).toEqual(["developer@2"]);
+    expect(result.contextFile).toBe(".bots/bus/developer@2/context.json");
+    expect(result.stdout).toContain("next turn for developer@2 in 0s");
+    expect(result.calls).toContain("wait developer@2 0");
   });
 
   it("neither counts a limit as a failure nor lets it reset the count", () => {
@@ -450,7 +448,7 @@ describe("claude-llc-agent", () => {
 
     expect(result.code).toBe(1);
     expect(result.runs).toBe(6);
-    expect(result.calls.at(-1)).toBe("gave-up developer-1");
+    expect(result.calls.at(-1)).toBe("gave-up developer");
   });
 
   it("starts the limit backoff over, and says the limit is over, after a turn that ends", () => {
@@ -463,7 +461,7 @@ describe("claude-llc-agent", () => {
         .map((call) => call.split(" ").at(-1)),
     ).toEqual(["0", "1", "0"]);
     expect(result.calls.filter((call) => call.startsWith("resumed "))).toEqual([
-      "resumed developer-1",
+      "resumed developer",
     ]);
   });
 });

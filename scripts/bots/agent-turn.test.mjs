@@ -86,7 +86,7 @@ function turn(events, peekDir = "") {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "agent-turn-test-"));
   dirs.push(dir);
   const bus = path.join(dir, "bus");
-  const state = path.join(dir, "developer-1");
+  const state = path.join(dir, "developer");
   fs.mkdirSync(bus);
   fs.writeFileSync(path.join(bus, "cursor"), "100\n");
   const script = path.join(dir, "claude.mjs");
@@ -105,7 +105,7 @@ function turn(events, peekDir = "") {
     encoding: "utf8",
     env: {
       ...process.env,
-      VIBEWARS_BOT_ROLE: "developer-1",
+      VIBEWARS_BOT_ROLE: "developer",
       VIBEWARS_CONTEXT_FILE: path.join(bus, "context.json"),
       ...(peekDir === "" ? {} : { VIBEWARS_PEEK_DIR: peekDir }),
     },
@@ -128,7 +128,7 @@ describe("a tg wait that went to the background", () => {
     expect(result.stdout).toContain("⚠ tg wait went to the background; inbox rewound");
     const [entry] = result.log.trim().split("\n");
     expect(JSON.parse(entry ?? "")).toMatchObject({
-      role: "developer-1",
+      role: "developer",
       command: "tg wait --timeout 540",
     });
     expect(result.cursor).toBe("100\n");
@@ -159,7 +159,7 @@ describe("what the manager can peek at (#19)", () => {
   /** @param {string} dir */
   const row = (dir) => {
     /** @type {unknown} */
-    const parsed = JSON.parse(fs.readFileSync(path.join(dir, "developer-1.json"), "utf8"));
+    const parsed = JSON.parse(fs.readFileSync(path.join(dir, "developer.json"), "utf8"));
     return /** @type {{ state: string }} */ (parsed);
   };
 
@@ -167,7 +167,7 @@ describe("what the manager can peek at (#19)", () => {
     const dir = peekDir();
     const result = turn(["init", "wait", "background", "swallow", "result"], dir);
 
-    const recorded = fs.readFileSync(path.join(dir, "developer-1.txt"), "utf8");
+    const recorded = fs.readFileSync(path.join(dir, "developer.txt"), "utf8");
     expect(result.stdout).toContain("⚠ tg wait went to the background; inbox rewound");
     expect(recorded).toContain("⚠ tg wait went to the background; inbox rewound");
     for (const line of result.stdout.trimEnd().split("\n")) {

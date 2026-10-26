@@ -11,6 +11,7 @@ import { ROLES } from "./hub-policy.mjs";
 import {
   COOLDOWN_MS,
   applyStaff,
+  checkStaff,
   markReady,
   nextEmployeeId,
   parseStaff,
@@ -92,7 +93,7 @@ describe("roleOf", () => {
   it("is the role of a bare seat and of a numbered one", () => {
     expect(roleOf("qa-tester")).toBe("qa-tester");
     expect(roleOf("qa-tester@2")).toBe("qa-tester");
-    expect(roleOf("developer-1@12")).toBe("developer-1");
+    expect(roleOf("developer@12")).toBe("developer");
   });
 
   it("is null for what is not an employee id", () => {
@@ -199,7 +200,7 @@ describe("staffAllowed", () => {
       [...ROLES],
       [
         { id: "qa-tester@2", change: "hire", at: NOW - 8 * MINUTE },
-        { id: "developer-1@2", change: "hire", at: NOW - 5 * MINUTE },
+        { id: "developer@2", change: "hire", at: NOW - 5 * MINUTE },
         { id: "lead-dev", change: "fire", at: NOW - 4 * MINUTE },
         { id: "architect@2", change: "hire", at: NOW - 2 * MINUTE },
       ],
@@ -210,7 +211,7 @@ describe("staffAllowed", () => {
       [...ROLES],
       [
         { id: "qa-tester@2", change: "hire", at: NOW - 11 * MINUTE },
-        { id: "developer-1@2", change: "hire", at: NOW - 5 * MINUTE },
+        { id: "developer@2", change: "hire", at: NOW - 5 * MINUTE },
         { id: "architect@2", change: "hire", at: NOW - 2 * MINUTE },
       ],
     );
@@ -289,6 +290,13 @@ describe("seedStaff", () => {
       recent: [],
     });
   });
+
+  it("employs two developers, developer and developer@2 (#749)", () => {
+    const seeded = seedStaff(["manager", "developer"], NOW);
+    expect(Object.keys(seeded.employees)).toEqual(["manager", "developer", "developer@2"]);
+    expect(seeded.employees["developer@2"]).toMatchObject({ role: "developer", by: "operator" });
+    expect(Object.keys(seedStaff(ROLES, NOW).employees)).toHaveLength(9);
+  });
 });
 
 describe("parseStaff", () => {
@@ -348,6 +356,26 @@ describe("parseStaff", () => {
   });
 });
 
+describe("checkStaff (#749)", () => {
+  it("keeps a staff.json whose roles are all roles, untouched", () => {
+    const staff = company(["manager", "qa-tester", "qa-tester@2"]);
+    expect(checkStaff(staff, ROLES, ["manager"], NOW)).toEqual({ staff, notice: null });
+  });
+
+  it("names each stale role once, and seeds the default staff of the boot's roles", () => {
+    const checked = checkStaff(
+      company(["manager", "developer-3", "developer-3@2", "intern"]),
+      ROLES,
+      ["manager", "developer"],
+      NOW,
+    );
+    expect(checked.staff).toEqual(seedStaff(["manager", "developer"], NOW));
+    expect(checked.notice).toMatch(
+      /^staff\.json named roles that no longer exist \(developer-3, intern\);/,
+    );
+  });
+});
+
 describe("strangers", () => {
   it("names the employees whose role left the roster", () => {
     expect(strangers(company(["qa-tester", "developer-3@2"]), ROLES)).toEqual(["developer-3@2"]);
@@ -381,7 +409,9 @@ describe("the CLI claude-llc up runs", () => {
     // Present: a later boot's CLAUDE_LLC_ROLES changes nothing.
     expect(run(root, "seed", "architect").status).toBe(0);
     expect(parseStaff(fs.readFileSync(file, "utf8"))).toEqual(seeded);
-    expect(run(root, "check").status).toBe(0);
+    expect(run(root, "check", "manager", "qa-tester").status).toBe(0);
+    expect(parseStaff(fs.readFileSync(file, "utf8"))).toEqual(seeded);
+    expect(fs.existsSync(path.join(root, "bus"))).toBe(false);
   });
 
   it("refuses to seed a role that is not in the roster", () => {
@@ -390,18 +420,48 @@ describe("the CLI claude-llc up runs", () => {
     expect(fs.existsSync(path.join(root, "staff.json"))).toBe(false);
   });
 
-  it("fails the check on a stale role, naming the employee, and on a malformed file", () => {
+  it("resets a staff.json with a stale role to the default staff, and tells General (#749)", () => {
     const root = tmp();
     const file = path.join(root, "staff.json");
     const stale = seedStaff(["manager"], NOW);
     stale.employees["developer-3@2"] = { ...stale.employees.manager, role: "developer-3" };
     fs.writeFileSync(file, JSON.stringify(stale));
-    const checked = run(root, "check");
-    expect(checked.status).toBe(1);
-    expect(checked.stderr).toMatch(/developer-3@2/);
 
+    const checked = run(root, "check", "manager", "developer");
+    expect(checked.status).toBe(0);
+    const notice =
+      "staff.json named roles that no longer exist (developer-3); it was reset to the default " +
+      "staff. Hires made since are gone; the manager re-hires.";
+    expect(checked.stderr).toBe(`staff: ${notice}\n`);
+    expect(Object.keys(parseStaff(fs.readFileSync(file, "utf8")).employees)).toEqual([
+      "manager",
+      "developer",
+      "developer@2",
+    ]);
+    const outbox = path.join(root, "bus", "_system", "outbox");
+    const entries = fs.readdirSync(outbox);
+    expect(entries).toHaveLength(1);
+    expect(JSON.parse(fs.readFileSync(path.join(outbox, entries[0] ?? ""), "utf8"))).toEqual({
+      to: "all",
+      text: notice,
+      nudge: null,
+    });
+
+    // Said once: the reset file is clean on the next boot.
+    expect(run(root, "check", "manager", "developer").stderr).toBe("");
+    expect(fs.readdirSync(outbox)).toHaveLength(1);
+  });
+
+  it("fails the check on a malformed file, and on a seed role that is not a role", () => {
+    const root = tmp();
+    const file = path.join(root, "staff.json");
     fs.writeFileSync(file, JSON.stringify({ employees: {} }));
-    expect(run(root, "check").stderr).toMatch(/staff.recent is missing/);
+    const malformed = run(root, "check", "manager");
+    expect(malformed.status).toBe(1);
+    expect(malformed.stderr).toMatch(/staff.recent is missing/);
+
+    fs.writeFileSync(file, JSON.stringify(seedStaff(["manager"], NOW)));
+    expect(run(root, "check", "intern").status).toBe(1);
   });
 });
 

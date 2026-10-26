@@ -36,7 +36,7 @@ afterEach(() => {
  */
 function stubHubd(answer, seen = [], alive = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hub-test-"));
-  const spool = path.join(dir, "developer-1");
+  const spool = path.join(dir, "developer");
   const req = path.join(spool, "req");
   const res = path.join(spool, "res");
   fs.mkdirSync(req, { recursive: true });
@@ -85,8 +85,8 @@ function hub(spool, args) {
     const child = spawn(process.execPath, [HUB, ...args], {
       env: {
         PATH: process.env.PATH ?? "",
-        VIBEWARS_BOT_EMPLOYEE: "developer-1",
-        VIBEWARS_BOT_ROLE: "developer-1",
+        VIBEWARS_BOT_EMPLOYEE: "developer",
+        VIBEWARS_BOT_ROLE: "developer",
         VIBEWARS_HUB: spool,
       },
       stdio: ["ignore", "pipe", "inherit"],
@@ -113,8 +113,8 @@ function hubIntoHead(spool, args) {
     const child = spawn(process.execPath, [HUB, ...args], {
       env: {
         PATH: process.env.PATH ?? "",
-        VIBEWARS_BOT_EMPLOYEE: "developer-1",
-        VIBEWARS_BOT_ROLE: "developer-1",
+        VIBEWARS_BOT_EMPLOYEE: "developer",
+        VIBEWARS_BOT_ROLE: "developer",
         VIBEWARS_HUB: spool,
       },
       stdio: ["ignore", "pipe", "pipe"],
@@ -138,8 +138,8 @@ function hubStderr(spool, args) {
     const child = spawn(process.execPath, [HUB, ...args], {
       env: {
         PATH: process.env.PATH ?? "",
-        VIBEWARS_BOT_EMPLOYEE: "developer-1",
-        VIBEWARS_BOT_ROLE: "developer-1",
+        VIBEWARS_BOT_EMPLOYEE: "developer",
+        VIBEWARS_BOT_ROLE: "developer",
         VIBEWARS_HUB: spool,
       },
       stdio: ["ignore", "ignore", "pipe"],
@@ -155,7 +155,7 @@ function hubStderr(spool, args) {
 describe("hub and a busy daemon (#496)", () => {
   it("says hubd is busy when the heartbeat is fresh and a request has run over 10 s", async () => {
     const current = {
-      employee: "developer-2",
+      employee: "developer@2",
       command: "gh pr checks",
       startedAt: Date.now() - 15_000,
     };
@@ -165,14 +165,14 @@ describe("hub and a busy daemon (#496)", () => {
 
     expect(result.code).toBe(0);
     expect(result.stderr).toMatch(
-      /hubd is busy with developer-2's `gh pr checks` for 1\d s; queued/,
+      /hubd is busy with developer@2's `gh pr checks` for 1\d s; queued/,
     );
     expect(result.stderr).not.toContain("not answering");
   });
 
   it("shows nothing but visible characters of the heartbeat", async () => {
     const current = {
-      employee: "developer-2",
+      employee: "developer@2",
       command: "gh \u001b[2J\u202eevil",
       startedAt: Date.now() - 15_000,
     };
@@ -182,12 +182,12 @@ describe("hub and a busy daemon (#496)", () => {
 
     expect(result.stderr).not.toContain("\u001b");
     expect(result.stderr).not.toContain("\u202e");
-    expect(result.stderr).toContain("busy with developer-2");
+    expect(result.stderr).toContain("busy with developer@2");
   });
 
   it("stays quiet for a request under 10 s, and says not answering for a stale heartbeat", async () => {
     const recent = {
-      employee: "developer-2",
+      employee: "developer@2",
       command: "gh pr checks",
       startedAt: Date.now() - 2000,
     };
@@ -285,9 +285,7 @@ describe("hub whoami", () => {
   it("names the employee and its role, and pushes under the employee (#62)", () => {
     const said = whoami("qa-tester", "qa-tester@2");
     expect(said.startsWith("employee: qa-tester@2\nrole: qa-tester\n")).toBe(true);
-    expect(whoami("developer-1", "developer-1@2")).toContain(
-      "yes  push branches (bot/developer-1@2/*)",
-    );
+    expect(whoami("developer", "developer@2")).toContain("yes  push branches (bot/developer@2/*)");
   });
 
   it("says only the manager may close and reopen", () => {
@@ -296,7 +294,7 @@ describe("hub whoami", () => {
   });
 
   it("says every role may read code-scanning alerts (#184)", () => {
-    expect(whoami("developer-1")).toContain("yes  read code-scanning alerts");
+    expect(whoami("developer")).toContain("yes  read code-scanning alerts");
     expect(whoami("asset-designer")).toContain("yes  read code-scanning alerts");
   });
 });
