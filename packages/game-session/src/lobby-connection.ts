@@ -1,3 +1,4 @@
+import type { ProfessionId } from "@vibewars/game-core";
 import type { LobbyPhase } from "@vibewars/game-protocol";
 
 import type { Transport } from "./transport.js";
@@ -7,6 +8,13 @@ import type { Transport } from "./transport.js";
  * callbacks, whoever hosts it.
  */
 
+/** The character a member brings (#580): its name and professions, never its build. */
+export interface LobbyCharacter {
+  readonly name: string;
+  readonly primary: ProfessionId;
+  readonly secondary: ProfessionId | null;
+}
+
 export interface LobbyPlayerSnapshot {
   readonly sessionId: string;
   readonly name: string;
@@ -14,6 +22,8 @@ export interface LobbyPlayerSnapshot {
   readonly team: 0 | 1 | null;
   readonly ready: boolean;
   readonly isHost: boolean;
+  /** `null` brings the house loadout. */
+  readonly character: LobbyCharacter | null;
 }
 
 export interface LobbySnapshot {

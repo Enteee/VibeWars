@@ -6,7 +6,7 @@ import {
   type SkillType,
 } from "@vibewars/game-core";
 
-import { teamColour } from "../render/arena-snapshot.js";
+import { teamColour, type RenderableActor } from "../render/arena-snapshot.js";
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
 
@@ -61,13 +61,25 @@ function hex(colour: number): string {
  * arena rather than being an arbitrary pretty size.
  */
 export function createCharacterDot(character: StoredCharacter): HTMLElement {
+  return createProfessionDot(character.primaryProfession, character.secondaryProfession);
+}
+
+/**
+ * The same circle for any professions, in the colour the arena paints
+ * `team` (#580): a lobby shows who will be your ally and who your foe.
+ */
+export function createProfessionDot(
+  primary: ProfessionId,
+  secondary: ProfessionId | undefined,
+  team: RenderableActor["team"] = "self",
+): HTMLElement {
   const dot = document.createElement("span");
   dot.className = "character-dot";
-  dot.style.setProperty("--dot-colour", hex(teamColour("self")));
+  dot.style.setProperty("--dot-colour", hex(teamColour(team)));
   dot.style.width = `${String(MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius * 2)}px`;
   dot.style.height = `${String(MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius * 2)}px`;
-  dot.textContent = professionBadge(character.primaryProfession, character.secondaryProfession);
-  dot.title = professionLabel(character.primaryProfession, character.secondaryProfession);
+  dot.textContent = professionBadge(primary, secondary);
+  dot.title = professionLabel(primary, secondary);
   return dot;
 }
 
