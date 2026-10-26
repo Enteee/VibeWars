@@ -52,7 +52,10 @@ export {
   effectiveActivationSeconds,
   effectiveMaxHealth,
   moveSpeedMultiplier,
+  naturalHealthPips,
+  netPips,
 } from "./tick.js";
+export type { NetPips } from "./tick.js";
 
 export type {
   ApplyStatusEffect,

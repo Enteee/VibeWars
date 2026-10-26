@@ -2584,3 +2584,24 @@ body:has(#screens:not([style*="none"])) .now-playing {
 .now-playing[hidden] {
   display: none;
 }
+
+/*
+ * Net regeneration and degeneration arrows (#504), GW1 style: at the bar's
+ * right end, clear of its centred label. Right for regeneration, left for
+ * degeneration, up to ten.
+ */
+.vital-pips {
+  position: absolute;
+  inset: 0 4px 0 auto;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 15px;
+  letter-spacing: -2px;
+  color: var(--ink);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
+  pointer-events: none;
+}
+
+.vital-pips.is-degen {
+  color: #ff9b94;
+}

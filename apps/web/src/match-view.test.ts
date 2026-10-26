@@ -31,6 +31,8 @@ function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining,
+    healthPips: 0,
+    energyPips: 0,
     statuses: [],
   };
 }

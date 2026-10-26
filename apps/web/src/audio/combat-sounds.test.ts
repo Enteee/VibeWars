@@ -195,6 +195,8 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     swingElapsed: 0,
     swingTotal: 0,
     knockdownRemaining: 0,
+    healthPips: 0,
+    energyPips: 0,
     statuses: [],
     ...extra,
   };
