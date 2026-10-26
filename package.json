@@ -22,6 +22,7 @@
     "dev": "node scripts/dev.mjs",
     "music:check": "pnpm --filter @vibewars/web run music:check",
     "test:e2e": "playwright test",
+    "bench:ticks": "BENCH_TICKS=400 vitest run packages/game-core/src/tools/tick-bench.test.ts",
     "wire:snapshot": "tsc --build tsconfig.build.json && WIRE_SNAPSHOT=write vitest run apps/server/src/tools/wire-snapshot.test.ts",
     "ci": "pnpm run format:check && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build",
     "ci:full": "pnpm run ci && pnpm run test:e2e"
