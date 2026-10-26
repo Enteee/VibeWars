@@ -348,13 +348,21 @@ test("clicking the ground walks there, round a wall, and stops (#310)", async ({
     .poll(async () => (await spotShot(page, canvas, goal)).equals(empty), { timeout: 10_000 })
     .toBe(false);
 
-  // Arrived, it stays.
-  await page.waitForTimeout(600);
-  const there = await spotShot(page, canvas, goal);
-  await page.waitForTimeout(700);
-  expect((await spotShot(page, canvas, goal)).equals(there), "the hero should stop there").toBe(
-    true,
-  );
+  // Arrived, it stays. The view follows the walk (#721), so the spot
+  // holds still only once the hero, and the camera with it, does.
+  let there = await spotShot(page, canvas, goal);
+  await expect
+    .poll(
+      async () => {
+        await page.waitForTimeout(700);
+        const now = await spotShot(page, canvas, goal);
+        const still = now.equals(there);
+        there = now;
+        return still;
+      },
+      { message: "the hero should stop there", intervals: [0], timeout: 15_000 },
+    )
+    .toBe(true);
 });
 
 test("clicking the ground keeps the target, and Space attacks it from there (#310)", async ({
@@ -529,7 +537,7 @@ test("the target panel shows the target's professions before its name (#281)", a
   await opponent.close();
 });
 
-test("at Close, the arena's bottom edge stops above the skill bar, not under it (#440)", async ({
+test("at the arena's bottom edge, an RMB drag down looks past it, and springs back (#721)", async ({
   page,
 }) => {
   const arena = JSON.parse(
@@ -576,9 +584,26 @@ test("at Close, the arena's bottom edge stops above the skill bar, not under it 
     .toBe(true);
   await page.keyboard.up(key("move-down"));
 
-  const edge = (await projection(stage, canvas)).onPage({ x: 0, y: arena.height }).y;
-  const bars = await page.locator(".hud-bars").boundingBox();
-  expect(Math.abs(edge - (bars?.y ?? 0))).toBeLessThan(2);
+  const cameraY = async (): Promise<number> =>
+    Number(((await stage.getAttribute("data-camera")) ?? "").split(",")[1]);
+  const { zoom } = await projection(stage, canvas);
+  const atWall = await cameraY();
+
+  // Not clamped to the map: the view centre goes below the arena, 200 px on.
+  const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  await page.mouse.down({ button: "right" });
+  await page.mouse.move(centre.x, centre.y + 100, { steps: 5 });
+  await page.mouse.move(centre.x, centre.y + 200, { steps: 5 });
+  const panned = atWall + 200 / zoom;
+  await expect.poll(cameraY).toBeGreaterThan(panned - 3);
+  expect(await cameraY()).toBeLessThan(panned + 3);
+  expect(panned).toBeGreaterThan(arena.height);
+
+  // Let go, the pointer back at the centre: the view is on you again.
+  await page.mouse.up({ button: "right" });
+  await page.mouse.move(centre.x, centre.y);
+  await expect.poll(cameraY, { timeout: 1_000 }).toBeLessThan(atWall + 3);
+  expect(await cameraY()).toBeGreaterThan(atWall - 3);
 });
 
 test("the target frame shows the target's health and the skill it casts, filling, then clears (#484)", async ({

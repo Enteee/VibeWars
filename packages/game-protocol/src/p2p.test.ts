@@ -301,6 +301,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["ping", parsePeerCall, { kind: "ping", x: 120.5, y: 40 }],
   ["calls", parseWireCalls, calls],
   ["calls with none", parseWireCalls, { target: null, pings: [] }],
+  [
+    "calls with every ping a team shows (#730)",
+    parseWireCalls,
+    { target: null, pings: Array.from({ length: 32 }, () => ping) },
+  ],
   ["lobby-join", parsePeerLobbyJoin, lobbyJoin],
   ["lobby-join on the house loadout", parsePeerLobbyJoin, { ...lobbyJoin, character: null }],
   ["lobby-state", parseWireLobbyState, lobbyState],

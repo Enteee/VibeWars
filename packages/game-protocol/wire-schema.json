@@ -53,7 +53,7 @@
     "MAX_WIRE_EVENTS": { "literal": 64 },
     "MAX_WIRE_JSON_DEPTH": { "literal": 16 },
     "MAX_WIRE_JSON_VALUES": { "literal": 4096 },
-    "MAX_WIRE_PINGS": { "literal": 8 },
+    "MAX_WIRE_PINGS": { "literal": 32 },
     "MAX_WIRE_PIPS": { "literal": 10 },
     "MAX_WIRE_POINTS": { "literal": 256 },
     "MAX_WIRE_PROJECTILES": { "literal": 256 },

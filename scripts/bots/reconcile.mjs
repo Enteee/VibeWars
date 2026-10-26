@@ -34,7 +34,7 @@ const MANAGER = "manager";
  * What to do now so the panes match `staff`.
  *
  * - A working employee with no pane is started, unless it was started
- *   within `RESTART_HOLDOFF_MS`. Not the manager: `managerAction` does.
+ *   within `holdoffMs` (`RESTART_HOLDOFF_MS` for the CLI). Not the manager: `managerAction` does.
  * - A firing employee is left alone until it has run `company ready`, is
  *   between turns, or `FIRE_DEADLINE_MS` passed since the fire; then its
  *   pane is killed and it is forgotten. One with no pane is forgotten.
@@ -50,11 +50,12 @@ const MANAGER = "manager";
  *   between: readonly string[],
  *   rebooting: boolean,
  *   started: ReadonlyMap<string, number>,
+ *   holdoffMs: number,
  * }} context `between` are the employees between turns, `started` when the
  *   supervisor last started each
  * @returns {Plan}
  */
-export function reconcile(staff, panes, { now, between, rebooting, started }) {
+export function reconcile(staff, panes, { now, between, rebooting, started, holdoffMs }) {
   /** @type {Plan} */
   const plan = { start: [], kill: [], forget: [] };
   if (rebooting) {
@@ -65,11 +66,7 @@ export function reconcile(staff, panes, { now, between, rebooting, started }) {
   for (const [id, employee] of Object.entries(staff.employees)) {
     if (employee.state === "working") {
       const last = started.get(id);
-      if (
-        id !== MANAGER &&
-        !running.has(id) &&
-        (last === undefined || now - last >= RESTART_HOLDOFF_MS)
-      ) {
+      if (id !== MANAGER && !running.has(id) && (last === undefined || now - last >= holdoffMs)) {
         plan.start.push(id);
       }
       continue;
