@@ -206,7 +206,22 @@ export interface Skill {
    * cast ends however it ends (#524): Healing Signet's armor loss.
    */
   readonly whileActivating: StatusId | undefined;
+  /**
+   * A spell that flies (#535): at cast completion it leaves the caster as
+   * a led shot, and its effects and area land with it, or not at all if
+   * it is dodged. `undefined`: it lands at once.
+   */
+  readonly projectile: SkillProjectile | undefined;
   readonly effects: readonly SkillEffect[];
+}
+
+/** How a flying spell flies (#535). */
+export interface SkillProjectile {
+  /**
+   * World units per second. GW1 publishes no spell speeds, so these are
+   * this project's tuning.
+   */
+  readonly speed: number;
 }
 
 /**

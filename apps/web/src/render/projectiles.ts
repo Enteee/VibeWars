@@ -30,8 +30,17 @@ const SPRITE: Readonly<Record<WeaponId, ProjectileSprite>> = {
   hornbow: "arrow",
 };
 
-export function projectileSprite(weaponId: string): ProjectileSprite {
-  return isWeaponId(weaponId) ? SPRITE[weaponId] : "bolt";
+/**
+ * A shot's sprite, from its shooter's weapon (`undefined` once they have
+ * left). A flying spell (#535) is a bolt until it has art of its own (#487).
+ */
+export function projectileSprite(
+  weaponId: string | undefined,
+  skillId: string | undefined,
+): ProjectileSprite {
+  return skillId === undefined && weaponId !== undefined && isWeaponId(weaponId)
+    ? SPRITE[weaponId]
+    : "bolt";
 }
 
 export const PROJECTILE_SPRITES: readonly ProjectileSprite[] = ["arrow", "spear", "bolt"];

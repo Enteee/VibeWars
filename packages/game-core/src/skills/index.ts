@@ -72,6 +72,7 @@ export type {
   SkillContext,
   SkillCost,
   SkillEffect,
+  SkillProjectile,
   SkillType,
   TargetRule,
 } from "./types.js";

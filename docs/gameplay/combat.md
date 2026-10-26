@@ -288,6 +288,17 @@ and recharge are spent at the release, whatever the arrow does. Barrage
 picks its foes at the release and sends each its own arrow, with its own
 blind roll and its own flight; each arrow that hits earns adrenaline.
 
+**Fireball flies too** (#535). At cast completion it leaves the caster
+as a shot led like an arrow's, at 420 units a second (a second's flight
+at full spell range; GW1 publishes no spell speeds, so this is ours), and
+its damage and its splash land on arrival, centred on where the target
+is then. Sidestep it and it is dodged: no damage, no splash, the cost and
+recharge spent all the same. A wall along its flight stops it
+("obstructed"). Blind does not touch it, it cannot be blocked or crit,
+it lands if its caster dies in flight, and does nothing to a target
+that died. Interrupted before completion, nothing flies. The Training
+Ground's "Dodge the Fireball" drills it.
+
 **Critical hits.** Any weapon blow can crit: a swing, each blow of a
 double strike, each cleave victim, an attack skill, a landing shot.
 Spells and degeneration never do. The chance is 1% plus 1.37% per rank

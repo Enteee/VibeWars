@@ -514,7 +514,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     projectiles: sim.projectiles.slice(-MAX_WIRE_PROJECTILES).map((shot) => ({
       id: shot.id,
       attackerId: shot.attackerId,
-      weaponId: shot.weaponSnapshot.mainHand.weapon.id,
+      skillId: shot.skillHit?.kind === "spell" ? shot.skillHit.skill.id : null,
       from: shot.from,
       to: shot.aimPoint,
       launchedAt: sim.elapsedSeconds - shot.elapsed,

@@ -1,5 +1,5 @@
 import { add, dot, lengthSquared, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
-import type { Skill } from "./types.js";
+import type { Combatant, Skill } from "./types.js";
 import type { BlowRule, WeaponSnapshot } from "./weapon-attack.js";
 
 /**
@@ -13,6 +13,9 @@ import type { BlowRule, WeaponSnapshot } from "./weapon-attack.js";
  * Its path is fixed at release, so walls are decided then too (#215): a
  * shot whose path crosses a wall is cut short at it, flies there, and
  * lands `obstructed`. It still flies through bodies.
+ *
+ * A spell can fly too (#535): Fireball is the same led shot, carrying the
+ * cast instead of a blow.
  */
 export interface Projectile {
   /** Deterministic: a counter, per match. */
@@ -34,8 +37,11 @@ export interface Projectile {
   elapsed: number;
   /** The weapon and rank it was released with. */
   readonly weaponSnapshot: WeaponSnapshot;
-  /** The attack skill it carries (#416), or `undefined` for a swing's shot. */
-  readonly skillHit: SkillHit | undefined;
+  /**
+   * The attack skill (#416) or spell (#535) it carries, or `undefined`
+   * for a swing's shot.
+   */
+  readonly skillHit: SkillHit | SpellHit | undefined;
 }
 
 /**
@@ -44,8 +50,20 @@ export interface Projectile {
  * with it.
  */
 export interface SkillHit {
+  readonly kind: "attack";
   readonly skill: Skill;
   readonly blow: BlowRule;
+}
+
+/**
+ * A spell in flight (#535): its effects and area land with it, cast by
+ * `caster` with the ranks it had at release, even if it has died or
+ * left since.
+ */
+export interface SpellHit {
+  readonly kind: "spell";
+  readonly skill: Skill;
+  readonly caster: Combatant;
 }
 
 /**

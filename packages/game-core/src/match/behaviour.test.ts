@@ -76,10 +76,13 @@ describe("cast-loop", () => {
       ],
     });
     const casts = run(sim, 10).filter((entry) => entry.cause === "skill");
-    // Fireball recharges in 7 s: one cast at t=0, landing at 1 s, and the
-    // next at 7 s, landing at 8 s.
+    // Fireball recharges in 7 s: one cast at t=0, released at 1 s, and the
+    // next at 7 s, released at 8 s. Each lands 150 units on, 0.4 s after
+    // its release (#535), and only the landing does damage.
     expect(casts.map((entry) => [entry.sourceId, entry.events[0]])).toEqual([
+      ["dummy", undefined],
       ["dummy", { kind: "damage", targetId: "near", amount: 91, critical: false }],
+      ["dummy", undefined],
       ["dummy", { kind: "damage", targetId: "near", amount: 91, critical: false }],
     ]);
   });
@@ -125,10 +128,12 @@ describe("cast-loop", () => {
 
   it("takes skills in order without firstLegal, the next one queued for the end of the aftercast", () => {
     // Troll Unguent resolves at 3.1; its 0.75 s aftercast (#317) holds
-    // Fireball's 1 s cast back until 3.85.
+    // Fireball's 1 s cast back until 3.85. The Fireball lands 150 units
+    // on, 0.4 s after its release (#535).
     expect(inOrder(0)).toEqual([
       ["ranger.troll-unguent", 3.1],
       [FIREBALL, 4.85],
+      [FIREBALL, 5.25],
     ]);
   });
 
@@ -136,6 +141,7 @@ describe("cast-loop", () => {
     expect(inOrder(5)).toEqual([
       ["ranger.troll-unguent", 3.1],
       [FIREBALL, 6.1],
+      [FIREBALL, 6.5],
     ]);
   });
 });

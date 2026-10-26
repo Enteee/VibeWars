@@ -91,7 +91,7 @@ export function toArenaSnapshot(
       const shooter = match.players.find((player) => player.sessionId === shot.attackerId);
       return {
         id: shot.id,
-        sprite: projectileSprite(shot.weaponId),
+        sprite: projectileSprite(shooter?.weaponId, shot.skillId),
         from: shot.from,
         to: shot.to,
         launchedAt: shot.launchedAt,

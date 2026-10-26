@@ -71,20 +71,23 @@ export interface MatchSnapshot {
   readonly winningTeam: number | undefined;
   /** "score", "time", or `undefined` while active. */
   readonly endReason: string | undefined;
-  /** Weapon shots in flight, oldest first (#160). */
+  /** Weapon shots and flying spells in flight, oldest first (#160, #535). */
   readonly projectiles: readonly ProjectileSnapshot[];
 }
 
 /**
- * A ranged weapon's shot, as released: it flies from `from` to `to` over
+ * A ranged weapon's shot or a flying spell, as released: it flies from `from` to `to` over
  * `flightSeconds`, starting at `launchedAt` on the match clock.
  */
 export interface ProjectileSnapshot {
   readonly id: number;
   /** The shooter's session id, for the side's tint. */
   readonly attackerId: string;
-  /** The weapon at release, which picks the sprite. */
-  readonly weaponId: string;
+  /**
+   * The spell it carries (#535), which picks the sprite; `undefined` for
+   * a weapon's shot, drawn from its shooter's `weaponId`.
+   */
+  readonly skillId: string | undefined;
   readonly from: { readonly x: number; readonly y: number };
   readonly to: { readonly x: number; readonly y: number };
   readonly launchedAt: number;
