@@ -279,8 +279,8 @@ describe("runsFromRest and jobsFromRest", () => {
       }),
     ).toEqual({
       jobs: [
-        { name: "ci", status: "completed", conclusion: "success" },
-        { name: "e2e", status: "in_progress", conclusion: null },
+        { id: 9, name: "ci", status: "completed", conclusion: "success" },
+        { id: null, name: "e2e", status: "in_progress", conclusion: null },
       ],
     });
   });

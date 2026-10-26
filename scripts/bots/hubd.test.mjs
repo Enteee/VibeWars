@@ -63,7 +63,22 @@ if (group === "api" && sub !== "graphql") {
   if (rel.startsWith("issues/7/comments") || rel.startsWith("issues/9/comments")) { console.log(JSON.stringify(restComments)); process.exit(0); }
   if (rel.startsWith("pulls/9/reviews")) { console.log(JSON.stringify([{ user: { login: "drive-by" }, author_association: "NONE", body: "stranger review", state: "COMMENTED", submitted_at: "2026-10-24T12:30:00Z", html_url: "r" }])); process.exit(0); }
   if (rel === "issues/9") { console.log(JSON.stringify({ ...pull9, pull_request: {} })); process.exit(0); }
+  // #9 as a test changed it: a new head, or closed (#736).
+  if (rel === "pulls/9" && fs.existsSync(path.join(state, "pull-9.json"))) { console.log(JSON.stringify({ ...pull9, ...JSON.parse(fs.readFileSync(path.join(state, "pull-9.json"), "utf8")) })); process.exit(0); }
   if (rel === "pulls/9") { console.log(JSON.stringify(pull9)); process.exit(0); }
+  // The open pull requests, for the In Review gate (#736): what the test planted, or none.
+  if (rel.startsWith("pulls?")) {
+    const planted = path.join(state, "pulls.json");
+    console.log(fs.existsSync(planted) ? fs.readFileSync(planted, "utf8") : "[]");
+    process.exit(0);
+  }
+  // A job's log, for the failing e2e specs a watch names (#736).
+  const log = /^actions\\/jobs\\/(\\d+)\\/logs$/.exec(rel);
+  if (log !== null) {
+    const planted = path.join(state, "log-" + log[1] + ".txt");
+    if (fs.existsSync(planted)) { process.stdout.write(fs.readFileSync(planted, "utf8")); process.exit(0); }
+    console.error("HTTP 404"); process.exit(1);
+  }
   // A commit's CI: the workflow runs and jobs the test planted, or none.
   const runs = /^actions\\/workflows\\/([a-z0-9.-]+)\\/runs\\?head_sha=([0-9a-f]+)/.exec(rel);
   const jobs = /^actions\\/runs\\/(\\d+)\\/jobs/.exec(rel);
@@ -293,6 +308,8 @@ async function startHubd(remaining, before) {
     HUBD_HEARTBEAT_MS: "200",
     // Short, so a batch of new issues reaches the manager in the test (#550).
     HUBD_NEW_ISSUES_WINDOW_MS: "4000",
+    // Short, so a watch answers within the test (#736).
+    HUBD_WATCH_POLL_MS: "300",
   };
   const child = spawn(process.execPath, [HUBD], { env, stdio: ["ignore", "ignore", "pipe"] });
   running.push({ child, dir });
@@ -2202,6 +2219,7 @@ describe("hubd scheduling a company reboot", () => {
       to: "all",
       text: String(asked.stdout).trim(),
       nudge: null,
+      direct: false,
     });
     expect(JSON.parse(fs.readFileSync(record, "utf8"))).toMatchObject({
       reason: "load #21",
@@ -2477,4 +2495,286 @@ describe("hub schedule (#678)", () => {
     const told = outbox(hubd).filter((m) => m.text.startsWith("Your own schedules were discarded"));
     expect(told.map((m) => m.to).sort()).toEqual(["architect", "lead-dev", "manager"]);
   }, 20_000);
+});
+
+describe("hubd watching CI for an agent (#736)", () => {
+  /** @param {string} name @param {string} conclusion @param {string} status */
+  const job = (name, conclusion = "success", status = "completed", id = 1) => ({
+    id,
+    name,
+    status,
+    conclusion,
+  });
+  /**
+   * CI on a commit, every workflow the merge gate reads, green unless `e2e`
+   * says otherwise.
+   *
+   * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+   * @param {string} sha
+   * @param {{ e2e?: Record<string, unknown>, running?: boolean }} [how]
+   */
+  const ran = (hubd, sha, how = {}) => {
+    const run = how.running === true ? { status: "in_progress", conclusion: null } : {};
+    hubd.setCi(sha, "ci.yml", {
+      id: 100,
+      jobs: [job("ci"), how.e2e ?? job("e2e", "success", "completed", 7)],
+      run: how.e2e === undefined ? run : { ...run, conclusion: "failure" },
+    });
+    hubd.setCi(sha, "dependency-review.yml", { id: 200, jobs: [job("dependency-review")] });
+    hubd.setCi(sha, "e2e-repeat.yml", { id: 400, jobs: [job("e2e-repeat (1)")] });
+    hubd.setCi(sha, "codeql.yml", { id: 500, jobs: [job("analyze")] });
+  };
+  /**
+   * What the system outbox holds for exactly one employee, in order. Only
+   * `direct` entries count: a watch's answer is that employee's alone, and
+   * never mirrored to Telegram.
+   *
+   * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+   * @param {string} to
+   * @returns {string[]}
+   */
+  const told = (hubd, to) => {
+    const outbox = path.join(hubd.root, "bus", "_system", "outbox");
+    if (!fs.existsSync(outbox)) {
+      return [];
+    }
+    return fs
+      .readdirSync(outbox)
+      .filter((name) => name.endsWith(".json"))
+      .sort()
+      .map((name) => readJson(path.join(outbox, name)))
+      .filter((message) => message.to === to && message.direct === true)
+      .map((message) => String(message.text));
+  };
+  /** @param {Awaited<ReturnType<typeof startHubd>>} hubd */
+  const watchesFile = (hubd) => path.join(hubd.hub, "watches.json");
+
+  it("answers at once, then tells the asker once when CI passes, with the note", async () => {
+    const hubd = await startHubd(5000);
+    hubd.expectChecks(["ci"]);
+    ran(hubd, "abc1234def", { running: true });
+
+    const answer = await hubd.request("developer", "watch", ["ci", "9", "--note", "then", "QA"]);
+    expect(answer.code, String(answer.reason)).toBe(0);
+    expect(String(answer.stdout)).toMatch(/^watching #9 @ abc1234 \(w[0-9a-f]{6}\)/);
+    const listed = await hubd.request("developer", "watch", ["ls"]);
+    expect(String(listed.stdout)).toContain("ci #9 @ abc1234");
+    expect(String((await hubd.request("developer@2", "watch", ["ls"])).stdout)).toBe(
+      "no watches\n",
+    );
+
+    await sleep(1000);
+    expect(told(hubd, "developer")).toEqual([]);
+    ran(hubd, "abc1234def");
+    await hubd.until(() => told(hubd, "developer").length > 0, "the watch to answer");
+    await sleep(800);
+    expect(told(hubd, "developer")).toEqual(["CI on #9 @ abc1234: PASS.\nyour note: then QA"]);
+    expect(JSON.parse(fs.readFileSync(watchesFile(hubd), "utf8"))).toEqual([]);
+  }, 30_000);
+
+  it("names the failing job and the e2e specs its log names", async () => {
+    const hubd = await startHubd(5000);
+    hubd.expectChecks(["ci", "e2e"]);
+    ran(hubd, "abc1234def", { e2e: job("e2e", "failure", "completed", 7) });
+    fs.writeFileSync(
+      path.join(hubd.state, "log-7.txt"),
+      [
+        "2026-10-26T21:00:00.0000000Z Running 40 tests",
+        "2026-10-26T21:05:00.0000000Z   1) [chromium] › e2e/builds.spec.ts:172:1 › the library shows icons ───",
+        "2026-10-26T21:05:00.0000000Z     Error: expect(received).toBe(expected)",
+      ].join("\n"),
+    );
+
+    await hubd.request("developer", "watch", ["ci", "9"]);
+    await hubd.until(() => told(hubd, "developer").length > 0, "the watch to answer");
+
+    const [message = ""] = told(hubd, "developer");
+    expect(message).toMatch(/^CI on #9 @ abc1234: FAIL\. ci\.yml run 100 ended failure/);
+    expect(message).toContain("- e2e (failure)");
+    expect(message).toContain("  e2e/builds.spec.ts:172 › the library shows icons");
+    expect(message).toContain("Error: expect(received).toBe(expected)");
+  }, 30_000);
+
+  it("follows a new push, saying so, and ends when the pull request closes", async () => {
+    const hubd = await startHubd(5000);
+    ran(hubd, "abc1234def", { running: true });
+    await hubd.request("developer", "watch", ["ci", "9"]);
+
+    fs.writeFileSync(
+      path.join(hubd.state, "pull-9.json"),
+      JSON.stringify({ head: { ref: "bot/x", sha: "fedcba9876" } }),
+    );
+    await hubd.until(() => told(hubd, "developer").length > 0, "the supersede");
+    expect(told(hubd, "developer")[0]).toBe(
+      "CI on #9 @ abc1234: superseded by fedcba9, watching that.",
+    );
+
+    fs.writeFileSync(
+      path.join(hubd.state, "pull-9.json"),
+      JSON.stringify({ state: "closed", head: { ref: "bot/x", sha: "fedcba9876" } }),
+    );
+    await hubd.until(() => told(hubd, "developer").length > 1, "the close");
+    expect(told(hubd, "developer")[1]).toBe("#9 was closed; stopped watching CI on #9 @ fedcba9.");
+  }, 30_000);
+
+  it("reads one head once a poll for two employees watching it", async () => {
+    const hubd = await startHubd(5000);
+    ran(hubd, "abc1234def", { running: true });
+    await hubd.request("developer", "watch", ["ci", "9"]);
+    await hubd.request("developer@2", "watch", ["ci", "9"]);
+    await sleep(1500);
+    const polls = hubd.calls("api repos/Enteee/VibeWars/pulls/9");
+    expect(polls).toBeGreaterThan(1);
+    // Each poll lists ci.yml's runs once, whoever is waiting.
+    expect(
+      hubd.calls("api repos/Enteee/VibeWars/actions/workflows/ci.yml/runs"),
+    ).toBeLessThanOrEqual(polls);
+  }, 30_000);
+
+  it("keeps its watches over a restart, and ends one past its cap", async () => {
+    const hubd = await startHubd(5000, ({ root }) => {
+      fs.mkdirSync(path.join(root, "hub"), { recursive: true });
+      fs.writeFileSync(
+        path.join(root, "hub", "watches.json"),
+        JSON.stringify([
+          {
+            id: "wabc123",
+            employee: "developer",
+            kind: "ci",
+            pr: 9,
+            sha: "abc1234def",
+            note: null,
+            created: Date.now() - 91 * 60_000,
+          },
+        ]),
+      );
+    });
+    ran(hubd, "abc1234def", { running: true });
+    await hubd.until(() => told(hubd, "developer").length > 0, "the cap");
+    expect(told(hubd, "developer")).toEqual([
+      "CI on #9 @ abc1234 did not finish within 90 min; stopped watching.",
+    ]);
+  }, 30_000);
+
+  it("discards a watches file in another shape, and tells whoever it names", async () => {
+    const hubd = await startHubd(5000, ({ root }) => {
+      fs.mkdirSync(path.join(root, "hub"), { recursive: true });
+      fs.writeFileSync(
+        path.join(root, "hub", "watches.json"),
+        JSON.stringify([{ id: "w1", employee: "developer@2", pr: "9" }]),
+      );
+    });
+    await hubd.until(() => told(hubd, "developer@2").length > 0, "the owner to be told");
+    expect(told(hubd, "developer@2")[0]).toMatch(/discarded it; register your watches again/);
+    expect(fs.existsSync(watchesFile(hubd))).toBe(false);
+  }, 30_000);
+
+  it("refuses bad words, and removes only the asker's own watch", async () => {
+    const hubd = await startHubd(5000);
+    ran(hubd, "abc1234def", { running: true });
+    expect((await hubd.request("developer", "watch", ["ci", "nine"])).code).toBe(77);
+    expect((await hubd.request("developer", "watch", ["run", "echo"])).code).toBe(77);
+    const answer = await hubd.request("developer", "watch", ["ci", "9"]);
+    const id = /\((w[0-9a-f]{6})\)/.exec(String(answer.stdout))?.[1] ?? "";
+    expect((await hubd.request("developer@2", "watch", ["rm", id])).code).toBe(77);
+    expect((await hubd.request("developer", "watch", ["rm", id])).code).toBe(0);
+    expect(String((await hubd.request("developer", "watch", ["ls"])).stdout)).toBe("no watches\n");
+  }, 30_000);
+});
+
+describe("hubd and the In Review gate (#736)", () => {
+  const TO_REVIEW = [
+    "project",
+    "item-edit",
+    "--id",
+    "PVTI_8",
+    "--project-id",
+    "PVT_2",
+    "--field-id",
+    "F_status",
+    "--single-select-option-id",
+    "o_review",
+  ];
+  /** @param {Awaited<ReturnType<typeof startHubd>>} hubd @param {string} conclusion @param {string} status */
+  const ran = (hubd, conclusion, status = "completed") => {
+    for (const [file, id, name] of /** @type {const} */ ([
+      ["ci.yml", 100, "ci"],
+      ["dependency-review.yml", 200, "dependency-review"],
+      ["e2e-repeat.yml", 400, "e2e-repeat (1)"],
+      ["codeql.yml", 500, "analyze"],
+    ])) {
+      hubd.setCi("abc1234def", file, {
+        id,
+        jobs: [{ name, status, conclusion: name === "ci" ? conclusion : "success" }],
+      });
+    }
+  };
+  /**
+   * An open pull request as REST lists it.
+   *
+   * @param {number} number
+   * @param {string} body
+   * @param {string} sha
+   * @param {string} login
+   */
+  const pull = (number, body, sha, login) => ({
+    number,
+    body,
+    head: { sha },
+    html_url: `https://github.com/Enteee/VibeWars/pull/${String(number)}`,
+    user: { login },
+  });
+  /** @param {Awaited<ReturnType<typeof startHubd>>} hubd */
+  const openPull = (hubd) => {
+    fs.writeFileSync(
+      path.join(hubd.state, "pulls.json"),
+      JSON.stringify([
+        pull(9, "Polish.\n\nCloses #8\n", "abc1234def", "Enteee"),
+        pull(12, "Closes #80", "0000000000", "Enteee"),
+      ]),
+    );
+  };
+
+  it("refuses a card no open pull request of the company's closes", async () => {
+    const hubd = await startHubd(5000);
+    // An outsider's PR that says it closes #8 does not count: it could
+    // otherwise hold any card out of In Review.
+    fs.writeFileSync(
+      path.join(hubd.state, "pulls.json"),
+      JSON.stringify([pull(13, "Closes #8", "abc1234def", "drive-by")]),
+    );
+    await hubd.request("developer", "gh", BOARD_READ);
+    const refused = await hubd.request("developer", "gh", TO_REVIEW);
+    expect(refused.code).toBe(77);
+    expect(String(refused.reason)).toContain(
+      'no open PR closes #8: open one whose body says "Closes #8"',
+    );
+  }, 20_000);
+
+  it("refuses while CI is red or running, naming hub watch ci, and moves it once green", async () => {
+    const hubd = await startHubd(5000);
+    // The board stays known: only the expected checks change.
+    const config = path.join(hubd.root, "company.json");
+    fs.writeFileSync(config, JSON.stringify({ ...readJson(config), expectedChecks: ["ci"] }));
+    openPull(hubd);
+    await hubd.request("developer", "gh", BOARD_READ);
+
+    ran(hubd, "failure");
+    const red = await hubd.request("developer", "gh", TO_REVIEW);
+    expect(red.code).toBe(77);
+    expect(String(red.reason)).toContain("In Review needs green CI on PR #9");
+    expect(String(red.reason)).toContain("failing: ci (failure)");
+    expect(String(red.reason)).toContain("hub watch ci 9");
+
+    ran(hubd, "", "in_progress");
+    const pending = await hubd.request("developer", "gh", TO_REVIEW);
+    expect(pending.code).toBe(77);
+    expect(String(pending.reason)).toContain("hub watch ci 9");
+
+    ran(hubd, "success");
+    expect((await hubd.request("developer", "gh", TO_REVIEW)).code).toBe(0);
+    expect(printed(await hubd.request("developer", "board", ["show", "8"])).card).toMatchObject({
+      status: "In Review",
+    });
+  }, 30_000);
 });
