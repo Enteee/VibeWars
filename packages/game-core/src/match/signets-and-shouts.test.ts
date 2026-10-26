@@ -101,7 +101,7 @@ describe("Healing Signet (#524)", () => {
     applyEffects([{ kind: "interrupt" }], {
       caster: get(match, "foe").combatant,
       target: w,
-      rng: createRng("interrupt"),
+      rng: createRng(524),
       rules: RULES.combat,
     });
     expect(armorOf(w)).toBe(before);
@@ -123,7 +123,7 @@ describe("Healing Signet (#524)", () => {
     applyEffects([{ kind: "knockdown", durationSeconds: 2 }], {
       caster: get(match, "foe").combatant,
       target: w,
-      rng: createRng("knockdown"),
+      rng: createRng(524),
       rules: RULES.combat,
     });
     expect(armorOf(w)).toBe(before);
