@@ -38,8 +38,25 @@ import {
  *
  * Add, remove, reorder and rename change the team in memory and stay on
  * screen; nothing is stored until Save, which `validateTeam` gates. Back
- * with unsaved edits, and Delete always, ask inline first.
+ * with unsaved edits, and Delete always, ask inline first. A member's name
+ * opens them in the build editor, and the way back hands the editor its
+ * own state again (#576), so nothing unsaved is lost on the trip.
  */
+
+/** Everything the editor holds that is not stored, to leave and come back to. */
+export interface TeamEditorState {
+  /** The team as opened or last saved: what "unsaved" compares against. */
+  readonly opened: StoredTeam;
+  /** The team as edited. */
+  readonly team: StoredTeam;
+  /** False for a new team, which nothing has stored yet. */
+  readonly stored: boolean;
+}
+
+/** The editor's state for `team`, fresh from the list or a new one. */
+export function openedTeam(team: StoredTeam, stored: boolean): TeamEditorState {
+  return { opened: team, team, stored };
+}
 
 export interface TeamEditorCallbacks {
   /** Store the team; the editor stays open once it has. */
@@ -48,6 +65,8 @@ export interface TeamEditorCallbacks {
   readonly onDelete: (id: string) => void;
   /** Leave the editor, without storing anything. */
   readonly onClose: () => void;
+  /** Open a member in the build editor; `state` is what to come back to. */
+  readonly onOpenMember: (characterId: string, state: TeamEditorState) => void;
 }
 
 export interface TeamEditorView {
@@ -180,15 +199,13 @@ export function dragMember(team: StoredTeam, from: number, to: number): StoredTe
 
 export function mountTeamEditor(
   root: HTMLElement,
-  initial: StoredTeam,
+  initial: TeamEditorState,
   characters: readonly StoredCharacter[],
   callbacks: TeamEditorCallbacks,
-  /** False for a new team, which nothing has stored yet. */
-  stored: boolean,
 ): TeamEditorView {
-  let team = initial;
-  let opened = initial;
-  let isStored = stored;
+  let team = initial.team;
+  let opened = initial.opened;
+  let isStored = initial.stored;
   let asking: InlineConfirm | undefined;
   let disposed = false;
 
@@ -316,7 +333,10 @@ export function mountTeamEditor(
     const who = h("span", "team-row-character");
     who.append(
       h("span", "team-row-dot"),
-      h("span", "team-row-name"),
+      button("", "team-row-name", () => {
+        asking?.dismiss();
+        callbacks.onOpenMember(characterId, { opened, team, stored: isStored });
+      }),
       h("span", "team-row-professions"),
       h("span", "team-row-attributes"),
     );
@@ -471,6 +491,11 @@ export function mountTeamEditor(
         setText(".team-row-index", String(index + 1));
         setText(".team-row-name", character?.name ?? "(missing character)");
         row.classList.toggle("is-missing", character === undefined);
+        const name = row.querySelector<HTMLButtonElement>(".team-row-name");
+        if (name !== null) {
+          name.disabled = character === undefined;
+          name.title = character === undefined ? "" : `edit ${character.name} in the build editor`;
+        }
         // A missing character can only be removed: no bar, no moving it.
         row.draggable = character !== undefined;
         if (character !== undefined) {

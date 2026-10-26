@@ -1,5 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import { chooseProfession } from "./helpers/professions.js";
+
 /**
  * The Options screen (#423) and its Controls section (#309): what only a
  * browser can tell is that a key bound there is the key the Training Ground
@@ -39,7 +41,7 @@ test("(1) Skill 1 bound to Z in Controls casts on Z, not Q, and survives a reloa
   await expect(page.locator(".options-screen")).toHaveCount(0);
 
   await page.getByRole("button", { name: "new character" }).click();
-  await page.locator(".editor-row select").first().selectOption("elementalist");
+  await chooseProfession(page, "primary", "elementalist");
   await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
   await expect(page.locator(".training-skill").first()).toHaveText("ZFireball");
   await page.locator(".training-stage").click({ position: { x: 12, y: 12 } });

@@ -232,7 +232,13 @@ The test used headful Chromium with `--autoplay-policy=document-user-activation-
 then `AudioContext.resume()` in the host, and the context reaches
 `running`. `allow="autoplay"` passes the user activation on to the frame.
 
-Firefox and Safari were not tested: neither is in the dev shell.
+2026-10-26 (#612, Q74): the operator ran `pnpm dev` in desktop Firefox with
+default prefs. Music played on the main menu after the first click and carried
+on in the Training Ground. `allow="autoplay"` and the click → `postMessage` →
+`resume()` path work there too. The headless harness hung only because it
+lacked `libpulse` (fixed in PR 617, see §8).
+
+Safari has not been tested.
 
 ### 7. Under load, and what it changed (#420)
 

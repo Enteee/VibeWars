@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { codeLabel } from "../apps/web/src/input/keymap.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
+import { chooseProfession, professionField } from "./helpers/professions.js";
 import { startSoloMatch } from "./helpers/peers.js";
 import { skillKey } from "./keys.js";
 
@@ -319,6 +320,41 @@ test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places le
   await expect(memberNames(page)).toHaveText(["Alpha", "Bravo", "Charlie"]);
 });
 
+test("a member opens in the build editor and comes back to the unsaved team (#576)", async ({
+  page,
+}) => {
+  await saveCharacters(page, ["Alpha", "Bravo"]);
+  await page.getByRole("button", { name: "teams" }).click();
+  await page.getByRole("button", { name: "new team" }).click();
+  await page.getByLabel("team name").fill("Trip");
+  await page.getByRole("button", { name: "add Alpha" }).click();
+  await page.getByRole("button", { name: "add Bravo" }).click();
+  await memberRows(page).nth(1).getByRole("button", { name: "move up" }).click();
+  await expect(memberNames(page)).toHaveText(["Bravo", "Alpha"]);
+
+  // Equip one skill on Alpha in the build editor, and save.
+  const alphaCells = memberRows(page).nth(1).locator(".team-skill:not(.is-empty)");
+  const before = await alphaCells.count();
+  await page.getByRole("button", { name: "Alpha", exact: true }).click();
+  await expect(page.locator("input.editor-name")).toHaveValue("Alpha");
+  await page.locator(".skill-box").first().locator(".skill-box-equip").click();
+  await page.getByRole("button", { name: "save", exact: true }).click();
+
+  // The team as it was left, still unsaved, with Alpha's new bar.
+  await expect(page.getByLabel("team name")).toHaveValue("Trip");
+  await expect(memberNames(page)).toHaveText(["Bravo", "Alpha"]);
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+  await expect(alphaCells).toHaveCount(before + 1);
+
+  // Deleted from the build editor: the row is a missing character.
+  await page.getByRole("button", { name: "Bravo", exact: true }).click();
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "delete", exact: true }).click();
+  await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
+  await expect(memberNames(page)).toHaveText(["(missing character)", "Alpha"]);
+  await expect(page.getByLabel("team name")).toHaveValue("Trip");
+});
+
 test("a build exports to text and imports back", async ({ page }) => {
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Shared Build");
@@ -376,7 +412,7 @@ test("a saved character can be chosen and is taken into a match", async ({ page 
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Pyro");
 
-  await page.locator(".editor-row select").first().selectOption("elementalist");
+  await chooseProfession(page, "primary", "elementalist");
   await pip(page.locator(".editor-attribute").first(), 1).click();
   await page.locator(".skill-box").first().locator(".skill-box-equip").click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
@@ -402,7 +438,7 @@ test("in a match, an empty slot's key does nothing; the next key casts its own s
 }) => {
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Gap");
-  await page.locator(".editor-row select").first().selectOption("elementalist");
+  await chooseProfession(page, "primary", "elementalist");
   // Armor of Earth on E, the third slot, with nothing on Q or W.
   await page
     .locator(".skill-box", { hasText: "Armor of Earth" })
@@ -439,7 +475,7 @@ test("a second elite replaces the first on the bar, framed in gold, into the mat
 }) => {
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Elite");
-  await page.locator(".editor-row select").first().selectOption("ranger");
+  await chooseProfession(page, "primary", "ranger");
 
   await expect(page.locator(".skill-box.is-elite", { hasText: "Barrage" })).toBeVisible();
   await expect(page.locator(".skill-box.is-elite", { hasText: "Troll Unguent" })).toHaveCount(0);
@@ -482,7 +518,7 @@ test("in a match, Glyph of Lesser Energy shows Armor of Earth's discounted cost,
   test.setTimeout(90_000);
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Glyph");
-  await page.locator(".editor-row select").first().selectOption("elementalist");
+  await chooseProfession(page, "primary", "elementalist");
   await page
     .locator(".skill-box", { hasText: "Glyph of Lesser Energy" })
     .dragTo(page.locator(".skill-slot").nth(0));
@@ -517,8 +553,8 @@ test("in a match, Glyph of Lesser Energy shows Armor of Earth's discounted cost,
 async function openElementalist(page: Page): Promise<void> {
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Pyro");
-  await page.locator(".editor-row select").first().selectOption("elementalist");
-  await page.locator(".editor-row select").nth(1).selectOption("monk");
+  await chooseProfession(page, "primary", "elementalist");
+  await chooseProfession(page, "secondary", "monk");
 }
 
 test("the skill library lists skills grouped by attribute", async ({ page }) => {
@@ -584,7 +620,7 @@ test("hovering a skill shows a tooltip whose numbers follow the attribute", asyn
 
 test("the primary attribute's row says what it does at its rank (#531)", async ({ page }) => {
   await newCharacter(page);
-  await page.locator(".editor-row select").first().selectOption("mesmer");
+  await chooseProfession(page, "primary", "mesmer");
 
   const fastCasting = page.locator(".editor-attribute", { hasText: "Fast Casting" });
   await expect(fastCasting.locator(".editor-attribute-effect")).toHaveCount(0);
@@ -931,7 +967,7 @@ test("the skill library keeps its scroll through an equip, a rank, a profession 
   const fireball = page.locator('.skill-box[data-skill-id="elementalist.fireball"]');
   const onScreen = async (): Promise<number> => (await fireball.boundingBox())?.y ?? Number.NaN;
   const before = await onScreen();
-  await page.locator(".editor-row select").nth(1).selectOption("warrior");
+  await chooseProfession(page, "secondary", "warrior");
   await expect(page.locator(".skill-group", { hasText: "TACTICS" })).toHaveCount(1);
   expect(Math.abs((await onScreen()) - before)).toBeLessThanOrEqual(1);
   const reshuffled = await libraryScroll(page);
@@ -1074,7 +1110,7 @@ const slotLabel = (slot: number): string => codeLabel(skillKey(slot));
 /** A Warrior/Elementalist with all eight slots filled, by clicking the first eight skills. */
 async function fullBar(page: Page): Promise<void> {
   await newCharacter(page);
-  await page.locator(".editor-row select").nth(1).selectOption("elementalist");
+  await chooseProfession(page, "secondary", "elementalist");
   for (let slot = 0; slot < 8; slot++) {
     await page.locator(".skill-box:not(.is-equipped)").first().locator(".skill-box-equip").click();
   }
@@ -1157,7 +1193,7 @@ test("a picked slot is let go by a second click or Esc (#564)", async ({ page })
 
   // Another profession is another bar: the pick goes with it.
   await slot.click();
-  await page.locator(".editor-row select").first().selectOption("elementalist");
+  await chooseProfession(page, "primary", "elementalist");
   await expect(page.locator(".skill-slot.is-selected")).toHaveCount(0);
 });
 
@@ -1280,4 +1316,50 @@ test("type chips filter the library, several at once, and search reads the text 
   await expect(names).toContainText(["Orison of Healing"]);
   await page.locator(".skill-search").fill("zzzz");
   await expect(page.locator(".skill-library-empty")).toBeVisible();
+});
+
+test("the profession grid says what each keeps, and a cell picks it (#568)", async ({ page }) => {
+  await openElementalist(page);
+  // Fireball (elementalist) and Orison of Healing (monk) on the bar.
+  for (const name of ["Fireball", "Orison of Healing"]) {
+    await page.locator(".skill-box", { hasText: name }).locator(".skill-box-equip").click();
+  }
+  await professionField(page, "secondary").click();
+  const grid = page.locator(".profession-grid:not([hidden])");
+  await expect(grid).toBeVisible();
+  // The primary is not offered as a secondary; the current one is marked.
+  await expect(grid.locator('[data-profession="elementalist"]')).toHaveCount(0);
+  await expect(grid.locator('[data-profession="monk"]')).toHaveAttribute("aria-current", "true");
+  await expect(grid.locator('[data-profession="monk"]')).toContainText("keeps 2 of 2 skills");
+  await expect(grid.locator('[data-profession="ranger"]')).toContainText("keeps 1 of 2 skills");
+  await expect(grid.locator('[data-profession="none"]')).toContainText("keeps 1 of 2 skills");
+  // Esc closes it and changes nothing.
+  await page.keyboard.press("Escape");
+  await expect(grid).toBeHidden();
+  await expect(professionField(page, "secondary")).toHaveAttribute("data-value", "monk");
+
+  await chooseProfession(page, "secondary", "ranger");
+  await expect(professionField(page, "secondary")).toHaveAttribute("data-value", "ranger");
+  await expect(page.locator(".skill-slot", { hasText: "Orison of Healing" })).toHaveCount(0);
+});
+
+test("other professions' skills are listed, locked, with what they need (#568)", async ({
+  page,
+}) => {
+  await openElementalist(page);
+  const locked = page.locator(".skill-locked");
+  await expect(locked.locator("summary")).toHaveText(/^Other professions \(\d+\)$/);
+  // Collapsed until asked for.
+  await expect(locked.locator(".skill-locked-box").first()).toBeHidden();
+  await locked.locator("summary").click();
+  const barrage = locked.locator(".skill-locked-box", { hasText: "Barrage" });
+  await expect(barrage).toContainText("needs Ranger");
+  await expect(barrage.locator(".skill-box-equip")).toHaveCount(0);
+  // Its details open as any card's do.
+  await barrage.locator(".skill-box-card").click();
+  await expect(barrage.locator(".skill-box-details")).toBeVisible();
+  // The search narrows it too.
+  await page.locator("input.skill-search").fill("barrage");
+  await expect(locked.locator(".skill-locked-box")).toHaveCount(1);
+  await expect(locked.locator("summary")).toHaveText("Other professions (1)");
 });

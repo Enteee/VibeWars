@@ -23,6 +23,7 @@ import {
   pipTarget,
   rankChange,
   remainingPoints,
+  professionChoices,
   setProfessions,
   setRank,
   equipSkill,
@@ -277,6 +278,47 @@ describe("setProfessions", () => {
     for (const next of ["monk", "ranger", "elementalist", "warrior"] as const) {
       character = setProfessions(character, next, undefined);
       expect(validateBuild(character), next).toEqual([]);
+    }
+  });
+});
+
+describe("professionChoices (#568)", () => {
+  /** A Warrior/Monk with a warrior skill and two monk skills on the bar. */
+  function warriorMonk(): StoredCharacter {
+    let character = setProfessions(newCharacter("c1"), "warrior", "monk");
+    character = setSkill(character, 0, "warrior.sever-artery-lite");
+    character = setSkill(character, 1, "monk.orison-of-healing");
+    return setSkill(character, 2, "monk.guardian");
+  }
+
+  it("says how many of the bar's skills each primary keeps, and offers not the secondary", () => {
+    const choices = professionChoices(warriorMonk(), "primary");
+    const by = new Map(choices.map((choice) => [choice.id, choice]));
+    expect(by.has("monk")).toBe(false);
+    expect(by.get("warrior")).toMatchObject({ keeps: 3, of: 3, current: true });
+    // Another primary loses the warrior skill and keeps the monk's two.
+    expect(by.get("elementalist")).toMatchObject({ keeps: 2, of: 3, current: false });
+    expect(by.get("warrior")?.attributes).toContain("Strength ★");
+  });
+
+  it("offers the secondary's (none) first, and not the primary", () => {
+    const choices = professionChoices(warriorMonk(), "secondary");
+    expect(choices[0]).toMatchObject({ id: undefined, name: "(none)", keeps: 1, of: 3 });
+    const by = new Map(choices.map((choice) => [choice.id, choice]));
+    expect(by.has("warrior")).toBe(false);
+    expect(by.get("monk")).toMatchObject({ keeps: 3, current: true });
+    expect(by.get("ranger")).toMatchObject({ keeps: 1, current: false });
+    // A secondary brings no primary attribute.
+    expect(by.get("monk")?.attributes.some((name) => name.endsWith("★"))).toBe(false);
+  });
+
+  it("keeps what setProfessions keeps, cell for cell", () => {
+    const character = warriorMonk();
+    for (const choice of professionChoices(character, "secondary")) {
+      const next = setProfessions(character, character.primaryProfession, choice.id);
+      expect(choice.keeps, String(choice.id)).toBe(
+        next.skillBar.filter((id) => id !== null).length,
+      );
     }
   });
 });

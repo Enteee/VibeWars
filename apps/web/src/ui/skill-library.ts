@@ -1,6 +1,7 @@
 import {
   PROFESSIONS,
   describeSkill,
+  type ProfessionId,
   type Skill,
   type SkillDescription,
   type SkillType,
@@ -61,6 +62,18 @@ export function skillTypesOf(
 ): readonly SkillType[] {
   const present = new Set(skills.map((skill) => skill.type));
   return order.filter((type) => present.has(type));
+}
+
+/**
+ * The library's locked group (#568): the skills of professions you do not
+ * have, in catalogue order, each a reason to try another profession.
+ */
+export function lockedSkills(
+  skills: readonly Skill[],
+  primary: ProfessionId,
+  secondary: ProfessionId | undefined,
+): readonly Skill[] {
+  return skills.filter((skill) => skill.profession !== primary && skill.profession !== secondary);
 }
 
 /** The library's "Elite" toggle (#459): elite skills only, in order. */
