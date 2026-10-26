@@ -1,4 +1,5 @@
 import {
+  describePrimaryAttribute,
   describeSkill,
   MAX_ATTRIBUTE_RANK,
   MINIMAL_GW_INSPIRED_PVP_V1,
@@ -527,6 +528,11 @@ function mountAttributes(panel: HTMLElement, context: EditorContext): Region {
           const [name, minus, rankText, plus] = Array.from(row.children);
           if (name !== undefined) {
             name.textContent = `${definition?.name ?? attributeId}${definition?.isPrimary === true ? " ★" : ""}`;
+            // What the primary does at this rank (#531), under its name.
+            const effect = describePrimaryAttribute(attributeId, rank);
+            if (effect !== undefined) {
+              name.appendChild(h("span", "editor-attribute-effect", effect));
+            }
           }
           if (rankText !== undefined) {
             rankText.textContent = String(rank);

@@ -147,6 +147,8 @@ export default defineConfig([
   },
 
   // The client plays peer to peer (#403): nothing in it talks to Colyseus.
+  // Nor does it reach the game-maps root, whose loader reads `maps/` with
+  // node:fs and kills the page under vite dev (#646): only its subpaths.
   {
     files: ["apps/web/src/**/*.ts"],
     ignores: [
@@ -157,6 +159,13 @@ export default defineConfig([
       "no-restricted-imports": [
         "error",
         {
+          paths: [
+            {
+              name: "@vibewars/game-maps",
+              message:
+                "The root loads maps with node:fs. In apps/web import /geometry, /schema, /maps/* or /training/*.",
+            },
+          ],
           patterns: [
             {
               group: ["@colyseus/*"],
