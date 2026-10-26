@@ -33,6 +33,7 @@ export type TrainingMechanic =
   | "auto-attacks"
   | "dodging"
   | "blocking"
+  | "area-damage"
   | MissingMechanic;
 
 /** One setting a scenario offers, generated into the editor's sub-controls. */
@@ -99,6 +100,39 @@ function target(id: string, label: string, position: Vec2, armor: number): Train
     behaviour: IDLE,
   };
 }
+
+/**
+ * Fireball's cluster (#111): a centre at (380, 210) and four 50 away
+ * round it, all inside its splash (AREA_NEARBY, 81) when the centre is
+ * hit, and bodies apart (two radii, 28) so none is pushed out of place.
+ */
+const CLUSTER_CENTRE = vec2(380, 210);
+const CLUSTER: readonly TrainingDummy[] = [
+  target("centre", "Centre (60 armor)", CLUSTER_CENTRE, 60),
+  target("east", "East (60 armor)", vec2(430, 210), 60),
+  target("north", "North (60 armor)", vec2(380, 160), 60),
+  target("west", "West (60 armor)", vec2(330, 210), 60),
+  target("south", "South (60 armor)", vec2(380, 260), 60),
+];
+
+/**
+ * Barrage's pack (#111): seven on a ring 36 round the centre, every one
+ * adjacent to it (AREA_ADJACENT, 40), and at least 30 from each other.
+ */
+const PACK: readonly TrainingDummy[] = [
+  target("centre", "Centre (60 armor)", CLUSTER_CENTRE, 60),
+  ...[
+    vec2(416, 210),
+    vec2(402, 238),
+    vec2(372, 245),
+    vec2(348, 226),
+    vec2(348, 194),
+    vec2(372, 175),
+    vec2(402, 182),
+  ].map((position, i) =>
+    target(`ring-${String(i + 1)}`, `Ring ${String(i + 1)} (60 armor)`, position, 60),
+  ),
+];
 
 /** A dummy's gear: its armor, and its weapon if it has one. */
 function dummyEquipment(dummy: TrainingDummy): ResolvedEquipment {
@@ -278,6 +312,44 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
           firstLegal: true,
         },
       },
+    ],
+  },
+  {
+    id: "aoe-cluster",
+    label: "Area: the cluster",
+    teaches:
+      "That a splash centres on its target: a Fireball at the centre burns all five, and neither straggler.",
+    mapId: "training-hall",
+    exercises: ["spell-damage", "area-damage"],
+    knobs: [],
+    // The stragglers stand 120 from the centre, outside its 81.
+    dummies: [
+      ...CLUSTER,
+      target("straggler-north", "Straggler north (60 armor)", vec2(380, 90), 60),
+      target("straggler-south", "Straggler south (60 armor)", vec2(380, 330), 60),
+    ],
+  },
+  {
+    id: "aoe-cap",
+    label: "Area: the cap",
+    teaches: "That Barrage stops at six: eight packed together, and two are always spared.",
+    mapId: "training-hall",
+    exercises: ["auto-attacks", "area-damage"],
+    knobs: [],
+    dummies: PACK,
+  },
+  {
+    id: "aoe-friendly-fire",
+    label: "Area: friendly fire",
+    teaches: "That a splash never hurts your own side: the ally in the cluster takes nothing.",
+    mapId: "training-hall",
+    exercises: ["spell-damage", "area-damage"],
+    knobs: [],
+    // In the gap between east and south, 49 from the centre: well inside
+    // the splash, and bodies apart from both.
+    dummies: [
+      ...CLUSTER,
+      { ...target("ally", "Ally (60 armor)", vec2(415, 245), 60), team: PLAYER_TEAM },
     ],
   },
 ];
