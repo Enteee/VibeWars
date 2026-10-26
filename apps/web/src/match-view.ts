@@ -91,8 +91,6 @@ export function toArenaSnapshot(
       const shooter = match.players.find((player) => player.sessionId === shot.attackerId);
       return {
         id: shot.id,
-        shooterId: shot.attackerId,
-        weaponShot: shot.skillId === undefined,
         sprite: projectileSprite(shooter?.weaponId, shot.skillId),
         from: shot.from,
         to: shot.to,
@@ -115,7 +113,8 @@ export function toArenaSnapshot(
         position: { x: player.x, y: player.y },
         facing: player.facing,
         weaponId: player.weaponId,
-        attackTargetId: player.attackTargetSessionId,
+        swingElapsed: player.swingElapsed,
+        swingTotal: player.swingTotal,
         offhandId: player.offhandId,
         profession: player.primaryProfession,
         radius: ACTOR_RADIUS,

@@ -2,6 +2,7 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   applyIntent,
   drainAccumulator,
+  swingProgress,
   type MatchSimulation,
   type Participant,
   type ProfessionId,
@@ -61,6 +62,7 @@ function toPlayerSnapshot(
 ): PlayerSnapshot {
   const { combatant } = participant;
   const activeCast = combatant.cast.activeCast;
+  const swing = swingProgress(combatant);
   return {
     sessionId: participant.id,
     name,
@@ -85,6 +87,8 @@ function toPlayerSnapshot(
     castingSkillId: activeCast?.skillId,
     castRemaining: activeCast?.remainingSeconds ?? 0,
     castTotal: activeCast?.totalSeconds ?? 0,
+    swingElapsed: swing.elapsed,
+    swingTotal: swing.total,
     statuses: wireStatuses(combatant.statuses.active).map((status) => status.id),
   };
 }

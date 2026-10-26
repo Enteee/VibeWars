@@ -26,14 +26,10 @@ export interface WeaponMarkLayout extends WeaponMarkGeometry {
 }
 
 /** A wind-up or a strike: the part of a swing that comes before its hit. */
-export type SwingClip =
-  | { readonly phase: "wind-up"; readonly progress: number }
-  | {
-      readonly phase: "strike";
-      readonly progress: number;
-      /** A swing nobody predicted strikes from rest, not from the wind-up. */
-      readonly fromRest: boolean;
-    };
+export interface SwingClip {
+  readonly phase: "wind-up" | "strike";
+  readonly progress: number;
+}
 
 /**
  * Where the weapon is in a swing. `progress` runs 0 … 1 through the phase;
@@ -216,7 +212,7 @@ function poseOf(m: WeaponMotion, clip: AttackClip): Pose {
         easeInOut(m.motion === "bow" ? Math.min(1, clip.progress / BOW_ANCHOR) : clip.progress),
       );
     case "strike":
-      return lerpPose(clip.fromRest ? REST : m.wind, m.strikePose, easeOutCubic(clip.progress));
+      return lerpPose(m.wind, m.strikePose, easeOutCubic(clip.progress));
     case "hold":
       return m.strikePose;
     case "recover":

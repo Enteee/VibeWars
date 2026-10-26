@@ -70,6 +70,29 @@ export function attackDurationSeconds(combatant: Combatant, baseSeconds: number)
   return baseSeconds * aggregateModifiers(combatant.statuses.active).attackDurationMultiplier;
 }
 
+/** The length of this combatant's swing with the weapon it holds, attack speed included. */
+export function swingIntervalSeconds(combatant: Combatant): number {
+  return attackDurationSeconds(
+    combatant,
+    combatant.equipment.mainHand.weapon.attackIntervalSeconds,
+  );
+}
+
+/**
+ * The swing under way, as the wire carries it (#560): seconds into it and
+ * its whole length, the hit landing at the end; both 0 when not attacking.
+ * Paused, `elapsed` holds; a reset starts it at 0 again.
+ */
+export function swingProgress(combatant: Combatant): {
+  readonly elapsed: number;
+  readonly total: number;
+} {
+  const { attack } = combatant;
+  return attack === undefined
+    ? { elapsed: 0, total: 0 }
+    : { elapsed: attack.swingElapsed, total: swingIntervalSeconds(combatant) };
+}
+
 /** The attacker's rank in `attributeId`: 0 for fists, which have none. */
 function rankIn(attacker: Combatant, attributeId: string | undefined): number {
   return attributeId === undefined ? 0 : (attacker.attributeRanks.get(attributeId) ?? 0);

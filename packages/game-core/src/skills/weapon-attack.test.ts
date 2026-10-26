@@ -16,6 +16,7 @@ import {
   doubleStrikeChance,
   resolveAttackSkill,
   resolveSwing,
+  swingProgress,
   weaponSnapshotOf,
 } from "./weapon-attack.js";
 import type { Combatant, Skill } from "./types.js";
@@ -830,6 +831,24 @@ describe("attackDurationSeconds", () => {
   it("is the base duration with no attack-speed effect", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
     expect(attackDurationSeconds(sword, 1.33)).toBe(1.33);
+  });
+});
+
+describe("swingProgress (#560)", () => {
+  it("is 0 of 0 when not attacking", () => {
+    expect(swingProgress(attacker(WEAPONS.sword, "warrior.swordsmanship"))).toEqual({
+      elapsed: 0,
+      total: 0,
+    });
+  });
+
+  it("is the swing's elapsed time of the weapon's interval while attacking", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    sword.attack = { targetId: "foe", swingElapsed: 0.4, unreachableSeconds: 0 };
+    expect(swingProgress(sword)).toEqual({
+      elapsed: 0.4,
+      total: WEAPONS.sword.attackIntervalSeconds,
+    });
   });
 });
 
