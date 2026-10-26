@@ -5,7 +5,10 @@ import type {
   CombatBatchMessage as WireCombatBatchMessage,
   CombatMessage as WireCombatMessage,
   MapDescriptor,
+  PeerCall,
   SkillBarSlot,
+  WireCalls,
+  WirePing,
 } from "@vibewars/game-protocol";
 
 /**
@@ -116,6 +119,17 @@ export interface SlotRecharge {
   readonly total: number;
 }
 
+/**
+ * Your team's calls (#443): the foe called, if any, and the live pings,
+ * `remaining` counted down on the match clock to now.
+ */
+export interface CallsSnapshot {
+  readonly target: WireCalls["target"];
+  readonly pings: readonly WirePing[];
+}
+
+export const NO_CALLS: CallsSnapshot = { target: null, pings: [] };
+
 /** A `"combat"` message, its events game-core's. */
 export type CombatMessage = WireCombatMessage<CombatEvent>;
 
@@ -146,5 +160,9 @@ export interface MatchConnection {
   onCastRefused(handler: (message: CastRefusedMessage) => void): void;
   /** This player's recharges right now, one entry per skill-bar slot (#152). */
   getRecharges(): readonly SlotRecharge[];
+  /** Call a foe for your team, or ping a spot (#443). The host may drop it, and says nothing. */
+  sendCall(call: PeerCall): void;
+  /** Your team's calls right now; nobody else's ever reach you. */
+  getCalls(): CallsSnapshot;
   disconnect(): Promise<void>;
 }

@@ -1,5 +1,5 @@
 import type { Vec2 } from "@vibewars/game-core";
-import type { ClientIntent } from "@vibewars/game-protocol";
+import type { ClientIntent, PeerCall } from "@vibewars/game-protocol";
 import type { MatchSnapshot } from "@vibewars/game-session";
 
 import { actorAtPoint, type ArenaSnapshot } from "../render/arena-snapshot.js";
@@ -33,4 +33,59 @@ export function secondaryClickIntents(
     { kind: "target", targetSessionId: hit.id },
     ...(double ? attackClickIntents(snapshot, hit.id) : []),
   ];
+}
+
+/** What a wheel click does (#443). */
+export type MiddleClick =
+  | { readonly kind: "call"; readonly call: PeerCall }
+  | { readonly kind: "watch"; readonly allyId: string }
+  | { readonly kind: "none" };
+
+/**
+ * What a wheel click at `world` means, shared by the match and the
+ * Training Ground: on a living foe, call it for your team; on a living
+ * ally, watch them (or stop); on the ground, ping it. On yourself, on a
+ * corpse, or while you are dead: nothing.
+ */
+export function middleClickAction(
+  snapshot: MatchSnapshot,
+  arena: ArenaSnapshot,
+  world: Vec2,
+): MiddleClick {
+  const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
+  if (self === undefined || self.dead) {
+    return { kind: "none" };
+  }
+  const hit = actorAtPoint(arena, world);
+  if (hit === undefined) {
+    return { kind: "call", call: { kind: "ping", x: world.x, y: world.y } };
+  }
+  const body = snapshot.players.find((player) => player.sessionId === hit.id);
+  if (body === undefined || body.dead || body.sessionId === self.sessionId) {
+    return { kind: "none" };
+  }
+  return body.team === self.team
+    ? { kind: "watch", allyId: body.sessionId }
+    : { kind: "call", call: { kind: "target", targetId: body.sessionId } };
+}
+
+/**
+ * The `call-target` key (#443): your current target, if it is a living
+ * foe and you are alive; otherwise nothing.
+ */
+export function callTargetCall(snapshot: MatchSnapshot): PeerCall | undefined {
+  const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
+  const target = snapshot.players.find((player) => player.sessionId === self?.targetSessionId);
+  if (self === undefined || self.dead || target === undefined || target.dead) {
+    return undefined;
+  }
+  return target.team === self.team ? undefined : { kind: "target", targetId: target.sessionId };
+}
+
+/** The `ping` key (#443): the ground under the pointer, while you are alive. */
+export function pingCall(snapshot: MatchSnapshot, pointer: Vec2 | undefined): PeerCall | undefined {
+  const self = snapshot.players.find((player) => player.sessionId === snapshot.selfSessionId);
+  return self === undefined || self.dead || pointer === undefined
+    ? undefined
+    : { kind: "ping", x: pointer.x, y: pointer.y };
 }
