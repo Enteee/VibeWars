@@ -428,6 +428,15 @@ forget a fired employee. So an agent reaches the supervisor only through
 what hubd lets its role ask for. The reboot records and the lock sit in
 the host bot root, which no jail sees.
 
+**A manager is always running (#384).** The supervisor starts a missing
+manager pane within one sample, backing off to once every five minutes
+after three restarts in ten, and says so in General. A manager that
+crashes on every turn, say from injected text it keeps re-reading, costs
+at most that restart rate, not a stopped company. Only `claude-llc stop`
+on the host holds it down, through the `stopping` file; that file and
+`manager-restarts.json` sit in the host bot root too, so no agent can
+stop the manager or reset its backoff.
+
 Every finding here so far came from **reading a gate with a hostile
 agent in mind**: #26, #39, #47, #57, #61, #67, #73. A change to any file in
 `GATE_PATHS` gets that review, from `perf-sec-qa` and `lead-dev` both.
