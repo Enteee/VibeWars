@@ -236,6 +236,74 @@ function armedArena(played: TrainingScenario, seed: string, weapon: Weapon): Mat
   });
 }
 
+describe("time-to-kill, headless (#111)", () => {
+  it("dies to the player's sword, and is back at full health 2 s later", () => {
+    const sim = armedArena(scenario("time-to-kill"), "ttk", WEAPONS.sword);
+    expect(sim.requestAttack("player", "dummy")).toEqual({ ok: true });
+    let diedAt: number | undefined;
+    let backAt: number | undefined;
+    for (let i = 0; i < Math.round(120 / DT) && backAt === undefined; i += 1) {
+      sim.step(DT);
+      const dummy = sim.get("dummy")?.combatant;
+      if (diedAt === undefined && dummy?.dead === true) {
+        diedAt = i * DT;
+      } else if (diedAt !== undefined && dummy?.dead === false) {
+        backAt = i * DT;
+        expect(dummy.health).toBe(RULES.combat.baseHealth);
+      }
+    }
+    expect(diedAt).toBeDefined();
+    expect((backAt ?? Infinity) - (diedAt ?? 0)).toBeCloseTo(2, 1);
+  });
+});
+
+describe("blind-denial, headless (#111)", () => {
+  it("the blinded archer misses about nine in ten; the other hits every time", () => {
+    const sim = armedArena(scenario("blind-denial"), "blind", WEAPONS.sword);
+    const landed: Record<string, number> = { blinded: 0, control: 0 };
+    const missed: Record<string, number> = { blinded: 0, control: 0 };
+    for (let i = 0; i < Math.round(240 / DT); i += 1) {
+      // Standing still: no arrow is dodged.
+      for (const entry of sim.step(DT).log) {
+        const from = entry.sourceId;
+        if (entry.cause !== "weapon" || from === undefined || !(from in landed)) {
+          continue;
+        }
+        for (const event of entry.events) {
+          landed[from] = (landed[from] ?? 0) + (event.kind === "damage" ? 1 : 0);
+          missed[from] = (missed[from] ?? 0) + (event.kind === "attack-missed" ? 1 : 0);
+        }
+      }
+    }
+    expect(missed.control).toBe(0);
+    expect(landed.control).toBeGreaterThan(50);
+    const shots = (landed.blinded ?? 0) + (missed.blinded ?? 0);
+    expect(shots).toBeGreaterThan(50);
+    expect((missed.blinded ?? 0) / shots).toBeGreaterThan(0.8);
+    expect((missed.blinded ?? 0) / shots).toBeLessThan(0.97);
+  });
+});
+
+describe("kiting-and-cripple, headless (#111)", () => {
+  it("walks two lanes, the crippled runner at half the other's speed", () => {
+    const sim = arena(scenario("kiting-and-cripple"), "kite");
+    const start = {
+      runner: sim.get("runner")?.position ?? vec2(0, 0),
+      crippled: sim.get("crippled")?.position ?? vec2(0, 0),
+    };
+    // One second: less than a lane's length (240) at full speed, so
+    // neither has turned back yet.
+    for (let i = 0; i < Math.round(1 / DT); i += 1) {
+      sim.step(DT);
+    }
+    const runner = distance(start.runner, sim.get("runner")?.position ?? vec2(0, 0));
+    const crippled = distance(start.crippled, sim.get("crippled")?.position ?? vec2(0, 0));
+    expect(runner).toBeGreaterThan(50);
+    expect(crippled / runner).toBeCloseTo(0.5, 1);
+    expect(sim.get("crippled")?.combatant.statuses.has("crippled")).toBe(true);
+  });
+});
+
 describe("weapon-dps, headless", () => {
   it("measures a sword at its own damage range, swing interval and rank", () => {
     const sword = WEAPONS.sword;
