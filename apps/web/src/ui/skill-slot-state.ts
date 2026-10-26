@@ -108,6 +108,17 @@ export function paintKnockdown(bar: HTMLElement, remaining: number): void {
 }
 
 /**
+ * Whether `self` can pay for `slot` now: the bar's cost, which the host
+ * sends again as a glyph's discount comes and goes (#637). A hint, not a
+ * gate: the press still goes to the host (brief §32).
+ */
+export function slotAffordable(slot: SkillSlot, self: PlayerSnapshot): boolean {
+  return slot.adrenalineCost > 0
+    ? self.adrenaline >= slot.adrenalineCost
+    : self.energy >= slot.energyCost;
+}
+
+/**
  * Which slots could not reach `target` from where `self` stands (#485):
  * too far, or a wall in the way. The same two game-core checks activation
  * makes, so the hint and the refusal cannot disagree. A hint, not a gate:

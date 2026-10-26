@@ -119,8 +119,9 @@ export interface MatchConnection {
   /** The match's static geometry, received once on join (brief §19). */
   readonly map: MapDescriptor;
   /**
-   * The server-assigned skill bar, received once on join: every slot in
-   * its place, `null` where it is empty (#347).
+   * The server-assigned skill bar, received on join and again whenever a
+   * slot changes, such as a cost a glyph lowers (#637): every slot in its
+   * place, `null` where it is empty (#347).
    */
   readonly skillBar: readonly (SkillSlot | null)[];
   /**

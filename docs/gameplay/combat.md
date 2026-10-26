@@ -227,7 +227,9 @@ spell you could not otherwise afford goes off. A spell uses its charge
 when it starts, so one interrupted or cancelled afterwards has still used
 it; one refused, or queued behind an aftercast, uses it only once it
 starts. Signets, shouts, stances and attacks leave it alone. The 16 is
-its rank-12 number; Energy Storage scaling comes with #532.
+its rank-12 number; Energy Storage scaling comes with #532. While it is
+up, the skill bar shows each spell at its discounted cost and lights
+the ones it makes affordable (#637).
 
 **Signets** usually cost nothing, so they work at 0 energy. Healing
 Signet (Warrior, Tactics) heals you after a 2 s cast, and for those 2 s
@@ -393,7 +395,8 @@ The build editor says under a primary's row what it does at its rank
 known character shows the cost and activation Expertise and Fast
 Casting make of it, the base in brackets: "5 energy (10)",
 "1.1s (2s)" (#531). The HUD skill bar shows the energy a skill costs
-the caster now, Expertise included (#528), with no base beside it.
+the caster now, Expertise and an active glyph included (#528, #637),
+with no base beside it.
 
 ## Positioning
 

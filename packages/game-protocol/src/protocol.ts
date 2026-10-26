@@ -460,7 +460,7 @@ export interface SkillBarSlot {
 }
 
 /**
- * Sent as `"skill-bar"` once on join: the bar the server resolved for
+ * Sent as `"skill-bar"` on join: the bar the server resolved for
  * this player, every slot in its place, `null` where it is empty (#347).
  */
 export interface SkillBarMessage {

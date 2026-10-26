@@ -294,7 +294,8 @@ function costText(skill: Skill, ranks: ReadonlyMap<string, number>): string {
   if (skill.cost.kind === "adrenaline") {
     return `${String(skill.cost.amount)} adrenaline`;
   }
-  const cost = energyCostOf(skill, { attributeRanks: ranks });
+  // At these ranks with no status on: a build, not a moment of a fight (#637).
+  const cost = energyCostOf(skill, { attributeRanks: ranks, statuses: new StatusSet() });
   const base = cost === skill.cost.amount ? "" : ` (${String(skill.cost.amount)})`;
   return `${String(cost)} energy${base}`;
 }

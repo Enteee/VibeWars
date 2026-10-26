@@ -227,6 +227,39 @@ test("in a match, an empty slot's key does nothing; the next key casts its own s
   await expect(energy).not.toHaveText(full ?? "");
 });
 
+test("in a match, Glyph of Lesser Energy shows Armor of Earth's discounted cost, then the full one (#637)", async ({
+  page,
+}) => {
+  // Setup, then up to 45 s for the glyph's 15 s of game time under load.
+  test.setTimeout(90_000);
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Glyph");
+  await page.locator(".editor-row select").first().selectOption("elementalist");
+  await page
+    .locator(".skill-box", { hasText: "Glyph of Lesser Energy" })
+    .dragTo(page.locator(".skill-slot").nth(0));
+  await page
+    .locator(".skill-box", { hasText: "Armor of Earth" })
+    .dragTo(page.locator(".skill-slot").nth(1));
+  await page.getByRole("button", { name: "save", exact: true }).click();
+  await page.locator(".roster-row", { hasText: "Glyph" }).click();
+  await startSoloMatch(page);
+  const armor = page.locator(".hud-skills .hud-skill").nth(1).locator(".hud-skill-cost");
+  await expect(armor).toHaveText("10e");
+
+  // The glyph takes 16 off the next two spells: Armor of Earth is free.
+  await page.keyboard.press(skillKey(0));
+  await expect(armor).toHaveText("0e");
+  await page.keyboard.press(skillKey(1));
+  await expect(
+    page.locator(".hud-skills .hud-skill").nth(1).locator(".recharge-overlay"),
+  ).toHaveCount(1);
+  // One spell left on it: the cost holds until the glyph's 15 s run out, in
+  // game time, which runs slower than wall time under load (#327).
+  await expect(armor).toHaveText("0e");
+  await expect(armor).toHaveText("10e", { timeout: 45_000 });
+});
+
 test("a team supports every operation sprint 18 asks for", async ({ page }) => {
   // reorder and duplicate were implemented and unit-tested in
   // team-builder.ts, but no button ever called them.
