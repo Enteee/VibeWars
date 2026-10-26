@@ -311,8 +311,18 @@ describe("skillSlotHtml", () => {
     expect(skillSlotHtml(slot("necromancer.faintheartedness"))).toContain('alt="Hex"');
   });
 
-  it("has no badge for a skill this client does not know", () => {
-    expect(skillSlotHtml(slot("nobody.unknown"))).not.toContain("skill-type-badge");
+  it("shows the skill's 48 px icon, and no name or cost (#719)", () => {
+    const html = skillSlotHtml(slot("elementalist.fireball"));
+    expect(html).toContain('src="/icons/skill/elementalist.fireball.svg"');
+    expect(html).toContain('width="48"');
+    expect(html).not.toContain("hud-skill-name");
+    expect(html).not.toContain("hud-skill-cost");
+  });
+
+  it("has the bare plate and no badge for a skill this client does not know", () => {
+    const html = skillSlotHtml(slot("nobody.unknown"));
+    expect(html).toContain('src="/icons/skill/unknown.svg"');
+    expect(html).not.toContain("skill-type-badge");
   });
 });
 

@@ -1,4 +1,5 @@
-import { describeSkill, getSkill } from "@vibewars/game-core";
+import { describeSkill, getSkill, type Skill, type SkillDescription } from "@vibewars/game-core";
+import type { SkillSlot } from "@vibewars/game-session";
 
 import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
 
@@ -13,11 +14,15 @@ import { createSkillTooltip, type SkillTooltip } from "./skill-tooltip.js";
 export const SLOT_TOOLTIP_DELAY_MS = 300;
 
 export interface SlotTooltips {
-  /** Show `skillId`'s tooltip after a hover or focus on `button`, slot `slot`. */
+  /**
+   * Show the tooltip of what `holding` gives after a hover or focus on
+   * `button`, slot `slot`. Read at show time, so the cost is the one the
+   * host last sent for the slot.
+   */
   bind(
     button: HTMLElement,
     slot: number,
-    skillId: string,
+    holding: () => SkillSlot | null,
     ranks: () => ReadonlyMap<string, number>,
   ): void;
   /** `slot` is casting, or none is: hide that slot's tooltip, shown or waiting. */
@@ -40,16 +45,17 @@ export function createSlotTooltips(): SlotTooltips {
   };
 
   return {
-    bind(button, slot, skillId, ranks) {
+    bind(button, slot, holding, ranks) {
       const open = (): void => {
         hide();
         current = slot;
         timer = setTimeout(() => {
           timer = undefined;
-          const skill = getSkill(skillId);
-          if (skill !== undefined && button.isConnected) {
+          const held = holding();
+          const skill = held === null ? undefined : getSkill(held.id);
+          if (held !== null && skill !== undefined && button.isConnected) {
             tooltip ??= createSkillTooltip("above");
-            tooltip.show(button, describeSkill(skill, ranks()));
+            tooltip.show(button, slotDescription(skill, held, ranks()));
           }
         }, SLOT_TOOLTIP_DELAY_MS);
       };
@@ -71,4 +77,22 @@ export function createSlotTooltips(): SlotTooltips {
       tooltip = undefined;
     },
   };
+}
+
+/**
+ * `skill` at `ranks`, priced as the host priced `slot`: the bar shows no
+ * cost (#719), so a glyph's discount (#637) is read here, with the base
+ * in brackets as the editor writes a rank's discount.
+ */
+export function slotDescription(
+  skill: Skill,
+  slot: SkillSlot,
+  ranks: ReadonlyMap<string, number>,
+): SkillDescription {
+  const description = describeSkill(skill, ranks);
+  if (skill.cost?.kind !== "energy") {
+    return description;
+  }
+  const base = slot.energyCost === skill.cost.amount ? "" : ` (${String(skill.cost.amount)})`;
+  return { ...description, cost: `${String(slot.energyCost)} energy${base}` };
 }

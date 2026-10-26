@@ -22,6 +22,18 @@ const WIDE = { width: 1500, height: 950 };
 /** The bar's filled slots; an empty one keeps its place and its key (#347). */
 const FILLED_SLOTS = ".training-skill:not(.is-empty)";
 
+/**
+ * The filled slots, each by its hotkey and its name. The bar shows icons,
+ * not names (#719), so the name is the slot's accessible one.
+ */
+async function expectFilledSlots(page: Page, names: readonly string[]): Promise<void> {
+  const filled = page.locator(FILLED_SLOTS);
+  await expect(filled).toHaveText(names.map((_, index) => codeLabel(skillKey(index))));
+  for (const [index, name] of names.entries()) {
+    await expect(filled.nth(index)).toHaveAccessibleName(name);
+  }
+}
+
 /** A new elementalist, holding its Wand (#614), with Fireball on the bar, in a wide editor. */
 async function openTraining(
   page: Page,
@@ -32,9 +44,8 @@ async function openTraining(
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "elementalist");
   await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
-  await expect(page.locator(FILLED_SLOTS)).toHaveText([
-    `${codeLabel(skillKey(0, keymap))}Fireball`,
-  ]);
+  await expect(page.locator(FILLED_SLOTS)).toHaveText([codeLabel(skillKey(0, keymap))]);
+  await expect(page.locator(FILLED_SLOTS).first()).toHaveAccessibleName("Fireball");
   const canvas = page.locator(".training canvas");
   await expect(canvas).toBeVisible();
   return canvas;
@@ -227,10 +238,7 @@ test("(7) editing the build re-arms the arena in place", async ({ page }) => {
     "Fireball",
   );
   await expect(meter(page, "damage")).toHaveText("0");
-  await expect(page.locator(FILLED_SLOTS)).toHaveText([
-    `${codeLabel(skillKey(0))}Fireball`,
-    `${codeLabel(skillKey(1))}Armor of Earth`,
-  ]);
+  await expectFilledSlots(page, ["Fireball", "Armor of Earth"]);
   expect(await canvasHandle.evaluate((node) => node.isConnected)).toBe(true);
 });
 
@@ -607,7 +615,7 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
     .locator(".skill-box", { hasText: "Troll Unguent" })
     .locator(".skill-box-equip")
     .click();
-  await expect(page.locator(FILLED_SLOTS)).toHaveText([`${codeLabel(skillKey(0))}Troll Unguent`]);
+  await expectFilledSlots(page, ["Troll Unguent"]);
   await takeControl(page);
   const slot = page.locator(FILLED_SLOTS).first();
   await page.keyboard.press(skillKey(0));
@@ -735,7 +743,8 @@ test("(24) an empty slot's key does nothing; the next key casts its own skill (#
   await expect(slots).toHaveCount(8);
   await expect(slots.nth(1)).toHaveClass(/is-empty/);
   await expect(slots.nth(1)).toHaveText(codeLabel(skillKey(1)));
-  await expect(slots.nth(2)).toHaveText(`${codeLabel(skillKey(2))}Armor of Earth`);
+  await expect(slots.nth(2)).toHaveText(codeLabel(skillKey(2)));
+  await expect(slots.nth(2)).toHaveAccessibleName("Armor of Earth");
   await takeControl(page);
   const energy = page.locator(".training-bar-energy .training-bar-label");
   const full = await energy.textContent();
@@ -893,7 +902,7 @@ test("(29) an attack skill pressed out of reach walks in, then lands (#415)", as
   await expect(page.locator(".gear-slot").first()).toContainText("Axe");
   await page.getByRole("button", { name: "skills", exact: true }).click();
   await page.locator(".skill-box", { hasText: "Swift Chop" }).locator(".skill-box-equip").click();
-  await expect(page.locator(FILLED_SLOTS)).toHaveText([`${codeLabel(skillKey(0))}Swift Chop`]);
+  await expectFilledSlots(page, ["Swift Chop"]);
   const canvas = page.locator(".training canvas");
   await page.locator("select.training-scenario").selectOption("weapon-dps");
   await expect(page.locator(".training-log")).toContainText("── Weapon DPS ──");
@@ -969,9 +978,9 @@ test("(31) a slot out of reach of the target is marked, and the mark goes once i
   const dummy = (await trainingView(page, canvas)).onPage({ x: 480, y: 210 });
   await page.mouse.click(dummy.x, dummy.y, { button: "right" });
   await expect(slot).toHaveClass(/is-out-of-range/);
-  // A shape, not only a colour: the `↔` after the name.
+  // A shape, not only a colour: the `↔` in the corner (#719).
   const glyph = await slot
-    .locator(".training-skill-name")
+    .locator(".skill-range-mark")
     .evaluate((node) => getComputedStyle(node, "::after").content);
   expect(glyph).toBe('"↔"');
 
@@ -992,7 +1001,7 @@ test("(32) the casting slot fills as the cast goes, hovering it shows its toolti
     .locator(".skill-box", { hasText: "Troll Unguent" })
     .locator(".skill-box-equip")
     .click();
-  await expect(page.locator(FILLED_SLOTS)).toHaveText([`${codeLabel(skillKey(0))}Troll Unguent`]);
+  await expectFilledSlots(page, ["Troll Unguent"]);
   await takeControl(page);
   const slot = page.locator(FILLED_SLOTS).first();
 
