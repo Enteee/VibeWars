@@ -197,17 +197,46 @@ describe("armor-ladder, headless", () => {
 });
 
 describe("interrupt-timing", () => {
-  it("loops Troll Unguent on itself: a 3 s cast, again 10 s after it lands", () => {
-    const sim = arena(scenario("interrupt-timing"), "unguent");
-    const casts: number[] = [];
-    for (let i = 0; i < Math.round(25 / DT); i += 1) {
+  /** When `sourceId`'s `skillId` lands in `sim`, in seconds, over `seconds`. */
+  function landings(
+    sim: MatchSimulation,
+    sourceId: string,
+    skillId: string,
+    seconds: number,
+  ): number[] {
+    const at: number[] = [];
+    for (let i = 0; i < Math.round(seconds / DT); i += 1) {
       for (const entry of sim.step(DT).log) {
-        if (entry.cause === "skill" && entry.skillId === "ranger.troll-unguent") {
-          casts.push(Math.round(entry.atSeconds));
+        if (entry.cause === "skill" && entry.skillId === skillId && entry.sourceId === sourceId) {
+          at.push(entry.atSeconds);
         }
       }
     }
-    expect(casts).toEqual([3, 16]);
+    return at;
+  }
+
+  it("loops Troll Unguent on itself: a 3 s cast, again 10 s after it lands", () => {
+    const sim = arena(scenario("interrupt-timing"), "unguent");
+    expect(landings(sim, "unguent", "ranger.troll-unguent", 25).map(Math.round)).toEqual([3, 16]);
+  });
+
+  it("the dazed one's Malaise takes 4 s, not 2: one every 6 s with its recharge", () => {
+    const sim = arena(scenario("interrupt-timing"), "malaise");
+    const at = landings(sim, "dazed", "necromancer.malaise", 25);
+    // The first is asked for on the tick before the daze lands: 2 s.
+    expect(at[0]).toBeCloseTo(2, 0);
+    const gaps = at.slice(1).map((t, i) => t - (at[i] ?? 0));
+    expect(gaps).toHaveLength(3);
+    for (const gap of gaps) {
+      expect(gap).toBeCloseTo(6, 0);
+    }
+  });
+
+  it("an archer shooting the dazed one stops every Malaise", () => {
+    const sim = armedArena(scenario("interrupt-timing"), "archer", WEAPONS.longbow);
+    expect(sim.requestAttack("player", "dazed")).toEqual({ ok: true });
+    // Only the undazed first one, before an arrow has landed.
+    expect(landings(sim, "dazed", "necromancer.malaise", 25).map(Math.round)).toEqual([2]);
   });
 });
 

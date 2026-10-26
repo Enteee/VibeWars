@@ -362,16 +362,17 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: "interrupt-timing",
     label: "Interrupt timing",
-    teaches: "That an interrupt is a timing skill: catch a 3 second cast before it lands.",
+    teaches:
+      "That an interrupt is a timing skill: catch a 3 second cast before it lands. A dazed caster's spells take twice as long, and any hit stops them.",
     mapId: "training-hall",
-    exercises: ["interrupts"],
+    exercises: ["interrupts", "conditions"],
     knobs: [],
     dummies: [
       {
         id: "unguent",
         label: "Troll Unguent dummy",
         team: 1,
-        position: vec2(380, 210),
+        position: vec2(380, 150),
         armor: 60,
         maxHealth: IMMORTAL,
         skillBar: ["ranger.troll-unguent"],
@@ -384,6 +385,34 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
           targeting: { kind: "self" },
           gapSeconds: 0,
           firstLegal: true,
+        },
+      },
+      {
+        ...target("dazed", "Dazed Malaise dummy", vec2(380, 270), 60),
+        skillBar: ["necromancer.malaise"],
+        attributeRanks: { "necromancer.curses": 12 },
+        baseEnergyPips: baseEnergyPipsFor("necromancer"),
+        // Kept dazed, hexing the player: Malaise's 2 s cast takes 4, and
+        // an attack that lands stops it. Daze slows spells only, so not
+        // the Unguent, which is a skill.
+        behaviour: {
+          kind: "parallel",
+          behaviours: [
+            {
+              kind: "apply-status-cadence",
+              statusId: "dazed",
+              durationSeconds: 10,
+              everySeconds: 5,
+              targeting: { kind: "self" },
+            },
+            {
+              kind: "cast-loop",
+              skillIds: ["necromancer.malaise"],
+              targeting: { kind: "nearest-enemy" },
+              gapSeconds: 0,
+              firstLegal: true,
+            },
+          ],
         },
       },
     ],
