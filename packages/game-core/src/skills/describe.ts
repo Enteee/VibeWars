@@ -129,7 +129,10 @@ export function describeStatus(id: string): string {
     );
   }
   if (definition.castTimeMultiplier !== 1) {
-    parts.push(`cast times ${String(definition.castTimeMultiplier)}× longer`);
+    parts.push(`spells take ${String(definition.castTimeMultiplier)}× as long to cast`);
+  }
+  if (definition.interruptsSpells) {
+    parts.push("spells are interrupted by attacks");
   }
   if (definition.attackDurationMultiplier !== 1) {
     parts.push(`attacks take ${String(definition.attackDurationMultiplier)}× as long`);

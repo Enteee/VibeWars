@@ -76,6 +76,9 @@ function printStatuses(): void {
     if (status.castTimeMultiplier !== 1) {
       parts.push(`cast x${String(status.castTimeMultiplier)}`);
     }
+    if (status.interruptsSpells) {
+      parts.push("attacks interrupt spells");
+    }
     if (status.attackDurationMultiplier !== 1) {
       parts.push(`attack x${String(status.attackDurationMultiplier)}`);
     }

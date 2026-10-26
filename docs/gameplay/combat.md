@@ -155,21 +155,24 @@ condition cannot out-last one well-timed long one.
 Each condition has a distinct mechanical identity, not just a different
 number:
 
-| Condition  | Effect                   |
-| ---------- | ------------------------ |
-| Bleeding   | −3 health/second         |
-| Burning    | −7 health/second         |
-| Poison     | −4 health/second         |
-| Crippled   | Half movement speed      |
-| Blind      | 90% of your attacks miss |
-| Weakness   | −20 armor                |
-| Deep Wound | −20% maximum health      |
-| Dazed      | Double cast time         |
+| Condition  | Effect                                           |
+| ---------- | ------------------------------------------------ |
+| Bleeding   | −3 health/second                                 |
+| Burning    | −7 health/second                                 |
+| Poison     | −4 health/second                                 |
+| Crippled   | Half movement speed                              |
+| Blind      | 90% of your attacks miss                         |
+| Weakness   | −20 armor                                        |
+| Deep Wound | −20% maximum health                              |
+| Dazed      | Spells: double cast time, interrupted by attacks |
 
-**Dazed doubles cast time; it does not make you easier to interrupt.**
-That is the reference's dazed, and here it would do nothing: every cast
-is already interruptible. An instant skill stays instant, and only
-spells are slowed: a dazed Warrior's Healing Signet casts in 2 s. See
+**Dazed doubles a spell's cast time, and attacks interrupt it** (#546,
+GW1). Applying Dazed interrupts a spell being cast, even on someone
+already dazed; and every attack that lands on a dazed spell-caster, a
+swing, an attack skill or an arrow, interrupts the spell before its
+damage. A miss, a block or a dodge does not. Only spells: a dazed
+Warrior's Healing Signet is neither slowed nor interrupted, and an
+instant skill stays instant. See
 [ADR-0019](../adr/0019-status-modifiers.md).
 
 **Blind makes attacks miss**: weapon swings, each blow rolled on its own,
@@ -289,8 +292,9 @@ Melee swings are never obstructed.
 **Ranged attack skills fly too** (#416). Broad Head Arrow and Barrage
 release their arrows at the hit, led like a swing's, and the skill's
 bonus and riders land with the arrow, only if it hits. So an interrupt
-lands late: a caster who finishes before Broad Head Arrow arrives is not
-interrupted, and one who steps aside dodges the Daze as well. The cost
+lands late: a spell-caster who finishes before Broad Head Arrow arrives
+is not interrupted by its Daze, and one who steps aside dodges the Daze
+as well. The cost
 and recharge are spent at the release, whatever the arrow does. Barrage
 picks its foes at the release and sends each its own arrow, with its own
 blind roll and its own flight; each arrow that hits earns adrenaline.

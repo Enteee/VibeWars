@@ -172,8 +172,9 @@ describe("describeStatus", () => {
     }
   });
 
-  it("explains dazed by its cast-time penalty", () => {
-    expect(describeStatus("dazed")).toContain("cast times");
+  it("explains dazed: slower spells, interrupted by attacks (#546)", () => {
+    expect(describeStatus("dazed")).toContain("spells take 2× as long to cast");
+    expect(describeStatus("dazed")).toContain("spells are interrupted by attacks");
   });
 
   it("returns the id for an unknown status rather than throwing", () => {

@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted (2026-10-24). Amends [ADR-0012](0012-equipment.md).
+Accepted (2026-10-24). Amends [ADR-0012](0012-equipment.md). Amended
+(2026-10-26, #546): dazed interrupts spells, as in GW1; see the end.
 
 ## Context
 
@@ -74,3 +75,26 @@ and `ArmorContext` go; `equipment/coverage.ts` records the gap as
   cannot deny auto-attack damage, because there is none.
 - Saved builds with Brawler's Insignia no longer validate and fall back
   like any other illegal build.
+
+## Amendment (2026-10-26, #546): dazed interrupts spells
+
+The deviation in "Dazed doubles cast time" is reversed. Its premise, that
+the reference's "easy to interrupt" would do nothing because every cast is
+already interruptible and there are no auto-attacks, stopped being true
+with [ADR-0026](0026-weapon-auto-attack.md): swings and arrows land all match
+long, and in GW1 every one that lands on a dazed spell-caster interrupts
+the spell. Decided in #468.
+
+Dazed now also interrupts, through the one interrupt path, so every "if
+interrupted" rule sees it:
+
+- applying Dazed interrupts a spell being cast, even on a target already
+  dazed;
+- an attack that lands on a dazed target casting a spell interrupts it,
+  before its damage: a swing, an attack skill or an arrow. A miss, a
+  block or a dodge does not land, and does not interrupt.
+
+Only spells, as `isSpell` says: a signet, a shout, a stance or an attack
+skill is left alone. The cast-time half stands. Broad Head Arrow loses its
+separate interrupt: its Daze interrupts by itself, now only a spell. The
+data is one flag on the status definition, `interruptsSpells`.
