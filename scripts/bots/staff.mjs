@@ -350,9 +350,6 @@ export function withoutEmployees(staff, gone) {
   };
 }
 
-/** How long a lock may be held before it is taken to be left behind by a crash. */
-const LOCK_STALE_MS = 10_000;
-
 /** How long to wait for the lock before giving up. */
 const LOCK_WAIT_MS = 5_000;
 
@@ -360,7 +357,9 @@ const LOCK_WAIT_MS = 5_000;
  * Run `change`, which reads, modifies and writes `file`, while holding the
  * one lock of `staff.json`. hubd and the supervisor both write it, and a
  * read-modify-write of one that runs between the other's read and rename
- * would lose that change. The lock is a directory: `mkdir` is atomic.
+ * would lose that change. The lock is a directory: `mkdir` is atomic. One
+ * left behind by a crash is removed by hand: taking it over would let two
+ * waiters steal it from each other.
  *
  * @template T
  * @param {string} file `staff.json`
@@ -378,16 +377,10 @@ export function withStaffLock(file, change) {
       if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) {
         throw error;
       }
-      try {
-        if (Date.now() - fs.statSync(lock).mtimeMs > LOCK_STALE_MS) {
-          fs.rmdirSync(lock);
-          continue;
-        }
-      } catch {
-        continue; // released meanwhile
-      }
       if (Date.now() > give) {
-        throw new Error(`${lock} is held; is something stuck?`, { cause: error });
+        throw new Error(`${lock} is held; if no process is changing staff.json, remove it`, {
+          cause: error,
+        });
       }
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 20);
     }

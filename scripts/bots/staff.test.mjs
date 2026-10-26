@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -465,7 +465,7 @@ describe("withStaffLock (#383)", () => {
     return path.join(dir, "staff.json");
   }
 
-  it("runs one change at a time, and lets go afterwards, even after a throw", () => {
+  it("lets go afterwards, even after a throw", () => {
     const file = staffFile();
     expect(withStaffLock(file, () => fs.existsSync(`${file}.lock`))).toBe(true);
     expect(fs.existsSync(`${file}.lock`)).toBe(false);
@@ -477,19 +477,11 @@ describe("withStaffLock (#383)", () => {
     expect(fs.existsSync(`${file}.lock`)).toBe(false);
   });
 
-  it("takes over a lock left behind long ago", () => {
-    const file = staffFile();
-    fs.mkdirSync(`${file}.lock`);
-    const old = new Date(Date.now() - 60_000);
-    fs.utimesSync(`${file}.lock`, old, old);
-    expect(withStaffLock(file, () => "ran")).toBe("ran");
-  });
-
-  it("keeps a hire another process recorded before a forget", () => {
+  it("makes a writer wait, so a hire made meanwhile survives a forget", async () => {
     const file = staffFile();
     fs.writeFileSync(file, JSON.stringify(company(["qa-tester", "qa-tester@2"])));
-    // The other writer arrives while the lock is held and must wait for it.
-    const other = spawnSync(
+    // The other writer holds the lock for 300 ms between its read and its write.
+    const child = spawn(
       process.execPath,
       [
         "-e",
@@ -497,18 +489,24 @@ describe("withStaffLock (#383)", () => {
           const fs = require("node:fs");
           withStaffLock(${JSON.stringify(file)}, () => {
             const s = JSON.parse(fs.readFileSync(${JSON.stringify(file)}, "utf8"));
+            fs.writeFileSync(${JSON.stringify(`${file}.held`)}, "");
+            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 300);
             s.employees["qa-tester@3"] = s.employees["qa-tester"];
             fs.writeFileSync(${JSON.stringify(file)}, JSON.stringify(s));
           });
         })`,
       ],
-      { encoding: "utf8" },
+      { stdio: "inherit" },
     );
-    expect(other.status).toBe(0);
+    const exited = new Promise((resolve) => child.on("exit", resolve));
+    while (!fs.existsSync(`${file}.held`)) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
     withStaffLock(file, () => {
       const current = parseStaff(fs.readFileSync(file, "utf8"));
       fs.writeFileSync(file, JSON.stringify(withoutEmployees(current, ["qa-tester@2"])));
     });
+    expect(await exited).toBe(0);
     expect(Object.keys(parseStaff(fs.readFileSync(file, "utf8")).employees).sort()).toEqual([
       "qa-tester",
       "qa-tester@3",
