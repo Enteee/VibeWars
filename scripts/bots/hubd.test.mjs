@@ -20,7 +20,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { parseAlive } from "./hub-health.mjs";
 import { ROLES } from "./hub-policy.mjs";
-import { obj } from "./protocol.mjs";
+import { deliverSystem, obj } from "./protocol.mjs";
 import { parseNudgeClock } from "./schedule.mjs";
 import { parseStaff, seedStaff } from "./staff.mjs";
 
@@ -2388,6 +2388,39 @@ describe("hubd hiring and firing", () => {
     // Not firing, and no reboot pending: nothing to be ready for.
     const working = await hubd.request("manager", "reboot", ["ready"]);
     expect(working.code).toBe(1);
+  }, 20_000);
+
+  it("stops only the fired seat, seat 1 included, not the role's other seats (#756)", async () => {
+    const hubd = await startHubd(5000);
+    employ(hubd, 4);
+    const seeded = staff(hubd);
+    seeded.employees["qa-tester@2"] = { ...seeded.employees["qa-tester"], role: "qa-tester" };
+    fs.writeFileSync(path.join(hubd.root, "staff.json"), JSON.stringify(seeded));
+    const employees = new Map([
+      ["manager", "manager"],
+      ["qa-tester", "qa-tester"],
+      ["qa-tester@2", "qa-tester"],
+    ]);
+    const outbox = path.join(hubd.root, "bus", "_system", "outbox");
+    /** Who each staff-stop entry reaches, in the order hubd wrote them. */
+    const stopped = () =>
+      fs
+        .readdirSync(outbox)
+        .sort()
+        .filter((name) => name.endsWith("-staff-stop.json"))
+        .map((name) => {
+          /** @type {unknown} */
+          const entry = JSON.parse(fs.readFileSync(path.join(outbox, name), "utf8"));
+          expect(obj(entry)).toMatchObject({ direct: true });
+          return deliverSystem(entry, { employees, now: 1 }).deliveries.map((d) => d.employee);
+        });
+
+    const first = await hubd.request("manager", "staff", ["fire", "qa-tester", "no QA work"]);
+    expect(first.code, String(first.reason)).toBe(0);
+    expect(stopped()).toEqual([["qa-tester"]]);
+    const second = await hubd.request("manager", "staff", ["fire", "qa-tester@2", "no QA work"]);
+    expect(second.code, String(second.reason)).toBe(0);
+    expect(stopped()).toEqual([["qa-tester"], ["qa-tester@2"]]);
   }, 20_000);
 
   it("refuses every request while company.json has no maxAgents", async () => {
