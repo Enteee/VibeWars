@@ -168,6 +168,7 @@ export function validateEquipment(
   }
 
   const runedAttributes = new Set<string>();
+  const universalRunes = new Set<string>();
   for (const [slot, piece] of armorPieces(equipment.armor)) {
     const field = `equipment.armor.${slot}`;
 
@@ -193,6 +194,14 @@ export function validateEquipment(
         });
       }
       runedAttributes.add(piece.rune.attributeId);
+    } else if (getUniversalRune(piece.rune.runeId)?.stacks === false) {
+      if (universalRunes.has(piece.rune.runeId)) {
+        problems.push({
+          field,
+          message: `${runeDisplayName(piece.rune)} duplicates another rune of the same kind; only one applies`,
+        });
+      }
+      universalRunes.add(piece.rune.runeId);
     }
   }
 
