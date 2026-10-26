@@ -356,10 +356,10 @@ async function startHubd(remaining, before) {
      */
     addRun(sha, file, planted) {
       const listed = path.join(state, `runs-${file}-${sha}.json`);
+      /** @type {unknown} */
+      const parsed = JSON.parse(fs.readFileSync(listed, "utf8"));
       const body =
-        /** @type {{ total_count: number, workflow_runs: Record<string, unknown>[] }} */ (
-          JSON.parse(fs.readFileSync(listed, "utf8"))
-        );
+        /** @type {{ total_count: number, workflow_runs: Record<string, unknown>[] }} */ (parsed);
       body.workflow_runs.push({ ...body.workflow_runs[0], id: planted.id, run_number: 2 });
       body.total_count = body.workflow_runs.length;
       fs.writeFileSync(listed, JSON.stringify(body));
