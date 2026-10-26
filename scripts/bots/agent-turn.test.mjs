@@ -86,7 +86,7 @@ function turn(events, peekDir = "") {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "agent-turn-test-"));
   dirs.push(dir);
   const bus = path.join(dir, "bus");
-  const state = path.join(dir, "state");
+  const state = path.join(dir, "developer-1");
   fs.mkdirSync(bus);
   fs.writeFileSync(path.join(bus, "cursor"), "100\n");
   const script = path.join(dir, "claude.mjs");
@@ -174,6 +174,17 @@ describe("what the manager can peek at (#19)", () => {
       expect(recorded).toContain(line);
     }
     expect(row(dir).state).toBe("between");
+  });
+
+  it("never costs the turn: a peek directory that cannot be written is only a notice", () => {
+    const dir = peekDir();
+    const blocked = path.join(dir, "file");
+    fs.writeFileSync(blocked, "");
+    const plain = turn(["init", "wait", "foreground", "result"]);
+    const withBadPeek = turn(["init", "wait", "foreground", "result"], blocked);
+
+    expect(withBadPeek.code).toBe(0);
+    expect(withBadPeek.stdout).toBe(plain.stdout);
   });
 
   it("says limited when the turn hit the usage limit", () => {

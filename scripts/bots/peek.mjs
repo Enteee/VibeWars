@@ -21,6 +21,8 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import { visible } from "./protocol.mjs";
+
 /** Lines kept per employee. */
 export const KEEP_LINES = 500;
 /** A line longer than this is cut, so 500 of them stay bounded. */
@@ -56,14 +58,11 @@ export function stripAnsi(text) {
   return text.replace(ESCAPES, "");
 }
 
-const KEY_BEGIN = /-----BEGIN [A-Z ]*PRIVATE KEY-----/;
-const KEY_END = /-----END [A-Z ]*PRIVATE KEY-----/;
-
 /** Single-line secrets, each replaced whole by `[redacted]`. */
 const SECRETS = [
   /\bgh[pousr]_[A-Za-z0-9]{20,}/g,
   /\bgithub_pat_[A-Za-z0-9_]{20,}/g,
-  /\b\d{8,10}:[A-Za-z0-9_-]{35}\b/g,
+  /\b\d{8,10}:[A-Za-z0-9_-]{35}(?![A-Za-z0-9_-])/g,
   /\bsk-ant-[A-Za-z0-9_-]+/g,
 ];
 
@@ -100,11 +99,18 @@ export function redact(text) {
  *
  * Lines carry over between turns: the file is read back when the writer
  * starts. Writes are atomic (temp file, rename) and at most one a second;
- * `finish` always writes.
+ * `finish` always writes. Each line is made `visible()` (a colleague's
+ * output is not to look like a message), then redacted. A line arrives
+ * whole, cut to 200 characters by the stream formatter, so a private key
+ * block is redacted from its BEGIN line to the end of that line.
+ *
+ * Nothing here throws once the writer exists: a write that fails costs the
+ * recording, never the turn (as `saveContext` in agent-turn.mjs). The first
+ * error goes to `onError` and the writer goes quiet.
  *
  * @param {string} dir
  * @param {string} employee
- * @param {{ now?: () => number }} [options]
+ * @param {{ now?: () => number, onError?: (error: unknown) => void }} [options]
  * @returns {{ line: (text: string) => void, state: (state: PeekState) => void, finish: (state: PeekState) => void }}
  */
 export function peekWriter(dir, employee, options = {}) {
@@ -114,23 +120,37 @@ export function peekWriter(dir, employee, options = {}) {
   const now = options.now ?? Date.now;
   const text = path.join(dir, `${employee}.txt`);
   const meta = path.join(dir, `${employee}.json`);
-  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
 
   /** @type {string[]} */
   let lines = [];
-  try {
-    lines = fs.readFileSync(text, "utf8").split("\n").slice(0, -1).slice(-KEEP_LINES);
-  } catch {
-    // The first turn of this employee.
-  }
   /** @type {PeekState} */
   let state = "turn";
   let lastLineAt = now();
   let lastWrite = Number.NEGATIVE_INFINITY;
   let dirty = false;
-  let inKey = false;
+  let broken = false;
   /** @type {NodeJS.Timeout | undefined} */
   let timer;
+
+  /**
+   * @param {() => void} work
+   * @returns {void}
+   */
+  const guarded = (work) => {
+    if (broken) {
+      return;
+    }
+    try {
+      work();
+    } catch (error) {
+      broken = true;
+      if (timer !== undefined) {
+        clearTimeout(timer);
+        timer = undefined;
+      }
+      options.onError?.(error);
+    }
+  };
 
   /**
    * @param {string} file
@@ -160,40 +180,48 @@ export function peekWriter(dir, employee, options = {}) {
       write();
     } else if (timer === undefined) {
       timer = setTimeout(() => {
-        if (dirty) {
-          write();
-        }
+        guarded(() => {
+          if (dirty) {
+            write();
+          }
+        });
       }, wait);
       timer.unref();
     }
   };
 
+  guarded(() => {
+    fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+    try {
+      lines = fs.readFileSync(text, "utf8").split("\n").slice(0, -1).slice(-KEEP_LINES);
+    } catch {
+      // The first turn of this employee.
+    }
+  });
+
   return {
     line(raw) {
-      for (const piece of stripAnsi(raw).split("\n")) {
-        // A key block can span lines; everything inside it goes.
-        let kept = piece;
-        if (inKey) {
-          const end = KEY_END.exec(kept);
-          kept = "[redacted]";
-          inKey = end === null;
-        } else if (KEY_BEGIN.test(kept)) {
-          inKey = !KEY_END.test(kept);
+      guarded(() => {
+        for (const piece of stripAnsi(raw).split("\n")) {
+          const clean = redact(visible(piece));
+          lines.push(clean.length > MAX_LINE ? clean.slice(0, MAX_LINE) : clean);
         }
-        const clean = redact(kept);
-        lines.push(clean.length > MAX_LINE ? clean.slice(0, MAX_LINE) : clean);
-      }
-      lines = lines.slice(-KEEP_LINES);
-      lastLineAt = now();
-      touch();
+        lines = lines.slice(-KEEP_LINES);
+        lastLineAt = now();
+        touch();
+      });
     },
     state(next) {
-      state = next;
-      touch();
+      guarded(() => {
+        state = next;
+        touch();
+      });
     },
     finish(next) {
-      state = next;
-      write();
+      guarded(() => {
+        state = next;
+        write();
+      });
     },
   };
 }
@@ -286,11 +314,12 @@ export function peek(argv, dir, at) {
     .readFileSync(path.join(dir, `${row.employee}.txt`), "utf8")
     .split("\n")
     .slice(0, -1);
+  // A fixed gutter on every line, so no line can open like a message header.
   return {
     code: 0,
     out: all
       .slice(-lines)
-      .map((line) => `${line}\n`)
+      .map((line) => `${row.employee} │ ${line}\n`)
       .join(""),
   };
 }

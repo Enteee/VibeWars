@@ -55,13 +55,25 @@ if (state === undefined || separator !== "--" || command === undefined) {
 }
 const SESSION = path.join(state, "session-id");
 const ROLE = process.env.VIBEWARS_BOT_ROLE ?? path.basename(state);
+/** The employee id: the state directory is named for it (`qa-tester@2`). */
+const EMPLOYEE = path.basename(state);
 
 /**
  * What the manager's `peek` reads (#19): every line this prints, as the pane
  * shows it. Unset in tests that do not look.
  */
 const PEEK_DIR = process.env.VIBEWARS_PEEK_DIR ?? "";
-const peek = PEEK_DIR === "" ? null : peekWriter(PEEK_DIR, ROLE);
+const peek =
+  PEEK_DIR === ""
+    ? null
+    : peekWriter(PEEK_DIR, EMPLOYEE, {
+        // A recording that cannot be written costs the notice, never the turn.
+        onError: (error) => {
+          console.error(
+            `agent-turn: peek is off for this run: ${error instanceof Error ? error.message : "?"}`,
+          );
+        },
+      });
 
 /**
  * A line for the pane and for `peek`.
