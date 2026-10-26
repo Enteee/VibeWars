@@ -57,3 +57,5 @@ Act accordingly — be stricter than usual, not looser:
 - When in doubt, leave it for a human rather than merging it yourself.
 
 This is temporary and the operator will remove it by hand once the bots exist.
+
+`hub schedule add <name> <every> <text>` keeps a reminder to yourself (`ls`, `rm`). Use it for things you would otherwise forget, not to poll.
