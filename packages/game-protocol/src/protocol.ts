@@ -490,6 +490,8 @@ export interface CombatMessage<Event> {
   readonly attributeId: string;
   /** Where an area skill landed, and how far it reached (#5). */
   readonly area?: { readonly x: number; readonly y: number; readonly radius: number };
+  /** A weapon swing that struck twice (#561); `false` on everything else. */
+  readonly doubleStrike: boolean;
   readonly events: readonly Event[];
 }
 

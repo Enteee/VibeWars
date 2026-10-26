@@ -213,6 +213,11 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /** Flash a melee swing; off under reduced motion, where the damage number says enough. */
+  /** The host says `actorId`'s swing struck twice (#561): the off hand stabs too. */
+  public struckTwice(actorId: string): void {
+    this.attackClocks.get(actorId)?.struckTwice(this.snapshot.clock);
+  }
+
   public addSwingFlash(flash: SwingFlash): void {
     if (!prefersReducedMotion()) {
       this.swingFlashes.push(flash);

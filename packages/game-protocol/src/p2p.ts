@@ -311,6 +311,8 @@ export interface WireCombat {
   readonly attributeId: string;
   /** Where an area skill landed, and how far it reached (#5). */
   readonly area: { readonly x: number; readonly y: number; readonly radius: number } | null;
+  /** A weapon swing that struck twice, so the off hand stabs too (#561); `false` otherwise. */
+  readonly doubleStrike: boolean;
   readonly events: readonly WireCombatEvent[];
 }
 
@@ -861,7 +863,9 @@ function parseWireCombat(value: unknown): WireCombat | undefined {
     !isString(raw.skillId) ||
     !isString(raw.weaponId) ||
     !isString(raw.attributeId) ||
-    (raw.cause === "attribute") !== (raw.attributeId !== "")
+    (raw.cause === "attribute") !== (raw.attributeId !== "") ||
+    typeof raw.doubleStrike !== "boolean" ||
+    (raw.doubleStrike && raw.cause !== "weapon")
   ) {
     return undefined;
   }
@@ -876,6 +880,7 @@ function parseWireCombat(value: unknown): WireCombat | undefined {
         weaponId: raw.weaponId,
         attributeId: raw.attributeId,
         area,
+        doubleStrike: raw.doubleStrike,
         events,
       };
 }

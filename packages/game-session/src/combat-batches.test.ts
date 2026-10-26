@@ -12,6 +12,7 @@ function entry(target: number, padding = 0): WireCombat {
     skillId: "",
     weaponId: "sword",
     attributeId: "",
+    doubleStrike: false,
     area: null,
     events: [
       {

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { WEAPONS } from "@vibewars/game-core";
 
-import { AttackClock, REST_FRAME, shownFrame } from "./attack-clock.js";
+import { AttackClock, OFF_HAND_DELAY, REST_FRAME, shownFrame } from "./attack-clock.js";
 import { WEAPON_MOTION } from "./weapon-pose.js";
 
 const SWORD = WEAPON_MOTION.sword;
@@ -130,5 +130,73 @@ describe("shownFrame", () => {
 
   it("is the rest pose for an actor that never attacked", () => {
     expect(shownFrame(undefined, 5, "sword", false)).toEqual(REST_FRAME);
+  });
+});
+
+describe("AttackClock, a double strike (#561)", () => {
+  const DAGGERS = WEAPON_MOTION.daggers;
+  const DAGGER_INTERVAL = WEAPONS.daggers.attackIntervalSeconds;
+  /** The first tick that sees the host's timer wrap: the hit's snapshot. */
+  const HIT_TICK = Math.ceil(DAGGER_INTERVAL / TICK) * TICK;
+
+  /**
+   * A dagger attack from match time 0, observed tick by tick to `until`;
+   * `twice` calls `struckTwice` as the combat message arrives, at the
+   * scene's last snapshot time, `"before"` or `"after"` the hit's.
+   */
+  function stabbing(until: number, twice?: "before" | "after"): AttackClock {
+    const clock = new AttackClock();
+    for (let tick = 0; tick * TICK <= until + EPS; tick += 1) {
+      const at = tick * TICK;
+      if (twice === "before" && Math.abs(at - HIT_TICK) < EPS) {
+        clock.struckTwice(at - TICK);
+      }
+      clock.observe(at, at % DAGGER_INTERVAL, DAGGER_INTERVAL, "daggers");
+      if (twice === "after" && Math.abs(at - HIT_TICK) < EPS) {
+        clock.struckTwice(at);
+      }
+    }
+    return clock;
+  }
+
+  for (const order of ["before", "after"] as const) {
+    it(`stabs with the off hand ${String(OFF_HAND_DELAY * 1000)} ms after the main hand, word ${order} the hit`, () => {
+      const clock = stabbing(HIT_TICK, order);
+      const atHit = clock.frame(DAGGER_INTERVAL, "daggers");
+      expect(atHit.clip.phase).toBe("hold");
+      expect(atHit.hit).toBe(1);
+      expect(atHit.offHand).toEqual({ phase: "wind-up", progress: 0 });
+      // The off hand's strike ends on its own hit, the delay later.
+      const offHit = DAGGER_INTERVAL + OFF_HAND_DELAY;
+      expect(clock.frame(offHit - EPS, "daggers").offHand).toEqual({
+        phase: "strike",
+        progress: expect.closeTo(1, 4) as number,
+      });
+      expect(clock.frame(offHit + EPS, "daggers").offHand?.phase).toBe("hold");
+      // Back at rest once its own recovery is over.
+      const rested = offHit + DAGGERS.hold + DAGGERS.recover + EPS;
+      expect(clock.frame(rested, "daggers").offHand).toBeUndefined();
+      // Two hands struck, so the next swing is the main hand's again.
+      const next = DAGGER_INTERVAL * 2 - DAGGERS.strike / 2;
+      const later = stabbing(next, order);
+      expect(later.frame(next, "daggers").clip.phase).toBe("strike");
+      expect(later.frame(next, "daggers").hit).toBe(3);
+    });
+  }
+
+  it("moves only the main hand, alternating, when the host says nothing", () => {
+    const clock = stabbing(HIT_TICK);
+    expect(clock.frame(DAGGER_INTERVAL, "daggers")).toEqual({
+      clip: { phase: "hold", progress: 0, sinceHit: 0 },
+      hit: 1,
+    });
+    const next = DAGGER_INTERVAL * 2 - DAGGERS.strike / 2;
+    expect(stabbing(next).frame(next, "daggers").hit).toBe(2);
+  });
+
+  it("is at rest under reduced motion, off hand and all", () => {
+    expect(shownFrame(stabbing(HIT_TICK, "after"), DAGGER_INTERVAL, "daggers", true)).toEqual(
+      REST_FRAME,
+    );
   });
 });

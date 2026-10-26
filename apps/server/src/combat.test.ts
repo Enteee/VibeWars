@@ -822,6 +822,7 @@ describe("combatBatch (#288)", () => {
     weaponId: "sword",
     attributeId: undefined,
     area: undefined,
+    doubleStrike: false,
     events: [{ kind: "damage", targetId: "b", amount: 12, critical: false }],
     ...overrides,
   });
@@ -865,6 +866,7 @@ describe("combatBatch (#288)", () => {
       skillId: "",
       weaponId: "",
       attributeId: "",
+      doubleStrike: false,
       events: [{ kind: "damage", targetId: "b", amount: 2, critical: false }],
     });
     expect(fireball?.area).toEqual({ x: 1, y: 2, radius: 81 });

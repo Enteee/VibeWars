@@ -625,6 +625,7 @@ export class MatchSimulation {
         weaponId: undefined,
         attributeId: undefined,
         area: undefined,
+        doubleStrike: false,
         events: [{ kind: "cancelled", targetId: record.id, skillId: cast.skillId }],
       });
     }
@@ -837,6 +838,7 @@ export class MatchSimulation {
         weaponId: undefined,
         attributeId: undefined,
         area: undefined,
+        doubleStrike: false,
         events: ended.map((statusId) => ({
           kind: "status-expired",
           targetId: record.id,
@@ -938,6 +940,7 @@ export class MatchSimulation {
           weaponId: undefined,
           attributeId: undefined,
           area: undefined,
+          doubleStrike: false,
           events: statusEvents,
         });
       }
@@ -1201,6 +1204,7 @@ export class MatchSimulation {
       weaponId: undefined,
       attributeId: undefined,
       area,
+      doubleStrike: false,
       events,
     });
   }
@@ -1414,6 +1418,7 @@ export class MatchSimulation {
           weaponId: undefined,
           attributeId: undefined,
           area: undefined,
+          doubleStrike: false,
           events: [unreachable],
         });
       } else {
@@ -1496,7 +1501,7 @@ export class MatchSimulation {
       }
       return;
     }
-    const events = resolveSwing({
+    const { events, doubleStrike } = resolveSwing({
       attacker: record.combatant,
       target,
       candidates: weapon.cleaveTargets === 0 ? [] : [...this.#participants.values()],
@@ -1507,7 +1512,7 @@ export class MatchSimulation {
     this.#gainAdrenaline(record, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
-    this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events);
+    this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events, doubleStrike);
   }
 
   /**
@@ -1798,12 +1803,18 @@ export class MatchSimulation {
       weaponId: undefined,
       attributeId: undefined,
       area,
+      doubleStrike: false,
       events,
     });
   }
 
   /** A weapon entry, named for the weapon that swung or shot (#162). */
-  #logWeapon(sourceId: string, weaponId: WeaponId, events: readonly CombatEvent[]): void {
+  #logWeapon(
+    sourceId: string,
+    weaponId: WeaponId,
+    events: readonly CombatEvent[],
+    doubleStrike = false,
+  ): void {
     this.#log.push({
       tick: this.#tick,
       atSeconds: this.#elapsedSeconds,
@@ -1813,6 +1824,7 @@ export class MatchSimulation {
       weaponId,
       attributeId: undefined,
       area: undefined,
+      doubleStrike,
       events,
     });
   }
@@ -1916,6 +1928,7 @@ export class MatchSimulation {
             weaponId: undefined,
             attributeId: SOUL_REAPING_ATTRIBUTE,
             area: undefined,
+            doubleStrike: false,
             events,
           });
         }

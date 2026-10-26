@@ -37,6 +37,7 @@ function entry(events: CombatEvent[], extra: Partial<CombatLogEntry> = {}): Comb
     weaponId: undefined,
     attributeId: undefined,
     area: undefined,
+    doubleStrike: false,
     events,
     ...extra,
   };

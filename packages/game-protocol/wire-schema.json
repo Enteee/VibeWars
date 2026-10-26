@@ -194,6 +194,7 @@
                         ]
                       }
                     },
+                    { "name": "doubleStrike", "optional": false, "type": "boolean" },
                     {
                       "name": "events",
                       "optional": false,
@@ -899,6 +900,7 @@
                     ]
                   }
                 },
+                { "name": "doubleStrike", "optional": false, "type": "boolean" },
                 {
                   "name": "events",
                   "optional": false,
@@ -1138,6 +1140,7 @@
             ]
           }
         },
+        { "name": "doubleStrike", "optional": false, "type": "boolean" },
         { "name": "events", "optional": false, "type": { "array": { "typeParameter": "Event" } } },
         { "name": "skillId", "optional": false, "type": "string" },
         { "name": "weaponId", "optional": false, "type": "string" }
@@ -1536,6 +1539,7 @@
                           ]
                         }
                       },
+                      { "name": "doubleStrike", "optional": false, "type": "boolean" },
                       {
                         "name": "events",
                         "optional": false,
@@ -1838,6 +1842,7 @@
             ]
           }
         },
+        { "name": "doubleStrike", "optional": false, "type": "boolean" },
         {
           "name": "events",
           "optional": false,
@@ -1900,6 +1905,7 @@
               ]
             }
           },
+          { "name": "doubleStrike", "optional": false, "type": "boolean" },
           {
             "name": "events",
             "optional": false,

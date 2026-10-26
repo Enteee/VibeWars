@@ -166,6 +166,7 @@ const combat: WireCombat = {
   weaponId: "",
   attributeId: "",
   area: { x: 300, y: 200, radius: 80 },
+  doubleStrike: false,
   events: [
     {
       kind: "damage",
@@ -199,7 +200,7 @@ const combat: WireCombat = {
 
 const combatBatch: WireCombatBatch = [
   combat,
-  { ...combat, cause: "weapon", skillId: "", weaponId: "sword", area: null },
+  { ...combat, cause: "weapon", skillId: "", weaponId: "daggers", area: null, doubleStrike: true },
   {
     ...combat,
     cause: "attribute",
@@ -608,6 +609,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     [{ ...combatBatch[2], attributeId: "" }],
   ],
   ["a skill combat with an attribute", parseWireCombatBatch, [{ ...combat, attributeId: "x" }]],
+  [
+    "combat with no double-strike flag (#561)",
+    parseWireCombatBatch,
+    [{ ...combat, doubleStrike: undefined }],
+  ],
+  [
+    "a skill combat that struck twice (#561)",
+    parseWireCombatBatch,
+    [{ ...combat, doubleStrike: true }],
+  ],
 ];
 
 describe("the P2P channels (#82)", () => {
