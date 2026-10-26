@@ -4,10 +4,12 @@ import {
   isOffhandId,
   isProfessionId,
   isStatusId,
+  STATUS_DEFINITIONS,
   type CombatEvent,
   type CombatLogEntry,
   type Combatant,
   type SkillBar,
+  type StatusId,
 } from "@vibewars/game-core";
 import type {
   SkillBarSlot,
@@ -30,6 +32,31 @@ import type {
  * its simulation logged into wire messages, and a client turns the wire
  * messages, once validated, back into what the match view draws.
  */
+
+/**
+ * The status table (#632): every status id, sorted. A snapshot names a
+ * status by its index here, and `wire-schema.json` carries the table, so
+ * builds whose tables differ never meet.
+ */
+export const WIRE_STATUS_IDS: readonly StatusId[] = Object.keys(STATUS_DEFINITIONS)
+  .filter(isStatusId)
+  .sort();
+
+const WIRE_STATUS_INDEX = new Map(WIRE_STATUS_IDS.map((id, index) => [id, index]));
+
+/** `id`'s index in `WIRE_STATUS_IDS`. */
+export function statusWireIndex(id: StatusId): number {
+  const index = WIRE_STATUS_INDEX.get(id);
+  if (index === undefined) {
+    throw new Error(`status ${id} is not in the wire table`);
+  }
+  return index;
+}
+
+/** The status at `index` in `WIRE_STATUS_IDS`, or `undefined` past its end. */
+export function statusFromWire(index: number): StatusId | undefined {
+  return WIRE_STATUS_IDS[index];
+}
 
 /**
  * The bar a client draws, every slot in its place, `null` where it is
@@ -196,8 +223,17 @@ function absent<T>(value: T | null): T | undefined {
 /**
  * Each `PlayerSnapshot` field from its `WirePlayer` field. Typed both ways,
  * so a field added to either type without the other does not compile.
+ * `undefined` for a status index past the table's end: malformed.
  */
-export function playerSnapshot(player: WirePlayer): PlayerSnapshot {
+export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
+  const statuses: StatusId[] = [];
+  for (const index of player.statuses) {
+    const status = statusFromWire(index);
+    if (status === undefined) {
+      return undefined;
+    }
+    statuses.push(status);
+  }
   return {
     sessionId: player.id,
     name: player.name,
@@ -227,7 +263,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot {
     castingSkillId: absent(player.castingSkillId),
     castRemaining: player.castRemaining,
     castTotal: player.castTotal,
-    statuses: player.statuses,
+    statuses,
   };
 }
 
@@ -235,11 +271,31 @@ function projectileSnapshot(shot: WireProjectile): ProjectileSnapshot {
   return { ...shot, skillId: absent(shot.skillId) };
 }
 
-/** A validated wire snapshot as the match view draws it, for `selfId`. */
-export function matchSnapshot(snapshot: WireSnapshot, selfId: string): MatchSnapshot {
+/** Every player in `snapshot`, or `undefined` if any is malformed. */
+export function playerSnapshots(snapshot: WireSnapshot): PlayerSnapshot[] | undefined {
+  const players: PlayerSnapshot[] = [];
+  for (const wire of snapshot.players) {
+    const player = playerSnapshot(wire);
+    if (player === undefined) {
+      return undefined;
+    }
+    players.push(player);
+  }
+  return players;
+}
+
+/**
+ * A validated wire snapshot as the match view draws it, for `selfId`,
+ * with its `players` from `playerSnapshots`.
+ */
+export function matchSnapshot(
+  snapshot: WireSnapshot,
+  players: readonly PlayerSnapshot[],
+  selfId: string,
+): MatchSnapshot {
   return {
     selfSessionId: selfId,
-    players: snapshot.players.map(playerSnapshot),
+    players,
     scoreTeam0: snapshot.score[0],
     scoreTeam1: snapshot.score[1],
     elapsedSeconds: snapshot.elapsedSeconds,

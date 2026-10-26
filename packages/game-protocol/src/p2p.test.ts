@@ -10,6 +10,7 @@ import {
   MAX_WIRE_RANKS,
   MAX_WIRE_SLOTS,
   MAX_WIRE_STATUSES,
+  MAX_WIRE_STATUS_INDEX,
   MAX_WIRE_STRING,
   MAX_WIRE_TEXT,
   MAX_WIRE_JSON_DEPTH,
@@ -116,7 +117,7 @@ const player: WirePlayer = {
   castingSkillId: "healing-breeze",
   castRemaining: 0.75,
   castTotal: 1,
-  statuses: ["crippled"],
+  statuses: [3],
 };
 
 const snapshot: WireSnapshot = {
@@ -372,16 +373,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireSnapshot,
     {
       ...snapshot,
-      players: [
-        { ...player, statuses: Array.from({ length: MAX_WIRE_STATUSES + 1 }, () => "dazed") },
-      ],
+      players: [{ ...player, statuses: Array.from({ length: MAX_WIRE_STATUSES + 1 }, () => 0) }],
     },
   ],
-  [
-    "snapshot with a long status",
-    parseWireSnapshot,
-    { ...snapshot, players: [{ ...player, statuses: [long] }] },
-  ],
+  ...[-1, 1.5, "crippled", MAX_WIRE_STATUS_INDEX + 1].map(
+    (index): [string, (value: unknown) => unknown, unknown] => [
+      `snapshot with status index ${String(index)}`,
+      parseWireSnapshot,
+      { ...snapshot, players: [{ ...player, statuses: [index] }] },
+    ],
+  ),
   [
     "snapshot with a player missing a field",
     parseWireSnapshot,

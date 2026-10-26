@@ -13,6 +13,7 @@ import {
   MAX_LOBBY_PLAYERS,
   MAX_WIRE_COMBATS,
   MAX_WIRE_STATUSES,
+  MAX_WIRE_STATUS_INDEX,
   PROTOCOL_VERSION,
   type JsonValue,
   type PeerHello,
@@ -55,7 +56,9 @@ const PEER_ID = "abcdefghijklmnopqrst/local";
 const NAME = sanitizeName("👩‍🚀".repeat(40), "player");
 
 const SKILL_IDS = IMPLEMENTED_SKILLS.map((skill) => skill.id);
-const STATUS_IDS = Object.keys(STATUS_DEFINITIONS).slice(0, MAX_WIRE_STATUSES);
+const STATUS_IDS = Object.keys(STATUS_DEFINITIONS);
+/** A snapshot's statuses (#632): as many as a player may carry, each the largest index. */
+const WIRE_STATUSES = Array.from({ length: MAX_WIRE_STATUSES }, () => MAX_WIRE_STATUS_INDEX);
 const WEAPON_ID = longest(ALL_WEAPONS.map((weapon) => weapon.id));
 const OFFHAND_ID = longest(ALL_OFFHANDS.map((offhand) => offhand.id));
 const SKILL_ID = longest(SKILL_IDS);
@@ -94,7 +97,7 @@ function player(index: number): WirePlayer {
     castingSkillId: SKILL_ID,
     castRemaining: FLOAT,
     castTotal: FLOAT,
-    statuses: STATUS_IDS,
+    statuses: WIRE_STATUSES,
   };
 }
 
@@ -156,7 +159,7 @@ const NECRO_ELE_ATTRIBUTES = [
 ];
 
 describe("every message fits in one Trystero chunk (#403)", () => {
-  it("a snapshot: 8 players, longest names, every status, casting, attacking; 32 projectiles", () => {
+  it("a snapshot: 8 players, longest names, 32 statuses at the largest index, casting, attacking; 32 projectiles", () => {
     const snapshot: WireSnapshot = {
       tick: 1_000_000,
       elapsedSeconds: FLOAT,
@@ -167,7 +170,6 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       players: Array.from({ length: 8 }, (_, i) => player(i)),
       projectiles: Array.from({ length: 32 }, (_, i) => projectile(i)),
     };
-    expect(STATUS_IDS.length).toBeGreaterThan(10);
     expect(messageBytes(snapshot)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 
