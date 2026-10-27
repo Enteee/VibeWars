@@ -178,7 +178,7 @@ export const SKILL_ICONS = {
   // Placeholders until the asset-designer's (#1039).
   "monk.cure-hex": { glyph: "cleanse", modifier: "clock" },
   "monk.smite-condition": { glyph: "cleanse", modifier: "upkeep" },
-  "monk.mending-touch": { glyph: "plaster", modifier: "up" },
+  "monk.mending-touch": { glyph: "plaster", modifier: "less" },
   "monk.vigorous-spirit": { glyph: "sword-heal", modifier: "clock" },
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },
   "paragon.never-surrender": { glyph: "banner", modifier: "area" },
