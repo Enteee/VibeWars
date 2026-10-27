@@ -278,6 +278,20 @@ async function measure(url, load) {
           };
           note();
           new MutationObserver(note).observe(root, { childList: true });
+          // And every step of the click, with where the screens sat then: a
+          // click Firefox drops shows here as a press with no click.
+          for (const type of ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]) {
+            document.addEventListener(
+              type,
+              (event) => {
+                const target = event.target instanceof Element ? event.target : null;
+                screens.push(
+                  `${String(Math.round(performance.now()))} ms: ${type} on ${target === null ? "?" : `${target.tagName}.${target.className}`}, screens top ${String(root.getBoundingClientRect().top)}`,
+                );
+              },
+              { capture: true },
+            );
+          }
         }
         Object.assign(window, { musicStressScreens: screens });
       });
