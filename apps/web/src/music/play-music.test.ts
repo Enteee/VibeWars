@@ -4,20 +4,40 @@ import { DEFAULT_MUSIC_PREFERENCE, type MusicPreference } from "../audio/music-p
 import { VOLUME_RAMP_SECONDS } from "../audio/volume-ramp.js";
 import type { MusicState } from "./director.js";
 import { createIntensityOverride } from "./intensity-override.js";
-import type { MusicPlayer } from "./music-player.js";
+import type { MusicPlayer, TeardownReason } from "./music-player.js";
 import { createMusicFollower } from "./play-music.js";
 
 const tracks = [
-  { id: "first-light", source: "a", phraseCycles: 8, moods: ["atmospheric" as const] },
-  { id: "clash-of-banners", source: "b", phraseCycles: 4, moods: ["action" as const] },
+  {
+    id: "first-light",
+    title: "First Light",
+    source: "a",
+    phraseCycles: 8,
+    moods: ["atmospheric" as const],
+  },
+  {
+    id: "clash-of-banners",
+    title: "Clash of Banners",
+    source: "b",
+    phraseCycles: 4,
+    moods: ["action" as const],
+  },
 ];
 
 /** No track is edited. */
-const NO_EDITS = { get: () => undefined };
+const NO_EDITS = { get: () => undefined, remove: () => undefined };
 
-/** A player that records every call as `[method, argument]`. */
-function recording(): { player: MusicPlayer; calls: [string, unknown][] } {
+/**
+ * A player that records every call as `[method, argument]`, and tears its
+ * host down on `tearDown`.
+ */
+function recording(): {
+  player: MusicPlayer;
+  calls: [string, unknown][];
+  tearDown: (reason: TeardownReason) => void;
+} {
   const calls: [string, unknown][] = [];
+  const tornDown: ((reason: TeardownReason) => void)[] = [];
   const record =
     (name: string) =>
     (...args: unknown[]): void => {
@@ -25,6 +45,11 @@ function recording(): { player: MusicPlayer; calls: [string, unknown][] } {
     };
   return {
     calls,
+    tearDown: (reason) => {
+      for (const handler of tornDown) {
+        handler(reason);
+      }
+    },
     player: {
       load: record("load"),
       crossfadeTo: record("crossfadeTo"),
@@ -40,6 +65,9 @@ function recording(): { player: MusicPlayer; calls: [string, unknown][] } {
       onError: record("onError"),
       onStats: record("onStats"),
       onEvaluated: record("onEvaluated"),
+      onTornDown: (handler) => {
+        tornDown.push(handler);
+      },
     },
   };
 }
@@ -231,7 +259,10 @@ describe("createMusicFollower", () => {
       saved(false),
       () => 0,
       createIntensityOverride(),
-      { get: (trackId) => (trackId === "first-light" ? edited : undefined) },
+      {
+        get: (trackId) => (trackId === "first-light" ? edited : undefined),
+        remove: () => undefined,
+      },
     );
     calls.length = 0;
     music.follow(state("first-light", 0));
@@ -293,5 +324,62 @@ describe("createMusicFollower", () => {
     off();
     music.follow(state("first-light", 0));
     expect(changes).toBe(6);
+  });
+
+  it("removes the playing track's edit when it stops the music, and says so once (#878)", () => {
+    const { player, calls, tearDown } = recording();
+    const edits = new Map([["first-light", { shippedHash: "a".repeat(64), source: "edited" }]]);
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+      {
+        get: (trackId) => edits.get(trackId),
+        remove: (trackId) => {
+          edits.delete(trackId);
+        },
+      },
+    );
+    const notices: string[] = [];
+    music.onNotice((notice) => notices.push(notice));
+    music.edit("first-light");
+    tearDown("flooded");
+    expect(edits.has("first-light")).toBe(false);
+    expect(notices).toEqual(["Your edit of First Light stopped the music and was removed."]);
+
+    // The next play of the track is the shipped one.
+    calls.length = 0;
+    music.edit(null);
+    music.follow(state("first-light", 0));
+    expect(calls).toEqual([["crossfadeTo", tracks[0]]]);
+    tearDown("hung");
+    expect(notices).toHaveLength(1);
+  });
+
+  it("removes nothing when a shipped track stops the music (#878)", () => {
+    const { player, tearDown } = recording();
+    const removed: string[] = [];
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+      {
+        get: () => undefined,
+        remove: (trackId) => {
+          removed.push(trackId);
+        },
+      },
+    );
+    const notices: string[] = [];
+    music.onNotice((notice) => notices.push(notice));
+    music.follow(state("first-light", 0));
+    tearDown("hung");
+    expect(removed).toEqual([]);
+    expect(notices).toEqual([]);
+    expect(music.nowPlaying).toBe("first-light");
   });
 });

@@ -31,6 +31,10 @@ export function editRemovedNotice(title: string): string {
   return `Your edit of ${title} was based on an older version and was removed.`;
 }
 
+export function editStoppedNotice(title: string): string {
+  return `Your edit of ${title} stopped the music and was removed.`;
+}
+
 /** SHA-256 of `source`, hex. */
 export async function shippedHash(source: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(source));

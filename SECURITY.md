@@ -257,6 +257,14 @@ talks to the game only by `postMessage`. What holds:
   a pattern cannot fetch from or beacon to another host.
 - **A hung host is torn down.** The game pings every second and removes a
   frame that has not answered for five.
+- **A flooding host is torn down** (#878). The game counts every message
+  from the host's window, parsed or not, and removes it at the 101st in a
+  second (`HOST_MESSAGES_PER_SECOND`; a real host sends about two). A flood
+  can answer pings, so the watchdog alone would not catch it. Only one error
+  per evaluation, and one per track sent, reaches the page.
+- **A saved edit that stops the music is not replayed.** When the host is
+  torn down, for hanging or flooding, while it plays an edited track, the
+  edit is removed and the next menu says so once.
 
 What does not hold, and why it is acceptable:
 
@@ -268,6 +276,13 @@ What does not hold, and why it is acceptable:
 - **Any site can frame the host** in its own sandbox and drive it, because
   static files carry `Access-Control-Allow-Origin: *`. There it is just a
   copy of Strudel with an opaque origin that reaches nothing of ours.
+- **A same-thread hang in Firefox and Android is not caught.** There the
+  sandboxed frame can share the game's thread, so a pattern that spins
+  forever (delayed by a `setTimeout`) hangs the watchdog with it, and a
+  saved edit that does this hangs every load. The way out is clearing the
+  site's data. Unverified, since the jails have no Firefox; if it is
+  confirmed, a crash sentinel follows (an edit playing when the page last
+  died without `pagehide` is not replayed).
 - **The vite dev server answers `Origin: null`**, which any site's
   sandboxed frame sends, so `server.fs.allow` limits it to `apps/web`,
   `packages` and `node_modules`. Never widen it to the repo root: `.bots/`

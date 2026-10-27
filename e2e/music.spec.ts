@@ -281,6 +281,43 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
   await expect(editor).toHaveCount(0);
 });
 
+test("a pasted beat that floods the game is switched off, and its edit is not replayed (#878)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
+  const row = page.locator(".jukebox-row", { hasText: "Ember Deep" });
+  await row.getByRole("button", { name: "Open Ember Deep in the beat editor" }).click();
+  const editor = page.getByRole("dialog", { name: "Beat editor: Ember Deep" });
+  const code = editor.locator(".cm-content");
+  await expect(code).toContainText("ember-deep");
+
+  await code.click();
+  await page.keyboard.press("Control+a");
+  await page.keyboard.insertText(
+    [
+      "const big = 'x'.repeat(4000)",
+      "setInterval(() => { for (let i = 0; i < 500; i++) parent.postMessage({ type: 'error', message: big, line: 1 }, '*') }, 0)",
+      "note('c3')",
+    ].join("\n"),
+  );
+  await page.keyboard.press("Control+Enter");
+  await expect(editor.locator(".beat-editor-status")).toHaveText(
+    "The music flooded the game with messages and was switched off.",
+    { timeout: 3_000 },
+  );
+  await expect(page.locator("iframe.music-host")).toHaveCount(0);
+
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(
+    page.getByText("Your edit of Ember Deep stopped the music and was removed."),
+  ).toBeVisible();
+  await page.reload();
+  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
+  await expect(row).not.toHaveClass(/is-edited/);
+});
+
 test("keys typed in the beat editor reach no skill in a match (#373)", async ({ page }) => {
   await page.goto("./");
   await startSoloMatch(page);
