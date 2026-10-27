@@ -239,6 +239,27 @@ and neither does a caster who has died or left.
 What a trigger does never sets off another trigger: a condition
 Contagion hands to a foe with Contagion goes no further.
 
+Three Necromancer curses answer what their target does (#935).
+**Spiteful Spirit** (elite hex, 22 s) deals 39 shadow damage to its
+target and each of its allies adjacent to it whenever the target uses a
+skill and whenever it attacks. A spell, a signet or a shout fires it
+once, an auto-attack swing or shot once, and an attack skill twice: once
+for the use and once for the attack. It fires after the skill has
+landed. **Insidious Parasite** (hex, 13 s): each blow its target lands
+steals 39 health for the caster, so a double strike steals twice, and a
+miss or a block steals nothing. **Mark of Pain** (hex, 30 s): each time
+its target loses health to physical damage, every ally of the target
+adjacent to it takes 34 shadow damage; the target itself does not. A
+block, a blow armor takes to 0, fire or lightning, and degeneration do
+nothing, and two marked targets side by side never set each other off.
+
+**Life steal** (Vampiric Gaze steals 52 at Blood Magic 12, Insidious
+Parasite 39) is not damage. The target loses up to that much, never more
+than it has, and the caster gains exactly what was taken, up to its
+maximum health. Armor does not apply, healing modifiers do not touch the
+gain, it charges no adrenaline, and Mark of Pain does not see it. It can
+kill. A dead caster steals nothing.
+
 ## Knockdown
 
 A knockdown puts its target on the ground for its duration (Backbreaker:
@@ -303,6 +324,20 @@ not 20); Pious Restoration then also removes up to 3 of your hexes.
 Mystic Regeneration gives +3 health pips for each enchantment on you,
 any profession's and itself included, at most 3, recounted the moment
 one goes. Heart of Fury is a stance: you attack 25% faster.
+
+**The scythe enchantments** (#939). While **Vow of Strength** (elite,
+15 s) is on you, every attack you make with a scythe, swing or attack
+skill, hit, miss or block, deals 22 slashing to every foe adjacent to
+you, your target included. **Sand Shards** (30 s) splashes 50 earth on
+every other foe adjacent to the foe you hit, for each of your next 4
+scythe hits; a cleave that hits 3 foes spends 3, and the 4th ends it.
+Neither does anything with another weapon, and a hit with another
+weapon spends nothing. A splash is not a blow: no block, no crit, no
+adrenaline. **Pious Haste** is a stance: lose 1 Dervish enchantment and
+move 25% faster for 6 s, or 50% faster if one was lost, which is capped
+at +33% as every speed-up is (ADR-0019). **Victorious Sweep** (+21, any
+melee weapon) gains you 70 health if, after the blow, its target has
+less health than you, counted in points, not as a share.
 
 Each condition has a distinct mechanical identity, not just a different
 number:

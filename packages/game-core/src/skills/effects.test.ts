@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import {
@@ -383,6 +385,76 @@ describe("sacrifice-health effect", () => {
   });
 });
 
+describe("life-steal effect (#935)", () => {
+  const steal = (flat: number): UnconditionalEffect => ({ kind: "life-steal", amount: { flat } });
+
+  it("takes from the target what the caster gains, armor or not", () => {
+    const caster = makeCombatant({ id: "caster", health: 300 });
+    const target = makeCombatant({ id: "target", team: 1 });
+    target.statuses.apply("armor-boost", 10, "target");
+    const events = applyEffect(steal(52), context(caster, target));
+    expect(events).toEqual([
+      { kind: "life-stolen", targetId: "target", amount: 52 },
+      { kind: "heal", targetId: "caster", amount: 52 },
+    ]);
+    expect(target.health).toBe(448);
+    expect(caster.health).toBe(352);
+  });
+
+  it("takes no more than the target has", () => {
+    const caster = makeCombatant({ id: "caster", health: 300 });
+    const target = makeCombatant({ id: "target", team: 1, health: 20 });
+    const events = applyEffect(steal(39), context(caster, target));
+    expect(events).toEqual([
+      { kind: "life-stolen", targetId: "target", amount: 20 },
+      { kind: "heal", targetId: "caster", amount: 20 },
+      { kind: "death", targetId: "target" },
+    ]);
+    expect(target.dead).toBe(true);
+    expect(caster.health).toBe(320);
+  });
+
+  it("still takes from the target when the caster is full, with no heal", () => {
+    const caster = makeCombatant({ id: "caster", health: 490 });
+    const target = makeCombatant({ id: "target", team: 1 });
+    expect(applyEffect(steal(39), context(caster, target))).toEqual([
+      { kind: "life-stolen", targetId: "target", amount: 39 },
+      { kind: "heal", targetId: "caster", amount: 10 },
+    ]);
+    expect(applyEffect(steal(39), context(caster, target))).toEqual([
+      { kind: "life-stolen", targetId: "target", amount: 39 },
+    ]);
+    expect(target.health).toBe(422);
+  });
+
+  it("is not a heal: deep wound does not shrink the gain", () => {
+    const caster = makeCombatant({ id: "caster", health: 300 });
+    caster.statuses.apply("deep-wound", 10, "target");
+    const target = makeCombatant({ id: "target", team: 1 });
+    applyEffect(steal(52), context(caster, target));
+    expect(caster.health).toBe(352);
+  });
+
+  it("does nothing from a dead caster or to a dead target", () => {
+    const deadCaster = makeCombatant({ id: "caster", health: 0, dead: true });
+    const target = makeCombatant({ id: "target", team: 1 });
+    expect(applyEffect(steal(39), context(deadCaster, target))).toEqual([]);
+    expect(target.health).toBe(500);
+
+    const caster = makeCombatant({ id: "caster", health: 300 });
+    const deadTarget = makeCombatant({ id: "target", team: 1, health: 0, dead: true });
+    expect(applyEffect(steal(39), context(caster, deadTarget))).toEqual([]);
+    expect(caster.health).toBe(300);
+  });
+
+  it("is not physical damage: a Mark of Pain bearer records nothing", () => {
+    const target = makeCombatant({ id: "target", team: 1 });
+    target.statuses.apply("mark-of-pain", 30, "caster");
+    applyEffect(steal(39), context(makeCombatant({ id: "caster", health: 300 }), target));
+    expect(target.statuses.drainChanges()).toEqual([]);
+  });
+});
+
 describe("applyEffects", () => {
   it("applies every effect in order and concatenates their events", () => {
     const caster = makeCombatant({ id: "caster", health: 500, maxHealth: 500 });
@@ -756,6 +828,41 @@ describe("state conditions (#794)", () => {
     for (const skillId of ["paragon.anthem-of-flame", "warrior.distracting-blow", undefined]) {
       expect(healed(spell, at(100, "caster"), casting(skillId)), String(skillId)).toBe(10);
     }
+  });
+
+  it("target-less-health: the target's health below the caster's, absolute; equal is not less (#939)", () => {
+    const less = healIf({ kind: "target-less-health" });
+    expect(healed(less, at(300, "caster"), at(299))).toBe(110);
+    expect(healed(less, at(300, "caster"), at(300))).toBe(10);
+    // A share would say 50% of 1000 is less than 80% of 500: health is absolute.
+    const big = makeCombatant({ id: "target", health: 500, maxHealth: 1000 });
+    expect(healed(less, at(400, "caster"), big)).toBe(10);
+  });
+
+  it("caster-wields: the caster's main hand is of the class, the target's is not read (#939)", () => {
+    const holding = (weapon: Weapon, id: string): Combatant =>
+      makeCombatant({
+        id,
+        health: 100,
+        maxHealth: 500,
+        equipment: {
+          ...unarmedResolvedEquipment(rules.armorReferenceLevel),
+          mainHand: {
+            weapon,
+            attributeId: undefined,
+            damageType: "slashing",
+            requirementMet: true,
+          },
+        },
+      });
+    const scythe = healIf({ kind: "caster-wields", weapon: "scythe" });
+    expect(healed(scythe, holding(WEAPONS.scythe, "caster"), at(100))).toBe(110);
+    expect(
+      healed(scythe, holding(WEAPONS.sword, "caster"), holding(WEAPONS.scythe, "target")),
+    ).toBe(10);
+    const melee = healIf({ kind: "caster-wields", weapon: "melee" });
+    expect(healed(melee, holding(WEAPONS.sword, "caster"), at(100))).toBe(110);
+    expect(healed(melee, holding(WEAPONS.flatbow, "caster"), at(100))).toBe(10);
   });
 
   it("is read per target", () => {

@@ -358,6 +358,28 @@ const status = {
     "hex",
     (c) => `<path d="M14.5 8L11 12l3.5 4M11 8L7.5 12l3.5 4" ${stroke(c, 2)}/>`,
   ],
+  // Hex: a burst with a dot at its heart, the spirit striking out (#935).
+  "spiteful-spirit": [
+    "hex",
+    (c) =>
+      `<circle cx="12" cy="12.5" r="2" fill="${c}"/>` +
+      `<path d="M12 5.5v2.5M12 17v2.5M5 12.5h2.5M16.5 12.5H19M7 7.5l1.8 1.8M15.2 15.7L17 17.5M17 7.5l-1.8 1.8M8.8 15.7L7 17.5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Hex: a drop drawn off by an arrow, health stolen on each hit (#935).
+  "insidious-parasite": [
+    "hex",
+    (c) =>
+      `<path d="M10 6c2 3 3.5 4.8 3.5 7a3.5 3.5 0 0 1-7 0c0-2.2 1.5-4 3.5-7z" fill="${c}"/>` +
+      `<path d="M14.5 10.5h4M16.5 8.5l2 2-2 2" ${stroke(c, 1.8)}/>`,
+  ],
+  // Hex: a cross with two rings beside it, pain passed to who stands near (#935).
+  "mark-of-pain": [
+    "hex",
+    (c) =>
+      `<path d="M10 9.5l4 4M14 9.5l-4 4" ${stroke(c, 2.2)}/>` +
+      `<circle cx="6.5" cy="15.5" r="1.5" ${stroke(c, 1.5)}/>` +
+      `<circle cx="17.5" cy="15.5" r="1.5" ${stroke(c, 1.5)}/>`,
+  ],
   // Hex: three ice spikes falling, the cold slowing you (#938).
   "ice-spikes": [
     "hex",
@@ -424,6 +446,29 @@ const status = {
   "heart-of-fury": [
     "stance",
     (c) => `<path d="M12 18l-4.8-4.8a2.8 2.8 0 0 1 4.8-4 2.8 2.8 0 0 1 4.8 4z" fill="${c}"/>`,
+  ],
+  // Enchantment: a blade with a ring round it, slashing all adjacent foes
+  // whenever you attack (#939).
+  "vow-of-strength": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.6)}/>` +
+      `<path d="M8.5 15.5l7-7M9 12.5l2.5 2.5" ${stroke(c, 2.2)}/>`,
+  ],
+  // Enchantment: three grains of sand, flung at the foes beside your hit (#939).
+  "sand-shards": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 5.5l2 3.5h-4z" fill="${c}"/>` +
+      `<path d="M7.5 13l2 3.5h-4z" fill="${c}"/>` +
+      `<path d="M16.5 13l2 3.5h-4z" fill="${c}"/>`,
+  ],
+  // Stance: one chevron, forward: move 25% faster (#939).
+  "pious-haste": ["stance", (c) => `<path d="M9.5 9l4.5 5-4.5 5" ${stroke(c, 2.5)}/>`],
+  // Stance: three chevrons, forward: run 50% faster, an enchantment paid (#939).
+  "pious-haste-run": [
+    "stance",
+    (c) => `<path d="M5 9l4 5-4 5M9.5 9l4 5-4 5M14 9l4 5-4 5" ${stroke(c, 2.2)}/>`,
   ],
   // Skill effect: a shield struck through, armor lost while the signet is
   // activated (#524).

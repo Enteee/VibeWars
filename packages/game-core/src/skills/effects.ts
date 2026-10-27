@@ -1,3 +1,4 @@
+import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
 import { DIVINE_FAVOR_ATTRIBUTE, divineFavorBonusHeal } from "../primary-attributes.js";
 import { emptyAdrenaline } from "./adrenaline.js";
 import { getSkill } from "./catalog.js";
@@ -12,6 +13,7 @@ import {
 } from "./status.js";
 import { nearestFirst } from "./targeting.js";
 import { effectiveMaxHealth, healingMultiplierOf, maxHealthLossOf, rankOf } from "./tick.js";
+import { wieldsFor } from "../equipment/weapons.js";
 import { distance } from "../vec2.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
@@ -56,6 +58,12 @@ export type CombatEvent =
   /** Energy the target actually lost (#793): never more than it had, never 0. */
   | { readonly kind: "energy-loss"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "sacrifice"; readonly targetId: string; readonly amount: number }
+  /**
+   * Health stolen from the target (#935): never more than it had, never 0.
+   * Not damage: nothing that reacts to damage sees it. What the caster
+   * gained is the `heal` after it.
+   */
+  | { readonly kind: "life-stolen"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "death"; readonly targetId: string }
   /** Back from the dead (#812), with these shares of maximum health and energy, 0..1. */
   | {
@@ -170,13 +178,15 @@ export type CombatEvent =
  * exactly once.
  *
  * Mitigation happens in `damage.ts` and is deliberately *not* done here:
- * degeneration reaches this function too, and armor must not apply to
- * it. Callers state what kind of damage they are dealing; this function
- * only does the bookkeeping.
+ * callers mitigate the packet and pass its `type`. Physical damage that
+ * takes health is recorded on the target's statuses, for Mark of Pain
+ * (#935). Degeneration has its own path in `tick.ts` and never comes
+ * here, so it can never count as physical.
  */
 export function applyDamage(
   target: Combatant,
   amount: number,
+  type: DamageType,
   critical: boolean,
   events: CombatEvent[],
 ): void {
@@ -186,6 +196,9 @@ export function applyDamage(
   const applied = Math.min(amount, target.health);
   target.health -= applied;
   events.push({ kind: "damage", targetId: target.id, amount: applied, critical });
+  if (isPhysicalDamage(type)) {
+    target.statuses.recordPhysicalDamage();
+  }
   // The guard above already returned for an already-dead target, so
   // reaching 0 here is always a *new* death — exactly one death event.
   if (target.health <= 0) {
@@ -243,6 +256,36 @@ function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): vo
   }
   target.health += applied;
   events.push({ kind: "heal", targetId: target.id, amount: applied });
+}
+
+/**
+ * GW1's life stealing (#935): the target loses up to `amount`, never more
+ * than it has, and the caster gains exactly that, up to its effective
+ * maximum. Not damage, so no armor and nothing that reacts to damage; not
+ * a heal either, so the caster's healing modifiers do not touch it. It
+ * can kill, with one `death`, as `applyDamage` does.
+ */
+function stealLife(
+  caster: Combatant,
+  target: Combatant,
+  amount: number,
+  events: CombatEvent[],
+): void {
+  const stolen = Math.min(amount, target.health);
+  if (stolen <= 0) {
+    return;
+  }
+  target.health -= stolen;
+  events.push({ kind: "life-stolen", targetId: target.id, amount: stolen });
+  const gained = Math.min(stolen, effectiveMaxHealth(caster) - caster.health);
+  if (gained > 0) {
+    caster.health += gained;
+    events.push({ kind: "heal", targetId: caster.id, amount: gained });
+  }
+  if (target.health <= 0) {
+    target.dead = true;
+    events.push({ kind: "death", targetId: target.id });
+  }
 }
 
 /**
@@ -510,7 +553,7 @@ export function applyEffect(
         return events;
       }
       const packet = skillDamage(amount, effect.type, effect.armorPenetration);
-      applyDamage(target, mitigate(packet, target, context.rules), false, events);
+      applyDamage(target, mitigate(packet, target, context.rules), packet.type, false, events);
       return events;
     }
 
@@ -537,6 +580,14 @@ export function applyEffect(
         return events;
       }
       loseEnergy(target, resolveMagnitude(effect.amount, caster), events);
+      return events;
+    }
+
+    case "life-steal": {
+      if (target === undefined || target.dead || caster.dead) {
+        return events;
+      }
+      stealLife(caster, target, resolveMagnitude(effect.amount, caster), events);
       return events;
     }
 
@@ -732,6 +783,8 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-alone":
     case "target-not-moving":
     case "caster-more-energy":
+    case "caster-wields":
+    case "target-less-health":
       return true;
   }
 }
@@ -777,6 +830,10 @@ export function stateHolds(
       return !target.moving;
     case "caster-more-energy":
       return caster.energy > target.energy;
+    case "caster-wields":
+      return wieldsFor(caster.equipment.mainHand.weapon.id, condition.weapon);
+    case "target-less-health":
+      return target.health < caster.health;
   }
 }
 
@@ -888,6 +945,8 @@ function conditionHolds(
     case "target-alone":
     case "target-not-moving":
     case "caster-more-energy":
+    case "caster-wields":
+    case "target-less-health":
       return held.has(condition);
   }
 }
@@ -958,6 +1017,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "remove-status":
       return effect.from === "caster";
     case "energy-loss":
+    case "life-steal":
     case "damage":
     case "apply-status":
     case "maintain-status":

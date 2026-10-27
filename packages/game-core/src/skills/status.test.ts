@@ -59,7 +59,7 @@ describe("status definitions", () => {
         def.interruptsSpells ||
         def.attackDurationMultiplier !== 1 ||
         def.block !== undefined ||
-        def.onAttackHit.length > 0 ||
+        def.onAttackHit !== undefined ||
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||
         def.nextAttackSkill !== undefined ||
@@ -455,6 +455,27 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.clear();
     set.remove("parasitic-bond");
     expect(set.drainChanges()).toEqual([]);
+  });
+
+  it("records a hit and physical damage only while a status answers them (#935)", () => {
+    const set = new StatusSet();
+    set.apply("backfire", 10, "a");
+    set.drainChanges();
+    set.recordHit();
+    set.recordPhysicalDamage();
+    expect(set.drainChanges()).toEqual([]);
+
+    set.apply("insidious-parasite", 13, "a");
+    set.recordHit();
+    set.recordPhysicalDamage();
+    set.recordHit();
+    expect(set.drainChanges()).toEqual([{ kind: "hit" }, { kind: "hit" }]);
+
+    set.apply("mark-of-pain", 30, "a");
+    set.drainChanges();
+    set.recordPhysicalDamage();
+    set.recordHit();
+    expect(set.drainChanges()).toEqual([{ kind: "took-physical-damage" }, { kind: "hit" }]);
   });
 });
 

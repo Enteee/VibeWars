@@ -2263,6 +2263,134 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "dervish.vow-of-strength",
+    name: "Vow of Strength",
+    type: "enchantment",
+    elite: true,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 15 seconds, whenever you attack a foe with your scythe, you deal
+    // 10...22...25 slashing damage to all adjacent foes": the status deals it.
+    effects: [{ kind: "apply-status", statusId: "vow-of-strength", durationSeconds: 15 }],
+  },
+  {
+    id: "dervish.sand-shards",
+    name: "Sand Shards",
+    // A flash enchantment: an enchantment spell with no activation.
+    type: "enchantment",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 30 seconds, the next 1...4...5 times you hit with a scythe, all
+    // other adjacent foes take 10...50...60 earth damage": the status does.
+    effects: [{ kind: "apply-status", statusId: "sand-shards", durationSeconds: 30 }],
+  },
+  {
+    id: "dervish.pious-haste",
+    name: "Pious Haste",
+    type: "stance",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.mysticism",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "You remove 1 Dervish enchantment and for 1...6...7 you move 25%
+    // faster. If an enchantment was removed, you run 50% faster instead":
+    // 6 s, its rank-12 value. The run is a stance too, so it replaces the
+    // 25% one as it lands.
+    effects: [
+      {
+        kind: "remove-status",
+        category: "enchantment",
+        count: 1,
+        profession: "dervish",
+        from: "caster",
+      },
+      { kind: "apply-status", statusId: "pious-haste", durationSeconds: 6 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "enchantment", from: "caster" },
+        effects: [{ kind: "apply-status", statusId: "pious-haste-run", durationSeconds: 6 }],
+      },
+    ],
+  },
+  {
+    id: "dervish.victorious-sweep",
+    name: "Victorious Sweep",
+    type: "attack",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.scythe-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 4,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "If this attack hits, you deal +5...21...25 damage. If target foe has
+    // less Health than you, you gain 30...70...80 Health." Read after the
+    // blow, so its own damage counts.
+    attack: {
+      weapon: "melee",
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 5, atTwelve: 21 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-less-health" },
+        effects: [
+          {
+            kind: "heal",
+            perStatusOnTarget: [],
+            recipient: "caster",
+            amount: {
+              scaling: { attributeId: "dervish.scythe-mastery", atZero: 30, atTwelve: 70 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: "ranger.savage-shot",
     name: "Savage Shot",
     type: "attack",
@@ -2587,6 +2715,103 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "...attack 50% slower for the next 5...25...30 seconds."
     effects: [{ kind: "apply-status", statusId: "shadow-of-fear", durationSeconds: 25 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Necromancer curses (#935)                                              */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "necromancer.spiteful-spirit",
+    name: "Spiteful Spirit",
+    type: "hex",
+    elite: true,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10...22...25 seconds, whenever target foe attacks or uses a
+    // skill, Spiteful Spirit deals 15...39...45 shadow damage to that foe
+    // and all adjacent allies of that foe." The damage is the hex's.
+    effects: [{ kind: "apply-status", statusId: "spiteful-spirit", durationSeconds: 22 }],
+  },
+  {
+    id: "necromancer.insidious-parasite",
+    name: "Insidious Parasite",
+    type: "hex",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...13...15 seconds, whenever target foe hits with an attack,
+    // you steal 15...39...45 health from that foe." The steal is the hex's.
+    effects: [{ kind: "apply-status", statusId: "insidious-parasite", durationSeconds: 13 }],
+  },
+  {
+    id: "necromancer.mark-of-pain",
+    name: "Mark of Pain",
+    type: "hex",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 30 seconds, whenever target foe takes physical damage, Mark of
+    // Pain deals 10...34...40 shadow damage to adjacent foes." The damage
+    // is the hex's.
+    effects: [{ kind: "apply-status", statusId: "mark-of-pain", durationSeconds: 30 }],
+  },
+  {
+    id: "necromancer.vampiric-gaze",
+    name: "Vampiric Gaze",
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Steal up to 18...52...60 Health from target foe."
+    effects: [
+      {
+        kind: "life-steal",
+        amount: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 18, atTwelve: 52 },
+        },
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */

@@ -69,6 +69,7 @@ function chop(attacker: Combatant, targets: readonly Combatant[], seed = 1): Com
       rules: RULES.combat,
     },
     NOWHERE,
+    [],
   );
 }
 
@@ -149,6 +150,7 @@ describe("Anthem of Flame on an attack skill (#758)", () => {
         rules: RULES.combat,
       },
       NOWHERE,
+      [],
     );
     expect(burned(events)).toEqual(["x", "y", "z"]);
     expect(ranger.statuses.has("anthem-of-flame")).toBe(false);

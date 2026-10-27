@@ -84,6 +84,10 @@ export const SKILL_ICONS = {
   "dervish.wounding-strike": { glyph: "axe", modifier: "down" },
   "dervish.signet-of-pious-light": { glyph: "heal", modifier: "less" },
   "dervish.pious-restoration": { glyph: "cleanse", modifier: "self" },
+  "dervish.vow-of-strength": { glyph: "axe", modifier: "area" },
+  "dervish.sand-shards": { glyph: "shard", modifier: "up" },
+  "dervish.pious-haste": { glyph: "dash", modifier: "self" },
+  "dervish.victorious-sweep": { glyph: "axe", modifier: "self" },
   "ranger.savage-shot": { glyph: "arrow" },
   "ranger.distracting-shot": { glyph: "interrupt", modifier: "less" },
   "mesmer.energy-burn": { glyph: "flame", modifier: "down" },
@@ -106,4 +110,9 @@ export const SKILL_ICONS = {
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },
   "paragon.never-surrender": { glyph: "banner", modifier: "area" },
   "paragon.leaders-comfort": { glyph: "banner-cross", modifier: "self" },
+  // Placeholders from existing glyphs (#935).
+  "necromancer.spiteful-spirit": { glyph: "fireball", modifier: "down" },
+  "necromancer.insidious-parasite": { glyph: "chain", modifier: "self" },
+  "necromancer.mark-of-pain": { glyph: "hammer", modifier: "area" },
+  "necromancer.vampiric-gaze": { glyph: "heal", modifier: "bleed" },
 };

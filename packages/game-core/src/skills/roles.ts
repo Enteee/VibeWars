@@ -42,6 +42,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "damage":
     case "energy-gain":
     case "energy-loss":
+    case "life-steal":
     case "sacrifice-health":
     case "resurrect":
     case "recharge-faster":
@@ -71,7 +72,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     roles.push("defence");
   }
   if (status.interruptsSpells) roles.push("interrupt");
-  const riders = [...status.onAttackHit, ...(status.nextAttackSkill ?? [])];
+  const riders = [...(status.onAttackHit?.effects ?? []), ...(status.nextAttackSkill ?? [])];
   return [...roles, ...riders.flatMap(effectRoles)];
 }
 

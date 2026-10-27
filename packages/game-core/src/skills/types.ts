@@ -124,6 +124,16 @@ export interface EnergyLossEffect {
   readonly amount: Magnitude;
 }
 
+/**
+ * Steal up to `amount` health from the target (#935), GW1's life
+ * stealing: not damage, so no armor, no adrenaline and nothing that
+ * reacts to damage sees it. The caster gains what the target lost.
+ */
+export interface LifeStealEffect {
+  readonly kind: "life-steal";
+  readonly amount: Magnitude;
+}
+
 /** Health sacrificed by the *caster*, as a percentage of their maximum. */
 export interface SacrificeHealthEffect {
   readonly kind: "sacrifice-health";
@@ -290,7 +300,18 @@ export type StateCondition =
    * The caster has more energy than the effect's target (#918): Mind
    * Shock's "if you have more energy than target foe". Equal is not more.
    */
-  | { readonly kind: "caster-more-energy" };
+  | { readonly kind: "caster-more-energy" }
+  /**
+   * The caster's main hand is a weapon of this class (#939): Vow of
+   * Strength's and Sand Shards' "with your scythe".
+   */
+  | { readonly kind: "caster-wields"; readonly weapon: AttackWeaponClass }
+  /**
+   * The effect's target has less health than the caster, absolute, not a
+   * share (#939): Victorious Sweep's "if target foe has less Health than
+   * you". Equal is not less.
+   */
+  | { readonly kind: "target-less-health" };
 
 export type EffectCondition = EventCondition | StateCondition;
 
@@ -314,6 +335,7 @@ export type UnconditionalEffect =
   | HealEffect
   | EnergyGainEffect
   | EnergyLossEffect
+  | LifeStealEffect
   | SacrificeHealthEffect
   | ApplyStatusEffect
   | MaintainStatusEffect
