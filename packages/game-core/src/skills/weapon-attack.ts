@@ -1,6 +1,6 @@
 import { AREA_ADJACENT } from "../distances.js";
 import type { ResolvedWeapon } from "../equipment/resolve.js";
-import { isPhysicalDamage } from "../equipment/types.js";
+import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
 import type { Weapon } from "../equipment/weapons.js";
 import {
   CRITICAL_STRIKES_ATTRIBUTE,
@@ -243,6 +243,10 @@ export interface BlowRule {
    * does not help.
    */
   readonly strengthRank: number;
+  /** The skill's damage type (#923); `undefined`: the weapon's. */
+  readonly damageType: DamageType | undefined;
+  /** The skill's own base armor penetration (#923); it and Strength's do not add. */
+  readonly armorPenetration: number;
   /**
    * More `bonus` while a state holds (#794), at the caster's ranks: read
    * by `settleBlow` as the blow lands on each victim.
@@ -256,6 +260,8 @@ export const PLAIN_BLOW: BlowRule = {
   weaponDamage: 1,
   bonus: 0,
   strengthRank: 0,
+  damageType: undefined,
+  armorPenetration: 0,
   conditionalBonus: undefined,
 };
 
@@ -267,6 +273,8 @@ export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
     weaponDamage: skill.attack?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
     bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
     strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),
+    damageType: skill.attack?.damageType,
+    armorPenetration: skill.attack?.armorPenetration ?? PLAIN_BLOW.armorPenetration,
     conditionalBonus:
       conditionalBonus === undefined
         ? undefined
@@ -345,11 +353,14 @@ export function landBlow(
       weaponAttributeMultiplier(snapshot.rank, rules) *
       (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier),
     armorIgnoring: blow.bonus,
-    type: snapshot.mainHand.damageType,
+    type: blow.damageType ?? snapshot.mainHand.damageType,
     source: "weapon",
-    armorPenetration: strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
+    armorPenetration: Math.max(
+      blow.armorPenetration,
+      strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
+    ),
   };
-  applyDamage(victim, mitigate(packet, victim, rules), critical, events);
+  applyDamage(victim, mitigate(packet, victim, rules), packet.type, critical, events);
   return critical;
 }
 
@@ -389,6 +400,19 @@ export function attackHitRiders(
  */
 export function bearerAttacked(attacker: Combatant, events: CombatEvent[]): void {
   for (const statusId of attacker.statuses.endOnBearerAttack()) {
+    events.push({ kind: "status-expired", targetId: attacker.id, statusId });
+  }
+}
+
+/**
+ * One of the attacker's blows hit (#919): swing, attack skill or arrow
+ * alike, never a miss or a block. Every status of its own that ends when
+ * its bearer hits ends now, as Dark Escape, and the hit is recorded for
+ * what answers one, as Insidious Parasite (#935).
+ */
+export function bearerHit(attacker: Combatant, events: CombatEvent[]): void {
+  attacker.statuses.recordHit();
+  for (const statusId of attacker.statuses.endOnBearerHit()) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
   }
 }
@@ -465,6 +489,7 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
   events.push(
     ...attackHitRiders(attacker, victim, snapshot.mainHand, rng, rules, swing.surroundings),
   );
+  bearerHit(attacker, events);
   attackReached(victim, events);
 }
 
@@ -592,6 +617,7 @@ export function resolveAttackSkill(
         ...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules, surroundings),
         ...nextAttackSkillRiders(next, caster, victim, rng, rules, surroundings),
       );
+      bearerHit(caster, events);
       attackReached(victim, events);
       markChain(caster, skill, victim.id);
       hit.push(victim);

@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 8,
+  "upkeep": false,
   "description": "You gain 80...136...150 Health and remove 1 Dervish enchantment. If an enchantment was removed in this way, you also lose 1...3...3 hexes.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

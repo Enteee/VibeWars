@@ -151,6 +151,8 @@ before any of their effects. Word of Healing heals 98 more (Healing
 Prayers 12) for an ally below half of its maximum health, a maximum a
 deep wound has lowered; its own heal cannot cancel the bonus. Mystic
 Sweep's blow deals 10 more while you are enchanted, in the same number.
+**Dwayna's Kiss** (#920) heals another ally 51, and 30 more for each
+enchantment and hex on it as the heal lands.
 
 ## Interrupts
 
@@ -170,9 +172,32 @@ interrupt a spell or a chant; against an attack skill, a signet or an idle
 foe they are a wasted cast. When they land, Power Spike deals damage and
 Power Drain gives you energy.
 
+**Leech Signet** (#920) interrupts anything being cast, as a plain
+interrupt does, and gives you 13 energy only if what it cancelled was a
+spell. A signet, it costs nothing.
+
 **Savage Shot** (#794) interrupts whatever its arrow finds being cast, and
 hits 25 harder if that was a spell: one bigger number on the hit, read
 as the arrow lands. A block or a miss does neither.
+
+Some interrupts also **disable** what they cut short (#914): the skill
+cannot be used for a while, on top of its recharge. The two run
+together, so the skill waits for whichever is longer, and on your bar
+it looks exactly like a recharge. **Power Block** (elite) interrupts a
+spell or a chant and disables it for 10 s, along with every skill on
+the victim's bar of the same attribute; a skill with no attribute takes
+only itself. **Distracting Shot** interrupts whatever its arrow finds,
+deals only 13, and disables an interrupted skill for 20 s; the Warrior's
+**Disrupting Chop** (6 adrenaline) interrupts and disables the same way, on a plain axe blow. The log says
+which skills were disabled, and for how long; a skill already
+recharging for longer is not mentioned.
+
+**Cry of Frustration** (#938, Domination Magic, 10 energy, ¼ s, 20 s
+recharge) only works on a foe using a skill, any skill. Then that foe is
+interrupted and takes 63 damage, and every foe in the area around it is
+interrupted too, if it is casting, and takes 75% of that, 47. On a foe
+using no skill it does nothing, to anyone: the energy is spent and it
+recharges all the same.
 
 ## Energy denial
 
@@ -183,6 +208,11 @@ taken, so a foe at 3 energy loses 3, and one at 0 loses nothing and takes
 no damage. Maximum energy is untouched, and a foe drained mid-cast keeps
 casting: energy is paid when a cast starts. The loss floats over the foe
 in blue, "−8 energy", and the Training log has a row for it.
+
+**Energy Surge** (#920) takes up to 8 energy from its target, which
+takes 7 damage for each point it lost; every foe nearby it takes 75% of
+that, rounded. The foes around it lose no energy themselves, and your
+allies are never hit.
 
 ## Reactive hexes
 
@@ -195,6 +225,40 @@ cancelled spell, a signet or a shout does nothing. The damage ignores
 armor and is the Mesmer's: the log names their Backfire or Empathy, it
 counts toward their damage, and a kill is theirs, even after they died.
 A Mesmer who has left the match hurts nobody.
+
+Two Necromancer skills answer a status changing (#887). **Contagion**
+(elite enchantment on yourself, 60 s): each time you gain a condition
+you did not already have, every living foe within the area of you gets
+the same condition, for as long as it was put on you, and you sacrifice
+6% of your maximum health, foes in reach or not. A condition you
+already had, refreshed or not, does nothing. **Parasitic Bond** (hex,
+20 s) gives its target −1 health degeneration and heals its caster for
+102 when it ends: when it runs out, when it is removed, or when its
+target dies. Re-casting it on a target that still has it heals nothing,
+and neither does a caster who has died or left.
+What a trigger does never sets off another trigger: a condition
+Contagion hands to a foe with Contagion goes no further.
+
+Three Necromancer curses answer what their target does (#935).
+**Spiteful Spirit** (elite hex, 22 s) deals 39 shadow damage to its
+target and each of its allies adjacent to it whenever the target uses a
+skill and whenever it attacks. A spell, a signet or a shout fires it
+once, an auto-attack swing or shot once, and an attack skill twice: once
+for the use and once for the attack. It fires after the skill has
+landed. **Insidious Parasite** (hex, 13 s): each blow its target lands
+steals 39 health for the caster, so a double strike steals twice, and a
+miss or a block steals nothing. **Mark of Pain** (hex, 30 s): each time
+its target loses health to physical damage, every ally of the target
+adjacent to it takes 34 shadow damage; the target itself does not. A
+block, a blow armor takes to 0, fire or lightning, and degeneration do
+nothing, and two marked targets side by side never set each other off.
+
+**Life steal** (Vampiric Gaze steals 52 at Blood Magic 12, Insidious
+Parasite 39) is not damage. The target loses up to that much, never more
+than it has, and the caster gains exactly what was taken, up to its
+maximum health. Armor does not apply, healing modifiers do not touch the
+gain, it charges no adrenaline, and Mark of Pain does not see it. It can
+kill. A dead caster steals nothing.
 
 ## Knockdown
 
@@ -404,10 +468,40 @@ leaves it alone, and stance removal leaves your enchantments. Sprint
 (Warrior, 13 s) moves you 25% faster; Dash (Assassin, 3 s) 50% faster.
 A stance and crippled multiply, as every movement change does.
 
+Three stances trade something for speed (#919). Frenzy (Warrior, 8 s,
+4 s recharge): you attack 33% faster but take double damage. Dark Escape
+(Assassin, Shadow Arts, 13 s): you move 25% faster and take half damage,
+until one of your attacks hits; a miss or a block keeps it. Natural
+Stride (Ranger, Wilderness Survival, 7 s): you run 33% faster and block
+half of incoming attacks, until a new hex or enchantment lands on you; a
+refreshed one does not end it. Damage taken is multiplied after armor
+and before a Rune of Absorption, on every damage packet; health loss,
+sacrifice and degeneration are not damage packets and are left alone.
+
+**Mantra of Recovery** (Mesmer elite stance, Fast Casting, 5 energy, 15 s
+recharge, #938) makes every spell you finish in the next 17 s recharge
+33% faster. It is read as the recharge starts: a spell finished after the
+Mantra ends gets nothing, and one already recharging keeps its shorter
+time. A signet, an attack or a stance is not a spell.
+
 Wild Throw (Paragon spear attack, 7 adrenaline) deals +17 damage, cannot
 be blocked, and ends the stance of the foe it hits. It does not yet
 disable your other attack skills for 3 s: that waits for disabled skills
-(#469).
+(#469). Cruel Spear (Paragon elite spear attack, 6 adrenaline) deals
++42 damage, and a Deep Wound for 17 s if its target is not moving as the
+spear lands (#921).
+
+**Moving** means walking during the previous tick: a held direction, a
+clicked point, an approach to attack or cast. Knocked down, in
+aftercast, dead or walking into a wall is not moving. Everyone's is read
+at the end of a tick, so it is one tick late and never depends on who
+acts first.
+
+Spear of Lightning (Paragon spear attack, 5 energy, 6 s) deals +18, and
+the whole blow is lightning, the spear's damage too: armor against
+elemental damage meets it, armor against physical damage does not. It
+has 25% armor penetration. Penetration from the skill and from Strength
+does not add: the blow takes the larger (#923).
 
 **Preparations** change your attacks while they last, and only one is up
 at a time, as with stances (#525). Apply Poison (Ranger, 15 energy, 2 s
@@ -440,6 +534,24 @@ for 10 s, and it ends early on each ally after 3 incoming attacks that
 hit or are blocked; a miss, a dodge or an obstructed arrow does not
 count. Earshot is GW1's ratio of earshot to cast range (about 1,010 to
 1,250) applied to the 420-unit spell range.
+"Never Surrender!" (Paragon, Command, 5 energy, 20 s) gives +4 Health
+regeneration for 10 s to each ally in earshot below 75% Health as it
+lands; one at exactly 75% or above gets nothing, and one healed above it
+afterwards keeps it (#923).
+
+Leader's Comfort (Paragon, Leadership, 5 energy, 2 s cast, 8 s) heals
+you 66, plus 18 for each living ally in earshot, you included, at most
+140 in all: 84 alone, 140 with four others. It is a skill, not a shout,
+so Leadership gives no energy for it. A Deep Wound cuts the capped heal
+by its 20%.
+
+The Paragon's Command shouts (#921): "Fall Back!" (10 energy, 25 s
+recharge) gives 9 s of 33% faster movement and 13 Health per second
+while moving, a heal Deep Wound cuts; it ends on an ally when that ally
+hits with an attack, but not on a miss or a block. "Stand Your Ground!"
+(15 energy, 30 s recharge) gives 17 s of +24 armor while not moving,
+and ends on an ally as soon as that ally attacks. Leadership pays for
+both, as for every shout.
 
 **Chants** reach allies in earshot as shouts do, but have a cast (#758).
 A chant is not a spell: dazed does not slow it. Anthem of Flame
@@ -621,6 +733,9 @@ lands and shrinks back when it ends; an attack skill keeps the wind-up it
 started with. Spells are not slowed. Only the strongest slow-down and the
 strongest speed-up count, and they multiply (ADR-0029). The hex also
 degenerates its target by 2 pips.
+**Shadow of Fear** (Curses, 10 energy, 2 s cast, 5 s recharge) is the
+same slow-down without the degeneration, for 25 s, on the target and
+every foe adjacent to it (#918).
 
 ## Damage types and armor
 
@@ -678,6 +793,18 @@ recharge) flies at the target, half as fast again as Fireball, and is
 dodged or blocked by a wall as Fireball is. It strikes for 82 lightning at
 Air Magic 12, and a Ranger's 100 armor counts as 75 against it: it lands
 for 63, where Fireball's 91 lands for 46.
+**Lightning Strike** (5 energy, 1 s, 5 s recharge) hits at once for 33
+lightning at rank 12. **Mind Shock** (elite, 5 energy, 10 overcast, 1 s,
+8 s recharge) hits for 42 lightning, and if you have more energy than
+your target when it lands (its cost already paid), another 42 and a
+knockdown. **Shard Storm** (Water Magic, 10 energy, 1 s, 10 s recharge)
+flies as Fireball does, a little faster, and on a hit deals 70 cold and
+hexes its target to 34% speed for 5 s (#918).
+**Ice Spikes** (Water Magic, 15 energy, 1 s, 10 s recharge) falls on its
+target and every foe adjacent to it: 68 cold and 34% speed for 5 s.
+**Deep Freeze** (25 energy, 2 s, 15 s recharge) does the same to every
+foe in the area of its target, for 70 cold and 10 s (#938). Neither
+flies. Slows multiply, down to a floor of 25% speed.
 
 ## Primary attributes
 
@@ -750,6 +877,11 @@ scores for the opposing team; both death paths — a killing blow and
 bleeding out — route through the same place, so neither is worth more
 than the other.
 
+A death ends every effect on the dead: conditions, hexes, enchantments,
+stances, shouts. Each ends as if removed, so what answers its ending
+fires, and a corpse wears nothing. A kill made by such an answer, as a
+Backfire's damage, ends them too but sets off nothing further.
+
 Kill credit is **team-level, not per-player**. Attributing a kill to a
 specific killer needs damage-source tracking that does not exist yet,
 and inventing an attribution would be a plausible-looking lie in the
@@ -759,6 +891,10 @@ What death costs, and how the dead come back, are properties of the
 match rules, set per mode as GW1 sets them (#843). Today's match is
 GW1's Annihilation (#846): there is no respawn, the dead stay corpses
 until resurrected or the match ends, and the **death penalty** is on.
+So the scoreboard counts who is left, not kills: `4 v 3 · 7:12` reads
+the living on your side, then theirs, beside the clock, and a pip per
+foe beside it is filled while they live and hollow once they fall
+(#881). Hover a pip for the name.
 In GW1's Kill Count, which no map picks yet, a dead player **respawns**
 at a spawn point of their own team after 8 seconds, at full health and
 energy, with all statuses cleared, and there is no death penalty.

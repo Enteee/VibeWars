@@ -63,6 +63,7 @@ import { CastState, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
 import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
 import {
+  applyEffects,
   applySkillEffects,
   applyStatus,
   gainEnergy,
@@ -113,6 +114,7 @@ import {
   attackHitRiders,
   attackReached,
   bearerAttacked,
+  bearerHit,
   blindMisses,
   blocks,
   gainCriticalEnergy,
@@ -128,7 +130,13 @@ import {
   swingIntervalSeconds,
   weaponSnapshotOf,
 } from "../skills/weapon-attack.js";
-import { fireTriggers } from "../skills/triggers.js";
+import {
+  fireChangeTriggers,
+  fireTriggers,
+  type FiredTrigger,
+  type SpreadGainedCondition,
+  type TriggerContext,
+} from "../skills/triggers.js";
 import { add, distance, normalize, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import {
   createCursor,
@@ -316,7 +324,11 @@ function degenerationSources(combatant: Combatant): {
     const definition = STATUS_DEFINITIONS[status.id];
     if (definition.healthPips < 0) {
       draining.add(status.sourceId);
-    } else if (definition.healthPips > 0 || definition.healthPipsPerEnchantment !== undefined) {
+    } else if (
+      definition.healthPips > 0 ||
+      definition.healthPipsPerEnchantment !== undefined ||
+      definition.healthPerSecondWhileMoving > 0
+    ) {
       healing.add(status.sourceId);
     }
   }
@@ -443,6 +455,12 @@ export class MatchSimulation {
    * it gains.
    */
   #moraleKills: number[] = [];
+  /**
+   * Where every participant stood as this step began (#921): what
+   * `Combatant.moving` is read against at its end. A reset puts its spawn
+   * here, so being put back is not walking.
+   */
+  #stepStart = new Map<string, Vec2>();
 
   public constructor(options: MatchSimulationOptions) {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
@@ -551,6 +569,7 @@ export class MatchSimulation {
   /** Remove a participant and every target that pointed at them. */
   public remove(id: string): void {
     this.#participants.delete(id);
+    this.#stepStart.delete(id);
     for (const other of this.#participants.values()) {
       if (other.targetId === id) {
         other.targetId = undefined;
@@ -988,6 +1007,9 @@ export class MatchSimulation {
     this.#tick += 1;
     this.#elapsedSeconds += dt;
     this.checkMatchEnd();
+    for (const record of this.#participants.values()) {
+      this.#stepStart.set(record.id, record.position);
+    }
     // Every knockdown counts down before anyone acts, so one lasts its
     // full duration whoever lands it, and the tick it ends is one its
     // bearer acts in again (#468).
@@ -1119,7 +1141,9 @@ export class MatchSimulation {
 
     this.#settleUpkeep(dt);
     this.#spreadStatuses();
+    this.#fireStatusChanges();
     this.#awardKillMorale();
+    this.#settleMoving();
     // After every death this step, so two teams wiped in it both lose.
     this.checkMatchEnd();
 
@@ -1149,10 +1173,10 @@ export class MatchSimulation {
         if (status.maintained === null) {
           continue;
         }
-        // Ended by a death, whichever path killed: the bearer's, or the
-        // caster's, who may have left the match too.
+        // Ended by its caster's death, or its caster leaving the match. A
+        // dead bearer has none left: its death ended them all (#940).
         const caster = this.#participants.get(status.sourceId);
-        if (bearer.dead || caster === undefined || caster.combatant.dead) {
+        if (caster === undefined || caster.combatant.dead) {
           bearer.statuses.remove(status.id);
           continue;
         }
@@ -1290,12 +1314,15 @@ export class MatchSimulation {
     }
   }
 
-  /** Losing health of any kind, a hit, a sacrifice or a drain, is being in combat. */
+  /** Losing health of any kind, a hit, a sacrifice, a drain or a steal, is being in combat. */
   #healthLost(log: readonly CombatLogEntry[]): void {
     for (const entry of log) {
       for (const event of entry.events) {
         if (
-          (event.kind === "damage" || event.kind === "sacrifice" || event.kind === "health-lost") &&
+          (event.kind === "damage" ||
+            event.kind === "sacrifice" ||
+            event.kind === "health-lost" ||
+            event.kind === "life-stolen") &&
           event.amount > 0
         ) {
           const target = this.#participants.get(event.targetId);
@@ -1536,7 +1563,15 @@ export class MatchSimulation {
     if (
       !events.some((event) => event.kind === "attack-missed" && event.reason === "out-of-sequence")
     ) {
-      record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds * (1 - rechargeFraction));
+      // A spell recharges faster under Mantra of Recovery (#938), read now:
+      // a mantra that ends later leaves this recharge as it started.
+      const spellKept = isSpell(skill.type)
+        ? 1 - aggregateModifiers(record.combatant.statuses.active).spellRechargeFaster
+        : 1;
+      record.combatant.cast.startRecharge(
+        skill.id,
+        skill.rechargeSeconds * (1 - rechargeFraction) * spellKept,
+      );
     }
     this.#log.push({
       tick: this.#tick,
@@ -1551,7 +1586,9 @@ export class MatchSimulation {
       events,
     });
     // After the skill's own effects, as their own entries (#469): a spell
-    // finished is Backfire's moment, an attack skill Empathy's.
+    // finished is Backfire's moment, an attack skill Empathy's. Any skill
+    // used is Spiteful Spirit's (#935), and an attack skill twice over.
+    this.#fireTriggers(record, "bearer-uses-skill");
     if (isSpell(skill.type)) {
       this.#fireTriggers(record, "bearer-casts-spell");
     }
@@ -1560,20 +1597,84 @@ export class MatchSimulation {
     }
   }
 
+  /** The bearer did `event` (#469): each status on it that answers fires. */
+  #fireTriggers(
+    record: ParticipantRecord,
+    event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends">,
+  ): void {
+    this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext()));
+  }
+
+  #triggerContext(): TriggerContext {
+    return {
+      sourceOf: (id) => this.#participants.get(id)?.combatant,
+      rng: this.#rng,
+      rules: this.#ruleset.combat,
+      surroundings: this.#participants,
+    };
+  }
+
   /**
-   * The bearer did `event` (#469): each status on it that answers fires,
-   * logged as its source's skill, and whoever it kills dies as usual.
-   * Its damage charges the bearer's adrenaline as any foe's hit does (#827).
+   * The one point a tick where statuses that answer a change fire (#887):
+   * every participant's recorded changes, in participant order, each in
+   * the order it happened. Then whatever the firing itself changed is
+   * discarded: a triggered effect never sets off a trigger, so two
+   * Contagions never echo, and a condition Contagion hands out sets off
+   * nobody's. Hits and physical damage are drained here too (#935), so
+   * two Mark of Pain bearers side by side never chain.
    */
-  #fireTriggers(record: ParticipantRecord, event: StatusTriggerEvent): void {
-    const fired = fireTriggers(
-      record.combatant,
-      event,
-      (id) => this.#participants.get(id)?.combatant,
-      this.#rng,
-      this.#ruleset.combat,
-      this.#participants,
-    );
+  #fireStatusChanges(): void {
+    const changes = [...this.#participants.values()].map((record) => ({
+      record,
+      changes: record.combatant.statuses.drainChanges(),
+    }));
+    const context = this.#triggerContext();
+    for (const { record, changes: recorded } of changes) {
+      for (const change of recorded) {
+        this.#logFired(fireChangeTriggers(record.combatant, change, this.#spread, context));
+      }
+    }
+    for (const record of this.#participants.values()) {
+      record.combatant.statuses.drainChanges();
+    }
+  }
+
+  /**
+   * Contagion (#887): the condition its bearer gained, on each living foe
+   * of the bearer within the radius, in participant order, as the bearer's.
+   */
+  readonly #spread: SpreadGainedCondition = (effect, bearer, gained) => {
+    const from = this.#participants.get(bearer.id);
+    if (from === undefined || bearer.dead) {
+      return [];
+    }
+    return [...this.#participants.values()]
+      .filter(
+        (other) =>
+          other.combatant.team !== bearer.team &&
+          !other.combatant.dead &&
+          distance(from.position, other.position) <= effect.radius,
+      )
+      .flatMap((other) =>
+        applyEffects(
+          [{ kind: "apply-status", statusId: gained.id, durationSeconds: gained.durationSeconds }],
+          {
+            caster: bearer,
+            target: other.combatant,
+            rng: this.#rng,
+            rules: this.#ruleset.combat,
+            surroundings: this.#participants,
+          },
+        ),
+      );
+  };
+
+  /**
+   * What triggers did (#469), each logged as its source's skill; whoever
+   * it kills dies as usual. Its damage charges the source's adrenaline as
+   * any foe's hit does (#827).
+   */
+  #logFired(fired: readonly FiredTrigger[]): void {
     for (const { sourceId, skillId, events } of fired) {
       this.#log.push({
         tick: this.#tick,
@@ -2141,6 +2242,7 @@ export class MatchSimulation {
             this.#participants,
           ),
         );
+        bearerHit(attacker.combatant, events);
       }
       if (skillHit !== undefined && attacker !== undefined) {
         events.push(
@@ -2352,6 +2454,7 @@ export class MatchSimulation {
         victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
         victim.combatant.knockdownRemaining = 0;
+        victim.combatant.statuses.endAll();
         this.#clearChainMarks(victim);
         emptyAdrenaline(victim.combatant);
         victim.respawnInSeconds = this.#respawnSeconds(victim);
@@ -2729,6 +2832,22 @@ export class MatchSimulation {
     record.sinceReset = 0;
     record.outOfCombatSeconds = 0;
     record.history.clear();
+    record.combatant.moving = false;
+    this.#stepStart.set(record.id, record.spawn);
+  }
+
+  /**
+   * Who walked this step (#921): everyone at once, after everyone acted,
+   * so the order the participants resolve in cannot change who is moving.
+   */
+  #settleMoving(): void {
+    for (const record of this.#participants.values()) {
+      const start = this.#stepStart.get(record.id);
+      record.combatant.moving =
+        !record.combatant.dead &&
+        start !== undefined &&
+        (start.x !== record.position.x || start.y !== record.position.y);
+    }
   }
 
   /** Ticks in the ruleset's tracking window: at least two, or there is no motion to fit. */
@@ -2752,6 +2871,7 @@ export class MatchSimulation {
       morale: 0,
       baseEnergyPips: spec.baseEnergyPips ?? 0,
       adrenaline: adrenalinePools(spec.skillBar),
+      skillBar: spec.skillBar,
       lastCombatAt: this.#elapsedSeconds,
       attributeRanks: spec.attributeRanks,
       team: spec.team,
@@ -2763,6 +2883,7 @@ export class MatchSimulation {
       soulReapingTriggers: [],
       nextMaintainSeq: 0,
       chainMarks: new Map(),
+      moving: false,
       equipment: spec.equipment,
     };
   }

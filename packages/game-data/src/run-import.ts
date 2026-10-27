@@ -173,6 +173,31 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Paragon/1084-Anthem_of_Flame",
   },
   {
+    id: "paragon.fall-back",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1062-Fall_Back!",
+  },
+  {
+    id: "paragon.stand-your-ground",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1070-Stand_Your_Ground!",
+  },
+  {
+    id: "paragon.spear-of-lightning",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1126-Spear_of_Lightning",
+  },
+  {
+    id: "paragon.never-surrender",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1069-Never_Surrender!",
+  },
+  {
+    id: "paragon.leaders-comfort",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1094-Leader's_Comfort",
+  },
+  {
     id: "ritualist.weapon-of-warding",
     profession: "ritualist",
     url: "https://www.gw-memorial.net/skills/Ritualist/769-Weapon_of_Warding",
@@ -181,6 +206,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "mesmer.power-spike",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/320-Power_Spike",
+  },
+  {
+    id: "mesmer.power-block",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/318-Power_Block",
   },
   {
     id: "mesmer.power-drain",
@@ -201,6 +231,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "monk.mend-condition",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/189-Mend_Condition",
+  },
+  {
+    id: "monk.mending",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/174-Mending",
   },
   {
     id: "assassin.jagged-strike",
@@ -258,6 +293,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Warrior/7-Eviscerate",
   },
   {
+    id: "warrior.disrupting-chop",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/6-Disrupting_Chop",
+  },
+  {
     id: "warrior.executioners-strike",
     profession: "warrior",
     url: "https://www.gw-memorial.net/skills/Warrior/8-Executioner's_Strike",
@@ -293,6 +333,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ranger/121-Savage_Shot",
   },
   {
+    id: "ranger.distracting-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/99-Distracting_Shot",
+  },
+  {
     id: "mesmer.energy-burn",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/311-Energy_Burn",
@@ -316,6 +361,21 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "monk.restore-life",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/176-Restore_Life",
+  },
+  {
+    id: "mesmer.energy-surge",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/312-Energy_Surge",
+  },
+  {
+    id: "mesmer.leech-signet",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/355-Leech_Signet",
+  },
+  {
+    id: "monk.dwaynas-kiss",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/164-Dwayna's_Kiss",
   },
   {
     id: "dervish.mystic-regeneration",
@@ -346,6 +406,81 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "dervish.pious-restoration",
     profession: "dervish",
     url: "https://www.gw-memorial.net/skills/Dervish/1052-Pious_Restoration",
+  },
+  {
+    id: "mesmer.cry-of-frustration",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/308-Cry_of_Frustration",
+  },
+  {
+    id: "mesmer.mantra-of-recovery",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/327-Mantra_of_Recovery",
+  },
+  {
+    id: "elementalist.ice-spikes",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/438-Ice_Spikes",
+  },
+  {
+    id: "elementalist.deep-freeze",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/434-Deep_Freeze",
+  },
+  {
+    id: "elementalist.lightning-strike",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/385-Lightning_Strike",
+  },
+  {
+    id: "elementalist.mind-shock",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/388-Mind_Shock",
+  },
+  {
+    id: "elementalist.shard-storm",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/443-Shard_Storm",
+  },
+  {
+    id: "necromancer.shadow-of-fear",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/270-Shadow_of_Fear",
+  },
+  {
+    id: "necromancer.spiteful-spirit",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/273-Spiteful_Spirit",
+  },
+  {
+    id: "necromancer.insidious-parasite",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/260-Insidious_Parasite",
+  },
+  {
+    id: "necromancer.mark-of-pain",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/263-Mark_of_Pain",
+  },
+  {
+    id: "necromancer.vampiric-gaze",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/248-Vampiric_Gaze",
+  },
+  {
+    id: "warrior.frenzy",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/73-Frenzy",
+  },
+  {
+    id: "assassin.dark-escape",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/688-Dark_Escape",
+  },
+  {
+    id: "ranger.natural-stride",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/826-Natural_Stride",
   },
 ];
 

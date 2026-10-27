@@ -1,0 +1,26 @@
+{
+  "id": "necromancer.shadow-of-fear",
+  "name": "Shadow of Fear",
+  "profession": "necromancer",
+  "attribute": "Curses",
+  "type": "Hex Spell.",
+  "elite": false,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 2,
+  "rechargeSeconds": 5,
+  "upkeep": false,
+  "description": "Target foe and all adjacent foes attack 50% slower for the next 5...25...30 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Necromancer/270-Shadow_of_Fear",
+    "fetchedAt": "2026-10-27T12:51:28.767Z"
+  },
+  "unmapped": {}
+}

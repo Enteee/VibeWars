@@ -1,10 +1,12 @@
-import { DEFAULT_MATCH_RULES, type PlayerBuild } from "@vibewars/game-core";
+import { RANDOM_ARENA_RULES, type PlayerBuild } from "@vibewars/game-core";
 import {
+  FORMATION_TIMEOUT_MS,
   MAX_LOBBY_PLAYERS,
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   type JsonValue,
   type PeerHello,
+  type QueueMode,
 } from "@vibewars/game-protocol";
 import {
   LobbyNoAnswerError,
@@ -13,19 +15,26 @@ import {
   connectMatch,
   createLobbyHost,
   createMatchHost,
+  createQueueClient,
   generateLobbyCode,
   joinLobby,
+  type FormedGroup,
   type LobbyCharacter,
   type LobbyClosedReason,
   type LobbyConnection,
   type MatchPlan,
   type MatchStarting,
   type PeerMatchConnection,
+  type QueueState,
+  type QueuedPlan,
+  type QueuedSeat,
+  type TicketKey,
 } from "@vibewars/game-session";
 
-import { arenaIds, hostMap } from "./maps.js";
+import { arenaIds, hostMap, randomArenaMapPool } from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
-import { joinRoom } from "./transport/index.js";
+import { joinQueueBoard, joinRoom } from "./transport/index.js";
+import { verifyTicketSig } from "./transport/ticket-key.js";
 
 /**
  * The glue between the app shell and a peer-to-peer lobby (#15, #403):
@@ -55,6 +64,11 @@ export const LOBBY_FULL_MESSAGE = "That lobby is full.";
 export const HOST_CLOSED_MESSAGE = "The host closed the lobby.";
 /** True whichever side dropped: a guest cannot tell its own drop from the host's. */
 export const CONNECTION_LOST_MESSAGE = "Lost the connection to the host.";
+/** A queued lobby (#871) turned this ticket away: its proof did not hold, or it is seated already. */
+export const NOT_ADMITTED_MESSAGE = "The match would not let this ticket in.";
+export const TICKET_USED_MESSAGE = "This ticket is already in the match, in another tab.";
+/** #854 C7's wording. */
+export const FELL_THROUGH_MESSAGE = "Match fell through, searching again.";
 
 /** A lobby hosted in this tab, and how to end it for everyone. */
 export interface HostedLobby {
@@ -80,7 +94,7 @@ function startMatch(plan: MatchPlan) {
     // A match is reproducible from its seed; the lobby's match id is
     // unique only within the lobby, so the code goes in too.
     seed: `${plan.transport.selfId}:${plan.matchId}`,
-    matchRules: DEFAULT_MATCH_RULES,
+    matchRules: plan.matchRules,
     random: secureRandom,
     maxPlayers: MAX_LOBBY_PLAYERS,
     seats: plan.seats,
@@ -93,10 +107,14 @@ function startMatch(plan: MatchPlan) {
  *
  * One clock runs the whole lobby, from now until `close()`: the lobby's
  * message budget counts on it, and its match runs on it.
+ *
+ * `queued` hosts a Random Arena group's lobby (#880) in the group's room
+ * instead of under a fresh code.
  */
 export async function hostLobby(
   name: string,
   character: LobbyCharacter | null,
+  queued?: QueuedPlan,
 ): Promise<HostedLobby> {
   // Best effort: a page going away tells its guests, rather than leaving
   // them to wait out a dropped host's reconnect window (#515). Added
@@ -106,9 +124,17 @@ export async function hostLobby(
     void close();
   };
   window.addEventListener("pagehide", onPageHide);
-  const code = generateLobbyCode(secureRandom);
-  const room = joinRoom(code);
-  const host = createLobbyHost({ transport: room, code, mapIds: arenaIds(), startMatch });
+  // A queued lobby meets in its group's room, which no lobby code can be,
+  // and goes by the group's id, as every member of it knows it.
+  const code = queued?.group.groupId ?? generateLobbyCode(secureRandom);
+  const room = joinRoom(queued?.group.room ?? code);
+  const host = createLobbyHost({
+    transport: room,
+    code,
+    mapIds: arenaIds(),
+    startMatch,
+    ...(queued === undefined ? {} : { queued }),
+  });
   const stopClock = startHostClock((seconds) => {
     host.advance(seconds);
   });
@@ -129,6 +155,8 @@ export async function hostLobby(
       name,
       character,
       timeoutMs: JOIN_TIMEOUT_MS,
+      // The host is one of its own group: it proves its ticket like the rest.
+      ...(queued === undefined ? {} : { queued }),
     });
     return { lobby, close };
   } catch (error) {
@@ -137,19 +165,190 @@ export async function hostLobby(
   }
 }
 
-/** Join the lobby `code` names, hosted on another peer's browser, bringing `character`. */
+/**
+ * Join the lobby `code` names, hosted on another peer's browser, bringing
+ * `character`; with `queued`, a Random Arena group's lobby in the group's room,
+ * `code` the group's id.
+ */
 export async function joinLobbyByCode(
   code: string,
   name: string,
   character: LobbyCharacter | null,
+  queued?: QueuedSeat,
 ): Promise<LobbyConnection> {
-  const room = joinRoom(code);
+  const room = joinRoom(queued?.group.room ?? code);
   try {
-    return await joinLobby({ transport: room, code, name, character, timeoutMs: JOIN_TIMEOUT_MS });
+    return await joinLobby({
+      transport: room,
+      code,
+      name,
+      character,
+      timeoutMs: JOIN_TIMEOUT_MS,
+      ...(queued === undefined ? {} : { queued }),
+    });
   } catch (error) {
     await room.leave();
     throw error;
   }
+}
+
+/** A queued lobby's countdown, from everyone seated to the match: the versus splash's time. */
+export const QUEUED_COUNTDOWN_SECONDS = 5;
+/**
+ * How often the queue client ticks, in seconds of the host clock: often
+ * enough that the wait reads smoothly, and a settle window ends close to
+ * on time, without a formation hash every beat.
+ */
+const QUEUE_TICK_SECONDS = 0.25;
+
+/** What the shell hears from a Random Arena queue. */
+export interface RandomArenaEvents {
+  /** The queue moved on: every state, `searching` again after a group fell through. */
+  readonly onState: (state: QueueState) => void;
+  /** Seated in the group's lobby; `hosted` when this tab hosts it. The shell owns both now. */
+  readonly onLobby: (lobby: LobbyConnection, hosted: HostedLobby | undefined) => void;
+  /** The group's lobby would not have this ticket: the queue is over, and this says why. */
+  readonly onRefused: (notice: string) => void;
+}
+
+/** One player's place in the Random Arena queue (#880). */
+export interface RandomArenaQueue {
+  /**
+   * Withdraw at once and close the board. A lobby already handed to the
+   * shell is the shell's to leave; one still being joined is left here.
+   */
+  leave(): void;
+}
+
+/**
+ * Queue for a Random Arena of `mode` as `name`, bringing `character`
+ * (#854 C1–C7): a ticket on the board `joinQueueBoard` picks, ticked from
+ * the host clock so a background tab keeps its place. When a group
+ * settles, this tab hosts its lobby or joins it; a lobby that never fills,
+ * or loses its host before the match, puts the player back in the queue
+ * with their place. The board closes when the player leaves or the match
+ * starts, not on entering the lobby, since a lobby that falls through
+ * queues again on it.
+ */
+export function enterQueue(
+  mode: QueueMode,
+  name: string,
+  character: LobbyCharacter | null,
+  events: RandomArenaEvents,
+): RandomArenaQueue {
+  const queue = joinQueueBoard();
+  const client = createQueueClient({
+    board: queue.board,
+    mode,
+    partySize: 1,
+    now: () => Date.now(),
+    newTicketKey: () => queue.newTicketKey(),
+    mapPool: randomArenaMapPool(mode),
+  });
+  let done = false;
+  let sinceTick = 0;
+  const stopClock = startHostClock((seconds) => {
+    sinceTick += seconds;
+    if (sinceTick >= QUEUE_TICK_SECONDS) {
+      sinceTick = 0;
+      void client.tick();
+    }
+  });
+
+  /** Stop queueing for good; whether this call was the one that stopped it. */
+  const finish = (): boolean => {
+    if (done) {
+      return false;
+    }
+    done = true;
+    stopClock();
+    client.leave();
+    queue.close();
+    return true;
+  };
+
+  /** Host the group's lobby, or join it, and hand it to the shell. */
+  const meet = async (group: FormedGroup, key: TicketKey): Promise<void> => {
+    client.enteredLobby();
+    let lobby: LobbyConnection;
+    let hosted: HostedLobby | undefined;
+    try {
+      if (group.hostTicketId === key.ticketId) {
+        hosted = await hostLobby(name, character, {
+          group,
+          key,
+          verifyTicketSig,
+          matchRules: RANDOM_ARENA_RULES,
+          countdownSeconds: QUEUED_COUNTDOWN_SECONDS,
+          timeoutSeconds: FORMATION_TIMEOUT_MS / 1000,
+          onFellThrough: (noShows) => {
+            if (!done) {
+              client.fellThrough(noShows);
+            }
+          },
+        });
+        lobby = hosted.lobby;
+      } else {
+        lobby = await joinLobbyByCode(group.groupId, name, character, {
+          group,
+          key,
+          verifyTicketSig,
+        });
+      }
+    } catch (error) {
+      if (done) {
+        return;
+      }
+      if (
+        error instanceof LobbyRefusedError &&
+        (error.reason === "not-admitted" || error.reason === "ticket-used")
+      ) {
+        finish();
+        events.onRefused(joinFailureNotice(error, location));
+        return;
+      }
+      // A host that never answered is skipped next time, as a no-show is.
+      client.fellThrough(error instanceof LobbyNoAnswerError ? [group.hostTicketId] : []);
+      return;
+    }
+    if (done) {
+      await lobby.disconnect();
+      await hosted?.close();
+      return;
+    }
+    lobby.onMatchStarting(() => {
+      finish();
+    });
+    lobby.onClosed((reason) => {
+      if (done) {
+        return;
+      }
+      if (hosted !== undefined) {
+        void hosted.close();
+        if (reason === "fell-through") {
+          // `onFellThrough` has queued again, naming who never came.
+          return;
+        }
+      }
+      // The group is gone before its match: queue again, keeping the place.
+      client.fellThrough([]);
+    });
+    events.onLobby(lobby, hosted);
+  };
+
+  client.onChange((state) => {
+    events.onState(state);
+    if (state.kind === "in-lobby") {
+      void meet(state.group, state.key);
+    }
+  });
+  events.onState(client.state);
+
+  return {
+    leave: () => {
+      finish();
+    },
+  };
 }
 
 /**
@@ -196,6 +395,12 @@ export function joinFailureNotice(
         return LOBBY_FULL_MESSAGE;
       case "host-left":
         return HOST_CLOSED_MESSAGE;
+      case "not-admitted":
+        return NOT_ADMITTED_MESSAGE;
+      case "ticket-used":
+        return TICKET_USED_MESSAGE;
+      case "fell-through":
+        return FELL_THROUGH_MESSAGE;
     }
   }
   return "Could not join the lobby.";
@@ -208,6 +413,8 @@ export function lobbyClosedNotice(reason: LobbyClosedReason): string {
       return HOST_CLOSED_MESSAGE;
     case "connection-lost":
       return CONNECTION_LOST_MESSAGE;
+    case "fell-through":
+      return FELL_THROUGH_MESSAGE;
   }
 }
 

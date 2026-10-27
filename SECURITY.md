@@ -189,6 +189,16 @@ channels, as often as they like.
   it. That peer had to know the code, so it is someone invited (see
   above), and the lobby it fakes holds nothing but names. In the same
   window it can also fail the join with a `lobby-note` refusal.
+- A queued lobby (#871) closes that window: the room's name is public, so
+  `joinLobby` says only an empty `lobby-hello` to the room, sends its
+  signed `lobby-join` only to a peer whose `lobby-welcome` verifies
+  against the planned host ticket, and takes a `lobby-state` or
+  `lobby-note` before the host is known only from such a peer. The host
+  welcomes each peer once, on its hello or its join, before checking its
+  proof, so even a refusal comes from the planned host, and seats a
+  ticket once. A signature check costs milliseconds, so each side checks
+  at most one from each peer while it is in the room: the host one join,
+  the joiner one welcome; the host checks a seated ticket not at all.
 - `hello.build` is capped in values and depth by `parsePeerHello`, then
   goes through `resolveJoinLoadout` and `validatePlayerBuild`: an illegal
   build gets the house loadout.
@@ -203,6 +213,14 @@ channels, as often as they like.
   less that header). The host splits a tick's snapshot into parts
   (`packSnapshot`, #662) and its combat into batches (#601), each of at
   most `MAX_MESSAGE_BYTES`.
+- **The Random Arena queue's relays are public and untrusted** (#872,
+  ADR-0032). Anyone can publish to them, so `nostr-queue.ts` takes a
+  ticket or withdrawal for id X only from an event signed by X, whose
+  NIP-01 id it recomputes. Anything over 4 KiB or of a mode nobody here
+  queues for is dropped before any signature check. A Schnorr verify
+  costs about 3 ms, so verifies are budgeted per board
+  (`VERIFY_PER_SECOND`, `VERIFY_BURST`). A flood of fake events slows
+  matchmaking but never freezes the tab.
 - **Host bandwidth.** The host uploads every peer's snapshot every tick:
   about 85 KiB/s per peer at 4v4 and 170 KiB/s at 8v8
   ([benchmarks](docs/development/benchmarks.md)), so around 20 Mbit/s for

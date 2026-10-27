@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 4,
+  "upkeep": false,
   "description": "Party members within earshot gain +5...21...25 armor for 10 seconds. This shout ends after 1...3...3 incoming attacks.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

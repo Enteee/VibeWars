@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.25,
   "rechargeSeconds": 10,
+  "upkeep": false,
   "description": "Target suffers from weakness for 10...26...30 seconds.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

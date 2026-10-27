@@ -1,0 +1,26 @@
+{
+  "id": "necromancer.vampiric-gaze",
+  "name": "Vampiric Gaze",
+  "profession": "necromancer",
+  "attribute": "Blood Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 8,
+  "upkeep": false,
+  "description": "Steal up to 18...52...60 Health from target foe.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Necromancer/248-Vampiric_Gaze",
+    "fetchedAt": "2026-10-27T16:10:41.680Z"
+  },
+  "unmapped": {}
+}
