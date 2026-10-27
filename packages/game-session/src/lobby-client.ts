@@ -24,6 +24,9 @@ import type {
 } from "./lobby-connection.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { sanitizeChatText, sanitizeName } from "./names.js";
+
+/** Who a chat line is from when nothing of its name is left to show (#479). */
+const UNNAMED_SPEAKER = "Unnamed";
 import { scopeTransport } from "./scoped-transport.js";
 import type { Transport, TransportTrouble } from "./transport.js";
 
@@ -287,7 +290,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         if (text === "") {
           return;
         }
-        const line = { ...wire, name: sanitizeName(wire.name, wire.fromId), text };
+        const line = { ...wire, name: sanitizeName(wire.name, UNNAMED_SPEAKER), text };
         for (const handler of [...chatHandlers]) {
           handler(line);
         }
