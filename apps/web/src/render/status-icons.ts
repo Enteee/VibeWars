@@ -84,6 +84,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "sand-shards": icon("sand-shards"),
   "pious-haste": icon("pious-haste"),
   "pious-haste-run": icon("pious-haste-run"),
+  "staggering-force": icon("staggering-force"),
+  "dust-cloak": icon("dust-cloak"),
+  "aura-of-thorns": icon("aura-of-thorns"),
   "never-surrender": icon("never-surrender"),
 };
 
