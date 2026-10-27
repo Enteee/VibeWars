@@ -428,8 +428,8 @@ describe("block (#534)", () => {
       if (!kinds(chop).includes("attack-blocked")) {
         continue;
       }
-      // The second damage is the health deep wound takes as it lands (#764).
-      expect(kinds(chop)).toEqual(["attack-blocked", "damage", "status-applied", "damage"]);
+      // Then the health deep wound takes as it lands (#764, #800).
+      expect(kinds(chop)).toEqual(["attack-blocked", "damage", "status-applied", "health-lost"]);
       expect(get(match, "d").combatant.statuses.has("deep-wound")).toBe(true);
       const caster = get(match, "a").combatant;
       expect(caster.energy).toBeLessThan(energy);

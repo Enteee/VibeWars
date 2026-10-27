@@ -102,6 +102,18 @@ describe("tallyCombat", () => {
     );
     expect(tally.unattributedDamage).toBe(0);
   });
+
+  it("counts health a status took as it landed as taken, never as dealt (#800)", () => {
+    const tally = tallyCombat([
+      {
+        ...hit(1, "a", 0),
+        events: [{ kind: "health-lost", targetId: "target", amount: 100, statusId: "deep-wound" }],
+      },
+    ]);
+    expect(tally.damageByActor).toEqual(new Map());
+    expect(tally.damageTakenByActor).toEqual(new Map([["target", 100]]));
+    expect(tally.unattributedDamage).toBe(0);
+  });
 });
 
 describe("CombatMeter", () => {

@@ -699,6 +699,27 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     ).toEqual([]);
   });
 
+  it("carries health a status took and which status, and drops an unknown one (#800)", () => {
+    const lost = {
+      kind: "health-lost",
+      targetId: "b",
+      amount: 100,
+      statusId: "deep-wound",
+    } as const;
+    const [combat] = wireCombat([
+      entry({ cause: "skill", skillId: "warrior.swift-chop", weaponId: undefined, events: [lost] }),
+    ]);
+    const received = parseWireCombatBatch(JSON.parse(JSON.stringify([combat])));
+    expect(received?.map(combatMessage).map((message) => message.events)).toEqual([[lost]]);
+    expect(
+      combat &&
+        combatMessage({
+          ...combat,
+          events: combat.events.map((event) => ({ ...event, statusId: "no-such-status" })),
+        }).events,
+    ).toEqual([]);
+  });
+
   it("carries a knockdown and how long it lasts, and drops one with no duration (#544)", () => {
     const wire = wireCombat([
       entry({

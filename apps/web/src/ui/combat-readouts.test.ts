@@ -64,6 +64,7 @@ describe("logToneOf", () => {
       "status-removed",
       "status-expired",
       "status-spread",
+      "health-lost",
       "interrupted",
       "interrupt-missed",
       "attack-missed",
@@ -80,6 +81,7 @@ describe("logToneOf", () => {
       "status",
       "status",
       "status",
+      "damage",
       "control",
       "control",
       "control",
@@ -120,6 +122,23 @@ describe("describeCombatEvent", () => {
     const spread = entry([event], { cause: "degeneration", skillId: undefined });
     expect(describeCombatEvent(spread, event, nameOf)).toBe(
       "Caster dummy catches Disease from Pyro",
+    );
+  });
+
+  it("names the status for the health it took as it landed, not the skill (#800)", () => {
+    const event: CombatEvent = {
+      kind: "health-lost",
+      targetId: "dummy",
+      amount: 100,
+      statusId: "deep-wound",
+    };
+    const chop = entry([event], { skillId: "warrior.swift-chop" });
+    expect(describeCombatEvent(chop, event, nameOf)).toBe(
+      "Deep Wound (Pyro) takes 100 health from Caster dummy",
+    );
+    const unknown = entry([event], { sourceId: undefined, skillId: undefined });
+    expect(describeCombatEvent(unknown, event, nameOf)).toBe(
+      "Deep Wound takes 100 health from Caster dummy",
     );
   });
 
@@ -292,6 +311,11 @@ describe("accumulate", () => {
         entry([{ kind: "heal", targetId: "dummy", amount: 99 }], { sourceId: "dummy" }),
         // Hurting yourself is damage taken, not damage dealt.
         entry([{ kind: "damage", targetId: "you", amount: 5, critical: false }]),
+        // Health a status took as it landed is taken, never dealt (#800).
+        entry([{ kind: "health-lost", targetId: "you", amount: 20, statusId: "deep-wound" }], {
+          sourceId: "dummy",
+        }),
+        entry([{ kind: "health-lost", targetId: "dummy", amount: 20, statusId: "deep-wound" }]),
         // A swing counts as damage, and as the weapon's share of it.
         entry([{ kind: "damage", targetId: "dummy", amount: 12, critical: false }], {
           cause: "weapon",
@@ -306,7 +330,7 @@ describe("accumulate", () => {
       damage: 76,
       weaponDamage: 12,
       healing: 30,
-      taken: 15,
+      taken: 35,
       seconds: 0.05,
     });
   });
@@ -349,6 +373,12 @@ describe("floatingCueFor", () => {
     expect(floatingCueFor("heal", 40, false)).toEqual({
       text: "+40",
       tone: "heal",
+      critical: false,
+    });
+    // Deep wound's health as it lands looks like damage on the body (#800).
+    expect(floatingCueFor("health-lost", 100, false)).toEqual({
+      text: "−100",
+      tone: "damage",
       critical: false,
     });
   });
