@@ -2,9 +2,11 @@ import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 
 import type { ResolvedEquipment } from "../equipment/resolve.js";
+import type { SkillBar } from "../build.js";
 import type { DamageType } from "../equipment/types.js";
 import type { ProfessionId } from "../professions.js";
 import type { CastState } from "./cast-state.js";
+import type { TargetCandidate } from "./targeting.js";
 import type { AttackState } from "./weapon-attack.js";
 import type { StatusCategory, StatusId, StatusSet } from "./status.js";
 
@@ -68,7 +70,8 @@ export interface DamageEffect {
   /**
    * The amount is per point of energy the same target lost to an earlier
    * `energy-loss` of this skill, as Energy Burn's "9 damage for each
-   * point of energy lost" (#793). None lost: no damage.
+   * point of energy lost" (#793). None lost: no damage. Inside a
+   * `splash`, the energy its centre lost, as Energy Surge's (#920).
    */
   readonly perEnergyLost?: true;
 }
@@ -81,6 +84,26 @@ export interface HealEffect {
    * Health" (#521). Absent: the target.
    */
   readonly recipient?: "caster";
+  /**
+   * With categories, the amount is per status of those categories the
+   * target bears as the heal lands, as Dwayna's Kiss's "10...30 Health
+   * for each enchantment or hex on that ally" (#920). Empty: once.
+   */
+  readonly perStatusOnTarget: readonly StatusCategory[];
+  /**
+   * More for each living ally of the caster within `radius` of it, the
+   * caster included, as Leader's Comfort's "+18 Health for each ally
+   * within earshot (maximum 140 Health)" (#923): the whole heal, base and
+   * per ally, is capped at `max` before healing modifiers.
+   */
+  readonly perAlly?: PerAllyHeal;
+}
+
+/** Leader's Comfort's heal per ally in earshot (#923). */
+export interface PerAllyHeal {
+  readonly amount: Magnitude;
+  readonly radius: number;
+  readonly max: number;
 }
 
 export interface EnergyGainEffect {
@@ -89,7 +112,8 @@ export interface EnergyGainEffect {
   /**
    * Per point of energy the target lost to an earlier `energy-loss`, as
    * Energy Tap's "2 Energy for each point of Energy target foe lost"
-   * (#793). None lost: no gain.
+   * (#793). None lost: no gain. Inside a `splash`, the energy its centre
+   * lost (#920).
    */
   readonly perEnergyLost?: true;
 }
@@ -97,6 +121,16 @@ export interface EnergyGainEffect {
 /** The effect's target loses up to `amount` energy (never below 0). */
 export interface EnergyLossEffect {
   readonly kind: "energy-loss";
+  readonly amount: Magnitude;
+}
+
+/**
+ * Steal up to `amount` health from the target (#935), GW1's life
+ * stealing: not damage, so no armor, no adrenaline and nothing that
+ * reacts to damage sees it. The caster gains what the target lost.
+ */
+export interface LifeStealEffect {
+  readonly kind: "life-steal";
   readonly amount: Magnitude;
 }
 
@@ -185,6 +219,42 @@ export interface ResurrectEffect {
   readonly energyPercent: Magnitude;
 }
 
+/**
+ * Apply `effects` to every foe of the caster within `radius` of the
+ * effect's target, the target itself excluded (#885), as Death Blossom's
+ * "all adjacent foes take 20...40 damage". Not a blow: no block, no crit
+ * and no chain mark on a foe it reaches.
+ */
+export interface SplashEffect {
+  readonly kind: "splash";
+  readonly radius: number;
+  readonly effects: readonly UnconditionalEffect[];
+}
+
+/**
+ * Every other skill of the caster of this type recharges at once (#885),
+ * as Moebius Strike's "all your other attack skills are recharged". Acts
+ * on the caster, once.
+ */
+export interface RechargeOthersEffect {
+  readonly kind: "recharge-others";
+  readonly which: "attack";
+}
+
+/**
+ * Disable the skill this resolution interrupted on the target (#914): it
+ * cannot be used for `seconds`, running alongside its recharge, as
+ * Distracting Shot's "that skill is disabled for an additional 20
+ * seconds". With `interrupted-and-attribute`, every skill on the
+ * target's bar of the same attribute too, as Power Block's; a skill with
+ * no attribute disables only itself. Nothing interrupted: nothing.
+ */
+export interface DisableSkillEffect {
+  readonly kind: "disable-skill";
+  readonly which: "interrupted" | "interrupted-and-attribute";
+  readonly seconds: Magnitude;
+}
+
 /** How long "knocks down" lasts when a skill names no duration (GW1). */
 export const KNOCKDOWN_SECONDS = 2;
 
@@ -192,6 +262,11 @@ export const KNOCKDOWN_SECONDS = 2;
 export type EventCondition =
   /** An `interrupt` earlier in the list cancelled an action. */
   | { readonly kind: "interrupted" }
+  /**
+   * An `interrupt` earlier in the list cancelled a spell (`isSpell`; a
+   * chant is not one), as Leech Signet's "if that action was a spell" (#920).
+   */
+  | { readonly kind: "interrupted-spell" }
   /**
    * A `remove-status` earlier in the list removed at least one status of
    * this category; with `from: "caster"`, from the caster (#845), which
@@ -212,7 +287,20 @@ export type StateCondition =
   /** The effect's target is activating a spell (`isSpell`); a chant is not one. */
   | { readonly kind: "target-casting"; readonly spell: true }
   /** The caster has at least one status of this category. */
-  | { readonly kind: "caster-has"; readonly category: StatusCategory };
+  | { readonly kind: "caster-has"; readonly category: StatusCategory }
+  /**
+   * No living ally of the effect's target, the target itself excluded,
+   * stands within `radius` of it (#885): Horns of the Ox's "not adjacent
+   * to any allies".
+   */
+  | { readonly kind: "target-alone"; readonly radius: number }
+  /** The effect's target did not walk in the previous tick (#921, `Combatant.moving`). */
+  | { readonly kind: "target-not-moving" }
+  /**
+   * The caster has more energy than the effect's target (#918): Mind
+   * Shock's "if you have more energy than target foe". Equal is not more.
+   */
+  | { readonly kind: "caster-more-energy" };
 
 export type EffectCondition = EventCondition | StateCondition;
 
@@ -236,6 +324,7 @@ export type UnconditionalEffect =
   | HealEffect
   | EnergyGainEffect
   | EnergyLossEffect
+  | LifeStealEffect
   | SacrificeHealthEffect
   | ApplyStatusEffect
   | MaintainStatusEffect
@@ -243,7 +332,10 @@ export type UnconditionalEffect =
   | InterruptEffect
   | KnockdownEffect
   | ResurrectEffect
-  | RechargeFasterEffect;
+  | RechargeFasterEffect
+  | SplashEffect
+  | RechargeOthersEffect
+  | DisableSkillEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
 
@@ -304,11 +396,29 @@ export interface AttackSkillRule {
   /** Added to the weapon's roll before armor; `undefined`: no bonus. */
   readonly bonusDamage: Magnitude | undefined;
   /**
+   * The blow's damage type instead of the weapon's (#923): Spear of
+   * Lightning's whole blow is lightning, weapon and bonus alike.
+   * `undefined`: the weapon's.
+   */
+  readonly damageType: DamageType | undefined;
+  /**
+   * GW1 base armor penetration (#923), as Spear of Lightning's "25% armor
+   * penetration". Base penetration does not stack: the blow takes the
+   * larger of this and Strength's. 0: none of its own.
+   */
+  readonly armorPenetration: number;
+  /**
    * More bonus while a state holds (#794), read as each blow lands on its
    * victim, and added to that blow: Mystic Sweep's "If you are enchanted,
    * +10 damage". One damage number, not a second hit. `undefined`: none.
    */
   readonly conditionalBonus: ConditionalBonus | undefined;
+  /**
+   * How many blows it strikes each victim (#885): 2 for a dual attack,
+   * each rolling its own blind, block, crit and damage, with the skill's
+   * effects on each that hits. A ranged attack skill flies once: 1.
+   */
+  readonly strikes: 1 | 2;
   /** Whether no block stops it (Wild Throw's "This attack cannot be blocked"). */
   readonly unblockable: boolean;
   /**
@@ -453,6 +563,15 @@ export interface Combatant {
    * set at 0 when the combatant is made.
    */
   readonly adrenaline: Map<string, number>;
+  /**
+   * When this combatant was last in combat for its adrenaline (#828), in
+   * seconds of match time: a blow or attack skill started, damage taken
+   * from a foe, or adrenaline gained. Set when made and on a respawn;
+   * `adrenalineLossSeconds` after it, every pool empties.
+   */
+  lastCombatAt: number;
+  /** The bar it was made with (#914): what Power Block reads to disable a whole attribute. */
+  readonly skillBar: SkillBar;
   /** Attribute ranks by attribute id; absent means rank 0. */
   readonly attributeRanks: ReadonlyMap<string, number>;
   readonly team: number;
@@ -489,6 +608,14 @@ export interface Combatant {
    */
   readonly chainMarks: Map<string, ChainMark>;
   /**
+   * It walked during the previous tick (#921): its position changed from
+   * that tick's start to its end. Written for everyone at the end of each
+   * tick, so it reads the same whoever resolves first, one tick late.
+   * Knocked down, in aftercast, dead or walking into a wall: not moving.
+   * A respawn or a reset clears it.
+   */
+  moving: boolean;
+  /**
    * Weapon, armor and rune effects, already resolved (ADR-0012).
    *
    * Readonly, and resolved once before this combatant was built. Gear is
@@ -511,4 +638,13 @@ export interface SkillContext {
    * experiment is a different object, not a different build.
    */
   readonly rules: CombatRules;
+  /**
+   * Everyone in the match by id, where they stand (#885): what a splash
+   * and "target is alone" read. Not a target list: who an area hits is
+   * `resolveTargets`'.
+   */
+  readonly surroundings: Surroundings;
 }
+
+/** Everyone in the match by id, where they stand (#885). */
+export type Surroundings = ReadonlyMap<string, TargetCandidate>;

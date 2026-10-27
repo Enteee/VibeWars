@@ -15,6 +15,7 @@ import {
   type DamagePacket,
 } from "./damage.js";
 import { applyEffects } from "./effects.js";
+import { aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, SkillContext } from "./types.js";
 
@@ -151,6 +152,63 @@ describe("status modifiers reaching the armor calculation", () => {
   });
 });
 
+describe("damage taken multipliers (#919)", () => {
+  it("doubles a packet against Frenzy and halves it against Dark Escape", () => {
+    const packet = skillDamage(100, "chaos", 0);
+    const plain = mitigate(packet, defender(60), RULES);
+    const frenzied = defender(60);
+    frenzied.statuses.apply("frenzy", 8, "self");
+    const escaping = defender(60);
+    escaping.statuses.apply("dark-escape", 13, "self");
+
+    expect(plain).toBe(100);
+    expect(mitigate(packet, frenzied, RULES)).toBe(200);
+    expect(mitigate(packet, escaping, RULES)).toBe(50);
+  });
+
+  it("multiplies the multipliers of statuses that are up together", () => {
+    // Two stances never are; the product is still the rule (aggregateModifiers).
+    expect(
+      aggregateModifiers([{ id: "frenzy" }, { id: "dark-escape" }]).damageTakenMultiplier,
+    ).toBe(1);
+  });
+
+  it("multiplies armor-ignoring damage too, and rounds once", () => {
+    const escaping = defender(60);
+    escaping.statuses.apply("dark-escape", 13, "self");
+    // (40 + 15) × 0.5 = 27.5: rounded once, at the end.
+    const packet: DamagePacket = { ...physical(40), armorIgnoring: 15 };
+    expect(mitigate(packet, escaping, RULES)).toBe(28);
+    expect(mitigate(skillDamage(25, "typeless", 0), escaping, RULES)).toBe(13);
+  });
+
+  it("applies before a Rune of Absorption's flat reduction", () => {
+    const resolved = resolveLoadout(
+      {
+        primaryProfession: "warrior",
+        allocatedRanks: new Map(),
+        equipment: {
+          mainHand: { weaponId: "sword", requirementAttributeId: null },
+          offHand: null,
+          armor: {
+            ...bareArmorSet(),
+            feet: {
+              insigniaId: null,
+              rune: { kind: "universal", runeId: "absorption", tier: "superior" },
+            },
+          },
+        },
+      },
+      RULES,
+    );
+    const runed = makeCombatant({ id: "d", team: 1, equipment: resolved.equipment });
+    const before = mitigate(physical(100), runed, RULES);
+    runed.statuses.apply("frenzy", 8, "self");
+    // (x + 3) × 2 − 3, not (x − 3) × 2.
+    expect(mitigate(physical(100), runed, RULES)).toBe((before + 3) * 2 - 3);
+  });
+});
+
 describe("armor penetration", () => {
   it("scales down whatever armor remains rather than subtracting flat", () => {
     const target = defender(80);
@@ -210,6 +268,29 @@ describe("conditional insignia armor", () => {
     target.statuses.apply("armor-boost", 30, "self");
     // +24 from the enchantment itself, +10 because one is active at all.
     expect(effectiveArmor(target, skillDamage(10, "typeless", 0))).toBe(114);
+  });
+});
+
+describe("Mysticism's armor while enchanted (#874)", () => {
+  function dervish(rank: number): Combatant {
+    return defender(80, { attributeRanks: new Map([["dervish.mysticism", rank]]) });
+  }
+
+  it("adds +1 a rank while any enchantment is up, and nothing without one", () => {
+    const target = dervish(12);
+    expect(effectiveArmor(target, physical(10))).toBe(80);
+    // Armor of Earth's own +24, then Mysticism's +12.
+    target.statuses.apply("armor-boost", 30, "someone-else");
+    expect(effectiveArmor(target, physical(10))).toBe(116);
+    expect(mitigate(physical(100), target, RULES)).toBeLessThan(
+      mitigate(physical(100), dervish(12), RULES),
+    );
+  });
+
+  it("adds nothing at rank 0", () => {
+    const target = dervish(0);
+    target.statuses.apply("armor-boost", 30, "self");
+    expect(effectiveArmor(target, physical(10))).toBe(104);
   });
 });
 
@@ -396,6 +477,7 @@ describe("spell damage through the effect system", () => {
       target,
       rng: createRng(1),
       rules: RULES,
+      surroundings: new Map(),
     };
   }
 
@@ -452,6 +534,7 @@ describe("spell damage through the effect system", () => {
       equipment: unarmedResolvedEquipment(100),
     });
     const events = applyEffects([{ kind: "sacrifice-health", percentOfMax: 10 }], {
+      surroundings: new Map(),
       caster,
       target: undefined,
       rng: createRng(1),

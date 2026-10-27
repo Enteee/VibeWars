@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 2,
   "rechargeSeconds": 30,
+  "upkeep": false,
   "description": "Target foe loses 4...6...7 Energy. You then gain 2 Energy for each point of Energy target foe lost.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

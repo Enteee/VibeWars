@@ -1,0 +1,26 @@
+{
+  "id": "mesmer.energy-surge",
+  "name": "Energy Surge",
+  "profession": "mesmer",
+  "attribute": "Domination Magic",
+  "type": "Spell.",
+  "elite": true,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 2,
+  "rechargeSeconds": 15,
+  "upkeep": false,
+  "description": "Target foe loses 1...8...10 energy. For each point of energy lost, that foe and all nearby foes take 7 damage and all nearby foes take 75% of that damage.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Mesmer/312-Energy_Surge",
+    "fetchedAt": "2026-10-27T13:39:59.803Z"
+  },
+  "unmapped": {}
+}

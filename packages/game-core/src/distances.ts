@@ -33,3 +33,9 @@ export const AREA_EARSHOT = 350;
  * `RANGE_SPELL`.
  */
 export const RANGE_SPIRIT = 850;
+/**
+ * Compass range, beyond which a maintained enchantment's bearer is lost
+ * to its caster (#839). GW1's is about 5,000 units, rescaled by the same
+ * ~0.34 as `RANGE_SPIRIT`.
+ */
+export const RANGE_COMPASS = 1700;

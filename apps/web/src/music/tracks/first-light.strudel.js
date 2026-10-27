@@ -28,7 +28,7 @@ let tale = arrange(
 stack(
   // 0: strings, a soft bass, the flute
   chord(P).voicing().mode("below:a4")
-    .s("supersaw").unison(3).detune(.25).attack(1.4).release(2.2).gain(.18)
+    .s("supersaw").unison(3).detune(.25).attack(1.4).clip(.9).release(.25).gain(.18)
     .lpf(sine.range(700, 1800).slow(16)).room(.8).roomsize(6).orbit(2),
   note(P.rootNotes(2)).s("triangle").attack(.08).release(1.2).gain(.45),
   tale.scale("d4:lydian")

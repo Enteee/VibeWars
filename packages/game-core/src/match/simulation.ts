@@ -9,7 +9,7 @@ import {
   resolveCircleSegmentCollision,
 } from "../geometry.js";
 import type { Segment } from "../geometry.js";
-import { AREA_ADJACENT, RANGE_SPIRIT } from "../distances.js";
+import { AREA_ADJACENT, RANGE_COMPASS, RANGE_SPIRIT } from "../distances.js";
 import {
   addKill,
   DEATH_PENALTY_PERCENT,
@@ -25,6 +25,8 @@ import {
   type MatchPhase,
   type MatchRules,
   type MatchScore,
+  type MatchStanding,
+  type TeamStanding,
 } from "../match-rules.js";
 import { clampInputDirection, integrateMovement } from "../movement.js";
 import {
@@ -50,11 +52,18 @@ import {
   type ActivationCheck,
   type ActivationRejection,
 } from "../skills/activation.js";
-import { adrenalinePools, emptyAdrenaline, gainStrikes } from "../skills/adrenaline.js";
+import {
+  adrenalineLossIn,
+  adrenalinePools,
+  emptyAdrenaline,
+  gainStrikes,
+  gainUnits,
+} from "../skills/adrenaline.js";
 import { CastState, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
 import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
 import {
+  applyEffects,
   applySkillEffects,
   applyStatus,
   gainEnergy,
@@ -67,6 +76,7 @@ import {
   aggregateModifiers,
   clampPips,
   ENERGY_PER_PIP,
+  isStatusId,
   MAX_PIPS,
   scaledStatusDuration,
   STATUS_DEFINITIONS,
@@ -74,6 +84,7 @@ import {
   type ActiveStatus,
   type Outbreak,
   type StatusId,
+  type StatusTriggerEvent,
 } from "../skills/status.js";
 import { effectiveMaxEnergy, recoverOvercast } from "../skills/overcast.js";
 import { resolveTargets } from "../skills/targeting.js";
@@ -103,6 +114,7 @@ import {
   attackHitRiders,
   attackReached,
   bearerAttacked,
+  bearerHit,
   blindMisses,
   blocks,
   gainCriticalEnergy,
@@ -118,6 +130,13 @@ import {
   swingIntervalSeconds,
   weaponSnapshotOf,
 } from "../skills/weapon-attack.js";
+import {
+  fireChangeTriggers,
+  fireTriggers,
+  type FiredTrigger,
+  type SpreadGainedCondition,
+  type TriggerContext,
+} from "../skills/triggers.js";
 import { add, distance, normalize, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import {
   createCursor,
@@ -305,7 +324,11 @@ function degenerationSources(combatant: Combatant): {
     const definition = STATUS_DEFINITIONS[status.id];
     if (definition.healthPips < 0) {
       draining.add(status.sourceId);
-    } else if (definition.healthPips > 0 || definition.healthPipsPerEnchantment !== undefined) {
+    } else if (
+      definition.healthPips > 0 ||
+      definition.healthPipsPerEnchantment !== undefined ||
+      definition.healthPerSecondWhileMoving > 0
+    ) {
       healing.add(status.sourceId);
     }
   }
@@ -322,6 +345,13 @@ const KNOCKDOWN_EPSILON = 1e-9;
 
 /** At most this many push-out passes per move; see `advanceMovement`. */
 const MOVEMENT_RELAX_PASSES = 4;
+
+/**
+ * How long a maintained enchantment's bearer may stay beyond compass
+ * range of its caster before it ends, s (#839). GW1 says "a short grace
+ * period"; this is our tuning.
+ */
+const UPKEEP_RANGE_GRACE_SECONDS = 5;
 
 /** How deep a body of `radius` at `position` is inside a living body of the same radius at `other`. */
 function penetration(position: Vec2, other: Vec2, radius: number): number {
@@ -396,6 +426,11 @@ export class MatchSimulation {
   readonly #bodies: Vec2[] = [];
   readonly #rng: SimulationRng;
   readonly #participants = new Map<string, ParticipantRecord>();
+  /**
+   * Every team anyone was added to (#846): one whose members all left is
+   * still in the standing, wiped, rather than gone.
+   */
+  readonly #teams = new Set<number>();
   #projectiles: Projectile[] = [];
   #nextProjectileId = 1;
 
@@ -420,6 +455,12 @@ export class MatchSimulation {
    * it gains.
    */
   #moraleKills: number[] = [];
+  /**
+   * Where every participant stood as this step began (#921): what
+   * `Combatant.moving` is read against at its end. A reset puts its spawn
+   * here, so being put back is not walking.
+   */
+  #stepStart = new Map<string, Vec2>();
 
   public constructor(options: MatchSimulationOptions) {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
@@ -521,12 +562,14 @@ export class MatchSimulation {
       resurrectedAtSeconds: Number.NEGATIVE_INFINITY,
     };
     this.#participants.set(spec.id, record);
+    this.#teams.add(spec.team);
     return record;
   }
 
   /** Remove a participant and every target that pointed at them. */
   public remove(id: string): void {
     this.#participants.delete(id);
+    this.#stepStart.delete(id);
     for (const other of this.#participants.values()) {
       if (other.targetId === id) {
         other.targetId = undefined;
@@ -661,6 +704,25 @@ export class MatchSimulation {
       record.combatant.cast.clearQueue();
       record.walkGoal = undefined;
     }
+  }
+
+  /**
+   * End an enchantment `casterId` maintains on `targetId` (#838): a
+   * double-click on its icon in GW1. It leaves the bearer at once, for
+   * free, with no log row, and the upkeep stops with it. Anything but a
+   * maintained `statusId` of the caster's own on that target is refused
+   * quietly, so a click that raced a drop does nothing. Whether it ended.
+   */
+  public endUpkeep(casterId: string, targetId: string, statusId: string): boolean {
+    const bearer = this.#participants.get(targetId)?.combatant;
+    if (bearer === undefined || !isStatusId(statusId)) {
+      return false;
+    }
+    const status = bearer.statuses.get(statusId);
+    if (status === undefined || status.maintained === null || status.sourceId !== casterId) {
+      return false;
+    }
+    return bearer.statuses.remove(statusId);
   }
 
   /**
@@ -908,11 +970,28 @@ export class MatchSimulation {
    * or at a foe, and that foe too: cancelled or interrupted later, it
    * still counted (GW1). A self-heal or a skill on an ally does not.
    */
+  /**
+   * A blow or attack skill started keeps adrenaline (#828) for its
+   * attacker and its foe: a hit for 0, which logs no damage, or one that
+   * is blocked is still a fight.
+   */
+  #blowStarted(record: ParticipantRecord, target: ParticipantRecord | undefined): void {
+    record.combatant.lastCombatAt = this.#elapsedSeconds;
+    if (target !== undefined && target.combatant.team !== record.combatant.team) {
+      target.combatant.lastCombatAt = this.#elapsedSeconds;
+    }
+  }
+
   #castBegun(record: ParticipantRecord, skill: Skill, castTargetId: string | undefined): void {
     const target = castTargetId === undefined ? undefined : this.#participants.get(castTargetId);
     const atFoe = target !== undefined && target.combatant.team !== record.combatant.team;
     if (skill.attack !== undefined || atFoe) {
       record.outOfCombatSeconds = 0;
+    }
+    // Only an attack skill keeps adrenaline (#828), its own and its foe's,
+    // as a blow does; a spell at a foe does not.
+    if (skill.type === "attack") {
+      this.#blowStarted(record, target);
     }
     if (atFoe) {
       target.outOfCombatSeconds = 0;
@@ -928,6 +1007,9 @@ export class MatchSimulation {
     this.#tick += 1;
     this.#elapsedSeconds += dt;
     this.checkMatchEnd();
+    for (const record of this.#participants.values()) {
+      this.#stepStart.set(record.id, record.position);
+    }
     // Every knockdown counts down before anyone acts, so one lasts its
     // full duration whoever lands it, and the tick it ends is one its
     // bearer acts in again (#468).
@@ -950,6 +1032,17 @@ export class MatchSimulation {
           this.#reset(record, "respawn");
         }
         continue;
+      }
+
+      // Adrenaline does not keep between fights (#828): out of combat for
+      // the whole window, within a hair, as a swing's interval is.
+      const lossIn = adrenalineLossIn(
+        record.combatant,
+        this.#elapsedSeconds,
+        this.#ruleset.resources.adrenalineLossSeconds,
+      );
+      if (lossIn !== null && lossIn < SWING_EPSILON) {
+        emptyAdrenaline(record.combatant);
       }
 
       // Knocked down, it does nothing at all; its statuses and recharges
@@ -1046,9 +1139,13 @@ export class MatchSimulation {
       }
     }
 
-    this.#settleUpkeep();
+    this.#settleUpkeep(dt);
     this.#spreadStatuses();
+    this.#fireStatusChanges();
     this.#awardKillMorale();
+    this.#settleMoving();
+    // After every death this step, so two teams wiped in it both lose.
+    this.checkMatchEnd();
 
     const log = this.#log.concat(this.#reaped);
     this.#log = [];
@@ -1060,13 +1157,15 @@ export class MatchSimulation {
   /**
    * Maintained enchantments that end by themselves (#837, GW1), once
    * everyone has acted. A death ends one, the bearer's or its caster's.
+   * A bearer beyond compass range of its caster for longer than the grace
+   * period loses it, unlogged; coming back starts the grace again (#839).
    * Past the cap, a caster whose upkeep takes its pre-cap energy pips below
    * −`MAX_PIPS` loses its oldest. And a caster at 0 energy whose pre-cap
    * net is below 0 loses its newest, then the next, until it can pay, each
    * with a log row of its own. Pre-cap, never the clamped rate the tick
    * applies.
    */
-  #settleUpkeep(): void {
+  #settleUpkeep(dt: number): void {
     const maintained = new Map<string, { bearer: Combatant; id: StatusId; seq: number }[]>();
     for (const record of this.#participants.values()) {
       const bearer = record.combatant;
@@ -1074,10 +1173,18 @@ export class MatchSimulation {
         if (status.maintained === null) {
           continue;
         }
-        // Ended by a death, whichever path killed: the bearer's, or the
-        // caster's, who may have left the match too.
-        const caster = this.#participants.get(status.sourceId)?.combatant;
-        if (bearer.dead || caster === undefined || caster.dead) {
+        // Ended by its caster's death, or its caster leaving the match. A
+        // dead bearer has none left: its death ended them all (#940).
+        const caster = this.#participants.get(status.sourceId);
+        if (caster === undefined || caster.combatant.dead) {
+          bearer.statuses.remove(status.id);
+          continue;
+        }
+        status.maintained.outOfRangeSeconds =
+          distance(caster.position, record.position) > RANGE_COMPASS
+            ? status.maintained.outOfRangeSeconds + dt
+            : 0;
+        if (status.maintained.outOfRangeSeconds > UPKEEP_RANGE_GRACE_SECONDS) {
           bearer.statuses.remove(status.id);
           continue;
         }
@@ -1207,12 +1314,15 @@ export class MatchSimulation {
     }
   }
 
-  /** Losing health of any kind, a hit, a sacrifice or a drain, is being in combat. */
+  /** Losing health of any kind, a hit, a sacrifice, a drain or a steal, is being in combat. */
   #healthLost(log: readonly CombatLogEntry[]): void {
     for (const entry of log) {
       for (const event of entry.events) {
         if (
-          (event.kind === "damage" || event.kind === "sacrifice" || event.kind === "health-lost") &&
+          (event.kind === "damage" ||
+            event.kind === "sacrifice" ||
+            event.kind === "health-lost" ||
+            event.kind === "life-stolen") &&
           event.amount > 0
         ) {
           const target = this.#participants.get(event.targetId);
@@ -1391,6 +1501,7 @@ export class MatchSimulation {
       }),
       rng: this.#rng,
       rules: this.#ruleset.combat,
+      surroundings: this.#participants,
     });
     // Where an area landed, for whoever draws it: nowhere, when an area
     // centred on a target had no target to centre on, or when it is still
@@ -1404,21 +1515,28 @@ export class MatchSimulation {
     // Only attack skills earn adrenaline, as weapon hits do: a spell is
     // paid for in energy, and earning both would make casters the best
     // adrenaline builders. A blocked blow earns nothing, not even the
-    // damage its `onBlocked` deals, as Swift Chop's (#534). An attack
-    // skill strikes each victim once, so damage on one that blocked is
-    // all `onBlocked`'s.
+    // damage its `onBlocked` deals, as Swift Chop's (#534). Damage on a
+    // victim that blocked every blow is all `onBlocked`'s; a dual attack
+    // (#885) blocked once and landed once still landed.
     if (skill.type === "attack") {
-      const blocked = new Set(
-        events.filter((event) => event.kind === "attack-blocked").map((event) => event.targetId),
-      );
+      const strikes = skill.attack?.strikes ?? 1;
+      const blocked = (targetId: string): boolean => {
+        const blows = events.filter(
+          (event) =>
+            (event.kind === "attack-blocked" || event.kind === "attack-missed") &&
+            event.targetId === targetId,
+        );
+        return blows.some(({ kind }) => kind === "attack-blocked") && blows.length >= strikes;
+      };
       this.#gainAdrenaline(
         record,
-        events.filter((event) => event.kind !== "damage" || !blocked.has(event.targetId)),
+        events.filter((event) => event.kind !== "damage" || !blocked(event.targetId)),
       );
     }
     if (skill.type === "shout" || skill.type === "chant") {
       this.#gainLeadershipEnergy(record, events);
     }
+    this.#chargeFromDamage(record.combatant, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     this.#recordResurrections(events);
@@ -1445,7 +1563,15 @@ export class MatchSimulation {
     if (
       !events.some((event) => event.kind === "attack-missed" && event.reason === "out-of-sequence")
     ) {
-      record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds * (1 - rechargeFraction));
+      // A spell recharges faster under Mantra of Recovery (#938), read now:
+      // a mantra that ends later leaves this recharge as it started.
+      const spellKept = isSpell(skill.type)
+        ? 1 - aggregateModifiers(record.combatant.statuses.active).spellRechargeFaster
+        : 1;
+      record.combatant.cast.startRecharge(
+        skill.id,
+        skill.rechargeSeconds * (1 - rechargeFraction) * spellKept,
+      );
     }
     this.#log.push({
       tick: this.#tick,
@@ -1459,6 +1585,112 @@ export class MatchSimulation {
       doubleStrike: false,
       events,
     });
+    // After the skill's own effects, as their own entries (#469): a spell
+    // finished is Backfire's moment, an attack skill Empathy's. Any skill
+    // used is Spiteful Spirit's (#935), and an attack skill twice over.
+    this.#fireTriggers(record, "bearer-uses-skill");
+    if (isSpell(skill.type)) {
+      this.#fireTriggers(record, "bearer-casts-spell");
+    }
+    if (skill.attack !== undefined) {
+      this.#fireTriggers(record, "bearer-attacks");
+    }
+  }
+
+  /** The bearer did `event` (#469): each status on it that answers fires. */
+  #fireTriggers(
+    record: ParticipantRecord,
+    event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends">,
+  ): void {
+    this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext()));
+  }
+
+  #triggerContext(): TriggerContext {
+    return {
+      sourceOf: (id) => this.#participants.get(id)?.combatant,
+      rng: this.#rng,
+      rules: this.#ruleset.combat,
+      surroundings: this.#participants,
+    };
+  }
+
+  /**
+   * The one point a tick where statuses that answer a change fire (#887):
+   * every participant's recorded changes, in participant order, each in
+   * the order it happened. Then whatever the firing itself changed is
+   * discarded: a triggered effect never sets off a trigger, so two
+   * Contagions never echo, and a condition Contagion hands out sets off
+   * nobody's. Hits and physical damage are drained here too (#935), so
+   * two Mark of Pain bearers side by side never chain.
+   */
+  #fireStatusChanges(): void {
+    const changes = [...this.#participants.values()].map((record) => ({
+      record,
+      changes: record.combatant.statuses.drainChanges(),
+    }));
+    const context = this.#triggerContext();
+    for (const { record, changes: recorded } of changes) {
+      for (const change of recorded) {
+        this.#logFired(fireChangeTriggers(record.combatant, change, this.#spread, context));
+      }
+    }
+    for (const record of this.#participants.values()) {
+      record.combatant.statuses.drainChanges();
+    }
+  }
+
+  /**
+   * Contagion (#887): the condition its bearer gained, on each living foe
+   * of the bearer within the radius, in participant order, as the bearer's.
+   */
+  readonly #spread: SpreadGainedCondition = (effect, bearer, gained) => {
+    const from = this.#participants.get(bearer.id);
+    if (from === undefined || bearer.dead) {
+      return [];
+    }
+    return [...this.#participants.values()]
+      .filter(
+        (other) =>
+          other.combatant.team !== bearer.team &&
+          !other.combatant.dead &&
+          distance(from.position, other.position) <= effect.radius,
+      )
+      .flatMap((other) =>
+        applyEffects(
+          [{ kind: "apply-status", statusId: gained.id, durationSeconds: gained.durationSeconds }],
+          {
+            caster: bearer,
+            target: other.combatant,
+            rng: this.#rng,
+            rules: this.#ruleset.combat,
+            surroundings: this.#participants,
+          },
+        ),
+      );
+  };
+
+  /**
+   * What triggers did (#469), each logged as its source's skill; whoever
+   * it kills dies as usual. Its damage charges the source's adrenaline as
+   * any foe's hit does (#827).
+   */
+  #logFired(fired: readonly FiredTrigger[]): void {
+    for (const { sourceId, skillId, events } of fired) {
+      this.#log.push({
+        tick: this.#tick,
+        atSeconds: this.#elapsedSeconds,
+        cause: "skill",
+        sourceId,
+        skillId,
+        weaponId: undefined,
+        attributeId: undefined,
+        area: undefined,
+        doubleStrike: false,
+        events,
+      });
+      this.#chargeFromDamage(this.#participants.get(sourceId)?.combatant, events);
+      this.#recordDeaths(events);
+    }
   }
 
   /**
@@ -1745,26 +1977,30 @@ export class MatchSimulation {
     }
     attack.swingElapsed = Math.max(0, attack.swingElapsed - interval);
     record.outOfCombatSeconds = 0;
+    this.#blowStarted(record, target);
 
     if (weapon.projectileSpeed !== undefined) {
       const released = this.#release(record, target, weapon.projectileSpeed, dt, undefined);
       if (released.length > 0) {
         this.#logWeapon(record.id, weapon.id, released);
       }
+      this.#fireTriggers(record, "bearer-attacks");
       return;
     }
     const { events, doubleStrike, landed } = resolveSwing({
       attacker: record.combatant,
       target,
-      candidates: weapon.cleaveTargets === 0 ? [] : [...this.#participants.values()],
+      surroundings: this.#participants,
       rng: this.#rng,
       rules: this.#ruleset.combat,
       exposed: this.#exposedTo(record),
     });
     this.#gainAdrenaline(record, events, landed);
+    this.#chargeFromDamage(record.combatant, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events, doubleStrike);
+    this.#fireTriggers(record, "bearer-attacks");
   }
 
   /**
@@ -1961,6 +2197,7 @@ export class MatchSimulation {
               targets: [target.combatant],
               rng: this.#rng,
               rules: this.#ruleset.combat,
+              surroundings: this.#participants,
             },
             events,
           );
@@ -1979,7 +2216,12 @@ export class MatchSimulation {
       const critical = landBlow(
         projectile.weaponSnapshot,
         target.combatant,
-        settleBlow(skillHit?.blow ?? PLAIN_BLOW, attacker?.combatant, target.combatant),
+        settleBlow(
+          skillHit?.blow ?? PLAIN_BLOW,
+          attacker?.combatant,
+          target.combatant,
+          this.#participants,
+        ),
         // A shot crits only on its roll, never for where it came from.
         false,
         this.#rng,
@@ -1997,8 +2239,10 @@ export class MatchSimulation {
             projectile.weaponSnapshot.mainHand,
             this.#rng,
             this.#ruleset.combat,
+            this.#participants,
           ),
         );
+        bearerHit(attacker.combatant, events);
       }
       if (skillHit !== undefined && attacker !== undefined) {
         events.push(
@@ -2008,6 +2252,7 @@ export class MatchSimulation {
             target.combatant,
             this.#rng,
             this.#ruleset.combat,
+            this.#participants,
           ),
         );
       }
@@ -2017,6 +2262,7 @@ export class MatchSimulation {
     if (attacker !== undefined && !attacker.combatant.dead && !blocked) {
       this.#gainAdrenaline(attacker, events);
     }
+    this.#chargeFromDamage(attacker?.combatant, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     this.#logShot(projectile, events);
@@ -2047,7 +2293,9 @@ export class MatchSimulation {
       }),
       rng: this.#rng,
       rules: this.#ruleset.combat,
+      surroundings: this.#participants,
     });
+    this.#chargeFromDamage(caster, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     const area =
@@ -2151,7 +2399,39 @@ export class MatchSimulation {
       return victim !== undefined && victim.combatant.team !== record.combatant.team;
     });
     if (damagedFoe) {
-      gainStrikes(record.combatant, blows);
+      gainStrikes(record.combatant, blows, this.#elapsedSeconds);
+    }
+  }
+
+  /**
+   * Taking damage from a foe charges adrenaline too (#827), as in GW1: a
+   * warrior under pressure builds it. Each `damage` in `events` that
+   * `source` dealt a living foe gives that foe `floor(100 × amount /
+   * maxHealth)` units, so a hit for a quarter of its health is a strike.
+   * Called where a skill, a swing, a shot or a spell lands, never for
+   * degeneration; an ally's or your own damage, and a lethal hit, give
+   * nothing. A `source` gone from the match is no one's foe. A hit for
+   * 0 gives nothing but still keeps the victim's adrenaline (#828).
+   */
+  #chargeFromDamage(source: Combatant | undefined, events: readonly CombatEvent[]): void {
+    if (source === undefined) {
+      return;
+    }
+    for (const event of events) {
+      const victim = event.kind === "damage" ? this.#participants.get(event.targetId) : undefined;
+      if (
+        event.kind !== "damage" ||
+        victim === undefined ||
+        victim.combatant.dead ||
+        victim.combatant.team === source.team
+      ) {
+        continue;
+      }
+      gainUnits(
+        victim.combatant,
+        Math.floor((100 * event.amount) / effectiveMaxHealth(victim.combatant)),
+        this.#elapsedSeconds,
+      );
     }
   }
 
@@ -2174,6 +2454,7 @@ export class MatchSimulation {
         victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
         victim.combatant.knockdownRemaining = 0;
+        victim.combatant.statuses.endAll();
         this.#clearChainMarks(victim);
         emptyAdrenaline(victim.combatant);
         victim.respawnInSeconds = this.#respawnSeconds(victim);
@@ -2375,7 +2656,8 @@ export class MatchSimulation {
   }
 
   /**
-   * Credit a kill to the team that scored it and check for a winner.
+   * Credit a kill to the team that scored it; the step checks for a winner
+   * once every death in it is in.
    *
    * The victim's team is what is known at the point of death, so a kill
    * is credited to "the other team" rather than to a specific killer.
@@ -2388,14 +2670,33 @@ export class MatchSimulation {
     }
     const scoringTeam = victimTeam === 0 ? 1 : 0;
     this.#score = addKill(this.#score, scoringTeam);
-    this.checkMatchEnd();
+  }
+
+  /** Every team that had members: who is alive and its total morale (#846). */
+  #standing(): MatchStanding {
+    const byTeam = new Map<number, TeamStanding>(
+      [...this.#teams].map((team) => [team, { living: 0, morale: 0 }]),
+    );
+    for (const { combatant } of this.#participants.values()) {
+      const team = byTeam.get(combatant.team) ?? { living: 0, morale: 0 };
+      byTeam.set(combatant.team, {
+        living: team.living + (combatant.dead ? 0 : 1),
+        morale: team.morale + combatant.morale,
+      });
+    }
+    return { byTeam };
   }
 
   private checkMatchEnd(): void {
     if (this.#matchRules === undefined) {
       return;
     }
-    const outcome = evaluateMatch(this.#score, this.#elapsedSeconds, this.#matchRules);
+    const outcome = evaluateMatch(
+      this.#score,
+      this.#standing(),
+      this.#elapsedSeconds,
+      this.#matchRules,
+    );
     if (outcome.phase !== "finished") {
       return;
     }
@@ -2515,6 +2816,7 @@ export class MatchSimulation {
     record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);
     record.combatant.energy = Math.max(0, effectiveMaxEnergy(record.combatant));
     emptyAdrenaline(record.combatant);
+    record.combatant.lastCombatAt = this.#elapsedSeconds;
     record.combatant.statuses.clear();
     record.position = record.spawn;
     record.facing = record.spec.facing;
@@ -2530,6 +2832,22 @@ export class MatchSimulation {
     record.sinceReset = 0;
     record.outOfCombatSeconds = 0;
     record.history.clear();
+    record.combatant.moving = false;
+    this.#stepStart.set(record.id, record.spawn);
+  }
+
+  /**
+   * Who walked this step (#921): everyone at once, after everyone acted,
+   * so the order the participants resolve in cannot change who is moving.
+   */
+  #settleMoving(): void {
+    for (const record of this.#participants.values()) {
+      const start = this.#stepStart.get(record.id);
+      record.combatant.moving =
+        !record.combatant.dead &&
+        start !== undefined &&
+        (start.x !== record.position.x || start.y !== record.position.y);
+    }
   }
 
   /** Ticks in the ruleset's tracking window: at least two, or there is no motion to fit. */
@@ -2553,6 +2871,8 @@ export class MatchSimulation {
       morale: 0,
       baseEnergyPips: spec.baseEnergyPips ?? 0,
       adrenaline: adrenalinePools(spec.skillBar),
+      skillBar: spec.skillBar,
+      lastCombatAt: this.#elapsedSeconds,
       attributeRanks: spec.attributeRanks,
       team: spec.team,
       dead: false,
@@ -2563,6 +2883,7 @@ export class MatchSimulation {
       soulReapingTriggers: [],
       nextMaintainSeq: 0,
       chainMarks: new Map(),
+      moving: false,
       equipment: spec.equipment,
     };
   }

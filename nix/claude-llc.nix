@@ -60,6 +60,7 @@ let
     "lead-dev"
     "perf-sec-qa"
     "qa-tester"
+    "business-analyst"
   ];
 
   session = "vibewars-llc";
@@ -112,6 +113,8 @@ let
 
     first time:
       claude-llc-init         create the board, protect main, write company.json
+      claude-llc doctor       the company's credentials: whose they are, expiry
+                              (also: claude-llc-doctor). Writes nothing.
       CLAUDE_LLC_ROLES="..."  employ only these roles (default: all of them);
                               later boots start who .bots/staff.json employs
 
@@ -156,6 +159,8 @@ let
         SESSION="${session}"
         export VIBEWARS_LLC_SESSION="$SESSION"
         export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
+        # The company's credential home (#864).
+        export VIBEWARS_CREDENTIALS="${config.vibewars.claudeBot.credentials}"
         # Where each role's Claude logs are, for the dashboard's tokens (#50).
         export VIBEWARS_CLAUDE_BOXES="$HOME/${config.vibewars.claudeBot.boxes}"
 
@@ -242,6 +247,10 @@ let
           -h | --help)
             usage
             exit 0
+            ;;
+          doctor)
+            # Read-only: what each company credential resolves to (#864).
+            exec ${node} ${llcScripts}/doctor.mjs
             ;;
           status)
             if ${tmux} has-session -t "=$SESSION" 2>/dev/null; then
@@ -564,7 +573,16 @@ in
         exec = ''
           set -euo pipefail
           export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
+          export VIBEWARS_CREDENTIALS="${config.vibewars.claudeBot.credentials}"
           exec ${node} ${llcScripts}/company-init.mjs "$@"
+        '';
+      };
+
+      claude-llc-doctor = {
+        description = "Print the company's credentials: identity, expiry, scopes, whose";
+        exec = ''
+          export VIBEWARS_CREDENTIALS="${config.vibewars.claudeBot.credentials}"
+          exec ${node} ${llcScripts}/doctor.mjs
         '';
       };
 

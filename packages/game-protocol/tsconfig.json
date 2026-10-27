@@ -8,6 +8,6 @@
     "declarationMap": false,
     "emitDeclarationOnly": false
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/wire-schema.json"],
   "exclude": []
 }

@@ -115,6 +115,18 @@ export interface WalkToIntent {
 }
 
 /**
+ * End an enchantment the sender maintains (#838): a double-click on its
+ * icon in the effects monitor. The caster is the sender, never a field;
+ * the host refuses quietly anything that is not theirs to end.
+ */
+export interface EndUpkeepIntent {
+  readonly kind: "end-upkeep";
+  readonly targetId: string;
+  /** The status id, e.g. `"mending"`. */
+  readonly status: string;
+}
+
+/**
  * Sent as `"cast-refused"` to the caster alone when the server turns down a
  * `UseSkillIntent` or an `AttackIntent`, so a key that did nothing can say
  * why (issue #51). Advisory only: the refusal has already happened, and
@@ -158,10 +170,41 @@ export interface RechargeMessage {
  * Sent as `"adrenaline"` to one player alone (#463): their own adrenaline
  * is nobody else's business, as GW1 shows no foe's. Units per bar slot,
  * 0 for an empty or non-adrenaline slot. Sent on join, rejoin and reset,
- * and whenever it changes.
+ * whenever it changes, and whenever the out-of-combat window starts again
+ * while any slot holds some (#828).
  */
 export interface AdrenalineMessage {
   readonly slots: readonly number[];
+  /**
+   * Seconds from this message's arrival until every slot empties out of
+   * combat (#828), counted down like a recharge; `null` when every slot is
+   * already empty.
+   */
+  readonly lossInSeconds: number | null;
+}
+
+/** A dagger chain mark's place in its chain (#831), as game-core's `ChainRole`. */
+export const CHAIN_ROLES = ["lead", "off-hand", "dual"] as const;
+
+export type WireChainRole = (typeof CHAIN_ROLES)[number];
+
+/** One chain mark a player left on one target (#916). */
+export interface WireChainMark {
+  readonly targetId: string;
+  readonly role: WireChainRole;
+  /** Seconds from this message's arrival until it runs out, counted down like a recharge. */
+  readonly remainingSeconds: number;
+}
+
+/**
+ * Sent as `"chain"` to one player alone (#916): the chain marks they
+ * placed, a full replacement list; a target absent from it bears none of
+ * theirs. Sent on join and rejoin, and whenever the marks change in a way
+ * the client cannot predict by counting down: a new mark, a new role, a
+ * refresh, or one gone early with a death.
+ */
+export interface ChainMarksMessage {
+  readonly marks: readonly WireChainMark[];
 }
 
 /** The maximum players a single lobby accepts (brief §4: not hardcoded to 8). */
@@ -181,7 +224,8 @@ export type ClientIntent =
   | UseSkillIntent
   | AttackIntent
   | CancelIntent
-  | WalkToIntent;
+  | WalkToIntent
+  | EndUpkeepIntent;
 
 /**
  * Validate an arbitrary network payload as a `ClientIntent`, or reject it.
@@ -257,7 +301,23 @@ export function parseClientIntent(value: unknown): ClientIntent | undefined {
     return { kind: "walk-to", x: record.x, y: record.y };
   }
 
+  if (
+    record.kind === "end-upkeep" &&
+    hasOnlyKeys(record, ["kind", "targetId", "status"]) &&
+    isIntentId(record.targetId) &&
+    isIntentId(record.status)
+  ) {
+    return { kind: "end-upkeep", targetId: record.targetId, status: record.status };
+  }
+
   return undefined;
+}
+
+/** The longest id an intent may name: as long as any string on the wire (`MAX_WIRE_STRING`). */
+const MAX_INTENT_ID = 64;
+
+function isIntentId(value: unknown): value is string {
+  return typeof value === "string" && value !== "" && value.length <= MAX_INTENT_ID;
 }
 
 function hasOnlyKeys(record: Record<string, unknown>, keys: readonly string[]): boolean {

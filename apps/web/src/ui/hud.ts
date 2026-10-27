@@ -5,7 +5,9 @@ import {
   maxHealthLossOfStatusIds,
   neededWeaponText,
   type ActivationRejection,
+  type ChainRole,
   type Segment,
+  type StatusId,
 } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
 import type {
@@ -18,9 +20,12 @@ import type {
 
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
+import { teamColour } from "../render/arena-snapshot.js";
+import { cssColour } from "./character-preview.js";
 import { paintHealthTint } from "./health-tint.js";
 import {
   attackingIcon,
+  chainMarkIcon,
   isEliteSkill,
   professionIcon,
   settingsIcon,
@@ -33,6 +38,7 @@ import {
 import {
   createEffectsMonitor,
   effectRows,
+  maintainedRows,
   type EffectRow,
   type EffectsMonitor,
 } from "./effects-monitor.js";
@@ -45,6 +51,7 @@ import {
   castFill,
   flashSlot,
   outOfRange,
+  adrenalineFading,
   adrenalineFill,
   adrenalineGaugeHtml,
   paintAdrenalineFill,
@@ -119,6 +126,8 @@ export interface HudElements {
   readonly targetHealthLost: HTMLElement;
   readonly targetHealthText: HTMLElement;
   readonly targetHealthPips: HTMLElement;
+  /** Your dagger chain mark on the target, right of its health (#916). */
+  readonly targetChain: HTMLImageElement;
   /** What the target is casting (#484): icon (#727), badge, name and a filling bar. */
   readonly targetCast: HTMLElement;
   readonly targetCastIcon: HTMLImageElement;
@@ -127,7 +136,10 @@ export interface HudElements {
   readonly targetCastFill: HTMLElement;
   /** Crossed swords and "attacking", shown while self attacks the target (#160). */
   readonly attacking: HTMLElement;
+  /** The count and clock, and beside them the foes' pips (#881). */
   readonly scoreboard: HTMLElement;
+  readonly scoreboardText: HTMLElement;
+  readonly enemies: HTMLElement;
   readonly result: HTMLElement;
   /** The match's buttons, top right, as one cluster (#454): the five below. */
   readonly controls: HTMLElement;
@@ -193,12 +205,21 @@ export function targetHintDismissed(
   return wasDismissed || self?.targetSessionId !== undefined;
 }
 
-export function createHud(parent: HTMLElement): HudElements {
+/**
+ * The HUD, in `parent`. `onEndUpkeep` ends an enchantment you maintain,
+ * double-clicked in your effects monitor (#838).
+ */
+export function createHud(
+  parent: HTMLElement,
+  onEndUpkeep: (targetId: string, statusId: StatusId) => void,
+): HudElements {
   const root = element("div", "hud", parent);
 
   // Score and clock sit at the top, away from the skill bar, so a glance
   // for "am I winning" never competes with a glance for "what can I cast".
   const scoreboard = element("div", "hud-scoreboard", parent);
+  const scoreboardText = element("span", "hud-scoreboard-text", scoreboard);
+  const enemies = element("span", "hud-enemies", scoreboard);
   const result = element("div", "hud-result", parent);
   result.style.display = "none";
   // One cluster, top right (#454): leave and mute on top, Options,
@@ -226,11 +247,16 @@ export function createHud(parent: HTMLElement): HudElements {
   swords.alt = "";
   attacking.append("attacking");
   attacking.hidden = true;
-  const targetHealth = element("div", "hud-bar hud-target-health", targetPanel);
+  const targetHealthRow = element("div", "hud-target-health-row", targetPanel);
+  const targetHealth = element("div", "hud-bar hud-target-health", targetHealthRow);
   const targetHealthFill = element("div", "hud-bar-fill", targetHealth);
   const targetHealthLost = element("div", "hud-bar-lost", targetHealth);
   const targetHealthText = element("span", "hud-bar-label", targetHealth);
   const targetHealthPips = targetHealth.appendChild(pipsElement());
+  const targetChain = targetHealthRow.appendChild(document.createElement("img"));
+  targetChain.className = "hud-target-chain";
+  targetChain.alt = "";
+  targetChain.hidden = true;
   targetHealth.hidden = true;
   const targetEffects = createEffectsMonitor(
     targetPanel,
@@ -265,7 +291,7 @@ export function createHud(parent: HTMLElement): HudElements {
   const energyPips = energyRow.appendChild(pipsElement());
 
   const gearText = element("div", "hud-gear", bars);
-  const effects = createEffectsMonitor(bars, EFFECT_ICON_PX, "your effects");
+  const effects = createEffectsMonitor(bars, EFFECT_ICON_PX, "your effects", onEndUpkeep);
 
   const hint = element("div", "hud-hint", root);
   const message = element("div", "hud-message", root);
@@ -302,6 +328,7 @@ export function createHud(parent: HTMLElement): HudElements {
     targetHealthLost,
     targetHealthText,
     targetHealthPips,
+    targetChain,
     targetCast,
     targetCastIcon,
     targetCastBadge,
@@ -309,6 +336,8 @@ export function createHud(parent: HTMLElement): HudElements {
     targetCastFill,
     attacking,
     scoreboard,
+    scoreboardText,
+    enemies,
     result,
     controls,
     mute,
@@ -570,14 +599,97 @@ export function formatClock(totalSeconds: number): string {
   return `${String(minutes)}:${String(seconds).padStart(2, "0")}`;
 }
 
-/** The end-of-match line a player reads, from their own team's point of view. */
+/** One foe on the HUD's pip row (#881): filled while alive, hollow and grey dead. */
+export interface EnemyPip {
+  readonly name: string;
+  readonly team: number;
+  readonly dead: boolean;
+}
+
+/**
+ * The pips for `players` as `selfTeam` sees them: every player not on it,
+ * in snapshot order. A spectator, with no team, gets every player, grouped
+ * by team. Only players in the snapshot get one, so an empty seat has none.
+ */
+export function enemyPips(
+  players: readonly PlayerSnapshot[],
+  selfTeam: number | undefined,
+): EnemyPip[] {
+  const pips = players
+    .filter((player) => player.team !== selfTeam)
+    .map(({ name, team, dead }) => ({ name, team, dead }));
+  // Stable, so each team keeps its snapshot order.
+  return selfTeam === undefined ? pips.sort((a, b) => a.team - b.team) : pips;
+}
+
+/** How many of `team` are alive. */
+export function livingCount(players: readonly PlayerSnapshot[], team: number): number {
+  return players.filter((player) => player.team === team && !player.dead).length;
+}
+
+/**
+ * "4 v 3 · 7:12": the living on each side, your own first, and the clock
+ * (#881). Every match is annihilation (#846), so this is the one
+ * scoreboard there is. A spectator reads team 1 first.
+ */
+export function scoreboardText(
+  players: readonly PlayerSnapshot[],
+  selfTeam: number | undefined,
+  elapsedSeconds: number,
+): string {
+  const ours = selfTeam ?? 0;
+  const theirs = ours === 0 ? 1 : 0;
+  return `${String(livingCount(players, ours))} v ${String(livingCount(players, theirs))} · ${formatClock(elapsedSeconds)}`;
+}
+
+/**
+ * Paint `pips` into `row`, one line a team, rebuilt only when one changes.
+ * A foe is drawn in the enemy colour; a spectator sees team 1 in the
+ * ally's and team 2 in the enemy's, as the splash shows a side.
+ */
+function renderEnemyPips(
+  row: HTMLElement,
+  pips: readonly EnemyPip[],
+  selfTeam: number | undefined,
+): void {
+  const key = JSON.stringify(pips);
+  if (row.dataset.pips === key) {
+    return;
+  }
+  row.dataset.pips = key;
+  const lines = new Map<number, HTMLElement>();
+  row.replaceChildren();
+  for (const pip of pips) {
+    let line = lines.get(pip.team);
+    if (line === undefined) {
+      line = element("span", "hud-enemy-row", row);
+      line.style.setProperty(
+        "--pip-colour",
+        cssColour(teamColour(selfTeam === undefined && pip.team === 0 ? "ally" : "enemy")),
+      );
+      lines.set(pip.team, line);
+    }
+    const node = element("span", pip.dead ? "hud-enemy-pip is-dead" : "hud-enemy-pip", line);
+    node.title = pip.name;
+    node.setAttribute("aria-label", pip.dead ? `${pip.name} (dead)` : pip.name);
+  }
+}
+
+/**
+ * The end-of-match line a player reads, from their own team's point of
+ * view. An annihilation match nobody won is lost by every team (GW1,
+ * #846); only kill-count draws.
+ */
 export function describeOutcome(
   winningTeam: number | undefined,
   reason: string | undefined,
   selfTeam: number | undefined,
 ): string {
-  const why = reason === "time" ? " (time)" : "";
+  const why = reason === "time" ? " (time)" : reason === "morale" ? " (morale)" : "";
   if (winningTeam === undefined) {
+    if (reason === "annihilation" || reason === "morale") {
+      return selfTeam === undefined ? `No winner${why}` : `Defeat${why}`;
+    }
     return `Draw${why}`;
   }
   if (selfTeam === undefined) {
@@ -736,6 +848,38 @@ export function targetWeaponIcon(target: PlayerSnapshot | undefined): Profession
   return target?.weaponId === undefined ? undefined : weaponIcon(target.weaponId);
 }
 
+/** What each chain mark's icon says on hover (#916), as GW1 means it. */
+const CHAIN_MARK_TITLE: Readonly<Record<ChainRole, string>> = {
+  lead: "lead attack landed",
+  "off-hand": "off-hand attack landed",
+  dual: "dual attack landed",
+};
+
+/**
+ * The icon for your dagger chain mark on `target` (#916): which of your
+ * chain attacks last hit it, while that mark runs. Nothing with no target
+ * or no mark of yours on it; nobody else's mark ever shows.
+ */
+export function targetChainIcon(
+  target: PlayerSnapshot | undefined,
+  chainMark: (targetId: string) => ChainRole | undefined,
+): ProfessionIcon | undefined {
+  const role = target === undefined ? undefined : chainMark(target.sessionId);
+  return role === undefined
+    ? undefined
+    : { src: chainMarkIcon(role), name: CHAIN_MARK_TITLE[role] };
+}
+
+/** Touch the chain icon only when its mark changes, never every frame. */
+function renderTargetChain(img: HTMLImageElement, icon: ProfessionIcon | undefined): void {
+  img.hidden = icon === undefined;
+  if (icon !== undefined && img.title !== icon.name) {
+    img.src = icon.src;
+    img.alt = icon.name;
+    img.title = icon.name;
+  }
+}
+
 /** Replace the icons only when the target or its professions changed, never every frame. */
 function renderTargetProfessions(container: HTMLElement, target: PlayerSnapshot | undefined): void {
   const weapon = targetWeaponIcon(target);
@@ -877,7 +1021,7 @@ export function targetEffectRows(
 ): EffectRow[] {
   return target === undefined || target.dead || now === undefined
     ? []
-    : effectRows(target.statuses, self.sessionId, names, now);
+    : effectRows(target, self.sessionId, names, now);
 }
 
 /** How far past the latest snapshot the effects count down, s: ten snapshots. */
@@ -903,11 +1047,20 @@ export function updateHud(
   skillBar: readonly (SkillSlot | null)[],
   /** Units each slot's skill holds, by slot (#463). */
   adrenaline: readonly number[],
+  /** Seconds until that is lost out of combat, `null` with none held (#828). */
+  adrenalineLossIn: number | null,
+  /** Your chain mark on a target, still running (#916). */
+  chainMark: (targetId: string) => ChainRole | undefined,
   walls: readonly Segment[],
   match?: MatchSnapshot,
 ): void {
   if (match !== undefined) {
-    hud.scoreboard.textContent = `${String(match.scoreTeam0)} — ${String(match.scoreTeam1)}  ·  ${formatClock(match.elapsedSeconds)}`;
+    hud.scoreboardText.textContent = scoreboardText(
+      match.players,
+      self?.team,
+      match.elapsedSeconds,
+    );
+    renderEnemyPips(hud.enemies, enemyPips(match.players, self?.team), self?.team);
 
     if (match.phase === "finished") {
       hud.result.style.display = "";
@@ -945,10 +1098,16 @@ export function updateHud(
   const names = new Map(match?.players.map((player) => [player.sessionId, player.name]));
   const now = match === undefined ? undefined : matchNow(hud, match.elapsedSeconds);
   hud.effects.update(
-    self.dead || now === undefined ? [] : effectRows(self.statuses, self.sessionId, names, now),
+    self.dead || now === undefined
+      ? []
+      : [
+          ...effectRows(self, self.sessionId, names, now),
+          ...maintainedRows(match?.players ?? [], self.sessionId),
+        ],
   );
 
   renderTarget(hud, self, target);
+  renderTargetChain(hud.targetChain, targetChainIcon(target, chainMark));
   hud.targetEffects.update(targetEffectRows(self, target, names, now));
 
   // Grey out skills the player cannot currently afford or the weapon in
@@ -973,6 +1132,11 @@ export function updateHud(
     button.classList.toggle("is-unaffordable", !slotAffordable(slot, self, adrenaline[index] ?? 0));
     // Lit from the bottom as it charges (#826): empty before any message.
     paintAdrenalineFill(button, adrenalineFill(slot, adrenaline[index] ?? 0));
+    // Blinking for the last seconds before it is lost (#828).
+    button.classList.toggle(
+      "is-adrenaline-fading",
+      adrenalineFading(adrenaline[index] ?? 0, adrenalineLossIn),
+    );
     button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
   });
 }

@@ -2,6 +2,7 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   MatchSimulation,
   ZERO,
+  adrenalineLossIn,
   applyIntent,
   drainAccumulator,
   resolveJoinLoadout,
@@ -25,6 +26,8 @@ import {
   parsePeerHello,
   parsePeerRejoinProof,
   type AdrenalineMessage,
+  type ChainMarksMessage,
+  type WireChainMark,
   type MapDescriptor,
   type PeerHello,
   type PeerRefuse,
@@ -43,6 +46,7 @@ import { packCombat } from "./combat-batches.js";
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 import { sanitizeName } from "./names.js";
 import { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
+import { chainMarks, chainMarksPredicted } from "./chain-marks.js";
 import { rechargePredicted, rechargeSlots } from "./recharge.js";
 import { rejoinProof } from "./rejoin-proof.js";
 import { packSnapshot } from "./snapshot-parts.js";
@@ -136,8 +140,11 @@ interface Seat {
   readonly name: string;
   readonly primaryProfession: ProfessionId;
   readonly secondaryProfession: ProfessionId | undefined;
-  /** The adrenaline the peer was last sent, so only a change goes (#463). */
-  adrenaline: readonly number[] | undefined;
+  /**
+   * The adrenaline the peer was last sent, and the combat it counted its
+   * loss from, so only a change goes (#463, #828).
+   */
+  adrenaline: { readonly slots: readonly number[]; readonly lastCombatAt: number } | undefined;
   /** The peer playing it; `undefined` while it is dropped. */
   peerId: string | undefined;
   /** What the peer proves it holds, by `rejoinProof`, to take the seat back. */
@@ -146,6 +153,8 @@ interface Seat {
   droppedAt: number | undefined;
   /** The recharges the peer was last told, and when, so only news is sent (#152). */
   recharges: { readonly slots: RechargeSlot[]; readonly at: number } | undefined;
+  /** The chain marks the peer was last told, and when, so only news is sent (#916). */
+  chainMarks: { readonly marks: readonly WireChainMark[]; readonly at: number } | undefined;
   /** The bar the peer was last sent, so it goes again only when it changes (#637). */
   skillBar: readonly (SkillBarSlot | null)[] | undefined;
 }
@@ -231,19 +240,55 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     transport.send("recharge", { slots }, seat.peerId);
   };
 
-  /** Send `seat`'s peer its own adrenaline when it changed, or whenever `force` (#463). */
+  /**
+   * Send `seat`'s peer its own adrenaline when it changed, or whenever
+   * `force` (#463); and when its out-of-combat window starts again while
+   * it holds any, so the loss it counts down to moves (#828).
+   */
   const sendAdrenaline = (seat: Seat, force: boolean): void => {
     const participant = sim.get(seat.playerId);
     if (participant === undefined || seat.peerId === undefined) {
       return;
     }
-    const slots = adrenalineSlots(participant.skillBar, participant.combatant);
-    if (!force && seat.adrenaline !== undefined && sameAdrenaline(seat.adrenaline, slots)) {
+    const { combatant } = participant;
+    const slots = adrenalineSlots(participant.skillBar, combatant);
+    const lossInSeconds = adrenalineLossIn(
+      combatant,
+      sim.elapsedSeconds,
+      RULESET.resources.adrenalineLossSeconds,
+    );
+    const sent = seat.adrenaline;
+    if (
+      !force &&
+      sent !== undefined &&
+      sameAdrenaline(sent.slots, slots) &&
+      (lossInSeconds === null || sent.lastCombatAt === combatant.lastCombatAt)
+    ) {
       return;
     }
-    seat.adrenaline = slots;
-    const message: AdrenalineMessage = { slots };
+    seat.adrenaline = { slots, lastCombatAt: combatant.lastCombatAt };
+    const message: AdrenalineMessage = { slots, lossInSeconds };
     transport.send("adrenaline", message, seat.peerId);
+  };
+
+  /**
+   * Send `seat`'s peer the chain marks it placed when they changed in a way
+   * its countdown cannot tell, or whenever `force` (#916).
+   */
+  const sendChainMarks = (seat: Seat, force: boolean): void => {
+    const participant = sim.get(seat.playerId);
+    if (participant === undefined || seat.peerId === undefined) {
+      return;
+    }
+    const at = sim.elapsedSeconds;
+    const marks = chainMarks(participant.combatant);
+    const sent = seat.chainMarks;
+    if (!force && sent !== undefined && chainMarksPredicted(sent.marks, at - sent.at, marks)) {
+      return;
+    }
+    seat.chainMarks = { marks, at };
+    const message: ChainMarksMessage = { marks };
+    transport.send("chain", message, seat.peerId);
   };
 
   /**
@@ -300,6 +345,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     sendSkillBar(seat, true);
     sendRecharges(seat, true);
     sendAdrenaline(seat, true);
+    sendChainMarks(seat, true);
     // A rejoin sees the call its team has up.
     transport.send("calls", calls.view(seat.team, sim.elapsedSeconds), peerId);
   };
@@ -357,6 +403,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       droppedAt: undefined,
       recharges: undefined,
       adrenaline: undefined,
+      chainMarks: undefined,
       skillBar: undefined,
     };
     seats.set(playerId, seat);
@@ -555,6 +602,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     seat.droppedAt = sim.elapsedSeconds;
     seat.recharges = undefined;
     seat.adrenaline = undefined;
+    seat.chainMarks = undefined;
     seat.skillBar = undefined;
     // Frozen, not left running into a wall while away.
     sim.setInputDirection(seat.playerId, ZERO);
@@ -659,6 +707,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       sendSkillBar(seat, false);
       sendRecharges(seat, false);
       sendAdrenaline(seat, false);
+      sendChainMarks(seat, false);
     }
     if (result.phase === "finished") {
       finished = true;

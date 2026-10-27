@@ -102,6 +102,7 @@ describe("Divine Favor (#529)", () => {
     const log = [...match.step(DT).log];
     const caster = get(match, "m").combatant;
     applyEffects([{ kind: "interrupt" }], {
+      surroundings: new Map(),
       caster: get(match, "ally").combatant,
       target: caster,
       rng: createRng(529),

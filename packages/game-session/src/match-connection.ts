@@ -1,4 +1,10 @@
-import type { CombatEvent, OffhandId, ProfessionId, StatusId } from "@vibewars/game-core";
+import type {
+  ChainRole,
+  CombatEvent,
+  OffhandId,
+  ProfessionId,
+  StatusId,
+} from "@vibewars/game-core";
 import type {
   CastRefusedMessage,
   ClientIntent,
@@ -105,7 +111,7 @@ export interface MatchSnapshot {
   readonly phase: string;
   /** The winning team, or `undefined` while active or on a draw. */
   readonly winningTeam: number | undefined;
-  /** "score", "time", or `undefined` while active. */
+  /** "score", "time", "annihilation", "morale", "host-left", or `undefined` while active. */
   readonly endReason: string | undefined;
   /** Weapon shots and flying spells in flight, oldest first (#160, #535). */
   readonly projectiles: readonly ProjectileSnapshot[];
@@ -186,6 +192,17 @@ export interface MatchConnection {
    * (#463): the units its skill holds, 0 for one that costs none.
    */
   getAdrenaline(): readonly number[];
+  /**
+   * Seconds until this player's adrenaline is lost out of combat (#828),
+   * never below 0; `null` while every slot is empty.
+   */
+  getAdrenalineLossIn(): number | null;
+  /**
+   * The chain mark this player left on `targetId` and still running
+   * (#916): which dagger attack of theirs last hit it; `undefined` for
+   * none, or one run out.
+   */
+  getChainMark(targetId: string): ChainRole | undefined;
   /** Call a foe for your team, or ping a spot (#443). The host may drop it, and says nothing. */
   sendCall(call: PeerCall): void;
   /** Your team's calls right now; nobody else's ever reach you. */

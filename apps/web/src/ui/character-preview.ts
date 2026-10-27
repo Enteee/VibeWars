@@ -50,7 +50,8 @@ export function equippedCount(character: StoredCharacter): number {
   return character.skillBar.filter((id) => id !== null).length;
 }
 
-function hex(colour: number): string {
+/** `colour`, a Phaser 0xRRGGBB, as CSS. */
+export function cssColour(colour: number): string {
   return `#${colour.toString(16).padStart(6, "0")}`;
 }
 
@@ -75,7 +76,7 @@ export function createProfessionDot(
 ): HTMLElement {
   const dot = document.createElement("span");
   dot.className = "character-dot";
-  dot.style.setProperty("--dot-colour", hex(teamColour(team)));
+  dot.style.setProperty("--dot-colour", cssColour(teamColour(team)));
   dot.style.width = `${String(MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius * 2)}px`;
   dot.style.height = `${String(MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius * 2)}px`;
   dot.textContent = professionBadge(primary, secondary);

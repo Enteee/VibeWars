@@ -1,17 +1,19 @@
-import type { StatusSnapshot } from "@vibewars/game-session";
+import type { PlayerSnapshot, StatusSnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   STATUS_CATEGORY_NAME,
   createEffectsMonitor,
   effectRows,
+  maintainedRows,
   type EffectRow,
 } from "./effects-monitor.js";
+import { SLOT_TOOLTIP_DELAY_MS } from "./slot-tooltip.js";
 
 /**
  * The effects monitor (#834): its rows, and the icons it draws them as.
- * The unit tests run in Node, so the DOM here is a small fake; the hover
- * and real layout are the e2e suite's (e2e/effects-monitor.spec.ts).
+ * The unit tests run in Node, so the DOM here is a small fake; the real
+ * hover and layout are the e2e suite's (e2e/effects-monitor.spec.ts).
  */
 
 const ME = "me";
@@ -29,9 +31,19 @@ function status(
   return { id, endsAt, durationSeconds, casterId };
 }
 
+/** `effectRows` for statuses on yourself. */
+function ownRows(
+  statuses: readonly StatusSnapshot[],
+  selfId: string,
+  names: ReadonlyMap<string, string>,
+  now: number,
+): EffectRow[] {
+  return effectRows({ sessionId: ME, statuses }, selfId, names, now);
+}
+
 describe("effectRows (#834)", () => {
   it("keeps the order the host sent, oldest first", () => {
-    const rows = effectRows(
+    const rows = ownRows(
       [status("bleeding", 20, 10), status("armor-boost", 15, 10), status("crippled", 30, 10)],
       ME,
       NAMES,
@@ -41,8 +53,7 @@ describe("effectRows (#834)", () => {
   });
 
   it("drains the bar from full to empty, and never below it", () => {
-    const at = (now: number) =>
-      effectRows([status("bleeding", 20, 10)], ME, NAMES, now)[0]?.fraction;
+    const at = (now: number) => ownRows([status("bleeding", 20, 10)], ME, NAMES, now)[0]?.fraction;
     expect(at(10)).toBe(1);
     expect(at(15)).toBe(0.5);
     expect(at(20)).toBe(0);
@@ -52,18 +63,18 @@ describe("effectRows (#834)", () => {
   });
 
   it("gives a status with no duration no bar", () => {
-    expect(effectRows([status("armor-boost", 0, 0)], ME, NAMES, 10)[0]?.fraction).toBeUndefined();
+    expect(ownRows([status("armor-boost", 0, 0)], ME, NAMES, 10)[0]?.fraction).toBeUndefined();
   });
 
   it("gives a maintained enchantment no bar and no seconds left (#837)", () => {
-    const [row] = effectRows([status("mending", null, null)], ME, NAMES, 10);
+    const [row] = ownRows([status("mending", null, null)], ME, NAMES, 10);
     expect(row?.fraction).toBeUndefined();
     expect(row?.secondsLeft).toBeUndefined();
   });
 
   it("counts whole seconds left, rounded up, never below 0", () => {
     const left = (now: number) =>
-      effectRows([status("bleeding", 20, 10)], ME, NAMES, now)[0]?.secondsLeft;
+      ownRows([status("bleeding", 20, 10)], ME, NAMES, now)[0]?.secondsLeft;
     expect(left(10)).toBe(10);
     expect(left(10.1)).toBe(10);
     expect(left(19.9)).toBe(1);
@@ -71,7 +82,7 @@ describe("effectRows (#834)", () => {
   });
 
   it("marks yours only an enchantment you cast", () => {
-    const rows = effectRows(
+    const rows = ownRows(
       [
         status("armor-boost", 20, 10, ME),
         status("armor-boost", 20, 10, "bob"),
@@ -85,7 +96,7 @@ describe("effectRows (#834)", () => {
   });
 
   it("names the caster: you, their name, or someone who has left", () => {
-    const rows = effectRows(
+    const rows = ownRows(
       [
         status("armor-boost", 20, 10, ME),
         status("bleeding", 20, 10),
@@ -99,19 +110,20 @@ describe("effectRows (#834)", () => {
   });
 
   it("carries each status's name and category, and an empty list is no rows", () => {
-    const [row] = effectRows([status("deep-wound", 20, 10)], ME, NAMES, 10);
+    const [row] = ownRows([status("deep-wound", 20, 10)], ME, NAMES, 10);
     expect(row?.name).toBe("Deep Wound");
     expect(row !== undefined && STATUS_CATEGORY_NAME[row.category]).toBe("Condition");
-    expect(effectRows([], ME, NAMES, 10)).toEqual([]);
+    expect(ownRows([], ME, NAMES, 10)).toEqual([]);
   });
 });
 
 /**
  * Just enough of an element for the monitor, without jsdom: children in
- * order, the moves made, and the fill widths written.
+ * order, the moves made, the fill widths written, and a tooltip's lines.
  */
 class FakeElement {
   className = "";
+  textContent = "";
   hidden = false;
   tabIndex = -1;
   src = "";
@@ -143,7 +155,14 @@ class FakeElement {
 
   readonly setAttribute = (): void => undefined;
 
-  readonly addEventListener = (): void => undefined;
+  readonly getBoundingClientRect = () => ({ left: 0, top: 0, right: 0, width: 0, height: 0 });
+
+  /** The listeners added, by event. */
+  readonly listeners = new Map<string, () => void>();
+
+  readonly addEventListener = (type: string, listener: () => void): void => {
+    this.listeners.set(type, listener);
+  };
 
   appendChild(child: FakeElement): FakeElement {
     this.insertBefore(child, null);
@@ -164,6 +183,13 @@ class FakeElement {
     child.parent = this;
   }
 
+  replaceChildren(...children: FakeElement[]): void {
+    for (const child of [...this.children]) {
+      child.remove();
+    }
+    this.append(...children);
+  }
+
   remove(): void {
     if (this.parent !== undefined) {
       this.parent.children.splice(this.parent.children.indexOf(this), 1);
@@ -172,15 +198,24 @@ class FakeElement {
   }
 }
 
-function row(id: EffectRow["id"], fraction: number | undefined, yours = false): EffectRow {
+function row(
+  id: EffectRow["id"],
+  fraction: number | undefined,
+  yours = false,
+  more: Partial<EffectRow> = {},
+): EffectRow {
   return {
     id,
+    bearerId: ME,
+    bearerName: undefined,
     name: id,
     category: "condition",
     fraction,
     secondsLeft: 5,
     yours,
     casterName: "Bob",
+    endable: false,
+    ...more,
   };
 }
 
@@ -196,8 +231,13 @@ describe("createEffectsMonitor (#834)", () => {
     vi.unstubAllGlobals();
   });
 
-  const mount = (size = 24) => {
-    const monitor = createEffectsMonitor(parent as unknown as HTMLElement, size, "your effects");
+  const mount = (size = 24, onEnd?: (bearerId: string, statusId: string) => void) => {
+    const monitor = createEffectsMonitor(
+      parent as unknown as HTMLElement,
+      size,
+      "your effects",
+      onEnd,
+    );
     const root = monitor.root as unknown as FakeElement;
     const icons = () => root.children.map((item) => item.children[0]?.alt);
     const fill = (index: number) => root.children[index]?.children[1]?.children[0];
@@ -269,5 +309,131 @@ describe("createEffectsMonitor (#834)", () => {
       ["crippled", 16, 16],
     ]);
     expect(fill(0)?.widths).toEqual(["8px"]);
+  });
+
+  it("keeps one status on two bearers apart (#838)", () => {
+    const { monitor, root } = mount();
+    monitor.update([
+      row("mending", undefined, true, { endable: true }),
+      row("mending", undefined, true, { bearerId: "bob", bearerName: "Bob", endable: true }),
+    ]);
+    expect(root.children).toHaveLength(2);
+    monitor.update([
+      row("mending", undefined, true, { bearerId: "bob", bearerName: "Bob", endable: true }),
+    ]);
+    expect(root.children).toHaveLength(1);
+  });
+
+  it("ends a maintained row of yours on a double-click, and nothing else (#838)", () => {
+    const ended: [string, string][] = [];
+    const { monitor, root } = mount(24, (bearerId, statusId) => ended.push([bearerId, statusId]));
+    monitor.update([
+      row("bleeding", 0.5),
+      row("mending", undefined, true, { bearerId: "bob", bearerName: "Bob", endable: true }),
+    ]);
+    root.children[0]?.listeners.get("dblclick")?.();
+    expect(ended).toEqual([]);
+    root.children[1]?.listeners.get("dblclick")?.();
+    expect(ended).toEqual([["bob", "mending"]]);
+  });
+
+  describe("the hover says a double-click ends it (#907)", () => {
+    let body: FakeElement;
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      body = new FakeElement();
+      vi.stubGlobal("document", { createElement: () => new FakeElement(), body });
+      vi.stubGlobal("window", { innerWidth: 1000, innerHeight: 1000 });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    /** The open tooltip's lines, hovering the `index`th icon. */
+    const hover = (root: FakeElement, index: number): string[] => {
+      root.children[index]?.listeners.get("mouseenter")?.();
+      vi.advanceTimersByTime(SLOT_TOOLTIP_DELAY_MS);
+      return body.children[0]?.children.map((line) => line.textContent) ?? [];
+    };
+    const yours = row("mending", undefined, true, {
+      bearerId: "bob",
+      bearerName: "Bob",
+      secondsLeft: undefined,
+      endable: true,
+    });
+
+    it("under an endable row of a monitor that ends it", () => {
+      const { monitor, root } = mount(24, () => undefined);
+      monitor.update([yours]);
+      expect(hover(root, 0).slice(-2)).toEqual(["maintained, −1 energy", "double-click to end"]);
+    });
+
+    it("not under a timed row, nor one someone else maintains", () => {
+      const { monitor, root } = mount(24, () => undefined);
+      monitor.update([
+        row("bleeding", 0.5),
+        row("mending", undefined, false, { secondsLeft: undefined }),
+      ]);
+      expect(hover(root, 0)).not.toContain("double-click to end");
+      expect(hover(root, 1)).toEqual(expect.arrayContaining(["maintained"]));
+      expect(hover(root, 1)).not.toContain("double-click to end");
+    });
+
+    it("not in a monitor that cannot end it: the target frame's", () => {
+      const { monitor, root } = mount(16);
+      monitor.update([yours]);
+      expect(hover(root, 0)).toContain("maintained, −1 energy");
+      expect(hover(root, 0)).not.toContain("double-click to end");
+    });
+  });
+});
+
+describe("maintainedRows (#838)", () => {
+  function player(sessionId: string, name: string, statuses: StatusSnapshot[]): PlayerSnapshot {
+    return { sessionId, name, statuses } as Partial<PlayerSnapshot> as PlayerSnapshot;
+  }
+
+  it("lists what you maintain on others, ticked, with no bar, and endable", () => {
+    const rows = maintainedRows(
+      [
+        player(ME, "Ann", [status("mending", null, null, ME)]),
+        player("bob", "Bob", [
+          status("mending", null, null, ME),
+          status("armor-boost", 20, 10, ME),
+        ]),
+        player("cy", "Cy", [status("mending", null, null, "bob")]),
+      ],
+      ME,
+    );
+    expect(rows).toEqual([
+      {
+        id: "mending",
+        bearerId: "bob",
+        bearerName: "Bob",
+        name: "Mending",
+        category: "enchantment",
+        fraction: undefined,
+        secondsLeft: undefined,
+        yours: true,
+        casterName: "you",
+        endable: true,
+      },
+    ]);
+  });
+
+  it("makes your own maintained enchantment endable, and a timed one not", () => {
+    const rows = ownRows(
+      [
+        status("mending", null, null, ME),
+        status("armor-boost", 20, 10, ME),
+        status("mending", null, null),
+      ],
+      ME,
+      NAMES,
+      10,
+    );
+    expect(rows.map((one) => one.endable)).toEqual([true, false, false]);
   });
 });

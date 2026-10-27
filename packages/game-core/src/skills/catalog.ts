@@ -1,12 +1,13 @@
 import {
   AREA_ADJACENT,
   AREA_EARSHOT,
+  AREA_IN_THE_AREA,
   AREA_NEARBY,
   RANGE_MELEE,
   RANGE_SPELL,
 } from "../distances.js";
 import { WEAPONS } from "../equipment/weapons.js";
-import type { Skill } from "./types.js";
+import { KNOCKDOWN_SECONDS, type Skill } from "./types.js";
 
 /**
  * The implemented skill catalog (brief §9's "Implemented" stage).
@@ -54,6 +55,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 60 },
         },
@@ -155,8 +157,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       // "If Swift Chop is blocked, target foe takes 1...16 damage and
       // suffers a Deep Wound for 20 seconds."
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
       chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [
         {
           kind: "damage",
@@ -198,8 +203,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 1,
       bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 12 } },
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
       chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -229,8 +237,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 16 },
       },
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
       chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -264,6 +275,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       { kind: "sacrifice-health", percentOfMax: 10 },
       {
         kind: "heal",
+        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "necromancer.blood-magic", atZero: 30, atTwelve: 90 },
         },
@@ -299,8 +311,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 0,
       bonusDamage: undefined,
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
       chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -326,8 +341,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 1,
       bonusDamage: undefined,
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
       chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -577,6 +595,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            perStatusOnTarget: [],
             amount: {
               scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 57 },
             },
@@ -645,8 +664,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 1,
       bonusDamage: undefined,
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
       chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -674,8 +696,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 1,
       bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 10, atTwelve: 38 } },
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
       chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -703,8 +728,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 1,
       bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 10, atTwelve: 34 } },
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
       chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -731,8 +759,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 1,
       bonusDamage: undefined,
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
       chain: { role: "lead", follows: undefined },
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -763,8 +794,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         scaling: { attributeId: "assassin.critical-strikes", atZero: 10, atTwelve: 27 },
       },
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
       chain: { role: "lead", follows: undefined },
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -809,8 +843,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         scaling: { attributeId: "assassin.dagger-mastery", atZero: 10, atTwelve: 22 },
       },
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: true,
       chain: { role: "off-hand", follows: "lead" },
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -840,14 +877,188 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         scaling: { attributeId: "assassin.dagger-mastery", atZero: 10, atTwelve: 30 },
       },
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: true,
       chain: { role: "off-hand", follows: "lead" },
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
     projectile: undefined,
     // "...and any Stance being used by target foe ends."
     effects: [{ kind: "remove-status", category: "stance", count: 1 }],
+  },
+  {
+    id: "assassin.death-blossom",
+    name: "Death Blossom",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 6,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow an off-hand attack. If it hits, Death Blossom strikes
+    // target foe for +20...40...45 damage and all adjacent foes take
+    // 20...40...45 damage." A dual attack: both blows splash.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 20, atTwelve: 40 },
+      },
+      conditionalBonus: undefined,
+      strikes: 2,
+      unblockable: false,
+      chain: { role: "dual", follows: "off-hand" },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "splash",
+        radius: AREA_ADJACENT,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "assassin.dagger-mastery", atZero: 20, atTwelve: 40 },
+            },
+            type: "piercing",
+            armorPenetration: 0,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "assassin.twisting-fangs",
+    name: "Twisting Fangs",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.critical-strikes",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 15,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow an off-hand attack. If it hits, Twisting Fangs strikes
+    // for +10...18...20 damage and struck foe suffers from Bleeding and
+    // Deep Wound for 5...17...20 seconds": 17 s, its rank-12 value.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.critical-strikes", atZero: 10, atTwelve: 18 },
+      },
+      conditionalBonus: undefined,
+      strikes: 2,
+      unblockable: false,
+      chain: { role: "dual", follows: "off-hand" },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      { kind: "apply-status", statusId: "bleeding", durationSeconds: 17 },
+      { kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 },
+    ],
+  },
+  {
+    id: "assassin.horns-of-the-ox",
+    name: "Horns of the Ox",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 12,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow an off-hand attack. If it hits, Horns of the Ox strikes
+    // for +1...9...11 damage. If struck foe is not adjacent to any allies,
+    // that foe is knocked down."
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 1, atTwelve: 9 },
+      },
+      conditionalBonus: undefined,
+      strikes: 2,
+      unblockable: false,
+      chain: { role: "dual", follows: "off-hand" },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-alone", radius: AREA_ADJACENT },
+        effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+      },
+    ],
+  },
+  {
+    id: "assassin.moebius-strike",
+    name: "Moebius Strike",
+    type: "attack",
+    elite: true,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 2,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow a Dual Attack. If it hits, Moebius Strike strikes for
+    // +10...30...35 damage. If you strike a foe whose Health is below 50%,
+    // all your other attack skills are recharged." An off-hand attack that
+    // follows a dual: lead, off-hand, dual, Moebius, dual, and round.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 10, atTwelve: 30 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: { role: "off-hand", follows: "dual" },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-health-below", fraction: 0.5 },
+        effects: [{ kind: "recharge-others", which: "attack" }],
+      },
+    ],
   },
   {
     id: "ranger.punishing-shot",
@@ -868,8 +1079,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 1,
       bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 10, atTwelve: 18 } },
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
       chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -953,6 +1167,69 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "dash", durationSeconds: 3 }],
   },
   {
+    id: "warrior.frenzy",
+    name: "Frenzy",
+    type: "stance",
+    elite: false,
+    profession: "warrior",
+    // GW1's "No Attribute": any warrior can use it.
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 8 seconds, you attack 33% faster but take double damage."
+    effects: [{ kind: "apply-status", statusId: "frenzy", durationSeconds: 8 }],
+  },
+  {
+    id: "assassin.dark-escape",
+    name: "Dark Escape",
+    type: "stance",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...13...15 seconds, you move 25% faster and take half damage":
+    // 13 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "dark-escape", durationSeconds: 13 }],
+  },
+  {
+    id: "ranger.natural-stride",
+    name: "Natural Stride",
+    type: "stance",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.wilderness-survival",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 1...7...8 seconds, you run 33% faster and have a 50% chance to
+    // block incoming attacks": 7 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "natural-stride", durationSeconds: 7 }],
+  },
+  {
     id: "paragon.wild-throw",
     name: "Wild Throw",
     type: "attack",
@@ -976,14 +1253,57 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 17 },
       },
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: true,
       chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
     projectile: undefined,
     // "...and any Stance being used by your target ends."
     effects: [{ kind: "remove-status", category: "stance", count: 1 }],
+  },
+  {
+    id: "paragon.cruel-spear",
+    name: "Cruel Spear",
+    type: "attack",
+    elite: true,
+    profession: "paragon",
+    attributeId: "paragon.spear-mastery",
+    cost: { kind: "adrenaline", amount: 6 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: WEAPONS.spear.range,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "spear",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "paragon.spear-mastery", atZero: 10, atTwelve: 42 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If it hits a non-moving target, you inflict a Deep Wound for
+    // 5...17...20 seconds": read as the spear lands (#921).
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-not-moving" },
+        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -1012,6 +1332,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "warrior.tactics", atZero: 82, atTwelve: 154 } },
       },
     ],
@@ -1043,6 +1364,62 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // +21 armor for 10 seconds, ending after 3 incoming attacks: its
     // rank-12 numbers, in the status.
     effects: [{ kind: "apply-status", statusId: "watch-yourself", durationSeconds: 10 }],
+  },
+  {
+    id: "paragon.fall-back",
+    name: '"Fall Back!"',
+    type: "shout",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.command",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 25,
+    range: RANGE_SPELL,
+    target: "self",
+    // "All allies within earshot", the shouter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // 13 Health per second while moving and 33% faster for 9 seconds,
+    // ending on a hit: its rank-12 numbers, in the status.
+    effects: [{ kind: "apply-status", statusId: "fall-back", durationSeconds: 9 }],
+  },
+  {
+    id: "paragon.stand-your-ground",
+    name: '"Stand Your Ground!"',
+    type: "shout",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.command",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    // "All party members within earshot", the shouter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // +24 armor when not moving for 17 seconds, ending if its bearer
+    // attacks: its rank-12 numbers, in the status.
+    effects: [{ kind: "apply-status", statusId: "stand-your-ground", durationSeconds: 17 }],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -1229,6 +1606,42 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "mesmer.leech-signet",
+    name: "Leech Signet",
+    type: "signet",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Interrupt target foe's action. If that action was a spell, you gain
+    // 3...13...15 Energy" (#920): any action, and energy for a spell only.
+    effects: [
+      { kind: "interrupt" },
+      {
+        kind: "if",
+        condition: { kind: "interrupted-spell" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 3, atTwelve: 13 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: "mesmer.shatter-enchantment",
     name: "Shatter Enchantment",
     type: "spell",
@@ -1298,6 +1711,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           },
           {
             kind: "heal",
+            perStatusOnTarget: [],
             recipient: "caster",
             amount: {
               scaling: { attributeId: "mesmer.inspiration-magic", atZero: 40, atTwelve: 104 },
@@ -1404,6 +1818,145 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       { kind: "energy-gain", amount: { flat: 2 }, perEnergyLost: true },
     ],
   },
+  {
+    id: "mesmer.energy-surge",
+    name: "Energy Surge",
+    type: "spell",
+    elite: true,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target foe loses 1...8...10 energy. For each point of energy lost,
+    // that foe and all nearby foes take 7 damage and all nearby foes take
+    // 75% of that damage" (PvP, #920): nearby the target, 5.25 a point of
+    // what the target lost, rounded as all damage is.
+    effects: [
+      {
+        kind: "energy-loss",
+        amount: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 8 } },
+      },
+      {
+        kind: "damage",
+        amount: { flat: 7 },
+        type: "typeless",
+        armorPenetration: 0,
+        perEnergyLost: true,
+      },
+      {
+        kind: "splash",
+        radius: AREA_NEARBY,
+        effects: [
+          {
+            kind: "damage",
+            amount: { flat: 5.25 },
+            type: "typeless",
+            armorPenetration: 0,
+            perEnergyLost: true,
+          },
+        ],
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Hexes that answer what their target does (#469)                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.backfire",
+    name: "Backfire",
+    type: "hex",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10 seconds, whenever target foe casts a spell, that foe takes
+    // 35...119...140 damage." The damage is the hex's, at rank 12.
+    effects: [{ kind: "apply-status", statusId: "backfire", durationSeconds: 10 }],
+  },
+  {
+    id: "mesmer.empathy",
+    name: "Empathy",
+    type: "hex",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...13...15 seconds, whenever target foe attacks, that foe takes
+    // 15...39...45 damage" (PvP). Both at rank 12, as every status is.
+    effects: [{ kind: "apply-status", statusId: "empathy", durationSeconds: 13 }],
+  },
+  {
+    id: "necromancer.parasitic-bond",
+    name: "Parasitic Bond",
+    type: "hex",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 20 seconds, target foe suffers health degeneration of 1. The
+    // caster is healed for 30...102...120 when Parasitic Bond ends." The
+    // heal is the hex's, at rank 12 (#887).
+    effects: [{ kind: "apply-status", statusId: "parasitic-bond", durationSeconds: 20 }],
+  },
+  {
+    id: "necromancer.contagion",
+    name: "Contagion",
+    type: "enchantment",
+    elite: true,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 60 seconds, whenever you suffer from a new Condition, all foes
+    // in the area suffer from that same Condition and you sacrifice
+    // 10...6...5% maximum Health." The spread and the 6% are the
+    // enchantment's (#887).
+    effects: [{ kind: "apply-status", statusId: "contagion", durationSeconds: 60 }],
+  },
 
   /* ---------------------------------------------------------------------- */
   /* An effect that depends on how things stand (#794)                      */
@@ -1431,6 +1984,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 81 } },
       },
       {
@@ -1439,11 +1993,44 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            perStatusOnTarget: [],
             amount: {
               scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 98 },
             },
           },
         ],
+      },
+    ],
+  },
+  {
+    id: "monk.dwaynas-kiss",
+    name: "Dwayna's Kiss",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Heal target other ally for 15...51...60 Health and an additional
+    // 10...30...35 Health for each enchantment or hex on that ally" (#920).
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 15, atTwelve: 51 } },
+      },
+      {
+        kind: "heal",
+        perStatusOnTarget: ["enchantment", "hex"],
+        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 10, atTwelve: 30 } },
       },
     ],
   },
@@ -1471,8 +2058,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         condition: { kind: "caster-has", category: "enchantment" },
         amount: { scaling: { attributeId: "dervish.mysticism", atZero: 3, atTwelve: 10 } },
       },
+      strikes: 1,
       unblockable: false,
       chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -1561,8 +2151,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       weaponDamage: 1,
       bonusDamage: undefined,
       conditionalBonus: undefined,
+      strikes: 1,
       unblockable: false,
       chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -1618,6 +2211,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
       {
         kind: "heal",
+        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "dervish.earth-prayers", atZero: 30, atTwelve: 126 } },
       },
       {
@@ -1650,6 +2244,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        perStatusOnTarget: [],
         recipient: "caster",
         amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 80, atTwelve: 136 } },
       },
@@ -1692,8 +2287,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         condition: { kind: "target-casting", spell: true },
         amount: { scaling: { attributeId: "ranger.marksmanship", atZero: 13, atTwelve: 25 } },
       },
+      strikes: 1,
       unblockable: false,
       chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
       onBlocked: [],
     },
     whileActivating: undefined,
@@ -1702,7 +2300,115 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   },
 
   /* ---------------------------------------------------------------------- */
-  /* Resurrection (#812)                                                    */
+  /* Disables (#914): an interrupt that also locks the skill out            */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "mesmer.power-block",
+    name: "Power Block",
+    type: "spell",
+    elite: true,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If target foe is casting a spell or chant, that skill and all
+    // skills of the same attribute are disabled for 1...10...12 seconds
+    // and that skill is interrupted."
+    effects: [
+      { kind: "interrupt", only: "spell-or-chant" },
+      {
+        kind: "disable-skill",
+        which: "interrupted-and-attribute",
+        seconds: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 10 } },
+      },
+    ],
+  },
+  {
+    id: "ranger.distracting-shot",
+    name: "Distracting Shot",
+    type: "attack",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.expertise",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 10,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    // "If Distracting Shot hits, it interrupts target foe's action but
+    // deals only 1...13...16 damage": the arrow's own roll counts for
+    // nothing, and the bonus it deals ignores armor (ADR-0029, #760).
+    attack: {
+      weapon: "bow",
+      weaponDamage: 0,
+      bonusDamage: { scaling: { attributeId: "ranger.expertise", atZero: 1, atTwelve: 13 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If the interrupted action was a skill, that skill is disabled for
+    // an additional 20 seconds."
+    effects: [
+      { kind: "interrupt" },
+      { kind: "disable-skill", which: "interrupted", seconds: { flat: 20 } },
+    ],
+  },
+  {
+    id: "warrior.disrupting-chop",
+    name: "Disrupting Chop",
+    type: "attack",
+    elite: false,
+    profession: "warrior",
+    attributeId: "warrior.axe-mastery",
+    cost: { kind: "adrenaline", amount: 6 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 1,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "axe",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If it hits, this attack interrupts the target's current action. If
+    // that action was a skill, that skill is disabled for an additional
+    // 20 seconds."
+    effects: [
+      { kind: "interrupt" },
+      { kind: "disable-skill", which: "interrupted", seconds: { flat: 20 } },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Resurrection (#812)                                                   */
   /* ---------------------------------------------------------------------- */
 
   {
@@ -1735,6 +2441,512 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           scaling: { attributeId: "monk.healing-prayers", atZero: 42, atTwelve: 80 },
         },
       },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Elementalist and Necromancer staples (#918)                            */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "elementalist.lightning-strike",
+    name: "Lightning Strike",
+    // The corpus's is a hex spell whose hex lands only while you are
+    // overcast; that half is not modelled, so it is the plain strike.
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Strike target foe for 5...33...40 lightning damage. This spell has
+    // 25% armor penetration."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 33 },
+        },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+    ],
+  },
+  {
+    id: "elementalist.mind-shock",
+    name: "Mind Shock",
+    type: "spell",
+    elite: true,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    // Exhaustion, as Chain Lightning's (#461), at the corpus's 10.
+    overcast: 10,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target foe suffers 10...42...50 lightning damage. If you have more
+    // energy than target foe, that foe suffers 10...42...50 additional
+    // lightning damage and is knocked down."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 42 },
+        },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-more-energy" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 42 },
+            },
+            type: "lightning",
+            armorPenetration: 0.25,
+          },
+          { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.shard-storm",
+    name: "Shard Storm",
+    type: "hex",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // Our own tuning, as GW1 publishes no speeds: a shard flies a little
+    // faster than Fireball, slower than Lightning Orb.
+    projectile: { speed: 1.25 * RANGE_SPELL },
+    // "...strikes target foe for 10...70...85 cold damage if it hits and
+    // causing target foe to move 66% slower for 2...5...6 seconds."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 70 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      { kind: "apply-status", statusId: "shard-storm", durationSeconds: 5 },
+    ],
+  },
+  {
+    id: "necromancer.shadow-of-fear",
+    name: "Shadow of Fear",
+    type: "hex",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all adjacent foes": the target, then every foe
+    // adjacent to it.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...attack 50% slower for the next 5...25...30 seconds."
+    effects: [{ kind: "apply-status", statusId: "shadow-of-fear", durationSeconds: 25 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Necromancer curses (#935)                                              */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "necromancer.spiteful-spirit",
+    name: "Spiteful Spirit",
+    type: "hex",
+    elite: true,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10...22...25 seconds, whenever target foe attacks or uses a
+    // skill, Spiteful Spirit deals 15...39...45 shadow damage to that foe
+    // and all adjacent allies of that foe." The damage is the hex's.
+    effects: [{ kind: "apply-status", statusId: "spiteful-spirit", durationSeconds: 22 }],
+  },
+  {
+    id: "necromancer.insidious-parasite",
+    name: "Insidious Parasite",
+    type: "hex",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...13...15 seconds, whenever target foe hits with an attack,
+    // you steal 15...39...45 health from that foe." The steal is the hex's.
+    effects: [{ kind: "apply-status", statusId: "insidious-parasite", durationSeconds: 13 }],
+  },
+  {
+    id: "necromancer.mark-of-pain",
+    name: "Mark of Pain",
+    type: "hex",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 30 seconds, whenever target foe takes physical damage, Mark of
+    // Pain deals 10...34...40 shadow damage to adjacent foes." The damage
+    // is the hex's.
+    effects: [{ kind: "apply-status", statusId: "mark-of-pain", durationSeconds: 30 }],
+  },
+  {
+    id: "necromancer.vampiric-gaze",
+    name: "Vampiric Gaze",
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Steal up to 18...52...60 Health from target foe."
+    effects: [
+      {
+        kind: "life-steal",
+        amount: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 18, atTwelve: 52 },
+        },
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Paragon command (#923)                                                 */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "paragon.spear-of-lightning",
+    name: "Spear of Lightning",
+    type: "attack",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.spear-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 6,
+    range: WEAPONS.spear.range,
+    target: "single-enemy",
+    area: undefined,
+    // "If this attack hits, it deals +8...18...20 lightning damage. This
+    // attack has 25% armor penetration." GW1 makes the whole blow one
+    // lightning packet, the spear's damage and the bonus alike.
+    attack: {
+      weapon: "spear",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "paragon.spear-mastery", atZero: 8, atTwelve: 18 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: "lightning",
+      armorPenetration: 0.25,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [],
+  },
+  {
+    id: "paragon.never-surrender",
+    name: '"Never Surrender!"',
+    type: "shout",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.command",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    // "All party members within earshot", the shouter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // PvP: "...and below 75% Health, gain +1...4...5 Health regeneration"
+    // for 10 seconds. Read as it lands; it stays on one healed above.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-health-below", fraction: 0.75 },
+        effects: [{ kind: "apply-status", statusId: "never-surrender", durationSeconds: 10 }],
+      },
+    ],
+  },
+  {
+    id: "paragon.leaders-comfort",
+    name: "Leader's Comfort",
+    type: "skill",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.leadership",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "You gain 30...66...75 Health. For each ally within earshot, you
+    // also gain +10...18...20 Health (maximum 140 Health)." The caster is
+    // one of those allies, as GW1 counts it, and 140 caps the whole heal.
+    effects: [
+      {
+        kind: "heal",
+        amount: { scaling: { attributeId: "paragon.leadership", atZero: 30, atTwelve: 66 } },
+        perStatusOnTarget: [],
+        perAlly: {
+          amount: { scaling: { attributeId: "paragon.leadership", atZero: 10, atTwelve: 18 } },
+          radius: AREA_EARSHOT,
+          max: 140,
+        },
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Mesmer and Elementalist staples (#938)                                 */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.cry-of-frustration",
+    name: "Cry of Frustration",
+    type: "spell",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If target foe is using a skill, that foe and all foes in the area
+    // are interrupted and suffer 15...63...75 damage and foes in the area
+    // take 75% of that damage." Not using one: nothing, to anyone.
+    effects: [
+      { kind: "interrupt" },
+      {
+        kind: "if",
+        condition: { kind: "interrupted" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 15, atTwelve: 63 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+          {
+            kind: "splash",
+            radius: AREA_IN_THE_AREA,
+            effects: [
+              { kind: "interrupt" },
+              {
+                kind: "damage",
+                amount: {
+                  scaling: {
+                    attributeId: "mesmer.domination-magic",
+                    atZero: 11.25,
+                    atTwelve: 47.25,
+                  },
+                },
+                type: "typeless",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.mantra-of-recovery",
+    name: "Mantra of Recovery",
+    type: "stance",
+    elite: true,
+    profession: "mesmer",
+    attributeId: "mesmer.fast-casting",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...17...20 seconds, spells you cast recharge 33% faster."
+    effects: [{ kind: "apply-status", statusId: "mantra-of-recovery", durationSeconds: 17 }],
+  },
+  {
+    id: "elementalist.ice-spikes",
+    name: "Ice Spikes",
+    type: "hex",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target and adjacent foes": dropped from the sky, so no projectile.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...are struck for 20...68...80 cold damage and move 66% slower for
+    // 2...5...6 seconds."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 20, atTwelve: 68 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      { kind: "apply-status", statusId: "ice-spikes", durationSeconds: 5 },
+    ],
+  },
+  {
+    id: "elementalist.deep-freeze",
+    name: "Deep Freeze",
+    type: "hex",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "...at target foe's location. All foes in this area".
+    area: {
+      radius: AREA_IN_THE_AREA,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...are struck for 10...70...85 cold damage. For 10 seconds, all foes
+    // move 66% slower."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 70 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      { kind: "apply-status", statusId: "deep-freeze", durationSeconds: 10 },
     ],
   },
 ];

@@ -14,13 +14,17 @@ import {
   feedLines,
   groupFeed,
   hhmm,
+  humanDuration,
   nudgeLines,
   usageBar,
 } from "./dashboard-view.mjs";
+import { KPI_SCHEMA_VERSION } from "./kpi.mjs";
 /** @type {import("./dashboard-view.mjs").NudgeFacts} */
 const noNudges = { schedule: [], since: null, sent: new Map(), unread: new Map(), now: 0 };
 /** @type {import("./dashboard-view.mjs").TelegramFacts} */
 const telegramUp = { down: false, lastSeen: 0, now: 0 };
+/** @type {import("./dashboard-view.mjs").CompanyFacts["kpi"]} */
+const noKpi = { file: null, now: 0 };
 /** @typedef {{ state: "up" | "stale" | "down" | "crash-looping", line: string }} HubLine */
 
 const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
@@ -416,6 +420,7 @@ describe("companyLines", () => {
         build: null,
         claude: null,
         telegram: telegramUp,
+        kpi: noKpi,
       },
       { rows: 30, width: 40 },
     ).map(plain);
@@ -444,6 +449,7 @@ describe("companyLines", () => {
           build: null,
           claude: null,
           telegram: telegramUp,
+          kpi: noKpi,
         },
         { rows: 30, width: 80 },
       ).find((line) => plain(line).startsWith("hub "));
@@ -466,6 +472,7 @@ describe("companyLines", () => {
           build: null,
           claude: null,
           telegram,
+          kpi: noKpi,
         },
         { rows: 30, width: 80 },
       );
@@ -491,6 +498,7 @@ describe("companyLines", () => {
         build: null,
         claude: null,
         telegram: telegramUp,
+        kpi: noKpi,
       },
       { rows: 30, width: 72 },
     ).map(plain);
@@ -531,6 +539,7 @@ describe("companyLines", () => {
         build: null,
         claude,
         telegram: telegramUp,
+        kpi: noKpi,
       },
       { rows: 40, width: 72 },
     ).map(plain);
@@ -589,6 +598,7 @@ describe("companyLines", () => {
         build: null,
         claude,
         telegram: telegramUp,
+        kpi: noKpi,
       },
       { rows: 40, width: 72 },
     );
@@ -645,6 +655,7 @@ describe("companyLines", () => {
                   },
           },
           telegram: telegramUp,
+          kpi: noKpi,
         },
         { rows: 60, width: 120 },
       );
@@ -747,6 +758,7 @@ describe("companyLines", () => {
         build: null,
         claude: null,
         telegram: telegramUp,
+        kpi: noKpi,
       },
       { rows: 4, width: 40 },
     );
@@ -775,6 +787,7 @@ describe("companyLines", () => {
           build: null,
           claude: null,
           telegram: telegramUp,
+          kpi: noKpi,
         },
         { rows: 40, width },
       );
@@ -878,6 +891,127 @@ describe("companyLines", () => {
     });
   });
 
+  describe("the KPIs (#892)", () => {
+    const GIB = 2 ** 30;
+    const MIN = 60_000;
+    const HOUR = 60 * MIN;
+    const since = new Date(2026, 9, 27, 9, 0).getTime();
+    const at = since + 5 * HOUR;
+    /** @type {import("./kpi.mjs").Kpis} */
+    const full = {
+      schemaVersion: KPI_SCHEMA_VERSION,
+      at,
+      flow: {
+        historySince: since,
+        columns: {},
+        done24h: 6,
+        done7d: 31,
+        cycleMedianMs: 5 * HOUR + 10 * MIN,
+        cycleP90Ms: 19 * HOUR,
+        reviewWaitMedianMs: 40 * MIN,
+        qaWaitMedianMs: HOUR + 5 * MIN,
+        bounces7d: 4,
+        blocked: 2,
+        oldestBlockedMs: 27 * HOUR,
+      },
+      claude: null,
+      github: null,
+      host: {
+        employees: {
+          developer: { memoryBytes: 1.4 * GIB, cpuShare: 0.6 },
+          "developer@2": { memoryBytes: 2.1 * GIB, cpuShare: 0.95 },
+          manager: { memoryBytes: 3 * GIB, cpuShare: null },
+          "qa-tester": { memoryBytes: 1.6 * GIB, cpuShare: 0.8 },
+        },
+        slice: { memoryBytes: 9.8 * GIB, cpuShare: 3.4 },
+        diskFreeBytes: 41 * GIB,
+        diskHoldBelow: 20 * GIB,
+      },
+      staff: null,
+      errors: {},
+    };
+    /**
+     * @param {Record<string, unknown> | null} file
+     * @param {{ now?: number, width?: number }} [options]
+     */
+    const pane = (file, { now = at + 2 * MIN, width = 120 } = {}) => {
+      const lines = companyLines(
+        {
+          roles,
+          live: new Set(),
+          stale: new Map(),
+          staff: staffFacts({}),
+          budget: null,
+          hub,
+          reboot: null,
+          build: null,
+          claude: null,
+          telegram: telegramUp,
+          kpi: { file, now },
+        },
+        { rows: 60, width },
+      );
+      const from = lines.findIndex((line) => plain(line).startsWith("KPI"));
+      const to = lines.findIndex((line, index) => index > from && line === "");
+      return lines.slice(from, to);
+    };
+
+    it("follows the staff with flow, blocked, host and the top three", () => {
+      const lines = pane(full);
+      expect(lines.map(plain)).toEqual([
+        "KPI (since 27 Oct, 7 d window)  updated 2 min ago",
+        "flow    done 24h 6 · 7d 31 · cycle med 5h10 p90 19h · review wait 40m · QA wait 1h05 · bounces 4",
+        "blocked 2, oldest 1d3h",
+        "host    jails 9.8 GiB · cpu 340% · disk free 41 GiB",
+        "top     developer@2 2.1 GiB 95% · qa-tester 1.6 GiB 80% · developer 1.4 GiB 60%",
+      ]);
+      expect(lines[0]).toContain("\x1b[1m");
+    });
+
+    it("paints blocked over 24 h and disk free under 1.5 × the hold", () => {
+      const lines = pane(full);
+      expect(lines[2]).toContain(`\x1b[33m`);
+      expect(lines[3]).not.toContain(`\x1b[33m`);
+      const low = pane({ ...full, host: { ...full.host, diskFreeBytes: 29 * GIB } });
+      expect(low[3]).toContain("\x1b[33mdisk free 29 GiB\x1b[0m");
+      const fresh = pane({ ...full, flow: { ...full.flow, oldestBlockedMs: 23 * HOUR } });
+      expect(fresh[2]).toBe("blocked 2, oldest 23h");
+    });
+
+    it("says stale once the file is over 15 minutes old", () => {
+      expect(plain(pane(full, { now: at + 16 * MIN })[0] ?? "")).toBe(
+        "KPI (since 27 Oct, 7 d window)  stale (16 min)",
+      );
+    });
+
+    it("is one line when the file is missing or another schemaVersion", () => {
+      expect(pane(null)).toEqual(["KPI: none yet"]);
+      expect(pane({ ...full, schemaVersion: KPI_SCHEMA_VERSION + 1 })).toEqual(["KPI: none yet"]);
+      expect(pane({})).toEqual(["KPI: none yet"]);
+    });
+
+    it("shows a null section's error, cut to the width", () => {
+      const lines = pane(
+        { ...full, host: null, errors: { host: "systemctl: unit vibewars.slice not found" } },
+        { width: 30 },
+      ).map(plain);
+      expect(lines.at(-1)).toBe("host    systemctl: unit vibew…");
+      expect(lines.some((line) => line.startsWith("top"))).toBe(false);
+    });
+
+    it("never wraps a narrow pane", () => {
+      for (const line of pane(full, { width: 24 })) {
+        expect(columnsOf(line)).toBeLessThanOrEqual(24);
+      }
+    });
+
+    it("humanises durations", () => {
+      expect(
+        [null, 0, 40 * MIN, 5 * HOUR + 10 * MIN, 19 * HOUR, 27 * HOUR].map(humanDuration),
+      ).toEqual(["–", "0m", "40m", "5h10", "19h", "1d3h"]);
+    });
+  });
+
   describe("the build (#557)", () => {
     /** @param {import("./dashboard-view.mjs").CompanyFacts["build"]} build */
     const pane = (build) =>
@@ -893,6 +1027,7 @@ describe("companyLines", () => {
           build,
           claude: null,
           telegram: telegramUp,
+          kpi: noKpi,
         },
         { rows: 30, width: 80 },
       );
@@ -944,6 +1079,7 @@ describe("companyLines", () => {
           build: null,
           claude: null,
           telegram: telegramUp,
+          kpi: noKpi,
         },
         { rows, width },
       ).map(plain);
@@ -977,6 +1113,7 @@ describe("companyLines", () => {
           build: null,
           claude: null,
           telegram: telegramUp,
+          kpi: noKpi,
         },
         { rows: 30, width: 80 },
       );
@@ -1018,6 +1155,7 @@ describe("companyLines", () => {
             build: null,
             claude: null,
             telegram: telegramUp,
+            kpi: noKpi,
           },
           { rows: 30, width: 200 },
         ).map(plain);

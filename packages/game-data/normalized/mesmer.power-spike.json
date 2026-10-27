@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.25,
   "rechargeSeconds": 12,
+  "upkeep": false,
   "description": "If target foe is casting a Spell or Chant, the Skill is interrupted and target foe takes 30...102...120 damage.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

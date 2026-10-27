@@ -10,10 +10,11 @@
  * positions, no cooldown state. See `docs/adr/0002-networking.md` §Security.
  */
 
-export { PROTOCOL_VERSION } from "./protocol-version.js";
+export { PROTOCOL_VERSION, fingerprint } from "./protocol-version.js";
 
 export {
   PROTOCOL_MISMATCH_MESSAGE,
+  CHAIN_ROLES,
   MAX_LOBBY_PLAYERS,
   isLobbyCode,
   normalizeLobbyCode,
@@ -31,8 +32,12 @@ export type {
   AttackIntent,
   CancelIntent,
   WalkToIntent,
+  EndUpkeepIntent,
   CastRefusedMessage,
   AdrenalineMessage,
+  ChainMarksMessage,
+  WireChainMark,
+  WireChainRole,
   RechargeMessage,
   RechargeSlot,
   MapDescriptor,
@@ -87,12 +92,15 @@ export {
   parseWireEnded,
   parseCastRefused,
   parseAdrenaline,
+  parseChainMarks,
   parseRecharge,
   LOBBY_REFUSALS,
   parsePeerLobbyJoin,
   parseWireLobbyState,
   parseWireLobbyCommand,
   parseWireLobbyNote,
+  parsePeerLobbyHello,
+  parseWireLobbyWelcome,
   parseWireMatchStart,
 } from "./p2p.js";
 
@@ -126,6 +134,21 @@ export type {
   WireLobbyState,
   WireLobbyCommand,
   WireLobbyNote,
+  PeerLobbyHello,
+  WireLobbyWelcome,
+  WireAdmission,
   LobbyRefusal,
   WireMatchStart,
 } from "./p2p.js";
+
+export {
+  FORMATION_SETTLE_MS,
+  FORMATION_TIMEOUT_MS,
+  NO_SHOW_IGNORE_MS,
+  QUEUE_MODES,
+  TICKET_HEARTBEAT_MS,
+  TICKET_TTL_MS,
+  parseQueueTicket,
+  teamSizeOf,
+} from "./queue.js";
+export type { QueueMode, QueueTicket } from "./queue.js";

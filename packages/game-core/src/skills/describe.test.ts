@@ -155,6 +155,23 @@ describe("describeSkill", () => {
     expect(describeSkill(skill("mesmer.power-spike"), ranks).headline).toBe("102 damage");
   });
 
+  it("says what a disable locks out, and for how long (#914)", () => {
+    const ranks = new Map([
+      ["mesmer.domination-magic", 12],
+      ["ranger.expertise", 12],
+    ]);
+    const lines = (id: string) => describeSkill(skill(id), ranks).effects.map((e) => e.text);
+    expect(lines("mesmer.power-block")).toEqual([
+      "Interrupts the target's spell or chant, if they are casting one",
+      "That skill and all skills of the same attribute are disabled for 10 seconds",
+    ]);
+    expect(lines("ranger.distracting-shot")).toEqual([
+      "+13 damage",
+      "Interrupts the target's current cast, if they are casting",
+      "The interrupted skill is disabled for 20 seconds",
+    ]);
+  });
+
   it("leads what depends on how things stand with its condition (#794)", () => {
     const ranks = new Map([
       ["monk.healing-prayers", 12],
@@ -203,6 +220,28 @@ describe("describeSkill", () => {
     expect(describeSkill(skill("mesmer.energy-burn"), ranks).headline).toBe("drains 8 energy");
   });
 
+  it("words Energy Surge's splash, Leech Signet's spell and Dwayna's Kiss's count (#920)", () => {
+    const ranks = new Map([
+      ["mesmer.domination-magic", 12],
+      ["mesmer.inspiration-magic", 12],
+      ["monk.healing-prayers", 12],
+    ]);
+    const lines = (id: string) => describeSkill(skill(id), ranks).effects.map((e) => e.text);
+    expect(lines("mesmer.energy-surge")).toEqual([
+      "Target loses 8 energy",
+      "Deals 7 damage per point lost",
+      "Nearby foes take 5.25 damage for each point of energy lost",
+    ]);
+    expect(lines("mesmer.leech-signet")).toEqual([
+      "Interrupts the target's current cast, if they are casting",
+      "If that action was a spell: gain 13 energy",
+    ]);
+    expect(lines("monk.dwaynas-kiss")).toEqual([
+      "Heals for 51",
+      "+30 Health for each enchantment or hex on target ally",
+    ]);
+  });
+
   it("says Guardian blocks half of all attacks (#534)", () => {
     expect(describeStatus("guardian")).toBe("50% chance to block attacks");
   });
@@ -248,6 +287,7 @@ describe("describeSkill", () => {
           (entry.attack?.chain === undefined ? 0 : 1) +
           (entry.attack?.bonusDamage === undefined ? 0 : 1) +
           (entry.attack?.conditionalBonus === undefined ? 0 : 1) +
+          ((entry.attack?.armorPenetration ?? 0) > 0 ? 1 : 0) +
           lines(entry.attack?.onBlocked ?? []) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1),
@@ -285,6 +325,43 @@ describe("attack skills (#417)", () => {
     expect(first("assassin.jagged-strike")).toBe("Lead attack.");
     expect(first("assassin.fox-fangs")).toBe("Off-hand attack. Must follow a lead attack.");
     expect(first("warrior.swift-chop")).not.toMatch(/attack\./);
+  });
+
+  it("words a splash, a lone target and a recharge of the others as GW1 does (#885)", () => {
+    const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
+    expect(texts("assassin.death-blossom")).toContain("Adjacent foes take 20 damage");
+    expect(texts("assassin.horns-of-the-ox")).toContain(
+      "If target is not adjacent to any allies: knocks down for 2s",
+    );
+    expect(texts("assassin.moebius-strike")).toContain(
+      "If target is below 50% Health: recharges all your other attack skills",
+    );
+    expect(texts("assassin.moebius-strike")[0]).toBe("Off-hand attack. Must follow a dual attack.");
+  });
+
+  it("words Mind Shock's energy comparison as GW1 does (#918)", () => {
+    expect(
+      describeSkill(skill("elementalist.mind-shock")).effects.map(({ text }) => text),
+    ).toContain("If you have more Energy than target: knocks down for 2s");
+  });
+
+  it("words Cry of Frustration's splash and Mantra of Recovery's faster spells (#938)", () => {
+    expect(
+      describeSkill(skill("mesmer.cry-of-frustration")).effects.map(({ text }) => text),
+    ).toContain("If it interrupts: foes in the area are interrupted if casting and take 11 damage");
+    expect(describeStatus("mantra-of-recovery")).toBe("spells recharge 33% faster");
+  });
+
+  it("words Spear of Lightning's type and penetration, and Leader's Comfort's per ally (#923)", () => {
+    const at12 = (id: string, attributeId: string) =>
+      describeSkill(skill(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
+    expect(at12("paragon.spear-of-lightning", "paragon.spear-mastery")).toEqual([
+      "+18 lightning damage",
+      "25% armor penetration",
+    ]);
+    expect(at12("paragon.leaders-comfort", "paragon.leadership")).toEqual([
+      "Heals for 66, +18 Health for each ally in earshot (max 140)",
+    ]);
   });
 
   it("chains only dagger attacks, so a chain blow never flies (#831)", () => {
@@ -330,6 +407,25 @@ describe("describeStatus", () => {
     withAttackDuration({ bleeding: 0.67 }, () => {
       expect(describeStatus("bleeding")).toContain("attacks 33% faster");
     });
+  });
+
+  it("says the curses' triggers from the bearer's side, two alike once (#935)", () => {
+    expect(describeStatus("spiteful-spirit")).toBe(
+      "takes 39 damage whenever it uses a skill or attacks, " +
+        "its adjacent allies take 39 damage whenever it uses a skill or attacks",
+    );
+    expect(describeStatus("mark-of-pain")).toBe(
+      "its adjacent allies take 34 damage whenever it takes physical damage",
+    );
+    expect(describeStatus("insidious-parasite")).toBe(
+      "its caster steals 39 Health whenever it hits with an attack",
+    );
+    expect(
+      describeSkill(
+        skill("necromancer.vampiric-gaze"),
+        new Map([["necromancer.blood-magic", 12]]),
+      ).effects.map(({ text }) => text),
+    ).toEqual(["Steals up to 52 Health"]);
   });
 
   it("returns the id for an unknown status rather than throwing", () => {

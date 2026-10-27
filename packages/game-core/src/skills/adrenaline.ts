@@ -16,19 +16,23 @@ function unitsFor(skill: Skill | undefined): number {
 }
 
 /**
- * Give `strikes` strikes to every adrenaline skill of `combatant` that is
- * not recharging, each capped at what it costs.
+ * Give `units` to every adrenaline skill of `combatant` that is not
+ * recharging, each capped at what it costs. Gaining any is combat, so it
+ * stamps `lastCombatAt` with `atSeconds` (#828).
  */
-export function gainStrikes(combatant: Combatant, strikes: number): void {
-  for (const [skillId, units] of combatant.adrenaline) {
+export function gainUnits(combatant: Combatant, units: number, atSeconds: number): void {
+  combatant.lastCombatAt = atSeconds;
+  for (const [skillId, held] of combatant.adrenaline) {
     if ((combatant.cast.rechargeRemaining.get(skillId) ?? 0) > 0) {
       continue;
     }
-    combatant.adrenaline.set(
-      skillId,
-      Math.min(unitsFor(getSkill(skillId)), units + strikes * ADRENALINE_PER_STRIKE),
-    );
+    combatant.adrenaline.set(skillId, Math.min(unitsFor(getSkill(skillId)), held + units));
   }
+}
+
+/** Give `strikes` strikes to every adrenaline skill of `combatant`, as `gainUnits`. */
+export function gainStrikes(combatant: Combatant, strikes: number, atSeconds: number): void {
+  gainUnits(combatant, strikes * ADRENALINE_PER_STRIKE, atSeconds);
 }
 
 /**
@@ -49,7 +53,20 @@ export function canAffordAdrenaline(combatant: Combatant, skill: Skill): boolean
   return (combatant.adrenaline.get(skill.id) ?? 0) >= unitsFor(skill);
 }
 
-/** Empty every adrenaline pool of `combatant`: death, respawn and reset. */
+/**
+ * Seconds at `atSeconds` until `combatant`'s adrenaline is lost out of
+ * combat (#828), never below 0: `null` when every pool is already empty.
+ */
+export function adrenalineLossIn(
+  combatant: Combatant,
+  atSeconds: number,
+  lossSeconds: number,
+): number | null {
+  const holds = [...combatant.adrenaline.values()].some((units) => units > 0);
+  return holds ? Math.max(0, combatant.lastCombatAt + lossSeconds - atSeconds) : null;
+}
+
+/** Empty every adrenaline pool of `combatant`: death, respawn, reset and 25 s out of combat. */
 export function emptyAdrenaline(combatant: Combatant): void {
   for (const skillId of combatant.adrenaline.keys()) {
     combatant.adrenaline.set(skillId, 0);

@@ -8,6 +8,7 @@
  * tmux wrap it, and the whole pane jumps.
  */
 import { formatCount } from "./claude-usage.mjs";
+import { KPI_SCHEMA_VERSION } from "./kpi.mjs";
 import { visible } from "./protocol.mjs";
 import { DRAIN_MS, clock } from "./reboot.mjs";
 
@@ -355,6 +356,7 @@ export function boardScreenLines(snapshot, boardColumns, live, nudgeFacts, { row
  * @property {{ record: import("./reboot.mjs").Reboot, between: readonly string[], now: number } | { rebooting: string } | null} reboot
  *   the pending reboot with the roles between turns, or the reason of the one handed to the restarter (#345)
  * @property {{ line: string, stale: boolean } | null} build the build the company runs, against the checkout; null when the dashboard runs from the checkout (#557)
+ * @property {{ file: Record<string, unknown> | null, now: number }} kpi `kpis.json` as read, null when missing or unreadable (#892)
  */
 
 /**
@@ -787,6 +789,133 @@ function telegramSection({ telegram: { down, lastSeen, now } }, width) {
   return [paint(cut(`TELEGRAM DOWN (${seen}): claude-llc status`, width), "1;31")];
 }
 
+/** `kpis.json` older than this says so in its header (#892). */
+const KPI_STALE_MS = 15 * 60_000;
+/** The warning colour: yellow reads on a dark and a light terminal. */
+const WARN = "33";
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/**
+ * A duration as the KPI line says it: `40m`, `5h10`, `19h`, `1d3h`; null is `–`.
+ *
+ * @param {number | null} ms
+ * @returns {string}
+ */
+export function humanDuration(ms) {
+  if (ms === null) {
+    return "–";
+  }
+  const minutes = Math.floor(ms / 60_000);
+  if (minutes < 60) {
+    return `${String(minutes)}m`;
+  }
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return minutes % 60 === 0
+      ? `${String(hours)}h`
+      : `${String(hours)}h${String(minutes % 60).padStart(2, "0")}`;
+  }
+  return `${String(Math.floor(hours / 24))}d${String(hours % 24)}h`;
+}
+
+/**
+ * @param {number} bytes
+ * @returns {string} `9.8 GiB`, whole from 10 GiB up
+ */
+function gib(bytes) {
+  const value = bytes / 2 ** 30;
+  return `${value < 10 ? value.toFixed(1) : String(Math.round(value))} GiB`;
+}
+
+/**
+ * @param {number | null} share cores' worth of CPU
+ * @returns {string}
+ */
+function percent(share) {
+  return share === null ? "–" : `${String(Math.round(share * 100))}%`;
+}
+
+/**
+ * The KPI section (#892): what `kpis.json` (#891) says that no other
+ * section does. The Claude and GitHub budgets have theirs. Read-only:
+ * hubd alone computes KPIs, so this and the analyst quote the same
+ * numbers.
+ *
+ * @param {CompanyFacts} facts
+ * @param {number} width
+ * @returns {string[]}
+ */
+function kpiSection({ kpi: { file, now } }, width) {
+  if (file?.schemaVersion !== KPI_SCHEMA_VERSION || typeof file.at !== "number") {
+    return [cut("KPI: none yet", width)];
+  }
+  const kpis = /** @type {import("./kpi.mjs").Kpis} */ (/** @type {unknown} */ (file));
+  const age = Math.max(0, Math.floor((now - kpis.at) / 60_000));
+  const since = kpis.flow?.historySince ?? null;
+  const from =
+    since === null
+      ? "7 d window"
+      : `since ${String(new Date(since).getDate())} ${MONTHS[new Date(since).getMonth()] ?? ""}, 7 d window`;
+  const updated =
+    now - kpis.at > KPI_STALE_MS ? `stale (${String(age)} min)` : `updated ${String(age)} min ago`;
+  /** @param {string} name */
+  const failed = (name) => {
+    const reason = obj(kpis.errors)[name];
+    return cut(
+      `${name.padEnd(8)}${visible(typeof reason === "string" ? reason : "unavailable")}`,
+      width,
+    );
+  };
+
+  const lines = [paint(cut(`KPI (${from})  ${updated}`, width), "1")];
+  const { flow, host } = kpis;
+  if (flow === null) {
+    lines.push(failed("flow"));
+  } else {
+    lines.push(
+      cut(
+        [
+          `flow    done 24h ${String(flow.done24h)}`,
+          `7d ${String(flow.done7d)}`,
+          `cycle med ${humanDuration(flow.cycleMedianMs)} p90 ${humanDuration(flow.cycleP90Ms)}`,
+          `review wait ${humanDuration(flow.reviewWaitMedianMs)}`,
+          `QA wait ${humanDuration(flow.qaWaitMedianMs)}`,
+          `bounces ${String(flow.bounces7d)}`,
+        ].join(" · "),
+        width,
+      ),
+    );
+    const blocked = cut(
+      `blocked ${String(flow.blocked)}${flow.oldestBlockedMs === null ? "" : `, oldest ${humanDuration(flow.oldestBlockedMs)}`}`,
+      width,
+    );
+    lines.push((flow.oldestBlockedMs ?? 0) > 24 * 3_600_000 ? paint(blocked, WARN) : blocked);
+  }
+  if (host === null) {
+    lines.push(failed("host"));
+  } else {
+    const disk = `disk free ${gib(host.diskFreeBytes)}`;
+    const line = cut(
+      `host    jails ${gib(host.slice.memoryBytes)} · cpu ${percent(host.slice.cpuShare)} · ${disk}`,
+      width,
+    );
+    // Only a disk figure that survived the cut is painted; a cut one is plain.
+    lines.push(
+      host.diskFreeBytes < host.diskHoldBelow * 1.5 ? line.replace(disk, paint(disk, WARN)) : line,
+    );
+    const top = Object.entries(host.employees)
+      .sort(
+        ([, a], [, b]) => (b.cpuShare ?? -1) - (a.cpuShare ?? -1) || b.memoryBytes - a.memoryBytes,
+      )
+      .slice(0, 3)
+      .map(([id, use]) => `${visible(id)} ${gib(use.memoryBytes)} ${percent(use.cpuShare)}`);
+    if (top.length > 0) {
+      lines.push(cut(`top     ${top.join(" · ")}`, width));
+    }
+  }
+  return lines;
+}
+
 /**
  * The COMPANY pane's sections, in order. A new one is a
  * function here rather than a pane, as #23's hub line and #50's tokens are.
@@ -799,6 +928,7 @@ export const COMPANY_SECTIONS = [
   rebootSection,
   buildSection,
   staffSection,
+  kpiSection,
   hubSection,
   githubSection,
   claudeSection,

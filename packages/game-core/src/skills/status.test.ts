@@ -46,6 +46,8 @@ describe("status definitions", () => {
         def.preventsKnockdown ||
         def.energyPips !== 0 ||
         def.armorModifier !== 0 ||
+        def.armorWhileStill !== 0 ||
+        def.healthPerSecondWhileMoving !== 0 ||
         def.armorReduction !== undefined ||
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
@@ -58,8 +60,10 @@ describe("status definitions", () => {
         def.attackDurationMultiplier !== 1 ||
         def.block !== undefined ||
         def.onAttackHit.length > 0 ||
+        def.triggers.length > 0 ||
         def.nextSpells !== undefined ||
-        def.nextAttackSkill !== undefined;
+        def.nextAttackSkill !== undefined ||
+        def.spellRechargeFaster !== 0;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -96,9 +100,11 @@ describe("status definitions", () => {
       poison: -4,
       disease: -4,
       faintheartedness: -2,
+      "parasitic-bond": -1,
       mending: 3,
       regeneration: 4,
       "weapon-of-warding": 4,
+      "never-surrender": 4,
     });
   });
 
@@ -360,6 +366,119 @@ describe("StatusSet duration advance", () => {
   });
 });
 
+describe("StatusSet changes, for the triggers (#887)", () => {
+  it("records a condition newly on the bearer, not its refresh", () => {
+    const set = new StatusSet();
+    set.apply("burning", 5, "a");
+    set.apply("burning", 8, "b");
+    set.apply("burning", 2, "c");
+    expect(set.drainChanges()).toEqual([
+      { kind: "gained-condition", id: "burning", durationSeconds: 5 },
+    ]);
+    expect(set.drainChanges()).toEqual([]);
+  });
+
+  it("records no gained condition for a hex, an enchantment or a stance", () => {
+    const set = new StatusSet();
+    set.apply("faintheartedness", 5, "a");
+    set.apply("regeneration", 5, "a");
+    set.apply("sprint", 5, "a");
+    expect(set.drainChanges()).toEqual([]);
+  });
+
+  it("records a condition caught from an outbreak, once (#765)", () => {
+    const set = new StatusSet();
+    const outbreak = { infected: new Set<string>() };
+    set.catch("disease", 6, "a", outbreak);
+    set.catch("disease", 9, "a", outbreak);
+    expect(set.drainChanges()).toEqual([
+      { kind: "gained-condition", id: "disease", durationSeconds: 6 },
+    ]);
+  });
+
+  it("records every ending with its source", () => {
+    const set = new StatusSet();
+    set.apply("parasitic-bond", 1, "expiry");
+    set.apply("backfire", 10, "removed");
+    set.apply("malaise", 10, "by-category");
+    set.apply("watch-yourself", 10, "attacked");
+    set.apply("glyph-of-lesser-energy", 10, "spells");
+    set.apply("weapon-of-warding", 10, "attacks");
+    set.apply("fleeting-stability", 10, "knockdown");
+    set.drainChanges();
+
+    set.advance(1);
+    set.remove("backfire");
+    set.removeByCategory("hex");
+    for (let attack = 0; attack < 3; attack += 1) {
+      set.countIncomingAttack();
+    }
+    set.countSpellStarted();
+    set.countSpellStarted();
+    set.endOnBearerAttack();
+    set.endOnKnockdownPrevented();
+
+    expect(set.drainChanges()).toEqual([
+      { kind: "ended", id: "parasitic-bond", sourceId: "expiry" },
+      { kind: "ended", id: "backfire", sourceId: "removed" },
+      { kind: "ended", id: "malaise", sourceId: "by-category" },
+      { kind: "ended", id: "watch-yourself", sourceId: "attacked" },
+      { kind: "ended", id: "glyph-of-lesser-energy", sourceId: "spells" },
+      { kind: "ended", id: "weapon-of-warding", sourceId: "attacks" },
+      { kind: "ended", id: "fleeting-stability", sourceId: "knockdown" },
+    ]);
+  });
+
+  it("ends every status on a death, each recorded with its source, in order (#940)", () => {
+    const set = new StatusSet();
+    set.apply("burning", 5, "a");
+    set.apply("parasitic-bond", 10, "b");
+    set.apply("regeneration", 10, "c");
+    set.apply("sprint", 8, "d");
+    set.drainChanges();
+
+    set.endAll();
+
+    expect(set.active).toEqual([]);
+    expect(set.drainChanges()).toEqual([
+      { kind: "ended", id: "burning", sourceId: "a" },
+      { kind: "ended", id: "parasitic-bond", sourceId: "b" },
+      { kind: "ended", id: "regeneration", sourceId: "c" },
+      { kind: "ended", id: "sprint", sourceId: "d" },
+    ]);
+  });
+
+  it("records nothing for a reset, or a removal of what is not there", () => {
+    const set = new StatusSet();
+    set.apply("parasitic-bond", 10, "a");
+    set.drainChanges();
+    set.clear();
+    set.remove("parasitic-bond");
+    expect(set.drainChanges()).toEqual([]);
+  });
+
+  it("records a hit and physical damage only while a status answers them (#935)", () => {
+    const set = new StatusSet();
+    set.apply("backfire", 10, "a");
+    set.drainChanges();
+    set.recordHit();
+    set.recordPhysicalDamage();
+    expect(set.drainChanges()).toEqual([]);
+
+    set.apply("insidious-parasite", 13, "a");
+    set.recordHit();
+    set.recordPhysicalDamage();
+    set.recordHit();
+    expect(set.drainChanges()).toEqual([{ kind: "hit" }, { kind: "hit" }]);
+
+    set.apply("mark-of-pain", 30, "a");
+    set.drainChanges();
+    set.recordPhysicalDamage();
+    set.recordHit();
+    expect(set.drainChanges()).toEqual([{ kind: "took-physical-damage" }, { kind: "hit" }]);
+  });
+});
+
 describe("clampPips", () => {
   it("clamps a net pip count to 10 either way", () => {
     expect(clampPips(0)).toBe(0);
@@ -459,11 +578,13 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness is 50% slower (#493), Heart of Fury 25% faster (#845)", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury 25% faster (#845), Frenzy 33% (#919)", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     const multipliers: Partial<Record<StatusId, number>> = {
       faintheartedness: 1.5,
       "heart-of-fury": 0.75,
+      "shadow-of-fear": 1.5,
+      frenzy: 0.67,
     };
     for (const id of ALL_STATUS_IDS) {
       const expected = multipliers[id] ?? 1;

@@ -232,6 +232,12 @@ describe("describeCombatEvent", () => {
     expect(
       describeCombatEvent(entry([missed], { skillId: "assassin.fox-fangs" }), missed, nameOf),
     ).toBe("Fox Fangs (Pyro) misses Caster dummy (must follow a lead attack)");
+    expect(
+      describeCombatEvent(entry([missed], { skillId: "assassin.death-blossom" }), missed, nameOf),
+    ).toBe("Death Blossom (Pyro) misses Caster dummy (must follow an off-hand attack)");
+    expect(
+      describeCombatEvent(entry([missed], { skillId: "assassin.moebius-strike" }), missed, nameOf),
+    ).toBe("Moebius Strike (Pyro) misses Caster dummy (must follow a dual attack)");
   });
 
   it("says why a picky interrupt let a cast through, and nothing when it found none (#796)", () => {
@@ -248,6 +254,19 @@ describe("describeCombatEvent", () => {
     expect(describeCombatEvent(entry([idle], spike), idle, nameOf)).toBe(
       "Power Spike (Pyro) finds nothing to interrupt on Caster dummy",
     );
+  });
+
+  it("says whose skill a disable held back, and for how long (#914)", () => {
+    const disabled: CombatEvent = {
+      kind: "skill-disabled",
+      targetId: "dummy",
+      skillId: "elementalist.fireball",
+      seconds: 10,
+    };
+    expect(
+      describeCombatEvent(entry([disabled], { skillId: "mesmer.power-block" }), disabled, nameOf),
+    ).toBe("Power Block (Pyro) disables Caster dummy's Fireball for 10 s");
+    expect(logToneOf("skill-disabled")).toBe("control");
   });
 
   it("says who knocked whom down, and for how long (#544)", () => {
@@ -286,6 +305,30 @@ describe("describeCombatEvent", () => {
       text: "−8 energy",
       tone: "energy",
       critical: false,
+    });
+  });
+
+  it("says who stole health from whom, floats it red, and counts it taken (#935)", () => {
+    const stolen: CombatEvent = { kind: "life-stolen", targetId: "you", amount: 39 };
+    const steal = entry([stolen, { kind: "heal", targetId: "dummy", amount: 39 }], {
+      sourceId: "dummy",
+      skillId: "necromancer.insidious-parasite",
+    });
+    expect(describeCombatEvent(steal, stolen, nameOf)).toBe(
+      "Insidious Parasite (Caster dummy) steals 39 health from Pyro",
+    );
+    expect(logToneOf("life-stolen")).toBe("damage");
+    expect(floatingCueFor("life-stolen", 39, false)).toEqual({
+      text: "−39",
+      tone: "damage",
+      critical: false,
+    });
+    expect(accumulate(EMPTY_TOTALS, [steal], "you", 0.05)).toEqual({
+      damage: 0,
+      weaponDamage: 0,
+      healing: 0,
+      taken: 39,
+      seconds: 0.05,
     });
   });
 

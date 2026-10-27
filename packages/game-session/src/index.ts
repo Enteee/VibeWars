@@ -59,7 +59,7 @@ export type {
 } from "./lobby-connection.js";
 export { UNNAMED_CHARACTER, lobbyCharacter } from "./lobby-character.js";
 export { canStart, createLobbyHost } from "./lobby-host.js";
-export type { LobbyHost, LobbyHostOptions, MatchPlan } from "./lobby-host.js";
+export type { LobbyHost, LobbyHostOptions, MatchPlan, QueuedPlan } from "./lobby-host.js";
 export { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
 export type { JoinLobbyOptions } from "./lobby-client.js";
 export { scopeTransport } from "./scoped-transport.js";
@@ -70,3 +70,11 @@ export {
   statusSnapshot,
   wireStatuses,
 } from "./wire.js";
+export { ROOM_PREFIX, formGroups, groupOf, isLive } from "./queue-formation.js";
+export type { FormGroupsInput, FormedGroup } from "./queue-formation.js";
+export { createMemoryBoard } from "./queue-board.js";
+export type { MemoryBoard, QueueBoard, QueueBoardEvent } from "./queue-board.js";
+export { createQueueClient } from "./queue-client.js";
+export type { QueueClient, QueueClientOptions, QueueState, TicketKey } from "./queue-client.js";
+export { admissionDigest } from "./queue-admission.js";
+export type { AdmissionTag, QueuedSeat, VerifyTicketSig } from "./queue-admission.js";

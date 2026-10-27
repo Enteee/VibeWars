@@ -49,12 +49,12 @@ async function joinLobby(page: Page, playerName: string, code: string): Promise<
   await expect(page.locator(".screen-lobby")).toBeVisible();
 }
 
-/** Host on team 1, guest on team 2, both ready, and the host starts. */
-async function startTwoPlayerMatch(host: Page, guest: Page): Promise<string> {
+/** Host on team 1, guest on team 2 unless `guestTeam` says, both ready, and the host starts. */
+async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Promise<string> {
   const code = await hostLobby(host, "Host");
   await joinLobby(guest, "Guest", code);
   await host.getByRole("button", { name: "join team 1" }).click();
-  await guest.getByRole("button", { name: "join team 2" }).click();
+  await guest.getByRole("button", { name: `join team ${String(guestTeam)}` }).click();
   await host.getByRole("button", { name: "Ready", exact: true }).click();
   await guest.getByRole("button", { name: "Ready", exact: true }).click();
   await host.getByRole("button", { name: "start match" }).click();
@@ -212,7 +212,8 @@ test("a lobby match shows the score, the clock and both fighters", async ({ brow
     await expect(host.locator("#viewport canvas")).toBeVisible();
 
     const scoreboard = host.locator(".hud-scoreboard");
-    await expect(scoreboard).toContainText("0 — 0");
+    // The living on each side (#881).
+    await expect(scoreboard).toContainText("1 v 1");
 
     // The clock advances.
     await expect(scoreboard).toContainText(/\d+:\d\d/);
@@ -242,11 +243,12 @@ test("a player who quits early is told the match still runs, until it ends", asy
 }) => {
   // Back from a running match, the lobby used to look open and say "in
   // match" in the status bar, while the host refused every click (#200).
+  // Teammates: a 1v1 quitter wipes their team, which ends the match (#846).
   const { context, pages } = await openPeers(browser, 2);
   const [host, guest] = pages as [Page, Page];
 
   try {
-    const code = await startTwoPlayerMatch(host, guest);
+    const code = await startTwoPlayerMatch(host, guest, 1);
     await expect(host.locator("#viewport canvas")).toBeVisible();
     await expect(guest.locator("#viewport canvas")).toBeVisible();
 
@@ -280,6 +282,29 @@ test("a player who quits early is told the match still runs, until it ends", asy
     await expect(host.locator(".lobby-map select")).toBeEnabled();
     await ready.click();
     await expect(host.getByRole("button", { name: "not ready" })).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
+test("a player who quits a 1v1 forfeits it, and is back in an open lobby (#846)", async ({
+  browser,
+}) => {
+  // Annihilation: the quitter's team has nobody left, so it is wiped and
+  // the match ends at once, rather than running on with nobody to fight.
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+
+  try {
+    const code = await startTwoPlayerMatch(host, guest);
+    await expect(host.locator(".hud-leave")).toBeVisible();
+    await expect(guest.locator(".hud-leave")).toBeVisible();
+
+    await leaveMatch(host);
+    await expect(host.locator(".screen-lobby")).toBeVisible();
+    await expect(host.locator("#status")).toHaveText(`lobby ${code}`);
+    await expect(host.locator(".lobby-running")).toHaveCount(0);
+    await expect(host.getByRole("button", { name: "Ready", exact: true })).toBeEnabled();
   } finally {
     await context.close();
   }

@@ -219,6 +219,22 @@ body {
   color: var(--ink);
 }
 
+/* The target's health, then your dagger chain mark on it (#916), as GW1. */
+.hud-target-health-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.hud-target-chain {
+  width: 16px;
+  height: 16px;
+}
+
+.hud-target-chain[hidden] {
+  display: none;
+}
+
 /* Hidden with no target, but its space kept. */
 .hud-target-health[hidden] {
   display: block;
@@ -543,6 +559,21 @@ body {
 
 .is-unaffordable > .adrenaline-gauge {
   display: block;
+}
+
+/* Adrenaline about to be lost out of combat (#828): a slot that holds
+   any blinks for the last 5 s, charged or not, and stops the moment a
+   fight starts the window again. A warning, so it blinks under reduced
+   motion too, slowly. */
+.hud-skill.is-adrenaline-fading,
+.training-skill.is-adrenaline-fading {
+  animation: adrenaline-fading 1s step-end infinite;
+}
+
+@keyframes adrenaline-fading {
+  50% {
+    opacity: 0.35;
+  }
 }
 
 /* An empty slot keeps its place and its key, and does nothing (#347). */
@@ -1717,19 +1748,55 @@ body {
   color: #7ee787;
 }
 
-/* Score and clock: top-centre, away from the skill bar, so checking the
-   score never competes with checking what you can cast. */
+/* Count and clock: top-centre, away from the skill bar, so checking the
+   score never competes with checking what you can cast. The foes' pips
+   sit beside them (#881). */
 .hud-scoreboard {
   position: absolute;
   top: 0.6rem;
   left: 50%;
   transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
   padding: 0.3rem 0.8rem;
   background: rgb(14 17 22 / 85%);
   border: 1px solid var(--line);
   letter-spacing: 0.12em;
   font-size: 0.95rem;
+  white-space: nowrap;
   pointer-events: none;
+}
+
+.hud-enemies {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.hud-enemies:empty {
+  display: none;
+}
+
+.hud-enemy-row {
+  display: flex;
+  gap: 0.3rem;
+}
+
+/* Filled in the team's colour while alive; hollow and grey dead. Hover
+   names it, so the pips take the pointer the scoreboard does not. */
+.hud-enemy-pip {
+  width: 0.65rem;
+  height: 0.65rem;
+  border: 2px solid var(--pip-colour);
+  border-radius: 50%;
+  background: var(--pip-colour);
+  pointer-events: auto;
+}
+
+.hud-enemy-pip.is-dead {
+  border-color: #6e7681;
+  background: transparent;
 }
 
 /*
@@ -3889,4 +3956,125 @@ body:has(#app > .chat) .now-playing {
 .chat-input:focus {
   border-color: var(--accent);
   outline: none;
+}
+
+/* Random Arena (#880): the mode choice beside its button on the menu. */
+.random-arena-modes {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.screen .random-arena-mode {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.screen .random-arena-mode[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.menu-random-arena-hint {
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+
+/* The queue screen: what the wait looks like, then the versus splash. */
+.queue-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 1.5rem 0 1rem;
+}
+
+.queue-status {
+  font-size: 1.4rem;
+  color: var(--accent);
+}
+
+.queue-waited {
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.queue-count {
+  color: var(--ink-dim);
+}
+
+.queue-actions {
+  justify-content: center;
+}
+
+.queue-notice {
+  text-align: center;
+}
+
+.versus-splash {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.versus-map {
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.versus-teams {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.versus-team {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 200px;
+  padding: 0.6rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--team-colour);
+}
+
+.versus-team-title {
+  margin: 0;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--team-colour);
+}
+
+.versus-vs {
+  font-size: 1.3rem;
+  color: var(--ink-dim);
+}
+
+.versus-player {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.versus-player-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.versus-player-character {
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+
+.versus-countdown {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
 }

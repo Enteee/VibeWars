@@ -9,6 +9,7 @@
   "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 20,
+  "upkeep": false,
   "description": "Remove 1 Dervish Enchantment. Target ally is healed for 30...126...150 Health. If an Enchantment was removed in this way, this Signet recharges 75% faster.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

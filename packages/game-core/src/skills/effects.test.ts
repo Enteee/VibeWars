@@ -26,7 +26,13 @@ function context(
   caster = makeCombatant({ id: "caster" }),
   target = makeCombatant({ id: "target", team: 1 }),
 ): SkillContext {
-  return { caster, target, rng: createRng(1), rules: MINIMAL_GW_INSPIRED_PVP_V1.combat };
+  return {
+    caster,
+    target,
+    rng: createRng(1),
+    rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
+    surroundings: new Map(),
+  };
 }
 
 describe("damage effect", () => {
@@ -137,6 +143,7 @@ describe("damage effect", () => {
       target: undefined,
       rng: createRng(1),
       rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
+      surroundings: new Map(),
     };
     expect(
       applyEffect(
@@ -151,27 +158,31 @@ describe("heal effect", () => {
   it("restores health", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 300 });
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx);
+    applyEffect({ kind: "heal", amount: { flat: 100 }, perStatusOnTarget: [] }, ctx);
     expect(target.health).toBe(400);
   });
 
   it("never exceeds maximum health", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 480 });
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    const events = applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx);
+    const events = applyEffect({ kind: "heal", amount: { flat: 100 }, perStatusOnTarget: [] }, ctx);
     expect(target.health).toBe(500);
     expect(events).toContainEqual({ kind: "heal", targetId: "target", amount: 20 });
   });
 
   it("emits nothing when already at full health", () => {
     const ctx = context();
-    expect(applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx)).toEqual([]);
+    expect(
+      applyEffect({ kind: "heal", amount: { flat: 100 }, perStatusOnTarget: [] }, ctx),
+    ).toEqual([]);
   });
 
   it("cannot resurrect a dead target", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 0, dead: true });
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    expect(applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx)).toEqual([]);
+    expect(
+      applyEffect({ kind: "heal", amount: { flat: 100 }, perStatusOnTarget: [] }, ctx),
+    ).toEqual([]);
     expect(target.health).toBe(0);
     expect(target.dead).toBe(true);
   });
@@ -234,11 +245,11 @@ describe("deep wound (#764)", () => {
     const target = woundedAt(200);
     target.statuses.apply("deep-wound", 20, "caster");
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    const events = applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx);
+    const events = applyEffect({ kind: "heal", amount: { flat: 100 }, perStatusOnTarget: [] }, ctx);
     expect(target.health).toBe(280);
     expect(events).toContainEqual({ kind: "heal", targetId: "target", amount: 80 });
     target.health = 350;
-    applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx);
+    applyEffect({ kind: "heal", amount: { flat: 100 }, perStatusOnTarget: [] }, ctx);
     expect(target.health).toBe(384);
   });
 
@@ -372,6 +383,76 @@ describe("sacrifice-health effect", () => {
   });
 });
 
+describe("life-steal effect (#935)", () => {
+  const steal = (flat: number): UnconditionalEffect => ({ kind: "life-steal", amount: { flat } });
+
+  it("takes from the target what the caster gains, armor or not", () => {
+    const caster = makeCombatant({ id: "caster", health: 300 });
+    const target = makeCombatant({ id: "target", team: 1 });
+    target.statuses.apply("armor-boost", 10, "target");
+    const events = applyEffect(steal(52), context(caster, target));
+    expect(events).toEqual([
+      { kind: "life-stolen", targetId: "target", amount: 52 },
+      { kind: "heal", targetId: "caster", amount: 52 },
+    ]);
+    expect(target.health).toBe(448);
+    expect(caster.health).toBe(352);
+  });
+
+  it("takes no more than the target has", () => {
+    const caster = makeCombatant({ id: "caster", health: 300 });
+    const target = makeCombatant({ id: "target", team: 1, health: 20 });
+    const events = applyEffect(steal(39), context(caster, target));
+    expect(events).toEqual([
+      { kind: "life-stolen", targetId: "target", amount: 20 },
+      { kind: "heal", targetId: "caster", amount: 20 },
+      { kind: "death", targetId: "target" },
+    ]);
+    expect(target.dead).toBe(true);
+    expect(caster.health).toBe(320);
+  });
+
+  it("still takes from the target when the caster is full, with no heal", () => {
+    const caster = makeCombatant({ id: "caster", health: 490 });
+    const target = makeCombatant({ id: "target", team: 1 });
+    expect(applyEffect(steal(39), context(caster, target))).toEqual([
+      { kind: "life-stolen", targetId: "target", amount: 39 },
+      { kind: "heal", targetId: "caster", amount: 10 },
+    ]);
+    expect(applyEffect(steal(39), context(caster, target))).toEqual([
+      { kind: "life-stolen", targetId: "target", amount: 39 },
+    ]);
+    expect(target.health).toBe(422);
+  });
+
+  it("is not a heal: deep wound does not shrink the gain", () => {
+    const caster = makeCombatant({ id: "caster", health: 300 });
+    caster.statuses.apply("deep-wound", 10, "target");
+    const target = makeCombatant({ id: "target", team: 1 });
+    applyEffect(steal(52), context(caster, target));
+    expect(caster.health).toBe(352);
+  });
+
+  it("does nothing from a dead caster or to a dead target", () => {
+    const deadCaster = makeCombatant({ id: "caster", health: 0, dead: true });
+    const target = makeCombatant({ id: "target", team: 1 });
+    expect(applyEffect(steal(39), context(deadCaster, target))).toEqual([]);
+    expect(target.health).toBe(500);
+
+    const caster = makeCombatant({ id: "caster", health: 300 });
+    const deadTarget = makeCombatant({ id: "target", team: 1, health: 0, dead: true });
+    expect(applyEffect(steal(39), context(caster, deadTarget))).toEqual([]);
+    expect(caster.health).toBe(300);
+  });
+
+  it("is not physical damage: a Mark of Pain bearer records nothing", () => {
+    const target = makeCombatant({ id: "target", team: 1 });
+    target.statuses.apply("mark-of-pain", 30, "caster");
+    applyEffect(steal(39), context(makeCombatant({ id: "caster", health: 300 }), target));
+    expect(target.statuses.drainChanges()).toEqual([]);
+  });
+});
+
 describe("applyEffects", () => {
   it("applies every effect in order and concatenates their events", () => {
     const caster = makeCombatant({ id: "caster", health: 500, maxHealth: 500 });
@@ -381,7 +462,7 @@ describe("applyEffects", () => {
     const events = applyEffects(
       [
         { kind: "sacrifice-health", percentOfMax: 10 },
-        { kind: "heal", amount: { flat: 100 } },
+        { kind: "heal", amount: { flat: 100 }, perStatusOnTarget: [] },
       ],
       ctx,
     );
@@ -434,7 +515,14 @@ describe("applySkillEffects", () => {
     const caster = makeCombatant({ id: "caster", energy: 10 });
     const targets = ["a", "b", "c"].map((id) => makeCombatant({ id, team: 1 }));
 
-    const events = applySkillEffects({ skill, caster, targets, rng: createRng(1), rules });
+    const events = applySkillEffects({
+      surroundings: new Map(),
+      skill,
+      caster,
+      targets,
+      rng: createRng(1),
+      rules,
+    });
 
     expect(events).toEqual([
       { kind: "sacrifice", targetId: "caster", amount: 50 },
@@ -449,7 +537,14 @@ describe("applySkillEffects", () => {
 
   it("still fires caster effects with nobody hit", () => {
     const caster = makeCombatant({ id: "caster", energy: 10 });
-    const events = applySkillEffects({ skill, caster, targets: [], rng: createRng(1), rules });
+    const events = applySkillEffects({
+      surroundings: new Map(),
+      skill,
+      caster,
+      targets: [],
+      rng: createRng(1),
+      rules,
+    });
     expect(events.map((event) => event.kind)).toEqual(["sacrifice", "energy-gain"]);
   });
 
@@ -461,11 +556,24 @@ describe("applySkillEffects", () => {
     };
     expect(
       run((caster, target) =>
-        applySkillEffects({ skill, caster, targets: [target], rng: createRng(1), rules }),
+        applySkillEffects({
+          surroundings: new Map(),
+          skill,
+          caster,
+          targets: [target],
+          rng: createRng(1),
+          rules,
+        }),
       ),
     ).toEqual(
       run((caster, target) =>
-        applyEffects(skill.effects, { caster, target, rng: createRng(1), rules }),
+        applyEffects(skill.effects, {
+          surroundings: new Map(),
+          caster,
+          target,
+          rng: createRng(1),
+          rules,
+        }),
       ),
     );
   });
@@ -499,6 +607,7 @@ describe("if effects (#521)", () => {
 
   function run(effects: readonly SkillEffect[], target: Combatant): CombatEvent[] {
     return applyEffects(effects, {
+      surroundings: new Map(),
       caster: makeCombatant({ id: "caster" }),
       target,
       rng: createRng(1),
@@ -610,6 +719,7 @@ describe("if effects (#521)", () => {
     c.statuses.apply("regeneration", 10, "ally");
 
     const events = applySkillEffects({
+      surroundings: new Map(),
       skill,
       caster,
       targets: [a, b, c],
@@ -631,8 +741,8 @@ describe("if effects (#521)", () => {
     const caster = makeCombatant({ id: "caster", health: 100 });
     const target = makeCombatant({ id: "target", team: 1, health: 100 });
     const events = applyEffect(
-      { kind: "heal", recipient: "caster", amount: { flat: 40 } },
-      { caster, target, rng: createRng(1), rules },
+      { kind: "heal", recipient: "caster", amount: { flat: 40 }, perStatusOnTarget: [] },
+      { surroundings: new Map(), caster, target, rng: createRng(1), rules },
     );
     expect(events).toEqual([{ kind: "heal", targetId: "caster", amount: 40 }]);
     expect(target.health).toBe(100);
@@ -641,7 +751,11 @@ describe("if effects (#521)", () => {
 
 describe("state conditions (#794)", () => {
   const rules = MINIMAL_GW_INSPIRED_PVP_V1.combat;
-  const heal = (flat: number): UnconditionalEffect => ({ kind: "heal", amount: { flat } });
+  const heal = (flat: number): UnconditionalEffect => ({
+    kind: "heal",
+    amount: { flat },
+    perStatusOnTarget: [],
+  });
   /** Heals 10, and 100 more if `condition` holds. */
   const healIf = (condition: EffectCondition): SkillEffect[] => [
     heal(10),
@@ -649,7 +763,7 @@ describe("state conditions (#794)", () => {
   ];
   const healed = (effects: SkillEffect[], caster: Combatant, target: Combatant): number => {
     const before = target.health;
-    applyEffects(effects, { caster, target, rng: createRng(1), rules });
+    applyEffects(effects, { surroundings: new Map(), caster, target, rng: createRng(1), rules });
     return target.health - before;
   };
   const at = (health: number, id = "target"): Combatant =>
@@ -737,6 +851,7 @@ describe("state conditions (#794)", () => {
     const low = at(100, "low");
     const high = at(400, "high");
     applySkillEffects({
+      surroundings: new Map(),
       skill,
       caster: at(500, "caster"),
       targets: [low, high],
@@ -846,6 +961,7 @@ describe("losing your own enchantment (#845)", () => {
     const caster = dervish();
     const targets = foes();
     const events = applySkillEffects({
+      surroundings: new Map(),
       skill: skill([lose]),
       caster,
       targets,
@@ -862,6 +978,7 @@ describe("losing your own enchantment (#845)", () => {
     const targets = foes();
     targets[0]?.statuses.apply("mystic-regeneration", 10, "a");
     applySkillEffects({
+      surroundings: new Map(),
       skill: skill([lose]),
       caster: dervish(),
       targets,
@@ -874,6 +991,7 @@ describe("losing your own enchantment (#845)", () => {
   it("then holds 'removed from the caster' for every target", () => {
     const targets = foes();
     applySkillEffects({
+      surroundings: new Map(),
       skill: skill([lose, ifLost]),
       caster: dervish(),
       targets,
@@ -888,6 +1006,7 @@ describe("losing your own enchantment (#845)", () => {
     caster.statuses.apply("guardian", 10, "monk");
     const targets = foes();
     const events = applySkillEffects({
+      surroundings: new Map(),
       skill: skill([lose, ifLost]),
       caster,
       targets,
@@ -904,6 +1023,7 @@ describe("losing your own enchantment (#845)", () => {
     const target = makeCombatant({ id: "a", team: 1 });
     target.statuses.apply("guardian", 10, "a");
     applySkillEffects({
+      surroundings: new Map(),
       skill: skill([strip, ifLost]),
       caster: makeCombatant({ id: "caster" }),
       targets: [target],
@@ -921,6 +1041,7 @@ describe("losing your own enchantment (#845)", () => {
     } as const;
     const resolve = (caster: Combatant): number =>
       resolveSkillEffects({
+        surroundings: new Map(),
         skill: skill([lose, faster]),
         caster,
         targets: foes(),

@@ -1,3 +1,5 @@
+import type { QueueMode } from "@vibewars/game-protocol";
+
 import { SOURCE_URL } from "../source.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
@@ -24,6 +26,8 @@ export const PEER_IP_NOTICE =
  */
 
 export interface MenuCallbacks {
+  /** Queue for a Random Arena of `mode` as `name` (#880), with the active character. */
+  readonly onRandomArena: (mode: QueueMode, name: string) => void;
   readonly onCreateLobby: (name: string) => void;
   readonly onJoinLobby: (code: string, name: string) => void;
   readonly onManageTeams: () => void;
@@ -43,6 +47,19 @@ export interface MenuCallbacks {
  * (#707): a join may take up to 20 s, which should not look like a hang.
  */
 export const CONNECTING_NOTICE_MS = 3000;
+
+/** The Random Arena modes the menu offers (Q97), as their buttons read. */
+export const RANDOM_ARENA_MODES: readonly { readonly mode: QueueMode; readonly label: string }[] = [
+  { mode: "random-arena-4v4", label: "4v4" },
+  { mode: "random-arena-2v2", label: "2v2" },
+  { mode: "random-arena-1v1", label: "1v1" },
+];
+
+/** Why *Random Arena* is greyed out: a queue needs a character to show strangers. */
+export const NO_CHARACTER_FOR_QUEUE = "Make a character first.";
+
+/** The Random Arena mode picked this visit (#880): kept in memory, never stored. */
+let randomArenaMode: QueueMode = "random-arena-4v4";
 
 const NAME_STORAGE_KEY = `${STORAGE_NAMESPACE}.playerName`;
 
@@ -223,6 +240,33 @@ export function renderMenu(
   });
   nameField.appendChild(nameInput);
   play.appendChild(nameField);
+
+  // Random Arena first (#854 B1): it needs no code and no friends.
+  const arenaRow = h("div", "menu-row menu-random-arena");
+  const queue = button("Random Arena", "primary", () => {
+    callbacks.onRandomArena(randomArenaMode, nameInput.value);
+  });
+  queue.disabled = !activeExists;
+  arenaRow.appendChild(queue);
+  const modes = h("div", "random-arena-modes");
+  modes.setAttribute("role", "group");
+  modes.setAttribute("aria-label", "Random Arena mode");
+  const modeButtons = RANDOM_ARENA_MODES.map(({ mode, label }) => {
+    const choice = button(label, "random-arena-mode", () => {
+      randomArenaMode = mode;
+      for (const [index, other] of modeButtons.entries()) {
+        other.setAttribute("aria-pressed", String(RANDOM_ARENA_MODES[index]?.mode === mode));
+      }
+    });
+    choice.setAttribute("aria-pressed", String(mode === randomArenaMode));
+    modes.appendChild(choice);
+    return choice;
+  });
+  arenaRow.appendChild(modes);
+  if (!activeExists) {
+    arenaRow.appendChild(h("span", "menu-random-arena-hint", NO_CHARACTER_FOR_QUEUE));
+  }
+  play.appendChild(arenaRow);
 
   // Why the last try failed, right above the buttons to try again with.
   if (connectionNotice !== undefined) {

@@ -51,7 +51,7 @@ function swing(attacker: Combatant, target: Combatant, seed = 1): CombatEvent[] 
   return resolveSwing({
     attacker,
     target: { combatant: target, position: vec2(40, 0) },
-    candidates: [],
+    surroundings: new Map(),
     rng: createRng(seed),
     rules: RULES.combat,
     exposed: NOWHERE,
@@ -109,6 +109,7 @@ describe("Apply Poison on a blow (#525)", () => {
     }
     const events = resolveAttackSkill(
       {
+        surroundings: new Map(),
         skill: barrage,
         caster: prepared(WEAPONS.longbow, "ranger.marksmanship"),
         targets: [victim("x"), victim("y"), victim("z")],
@@ -211,6 +212,7 @@ describe("Apply Poison in the match (#525)", () => {
       seed: "prep",
       participants: [archer("a", vec2(0, 0)), dummy("d", vec2(600, 0))],
       matchRules: {
+        victory: "kill-count",
         scoreToWin: 10,
         timeLimitSeconds: 600,
         deathRule: "respawn",

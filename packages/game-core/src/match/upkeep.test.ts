@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { RANGE_COMPASS } from "../distances.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
@@ -7,6 +8,7 @@ import { applyEffect, type CombatEvent } from "../skills/effects.js";
 import { StatusSet } from "../skills/status.js";
 import type { Combatant } from "../skills/types.js";
 import { vec2 } from "../vec2.js";
+import { applyIntent } from "./apply-intent.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
@@ -48,6 +50,7 @@ function mend(sim: MatchSimulation, casterId: string, bearerId: string): CombatE
   return applyEffect(
     { kind: "maintain-status", statusId: "mending" },
     {
+      surroundings: new Map(),
       caster: get(sim, casterId).combatant,
       target: get(sim, bearerId).combatant,
       rng: createRng(1),
@@ -180,6 +183,110 @@ describe("maintained enchantments (#837)", () => {
     mend(sim, "a", "b");
     mending(sim, "b").removeByCategory("enchantment");
     expect(energyPips(sim, "a")).toBe(4);
+  });
+});
+
+describe("beyond compass range (#839)", () => {
+  /** Step `seconds` of match time. */
+  function run(sim: MatchSimulation, seconds: number): void {
+    for (let i = 0; i < Math.round(seconds / DT); i += 1) {
+      sim.step(DT);
+    }
+  }
+
+  /** "a" maintains Mending on "b", then "b" stands `x` from "a". */
+  function apart(x: number): MatchSimulation {
+    const sim = monks(["a", "b"]);
+    mend(sim, "a", "b");
+    get(sim, "a").position = vec2(0, 0);
+    get(sim, "b").position = vec2(x, 0);
+    return sim;
+  }
+
+  it("ends after the bearer is beyond range for more than 5 s, unlogged", () => {
+    const sim = apart(RANGE_COMPASS + 100);
+    run(sim, 4.9);
+    expect(mending(sim, "b").has("mending")).toBe(true);
+    const log = [];
+    for (let i = 0; i < Math.round(0.2 / DT); i += 1) {
+      log.push(...sim.step(DT).log);
+    }
+    expect(mending(sim, "b").has("mending")).toBe(false);
+    expect(log).toEqual([]);
+    expect(energyPips(sim, "a")).toBe(4);
+  });
+
+  it("4.9 s out, then back: it stays, and the grace starts again", () => {
+    const sim = apart(RANGE_COMPASS + 100);
+    run(sim, 4.9);
+    get(sim, "b").position = vec2(100, 0);
+    run(sim, 1);
+    get(sim, "b").position = vec2(RANGE_COMPASS + 100, 0);
+    run(sim, 4.9);
+    expect(mending(sim, "b").has("mending")).toBe(true);
+  });
+
+  it("out, in, out, each under 5 s, it stays", () => {
+    const sim = apart(RANGE_COMPASS + 100);
+    for (const x of [100, RANGE_COMPASS + 100, 100, RANGE_COMPASS + 100]) {
+      run(sim, 3);
+      get(sim, "b").position = vec2(x, 0);
+    }
+    expect(mending(sim, "b").has("mending")).toBe(true);
+  });
+
+  it("exactly at compass range is inside", () => {
+    const sim = apart(RANGE_COMPASS);
+    run(sim, 6);
+    expect(mending(sim, "b").has("mending")).toBe(true);
+  });
+
+  it("one on yourself never ends this way", () => {
+    const sim = monks(["a"]);
+    mend(sim, "a", "a");
+    run(sim, 10);
+    expect(mending(sim, "a").has("mending")).toBe(true);
+  });
+});
+
+describe("ending a maintained enchantment (#838)", () => {
+  it("its caster ends it at once, for free, unlogged, and the pip returns", () => {
+    const sim = monks(["a", "b"]);
+    mend(sim, "a", "b");
+    const energy = get(sim, "a").combatant.energy;
+    expect(applyIntent(sim, "a", { kind: "end-upkeep", targetId: "b", status: "mending" })).toBe(
+      null,
+    );
+    expect(mending(sim, "b").has("mending")).toBe(false);
+    expect(get(sim, "a").combatant.energy).toBe(energy);
+    expect(energyPips(sim, "a")).toBe(4);
+    expect(sim.step(DT).log).toEqual([]);
+  });
+
+  it("on itself too", () => {
+    const sim = monks(["a"]);
+    mend(sim, "a", "a");
+    expect(sim.endUpkeep("a", "a", "mending")).toBe(true);
+    expect(mending(sim, "a").has("mending")).toBe(false);
+  });
+
+  it("refuses another caster's, a timed one, a missing one and an unknown id, quietly", () => {
+    const sim = monks(["a", "b", "c"]);
+    mend(sim, "b", "c");
+    get(sim, "c").combatant.statuses.apply("burning", 5, "a");
+    expect(sim.endUpkeep("a", "c", "mending")).toBe(false);
+    expect(sim.endUpkeep("a", "c", "burning")).toBe(false);
+    expect(sim.endUpkeep("a", "b", "mending")).toBe(false);
+    expect(sim.endUpkeep("a", "nobody", "mending")).toBe(false);
+    expect(sim.endUpkeep("a", "c", "no-such-status")).toBe(false);
+    expect(mending(sim, "c").has("mending")).toBe(true);
+    expect(mending(sim, "c").has("burning")).toBe(true);
+    expect(
+      sim
+        .step(DT)
+        .log.flatMap((entry) => entry.events)
+        .map((e) => e.kind),
+    ).not.toContain("upkeep-lost");
   });
 });
 

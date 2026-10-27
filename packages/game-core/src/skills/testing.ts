@@ -27,6 +27,8 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     morale: 0,
     baseEnergyPips: 0,
     adrenaline: new Map(),
+    skillBar: [],
+    lastCombatAt: 0,
     attributeRanks: new Map(),
     team: 0,
     dead: false,
@@ -37,6 +39,7 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     soulReapingTriggers: [],
     nextMaintainSeq: 0,
     chainMarks: new Map(),
+    moving: false,
     // Armor at the reference level, so an unconfigured test combatant
     // takes damage for exactly its stated amount. A test that wants to
     // exercise mitigation says so explicitly.

@@ -40,7 +40,7 @@ import type {
 
 /**
  * The status table (#632): every status id, sorted. A snapshot names a
- * status by its index here, and `wire-schema.json` carries the table, so
+ * status by its index here, and `src/wire-schema.json` carries the table, so
  * builds whose tables differ never meet.
  */
 export const WIRE_STATUS_IDS: readonly StatusId[] = Object.keys(STATUS_DEFINITIONS)
@@ -217,6 +217,7 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
     case "energy-gain":
     case "energy-loss":
     case "sacrifice":
+    case "life-stolen":
       return { ...none, kind: event.kind, targetId: event.targetId, amount: event.amount };
     case "status-applied":
       return {
@@ -232,6 +233,14 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
         kind: event.kind,
         targetId: event.targetId,
         durationSeconds: event.durationSeconds,
+      };
+    case "skill-disabled":
+      return {
+        ...none,
+        kind: event.kind,
+        targetId: event.targetId,
+        skillId: event.skillId,
+        durationSeconds: event.seconds,
       };
     case "status-removed":
     case "status-expired":
@@ -331,6 +340,7 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
     case "energy-gain":
     case "energy-loss":
     case "sacrifice":
+    case "life-stolen":
       return amount === null ? undefined : { kind: event.kind, targetId, amount };
     case "status-applied":
       return isStatusId(statusId)
@@ -342,6 +352,10 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
         : undefined;
     case "knocked-down":
       return durationSeconds === null ? undefined : { kind: event.kind, targetId, durationSeconds };
+    case "skill-disabled":
+      return skillId === null || durationSeconds === null
+        ? undefined
+        : { kind: event.kind, targetId, skillId, seconds: durationSeconds };
     case "status-removed":
     case "status-expired":
       return isStatusId(statusId) ? { kind: event.kind, targetId, statusId } : undefined;

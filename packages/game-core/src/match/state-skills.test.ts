@@ -55,6 +55,7 @@ describe("Word of Healing (#794)", () => {
     const word = skill("monk.word-of-healing");
     payCost(word, caster);
     applySkillEffects({
+      surroundings: new Map(),
       skill: word,
       caster,
       targets: [ally],
@@ -103,6 +104,7 @@ describe("Mystic Sweep (#794)", () => {
     const victim = makeCombatant({ id: "foe", team: 1, health: 1e6, maxHealth: 1e6 });
     return resolveAttackSkill(
       {
+        surroundings: new Map(),
         skill: skill("dervish.mystic-sweep"),
         caster: dervish,
         targets: [victim],

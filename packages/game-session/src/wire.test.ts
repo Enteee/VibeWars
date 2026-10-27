@@ -47,7 +47,7 @@ function maintained(id: StatusId): ActiveStatus {
   return {
     ...status(id, Infinity),
     durationSeconds: Infinity,
-    maintained: { seq: 0 },
+    maintained: { seq: 0, outOfRangeSeconds: 0 },
   };
 }
 
@@ -57,9 +57,17 @@ function rank(entry: ActiveStatus): number {
 
 describe("wireStatuses (#636)", () => {
   it("keeps 32 of 40, every condition and hex, by category, then least time left (#803)", () => {
-    // Every status twice, then two more, in reverse table order with
-    // times that run against it: nothing is in place by accident.
-    const ids = [...WIRE_STATUS_IDS, ...WIRE_STATUS_IDS, ...WIRE_STATUS_IDS].reverse();
+    // One of every category first, then the rest, in reverse table order
+    // with times that run against it: nothing is in place by accident, and
+    // the table outgrowing 40 cannot drop a category from the test.
+    const reversed = [...WIRE_STATUS_IDS, ...WIRE_STATUS_IDS].reverse();
+    const firsts = ORDER.map((category) =>
+      reversed.findIndex((id) => getStatusDefinition(id).category === category),
+    );
+    const ids = [
+      ...reversed.filter((_, index) => firsts.includes(index)),
+      ...reversed.filter((_, index) => !firsts.includes(index)),
+    ];
     const active = ids.slice(0, 40).map((id, i) => status(id, (i * 7) % 11));
     expect(new Set(active.map(rank)).size).toBe(ORDER.length);
 

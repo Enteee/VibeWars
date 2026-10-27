@@ -62,6 +62,13 @@ Backlog`, judged against the card's column in hubd's copy of the board
   `ARCHITECTURE OK` comment on `Ready -> In Progress`, which costs an issue
   read per move and can be faked by any role that can comment.
 
+- **A role may be read-only** (#893). The business-analyst reads GitHub,
+  the board and `company load`, and advises the manager on Telegram. It is
+  in `ROLES` but in no list that writes: not an implementer, reviewer or
+  scheduler, no card moves, no issues, and no comments, so commenting is a
+  named list of the other roles rather than `"*"`. Nor does it read
+  code-scanning alerts.
+
 - **The jails share one resource budget** (#358). Jails run as the
   operator's UID, so without a cap one runaway test run takes the host's RAM,
   CPU or process table with it. `claude-bot` starts every jail as a systemd
