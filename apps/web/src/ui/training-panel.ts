@@ -842,16 +842,16 @@ export function createTrainingPanel(): TrainingPanel {
     }
     viewport = created;
     // At a match's scale (#709): the small stage shows less of the world
-    // instead of all of it shrunk. A match's canvas is the window under
-    // the top bar (#viewport), so that is the box the zoom comes from.
-    const topbar = document.getElementById("topbar");
+    // instead of all of it shrunk. A match's canvas is the whole window
+    // (#viewport; the top bar hides in a match, #454), so that is the box
+    // the zoom comes from.
     const follow = attachFollowCamera(
       created,
       stage,
       session === undefined ? firstMap : trainingMap(session.scenario),
       () => ({
         width: window.innerWidth,
-        height: window.innerHeight - (topbar?.offsetHeight ?? 0),
+        height: window.innerHeight,
       }),
     );
     camera = follow;

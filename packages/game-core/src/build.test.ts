@@ -65,3 +65,25 @@ describe("one elite per bar (#459)", () => {
     expect(problems).toContain(ONE_ELITE_PER_BAR);
   });
 });
+
+describe("the staples of #522 are legal for their professions", () => {
+  const build = (primary: PlayerBuild["primaryProfession"], ...skills: string[]): PlayerBuild => ({
+    ...withBar(...skills),
+    primaryProfession: primary,
+    secondaryProfession: undefined,
+    equipment: defaultBuildEquipment(primary),
+  });
+
+  it.each([
+    ["assassin", "assassin.jagged-strike"],
+    ["warrior", "warrior.sever-artery", "warrior.eviscerate", "warrior.executioners-strike"],
+    ["ranger", "ranger.punishing-shot", "ranger.throw-dirt"],
+    ["necromancer", "necromancer.enfeebling-blood"],
+  ] as const)("a %s with its new skills", (primary, ...skills) => {
+    expect(validatePlayerBuild(build(primary, ...skills), RULES)).toEqual([]);
+  });
+
+  it("a monk may not take Jagged Strike", () => {
+    expect(validatePlayerBuild(build("monk", "assassin.jagged-strike"), RULES)).not.toEqual([]);
+  });
+});

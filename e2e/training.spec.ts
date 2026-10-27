@@ -1077,9 +1077,8 @@ test("(36) the arena draws at a match's scale: the stage shows less of the world
   await page.getByRole("button", { name: "new character" }).click();
   const stage = page.locator(".training-stage");
   await expect(page.locator(".training canvas")).toBeVisible();
-  // What a match's canvas, the window under the top bar, shows at Default.
-  const topbar = (await page.locator("#topbar").boundingBox())?.height ?? 0;
-  const match = { width: size.width, height: size.height - topbar };
+  // What a match's canvas, the whole window (#454), shows at Default.
+  const match = size;
   await expect(stage).toHaveAttribute("data-zoom", zoomFor(DEFAULT_STEP, match).toFixed(4));
   const box = await stage.boundingBox();
   expect(box?.height ?? Infinity).toBeLessThan(size.height / 2);

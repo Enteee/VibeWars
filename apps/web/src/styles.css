@@ -36,17 +36,23 @@ body {
   height: 100%;
 }
 
+/* Slim, on the menus only (#454): a match hides it and has the whole height. */
 #topbar {
+  position: relative;
+  z-index: 10;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.5rem 0.9rem;
+  gap: 0.8rem;
+  padding: 0.15rem 0.5rem 0.15rem 0.9rem;
   background: var(--panel);
   border-bottom: 1px solid var(--line);
   font-size: 0.85rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+#topbar[hidden] {
+  display: none;
 }
 
 .brand {
@@ -55,7 +61,76 @@ body {
 }
 
 .status {
+  min-width: 0;
+  overflow: hidden;
   color: var(--ink-dim);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status[hidden] {
+  display: none;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 0.3rem;
+  margin-left: auto;
+}
+
+/* The bar's buttons (#454): square, an icon each. */
+.topbar-actions button {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.topbar-actions button:hover,
+.topbar-actions button:focus-visible,
+.topbar-actions button[aria-expanded="true"] {
+  border-color: var(--accent);
+}
+
+.topbar-actions button[hidden] {
+  display: none;
+}
+
+.topbar-actions img {
+  width: 18px;
+  height: 18px;
+}
+
+/* The jukebox from the bar's ♪, just under the bar. */
+#topbar .hud-jukebox {
+  top: calc(100% + 0.3rem);
+  right: 0.5rem;
+  max-height: 70vh;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Options over a screen or a match (#454): the match runs on behind it. */
+.options-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-y: auto;
+  padding: 2rem 1rem;
+  background: rgb(14 17 22 / 70%);
+}
+
+.options-overlay .screen.options-screen {
+  padding: 1rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
 }
 
 .status[data-state="online"] {
@@ -1558,10 +1633,29 @@ body {
   pointer-events: none;
 }
 
-.hud-mute {
+/*
+ * The match's buttons, top right, as one cluster (#454): leave and mute on
+ * top, Options, fullscreen and music under them, music under mute.
+ */
+.hud-controls {
   position: absolute;
   top: 0.6rem;
   right: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+
+.hud-controls-row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.hud-mute,
+.hud-music,
+.hud-options,
+.hud-fullscreen {
   display: grid;
   place-items: center;
   width: 2.2rem;
@@ -1573,37 +1667,23 @@ body {
 }
 
 .hud-mute:hover,
-.hud-mute:focus-visible {
-  border-color: var(--accent);
-}
-
-.hud-mute img {
-  width: 24px;
-  height: 24px;
-}
-
-/* Under the mute button: opens the jukebox (#372). */
-.hud-music {
-  position: absolute;
-  top: 3.2rem;
-  right: 0.9rem;
-  display: grid;
-  place-items: center;
-  width: 2.2rem;
-  height: 2.2rem;
-  padding: 0;
-  background: rgb(14 17 22 / 85%);
-  border: 1px solid var(--line);
-  cursor: pointer;
-}
-
+.hud-mute:focus-visible,
 .hud-music:hover,
 .hud-music:focus-visible,
-.hud-music[aria-expanded="true"] {
+.hud-music[aria-expanded="true"],
+.hud-options:hover,
+.hud-options:focus-visible,
+.hud-options[aria-expanded="true"],
+.hud-fullscreen:hover,
+.hud-fullscreen:focus-visible {
   border-color: var(--accent);
 }
 
-.hud-music img {
+.hud-fullscreen[hidden] {
+  display: none;
+}
+
+.hud-controls img {
   width: 24px;
   height: 24px;
 }
@@ -1638,9 +1718,6 @@ body {
 
 /* Left of the mute button; asks before it leaves (#160). */
 .hud-leave {
-  position: absolute;
-  top: 0.6rem;
-  right: 3.6rem;
   display: flex;
   align-items: center;
   gap: 0.4rem;

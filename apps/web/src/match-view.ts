@@ -49,7 +49,13 @@ import {
 } from "./ui/hud.js";
 import { createAllyWatch } from "./ui/ally-watch.js";
 import { noWebGlNotice } from "./ui/arena-notice.js";
+import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
 import { attachJukeboxPopover } from "./ui/jukebox.js";
+import {
+  closeOptionsOverlay,
+  isOptionsOverlayOpen,
+  openOptionsOverlay,
+} from "./ui/options-screen.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 
@@ -272,6 +278,17 @@ export async function startMatchView(
   const jukebox = attachJukeboxPopover(hud.music, parent);
   // Esc cancels an attack now, so leaving is a button that asks first (#160).
   const leave = renderLeave(hud, callbacks.onLeave);
+  // Options over the match (#454): the match goes on underneath.
+  const openOptions = (): void => {
+    openOptionsOverlay(parent, () => {
+      hud.options.setAttribute("aria-expanded", "false");
+      hud.options.focus();
+    });
+    hud.options.setAttribute("aria-expanded", "true");
+  };
+  hud.options.setAttribute("aria-expanded", "false");
+  hud.options.addEventListener("click", openOptions);
+  const detachFullscreen = attachFullscreenButton(hud.fullscreen, fullscreenTarget());
 
   const detachMovement = attachKeyboardMoveInput(window, keymap, (direction) => {
     if (direction.x === 0 && direction.y === 0) {
@@ -292,7 +309,9 @@ export async function startMatchView(
       // Some browsers focus their menu bar on F10.
       event.preventDefault();
       event.stopPropagation();
-      if (!event.repeat) {
+      // Not under Options (#454): its keys are its own, so no question
+      // opens beneath it.
+      if (!event.repeat && !isOptionsOverlayOpen()) {
         if (leave.isOpen()) {
           leave.close();
         } else {
@@ -317,6 +336,13 @@ export async function startMatchView(
       } else if (event.key !== "Enter" && event.key !== " ") {
         event.stopPropagation();
       }
+      return;
+    }
+    // Options over the match (#454): keys are its, as for the leave
+    // question. Its Esc closes it, on the screen bar's own listener, which
+    // runs first, so an Esc it used is not also Cancel Action. Movement
+    // keys still move.
+    if (isOptionsOverlayOpen() || (event.key === "Escape" && event.defaultPrevented)) {
       return;
     }
     if (event.key === "Escape") {
@@ -534,11 +560,11 @@ export async function startMatchView(
       hud.slotTips.dispose();
       hud.scoreboard.remove();
       hud.result.remove();
-      hud.mute.remove();
       offMute();
       jukebox.dispose();
-      hud.music.remove();
-      hud.leave.remove();
+      closeOptionsOverlay();
+      detachFullscreen();
+      hud.controls.remove();
       viewport?.destroy();
       notice?.remove();
       await connection.disconnect();

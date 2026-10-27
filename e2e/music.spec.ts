@@ -161,7 +161,7 @@ function playedTracks(page: Page): Promise<string[]> {
 test("a pinned track is what plays after a reload (#372)", async ({ page }) => {
   await recordMessages(page);
   await page.goto("./");
-  await page.getByRole("button", { name: "Music", exact: true }).click();
+  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
   await page
     .locator(".jukebox-row", { hasText: "Ember Deep" })
     .getByRole("button", { name: "pin" })
@@ -178,7 +178,7 @@ test("tracks are selectable rows: Enter previews and keeps focus; no dead editor
   page,
 }) => {
   await page.goto("./");
-  await page.getByRole("button", { name: "Music", exact: true }).click();
+  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
   const row = page.locator(".jukebox-row", { hasText: "Ember Deep" });
   const play = row.locator(".selectable-row-choose");
   await play.focus();
@@ -235,7 +235,7 @@ test("Off plays nothing after a click, and the music mute survives a reload (#37
 }) => {
   await recordMessages(page);
   await page.goto("./");
-  await page.getByRole("button", { name: "Music", exact: true }).click();
+  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
   await page.locator(".jukebox-mode").selectOption("off");
   // The music's mute lives in Options → Sound, a link away.
   await page.getByRole("button", { name: "sound settings" }).click();
@@ -250,7 +250,7 @@ test("Off plays nothing after a click, and the music mute survives a reload (#37
   await page.waitForTimeout(4_000);
   expect(await playedTracks(page)).toEqual([]);
 
-  await page.getByRole("button", { name: "Music", exact: true }).click();
+  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
   await expect(page.locator(".jukebox-mode")).toHaveValue("off");
   await page.getByRole("button", { name: "sound settings" }).click();
   await expect(page.getByLabel("Mute music")).toBeChecked();
@@ -405,7 +405,7 @@ test("Options → Sound names the menu's track, and a fixed intensity reaches th
   await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toHaveLength(1);
   const [menuTrack] = await playedTracks(page);
 
-  await page.getByRole("button", { name: "options" }).click();
+  await page.locator("#screens").getByRole("button", { name: "options" }).click();
   await expect(page.locator('.options-entry[data-section="sound"]')).toHaveClass(/is-selected/);
   await expect(page.locator(".music-now-playing-title")).toContainText(
     titles.get(menuTrack ?? "") ?? "no such track",

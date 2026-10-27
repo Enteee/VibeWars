@@ -26,7 +26,7 @@ export type {
 } from "./match-connection.js";
 export { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 export type { DropReport } from "./intent-budget.js";
-export { sanitizeName } from "./names.js";
+export { sanitizeChatText, sanitizeName } from "./names.js";
 export { RECHARGE_TOLERANCE_SECONDS, rechargePredicted, rechargeSlots } from "./recharge.js";
 export { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
 export { spawnPoint } from "./spawn-points.js";
@@ -49,6 +49,7 @@ export {
 export type { ConnectMatchOptions, PeerMatchConnection } from "./match-client.js";
 export { generateLobbyCode } from "./lobby-codes.js";
 export type {
+  ChatLine,
   LobbyCharacter,
   LobbyClosedReason,
   LobbyConnection,

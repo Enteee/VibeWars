@@ -17,7 +17,7 @@ const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 const FIREBALL = "elementalist.fireball";
 const ARMOR_OF_EARTH = "elementalist.armor-of-earth";
-const OPENING_CUT = "warrior.sever-artery-lite";
+const SEVER_ARTERY = "warrior.sever-artery";
 const BACKBREAKER = "warrior.backbreaker";
 
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
@@ -28,15 +28,15 @@ function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
 }
 
 /**
- * A swordsman at rank 12 who also knows a little fire, and Opening Cut.
- * Backbreaker, 9 strikes, only so a test can count strikes past Opening
- * Cut's one (#463): a sword cannot use it.
+ * A swordsman at rank 12 who also knows a little fire, and Sever Artery.
+ * Backbreaker, 9 strikes, only so a test can count strikes past Sever
+ * Artery's four (#463): a sword cannot use it.
  */
 function swordsman(id: string, spawn: Vec2): ParticipantSpec {
   return {
     id,
     team: 0,
-    skillBar: [FIREBALL, ARMOR_OF_EARTH, OPENING_CUT, BACKBREAKER],
+    skillBar: [FIREBALL, ARMOR_OF_EARTH, SEVER_ARTERY, BACKBREAKER],
     attributeRanks: new Map([
       ["warrior.swordsmanship", 12],
       ["elementalist.fire-magic", 12],
@@ -148,7 +148,7 @@ describe("the swing", () => {
       }
     }
     // A strike per landed swing, each skill capped at its own cost (#463).
-    expect(strikesOf(get(match, "a").combatant, OPENING_CUT)).toBe(1);
+    expect(strikesOf(get(match, "a").combatant, SEVER_ARTERY)).toBe(4);
     expect(strikesOf(get(match, "a").combatant, BACKBREAKER)).toBe(9);
   });
 
@@ -328,7 +328,7 @@ describe("adrenaline (#463)", () => {
     const hit = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     hit.requestAttack("a", "d");
     stepFor(hit, 1.4);
-    expect(strikesOf(get(hit, "a").combatant, OPENING_CUT)).toBe(1);
+    expect(strikesOf(get(hit, "a").combatant, SEVER_ARTERY)).toBe(1);
     expect(strikesOf(get(hit, "a").combatant, BACKBREAKER)).toBe(1);
   });
 
@@ -339,10 +339,10 @@ describe("adrenaline (#463)", () => {
     chargeAdrenaline(caster);
     expect(chop.requestSkill("a", 2)?.check).toEqual({ ok: true });
     stepFor(chop, DT);
-    expect(strikesOf(caster, OPENING_CUT)).toBe(0);
+    expect(strikesOf(caster, SEVER_ARTERY)).toBe(0);
     expect(strikesOf(caster, BACKBREAKER)).toBe(8);
     stepFor(chop, 0.7);
-    expect(strikesOf(caster, OPENING_CUT)).toBe(1);
+    expect(strikesOf(caster, SEVER_ARTERY)).toBe(1);
     expect(strikesOf(caster, BACKBREAKER)).toBe(9);
   });
 
@@ -355,7 +355,7 @@ describe("adrenaline (#463)", () => {
     expect(
       log.some((entry) => entry.cause === "skill" && entry.events.some((e) => e.kind === "damage")),
     ).toBe(true);
-    expect(strikesOf(get(match, "a").combatant, OPENING_CUT)).toBe(0);
+    expect(strikesOf(get(match, "a").combatant, SEVER_ARTERY)).toBe(0);
     expect(strikesOf(get(match, "a").combatant, BACKBREAKER)).toBe(0);
   });
 
@@ -386,7 +386,7 @@ describe("adrenaline (#463)", () => {
     caster.health = 0.2;
     stepFor(match, DT);
     expect(caster.dead).toBe(true);
-    expect(strikesOf(caster, OPENING_CUT)).toBe(0);
+    expect(strikesOf(caster, SEVER_ARTERY)).toBe(0);
     expect(strikesOf(caster, BACKBREAKER)).toBe(0);
   });
 });
@@ -524,7 +524,7 @@ describe("the log", () => {
   });
 
   it("says which swings struck twice; an attack skill never does (#561, ADR-0029)", () => {
-    // A sword that always strikes twice, so Opening Cut can ride it.
+    // A sword that always strikes twice, so Sever Artery can ride it.
     const always: Weapon = {
       ...WEAPONS.sword,
       doubleStrike: { attributeId: "warrior.swordsmanship", baseChance: 1, perRank: 0 },
@@ -537,7 +537,7 @@ describe("the log", () => {
     chargeAdrenaline(get(match, "a").combatant);
     expect(match.requestSkill("a", 2)?.check).toEqual({ ok: true });
     const log = stepFor(match, 3);
-    const cut = log.filter((entry) => entry.skillId === OPENING_CUT);
+    const cut = log.filter((entry) => entry.skillId === SEVER_ARTERY);
     expect(cut.length).toBeGreaterThan(0);
     expect(cut.every((entry) => !entry.doubleStrike)).toBe(true);
     expect(swings(log).length).toBeGreaterThan(0);
@@ -885,12 +885,12 @@ describe("aftercast (#317)", () => {
     stepFor(match, 0.75);
     chargeAdrenaline(get(match, "a").combatant);
     expect(match.requestSkill("a", 2)).toEqual({
-      skillId: OPENING_CUT,
+      skillId: SEVER_ARTERY,
       check: { ok: true },
       queued: true,
     });
     stepFor(match, AFTERCAST);
-    expect(get(match, "a").combatant.cast.activeCast?.skillId).toBe(OPENING_CUT);
+    expect(get(match, "a").combatant.cast.activeCast?.skillId).toBe(SEVER_ARTERY);
   });
 
   it("a skill that could not go off is refused at the press, not queued", () => {

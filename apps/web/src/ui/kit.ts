@@ -27,6 +27,24 @@ export function button(label: string, className: string, onClick: () => void): H
   return node;
 }
 
+/**
+ * A square button that is only an icon (#454): `label` names it for a
+ * screen reader and on hover. Who uses it listens for its clicks.
+ */
+export function iconButton(className: string, label: string, icon = ""): HTMLButtonElement {
+  const node = document.createElement("button");
+  node.type = "button";
+  node.className = className;
+  node.setAttribute("aria-label", label);
+  node.title = label;
+  const image = node.appendChild(document.createElement("img"));
+  image.alt = "";
+  if (icon !== "") {
+    image.src = icon;
+  }
+  return node;
+}
+
 /** The key each element `syncList` placed was made for. */
 const listKeys = new WeakMap<Element, string>();
 
@@ -102,10 +120,23 @@ export interface ScreenBarOptions {
    * An open inline confirmation is put away before this is asked.
    */
   readonly putAway?: () => boolean;
+  /**
+   * The bar of an overlay above the screen, such as Options opened from
+   * the top bar (#454): while it is on the page, Esc is its, even when the
+   * screen under it draws a new bar.
+   */
+  readonly overlay?: boolean;
+}
+
+interface LiveBar {
+  readonly element: HTMLElement;
+  readonly escape: () => void;
 }
 
 /** The newest screen bar: Esc serves it while it is on screen. */
-let liveBar: { readonly element: HTMLElement; readonly escape: () => void } | undefined;
+let liveBar: LiveBar | undefined;
+/** The newest overlay's bar, which Esc serves before the screen's while it is on screen. */
+let overlayBar: LiveBar | undefined;
 
 /** Whether `element` is in the page and nothing above it hides it. */
 function onScreen(element: HTMLElement): boolean {
@@ -129,7 +160,8 @@ function onEscape(event: KeyboardEvent): void {
   if (event.key !== "Escape" || event.defaultPrevented || event.repeat) {
     return;
   }
-  if (liveBar === undefined || !onScreen(liveBar.element)) {
+  const bar = overlayBar !== undefined && onScreen(overlayBar.element) ? overlayBar : liveBar;
+  if (bar === undefined || !onScreen(bar.element)) {
     return;
   }
   const target = event.target;
@@ -143,7 +175,7 @@ function onEscape(event: KeyboardEvent): void {
   if (cancelConfirm()) {
     return;
   }
-  liveBar.escape();
+  bar.escape();
 }
 
 let listening = false;
@@ -186,7 +218,7 @@ export function screenBar(options: ScreenBarOptions): {
     part("screen-bar-actions", options.actions),
   );
 
-  liveBar = {
+  const live: LiveBar = {
     element,
     escape: () => {
       if (options.putAway?.() === true) {
@@ -195,6 +227,11 @@ export function screenBar(options: ScreenBarOptions): {
       options.back?.onBack();
     },
   };
+  if (options.overlay === true) {
+    overlayBar = live;
+  } else {
+    liveBar = live;
+  }
   if (!listening) {
     listening = true;
     window.addEventListener("keydown", onEscape);

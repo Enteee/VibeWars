@@ -11,6 +11,7 @@ import {
 } from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
+  MAX_WIRE_CHAT_TEXT,
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_COMBATS,
   MAX_WIRE_PIPS,
@@ -23,6 +24,8 @@ import {
   type PeerRejoinChallenge,
   type PeerRejoinProof,
   type PeerWelcome,
+  type PeerChat,
+  type WireChatLine,
   type WireCombat,
   type WireCombatBatch,
   type WireLobbyState,
@@ -37,6 +40,7 @@ import {
   messageBytes,
   packCombat,
   packSnapshot,
+  sanitizeChatText,
   sanitizeName,
 } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
@@ -372,5 +376,24 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       })),
     };
     expect(messageBytes(state)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+  });
+
+  it("a chat line on its way to the host: the longest wire text, each unit a JSON-escaped control (#479)", () => {
+    const chat: PeerChat = { channel: "team", text: "\u0001".repeat(MAX_WIRE_CHAT_TEXT) };
+    expect(messageBytes(chat)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+  });
+
+  it("a chat line from the host: longest name, and the longest text the host lets through (#479)", () => {
+    const candidates = [
+      '"',
+      "\u{10ffff}",
+      "\u{1f468}\u200d\u{1f469}\u200d\u{1f467}",
+      "a\u0301\u0301",
+    ];
+    const text = candidates
+      .map((piece) => sanitizeChatText(piece.repeat(MAX_WIRE_CHAT_TEXT)))
+      .reduce((a, b) => (messageBytes(b) > messageBytes(a) ? b : a));
+    const line: WireChatLine = { channel: "team", fromId: PEER_ID, name: NAME, team: 1, text };
+    expect(messageBytes(line)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 });

@@ -2,10 +2,12 @@ import {
   MAX_LOBBY_PLAYERS,
   PROTOCOL_VERSION,
   helloProtocolVersion,
+  parsePeerChat,
   parsePeerLobbyJoin,
   parseWireLobbyCommand,
   type LobbyPhase,
   type LobbyRefusal,
+  type WireChatLine,
   type WireLobbyCommand,
   type WireLobbyNote,
   type WireLobbyState,
@@ -17,7 +19,7 @@ import { lobbyCharacter } from "./lobby-character.js";
 import type { LobbyCharacter } from "./lobby-connection.js";
 import { createLocalPeer } from "./local-peer.js";
 import { RECONNECT_WINDOW_SECONDS, type MatchHost, type PlannedSeats } from "./match-host.js";
-import { sanitizeName } from "./names.js";
+import { sanitizeChatText, sanitizeName } from "./names.js";
 import { scopeTransport } from "./scoped-transport.js";
 import { sizeChecked, type Transport } from "./transport.js";
 
@@ -31,6 +33,13 @@ import { sizeChecked, type Transport } from "./transport.js";
  * Nothing here reads a clock: whoever drives it calls `advance`, which
  * runs the match while there is one.
  */
+
+/**
+ * Chat lines a peer may send (#479): five in five seconds, refilling one
+ * a second. Its own budget, apart from the lobby's commands.
+ */
+export const CHAT_LINES_PER_SECOND = 1;
+export const CHAT_BURST = 5;
 
 /** A lobby's match, as the lobby hands it to whoever builds the `MatchHost`. */
 export interface MatchPlan {
@@ -101,6 +110,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    */
   const away = new Map<string, number>();
   const budget = new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, () => undefined);
+  const chatBudget = new MessageBudget(CHAT_LINES_PER_SECOND, CHAT_BURST, () => undefined);
+  /** Peers already told their lines are dropped, until one gets through: once a burst. */
+  const throttled = new Set<string>();
   let phase: LobbyPhase = "waiting";
   let mapId = defaultMap;
   let joined = 0;
@@ -267,6 +279,44 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
   });
 
+  // Chat (#479), in the lobby and through its match, whose teams are the
+  // lobby's: all chat reaches every member, spectators too; team chat
+  // only the sender's team, and a spectator has none.
+  transport.on("chat", (data, from) => {
+    const member = members.get(from);
+    if (closed || member === undefined || away.has(from)) {
+      return;
+    }
+    if (!chatBudget.take(from, nowMs())) {
+      if (!throttled.has(from)) {
+        throttled.add(from);
+        note("chat-throttled", "", from);
+      }
+      return;
+    }
+    throttled.delete(from);
+    const chat = parsePeerChat(data);
+    if (chat === undefined || (chat.channel === "team" && member.team === null)) {
+      return;
+    }
+    const text = sanitizeChatText(chat.text);
+    if (text === "") {
+      return;
+    }
+    const line: WireChatLine = {
+      channel: chat.channel,
+      fromId: member.id,
+      name: member.name,
+      team: member.team,
+      text,
+    };
+    for (const to of members.values()) {
+      if (!away.has(to.id) && (chat.channel === "all" || to.team === member.team)) {
+        transport.send("chat-line", line, to.id);
+      }
+    }
+  });
+
   /** Forget the away members `gone` picks; whether there were any. */
   const dropAway = (gone: (leftAt: number) => boolean): boolean => {
     let dropped = false;
@@ -328,6 +378,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
 
   transport.onPeerLeave((peerId) => {
     budget.forget(peerId);
+    chatBudget.forget(peerId);
+    throttled.delete(peerId);
     if (peerId === local.selfId) {
       // The host's own player went: there is no lobby without its host.
       void host.close();

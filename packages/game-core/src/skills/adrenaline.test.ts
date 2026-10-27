@@ -12,10 +12,10 @@ import { getSkill } from "./catalog.js";
 import { makeCombatant } from "./testing.js";
 import type { Skill } from "./types.js";
 
-/** Per-skill adrenaline (#463): Backbreaker 9 strikes, Opening Cut 1, "Watch Yourself!" 4. */
+/** Per-skill adrenaline (#463): Backbreaker 9 strikes, Sever Artery 4, "Watch Yourself!" 4. */
 
 const BACKBREAKER = "warrior.backbreaker";
-const OPENING_CUT = "warrior.sever-artery-lite";
+const SEVER_ARTERY = "warrior.sever-artery";
 const WATCH_YOURSELF = "warrior.watch-yourself";
 
 function skill(id: string): Skill {
@@ -27,12 +27,12 @@ function skill(id: string): Skill {
 }
 
 /** A warrior with these units in each of the three. */
-function warrior(backbreaker: number, openingCut: number, watchYourself: number) {
+function warrior(backbreaker: number, severArtery: number, watchYourself: number) {
   return makeCombatant({
     id: "w",
     adrenaline: new Map([
       [BACKBREAKER, backbreaker],
-      [OPENING_CUT, openingCut],
+      [SEVER_ARTERY, severArtery],
       [WATCH_YOURSELF, watchYourself],
     ]),
   });
@@ -40,10 +40,10 @@ function warrior(backbreaker: number, openingCut: number, watchYourself: number)
 
 describe("adrenalinePools", () => {
   it("keys exactly the bar's adrenaline skills, at 0", () => {
-    const pools = adrenalinePools([BACKBREAKER, "elementalist.fireball", null, OPENING_CUT]);
+    const pools = adrenalinePools([BACKBREAKER, "elementalist.fireball", null, SEVER_ARTERY]);
     expect([...pools]).toEqual([
       [BACKBREAKER, 0],
-      [OPENING_CUT, 0],
+      [SEVER_ARTERY, 0],
     ]);
   });
 });
@@ -54,7 +54,7 @@ describe("gainStrikes", () => {
     gainStrikes(w, 2);
     expect([...w.adrenaline.values()]).toEqual([
       2 * ADRENALINE_PER_STRIKE,
-      ADRENALINE_PER_STRIKE,
+      2 * ADRENALINE_PER_STRIKE,
       4 * ADRENALINE_PER_STRIKE,
     ]);
   });
@@ -78,15 +78,15 @@ describe("spendAdrenaline", () => {
   it("the only adrenaline skill on the bar just empties", () => {
     const w = makeCombatant({
       id: "w",
-      adrenaline: new Map([[OPENING_CUT, ADRENALINE_PER_STRIKE]]),
+      adrenaline: new Map([[SEVER_ARTERY, 4 * ADRENALINE_PER_STRIKE]]),
     });
-    spendAdrenaline(w, skill(OPENING_CUT));
-    expect([...w.adrenaline]).toEqual([[OPENING_CUT, 0]]);
+    spendAdrenaline(w, skill(SEVER_ARTERY));
+    expect([...w.adrenaline]).toEqual([[SEVER_ARTERY, 0]]);
   });
 
   it("draining a charged skill leaves it one strike short", () => {
-    const w = warrior(9 * ADRENALINE_PER_STRIKE, ADRENALINE_PER_STRIKE, 0);
-    spendAdrenaline(w, skill(OPENING_CUT));
+    const w = warrior(9 * ADRENALINE_PER_STRIKE, 4 * ADRENALINE_PER_STRIKE, 0);
+    spendAdrenaline(w, skill(SEVER_ARTERY));
     expect(canAffordAdrenaline(w, skill(BACKBREAKER))).toBe(false);
     expect(w.adrenaline.get(BACKBREAKER)).toBe(8 * ADRENALINE_PER_STRIKE);
   });
@@ -105,7 +105,7 @@ describe("emptyAdrenaline", () => {
     emptyAdrenaline(w);
     expect([...w.adrenaline]).toEqual([
       [BACKBREAKER, 0],
-      [OPENING_CUT, 0],
+      [SEVER_ARTERY, 0],
       [WATCH_YOURSELF, 0],
     ]);
   });

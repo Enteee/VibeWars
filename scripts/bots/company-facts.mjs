@@ -61,7 +61,7 @@ export function readPresence(root, staff, now) {
 }
 
 /**
- * Each agent's Claude config dir is `<boxes>/<role>/config`, and its logs
+ * Each employee's Claude config dir is `<boxes>/<employee>/config`, and its logs
  * are under that; `claude-llc` says where `<boxes>` is (#50). Null when it
  * did not say.
  *
