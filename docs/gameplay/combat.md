@@ -203,8 +203,8 @@ maximum, not the raw one.
 A skill's type is its badge on the slot, in the library and in the
 Training Ground, and is named first in its tooltip ("Signet.", "Hex
 Spell."). Some types play by rules of their own (#465). Spells,
-enchantments and hexes are **spells**; attacks, signets, shouts, stances
-and plain skills are not, and every rule that "affects spells" (dazed
+enchantments, hexes and weapon spells are **spells**; attacks, signets,
+shouts, chants, stances and plain skills are not, and every rule that "affects spells" (dazed
 and Fast Casting, so far) leaves them alone.
 
 **Elite skills** wear a doubled gold frame wherever a skill is drawn,
@@ -241,7 +241,7 @@ a time (#526). Glyph of Lesser Energy (Elementalist, 5 energy, 1 s cast,
 spell you could not otherwise afford goes off. A spell uses its charge
 when it starts, so one interrupted or cancelled afterwards has still used
 it; one refused, or queued behind an aftercast, uses it only once it
-starts. Signets, shouts, stances and attacks leave it alone. The 16 is
+starts. Signets, shouts, chants, stances and attacks leave it alone. The 16 is
 its rank-12 number; Energy Storage scaling comes with #532. While it is
 up, the skill bar shows each spell at its discounted cost and lights
 the ones it makes affordable (#637).
@@ -259,6 +259,26 @@ for 10 s, and it ends early on each ally after 3 incoming attacks that
 hit or are blocked; a miss, a dodge or an obstructed arrow does not
 count. Earshot is GW1's ratio of earshot to cast range (about 1,010 to
 1,250) applied to the 420-unit spell range.
+
+**Chants** reach allies in earshot as shouts do, but have a cast (#758).
+A chant is not a spell: dazed does not slow it. Anthem of Flame
+(Paragon, Leadership, 5 energy, 1 s cast, 10 s recharge) lasts 10 s on
+each ally in earshot, the paragon included: the next attack skill each
+uses burns whoever it hits for 3 s. That attack skill uses the chant up
+when its blow lands, misses or is blocked, or, from a bow or a spear,
+when its shot lands or is dodged; only a hit burns, every victim of
+Barrage alike. Plain swings leave it alone, and so does an attack skill
+interrupted or cancelled before its blow. Several different chants can
+be up at once; the same one again keeps the longer.
+
+**Weapon spells** go on an ally's weapon, one at a time: a new one
+replaces the old, the same one included (#758). They are spells, so
+dazed doubles their cast and a glyph cheapens them, but not
+enchantments, so enchantment removal leaves them. Weapon of Warding
+(Ritualist, Restoration Magic, 10 energy, 1 s cast, 8 s recharge, an
+ally or yourself) gives +4 health regeneration and a 50% chance to block
+attacks for 7 s, and ends the moment its bearer attacks: a swing, an
+arrow or an attack skill, hit or miss.
 
 ## Weapon attacks
 
@@ -377,7 +397,7 @@ uses it yet.
 Each profession's primary attribute does something of its own, as in
 GW1 PvP (#473). Only a primary can hold its rank, and runes count.
 
-- **Fast Casting** (Mesmer). Spells, enchantments and hexes activate in
+- **Fast Casting** (Mesmer). Spells, enchantments, hexes and weapon spells activate in
   2^(−rank/15) of the time: ×0.574 at rank 12, and still faster above
   it. Every Mesmer spell; another profession's only if its own
   activation is 2 s or more, so a Mesmer/Necromancer casts Malaise in
@@ -403,8 +423,8 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   within spirit range (850), you gain energy equal to your rank, up to
   your maximum, at most 3 times in any 15 s. Not while you are dead.
   The gain floats over you, and the Training log names Soul Reaping.
-- **Leadership** (Paragon). Each shout gives the shouter 1 energy for
-  every ally it affected, the shouter included, up to 1 for every 2
+- **Leadership** (Paragon). Each shout or chant gives its user 1 energy
+  for every ally it affected, the user included, up to 1 for every 2
   ranks: up to 6 at rank 12.
 
 The others have no effect yet.

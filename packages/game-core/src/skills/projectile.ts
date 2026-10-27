@@ -1,6 +1,6 @@
 import { add, dot, lengthSquared, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import type { Combatant, Skill } from "./types.js";
-import type { BlowRule, WeaponSnapshot } from "./weapon-attack.js";
+import type { BlowRule, NextAttackSkill, WeaponSnapshot } from "./weapon-attack.js";
 
 /**
  * A ranged weapon's shot in flight (#159).
@@ -53,6 +53,8 @@ export interface SkillHit {
   readonly kind: "attack";
   readonly skill: Skill;
   readonly blow: BlowRule;
+  /** The chants it took at release (#758): their riders land with it. */
+  readonly next: NextAttackSkill;
 }
 
 /**
