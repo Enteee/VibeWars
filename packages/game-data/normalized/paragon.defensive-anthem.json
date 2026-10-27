@@ -1,0 +1,26 @@
+{
+  "id": "paragon.defensive-anthem",
+  "name": "Defensive Anthem",
+  "profession": "paragon",
+  "attribute": "Leadership",
+  "type": "Chant.",
+  "elite": true,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 15
+  },
+  "overcast": 0,
+  "activationSeconds": 2,
+  "rechargeSeconds": 25,
+  "upkeep": false,
+  "description": "For 4...9...10 seconds, each party member within earshot has a 50% chance to block incoming attacks. This chant ends if that party member hits with an attack skill.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Paragon/1089-Defensive_Anthem",
+    "fetchedAt": "2026-10-27T17:39:59.839Z"
+  },
+  "unmapped": {}
+}

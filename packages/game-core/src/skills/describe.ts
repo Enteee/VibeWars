@@ -263,6 +263,9 @@ export function describeStatus(id: string): string {
   if (definition.endsWhenBearerHits) {
     parts.push("ends if the bearer hits with an attack");
   }
+  if (definition.endsWhenBearerHitsWithAttackSkill) {
+    parts.push("ends if the bearer hits with an attack skill");
+  }
   if (definition.endsWhenBearerGains.length > 0) {
     const gained = definition.endsWhenBearerGains.map((category) =>
       category === "hex" ? "hexed" : "enchanted",

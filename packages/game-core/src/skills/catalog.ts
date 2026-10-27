@@ -1421,6 +1421,55 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // attacks: its rank-12 numbers, in the status.
     effects: [{ kind: "apply-status", statusId: "stand-your-ground", durationSeconds: 17 }],
   },
+  {
+    id: "paragon.incoming",
+    name: '"Incoming!"',
+    type: "shout",
+    elite: true,
+    profession: "paragon",
+    attributeId: "paragon.command",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 25,
+    range: RANGE_SPELL,
+    target: "self",
+    // "All allies within earshot", the shouter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // 33% faster and 13 Health per second while moving for 9 seconds:
+    // its rank-12 numbers, in the status (#956).
+    effects: [{ kind: "apply-status", statusId: "incoming", durationSeconds: 9 }],
+  },
+  {
+    id: "paragon.make-haste",
+    name: '"Make Haste!"',
+    type: "shout",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.command",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...17...20 seconds, target other ally moves 33% faster. This
+    // skill ends if that ally successfully hits with an attack." (#956)
+    effects: [{ kind: "apply-status", statusId: "make-haste", durationSeconds: 17 }],
+  },
 
   /* ---------------------------------------------------------------------- */
   /* Preparations (#525): ride your attacks, one at a time                  */
@@ -1506,6 +1555,34 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // "For 10 seconds, the next attack skill used ... also causes Burning
     // for 1...3...3 seconds": the burning is the status's `nextAttackSkill`.
     effects: [{ kind: "apply-status", statusId: "anthem-of-flame", durationSeconds: 10 }],
+  },
+  {
+    id: "paragon.defensive-anthem",
+    name: "Defensive Anthem",
+    type: "chant",
+    elite: true,
+    profession: "paragon",
+    attributeId: "paragon.leadership",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 25,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Each party member within earshot", the chanter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // A 50% block for 9 seconds, ending on a member's attack-skill hit:
+    // its rank-12 numbers, in the status (#956).
+    effects: [{ kind: "apply-status", statusId: "defensive-anthem", durationSeconds: 9 }],
   },
   {
     id: "ritualist.weapon-of-warding",
