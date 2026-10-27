@@ -275,6 +275,25 @@ function conditionText(condition: EffectCondition): string {
       return `If you have ${aCategory(condition.category)}`;
     case "target-casting":
       return "If target is casting a spell";
+    case "target-alone":
+      return condition.radius === AREA_ADJACENT
+        ? "If target is not adjacent to any allies"
+        : `If target has no allies within ${String(condition.radius)}`;
+  }
+}
+
+/** Who a splash reaches, as GW1 words it (#885): "Adjacent foes". */
+function foesWithin(radius: number): string {
+  const area = AREA_TEXT.get(radius);
+  switch (area) {
+    case "adjacent":
+      return "Adjacent foes";
+    case "nearby":
+      return "Nearby foes";
+    case undefined:
+      return `Foes within ${String(radius)}`;
+    default:
+      return `Foes ${area}`;
   }
 }
 
@@ -413,6 +432,27 @@ function describeEffect(
         text: `This skill recharges ${String(Math.round(effect.fraction * 100))}% faster`,
         magnitude: undefined,
       };
+    case "recharge-others":
+      return { text: "Recharges all your other attack skills", magnitude: undefined };
+    case "splash": {
+      // "Adjacent foes take 40 damage" (#885).
+      const inner = effect.effects.map((each) => ({
+        each,
+        description: describeEffect(each, ranks),
+      }));
+      const what = inner
+        .map(({ each, description }) =>
+          each.kind === "damage"
+            ? `take ${String(describeMagnitude(each.amount, ranks).current)} damage`
+            : lowerFirst(description.text),
+        )
+        .join(", ");
+      return {
+        text: `${foesWithin(effect.radius)} ${what}`,
+        magnitude: inner.find(({ description }) => description.magnitude !== undefined)?.description
+          .magnitude,
+      };
+    }
   }
 }
 

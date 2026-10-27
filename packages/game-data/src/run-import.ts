@@ -228,6 +228,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Assassin/665-Wild_Strike",
   },
   {
+    id: "assassin.death-blossom",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/648-Death_Blossom",
+  },
+  {
+    id: "assassin.twisting-fangs",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/644-Twisting_Fangs",
+  },
+  {
+    id: "assassin.horns-of-the-ox",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/657-Horns_of_the_Ox",
+  },
+  {
+    id: "assassin.moebius-strike",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/661-Moebius_Strike",
+  },
+  {
     id: "paragon.cruel-spear",
     profession: "paragon",
     url: "https://www.gw-memorial.net/skills/Paragon/1119-Cruel_Spear",

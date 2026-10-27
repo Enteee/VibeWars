@@ -160,6 +160,32 @@ export function energyStorageBonus(rank: number): number {
   return ENERGY_STORAGE_ENERGY_PER_RANK * rank;
 }
 
+/** The Dervish's primary. */
+export const MYSTICISM_ATTRIBUTE = "dervish.mysticism";
+
+/** Share of a Dervish enchantment's energy cost each rank of Mysticism takes off. */
+export const MYSTICISM_COST_CUT_PER_RANK = 0.04;
+
+/** Armor each rank of Mysticism gives its bearer while enchanted. */
+export const MYSTICISM_ARMOR_PER_RANK = 1;
+
+/**
+ * What `skill`'s energy cost comes to with this rank of Mysticism (#874):
+ * 4% less a rank, rounded once, never below 0, for a Dervish enchantment.
+ * Any other skill's cost stands.
+ */
+export function mysticismEnergyCost(rank: number, skill: Skill, cost: number): number {
+  if (skill.type !== "enchantment" || skill.profession !== "dervish") {
+    return cost;
+  }
+  return Math.max(0, Math.round(cost * (1 - MYSTICISM_COST_CUT_PER_RANK * rank)));
+}
+
+/** The armor Mysticism gives an enchanted bearer at this rank (#874): +1 a rank. */
+export function mysticismArmor(rank: number): number {
+  return MYSTICISM_ARMOR_PER_RANK * rank;
+}
+
 /** A share in [0, 1] as a whole percentage, for a readout. */
 function percent(share: number): string {
   return `${String(Math.round(share * 100))}%`;
@@ -201,6 +227,11 @@ export function describePrimaryAttribute(attributeId: string, rank: number): str
       return (
         `up to ${String(leadershipEnergy(rank, Number.POSITIVE_INFINITY))} energy per shout, ` +
         "1 per ally affected"
+      );
+    case MYSTICISM_ATTRIBUTE:
+      return (
+        `Dervish enchantments cost ${percent(MYSTICISM_COST_CUT_PER_RANK * rank)} less energy, ` +
+        `+${String(mysticismArmor(rank))} armor while enchanted`
       );
     default:
       return undefined;

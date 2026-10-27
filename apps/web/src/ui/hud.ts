@@ -6,6 +6,7 @@ import {
   neededWeaponText,
   type ActivationRejection,
   type Segment,
+  type StatusId,
 } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
 import type {
@@ -33,6 +34,7 @@ import {
 import {
   createEffectsMonitor,
   effectRows,
+  maintainedRows,
   type EffectRow,
   type EffectsMonitor,
 } from "./effects-monitor.js";
@@ -193,7 +195,14 @@ export function targetHintDismissed(
   return wasDismissed || self?.targetSessionId !== undefined;
 }
 
-export function createHud(parent: HTMLElement): HudElements {
+/**
+ * The HUD, in `parent`. `onEndUpkeep` ends an enchantment you maintain,
+ * double-clicked in your effects monitor (#838).
+ */
+export function createHud(
+  parent: HTMLElement,
+  onEndUpkeep: (targetId: string, statusId: StatusId) => void,
+): HudElements {
   const root = element("div", "hud", parent);
 
   // Score and clock sit at the top, away from the skill bar, so a glance
@@ -265,7 +274,7 @@ export function createHud(parent: HTMLElement): HudElements {
   const energyPips = energyRow.appendChild(pipsElement());
 
   const gearText = element("div", "hud-gear", bars);
-  const effects = createEffectsMonitor(bars, EFFECT_ICON_PX, "your effects");
+  const effects = createEffectsMonitor(bars, EFFECT_ICON_PX, "your effects", onEndUpkeep);
 
   const hint = element("div", "hud-hint", root);
   const message = element("div", "hud-message", root);
@@ -877,7 +886,7 @@ export function targetEffectRows(
 ): EffectRow[] {
   return target === undefined || target.dead || now === undefined
     ? []
-    : effectRows(target.statuses, self.sessionId, names, now);
+    : effectRows(target, self.sessionId, names, now);
 }
 
 /** How far past the latest snapshot the effects count down, s: ten snapshots. */
@@ -945,7 +954,12 @@ export function updateHud(
   const names = new Map(match?.players.map((player) => [player.sessionId, player.name]));
   const now = match === undefined ? undefined : matchNow(hud, match.elapsedSeconds);
   hud.effects.update(
-    self.dead || now === undefined ? [] : effectRows(self.statuses, self.sessionId, names, now),
+    self.dead || now === undefined
+      ? []
+      : [
+          ...effectRows(self, self.sessionId, names, now),
+          ...maintainedRows(match?.players ?? [], self.sessionId),
+        ],
   );
 
   renderTarget(hud, self, target);

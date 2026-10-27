@@ -6,6 +6,7 @@ import {
   canAffordAdrenaline,
   emptyAdrenaline,
   gainStrikes,
+  gainUnits,
   spendAdrenaline,
 } from "./adrenaline.js";
 import { getSkill } from "./catalog.js";
@@ -65,6 +66,21 @@ describe("gainStrikes", () => {
     gainStrikes(w, 1);
     expect(w.adrenaline.get(WATCH_YOURSELF)).toBe(0);
     expect(w.adrenaline.get(BACKBREAKER)).toBe(ADRENALINE_PER_STRIKE);
+  });
+});
+
+describe("gainUnits", () => {
+  it("adds units, not strikes, each capped at its own cost (#827)", () => {
+    const w = warrior(0, 4 * ADRENALINE_PER_STRIKE - 5, 0);
+    gainUnits(w, 24);
+    expect([...w.adrenaline.values()]).toEqual([24, 4 * ADRENALINE_PER_STRIKE, 24]);
+  });
+
+  it("skips a recharging skill (#827)", () => {
+    const w = warrior(0, 0, 0);
+    w.cast.startRecharge(SEVER_ARTERY, 4);
+    gainUnits(w, 10);
+    expect([...w.adrenaline.values()]).toEqual([10, 0, 10]);
   });
 });
 

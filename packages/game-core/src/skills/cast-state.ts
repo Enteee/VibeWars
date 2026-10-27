@@ -155,6 +155,12 @@ export class CastState {
     }
   }
 
+  /** `skillId` is ready again at once, as Moebius Strike makes it (#885). */
+  public endRecharge(skillId: string): void {
+    this.#rechargeRemaining.delete(skillId);
+    this.#rechargeTotal.delete(skillId);
+  }
+
   /**
    * Advance time by `dt` seconds. Returns the cast that completed on this
    * tick, if any — the caller is responsible for actually applying its
