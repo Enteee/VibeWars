@@ -230,6 +230,11 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
   const editor = page.getByRole("dialog", { name: "Beat editor: Ember Deep" });
   const code = editor.locator(".cm-content");
   await expect(code).toContainText("ember-deep");
+  // Syntax colours: a keyword is not plain ink.
+  await expect(code.locator("span", { hasText: /^let$/ }).first()).toHaveCSS(
+    "color",
+    "rgb(210, 168, 255)",
+  );
   // The click on Music started the menu's track; the editor holds its own.
   await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toContain("ember-deep");
 

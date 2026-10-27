@@ -1,5 +1,6 @@
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { javascript } from "@codemirror/lang-javascript";
+import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { EditorState, Prec, StateEffect, StateField } from "@codemirror/state";
 import {
   Decoration,
@@ -12,6 +13,7 @@ import {
   lineNumbers,
   type DecorationSet,
 } from "@codemirror/view";
+import { tags } from "@lezer/highlight";
 
 /**
  * The beat editor's text area (#373): a minimal CodeMirror 6 with line
@@ -66,6 +68,17 @@ class ErrorWidget extends WidgetType {
   }
 }
 
+/** Syntax colours on the dark panel, from the skill-type palette. */
+const beatHighlight = HighlightStyle.define([
+  { tag: [tags.keyword, tags.operatorKeyword], color: "#d2a8ff" },
+  { tag: [tags.string, tags.special(tags.string)], color: "#c3e88d" },
+  { tag: [tags.number, tags.bool, tags.null], color: "#e3b341" },
+  { tag: [tags.function(tags.variableName), tags.function(tags.propertyName)], color: "#59c2ff" },
+  { tag: tags.propertyName, color: "#56d4dd" },
+  { tag: [tags.lineComment, tags.blockComment], color: "#7d8899", fontStyle: "italic" },
+  { tag: tags.invalid, color: "#ff7b72" },
+]);
+
 const setError = StateEffect.define<ShownError | null>();
 
 /** The error shown, as a block under its line; any edit clears it. */
@@ -114,6 +127,7 @@ export function createCodeEditor(doc: string, keys: CodeEditorKeys): CodeEditor 
         drawSelection(),
         history(),
         javascript(),
+        syntaxHighlighting(beatHighlight),
         errorField,
         // Ahead of the default keymap, whose Mod-Enter inserts a line.
         Prec.highest(
