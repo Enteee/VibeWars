@@ -325,6 +325,20 @@ Mystic Regeneration gives +3 health pips for each enchantment on you,
 any profession's and itself included, at most 3, recounted the moment
 one goes. Heart of Fury is a stance: you attack 25% faster.
 
+**The scythe enchantments** (#939). While **Vow of Strength** (elite,
+15 s) is on you, every attack you make with a scythe, swing or attack
+skill, hit, miss or block, deals 22 slashing to every foe adjacent to
+you, your target included. **Sand Shards** (30 s) splashes 50 earth on
+every other foe adjacent to the foe you hit, for each of your next 4
+scythe hits; a cleave that hits 3 foes spends 3, and the 4th ends it.
+Neither does anything with another weapon, and a hit with another
+weapon spends nothing. A splash is not a blow: no block, no crit, no
+adrenaline. **Pious Haste** is a stance: lose 1 Dervish enchantment and
+move 25% faster for 6 s, or 50% faster if one was lost, which is capped
+at +33% as every speed-up is (ADR-0019). **Victorious Sweep** (+21, any
+melee weapon) gains you 70 health if, after the blow, its target has
+less health than you, counted in points, not as a share.
+
 Each condition has a distinct mechanical identity, not just a different
 number:
 

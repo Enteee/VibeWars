@@ -408,6 +408,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Dervish/1052-Pious_Restoration",
   },
   {
+    id: "dervish.vow-of-strength",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1000-Vow_of_Strength",
+  },
+  {
+    id: "dervish.sand-shards",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/994-Sand_Shards",
+  },
+  {
+    id: "dervish.pious-haste",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1017-Pious_Haste",
+  },
+  {
+    id: "dervish.victorious-sweep",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1030-Victorious_Sweep",
+  },
+  {
     id: "mesmer.cry-of-frustration",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/308-Cry_of_Frustration",

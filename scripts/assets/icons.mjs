@@ -447,6 +447,29 @@ const status = {
     "stance",
     (c) => `<path d="M12 18l-4.8-4.8a2.8 2.8 0 0 1 4.8-4 2.8 2.8 0 0 1 4.8 4z" fill="${c}"/>`,
   ],
+  // Enchantment: a blade with a ring round it, slashing all adjacent foes
+  // whenever you attack (#939).
+  "vow-of-strength": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.6)}/>` +
+      `<path d="M8.5 15.5l7-7M9 12.5l2.5 2.5" ${stroke(c, 2.2)}/>`,
+  ],
+  // Enchantment: three grains of sand, flung at the foes beside your hit (#939).
+  "sand-shards": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 5.5l2 3.5h-4z" fill="${c}"/>` +
+      `<path d="M7.5 13l2 3.5h-4z" fill="${c}"/>` +
+      `<path d="M16.5 13l2 3.5h-4z" fill="${c}"/>`,
+  ],
+  // Stance: one chevron, forward: move 25% faster (#939).
+  "pious-haste": ["stance", (c) => `<path d="M9.5 9l4.5 5-4.5 5" ${stroke(c, 2.5)}/>`],
+  // Stance: three chevrons, forward: run 50% faster, an enchantment paid (#939).
+  "pious-haste-run": [
+    "stance",
+    (c) => `<path d="M5 9l4 5-4 5M9.5 9l4 5-4 5M14 9l4 5-4 5" ${stroke(c, 2.2)}/>`,
+  ],
   // Skill effect: a shield struck through, armor lost while the signet is
   // activated (#524).
   "healing-signet-armor": [
