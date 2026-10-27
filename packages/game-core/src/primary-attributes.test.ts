@@ -13,7 +13,7 @@ import {
 import { unarmedResolvedEquipment } from "./equipment/resolve.js";
 import { WEAPONS, type Weapon } from "./equipment/weapons.js";
 import { createRng } from "./rng.js";
-import { MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
+import { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
 import { getSkill } from "./skills/catalog.js";
 import { canActivate, payCost } from "./skills/activation.js";
 import { applySkillEffects } from "./skills/effects.js";
@@ -105,7 +105,7 @@ describe("Expertise (#528)", () => {
       reason: "insufficient-energy",
     });
     const { caster, check } = ranger(0, WEAPONS.hammer);
-    caster.adrenaline = 8;
+    caster.adrenaline.set("warrior.backbreaker", 8 * ADRENALINE_PER_STRIKE);
     expect(check(skill("warrior.backbreaker"))).toEqual({
       ok: false,
       reason: "insufficient-adrenaline",

@@ -239,9 +239,9 @@ export function createTrainingPanel(): TrainingPanel {
   // Overcast's grey band, after the fill and under the label (#461).
   const energyOvercast = overcastBandElement();
   energy.fill.after(energyOvercast);
-  const adrenaline = h("span", "training-adrenaline");
+  const attacking = h("span", "training-attacking");
   const vitals = h("div", "training-vitals");
-  vitals.append(health.root, energy.root, adrenaline);
+  vitals.append(health.root, energy.root, attacking);
 
   const skills = h("div", "training-skills");
 
@@ -469,11 +469,10 @@ export function createTrainingPanel(): TrainingPanel {
     renderOvercastBand(energyOvercast, self.overcast, self.maxEnergy);
     renderPips(health.pips, self.healthPips);
     renderPips(energy.pips, self.energyPips);
-    adrenaline.textContent =
-      `adrenaline ${String(self.adrenaline)}` +
-      (self.attackTargetSessionId === undefined ? "" : " · attacking");
+    attacking.textContent = self.attackTargetSessionId === undefined ? "" : "attacking";
     const slots = session?.connection.skillBar ?? [];
     const recharges = session?.connection.getRecharges() ?? [];
+    const adrenaline = session?.connection.getAdrenaline() ?? [];
     const reducedMotion = prefersReducedMotion();
     const fill = castFill(slots, self);
     const target = match.players.find((player) => player.sessionId === self.targetSessionId);
@@ -492,7 +491,10 @@ export function createTrainingPanel(): TrainingPanel {
       paintCastFill(button, index === fill?.slot ? fill.fraction : undefined);
       button.classList.toggle("is-out-of-range", far[index] === true);
       // A hint, not a gate: the simulation still decides.
-      button.classList.toggle("is-unaffordable", !slotAffordable(slot, self));
+      button.classList.toggle(
+        "is-unaffordable",
+        !slotAffordable(slot, self, adrenaline[index] ?? 0),
+      );
       button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
       // The same wipe as the match HUD (#152).
       paintRecharge(button, recharges[index], slot.name, reducedMotion);

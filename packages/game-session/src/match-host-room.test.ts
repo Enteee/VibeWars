@@ -4,9 +4,11 @@ import {
   PROTOCOL_VERSION,
   parsePeerRefuse,
   parsePeerWelcome,
+  parseAdrenaline,
   parseRecharge,
   type PeerRefuse,
   type PeerWelcome,
+  type AdrenalineMessage,
   type RechargeMessage,
 } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
@@ -39,7 +41,7 @@ const FIRST_SPAWN = ARENA.spawns[0]?.position ?? { x: Number.NaN, y: Number.NaN 
 /** Every message `transport` is sent on one channel, through `parse`. */
 function collect<T>(
   transport: Transport,
-  channel: "welcome" | "refuse" | "recharge" | "ended",
+  channel: "welcome" | "refuse" | "recharge" | "adrenaline" | "ended",
   parse: (value: unknown) => T | undefined,
 ): T[] {
   const received: T[] = [];
@@ -395,6 +397,27 @@ describe("a P2P match host, as the match room (#375)", () => {
       await match.step(1);
       expect(caster.received).toHaveLength(2);
       expect(other.received).toHaveLength(1);
+    });
+  });
+
+  describe("adrenaline (#463)", () => {
+    it("tells each player their own, one entry per slot, on join", async () => {
+      const match = startMatch();
+      const transport = match.network.join();
+      const received: AdrenalineMessage[] = collect(transport, "adrenaline", parseAdrenaline);
+      await settle();
+      const connection = await connectMatch({
+        transport,
+        hostId: "host",
+        hello: hello(),
+        timeoutMs: 1000,
+      });
+      await settle();
+      expect(received).toEqual([{ slots: DEFAULT_SKILL_BAR.map(() => 0) }]);
+      expect(connection.getAdrenaline()).toEqual(DEFAULT_SKILL_BAR.map(() => 0));
+      // Nothing changed: nothing more.
+      await match.step(1);
+      expect(received).toHaveLength(1);
     });
   });
 });

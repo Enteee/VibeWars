@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type WeaponId } from "../equipment/weapons.js";
 import { segment } from "../geometry.js";
+import { ADRENALINE_PER_STRIKE } from "../ruleset.js";
 import { vec2 } from "../vec2.js";
 import {
   canActivate,
@@ -108,13 +109,25 @@ describe("canActivate", () => {
     expect(canActivate(request({ caster }))).toEqual({ ok: true });
   });
 
-  it("rejects insufficient adrenaline for an adrenaline skill", () => {
+  it("rejects an adrenaline skill one unit short of its strikes, from its own pool (#463)", () => {
     const adrenalineSkill: Skill = { ...SPELL, cost: { kind: "adrenaline", amount: 9 } };
-    const caster = makeCombatant({ id: "caster", adrenaline: 5 });
-    expect(canActivate(request({ skill: adrenalineSkill, caster, skillBar: [SPELL.id] }))).toEqual({
-      ok: false,
-      reason: "insufficient-adrenaline",
+    const short = makeCombatant({
+      id: "caster",
+      adrenaline: new Map([
+        [SPELL.id, 9 * ADRENALINE_PER_STRIKE - 1],
+        ["other", 1000],
+      ]),
     });
+    expect(
+      canActivate(request({ skill: adrenalineSkill, caster: short, skillBar: [SPELL.id] })),
+    ).toEqual({ ok: false, reason: "insufficient-adrenaline" });
+    const charged = makeCombatant({
+      id: "caster",
+      adrenaline: new Map([[SPELL.id, 9 * ADRENALINE_PER_STRIKE]]),
+    });
+    expect(
+      canActivate(request({ skill: adrenalineSkill, caster: charged, skillBar: [SPELL.id] })),
+    ).toEqual({ ok: true });
   });
 
   it("accepts a free skill with no cost at all", () => {
@@ -268,19 +281,30 @@ describe("payCost", () => {
     expect(caster.energy).toBe(40);
   });
 
-  it("deducts adrenaline", () => {
+  it("empties the skill's own adrenaline and drains a strike from every other, floored (#463)", () => {
     const skill: Skill = { ...SPELL, cost: { kind: "adrenaline", amount: 9 } };
-    const caster = makeCombatant({ id: "caster", adrenaline: 12 });
+    const caster = makeCombatant({
+      id: "caster",
+      adrenaline: new Map([
+        [SPELL.id, 9 * ADRENALINE_PER_STRIKE],
+        ["full", 4 * ADRENALINE_PER_STRIKE],
+        ["low", 10],
+      ]),
+    });
     payCost(skill, caster);
-    expect(caster.adrenaline).toBe(3);
+    expect([...caster.adrenaline]).toEqual([
+      [SPELL.id, 0],
+      ["full", 3 * ADRENALINE_PER_STRIKE],
+      ["low", 0],
+    ]);
   });
 
   it("is a no-op for a free skill", () => {
     const skill: Skill = { ...SPELL, cost: undefined };
-    const caster = makeCombatant({ id: "caster", energy: 50, adrenaline: 5 });
+    const caster = makeCombatant({ id: "caster", energy: 50, adrenaline: new Map([["x", 5]]) });
     payCost(skill, caster);
     expect(caster.energy).toBe(50);
-    expect(caster.adrenaline).toBe(5);
+    expect(caster.adrenaline.get("x")).toBe(5);
   });
 });
 

@@ -467,10 +467,13 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
  * blind, block, crit and damage rolls; it is rolled only for a weapon that can, for
  * the same reason as the miss. `doubleStrike` says it struck twice, missed
  * blows included, so the off hand can stab after the main one (#561).
+ * `landed` counts the blows that damaged a victim, however many each
+ * cleaved: each earns a strike of adrenaline (#463).
  */
 export function resolveSwing(swing: Swing): {
   readonly events: CombatEvent[];
   readonly doubleStrike: boolean;
+  readonly landed: number;
 } {
   const { weapon } = swing.attacker.equipment.mainHand;
   const victims = victimsOf(swing, weapon);
@@ -479,12 +482,21 @@ export function resolveSwing(swing: Swing): {
 
   const events: CombatEvent[] = [];
   bearerAttacked(swing.attacker, events);
+  let landed = 0;
   for (let blow = 0; blow < strikes; blow += 1) {
+    const from = events.length;
     for (const victim of victims) {
       strike(swing, victim, events);
     }
+    if (
+      events
+        .slice(from)
+        .some((event) => event.kind === "damage" && event.targetId !== swing.attacker.id)
+    ) {
+      landed += 1;
+    }
   }
-  return { events, doubleStrike: strikes === 2 };
+  return { events, doubleStrike: strikes === 2, landed };
 }
 
 /**

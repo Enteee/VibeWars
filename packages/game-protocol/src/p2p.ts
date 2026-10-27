@@ -14,6 +14,7 @@
 import type {
   CastRefusedMessage,
   MapDescriptor,
+  AdrenalineMessage,
   RechargeMessage,
   RechargeSlot,
   SkillBarSlot,
@@ -35,6 +36,7 @@ export const CHANNELS = [
   "refused",
   "skill-bar",
   "recharge",
+  "adrenaline",
   "ended",
   "bye",
   "lobby-join",
@@ -206,7 +208,6 @@ export interface WirePlayer {
   readonly maxEnergy: number;
   /** Maximum energy lost to overcast (#461); energy fills to `maxEnergy − overcast`. */
   readonly overcast: number;
-  readonly adrenaline: number;
   readonly armor: number;
   readonly weaponId: string | null;
   readonly offhandId: string | null;
@@ -815,7 +816,6 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isNumber(raw.energy) ||
     !isNumber(raw.maxEnergy) ||
     !isNumber(raw.overcast) ||
-    !isNumber(raw.adrenaline) ||
     !isNumber(raw.armor) ||
     !isNullableString(raw.weaponId) ||
     !isNullableString(raw.offhandId) ||
@@ -851,7 +851,6 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         energy: raw.energy,
         maxEnergy: raw.maxEnergy,
         overcast: raw.overcast,
-        adrenaline: raw.adrenaline,
         armor: raw.armor,
         weaponId: raw.weaponId,
         offhandId: raw.offhandId,
@@ -1111,6 +1110,14 @@ function parseRechargeSlot(value: unknown): RechargeSlot | undefined {
 /** The `"recharge"` channel: a `RechargeMessage`, to one player alone (#152). */
 export function parseRecharge(value: unknown): RechargeMessage | undefined {
   const slots = parseArray(fields(value)?.slots, MAX_WIRE_SLOTS, parseRechargeSlot);
+  return slots === undefined ? undefined : { slots };
+}
+
+/** The `"adrenaline"` channel: an `AdrenalineMessage`, to one player alone (#463). */
+export function parseAdrenaline(value: unknown): AdrenalineMessage | undefined {
+  const slots = parseArray(fields(value)?.slots, MAX_WIRE_SLOTS, (slot) =>
+    isNumber(slot) && slot >= 0 ? slot : undefined,
+  );
   return slots === undefined ? undefined : { slots };
 }
 

@@ -575,11 +575,9 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     elite: false,
     profession: "warrior",
     attributeId: "warrior.swordsmanship",
-    // Costs exactly one hit's worth of adrenaline, so landing a skill
-    // immediately opens up the follow-up. Charging more than a hit grants
-    // would make it uncastable in practice — a real bug this catalog's
-    // own integration tests caught.
-    cost: { kind: "adrenaline", amount: 3 },
+    // Costs one strike, one hit's worth of adrenaline (#463), so landing
+    // it refills it for the next.
+    cost: { kind: "adrenaline", amount: 1 },
     overcast: 0,
     activationSeconds: 0,
     rechargeSeconds: 0,

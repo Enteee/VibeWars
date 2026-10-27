@@ -45,7 +45,6 @@ function self(cast: Partial<PlayerSnapshot>): PlayerSnapshot {
     energy: 20,
     maxEnergy: 50,
     overcast: 0,
-    adrenaline: 0,
     armor: 60,
     weaponId: undefined,
     offhandId: undefined,
@@ -304,15 +303,15 @@ describe("flashSlot", () => {
 describe("slotAffordable (#637)", () => {
   it("reads the bar's cost, so a discounted spell lights", () => {
     const poor = self({ energy: 3 });
-    expect(slotAffordable(slot("fireball"), poor)).toBe(false);
+    expect(slotAffordable(slot("fireball"), poor, 0)).toBe(false);
     // The host's next bar, with Glyph of Lesser Energy up.
-    expect(slotAffordable({ ...slot("fireball"), energyCost: 0 }, poor)).toBe(true);
+    expect(slotAffordable({ ...slot("fireball"), energyCost: 0 }, poor, 0)).toBe(true);
   });
 
-  it("asks adrenaline of an adrenal skill, not energy", () => {
+  it("asks the slot's own adrenaline of an adrenal skill, in strikes of 25, not energy (#463)", () => {
     const rush = { ...slot("rush"), energyCost: 0, adrenalineCost: 4 };
-    expect(slotAffordable(rush, self({ adrenaline: 3 }))).toBe(false);
-    expect(slotAffordable(rush, self({ adrenaline: 4 }))).toBe(true);
+    expect(slotAffordable(rush, self({ energy: 0 }), 4 * 25 - 1)).toBe(false);
+    expect(slotAffordable(rush, self({ energy: 0 }), 4 * 25)).toBe(true);
   });
 });
 

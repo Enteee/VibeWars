@@ -4,6 +4,7 @@ import { distanceWithinRange, hasLineOfSight, type Segment } from "../geometry.j
 import { EXPERTISE_ATTRIBUTE, expertiseEnergyCost } from "../primary-attributes.js";
 import type { Vec2 } from "../vec2.js";
 
+import { canAffordAdrenaline, spendAdrenaline } from "./adrenaline.js";
 import { addOvercast } from "./overcast.js";
 import { getStatusDefinition } from "./status.js";
 import { rankOf, type RankHolder } from "./tick.js";
@@ -141,7 +142,7 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
     if (skill.cost.kind === "energy" && caster.energy < energyCostOf(skill, caster)) {
       return reject("insufficient-energy");
     }
-    if (skill.cost.kind === "adrenaline" && caster.adrenaline < skill.cost.amount) {
+    if (skill.cost.kind === "adrenaline" && !canAffordAdrenaline(caster, skill)) {
       return reject("insufficient-adrenaline");
     }
   }
@@ -197,7 +198,7 @@ export function payCost(skill: Skill, caster: Combatant): void {
   if (skill.cost?.kind === "energy") {
     caster.energy -= energyCostOf(skill, caster);
   } else if (skill.cost?.kind === "adrenaline") {
-    caster.adrenaline -= skill.cost.amount;
+    spendAdrenaline(caster, skill);
   }
   // After the energy, so a spell that lowers the ceiling below its own
   // cost still goes off; at activation start, so an interrupted or
