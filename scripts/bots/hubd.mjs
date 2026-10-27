@@ -13,7 +13,7 @@
  *
  * See docs/adr/0015-agent-company.md.
  */
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -133,7 +133,7 @@ import {
   cpuShare,
   employeeOfUnit,
   flowKpis,
-  parseUnitShow,
+  parseUnits,
   staffKpis,
   tokensByRole,
 } from "./kpi.mjs";
@@ -3338,41 +3338,56 @@ let cpuSamples = /** @type {{ at: number, nsec: Map<string, number> }} */ ({
   nsec: new Map(),
 });
 
+const SLICE = "vibewars-jails.slice";
+
+/** The user manager gets this long, in all, to answer; hubd's loop waits for it. */
+const SYSTEMCTL_MS = 3000;
+
 /**
- * Memory and CPU of every running jail and of their slice, from the user
- * manager. A unit that vanishes between list and show is skipped.
+ * Memory and CPU of every jail and of their slice, from the user manager, in
+ * one `systemctl show` that is killed after `SYSTEMCTL_MS`: a stalled user
+ * manager must not stall the hub commands behind it.
  *
  * @param {number} now
  * @param {readonly string[]} employees staff ids, to name a unit by
  * @returns {Promise<NonNullable<import("./kpi.mjs").Kpis["host"]>>}
  */
 async function sampleHost(now, employees) {
-  const listed = await run(
-    "systemctl",
-    ["--user", "list-units", "--plain", "--no-legend", "--state=running", "vibewars-jail-*"],
-    GH_CWD,
-  );
-  if (listed.code !== 0) {
-    throw new Error(`systemctl list-units exited ${String(listed.code)}`);
-  }
+  /** @type {string} */
+  const shown = await new Promise((resolve, reject) => {
+    execFile(
+      "systemctl",
+      [
+        "--user",
+        "show",
+        "-p",
+        "Id",
+        "-p",
+        "MemoryCurrent",
+        "-p",
+        "CPUUsageNSec",
+        "vibewars-jail-*",
+        SLICE,
+      ],
+      { timeout: SYSTEMCTL_MS, killSignal: "SIGKILL", encoding: "utf8" },
+      (error, stdout) => {
+        if (error === null) {
+          resolve(stdout);
+        } else {
+          reject(new Error(`systemctl show: ${error.message.split("\n")[0] ?? "failed"}`));
+        }
+      },
+    );
+  });
+  const units = parseUnits(shown);
   const elapsed = now - cpuSamples.at;
   /** @type {Map<string, number>} */
   const nsec = new Map();
   /** @type {Record<string, { memoryBytes: number, cpuShare: number | null }>} */
   const perEmployee = {};
-  for (const line of listed.stdout.split("\n")) {
-    const unit = line.trim().split(/\s+/)[0] ?? "";
+  for (const [unit, { memoryBytes, cpuNSec }] of units) {
     const key = employeeOfUnit(unit);
-    if (key === null) {
-      continue;
-    }
-    const shown = await run(
-      "systemctl",
-      ["--user", "show", "-p", "MemoryCurrent", "-p", "CPUUsageNSec", unit],
-      GH_CWD,
-    );
-    const { memoryBytes, cpuNSec } = parseUnitShow(shown.code === 0 ? shown.stdout : "");
-    if (memoryBytes === null) {
+    if (key === null || memoryBytes === null) {
       continue;
     }
     const employee = employees.find((id) => id.replace("@", "-") === key) ?? key;
@@ -3382,21 +3397,15 @@ async function sampleHost(now, employees) {
       cpuShare: cpuShare(cpuSamples.nsec.get(employee) ?? null, cpuNSec, elapsed),
     };
   }
-  const slice = await run(
-    "systemctl",
-    ["--user", "show", "-p", "MemoryCurrent", "-p", "CPUUsageNSec", "vibewars-jails.slice"],
-    GH_CWD,
-  );
-  const total = parseUnitShow(slice.code === 0 ? slice.stdout : "");
-  const sliceKey = "vibewars-jails.slice";
+  const total = units.get(SLICE) ?? { memoryBytes: null, cpuNSec: null };
   if (total.cpuNSec !== null) {
-    nsec.set(sliceKey, total.cpuNSec);
+    nsec.set(SLICE, total.cpuNSec);
   }
   const host = {
     employees: perEmployee,
     slice: {
       memoryBytes: total.memoryBytes ?? 0,
-      cpuShare: cpuShare(cpuSamples.nsec.get(sliceKey) ?? null, total.cpuNSec, elapsed),
+      cpuShare: cpuShare(cpuSamples.nsec.get(SLICE) ?? null, total.cpuNSec, elapsed),
     },
     diskFreeBytes: freeBytes(ROOT),
     diskHoldBelow: HOLD_BELOW,

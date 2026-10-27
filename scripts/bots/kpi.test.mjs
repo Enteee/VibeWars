@@ -8,7 +8,7 @@ import {
   flowKpis,
   median,
   p90,
-  parseUnitShow,
+  parseUnits,
   staffKpis,
   tokensByRole,
 } from "./kpi.mjs";
@@ -146,15 +146,17 @@ describe("statistics", () => {
 });
 
 describe("host readers", () => {
-  it("parses systemctl show, treating unset values as absent", () => {
-    expect(parseUnitShow("MemoryCurrent=1048576\nCPUUsageNSec=2000000000\n")).toEqual({
-      memoryBytes: 1048576,
-      cpuNSec: 2e9,
-    });
-    expect(parseUnitShow("MemoryCurrent=[not set]\nCPUUsageNSec=18446744073709551615\n")).toEqual({
-      memoryBytes: null,
-      cpuNSec: null,
-    });
+  it("parses systemctl show of several units, treating unset values as absent", () => {
+    const text = [
+      "Id=vibewars-jail-qa-tester-1.service\nMemoryCurrent=1048576\nCPUUsageNSec=2000000000",
+      "Id=vibewars-jails.slice\nMemoryCurrent=[not set]\nCPUUsageNSec=18446744073709551615\n",
+    ].join("\n\n");
+    expect(parseUnits(text)).toEqual(
+      new Map([
+        ["vibewars-jail-qa-tester-1.service", { memoryBytes: 1048576, cpuNSec: 2e9 }],
+        ["vibewars-jails.slice", { memoryBytes: null, cpuNSec: null }],
+      ]),
+    );
   });
 
   it("measures CPU in cores, null without a previous sample", () => {

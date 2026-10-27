@@ -122,20 +122,34 @@ export function flowKpis({ now, moves, cards }) {
 }
 
 /**
- * `systemctl show -p A -p B` output as numbers; `[not set]` and the
- * unsigned-max "no value" of systemd are absent.
+ * `systemctl show -p Id -p MemoryCurrent -p CPUUsageNSec` for several units:
+ * blocks separated by a blank line. `[not set]` and the unsigned-max "no
+ * value" of systemd are absent.
  *
  * @param {string} text
- * @returns {{ memoryBytes: number | null, cpuNSec: number | null }}
+ * @returns {Map<string, { memoryBytes: number | null, cpuNSec: number | null }>}
  */
-export function parseUnitShow(text) {
-  /** @param {string} key */
-  const read = (key) => {
-    const line = text.split("\n").find((l) => l.startsWith(`${key}=`));
-    const value = Number(line?.slice(key.length + 1));
-    return Number.isFinite(value) && value < 2 ** 63 ? value : null;
-  };
-  return { memoryBytes: read("MemoryCurrent"), cpuNSec: read("CPUUsageNSec") };
+export function parseUnits(text) {
+  /** @type {Map<string, { memoryBytes: number | null, cpuNSec: number | null }>} */
+  const units = new Map();
+  for (const block of text.split(/\n\s*\n/)) {
+    /** @param {string} key */
+    const field = (key) =>
+      block
+        .split("\n")
+        .find((line) => line.startsWith(`${key}=`))
+        ?.slice(key.length + 1);
+    /** @param {string} key */
+    const number = (key) => {
+      const value = Number(field(key));
+      return Number.isFinite(value) && value < 2 ** 63 ? value : null;
+    };
+    const id = field("Id");
+    if (id !== undefined && id !== "") {
+      units.set(id, { memoryBytes: number("MemoryCurrent"), cpuNSec: number("CPUUsageNSec") });
+    }
+  }
+  return units;
 }
 
 /**
