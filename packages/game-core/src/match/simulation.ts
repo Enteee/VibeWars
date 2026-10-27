@@ -968,7 +968,6 @@ export class MatchSimulation {
       // claim this is unreachable, and losing this branch would leave a
       // corpse mid-cast that never respawns.
       if (statusEvents.some((event) => event.kind === "death")) {
-        record.combatant.cast.cancelCast();
         this.#recordDeaths(statusEvents);
         continue;
       }
@@ -2016,7 +2015,8 @@ export class MatchSimulation {
   }
 
   /**
-   * Every death in `events` scores for the other side and starts its
+   * Every death in `events` drops the victim's cast, so a resurrection
+   * (#812) never finishes it, scores for the other side and starts its
    * respawn. Read from the emitted events so every death routes through
    * one place, whether a skill, a swing or degeneration caused it.
    */
@@ -2029,6 +2029,7 @@ export class MatchSimulation {
       if (victim !== undefined) {
         victim.combatant.attack = undefined;
         victim.pendingSkill = undefined;
+        victim.combatant.cast.cancelCast();
         victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
         victim.combatant.knockdownRemaining = 0;

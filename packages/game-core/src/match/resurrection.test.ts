@@ -142,3 +142,74 @@ describe("Restore Life in a match (#812)", () => {
     expect(get(sim, "w").position).toEqual(vec2(200, 0));
   });
 });
+
+describe("Restore Life meets death and overcast (#812)", () => {
+  /** `match()` with the foe an Elementalist casting Chain Lightning from `at`. */
+  function withCaster(at: Vec2): MatchSimulation {
+    return new MatchSimulation({
+      seed: "restore",
+      matchRules: MATCH,
+      participants: [
+        spec("m", 0, vec2(0, 0)),
+        spec("n", 0, vec2(60, 0)),
+        spec("w", 0, vec2(30, 0)),
+        {
+          ...spec("foe", 1, at),
+          skillBar: ["elementalist.chain-lightning"],
+          attributeRanks: new Map([["elementalist.air-magic", 12]]),
+        },
+      ],
+    });
+  }
+
+  it("a caster killed by a hit mid-cast comes back with no cast, and never finishes it", () => {
+    const sim = withCaster(vec2(200, 0));
+    kill(sim, "w");
+    get(sim, "w").respawnInSeconds = 100;
+    sim.setTarget("n", "w");
+    expect(sim.requestSkill("n", 0)?.check).toEqual({ ok: true });
+    const caster = get(sim, "n");
+    caster.combatant.health = 1;
+    sim.setTarget("foe", "n");
+    expect(sim.requestSkill("foe", 0)?.check).toEqual({ ok: true });
+    stepFor(sim, 2 + DT);
+    expect(caster.combatant.dead).toBe(true);
+    expect(caster.combatant.cast.activeCast).toBeUndefined();
+
+    sim.setTarget("m", "n");
+    expect(sim.requestSkill("m", 0)?.check).toEqual({ ok: true });
+    // Restore Life's cast, and the tick or two its start waits on.
+    const events = stepFor(sim, CAST_SECONDS + 0.5);
+    expect(caster.combatant.dead).toBe(false);
+    expect(caster.combatant.cast.activeCast).toBeUndefined();
+
+    events.push(...stepFor(sim, CAST_SECONDS));
+    expect(resurrections(events).map((event) => event.targetId)).toEqual(["n"]);
+    expect(get(sim, "w").combatant.dead).toBe(true);
+  });
+
+  it("brings energy back only up to the ceiling overcast leaves (#461)", () => {
+    const sim = match();
+    kill(sim, "w");
+    const ally = get(sim, "w").combatant;
+    ally.overcast = 20;
+    sim.setTarget("m", "w");
+    expect(sim.requestSkill("m", 0)?.check).toEqual({ ok: true });
+    expect(resurrections(stepFor(sim, CAST_SECONDS))).toHaveLength(1);
+    // 80% of 30 is 24, above the 10-odd that 20 overcast, less what
+    // recovered over the cast, leaves.
+    expect(ally.overcast).toBeGreaterThan(18);
+    expect(ally.energy).toBeCloseTo(30 - ally.overcast, 1);
+  });
+
+  it("brings no energy back when overcast is above maximum energy (#461)", () => {
+    const sim = match();
+    kill(sim, "w");
+    const ally = get(sim, "w").combatant;
+    ally.overcast = 40;
+    sim.setTarget("m", "w");
+    expect(sim.requestSkill("m", 0)?.check).toEqual({ ok: true });
+    expect(resurrections(stepFor(sim, CAST_SECONDS))).toHaveLength(1);
+    expect(ally.energy).toBe(0);
+  });
+});

@@ -209,7 +209,8 @@ function loseEnergy(target: Combatant, amount: number, events: CombatEvent[]): v
 /**
  * Bring a dead `target` back (#812), as a respawn leaves it but where it
  * lies: these shares of its maximum health (at least 1) and energy, no
- * effects, no adrenaline. Its recharges carry on.
+ * effects, no adrenaline. Its recharges carry on, and so does its
+ * overcast: energy stops at the ceiling that leaves (#461).
  */
 function resurrect(
   target: Combatant,
@@ -220,7 +221,10 @@ function resurrect(
   target.statuses.clear();
   target.dead = false;
   target.health = Math.max(1, Math.floor(target.maxHealth * healthFraction));
-  target.energy = Math.floor(target.maxEnergy * energyFraction);
+  target.energy = Math.max(
+    0,
+    Math.min(Math.floor(target.maxEnergy * energyFraction), effectiveMaxEnergy(target)),
+  );
   target.adrenaline = 0;
   events.push({ kind: "resurrected", targetId: target.id, healthFraction, energyFraction });
 }
