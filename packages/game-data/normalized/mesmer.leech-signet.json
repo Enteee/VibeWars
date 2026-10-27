@@ -9,6 +9,7 @@
   "overcast": 0,
   "activationSeconds": 0.25,
   "rechargeSeconds": 30,
+  "upkeep": false,
   "description": "Interrupt target foe's action. If that action was a spell, you gain 3...13...15 Energy.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

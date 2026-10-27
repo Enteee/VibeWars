@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 6,
+  "upkeep": false,
   "description": "Must follow a lead attack. If it hits, this attack strikes for +10...30...35 damage and any Stance being used by target foe ends. This attack cannot be blocked.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

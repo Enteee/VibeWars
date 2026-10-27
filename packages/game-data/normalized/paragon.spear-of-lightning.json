@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 6,
+  "upkeep": false,
   "description": "If this attack hits, it deals +8...18...20 lightning damage. This attack has 25% armor penetration.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.75,
   "rechargeSeconds": 3,
+  "upkeep": false,
   "description": "Heal target ally for 5...81...100 Health. Heal for an additional 30...98...115 Health if that ally is below 50% health.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

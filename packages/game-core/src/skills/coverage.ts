@@ -123,6 +123,22 @@ export function computeCoverage(importedSkillIds: readonly string[]): SkillCover
   };
 }
 
+/**
+ * Catalog skills the corpus marks as upkeep that are not maintained here
+ * (#840): an upkeep skill implemented as a timed enchantment would be a
+ * different skill wearing its name. Takes the imported upkeep ids for the
+ * same reason `computeCoverage` takes the imported ids. Empty is healthy.
+ */
+export function unmaintainedUpkeepSkills(upkeepSkillIds: readonly string[]): readonly string[] {
+  const upkeep = new Set(upkeepSkillIds);
+  return IMPLEMENTED_SKILLS.filter(
+    (skill) =>
+      upkeep.has(skill.id) && !skill.effects.some((effect) => effect.kind === "maintain-status"),
+  )
+    .map((skill) => skill.id)
+    .sort();
+}
+
 /** Group unimplemented skills by the mechanic they are waiting on. */
 export function missingMechanics(
   coverage: SkillCoverage,

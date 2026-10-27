@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 8,
+  "upkeep": false,
   "description": "For 3 seconds, you run 50% faster.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

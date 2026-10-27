@@ -13,6 +13,7 @@
   "overcast": 10,
   "activationSeconds": 5,
   "rechargeSeconds": 60,
+  "upkeep": false,
   "description": "Create a Meteor Shower at target foe's location. For 9 seconds, foes adjacent to\n                that location are struck for 7...91...112 fire damage\n                and knocked down every 3 seconds.",
   "variant": "pvp",
   "ruleset": "gw1-reference",
