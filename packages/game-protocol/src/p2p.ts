@@ -202,6 +202,8 @@ export interface WirePlayer {
   readonly walking: boolean;
   readonly health: number;
   readonly maxHealth: number;
+  /** Maximum health after a loss such as deep wound's (#764): the bar greys the rest. */
+  readonly effectiveMaxHealth: number;
   readonly energy: number;
   readonly maxEnergy: number;
   readonly adrenaline: number;
@@ -778,6 +780,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     typeof raw.walking !== "boolean" ||
     !isNumber(raw.health) ||
     !isNumber(raw.maxHealth) ||
+    !isNumber(raw.effectiveMaxHealth) ||
     !isNumber(raw.energy) ||
     !isNumber(raw.maxEnergy) ||
     !isNumber(raw.adrenaline) ||
@@ -813,6 +816,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
         walking: raw.walking,
         health: raw.health,
         maxHealth: raw.maxHealth,
+        effectiveMaxHealth: raw.effectiveMaxHealth,
         energy: raw.energy,
         maxEnergy: raw.maxEnergy,
         adrenaline: raw.adrenaline,

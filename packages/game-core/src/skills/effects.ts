@@ -3,6 +3,7 @@ import { getSkill } from "./catalog.js";
 import { mitigate, spellDamage } from "./damage.js";
 import { resolveMagnitude } from "./scaling.js";
 import { getStatusDefinition, scaledStatusDuration, type StatusId } from "./status.js";
+import { effectiveMaxHealth, healingMultiplierOf, maxHealthLossOf } from "./tick.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import {
@@ -114,12 +115,19 @@ export function applyDamage(
   }
 }
 
-/** Heal, clamped so it can never exceed maximum health. The dead stay dead. */
+/**
+ * A heal from a skill: weakened by the target's healing reduction (deep
+ * wound), and clamped so it never exceeds the effective maximum health.
+ * The dead stay dead.
+ */
 function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): void {
   if (amount <= 0 || target.dead) {
     return;
   }
-  const applied = Math.min(amount, target.maxHealth - target.health);
+  const applied = Math.min(
+    amount * healingMultiplierOf(target),
+    effectiveMaxHealth(target) - target.health,
+  );
   if (applied <= 0) {
     return;
   }
@@ -209,6 +217,32 @@ export function interruptIfCastingSpell(target: Combatant, events: CombatEvent[]
   }
 }
 
+/**
+ * Apply (or refresh) a status, and take what it takes as it lands: a
+ * newly applied maximum health loss (deep wound) comes off current health
+ * too, never below 1, so it alone never kills (#764: GW1 defers the loss
+ * to the next health change; flooring it is the accepted approximation).
+ * A refresh takes nothing. Returns the health taken, for the caller to
+ * report as damage.
+ */
+export function applyStatus(
+  target: Combatant,
+  statusId: StatusId,
+  durationSeconds: number,
+  sourceId: string,
+): number {
+  const lossBefore = maxHealthLossOf(target);
+  if (!target.statuses.apply(statusId, durationSeconds, sourceId)) {
+    return 0;
+  }
+  const taken = Math.min(maxHealthLossOf(target) - lossBefore, target.health - 1);
+  if (taken <= 0) {
+    return 0;
+  }
+  target.health -= taken;
+  return taken;
+}
+
 export function applyEffect(effect: SkillEffect, context: SkillContext): CombatEvent[] {
   const events: CombatEvent[] = [];
   const { caster, target } = context;
@@ -261,13 +295,16 @@ export function applyEffect(effect: SkillEffect, context: SkillContext): CombatE
         return events;
       }
       const durationSeconds = scaledStatusDuration(target, effect.statusId, effect.durationSeconds);
-      target.statuses.apply(effect.statusId, durationSeconds, caster.id);
+      const loss = applyStatus(target, effect.statusId, durationSeconds, caster.id);
       events.push({
         kind: "status-applied",
         targetId: target.id,
         statusId: effect.statusId,
         durationSeconds,
       });
+      if (loss > 0) {
+        events.push({ kind: "damage", targetId: target.id, amount: loss, critical: false });
+      }
       // Applying Dazed interrupts a spell, even on a target already dazed.
       if (getStatusDefinition(effect.statusId).interruptsSpells) {
         interruptIfCastingSpell(target, events);

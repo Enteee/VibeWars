@@ -577,6 +577,8 @@ describe("block (#534)", () => {
           critical: false,
         },
         { kind: "status-applied", targetId: "t", statusId: "deep-wound", durationSeconds: 20 },
+        // 20% of 500 off current health as it lands (#764).
+        { kind: "damage", targetId: "t", amount: 100, critical: false },
       ]);
     });
 

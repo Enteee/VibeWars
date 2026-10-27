@@ -11,6 +11,7 @@ import { getSkill } from "../skills/catalog.js";
 import { MISSING_MECHANIC_DESCRIPTIONS } from "../skills/coverage.js";
 import { armorMultiplier, weaponAttributeMultiplier } from "../skills/damage.js";
 import { describeSkill } from "../skills/describe.js";
+import { HEALTH_PER_PIP } from "../skills/status.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation } from "./simulation.js";
 import {
@@ -421,7 +422,10 @@ describe("condition-removal, headless (#111)", () => {
       sim.step(DT);
       most = Math.max(most, sim.get("ally")?.combatant.health ?? 0);
     }
-    expect(most).toBe(400);
+    // The heal stops at 400 (#764); the ally's bleeding, −3 pips, takes its
+    // tick off in the same step, after the heal and before the reading.
+    expect(most).toBeLessThanOrEqual(400);
+    expect(most).toBeCloseTo(400 - 3 * HEALTH_PER_PIP * DT, 9);
   });
 });
 

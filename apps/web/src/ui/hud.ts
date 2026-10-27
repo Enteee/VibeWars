@@ -59,6 +59,8 @@ export interface HudElements {
   /** Health, energy and statuses, then the skill bar: from its top down, the HUD hides the arena. */
   readonly bars: HTMLElement;
   readonly healthFill: HTMLElement;
+  /** The greyed end of the bar: maximum health a deep wound took (#764). */
+  readonly healthLost: HTMLElement;
   readonly healthText: HTMLElement;
   /** Net regeneration or degeneration arrows in the bar (#504). */
   readonly healthPips: HTMLElement;
@@ -84,6 +86,7 @@ export interface HudElements {
   /** The target's health bar (#484), labelled with its percentage. */
   readonly targetHealth: HTMLElement;
   readonly targetHealthFill: HTMLElement;
+  readonly targetHealthLost: HTMLElement;
   readonly targetHealthText: HTMLElement;
   readonly targetHealthPips: HTMLElement;
   /** What the target is casting (#484): icon (#727), badge, name and a filling bar. */
@@ -191,6 +194,7 @@ export function createHud(parent: HTMLElement): HudElements {
   attacking.hidden = true;
   const targetHealth = element("div", "hud-bar hud-target-health", targetPanel);
   const targetHealthFill = element("div", "hud-bar-fill", targetHealth);
+  const targetHealthLost = element("div", "hud-bar-lost", targetHealth);
   const targetHealthText = element("span", "hud-bar-label", targetHealth);
   const targetHealthPips = targetHealth.appendChild(pipsElement());
   targetHealth.hidden = true;
@@ -209,6 +213,7 @@ export function createHud(parent: HTMLElement): HudElements {
 
   const healthRow = element("div", "hud-bar hud-bar-health", bars);
   const healthFill = element("div", "hud-bar-fill", healthRow);
+  const healthLost = element("div", "hud-bar-lost", healthRow);
   const healthText = element("span", "hud-bar-label", healthRow);
   const healthPips = healthRow.appendChild(pipsElement());
 
@@ -229,6 +234,7 @@ export function createHud(parent: HTMLElement): HudElements {
     root,
     bars,
     healthFill,
+    healthLost,
     healthText,
     healthPips,
     energyFill,
@@ -246,6 +252,7 @@ export function createHud(parent: HTMLElement): HudElements {
     targetText,
     targetHealth,
     targetHealthFill,
+    targetHealthLost,
     targetHealthText,
     targetHealthPips,
     targetCast,
@@ -466,6 +473,19 @@ function setBar(
   const fraction = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
   fill.style.width = `${String(fraction * 100)}%`;
   label.textContent = `${String(Math.round(value))} / ${String(Math.round(max))} ${suffix}`;
+}
+
+/**
+ * How much of a health bar is greyed (#764): the share of maximum health
+ * a loss such as deep wound's took, as a percentage of the whole bar.
+ * None for the dead, whose bar is an empty track.
+ */
+export function lostHealthPercent(player: PlayerSnapshot): number {
+  if (player.dead || player.maxHealth <= 0) {
+    return 0;
+  }
+  const lost = player.maxHealth - player.effectiveMaxHealth;
+  return Math.max(0, Math.min(100, (lost / player.maxHealth) * 100));
 }
 
 /** Update the HUD from the latest authoritative snapshot of this player. */
@@ -757,6 +777,7 @@ function renderTarget(
   if (target !== undefined) {
     hud.targetHealth.classList.toggle("is-dead", target.dead);
     hud.targetHealthFill.style.width = `${String(targetHealthPercent(target))}%`;
+    hud.targetHealthLost.style.width = `${String(lostHealthPercent(target))}%`;
     hud.targetHealthText.textContent = targetHealthLabel(target, self.team);
     renderPips(hud.targetHealthPips, target.healthPips);
   }
@@ -790,6 +811,7 @@ export function updateHud(
   hud.hint.hidden = hud.hintDismissed;
 
   setBar(hud.healthFill, hud.healthText, self.health, self.maxHealth, "hp");
+  hud.healthLost.style.width = `${String(lostHealthPercent(self))}%`;
   setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, "en");
   renderPips(hud.healthPips, self.healthPips);
   renderPips(hud.energyPips, self.energyPips);

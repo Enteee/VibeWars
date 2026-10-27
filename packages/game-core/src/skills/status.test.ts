@@ -46,7 +46,8 @@ describe("status definitions", () => {
         def.armorModifier !== 0 ||
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
-        def.maxHealthMultiplier !== 1 ||
+        def.maxHealthLoss !== undefined ||
+        def.healingMultiplier !== 1 ||
         def.castTimeMultiplier !== 1 ||
         def.interruptsSpells ||
         def.attackDurationMultiplier !== 1 ||
@@ -65,7 +66,8 @@ describe("status definitions", () => {
     );
     expect(getStatusDefinition("crippled").moveSpeedMultiplier).toBeLessThan(1);
     expect(getStatusDefinition("blind").attackMissChance).toBeGreaterThan(0.5);
-    expect(getStatusDefinition("deep-wound").maxHealthMultiplier).toBeLessThan(1);
+    expect(getStatusDefinition("deep-wound").maxHealthLoss?.fraction).toBeGreaterThan(0);
+    expect(getStatusDefinition("deep-wound").healingMultiplier).toBeLessThan(1);
     expect(getStatusDefinition("dazed").castTimeMultiplier).toBeGreaterThan(1);
   });
 
@@ -265,7 +267,8 @@ describe("aggregateModifiers", () => {
     expect(mods.armorModifier).toBe(0);
     expect(mods.moveSpeedMultiplier).toBe(1);
     expect(mods.attackMissChance).toBe(0);
-    expect(mods.maxHealthMultiplier).toBe(1);
+    expect(mods.maxHealthLoss).toBeUndefined();
+    expect(mods.healingMultiplier).toBe(1);
     expect(mods.castTimeMultiplier).toBe(1);
   });
 

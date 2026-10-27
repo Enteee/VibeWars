@@ -37,6 +37,8 @@ export interface PlayerSnapshot {
   readonly walking: boolean;
   readonly health: number;
   readonly maxHealth: number;
+  /** Maximum health after a loss such as deep wound's (#764): the bar greys the rest. */
+  readonly effectiveMaxHealth: number;
   readonly energy: number;
   readonly maxEnergy: number;
   readonly adrenaline: number;

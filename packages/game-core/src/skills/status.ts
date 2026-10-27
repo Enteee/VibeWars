@@ -117,8 +117,16 @@ export interface StatusDefinition {
    * injectable simulation RNG, never Math.random (brief §35).
    */
   readonly attackMissChance: number;
-  /** Multiplier on the bearer's maximum health (deep wound's signature). */
-  readonly maxHealthMultiplier: number;
+  /**
+   * What the bearer loses of its maximum health (deep wound's signature):
+   * `fraction` of it, at most `cap`. `undefined`: none.
+   */
+  readonly maxHealthLoss: MaxHealthLoss | undefined;
+  /**
+   * Multiplier on the heals the bearer receives from skills (1 = unaffected).
+   * Regeneration and life steal ignore it.
+   */
+  readonly healingMultiplier: number;
   /**
    * Multiplier on the bearer's spell cast time; >1 is a penalty. Dazed
    * doubles it. A signet or any other skill that is not a spell ignores
@@ -162,6 +170,12 @@ export interface StatusDefinition {
   readonly nextSpells: NextSpells | undefined;
 }
 
+/** A share of maximum health a status takes, at most `cap` (GW1's deep wound). */
+export interface MaxHealthLoss {
+  readonly fraction: number;
+  readonly cap: number;
+}
+
 /** A glyph's hold on the next spells: how many, and how much cheaper (#526). */
 export interface NextSpells {
   readonly count: number;
@@ -183,7 +197,8 @@ function define(
     armorModifier: 0,
     moveSpeedMultiplier: 1,
     attackMissChance: 0,
-    maxHealthMultiplier: 1,
+    maxHealthLoss: undefined,
+    healingMultiplier: 1,
     castTimeMultiplier: 1,
     interruptsSpells: false,
     attackDurationMultiplier: 1,
@@ -210,7 +225,10 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   crippled: define("crippled", "Crippled", "condition", { moveSpeedMultiplier: 0.5 }),
   blind: define("blind", "Blind", "condition", { attackMissChance: 0.9 }),
   weakness: define("weakness", "Weakness", "condition", { armorModifier: -20 }),
-  "deep-wound": define("deep-wound", "Deep Wound", "condition", { maxHealthMultiplier: 0.8 }),
+  "deep-wound": define("deep-wound", "Deep Wound", "condition", {
+    maxHealthLoss: { fraction: 0.2, cap: 100 },
+    healingMultiplier: 0.8,
+  }),
   dazed: define("dazed", "Dazed", "condition", { castTimeMultiplier: 2, interruptsSpells: true }),
 
   "life-drain": define("life-drain", "Life Drain", "hex", { healthPips: -2 }),
@@ -306,18 +324,23 @@ export class StatusSet {
    * one never shortens a longer one already running. In an exclusive
    * category the new one replaces every one of its category, itself
    * included, at the incoming duration (a stance, #523).
+   *
+   * Returns whether it is newly on the bearer: `false` for a refresh, or
+   * for a duration of nothing. What a status does once, as it lands
+   * (deep wound's health), hangs on this.
    */
-  public apply(id: StatusId, durationSeconds: number, sourceId: string): void {
+  public apply(id: StatusId, durationSeconds: number, sourceId: string): boolean {
     if (durationSeconds <= 0) {
-      return;
+      return false;
     }
+    const wasActive = this.#statuses.has(id);
     const { category } = getStatusDefinition(id);
     if (EXCLUSIVE_CATEGORIES.has(category)) {
       this.removeByCategory(category);
     }
     const existing = this.#statuses.get(id);
     if (existing !== undefined && existing.remainingSeconds >= durationSeconds) {
-      return;
+      return false;
     }
     this.#statuses.set(id, {
       id,
@@ -326,6 +349,7 @@ export class StatusSet {
       spellsLeft: getStatusDefinition(id).nextSpells?.count,
       sourceId,
     });
+    return !wasActive;
   }
 
   /** Remove every status, of every category: what a respawn leaves. */
@@ -457,18 +481,26 @@ export interface StatusModifiers {
   readonly armorModifier: number;
   readonly moveSpeedMultiplier: number;
   readonly attackMissChance: number;
-  readonly maxHealthMultiplier: number;
+  /** The largest single status's: losses do not add up. */
+  readonly maxHealthLoss: MaxHealthLoss | undefined;
+  /** Every status's, multiplied, and floored at `HEALING_MULTIPLIER_FLOOR`. */
+  readonly healingMultiplier: number;
   readonly castTimeMultiplier: number;
   readonly attackDurationMultiplier: number;
 }
+
+/** The weakest heals get, whatever reduces them (GW1: at most −40%). */
+export const HEALING_MULTIPLIER_FLOOR = 0.6;
 
 /**
  * Collapse every active status into one set of modifiers.
  *
  * Additive effects (health and energy pips, armor) sum; multiplicative ones
- * (move speed, max health, cast time) multiply; miss chance takes the
+ * (move speed, healing, cast time) multiply; miss chance takes the
  * worst rather than compounding, so two blinding effects cannot push a
- * player past certain failure in a way that feels arbitrary.
+ * player past certain failure in a way that feels arbitrary. A maximum
+ * health loss is the largest single one, and healing is floored at
+ * `HEALING_MULTIPLIER_FLOOR`.
  * Attack duration is GW1's rule: only the strongest speed-up and the
  * strongest slow-down count, and they multiply.
  */
@@ -478,7 +510,8 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
   let armorModifier = 0;
   let moveSpeedMultiplier = 1;
   let attackMissChance = 0;
-  let maxHealthMultiplier = 1;
+  let maxHealthLoss: MaxHealthLoss | undefined;
+  const healingMultipliers: number[] = [];
   let castTimeMultiplier = 1;
   let attackFaster = 1;
   let attackSlower = 1;
@@ -490,7 +523,13 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
     armorModifier += def.armorModifier;
     moveSpeedMultiplier *= def.moveSpeedMultiplier;
     attackMissChance = Math.max(attackMissChance, def.attackMissChance);
-    maxHealthMultiplier *= def.maxHealthMultiplier;
+    if (
+      def.maxHealthLoss !== undefined &&
+      (maxHealthLoss === undefined || def.maxHealthLoss.fraction > maxHealthLoss.fraction)
+    ) {
+      maxHealthLoss = def.maxHealthLoss;
+    }
+    healingMultipliers.push(def.healingMultiplier);
     castTimeMultiplier *= def.castTimeMultiplier;
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
     attackSlower = Math.max(attackSlower, def.attackDurationMultiplier);
@@ -502,8 +541,20 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
     armorModifier,
     moveSpeedMultiplier,
     attackMissChance,
-    maxHealthMultiplier,
+    maxHealthLoss,
+    healingMultiplier: combinedHealingMultiplier(healingMultipliers),
     castTimeMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,
   };
+}
+
+/**
+ * Several healing reductions together (GW1): they multiply, and heals are
+ * never cut below `HEALING_MULTIPLIER_FLOOR`.
+ */
+export function combinedHealingMultiplier(multipliers: readonly number[]): number {
+  return Math.max(
+    HEALING_MULTIPLIER_FLOOR,
+    multipliers.reduce((product, multiplier) => product * multiplier, 1),
+  );
 }

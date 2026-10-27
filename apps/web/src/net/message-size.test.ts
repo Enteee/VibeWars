@@ -102,6 +102,7 @@ function player(index: number): WirePlayer {
     walking: true,
     health: 1000,
     maxHealth: 1000,
+    effectiveMaxHealth: 1000,
     energy: 100,
     maxEnergy: 100,
     adrenaline: 1000,

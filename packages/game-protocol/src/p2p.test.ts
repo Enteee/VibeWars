@@ -110,6 +110,7 @@ const player: WirePlayer = {
   walking: false,
   health: 480,
   maxHealth: 480,
+  effectiveMaxHealth: 480,
   energy: 25,
   maxEnergy: 30,
   adrenaline: 0,

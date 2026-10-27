@@ -315,6 +315,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     walking: player.walking,
     health: player.health,
     maxHealth: player.maxHealth,
+    effectiveMaxHealth: player.effectiveMaxHealth,
     energy: player.energy,
     maxEnergy: player.maxEnergy,
     adrenaline: player.adrenaline,

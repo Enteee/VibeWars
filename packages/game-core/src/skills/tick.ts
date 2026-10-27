@@ -32,12 +32,10 @@ export function advanceStatuses(
     return events;
   }
 
-  const modifiers = aggregateModifiers(combatant.statuses.active);
-
   const pips = netPips(combatant, naturalPips).health;
   if (pips !== 0) {
     const delta = pips * HEALTH_PER_PIP * dt;
-    const effectiveMax = combatant.maxHealth * modifiers.maxHealthMultiplier;
+    const effectiveMax = effectiveMaxHealth(combatant);
     const next = Math.min(effectiveMax, Math.max(0, combatant.health + delta));
     const applied = next - combatant.health;
     combatant.health = next;
@@ -115,12 +113,26 @@ export function naturalHealthPips(
 const PIP_EPSILON = 1e-6;
 
 /**
- * The bearer's effective maximum health, after multipliers such as deep
- * wound. Exposed because both the simulation (for clamping heals) and the
- * client (for drawing a health bar) need the same number.
+ * The bearer's effective maximum health, after a loss such as deep
+ * wound's: `fraction` of the maximum, at most `cap`. The simulation
+ * clamps heals to it, and the wire carries it for the health bar.
  */
-export function effectiveMaxHealth(combatant: Combatant): number {
-  return combatant.maxHealth * aggregateModifiers(combatant.statuses.active).maxHealthMultiplier;
+export function effectiveMaxHealth(combatant: Pick<Combatant, "maxHealth" | "statuses">): number {
+  return combatant.maxHealth - maxHealthLossOf(combatant);
+}
+
+/** How much maximum health the bearer's statuses take: 0 for none. */
+export function maxHealthLossOf(combatant: Pick<Combatant, "maxHealth" | "statuses">): number {
+  const loss = aggregateModifiers(combatant.statuses.active).maxHealthLoss;
+  return loss === undefined ? 0 : Math.min(loss.cap, loss.fraction * combatant.maxHealth);
+}
+
+/**
+ * What the bearer's heals from skills are multiplied by (deep wound's
+ * −20%). Regeneration and life steal do not ask.
+ */
+export function healingMultiplierOf(combatant: Pick<Combatant, "statuses">): number {
+  return aggregateModifiers(combatant.statuses.active).healingMultiplier;
 }
 
 /** The slowest and fastest a combination of statuses can make anyone move. */
