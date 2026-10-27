@@ -21,7 +21,7 @@ stack(
   // 0: the heartbeat and a dark held chord
   note("b1 ~ ~ ~ b1 ~ [b1 ~] ~").s("sine").decay(.25).sustain(0).gain(.5).lpf(150),
   chord(P).voicing().mode("below:d4")
-    .s("sawtooth").attack(.8).release(1.5).gain(.22)
+    .s("sawtooth").attack(.8).clip(.9).release(.12).gain(.22)
     .lpf(ref(() => 400 + INTENSITY * 900)).room(.7).roomsize(6).orbit(2),
   // 1: tremolo strings (sixteenth gates), taiko on the heart
   layer(1, stack(
@@ -36,7 +36,7 @@ stack(
       .s("sawtooth").attack(.02).release(.3).gain(.45).lpf(1000).lpenv(2).lpd(.25).room(.4).roomsize(6).orbit(2))),
   // 3: choir, cymbal swell, everything open
   layer(3, stack(
-    chord(P).voicing().mode("below:f#5").s("sawtooth").lpq(4).attack(.3).release(1).gain(.2).lpf(2600).room(.7).roomsize(6).orbit(2),
+    chord(P).voicing().mode("below:f#5").s("sawtooth").lpq(4).attack(.3).clip(.9).release(.12).gain(.2).lpf(2600).room(.7).roomsize(6).orbit(2),
     s("swell:0 ~ ~ ~ ~ ~ ~ ~").slow(2).gain(.3),
     s("snare:1*8").gain(.18)))
 ).postgain(.29)
