@@ -29,5 +29,7 @@ declare const crypto: {
       keyUsages: readonly "sign"[],
     ): Promise<SubtleHmacKey>;
     sign(algorithm: "HMAC", key: SubtleHmacKey, data: Uint8Array): Promise<ArrayBuffer>;
+    /** A queue group's id is a sha256 every member computes alike (#869). */
+    digest(algorithm: "SHA-256", data: Uint8Array): Promise<ArrayBuffer>;
   };
 };
