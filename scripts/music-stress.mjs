@@ -266,7 +266,14 @@ async function measure(url, load) {
     if (load.screen !== "menu") {
       await page.getByRole("button", { name: "new character" }).click();
       // The profession is a picker: open it, then click the cell.
-      await page.locator('.editor-profession[data-which="primary"]').click();
+      try {
+        await page.locator('.editor-profession[data-which="primary"]').click({ timeout: 15_000 });
+      } catch (error) {
+        // Say what the page shows instead, so a red run names its cause.
+        const shown = await page.locator("body").innerText();
+        console.log(`[${load.browser}] no profession picker; the page shows:\n${shown}`);
+        throw error;
+      }
       await page
         .locator('.profession-grid .profession-cell[data-profession="elementalist"]')
         .click();
