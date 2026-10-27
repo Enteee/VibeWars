@@ -138,4 +138,9 @@ export const SKILL_ICONS = {
   "necromancer.insidious-parasite": { glyph: "chain", modifier: "self" },
   "necromancer.mark-of-pain": { glyph: "hammer", modifier: "area" },
   "necromancer.vampiric-gaze": { glyph: "heal", modifier: "bleed" },
+  // Placeholders until asset-designer's icons (#988).
+  "assassin.deaths-charge": { glyph: "dash", modifier: "stun" },
+  "assassin.shadow-refuge": { glyph: "plaster", modifier: "clock" },
+  "assassin.shroud-of-distress": { glyph: "armor", modifier: "bleed" },
+  "assassin.critical-eye": { glyph: "dagger", modifier: "hourglass" },
 };

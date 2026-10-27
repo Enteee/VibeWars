@@ -548,6 +548,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Assassin/688-Dark_Escape",
   },
   {
+    id: "assassin.deaths-charge",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/689-Death's_Charge",
+  },
+  {
+    id: "assassin.shadow-refuge",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/694-Shadow_Refuge",
+  },
+  {
+    id: "assassin.shroud-of-distress",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/698-Shroud_of_Distress",
+  },
+  {
+    id: "assassin.critical-eye",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/637-Critical_Eye",
+  },
+  {
     id: "ranger.natural-stride",
     profession: "ranger",
     url: "https://www.gw-memorial.net/skills/Ranger/826-Natural_Stride",

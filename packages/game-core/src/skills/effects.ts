@@ -179,7 +179,12 @@ export type CombatEvent =
       readonly kind: "knocked-down";
       readonly targetId: string;
       readonly durationSeconds: number;
-    };
+    }
+  /**
+   * Shadow Stepped (#988): `targetId`, the caster, moves to `toId`. The
+   * simulation places the body when it reads this.
+   */
+  | { readonly kind: "shadow-stepped"; readonly targetId: string; readonly toId: string };
 
 /**
  * Apply an already-mitigated amount, clamping at 0 and flagging death
@@ -797,6 +802,15 @@ export function applyEffect(
       return events;
     }
 
+    case "shadow-step": {
+      // To a living target only: there is nowhere to step to otherwise.
+      if (target === undefined || target.dead || caster.dead) {
+        return events;
+      }
+      events.push({ kind: "shadow-stepped", targetId: caster.id, toId: target.id });
+      return events;
+    }
+
     case "resurrect": {
       // Only the dead: one whom another resurrection, or the respawn
       // timer, brought back first is left as they are.
@@ -880,6 +894,8 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "caster-more-energy":
     case "caster-wields":
     case "target-less-health":
+    case "target-more-health":
+    case "target-attacking":
       return true;
   }
 }
@@ -929,6 +945,18 @@ export function stateHolds(
       return wieldsFor(caster.equipment.mainHand.weapon.id, condition.weapon);
     case "target-less-health":
       return target.health < caster.health;
+    case "target-more-health":
+      return target.health > caster.health;
+    case "target-attacking": {
+      if (target.dead) {
+        return false;
+      }
+      const cast = target.cast.activeCast;
+      return (
+        target.attack !== undefined ||
+        (cast !== undefined && getSkill(cast.skillId)?.type === "attack")
+      );
+    }
   }
 }
 
@@ -1042,6 +1070,8 @@ function conditionHolds(
     case "caster-more-energy":
     case "caster-wields":
     case "target-less-health":
+    case "target-more-health":
+    case "target-attacking":
       return held.has(condition);
   }
 }
@@ -1123,6 +1153,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "maintain-status":
     case "interrupt":
     case "knockdown":
+    case "shadow-step":
     case "resurrect":
     case "splash":
     case "disable-skill":

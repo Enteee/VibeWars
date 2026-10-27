@@ -282,6 +282,15 @@ describe("describeCombatEvent", () => {
     expect(logToneOf("recharge-lengthened")).toBe("control");
   });
 
+  it("says who shadow stepped to whom, with no floating text (#988)", () => {
+    const step: CombatEvent = { kind: "shadow-stepped", targetId: "dummy", toId: "you" };
+    expect(
+      describeCombatEvent(entry([step], { skillId: "assassin.deaths-charge" }), step, nameOf),
+    ).toBe("Caster dummy shadow steps to Pyro");
+    expect(logToneOf("shadow-stepped")).toBe("control");
+    expect(floatingCueFor("shadow-stepped", undefined, false)).toBeUndefined();
+  });
+
   it("says who knocked whom down, and for how long (#544)", () => {
     const down: CombatEvent = { kind: "knocked-down", targetId: "dummy", durationSeconds: 4 };
     expect(

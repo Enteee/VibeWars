@@ -271,6 +271,12 @@ of energy or by a death, it takes the newest hex off its ally. A hex it
 removes does not fire its own end: a Parasitic Bond taken this way
 heals nobody.
 
+**Shadow Refuge** (#988; Assassin, Shadow Arts, 5 energy, 1 s, 8 s
+recharge) gives you +9 health regeneration for 6 s. When it ends, for any
+reason, a strip included, you gain 88 Health if you are attacking right
+then: a swing in progress or an attack skill being used. Standing idle,
+casting a spell or dead, it gives nothing.
+
 **Rend Enchantments** (Necromancer, Curses, 5 energy, 2 s, 20 s
 recharge) removes up to 8 enchantments from a foe, the newest first,
 and you lose 31 health for each Monk enchantment among them. That loss
@@ -817,6 +823,11 @@ the attribute and an unmet requirement; an attack skill's bonus is
 added unmultiplied. A melee blow at a target that is moving with its
 back to you (facing more than 90° away) always crits. A crit floats
 larger, with a "!", and the log says "a critical hit".
+**Critical Eye** (Assassin, Critical Strikes, 5 energy, instant, 30 s
+recharge, #988) adds 13% to the chance for 30 s, all of it capped at
+100%, and gives 1 more energy on each crit, beside Critical Strikes'.
+It is a skill effect, so no strip removes it. An arrow keeps the crit
+chance it was loosed with, but the extra energy is read as it lands.
 
 **Block** (#534). Guardian gives its ally a 50% chance to block attacks;
 several block sources combine as 1 − ∏(1 − p), so two 50% sources make
@@ -829,6 +840,11 @@ skill's cost and recharge are still spent. "block" floats over the
 target. Swift Chop is the exception that proves it: blocked, it still
 deals its flat damage and a 20 s Deep Wound. Spells are never blocked,
 and shields do not block, as in GW1. Wild Throw cannot be blocked at all.
+**Shroud of Distress** (Assassin, Shadow Arts, 10 energy, 1 s, 45 s
+recharge, #988) gives a 75% chance to block attacks for 54 s, but only
+while you are below half your maximum Health (after a deep wound), read
+at each block roll: a heal back over half turns it off. It combines
+with other blocks as above.
 
 Not modelled: evade.
 
@@ -983,6 +999,15 @@ brackets.
   and a wall ends up outside the wall rather than inside it.
 - **Line of sight** is a geometric query against wall segments, shared
   by the server, the tests and any future client preview.
+- **Shadow step** (#988): **Death's Charge** (Assassin, Shadow Arts,
+  5 energy, ¼ s, 30 s recharge) moves you to the foe it targets, where
+  that foe stands as the spell resolves, touching it on the side you
+  came from, facing it. With a wall between, you land on it, and bodies,
+  walls and the map's edge push you clear as for a walk. It is not a
+  walk: snares do not slow it, nothing reads it as running, and an
+  arrow already flying at you misses. A long step snaps the camera, as
+  a respawn does. If that foe has more Health than you, read before the
+  step, you are healed for 173.
 
 ## Death and scoring
 

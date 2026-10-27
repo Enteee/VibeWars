@@ -363,6 +363,26 @@ describe("attack skills (#417)", () => {
     expect(describeStatus("weapon-of-aggression")).toBe("attacks 25% faster");
   });
 
+  it("words the Assassin's staples (#988)", () => {
+    const lines = (id: string) =>
+      describeSkill(skill(id), new Map([["assassin.shadow-arts", 12]])).effects.map(
+        ({ text }) => text,
+      );
+    expect(lines("assassin.deaths-charge")).toEqual([
+      "Shadow steps to the target",
+      "If target has more Health than you: you gain 173 health",
+    ]);
+    expect(lines("assassin.shadow-refuge")).toEqual([
+      "Applies Shadow Refuge for 6s (+9 Health regeneration. When it ends, if it is attacking: heals for 88)",
+    ]);
+    expect(describeStatus("shroud-of-distress")).toBe(
+      "75% chance to block attacks while below 50% Health",
+    );
+    expect(describeStatus("critical-eye")).toBe(
+      "+13% critical chance, gain 1 Energy per critical hit",
+    );
+  });
+
   it("words Spear of Lightning's type and penetration, and Leader's Comfort's per ally (#923)", () => {
     const at12 = (id: string, attributeId: string) =>
       describeSkill(skill(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);

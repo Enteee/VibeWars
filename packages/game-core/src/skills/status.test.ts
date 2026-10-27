@@ -66,7 +66,9 @@ describe("status definitions", () => {
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||
         def.nextAttackSkill !== undefined ||
-        def.spellRechargeFaster !== 0;
+        def.spellRechargeFaster !== 0 ||
+        def.criticalChanceBonus !== 0 ||
+        def.energyPerCritical !== 0;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -108,6 +110,7 @@ describe("status definitions", () => {
       regeneration: 4,
       "weapon-of-warding": 4,
       "never-surrender": 4,
+      "shadow-refuge": 9,
     });
   });
 

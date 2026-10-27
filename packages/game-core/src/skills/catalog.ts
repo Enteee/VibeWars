@@ -3558,6 +3558,109 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // durations from yourself to target touched foe."
     effects: [{ kind: "transfer-conditions", count: 3 }],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Assassin staples (#988)                                                */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "assassin.deaths-charge",
+    name: "Death's Charge",
+    type: "spell",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Shadow Step to target foe. If that foe has more Health than you, you
+    // are healed for 65...173...200": who has more is read before the step.
+    effects: [
+      { kind: "shadow-step" },
+      {
+        kind: "if",
+        condition: { kind: "target-more-health" },
+        effects: [
+          {
+            kind: "heal",
+            recipient: "caster",
+            amount: { scaling: { attributeId: "assassin.shadow-arts", atZero: 65, atTwelve: 173 } },
+            perStatusOnTarget: [],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "assassin.shadow-refuge",
+    name: "Shadow Refuge",
+    type: "enchantment",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
+    // Refuge ends, you gain 40...88...100 Health if you are attacking."
+    effects: [{ kind: "apply-status", statusId: "shadow-refuge", durationSeconds: 6 }],
+  },
+  {
+    id: "assassin.shroud-of-distress",
+    name: "Shroud of Distress",
+    type: "enchantment",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 30...54...60 seconds, if you are below 50% Health, you have a 75%
+    // chance to block attacks": 54 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "shroud-of-distress", durationSeconds: 54 }],
+  },
+  {
+    id: "assassin.critical-eye",
+    name: "Critical Eye",
+    type: "skill",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.critical-strikes",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10...30...35 seconds, you have an additional 3...13...15% chance
+    // to land a critical hit when attacking. You gain 1 Energy whenever you
+    // score a critical hit": 30 s and 13%, the rank-12 values.
+    effects: [{ kind: "apply-status", statusId: "critical-eye", durationSeconds: 30 }],
+  },
 ];
 
 export const SKILLS_BY_ID: ReadonlyMap<string, Skill> = new Map(

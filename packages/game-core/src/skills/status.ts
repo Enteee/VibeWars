@@ -90,6 +90,8 @@ export type StatusId =
   | "patient-spirit"
   | "holy-veil"
   | "protective-spirit"
+  | "shadow-refuge"
+  | "shroud-of-distress"
   // Stances.
   | "sprint"
   | "dash"
@@ -105,6 +107,7 @@ export type StatusId =
   | "watch-yourself"
   | "healing-signet-armor"
   | "for-great-justice"
+  | "critical-eye"
   // Paragon shouts (#921).
   | "fall-back"
   | "stand-your-ground"
@@ -251,6 +254,16 @@ export interface StatusDefinition {
   readonly endsOnKnockdownPrevented: boolean;
   /** The bearer's chance to block attacks; `undefined`: none. */
   readonly block: BlockRule | undefined;
+  /**
+   * `block` holds only while the bearer's health is below this share of
+   * its maximum after a deep wound (#988): Shroud of Distress's "if you
+   * are below 50% Health". `undefined`: at any health.
+   */
+  readonly blockBelowHealth: number | undefined;
+  /** Added to the bearer's chance to land a critical hit (#988): Critical Eye's 0.13. */
+  readonly criticalChanceBonus: number;
+  /** Energy the bearer gains on each critical hit it lands, beyond Critical Strikes' (#988). */
+  readonly energyPerCritical: number;
   /**
    * It ends after this many incoming attacks, each a hit or a block
    * (#524); `undefined`: only its duration ends it. Counted on each
@@ -494,6 +507,9 @@ function define(
     preventsKnockdown: false,
     endsOnKnockdownPrevented: false,
     block: undefined,
+    blockBelowHealth: undefined,
+    criticalChanceBonus: 0,
+    energyPerCritical: 0,
     endsAfterAttacks: undefined,
     onAttackHit: undefined,
     endsAfterHits: undefined,
@@ -765,6 +781,34 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "monk",
     maxDamageFractionPerHit: 0.1,
   }),
+  // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
+  // Refuge ends, you gain 40...88...100 Health if you are attacking" (#988).
+  // Any end, a strip included: GW1 says "ends", not "expires".
+  "shadow-refuge": define("shadow-refuge", "Shadow Refuge", "enchantment", {
+    profession: "assassin",
+    healthPips: 9,
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "if",
+            condition: { kind: "target-attacking" },
+            effects: [{ kind: "heal", amount: { flat: 88 }, perStatusOnTarget: [] }],
+          },
+        ],
+        target: "bearer",
+        skillId: "assassin.shadow-refuge",
+      },
+    ],
+  }),
+  // "For 30...54...60 seconds, if you are below 50% Health, you have a 75%
+  // chance to block attacks" (#988), read at each block roll.
+  "shroud-of-distress": define("shroud-of-distress", "Shroud of Distress", "enchantment", {
+    profession: "assassin",
+    block: { chance: 0.75, against: "all" },
+    blockBelowHealth: 0.5,
+  }),
 
   sprint: define("sprint", "Sprint", "stance", {
     profession: "warrior",
@@ -812,6 +856,14 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "for-great-justice": define("for-great-justice", "For Great Justice!", "shout", {
     profession: "warrior",
     extraStrikesPerHit: 1,
+  }),
+  // "For 10...30...35 seconds, you have an additional 3...13...15% chance
+  // to land a critical hit when attacking. You gain 1 Energy whenever you
+  // score a critical hit" (#988). A skill effect: no strip removes it.
+  "critical-eye": define("critical-eye", "Critical Eye", "skill-effect", {
+    profession: "assassin",
+    criticalChanceBonus: 0.13,
+    energyPerCritical: 1,
   }),
   "healing-signet-armor": define("healing-signet-armor", "Healing Signet", "skill-effect", {
     profession: "warrior",
@@ -1537,6 +1589,10 @@ export interface StatusModifiers {
   readonly spellRechargeFaster: number;
   /** Every status's, multiplied (#944). */
   readonly incomingHexCastTimeMultiplier: number;
+  /** Every status's, summed (#988). */
+  readonly criticalChanceBonus: number;
+  /** Every status's, summed (#988). */
+  readonly energyPerCritical: number;
 }
 
 /**
@@ -1594,6 +1650,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let extraStrikesPerHit = 0;
   let spellRechargeKept = 1;
   let incomingHexCastTimeMultiplier = 1;
+  let criticalChanceBonus = 0;
+  let energyPerCritical = 0;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
@@ -1641,6 +1699,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     extraStrikesPerHit += def.extraStrikesPerHit;
     spellRechargeKept *= 1 - def.spellRechargeFaster;
     incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
+    criticalChanceBonus += def.criticalChanceBonus;
+    energyPerCritical += def.energyPerCritical;
   }
 
   return {
@@ -1664,6 +1724,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     extraStrikesPerHit,
     spellRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - spellRechargeKept),
     incomingHexCastTimeMultiplier,
+    criticalChanceBonus,
+    energyPerCritical,
   };
 }
 
