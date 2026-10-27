@@ -2249,7 +2249,7 @@ export class MatchSimulation {
             fired,
           ),
         );
-        bearerHit(attacker.combatant, events);
+        bearerHit(attacker.combatant, events, skillHit !== undefined);
       }
       if (skillHit !== undefined && attacker !== undefined) {
         events.push(

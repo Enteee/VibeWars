@@ -411,6 +411,22 @@ const status = {
       `<path d="M8 5h8v4.5c0 2.5-2 4-4 5.2-2-1.2-4-2.7-4-5.2z" ${stroke(c, 2)}/>` +
       `<path d="M6.5 18.5h11" ${stroke(c, 2.5)}/>`,
   ],
+  // Shout: an arrow forward with a plus behind it, run and be healed (#956).
+  incoming: [
+    "shout",
+    (c) =>
+      `<path d="M11 12h7M15 8.5l3.5 3.5-3.5 3.5" ${stroke(c, 2.5)}/>` +
+      `<path d="M7 9.5v5M4.5 12h5" ${stroke(c, 2)}/>`,
+  ],
+  // Shout: a double chevron, one ally hurried along (#956).
+  "make-haste": ["shout", (c) => `<path d="M7 8l4 4-4 4M12.5 8l4 4-4 4" ${stroke(c, 2.5)}/>`],
+  // Chant: a shield with a bar across it, blocks for the party (#956).
+  "defensive-anthem": [
+    "chant",
+    (c) =>
+      `<path d="M8 6h8v4.5c0 2.5-2 4-4 5.2-2-1.2-4-2.7-4-5.2z" ${stroke(c, 2)}/>` +
+      `<path d="M9.5 10h5" ${stroke(c, 2)}/>`,
+  ],
   // Chant: a flame, your next attack skill burns (#758). Burning's flame,
   // smaller and higher, clear of the banner's notch.
   "anthem-of-flame": [

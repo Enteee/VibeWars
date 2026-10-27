@@ -429,6 +429,18 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     ]);
   });
 
+  it("ends Make Haste! on any hit, Defensive Anthem only on an attack skill's (#956)", () => {
+    const set = new StatusSet();
+    set.apply("make-haste", 17, "p");
+    set.apply("defensive-anthem", 9, "p");
+    expect(set.endOnBearerHit(false)).toEqual(["make-haste"]);
+    expect(set.has("defensive-anthem")).toBe(true);
+
+    set.apply("make-haste", 17, "p");
+    expect(set.endOnBearerHit(true)).toEqual(["defensive-anthem", "make-haste"]);
+    expect(set.active).toEqual([]);
+  });
+
   it("ends every status on a death, each recorded with its source, in order (#940)", () => {
     const set = new StatusSet();
     set.apply("burning", 5, "a");
