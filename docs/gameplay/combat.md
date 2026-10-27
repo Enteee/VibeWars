@@ -451,6 +451,12 @@ aftercast, dead or walking into a wall is not moving. Everyone's is read
 at the end of a tick, so it is one tick late and never depends on who
 acts first.
 
+Spear of Lightning (Paragon spear attack, 5 energy, 6 s) deals +18, and
+the whole blow is lightning, the spear's damage too: armor against
+elemental damage meets it, armor against physical damage does not. It
+has 25% armor penetration. Penetration from the skill and from Strength
+does not add: the blow takes the larger (#923).
+
 **Preparations** change your attacks while they last, and only one is up
 at a time, as with stances (#525). Apply Poison (Ranger, 15 energy, 2 s
 cast, 24 s) poisons for 13 s every foe your physical attacks hit:
@@ -482,6 +488,16 @@ for 10 s, and it ends early on each ally after 3 incoming attacks that
 hit or are blocked; a miss, a dodge or an obstructed arrow does not
 count. Earshot is GW1's ratio of earshot to cast range (about 1,010 to
 1,250) applied to the 420-unit spell range.
+"Never Surrender!" (Paragon, Command, 5 energy, 20 s) gives +4 Health
+regeneration for 10 s to each ally in earshot below 75% Health as it
+lands; one at exactly 75% or above gets nothing, and one healed above it
+afterwards keeps it (#923).
+
+Leader's Comfort (Paragon, Leadership, 5 energy, 2 s cast, 8 s) heals
+you 66, plus 18 for each living ally in earshot, you included, at most
+140 in all: 84 alone, 140 with four others. It is a skill, not a shout,
+so Leadership gives no energy for it. A Deep Wound cuts the capped heal
+by its 20%.
 
 The Paragon's Command shouts (#921): "Fall Back!" (10 energy, 25 s
 recharge) gives 9 s of 33% faster movement and 13 Health per second

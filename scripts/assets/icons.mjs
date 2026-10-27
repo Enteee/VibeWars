@@ -386,6 +386,13 @@ const status = {
     "weapon-spell",
     (c) => `<path d="M12 4.5v10M8.5 14.5h7M12 14.5v4" ${stroke(c, 2.5)}/>`,
   ],
+  // Shout: a plus with a chevron rising over it, regeneration called for (#923).
+  "never-surrender": [
+    "shout",
+    (c) =>
+      `<path d="M12 10v8M8 14h8" ${stroke(c, 2.5)}/>` +
+      `<path d="M8.5 8.5L12 5l3.5 3.5" ${stroke(c, 2)}/>`,
+  ],
   // Enchantment: a plus in a ring, health for every enchantment around it (#845).
   "mystic-regeneration": [
     "enchantment",

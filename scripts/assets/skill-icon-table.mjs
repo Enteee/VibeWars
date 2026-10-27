@@ -96,4 +96,8 @@ export const SKILL_ICONS = {
   "mesmer.leech-signet": { glyph: "interrupt", modifier: "self" },
   // A placeholder: no modifier yet says "per enchantment or hex" (#920).
   "monk.dwaynas-kiss": { glyph: "heal", modifier: "stun" },
+  // Placeholders from existing glyphs (#923).
+  "paragon.spear-of-lightning": { glyph: "spear", modifier: "up" },
+  "paragon.never-surrender": { glyph: "resurrect", modifier: "area" },
+  "paragon.leaders-comfort": { glyph: "resurrect", modifier: "self" },
 };

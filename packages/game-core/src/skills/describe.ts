@@ -17,6 +17,7 @@ import type {
   ChainRole,
   ChainStep,
   EffectCondition,
+  HealEffect,
   Magnitude,
   Skill,
   SkillEffect,
@@ -356,6 +357,26 @@ function conditionText(condition: EffectCondition): string {
   }
 }
 
+/** An attack skill's damage type (#923), as " lightning" in "+18 lightning damage". */
+function damageTypeText(skill: Skill): string {
+  const type = skill.attack?.damageType;
+  return type === undefined ? "" : ` ${type}`;
+}
+
+/**
+ * Leader's Comfort's heal per ally (#923), as the second half of its
+ * line: ", +18 Health for each ally in earshot (max 140)".
+ */
+function perAllyText(effect: HealEffect, ranks: ReadonlyMap<string, number>): string {
+  const { perAlly } = effect;
+  if (perAlly === undefined) {
+    return "";
+  }
+  const amount = describeMagnitude(perAlly.amount, ranks).current;
+  const area = AREA_TEXT.get(perAlly.radius) ?? `within ${String(perAlly.radius)}`;
+  return `, +${String(amount)} Health for each ally ${area} (max ${String(perAlly.max)})`;
+}
+
 /** Who a splash reaches, as GW1 words it (#885): "Adjacent foes". */
 function foesWithin(radius: number): string {
   const area = AREA_TEXT.get(radius);
@@ -413,15 +434,13 @@ function describeEffect(
     case "heal": {
       const magnitude = describeMagnitude(effect.amount, ranks);
       const amount = String(magnitude.current);
-      return {
-        text:
-          effect.perStatusOnTarget.length > 0
-            ? `+${amount} Health for each ${effect.perStatusOnTarget.join(" or ")} on target ally`
-            : effect.recipient === "caster"
-              ? `You gain ${amount} health`
-              : `Heals for ${amount}`,
-        magnitude,
-      };
+      const text =
+        effect.perStatusOnTarget.length > 0
+          ? `+${amount} Health for each ${effect.perStatusOnTarget.join(" or ")} on target ally`
+          : effect.recipient === "caster"
+            ? `You gain ${amount} health`
+            : `Heals for ${amount}`;
+      return { text: `${text}${perAllyText(effect, ranks)}`, magnitude };
     }
     case "energy-gain": {
       const magnitude = describeMagnitude(effect.amount, ranks);
@@ -743,7 +762,7 @@ export function describeSkill(
   const bonusLine = [
     ...(bonus === undefined
       ? []
-      : [{ text: `+${String(bonus.current)} damage`, magnitude: bonus }]),
+      : [{ text: `+${String(bonus.current)}${damageTypeText(skill)} damage`, magnitude: bonus }]),
     ...(conditionalBonus === undefined || more === undefined
       ? []
       : [
@@ -753,6 +772,17 @@ export function describeSkill(
           },
         ]),
   ];
+  // Its own armor penetration (#923): Spear of Lightning's 25%.
+  const armorPenetration = skill.attack?.armorPenetration ?? 0;
+  const penetrationLine =
+    armorPenetration > 0
+      ? [
+          {
+            text: `${String(Math.round(armorPenetration * 100))}% armor penetration`,
+            magnitude: undefined,
+          },
+        ]
+      : [];
   // An attack skill's if-blocked effects (#534), after the ones a hit gets.
   const onBlocked = (skill.attack?.onBlocked ?? []).flatMap((effect) =>
     describeEffects(effect, ranks).map(({ text, magnitude }) => ({
@@ -778,6 +808,7 @@ export function describeSkill(
   const effects = [
     ...chainLine,
     ...bonusLine,
+    ...penetrationLine,
     ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
     ...onBlocked,
     ...whileActivating,
