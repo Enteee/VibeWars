@@ -11,6 +11,7 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "monk.orison-of-healing": "healing",
   "necromancer.blood-renewal-lite": "healing",
   "necromancer.blood-ritual": "",
+  "necromancer.enfeeble": "condition",
   "necromancer.faintheartedness": "hex",
   "necromancer.malaise": "hex",
   "necromancer.weaken-armor": "condition",

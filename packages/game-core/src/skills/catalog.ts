@@ -351,6 +351,26 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "malaise", durationSeconds: 24 }],
   },
   {
+    id: "necromancer.enfeeble",
+    name: "Enfeeble",
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 5 },
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target suffers from weakness for 10...26...30 seconds": 26 s, its
+    // rank-12 value. Weakness's first source (#762).
+    effects: [{ kind: "apply-status", statusId: "weakness", durationSeconds: 26 }],
+  },
+  {
     id: "necromancer.blood-ritual",
     name: "Blood Ritual",
     type: "enchantment",

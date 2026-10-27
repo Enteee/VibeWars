@@ -38,6 +38,7 @@ import { music } from "../music/play-music.js";
 import { TRACKS } from "../music/tracks/index.js";
 import {
   EMPTY_SNAPSHOT,
+  nameShown,
   withCalls,
   withNames,
   type ArenaSnapshot,
@@ -777,6 +778,15 @@ export function createTrainingPanel(): TrainingPanel {
       if (stage.dataset.called !== called) {
         stage.dataset.called = called;
       }
+      // And whose names are drawn (#253): screen-sized names overlap on a
+      // crowded stage (#456), so a pixel band cannot tell them apart.
+      const names = latestArena.actors
+        .filter((actor) => nameShown(latestArena, actor))
+        .map((actor) => actor.id)
+        .join(",");
+      if (stage.dataset.names !== names) {
+        stage.dataset.names = names;
+      }
       paintVitals(latestMatch);
       sinceMeterPaint += deltaSeconds;
       if (sinceMeterPaint >= METER_PAINT_SECONDS) {
@@ -866,6 +876,7 @@ export function createTrainingPanel(): TrainingPanel {
       camera = undefined;
       allyWatch.dispose();
       delete stage.dataset.called;
+      delete stage.dataset.names;
       nameReveal.detach();
       detachMovement();
       stage.removeEventListener("keydown", onStageKeyDown);

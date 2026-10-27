@@ -47,6 +47,8 @@ describe("status definitions", () => {
         def.moveSpeedMultiplier !== 1 ||
         def.attackMissChance !== 0 ||
         def.maxHealthMultiplier !== 1 ||
+        def.weaponDamageMultiplier !== 1 ||
+        def.attributeDelta !== 0 ||
         def.castTimeMultiplier !== 1 ||
         def.interruptsSpells ||
         def.attackDurationMultiplier !== 1 ||
@@ -68,6 +70,11 @@ describe("status definitions", () => {
     expect(getStatusDefinition("blind").attackMissChance).toBeGreaterThan(0.5);
     expect(getStatusDefinition("deep-wound").maxHealthMultiplier).toBeLessThan(1);
     expect(getStatusDefinition("dazed").castTimeMultiplier).toBeGreaterThan(1);
+    expect(getStatusDefinition("weakness")).toMatchObject({
+      weaponDamageMultiplier: 0.34,
+      attributeDelta: -1,
+      armorModifier: 0,
+    });
   });
 
   it("counts health in GW1's pips", () => {
@@ -299,8 +306,8 @@ describe("aggregateModifiers", () => {
   it("sums armor modifiers, including a negative one", () => {
     const set = new StatusSet();
     set.apply("armor-boost", 10, "a");
-    set.apply("weakness", 10, "a");
-    expect(aggregateModifiers(set.active).armorModifier).toBe(24 - 20);
+    set.apply("healing-signet-armor", 10, "a");
+    expect(aggregateModifiers(set.active).armorModifier).toBe(24 - 40);
   });
 
   it("multiplies movement penalties rather than summing them", () => {

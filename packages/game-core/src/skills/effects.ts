@@ -3,6 +3,7 @@ import { getSkill } from "./catalog.js";
 import { mitigate, spellDamage } from "./damage.js";
 import { resolveMagnitude } from "./scaling.js";
 import { getStatusDefinition, scaledStatusDuration, type StatusId } from "./status.js";
+import { rankOf } from "./tick.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import {
@@ -375,7 +376,7 @@ export function applySkillEffects(resolution: SkillResolution): CombatEvent[] {
     applyHeal(
       primary,
       divineFavorBonusHeal(
-        caster.attributeRanks.get(DIVINE_FAVOR_ATTRIBUTE) ?? 0,
+        rankOf(caster, DIVINE_FAVOR_ATTRIBUTE),
         skill,
         primary.team === caster.team,
       ),

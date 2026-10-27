@@ -343,6 +343,20 @@ describe("headless combat simulation", () => {
     ]);
   });
 
+  it("Enfeeble weakens a foe at spell range for its rank-12 26 s (#762)", () => {
+    const necro = actor(makeCombatant({ id: "necro", team: 0 }), ["necromancer.enfeeble"]);
+    const foe = actor(makeCombatant({ id: "foe", team: 1 }), [], 300);
+
+    expect(tryCast(necro, "necromancer.enfeeble", foe)).toBeUndefined();
+    for (let i = 0; i < 10; i += 1) {
+      tick(necro, foe);
+    }
+
+    expect(foe.combatant.statuses.active.map((s) => [s.id, s.remainingSeconds])).toEqual([
+      ["weakness", 26],
+    ]);
+  });
+
   it("a dead caster cannot act", () => {
     const ele = actor(makeCombatant({ id: "ele", team: 0, dead: true }), ["elementalist.fireball"]);
     const victim = actor(makeCombatant({ id: "victim", team: 1 }), [], 100);
@@ -431,6 +445,7 @@ describe("skill types", () => {
     expect(typeOf("elementalist.armor-of-earth")).toBe("enchantment");
     expect(typeOf("necromancer.faintheartedness")).toBe("hex");
     expect(typeOf("necromancer.malaise")).toBe("hex");
+    expect(typeOf("necromancer.enfeeble")).toBe("spell");
     expect(typeOf("necromancer.blood-ritual")).toBe("enchantment");
     expect(typeOf("ranger.troll-unguent")).toBe("skill");
   });

@@ -166,17 +166,17 @@ condition cannot out-last one well-timed long one.
 Each condition has a distinct mechanical identity, not just a different
 number:
 
-| Condition     | Effect                                           |
-| ------------- | ------------------------------------------------ |
-| Bleeding      | −3 health/second                                 |
-| Burning       | −7 health/second                                 |
-| Poison        | −4 health/second                                 |
-| Crippled      | Half movement speed                              |
-| Blind         | 90% of your attacks miss                         |
-| Weakness      | −20 armor                                        |
-| Cracked Armor | −20 armor, never below 60                        |
-| Deep Wound    | −20% maximum health                              |
-| Dazed         | Spells: double cast time, interrupted by attacks |
+| Condition     | Effect                                            |
+| ------------- | ------------------------------------------------- |
+| Bleeding      | −3 health/second                                  |
+| Burning       | −7 health/second                                  |
+| Poison        | −4 health/second                                  |
+| Crippled      | Half movement speed                               |
+| Blind         | 90% of your attacks miss                          |
+| Weakness      | −66% weapon damage, −1 to every attribute above 0 |
+| Cracked Armor | −20 armor, never below 60                         |
+| Deep Wound    | −20% maximum health                               |
+| Dazed         | Spells: double cast time, interrupted by attacks  |
 
 **Dazed doubles a spell's cast time, and attacks interrupt it** (#546,
 GW1). Applying Dazed interrupts a spell being cast, even on someone
@@ -186,6 +186,16 @@ damage. A miss, a block or a dodge does not. Only spells: a dazed
 Warrior's Healing Signet is neither slowed nor interrupted, and an
 instant skill stays instant. See
 [ADR-0019](../adr/0019-status-modifiers.md).
+
+**Weakness cuts your weapon and your attributes** (#762, GW1). Your
+weapon's roll deals 34%; an attack skill's bonus damage is whole.
+Every attribute you put points in counts one rank lower, so your
+skills scale one rank lower and Expertise, Fast Casting and the other
+primary attributes give less. One you left at 0 stays 0, even when a
+rune raised it. A weapon's requirement is checked at each blow: a
+Warrior at exactly 9 Swordsmanship swings at a third of the damage
+while weakened. Two sources of weakness are one weakness, so it is
+never −2. Enfeeble (Necromancer, Curses) is its first source.
 
 **Cracked Armor takes 20 armor, but never below 60** (#763, GW1). It is
 taken before any status adds armor, so a cracked caster at 60 loses

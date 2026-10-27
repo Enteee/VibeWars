@@ -71,7 +71,7 @@ export function effectiveArmor(target: Combatant, packet: DamagePacket): number 
     armor -= Math.min(reduction.amount, Math.max(0, armor - reduction.floor));
   }
 
-  // Weakness (-20) and Armor of Earth (+24) reach a consumer here for
+  // Armor of Earth (+24) and Healing Signet (−40) reach a consumer here for
   // the first time.
   armor += aggregateModifiers(target.statuses.active).armorModifier;
 

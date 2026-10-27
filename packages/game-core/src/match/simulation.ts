@@ -67,6 +67,7 @@ import {
   naturalHealthPips,
   moveSpeedMultiplier,
   netPips,
+  rankOf,
   type NetPips,
 } from "../skills/tick.js";
 import { isSpell, type Combatant, type Skill } from "../skills/types.js";
@@ -1107,7 +1108,7 @@ export class MatchSimulation {
         .map((event) => event.targetId)
         .filter((id) => this.#participants.get(id)?.combatant.team === team),
     );
-    const rank = record.combatant.attributeRanks.get(LEADERSHIP_ATTRIBUTE) ?? 0;
+    const rank = rankOf(record.combatant, LEADERSHIP_ATTRIBUTE);
     gainEnergy(record.combatant, leadershipEnergy(rank, affected.size), events);
   }
 
@@ -1945,7 +1946,7 @@ export class MatchSimulation {
   #reapSoul(victim: ParticipantRecord): void {
     for (const record of this.#participants.values()) {
       const { combatant } = record;
-      const rank = combatant.attributeRanks.get(SOUL_REAPING_ATTRIBUTE) ?? 0;
+      const rank = rankOf(combatant, SOUL_REAPING_ATTRIBUTE);
       if (
         rank <= 0 ||
         combatant.dead ||
