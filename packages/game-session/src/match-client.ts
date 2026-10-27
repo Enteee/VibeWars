@@ -6,6 +6,7 @@ import {
   parsePeerRejoinChallenge,
   parsePeerWelcome,
   parseAdrenaline,
+  parseChainMarks,
   parseRecharge,
   parseWireCalls,
   parseWireCombatBatch,
@@ -14,6 +15,8 @@ import {
   parseWireSnapshotPart,
   type AdrenalineMessage,
   type CastRefusedMessage,
+  type ChainMarksMessage,
+  type WireChainRole,
   type Channel,
   type ClientIntent,
   type PeerBye,
@@ -121,6 +124,11 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
    */
   let adrenaline: { readonly message: AdrenalineMessage; readonly at: number } = {
     message: { slots: [], lossInSeconds: null },
+    at: 0,
+  };
+  /** The chain marks you placed as last sent, and the match time they came at (#916). */
+  let chain: { readonly message: ChainMarksMessage; readonly at: number } = {
+    message: { marks: [] },
     at: 0,
   };
   /** Your team's calls as last sent, and the match time they came at (#443). */
@@ -232,6 +240,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   });
   fromHost("adrenaline", parseAdrenaline, (message) => {
     adrenaline = { message, at: elapsed() };
+  });
+  fromHost("chain", parseChainMarks, (message) => {
+    chain = { message, at: elapsed() };
   });
   fromHost("calls", parseWireCalls, (message) => {
     calls = { wire: message, at: elapsed() };
@@ -367,6 +378,13 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         return lossInSeconds === null
           ? null
           : Math.max(0, lossInSeconds - (elapsed() - adrenaline.at));
+      },
+      getChainMark(targetId: string): WireChainRole | undefined {
+        // Counted down on the match clock, as a recharge is: one run out reads as none.
+        const mark = chain.message.marks.find((candidate) => candidate.targetId === targetId);
+        return mark !== undefined && mark.remainingSeconds - (elapsed() - chain.at) > 0
+          ? mark.role
+          : undefined;
       },
       getRecharges(): readonly SlotRecharge[] {
         // Counted down on the match clock: no wall time crosses the wire.
