@@ -24,6 +24,8 @@
  *   company ready                    your work is saved; the reboot may go ahead
  *   company hire <role> "<reason>"   manager only; prints the new employee id
  *   company fire <employee> "<reason>"  manager only
+ *   company load                     manager only: the board, staff and tokens
+ *                                    the staffing review is decided on
  *     (`company` is this script with `company` as its first word)
  *
  * `whoami` is answered locally, because the policy is pure and bundled in
@@ -107,6 +109,8 @@ if (argv[0] === "whoami") {
   console.log(`  ${reboots.allow ? "yes" : "no "}  reboot the company (company reboot)`);
   const staff = authorize(ROLE, { kind: "staff", argv: ["hire", "x", "x"] }, { acting: ACTING });
   console.log(`  ${staff.allow ? "yes" : "no "}  hire and fire (company hire, company fire)`);
+  const load = authorize(ROLE, { kind: "load", argv: [] }, { acting: ACTING });
+  console.log(`  ${load.allow ? "yes" : "no "}  read the company's load (company load)`);
   const schedules = authorize(ROLE, { kind: "schedule", argv: ["ls"] }, { acting: ACTING });
   console.log(
     `  ${schedules.allow ? "yes" : "no "}  keep recurring reminders to yourself (hub schedule)`,
@@ -159,10 +163,13 @@ if (argv[0] === "push") {
   request = { kind: "board", argv: argv.slice(1) };
 } else if (argv[0] === "company") {
   // `company reboot "<reason>"`, `company reboot --abort` and
-  // `company ready` (#21); `company hire` and `company fire` (#380).
+  // `company ready` (#21); `company hire` and `company fire` (#380);
+  // `company load` (#747).
   const [, verb, ...rest] = argv;
   const [who, ...reason] = rest;
-  if ((verb === "hire" || verb === "fire") && who !== undefined && reason.length > 0) {
+  if (verb === "load" && rest.length === 0) {
+    request = { kind: "load", argv: [] };
+  } else if ((verb === "hire" || verb === "fire") && who !== undefined && reason.length > 0) {
     request = { kind: "staff", argv: [verb, who, reason.join(" ")] };
   } else if (verb === "ready" && rest.length === 0) {
     request = { kind: "reboot", argv: ["ready"] };
@@ -179,7 +186,7 @@ if (argv[0] === "push") {
   } else {
     console.error(
       'company: usage: company reboot "<reason>" | company reboot --abort | company reboot --workday | company ready\n' +
-        '       company hire <role> "<reason>" | company fire <employee> "<reason>"',
+        '       company hire <role> "<reason>" | company fire <employee> "<reason>" | company load',
     );
     process.exit(2);
   }

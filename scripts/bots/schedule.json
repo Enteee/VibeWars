@@ -11,6 +11,12 @@
       "to": "manager",
       "everyMinutes": 720,
       "text": "End of the workday. Summarise the last 12 hours to the operator, list every Blocked card, then run: company reboot --workday"
+    },
+    {
+      "id": "staffing-review",
+      "to": "manager",
+      "everyMinutes": 120,
+      "text": "Staffing review: run `company load`. Hire where a column is backing up (Ready deep → developer; QA deep → qa-tester; In Review deep → a reviewer), fire an employee idle for the whole window, within maxAgents. Then one line to the operator: what you changed and why, or 'no change' and why."
     }
   ]
 }

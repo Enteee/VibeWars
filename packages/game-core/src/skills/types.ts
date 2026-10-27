@@ -2,6 +2,7 @@ import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 
 import type { ResolvedEquipment } from "../equipment/resolve.js";
+import type { DamageType } from "../equipment/types.js";
 import type { ProfessionId } from "../professions.js";
 import type { CastState } from "./cast-state.js";
 import type { AttackState } from "./weapon-attack.js";
@@ -58,6 +59,8 @@ export type TargetRule =
 export interface DamageEffect {
   readonly kind: "damage";
   readonly amount: Magnitude;
+  /** GW1's type, which decides the typed armor that applies (#759). */
+  readonly type: DamageType;
 }
 
 export interface HealEffect {

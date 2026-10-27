@@ -8,7 +8,13 @@
  */
 
 export type { DamageType, EquipmentRequirement, ArmorSlot } from "./types.js";
-export { ARMOR_SLOTS, EQUIPMENT_REQUIREMENT_RANK, isArmorSlot, isPhysicalDamage } from "./types.js";
+export {
+  ARMOR_SLOTS,
+  EQUIPMENT_REQUIREMENT_RANK,
+  isArmorSlot,
+  isElementalDamage,
+  isPhysicalDamage,
+} from "./types.js";
 
 export type { DoubleStrikeRule, Weapon, WeaponGrip, WeaponId } from "./weapons.js";
 export {
@@ -31,10 +37,11 @@ export {
   isOffhandId,
 } from "./offhands.js";
 
-export type { ArmorPiece, ArmorSet } from "./armor.js";
+export type { ArmorPiece, ArmorSet, ConditionalArmor } from "./armor.js";
 export {
   BASE_ARMOR_BY_PROFESSION,
   BASE_ENERGY_PIPS_BY_PROFESSION,
+  INHERENT_ARMOR_BY_PROFESSION,
   armorPieces,
   bareArmorSet,
   baseArmorFor,
@@ -72,7 +79,6 @@ export { GEAR_OMISSIONS, formatGearCoverage, gearOmission, openGearGaps } from "
 export { parseBuildEquipment } from "./parse.js";
 
 export type {
-  ConditionalArmor,
   LoadoutInput,
   ResolvedEquipment,
   ResolvedLoadout,
