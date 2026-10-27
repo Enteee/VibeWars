@@ -144,9 +144,11 @@ describe("lobby chat (#479)", () => {
       text: "\u202eabc" + "x".repeat(2000),
     });
     lobby.room.send("chat-line", { ...line, name: "Ann", text: "\u200b" });
+    lobby.room.send("chat-line", { ...line, fromId: "\u202eevil", name: "\u200b", text: "hi" });
     await settle();
-    expect(ann.lines).toHaveLength(1);
+    expect(ann.lines).toHaveLength(2);
     expect(ann.lines[0]?.name).toBe("Ab");
+    expect(ann.lines[1]?.name).toBe("Unnamed");
     expect(ann.lines[0]?.text).toBe("abc" + "x".repeat(MAX_CHAT_GRAPHEMES - 3));
   });
 
