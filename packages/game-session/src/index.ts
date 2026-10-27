@@ -70,5 +70,9 @@ export {
   statusSnapshot,
   wireStatuses,
 } from "./wire.js";
-export { ROOM_PREFIX, formGroups, groupOf } from "./queue-formation.js";
+export { ROOM_PREFIX, formGroups, groupOf, isLive } from "./queue-formation.js";
 export type { FormGroupsInput, FormedGroup } from "./queue-formation.js";
+export { createMemoryBoard } from "./queue-board.js";
+export type { MemoryBoard, QueueBoard, QueueBoardEvent } from "./queue-board.js";
+export { createQueueClient } from "./queue-client.js";
+export type { QueueClient, QueueClientOptions, QueueState, TicketKey } from "./queue-client.js";

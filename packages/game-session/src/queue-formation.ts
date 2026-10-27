@@ -63,8 +63,17 @@ function compare(a: string, b: string): number {
 }
 
 /**
- * The live tickets, first queued first: this protocol and mode, heard
- * from within `TICKET_TTL_MS`, not ignored, each id once.
+ * Whether `ticket` was heard within `TICKET_TTL_MS` of `now`, either way:
+ * a peer's clock is not trusted, and a heartbeat from far in the future
+ * would otherwise never expire (#870).
+ */
+export function isLive(ticket: QueueTicket, now: number): boolean {
+  return Math.abs(now - ticket.heartbeatAt) <= TICKET_TTL_MS;
+}
+
+/**
+ * The live tickets, first queued first: this protocol and mode, `isLive`,
+ * not ignored, each id once.
  */
 function liveQueue(input: FormGroupsInput): QueueTicket[] {
   const sorted = input.tickets
@@ -72,7 +81,7 @@ function liveQueue(input: FormGroupsInput): QueueTicket[] {
       (ticket) =>
         ticket.protocol === PROTOCOL_VERSION &&
         ticket.mode === input.mode &&
-        input.now - ticket.heartbeatAt <= TICKET_TTL_MS &&
+        isLive(ticket, input.now) &&
         !input.ignored.has(ticket.ticketId),
     )
     .sort(queueOrder);

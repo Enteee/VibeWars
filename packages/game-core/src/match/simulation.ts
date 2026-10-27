@@ -81,6 +81,7 @@ import {
   type ActiveStatus,
   type Outbreak,
   type StatusId,
+  type StatusTriggerEvent,
 } from "../skills/status.js";
 import { effectiveMaxEnergy, recoverOvercast } from "../skills/overcast.js";
 import { resolveTargets } from "../skills/targeting.js";
@@ -125,6 +126,7 @@ import {
   swingIntervalSeconds,
   weaponSnapshotOf,
 } from "../skills/weapon-attack.js";
+import { fireTriggers } from "../skills/triggers.js";
 import { add, distance, normalize, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import {
   createCursor,
@@ -1538,6 +1540,46 @@ export class MatchSimulation {
       doubleStrike: false,
       events,
     });
+    // After the skill's own effects, as their own entries (#469): a spell
+    // finished is Backfire's moment, an attack skill Empathy's.
+    if (isSpell(skill.type)) {
+      this.#fireTriggers(record, "bearer-casts-spell");
+    }
+    if (skill.attack !== undefined) {
+      this.#fireTriggers(record, "bearer-attacks");
+    }
+  }
+
+  /**
+   * The bearer did `event` (#469): each status on it that answers fires,
+   * logged as its source's skill, and whoever it kills dies as usual.
+   * Its damage charges the bearer's adrenaline as any foe's hit does (#827).
+   */
+  #fireTriggers(record: ParticipantRecord, event: StatusTriggerEvent): void {
+    const fired = fireTriggers(
+      record.combatant,
+      event,
+      (id) => this.#participants.get(id)?.combatant,
+      this.#rng,
+      this.#ruleset.combat,
+      this.#participants,
+    );
+    for (const { sourceId, skillId, events } of fired) {
+      this.#log.push({
+        tick: this.#tick,
+        atSeconds: this.#elapsedSeconds,
+        cause: "skill",
+        sourceId,
+        skillId,
+        weaponId: undefined,
+        attributeId: undefined,
+        area: undefined,
+        doubleStrike: false,
+        events,
+      });
+      this.#chargeFromDamage(this.#participants.get(sourceId)?.combatant, events);
+      this.#recordDeaths(events);
+    }
   }
 
   /**
@@ -1831,6 +1873,7 @@ export class MatchSimulation {
       if (released.length > 0) {
         this.#logWeapon(record.id, weapon.id, released);
       }
+      this.#fireTriggers(record, "bearer-attacks");
       return;
     }
     const { events, doubleStrike, landed } = resolveSwing({
@@ -1846,6 +1889,7 @@ export class MatchSimulation {
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events, doubleStrike);
+    this.#fireTriggers(record, "bearer-attacks");
   }
 
   /**
