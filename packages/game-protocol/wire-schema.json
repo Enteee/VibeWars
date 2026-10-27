@@ -56,7 +56,7 @@
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },
     "MAX_SNAPSHOT_PARTS": { "literal": 8 },
-    "MAX_WIRE_CHAT_TEXT": { "literal": 4096 },
+    "MAX_WIRE_CHAT_TEXT": { "literal": 2048 },
     "MAX_WIRE_COMBATS": { "literal": 64 },
     "MAX_WIRE_EVENTS": { "literal": 64 },
     "MAX_WIRE_JSON_DEPTH": { "literal": 16 },

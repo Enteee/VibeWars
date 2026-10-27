@@ -1,4 +1,4 @@
-import { MAX_CHAT_GRAPHEMES } from "@vibewars/game-protocol";
+import { MAX_CHAT_GRAPHEMES, MAX_WIRE_CHAT_TEXT } from "@vibewars/game-protocol";
 
 /**
  * Display names a player asks for, made safe to show everyone (#375):
@@ -60,8 +60,8 @@ const MAX_CODE_POINTS_PER_GRAPHEME = 12;
  */
 const MAX_NAME_CODE_POINTS = 48;
 
-/** How much of a chat line is looked at, in UTF-16 units: as for names, 16 a grapheme. */
-const MAX_RAW_CHAT_UNITS = MAX_CHAT_GRAPHEMES * 16;
+/** How much of a chat line is looked at, in UTF-16 units: all the wire carries. */
+const MAX_RAW_CHAT_UNITS = MAX_WIRE_CHAT_TEXT;
 
 /**
  * Code points in a whole chat line: three a grapheme on average, so a

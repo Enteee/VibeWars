@@ -88,9 +88,11 @@ export const MAX_CHAT_GRAPHEMES = 200;
 /**
  * The longest chat text on the wire, in UTF-16 units (#479): room for
  * `MAX_CHAT_GRAPHEMES` of nearly anything. Longer is malformed and
- * dropped whole; the host's clamp is what keeps a line short.
+ * dropped whole; the host's clamp is what keeps a line short. Small
+ * enough that a line of control characters, six bytes each once
+ * JSON-escaped, still fits one message (#403).
  */
-export const MAX_WIRE_CHAT_TEXT = 4096;
+export const MAX_WIRE_CHAT_TEXT = 2048;
 
 /** The most net pips either way (game-core's MAX_PIPS, #504). */
 export const MAX_WIRE_PIPS = 10;
