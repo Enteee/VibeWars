@@ -55,6 +55,21 @@ target you mean to attack: only the swing counts. The dead regenerate
 nothing, a respawn starts the count again, and training dummies
 regenerate like anyone. The numbers are the ruleset's.
 
+**Overcast** (#461, GW1's exhaustion) is a second cost some
+Elementalist spells take: maximum energy, not energy. Chain Lightning
+(Air Magic, 10 energy, 5 overcast, 2 s cast, 6 s recharge) strikes its
+target and the two foes nearest it for 70 lightning damage at rank 12,
+and lowers your maximum energy by 5 each cast. Overcast stacks, is paid
+when the cast starts (an interrupted or cancelled cast keeps it), and
+recovers 1 every 3 s, alive or dead. It takes no energy unless yours is
+now above the lowered maximum, which cuts it down: 30 / 30 and a spell
+costing 5 with 10 overcast leaves 20 / 20. Regeneration and energy gains
+fill only to the lowered maximum, which can drop below 0. It is not a
+condition, nothing removes it, and it lasts through death: a respawn
+fills you to the lowered maximum. A Training Ground reset clears it. The
+energy bar greys the overcast part at its right end and reads energy /
+lowered maximum; the tooltip says "10 energy, 5 overcast".
+
 The split is deliberate. Energy rewards patience; adrenaline rewards
 staying in the fight and landing hits. An adrenaline skill you cannot
 charge is useless, so costs are tuned against what one hit grants — a
@@ -108,6 +123,12 @@ casts, its slot on the bar is lit; when your cast ends without going
 off, the slot flashes, red with a ✕ if you were interrupted and grey if
 you cancelled it.
 
+**Some skills read how things stand** (#794), once, as they land and
+before any of their effects. Word of Healing heals 98 more (Healing
+Prayers 12) for an ally below half of its maximum health, a maximum a
+deep wound has lowered; its own heal cannot cancel the bonus. Mystic
+Sweep's blow deals 10 more while you are enchanted, in the same number.
+
 ## Interrupts
 
 Interrupting cancels a cast **only if one is in progress**. Too early or
@@ -125,6 +146,10 @@ Some interrupts are picky (#521). **Power Spike** and **Power Drain** only
 interrupt a spell or a chant; against an attack skill, a signet or an idle
 foe they are a wasted cast. When they land, Power Spike deals damage and
 Power Drain gives you energy.
+
+**Savage Shot** (#794) interrupts whatever its arrow finds being cast, and
+hits 25 harder if that was a spell: one bigger number on the hit, read
+as the arrow lands. A block or a miss does neither.
 
 ## Energy denial
 

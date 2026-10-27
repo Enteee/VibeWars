@@ -75,6 +75,7 @@ import {
 import { describeRefusal, MESSAGE_SECONDS, SKILL_SLOT_ICON_PX } from "./hud.js";
 import { isEliteSkill, skillBadgeHtml, skillIconHtml } from "./icons.js";
 import { createAllyWatch } from "./ally-watch.js";
+import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { paintHealthTint } from "./health-tint.js";
 import { pipsElement, renderPips } from "./pips.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
@@ -235,6 +236,9 @@ export function createTrainingPanel(): TrainingPanel {
 
   const health = vitalBar("health");
   const energy = vitalBar("energy");
+  // Overcast's grey band, after the fill and under the label (#461).
+  const energyOvercast = overcastBandElement();
+  energy.fill.after(energyOvercast);
   const adrenaline = h("span", "training-adrenaline");
   const vitals = h("div", "training-vitals");
   vitals.append(health.root, energy.root, adrenaline);
@@ -454,7 +458,8 @@ export function createTrainingPanel(): TrainingPanel {
     health.label.textContent = `${String(self.health)} / ${String(self.maxHealth)}`;
     paintHealthTint(health.root, self);
     energy.fill.style.width = fraction(self.energy, self.maxEnergy);
-    energy.label.textContent = `${String(self.energy)} / ${String(self.maxEnergy)}`;
+    energy.label.textContent = energyLabel(self.energy, self.maxEnergy, self.overcast);
+    renderOvercastBand(energyOvercast, self.overcast, self.maxEnergy);
     renderPips(health.pips, self.healthPips);
     renderPips(energy.pips, self.energyPips);
     adrenaline.textContent =

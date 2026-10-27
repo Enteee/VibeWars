@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 5
   },
+  "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 30,
   "description": "For 15 seconds, your next 2 spells cost 10...16...18 less Energy to cast.",

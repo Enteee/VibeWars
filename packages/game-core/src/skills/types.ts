@@ -147,16 +147,35 @@ export interface KnockdownEffect {
 export const KNOCKDOWN_SECONDS = 2;
 
 /** What an earlier effect of the same skill did to the same target (#521). */
-export type EffectCondition =
+export type EventCondition =
   /** An `interrupt` earlier in the list cancelled an action. */
   | { readonly kind: "interrupted" }
   /** A `remove-status` earlier in the list removed at least one status of this category. */
   | { readonly kind: "removed"; readonly category: StatusCategory };
 
 /**
- * Effects that land only if an earlier effect of the same skill did
- * something to the same target (#521): Power Spike's damage, if it
- * interrupted a spell. Evaluated per target.
+ * How the target or the caster stands (#794), read once, before any
+ * effect of the skill lands, so a heal cannot lift its own target out of
+ * its bonus.
+ */
+export type StateCondition =
+  /** The effect's target is below this fraction of its maximum health (0.5 = 50%). */
+  | { readonly kind: "target-health-below"; readonly fraction: number }
+  /** The effect's target has at least one status of this category. */
+  | { readonly kind: "target-has"; readonly category: StatusCategory }
+  /** The caster has at least one status of this category. */
+  /** The effect's target is activating a spell (`isSpell`); a chant is not one. */
+  | { readonly kind: "target-casting"; readonly spell: true }
+  | { readonly kind: "caster-has"; readonly category: StatusCategory };
+
+export type EffectCondition = EventCondition | StateCondition;
+
+/**
+ * Effects that land only if a condition holds for the same target: an
+ * earlier effect of the skill did something to it (#521), as Power
+ * Spike's damage if it interrupted a spell, or it or the caster stands
+ * a certain way (#794), as Word of Healing's more if the ally is below
+ * half health. Evaluated per target.
  */
 export interface ConditionalEffect {
   readonly kind: "if";
@@ -219,6 +238,12 @@ export function isSpell(type: SkillType): boolean {
 export type AttackWeaponClass =
   "axe" | "sword" | "hammer" | "daggers" | "scythe" | "spear" | "bow" | "melee";
 
+/** Bonus damage an attack skill adds only while `condition` holds (#794). */
+export interface ConditionalBonus {
+  readonly condition: StateCondition;
+  readonly amount: Magnitude;
+}
+
 /** What makes an attack skill a blow of its weapon (ADR-0029). */
 export interface AttackSkillRule {
   readonly weapon: AttackWeaponClass;
@@ -229,6 +254,12 @@ export interface AttackSkillRule {
   readonly weaponDamage: number;
   /** Added to the weapon's roll before armor; `undefined`: no bonus. */
   readonly bonusDamage: Magnitude | undefined;
+  /**
+   * More bonus while a state holds (#794), read as each blow lands on its
+   * victim, and added to that blow: Mystic Sweep's "If you are enchanted,
+   * +10 damage". One damage number, not a second hit. `undefined`: none.
+   */
+  readonly conditionalBonus: ConditionalBonus | undefined;
   /** Whether no block stops it (Wild Throw's "This attack cannot be blocked"). */
   readonly unblockable: boolean;
   /**
@@ -263,6 +294,11 @@ export interface Skill {
    */
   readonly attributeId: string | undefined;
   readonly cost: SkillCost | undefined;
+  /**
+   * Maximum energy it takes away when activation starts, on top of its
+   * cost (#461): GW1's overcast, once called exhaustion. `0` for none.
+   */
+  readonly overcast: number;
   /** Cast time in seconds. `0` is instant. */
   readonly activationSeconds: number;
   readonly rechargeSeconds: number;
@@ -327,6 +363,11 @@ export interface Combatant {
   readonly maxHealth: number;
   energy: number;
   readonly maxEnergy: number;
+  /**
+   * Maximum energy lost to overcast (#461), recovering over time; the
+   * ceiling energy fills to is `maxEnergy − overcast`, and may be below 0.
+   */
+  overcast: number;
   /** Energy regeneration before statuses, in pips (`ENERGY_PER_PIP`). */
   readonly baseEnergyPips: number;
   adrenaline: number;

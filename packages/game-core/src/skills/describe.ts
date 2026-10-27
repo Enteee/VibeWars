@@ -4,7 +4,7 @@ import { getAttribute } from "../professions.js";
 
 import { energyCostOf } from "./activation.js";
 import { resolveMagnitudeAtRanks } from "./scaling.js";
-import { findStatusDefinition } from "./status.js";
+import { findStatusDefinition, type StatusCategory } from "./status.js";
 import { effectiveActivationSeconds, outsideMatch } from "./tick.js";
 import type {
   AreaRule,
@@ -239,13 +239,26 @@ function lowerFirst(text: string): string {
   return `${text.charAt(0).toLowerCase()}${text.slice(1)}`;
 }
 
-/** What an `if` waits for, as the line it leads says it (#521). */
+/** "a hex", "an enchantment". */
+function aCategory(category: StatusCategory): string {
+  return `${category === "enchantment" ? "an" : "a"} ${category}`;
+}
+
+/** What an `if` waits for, as the line it leads says it (#521, #794). */
 function conditionText(condition: EffectCondition): string {
   switch (condition.kind) {
     case "interrupted":
       return "If it interrupts";
     case "removed":
-      return `If it removes ${condition.category === "enchantment" ? "an" : "a"} ${condition.category}`;
+      return `If it removes ${aCategory(condition.category)}`;
+    case "target-health-below":
+      return `If target is below ${String(Math.round(condition.fraction * 100))}% Health`;
+    case "target-has":
+      return `If target has ${aCategory(condition.category)}`;
+    case "caster-has":
+      return `If you have ${aCategory(condition.category)}`;
+    case "target-casting":
+      return "If target is casting a spell";
   }
 }
 
@@ -489,7 +502,12 @@ function costText(skill: Skill, ranks: ReadonlyMap<string, number>): string {
   }
   const cost = energyCostOf(skill, outsideMatch(ranks));
   const base = cost === skill.cost.amount ? "" : ` (${String(skill.cost.amount)})`;
-  return `${String(cost)} energy${base}`;
+  return `${String(cost)} energy${base}${overcastText(skill)}`;
+}
+
+/** ", 5 overcast" after an energy cost (#461), or nothing for a skill without. */
+export function overcastText(skill: Skill): string {
+  return skill.overcast > 0 ? `, ${String(skill.overcast)} overcast` : "";
 }
 
 /** "1.1s (2s)": how long it activates at these ranks, with no status on, the base in brackets when they differ. */
@@ -518,8 +536,24 @@ export function describeSkill(
   // blow, first, as GW1 writes it. Broad Head Arrow has none.
   const bonusDamage = skill.attack?.bonusDamage;
   const bonus = bonusDamage === undefined ? undefined : describeMagnitude(bonusDamage, ranks);
-  const bonusLine =
-    bonus === undefined ? [] : [{ text: `+${String(bonus.current)} damage`, magnitude: bonus }];
+  // Then its bonus while a state holds (#794): Mystic Sweep's "If you
+  // have an enchantment: +10 damage".
+  const conditionalBonus = skill.attack?.conditionalBonus;
+  const more =
+    conditionalBonus === undefined ? undefined : describeMagnitude(conditionalBonus.amount, ranks);
+  const bonusLine = [
+    ...(bonus === undefined
+      ? []
+      : [{ text: `+${String(bonus.current)} damage`, magnitude: bonus }]),
+    ...(conditionalBonus === undefined || more === undefined
+      ? []
+      : [
+          {
+            text: `${conditionText(conditionalBonus.condition)}: +${String(more.current)} damage`,
+            magnitude: more,
+          },
+        ]),
+  ];
   // An attack skill's if-blocked effects (#534), after the ones a hit gets.
   const onBlocked = (skill.attack?.onBlocked ?? []).flatMap((effect) =>
     describeEffects(effect, ranks).map(({ text, magnitude }) => ({

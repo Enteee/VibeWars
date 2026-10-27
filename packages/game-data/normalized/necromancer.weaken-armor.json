@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 5
   },
+  "overcast": 0,
   "activationSeconds": 0.5,
   "rechargeSeconds": 5,
   "description": "Target foe and foes adjacent to your target have Cracked Armor for 5...17...20 seconds.",

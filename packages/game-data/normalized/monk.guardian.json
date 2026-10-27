@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 5
   },
+  "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 6,
   "description": "For 2...6...7 seconds, target ally has a 50% chance to block attacks.",

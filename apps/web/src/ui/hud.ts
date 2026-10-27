@@ -31,6 +31,7 @@ import {
   weaponIcon,
 } from "./icons.js";
 import { iconButton } from "./kit.js";
+import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { pipsElement, renderPips } from "./pips.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import {
@@ -73,6 +74,8 @@ export interface HudElements {
   /** Net regeneration or degeneration arrows in the bar (#504). */
   readonly healthPips: HTMLElement;
   readonly energyFill: HTMLElement;
+  /** Overcast's grey band at the energy bar's right end (#461). */
+  readonly energyOvercast: HTMLElement;
   readonly energyText: HTMLElement;
   readonly energyPips: HTMLElement;
   readonly adrenalineText: HTMLElement;
@@ -231,6 +234,7 @@ export function createHud(parent: HTMLElement): HudElements {
 
   const energyRow = element("div", "hud-bar hud-bar-energy", bars);
   const energyFill = element("div", "hud-bar-fill", energyRow);
+  const energyOvercast = energyRow.appendChild(overcastBandElement());
   const energyText = element("span", "hud-bar-label", energyRow);
   const energyPips = energyRow.appendChild(pipsElement());
 
@@ -251,6 +255,7 @@ export function createHud(parent: HTMLElement): HudElements {
     healthText,
     healthPips,
     energyFill,
+    energyOvercast,
     energyText,
     energyPips,
     adrenalineText,
@@ -477,11 +482,11 @@ function setBar(
   label: HTMLElement,
   value: number,
   max: number,
-  suffix: string,
+  text: string,
 ): void {
   const fraction = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
   fill.style.width = `${String(fraction * 100)}%`;
-  label.textContent = `${String(Math.round(value))} / ${String(Math.round(max))} ${suffix}`;
+  label.textContent = text;
 }
 
 /**
@@ -496,7 +501,10 @@ export function lostHealthPercent(
   if (player.dead || player.maxHealth <= 0) {
     return 0;
   }
-  const lost = maxHealthLossOfStatusIds(player.maxHealth, player.statuses);
+  const lost = maxHealthLossOfStatusIds(
+    player.maxHealth,
+    player.statuses.map((status) => status.id),
+  );
   return Math.max(0, Math.min(100, (lost / player.maxHealth) * 100));
 }
 
@@ -823,10 +831,14 @@ export function updateHud(
   hud.hintDismissed = targetHintDismissed(hud.hintDismissed, self);
   hud.hint.hidden = hud.hintDismissed;
 
-  setBar(hud.healthFill, hud.healthText, self.health, self.maxHealth, "hp");
+  const healthText = `${String(Math.round(self.health))} / ${String(Math.round(self.maxHealth))} hp`;
+  setBar(hud.healthFill, hud.healthText, self.health, self.maxHealth, healthText);
   hud.healthLost.style.width = `${String(lostHealthPercent(self))}%`;
   paintHealthTint(hud.healthRow, self);
-  setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, "en");
+  // Counted to the ceiling overcast leaves, the rest of the bar greyed (#461).
+  const energyText = `${energyLabel(self.energy, self.maxEnergy, self.overcast)} en`;
+  setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, energyText);
+  renderOvercastBand(hud.energyOvercast, self.overcast, self.maxEnergy);
   renderPips(hud.healthPips, self.healthPips);
   renderPips(hud.energyPips, self.energyPips);
   // Armor and weapon alongside adrenaline: both are now numbers that
@@ -837,7 +849,9 @@ export function updateHud(
     (self.weaponId === undefined ? "" : ` · ${describeWeaponName(self.weaponId)}`);
 
   hud.statusList.textContent =
-    self.statuses.length > 0 ? self.statuses.join(" · ") : "no active effects";
+    self.statuses.length > 0
+      ? self.statuses.map((status) => status.id).join(" · ")
+      : "no active effects";
 
   renderTarget(hud, self, target);
 

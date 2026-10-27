@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 5
   },
+  "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 10,
   "description": "For 10 seconds, the next attack skill used by each party member within earshot also causes Burning for 1...3...3 seconds.",

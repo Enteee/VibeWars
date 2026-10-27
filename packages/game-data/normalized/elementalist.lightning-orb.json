@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 15
   },
+  "overcast": 0,
   "activationSeconds": 2,
   "rechargeSeconds": 5,
   "description": "Send out a Lightning Orb that strikes target foe for 10...82...100 lightning damage if it hits. This spell has 25% armor penetration.",

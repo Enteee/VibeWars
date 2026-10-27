@@ -1,6 +1,7 @@
 import { DIVINE_FAVOR_ATTRIBUTE, divineFavorBonusHeal } from "../primary-attributes.js";
 import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
+import { effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude } from "./scaling.js";
 import { getStatusDefinition, scaledStatusDuration, type StatusId } from "./status.js";
 import { effectiveMaxHealth, healingMultiplierOf, maxHealthLossOf, rankOf } from "./tick.js";
@@ -14,6 +15,7 @@ import {
   type EffectCondition,
   type InterruptEffect,
   type SkillEffect,
+  type StateCondition,
   type UnconditionalEffect,
 } from "./types.js";
 
@@ -166,14 +168,15 @@ function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): vo
 }
 
 /**
- * Give energy, clamped so it can never exceed maximum energy. The dead
+ * Give energy, clamped so it can never exceed the maximum overcast
+ * leaves (#461). The dead
  * gain none, and a gain that fills nothing is no event.
  */
 export function gainEnergy(target: Combatant, amount: number, events: CombatEvent[]): void {
   if (amount <= 0 || target.dead) {
     return;
   }
-  const applied = Math.min(amount, target.maxEnergy - target.energy);
+  const applied = Math.min(amount, effectiveMaxEnergy(target) - target.energy);
   if (applied <= 0) {
     return;
   }
@@ -479,14 +482,84 @@ export function applyEffect(
   }
 }
 
+/** Whether `condition` is read from how things stand rather than from what came before (#794). */
+function isStateCondition(condition: EffectCondition): condition is StateCondition {
+  switch (condition.kind) {
+    case "interrupted":
+    case "removed":
+      return false;
+    case "target-health-below":
+    case "target-has":
+    case "target-casting":
+    case "caster-has":
+      return true;
+  }
+}
+
 /**
- * Whether an earlier effect of the same skill did what `condition` asks
- * to `targetId` (#521), read from the events it emitted.
+ * Whether `condition` holds for `target` and `caster` as they stand now
+ * (#794). Health is a share of the maximum a deep wound left; exactly
+ * the fraction is not below it.
+ */
+export function stateHolds(
+  condition: StateCondition,
+  caster: Combatant,
+  target: Combatant,
+): boolean {
+  switch (condition.kind) {
+    case "target-health-below":
+      return target.health < effectiveMaxHealth(target) * condition.fraction;
+    case "target-has":
+      return target.statuses.countByCategory(condition.category) > 0;
+    case "caster-has":
+      return caster.statuses.countByCategory(condition.category) > 0;
+    case "target-casting": {
+      const cast = target.cast.activeCast;
+      const skill = cast === undefined ? undefined : getSkill(cast.skillId);
+      return skill !== undefined && isSpell(skill.type);
+    }
+  }
+}
+
+/** No state held: a resolution with no target. */
+const NONE_HELD: ReadonlySet<EffectCondition> = new Set();
+
+/**
+ * The state conditions of the `if`s among `effects` that hold for
+ * `target`, read once before any of them lands (#794): a heal cannot
+ * lift its own target out of its bonus.
+ */
+function statesBefore(
+  effects: readonly SkillEffect[],
+  caster: Combatant,
+  target: Combatant | undefined,
+): ReadonlySet<EffectCondition> {
+  if (target === undefined) {
+    return NONE_HELD;
+  }
+  const held = new Set<EffectCondition>();
+  for (const effect of effects) {
+    if (
+      effect.kind === "if" &&
+      isStateCondition(effect.condition) &&
+      stateHolds(effect.condition, caster, target)
+    ) {
+      held.add(effect.condition);
+    }
+  }
+  return held;
+}
+
+/**
+ * Whether `condition` holds for `targetId`: for an earlier effect's
+ * (#521), read from the events this resolution has emitted so far; for a
+ * state (#794), as `held` read it before the first effect.
  */
 function conditionHolds(
   condition: EffectCondition,
   targetId: string,
   earlier: readonly CombatEvent[],
+  held: ReadonlySet<EffectCondition>,
 ): boolean {
   switch (condition.kind) {
     case "interrupted":
@@ -498,24 +571,31 @@ function conditionHolds(
           event.targetId === targetId &&
           getStatusDefinition(event.statusId).category === condition.category,
       );
+    case "target-health-below":
+    case "target-has":
+    case "target-casting":
+    case "caster-has":
+      return held.has(condition);
   }
 }
 
 /**
  * Apply one effect to `context.target`, an `if` included: its effects
  * land only if its condition holds for that target, given `earlier`, the
- * events this resolution has emitted so far.
+ * events this resolution has emitted so far, and `held`, the states that
+ * held before it began.
  */
 function applyInOrder(
   effect: SkillEffect,
   context: SkillContext,
   earlier: readonly CombatEvent[],
+  held: ReadonlySet<EffectCondition>,
 ): CombatEvent[] {
   if (effect.kind !== "if") {
     return applyEffect(effect, context, earlier);
   }
   const { target } = context;
-  return target !== undefined && conditionHolds(effect.condition, target.id, earlier)
+  return target !== undefined && conditionHolds(effect.condition, target.id, earlier, held)
     ? effect.effects.flatMap((inner) => applyEffect(inner, context, earlier))
     : [];
 }
@@ -525,9 +605,10 @@ export function applyEffects(
   effects: readonly SkillEffect[],
   context: SkillContext,
 ): CombatEvent[] {
+  const held = statesBefore(effects, context.caster, context.target);
   const events: CombatEvent[] = [];
   for (const effect of effects) {
-    events.push(...applyInOrder(effect, context, events));
+    events.push(...applyInOrder(effect, context, events, held));
   }
   return events;
 }
@@ -581,11 +662,15 @@ export interface SkillResolution {
  */
 export function applySkillEffects(resolution: SkillResolution): CombatEvent[] {
   const { skill, caster, targets, rng, rules } = resolution;
+  const held = new Map(
+    targets.map((target) => [target, statesBefore(skill.effects, caster, target)] as const),
+  );
   const events: CombatEvent[] = [];
   for (const effect of skill.effects) {
     const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
     for (const target of on) {
-      events.push(...applyInOrder(effect, { caster, target, rng, rules }, events));
+      const states = (target === undefined ? undefined : held.get(target)) ?? NONE_HELD;
+      events.push(...applyInOrder(effect, { caster, target, rng, rules }, events, states));
     }
   }
   // Divine Favor (#529): once a cast, on the primary target only, after

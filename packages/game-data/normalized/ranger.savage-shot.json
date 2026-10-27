@@ -1,0 +1,25 @@
+{
+  "id": "ranger.savage-shot",
+  "name": "Savage Shot",
+  "profession": "ranger",
+  "attribute": "Marksmanship",
+  "type": "Bow attack.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0.5,
+  "rechargeSeconds": 5,
+  "description": "If Savage Shot hits, your target's action is interrupted. If that action was a spell, you strike for 13...25...28 damage.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/121-Savage_Shot",
+    "fetchedAt": "2026-10-27T04:38:28.885Z"
+  },
+  "unmapped": {}
+}

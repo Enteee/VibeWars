@@ -1,3 +1,5 @@
+import type { StatusId } from "@vibewars/game-core";
+import type { PlayerSnapshot } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
 import { healthTint, paintHealthTint } from "./health-tint.js";
@@ -49,12 +51,17 @@ function bar(): { classList: Pick<DOMTokenList, "toggle">; classes: Set<string> 
   return { classList, classes };
 }
 
+/** Snapshot statuses with these ids, as the wire carries them (#803). */
+function statuses(...ids: readonly StatusId[]): PlayerSnapshot["statuses"] {
+  return ids.map((id) => ({ id, endsAt: 20, durationSeconds: 20, casterId: "foe" }));
+}
+
 describe("paintHealthTint (#807)", () => {
   it("puts the tint's class on the bar, and takes it off when the status is gone", () => {
     const health = bar();
-    paintHealthTint(health, { dead: false, statuses: ["bleeding"] });
+    paintHealthTint(health, { dead: false, statuses: statuses("bleeding") });
     expect([...health.classes]).toEqual(["is-tint-bleeding"]);
-    paintHealthTint(health, { dead: false, statuses: ["bleeding", "faintheartedness"] });
+    paintHealthTint(health, { dead: false, statuses: statuses("bleeding", "faintheartedness") });
     expect([...health.classes]).toEqual(["is-tint-hex"]);
     paintHealthTint(health, { dead: false, statuses: [] });
     expect([...health.classes]).toEqual([]);
@@ -62,8 +69,8 @@ describe("paintHealthTint (#807)", () => {
 
   it("leaves a corpse untinted", () => {
     const health = bar();
-    paintHealthTint(health, { dead: false, statuses: ["poison"] });
-    paintHealthTint(health, { dead: true, statuses: ["poison"] });
+    paintHealthTint(health, { dead: false, statuses: statuses("poison") });
+    paintHealthTint(health, { dead: true, statuses: statuses("poison") });
     expect([...health.classes]).toEqual([]);
   });
 });

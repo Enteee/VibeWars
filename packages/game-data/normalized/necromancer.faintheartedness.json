@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 10
   },
+  "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 8,
   "description": "For the next 3...13...16 seconds, target foe attacks\n                50% slower, and that foe suffers health degeneration of\n                0...2...3.",

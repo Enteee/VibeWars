@@ -768,7 +768,10 @@ test("⚙ opens Options over the match: Esc closes it, and the attack and the ma
 
   await page.keyboard.press("Escape");
   await expect(options).toHaveCount(0);
-  // Esc closed Options; it did not also cancel the attack.
+  // Esc closed Options; it did not also cancel the attack. Wait for the
+  // clock to move, so snapshots after the Esc have arrived from the host.
+  const afterEsc = (await clock.textContent()) ?? "";
+  await expect(clock).not.toHaveText(afterEsc);
   await expect(attacking).toBeVisible();
   await expect(page.locator(".hud-options")).toBeFocused();
   await opponent.close();

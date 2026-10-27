@@ -3,7 +3,9 @@
 exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
 {
   "assassin.dash": "",
+  "dervish.mystic-sweep": "",
   "elementalist.armor-of-earth": "defence",
+  "elementalist.chain-lightning": "",
   "elementalist.fireball": "",
   "elementalist.glyph-of-lesser-energy": "",
   "elementalist.lightning-orb": "",
@@ -16,6 +18,7 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "monk.guardian": "defence",
   "monk.mend-condition": "healing removal",
   "monk.orison-of-healing": "healing",
+  "monk.word-of-healing": "healing",
   "necromancer.blood-renewal-lite": "healing",
   "necromancer.blood-ritual": "",
   "necromancer.enfeeble": "condition",
@@ -28,6 +31,7 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "ranger.apply-poison": "condition",
   "ranger.barrage": "",
   "ranger.broad-head-arrow": "interrupt condition",
+  "ranger.savage-shot": "interrupt",
   "ranger.troll-unguent": "",
   "ritualist.weapon-of-warding": "defence",
   "warrior.backbreaker": "knockdown",

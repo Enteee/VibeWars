@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 5
   },
+  "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 15,
   "description": "For 8...13...14 seconds, you move 25% faster.",
