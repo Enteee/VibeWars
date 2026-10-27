@@ -145,9 +145,13 @@ describe("a scythe's attack skill cleaves (#977)", () => {
       throw new Error("no target");
     }
     expect(
-      cleaveVictims(self, at, surroundings, WEAPONS.scythe).map((combatant) => combatant.id),
+      cleaveVictims(self, at, surroundings, WEAPONS.scythe, WEAPONS.scythe.cleaveTargets).map(
+        (combatant) => combatant.id,
+      ),
     ).toEqual(["near1", "near2"]);
-    expect(cleaveVictims(self, at, surroundings, WEAPONS.sword)).toEqual([]);
+    expect(cleaveVictims(self, at, surroundings, WEAPONS.sword, Number.POSITIVE_INFINITY)).toEqual(
+      [],
+    );
   });
 
   it("with a sword, an attack skill strikes only its target", () => {

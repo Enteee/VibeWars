@@ -1025,6 +1025,26 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     ]);
   });
 
+  it("carries a shadow step and where it went, and drops one with nowhere (#988)", () => {
+    const wire = wireCombat([
+      entry({
+        cause: "skill",
+        skillId: "assassin.deaths-charge",
+        weaponId: undefined,
+        events: [{ kind: "shadow-stepped", targetId: "a", toId: "b" }],
+      }),
+    ]).map((combat) => ({
+      sent: combatMessage(combat).events,
+      broken: combatMessage({
+        ...combat,
+        events: combat.events.map((event) => ({ ...event, fromId: null })),
+      }).events,
+    }));
+    expect(wire).toEqual([
+      { sent: [{ kind: "shadow-stepped", targetId: "a", toId: "b" }], broken: [] },
+    ]);
+  });
+
   it("carries a blocked attack across (#534)", () => {
     const blocked = { kind: "attack-blocked", targetId: "b" } as const;
     const [wired] = wireCombat([entry({ events: [blocked] })]);

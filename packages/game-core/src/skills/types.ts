@@ -278,6 +278,15 @@ export interface KnockdownEffect {
 }
 
 /**
+ * Shadow Step (#988): the caster moves to the effect's target, as Death's
+ * Charge's "Shadow Step to target foe". The effect layer only reports it
+ * (`shadow-stepped`); the simulation places the body.
+ */
+export interface ShadowStepEffect {
+  readonly kind: "shadow-step";
+}
+
+/**
  * Bring a dead target back to life where it lies (#812), with these
  * percentages of its maximum health and energy, as Restore Life's
  * "returned to life with 20...56...65% health and 42...80...90% energy".
@@ -367,8 +376,16 @@ export type StateCondition =
   | { readonly kind: "target-has"; readonly category: StatusCategory }
   /** The effect's target is activating a spell (`isSpell`); a chant is not one. */
   | { readonly kind: "target-casting"; readonly spell: true }
-  /** The caster has at least one status of this category. */
-  | { readonly kind: "caster-has"; readonly category: StatusCategory }
+  /**
+   * The caster has at least one status of this category; with a
+   * `profession`, one of that profession's (#1021): Eremite's Attack's
+   * "if a Dervish enchantment is removed", read before it is.
+   */
+  | {
+      readonly kind: "caster-has";
+      readonly category: StatusCategory;
+      readonly profession?: ProfessionId;
+    }
   /**
    * No living ally of the effect's target, the target itself excluded,
    * stands within `radius` of it (#885): Horns of the Ox's "not adjacent
@@ -412,7 +429,19 @@ export type StateCondition =
    * share (#939): Victorious Sweep's "if target foe has less Health than
    * you". Equal is not less.
    */
-  | { readonly kind: "target-less-health" };
+  | { readonly kind: "target-less-health" }
+  /**
+   * The effect's target has more health than the caster, absolute (#988):
+   * Death's Charge's "if that foe has more Health than you". Equal is not
+   * more.
+   */
+  | { readonly kind: "target-more-health" }
+  /**
+   * The effect's target is alive and attacking (#988): an auto-attack
+   * swinging, not walking to its foe, or an attack skill being activated,
+   * as Shadow Refuge's "if you are attacking".
+   */
+  | { readonly kind: "target-attacking" };
 
 export type EffectCondition = EventCondition | StateCondition;
 
@@ -447,6 +476,7 @@ export type UnconditionalEffect =
   | RemoveStatusEffect
   | InterruptEffect
   | KnockdownEffect
+  | ShadowStepEffect
   | ResurrectEffect
   | RechargeFasterEffect
   | SplashEffect
@@ -512,6 +542,14 @@ export interface AttackSkillRule {
   readonly weaponDamage: number;
   /** Added to the weapon's roll before armor; `undefined`: no bonus. */
   readonly bonusDamage: Magnitude | undefined;
+  /**
+   * While this holds for the caster as the skill hits, its cleave takes
+   * every living foe adjacent to its target, not the weapon's
+   * `cleaveTargets` (#1021): Eremite's Attack's "strike all adjacent
+   * foes". Read once, with the primary as the target. A weapon that does
+   * not cleave does not start to. Absent: the weapon's cap.
+   */
+  readonly cleavesAllWhen?: StateCondition;
   /**
    * The blow's damage type instead of the weapon's (#923): Spear of
    * Lightning's whole blow is lightning, weapon and bonus alike.

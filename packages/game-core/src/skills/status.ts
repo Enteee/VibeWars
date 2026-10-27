@@ -26,7 +26,8 @@
  * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time.
  */
 
-import { AREA_ADJACENT, AREA_IN_THE_AREA } from "../distances.js";
+import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../distances.js";
+import type { DamageType } from "../equipment/types.js";
 import { wieldsFor, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
 import type { AttackWeaponClass, Combatant, DamageEffect, SkillEffect } from "./types.js";
@@ -90,6 +91,8 @@ export type StatusId =
   | "patient-spirit"
   | "holy-veil"
   | "protective-spirit"
+  | "shadow-refuge"
+  | "shroud-of-distress"
   | "reversal-of-fortune"
   // Stances.
   | "sprint"
@@ -108,6 +111,7 @@ export type StatusId =
   | "watch-yourself"
   | "healing-signet-armor"
   | "for-great-justice"
+  | "critical-eye"
   // Paragon shouts (#921).
   | "fall-back"
   | "stand-your-ground"
@@ -123,6 +127,10 @@ export type StatusId =
   | "spirit-light-weapon"
   | "weapon-of-quickening"
   | "weapon-of-aggression"
+  // Ritualist weapon spells 2 (#1022).
+  | "weapon-of-remedy"
+  | "vengeful-weapon"
+  | "splinter-weapon"
   // Paragon command (#923).
   | "never-surrender"
   // Dervish enchantments and stances (#845).
@@ -132,7 +140,11 @@ export type StatusId =
   | "vow-of-strength"
   | "sand-shards"
   | "pious-haste"
-  | "pious-haste-run";
+  | "pious-haste-run"
+  // Dervish earth enchantments (#1021).
+  | "staggering-force"
+  | "dust-cloak"
+  | "aura-of-thorns";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -227,6 +239,13 @@ export interface StatusDefinition {
    */
   readonly weaponDamageMultiplier: number;
   /**
+   * The type the bearer's attacks deal, the weapon's roll included
+   * (#1021): Staggering Force's and Dust Cloak's "your attacks deal
+   * earth damage". An attack skill's own `damageType` (Spear of
+   * Lightning) still wins. `undefined`: the weapon's.
+   */
+  readonly attackDamageType: DamageType | undefined;
+  /**
    * Added to every attribute of the bearer above rank 0 (#762): weakness's
    * −1. Read through `rankOf` alone (ADR-0019).
    */
@@ -255,6 +274,16 @@ export interface StatusDefinition {
   readonly endsOnKnockdownPrevented: boolean;
   /** The bearer's chance to block attacks; `undefined`: none. */
   readonly block: BlockRule | undefined;
+  /**
+   * `block` holds only while the bearer's health is below this share of
+   * its maximum after a deep wound (#988): Shroud of Distress's "if you
+   * are below 50% Health". `undefined`: at any health.
+   */
+  readonly blockBelowHealth: number | undefined;
+  /** Added to the bearer's chance to land a critical hit (#988): Critical Eye's 0.13. */
+  readonly criticalChanceBonus: number;
+  /** Energy the bearer gains on each critical hit it lands, beyond Critical Strikes' (#988). */
+  readonly energyPerCritical: number;
   /**
    * It ends after this many incoming attacks, each a hit or a block
    * (#524); `undefined`: only its duration ends it. Counted on each
@@ -317,6 +346,12 @@ export interface StatusDefinition {
    */
   readonly endsWhenBearerUsesSkill: boolean;
   /**
+   * It ends once one of its triggers has fired (#1022): Vengeful Weapon's
+   * and Weapon of Remedy's "the next time". Ended where the trigger fires,
+   * after its effects, logged as its expiry.
+   */
+  readonly endsWhenTriggered: boolean;
+  /**
    * It ends the moment one of the bearer's attack skills hits (#956): a
    * plain swing or arrow keeps it, as does a miss or a block. Defensive
    * Anthem's price.
@@ -377,7 +412,8 @@ export interface StatusDefinition {
  * the status itself ends, for any reason but a refresh or a reset (#887).
  * Or (#935) it completes any skill, lands a hit, or loses health to
  * physical damage. `expires` is only the end of its duration (#944):
- * Patient Spirit's "unless it ends prematurely".
+ * Patient Spirit's "unless it ends prematurely". Or (#1022) it loses
+ * health to damage or life steal from a foe.
  */
 export type StatusTriggerEvent =
   | "bearer-casts-spell"
@@ -385,6 +421,13 @@ export type StatusTriggerEvent =
   | "bearer-uses-skill"
   | "bearer-hits"
   | "bearer-takes-physical-damage"
+  /**
+   * The bearer lost health to damage or life steal from a foe (#1022):
+   * any typed packet through `applyDamage`, or a `stealLife`, whose dealer
+   * is on the other team. Degeneration, sacrifice and a reversed packet are
+   * neither. Recorded with the dealer, and fired at the drain, as hits are.
+   */
+  | "bearer-takes-damage-from-foe"
   | "bearer-gains-condition"
   | "ends"
   | "expires";
@@ -394,9 +437,13 @@ export interface StatusTrigger {
   /**
    * Applied with the status's source as caster, on `target`: the bearer
    * (Backfire's damage), or the source itself (Parasitic Bond's heal, #887).
+   * Or `offender` (#1022): the bearer turns on the foe whose damage or
+   * steal set it off. The bearer is the effects' caster and that foe their
+   * target, so "that ally steals ... from that foe" heals the bearer, and a
+   * `remove-status` with `from: "caster"` strips the bearer.
    */
   readonly effects: readonly TriggerEffect[];
-  readonly target: "bearer" | "source";
+  readonly target: "bearer" | "source" | "offender";
   /** The skill the log names it after: "mesmer.backfire". */
   readonly skillId: string;
 }
@@ -414,7 +461,8 @@ export interface AttackHitRider {
 /** How many of the bearer's hits, with which weapon, a status lasts (#939). */
 export interface EndsAfterHits {
   readonly count: number;
-  readonly weapon: AttackWeaponClass;
+  /** `undefined`: a hit with any weapon whose blow carries riders (#1022): Splinter Weapon's. */
+  readonly weapon: AttackWeaponClass | undefined;
 }
 
 /**
@@ -438,6 +486,7 @@ export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect;
  * ending it. Or (#935) a hit the bearer landed, or physical damage it
  * took, with the triggers on it that answered at that moment (#953): a
  * killing blow ends them before the drain, and they still fire for it.
+ * Or (#1022) damage or life steal it took from a foe, with that foe.
  */
 export type StatusChange =
   | { readonly kind: "gained-condition"; readonly id: StatusId; readonly durationSeconds: number }
@@ -448,10 +497,16 @@ export type StatusChange =
       readonly expired: boolean;
     }
   | { readonly kind: "hit"; readonly fired: readonly AnsweringTrigger[] }
-  | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] };
+  | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] }
+  | {
+      readonly kind: "took-damage-from-foe";
+      readonly offenderId: string;
+      readonly fired: readonly AnsweringTrigger[];
+    };
 
-/** A trigger on the bearer that answered an event, and who applied its status. */
+/** A trigger on the bearer that answered an event, the status that holds it, and who applied it. */
 export interface AnsweringTrigger {
+  readonly statusId: StatusId;
   readonly sourceId: string;
   readonly trigger: StatusTrigger;
 }
@@ -504,6 +559,7 @@ function define(
     maxHealthLoss: undefined,
     healingMultiplier: 1,
     weaponDamageMultiplier: 1,
+    attackDamageType: undefined,
     attributeDelta: 0,
     castTimeMultiplier: 1,
     interruptsSpells: false,
@@ -511,6 +567,9 @@ function define(
     preventsKnockdown: false,
     endsOnKnockdownPrevented: false,
     block: undefined,
+    blockBelowHealth: undefined,
+    criticalChanceBonus: 0,
+    energyPerCritical: 0,
     endsAfterAttacks: undefined,
     onAttackHit: undefined,
     endsAfterHits: undefined,
@@ -521,6 +580,7 @@ function define(
     endsWhenBearerAttacksInMelee: false,
     endsWhenBearerHits: false,
     endsWhenBearerUsesSkill: false,
+    endsWhenTriggered: false,
     endsWhenBearerHitsWithAttackSkill: false,
     endsWhenBearerGains: [],
     damageTakenMultiplier: 1,
@@ -784,6 +844,34 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "monk",
     maxDamageFractionPerHit: 0.1,
   }),
+  // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
+  // Refuge ends, you gain 40...88...100 Health if you are attacking" (#988).
+  // Any end, a strip included: GW1 says "ends", not "expires".
+  "shadow-refuge": define("shadow-refuge", "Shadow Refuge", "enchantment", {
+    profession: "assassin",
+    healthPips: 9,
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "if",
+            condition: { kind: "target-attacking" },
+            effects: [{ kind: "heal", amount: { flat: 88 }, perStatusOnTarget: [] }],
+          },
+        ],
+        target: "bearer",
+        skillId: "assassin.shadow-refuge",
+      },
+    ],
+  }),
+  // "For 30...54...60 seconds, if you are below 50% Health, you have a 75%
+  // chance to block attacks" (#988), read at each block roll.
+  "shroud-of-distress": define("shroud-of-distress", "Shroud of Distress", "enchantment", {
+    profession: "assassin",
+    block: { chance: 0.75, against: "all" },
+    blockBelowHealth: 0.5,
+  }),
   // "For 8 seconds, the next time target ally would take damage or life
   // steal, that ally gains that amount of health instead, maximum
   // 15...67...80": 67, its rank-12 cap; the 8 s are the skill's.
@@ -853,6 +941,14 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "for-great-justice": define("for-great-justice", "For Great Justice!", "shout", {
     profession: "warrior",
     extraStrikesPerHit: 1,
+  }),
+  // "For 10...30...35 seconds, you have an additional 3...13...15% chance
+  // to land a critical hit when attacking. You gain 1 Energy whenever you
+  // score a critical hit" (#988). A skill effect: no strip removes it.
+  "critical-eye": define("critical-eye", "Critical Eye", "skill-effect", {
+    profession: "assassin",
+    criticalChanceBonus: 0.13,
+    energyPerCritical: 1,
   }),
   "healing-signet-armor": define("healing-signet-armor", "Healing Signet", "skill-effect", {
     profession: "warrior",
@@ -964,6 +1060,60 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "ritualist",
     attackDurationMultiplier: 0.75,
   }),
+  // "For 8 seconds, the next time target ally takes damage or life steal
+  // from a foe, that ally steals up to 20...68...80 health from that foe
+  // and loses 2 conditions" (#1022): 68, its rank-12 value, as for every
+  // trigger (#935).
+  "weapon-of-remedy": define("weapon-of-remedy", "Weapon of Remedy", "weapon-spell", {
+    profession: "ritualist",
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        target: "offender",
+        effects: [
+          { kind: "life-steal", amount: { flat: 68 } },
+          { kind: "remove-status", category: "condition", count: 2, from: "caster" },
+        ],
+        skillId: "ritualist.weapon-of-remedy",
+      },
+    ],
+    endsWhenTriggered: true,
+  }),
+  // "For 8 seconds, the next time target ally takes damage or life steal
+  // from a foe, that ally steals up to 15...51...60 Health from that foe"
+  // (#1022): 51.
+  "vengeful-weapon": define("vengeful-weapon", "Vengeful Weapon", "weapon-spell", {
+    profession: "ritualist",
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        target: "offender",
+        effects: [{ kind: "life-steal", amount: { flat: 51 } }],
+        skillId: "ritualist.vengeful-weapon",
+      },
+    ],
+    endsWhenTriggered: true,
+  }),
+  // "For 20 seconds, target ally's next 1...4...5 attacks deal 5...25...30
+  // damage to up to 4 adjacent foes" (#1022): 4 and 25, its rank-12
+  // values. Adjacent to the foe hit, that foe excluded, as Sand Shards
+  // (#939). GW1's is armor-ignoring physical; typeless ignores armor here.
+  "splinter-weapon": define("splinter-weapon", "Splinter Weapon", "weapon-spell", {
+    profession: "ritualist",
+    onAttackHit: {
+      effects: [
+        {
+          kind: "splash",
+          radius: AREA_ADJACENT,
+          effects: [
+            { kind: "damage", amount: { flat: 25 }, type: "typeless", armorPenetration: 0 },
+          ],
+        },
+      ],
+      skillId: "ritualist.splinter-weapon",
+    },
+    endsAfterHits: { count: 4, weapon: undefined },
+  }),
 
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
   // each Enchantment (maximum of 3) on you."
@@ -1049,6 +1199,67 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "pious-haste-run": define("pious-haste-run", "Pious Haste (run)", "stance", {
     profession: "dervish",
     moveSpeedMultiplier: 1.5,
+  }),
+  // "For 30 seconds, your attacks deal earth damage. When this enchantment
+  // ends, all nearby foes have Cracked Armor for 1...8...10 seconds" (#1021):
+  // 8 s, its rank-12 value. Any end counts: expiry, a strip, a death.
+  "staggering-force": define("staggering-force", "Staggering Force", "enchantment", {
+    profession: "dervish",
+    attackDamageType: "earth",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            radius: AREA_NEARBY,
+            effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 8 }],
+          },
+        ],
+        skillId: "dervish.staggering-force",
+      },
+    ],
+  }),
+  // "For 30 seconds, your attacks deal earth damage. When this Enchantment
+  // ends, all nearby foes are Blinded for 1...3...4 seconds" (#1021): 3 s.
+  "dust-cloak": define("dust-cloak", "Dust Cloak", "enchantment", {
+    profession: "dervish",
+    attackDamageType: "earth",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            radius: AREA_NEARBY,
+            effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 3 }],
+          },
+        ],
+        skillId: "dervish.dust-cloak",
+      },
+    ],
+  }),
+  // "For 30 seconds, this enchantment does nothing. When this enchantment
+  // ends, all nearby foes are Crippled for 3...7...8 seconds" (#1021): 7 s.
+  // Until then it counts as a Dervish enchantment, nothing more.
+  "aura-of-thorns": define("aura-of-thorns", "Aura of Thorns", "enchantment", {
+    profession: "dervish",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            radius: AREA_NEARBY,
+            effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 7 }],
+          },
+        ],
+        skillId: "dervish.aura-of-thorns",
+      },
+    ],
   }),
   // PvP "Never Surrender!" at rank 12: +4 Health regeneration (#923).
   "never-surrender": define("never-surrender", "Never Surrender!", "shout", {
@@ -1163,8 +1374,28 @@ export class StatusSet {
     }
   }
 
+  /**
+   * The bearer lost health to damage or life steal from `offenderId`, a
+   * foe (#1022), recorded only if a status on it answers that, with the
+   * triggers that do. A status already waiting to answer one, undrained,
+   * does not answer another: it fires once, at the first foe.
+   */
+  public recordDamageFromFoe(offenderId: string): void {
+    const pending = new Set(
+      this.#changes.flatMap((change) =>
+        change.kind === "took-damage-from-foe" ? change.fired.map(({ statusId }) => statusId) : [],
+      ),
+    );
+    const fired = this.#answering("bearer-takes-damage-from-foe").filter(
+      ({ statusId }) => !pending.has(statusId),
+    );
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "took-damage-from-foe", offenderId, fired });
+    }
+  }
+
   #answering(event: StatusTriggerEvent): AnsweringTrigger[] {
-    return this.triggersOn(event).map(({ sourceId, trigger }) => ({ sourceId, trigger }));
+    return this.triggersOn(event);
   }
 
   /** Record a condition newly on the bearer (#887); any other category is not one. */
@@ -1329,6 +1560,11 @@ export class StatusSet {
     this.#end([...this.#statuses.keys()]);
   }
 
+  /** End one status by id, recorded as ended (#1022): a trigger that spends it. */
+  public end(id: StatusId): void {
+    this.#end([id]);
+  }
+
   /** Remove one status by id. Returns whether anything was removed. */
   public remove(id: StatusId): boolean {
     const had = this.#statuses.has(id);
@@ -1421,7 +1657,8 @@ export class StatusSet {
 
   /**
    * One of the bearer's blows of `weaponId` hit (#939): one fewer for
-   * every status that ends after so many hits with a weapon it is. Returns
+   * every status that ends after so many hits with a weapon it is, or
+   * with any weapon (#1022). Returns
    * the ids that ended on it.
    */
   public countHit(weaponId: WeaponId): StatusId[] {
@@ -1431,7 +1668,7 @@ export class StatusSet {
       if (
         status.hitsLeft !== undefined &&
         limit !== undefined &&
-        wieldsFor(weaponId, limit.weapon)
+        (limit.weapon === undefined || wieldsFor(weaponId, limit.weapon))
       ) {
         status.hitsLeft -= 1;
         if (status.hitsLeft <= 0) {
@@ -1538,10 +1775,15 @@ export class StatusSet {
     );
   }
 
-  public countByCategory(category: StatusCategory): number {
+  /** How many are up of a category; with a `profession`, only that profession's (#1021). */
+  public countByCategory(category: StatusCategory, profession?: ProfessionId): number {
     let count = 0;
     for (const status of this.#statuses.values()) {
-      if (getStatusDefinition(status.id).category === category) {
+      const definition = getStatusDefinition(status.id);
+      if (
+        definition.category === category &&
+        (profession === undefined || definition.profession === profession)
+      ) {
         count += 1;
       }
     }
@@ -1622,6 +1864,10 @@ export interface StatusModifiers {
   readonly spellRechargeFaster: number;
   /** Every status's, multiplied (#944). */
   readonly incomingHexCastTimeMultiplier: number;
+  /** Every status's, summed (#988). */
+  readonly criticalChanceBonus: number;
+  /** Every status's, summed (#988). */
+  readonly energyPerCritical: number;
 }
 
 /**
@@ -1679,6 +1925,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let extraStrikesPerHit = 0;
   let spellRechargeKept = 1;
   let incomingHexCastTimeMultiplier = 1;
+  let criticalChanceBonus = 0;
+  let energyPerCritical = 0;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
@@ -1726,6 +1974,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     extraStrikesPerHit += def.extraStrikesPerHit;
     spellRechargeKept *= 1 - def.spellRechargeFaster;
     incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
+    criticalChanceBonus += def.criticalChanceBonus;
+    energyPerCritical += def.energyPerCritical;
   }
 
   return {
@@ -1749,6 +1999,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     extraStrikesPerHit,
     spellRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - spellRechargeKept),
     incomingHexCastTimeMultiplier,
+    criticalChanceBonus,
+    energyPerCritical,
   };
 }
 
