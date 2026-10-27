@@ -656,6 +656,29 @@ describe("if effects (#521)", () => {
     }
   });
 
+  it("interrupts only a spell with only: spell, not a chant (#1008)", () => {
+    const spellOnly = [{ kind: "interrupt", only: "spell" }, ifInterrupted] as const;
+    for (const skillId of [
+      "elementalist.fireball",
+      "mesmer.backfire",
+      "monk.guardian",
+      "ritualist.weapon-of-warding",
+    ]) {
+      const foe = casting(skillId);
+      run(spellOnly, foe);
+      expect(foe.cast.isCasting, skillId).toBe(false);
+      expect(foe.health, skillId).toBe(470);
+    }
+    for (const skillId of ["paragon.anthem-of-flame", "warrior.healing-signet"]) {
+      const foe = casting(skillId);
+      const events = run(spellOnly, foe);
+      expect(foe.cast.isCasting, skillId).toBe(true);
+      expect(events, skillId).toEqual([
+        { kind: "interrupt-missed", targetId: "target", refusedSkillId: skillId },
+      ]);
+    }
+  });
+
   it("a picky interrupt on an idle target refuses nothing: refusedSkillId is null (#796)", () => {
     const idle = makeCombatant({ id: "target", team: 1 });
     expect(run([{ kind: "interrupt", only: "spell-or-chant" }], idle)).toEqual([

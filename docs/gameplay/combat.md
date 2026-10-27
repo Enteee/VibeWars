@@ -196,6 +196,12 @@ spell. A signet, it costs nothing.
 hits 25 harder if that was a spell: one bigger number on the hit, read
 as the arrow lands. A block or a miss does neither.
 
+**Concussion Shot** (#1008, Marksmanship, 25 energy, ½ s, 5 s recharge)
+interrupts only a spell: a chant, a signet or an attack goes on, and the
+log says "not a spell". When it cuts a spell, its foe is Dazed for 17 s.
+The arrow deals only 13. On a foe already Dazed the arrow's own hit
+cuts the spell first, and the daze is still refreshed.
+
 Some interrupts also **disable** what they cut short (#914): the skill
 cannot be used for a while, on top of its recharge. The two run
 together, so the skill waits for whichever is longer, and on your bar
@@ -574,6 +580,10 @@ or block. A shot from a bow, an arrow attack skill or a thrown spear
 keeps it. Pin Down and Hunter's Shot are bow attacks: Pin Down cripples
 for 13 s, and Hunter's Shot (1 s to use) bleeds for 21 s, when the arrow
 hits; a block or a blind miss lands neither.
+Crippling Shot (Marksmanship elite, 10 energy, 2 s recharge, #1008)
+cannot be blocked and cripples for 10 s. Debilitating Shot (10 energy,
+10 s) drains 8 energy. Burning Arrow (elite, 10 energy, 5 s) hits 26
+harder and burns for 6 s. Each lands its rider only when the arrow hits.
 
 **Mantra of Recovery** (Mesmer elite stance, Fast Casting, 5 energy, 15 s
 recharge, #938) makes every spell you finish in the next 17 s recharge
@@ -868,7 +878,7 @@ its riders, so a blocked Distracting Blow interrupts nothing; an attack
 skill's cost and recharge are still spent. "block" floats over the
 target. Swift Chop is the exception that proves it: blocked, it still
 deals its flat damage and a 20 s Deep Wound. Spells are never blocked,
-and shields do not block, as in GW1. Wild Throw cannot be blocked at all.
+and shields do not block, as in GW1. Wild Throw and Crippling Shot cannot be blocked at all.
 
 Not modelled: evade.
 
