@@ -1,6 +1,7 @@
 import { MAX_ATTRIBUTE_RANK } from "../attributes.js";
 
-import type { Combatant, Magnitude } from "./types.js";
+import { rankOf } from "./tick.js";
+import type { AttributeScaling, Combatant, Magnitude } from "./types.js";
 
 /**
  * Resolve a `Magnitude` to a concrete number for a given caster.
@@ -11,10 +12,14 @@ import type { Combatant, Magnitude } from "./types.js";
  * `attributes.ts`'s `effectiveRank`). Results are rounded to whole
  * numbers: health, damage and energy are integers in this game, and
  * rounding once here keeps that invariant in one place instead of at
- * every call site.
+ * every call site. The caster's rank is `rankOf`'s: weakness scales a
+ * skill one rank lower (#762).
  */
 export function resolveMagnitude(magnitude: Magnitude, caster: Combatant): number {
-  return resolveMagnitudeAtRanks(magnitude, caster.attributeRanks);
+  if ("flat" in magnitude) {
+    return magnitude.flat;
+  }
+  return magnitudeAtRank(magnitude.scaling, rankOf(caster, magnitude.scaling.attributeId));
 }
 
 /**
@@ -27,13 +32,16 @@ export function resolveMagnitude(magnitude: Magnitude, caster: Combatant): numbe
  */
 export function resolveMagnitudeAtRanks(
   magnitude: Magnitude,
-  attributeRanks: ReadonlyMap<string, number>,
+  ranks: ReadonlyMap<string, number>,
 ): number {
   if ("flat" in magnitude) {
     return magnitude.flat;
   }
-  const { attributeId, atZero, atTwelve } = magnitude.scaling;
-  const rank = attributeRanks.get(attributeId) ?? 0;
-  const slope = (atTwelve - atZero) / MAX_ATTRIBUTE_RANK;
-  return Math.round(atZero + slope * rank);
+  return magnitudeAtRank(magnitude.scaling, ranks.get(magnitude.scaling.attributeId) ?? 0);
+}
+
+/** The curve itself: `scaling` at `rank`, rounded. */
+function magnitudeAtRank(scaling: AttributeScaling, rank: number): number {
+  const slope = (scaling.atTwelve - scaling.atZero) / MAX_ATTRIBUTE_RANK;
+  return Math.round(scaling.atZero + slope * rank);
 }

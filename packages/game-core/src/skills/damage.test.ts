@@ -98,19 +98,18 @@ describe("what armor does and does not stop", () => {
 });
 
 describe("status modifiers reaching the armor calculation", () => {
-  it("lets Weakness make its bearer take more damage", () => {
-    // `armorModifier` has existed on StatusDefinition since conditions
-    // shipped and nothing read it. Weakness's tooltip promised -20 armor
-    // and delivered nothing; this is the test that it now does.
-    const weakened = defender(80);
-    weakened.statuses.apply("weakness", 10, "attacker");
+  it("lets an armor loss make its bearer take more damage", () => {
+    // Healing Signet's -40 while it is activated, the one status left
+    // that lowers armor (weakness no longer does, #762).
+    const exposed = defender(100);
+    exposed.statuses.apply("healing-signet-armor", 2, "self");
 
-    const healthy = defender(80);
+    const healthy = defender(100);
     const packet = spellDamage(100);
 
-    expect(mitigate(packet, weakened, RULES)).toBeGreaterThan(mitigate(packet, healthy, RULES));
-    // 80 - 20 = 60, the reference level: exactly unmitigated.
-    expect(mitigate(packet, weakened, RULES)).toBe(100);
+    expect(mitigate(packet, exposed, RULES)).toBeGreaterThan(mitigate(packet, healthy, RULES));
+    // 100 - 40 = 60, the reference level: exactly unmitigated.
+    expect(mitigate(packet, exposed, RULES)).toBe(100);
   });
 
   it("lets Armor of Earth's enchantment actually protect its bearer", () => {
@@ -122,10 +121,10 @@ describe("status modifiers reaching the armor calculation", () => {
 
   it("stacks a buff and a debuff additively, as aggregateModifiers does", () => {
     const both = defender(80);
-    both.statuses.apply("weakness", 10, "attacker");
+    both.statuses.apply("healing-signet-armor", 2, "self");
     both.statuses.apply("armor-boost", 30, "self");
-    // 80 - 20 + 24 = 84.
-    expect(effectiveArmor(both, spellDamage(1))).toBe(84);
+    // 80 - 40 + 24 = 64.
+    expect(effectiveArmor(both, spellDamage(1))).toBe(64);
   });
 });
 

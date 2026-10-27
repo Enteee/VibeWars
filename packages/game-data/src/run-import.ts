@@ -142,6 +142,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     profession: "elementalist",
     url: "https://www.gw-memorial.net/skills/Elementalist/452-Glyph_of_Lesser_Energy",
   },
+  {
+    id: "necromancer.enfeeble",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/256-Enfeeble",
+  },
 ];
 
 function packageRoot(): string {

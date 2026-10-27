@@ -9,7 +9,7 @@ import {
   type ActiveStatus,
   type CombatEvent,
   type CombatLogEntry,
-  type Combatant,
+  type RankHolder,
   type SkillBar,
   type StatusCategory,
   type StatusId,
@@ -102,12 +102,9 @@ export function wireStatuses(active: readonly ActiveStatus[]): ActiveStatus[] {
 /**
  * The bar a client draws, every slot in its place, `null` where it is
  * empty (#347). Energy costs are what `bearer` pays right now, Expertise
- * (#528) and an active glyph (#637) and all.
+ * (#528) at its weakened rank (#762) and an active glyph (#637) and all.
  */
-export function skillBarSlots(
-  skillBar: SkillBar,
-  bearer: Pick<Combatant, "attributeRanks" | "statuses">,
-): (SkillBarSlot | null)[] {
+export function skillBarSlots(skillBar: SkillBar, bearer: RankHolder): (SkillBarSlot | null)[] {
   return skillBar.map((skillId) => {
     if (skillId === null) {
       return null;

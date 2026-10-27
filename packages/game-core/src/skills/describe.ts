@@ -4,8 +4,8 @@ import { getAttribute } from "../professions.js";
 
 import { energyCostOf } from "./activation.js";
 import { resolveMagnitudeAtRanks } from "./scaling.js";
-import { findStatusDefinition, StatusSet } from "./status.js";
-import { effectiveActivationSeconds } from "./tick.js";
+import { findStatusDefinition } from "./status.js";
+import { effectiveActivationSeconds, outsideMatch } from "./tick.js";
 import type { AreaRule, Magnitude, Skill, SkillEffect, SkillType } from "./types.js";
 
 /**
@@ -107,6 +107,11 @@ const BLOCKED_ATTACKS: Record<"all" | "melee" | "projectile", string> = {
   projectile: "projectiles",
 };
 
+/** `n` with its sign, a minus as GW1 prints it: "+3", "−66". */
+function signed(n: number): string {
+  return n > 0 ? `+${String(n)}` : `−${String(-n)}`;
+}
+
 /** What a status actually does, so a tooltip does not just name it. */
 export function describeStatus(id: string): string {
   const definition = findStatusDefinition(id);
@@ -141,6 +146,13 @@ export function describeStatus(id: string): string {
     parts.push(
       `maximum health reduced to ${String(Math.round(definition.maxHealthMultiplier * 100))}%`,
     );
+  }
+  if (definition.weaponDamageMultiplier !== 1) {
+    const change = Math.round((definition.weaponDamageMultiplier - 1) * 100);
+    parts.push(`${signed(change)}% weapon damage`);
+  }
+  if (definition.attributeDelta !== 0) {
+    parts.push(`${signed(definition.attributeDelta)} to all attributes`);
   }
   if (definition.castTimeMultiplier !== 1) {
     parts.push(`spells take ${String(definition.castTimeMultiplier)}× as long to cast`);
@@ -333,8 +345,7 @@ function costText(skill: Skill, ranks: ReadonlyMap<string, number>): string {
   if (skill.cost.kind === "adrenaline") {
     return `${String(skill.cost.amount)} adrenaline`;
   }
-  // At these ranks with no status on: a build, not a moment of a fight (#637).
-  const cost = energyCostOf(skill, { attributeRanks: ranks, statuses: new StatusSet() });
+  const cost = energyCostOf(skill, outsideMatch(ranks));
   const base = cost === skill.cost.amount ? "" : ` (${String(skill.cost.amount)})`;
   return `${String(cost)} energy${base}`;
 }
@@ -344,9 +355,7 @@ function castTimeText(skill: Skill, ranks: ReadonlyMap<string, number>): string 
   if (skill.activationSeconds === 0) {
     return "Instant";
   }
-  const activation = seconds(
-    effectiveActivationSeconds(skill, { attributeRanks: ranks, statuses: new StatusSet() }),
-  );
+  const activation = seconds(effectiveActivationSeconds(skill, outsideMatch(ranks)));
   const base = seconds(skill.activationSeconds);
   return activation === base ? base : `${activation} (${base})`;
 }
