@@ -106,7 +106,8 @@ export const SKILL_ICONS = {
   "warrior.cyclone-axe": { glyph: "axe", modifier: "area" },
   // A placeholder: no glyph yet says "adrenaline" (#936).
   "warrior.for-great-justice": { glyph: "axe", modifier: "self" },
-  "monk.protective-spirit": { glyph: "armor", modifier: "clock" },
+  // A hit taken is capped: armor with the "less" mark (#936).
+  "monk.protective-spirit": { glyph: "armor", modifier: "less" },
   // Your own blood, given: heal with the bleed drop (#936).
   "monk.infuse-health": { glyph: "heal", modifier: "bleed" },
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },

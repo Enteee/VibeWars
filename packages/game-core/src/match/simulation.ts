@@ -1173,10 +1173,10 @@ export class MatchSimulation {
         if (status.maintained === null) {
           continue;
         }
-        // Ended by a death, whichever path killed: the bearer's, or the
-        // caster's, who may have left the match too.
+        // Ended by its caster's death, or its caster leaving the match. A
+        // dead bearer has none left: its death ended them all (#940).
         const caster = this.#participants.get(status.sourceId);
-        if (bearer.dead || caster === undefined || caster.combatant.dead) {
+        if (caster === undefined || caster.combatant.dead) {
           bearer.statuses.remove(status.id);
           continue;
         }
@@ -2465,6 +2465,7 @@ export class MatchSimulation {
         victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
         victim.combatant.knockdownRemaining = 0;
+        victim.combatant.statuses.endAll();
         this.#clearChainMarks(victim);
         emptyAdrenaline(victim.combatant);
         victim.respawnInSeconds = this.#respawnSeconds(victim);

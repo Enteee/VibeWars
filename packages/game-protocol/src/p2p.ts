@@ -265,7 +265,7 @@ export interface WirePlayer {
 export interface WireStatus {
   /**
    * Its index in the sorted status-id table (#632), which
-   * `wire-schema.json` carries, so a build with another table is refused
+   * `src/wire-schema.json` carries, so a build with another table is refused
    * at join.
    */
   readonly status: number;

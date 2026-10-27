@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { openPeers } from "./helpers/peers.js";
+import { key } from "./keys.js";
 
 /**
  * Random Arena (#880, #854): one button, a stranger, a random map. Two
@@ -43,11 +44,12 @@ test("Random Arena is greyed out until there is a character to queue with, and 4
   );
 });
 
-test("two players queue for a 1v1, are matched, see the versus splash and play one match", async ({
+test("two players queue for a 1v1, are matched, see the versus splash, play it out and queue again", async ({
   browser,
 }) => {
-  // A group settles for 3 s and its lobby counts down 5 s.
-  test.setTimeout(60_000);
+  // A group settles for 3 s and its lobby counts down 5 s; the house bar
+  // takes about 35 s to kill a foe who stands still.
+  test.setTimeout(150_000);
   const { context, pages } = await openPeers(browser, 2);
   const [alice, bob] = pages as [Page, Page];
 
@@ -79,6 +81,42 @@ test("two players queue for a 1v1, are matched, see the versus splash and play o
         timeout: 15_000,
       });
     }
+
+    // The count and the foe's pip (#881).
+    await expect(alice.locator(".hud-scoreboard")).toContainText("1 v 1");
+    const pip = alice.locator(".hud-enemy-pip");
+    await expect(pip).toHaveAttribute("title", "Bob");
+    await expect(pip).not.toHaveClass(/is-dead/);
+
+    // Alice beats Bob, who stands still, with the house bar's damage.
+    await alice.keyboard.press(key("target-next"));
+    await alice.keyboard.press(key("attack"));
+    const result = alice.locator(".hud-result");
+    await expect(async () => {
+      for (const skill of ["skill-1", "skill-3", "skill-4", "skill-7"] as const) {
+        await alice.keyboard.press(key(skill));
+      }
+      await expect(result).toBeVisible({ timeout: 1_000 });
+    }).toPass({ timeout: 90_000 });
+    await expect(result).toHaveText(/victory/i);
+    await expect(bob.locator(".hud-result")).toHaveText(/defeat/i);
+    await expect(alice.locator(".hud-scoreboard")).toContainText("1 v 0");
+    await expect(pip).toHaveClass(/is-dead/);
+
+    // Four seconds on, the queue screen says how it went.
+    await expect(alice.locator(".queue-status")).toHaveText("Victory", { timeout: 10_000 });
+    await expect(alice.locator(".queue-streak")).toHaveText(
+      "1 win in a row this visit (not a rating)",
+    );
+    await expect(bob.locator(".queue-status")).toHaveText("Defeat", { timeout: 10_000 });
+    await expect(bob.locator(".queue-streak")).toBeHidden();
+    await expect(bob.getByRole("button", { name: "Back to menu", exact: true })).toBeVisible();
+
+    await alice.getByRole("button", { name: "Queue again", exact: true }).click();
+    await expect(alice.locator(".queue-status")).toHaveText("Searching");
+    await expect(alice.locator(".screen-queue .screen-title")).toHaveText(
+      "Random Arena 1v1 · Pyro",
+    );
   } finally {
     await context.close();
   }

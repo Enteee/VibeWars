@@ -6,10 +6,13 @@ import {
   FELL_THROUGH,
   MATCH_FOUND,
   UNREACHABLE,
+  endedLines,
   modeLabel,
+  nextStreak,
   queueLines,
   queueTitle,
   searchingLabel,
+  streakLine,
   versusTeams,
   waitedLabel,
 } from "./queue-screen.js";
@@ -105,6 +108,40 @@ describe("queueLines (#880)", () => {
     expect(queueLines({ kind: "unreachable" }, false)).toEqual({
       status: UNREACHABLE,
       action: "back",
+    });
+  });
+});
+
+describe("nextStreak (#881)", () => {
+  it("adds a win, clears on a defeat or a forfeit, and keeps it when the host left", () => {
+    expect(nextStreak(2, "win")).toBe(3);
+    expect(nextStreak(2, "loss")).toBe(0);
+    expect(nextStreak(2, "forfeit")).toBe(0);
+    expect(nextStreak(2, "host-left")).toBe(2);
+  });
+});
+
+describe("streakLine (#881)", () => {
+  it("says nothing at 0, and counts the wins after", () => {
+    expect(streakLine(0)).toBeUndefined();
+    expect(streakLine(1)).toBe("1 win in a row this visit (not a rating)");
+    expect(streakLine(3)).toBe("3 wins in a row this visit (not a rating)");
+  });
+});
+
+describe("endedLines (#881)", () => {
+  it("shows the outcome, the streak and both buttons", () => {
+    expect(endedLines("Victory", 1)).toEqual({
+      status: "Victory",
+      streak: "1 win in a row this visit (not a rating)",
+      action: "ended",
+    });
+  });
+
+  it("shows no streak at 0", () => {
+    expect(endedLines("Defeat (morale)", 0)).toEqual({
+      status: "Defeat (morale)",
+      action: "ended",
     });
   });
 });

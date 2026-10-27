@@ -911,6 +911,14 @@ export class StatusSet {
     this.#statuses.clear();
   }
 
+  /**
+   * End every status, of every category, each recorded as ended, in
+   * `active` order: what a death does (#940), so every `ends` trigger fires.
+   */
+  public endAll(): void {
+    this.#end([...this.#statuses.keys()]);
+  }
+
   /** Remove one status by id. Returns whether anything was removed. */
   public remove(id: StatusId): boolean {
     const had = this.#statuses.has(id);
