@@ -151,6 +151,8 @@ before any of their effects. Word of Healing heals 98 more (Healing
 Prayers 12) for an ally below half of its maximum health, a maximum a
 deep wound has lowered; its own heal cannot cancel the bonus. Mystic
 Sweep's blow deals 10 more while you are enchanted, in the same number.
+**Dwayna's Kiss** (#920) heals another ally 51, and 30 more for each
+enchantment and hex on it as the heal lands.
 
 ## Interrupts
 
@@ -170,6 +172,10 @@ interrupt a spell or a chant; against an attack skill, a signet or an idle
 foe they are a wasted cast. When they land, Power Spike deals damage and
 Power Drain gives you energy.
 
+**Leech Signet** (#920) interrupts anything being cast, as a plain
+interrupt does, and gives you 13 energy only if what it cancelled was a
+spell. A signet, it costs nothing.
+
 **Savage Shot** (#794) interrupts whatever its arrow finds being cast, and
 hits 25 harder if that was a spell: one bigger number on the hit, read
 as the arrow lands. A block or a miss does neither.
@@ -183,6 +189,11 @@ taken, so a foe at 3 energy loses 3, and one at 0 loses nothing and takes
 no damage. Maximum energy is untouched, and a foe drained mid-cast keeps
 casting: energy is paid when a cast starts. The loss floats over the foe
 in blue, "−8 energy", and the Training log has a row for it.
+
+**Energy Surge** (#920) takes up to 8 energy from its target, which
+takes 7 damage for each point it lost; every foe nearby it takes 75% of
+that, rounded. The foes around it lose no energy themselves, and your
+allies are never hit.
 
 ## Reactive hexes
 

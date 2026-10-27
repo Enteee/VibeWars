@@ -5,11 +5,13 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
+import { AREA_NEARBY } from "../distances.js";
+import { vec2 } from "../vec2.js";
 import { makeCombatant } from "./testing.js";
-import type { Combatant } from "./types.js";
+import type { Combatant, Surroundings } from "./types.js";
 
 /**
- * The skills whose effects depend on an earlier effect (#521, #793), each in a
+ * The skills whose effects depend on an earlier effect (#521, #793, #920), each in a
  * scripted duel: the foe is busy (or not), the skill lands.
  */
 
@@ -17,6 +19,7 @@ const RANKS = new Map([
   ["mesmer.domination-magic", 12],
   ["mesmer.inspiration-magic", 12],
   ["monk.protection-prayers", 12],
+  ["monk.healing-prayers", 12],
 ]);
 
 function caster(overrides: Partial<Combatant> = {}): Combatant {
@@ -33,14 +36,19 @@ function foe(skillId?: string): Combatant {
 }
 
 /** `user` pays for `skillId` and it lands on `target`. */
-function use(user: Combatant, skillId: string, target: Combatant): CombatEvent[] {
+function use(
+  user: Combatant,
+  skillId: string,
+  target: Combatant,
+  surroundings: Surroundings = new Map(),
+): CombatEvent[] {
   const skill = getSkill(skillId);
   if (skill === undefined) {
     throw new Error(`unknown skill ${skillId}`);
   }
   payCost(skill, user);
   return applySkillEffects({
-    surroundings: new Map(),
+    surroundings,
     skill,
     caster: user,
     targets: [target],
@@ -186,5 +194,116 @@ describe("Energy Tap (#793)", () => {
     const mesmer = caster();
     use(mesmer, "mesmer.energy-tap", makeCombatant({ id: "foe", team: 1, energy: 2 }));
     expect(mesmer.energy).toBe(15 + 4);
+  });
+});
+
+describe("Energy Surge (#920)", () => {
+  /**
+   * The target at the origin, a foe nearby it, a foe twice as far and an
+   * ally of the caster beside the target, all at 500 health.
+   */
+  function crowd(energy: number): {
+    readonly target: Combatant;
+    readonly near: Combatant;
+    readonly far: Combatant;
+    readonly ally: Combatant;
+    readonly surroundings: Surroundings;
+  } {
+    const target = makeCombatant({ id: "foe", team: 1, energy });
+    const near = makeCombatant({ id: "near", team: 1, energy: 25 });
+    const far = makeCombatant({ id: "far", team: 1, energy: 25 });
+    const ally = makeCombatant({ id: "ally" });
+    const surroundings: Surroundings = new Map([
+      ["foe", { combatant: target, position: vec2(0, 0) }],
+      ["near", { combatant: near, position: vec2(AREA_NEARBY, 0) }],
+      ["far", { combatant: far, position: vec2(2 * AREA_NEARBY, 0) }],
+      ["ally", { combatant: ally, position: vec2(0, 1) }],
+    ]);
+    return { target, near, far, ally, surroundings };
+  }
+
+  it("burns 8 energy; the target takes 56, a nearby foe 75% of it, no one else anything", () => {
+    const { target, near, far, ally, surroundings } = crowd(25);
+    use(caster(), "mesmer.energy-surge", target, surroundings);
+    expect(target.energy).toBe(17);
+    expect(target.health).toBe(500 - 56);
+    expect(near.health).toBe(500 - 42);
+    expect(near.energy).toBe(25);
+    expect(far.health).toBe(500);
+    expect(ally.health).toBe(500);
+  });
+
+  it("counts what the target lost: 3 points, 21 and 15.75 rounded; none, no damage at all", () => {
+    const low = crowd(3);
+    use(caster(), "mesmer.energy-surge", low.target, low.surroundings);
+    expect(low.target.health).toBe(500 - 21);
+    expect(low.near.health).toBe(500 - 16);
+
+    const empty = crowd(0);
+    const events = use(caster(), "mesmer.energy-surge", empty.target, empty.surroundings);
+    expect(events.filter((event) => event.kind === "damage")).toEqual([]);
+    expect(empty.near.health).toBe(500);
+  });
+});
+
+describe("Leech Signet (#920)", () => {
+  it("interrupts a spell and gives 13 energy, at no cost", () => {
+    const mesmer = caster();
+    const events = use(mesmer, "mesmer.leech-signet", foe("elementalist.fireball"));
+    expect(events).toContainEqual({
+      kind: "interrupted",
+      targetId: "foe",
+      skillId: "elementalist.fireball",
+    });
+    expect(mesmer.energy).toBe(20 + 13);
+  });
+
+  it("interrupts an attack skill, a chant or a skill, and gives nothing", () => {
+    for (const skillId of [
+      "warrior.distracting-blow",
+      "paragon.anthem-of-flame",
+      "ranger.troll-unguent",
+    ]) {
+      const mesmer = caster();
+      const target = foe(skillId);
+      const events = use(mesmer, "mesmer.leech-signet", target);
+      expect(events, skillId).toContainEqual({ kind: "interrupted", targetId: "foe", skillId });
+      expect(target.cast.isCasting, skillId).toBe(false);
+      expect(mesmer.energy, skillId).toBe(20);
+    }
+  });
+
+  it("misses an idle foe and gives nothing", () => {
+    const mesmer = caster();
+    expect(use(mesmer, "mesmer.leech-signet", foe())).toEqual([
+      { kind: "interrupt-missed", targetId: "foe", refusedSkillId: null },
+    ]);
+    expect(mesmer.energy).toBe(20);
+  });
+});
+
+describe("Dwayna's Kiss (#920)", () => {
+  it("heals 51, and 30 more for each enchantment and hex on the ally", () => {
+    const ally = makeCombatant({ id: "ally", health: 100 });
+    ally.statuses.apply("guardian", 10, "ally");
+    ally.statuses.apply("regeneration", 10, "ally");
+    ally.statuses.apply("malaise", 10, "foe");
+    ally.statuses.apply("bleeding", 10, "foe");
+    expect(use(caster(), "monk.dwaynas-kiss", ally)).toEqual([
+      { kind: "heal", targetId: "ally", amount: 51 },
+      { kind: "heal", targetId: "ally", amount: 90 },
+    ]);
+    expect(ally.health).toBe(100 + 51 + 90);
+  });
+
+  it("heals only 51 on an ally with neither, with no second heal", () => {
+    const ally = makeCombatant({ id: "ally", health: 100 });
+    expect(use(caster(), "monk.dwaynas-kiss", ally)).toEqual([
+      { kind: "heal", targetId: "ally", amount: 51 },
+    ]);
+  });
+
+  it("cannot target its caster", () => {
+    expect(getSkill("monk.dwaynas-kiss")?.target).toBe("single-other-ally");
   });
 });
