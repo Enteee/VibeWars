@@ -20,7 +20,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { parseAlive } from "./hub-health.mjs";
 import { ROLES } from "./hub-policy.mjs";
-import { deliverSystem, obj } from "./protocol.mjs";
+import { deliverSystem } from "./protocol.mjs";
 import { parseNudgeClock } from "./schedule.mjs";
 import { parseStaff, seedStaff } from "./staff.mjs";
 
@@ -487,6 +487,25 @@ function readJson(file) {
 }
 
 /**
+ * Every whole entry in hubd's system outbox, in name order, and none
+ * before it exists (#779). Only `*.json`: hubd writes `<name>.json.part`
+ * and renames it, so a listing can catch the temp file mid-write.
+ *
+ * @param {{ root: string }} hubd
+ * @returns {{ name: string, message: Record<string, unknown> }[]}
+ */
+function outboxEntries(hubd) {
+  const dir = path.join(hubd.root, "bus", "_system", "outbox");
+  return fs.existsSync(dir)
+    ? fs
+        .readdirSync(dir)
+        .filter((name) => name.endsWith(".json"))
+        .sort()
+        .map((name) => ({ name, message: readJson(path.join(dir, name)) }))
+    : [];
+}
+
+/**
  * What hubd printed: `board`'s JSON answer, or a board listing.
  *
  * @param {Record<string, unknown>} response
@@ -816,16 +835,10 @@ describe("hubd and the GraphQL budget", () => {
    * @param {Awaited<ReturnType<typeof startHubd>>} hubd
    * @returns {{ to: unknown, text: unknown }[]}
    */
-  const toManager = (hubd) => {
-    const outbox = path.join(hubd.root, "bus", "_system", "outbox");
-    return fs.existsSync(outbox)
-      ? fs
-          .readdirSync(outbox)
-          .filter((name) => name.includes("new-issues"))
-          .map((name) => readJson(path.join(outbox, name)))
-          .map((message) => ({ to: message.to, text: message.text }))
-      : [];
-  };
+  const toManager = (hubd) =>
+    outboxEntries(hubd)
+      .filter(({ name }) => name.includes("new-issues"))
+      .map(({ message }) => ({ to: message.to, text: message.text }));
 
   it("tells the manager, once its minute is up, about an issue a colleague filed (#550)", async () => {
     const hubd = await startHubd(5000);
@@ -2212,10 +2225,9 @@ describe("hubd scheduling a company reboot", () => {
     // The announcement company broadcasts, with what the reboot loads.
     expect(String(asked.stdout)).toMatch(/load #21\. It loads: change\./);
     // And it wakes everyone, through the system outbox, once.
-    const outbox = path.join(hubd.root, "bus", "_system", "outbox");
-    const sent = fs.readdirSync(outbox).filter((n) => n.endsWith(".json"));
+    const sent = outboxEntries(hubd);
     expect(sent).toHaveLength(1);
-    expect(JSON.parse(fs.readFileSync(path.join(outbox, sent[0] ?? ""), "utf8"))).toEqual({
+    expect(sent[0]?.message).toEqual({
       to: "all",
       text: String(asked.stdout).trim(),
       nudge: null,
@@ -2311,21 +2323,8 @@ describe("hubd hiring and firing", () => {
    * @param {Awaited<ReturnType<typeof startHubd>>} hubd
    * @returns {string[]}
    */
-  const told = (hubd) => {
-    const outbox = path.join(hubd.root, "bus", "_system", "outbox");
-    return fs.existsSync(outbox)
-      ? fs
-          .readdirSync(outbox)
-          .sort()
-          .map((name) => {
-            /** @type {unknown} */
-            const message = JSON.parse(fs.readFileSync(path.join(outbox, name), "utf8"));
-            return typeof message === "object" && message !== null && "text" in message
-              ? String(message.text)
-              : "";
-          })
-      : [];
-  };
+  const told = (hubd) =>
+    outboxEntries(hubd).map(({ message }) => ("text" in message ? String(message.text) : ""));
 
   it("serves the operator's spool: no cooldowns, --over-cap, and nothing but staff", async () => {
     const hubd = await startHubd(5000);
@@ -2410,10 +2409,7 @@ describe("hubd hiring and firing", () => {
     const stop = told(hubd).find((text) => text.startsWith("You're being stopped"));
     expect(stop).toContain("(no QA work)");
     expect(stop).toContain("run `company ready`");
-    const outbox = path.join(hubd.root, "bus", "_system", "outbox");
-    const addressed = fs
-      .readdirSync(outbox)
-      .map((name) => obj(JSON.parse(fs.readFileSync(path.join(outbox, name), "utf8"))).to);
+    const addressed = outboxEntries(hubd).map(({ message }) => message.to);
     expect(addressed).toContain("qa-tester");
 
     expect(staff(hubd).employees["qa-tester"]?.readyAt).toBeNull();
@@ -2437,18 +2433,13 @@ describe("hubd hiring and firing", () => {
       ["qa-tester", "qa-tester"],
       ["qa-tester@2", "qa-tester"],
     ]);
-    const outbox = path.join(hubd.root, "bus", "_system", "outbox");
     /** Who each staff-stop entry reaches, in the order hubd wrote them. */
     const stopped = () =>
-      fs
-        .readdirSync(outbox)
-        .sort()
-        .filter((name) => name.endsWith("-staff-stop.json"))
-        .map((name) => {
-          /** @type {unknown} */
-          const entry = JSON.parse(fs.readFileSync(path.join(outbox, name), "utf8"));
-          expect(obj(entry)).toMatchObject({ direct: true });
-          return deliverSystem(entry, { employees, now: 1 }).deliveries.map((d) => d.employee);
+      outboxEntries(hubd)
+        .filter(({ name }) => name.endsWith("-staff-stop.json"))
+        .map(({ message }) => {
+          expect(message).toMatchObject({ direct: true });
+          return deliverSystem(message, { employees, now: 1 }).deliveries.map((d) => d.employee);
         });
 
     const first = await hubd.request("manager", "staff", ["fire", "qa-tester", "no QA work"]);
@@ -2489,17 +2480,11 @@ describe("hub schedule (#678)", () => {
    * @param {Awaited<ReturnType<typeof startHubd>>} hubd
    * @returns {{ to: string, text: string }[]}
    */
-  const outbox = (hubd) => {
-    const dir = path.join(hubd.root, "bus", "_system", "outbox");
-    return fs.existsSync(dir)
-      ? fs.readdirSync(dir).map((name) => {
-          /** @type {unknown} */
-          const message = JSON.parse(fs.readFileSync(path.join(dir, name), "utf8"));
-          const { to, text } = obj(message);
-          return { to: String(to), text: String(text) };
-        })
-      : [];
-  };
+  const outbox = (hubd) =>
+    outboxEntries(hubd).map(({ message }) => ({
+      to: String(message.to),
+      text: String(message.text),
+    }));
   /**
    * @param {string} root
    * @param {string} name
@@ -2607,19 +2592,10 @@ describe("hubd watching CI for an agent (#736)", () => {
    * @param {string} to
    * @returns {string[]}
    */
-  const told = (hubd, to) => {
-    const outbox = path.join(hubd.root, "bus", "_system", "outbox");
-    if (!fs.existsSync(outbox)) {
-      return [];
-    }
-    return fs
-      .readdirSync(outbox)
-      .filter((name) => name.endsWith(".json"))
-      .sort()
-      .map((name) => readJson(path.join(outbox, name)))
-      .filter((message) => message.to === to && message.direct === true)
-      .map((message) => String(message.text));
-  };
+  const told = (hubd, to) =>
+    outboxEntries(hubd)
+      .filter(({ message }) => message.to === to && message.direct === true)
+      .map(({ message }) => String(message.text));
   /** @param {Awaited<ReturnType<typeof startHubd>>} hubd */
   const watchesFile = (hubd) => path.join(hubd.hub, "watches.json");
 

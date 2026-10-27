@@ -3,7 +3,8 @@
 ## Status
 
 Accepted (2026-10-24). Amends [ADR-0012](0012-equipment.md). Amended
-(2026-10-26, #546): dazed interrupts spells, as in GW1; see the end.
+(2026-10-26, #546): dazed interrupts spells, as in GW1. Amended
+(2026-10-27, #762): statuses that change attributes. See the end.
 
 ## Context
 
@@ -98,3 +99,37 @@ Only spells, as `isSpell` says: a signet, a shout, a stance or an attack
 skill is left alone. The cast-time half stands. Broad Head Arrow loses its
 separate interrupt: its Daze interrupts by itself, now only a spell. The
 data is one flag on the status definition, `interruptsSpells`.
+
+## Amendment (2026-10-27, #762): statuses that change attributes
+
+Weakness is the first status that changes attributes: −1 to every
+attribute, as in GW1. Conditions follow GW1 from here on, its mechanics
+and its magnitudes (#492). Weakness loses its −20 armor; armor loss is
+Cracked Armor's.
+
+- **`attributeDelta`** on `StatusDefinition` applies to every attribute.
+  `aggregateModifiers` sums it. One weakness is −1, never −2, because
+  a status is applied once however many sources it has.
+- **`rankOf(holder, attributeId)`** in `skills/tick.ts` is the one
+  match-time reader of `attributeRanks`. Magnitudes, the weapon's
+  rank, Critical Strikes, Expertise, Fast Casting, Divine Favor,
+  Leadership and Soul Reaping all go through it. A source scan keeps it
+  the only one. The scan is in game-data's `core-sources.test.ts`,
+  because game-core's tests have no Node to read files with. Outside it, only `equipment/resolve.ts` (it builds the sheet) and
+  `describe.ts` (a build's ranks, no match) read the map. The
+  attribute-modifier skills of #458 reuse it.
+- **Rank 0 is never lowered**: "attributes at rank 0 are not affected,
+  even when boosted". The delta applies only to a rank bought with
+  points. `ResolvedEquipment.attributeBonuses` holds what runes add, so
+  `rankOf` can tell a bought rank from a boosted one. The result is
+  floored at 0 through `effectiveRank`.
+- **A weapon's requirement is checked at each blow**, from `rankOf`, in
+  `weaponSnapshotOf`, not once at join. `ResolvedWeapon.requirementMet`
+  stays, for the gear editor's static display. A projectile carries the
+  check from its release, with the rest of its snapshot.
+- **`weaponDamageMultiplier`** scales the weapon's roll (weakness's
+  0.34). An attack skill's bonus is not scaled. Several multiply.
+
+The alternative was a second `AttributeModifier` family beside the
+statuses, or each reader applying the delta itself. Both put the rank-0
+rule in more than one place.

@@ -4,6 +4,7 @@ import type { CallsSnapshot } from "@vibewars/game-session";
 
 import type { RenderablePing } from "./call-marks.js";
 import type { RenderableProjectile } from "./projectiles.js";
+import { screenPx } from "./screen-text.js";
 
 /**
  * The renderer's own data shape and its pure helpers (team colour lookup,
@@ -65,8 +66,13 @@ export interface FloatingText {
   /** The actor it floats over; only texts over the same actor make room for each other. */
   readonly anchorId: string;
   readonly text: string;
-  /** Where it starts; it rises from here as it ages. */
+  /** Where it starts, in the world; it rises from here as it ages. */
   readonly position: Vec2;
+  /**
+   * Screen px it starts above `position`, to clear the texts already over
+   * the same actor (#54). Screen px, as the text is (#456).
+   */
+  readonly lift: number;
   readonly colour: number;
   /**
    * `"light"` for weapon swings: smaller and fainter, so a stream of
@@ -80,15 +86,20 @@ export interface FloatingText {
 
 export const FLOATING_TEXT_SECONDS = 1.2;
 const FLOATING_TEXT_RISE_PER_SECOND = 24;
-/** A 13px line of text, plus a pixel so neighbours never touch. */
+/** A 13px line of text, plus a pixel so neighbours never touch; screen px, as the rise is. */
 export const FLOATING_TEXT_LINE = 14;
 /** The most texts one actor carries at once; a steady stream would otherwise build a tower. */
 export const FLOATING_TEXT_STACK = 4;
 
-/** How high a floating text has risen by now. */
-export function floatingTextY(text: FloatingText): number {
+/** How far a floating text is above its `position` by now, screen px (#456). */
+function floatingTextRise(text: FloatingText): number {
   const age = FLOATING_TEXT_SECONDS - text.remainingSeconds;
-  return text.position.y - FLOATING_TEXT_RISE_PER_SECOND * age;
+  return text.lift + FLOATING_TEXT_RISE_PER_SECOND * age;
+}
+
+/** Where a floating text is by now, in world y at camera `zoom`. */
+export function floatingTextY(text: FloatingText, zoom: number): number {
+  return text.position.y - screenPx(floatingTextRise(text), zoom);
 }
 
 /**
@@ -99,25 +110,30 @@ export function floatingTextY(text: FloatingText): number {
  *
  * Nothing, once the actor already carries `FLOATING_TEXT_STACK` texts:
  * the new one is dropped rather than stacked out of sight.
+ *
+ * @param zoom the camera's: texts are screen-sized (#456), so a line apart
+ *   is screen px
  */
 export function placeFloatingText(
   existing: readonly FloatingText[],
   incoming: FloatingText,
+  zoom: number,
 ): FloatingText | undefined {
   const sameAnchor = existing.filter((text) => text.anchorId === incoming.anchorId);
   if (sameAnchor.length >= FLOATING_TEXT_STACK) {
     return undefined;
   }
-  // Lowest first: lifting past one can only reach those above it.
-  const ys = sameAnchor.map(floatingTextY).sort((a, b) => b - a);
-  let y = floatingTextY(incoming);
+  // In screen px, where the line is. Lowest first: lifting past one can
+  // only reach those above it.
+  const screenY = (text: FloatingText): number => floatingTextY(text, zoom) * zoom;
+  const ys = sameAnchor.map(screenY).sort((a, b) => b - a);
+  let y = screenY(incoming);
   for (const other of ys) {
     if (Math.abs(other - y) < FLOATING_TEXT_LINE) {
       y = other - FLOATING_TEXT_LINE;
     }
   }
-  const lift = floatingTextY(incoming) - y;
-  return { ...incoming, position: Vec.add(incoming.position, { x: 0, y: -lift }) };
+  return { ...incoming, lift: incoming.lift + screenY(incoming) - y };
 }
 
 /**
@@ -321,15 +337,29 @@ export function healthFraction(actor: RenderableActor): number {
   return Math.max(0, Math.min(1, actor.health / actor.maxHealth));
 }
 
+/** The cast bar's top, in world units above a living body's edge. */
+const CAST_BAR_TOP = 19;
+/** Screen px between a name and the cast bar, or a corpse's edge, under it (#456). */
+const NAME_GAP_LIVING = 3;
+const NAME_GAP_DEAD = 4;
+/** A name label's height, screen px: its 11 px text (#456). */
+export const NAME_LABEL_HEIGHT = 11;
+
 /**
- * Where an actor's name label sits: its bottom edge, in world y (#53).
+ * Where an actor's name label sits: its bottom edge, in world y (#53), at
+ * camera `zoom`. The label is screen-sized (#456), so the gap under it is
+ * screen px at every zoom.
  *
  * Clear of the cast bar whether or not one is showing, so a name does not
  * jump every time its owner starts casting. A corpse has no bars, so its
  * name sits just over the circle.
  */
-export function nameLabelBottom(actor: RenderableActor): number {
-  return actor.position.y - actor.radius - (actor.dead ? 4 : 22);
+export function nameLabelBottom(actor: RenderableActor, zoom: number): number {
+  const { y } = actor.position;
+  if (actor.dead) {
+    return y - actor.radius - screenPx(NAME_GAP_DEAD, zoom);
+  }
+  return y - actor.radius - CAST_BAR_TOP - screenPx(NAME_GAP_LIVING, zoom);
 }
 
 /** The shield: an arc on the body's centre, 45° to 105° left of the facing, at r + 3.5 (#275). */
@@ -408,12 +438,12 @@ export function offhandMarkLayout(
   }
 }
 
-/** The profession glyph before a name, in world pixels: the name's own 11 px (#281). */
-export const PROFESSION_GLYPH_SIZE = 11;
+/** The profession glyph before a name, screen px: the name's own 11 px (#281, #456). */
+export const PROFESSION_GLYPH_SIZE = NAME_LABEL_HEIGHT;
 /** Between the glyph and the name. */
 const PROFESSION_GLYPH_GAP = 2;
 
-/** Where a name and its profession glyph go: centre x of each, and their shared bottom. */
+/** Where a name and its profession glyph go: centre x of each, and their shared bottom, in world units. */
 export interface NameplateLayout {
   /** `undefined`: the actor has no profession, so no glyph. */
   readonly glyphX: number | undefined;
@@ -424,21 +454,29 @@ export interface NameplateLayout {
 /**
  * Lay out an actor's name and the glyph before it (#281): glyph, gap and
  * name centred together on the body, so a long name pushes the glyph left
- * with it, and both sit on `nameLabelBottom`.
+ * with it, and both sit on `nameLabelBottom`. Both are screen-sized
+ * (#456), so their widths are screen px, laid out in world units at `zoom`.
  *
- * @param textWidth the label's measured width, never a character count:
- *   a name can be any script (#192)
+ * @param textWidth the label's measured width, screen px, never a
+ *   character count: a name can be any script (#192)
  */
-export function nameplateLayout(actor: RenderableActor, textWidth: number): NameplateLayout {
-  const bottom = nameLabelBottom(actor);
+export function nameplateLayout(
+  actor: RenderableActor,
+  textWidth: number,
+  zoom: number,
+): NameplateLayout {
+  const bottom = nameLabelBottom(actor, zoom);
   const { x } = actor.position;
   if (actor.profession === undefined) {
     return { glyphX: undefined, textX: x, bottom };
   }
-  const left = x - (PROFESSION_GLYPH_SIZE + PROFESSION_GLYPH_GAP + textWidth) / 2;
+  const glyph = screenPx(PROFESSION_GLYPH_SIZE, zoom);
+  const gap = screenPx(PROFESSION_GLYPH_GAP, zoom);
+  const text = screenPx(textWidth, zoom);
+  const left = x - (glyph + gap + text) / 2;
   return {
-    glyphX: left + PROFESSION_GLYPH_SIZE / 2,
-    textX: left + PROFESSION_GLYPH_SIZE + PROFESSION_GLYPH_GAP + textWidth / 2,
+    glyphX: left + glyph / 2,
+    textX: left + glyph + gap + text / 2,
     bottom,
   };
 }

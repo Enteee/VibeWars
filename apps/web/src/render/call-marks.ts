@@ -1,6 +1,9 @@
 import type { Vec2 } from "@vibewars/game-core";
 import { PING_SECONDS } from "@vibewars/game-session";
 
+import { NAME_LABEL_HEIGHT, nameLabelBottom, type RenderableActor } from "./arena-snapshot.js";
+import { screenPx } from "./screen-text.js";
+
 /**
  * What your team's calls look like in the arena (#443,
  * docs/art/art-direction.md "Calls, pings and the watched ally"). Plain
@@ -20,14 +23,18 @@ export interface RenderablePing {
   readonly remaining: number;
 }
 
-/** The chevron's tip sits this far above the body's top edge, clear of the name label. */
-const CHEVRON_GAP = 37;
+/** The chevron's tip sits this many screen px above the top of the name label. */
+const CHEVRON_GAP = 4;
 const CHEVRON_HALF_WIDTH = 6;
 const CHEVRON_HEIGHT = 6;
 
-/** The chevron over a called body of radius `r` at `centre`: left arm, tip, right arm. */
-export function callChevron(centre: Vec2, r: number): readonly [Vec2, Vec2, Vec2] {
-  const tipY = centre.y - r - CHEVRON_GAP;
+/**
+ * The chevron over a called body: left arm, tip, right arm. Its tip clears
+ * the name label, which is screen-sized (#456), at camera `zoom`.
+ */
+export function callChevron(actor: RenderableActor, zoom: number): readonly [Vec2, Vec2, Vec2] {
+  const centre = actor.position;
+  const tipY = nameLabelBottom(actor, zoom) - screenPx(NAME_LABEL_HEIGHT + CHEVRON_GAP, zoom);
   return [
     { x: centre.x - CHEVRON_HALF_WIDTH, y: tipY - CHEVRON_HEIGHT },
     { x: centre.x, y: tipY },

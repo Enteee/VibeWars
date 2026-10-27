@@ -58,8 +58,11 @@ export {
   moveSpeedMultiplier,
   naturalHealthPips,
   netPips,
+  outsideMatch,
+  rankOf,
+  weaponDamageMultiplierOf,
 } from "./tick.js";
-export type { NetPips } from "./tick.js";
+export type { NetPips, RankHolder } from "./tick.js";
 
 export type {
   ApplyStatusEffect,

@@ -59,6 +59,7 @@ import {
   type RenderablePing,
 } from "./call-marks.js";
 import { lyingPose } from "./lying-pose.js";
+import { screenSized } from "./screen-text.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
 import type {
   ArenaSnapshot,
@@ -206,7 +207,7 @@ export class ArenaScene extends Phaser.Scene {
 
   /** Queue a floating number/label above a world position. */
   public addFloatingText(text: FloatingText): void {
-    const placed = placeFloatingText(this.floatingTexts, text);
+    const placed = placeFloatingText(this.floatingTexts, text, this.cameras.main.zoom);
     if (placed !== undefined) {
       this.floatingTexts.push(placed);
     }
@@ -595,7 +596,7 @@ export class ArenaScene extends Phaser.Scene {
 
   /** Your team's called foe (#443): a `condition` chevron over it, cased like the weapon mark. */
   private drawCallChevron(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
-    const points = callChevron(actor.position, actor.radius);
+    const points = callChevron(actor, this.cameras.main.zoom);
     for (const [width, colour] of [
       [5, BODY_EDGE],
       [3, CALL_CHEVRON],
@@ -778,6 +779,7 @@ export class ArenaScene extends Phaser.Scene {
           .setOrigin(0.5, 0.5);
         this.statusOverflow.set(actor.id, more);
       }
+      screenSized(more, this.cameras.main.zoom);
       more
         .setText(`+${String(row.overflow.count)}`)
         .setPosition(row.overflow.position.x, row.overflow.position.y)
@@ -805,6 +807,7 @@ export class ArenaScene extends Phaser.Scene {
    * so a player can still see who went down.
    */
   private updateNameLabels(): void {
+    const zoom = this.cameras.main.zoom;
     const seen = new Set<string>();
     for (const actor of this.snapshot.actors) {
       seen.add(actor.id);
@@ -823,7 +826,9 @@ export class ArenaScene extends Phaser.Scene {
       }
       const shown = nameShown(this.snapshot, actor);
       label.setText(actor.name);
-      const layout = nameplateLayout(actor, label.width);
+      screenSized(label, zoom);
+      // `width` is unscaled: the label's screen px.
+      const layout = nameplateLayout(actor, label.width, zoom);
       label.setPosition(layout.textX, layout.bottom).setVisible(shown);
       this.updateNameGlyph(actor, layout, shown);
     }
@@ -860,6 +865,7 @@ export class ArenaScene extends Phaser.Scene {
     if (glyph.tint !== tint) {
       glyph.setTint(tint);
     }
+    screenSized(glyph, this.cameras.main.zoom);
     glyph.setPosition(layout.glyphX, layout.bottom).setVisible(shown);
   }
 
@@ -906,6 +912,7 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   private updateFloatingTexts(dt: number): void {
+    const zoom = this.cameras.main.zoom;
     const survivors: FloatingText[] = [];
     for (const floating of this.floatingTexts) {
       floating.remainingSeconds -= dt;
@@ -933,7 +940,8 @@ export class ArenaScene extends Phaser.Scene {
 
       // Drift upward and fade as it ages; placeFloatingText relies on
       // this rise to find room for the next one.
-      object.y = floatingTextY(floating);
+      screenSized(object, zoom);
+      object.y = floatingTextY(floating, zoom);
       object.setAlpha(
         Math.min(floating.weight === "light" ? LIGHT_TEXT_ALPHA : 1, floating.remainingSeconds),
       );
