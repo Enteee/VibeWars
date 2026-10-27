@@ -31,7 +31,7 @@ const SPELL: Skill = {
   attack: undefined,
   whileActivating: undefined,
   projectile: undefined,
-  effects: [{ kind: "damage", amount: { flat: 50 } }],
+  effects: [{ kind: "damage", amount: { flat: 50 }, type: "typeless" }],
 };
 
 function request(overrides: Partial<ActivationRequest> = {}): ActivationRequest {

@@ -22,7 +22,7 @@ export type InsigniaId = "survivor" | "radiant" | "stalwart" | "blessed";
  * `"armor-while-attacking"`). A number that is always zero is a lie with
  * a tooltip.
  */
-export type ArmorCondition = "vs-physical" | "while-enchanted";
+export type ArmorCondition = "vs-physical" | "vs-elemental" | "while-enchanted";
 
 export type InsigniaEffect =
   /** Per-piece amounts: chest is worth most, legs next, the rest equal. */

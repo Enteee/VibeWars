@@ -16,13 +16,13 @@ function context(
 describe("damage effect", () => {
   it("reduces target health by a flat amount", () => {
     const ctx = context();
-    applyEffect({ kind: "damage", amount: { flat: 100 } }, ctx);
+    applyEffect({ kind: "damage", amount: { flat: 100 }, type: "typeless" }, ctx);
     expect(ctx.target?.health).toBe(400);
   });
 
   it("emits a damage event with the amount actually applied", () => {
     const ctx = context();
-    const events = applyEffect({ kind: "damage", amount: { flat: 100 } }, ctx);
+    const events = applyEffect({ kind: "damage", amount: { flat: 100 }, type: "typeless" }, ctx);
     expect(events).toContainEqual({
       kind: "damage",
       targetId: "target",
@@ -34,14 +34,14 @@ describe("damage effect", () => {
   it("clamps health at zero rather than going negative", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 30 });
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    applyEffect({ kind: "damage", amount: { flat: 100 } }, ctx);
+    applyEffect({ kind: "damage", amount: { flat: 100 }, type: "typeless" }, ctx);
     expect(target.health).toBe(0);
   });
 
   it("reports only the damage actually dealt when it would overkill", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 30 });
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    const events = applyEffect({ kind: "damage", amount: { flat: 100 } }, ctx);
+    const events = applyEffect({ kind: "damage", amount: { flat: 100 }, type: "typeless" }, ctx);
     expect(events).toContainEqual({
       kind: "damage",
       targetId: "target",
@@ -53,7 +53,7 @@ describe("damage effect", () => {
   it("flags death and emits a death event when health reaches zero", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 30 });
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    const events = applyEffect({ kind: "damage", amount: { flat: 100 } }, ctx);
+    const events = applyEffect({ kind: "damage", amount: { flat: 100 }, type: "typeless" }, ctx);
     expect(target.dead).toBe(true);
     expect(events).toContainEqual({ kind: "death", targetId: "target" });
   });
@@ -61,23 +61,25 @@ describe("damage effect", () => {
   it("does nothing to an already-dead target", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 0, dead: true });
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    const events = applyEffect({ kind: "damage", amount: { flat: 100 } }, ctx);
+    const events = applyEffect({ kind: "damage", amount: { flat: 100 }, type: "typeless" }, ctx);
     expect(events).toEqual([]);
   });
 
   it("emits death exactly once even across repeated damage", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 10 });
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    const first = applyEffect({ kind: "damage", amount: { flat: 100 } }, ctx);
-    const second = applyEffect({ kind: "damage", amount: { flat: 100 } }, ctx);
+    const first = applyEffect({ kind: "damage", amount: { flat: 100 }, type: "typeless" }, ctx);
+    const second = applyEffect({ kind: "damage", amount: { flat: 100 }, type: "typeless" }, ctx);
     const deaths = [...first, ...second].filter((e: CombatEvent) => e.kind === "death");
     expect(deaths).toHaveLength(1);
   });
 
   it("ignores non-positive damage", () => {
     const ctx = context();
-    expect(applyEffect({ kind: "damage", amount: { flat: 0 } }, ctx)).toEqual([]);
-    expect(applyEffect({ kind: "damage", amount: { flat: -50 } }, ctx)).toEqual([]);
+    expect(applyEffect({ kind: "damage", amount: { flat: 0 }, type: "typeless" }, ctx)).toEqual([]);
+    expect(applyEffect({ kind: "damage", amount: { flat: -50 }, type: "typeless" }, ctx)).toEqual(
+      [],
+    );
     expect(ctx.target?.health).toBe(500);
   });
 
@@ -88,7 +90,9 @@ describe("damage effect", () => {
       rng: createRng(1),
       rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
     };
-    expect(applyEffect({ kind: "damage", amount: { flat: 100 } }, ctx)).toEqual([]);
+    expect(applyEffect({ kind: "damage", amount: { flat: 100 }, type: "typeless" }, ctx)).toEqual(
+      [],
+    );
   });
 });
 
@@ -211,7 +215,7 @@ describe("applySkillEffects", () => {
     projectile: undefined,
     effects: [
       { kind: "sacrifice-health", percentOfMax: 10 },
-      { kind: "damage", amount: { flat: 30 } },
+      { kind: "damage", amount: { flat: 30 }, type: "typeless" },
       { kind: "energy-gain", amount: { flat: 5 } },
     ],
   };
