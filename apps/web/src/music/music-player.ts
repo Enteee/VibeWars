@@ -17,7 +17,8 @@ import { STRESS_BUILD, audioStressMs } from "./stress.js";
  * The host runs player-written code, and a pattern can navigate its own
  * frame, so the host is untrusted: only messages from its own frame are
  * read, only after `parseHostToGame` accepts them, and a host that stops
- * answering the heartbeat is torn down rather than waited on.
+ * answering the heartbeat, or floods the game with messages (#878), is
+ * torn down rather than waited on.
  */
 
 export interface MusicTrack {
@@ -55,7 +56,12 @@ export interface MusicPlayer {
   onEvaluated(handler: (evaluation: number) => void): void;
   /** Each second's stats, from a host that measures (`measure` in the deps). */
   onStats(handler: (stats: MusicStats) => void): void;
+  /** The host was torn down, after its `onError` said why (#878). */
+  onTornDown(handler: (reason: TeardownReason) => void): void;
 }
+
+/** Why a host was torn down: it stopped answering, or it sent too much. */
+export type TeardownReason = "hung" | "flooded";
 
 /** The host as the player sees it: an iframe in the page, or a test's fake. */
 export interface MusicFrame {
@@ -64,8 +70,11 @@ export interface MusicFrame {
 }
 
 export interface MusicPlayerDeps {
-  /** Make the host. It calls `receive` only with messages from that host, already parsed. */
-  readonly createFrame: (receive: (message: HostToGame) => void) => MusicFrame;
+  /**
+   * Make the host. It calls `receive` only with messages from that host:
+   * parsed, or `null` for one that did not parse, which still counts (#878).
+   */
+  readonly createFrame: (receive: (message: HostToGame | null) => void) => MusicFrame;
   /**
    * Where the first gesture is heard: `window`. The page makes its player
    * at boot, before any gesture, so it always waits for one rather than
@@ -89,7 +98,15 @@ export const HEARTBEAT_MS = 1_000;
 /** A ping unanswered for this long means the host is hung, by a pattern or anything else. */
 export const HEARTBEAT_TIMEOUT_MS = 5_000;
 
+/**
+ * More messages than this from the host in one second, and it is torn down
+ * (#878). It sends about two a second: a pong, its stats, and one answer
+ * per track or evaluation.
+ */
+export const HOST_MESSAGES_PER_SECOND = 100;
+
 export const HUNG_MESSAGE = "The music stopped responding and was switched off.";
+export const FLOODED_MESSAGE = "The music flooded the game with messages and was switched off.";
 
 /** Whether `later` makes `earlier` pointless to send. */
 function supersedes(later: GameToHost, earlier: GameToHost): boolean {
@@ -105,6 +122,7 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
   const errors: ((error: MusicError) => void)[] = [];
   const evaluated: ((evaluation: number) => void)[] = [];
   const statsHandlers: ((stats: MusicStats) => void)[] = [];
+  const tornDown: ((reason: TeardownReason) => void)[] = [];
   let gestured = false;
   let frame: MusicFrame | undefined;
   let ready = false;
@@ -116,6 +134,12 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
   // Replayed to a new host, after a hung one was torn down.
   let volume = 1;
   let intensity: MusicLevel = 0;
+  // The flood budget's window: when it began, and what arrived in it.
+  let windowStart = 0;
+  let received = 0;
+  // One error per evaluation, and one without one per track sent (#878).
+  const evaluationsFailed = new Set<number>();
+  let trackFailed = false;
 
   const report = (error: MusicError): void => {
     for (const handler of errors) {
@@ -123,7 +147,7 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     }
   };
 
-  const teardown = (): void => {
+  const teardown = (reason: TeardownReason): void => {
     stopHeartbeat?.();
     stopHeartbeat = undefined;
     frame?.destroy();
@@ -131,13 +155,17 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     ready = false;
     queue = [];
     outstanding = undefined;
-    report({ message: HUNG_MESSAGE });
+    received = 0;
+    report({ message: reason === "hung" ? HUNG_MESSAGE : FLOODED_MESSAGE });
+    for (const handler of tornDown) {
+      handler(reason);
+    }
   };
 
   const heartbeat = (): void => {
     if (outstanding !== undefined) {
       if (deps.now() - outstanding.sentAt > HEARTBEAT_TIMEOUT_MS) {
-        teardown();
+        teardown("hung");
       }
       return;
     }
@@ -146,7 +174,28 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     frame?.post({ type: "ping", seq });
   };
 
-  const receive = (message: HostToGame): void => {
+  /** Whether this message from the host is one too many for this second. */
+  const flooding = (): boolean => {
+    const at = deps.now();
+    if (at - windowStart >= 1_000) {
+      windowStart = at;
+      received = 0;
+    }
+    received += 1;
+    return received > HOST_MESSAGES_PER_SECOND;
+  };
+
+  const receive = (message: HostToGame | null): void => {
+    if (frame === undefined) {
+      return;
+    }
+    if (flooding()) {
+      teardown("flooded");
+      return;
+    }
+    if (message === null) {
+      return;
+    }
     switch (message.type) {
       case "ready": {
         if (ready) {
@@ -156,7 +205,7 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
         const waiting = queue;
         queue = [];
         for (const queued of waiting) {
-          frame?.post(queued);
+          frame.post(queued);
         }
         stopHeartbeat = deps.every(HEARTBEAT_MS, heartbeat);
         return;
@@ -172,6 +221,17 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
         }
         return;
       case "error":
+        if (message.seq === undefined) {
+          if (trackFailed) {
+            return;
+          }
+          trackFailed = true;
+        } else {
+          if (evaluationsFailed.has(message.seq)) {
+            return;
+          }
+          evaluationsFailed.add(message.seq);
+        }
         report({
           message: message.message,
           ...(message.line === undefined ? {} : { line: message.line }),
@@ -244,10 +304,12 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
 
   return {
     load(track) {
+      trackFailed = false;
       send({ type: "load", ...trackMessage(track) });
     },
     crossfadeTo(track) {
       // A fresh host has nothing to fade from; it plays the track at once.
+      trackFailed = false;
       send({ type: "crossfadeTo", cycles: CROSSFADE_CYCLES, ...trackMessage(track) });
     },
     setIntensity(level) {
@@ -281,6 +343,9 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     onStats(handler) {
       statsHandlers.push(handler);
     },
+    onTornDown(handler) {
+      tornDown.push(handler);
+    },
   };
 }
 
@@ -288,7 +353,10 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
 export const HOST_SANDBOX = "allow-scripts";
 
 /** The host as an iframe in `document`, which only its own messages get out of. */
-export function createHostFrame(url: string, receive: (message: HostToGame) => void): MusicFrame {
+export function createHostFrame(
+  url: string,
+  receive: (message: HostToGame | null) => void,
+): MusicFrame {
   const iframe = document.createElement("iframe");
   iframe.setAttribute("sandbox", HOST_SANDBOX);
   iframe.setAttribute("allow", "autoplay");
@@ -303,10 +371,7 @@ export function createHostFrame(url: string, receive: (message: HostToGame) => v
     if (event.source !== iframe.contentWindow || event.source === null) {
       return;
     }
-    const message = parseHostToGame(event.data);
-    if (message !== null) {
-      receive(message);
-    }
+    receive(parseHostToGame(event.data));
   };
   window.addEventListener("message", listener);
   document.body.appendChild(iframe);

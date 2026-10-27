@@ -112,6 +112,10 @@ async function main(): Promise<void> {
   // Before any music: a stale edit is gone before it could play (#373).
   // Its notice goes on the first menu, once.
   let editNotices = await beatEdits.load(TRACKS);
+  // An edit that stopped the music, on the next menu (#878).
+  music().onNotice((notice) => {
+    editNotices = [...editNotices, notice];
+  });
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
 
