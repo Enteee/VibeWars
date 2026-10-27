@@ -228,8 +228,8 @@ A wheel click calls a foe for your team, pings the ground, or watches an
 ally (#443). Each has a shape nothing else in the arena has, so none can be
 taken for the target ring, the off-hand focus or the area flash.
 
-- **The called foe** wears a chevron pointing down at it, its tip 37 units
-  above the body's top edge, clear of the name label. The two arms are 6
+- **The called foe** wears a chevron pointing down at it, its tip 4 px
+  above the name label's top, so it clears the name at every zoom. The two arms are 6
   units wide and 6 tall, a 3 px `condition` core on a 5 px `edge` casing.
   `condition` because a call says "hurt this one", and orange is the
   colour of what hurts; it is over the body, where no plate ever sits. Your
@@ -251,15 +251,23 @@ taken for the target ring, the off-hand focus or the area flash.
 ### Damage and heal numbers
 
 Above a body, the column is already full: the health bar at r + 8 … r + 12,
-the cast bar at r + 15 … r + 19, the name with its bottom at r + 22. A
+the cast bar at r + 15 … r + 19, the name with its bottom 3 px over that. A
 number that starts on the bar and rises through the name hides both, and the
 name it hides is your target's.
+
+- **Numbers, names and the status `+N` keep their size on screen** at
+  every zoom step and window size (#456), as GW1's do: 11 px, 13 px for a
+  skill's number, 17 px for a critical hit. Their rise, their stacking and
+  the gaps that place them are screen px too; the bodies, bars, icons and
+  rings they sit by scale with the world. Zoomed out, a name is wider than
+  the world between two bodies, so names overlap sooner: another reason
+  only the target's and the hovered body's show.
 
 - **They rise beside the body, not over it.** Left-aligned at x = r + 4 to
   the right of the centre, clear of the 34-px bar, with the first line's
   bottom at y = 8 below the centre.
-- **They rise straight up, 24 px a second for 1.2 s**, so a single number ends with its
-  top at 34 above the centre, still under the name.
+- **They rise straight up, 24 px a second for 1.2 s**, so at full zoom a
+  single number ends with its top at 34 above the centre, still under the name.
 - **Numbers landing together stack a line apart, upward, at most four** (#54).
   A second line reaches the name's band late in its rise, so a burst may
   brush the name for a moment; a single hit, the common case, never does.

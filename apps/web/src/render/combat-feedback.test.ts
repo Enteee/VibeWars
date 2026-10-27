@@ -176,12 +176,12 @@ describe("showCombatFeedback", () => {
     // Landing together, the second sits a line above it, as #54 stacks them.
     const placed: FloatingText[] = [];
     for (const text of texts) {
-      const next = placeFloatingText(placed, text);
+      const next = placeFloatingText(placed, text, 1);
       if (next !== undefined) {
         placed.push(next);
       }
     }
-    expect(placed.map((text) => [text.position.x, floatingTextY(text)])).toEqual([
+    expect(placed.map((text) => [text.position.x, floatingTextY(text, 1)])).toEqual([
       [118, 108],
       [118, 94],
     ]);
