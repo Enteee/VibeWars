@@ -289,6 +289,15 @@ const status = {
     "glyph",
     (c) => `<path d="M13.5 4.5L8.5 11h3.5l-1.5 5 5-6.5H12z" fill="${c}"/>`,
   ],
+  // Enchantment: a dot spreading to three, a condition handed on (#887).
+  contagion: [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="13" r="2.5" fill="${c}"/>` +
+      `<circle cx="12" cy="6" r="1.6" fill="${c}"/>` +
+      `<circle cx="6" cy="17" r="1.6" fill="${c}"/>` +
+      `<circle cx="18" cy="17" r="1.6" fill="${c}"/>`,
+  ],
   // Enchantment: a small shield.
   "armor-boost": [
     "enchantment",
@@ -311,6 +320,13 @@ const status = {
   ],
   // Hex: a sword point down, an attack that hurts its attacker (#469).
   empathy: ["hex", (c) => `<path d="M12 18.5v-10M8.5 8.5h7M12 8.5v-4" ${stroke(c, 2.5)}/>`],
+  // Hex: two links of a chain, the bond that heals its caster when it ends (#887).
+  "parasitic-bond": [
+    "hex",
+    (c) =>
+      `<rect x="5" y="9.5" width="8" height="5" rx="2.5" ${stroke(c, 2)}/>` +
+      `<rect x="11" y="9.5" width="8" height="5" rx="2.5" ${stroke(c, 2)}/>`,
+  ],
   // Enchantment: a shield in outline with a blow glancing off it, block (#534).
   guardian: [
     "enchantment",
