@@ -1119,6 +1119,22 @@ brackets.
 - **Line of sight** is a geometric query against wall segments, shared
   by the server, the tests and any future client preview.
 
+## Creatures
+
+A creature (#1052) is a body that is not a player: a spirit or a minion,
+summoned by a skill. It has health, armor, statuses and its owner's team,
+so every attack, spell, area and condition hits it, and it can be
+targeted with Tab, C, a click or a call. It is drawn smaller (radius 10
+to a player's 14) and blocks bodies at that radius.
+
+It never counts for its team: killing one scores nothing and gives no
+morale, it has no morale of its own, and a team with only creatures left
+standing has lost. A creature that dies or runs out its time disappears
+at the end of the tick, with no corpse and no respawn; running out is not
+a death. Its owner's death does not end it; its owner leaving the match
+does. Soul Reaping answers a minion's death but not a spirit's. At most
+32 creatures are on the field at once (ADR-0035).
+
 ## Death and scoring
 
 Health reaching zero kills exactly once (no double death events). A kill

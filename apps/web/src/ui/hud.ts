@@ -609,22 +609,25 @@ export interface EnemyPip {
 /**
  * The pips for `players` as `selfTeam` sees them: every player not on it,
  * in snapshot order. A spectator, with no team, gets every player, grouped
- * by team. Only players in the snapshot get one, so an empty seat has none.
+ * by team. Only players in the snapshot get one, so an empty seat has none,
+ * and a creature (#1052) never counts.
  */
 export function enemyPips(
   players: readonly PlayerSnapshot[],
   selfTeam: number | undefined,
 ): EnemyPip[] {
   const pips = players
-    .filter((player) => player.team !== selfTeam)
+    .filter((player) => player.team !== selfTeam && player.creature === undefined)
     .map(({ name, team, dead }) => ({ name, team, dead }));
   // Stable, so each team keeps its snapshot order.
   return selfTeam === undefined ? pips.sort((a, b) => a.team - b.team) : pips;
 }
 
-/** How many of `team` are alive. */
+/** How many of `team`'s players are alive: its creatures never count (#1052). */
 export function livingCount(players: readonly PlayerSnapshot[], team: number): number {
-  return players.filter((player) => player.team === team && !player.dead).length;
+  return players.filter(
+    (player) => player.team === team && !player.dead && player.creature === undefined,
+  ).length;
 }
 
 /**

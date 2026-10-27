@@ -43,6 +43,7 @@ function snapshot(castingSkillId: string | undefined): MatchSnapshot {
     knockdownRemaining: 0,
     healthPips: 0,
     energyPips: 0,
+    creature: undefined,
     statuses: [],
   };
   return {

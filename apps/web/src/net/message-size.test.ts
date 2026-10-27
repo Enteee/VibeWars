@@ -134,6 +134,7 @@ function player(index: number): WirePlayer {
     // The longest a pip count is on the wire.
     healthPips: -MAX_WIRE_PIPS,
     energyPips: -MAX_WIRE_PIPS,
+    creature: null,
     statuses: WIRE_STATUSES,
   };
 }
