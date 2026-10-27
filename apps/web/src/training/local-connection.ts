@@ -1,5 +1,6 @@
 import {
   MINIMAL_GW_INSPIRED_PVP_V1,
+  adrenalineLossIn,
   applyIntent,
   drainAccumulator,
   swingProgress,
@@ -251,6 +252,16 @@ export function createLocalConnection(options: {
       return skillBar.map((slot) =>
         slot === null ? 0 : (combatant?.adrenaline.get(slot.id) ?? 0),
       );
+    },
+    getAdrenalineLossIn() {
+      const combatant = simulation.get(selfId)?.combatant;
+      return combatant === undefined
+        ? null
+        : adrenalineLossIn(
+            combatant,
+            simulation.elapsedSeconds,
+            MINIMAL_GW_INSPIRED_PVP_V1.resources.adrenalineLossSeconds,
+          );
     },
     getRecharges() {
       // Straight from the simulation: there is no wire to extrapolate over.

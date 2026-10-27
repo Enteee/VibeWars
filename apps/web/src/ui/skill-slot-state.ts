@@ -1,5 +1,6 @@
 import {
   ADRENALINE_PER_STRIKE,
+  MINIMAL_GW_INSPIRED_PVP_V1,
   distanceWithinRange,
   getSkill,
   hasLineOfSight,
@@ -166,6 +167,20 @@ export function paintAdrenalineFill(button: HTMLElement, fill: number | undefine
   } else {
     button.style.setProperty("--adrenaline-fill", value);
   }
+}
+
+/**
+ * Whether a slot holding `adrenaline` units blinks (#828): it has some,
+ * charged or not, and `lossIn`, the seconds until it is lost out of
+ * combat, is within the ruleset's warning. Toggled every frame, but a
+ * class that keeps its value never restarts its animation.
+ */
+export function adrenalineFading(adrenaline: number, lossIn: number | null): boolean {
+  return (
+    adrenaline > 0 &&
+    lossIn !== null &&
+    lossIn <= MINIMAL_GW_INSPIRED_PVP_V1.resources.adrenalineWarningSeconds
+  );
 }
 
 /**

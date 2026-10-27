@@ -89,6 +89,13 @@ empties its own pool and takes one strike from every other, at
 activation, so an interrupted one has still paid; an attack skill that
 lands then earns its strike back like any blow. Death, respawn and a
 reset empty every pool.
+Adrenaline does not keep between fights (#828): **25 s out of combat**
+(`adrenalineLossSeconds`) and every pool empties at once. A blow or an
+attack skill you start, a foe's blow or attack skill at you (even one
+for 0 or blocked), damage from a foe, and any adrenaline gained start
+the 25 s again; healing, a spell and walking do not. For the last 5 s
+(`adrenalineWarningSeconds`) every slot holding some blinks, charged or
+not.
 Your adrenaline is yours alone: it is sent to you, never in the shared
 snapshot, and a slot greys until its own skill is charged.
 
@@ -340,7 +347,7 @@ or a death ends it with the enchantment. Mending (Monk, Healing Prayers,
 yourself. Recasting it on the same ally is still one, and becomes your
 newest. Another Monk's Mending on that ally replaces yours, and your
 upkeep ends with it. Its icon has no duration bar, and its hover says
-"maintained". It ends by itself in three ways:
+"maintained". It ends by itself in four ways:
 
 - **Can't pay.** At 0 energy, with net energy pips below 0 before the
   clamp, your newest maintained enchantment ends, then the next, until
@@ -351,6 +358,11 @@ upkeep ends with it. Its icon has no duration bar, and its hover says
   newest always stays.
 - **Death.** Your death ends everything you maintain. Your bearer's
   death ends what is on them, and resurrection does not bring it back.
+- **Out of range.** A bearer beyond compass range of you (1,700 units,
+  GW1's ~5,000 rescaled by ~0.34) for more than 5 s loses it, with no
+  log row (#839). Coming back inside, exactly 1,700 included, starts the
+  5 s again. One on yourself never ends this way. It can happen only on
+  the large arenas, such as Canyon or Ring.
 
 Your effects monitor shows every enchantment you maintain (#838): those
 on yourself among your own effects, those on others after them, ticked

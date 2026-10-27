@@ -490,6 +490,13 @@ export interface Combatant {
    * set at 0 when the combatant is made.
    */
   readonly adrenaline: Map<string, number>;
+  /**
+   * When this combatant was last in combat for its adrenaline (#828), in
+   * seconds of match time: a blow or attack skill started, damage taken
+   * from a foe, or adrenaline gained. Set when made and on a respawn;
+   * `adrenalineLossSeconds` after it, every pool empties.
+   */
+  lastCombatAt: number;
   /** Attribute ranks by attribute id; absent means rank 0. */
   readonly attributeRanks: ReadonlyMap<string, number>;
   readonly team: number;

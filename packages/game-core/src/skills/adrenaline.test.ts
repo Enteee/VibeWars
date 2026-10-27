@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { ADRENALINE_PER_STRIKE } from "../ruleset.js";
 import {
+  adrenalineLossIn,
   adrenalinePools,
   canAffordAdrenaline,
   emptyAdrenaline,
@@ -52,7 +53,7 @@ describe("adrenalinePools", () => {
 describe("gainStrikes", () => {
   it("fills every skill by 25 a strike, each capped at its own cost", () => {
     const w = warrior(0, 0, 3 * ADRENALINE_PER_STRIKE + 10);
-    gainStrikes(w, 2);
+    gainStrikes(w, 2, 0);
     expect([...w.adrenaline.values()]).toEqual([
       2 * ADRENALINE_PER_STRIKE,
       2 * ADRENALINE_PER_STRIKE,
@@ -63,7 +64,7 @@ describe("gainStrikes", () => {
   it("skips a recharging skill", () => {
     const w = warrior(0, 0, 0);
     w.cast.startRecharge(WATCH_YOURSELF, 4);
-    gainStrikes(w, 1);
+    gainStrikes(w, 1, 0);
     expect(w.adrenaline.get(WATCH_YOURSELF)).toBe(0);
     expect(w.adrenaline.get(BACKBREAKER)).toBe(ADRENALINE_PER_STRIKE);
   });
@@ -72,14 +73,14 @@ describe("gainStrikes", () => {
 describe("gainUnits", () => {
   it("adds units, not strikes, each capped at its own cost (#827)", () => {
     const w = warrior(0, 4 * ADRENALINE_PER_STRIKE - 5, 0);
-    gainUnits(w, 24);
+    gainUnits(w, 24, 0);
     expect([...w.adrenaline.values()]).toEqual([24, 4 * ADRENALINE_PER_STRIKE, 24]);
   });
 
   it("skips a recharging skill (#827)", () => {
     const w = warrior(0, 0, 0);
     w.cast.startRecharge(SEVER_ARTERY, 4);
-    gainUnits(w, 10);
+    gainUnits(w, 10, 0);
     expect([...w.adrenaline.values()]).toEqual([10, 0, 10]);
   });
 });
@@ -112,6 +113,17 @@ describe("canAffordAdrenaline", () => {
   it("needs the whole cost in its own pool: 9 × 25, not one unit less", () => {
     expect(canAffordAdrenaline(warrior(9 * 25 - 1, 0, 1000), skill(BACKBREAKER))).toBe(false);
     expect(canAffordAdrenaline(warrior(9 * 25, 0, 0), skill(BACKBREAKER))).toBe(true);
+  });
+});
+
+describe("adrenalineLossIn (#828)", () => {
+  it("counts down from the last combat, never below 0, and is null with every pool empty", () => {
+    const w = warrior(30, 0, 0);
+    gainUnits(w, 0, 10);
+    expect(w.lastCombatAt).toBe(10);
+    expect(adrenalineLossIn(w, 14, 25)).toBe(21);
+    expect(adrenalineLossIn(w, 40, 25)).toBe(0);
+    expect(adrenalineLossIn(warrior(0, 0, 0), 14, 25)).toBeNull();
   });
 });
 
