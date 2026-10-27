@@ -609,6 +609,25 @@ export function applyEffect(
       return events;
     }
 
+    case "give-health": {
+      if (target === undefined || target.dead) {
+        return events;
+      }
+      // Not damage: nothing caps, charges or answers it, and half of what
+      // is left is always less than all of it, so it never kills.
+      const lost = Math.floor(effect.fractionOfCurrent * caster.health);
+      if (lost > 0) {
+        caster.health -= lost;
+        events.push({ kind: "sacrifice", targetId: caster.id, amount: lost });
+      }
+      applyHeal(
+        target,
+        Math.round((lost * resolveMagnitude(effect.healPercent, caster)) / 100),
+        events,
+      );
+      return events;
+    }
+
     case "apply-status": {
       if (target === undefined || target.dead) {
         return events;
@@ -1019,6 +1038,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "energy-loss":
     case "life-steal":
     case "damage":
+    case "give-health":
     case "apply-status":
     case "maintain-status":
     case "interrupt":

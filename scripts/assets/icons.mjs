@@ -402,6 +402,18 @@ const status = {
       `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" ${stroke(c, 2)}/>` +
       `<path d="M12 8.5v3.5" ${stroke(c, 2.2)}/><circle cx="12" cy="14.6" r="1.1" fill="${c}"/>`,
   ],
+  // Shout: two chevrons up, a strike and one more per hit (#936).
+  "for-great-justice": [
+    "shout",
+    (c) => `<path d="M7.5 12l4.5-4.5 4.5 4.5M7.5 16.5l4.5-4.5 4.5 4.5" ${stroke(c, 2.2)}/>`,
+  ],
+  // Enchantment: a shield under a line, no hit past 10% (#936).
+  "protective-spirit": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 7.5h10v4c0 3-2.5 5-5 6.5C9.5 16.5 7 14.5 7 11.5z" ${stroke(c, 2)}/>` +
+      `<path d="M6 4.5h12" ${stroke(c, 2)}/>`,
+  ],
   // Shout: an arrow turning back, run and be healed for it (#921).
   "fall-back": ["shout", (c) => `<path d="M17 12H7.5M11 8l-4 4 4 4" ${stroke(c, 2.5)}/>`],
   // Shout: a shield planted on the ground, armor while you stand (#921).
@@ -793,6 +805,17 @@ const skillGlyph = {
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
     `<ellipse cx="10.5" cy="15.2" rx="2.2" ry="1.7" fill="${C.ink}"/>` +
     inkLine("M12.5 14.8V7.5L16 9.5", 1.8),
+  // A sticking plaster: bound wounds, body and soul (#962).
+  plaster: () =>
+    `<rect x="2" y="7.5" width="20" height="9" rx="3" transform="rotate(-45 12 12)" fill="${C.ink}"/>` +
+    `<rect x="8.5" y="7.5" width="7" height="9" transform="rotate(-45 12 12)" fill="${C.bg}" fill-opacity="0.45"/>` +
+    `<circle cx="9.5" cy="9.5" r="0.9" fill="${C.bg}"/><circle cx="14.5" cy="14.5" r="0.9" fill="${C.bg}"/>`,
+  // A sword with a small plus in its upper left: a heal that waits on a weapon spell (#962).
+  "sword-heal": () =>
+    inkLine("M7 20.5L20.5 7", 3) +
+    inkLine("M8 12.5L14.5 19", 2.6) +
+    inkLine("M4.5 20l2.5-2.5", 2.6) +
+    inkLine("M6.5 3V9M3.5 6H9.5", 2),
   arrow: () => inkLine("M4 20L15 9", 2.2) + inkFill("M21 3L11.5 6L18 12.5Z"),
   volley: () =>
     [-4.5, 0, 4.5]

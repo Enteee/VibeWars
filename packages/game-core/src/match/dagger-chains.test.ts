@@ -5,6 +5,7 @@ import { WEAPONS } from "../equipment/weapons.js";
 import { RANGE_MELEE } from "../distances.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { applyStatus } from "../skills/effects.js";
+import { strikesOf } from "../skills/testing.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
@@ -220,5 +221,34 @@ describe("dual attacks and Moebius Strike (#885)", () => {
     const match = fight();
     use(match, "a", JAGGED_STRIKE);
     expect(outOfSequence(use(match, "a", DEATH_BLOSSOM))).toBe(true);
+  });
+});
+
+describe("adrenaline from a dual attack's splash (#936)", () => {
+  /**
+   * `a`'s strikes of Backbreaker after the whole chain to Death Blossom,
+   * with or without a second foe beside the first, in its splash.
+   */
+  const strikesAfterChain = (withNeighbour: boolean): number => {
+    const a = assassin("a", vec2(0, 0));
+    const match = new MatchSimulation({
+      seed: "splash",
+      participants: [
+        { ...a, skillBar: [...a.skillBar, "warrior.backbreaker"] },
+        dummy("foe", NEAR),
+        ...(withNeighbour ? [dummy("beside", vec2(NEAR.x, RANGE_MELEE / 2))] : []),
+      ],
+    });
+    let blossom: CombatLogEntry | undefined;
+    for (const slot of [JAGGED_STRIKE, FOX_FANGS, DEATH_BLOSSOM]) {
+      blossom = use(match, "a", slot);
+      stepFor(match, 1);
+    }
+    expect(blossom === undefined ? 0 : damageTo(blossom, "beside")).toBe(withNeighbour ? 2 : 0);
+    return strikesOf(get(match, "a").combatant, "warrior.backbreaker");
+  };
+
+  it("earns none for the foes Death Blossom's splash hits, only for its target", () => {
+    expect(strikesAfterChain(true)).toBe(strikesAfterChain(false));
   });
 });
