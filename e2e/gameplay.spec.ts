@@ -82,7 +82,7 @@ async function startLobbyMatch(host: Page, guests: readonly Page[]): Promise<Loc
   for (const page of [host, ...guests]) {
     await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
   }
-  return host.locator("#viewport canvas");
+  return host.locator("#viewport canvas:not(.compass)");
 }
 
 /** Leave by the button, which leaves for good: a closed page is held for its reconnection. */
@@ -113,6 +113,18 @@ test("a match renders the arena and a populated HUD", async ({ page }) => {
   const last = await page.locator(".hud-skills .hud-skill").last().boundingBox();
   expect(bar !== null && last !== null && bar.x + bar.width - (last.x + last.width)).toBeLessThan(
     2,
+  );
+  // The compass (#1056): top right, under the match buttons.
+  const compass = page.locator(".compass");
+  await expect(compass).toBeVisible();
+  const disc = await compass.boundingBox();
+  const controls = await page.locator(".hud-controls").boundingBox();
+  const viewport = page.viewportSize();
+  expect(disc !== null && controls !== null && disc.y).toBeGreaterThan(
+    (controls?.y ?? 0) + (controls?.height ?? 0),
+  );
+  expect(disc !== null && viewport !== null && viewport.width - (disc.x + disc.width)).toBeLessThan(
+    30,
   );
 });
 
@@ -256,7 +268,7 @@ test("a skill the player cannot afford is refused rather than cast", async ({ pa
   await page.waitForTimeout(500);
 
   expect(await readEnergy(page)).toBeGreaterThanOrEqual(0);
-  await expect(page.locator("#viewport canvas")).toBeVisible();
+  await expect(page.locator("#viewport canvas:not(.compass)")).toBeVisible();
 });
 
 test("a refused cast says why, briefly, above the skill bar", async ({ page }) => {
@@ -515,7 +527,7 @@ test("a match whose host goes returns to the menu and says why (#195)", async ({
   // match and the lobby with it (#403).
   const host = await page.context().newPage();
   await startLobbyMatch(host, [page]);
-  const canvas = page.locator("#viewport canvas");
+  const canvas = page.locator("#viewport canvas:not(.compass)");
 
   await host.close();
 
@@ -568,7 +580,7 @@ test("at the arena's bottom edge, an RMB drag down looks past it, and springs ba
   await page.getByRole("button", { name: "start match" }).click();
   await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
   const stage = page.locator("#viewport");
-  const canvas = page.locator("#viewport canvas");
+  const canvas = page.locator("#viewport canvas:not(.compass)");
   const box = await canvas.boundingBox();
   if (box === null) {
     throw new Error("the arena canvas has no box");

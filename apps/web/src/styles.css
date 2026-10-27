@@ -149,7 +149,7 @@ body {
   position: relative;
 }
 
-#viewport canvas {
+#viewport canvas:not(.compass) {
   display: block;
   width: 100%;
   height: 100%;
@@ -3778,13 +3778,46 @@ body:has(#app > .chat) .now-playing {
 }
 
 /*
- * The ally you watch (#443): name and health, top right, under the match
- * buttons and the music button (.hud-music, 3.2rem + 2.2rem), live.
- * Yours alone.
+ * The compass (#486): GW1's radar, top right under the match buttons,
+ * centred on you, north up. A canvas `ui/compass.ts` draws; hidden keeps
+ * its box, so its size is there to read. Smaller on a narrow window, clear
+ * of the scoreboard.
+ */
+:root {
+  --compass-top: 5.8rem;
+  --compass-size: 160px;
+}
+
+@media (width < 80rem) {
+  :root {
+    --compass-size: 120px;
+  }
+}
+
+.compass {
+  position: absolute;
+  top: var(--compass-top);
+  right: 0.9rem;
+  display: block;
+  width: var(--compass-size);
+  height: var(--compass-size);
+  background: rgb(22 27 34 / 85%);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.compass[hidden] {
+  visibility: hidden;
+}
+
+/*
+ * The ally you watch (#443): name and health, top right, under the
+ * compass, live. Yours alone.
  */
 .ally-watch {
   position: absolute;
-  top: 6rem;
+  top: calc(var(--compass-top) + var(--compass-size) + 0.4rem);
   right: 0.9rem;
   display: flex;
   flex-direction: column;

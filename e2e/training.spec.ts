@@ -268,10 +268,10 @@ test("(8) leaving the editor leaves no arena behind", async ({ page }) => {
 test("(9) a match is unaffected", async ({ page }) => {
   await page.goto("./");
   await startSoloMatch(page);
-  await expect(page.locator("#viewport canvas")).toHaveCount(1);
+  await expect(page.locator("#viewport canvas:not(.compass)")).toHaveCount(1);
   await expect(page.locator(".hud-skills .hud-skill")).toHaveCount(8);
   await expect(page.locator(".training")).toHaveCount(0);
-  await expect(page.locator("canvas")).toHaveCount(1);
+  await expect(page.locator("canvas:not(.compass)")).toHaveCount(1);
 });
 
 test("(10) on a narrow screen the columns stack: training, editor, library", async ({ page }) => {

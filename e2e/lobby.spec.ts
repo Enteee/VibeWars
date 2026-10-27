@@ -194,8 +194,8 @@ test("the host starts a match and both players enter the arena", async ({ browse
     await start.click();
 
     // The arena canvas only exists once Phaser has booted into a match.
-    await expect(host.locator("#viewport canvas")).toBeVisible();
-    await expect(guest.locator("#viewport canvas")).toBeVisible();
+    await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
+    await expect(guest.locator("#viewport canvas:not(.compass)")).toBeVisible();
   } finally {
     await context.close();
   }
@@ -209,7 +209,7 @@ test("a lobby match shows the score, the clock and both fighters", async ({ brow
 
   try {
     await startTwoPlayerMatch(host, guest);
-    await expect(host.locator("#viewport canvas")).toBeVisible();
+    await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
 
     const scoreboard = host.locator(".hud-scoreboard");
     // The living on each side (#881).
@@ -249,8 +249,8 @@ test("a player who quits early is told the match still runs, until it ends", asy
 
   try {
     const code = await startTwoPlayerMatch(host, guest, 1);
-    await expect(host.locator("#viewport canvas")).toBeVisible();
-    await expect(guest.locator("#viewport canvas")).toBeVisible();
+    await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
+    await expect(guest.locator("#viewport canvas:not(.compass)")).toBeVisible();
 
     // The canvas shows before the join resolves, and the leave button only
     // exists once the match view is up. The top bar hides in a match (#454).

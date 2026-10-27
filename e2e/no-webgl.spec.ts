@@ -42,5 +42,5 @@ test("a match with no WebGL says so where the arena would be, and the HUD runs",
   await startSoloMatch(page);
 
   await expect(page.locator("#viewport > .arena-notice")).toHaveText(NO_WEBGL_NOTICE);
-  await expect(page.locator("#viewport canvas")).toHaveCount(0);
+  await expect(page.locator("#viewport canvas:not(.compass)")).toHaveCount(0);
 });
