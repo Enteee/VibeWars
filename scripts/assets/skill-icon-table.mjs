@@ -17,6 +17,7 @@
 /** @type {Readonly<Record<string, SkillIconRow>>} */
 export const SKILL_ICONS = {
   "monk.orison-of-healing": { glyph: "heal" },
+  "monk.restore-life": { glyph: "resurrect" },
   "elementalist.fireball": { glyph: "fireball", modifier: "area" },
   "warrior.swift-chop": { glyph: "axe" },
   "ranger.barrage": { glyph: "volley", modifier: "area" },
