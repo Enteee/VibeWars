@@ -328,6 +328,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Assassin/661-Moebius_Strike",
   },
   {
+    id: "assassin.leaping-mantis-sting",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/660-Leaping_Mantis_Sting",
+  },
+  {
+    id: "assassin.jungle-strike",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/659-Jungle_Strike",
+  },
+  {
+    id: "assassin.trampling-ox",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/1199-Trampling_Ox",
+  },
+  {
+    id: "assassin.falling-spider",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/652-Falling_Spider",
+  },
+  {
     id: "paragon.cruel-spear",
     profession: "paragon",
     url: "https://www.gw-memorial.net/skills/Paragon/1119-Cruel_Spear",

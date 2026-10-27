@@ -17,6 +17,7 @@ export {
   describeSkill,
   describeStatus,
   formatScalingRange,
+  chainRequirementText,
   neededWeaponText,
   overcastText,
 } from "./describe.js";

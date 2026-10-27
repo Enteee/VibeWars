@@ -48,6 +48,11 @@ export const SKILL_ICONS = {
   "assassin.twisting-fangs": { glyph: "dagger", modifier: "clock" },
   "assassin.horns-of-the-ox": { glyph: "dagger", modifier: "stun" },
   "assassin.moebius-strike": { glyph: "dagger", modifier: "self" },
+  // Placeholders until asset-designer's icons (#1041).
+  "assassin.leaping-mantis-sting": { glyph: "slow", modifier: "up" },
+  "assassin.jungle-strike": { glyph: "slow", modifier: "down" },
+  "assassin.trampling-ox": { glyph: "slow", modifier: "stun" },
+  "assassin.falling-spider": { glyph: "flask", modifier: "stun" },
   "ranger.punishing-shot": { glyph: "arrow", modifier: "up" },
   // Placeholders until asset-designer's icons (#976).
   "ranger.pin-down": { glyph: "arrow", modifier: "down" },

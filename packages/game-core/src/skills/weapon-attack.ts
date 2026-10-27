@@ -591,9 +591,10 @@ export function resolveSwing(swing: Swing): {
  * attacker, as Wounding Strike's lost enchantment (#845), needs a hit
  * too. A victim that blocks gets the skill's `onBlocked` effects instead
  * (#534); an `unblockable` one rolls no block at all (Wild Throw, #523).
- * A chain attack on a victim without the mark it follows misses it
- * outright, before blind, read once before the first blow; a chain
- * attack that hits leaves its own mark (#831).
+ * A chain attack on a victim without the mark it follows, or for which
+ * its `requires` does not hold (#1041), misses it outright, before
+ * blind, read once before the first blow; a chain attack that hits
+ * leaves its own mark (#831).
  *
  * A dual attack strikes twice (#885): each blow rolls its own blind,
  * block, crit and damage, and the skill's effects land after each blow
@@ -647,7 +648,11 @@ export function resolveAttackSkill(
     if (victim.dead) {
       continue;
     }
-    if (!chainAllows(caster, skill, victim.id)) {
+    const requires = skill.attack?.chain?.requires;
+    if (
+      !chainAllows(caster, skill, victim.id) ||
+      (requires !== undefined && !stateHolds(requires, caster, victim, surroundings))
+    ) {
       events.push({ kind: "attack-missed", targetId: victim.id, reason: "out-of-sequence" });
       continue;
     }

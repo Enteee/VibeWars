@@ -4367,6 +4367,198 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Assassin staples 2 (#1041)                                             */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "assassin.leaping-mantis-sting",
+    name: "Leaping Mantis Sting",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 8,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "If Mantis Sting hits, target foe takes +5...13...15 damage. If this
+    // attack strikes a moving foe that foe is Crippled for 3...13...15
+    // seconds": 13 s, its rank-12 value. The +13 is the 2012 update;
+    // fandom's template still has the older +14...19.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 13 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: { role: "lead", follows: undefined },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-moving" },
+        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+      },
+    ],
+  },
+  {
+    id: "assassin.jungle-strike",
+    name: "Jungle Strike",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 6,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow a lead attack. If it hits, this attack strikes for
+    // +10...22...25 damage. If it hits a foe that was Crippled, that foe
+    // and all adjacent foes take 1...25...31 damage." The 2026 update's 6 s
+    // recharge; fandom still says 10. The same update dropped the "+" from
+    // the 25, so it is its own damage on the foe, through armor as Death
+    // Blossom's splash, not a bonus on the blow.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 10, atTwelve: 22 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: { role: "off-hand", follows: "lead" },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "crippled" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "assassin.dagger-mastery", atZero: 1, atTwelve: 25 },
+            },
+            type: "piercing",
+            armorPenetration: 0,
+          },
+          {
+            kind: "splash",
+            radius: AREA_ADJACENT,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "assassin.dagger-mastery", atZero: 1, atTwelve: 25 },
+                },
+                type: "piercing",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "assassin.trampling-ox",
+    name: "Trampling Ox",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 8,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must follow an off-hand attack. If it hits, you deal +5...17...20
+    // damage. If you hit a Crippled foe, that foe is knocked down." Both
+    // blows may knock down; the second finds the foe down already.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 17 },
+      },
+      conditionalBonus: undefined,
+      strikes: 2,
+      unblockable: false,
+      chain: { role: "dual", follows: "off-hand" },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "crippled" },
+        effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+      },
+    ],
+  },
+  {
+    id: "assassin.falling-spider",
+    name: "Falling Spider",
+    type: "attack",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.dagger-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 8,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "Must strike a knocked-down foe. If it hits, Falling Spider strikes
+    // for +15...31...35 damage and target foe is Poisoned for 5...17...20":
+    // 17 s. It needs no lead. On a standing foe it misses as GW1's
+    // off-hand attacks do when their condition is unmet: energy spent,
+    // recharged at once.
+    attack: {
+      weapon: "daggers",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 15, atTwelve: 31 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: { role: "off-hand", follows: undefined, requires: { kind: "target-knocked-down" } },
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 17 }],
+  },
 ];
 
 export const SKILLS_BY_ID: ReadonlyMap<string, Skill> = new Map(

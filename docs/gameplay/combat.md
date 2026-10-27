@@ -816,6 +816,19 @@ and against a foe below half health recharges all your other attack
 skills at once, so the chain loops: lead, off-hand, dual, Moebius,
 dual, Moebius. The weapon's own double strike never adds to a skill.
 
+**Off-hand attacks that ask for a state** (#1041). Falling Spider needs
+no lead: it hits only a knocked-down foe, whoever knocked it down, read
+as its blow lands. On a foe standing, it is out of sequence like an
+off-hand without its lead: it costs its energy, misses ("Falling Spider
+misses Warrior (only if target is knocked down)") and recharges at
+once. A hit poisons and leaves your off-hand mark, so a dual follows.
+The tooltip reads "Off-hand attack. Only if target is knocked down."
+The crippling knockdown chain sets each step up: Leaping Mantis Sting,
+a lead, cripples a foe that is moving; Jungle Strike, an off-hand,
+deals a crippled foe and every foe adjacent to it 25 more; Trampling
+Ox, a dual, knocks a crippled foe down; then Falling Spider, and Death
+Blossom or Twisting Fangs after it.
+
 Your mark on your target shows right of its health in the target frame
 (#916): one dagger for lead, one in the left hand for off-hand, two
 crossed for dual, with "lead attack landed" and so on on hover. It

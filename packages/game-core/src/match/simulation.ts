@@ -1593,7 +1593,8 @@ export class MatchSimulation {
       record.combatant.cast.beginAftercast(cast.totalSeconds);
     }
 
-    // An off-hand attack out of sequence recharges at once (#831).
+    // An off-hand attack out of sequence, or whose chain requirement did
+    // not hold, recharges at once (#831, #1041).
     if (
       !events.some((event) => event.kind === "attack-missed" && event.reason === "out-of-sequence")
     ) {

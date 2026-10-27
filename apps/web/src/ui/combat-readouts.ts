@@ -1,5 +1,6 @@
 import {
   STATUS_DEFINITIONS,
+  chainRequirementText,
   getAttribute,
   getSkill,
   getWeapon,
@@ -92,12 +93,14 @@ function skillName(skillId: string | undefined): string | undefined {
 }
 
 /** One event as a sentence a player can learn from. */
-/** " (must follow an off-hand attack)": what a chain attack out of sequence needed (#831, #885). */
+/**
+ * " (must follow an off-hand attack)", " (only if target is knocked
+ * down)": what a chain attack out of sequence needed (#831, #885, #1041).
+ */
 function outOfSequence(skillId: string | undefined): string {
-  const follows = skillId === undefined ? undefined : getSkill(skillId)?.attack?.chain?.follows;
-  return follows === undefined
-    ? ""
-    : ` (must follow ${follows === "off-hand" ? "an off-hand" : `a ${follows}`} attack)`;
+  const skill = skillId === undefined ? undefined : getSkill(skillId);
+  const needed = skill === undefined ? undefined : chainRequirementText(skill);
+  return needed === undefined ? "" : ` (${needed})`;
 }
 
 /** "not a spell": why a picky interrupt let a cast through, by its filter (#796, #1008). */

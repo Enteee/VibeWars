@@ -238,6 +238,9 @@ describe("describeCombatEvent", () => {
     expect(
       describeCombatEvent(entry([missed], { skillId: "assassin.moebius-strike" }), missed, nameOf),
     ).toBe("Moebius Strike (Pyro) misses Caster dummy (must follow a dual attack)");
+    expect(
+      describeCombatEvent(entry([missed], { skillId: "assassin.falling-spider" }), missed, nameOf),
+    ).toBe("Falling Spider (Pyro) misses Caster dummy (only if target is knocked down)");
   });
 
   it("says why a picky interrupt let a cast through, and nothing when it found none (#796)", () => {
