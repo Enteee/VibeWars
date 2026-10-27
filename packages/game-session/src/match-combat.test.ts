@@ -445,7 +445,7 @@ describe("networked combat (P2P)", () => {
     expect(self(a)?.attackTargetSessionId).toBeUndefined();
   });
 
-  it("sends the striker alone its adrenaline, once a blow lands, and again only when it changes (#463)", async () => {
+  it("sends each player only its own adrenaline, once a blow lands, and again only when it changes (#463, #827)", async () => {
     const match = startMatch();
     const { connection: a, transport: ta } = await match.join();
     const { connection: b, transport: tb } = await match.join();
@@ -483,7 +483,10 @@ describe("networked combat (P2P)", () => {
     // ...then more blows change nothing, and say nothing.
     await match.step(4);
     expect(toA).toHaveLength(4);
-    expect(toB).toEqual([]);
+    // b is sent its own: what the blows it took charged (#827), never a's.
+    expect(toB.length).toBeGreaterThan(0);
+    expect(toB.at(-1)?.slots).toEqual(b.getAdrenaline());
+    expect(b.getAdrenaline()[severArtery]).toBeLessThan(4 * ADRENALINE_PER_STRIKE);
   });
 
   it("syncs applied statuses so the client can show condition markers, and ticks them as degeneration", async () => {

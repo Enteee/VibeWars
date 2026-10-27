@@ -4,7 +4,7 @@ import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/r
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { segment, type Segment } from "../geometry.js";
 import { createRng } from "../rng.js";
-import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { emptyAdrenaline } from "../skills/adrenaline.js";
 import { applyEffects } from "../skills/effects.js";
@@ -390,6 +390,65 @@ describe("adrenaline (#463)", () => {
     expect(strikesOf(caster, BACKBREAKER)).toBe(0);
   });
 });
+
+describe("adrenaline from damage taken (#827)", () => {
+  /** A swordsman of the other team, with `maxHealth`, who only stands and takes it. */
+  function victim(maxHealth: number): ParticipantSpec {
+    return { ...swordsman("v", vec2(40, 0)), team: 1, maxHealth };
+  }
+
+  /** The damage of `a`'s first landed swing on `v`, and `v`'s units in each skill after it. */
+  function firstBlow(maxHealth: number): { amount: number; units: number; severArtery: number } {
+    const match = sim(swordsman("a", vec2(0, 0)), victim(maxHealth));
+    match.requestAttack("a", "v");
+    for (let i = 0; i < 200; i += 1) {
+      for (const entry of swings(match.step(DT).log)) {
+        for (const event of entry.events) {
+          if (event.kind === "damage") {
+            return {
+              amount: event.amount,
+              units: get(match, "v").combatant.adrenaline.get(BACKBREAKER) ?? 0,
+              severArtery: get(match, "v").combatant.adrenaline.get(SEVER_ARTERY) ?? 0,
+            };
+          }
+        }
+      }
+    }
+    throw new Error("no blow landed in 10 s");
+  }
+
+  it("a hit for a quarter of max health is one strike on every skill; a hair less, 24 units", () => {
+    // The same seed swings the same first blow, whatever the victim's health.
+    const { amount } = firstBlow(1e6);
+    expect(firstBlow(4 * amount)).toMatchObject({
+      units: ADRENALINE_PER_STRIKE,
+      severArtery: ADRENALINE_PER_STRIKE,
+    });
+    expect(firstBlow((4 * amount * 120) / 119).units).toBe(24);
+  });
+
+  it("a lethal blow gives nothing: death leaves the pools empty", () => {
+    const { amount } = firstBlow(1e6);
+    const match = sim(swordsman("a", vec2(0, 0)), victim(amount));
+    const taker = get(match, "v").combatant;
+    match.requestAttack("a", "v");
+    stepFor(match, 1.4);
+    expect(taker.dead).toBe(true);
+    expect(strikesOf(taker, BACKBREAKER)).toBe(0);
+  });
+
+  it("a bleeding tick gains nothing", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), victim(480));
+    const taker = get(match, "v").combatant;
+    taker.statuses.apply("bleeding", 10, "a");
+    const log = stepFor(match, 3);
+    expect(log.some((entry) => entry.events.some((event) => event.kind === "damage"))).toBe(true);
+    expect(taker.health).toBeLessThan(480);
+    expect(strikesOf(taker, BACKBREAKER)).toBe(0);
+    expect(strikesOf(taker, SEVER_ARTERY)).toBe(0);
+  });
+});
+
 describe("block (#534)", () => {
   /** `defender` under a Guardian that outlasts the test. */
   function guarded(match: MatchSimulation, defender: string): void {
