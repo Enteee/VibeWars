@@ -2,6 +2,7 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   MatchSimulation,
   ZERO,
+  adrenalineLossIn,
   applyIntent,
   drainAccumulator,
   resolveJoinLoadout,
@@ -136,8 +137,11 @@ interface Seat {
   readonly name: string;
   readonly primaryProfession: ProfessionId;
   readonly secondaryProfession: ProfessionId | undefined;
-  /** The adrenaline the peer was last sent, so only a change goes (#463). */
-  adrenaline: readonly number[] | undefined;
+  /**
+   * The adrenaline the peer was last sent, and the combat it counted its
+   * loss from, so only a change goes (#463, #828).
+   */
+  adrenaline: { readonly slots: readonly number[]; readonly lastCombatAt: number } | undefined;
   /** The peer playing it; `undefined` while it is dropped. */
   peerId: string | undefined;
   /** What the peer proves it holds, by `rejoinProof`, to take the seat back. */
@@ -231,18 +235,34 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     transport.send("recharge", { slots }, seat.peerId);
   };
 
-  /** Send `seat`'s peer its own adrenaline when it changed, or whenever `force` (#463). */
+  /**
+   * Send `seat`'s peer its own adrenaline when it changed, or whenever
+   * `force` (#463); and when its out-of-combat window starts again while
+   * it holds any, so the loss it counts down to moves (#828).
+   */
   const sendAdrenaline = (seat: Seat, force: boolean): void => {
     const participant = sim.get(seat.playerId);
     if (participant === undefined || seat.peerId === undefined) {
       return;
     }
-    const slots = adrenalineSlots(participant.skillBar, participant.combatant);
-    if (!force && seat.adrenaline !== undefined && sameAdrenaline(seat.adrenaline, slots)) {
+    const { combatant } = participant;
+    const slots = adrenalineSlots(participant.skillBar, combatant);
+    const lossInSeconds = adrenalineLossIn(
+      combatant,
+      sim.elapsedSeconds,
+      RULESET.resources.adrenalineLossSeconds,
+    );
+    const sent = seat.adrenaline;
+    if (
+      !force &&
+      sent !== undefined &&
+      sameAdrenaline(sent.slots, slots) &&
+      (lossInSeconds === null || sent.lastCombatAt === combatant.lastCombatAt)
+    ) {
       return;
     }
-    seat.adrenaline = slots;
-    const message: AdrenalineMessage = { slots };
+    seat.adrenaline = { slots, lastCombatAt: combatant.lastCombatAt };
+    const message: AdrenalineMessage = { slots, lossInSeconds };
     transport.send("adrenaline", message, seat.peerId);
   };
 

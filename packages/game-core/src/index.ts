@@ -46,6 +46,7 @@ export type {
   Ruleset,
 } from "./ruleset.js";
 export { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
+export { adrenalineLossIn } from "./skills/adrenaline.js";
 
 export type { AttributeDefinition, ProfessionDefinition, ProfessionId } from "./professions.js";
 export { PROFESSIONS, getAttribute, getProfession, primaryAttributeOf } from "./professions.js";

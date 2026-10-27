@@ -92,7 +92,10 @@
   },
   "types": {
     "AdrenalineMessage": {
-      "properties": [{ "name": "slots", "optional": false, "type": { "array": "number" } }]
+      "properties": [
+        { "name": "lossInSeconds", "optional": false, "type": { "union": ["null", "number"] } },
+        { "name": "slots", "optional": false, "type": { "array": "number" } }
+      ]
     },
     "AttackIntent": {
       "properties": [

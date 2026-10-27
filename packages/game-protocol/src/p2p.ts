@@ -1224,10 +1224,18 @@ export function parseRecharge(value: unknown): RechargeMessage | undefined {
 
 /** The `"adrenaline"` channel: an `AdrenalineMessage`, to one player alone (#463). */
 export function parseAdrenaline(value: unknown): AdrenalineMessage | undefined {
-  const slots = parseArray(fields(value)?.slots, MAX_WIRE_SLOTS, (slot) =>
+  const raw = fields(value);
+  const slots = parseArray(raw?.slots, MAX_WIRE_SLOTS, (slot) =>
     isNumber(slot) && slot >= 0 ? slot : undefined,
   );
-  return slots === undefined ? undefined : { slots };
+  const lossInSeconds = raw?.lossInSeconds;
+  if (
+    slots === undefined ||
+    !(lossInSeconds === null || (isNumber(lossInSeconds) && lossInSeconds >= 0))
+  ) {
+    return undefined;
+  }
+  return { slots, lossInSeconds };
 }
 
 /** A lobby character; `null` is a starter build, a missing one is malformed. */
