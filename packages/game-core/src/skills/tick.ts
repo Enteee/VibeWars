@@ -1,3 +1,5 @@
+import { effectiveRank } from "../attributes.js";
+import type { ResolvedEquipment } from "../equipment/resolve.js";
 import { FAST_CASTING_ATTRIBUTE, fastCastingMultiplier } from "../primary-attributes.js";
 import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
@@ -6,6 +8,7 @@ import {
   clampPips,
   getStatusDefinition,
   HEALTH_PER_PIP,
+  StatusSet,
   type BlockRule,
 } from "./status.js";
 import { isSpell, type Combatant, type Skill } from "./types.js";
@@ -145,23 +148,55 @@ export function clampMoveSpeed(raw: number): number {
   return Math.min(MOVE_SPEED_MAX, Math.max(MOVE_SPEED_MIN, raw));
 }
 
+/** What `rankOf` reads of a combatant: a tooltip outside a match passes no statuses. */
+export type RankHolder = Pick<Combatant, "attributeRanks" | "statuses"> & {
+  readonly equipment: Pick<ResolvedEquipment, "attributeBonuses">;
+};
+
+/**
+ * A holder at `ranks` with nothing on: a build, not a moment of a fight,
+ * for a tooltip or an editor (#637).
+ */
+export function outsideMatch(ranks: ReadonlyMap<string, number>): RankHolder {
+  return {
+    attributeRanks: ranks,
+    statuses: new StatusSet(),
+    equipment: { attributeBonuses: new Map() },
+  };
+}
+
+/**
+ * The bearer's rank in `attributeId` right now (#762): its sheet's, runes
+ * included, plus every status's `attributeDelta`, floored at 0. A rank
+ * of 0 bought with points is never lowered, even when a rune raised it,
+ * as GW1 says. The one match-time reader of `attributeRanks` (ADR-0019).
+ */
+export function rankOf(holder: RankHolder, attributeId: string): number {
+  const rank = holder.attributeRanks.get(attributeId) ?? 0;
+  const allocated = rank - (holder.equipment.attributeBonuses.get(attributeId) ?? 0);
+  if (allocated <= 0) {
+    return rank;
+  }
+  const { attributeDelta } = aggregateModifiers(holder.statuses.active);
+  return effectiveRank(rank, [{ delta: attributeDelta }]);
+}
+
+/** The multiplier on the bearer's weapon roll: weakness's 0.34 (#762). */
+export function weaponDamageMultiplierOf(combatant: Combatant): number {
+  return aggregateModifiers(combatant.statuses.active).weaponDamageMultiplier;
+}
+
 /**
  * How long this caster takes to cast this skill. Dazed doubles a spell's;
  * a signet or any other skill that is not a spell casts at normal speed,
  * as in GW1 (#524). An instant skill stays instant (0 × 2 = 0). Fast
  * Casting multiplies in too (#527), judged on the skill's own activation.
  */
-export function effectiveActivationSeconds(
-  skill: Skill,
-  caster: Pick<Combatant, "attributeRanks" | "statuses">,
-): number {
+export function effectiveActivationSeconds(skill: Skill, caster: RankHolder): number {
   if (!isSpell(skill.type)) {
     return skill.activationSeconds;
   }
-  const fastCasting = fastCastingMultiplier(
-    caster.attributeRanks.get(FAST_CASTING_ATTRIBUTE) ?? 0,
-    skill,
-  );
+  const fastCasting = fastCastingMultiplier(rankOf(caster, FAST_CASTING_ATTRIBUTE), skill);
   return (
     skill.activationSeconds *
     aggregateModifiers(caster.statuses.active).castTimeMultiplier *

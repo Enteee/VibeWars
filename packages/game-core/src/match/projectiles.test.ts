@@ -179,17 +179,18 @@ describe("ranged weapons fire projectiles", () => {
   });
 
   describe("Critical Strikes (#606)", () => {
-    /** Critical Strikes 13, and Marksmanship so high every arrow crits. */
+    /** Critical Strikes 13, under rules where every arrow crits. */
     function critter(): MatchSimulation {
       return new MatchSimulation({
         seed: "arrow",
+        ruleset: {
+          ...MINIMAL_GW_INSPIRED_PVP_V1,
+          combat: { ...MINIMAL_GW_INSPIRED_PVP_V1.combat, criticalBaseChance: 1 },
+        },
         participants: [
           {
             ...archer(vec2(0, 0)),
-            attributeRanks: new Map([
-              ["ranger.marksmanship", 80],
-              ["assassin.critical-strikes", 13],
-            ]),
+            attributeRanks: new Map([["assassin.critical-strikes", 13]]),
           },
           target(vec2(300, 0)),
         ],

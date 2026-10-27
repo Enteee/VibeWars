@@ -130,6 +130,10 @@ describe("describeSkill", () => {
     expect(describeStatus("guardian")).toBe("50% chance to block attacks");
   });
 
+  it("says weakness cuts the weapon and every attribute (#762)", () => {
+    expect(describeStatus("weakness")).toBe("−66% weapon damage, −1 to all attributes");
+  });
+
   it("words a status's pips as GW1 does", () => {
     expect(describeStatus("bleeding")).toContain("−3 Health degeneration");
     expect(describeStatus("regeneration")).toContain("+4 Health regeneration");
