@@ -1,4 +1,4 @@
-import { HOUSE_LOADOUT } from "@vibewars/game-core";
+import { HOUSE_LOADOUT, KILL_COUNT_MATCH_RULES } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   parsePeerRefuse,
@@ -548,7 +548,9 @@ describe("a P2P host survives hostile peers (#375)", () => {
     expect(match.host.phase).toBe("active");
   });
   it("never seats again a peer that said bye, however it loops bye and hello", async () => {
-    const match = startMatch();
+    // Kill-count: under annihilation the bye empties the peer's team, a
+    // wipe, and this test is about seating, not about who wins.
+    const match = startMatch({ matchRules: KILL_COUNT_MATCH_RULES });
     const { connection: watcher } = await match.join();
     const raw = match.network.join();
     let welcomes = 0;

@@ -727,7 +727,8 @@ respawn timer running out, it does nothing, and the energy is spent.
 
 An Annihilation match (#846, today's match) is won by **wiping the other
 team**: the moment every member of it is dead at once, your team wins.
-Kills still show in the score, but no number of them ends the match.
+A team whose members have all left the match counts as wiped too, so
+quitting a 1v1 forfeits it. Kills still show in the score, but no number of them ends the match.
 After **8 minutes** the team with the **highest total morale** wins: the
 sum of every member's morale, dead or alive, so a team at 0, −15 and
 −30 (−45) beats one at −15, −15 and −30 (−60). The end line reads
