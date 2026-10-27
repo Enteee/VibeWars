@@ -2,6 +2,7 @@ import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 
 import type { ResolvedEquipment } from "../equipment/resolve.js";
+import type { SkillBar } from "../build.js";
 import type { DamageType } from "../equipment/types.js";
 import type { ProfessionId } from "../professions.js";
 import type { CastState } from "./cast-state.js";
@@ -230,6 +231,20 @@ export interface RechargeOthersEffect {
   readonly which: "attack";
 }
 
+/**
+ * Disable the skill this resolution interrupted on the target (#914): it
+ * cannot be used for `seconds`, running alongside its recharge, as
+ * Distracting Shot's "that skill is disabled for an additional 20
+ * seconds". With `interrupted-and-attribute`, every skill on the
+ * target's bar of the same attribute too, as Power Block's; a skill with
+ * no attribute disables only itself. Nothing interrupted: nothing.
+ */
+export interface DisableSkillEffect {
+  readonly kind: "disable-skill";
+  readonly which: "interrupted" | "interrupted-and-attribute";
+  readonly seconds: Magnitude;
+}
+
 /** How long "knocks down" lasts when a skill names no duration (GW1). */
 export const KNOCKDOWN_SECONDS = 2;
 
@@ -306,7 +321,8 @@ export type UnconditionalEffect =
   | ResurrectEffect
   | RechargeFasterEffect
   | SplashEffect
-  | RechargeOthersEffect;
+  | RechargeOthersEffect
+  | DisableSkillEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
 
@@ -541,6 +557,8 @@ export interface Combatant {
    * `adrenalineLossSeconds` after it, every pool empties.
    */
   lastCombatAt: number;
+  /** The bar it was made with (#914): what Power Block reads to disable a whole attribute. */
+  readonly skillBar: SkillBar;
   /** Attribute ranks by attribute id; absent means rank 0. */
   readonly attributeRanks: ReadonlyMap<string, number>;
   readonly team: number;
