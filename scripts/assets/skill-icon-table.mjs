@@ -97,6 +97,10 @@ export const SKILL_ICONS = {
   "ritualist.spirit-light-weapon": { glyph: "blade-plus" },
   "ritualist.weapon-of-quickening": { glyph: "blade-turn" },
   "ritualist.weapon-of-aggression": { glyph: "blade-fast" },
+  "ritualist.weapon-of-remedy": { glyph: "blade-plus", modifier: "bleed" },
+  "ritualist.vengeful-weapon": { glyph: "blade-turn", modifier: "down" },
+  "ritualist.splinter-weapon": { glyph: "blade-fast", modifier: "area" },
+  "ritualist.mending-grip": { glyph: "plaster", modifier: "up" },
   "mesmer.power-spike": { glyph: "interrupt", modifier: "down" },
   "mesmer.power-drain": { glyph: "interrupt", modifier: "up" },
   "mesmer.power-block": { glyph: "interrupt", modifier: "clock" },
@@ -179,4 +183,9 @@ export const SKILL_ICONS = {
   "necromancer.insidious-parasite": { glyph: "chain", modifier: "self" },
   "necromancer.mark-of-pain": { glyph: "hammer", modifier: "area" },
   "necromancer.vampiric-gaze": { glyph: "heal", modifier: "bleed" },
+  // Placeholders until asset-designer's icons (#988).
+  "assassin.deaths-charge": { glyph: "dash", modifier: "stun" },
+  "assassin.shadow-refuge": { glyph: "plaster", modifier: "clock" },
+  "assassin.shroud-of-distress": { glyph: "armor", modifier: "stun" },
+  "assassin.critical-eye": { glyph: "dagger", modifier: "hourglass" },
 };

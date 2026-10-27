@@ -285,6 +285,12 @@ of energy or by a death, it takes the newest hex off its ally. A hex it
 removes does not fire its own end: a Parasitic Bond taken this way
 heals nobody.
 
+**Shadow Refuge** (#988; Assassin, Shadow Arts, 5 energy, 1 s, 8 s
+recharge) gives you +9 health regeneration for 6 s. When it ends, for any
+reason, a strip included, you gain 88 Health if you are attacking right
+then: a swing in progress or an attack skill being used. Standing idle,
+casting a spell or dead, it gives nothing.
+
 **Rend Enchantments** (Necromancer, Curses, 5 energy, 2 s, 20 s
 recharge) removes up to 8 enchantments from a foe, the newest first,
 and you lose 31 health for each Monk enchantment among them. That loss
@@ -319,7 +325,8 @@ Parasite 39) is not damage. The target loses up to that much, never more
 than it has, and the caster gains exactly what was taken, up to its
 maximum health. Armor does not apply, healing modifiers do not touch the
 gain, it charges no adrenaline, and Mark of Pain does not see it. It can
-kill. A dead caster steals nothing.
+kill. A dead caster steals nothing. Vengeful Weapon and Weapon of Remedy
+steal for their bearer, not their Ritualist, and only once.
 
 ## Knockdown
 
@@ -766,11 +773,30 @@ speed-up only the strongest counts, so under Frenzy it adds nothing.
 Spirit Light Weapon's extra 21 a second near a spirit and Weapon of
 Quickening's binding rituals wait for spirits (#467).
 
+Three more (#1022), which still replace any other weapon spell. Each
+lasts on an ally or yourself. **Vengeful Weapon** (Restoration Magic, 5
+energy, ¼ s, 3 s recharge) lasts 8 s: the next time its bearer loses
+health to damage or life steal from a foe, a blow, an arrow or a spell,
+the bearer steals 51 from that foe, and it ends. **Weapon of Remedy**
+(elite, 3 energy, ¼ s, 3 s recharge) is the same with a 68 steal, and
+the bearer also loses its 2 newest conditions. Degeneration, sacrifice,
+a block, a blow armor takes to 0 and a hit Reversal of Fortune reverses
+do not set either off. Neither does damage a trigger deals, so Mark of
+Pain's splash leaves them up, and two Vengeful Weapons never echo. Two
+foes in one tick: it answers the first. The blow that kills the bearer
+steals nothing. **Splinter Weapon** (Channeling Magic, 5 energy, 1 s, 8 s
+recharge) lasts 20 s or 4 hits with any physical weapon: each hit deals
+25 armor-ignoring damage to every other foe adjacent to the foe hit. A
+miss or a block spends nothing, and a wand or a staff carries none.
+
 The Ritualist heals with Restoration Magic, each on an ally or yourself
 (#955). **Mend Body and Soul** (5 energy, ¾ s, 3 s recharge) heals 96.
 **Spirit Light** (5 energy, 1 s, 4 s recharge) sacrifices 17% of your
 maximum health and heals 156. **Wielder's Boon** (5 energy, ¼ s, 4 s
 recharge) heals 51, and 63 more if the ally is under a weapon spell.
+**Mending Grip** (5 energy, 1 s, 4 s recharge) heals 68, and if the ally
+is under a weapon spell it also loses one condition, the newest: the
+Ritualist's first condition removal (#1022).
 Their spirit clauses, a condition removed per spirit in earshot and no
 sacrifice with a spirit near, wait for spirits (#467).
 
@@ -918,6 +944,11 @@ the attribute and an unmet requirement; an attack skill's bonus is
 added unmultiplied. A melee blow at a target that is moving with its
 back to you (facing more than 90° away) always crits. A crit floats
 larger, with a "!", and the log says "a critical hit".
+**Critical Eye** (Assassin, Critical Strikes, 5 energy, instant, 30 s
+recharge, #988) adds 13% to the chance for 30 s, all of it capped at
+100%, and gives 1 more energy on each crit, beside Critical Strikes'.
+It is a skill effect, so no strip removes it. An arrow keeps the crit
+chance it was loosed with, but the extra energy is read as it lands.
 
 **Block** (#534). Guardian gives its ally a 50% chance to block attacks;
 several block sources combine as 1 − ∏(1 − p), so two 50% sources make
@@ -930,6 +961,11 @@ skill's cost and recharge are still spent. "block" floats over the
 target. Swift Chop is the exception that proves it: blocked, it still
 deals its flat damage and a 20 s Deep Wound. Spells are never blocked,
 and shields do not block, as in GW1. Wild Throw and Crippling Shot cannot be blocked at all.
+**Shroud of Distress** (Assassin, Shadow Arts, 10 energy, 1 s, 45 s
+recharge, #988) gives a 75% chance to block attacks for 54 s, but only
+while you are below half your maximum Health (after a deep wound), read
+at each block roll: a heal back over half turns it off. It combines
+with other blocks as above.
 
 Not modelled: evade.
 
@@ -1118,6 +1154,15 @@ brackets.
   and a wall ends up outside the wall rather than inside it.
 - **Line of sight** is a geometric query against wall segments, shared
   by the server, the tests and any future client preview.
+- **Shadow step** (#988): **Death's Charge** (Assassin, Shadow Arts,
+  5 energy, ¼ s, 30 s recharge) moves you to the foe it targets, where
+  that foe stands as the spell resolves, touching it on the side you
+  came from, facing it. With a wall between, you land on it, and bodies,
+  walls and the map's edge push you clear as for a walk. It is not a
+  walk: snares do not slow it, nothing reads it as running, and an
+  arrow already flying at you misses. A long step snaps the camera, as
+  a respawn does. If that foe has more Health than you, read before the
+  step, you are healed for 173.
 
 ## Creatures
 

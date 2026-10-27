@@ -515,11 +515,45 @@ team:
 - **A: the primary, 11 px, before the name.** All ten read at true size.
 - **B: A, plus the secondary at 8 px in dim ink.** The secondary is mush at
   that size; at 11 px the name plate doubles in width over a 34 px bar.
-- **C: the primary on the body.** The weapon mark (#188) runs across it, so
-  it does not read.
+- **C: the primary on the body.** At full ink under the weapon mark (#188),
+  the line runs across a plate as loud as itself, so neither reads. That was
+  true of a full-ink plate; B of the body study below fixes it.
 
 It recommended A, with the pair in the target panel, where there is room
 and the profession colours are allowed.
+
+#### The glyph inside the body
+
+Decided (Q104, Q105): option **B** of the body study. Players on the map
+were hard to tell apart with the glyph only before a name that hides, so
+every body also shows its primary profession's glyph inside its circle
+(#1037):
+
+- **13 world units** square, centred on the body (radius 14), **upright**: it
+  never turns with facing. World sized, so it scales with the body at every
+  zoom.
+- Painted in `edge` at **60 %**: a dark mark on the team colour, never the
+  profession colour. The self rim stays over it.
+- **Under** the off-hand and weapon marks. The scene draws in layers, bottom
+  up: bodies, body glyphs, every mark on a body (off-hand, weapon, target
+  ring, call chevron, watch brackets, bars), then shots, status icons, names
+  and numbers. So in a clump a neighbour's weapon crosses your body: the
+  weapon is the more urgent read.
+- **A corpse**: the glyph in `dead` at full opacity, same size, inside the
+  hollow circle, so you can tell whom to resurrect or exploit.
+- **Knocked down**: centred, upright, scaled by the lying width (0.55, about
+  7 units), so it stays inside the flattened disc.
+- No profession: no glyph, as the name plate does.
+
+B works where C did not because the glyph is a 60 % shadow under the
+weapon, not a full-ink plate beside it: the weapon line keeps its contrast
+across it, and the glyph still reads round it.
+
+`node scripts/assets/profession-body-study.mjs` draws the three options at
+the four camera zooms: A, 9 units in full `edge`; B, 13 units at 60 %; C,
+a fixed 11 screen px, which crosses every weapon at Wide.
+
+![Profession body study](profession-body-study.svg)
 
 ### Name labels (study, not decided)
 
