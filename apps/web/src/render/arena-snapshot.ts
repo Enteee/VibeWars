@@ -282,14 +282,28 @@ export function teamColour(team: RenderableActor["team"]): number {
 /**
  * Hit-test a point against actors; used by click-to-target (brief §5).
  *
- * Dead actors are skipped: clicking a corpse should select whoever is
- * standing behind it, not the corpse.
+ * The living come first: clicking a corpse selects whoever is standing
+ * behind it. With nobody living under the point, an ally's corpse is
+ * picked, so a resurrection has something to aim at (#812). A foe's
+ * corpse never is.
  */
 export function actorAtPoint(snapshot: ArenaSnapshot, point: Vec2): RenderableActor | undefined {
+  return (
+    nearestUnder(snapshot.actors, point, (actor) => !actor.dead) ??
+    nearestUnder(snapshot.actors, point, (actor) => actor.dead && actor.team === "ally")
+  );
+}
+
+/** The actor among `actors` that `accepts` nearest `point`, within its radius. */
+function nearestUnder(
+  actors: readonly RenderableActor[],
+  point: Vec2,
+  accepts: (actor: RenderableActor) => boolean,
+): RenderableActor | undefined {
   let best: RenderableActor | undefined;
   let bestDistance = Number.POSITIVE_INFINITY;
-  for (const actor of snapshot.actors) {
-    if (actor.dead) {
+  for (const actor of actors) {
+    if (!accepts(actor)) {
       continue;
     }
     const d = Vec.distance(actor.position, point);
@@ -304,7 +318,7 @@ export function actorAtPoint(snapshot: ArenaSnapshot, point: Vec2): RenderableAc
 /**
  * `snapshot` with whose names show this frame (#253): the body under
  * `pointer` (in world units, `undefined` once the cursor left the
- * arena), hit-tested like a click so a corpse is never picked, and
+ * arena), hit-tested like a click, so a foe's corpse is never picked, and
  * every name while `showAllNames`.
  */
 export function withNames(

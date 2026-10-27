@@ -7,11 +7,19 @@
  * The logs hold prompts, code and maybe secrets. Only the usage fields are
  * ever parsed out of a line, and no line, nor any part of one, is ever
  * printed, error messages included.
+ *
+ * How much is left (#452) is not in the logs. The plan publishes no limit
+ * in tokens, only how much of its 5-hour and 7-day windows is used: the
+ * percentages `/usage` and the statusline show. Claude Code reports them
+ * to every `-p` run as a `rate_limit_event`, which agent-turn.mjs keeps in
+ * each employee's `bus/<employee>/limit.json`; the newest one is the
+ * account's. With every agent idle it grows old, and the pane says so.
  */
 import fs from "node:fs";
 import path from "node:path";
 
 import { openJailDir } from "./jail-fs.mjs";
+import { LIMIT_STATUSES, LIMIT_TYPES, oneOf } from "./stream-format.mjs";
 
 /** @typedef {import("./jail-fs.mjs").JailDir} JailDir */
 
@@ -167,6 +175,140 @@ export function formatCount(n) {
     return `${String(Math.round(n / 1000))}k`;
   }
   return `${(n / 1_000_000).toFixed(1)}M`;
+}
+
+/**
+ * The last `rate_limit_event` an agent's turn saw (#452), as agent-turn
+ * writes it to `$VIBEWARS_LIMIT_FILE`, with when it saw it.
+ *
+ * @typedef {import("./stream-format.mjs").RateLimitInfo & { at: number }} LimitReading
+ */
+
+/**
+ * @param {unknown} value
+ * @returns {value is number}
+ */
+function isFinite(value) {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+/**
+ * @param {unknown} value
+ * @returns {boolean} a `LimitWindow`, or null
+ */
+function isWindowOrNull(value) {
+  if (value === null) {
+    return true;
+  }
+  const fields = obj(value);
+  return (
+    Object.keys(fields).length === 2 && isFinite(fields.utilization) && isFinite(fields.resetsAt)
+  );
+}
+
+/** The keys of a limit file, each exactly once. */
+const LIMIT_KEYS = [
+  "at",
+  "status",
+  "rateLimitType",
+  "resetsAt",
+  "utilization",
+  "fiveHour",
+  "sevenDay",
+].sort();
+
+/**
+ * A limit file, or `null` for anything not exactly its shape: the file is
+ * in the agent's own bus directory, which its jail can write.
+ *
+ * @param {string} text
+ * @returns {LimitReading | null}
+ */
+export function parseLimitFile(text) {
+  /** @type {unknown} */
+  let raw;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  const fields = obj(raw);
+  const keys = Object.keys(fields).sort();
+  const shaped =
+    keys.length === LIMIT_KEYS.length &&
+    keys.every((key, i) => key === LIMIT_KEYS[i]) &&
+    isFinite(fields.at) &&
+    (fields.status === null || oneOf(LIMIT_STATUSES, fields.status) !== null) &&
+    (fields.rateLimitType === null || oneOf(LIMIT_TYPES, fields.rateLimitType) !== null) &&
+    (fields.resetsAt === null || isFinite(fields.resetsAt)) &&
+    (fields.utilization === null || isFinite(fields.utilization)) &&
+    isWindowOrNull(fields.fiveHour) &&
+    isWindowOrNull(fields.sevenDay);
+  return shaped ? /** @type {LimitReading} */ (fields) : null;
+}
+
+/**
+ * The newest reading: the limit is the account's, so whichever agent saw
+ * it last saw it best. One dated past `now`, give or take, is forged.
+ *
+ * @param {readonly (LimitReading | null)[]} readings
+ * @param {number} now epoch milliseconds
+ * @returns {LimitReading | null}
+ */
+export function newestLimit(readings, now) {
+  /** @type {LimitReading | null} */
+  let newest = null;
+  for (const reading of readings) {
+    if (reading !== null && reading.at <= now + MAX_SKEW_MS && reading.at > (newest?.at ?? -1)) {
+      newest = reading;
+    }
+  }
+  return newest;
+}
+
+/** The burn rate's window (#452). */
+export const BURN_MS = 60 * 60 * 1000;
+
+/**
+ * The last hour's output (#452), as hubd's GraphQL line shows its spend.
+ *
+ * @typedef {object} Burn
+ * @property {number} output
+ * @property {number} replies
+ * @property {{ role: string, output: number }[]} top the three roles that
+ *   wrote the most, most first
+ */
+
+/**
+ * Each reply counted once however many lines logged it, as `summarize`.
+ *
+ * @param {readonly (UsageRecord & { role: string })[]} records
+ * @param {number} now epoch milliseconds
+ * @returns {Burn}
+ */
+export function burnOf(records, now) {
+  /** @type {Map<string, UsageRecord & { role: string }>} */
+  const replies = new Map();
+  for (const record of records) {
+    replies.set(record.id, record);
+  }
+  /** @type {Map<string, number>} */
+  const byRole = new Map();
+  let output = 0;
+  let replyCount = 0;
+  for (const reply of replies.values()) {
+    if (reply.ts < now - BURN_MS || reply.ts > now) {
+      continue;
+    }
+    replyCount += 1;
+    output += reply.output;
+    byRole.set(reply.role, (byRole.get(reply.role) ?? 0) + reply.output);
+  }
+  const top = [...byRole]
+    .map(([role, out]) => ({ role, output: out }))
+    .sort((a, b) => b.output - a.output)
+    .slice(0, 3);
+  return { output, replies: replyCount, top };
 }
 
 /**

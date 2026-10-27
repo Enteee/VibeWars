@@ -46,6 +46,13 @@ export type CombatEvent =
   | { readonly kind: "energy-loss"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "sacrifice"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "death"; readonly targetId: string }
+  /** Back from the dead (#812), with these shares of maximum health and energy, 0..1. */
+  | {
+      readonly kind: "resurrected";
+      readonly targetId: string;
+      readonly healthFraction: number;
+      readonly energyFraction: number;
+    }
   | {
       readonly kind: "status-applied";
       readonly targetId: string;
@@ -200,6 +207,29 @@ function loseEnergy(target: Combatant, amount: number, events: CombatEvent[]): v
 }
 
 /**
+ * Bring a dead `target` back (#812), as a respawn leaves it but where it
+ * lies: these shares of its maximum health (at least 1) and energy, no
+ * effects, no adrenaline. Its recharges carry on, and so does its
+ * overcast: energy stops at the ceiling that leaves (#461).
+ */
+function resurrect(
+  target: Combatant,
+  healthFraction: number,
+  energyFraction: number,
+  events: CombatEvent[],
+): void {
+  target.statuses.clear();
+  target.dead = false;
+  target.health = Math.max(1, Math.floor(target.maxHealth * healthFraction));
+  target.energy = Math.max(
+    0,
+    Math.min(Math.floor(target.maxEnergy * energyFraction), effectiveMaxEnergy(target)),
+  );
+  target.adrenaline = 0;
+  events.push({ kind: "resurrected", targetId: target.id, healthFraction, energyFraction });
+}
+
+/**
  * The energy `targetId` lost to earlier effects of this skill (#793), read
  * from `earlier`, the events its resolution has emitted so far.
  */
@@ -339,8 +369,9 @@ function refusedSkill(effect: InterruptEffect, target: Combatant): string | null
 
 /**
  * Apply one effect to `context.target`. `earlier` is what this skill's
- * resolution has emitted before it, for a `perEnergyLost` amount (#793);
- * an effect applied on its own has nothing before it.
+ * resolution has emitted before it, for a `perEnergyLost` amount (#793)
+ * and an interrupt that finds its target already interrupted (#817); an
+ * effect applied on its own has nothing before it.
  */
 export function applyEffect(
   effect: UnconditionalEffect,
@@ -458,6 +489,12 @@ export function applyEffect(
       }
       const refusedSkillId = refusedSkill(effect, target);
       if (refusedSkillId !== null || !interruptCast(target, events)) {
+        // Already interrupted by this resolution, as by the daze its own
+        // blow brought down (#817): the player's interrupt landed, so it
+        // is no miss.
+        if (wasInterrupted(target.id, earlier)) {
+          return events;
+        }
         // Nothing it may interrupt was being cast: the interrupt is wasted. Emitted
         // explicitly so a combat log can show the miss, and why — landing an
         // interrupt is a timing skill, and silently swallowing failures
@@ -477,6 +514,21 @@ export function applyEffect(
         targetId: target.id,
         durationSeconds: effect.durationSeconds,
       });
+      return events;
+    }
+
+    case "resurrect": {
+      // Only the dead: one whom another resurrection, or the respawn
+      // timer, brought back first is left as they are.
+      if (!target?.dead) {
+        return events;
+      }
+      resurrect(
+        target,
+        resolveMagnitude(effect.healthPercent, caster) / 100,
+        resolveMagnitude(effect.energyPercent, caster) / 100,
+        events,
+      );
       return events;
     }
   }
@@ -550,6 +602,11 @@ function statesBefore(
   return held;
 }
 
+/** Whether `earlier`, this resolution's events so far, interrupted `targetId`. */
+function wasInterrupted(targetId: string, earlier: readonly CombatEvent[]): boolean {
+  return earlier.some((event) => event.kind === "interrupted" && event.targetId === targetId);
+}
+
 /**
  * Whether `condition` holds for `targetId`: for an earlier effect's
  * (#521), read from the events this resolution has emitted so far; for a
@@ -563,7 +620,7 @@ function conditionHolds(
 ): boolean {
   switch (condition.kind) {
     case "interrupted":
-      return earlier.some((event) => event.kind === "interrupted" && event.targetId === targetId);
+      return wasInterrupted(targetId, earlier);
     case "removed":
       return earlier.some(
         (event) =>
@@ -634,6 +691,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "remove-status":
     case "interrupt":
     case "knockdown":
+    case "resurrect":
     case "if":
       return false;
   }
@@ -658,9 +716,13 @@ export interface SkillResolution {
  * and grant `energy-gain` once per foe caught in a splash.
  *
  * An attack skill's blow, and whether it missed, is `resolveAttackSkill`'s
- * business; this applies its riders to whoever it hit.
+ * business; this applies its riders to whoever it hit. `earlier` is what
+ * the blow emitted, which the riders read as this resolution's (#817).
  */
-export function applySkillEffects(resolution: SkillResolution): CombatEvent[] {
+export function applySkillEffects(
+  resolution: SkillResolution,
+  earlier: readonly CombatEvent[] = [],
+): CombatEvent[] {
   const { skill, caster, targets, rng, rules } = resolution;
   const held = new Map(
     targets.map((target) => [target, statesBefore(skill.effects, caster, target)] as const),
@@ -670,7 +732,9 @@ export function applySkillEffects(resolution: SkillResolution): CombatEvent[] {
     const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
     for (const target of on) {
       const states = (target === undefined ? undefined : held.get(target)) ?? NONE_HELD;
-      events.push(...applyInOrder(effect, { caster, target, rng, rules }, events, states));
+      events.push(
+        ...applyInOrder(effect, { caster, target, rng, rules }, [...earlier, ...events], states),
+      );
     }
   }
   // Divine Favor (#529): once a cast, on the primary target only, after

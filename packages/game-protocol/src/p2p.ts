@@ -332,6 +332,11 @@ export interface WireCombatEvent {
   readonly crit: boolean | null;
   /** Whom a spreading status was caught from (#765); `null` for any other kind. */
   readonly fromId: string | null;
+  /**
+   * The share of maximum energy a resurrection gives back, 0..1 (#812),
+   * its health share riding in `amount`; `null` for any other kind.
+   */
+  readonly energy: number | null;
 }
 
 /** One cast, swing or status tick, and what it did. */
@@ -1020,7 +1025,8 @@ function parseCombatEvent(value: unknown): WireCombatEvent | undefined {
     isNullableString(raw.statusId) &&
     (raw.durationSeconds === null || isNumber(raw.durationSeconds)) &&
     (raw.crit === null || typeof raw.crit === "boolean") &&
-    isNullableString(raw.fromId)
+    isNullableString(raw.fromId) &&
+    (raw.energy === null || isNumber(raw.energy))
     ? {
         kind: raw.kind,
         targetId: raw.targetId,
@@ -1030,6 +1036,7 @@ function parseCombatEvent(value: unknown): WireCombatEvent | undefined {
         durationSeconds: raw.durationSeconds,
         crit: raw.crit,
         fromId: raw.fromId,
+        energy: raw.energy,
       }
     : undefined;
 }

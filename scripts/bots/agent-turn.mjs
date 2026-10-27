@@ -27,6 +27,10 @@
  * `$VIBEWARS_CONTEXT_FILE`, where `tg wait` reads it and tells an agent
  * past CONTEXT_CEILING to end its turn. A turn that ends past it forgets
  * the session, so the next one starts fresh from the kickoff prompt.
+ *
+ * How much of Claude's usage is left (#452): every `rate_limit_event`
+ * goes to `$VIBEWARS_LIMIT_FILE`, whitelisted and dated, for the
+ * dashboard's CLAUDE pane.
  */
 
 import { spawn } from "node:child_process";
@@ -43,6 +47,7 @@ import {
   formatLine,
   mcpServersOf,
   parseEvent,
+  rateLimitInfoOf,
   runFailed,
   sessionIdOf,
   usageLimitOf,
@@ -108,30 +113,41 @@ const FAILURE_LINES = 20;
 /** Past this many tokens of context, the next turn starts a new session (#321). */
 const CONTEXT_CEILING = 120_000;
 const CONTEXT_FILE = process.env.VIBEWARS_CONTEXT_FILE ?? "";
+/** Where the last `rate_limit_event` goes, for the dashboard (#452). */
+const LIMIT_FILE = process.env.VIBEWARS_LIMIT_FILE ?? "";
+
+/**
+ * Write `value` as JSON to `file`, unless `file` is unset.
+ *
+ * The file is in the agent's own bus directory, which its jail can write,
+ * and this runs on the host: jail-fs.mjs (#329). A write that fails costs
+ * what the file was for, never the turn.
+ *
+ * @param {string} file
+ * @param {unknown} value
+ * @returns {void}
+ */
+function saveBusFile(file, value) {
+  if (file === "") {
+    return;
+  }
+  try {
+    withJailDir(path.dirname(file), "", {}, (dir) => {
+      dir.writeAtomic(path.basename(file), `${JSON.stringify(value)}\n`);
+    });
+  } catch (error) {
+    console.error(
+      `agent-turn: could not write ${file}: ${error instanceof Error ? error.message : "?"}`,
+    );
+  }
+}
 
 /**
  * @param {number} tokens
  * @returns {void}
  */
 function saveContext(tokens) {
-  if (CONTEXT_FILE === "") {
-    return;
-  }
-  // The file is in the agent's own bus directory, which its jail can
-  // write, and this runs on the host: jail-fs.mjs (#329). A write that
-  // fails costs the agent its notice, never the turn.
-  try {
-    withJailDir(path.dirname(CONTEXT_FILE), "", {}, (dir) => {
-      dir.writeAtomic(
-        path.basename(CONTEXT_FILE),
-        `${JSON.stringify({ tokens, ceiling: CONTEXT_CEILING })}\n`,
-      );
-    });
-  } catch (error) {
-    console.error(
-      `agent-turn: could not write ${CONTEXT_FILE}: ${error instanceof Error ? error.message : "?"}`,
-    );
-  }
+  saveBusFile(CONTEXT_FILE, { tokens, ceiling: CONTEXT_CEILING });
 }
 
 /**
@@ -223,8 +239,10 @@ process.on("SIGINT", () => {
 });
 
 fs.mkdirSync(state, { recursive: true });
-if (CONTEXT_FILE !== "") {
-  fs.mkdirSync(path.dirname(CONTEXT_FILE), { recursive: true });
+for (const file of [CONTEXT_FILE, LIMIT_FILE]) {
+  if (file !== "") {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+  }
 }
 // So a file left from the last session never turns this one away.
 saveContext(0);
@@ -275,6 +293,10 @@ lines.on("line", (line) => {
     recent.shift();
   }
   const event = parseEvent(line);
+  const info = rateLimitInfoOf(event);
+  if (info !== null) {
+    saveBusFile(LIMIT_FILE, { at: Date.now(), ...info });
+  }
   const limit = usageLimitOf(event);
   if (limit !== null) {
     seen.limit = limit;

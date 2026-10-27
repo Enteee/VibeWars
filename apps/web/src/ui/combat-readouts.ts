@@ -20,6 +20,21 @@ export interface LogRow {
   readonly time: string;
   readonly text: string;
   readonly tone: LogTone;
+  /**
+   * Set only on a regeneration row the batcher writes, so a run of them
+   * for one target and source folds into one row (#590).
+   */
+  readonly fold?: LogFold;
+}
+
+export interface LogFold {
+  /** `${targetId}:${sourceId}`: rows fold only with the same key. */
+  readonly key: string;
+  readonly amount: number;
+  readonly startedAt: number;
+  readonly endedAt: number;
+  /** The text before " for ", e.g. "regeneration heals You". */
+  readonly label: string;
 }
 
 /** `m:ss.t`, the session clock as the log shows it. */
@@ -38,6 +53,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "sacrifice":
       return "damage";
     case "heal":
+    case "resurrected":
       return "heal";
     case "energy-gain":
     case "energy-loss":
@@ -60,6 +76,11 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "death":
       return "death";
   }
+}
+
+/** A share, 0..1, as a whole percentage: "25%". */
+function percent(fraction: number): string {
+  return `${String(Math.round(fraction * 100))}%`;
 }
 
 function skillName(skillId: string | undefined): string | undefined {
@@ -109,6 +130,8 @@ export function describeCombatEvent(
       return `${target} sacrifices ${formatAmount(event.amount)} health`;
     case "death":
       return `${target} dies`;
+    case "resurrected":
+      return `${by} resurrects ${target} (${percent(event.healthFraction)} health, ${percent(event.energyFraction)} energy)`;
     case "status-applied":
       return `${target} gains ${STATUS_DEFINITIONS[event.statusId].name} (${formatAmount(event.durationSeconds)} s)`;
     case "status-removed":
@@ -264,21 +287,35 @@ export class StatusTickBatcher {
       if (formatAmount(open.amount) === "0") {
         continue;
       }
+      const atSeconds = closedAt(open);
+      const row = combatEventToRow(
+        {
+          atSeconds,
+          cause: "degeneration",
+          sourceId: open.sourceId,
+          skillId: undefined,
+          weaponId: undefined,
+          attributeId: undefined,
+        },
+        open.kind === "damage"
+          ? { kind: open.kind, targetId: open.targetId, amount: open.amount, critical: false }
+          : { kind: open.kind, targetId: open.targetId, amount: open.amount },
+        nameOf,
+      );
+      // Degeneration stays tick by tick: a damage run is worth reading.
       rows.push(
-        combatEventToRow(
-          {
-            atSeconds: closedAt(open),
-            cause: "degeneration",
-            sourceId: open.sourceId,
-            skillId: undefined,
-            weaponId: undefined,
-            attributeId: undefined,
-          },
-          open.kind === "damage"
-            ? { kind: open.kind, targetId: open.targetId, amount: open.amount, critical: false }
-            : { kind: open.kind, targetId: open.targetId, amount: open.amount },
-          nameOf,
-        ),
+        open.kind === "heal"
+          ? {
+              ...row,
+              fold: {
+                key: `${open.targetId}:${open.sourceId ?? ""}`,
+                amount: open.amount,
+                startedAt: atSeconds,
+                endedAt: atSeconds,
+                label: row.text.slice(0, row.text.lastIndexOf(" for ")),
+              },
+            }
+          : row,
       );
     }
     return rows;
@@ -290,19 +327,53 @@ export function dividerRow(label: string, atSeconds: number): LogRow {
   return { time: formatSimClock(atSeconds), text: `── ${label} ──`, tone: "divider" };
 }
 
+/** A folded run's text: "regeneration heals You for 57 over 19 s". */
+export function foldedText(fold: LogFold): string {
+  const seconds = formatAmount(fold.endedAt - fold.startedAt);
+  return `${fold.label} for ${formatAmount(fold.amount)} over ${seconds} s`;
+}
+
 /**
  * The log after `incoming` arrives, keeping the newest `cap` rows.
- * `dropped` is how many came off the front, so the DOM can remove
- * exactly those instead of rebuilding.
+ * Consecutive rows with the same `fold.key` merge into one that keeps
+ * the first row's time (#590). `replacedLast` says the last existing
+ * row absorbed incoming ones, so the DOM rewrites it in place; `added`
+ * are the rows to paint after it. `dropped` is how many came off the
+ * front, so the DOM can remove exactly those instead of rebuilding.
  */
 export function appendRows(
   existing: readonly LogRow[],
   incoming: readonly LogRow[],
   cap: number,
-): { readonly rows: readonly LogRow[]; readonly dropped: number } {
-  const all = [...existing, ...incoming];
+): {
+  readonly rows: readonly LogRow[];
+  readonly dropped: number;
+  readonly replacedLast: boolean;
+  readonly added: readonly LogRow[];
+} {
+  const all = [...existing];
+  let replacedLast = false;
+  for (const row of incoming) {
+    const last = all.at(-1);
+    if (row.fold !== undefined && last?.fold?.key === row.fold.key) {
+      const fold: LogFold = {
+        ...last.fold,
+        amount: last.fold.amount + row.fold.amount,
+        endedAt: row.fold.endedAt,
+      };
+      all[all.length - 1] = { ...last, text: foldedText(fold), fold };
+      replacedLast ||= all.length === existing.length;
+      continue;
+    }
+    all.push(row);
+  }
   const dropped = Math.max(0, all.length - cap);
-  return { rows: all.slice(dropped), dropped };
+  return {
+    rows: all.slice(dropped),
+    dropped,
+    replacedLast,
+    added: all.slice(existing.length),
+  };
 }
 
 /**
