@@ -180,7 +180,9 @@ agent's only way out; the bot token stays outside it.
 
 Needs one manager-bot token in `devenv.local.nix`. Setup, the two taps
 each new role costs, and why it is built this way:
-[ADR-0014](docs/adr/0014-agent-coordination.md).
+[ADR-0014](docs/adr/0014-agent-coordination.md). What the host needs
+(cgroup delegation, user namespaces, the token file, tmux):
+[Host prerequisites](docs/development/agent-company-host.md).
 
 ## License
 

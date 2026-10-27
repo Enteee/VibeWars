@@ -21,6 +21,30 @@
  */
 
 /**
+ * The runs of one workflow file for exactly this commit, on a pull request,
+ * from this repository (#96): every one of them, finished or not. `judgingRuns`
+ * judges them; `hub watch` (#736) waits for them.
+ *
+ * @param {Record<string, unknown>[]} runs `workflow_runs` rows, as GitHub sends them
+ * @param {{ sha: string, repo: string, file: string }} target
+ * @returns {Record<string, unknown>[]}
+ */
+export function commitRuns(runs, target) {
+  const path = `.github/workflows/${target.file}`;
+  return runs.filter((run) => {
+    const repository = /** @type {{ full_name?: unknown } | null} */ (run.repository);
+    return (
+      run.head_sha === target.sha &&
+      run.event === "pull_request" &&
+      typeof run.path === "string" &&
+      (run.path === path || run.path.startsWith(`${path}@`)) &&
+      repository?.full_name === target.repo &&
+      typeof run.id === "number"
+    );
+  });
+}
+
+/**
  * The workflow runs that judged a commit, or why none can.
  *
  * Check runs and commit statuses are not evidence: any `GITHUB_TOKEN` with
@@ -41,18 +65,7 @@
  * @returns {{ ok: true, ids: number[] } | { ok: false, reason: string }}
  */
 export function judgingRuns(runs, target) {
-  const path = `.github/workflows/${target.file}`;
-  const mine = runs.filter((run) => {
-    const repository = /** @type {{ full_name?: unknown } | null} */ (run.repository);
-    return (
-      run.head_sha === target.sha &&
-      run.event === "pull_request" &&
-      typeof run.path === "string" &&
-      (run.path === path || run.path.startsWith(`${path}@`)) &&
-      repository?.full_name === target.repo &&
-      typeof run.id === "number"
-    );
-  });
+  const mine = commitRuns(runs, target);
   if (mine.length === 0) {
     return { ok: false, reason: `${target.file} has not run on this commit yet` };
   }

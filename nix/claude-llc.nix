@@ -54,8 +54,7 @@ let
   roles = [
     "manager"
     "architect"
-    "developer-1"
-    "developer-2"
+    "developer"
     "asset-designer"
     "cicd-engineer"
     "lead-dev"
@@ -359,7 +358,7 @@ let
           if [ "$attach" = 0 ]; then
             exit 0
           fi
-          exec ${tmux} attach-session -t "$SESSION"
+          exec ${node} ${llcScripts}/attach.mjs "$SESSION"
         fi
 
         # The reboot this waited for did not bring the company up. Never
@@ -375,7 +374,8 @@ let
         # Which roles to start. With one Telegram bot for the company
         # (docs/adr/0023-one-telegram-bot.md) hiring needs no setup, so every
         # role can start. Nine agents is a real cost, so CLAUDE_LLC_ROLES can
-        # name a subset, e.g. CLAUDE_LLC_ROLES="manager architect developer-1".
+        # name a subset, e.g. CLAUDE_LLC_ROLES="manager architect developer",
+        # which seeds the two developers developer and developer@2.
         # That subset only seeds .bots/staff.json on the first boot (#62);
         # from then on the company starts who staff.json employs, and the
         # manager hires and fires.
@@ -392,7 +392,8 @@ let
         done
         # shellcheck disable=SC2086 # one word per role
         ${node} ${llcScripts}/staff.mjs seed $seed || exit 1
-        ${node} ${llcScripts}/staff.mjs check || exit 1
+        # shellcheck disable=SC2086 # one word per role
+        ${node} ${llcScripts}/staff.mjs check $seed || exit 1
         # Who staff.json employs and is not firing, roles in roster order.
         ready=""
         for role in ${lib.concatStringsSep " " roles}; do
@@ -467,6 +468,9 @@ let
         # Which build this company runs, for `claude-llc status` and an
         # attach from a newer checkout (#557).
         ${tmux} set-environment -t "$SESSION" VIBEWARS_LLC_BUILD ${llcScripts}
+        # A tmux server that was already running, byobu's say, gives new
+        # windows its own environment, not ours: claude-llc-agent needs this.
+        ${tmux} set-environment -t "$SESSION" DEVENV_ROOT "$DEVENV_ROOT"
         board_pane="$(${tmux} display-message -p -t "$SESSION:dashboard" '#{pane_id}')"
         feed_pane="$(${tmux} split-window -v -l 30% -t "$board_pane" -P -F '#{pane_id}' \
           -c "$DEVENV_ROOT" "${node} ${llcScripts}/dashboard.mjs feed")"
@@ -522,7 +526,9 @@ let
           exit 0
         fi
 
-        exec ${tmux} attach-session -t "$SESSION"
+        # Inside tmux or byobu this switches to the session; with no
+        # terminal it says how to attach (scripts/bots/attach.mjs).
+        exec ${node} ${llcScripts}/attach.mjs "$SESSION"
   '';
 in
 {

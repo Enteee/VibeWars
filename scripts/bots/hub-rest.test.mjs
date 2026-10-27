@@ -70,7 +70,7 @@ describe("planView", () => {
     for (const argv of [
       ["pr", "view", "25", "--json", "reviewDecision"], // no REST equivalent
       ["pr", "view", "25", "--json", "statusCheckRollup"],
-      ["pr", "view", "bot/developer-1/issue-1"], // a branch, not a number
+      ["pr", "view", "bot/developer/issue-1"], // a branch, not a number
       ["issue", "view", "https://github.com/o/r/issues/1"],
       ["issue", "view", "1", "--web"],
       ["issue", "view", "1", "--template", "{{.title}}"],
@@ -256,7 +256,7 @@ describe("golden: real REST answers against what gh said for the same items", ()
     ).toEqual({
       state: "MERGED",
       headRefOid: "b02a5cc7c46c2eef027087626112d130e0e48e20",
-      headRefName: "bot/developer-1/issue-1",
+      headRefName: "bot/developer/issue-1",
       baseRefName: "main",
       isDraft: false,
       mergedAt: "2026-10-24T14:47:26Z",
@@ -279,8 +279,8 @@ describe("runsFromRest and jobsFromRest", () => {
       }),
     ).toEqual({
       jobs: [
-        { name: "ci", status: "completed", conclusion: "success" },
-        { name: "e2e", status: "in_progress", conclusion: null },
+        { id: 9, name: "ci", status: "completed", conclusion: "success" },
+        { id: null, name: "e2e", status: "in_progress", conclusion: null },
       ],
     });
   });

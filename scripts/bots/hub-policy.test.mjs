@@ -40,8 +40,9 @@ const push = (role, argv, employee = role) => authorize(role, { kind: "push", ar
 const review = (role, argv) => authorize(role, { kind: "review", argv });
 
 describe("the roster", () => {
-  it("is the nine employees, and nothing else is a role", () => {
-    expect(ROLES).toHaveLength(9);
+  it("is the eight roles, and nothing else is a role", () => {
+    expect(ROLES).toHaveLength(8);
+    expect(gh("developer-1", ["issue", "list"])).toMatchObject({ allow: false });
     expect(gh("intern", ["issue", "list"])).toMatchObject({ allow: false });
     expect(gh("", ["issue", "list"])).toMatchObject({ allow: false });
   });
@@ -73,7 +74,7 @@ describe("merging", () => {
   });
 
   it("cannot be reached by a developer dressing it up with flags", () => {
-    expect(gh("developer-1", ["pr", "merge", "22", "--admin", "--squash"])).toMatchObject({
+    expect(gh("developer", ["pr", "merge", "22", "--admin", "--squash"])).toMatchObject({
       allow: false,
     });
   });
@@ -81,7 +82,7 @@ describe("merging", () => {
   it("names exactly one pull request, by number, so the guard and gh agree on it", () => {
     for (const argv of [
       ["pr", "merge", "https://github.com/Enteee/VibeWars/pull/22"],
-      ["pr", "merge", "bot/developer-1/issue-1"],
+      ["pr", "merge", "bot/developer/issue-1"],
       ["pr", "merge", "22", "23"],
       ["pr", "merge"],
     ]) {
@@ -135,7 +136,7 @@ describe("reading host files through gh", () => {
       ["pr", "create", "-dT", "x"],
       ["pr", "comment", "5", "-wF", "x"],
     ]) {
-      expect(gh("developer-1", argv), argv.join(" ")).toMatchObject({ allow: false });
+      expect(gh("developer", argv), argv.join(" ")).toMatchObject({ allow: false });
     }
     expect(gh("manager", ["issue", "create", "--body-file", "x"])).toMatchObject({ allow: false });
     expect(gh("cicd-engineer", ["release", "create", "v1", "--notes-file", "x"])).toMatchObject({
@@ -178,7 +179,7 @@ describe("reading host files through gh", () => {
   });
 
   it("still allows --body, which is what hub turns --body-file into", () => {
-    expect(gh("developer-1", ["issue", "comment", "1", "--body", "hello"])).toMatchObject({
+    expect(gh("developer", ["issue", "comment", "1", "--body", "hello"])).toMatchObject({
       allow: true,
     });
   });
@@ -196,7 +197,7 @@ describe("retargeting and parser tricks", () => {
       ["project", "item-list", "2", "--owner=someone-else"],
       ["issue", "comment", "1", "--", "--body-file", "x"],
     ]) {
-      expect(gh("developer-1", argv), argv.join(" ")).toMatchObject({ allow: false });
+      expect(gh("developer", argv), argv.join(" ")).toMatchObject({ allow: false });
     }
   });
 
@@ -268,7 +269,7 @@ describe("review verdicts", () => {
   });
 
   it("cannot be recorded by the author roles", () => {
-    expect(review("developer-1", ["approve", "22", "--sha", SHA])).toMatchObject({ allow: false });
+    expect(review("developer", ["approve", "22", "--sha", SHA])).toMatchObject({ allow: false });
     expect(review("manager", ["approve", "22", "--sha", SHA])).toMatchObject({ allow: false });
   });
 
@@ -287,13 +288,13 @@ describe("review verdicts", () => {
 
 describe("pushing", () => {
   it("lets an implementer push its own namespace", () => {
-    expect(push("developer-1", ["bot/developer-1/issue-14"])).toMatchObject({ allow: true });
+    expect(push("developer", ["bot/developer/issue-14"])).toMatchObject({ allow: true });
     expect(push("asset-designer", ["bot/asset-designer/sprites"])).toMatchObject({ allow: true });
   });
 
   it("keeps every role but cicd-engineer out of workflows and actions (#116)", () => {
     const guard = "paths-outside:.github/workflows/,.github/actions/";
-    for (const role of ["developer-1", "developer-2", "asset-designer", "perf-sec-qa"]) {
+    for (const role of ["developer", "asset-designer", "perf-sec-qa"]) {
       expect(push(role, [`bot/${role}/x`]), role).toEqual({ allow: true, guards: [guard] });
     }
     expect(push("cicd-engineer", ["bot/cicd-engineer/x"])).toEqual({ allow: true });
@@ -303,38 +304,38 @@ describe("pushing", () => {
     for (const role of ROLES) {
       expect(push(role, ["main"]), role).toMatchObject({ allow: false });
     }
-    expect(push("developer-1", ["refs/heads/main"])).toMatchObject({ allow: false });
-    expect(push("developer-1", ["HEAD"])).toMatchObject({ allow: false });
+    expect(push("developer", ["refs/heads/main"])).toMatchObject({ allow: false });
+    expect(push("developer", ["HEAD"])).toMatchObject({ allow: false });
   });
 
   it("refuses another role's namespace", () => {
-    expect(push("developer-1", ["bot/developer-2/issue-14"])).toMatchObject({ allow: false });
-    expect(push("developer-1", ["bot/architect/whatever"])).toMatchObject({ allow: false });
+    expect(push("developer", ["bot/asset-designer/issue-14"])).toMatchObject({ allow: false });
+    expect(push("developer", ["bot/architect/whatever"])).toMatchObject({ allow: false });
   });
 
   it("puts each employee under its own prefix, not its role's (#62)", () => {
-    expect(push("developer-1", ["bot/developer-1@2/x"], "developer-1@2")).toMatchObject({
+    expect(push("developer", ["bot/developer@2/x"], "developer@2")).toMatchObject({
       allow: true,
     });
-    expect(push("developer-1", ["bot/developer-1/x"], "developer-1@2")).toStrictEqual({
+    expect(push("developer", ["bot/developer/x"], "developer@2")).toStrictEqual({
       allow: false,
-      reason: "developer-1@2 may only push branches under bot/developer-1@2/",
+      reason: "developer@2 may only push branches under bot/developer@2/",
     });
     // The bare seat's prefix is a prefix of nothing else's: the slash ends it.
-    expect(push("developer-1", ["bot/developer-1@2/x"])).toMatchObject({ allow: false });
+    expect(push("developer", ["bot/developer@2/x"])).toMatchObject({ allow: false });
   });
 
   it("refuses a push that does not say who is pushing", () => {
-    expect(authorize("developer-1", { kind: "push", argv: ["bot/developer-1/x"] })).toStrictEqual({
+    expect(authorize("developer", { kind: "push", argv: ["bot/developer/x"] })).toStrictEqual({
       allow: false,
       reason: "a push needs the pusher's employee id",
     });
   });
 
   it("refuses a refspec, which would sidestep the branch check entirely", () => {
-    // `git push origin bot/developer-1/x:main` ends up on main while passing
+    // `git push origin bot/developer/x:main` ends up on main while passing
     // a naive prefix test.
-    expect(push("developer-1", ["bot/developer-1/x:main"])).toMatchObject({ allow: false });
+    expect(push("developer", ["bot/developer/x:main"])).toMatchObject({ allow: false });
   });
 
   it("refuses force, delete, mirror and prune", () => {
@@ -347,7 +348,7 @@ describe("pushing", () => {
       "--mirror",
       "--prune",
     ]) {
-      expect(push("developer-1", ["bot/developer-1/x", flag]), flag).toMatchObject({
+      expect(push("developer", ["bot/developer/x", flag]), flag).toMatchObject({
         allow: false,
       });
     }
@@ -369,7 +370,7 @@ describe("pushing", () => {
         "paths-outside:.github/workflows/,.github/actions/",
       ],
     });
-    expect(push("manager", ["bot/developer-1/x"])).toMatchObject({ allow: false });
+    expect(push("manager", ["bot/developer/x"])).toMatchObject({ allow: false });
     expect(push("manager", ["main"])).toMatchObject({ allow: false });
     expect(push("manager", ["bot/manager/x", "--force"])).toMatchObject({ allow: false });
   });
@@ -383,7 +384,7 @@ describe("pushing", () => {
     expect(create(["--head=bot/manager/skill-x"]).allow).toBe(true);
     expect(create(["-Hbot/manager/skill-x"]).allow).toBe(true);
     expect(create(["-H=bot/manager/skill-x", "-t", "t", "-d", "-l", "skills"]).allow).toBe(true);
-    expect(create(["--head", "bot/developer-1/x"])).toMatchObject({ allow: false });
+    expect(create(["--head", "bot/developer/x"])).toMatchObject({ allow: false });
     expect(create(["--title", "no head"])).toMatchObject({ allow: false });
   });
 
@@ -391,14 +392,14 @@ describe("pushing", () => {
     const create = (/** @type {string[]} */ rest) =>
       authorize("manager", { kind: "gh", argv: ["pr", "create", ...rest] }).allow;
     // gh takes the last of several, so any second --head is refused.
-    expect(create(["--head", "bot/manager/x", "--head", "bot/developer-1/x"])).toBe(false);
+    expect(create(["--head", "bot/manager/x", "--head", "bot/developer/x"])).toBe(false);
     expect(create(["--head", "bot/manager/x", "-H", "bot/manager/y"])).toBe(false);
-    expect(create(["-Hbot/manager/x", "--head=bot/developer-1/x"])).toBe(false);
+    expect(create(["-Hbot/manager/x", "--head=bot/developer/x"])).toBe(false);
     // A value is consumed whatever it looks like: this title names no head.
     expect(create(["--title", "--head=bot/manager/x"])).toBe(false);
-    expect(create(["--title", "--head=bot/manager/x", "-dH", "bot/developer-1/x"])).toBe(false);
+    expect(create(["--title", "--head=bot/manager/x", "-dH", "bot/developer/x"])).toBe(false);
     // Clusters, unknown flags, positionals and a missing value are refused.
-    expect(create(["--head", "bot/manager/x", "-dH", "bot/developer-1/x"])).toBe(false);
+    expect(create(["--head", "bot/manager/x", "-dH", "bot/developer/x"])).toBe(false);
     expect(create(["--head", "bot/manager/x", "--repo", "evil/repo"])).toBe(false);
     expect(create(["--head", "bot/manager/x", "stray"])).toBe(false);
     expect(create(["--head", "bot/manager/x", "--", "-H", "x"])).toBe(false);
@@ -406,7 +407,7 @@ describe("pushing", () => {
     expect(create(["--head", "bot/manager/x", "--draft=false"])).toBe(false);
     // Developers are not scoped, as before.
     expect(
-      authorize("developer-1", { kind: "gh", argv: ["pr", "create", "--title", "t"] }).allow,
+      authorize("developer", { kind: "gh", argv: ["pr", "create", "--title", "t"] }).allow,
     ).toBe(true);
   });
 
@@ -416,8 +417,8 @@ describe("pushing", () => {
   });
 
   it("refuses an empty branch", () => {
-    expect(push("developer-1", [])).toMatchObject({ allow: false });
-    expect(push("developer-1", [""])).toMatchObject({ allow: false });
+    expect(push("developer", [])).toMatchObject({ allow: false });
+    expect(push("developer", [""])).toMatchObject({ allow: false });
   });
 });
 
@@ -504,8 +505,8 @@ describe("reading", () => {
 
   it("does not leak write access through a longer read prefix", () => {
     // `pr view` is open to all; `pr merge` must not inherit that.
-    expect(gh("developer-1", ["pr", "view", "22"])).toMatchObject({ allow: true });
-    expect(gh("developer-1", ["pr", "merge", "22"])).toMatchObject({ allow: false });
+    expect(gh("developer", ["pr", "view", "22"])).toMatchObject({ allow: true });
+    expect(gh("developer", ["pr", "merge", "22"])).toMatchObject({ allow: false });
   });
 });
 
@@ -513,7 +514,7 @@ describe("the board", () => {
   it("is restructured only by the manager", () => {
     expect(gh("manager", ["project", "field-create", "2"])).toMatchObject({ allow: true });
     expect(gh("manager", ["project", "item-add", "2"])).toMatchObject({ allow: true });
-    expect(gh("developer-1", ["project", "item-add", "2"])).toMatchObject({ allow: false });
+    expect(gh("developer", ["project", "item-add", "2"])).toMatchObject({ allow: false });
     expect(gh("architect", ["project", "field-create", "2"])).toMatchObject({ allow: false });
   });
 
@@ -521,7 +522,7 @@ describe("the board", () => {
     // Each hand-off is a column change, so this has to be broader than the
     // rest of the board permissions.
     for (const role of [
-      "developer-1",
+      "developer",
       "lead-dev",
       "perf-sec-qa",
       "qa-tester",
@@ -552,8 +553,8 @@ describe("the pipeline", () => {
     ]) {
       expect(gh("cicd-engineer", argv), argv.join(" ")).toMatchObject({ allow: false });
     }
-    expect(gh("developer-1", ["workflow", "disable", "ci.yml"])).toMatchObject({ allow: false });
-    expect(gh("developer-1", ["run", "rerun", "123"])).toMatchObject({ allow: false });
+    expect(gh("developer", ["workflow", "disable", "ci.yml"])).toMatchObject({ allow: false });
+    expect(gh("developer", ["run", "rerun", "123"])).toMatchObject({ allow: false });
     expect(gh("qa-tester", ["workflow", "disable", "ci.yml"])).toMatchObject({ allow: false });
   });
 
@@ -570,7 +571,7 @@ describe("the pipeline", () => {
     });
     expect(gh("cicd-engineer", ["issue", "edit", "170"])).toMatchObject({ allow: false });
     expect(gh("cicd-engineer", ["issue", "close", "170"])).toMatchObject({ allow: false });
-    expect(gh("developer-1", ["issue", "create", "--title", "x"])).toMatchObject({ allow: false });
+    expect(gh("developer", ["issue", "create", "--title", "x"])).toMatchObject({ allow: false });
   });
 });
 
@@ -639,11 +640,11 @@ describe("borrowed hats", () => {
   it("changes nothing for a role that has been given no hats", () => {
     // hubd looks `acting` up by role in company.json, so a role with no entry
     // is called with an empty list and must be unaffected. Handing
-    // developer-1 lead-dev's hats WOULD let it merge — that is the whole
+    // developer lead-dev's hats WOULD let it merge — that is the whole
     // mechanism, and it is exactly why the list comes from configuration on
     // the host and never from the request.
     expect(
-      authorize("developer-1", { kind: "gh", argv: ["pr", "merge", "22"] }, { acting: [] }),
+      authorize("developer", { kind: "gh", argv: ["pr", "merge", "22"] }, { acting: [] }),
     ).toMatchObject({ allow: false });
     expect(authorize("lead-dev", { kind: "gh", argv: ["pr", "merge", "22"] })).toMatchObject({
       allow: false,
@@ -654,11 +655,7 @@ describe("borrowed hats", () => {
     // `acting` comes from company.json via hubd, never from the agent. This
     // asserts the shape that matters: an unknown hat grants nothing.
     expect(
-      authorize(
-        "developer-1",
-        { kind: "gh", argv: ["pr", "merge", "22"] },
-        { acting: ["nonsense"] },
-      ),
+      authorize("developer", { kind: "gh", argv: ["pr", "merge", "22"] }, { acting: ["nonsense"] }),
     ).toMatchObject({ allow: false });
   });
 });
@@ -820,7 +817,7 @@ describe("board reads", () => {
         );
       }
     }
-    expect(authorize("developer-1", { kind: "board", argv: ["move", "14", "Done"] }).allow).toBe(
+    expect(authorize("developer", { kind: "board", argv: ["move", "14", "Done"] }).allow).toBe(
       false,
     );
   });
@@ -836,6 +833,12 @@ describe("board reads", () => {
   it("lets every role read code-scanning alerts (#184)", () => {
     for (const role of ROLES) {
       expect(authorize(role, { kind: "alerts", argv: ["--pr", "183"] }).allow, role).toBe(true);
+    }
+  });
+
+  it("lets every role watch CI on a pull request (#736)", () => {
+    for (const role of ROLES) {
+      expect(authorize(role, { kind: "watch", argv: ["ci", "736"] }).allow, role).toBe(true);
     }
   });
 
@@ -860,7 +863,7 @@ describe("hub schedule (#678)", () => {
   });
 
   it("is refused to every other role, and no hat lends it", () => {
-    for (const role of ["developer-1", "developer-2", "qa-tester", "cicd-engineer"]) {
+    for (const role of ["developer", "qa-tester", "cicd-engineer"]) {
       expect(schedule(role), role).toMatchObject({
         allow: false,
         reason: "schedule: only manager, architect and lead-dev keep schedules",

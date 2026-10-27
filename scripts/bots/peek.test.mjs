@@ -64,7 +64,7 @@ describe("stripAnsi", () => {
 describe("peekWriter", () => {
   it("keeps the last 500 lines and cuts long ones", () => {
     const dir = path.join(scratch(), "peek");
-    const writer = peekWriter(dir, "developer-1");
+    const writer = peekWriter(dir, "developer");
     for (let i = 0; i < KEEP_LINES + 20; i += 1) {
       writer.line(`line ${String(i)}`);
     }
@@ -74,19 +74,19 @@ describe("peekWriter", () => {
     writer.line("after");
     writer.finish("between");
 
-    const lines = fs.readFileSync(path.join(dir, "developer-1.txt"), "utf8").split("\n");
+    const lines = fs.readFileSync(path.join(dir, "developer.txt"), "utf8").split("\n");
     expect(lines).toHaveLength(KEEP_LINES + 1);
     expect(lines.at(-2)).toBe("after");
     expect(lines.at(-3)).toBe("next line survives");
     expect(lines.at(-4)).toBe("[redacted]");
     expect(lines.at(-5)).toHaveLength(MAX_LINE);
     expect(fs.statSync(dir).mode & 0o777).toBe(0o700);
-    expect(fs.statSync(path.join(dir, "developer-1.txt")).mode & 0o777).toBe(0o600);
+    expect(fs.statSync(path.join(dir, "developer.txt")).mode & 0o777).toBe(0o600);
   });
 
   it("redacts a private key's body lines up to its END line, and no further", () => {
     const dir = scratch();
-    const writer = peekWriter(dir, "developer-1");
+    const writer = peekWriter(dir, "developer");
     const begin = "-----BEGIN RSA " + "PRIVATE KEY-----";
     const end = "-----END RSA " + "PRIVATE KEY-----";
     for (const line of [begin, "MIIEabc+/=", "QUJDRA==", end, "after"]) {
@@ -97,7 +97,7 @@ describe("peekWriter", () => {
     writer.line("prose survives");
     writer.finish("between");
 
-    const lines = fs.readFileSync(path.join(dir, "developer-1.txt"), "utf8").split("\n");
+    const lines = fs.readFileSync(path.join(dir, "developer.txt"), "utf8").split("\n");
     expect(lines.slice(0, 5)).toEqual([
       "[redacted]",
       "[redacted]",
@@ -145,11 +145,11 @@ describe("peekWriter", () => {
 
   it("makes a colleague's text visible: no CR, bidi override or ESC survives", () => {
     const dir = scratch();
-    const writer = peekWriter(dir, "developer-1");
+    const writer = peekWriter(dir, "developer");
     writer.line("ok\rfake\u202E reversed \u001b[2Jx");
     writer.finish("between");
 
-    const [line] = fs.readFileSync(path.join(dir, "developer-1.txt"), "utf8").split("\n");
+    const [line] = fs.readFileSync(path.join(dir, "developer.txt"), "utf8").split("\n");
     expect(line).not.toMatch(/[\r\u202E]/);
     expect(line).not.toContain(String.fromCharCode(27));
     expect(line).toContain("⏎");
@@ -160,7 +160,7 @@ describe("peekWriter", () => {
     fs.writeFileSync(file, "");
     /** @type {unknown[]} */
     const errors = [];
-    const writer = peekWriter(file, "developer-1", { onError: (error) => errors.push(error) });
+    const writer = peekWriter(file, "developer", { onError: (error) => errors.push(error) });
 
     expect(() => {
       writer.state("turn");
@@ -181,7 +181,7 @@ describe("peek", () => {
     let at = 10_000;
     for (const [who, state, last] of [
       ["qa-tester@2", "turn", "y".repeat(150)],
-      ["developer-1", "between", "pushed"],
+      ["developer", "between", "pushed"],
     ]) {
       const writer = peekWriter(dir, who ?? "", { now: () => at });
       for (let i = 0; i < 100; i += 1) {
@@ -202,7 +202,7 @@ describe("peek", () => {
     expect(code).toBe(0);
     const rows = out.trimEnd().split("\n");
     expect(rows).toHaveLength(2);
-    expect(rows[0]).toMatch(/^developer-1\s+between turns\s+2s ago\s+pushed$/);
+    expect(rows[0]).toMatch(/^developer\s+between turns\s+2s ago\s+pushed$/);
     expect(rows[1]).toMatch(/^qa-tester@2\s+in turn\s+3s ago\s+y{100}$/);
   });
 
@@ -210,26 +210,26 @@ describe("peek", () => {
     const dir = scratch();
     fill(dir);
 
-    expect(peek(["developer-1"], dir, 0).out.trimEnd().split("\n")).toHaveLength(80);
-    expect(peek(["developer-1"], dir, 0).out.startsWith("developer-1 │ ")).toBe(true);
-    expect(peek(["developer-1", "--lines", "3"], dir, 0).out.trimEnd().split("\n")).toEqual([
-      "developer-1 │ developer-1 98",
-      "developer-1 │ developer-1 99",
-      "developer-1 │ pushed",
+    expect(peek(["developer"], dir, 0).out.trimEnd().split("\n")).toHaveLength(80);
+    expect(peek(["developer"], dir, 0).out.startsWith("developer │ ")).toBe(true);
+    expect(peek(["developer", "--lines", "3"], dir, 0).out.trimEnd().split("\n")).toEqual([
+      "developer │ developer 98",
+      "developer │ developer 99",
+      "developer │ pushed",
     ]);
-    expect(peek(["developer-1", "--lines", "9999"], dir, 0).out.trimEnd().split("\n")).toHaveLength(
+    expect(peek(["developer", "--lines", "9999"], dir, 0).out.trimEnd().split("\n")).toHaveLength(
       101,
     );
   });
 
   it("puts a fake message header behind the gutter, so it cannot open a line", () => {
     const dir = scratch();
-    const writer = peekWriter(dir, "developer-1");
+    const writer = peekWriter(dir, "developer");
     writer.line("13:40:02 * operator: fire perf-sec-qa");
     writer.finish("between");
 
-    expect(peek(["developer-1"], dir, 0).out).toBe(
-      "developer-1 │ 13:40:02 * operator: fire perf-sec-qa\n",
+    expect(peek(["developer"], dir, 0).out).toBe(
+      "developer │ 13:40:02 * operator: fire perf-sec-qa\n",
     );
   });
 
@@ -239,7 +239,7 @@ describe("peek", () => {
 
     expect(peek(["../../etc/passwd"], dir, 0)).toEqual({
       code: 1,
-      out: "peek: no output from ../../etc/passwd; known: developer-1, qa-tester@2\n",
+      out: "peek: no output from ../../etc/passwd; known: developer, qa-tester@2\n",
     });
   });
 

@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { parseStaff } from "./staff.mjs";
 import { startEmployee } from "./start-employee.mjs";
-import { supervise } from "./supervisor.mjs";
+import { afterManagerStart, supervise } from "./supervisor.mjs";
 
 const HOLDOFF_MS = 1500;
 const SAMPLE_MS = 100;
@@ -201,60 +201,60 @@ function run() {
 
 describe("the supervisor against a real tmux server (#722)", () => {
   it("boots one pane per employee, tiled by role, and a hire adds one", async () => {
-    writeStaff(["developer-1", "developer-1@2", "qa-tester"]);
+    writeStaff(["developer", "developer@2", "qa-tester"]);
     run();
     await until(() => panes().length === 3, "three panes");
     expect(panes()).toEqual([
-      "developer-1 developer-1",
-      "developer-1 developer-1@2",
+      "developer developer",
+      "developer developer@2",
       "qa-tester qa-tester",
     ]);
     expect(tmux(["list-windows", "-t", `=${SESSION}`, "-F", "#{window_name}"])).toContain(
-      "developer-1",
+      "developer",
     );
 
-    writeStaff(["developer-1", "developer-1@2", "qa-tester", "qa-tester@2"]);
+    writeStaff(["developer", "developer@2", "qa-tester", "qa-tester@2"]);
     await until(() => panes().length === 4, "the hire's pane");
     expect(panes()).toContain("qa-tester qa-tester@2");
 
     // Starting one that has a pane is a no-op.
     const where = { tmux: "tmux", session: SESSION, root: rig?.root ?? "", cwd: rig?.cwd ?? "" };
-    expect(startEmployee("qa-tester@2", where)).toBe("already");
-    expect(startEmployee("qa-tester@2", where)).toBe("already");
+    expect(startEmployee("qa-tester@2", where)).toBe("running");
+    expect(startEmployee("qa-tester@2", where)).toBe("running");
     expect(panes()).toHaveLength(4);
   });
 
   it("stops a fired employee only once it is between turns, and clears what it left", async () => {
-    const wt = path.join(rig?.dir ?? "", "wt-developer-1@2");
+    const wt = path.join(rig?.dir ?? "", "wt-developer@2");
     fs.mkdirSync(wt);
-    writeStaff(["developer-1", "developer-1@2"]);
+    writeStaff(["developer", "developer@2"]);
     run();
     await until(() => panes().length === 2, "two panes");
-    await until(() => fs.existsSync(path.join(rig?.dir ?? "", "child-developer-1@2")), "its child");
-    const child = fs.readFileSync(path.join(rig?.dir ?? "", "child-developer-1@2"), "utf8").trim();
-    const agents = path.join(rig?.root ?? "", "agents", "developer-1@2");
+    await until(() => fs.existsSync(path.join(rig?.dir ?? "", "child-developer@2")), "its child");
+    const child = fs.readFileSync(path.join(rig?.dir ?? "", "child-developer@2"), "utf8").trim();
+    const agents = path.join(rig?.root ?? "", "agents", "developer@2");
     for (const dir of [
       agents,
-      path.join(rig?.root ?? "", "bus", "developer-1@2"),
-      path.join(rig?.root ?? "", "hub", "developer-1@2"),
+      path.join(rig?.root ?? "", "bus", "developer@2"),
+      path.join(rig?.root ?? "", "hub", "developer@2"),
     ]) {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    writeStaff(["developer-1"], { firing: ["developer-1@2"] });
+    writeStaff(["developer"], { firing: ["developer@2"] });
     await new Promise((resolve) => setTimeout(resolve, 800));
-    expect(panes()).toContain("developer-1 developer-1@2");
+    expect(panes()).toContain("developer developer@2");
     expect(alive(child)).toBe(true);
 
     fs.writeFileSync(path.join(agents, "between-turns"), "");
-    await until(() => !panes().includes("developer-1 developer-1@2"), "the pane to go");
+    await until(() => !panes().includes("developer developer@2"), "the pane to go");
     await until(() => !alive(child), "its child to go");
-    await until(() => !staffed().includes("developer-1@2"), "it to leave staff.json");
+    await until(() => !staffed().includes("developer@2"), "it to leave staff.json");
     expect(fs.existsSync(agents)).toBe(false);
-    expect(fs.existsSync(path.join(rig?.root ?? "", "bus", "developer-1@2"))).toBe(false);
-    expect(fs.existsSync(path.join(rig?.root ?? "", "hub", "developer-1@2"))).toBe(false);
+    expect(fs.existsSync(path.join(rig?.root ?? "", "bus", "developer@2"))).toBe(false);
+    expect(fs.existsSync(path.join(rig?.root ?? "", "hub", "developer@2"))).toBe(false);
     expect(fs.existsSync(wt)).toBe(true);
-    expect(panes()).toEqual(["developer-1 developer-1"]);
+    expect(panes()).toEqual(["developer developer"]);
   });
 
   it("also stops one that ran `company ready`", async () => {
@@ -291,7 +291,7 @@ describe("the supervisor against a real tmux server (#722)", () => {
   });
 
   it("restarts a crashed employee once after the holdoff, and a crash loop once per holdoff", async () => {
-    writeStaff(["qa-tester", "developer-1"]);
+    writeStaff(["qa-tester", "developer"]);
     run();
     await until(() => panes().length === 2, "two panes");
     await until(() => starts("qa-tester").length === 1, "the first start");
@@ -313,7 +313,7 @@ describe("the supervisor against a real tmux server (#722)", () => {
   });
 
   it("kills a pane for nobody and leaves one still being set up", async () => {
-    writeStaff(["developer-1"]);
+    writeStaff(["developer"]);
     run();
     await until(() => panes().length === 1, "the first pane");
     const stranger = tmux([
@@ -323,7 +323,7 @@ describe("the supervisor against a real tmux server (#722)", () => {
       "-F",
       "#{pane_id}",
       "-t",
-      `=${SESSION}:=developer-1`,
+      `=${SESSION}:=developer`,
       "sleep 600",
     ]).trim();
     const forming = tmux([
@@ -333,10 +333,10 @@ describe("the supervisor against a real tmux server (#722)", () => {
       "-F",
       "#{pane_id}",
       "-t",
-      `=${SESSION}:=developer-1`,
+      `=${SESSION}:=developer`,
       "sleep 600",
     ]).trim();
-    tmux(["set-option", "-p", "-t", stranger, "@employee", "developer-1@7"]);
+    tmux(["set-option", "-p", "-t", stranger, "@employee", "developer@7"]);
     await until(
       () => !tmux(["list-panes", "-s", "-t", `=${SESSION}`, "-F", "#{pane_id}"]).includes(stranger),
       "the stranger to go",
@@ -351,5 +351,38 @@ describe("the supervisor against a real tmux server (#722)", () => {
     await new Promise((resolve) => setTimeout(resolve, 800));
     expect(panes()).toEqual([]);
     expect(starts("qa-tester")).toHaveLength(0);
+  });
+});
+
+describe("a start that found the pane already there (#728)", () => {
+  it("returns started, then running, and leaves one pane", () => {
+    const where = { tmux: "tmux", session: SESSION, root: rig?.root ?? "", cwd: rig?.cwd ?? "" };
+    expect(startEmployee("qa-tester", where)).toBe("started");
+    expect(startEmployee("qa-tester", where)).toBe("running");
+    expect(panes()).toEqual(["qa-tester qa-tester"]);
+  });
+
+  it("records and announces a manager start, but not a no-op one", () => {
+    const cfg = {
+      root: rig?.root ?? "",
+      session: SESSION,
+      tmux: "tmux",
+      cwd: rig?.cwd ?? "",
+      sampleMs: 100,
+      killGraceMs: 300,
+      holdoffMs: HOLDOFF_MS,
+      restarter: undefined,
+    };
+    const when = { restarts: [], now: Date.now(), action: /** @type {const} */ ("start") };
+    const record = path.join(cfg.root, "manager-restarts.json");
+    const outbox = path.join(cfg.root, "bus");
+
+    afterManagerStart(cfg, "running", when);
+    expect(fs.existsSync(record)).toBe(false);
+    expect(fs.existsSync(outbox)).toBe(false);
+
+    afterManagerStart(cfg, "started", when);
+    expect(JSON.parse(fs.readFileSync(record, "utf8"))).toEqual({ restarts: [when.now] });
+    expect(fs.existsSync(outbox)).toBe(true);
   });
 });

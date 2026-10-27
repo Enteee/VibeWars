@@ -39,7 +39,7 @@ function briefing(command, text) {
 
 describe("parseBriefing", () => {
   it("without frontmatter: no model, and the body is the whole text", () => {
-    const text = "# Role: developer-1\n\nYou are developer 1.\n";
+    const text = "# Role: developer\n\nYou are a developer.\n";
     expect(parseBriefing(text)).toEqual({ model: undefined, body: text });
   });
 
@@ -72,7 +72,7 @@ describe("briefing.mjs", () => {
 
   it("prints claude-opus-5-5 for a briefing that names none", () => {
     expect(DEFAULT_MODEL).toBe("claude-opus-5-5");
-    expect(briefing("model", "# Role: developer-1\n").stdout).toBe("claude-opus-5-5\n");
+    expect(briefing("model", "# Role: developer\n").stdout).toBe("claude-opus-5-5\n");
   });
 
   it.each(["claude-opus-5-5[1m]", "gpt-4", ""])("refuses %j with exit 2", (model) => {
@@ -98,7 +98,7 @@ describe("the briefings in .claude/bots (#735)", () => {
 
   it("include every role and the protocol", () => {
     expect(briefs).toContain("_protocol.md");
-    expect(briefs).toContain("developer-1.md");
+    expect(briefs).toContain("developer.md");
   });
 
   // CI runs the suites (ci-is-truth): a brief, read every turn, never

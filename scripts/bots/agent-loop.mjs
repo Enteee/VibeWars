@@ -221,7 +221,7 @@ export function tellCompany(root, name, text) {
   const file = `${String(Date.now())}-${name}.json`;
   fs.writeFileSync(
     path.join(outbox, `.${file}.part`),
-    JSON.stringify({ to: "all", text, nudge: null }),
+    JSON.stringify({ to: "all", text, nudge: null, direct: false }),
   );
   fs.renameSync(path.join(outbox, `.${file}.part`), path.join(outbox, file));
 }
