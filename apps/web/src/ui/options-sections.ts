@@ -1,4 +1,5 @@
 import { controlsSection } from "./controls-section.js";
+import { relaySection } from "./relay-section.js";
 import { mountSoundControls, soundControlsDeps } from "./sound-controls.js";
 
 /**
@@ -22,4 +23,8 @@ export const soundSection: OptionsSection = {
   mount: (container) => mountSoundControls(container, soundControlsDeps()),
 };
 
-export const OPTIONS_SECTIONS: readonly OptionsSection[] = [soundSection, controlsSection];
+export const OPTIONS_SECTIONS: readonly OptionsSection[] = [
+  soundSection,
+  controlsSection,
+  relaySection,
+];

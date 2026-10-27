@@ -2767,6 +2767,81 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "dervish.zealous-sweep",
+    name: "Zealous Sweep",
+    type: "attack",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.scythe-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "If this attack hits, you deal +5...17...20 damage. You gain 3 Energy
+    // and 1 strike of adrenaline for each foe you hit." A scythe cleaves,
+    // so that is up to 3 (#977).
+    attack: {
+      weapon: "scythe",
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 5, atTwelve: 17 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      { kind: "energy-gain", amount: { flat: 3 }, perTarget: true },
+      { kind: "adrenaline-gain", strikes: 1, perTarget: true },
+    ],
+  },
+  {
+    id: "dervish.mystic-twister",
+    name: "Mystic Twister",
+    type: "spell",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.wind-prayers",
+    cost: { kind: "adrenaline", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Deals 10...50...60 cold damage to all nearby foes. If you are
+    // enchanted, this spell deals an additional +10...50...60 cold
+    // damage": one packet, the bonus read as it lands (#977).
+    area: {
+      radius: AREA_NEARBY,
+      origin: "caster",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "damage",
+        type: "cold",
+        armorPenetration: 0,
+        amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 10, atTwelve: 50 } },
+        conditionalBonus: {
+          condition: { kind: "caster-has", category: "enchantment" },
+          amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 10, atTwelve: 50 } },
+        },
+      },
+    ],
+  },
+  {
     id: "ranger.savage-shot",
     name: "Savage Shot",
     type: "attack",
@@ -3816,6 +3891,135 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         armorPenetration: 0,
       },
       { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Monk staples (#987)                                                    */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "monk.heal-other",
+    name: "Heal Other",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Heal target other ally for 35...151...180 health."
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "monk.healing-prayers", atZero: 35, atTwelve: 151 },
+        },
+      },
+    ],
+  },
+  {
+    id: "monk.reversal-of-fortune",
+    name: "Reversal of Fortune",
+    type: "enchantment",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 8 seconds, the next time target ally would take damage or life
+    // steal, that ally gains that amount of health instead, maximum
+    // 15...67...80": the 67 cap is the status's.
+    effects: [{ kind: "apply-status", statusId: "reversal-of-fortune", durationSeconds: 8 }],
+  },
+  {
+    id: "monk.smite-hex",
+    name: "Smite Hex",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Remove a hex from target ally. If a hex is removed, foes in the area
+    // suffer 10...70...85 holy damage": the area is the ally's.
+    effects: [
+      { kind: "remove-status", category: "hex", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "hex" },
+        effects: [
+          {
+            kind: "splash",
+            radius: AREA_IN_THE_AREA,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 70 },
+                },
+                type: "holy",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "monk.restore-condition",
+    name: "Restore Condition",
+    type: "spell",
+    elite: true,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Remove all conditions from target other ally. That ally is healed
+    // 10...58...70 health for each condition removed."
+    effects: [
+      { kind: "remove-status", category: "condition", count: Number.POSITIVE_INFINITY },
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        perRemoved: "condition",
+        amount: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 10, atTwelve: 58 },
+        },
+      },
     ],
   },
   /* ---------------------------------------------------------------------- */

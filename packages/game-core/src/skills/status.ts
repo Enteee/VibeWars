@@ -91,6 +91,7 @@ export type StatusId =
   | "holy-veil"
   | "healing-breeze"
   | "protective-spirit"
+  | "reversal-of-fortune"
   // Stances.
   | "sprint"
   | "dash"
@@ -341,6 +342,13 @@ export interface StatusDefinition {
    */
   readonly maxDamageFractionPerHit: number | undefined;
   /**
+   * The next damage or life steal the bearer would take heals it instead,
+   * up to this much, and the status ends (#987): Reversal of Fortune's 67.
+   * The whole packet is negated, after `mitigate`; degeneration and
+   * sacrifice are neither. `undefined`: no reversal.
+   */
+  readonly reversesNextDamage: number | undefined;
+  /**
    * Strikes of adrenaline the bearer gains on top of each hit it lands
    * (#936): "For Great Justice!"'s 1. Taking damage is not a hit.
    */
@@ -517,6 +525,7 @@ function define(
     endsWhenBearerGains: [],
     damageTakenMultiplier: 1,
     maxDamageFractionPerHit: undefined,
+    reversesNextDamage: undefined,
     extraStrikesPerHit: 0,
     spellRechargeFaster: 0,
     incomingHexCastTimeMultiplier: 1,
@@ -780,6 +789,13 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "protective-spirit": define("protective-spirit", "Protective Spirit", "enchantment", {
     profession: "monk",
     maxDamageFractionPerHit: 0.1,
+  }),
+  // "For 8 seconds, the next time target ally would take damage or life
+  // steal, that ally gains that amount of health instead, maximum
+  // 15...67...80": 67, its rank-12 cap; the 8 s are the skill's.
+  "reversal-of-fortune": define("reversal-of-fortune", "Reversal of Fortune", "enchantment", {
+    profession: "monk",
+    reversesNextDamage: 67,
   }),
 
   sprint: define("sprint", "Sprint", "stance", {
@@ -1335,6 +1351,21 @@ export class StatusSet {
     }
     this.#end(removed);
     return removed;
+  }
+
+  /**
+   * Spend the newest status that reverses the next damage (#987),
+   * recorded as ended, and return its cap; `undefined` if none is up.
+   */
+  public takeReversal(): { readonly id: StatusId; readonly cap: number } | undefined {
+    for (const status of [...this.#statuses.values()].reverse()) {
+      const cap = getStatusDefinition(status.id).reversesNextDamage;
+      if (cap !== undefined) {
+        this.#end([status.id]);
+        return { id: status.id, cap };
+      }
+    }
+    return undefined;
   }
 
   /**

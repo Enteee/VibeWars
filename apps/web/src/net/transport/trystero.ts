@@ -11,6 +11,8 @@
  * Trystero found a peer and exchanged SDP but never connected, and
  * `no-relay` when, `RELAY_CHECK_MS` in and with nobody met, not one
  * relay socket is open.
+ *
+ * A TURN relay the player saved (#972) goes to Trystero as `turnConfig`.
  */
 import { CHANNELS, normalizeLobbyCode } from "@vibewars/game-protocol";
 import type { Channel } from "@vibewars/game-protocol";
@@ -20,6 +22,7 @@ import type { DataPayload, MessageAction } from "trystero/nostr";
 
 import { HandlerSets } from "./handler-sets.js";
 import { oversizedCheck } from "./oversized.js";
+import { loadTurnConfig, type TurnConfig } from "./turn-config.js";
 import {
   APP_ID,
   MAX_RECEIVE_BYTES,
@@ -34,6 +37,8 @@ export interface TrysteroDeps {
   readonly selfId: string;
   /** Every relay's socket, by URL. */
   readonly relaySockets: () => Readonly<Record<string, { readonly readyState: number }>>;
+  /** The player's own TURN relay (#972), if they saved one. */
+  readonly turnConfig: () => TurnConfig | undefined;
 }
 
 /** Trystero itself. `getRelaySockets` is untyped there; this is its shape. */
@@ -41,6 +46,7 @@ const TRYSTERO: TrysteroDeps = {
   joinRoom,
   selfId,
   relaySockets: getRelaySockets as TrysteroDeps["relaySockets"],
+  turnConfig: () => loadTurnConfig(),
 };
 
 /** Trystero's `onJoinError` text when SDP went both ways and no connection came of it. */
@@ -53,12 +59,22 @@ const SOCKET_OPEN = 1;
 export function joinTrysteroRoom(code: string, deps: TrysteroDeps = TRYSTERO): Transport {
   const roomId = normalizeLobbyCode(code);
   const handlers = new HandlerSets();
+  // Read at join, so a relay saved in Options counts from the next lobby.
+  // Added to Trystero's STUN, not instead: ICE still prefers a direct path.
+  const turn = deps.turnConfig();
   const room = deps.joinRoom(
     {
       appId: APP_ID,
       password: roomId,
       relayConfig: { urls: [...NOSTR_RELAYS], redundancy: RELAY_REDUNDANCY },
       maxReceiveBytes: MAX_RECEIVE_BYTES,
+      ...(turn === undefined
+        ? {}
+        : {
+            turnConfig: [
+              { urls: [...turn.urls], username: turn.username, credential: turn.credential },
+            ],
+          }),
     },
     roomId,
     {

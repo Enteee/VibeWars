@@ -478,6 +478,16 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Dervish/1030-Victorious_Sweep",
   },
   {
+    id: "dervish.zealous-sweep",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1221-Zealous_Sweep",
+  },
+  {
+    id: "dervish.mystic-twister",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1049-Mystic_Twister",
+  },
+  {
     id: "mesmer.cry-of-frustration",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/308-Cry_of_Frustration",
@@ -631,6 +641,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "monk.infuse-health",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/172-Infuse_Health",
+  },
+  {
+    id: "monk.heal-other",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/166-Heal_Other",
+  },
+  {
+    id: "monk.reversal-of-fortune",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/195-Reversal_of_Fortune",
+  },
+  {
+    id: "monk.smite-hex",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/213-Smite_Hex",
+  },
+  {
+    id: "monk.restore-condition",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/194-Restore_Condition",
   },
   {
     id: "monk.remove-hex",

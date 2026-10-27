@@ -103,6 +103,8 @@ export const SKILL_ICONS = {
   "dervish.vow-of-strength": { glyph: "axe", modifier: "area" },
   "dervish.sand-shards": { glyph: "shard", modifier: "up" },
   "dervish.pious-haste": { glyph: "dash", modifier: "self" },
+  "dervish.zealous-sweep": { glyph: "energy", modifier: "clock" },
+  "dervish.mystic-twister": { glyph: "snowflake", modifier: "self" },
   "dervish.victorious-sweep": { glyph: "axe", modifier: "self" },
   "ranger.savage-shot": { glyph: "arrow" },
   "ranger.distracting-shot": { glyph: "interrupt", modifier: "less" },
@@ -141,6 +143,14 @@ export const SKILL_ICONS = {
   "monk.protective-spirit": { glyph: "armor", modifier: "less" },
   // Your own life, given: the resurrect glyph with the bleed drop (#936).
   "monk.infuse-health": { glyph: "resurrect", modifier: "bleed" },
+  // A placeholder: a plain heal on someone else, the plaster (#987).
+  "monk.heal-other": { glyph: "plaster" },
+  // A placeholder: armor that turns the blood drop into health (#987).
+  "monk.reversal-of-fortune": { glyph: "armor", modifier: "bleed" },
+  // A placeholder: a hex removed, a burst around the ally (#987).
+  "monk.smite-hex": { glyph: "cleanse", modifier: "area" },
+  // A placeholder: every condition removed; no modifier says "all" (#987).
+  "monk.restore-condition": { glyph: "cleanse", modifier: "stun" },
   // Placeholders until the asset-designer's (#1013).
   "monk.remove-hex": { glyph: "cleanse" },
   "monk.dismiss-condition": { glyph: "cleanse", modifier: "up" },

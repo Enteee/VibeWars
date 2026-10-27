@@ -111,26 +111,39 @@ export function doubleStrikeChance(attacker: Combatant, weapon: Weapon): number 
 }
 
 /**
- * Who a swing at `target` hits: the target, then up to `cleaveTargets`
- * other living foes adjacent to it, nearest first. Weapon reach is
- * checked before the swing lands, so the target itself is never filtered.
+ * Who a swing at `target` hits: the target, then its cleave victims.
+ * Weapon reach is checked before the swing lands, so the target itself
+ * is never filtered.
  */
 function victimsOf(swing: Swing, weapon: Weapon): readonly Combatant[] {
+  return [
+    swing.target.combatant,
+    ...cleaveVictims(swing.attacker, swing.target, swing.surroundings, weapon),
+  ];
+}
+
+/**
+ * Whom else a blow of `weapon` at `target` strikes: up to
+ * `cleaveTargets` other living foes adjacent to it, nearest first, the
+ * target excluded. None for any weapon but a scythe.
+ */
+export function cleaveVictims(
+  attacker: Combatant,
+  target: TargetCandidate,
+  surroundings: Surroundings,
+  weapon: Weapon,
+): readonly Combatant[] {
   if (weapon.cleaveTargets === 0) {
-    return [swing.target.combatant];
+    return [];
   }
-  const { attacker, target } = swing;
-  const adjacent = [...swing.surroundings.values()].filter(
+  const adjacent = [...surroundings.values()].filter(
     ({ combatant, position }) =>
       !combatant.dead &&
       combatant.id !== target.combatant.id &&
       combatant.team !== attacker.team &&
       distance(position, target.position) <= AREA_ADJACENT,
   );
-  return [
-    target.combatant,
-    ...nearestFirst(adjacent, target.position).slice(0, weapon.cleaveTargets),
-  ];
+  return nearestFirst(adjacent, target.position).slice(0, weapon.cleaveTargets);
 }
 
 /**
@@ -586,9 +599,14 @@ export function resolveSwing(swing: Swing): {
  * block, crit and damage, and the skill's effects land after each blow
  * that hits, so a condition applied twice is refreshed. A victim the
  * first blow killed takes no second. The weapon's own double strike is
- * never added to a skill, and nor is cleave: an area, as Barrage's, is
- * already the skill's own, and each of its blows rolls its own block and
- * its own crit.
+ * never added to a skill.
+ *
+ * A scythe's attack skill cleaves, as its swing does (#977): its victims
+ * are the primary and the foes `cleaveVictims` finds round it, read
+ * once, at the hit, and each gets its own blind, block, crit and damage,
+ * and the skill's effects if it is hit. A skill with an area, as
+ * Barrage's, has its area's victims instead, each rolling its own block
+ * and its own crit.
  *
  * The attacker's weapon spell ends as it strikes, and its chants' riders
  * (#758) land on each victim a blow hits, after the skill's own blow; the
@@ -612,8 +630,20 @@ export function resolveAttackSkill(
   const events: CombatEvent[] = [];
   bearerAttacked(caster, events, kind);
   const next = nextAttackSkillOf(caster);
+  const primary = resolution.targets[0];
+  const around =
+    skill.area !== undefined || primary === undefined || primary.dead
+      ? undefined
+      : surroundings.get(primary.id);
+  const targets =
+    around === undefined
+      ? resolution.targets
+      : [
+          ...resolution.targets,
+          ...cleaveVictims(caster, around, surroundings, snapshot.mainHand.weapon),
+        ];
   const victims: Combatant[] = [];
-  for (const victim of resolution.targets) {
+  for (const victim of targets) {
     if (victim.dead) {
       continue;
     }

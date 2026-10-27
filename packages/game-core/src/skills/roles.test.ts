@@ -30,6 +30,13 @@ describe("skillRoles", () => {
     // A shout that raises armor, and an enchantment that blocks.
     expect(rolesOf("warrior.watch-yourself")).toEqual(["defence"]);
     expect(rolesOf("monk.guardian")).toEqual(["defence"]);
+    // One that turns the next hit into a heal (#987).
+    expect(rolesOf("monk.reversal-of-fortune")).toEqual(["defence"]);
+  });
+
+  it("counts a hex or condition removal as removal (#987)", () => {
+    expect(rolesOf("monk.smite-hex")).toContain("removal");
+    expect(rolesOf("monk.restore-condition")).toEqual(["healing", "removal"]);
   });
 
   it("counts a status that regenerates as healing (#1013)", () => {
