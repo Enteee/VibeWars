@@ -160,10 +160,13 @@ export function describeStatus(id: string): string {
   if (definition.attackMissChance !== 0) {
     parts.push(`${String(Math.round(definition.attackMissChance * 100))}% of attacks miss`);
   }
-  if (definition.maxHealthMultiplier !== 1) {
-    parts.push(
-      `maximum health reduced to ${String(Math.round(definition.maxHealthMultiplier * 100))}%`,
-    );
+  if (definition.maxHealthLoss !== undefined) {
+    const { fraction, cap } = definition.maxHealthLoss;
+    parts.push(`−${String(Math.round(fraction * 100))}% maximum health (at most ${String(cap)})`);
+  }
+  if (definition.healingMultiplier !== 1) {
+    const change = Math.round((definition.healingMultiplier - 1) * 100);
+    parts.push(`${change > 0 ? "+" : "−"}${String(Math.abs(change))}% healing`);
   }
   if (definition.weaponDamageMultiplier !== 1) {
     const change = Math.round((definition.weaponDamageMultiplier - 1) * 100);
