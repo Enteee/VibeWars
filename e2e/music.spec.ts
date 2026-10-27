@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { expect, test, type Page } from "@playwright/test";
 
 import { startSoloMatch } from "./helpers/peers.js";
@@ -344,4 +346,80 @@ test("the now-playing toast in the build editor stays off the Training panel (#5
       log.y < box.y + box.height;
     expect(overlaps, "the toast overlaps the Training panel").toBe(false);
   }
+});
+
+/** In the music host's frame, every message the game posts to it. */
+async function recordHostInbox(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    if (window.top === window) {
+      return;
+    }
+    const received: unknown[] = [];
+    Object.assign(window, { fromGame: received });
+    addEventListener("message", (event: MessageEvent) => {
+      if (event.source === window.parent) {
+        received.push(event.data);
+      }
+    });
+  });
+}
+
+/** The levels the game told its host to play, in order. */
+async function intensitiesSent(page: Page): Promise<number[]> {
+  const host = page.frames().find((frame) => frame.url().includes("music-host"));
+  if (host === undefined) {
+    return [];
+  }
+  return host.evaluate(
+    () =>
+      (window as unknown as { fromGame?: unknown[] }).fromGame?.flatMap((message) =>
+        typeof message === "object" &&
+        message !== null &&
+        "type" in message &&
+        message.type === "setIntensity" &&
+        "level" in message
+          ? [Number(message.level)]
+          : [],
+      ) ?? [],
+  );
+}
+
+test("Options → Sound names the menu's track, and a fixed intensity reaches the host (#425)", async ({
+  page,
+}) => {
+  const titles = new Map(
+    (
+      JSON.parse(
+        readFileSync(
+          new URL("../apps/web/src/music/tracks/manifest.json", import.meta.url),
+          "utf8",
+        ),
+      ) as readonly { readonly id: string; readonly title: string }[]
+    ).map((track) => [track.id, track.title]),
+  );
+  await recordMessages(page);
+  await recordHostInbox(page);
+  await page.goto("./");
+  await expect(page.locator(".roster")).toBeVisible();
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
+  await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toHaveLength(1);
+  const [menuTrack] = await playedTracks(page);
+
+  await page.getByRole("button", { name: "options" }).click();
+  await expect(page.locator('.options-entry[data-section="sound"]')).toHaveClass(/is-selected/);
+  await expect(page.locator(".music-now-playing-title")).toContainText(
+    titles.get(menuTrack ?? "") ?? "no such track",
+  );
+  const intensity = page.getByRole("group", { name: "intensity" });
+  // The menu is calm: the director picks 0, and Auto says so.
+  await expect(intensity.getByRole("button", { name: "Auto (0)" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await intensity.getByRole("button", { name: "3", exact: true }).click();
+  await expect(intensity.getByRole("button", { name: "3", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect.poll(() => intensitiesSent(page), { timeout: 5_000 }).toContain(3);
 });

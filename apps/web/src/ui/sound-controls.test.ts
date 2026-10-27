@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_MUSIC_PREFERENCE, type MusicPreference } from "../audio/music-preference.js";
+import { createIntensityOverride } from "../music/intensity-override.js";
 import { SoundSettings, volumePercent, type SoundControlsDeps } from "./sound-controls.js";
 
 /** Deps that record every setter and saver, with a global mute anyone can flip. */
@@ -43,6 +44,11 @@ function fakes() {
     onGlobalMute: (listener) => {
       listeners.add(listener);
       return () => listeners.delete(listener);
+    },
+    musicBlock: {
+      override: createIntensityOverride(),
+      music: { intensity: 0, nowPlaying: null, onChange: () => () => undefined },
+      tracks: [],
     },
   };
   return { deps, calls, setGlobalMute, listeners };

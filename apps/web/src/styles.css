@@ -351,6 +351,27 @@ body {
   background: #3a6a3e;
 }
 
+/* The worst degeneration on the bar's combatant (#807), as GW1: a hex that
+   drains health, then poison or disease, then bleeding. Never the only signal:
+   the status icons and the pips say it too. */
+.hud-bar-health.is-tint-hex .hud-bar-fill,
+.training-bar-health.is-tint-hex .training-bar-fill,
+.hud-target-health.is-tint-hex .hud-bar-fill {
+  background: #7a3a7a;
+}
+
+.hud-bar-health.is-tint-poison .hud-bar-fill,
+.training-bar-health.is-tint-poison .training-bar-fill,
+.hud-target-health.is-tint-poison .hud-bar-fill {
+  background: #66601e;
+}
+
+.hud-bar-health.is-tint-bleeding .hud-bar-fill,
+.training-bar-health.is-tint-bleeding .training-bar-fill,
+.hud-target-health.is-tint-bleeding .hud-bar-fill {
+  background: #8c4a42;
+}
+
 .hud-bar-energy .hud-bar-fill {
   background: #2f6787;
 }
@@ -3372,6 +3393,41 @@ body.has-expanded-training #screens {
 
 .hud-sound .sound-volume input {
   width: 9rem;
+}
+
+/* The Music block (#425): what plays, and the intensity, under the volumes. */
+.music-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--line);
+}
+
+.music-now-playing-title {
+  color: var(--ink);
+}
+
+.music-intensity-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.music-intensity-choice {
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-dim);
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.music-intensity-choice[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* The now-playing toast: top left, just under the top bar, where a match has

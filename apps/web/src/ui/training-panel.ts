@@ -75,6 +75,7 @@ import {
 import { describeRefusal, MESSAGE_SECONDS, SKILL_SLOT_ICON_PX } from "./hud.js";
 import { isEliteSkill, skillBadgeHtml, skillIconHtml } from "./icons.js";
 import { createAllyWatch } from "./ally-watch.js";
+import { paintHealthTint } from "./health-tint.js";
 import { pipsElement, renderPips } from "./pips.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import {
@@ -451,6 +452,7 @@ export function createTrainingPanel(): TrainingPanel {
       `${String(max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0)}%`;
     health.fill.style.width = fraction(self.health, self.maxHealth);
     health.label.textContent = `${String(self.health)} / ${String(self.maxHealth)}`;
+    paintHealthTint(health.root, self);
     energy.fill.style.width = fraction(self.energy, self.maxEnergy);
     energy.label.textContent = `${String(self.energy)} / ${String(self.maxEnergy)}`;
     renderPips(health.pips, self.healthPips);
