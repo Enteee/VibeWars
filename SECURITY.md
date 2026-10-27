@@ -67,7 +67,11 @@ channels, as often as they like.
   forge any message it relays, can kick anyone, and controls the match
   clock. Nothing a peer runs can tell a fair host from a cheating one. P2P
   is for playing with people you would let host; there is no ranked play,
-  and none is planned without a server.
+  and none is planned without a server. In a Random Arena (#854) you do
+  not pick your host either, and a player can pick themselves: formation
+  is a public pure function, so a late joiner can grind ticket secrets
+  until they host (#869). Accepted: unranked play among strangers trusts
+  the host as much as a lobby does.
 - **Knowing the code means being invited.** Anyone with the lobby code can
   join and see the lobby. A code is shared like a party invite; it is not a
   credential.

@@ -153,9 +153,11 @@ async function sha256Hex(text: string): Promise<string> {
 
 /**
  * The host of `groupId`: the ticket whose `sha256(groupId ‖ ticketId)` is
- * lowest. Not simply the lowest id, which a player could grind secrets
- * for and host every match; the group id hangs on every ticket in it, so
- * nobody knows who hosts until the group exists.
+ * lowest. Not simply the lowest id, which one ground secret would make
+ * host of every match. This is still grindable: formation is public, so
+ * a late joiner can try secrets until they host the group they join, in
+ * about `2 * teamSize` tries. Accepted on #869; see SECURITY.md, "A
+ * cheating host".
  */
 async function hostOf(groupId: string, ids: readonly string[]): Promise<string | undefined> {
   const ranked = await Promise.all(
