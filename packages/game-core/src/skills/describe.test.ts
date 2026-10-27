@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY, RANGE_SPELL } from "../distances.js";
+
 import { IMPLEMENTED_SKILLS, getSkill } from "./catalog.js";
 import { describeSkill, describeStatus, formatScalingRange } from "./describe.js";
 import { makeCombatant, withAttackDuration } from "./testing.js";
@@ -82,8 +84,38 @@ describe("describeSkill", () => {
 
     expect(described.cost).toBe("10 energy");
     expect(described.castTime).toBe("1s");
-    expect(described.targetText).toBe("One foe");
-    expect(described.rangeText).toContain("range");
+    expect(described.targetText).toBe("One foe, and foes nearby it");
+    expect(described.rangeText).toBe(`${String(RANGE_SPELL)} range, ${String(AREA_NEARBY)} radius`);
+  });
+
+  it("names the foes round its target a target-centred area also hits (#998)", () => {
+    const lines = (id: string): readonly [string, string | undefined] => {
+      const described = describeSkill(skill(id));
+      return [described.targetText, described.rangeText];
+    };
+    const range = (radius: number): string =>
+      `${String(RANGE_SPELL)} range, ${String(radius)} radius`;
+    expect(lines("elementalist.chain-lightning")).toEqual([
+      "One foe, and up to 2 foes nearby it",
+      range(AREA_NEARBY),
+    ]);
+    expect(lines("elementalist.ice-spikes")).toEqual([
+      "One foe, and foes adjacent to it",
+      range(AREA_ADJACENT),
+    ]);
+    expect(lines("elementalist.meteor")).toEqual([
+      "One foe, and foes adjacent to it",
+      range(AREA_ADJACENT),
+    ]);
+    expect(lines("elementalist.deep-freeze")).toEqual([
+      "One foe, and foes in the area around it",
+      range(AREA_IN_THE_AREA),
+    ]);
+    // No area, and a shout round its caster: as before.
+    const orison = describeSkill(skill("monk.orison-of-healing"));
+    expect(orison.targetText).toBe("One ally");
+    expect(orison.rangeText).toBe(`${String(skill("monk.orison-of-healing").range)} range`);
+    expect(lines("warrior.watch-yourself")).toEqual(["Allies in earshot", "350 radius"]);
   });
 
   it("says a flying spell can be dodged (#535)", () => {

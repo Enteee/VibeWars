@@ -870,6 +870,14 @@ const AREA_TEXT: ReadonlyMap<number, string> = new Map([
   [AREA_EARSHOT, "in earshot"],
 ]);
 
+/** Where round its target a target-centred area reaches: "nearby it" (#998). */
+const AREA_AROUND_TARGET: ReadonlyMap<number, string> = new Map([
+  [AREA_ADJACENT, "adjacent to it"],
+  [AREA_NEARBY, "nearby it"],
+  [AREA_IN_THE_AREA, "in the area around it"],
+  [AREA_EARSHOT, "in earshot of it"],
+]);
+
 const TARGET_TEXT: Record<Skill["target"], string> = {
   self: "Self",
   "single-enemy": "One foe",
@@ -904,6 +912,18 @@ function targetAndRange(skill: Skill): {
     return {
       target: `${TARGET_TEXT[skill.target]}, and ${AREA_WHO[area.affects].toLowerCase()} ${where} around you`,
       range: `${String(skill.range)} range`,
+    };
+  }
+  if (area?.origin === "target") {
+    // Fireball, Meteor (#998): its target, and those round it. maxTargets
+    // counts the primary.
+    const who = AREA_WHO[area.affects].toLowerCase();
+    const count =
+      area.maxTargets === undefined ? who : `up to ${String(area.maxTargets - 1)} ${who}`;
+    const where = AREA_AROUND_TARGET.get(area.radius) ?? `within ${String(area.radius)} of it`;
+    return {
+      target: `${TARGET_TEXT[skill.target]}, and ${count} ${where}`,
+      range: `${String(skill.range)} range, ${String(area.radius)} radius`,
     };
   }
   return {
