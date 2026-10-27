@@ -26,6 +26,8 @@ import {
   parsePeerHello,
   parsePeerRejoinProof,
   type AdrenalineMessage,
+  type ChainMarksMessage,
+  type WireChainMark,
   type MapDescriptor,
   type PeerHello,
   type PeerRefuse,
@@ -44,6 +46,7 @@ import { packCombat } from "./combat-batches.js";
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 import { sanitizeName } from "./names.js";
 import { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
+import { chainMarks, chainMarksPredicted } from "./chain-marks.js";
 import { rechargePredicted, rechargeSlots } from "./recharge.js";
 import { rejoinProof } from "./rejoin-proof.js";
 import { packSnapshot } from "./snapshot-parts.js";
@@ -150,6 +153,8 @@ interface Seat {
   droppedAt: number | undefined;
   /** The recharges the peer was last told, and when, so only news is sent (#152). */
   recharges: { readonly slots: RechargeSlot[]; readonly at: number } | undefined;
+  /** The chain marks the peer was last told, and when, so only news is sent (#916). */
+  chainMarks: { readonly marks: readonly WireChainMark[]; readonly at: number } | undefined;
   /** The bar the peer was last sent, so it goes again only when it changes (#637). */
   skillBar: readonly (SkillBarSlot | null)[] | undefined;
 }
@@ -267,6 +272,26 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   };
 
   /**
+   * Send `seat`'s peer the chain marks it placed when they changed in a way
+   * its countdown cannot tell, or whenever `force` (#916).
+   */
+  const sendChainMarks = (seat: Seat, force: boolean): void => {
+    const participant = sim.get(seat.playerId);
+    if (participant === undefined || seat.peerId === undefined) {
+      return;
+    }
+    const at = sim.elapsedSeconds;
+    const marks = chainMarks(participant.combatant);
+    const sent = seat.chainMarks;
+    if (!force && sent !== undefined && chainMarksPredicted(sent.marks, at - sent.at, marks)) {
+      return;
+    }
+    seat.chainMarks = { marks, at };
+    const message: ChainMarksMessage = { marks };
+    transport.send("chain", message, seat.peerId);
+  };
+
+  /**
    * Send `seat`'s peer its bar when it changed since the last one, or
    * whenever `force`, as on a welcome (#637). Costs follow the bearer,
    * so a glyph going up or being spent, or a respawn, sends it again.
@@ -320,6 +345,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     sendSkillBar(seat, true);
     sendRecharges(seat, true);
     sendAdrenaline(seat, true);
+    sendChainMarks(seat, true);
     // A rejoin sees the call its team has up.
     transport.send("calls", calls.view(seat.team, sim.elapsedSeconds), peerId);
   };
@@ -377,6 +403,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       droppedAt: undefined,
       recharges: undefined,
       adrenaline: undefined,
+      chainMarks: undefined,
       skillBar: undefined,
     };
     seats.set(playerId, seat);
@@ -575,6 +602,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     seat.droppedAt = sim.elapsedSeconds;
     seat.recharges = undefined;
     seat.adrenaline = undefined;
+    seat.chainMarks = undefined;
     seat.skillBar = undefined;
     // Frozen, not left running into a wall while away.
     sim.setInputDirection(seat.playerId, ZERO);
@@ -679,6 +707,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       sendSkillBar(seat, false);
       sendRecharges(seat, false);
       sendAdrenaline(seat, false);
+      sendChainMarks(seat, false);
     }
     if (result.phase === "finished") {
       finished = true;
