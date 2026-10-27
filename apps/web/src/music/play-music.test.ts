@@ -30,7 +30,10 @@ function recording(): { player: MusicPlayer; calls: [string, unknown][] } {
       crossfadeTo: record("crossfadeTo"),
       setIntensity: record("setIntensity"),
       setVolume: record("setVolume"),
-      evaluate: record("evaluate"),
+      evaluate: (source: string) => {
+        record("evaluate")(source);
+        return calls.length;
+      },
       play: record("play"),
       stop: record("stop"),
       onNowPlaying: record("onNowPlaying"),

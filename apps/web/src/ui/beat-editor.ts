@@ -1,4 +1,5 @@
 import { beatEdits, shippedHash, tooLarge, type BeatEditStore } from "../music/beat-edits.js";
+import { beatEvaluations } from "../music/beat-evaluations.js";
 import type { MusicLevel } from "../music/host-protocol.js";
 import {
   intensityOverride,
@@ -41,11 +42,8 @@ const defaultDeps = (): BeatEditorDeps => ({
   tracks: TRACKS,
 });
 
-/** What the host is evaluating for the editor, until it answers. */
-type Pending = { readonly kind: "edit"; readonly source: string } | { readonly kind: "reset" };
-
 interface OpenEditor {
-  evaluated(): void;
+  evaluated(seq: number): void;
   failed(error: MusicError): void;
   close(): void;
 }
@@ -59,8 +57,8 @@ function listen(player: MusicPlayer): void {
     return;
   }
   listening.add(player);
-  player.onEvaluated(() => {
-    open?.evaluated();
+  player.onEvaluated((seq) => {
+    open?.evaluated(seq);
   });
   player.onError((error) => {
     open?.failed(error);
@@ -88,7 +86,7 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
   const { player, edits, override } = deps;
   const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const restoreOverride = override.get();
-  let pending: Pending | undefined;
+  const evaluations = beatEvaluations(track.id, track.source, edits, shippedHash(track.source));
   let stopped = false;
   let editor: CodeEditor | undefined;
   let closed = false;
@@ -187,10 +185,9 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
       editor.showError("This beat is over 64 KB, so it was not played or kept.", undefined);
       return;
     }
-    pending = { kind: "edit", source };
     stopped = false;
     status.textContent = "Playing…";
-    player.evaluate(source);
+    evaluations.sent(player.evaluate(source), { kind: "edit", source });
   }
 
   function stop(): void {
@@ -200,12 +197,11 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
   }
 
   function reset(): void {
-    edits.remove(track.id);
+    evaluations.reset();
     editor?.setText(track.source);
     editor?.clearError();
-    pending = { kind: "reset" };
     stopped = false;
-    player.evaluate(track.source);
+    evaluations.sent(player.evaluate(track.source), { kind: "reset" });
   }
 
   const paste = (text: string): void => {
@@ -273,31 +269,19 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
   }
 
   open = {
-    evaluated() {
-      const done = pending;
-      pending = undefined;
-      editor?.clearError();
-      if (done?.kind === "reset") {
-        status.textContent = "Back to the shipped track.";
-        return;
-      }
+    evaluated(seq) {
+      const done = evaluations.evaluated(seq);
       if (done === undefined) {
         return;
       }
-      status.textContent = "Playing your change. It is kept.";
-      if (done.source === track.source) {
-        edits.remove(track.id);
-        return;
-      }
-      void shippedHash(track.source).then((hash) => {
-        edits.save(track.id, { shippedHash: hash, source: done.source });
-      });
+      editor?.clearError();
+      status.textContent =
+        done.kind === "reset" ? "Back to the shipped track." : "Playing your change. It is kept.";
     },
     failed(error) {
-      if (pending === undefined) {
+      if (error.evaluation === undefined || !evaluations.failed(error.evaluation)) {
         return;
       }
-      pending = undefined;
       status.textContent = "That did not play; the last version plays on.";
       editor?.showError(error.message, error.line);
     },

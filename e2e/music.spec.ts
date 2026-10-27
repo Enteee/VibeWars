@@ -85,7 +85,7 @@ test("music-host.html opened on its own loads no engine and runs nothing posted 
   await page.goto("./music-host.html");
   await page.evaluate((source) => {
     for (const message of [
-      { type: "evaluate", source },
+      { type: "evaluate", seq: 1, source },
       { type: "load", trackId: "x", source, phraseCycles: 4 },
     ]) {
       postMessage(message, "*");
@@ -108,7 +108,7 @@ test("music-host.html framed without a sandbox runs nothing either", async ({ pa
         const frame = document.createElement("iframe");
         frame.src = "music-host.html";
         frame.addEventListener("load", () => {
-          frame.contentWindow?.postMessage({ type: "evaluate", source }, "*");
+          frame.contentWindow?.postMessage({ type: "evaluate", seq: 1, source }, "*");
           resolve();
         });
         document.body.appendChild(frame);

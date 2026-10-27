@@ -404,17 +404,22 @@ export async function startEngine(): Promise<void> {
       case "evaluate": {
         // The track the player hears; a switch not yet heard is dropped.
         const track = switching?.announced === true ? switching.next : playing;
-        if (track === undefined) {
-          throw new Error("nothing is playing to change");
+        try {
+          if (track === undefined) {
+            throw new Error("nothing is playing to change");
+          }
+          const { pattern, cps, clock } = await compile(message.source, track.phraseCycles);
+          clock.origin = track.clock.origin;
+          switching = undefined;
+          playing = { ...track, pattern, cps, clock };
+          pins.reset();
+          scheduler.setCps(cps);
+          await schedule(pattern.late(clock.origin));
+        } catch (error) {
+          post({ ...describe(error), seq: message.seq });
+          return;
         }
-        const { pattern, cps, clock } = await compile(message.source, track.phraseCycles);
-        clock.origin = track.clock.origin;
-        switching = undefined;
-        playing = { ...track, pattern, cps, clock };
-        pins.reset();
-        scheduler.setCps(cps);
-        await schedule(pattern.late(clock.origin));
-        post({ type: "evaluated" });
+        post({ type: "evaluated", seq: message.seq });
         return;
       }
       case "ping":
