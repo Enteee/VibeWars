@@ -383,6 +383,24 @@ describe("attack skills (#417)", () => {
     ).toContain("If you have more Energy than target: knocks down for 2s");
   });
 
+  it("words the #997 conditions: moving, has a status, lacks it", () => {
+    const ranks = new Map([
+      ["elementalist.water-magic", 12],
+      ["elementalist.earth-magic", 12],
+      ["elementalist.fire-magic", 12],
+    ]);
+    const texts = (id: string): string[] =>
+      describeSkill(skill(id), ranks).effects.map(({ text }) => text);
+    expect(texts("elementalist.water-trident")).toContain(
+      "If target is moving: knocks down for 2s",
+    );
+    expect(texts("elementalist.stoning")).toContain("If target has Weakness: knocks down for 2s");
+    expect(texts("elementalist.searing-flames")).toEqual([
+      "If target has Burning: deals 82 damage",
+      "If target does not have Burning: applies Burning for 6s (−7 Health degeneration)",
+    ]);
+  });
+
   it("words Aftershock's bonus on a foe that is down (#985)", () => {
     const ranks = new Map([["elementalist.earth-magic", 12]]);
     const texts = describeSkill(skill("elementalist.aftershock"), ranks).effects.map(

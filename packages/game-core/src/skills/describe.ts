@@ -504,6 +504,12 @@ function conditionText(condition: EffectCondition): string {
       return "If target is not moving";
     case "target-knocked-down":
       return "If target is knocked down";
+    case "target-moving":
+      return "If target is moving";
+    case "target-has-status":
+      return `If target has ${statusName(condition.statusId)}`;
+    case "target-lacks-status":
+      return `If target does not have ${statusName(condition.statusId)}`;
     case "caster-more-energy":
       return "If you have more Energy than target";
     case "caster-wields":

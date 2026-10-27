@@ -73,6 +73,8 @@ export const SKILL_ICONS = {
   "paragon.incoming": { glyph: "speed-heal" },
   "paragon.make-haste": { glyph: "dash", modifier: "up" },
   "paragon.defensive-anthem": { glyph: "anthem-shield" },
+  // A placeholder: the healing banner, for the party in earshot (#999).
+  "paragon.song-of-restoration": { glyph: "banner-cross", modifier: "area" },
   "ranger.apply-poison": { glyph: "flask" },
   "elementalist.glyph-of-lesser-energy": { glyph: "energy", modifier: "less" },
   "elementalist.lightning-orb": { glyph: "lightning-orb" },
@@ -124,6 +126,11 @@ export const SKILL_ICONS = {
   "elementalist.shock": { glyph: "lightning", modifier: "stun" },
   "elementalist.aftershock": { glyph: "mountain", modifier: "down" },
   "elementalist.meteor": { glyph: "fireball", modifier: "stun" },
+  // Placeholders until asset-designer's icons (#997).
+  "elementalist.water-trident": { glyph: "spear", modifier: "stun" },
+  "elementalist.searing-flames": { glyph: "flame" },
+  "elementalist.ebon-hawk": { glyph: "mountain", modifier: "less" },
+  "elementalist.stoning": { glyph: "mountain", modifier: "stun" },
   "mesmer.cry-of-frustration": { glyph: "interrupt", modifier: "area" },
   "mesmer.mantra-of-recovery": { glyph: "speed", modifier: "clock" },
   "necromancer.shadow-of-fear": { glyph: "slow", modifier: "area" },

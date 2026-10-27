@@ -70,8 +70,9 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * What it does on each attack hit counts too: Apply Poison poisons,
  * and so does what it adds to the next attack skill: Anthem of Flame burns.
  * So does what an ally's status does to its bearer when it ends (#944):
- * Patient Spirit heals, Holy Veil removes a hex. One that heals every
- * second (Spirit Light Weapon, #975) is healing.
+ * Patient Spirit heals, Holy Veil removes a hex, or when it uses a skill
+ * (#999): Song of Restoration heals. One that heals every second (Spirit
+ * Light Weapon, #975) is healing.
  */
 function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   const roles: SkillRole[] = [];
@@ -90,11 +91,15 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   }
   if (status.interruptsSpells) roles.push("interrupt");
   if (status.healthPerSecond > 0) roles.push("healing");
-  const onEnd =
+  const forBearer =
     status.category === "hex" || status.category === "condition"
       ? []
       : status.triggers
-          .filter(({ on, target }) => (on === "ends" || on === "expires") && target === "bearer")
+          .filter(
+            ({ on, target }) =>
+              (on === "ends" || on === "expires" || on === "bearer-uses-skill") &&
+              target === "bearer",
+          )
           .flatMap(({ effects }) =>
             effects.flatMap((effect) =>
               effect.kind === "spread-gained-condition" ? [] : [effect],
@@ -103,7 +108,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   const riders = [
     ...(status.onAttackHit?.effects ?? []),
     ...(status.nextAttackSkill ?? []),
-    ...onEnd,
+    ...forBearer,
   ];
   return [...roles, ...riders.flatMap(effectRoles)];
 }

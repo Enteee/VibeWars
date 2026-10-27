@@ -467,6 +467,18 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     expect(set.active).toEqual([]);
   });
 
+  it("ends what ends on a skill used, but what that skill spared (#999)", () => {
+    const set = new StatusSet();
+    set.apply("song-of-restoration", 10, "p");
+    set.apply("diversion", 6, "foe");
+    expect(set.endOnBearerUseSkill(new Set(["song-of-restoration"]))).toEqual(["diversion"]);
+    expect(set.has("song-of-restoration")).toBe(true);
+
+    set.apply("diversion", 6, "foe");
+    expect(set.endOnBearerUseSkill(new Set())).toEqual(["song-of-restoration", "diversion"]);
+    expect(set.active).toEqual([]);
+  });
+
   it("ends Stand Your Ground! on any attack, Escape only on a melee one (#976)", () => {
     const set = new StatusSet();
     set.apply("stand-your-ground", 10, "p");
