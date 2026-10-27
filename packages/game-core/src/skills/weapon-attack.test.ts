@@ -1535,6 +1535,18 @@ describe("dual attacks (#885)", () => {
       expect(caster.chainMarks.get("t")?.role).toBe("off-hand");
     });
 
+    it("leaves an attack skill Distracting Shot disabled waiting (#914)", () => {
+      const { caster, target } = recharging(4e5);
+      caster.cast.beginCast("assassin.jagged-strike", "t", 3, undefined);
+      const ranger = attacker(WEAPONS.longbow, "ranger.marksmanship", 12);
+      resolve("ranger.distracting-shot", ranger, caster);
+      expect(caster.cast.rechargeRemaining.get("assassin.jagged-strike")).toBe(20);
+
+      resolve("assassin.moebius-strike", caster, target);
+      expect(ready(caster)).toEqual(["assassin.death-blossom"]);
+      expect(caster.cast.rechargeRemaining.get("assassin.jagged-strike")).toBe(20);
+    });
+
     it("on a foe above 50% recharges nothing", () => {
       const { caster, target } = recharging(6e5);
       resolve("assassin.moebius-strike", caster, target);
