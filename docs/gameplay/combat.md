@@ -23,10 +23,10 @@ the server decides what happens (brief §12, §32).
 
 ## Resources
 
-| Resource   | How you get it                                                                                       | What it gates     |
-| ---------- | ---------------------------------------------------------------------------------------------------- | ----------------- |
-| Energy     | Regenerates by profession, up to 50: see below                                                       | Most skills       |
-| Adrenaline | Per skill, in strikes: each landed blow on a foe gives every adrenaline skill one (spells earn none) | Adrenaline skills |
+| Resource   | How you get it                                                                                                                                                | What it gates     |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| Energy     | Regenerates by profession, up to 50: see below                                                                                                                | Most skills       |
+| Adrenaline | Per skill, in strikes: each landed blow on a foe gives every adrenaline skill one (spells earn none); a foe's damage to you gives 1 unit per 1% of max health | Adrenaline skills |
 
 Regeneration and degeneration count in **pips**, as in GW1. One health
 pip is 2 HP/s and one energy pip ⅓ energy/s. Every status's pips sum
@@ -81,10 +81,14 @@ a foe, a swing, a landed arrow or an attack skill's blow, gives one strike
 to every adrenaline skill that is not recharging: one per blow, not per
 foe, so a cleave across three foes is one strike and a double strike
 whose two blows land is two. Blocked, missed or obstructed blows give
-nothing, and neither do spells. Using an adrenaline skill empties its own
-pool and takes one strike from every other, at activation, so an
-interrupted one has still paid; an attack skill that lands then earns its
-strike back like any blow. Death, respawn and a reset empty every pool.
+nothing, and neither do spells. Taking damage from a foe charges you too
+(#827): every hit, blow or spell, gives `floor(100 × damage ÷ max health)`
+units, so a hit for a quarter of your health is a strike; degeneration,
+sacrifice and a killing blow give nothing. Using an adrenaline skill
+empties its own pool and takes one strike from every other, at
+activation, so an interrupted one has still paid; an attack skill that
+lands then earns its strike back like any blow. Death, respawn and a
+reset empty every pool.
 Your adrenaline is yours alone: it is sent to you, never in the shared
 snapshot, and a slot greys until its own skill is charged.
 
