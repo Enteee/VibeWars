@@ -29,6 +29,7 @@ import type {
   MatchSnapshot,
   PlayerSnapshot,
   ProjectileSnapshot,
+  StatusSnapshot,
 } from "./match-connection.js";
 
 /**
@@ -86,19 +87,52 @@ function wireStatusRank(id: StatusId): number {
 
 /**
  * The statuses a snapshot carries for one player (#636): at most
- * `MAX_WIRE_STATUSES`, by `WIRE_STATUS_RANK`, then the least time left,
- * then the id. A client refuses a whole snapshot past the cap, so the rest
- * stay off the wire; the simulation still applies them.
+ * `MAX_WIRE_STATUSES`, kept by `WIRE_STATUS_RANK`, then the least time
+ * left, then the id. A client refuses a whole snapshot past the cap, so the
+ * rest stay off the wire; the simulation still applies them. The ones kept
+ * go in the order applied, oldest first (#803).
  */
 export function wireStatuses(active: readonly ActiveStatus[]): ActiveStatus[] {
-  return [...active]
-    .sort(
-      (a, b) =>
-        wireStatusRank(a.id) - wireStatusRank(b.id) ||
-        a.remainingSeconds - b.remainingSeconds ||
-        (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
-    )
-    .slice(0, MAX_WIRE_STATUSES);
+  const kept = new Set(
+    [...active]
+      .sort(
+        (a, b) =>
+          wireStatusRank(a.id) - wireStatusRank(b.id) ||
+          a.remainingSeconds - b.remainingSeconds ||
+          (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+      )
+      .slice(0, MAX_WIRE_STATUSES),
+  );
+  return active.filter((status) => kept.has(status));
+}
+
+/** Seconds to the 0.1 s a status's times go on the wire in. */
+function tenths(seconds: number): number {
+  return Math.round(seconds * 10) / 10;
+}
+
+/**
+ * One status as a snapshot carries it (#803): when it runs out on the
+ * match clock, how long it was applied for, and who applied it. One with
+ * no end of its own is what its bearer bears while activating
+ * (`whileActivating`): it ends with `cast`, so it takes the cast's times.
+ * A duration under 0.05 s still goes as 0.1, as the wire refuses one of
+ * nothing.
+ */
+export function statusSnapshot(
+  status: ActiveStatus,
+  elapsedSeconds: number,
+  cast: { readonly remainingSeconds: number; readonly totalSeconds: number } | undefined,
+): StatusSnapshot {
+  const [remaining, duration] = Number.isFinite(status.remainingSeconds)
+    ? [status.remainingSeconds, status.durationSeconds]
+    : [cast?.remainingSeconds ?? 0, cast?.totalSeconds ?? 0];
+  return {
+    id: status.id,
+    endsAt: tenths(elapsedSeconds + remaining),
+    durationSeconds: Math.max(0.1, tenths(duration)),
+    casterId: status.sourceId,
+  };
 }
 
 /**
@@ -337,13 +371,13 @@ function absent<T>(value: T | null): T | undefined {
  * `undefined` for a status index past the table's end: malformed.
  */
 export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
-  const statuses: StatusId[] = [];
-  for (const index of player.statuses) {
-    const status = statusFromWire(index);
-    if (status === undefined) {
+  const statuses: StatusSnapshot[] = [];
+  for (const { status: index, ...times } of player.statuses) {
+    const id = statusFromWire(index);
+    if (id === undefined) {
       return undefined;
     }
-    statuses.push(status);
+    statuses.push({ id, ...times });
   }
   return {
     sessionId: player.id,

@@ -45,6 +45,7 @@ describe("a P2P match (#375)", () => {
     const many: ActiveStatus[] = Array.from({ length: MAX_WIRE_STATUSES + 1 }, (_, i) => ({
       id: i % 2 === 0 ? "burning" : "regeneration",
       remainingSeconds: i,
+      durationSeconds: MAX_WIRE_STATUSES + 1,
       attacksLeft: undefined,
       spellsLeft: undefined,
       sourceId: remote.selfSessionId,
@@ -57,6 +58,31 @@ describe("a P2P match (#375)", () => {
 
     expect(remote.getSnapshot().elapsedSeconds).toBeGreaterThan(before);
     expect(self(remote)?.statuses).toHaveLength(MAX_WIRE_STATUSES);
+    vi.restoreAllMocks();
+  });
+
+  it("sends each status with its end on the match clock, its length and its caster (#803)", async () => {
+    const match = startMatch();
+    const { connection: remote } = await match.join();
+    await match.step(0.05);
+    const bleeding: ActiveStatus = {
+      id: "bleeding",
+      remainingSeconds: 5.25,
+      durationSeconds: 8,
+      attacksLeft: undefined,
+      spellsLeft: undefined,
+      sourceId: "foe",
+      outbreak: null,
+    };
+    vi.spyOn(StatusSet.prototype, "active", "get").mockReturnValue([bleeding]);
+
+    await match.step(0.5);
+
+    const snapshot = remote.getSnapshot();
+    const [sent] = self(remote)?.statuses ?? [];
+    expect(sent).toMatchObject({ id: "bleeding", durationSeconds: 8, casterId: "foe" });
+    // To 0.1 s: on 20 Hz ticks, the rounding is off by 0 or exactly 0.05.
+    expect(Math.abs((sent?.endsAt ?? 0) - snapshot.elapsedSeconds - 5.25)).toBeLessThan(0.051);
     vi.restoreAllMocks();
   });
 });

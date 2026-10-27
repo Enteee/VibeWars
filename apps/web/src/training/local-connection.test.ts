@@ -36,6 +36,22 @@ function targetDummy(character = pyro()) {
 }
 
 describe("createLocalConnection", () => {
+  it("gives each status its end on the match clock, its length and its caster (#803)", () => {
+    const { setup, connection } = targetDummy();
+    setup.simulation.get(SELF_ID)?.combatant.statuses.apply("bleeding", 8, "dummy");
+    for (let i = 0; i < 10; i += 1) {
+      connection.advance(TICK_SECONDS);
+    }
+
+    const snapshot = connection.getSnapshot();
+    const remaining = setup.simulation.get(SELF_ID)?.combatant.statuses.get("bleeding");
+    const [shown] = snapshot.players.find((p) => p.sessionId === SELF_ID)?.statuses ?? [];
+    expect(shown).toMatchObject({ id: "bleeding", durationSeconds: 8, casterId: "dummy" });
+    // To 0.1 s: on 20 Hz ticks, the rounding is off by 0 or exactly 0.05.
+    const left = (shown?.endsAt ?? 0) - snapshot.elapsedSeconds;
+    expect(Math.abs(left - (remaining?.remainingSeconds ?? 0))).toBeLessThan(0.051);
+  });
+
   it("is a MatchConnection over the simulation: snapshot, bar and map", () => {
     const { connection } = targetDummy();
     const snapshot = connection.getSnapshot();

@@ -1,4 +1,5 @@
 import { findStatusDefinition } from "@vibewars/game-core";
+import type { PlayerSnapshot } from "@vibewars/game-session";
 
 /** A health bar's tint for the worst degeneration on its combatant (#807). */
 export type HealthTint = "hex" | "poison" | "bleeding";
@@ -43,9 +44,9 @@ const TINT_CLASSES: Readonly<Record<HealthTint, string>> = {
  */
 export function paintHealthTint(
   bar: { readonly classList: Pick<DOMTokenList, "toggle"> },
-  player: { readonly dead: boolean; readonly statuses: readonly string[] },
+  player: Pick<PlayerSnapshot, "dead" | "statuses">,
 ): void {
-  const tint = player.dead ? null : healthTint(player.statuses);
+  const tint = player.dead ? null : healthTint(player.statuses.map((status) => status.id));
   for (const [name, className] of Object.entries(TINT_CLASSES)) {
     bar.classList.toggle(className, name === tint);
   }
