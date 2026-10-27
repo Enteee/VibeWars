@@ -256,7 +256,9 @@ primary attributes give less. One you left at 0 stays 0, even when a
 rune raised it. A weapon's requirement is checked at each blow: a
 Warrior at exactly 9 Swordsmanship swings at a third of the damage
 while weakened. Two sources of weakness are one weakness, so it is
-never −2. Enfeeble (Necromancer, Curses) is its first source.
+never −2. Enfeeble (Necromancer, Curses) weakens one foe for 26 s;
+Enfeebling Blood (Necromancer, Curses, 1 energy and 17% of your health)
+weakens the target and every nearby foe for 13 s.
 
 **Cracked Armor takes 20 armor, but never below 60** (#763, GW1). It is
 taken before any status adds armor, so a cracked caster at 60 loses
@@ -278,8 +280,9 @@ is a new outbreak. The dead neither carry nor catch it. Rotting Flesh
 log reads "X catches Disease from Y".
 
 **Blind makes attacks miss**: weapon swings, each blow rolled on its own,
-and attack skills (Swift Chop, Backbreaker, Opening Cut, Barrage, Broad
-Head Arrow). Each blow of an attack skill is rolled when it
+and attack skills (Swift Chop, Sever Artery, Barrage and the rest).
+Throw Dirt (Ranger, Expertise) blinds the foe you touch and every foe
+adjacent to it for 13 s. Each blow of an attack skill is rolled when it
 lands, so a miss still costs energy or adrenaline and starts the
 recharge, and the missed foe gets none of the skill's riders. Spells are
 unaffected.
@@ -300,7 +303,8 @@ and Fast Casting, so far) leaves them alone.
 
 **Elite skills** wear a doubled gold frame wherever a skill is drawn,
 and their tooltip says "Elite" before the type (#459). A bar holds at most
-one: Barrage, Backbreaker and Broad Head Arrow, so far. In the build
+one: Barrage, Backbreaker, Broad Head Arrow, Eviscerate and Punishing
+Shot, so far. In the build
 editor, placing a second elite takes the first one's place on the bar
 and says so ("Broad Head Arrow replaced Barrage: only one elite skill per
 bar."); the library's Elite toggle lists only elites. A bar with two
@@ -392,8 +396,9 @@ damage. Daggers sometimes strike twice; a scythe also hits up to two foes
 adjacent to its target.
 
 **Attack skills ride the weapon** (ADR-0029). An attack skill needs its
-weapon: Swift Chop an axe, Backbreaker a hammer, Opening Cut a sword,
-Barrage and Broad Head Arrow any bow, Distracting Blow any melee weapon.
+weapon: Swift Chop, Eviscerate and Executioner's Strike an axe, Backbreaker a
+hammer, Sever Artery a sword, Jagged Strike daggers, Barrage, Broad Head
+Arrow and Punishing Shot any bow, Distracting Blow any melee weapon.
 With the wrong one it is refused ("Needs an axe."), and its slot is
 dimmed on the skill bar as if you could not pay for it; the build
 editor flags it ("Needs an axe — your weapon is a sword") but still

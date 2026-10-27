@@ -57,14 +57,14 @@ function land(skillId: string, caster: Combatant, target: Combatant) {
 }
 
 describe("condition-duration runes (#464)", () => {
-  it("a Restoration wearer hit by Opening Cut bleeds 12 s, and the event says 12", () => {
+  it("a Restoration wearer hit by Sever Artery bleeds 16.8 s, and the event says 16.8", () => {
     const target = wearing("target", 1, "restoration");
-    const events = land("warrior.sever-artery-lite", makeCombatant({ id: "caster" }), target);
+    const events = land("warrior.sever-artery", makeCombatant({ id: "caster" }), target);
 
-    expect(target.statuses.get("bleeding")?.remainingSeconds).toBeCloseTo(12, 9);
+    expect(target.statuses.get("bleeding")?.remainingSeconds).toBeCloseTo(16.8, 9);
     const applied = events.find((event) => event.kind === "status-applied");
     expect(applied).toMatchObject({ statusId: "bleeding" });
-    expect(applied?.kind === "status-applied" && applied.durationSeconds).toBeCloseTo(12, 9);
+    expect(applied?.kind === "status-applied" && applied.durationSeconds).toBeCloseTo(16.8, 9);
   });
 
   it("a Recovery wearer is dazed by Broad Head Arrow for 13.6 s", () => {
@@ -73,7 +73,7 @@ describe("condition-duration runes (#464)", () => {
     expect(target.statuses.get("dazed")?.remainingSeconds).toBeCloseTo(13.6, 9);
   });
 
-  it("Recovery shortens deep wound too, which no skill applies yet", () => {
+  it("Recovery shortens deep wound too", () => {
     const target = wearing("target", 1, "recovery");
     applyEffect(
       { kind: "apply-status", statusId: "deep-wound", durationSeconds: 10 },
@@ -115,17 +115,17 @@ describe("condition-duration runes (#464)", () => {
 
   it("the caster's own Restoration does not shorten the bleeding they inflict", () => {
     const target = makeCombatant({ id: "target", team: 1 });
-    land("warrior.sever-artery-lite", wearing("caster", 0, "restoration"), target);
-    expect(target.statuses.get("bleeding")?.remainingSeconds).toBe(15);
+    land("warrior.sever-artery", wearing("caster", 0, "restoration"), target);
+    expect(target.statuses.get("bleeding")?.remainingSeconds).toBe(21);
   });
 
   it("compares the scaled duration against a longer bleed already running", () => {
     const target = wearing("target", 1, "restoration");
-    target.statuses.apply("bleeding", 13, "earlier");
-    land("warrior.sever-artery-lite", makeCombatant({ id: "caster" }), target);
-    // 15 s scaled is 12 s, shorter than the 13 s left, so the 13 s stays.
+    target.statuses.apply("bleeding", 17, "earlier");
+    land("warrior.sever-artery", makeCombatant({ id: "caster" }), target);
+    // 21 s scaled is 16.8 s, shorter than the 17 s left, so the 17 s stays.
     expect(target.statuses.get("bleeding")).toMatchObject({
-      remainingSeconds: 13,
+      remainingSeconds: 17,
       sourceId: "earlier",
     });
   });

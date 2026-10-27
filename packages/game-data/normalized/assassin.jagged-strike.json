@@ -1,0 +1,25 @@
+{
+  "id": "assassin.jagged-strike",
+  "name": "Jagged Strike",
+  "profession": "assassin",
+  "attribute": "Dagger Mastery",
+  "type": "Lead attack.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0.5,
+  "rechargeSeconds": 2,
+  "description": "If Jagged Strike hits, your target suffers from Bleeding for 5...17...20 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Assassin/658-Jagged_Strike",
+    "fetchedAt": "2026-10-27T02:46:45.561Z"
+  },
+  "unmapped": {}
+}
