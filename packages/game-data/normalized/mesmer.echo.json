@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 10,
+  "upkeep": false,
   "description": "For 30 seconds, Echo is replaced with the next skill you use. Echo acts as this\n                skill for 20 seconds.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.25,
   "rechargeSeconds": 10,
+  "upkeep": false,
   "description": "Lose all enchantments. For each one lost, you gain\n                0...64...80 health, lose one hex, and lose one\n                condition (maximum 1...7...8 hexes and conditions).",
   "variant": "pvp",
   "ruleset": "gw1-reference",

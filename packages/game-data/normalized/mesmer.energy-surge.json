@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 2,
   "rechargeSeconds": 15,
+  "upkeep": false,
   "description": "Target foe loses 1...8...10 energy. For each point of energy lost, that foe and all nearby foes take 7 damage and all nearby foes take 75% of that damage.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

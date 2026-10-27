@@ -9,6 +9,7 @@
   "overcast": 0,
   "activationSeconds": 2,
   "rechargeSeconds": 4,
+  "upkeep": false,
   "description": "You gain 82...154...172 health. You have -40 armor while using this skill.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

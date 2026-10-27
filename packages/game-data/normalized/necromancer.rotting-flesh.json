@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 3,
   "rechargeSeconds": 3,
+  "upkeep": false,
   "description": "Target fleshy foe becomes Disease for 10...22...25 seconds, slowly losing Health.",
   "variant": "pvp",
   "ruleset": "gw1-reference",
