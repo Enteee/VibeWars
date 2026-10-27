@@ -86,6 +86,16 @@ export function builds({ mirror, scratch, logFile, log }, sha) {
       log(`could not unpack ${sha}`);
       return false;
     }
+    // The scratch sits inside the operator's checkout. Without a repository of
+    // its own, devenv installs the git hooks into that one, pointing them at a
+    // config no worktree has, so every commit there fails.
+    const init = spawnSync("git", [...GIT_HARDENING, "init", "-q", scratch], {
+      env: { ...process.env, ...GIT_ENV },
+    });
+    if (init.status !== 0) {
+      log("could not init the scratch repository");
+      return false;
+    }
     return devenvShell(["claude-llc", "--help"], scratch, logFile, log) === 0;
   } finally {
     fs.rmSync(scratch, { recursive: true, force: true });
