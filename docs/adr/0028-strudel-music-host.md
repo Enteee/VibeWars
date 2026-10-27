@@ -404,6 +404,36 @@ makes. Levers that might close the gap, none tried:
 A real-device run (desktop Firefox, a phone) is wanted before the default
 path ever flips. The architect asks the operator for it.
 
+### 10. A lower DSP budget (#446)
+
+After #448 and #509 what still scales with load is the size of the live
+audio graph, and the operator still heard cracks in a match at the top
+intensity levels. The budget went from 90 to **50** (`MAX_DSP_COST`, still
+provisional until a validated device measurement); the ruler (`cost.mjs`)
+did not move. 23 of 31 levels were over. They were trimmed with the levers
+that keep the character, in this order:
+
+1. A pad no longer overlaps the next chord. A chord-held `supersaw` or
+   `sawtooth` voice used `release` of 1 to 3 s over a chord of a cycle or
+   two, so two five-note chords sounded at once (10 voices). The pad now
+   ends at 90% of its chord (`.clip(.9)`) with a release inside the last
+   10%; the reverb tail and the slow `attack` of the next chord cover the
+   join. This alone took 15 levels under.
+2. `unison` of the pads: 3 to 2 on northern-pass and clash-of-banners; 2
+   to 1 on the strings of victors-hymn and hall-of-champions (one detuned-less
+   saw, under a second saw voice).
+3. Shorter releases on lines that overlapped themselves (ember-deep's stabs,
+   northern-pass's horn and whistle, hall-of-champions's bass and brass,
+   victors-hymn's tune and bass).
+4. Two timbre changes, both flagged for the ear: hall-of-champions's level-3
+   choir is a triangle chord with no filter, not a resonant saw (−10); and
+   victors-hymn's level-1 war drum lost its 700 Hz low-pass (−2).
+
+The peak gain numbers fall too (the overlap was part of them); levels still
+rise with intensity, so no top level is quieter than the one below it.
+Measured with `music:check`; the Firefox `audiostress` before/after table
+could not be run in the agent sandbox and is the operator's run.
+
 ## The scheduler works ahead
 
 Strudel's cyclist queries slots up to 0.2 s past its clock and skips every
@@ -469,7 +499,7 @@ Step 4 builds to these budgets, and QA (step 8) checks them.
 | Game page script time, music on minus off (median of ≥ 5 runs) | **≤ 1 percentage point** | below noise            |
 | Sound palette                                                  | 3 MB                     | –                      |
 | Worker-backed timers                                           | **required**             | –                      |
-| Audio-thread DSP cost of what sounds at once (`music:check`)   | **90** (provisional)     | 39 to 90, per level    |
+| Audio-thread DSP cost of what sounds at once (`music:check`)   | **50** (provisional)     | 24 to 49, per level    |
 | Reverb                                                         | one room: orbit 2 6 s    | –                      |
 
 The DSP cost and the room are checked by `pnpm music:check` (#508), with no

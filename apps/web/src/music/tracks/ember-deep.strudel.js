@@ -14,7 +14,7 @@ let P = arrange([8, A], [8, B], [8, A], [8, C], [8, D], [8, B], [8, C], [8, A], 
 stack(
   // 0: low brass swells and the sub
   chord(P).voicing().mode("below:g3")
-    .s("sawtooth").attack(.7).release(1.4).gain(.3)
+    .s("sawtooth").attack(.7).clip(.9).release(.2).gain(.3)
     .lpf(500).lpenv(3).lpa(.5).lpd(1.2).room(.6).roomsize(6).orbit(2),
   note(P.rootNotes(1)).s("sine").attack(.05).release(1.2).gain(.4),
   s("anvil:0 ~ ~ ~ ~ ~ ~ ~").slow(2).gain(.35).room(.6).roomsize(6).orbit(2),
@@ -28,8 +28,8 @@ stack(
     s("anvil:1 ~ ~ ~ ~ anvil:2 ~ ~").gain(.4).room(.5))),
   // 3: brass stabs and the choir
   layer(3, stack(
-    n("0 ~ ~ 0 ~ ~ 4 ~".add("<0 0 2 0 3 0 -1 0 4 2 0 0 -2 0 3 2>")).scale("c3:aeolian").s("sawtooth").attack(.02).release(.3).gain(.4)
+    n("0 ~ ~ 0 ~ ~ 4 ~".add("<0 0 2 0 3 0 -1 0 4 2 0 0 -2 0 3 2>")).scale("c3:aeolian").s("sawtooth").attack(.02).release(.1).gain(.4)
       .lpf(1000).lpenv(2).lpd(.3).room(.4).roomsize(6).orbit(2),
-    chord(P).voicing().mode("below:c5").s("sawtooth").lpq(4).attack(.4).release(1.5).gain(.2)
+    chord(P).voicing().mode("below:c5").s("sawtooth").lpq(4).attack(.4).clip(.9).release(.2).gain(.2)
       .lpf(2000).room(.8).roomsize(6).orbit(2)))
 ).postgain(.27)

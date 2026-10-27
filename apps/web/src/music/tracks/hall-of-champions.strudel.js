@@ -21,9 +21,9 @@ let brass = arrange([8, verse], [8, verse.add(2)], [8, verse.rev()], [8, verse.a
 stack(
   // 0: the full strings and the timpani ostinato
   chord(P).voicing().mode("below:f4")
-    .s("supersaw").unison(2).detune(.2).attack(.3).release(.8).gain(.25)
+    .s("supersaw").unison(1).attack(.3).clip(.9).release(.15).gain(.25)
     .lpf(ref(() => 900 + INTENSITY * 700)).room(.6).roomsize(6).orbit(2),
-  note(P.rootNotes(2)).s("sawtooth").attack(.02).release(.5).gain(.25).lpf(300),
+  note(P.rootNotes(2)).s("sawtooth").attack(.02).clip(.9).release(.2).gain(.25).lpf(300),
   s("timp:0 ~ [~ timp:0] timp:0 ~ ~ [timp:1 timp:0] ~").gain(.7).room(.35),
   // 1: strings in eighths, a ceremonial bell
   layer(1, stack(
@@ -33,12 +33,12 @@ stack(
   // 2: the brass melody, snare and cymbal
   layer(2, stack(
     n(brass).scale("d4:aeolian")
-      .s("sawtooth").attack(.04).release(.4).gain(.5).lpf(500).lpenv(3).lpa(.05).lpd(.5).room(.5).roomsize(6).orbit(2),
+      .s("sawtooth").attack(.04).release(.15).gain(.5).lpf(500).lpenv(3).lpa(.05).lpd(.5).room(.5).roomsize(6).orbit(2),
     s("~ snare:1 ~ snare:1").gain(.35).room(.3),
     s("crash:0 ~ ~ ~ ~ ~ ~ ~").slow(4).gain(.3))),
   // 3: the choir, doubled war drums
   layer(3, stack(
-    chord(P).voicing().mode("below:d5").s("sawtooth").lpq(4).attack(.2).release(.8).gain(.2)
-      .lpf(2400).room(.8).roomsize(6).orbit(2),
+    chord(P).voicing().mode("below:d5").s("triangle").attack(.2).clip(.9).release(.15).gain(.3)
+      .room(.8).roomsize(6).orbit(2),
     s("taiko:0 ~ taiko:1 taiko:0 ~ taiko:1 ~ taiko:0").gain(.5).room(.4)))
 ).postgain(.28)
