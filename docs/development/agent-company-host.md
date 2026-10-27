@@ -63,6 +63,17 @@ chat id to `devenv.local.nix`. Without the file every employee refuses to
 start and retries. To keep it elsewhere, set
 `vibewars.telegram.managerTokenFile` in `devenv.local.nix`.
 
+The agents run on the company's own Claude account (ADR-0031), never yours.
+Sign it in once, in its own config directory (a separate account from yours is
+best, but not checked):
+
+```sh
+CLAUDE_CONFIG_DIR=~/.claude-bot/creds/claude claude   # then /login
+```
+
+`claude-llc-init` then records it, and `claude-llc` refuses to start unless
+it is signed in.
+
 A machine set up before this had the token wherever `managerTokenFile`
 pointed and still has that line in `devenv.local.nix`, which keeps working.
 Without that line, move the file once into the credential home.

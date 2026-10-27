@@ -702,6 +702,7 @@ describe("Defensive Anthem (#956)", () => {
           surroundings: new Map(),
         },
         () => false,
+        [],
       );
       // A blocked Swift Chop still deals its damage: a block, not a hit.
       const blocked = events.some((event) => event.kind === "attack-blocked");

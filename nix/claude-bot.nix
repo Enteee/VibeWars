@@ -668,9 +668,13 @@ let
           printf '%s\n' "$merged" > "$boxDir/config/settings.json"
         fi
 
-        creds="$HOME/.claude/.credentials.json"
+        # The company's own Claude credential (#865), never the operator's
+        # ~/.claude. claude-llc refuses to boot without it; run alone, this
+        # says the same.
+        creds="${config.vibewars.claudeBot.credentials}/claude/.credentials.json"
         if [ ! -e "$creds" ]; then
-          echo "claude-bot: $creds not found. Run 'claude' once unsandboxed to log in." >&2
+          echo "claude-bot: $creds not found. Sign the company's Claude account in:" >&2
+          echo "claude-bot:   CLAUDE_CONFIG_DIR=$(dirname "$creds") claude   (then /login)" >&2
           exit 1
         fi
 
