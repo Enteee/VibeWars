@@ -209,7 +209,10 @@ number:
 **Deep Wound takes maximum health, and current health with it** (#764,
 GW1). Its loss, 20% of maximum health but never more than 100, comes off
 current health too as it lands, though never below 1: a deep wound alone
-never kills. Re-applying it while it is up takes nothing more. While it
+never kills. That health is not damage (#800): the log names Deep Wound
+for it, it counts as taken but not dealt, and nothing that reacts to
+damage, such as adrenaline, sees it. Re-applying it while it is up takes
+nothing more. While it
 lasts, heals from skills are 20% weaker and stop at the reduced maximum;
 regeneration and life steal are untouched. When it ends, the maximum
 comes back and current health stays where it is. Healing reductions

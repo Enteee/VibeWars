@@ -174,16 +174,17 @@ describe("deep wound (#764)", () => {
     return makeCombatant({ id: "target", team: 1, health, maxHealth });
   }
 
-  it("takes its loss off current health as it lands, reported as damage", () => {
+  it("takes its loss off current health as it lands, reported as health lost, not damage", () => {
     const target = woundedAt(480);
     const events = applyEffect(deepWound, context(makeCombatant({ id: "caster" }), target));
     expect(target.health).toBe(384);
     expect(events).toContainEqual({
-      kind: "damage",
+      kind: "health-lost",
       targetId: "target",
       amount: 96,
-      critical: false,
+      statusId: "deep-wound",
     });
+    expect(events.some((event) => event.kind === "damage")).toBe(false);
   });
 
   it("takes at most 100", () => {
@@ -198,10 +199,10 @@ describe("deep wound (#764)", () => {
     expect(target.health).toBe(1);
     expect(target.dead).toBe(false);
     expect(events).toContainEqual({
-      kind: "damage",
+      kind: "health-lost",
       targetId: "target",
       amount: 49,
-      critical: false,
+      statusId: "deep-wound",
     });
   });
 
@@ -211,7 +212,7 @@ describe("deep wound (#764)", () => {
     applyEffect(deepWound, ctx);
     const events = applyEffect({ ...deepWound, durationSeconds: 30 }, ctx);
     expect(target.health).toBe(384);
-    expect(events.some((event) => event.kind === "damage")).toBe(false);
+    expect(events.some((event) => event.kind === "health-lost")).toBe(false);
     expect(target.statuses.get("deep-wound")?.remainingSeconds).toBe(30);
   });
 

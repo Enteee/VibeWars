@@ -1081,7 +1081,10 @@ export class MatchSimulation {
   #healthLost(log: readonly CombatLogEntry[]): void {
     for (const entry of log) {
       for (const event of entry.events) {
-        if ((event.kind === "damage" || event.kind === "sacrifice") && event.amount > 0) {
+        if (
+          (event.kind === "damage" || event.kind === "sacrifice" || event.kind === "health-lost") &&
+          event.amount > 0
+        ) {
           const target = this.#participants.get(event.targetId);
           if (target !== undefined) {
             target.outOfCombatSeconds = 0;
@@ -1171,7 +1174,14 @@ export class MatchSimulation {
             attributeId: undefined,
             area: undefined,
             doubleStrike: false,
-            events: [{ kind: "damage", targetId: target.id, amount: loss, critical: false }],
+            events: [
+              {
+                kind: "health-lost",
+                targetId: target.id,
+                amount: loss,
+                statusId: application.statusId,
+              },
+            ],
           });
         }
       }
