@@ -1,5 +1,6 @@
 import { effectiveRank } from "../attributes.js";
 import type { ResolvedEquipment } from "../equipment/resolve.js";
+import type { DamageType } from "../equipment/types.js";
 import { FAST_CASTING_ATTRIBUTE, fastCastingMultiplier } from "../primary-attributes.js";
 import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
@@ -254,6 +255,21 @@ export function rankOf(holder: RankHolder, attributeId: string): number {
 /** The multiplier on the bearer's weapon roll: weakness's 0.34 (#762). */
 export function weaponDamageMultiplierOf(combatant: Combatant): number {
   return aggregateModifiers(combatant.statuses.active).weaponDamageMultiplier;
+}
+
+/**
+ * The type the bearer's attacks deal while a status sets one (#1021):
+ * the newest such status's, a pick and not a sum. `undefined`: the
+ * weapon's own.
+ */
+export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined {
+  for (const { id } of [...combatant.statuses.active].reverse()) {
+    const type = getStatusDefinition(id).attackDamageType;
+    if (type !== undefined) {
+      return type;
+    }
+  }
+  return undefined;
 }
 
 /**

@@ -13,6 +13,7 @@ import {
 } from "./status.js";
 import { effectiveActivationSeconds, outsideMatch } from "./tick.js";
 import type {
+  ApplyStatusEffect,
   RadiusArea,
   AttackWeaponClass,
   ChainRole,
@@ -200,6 +201,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const change = Math.round((definition.weaponDamageMultiplier - 1) * 100);
     parts.push(`${signed(change)}% weapon damage`);
   }
+  if (definition.attackDamageType !== undefined) {
+    parts.push(`attacks deal ${definition.attackDamageType} damage`);
+  }
   if (definition.attributeDelta !== 0) {
     parts.push(`${signed(definition.attributeDelta)} to all attributes`);
   }
@@ -299,6 +303,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     definition.triggers,
     ranks,
     definition.endsWhenBearerUsesSkill,
+    definition.category === "hex" || definition.category === "condition",
   )) {
     (clause ? parts : sentences).push(text);
   }
@@ -359,6 +364,7 @@ function describeTriggers(
   triggers: readonly StatusTrigger[],
   ranks: ReadonlyMap<string, number>,
   once: boolean,
+  bearerIsFoe: boolean,
 ): TriggerLine[] {
   const groups = new Map<string, { trigger: StatusTrigger; on: StatusTriggerEvent[] }>();
   for (const trigger of triggers) {
@@ -379,6 +385,7 @@ function describeTriggers(
           ? NEXT_SKILL
           : `whenever it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`,
       ranks,
+      bearerIsFoe,
     ),
   );
 }
@@ -397,6 +404,7 @@ function describeTrigger(
   trigger: StatusTrigger,
   when: string,
   ranks: ReadonlyMap<string, number>,
+  bearerIsFoe: boolean,
 ): TriggerLine[] {
   const amount = (magnitude: Magnitude): string =>
     String(describeMagnitude(magnitude, ranks).current);
@@ -420,17 +428,21 @@ function describeTrigger(
     if (effect.kind === "life-steal" && trigger.target === "bearer") {
       return [clause(`its caster steals ${amount(effect.amount)} Health ${when}`)];
     }
-    // The caster's foes beside its bearer are the bearer's allies.
+    // The caster's foes beside a hexed or conditioned bearer are the
+    // bearer's allies; beside one wearing its own enchantment, its foes (#1021).
     if (effect.kind === "splash" && trigger.target === "bearer") {
       const area = AREA_TEXT.get(effect.radius);
-      const allies =
-        area === "adjacent"
+      const allies = !bearerIsFoe
+        ? lowerFirst(foesWithin(effect.radius))
+        : area === "adjacent"
           ? "its adjacent allies"
           : `its allies ${area ?? `within ${String(effect.radius)}`}`;
       return effect.effects.map((inner) =>
         inner.kind === "damage"
           ? clause(`${allies} take ${amount(inner.amount)} damage ${when}`)
-          : sentence(`${when}: ${allies}: ${lowerFirst(describeEffect(inner, ranks).text)}`),
+          : inner.kind === "apply-status"
+            ? sentence(`${when}: ${allies} ${suffered(inner, ranks)}`)
+            : sentence(`${when}: ${allies}: ${lowerFirst(describeEffect(inner, ranks).text)}`),
       );
     }
     return describeEffects(effect, ranks).map(({ text }) =>
@@ -445,6 +457,17 @@ function describeNextAttackSkill(effect: SkillEffect): string[] {
     return [`next attack skill: ${statusName(effect.statusId)} ${seconds(effect.durationSeconds)}`];
   }
   return describeEffects(effect, new Map()).map(({ text }) => `next attack skill: ${text}`);
+}
+
+/**
+ * A status a splash puts on those it reaches, as the second half of a
+ * line (#1021): "nearby foes suffer Bleeding for 13s (…)", not "applies".
+ */
+function suffered(effect: ApplyStatusEffect, ranks: ReadonlyMap<string, number>): string {
+  return (
+    `suffer ${statusName(effect.statusId)} for ${seconds(effect.durationSeconds)} ` +
+    `(${describeStatus(effect.statusId, ranks)})`
+  );
 }
 
 /** "Deals 63 damage" as the second half of a line: "deals 63 damage". */
@@ -473,7 +496,9 @@ function conditionText(condition: EffectCondition): string {
     case "target-has":
       return `If target has ${aCategory(condition.category)}`;
     case "caster-has":
-      return `If you have ${aCategory(condition.category)}`;
+      return condition.profession === undefined
+        ? `If you have ${aCategory(condition.category)}`
+        : `If you have a ${getProfession(condition.profession).name} ${condition.category}`;
     case "target-casting":
       return "If target is casting a spell";
     case "target-alone":
@@ -707,9 +732,11 @@ function describeEffect(
     case "interrupt":
       return {
         text:
-          effect.only === "spell-or-chant"
-            ? "Interrupts the target's spell or chant, if they are casting one"
-            : "Interrupts the target's current cast, if they are casting",
+          effect.only === "spell"
+            ? "Interrupts the target's spell, if they are casting one"
+            : effect.only === "spell-or-chant"
+              ? "Interrupts the target's spell or chant, if they are casting one"
+              : "Interrupts the target's current cast, if they are casting",
         magnitude: undefined,
       };
     case "knockdown":
@@ -762,7 +789,9 @@ function describeEffect(
             (each.perEnergyLost === undefined ? "" : " for each point of energy lost")
           : each.kind === "interrupt"
             ? "are interrupted if casting"
-            : lowerFirst(description.text),
+            : each.kind === "apply-status"
+              ? suffered(each, ranks)
+              : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
@@ -1049,6 +1078,17 @@ export function describeSkill(
         },
       ]
     : [];
+  // Eremite's Attack's every adjacent foe while a state holds (#1021).
+  const cleavesAllWhen = cleaves ? skill.attack.cleavesAllWhen : undefined;
+  const cleaveAllLine =
+    cleavesAllWhen === undefined
+      ? []
+      : [
+          {
+            text: `${conditionText(cleavesAllWhen)}: hits every adjacent foe`,
+            magnitude: undefined,
+          },
+        ];
   // Its own armor penetration (#923): Spear of Lightning's 25%.
   const armorPenetration = skill.attack?.armorPenetration ?? 0;
   const penetrationLine =
@@ -1086,6 +1126,7 @@ export function describeSkill(
     ...chainLine,
     ...bonusLine,
     ...cleaveLine,
+    ...cleaveAllLine,
     ...penetrationLine,
     ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
     ...onBlocked,
