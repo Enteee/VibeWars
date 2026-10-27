@@ -47,6 +47,7 @@
     "deep-wound",
     "defensive-anthem",
     "disease",
+    "diversion",
     "empathy",
     "faintheartedness",
     "fall-back",
@@ -80,12 +81,15 @@
     "sand-shards",
     "shadow-of-fear",
     "shard-storm",
+    "spirit-light-weapon",
     "spiteful-spirit",
     "sprint",
     "stand-your-ground",
     "vow-of-strength",
     "watch-yourself",
     "weakness",
+    "weapon-of-aggression",
+    "weapon-of-quickening",
     "weapon-of-warding"
   ],
   "constants": {
@@ -369,6 +373,7 @@
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
@@ -402,12 +407,15 @@
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shard-storm" },
+                  { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
+                  { "literal": "weapon-of-aggression" },
+                  { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
@@ -456,6 +464,7 @@
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
@@ -489,12 +498,15 @@
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shard-storm" },
+                  { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
+                  { "literal": "weapon-of-aggression" },
+                  { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
@@ -540,6 +552,7 @@
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
@@ -573,12 +586,15 @@
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shard-storm" },
+                  { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
+                  { "literal": "weapon-of-aggression" },
+                  { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
@@ -621,6 +637,7 @@
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
@@ -654,12 +671,15 @@
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shard-storm" },
+                  { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
+                  { "literal": "weapon-of-aggression" },
+                  { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
@@ -731,6 +751,14 @@
         },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "recharge-lengthened" } },
+            { "name": "seconds", "optional": false, "type": "number" },
+            { "name": "skillId", "optional": false, "type": "string" },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "skill-disabled" } },
             { "name": "seconds", "optional": false, "type": "number" },
             { "name": "skillId", "optional": false, "type": "string" },
@@ -763,6 +791,7 @@
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
@@ -796,12 +825,15 @@
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shard-storm" },
+                  { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
+                  { "literal": "weapon-of-aggression" },
+                  { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-warding" }
                 ]
               }
@@ -835,6 +867,7 @@
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
                   { "literal": "disease" },
+                  { "literal": "diversion" },
                   { "literal": "empathy" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
@@ -868,12 +901,15 @@
                   { "literal": "sand-shards" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shard-storm" },
+                  { "literal": "spirit-light-weapon" },
                   { "literal": "spiteful-spirit" },
                   { "literal": "sprint" },
                   { "literal": "stand-your-ground" },
                   { "literal": "vow-of-strength" },
                   { "literal": "watch-yourself" },
                   { "literal": "weakness" },
+                  { "literal": "weapon-of-aggression" },
+                  { "literal": "weapon-of-quickening" },
                   { "literal": "weapon-of-warding" }
                 ]
               }

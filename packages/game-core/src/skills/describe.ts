@@ -174,6 +174,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.healthPerSecondWhileMoving !== 0) {
     parts.push(`${String(definition.healthPerSecondWhileMoving)} Health per second while moving`);
   }
+  if (definition.healthPerSecond !== 0) {
+    parts.push(`+${String(definition.healthPerSecond)} Health per second`);
+  }
   if (definition.armorReduction !== undefined) {
     const { amount, floor } = definition.armorReduction;
     parts.push(`−${String(amount)} armor (not below ${String(floor)})`);
@@ -288,7 +291,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   // A trigger that reads "when it ends: removes 1 hex" is a sentence of
   // its own (#944), not one more clause after a comma.
   const sentences: string[] = [];
-  for (const { text, clause } of describeTriggers(definition.triggers, ranks)) {
+  for (const { text, clause } of describeTriggers(
+    definition.triggers,
+    ranks,
+    definition.endsWhenBearerUsesSkill,
+  )) {
     (clause ? parts : sentences).push(text);
   }
   if (parts.length === 0 && sentences.length === 0) {
@@ -341,11 +348,13 @@ interface TriggerLine {
 
 /**
  * A status's triggers, those that do the same thing said once (#935):
- * Spiteful Spirit's "whenever it uses a skill or attacks".
+ * Spiteful Spirit's "whenever it uses a skill or attacks". One that ends
+ * when its bearer uses a skill answers only the next use (#949).
  */
 function describeTriggers(
   triggers: readonly StatusTrigger[],
   ranks: ReadonlyMap<string, number>,
+  once: boolean,
 ): TriggerLine[] {
   const groups = new Map<string, { trigger: StatusTrigger; on: StatusTriggerEvent[] }>();
   for (const trigger of triggers) {
@@ -362,11 +371,16 @@ function describeTriggers(
       trigger,
       on.includes("ends") || on.includes("expires")
         ? `when it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`
-        : `whenever it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`,
+        : once && on.includes("bearer-uses-skill")
+          ? NEXT_SKILL
+          : `whenever it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`,
       ranks,
     ),
   );
 }
+
+/** The one use a status that ends on it answers (#949), as its tooltip says it. */
+const NEXT_SKILL = "the next time it uses a skill";
 
 /**
  * A status's answer to its bearer (#469): "takes 119 damage whenever it
@@ -393,6 +407,11 @@ function describeTrigger(
     }
     if (effect.kind === "heal" && trigger.target === "source") {
       return [clause(`heals its caster for ${amount(effect.amount)} ${when}`)];
+    }
+    if (effect.kind === "lengthen-recharge" && when === NEXT_SKILL) {
+      return [
+        clause(`the next skill it uses takes ${amount(effect.seconds)} seconds longer to recharge`),
+      ];
     }
     if (effect.kind === "life-steal" && trigger.target === "bearer") {
       return [clause(`its caster steals ${amount(effect.amount)} Health ${when}`)];
@@ -688,6 +707,13 @@ function describeEffect(
           effect.which === "interrupted"
             ? `The interrupted skill is disabled for ${time}`
             : `That skill and all skills of the same attribute are disabled for ${time}`,
+        magnitude,
+      };
+    }
+    case "lengthen-recharge": {
+      const magnitude = describeMagnitude(effect.seconds, ranks);
+      return {
+        text: `That skill takes ${String(magnitude.current)} seconds longer to recharge`,
         magnitude,
       };
     }

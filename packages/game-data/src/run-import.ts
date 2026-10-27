@@ -233,6 +233,21 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ritualist/770-Wielder's_Boon",
   },
   {
+    id: "ritualist.spirit-light-weapon",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/763-Spirit_Light_Weapon",
+  },
+  {
+    id: "ritualist.weapon-of-quickening",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/749-Weapon_of_Quickening",
+  },
+  {
+    id: "ritualist.weapon-of-aggression",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/1206-Weapon_of_Aggression",
+  },
+  {
     id: "mesmer.power-spike",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/320-Power_Spike",
@@ -386,6 +401,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "mesmer.empathy",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/310-Empathy",
+  },
+  {
+    id: "mesmer.diversion",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/309-Diversion",
   },
   {
     id: "monk.restore-life",

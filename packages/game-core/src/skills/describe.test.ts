@@ -357,6 +357,12 @@ describe("attack skills (#417)", () => {
     expect(describeStatus("mantra-of-recovery")).toBe("spells recharge 33% faster");
   });
 
+  it("words the Ritualist's weapon spells (#975)", () => {
+    expect(describeStatus("spirit-light-weapon")).toBe("+21 Health per second");
+    expect(describeStatus("weapon-of-quickening")).toBe("spells recharge 33% faster");
+    expect(describeStatus("weapon-of-aggression")).toBe("attacks 25% faster");
+  });
+
   it("words Spear of Lightning's type and penetration, and Leader's Comfort's per ally (#923)", () => {
     const at12 = (id: string, attributeId: string) =>
       describeSkill(skill(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
