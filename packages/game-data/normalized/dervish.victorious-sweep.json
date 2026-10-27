@@ -1,0 +1,26 @@
+{
+  "id": "dervish.victorious-sweep",
+  "name": "Victorious Sweep",
+  "profession": "dervish",
+  "attribute": "Scythe Mastery",
+  "type": "Melee attack.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 4,
+  "upkeep": false,
+  "description": "If this attack hits, you deal +5...21...25 damage. If target foe has less Health than you, you gain 30...70...80 Health.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Dervish/1030-Victorious_Sweep",
+    "fetchedAt": "2026-10-27T15:23:20.213Z"
+  },
+  "unmapped": {}
+}

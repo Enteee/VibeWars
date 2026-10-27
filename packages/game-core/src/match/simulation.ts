@@ -1480,6 +1480,8 @@ export class MatchSimulation {
     // Only a skill that lands at once can shorten its own recharge (#845):
     // one that flies has started it by the time it lands.
     const only = (events: CombatEvent[]): SkillOutcome => ({ events, rechargeFraction: 0 });
+    // What the caster's statuses add to its hits, each logged apart (#939).
+    const riders: FiredTrigger[] = [];
     const resolve =
       flight !== undefined
         ? (resolution: SkillResolution) =>
@@ -1487,7 +1489,7 @@ export class MatchSimulation {
         : skill.attack === undefined
           ? (resolution: SkillResolution) => resolveSkillEffects(resolution)
           : speed === undefined
-            ? (resolution: SkillResolution) => only(resolveAttackSkill(resolution, exposed))
+            ? (resolution: SkillResolution) => only(resolveAttackSkill(resolution, exposed, riders))
             : (resolution: SkillResolution) =>
                 only(this.#releaseSkill(record, resolution, speed, dt));
     const { events, rechargeFraction } = resolve({
@@ -1591,6 +1593,7 @@ export class MatchSimulation {
       doubleStrike: false,
       events,
     });
+    this.#logFired(riders);
     // After the skill's own effects, as their own entries (#469): a spell
     // finished is Backfire's moment, an attack skill Empathy's. Any skill
     // used is Spiteful Spirit's (#935), and an attack skill twice over.
@@ -1993,7 +1996,7 @@ export class MatchSimulation {
       this.#fireTriggers(record, "bearer-attacks");
       return;
     }
-    const { events, doubleStrike, landed } = resolveSwing({
+    const { events, doubleStrike, landed, fired } = resolveSwing({
       attacker: record.combatant,
       target,
       surroundings: this.#participants,
@@ -2006,6 +2009,7 @@ export class MatchSimulation {
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events, doubleStrike);
+    this.#logFired(fired);
     this.#fireTriggers(record, "bearer-attacks");
   }
 
@@ -2193,6 +2197,8 @@ export class MatchSimulation {
     }
     const events: CombatEvent[] = [];
     const attacker = this.#participants.get(projectile.attackerId);
+    // What the attacker's statuses add to the hit, each logged apart (#939).
+    const fired: FiredTrigger[] = [];
     const riders = (effects: Skill["effects"]): CombatEvent[] =>
       skillHit === undefined || attacker === undefined
         ? []
@@ -2246,6 +2252,7 @@ export class MatchSimulation {
             this.#rng,
             this.#ruleset.combat,
             this.#participants,
+            fired,
           ),
         );
         bearerHit(attacker.combatant, events);
@@ -2272,6 +2279,7 @@ export class MatchSimulation {
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     this.#logShot(projectile, events);
+    this.#logFired(fired);
   }
 
   /**

@@ -70,6 +70,7 @@ function attackSkill(attacker: Combatant, id: string, target: Combatant): Combat
       rules: RULES.combat,
     },
     NOWHERE,
+    [],
   );
 }
 

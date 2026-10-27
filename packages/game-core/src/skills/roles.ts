@@ -91,7 +91,11 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
               effect.kind === "spread-gained-condition" ? [] : [effect],
             ),
           );
-  const riders = [...status.onAttackHit, ...(status.nextAttackSkill ?? []), ...onEnd];
+  const riders = [
+    ...(status.onAttackHit?.effects ?? []),
+    ...(status.nextAttackSkill ?? []),
+    ...onEnd,
+  ];
   return [...roles, ...riders.flatMap(effectRoles)];
 }
 

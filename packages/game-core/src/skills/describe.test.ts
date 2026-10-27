@@ -177,6 +177,7 @@ describe("describeSkill", () => {
       ["monk.healing-prayers", 12],
       ["dervish.mysticism", 12],
       ["ranger.marksmanship", 12],
+      ["ritualist.restoration-magic", 12],
     ]);
     const lines = (id: string) => describeSkill(skill(id), ranks).effects.map((e) => e.text);
     expect(lines("monk.word-of-healing")).toEqual([
@@ -190,6 +191,10 @@ describe("describeSkill", () => {
     expect(lines("ranger.savage-shot")).toEqual([
       "If target is casting a spell: +25 damage",
       "Interrupts the target's current cast, if they are casting",
+    ]);
+    expect(lines("ritualist.wielders-boon")).toEqual([
+      "Heals for 51",
+      "If target has a weapon spell: heals for 63",
     ]);
   });
 
