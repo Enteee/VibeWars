@@ -12,9 +12,12 @@ import {
 import { professionIcon } from "../ui/icons.js";
 import { prefersReducedMotion } from "../ui/recharge-overlay.js";
 import {
+  BODY_EDGE,
+  DEAD_COLOUR,
   EMPTY_SNAPSHOT,
   PROFESSION_GLYPH_SIZE,
   areaFlashAlpha,
+  bodyGlyphLayout,
   decayAreaFlashes,
   decaySwingFlashes,
   floatingTextY,
@@ -96,10 +99,7 @@ const HEALTH_BAR_LOW = 0xff7b72;
 const CAST_BAR_FILL = 0xd7dee8;
 /** Marks the actor you control, inside its circle, in any team colour. */
 const SELF_RIM = 0xd7dee8;
-/** Edges every living body, darker than the grid and walls, so no body blends into what it stands on. */
-const BODY_EDGE = 0x0b0f14;
 const BODY_EDGE_WIDTH = 1.5;
-const DEAD_COLOUR = 0x4a5464;
 /** How opaque a weapon swing's number is at most: present, never louder than a skill (#160). */
 const LIGHT_TEXT_ALPHA = 0.8;
 /** A floating text's size by weight: a critical hit is the loudest number on screen (#533). */
@@ -124,8 +124,24 @@ const DEAD_INK_TINT = 0x4a5464;
 /** An off-screen marker's length, tip to base, and width, screen px (#440). */
 const EDGE_MARKER_LENGTH = 12;
 const EDGE_MARKER_WIDTH = 10;
+/**
+ * The world's layers, bottom up (#1037). The floor and the bodies; the
+ * profession glyph inside each body; every mark on a body (off-hand,
+ * weapon, target ring, call chevron, watch brackets, bars, swing flashes),
+ * so a weapon crosses the glyph, never the reverse; then shots, status
+ * icons, names and numbers, which were over the bodies before the split.
+ */
+const BODY_DEPTH = 0;
+const BODY_GLYPH_DEPTH = 1;
+const MARK_DEPTH = 2;
+const OVERLAY_DEPTH = 3;
 /** Over every world object, names and numbers included. */
 const EDGE_MARKER_DEPTH = 10;
+/**
+ * The body glyph's texture size, px: 13 world units at the Close zoom
+ * (1080 / 640) on a 2x display is about 44 px, so it stays crisp there.
+ */
+const BODY_GLYPH_TEXTURE_SIZE = 48;
 
 const HEALTH_BAR_WIDTH = 34;
 const HEALTH_BAR_HEIGHT = 4;
@@ -133,7 +149,10 @@ const HEALTH_BAR_HEIGHT = 4;
 export class ArenaScene extends Phaser.Scene {
   public static readonly KEY = "arena";
 
+  /** The floor and the bodies, under the body glyphs. */
   private graphics: Phaser.GameObjects.Graphics | undefined;
+  /** Every mark on a body, over the body glyphs (#1037). */
+  private markGraphics: Phaser.GameObjects.Graphics | undefined;
   /** The off-screen markers, drawn in screen px over everything (#440). */
   private markerGraphics: Phaser.GameObjects.Graphics | undefined;
   private snapshot: ArenaSnapshot = EMPTY_SNAPSHOT;
@@ -171,6 +190,8 @@ export class ArenaScene extends Phaser.Scene {
   private nameLabels = new Map<string, Phaser.GameObjects.Text>();
   /** The primary profession's glyph before each name, one pooled image per actor (#281). */
   private nameGlyphs = new Map<string, Phaser.GameObjects.Image>();
+  /** The primary profession's glyph inside each body, one pooled image per actor (#1037). */
+  private bodyGlyphs = new Map<string, Phaser.GameObjects.Image>();
   /** Status ids the server sent that this client has no icon for. */
   private readonly unknownStatuses = new Set<string>();
   /** Each attacker's swing, which its weapon mark plays (#558), by actor id. */
@@ -248,6 +269,10 @@ export class ArenaScene extends Phaser.Scene {
         width: PROFESSION_GLYPH_SIZE,
         height: PROFESSION_GLYPH_SIZE,
       });
+      this.load.svg(bodyProfessionTexture(profession), professionIcon(profession), {
+        width: BODY_GLYPH_TEXTURE_SIZE,
+        height: BODY_GLYPH_TEXTURE_SIZE,
+      });
     }
     for (const sprite of PROJECTILE_SPRITES) {
       this.load.svg(projectileTexture(sprite), projectileSpriteUrl(sprite), {
@@ -258,16 +283,19 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   public create(): void {
-    this.graphics = this.add.graphics();
+    this.graphics = this.add.graphics().setDepth(BODY_DEPTH);
+    this.markGraphics = this.add.graphics().setDepth(MARK_DEPTH);
     this.markerGraphics = this.add.graphics().setDepth(EDGE_MARKER_DEPTH);
   }
 
   public override update(time: number, deltaMs: number): void {
     const g = this.graphics;
-    if (g === undefined) {
+    const marks = this.markGraphics;
+    if (g === undefined || marks === undefined) {
       return;
     }
     g.clear();
+    marks.clear();
     this.now = time / 1000;
     this.reducedMotion = prefersReducedMotion();
     this.clock.observe(this.snapshot.clock, this.now);
@@ -294,12 +322,13 @@ export class ArenaScene extends Phaser.Scene {
       this.drawPing(g, ping);
     }
     for (const actor of this.snapshot.actors) {
-      this.drawActor(g, actor);
+      this.drawActor(g, marks, actor);
     }
     this.swingFlashes = decaySwingFlashes(this.swingFlashes, deltaMs / 1000);
     for (const flash of this.swingFlashes) {
-      this.drawSwingFlash(g, flash);
+      this.drawSwingFlash(marks, flash);
     }
+    this.updateBodyGlyphs();
     this.updateProjectiles(time / 1000);
     this.updateStatusIcons();
     this.updateNameLabels();
@@ -427,7 +456,11 @@ export class ArenaScene extends Phaser.Scene {
    * as a standing one is, with the weapon mark dropped beside it. The
    * off-hand is not drawn: one dropped thing reads, two clutter.
    */
-  private drawLyingBody(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
+  private drawLyingBody(
+    g: Phaser.GameObjects.Graphics,
+    marks: Phaser.GameObjects.Graphics,
+    actor: RenderableActor,
+  ): void {
     const { x, y } = actor.position;
     const pose = lyingPose(x, y, actor.radius, actor.facing);
     const outline = (points: readonly { readonly x: number; readonly y: number }[]) => {
@@ -451,7 +484,7 @@ export class ArenaScene extends Phaser.Scene {
       outline(lyingPose(x, y, actor.radius - 2, actor.facing).body);
       g.strokePath();
     }
-    this.drawWeaponMark(g, actor, pose.weapon);
+    this.drawWeaponMark(marks, actor, pose.weapon);
   }
 
   /**
@@ -663,7 +696,9 @@ export class ArenaScene extends Phaser.Scene {
       }
       flying.add(shot.id);
       if (shown === undefined) {
-        const image = this.add.image(position.x, position.y, projectileTexture(shot.sprite));
+        const image = this.add
+          .image(position.x, position.y, projectileTexture(shot.sprite))
+          .setDepth(OVERLAY_DEPTH);
         image.setRotation(projectileHeading(shot));
         image.setTint(shot.colour);
         this.projectileImages.set(shot.id, { image, to: shot.to, endedAt: undefined });
@@ -693,7 +728,16 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
-  private drawActor(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
+  /**
+   * One actor: its body on `g`, every mark on it on `marks`, over the
+   * body glyphs (#1037). In a clump a neighbour's weapon now crosses your
+   * body: the weapon is the more urgent read.
+   */
+  private drawActor(
+    g: Phaser.GameObjects.Graphics,
+    marks: Phaser.GameObjects.Graphics,
+    actor: RenderableActor,
+  ): void {
     const { x, y } = actor.position;
 
     if (actor.dead) {
@@ -704,7 +748,7 @@ export class ArenaScene extends Phaser.Scene {
     }
 
     if (actor.knockedDown) {
-      this.drawLyingBody(g, actor);
+      this.drawLyingBody(g, marks, actor);
     } else {
       g.fillStyle(teamColour(actor.team), 1);
       g.fillCircle(x, y, actor.radius);
@@ -719,25 +763,25 @@ export class ArenaScene extends Phaser.Scene {
       }
 
       // Off-hand, then weapon mark, then target ring: the order #275 gives.
-      this.drawOffhandMark(g, actor);
-      this.drawWeaponMark(g, actor);
+      this.drawOffhandMark(marks, actor);
+      this.drawWeaponMark(marks, actor);
     }
 
     if (actor.id === this.snapshot.targetId) {
-      g.lineStyle(2, TARGET_RING, 1);
-      g.strokeCircle(x, y, actor.radius + TARGET_RING_OFFSET);
+      marks.lineStyle(2, TARGET_RING, 1);
+      marks.strokeCircle(x, y, actor.radius + TARGET_RING_OFFSET);
     }
     if (actor.id === this.snapshot.calledId) {
-      this.drawCallChevron(g, actor);
+      this.drawCallChevron(marks, actor);
     }
     if (actor.id === this.snapshot.watchedId) {
-      this.drawWatchBrackets(g, actor);
+      this.drawWatchBrackets(marks, actor);
     }
 
-    this.drawHealthBar(g, actor);
+    this.drawHealthBar(marks, actor);
 
     if (actor.castProgress !== undefined) {
-      this.drawCastBar(g, actor, actor.castProgress);
+      this.drawCastBar(marks, actor, actor.castProgress);
     }
   }
 
@@ -760,7 +804,7 @@ export class ArenaScene extends Phaser.Scene {
         const texture = statusTexture(statuses[index] ?? "");
         let image = pool[index];
         if (image === undefined) {
-          image = this.add.image(position.x, position.y, texture);
+          image = this.add.image(position.x, position.y, texture).setDepth(OVERLAY_DEPTH);
           pool.push(image);
         }
         image.setTexture(texture).setPosition(position.x, position.y).setVisible(true);
@@ -777,7 +821,8 @@ export class ArenaScene extends Phaser.Scene {
       if (more === undefined) {
         more = this.add
           .text(0, 0, "", { fontSize: "11px", fontFamily: "ui-monospace, monospace", color: INK })
-          .setOrigin(0.5, 0.5);
+          .setOrigin(0.5, 0.5)
+          .setDepth(OVERLAY_DEPTH);
         this.statusOverflow.set(actor.id, more);
       }
       screenSized(more, this.cameras.main.zoom);
@@ -816,7 +861,8 @@ export class ArenaScene extends Phaser.Scene {
       if (label === undefined) {
         label = this.add
           .text(0, 0, "", { fontSize: "11px", fontFamily: "ui-monospace, monospace", color: INK })
-          .setOrigin(0.5, 1);
+          .setOrigin(0.5, 1)
+          .setDepth(OVERLAY_DEPTH);
         this.nameLabels.set(actor.id, label);
       }
       // setText skips an unchanged string, but setColor redraws and
@@ -856,7 +902,11 @@ export class ArenaScene extends Phaser.Scene {
     }
     const texture = professionTexture(actor.profession);
     if (glyph === undefined) {
-      glyph = this.add.image(0, 0, texture).setOrigin(0.5, 1).setTintMode(Phaser.TintModes.FILL);
+      glyph = this.add
+        .image(0, 0, texture)
+        .setOrigin(0.5, 1)
+        .setTintMode(Phaser.TintModes.FILL)
+        .setDepth(OVERLAY_DEPTH);
       this.nameGlyphs.set(actor.id, glyph);
     }
     if (glyph.texture.key !== texture) {
@@ -868,6 +918,52 @@ export class ArenaScene extends Phaser.Scene {
     }
     screenSized(glyph, this.cameras.main.zoom);
     glyph.setPosition(layout.glyphX, layout.bottom).setVisible(shown);
+  }
+
+  /**
+   * The primary profession's glyph inside every body (#1037): upright,
+   * world sized, between the bodies and their marks. Texture, tint and
+   * alpha are set only when they change, as the name glyph's are; an actor
+   * that left takes its glyph with it.
+   */
+  private updateBodyGlyphs(): void {
+    const seen = new Set<string>();
+    for (const actor of this.snapshot.actors) {
+      seen.add(actor.id);
+      const layout = bodyGlyphLayout(actor);
+      let glyph = this.bodyGlyphs.get(actor.id);
+      if (layout === undefined) {
+        glyph?.setVisible(false);
+        continue;
+      }
+      const texture = bodyProfessionTexture(layout.profession);
+      if (glyph === undefined) {
+        glyph = this.add
+          .image(0, 0, texture)
+          .setTintMode(Phaser.TintModes.FILL)
+          .setDepth(BODY_GLYPH_DEPTH);
+        this.bodyGlyphs.set(actor.id, glyph);
+      }
+      if (glyph.texture.key !== texture) {
+        glyph.setTexture(texture);
+      }
+      if (glyph.tint !== layout.tint) {
+        glyph.setTint(layout.tint);
+      }
+      if (glyph.alpha !== layout.alpha) {
+        glyph.setAlpha(layout.alpha);
+      }
+      glyph
+        .setDisplaySize(layout.size, layout.size)
+        .setPosition(layout.x, layout.y)
+        .setVisible(true);
+    }
+    for (const [id, glyph] of this.bodyGlyphs) {
+      if (!seen.has(id)) {
+        glyph.destroy();
+        this.bodyGlyphs.delete(id);
+      }
+    }
   }
 
   /**
@@ -929,7 +1025,7 @@ export class ArenaScene extends Phaser.Scene {
           strokeThickness: 3,
         });
         // Left-aligned, bottom on the position: it grows away from the bar.
-        object.setOrigin(0, 1);
+        object.setOrigin(0, 1).setDepth(OVERLAY_DEPTH);
         this.floatingTextObjects.set(floating.id, object);
       }
 
@@ -986,6 +1082,11 @@ function projectileTexture(sprite: string): string {
 
 function professionTexture(profession: ProfessionId): string {
   return `profession:${profession}`;
+}
+
+/** The glyph inside the body (#1037), loaded larger than the name's: it is world sized. */
+function bodyProfessionTexture(profession: ProfessionId): string {
+  return `body-profession:${profession}`;
 }
 
 function statusTexture(id: string): string {

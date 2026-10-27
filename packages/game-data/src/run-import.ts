@@ -253,6 +253,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ritualist/1206-Weapon_of_Aggression",
   },
   {
+    id: "ritualist.weapon-of-remedy",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/975-Weapon_of_Remedy",
+  },
+  {
+    id: "ritualist.vengeful-weapon",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/767-Vengeful_Weapon",
+  },
+  {
+    id: "ritualist.splinter-weapon",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/726-Splinter_Weapon",
+  },
+  {
+    id: "ritualist.mending-grip",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/1209-Mending_Grip",
+  },
+  {
     id: "mesmer.power-spike",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/320-Power_Spike",
@@ -331,6 +351,31 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "paragon.cruel-spear",
     profession: "paragon",
     url: "https://www.gw-memorial.net/skills/Paragon/1119-Cruel_Spear",
+  },
+  {
+    id: "paragon.barbed-spear",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1117-Barbed_Spear",
+  },
+  {
+    id: "paragon.maiming-spear",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1233-Maiming_Spear",
+  },
+  {
+    id: "paragon.merciless-spear",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1123-Merciless_Spear",
+  },
+  {
+    id: "paragon.stunning-strike",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1127-Stunning_Strike",
+  },
+  {
+    id: "paragon.harriers-toss",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1122-Harrier's_Toss",
   },
   {
     id: "warrior.sever-artery",
@@ -493,6 +538,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Dervish/1049-Mystic_Twister",
   },
   {
+    id: "dervish.eremites-attack",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1025-Eremite's_Attack",
+  },
+  {
+    id: "dervish.staggering-force",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/997-Staggering_Force",
+  },
+  {
+    id: "dervish.dust-cloak",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/988-Dust_Cloak",
+  },
+  {
+    id: "dervish.aura-of-thorns",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/986-Aura_of_Thorns",
+  },
+  {
     id: "mesmer.cry-of-frustration",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/308-Cry_of_Frustration",
@@ -601,6 +666,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "assassin.dark-escape",
     profession: "assassin",
     url: "https://www.gw-memorial.net/skills/Assassin/688-Dark_Escape",
+  },
+  {
+    id: "assassin.deaths-charge",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/689-Death's_Charge",
+  },
+  {
+    id: "assassin.shadow-refuge",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/694-Shadow_Refuge",
+  },
+  {
+    id: "assassin.shroud-of-distress",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/698-Shroud_of_Distress",
+  },
+  {
+    id: "assassin.critical-eye",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/637-Critical_Eye",
   },
   {
     id: "ranger.natural-stride",

@@ -11,7 +11,7 @@ import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 
 /**
  * Vigorous Spirit in a match (#1039): each swing and each completed
- * spell heals its bearer 17, a signet or a cancelled spell does not, and
+ * spell heals its bearer 5...17 by its Monk's Healing Prayers, a signet or a cancelled spell does not, and
  * its own cast does not. Divine Favor adds to Cure Hex, not to Vigorous
  * Spirit's heals.
  */
@@ -58,14 +58,14 @@ function spec(
  * beside it with Healing Signet, and a foe beside the Warrior; a Mesmer
  * foe with Shatter Enchantment.
  */
-function match(divineFavor = 0): MatchSimulation {
+function match(divineFavor = 0, healingPrayers = 12): MatchSimulation {
   return new MatchSimulation({
     seed: "vigorous-spirit",
     participants: [
       spec("monk", 0, vec2(0, 0), {
         skillBar: [VIGOROUS_SPIRIT, CURE_HEX, HEAL_OTHER],
         attributeRanks: new Map([
-          ["monk.healing-prayers", 12],
+          ["monk.healing-prayers", healingPrayers],
           ["monk.divine-favor", divineFavor],
         ]),
       }),
@@ -120,6 +120,17 @@ describe("Vigorous Spirit in a match (#1039)", () => {
     const swings = log.filter((entry) => entry.cause === "weapon" && entry.sourceId === "w");
     expect(swings.length).toBeGreaterThanOrEqual(2);
     expect(heals(log, VIGOROUS_SPIRIT, "w")).toEqual(swings.map(() => 17));
+  });
+
+  it("heals 5 a swing for a Monk with no Healing Prayers", () => {
+    const sim = match(0, 0);
+    use(sim, "monk", 0, "w");
+    stepFor(sim, 1);
+    expect(sim.requestAttack("w", "foe")).toEqual({ ok: true });
+    const log = stepFor(sim, 5);
+    const swings = log.filter((entry) => entry.cause === "weapon" && entry.sourceId === "w");
+    expect(swings.length).toBeGreaterThanOrEqual(2);
+    expect(heals(log, VIGOROUS_SPIRIT, "w")).toEqual(swings.map(() => 5));
   });
 
   it("does not heal for a signet", () => {

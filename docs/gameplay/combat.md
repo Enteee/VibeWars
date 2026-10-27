@@ -290,12 +290,18 @@ removes does not fire its own end: a Parasitic Bond taken this way
 heals nobody.
 
 **Vigorous Spirit** (#1039, Monk, Healing Prayers, 5 energy, ¼ s, 4 s)
-heals its ally 17 for 30 s each time it attacks or casts a spell: each
+heals its ally 17 (5 at Healing Prayers 0) for 30 s each time it attacks or casts a spell: each
 swing, each shot, each attack skill and each completed spell. A signet,
 a shout, a stance, a chant, or a spell interrupted or cancelled heals
 nothing, and cast on yourself its own cast does not count. The Monk who
 cast it is the healer: a deep wound cuts it, and Divine Favor, which
 adds once as a spell lands, does not add to each heal.
+
+**Shadow Refuge** (#988; Assassin, Shadow Arts, 5 energy, 1 s, 8 s
+recharge) gives you +9 health regeneration for 6 s. When it ends, for any
+reason, a strip included, you gain 88 Health if you are attacking right
+then: a swing in progress or an attack skill being used. Standing idle,
+casting a spell or dead, it gives nothing.
 
 **Rend Enchantments** (Necromancer, Curses, 5 energy, 2 s, 20 s
 recharge) removes up to 8 enchantments from a foe, the newest first,
@@ -331,7 +337,8 @@ Parasite 39) is not damage. The target loses up to that much, never more
 than it has, and the caster gains exactly what was taken, up to its
 maximum health. Armor does not apply, healing modifiers do not touch the
 gain, it charges no adrenaline, and Mark of Pain does not see it. It can
-kill. A dead caster steals nothing.
+kill. A dead caster steals nothing. Vengeful Weapon and Weapon of Remedy
+steal for their bearer, not their Ritualist, and only once.
 
 ## Knockdown
 
@@ -437,6 +444,27 @@ gives 9 energy and, with the blow's own, 4 strikes. **Mystic Twister**
 (Wind Prayers) is an adrenaline **spell**, 5 strikes, ½ s, 4 s: 50 cold
 to every foe nearby, or 100 if you are enchanted as it lands, in one
 packet. Like any spell it earns its caster no strike.
+
+**The earth enchantments and Eremite's Attack** (#1021). Staggering
+Force, Dust Cloak and Aura of Thorns are flash enchantments (no
+activation, so no interrupt), 10 energy, 30 s. As each lands, every foe
+nearby you takes 34 earth (Staggering Force, 6 s recharge; Dust Cloak,
+10 s) or starts Bleeding for 13 s (Aura of Thorns, 10 s). While
+Staggering Force or Dust Cloak is up, **your attacks deal earth
+damage**, the weapon's roll included. When one **ends**, every foe
+nearby you where they stand then has Cracked Armor for 8 s (Staggering
+Force), is Blinded for 3 s (Dust Cloak) or Crippled for 7 s (Aura of
+Thorns). Any end counts: running out, a strip by your own skill or a
+foe's, your death. A recast while it is up is no end: it strikes or
+bleeds again and keeps one 30 s enchantment. **Eremite's Attack**
+(scythe, 5 energy, 6 s) hits for +8, and, if you have a Dervish
+enchantment as it hits, +8 more and it strikes **every** foe adjacent to
+its target, not just 2. Then you lose your newest Dervish enchantment,
+once, however many it struck, and only if it hit. So Staggering Force,
+then Eremite's Attack, hits a clump for earth and cracks all their
+armor as the enchantment goes. If Sand Shards is your only Dervish
+enchantment and its 4th hit ends it mid-cleave, the foes after it get
+no second +8.
 
 Each condition has a distinct mechanical identity, not just a different
 number:
@@ -625,6 +653,17 @@ disable your other attack skills for 3 s: that waits for disabled skills
 +42 damage, and a Deep Wound for 17 s if its target is not moving as the
 spear lands (#921).
 
+Five more Paragon spear attacks (#1030) build the bleed → cripple →
+Deep Wound line. Barbed Spear (2 adrenaline) bleeds its foe for 17 s.
+Maiming Spear (5 energy, 5 s) cripples a foe already Bleeding for 17 s,
+so Barbed Spear then Maiming Spear cripples, and one Barbed Spear alone
+does not. Merciless Spear (6 adrenaline) gives a Deep Wound for 17 s to
+a foe below 50% Health, counting the spear's own damage: a foe at 55%
+it drops to 45% is wounded. Stunning Strike (elite, 8 adrenaline) deals
++42, and Dazes for 9 s a foe suffering from any condition after it
+lands; a hex alone is not enough. Harrier's Toss (10 energy, 1 s, 10 s)
+deals +17, and 33 more on a foe that is moving, in one packet.
+
 **Moving** means walking during the previous tick: a held direction, a
 clicked point, an approach to attack or cast. Knocked down, in
 aftercast, dead or walking into a wall is not moving. Everyone's is read
@@ -750,11 +789,30 @@ speed-up only the strongest counts, so under Frenzy it adds nothing.
 Spirit Light Weapon's extra 21 a second near a spirit and Weapon of
 Quickening's binding rituals wait for spirits (#467).
 
+Three more (#1022), which still replace any other weapon spell. Each
+lasts on an ally or yourself. **Vengeful Weapon** (Restoration Magic, 5
+energy, ¼ s, 3 s recharge) lasts 8 s: the next time its bearer loses
+health to damage or life steal from a foe, a blow, an arrow or a spell,
+the bearer steals 51 from that foe, and it ends. **Weapon of Remedy**
+(elite, 3 energy, ¼ s, 3 s recharge) is the same with a 68 steal, and
+the bearer also loses its 2 newest conditions. Degeneration, sacrifice,
+a block, a blow armor takes to 0 and a hit Reversal of Fortune reverses
+do not set either off. Neither does damage a trigger deals, so Mark of
+Pain's splash leaves them up, and two Vengeful Weapons never echo. Two
+foes in one tick: it answers the first. The blow that kills the bearer
+steals nothing. **Splinter Weapon** (Channeling Magic, 5 energy, 1 s, 8 s
+recharge) lasts 20 s or 4 hits with any physical weapon: each hit deals
+25 armor-ignoring damage to every other foe adjacent to the foe hit. A
+miss or a block spends nothing, and a wand or a staff carries none.
+
 The Ritualist heals with Restoration Magic, each on an ally or yourself
 (#955). **Mend Body and Soul** (5 energy, ¾ s, 3 s recharge) heals 96.
 **Spirit Light** (5 energy, 1 s, 4 s recharge) sacrifices 17% of your
 maximum health and heals 156. **Wielder's Boon** (5 energy, ¼ s, 4 s
 recharge) heals 51, and 63 more if the ally is under a weapon spell.
+**Mending Grip** (5 energy, 1 s, 4 s recharge) heals 68, and if the ally
+is under a weapon spell it also loses one condition, the newest: the
+Ritualist's first condition removal (#1022).
 Their spirit clauses, a condition removed per spirit in earshot and no
 sacrifice with a spirit near, wait for spirits (#467).
 
@@ -795,8 +853,9 @@ it, and the weapon eases back to rest. No double strike on an attack
 skill, but **a scythe's attack skill cleaves** as the swing does (#977):
 it also strikes up to 2 foes adjacent to its target, nearest first, picked
 at the hit, and each foe struck rolls its own blind, block and crit and
-gets the skill's effects. A skill with its own area, or another weapon,
-does not cleave. Afterwards you swing at its foe, from a fresh
+gets the skill's effects. Eremite's Attack strikes every foe adjacent
+to its target while you have a Dervish enchantment (#1021). A skill
+with its own area, or another weapon, does not cleave. Afterwards you swing at its foe, from a fresh
 swing. Distracting Blow deals no damage: a hit only interrupts, and a
 miss does nothing. It has no attribute, as in GW1, so any warrior can
 use it and its numbers never scale.
@@ -901,6 +960,11 @@ the attribute and an unmet requirement; an attack skill's bonus is
 added unmultiplied. A melee blow at a target that is moving with its
 back to you (facing more than 90° away) always crits. A crit floats
 larger, with a "!", and the log says "a critical hit".
+**Critical Eye** (Assassin, Critical Strikes, 5 energy, instant, 30 s
+recharge, #988) adds 13% to the chance for 30 s, all of it capped at
+100%, and gives 1 more energy on each crit, beside Critical Strikes'.
+It is a skill effect, so no strip removes it. An arrow keeps the crit
+chance it was loosed with, but the extra energy is read as it lands.
 
 **Block** (#534). Guardian gives its ally a 50% chance to block attacks;
 several block sources combine as 1 − ∏(1 − p), so two 50% sources make
@@ -913,6 +977,11 @@ skill's cost and recharge are still spent. "block" floats over the
 target. Swift Chop is the exception that proves it: blocked, it still
 deals its flat damage and a 20 s Deep Wound. Spells are never blocked,
 and shields do not block, as in GW1. Wild Throw and Crippling Shot cannot be blocked at all.
+**Shroud of Distress** (Assassin, Shadow Arts, 10 energy, 1 s, 45 s
+recharge, #988) gives a 75% chance to block attacks for 54 s, but only
+while you are below half your maximum Health (after a deep wound), read
+at each block roll: a heal back over half turns it off. It combines
+with other blocks as above.
 
 Not modelled: evade.
 
@@ -953,6 +1022,13 @@ and a Ranger 70 and 100. Damage halves for every 40 armor above 60:
 Fireball's 91 lands for about 46 on a Ranger. Types that are neither
 physical nor elemental get no typed bonus; base armor still applies.
 Armor penetration cuts the whole total, typed bonus included.
+
+A status can change the type of your attacks (#1021): under Staggering
+Force or Dust Cloak a scythe deals earth, so a Warrior meets it with 80
+armor, not 100, and a Ranger with 100, not 70. It is still an attack:
+blind, block, crits, adrenaline and attack riders are as before, but a
+Rune of Absorption and Mark of Pain, which answer physical damage, do
+not. A skill's own type, as Spear of Lightning's, wins over it.
 
 **Protective Spirit** (#936, Monk, Protection Prayers, 10 energy, ¼ s,
 5 s recharge) lasts 19 s on any ally: no single hit takes more than 10%
@@ -1094,6 +1170,15 @@ brackets.
   and a wall ends up outside the wall rather than inside it.
 - **Line of sight** is a geometric query against wall segments, shared
   by the server, the tests and any future client preview.
+- **Shadow step** (#988): **Death's Charge** (Assassin, Shadow Arts,
+  5 energy, ¼ s, 30 s recharge) moves you to the foe it targets, where
+  that foe stands as the spell resolves, touching it on the side you
+  came from, facing it. With a wall between, you land on it, and bodies,
+  walls and the map's edge push you clear as for a walk. It is not a
+  walk: snares do not slow it, nothing reads it as running, and an
+  arrow already flying at you misses. A long step snaps the camera, as
+  a respawn does. If that foe has more Health than you, read before the
+  step, you are healed for 173.
 
 ## Death and scoring
 

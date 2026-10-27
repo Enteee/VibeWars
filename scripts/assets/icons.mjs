@@ -448,6 +448,27 @@ const status = {
       `<path d="M7 7.5h10v4c0 3-2.5 5-5 6.5C9.5 16.5 7 14.5 7 11.5z" ${stroke(c, 2)}/>` +
       `<path d="M6 4.5h12" ${stroke(c, 2)}/>`,
   ],
+  // Enchantment: a crescent over a plus, healed in the shadows (#988).
+  "shadow-refuge": [
+    "enchantment",
+    (c) =>
+      `<path d="M11 5a5 5 0 1 0 0 9a4 4 0 0 1 0-9z" fill="${c}"/>` +
+      `<path d="M16.5 13v6M13.5 16h6" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a shield, half filled, blocks below half Health (#988).
+  "shroud-of-distress": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M7 12h10c-.5 3-2.6 4.8-5 6-2.4-1.2-4.5-3-5-6z" fill="${c}"/>`,
+  ],
+  // Skill: an eye, more critical hits (#988).
+  "critical-eye": [
+    "skill-effect",
+    (c) =>
+      `<path d="M4 12.5c2-3.5 5-5.5 8-5.5s6 2 8 5.5c-2 3.5-5 5.5-8 5.5s-6-2-8-5.5z" ${stroke(c, 2)}/>` +
+      `<circle cx="12" cy="12.5" r="2.5" fill="${c}"/>`,
+  ],
   // Enchantment: an arrow turning back up, the next hit heals (#987).
   "reversal-of-fortune": [
     "enchantment",
@@ -525,6 +546,27 @@ const status = {
       `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
       `<path d="M14.5 6l3 3-3 3M17 6l3 3-3 3" ${stroke(c, 1.8)}/>`,
   ],
+  // Weapon spell: a blade and a drop drawn back, steals and cleanses (#1022).
+  "weapon-of-remedy": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
+      `<path d="M17 5.5c-1.8 2.4-2.5 3.6-2.5 4.6a2.5 2.5 0 0 0 5 0c0-1-.7-2.2-2.5-4.6z" fill="${c}"/>`,
+  ],
+  // Weapon spell: a blade and a hook turning back, steals from who hurt it (#1022).
+  "vengeful-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
+      `<path d="M20 6h-3.5a2.5 2.5 0 0 0 0 5H19M15 4.5L13.5 6 15 7.5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Weapon spell: a blade and splinters flying off, splashes the adjacent (#1022).
+  "splinter-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
+      `<path d="M15 6l4-2M15 9h5M15 12l4 2" ${stroke(c, 1.8)}/>`,
+  ],
   // Shout: a plus with a chevron rising over it, regeneration called for (#923).
   "never-surrender": [
     "shout",
@@ -571,6 +613,31 @@ const status = {
   "pious-haste-run": [
     "stance",
     (c) => `<path d="M5 9l4 5-4 5M9.5 9l4 5-4 5M14 9l4 5-4 5" ${stroke(c, 2.2)}/>`,
+  ],
+  // Enchantment: a peak split down the middle, your attacks are earth and
+  // crack the armor round you when it ends (#1021).
+  "staggering-force": [
+    "enchantment",
+    (c) =>
+      `<path d="M5 18l7-11 7 11z" fill="${c}"/>` +
+      `<path d="M12 9l-1.5 4 2 2-1 3" ${stroke(C.enchantment, 1.6)}/>`,
+  ],
+  // Enchantment: a cloud of grains, your attacks are earth and blind the
+  // foes round you when it ends (#1021).
+  "dust-cloak": [
+    "enchantment",
+    (c) =>
+      `<circle cx="9" cy="10" r="1.6" fill="${c}"/><circle cx="14" cy="8.5" r="1.6" fill="${c}"/>` +
+      `<circle cx="12" cy="13" r="1.6" fill="${c}"/><circle cx="7.5" cy="15" r="1.6" fill="${c}"/>` +
+      `<circle cx="16.5" cy="14" r="1.6" fill="${c}"/><circle cx="12" cy="17.5" r="1.6" fill="${c}"/>`,
+  ],
+  // Enchantment: a ring of thorns, bleeding as it lands and crippling when
+  // it ends (#1021).
+  "aura-of-thorns": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="5" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 4.5v2.5M12 17v2.5M4.5 12h2.5M17 12h2.5M6.7 6.7l1.8 1.8M15.5 15.5l1.8 1.8M17.3 6.7l-1.8 1.8M8.5 15.5l-1.8 1.8" ${stroke(c, 1.8)}/>`,
   ],
   // Skill effect: a shield struck through, armor lost while the signet is
   // activated (#524).
@@ -917,6 +984,14 @@ const skillGlyph = {
       )
       .join(""),
   interrupt: () => inkFill(burst(6)),
+  // An arrow driven down into a ground bar: pinned in place (#981).
+  pin: () => inkLine("M12 3V14", 2.4) + inkFill("M12 20.5L7 13H17Z") + inkLine("M4 21.5H20", 2.4),
+  // A shield with a bolt in it: fast and hard to hit (#981).
+  "shield-bolt": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
+    inkFill("M13 6L8.5 13H12L11 18L15.5 11H12Z"),
+  // Chevrons and a bar, as on the Escape stance (#981).
+  retreat: () => inkLine("M3 6L9 12L3 18M10 6L16 12L10 18", 2.5) + inkLine("M20 5V19", 2.6),
   speed: () => inkLine("M4 4L10 12L4 20M11 4L17 12L11 20", 2.5),
   slow: () => inkLine("M20 4L14 12L20 20M13 4L7 12L13 20", 2.5),
   dash: () => inkLine("M3 7H11M2 12H9M3 17H11", 2) + inkLine("M13 4L21 12L13 20", 2.6),
@@ -952,6 +1027,15 @@ const skillGlyph = {
     `<path d="M9.5 3H14.5M10.5 3V9L4.5 19Q3.5 21 6 21H18Q20.5 21 19.5 19L13.5 9V3" ${stroke(C.ink, 2)}/>` +
     inkFill("M7.5 15H16.5L19 19.5H5Z"),
   germ: () => germ(C.ink),
+  // Three prongs on a shaft: a trident thrown through water (#1007).
+  trident: () => inkLine("M12 21V3M5.5 4V9Q5.5 13 12 13Q18.5 13 18.5 9V4", 2.4),
+  // A hawk seen from below, wings swept back (#1007).
+  hawk: () =>
+    inkFill(
+      "M12 2.5L14 6L12.8 9L22 7.5Q20 16 14.5 17.5L15 21.5L12 19.5L9 21.5L9.5 17.5Q4 16 2 7.5L11.2 9L10 6Z",
+    ),
+  // A rough boulder: a stone thrown (#1007).
+  rock: () => inkFill("M5 8L10 3.5L17 4.5L21 10L19 17L12 20.5L5.5 17.5L3.5 12Z"),
 };
 
 /** Modifiers, drawn around the bottom right corner on a dark disc. */

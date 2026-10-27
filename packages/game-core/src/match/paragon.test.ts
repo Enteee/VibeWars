@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  ONE_ELITE_PER_BAR,
+  defaultBuildEquipment,
+  validatePlayerBuild,
+  type PlayerBuild,
+} from "../build.js";
 import { AREA_EARSHOT } from "../distances.js";
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
@@ -9,7 +15,7 @@ import { getSkill } from "../skills/catalog.js";
 import { effectiveArmor, mitigate, skillDamage } from "../skills/damage.js";
 import { describeSkill } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers } from "../skills/status.js";
+import { aggregateModifiers, type StatusId } from "../skills/status.js";
 import { chargeAdrenaline, makeCombatant } from "../skills/testing.js";
 import { advanceStatuses } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
@@ -894,6 +900,200 @@ describe("Song of Restoration (#999)", () => {
     const ranks = new Map([["paragon.motivation", 12]]);
     expect(describeSkill(skill(SONG), ranks).effects.map((effect) => effect.text)).toEqual([
       "Applies Song of Restoration for 10s (the next time it uses a skill: heals for 97)",
+    ]);
+  });
+});
+
+describe("spear attacks (#1030)", () => {
+  const BARBED = "paragon.barbed-spear";
+  const MAIMING = "paragon.maiming-spear";
+  const MERCILESS = "paragon.merciless-spear";
+  const STUNNING = "paragon.stunning-strike";
+  const HARRIERS = "paragon.harriers-toss";
+
+  /** A rank-12 spear Paragon `p` at the origin, its foe `foe` 300 away. */
+  function arena(seed = "spears", foeHealth = 1e6): MatchSimulation {
+    const match = new MatchSimulation({
+      seed,
+      participants: [
+        spec("p", 0, vec2(0, 0), {
+          skillBar: [BARBED, MAIMING, MERCILESS, STUNNING, HARRIERS],
+          attributeRanks: new Map([["paragon.spear-mastery", 12]]),
+          equipment: wielding(WEAPONS.spear, "paragon.spear-mastery"),
+          maxEnergy: 100,
+        }),
+        spec("foe", 1, vec2(300, 0), { maxHealth: foeHealth }),
+      ],
+    });
+    chargeAdrenaline(get(match, "p").combatant);
+    match.setTarget("p", "foe");
+    return match;
+  }
+
+  /** Throw the spear in `slot` and step until it has landed: its log entry. */
+  function thrown(match: MatchSimulation, slot: number): CombatLogEntry {
+    expect(match.requestSkill("p", slot)?.check).toEqual({ ok: true });
+    let released = false;
+    for (let i = 0; i < 400; i += 1) {
+      const entry = match
+        .step(DT)
+        .log.find((logged) => logged.cause === "skill" && logged.sourceId === "p");
+      released ||= match.projectiles.length > 0;
+      if (entry !== undefined && released && match.projectiles.length === 0) {
+        return entry;
+      }
+    }
+    throw new Error("no spear landed");
+  }
+
+  const kinds = (entry: CombatLogEntry): string[] => entry.events.map((event) => event.kind);
+  const damageOf = (entry: CombatLogEntry): number =>
+    entry.events.reduce((sum, event) => sum + (event.kind === "damage" ? event.amount : 0), 0);
+  const foe = (match: MatchSimulation): Combatant => get(match, "foe").combatant;
+  const durationOn = (match: MatchSimulation, statusId: StatusId): number | undefined =>
+    foe(match).statuses.get(statusId)?.durationSeconds;
+
+  it("cost, activate and recharge as the PvP corpus says, all needing a spear", () => {
+    const rows = [BARBED, MAIMING, MERCILESS, STUNNING, HARRIERS].map((id) => {
+      const found = skill(id);
+      return [id, found.cost, found.activationSeconds, found.rechargeSeconds, found.elite];
+    });
+    expect(rows).toEqual([
+      [BARBED, { kind: "adrenaline", amount: 2 }, 0, 0, false],
+      [MAIMING, { kind: "energy", amount: 5 }, 0, 5, false],
+      [MERCILESS, { kind: "adrenaline", amount: 6 }, 0, 0, false],
+      [STUNNING, { kind: "adrenaline", amount: 8 }, 0, 0, true],
+      [HARRIERS, { kind: "energy", amount: 10 }, 1, 10, false],
+    ]);
+    for (const id of [BARBED, MAIMING, MERCILESS, STUNNING, HARRIERS]) {
+      expect(skill(id).attack?.weapon).toBe("spear");
+    }
+  });
+
+  it("Barbed Spear bleeds for 17 s when it hits", () => {
+    const match = arena();
+    expect(kinds(thrown(match, 0))).toEqual(["damage", "status-applied"]);
+    expect(durationOn(match, "bleeding")).toBe(17);
+  });
+
+  it("Barbed Spear bleeds nobody when it is blocked", () => {
+    for (let seed = 0; seed < 20; seed += 1) {
+      const match = arena(`block-${String(seed)}`);
+      foe(match).statuses.apply("guardian", 1000, "foe");
+      const landed = thrown(match, 0);
+      if (!kinds(landed).includes("attack-blocked")) {
+        continue;
+      }
+      expect(kinds(landed)).toEqual(["attack-blocked"]);
+      expect(foe(match).statuses.has("bleeding")).toBe(false);
+      return;
+    }
+    throw new Error("no seed blocked the spear");
+  });
+
+  it("Maiming Spear cripples a Bleeding foe for 17 s, and a clean one not at all", () => {
+    const clean = arena();
+    expect(kinds(thrown(clean, 1))).toEqual(["damage"]);
+    expect(foe(clean).statuses.has("crippled")).toBe(false);
+
+    const barbed = arena();
+    thrown(barbed, 0);
+    expect(kinds(thrown(barbed, 1))).toEqual(["damage", "status-applied"]);
+    expect(durationOn(barbed, "crippled")).toBe(17);
+  });
+
+  it("Merciless Spear deep-wounds a foe below half Health, read after its own hit", () => {
+    const healthy = arena("merciless", 1000);
+    foe(healthy).health = 800;
+    thrown(healthy, 2);
+    expect(foe(healthy).statuses.has("deep-wound")).toBe(false);
+
+    const low = arena("merciless", 1000);
+    foe(low).health = 400;
+    thrown(low, 2);
+    expect(durationOn(low, "deep-wound")).toBe(17);
+
+    const pushed = arena("merciless", 1000);
+    foe(pushed).health = 505;
+    const landed = thrown(pushed, 2);
+    expect(damageOf(landed)).toBeGreaterThan(5);
+    expect(durationOn(pushed, "deep-wound")).toBe(17);
+  });
+
+  it("Stunning Strike hits 42 harder than a plain spear on the same roll", () => {
+    expect(damageOf(thrown(arena(), 3)) - damageOf(thrown(arena(), 0))).toBe(42);
+  });
+
+  it("Stunning Strike dazes a foe with a condition for 9 s, not a clean or a hexed one", () => {
+    const clean = arena();
+    thrown(clean, 3);
+    expect(foe(clean).statuses.has("dazed")).toBe(false);
+
+    const hexed = arena();
+    foe(hexed).statuses.apply("faintheartedness", 1000, "p");
+    thrown(hexed, 3);
+    expect(foe(hexed).statuses.has("dazed")).toBe(false);
+
+    const bleeding = arena();
+    thrown(bleeding, 0);
+    thrown(bleeding, 3);
+    expect(durationOn(bleeding, "dazed")).toBe(9);
+  });
+
+  it("Harrier's Toss: +17 on a standing foe, 33 more on a moving one", () => {
+    const plain = damageOf(thrown(arena(), 0));
+    expect(damageOf(thrown(arena(), 4)) - plain).toBe(17);
+    const walking = arena();
+    walking.setInputDirection("foe", vec2(0, 1));
+    expect(damageOf(thrown(walking, 4)) - plain).toBe(50);
+  });
+
+  it("Stunning Strike shares a bar with Cruel Spear only illegally: one elite", () => {
+    const bar = (...ids: string[]): PlayerBuild["skillBar"] => [
+      ...ids,
+      ...Array<null>(8 - ids.length).fill(null),
+    ];
+    const build = (...ids: string[]): PlayerBuild => ({
+      name: "Spear Tester",
+      primaryProfession: "paragon",
+      secondaryProfession: "warrior",
+      attributes: [],
+      skillBar: bar(...ids),
+      equipment: defaultBuildEquipment("paragon"),
+    });
+    const problems = (...ids: string[]): string[] =>
+      validatePlayerBuild(build(...ids), RULES.attributes).map((problem) => problem.message);
+    expect(problems(BARBED, MAIMING, MERCILESS, STUNNING, HARRIERS)).toEqual([]);
+    expect(problems(STUNNING, CRUEL_SPEAR)).toEqual([ONE_ELITE_PER_BAR]);
+  });
+});
+
+describe("the #1030 spear attacks read as what they do", () => {
+  const text = (id: string): string[] =>
+    describeSkill(skill(id)).effects.map((effect) => effect.text);
+
+  it("Barbed, Maiming and Merciless Spear, Stunning Strike and Harrier's Toss", () => {
+    expect(
+      [
+        "paragon.barbed-spear",
+        "paragon.maiming-spear",
+        "paragon.merciless-spear",
+        "paragon.stunning-strike",
+        "paragon.harriers-toss",
+      ].map(text),
+    ).toEqual([
+      ["Applies Bleeding for 17s (−3 Health degeneration)"],
+      ["If target has Bleeding: applies Crippled for 17s (moves at 50% speed)"],
+      [
+        "If target is below 50% Health: applies Deep Wound for 17s " +
+          "(−20% maximum health (at most 100), −20% healing)",
+      ],
+      [
+        "+10 damage",
+        "If target has a condition: applies Dazed for 9s " +
+          "(spells take 2× as long to cast, spells are interrupted by attacks)",
+      ],
+      ["+5 damage", "If target is moving: +5 damage"],
     ]);
   });
 });

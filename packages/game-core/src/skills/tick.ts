@@ -1,5 +1,6 @@
 import { effectiveRank } from "../attributes.js";
 import type { ResolvedEquipment } from "../equipment/resolve.js";
+import type { DamageType } from "../equipment/types.js";
 import { FAST_CASTING_ATTRIBUTE, fastCastingMultiplier } from "../primary-attributes.js";
 import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
@@ -257,6 +258,21 @@ export function weaponDamageMultiplierOf(combatant: Combatant): number {
 }
 
 /**
+ * The type the bearer's attacks deal while a status sets one (#1021):
+ * the newest such status's, a pick and not a sum. `undefined`: the
+ * weapon's own.
+ */
+export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined {
+  for (const { id } of [...combatant.statuses.active].reverse()) {
+    const type = getStatusDefinition(id).attackDamageType;
+    if (type !== undefined) {
+      return type;
+    }
+  }
+  return undefined;
+}
+
+/**
  * How long this caster takes to cast this skill. Dazed doubles a spell's;
  * a signet or any other skill that is not a spell casts at normal speed,
  * as in GW1 (#524). An instant skill stays instant (0 × 2 = 0). Fast
@@ -316,14 +332,21 @@ export function combinedBlockChance(
 /**
  * The chance in [0, 1] that the bearer blocks an attack of this kind
  * (#534). None while knocked down, as in GW1 (#610): 0, so no block is
- * rolled at all.
+ * rolled at all. A block that holds only below a share of health (#988)
+ * reads the bearer's health as it is now.
  */
 export function blockChanceOf(combatant: Combatant, kind: "melee" | "projectile"): number {
   if (combatant.knockdownRemaining > 0) {
     return 0;
   }
+  const maxHealth = effectiveMaxHealth(combatant);
   return combinedBlockChance(
-    combatant.statuses.active.flatMap((status) => getStatusDefinition(status.id).block ?? []),
+    combatant.statuses.active.flatMap((status) => {
+      const { block, blockBelowHealth } = getStatusDefinition(status.id);
+      const holds =
+        blockBelowHealth === undefined || combatant.health < maxHealth * blockBelowHealth;
+      return block !== undefined && holds ? [block] : [];
+    }),
     kind,
   );
 }

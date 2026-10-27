@@ -1517,6 +1517,193 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "paragon.barbed-spear",
+    name: "Barbed Spear",
+    type: "attack",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.spear-mastery",
+    cost: { kind: "adrenaline", amount: 2 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: WEAPONS.spear.range,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "spear",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If this attack hits, your target begins Bleeding for 5...17...20
+    // seconds": 17 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 17 }],
+  },
+  {
+    id: "paragon.maiming-spear",
+    name: "Maiming Spear",
+    type: "attack",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.spear-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 5,
+    range: WEAPONS.spear.range,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "spear",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If your attack hits a Bleeding foe, that foe is Crippled for
+    // 5...17...20 seconds": read as the spear lands.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "bleeding" },
+        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 17 }],
+      },
+    ],
+  },
+  {
+    id: "paragon.merciless-spear",
+    name: "Merciless Spear",
+    type: "attack",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.spear-mastery",
+    cost: { kind: "adrenaline", amount: 6 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: WEAPONS.spear.range,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "spear",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If this attack hits a foe with less than 50% Health, that foe
+    // suffers from a Deep Wound for 5...17...20 seconds": read after the
+    // spear's own damage has landed.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-health-below", fraction: 0.5 },
+        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+      },
+    ],
+  },
+  {
+    id: "paragon.stunning-strike",
+    name: "Stunning Strike",
+    type: "attack",
+    elite: true,
+    profession: "paragon",
+    attributeId: "paragon.spear-mastery",
+    cost: { kind: "adrenaline", amount: 8 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: WEAPONS.spear.range,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "spear",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "paragon.spear-mastery", atZero: 10, atTwelve: 42 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If it hits a foe suffering from a Condition, that foe is also Dazed
+    // for 4...9...10 seconds": 9 s, read after the spear has landed.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "condition" },
+        effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 9 }],
+      },
+    ],
+  },
+  {
+    id: "paragon.harriers-toss",
+    name: "Harrier's Toss",
+    type: "attack",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.spear-mastery",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: WEAPONS.spear.range,
+    target: "single-enemy",
+    area: undefined,
+    // "If this attack hits a moving foe, it deals an additional
+    // 5...33...40 damage": one packet with the +17, read as the spear
+    // lands on `moving`, one tick late (#921).
+    attack: {
+      weapon: "spear",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 17 },
+      },
+      conditionalBonus: {
+        condition: { kind: "target-moving" },
+        amount: { scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 33 } },
+      },
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [],
+  },
 
   /* ---------------------------------------------------------------------- */
   /* Signets and shouts (#524)                                               */
@@ -2015,6 +2202,114 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // "For 5...13...15 seconds, you attack 25% faster": 13 s, its rank-12
     // value.
     effects: [{ kind: "apply-status", statusId: "weapon-of-aggression", durationSeconds: 13 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Ritualist weapon spells 2 (#1022)                                       */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "ritualist.weapon-of-remedy",
+    name: "Weapon of Remedy",
+    type: "weapon-spell",
+    elite: true,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 3 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 8 seconds, the next time target ally takes damage or life steal
+    // from a foe, that ally steals up to 20...68...80 health from that foe
+    // and loses 2 conditions": the 2026-04-28 revision (3 energy, 68, 2
+    // conditions); the steal and the removal are the status's.
+    effects: [{ kind: "apply-status", statusId: "weapon-of-remedy", durationSeconds: 8 }],
+  },
+  {
+    id: "ritualist.vengeful-weapon",
+    name: "Vengeful Weapon",
+    type: "weapon-spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 8 seconds, the next time target ally takes damage or life steal
+    // from a foe, that ally steals up to 15...51...60 Health from that
+    // foe": the 51 is the status's.
+    effects: [{ kind: "apply-status", statusId: "vengeful-weapon", durationSeconds: 8 }],
+  },
+  {
+    id: "ritualist.splinter-weapon",
+    name: "Splinter Weapon",
+    type: "weapon-spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 20 seconds, target ally has a Splinter Weapon. Target ally's next
+    // 1...4...5 attacks deal 5...25...30 damage to up to 4 adjacent foes":
+    // the PvP page, 726; the 4 hits and the 25 are the status's.
+    effects: [{ kind: "apply-status", statusId: "splinter-weapon", durationSeconds: 20 }],
+  },
+  {
+    id: "ritualist.mending-grip",
+    name: "Mending Grip",
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target ally is healed for 15...68...80 Health. If that ally is under
+    // the effects of a weapon Spell, that ally loses one Condition": the
+    // 2026-04-28 revision (4 s, 68). The weapon spell is read before the
+    // heal, as Wielder's Boon's.
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 68 },
+        },
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "weapon-spell" },
+        effects: [{ kind: "remove-status", category: "condition", count: 1 }],
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -2972,6 +3267,156 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           condition: { kind: "caster-has", category: "enchantment" },
           amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 10, atTwelve: 50 } },
         },
+      },
+    ],
+  },
+  // Dervish earth enchantments and Eremite's Attack (#1021).
+  {
+    id: "dervish.eremites-attack",
+    name: "Eremite's Attack",
+    type: "attack",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.scythe-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 6,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "If it hits, this attack deals +1...8...10 damage and removes a
+    // Dervish enchantment. If an enchantment is removed, you do an
+    // additional +1...8...10 damage and strike all adjacent foes": +8 and
+    // +8, the rank-12 values. The blow reads the enchantment the removal
+    // will take, before it lands (ADR-0029).
+    attack: {
+      weapon: "scythe",
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 1, atTwelve: 8 } },
+      conditionalBonus: {
+        condition: { kind: "caster-has", category: "enchantment", profession: "dervish" },
+        amount: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 1, atTwelve: 8 } },
+      },
+      cleavesAllWhen: { kind: "caster-has", category: "enchantment", profession: "dervish" },
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "remove-status",
+        category: "enchantment",
+        count: 1,
+        profession: "dervish",
+        from: "caster",
+      },
+    ],
+  },
+  {
+    id: "dervish.staggering-force",
+    name: "Staggering Force",
+    // A flash enchantment: an enchantment spell with no activation.
+    type: "enchantment",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 6,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "All nearby foes are struck for 10...34...40 earth damage. For 30
+    // seconds, your attacks deal earth damage": 34, its rank-12 value. The
+    // status turns the attacks, and cracks armor when it ends.
+    effects: [
+      { kind: "apply-status", statusId: "staggering-force", durationSeconds: 30 },
+      {
+        kind: "splash",
+        radius: AREA_NEARBY,
+        effects: [
+          {
+            kind: "damage",
+            type: "earth",
+            armorPenetration: 0,
+            amount: { scaling: { attributeId: "dervish.earth-prayers", atZero: 10, atTwelve: 34 } },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "dervish.dust-cloak",
+    name: "Dust Cloak",
+    type: "enchantment",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "All nearby foes are struck for 10...34...40 earth damage. For 30
+    // seconds, your attacks deal earth damage": 34. The status blinds
+    // when it ends.
+    effects: [
+      { kind: "apply-status", statusId: "dust-cloak", durationSeconds: 30 },
+      {
+        kind: "splash",
+        radius: AREA_NEARBY,
+        effects: [
+          {
+            kind: "damage",
+            type: "earth",
+            armorPenetration: 0,
+            amount: { scaling: { attributeId: "dervish.earth-prayers", atZero: 10, atTwelve: 34 } },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "dervish.aura-of-thorns",
+    name: "Aura of Thorns",
+    type: "enchantment",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "All nearby foes begin Bleeding for 5...13...15 seconds. For 30
+    // seconds, this enchantment does nothing": 13 s. The status cripples
+    // when it ends.
+    effects: [
+      { kind: "apply-status", statusId: "aura-of-thorns", durationSeconds: 30 },
+      {
+        kind: "splash",
+        radius: AREA_NEARBY,
+        effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
       },
     ],
   },
@@ -4504,6 +4949,109 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // "For 30 seconds, each time target ally attacks or casts a spell, that
     // ally is healed for 5...17...20 health": the 17 is the status's.
     effects: [{ kind: "apply-status", statusId: "vigorous-spirit", durationSeconds: 30 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Assassin staples (#988)                                                */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "assassin.deaths-charge",
+    name: "Death's Charge",
+    type: "spell",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Shadow Step to target foe. If that foe has more Health than you, you
+    // are healed for 65...173...200": who has more is read before the step.
+    effects: [
+      { kind: "shadow-step" },
+      {
+        kind: "if",
+        condition: { kind: "target-more-health" },
+        effects: [
+          {
+            kind: "heal",
+            recipient: "caster",
+            amount: { scaling: { attributeId: "assassin.shadow-arts", atZero: 65, atTwelve: 173 } },
+            perStatusOnTarget: [],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "assassin.shadow-refuge",
+    name: "Shadow Refuge",
+    type: "enchantment",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
+    // Refuge ends, you gain 40...88...100 Health if you are attacking."
+    effects: [{ kind: "apply-status", statusId: "shadow-refuge", durationSeconds: 6 }],
+  },
+  {
+    id: "assassin.shroud-of-distress",
+    name: "Shroud of Distress",
+    type: "enchantment",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 30...54...60 seconds, if you are below 50% Health, you have a 75%
+    // chance to block attacks": 54 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "shroud-of-distress", durationSeconds: 54 }],
+  },
+  {
+    id: "assassin.critical-eye",
+    name: "Critical Eye",
+    type: "skill",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.critical-strikes",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10...30...35 seconds, you have an additional 3...13...15% chance
+    // to land a critical hit when attacking. You gain 1 Energy whenever you
+    // score a critical hit": 30 s and 13%, the rank-12 values.
+    effects: [{ kind: "apply-status", statusId: "critical-eye", durationSeconds: 30 }],
   },
 ];
 

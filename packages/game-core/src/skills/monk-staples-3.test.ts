@@ -238,13 +238,19 @@ describe("Vigorous Spirit (#1039)", () => {
     });
   });
 
-  it("is a Monk enchantment that heals its bearer 17 when it attacks or casts a spell", () => {
+  it("is a Monk enchantment that heals its bearer 5...17 when it attacks or casts a spell", () => {
     const status = getStatusDefinition("vigorous-spirit");
     expect([status.category, status.profession]).toEqual(["enchantment", "monk"]);
     expect(status.triggers).toEqual(
       (["bearer-attacks", "bearer-casts-spell"] as const).map((on) => ({
         on,
-        effects: [{ kind: "heal", amount: { flat: 17 }, perStatusOnTarget: [] }],
+        effects: [
+          {
+            kind: "heal",
+            amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 17 } },
+            perStatusOnTarget: [],
+          },
+        ],
         target: "bearer",
         skillId: "monk.vigorous-spirit",
       })),

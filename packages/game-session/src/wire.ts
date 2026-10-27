@@ -277,6 +277,8 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
         statusId: event.statusId,
         fromId: event.casterId,
       };
+    case "shadow-stepped":
+      return { ...none, kind: event.kind, targetId: event.targetId, fromId: event.toId };
     case "interrupted":
     case "cancelled":
       return { ...none, kind: event.kind, targetId: event.targetId, skillId: event.skillId };
@@ -376,6 +378,8 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
       return isStatusId(statusId) && fromId !== null
         ? { kind: event.kind, targetId, fromId, statusId }
         : undefined;
+    case "shadow-stepped":
+      return fromId === null ? undefined : { kind: event.kind, targetId, toId: fromId };
     case "interrupted":
     case "cancelled":
       return skillId === null ? undefined : { kind: event.kind, targetId, skillId };

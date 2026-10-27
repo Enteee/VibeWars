@@ -27,7 +27,13 @@ import {
 import { resolveMagnitude } from "./scaling.js";
 import { aggregateModifiers, getStatusDefinition, type StatusId } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
-import { attackMissChanceOf, blockChanceOf, rankOf, weaponDamageMultiplierOf } from "./tick.js";
+import {
+  attackDamageTypeOf,
+  attackMissChanceOf,
+  blockChanceOf,
+  rankOf,
+  weaponDamageMultiplierOf,
+} from "./tick.js";
 import type { FiredTrigger } from "./triggers.js";
 import type { Combatant, Skill, SkillEffect, StateCondition, Surroundings } from "./types.js";
 
@@ -118,20 +124,28 @@ export function doubleStrikeChance(attacker: Combatant, weapon: Weapon): number 
 function victimsOf(swing: Swing, weapon: Weapon): readonly Combatant[] {
   return [
     swing.target.combatant,
-    ...cleaveVictims(swing.attacker, swing.target, swing.surroundings, weapon),
+    ...cleaveVictims(
+      swing.attacker,
+      swing.target,
+      swing.surroundings,
+      weapon,
+      weapon.cleaveTargets,
+    ),
   ];
 }
 
 /**
- * Whom else a blow of `weapon` at `target` strikes: up to
- * `cleaveTargets` other living foes adjacent to it, nearest first, the
- * target excluded. None for any weapon but a scythe.
+ * Whom else a blow of `weapon` at `target` strikes: up to `max` other
+ * living foes adjacent to it, nearest first, the target excluded. `max`
+ * is the weapon's `cleaveTargets`, or every one for Eremite's Attack
+ * (#1021). None for any weapon but a scythe, whatever `max` says.
  */
 export function cleaveVictims(
   attacker: Combatant,
   target: TargetCandidate,
   surroundings: Surroundings,
   weapon: Weapon,
+  max: number,
 ): readonly Combatant[] {
   if (weapon.cleaveTargets === 0) {
     return [];
@@ -143,7 +157,7 @@ export function cleaveVictims(
       combatant.team !== attacker.team &&
       distance(position, target.position) <= AREA_ADJACENT,
   );
-  return nearestFirst(adjacent, target.position).slice(0, weapon.cleaveTargets);
+  return nearestFirst(adjacent, target.position).slice(0, max);
 }
 
 /**
@@ -162,6 +176,14 @@ export interface WeaponSnapshot {
   readonly requirementMet: boolean;
   /** The multiplier on the weapon's roll: weakness's 0.34 (#762). */
   readonly damageMultiplier: number;
+  /** Added to the chance to crit by the attacker's statuses: Critical Eye's 0.13 (#988). */
+  readonly criticalChanceBonus: number;
+  /**
+   * The type the blow deals unless the skill names its own: a status's
+   * `attackDamageType` (#1021), else the weapon's. Riders still read the
+   * weapon's: an earth scythe blow is still a physical attack.
+   */
+  readonly damageType: DamageType;
 }
 
 export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
@@ -173,6 +195,8 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     criticalStrikes: rankIn(attacker, CRITICAL_STRIKES_ATTRIBUTE),
     requirementMet: mainHand.attributeId === undefined || rank >= mainHand.weapon.requirement.rank,
     damageMultiplier: weaponDamageMultiplierOf(attacker),
+    criticalChanceBonus: aggregateModifiers(attacker.statuses.active).criticalChanceBonus,
+    damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
   };
 }
 
@@ -181,7 +205,8 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
  * share per rank in the weapon's mastery, the attribute its requirement
  * names, plus Critical Strikes' (#606). A caster weapon's nominated
  * attribute is no mastery, and fists have none, so both crit at the base
- * chance and Critical Strikes'.
+ * chance and Critical Strikes'. Statuses add theirs (#988), all of it at
+ * most 1.
  */
 export function criticalChance(snapshot: WeaponSnapshot, rules: CombatRules): number {
   const mastery = snapshot.mainHand.weapon.requirement.kind === "fixed" ? snapshot.rank : 0;
@@ -189,17 +214,20 @@ export function criticalChance(snapshot: WeaponSnapshot, rules: CombatRules): nu
     1,
     rules.criticalBaseChance +
       rules.criticalChancePerRank * mastery +
-      CRITICAL_STRIKES_CHANCE_PER_RANK * snapshot.criticalStrikes,
+      CRITICAL_STRIKES_CHANCE_PER_RANK * snapshot.criticalStrikes +
+      snapshot.criticalChanceBonus,
   );
 }
 
 /**
- * Critical Strikes' energy for a critical blow (#606), up to the
- * attacker's maximum. A dead attacker, as one whose arrow lands after it
- * fell, gains none.
+ * Critical Strikes' energy for a critical blow (#606), and its statuses'
+ * (#988, Critical Eye's 1), up to the attacker's maximum. Statuses are
+ * read as the blow lands. A dead attacker, as one whose arrow lands after
+ * it fell, gains none.
  */
 export function gainCriticalEnergy(attacker: Combatant, rank: number, events: CombatEvent[]): void {
-  gainEnergy(attacker, criticalStrikesEnergy(rank), events);
+  const extra = aggregateModifiers(attacker.statuses.active).energyPerCritical;
+  gainEnergy(attacker, criticalStrikesEnergy(rank) + extra, events);
 }
 
 /**
@@ -343,6 +371,7 @@ export function settleBlow(
  */
 export function landBlow(
   snapshot: WeaponSnapshot,
+  attacker: Combatant | undefined,
   victim: Combatant,
   blow: BlowRule,
   exposed: boolean,
@@ -367,14 +396,14 @@ export function landBlow(
       weaponAttributeMultiplier(snapshot.rank, rules) *
       (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier),
     armorIgnoring: blow.bonus,
-    type: blow.damageType ?? snapshot.mainHand.damageType,
+    type: blow.damageType ?? snapshot.damageType,
     source: "weapon",
     armorPenetration: Math.max(
       blow.armorPenetration,
       strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
     ),
   };
-  applyDamage(victim, mitigate(packet, victim, rules), packet.type, critical, events);
+  applyDamage(victim, mitigate(packet, victim, rules), packet.type, critical, events, attacker);
   return critical;
 }
 
@@ -529,7 +558,7 @@ function strike(
     return;
   }
   const snapshot = weaponSnapshotOf(attacker);
-  if (landBlow(snapshot, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
+  if (landBlow(snapshot, attacker, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
     gainCriticalEnergy(attacker, snapshot.criticalStrikes, events);
   }
   events.push(
@@ -604,7 +633,8 @@ export function resolveSwing(swing: Swing): {
  * A scythe's attack skill cleaves, as its swing does (#977): its victims
  * are the primary and the foes `cleaveVictims` finds round it, read
  * once, at the hit, and each gets its own blind, block, crit and damage,
- * and the skill's effects if it is hit. A skill with an area, as
+ * and the skill's effects if it is hit. With `cleavesAllWhen` holding,
+ * the foes round it are every one adjacent to it (#1021). A skill with an area, as
  * Barrage's, has its area's victims instead, each rolling its own block
  * and its own crit.
  *
@@ -635,12 +665,25 @@ export function resolveAttackSkill(
     skill.area !== undefined || primary === undefined || primary.dead
       ? undefined
       : surroundings.get(primary.id);
+  const cleavesAll = skill.attack?.cleavesAllWhen;
+  const all =
+    around !== undefined &&
+    primary !== undefined &&
+    cleavesAll !== undefined &&
+    stateHolds(cleavesAll, caster, primary, surroundings);
+  const { weapon } = snapshot.mainHand;
   const targets =
     around === undefined
       ? resolution.targets
       : [
           ...resolution.targets,
-          ...cleaveVictims(caster, around, surroundings, snapshot.mainHand.weapon),
+          ...cleaveVictims(
+            caster,
+            around,
+            surroundings,
+            weapon,
+            all ? Number.POSITIVE_INFINITY : weapon.cleaveTargets,
+          ),
         ];
   const victims: Combatant[] = [];
   for (const victim of targets) {
@@ -674,6 +717,7 @@ export function resolveAttackSkill(
       if (
         landBlow(
           snapshot,
+          caster,
           victim,
           settleBlow(blow, caster, victim, surroundings),
           exposed(victim),
