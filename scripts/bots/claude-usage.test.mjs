@@ -1,6 +1,7 @@
 /**
  * Tokens per role from the agents' session logs (#50): each reply counted
  * once, only the window's, and only the bytes appended since last time.
+ * The last hour's burn and the newest usage reading (#452).
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -15,8 +16,11 @@ import {
   MAX_KEPT,
   MAX_LINE_BYTES,
   ROLE_BYTES,
+  burnOf,
   createUsageReader,
   formatCount,
+  newestLimit,
+  parseLimitFile,
   parseUsageLine,
   summarize,
 } from "./claude-usage.mjs";
@@ -147,6 +151,99 @@ describe("summarize", () => {
       { now, windowMs: WINDOW, dayStart },
     );
     expect(summary.roles.get("manager")?.model).toBe("claude-sonnet-5-5");
+  });
+});
+
+describe("burnOf (#452)", () => {
+  const now = new Date(2026, 9, 25, 16, 0).getTime();
+
+  it("counts only the last hour, and a reply logged twice once", () => {
+    const twice = reply("m1", now - 10_000, { output: 40 });
+    const burn = burnOf(
+      [
+        record(twice, "manager"),
+        record(twice, "manager"),
+        record(reply("m2", now - HOUR + 1000, { output: 2 }), "manager"),
+        record(reply("old", now - HOUR - 1000, { output: 500 }), "manager"),
+      ],
+      now,
+    );
+    expect(burn).toEqual({ output: 42, replies: 2, top: [{ role: "manager", output: 42 }] });
+  });
+
+  it("names the three roles that wrote the most, most first", () => {
+    const burn = burnOf(
+      [
+        ["a", "qa-tester", 30],
+        ["b", "developer", 80],
+        ["c", "manager", 5],
+        ["d", "lead-dev", 50],
+      ].map(([id, role, output]) =>
+        record(reply(String(id), now - HOUR / 2, { output: Number(output) }), String(role)),
+      ),
+      now,
+    );
+    expect(burn.top).toEqual([
+      { role: "developer", output: 80 },
+      { role: "lead-dev", output: 50 },
+      { role: "qa-tester", output: 30 },
+    ]);
+    expect(burn.output).toBe(165);
+  });
+
+  it("is empty for a quiet hour", () => {
+    expect(burnOf([], now)).toEqual({ output: 0, replies: 0, top: [] });
+  });
+});
+
+describe("parseLimitFile and newestLimit (#452)", () => {
+  const now = new Date(2026, 9, 25, 16, 0).getTime();
+  /** @param {number} at @param {number} [utilization] */
+  const reading = (at, utilization = 0.38) => ({
+    at,
+    status: "allowed",
+    rateLimitType: "five_hour",
+    resetsAt: 1_761_400_800,
+    utilization,
+    fiveHour: { utilization, resetsAt: 1_761_400_800 },
+    sevenDay: null,
+  });
+
+  it("reads a file in the shape agent-turn writes", () => {
+    expect(parseLimitFile(`${JSON.stringify(reading(now))}\n`)).toEqual(reading(now));
+  });
+
+  it("counts a malformed file as none", () => {
+    for (const text of [
+      "",
+      "{",
+      "[]",
+      JSON.stringify({ ...reading(now), status: "\u001b[2J" }),
+      JSON.stringify({ ...reading(now), rateLimitType: "forever" }),
+      JSON.stringify({ ...reading(now), at: "now" }),
+      JSON.stringify({ ...reading(now), fiveHour: { utilization: "38%", resetsAt: 1 } }),
+      JSON.stringify({ ...reading(now), sevenDay: { utilization: 1, resetsAt: 1, x: 1 } }),
+      JSON.stringify({ ...reading(now), extra: 1 }),
+      JSON.stringify({ ...reading(now), sevenDay: undefined }),
+    ]) {
+      expect(parseLimitFile(text), text).toBeNull();
+    }
+  });
+
+  it("keeps the newest of several, and skips the malformed", () => {
+    const files = [
+      JSON.stringify(reading(now - 60_000, 0.4)),
+      JSON.stringify(reading(now - 1000, 0.41)),
+      "not json",
+    ];
+    expect(newestLimit(files.map(parseLimitFile), now)).toEqual(reading(now - 1000, 0.41));
+    expect(newestLimit([null], now)).toBeNull();
+  });
+
+  it("ignores one dated in the future: a jail could forge it to win", () => {
+    expect(newestLimit([reading(now - 1000, 0.4), reading(now + HOUR, 0)], now)).toEqual(
+      reading(now - 1000, 0.4),
+    );
   });
 });
 

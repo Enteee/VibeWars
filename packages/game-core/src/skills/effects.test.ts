@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
-import { applyEffect, applyEffects, applySkillEffects, type CombatEvent } from "./effects.js";
+import {
+  applyEffect,
+  applyEffects,
+  applySkillEffects,
+  applyStatus,
+  type CombatEvent,
+} from "./effects.js";
 import { HEALTH_PER_PIP } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { advanceStatuses, effectiveMaxHealth } from "./tick.js";
@@ -545,6 +551,21 @@ describe("if effects (#521)", () => {
     ]);
   });
 
+  it("a second interrupt in one resolution is no miss: the first one landed (#817)", () => {
+    const foe = casting("elementalist.fireball");
+    expect(run([{ kind: "interrupt" }, { kind: "interrupt" }], foe)).toEqual([
+      { kind: "interrupted", targetId: "target", skillId: "elementalist.fireball" },
+    ]);
+  });
+
+  it("an interrupt on a target another resolution interrupted is a miss", () => {
+    const foe = casting("elementalist.fireball");
+    run([{ kind: "interrupt" }], foe);
+    expect(run([{ kind: "interrupt" }], foe)).toEqual([
+      { kind: "interrupt-missed", targetId: "target", refusedSkillId: null },
+    ]);
+  });
+
   it("lands after a removal only when one of that category went", () => {
     const strip = { kind: "remove-status", category: "enchantment", count: 1 } as const;
     const enchanted = makeCombatant({ id: "target", team: 1 });
@@ -723,5 +744,58 @@ describe("state conditions (#794)", () => {
     });
     expect(low.health).toBe(210);
     expect(high.health).toBe(410);
+  });
+});
+
+describe("resurrect effect (#812)", () => {
+  const RESURRECT: UnconditionalEffect = {
+    kind: "resurrect",
+    healthPercent: { scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 56 } },
+    energyPercent: { scaling: { attributeId: "monk.healing-prayers", atZero: 42, atTwelve: 80 } },
+  };
+  const monk = (rank: number) =>
+    makeCombatant({ id: "caster", attributeRanks: new Map([["monk.healing-prayers", rank]]) });
+  const corpse = () => {
+    const target = makeCombatant({
+      id: "target",
+      health: 0,
+      maxHealth: 480,
+      energy: 7,
+      maxEnergy: 30,
+      adrenaline: 4,
+      dead: true,
+    });
+    applyStatus(target, "bleeding", 10, "foe");
+    return target;
+  };
+
+  it("brings the dead back with the shares of health and energy its rank gives", () => {
+    const target = corpse();
+    const events = applyEffect(RESURRECT, context(monk(12), target));
+    expect(target.dead).toBe(false);
+    expect(target.health).toBe(Math.floor(480 * 0.56));
+    expect(target.energy).toBe(Math.floor(30 * 0.8));
+    expect(events).toEqual([
+      { kind: "resurrected", targetId: "target", healthFraction: 0.56, energyFraction: 0.8 },
+    ]);
+  });
+
+  it("rounds down, but never to 0 health", () => {
+    const target = makeCombatant({ id: "target", health: 0, maxHealth: 3, dead: true });
+    applyEffect(RESURRECT, context(monk(0), target));
+    expect(target.health).toBe(1);
+  });
+
+  it("comes back with no effects and no adrenaline", () => {
+    const target = corpse();
+    applyEffect(RESURRECT, context(monk(12), target));
+    expect(target.statuses.active).toEqual([]);
+    expect(target.adrenaline).toBe(0);
+  });
+
+  it("leaves the living as they are, with no event", () => {
+    const target = makeCombatant({ id: "target", health: 100 });
+    expect(applyEffect(RESURRECT, context(monk(12), target))).toEqual([]);
+    expect(target.health).toBe(100);
   });
 });

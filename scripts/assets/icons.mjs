@@ -592,6 +592,10 @@ const skillGlyph = {
   speed: () => inkLine("M4 4L10 12L4 20M11 4L17 12L11 20", 2.5),
   slow: () => inkLine("M20 4L14 12L20 20M13 4L7 12L13 20", 2.5),
   dash: () => inkLine("M3 7H11M2 12H9M3 17H11", 2) + inkLine("M13 4L21 12L13 20", 2.6),
+  // An ankh: life returned, a resurrection (#812).
+  resurrect: () =>
+    `<ellipse cx="12" cy="7.5" rx="4" ry="4.5" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 12V21M6 14.5H18", 2.6),
   energy: () => inkFill("M13 2L5 13.5H11L10 22L19 10H13Z"),
   // Chain Lightning (#461): a jagged bolt through three foes, not the
   // energy bolt, which means energy.

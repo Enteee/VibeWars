@@ -18,6 +18,7 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "monk.guardian": "defence",
   "monk.mend-condition": "healing removal",
   "monk.orison-of-healing": "healing",
+  "monk.restore-life": "",
   "monk.word-of-healing": "healing",
   "necromancer.blood-renewal-lite": "healing",
   "necromancer.blood-ritual": "",

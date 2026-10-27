@@ -29,7 +29,13 @@ import { betweenTurns, parseReboot } from "./reboot.mjs";
 import { ownNudges, parseOwnSchedules, parseSchedule } from "./schedule.mjs";
 import { readSidecar, sidecarDown } from "./sidecar.mjs";
 import { unreadOf } from "./unread.mjs";
-import { readPresence, readStaffFile, readUsage, usageReader } from "./company-facts.mjs";
+import {
+  readLimit,
+  readPresence,
+  readStaffFile,
+  readUsage,
+  usageReader,
+} from "./company-facts.mjs";
 import { boardLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
 import { hubHealth, parseAlive, parseRestarts } from "./hub-health.mjs";
 import { roleOf } from "./staff.mjs";
@@ -375,7 +381,7 @@ function linesOf(section, pane) {
           hub: hub(),
           reboot: reboot(live),
           build: build(),
-          claude: readUsage(usage, now),
+          claude: readUsage(usage, now, readLimit(ROOT, staff, now)),
           nudges: nudges(staff, now),
           telegram: telegram(),
         },
