@@ -26,8 +26,10 @@
  * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time.
  */
 
+import { AREA_ADJACENT } from "../distances.js";
+import { wieldsFor, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
-import type { Combatant, SkillEffect } from "./types.js";
+import type { AttackWeaponClass, Combatant, SkillEffect } from "./types.js";
 
 export type StatusCategory =
   | "condition"
@@ -96,7 +98,11 @@ export type StatusId =
   // Dervish enchantments and stances (#845).
   | "mystic-regeneration"
   | "fleeting-stability"
-  | "heart-of-fury";
+  | "heart-of-fury"
+  | "vow-of-strength"
+  | "sand-shards"
+  | "pious-haste"
+  | "pious-haste-run";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -216,6 +222,13 @@ export interface StatusDefinition {
    */
   readonly onAttackHit: readonly SkillEffect[];
   /**
+   * It ends after this many of the bearer's hits with a weapon of
+   * `weapon` (#939): Sand Shards' "the next 4 times you hit with a
+   * scythe". Each victim a blow lands on is a hit, a cleave's included;
+   * a blow of another weapon spends none. `undefined`: no such limit.
+   */
+  readonly endsAfterHits: EndsAfterHits | undefined;
+  /**
    * What it does to the bearer's next spells (#526): each costs
    * `costReduction` less energy, and it ends once `count` spells have
    * started. `undefined`: spells leave it alone.
@@ -274,6 +287,12 @@ export interface StatusTrigger {
   readonly skillId: string;
 }
 
+/** How many of the bearer's hits, with which weapon, a status lasts (#939). */
+export interface EndsAfterHits {
+  readonly count: number;
+  readonly weapon: AttackWeaponClass;
+}
+
 /** A share of maximum health a status takes, at most `cap` (GW1's deep wound). */
 export interface MaxHealthLoss {
   readonly fraction: number;
@@ -328,6 +347,7 @@ function define(
     block: undefined,
     endsAfterAttacks: undefined,
     onAttackHit: [],
+    endsAfterHits: undefined,
     nextSpells: undefined,
     spreads: false,
     nextAttackSkill: undefined,
@@ -520,6 +540,66 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "dervish",
     attackDurationMultiplier: 0.75,
   }),
+  // "For 15 seconds, whenever you attack a foe with your scythe, you deal
+  // 10...22...25 slashing damage to all adjacent foes": 22, its rank-12
+  // value. Hit, miss or block: an attack. Its own Dervish is the splash's
+  // centre, so the foe it attacks is among them (#939).
+  "vow-of-strength": define("vow-of-strength", "Vow of Strength", "enchantment", {
+    profession: "dervish",
+    triggers: [
+      {
+        on: "bearer-attacks",
+        effects: [
+          {
+            kind: "if",
+            condition: { kind: "caster-wields", weapon: "scythe" },
+            effects: [
+              {
+                kind: "splash",
+                radius: AREA_ADJACENT,
+                effects: [
+                  { kind: "damage", amount: { flat: 22 }, type: "slashing", armorPenetration: 0 },
+                ],
+              },
+            ],
+          },
+        ],
+        skillId: "dervish.vow-of-strength",
+      },
+    ],
+  }),
+  // "For 30 seconds, the next 1...4...5 times you hit with a scythe, all
+  // other adjacent foes take 10...50...60 earth damage": 4 and 50, its
+  // rank-12 values. Adjacent to the foe hit, not to the Dervish: at melee
+  // reach the two barely differ (#939).
+  "sand-shards": define("sand-shards", "Sand Shards", "enchantment", {
+    profession: "dervish",
+    onAttackHit: [
+      {
+        kind: "if",
+        condition: { kind: "caster-wields", weapon: "scythe" },
+        effects: [
+          {
+            kind: "splash",
+            radius: AREA_ADJACENT,
+            effects: [{ kind: "damage", amount: { flat: 50 }, type: "earth", armorPenetration: 0 }],
+          },
+        ],
+      },
+    ],
+    endsAfterHits: { count: 4, weapon: "scythe" },
+  }),
+  // "...for 1...6...7 [seconds] you move 25% faster. If an enchantment was
+  // removed, you run 50% faster instead" (#939): two stances, so the
+  // faster replaces the slower as it lands.
+  "pious-haste": define("pious-haste", "Pious Haste", "stance", {
+    profession: "dervish",
+    moveSpeedMultiplier: 1.25,
+  }),
+  "pious-haste-run": define("pious-haste-run", "Pious Haste", "stance", {
+    profession: "dervish",
+    moveSpeedMultiplier: 1.5,
+  }),
 };
 
 /**
@@ -542,6 +622,8 @@ export interface ActiveStatus {
   durationSeconds: number;
   /** Incoming attacks before it ends (`endsAfterAttacks`); `undefined`: no such limit. */
   attacksLeft: number | undefined;
+  /** The bearer's hits before it ends (`endsAfterHits`); `undefined`: no such limit. */
+  hitsLeft: number | undefined;
   /** Spells still to start before it ends (`nextSpells`); `undefined`: no such limit. */
   spellsLeft: number | undefined;
   /** Who applied it — needed so a future "when this ends, heal the caster"
@@ -634,6 +716,7 @@ export class StatusSet {
       remainingSeconds: durationSeconds,
       durationSeconds,
       attacksLeft: definition.endsAfterAttacks,
+      hitsLeft: definition.endsAfterHits?.count,
       spellsLeft: definition.nextSpells?.count,
       sourceId,
       outbreak,
@@ -666,6 +749,7 @@ export class StatusSet {
       remainingSeconds: durationSeconds,
       durationSeconds,
       attacksLeft: undefined,
+      hitsLeft: undefined,
       spellsLeft: undefined,
       sourceId,
       outbreak,
@@ -691,6 +775,7 @@ export class StatusSet {
       remainingSeconds: Number.POSITIVE_INFINITY,
       durationSeconds: Number.POSITIVE_INFINITY,
       attacksLeft: undefined,
+      hitsLeft: undefined,
       spellsLeft: undefined,
       sourceId,
       outbreak: null,
@@ -765,6 +850,32 @@ export class StatusSet {
       if (status.attacksLeft !== undefined) {
         status.attacksLeft -= 1;
         if (status.attacksLeft <= 0) {
+          ended.push(status.id);
+        }
+      }
+    }
+    for (const id of ended) {
+      this.#statuses.delete(id);
+    }
+    return ended;
+  }
+
+  /**
+   * One of the bearer's blows of `weaponId` hit (#939): one fewer for
+   * every status that ends after so many hits with a weapon it is. Returns
+   * the ids that ended on it.
+   */
+  public countHit(weaponId: WeaponId): StatusId[] {
+    const ended: StatusId[] = [];
+    for (const status of this.#statuses.values()) {
+      const limit = getStatusDefinition(status.id).endsAfterHits;
+      if (
+        status.hitsLeft !== undefined &&
+        limit !== undefined &&
+        wieldsFor(weaponId, limit.weapon)
+      ) {
+        status.hitsLeft -= 1;
+        if (status.hitsLeft <= 0) {
           ended.push(status.id);
         }
       }

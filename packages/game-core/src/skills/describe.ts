@@ -217,6 +217,11 @@ export function describeStatus(id: string): string {
   for (const effect of definition.onAttackHit) {
     parts.push(...describeAttackHit(effect));
   }
+  if (definition.endsAfterHits !== undefined) {
+    const { count, weapon } = definition.endsAfterHits;
+    const plural = count === 1 ? "" : "s";
+    parts.push(`ends after ${String(count)} hit${plural} with ${NEEDED_WEAPON[weapon]}`);
+  }
   if (definition.nextSpells !== undefined) {
     const { count, costReduction } = definition.nextSpells;
     const spells = count === 1 ? "spell costs" : `${String(count)} spells cost`;
@@ -329,6 +334,10 @@ function conditionText(condition: EffectCondition): string {
         : `If target has no allies within ${String(condition.radius)}`;
     case "caster-more-energy":
       return "If you have more Energy than target";
+    case "caster-wields":
+      return `If you wield ${NEEDED_WEAPON[condition.weapon]}`;
+    case "target-less-health":
+      return "If target has less Health than you";
   }
 }
 

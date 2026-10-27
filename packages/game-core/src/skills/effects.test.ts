@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import {
@@ -756,6 +758,41 @@ describe("state conditions (#794)", () => {
     for (const skillId of ["paragon.anthem-of-flame", "warrior.distracting-blow", undefined]) {
       expect(healed(spell, at(100, "caster"), casting(skillId)), String(skillId)).toBe(10);
     }
+  });
+
+  it("target-less-health: the target's health below the caster's, absolute; equal is not less (#939)", () => {
+    const less = healIf({ kind: "target-less-health" });
+    expect(healed(less, at(300, "caster"), at(299))).toBe(110);
+    expect(healed(less, at(300, "caster"), at(300))).toBe(10);
+    // A share would say 50% of 1000 is less than 80% of 500: health is absolute.
+    const big = makeCombatant({ id: "target", health: 500, maxHealth: 1000 });
+    expect(healed(less, at(400, "caster"), big)).toBe(10);
+  });
+
+  it("caster-wields: the caster's main hand is of the class, the target's is not read (#939)", () => {
+    const holding = (weapon: Weapon, id: string): Combatant =>
+      makeCombatant({
+        id,
+        health: 100,
+        maxHealth: 500,
+        equipment: {
+          ...unarmedResolvedEquipment(rules.armorReferenceLevel),
+          mainHand: {
+            weapon,
+            attributeId: undefined,
+            damageType: "slashing",
+            requirementMet: true,
+          },
+        },
+      });
+    const scythe = healIf({ kind: "caster-wields", weapon: "scythe" });
+    expect(healed(scythe, holding(WEAPONS.scythe, "caster"), at(100))).toBe(110);
+    expect(
+      healed(scythe, holding(WEAPONS.sword, "caster"), holding(WEAPONS.scythe, "target")),
+    ).toBe(10);
+    const melee = healIf({ kind: "caster-wields", weapon: "melee" });
+    expect(healed(melee, holding(WEAPONS.sword, "caster"), at(100))).toBe(110);
+    expect(healed(melee, holding(WEAPONS.flatbow, "caster"), at(100))).toBe(10);
   });
 
   it("is read per target", () => {

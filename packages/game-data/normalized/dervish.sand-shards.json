@@ -1,0 +1,25 @@
+{
+  "id": "dervish.sand-shards",
+  "name": "Sand Shards",
+  "profession": "dervish",
+  "attribute": "Earth Prayers",
+  "type": "Flash Enchantment Spell.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 10,
+  "description": "For 30 seconds, the next 1...4...5 times you hit with a scythe, all other adjacent foes take 10...50...60 earth damage.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Dervish/994-Sand_Shards",
+    "fetchedAt": "2026-10-27T15:23:20.060Z"
+  },
+  "unmapped": {}
+}

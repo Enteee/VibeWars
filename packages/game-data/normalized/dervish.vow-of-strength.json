@@ -1,0 +1,25 @@
+{
+  "id": "dervish.vow-of-strength",
+  "name": "Vow of Strength",
+  "profession": "dervish",
+  "attribute": "Earth Prayers",
+  "type": "Enchantment Spell.",
+  "elite": true,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0.25,
+  "rechargeSeconds": 20,
+  "description": "For 15 seconds, whenever you attack a foe with your scythe, you deal 10...22...25 slashing damage to all adjacent foes.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Dervish/1000-Vow_of_Strength",
+    "fetchedAt": "2026-10-27T15:23:19.980Z"
+  },
+  "unmapped": {}
+}

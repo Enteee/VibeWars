@@ -358,7 +358,9 @@ export function landBlow(
  * `victim` (#525): every active status's `onAttackHit`, as Apply
  * Poison's poison. Read when the blow lands, so a preparation that ran
  * out mid-swing or mid-flight adds nothing. Physical attacks only, as GW1
- * says: a wand's or a staff's bolt carries none.
+ * says: a wand's or a staff's bolt carries none. Then every status that
+ * ends after so many hits with this weapon spends one (#939): Sand
+ * Shards' fourth hit splashes, then ends it.
  */
 export function attackHitRiders(
   attacker: Combatant,
@@ -371,7 +373,7 @@ export function attackHitRiders(
   if (!isPhysicalDamage(mainHand.damageType)) {
     return [];
   }
-  return attacker.statuses.active.flatMap(({ id }) =>
+  const events = attacker.statuses.active.flatMap(({ id }) =>
     applyEffects(getStatusDefinition(id).onAttackHit, {
       caster: attacker,
       target: victim,
@@ -380,6 +382,10 @@ export function attackHitRiders(
       surroundings,
     }),
   );
+  for (const statusId of attacker.statuses.countHit(mainHand.weapon.id)) {
+    events.push({ kind: "status-expired", targetId: attacker.id, statusId });
+  }
+  return events;
 }
 
 /**
