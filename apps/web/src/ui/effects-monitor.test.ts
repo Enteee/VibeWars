@@ -8,11 +8,12 @@ import {
   maintainedRows,
   type EffectRow,
 } from "./effects-monitor.js";
+import { SLOT_TOOLTIP_DELAY_MS } from "./slot-tooltip.js";
 
 /**
  * The effects monitor (#834): its rows, and the icons it draws them as.
- * The unit tests run in Node, so the DOM here is a small fake; the hover
- * and real layout are the e2e suite's (e2e/effects-monitor.spec.ts).
+ * The unit tests run in Node, so the DOM here is a small fake; the real
+ * hover and layout are the e2e suite's (e2e/effects-monitor.spec.ts).
  */
 
 const ME = "me";
@@ -118,10 +119,11 @@ describe("effectRows (#834)", () => {
 
 /**
  * Just enough of an element for the monitor, without jsdom: children in
- * order, the moves made, and the fill widths written.
+ * order, the moves made, the fill widths written, and a tooltip's lines.
  */
 class FakeElement {
   className = "";
+  textContent = "";
   hidden = false;
   tabIndex = -1;
   src = "";
@@ -153,6 +155,8 @@ class FakeElement {
 
   readonly setAttribute = (): void => undefined;
 
+  readonly getBoundingClientRect = () => ({ left: 0, top: 0, right: 0, width: 0, height: 0 });
+
   /** The listeners added, by event. */
   readonly listeners = new Map<string, () => void>();
 
@@ -177,6 +181,13 @@ class FakeElement {
     const index = before === null ? -1 : this.children.indexOf(before);
     this.children.splice(index === -1 ? this.children.length : index, 0, child);
     child.parent = this;
+  }
+
+  replaceChildren(...children: FakeElement[]): void {
+    for (const child of [...this.children]) {
+      child.remove();
+    }
+    this.append(...children);
   }
 
   remove(): void {
@@ -324,6 +335,58 @@ describe("createEffectsMonitor (#834)", () => {
     expect(ended).toEqual([]);
     root.children[1]?.listeners.get("dblclick")?.();
     expect(ended).toEqual([["bob", "mending"]]);
+  });
+
+  describe("the hover says a double-click ends it (#907)", () => {
+    let body: FakeElement;
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      body = new FakeElement();
+      vi.stubGlobal("document", { createElement: () => new FakeElement(), body });
+      vi.stubGlobal("window", { innerWidth: 1000, innerHeight: 1000 });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    /** The open tooltip's lines, hovering the `index`th icon. */
+    const hover = (root: FakeElement, index: number): string[] => {
+      root.children[index]?.listeners.get("mouseenter")?.();
+      vi.advanceTimersByTime(SLOT_TOOLTIP_DELAY_MS);
+      return body.children[0]?.children.map((line) => line.textContent) ?? [];
+    };
+    const yours = row("mending", undefined, true, {
+      bearerId: "bob",
+      bearerName: "Bob",
+      secondsLeft: undefined,
+      endable: true,
+    });
+
+    it("under an endable row of a monitor that ends it", () => {
+      const { monitor, root } = mount(24, () => undefined);
+      monitor.update([yours]);
+      expect(hover(root, 0).slice(-2)).toEqual(["maintained, −1 energy", "double-click to end"]);
+    });
+
+    it("not under a timed row, nor one someone else maintains", () => {
+      const { monitor, root } = mount(24, () => undefined);
+      monitor.update([
+        row("bleeding", 0.5),
+        row("mending", undefined, false, { secondsLeft: undefined }),
+      ]);
+      expect(hover(root, 0)).not.toContain("double-click to end");
+      expect(hover(root, 1)).toEqual(expect.arrayContaining(["maintained"]));
+      expect(hover(root, 1)).not.toContain("double-click to end");
+    });
+
+    it("not in a monitor that cannot end it: the target frame's", () => {
+      const { monitor, root } = mount(16);
+      monitor.update([yours]);
+      expect(hover(root, 0)).toContain("maintained, −1 energy");
+      expect(hover(root, 0)).not.toContain("double-click to end");
+    });
   });
 });
 
