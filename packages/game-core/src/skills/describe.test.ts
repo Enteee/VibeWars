@@ -166,9 +166,9 @@ describe("describeSkill", () => {
       "That skill and all skills of the same attribute are disabled for 10 seconds",
     ]);
     expect(lines("ranger.distracting-shot")).toEqual([
+      "+13 damage",
       "Interrupts the target's current cast, if they are casting",
       "The interrupted skill is disabled for 20 seconds",
-      "Deals 13 damage",
     ]);
   });
 

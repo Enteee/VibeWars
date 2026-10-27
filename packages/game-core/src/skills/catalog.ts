@@ -1930,11 +1930,11 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     area: undefined,
     // "If Distracting Shot hits, it interrupts target foe's action but
     // deals only 1...13...16 damage": the arrow's own roll counts for
-    // nothing, and what it deals ignores armor, as Power Spike's.
+    // nothing, and the bonus it deals ignores armor (ADR-0029, #760).
     attack: {
       weapon: "bow",
       weaponDamage: 0,
-      bonusDamage: undefined,
+      bonusDamage: { scaling: { attributeId: "ranger.expertise", atZero: 1, atTwelve: 13 } },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: false,
@@ -1948,12 +1948,6 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [
       { kind: "interrupt" },
       { kind: "disable-skill", which: "interrupted", seconds: { flat: 20 } },
-      {
-        kind: "damage",
-        amount: { scaling: { attributeId: "ranger.expertise", atZero: 1, atTwelve: 13 } },
-        type: "typeless",
-        armorPenetration: 0,
-      },
     ],
   },
   {
