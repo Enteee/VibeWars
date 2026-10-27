@@ -40,4 +40,6 @@ export const SKILL_ICONS = {
   "ranger.apply-poison": { glyph: "flask" },
   "elementalist.glyph-of-lesser-energy": { glyph: "energy", modifier: "less" },
   "necromancer.enfeeble": { glyph: "sword", modifier: "down" },
+  "paragon.anthem-of-flame": { glyph: "flame", modifier: "area" },
+  "ritualist.weapon-of-warding": { glyph: "armor", modifier: "up" },
 };

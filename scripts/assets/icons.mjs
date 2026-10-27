@@ -36,6 +36,7 @@ const C = {
   stance: "#f778ba",
   preparation: "#e3b341",
   glyph: "#c3e88d",
+  weaponSpell: "#8b9cff",
   warrior: "#e3b341",
   ranger: "#8fd36b",
   monk: "#9ecbff",
@@ -136,6 +137,13 @@ const skillType = {
   preparation: () => `<path d="M12 3.5L21 20H3z" ${stroke(C.preparation, 3)}/>`,
   // Triangle ring, point down: your next spells are readied (#526).
   glyph: () => `<path d="M12 20.5L21 4H3z" ${stroke(C.glyph, 3)}/>`,
+  // A note: a chant is sung to the party (#758).
+  chant: () =>
+    `<circle cx="8" cy="17.5" r="3.5" fill="${C.ink}"/>` +
+    `<path d="M10.5 17.5V3.5c2.5.5 6.5 2.5 6.5 7" ${stroke(C.ink, 2.5)}/>`,
+  // Shield ring: a spell held on an ally's weapon, one at a time (#758).
+  "weapon-spell": () =>
+    `<path d="M4.5 3.5h15v7c0 4.5-3.5 7.5-7.5 9.5-4-2-7.5-5-7.5-9.5z" ${stroke(C.weaponSpell, 3)}/>`,
   // Plain square: a skill with no other type.
   skill: () => `<rect x="6" y="6" width="12" height="12" rx="1" fill="${C.ink}"/>`,
 };
@@ -144,12 +152,13 @@ const skillType = {
 // Statuses: the markers under an actor in the arena. The plate gives the
 // category by colour *and* outline (condition = circle, hex = diamond,
 // enchantment = rounded square, stance = pentagon, preparation = triangle
-// point up, glyph = triangle point down, shout = hexagon, skill effect =
-// wide capsule), and the glyph gives the status.
+// point up, glyph = triangle point down, shout = hexagon, chant = banner,
+// weapon spell = shield, skill effect = wide capsule), and the glyph gives
+// the status.
 // ---------------------------------------------------------------------------
 
 /** @typedef {(colour: string) => string} Glyph */
-/** @typedef {"condition" | "hex" | "enchantment" | "stance" | "preparation" | "glyph" | "shout" | "skill-effect"} Category */
+/** @typedef {"condition" | "hex" | "enchantment" | "stance" | "preparation" | "glyph" | "shout" | "chant" | "weapon-spell" | "skill-effect"} Category */
 
 /** @type {Record<Category, (glyph: Glyph) => string>} */
 const plates = {
@@ -168,6 +177,10 @@ const plates = {
     glyph(C.plate),
   shout: (glyph) =>
     `<path d="M6.5 2h11l5.5 10-5.5 10h-11L1 12z" fill="${C.ink}"/>` + glyph(C.plate),
+  chant: (glyph) => `<path d="M3 1h18v22l-9-5-9 5z" fill="${C.ink}"/>` + glyph(C.plate),
+  "weapon-spell": (glyph) =>
+    `<path d="M1.5 1h21v10c0 6.5-5 10-10.5 12.5C6.5 21 1.5 17.5 1.5 11z" fill="${C.weaponSpell}"/>` +
+    glyph(C.plate),
   "skill-effect": (glyph) =>
     `<rect x="0.5" y="4" width="23" height="16" rx="8" fill="${C.inkDim}"/>` + glyph(C.plate),
 };
@@ -265,6 +278,18 @@ const status = {
     (c) =>
       `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" ${stroke(c, 2)}/>` +
       `<path d="M12 8.5v3.5" ${stroke(c, 2.2)}/><circle cx="12" cy="14.6" r="1.1" fill="${c}"/>`,
+  ],
+  // Chant: a flame, your next attack skill burns (#758). Burning's flame,
+  // smaller and higher, clear of the banner's notch.
+  "anthem-of-flame": [
+    "chant",
+    (c) =>
+      `<path d="M14 3.5c.5 3.5 4 5.5 4 10a6 6 0 0 1-12 0c0-2.5 1-4.5 2.5-5.5 0 2 .5 3 1.5 3.5-.5-3 1-6 4-8z" fill="${c}" transform="translate(12 10) scale(0.7) translate(-12 -11.5)"/>`,
+  ],
+  // Weapon spell: a sword, held up, warded (#758).
+  "weapon-of-warding": [
+    "weapon-spell",
+    (c) => `<path d="M12 4.5v10M8.5 14.5h7M12 14.5v4" ${stroke(c, 2.5)}/>`,
   ],
   // Skill effect: a shield struck through, armor lost while the signet is
   // activated (#524).
@@ -540,6 +565,10 @@ const skillGlyph = {
     `<path d="M12 3C12 3 5.5 11 5.5 15A6.5 6.5 0 0 0 18.5 15C18.5 11 12 3 12 3Z" ${stroke(C.ink, 2)}/>` +
     inkLine("M4 4L20 20", 2.4),
   armor: () => inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z"),
+  flame: () =>
+    inkFill(
+      "M14 3c.6 4 5 6 5 11a7 7 0 0 1-14 0c0-3 1.2-5.2 3-6.4 0 2.3.6 3.5 1.8 4.1-.6-3.5 1.2-7 4.2-8.7z",
+    ),
   flask: () =>
     `<path d="M9.5 3H14.5M10.5 3V9L4.5 19Q3.5 21 6 21H18Q20.5 21 19.5 19L13.5 9V3" ${stroke(C.ink, 2)}/>` +
     inkFill("M7.5 15H16.5L19 19.5H5Z"),

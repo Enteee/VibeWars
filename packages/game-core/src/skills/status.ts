@@ -14,6 +14,9 @@
  * - `preparation`— on yourself only; changes your attacks while it lasts (#525).
  * - `glyph`      — on yourself only; changes your next spells, then is gone (#526).
  * - `shout`      — a shout's lingering effect (#524); no removal touches it.
+ * - `chant`      — a chant's lingering effect (#758); no removal touches it.
+ * - `weapon-spell`— a spell on an ally's weapon (#758), one at a time; not
+ *   an enchantment, so enchantment removal leaves it.
  * - `skill-effect`— none of GW1's removable kinds: Healing Signet's armor
  *   loss while it is activated. No removal touches it either.
  *
@@ -33,6 +36,8 @@ export type StatusCategory =
   | "preparation"
   | "glyph"
   | "shout"
+  | "chant"
+  | "weapon-spell"
   | "skill-effect";
 
 /**
@@ -44,6 +49,7 @@ export const EXCLUSIVE_CATEGORIES: ReadonlySet<StatusCategory> = new Set([
   "stance",
   "preparation",
   "glyph",
+  "weapon-spell",
 ]);
 
 export type StatusId =
@@ -72,7 +78,10 @@ export type StatusId =
   | "glyph-of-lesser-energy"
   // Shouts and skill effects (#524).
   | "watch-yourself"
-  | "healing-signet-armor";
+  | "healing-signet-armor"
+  // Chants and weapon spells (#758).
+  | "anthem-of-flame"
+  | "weapon-of-warding";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -170,6 +179,18 @@ export interface StatusDefinition {
    * started. `undefined`: spells leave it alone.
    */
   readonly nextSpells: NextSpells | undefined;
+  /**
+   * Effects on whoever the bearer's next attack skill hits (#758): a
+   * chant's rider, as Anthem of Flame's burning. It ends when that attack
+   * skill resolves, hit, miss or block, and applies only on a hit.
+   * `undefined`: attack skills leave it alone.
+   */
+  readonly nextAttackSkill: readonly SkillEffect[] | undefined;
+  /**
+   * It ends the moment the bearer attacks (#758): strikes a blow or
+   * releases a shot, swing or attack skill alike. A weapon spell's price.
+   */
+  readonly endsWhenBearerAttacks: boolean;
 }
 
 /** A glyph's hold on the next spells: how many, and how much cheaper (#526). */
@@ -204,6 +225,8 @@ function define(
     endsAfterAttacks: undefined,
     onAttackHit: [],
     nextSpells: undefined,
+    nextAttackSkill: undefined,
+    endsWhenBearerAttacks: false,
     ...overrides,
   };
 }
@@ -261,6 +284,19 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   // rank-12 value; Energy Storage scaling waits for #532.
   "glyph-of-lesser-energy": define("glyph-of-lesser-energy", "Glyph of Lesser Energy", "glyph", {
     nextSpells: { count: 2, costReduction: 16 },
+  }),
+
+  // "The next attack skill used by each party member within earshot also
+  // causes Burning for 1...3...3 seconds": 3 s, its rank-12 value.
+  "anthem-of-flame": define("anthem-of-flame", "Anthem of Flame", "chant", {
+    nextAttackSkill: [{ kind: "apply-status", statusId: "burning", durationSeconds: 3 }],
+  }),
+  // "+2...4...4 Health regeneration and a 50% chance to block. Weapon of
+  // Warding ends if that ally attacks."
+  "weapon-of-warding": define("weapon-of-warding", "Weapon of Warding", "weapon-spell", {
+    healthPips: 4,
+    block: { chance: 0.5, against: "all" },
+    endsWhenBearerAttacks: true,
   }),
 };
 
@@ -407,6 +443,20 @@ export class StatusSet {
         }
       }
     }
+    for (const id of ended) {
+      this.#statuses.delete(id);
+    }
+    return ended;
+  }
+
+  /**
+   * The bearer attacked (#758): every status that ends when it does is
+   * gone. Returns the ids that ended on it.
+   */
+  public endOnBearerAttack(): StatusId[] {
+    const ended = this.active
+      .filter(({ id }) => getStatusDefinition(id).endsWhenBearerAttacks)
+      .map(({ id }) => id);
     for (const id of ended) {
       this.#statuses.delete(id);
     }

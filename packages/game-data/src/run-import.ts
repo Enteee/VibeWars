@@ -147,6 +147,16 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     profession: "necromancer",
     url: "https://www.gw-memorial.net/skills/Necromancer/256-Enfeeble",
   },
+  {
+    id: "paragon.anthem-of-flame",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1084-Anthem_of_Flame",
+  },
+  {
+    id: "ritualist.weapon-of-warding",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/769-Weapon_of_Warding",
+  },
 ];
 
 function packageRoot(): string {

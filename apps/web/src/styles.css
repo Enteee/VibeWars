@@ -734,7 +734,12 @@ body {
   --skill-type-colour: #f778ba;
 }
 
+.team-skill[data-skill-type="weapon-spell"] {
+  --skill-type-colour: #8b9cff;
+}
+
 .team-skill[data-skill-type="attack"],
+.team-skill[data-skill-type="chant"],
 .team-skill[data-skill-type="shout"],
 .team-skill[data-skill-type="signet"],
 .team-skill[data-skill-type="skill"],
