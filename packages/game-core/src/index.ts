@@ -109,6 +109,7 @@ export {
   MATCH_IN_PROGRESS,
   MORALE_CEILING,
   MORALE_FLOOR,
+  RANDOM_ARENA_RULES,
   addKill,
   emptyScore,
   evaluateMatch,

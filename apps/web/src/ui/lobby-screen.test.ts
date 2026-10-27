@@ -24,6 +24,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
       { sessionId: "guest", name: "Guest", team: 1, ready: true, isHost: false, character: null },
     ],
     isHost: true,
+    countdownSeconds: null,
   };
 }
 

@@ -219,6 +219,19 @@ armor and is the Mesmer's: the log names their Backfire or Empathy, it
 counts toward their damage, and a kill is theirs, even after they died.
 A Mesmer who has left the match hurts nobody.
 
+Two Necromancer skills answer a status changing (#887). **Contagion**
+(elite enchantment on yourself, 60 s): each time you gain a condition
+you did not already have, every living foe within the area of you gets
+the same condition, for as long as it was put on you, and you sacrifice
+6% of your maximum health, foes in reach or not. A condition you
+already had, refreshed or not, does nothing. **Parasitic Bond** (hex,
+20 s) gives its target −1 health degeneration and heals its caster for
+102 when it ends: when it runs out, or when it is removed. Re-casting it
+on a target that still has it heals nothing; the respawn of its target
+heals nothing either, and neither does a caster who has died or left.
+What a trigger does never sets off another trigger: a condition
+Contagion hands to a foe with Contagion goes no further.
+
 ## Knockdown
 
 A knockdown puts its target on the ground for its duration (Backbreaker:
@@ -654,6 +667,9 @@ lands and shrinks back when it ends; an attack skill keeps the wind-up it
 started with. Spells are not slowed. Only the strongest slow-down and the
 strongest speed-up count, and they multiply (ADR-0029). The hex also
 degenerates its target by 2 pips.
+**Shadow of Fear** (Curses, 10 energy, 2 s cast, 5 s recharge) is the
+same slow-down without the degeneration, for 25 s, on the target and
+every foe adjacent to it (#918).
 
 ## Damage types and armor
 
@@ -711,6 +727,13 @@ recharge) flies at the target, half as fast again as Fireball, and is
 dodged or blocked by a wall as Fireball is. It strikes for 82 lightning at
 Air Magic 12, and a Ranger's 100 armor counts as 75 against it: it lands
 for 63, where Fireball's 91 lands for 46.
+**Lightning Strike** (5 energy, 1 s, 5 s recharge) hits at once for 33
+lightning at rank 12. **Mind Shock** (elite, 5 energy, 10 overcast, 1 s,
+8 s recharge) hits for 42 lightning, and if you have more energy than
+your target when it lands (its cost already paid), another 42 and a
+knockdown. **Shard Storm** (Water Magic, 10 energy, 1 s, 10 s recharge)
+flies as Fireball does, a little faster, and on a hit deals 70 cold and
+hexes its target to 34% speed for 5 s (#918).
 
 ## Primary attributes
 

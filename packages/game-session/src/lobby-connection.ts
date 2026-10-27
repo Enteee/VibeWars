@@ -36,14 +36,16 @@ export interface LobbySnapshot {
   readonly players: readonly LobbyPlayerSnapshot[];
   /** Whether this player is the host's own: the one who picks the map and starts. */
   readonly isHost: boolean;
+  /** Whole seconds until a queued lobby's match starts (#871); `null` when none is counting. */
+  readonly countdownSeconds: number | null;
 }
 
 /**
  * Why a lobby closed: the host closed it or left, or its peer was gone
  * for the whole reconnect window, which this side cannot tell from its
- * own connection dropping.
+ * own connection dropping, or a queued lobby's group never filled (#871).
  */
-export type LobbyClosedReason = "host-left" | "connection-lost";
+export type LobbyClosedReason = "host-left" | "connection-lost" | "fell-through";
 
 /** A chat line (#479), with its sender's name and team as it was sent. */
 export interface ChatLine {

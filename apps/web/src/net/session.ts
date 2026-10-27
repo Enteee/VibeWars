@@ -1,4 +1,4 @@
-import { DEFAULT_MATCH_RULES, type PlayerBuild } from "@vibewars/game-core";
+import type { PlayerBuild } from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
   PROTOCOL_MISMATCH_MESSAGE,
@@ -55,6 +55,11 @@ export const LOBBY_FULL_MESSAGE = "That lobby is full.";
 export const HOST_CLOSED_MESSAGE = "The host closed the lobby.";
 /** True whichever side dropped: a guest cannot tell its own drop from the host's. */
 export const CONNECTION_LOST_MESSAGE = "Lost the connection to the host.";
+/** A queued lobby (#871) turned this ticket away: its proof did not hold, or it is seated already. */
+export const NOT_ADMITTED_MESSAGE = "The match would not let this ticket in.";
+export const TICKET_USED_MESSAGE = "This ticket is already in the match, in another tab.";
+/** #854 C7's wording. */
+export const FELL_THROUGH_MESSAGE = "Match fell through, searching again.";
 
 /** A lobby hosted in this tab, and how to end it for everyone. */
 export interface HostedLobby {
@@ -80,7 +85,7 @@ function startMatch(plan: MatchPlan) {
     // A match is reproducible from its seed; the lobby's match id is
     // unique only within the lobby, so the code goes in too.
     seed: `${plan.transport.selfId}:${plan.matchId}`,
-    matchRules: DEFAULT_MATCH_RULES,
+    matchRules: plan.matchRules,
     random: secureRandom,
     maxPlayers: MAX_LOBBY_PLAYERS,
     seats: plan.seats,
@@ -196,6 +201,12 @@ export function joinFailureNotice(
         return LOBBY_FULL_MESSAGE;
       case "host-left":
         return HOST_CLOSED_MESSAGE;
+      case "not-admitted":
+        return NOT_ADMITTED_MESSAGE;
+      case "ticket-used":
+        return TICKET_USED_MESSAGE;
+      case "fell-through":
+        return FELL_THROUGH_MESSAGE;
     }
   }
   return "Could not join the lobby.";
@@ -208,6 +219,8 @@ export function lobbyClosedNotice(reason: LobbyClosedReason): string {
       return HOST_CLOSED_MESSAGE;
     case "connection-lost":
       return CONNECTION_LOST_MESSAGE;
+    case "fell-through":
+      return FELL_THROUGH_MESSAGE;
   }
 }
 

@@ -306,6 +306,15 @@ const status = {
     "glyph",
     (c) => `<path d="M13.5 4.5L8.5 11h3.5l-1.5 5 5-6.5H12z" fill="${c}"/>`,
   ],
+  // Enchantment: a dot spreading to three, a condition handed on (#887).
+  contagion: [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="13" r="2.5" fill="${c}"/>` +
+      `<circle cx="12" cy="6" r="1.6" fill="${c}"/>` +
+      `<circle cx="6" cy="17" r="1.6" fill="${c}"/>` +
+      `<circle cx="18" cy="17" r="1.6" fill="${c}"/>`,
+  ],
   // Enchantment: a small shield.
   "armor-boost": [
     "enchantment",
@@ -328,6 +337,20 @@ const status = {
   ],
   // Hex: a sword point down, an attack that hurts its attacker (#469).
   empathy: ["hex", (c) => `<path d="M12 18.5v-10M8.5 8.5h7M12 8.5v-4" ${stroke(c, 2.5)}/>`],
+  // Hex: two links of a chain, the bond that heals its caster when it ends (#887).
+  "parasitic-bond": [
+    "hex",
+    (c) =>
+      `<rect x="5" y="9.5" width="8" height="5" rx="2.5" ${stroke(c, 2)}/>` +
+      `<rect x="11" y="9.5" width="8" height="5" rx="2.5" ${stroke(c, 2)}/>`,
+  ],
+  // Hex: an ice shard, the cold slowing you (#918).
+  "shard-storm": ["hex", (c) => `<path d="M12 5.5L15 12L12 18.5L9 12z" fill="${c}"/>`],
+  // Hex: two chevrons pointing back, attacks slowed (#918).
+  "shadow-of-fear": [
+    "hex",
+    (c) => `<path d="M14.5 8L11 12l3.5 4M11 8L7.5 12l3.5 4" ${stroke(c, 2)}/>`,
+  ],
   // Enchantment: a shield in outline with a blow glancing off it, block (#534).
   guardian: [
     "enchantment",
@@ -392,6 +415,10 @@ const speaker = `<path d="M3 9h4l5-5v16l-5-5H3z" fill="${C.ink}"/>`;
 /** The beamed eighth notes both music icons share: two heads, two stems, a slab beam, one fill. */
 const notes = `<path d="M8.5 18V6L19.5 4v12h-2V7.5l-7 1.5v9zM3 18a3 2 0 1 1 6 0 3 2 0 1 1-6 0M14 16a3 2 0 1 1 6 0 3 2 0 1 1-6 0" fill="${C.ink}"/>`;
 
+/** One dagger, tilted about the icon's centre: the three chain marks share it. */
+const chainDagger = (/** @type {number} */ tilt) =>
+  `<g transform="rotate(${String(tilt)} 12 12)"><path d="M12 2.5l1.6 3.2V14h-3.2V5.7zM8.5 14h7M12 14v4.5"/><circle cx="12" cy="20" r="1.2"/></g>`;
+
 const ui = {
   // Speaker with two sound waves: sound is on (#112).
   "sound-on": () =>
@@ -416,6 +443,12 @@ const ui = {
   // (#160). Two blades, so it never reads as the one-sword attack skill type.
   attacking: () =>
     `<path d="M4 4l13 13M20 4L7 17M14 20l6-6M10 20l-6-6M17 17l3.5 3.5M7 17l-3.5 3.5" ${stroke(C.ink, 2)}/>`,
+  // A dagger leaning right, one leaning left, both: the next blow of your
+  // dagger chain is the lead, the off-hand, or a dual attack (#916). The shape
+  // carries the state; the Assassin's red only says whose chain it is.
+  "chain-lead": () => `<g ${stroke(C.assassin, 2)}>${chainDagger(35)}</g>`,
+  "chain-off-hand": () => `<g ${stroke(C.assassin, 2)}>${chainDagger(-35)}</g>`,
+  "chain-dual": () => `<g ${stroke(C.assassin, 2)}>${chainDagger(35)}${chainDagger(-35)}</g>`,
 };
 
 // ---------------------------------------------------------------------------
@@ -632,6 +665,11 @@ const skillGlyph = {
   "lightning-orb": () =>
     `<circle cx="12" cy="12" r="8" ${stroke(C.ink, 2)}/>` +
     inkLine("M13.5 5.5L9.5 12H14.5L10.5 18.5", 2),
+  // A bolt in a line, from above (#918): lightning, not the filled
+  // energy bolt.
+  lightning: () => inkLine("M15 2.5L8.5 12.5H15.5L9 21.5", 2.6),
+  // An ice shard in flight, with its trail (#918).
+  shard: () => inkFill("M21 3L18 13L11 6Z") + inkLine("M12.5 11.5L4 20M9 9L5 13M15 15L11 19", 2),
   axe: () =>
     inkLine("M5 20L16 7", 2.4) + inkFill("M11 3.5C17 2.5 21.5 5 21 9C20.5 13 16.5 15 14 12.5Z"),
   sword: () =>

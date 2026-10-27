@@ -43,6 +43,8 @@ import {
   parsePeerLobbyJoin,
   parseWireLobbyCommand,
   parseWireLobbyNote,
+  parsePeerLobbyHello,
+  parseWireLobbyWelcome,
   parseWireLobbyState,
   parseWireMatchStart,
 } from "./p2p.js";
@@ -287,7 +289,11 @@ const lobbyJoin: PeerLobbyJoin = {
   protocolVersion: PROTOCOL_VERSION,
   name: "Mhenlo",
   character: { name: "Mhenlo Healer", primary: "monk", secondary: "elementalist" },
+  admission: null,
 };
+
+/** A queued join's proof (#871): a ticket id and a signature, as hex. */
+const admission = { ticketId: "ab".repeat(32), admissionSig: "cd".repeat(64) };
 
 const lobbyState: WireLobbyState = {
   code: "ACDEFG",
@@ -306,6 +312,7 @@ const lobbyState: WireLobbyState = {
     },
     { id: "peer-3", name: "Watcher", team: null, ready: false, isHost: false, character: null },
   ],
+  countdownSeconds: null,
 };
 
 const ping = { id: 3, x: 200, y: 150.5, byId: "peer-1", remaining: 2.6 };
@@ -384,6 +391,14 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["chat-throttled (#479)", parseWireLobbyNote, { kind: "chat-throttled", reason: "" }],
   ["lobby-join", parsePeerLobbyJoin, lobbyJoin],
   ["lobby-join on the house loadout", parsePeerLobbyJoin, { ...lobbyJoin, character: null }],
+  ["queued lobby-join (#871)", parsePeerLobbyJoin, { ...lobbyJoin, admission }],
+  ["lobby-hello (#871)", parsePeerLobbyHello, {}],
+  ["lobby-welcome (#871)", parseWireLobbyWelcome, { hostSig: "ef".repeat(64) }],
+  [
+    "counting-down lobby-state (#871)",
+    parseWireLobbyState,
+    { ...lobbyState, phase: "starting", matchId: null, countdownSeconds: 3 },
+  ],
   ["lobby-state", parseWireLobbyState, lobbyState],
   ["waiting lobby-state", parseWireLobbyState, { ...lobbyState, phase: "waiting", matchId: null }],
   ["choose-team", parseWireLobbyCommand, { kind: "choose-team", team: 1 }],
@@ -393,6 +408,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["start", parseWireLobbyCommand, { kind: "start" }],
   ["start-rejected", parseWireLobbyNote, { kind: "start-rejected", reason: "nobody is ready" }],
   ["lobby refusal", parseWireLobbyNote, { kind: "refused", reason: "lobby-full" }],
+  ["fell-through (#871)", parseWireLobbyNote, { kind: "refused", reason: "fell-through" }],
   ["match-start", parseWireMatchStart, { mapId: "isle", matchId: "match-2" }],
 ];
 
@@ -816,6 +832,53 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "lobby-state with a player of no character",
     parseWireLobbyState,
     { ...lobbyState, players: [{ ...lobbyState.players[1], character: undefined }] },
+  ],
+  [
+    "lobby-join without an admission (#871)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, admission: undefined },
+  ],
+  [
+    "lobby-join with an upper-case ticket id (#871)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, admission: { ...admission, ticketId: "AB".repeat(32) } },
+  ],
+  [
+    "lobby-join with a short ticket id (#871)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, admission: { ...admission, ticketId: "ab".repeat(31) } },
+  ],
+  [
+    "lobby-join with a long admission signature (#871)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, admission: { ...admission, admissionSig: "cd".repeat(65) } },
+  ],
+  [
+    "lobby-join with an admission of no signature (#871)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, admission: { ticketId: admission.ticketId } },
+  ],
+  ["lobby-hello with a field (#871)", parsePeerLobbyHello, { ticketId: "ab".repeat(32) }],
+  ["lobby-welcome of no signature (#871)", parseWireLobbyWelcome, {}],
+  [
+    "lobby-welcome of a non-hex signature (#871)",
+    parseWireLobbyWelcome,
+    { hostSig: "zz".repeat(64) },
+  ],
+  [
+    "lobby-state without a countdown (#871)",
+    parseWireLobbyState,
+    { ...lobbyState, countdownSeconds: undefined },
+  ],
+  [
+    "lobby-state counting down a fraction (#871)",
+    parseWireLobbyState,
+    { ...lobbyState, countdownSeconds: 2.5 },
+  ],
+  [
+    "lobby-state counting below zero (#871)",
+    parseWireLobbyState,
+    { ...lobbyState, countdownSeconds: -1 },
   ],
   ["lobby-state of an unknown phase", parseWireLobbyState, { ...lobbyState, phase: "over" }],
   ["lobby-state without a host", parseWireLobbyState, { ...lobbyState, hostId: undefined }],
