@@ -1265,6 +1265,46 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // "...and any Stance being used by your target ends."
     effects: [{ kind: "remove-status", category: "stance", count: 1 }],
   },
+  {
+    id: "paragon.cruel-spear",
+    name: "Cruel Spear",
+    type: "attack",
+    elite: true,
+    profession: "paragon",
+    attributeId: "paragon.spear-mastery",
+    cost: { kind: "adrenaline", amount: 6 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: WEAPONS.spear.range,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "spear",
+      weaponDamage: 1,
+      bonusDamage: {
+        scaling: { attributeId: "paragon.spear-mastery", atZero: 10, atTwelve: 42 },
+      },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If it hits a non-moving target, you inflict a Deep Wound for
+    // 5...17...20 seconds": read as the spear lands (#921).
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-not-moving" },
+        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+      },
+    ],
+  },
 
   /* ---------------------------------------------------------------------- */
   /* Signets and shouts (#524)                                               */
@@ -1324,6 +1364,62 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // +21 armor for 10 seconds, ending after 3 incoming attacks: its
     // rank-12 numbers, in the status.
     effects: [{ kind: "apply-status", statusId: "watch-yourself", durationSeconds: 10 }],
+  },
+  {
+    id: "paragon.fall-back",
+    name: '"Fall Back!"',
+    type: "shout",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.command",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 25,
+    range: RANGE_SPELL,
+    target: "self",
+    // "All allies within earshot", the shouter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // 13 Health per second while moving and 33% faster for 9 seconds,
+    // ending on a hit: its rank-12 numbers, in the status.
+    effects: [{ kind: "apply-status", statusId: "fall-back", durationSeconds: 9 }],
+  },
+  {
+    id: "paragon.stand-your-ground",
+    name: '"Stand Your Ground!"',
+    type: "shout",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.command",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    // "All party members within earshot", the shouter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // +24 armor when not moving for 17 seconds, ending if its bearer
+    // attacks: its rank-12 numbers, in the status.
+    effects: [{ kind: "apply-status", statusId: "stand-your-ground", durationSeconds: 17 }],
   },
 
   /* ---------------------------------------------------------------------- */

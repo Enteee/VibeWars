@@ -126,7 +126,7 @@ shared builds, the revisit condition above applies.
 ## Amendment (2026-10-25, #303): the protocol version is derived
 
 `PROTOCOL_VERSION` is no longer a number anyone bumps. It is the hash of
-`packages/game-protocol/wire-schema.json`, a committed, generated
+`packages/game-protocol/src/wire-schema.json`, a committed, generated
 description of the whole wire schema, and `pnpm run wire:snapshot`
 writes both. A wire change changes the version with no human step, a
 change that did not regenerate fails the server suite, and two wire
@@ -142,3 +142,18 @@ What was tried first:
 - **A hand-appended `PROTOCOL_LOG.md` line per wire change.** It makes
   the PRs conflict, but it is still a step someone has to remember, and
   only a heuristic can say when they forgot.
+
+## Amendment (2026-10-27, #950): the hash is no longer committed
+
+`PROTOCOL_VERSION` is computed when `protocol-version.ts` loads, as a
+fingerprint of `wire-schema.json`. A wire PR commits only the schema.
+
+Why: the committed hash changed in every PR that touched the wire, which
+is every skill PR, so each merge left all the others conflicted: a
+merge-main, a push and a re-review apiece, for a line nobody wrote.
+
+What guards it now: the schema is canonical (sorted keys, unions and
+status ids), so a clean textual merge of two independent insertions is
+the regenerated file, and edits to the same type conflict as before. The
+rare remainder is caught by the snapshot test on `main`'s CI and fixed
+by the next PR's `pnpm run wire:snapshot`. It still only rejects.

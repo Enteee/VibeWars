@@ -233,9 +233,9 @@ the same condition, for as long as it was put on you, and you sacrifice
 6% of your maximum health, foes in reach or not. A condition you
 already had, refreshed or not, does nothing. **Parasitic Bond** (hex,
 20 s) gives its target −1 health degeneration and heals its caster for
-102 when it ends: when it runs out, or when it is removed. Re-casting it
-on a target that still has it heals nothing; the respawn of its target
-heals nothing either, and neither does a caster who has died or left.
+102 when it ends: when it runs out, when it is removed, or when its
+target dies. Re-casting it on a target that still has it heals nothing,
+and neither does a caster who has died or left.
 What a trigger does never sets off another trigger: a condition
 Contagion hands to a foe with Contagion goes no further.
 
@@ -495,7 +495,15 @@ time. A signet, an attack or a stance is not a spell.
 Wild Throw (Paragon spear attack, 7 adrenaline) deals +17 damage, cannot
 be blocked, and ends the stance of the foe it hits. It does not yet
 disable your other attack skills for 3 s: that waits for disabled skills
-(#469).
+(#469). Cruel Spear (Paragon elite spear attack, 6 adrenaline) deals
++42 damage, and a Deep Wound for 17 s if its target is not moving as the
+spear lands (#921).
+
+**Moving** means walking during the previous tick: a held direction, a
+clicked point, an approach to attack or cast. Knocked down, in
+aftercast, dead or walking into a wall is not moving. Everyone's is read
+at the end of a tick, so it is one tick late and never depends on who
+acts first.
 
 Spear of Lightning (Paragon spear attack, 5 energy, 6 s) deals +18, and
 the whole blow is lightning, the spear's damage too: armor against
@@ -544,6 +552,14 @@ you 66, plus 18 for each living ally in earshot, you included, at most
 140 in all: 84 alone, 140 with four others. It is a skill, not a shout,
 so Leadership gives no energy for it. A Deep Wound cuts the capped heal
 by its 20%.
+
+The Paragon's Command shouts (#921): "Fall Back!" (10 energy, 25 s
+recharge) gives 9 s of 33% faster movement and 13 Health per second
+while moving, a heal Deep Wound cuts; it ends on an ally when that ally
+hits with an attack, but not on a miss or a block. "Stand Your Ground!"
+(15 energy, 30 s recharge) gives 17 s of +24 armor while not moving,
+and ends on an ally as soon as that ally attacks. Leadership pays for
+both, as for every shout.
 
 **Chants** reach allies in earshot as shouts do, but have a cast (#758).
 A chant is not a spell: dazed does not slow it. Anthem of Flame
@@ -868,6 +884,11 @@ Health reaching zero kills exactly once (no double death events). A kill
 scores for the opposing team; both death paths — a killing blow and
 bleeding out — route through the same place, so neither is worth more
 than the other.
+
+A death ends every effect on the dead: conditions, hexes, enchantments,
+stances, shouts. Each ends as if removed, so what answers its ending
+fires, and a corpse wears nothing. A kill made by such an answer, as a
+Backfire's damage, ends them too but sets off nothing further.
 
 Kill credit is **team-level, not per-player**. Attributing a kill to a
 specific killer needs damage-source tracking that does not exist yet,

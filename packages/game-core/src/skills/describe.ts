@@ -168,6 +168,12 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const sign = definition.armorModifier > 0 ? "+" : "";
     parts.push(`${sign}${String(definition.armorModifier)} armor`);
   }
+  if (definition.armorWhileStill !== 0) {
+    parts.push(`${signed(definition.armorWhileStill)} armor while not moving`);
+  }
+  if (definition.healthPerSecondWhileMoving !== 0) {
+    parts.push(`${String(definition.healthPerSecondWhileMoving)} Health per second while moving`);
+  }
   if (definition.armorReduction !== undefined) {
     const { amount, floor } = definition.armorReduction;
     parts.push(`−${String(amount)} armor (not below ${String(floor)})`);
@@ -378,6 +384,8 @@ function conditionText(condition: EffectCondition): string {
       return condition.radius === AREA_ADJACENT
         ? "If target is not adjacent to any allies"
         : `If target has no allies within ${String(condition.radius)}`;
+    case "target-not-moving":
+      return "If target is not moving";
     case "caster-more-energy":
       return "If you have more Energy than target";
   }

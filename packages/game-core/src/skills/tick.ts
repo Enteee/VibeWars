@@ -27,6 +27,10 @@ import { isSpell, type Combatant, type Skill } from "./types.js";
  *
  * `naturalPips` is natural regeneration (`naturalHealthPips`): not a
  * status, but summed with theirs before the clamp, as GW1 does.
+ *
+ * A moving bearer's health per second (#921, "Fall Back!") is a heal,
+ * not pips: outside the clamp, scaled by `healingMultiplier`, and added
+ * to the same change, so one tick emits one damage or heal event.
  */
 export function advanceStatuses(
   combatant: Combatant,
@@ -40,8 +44,12 @@ export function advanceStatuses(
 
   // Health only: upkeep is energy, so none is owed here.
   const pips = netPips(combatant, naturalPips, 0).health;
-  if (pips !== 0) {
-    const delta = pips * HEALTH_PER_PIP * dt;
+  const modifiers = aggregateModifiers(combatant.statuses.active);
+  const whileMoving = combatant.moving
+    ? modifiers.healthPerSecondWhileMoving * modifiers.healingMultiplier
+    : 0;
+  if (pips !== 0 || whileMoving !== 0) {
+    const delta = (pips * HEALTH_PER_PIP + whileMoving) * dt;
     const effectiveMax = effectiveMaxHealth(combatant);
     const next = Math.min(effectiveMax, Math.max(0, combatant.health + delta));
     const applied = next - combatant.health;
