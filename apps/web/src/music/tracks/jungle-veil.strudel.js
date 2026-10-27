@@ -24,7 +24,7 @@ stack(
   // 0: the humid bed - a low drone, a held chord, the flute calling
   note("e2").s("triangle").attack(1).release(2).gain(.5).lpf(400),
   chord(P).voicing().mode("below:g4")
-    .s("supersaw").unison(2).detune(.3).attack(1.6).release(2.5).gain(.15)
+    .s("supersaw").unison(2).detune(.3).attack(1.6).clip(.9).release(.25).gain(.15)
     .lpf(sine.range(500, 1400).slow(12)).room(.85).roomsize(6).orbit(2),
   n(flute).scale("e3:dorian")
     .s("recorder").gain(.6).attack(.12).release(.7).lpf(2800).room(.8).roomsize(6).orbit(2),

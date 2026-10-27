@@ -594,6 +594,7 @@ export const ROLE_STYLE = {
   "lead-dev": { emoji: "🔍", name: "Lead Dev" },
   "perf-sec-qa": { emoji: "🛡", name: "Perf/Sec/QA" },
   "qa-tester": { emoji: "🧪", name: "QA Tester" },
+  "business-analyst": { emoji: "📈", name: "Business Analyst" },
 };
 
 /**

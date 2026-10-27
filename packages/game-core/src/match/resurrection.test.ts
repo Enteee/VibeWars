@@ -15,6 +15,7 @@ import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 const MATCH: MatchRules = {
+  victory: "kill-count",
   scoreToWin: 15,
   timeLimitSeconds: 600,
   deathRule: "respawn",
