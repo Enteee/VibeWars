@@ -34,6 +34,7 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     attack: undefined,
     knockdownRemaining: 0,
     soulReapingTriggers: [],
+    nextMaintainSeq: 0,
     // Armor at the reference level, so an unconfigured test combatant
     // takes damage for exactly its stated amount. A test that wants to
     // exercise mitigation says so explicitly.

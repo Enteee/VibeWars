@@ -65,6 +65,7 @@ describe("logToneOf", () => {
       "status-removed",
       "status-expired",
       "status-spread",
+      "upkeep-lost",
       "health-lost",
       "interrupted",
       "interrupt-missed",
@@ -79,6 +80,7 @@ describe("logToneOf", () => {
       "resource",
       "damage",
       "death",
+      "status",
       "status",
       "status",
       "status",
@@ -187,6 +189,24 @@ describe("describeCombatEvent", () => {
     };
     expect(describeCombatEvent(entry([applied]), applied, nameOf)).toBe(
       "Caster dummy gains Bleeding (10 s)",
+    );
+    const maintained: CombatEvent = {
+      kind: "status-applied",
+      targetId: "dummy",
+      statusId: "mending",
+      durationSeconds: null,
+    };
+    expect(describeCombatEvent(entry([maintained]), maintained, nameOf)).toBe(
+      "Caster dummy gains Mending (maintained)",
+    );
+    const lost: CombatEvent = {
+      kind: "upkeep-lost",
+      targetId: "dummy",
+      statusId: "mending",
+      casterId: "you",
+    };
+    expect(describeCombatEvent(entry([lost]), lost, nameOf)).toBe(
+      "Mending on Caster dummy was lost: Pyro could not pay the upkeep",
     );
     const interrupted: CombatEvent = {
       kind: "interrupted",

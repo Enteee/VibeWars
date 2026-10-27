@@ -299,6 +299,27 @@ lands, so a miss still costs energy or adrenaline and starts the
 recharge, and the missed foe gets none of the skill's riders. Spells are
 unaffected.
 
+**A maintained enchantment lasts until something ends it** (#837, GW1).
+While it lasts, its caster has −1 energy pip for it, on top of the other
+pips and inside the same ±10 clamp; the bearer pays nothing. The upkeep
+is worked out each tick from who bears what, so a strip, a replacement
+or a death ends it with the enchantment. Mending (Monk, Healing Prayers,
+10 energy, 2 s) is the first: +3 Health regeneration on an ally or
+yourself. Recasting it on the same ally is still one, and becomes your
+newest. Another Monk's Mending on that ally replaces yours, and your
+upkeep ends with it. Its icon has no duration bar, and its hover says
+"maintained". It ends by itself in three ways:
+
+- **Can't pay.** At 0 energy, with net energy pips below 0 before the
+  clamp, your newest maintained enchantment ends, then the next, until
+  the net is 0 or more. Each one logs "Mending on X was lost: Y could not
+  pay the upkeep". At 0 energy with a net of exactly 0, nothing ends.
+- **Over the cap.** If your net energy pips before the clamp would fall
+  below −10, your oldest ones end until they are −10 or better. The
+  newest always stays.
+- **Death.** Your death ends everything you maintain. Your bearer's
+  death ends what is on them, and resurrection does not bring it back.
+
 Degeneration applies **continuously** (`pips × 2 × dt`), not in once-per-
 second lumps, so a bleed at 20 Hz drains smoothly instead of
 stair-stepping. Regeneration correctly caps at the deep-wound-_reduced_

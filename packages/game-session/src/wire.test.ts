@@ -38,6 +38,16 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     spellsLeft: undefined,
     sourceId: "caster",
     outbreak: null,
+    maintained: null,
+  };
+}
+
+/** `id` maintained (#837): no end of its own. */
+function maintained(id: StatusId): ActiveStatus {
+  return {
+    ...status(id, Infinity),
+    durationSeconds: Infinity,
+    maintained: { seq: 0 },
   };
 }
 
@@ -87,6 +97,17 @@ describe("wireStatuses (#636)", () => {
     expect(wireStatuses(active)).toEqual(active);
     expect(wireStatuses([...active].reverse())).toEqual([...active].reverse());
   });
+
+  it("sorts two with no end as equal, after every timed one of their rank (#837)", () => {
+    const active = [
+      maintained("mending"),
+      maintained("regeneration"),
+      ...Array.from({ length: 31 }, () => status("armor-boost", 5)),
+    ];
+    const sent = wireStatuses(active);
+    expect(sent).toHaveLength(32);
+    expect(sent.filter((entry) => entry.maintained !== null)).toHaveLength(1);
+  });
 });
 
 describe("statusSnapshot (#803)", () => {
@@ -109,6 +130,16 @@ describe("statusSnapshot (#803)", () => {
     const cast = { remainingSeconds: 1.5, totalSeconds: 2 };
     const borne = { ...status("healing-signet-armor", Infinity), durationSeconds: Infinity };
     expect(statusSnapshot(borne, 4, cast)).toMatchObject({ endsAt: 5.5, durationSeconds: 2 });
+  });
+
+  it("sends a maintained enchantment with no times at all (#837)", () => {
+    const mending = { ...maintained("mending"), sourceId: "monk" };
+    expect(statusSnapshot(mending, 4, undefined)).toEqual({
+      id: "mending",
+      endsAt: null,
+      durationSeconds: null,
+      casterId: "monk",
+    });
   });
 });
 

@@ -79,10 +79,16 @@ export interface PlayerSnapshot {
 /** One status on a player (#803): what the effects monitor draws. */
 export interface StatusSnapshot {
   readonly id: StatusId;
-  /** Match clock (`elapsedSeconds`) at which it runs out. */
-  readonly endsAt: number;
-  /** The length of the application that set it: a duration bar's full width. */
-  readonly durationSeconds: number;
+  /**
+   * Match clock (`elapsedSeconds`) at which it runs out; `null` for a
+   * maintained enchantment (#837), which lasts until something ends it.
+   */
+  readonly endsAt: number | null;
+  /**
+   * The length of the application that set it: a duration bar's full
+   * width. `null` exactly when `endsAt` is.
+   */
+  readonly durationSeconds: number | null;
   /** Who applied it; it keeps the id after they leave the match. */
   readonly casterId: string;
 }

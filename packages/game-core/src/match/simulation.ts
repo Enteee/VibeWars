@@ -58,11 +58,13 @@ import {
   aggregateModifiers,
   clampPips,
   ENERGY_PER_PIP,
+  MAX_PIPS,
   scaledStatusDuration,
   STATUS_DEFINITIONS,
   StatusSet,
   type ActiveStatus,
   type Outbreak,
+  type StatusId,
 } from "../skills/status.js";
 import { effectiveMaxEnergy, recoverOvercast } from "../skills/overcast.js";
 import { resolveTargets } from "../skills/targeting.js";
@@ -72,7 +74,9 @@ import {
   naturalHealthPips,
   moveSpeedMultiplier,
   netPips,
+  preCapEnergyPips,
   rankOf,
+  upkeepPips,
   type NetPips,
 } from "../skills/tick.js";
 import { isSpell, type Combatant, type Skill } from "../skills/types.js";
@@ -334,6 +338,13 @@ const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
 /** How a step toward a waypoint went; see `#stepToward`. */
 type PathStep = "moved" | "stalled" | "held";
 
+/** Every participant's combatant, without a copy: read each tick (#837). */
+function* combatantsOf(records: Iterable<Participant>): Generator<Combatant> {
+  for (const record of records) {
+    yield record.combatant;
+  }
+}
+
 /** How far a body walks from `from` along `path`'s waypoints. */
 function pathLength(from: Vec2, path: readonly Vec2[]): number {
   let total = 0;
@@ -437,6 +448,7 @@ export class MatchSimulation {
     return netPips(
       combatant,
       naturalHealthPips(combatant, outOfCombatSeconds, this.#ruleset.resources),
+      this.#upkeep(participant.id),
     );
   }
 
@@ -936,7 +948,7 @@ export class MatchSimulation {
       // Energy regenerates continuously, at the net pips (GW1); adrenaline
       // is earned by acting, not by waiting, so it deliberately does not
       // tick up here.
-      const energyPips = netPips(record.combatant, natural).energy;
+      const energyPips = netPips(record.combatant, natural, this.#upkeep(record.id)).energy;
       // Up to the ceiling overcast leaves, which can be below 0 (#461).
       record.combatant.energy = Math.max(
         0,
@@ -1003,6 +1015,7 @@ export class MatchSimulation {
       }
     }
 
+    this.#settleUpkeep();
     this.#spreadStatuses();
 
     const log = this.#log.concat(this.#reaped);
@@ -1010,6 +1023,88 @@ export class MatchSimulation {
     this.#reaped = [];
     this.#healthLost(log);
     return this.#result(log);
+  }
+
+  /**
+   * Maintained enchantments that end by themselves (#837, GW1), once
+   * everyone has acted. A death ends one, the bearer's or its caster's.
+   * Past the cap, a caster whose upkeep takes its pre-cap energy pips below
+   * −`MAX_PIPS` loses its oldest. And a caster at 0 energy whose pre-cap
+   * net is below 0 loses its newest, then the next, until it can pay, each
+   * with a log row of its own. Pre-cap, never the clamped rate the tick
+   * applies.
+   */
+  #settleUpkeep(): void {
+    const maintained = new Map<string, { bearer: Combatant; id: StatusId; seq: number }[]>();
+    for (const record of this.#participants.values()) {
+      const bearer = record.combatant;
+      for (const status of bearer.statuses.active) {
+        if (status.maintained === null) {
+          continue;
+        }
+        // Ended by a death, whichever path killed: the bearer's, or the
+        // caster's, who may have left the match too.
+        const caster = this.#participants.get(status.sourceId)?.combatant;
+        if (bearer.dead || caster === undefined || caster.dead) {
+          bearer.statuses.remove(status.id);
+          continue;
+        }
+        const held = maintained.get(status.sourceId) ?? [];
+        held.push({ bearer, id: status.id, seq: status.maintained.seq });
+        maintained.set(status.sourceId, held);
+      }
+    }
+    for (const [casterId, held] of maintained) {
+      const caster = this.#participants.get(casterId)?.combatant;
+      if (caster === undefined) {
+        continue;
+      }
+      held.sort((a, b) => a.seq - b.seq);
+      let upkeep = -held.length;
+      // Over the cap: the oldest give way to the newest, which stays even
+      // alone. Checked every tick, so in practice it is the cast that
+      // crosses it.
+      while (held.length > 1 && preCapEnergyPips(caster, upkeep) < -MAX_PIPS) {
+        const oldest = held.shift();
+        oldest?.bearer.statuses.remove(oldest.id);
+        upkeep += 1;
+      }
+      // Can't pay: the newest goes first, until the rest can be paid for.
+      const events: CombatEvent[] = [];
+      while (caster.energy <= 0 && preCapEnergyPips(caster, upkeep) < 0) {
+        const newest = held.pop();
+        if (newest === undefined) {
+          break;
+        }
+        newest.bearer.statuses.remove(newest.id);
+        upkeep += 1;
+        events.push({
+          kind: "upkeep-lost",
+          targetId: newest.bearer.id,
+          statusId: newest.id,
+          casterId,
+        });
+      }
+      if (events.length > 0) {
+        this.#log.push({
+          tick: this.#tick,
+          atSeconds: this.#elapsedSeconds,
+          cause: "skill",
+          sourceId: casterId,
+          skillId: undefined,
+          weaponId: undefined,
+          attributeId: undefined,
+          area: undefined,
+          doubleStrike: false,
+          events,
+        });
+      }
+    }
+  }
+
+  /** What `casterId` pays for the enchantments it maintains, in pips (#837). */
+  #upkeep(casterId: string): number {
+    return upkeepPips(casterId, combatantsOf(this.#participants.values()));
   }
 
   /**
@@ -2342,6 +2437,7 @@ export class MatchSimulation {
       attack: undefined,
       knockdownRemaining: 0,
       soulReapingTriggers: [],
+      nextMaintainSeq: 0,
       equipment: spec.equipment,
     };
   }

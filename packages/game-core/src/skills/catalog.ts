@@ -601,6 +601,27 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "guardian", durationSeconds: 6 }],
   },
   {
+    id: "monk.mending",
+    name: "Mending",
+    type: "enchantment",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // The first maintained enchantment (#837): +3 Health regeneration, its
+    // rank-12 value, for −1 energy pip on its caster while it lasts.
+    effects: [{ kind: "maintain-status", statusId: "mending" }],
+  },
+  {
     id: "warrior.sever-artery",
     name: "Sever Artery",
     type: "attack",

@@ -22,8 +22,8 @@ const NAMES = new Map([
 
 function status(
   id: StatusSnapshot["id"],
-  endsAt: number,
-  durationSeconds: number,
+  endsAt: number | null,
+  durationSeconds: number | null,
   casterId = "bob",
 ): StatusSnapshot {
   return { id, endsAt, durationSeconds, casterId };
@@ -53,6 +53,12 @@ describe("effectRows (#834)", () => {
 
   it("gives a status with no duration no bar", () => {
     expect(effectRows([status("armor-boost", 0, 0)], ME, NAMES, 10)[0]?.fraction).toBeUndefined();
+  });
+
+  it("gives a maintained enchantment no bar and no seconds left (#837)", () => {
+    const [row] = effectRows([status("mending", null, null)], ME, NAMES, 10);
+    expect(row?.fraction).toBeUndefined();
+    expect(row?.secondsLeft).toBeUndefined();
   });
 
   it("counts whole seconds left, rounded up, never below 0", () => {

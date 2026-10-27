@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { key } from "./keys.js";
 import { startSoloMatch } from "./helpers/peers.js";
+import { chooseProfession } from "./helpers/professions.js";
 
 /**
  * The effects monitor (#834): your statuses as icons under your bars,
@@ -36,4 +37,33 @@ test("your enchantment shows as an icon, marked yours, its bar draining; the hov
   await expect(tip).toContainText("Enchantment");
   await expect(tip).toContainText("from you");
   await expect(tip).toContainText(/\d+ s left/);
+});
+
+test("a maintained enchantment has no bar, its hover says maintained, and it costs you an energy pip (#837)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "monk");
+  await page.locator("input.editor-name").fill("Mender");
+  await page.locator(".skill-box", { hasText: "Mending" }).locator(".skill-box-equip").click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.locator(".roster").getByText("Mender", { exact: true }).click();
+  await startSoloMatch(page);
+  const energyPips = page.locator(".hud-bar-energy .vital-pips");
+  await expect(energyPips).toHaveAttribute("data-pips", "4");
+
+  // No target: Mending goes on yourself.
+  await page.keyboard.press(key("skill-1"));
+  const effects = page.getByRole("list", { name: "your effects" });
+  const icon = effects.getByRole("listitem").filter({ has: page.getByAltText("Mending") });
+  await expect(icon).toBeVisible();
+  await expect(icon.locator(".effect-bar")).toBeHidden();
+  await expect(energyPips).toHaveAttribute("data-pips", "3");
+
+  await icon.hover();
+  const tip = page.getByRole("tooltip");
+  await expect(tip).toContainText("Mending");
+  await expect(tip).toContainText("maintained");
+  await expect(tip).not.toContainText(/s left/);
 });

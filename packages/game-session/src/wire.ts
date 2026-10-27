@@ -98,12 +98,18 @@ export function wireStatuses(active: readonly ActiveStatus[]): ActiveStatus[] {
       .sort(
         (a, b) =>
           wireStatusRank(a.id) - wireStatusRank(b.id) ||
-          a.remainingSeconds - b.remainingSeconds ||
-          (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+          // Compared, not subtracted: two with no end (#837) are equal, not NaN.
+          compare(a.remainingSeconds, b.remainingSeconds) ||
+          compare(a.id, b.id),
       )
       .slice(0, MAX_WIRE_STATUSES),
   );
   return active.filter((status) => kept.has(status));
+}
+
+/** -1, 0 or 1 as `a` sorts before, with or after `b`. */
+function compare<T extends number | string>(a: T, b: T): number {
+  return a < b ? -1 : a > b ? 1 : 0;
 }
 
 /** Seconds to the 0.1 s a status's times go on the wire in. */
@@ -116,6 +122,7 @@ function tenths(seconds: number): number {
  * match clock, how long it was applied for, and who applied it. One with
  * no end of its own is what its bearer bears while activating
  * (`whileActivating`): it ends with `cast`, so it takes the cast's times.
+ * A maintained enchantment (#837) has no end at all: both times `null`.
  * A duration under 0.05 s still goes as 0.1, as the wire refuses one of
  * nothing.
  */
@@ -124,6 +131,9 @@ export function statusSnapshot(
   elapsedSeconds: number,
   cast: { readonly remainingSeconds: number; readonly totalSeconds: number } | undefined,
 ): StatusSnapshot {
+  if (status.maintained !== null) {
+    return { id: status.id, endsAt: null, durationSeconds: null, casterId: status.sourceId };
+  }
   const [remaining, duration] = Number.isFinite(status.remainingSeconds)
     ? [status.remainingSeconds, status.durationSeconds]
     : [cast?.remainingSeconds ?? 0, cast?.totalSeconds ?? 0];
@@ -242,6 +252,14 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
         statusId: event.statusId,
         fromId: event.fromId,
       };
+    case "upkeep-lost":
+      return {
+        ...none,
+        kind: event.kind,
+        targetId: event.targetId,
+        statusId: event.statusId,
+        fromId: event.casterId,
+      };
     case "interrupted":
     case "cancelled":
       return { ...none, kind: event.kind, targetId: event.targetId, skillId: event.skillId };
@@ -308,8 +326,12 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
     case "sacrifice":
       return amount === null ? undefined : { kind: event.kind, targetId, amount };
     case "status-applied":
-      return isStatusId(statusId) && durationSeconds !== null
+      return isStatusId(statusId)
         ? { kind: event.kind, targetId, statusId, durationSeconds }
+        : undefined;
+    case "upkeep-lost":
+      return isStatusId(statusId) && fromId !== null
+        ? { kind: event.kind, targetId, statusId, casterId: fromId }
         : undefined;
     case "knocked-down":
       return durationSeconds === null ? undefined : { kind: event.kind, targetId, durationSeconds };
