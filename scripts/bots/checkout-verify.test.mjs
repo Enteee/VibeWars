@@ -5,7 +5,7 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { tamperedPaths } from "./checkout-verify.mjs";
+import { tamperedPaths, updateFilesFromMirror } from "./checkout-verify.mjs";
 
 const ENV = {
   ...process.env,
@@ -164,5 +164,52 @@ describe("tamperedPaths", () => {
   it("refuses a sha the mirror does not have", () => {
     const c = setup();
     expect(tamperedPaths({ ...c, sha: "0".repeat(40) })).toHaveLength(1);
+  });
+});
+
+describe("updateFilesFromMirror", () => {
+  it("writes the mirror's files even when a forged tree is swapped in and then swapped back", () => {
+    const c = setup();
+    const from = c.sha;
+    fs.writeFileSync(path.join(c.up, ".gitignore"), "node_modules/\n");
+    fs.writeFileSync(path.join(c.up, "s", "f"), "merged content\n");
+    git(["add", "-A"], c.up);
+    git(["commit", "-qm", "2"], c.up);
+    git(["push", "-q", c.mirror, "main"], c.up);
+    const to = git(["rev-parse", "HEAD"], c.up);
+    git(["fetch", "-q", c.mirror, "main"], c.repoDir);
+    const sTree = git(["rev-parse", "FETCH_HEAD:s"], c.repoDir);
+    const planted = git(["hash-object", "-w", "--stdin"], c.repoDir, "evil\n");
+    const nm = git(["mktree"], c.repoDir, `100644 blob ${planted}\tindex.js\n`);
+    const entries = git(["ls-tree", sTree], c.repoDir);
+    const evilS = git(["mktree"], c.repoDir, `${entries}\n040000 tree ${nm}\tnode_modules\n`);
+    const objects = path.join(c.repoDir, ".git", "objects");
+    const loose = path.join(objects, sTree.slice(0, 2), sTree.slice(2));
+    const genuine = fs.readFileSync(loose);
+    fs.chmodSync(loose, 0o644);
+    fs.copyFileSync(path.join(objects, evilS.slice(0, 2), evilS.slice(2)), loose);
+
+    expect(updateFilesFromMirror({ mirror: c.mirror, repoDir: c.repoDir, from, to })).toBe(true);
+    // the jail restores the genuine object once the update is done
+    fs.chmodSync(loose, 0o644);
+    fs.writeFileSync(loose, genuine);
+    git(["reset", "-q", "--mixed", to], c.repoDir);
+
+    expect(fs.readFileSync(path.join(c.repoDir, "s", "f"), "utf8")).toBe("merged content\n");
+    expect(fs.existsSync(path.join(c.repoDir, "s", "node_modules"))).toBe(false);
+    expect(git(["status", "--porcelain"], c.repoDir)).toBe("");
+    expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha: to })).toEqual([]);
+  });
+
+  it("refuses over a locally edited file", () => {
+    const c = setup();
+    fs.writeFileSync(path.join(c.up, "s", "f"), "merged content\n");
+    git(["commit", "-qam", "2"], c.up);
+    git(["push", "-q", c.mirror, "main"], c.up);
+    const to = git(["rev-parse", "HEAD"], c.up);
+    fs.writeFileSync(path.join(c.repoDir, "s", "f"), "mine\n");
+    expect(updateFilesFromMirror({ mirror: c.mirror, repoDir: c.repoDir, from: c.sha, to })).toBe(
+      false,
+    );
   });
 });

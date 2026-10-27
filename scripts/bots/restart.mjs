@@ -38,7 +38,7 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { tamperedPaths } from "./checkout-verify.mjs";
+import { tamperedPaths, updateFilesFromMirror } from "./checkout-verify.mjs";
 import { FILTER_KEYS, GIT_ENV, GIT_HARDENING, filterPins } from "./git-hardening.mjs";
 import { builds as buildsCommit, devenvShell } from "./company-build.mjs";
 import { writeLock } from "./company-lock.mjs";
@@ -274,7 +274,14 @@ function update(git, target) {
   if (!decision.update) {
     return { updated: false, why: decision.reason };
   }
-  if (git(["merge", "--ff-only", "-q", target]).code !== 0) {
+  // The files come from the mirror's objects, never the shared store's, so a
+  // forged tree cannot write one; the checkout's ref and index follow, and a
+  // forged object there can only make the index look dirty.
+  const from = git(["rev-parse", "HEAD"]).stdout.trim();
+  if (
+    !updateFilesFromMirror({ mirror: MIRROR, repoDir: REPO, from, to: target }) ||
+    git(["reset", "-q", "--mixed", target]).code !== 0
+  ) {
     return { updated: false, why: `the fast-forward to ${short(target)} failed` };
   }
   // A jail can swap an object in the shared store; the mirror's are the truth.

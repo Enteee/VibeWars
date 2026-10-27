@@ -63,3 +63,39 @@ export function tamperedPaths({ mirror, repoDir, sha }) {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 }
+
+/**
+ * Move the checkout's working files from `from` to `to`, reading both commits
+ * from the mirror: `GIT_DIR` is the mirror and the index a scratch one, so
+ * neither the checkout's object store nor its index or config can write a
+ * file. The checkout's own index and branch are for the caller to move
+ * afterwards (`git reset --mixed`, which writes no file); a forged object
+ * then only makes its index look dirty.
+ *
+ * @param {{ mirror: string, repoDir: string, from: string, to: string }} where
+ * @returns {boolean} false when git refused, for instance over a locally edited file
+ */
+export function updateFilesFromMirror({ mirror, repoDir, from, to }) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "checkout-update-"));
+  try {
+    const env = {
+      ...process.env,
+      ...GIT_ENV,
+      GIT_DIR: mirror,
+      GIT_WORK_TREE: repoDir,
+      GIT_INDEX_FILE: path.join(dir, "index"),
+    };
+    /** @param {string[]} args */
+    const git = (args) =>
+      spawnSync("git", [...GIT_HARDENING, ...args], { env, cwd: repoDir, encoding: "utf8" });
+    if (git(["read-tree", from]).status !== 0) {
+      return false;
+    }
+    // A scratch index has no stat data: hash the files so read-tree -m sees them
+    // up to date. A locally edited file stays out of date and read-tree refuses.
+    git(["update-index", "-q", "--really-refresh"]);
+    return git(["read-tree", "-m", "-u", from, to]).status === 0;
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}

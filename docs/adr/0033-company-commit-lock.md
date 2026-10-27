@@ -39,8 +39,15 @@ code nobody had merged.
   the working tree, which is what is verified. This was read from the nix
   files, not run under a tampered checkout.
   Rejected: read-only `.git/objects` in jails (agents must commit),
-  `git fsck` on every boot (slow, and alternates bypass it), checking out
-  from the mirror directly (goes through the checkout's index and config).
+  `git fsck` on every boot (slow, and alternates bypass it).
+  The restarter writes the working files from the mirror
+  (`updateFilesFromMirror`: `GIT_DIR` the mirror, a scratch index,
+  `read-tree -m -u`), not with `git merge`, so a forged object can write no
+  file, not even one it swaps back out of the store afterwards. The
+  checkout's branch and index follow with `reset --mixed`, which writes no
+  file. Residual: `claude-llc lock` after a checkout the operator made by
+  hand goes through the shared store; the verify still catches a forged
+  object that is in place, not one swapped back.
 - The lock advances only in a reboot, after the restarter built `main` in
   the mirror and fast-forwarded the checkout to it, and in
   `claude-llc lock`, which the operator runs on the host after the same
