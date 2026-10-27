@@ -75,7 +75,15 @@ export type CombatEvent =
       readonly skillId: string;
     }
   /** An interrupt that found nothing to interrupt — a wasted cast. */
-  | { readonly kind: "interrupt-missed"; readonly targetId: string }
+  | {
+      readonly kind: "interrupt-missed";
+      readonly targetId: string;
+      /**
+       * The skill the target was activating that the interrupt's filter
+       * refused (#796), or `null` when it was activating nothing.
+       */
+      readonly refusedSkillId: string | null;
+    }
   /** A blinded attack skill that swung and missed: paid for, no effect. */
   | { readonly kind: "attack-missed"; readonly targetId: string }
   /**
@@ -254,16 +262,19 @@ export function applyStatus(
 }
 
 /**
- * Whether `effect` may interrupt what `target` is casting (#521): any
- * cast, or with `only: "spell-or-chant"`, a spell or a chant alone.
+ * The skill `target` is activating that `effect` may not interrupt (#521,
+ * #796), or `null`: with no `only`, any cast is fair game; with `only:
+ * "spell-or-chant"`, anything but a spell or a chant is refused.
  */
-function interrupts(effect: InterruptEffect, target: Combatant): boolean {
-  if (effect.only === undefined) {
-    return true;
-  }
+function refusedSkill(effect: InterruptEffect, target: Combatant): string | null {
   const cast = target.cast.activeCast;
-  const skill = cast === undefined ? undefined : getSkill(cast.skillId);
-  return skill !== undefined && (isSpell(skill.type) || skill.type === "chant");
+  if (effect.only === undefined || cast === undefined) {
+    return null;
+  }
+  const skill = getSkill(cast.skillId);
+  return skill !== undefined && (isSpell(skill.type) || skill.type === "chant")
+    ? null
+    : cast.skillId;
 }
 
 export function applyEffect(effect: UnconditionalEffect, context: SkillContext): CombatEvent[] {
@@ -350,12 +361,13 @@ export function applyEffect(effect: UnconditionalEffect, context: SkillContext):
       if (target === undefined || target.dead) {
         return events;
       }
-      if (!interrupts(effect, target) || !interruptCast(target, events)) {
+      const refusedSkillId = refusedSkill(effect, target);
+      if (refusedSkillId !== null || !interruptCast(target, events)) {
         // Nothing it may interrupt was being cast: the interrupt is wasted. Emitted
-        // explicitly so a combat log can show the miss — landing an
+        // explicitly so a combat log can show the miss, and why — landing an
         // interrupt is a timing skill, and silently swallowing failures
         // would hide exactly the feedback that teaches it.
-        events.push({ kind: "interrupt-missed", targetId: target.id });
+        events.push({ kind: "interrupt-missed", targetId: target.id, refusedSkillId });
       }
       return events;
     }

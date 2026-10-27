@@ -382,7 +382,9 @@ describe("if effects (#521)", () => {
 
     const idle = makeCombatant({ id: "target", team: 1 });
     const events = run([{ kind: "interrupt" }, ifInterrupted], idle);
-    expect(events).toEqual([{ kind: "interrupt-missed", targetId: "target" }]);
+    expect(events).toEqual([
+      { kind: "interrupt-missed", targetId: "target", refusedSkillId: null },
+    ]);
     expect(idle.health).toBe(500);
   });
 
@@ -404,9 +406,19 @@ describe("if effects (#521)", () => {
       const foe = casting(skillId);
       const events = run(spellOrChant, foe);
       expect(foe.cast.isCasting, skillId).toBe(true);
-      expect(events, skillId).toEqual([{ kind: "interrupt-missed", targetId: "target" }]);
+      // The miss names what it let through (#796).
+      expect(events, skillId).toEqual([
+        { kind: "interrupt-missed", targetId: "target", refusedSkillId: skillId },
+      ]);
       expect(foe.health, skillId).toBe(500);
     }
+  });
+
+  it("a picky interrupt on an idle target refuses nothing: refusedSkillId is null (#796)", () => {
+    const idle = makeCombatant({ id: "target", team: 1 });
+    expect(run([{ kind: "interrupt", only: "spell-or-chant" }], idle)).toEqual([
+      { kind: "interrupt-missed", targetId: "target", refusedSkillId: null },
+    ]);
   });
 
   it("lands after a removal only when one of that category went", () => {
