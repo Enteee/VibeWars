@@ -1748,19 +1748,55 @@ body {
   color: #7ee787;
 }
 
-/* Score and clock: top-centre, away from the skill bar, so checking the
-   score never competes with checking what you can cast. */
+/* Count and clock: top-centre, away from the skill bar, so checking the
+   score never competes with checking what you can cast. The foes' pips
+   sit beside them (#881). */
 .hud-scoreboard {
   position: absolute;
   top: 0.6rem;
   left: 50%;
   transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
   padding: 0.3rem 0.8rem;
   background: rgb(14 17 22 / 85%);
   border: 1px solid var(--line);
   letter-spacing: 0.12em;
   font-size: 0.95rem;
+  white-space: nowrap;
   pointer-events: none;
+}
+
+.hud-enemies {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.hud-enemies:empty {
+  display: none;
+}
+
+.hud-enemy-row {
+  display: flex;
+  gap: 0.3rem;
+}
+
+/* Filled in the team's colour while alive; hollow and grey dead. Hover
+   names it, so the pips take the pointer the scoreboard does not. */
+.hud-enemy-pip {
+  width: 0.65rem;
+  height: 0.65rem;
+  border: 2px solid var(--pip-colour);
+  border-radius: 50%;
+  background: var(--pip-colour);
+  pointer-events: auto;
+}
+
+.hud-enemy-pip.is-dead {
+  border-color: #6e7681;
+  background: transparent;
 }
 
 /*

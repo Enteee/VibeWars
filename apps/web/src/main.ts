@@ -38,7 +38,8 @@ import {
   renderOptionsScreen,
 } from "./ui/options-screen.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
-import { mountQueueScreen, type QueueScreen } from "./ui/queue-screen.js";
+import { describeOutcome } from "./ui/hud.js";
+import { mountQueueScreen, nextStreak, type QueueScreen } from "./ui/queue-screen.js";
 import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
@@ -71,6 +72,9 @@ import {
 
 /** Shown on the lobby or the menu once a match is lost for good. */
 const LOST_MATCH_NOTICE = "Lost the connection to the match.";
+
+/** How long a queued match's result stays on the HUD before the queue's ended view (#881). */
+const QUEUED_RESULT_SECONDS = 4;
 
 function requireElement(selector: string): HTMLElement {
   const element = document.querySelector<HTMLElement>(selector);
@@ -155,12 +159,31 @@ async function main(): Promise<void> {
    * the menu again: through its lobby and its match, which show the
    * splash and end on the menu rather than a lobby screen.
    */
-  let queue: { readonly place: RandomArenaQueue; readonly screen: QueueScreen } | undefined;
+  let queue:
+    | {
+        readonly place: RandomArenaQueue;
+        readonly screen: QueueScreen;
+        readonly mode: QueueMode;
+        readonly name: string;
+      }
+    | undefined;
   /** Set while *Random Arena* is reading the character, so a second press makes no second ticket. */
   let joiningQueue = false;
+  /** Queued wins in a row this visit (#881): page memory only, never stored. */
+  let queueStreak = 0;
+  /** The queued match's result line once it finished, and the timer to its ended view. */
+  let queuedEnd: { readonly outcome: string; readonly timer: number } | undefined;
+
+  const clearQueuedEnd = (): void => {
+    if (queuedEnd !== undefined) {
+      clearTimeout(queuedEnd.timer);
+      queuedEnd = undefined;
+    }
+  };
 
   /** Out of the queue, if in it; the lobby and match, if any, are the caller's to leave. */
   const dropQueue = (): void => {
+    clearQueuedEnd();
     queue?.place.leave();
     queue?.screen.dispose();
     queue = undefined;
@@ -492,15 +515,16 @@ async function main(): Promise<void> {
   /**
    * Queue for a Random Arena with the active character (#880): the queue
    * screen until a group's lobby seats this player, its splash while it
-   * counts down, then the match.
+   * counts down, then the match. Whether it queued: not without an
+   * active character, or while already queueing.
    */
-  const enterRandomArena = async (mode: QueueMode, name: string): Promise<void> => {
+  const enterRandomArena = async (mode: QueueMode, name: string): Promise<boolean> => {
     if (queue !== undefined || joiningQueue) {
-      return;
+      return false;
     }
     const id = loadActiveCharacterId();
     if (id === undefined) {
-      return;
+      return false;
     }
     joiningQueue = true;
     let stored: StoredCharacter | undefined;
@@ -512,7 +536,7 @@ async function main(): Promise<void> {
       joiningQueue = false;
     }
     if (stored === undefined) {
-      return;
+      return false;
     }
     leaveScreen();
     menuNotice = undefined;
@@ -531,6 +555,15 @@ async function main(): Promise<void> {
         onBack: () => {
           void leaveLobby();
         },
+        onQueueAgain: () => {
+          dropQueue();
+          void enterRandomArena(mode, name).then((queued) => {
+            // The character went meanwhile: the menu, where *Random Arena* is greyed.
+            if (!queued) {
+              showMenu();
+            }
+          });
+        },
       },
     );
     const place = enterQueue(mode, name, character, {
@@ -547,7 +580,8 @@ async function main(): Promise<void> {
         screen.show({ kind: "refused", notice });
       },
     });
-    queue = { place, screen };
+    queue = { place, screen, mode, name };
+    return true;
   };
 
   const renderLobby = (): void => {
@@ -694,21 +728,59 @@ async function main(): Promise<void> {
   };
 
   /**
-   * Back to where the player came from: the lobby if there is one, else
-   * the menu, with `notice` on it. A no-op once the match is gone, so a
-   * lost connection racing a leave click exits once.
+   * A finished queued match, after its result (#881): out of the match
+   * and its lobby, onto the queue screen's ended view rather than the
+   * menu. The queue's place already closed as the match started.
    */
-  const exitMatch = async (notice?: string): Promise<void> => {
+  const endQueuedMatch = async (outcome: string): Promise<void> => {
+    clearQueuedEnd();
     const leaving = match;
     if (leaving === undefined) {
       return;
     }
     match = undefined;
     await leaving.dispose();
+    enteringMatch = false;
+    const leavingLobby = lobby;
+    const ending = hosted;
+    lobby = undefined;
+    hosted = undefined;
+    closeChat();
+    await leavingLobby?.disconnect();
+    await ending?.close();
+    if (queue === undefined) {
+      return;
+    }
+    leaveScreen();
+    setStatus("", "offline");
+    showViewport(false);
+    music().screen("menu");
+    queue.screen.show({ kind: "ended", outcome, streak: queueStreak });
+  };
+
+  /**
+   * Back to where the player came from: the lobby if there is one, else
+   * the menu, with `notice` on it. A no-op once the match is gone, so a
+   * lost connection racing a leave click exits once.
+   */
+  const exitMatch = async (notice?: string): Promise<void> => {
+    if (match === undefined) {
+      return;
+    }
+    if (queue !== undefined && queuedEnd !== undefined) {
+      // Finished: leaving now, or the host going, only skips the wait.
+      await endQueuedMatch(queuedEnd.outcome);
+      return;
+    }
+    const leaving = match;
+    match = undefined;
+    await leaving.dispose();
     leaveScreen();
     enteringMatch = false;
     if (queue !== undefined) {
-      // A Random Arena ends on the menu, for now (#880).
+      // Before the end, the player's own leave forfeits; a host or a
+      // connection lost counts for nothing. Either way, the menu.
+      queueStreak = nextStreak(queueStreak, notice === undefined ? "forfeit" : "host-left");
       await leaveLobby(notice);
       return;
     }
@@ -731,6 +803,7 @@ async function main(): Promise<void> {
     enteringMatch = true;
     menuNotice = undefined;
     lobbyNotice = undefined;
+    clearQueuedEnd();
     showViewport(true);
     setStatus("entering match…", "offline");
     try {
@@ -751,6 +824,21 @@ async function main(): Promise<void> {
           onLeave: () => {
             void exitMatch();
           },
+          ...(queue === undefined
+            ? {}
+            : {
+                onFinished: ({ winningTeam, endReason, selfTeam }) => {
+                  const won = selfTeam !== undefined && winningTeam === selfTeam;
+                  queueStreak = nextStreak(queueStreak, won ? "win" : "loss");
+                  const outcome = describeOutcome(winningTeam, endReason, selfTeam);
+                  queuedEnd = {
+                    outcome,
+                    timer: window.setTimeout(() => {
+                      void endQueuedMatch(outcome);
+                    }, QUEUED_RESULT_SECONDS * 1000),
+                  };
+                },
+              }),
         },
         { connect: () => connectMatchFor(from, start, name, build) },
       );
