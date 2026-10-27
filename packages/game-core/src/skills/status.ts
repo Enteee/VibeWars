@@ -79,6 +79,7 @@ export type StatusId =
   | "spiteful-spirit"
   | "insidious-parasite"
   | "mark-of-pain"
+  | "diversion"
   | "ice-spikes"
   | "deep-freeze"
   | "regeneration"
@@ -290,6 +291,12 @@ export interface StatusDefinition {
    */
   readonly endsWhenBearerHits: boolean;
   /**
+   * It ends the moment the bearer uses a skill (#949), after its own
+   * triggers have answered that use: Diversion's "the next time target
+   * foe uses a skill". An interrupted or cancelled skill is not used.
+   */
+  readonly endsWhenBearerUsesSkill: boolean;
+  /**
    * It ends the moment one of the bearer's attack skills hits (#956): a
    * plain swing or arrow keeps it, as does a miss or a block. Defensive
    * Anthem's price.
@@ -484,6 +491,7 @@ function define(
     nextAttackSkill: undefined,
     endsWhenBearerAttacks: false,
     endsWhenBearerHits: false,
+    endsWhenBearerUsesSkill: false,
     endsWhenBearerHitsWithAttackSkill: false,
     endsWhenBearerGains: [],
     damageTakenMultiplier: 1,
@@ -621,6 +629,21 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       target: "bearer",
       skillId: "necromancer.spiteful-spirit",
     })),
+  }),
+  // "For 6 seconds, the next time target foe uses a skill, that skill
+  // takes an additional 10...47...56 seconds to recharge" (#949): 47, its
+  // rank-12 value.
+  diversion: define("diversion", "Diversion", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        effects: [{ kind: "lengthen-recharge", seconds: { flat: 47 } }],
+        target: "bearer",
+        skillId: "mesmer.diversion",
+      },
+    ],
+    endsWhenBearerUsesSkill: true,
   }),
   // "Whenever target foe hits with an attack, you steal 15...39...45
   // health from that foe" (#935): 39, its rank-12 value.
@@ -1338,6 +1361,18 @@ export class StatusSet {
   public endOnBearerAttack(): StatusId[] {
     const ended = this.active
       .filter(({ id }) => getStatusDefinition(id).endsWhenBearerAttacks)
+      .map(({ id }) => id);
+    this.#end(ended);
+    return ended;
+  }
+
+  /**
+   * The bearer used a skill (#949): every status that ends when it does
+   * is gone. Returns the ids that ended on it.
+   */
+  public endOnBearerUseSkill(): StatusId[] {
+    const ended = this.active
+      .filter(({ id }) => getStatusDefinition(id).endsWhenBearerUsesSkill)
       .map(({ id }) => id);
     this.#end(ended);
     return ended;

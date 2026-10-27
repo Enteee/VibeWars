@@ -53,6 +53,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "recharge-faster":
     case "recharge-others":
     case "disable-skill":
+    case "lengthen-recharge":
       return [];
   }
 }

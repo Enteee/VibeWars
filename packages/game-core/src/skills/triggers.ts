@@ -33,6 +33,11 @@ export interface TriggerContext {
   readonly rng: SimulationRng;
   readonly rules: CombatRules;
   readonly surroundings: Surroundings;
+  /**
+   * The skill the bearer just used, on `bearer-uses-skill` (#949): what
+   * Diversion lengthens. `undefined` on every other event.
+   */
+  readonly usedSkillId: string | undefined;
 }
 
 /**
@@ -102,7 +107,7 @@ function fire(
   sourceId: string,
   bearer: Combatant,
   spread: ((effect: SpreadGainedConditionEffect) => CombatEvent[]) | undefined,
-  { sourceOf, rng, rules, surroundings }: TriggerContext,
+  { sourceOf, rng, rules, surroundings, usedSkillId }: TriggerContext,
 ): FiredTrigger[] {
   const source = sourceOf(sourceId);
   if (source === undefined) {
@@ -112,7 +117,9 @@ function fire(
   const events: CombatEvent[] = [];
   let pending: SkillEffect[] = [];
   const flush = (): void => {
-    events.push(...applyEffects(pending, { caster: source, target, rng, rules, surroundings }));
+    events.push(
+      ...applyEffects(pending, { caster: source, target, rng, rules, surroundings, usedSkillId }),
+    );
     pending = [];
   };
   for (const effect of trigger.effects) {

@@ -64,6 +64,7 @@ function fireChanges(bearer: Combatant, source: Combatant): CombatEvent[] {
     rng: createRng(1),
     rules: RULES,
     surroundings: new Map(),
+    usedSkillId: undefined,
   };
   return bearer.statuses
     .drainChanges()

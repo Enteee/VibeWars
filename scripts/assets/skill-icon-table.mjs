@@ -101,6 +101,7 @@ export const SKILL_ICONS = {
   "mesmer.energy-tap": { glyph: "energy", modifier: "self" },
   "mesmer.backfire": { glyph: "fireball", modifier: "self" },
   "mesmer.empathy": { glyph: "sword", modifier: "self" },
+  "mesmer.diversion": { glyph: "slow", modifier: "clock" },
   "monk.mending": { glyph: "heal", modifier: "upkeep" },
   "elementalist.lightning-strike": { glyph: "lightning" },
   "elementalist.mind-shock": { glyph: "lightning", modifier: "down" },

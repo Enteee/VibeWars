@@ -388,6 +388,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Mesmer/310-Empathy",
   },
   {
+    id: "mesmer.diversion",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/309-Diversion",
+  },
+  {
     id: "monk.restore-life",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/176-Restore_Life",
