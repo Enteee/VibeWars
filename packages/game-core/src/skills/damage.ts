@@ -146,6 +146,10 @@ export function mitigate(packet: DamagePacket, target: Combatant, rules: CombatR
   const armor = effectiveArmor(target, packet);
   let dealt = packet.armored * armorMultiplier(armor, rules) + packet.armorIgnoring;
 
+  // Frenzy's double and Dark Escape's half (#919): every packet, armored
+  // or not, after armor and before the flat shield below.
+  dealt *= aggregateModifiers(target.statuses.active).damageTakenMultiplier;
+
   // Rune of Absorption, last and only against physical hits. After
   // mitigation on purpose: it is a flat shield against each blow, so it
   // is proportionally worth most against the many small hits an

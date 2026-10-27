@@ -114,6 +114,7 @@ import {
   attackHitRiders,
   attackReached,
   bearerAttacked,
+  bearerHit,
   blindMisses,
   blocks,
   gainCriticalEnergy,
@@ -2212,6 +2213,7 @@ export class MatchSimulation {
             this.#participants,
           ),
         );
+        bearerHit(attacker.combatant, events);
       }
       if (skillHit !== undefined && attacker !== undefined) {
         events.push(

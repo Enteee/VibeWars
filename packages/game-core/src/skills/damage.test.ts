@@ -15,6 +15,7 @@ import {
   type DamagePacket,
 } from "./damage.js";
 import { applyEffects } from "./effects.js";
+import { aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, SkillContext } from "./types.js";
 
@@ -148,6 +149,63 @@ describe("status modifiers reaching the armor calculation", () => {
     both.statuses.apply("armor-boost", 30, "self");
     // 80 - 40 + 24 = 64.
     expect(effectiveArmor(both, skillDamage(1, "typeless", 0))).toBe(64);
+  });
+});
+
+describe("damage taken multipliers (#919)", () => {
+  it("doubles a packet against Frenzy and halves it against Dark Escape", () => {
+    const packet = skillDamage(100, "chaos", 0);
+    const plain = mitigate(packet, defender(60), RULES);
+    const frenzied = defender(60);
+    frenzied.statuses.apply("frenzy", 8, "self");
+    const escaping = defender(60);
+    escaping.statuses.apply("dark-escape", 13, "self");
+
+    expect(plain).toBe(100);
+    expect(mitigate(packet, frenzied, RULES)).toBe(200);
+    expect(mitigate(packet, escaping, RULES)).toBe(50);
+  });
+
+  it("multiplies the multipliers of statuses that are up together", () => {
+    // Two stances never are; the product is still the rule (aggregateModifiers).
+    expect(
+      aggregateModifiers([{ id: "frenzy" }, { id: "dark-escape" }]).damageTakenMultiplier,
+    ).toBe(1);
+  });
+
+  it("multiplies armor-ignoring damage too, and rounds once", () => {
+    const escaping = defender(60);
+    escaping.statuses.apply("dark-escape", 13, "self");
+    // (40 + 15) × 0.5 = 27.5: rounded once, at the end.
+    const packet: DamagePacket = { ...physical(40), armorIgnoring: 15 };
+    expect(mitigate(packet, escaping, RULES)).toBe(28);
+    expect(mitigate(skillDamage(25, "typeless", 0), escaping, RULES)).toBe(13);
+  });
+
+  it("applies before a Rune of Absorption's flat reduction", () => {
+    const resolved = resolveLoadout(
+      {
+        primaryProfession: "warrior",
+        allocatedRanks: new Map(),
+        equipment: {
+          mainHand: { weaponId: "sword", requirementAttributeId: null },
+          offHand: null,
+          armor: {
+            ...bareArmorSet(),
+            feet: {
+              insigniaId: null,
+              rune: { kind: "universal", runeId: "absorption", tier: "superior" },
+            },
+          },
+        },
+      },
+      RULES,
+    );
+    const runed = makeCombatant({ id: "d", team: 1, equipment: resolved.equipment });
+    const before = mitigate(physical(100), runed, RULES);
+    runed.statuses.apply("frenzy", 8, "self");
+    // (x + 3) × 2 − 3, not (x − 3) × 2.
+    expect(mitigate(physical(100), runed, RULES)).toBe((before + 3) * 2 - 3);
   });
 });
 
