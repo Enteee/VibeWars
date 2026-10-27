@@ -130,14 +130,14 @@ export const SKILL_ICONS = {
   "monk.protective-spirit": { glyph: "armor", modifier: "less" },
   // Your own life, given: the resurrect glyph with the bleed drop (#936).
   "monk.infuse-health": { glyph: "resurrect", modifier: "bleed" },
-  // A placeholder: a plain heal on someone else, the plaster (#987).
-  "monk.heal-other": { glyph: "plaster" },
-  // A placeholder: armor that turns the blood drop into health (#987).
-  "monk.reversal-of-fortune": { glyph: "armor", modifier: "bleed" },
-  // A placeholder: a hex removed, a burst around the ally (#987).
-  "monk.smite-hex": { glyph: "cleanse", modifier: "area" },
-  // A placeholder: every condition removed; no modifier says "all" (#987).
-  "monk.restore-condition": { glyph: "cleanse", modifier: "stun" },
+  // A heal aimed at another, not the plaster of self-heals (#996).
+  "monk.heal-other": { glyph: "heal-other" },
+  // The next blow turned back into a heal (#996).
+  "monk.reversal-of-fortune": { glyph: "heal-turn" },
+  // A hex struck down, the foes near it hurt (#996).
+  "monk.smite-hex": { glyph: "hex-bolt" },
+  // Conditions cleansed, a heal for each (#996).
+  "monk.restore-condition": { glyph: "cleanse", modifier: "plus" },
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },
   "paragon.never-surrender": { glyph: "banner", modifier: "area" },
   "paragon.leaders-comfort": { glyph: "banner-cross", modifier: "self" },

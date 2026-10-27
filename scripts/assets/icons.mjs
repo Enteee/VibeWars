@@ -908,12 +908,28 @@ const skillGlyph = {
     `<path d="M9.5 3H14.5M10.5 3V9L4.5 19Q3.5 21 6 21H18Q20.5 21 19.5 19L13.5 9V3" ${stroke(C.ink, 2)}/>` +
     inkFill("M7.5 15H16.5L19 19.5H5Z"),
   germ: () => germ(C.ink),
+  // A head and shoulders with a plus beside it: a heal aimed at another (#996).
+  "heal-other": () =>
+    `<circle cx="9" cy="12" r="3.4" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    `<path d="M3 21.5C3 17 5.5 15.5 9 15.5S15 17 15 21.5Z" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M17 3.5V11M13.2 7.2H20.8", 2.6),
+  // A plus in a ring of arrow: the blow turned back into a heal (#996).
+  "heal-turn": () =>
+    `<path d="M18.5 8A8 8 0 1 0 20 12" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M21.5 3.5V10.5H14.5Z") +
+    inkLine("M12 8.5V15.5M8.5 12H15.5", 2.4),
+  // A dashed ring (a hex) with a bolt through it: a hex smitten (#996).
+  "hex-bolt": () =>
+    `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
+    inkLine("M14.5 3.5L9 12.5H15L9.5 20.5", 2.4),
 };
 
 /** Modifiers, drawn around the bottom right corner on a dark disc. */
 const skillModifier = {
   up: () => inkLine("M19 21V15M16.5 17.5L19 15L21.5 17.5", 1.7),
   down: () => inkLine("M19 15V21M16.5 18.5L19 21L21.5 18.5", 1.7),
+  // A plus: it heals as it works (#996).
+  plus: () => inkLine("M19 15.4V20.6M16.4 18H21.6", 1.7),
   less: () => inkLine("M16.5 18H21.5", 2),
   area: () => `<circle cx="19" cy="18" r="3.4" ${stroke(C.ink, 1.6)}/>`,
   clock: () =>
