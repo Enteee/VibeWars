@@ -854,6 +854,11 @@ const skillGlyph = {
     bladeMark(inkLine("M11 6.5A3.5 3.5 0 1 0 8.5 11.5M8.5 11.5L10.5 12M8.5 11.5L9 9.5", 1.8)),
   "blade-fast": () =>
     bladeMark(inkLine("M3.5 5.5L6.5 8.5L3.5 11.5M7.5 5.5L10.5 8.5L7.5 11.5", 1.8)),
+  // A scythe: a long haft, the blade curved over its top (#990).
+  scythe: () =>
+    inkLine("M7 21L16 6", 2.4) + inkFill("M16 6C12 2.5 7 3 3.5 6.5C8 5.5 11.5 6.5 14.5 9Z"),
+  // A tornado: bars narrowing to a point, a whirlwind round the caster (#990).
+  twister: () => inkLine("M3.5 5H20.5M6 9.5H18M8.5 14H15.5M11 18.5H13.5", 2.4),
   axe: () =>
     inkLine("M5 20L16 7", 2.4) + inkFill("M11 3.5C17 2.5 21.5 5 21 9C20.5 13 16.5 15 14 12.5Z"),
   sword: () =>
