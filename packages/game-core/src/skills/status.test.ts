@@ -534,7 +534,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         kind: "took-physical-damage",
         fired: [{ sourceId: "b", trigger: getStatusDefinition("mark-of-pain").triggers[0] }],
       },
-      { kind: "ended", id: "mark-of-pain", sourceId: "b" },
+      { kind: "ended", id: "mark-of-pain", sourceId: "b", expired: false },
     ]);
   });
 });
