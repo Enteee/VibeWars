@@ -333,6 +333,21 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Monk/176-Restore_Life",
   },
   {
+    id: "mesmer.energy-surge",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/312-Energy_Surge",
+  },
+  {
+    id: "mesmer.leech-signet",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/355-Leech_Signet",
+  },
+  {
+    id: "monk.dwaynas-kiss",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/164-Dwayna's_Kiss",
+  },
+  {
     id: "dervish.mystic-regeneration",
     profession: "dervish",
     url: "https://www.gw-memorial.net/skills/Dervish/991-Mystic_Regeneration",
@@ -361,6 +376,21 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "dervish.pious-restoration",
     profession: "dervish",
     url: "https://www.gw-memorial.net/skills/Dervish/1052-Pious_Restoration",
+  },
+  {
+    id: "warrior.frenzy",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/73-Frenzy",
+  },
+  {
+    id: "assassin.dark-escape",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/688-Dark_Escape",
+  },
+  {
+    id: "ranger.natural-stride",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/826-Natural_Stride",
   },
 ];
 

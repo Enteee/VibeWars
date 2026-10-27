@@ -49,6 +49,9 @@ export const SKILL_ICONS = {
   "ranger.throw-dirt": { glyph: "mountain", modifier: "area" },
   "warrior.sprint": { glyph: "speed" },
   "assassin.dash": { glyph: "dash" },
+  "warrior.frenzy": { glyph: "sword", modifier: "clock" },
+  "assassin.dark-escape": { glyph: "dash", modifier: "down" },
+  "ranger.natural-stride": { glyph: "armor", modifier: "self" },
   "paragon.wild-throw": { glyph: "spear" },
   "warrior.healing-signet": { glyph: "heal", modifier: "self" },
   "warrior.watch-yourself": { glyph: "armor", modifier: "area" },
@@ -78,6 +81,11 @@ export const SKILL_ICONS = {
   "mesmer.backfire": { glyph: "fireball", modifier: "self" },
   "mesmer.empathy": { glyph: "sword", modifier: "self" },
   "monk.mending": { glyph: "heal", modifier: "upkeep" },
+  "mesmer.energy-surge": { glyph: "energy", modifier: "area" },
+  "mesmer.leech-signet": { glyph: "interrupt", modifier: "self" },
+  // A placeholder: no modifier yet says "per enchantment or hex" (#920).
+  "monk.dwaynas-kiss": { glyph: "heal", modifier: "stun" },
+  // Placeholders from existing glyphs (#923).
   "paragon.spear-of-lightning": { glyph: "spear", modifier: "up" },
   "paragon.never-surrender": { glyph: "resurrect", modifier: "area" },
   "paragon.leaders-comfort": { glyph: "resurrect", modifier: "self" },

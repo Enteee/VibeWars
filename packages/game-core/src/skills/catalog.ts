@@ -54,6 +54,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 60 },
         },
@@ -273,6 +274,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       { kind: "sacrifice-health", percentOfMax: 10 },
       {
         kind: "heal",
+        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "necromancer.blood-magic", atZero: 30, atTwelve: 90 },
         },
@@ -592,6 +594,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            perStatusOnTarget: [],
             amount: {
               scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 57 },
             },
@@ -1163,6 +1166,69 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "dash", durationSeconds: 3 }],
   },
   {
+    id: "warrior.frenzy",
+    name: "Frenzy",
+    type: "stance",
+    elite: false,
+    profession: "warrior",
+    // GW1's "No Attribute": any warrior can use it.
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 8 seconds, you attack 33% faster but take double damage."
+    effects: [{ kind: "apply-status", statusId: "frenzy", durationSeconds: 8 }],
+  },
+  {
+    id: "assassin.dark-escape",
+    name: "Dark Escape",
+    type: "stance",
+    elite: false,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...13...15 seconds, you move 25% faster and take half damage":
+    // 13 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "dark-escape", durationSeconds: 13 }],
+  },
+  {
+    id: "ranger.natural-stride",
+    name: "Natural Stride",
+    type: "stance",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.wilderness-survival",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 1...7...8 seconds, you run 33% faster and have a 50% chance to
+    // block incoming attacks": 7 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "natural-stride", durationSeconds: 7 }],
+  },
+  {
     id: "paragon.wild-throw",
     name: "Wild Throw",
     type: "attack",
@@ -1225,6 +1291,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "warrior.tactics", atZero: 82, atTwelve: 154 } },
       },
     ],
@@ -1442,6 +1509,42 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "mesmer.leech-signet",
+    name: "Leech Signet",
+    type: "signet",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Interrupt target foe's action. If that action was a spell, you gain
+    // 3...13...15 Energy" (#920): any action, and energy for a spell only.
+    effects: [
+      { kind: "interrupt" },
+      {
+        kind: "if",
+        condition: { kind: "interrupted-spell" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 3, atTwelve: 13 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: "mesmer.shatter-enchantment",
     name: "Shatter Enchantment",
     type: "spell",
@@ -1511,6 +1614,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           },
           {
             kind: "heal",
+            perStatusOnTarget: [],
             recipient: "caster",
             amount: {
               scaling: { attributeId: "mesmer.inspiration-magic", atZero: 40, atTwelve: 104 },
@@ -1617,6 +1721,54 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       { kind: "energy-gain", amount: { flat: 2 }, perEnergyLost: true },
     ],
   },
+  {
+    id: "mesmer.energy-surge",
+    name: "Energy Surge",
+    type: "spell",
+    elite: true,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target foe loses 1...8...10 energy. For each point of energy lost,
+    // that foe and all nearby foes take 7 damage and all nearby foes take
+    // 75% of that damage" (PvP, #920): nearby the target, 5.25 a point of
+    // what the target lost, rounded as all damage is.
+    effects: [
+      {
+        kind: "energy-loss",
+        amount: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 8 } },
+      },
+      {
+        kind: "damage",
+        amount: { flat: 7 },
+        type: "typeless",
+        armorPenetration: 0,
+        perEnergyLost: true,
+      },
+      {
+        kind: "splash",
+        radius: AREA_NEARBY,
+        effects: [
+          {
+            kind: "damage",
+            amount: { flat: 5.25 },
+            type: "typeless",
+            armorPenetration: 0,
+            perEnergyLost: true,
+          },
+        ],
+      },
+    ],
+  },
 
   /* ---------------------------------------------------------------------- */
   /* Hexes that answer what their target does (#469)                        */
@@ -1690,6 +1842,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 81 } },
       },
       {
@@ -1698,11 +1851,44 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            perStatusOnTarget: [],
             amount: {
               scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 98 },
             },
           },
         ],
+      },
+    ],
+  },
+  {
+    id: "monk.dwaynas-kiss",
+    name: "Dwayna's Kiss",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Heal target other ally for 15...51...60 Health and an additional
+    // 10...30...35 Health for each enchantment or hex on that ally" (#920).
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 15, atTwelve: 51 } },
+      },
+      {
+        kind: "heal",
+        perStatusOnTarget: ["enchantment", "hex"],
+        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 10, atTwelve: 30 } },
       },
     ],
   },
@@ -1883,6 +2069,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
       {
         kind: "heal",
+        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "dervish.earth-prayers", atZero: 30, atTwelve: 126 } },
       },
       {
@@ -1915,6 +2102,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        perStatusOnTarget: [],
         recipient: "caster",
         amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 80, atTwelve: 136 } },
       },
@@ -2103,6 +2291,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       {
         kind: "heal",
         amount: { scaling: { attributeId: "paragon.leadership", atZero: 30, atTwelve: 66 } },
+        perStatusOnTarget: [],
         perAlly: {
           amount: { scaling: { attributeId: "paragon.leadership", atZero: 10, atTwelve: 18 } },
           radius: AREA_EARSHOT,

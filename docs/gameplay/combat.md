@@ -151,6 +151,8 @@ before any of their effects. Word of Healing heals 98 more (Healing
 Prayers 12) for an ally below half of its maximum health, a maximum a
 deep wound has lowered; its own heal cannot cancel the bonus. Mystic
 Sweep's blow deals 10 more while you are enchanted, in the same number.
+**Dwayna's Kiss** (#920) heals another ally 51, and 30 more for each
+enchantment and hex on it as the heal lands.
 
 ## Interrupts
 
@@ -170,6 +172,10 @@ interrupt a spell or a chant; against an attack skill, a signet or an idle
 foe they are a wasted cast. When they land, Power Spike deals damage and
 Power Drain gives you energy.
 
+**Leech Signet** (#920) interrupts anything being cast, as a plain
+interrupt does, and gives you 13 energy only if what it cancelled was a
+spell. A signet, it costs nothing.
+
 **Savage Shot** (#794) interrupts whatever its arrow finds being cast, and
 hits 25 harder if that was a spell: one bigger number on the hit, read
 as the arrow lands. A block or a miss does neither.
@@ -183,6 +189,11 @@ taken, so a foe at 3 energy loses 3, and one at 0 loses nothing and takes
 no damage. Maximum energy is untouched, and a foe drained mid-cast keeps
 casting: energy is paid when a cast starts. The loss floats over the foe
 in blue, "−8 energy", and the Training log has a row for it.
+
+**Energy Surge** (#920) takes up to 8 energy from its target, which
+takes 7 damage for each point it lost; every foe nearby it takes 75% of
+that, rounded. The foes around it lose no energy themselves, and your
+allies are never hit.
 
 ## Reactive hexes
 
@@ -403,6 +414,16 @@ at its full duration. A stance is not an enchantment: enchantment removal
 leaves it alone, and stance removal leaves your enchantments. Sprint
 (Warrior, 13 s) moves you 25% faster; Dash (Assassin, 3 s) 50% faster.
 A stance and crippled multiply, as every movement change does.
+
+Three stances trade something for speed (#919). Frenzy (Warrior, 8 s,
+4 s recharge): you attack 33% faster but take double damage. Dark Escape
+(Assassin, Shadow Arts, 13 s): you move 25% faster and take half damage,
+until one of your attacks hits; a miss or a block keeps it. Natural
+Stride (Ranger, Wilderness Survival, 7 s): you run 33% faster and block
+half of incoming attacks, until a new hex or enchantment lands on you; a
+refreshed one does not end it. Damage taken is multiplied after armor
+and before a Rune of Absorption, on every damage packet; health loss,
+sacrifice and degeneration are not damage packets and are left alone.
 
 Wild Throw (Paragon spear attack, 7 adrenaline) deals +17 damage, cannot
 be blocked, and ends the stance of the foe it hits. It does not yet

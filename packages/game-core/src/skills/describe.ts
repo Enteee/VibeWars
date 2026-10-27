@@ -232,10 +232,33 @@ export function describeStatus(id: string): string {
   if (definition.endsWhenBearerAttacks) {
     parts.push("ends if the bearer attacks");
   }
+  if (definition.damageTakenMultiplier !== 1) {
+    parts.push(`takes ${damageTaken(definition.damageTakenMultiplier)} damage`);
+  }
+  if (definition.endsWhenBearerHits) {
+    parts.push("ends if the bearer hits with an attack");
+  }
+  if (definition.endsWhenBearerGains.length > 0) {
+    const gained = definition.endsWhenBearerGains.map((category) =>
+      category === "hex" ? "hexed" : "enchanted",
+    );
+    parts.push(`ends if the bearer becomes ${gained.join(" or ")}`);
+  }
   for (const trigger of definition.triggers) {
     parts.push(...describeTrigger(trigger));
   }
   return parts.length === 0 ? definition.name : parts.join(", ");
+}
+
+/** GW1's words for a damage-taken multiplier (#919): "double", "half", or "1.5×". */
+function damageTaken(multiplier: number): string {
+  if (multiplier === 2) {
+    return "double";
+  }
+  if (multiplier === 0.5) {
+    return "half";
+  }
+  return `${String(multiplier)}×`;
 }
 
 /** A preparation's rider (#525), as its tooltip says it: "your attacks …". */
@@ -287,6 +310,8 @@ function conditionText(condition: EffectCondition): string {
   switch (condition.kind) {
     case "interrupted":
       return "If it interrupts";
+    case "interrupted-spell":
+      return "If that action was a spell";
     case "removed":
       return condition.from === "caster"
         ? `If ${aCategory(condition.category)} was removed`
@@ -384,7 +409,11 @@ function describeEffect(
       const magnitude = describeMagnitude(effect.amount, ranks);
       const amount = String(magnitude.current);
       const text =
-        effect.recipient === "caster" ? `You gain ${amount} health` : `Heals for ${amount}`;
+        effect.perStatusOnTarget.length > 0
+          ? `+${amount} Health for each ${effect.perStatusOnTarget.join(" or ")} on target ally`
+          : effect.recipient === "caster"
+            ? `You gain ${amount} health`
+            : `Heals for ${amount}`;
       return { text: `${text}${perAllyText(effect, ranks)}`, magnitude };
     }
     case "energy-gain": {
@@ -486,7 +515,8 @@ function describeEffect(
       const what = inner
         .map(({ each, description }) =>
           each.kind === "damage"
-            ? `take ${String(describeMagnitude(each.amount, ranks).current)} damage`
+            ? `take ${String(describeMagnitude(each.amount, ranks).current)} damage` +
+              (each.perEnergyLost === undefined ? "" : " for each point of energy lost")
             : lowerFirst(description.text),
         )
         .join(", ");
