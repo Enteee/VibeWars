@@ -270,6 +270,21 @@ const status = {
       `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.6)}/>` +
       `<path d="M12 8.5v7M8.5 12h7" ${stroke(c, 2.5)}/>`,
   ],
+  // Enchantment: an hourglass run out into a plus, the heal waiting at
+  // the end of its time (#944).
+  "patient-spirit": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 5h10L7 15h10z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 15.5v4M10 17.5h4" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a veil drawn over its bearer, hexes held back (#944).
+  "holy-veil": [
+    "enchantment",
+    (c) =>
+      `<path d="M5 18c0-7 3-12 7-12s7 5 7 12" ${stroke(c, 2)}/>` +
+      `<path d="M9 18c0-4 1.3-7 3-7s3 3 3 7" ${stroke(c, 1.6)}/>`,
+  ],
   // Stance: two chevrons, forward: move 25% faster.
   sprint: ["stance", (c) => `<path d="M7 9l4.5 5L7 19M12.5 9l4.5 5-4.5 5" ${stroke(c, 2.5)}/>`],
   // Stance: an arrowhead trailing speed lines: run 50% faster.
@@ -870,6 +885,8 @@ const skillModifier = {
     `<path d="M19 14.6C19 14.6 15.8 18 15.8 19.8A3.2 3.2 0 0 0 22.2 19.8C22.2 18 19 14.6 19 14.6Z" fill="${C.ink}"/>`,
   self: () =>
     `<circle cx="19" cy="18" r="3.4" ${stroke(C.ink, 1.5)}/><circle cx="19" cy="18" r="1.2" fill="${C.ink}"/>`,
+  // An hourglass: it acts when its time runs out (#944).
+  hourglass: () => inkLine("M16.8 15H21.2L16.8 21H21.2Z", 1.4),
   // A loop: maintained, it lasts until ended (#837).
   upkeep: () =>
     `<path d="M19 18c-1-1.5-3.4-1.5-3.4 0s2.4 1.5 3.4 0 3.4-1.5 3.4 0-2.4 1.5-3.4 0z" ${stroke(C.ink, 1.4)}/>`,

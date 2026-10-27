@@ -110,6 +110,10 @@ export const SKILL_ICONS = {
   "mesmer.cry-of-frustration": { glyph: "interrupt", modifier: "area" },
   "mesmer.mantra-of-recovery": { glyph: "speed", modifier: "clock" },
   "necromancer.shadow-of-fear": { glyph: "slow", modifier: "area" },
+  "monk.patient-spirit": { glyph: "heal", modifier: "hourglass" },
+  "monk.holy-veil": { glyph: "armor", modifier: "upkeep" },
+  "necromancer.rend-enchantments": { glyph: "cleanse", modifier: "bleed" },
+  "necromancer.plague-touch": { glyph: "germ", modifier: "self" },
   "mesmer.energy-surge": { glyph: "energy", modifier: "area" },
   "mesmer.leech-signet": { glyph: "interrupt", modifier: "self" },
   // A placeholder: no modifier yet says "per enchantment or hex" (#920).
