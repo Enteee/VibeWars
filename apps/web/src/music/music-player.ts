@@ -6,7 +6,7 @@ import {
   type MusicStats,
 } from "./host-protocol.js";
 import { musicHostUrl } from "./music-urls.js";
-import { STRESS_BUILD, audioStressMs, renderAhead } from "./stress.js";
+import { STRESS_BUILD, audioStressMs } from "./stress.js";
 
 /**
  * The game's side of the music (#371, ADR-0028): a facade over the
@@ -71,8 +71,6 @@ export interface MusicPlayerDeps {
   readonly measure: boolean;
   /** Ask every host to busy-wait this long per render quantum (`?audiostress=`, #519), or `null`. */
   readonly audioStress: number | null;
-  /** Ask every host to render the music ahead rather than live (`?musicrender=ahead`, #509 spike). */
-  readonly renderAhead: boolean;
 }
 
 /** A track switch fades over this many cycles (#366 §3.1). */
@@ -187,7 +185,6 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     }
     frame = deps.createFrame(receive);
     queue = [
-      ...(deps.renderAhead ? [{ type: "renderAhead" } as const] : []),
       ...(deps.measure ? [{ type: "measure" } as const] : []),
       ...(deps.audioStress === null
         ? []
@@ -328,7 +325,6 @@ export function musicPlayer(): MusicPlayer {
     },
     measure,
     audioStress: audioStressMs(location.search, STRESS_BUILD),
-    renderAhead: renderAhead(location.search, STRESS_BUILD),
   });
   if (measure) {
     // For scripts/music-stress.mjs, which reads the last second's stats.

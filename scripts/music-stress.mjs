@@ -33,10 +33,6 @@
  *                                PulseAudio with a null sink for the run.
  *                                Without a sound device a browser's audio
  *                                clock may be a fake that never underruns.
- *   --render-ahead               play by rendering the music ahead offline
- *                                (`?musicrender=ahead`, #509 spike), and print
- *                                render speed, buffer memory and how late
- *                                each change was heard
  *   --reactivity                 instead of the minute at intensity 3, step
  *                                the music through changes and print how late
  *                                each is heard (#509): intensity +1, -1, +2,
@@ -80,7 +76,6 @@ const { values: options } = parseArgs({
     only: { type: "string" },
     pulse: { type: "boolean", default: false },
     json: { type: "string" },
-    "render-ahead": { type: "boolean", default: false },
     reactivity: { type: "boolean", default: false },
   },
 });
@@ -239,8 +234,8 @@ async function measure(url, load) {
       /** @type {unknown[]} */
       const seen = [];
       /** @type {unknown[]} */
-      const renders = [];
-      Object.assign(window, { musicStatsSeen: seen, musicRenderSeen: renders });
+      const heard = [];
+      Object.assign(window, { musicStatsSeen: seen, musicHeardSeen: heard });
       addEventListener("message", (event) => {
         const data = /** @type {unknown} */ (event.data);
         if (typeof data === "object" && data !== null && "type" in data && data.type === "stats") {
@@ -249,9 +244,9 @@ async function measure(url, load) {
           typeof data === "object" &&
           data !== null &&
           "type" in data &&
-          (data.type === "rendered" || data.type === "heard")
+          data.type === "heard"
         ) {
-          renders.push(data);
+          heard.push(data);
         } else if (
           typeof data === "object" &&
           data !== null &&
@@ -265,8 +260,7 @@ async function measure(url, load) {
     });
     const query =
       `?musicstats${load.stress > 0 ? `&stress=${String(load.stress)}` : ""}` +
-      ((load.audioStress ?? 0) > 0 ? `&audiostress=${String(load.audioStress)}` : "") +
-      (options["render-ahead"] ? "&musicrender=ahead" : "");
+      ((load.audioStress ?? 0) > 0 ? `&audiostress=${String(load.audioStress)}` : "");
     await page.goto(`${url}${query}`);
     await page.locator(".roster").waitFor();
     if (load.screen !== "menu") {
@@ -315,14 +309,14 @@ async function measure(url, load) {
       await sleep((SECONDS * 1000) / 2);
     }
     await playing?.stop();
-    const { seen, renders } = await page.evaluate(() => {
-      const w = /** @type {{ musicStatsSeen: unknown[], musicRenderSeen: unknown[] }} */ (
+    const { seen, heard } = await page.evaluate(() => {
+      const w = /** @type {{ musicStatsSeen: unknown[], musicHeardSeen: unknown[] }} */ (
         /** @type {unknown} */ (window)
       );
-      return { seen: w.musicStatsSeen, renders: w.musicRenderSeen };
+      return { seen: w.musicStatsSeen, heard: w.musicHeardSeen };
     });
-    if (renders.length > 0) {
-      reportRenders(/** @type {Render[]} */ (renders));
+    if (heard.length > 0) {
+      reportHeard(/** @type {Heard[]} */ (heard));
     }
     return /** @type {Stats[]} */ (seen.slice(start));
   } finally {
@@ -374,39 +368,16 @@ async function steps(page) {
   await settle();
 }
 
-/**
- * @typedef {{ type: "rendered", trackId: string, chunk: number, level: number,
- *   audioSeconds: number, wallMs: number, liveBytes: number, peakBytes: number,
- *   maxStallMs: number, retries: number, failed: number }
- *   | { type: "heard", change: string, delayMs: number }} Render
- */
+/** @typedef {{ type: "heard", change: string, delayMs: number }} Heard */
 
 /**
- * What render-ahead reported (#509): how fast it rendered, the most audio
- * buffer memory it held, and how late each change was heard.
+ * How late each change was heard (#509), as the live engine reports it.
  *
- * @param {Render[]} renders
+ * @param {Heard[]} heard
  */
-function reportRenders(renders) {
-  const chunks = renders.flatMap((r) => (r.type === "rendered" ? [r] : []));
-  const speeds = chunks.map((r) => r.audioSeconds / (r.wallMs / 1000)).sort((a, b) => a - b);
-  const median = speeds[Math.floor(speeds.length / 2)] ?? 0;
-  const peak = Math.max(0, ...chunks.map((r) => r.peakBytes));
-  const rendered = chunks.reduce((n, r) => n + r.audioSeconds, 0);
-  const wall = chunks.reduce((n, r) => n + r.wallMs, 0) / 1000;
-  const stall = Math.max(0, ...chunks.map((r) => r.maxStallMs));
-  if (chunks.length > 0) {
-    console.log(
-      `render-ahead: ${String(chunks.length)} chunks, ${fixed(rendered)} s of audio in ${fixed(wall)} s, ` +
-        `speed min ${fixed(speeds[0] ?? 0)}x median ${fixed(median)}x real time, peak buffers ${fixed(peak / 1e6)} MB, ` +
-        `retried ${String(chunks.reduce((n, r) => n + r.retries, 0))} events, failed ${String(chunks.reduce((n, r) => n + r.failed, 0))}, ` +
-        `longest main-thread stall ${fixed(stall)} ms`,
-    );
-  }
-  for (const r of renders) {
-    if (r.type === "heard") {
-      console.log(`  heard ${r.change} after ${fixed(r.delayMs)} ms`);
-    }
+function reportHeard(heard) {
+  for (const h of heard) {
+    console.log(`  heard ${h.change} after ${fixed(h.delayMs)} ms`);
   }
 }
 

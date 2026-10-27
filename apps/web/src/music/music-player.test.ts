@@ -39,7 +39,6 @@ function setup(overrides: Partial<MusicPlayerDeps> = {}) {
     now: () => now,
     measure: false,
     audioStress: null,
-    renderAhead: false,
     every: (ms, callback) => {
       expect(ms).toBe(HEARTBEAT_MS);
       tick = callback;

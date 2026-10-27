@@ -35,9 +35,7 @@ export type GameToHost =
   /** Count what the music costs and report it every second (`?musicstats`, #420). */
   | { readonly type: "measure" }
   /** Busy-wait this many ms in every render quantum of the music audio thread (`?audiostress=`, #519). */
-  | { readonly type: "audioStress"; readonly ms: number }
-  /** Play by rendering ahead offline, not live (`?musicrender=ahead`, #509 spike). Before the first `load`. */
-  | { readonly type: "renderAhead" };
+  | { readonly type: "audioStress"; readonly ms: number };
 
 /**
  * One second of the music's timing (#420), counted only after `measure`.
@@ -166,8 +164,6 @@ export function parseGameToHost(data: unknown): GameToHost | null {
       return { type: "measure" };
     case "audioStress":
       return finite(message.ms, 0, 5) ? { type: "audioStress", ms: message.ms } : null;
-    case "renderAhead":
-      return { type: "renderAhead" };
     default:
       return null;
   }

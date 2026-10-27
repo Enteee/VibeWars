@@ -313,14 +313,16 @@ that run's job summaries and `music-measure-*` artifacts.
 
 A spike asked whether rendering the music ahead of the audio clock, in an
 `OfflineAudioContext` with no deadline, removes the underruns that come
-with a heavy live graph. The prototype is `host/render-ahead.ts` and the
-pure planner `host/render-plan.ts`, behind `?musicrender=ahead` in a stress
-build only. A track is cut into chunks of 4 cycles. A chunk is one whole
+with a heavy live graph. The prototype was not merged: it is
+`host/render-ahead.ts` and the pure planner `host/render-plan.ts` at commit
+[`b772006`](https://github.com/Enteee/VibeWars/commit/b7720062)
+(PR #819), behind `?musicrender=ahead` in a stress build. A track is cut into chunks of 4 cycles. A chunk is one whole
 mix at one level, plus a 7 s tail for the room and the release. The current
 level is kept 3 chunks ahead and the levels either side 2 chunks ahead. Live,
 the graph is a few `AudioBufferSourceNode`s, their gains and the bus limiter.
-`scripts/music-stress.mjs --render-ahead` measures it, and `--reactivity`
-steps the music through changes and prints how late each is heard.
+At that commit `scripts/music-stress.mjs --render-ahead` measures it. On
+`main`, `--reactivity` steps the live engine through changes and prints
+how late each is heard (`heard`, under `?musicstats`).
 
 All numbers are from this sandbox, 2026-10-27: Playwright Firefox 155 and
 Chromium 155, headless, a PulseAudio null sink at 44.1 kHz, 30 s per load.
