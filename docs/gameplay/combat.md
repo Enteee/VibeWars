@@ -479,8 +479,8 @@ Every hit has one of GW1's damage types (#759). Slashing, piercing and
 blunt are **physical**: swords, axes and scythes slash, daggers, bows and spears
 pierce, hammers and fists are blunt. Fire, cold, lightning and earth are
 **elemental**: Fireball is fire. Chaos, dark, holy, shadow and
-**typeless** are neither. Wands and staves are typeless for now, and so
-is the flat damage of a blocked Swift Chop.
+**typeless** are neither. The flat damage of a blocked Swift Chop is
+typeless.
 
 Armor comes from the primary profession: 80 for a Warrior or Paragon, 70
 for a Ranger, Assassin or Dervish, 60 for the casters. On top of that,
@@ -503,9 +503,32 @@ Some damage ignores armor altogether (#760): holy, shadow and typeless
 skill damage, an attack skill's "+N damage" bonus, degeneration and
 life steal. Swift Chop's +16 lands as 16 on a Warrior and on a Monk
 alike, on top of its armor-mitigated weapon blow, and its blocked 16
-lands as 16. A weapon's own blow always respects armor, a typeless wand
+lands as 16. A weapon's own blow always respects armor, a holy or typeless wand
 included. Against a 60-armor caster nothing changed: the curve is
 exactly 1 there.
+
+A wand or staff deals the element of the attribute you nominate for it
+(#761), so a Fire Magic wand hits a Ranger at 100 armor and a
+Domination wand at 70:
+
+| Nominated attribute                                        | Damage    |
+| ---------------------------------------------------------- | --------- |
+| Fire Magic                                                 | fire      |
+| Air Magic                                                  | lightning |
+| Water Magic                                                | cold      |
+| Earth Magic                                                | earth     |
+| Healing, Protection, Smiting Prayers, Divine Favor         | holy      |
+| Domination, Illusion, Inspiration Magic                    | chaos     |
+| Blood Magic, Soul Reaping                                  | dark      |
+| Curses, Death Magic                                        | cold      |
+| anything else (Energy Storage, Fast Casting, ...), or none | typeless  |
+
+Lightning has an edge: its spells ignore 25% of armor, as in GW1.
+**Lightning Orb** (Elementalist, Air Magic, 15 energy, 2 s cast, 5 s
+recharge) flies at the target, half as fast again as Fireball, and is
+dodged or blocked by a wall as Fireball is. It strikes for 82 lightning at
+Air Magic 12, and a Ranger's 100 armor counts as 75 against it: it lands
+for 63, where Fireball's 91 lands for 46.
 
 ## Primary attributes
 

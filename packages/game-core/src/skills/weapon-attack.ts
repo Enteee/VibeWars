@@ -299,7 +299,7 @@ export function landBlow(
       weaponAttributeMultiplier(snapshot.rank, rules) *
       (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier),
     armorIgnoring: blow.bonus,
-    type: weapon.damageType,
+    type: snapshot.mainHand.damageType,
     source: "weapon",
     armorPenetration: strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
   };
@@ -308,7 +308,7 @@ export function landBlow(
 }
 
 /**
- * What the attacker's statuses add to a blow of `weapon` that hit
+ * What the attacker's statuses add to a blow of `mainHand` that hit
  * `victim` (#525): every active status's `onAttackHit`, as Apply
  * Poison's poison. Read when the blow lands, so a preparation that ran
  * out mid-swing or mid-flight adds nothing. Physical attacks only, as GW1
@@ -317,11 +317,11 @@ export function landBlow(
 export function attackHitRiders(
   attacker: Combatant,
   victim: Combatant,
-  weapon: Weapon,
+  mainHand: ResolvedWeapon,
   rng: SimulationRng,
   rules: CombatRules,
 ): CombatEvent[] {
-  if (!isPhysicalDamage(weapon.damageType)) {
+  if (!isPhysicalDamage(mainHand.damageType)) {
     return [];
   }
   return attacker.statuses.active.flatMap(({ id }) =>
@@ -413,7 +413,7 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
   if (landBlow(snapshot, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
     gainCriticalEnergy(attacker, snapshot.criticalStrikes, events);
   }
-  events.push(...attackHitRiders(attacker, victim, snapshot.mainHand.weapon, rng, rules));
+  events.push(...attackHitRiders(attacker, victim, snapshot.mainHand, rng, rules));
   attackReached(victim, events);
 }
 
@@ -492,7 +492,7 @@ export function resolveAttackSkill(
     if (landBlow(snapshot, victim, blow, exposed(victim), rng, rules, events)) {
       gainCriticalEnergy(caster, snapshot.criticalStrikes, events);
     }
-    events.push(...attackHitRiders(caster, victim, snapshot.mainHand.weapon, rng, rules));
+    events.push(...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules));
     events.push(...nextAttackSkillRiders(next, caster, victim, rng, rules));
     attackReached(victim, events);
     hit.push(victim);

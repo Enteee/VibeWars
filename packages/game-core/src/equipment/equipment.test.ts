@@ -10,7 +10,14 @@ import { defaultEquipmentFor, defaultWeaponFor } from "./loadout.js";
 import { parseBuildEquipment } from "./parse.js";
 import { reconcileEquipment } from "./reconcile.js";
 import { validateEquipment } from "./validate.js";
-import { ALL_WEAPONS, WEAPONS, allowsOffhand, getWeapon } from "./weapons.js";
+import {
+  ALL_WEAPONS,
+  CASTER_WEAPON_ELEMENT,
+  WEAPONS,
+  allowsOffhand,
+  getWeapon,
+  type WeaponId,
+} from "./weapons.js";
 import { ALL_INSIGNIAS } from "./insignias.js";
 import { ALL_OFFHANDS, SHIELD_REQUIREMENT_ATTRIBUTES } from "./offhands.js";
 import { resolveLoadout } from "./resolve.js";
@@ -217,6 +224,46 @@ describe("resolving universal runes", () => {
 
   it("counts every Rune of Vitae, which stacks (GW1)", () => {
     expect(maxHealthWearing(["vitae", "minor"], ["vitae", "minor"])).toBe(maxHealthWearing() + 20);
+  });
+});
+
+describe("what a weapon deals (#761)", () => {
+  function damageTypeOf(weaponId: WeaponId, nominated: string | null): string {
+    return resolveLoadout(
+      {
+        primaryProfession: "elementalist",
+        allocatedRanks: new Map(),
+        equipment: {
+          mainHand: { weaponId, requirementAttributeId: nominated },
+          offHand: null,
+          armor: bareArmorSet(),
+        },
+      },
+      MINIMAL_GW_INSPIRED_PVP_V1.combat,
+    ).equipment.mainHand.damageType;
+  }
+
+  it("gives a wand or staff its nominated attribute's element", () => {
+    expect(damageTypeOf("wand", "elementalist.fire-magic")).toBe("fire");
+    expect(damageTypeOf("staff", "elementalist.air-magic")).toBe("lightning");
+    expect(damageTypeOf("wand", "mesmer.domination-magic")).toBe("chaos");
+  });
+
+  it("leaves it typeless for an attribute with no element, or none nominated", () => {
+    expect(damageTypeOf("wand", "elementalist.energy-storage")).toBe("typeless");
+    expect(damageTypeOf("wand", "mesmer.fast-casting")).toBe("typeless");
+    expect(damageTypeOf("staff", null)).toBe("typeless");
+  });
+
+  it("keeps every other weapon's own type", () => {
+    expect(damageTypeOf("sword", null)).toBe("slashing");
+    expect(damageTypeOf("unarmed", null)).toBe("blunt");
+  });
+
+  it("names only attributes that exist", () => {
+    for (const attributeId of Object.keys(CASTER_WEAPON_ELEMENT)) {
+      expect(getAttribute(attributeId), attributeId).toBeDefined();
+    }
   });
 });
 

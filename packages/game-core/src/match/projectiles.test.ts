@@ -5,6 +5,7 @@ import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { hasLineOfSight, type Segment } from "../geometry.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
+import { mitigate, skillDamage } from "../skills/damage.js";
 import type { Projectile } from "../skills/projectile.js";
 import { vec2, ZERO, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -26,7 +27,12 @@ function archer(spawn: Vec2, weapon: Weapon = LONGBOW): ParticipantSpec {
     attributeRanks: new Map([["ranger.marksmanship", 12]]),
     equipment: {
       ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-      mainHand: { weapon, attributeId: "ranger.marksmanship", requirementMet: true },
+      mainHand: {
+        weapon,
+        attributeId: "ranger.marksmanship",
+        damageType: weapon.damageType,
+        requirementMet: true,
+      },
     },
     spawn,
     facing: 0,
@@ -794,5 +800,75 @@ describe("Fireball flies (#535)", () => {
       expect(match.projectiles).toHaveLength(0);
     }
     expect(health(match, "target")).toBe(1e6);
+  });
+});
+
+describe("Lightning Orb flies (#761)", () => {
+  const ORB = "elementalist.lightning-orb";
+  const ORB_SPEED = getSkill(ORB)?.projectile?.speed ?? 0;
+
+  function orbSim(): MatchSimulation {
+    return new MatchSimulation({
+      seed: "lightning-orb",
+      participants: [
+        {
+          id: "caster",
+          team: 0,
+          skillBar: [ORB],
+          attributeRanks: new Map([["elementalist.air-magic", 12]]),
+          equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+          maxEnergy: 1000,
+          spawn: vec2(0, 0),
+          facing: 0,
+        },
+        target(vec2(300, 0)),
+      ],
+    });
+  }
+
+  /** Cast at the target, walking `walking` from the start, and step until it lands. */
+  function castAndLand(match: MatchSimulation, walking: Vec2 = ZERO, then: Vec2 = walking) {
+    match.setTarget("caster", "target");
+    match.setInputDirection("target", walking);
+    expect(match.requestSkill("caster", 0)?.check).toEqual({ ok: true });
+    let completed: CombatLogEntry | undefined;
+    for (let i = 0; i < 300; i += 1) {
+      const entry = match.step(DT).log.find((logged) => logged.skillId === ORB);
+      if (entry === undefined) {
+        continue;
+      }
+      if (completed !== undefined) {
+        return { completed, landed: entry };
+      }
+      completed = entry;
+      match.setInputDirection("target", then);
+    }
+    throw new Error("nothing landed");
+  }
+
+  it("flies faster than Fireball and lands 82 lightning at 25% armor penetration", () => {
+    const fireballSpeed = getSkill("elementalist.fireball")?.projectile?.speed ?? 0;
+    expect(ORB_SPEED).toBe(1.5 * fireballSpeed);
+    const match = orbSim();
+    const { completed, landed } = castAndLand(match);
+    expect(completed.events).toEqual([]);
+    expect(landed.atSeconds - completed.atSeconds).toBeGreaterThanOrEqual(300 / ORB_SPEED - DT);
+    const victim = get(match, "target").combatant;
+    const expected = mitigate(skillDamage(82, "lightning", 0.25), victim, RULES.combat);
+    expect(expected).toBeGreaterThan(
+      mitigate(skillDamage(82, "lightning", 0), victim, RULES.combat),
+    );
+    expect(landed.events).toEqual([
+      expect.objectContaining({ kind: "damage", targetId: "target", amount: expected }),
+    ]);
+    expect(victim.health).toBe(1e6 - expected);
+  });
+
+  it("a target that sidesteps takes nothing", () => {
+    const match = orbSim();
+    expect(castAndLand(match, UP, DOWN).landed.events).toEqual([
+      { kind: "attack-dodged", targetId: "target" },
+    ]);
+    expect(get(match, "target").combatant.health).toBe(1e6);
   });
 });

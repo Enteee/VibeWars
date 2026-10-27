@@ -390,3 +390,39 @@ const WIELDS: Readonly<Record<AttackWeaponClass, readonly WeaponId[]>> = Object.
 export function wieldsFor(weaponId: WeaponId, required: AttackWeaponClass): boolean {
   return WIELDS[required].includes(weaponId);
 }
+
+/**
+ * The element a wand or staff deals, by the attribute its owner nominated
+ * (GW1, #761). An attribute not listed, or none nominated, leaves the
+ * weapon typeless.
+ */
+export const CASTER_WEAPON_ELEMENT: Readonly<Record<string, DamageType>> = Object.freeze({
+  "elementalist.fire-magic": "fire",
+  "elementalist.air-magic": "lightning",
+  "elementalist.water-magic": "cold",
+  "elementalist.earth-magic": "earth",
+  "monk.healing-prayers": "holy",
+  "monk.protection-prayers": "holy",
+  "monk.smiting-prayers": "holy",
+  "monk.divine-favor": "holy",
+  "mesmer.domination-magic": "chaos",
+  "mesmer.illusion-magic": "chaos",
+  "mesmer.inspiration-magic": "chaos",
+  // The Necromancer lines are unverified against GW1.
+  "necromancer.blood-magic": "dark",
+  "necromancer.soul-reaping": "dark",
+  "necromancer.curses": "cold",
+  "necromancer.death-magic": "cold",
+});
+
+/**
+ * What a blow from `weapon` deals, linked to `attributeId`: a caster
+ * weapon's element, every other weapon its own type.
+ */
+export function weaponDamageType(weapon: Weapon, attributeId: string | undefined): DamageType {
+  const caster = weapon.requirement === CASTER_REQUIREMENT;
+  if (!caster || attributeId === undefined || !Object.hasOwn(CASTER_WEAPON_ELEMENT, attributeId)) {
+    return weapon.damageType;
+  }
+  return CASTER_WEAPON_ELEMENT[attributeId] ?? weapon.damageType;
+}

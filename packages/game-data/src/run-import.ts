@@ -158,6 +158,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Elementalist/378-Chain_Lightning",
   },
   {
+    id: "elementalist.lightning-orb",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/384-Lightning_Orb",
+  },
+  {
     id: "necromancer.enfeeble",
     profession: "necromancer",
     url: "https://www.gw-memorial.net/skills/Necromancer/256-Enfeeble",

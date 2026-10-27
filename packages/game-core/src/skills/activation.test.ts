@@ -32,7 +32,7 @@ const SPELL: Skill = {
   attack: undefined,
   whileActivating: undefined,
   projectile: undefined,
-  effects: [{ kind: "damage", amount: { flat: 50 }, type: "typeless" }],
+  effects: [{ kind: "damage", amount: { flat: 50 }, type: "typeless", armorPenetration: 0 }],
 };
 
 function request(overrides: Partial<ActivationRequest> = {}): ActivationRequest {
@@ -304,7 +304,12 @@ describe("canActivate, an attack skill's weapon (ADR-0029)", () => {
       energy: 50,
       equipment: {
         ...unarmedResolvedEquipment(60),
-        mainHand: { weapon: WEAPONS[weaponId], attributeId: undefined, requirementMet: true },
+        mainHand: {
+          weapon: WEAPONS[weaponId],
+          attributeId: undefined,
+          damageType: WEAPONS[weaponId].damageType,
+          requirementMet: true,
+        },
       },
     });
   }

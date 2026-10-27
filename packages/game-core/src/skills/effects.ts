@@ -290,7 +290,11 @@ export function applyEffect(effect: UnconditionalEffect, context: SkillContext):
       }
       // Physical and elemental skill damage respects armor; holy, shadow and
       // typeless damage ignores it (#760).
-      const packet = skillDamage(resolveMagnitude(effect.amount, caster), effect.type);
+      const packet = skillDamage(
+        resolveMagnitude(effect.amount, caster),
+        effect.type,
+        effect.armorPenetration,
+      );
       applyDamage(target, mitigate(packet, target, context.rules), false, events);
       return events;
     }

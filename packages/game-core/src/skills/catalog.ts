@@ -93,6 +93,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           scaling: { attributeId: "elementalist.fire-magic", atZero: 7, atTwelve: 91 },
         },
         type: "fire",
+        armorPenetration: 0,
       },
     ],
   },
@@ -111,8 +112,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     range: RANGE_SPELL,
     target: "single-enemy",
     // "Target foe and up to two other foes near your target": the target
-    // first, then the nearest two (`targeting.ts`). Its 25% armor
-    // penetration is lightning's own, which #761 brings.
+    // first, then the nearest two (`targeting.ts`).
     area: {
       radius: AREA_NEARBY,
       origin: "target",
@@ -130,6 +130,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 70 },
         },
         type: "lightning",
+        armorPenetration: 0.25,
       },
     ],
   },
@@ -159,6 +160,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
           kind: "damage",
           amount: { scaling: { attributeId: "warrior.axe-mastery", atZero: 1, atTwelve: 16 } },
           type: "typeless",
+          armorPenetration: 0,
         },
         { kind: "apply-status", statusId: "deep-wound", durationSeconds: 20 },
       ],
@@ -873,6 +875,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
               scaling: { attributeId: "mesmer.domination-magic", atZero: 30, atTwelve: 102 },
             },
             type: "typeless",
+            armorPenetration: 0,
           },
         ],
       },
@@ -944,6 +947,7 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
               scaling: { attributeId: "mesmer.domination-magic", atZero: 14, atTwelve: 83 },
             },
             type: "typeless",
+            armorPenetration: 0,
           },
         ],
       },
@@ -988,6 +992,38 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
             },
           },
         ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.lightning-orb",
+    name: "Lightning Orb",
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // Our own tuning, as GW1 publishes no speeds: lightning flies half as
+    // fast again as Fireball, so it is harder to step out of (#761).
+    projectile: { speed: 1.5 * RANGE_SPELL },
+    // "...strikes target foe for 10...82...100 lightning damage if it
+    // hits. This spell has 25% armor penetration."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 82 },
+        },
+        type: "lightning",
+        armorPenetration: 0.25,
       },
     ],
   },
