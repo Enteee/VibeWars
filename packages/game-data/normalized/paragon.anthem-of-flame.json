@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 10,
+  "upkeep": false,
   "description": "For 10 seconds, the next attack skill used by each party member within earshot also causes Burning for 1...3...3 seconds.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 4,
+  "upkeep": false,
   "description": "For 8 seconds, you attack 33% faster but take double damage.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

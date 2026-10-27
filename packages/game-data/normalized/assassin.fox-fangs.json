@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.5,
   "rechargeSeconds": 6,
+  "upkeep": false,
   "description": "Must follow a lead attack. Fox Fangs cannot be blocked or evaded and strikes for +10...22...25 damage if it hits.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

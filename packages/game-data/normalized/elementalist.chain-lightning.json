@@ -13,6 +13,7 @@
   "overcast": 5,
   "activationSeconds": 2,
   "rechargeSeconds": 6,
+  "upkeep": false,
   "description": "Target foe and up to two other foes near your target are struck for 10...70...85 lightning damage. This spell has 25% armor penetration.",
   "variant": "pvp",
   "ruleset": "gw1-reference",
