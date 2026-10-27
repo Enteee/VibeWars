@@ -1528,6 +1528,108 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // the block and the end on attacking are the status's.
     effects: [{ kind: "apply-status", statusId: "weapon-of-warding", durationSeconds: 7 }],
   },
+  {
+    id: "ritualist.mend-body-and-soul",
+    name: "Mend Body and Soul",
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "That ally loses one condition for each spirit within earshot": there
+    // are no spirits yet (#467), so it removes none, as in GW1 with none up.
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 20, atTwelve: 96 },
+        },
+      },
+    ],
+  },
+  {
+    id: "ritualist.spirit-light",
+    name: "Spirit Light",
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If any Spirits are within earshot, you don't sacrifice Health": there
+    // are no spirits yet (#467), so the 17% is always paid, as in GW1 with
+    // none up.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 17 },
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 60, atTwelve: 156 },
+        },
+      },
+    ],
+  },
+  {
+    id: "ritualist.wielders-boon",
+    name: "Wielder's Boon",
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If that ally is under the effects of a Weapon Spell, Wielder's Boon
+    // heals for an additional 15...63...75 Health."
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 51 },
+        },
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "weapon-spell" },
+        effects: [
+          {
+            kind: "heal",
+            perStatusOnTarget: [],
+            amount: {
+              scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 63 },
+            },
+          },
+        ],
+      },
+    ],
+  },
 
   /* ---------------------------------------------------------------------- */
   /* An effect that depends on an earlier one (#521)                         */
