@@ -27,7 +27,7 @@ const card = (status) => ({ item: { status, content: { number: 1 } } });
 /** @returns {import("./company-load.mjs").LoadFacts} */
 const facts = () => ({
   now: NOW,
-  roles: ["manager", "developer-1", "qa-tester", "asset-designer"],
+  roles: ["manager", "developer", "qa-tester", "asset-designer"],
   board: {
     cards: [
       card("Ready"),
@@ -41,24 +41,24 @@ const facts = () => ({
   staff: {
     employees: {
       manager: employee("manager"),
-      "developer-1": employee("developer-1"),
-      "developer-1@2": employee("developer-1"),
+      developer: employee("developer"),
+      "developer@2": employee("developer"),
       "qa-tester": employee("qa-tester", { state: "firing", readyAt: NOW - MIN }),
     },
     recent: [],
   },
   maxAgents: 12,
-  live: new Set(["manager", "developer-1", "developer-1@2", "qa-tester"]),
+  live: new Set(["manager", "developer", "developer@2", "qa-tester"]),
   stale: new Map(),
   peek: [
     { employee: "manager", state: "turn", lastLineAt: NOW - 30_000, lastLine: "x" },
-    { employee: "developer-1", state: "turn", lastLineAt: NOW - MIN, lastLine: "x" },
-    { employee: "developer-1@2", state: "between", lastLineAt: NOW - 130 * MIN, lastLine: "x" },
+    { employee: "developer", state: "turn", lastLineAt: NOW - MIN, lastLine: "x" },
+    { employee: "developer@2", state: "between", lastLineAt: NOW - 130 * MIN, lastLine: "x" },
   ],
   usage: {
     roles: new Map([
       ["manager", { replies: 1, output: 40_000, input: 0, cacheRead: 0, model: "m" }],
-      ["developer-1", { replies: 1, output: 1_200_000, input: 0, cacheRead: 0, model: "m" }],
+      ["developer", { replies: 1, output: 1_200_000, input: 0, cacheRead: 0, model: "m" }],
     ]),
     total: { replies: 2, output: 1_240_000, input: 0, cacheRead: 0, model: "" },
     todayOutput: 0,
@@ -70,11 +70,11 @@ describe("loadLines (#747)", () => {
     expect(loadLines(facts())).toEqual([
       `LOAD  as of ${hhmm(NOW)}   staff 4/12`,
       "board   Ready 2  In Progress 1  In Review 0  QA 1  Blocked 0",
-      "role             n  employees (state, last activity)                     tokens out 5h",
-      "manager          1  manager in turn 0m                                     40k",
-      "developer-1      2  developer-1 in turn 1m; developer-1@2 between 2h10m   1.2M",
-      "qa-tester        1  qa-tester firing (ready)                                 0",
-      "asset-designer   0  -                                                        0",
+      "role             n  employees (state, last activity)                 tokens out 5h",
+      "manager          1  manager in turn 0m                                 40k",
+      "developer        2  developer in turn 1m; developer@2 between 2h10m   1.2M",
+      "qa-tester        1  qa-tester firing (ready)                             0",
+      "asset-designer   0  -                                                    0",
     ]);
   });
 
@@ -83,11 +83,11 @@ describe("loadLines (#747)", () => {
     const lines = loadLines({
       ...base,
       live: new Set(["manager"]),
-      stale: new Map([["developer-1", new Date(2026, 9, 26, 22, 5).getTime()]]),
+      stale: new Map([["developer", new Date(2026, 9, 26, 22, 5).getTime()]]),
       peek: [],
     });
     expect(lines[3]).toContain("manager no turn yet");
-    expect(lines[4]).toContain("developer-1 down since 22:05; developer-1@2 not running");
+    expect(lines[4]).toContain("developer down since 22:05; developer@2 not running");
   });
 
   it("prints the rest when the board, the usage logs, staff.json or maxAgents are unknown", () => {
