@@ -318,9 +318,10 @@ export function claudeSignIn(root) {
 
 /**
  * Whether the agents may run on the company's Claude account (#865): it must
- * be signed in, in the company's config directory, and be a different account
- * from the operator's. An identity that cannot be read is refused too: the
- * check exists to keep the operator's account out, so a doubt is a no.
+ * be signed in, in the company's config directory. Whose account that is, is
+ * the operator's responsibility (the doctor shows it, informationally); the
+ * point of the directory is that the jails bind that one credential and
+ * nothing of the operator's `~/.claude`.
  *
  * @param {string} root
  * @param {Run} [run]
@@ -338,24 +339,6 @@ export function claudeVerdict(root, run = runCommand) {
     return {
       ok: false,
       message: `the company's Claude account is not set up. Sign it in: ${claudeSignIn(root)}`,
-    };
-  }
-  const operator = claudeIdentity(null, run);
-  // An operator who is not signed in at all cannot be the company's account.
-  if (operator.state === "not set up") {
-    return { ok: true, who: company.who };
-  }
-  const same = operator.state === "ok" ? isOperators(company.who, operator.who) : null;
-  if (same === true) {
-    return {
-      ok: false,
-      message: `the company's Claude account is the operator's (${company.who}). It must be a separate account. Sign it in: ${claudeSignIn(root)}`,
-    };
-  }
-  if (same === null) {
-    return {
-      ok: false,
-      message: "the company's Claude account cannot be told apart from the operator's; refusing",
     };
   }
   return { ok: true, who: company.who };

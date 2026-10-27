@@ -18,12 +18,13 @@ account all landed on the operator's personal account.
   `<credentials>/claude/` (a `CLAUDE_CONFIG_DIR`). One copy, not nine: every
   jail binds that one `.credentials.json` and nothing of the operator's
   `~/.claude`.
-- `claude-llc-init` provisions: it reads the account, refuses one that is
-  the operator's or cannot be told apart from it, and prints the sign-in
-  command (`CLAUDE_CONFIG_DIR=<credentials>/claude claude`, then `/login`,
-  as a separate account).
+- `claude-llc-init` provisions: it reads the account, refuses one that is not
+  signed in, and prints the sign-in command
+  (`CLAUDE_CONFIG_DIR=<credentials>/claude claude`, then `/login`).
+  Whether that is a separate account from the operator's is the operator's
+  setup, not checked (the operator's decision); `claude-llc doctor` shows it.
 - `claude-llc` enforces: it exits before the hub window unless the same
-  check passes (`claude-check.mjs`). A doubt is a no.
+  check passes (`claude-check.mjs`).
 - The per-role `claude.json` records onboarding, trust and the account it
   saw. When the company's account differs from the one recorded in
   `<credentials>/claude-identity`, init deletes every box's `claude.json`

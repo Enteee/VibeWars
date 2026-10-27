@@ -264,21 +264,15 @@ describe("claudeVerdict", () => {
     };
   };
 
-  it("accepts a separate account", () => {
+  it("accepts a signed-in company account", () => {
     expect(claudeVerdict(signedIn(), accounts("co@x.org", "me@x.org"))).toEqual({
       ok: true,
       who: "co@x.org",
     });
   });
 
-  it("accepts it when the operator is not signed in at all", () => {
-    expect(claudeVerdict(signedIn(), accounts("co@x.org", null)).ok).toBe(true);
-  });
-
-  it("refuses the operator's own account, naming it", () => {
-    const verdict = claudeVerdict(signedIn(), accounts("Me@x.org", "me@x.org"));
-    expect(verdict).toMatchObject({ ok: false });
-    expect(JSON.stringify(verdict)).toContain("the operator's");
+  it("does not compare it with the operator's: the same account passes", () => {
+    expect(claudeVerdict(signedIn(), accounts("me@x.org", "me@x.org")).ok).toBe(true);
   });
 
   it("refuses a missing company credential, with the sign-in command", () => {
@@ -287,8 +281,8 @@ describe("claudeVerdict", () => {
     expect(JSON.stringify(verdict)).toContain("CLAUDE_CONFIG_DIR=");
   });
 
-  it("refuses when the operator's identity cannot be read, without echoing output", () => {
-    const verdict = claudeVerdict(signedIn(), accounts("co@x.org", "broken"));
+  it("refuses an unreadable company account, without echoing output", () => {
+    const verdict = claudeVerdict(signedIn(), accounts("broken", null));
     expect(verdict).toMatchObject({ ok: false });
     expect(JSON.stringify(verdict)).not.toContain(SECRET);
   });
