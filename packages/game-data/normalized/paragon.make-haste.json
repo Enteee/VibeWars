@@ -1,0 +1,26 @@
+{
+  "id": "paragon.make-haste",
+  "name": "\"Make Haste!\"",
+  "profession": "paragon",
+  "attribute": "Command",
+  "type": "Shout.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 10,
+  "upkeep": false,
+  "description": "For 5...17...20 seconds, target other ally moves 33% faster. This skill ends if that ally successfully hits with an attack.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Paragon/1067-Make_Haste!",
+    "fetchedAt": "2026-10-27T17:39:59.777Z"
+  },
+  "unmapped": {}
+}

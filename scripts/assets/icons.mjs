@@ -411,6 +411,22 @@ const status = {
       `<path d="M8 5h8v4.5c0 2.5-2 4-4 5.2-2-1.2-4-2.7-4-5.2z" ${stroke(c, 2)}/>` +
       `<path d="M6.5 18.5h11" ${stroke(c, 2.5)}/>`,
   ],
+  // Shout: an arrow forward with a plus behind it, run and be healed (#956).
+  incoming: [
+    "shout",
+    (c) =>
+      `<path d="M11 12h7M15 8.5l3.5 3.5-3.5 3.5" ${stroke(c, 2.5)}/>` +
+      `<path d="M7 9.5v5M4.5 12h5" ${stroke(c, 2)}/>`,
+  ],
+  // Shout: a double chevron, one ally hurried along (#956).
+  "make-haste": ["shout", (c) => `<path d="M7 8l4 4-4 4M12.5 8l4 4-4 4" ${stroke(c, 2.5)}/>`],
+  // Chant: a shield with a bar across it, blocks for the party (#956).
+  "defensive-anthem": [
+    "chant",
+    (c) =>
+      `<path d="M8 6h8v4.5c0 2.5-2 4-4 5.2-2-1.2-4-2.7-4-5.2z" ${stroke(c, 2)}/>` +
+      `<path d="M9.5 10h5" ${stroke(c, 2)}/>`,
+  ],
   // Chant: a flame, your next attack skill burns (#758). Burning's flame,
   // smaller and higher, clear of the banner's notch.
   "anthem-of-flame": [
@@ -446,6 +462,29 @@ const status = {
   "heart-of-fury": [
     "stance",
     (c) => `<path d="M12 18l-4.8-4.8a2.8 2.8 0 0 1 4.8-4 2.8 2.8 0 0 1 4.8 4z" fill="${c}"/>`,
+  ],
+  // Enchantment: a blade with a ring round it, slashing all adjacent foes
+  // whenever you attack (#939).
+  "vow-of-strength": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.6)}/>` +
+      `<path d="M8.5 15.5l7-7M9 12.5l2.5 2.5" ${stroke(c, 2.2)}/>`,
+  ],
+  // Enchantment: three grains of sand, flung at the foes beside your hit (#939).
+  "sand-shards": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 5.5l2 3.5h-4z" fill="${c}"/>` +
+      `<path d="M7.5 13l2 3.5h-4z" fill="${c}"/>` +
+      `<path d="M16.5 13l2 3.5h-4z" fill="${c}"/>`,
+  ],
+  // Stance: one chevron, forward: move 25% faster (#939).
+  "pious-haste": ["stance", (c) => `<path d="M9.5 9l4.5 5-4.5 5" ${stroke(c, 2.5)}/>`],
+  // Stance: three chevrons, forward: run 50% faster, an enchantment paid (#939).
+  "pious-haste-run": [
+    "stance",
+    (c) => `<path d="M5 9l4 5-4 5M9.5 9l4 5-4 5M14 9l4 5-4 5" ${stroke(c, 2.2)}/>`,
   ],
   // Skill effect: a shield struck through, armor lost while the signet is
   // activated (#524).

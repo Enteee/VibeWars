@@ -326,6 +326,20 @@ Mystic Regeneration gives +3 health pips for each enchantment on you,
 any profession's and itself included, at most 3, recounted the moment
 one goes. Heart of Fury is a stance: you attack 25% faster.
 
+**The scythe enchantments** (#939). While **Vow of Strength** (elite,
+15 s) is on you, every attack you make with a scythe, swing or attack
+skill, hit, miss or block, deals 22 slashing to every foe adjacent to
+you, your target included. **Sand Shards** (30 s) splashes 50 earth on
+every other foe adjacent to the foe you hit, for each of your next 4
+scythe hits; a cleave that hits 3 foes spends 3, and the 4th ends it.
+Neither does anything with another weapon, and a hit with another
+weapon spends nothing. A splash is not a blow: no block, no crit, no
+adrenaline. **Pious Haste** is a stance: lose 1 Dervish enchantment and
+move 25% faster for 6 s, or 50% faster if one was lost, which is capped
+at +33% as every speed-up is (ADR-0019). **Victorious Sweep** (+21, any
+melee weapon) gains you 70 health if, after the blow, its target has
+less health than you, counted in points, not as a share.
+
 Each condition has a distinct mechanical identity, not just a different
 number:
 
@@ -552,7 +566,10 @@ while moving, a heal Deep Wound cuts; it ends on an ally when that ally
 hits with an attack, but not on a miss or a block. "Stand Your Ground!"
 (15 energy, 30 s recharge) gives 17 s of +24 armor while not moving,
 and ends on an ally as soon as that ally attacks. Leadership pays for
-both, as for every shout.
+both, as for every shout. "Incoming!" (elite, 10 energy, 25 s recharge)
+is "Fall Back!" that a hit does not end (#956). "Make Haste!" (5 energy,
+10 s recharge) gives one other ally 17 s of 33% faster movement, and
+ends as "Fall Back!" does, when that ally hits.
 
 **Chants** reach allies in earshot as shouts do, but have a cast (#758).
 A chant is not a spell: dazed does not slow it. Anthem of Flame
@@ -565,7 +582,13 @@ loosed before the first arrow lands carries none, and an Anthem that
 runs out while the arrow flies still burns. Only a hit burns, every
 victim of Barrage alike. Plain swings leave it alone, and so does an attack skill
 interrupted or cancelled before its blow. Several different chants can
-be up at once; the same one again keeps the longer.
+be up at once; the same one again keeps the longer. Defensive Anthem
+(elite, Leadership, 15 energy, 2 s cast, 25 s recharge) gives each ally
+in earshot a 50% chance to block attacks for 9 s (#956). It ends on an
+ally when one of that ally's attack skills hits, melee or thrown. A
+plain swing or arrow does not end it, and neither does an attack skill
+that misses or is blocked. Its block combines with any other as
+1 − ∏(1 − p): with Weapon of Warding it is 75%.
 
 **Weapon spells** go on an ally's weapon, one at a time: a new one
 replaces the old, the same one included (#758). They are spells, so
@@ -575,6 +598,14 @@ enchantments, so enchantment removal leaves them. Weapon of Warding
 ally or yourself) gives +4 health regeneration and a 50% chance to block
 attacks for 7 s, and ends the moment its bearer attacks: a swing, an
 arrow or an attack skill, hit or miss.
+
+The Ritualist heals with Restoration Magic, each on an ally or yourself
+(#955). **Mend Body and Soul** (5 energy, ¾ s, 3 s recharge) heals 96.
+**Spirit Light** (5 energy, 1 s, 4 s recharge) sacrifices 17% of your
+maximum health and heals 156. **Wielder's Boon** (5 energy, ¼ s, 4 s
+recharge) heals 51, and 63 more if the ally is under a weapon spell.
+Their spirit clauses, a condition removed per spirit in earshot and no
+sacrifice with a spirit near, wait for spirits (#467).
 
 ## Weapon attacks
 

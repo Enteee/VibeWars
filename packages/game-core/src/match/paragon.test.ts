@@ -13,7 +13,7 @@ import { aggregateModifiers } from "../skills/status.js";
 import { chargeAdrenaline, makeCombatant } from "../skills/testing.js";
 import { advanceStatuses } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
-import { resolveSwing, skillBlow } from "../skills/weapon-attack.js";
+import { resolveAttackSkill, resolveSwing, skillBlow } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
@@ -25,6 +25,11 @@ const STAND = "paragon.stand-your-ground";
 const CRUEL_SPEAR = "paragon.cruel-spear";
 const NEVER_SURRENDER = "paragon.never-surrender";
 const LEADERS_COMFORT = "paragon.leaders-comfort";
+const INCOMING = "paragon.incoming";
+const MAKE_HASTE = "paragon.make-haste";
+const DEFENSIVE_ANTHEM = "paragon.defensive-anthem";
+const SPEAR_OF_LIGHTNING = "paragon.spear-of-lightning";
+const SWIFT_CHOP = "warrior.swift-chop";
 
 function skill(id: string): Skill {
   const found = getSkill(id);
@@ -520,5 +525,224 @@ describe("Leader's Comfort (#923)", () => {
       get(match, "p").combatant.statuses.apply("deep-wound", 20, "foe");
     });
     expect(heals).toEqual([140 * 0.8]);
+  });
+});
+
+describe('"Incoming!" (#956)', () => {
+  it("an elite shout that reaches every ally in earshot, the paragon too, for 9 s", () => {
+    expect(skill(INCOMING).elite).toBe(true);
+    const match = new MatchSimulation({
+      seed: "incoming",
+      participants: [
+        paragon(INCOMING),
+        bystander("near", 0, vec2(AREA_EARSHOT - 10, 0)),
+        bystander("far", 0, vec2(0, -2 * AREA_EARSHOT)),
+        bystander("foe", 1, vec2(40, 0)),
+      ],
+    });
+    useSkill(match, INCOMING);
+    for (const id of ["p", "near"]) {
+      expect(get(match, id).combatant.statuses.get("incoming")?.remainingSeconds).toBeCloseTo(9, 0);
+    }
+    expect(get(match, "far").combatant.statuses.has("incoming")).toBe(false);
+    expect(get(match, "foe").combatant.statuses.has("incoming")).toBe(false);
+  });
+
+  it("moves a bearer 33% faster and heals it 13 a second while it moves, nothing standing", () => {
+    const run = (incoming: boolean, walking: boolean): { x: number; healed: number } => {
+      const match = new MatchSimulation({
+        seed: "incoming",
+        participants: [spec("a", 0, vec2(0, 0), { maxHealth: 500, startHealthFraction: 0.5 })],
+      });
+      if (incoming) {
+        get(match, "a").combatant.statuses.apply("incoming", 9, "p");
+      }
+      match.setInputDirection("a", walking ? vec2(1, 0) : vec2(0, 0));
+      // The first tick only starts it moving.
+      match.step(DT);
+      const before = get(match, "a").combatant.health;
+      stepFor(match, 1);
+      return { x: get(match, "a").position.x, healed: get(match, "a").combatant.health - before };
+    };
+    const hurried = run(true, true);
+    expect(hurried.healed).toBeCloseTo(13);
+    expect(hurried.x).toBeCloseTo(run(false, true).x * 1.33);
+    expect(run(true, false).healed).toBe(0);
+  });
+
+  it("does not end on its bearer's hit, as Fall Back! does", () => {
+    const hitter = axeman();
+    hitter.statuses.apply("incoming", 9, "p");
+    expect(swing(hitter, victim()).some((event) => event.kind === "damage")).toBe(true);
+    expect(hitter.statuses.has("incoming")).toBe(true);
+  });
+});
+
+describe('"Make Haste!" (#956)', () => {
+  it("hurries another ally for 17 s, never the shouter", () => {
+    const match = new MatchSimulation({
+      seed: "make-haste",
+      participants: [paragon(MAKE_HASTE), bystander("ally", 0, vec2(200, 0))],
+    });
+    match.setTarget("p", "p");
+    expect(match.requestSkill("p", 0)?.check.ok).toBe(false);
+    match.setTarget("p", "ally");
+    useSkill(match, MAKE_HASTE);
+    expect(get(match, "ally").combatant.statuses.get("make-haste")?.remainingSeconds).toBeCloseTo(
+      17,
+      0,
+    );
+    expect(get(match, "p").combatant.statuses.has("make-haste")).toBe(false);
+  });
+
+  it("ends on its bearer's landed swing, not on a miss or a block", () => {
+    const hitter = axeman();
+    hitter.statuses.apply("make-haste", 17, "p");
+    expect(swing(hitter, victim())).toContainEqual({
+      kind: "status-expired",
+      targetId: "a",
+      statusId: "make-haste",
+    });
+
+    let seenMiss = false;
+    let seenBlock = false;
+    for (let seed = 0; seed < 30; seed += 1) {
+      const attacker = axeman();
+      attacker.statuses.apply("blind", 10, "foe");
+      attacker.statuses.apply("make-haste", 17, "p");
+      const target = victim();
+      target.statuses.apply("guardian", 10, "ally");
+      const events = swing(attacker, target, seed);
+      const hit = events.some((event) => event.kind === "damage");
+      seenMiss ||= events.some((event) => event.kind === "attack-missed");
+      seenBlock ||= events.some((event) => event.kind === "attack-blocked");
+      expect(attacker.statuses.has("make-haste")).toBe(!hit);
+    }
+    expect([seenMiss, seenBlock]).toEqual([true, true]);
+  });
+});
+
+describe("Defensive Anthem (#956)", () => {
+  /** A rank-12 spear paragon wearing Defensive Anthem, Spear of Lightning in slot 0, a foe 300 away. */
+  function spearman(): MatchSimulation {
+    const match = new MatchSimulation({
+      seed: "defensive-anthem",
+      participants: [
+        spec("p", 0, vec2(0, 0), {
+          skillBar: [SPEAR_OF_LIGHTNING],
+          attributeRanks: new Map([["paragon.spear-mastery", 12]]),
+          equipment: wielding(WEAPONS.spear, "paragon.spear-mastery"),
+          maxEnergy: 100,
+        }),
+        spec("foe", 1, vec2(300, 0)),
+      ],
+    });
+    get(match, "p").combatant.statuses.apply("defensive-anthem", 9, "p");
+    return match;
+  }
+
+  const damaged = (log: readonly CombatLogEntry[]): boolean =>
+    log.some((entry) => entry.events.some((event) => event.kind === "damage"));
+
+  it("an elite chant that reaches every ally in earshot, the chanter too, for 9 s", () => {
+    expect(skill(DEFENSIVE_ANTHEM).elite).toBe(true);
+    const match = new MatchSimulation({
+      seed: "defensive-anthem",
+      participants: [
+        paragon(DEFENSIVE_ANTHEM),
+        bystander("near", 0, vec2(AREA_EARSHOT - 10, 0)),
+        bystander("far", 0, vec2(0, -2 * AREA_EARSHOT)),
+      ],
+    });
+    useSkill(match, DEFENSIVE_ANTHEM);
+    for (const id of ["p", "near"]) {
+      expect(
+        get(match, id).combatant.statuses.get("defensive-anthem")?.remainingSeconds,
+      ).toBeCloseTo(9, 0);
+    }
+    expect(get(match, "far").combatant.statuses.has("defensive-anthem")).toBe(false);
+  });
+
+  it("blocks about half the attacks on its bearer", () => {
+    let blocked = 0;
+    for (let seed = 0; seed < 200; seed += 1) {
+      const target = victim();
+      target.statuses.apply("defensive-anthem", 9, "p");
+      if (swing(axeman(), target, seed).some((event) => event.kind === "attack-blocked")) {
+        blocked += 1;
+      }
+    }
+    expect(blocked).toBeGreaterThan(70);
+    expect(blocked).toBeLessThan(130);
+  });
+
+  it("survives its bearer's landed swing", () => {
+    const hitter = axeman();
+    hitter.statuses.apply("defensive-anthem", 9, "p");
+    expect(swing(hitter, victim()).some((event) => event.kind === "damage")).toBe(true);
+    expect(hitter.statuses.has("defensive-anthem")).toBe(true);
+  });
+
+  it("ends on a landed melee attack skill, not on a blocked one", () => {
+    let seenHit = false;
+    let seenBlock = false;
+    for (let seed = 0; seed < 30; seed += 1) {
+      const attacker = axeman();
+      attacker.energy = 20;
+      attacker.statuses.apply("defensive-anthem", 9, "p");
+      const target = victim();
+      target.statuses.apply("guardian", 10, "ally");
+      const events = resolveAttackSkill(
+        {
+          skill: skill(SWIFT_CHOP),
+          caster: attacker,
+          targets: [target],
+          rng: createRng(seed),
+          rules: RULES.combat,
+          surroundings: new Map(),
+        },
+        () => false,
+        [],
+      );
+      // A blocked Swift Chop still deals its damage: a block, not a hit.
+      const blocked = events.some((event) => event.kind === "attack-blocked");
+      const hit = !blocked && events.some((event) => event.kind === "damage");
+      seenHit ||= hit;
+      seenBlock ||= blocked;
+      expect(attacker.statuses.has("defensive-anthem")).toBe(!hit);
+    }
+    expect([seenHit, seenBlock]).toEqual([true, true]);
+  });
+
+  it("survives a plain spear that lands, and ends when Spear of Lightning lands", () => {
+    const plain = spearman();
+    expect(plain.requestAttack("p", "foe")?.ok).toBe(true);
+    expect(damaged(stepFor(plain, 2))).toBe(true);
+    expect(get(plain, "p").combatant.statuses.has("defensive-anthem")).toBe(true);
+
+    const thrown = spearman();
+    thrown.setTarget("p", "foe");
+    expect(thrown.requestSkill("p", 0)?.check).toEqual({ ok: true });
+    const log = stepFor(thrown, 2).filter((entry) => entry.skillId === SPEAR_OF_LIGHTNING);
+    expect(damaged(log)).toBe(true);
+    expect(get(thrown, "p").combatant.statuses.has("defensive-anthem")).toBe(false);
+  });
+});
+
+describe("the #956 Paragon skills read as what they do", () => {
+  const text = (id: string): string[] =>
+    describeSkill(skill(id)).effects.map((effect) => effect.text);
+
+  it('"Incoming!", "Make Haste!" and Defensive Anthem', () => {
+    expect(text(INCOMING)).toEqual([
+      "Applies Incoming! for 9s (13 Health per second while moving, moves at 133% speed)",
+    ]);
+    expect(text(MAKE_HASTE)).toEqual([
+      "Applies Make Haste! for 17s (moves at 133% speed, ends if the bearer hits with an attack)",
+    ]);
+    expect(text(DEFENSIVE_ANTHEM)).toEqual([
+      "Applies Defensive Anthem for 9s " +
+        "(50% chance to block attacks, ends if the bearer hits with an attack skill)",
+    ]);
   });
 });

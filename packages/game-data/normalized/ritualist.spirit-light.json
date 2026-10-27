@@ -1,0 +1,28 @@
+{
+  "id": "ritualist.spirit-light",
+  "name": "Spirit Light",
+  "profession": "ritualist",
+  "attribute": "Restoration Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 4,
+  "upkeep": false,
+  "description": "Target ally is healed for 60...156...180. If any Spirits are within earshot, you don't sacrifice Health.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ritualist/762-Spirit_Light",
+    "fetchedAt": "2026-10-27T17:37:18.422Z"
+  },
+  "unmapped": {
+    "cost.sacrifice": 17
+  }
+}

@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { readLock } from "./company-lock.mjs";
 import { obj } from "./protocol.mjs";
 
 const RESTART = path.join(path.dirname(fileURLToPath(import.meta.url)), "restart.mjs");
@@ -225,6 +226,7 @@ describe("the restarter", () => {
     });
     expect(fs.existsSync(path.join(company.root, "rebooting.json"))).toBe(false);
     expect(fs.existsSync(path.join(company.root, "reboot-check"))).toBe(false);
+    expect(readLock(company.root)).toMatchObject({ sha: company.target, by: "reboot" });
   });
 
   it("starts devenv on the host's PATH, so reboots do not nest shells until tmux refuses it", () => {
@@ -289,6 +291,7 @@ describe("the restarter", () => {
 
     expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
     expect(String(result.boot.note)).toMatch(/NOT updated: checkout is on branch mine/);
+    expect(readLock(company.root)).toBe("missing");
     expect(result.calls).toContain(
       `devenv ${company.repo} shell --refresh-eval-cache -- claude-llc up rebooted=1`,
     );
@@ -310,6 +313,7 @@ describe("the restarter", () => {
     const result = company.restart();
 
     expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
+    expect(readLock(company.root)).toBe("missing");
     expect(String(result.boot.note)).toMatch(
       new RegExp(
         `main ${company.target.slice(0, 8)} failed to build; running ${company.boot.slice(0, 8)}`,
