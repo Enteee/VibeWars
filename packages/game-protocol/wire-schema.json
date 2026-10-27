@@ -11,6 +11,7 @@
     "skill-bar",
     "recharge",
     "adrenaline",
+    "chain",
     "ended",
     "bye",
     "lobby-join",
@@ -128,12 +129,40 @@
         }
       ]
     },
+    "ChainMarksMessage": {
+      "properties": [
+        {
+          "name": "marks",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "remainingSeconds", "optional": false, "type": "number" },
+                {
+                  "name": "role",
+                  "optional": false,
+                  "type": {
+                    "union": [
+                      { "literal": "dual" },
+                      { "literal": "lead" },
+                      { "literal": "off-hand" }
+                    ]
+                  }
+                },
+                { "name": "targetId", "optional": false, "type": "string" }
+              ]
+            }
+          }
+        }
+      ]
+    },
     "Channel": {
       "union": [
         { "literal": "adrenaline" },
         { "literal": "bye" },
         { "literal": "call" },
         { "literal": "calls" },
+        { "literal": "chain" },
         { "literal": "chat" },
         { "literal": "chat-line" },
         { "literal": "combat" },
@@ -1107,6 +1136,22 @@
           }
         }
       ]
+    },
+    "WireChainMark": {
+      "properties": [
+        { "name": "remainingSeconds", "optional": false, "type": "number" },
+        {
+          "name": "role",
+          "optional": false,
+          "type": {
+            "union": [{ "literal": "dual" }, { "literal": "lead" }, { "literal": "off-hand" }]
+          }
+        },
+        { "name": "targetId", "optional": false, "type": "string" }
+      ]
+    },
+    "WireChainRole": {
+      "union": [{ "literal": "dual" }, { "literal": "lead" }, { "literal": "off-hand" }]
     },
     "WireChatLine": {
       "properties": [

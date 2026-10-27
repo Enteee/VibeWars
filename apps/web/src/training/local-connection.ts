@@ -263,6 +263,10 @@ export function createLocalConnection(options: {
             MINIMAL_GW_INSPIRED_PVP_V1.resources.adrenalineLossSeconds,
           );
     },
+    getChainMark(targetId) {
+      // Straight from the simulation, which drops a mark the tick it runs out (#916).
+      return simulation.get(selfId)?.combatant.chainMarks.get(targetId)?.role;
+    },
     getRecharges() {
       // Straight from the simulation: there is no wire to extrapolate over.
       const cast = simulation.get(selfId)?.combatant.cast;

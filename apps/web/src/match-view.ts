@@ -503,6 +503,7 @@ export async function startMatchView(
       connection.skillBar,
       connection.getAdrenaline(),
       connection.getAdrenalineLossIn(),
+      (targetId) => connection.getChainMark(targetId),
       wallSegments,
       latestMatch,
     );
