@@ -14,7 +14,7 @@ import type { Combatant, Skill } from "./types.js";
 /**
  * Disables (#914): an interrupt that also keeps the skill from being used
  * again for a while, alongside its recharge. Power Block takes the whole
- * attribute with it; Distracting Shot the one skill.
+ * attribute with it; Distracting Shot and Disrupting Chop the one skill.
  */
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.combat;
@@ -196,5 +196,40 @@ describe("Distracting Shot (#914)", () => {
     expect(target.cast.isCasting).toBe(true);
     expect(disabled(events)).toEqual([]);
     expect(target.health).toBe(500);
+  });
+});
+
+describe("Disrupting Chop (#914)", () => {
+  it("interrupts a skill and disables it for 20 s when the axe hits", () => {
+    const warrior = makeCombatant({
+      id: "warrior",
+      equipment: {
+        ...unarmedResolvedEquipment(RULES.armorReferenceLevel),
+        mainHand: {
+          weapon: WEAPONS.axe,
+          attributeId: "warrior.axe-mastery",
+          damageType: WEAPONS.axe.damageType,
+          requirementMet: true,
+        },
+      },
+    });
+    const target = foe(["elementalist.fireball"], "elementalist.fireball");
+    const events = resolveAttackSkill(
+      {
+        surroundings: new Map(),
+        skill: skill("warrior.disrupting-chop"),
+        caster: warrior,
+        targets: [target],
+        rng: Object.assign(createRng(1), { nextInt: () => 10, nextFloat: () => 0.95 }),
+        rules: RULES,
+      },
+      NOWHERE,
+    );
+
+    expect(target.cast.isCasting).toBe(false);
+    expect(target.cast.rechargeRemaining.get("elementalist.fireball")).toBe(20);
+    expect(disabled(events)).toEqual([
+      { kind: "skill-disabled", targetId: "foe", skillId: "elementalist.fireball", seconds: 20 },
+    ]);
   });
 });

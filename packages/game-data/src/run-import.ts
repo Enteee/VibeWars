@@ -263,6 +263,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Warrior/7-Eviscerate",
   },
   {
+    id: "warrior.disrupting-chop",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/6-Disrupting_Chop",
+  },
+  {
     id: "warrior.executioners-strike",
     profession: "warrior",
     url: "https://www.gw-memorial.net/skills/Warrior/8-Executioner's_Strike",

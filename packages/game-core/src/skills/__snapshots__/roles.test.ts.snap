@@ -56,6 +56,7 @@ exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
   "ranger.troll-unguent": "",
   "ritualist.weapon-of-warding": "defence",
   "warrior.backbreaker": "knockdown",
+  "warrior.disrupting-chop": "interrupt",
   "warrior.distracting-blow": "interrupt",
   "warrior.eviscerate": "condition",
   "warrior.executioners-strike": "",

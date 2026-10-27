@@ -1956,9 +1956,43 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "warrior.disrupting-chop",
+    name: "Disrupting Chop",
+    type: "attack",
+    elite: false,
+    profession: "warrior",
+    attributeId: "warrior.axe-mastery",
+    cost: { kind: "adrenaline", amount: 6 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 1,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "axe",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If it hits, this attack interrupts the target's current action. If
+    // that action was a skill, that skill is disabled for an additional
+    // 20 seconds."
+    effects: [
+      { kind: "interrupt" },
+      { kind: "disable-skill", which: "interrupted", seconds: { flat: 20 } },
+    ],
+  },
 
   /* ---------------------------------------------------------------------- */
-  /* Resurrection (#812)                                                    */
+  /* Resurrection (#812)                                                   */
   /* ---------------------------------------------------------------------- */
 
   {
