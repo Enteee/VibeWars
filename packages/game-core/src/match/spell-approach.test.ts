@@ -22,7 +22,12 @@ const FAR = RANGE_SPELL * 1.5;
 function sworded(): ResolvedEquipment {
   return {
     ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-    mainHand: { weapon: WEAPONS.sword, attributeId: "warrior.swordsmanship", requirementMet: true },
+    mainHand: {
+      weapon: WEAPONS.sword,
+      attributeId: "warrior.swordsmanship",
+      damageType: WEAPONS.sword.damageType,
+      requirementMet: true,
+    },
   };
 }
 

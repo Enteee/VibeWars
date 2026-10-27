@@ -43,11 +43,15 @@ function ignoresArmor(type: DamageType): boolean {
   return type === "holy" || type === "shadow" || type === "typeless";
 }
 
-/** A skill's damage packet, of the effect's type, no penetration. */
-export function skillDamage(amount: number, type: DamageType): DamagePacket {
+/** A skill's damage packet, of the effect's type and armor penetration. */
+export function skillDamage(
+  amount: number,
+  type: DamageType,
+  armorPenetration: number,
+): DamagePacket {
   return ignoresArmor(type)
-    ? { armored: 0, armorIgnoring: amount, type, source: "skill", armorPenetration: 0 }
-    : { armored: amount, armorIgnoring: 0, type, source: "skill", armorPenetration: 0 };
+    ? { armored: 0, armorIgnoring: amount, type, source: "skill", armorPenetration }
+    : { armored: amount, armorIgnoring: 0, type, source: "skill", armorPenetration };
 }
 
 /** Degeneration and life steal: armor never helps. */

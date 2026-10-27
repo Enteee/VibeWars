@@ -21,7 +21,12 @@ const FIREBALL = "elementalist.fireball";
 
 const swordsman: ResolvedEquipment = {
   ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-  mainHand: { weapon: WEAPONS.sword, attributeId: "warrior.swordsmanship", requirementMet: true },
+  mainHand: {
+    weapon: WEAPONS.sword,
+    attributeId: "warrior.swordsmanship",
+    damageType: WEAPONS.sword.damageType,
+    requirementMet: true,
+  },
 };
 
 function warrior(id: string, team: number, spawn: Vec2): ParticipantSpec {
@@ -59,7 +64,7 @@ function stepFor(match: MatchSimulation, seconds: number): CombatLogEntry[] {
 
 const events = (log: readonly CombatLogEntry[]) => log.flatMap((entry) => entry.events);
 
-const armorOf = (combatant: Combatant) => effectiveArmor(combatant, skillDamage(1, "typeless"));
+const armorOf = (combatant: Combatant) => effectiveArmor(combatant, skillDamage(1, "typeless", 0));
 
 describe("Healing Signet (#524)", () => {
   function signetter(): MatchSimulation {

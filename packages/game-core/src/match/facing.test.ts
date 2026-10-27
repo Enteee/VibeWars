@@ -53,7 +53,12 @@ describe("spawnFacing", () => {
 function swordsman(id: string, team: number, spawn: Vec2): ParticipantSpec {
   const equipment: ResolvedEquipment = {
     ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-    mainHand: { weapon: WEAPONS.sword, attributeId: "warrior.swordsmanship", requirementMet: true },
+    mainHand: {
+      weapon: WEAPONS.sword,
+      attributeId: "warrior.swordsmanship",
+      damageType: WEAPONS.sword.damageType,
+      requirementMet: true,
+    },
   };
   return {
     id,

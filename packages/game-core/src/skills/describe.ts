@@ -274,7 +274,11 @@ function describeEffect(
   switch (effect.kind) {
     case "damage": {
       const magnitude = describeMagnitude(effect.amount, ranks);
-      return { text: `Deals ${String(magnitude.current)} damage`, magnitude };
+      const penetration =
+        effect.armorPenetration > 0
+          ? ` (${String(Math.round(effect.armorPenetration * 100))}% armor penetration)`
+          : "";
+      return { text: `Deals ${String(magnitude.current)} damage${penetration}`, magnitude };
     }
     case "heal": {
       const magnitude = describeMagnitude(effect.amount, ranks);
