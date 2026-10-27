@@ -97,14 +97,12 @@ function damageTo(events: readonly CombatEvent[]): Record<string, number[]> {
 describe("Vow of Strength (#939)", () => {
   /** The Dervish attacks: every trigger on it answers, as the simulation fires them. */
   function attacks(bearer: Combatant, surroundings: Surroundings): CombatEvent[] {
-    return fireTriggers(
-      bearer,
-      "bearer-attacks",
-      (id) => surroundings.get(id)?.combatant,
-      createRng(1),
-      RULES,
+    return fireTriggers(bearer, "bearer-attacks", {
+      sourceOf: (id) => surroundings.get(id)?.combatant,
+      rng: createRng(1),
+      rules: RULES,
       surroundings,
-    ).flatMap(({ events }) => events);
+    }).flatMap(({ events }) => events);
   }
 
   it("is an elite 15 s enchantment the Dervish casts on itself", () => {

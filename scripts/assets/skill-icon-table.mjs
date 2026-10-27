@@ -30,6 +30,8 @@ export const SKILL_ICONS = {
   "necromancer.weaken-armor": { glyph: "armor", modifier: "down" },
   "necromancer.malaise": { glyph: "energy", modifier: "down" },
   "necromancer.blood-ritual": { glyph: "energy", modifier: "up" },
+  "necromancer.contagion": { glyph: "germ", modifier: "area" },
+  "necromancer.parasitic-bond": { glyph: "chain", modifier: "down" },
   "elementalist.armor-of-earth": { glyph: "mountain" },
   "ranger.troll-unguent": { glyph: "heal", modifier: "clock" },
   "monk.mend-condition": { glyph: "cleanse" },

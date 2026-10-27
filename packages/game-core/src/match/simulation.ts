@@ -63,6 +63,7 @@ import { CastState, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
 import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
 import {
+  applyEffects,
   applySkillEffects,
   applyStatus,
   gainEnergy,
@@ -129,7 +130,13 @@ import {
   swingIntervalSeconds,
   weaponSnapshotOf,
 } from "../skills/weapon-attack.js";
-import { fireTriggers } from "../skills/triggers.js";
+import {
+  fireChangeTriggers,
+  fireTriggers,
+  type FiredTrigger,
+  type SpreadGainedCondition,
+  type TriggerContext,
+} from "../skills/triggers.js";
 import { add, distance, normalize, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import {
   createCursor,
@@ -1120,6 +1127,7 @@ export class MatchSimulation {
 
     this.#settleUpkeep(dt);
     this.#spreadStatuses();
+    this.#fireStatusChanges();
     this.#awardKillMorale();
     // After every death this step, so two teams wiped in it both lose.
     this.checkMatchEnd();
@@ -1561,20 +1569,83 @@ export class MatchSimulation {
     }
   }
 
+  /** The bearer did `event` (#469): each status on it that answers fires. */
+  #fireTriggers(
+    record: ParticipantRecord,
+    event: Exclude<StatusTriggerEvent, "bearer-gains-condition" | "ends">,
+  ): void {
+    this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext()));
+  }
+
+  #triggerContext(): TriggerContext {
+    return {
+      sourceOf: (id) => this.#participants.get(id)?.combatant,
+      rng: this.#rng,
+      rules: this.#ruleset.combat,
+      surroundings: this.#participants,
+    };
+  }
+
   /**
-   * The bearer did `event` (#469): each status on it that answers fires,
-   * logged as its source's skill, and whoever it kills dies as usual.
-   * Its damage charges the bearer's adrenaline as any foe's hit does (#827).
+   * The one point a tick where statuses that answer a change fire (#887):
+   * every participant's recorded changes, in participant order, each in
+   * the order it happened. Then whatever the firing itself changed is
+   * discarded: a triggered effect never sets off a trigger, so two
+   * Contagions never echo, and a condition Contagion hands out sets off
+   * nobody's.
    */
-  #fireTriggers(record: ParticipantRecord, event: StatusTriggerEvent): void {
-    const fired = fireTriggers(
-      record.combatant,
-      event,
-      (id) => this.#participants.get(id)?.combatant,
-      this.#rng,
-      this.#ruleset.combat,
-      this.#participants,
-    );
+  #fireStatusChanges(): void {
+    const changes = [...this.#participants.values()].map((record) => ({
+      record,
+      changes: record.combatant.statuses.drainChanges(),
+    }));
+    const context = this.#triggerContext();
+    for (const { record, changes: recorded } of changes) {
+      for (const change of recorded) {
+        this.#logFired(fireChangeTriggers(record.combatant, change, this.#spread, context));
+      }
+    }
+    for (const record of this.#participants.values()) {
+      record.combatant.statuses.drainChanges();
+    }
+  }
+
+  /**
+   * Contagion (#887): the condition its bearer gained, on each living foe
+   * of the bearer within the radius, in participant order, as the bearer's.
+   */
+  readonly #spread: SpreadGainedCondition = (effect, bearer, gained) => {
+    const from = this.#participants.get(bearer.id);
+    if (from === undefined || bearer.dead) {
+      return [];
+    }
+    return [...this.#participants.values()]
+      .filter(
+        (other) =>
+          other.combatant.team !== bearer.team &&
+          !other.combatant.dead &&
+          distance(from.position, other.position) <= effect.radius,
+      )
+      .flatMap((other) =>
+        applyEffects(
+          [{ kind: "apply-status", statusId: gained.id, durationSeconds: gained.durationSeconds }],
+          {
+            caster: bearer,
+            target: other.combatant,
+            rng: this.#rng,
+            rules: this.#ruleset.combat,
+            surroundings: this.#participants,
+          },
+        ),
+      );
+  };
+
+  /**
+   * What triggers did (#469), each logged as its source's skill; whoever
+   * it kills dies as usual. Its damage charges the source's adrenaline as
+   * any foe's hit does (#827).
+   */
+  #logFired(fired: readonly FiredTrigger[]): void {
     for (const { sourceId, skillId, events } of fired) {
       this.#log.push({
         tick: this.#tick,
