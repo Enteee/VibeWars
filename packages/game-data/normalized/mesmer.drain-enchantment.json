@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 5
   },
+  "overcast": 0,
   "activationSeconds": 2,
   "rechargeSeconds": 20,
   "description": "Remove an Enchantment from target foe. If an Enchantment is removed, you gain 8...15...17 Energy and 40...104...120 Health.",

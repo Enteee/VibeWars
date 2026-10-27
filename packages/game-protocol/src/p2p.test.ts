@@ -115,6 +115,7 @@ const player: WirePlayer = {
   maxHealth: 480,
   energy: 25,
   maxEnergy: 30,
+  overcast: 5,
   adrenaline: 0,
   armor: 60,
   weaponId: "staff",
@@ -524,6 +525,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a player missing knockdownRemaining (#545)",
     parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, knockdownRemaining: undefined }] },
+  ],
+  [
+    "snapshot with a player missing overcast (#461)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, overcast: undefined }] },
+  ],
+  [
+    "snapshot with a string for a player's overcast (#461)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, overcast: "5" }] },
   ],
   [
     "snapshot with a string for walking",

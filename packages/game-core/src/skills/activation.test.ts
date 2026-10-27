@@ -23,6 +23,7 @@ const SPELL: Skill = {
   profession: "elementalist",
   attributeId: "elementalist.fire-magic",
   cost: { kind: "energy", amount: 10 },
+  overcast: 0,
   activationSeconds: 1,
   rechargeSeconds: 5,
   range: 400,
@@ -332,6 +333,7 @@ describe("canActivate, an attack skill's weapon (ADR-0029)", () => {
     id: "test.melee-attack",
     type: "attack",
     cost: undefined,
+    overcast: 0,
     activationSeconds: 0,
     range: 100,
     attack: {

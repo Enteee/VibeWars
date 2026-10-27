@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 10
   },
+  "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 20,
   "description": "Remove an enchantment from target foe. If an enchantment is removed, that foe takes 14...83...100 damage.",

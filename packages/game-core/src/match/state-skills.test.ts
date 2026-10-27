@@ -214,6 +214,16 @@ describe("Savage Shot (#794)", () => {
     });
   });
 
+  it("on a dazed foe casting a spell: the bonus, and one interrupt, not a miss too (#817)", () => {
+    const dazed = shootAt("elementalist.fireball", (match) => {
+      get(match, "foe").combatant.statuses.apply("dazed", 60, "archer");
+    });
+    // Daze interrupts as the blow lands; Savage Shot's own interrupt then
+    // finds nothing, and says nothing of it.
+    expect(kinds(dazed)).toEqual(["interrupted", "damage"]);
+    expect(damages(dazed.events)).toEqual(damages(shootAt("elementalist.fireball").events));
+  });
+
   it("blocked, it gives neither the bonus nor the interrupt", () => {
     const guarded = (match: MatchSimulation): void => {
       get(match, "foe").combatant.statuses.apply("guardian", 60, "monk");

@@ -27,6 +27,8 @@ export const normalizedSkillSchema = z.object({
   elite: z.boolean(),
   campaign: z.string().min(1),
   cost: costSchema.optional(),
+  /** Maximum energy it takes away on use, GW1's overcast (#461), once called exhaustion. `0` for none. */
+  overcast: z.number().nonnegative(),
   /** Activation/cast time in seconds. `0` for instant/not-applicable. */
   activationSeconds: z.number().nonnegative(),
   /** Recharge in seconds. `0` if the source shows none. */

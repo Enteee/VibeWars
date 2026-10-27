@@ -10,6 +10,7 @@
     "kind": "adrenaline",
     "amount": 7
   },
+  "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 0,
   "description": "If this attack hits, it deals +5...17...20 damage, and any Stance being used by your target ends. This attack cannot be blocked. All of your non-spear attack skills are disabled for 3 seconds.",

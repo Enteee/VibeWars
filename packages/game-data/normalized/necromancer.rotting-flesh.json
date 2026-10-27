@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 15
   },
+  "overcast": 0,
   "activationSeconds": 3,
   "rechargeSeconds": 3,
   "description": "Target fleshy foe becomes Disease for 10...22...25 seconds, slowly losing Health.",

@@ -301,6 +301,14 @@ body {
   background: #2f6787;
 }
 
+/* Overcast (#461): the maximum energy it took, greyed at the bar's right end. */
+.overcast-band {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 0;
+  background: #4a5464;
+}
+
 .hud-bar-label {
   position: relative;
   display: block;

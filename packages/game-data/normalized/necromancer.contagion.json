@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 5
   },
+  "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 20,
   "description": "For 60 seconds, whenever you suffer from a new Condition, all foes in the area\n                suffer from that same Condition and you sacrifice\n                10...6...5% maximum Health.",
