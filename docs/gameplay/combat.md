@@ -497,6 +497,10 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
 - **Leadership** (Paragon). Each shout or chant gives its user 1 energy
   for every ally it affected, the user included, up to 1 for every 2
   ranks: up to 6 at rank 12.
+- **Energy Storage** (Elementalist). +3 maximum energy a rank, +36 at
+  rank 12, and more above it. It adds to Rune of Attunement and gear,
+  and you start the match full at the new maximum. The build editor's
+  max energy counts it.
 
 The others have no effect yet.
 
