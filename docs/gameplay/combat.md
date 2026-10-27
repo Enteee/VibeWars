@@ -136,6 +136,16 @@ Power Drain gives you energy.
 hits 25 harder if that was a spell: one bigger number on the hit, read
 as the arrow lands. A block or a miss does neither.
 
+## Energy denial
+
+A Mesmer can take a foe's energy (#793). **Energy Burn** takes up to 8
+energy and deals 9 damage for each point it took; **Energy Tap** takes up
+to 6 and gives you 2 energy for each. Only whole points the foe has are
+taken, so a foe at 3 energy loses 3, and one at 0 loses nothing and takes
+no damage. Maximum energy is untouched, and a foe drained mid-cast keeps
+casting: energy is paid when a cast starts. The loss floats over the foe
+in blue, "−8 energy", and the Training log has a row for it.
+
 ## Knockdown
 
 A knockdown puts its target on the ground for its duration (Backbreaker:

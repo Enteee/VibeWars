@@ -52,4 +52,6 @@ export const SKILL_ICONS = {
   "monk.word-of-healing": { glyph: "heal", modifier: "up" },
   "dervish.mystic-sweep": { glyph: "sword", modifier: "up" },
   "ranger.savage-shot": { glyph: "arrow" },
+  "mesmer.energy-burn": { glyph: "flame", modifier: "down" },
+  "mesmer.energy-tap": { glyph: "energy", modifier: "self" },
 };

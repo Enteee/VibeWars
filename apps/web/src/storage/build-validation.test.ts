@@ -97,7 +97,7 @@ describe("equippableSkills", () => {
     expect(ids).not.toContain("ranger.broad-head-arrow");
   });
 
-  it("offers a Mesmer primary its four skills (#521)", () => {
+  it("offers a Mesmer primary its six skills (#521, #793)", () => {
     const ids = equippableSkills(
       stored({
         primaryProfession: "mesmer",
@@ -111,6 +111,8 @@ describe("equippableSkills", () => {
         "mesmer.power-drain",
         "mesmer.shatter-enchantment",
         "mesmer.drain-enchantment",
+        "mesmer.energy-burn",
+        "mesmer.energy-tap",
       ]),
     );
   });

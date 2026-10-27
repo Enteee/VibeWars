@@ -176,6 +176,23 @@ describe("describeSkill", () => {
     ]);
   });
 
+  it("says what is taken, and what comes per point of it (#793)", () => {
+    const ranks = new Map([
+      ["mesmer.domination-magic", 12],
+      ["mesmer.inspiration-magic", 12],
+    ]);
+    const lines = (id: string) => describeSkill(skill(id), ranks).effects.map((e) => e.text);
+    expect(lines("mesmer.energy-burn")).toEqual([
+      "Target loses 8 energy",
+      "Deals 9 damage per point lost",
+    ]);
+    expect(lines("mesmer.energy-tap")).toEqual([
+      "Target loses 6 energy",
+      "Gain 2 energy per point lost",
+    ]);
+    expect(describeSkill(skill("mesmer.energy-burn"), ranks).headline).toBe("drains 8 energy");
+  });
+
   it("says Guardian blocks half of all attacks (#534)", () => {
     expect(describeStatus("guardian")).toBe("50% chance to block attacks");
   });

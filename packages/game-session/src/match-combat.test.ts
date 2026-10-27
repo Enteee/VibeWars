@@ -741,6 +741,23 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     ]);
   });
 
+  it("carries the energy a foe lost and what the caster gained for it (#793)", () => {
+    const events = [
+      { kind: "energy-loss", targetId: "b", amount: 6 },
+      { kind: "energy-gain", targetId: "a", amount: 12 },
+    ] as const;
+    const sent = wireCombat([
+      entry({
+        cause: "skill",
+        skillId: "mesmer.energy-tap",
+        weaponId: undefined,
+        events: [...events],
+      }),
+    ]);
+    const received = parseWireCombatBatch(JSON.parse(JSON.stringify(sent)));
+    expect(received?.map(combatMessage).map((message) => message.events)).toEqual([events]);
+  });
+
   it("carries a knockdown and how long it lasts, and drops one with no duration (#544)", () => {
     const wire = wireCombat([
       entry({
