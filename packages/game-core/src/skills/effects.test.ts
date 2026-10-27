@@ -5,6 +5,7 @@ import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import {
+  applyDamage,
   applyEffect,
   applyEffects,
   applySkillEffects,
@@ -36,6 +37,61 @@ function context(
     surroundings: new Map(),
   };
 }
+
+describe("damage or life steal from a foe (#1022)", () => {
+  const hit = { kind: "damage", amount: { flat: 50 }, type: "fire", armorPenetration: 0 } as const;
+  const steal = { kind: "life-steal", amount: { flat: 30 } } as const;
+
+  /** A target under Vengeful Weapon, and what it recorded. */
+  function vengeful(team = 1): {
+    ctx: SkillContext;
+    target: Combatant;
+    offenders: () => string[];
+  } {
+    const target = makeCombatant({ id: "target", team });
+    const ctx = context(undefined, target);
+    target.statuses.apply("vengeful-weapon", 8, "rit");
+    target.statuses.drainChanges();
+    return {
+      ctx,
+      target,
+      offenders: () =>
+        target.statuses
+          .drainChanges()
+          .flatMap((change) => (change.kind === "took-damage-from-foe" ? [change.offenderId] : [])),
+    };
+  }
+
+  it("a packet from a foe records its dealer", () => {
+    const { ctx, offenders } = vengeful();
+    applyEffect(hit, ctx);
+    expect(offenders()).toEqual(["caster"]);
+  });
+
+  it("a steal from a foe records its caster", () => {
+    const { ctx, offenders } = vengeful();
+    applyEffect(steal, ctx);
+    expect(offenders()).toEqual(["caster"]);
+  });
+
+  it("a packet from an ally, or from no one, records nothing", () => {
+    const ally = vengeful(0);
+    applyEffect(hit, ally.ctx);
+    expect(ally.offenders()).toEqual([]);
+
+    const nobody = vengeful();
+    applyDamage(nobody.target, 50, "fire", false, [], undefined);
+    expect(nobody.offenders()).toEqual([]);
+  });
+
+  it("a packet Reversal of Fortune reverses records nothing", () => {
+    const { ctx, offenders } = vengeful();
+    ctx.target?.statuses.apply("reversal-of-fortune", 8, "monk");
+    ctx.target?.statuses.drainChanges();
+    applyEffect(hit, ctx);
+    expect(offenders()).toEqual([]);
+  });
+});
 
 describe("damage effect", () => {
   it("reduces target health by a flat amount", () => {

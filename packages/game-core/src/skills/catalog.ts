@@ -2205,6 +2205,114 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   },
 
   /* ---------------------------------------------------------------------- */
+  /* Ritualist weapon spells 2 (#1022)                                       */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "ritualist.weapon-of-remedy",
+    name: "Weapon of Remedy",
+    type: "weapon-spell",
+    elite: true,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 3 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 8 seconds, the next time target ally takes damage or life steal
+    // from a foe, that ally steals up to 20...68...80 health from that foe
+    // and loses 2 conditions": the 2026-04-28 revision (3 energy, 68, 2
+    // conditions); the steal and the removal are the status's.
+    effects: [{ kind: "apply-status", statusId: "weapon-of-remedy", durationSeconds: 8 }],
+  },
+  {
+    id: "ritualist.vengeful-weapon",
+    name: "Vengeful Weapon",
+    type: "weapon-spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 8 seconds, the next time target ally takes damage or life steal
+    // from a foe, that ally steals up to 15...51...60 Health from that
+    // foe": the 51 is the status's.
+    effects: [{ kind: "apply-status", statusId: "vengeful-weapon", durationSeconds: 8 }],
+  },
+  {
+    id: "ritualist.splinter-weapon",
+    name: "Splinter Weapon",
+    type: "weapon-spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 20 seconds, target ally has a Splinter Weapon. Target ally's next
+    // 1...4...5 attacks deal 5...25...30 damage to up to 4 adjacent foes":
+    // the PvP page, 726; the 4 hits and the 25 are the status's.
+    effects: [{ kind: "apply-status", statusId: "splinter-weapon", durationSeconds: 20 }],
+  },
+  {
+    id: "ritualist.mending-grip",
+    name: "Mending Grip",
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target ally is healed for 15...68...80 Health. If that ally is under
+    // the effects of a weapon Spell, that ally loses one Condition": the
+    // 2026-04-28 revision (4 s, 68). The weapon spell is read before the
+    // heal, as Wielder's Boon's.
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 68 },
+        },
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "weapon-spell" },
+        effects: [{ kind: "remove-status", category: "condition", count: 1 }],
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
   /* An effect that depends on an earlier one (#521)                         */
   /* ---------------------------------------------------------------------- */
 

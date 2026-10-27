@@ -1302,7 +1302,16 @@ describe("a caster weapon's element (#761)", () => {
   function boltOnRanger(attributeId: string): number[] {
     const events: CombatEvent[] = [];
     const caster = attacker(WEAPONS.wand, attributeId);
-    landBlow(weaponSnapshotOf(caster), ranger(), PLAIN_BLOW, false, noCrit(), RULES, events);
+    landBlow(
+      weaponSnapshotOf(caster),
+      caster,
+      ranger(),
+      PLAIN_BLOW,
+      false,
+      noCrit(),
+      RULES,
+      events,
+    );
     return damages(events);
   }
 
