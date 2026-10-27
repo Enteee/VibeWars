@@ -46,9 +46,7 @@ async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
       page.locator(".hud"),
       page.locator(".hud-scoreboard"),
       page.locator(".hud-result"),
-      page.locator(".hud-mute"),
-      page.locator(".hud-music"),
-      page.locator(".hud-leave"),
+      page.locator(".hud-controls"),
     ],
   });
 }
@@ -423,7 +421,8 @@ test("Esc cancels the attack; leaving the match is a button that asks first (#16
 test("F10, Tab, Enter on yes leaves the match without a mouse (#221)", async ({ page }) => {
   const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
-  await expect(page.locator("#status")).toHaveText("in match");
+  // The HUD, which comes with the match view and its keys (#454: no "in match").
+  await expect(page.locator(".hud-leave")).toBeVisible();
   const leave = page.locator(".hud-leave");
 
   await page.keyboard.press("F10");
@@ -440,7 +439,8 @@ test("F10, Tab, Enter on yes leaves the match without a mouse (#221)", async ({ 
 test("F10 then Esc says no, and the attack goes on (#221)", async ({ page }) => {
   const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
-  await expect(page.locator("#status")).toHaveText("in match");
+  // The HUD, which comes with the match view and its keys (#454: no "in match").
+  await expect(page.locator(".hud-leave")).toBeVisible();
   const attacking = page.locator(".hud-attacking");
   const leave = page.locator(".hud-leave");
 
@@ -743,5 +743,33 @@ test("a wheel click on a foe calls it for your team, and the other team never se
   // The called side hears nothing of it.
   await page.waitForTimeout(500);
   await expect(opponent.locator("#viewport")).toHaveAttribute("data-called", "");
+  await opponent.close();
+});
+
+test("⚙ opens Options over the match: Esc closes it, and the attack and the match go on (#454)", async ({
+  page,
+}) => {
+  // A lobby of two, so there is an attack to keep going.
+  const opponent = await page.context().newPage();
+  await startLobbyMatch(page, [opponent]);
+  // The top bar gives the match its height; the HUD has its buttons.
+  await expect(page.locator("#topbar")).toBeHidden();
+  const attacking = page.locator(".hud-attacking");
+  await page.keyboard.press(key("attack"));
+  await expect(attacking).toBeVisible();
+
+  const clock = page.locator(".hud-scoreboard");
+  const before = (await clock.textContent()) ?? "";
+  await page.locator(".hud-options").click();
+  const options = page.getByRole("dialog", { name: "Options" });
+  await expect(options).toBeVisible();
+  // Not paused: the clock runs under it.
+  await expect(clock).not.toHaveText(before);
+
+  await page.keyboard.press("Escape");
+  await expect(options).toHaveCount(0);
+  // Esc closed Options; it did not also cancel the attack.
+  await expect(attacking).toBeVisible();
+  await expect(page.locator(".hud-options")).toBeFocused();
   await opponent.close();
 });

@@ -28,12 +28,12 @@ test("#578: Esc goes back on the teams, team editor, options, music and lobby sc
   await page.keyboard.press("Escape");
   await expect(menuHeading(page)).toBeVisible();
 
-  await page.getByRole("button", { name: "Options", exact: true }).click();
+  await page.locator("#screens").getByRole("button", { name: "Options", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Options" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(menuHeading(page)).toBeVisible();
 
-  await page.getByRole("button", { name: "Music", exact: true }).click();
+  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Music" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(menuHeading(page)).toBeVisible();
@@ -42,7 +42,7 @@ test("#578: Esc goes back on the teams, team editor, options, music and lobby sc
   await expect(page.locator(".screen-lobby .screen-bar .lobby-code")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(menuHeading(page)).toBeVisible();
-  await expect(page.locator("#status")).toHaveText("ready");
+  await expect(page.locator("#status")).toBeHidden();
 
   // The main menu has no way back: Esc leaves it where it is.
   await page.keyboard.press("Escape");
