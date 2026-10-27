@@ -51,10 +51,9 @@ export const SKILL_ICONS = {
   "ranger.punishing-shot": { glyph: "arrow", modifier: "up" },
   "ranger.pin-down": { glyph: "pin", modifier: "less" },
   "ranger.hunters-shot": { glyph: "arrow", modifier: "bleed" },
-  // Placeholders until asset-designer's icons (#1008).
-  "ranger.crippling-shot": { glyph: "arrow", modifier: "clock" },
-  "ranger.debilitating-shot": { glyph: "arrow", modifier: "less" },
-  "ranger.burning-arrow": { glyph: "flame", modifier: "up" },
+  "ranger.crippling-shot": { glyph: "arrow-pierce", modifier: "down" },
+  "ranger.debilitating-shot": { glyph: "arrow", modifier: "bolt" },
+  "ranger.burning-arrow": { glyph: "arrow-flame" },
   "ranger.throw-dirt": { glyph: "mountain", modifier: "area" },
   "warrior.sprint": { glyph: "speed" },
   "assassin.dash": { glyph: "dash" },
@@ -125,8 +124,7 @@ export const SKILL_ICONS = {
   "dervish.dust-cloak": { glyph: "shard", modifier: "self" },
   "dervish.aura-of-thorns": { glyph: "shard", modifier: "bleed" },
   "ranger.savage-shot": { glyph: "arrow" },
-  // A placeholder until asset-designer's icon (#1008).
-  "ranger.concussion-shot": { glyph: "interrupt", modifier: "stun" },
+  "ranger.concussion-shot": { glyph: "arrow-burst" },
   "ranger.distracting-shot": { glyph: "interrupt", modifier: "less" },
   "mesmer.energy-burn": { glyph: "flame", modifier: "down" },
   "mesmer.energy-tap": { glyph: "energy", modifier: "self" },

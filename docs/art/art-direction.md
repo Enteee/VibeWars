@@ -614,7 +614,7 @@ it, not baked in, so one file serves every screen.
 |          |                 | in full, its silhouette as a 20% watermark                                 |
 | Glyph    | Primary effect  | One shape from the table below, `ink` with a `bg` casing, in the box 3..21 |
 | Modifier | How it bends it | Bottom right, on a dark disc, `ink`: up, down, less, area, clock, stun,    |
-|          |                 | bleed, self                                                                |
+|          |                 | bleed, self, bolt                                                          |
 
 - **Shape first.** Glyph and modifier are `ink` only; the plate's hue is
   decoration, so every icon reads with the colour taken out.
@@ -630,8 +630,9 @@ it, not baked in, so one file serves every screen.
 - **Glyph vocabulary** (grows by effect, not by skill): heal, fireball (comet),
   axe, sword, hammer, spear, arrow, volley, interrupt (burst), speed (chevrons
   right), slow (chevrons left), dash, energy (bolt), mountain (earth), cleanse
-  (drop, struck through), armor (shield), flask, flame, trident, hawk, rock. A
-  new primary effect adds a glyph; a new skill adds a row.
+  (drop, struck through), armor (shield), flask, flame, trident, hawk, rock,
+  arrow-burst, arrow-pierce, arrow-flame. A new primary effect adds a glyph; a
+  new skill adds a row.
 
 ### Skill slot states
 
