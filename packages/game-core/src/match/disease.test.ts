@@ -45,6 +45,7 @@ function melee(): MatchSimulation {
       body("necro", 0, vec2(0, 0), [ROTTING_FLESH]),
     ],
     matchRules: {
+      victory: "kill-count",
       scoreToWin: 10,
       timeLimitSeconds: 600,
       deathRule: "respawn",

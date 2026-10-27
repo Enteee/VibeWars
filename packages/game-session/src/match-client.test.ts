@@ -189,7 +189,7 @@ describe("connectMatch", () => {
     await match.step(0.2);
     const snapshot = connection.getSnapshot();
     expect(snapshot.phase).toBe("finished");
-    expect(snapshot.endReason).toBe("time");
+    expect(snapshot.endReason).toBe("morale");
   });
 
   it("counts recharges down on the match clock, with no wall time", async () => {
