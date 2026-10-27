@@ -2,6 +2,7 @@ import { Vec, type OffhandId, type ProfessionId, type Vec2 } from "@vibewars/gam
 
 import type { CallsSnapshot } from "@vibewars/game-session";
 
+import type { AttackCast } from "./attack-clock.js";
 import type { RenderablePing } from "./call-marks.js";
 import type { RenderableProjectile } from "./projectiles.js";
 import { screenPx } from "./screen-text.js";
@@ -29,6 +30,8 @@ export interface RenderableActor {
   /** The host's swing timer, which the weapon mark's pose follows (#560); `swingTotal` 0: not attacking. */
   readonly swingElapsed: number;
   readonly swingTotal: number;
+  /** The host's cast timer while an attack skill winds up (#562), which the pose follows instead. */
+  readonly attackCast: AttackCast | undefined;
   /** Picks the off-hand mark (#276); `undefined` draws none. */
   readonly offhandId: OffhandId | undefined;
   /** The primary profession, whose glyph leads the name (#281); `undefined` draws none. */

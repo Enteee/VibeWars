@@ -36,10 +36,6 @@ export interface AttributeRules {
  * character's, in pips, by profession (`BASE_ENERGY_PIPS_BY_PROFESSION`).
  */
 export interface ResourceRules {
-  /** Adrenaline earned each time one of your skills damages an enemy. */
-  readonly adrenalinePerHit: number;
-  /** Adrenaline ceiling, so it cannot be banked indefinitely between fights. */
-  readonly maxAdrenaline: number;
   /**
    * Natural health regeneration (GW1, #460): this long out of combat,
    * below full health, and a combatant regenerates +1 health pip.
@@ -138,8 +134,6 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
     playerRadius: 14,
   }),
   resources: Object.freeze({
-    adrenalinePerHit: 3,
-    maxAdrenaline: 25,
     // GW1's 5 s and +7 (14 HP/s); its wiki gives no step, so +7 arrives
     // at 17 s. Retreating to heal is a GW1 decision, and the 5 s without
     // combat already stops it mid-fight.
@@ -181,3 +175,10 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
     attributePointBudget: 200,
   }),
 });
+
+/**
+ * Units in one strike of adrenaline (GW1, #463). A skill's adrenaline cost
+ * is in strikes, a blow that lands gives one, and a skill's pool holds
+ * units. A rule, not a tunable.
+ */
+export const ADRENALINE_PER_STRIKE = 25;

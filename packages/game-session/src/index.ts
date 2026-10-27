@@ -28,6 +28,7 @@ export { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budg
 export type { DropReport } from "./intent-budget.js";
 export { sanitizeChatText, sanitizeName } from "./names.js";
 export { RECHARGE_TOLERANCE_SECONDS, rechargePredicted, rechargeSlots } from "./recharge.js";
+export { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
 export { spawnPoint } from "./spawn-points.js";
 export type { SpawnPoint } from "./spawn-points.js";
 export type { Json } from "./transport.js";

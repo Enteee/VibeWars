@@ -464,7 +464,7 @@ Step 4 builds to these budgets, and QA (step 8) checks them.
 | -------------------------------------------------------------- | ------------------------ | ---------------------- |
 | Host chunk, gzip                                               | **200 kB**               | 189.4 kB               |
 | Game chunk growth from the host client and protocol            | 2 kB gzip                | 0, with no engine code |
-| Beat editor chunk, gzip, lazy, game side                       | **140 kB**               | 134.7 kB (minimal CM6) |
+| Beat editor chunk, gzip, lazy, game side                       | **140 kB**               | 136.8 kB (#373)        |
 | Music host main thread, intensity 3, 4v4                       | **8 % of a core**        | 3.9 % at intensity 2   |
 | Game page script time, music on minus off (median of ≥ 5 runs) | **≤ 1 percentage point** | below noise            |
 | Sound palette                                                  | 3 MB                     | –                      |

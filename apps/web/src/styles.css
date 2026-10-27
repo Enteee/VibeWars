@@ -393,7 +393,7 @@ body {
   text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
 }
 
-.hud-adrenaline,
+.hud-gear,
 .hud-statuses {
   color: var(--ink-dim);
 }
@@ -2086,7 +2086,7 @@ body.has-expanded-training #screens {
   text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
 }
 
-.training-adrenaline {
+.training-attacking {
   color: var(--ink-dim);
   font-size: 0.75rem;
 }
@@ -3349,6 +3349,141 @@ body.has-expanded-training #screens {
 .jukebox-row.is-selected .selectable-row-name::before {
   content: "▶ ";
   color: var(--accent);
+}
+
+/* A track the player edited (#373) says so. */
+.jukebox-row.is-edited .selectable-row-name::after {
+  content: " · edited";
+  color: var(--ink-dim);
+}
+
+/* --- beat editor (#373) ------------------------------------------------- */
+
+/* Over everything, the HUD and its popover included. */
+.beat-editor {
+  position: fixed;
+  z-index: 50;
+  inset: 1rem;
+  width: auto;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0.9rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  gap: 0.6rem;
+}
+
+.beat-editor-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.beat-editor-bar .screen-title {
+  font-size: 1.2rem;
+}
+
+.beat-editor-edited {
+  margin-left: 0.6rem;
+  font-size: 0.8rem;
+  letter-spacing: normal;
+  color: var(--ink-dim);
+}
+
+.beat-editor-edited[hidden],
+.beat-editor-paste[hidden] {
+  display: none;
+}
+
+.beat-editor-tools {
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.beat-editor-share {
+  position: relative;
+}
+
+.beat-editor-intensity input {
+  width: 7rem;
+}
+
+.beat-editor-intensity-value {
+  margin-left: 0.4rem;
+}
+
+.beat-editor-paste {
+  min-height: 4rem;
+  padding: 0.4rem;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  color: var(--ink);
+  font-family: ui-monospace, "SFMono-Regular", "Menlo", monospace;
+}
+
+.beat-editor-status {
+  min-height: 1.2em;
+  margin: 0;
+  color: var(--ink-dim);
+}
+
+.beat-editor-code {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.beat-editor-code .cm-editor {
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 0.85rem;
+}
+
+.beat-editor-code .cm-editor.cm-focused {
+  outline: 1px solid var(--accent);
+}
+
+.beat-editor-code .cm-scroller {
+  font-family: ui-monospace, "SFMono-Regular", "Menlo", monospace;
+}
+
+.beat-editor-code .cm-content {
+  caret-color: var(--accent);
+}
+
+.beat-editor-code .cm-gutters {
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  color: var(--ink-dim);
+}
+
+.beat-editor-code .cm-activeLine,
+.beat-editor-code .cm-activeLineGutter {
+  background: rgb(89 194 255 / 8%);
+}
+
+.beat-editor-code .cm-selectionBackground,
+.beat-editor-code .cm-focused .cm-selectionBackground {
+  background: rgb(89 194 255 / 25%);
+}
+
+/* Under the line that failed; the old pattern plays on. */
+.beat-editor-error {
+  padding: 0.2rem 0.6rem;
+  background: rgb(255 123 114 / 12%);
+  border-left: 3px solid var(--damage);
+  color: var(--damage);
+  font-family: inherit;
+  white-space: pre-wrap;
+}
+
+.beat-editor-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ink-dim);
 }
 
 /* --- sound controls (#424): Options → Sound and the HUD's ♪ popover ------ */

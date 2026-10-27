@@ -31,6 +31,7 @@ import {
   type ArenaSnapshot,
   type RenderableWall,
 } from "./render/arena-snapshot.js";
+import { attackCastOf } from "./render/attack-clock.js";
 import { NoWebGlError, createArenaViewport, type ArenaViewport } from "./render/arena-viewport.js";
 import { attachFollowCamera } from "./render/follow-camera.js";
 import { showCombatFeedback } from "./render/combat-feedback.js";
@@ -133,6 +134,7 @@ export function toArenaSnapshot(
         weaponId: player.weaponId,
         swingElapsed: player.swingElapsed,
         swingTotal: player.swingTotal,
+        attackCast: attackCastOf(player.castingSkillId, player.castRemaining, player.castTotal),
         offhandId: player.offhandId,
         profession: player.primaryProfession,
         radius: ACTOR_RADIUS,
@@ -492,7 +494,15 @@ export async function startMatchView(
     // here left the scoreboard, the match clock and the victory banner
     // permanently blank: the server tracked all three and the HUD could
     // draw all three, and nothing connected them.
-    updateHud(hud, self, target, connection.skillBar, wallSegments, latestMatch);
+    updateHud(
+      hud,
+      self,
+      target,
+      connection.skillBar,
+      connection.getAdrenaline(),
+      wallSegments,
+      latestMatch,
+    );
     updateRecharges(hud, connection.skillBar, connection.getRecharges());
   };
   const offFrame = viewport?.onFrame(onFrame) ?? animationFrames(onFrame);

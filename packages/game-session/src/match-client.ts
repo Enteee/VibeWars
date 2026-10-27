@@ -5,6 +5,7 @@ import {
   parsePeerRefuse,
   parsePeerRejoinChallenge,
   parsePeerWelcome,
+  parseAdrenaline,
   parseRecharge,
   parseWireCalls,
   parseWireCombatBatch,
@@ -113,6 +114,8 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     { readonly wire: WireSnapshot; readonly players: readonly PlayerSnapshot[] } | undefined;
   let ended: WireEnded | undefined;
   let recharges: Recharges = { slots: [], at: 0 };
+  /** Your own adrenaline per slot, as last sent (#463). */
+  let adrenaline: readonly number[] = [];
   /** Your team's calls as last sent, and the match time they came at (#443). */
   let calls: { readonly wire: WireCalls; readonly at: number } | undefined;
   let lost = false;
@@ -219,6 +222,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   });
   fromHost("recharge", parseRecharge, (message) => {
     recharges = { slots: message.slots, at: elapsed() };
+  });
+  fromHost("adrenaline", parseAdrenaline, (message) => {
+    adrenaline = message.slots;
   });
   fromHost("calls", parseWireCalls, (message) => {
     calls = { wire: message, at: elapsed() };
@@ -344,6 +350,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
       },
       onCastRefused(handler) {
         refusalHandlers.push(handler);
+      },
+      getAdrenaline(): readonly number[] {
+        return bar.slots.map((_, slot) => adrenaline[slot] ?? 0);
       },
       getRecharges(): readonly SlotRecharge[] {
         // Counted down on the match clock: no wall time crosses the wire.
