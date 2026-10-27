@@ -70,7 +70,8 @@ function fromSnapshot(
   }
   const fraction = (health: number, maxHealth: number): number =>
     maxHealth > 0 ? health / maxHealth : 0;
-  const living = snapshot.players.filter((p) => !p.dead);
+  // Creatures (#1052) are neither side's strength nor its losses.
+  const living = snapshot.players.filter((p) => !p.dead && p.creature === undefined);
   const allies = living.filter((p) => p.team === self.team);
   const enemies = living.filter((p) => p.team !== self.team);
   const others = allies.filter((p) => p.sessionId !== self.sessionId);
@@ -136,7 +137,9 @@ export function attachMatchMusic(
       // may hold only some of the side: the largest count seen is the size.
       const self = next.players.find((p) => p.sessionId === next.selfSessionId);
       if (self !== undefined) {
-        const side = next.players.filter((p) => p.team === self.team).length;
+        const side = next.players.filter(
+          (p) => p.team === self.team && p.creature === undefined,
+        ).length;
         teamSize = Math.max(teamSize ?? 0, side);
       }
       const input: MusicInput = {

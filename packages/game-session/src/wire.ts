@@ -9,6 +9,8 @@ import {
   type ActiveStatus,
   type CombatEvent,
   type CombatLogEntry,
+  type Participant,
+  type ProfessionId,
   type RankHolder,
   type SkillBar,
   type StatusCategory,
@@ -423,6 +425,53 @@ function absent<T>(value: T | null): T | undefined {
   return value ?? undefined;
 }
 
+/** The fields of a body's `WirePlayer` that say who it is, not how it stands. */
+export type WireIdentity = Pick<
+  WirePlayer,
+  "name" | "team" | "primaryProfession" | "secondaryProfession" | "creature"
+>;
+
+/** What a seat says about who sits in it. */
+export interface SeatIdentity {
+  readonly name: string;
+  readonly team: 0 | 1;
+  readonly primaryProfession: ProfessionId;
+  readonly secondaryProfession: ProfessionId | undefined;
+}
+
+/**
+ * Who a body on the wire is: a seat's player, or a creature (#1052),
+ * named for its kind, on its owner's team, with no professions.
+ * `undefined` for a body with no seat that is not a seated player's
+ * creature: it is not sent.
+ */
+export function wireIdentity(
+  participant: Pick<Participant, "id" | "creature">,
+  seats: ReadonlyMap<string, SeatIdentity>,
+): WireIdentity | undefined {
+  const seat = seats.get(participant.id);
+  if (seat !== undefined) {
+    return {
+      name: seat.name,
+      team: seat.team,
+      primaryProfession: seat.primaryProfession,
+      secondaryProfession: seat.secondaryProfession ?? null,
+      creature: null,
+    };
+  }
+  const { creature } = participant;
+  const owner = creature === undefined ? undefined : seats.get(creature.ownerId);
+  return creature === undefined || owner === undefined
+    ? undefined
+    : {
+        name: creature.name,
+        team: owner.team,
+        primaryProfession: null,
+        secondaryProfession: null,
+        creature: { ownerId: creature.ownerId, kind: creature.kind },
+      };
+}
+
 /**
  * Each `PlayerSnapshot` field from its `WirePlayer` field. Typed both ways,
  * so a field added to either type without the other does not compile.
@@ -473,6 +522,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     healthPips: player.healthPips,
     energyPips: player.energyPips,
     statuses,
+    creature: player.creature ?? undefined,
   };
 }
 

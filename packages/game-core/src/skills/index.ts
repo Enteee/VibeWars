@@ -17,6 +17,7 @@ export {
   describeSkill,
   describeStatus,
   formatScalingRange,
+  chainRequirementText,
   neededWeaponText,
   overcastText,
 } from "./describe.js";
@@ -96,6 +97,7 @@ export type {
   ChainMark,
   ChainRole,
   Combatant,
+  CreatureTemplate,
   DamageEffect,
   EnergyGainEffect,
   HealEffect,
@@ -111,6 +113,7 @@ export type {
   SkillEffect,
   SkillProjectile,
   SkillType,
+  SummonEffect,
   TargetRule,
 } from "./types.js";
 
