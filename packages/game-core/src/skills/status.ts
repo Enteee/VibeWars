@@ -96,6 +96,9 @@ export type StatusId =
   // Shouts and skill effects (#524).
   | "watch-yourself"
   | "healing-signet-armor"
+  // Paragon shouts (#921).
+  | "fall-back"
+  | "stand-your-ground"
   // Chants and weapon spells (#758).
   | "anthem-of-flame"
   | "weapon-of-warding"
@@ -154,6 +157,17 @@ export interface StatusDefinition {
   readonly energyPips: number;
   /** Flat armor modifier while active. */
   readonly armorModifier: number;
+  /**
+   * Armor added while the bearer is not moving (#921, `Combatant.moving`):
+   * "Stand Your Ground!"'s +24.
+   */
+  readonly armorWhileStill: number;
+  /**
+   * Health per second healed while the bearer is moving (#921): "Fall
+   * Back!"'s. A heal, so `healingMultiplier` scales it; not pips, so
+   * outside `MAX_PIPS` and not regeneration.
+   */
+  readonly healthPerSecondWhileMoving: number;
   /**
    * Armor taken before `armorModifier`s add, never below a floor (#763):
    * Cracked Armor's −20, not below 60. `undefined`: none.
@@ -358,6 +372,8 @@ function define(
     healthPipsPerEnchantment: undefined,
     energyPips: 0,
     armorModifier: 0,
+    armorWhileStill: 0,
+    healthPerSecondWhileMoving: 0,
     armorReduction: undefined,
     moveSpeedMultiplier: 1,
     attackMissChance: 0,
@@ -565,6 +581,21 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "healing-signet-armor": define("healing-signet-armor", "Healing Signet", "skill-effect", {
     profession: "warrior",
     armorModifier: -40,
+  }),
+  // "Fall Back!" at rank 12: 13 Health per second while moving, 33%
+  // faster, ending on its bearer's hit.
+  "fall-back": define("fall-back", "Fall Back!", "shout", {
+    profession: "paragon",
+    moveSpeedMultiplier: 1.33,
+    healthPerSecondWhileMoving: 13,
+    endsWhenBearerHits: true,
+  }),
+  // "Stand Your Ground!" at rank 12: +24 armor when not moving, ending if
+  // its bearer attacks.
+  "stand-your-ground": define("stand-your-ground", "Stand Your Ground!", "shout", {
+    profession: "paragon",
+    armorWhileStill: 24,
+    endsWhenBearerAttacks: true,
   }),
 
   // "Enemies struck by your physical attacks become poisoned for
@@ -1030,6 +1061,10 @@ export interface StatusModifiers {
   /** Every status's energy pips, summed and not yet clamped. */
   readonly energyPips: number;
   readonly armorModifier: number;
+  /** Every status's, summed: armor while the bearer is not moving (#921). */
+  readonly armorWhileStill: number;
+  /** Every status's, summed: health per second while the bearer is moving (#921). */
+  readonly healthPerSecondWhileMoving: number;
   /** The largest armor reduction; `undefined`: none. */
   readonly armorReduction: ArmorReduction | undefined;
   readonly moveSpeedMultiplier: number;
@@ -1073,6 +1108,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let healthPips = 0;
   let energyPips = 0;
   let armorModifier = 0;
+  let armorWhileStill = 0;
+  let healthPerSecondWhileMoving = 0;
   let armorReduction: ArmorReduction | undefined;
   let moveSpeedMultiplier = 1;
   let attackMissChance = 0;
@@ -1098,6 +1135,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     }
     energyPips += def.energyPips;
     armorModifier += def.armorModifier;
+    armorWhileStill += def.armorWhileStill;
+    healthPerSecondWhileMoving += def.healthPerSecondWhileMoving;
     if (
       def.armorReduction !== undefined &&
       (armorReduction === undefined || def.armorReduction.amount > armorReduction.amount)
@@ -1126,6 +1165,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     healthPips,
     energyPips,
     armorModifier,
+    armorWhileStill,
+    healthPerSecondWhileMoving,
     armorReduction,
     moveSpeedMultiplier,
     attackMissChance,
