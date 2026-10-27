@@ -849,6 +849,21 @@ const skillGlyph = {
     bladeMark(inkLine("M11 6.5A3.5 3.5 0 1 0 8.5 11.5M8.5 11.5L10.5 12M8.5 11.5L9 9.5", 1.8)),
   "blade-fast": () =>
     bladeMark(inkLine("M3.5 5.5L6.5 8.5L3.5 11.5M7.5 5.5L10.5 8.5L7.5 11.5", 1.8)),
+  // A white-hot disc ringed by rays: a flash that blinds (#992).
+  flash: () =>
+    `<circle cx="12" cy="12" r="4.2" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine(
+      "M12 2.5V6M12 18V21.5M2.5 12H6M18 12H21.5M5.3 5.3L7.8 7.8M16.2 16.2L18.7 18.7M18.7 5.3L16.2 7.8M7.8 16.2L5.3 18.7",
+      2,
+    ),
+  // A cracked ground line with a ring of tremor above it (#992).
+  quake: () =>
+    inkLine("M2.5 17L7 15L10 19L13.5 14L17 18L21.5 15.5", 2.4) +
+    `<path d="M6.5 11A7 7 0 0 1 17.5 11M9.5 7.5A3.5 3.5 0 0 1 14.5 7.5" ${stroke(C.ink, 2)}/>`,
+  // A rock falling in from the upper left, its trail behind it (#992).
+  meteor: () =>
+    `<circle cx="15.5" cy="15.5" r="5.5" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M11 11L3.5 3.5M9 14.5L3 10M14.5 9L10 3", 2.4),
   axe: () =>
     inkLine("M5 20L16 7", 2.4) + inkFill("M11 3.5C17 2.5 21.5 5 21 9C20.5 13 16.5 15 14 12.5Z"),
   sword: () =>
