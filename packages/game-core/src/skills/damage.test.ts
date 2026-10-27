@@ -213,6 +213,29 @@ describe("conditional insignia armor", () => {
   });
 });
 
+describe("Mysticism's armor while enchanted (#874)", () => {
+  function dervish(rank: number): Combatant {
+    return defender(80, { attributeRanks: new Map([["dervish.mysticism", rank]]) });
+  }
+
+  it("adds +1 a rank while any enchantment is up, and nothing without one", () => {
+    const target = dervish(12);
+    expect(effectiveArmor(target, physical(10))).toBe(80);
+    // Armor of Earth's own +24, then Mysticism's +12.
+    target.statuses.apply("armor-boost", 30, "someone-else");
+    expect(effectiveArmor(target, physical(10))).toBe(116);
+    expect(mitigate(physical(100), target, RULES)).toBeLessThan(
+      mitigate(physical(100), dervish(12), RULES),
+    );
+  });
+
+  it("adds nothing at rank 0", () => {
+    const target = dervish(0);
+    target.statuses.apply("armor-boost", 30, "self");
+    expect(effectiveArmor(target, physical(10))).toBe(104);
+  });
+});
+
 /** A bare-armored combatant of `profession`: only its own typed armor. */
 function primary(profession: "warrior" | "ranger" | "monk"): Combatant {
   const resolved = resolveLoadout(

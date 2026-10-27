@@ -1,8 +1,9 @@
 import { isElementalDamage, isPhysicalDamage, type DamageType } from "../equipment/types.js";
 import type { ArmorCondition } from "../equipment/insignias.js";
+import { MYSTICISM_ATTRIBUTE, mysticismArmor } from "../primary-attributes.js";
 import type { CombatRules } from "../ruleset.js";
 import { aggregateModifiers } from "./status.js";
-import { armorReductionOf } from "./tick.js";
+import { armorReductionOf, rankOf } from "./tick.js";
 import type { Combatant } from "./types.js";
 
 /**
@@ -70,6 +71,10 @@ export function effectiveArmor(target: Combatant, packet: DamagePacket): number 
     if (conditionHolds(bonus.condition, target, packet)) {
       armor += bonus.amount;
     }
+  }
+  // Mysticism (#874): +1 a rank while enchanted, by anyone.
+  if (target.statuses.countByCategory("enchantment") > 0) {
+    armor += mysticismArmor(rankOf(target, MYSTICISM_ATTRIBUTE));
   }
 
   // Cracked Armor (#763) before status modifiers: −20, never below 60,
