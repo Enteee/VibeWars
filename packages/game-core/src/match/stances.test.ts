@@ -1,21 +1,31 @@
 import { describe, expect, it } from "vitest";
 
-import { defaultBuildEquipment, validatePlayerBuild, type PlayerBuild } from "../build.js";
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
+import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
-import { describeSkill } from "../skills/describe.js";
+import { CHAIN_MARK_SECONDS } from "../skills/chain.js";
 import { getSkill } from "../skills/catalog.js";
-import { chargeAdrenaline } from "../skills/testing.js";
+import { describeStatus } from "../skills/describe.js";
+import { applyEffect, type CombatEvent } from "../skills/effects.js";
+import { aggregateModifiers, type StatusId } from "../skills/status.js";
+import { makeCombatant } from "../skills/testing.js";
+import type { Combatant, Skill } from "../skills/types.js";
+import { resolveAttackSkill, resolveSwing, swingIntervalSeconds } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
-import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
-const SPRINT = "warrior.sprint";
-const DASH = "assassin.dash";
-const WILD_THROW = "paragon.wild-throw";
+const NOWHERE = (): boolean => false;
+
+function skill(id: string): Skill {
+  const found = getSkill(id);
+  if (found === undefined) {
+    throw new Error(`missing ${id}`);
+  }
+  return found;
+}
 
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   return {
@@ -24,175 +34,290 @@ function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   };
 }
 
-/** A warrior/assassin with Sprint in slot 0 and Dash in slot 1. */
-function runner(id: string, spawn: Vec2): ParticipantSpec {
-  return {
-    id,
+/** A rank-12 dagger assassin in Dark Escape. */
+function escaping(): Combatant {
+  const assassin = makeCombatant({
+    id: "a",
     team: 0,
-    skillBar: [SPRINT, DASH],
-    attributeRanks: new Map([["warrior.strength", 12]]),
-    equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-    maxEnergy: 1000,
-    spawn,
-    facing: 0,
-  };
+    equipment: wielding(WEAPONS.daggers, "assassin.dagger-mastery"),
+    attributeRanks: new Map([["assassin.dagger-mastery", 12]]),
+  });
+  assassin.statuses.apply("dark-escape", 13, "a");
+  return assassin;
 }
 
-/** A rank-12 paragon with a spear and Wild Throw. */
-function thrower(id: string, spawn: Vec2): ParticipantSpec {
-  return {
-    id,
-    team: 0,
-    skillBar: [WILD_THROW],
-    attributeRanks: new Map([["paragon.spear-mastery", 12]]),
-    equipment: wielding(WEAPONS.spear, "paragon.spear-mastery"),
-    spawn,
-    facing: 0,
-  };
+const victim = (id = "t"): Combatant => makeCombatant({ id, team: 1, health: 1e6, maxHealth: 1e6 });
+
+function swing(attacker: Combatant, target: Combatant, seed = 1): CombatEvent[] {
+  return resolveSwing({
+    attacker,
+    target: { combatant: target, position: vec2(40, 0) },
+    surroundings: new Map(),
+    rng: createRng(seed),
+    rules: RULES.combat,
+    exposed: NOWHERE,
+  }).events;
 }
 
-/** A sturdy foe that does nothing. */
-function dummy(id: string, spawn: Vec2): ParticipantSpec {
-  return {
-    id,
-    team: 1,
-    skillBar: [],
-    attributeRanks: new Map(),
-    equipment: unarmedResolvedEquipment(60),
-    maxHealth: 1e6,
-    spawn,
-    facing: Math.PI,
-  };
+function attackSkill(attacker: Combatant, id: string, target: Combatant): CombatEvent[] {
+  return resolveAttackSkill(
+    {
+      surroundings: new Map(),
+      skill: skill(id),
+      caster: attacker,
+      targets: [target],
+      rng: createRng(1),
+      rules: RULES.combat,
+    },
+    NOWHERE,
+  );
 }
 
-function get(match: MatchSimulation, id: string) {
-  const found = match.get(id);
-  if (found === undefined) {
-    throw new Error(`no participant ${id}`);
-  }
-  return found;
-}
+const ended = (statusId: StatusId, targetId = "a"): CombatEvent => ({
+  kind: "status-expired",
+  targetId,
+  statusId,
+});
 
-function stepFor(match: MatchSimulation, seconds: number): CombatLogEntry[] {
-  const log: CombatLogEntry[] = [];
-  for (let i = 0; i < Math.round(seconds / DT); i += 1) {
-    log.push(...match.step(DT).log);
-  }
-  return log;
-}
-
-const stances = (match: MatchSimulation, id: string) =>
-  get(match, id).combatant.statuses.active.map((status) => status.id);
-
-/** How far `id` walks east in one second from where it stands. */
-function walkedInOneSecond(match: MatchSimulation, id: string): number {
-  const from = get(match, id).position.x;
-  match.setInputDirection(id, vec2(1, 0));
-  stepFor(match, 1);
-  match.setInputDirection(id, vec2(0, 0));
-  return get(match, id).position.x - from;
-}
-
-describe("stances (#523)", () => {
-  it("Sprint is a 13 s stance that moves you 25% faster", () => {
-    const plain = new MatchSimulation({ seed: "stance", participants: [runner("a", vec2(0, 0))] });
-    const sprinting = new MatchSimulation({
-      seed: "stance",
-      participants: [runner("a", vec2(0, 0))],
+describe("Frenzy (#919)", () => {
+  it("attacks 33% faster for 8 s and takes double damage", () => {
+    const frenzy = skill("warrior.frenzy");
+    expect(frenzy.type).toBe("stance");
+    expect(frenzy.cost).toEqual({ kind: "energy", amount: 5 });
+    expect(frenzy.rechargeSeconds).toBe(4);
+    expect(frenzy.effects).toEqual([
+      { kind: "apply-status", statusId: "frenzy", durationSeconds: 8 },
+    ]);
+    const warrior = makeCombatant({
+      id: "w",
+      equipment: wielding(WEAPONS.axe, "warrior.axe-mastery"),
     });
-    expect(sprinting.requestSkill("a", 0)?.check).toEqual({ ok: true });
-    sprinting.step(DT);
-    expect(get(sprinting, "a").combatant.statuses.get("sprint")?.remainingSeconds).toBe(13);
-    plain.step(DT);
-    expect(walkedInOneSecond(sprinting, "a")).toBeCloseTo(walkedInOneSecond(plain, "a") * 1.25);
+    const plain = swingIntervalSeconds(warrior);
+    warrior.statuses.apply("frenzy", 8, "w");
+    expect(swingIntervalSeconds(warrior)).toBeCloseTo(plain * 0.67, 10);
+    expect(aggregateModifiers(warrior.statuses.active).damageTakenMultiplier).toBe(2);
   });
 
-  it("Dash over Sprint ends Sprint: only the second is up", () => {
-    const match = new MatchSimulation({ seed: "stance", participants: [runner("a", vec2(0, 0))] });
-    match.requestSkill("a", 0);
-    match.step(DT);
-    match.requestSkill("a", 1);
-    match.step(DT);
-    expect(stances(match, "a")).toEqual(["dash"]);
-    stepFor(match, 3 + DT);
-    expect(stances(match, "a")).toEqual([]);
-  });
-
-  it("Wild Throw ends the target's stance and leaves its enchantments", () => {
-    const match = new MatchSimulation({
-      seed: "stance",
-      participants: [thrower("a", vec2(0, 0)), dummy("d", vec2(300, 0))],
-    });
-    const foe = get(match, "d").combatant;
-    foe.statuses.apply("sprint", 100, "d");
-    foe.statuses.apply("regeneration", 100, "d");
-    chargeAdrenaline(get(match, "a").combatant);
-    match.setTarget("a", "d");
-    expect(match.requestSkill("a", 0)?.check).toEqual({ ok: true });
-    const thrown = stepFor(match, 2).filter((entry) => entry.skillId === WILD_THROW);
-    expect(thrown.flatMap((entry) => entry.events.map((event) => event.kind))).toContain("damage");
-    expect(stances(match, "d")).toEqual(["regeneration"]);
-  });
-
-  it("Wild Throw cannot be blocked: it lands through Guardian every time", () => {
-    for (let seed = 0; seed < 10; seed += 1) {
-      const match = new MatchSimulation({
-        seed: `wild-${String(seed)}`,
-        participants: [thrower("a", vec2(0, 0)), dummy("d", vec2(300, 0))],
-      });
-      get(match, "d").combatant.statuses.apply("guardian", 100, "d");
-      chargeAdrenaline(get(match, "a").combatant);
-      match.setTarget("a", "d");
-      match.requestSkill("a", 0);
-      const kinds = stepFor(match, 2)
-        .filter((entry) => entry.skillId === WILD_THROW)
-        .flatMap((entry) => entry.events.map((event) => event.kind));
-      expect(kinds).toContain("damage");
-      expect(kinds).not.toContain("attack-blocked");
-    }
-  });
-
-  it("Wild Throw on a foe with no stance removes nothing", () => {
-    const match = new MatchSimulation({
-      seed: "stance",
-      participants: [thrower("a", vec2(0, 0)), dummy("d", vec2(300, 0))],
-    });
-    chargeAdrenaline(get(match, "a").combatant);
-    match.setTarget("a", "d");
-    match.requestSkill("a", 0);
-    const thrown = stepFor(match, 2).filter((entry) => entry.skillId === WILD_THROW);
-    expect(thrown.flatMap((entry) => entry.events.map((event) => event.kind))).toEqual(["damage"]);
-  });
-
-  it("describes a stance as one, and Wild Throw's removal", () => {
-    const text = (id: string) => {
-      const skill = getSkill(id);
-      return skill === undefined ? [] : describeSkill(skill).effects.map((effect) => effect.text);
-    };
-    const sprint = getSkill(SPRINT);
-    expect(sprint === undefined ? undefined : describeSkill(sprint).typeText).toBe("Stance.");
-    expect(text(SPRINT)).toEqual(["For 13s, moves at 125% speed"]);
-    expect(text(DASH)).toEqual(["For 3s, moves at 150% speed"]);
-    expect(text(WILD_THROW)).toEqual(["+5 damage", "Ends the target's stance"]);
+  it("is replaced by Dark Escape, a stance like it: half damage, not double times half", () => {
+    const both = makeCombatant({ id: "x" });
+    both.statuses.apply("frenzy", 8, "x");
+    both.statuses.apply("dark-escape", 13, "x");
+    expect(both.statuses.active.map(({ id }) => id)).toEqual(["dark-escape"]);
+    expect(aggregateModifiers(both.statuses.active).damageTakenMultiplier).toBe(0.5);
   });
 });
 
-describe("stance builds (#523)", () => {
-  const build = (
-    primaryProfession: PlayerBuild["primaryProfession"],
-    skill: string,
-  ): PlayerBuild => ({
-    name: "Stancer",
-    primaryProfession,
-    secondaryProfession: undefined,
-    attributes: [],
-    skillBar: [skill, null, null, null, null, null, null, null],
-    equipment: defaultBuildEquipment(primaryProfession),
+describe("Dark Escape (#919)", () => {
+  it("moves 25% faster for 13 s and takes half damage", () => {
+    const darkEscape = skill("assassin.dark-escape");
+    expect(darkEscape.attributeId).toBe("assassin.shadow-arts");
+    expect(darkEscape.rechargeSeconds).toBe(30);
+    expect(darkEscape.effects).toEqual([
+      { kind: "apply-status", statusId: "dark-escape", durationSeconds: 13 },
+    ]);
+    const modifiers = aggregateModifiers([{ id: "dark-escape" }]);
+    expect(modifiers.moveSpeedMultiplier).toBe(1.25);
+    expect(modifiers.damageTakenMultiplier).toBe(0.5);
   });
 
-  it("a paragon with Wild Throw, an assassin with Dash and a warrior with Sprint are legal", () => {
-    expect(validatePlayerBuild(build("paragon", WILD_THROW), RULES.attributes)).toEqual([]);
-    expect(validatePlayerBuild(build("assassin", DASH), RULES.attributes)).toEqual([]);
-    expect(validatePlayerBuild(build("warrior", SPRINT), RULES.attributes)).toEqual([]);
+  it("ends when a swing hits", () => {
+    const assassin = escaping();
+    const events = swing(assassin, victim());
+    expect(events.some((event) => event.kind === "damage")).toBe(true);
+    expect(events).toContainEqual(ended("dark-escape"));
+    expect(assassin.statuses.has("dark-escape")).toBe(false);
+  });
+
+  it("survives a blind miss", () => {
+    const assassin = escaping();
+    assassin.statuses.apply("blind", 10, "foe");
+    let missed = 0;
+    for (let seed = 0; seed < 20 && missed === 0; seed += 1) {
+      const events = swing(assassin, victim(), seed);
+      if (events.every((event) => event.kind === "attack-missed")) {
+        missed += 1;
+        expect(assassin.statuses.has("dark-escape")).toBe(true);
+      }
+    }
+    expect(missed).toBe(1);
+  });
+
+  it("survives a block", () => {
+    let blocked = 0;
+    for (let seed = 0; seed < 20 && blocked === 0; seed += 1) {
+      const assassin = escaping();
+      const target = victim();
+      target.statuses.apply("guardian", 10, "monk");
+      const events = swing(assassin, target, seed);
+      if (events.some((event) => event.kind === "attack-blocked")) {
+        blocked += 1;
+        expect(events.some((event) => event.kind === "damage")).toBe(false);
+        expect(assassin.statuses.has("dark-escape")).toBe(true);
+      }
+    }
+    expect(blocked).toBe(1);
+  });
+
+  it("ends when an attack skill hits", () => {
+    const assassin = escaping();
+    const events = attackSkill(assassin, "assassin.jagged-strike", victim());
+    expect(events).toContainEqual(ended("dark-escape"));
+    expect(assassin.statuses.has("dark-escape")).toBe(false);
+  });
+
+  it("ends at a dual attack's first blow that hits, before the second", () => {
+    const assassin = escaping();
+    const target = victim();
+    assassin.chainMarks.set("t", { role: "off-hand", remainingSeconds: CHAIN_MARK_SECONDS });
+    const events = attackSkill(assassin, "assassin.twisting-fangs", target);
+    const blows = events.flatMap((event, index) =>
+      event.kind === "damage" && event.targetId === "t" ? [index] : [],
+    );
+    const end = events.findIndex(
+      (event) => event.kind === "status-expired" && event.statusId === "dark-escape",
+    );
+    expect(blows).toHaveLength(2);
+    expect(end).toBeGreaterThan(blows[0] ?? Infinity);
+    expect(end).toBeLessThan(blows[1] ?? -Infinity);
+  });
+
+  it("ends when an arrow hits, not when it is released", () => {
+    const archer: ParticipantSpec = {
+      id: "a",
+      team: 0,
+      skillBar: [],
+      attributeRanks: new Map([["ranger.marksmanship", 12]]),
+      equipment: wielding(WEAPONS.longbow, "ranger.marksmanship"),
+      maxHealth: 1e6,
+      spawn: vec2(0, 0),
+      facing: 0,
+    };
+    const target = (spawn: Vec2): ParticipantSpec => ({
+      ...archer,
+      id: "t",
+      team: 1,
+      attributeRanks: new Map(),
+      equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+      spawn,
+    });
+    const match = new MatchSimulation({
+      seed: "dark-escape",
+      participants: [archer, target(vec2(600, 0))],
+    });
+    const shooter = match.get("a")?.combatant;
+    shooter?.statuses.apply("dark-escape", 13, "a");
+    match.requestAttack("a", "t");
+    for (let i = 0; i < 5 * RULES.tickRateHz && match.projectiles.length === 0; i += 1) {
+      match.step(DT);
+    }
+    expect(match.projectiles).toHaveLength(1);
+    expect(shooter?.statuses.has("dark-escape")).toBe(true);
+    const log: CombatEvent[] = [];
+    for (let i = 0; i < 5 * RULES.tickRateHz && shooter?.statuses.has("dark-escape"); i += 1) {
+      log.push(...match.step(DT).log.flatMap((entry) => entry.events));
+    }
+    expect(log.some((event) => event.kind === "damage" && event.targetId === "t")).toBe(true);
+    expect(log).toContainEqual(ended("dark-escape"));
+  });
+});
+
+describe("Natural Stride (#919)", () => {
+  /** A ranger in Natural Stride, and what applying `effect` to it said. */
+  function striding(): Combatant {
+    const ranger = makeCombatant({ id: "r" });
+    ranger.statuses.apply("natural-stride", 7, "r");
+    return ranger;
+  }
+
+  function land(target: Combatant, statusId: StatusId): CombatEvent[] {
+    return applyEffect(
+      { kind: "apply-status", statusId, durationSeconds: 10 },
+      {
+        caster: makeCombatant({ id: "c", team: 1 }),
+        target,
+        rng: createRng(1),
+        rules: RULES.combat,
+        surroundings: new Map(),
+      },
+    );
+  }
+
+  it("runs 33% faster for 7 s and blocks about half of 1,000 swings", () => {
+    const naturalStride = skill("ranger.natural-stride");
+    expect(naturalStride.attributeId).toBe("ranger.wilderness-survival");
+    expect(naturalStride.rechargeSeconds).toBe(12);
+    expect(naturalStride.effects).toEqual([
+      { kind: "apply-status", statusId: "natural-stride", durationSeconds: 7 },
+    ]);
+    expect(aggregateModifiers([{ id: "natural-stride" }]).moveSpeedMultiplier).toBe(1.33);
+    const ranger = makeCombatant({ id: "r", health: 1e6, maxHealth: 1e6 });
+    ranger.statuses.apply("natural-stride", 1e6, "r");
+    const sword = makeCombatant({
+      id: "w",
+      equipment: wielding(WEAPONS.sword, "warrior.swordsmanship"),
+    });
+    const rng = createRng(919);
+    let blocked = 0;
+    for (let i = 0; i < 1000; i += 1) {
+      const events = resolveSwing({
+        attacker: sword,
+        target: { combatant: ranger, position: vec2(40, 0) },
+        surroundings: new Map(),
+        rng,
+        rules: RULES.combat,
+        exposed: NOWHERE,
+      }).events;
+      blocked += events.some((event) => event.kind === "attack-blocked") ? 1 : 0;
+    }
+    expect(blocked / 1000).toBeGreaterThan(0.45);
+    expect(blocked / 1000).toBeLessThan(0.55);
+  });
+
+  it("ends when a hex lands, and says so", () => {
+    const ranger = striding();
+    expect(land(ranger, "faintheartedness")).toContainEqual(ended("natural-stride", "r"));
+    expect(ranger.statuses.has("natural-stride")).toBe(false);
+  });
+
+  it("ends when an enchantment lands, a maintained one too", () => {
+    const enchanted = striding();
+    land(enchanted, "regeneration");
+    expect(enchanted.statuses.has("natural-stride")).toBe(false);
+
+    const maintained = striding();
+    const events = applyEffect(
+      { kind: "maintain-status", statusId: "mending" },
+      {
+        caster: makeCombatant({ id: "m", team: 0 }),
+        target: maintained,
+        rng: createRng(1),
+        rules: RULES.combat,
+        surroundings: new Map(),
+      },
+    );
+    expect(events).toContainEqual(ended("natural-stride", "r"));
+    expect(maintained.statuses.has("natural-stride")).toBe(false);
+  });
+
+  it("survives a condition, and a refresh of a hex it already bore", () => {
+    const ranger = makeCombatant({ id: "r" });
+    ranger.statuses.apply("faintheartedness", 10, "c");
+    ranger.statuses.apply("natural-stride", 7, "r");
+    expect(land(ranger, "bleeding")).not.toContainEqual(ended("natural-stride", "r"));
+    land(ranger, "faintheartedness");
+    expect(ranger.statuses.has("natural-stride")).toBe(true);
+  });
+});
+
+describe("the three stances' tooltips (#919)", () => {
+  it("say what each costs you", () => {
+    expect(describeStatus("frenzy")).toBe("attacks 33% faster, takes double damage");
+    expect(describeStatus("dark-escape")).toBe(
+      "moves at 125% speed, takes half damage, ends if the bearer hits with an attack",
+    );
+    expect(describeStatus("natural-stride")).toBe(
+      "moves at 133% speed, 50% chance to block attacks, " +
+        "ends if the bearer becomes hexed or enchanted",
+    );
   });
 });

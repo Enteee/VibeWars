@@ -404,6 +404,16 @@ leaves it alone, and stance removal leaves your enchantments. Sprint
 (Warrior, 13 s) moves you 25% faster; Dash (Assassin, 3 s) 50% faster.
 A stance and crippled multiply, as every movement change does.
 
+Three stances trade something for speed (#919). Frenzy (Warrior, 8 s,
+4 s recharge): you attack 33% faster but take double damage. Dark Escape
+(Assassin, Shadow Arts, 13 s): you move 25% faster and take half damage,
+until one of your attacks hits; a miss or a block keeps it. Natural
+Stride (Ranger, Wilderness Survival, 7 s): you run 33% faster and block
+half of incoming attacks, until a new hex or enchantment lands on you; a
+refreshed one does not end it. Damage taken is multiplied after armor
+and before a Rune of Absorption, on every damage packet; health loss,
+sacrifice and degeneration are not damage packets and are left alone.
+
 Wild Throw (Paragon spear attack, 7 adrenaline) deals +17 damage, cannot
 be blocked, and ends the stance of the foe it hits. It does not yet
 disable your other attack skills for 3 s: that waits for disabled skills

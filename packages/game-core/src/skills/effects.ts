@@ -376,6 +376,26 @@ export function applyStatus(
 }
 
 /**
+ * What `statusId` newly on `target` would end (#919): its statuses that
+ * end when their bearer gains that category, as Natural Stride on a hex.
+ */
+function endedByGaining(target: Combatant, statusId: StatusId): StatusId[] {
+  const { category } = getStatusDefinition(statusId);
+  return target.statuses.active
+    .filter(({ id }) => getStatusDefinition(id).endsWhenBearerGains.some((c) => c === category))
+    .map(({ id }) => id);
+}
+
+/** Those of `ending` that `target` no longer bears, reported as ended. */
+function reportEnded(target: Combatant, ending: readonly StatusId[], events: CombatEvent[]): void {
+  for (const statusId of ending) {
+    if (!target.statuses.has(statusId)) {
+      events.push({ kind: "status-expired", targetId: target.id, statusId });
+    }
+  }
+}
+
+/**
  * The skill `target` is activating that `effect` may not interrupt (#521,
  * #796), or `null`: with no `only`, any cast is fair game; with `only:
  * "spell-or-chant"`, anything but a spell or a chant is refused.
@@ -475,6 +495,7 @@ export function applyEffect(
         return events;
       }
       const durationSeconds = scaledStatusDuration(target, effect.statusId, effect.durationSeconds);
+      const ending = endedByGaining(target, effect.statusId);
       const loss = applyStatus(target, effect.statusId, durationSeconds, caster.id);
       events.push({
         kind: "status-applied",
@@ -482,6 +503,7 @@ export function applyEffect(
         statusId: effect.statusId,
         durationSeconds,
       });
+      reportEnded(target, ending, events);
       if (loss > 0) {
         events.push({
           kind: "health-lost",
@@ -502,6 +524,7 @@ export function applyEffect(
         return events;
       }
       // The caster's newest; the simulation drops what it cannot pay for.
+      const ending = endedByGaining(target, effect.statusId);
       target.statuses.maintain(effect.statusId, caster.id, caster.nextMaintainSeq);
       caster.nextMaintainSeq += 1;
       events.push({
@@ -510,6 +533,7 @@ export function applyEffect(
         statusId: effect.statusId,
         durationSeconds: null,
       });
+      reportEnded(target, ending, events);
       return events;
     }
 
