@@ -64,16 +64,29 @@ with nobody negotiating.**
    `pubkey` is X with a valid signature, so nobody can republish an
    honest id with another `enteredAt` or party size. Throwaway keys
    also mean tickets do not link a player across visits.
-6. **Admission by secret.** The room's name can be worked out by anyone
-   watching the relays, so a joiner shows its secret, and the host admits
-   a peer only if `ticketIdOf(secret)` is one of the group's ticket ids,
-   once per ticket. `ticketIdOf` is passed into game-session as a
-   function, so game-session takes no secp256k1 dependency. Showing the
-   key then is harmless: the ticket is no longer published, and a host
-   could flood fake tickets anyway. This is the shape `rejoin-proof.ts`
-   already uses, and it needs no challenge round trip. A revealed key is
-   burnt: a client that requeues after a fall-through makes a fresh key,
-   so a fresh ticket id, and keeps its original `enteredAt`.
+6. **Admission by signature, both ways; the key never leaves the
+   client.** The room's name can be worked out by anyone watching the
+   relays, so a peer there proves which ticket it holds. The joiner's
+   join carries its `ticketId` and a BIP-340 Schnorr signature by its
+   ticket key over
+   `sha256("vibewars-admit" ‖ groupId ‖ hostTicketId ‖ joinerPeerId)`,
+   where `joinerPeerId` is its transport peer id as the
+   host sees it. The host admits it only if the ticket is in the group
+   and unused, and the signature verifies with the host's own
+   `hostTicketId` and the sender's actual peer id, so a relayed or
+   replayed signature fails. The host proves itself the same way: its
+   welcome carries a signature by the host ticket's key over
+   `sha256("vibewars-host" ‖ groupId ‖ hostTicketId ‖ joinerPeerId)`, and
+   a joiner takes lobby state only from a peer whose welcome verifies
+   against the planned host; otherwise it waits out
+   `FORMATION_TIMEOUT_MS`. Both sides already know every input, so there
+   is no round trip. Revealing the secret instead would let anyone in the
+   room pose as the host, collect the joiners' secrets and take their
+   seats. game-session takes `verifyTicketSig` and `signWithTicket` as
+   functions, so it has no secp256k1 dependency. Like
+   `rejoin-proof.ts`, a proof names the peer that sends it. A client
+   that requeues after a fall-through still makes a fresh key, so a
+   fresh ticket id, and keeps its original `enteredAt`.
 7. **Signing with `@noble/secp256k1`**, which Trystero already brings into
    the lockfile at 3.2.0. It becomes a direct dependency at that version.
 8. **No proof-of-work at first.** A fake ticket costs its sender nothing.

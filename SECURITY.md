@@ -78,6 +78,13 @@ channels, as often as they like.
   so a sybil flood can stall the queue, every group falling through. A
   ticket id is its signing key, so nobody can rewrite an honest ticket.
   NIP-13 proof-of-work is the lever if it happens.
+- **A Random Arena peer id is self-asserted.** Admission and the host's
+  welcome are Schnorr signatures by ticket keys that name the group, the
+  host's ticket and the joiner's transport peer id, so an outsider in the
+  public room can neither pose as the host nor replay a joiner's proof
+  from its own peer id. The peer id itself is whatever the transport
+  reports, which a peer chooses; a peer that also claims a joiner's id
+  could at most race that joiner for its one seat.
 - **Knowing the code means being invited.** Anyone with the lobby code can
   join and see the lobby. A code is shared like a party invite; it is not a
   credential.
