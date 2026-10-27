@@ -18,6 +18,7 @@ import {
   formatLine,
   oneLine,
   parseEvent,
+  rateLimitInfoOf,
   runFailed,
   sessionIdOf,
   usageLimitOf,
@@ -281,6 +282,81 @@ const REJECTED = {
 };
 /** @param {string} text @returns {Record<string, unknown>} */
 const errorResult = (text) => ({ ...RESULT, subtype: "success", is_error: true, result: text });
+
+describe("rateLimitInfoOf (#452)", () => {
+  const FULL = {
+    type: "rate_limit_event",
+    rate_limit_info: {
+      status: "allowed_warning",
+      rateLimitType: "seven_day",
+      resetsAt: 1_761_900_000,
+      utilization: 0.74,
+      unifiedWindows: {
+        five_hour: { utilization: 0.38, resetsAt: 1_761_400_800 },
+        seven_day: { utilization: 0.74, resetsAt: 1_761_900_000 },
+      },
+    },
+    session_id: SESSION_ID,
+  };
+
+  it("takes both windows from unifiedWindows", () => {
+    expect(rateLimitInfoOf(FULL)).toEqual({
+      status: "allowed_warning",
+      rateLimitType: "seven_day",
+      resetsAt: 1_761_900_000,
+      utilization: 0.74,
+      fiveHour: { utilization: 0.38, resetsAt: 1_761_400_800 },
+      sevenDay: { utilization: 0.74, resetsAt: 1_761_900_000 },
+    });
+  });
+
+  it("without unifiedWindows, has only the window rateLimitType names", () => {
+    const event = {
+      type: "rate_limit_event",
+      rate_limit_info: {
+        status: "allowed",
+        rateLimitType: "five_hour",
+        resetsAt: 1_761_400_800,
+        utilization: 0.5,
+      },
+    };
+    expect(rateLimitInfoOf(event)).toEqual({
+      status: "allowed",
+      rateLimitType: "five_hour",
+      resetsAt: 1_761_400_800,
+      utilization: 0.5,
+      fiveHour: { utilization: 0.5, resetsAt: 1_761_400_800 },
+      sevenDay: null,
+    });
+  });
+
+  it("copies nothing of the wrong type, and nothing it does not know", () => {
+    const event = {
+      type: "rate_limit_event",
+      rate_limit_info: {
+        status: "\u001b[2J",
+        rateLimitType: "forever",
+        resetsAt: "soon",
+        utilization: Number.NaN,
+        unifiedWindows: { five_hour: { utilization: "38%", resetsAt: 1 }, seven_day: [] },
+        secret: "sk-ant-…",
+      },
+    };
+    expect(rateLimitInfoOf(event)).toEqual({
+      status: null,
+      rateLimitType: null,
+      resetsAt: null,
+      utilization: null,
+      fiveHour: null,
+      sevenDay: null,
+    });
+  });
+
+  it("is null for any other event", () => {
+    expect(rateLimitInfoOf(errorResult("Claude AI usage limit reached|1761400800"))).toBeNull();
+    expect(rateLimitInfoOf(null)).toBeNull();
+  });
+});
 
 describe("usageLimitOf", () => {
   it("takes the reset of a rejected rate_limit_event", () => {

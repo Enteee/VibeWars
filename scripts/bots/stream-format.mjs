@@ -357,6 +357,99 @@ export function usageLimitOf(event) {
   return null;
 }
 
+/** What a `rate_limit_event`'s `status` may be (#452). */
+export const LIMIT_STATUSES = /** @type {const} */ (["allowed", "allowed_warning", "rejected"]);
+
+/** The windows a `rate_limit_event`'s `rateLimitType` may name (#452). */
+export const LIMIT_TYPES = /** @type {const} */ ([
+  "five_hour",
+  "seven_day",
+  "seven_day_opus",
+  "seven_day_sonnet",
+  "overage",
+]);
+
+/**
+ * How much of one usage window is used: `utilization` a fraction, which
+ * may exceed 1, and `resetsAt` in unix seconds.
+ *
+ * @typedef {{ utilization: number, resetsAt: number }} LimitWindow
+ */
+
+/**
+ * What a `rate_limit_event` says of Claude's usage (#452), every field
+ * copied only when it has the expected type, and `null` otherwise.
+ *
+ * @typedef {object} RateLimitInfo
+ * @property {(typeof LIMIT_STATUSES)[number] | null} status
+ * @property {(typeof LIMIT_TYPES)[number] | null} rateLimitType the window
+ *   that limits now
+ * @property {number | null} resetsAt that window's reset, unix seconds
+ * @property {number | null} utilization that window's fraction used
+ * @property {LimitWindow | null} fiveHour
+ * @property {LimitWindow | null} sevenDay
+ */
+
+/**
+ * @param {unknown} value
+ * @returns {number | null}
+ */
+function finite(value) {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/**
+ * @template {string} T
+ * @param {readonly T[]} known
+ * @param {unknown} value
+ * @returns {T | null}
+ */
+export function oneOf(known, value) {
+  return known.find((option) => option === value) ?? null;
+}
+
+/**
+ * @param {unknown} value
+ * @returns {LimitWindow | null}
+ */
+function limitWindow(value) {
+  const fields = record(value);
+  const utilization = finite(fields?.utilization);
+  const resetsAt = finite(fields?.resetsAt);
+  return utilization === null || resetsAt === null ? null : { utilization, resetsAt };
+}
+
+/**
+ * How much of Claude's usage is left, as `/usage` and the statusline say
+ * it (#452). `unifiedWindows` holds both windows; an event without one
+ * gives only the window `rateLimitType` names, from the top-level fields.
+ *
+ * @param {Record<string, unknown> | null} event
+ * @returns {RateLimitInfo | null} `null` when the event is not a `rate_limit_event`
+ */
+export function rateLimitInfoOf(event) {
+  if (event?.type !== "rate_limit_event") {
+    return null;
+  }
+  const info = record(event.rate_limit_info);
+  const rateLimitType = oneOf(LIMIT_TYPES, info?.rateLimitType);
+  const resetsAt = finite(info?.resetsAt);
+  const utilization = finite(info?.utilization);
+  const unified = record(info?.unifiedWindows);
+  /** @param {"five_hour" | "seven_day"} type */
+  const windowOf = (type) =>
+    limitWindow(unified?.[type]) ??
+    (rateLimitType === type ? limitWindow({ utilization, resetsAt }) : null);
+  return {
+    status: oneOf(LIMIT_STATUSES, info?.status),
+    rateLimitType,
+    resetsAt,
+    utilization,
+    fiveHour: windowOf("five_hour"),
+    sevenDay: windowOf("seven_day"),
+  };
+}
+
 /**
  * @param {Record<string, unknown>} event an `assistant` or `system` event
  * @returns {boolean} does it carry an API error that says 429 or `rate_limit_error`?
