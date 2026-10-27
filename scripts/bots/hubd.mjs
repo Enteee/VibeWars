@@ -1669,7 +1669,7 @@ function serveLoad(cfg) {
     live,
     stale,
     peek,
-    usage: readUsage(usage, now)?.summary ?? null,
+    usage: readUsage(usage, now, null)?.summary ?? null,
   });
   return { code: 0, stdout: `${lines.join("\n")}\n`, stderr: "" };
 }

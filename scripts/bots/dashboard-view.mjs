@@ -476,8 +476,109 @@ function hubSection({ hub }, width) {
  * @property {import("./claude-usage.mjs").UsageSummary} summary
  * @property {ReadonlySet<string>} capped roles whose counts are short: their
  *   logs hold more replies than are kept
+ * @property {import("./claude-usage.mjs").Burn} burn the last hour (#452)
+ * @property {import("./claude-usage.mjs").LimitReading | null} limit the
+ *   newest `rate_limit_event` any agent saw (#452), null before one
  * @property {number} now epoch milliseconds
  */
+
+/** Past this, a usage reading says how old it is (#452). */
+const LIMIT_STALE_MS = 10 * 60 * 1000;
+
+/** The cells of a usage bar (#452). */
+const BAR_CELLS = 20;
+
+/**
+ * `[####····]`: `utilization` of `width` cells filled, at most all of them.
+ *
+ * @param {number} utilization the fraction used, which may exceed 1
+ * @param {number} width
+ * @returns {string}
+ */
+export function usageBar(utilization, width) {
+  const filled = Math.round(width * Math.min(Math.max(utilization, 0), 1));
+  return `[${"#".repeat(filled)}${"·".repeat(width - filled)}]`;
+}
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/**
+ * `hh:mm` if `at` is today, else `Ddd hh:mm`.
+ *
+ * @param {number} at epoch milliseconds
+ * @param {number} now epoch milliseconds
+ * @returns {string}
+ */
+function dayClock(at, now) {
+  const day = new Date(at);
+  return day.toDateString() === new Date(now).toDateString()
+    ? hhmm(at)
+    : `${WEEKDAYS[day.getDay()] ?? ""} ${hhmm(at)}`;
+}
+
+/**
+ * The 5-hour and 7-day windows as bars (#452): the percentages `/usage`
+ * shows, from the newest `rate_limit_event`. The plan publishes no
+ * limit in tokens, so what is left is a share of each window.
+ *
+ * @param {import("./claude-usage.mjs").LimitReading | null} limit
+ * @param {number} now
+ * @param {number} width
+ * @returns {string[]}
+ */
+function limitLines(limit, now, width) {
+  if (limit === null) {
+    return [cut("CLAUDE usage  unknown (no rate_limit_event seen yet)", width)];
+  }
+  const stale = now - limit.at > LIMIT_STALE_MS ? ` (as of ${hhmm(limit.at)})` : "";
+  /** @type {[string, import("./stream-format.mjs").LimitWindow | null, string][]} */
+  const windows = [
+    ["5h", limit.fiveHour, "five_hour"],
+    ["7d", limit.sevenDay, "seven_day"],
+  ];
+  return windows.map(([label, window, type], i) => {
+    const head = `${(i === 0 ? "CLAUDE usage" : "").padEnd(14)}${label}`;
+    if (window === null) {
+      return cut(`${head}  unknown`, width);
+    }
+    const resetAt = window.resetsAt * 1000;
+    if (resetAt <= now) {
+      return cut(`${head}  reset since ${hhmm(resetAt)}, no newer reading`, width);
+    }
+    const used = Math.round(window.utilization * 100);
+    const left = Math.max(0, 100 - used);
+    const rejected = limit.status === "rejected" && limit.rateLimitType === type;
+    const line = cut(
+      `${head} ${usageBar(window.utilization, BAR_CELLS)}  ${String(used)} % used, ${String(left)} % left, resets ${dayClock(resetAt, now)}${stale}${rejected ? "  LIMIT REACHED" : ""}`,
+      width,
+    );
+    if (rejected || window.utilization >= 0.9) {
+      return paint(line, "31");
+    }
+    return window.utilization >= 0.75 ? paint(line, "33") : line;
+  });
+}
+
+/**
+ * The last hour's output, shaped like hubd's GraphQL line (#452).
+ *
+ * @param {import("./claude-usage.mjs").Burn} burn
+ * @param {number} width
+ * @returns {string}
+ */
+function burnLine(burn, width) {
+  if (burn.replies === 0) {
+    return cut("  burn    nothing in the last hour", width);
+  }
+  // Role names are printed into the operator's tmux: see `visible`.
+  const top = burn.top
+    .map(({ role, output }) => `${visible(role)} ~${formatCount(output)}`)
+    .join(", ");
+  return cut(
+    `  burn    ~${formatCount(burn.output)} out/h, ${formatCount(burn.replies)} replies  top: ${top}`,
+    width,
+  );
+}
 
 /**
  * One row of the CLAUDE table: a name, then four counts and a model.
@@ -493,9 +594,9 @@ function usageRow(name, cells, model) {
 }
 
 /**
- * Tokens per role over the plan's 5-hour window (#50), so a role stuck in
- * a loop shows before the limit hits everyone. No prices and no quota:
- * neither is in the logs.
+ * How much of Claude's usage is left (#452), then tokens per role over the
+ * plan's 5-hour window (#50), most output first, so a role stuck in a loop
+ * shows before the limit hits everyone. No prices: none are in the logs.
  *
  * @param {CompanyFacts} facts
  * @param {number} width
@@ -505,7 +606,7 @@ function claudeSection({ roles, claude }, width) {
   if (claude === null) {
     return [cut("CLAUDE usage unknown (no agent logs yet)", width)];
   }
-  const { summary, capped, now } = claude;
+  const { summary, capped, burn, limit, now } = claude;
   let top = "";
   let most = 0;
   for (const [role, usage] of summary.roles) {
@@ -517,10 +618,16 @@ function claudeSection({ roles, claude }, width) {
   /** @param {import("./claude-usage.mjs").RoleUsage} usage */
   const counts = (usage) =>
     [usage.replies, usage.output, usage.input, usage.cacheRead].map(formatCount);
+  // Most output first, ties and quiet roles in roster order: sort is stable.
+  const ranked = [...roles].sort(
+    (a, b) => (summary.roles.get(b)?.output ?? -1) - (summary.roles.get(a)?.output ?? -1),
+  );
   return [
+    ...limitLines(limit, now, width),
+    burnLine(burn, width),
     paint(cut(`CLAUDE tokens, last 5h, as of ${hhmm(now)}`, width), "1"),
     cut(usageRow("role", ["replies", "output", "input", "cache rd"], "model"), width),
-    ...roles.map((role) => {
+    ...ranked.map((role) => {
       const usage = summary.roles.get(role);
       if (usage === undefined) {
         return cut(usageRow(role, ["—"], ""), width);
