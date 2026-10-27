@@ -13,6 +13,8 @@
   --recharge-shade: rgb(0 0 0 / 55%);
   /* A cast's progress on its slot: --ink at low alpha (#485). */
   --cast-fill-shade: rgb(215 222 232 / 18%);
+  /* The unfilled part of an adrenaline skill's icon (#826). */
+  --adrenaline-shade: rgb(0 0 0 / 65%);
   /* An elite skill's frame (#459). */
   --elite: #d4a72c;
   font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
@@ -199,8 +201,8 @@ body {
   pointer-events: auto;
 }
 
-/* The target frame (#484): header, health bar, cast row. Its size never
-   changes with what it shows, so the bars under it never jump. */
+/* The target frame (#484): header, health bar, effects, cast row. Only
+   the effects row grows it, upwards, so the bars under it never jump. */
 .hud-target {
   display: flex;
   flex-direction: column;
@@ -230,6 +232,11 @@ body {
 /* A corpse: an empty track in the corpse colour. */
 .hud-target-health.is-dead {
   border-color: #4a5464;
+}
+
+/* The target's effects (#835) wrap inside the health bar's width. */
+.hud-target .effects-monitor {
+  max-width: 220px;
 }
 
 /* Maximum health a deep wound took (#764): the bar's far end, greyed, as GW1. */
@@ -440,14 +447,15 @@ body {
   background: var(--ink-dim);
 }
 
-/* Your own enchantment: an ink tick in the top-right corner. */
+/* Your own enchantment: an ink tick in the top-right corner, a quarter
+   of the icon: 6 px in your monitor, 4 px in the target frame (#835). */
 .effect.is-yours::after {
   content: "";
   position: absolute;
   top: -2px;
   right: -2px;
-  width: 6px;
-  height: 6px;
+  width: calc(var(--effect-size) / 4);
+  height: calc(var(--effect-size) / 4);
   background: var(--ink);
   border: 1px solid var(--bg);
   border-radius: 1px;
@@ -493,12 +501,38 @@ body {
 }
 
 /* A hint, not a gate: the server still decides whether a cast is legal.
-   The wrong weapon in hand dims an attack skill the same way (#417). */
-.hud-skill.is-unaffordable,
+   The wrong weapon in hand dims an attack skill the same way (#417). An
+   adrenaline skill short of its charge shows its gauge instead (#826). */
+.hud-skill.is-unaffordable:not(:has(> .adrenaline-gauge)),
 .hud-skill.is-wrong-weapon,
-.training-skill.is-unaffordable,
+.training-skill.is-unaffordable:not(:has(> .adrenaline-gauge)),
 .training-skill.is-wrong-weapon {
   opacity: 0.45;
+}
+
+/* An adrenaline skill's charge (#826), as in GW1: the icon is dark where
+   it has not filled yet and lit where it has, rising from the bottom, with
+   a thin ink line at the edge. Charged, it is gone, and the slot looks as
+   a usable energy skill does. Under the recharge wipe, which a skill just
+   used shows over an empty gauge. Information, so it moves under reduced
+   motion too. */
+.adrenaline-gauge {
+  --adrenaline-level: calc(var(--adrenaline-fill, 0) * 100%);
+
+  position: absolute;
+  inset: 0;
+  display: none;
+  background: linear-gradient(
+    to top,
+    transparent calc(var(--adrenaline-level) - 2px),
+    var(--ink) 0 var(--adrenaline-level),
+    var(--adrenaline-shade) 0
+  );
+  pointer-events: none;
+}
+
+.is-unaffordable > .adrenaline-gauge {
+  display: block;
 }
 
 /* An empty slot keeps its place and its key, and does nothing (#347). */
