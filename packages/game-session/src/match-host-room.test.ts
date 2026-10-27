@@ -1,4 +1,4 @@
-import { DEFAULT_MATCH_RULES, DEFAULT_SKILL_BAR } from "@vibewars/game-core";
+import { DEFAULT_MATCH_RULES } from "@vibewars/game-core";
 import {
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
@@ -15,6 +15,8 @@ import { MatchRefusedError, connectMatch } from "./match-client.js";
 import { MATCH_OVER_MESSAGE, RECONNECT_WINDOW_SECONDS, RULESET } from "./match-host.js";
 import {
   ARENA,
+  FIGHTER,
+  fighterHello,
   TICK_SECONDS,
   hello,
   playerIn,
@@ -258,7 +260,7 @@ describe("a P2P match host, as the match room (#375)", () => {
 
   it("shows a spell walking in as walking, and cancel drops it unpaid (#499)", async () => {
     const match = startMatch();
-    const { connection: a } = await match.join();
+    const { connection: a } = await match.join(fighterHello());
     const { connection: b } = await match.join();
     // Back off from the foe across the way, past Fireball range.
     a.sendIntent({ kind: "walk-to", x: 50, y: FIRST_SPAWN.y });
@@ -267,7 +269,7 @@ describe("a P2P match host, as the match room (#375)", () => {
     expect(self(a)?.x).toBeLessThan(100);
 
     a.sendIntent({ kind: "target", targetSessionId: b.selfSessionId });
-    a.sendIntent({ kind: "use-skill", slot: DEFAULT_SKILL_BAR.indexOf("elementalist.fireball") });
+    a.sendIntent({ kind: "use-skill", slot: FIGHTER.skillBar.indexOf("elementalist.fireball") });
     await landAndTick(match);
     expect(self(a)?.walking).toBe(true);
 
@@ -365,7 +367,7 @@ describe("a P2P match host, as the match room (#375)", () => {
       const connection = await connectMatch({
         transport,
         hostId: "host",
-        hello: hello(),
+        hello: fighterHello(),
         timeoutMs: 1000,
       });
       return { connection, received };
@@ -382,7 +384,7 @@ describe("a P2P match host, as the match room (#375)", () => {
       expect(caster.received[0]?.slots).toEqual([]);
 
       // Armor of Earth: self-targeted, so it fires with nobody in range.
-      const slot = DEFAULT_SKILL_BAR.indexOf("elementalist.armor-of-earth");
+      const slot = FIGHTER.skillBar.indexOf("elementalist.armor-of-earth");
       caster.connection.sendIntent({ kind: "use-skill", slot });
       await match.step(1);
       expect(caster.received).toHaveLength(2);

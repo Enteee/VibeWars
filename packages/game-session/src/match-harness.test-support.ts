@@ -7,7 +7,14 @@
  * Not a test file itself (vitest runs `*.test.ts` only), and left out of
  * the build.
  */
-import { DEFAULT_MATCH_RULES, segment, type MatchRules } from "@vibewars/game-core";
+import {
+  DEFAULT_MATCH_RULES,
+  STARTER_BUILDS,
+  defaultBuildEquipment,
+  segment,
+  type MatchRules,
+  type PlayerBuild,
+} from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   parsePeerRejoinChallenge,
@@ -105,6 +112,47 @@ export function answerChallenges(transport: Transport, token: string, hostId = "
       transport.send("rejoin-proof", message, hostId);
     });
   });
+}
+
+/**
+ * A swordsman who casts (#852): a warrior's armor, sword and shield, with
+ * Fireball and Armor of Earth at Fire Magic 12. What a test joins with when
+ * it needs a known bar; joining with no build gets a random starter build.
+ * The shield's Strength requirement is not met, so armor is 80 + 8 = 88.
+ */
+export const FIGHTER: PlayerBuild = {
+  name: "Fighter",
+  primaryProfession: "warrior",
+  secondaryProfession: "elementalist",
+  attributes: [
+    { attributeId: "warrior.swordsmanship", rank: 12 },
+    { attributeId: "elementalist.fire-magic", rank: 12 },
+  ],
+  skillBar: [
+    "elementalist.fireball",
+    "warrior.sever-artery-lite",
+    "warrior.distracting-blow",
+    "elementalist.armor-of-earth",
+    null,
+    null,
+    null,
+    null,
+  ],
+  equipment: defaultBuildEquipment("warrior"),
+};
+
+/** A hello that brings `FIGHTER`. */
+export function fighterHello(): PeerHello {
+  return hello({ build: toJson(FIGHTER) });
+}
+
+/** The starter build called `name`, to join with its bar. */
+export function starterBuild(name: string): PlayerBuild {
+  const build = STARTER_BUILDS.find((starter) => starter.name === name);
+  if (build === undefined) {
+    throw new Error(`no starter build ${name}`);
+  }
+  return build;
 }
 
 export function hello(

@@ -1,10 +1,11 @@
 import {
-  HOUSE_LOADOUT,
   LONG_BOW_RANGE,
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
+  baseEnergyPipsFor,
   buildNavGraph,
   createPathFinder,
+  defaultBuildEquipment,
   Vec,
   distancePointToSegment,
   nearestStandable,
@@ -99,9 +100,9 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
     const ruleset = MINIMAL_GW_INSPIRED_PVP_V1;
     const resolved = resolveLoadout(
       {
-        primaryProfession: HOUSE_LOADOUT.primaryProfession,
-        allocatedRanks: HOUSE_LOADOUT.attributeRanks,
-        equipment: HOUSE_LOADOUT.equipment,
+        primaryProfession: "warrior",
+        allocatedRanks: new Map([["warrior.swordsmanship", 12]]),
+        equipment: defaultBuildEquipment("warrior"),
       },
       ruleset.combat,
     );
@@ -122,7 +123,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
           skillBar: [],
           attributeRanks: resolved.attributeRanks,
           equipment: resolved.equipment,
-          baseEnergyPips: HOUSE_LOADOUT.baseEnergyPips,
+          baseEnergyPips: baseEnergyPipsFor("warrior"),
           maxHealth: 1e7,
           spawn: at,
           facing: 0,

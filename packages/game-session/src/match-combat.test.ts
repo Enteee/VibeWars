@@ -1,9 +1,4 @@
-import {
-  DEFAULT_SKILL_BAR,
-  defaultBuildEquipment,
-  type CombatLogEntry,
-  type PlayerBuild,
-} from "@vibewars/game-core";
+import { defaultBuildEquipment, type CombatLogEntry, type PlayerBuild } from "@vibewars/game-core";
 import {
   MAX_WIRE_COMBATS,
   parsePeerHello,
@@ -14,9 +9,11 @@ import {
 import { describe, expect, it } from "vitest";
 
 import {
+  FIGHTER,
   hello,
   playerIn,
   self,
+  starterBuild,
   startMatch,
   toJson,
   type TestMatch,
@@ -34,9 +31,14 @@ import { combatMessage, wireCombat } from "./wire.js";
  * clock or flakes on a busy runner.
  */
 
-const FIREBALL = DEFAULT_SKILL_BAR.indexOf("elementalist.fireball");
+const FIREBALL = FIGHTER.skillBar.indexOf("elementalist.fireball");
 
-/** A ranger with a bow and Broad Head Arrow, which the house loadout lacks. */
+/** A hello that brings `build`, `FIGHTER` unless a test needs another bar. */
+function bringing(build: PlayerBuild = FIGHTER) {
+  return hello({ build: toJson(build) });
+}
+
+/** A ranger with a bow and Broad Head Arrow, which `FIGHTER` lacks. */
 const ARCHER: PlayerBuild = {
   name: "Archer",
   primaryProfession: "ranger",
@@ -138,10 +140,10 @@ async function closeDistance(
   await walkTo(match, connection, { x: them.x, y: them.y }, range * 0.8);
 }
 
-/** A remote pair, on opposite teams, in their first snapshot. */
-async function joinPair(match: TestMatch = startMatch()) {
-  const { connection: a } = await match.join();
-  const { connection: b } = await match.join();
+/** A remote pair, on opposite teams, in their first snapshot; `b` is a `FIGHTER`. */
+async function joinPair(match: TestMatch = startMatch(), aBuild: PlayerBuild = FIGHTER) {
+  const { connection: a } = await match.join(bringing(aBuild));
+  const { connection: b } = await match.join(bringing());
   await match.step(TICK);
   return { match, a, b };
 }
@@ -177,7 +179,7 @@ async function target(
 describe("networked combat (P2P)", () => {
   it("spawns players with full health and energy", async () => {
     const match = startMatch();
-    const { connection } = await match.join();
+    const { connection } = await match.join(bringing());
     await match.step(TICK);
 
     const me = self(connection);
@@ -189,10 +191,10 @@ describe("networked combat (P2P)", () => {
 
   it("sends the skill bar on join, so the client can render it", async () => {
     const match = startMatch();
-    const { connection } = await match.join();
+    const { connection } = await match.join(bringing());
 
-    expect(connection.skillBar).toHaveLength(DEFAULT_SKILL_BAR.length);
-    expect(connection.skillBar[0]?.id).toBe(DEFAULT_SKILL_BAR[0]);
+    expect(connection.skillBar).toHaveLength(FIGHTER.skillBar.length);
+    expect(connection.skillBar[0]?.id).toBe(FIGHTER.skillBar[0]);
     expect(connection.skillBar[0]?.name.length).toBeGreaterThan(0);
   });
 
@@ -246,11 +248,11 @@ describe("networked combat (P2P)", () => {
       "the target to take damage",
     );
 
-    // Fire Magic 12 -> 91 before mitigation. The house loadout is a
-    // warrior (80 base armor) carrying a shield whose Strength
-    // requirement it does not meet (+8, not +16), so armor is 88 and the
-    // curve gives 91 * 2^((60 - 88) / 40) = 56. Spelled out, not derived,
-    // so a change to either the curve or the house loadout fails loudly.
+    // Fire Magic 12 -> 91 before mitigation. `FIGHTER` is a warrior (80
+    // base armor) carrying a shield whose Strength requirement it does
+    // not meet (+8, not +16), so armor is 88 and the curve gives
+    // 91 * 2^((60 - 88) / 40) = 56. Spelled out, not derived, so a change
+    // to either the curve or `FIGHTER` fails loudly.
     expect(playerIn(a.getSnapshot(), b.selfSessionId)?.health).toBe(500 - 56);
   });
 
@@ -266,12 +268,13 @@ describe("networked combat (P2P)", () => {
   });
 
   it("exposes cast progress so a client can draw a cast bar", async () => {
-    const { match, a, b } = await joinPair();
+    const ranger = starterBuild("Ranger/Mesmer");
+    const { match, a, b } = await joinPair(startMatch(), ranger);
     await closeDistance(match, a, b.selfSessionId, 300);
     await target(match, a, b.selfSessionId);
 
     // Troll Unguent has a 3s cast: long enough to observe mid-cast.
-    a.sendIntent({ kind: "use-skill", slot: DEFAULT_SKILL_BAR.indexOf("ranger.troll-unguent") });
+    a.sendIntent({ kind: "use-skill", slot: ranger.skillBar.indexOf("ranger.troll-unguent") });
     await until(match, () => self(a)?.castingSkillId !== undefined, "the cast to start");
 
     const me = self(a);
@@ -284,7 +287,8 @@ describe("networked combat (P2P)", () => {
     // Broad Head Arrow needs a bow (ADR-0029): A is a ranger.
     const match = startMatch();
     const { connection: a } = await match.join(hello({ build: toJson(ARCHER) }));
-    const { connection: b } = await match.join();
+    const monk = starterBuild("Monk/Elementalist");
+    const { connection: b } = await match.join(bringing(monk));
     await match.step(TICK);
     await closeDistance(match, a, b.selfSessionId, 300);
     await target(match, a, b.selfSessionId);
@@ -298,7 +302,7 @@ describe("networked combat (P2P)", () => {
     );
 
     // A spell: dazed slows spells only (#524).
-    b.sendIntent({ kind: "use-skill", slot: DEFAULT_SKILL_BAR.indexOf("monk.orison-of-healing") });
+    b.sendIntent({ kind: "use-skill", slot: monk.skillBar.indexOf("monk.orison-of-healing") });
     await until(match, () => self(b)?.castingSkillId !== undefined, "b's cast to start");
 
     const me = self(b);
@@ -310,7 +314,7 @@ describe("networked combat (P2P)", () => {
   it("sends what a caster bears while activating, ending with the cast (#803)", async () => {
     const match = startMatch();
     const { connection: a } = await match.join(hello({ build: toJson(SIGNET) }));
-    const { connection: b } = await match.join();
+    const { connection: b } = await match.join(bringing());
     await match.step(TICK);
 
     a.sendIntent({ kind: "use-skill", slot: 0 });
@@ -332,7 +336,7 @@ describe("networked combat (P2P)", () => {
   it("sends a knockdown's time left on the victim, and 0 once it rises (#545)", async () => {
     const match = startMatch();
     const { connection: a } = await match.join(hello({ build: toJson(HAMMERER) }));
-    const { connection: b } = await match.join();
+    const { connection: b } = await match.join(bringing());
     await match.step(TICK);
     await closeDistance(match, a, b.selfSessionId, 60);
     await target(match, a, b.selfSessionId);
@@ -403,7 +407,7 @@ describe("networked combat (P2P)", () => {
       throw new Error("the shooter's hello does not parse");
     }
     const { connection: caster } = await match.join(shooter);
-    const { connection: victim } = await match.join();
+    const { connection: victim } = await match.join(bringing());
     await match.step(TICK);
     await closeDistance(match, caster, victim.selfSessionId, 200);
 
@@ -456,7 +460,7 @@ describe("networked combat (P2P)", () => {
     await closeDistance(match, a, b.selfSessionId, 30);
     a.sendIntent({
       kind: "use-skill",
-      slot: DEFAULT_SKILL_BAR.indexOf("warrior.sever-artery-lite"),
+      slot: FIGHTER.skillBar.indexOf("warrior.sever-artery-lite"),
     });
     await until(
       match,
@@ -547,7 +551,7 @@ describe("networked combat (P2P)", () => {
     const { a, b } = await joinPair(match);
     const others: MatchConnection[] = [];
     for (let i = 0; i < 4; i += 1) {
-      others.push((await match.join()).connection);
+      others.push((await match.join(bringing())).connection);
     }
     const [, c, , d] = others;
     if (c === undefined || d === undefined) {
@@ -597,7 +601,7 @@ describe("networked combat (P2P)", () => {
 
   it("refuses to cast a damage skill with no target selected", async () => {
     const match = startMatch();
-    const { connection } = await match.join();
+    const { connection } = await match.join(bringing());
     await match.step(TICK);
 
     const before = self(connection)?.energy ?? 0;
@@ -613,13 +617,13 @@ describe("networked combat (P2P)", () => {
     // A self-targeted skill, so the energy economy is tested without
     // walking across the arena.
     const match = startMatch();
-    const { connection } = await match.join();
+    const { connection } = await match.join(bringing());
     await match.step(TICK);
     const full = self(connection)?.energy ?? 0;
 
     connection.sendIntent({
       kind: "use-skill",
-      slot: DEFAULT_SKILL_BAR.indexOf("elementalist.armor-of-earth"),
+      slot: FIGHTER.skillBar.indexOf("elementalist.armor-of-earth"),
     });
     await until(match, () => (self(connection)?.energy ?? full) < full, "energy spent");
 
@@ -632,7 +636,7 @@ describe("networked combat (P2P)", () => {
 describe("match rules over the network (P2P)", () => {
   it("starts a match active, scoreless, with a running clock", async () => {
     const match = startMatch();
-    const { connection } = await match.join();
+    const { connection } = await match.join(bringing());
     await match.step(TICK);
 
     const snapshot = connection.getSnapshot();

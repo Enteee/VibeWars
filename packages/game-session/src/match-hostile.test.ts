@@ -1,4 +1,4 @@
-import { HOUSE_LOADOUT } from "@vibewars/game-core";
+import { STARTER_BUILDS } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   parsePeerRefuse,
@@ -387,7 +387,7 @@ describe("a P2P host survives hostile peers (#375)", () => {
     await match.step(TICK);
 
     // One peer, one seat, whatever it repeats: the first hello seats it
-    // on the house loadout with a fallback name, and the rest are ignored.
+    // on a starter build with a fallback name, and the rest are ignored.
     expect(welcomes).toHaveLength(1);
     const players = watcher.getSnapshot().players;
     expect(players).toHaveLength(2);
@@ -442,10 +442,10 @@ describe("a P2P host survives hostile peers (#375)", () => {
     );
     await match.step(TICK);
 
-    // The build was refused: the peer plays the house loadout instead.
-    expect(connection.skillBar.map((slot) => slot?.id ?? null)).toEqual([
-      ...HOUSE_LOADOUT.skillBar,
-    ]);
+    // The build was refused: the peer plays a starter build instead.
+    expect(STARTER_BUILDS.map((build) => [...build.skillBar])).toContainEqual(
+      connection.skillBar.map((slot) => slot?.id ?? null),
+    );
     const seen = playerIn(watcher.getSnapshot(), connection.selfSessionId);
     expect(seen?.name).toBeDefined();
     expect(seen?.name).not.toMatch(/[\n\r]/);

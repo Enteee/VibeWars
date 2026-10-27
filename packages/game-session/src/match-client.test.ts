@@ -194,10 +194,10 @@ describe("connectMatch", () => {
 
   it("counts recharges down on the match clock, with no wall time", async () => {
     const match = startMatch();
-    const { connection } = await match.join();
+    const { connection } = await match.join(fighterHello());
     const { connection: foe } = await match.join();
     await match.step(0.05);
-    // The house bar's Armor of Earth is a self-buff: castable at once.
+    // `FIGHTER`'s Armor of Earth is a self-buff: castable at once.
     const slot = connection.skillBar.findIndex((s) => s?.id === "elementalist.armor-of-earth");
     expect(slot).toBeGreaterThanOrEqual(0);
     connection.sendIntent({ kind: "use-skill", slot });

@@ -1,8 +1,9 @@
 import { resolveLoadout } from "../equipment/resolve.js";
 import { segment, type Segment } from "../geometry.js";
-import { HOUSE_LOADOUT } from "../join-loadout.js";
+import { loadoutOf } from "../join-loadout.js";
 import { MatchSimulation, type ParticipantSpec } from "../match/simulation.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { pickStarterBuild } from "../starter-builds.js";
 import { vec2, type Vec2 } from "../vec2.js";
 
 /**
@@ -46,24 +47,27 @@ export const DENSE_FIELD: BenchField = {
   })),
 };
 
-/** Every fighter with the house loadout, all ordered to attack their mirror across the field. */
+/** The first starter build: one fixed build, so the bench stays deterministic. */
+const BENCH_LOADOUT = loadoutOf(pickStarterBuild(() => 0));
+
+/** Every fighter with the first starter build, all ordered to attack their mirror across the field. */
 function benchMatch(field: BenchField, seed: string): MatchSimulation {
   const ruleset = MINIMAL_GW_INSPIRED_PVP_V1;
   const resolved = resolveLoadout(
     {
-      primaryProfession: HOUSE_LOADOUT.primaryProfession,
-      allocatedRanks: HOUSE_LOADOUT.attributeRanks,
-      equipment: HOUSE_LOADOUT.equipment,
+      primaryProfession: BENCH_LOADOUT.primaryProfession,
+      allocatedRanks: BENCH_LOADOUT.attributeRanks,
+      equipment: BENCH_LOADOUT.equipment,
     },
     ruleset.combat,
   );
   const participants: ParticipantSpec[] = field.spawns.map((spawn) => ({
     id: spawn.id,
     team: spawn.team,
-    skillBar: HOUSE_LOADOUT.skillBar,
+    skillBar: BENCH_LOADOUT.skillBar,
     attributeRanks: resolved.attributeRanks,
     equipment: resolved.equipment,
-    baseEnergyPips: HOUSE_LOADOUT.baseEnergyPips,
+    baseEnergyPips: BENCH_LOADOUT.baseEnergyPips,
     // Nobody dies, so everyone keeps walking and swinging the whole run.
     maxHealth: 1e7,
     spawn: spawn.at,
