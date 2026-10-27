@@ -235,6 +235,13 @@
         {
           "properties": [
             { "name": "amount", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "energy-loss" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "amount", "optional": false, "type": "number" },
             { "name": "kind", "optional": false, "type": { "literal": "heal" } },
             { "name": "targetId", "optional": false, "type": "string" }
           ]

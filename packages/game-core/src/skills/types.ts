@@ -61,6 +61,12 @@ export interface DamageEffect {
   readonly amount: Magnitude;
   /** GW1's type, which decides the typed armor that applies (#759). */
   readonly type: DamageType;
+  /**
+   * The amount is per point of energy the same target lost to an earlier
+   * `energy-loss` of this skill, as Energy Burn's "9 damage for each
+   * point of energy lost" (#793). None lost: no damage.
+   */
+  readonly perEnergyLost?: true;
 }
 
 export interface HealEffect {
@@ -75,6 +81,18 @@ export interface HealEffect {
 
 export interface EnergyGainEffect {
   readonly kind: "energy-gain";
+  readonly amount: Magnitude;
+  /**
+   * Per point of energy the target lost to an earlier `energy-loss`, as
+   * Energy Tap's "2 Energy for each point of Energy target foe lost"
+   * (#793). None lost: no gain.
+   */
+  readonly perEnergyLost?: true;
+}
+
+/** The effect's target loses up to `amount` energy (never below 0). */
+export interface EnergyLossEffect {
+  readonly kind: "energy-loss";
   readonly amount: Magnitude;
 }
 
@@ -150,6 +168,7 @@ export type UnconditionalEffect =
   | DamageEffect
   | HealEffect
   | EnergyGainEffect
+  | EnergyLossEffect
   | SacrificeHealthEffect
   | ApplyStatusEffect
   | RemoveStatusEffect

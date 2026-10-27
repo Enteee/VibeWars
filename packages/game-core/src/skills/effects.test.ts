@@ -229,6 +229,69 @@ describe("energy-gain effect", () => {
   });
 });
 
+describe("energy-loss effect (#793)", () => {
+  const loss: SkillEffect = { kind: "energy-loss", amount: { flat: 8 } };
+
+  it("takes energy from the target, not the caster, and says how much", () => {
+    const caster = makeCombatant({ id: "caster", energy: 10 });
+    const target = makeCombatant({ id: "target", team: 1, energy: 20 });
+    const events = applyEffects([loss], context(caster, target));
+    expect(target.energy).toBe(12);
+    expect(caster.energy).toBe(10);
+    expect(events).toEqual([{ kind: "energy-loss", targetId: "target", amount: 8 }]);
+  });
+
+  it("takes only the whole points the target has, and nothing below 0", () => {
+    const target = makeCombatant({ id: "target", team: 1, energy: 5.5 });
+    const events = applyEffects([loss], context(makeCombatant({ id: "caster" }), target));
+    expect(target.energy).toBe(0.5);
+    expect(events).toEqual([{ kind: "energy-loss", targetId: "target", amount: 5 }]);
+  });
+
+  it("emits nothing when the target has no energy to lose", () => {
+    const target = makeCombatant({ id: "target", team: 1, energy: 0 });
+    expect(applyEffects([loss], context(makeCombatant({ id: "caster" }), target))).toEqual([]);
+  });
+
+  it("leaves maximum energy alone", () => {
+    const target = makeCombatant({ id: "target", team: 1, energy: 20 });
+    applyEffects([loss], context(makeCombatant({ id: "caster" }), target));
+    expect(target.maxEnergy).toBe(makeCombatant({ id: "fresh" }).maxEnergy);
+  });
+
+  it("scales a perEnergyLost damage and gain with what was actually lost", () => {
+    const effects: SkillEffect[] = [
+      loss,
+      { kind: "damage", amount: { flat: 9 }, type: "typeless", perEnergyLost: true },
+      { kind: "energy-gain", amount: { flat: 2 }, perEnergyLost: true },
+    ];
+    const caster = makeCombatant({ id: "caster", energy: 0 });
+    const target = makeCombatant({ id: "target", team: 1, energy: 3 });
+    const events = applyEffects(effects, context(caster, target));
+    expect(events).toEqual([
+      { kind: "energy-loss", targetId: "target", amount: 3 },
+      { kind: "damage", targetId: "target", amount: 27, critical: false },
+      { kind: "energy-gain", targetId: "caster", amount: 6 },
+    ]);
+  });
+
+  it("deals and gives nothing per point with no loss before it", () => {
+    const caster = makeCombatant({ id: "caster", energy: 0 });
+    const target = makeCombatant({ id: "target", team: 1, energy: 0 });
+    const events = applyEffects(
+      [
+        loss,
+        { kind: "damage", amount: { flat: 9 }, type: "typeless", perEnergyLost: true },
+        { kind: "energy-gain", amount: { flat: 2 }, perEnergyLost: true },
+      ],
+      context(caster, target),
+    );
+    expect(events).toEqual([]);
+    expect(target.health).toBe(500);
+    expect(caster.energy).toBe(0);
+  });
+});
+
 describe("sacrifice-health effect", () => {
   it("costs the caster a percentage of MAXIMUM health, not current", () => {
     const caster = makeCombatant({ id: "caster", health: 200, maxHealth: 500 });

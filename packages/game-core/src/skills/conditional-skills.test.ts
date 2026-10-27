@@ -9,7 +9,7 @@ import { makeCombatant } from "./testing.js";
 import type { Combatant } from "./types.js";
 
 /**
- * The skills whose effects depend on an earlier effect (#521), each in a
+ * The skills whose effects depend on an earlier effect (#521, #793), each in a
  * scripted duel: the foe is busy (or not), the skill lands.
  */
 
@@ -143,5 +143,47 @@ describe("Mend Condition (#521)", () => {
 
   it("cannot target its caster", () => {
     expect(getSkill("monk.mend-condition")?.target).toBe("single-other-ally");
+  });
+});
+
+describe("Energy Burn (#793)", () => {
+  it("burns 8 energy and deals 9 damage a point from a foe with plenty", () => {
+    const target = makeCombatant({ id: "foe", team: 1, energy: 25 });
+    const mesmer = caster();
+    use(mesmer, "mesmer.energy-burn", target);
+    expect(target.energy).toBe(17);
+    expect(target.health).toBe(500 - 72);
+    expect(mesmer.energy).toBe(10);
+  });
+
+  it("burns only what a foe has: 3 points, 27 damage; none, none", () => {
+    const low = makeCombatant({ id: "foe", team: 1, energy: 3 });
+    use(caster(), "mesmer.energy-burn", low);
+    expect(low.energy).toBe(0);
+    expect(low.health).toBe(500 - 27);
+
+    const empty = makeCombatant({ id: "foe", team: 1, energy: 0 });
+    expect(use(caster(), "mesmer.energy-burn", empty)).toEqual([]);
+    expect(empty.health).toBe(500);
+  });
+});
+
+describe("Energy Tap (#793)", () => {
+  it("gives the caster 2 energy for each of the 6 points the foe lost", () => {
+    const target = makeCombatant({ id: "foe", team: 1, energy: 25 });
+    const mesmer = caster();
+    const events = use(mesmer, "mesmer.energy-tap", target);
+    expect(target.energy).toBe(19);
+    expect(mesmer.energy).toBe(15 + 12);
+    expect(events).toEqual([
+      { kind: "energy-loss", targetId: "foe", amount: 6 },
+      { kind: "energy-gain", targetId: "caster", amount: 12 },
+    ]);
+  });
+
+  it("gives only for what a foe with too little had", () => {
+    const mesmer = caster();
+    use(mesmer, "mesmer.energy-tap", makeCombatant({ id: "foe", team: 1, energy: 2 }));
+    expect(mesmer.energy).toBe(15 + 4);
   });
 });

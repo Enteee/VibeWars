@@ -58,6 +58,7 @@ describe("logToneOf", () => {
       "damage",
       "heal",
       "energy-gain",
+      "energy-loss",
       "sacrifice",
       "death",
       "status-applied",
@@ -73,6 +74,7 @@ describe("logToneOf", () => {
     expect(kinds.map(logToneOf)).toEqual([
       "damage",
       "heal",
+      "resource",
       "resource",
       "damage",
       "death",
@@ -207,6 +209,19 @@ describe("describeCombatEvent", () => {
     expect(floatingCueFor("knocked-down", undefined, false)).toEqual({
       text: "Knocked down",
       tone: "neutral",
+      critical: false,
+    });
+  });
+
+  it("says who lost energy to what, and floats it in blue (#793)", () => {
+    const burned: CombatEvent = { kind: "energy-loss", targetId: "dummy", amount: 8 };
+    expect(
+      describeCombatEvent(entry([burned], { skillId: "mesmer.energy-burn" }), burned, nameOf),
+    ).toBe("Caster dummy loses 8 energy to Energy Burn (Pyro)");
+    expect(logToneOf("energy-loss")).toBe("resource");
+    expect(floatingCueFor("energy-loss", 8, false)).toEqual({
+      text: "−8 energy",
+      tone: "energy",
       critical: false,
     });
   });

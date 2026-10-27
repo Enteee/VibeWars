@@ -48,4 +48,6 @@ export const SKILL_ICONS = {
   "mesmer.power-drain": { glyph: "interrupt", modifier: "up" },
   "mesmer.shatter-enchantment": { glyph: "cleanse", modifier: "down" },
   "mesmer.drain-enchantment": { glyph: "cleanse", modifier: "up" },
+  "mesmer.energy-burn": { glyph: "energy", modifier: "down" },
+  "mesmer.energy-tap": { glyph: "energy", modifier: "up" },
 };

@@ -170,6 +170,7 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
       };
     case "heal":
     case "energy-gain":
+    case "energy-loss":
     case "sacrifice":
       return { ...none, kind: event.kind, targetId: event.targetId, amount: event.amount };
     case "status-applied":
@@ -252,6 +253,7 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
         : { kind: event.kind, targetId, amount, critical: crit };
     case "heal":
     case "energy-gain":
+    case "energy-loss":
     case "sacrifice":
       return amount === null ? undefined : { kind: event.kind, targetId, amount };
     case "status-applied":

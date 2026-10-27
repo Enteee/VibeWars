@@ -267,6 +267,11 @@ function describeEffects(
   });
 }
 
+/** " per point lost", for an amount multiplied by the energy taken before it (#793). */
+function perPointLost(effect: { readonly perEnergyLost?: true }): string {
+  return effect.perEnergyLost === undefined ? "" : " per point lost";
+}
+
 function describeEffect(
   effect: UnconditionalEffect,
   ranks: ReadonlyMap<string, number>,
@@ -274,7 +279,10 @@ function describeEffect(
   switch (effect.kind) {
     case "damage": {
       const magnitude = describeMagnitude(effect.amount, ranks);
-      return { text: `Deals ${String(magnitude.current)} damage`, magnitude };
+      return {
+        text: `Deals ${String(magnitude.current)} damage${perPointLost(effect)}`,
+        magnitude,
+      };
     }
     case "heal": {
       const magnitude = describeMagnitude(effect.amount, ranks);
@@ -286,7 +294,11 @@ function describeEffect(
     }
     case "energy-gain": {
       const magnitude = describeMagnitude(effect.amount, ranks);
-      return { text: `Gain ${String(magnitude.current)} energy`, magnitude };
+      return { text: `Gain ${String(magnitude.current)} energy${perPointLost(effect)}`, magnitude };
+    }
+    case "energy-loss": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return { text: `Target loses ${String(magnitude.current)} energy`, magnitude };
     }
     case "sacrifice-health":
       return {
@@ -353,11 +365,18 @@ function headlineOf(
       const amount = String(magnitude.current);
       const text =
         effect.kind === "damage"
-          ? `${amount} damage`
+          ? `${amount} damage${perPointLost(effect)}`
           : effect.kind === "heal"
             ? `heals ${amount}`
-            : `+${amount} energy`;
+            : `+${amount} energy${perPointLost(effect)}`;
       return { text, scales: magnitude.attributeId !== undefined };
+    }
+    case "energy-loss": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return {
+        text: `drains ${String(magnitude.current)} energy`,
+        scales: magnitude.attributeId !== undefined,
+      };
     }
     case "if": {
       // Power Spike's card leads with its damage, though it needs a spell.
