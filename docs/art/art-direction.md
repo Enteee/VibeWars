@@ -469,7 +469,10 @@ half wind, full wind, half strike, hit, early and late recovery.
 - **The strike ends exactly on the hit** for melee and on the release for
   ranged weapons: the pose at the hit is the sheet's "hit" column. The
   pose follows the host's swing timer (#560), so the first swing winds up
-  too, and one cut short eases back to rest.
+  too, and one cut short eases back to rest. An attack skill winds up over
+  its whole activation instead, on the host's cast timer (#562): rest at
+  the cast's start, the strike's start at its end. A bow's release is the
+  end of the activation, not the arrow appearing.
 - **The wind-up is a tell.** A defender should read it: the hammer's 0.55 s
   lift and the longbow's 0.85 s draw are slow on purpose (operator,
   2026-10-25). A quick weapon (daggers 0.16 s, unarmed 0.22 s) gives

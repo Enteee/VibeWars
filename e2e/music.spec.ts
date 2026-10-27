@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 
 import { startSoloMatch } from "./helpers/peers.js";
+import { key } from "./keys.js";
 
 /**
  * Music (#371, ADR-0028): the Strudel engine in a sandboxed iframe, made
@@ -84,7 +85,7 @@ test("music-host.html opened on its own loads no engine and runs nothing posted 
   await page.goto("./music-host.html");
   await page.evaluate((source) => {
     for (const message of [
-      { type: "evaluate", source },
+      { type: "evaluate", seq: 1, source },
       { type: "load", trackId: "x", source, phraseCycles: 4 },
     ]) {
       postMessage(message, "*");
@@ -107,7 +108,7 @@ test("music-host.html framed without a sandbox runs nothing either", async ({ pa
         const frame = document.createElement("iframe");
         frame.src = "music-host.html";
         frame.addEventListener("load", () => {
-          frame.contentWindow?.postMessage({ type: "evaluate", source }, "*");
+          frame.contentWindow?.postMessage({ type: "evaluate", seq: 1, source }, "*");
           resolve();
         });
         document.body.appendChild(frame);
@@ -174,9 +175,7 @@ test("a pinned track is what plays after a reload (#372)", async ({ page }) => {
   await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toEqual(["ember-deep"]);
 });
 
-test("tracks are selectable rows: Enter previews and keeps focus; no dead editor button (#581)", async ({
-  page,
-}) => {
+test("tracks are selectable rows: Enter previews and keeps focus (#581)", async ({ page }) => {
   await page.goto("./");
   await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
   const row = page.locator(".jukebox-row", { hasText: "Ember Deep" });
@@ -192,8 +191,111 @@ test("tracks are selectable rows: Enter previews and keeps focus; no dead editor
   await play.focus();
   await page.keyboard.press("Enter");
   await expect(play).toHaveAttribute("aria-pressed", "false");
-  // The beat editor (#373) has not landed: no button that does nothing.
-  await expect(page.getByRole("button", { name: "open in editor" })).toHaveCount(0);
+});
+
+/** The types of what this page's host said, in order. */
+function hostTypes(page: Page): Promise<string[]> {
+  return page.evaluate(() =>
+    (window as unknown as { hostMessages: unknown[] }).hostMessages.map((message) =>
+      typeof message === "object" && message !== null && "type" in message
+        ? String(message.type)
+        : "?",
+    ),
+  );
+}
+
+/** How many events the host played in each second it measured (`?musicstats`). */
+function eventsPerSecond(page: Page): Promise<number[]> {
+  return page.evaluate(() => {
+    const stats = (window as unknown as { hostMessages: unknown[] }).hostMessages.filter(
+      (message): message is { type: "stats"; events: number } =>
+        typeof message === "object" &&
+        message !== null &&
+        "type" in message &&
+        message.type === "stats",
+    );
+    return stats.map((message) => message.events);
+  });
+}
+
+test("the beat editor plays a change, keeps it across a reload, and an error leaves it playing (#373)", async ({
+  page,
+}) => {
+  await recordMessages(page);
+  await recordHostInbox(page);
+  await page.goto("./?musicstats");
+  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
+  const row = page.locator(".jukebox-row", { hasText: "Ember Deep" });
+  await row.getByRole("button", { name: "Open Ember Deep in the beat editor" }).click();
+  const editor = page.getByRole("dialog", { name: "Beat editor: Ember Deep" });
+  const code = editor.locator(".cm-content");
+  await expect(code).toContainText("ember-deep");
+  // Syntax colours: a keyword is not plain ink.
+  await expect(code.locator("span", { hasText: /^let$/ }).first()).toHaveCSS(
+    "color",
+    "rgb(210, 168, 255)",
+  );
+  // The click on Music started the menu's track; the editor holds its own.
+  await expect.poll(() => playedTracks(page), { timeout: 5_000 }).toContain("ember-deep");
+
+  await code.click();
+  await page.keyboard.press("Control+End");
+  await page.keyboard.type("\n.gain(.9)");
+  await page.keyboard.press("Control+Enter");
+  await expect.poll(() => hostTypes(page), { timeout: 5_000 }).toContain("evaluated");
+  await expect(editor.locator(".beat-editor-edited")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(editor).toHaveCount(0);
+  await expect(row).toHaveClass(/is-edited/);
+
+  await page.reload();
+  await page.locator("#screens").getByRole("button", { name: "Music", exact: true }).click();
+  await expect(row).toHaveClass(/is-edited/);
+  await row.getByRole("button", { name: "Open Ember Deep in the beat editor" }).click();
+  // CodeMirror draws only the lines in view; the change is on the last.
+  await code.click();
+  await page.keyboard.press("Control+End");
+  await expect(code).toContainText(".gain(.9)");
+  // The edit is what plays: the host was sent it, not the shipped source.
+  await expect.poll(() => sourcesSent(page, "ember-deep"), { timeout: 5_000 }).toEqual([true]);
+
+  await page.keyboard.type("\n)))(");
+  await page.keyboard.press("Control+Enter");
+  await expect.poll(() => hostTypes(page), { timeout: 5_000 }).toContain("error");
+  await expect(editor.locator(".beat-editor-error")).toBeVisible();
+  // The old pattern plays on: the seconds measured after the error have
+  // events. Three of them, as the menu's layer plays a chord every 2.4 s.
+  const seconds = (await eventsPerSecond(page)).length;
+  await expect
+    .poll(async () => (await eventsPerSecond(page)).length, { timeout: 8_000 })
+    .toBeGreaterThan(seconds + 3);
+  const after = (await eventsPerSecond(page)).slice(seconds + 1);
+  expect(after.reduce((sum, events) => sum + events, 0)).toBeGreaterThan(0);
+
+  await editor.getByRole("button", { name: "Reset to shipped" }).click();
+  await expect(editor.locator(".beat-editor-edited")).toBeHidden();
+  await expect(row).not.toHaveClass(/is-edited/);
+  // The button disables itself; focus goes back to the code, so Esc still closes.
+  await expect(code).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(editor).toHaveCount(0);
+});
+
+test("keys typed in the beat editor reach no skill in a match (#373)", async ({ page }) => {
+  await page.goto("./");
+  await startSoloMatch(page);
+  const effects = page.getByRole("list", { name: "your effects" }).getByRole("listitem");
+  await expect(effects).toHaveCount(0);
+  await page.locator(".hud-music").click();
+  await page.getByRole("button", { name: "Edit what plays" }).click();
+  const editor = page.getByRole("dialog", { name: /^Beat editor: / });
+  await editor.locator(".cm-content").click();
+  // Q is skill 1; skill 5 is a self-cast enchantment, which needs no target.
+  await page.keyboard.type(`q${key("skill-5").replace(/^Key/, "").toLowerCase()}`);
+  await page.waitForTimeout(1000);
+  await expect(effects).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(editor).toHaveCount(0);
 });
 
 test("in the HUD ♪ popover, pinning a track narrows neither its row nor its button (#710)", async ({
@@ -362,6 +464,28 @@ async function recordHostInbox(page: Page): Promise<void> {
       }
     });
   });
+}
+
+/** For each track message the game sent its host for `trackId`: whether it carried `.gain(.9)`. */
+async function sourcesSent(page: Page, trackId: string): Promise<boolean[]> {
+  const host = page.frames().find((frame) => frame.url().includes("music-host"));
+  if (host === undefined) {
+    return [];
+  }
+  return host.evaluate(
+    (id) =>
+      (window as unknown as { fromGame?: unknown[] }).fromGame?.flatMap((message) =>
+        typeof message === "object" &&
+        message !== null &&
+        "trackId" in message &&
+        message.trackId === id &&
+        "source" in message &&
+        typeof message.source === "string"
+          ? [message.source.includes(".gain(.9)")]
+          : [],
+      ) ?? [],
+    trackId,
+  );
 }
 
 /** The levels the game told its host to play, in order. */

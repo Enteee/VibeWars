@@ -32,7 +32,7 @@ describe("parseGameToHost", () => {
       { type: "setIntensity", level: 0 },
       { type: "setIntensity", level: 3 },
       { type: "setVolume", gain: 0.5, rampSeconds: 0.3 },
-      { type: "evaluate", source: 's("hh*8")' },
+      { type: "evaluate", seq: 2, source: 's("hh*8")' },
       { type: "ping", seq: 7 },
       { type: "measure" },
       { type: "audioStress", ms: 2.5 },
@@ -64,6 +64,8 @@ describe("parseGameToHost", () => {
       { type: "setVolume", gain: 2, rampSeconds: 0 },
       { type: "setVolume", gain: 0.5, rampSeconds: -1 },
       { type: "evaluate" },
+      { type: "evaluate", source: 's("hh*8")' },
+      { type: "evaluate", seq: 1.5, source: 's("hh*8")' },
       { type: "ping", seq: 1.5 },
     ]) {
       expect(parseGameToHost(message), JSON.stringify(message)).toBeNull();
@@ -76,8 +78,10 @@ describe("parseHostToGame", () => {
     for (const message of [
       { type: "ready" },
       { type: "playing", trackId: "first-light", cycle: 8, cps: 0.3 },
-      { type: "evaluated" },
+      { type: "evaluated", seq: 2 },
       { type: "error", message: "Unexpected token (3:0)", line: 3 },
+      { type: "error", message: "Unexpected token (3:0)", line: 3, seq: 2 },
+      { type: "error", message: "x is not defined", seq: 4 },
       { type: "error", message: "the source does not end in a pattern" },
       { type: "pong", seq: 3 },
       stats,
@@ -96,6 +100,8 @@ describe("parseHostToGame", () => {
       { type: "error" },
       { type: "error", message: "x".repeat(501) },
       { type: "error", message: "x", line: 0 },
+      { type: "error", message: "x", seq: "2" },
+      { type: "evaluated" },
       { type: "pong" },
       { ...stats, ticks: -1 },
       { ...stats, skippedMs: Number.POSITIVE_INFINITY },

@@ -12,6 +12,7 @@ import {
   type HostedLobby,
 } from "./net/session.js";
 import { startMatchView, type MatchView } from "./match-view.js";
+import { beatEdits } from "./music/beat-edits.js";
 import { musicPlayer } from "./music/music-player.js";
 import { music } from "./music/play-music.js";
 import { TRACKS } from "./music/tracks/index.js";
@@ -25,6 +26,7 @@ import {
 } from "./storage/repository.js";
 import type { StoredCharacter } from "./storage/schema.js";
 import { importTeam, importedTeamSummary, type TeamImportResult } from "./storage/team-transfer.js";
+import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
 import { disposeJukeboxScreen, renderJukeboxScreen } from "./ui/jukebox.js";
 import {
@@ -33,6 +35,7 @@ import {
   openOptionsOverlay,
   renderOptionsScreen,
 } from "./ui/options-screen.js";
+import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import { loadActiveCharacterId, renderMenu, renderTeamList } from "./ui/menu.js";
@@ -106,6 +109,9 @@ async function main(): Promise<void> {
   }
 
   const store = await openStore();
+  // Before any music: a stale edit is gone before it could play (#373).
+  // Its notice goes on the first menu, once.
+  let editNotices = await beatEdits.load(TRACKS);
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
 
@@ -120,6 +126,8 @@ async function main(): Promise<void> {
   /** The lobby this tab hosts, while it hosts one: leaving it ends it for everyone. */
   let hosted: HostedLobby | undefined;
   let match: MatchView | undefined;
+  /** The lobby's chat (#479), for as long as the lobby: on its screen, then over its match. */
+  let chat: ChatPanel | undefined;
   /**
    * Set synchronously the moment a match is requested.
    *
@@ -143,6 +151,7 @@ async function main(): Promise<void> {
    */
   const leaveScreen = (): void => {
     dismissToast();
+    closeBeatEditor();
   };
 
   // The bar's ⚙ opens Options over the screen, which stays as it was
@@ -165,6 +174,16 @@ async function main(): Promise<void> {
     topbar.hidden = visible;
     viewport.style.display = visible ? "block" : "none";
     screenRoot.style.display = visible ? "none" : "flex";
+    if (chat !== undefined) {
+      // Moved, not rebuilt: the lines and a half-typed one come along.
+      (visible ? viewport : app).append(chat.root);
+      chat.setInMatch(visible);
+    }
+  };
+
+  const closeChat = (): void => {
+    chat?.dispose();
+    chat = undefined;
   };
 
   /**
@@ -228,7 +247,8 @@ async function main(): Promise<void> {
     music().screen("menu");
     void (async () => {
       const { characters: list, problems } = await characters.list();
-      renderMenuWith(list, problems);
+      renderMenuWith(list, [...problems, ...editNotices]);
+      editNotices = [];
     })();
   };
 
@@ -495,6 +515,7 @@ async function main(): Promise<void> {
     const ending = hosted;
     lobby = undefined;
     hosted = undefined;
+    closeChat();
     await leaving?.disconnect();
     await ending?.close();
     menuNotice = notice;
@@ -523,6 +544,23 @@ async function main(): Promise<void> {
     // Here and not in renderLobby, which every lobby change repaints:
     // a "Copied" toast outlives a player joining.
     leaveScreen();
+    const joined = lobby;
+    chat = mountChat({
+      selfId: joined.selfSessionId,
+      selfTeam: () =>
+        joined.getSnapshot().players.find((p) => p.sessionId === joined.selfSessionId)?.team ??
+        null,
+      send: (channel, text) => {
+        joined.sendChat(channel, text);
+      },
+    });
+    app.append(chat.root);
+    lobby.onChat((line) => {
+      chat?.add(line);
+    });
+    lobby.onChatThrottled(() => {
+      chat?.notice("Slow down: your last lines were not sent.");
+    });
     lobby.onChange(renderLobby);
     lobby.onStartRejected((reason) => {
       lobbyNotice = reason;
@@ -536,6 +574,7 @@ async function main(): Promise<void> {
       // From the lobby or from its match: either way, it is over.
       lobby = undefined;
       hosted = undefined;
+      closeChat();
       const notice = lobbyClosedNotice(reason);
       if (match !== undefined) {
         void exitMatch(notice);

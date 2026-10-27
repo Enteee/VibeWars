@@ -23,10 +23,10 @@ the server decides what happens (brief §12, §32).
 
 ## Resources
 
-| Resource   | How you get it                                                                             | What it gates     |
-| ---------- | ------------------------------------------------------------------------------------------ | ----------------- |
-| Energy     | Regenerates by profession, up to 50: see below                                             | Most skills       |
-| Adrenaline | +3 each time your attack skill or weapon swing damages an enemy (spells earn none), max 25 | Adrenaline skills |
+| Resource   | How you get it                                                                                       | What it gates     |
+| ---------- | ---------------------------------------------------------------------------------------------------- | ----------------- |
+| Energy     | Regenerates by profession, up to 50: see below                                                       | Most skills       |
+| Adrenaline | Per skill, in strikes: each landed blow on a foe gives every adrenaline skill one (spells earn none) | Adrenaline skills |
 
 Regeneration and degeneration count in **pips**, as in GW1. One health
 pip is 2 HP/s and one energy pip ⅓ energy/s. Every status's pips sum
@@ -71,10 +71,22 @@ energy bar greys the overcast part at its right end and reads energy /
 lowered maximum; the tooltip says "10 energy, 5 overcast".
 
 The split is deliberate. Energy rewards patience; adrenaline rewards
-staying in the fight and landing hits. An adrenaline skill you cannot
-charge is useless, so costs are tuned against what one hit grants — a
-skill costing more than a hit gives would be uncastable in practice,
-which is a bug the catalog's own tests now catch.
+staying in the fight and landing hits.
+
+**Adrenaline is per skill** (#463), as in GW1. A cost is in **strikes**,
+as GW1 prints it: Backbreaker 9, Wild Throw 7, "Watch Yourself!" 4. One
+strike is 25 units (`ADRENALINE_PER_STRIKE`), and each adrenaline skill on
+the bar fills its own pool up to its cost. Every weapon blow that damages
+a foe, a swing, a landed arrow or an attack skill's blow, gives one strike
+to every adrenaline skill that is not recharging: one per blow, not per
+foe, so a cleave across three foes is one strike and a double strike
+whose two blows land is two. Blocked, missed or obstructed blows give
+nothing, and neither do spells. Using an adrenaline skill empties its own
+pool and takes one strike from every other, at activation, so an
+interrupted one has still paid; an attack skill that lands then earns its
+strike back like any blow. Death, respawn and a reset empty every pool.
+Your adrenaline is yours alone: it is sent to you, never in the shared
+snapshot, and a slot greys until its own skill is charged.
 
 Numbers live in the ruleset (`game-core/src/ruleset.ts`), not scattered
 through the server, so the headless runner and the live match cannot
@@ -408,7 +420,9 @@ that weapon: it hits halfway through a swing (or through its own
 activation, if it states one), for the weapon's damage plus the skill's
 bonus, mitigated once, and you
 recover for as long again before you swing or cast. The wind-up shows on
-the cast bar, and an interrupt or a move stops it. No double strike or
+the cast bar and on the held weapon, which cocks back over the whole
+activation and strikes as it ends (#562); an interrupt or a move stops
+it, and the weapon eases back to rest. No double strike or
 cleave on an attack skill. Afterwards you swing at its foe, from a fresh
 swing. Distracting Blow deals no damage: a hit only interrupts, and a
 miss does nothing. It has no attribute, as in GW1, so any warrior can

@@ -393,7 +393,6 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     energy: player.energy,
     maxEnergy: player.maxEnergy,
     overcast: player.overcast,
-    adrenaline: player.adrenaline,
     armor: player.armor,
     weaponId: absent(player.weaponId),
     // One this client does not know draws as none, as the server's does.

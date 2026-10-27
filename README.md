@@ -40,20 +40,21 @@ and pick **join**. The host's tab runs the match, so it has to stay open: if
 it closes, the lobby ends for everyone. The two builds keep separate
 saved characters.
 
-| Key             | Action                              |
-| --------------- | ----------------------------------- |
-| `W` `A` `S` `D` | Move                                |
-| Left click      | Walk there                          |
-| Right click     | Target (double: attack)             |
-| Right drag      | Look around; let go to come back    |
-| Wheel click     | Call a foe, watch an ally, or ping  |
-| `1`–`9`, `0`    | Use the matching skill-bar slot     |
-| `Tab`           | Target the next nearest enemy       |
-| `Shift` `Tab`   | Target the previous one             |
-| `Space`         | Attack your target with your weapon |
-| `Esc`           | Cancel your cast and your attack    |
-| `M`             | Mute or unmute the sound            |
-| `F10`           | Leave the match (asks first)        |
+| Key             | Action                                    |
+| --------------- | ----------------------------------------- |
+| `W` `A` `S` `D` | Move                                      |
+| Left click      | Walk there                                |
+| Right click     | Target (double: attack)                   |
+| Right drag      | Look around; let go to come back          |
+| Wheel click     | Call a foe, watch an ally, or ping        |
+| `1`–`9`, `0`    | Use the matching skill-bar slot           |
+| `Tab`           | Target the next nearest enemy             |
+| `Shift` `Tab`   | Target the previous one                   |
+| `Space`         | Attack your target with your weapon       |
+| `Esc`           | Cancel your cast and your attack          |
+| `M`             | Mute or unmute the sound                  |
+| `F10`           | Leave the match (asks first)              |
+| `Enter`         | Chat: `!` all, `#` team (lobby and match) |
 
 To leave a match, press `F10` or use **leave match** at the top right; it asks first.
 
