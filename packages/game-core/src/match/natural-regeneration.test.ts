@@ -215,7 +215,7 @@ describe("net pips (#504)", () => {
     a.statuses.apply("burning", 60, "b");
     a.statuses.apply("bleeding", 60, "b");
     a.statuses.apply("poison", 60, "b");
-    a.statuses.apply("life-drain", 60, "b");
+    a.statuses.apply("faintheartedness", 60, "b");
     // 4 − 7 − 3 − 4 − 2 = −12: clamped.
     expect(sim.pips(get(sim, "a")).health).toBe(-10);
     const [applied] = pipsNextTick(sim, "a");

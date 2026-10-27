@@ -144,7 +144,7 @@ describe("hitsForCombat (#370)", () => {
       { kind: "damage", targetId: "foe", amount: 9, critical: false },
       { kind: "interrupted", targetId: "foe", skillId: "heal" },
       { kind: "status-applied", targetId: "foe", statusId: "bleeding", durationSeconds: 5 },
-      { kind: "status-applied", targetId: "foe", statusId: "life-drain", durationSeconds: 5 },
+      { kind: "status-applied", targetId: "foe", statusId: "faintheartedness", durationSeconds: 5 },
     ]);
     expect(hitsForCombat(dealt, ME)).toEqual(["dealt", "dealt", "dealt", "dealt"]);
     const taken = message("foe", [
