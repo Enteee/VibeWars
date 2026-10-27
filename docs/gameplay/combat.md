@@ -416,6 +416,27 @@ gives 9 energy and, with the blow's own, 4 strikes. **Mystic Twister**
 to every foe nearby, or 100 if you are enchanted as it lands, in one
 packet. Like any spell it earns its caster no strike.
 
+**The earth enchantments and Eremite's Attack** (#1021). Staggering
+Force, Dust Cloak and Aura of Thorns are flash enchantments (no
+activation, so no interrupt), 10 energy, 30 s. As each lands, every foe
+nearby you takes 34 earth (Staggering Force, 6 s recharge; Dust Cloak,
+10 s) or starts Bleeding for 13 s (Aura of Thorns, 10 s). While
+Staggering Force or Dust Cloak is up, **your attacks deal earth
+damage**, the weapon's roll included. When one **ends**, every foe
+nearby you where they stand then has Cracked Armor for 8 s (Staggering
+Force), is Blinded for 3 s (Dust Cloak) or Crippled for 7 s (Aura of
+Thorns). Any end counts: running out, a strip by your own skill or a
+foe's, your death. A recast while it is up is no end: it strikes or
+bleeds again and keeps one 30 s enchantment. **Eremite's Attack**
+(scythe, 5 energy, 6 s) hits for +8, and, if you have a Dervish
+enchantment as it hits, +8 more and it strikes **every** foe adjacent to
+its target, not just 2. Then you lose your newest Dervish enchantment,
+once, however many it struck, and only if it hit. So Staggering Force,
+then Eremite's Attack, hits a clump for earth and cracks all their
+armor as the enchantment goes. If Sand Shards is your only Dervish
+enchantment and its 4th hit ends it mid-cleave, the foes after it get
+no second +8.
+
 Each condition has a distinct mechanical identity, not just a different
 number:
 
@@ -769,8 +790,9 @@ it, and the weapon eases back to rest. No double strike on an attack
 skill, but **a scythe's attack skill cleaves** as the swing does (#977):
 it also strikes up to 2 foes adjacent to its target, nearest first, picked
 at the hit, and each foe struck rolls its own blind, block and crit and
-gets the skill's effects. A skill with its own area, or another weapon,
-does not cleave. Afterwards you swing at its foe, from a fresh
+gets the skill's effects. Eremite's Attack strikes every foe adjacent
+to its target while you have a Dervish enchantment (#1021). A skill
+with its own area, or another weapon, does not cleave. Afterwards you swing at its foe, from a fresh
 swing. Distracting Blow deals no damage: a hit only interrupts, and a
 miss does nothing. It has no attribute, as in GW1, so any warrior can
 use it and its numbers never scale.
@@ -927,6 +949,13 @@ and a Ranger 70 and 100. Damage halves for every 40 armor above 60:
 Fireball's 91 lands for about 46 on a Ranger. Types that are neither
 physical nor elemental get no typed bonus; base armor still applies.
 Armor penetration cuts the whole total, typed bonus included.
+
+A status can change the type of your attacks (#1021): under Staggering
+Force or Dust Cloak a scythe deals earth, so a Warrior meets it with 80
+armor, not 100, and a Ranger with 100, not 70. It is still an attack:
+blind, block, crits, adrenaline and attack riders are as before, but a
+Rune of Absorption and Mark of Pain, which answer physical damage, do
+not. A skill's own type, as Spear of Lightning's, wins over it.
 
 **Protective Spirit** (#936, Monk, Protection Prayers, 10 energy, ¼ s,
 5 s recharge) lasts 19 s on any ally: no single hit takes more than 10%

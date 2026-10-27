@@ -966,7 +966,7 @@ export function stateHolds(
     case "target-has":
       return target.statuses.countByCategory(condition.category) > 0;
     case "caster-has":
-      return caster.statuses.countByCategory(condition.category) > 0;
+      return caster.statuses.countByCategory(condition.category, condition.profession) > 0;
     case "target-casting": {
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);

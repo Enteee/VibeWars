@@ -564,6 +564,31 @@ const status = {
     "stance",
     (c) => `<path d="M5 9l4 5-4 5M9.5 9l4 5-4 5M14 9l4 5-4 5" ${stroke(c, 2.2)}/>`,
   ],
+  // Enchantment: a peak split down the middle, your attacks are earth and
+  // crack the armor round you when it ends (#1021).
+  "staggering-force": [
+    "enchantment",
+    (c) =>
+      `<path d="M5 18l7-11 7 11z" fill="${c}"/>` +
+      `<path d="M12 9l-1.5 4 2 2-1 3" ${stroke(C.enchantment, 1.6)}/>`,
+  ],
+  // Enchantment: a cloud of grains, your attacks are earth and blind the
+  // foes round you when it ends (#1021).
+  "dust-cloak": [
+    "enchantment",
+    (c) =>
+      `<circle cx="9" cy="10" r="1.6" fill="${c}"/><circle cx="14" cy="8.5" r="1.6" fill="${c}"/>` +
+      `<circle cx="12" cy="13" r="1.6" fill="${c}"/><circle cx="7.5" cy="15" r="1.6" fill="${c}"/>` +
+      `<circle cx="16.5" cy="14" r="1.6" fill="${c}"/><circle cx="12" cy="17.5" r="1.6" fill="${c}"/>`,
+  ],
+  // Enchantment: a ring of thorns, bleeding as it lands and crippling when
+  // it ends (#1021).
+  "aura-of-thorns": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="5" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 4.5v2.5M12 17v2.5M4.5 12h2.5M17 12h2.5M6.7 6.7l1.8 1.8M15.5 15.5l1.8 1.8M17.3 6.7l-1.8 1.8M8.5 15.5l-1.8 1.8" ${stroke(c, 1.8)}/>`,
+  ],
   // Skill effect: a shield struck through, armor lost while the signet is
   // activated (#524).
   "healing-signet-armor": [

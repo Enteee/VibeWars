@@ -365,8 +365,16 @@ export type StateCondition =
   | { readonly kind: "target-has"; readonly category: StatusCategory }
   /** The effect's target is activating a spell (`isSpell`); a chant is not one. */
   | { readonly kind: "target-casting"; readonly spell: true }
-  /** The caster has at least one status of this category. */
-  | { readonly kind: "caster-has"; readonly category: StatusCategory }
+  /**
+   * The caster has at least one status of this category; with a
+   * `profession`, one of that profession's (#1021): Eremite's Attack's
+   * "if a Dervish enchantment is removed", read before it is.
+   */
+  | {
+      readonly kind: "caster-has";
+      readonly category: StatusCategory;
+      readonly profession?: ProfessionId;
+    }
   /**
    * No living ally of the effect's target, the target itself excluded,
    * stands within `radius` of it (#885): Horns of the Ox's "not adjacent
@@ -510,6 +518,14 @@ export interface AttackSkillRule {
   readonly weaponDamage: number;
   /** Added to the weapon's roll before armor; `undefined`: no bonus. */
   readonly bonusDamage: Magnitude | undefined;
+  /**
+   * While this holds for the caster as the skill hits, its cleave takes
+   * every living foe adjacent to its target, not the weapon's
+   * `cleaveTargets` (#1021): Eremite's Attack's "strike all adjacent
+   * foes". Read once, with the primary as the target. A weapon that does
+   * not cleave does not start to. Absent: the weapon's cap.
+   */
+  readonly cleavesAllWhen?: StateCondition;
   /**
    * The blow's damage type instead of the weapon's (#923): Spear of
    * Lightning's whole blow is lightning, weapon and bonus alike.
