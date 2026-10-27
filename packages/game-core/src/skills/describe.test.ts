@@ -409,6 +409,25 @@ describe("describeStatus", () => {
     });
   });
 
+  it("says the curses' triggers from the bearer's side, two alike once (#935)", () => {
+    expect(describeStatus("spiteful-spirit")).toBe(
+      "takes 39 damage whenever it uses a skill or attacks, " +
+        "its adjacent allies take 39 damage whenever it uses a skill or attacks",
+    );
+    expect(describeStatus("mark-of-pain")).toBe(
+      "its adjacent allies take 34 damage whenever it takes physical damage",
+    );
+    expect(describeStatus("insidious-parasite")).toBe(
+      "its caster steals 39 Health whenever it hits with an attack",
+    );
+    expect(
+      describeSkill(
+        skill("necromancer.vampiric-gaze"),
+        new Map([["necromancer.blood-magic", 12]]),
+      ).effects.map(({ text }) => text),
+    ).toEqual(["Steals up to 52 Health"]);
+  });
+
   it("returns the id for an unknown status rather than throwing", () => {
     expect(describeStatus("not-a-status")).toBe("not-a-status");
   });

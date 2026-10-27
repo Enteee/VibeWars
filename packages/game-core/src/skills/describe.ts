@@ -254,9 +254,7 @@ export function describeStatus(id: string): string {
     );
     parts.push(`ends if the bearer becomes ${gained.join(" or ")}`);
   }
-  for (const trigger of definition.triggers) {
-    parts.push(...describeTrigger(trigger));
-  }
+  parts.push(...describeTriggers(definition.triggers));
   return parts.length === 0 ? definition.name : parts.join(", ");
 }
 
@@ -282,32 +280,76 @@ function describeAttackHit(effect: SkillEffect): string[] {
   return describeEffects(effect, new Map()).map(({ text }) => `your physical attacks: ${text}`);
 }
 
+/** What the bearer does that a trigger answers, as its tooltip says it. */
 const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
-  "bearer-casts-spell": "whenever it casts a spell",
-  "bearer-attacks": "whenever it attacks",
-  "bearer-gains-condition": "whenever it gains a new condition",
-  ends: "when it ends",
+  "bearer-casts-spell": "casts a spell",
+  "bearer-attacks": "attacks",
+  "bearer-uses-skill": "uses a skill",
+  "bearer-hits": "hits with an attack",
+  "bearer-takes-physical-damage": "takes physical damage",
+  "bearer-gains-condition": "gains a new condition",
+  ends: "ends",
 };
 
 /**
- * A status's answer to its bearer (#469): "takes 119 damage whenever it
- * casts a spell", "heals its caster for 102 when it ends" (#887).
+ * A status's triggers, those that do the same thing said once (#935):
+ * Spiteful Spirit's "whenever it uses a skill or attacks".
  */
-function describeTrigger(trigger: StatusTrigger): string[] {
-  const when = TRIGGER_WHEN[trigger.on];
+function describeTriggers(triggers: readonly StatusTrigger[]): string[] {
+  const groups = new Map<string, { trigger: StatusTrigger; on: StatusTriggerEvent[] }>();
+  for (const trigger of triggers) {
+    const key = JSON.stringify([trigger.effects, trigger.target]);
+    const group = groups.get(key);
+    if (group === undefined) {
+      groups.set(key, { trigger, on: [trigger.on] });
+    } else {
+      group.on.push(trigger.on);
+    }
+  }
+  return [...groups.values()].flatMap(({ trigger, on }) =>
+    describeTrigger(
+      trigger,
+      on.includes("ends")
+        ? "when it ends"
+        : `whenever it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`,
+    ),
+  );
+}
+
+/**
+ * A status's answer to its bearer (#469): "takes 119 damage whenever it
+ * casts a spell", "heals its caster for 102 when it ends" (#887), "its
+ * adjacent allies take 34 damage whenever it takes physical damage"
+ * (#935).
+ */
+function describeTrigger(trigger: StatusTrigger, when: string): string[] {
+  const amount = (magnitude: Magnitude): string =>
+    String(describeMagnitude(magnitude, new Map()).current);
   return trigger.effects.flatMap((effect) => {
     if (effect.kind === "spread-gained-condition") {
       return [`${when}: foes in the area suffer it too`];
     }
     if (effect.kind === "damage" && trigger.target === "bearer") {
-      return [
-        `takes ${String(describeMagnitude(effect.amount, new Map()).current)} damage ${when}`,
-      ];
+      return [`takes ${amount(effect.amount)} damage ${when}`];
     }
     if (effect.kind === "heal" && trigger.target === "source") {
-      return [
-        `heals its caster for ${String(describeMagnitude(effect.amount, new Map()).current)} ${when}`,
-      ];
+      return [`heals its caster for ${amount(effect.amount)} ${when}`];
+    }
+    if (effect.kind === "life-steal" && trigger.target === "bearer") {
+      return [`its caster steals ${amount(effect.amount)} Health ${when}`];
+    }
+    // The caster's foes beside its bearer are the bearer's allies.
+    if (effect.kind === "splash" && trigger.target === "bearer") {
+      const area = AREA_TEXT.get(effect.radius);
+      const allies =
+        area === "adjacent"
+          ? "its adjacent allies"
+          : `its allies ${area ?? `within ${String(effect.radius)}`}`;
+      return effect.effects.map((inner) =>
+        inner.kind === "damage"
+          ? `${allies} take ${amount(inner.amount)} damage ${when}`
+          : `${when}: ${allies}: ${lowerFirst(describeEffect(inner, new Map()).text)}`,
+      );
     }
     return describeEffects(effect, new Map()).map(({ text }) => `${when}: ${lowerFirst(text)}`);
   });
@@ -454,6 +496,10 @@ function describeEffect(
       const magnitude = describeMagnitude(effect.amount, ranks);
       return { text: `Target loses ${String(magnitude.current)} energy`, magnitude };
     }
+    case "life-steal": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return { text: `Steals up to ${String(magnitude.current)} Health`, magnitude };
+    }
     case "sacrifice-health":
       return {
         text: `You sacrifice ${String(effect.percentOfMax)}% of your maximum health`,
@@ -595,6 +641,13 @@ function headlineOf(
       const magnitude = describeMagnitude(effect.amount, ranks);
       return {
         text: `drains ${String(magnitude.current)} energy`,
+        scales: magnitude.attributeId !== undefined,
+      };
+    }
+    case "life-steal": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return {
+        text: `steals ${String(magnitude.current)} health`,
         scales: magnitude.attributeId !== undefined,
       };
     }
