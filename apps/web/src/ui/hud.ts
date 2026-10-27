@@ -18,6 +18,7 @@ import type {
 
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
+import { paintHealthTint } from "./health-tint.js";
 import {
   attackingIcon,
   isEliteSkill,
@@ -62,6 +63,8 @@ export interface HudElements {
   readonly root: HTMLElement;
   /** Health, energy and statuses, then the skill bar: from its top down, the HUD hides the arena. */
   readonly bars: HTMLElement;
+  /** Your health bar, tinted by your worst degeneration (#807). */
+  readonly healthRow: HTMLElement;
   readonly healthFill: HTMLElement;
   /** The greyed end of the bar: maximum health a deep wound took (#764). */
   readonly healthLost: HTMLElement;
@@ -240,6 +243,7 @@ export function createHud(parent: HTMLElement): HudElements {
   return {
     root,
     bars,
+    healthRow,
     healthFill,
     healthLost,
     healthText,
@@ -775,6 +779,7 @@ function renderTarget(
   hud.targetHealth.hidden = target === undefined;
   if (target !== undefined) {
     hud.targetHealth.classList.toggle("is-dead", target.dead);
+    paintHealthTint(hud.targetHealth, target);
     hud.targetHealthFill.style.width = `${String(targetHealthPercent(target))}%`;
     hud.targetHealthLost.style.width = `${String(lostHealthPercent(target))}%`;
     hud.targetHealthText.textContent = targetHealthLabel(target, self.team);
@@ -812,6 +817,7 @@ export function updateHud(
   const healthText = `${String(Math.round(self.health))} / ${String(Math.round(self.maxHealth))} hp`;
   setBar(hud.healthFill, hud.healthText, self.health, self.maxHealth, healthText);
   hud.healthLost.style.width = `${String(lostHealthPercent(self))}%`;
+  paintHealthTint(hud.healthRow, self);
   // Counted to the ceiling overcast leaves, the rest of the bar greyed (#461).
   const energyText = `${energyLabel(self.energy, self.maxEnergy, self.overcast)} en`;
   setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, energyText);
