@@ -56,6 +56,8 @@
     "weapon-of-warding"
   ],
   "constants": {
+    "FORMATION_SETTLE_MS": { "literal": 3000 },
+    "FORMATION_TIMEOUT_MS": { "literal": 20000 },
     "LOBBY_CODE_ALPHABET": { "literal": "ACDEFGHJKMNPQRTWXY34679" },
     "LOBBY_CODE_LENGTH": { "literal": 6 },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
@@ -81,9 +83,12 @@
     "MAX_WIRE_TEXT": { "literal": 256 },
     "MAX_WIRE_WALLS": { "literal": 1024 },
     "MIN_WIRE_MORALE": { "literal": -60 },
+    "NO_SHOW_IGNORE_MS": { "literal": 120000 },
     "PROTOCOL_MISMATCH_MESSAGE": {
       "literal": "This tab is running an outdated version of VibeWars. Reload the page."
-    }
+    },
+    "TICKET_HEARTBEAT_MS": { "literal": 5000 },
+    "TICKET_TTL_MS": { "literal": 15000 }
   },
   "types": {
     "AdrenalineMessage": {
@@ -900,6 +905,33 @@
             }
           }
         }
+      ]
+    },
+    "QueueMode": {
+      "union": [
+        { "literal": "random-arena-1v1" },
+        { "literal": "random-arena-2v2" },
+        { "literal": "random-arena-4v4" }
+      ]
+    },
+    "QueueTicket": {
+      "properties": [
+        { "name": "enteredAt", "optional": false, "type": "number" },
+        { "name": "heartbeatAt", "optional": false, "type": "number" },
+        {
+          "name": "mode",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "random-arena-1v1" },
+              { "literal": "random-arena-2v2" },
+              { "literal": "random-arena-4v4" }
+            ]
+          }
+        },
+        { "name": "partySize", "optional": false, "type": "number" },
+        { "name": "protocol", "optional": false, "type": "string" },
+        { "name": "ticketId", "optional": false, "type": "string" }
       ]
     },
     "RechargeMessage": {
