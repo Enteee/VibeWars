@@ -316,6 +316,27 @@ export interface AttackSkillRule {
    * `effects` (#534): Swift Chop's damage and Deep Wound. Usually none.
    */
   readonly onBlocked: readonly SkillEffect[];
+  /** Its place in a dagger chain (#831); `undefined`: not a chain attack. */
+  readonly chain: ChainStep | undefined;
+}
+
+/** GW1's dagger chain: a lead attack, then an off-hand, then a dual (#831). */
+export type ChainRole = "lead" | "off-hand" | "dual";
+
+/** Where a chain attack stands in its chain (#831). */
+export interface ChainStep {
+  readonly role: ChainRole;
+  /**
+   * The mark of yours its target must bear for it to hit, as Fox Fangs'
+   * "Must follow a lead attack"; `undefined`: it may open a chain.
+   */
+  readonly follows: ChainRole | undefined;
+}
+
+/** A chain mark one attacker left on one target (#831). */
+export interface ChainMark {
+  readonly role: ChainRole;
+  remainingSeconds: number;
 }
 
 export interface Skill {
@@ -455,6 +476,11 @@ export interface Combatant {
    * its last, so its newest and its oldest can be told apart.
    */
   nextMaintainSeq: number;
+  /**
+   * Chain marks this combatant placed, by target id (#831): what its next
+   * off-hand attack on each may follow.
+   */
+  readonly chainMarks: Map<string, ChainMark>;
   /**
    * Weapon, armor and rune effects, already resolved (ADR-0012).
    *

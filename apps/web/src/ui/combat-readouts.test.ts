@@ -223,6 +223,17 @@ describe("describeCombatEvent", () => {
     expect(logToneOf("attack-unreachable")).toBe("control");
   });
 
+  it("says an off-hand attack out of sequence must follow a lead attack (#831)", () => {
+    const missed: CombatEvent = {
+      kind: "attack-missed",
+      targetId: "dummy",
+      reason: "out-of-sequence",
+    };
+    expect(
+      describeCombatEvent(entry([missed], { skillId: "assassin.fox-fangs" }), missed, nameOf),
+    ).toBe("Fox Fangs (Pyro) misses Caster dummy (must follow a lead attack)");
+  });
+
   it("says why a picky interrupt let a cast through, and nothing when it found none (#796)", () => {
     const spike = { skillId: "mesmer.power-spike" };
     const refused: CombatEvent = {

@@ -245,6 +245,7 @@ describe("describeSkill", () => {
       const described = describeSkill(entry);
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
         lines(entry.effects) +
+          (entry.attack?.chain === undefined ? 0 : 1) +
           (entry.attack?.bonusDamage === undefined ? 0 : 1) +
           (entry.attack?.conditionalBonus === undefined ? 0 : 1) +
           lines(entry.attack?.onBlocked ?? []) +
@@ -277,6 +278,18 @@ describe("attack skills (#417)", () => {
       scythe: "Scythe attack",
     });
     expect(describeSkill(skill("elementalist.fireball")).weaponText).toBeUndefined();
+  });
+
+  it("leads with a chain attack's place in its chain, as GW1 prints it (#831)", () => {
+    const first = (id: string) => describeSkill(skill(id)).effects[0]?.text;
+    expect(first("assassin.jagged-strike")).toBe("Lead attack.");
+    expect(first("assassin.fox-fangs")).toBe("Off-hand attack. Must follow a lead attack.");
+    expect(first("warrior.swift-chop")).not.toMatch(/attack\./);
+  });
+
+  it("chains only dagger attacks, so a chain blow never flies (#831)", () => {
+    const chained = IMPLEMENTED_SKILLS.filter((entry) => entry.attack?.chain !== undefined);
+    expect(chained.map((entry) => entry.attack?.weapon)).toEqual(chained.map(() => "daggers"));
   });
 
   it("words the bonus as +N damage at these ranks, and leads with it", () => {

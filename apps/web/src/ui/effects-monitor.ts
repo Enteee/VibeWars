@@ -123,11 +123,15 @@ function renderTip(node: HTMLElement, row: EffectRow): void {
  * The monitor, in `parent`, with icons `size` px square. `update` reuses
  * each status's icon by id, so a frame touches only what changed.
  */
-export function createEffectsMonitor(parent: HTMLElement, size: number): EffectsMonitor {
+export function createEffectsMonitor(
+  parent: HTMLElement,
+  size: number,
+  label: string,
+): EffectsMonitor {
   const root = document.createElement("div");
   root.className = "effects-monitor";
   root.setAttribute("role", "list");
-  root.setAttribute("aria-label", "your effects");
+  root.setAttribute("aria-label", label);
   root.style.setProperty("--effect-size", `${String(size)}px`);
   root.hidden = true;
   parent.appendChild(root);

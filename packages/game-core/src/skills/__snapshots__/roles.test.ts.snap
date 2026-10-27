@@ -2,8 +2,11 @@
 
 exports[`skillRoles > tags the whole catalogue the same way every time 1`] = `
 {
+  "assassin.black-lotus-strike": "",
   "assassin.dash": "",
+  "assassin.fox-fangs": "",
   "assassin.jagged-strike": "condition",
+  "assassin.wild-strike": "",
   "dervish.fleeting-stability": "",
   "dervish.heart-of-fury": "",
   "dervish.mystic-regeneration": "",
