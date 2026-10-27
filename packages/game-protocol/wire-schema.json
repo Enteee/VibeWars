@@ -18,6 +18,7 @@
     "lobby-state",
     "lobby-cmd",
     "lobby-note",
+    "lobby-hello",
     "lobby-welcome",
     "match-start",
     "rejoin-challenge",
@@ -169,6 +170,7 @@
         { "literal": "hello" },
         { "literal": "intent" },
         { "literal": "lobby-cmd" },
+        { "literal": "lobby-hello" },
         { "literal": "lobby-join" },
         { "literal": "lobby-note" },
         { "literal": "lobby-state" },
@@ -844,6 +846,7 @@
         }
       ]
     },
+    "PeerLobbyHello": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
     "PeerLobbyJoin": {
       "properties": [
         {

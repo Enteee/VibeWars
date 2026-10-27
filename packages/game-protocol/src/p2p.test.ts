@@ -43,6 +43,7 @@ import {
   parsePeerLobbyJoin,
   parseWireLobbyCommand,
   parseWireLobbyNote,
+  parsePeerLobbyHello,
   parseWireLobbyWelcome,
   parseWireLobbyState,
   parseWireMatchStart,
@@ -391,6 +392,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["lobby-join", parsePeerLobbyJoin, lobbyJoin],
   ["lobby-join on the house loadout", parsePeerLobbyJoin, { ...lobbyJoin, character: null }],
   ["queued lobby-join (#871)", parsePeerLobbyJoin, { ...lobbyJoin, admission }],
+  ["lobby-hello (#871)", parsePeerLobbyHello, {}],
   ["lobby-welcome (#871)", parseWireLobbyWelcome, { hostSig: "ef".repeat(64) }],
   [
     "counting-down lobby-state (#871)",
@@ -856,6 +858,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parsePeerLobbyJoin,
     { ...lobbyJoin, admission: { ticketId: admission.ticketId } },
   ],
+  ["lobby-hello with a field (#871)", parsePeerLobbyHello, { ticketId: "ab".repeat(32) }],
   ["lobby-welcome of no signature (#871)", parseWireLobbyWelcome, {}],
   [
     "lobby-welcome of a non-hex signature (#871)",

@@ -4,6 +4,7 @@ import {
   PROTOCOL_VERSION,
   helloProtocolVersion,
   parsePeerChat,
+  parsePeerLobbyHello,
   parsePeerLobbyJoin,
   parseWireLobbyCommand,
   type LobbyPhase,
@@ -145,6 +146,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const chatBudget = new MessageBudget(CHAT_LINES_PER_SECOND, CHAT_BURST, () => undefined);
   /** Peers already told their lines are dropped, until one gets through: once a burst. */
   const throttled = new Set<string>();
+  /** Peers a queued lobby has welcomed: each once, while it is here. */
+  const welcomed = new Set<string>();
   let phase: LobbyPhase = "waiting";
   let mapId = queued?.group.mapId ?? defaultMap;
   let joined = 0;
@@ -321,6 +324,16 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     phase = "starting";
   };
 
+  /** The host's proof to `to`, over the `vibewars-host` digest made for it; once. */
+  const sendWelcome = (plan: QueuedPlan, hostDigest: Uint8Array, to: string): void => {
+    if (welcomed.has(to)) {
+      return;
+    }
+    welcomed.add(to);
+    const welcome: WireLobbyWelcome = { hostSig: plan.key.sign(hostDigest) };
+    transport.send("lobby-welcome", welcome, to);
+  };
+
   /**
    * Welcome `from` with the host's proof, whoever it is, so even a
    * refusal comes from the planned host; then seat it on its planned team
@@ -347,8 +360,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (closed || members.has(from)) {
       return;
     }
-    const welcome: WireLobbyWelcome = { hostSig: key.sign(hostDigest) };
-    transport.send("lobby-welcome", welcome, from);
+    sendWelcome(plan, hostDigest, from);
     if (!proven) {
       refuse(from, "not-admitted");
       return;
@@ -359,6 +371,26 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
     admit(from, join, team, admission.ticketId);
   };
+
+  // A queued joiner asks before it joins: its proof goes only to a peer
+  // whose welcome proved it this lobby's host.
+  transport.on("lobby-hello", (data, from) => {
+    if (
+      queued === undefined ||
+      closed ||
+      members.has(from) ||
+      !budget.take(from, nowMs()) ||
+      parsePeerLobbyHello(data) === undefined
+    ) {
+      return;
+    }
+    const { group, key } = queued;
+    void admissionDigest("vibewars-host", group.groupId, key.ticketId, from).then((digest) => {
+      if (!closed && !members.has(from)) {
+        sendWelcome(queued, digest, from);
+      }
+    });
+  });
 
   transport.on("lobby-join", (data, from) => {
     if (closed || !budget.take(from, nowMs()) || (members.has(from) && !away.has(from))) {
@@ -554,6 +586,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     budget.forget(peerId);
     chatBudget.forget(peerId);
     throttled.delete(peerId);
+    welcomed.delete(peerId);
     if (peerId === local.selfId) {
       // The host's own player went: there is no lobby without its host.
       void host.close();

@@ -45,6 +45,7 @@ export const CHANNELS = [
   "lobby-state",
   "lobby-cmd",
   "lobby-note",
+  "lobby-hello",
   "lobby-welcome",
   "match-start",
   "rejoin-challenge",
@@ -501,6 +502,14 @@ export interface WireAdmission {
   /** 128 lowercase hex digits. */
   readonly admissionSig: string;
 }
+
+/**
+ * A queued joiner to the room, and to each peer as it arrives (#871):
+ * "if you host here, welcome me". It carries nothing, so it may go to
+ * the room; the join, with its proof, goes only to a peer whose welcome
+ * proved it the planned host.
+ */
+export type PeerLobbyHello = Readonly<Record<string, never>>;
 
 /**
  * Queued lobby host to one joiner, and only to it (#871): `hostSig` is
@@ -1363,6 +1372,12 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     character,
     admission,
   };
+}
+
+/** The `"lobby-hello"` channel. */
+export function parsePeerLobbyHello(value: unknown): PeerLobbyHello | undefined {
+  const raw = fields(value);
+  return raw !== undefined && Object.keys(raw).length === 0 ? {} : undefined;
 }
 
 /** The `"lobby-welcome"` channel. */

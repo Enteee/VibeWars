@@ -275,17 +275,31 @@ describe("a queued lobby", () => {
     expect(peer.notes).toEqual([{ kind: "refused", reason: "not-admitted" }]);
   });
 
-  it("sends joins and welcomes to one peer each, never to the room", async () => {
+  it("sends its join to the proven host alone, and only a hello to the room", async () => {
     const queued = await openQueued();
+    const bystander = queued.network.join();
+    const overheard: unknown[] = [];
+    bystander.on("lobby-join", (data) => overheard.push(data));
     const sent: { channel: Channel; to: string | undefined }[] = [];
-    await queued.join(ALLY, spied(queued.network.join(), sent));
+    const ally = queued.network.join();
+    await queued.join(ALLY, spied(ally, sent));
     const joins = sent.filter((message) => message.channel === "lobby-join");
     const welcomes = queued.sent.filter((message) => message.channel === "lobby-welcome");
-    expect(joins.length).toBeGreaterThan(0);
-    expect(joins.every((message) => message.to !== undefined)).toBe(true);
-    // The host's own player is welcomed past the room, through its local peer.
-    expect(welcomes).toHaveLength(1);
-    expect(welcomes.every((message) => message.to !== undefined)).toBe(true);
+    expect(sent).toContainEqual({ channel: "lobby-hello", to: undefined });
+    expect(joins).toEqual([{ channel: "lobby-join", to: "host" }]);
+    expect(overheard).toEqual([]);
+    // Once, though its hello and its join both asked; the host's own player
+    // is welcomed past the room, through its local peer.
+    expect(welcomes).toEqual([{ channel: "lobby-welcome", to: ally.selfId }]);
+  });
+
+  it("seats a joiner that asks long after its peer joined the room", async () => {
+    const queued = await openQueued();
+    // Every peer's arrival is told before the joiner listens for it.
+    const late = queued.network.join();
+    await settle();
+    await queued.join(ALLY, late);
+    expect(teamsOf(queued.host)).toEqual({ "ticket-1": 0, "ticket-2": 0 });
   });
 
   it("takes no lobby from a peer whose welcome does not prove the planned host", async () => {
@@ -295,24 +309,27 @@ describe("a queued lobby", () => {
     ] as const) {
       const network = createMemoryNetwork();
       const impostor = network.join("impostor");
-      impostor.on("lobby-join", (_data, from) => {
+      // A lobby that lists the joiner, to its hello and to its join.
+      const answer = (from: string): void => {
+        const state: WireLobbyState = {
+          code: GROUP_ID,
+          phase: "waiting",
+          mapId: "other-arena",
+          hostId: "impostor",
+          matchId: null,
+          players: [{ id: from, name: "x", team: 1, ready: false, isHost: false, character: null }],
+          countdownSeconds: null,
+        };
+        impostor.send("lobby-state", state, from);
+      };
+      impostor.on("lobby-hello", (_data, from) => {
         void admissionDigest("vibewars-host", GROUP_ID, HOST, from).then((digest) => {
           const welcome: WireLobbyWelcome = { hostSig: keyOf(signer).sign(digest) };
           impostor.send("lobby-welcome", welcome, from);
-          const state: WireLobbyState = {
-            code: GROUP_ID,
-            phase: "waiting",
-            mapId: "other-arena",
-            hostId: "impostor",
-            matchId: null,
-            players: [
-              { id: from, name: "x", team: 1, ready: false, isHost: false, character: null },
-            ],
-            countdownSeconds: null,
-          };
-          impostor.send("lobby-state", state, from);
+          answer(from);
         });
       });
+      impostor.on("lobby-join", (_data, from) => answer(from));
       const joining = joinQueued(network.join(), FOE, 200);
       if (joins) {
         await expect(joining).resolves.toBeDefined();

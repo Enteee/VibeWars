@@ -9,6 +9,7 @@ import {
   parseWireLobbyWelcome,
   parseWireMatchStart,
   type LobbyRefusal,
+  type PeerLobbyHello,
   type PeerLobbyJoin,
   type WireLobbyCommand,
   type WireLobbyState,
@@ -42,9 +43,10 @@ import type { Transport, TransportTrouble } from "./transport.js";
  * is back, joins again: the host dropped this player from the lobby as it
  * went, and the match's end would otherwise find nobody to return to.
  *
- * A queued lobby's joiner (#871) proves its ticket in its join, sent to
- * each peer alone, never to the room, and takes lobby messages only from
- * a peer whose welcome proves it holds the planned host's ticket.
+ * A queued lobby's joiner (#871) says only hello to the room and to each
+ * peer as it arrives. A peer whose welcome proves it holds the planned
+ * host's ticket gets the join, with this ticket's proof, to it alone;
+ * lobby messages count only from such a peer.
  */
 
 /** Nobody answered: a wrong code, or a host that cannot be reached. */
@@ -100,14 +102,28 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     name: options.name,
     character: options.character,
   };
-  /** Once made: a queued join waits for its proof. */
-  let join: PeerLobbyJoin | undefined =
-    queued === undefined ? { ...base, admission: null } : undefined;
-  /** Who a queued join is owed to while its proof is being made. */
-  const owed: string[] = [];
-  /** What a queued host's welcome to this peer signs, once made. */
-  let hostDigest: Uint8Array | undefined;
-  /** Peers whose welcome proved them the planned host. */
+  /** A coded lobby's join; a queued one's is made with its proof. */
+  const codedJoin: PeerLobbyJoin = { ...base, admission: null };
+  /** A queued join, and what the planned host's welcome to this peer signs. */
+  const proof =
+    queued === undefined
+      ? undefined
+      : Promise.all([
+          admissionDigest(
+            "vibewars-admit",
+            queued.group.groupId,
+            queued.group.hostTicketId,
+            selfId,
+          ),
+          admissionDigest("vibewars-host", queued.group.groupId, queued.group.hostTicketId, selfId),
+        ]).then(([admit, hostDigest]) => ({
+          join: {
+            ...base,
+            admission: { ticketId: queued.key.ticketId, admissionSig: queued.key.sign(admit) },
+          } satisfies PeerLobbyJoin,
+          hostDigest,
+        }));
+  /** Peers whose welcome proved them the planned host; each got the join once. */
   const provenHosts = new Set<string>();
   const unsubscribe: (() => void)[] = [];
   let hostId: string | undefined;
@@ -156,13 +172,28 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
 
   /** Join through `to`; a coded lobby's first join may go to the whole room. */
   const sendJoin = (to?: string): void => {
-    if (join === undefined) {
-      if (to !== undefined) {
-        owed.push(to);
-      }
-      return;
+    if (proof === undefined) {
+      transport.send("lobby-join", codedJoin, to);
+    } else if (to !== undefined) {
+      void proof.then(({ join }) => {
+        if (!stopped) {
+          transport.send("lobby-join", join, to);
+        }
+      });
     }
-    transport.send("lobby-join", join, to);
+  };
+
+  /**
+   * Make this peer known to `to`, or to the room: a coded lobby's join,
+   * or a queued one's hello, which carries nothing and asks a host to
+   * prove itself before the join goes to it.
+   */
+  const knock = (to?: string): void => {
+    if (queued === undefined) {
+      sendJoin(to);
+    } else {
+      transport.send("lobby-hello", {} satisfies PeerLobbyHello, to);
+    }
   };
 
   /** Whether lobby messages from `from` count before the host is known. */
@@ -264,15 +295,22 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       }),
       transport.on("lobby-welcome", (data, from) => {
         const welcome = parseWireLobbyWelcome(data);
-        if (
-          queued !== undefined &&
-          hostId === undefined &&
-          hostDigest !== undefined &&
-          welcome !== undefined &&
-          queued.verifyTicketSig(queued.group.hostTicketId, hostDigest, welcome.hostSig)
-        ) {
-          provenHosts.add(from);
+        if (queued === undefined || proof === undefined || welcome === undefined) {
+          return;
         }
+        void proof.then(({ hostDigest }) => {
+          if (
+            stopped ||
+            hostId !== undefined ||
+            provenHosts.has(from) ||
+            !queued.verifyTicketSig(queued.group.hostTicketId, hostDigest, welcome.hostSig)
+          ) {
+            return;
+          }
+          // Proven the planned host: the join, with its proof, goes to it alone.
+          provenHosts.add(from);
+          sendJoin(from);
+        });
       }),
       transport.on("lobby-state", (data, from) => {
         // Only the host's, once it is known; before that, only a state the
@@ -367,7 +405,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       transport.onPeerJoin((peerId) => {
         // Said to every peer in the room: until one answers, any might host.
         if (hostId === undefined) {
-          sendJoin(peerId);
+          knock(peerId);
           return;
         }
         if (peerId !== hostId || droppedAt === undefined) {
@@ -397,27 +435,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         }, RECONNECT_WINDOW_SECONDS * 1000);
       }),
     );
-    if (queued === undefined) {
-      // And to those already here, in case their joins were told before now.
-      sendJoin();
-      return;
-    }
-    const { group, key } = queued;
-    void Promise.all([
-      admissionDigest("vibewars-admit", group.groupId, group.hostTicketId, selfId),
-      admissionDigest("vibewars-host", group.groupId, group.hostTicketId, selfId),
-    ]).then(([admit, welcome]) => {
-      if (stopped) {
-        return;
-      }
-      hostDigest = welcome;
-      join = {
-        ...base,
-        admission: { ticketId: key.ticketId, admissionSig: key.sign(admit) },
-      };
-      for (const to of owed.splice(0)) {
-        sendJoin(to);
-      }
-    });
+    // And to those already here, in case their joins were told before now.
+    knock();
   });
 }
