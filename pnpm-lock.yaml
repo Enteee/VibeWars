@@ -62,6 +62,9 @@ importers:
       '@codemirror/view':
         specifier: 6.43.15
         version: 6.43.15
+      '@lezer/highlight':
+        specifier: 1.2.5
+        version: 1.2.5
       '@strudel/core':
         specifier: 1.2.6
         version: 1.2.6
