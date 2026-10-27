@@ -27,7 +27,12 @@ function wounded(
     attributeRanks: new Map([["elementalist.fire-magic", 12]]),
     equipment: {
       ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-      mainHand: { weapon, attributeId: "ranger.marksmanship", requirementMet: true },
+      mainHand: {
+        weapon,
+        attributeId: "ranger.marksmanship",
+        damageType: weapon.damageType,
+        requirementMet: true,
+      },
     },
     spawn,
     facing: 0,

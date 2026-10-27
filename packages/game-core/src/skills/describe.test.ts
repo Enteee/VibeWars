@@ -64,6 +64,15 @@ describe("describeSkill", () => {
     expect(atZero.effects[0]?.text).toBe(explicitZero.effects[0]?.text);
   });
 
+  it("says how much armor a damage effect ignores, when it ignores any (#761)", () => {
+    const orb = describeSkill(
+      skill("elementalist.lightning-orb"),
+      new Map([["elementalist.air-magic", 12]]),
+    );
+    expect(orb.effects[0]?.text).toBe("Deals 82 damage (25% armor penetration)");
+    expect(describeSkill(skill("elementalist.fireball")).effects[0]?.text).not.toContain("armor");
+  });
+
   it("names the attribute in readable form", () => {
     expect(describeSkill(skill("elementalist.fireball")).attributeName).toBe("Fire Magic");
   });

@@ -23,8 +23,8 @@ import {
   type RuneTier,
   type UniversalRuneId,
 } from "./runes.js";
-import type { ArmorSlot, EquipmentRequirement } from "./types.js";
-import { getWeapon, type Weapon } from "./weapons.js";
+import type { ArmorSlot, DamageType, EquipmentRequirement } from "./types.js";
+import { getWeapon, weaponDamageType, type Weapon } from "./weapons.js";
 
 /**
  * Turning a build's gear into the numbers the simulation uses
@@ -43,6 +43,8 @@ export interface ResolvedWeapon {
   readonly weapon: Weapon;
   /** The attribute its damage scales with, if any. */
   readonly attributeId: string | undefined;
+  /** What its blows deal: a wand or staff takes the nominated attribute's element (#761). */
+  readonly damageType: DamageType;
   /** Whether the bearer actually meets the requirement. */
   readonly requirementMet: boolean;
 }
@@ -325,6 +327,7 @@ function resolveWeapon(
   return {
     weapon: resolved,
     attributeId,
+    damageType: weaponDamageType(resolved, attributeId),
     // Fists and anything else with no attribute link are always "met":
     // there is no training that would improve them.
     requirementMet: attributeId === undefined || rankOf(attributeId) >= resolved.requirement.rank,
@@ -338,7 +341,12 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
     throw new Error("internal: the unarmed fallback is missing from the weapon catalog");
   }
   return {
-    mainHand: { weapon: unarmed, attributeId: undefined, requirementMet: true },
+    mainHand: {
+      weapon: unarmed,
+      attributeId: undefined,
+      damageType: unarmed.damageType,
+      requirementMet: true,
+    },
     baseArmor,
     conditionalArmor: [],
     flatPhysicalReduction: 0,

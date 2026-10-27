@@ -1833,7 +1833,7 @@ export class MatchSimulation {
           ...attackHitRiders(
             attacker.combatant,
             target.combatant,
-            projectile.weaponSnapshot.mainHand.weapon,
+            projectile.weaponSnapshot.mainHand,
             this.#rng,
             this.#ruleset.combat,
           ),

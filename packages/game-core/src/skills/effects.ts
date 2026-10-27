@@ -353,7 +353,7 @@ export function applyEffect(
       if (amount <= 0) {
         return events;
       }
-      const packet = skillDamage(amount, effect.type);
+      const packet = skillDamage(amount, effect.type, effect.armorPenetration);
       applyDamage(target, mitigate(packet, target, context.rules), false, events);
       return events;
     }

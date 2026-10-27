@@ -895,6 +895,7 @@ describe("moving cancels a cast (#279)", () => {
               mainHand: {
                 weapon: WEAPONS.longbow,
                 attributeId: "ranger.marksmanship",
+                damageType: WEAPONS.longbow.damageType,
                 requirementMet: true,
               },
             },

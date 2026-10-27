@@ -19,12 +19,14 @@ export {
 export type { DoubleStrikeRule, Weapon, WeaponGrip, WeaponId } from "./weapons.js";
 export {
   ALL_WEAPONS,
+  CASTER_WEAPON_ELEMENT,
   LONG_BOW_RANGE,
   UNARMED_WEAPON_ID,
   WEAPONS,
   allowsOffhand,
   getWeapon,
   isWeaponId,
+  weaponDamageType,
   wieldsFor,
 } from "./weapons.js";
 
