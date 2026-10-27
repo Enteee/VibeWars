@@ -333,6 +333,18 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
   ["ended", parseWireEnded, ended],
+  ["ended by a wipe (#846)", parseWireEnded, { winningTeam: 1, endReason: "annihilation" }],
+  ["ended at time by morale (#846)", parseWireEnded, { winningTeam: null, endReason: "morale" }],
+  [
+    "snapshot ended by a wipe (#846)",
+    parseWireSnapshotPart,
+    { ...snapshot, phase: "finished", winningTeam: 0, endReason: "annihilation" },
+  ],
+  [
+    "snapshot ended by morale (#846)",
+    parseWireSnapshotPart,
+    { ...snapshot, phase: "finished", winningTeam: null, endReason: "morale" },
+  ],
   ["refused", parseCastRefused, refused],
   ["refused attack", parseCastRefused, { kind: "attack", reason: "no-weapon" }],
   ["recharge", parseRecharge, recharge],

@@ -26,8 +26,8 @@
 import { shortFlag } from "./hub-filter.mjs";
 
 /**
- * The eight roles. Order is the org chart, roughly. The default staff is
- * nine: `developer` starts with two (staff.mjs DEFAULT_HEADCOUNT).
+ * The nine roles. Order is the org chart, roughly. The default staff is
+ * ten: `developer` starts with two (staff.mjs DEFAULT_HEADCOUNT).
  */
 export const ROLES = [
   "manager",
@@ -38,17 +38,19 @@ export const ROLES = [
   "lead-dev",
   "perf-sec-qa",
   "qa-tester",
+  "business-analyst",
 ];
 
 /** Who keeps recurring reminders to themselves (#678). No hat lends it. */
 export const SCHEDULERS = Object.freeze(["manager", "architect", "lead-dev"]);
 
 /**
- * Who may read code-scanning alerts (#184): today's eight roles, named
+ * Who may read code-scanning alerts (#184): the eight roles of the time, named
  * here rather than taken from ROLES. An open alert is an unfixed
  * vulnerability, the one thing hub reads that is not public, so a role
  * added to ROLES later, such as #131's public-facing support agent, gets
- * none until someone decides here that it should.
+ * none until someone decides here that it should. The business-analyst (#893)
+ * does not: it advises on flow and needs no open vulnerabilities.
  */
 const ALERT_READERS = Object.freeze([
   "manager",
@@ -101,6 +103,23 @@ const PR_OPENERS = [...IMPLEMENTERS, ...Object.keys(PUSH_SCOPES)];
 
 /** Roles that review code. Note: neither may merge. */
 const REVIEWERS = ["lead-dev", "perf-sec-qa"];
+
+/**
+ * Who may comment on an issue or a pull request: named, so a role added
+ * later talks on GitHub only once someone decides it should. Not the
+ * business-analyst, which reads and advises the manager and writes nothing
+ * on GitHub (#893).
+ */
+const COMMENTERS = [
+  "manager",
+  "architect",
+  "developer",
+  "asset-designer",
+  "cicd-engineer",
+  "lead-dev",
+  "perf-sec-qa",
+  "qa-tester",
+];
 
 /**
  * Paths whose contents define the automated quality gates. A change here can
@@ -193,9 +212,9 @@ const RULES = [
   { argv: ["workflow", "list"], roles: "*" },
   { argv: ["workflow", "view"], roles: "*" },
 
-  /* ---- commenting. Everyone can talk on an issue or a PR. -------------- */
-  { argv: ["issue", "comment"], roles: "*" },
-  { argv: ["pr", "comment"], roles: "*" },
+  /* ---- commenting. Every role but the read-only business-analyst (#893). */
+  { argv: ["issue", "comment"], roles: COMMENTERS },
+  { argv: ["pr", "comment"], roles: COMMENTERS },
 
   /* ---- the manager runs the backlog and the board. --------------------- */
   // The CI/CD engineer files the bug when main goes red (#164): it is the
@@ -976,8 +995,8 @@ function authorizeStaff(role, argv) {
 
 /**
  * `company load` (#747): what the manager's staffing review is decided
- * on, the dashboard's numbers as text. The manager's, as hiring is; it
- * takes no words.
+ * on, the dashboard's numbers as text. The manager's, as hiring is, and
+ * the business-analyst's, which advises on it (#893); it takes no words.
  *
  * @param {string} role
  * @param {string[]} argv
@@ -987,9 +1006,9 @@ function authorizeLoad(role, argv) {
   if (argv.length > 0) {
     return { allow: false, reason: "usage: company load" };
   }
-  return role === "manager"
+  return role === "manager" || role === "business-analyst"
     ? { allow: true }
-    : { allow: false, reason: "only the manager reads the company's load" };
+    : { allow: false, reason: "only the manager and the business-analyst read the company's load" };
 }
 
 /**

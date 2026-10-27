@@ -22,7 +22,7 @@ stack(
   n("0 0 [0 7] 0 0 [0 7] 0 0 0 [0 7] 0 [4 3] 0 0 [2 0]".add("<0 0 1 0 0 0 -1 0 0 2 0 0 -2 0 0 3>")).scale("a2:dorian")
     .s("sawtooth").decay(.1).sustain(0).release(.05).gain(.45).lpf(ref(() => 600 + INTENSITY * 500)).roomsize(6).orbit(2),
   chord(P).voicing().mode("below:e4")
-    .s("supersaw").unison(3).detune(.2).attack(.1).release(.6).gain(.22)
+    .s("supersaw").unison(2).detune(.2).attack(.1).clip(.9).release(.15).gain(.22)
     .lpf(1400).room(.4).roomsize(6).orbit(2),
   s("timp:1 ~ ~ ~ timp:1 ~ ~ ~").gain(.5).room(.3),
   // 1: frame drums drive the offbeat, the lute stabs

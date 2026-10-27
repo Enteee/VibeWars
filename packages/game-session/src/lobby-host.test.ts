@@ -331,13 +331,15 @@ describe("canStart", () => {
 });
 
 describe("playing more than one match in a lobby", () => {
-  /** A host on team 0 and a guest on team 1, both playing the lobby's first match. */
-  async function startAMatch(options: { timeLimitSeconds?: number } = {}) {
+  /** A host on team 0 and a guest on team 1, unless `teams` says otherwise, both playing the lobby's first match. */
+  async function startAMatch(
+    options: { timeLimitSeconds?: number; teams?: readonly [0 | 1, 0 | 1] } = {},
+  ) {
     const lobby = await openLobby({
       matchRules: { ...DEFAULT_MATCH_RULES, timeLimitSeconds: options.timeLimitSeconds ?? 600 },
     });
     const guest = await lobby.join();
-    await seat([lobby.host, guest], [0, 1]);
+    await seat([lobby.host, guest], options.teams ?? [0, 1]);
     await start(lobby);
     const matches = [await play(lobby.host, "Host"), await play(guest, "Guest")];
     return { lobby, guest, matches };
@@ -399,7 +401,8 @@ describe("playing more than one match in a lobby", () => {
   });
 
   it("stays in its match while anyone is still playing it", async () => {
-    const { lobby, matches } = await startAMatch();
+    // Teammates: walking out of a 1v1 wipes your team, which ends it.
+    const { lobby, matches } = await startAMatch({ teams: [0, 0] });
     const [hostMatch, guestMatch] = matches;
     // The host walking out early must not end the match for the guest.
     await hostMatch?.disconnect();

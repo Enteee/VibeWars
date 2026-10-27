@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import { segment } from "../geometry.js";
-import type { MatchRules } from "../match-rules.js";
+import { DEFAULT_MATCH_RULES, type MatchRules } from "../match-rules.js";
 import { BASE_ENERGY_PIPS_BY_PROFESSION } from "../equipment/armor.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
@@ -22,6 +22,7 @@ const BACKBREAKER = "warrior.backbreaker";
 /** An elementalist's energy regeneration, per second. */
 const CASTER_REGEN = BASE_ENERGY_PIPS_BY_PROFESSION.elementalist * ENERGY_PER_PIP;
 const MATCH: MatchRules = {
+  victory: "kill-count",
   scoreToWin: 2,
   timeLimitSeconds: 600,
   deathRule: "respawn",
@@ -588,6 +589,40 @@ describe("match end", () => {
       phase: "finished",
       log: [],
     });
+  });
+
+  it("under the default annihilation, keeps the dead down and ends on the wipe (#846)", () => {
+    const sim = new MatchSimulation({
+      seed: "annihilation",
+      matchRules: DEFAULT_MATCH_RULES,
+      participants: [
+        spec("a", 0, vec2(0, 0)),
+        spec("b", 1, vec2(200, 0)),
+        spec("c", 1, vec2(0, 200)),
+      ],
+    });
+    participant(sim, "b").combatant.health = 1;
+    participant(sim, "c").combatant.health = 1;
+    sim.setTarget("a", "b");
+    sim.requestSkill("a", 0);
+    // Past kill-count's 8 s respawn, and past Fireball's recharge.
+    stepFor(sim, 10);
+    expect(participant(sim, "b").combatant.dead).toBe(true);
+    expect(sim.phase).toBe("active");
+
+    sim.setTarget("a", "c");
+    sim.requestSkill("a", 0);
+    stepFor(sim, 2);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "annihilation" });
+    expect(participant(sim, "b").combatant.dead).toBe(true);
+  });
+
+  it("counts a team whose members all left as wiped (#846)", () => {
+    const sim = duel(DEFAULT_MATCH_RULES);
+    sim.step(DT);
+    sim.remove("b");
+    sim.step(DT);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "annihilation" });
   });
 
   it("never ends, and nobody respawns, without match rules", () => {

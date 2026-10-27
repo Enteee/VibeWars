@@ -60,6 +60,7 @@ let
     "lead-dev"
     "perf-sec-qa"
     "qa-tester"
+    "business-analyst"
   ];
 
   session = "vibewars-llc";

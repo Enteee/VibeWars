@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
-import { DEFAULT_MATCH_RULES, moraleMaximum, type MatchRules } from "../match-rules.js";
+import { KILL_COUNT_MATCH_RULES, moraleMaximum, type MatchRules } from "../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
@@ -17,6 +17,7 @@ const DT = 1 / RULES.tickRateHz;
 const BASE_HEALTH = RULES.combat.baseHealth;
 const BASE_ENERGY = RULES.combat.baseEnergy;
 const DP: MatchRules = {
+  victory: "kill-count",
   scoreToWin: 99,
   timeLimitSeconds: 600,
   deathRule: "respawn",
@@ -114,11 +115,11 @@ describe("morale and the death penalty (#843)", () => {
     expect(a.maxEnergy).toBe(BASE_ENERGY);
   });
 
-  it("takes nothing with the death penalty off: today's default match", () => {
-    expect(DEFAULT_MATCH_RULES.deathPenalty).toBe(false);
-    const sim = match(DEFAULT_MATCH_RULES);
+  it("takes nothing with the death penalty off: the kill-count match", () => {
+    expect(KILL_COUNT_MATCH_RULES.deathPenalty).toBe(false);
+    const sim = match(KILL_COUNT_MATCH_RULES);
     kill(sim, "a", "x");
-    stepFor(sim, DEFAULT_MATCH_RULES.respawnSeconds + DT);
+    stepFor(sim, KILL_COUNT_MATCH_RULES.respawnSeconds + DT);
     for (const id of ["a", "m", "x", "y"]) {
       expect(morale(sim, id)).toBe(0);
     }
