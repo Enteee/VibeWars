@@ -33,7 +33,9 @@ for rationale and trade-offs.
 
 There is no game server ([ADR-0022](docs/adr/0022-peer-to-peer-networking.md)).
 The page is a static site (GitHub Pages); one player's browser hosts the
-lobby and its match, and public Nostr relays only introduce the peers.
+lobby and its match, and public Nostr relays only introduce the peers:
+by a lobby code, or, for Random Arena, by tickets every queued client
+reads to work out the same match ([ADR-0032](docs/adr/0032-random-arena-queue.md)).
 
 Dependencies point one way only (ADR-0001). `game-core` depends on nothing
 else in the workspace and never touches a socket, a renderer or a clock.

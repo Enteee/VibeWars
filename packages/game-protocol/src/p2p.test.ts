@@ -320,6 +320,14 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["welcome", parsePeerWelcome, welcome],
   ["refuse", parsePeerRefuse, refuse],
   ["snapshot", parseWireSnapshotPart, snapshot],
+  [
+    "snapshot with a maintained enchantment (#837)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      players: [{ ...player, statuses: [{ ...status, endsAt: null, durationSeconds: null }] }],
+    },
+  ],
   ["last of three snapshot parts", parseWireSnapshotPart, { ...snapshot, part: 2, parts: 3 }],
   ["combat batch", parseWireCombatBatch, combatBatch],
   ["skill-bar", parseWireSkillBar, skillBar],
@@ -528,6 +536,9 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
       ["durationSeconds", -1],
       ["durationSeconds", Infinity],
       ["durationSeconds", undefined],
+      // Both times or neither (#837): one alone is malformed.
+      ["endsAt", null],
+      ["durationSeconds", null],
       ["casterId", 7],
       ["casterId", null],
       ["casterId", long],

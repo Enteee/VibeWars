@@ -96,6 +96,7 @@ describe("status definitions", () => {
       poison: -4,
       disease: -4,
       faintheartedness: -2,
+      mending: 3,
       regeneration: 4,
       "weapon-of-warding": 4,
     });

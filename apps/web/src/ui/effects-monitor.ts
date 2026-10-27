@@ -37,8 +37,11 @@ export interface EffectRow {
   readonly category: StatusCategory;
   /** How much of its duration is left, 0 to 1; `undefined`: no bar. */
   readonly fraction: number | undefined;
-  /** Whole seconds left, rounded up, never below 0. */
-  readonly secondsLeft: number;
+  /**
+   * Whole seconds left, rounded up, never below 0; `undefined` for a
+   * maintained enchantment (#837), which lasts until something ends it.
+   */
+  readonly secondsLeft: number | undefined;
   /** An enchantment the player put on themselves: the corner tick. */
   readonly yours: boolean;
   /** "you", the caster's name, or "someone" for a caster no longer here. */
@@ -57,17 +60,21 @@ export function effectRows(
 ): EffectRow[] {
   return statuses.map((status) => {
     const definition = STATUS_DEFINITIONS[status.id];
-    const left = status.endsAt - now;
     const mine = status.casterId === selfId;
+    const timed =
+      status.endsAt === null || status.durationSeconds === null
+        ? undefined
+        : { left: status.endsAt - now, duration: status.durationSeconds };
     return {
       id: status.id,
       name: definition.name,
       category: definition.category,
+      // A maintained one has no bar: it is not running out.
       fraction:
-        status.durationSeconds > 0
-          ? Math.min(1, Math.max(0, left / status.durationSeconds))
+        timed !== undefined && timed.duration > 0
+          ? Math.min(1, Math.max(0, timed.left / timed.duration))
           : undefined,
-      secondsLeft: Math.max(0, Math.ceil(left)),
+      secondsLeft: timed === undefined ? undefined : Math.max(0, Math.ceil(timed.left)),
       yours: mine && definition.category === "enchantment",
       casterName: mine ? "you" : (names.get(status.casterId) ?? "someone"),
     };
@@ -103,10 +110,11 @@ function renderTip(node: HTMLElement, row: EffectRow): void {
   from.className = "tip-effect";
   from.textContent = `from ${row.casterName}`;
   node.replaceChildren(title, type, effect, from);
-  if (row.fraction !== undefined) {
+  if (row.secondsLeft === undefined || row.fraction !== undefined) {
     const left = document.createElement("div");
     left.className = "tip-effect";
-    left.textContent = `${String(row.secondsLeft)} s left`;
+    left.textContent =
+      row.secondsLeft === undefined ? "maintained" : `${String(row.secondsLeft)} s left`;
     node.appendChild(left);
   }
 }

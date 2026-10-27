@@ -33,6 +33,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
       return effect.category === "condition" || effect.category === "hex" ? ["removal"] : [];
     case "knockdown":
       return ["knockdown"];
+    case "maintain-status":
     case "apply-status":
       return statusRoles(getStatusDefinition(effect.statusId));
     case "if":
