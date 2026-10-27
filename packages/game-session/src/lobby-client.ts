@@ -23,6 +23,7 @@ import type {
   MatchStarting,
 } from "./lobby-connection.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
+import { sanitizeChatText, sanitizeName } from "./names.js";
 import { scopeTransport } from "./scoped-transport.js";
 import type { Transport, TransportTrouble } from "./transport.js";
 
@@ -276,10 +277,17 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         }
       }),
       transport.on("chat-line", (data, from) => {
-        const line = parseWireChatLine(data);
-        if (from !== hostId || line === undefined) {
+        const wire = parseWireChatLine(data);
+        if (from !== hostId || wire === undefined) {
           return;
         }
+        // The host cleaned it, but a host can be anyone: shown only as
+        // clean as it would have made it.
+        const text = sanitizeChatText(wire.text);
+        if (text === "") {
+          return;
+        }
+        const line = { ...wire, name: sanitizeName(wire.name, wire.fromId), text };
         for (const handler of [...chatHandlers]) {
           handler(line);
         }

@@ -135,6 +135,21 @@ describe("lobby chat (#479)", () => {
     expect(ann.lines).toEqual([]);
   });
 
+  it("shows a line from its host only as clean as the host should have made it", async () => {
+    const { lobby, ann } = await fourInALobby();
+    const line = { channel: "all", fromId: "x", team: null };
+    lobby.room.send("chat-line", {
+      ...line,
+      name: "A\u202eb",
+      text: "\u202eabc" + "x".repeat(2000),
+    });
+    lobby.room.send("chat-line", { ...line, name: "Ann", text: "\u200b" });
+    await settle();
+    expect(ann.lines).toHaveLength(1);
+    expect(ann.lines[0]?.name).toBe("Ab");
+    expect(ann.lines[0]?.text).toBe("abc" + "x".repeat(MAX_CHAT_GRAPHEMES - 3));
+  });
+
   it("drops lines past the budget, says so once a burst, and lets one through once it refills", async () => {
     const { lobby, host, ann } = await fourInALobby();
     for (let i = 0; i < CHAT_BURST + 3; i += 1) {
