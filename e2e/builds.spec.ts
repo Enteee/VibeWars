@@ -1456,12 +1456,19 @@ test("the arena survives the editor collapsing to one column", async ({ page }) 
 /** Slot `slot`'s key, as the editor's bar and its Equip label it (#564). */
 const slotLabel = (slot: number): string => codeLabel(skillKey(slot));
 
-/** A Warrior/Elementalist with all eight slots filled, by clicking the first eight skills. */
+/**
+ * A Warrior/Elementalist with all eight slots filled, by clicking the first eight
+ * non-elite skills: a second elite would replace the first (#459).
+ */
 async function fullBar(page: Page): Promise<void> {
   await newCharacter(page);
   await chooseProfession(page, "secondary", "elementalist");
   for (let slot = 0; slot < 8; slot++) {
-    await page.locator(".skill-box:not(.is-equipped)").first().locator(".skill-box-equip").click();
+    await page
+      .locator(".skill-box:not(.is-equipped):not(.is-elite)")
+      .first()
+      .locator(".skill-box-equip")
+      .click();
   }
   await expect(page.locator(".skill-slot.is-empty")).toHaveCount(0);
 }
