@@ -1573,6 +1573,7 @@ export class MatchSimulation {
     this.#chargeFromDamage(record.combatant, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
+    this.#recordShadowSteps(events);
     this.#recordResurrections(events);
     // An attack skill is a swing, so it turns on its target with the
     // weapon: it starts an attack, or switches one to them. Any other skill
@@ -2293,6 +2294,7 @@ export class MatchSimulation {
     } else {
       const critical = landBlow(
         projectile.weaponSnapshot,
+        attacker?.combatant,
         target.combatant,
         settleBlow(
           skillHit?.blow ?? PLAIN_BLOW,
@@ -2622,6 +2624,51 @@ export class MatchSimulation {
         victim.walkGoal = undefined;
         victim.pendingSkill = undefined;
       }
+    }
+  }
+
+  /**
+   * Every shadow step in `events` (#988) puts its caster beside its
+   * target, where it stands now: touching it, on the side the caster came
+   * from, or behind it when the two stood on one spot. With a wall between
+   * the target and that spot, on the target, and the push-outs move it
+   * clear as they do a walk; the doorway rule does not hold, since a step
+   * is not a walk. It faces the target, and nothing reads the step as a
+   * run: its track starts over, and it did not walk this step. An attack
+   * and a skill walking in stay.
+   */
+  #recordShadowSteps(events: readonly CombatEvent[]): void {
+    for (const event of events) {
+      if (event.kind !== "shadow-stepped") {
+        continue;
+      }
+      const record = this.#participants.get(event.targetId);
+      const target = this.#participants.get(event.toId);
+      if (record === undefined || target === undefined) {
+        continue;
+      }
+      const radius = this.#ruleset.collision.playerRadius;
+      const away =
+        distance(record.position, target.position) > 0
+          ? normalize(sub(record.position, target.position))
+          : vec2(-Math.cos(target.facing), -Math.sin(target.facing));
+      const beside = add(target.position, scale(away, 2 * radius));
+      let position = hasLineOfSight(target.position, beside, this.#walls)
+        ? beside
+        : target.position;
+      for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
+        const relaxed = this.#pushOut(record.id, position, radius);
+        const settled = relaxed.x === position.x && relaxed.y === position.y;
+        position = relaxed;
+        if (settled) {
+          break;
+        }
+      }
+      record.position = position;
+      faceToward(record, target.position);
+      record.walkGoal = undefined;
+      record.history.clear();
+      this.#stepStart.set(record.id, position);
     }
   }
 

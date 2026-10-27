@@ -356,8 +356,9 @@ export interface WireCombatEvent {
    */
   readonly crit: boolean | null;
   /**
-   * Whom a spreading status was caught from (#765), or who could not pay
-   * a maintained enchantment's upkeep (#837); `null` for any other kind.
+   * Whom a spreading status was caught from (#765), who could not pay
+   * a maintained enchantment's upkeep (#837), or whom a shadow step went
+   * to (#988); `null` for any other kind.
    */
   readonly fromId: string | null;
   /**

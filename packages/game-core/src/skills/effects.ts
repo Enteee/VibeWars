@@ -179,7 +179,12 @@ export type CombatEvent =
       readonly kind: "knocked-down";
       readonly targetId: string;
       readonly durationSeconds: number;
-    };
+    }
+  /**
+   * Shadow Stepped (#988): `targetId`, the caster, moves to `toId`. The
+   * simulation places the body when it reads this.
+   */
+  | { readonly kind: "shadow-stepped"; readonly targetId: string; readonly toId: string };
 
 /**
  * Apply an already-mitigated amount, clamping at 0 and flagging death
@@ -189,7 +194,9 @@ export type CombatEvent =
  * callers mitigate the packet and pass its `type`. Physical damage that
  * takes health is recorded on the target's statuses, for Mark of Pain
  * (#935). Degeneration has its own path in `tick.ts` and never comes
- * here, so it can never count as physical.
+ * here, so it can never count as physical. Damage a foe `dealer` dealt is
+ * recorded too, for Vengeful Weapon (#1022); with no dealer, as a
+ * sacrifice, it is not.
  */
 export function applyDamage(
   target: Combatant,
@@ -197,6 +204,7 @@ export function applyDamage(
   type: DamageType,
   critical: boolean,
   events: CombatEvent[],
+  dealer: Combatant | undefined,
 ): void {
   if (amount <= 0 || target.dead) {
     return;
@@ -210,11 +218,19 @@ export function applyDamage(
   if (isPhysicalDamage(type)) {
     target.statuses.recordPhysicalDamage();
   }
+  recordFromFoe(target, dealer);
   // The guard above already returned for an already-dead target, so
   // reaching 0 here is always a *new* death — exactly one death event.
   if (target.health <= 0) {
     target.dead = true;
     events.push({ kind: "death", targetId: target.id });
+  }
+}
+
+/** `target` lost health to `dealer`; recorded if that was a foe (#1022). */
+function recordFromFoe(target: Combatant, dealer: Combatant | undefined): void {
+  if (dealer !== undefined && dealer.team !== target.team) {
+    target.statuses.recordDamageFromFoe(dealer.id);
   }
 }
 
@@ -312,6 +328,7 @@ function stealLife(
   }
   target.health -= stolen;
   events.push({ kind: "life-stolen", targetId: target.id, amount: stolen });
+  recordFromFoe(target, caster);
   const gained = Math.min(stolen, effectiveMaxHealth(caster) - caster.health);
   if (gained > 0) {
     caster.health += gained;
@@ -679,7 +696,14 @@ export function applyEffect(
         return events;
       }
       const packet = skillDamage(amount, effect.type, effect.armorPenetration);
-      applyDamage(target, mitigate(packet, target, context.rules), packet.type, false, events);
+      applyDamage(
+        target,
+        mitigate(packet, target, context.rules),
+        packet.type,
+        false,
+        events,
+        caster,
+      );
       return events;
     }
 
@@ -859,6 +883,15 @@ export function applyEffect(
       return events;
     }
 
+    case "shadow-step": {
+      // To a living target only: there is nowhere to step to otherwise.
+      if (target === undefined || target.dead || caster.dead) {
+        return events;
+      }
+      events.push({ kind: "shadow-stepped", targetId: caster.id, toId: target.id });
+      return events;
+    }
+
     case "resurrect": {
       // Only the dead: one whom another resurrection, or the respawn
       // timer, brought back first is left as they are.
@@ -946,6 +979,8 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "caster-more-energy":
     case "caster-wields":
     case "target-less-health":
+    case "target-more-health":
+    case "target-attacking":
       return true;
   }
 }
@@ -1003,6 +1038,20 @@ export function stateHolds(
       return wieldsFor(caster.equipment.mainHand.weapon.id, condition.weapon);
     case "target-less-health":
       return target.health < caster.health;
+    case "target-more-health":
+      return target.health > caster.health;
+    case "target-attacking": {
+      if (target.dead) {
+        return false;
+      }
+      // An auto-attack still walking to its foe is the run-up, not an
+      // attack: GW1 counts only the swings, which are made standing.
+      const cast = target.cast.activeCast;
+      return (
+        (target.attack !== undefined && !target.moving) ||
+        (cast !== undefined && getSkill(cast.skillId)?.type === "attack")
+      );
+    }
   }
 }
 
@@ -1120,6 +1169,8 @@ function conditionHolds(
     case "caster-more-energy":
     case "caster-wields":
     case "target-less-health":
+    case "target-more-health":
+    case "target-attacking":
       return held.has(condition);
   }
 }
@@ -1203,6 +1254,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "maintain-status":
     case "interrupt":
     case "knockdown":
+    case "shadow-step":
     case "resurrect":
     case "splash":
     case "disable-skill":

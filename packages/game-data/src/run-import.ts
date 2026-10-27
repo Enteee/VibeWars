@@ -253,6 +253,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Ritualist/1206-Weapon_of_Aggression",
   },
   {
+    id: "ritualist.weapon-of-remedy",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/975-Weapon_of_Remedy",
+  },
+  {
+    id: "ritualist.vengeful-weapon",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/767-Vengeful_Weapon",
+  },
+  {
+    id: "ritualist.splinter-weapon",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/726-Splinter_Weapon",
+  },
+  {
+    id: "ritualist.mending-grip",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/1209-Mending_Grip",
+  },
+  {
     id: "mesmer.power-spike",
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/320-Power_Spike",
@@ -646,6 +666,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "assassin.dark-escape",
     profession: "assassin",
     url: "https://www.gw-memorial.net/skills/Assassin/688-Dark_Escape",
+  },
+  {
+    id: "assassin.deaths-charge",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/689-Death's_Charge",
+  },
+  {
+    id: "assassin.shadow-refuge",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/694-Shadow_Refuge",
+  },
+  {
+    id: "assassin.shroud-of-distress",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/698-Shroud_of_Distress",
+  },
+  {
+    id: "assassin.critical-eye",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/637-Critical_Eye",
   },
   {
     id: "ranger.natural-stride",

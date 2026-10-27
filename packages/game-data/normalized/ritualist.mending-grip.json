@@ -1,0 +1,26 @@
+{
+  "id": "ritualist.mending-grip",
+  "name": "Mending Grip",
+  "profession": "ritualist",
+  "attribute": "Restoration Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Eye Of The North",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 4,
+  "upkeep": false,
+  "description": "Target ally is healed for 15...68...80 Health. If that ally is under the effects of a weapon Spell, that ally loses one Condition.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ritualist/1209-Mending_Grip",
+    "fetchedAt": "2026-10-27T22:01:08.703Z"
+  },
+  "unmapped": {}
+}

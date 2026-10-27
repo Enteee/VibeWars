@@ -120,12 +120,13 @@ export function renderSkillDescription(
 
 /**
  * Where the tooltip goes. `beside` the anchor suits a list; `above` suits
- * a skill bar at the bottom of the screen, which it must never cover (#485).
+ * a skill bar at the bottom of the screen, which it must never cover (#485);
+ * `below` suits the target frame at the top (#1042).
  */
-export type SkillTooltipPlacement = "beside" | "above";
+export type SkillTooltipPlacement = "beside" | "above" | "below";
 
 /**
- * Place a tooltip `node` beside or above its anchor, nudged back inside
+ * Place a tooltip `node` beside, above or below its anchor, nudged back inside
  * the viewport, and show it.
  *
  * Positioned in viewport coordinates against `position: fixed`, so a
@@ -147,6 +148,9 @@ export function placeTip(
   if (placement === "above") {
     left = box.left + box.width / 2 - tip.width / 2;
     top = box.top - tip.height - margin;
+  } else if (placement === "below") {
+    left = box.left + box.width / 2 - tip.width / 2;
+    top = box.bottom + margin;
   } else {
     left = box.left - tip.width - margin;
     if (left < margin) {

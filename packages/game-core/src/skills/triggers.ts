@@ -62,7 +62,9 @@ export function fireTriggers(
   return bearer.statuses
     .triggersOn(event)
     .filter(({ statusId }) => !spared.has(statusId))
-    .flatMap(({ sourceId, trigger }) => fire(trigger, sourceId, bearer, undefined, context));
+    .flatMap(({ statusId, sourceId, trigger }) =>
+      fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
+    );
 }
 
 /**
@@ -72,8 +74,9 @@ export function fireTriggers(
  * the bearer, and its `expires` ones too if its duration ran out (#944).
  * A hit the bearer landed, or physical damage it took (#935), fires what
  * answered it when it happened (#953), so a killing blow still sets off
- * the hexes its death ended. The simulation discards whatever the firing
- * itself changes, so this never recurses either.
+ * the hexes its death ended. Damage or life steal from a foe (#1022)
+ * fires what answered it at that foe. The simulation discards whatever
+ * the firing itself changes, so this never recurses either.
  */
 export function fireChangeTriggers(
   bearer: Combatant,
@@ -85,32 +88,76 @@ export function fireChangeTriggers(
     case "gained-condition":
       return bearer.statuses
         .triggersOn("bearer-gains-condition")
-        .flatMap(({ sourceId, trigger }) =>
-          fire(trigger, sourceId, bearer, (effect) => spread(effect, bearer, change), context),
+        .flatMap(({ statusId, sourceId, trigger }) =>
+          fire(
+            trigger,
+            statusId,
+            sourceId,
+            bearer,
+            undefined,
+            (effect) => spread(effect, bearer, change),
+            context,
+          ),
         );
     case "ended":
       return getStatusDefinition(change.id)
         .triggers.filter(
           (trigger) => trigger.on === "ends" || (trigger.on === "expires" && change.expired),
         )
-        .flatMap((trigger) => fire(trigger, change.sourceId, bearer, undefined, context));
+        .flatMap((trigger) =>
+          fire(trigger, change.id, change.sourceId, bearer, undefined, undefined, context),
+        );
     case "hit":
     case "took-physical-damage":
-      return change.fired.flatMap(({ sourceId, trigger }) =>
-        fire(trigger, sourceId, bearer, undefined, context),
+      return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
+        fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
+      );
+    case "took-damage-from-foe":
+      return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
+        fire(trigger, statusId, sourceId, bearer, change.offenderId, undefined, context),
       );
   }
 }
 
 /**
- * One trigger's effects, in order, the source as caster. Consecutive
- * skill effects resolve together, so one may read what an earlier one did;
- * a spread with nothing gained does nothing.
+ * Who a trigger's effects come from and land on: the source on the bearer
+ * or on itself, or (#1022) the bearer on `offenderId`, the foe that set it
+ * off. `undefined` when one of them is gone, or an offender's bearer is
+ * dead: then it fires nothing.
+ */
+function parties(
+  trigger: StatusTrigger,
+  source: Combatant,
+  bearer: Combatant,
+  offenderId: string | undefined,
+  sourceOf: (id: string) => Combatant | undefined,
+): { caster: Combatant; target: Combatant } | undefined {
+  switch (trigger.target) {
+    case "bearer":
+      return { caster: source, target: bearer };
+    case "source":
+      return { caster: source, target: source };
+    case "offender": {
+      const offender = offenderId === undefined ? undefined : sourceOf(offenderId);
+      return offender === undefined || bearer.dead
+        ? undefined
+        : { caster: bearer, target: offender };
+    }
+  }
+}
+
+/**
+ * One trigger's effects, in order, from `parties`. Consecutive skill
+ * effects resolve together, so one may read what an earlier one did; a
+ * spread with nothing gained does nothing. A status that ends when
+ * triggered (#1022) then ends, logged as its expiry.
  */
 function fire(
   trigger: StatusTrigger,
+  statusId: StatusId,
   sourceId: string,
   bearer: Combatant,
+  offenderId: string | undefined,
   spread: ((effect: SpreadGainedConditionEffect) => CombatEvent[]) | undefined,
   { sourceOf, rng, rules, surroundings, usedSkillId }: TriggerContext,
 ): FiredTrigger[] {
@@ -118,12 +165,16 @@ function fire(
   if (source === undefined) {
     return [];
   }
-  const target = trigger.target === "bearer" ? bearer : source;
+  const resolved = parties(trigger, source, bearer, offenderId, sourceOf);
+  if (resolved === undefined) {
+    return [];
+  }
+  const { caster, target } = resolved;
   const events: CombatEvent[] = [];
   let pending: SkillEffect[] = [];
   const flush = (): void => {
     events.push(
-      ...applyEffects(pending, { caster: source, target, rng, rules, surroundings, usedSkillId }),
+      ...applyEffects(pending, { caster, target, rng, rules, surroundings, usedSkillId }),
     );
     pending = [];
   };
@@ -136,5 +187,9 @@ function fire(
     }
   }
   flush();
+  if (getStatusDefinition(statusId).endsWhenTriggered && bearer.statuses.has(statusId)) {
+    bearer.statuses.end(statusId);
+    events.push({ kind: "status-expired", targetId: bearer.id, statusId });
+  }
   return events.length === 0 ? [] : [{ sourceId, skillId: trigger.skillId, events }];
 }

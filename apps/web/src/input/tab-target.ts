@@ -1,3 +1,4 @@
+import type { ClientIntent } from "@vibewars/game-protocol";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 
 /**
@@ -52,4 +53,19 @@ export function closestTarget(
   selfId: string,
 ): string | undefined {
   return foesByDistance(players, selfId)[0]?.sessionId;
+}
+
+/**
+ * G (#1028): yourself as your target, as a right click on your own body
+ * sends; `undefined` when you are already your target, or not in `players`.
+ */
+export function selfTargetIntent(
+  players: readonly PlayerSnapshot[],
+  selfId: string,
+): ClientIntent | undefined {
+  const self = players.find((player) => player.sessionId === selfId);
+  if (self === undefined || self.targetSessionId === selfId) {
+    return undefined;
+  }
+  return { kind: "target", targetSessionId: selfId };
 }

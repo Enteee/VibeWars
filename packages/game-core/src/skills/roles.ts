@@ -50,6 +50,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "life-steal":
     case "sacrifice-health":
     case "lose-health":
+    case "shadow-step":
     case "resurrect":
     case "recharge-faster":
     case "recharge-others":
@@ -70,8 +71,9 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * and so does what it adds to the next attack skill: Anthem of Flame burns.
  * So does what an ally's status does to its bearer when it ends (#944):
  * Patient Spirit heals, Holy Veil removes a hex, or when it uses a skill
- * (#999): Song of Restoration heals. One that heals every second (Spirit
- * Light Weapon, #975) is healing.
+ * (#999): Song of Restoration heals, or what its bearer does to the foe
+ * that hurt it (#1022): Weapon of Remedy removes conditions. One that
+ * heals every second (Spirit Light Weapon, #975) is healing.
  */
 function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   const roles: SkillRole[] = [];
@@ -96,8 +98,9 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
       : status.triggers
           .filter(
             ({ on, target }) =>
-              (on === "ends" || on === "expires" || on === "bearer-uses-skill") &&
-              target === "bearer",
+              ((on === "ends" || on === "expires" || on === "bearer-uses-skill") &&
+                target === "bearer") ||
+              target === "offender",
           )
           .flatMap(({ effects }) =>
             effects.flatMap((effect) =>

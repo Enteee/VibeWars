@@ -32,7 +32,7 @@ import {
 import { loadKeymap } from "../input/keymap-preference.js";
 import { skillSlotForKeyDown } from "../input/skill-keys.js";
 import { attachNameReveal } from "../input/name-reveal.js";
-import { closestTarget, nextTabTarget } from "../input/tab-target.js";
+import { closestTarget, nextTabTarget, selfTargetIntent } from "../input/tab-target.js";
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
 import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
 import { music } from "../music/play-music.js";
@@ -403,14 +403,17 @@ export function createTrainingPanel(): TrainingPanel {
     }
   };
 
-  const targetByKey = (action: "target-closest" | "target-called"): void => {
+  const targetByKey = (action: "target-closest" | "target-called" | "target-self"): void => {
     if (session === undefined || session.parked) {
       return;
     }
     const { connection } = session;
     const snapshot = connection.getSnapshot();
-    if (action === "target-called") {
-      const intent = calledTargetIntent(snapshot, connection.getCalls());
+    if (action === "target-called" || action === "target-self") {
+      const intent =
+        action === "target-called"
+          ? calledTargetIntent(snapshot, connection.getCalls())
+          : selfTargetIntent(snapshot.players, SELF_ID);
       if (intent !== undefined) {
         connection.sendIntent(intent);
       }
@@ -676,7 +679,7 @@ export function createTrainingPanel(): TrainingPanel {
       }
       return;
     }
-    if (action === "target-closest" || action === "target-called") {
+    if (action === "target-closest" || action === "target-called" || action === "target-self") {
       if (!event.repeat) {
         targetByKey(action);
       }
