@@ -2718,6 +2718,103 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   },
 
   /* ---------------------------------------------------------------------- */
+  /* Necromancer curses (#935)                                              */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "necromancer.spiteful-spirit",
+    name: "Spiteful Spirit",
+    type: "hex",
+    elite: true,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10...22...25 seconds, whenever target foe attacks or uses a
+    // skill, Spiteful Spirit deals 15...39...45 shadow damage to that foe
+    // and all adjacent allies of that foe." The damage is the hex's.
+    effects: [{ kind: "apply-status", statusId: "spiteful-spirit", durationSeconds: 22 }],
+  },
+  {
+    id: "necromancer.insidious-parasite",
+    name: "Insidious Parasite",
+    type: "hex",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...13...15 seconds, whenever target foe hits with an attack,
+    // you steal 15...39...45 health from that foe." The steal is the hex's.
+    effects: [{ kind: "apply-status", statusId: "insidious-parasite", durationSeconds: 13 }],
+  },
+  {
+    id: "necromancer.mark-of-pain",
+    name: "Mark of Pain",
+    type: "hex",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 30 seconds, whenever target foe takes physical damage, Mark of
+    // Pain deals 10...34...40 shadow damage to adjacent foes." The damage
+    // is the hex's.
+    effects: [{ kind: "apply-status", statusId: "mark-of-pain", durationSeconds: 30 }],
+  },
+  {
+    id: "necromancer.vampiric-gaze",
+    name: "Vampiric Gaze",
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Steal up to 18...52...60 Health from target foe."
+    effects: [
+      {
+        kind: "life-steal",
+        amount: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 18, atTwelve: 52 },
+        },
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
   /* Paragon command (#923)                                                 */
   /* ---------------------------------------------------------------------- */
 
