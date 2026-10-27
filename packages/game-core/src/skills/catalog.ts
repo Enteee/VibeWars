@@ -1093,6 +1093,70 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "interrupt" }],
   },
   {
+    id: "ranger.pin-down",
+    name: "Pin Down",
+    type: "attack",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 8,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If Pin Down hits, your target is crippled for 3...13...15 seconds":
+    // 13 s, its rank-12 value, when the arrow lands.
+    effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+  },
+  {
+    id: "ranger.hunters-shot",
+    name: "Hunter's Shot",
+    type: "attack",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If Hunter's Shot hits, your target begins Bleeding for 3...21...25
+    // seconds": 21 s, its rank-12 value, when the arrow lands.
+    effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 21 }],
+  },
+  {
     id: "ranger.throw-dirt",
     name: "Throw Dirt",
     type: "skill",
@@ -1228,6 +1292,51 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // "For 1...7...8 seconds, you run 33% faster and have a 50% chance to
     // block incoming attacks": 7 s, its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "natural-stride", durationSeconds: 7 }],
+  },
+  {
+    id: "ranger.lightning-reflexes",
+    name: "Lightning Reflexes",
+    type: "stance",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.expertise",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    // PvP: 45 s; the PvE copy recharges in 30.
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...10...11 seconds, you have a 75% chance to block melee and
+    // projectile attacks, and you attack 33% faster": 10 s, its rank-12
+    // value.
+    effects: [{ kind: "apply-status", statusId: "lightning-reflexes", durationSeconds: 10 }],
+  },
+  {
+    id: "ranger.escape",
+    name: "Escape",
+    type: "stance",
+    elite: true,
+    profession: "ranger",
+    attributeId: "ranger.expertise",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 1...7...8 seconds, you move 33% faster and have a 75% chance to
+    // block attacks. Escape ends if you make a melee attack" (PvP): 7 s,
+    // its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "escape", durationSeconds: 7 }],
   },
   {
     id: "paragon.wild-throw",
@@ -1707,6 +1816,72 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "ritualist.spirit-light-weapon",
+    name: "Spirit Light Weapon",
+    type: "weapon-spell",
+    elite: true,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 10 seconds, target ally gains 5...21...25 Health per second and an
+    // additional 5...21...25 Health per second if that ally is within
+    // earshot of a Spirit": the 21 is the status's; there are no spirits
+    // yet (#467), so never the additional 21, as in GW1 with none up.
+    effects: [{ kind: "apply-status", statusId: "spirit-light-weapon", durationSeconds: 10 }],
+  },
+  {
+    id: "ritualist.weapon-of-quickening",
+    name: "Weapon of Quickening",
+    type: "weapon-spell",
+    elite: true,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...21...25 seconds, target ally has a Weapon of Quickening, and
+    // Spells and Binding Rituals recharge 33% faster": 21 s, its rank-12
+    // value. There are no binding rituals yet (#467), so spells alone.
+    effects: [{ kind: "apply-status", statusId: "weapon-of-quickening", durationSeconds: 21 }],
+  },
+  {
+    id: "ritualist.weapon-of-aggression",
+    name: "Weapon of Aggression",
+    type: "weapon-spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...13...15 seconds, you attack 25% faster": 13 s, its rank-12
+    // value.
+    effects: [{ kind: "apply-status", statusId: "weapon-of-aggression", durationSeconds: 13 }],
+  },
 
   /* ---------------------------------------------------------------------- */
   /* An effect that depends on an earlier one (#521)                         */
@@ -2069,6 +2244,28 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // "For 10 seconds, whenever target foe casts a spell, that foe takes
     // 35...119...140 damage." The damage is the hex's, at rank 12.
     effects: [{ kind: "apply-status", statusId: "backfire", durationSeconds: 10 }],
+  },
+  {
+    id: "mesmer.diversion",
+    name: "Diversion",
+    type: "hex",
+    elite: false,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 6 seconds, the next time target foe uses a skill, that skill
+    // takes an additional 10...47...56 seconds to recharge." The extra
+    // recharge is the hex's, at rank 12 (#949).
+    effects: [{ kind: "apply-status", statusId: "diversion", durationSeconds: 6 }],
   },
   {
     id: "mesmer.empathy",
@@ -3469,6 +3666,157 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // "Transfer 1...3...3 negative conditions and their remaining
     // durations from yourself to target touched foe."
     effects: [{ kind: "transfer-conditions", count: 3 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Elementalist knockdown staples (#985)                                  */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.blinding-flash",
+    name: "Blinding Flash",
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    // The 2011 revision's 8 s, which the corpus carries.
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target enemy is blinded for 3...7...8 seconds": 7 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 7 }],
+  },
+  {
+    id: "elementalist.shock",
+    name: "Shock",
+    // A touch skill, not a spell: Dazed does not slow it, Fast Casting does
+    // not speed it, Backfire does not answer it.
+    type: "skill",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    // Exhaustion, as Mind Shock's (#461), at the corpus's 10.
+    overcast: 10,
+    activationSeconds: 0.75,
+    rechargeSeconds: 10,
+    // "Target touched foe": the foe must be at hand.
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...is knocked down and struck for 10...50...60 lightning damage. This
+    // skill has 25% armor penetration."
+    effects: [
+      { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 50 },
+        },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+    ],
+  },
+  {
+    id: "elementalist.aftershock",
+    name: "Aftershock",
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Nearby foes": the latest revision's radius, around the caster.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "caster",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...are struck for 26...85...100 earth damage. Knocked down foes are
+    // struck for 10...56...68 additional earth damage." Down is read before
+    // the first strike lands.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 26, atTwelve: 85 },
+        },
+        type: "earth",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-knocked-down" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 10, atTwelve: 56 },
+            },
+            type: "earth",
+            armorPenetration: 0,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.meteor",
+    name: "Meteor",
+    type: "spell",
+    elite: false,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 5 },
+    // Exhaustion (#461), at the corpus's 10.
+    overcast: 10,
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all adjacent foes": it lands as the cast ends, with no
+    // impact delay.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "...are struck for 7...91...112 fire damage and knocked down."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.fire-magic", atZero: 7, atTwelve: 91 },
+        },
+        type: "fire",
+        armorPenetration: 0,
+      },
+      { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */

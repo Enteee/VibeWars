@@ -839,6 +839,21 @@ describe("state conditions (#794)", () => {
     expect(healed(less, at(400, "caster"), big)).toBe(10);
   });
 
+  it("target-knocked-down: holds while knockdown remains, not at 0 (#985)", () => {
+    const down = healIf({ kind: "target-knocked-down" });
+    const knocked = (remaining: number): Combatant => {
+      const target = at(100);
+      target.knockdownRemaining = remaining;
+      return target;
+    };
+    expect(healed(down, at(100, "caster"), knocked(0.1))).toBe(110);
+    expect(healed(down, at(100, "caster"), knocked(0))).toBe(10);
+    // The caster being down is not read.
+    const downCaster = at(100, "caster");
+    downCaster.knockdownRemaining = 2;
+    expect(healed(down, downCaster, knocked(0))).toBe(10);
+  });
+
   it("caster-wields: the caster's main hand is of the class, the target's is not read (#939)", () => {
     const holding = (weapon: Weapon, id: string): Combatant =>
       makeCombatant({
@@ -1117,5 +1132,23 @@ describe("a knockdown prevented (#845)", () => {
       applyEffect({ kind: "knockdown", durationSeconds: 2 }, context(undefined, target)),
     ).toEqual([]);
     expect(target.statuses.has("fleeting-stability")).toBe(true);
+  });
+});
+
+describe("lengthen-recharge (#949)", () => {
+  const effect = { kind: "lengthen-recharge", seconds: { flat: 47 } } as const;
+
+  it("lengthens the skill its target just used", () => {
+    const target = makeCombatant({ id: "target", team: 1 });
+    expect(applyEffect(effect, { ...context(undefined, target), usedSkillId: "skill.a" })).toEqual([
+      { kind: "recharge-lengthened", targetId: "target", skillId: "skill.a", seconds: 47 },
+    ]);
+    expect(target.cast.rechargeRemaining.get("skill.a")).toBe(47);
+  });
+
+  it("does nothing without a skill just used", () => {
+    const target = makeCombatant({ id: "target", team: 1 });
+    expect(applyEffect(effect, context(undefined, target))).toEqual([]);
+    expect(target.cast.rechargeRemaining.size).toBe(0);
   });
 });
