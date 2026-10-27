@@ -162,6 +162,21 @@ export class CastState {
   }
 
   /**
+   * Disable `skillId` for `seconds` (#914, GW1): the disable and the
+   * recharge run together, so the skill waits for the longer. A longer
+   * wait replaces remaining and total both, so the wipe draws a true
+   * fraction (#152). Returns whether the wait got longer.
+   */
+  public disable(skillId: string, seconds: number): boolean {
+    if (seconds <= (this.#rechargeRemaining.get(skillId) ?? 0)) {
+      return false;
+    }
+    this.#rechargeRemaining.set(skillId, seconds);
+    this.#rechargeTotal.set(skillId, seconds);
+    return true;
+  }
+
+  /**
    * Advance time by `dt` seconds. Returns the cast that completed on this
    * tick, if any — the caller is responsible for actually applying its
    * effects, because only the caller knows whether the target is still

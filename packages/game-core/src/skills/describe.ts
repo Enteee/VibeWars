@@ -434,6 +434,17 @@ function describeEffect(
       };
     case "recharge-others":
       return { text: "Recharges all your other attack skills", magnitude: undefined };
+    case "disable-skill": {
+      const magnitude = describeMagnitude(effect.seconds, ranks);
+      const time = `${String(magnitude.current)} seconds`;
+      return {
+        text:
+          effect.which === "interrupted"
+            ? `The interrupted skill is disabled for ${time}`
+            : `That skill and all skills of the same attribute are disabled for ${time}`,
+        magnitude,
+      };
+    }
     case "splash": {
       // "Adjacent foes take 40 damage" (#885).
       const inner = effect.effects.map((each) => ({

@@ -155,6 +155,23 @@ describe("describeSkill", () => {
     expect(describeSkill(skill("mesmer.power-spike"), ranks).headline).toBe("102 damage");
   });
 
+  it("says what a disable locks out, and for how long (#914)", () => {
+    const ranks = new Map([
+      ["mesmer.domination-magic", 12],
+      ["ranger.expertise", 12],
+    ]);
+    const lines = (id: string) => describeSkill(skill(id), ranks).effects.map((e) => e.text);
+    expect(lines("mesmer.power-block")).toEqual([
+      "Interrupts the target's spell or chant, if they are casting one",
+      "That skill and all skills of the same attribute are disabled for 10 seconds",
+    ]);
+    expect(lines("ranger.distracting-shot")).toEqual([
+      "Interrupts the target's current cast, if they are casting",
+      "The interrupted skill is disabled for 20 seconds",
+      "Deals 13 damage",
+    ]);
+  });
+
   it("leads what depends on how things stand with its condition (#794)", () => {
     const ranks = new Map([
       ["monk.healing-prayers", 12],

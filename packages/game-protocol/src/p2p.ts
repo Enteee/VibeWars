@@ -331,12 +331,12 @@ export interface WireCombatEvent {
   readonly kind: string;
   readonly targetId: string | null;
   readonly amount: number | null;
-  /** The skill an interrupt or a cancel cut short. */
+  /** The skill an interrupt or a cancel cut short, or a disable held back (#914). */
   readonly skillId: string | null;
   /** The status applied, removed or expired. */
   readonly statusId: string | null;
   /**
-   * How long an applied status or a knockdown lasts; `null` too for a
+   * How long an applied status, a knockdown or a disable lasts; `null` too for a
    * maintained enchantment applied (#837), which lasts until ended.
    */
   readonly durationSeconds: number | null;

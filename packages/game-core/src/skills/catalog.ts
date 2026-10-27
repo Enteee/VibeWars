@@ -1882,6 +1882,82 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
   },
 
   /* ---------------------------------------------------------------------- */
+  /* Disables (#914): an interrupt that also locks the skill out            */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "mesmer.power-block",
+    name: "Power Block",
+    type: "spell",
+    elite: true,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If target foe is casting a spell or chant, that skill and all
+    // skills of the same attribute are disabled for 1...10...12 seconds
+    // and that skill is interrupted."
+    effects: [
+      { kind: "interrupt", only: "spell-or-chant" },
+      {
+        kind: "disable-skill",
+        which: "interrupted-and-attribute",
+        seconds: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 10 } },
+      },
+    ],
+  },
+  {
+    id: "ranger.distracting-shot",
+    name: "Distracting Shot",
+    type: "attack",
+    elite: false,
+    profession: "ranger",
+    attributeId: "ranger.expertise",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 10,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    // "If Distracting Shot hits, it interrupts target foe's action but
+    // deals only 1...13...16 damage": the arrow's own roll counts for
+    // nothing, and what it deals ignores armor, as Power Spike's.
+    attack: {
+      weapon: "bow",
+      weaponDamage: 0,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If the interrupted action was a skill, that skill is disabled for
+    // an additional 20 seconds."
+    effects: [
+      { kind: "interrupt" },
+      { kind: "disable-skill", which: "interrupted", seconds: { flat: 20 } },
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "ranger.expertise", atZero: 1, atTwelve: 13 } },
+        type: "typeless",
+        armorPenetration: 0,
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
   /* Resurrection (#812)                                                    */
   /* ---------------------------------------------------------------------- */
 
