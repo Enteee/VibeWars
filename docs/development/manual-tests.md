@@ -122,7 +122,9 @@ Code: `apps/web/src/net/transport/nostr-queue.ts` and the queue under
 2. Each queue screen counts 2 of 2 searching within a heartbeat (5 s).
 3. Within a few seconds more, both see the versus splash and land in the
    same match, one of them hosting. Play it to its end.
-4. Both queue again; one leaves the queue. The other player's count drops
+4. Four seconds after the result, both see it again on the queue
+   screen, the winner with "1 win in a row this visit (not a rating)".
+   Both press _Queue again_; one leaves the queue. The other player's count drops
    back at once, from the withdrawal, and no later than the ticket TTL (15 s).
 
 Pass: every step as written. A pair that queues but never meets, with

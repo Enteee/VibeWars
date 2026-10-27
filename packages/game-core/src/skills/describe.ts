@@ -265,10 +265,8 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   // A trigger that reads "when it ends: removes 1 hex" is a sentence of
   // its own (#944), not one more clause after a comma.
   const sentences: string[] = [];
-  for (const trigger of definition.triggers) {
-    for (const { text, clause } of describeTrigger(trigger, ranks)) {
-      (clause ? parts : sentences).push(text);
-    }
+  for (const { text, clause } of describeTriggers(definition.triggers, ranks)) {
+    (clause ? parts : sentences).push(text);
   }
   if (parts.length === 0 && sentences.length === 0) {
     return definition.name;
@@ -300,12 +298,16 @@ function describeAttackHit(effect: SkillEffect): string[] {
   return describeEffects(effect, new Map()).map(({ text }) => `your physical attacks: ${text}`);
 }
 
+/** What the bearer does that a trigger answers, as its tooltip says it. */
 const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
-  "bearer-casts-spell": "whenever it casts a spell",
-  "bearer-attacks": "whenever it attacks",
-  "bearer-gains-condition": "whenever it gains a new condition",
-  ends: "when it ends",
-  expires: "when it expires",
+  "bearer-casts-spell": "casts a spell",
+  "bearer-attacks": "attacks",
+  "bearer-uses-skill": "uses a skill",
+  "bearer-hits": "hits with an attack",
+  "bearer-takes-physical-damage": "takes physical damage",
+  "bearer-gains-condition": "gains a new condition",
+  ends: "ends",
+  expires: "expires",
 };
 
 /** A trigger's line, and whether it follows a comma or stands alone. */
@@ -315,31 +317,79 @@ interface TriggerLine {
 }
 
 /**
+ * A status's triggers, those that do the same thing said once (#935):
+ * Spiteful Spirit's "whenever it uses a skill or attacks".
+ */
+function describeTriggers(
+  triggers: readonly StatusTrigger[],
+  ranks: ReadonlyMap<string, number>,
+): TriggerLine[] {
+  const groups = new Map<string, { trigger: StatusTrigger; on: StatusTriggerEvent[] }>();
+  for (const trigger of triggers) {
+    const key = JSON.stringify([trigger.effects, trigger.target]);
+    const group = groups.get(key);
+    if (group === undefined) {
+      groups.set(key, { trigger, on: [trigger.on] });
+    } else {
+      group.on.push(trigger.on);
+    }
+  }
+  return [...groups.values()].flatMap(({ trigger, on }) =>
+    describeTrigger(
+      trigger,
+      on.includes("ends") || on.includes("expires")
+        ? `when it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`
+        : `whenever it ${on.map((event) => TRIGGER_WHEN[event]).join(" or ")}`,
+      ranks,
+    ),
+  );
+}
+
+/**
  * A status's answer to its bearer (#469): "takes 119 damage whenever it
- * casts a spell", "heals its caster for 102 when it ends" (#887). A
- * `clause` follows a comma; the rest, "when it ends: …", stand alone.
+ * casts a spell", "heals its caster for 102 when it ends" (#887), "its
+ * adjacent allies take 34 damage whenever it takes physical damage"
+ * (#935). A `clause` follows a comma; the rest, "when it ends: …",
+ * stand alone (#944).
  */
 function describeTrigger(
   trigger: StatusTrigger,
+  when: string,
   ranks: ReadonlyMap<string, number>,
 ): TriggerLine[] {
-  const when = TRIGGER_WHEN[trigger.on];
+  const amount = (magnitude: Magnitude): string =>
+    String(describeMagnitude(magnitude, ranks).current);
+  const clause = (text: string): TriggerLine => ({ text, clause: true });
+  const sentence = (text: string): TriggerLine => ({ text, clause: false });
   return trigger.effects.flatMap((effect): TriggerLine[] => {
     if (effect.kind === "spread-gained-condition") {
-      return [{ text: `${when}: foes in the area suffer it too`, clause: false }];
+      return [sentence(`${when}: foes in the area suffer it too`)];
     }
     if (effect.kind === "damage" && trigger.target === "bearer") {
-      const amount = String(describeMagnitude(effect.amount, ranks).current);
-      return [{ text: `takes ${amount} damage ${when}`, clause: true }];
+      return [clause(`takes ${amount(effect.amount)} damage ${when}`)];
     }
     if (effect.kind === "heal" && trigger.target === "source") {
-      const amount = String(describeMagnitude(effect.amount, ranks).current);
-      return [{ text: `heals its caster for ${amount} ${when}`, clause: true }];
+      return [clause(`heals its caster for ${amount(effect.amount)} ${when}`)];
     }
-    return describeEffects(effect, ranks).map(({ text }) => ({
-      text: `${when}: ${lowerFirst(text)}`,
-      clause: false,
-    }));
+    if (effect.kind === "life-steal" && trigger.target === "bearer") {
+      return [clause(`its caster steals ${amount(effect.amount)} Health ${when}`)];
+    }
+    // The caster's foes beside its bearer are the bearer's allies.
+    if (effect.kind === "splash" && trigger.target === "bearer") {
+      const area = AREA_TEXT.get(effect.radius);
+      const allies =
+        area === "adjacent"
+          ? "its adjacent allies"
+          : `its allies ${area ?? `within ${String(effect.radius)}`}`;
+      return effect.effects.map((inner) =>
+        inner.kind === "damage"
+          ? clause(`${allies} take ${amount(inner.amount)} damage ${when}`)
+          : sentence(`${when}: ${allies}: ${lowerFirst(describeEffect(inner, ranks).text)}`),
+      );
+    }
+    return describeEffects(effect, ranks).map(({ text }) =>
+      sentence(`${when}: ${lowerFirst(text)}`),
+    );
   });
 }
 
@@ -483,6 +533,10 @@ function describeEffect(
     case "energy-loss": {
       const magnitude = describeMagnitude(effect.amount, ranks);
       return { text: `Target loses ${String(magnitude.current)} energy`, magnitude };
+    }
+    case "life-steal": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return { text: `Steals up to ${String(magnitude.current)} Health`, magnitude };
     }
     case "sacrifice-health":
       return {
@@ -642,6 +696,13 @@ function headlineOf(
       const magnitude = describeMagnitude(effect.amount, ranks);
       return {
         text: `drains ${String(magnitude.current)} energy`,
+        scales: magnitude.attributeId !== undefined,
+      };
+    }
+    case "life-steal": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return {
+        text: `steals ${String(magnitude.current)} health`,
         scales: magnitude.attributeId !== undefined,
       };
     }

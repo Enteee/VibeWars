@@ -212,7 +212,8 @@ test("a lobby match shows the score, the clock and both fighters", async ({ brow
     await expect(host.locator("#viewport canvas")).toBeVisible();
 
     const scoreboard = host.locator(".hud-scoreboard");
-    await expect(scoreboard).toContainText("0 — 0");
+    // The living on each side (#881).
+    await expect(scoreboard).toContainText("1 v 1");
 
     // The clock advances.
     await expect(scoreboard).toContainText(/\d+:\d\d/);

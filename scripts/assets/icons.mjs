@@ -373,6 +373,28 @@ const status = {
     "hex",
     (c) => `<path d="M14.5 8L11 12l3.5 4M11 8L7.5 12l3.5 4" ${stroke(c, 2)}/>`,
   ],
+  // Hex: a burst with a dot at its heart, the spirit striking out (#935).
+  "spiteful-spirit": [
+    "hex",
+    (c) =>
+      `<circle cx="12" cy="12.5" r="2" fill="${c}"/>` +
+      `<path d="M12 5.5v2.5M12 17v2.5M5 12.5h2.5M16.5 12.5H19M7 7.5l1.8 1.8M15.2 15.7L17 17.5M17 7.5l-1.8 1.8M8.8 15.7L7 17.5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Hex: a drop drawn off by an arrow, health stolen on each hit (#935).
+  "insidious-parasite": [
+    "hex",
+    (c) =>
+      `<path d="M10 6c2 3 3.5 4.8 3.5 7a3.5 3.5 0 0 1-7 0c0-2.2 1.5-4 3.5-7z" fill="${c}"/>` +
+      `<path d="M14.5 10.5h4M16.5 8.5l2 2-2 2" ${stroke(c, 1.8)}/>`,
+  ],
+  // Hex: a cross with two rings beside it, pain passed to who stands near (#935).
+  "mark-of-pain": [
+    "hex",
+    (c) =>
+      `<path d="M10 9.5l4 4M14 9.5l-4 4" ${stroke(c, 2.2)}/>` +
+      `<circle cx="6.5" cy="15.5" r="1.5" ${stroke(c, 1.5)}/>` +
+      `<circle cx="17.5" cy="15.5" r="1.5" ${stroke(c, 1.5)}/>`,
+  ],
   // Hex: three ice spikes falling, the cold slowing you (#938).
   "ice-spikes": [
     "hex",

@@ -124,6 +124,16 @@ export interface EnergyLossEffect {
   readonly amount: Magnitude;
 }
 
+/**
+ * Steal up to `amount` health from the target (#935), GW1's life
+ * stealing: not damage, so no armor, no adrenaline and nothing that
+ * reacts to damage sees it. The caster gains what the target lost.
+ */
+export interface LifeStealEffect {
+  readonly kind: "life-steal";
+  readonly amount: Magnitude;
+}
+
 /** Health sacrificed by the *caster*, as a percentage of their maximum. */
 export interface SacrificeHealthEffect {
   readonly kind: "sacrifice-health";
@@ -338,6 +348,7 @@ export type UnconditionalEffect =
   | HealEffect
   | EnergyGainEffect
   | EnergyLossEffect
+  | LifeStealEffect
   | SacrificeHealthEffect
   | LoseHealthEffect
   | TransferConditionsEffect
