@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 
-import { nextTabTarget } from "./tab-target.js";
+import { closestTarget, nextTabTarget } from "./tab-target.js";
 
 function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
   return {
@@ -92,5 +92,22 @@ describe("nextTabTarget", () => {
   it("finds nobody with no enemy, or no self", () => {
     expect(nextTabTarget([ME, player("ally", { team: 0 })], "me", undefined, 1)).toBeUndefined();
     expect(nextTabTarget([NEAR], "me", undefined, 1)).toBeUndefined();
+  });
+});
+
+describe("closestTarget (#1024)", () => {
+  it("picks the nearest living foe, and stays on it when pressed again", () => {
+    expect(closestTarget(PLAYERS, "me")).toBe("near");
+    expect(closestTarget([ME, player("near", { x: 10, dead: true }), MID], "me")).toBe("mid");
+    expect(closestTarget([ME, player("ally", { team: 0, x: 1 }), FAR], "me")).toBe("far");
+  });
+
+  it("breaks ties by id", () => {
+    expect(closestTarget([ME, player("b", { x: 10 }), player("a", { y: 10 })], "me")).toBe("a");
+  });
+
+  it("finds nobody with no living foe, or no self", () => {
+    expect(closestTarget([ME, player("ally", { team: 0 })], "me")).toBeUndefined();
+    expect(closestTarget([NEAR], "me")).toBeUndefined();
   });
 });
