@@ -120,7 +120,7 @@ export const SKILL_ICONS = {
   "elementalist.blinding-flash": { glyph: "flash" },
   "elementalist.shock": { glyph: "lightning", modifier: "stun" },
   "elementalist.aftershock": { glyph: "quake" },
-  "elementalist.meteor": { glyph: "meteor" },
+  "elementalist.meteor": { glyph: "meteor", modifier: "stun" },
   "mesmer.cry-of-frustration": { glyph: "interrupt", modifier: "area" },
   "mesmer.mantra-of-recovery": { glyph: "speed", modifier: "clock" },
   "necromancer.shadow-of-fear": { glyph: "slow", modifier: "area" },

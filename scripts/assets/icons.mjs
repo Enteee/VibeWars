@@ -860,10 +860,11 @@ const skillGlyph = {
   quake: () =>
     inkLine("M2.5 17L7 15L10 19L13.5 14L17 18L21.5 15.5", 2.4) +
     `<path d="M6.5 11A7 7 0 0 1 17.5 11M9.5 7.5A3.5 3.5 0 0 1 14.5 7.5" ${stroke(C.ink, 2)}/>`,
-  // A rock falling in from the upper left, its trail behind it (#992).
+  // A jagged rock dropping straight down onto the ground, streaks above it (#992).
   meteor: () =>
-    `<circle cx="15.5" cy="15.5" r="5.5" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
-    inkLine("M11 11L3.5 3.5M9 14.5L3 10M14.5 9L10 3", 2.4),
+    inkFill("M6 10L10 6.5L15.5 8L17 13L13.5 17L8 16Z") +
+    inkLine("M8 3V5M12.5 1.5V4.5M16.5 3V6M3 11V13", 2) +
+    inkLine("M2.5 20.5H14M4.5 18.5L6 19.5", 2.2),
   axe: () =>
     inkLine("M5 20L16 7", 2.4) + inkFill("M11 3.5C17 2.5 21.5 5 21 9C20.5 13 16.5 15 14 12.5Z"),
   sword: () =>
