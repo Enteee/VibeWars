@@ -594,7 +594,7 @@ test("(20) a double right click on a far enemy attacks it: you walk there and sw
   const dummy = (await trainingView(page, canvas)).onPage({ x: 480, y: 210 });
   await page.mouse.dblclick(dummy.x, dummy.y, { button: "right" });
 
-  await expect(page.locator(".training-adrenaline")).toContainText("· attacking");
+  await expect(page.locator(".training-attacking")).toContainText("attacking");
   // Only a body that walked the whole way there can land this. The walk
   // is in game time, which runs slower than wall time under load (#327).
   await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Bow-range dummy/, {
@@ -834,7 +834,7 @@ test("(26) left click walks, even onto a dummy, and never targets; right click t
   await page.mouse.click(moved.x, moved.y, { button: "right" });
   await page.mouse.move(1, 1);
   await expect.poll(() => shownNames(page)).toEqual([LADDER_IDS[0]]);
-  await expect(page.locator(".training-adrenaline")).not.toContainText("attacking");
+  await expect(page.locator(".training-attacking")).not.toContainText("attacking");
 });
 
 test("(27) a right click on the ground moves nobody and keeps the target (#438)", async ({
@@ -1031,9 +1031,10 @@ test("(34) Backbreaker lays the melee dummy flat until it rises (#545)", async (
   // The melee dummy, at (136, 210), in reach from spawn.
   const dummy = (await trainingView(page, canvas)).onPage({ x: 136, y: 210 });
   await page.mouse.dblclick(dummy.x, dummy.y, { button: "right" });
-  // Backbreaker costs 9 adrenaline, one strike a blow: about 16 s of
-  // swinging, in game time, which runs slower than wall time under load (#327).
-  await expect(page.locator(".training-adrenaline")).toContainText(/adrenaline ([9]|[1-9]\d)/, {
+  // Backbreaker costs 9 strikes, one a landed blow (#463): about 16 s of
+  // swinging, in game time, which runs slower than wall time under load
+  // (#327). Its slot stops greying once it is charged.
+  await expect(page.locator(".training-skill").first()).not.toHaveClass(/is-unaffordable/, {
     timeout: 40_000,
   });
 

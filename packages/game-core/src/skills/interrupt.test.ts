@@ -164,7 +164,7 @@ describe("interrupt mechanic", () => {
 
 describe("status-driven combat scenarios", () => {
   it("bleeding from an attack genuinely degenerates the target over time", () => {
-    const warrior = makeCombatant({ id: "war", team: 0, adrenaline: 4 });
+    const warrior = makeCombatant({ id: "war", team: 0 });
     const victim = makeCombatant({ id: "victim", team: 1, health: 500 });
 
     applyEffects(getSkill("warrior.sever-artery")?.effects ?? [], {

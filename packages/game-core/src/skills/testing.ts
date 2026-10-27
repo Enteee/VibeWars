@@ -1,6 +1,7 @@
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
-import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { CastState } from "./cast-state.js";
+import { getSkill } from "./catalog.js";
 import {
   STATUS_DEFINITIONS,
   StatusSet,
@@ -25,7 +26,7 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     overcast: 0,
     morale: 0,
     baseEnergyPips: 0,
-    adrenaline: 0,
+    adrenaline: new Map(),
     attributeRanks: new Map(),
     team: 0,
     dead: false,
@@ -81,4 +82,22 @@ export function withStatusDefinitions<T>(
   } finally {
     Object.assign(table, saved);
   }
+}
+
+/**
+ * Fill `combatant`'s adrenaline (#463) for each of `skillIds`, or for every
+ * adrenaline skill on its bar with none named, to that skill's whole cost.
+ */
+export function chargeAdrenaline(combatant: Combatant, ...skillIds: string[]): void {
+  for (const skillId of skillIds.length > 0 ? skillIds : [...combatant.adrenaline.keys()]) {
+    const cost = getSkill(skillId)?.cost;
+    if (cost?.kind === "adrenaline") {
+      combatant.adrenaline.set(skillId, cost.amount * ADRENALINE_PER_STRIKE);
+    }
+  }
+}
+
+/** The strikes `combatant` holds for `skillId`, 0 for none (#463). */
+export function strikesOf(combatant: Combatant, skillId: string): number {
+  return (combatant.adrenaline.get(skillId) ?? 0) / ADRENALINE_PER_STRIKE;
 }

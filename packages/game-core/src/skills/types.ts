@@ -392,7 +392,12 @@ export interface Combatant {
   overcast: number;
   /** Energy regeneration before statuses, in pips (`ENERGY_PER_PIP`). */
   readonly baseEnergyPips: number;
-  adrenaline: number;
+  /**
+   * Units per adrenaline skill on the bar (#463), keyed by skill id like
+   * `cast.rechargeRemaining`. Exactly the bar's adrenaline skills are keys,
+   * set at 0 when the combatant is made.
+   */
+  readonly adrenaline: Map<string, number>;
   /** Attribute ranks by attribute id; absent means rank 0. */
   readonly attributeRanks: ReadonlyMap<string, number>;
   readonly team: number;

@@ -6,8 +6,9 @@ import { segment, type Segment } from "../geometry.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
+import { emptyAdrenaline } from "../skills/adrenaline.js";
 import { applyEffects } from "../skills/effects.js";
-import { withAttackDuration } from "../skills/testing.js";
+import { chargeAdrenaline, strikesOf, withAttackDuration } from "../skills/testing.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import { tallyCombat, type CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
@@ -17,6 +18,7 @@ const DT = 1 / RULES.tickRateHz;
 const FIREBALL = "elementalist.fireball";
 const ARMOR_OF_EARTH = "elementalist.armor-of-earth";
 const SEVER_ARTERY = "warrior.sever-artery";
+const BACKBREAKER = "warrior.backbreaker";
 
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   return {
@@ -25,12 +27,16 @@ function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   };
 }
 
-/** A swordsman at rank 12 who also knows a little fire, and Sever Artery. */
+/**
+ * A swordsman at rank 12 who also knows a little fire, and Sever Artery.
+ * Backbreaker, 9 strikes, only so a test can count strikes past Sever
+ * Artery's four (#463): a sword cannot use it.
+ */
 function swordsman(id: string, spawn: Vec2): ParticipantSpec {
   return {
     id,
     team: 0,
-    skillBar: [FIREBALL, ARMOR_OF_EARTH, SEVER_ARTERY],
+    skillBar: [FIREBALL, ARMOR_OF_EARTH, SEVER_ARTERY, BACKBREAKER],
     attributeRanks: new Map([
       ["warrior.swordsmanship", 12],
       ["elementalist.fire-magic", 12],
@@ -141,8 +147,9 @@ describe("the swing", () => {
         }
       }
     }
-    // +3 per landed swing, capped.
-    expect(get(match, "a").combatant.adrenaline).toBe(RULES.resources.maxAdrenaline);
+    // A strike per landed swing, each skill capped at its own cost (#463).
+    expect(strikesOf(get(match, "a").combatant, SEVER_ARTERY)).toBe(4);
+    expect(strikesOf(get(match, "a").combatant, BACKBREAKER)).toBe(9);
   });
 
   it("walks into reach first; the first hit lands one interval after arriving", () => {
@@ -272,7 +279,7 @@ describe("skills and the swing", () => {
   it("an attack skill at an enemy starts an attack on them, and swings follow", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     match.setTarget("a", "d");
-    get(match, "a").combatant.adrenaline = 4;
+    chargeAdrenaline(get(match, "a").combatant);
     expect(match.requestSkill("a", 2)?.check).toEqual({ ok: true });
     const log = stepFor(match, 3);
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
@@ -316,19 +323,27 @@ describe("moving", () => {
   });
 });
 
-describe("adrenaline", () => {
-  it("a landed swing gives +3, as a damaging attack skill does", () => {
+describe("adrenaline (#463)", () => {
+  it("a landed swing gives every adrenaline skill one strike", () => {
     const hit = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     hit.requestAttack("a", "d");
     stepFor(hit, 1.4);
-    expect(get(hit, "a").combatant.adrenaline).toBe(RULES.resources.adrenalinePerHit);
+    expect(strikesOf(get(hit, "a").combatant, SEVER_ARTERY)).toBe(1);
+    expect(strikesOf(get(hit, "a").combatant, BACKBREAKER)).toBe(1);
+  });
 
+  it("an attack skill pays at once, draining a strike from the others, and its blow refills it", () => {
     const chop = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     chop.setTarget("a", "d");
-    get(chop, "a").combatant.adrenaline = 4;
+    const caster = get(chop, "a").combatant;
+    chargeAdrenaline(caster);
     expect(chop.requestSkill("a", 2)?.check).toEqual({ ok: true });
+    stepFor(chop, DT);
+    expect(strikesOf(caster, SEVER_ARTERY)).toBe(0);
+    expect(strikesOf(caster, BACKBREAKER)).toBe(8);
     stepFor(chop, 0.7);
-    expect(get(chop, "a").combatant.adrenaline).toBe(RULES.resources.adrenalinePerHit);
+    expect(strikesOf(caster, SEVER_ARTERY)).toBe(1);
+    expect(strikesOf(caster, BACKBREAKER)).toBe(9);
   });
 
   it("a damaging spell gives none (Q19)", () => {
@@ -340,10 +355,41 @@ describe("adrenaline", () => {
     expect(
       log.some((entry) => entry.cause === "skill" && entry.events.some((e) => e.kind === "damage")),
     ).toBe(true);
-    expect(get(match, "a").combatant.adrenaline).toBe(0);
+    expect(strikesOf(get(match, "a").combatant, SEVER_ARTERY)).toBe(0);
+    expect(strikesOf(get(match, "a").combatant, BACKBREAKER)).toBe(0);
+  });
+
+  it("a cleave that damages three foes is one blow: one strike", () => {
+    const match = sim(
+      {
+        ...swordsman("a", vec2(0, 0)),
+        equipment: wielding(WEAPONS.scythe, "dervish.scythe-mastery"),
+      },
+      dummy("d", vec2(40, 0)),
+      dummy("e", vec2(45, 20)),
+      dummy("f", vec2(45, -20)),
+    );
+    match.requestAttack("a", "d");
+    const [swing] = swings(stepFor(match, 1.9));
+    const struck = new Set(
+      (swing?.events ?? []).flatMap((event) => (event.kind === "damage" ? [event.targetId] : [])),
+    );
+    expect(struck).toEqual(new Set(["d", "e", "f"]));
+    expect(strikesOf(get(match, "a").combatant, BACKBREAKER)).toBe(1);
+  });
+
+  it("death empties every adrenaline skill", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
+    const caster = get(match, "a").combatant;
+    chargeAdrenaline(caster);
+    caster.statuses.apply("burning", 10, "d");
+    caster.health = 0.2;
+    stepFor(match, DT);
+    expect(caster.dead).toBe(true);
+    expect(strikesOf(caster, SEVER_ARTERY)).toBe(0);
+    expect(strikesOf(caster, BACKBREAKER)).toBe(0);
   });
 });
-
 describe("block (#534)", () => {
   /** `defender` under a Guardian that outlasts the test. */
   function guarded(match: MatchSimulation, defender: string): void {
@@ -354,7 +400,7 @@ describe("block (#534)", () => {
     return entries.flatMap((entry) => entry.events.map((event) => event.kind));
   }
 
-  it("a blocked swing deals nothing and earns no adrenaline; a landed one still earns +3", () => {
+  it("a blocked swing deals nothing and earns no adrenaline; a landed one still earns a strike", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     guarded(match, "d");
     match.requestAttack("a", "d");
@@ -364,7 +410,7 @@ describe("block (#534)", () => {
     expect(landed + blocked).toBe(seen.length);
     expect(landed).toBeGreaterThan(0);
     expect(blocked).toBeGreaterThan(0);
-    expect(get(match, "a").combatant.adrenaline).toBe(landed * RULES.resources.adrenalinePerHit);
+    expect(strikesOf(get(match, "a").combatant, BACKBREAKER)).toBe(Math.min(9, landed));
   });
 
   it("a double strike with one blow blocked and one landed earns adrenaline for the landed one", () => {
@@ -380,12 +426,10 @@ describe("block (#534)", () => {
     match.requestAttack("a", "d");
     // Every swing until one is half blocked: at 50% a blow, one comes soon.
     for (let i = 0; i < 2000; i += 1) {
-      const before = get(match, "a").combatant.adrenaline;
+      emptyAdrenaline(get(match, "a").combatant);
       const seen = kinds(swings(match.step(DT).log)).sort();
       if (seen.length === 2 && seen[0] === "attack-blocked" && seen[1] === "damage") {
-        expect(get(match, "a").combatant.adrenaline).toBe(
-          before + RULES.resources.adrenalinePerHit,
-        );
+        expect(strikesOf(get(match, "a").combatant, BACKBREAKER)).toBe(1);
         return;
       }
     }
@@ -409,7 +453,7 @@ describe("block (#534)", () => {
   it("Swift Chop, blocked: cost and recharge spent, its flat damage and Deep Wound, no adrenaline", () => {
     const axeman: ParticipantSpec = {
       ...swordsman("a", vec2(0, 0)),
-      skillBar: ["warrior.swift-chop"],
+      skillBar: ["warrior.swift-chop", BACKBREAKER],
       attributeRanks: new Map([["warrior.axe-mastery", 12]]),
       equipment: wielding(WEAPONS.axe, "warrior.axe-mastery"),
     };
@@ -434,7 +478,7 @@ describe("block (#534)", () => {
       const caster = get(match, "a").combatant;
       expect(caster.energy).toBeLessThan(energy);
       expect(caster.cast.rechargeRemaining.has("warrior.swift-chop")).toBe(true);
-      expect(caster.adrenaline).toBe(0);
+      expect(strikesOf(caster, BACKBREAKER)).toBe(0);
       return;
     }
     throw new Error("no seed blocked the chop");
@@ -475,8 +519,8 @@ describe("the log", () => {
       0,
     );
     expect(tallyCombat(entry === undefined ? [] : [entry]).damageByActor.get("a")).toBe(total);
-    // Two hits, one swing: adrenaline once.
-    expect(get(match, "a").combatant.adrenaline).toBe(3);
+    // Two blows, each landed: a strike each (#463).
+    expect(strikesOf(get(match, "a").combatant, BACKBREAKER)).toBe(2);
   });
 
   it("says which swings struck twice; an attack skill never does (#561, ADR-0029)", () => {
@@ -490,7 +534,7 @@ describe("the log", () => {
       dummy("d", vec2(40, 0)),
     );
     match.setTarget("a", "d");
-    get(match, "a").combatant.adrenaline = 4;
+    chargeAdrenaline(get(match, "a").combatant);
     expect(match.requestSkill("a", 2)?.check).toEqual({ ok: true });
     const log = stepFor(match, 3);
     const cut = log.filter((entry) => entry.skillId === SEVER_ARTERY);
@@ -745,7 +789,7 @@ describe("aftercast (#317)", () => {
   it("an attack skill has its own instead: the recovery from its blow, as long as the wind-up", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     match.setTarget("a", "d");
-    get(match, "a").combatant.adrenaline = 4;
+    chargeAdrenaline(get(match, "a").combatant);
     match.requestSkill("a", 2);
     const hitTicks = Math.ceil(WEAPONS.sword.attackIntervalSeconds / 2 / DT);
     stepFor(match, hitTicks * DT);
@@ -839,7 +883,7 @@ describe("aftercast (#317)", () => {
     match.setTarget("a", "d");
     match.requestSkill("a", 1);
     stepFor(match, 0.75);
-    get(match, "a").combatant.adrenaline = 25;
+    chargeAdrenaline(get(match, "a").combatant);
     expect(match.requestSkill("a", 2)).toEqual({
       skillId: SEVER_ARTERY,
       check: { ok: true },
@@ -957,7 +1001,7 @@ describe("attack skills ride the weapon (ADR-0029)", () => {
   it("Backbreaker on a hammer hits at half the hammer's 1.75 s", () => {
     const match = sim(hammerer(), dummy("d", vec2(40, 0)));
     match.setTarget("a", "d");
-    get(match, "a").combatant.adrenaline = 9;
+    chargeAdrenaline(get(match, "a").combatant);
     expect(match.requestSkill("a", 1)?.check).toEqual({ ok: true });
     const log = stepFor(match, 2);
     expect(skillHits(log, BACKBREAKER)[0]?.atSeconds).toBeCloseTo(ticksFor(0.875) * DT, 6);

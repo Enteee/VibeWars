@@ -10,6 +10,7 @@
     "refused",
     "skill-bar",
     "recharge",
+    "adrenaline",
     "ended",
     "bye",
     "lobby-join",
@@ -81,6 +82,9 @@
     }
   },
   "types": {
+    "AdrenalineMessage": {
+      "properties": [{ "name": "slots", "optional": false, "type": { "array": "number" } }]
+    },
     "AttackIntent": {
       "properties": [
         { "name": "kind", "optional": false, "type": { "literal": "attack" } },
@@ -110,6 +114,7 @@
     },
     "Channel": {
       "union": [
+        { "literal": "adrenaline" },
         { "literal": "bye" },
         { "literal": "call" },
         { "literal": "calls" },
@@ -1296,7 +1301,6 @@
     },
     "WirePlayer": {
       "properties": [
-        { "name": "adrenaline", "optional": false, "type": "number" },
         { "name": "armor", "optional": false, "type": "number" },
         { "name": "attackTargetId", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "castRemaining", "optional": false, "type": "number" },
@@ -1428,7 +1432,6 @@
           "type": {
             "array": {
               "properties": [
-                { "name": "adrenaline", "optional": false, "type": "number" },
                 { "name": "armor", "optional": false, "type": "number" },
                 {
                   "name": "attackTargetId",
@@ -1561,7 +1564,6 @@
           "type": {
             "array": {
               "properties": [
-                { "name": "adrenaline", "optional": false, "type": "number" },
                 { "name": "armor", "optional": false, "type": "number" },
                 {
                   "name": "attackTargetId",

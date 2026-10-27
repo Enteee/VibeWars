@@ -8,6 +8,7 @@ import { BASE_ENERGY_PIPS_BY_PROFESSION } from "../equipment/armor.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { ENERGY_PER_PIP } from "../skills/status.js";
+import { chargeAdrenaline, strikesOf } from "../skills/testing.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
@@ -17,6 +18,7 @@ const DT = 1 / RULES.tickRateHz;
 const FIREBALL = "elementalist.fireball";
 const ORISON = "monk.orison-of-healing";
 const BARRAGE = "ranger.barrage";
+const BACKBREAKER = "warrior.backbreaker";
 /** An elementalist's energy regeneration, per second. */
 const CASTER_REGEN = BASE_ENERGY_PIPS_BY_PROFESSION.elementalist * ENERGY_PER_PIP;
 const MATCH: MatchRules = {
@@ -31,7 +33,9 @@ function spec(id: string, team: number, spawn: Vec2, extra: Partial<ParticipantS
   return {
     id,
     team,
-    skillBar: [FIREBALL],
+    // Backbreaker only so a test can watch adrenaline (#463): unarmed, it
+    // cannot be used.
+    skillBar: [FIREBALL, BACKBREAKER],
     attributeRanks: new Map([["elementalist.fire-magic", 12]]),
     equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
     spawn,
@@ -202,7 +206,7 @@ describe("MatchSimulation step", () => {
       },
     ]);
     // A spell earns no adrenaline, whatever it hits; only attacks do.
-    expect(participant(sim, "a").combatant.adrenaline).toBe(0);
+    expect(strikesOf(participant(sim, "a").combatant, BACKBREAKER)).toBe(0);
   });
 
   it("says why a cast was refused, and nothing for an empty slot", () => {
@@ -321,6 +325,7 @@ describe("previously uncovered branches", () => {
     stepFor(sim, 1 + FIREBALL_FLIGHT);
     expect(b.combatant.dead).toBe(true);
     b.position = vec2(300, 300);
+    chargeAdrenaline(b.combatant);
     expect(b.respawnInSeconds).toBeGreaterThan(MATCH.respawnSeconds - 0.1);
 
     stepFor(sim, MATCH.respawnSeconds - 0.5);
@@ -329,7 +334,7 @@ describe("previously uncovered branches", () => {
     expect(b.combatant.dead).toBe(false);
     expect(b.combatant.health).toBe(b.combatant.maxHealth);
     expect(b.combatant.energy).toBe(b.combatant.maxEnergy);
-    expect(b.combatant.adrenaline).toBe(0);
+    expect(strikesOf(b.combatant, BACKBREAKER)).toBe(0);
     expect(b.combatant.statuses.active).toEqual([]);
     expect(b.position).toEqual(vec2(200, 0));
   });
@@ -615,7 +620,7 @@ describe("reset policies", () => {
     d.combatant.statuses.apply("burning", 60, "a");
     d.combatant.statuses.apply("armor-boost", 60, "d");
     d.combatant.energy = 0;
-    d.combatant.adrenaline = 3;
+    chargeAdrenaline(d.combatant);
     d.position = vec2(250, 50);
   }
 
@@ -623,7 +628,7 @@ describe("reset policies", () => {
     expect(d.combatant.dead).toBe(false);
     expect(d.combatant.health).toBe(400);
     expect(d.combatant.energy).toBe(d.combatant.maxEnergy);
-    expect(d.combatant.adrenaline).toBe(0);
+    expect(strikesOf(d.combatant, BACKBREAKER)).toBe(0);
     expect(d.combatant.statuses.active).toEqual([]);
     expect(d.combatant.cast.isCasting).toBe(false);
     expect(d.position).toEqual(vec2(200, 0));

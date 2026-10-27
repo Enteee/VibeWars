@@ -80,7 +80,7 @@ export interface HudElements {
   readonly energyOvercast: HTMLElement;
   readonly energyText: HTMLElement;
   readonly energyPips: HTMLElement;
-  readonly adrenalineText: HTMLElement;
+  readonly gearText: HTMLElement;
   readonly statusList: HTMLElement;
   readonly skillBar: HTMLElement;
   /** The skill bar's hover tooltips (#485); `dispose` it with the HUD. */
@@ -242,7 +242,7 @@ export function createHud(parent: HTMLElement): HudElements {
   const energyText = element("span", "hud-bar-label", energyRow);
   const energyPips = energyRow.appendChild(pipsElement());
 
-  const adrenalineText = element("div", "hud-adrenaline", bars);
+  const gearText = element("div", "hud-gear", bars);
   const statusList = element("div", "hud-statuses", bars);
 
   const hint = element("div", "hud-hint", root);
@@ -263,7 +263,7 @@ export function createHud(parent: HTMLElement): HudElements {
     energyOvercast,
     energyText,
     energyPips,
-    adrenalineText,
+    gearText,
     statusList,
     skillBar,
     slotTips: createSlotTooltips(),
@@ -834,6 +834,8 @@ export function updateHud(
   self: PlayerSnapshot | undefined,
   target: PlayerSnapshot | undefined,
   skillBar: readonly (SkillSlot | null)[],
+  /** Units each slot's skill holds, by slot (#463). */
+  adrenaline: readonly number[],
   walls: readonly Segment[],
   match?: MatchSnapshot,
 ): void {
@@ -866,11 +868,11 @@ export function updateHud(
   renderOvercastBand(hud.energyOvercast, self.overcast, self.maxEnergy);
   renderPips(hud.healthPips, self.healthPips);
   renderPips(hud.energyPips, self.energyPips);
-  // Armor and weapon alongside adrenaline: both are now numbers that
-  // change what a fight does, so hiding them would be the HUD lying by
-  // omission.
-  hud.adrenalineText.textContent =
-    `adrenaline ${String(self.adrenaline)} · armor ${String(self.armor)}` +
+  // Armor and weapon: both are numbers that change what a fight does, so
+  // hiding them would be the HUD lying by omission. Adrenaline is each
+  // slot's own (#463).
+  hud.gearText.textContent =
+    `armor ${String(self.armor)}` +
     (self.weaponId === undefined ? "" : ` · ${describeWeaponName(self.weaponId)}`);
 
   hud.statusList.textContent =
@@ -899,7 +901,7 @@ export function updateHud(
     button.classList.toggle("is-casting", index === fill?.slot);
     paintCastFill(button, index === fill?.slot ? fill.fraction : undefined);
     button.classList.toggle("is-out-of-range", far[index] === true);
-    button.classList.toggle("is-unaffordable", !slotAffordable(slot, self));
+    button.classList.toggle("is-unaffordable", !slotAffordable(slot, self, adrenaline[index] ?? 0));
     button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
   });
 }

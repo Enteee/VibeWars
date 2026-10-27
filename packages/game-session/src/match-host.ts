@@ -24,6 +24,7 @@ import {
   parsePeerCall,
   parsePeerHello,
   parsePeerRejoinProof,
+  type AdrenalineMessage,
   type MapDescriptor,
   type PeerHello,
   type PeerRefuse,
@@ -41,6 +42,7 @@ import { createCallBoard, type Team } from "./calls.js";
 import { packCombat } from "./combat-batches.js";
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 import { sanitizeName } from "./names.js";
+import { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
 import { rechargePredicted, rechargeSlots } from "./recharge.js";
 import { rejoinProof } from "./rejoin-proof.js";
 import { packSnapshot } from "./snapshot-parts.js";
@@ -134,6 +136,8 @@ interface Seat {
   readonly name: string;
   readonly primaryProfession: ProfessionId;
   readonly secondaryProfession: ProfessionId | undefined;
+  /** The adrenaline the peer was last sent, so only a change goes (#463). */
+  adrenaline: readonly number[] | undefined;
   /** The peer playing it; `undefined` while it is dropped. */
   peerId: string | undefined;
   /** What the peer proves it holds, by `rejoinProof`, to take the seat back. */
@@ -227,6 +231,21 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     transport.send("recharge", { slots }, seat.peerId);
   };
 
+  /** Send `seat`'s peer its own adrenaline when it changed, or whenever `force` (#463). */
+  const sendAdrenaline = (seat: Seat, force: boolean): void => {
+    const participant = sim.get(seat.playerId);
+    if (participant === undefined || seat.peerId === undefined) {
+      return;
+    }
+    const slots = adrenalineSlots(participant.skillBar, participant.combatant);
+    if (!force && seat.adrenaline !== undefined && sameAdrenaline(seat.adrenaline, slots)) {
+      return;
+    }
+    seat.adrenaline = slots;
+    const message: AdrenalineMessage = { slots };
+    transport.send("adrenaline", message, seat.peerId);
+  };
+
   /**
    * Send `seat`'s peer its bar when it changed since the last one, or
    * whenever `force`, as on a welcome (#637). Costs follow the bearer,
@@ -280,6 +299,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     transport.send("welcome", message, peerId);
     sendSkillBar(seat, true);
     sendRecharges(seat, true);
+    sendAdrenaline(seat, true);
     // A rejoin sees the call its team has up.
     transport.send("calls", calls.view(seat.team, sim.elapsedSeconds), peerId);
   };
@@ -336,6 +356,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       token: "",
       droppedAt: undefined,
       recharges: undefined,
+      adrenaline: undefined,
       skillBar: undefined,
     };
     seats.set(playerId, seat);
@@ -533,6 +554,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     seat.peerId = undefined;
     seat.droppedAt = sim.elapsedSeconds;
     seat.recharges = undefined;
+    seat.adrenaline = undefined;
     seat.skillBar = undefined;
     // Frozen, not left running into a wall while away.
     sim.setInputDirection(seat.playerId, ZERO);
@@ -560,7 +582,6 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       maxEnergy: combatant.maxEnergy,
       overcast: Math.round(combatant.overcast),
       morale: combatant.morale,
-      adrenaline: combatant.adrenaline,
       armor: combatant.equipment.baseArmor,
       weaponId: combatant.equipment.mainHand.weapon.id,
       offhandId: combatant.equipment.offhandId ?? null,
@@ -637,6 +658,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     for (const seat of seats.values()) {
       sendSkillBar(seat, false);
       sendRecharges(seat, false);
+      sendAdrenaline(seat, false);
     }
     if (result.phase === "finished") {
       finished = true;

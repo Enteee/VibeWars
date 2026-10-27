@@ -50,6 +50,7 @@ import {
   type ActivationCheck,
   type ActivationRejection,
 } from "../skills/activation.js";
+import { adrenalinePools, emptyAdrenaline, gainStrikes } from "../skills/adrenaline.js";
 import { CastState, type ActiveCast } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
 import {
@@ -537,6 +538,7 @@ export class MatchSimulation {
     const fraction = before.maxHealth > 0 ? before.health / before.maxHealth : 0;
     record.combatant = this.#combatant({
       ...record.spec,
+      skillBar,
       attributeRanks: loadout.attributeRanks,
       equipment: loadout.equipment,
       maxHealth: loadout.maxHealth,
@@ -1642,7 +1644,7 @@ export class MatchSimulation {
       }
       return;
     }
-    const { events, doubleStrike } = resolveSwing({
+    const { events, doubleStrike, landed } = resolveSwing({
       attacker: record.combatant,
       target,
       candidates: weapon.cleaveTargets === 0 ? [] : [...this.#participants.values()],
@@ -1650,7 +1652,7 @@ export class MatchSimulation {
       rules: this.#ruleset.combat,
       exposed: this.#exposedTo(record),
     });
-    this.#gainAdrenaline(record, events);
+    this.#gainAdrenaline(record, events, landed);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
     this.#logWeapon(record.id, record.combatant.equipment.mainHand.weapon.id, events, doubleStrike);
@@ -2026,22 +2028,21 @@ export class MatchSimulation {
   }
 
   /**
-   * Adrenaline is earned by landing damage on someone else, never by
-   * waiting, which makes adrenaline skills a reward for staying in the
-   * fight rather than a second energy pool. Once per resolution, however
-   * many it hit. A blocked blow deals no damage, so it earns nothing
-   * (#534); a double strike with one blow blocked still earns it for the
-   * other.
+   * Adrenaline is earned by landing damage on a foe, never by waiting,
+   * which makes adrenaline skills a reward for staying in the fight rather
+   * than a second energy pool. `blows` strikes to every adrenaline skill
+   * (#463), if anything in `events` damaged a foe: one for an attack skill
+   * or a shot, however many it hit, and one per landed blow of a swing, so
+   * a double strike earns two. A blocked blow deals no damage, so it earns
+   * nothing (#534).
    */
-  #gainAdrenaline(record: ParticipantRecord, events: readonly CombatEvent[]): void {
-    const dealtDamage = events.some(
-      (event) => event.kind === "damage" && event.targetId !== record.combatant.id,
-    );
-    if (dealtDamage) {
-      record.combatant.adrenaline = Math.min(
-        this.#ruleset.resources.maxAdrenaline,
-        record.combatant.adrenaline + this.#ruleset.resources.adrenalinePerHit,
-      );
+  #gainAdrenaline(record: ParticipantRecord, events: readonly CombatEvent[], blows = 1): void {
+    const damagedFoe = events.some((event) => {
+      const victim = event.kind === "damage" ? this.#participants.get(event.targetId) : undefined;
+      return victim !== undefined && victim.combatant.team !== record.combatant.team;
+    });
+    if (damagedFoe) {
+      gainStrikes(record.combatant, blows);
     }
   }
 
@@ -2064,6 +2065,7 @@ export class MatchSimulation {
         victim.combatant.cast.endAftercast();
         victim.walkGoal = undefined;
         victim.combatant.knockdownRemaining = 0;
+        emptyAdrenaline(victim.combatant);
         victim.respawnInSeconds = this.#respawnSeconds(victim);
         this.#deathPenalty(victim);
         this.#reapSoul(victim);
@@ -2392,7 +2394,7 @@ export class MatchSimulation {
     record.combatant.dead = false;
     record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);
     record.combatant.energy = Math.max(0, effectiveMaxEnergy(record.combatant));
-    record.combatant.adrenaline = 0;
+    emptyAdrenaline(record.combatant);
     record.combatant.statuses.clear();
     record.position = record.spawn;
     record.facing = record.spec.facing;
@@ -2429,7 +2431,7 @@ export class MatchSimulation {
       overcast: 0,
       morale: 0,
       baseEnergyPips: spec.baseEnergyPips ?? 0,
-      adrenaline: 0,
+      adrenaline: adrenalinePools(spec.skillBar),
       attributeRanks: spec.attributeRanks,
       team: spec.team,
       dead: false,

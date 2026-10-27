@@ -403,7 +403,7 @@ body {
   color: #e07a6e;
 }
 
-.hud-adrenaline,
+.hud-gear,
 .hud-statuses {
   color: var(--ink-dim);
 }
@@ -2096,7 +2096,7 @@ body.has-expanded-training #screens {
   text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
 }
 
-.training-adrenaline {
+.training-attacking {
   color: var(--ink-dim);
   font-size: 0.75rem;
 }

@@ -19,7 +19,6 @@ function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): Pla
     maxEnergy: 50,
     overcast: 0,
     morale: 0,
-    adrenaline: 0,
     armor: 60,
     weaponId: undefined,
     offhandId: undefined,
