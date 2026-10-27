@@ -249,6 +249,45 @@
         {
           "properties": [
             { "name": "amount", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "health-lost" } },
+            {
+              "name": "statusId",
+              "optional": false,
+              "type": {
+                "union": [
+                  { "literal": "anthem-of-flame" },
+                  { "literal": "apply-poison" },
+                  { "literal": "armor-boost" },
+                  { "literal": "bleeding" },
+                  { "literal": "blind" },
+                  { "literal": "blood-ritual" },
+                  { "literal": "burning" },
+                  { "literal": "cracked-armor" },
+                  { "literal": "crippled" },
+                  { "literal": "dash" },
+                  { "literal": "dazed" },
+                  { "literal": "deep-wound" },
+                  { "literal": "disease" },
+                  { "literal": "faintheartedness" },
+                  { "literal": "glyph-of-lesser-energy" },
+                  { "literal": "guardian" },
+                  { "literal": "healing-signet-armor" },
+                  { "literal": "malaise" },
+                  { "literal": "poison" },
+                  { "literal": "regeneration" },
+                  { "literal": "sprint" },
+                  { "literal": "watch-yourself" },
+                  { "literal": "weakness" },
+                  { "literal": "weapon-of-warding" }
+                ]
+              }
+            },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "amount", "optional": false, "type": "number" },
             { "name": "kind", "optional": false, "type": { "literal": "sacrifice" } },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
