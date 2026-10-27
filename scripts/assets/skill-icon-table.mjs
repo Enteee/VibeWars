@@ -60,7 +60,7 @@ export const SKILL_ICONS = {
   "ranger.natural-stride": { glyph: "armor", modifier: "self" },
   // Placeholders until asset-designer's icons (#976).
   "ranger.lightning-reflexes": { glyph: "lightning", modifier: "self" },
-  "ranger.escape": { glyph: "dash", modifier: "up" },
+  "ranger.escape": { glyph: "dash", modifier: "clock" },
   "paragon.wild-throw": { glyph: "spear" },
   // A placeholder: the bleed mark stands in for its Deep Wound (#921).
   "paragon.cruel-spear": { glyph: "spear", modifier: "bleed" },
