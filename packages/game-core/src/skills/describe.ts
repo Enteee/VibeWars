@@ -167,6 +167,9 @@ export function describeStatus(id: string): string {
     const spells = count === 1 ? "spell costs" : `${String(count)} spells cost`;
     parts.push(`your next ${spells} ${String(costReduction)} less energy`);
   }
+  if (definition.spreads) {
+    parts.push("spreads to adjacent combatants");
+  }
   return parts.length === 0 ? definition.name : parts.join(", ");
 }
 

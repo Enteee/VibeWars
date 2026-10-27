@@ -93,6 +93,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Necromancer/264-Parasitic_Bond",
   },
   {
+    id: "necromancer.rotting-flesh",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/291-Rotting_Flesh",
+  },
+  {
     id: "ranger.broad-head-arrow",
     profession: "ranger",
     url: "https://www.gw-memorial.net/skills/Ranger/501-Broad_Head_Arrow",

@@ -82,6 +82,13 @@ describe("condition-duration runes (#464)", () => {
     expect(target.statuses.get("deep-wound")?.remainingSeconds).toBeCloseTo(8, 9);
   });
 
+  it("Purity takes poison and disease to 80%, and leaves burning alone (#765)", () => {
+    const target = wearing("target", 1, "purity");
+    expect(scaledStatusDuration(target, "poison", 10)).toBeCloseTo(8, 9);
+    expect(scaledStatusDuration(target, "disease", 10)).toBeCloseTo(8, 9);
+    expect(scaledStatusDuration(target, "burning", 10)).toBe(10);
+  });
+
   it("Clarity takes blind and weakness to 80%", () => {
     const target = wearing("target", 1, "clarity");
     expect(scaledStatusDuration(target, "blind", 10)).toBeCloseTo(8, 9);

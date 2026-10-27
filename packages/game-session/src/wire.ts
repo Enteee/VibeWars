@@ -158,6 +158,7 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
     statusId: null,
     durationSeconds: null,
     crit: null,
+    fromId: null,
   };
   switch (event.kind) {
     case "damage":
@@ -190,6 +191,14 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
     case "status-removed":
     case "status-expired":
       return { ...none, kind: event.kind, targetId: event.targetId, statusId: event.statusId };
+    case "status-spread":
+      return {
+        ...none,
+        kind: event.kind,
+        targetId: event.targetId,
+        statusId: event.statusId,
+        fromId: event.fromId,
+      };
     case "interrupted":
     case "cancelled":
       return { ...none, kind: event.kind, targetId: event.targetId, skillId: event.skillId };
@@ -232,7 +241,7 @@ export function wireCombat(log: readonly CombatLogEntry[]): WireCombat[] {
 
 /** A wire event back as game-core's, or `undefined` for one this client does not know. */
 function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
-  const { targetId, amount, skillId, statusId, durationSeconds, crit } = event;
+  const { targetId, amount, skillId, statusId, durationSeconds, crit, fromId } = event;
   if (targetId === null) {
     return undefined;
   }
@@ -254,6 +263,10 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
     case "status-removed":
     case "status-expired":
       return isStatusId(statusId) ? { kind: event.kind, targetId, statusId } : undefined;
+    case "status-spread":
+      return isStatusId(statusId) && fromId !== null
+        ? { kind: event.kind, targetId, fromId, statusId }
+        : undefined;
     case "interrupted":
     case "cancelled":
       return skillId === null ? undefined : { kind: event.kind, targetId, skillId };

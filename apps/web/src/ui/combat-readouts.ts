@@ -43,6 +43,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "status-applied":
     case "status-removed":
     case "status-expired":
+    case "status-spread":
       return "status";
     case "interrupted":
     case "cancelled":
@@ -107,6 +108,8 @@ export function describeCombatEvent(
       return `${by} removes ${STATUS_DEFINITIONS[event.statusId].name} from ${target}`;
     case "status-expired":
       return `${STATUS_DEFINITIONS[event.statusId].name} ends on ${target}`;
+    case "status-spread":
+      return `${target} catches ${STATUS_DEFINITIONS[event.statusId].name} from ${nameOf(event.fromId)}`;
     case "interrupted":
       return `${by} interrupts ${target}'s ${skillName(event.skillId) ?? event.skillId}`;
     case "cancelled":

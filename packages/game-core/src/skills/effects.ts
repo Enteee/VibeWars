@@ -46,6 +46,13 @@ export type CombatEvent =
     }
   | { readonly kind: "status-removed"; readonly targetId: string; readonly statusId: StatusId }
   | { readonly kind: "status-expired"; readonly targetId: string; readonly statusId: StatusId }
+  /** A spreading status caught from `fromId`, adjacent to the target (#765). */
+  | {
+      readonly kind: "status-spread";
+      readonly targetId: string;
+      readonly fromId: string;
+      readonly statusId: StatusId;
+    }
   | {
       readonly kind: "interrupted";
       readonly targetId: string;

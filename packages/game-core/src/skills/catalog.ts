@@ -322,6 +322,27 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "malaise", durationSeconds: 24 }],
   },
   {
+    id: "necromancer.rotting-flesh",
+    name: "Rotting Flesh",
+    type: "spell",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 15 },
+    activationSeconds: 3,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target fleshy foe becomes Diseased for 10...22...25 seconds": 22 s,
+    // its rank-12 value. Disease spreads on its own (#765); everyone
+    // here is fleshy.
+    effects: [{ kind: "apply-status", statusId: "disease", durationSeconds: 22 }],
+  },
+  {
     id: "necromancer.blood-ritual",
     name: "Blood Ritual",
     type: "enchantment",

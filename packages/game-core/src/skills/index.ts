@@ -33,6 +33,7 @@ export { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";
 export type {
   ActiveStatus,
   BlockRule,
+  Outbreak,
   StatusCategory,
   StatusDefinition,
   StatusId,

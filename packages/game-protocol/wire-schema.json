@@ -33,6 +33,7 @@
     "dash",
     "dazed",
     "deep-wound",
+    "disease",
     "glyph-of-lesser-energy",
     "guardian",
     "healing-signet-armor",
@@ -268,6 +269,43 @@
                   { "literal": "dash" },
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
+                  { "literal": "disease" },
+                  { "literal": "glyph-of-lesser-energy" },
+                  { "literal": "guardian" },
+                  { "literal": "healing-signet-armor" },
+                  { "literal": "life-drain" },
+                  { "literal": "malaise" },
+                  { "literal": "poison" },
+                  { "literal": "regeneration" },
+                  { "literal": "sprint" },
+                  { "literal": "watch-yourself" },
+                  { "literal": "weakness" }
+                ]
+              }
+            },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "fromId", "optional": false, "type": "string" },
+            { "name": "kind", "optional": false, "type": { "literal": "status-spread" } },
+            {
+              "name": "statusId",
+              "optional": false,
+              "type": {
+                "union": [
+                  { "literal": "apply-poison" },
+                  { "literal": "armor-boost" },
+                  { "literal": "bleeding" },
+                  { "literal": "blind" },
+                  { "literal": "blood-ritual" },
+                  { "literal": "burning" },
+                  { "literal": "crippled" },
+                  { "literal": "dash" },
+                  { "literal": "dazed" },
+                  { "literal": "deep-wound" },
+                  { "literal": "disease" },
                   { "literal": "glyph-of-lesser-energy" },
                   { "literal": "guardian" },
                   { "literal": "healing-signet-armor" },
@@ -358,6 +396,7 @@
                   { "literal": "dash" },
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
+                  { "literal": "disease" },
                   { "literal": "glyph-of-lesser-energy" },
                   { "literal": "guardian" },
                   { "literal": "healing-signet-armor" },
@@ -392,6 +431,7 @@
                   { "literal": "dash" },
                   { "literal": "dazed" },
                   { "literal": "deep-wound" },
+                  { "literal": "disease" },
                   { "literal": "glyph-of-lesser-energy" },
                   { "literal": "guardian" },
                   { "literal": "healing-signet-armor" },
@@ -871,6 +911,7 @@
                   "optional": false,
                   "type": { "union": ["null", "number"] }
                 },
+                { "name": "fromId", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "kind", "optional": false, "type": "string" },
                 { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "statusId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -934,6 +975,7 @@
                     "optional": false,
                     "type": { "union": ["null", "number"] }
                   },
+                  { "name": "fromId", "optional": false, "type": { "union": ["null", "string"] } },
                   { "name": "kind", "optional": false, "type": "string" },
                   { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
                   {
@@ -960,6 +1002,7 @@
           "type": { "union": ["null", { "literal": false }, { "literal": true }] }
         },
         { "name": "durationSeconds", "optional": false, "type": { "union": ["null", "number"] } },
+        { "name": "fromId", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "kind", "optional": false, "type": "string" },
         { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "statusId", "optional": false, "type": { "union": ["null", "string"] } },

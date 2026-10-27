@@ -9,7 +9,7 @@ import {
   resolveCircleSegmentCollision,
 } from "../geometry.js";
 import type { Segment } from "../geometry.js";
-import { RANGE_SPIRIT } from "../distances.js";
+import { AREA_ADJACENT, RANGE_SPIRIT } from "../distances.js";
 import {
   addKill,
   emptyScore,
@@ -59,6 +59,8 @@ import {
   scaledStatusDuration,
   STATUS_DEFINITIONS,
   StatusSet,
+  type ActiveStatus,
+  type Outbreak,
 } from "../skills/status.js";
 import { resolveTargets } from "../skills/targeting.js";
 import {
@@ -985,11 +987,81 @@ export class MatchSimulation {
       }
     }
 
+    this.#spreadStatuses();
+
     const log = this.#log.concat(this.#reaped);
     this.#log = [];
     this.#reaped = [];
     this.#healthLost(log);
     return this.#result(log);
+  }
+
+  /**
+   * Spreading statuses (#765), once everyone has acted: every living
+   * combatant adjacent to a living bearer, on either team, catches it for
+   * as long as the bearer has left, once per outbreak. Who carries what
+   * is read before anyone catches anything, so one caught this step
+   * spreads from the next, and in the participants' fixed order, so the
+   * same seed spreads the same way.
+   */
+  #spreadStatuses(): void {
+    const living = [...this.#participants.values()].filter((record) => !record.combatant.dead);
+    const carriers: {
+      readonly record: ParticipantRecord;
+      readonly status: ActiveStatus;
+      readonly outbreak: Outbreak;
+      readonly remainingSeconds: number;
+    }[] = [];
+    for (const record of living) {
+      for (const status of record.combatant.statuses.active) {
+        if (status.outbreak !== null) {
+          // Its bearer is in it, so it never catches its own outbreak back.
+          status.outbreak.infected.add(record.id);
+          carriers.push({
+            record,
+            status,
+            outbreak: status.outbreak,
+            remainingSeconds: status.remainingSeconds,
+          });
+        }
+      }
+    }
+    for (const { record, status, outbreak, remainingSeconds } of carriers) {
+      for (const other of living) {
+        if (
+          outbreak.infected.has(other.id) ||
+          distance(record.position, other.position) > AREA_ADJACENT
+        ) {
+          continue;
+        }
+        outbreak.infected.add(other.id);
+        const had = other.combatant.statuses.has(status.id);
+        other.combatant.statuses.catch(
+          status.id,
+          scaledStatusDuration(other.combatant, status.id, remainingSeconds),
+          status.sourceId,
+          outbreak,
+        );
+        // Already carrying it, from another outbreak: nothing new to say.
+        if (had) {
+          continue;
+        }
+        this.#log.push({
+          tick: this.#tick,
+          atSeconds: this.#elapsedSeconds,
+          cause: "degeneration",
+          sourceId: status.sourceId,
+          skillId: undefined,
+          weaponId: undefined,
+          attributeId: undefined,
+          area: undefined,
+          doubleStrike: false,
+          events: [
+            { kind: "status-spread", targetId: other.id, fromId: record.id, statusId: status.id },
+          ],
+        });
+      }
+    }
   }
 
   /** Losing health of any kind, a hit, a sacrifice or a drain, is being in combat. */

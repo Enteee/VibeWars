@@ -30,7 +30,7 @@ the server decides what happens (brief §12, §32).
 
 Regeneration and degeneration count in **pips**, as in GW1. One health
 pip is 2 HP/s and one energy pip ⅓ energy/s. Every status's pips sum
-(Bleeding −3, Burning −7, Poison −4, Life Drain −2, Regeneration +4), and
+(Bleeding −3, Burning −7, Poison −4, Disease −4, Life Drain −2, Regeneration +4), and
 the net is clamped to ±10 before it applies: burning, bleeding and poison
 together (−14) drain 20 HP/s, not 28. Energy is the primary profession's
 base pips plus any status's, clamped the same way: Warrior and Paragon 2
@@ -176,6 +176,7 @@ number:
 | Weakness   | −20 armor                                        |
 | Deep Wound | −20% maximum health                              |
 | Dazed      | Spells: double cast time, interrupted by attacks |
+| Disease    | −4 health/second; spreads to adjacent combatants |
 
 **Dazed doubles a spell's cast time, and attacks interrupt it** (#546,
 GW1). Applying Dazed interrupts a spell being cast, even on someone
@@ -185,6 +186,16 @@ damage. A miss, a block or a dodge does not. Only spells: a dazed
 Warrior's Healing Signet is neither slowed nor interrupted, and an
 instant skill stays instant. See
 [ADR-0019](../adr/0019-status-modifiers.md).
+
+**Disease spreads** (#765, GW1). While you are diseased, every living
+combatant adjacent to you catches it, on both teams: a Necromancer who
+diseases a foe in a melee ball diseases their own Warrior too. A caught
+copy lasts as long as yours has left. Each cast is one outbreak, and it
+infects each combatant once: cured or run out, you do not catch the same
+outbreak again, however long you stand next to a carrier. A new cast
+is a new outbreak. The dead neither carry nor catch it. Rotting Flesh
+(Necromancer, Death Magic) diseases a foe for 22 s at rank 12. The
+log reads "X catches Disease from Y".
 
 **Blind makes attacks miss**: weapon swings, each blow rolled on its own,
 and attack skills (Swift Chop, Backbreaker, Opening Cut, Barrage, Broad

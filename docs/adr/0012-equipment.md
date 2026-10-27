@@ -107,8 +107,8 @@ the physical damage split (slashing, piercing, blunt) plus `untyped`
 exists, because only Stalwart and Absorption consult it — adding fire,
 cold, lightning and holy when nothing reacts to them would be exactly
 the decorative data `skills/coverage.ts` was built to prevent. Rune of
-Purity covers Burning in place of the reference's Disease, which this
-game does not have.
+Purity covered Burning in place of the reference's Disease until Disease
+existed; it covers Poison and Disease, as in GW1, since #765.
 
 **A missing `equipment` key is not an error.** A build saved or shared
 before weapons existed is _old_, not malformed. It receives its
