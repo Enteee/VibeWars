@@ -15,6 +15,8 @@
  *   hub request-changes <pr> --sha <commit> <note>  reviewers only
  *     <commit> is the head you reviewed; a verdict on a moved head is refused
  *   hub whoami                       who you are, your role, and what it may do
+ *   hub watch ci <pr> [--note <text>]  told in your inbox when CI on the PR's
+ *                                    head ends (#736); hub watch ls, hub watch rm <id>
  *   hub board ls|show|changes ...    hubd's copy of the board, as JSON (what
  *                                    `board` reads; see hub-board.mjs)
  *   company reboot "<reason>"        manager only; also: company reboot --abort,
@@ -22,6 +24,8 @@
  *   company ready                    your work is saved; the reboot may go ahead
  *   company hire <role> "<reason>"   manager only; prints the new employee id
  *   company fire <employee> "<reason>"  manager only
+ *   company load                     manager only: the board, staff and tokens
+ *                                    the staffing review is decided on
  *     (`company` is this script with `company` as its first word)
  *
  * `whoami` is answered locally, because the policy is pure and bundled in
@@ -105,9 +109,15 @@ if (argv[0] === "whoami") {
   console.log(`  ${reboots.allow ? "yes" : "no "}  reboot the company (company reboot)`);
   const staff = authorize(ROLE, { kind: "staff", argv: ["hire", "x", "x"] }, { acting: ACTING });
   console.log(`  ${staff.allow ? "yes" : "no "}  hire and fire (company hire, company fire)`);
+  const load = authorize(ROLE, { kind: "load", argv: [] }, { acting: ACTING });
+  console.log(`  ${load.allow ? "yes" : "no "}  read the company's load (company load)`);
   const schedules = authorize(ROLE, { kind: "schedule", argv: ["ls"] }, { acting: ACTING });
   console.log(
     `  ${schedules.allow ? "yes" : "no "}  keep recurring reminders to yourself (hub schedule)`,
+  );
+  const watches = authorize(ROLE, { kind: "watch", argv: ["ls"] }, { acting: ACTING });
+  console.log(
+    `  ${watches.allow ? "yes" : "no "}  be told when CI on a PR ends (hub watch ci <pr>)`,
   );
   const ranks = authorize(ROLE, { kind: "rank", argv: ["1", "top"] }, { acting: ACTING });
   console.log(`  ${ranks.allow ? "yes" : "no "}  order the board (board rank)`);
@@ -139,6 +149,9 @@ if (argv[0] === "push") {
   // Code-scanning alerts on main or a pull request (#184): a hub verb,
   // because gh has none and `gh api` is refused.
   request = { kind: "alerts", argv: argv.slice(1) };
+} else if (argv[0] === "watch") {
+  // Told in your inbox when CI on a pull request ends (#736): ci, ls, rm.
+  request = { kind: "watch", argv: argv.slice(1) };
 } else if (argv[0] === "schedule") {
   // Your own recurring reminders (#678): add, ls, rm. hubd checks the words.
   request = { kind: "schedule", argv: argv.slice(1) };
@@ -150,10 +163,13 @@ if (argv[0] === "push") {
   request = { kind: "board", argv: argv.slice(1) };
 } else if (argv[0] === "company") {
   // `company reboot "<reason>"`, `company reboot --abort` and
-  // `company ready` (#21); `company hire` and `company fire` (#380).
+  // `company ready` (#21); `company hire` and `company fire` (#380);
+  // `company load` (#747).
   const [, verb, ...rest] = argv;
   const [who, ...reason] = rest;
-  if ((verb === "hire" || verb === "fire") && who !== undefined && reason.length > 0) {
+  if (verb === "load" && rest.length === 0) {
+    request = { kind: "load", argv: [] };
+  } else if ((verb === "hire" || verb === "fire") && who !== undefined && reason.length > 0) {
     request = { kind: "staff", argv: [verb, who, reason.join(" ")] };
   } else if (verb === "ready" && rest.length === 0) {
     request = { kind: "reboot", argv: ["ready"] };
@@ -170,7 +186,7 @@ if (argv[0] === "push") {
   } else {
     console.error(
       'company: usage: company reboot "<reason>" | company reboot --abort | company reboot --workday | company ready\n' +
-        '       company hire <role> "<reason>" | company fire <employee> "<reason>"',
+        '       company hire <role> "<reason>" | company fire <employee> "<reason>" | company load',
     );
     process.exit(2);
   }

@@ -14,8 +14,8 @@
  * as a pure function; the CLI at the bottom is what `claude-llc up` runs to
  * seed the file on the first boot and to check it on every boot.
  *
- *   node scripts/bots/staff.mjs seed <role...>   write staff.json if absent
- *   node scripts/bots/staff.mjs check            validate it against the roster
+ *   node scripts/bots/staff.mjs seed <role...>    write staff.json if absent
+ *   node scripts/bots/staff.mjs check <role...>   validate it against the roster
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -23,6 +23,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import { ROLES } from "./hub-policy.mjs";
+import { SYSTEM } from "./protocol.mjs";
 
 /** How long an employee id stays untouched after a change, and the hire window. */
 export const COOLDOWN_MS = 10 * 60_000;
@@ -357,28 +358,47 @@ const LOCK_WAIT_MS = 5_000;
  * Run `change`, which reads, modifies and writes `file`, while holding the
  * one lock of `staff.json`. hubd and the supervisor both write it, and a
  * read-modify-write of one that runs between the other's read and rename
- * would lose that change. The lock is a directory: `mkdir` is atomic. One
- * left behind by a crash is removed by hand: taking it over would let two
- * waiters steal it from each other.
+ * would lose that change. The lock is a directory: `mkdir` is atomic, and
+ * it holds a `pid` file with the holder's pid. A lock whose holder is gone
+ * (killed between `mkdir` and the release) is broken by the next caller, so
+ * a crash cannot block every start and every hire.
+ *
+ * Accepted race: a breaker that read a dead pid could delete a lock a third
+ * process took in the microseconds between that read and the delete. That
+ * needs a holder to have died and two contenders at the same instant, and is
+ * far rarer than the deadlock this prevents.
  *
  * @template T
  * @param {string} file `staff.json`
  * @param {() => T} change
+ * @param {number} [waitMs] how long to wait for a live holder
  * @returns {T}
  */
-export function withStaffLock(file, change) {
+export function withStaffLock(file, change, waitMs = LOCK_WAIT_MS) {
   const lock = `${file}.lock`;
-  const give = Date.now() + LOCK_WAIT_MS;
+  const give = Date.now() + waitMs;
   for (;;) {
     try {
       fs.mkdirSync(lock);
+      try {
+        fs.writeFileSync(path.join(lock, "pid"), String(process.pid));
+      } catch (error) {
+        fs.rmSync(lock, { recursive: true, force: true });
+        throw error;
+      }
       break;
     } catch (error) {
       if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) {
         throw error;
       }
+      const dead = deadHolder(lock, LOCK_WAIT_MS);
+      if (dead !== null) {
+        console.error(`staff: broke stale lock ${lock} (${dead})`);
+        fs.rmSync(lock, { recursive: true, force: true });
+        continue;
+      }
       if (Date.now() > give) {
-        throw new Error(`${lock} is held; if no process holds it, remove it`, {
+        throw new Error(`${lock} is held${heldBy(lock)}; if no process holds it, remove it`, {
           cause: error,
         });
       }
@@ -388,31 +408,83 @@ export function withStaffLock(file, change) {
   try {
     return change();
   } finally {
-    fs.rmdirSync(lock);
+    fs.rmSync(lock, { recursive: true, force: true });
   }
 }
 
 /**
- * The company on its first boot: one employee per role, under the bare id.
+ * @param {string} lock
+ * @returns {number | null} the pid in the lock, if it holds one
+ */
+function lockPid(lock) {
+  try {
+    const pid = Number(fs.readFileSync(path.join(lock, "pid"), "utf8"));
+    return Number.isInteger(pid) && pid > 0 ? pid : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @param {string} lock
+ * @returns {string} " by pid <n>", or nothing
+ */
+function heldBy(lock) {
+  const pid = lockPid(lock);
+  return pid === null ? "" : ` by pid ${String(pid)}`;
+}
+
+/**
+ * @param {string} lock
+ * @param {number} youngMs a lock with no pid younger than this is being taken
+ * @returns {string | null} why the lock's holder is gone, or null while it may be there
+ */
+function deadHolder(lock, youngMs) {
+  const pid = lockPid(lock);
+  try {
+    if (pid === null) {
+      // Between mkdir and writing the pid, a live holder looks like this.
+      return Date.now() - fs.statSync(lock).mtimeMs > youngMs ? "it never recorded a pid" : null;
+    }
+    process.kill(pid, 0);
+    return null;
+  } catch (error) {
+    if (pid !== null && error instanceof Error && "code" in error && error.code === "ESRCH") {
+      return `pid ${String(pid)} is gone`;
+    }
+    return null;
+  }
+}
+
+/** How many employees a role starts with, where that is not one (#749). */
+export const DEFAULT_HEADCOUNT = Object.freeze(
+  /** @type {Record<string, number>} */ ({ developer: 2 }),
+);
+
+/**
+ * The company on its first boot: `DEFAULT_HEADCOUNT` employees per role,
+ * one where it names none, the first under the bare id.
  *
  * @param {readonly string[]} roles
  * @param {number} now
  * @returns {Staff}
  */
 export function seedStaff(roles, now) {
-  /** @type {Record<string, Employee>} */
-  const employees = {};
+  /** @type {Staff} */
+  const staff = { employees: {}, recent: [] };
   for (const role of roles) {
-    employees[role] = {
-      role,
-      hiredAt: now,
-      by: "operator",
-      reason: "first boot",
-      state: "working",
-      readyAt: null,
-    };
+    for (let seat = 0; seat < (DEFAULT_HEADCOUNT[role] ?? 1); seat += 1) {
+      staff.employees[nextEmployeeId(role, staff)] = {
+        role,
+        hiredAt: now,
+        by: "operator",
+        reason: "first boot",
+        state: "working",
+        readyAt: null,
+      };
+    }
   }
-  return { employees, recent: [] };
+  return staff;
 }
 
 /**
@@ -426,6 +498,44 @@ export function strangers(staff, roster) {
   return Object.entries(staff.employees)
     .filter(([, employee]) => !roster.includes(employee.role))
     .map(([id]) => id);
+}
+
+/**
+ * `staff` as the boot keeps it. One that employs a role not in `roster`
+ * is stale: it is discarded for the default staff of `roles`, and
+ * `notice` says so once, plainly (#749).
+ *
+ * @param {Staff} staff
+ * @param {readonly string[]} roster
+ * @param {readonly string[]} roles what `seed` was given
+ * @param {number} now
+ * @returns {{ staff: Staff, notice: string | null }}
+ */
+export function checkStaff(staff, roster, roles, now) {
+  const unknown = strangers(staff, roster);
+  if (unknown.length === 0) {
+    return { staff, notice: null };
+  }
+  const gone = [...new Set(unknown.map((id) => staff.employees[id]?.role ?? id))];
+  return {
+    staff: seedStaff(roles, now),
+    notice:
+      `staff.json named roles that no longer exist (${gone.join(", ")}); ` +
+      "it was reset to the default staff. Hires made since are gone; the manager re-hires.",
+  };
+}
+
+/**
+ * Write `dir/name` whole or not at all; the part file is hidden, so an
+ * outbox reader never takes it for an entry.
+ *
+ * @param {string} dir
+ * @param {string} name
+ * @param {string} text
+ */
+function writeAtomic(dir, name, text) {
+  fs.writeFileSync(path.join(dir, `.${name}.part`), text);
+  fs.renameSync(path.join(dir, `.${name}.part`), path.join(dir, name));
 }
 
 /**
@@ -447,37 +557,41 @@ if (
   }
   const file = path.join(root, "staff.json");
   const [command, ...roles] = process.argv.slice(2);
+  const unknown = roles.filter((role) => !ROLES.includes(role));
+  if (unknown.length > 0) {
+    console.error(`staff: not a role: ${unknown.join(", ")}`);
+    process.exit(1);
+  }
   if (command === "seed" && roles.length > 0) {
-    const unknown = roles.filter((role) => !ROLES.includes(role));
-    if (unknown.length > 0) {
-      console.error(`staff: not a role: ${unknown.join(", ")}`);
-      process.exit(1);
-    }
     if (!fs.existsSync(file)) {
-      fs.writeFileSync(
-        `${file}.part`,
-        `${JSON.stringify(seedStaff(roles, Date.now()), null, 2)}\n`,
-      );
-      fs.renameSync(`${file}.part`, file);
-      console.log(`staff: seeded ${file} with ${roles.join(", ")}`);
+      const seeded = seedStaff(roles, Date.now());
+      writeAtomic(root, "staff.json", `${JSON.stringify(seeded, null, 2)}\n`);
+      console.log(`staff: seeded ${file} with ${Object.keys(seeded.employees).join(", ")}`);
     }
-  } else if (command === "check" && roles.length === 0) {
+  } else if (command === "check" && roles.length > 0) {
+    /** @type {Staff} */
+    let staff;
     try {
-      const staff = parseStaff(fs.readFileSync(file, "utf8"));
-      const unknown = strangers(staff, ROLES);
-      if (unknown.length > 0) {
-        console.error(
-          `staff: ${file} lists ${unknown.join(", ")}, whose role is not in the roster. ` +
-            "Remove them from the file.",
-        );
-        process.exit(1);
-      }
+      staff = parseStaff(fs.readFileSync(file, "utf8"));
     } catch (error) {
       console.error(`staff: ${file}: ${error instanceof Error ? error.message : String(error)}`);
       process.exit(1);
     }
+    const checked = checkStaff(staff, ROLES, roles, Date.now());
+    if (checked.notice !== null) {
+      writeAtomic(root, "staff.json", `${JSON.stringify(checked.staff, null, 2)}\n`);
+      console.error(`staff: ${checked.notice}`);
+      // To General, as the sidecar's own words.
+      const outbox = path.join(root, "bus", SYSTEM, "outbox");
+      fs.mkdirSync(outbox, { recursive: true });
+      writeAtomic(
+        outbox,
+        `${String(Date.now())}-staff-reset.json`,
+        JSON.stringify({ to: "all", text: checked.notice, nudge: null, direct: false }),
+      );
+    }
   } else {
-    console.error("usage: staff.mjs seed <role...> | check");
+    console.error("usage: staff.mjs seed <role...> | check <role...>");
     process.exit(2);
   }
 }

@@ -197,7 +197,7 @@ describe("own schedules (#678)", () => {
     expect(refusal(plan("architect", ["add", "f", "1h", "x"], five))).toContain("a, b, c, d, e");
     expect(plan("architect", ["add", "a", "1h", "x"], five)).toHaveProperty("next");
     expect(refusal(plan("manager", ["rm", "groom-backlog"]))).toContain("fixed by schedule.json");
-    expect(plan("developer-1", ["ls"])).toHaveProperty("refuse");
+    expect(plan("developer", ["ls"])).toHaveProperty("refuse");
     expect(plan("architect", ["add", "Bad Name", "1h", "x"])).toHaveProperty("refuse");
     expect(plan("architect", ["add", "x".repeat(33), "1h", "x"])).toHaveProperty("refuse");
     expect(plan("architect", ["add", "x", "5m", "x"])).toHaveProperty("refuse");
@@ -205,6 +205,20 @@ describe("own schedules (#678)", () => {
     expect(plan("architect", ["add", "x", "1h", "x".repeat(501)])).toHaveProperty("refuse");
     expect(refusal(plan("architect", ["rm", "nope"], [mine]))).toContain("check-qa");
     expect(plan("architect", ["frob"])).toHaveProperty("refuse");
+  });
+
+  it("ships staffing-review fixed; the manager's own staffing stays removable (#747)", () => {
+    const shipped = parseSchedule(fs.readFileSync(SHIPPED, "utf8"));
+    expect(shipped.find((nudge) => nudge.id === "staffing-review")).toMatchObject({
+      to: "manager",
+      everyMinutes: 120,
+    });
+    const stopgap = { ...mine, role: "manager", name: "staffing" };
+    /** @param {string[]} argv */
+    const live = (argv) =>
+      planScheduleCommand({ role: "manager", argv, own: [stopgap], fixed: shipped, now: 9 });
+    expect(refusal(live(["rm", "staffing-review"]))).toContain("fixed by schedule.json");
+    expect(live(["rm", "staffing"])).toMatchObject({ next: [], removed: "own-manager-staffing" });
   });
 
   it("makes the text visible: a line break cannot fake a header", () => {
@@ -219,7 +233,7 @@ describe("own schedules (#678)", () => {
     const bad = (/** @type {Record<string, unknown>} */ change) =>
       JSON.stringify({ schedules: [{ ...mine, ...change }] });
     expect(() => parseOwnSchedules("{}")).toThrow("schedules.schedules");
-    expect(() => parseOwnSchedules(bad({ role: "developer-1" }))).toThrow("role");
+    expect(() => parseOwnSchedules(bad({ role: "developer" }))).toThrow("role");
     expect(() => parseOwnSchedules(bad({ everyMinutes: 5 }))).toThrow("everyMinutes");
     expect(() => parseOwnSchedules(bad({ name: "Bad" }))).toThrow("name");
     expect(() => parseOwnSchedules(bad({ extra: 1 }))).toThrow("extra");

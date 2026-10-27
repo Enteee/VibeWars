@@ -20,7 +20,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { parseAlive } from "./hub-health.mjs";
 import { ROLES } from "./hub-policy.mjs";
-import { obj } from "./protocol.mjs";
+import { deliverSystem, obj } from "./protocol.mjs";
 import { parseNudgeClock } from "./schedule.mjs";
 import { parseStaff, seedStaff } from "./staff.mjs";
 
@@ -63,7 +63,22 @@ if (group === "api" && sub !== "graphql") {
   if (rel.startsWith("issues/7/comments") || rel.startsWith("issues/9/comments")) { console.log(JSON.stringify(restComments)); process.exit(0); }
   if (rel.startsWith("pulls/9/reviews")) { console.log(JSON.stringify([{ user: { login: "drive-by" }, author_association: "NONE", body: "stranger review", state: "COMMENTED", submitted_at: "2026-10-24T12:30:00Z", html_url: "r" }])); process.exit(0); }
   if (rel === "issues/9") { console.log(JSON.stringify({ ...pull9, pull_request: {} })); process.exit(0); }
+  // #9 as a test changed it: a new head, or closed (#736).
+  if (rel === "pulls/9" && fs.existsSync(path.join(state, "pull-9.json"))) { console.log(JSON.stringify({ ...pull9, ...JSON.parse(fs.readFileSync(path.join(state, "pull-9.json"), "utf8")) })); process.exit(0); }
   if (rel === "pulls/9") { console.log(JSON.stringify(pull9)); process.exit(0); }
+  // The open pull requests, for the In Review gate (#736): what the test planted, or none.
+  if (rel.startsWith("pulls?")) {
+    const planted = path.join(state, "pulls.json");
+    console.log(fs.existsSync(planted) ? fs.readFileSync(planted, "utf8") : "[]");
+    process.exit(0);
+  }
+  // A job's log, for the failing e2e specs a watch names (#736).
+  const log = /^actions\\/jobs\\/(\\d+)\\/logs$/.exec(rel);
+  if (log !== null) {
+    const planted = path.join(state, "log-" + log[1] + ".txt");
+    if (fs.existsSync(planted)) { process.stdout.write(fs.readFileSync(planted, "utf8")); process.exit(0); }
+    console.error("HTTP 404"); process.exit(1);
+  }
   // A commit's CI: the workflow runs and jobs the test planted, or none.
   const runs = /^actions\\/workflows\\/([a-z0-9.-]+)\\/runs\\?head_sha=([0-9a-f]+)/.exec(rel);
   const jobs = /^actions\\/runs\\/(\\d+)\\/jobs/.exec(rel);
@@ -217,7 +232,7 @@ const commit = (message, cwd) =>
  * does, and `more` besides (#62).
  *
  * @param {string} root
- * @param {string[]} more further employee ids, such as `developer-1@2`
+ * @param {string[]} more further employee ids, such as `developer@3`
  * @returns {void}
  */
 function employ(root, more) {
@@ -293,6 +308,8 @@ async function startHubd(remaining, before) {
     HUBD_HEARTBEAT_MS: "200",
     // Short, so a batch of new issues reaches the manager in the test (#550).
     HUBD_NEW_ISSUES_WINDOW_MS: "4000",
+    // Short, so a watch answers within the test (#736).
+    HUBD_WATCH_POLL_MS: "300",
   };
   const child = spawn(process.execPath, [HUBD], { env, stdio: ["ignore", "ignore", "pipe"] });
   running.push({ child, dir });
@@ -527,7 +544,7 @@ describe("hubd and the GraphQL budget", () => {
   it("serves every agent's board read from one snapshot", async () => {
     const hubd = await startHubd(5000);
 
-    const first = await hubd.request("developer-1", "gh", BOARD_READ);
+    const first = await hubd.request("developer", "gh", BOARD_READ);
     const second = await hubd.request("lead-dev", "gh", BOARD_READ);
 
     expect(first.code).toBe(0);
@@ -559,9 +576,9 @@ describe("hubd and the GraphQL budget", () => {
   it("applies a move it ran to its copy, so the move shows at once and costs no re-read", async () => {
     const hubd = await startHubd(5000);
 
-    await hubd.request("developer-1", "gh", BOARD_READ);
-    await hubd.request("developer-1", "gh", MOVE_8_TO_DONE);
-    const after = await hubd.request("developer-1", "board", ["show", "8"]);
+    await hubd.request("developer", "gh", BOARD_READ);
+    await hubd.request("developer", "gh", MOVE_8_TO_DONE);
+    const after = await hubd.request("developer", "board", ["show", "8"]);
 
     expect(hubd.calls("api graphql")).toBe(2);
     expect(printed(after).card).toMatchObject({ number: 8, status: "Done" });
@@ -585,7 +602,7 @@ describe("hubd and the GraphQL budget", () => {
 
     await hubd.request("manager", "gh", BOARD_READ);
     // Withdrawing a sign-off: the manager may, a developer may not.
-    expect((await hubd.request("developer-1", "gh", move("o_backlog"))).code).toBe(77);
+    expect((await hubd.request("developer", "gh", move("o_backlog"))).code).toBe(77);
     expect((await hubd.request("manager", "gh", move("o_backlog"))).code).toBe(0);
     expect(printed(await hubd.request("manager", "board", ["show", "8"])).card).toMatchObject({
       status: "Backlog",
@@ -596,7 +613,7 @@ describe("hubd and the GraphQL budget", () => {
     expect(String(refused.reason)).toContain(
       "only the architect moves a card from Backlog to Ready",
     );
-    expect((await hubd.request("developer-1", "gh", move("o_ready"))).code).toBe(77);
+    expect((await hubd.request("developer", "gh", move("o_ready"))).code).toBe(77);
     expect((await hubd.request("architect", "gh", move("o_ready"))).code).toBe(0);
     expect(printed(await hubd.request("manager", "board", ["show", "8"])).card).toMatchObject({
       status: "Ready",
@@ -742,7 +759,7 @@ describe("hubd and the GraphQL budget", () => {
   it("re-reads only the one issue an item-add put on the board", async () => {
     const hubd = await startHubd(5000);
 
-    await hubd.request("developer-1", "board", ["ls"]);
+    await hubd.request("developer", "board", ["ls"]);
     const added = await hubd.request("manager", "gh", [
       "project",
       "item-add",
@@ -751,7 +768,7 @@ describe("hubd and the GraphQL budget", () => {
       "https://github.com/Enteee/VibeWars/issues/7",
     ]);
     expect(added.code).toBe(0);
-    const backlog = await hubd.request("developer-1", "board", ["ls", "Backlog"]);
+    const backlog = await hubd.request("developer", "board", ["ls", "Backlog"]);
 
     // Two pages for the board, one small query for the new card.
     expect(hubd.calls("api graphql")).toBe(3);
@@ -766,7 +783,7 @@ describe("hubd and the GraphQL budget", () => {
 
   it("puts the issue it creates in Backlog, whoever created it (#517)", async () => {
     const hubd = await startHubd(5000);
-    await hubd.request("developer-1", "board", ["ls"]);
+    await hubd.request("developer", "board", ["ls"]);
 
     const created = await hubd.request("architect", "gh", ["issue", "create", "--title", "t"]);
 
@@ -777,14 +794,14 @@ describe("hubd and the GraphQL budget", () => {
       "project item-add 2 --url https://github.com/Enteee/VibeWars/issues/11 --format json",
     );
     expect(hubd.callLog()).toContain("--single-select-option-id o_backlog");
-    const shown = printed(await hubd.request("developer-1", "board", ["show", "11"]));
+    const shown = printed(await hubd.request("developer", "board", ["show", "11"]));
     expect(shown.card).toMatchObject({ number: 11, status: "Backlog" });
   }, 20_000);
 
   it("keeps the issue it created, and says so, when it cannot place it (#517)", async () => {
     const hubd = await startHubd(5000);
     fs.writeFileSync(path.join(hubd.state, "edit-fails"), "");
-    await hubd.request("developer-1", "board", ["ls"]);
+    await hubd.request("developer", "board", ["ls"]);
 
     const created = await hubd.request("cicd-engineer", "gh", ["issue", "create", "--title", "t"]);
 
@@ -812,7 +829,7 @@ describe("hubd and the GraphQL budget", () => {
 
   it("tells the manager, once its minute is up, about an issue a colleague filed (#550)", async () => {
     const hubd = await startHubd(5000);
-    await hubd.request("developer-1", "board", ["ls"]);
+    await hubd.request("developer", "board", ["ls"]);
 
     await hubd.request("architect", "gh", ["issue", "create", "--title", "Music: loop"]);
     expect(toManager(hubd)).toEqual([]);
@@ -825,7 +842,7 @@ describe("hubd and the GraphQL budget", () => {
 
   it("names two issues filed in one window in one message (#550)", async () => {
     const hubd = await startHubd(5000);
-    await hubd.request("developer-1", "board", ["ls"]);
+    await hubd.request("developer", "board", ["ls"]);
 
     await hubd.request("architect", "gh", ["issue", "create", "--title", "Music: a"]);
     await hubd.request("cicd-engineer", "gh", ["issue", "create", "--title=Perf: b"]);
@@ -839,7 +856,7 @@ describe("hubd and the GraphQL budget", () => {
   it("says an issue it could not land is not on the board (#550)", async () => {
     const hubd = await startHubd(5000);
     fs.writeFileSync(path.join(hubd.state, "edit-fails"), "");
-    await hubd.request("developer-1", "board", ["ls"]);
+    await hubd.request("developer", "board", ["ls"]);
 
     await hubd.request("cicd-engineer", "gh", ["issue", "create", "-t", "CI: c"]);
 
@@ -851,7 +868,7 @@ describe("hubd and the GraphQL budget", () => {
 
   it("does not tell the manager about an issue the manager filed (#550)", async () => {
     const hubd = await startHubd(5000);
-    await hubd.request("developer-1", "board", ["ls"]);
+    await hubd.request("developer", "board", ["ls"]);
 
     await hubd.request("manager", "gh", ["issue", "create", "--title", "t"]);
     await hubd.request("architect", "gh", ["issue", "create", "--title", "u"]);
@@ -864,7 +881,7 @@ describe("hubd and the GraphQL budget", () => {
   it("lands an added card that has no column, and leaves one that has (#517)", async () => {
     const hubd = await startHubd(5000);
     fs.writeFileSync(path.join(hubd.state, "no-status-7"), "");
-    await hubd.request("developer-1", "board", ["ls"]);
+    await hubd.request("developer", "board", ["ls"]);
     const add = (/** @type {number} */ n) => [
       "project",
       "item-add",
@@ -878,7 +895,7 @@ describe("hubd and the GraphQL budget", () => {
     expect(hubd.callLog()).toContain(
       "--id PVTI_7 --project-id PVT_2 --field-id F_status --single-select-option-id o_backlog",
     );
-    expect(printed(await hubd.request("developer-1", "board", ["show", "7"])).card).toMatchObject({
+    expect(printed(await hubd.request("developer", "board", ["show", "7"])).card).toMatchObject({
       status: "Backlog",
     });
 
@@ -891,7 +908,7 @@ describe("hubd and the GraphQL budget", () => {
     const hubd = await startHubd(5000);
     fs.writeFileSync(path.join(hubd.state, "no-status-9"), "");
     fs.writeFileSync(path.join(hubd.state, "pull-9"), "");
-    await hubd.request("developer-1", "board", ["ls"]);
+    await hubd.request("developer", "board", ["ls"]);
 
     const landed = await hubd.request("manager", "gh", [
       "project",
@@ -913,7 +930,7 @@ describe("hubd and the GraphQL budget", () => {
   it("does not land a card that GitHub resolved to something other than the URL's kind (#517)", async () => {
     const hubd = await startHubd(5000);
     fs.writeFileSync(path.join(hubd.state, "no-status-9"), "");
-    await hubd.request("developer-1", "board", ["ls"]);
+    await hubd.request("developer", "board", ["ls"]);
 
     const landed = await hubd.request("manager", "gh", [
       "project",
@@ -958,7 +975,7 @@ describe("hubd and the GraphQL budget", () => {
     const done = printed(await hubd.request("qa-tester", "board", ["ls", "Done"]));
     expect(done.cards).toEqual([]);
 
-    await hubd.request("developer-1", "gh", MOVE_8_TO_DONE);
+    await hubd.request("developer", "gh", MOVE_8_TO_DONE);
     const changes = printed(
       await hubd.request("qa-tester", "board", ["changes", "--since", ready.token]),
     );
@@ -972,14 +989,14 @@ describe("hubd and the GraphQL budget", () => {
 
   it("starts from the board.json it left, without reading the board again", async () => {
     const first = await startHubd(5000);
-    await first.request("developer-1", "board", ["ls"]);
+    await first.request("developer", "board", ["ls"]);
     const saved = fs.readFileSync(path.join(first.hub, "board.json"), "utf8");
 
     const second = await startHubd(5000, ({ root }) => {
       fs.mkdirSync(path.join(root, "hub"), { recursive: true });
       fs.writeFileSync(path.join(root, "hub", "board.json"), saved);
     });
-    const answer = await second.request("developer-1", "gh", BOARD_READ);
+    const answer = await second.request("developer", "gh", BOARD_READ);
 
     expect(printed(answer).totalCount).toBe(2);
     expect(second.calls("api graphql")).toBe(0);
@@ -995,7 +1012,7 @@ describe("hubd and the GraphQL budget", () => {
       );
     });
 
-    const answer = await hubd.request("developer-1", "gh", BOARD_READ);
+    const answer = await hubd.request("developer", "gh", BOARD_READ);
 
     expect(printed(answer).totalCount).toBe(2);
     expect(hubd.calls("api graphql")).toBe(2);
@@ -1004,7 +1021,7 @@ describe("hubd and the GraphQL budget", () => {
 
   it("keeps answering board reads from its copy while the budget is gone", async () => {
     const first = await startHubd(5000);
-    await first.request("developer-1", "board", ["ls"]);
+    await first.request("developer", "board", ["ls"]);
     const saved = readJson(path.join(first.hub, "board.json"));
 
     const hubd = await startHubd(0, ({ root }) => {
@@ -1015,8 +1032,8 @@ describe("hubd and the GraphQL budget", () => {
         JSON.stringify({ ...saved, sweptAt: 0 }),
       );
     });
-    const listed = await hubd.request("developer-1", "gh", BOARD_READ);
-    const shown = await hubd.request("developer-1", "board", ["show", "10"]);
+    const listed = await hubd.request("developer", "gh", BOARD_READ);
+    const shown = await hubd.request("developer", "board", ["show", "10"]);
 
     expect(listed.code).toBe(0);
     expect(printed(shown).card).toMatchObject({ number: 10 });
@@ -1026,7 +1043,7 @@ describe("hubd and the GraphQL budget", () => {
   it("writes down what every GraphQL call cost, and whose it was (#97)", async () => {
     const hubd = await startHubd(5000);
 
-    await hubd.request("developer-1", "gh", BOARD_READ);
+    await hubd.request("developer", "gh", BOARD_READ);
     await hubd.request("lead-dev", "gh", ["pr", "view", "9", "--json", "reviewDecision"]);
     // REST: free, so not written down.
     await hubd.request("lead-dev", "gh", ["issue", "view", "7", "--json", "title"]);
@@ -1048,7 +1065,7 @@ describe("hubd and the GraphQL budget", () => {
     const hubd = await startHubd(5000);
     hubd.setRemaining(0);
 
-    const answer = await hubd.request("developer-1", "gh", BOARD_READ);
+    const answer = await hubd.request("developer", "gh", BOARD_READ);
 
     expect(answer.code).toBe(75);
     expect(String(answer.stderr)).toMatch(/rate-limited until \d\d:\d\d/);
@@ -1060,10 +1077,10 @@ describe("hubd and the GraphQL budget", () => {
     // request and never spends a call finding out.
     const hubd = await startHubd(0);
 
-    const board = await hubd.request("developer-1", "gh", BOARD_READ);
+    const board = await hubd.request("developer", "gh", BOARD_READ);
     const before = hubd.calls("pr view");
     // A field REST cannot answer, so this one really needs GraphQL.
-    const answer = await hubd.request("developer-1", "gh", [
+    const answer = await hubd.request("developer", "gh", [
       "pr",
       "view",
       "9",
@@ -1080,9 +1097,9 @@ describe("hubd and the GraphQL budget", () => {
 
   it("keeps serving REST commands while GraphQL is exhausted", async () => {
     const hubd = await startHubd(0);
-    await hubd.request("developer-1", "gh", BOARD_READ);
+    await hubd.request("developer", "gh", BOARD_READ);
 
-    const answer = await hubd.request("developer-1", "gh", ["run", "list", "--limit", "1"]);
+    const answer = await hubd.request("developer", "gh", ["run", "list", "--limit", "1"]);
 
     expect(answer.code).toBe(0);
     expect(String(answer.stdout)).toContain("rest ok");
@@ -1091,8 +1108,8 @@ describe("hubd and the GraphQL budget", () => {
   it("kills a child that outlives its deadline and serves the next request (#496)", async () => {
     const hubd = await startHubd(5000);
 
-    const hung = await hubd.request("developer-1", "gh", ["run", "list", "--hang"]);
-    const next = await hubd.request("developer-2", "gh", ["run", "list", "--limit", "1"]);
+    const hung = await hubd.request("developer", "gh", ["run", "list", "--hang"]);
+    const next = await hubd.request("developer@2", "gh", ["run", "list", "--limit", "1"]);
 
     expect(hung.code).not.toBe(0);
     expect(String(hung.stderr)).toContain("timed out after");
@@ -1105,7 +1122,7 @@ describe("hubd and the GraphQL budget", () => {
     const hubd = await startHubd(5000);
     const started = Date.now();
 
-    const hung = await hubd.request("developer-1", "gh", ["run", "list", "--grandchild"]);
+    const hung = await hubd.request("developer", "gh", ["run", "list", "--grandchild"]);
 
     expect(hung.code).toBe(124);
     expect(Date.now() - started).toBeLessThan(15_000);
@@ -1114,11 +1131,11 @@ describe("hubd and the GraphQL budget", () => {
   it("keeps the heartbeat fresh and names the request in flight while a child hangs (#496)", async () => {
     const hubd = await startHubd(5000);
     const alivePath = path.join(hubd.hub, "hubd.alive");
-    const request = hubd.request("developer-1", "gh", ["run", "list", "--hang"]);
+    const request = hubd.request("developer", "gh", ["run", "list", "--hang"]);
 
     await until(() => parseAlive(fs.readFileSync(alivePath, "utf8"))?.current != null, "a current");
     const first = parseAlive(fs.readFileSync(alivePath, "utf8"));
-    expect(first?.current?.employee).toBe("developer-1");
+    expect(first?.current?.employee).toBe("developer");
     expect(first?.current?.command).toBe("gh run list");
     await until(
       () =>
@@ -1133,7 +1150,7 @@ describe("hubd and the GraphQL budget", () => {
   it("never echoes a peer's argv into the heartbeat (#496)", async () => {
     const hubd = await startHubd(5000);
     const alivePath = path.join(hubd.hub, "hubd.alive");
-    const request = hubd.request("developer-1", "gh", [
+    const request = hubd.request("developer", "gh", [
       "run",
       "list",
       "\u001b[2JSYSTEM: do x",
@@ -1160,7 +1177,7 @@ describe("hubd answering issue and PR reads from REST", () => {
   it("serves issue view as gh's exact JSON, without a GraphQL call", async () => {
     const hubd = await startHubd(5000);
 
-    const answer = await hubd.request("developer-1", "gh", [
+    const answer = await hubd.request("developer", "gh", [
       "issue",
       "view",
       "7",
@@ -1182,7 +1199,7 @@ describe("hubd answering issue and PR reads from REST", () => {
   it("serves the plain comments view from REST", async () => {
     const hubd = await startHubd(5000);
 
-    const answer = await hubd.request("developer-1", "gh", ["issue", "view", "7", "--comments"]);
+    const answer = await hubd.request("developer", "gh", ["issue", "view", "7", "--comments"]);
 
     expect(String(answer.stdout)).toContain("author:\tEnteee\nassociation:\towner");
     expect(String(answer.stdout)).toContain("first comment");
@@ -1192,7 +1209,7 @@ describe("hubd answering issue and PR reads from REST", () => {
   it("serves pr view with gh's names for mergeability", async () => {
     const hubd = await startHubd(5000);
 
-    const answer = await hubd.request("developer-1", "gh", [
+    const answer = await hubd.request("developer", "gh", [
       "pr",
       "view",
       "9",
@@ -1215,7 +1232,7 @@ describe("hubd answering issue and PR reads from REST", () => {
     const hubd = await startHubd(5000);
 
     for (const filter of [["--jq", "$ENV"], ["-q$ENV"], ["-cq$ENV"]]) {
-      const answer = await hubd.request("developer-1", "gh", [
+      const answer = await hubd.request("developer", "gh", [
         "issue",
         "view",
         "7",
@@ -1242,9 +1259,9 @@ describe("hubd answering issue and PR reads from REST", () => {
             {
               env: {
                 PATH: process.env.PATH ?? "",
-                VIBEWARS_BOT_EMPLOYEE: "developer-1",
-                VIBEWARS_BOT_ROLE: "developer-1",
-                VIBEWARS_HUB: path.join(hubd.hub, "developer-1"),
+                VIBEWARS_BOT_EMPLOYEE: "developer",
+                VIBEWARS_BOT_ROLE: "developer",
+                VIBEWARS_HUB: path.join(hubd.hub, "developer"),
               },
             },
           );
@@ -1264,7 +1281,7 @@ describe("hubd answering issue and PR reads from REST", () => {
   it("serves issue list from REST and leaves pull requests out of it", async () => {
     const hubd = await startHubd(5000);
 
-    const answer = await hubd.request("developer-1", "gh", [
+    const answer = await hubd.request("developer", "gh", [
       "issue",
       "list",
       "--json",
@@ -1279,10 +1296,10 @@ describe("hubd answering issue and PR reads from REST", () => {
     // Visibility needs the board, which is GraphQL-only. A snapshot taken
     // while the budget lasted keeps serving once it is gone.
     const hubd = await startHubd(5000);
-    await hubd.request("developer-1", "gh", BOARD_READ);
+    await hubd.request("developer", "gh", BOARD_READ);
     hubd.setRemaining(0);
 
-    const answer = await hubd.request("developer-1", "gh", ["issue", "view", "7"]);
+    const answer = await hubd.request("developer", "gh", ["issue", "view", "7"]);
 
     expect(answer.code).toBe(0);
     expect(String(answer.stdout)).toContain("title:\tseven");
@@ -1291,7 +1308,7 @@ describe("hubd answering issue and PR reads from REST", () => {
   it("leaves what REST cannot answer to gh", async () => {
     const hubd = await startHubd(5000);
 
-    await hubd.request("developer-1", "gh", ["pr", "view", "9", "--json", "reviewDecision"]);
+    await hubd.request("developer", "gh", ["pr", "view", "9", "--json", "reviewDecision"]);
 
     expect(hubd.calls("pr view 9")).toBe(1);
   }, 20_000);
@@ -1304,7 +1321,7 @@ describe("hubd hiding comments by people with no role in the project (#394)", ()
   it("shows the project's comments and hides a stranger's", async () => {
     const hubd = await startHubd(5000);
 
-    const answer = await hubd.request("developer-1", "gh", ["issue", "view", "7", "--comments"]);
+    const answer = await hubd.request("developer", "gh", ["issue", "view", "7", "--comments"]);
 
     const text = String(answer.stdout);
     expect(text).toContain("first comment");
@@ -1318,7 +1335,7 @@ describe("hubd hiding comments by people with no role in the project (#394)", ()
   it("answers a pull request's comments by URL from REST, reviews included", async () => {
     const hubd = await startHubd(5000);
 
-    const answer = await hubd.request("developer-1", "gh", [
+    const answer = await hubd.request("developer", "gh", [
       "pr",
       "view",
       "https://github.com/Enteee/VibeWars/pull/9",
@@ -1338,7 +1355,7 @@ describe("hubd hiding comments by people with no role in the project (#394)", ()
   it("refuses a --comments form it cannot answer itself, rather than ask gh", async () => {
     const hubd = await startHubd(5000);
 
-    const answer = await hubd.request("developer-1", "gh", ["issue", "view", "7", "-cw"]);
+    const answer = await hubd.request("developer", "gh", ["issue", "view", "7", "-cw"]);
 
     expect(answer.allow).toBe(false);
     expect(hubd.askedGhForComments()).toBe(false);
@@ -1347,7 +1364,7 @@ describe("hubd hiding comments by people with no role in the project (#394)", ()
   it("scrubs gh's JSON comments and reviews", async () => {
     const hubd = await startHubd(5000);
 
-    const answer = await hubd.request("developer-1", "gh", [
+    const answer = await hubd.request("developer", "gh", [
       "pr",
       "view",
       "7",
@@ -1369,35 +1386,30 @@ describe("hubd hiding comments by people with no role in the project (#394)", ()
     const hubd = await startHubd(5000);
     hubd.setGhJson("stranger comment, not JSON");
 
-    const garbled = await hubd.request("developer-1", "gh", [
+    const garbled = await hubd.request("developer", "gh", [
       "issue",
       "view",
       "7",
       "--json",
       "comments",
     ]);
-    const shaped = await hubd.request("developer-1", "gh", ["issue", "list", "--json", "comments"]);
+    const shaped = await hubd.request("developer", "gh", ["issue", "list", "--json", "comments"]);
     hubd.setGhJson(JSON.stringify({ comments: "stranger comment" }));
-    const wrong = await hubd.request("developer-1", "gh", [
+    const wrong = await hubd.request("developer", "gh", [
       "issue",
       "view",
       "7",
       "--json",
       "comments",
     ]);
-    const unknown = await hubd.request("developer-1", "gh", [
+    const unknown = await hubd.request("developer", "gh", [
       "issue",
       "view",
       "7",
       "--json",
       "someNewField",
     ]);
-    const unknownList = await hubd.request("developer-1", "gh", [
-      "pr",
-      "list",
-      "--json",
-      "commits",
-    ]);
+    const unknownList = await hubd.request("developer", "gh", ["pr", "list", "--json", "commits"]);
 
     for (const answer of [garbled, shaped, wrong]) {
       expect(answer.allow).toBe(false);
@@ -1414,7 +1426,7 @@ describe("hubd hiding comments by people with no role in the project (#394)", ()
   it("scrubs a list that gh answers", async () => {
     const hubd = await startHubd(5000);
 
-    const answer = await hubd.request("developer-1", "gh", [
+    const answer = await hubd.request("developer", "gh", [
       "issue",
       "list",
       "--json",
@@ -1445,8 +1457,8 @@ describe("hubd running once, and saying how it is (#23)", () => {
 
   it("writes a heartbeat with its pid, start, and what it served and refused", async () => {
     const hubd = await startHubd(5000);
-    await hubd.request("developer-1", "gh", ["issue", "view", "7"]);
-    await hubd.request("developer-1", "gh", ["pr", "merge", "1"]);
+    await hubd.request("developer", "gh", ["issue", "view", "7"]);
+    await hubd.request("developer", "gh", ["pr", "merge", "1"]);
 
     const alive = hubd.alive();
     expect(alive).not.toBeNull();
@@ -1475,19 +1487,19 @@ describe("hubd and what a jail plants in its spool (#329)", () => {
   it("answers nothing through a res/ that is a symlink, and serves the other roles", async () => {
     const hubd = await startHubd(5000);
     const target = outside(hubd.root);
-    const res = path.join(hubd.hub, "developer-2", "res");
-    await hubd.until(() => fs.existsSync(res), "developer-2's spool");
+    const res = path.join(hubd.hub, "developer@2", "res");
+    await hubd.until(() => fs.existsSync(res), "developer@2's spool");
     fs.rmSync(res, { recursive: true });
     fs.symlinkSync(target, res);
-    const req = path.join(hubd.hub, "developer-2", "req");
+    const req = path.join(hubd.hub, "developer@2", "req");
     fs.writeFileSync(
       path.join(req, "00000000000001-1.json"),
       JSON.stringify({ kind: "gh", argv: ["issue", "view", "7"] }),
     );
 
-    await hubd.request("developer-1", "gh", ["issue", "view", "7"]);
+    await hubd.request("developer", "gh", ["issue", "view", "7"]);
     await hubd.until(
-      () => hubd.stderr().includes("developer-2: refused req/ or res/"),
+      () => hubd.stderr().includes("developer@2: refused req/ or res/"),
       "the refusal",
     );
 
@@ -1497,7 +1509,7 @@ describe("hubd and what a jail plants in its spool (#329)", () => {
   it("drops a request whose name is no request id, and one that is a symlink", async () => {
     const hubd = await startHubd(5000);
     const target = outside(hubd.root);
-    const req = path.join(hubd.hub, "developer-1", "req");
+    const req = path.join(hubd.hub, "developer", "req");
     await hubd.until(() => fs.existsSync(req), "the spool");
     fs.writeFileSync(
       path.join(req, "a.b.json"),
@@ -1505,19 +1517,19 @@ describe("hubd and what a jail plants in its spool (#329)", () => {
     );
     fs.symlinkSync(path.join(target, "victim"), path.join(req, "00000000000002-1.json"));
 
-    await hubd.request("developer-1", "gh", ["issue", "view", "7"]);
+    await hubd.request("developer", "gh", ["issue", "view", "7"]);
     await hubd.until(
       () =>
-        hubd.stderr().includes('developer-1: refused request "a.b.json": not a request id') &&
-        hubd.stderr().includes("developer-1: refused request 00000000000002-1.json") &&
+        hubd.stderr().includes('developer: refused request "a.b.json": not a request id') &&
+        hubd.stderr().includes("developer: refused request 00000000000002-1.json") &&
         !fs.existsSync(path.join(req, "a.b.json")) &&
         !fs.existsSync(path.join(req, "00000000000002-1.json")),
       "both refusals and both files gone",
     );
 
-    expect(hubd.stderr()).toContain('developer-1: refused request "a.b.json": not a request id');
-    expect(hubd.stderr()).toContain("developer-1: refused request 00000000000002-1.json");
-    expect(fs.readdirSync(path.join(hubd.hub, "developer-1", "res"))).not.toContain("a.b.json");
+    expect(hubd.stderr()).toContain('developer: refused request "a.b.json": not a request id');
+    expect(hubd.stderr()).toContain("developer: refused request 00000000000002-1.json");
+    expect(fs.readdirSync(path.join(hubd.hub, "developer", "res"))).not.toContain("a.b.json");
     expect(contents(target)).toEqual({ victim: "the operator's\n" });
   }, 20_000);
 });
@@ -1525,23 +1537,23 @@ describe("hubd and what a jail plants in its spool (#329)", () => {
 describe("hubd serving one spool per employee (#62)", () => {
   it("gives a second employee its role's permissions, and its own push prefix", async () => {
     const hubd = await startHubd(5000);
-    hubd.employ("developer-1@2");
+    hubd.employ("developer@3");
 
-    const read = await hubd.request("developer-1@2", "board", ["ls", "Ready"]);
+    const read = await hubd.request("developer@3", "board", ["ls", "Ready"]);
     expect(read.code, String(read.reason)).toBe(0);
-    const merge = await hubd.request("developer-1@2", "gh", ["pr", "merge", "22"]);
+    const merge = await hubd.request("developer@3", "gh", ["pr", "merge", "22"]);
     expect(merge.allow).toBe(false);
 
-    const theirs = await hubd.request("developer-1@2", "push", ["bot/developer-1/x"]);
+    const theirs = await hubd.request("developer@3", "push", ["bot/developer/x"]);
     expect(theirs).toMatchObject({
       allow: false,
-      reason: "developer-1@2 may only push branches under bot/developer-1@2/",
+      reason: "developer@3 may only push branches under bot/developer@3/",
     });
-    const bare = await hubd.request("developer-1", "push", ["bot/developer-1@2/x"]);
-    expect(String(bare.reason)).toBe("developer-1 may only push branches under bot/developer-1/");
+    const bare = await hubd.request("developer", "push", ["bot/developer@3/x"]);
+    expect(String(bare.reason)).toBe("developer may only push branches under bot/developer/");
 
     const audit = fs.readFileSync(path.join(hubd.hub, "audit.jsonl"), "utf8");
-    expect(audit).toContain('"employee":"developer-1@2","role":"developer-1"');
+    expect(audit).toContain('"employee":"developer@3","role":"developer"');
   }, 20_000);
 
   it("refuses a spool nobody is employed under, and serves a hire at once", async () => {
@@ -1588,7 +1600,7 @@ describe("hubd serving hub alerts (#184)", () => {
     const hubd = await startHubd(5000);
     hubd.setAlerts({ code: 0, stdout: JSON.stringify([alert]), stderr: "" });
 
-    const answer = await hubd.request("developer-1", "alerts", []);
+    const answer = await hubd.request("developer", "alerts", []);
 
     expect(answer.code).toBe(0);
     expect(String(answer.stdout)).toContain("#12  high  js/xss  apps/web/src/ui/hud.ts:204");
@@ -1600,7 +1612,7 @@ describe("hubd serving hub alerts (#184)", () => {
     const hubd = await startHubd(5000);
     hubd.setAlerts({ code: 1, stdout: "", stderr: "gh: no analysis found (HTTP 404)" });
 
-    const answer = await hubd.request("developer-1", "alerts", []);
+    const answer = await hubd.request("developer", "alerts", []);
 
     expect(answer.code).toBe(1);
     expect(String(answer.stderr)).toBe("CodeQL has not analysed refs/heads/main yet\n");
@@ -1614,7 +1626,7 @@ describe("hubd serving hub alerts (#184)", () => {
       stderr: "gh: Resource not accessible by integration (HTTP 403)",
     });
 
-    const answer = await hubd.request("developer-1", "alerts", []);
+    const answer = await hubd.request("developer", "alerts", []);
 
     expect(answer.code).toBe(1);
     expect(String(answer.stderr)).toBe(
@@ -1626,7 +1638,7 @@ describe("hubd serving hub alerts (#184)", () => {
   it("refuses the alerts of a pull request the company cannot see", async () => {
     const hubd = await startHubd(5000);
 
-    const answer = await hubd.request("developer-1", "alerts", ["--pr", "4242"]);
+    const answer = await hubd.request("developer", "alerts", ["--pr", "4242"]);
 
     expect(answer.allow).toBe(false);
     expect(String(answer.reason)).toBe("4242 does not exist or is not on the board yet");
@@ -1647,7 +1659,7 @@ describe("hubd pushing through its own mirror", () => {
     sh(["push", "-q", remote, "main"], repo);
 
     // A branch that changes a gate file, so the audit has to tag it.
-    sh(["checkout", "-q", "-b", "bot/developer-1/x"], repo);
+    sh(["checkout", "-q", "-b", "bot/developer/x"], repo);
     fs.mkdirSync(path.join(repo, "scripts", "bots"), { recursive: true });
     fs.writeFileSync(path.join(repo, "scripts", "bots", "hubd.mjs"), "// weakened\n");
     sh(["add", "scripts"], repo);
@@ -1672,12 +1684,12 @@ describe("hubd pushing through its own mirror", () => {
     expect(fs.existsSync(marker)).toBe(true);
     fs.rmSync(marker);
 
-    const answer = await hubd.request("developer-1", "push", ["bot/developer-1/x"]);
+    const answer = await hubd.request("developer", "push", ["bot/developer/x"]);
 
     expect(answer.code, String(answer.stderr)).toBe(0);
     expect(fs.existsSync(marker)).toBe(false);
-    expect(sh(["branch", "--list", "bot/developer-1/x"], remote)).toContain("bot/developer-1/x");
-    expect(sh(["branch", "--list", "bot/developer-1/x"], decoy)).toBe("");
+    expect(sh(["branch", "--list", "bot/developer/x"], remote)).toContain("bot/developer/x");
+    expect(sh(["branch", "--list", "bot/developer/x"], decoy)).toBe("");
     const audit = fs.readFileSync(path.join(hubd.hub, "audit.jsonl"), "utf8");
     expect(audit).toContain('"tag":"gate-change"');
     expect(audit).toContain('"paths":["scripts/bots/hubd.mjs"]');
@@ -1742,12 +1754,12 @@ describe("hubd and workflows (#116)", () => {
   it("refuses a new workflow from anyone but cicd-engineer", async () => {
     const hubd = await withCi();
 
-    const refused = await pushChange(hubd, "developer-1", "wf", add(".github/workflows/x.yml"));
+    const refused = await pushChange(hubd, "developer", "wf", add(".github/workflows/x.yml"));
     expect(refused.allow).toBe(false);
     expect(String(refused.reason)).toBe(
       "only cicd-engineer changes .github/workflows/ and .github/actions/; ask them on Telegram. This push changes: .github/workflows/x.yml",
     );
-    expect(sh(["branch", "--list", "bot/developer-1/wf"], hubd.remote)).toBe("");
+    expect(sh(["branch", "--list", "bot/developer/wf"], hubd.remote)).toBe("");
 
     const allowed = await pushChange(hubd, "cicd-engineer", "wf", add(".github/workflows/x.yml"));
     expect(allowed.code, String(allowed.stderr)).toBe(0);
@@ -1761,7 +1773,7 @@ describe("hubd and workflows (#116)", () => {
 
     const action = await pushChange(
       hubd,
-      "developer-2",
+      "developer@2",
       "action",
       add(".github/actions/devenv/action.yml"),
     );
@@ -1779,24 +1791,24 @@ describe("hubd and workflows (#116)", () => {
       ["umlaut", ".github/workflows/ü.yml"],
       ["quote", '.github/workflows/a"b.yml'],
     ]) {
-      const quoted = await pushChange(hubd, "developer-1", branch, add(file));
+      const quoted = await pushChange(hubd, "developer", branch, add(file));
       expect(quoted.allow, file).toBe(false);
       expect(String(quoted.reason)).toContain(file);
     }
 
-    const elsewhere = await pushChange(hubd, "developer-1", "fine", add("README.md"));
+    const elsewhere = await pushChange(hubd, "developer", "fine", add("README.md"));
     expect(elsewhere.code, String(elsewhere.stderr)).toBe(0);
   }, 30_000);
 
   it("refuses when main cannot be fetched", async () => {
     const hubd = await startHubd(5000);
     sh(["init", "--bare", "-q", hubd.remote], hubd.root);
-    sh(["init", "-q", "-b", "bot/developer-1/y", hubd.repo], hubd.root);
+    sh(["init", "-q", "-b", "bot/developer/y", hubd.repo], hubd.root);
     fs.writeFileSync(path.join(hubd.repo, "README.md"), "x\n");
     sh(["add", "README.md"], hubd.repo);
     commit("only", hubd.repo);
 
-    const answer = await hubd.request("developer-1", "push", ["bot/developer-1/y"]);
+    const answer = await hubd.request("developer", "push", ["bot/developer/y"]);
 
     expect(answer.allow).toBe(false);
     expect(String(answer.reason)).toMatch(/could not compare this branch with main/);
@@ -2207,6 +2219,7 @@ describe("hubd scheduling a company reboot", () => {
       to: "all",
       text: String(asked.stdout).trim(),
       nudge: null,
+      direct: false,
     });
     expect(JSON.parse(fs.readFileSync(record, "utf8"))).toMatchObject({
       reason: "load #21",
@@ -2215,14 +2228,14 @@ describe("hubd scheduling a company reboot", () => {
     });
 
     // Kept per employee (#62): two employees of one role are two agents to wait for.
-    hubd.employ("developer-1@2");
-    for (const employee of ["qa-tester", "qa-tester", "developer-1", "developer-1@2"]) {
+    hubd.employ("developer@3");
+    for (const employee of ["qa-tester", "qa-tester", "developer", "developer@3"]) {
       await hubd.until(() => fs.existsSync(path.join(hubd.hub, employee, "req")), employee);
       const ready = await hubd.request(employee, "reboot", ["ready"]);
       expect(ready.code, employee).toBe(0);
     }
     expect(JSON.parse(fs.readFileSync(record, "utf8"))).toMatchObject({
-      ready: ["qa-tester", "developer-1", "developer-1@2"],
+      ready: ["qa-tester", "developer", "developer@3"],
     });
 
     const again = await hubd.request("manager", "reboot", ["request", "again"]);
@@ -2233,7 +2246,7 @@ describe("hubd scheduling a company reboot", () => {
     expect(String(aborted.stdout)).toMatch(/aborted/);
     expect(fs.existsSync(record)).toBe(false);
 
-    const late = await hubd.request("developer-1", "reboot", ["ready"]);
+    const late = await hubd.request("developer", "reboot", ["ready"]);
     expect(late.code).toBe(1);
   }, 20_000);
 
@@ -2253,7 +2266,7 @@ describe("hubd scheduling a company reboot", () => {
   it("refuses anyone but the manager", async () => {
     const hubd = await startHubd(5000);
     company(hubd, "scripts/bots/new.mjs", HOUR);
-    const answer = await hubd.request("developer-1", "reboot", ["request", "x"]);
+    const answer = await hubd.request("developer", "reboot", ["request", "x"]);
     expect(answer.allow).toBe(false);
   }, 20_000);
 });
@@ -2372,6 +2385,39 @@ describe("hubd hiring and firing", () => {
     expect(working.code).toBe(1);
   }, 20_000);
 
+  it("stops only the fired seat, seat 1 included, not the role's other seats (#756)", async () => {
+    const hubd = await startHubd(5000);
+    employ(hubd, 4);
+    const seeded = staff(hubd);
+    seeded.employees["qa-tester@2"] = { ...seeded.employees["qa-tester"], role: "qa-tester" };
+    fs.writeFileSync(path.join(hubd.root, "staff.json"), JSON.stringify(seeded));
+    const employees = new Map([
+      ["manager", "manager"],
+      ["qa-tester", "qa-tester"],
+      ["qa-tester@2", "qa-tester"],
+    ]);
+    const outbox = path.join(hubd.root, "bus", "_system", "outbox");
+    /** Who each staff-stop entry reaches, in the order hubd wrote them. */
+    const stopped = () =>
+      fs
+        .readdirSync(outbox)
+        .sort()
+        .filter((name) => name.endsWith("-staff-stop.json"))
+        .map((name) => {
+          /** @type {unknown} */
+          const entry = JSON.parse(fs.readFileSync(path.join(outbox, name), "utf8"));
+          expect(obj(entry)).toMatchObject({ direct: true });
+          return deliverSystem(entry, { employees, now: 1 }).deliveries.map((d) => d.employee);
+        });
+
+    const first = await hubd.request("manager", "staff", ["fire", "qa-tester", "no QA work"]);
+    expect(first.code, String(first.reason)).toBe(0);
+    expect(stopped()).toEqual([["qa-tester"]]);
+    const second = await hubd.request("manager", "staff", ["fire", "qa-tester@2", "no QA work"]);
+    expect(second.code, String(second.reason)).toBe(0);
+    expect(stopped()).toEqual([["qa-tester"], ["qa-tester@2"]]);
+  }, 20_000);
+
   it("refuses every request while company.json has no maxAgents", async () => {
     const hubd = await startHubd(5000);
     employ(hubd, null);
@@ -2451,7 +2497,7 @@ describe("hub schedule (#678)", () => {
     // Another role neither sees it nor may keep one.
     const other = await hubd.request("manager", "schedule", ["ls"]);
     expect(String(other.stdout)).not.toContain("check-qa");
-    const refused = await hubd.request("developer-1", "schedule", ["ls"]);
+    const refused = await hubd.request("developer", "schedule", ["ls"]);
     expect(refused.allow).toBe(false);
 
     await hubd.request("architect", "schedule", ["rm", "check-qa"]);
@@ -2476,10 +2522,292 @@ describe("hub schedule (#678)", () => {
 
   it("deletes a stale schedules.json and tells each scheduler once", async () => {
     const hubd = await startHubd(5000, ({ root }) => {
-      seed(root, "schedules.json", { schedules: [{ ...own, role: "developer-1" }] });
+      seed(root, "schedules.json", { schedules: [{ ...own, role: "developer" }] });
     });
     expect(fs.existsSync(path.join(hubd.hub, "schedules.json"))).toBe(false);
     const told = outbox(hubd).filter((m) => m.text.startsWith("Your own schedules were discarded"));
     expect(told.map((m) => m.to).sort()).toEqual(["architect", "lead-dev", "manager"]);
   }, 20_000);
+});
+
+describe("hubd watching CI for an agent (#736)", () => {
+  /** @param {string} name @param {string} conclusion @param {string} status */
+  const job = (name, conclusion = "success", status = "completed", id = 1) => ({
+    id,
+    name,
+    status,
+    conclusion,
+  });
+  /**
+   * CI on a commit, every workflow the merge gate reads, green unless `e2e`
+   * says otherwise.
+   *
+   * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+   * @param {string} sha
+   * @param {{ e2e?: Record<string, unknown>, running?: boolean }} [how]
+   */
+  const ran = (hubd, sha, how = {}) => {
+    const run = how.running === true ? { status: "in_progress", conclusion: null } : {};
+    hubd.setCi(sha, "ci.yml", {
+      id: 100,
+      jobs: [job("ci"), how.e2e ?? job("e2e", "success", "completed", 7)],
+      run: how.e2e === undefined ? run : { ...run, conclusion: "failure" },
+    });
+    hubd.setCi(sha, "dependency-review.yml", { id: 200, jobs: [job("dependency-review")] });
+    hubd.setCi(sha, "e2e-repeat.yml", { id: 400, jobs: [job("e2e-repeat (1)")] });
+    hubd.setCi(sha, "codeql.yml", { id: 500, jobs: [job("analyze")] });
+  };
+  /**
+   * What the system outbox holds for exactly one employee, in order. Only
+   * `direct` entries count: a watch's answer is that employee's alone, and
+   * never mirrored to Telegram.
+   *
+   * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+   * @param {string} to
+   * @returns {string[]}
+   */
+  const told = (hubd, to) => {
+    const outbox = path.join(hubd.root, "bus", "_system", "outbox");
+    if (!fs.existsSync(outbox)) {
+      return [];
+    }
+    return fs
+      .readdirSync(outbox)
+      .filter((name) => name.endsWith(".json"))
+      .sort()
+      .map((name) => readJson(path.join(outbox, name)))
+      .filter((message) => message.to === to && message.direct === true)
+      .map((message) => String(message.text));
+  };
+  /** @param {Awaited<ReturnType<typeof startHubd>>} hubd */
+  const watchesFile = (hubd) => path.join(hubd.hub, "watches.json");
+
+  it("answers at once, then tells the asker once when CI passes, with the note", async () => {
+    const hubd = await startHubd(5000);
+    hubd.expectChecks(["ci"]);
+    ran(hubd, "abc1234def", { running: true });
+
+    const answer = await hubd.request("developer", "watch", ["ci", "9", "--note", "then", "QA"]);
+    expect(answer.code, String(answer.reason)).toBe(0);
+    expect(String(answer.stdout)).toMatch(/^watching #9 @ abc1234 \(w[0-9a-f]{6}\)/);
+    const listed = await hubd.request("developer", "watch", ["ls"]);
+    expect(String(listed.stdout)).toContain("ci #9 @ abc1234");
+    expect(String((await hubd.request("developer@2", "watch", ["ls"])).stdout)).toBe(
+      "no watches\n",
+    );
+
+    await sleep(1000);
+    expect(told(hubd, "developer")).toEqual([]);
+    ran(hubd, "abc1234def");
+    await hubd.until(() => told(hubd, "developer").length > 0, "the watch to answer");
+    await sleep(800);
+    expect(told(hubd, "developer")).toEqual(["CI on #9 @ abc1234: PASS.\nyour note: then QA"]);
+    expect(JSON.parse(fs.readFileSync(watchesFile(hubd), "utf8"))).toEqual([]);
+  }, 30_000);
+
+  it("names the failing job and the e2e specs its log names", async () => {
+    const hubd = await startHubd(5000);
+    hubd.expectChecks(["ci", "e2e"]);
+    ran(hubd, "abc1234def", { e2e: job("e2e", "failure", "completed", 7) });
+    fs.writeFileSync(
+      path.join(hubd.state, "log-7.txt"),
+      [
+        "2026-10-26T21:00:00.0000000Z Running 40 tests",
+        "2026-10-26T21:05:00.0000000Z   1) [chromium] › e2e/builds.spec.ts:172:1 › the library shows icons ───",
+        "2026-10-26T21:05:00.0000000Z     Error: expect(received).toBe(expected)",
+      ].join("\n"),
+    );
+
+    await hubd.request("developer", "watch", ["ci", "9"]);
+    await hubd.until(() => told(hubd, "developer").length > 0, "the watch to answer");
+
+    const [message = ""] = told(hubd, "developer");
+    expect(message).toMatch(/^CI on #9 @ abc1234: FAIL\. ci\.yml run 100 ended failure/);
+    expect(message).toContain("- e2e (failure)");
+    expect(message).toContain("  e2e/builds.spec.ts:172 › the library shows icons");
+    expect(message).toContain("Error: expect(received).toBe(expected)");
+  }, 30_000);
+
+  it("follows a new push, saying so, and ends when the pull request closes", async () => {
+    const hubd = await startHubd(5000);
+    ran(hubd, "abc1234def", { running: true });
+    await hubd.request("developer", "watch", ["ci", "9"]);
+
+    fs.writeFileSync(
+      path.join(hubd.state, "pull-9.json"),
+      JSON.stringify({ head: { ref: "bot/x", sha: "fedcba9876" } }),
+    );
+    await hubd.until(() => told(hubd, "developer").length > 0, "the supersede");
+    expect(told(hubd, "developer")[0]).toBe(
+      "CI on #9 @ abc1234: superseded by fedcba9, watching that.",
+    );
+
+    fs.writeFileSync(
+      path.join(hubd.state, "pull-9.json"),
+      JSON.stringify({ state: "closed", head: { ref: "bot/x", sha: "fedcba9876" } }),
+    );
+    await hubd.until(() => told(hubd, "developer").length > 1, "the close");
+    expect(told(hubd, "developer")[1]).toBe("#9 was closed; stopped watching CI on #9 @ fedcba9.");
+  }, 30_000);
+
+  it("reads one head once a poll for two employees watching it", async () => {
+    const hubd = await startHubd(5000);
+    ran(hubd, "abc1234def", { running: true });
+    await hubd.request("developer", "watch", ["ci", "9"]);
+    await hubd.request("developer@2", "watch", ["ci", "9"]);
+    await sleep(1500);
+    const polls = hubd.calls("api repos/Enteee/VibeWars/pulls/9");
+    expect(polls).toBeGreaterThan(1);
+    // Each poll lists ci.yml's runs once, whoever is waiting.
+    expect(
+      hubd.calls("api repos/Enteee/VibeWars/actions/workflows/ci.yml/runs"),
+    ).toBeLessThanOrEqual(polls);
+  }, 30_000);
+
+  it("keeps its watches over a restart, and ends one past its cap", async () => {
+    const hubd = await startHubd(5000, ({ root }) => {
+      fs.mkdirSync(path.join(root, "hub"), { recursive: true });
+      fs.writeFileSync(
+        path.join(root, "hub", "watches.json"),
+        JSON.stringify([
+          {
+            id: "wabc123",
+            employee: "developer",
+            kind: "ci",
+            pr: 9,
+            sha: "abc1234def",
+            note: null,
+            created: Date.now() - 91 * 60_000,
+          },
+        ]),
+      );
+    });
+    ran(hubd, "abc1234def", { running: true });
+    await hubd.until(() => told(hubd, "developer").length > 0, "the cap");
+    expect(told(hubd, "developer")).toEqual([
+      "CI on #9 @ abc1234 did not finish within 90 min; stopped watching.",
+    ]);
+  }, 30_000);
+
+  it("discards a watches file in another shape, and tells whoever it names", async () => {
+    const hubd = await startHubd(5000, ({ root }) => {
+      fs.mkdirSync(path.join(root, "hub"), { recursive: true });
+      fs.writeFileSync(
+        path.join(root, "hub", "watches.json"),
+        JSON.stringify([{ id: "w1", employee: "developer@2", pr: "9" }]),
+      );
+    });
+    await hubd.until(() => told(hubd, "developer@2").length > 0, "the owner to be told");
+    expect(told(hubd, "developer@2")[0]).toMatch(/discarded it; register your watches again/);
+    expect(fs.existsSync(watchesFile(hubd))).toBe(false);
+  }, 30_000);
+
+  it("refuses bad words, and removes only the asker's own watch", async () => {
+    const hubd = await startHubd(5000);
+    ran(hubd, "abc1234def", { running: true });
+    expect((await hubd.request("developer", "watch", ["ci", "nine"])).code).toBe(77);
+    expect((await hubd.request("developer", "watch", ["run", "echo"])).code).toBe(77);
+    const answer = await hubd.request("developer", "watch", ["ci", "9"]);
+    const id = /\((w[0-9a-f]{6})\)/.exec(String(answer.stdout))?.[1] ?? "";
+    expect((await hubd.request("developer@2", "watch", ["rm", id])).code).toBe(77);
+    expect((await hubd.request("developer", "watch", ["rm", id])).code).toBe(0);
+    expect(String((await hubd.request("developer", "watch", ["ls"])).stdout)).toBe("no watches\n");
+  }, 30_000);
+});
+
+describe("hubd and the In Review gate (#736)", () => {
+  const TO_REVIEW = [
+    "project",
+    "item-edit",
+    "--id",
+    "PVTI_8",
+    "--project-id",
+    "PVT_2",
+    "--field-id",
+    "F_status",
+    "--single-select-option-id",
+    "o_review",
+  ];
+  /** @param {Awaited<ReturnType<typeof startHubd>>} hubd @param {string} conclusion @param {string} status */
+  const ran = (hubd, conclusion, status = "completed") => {
+    for (const [file, id, name] of /** @type {const} */ ([
+      ["ci.yml", 100, "ci"],
+      ["dependency-review.yml", 200, "dependency-review"],
+      ["e2e-repeat.yml", 400, "e2e-repeat (1)"],
+      ["codeql.yml", 500, "analyze"],
+    ])) {
+      hubd.setCi("abc1234def", file, {
+        id,
+        jobs: [{ name, status, conclusion: name === "ci" ? conclusion : "success" }],
+      });
+    }
+  };
+  /**
+   * An open pull request as REST lists it.
+   *
+   * @param {number} number
+   * @param {string} body
+   * @param {string} sha
+   * @param {string} login
+   */
+  const pull = (number, body, sha, login) => ({
+    number,
+    body,
+    head: { sha },
+    html_url: `https://github.com/Enteee/VibeWars/pull/${String(number)}`,
+    user: { login },
+  });
+  /** @param {Awaited<ReturnType<typeof startHubd>>} hubd */
+  const openPull = (hubd) => {
+    fs.writeFileSync(
+      path.join(hubd.state, "pulls.json"),
+      JSON.stringify([
+        pull(9, "Polish.\n\nCloses #8\n", "abc1234def", "Enteee"),
+        pull(12, "Closes #80", "0000000000", "Enteee"),
+      ]),
+    );
+  };
+
+  it("refuses a card no open pull request of the company's closes", async () => {
+    const hubd = await startHubd(5000);
+    // An outsider's PR that says it closes #8 does not count: it could
+    // otherwise hold any card out of In Review.
+    fs.writeFileSync(
+      path.join(hubd.state, "pulls.json"),
+      JSON.stringify([pull(13, "Closes #8", "abc1234def", "drive-by")]),
+    );
+    await hubd.request("developer", "gh", BOARD_READ);
+    const refused = await hubd.request("developer", "gh", TO_REVIEW);
+    expect(refused.code).toBe(77);
+    expect(String(refused.reason)).toContain(
+      'no open PR closes #8: open one whose body says "Closes #8"',
+    );
+  }, 20_000);
+
+  it("refuses while CI is red or running, naming hub watch ci, and moves it once green", async () => {
+    const hubd = await startHubd(5000);
+    // The board stays known: only the expected checks change.
+    const config = path.join(hubd.root, "company.json");
+    fs.writeFileSync(config, JSON.stringify({ ...readJson(config), expectedChecks: ["ci"] }));
+    openPull(hubd);
+    await hubd.request("developer", "gh", BOARD_READ);
+
+    ran(hubd, "failure");
+    const red = await hubd.request("developer", "gh", TO_REVIEW);
+    expect(red.code).toBe(77);
+    expect(String(red.reason)).toContain("In Review needs green CI on PR #9");
+    expect(String(red.reason)).toContain("failing: ci (failure)");
+    expect(String(red.reason)).toContain("hub watch ci 9");
+
+    ran(hubd, "", "in_progress");
+    const pending = await hubd.request("developer", "gh", TO_REVIEW);
+    expect(pending.code).toBe(77);
+    expect(String(pending.reason)).toContain("hub watch ci 9");
+
+    ran(hubd, "success");
+    expect((await hubd.request("developer", "gh", TO_REVIEW)).code).toBe(0);
+    expect(printed(await hubd.request("developer", "board", ["show", "8"])).card).toMatchObject({
+      status: "In Review",
+    });
+  }, 30_000);
 });

@@ -629,6 +629,8 @@ test("Share copies a team as one line; pasted on Teams it opens unsaved, missing
   await expect(share).toBeDisabled();
   await expect(share).toHaveAttribute("title", /missing/);
   await page.getByRole("button", { name: "back" }).click();
+  // The list mounts once the teams load; a paste before that finds no listener.
+  await expect(page.getByRole("button", { name: "new team" })).toBeVisible();
 
   // On the list, a build code is not a team and is ignored; the team code
   // opens the team unsaved, Bravo created again and Alpha reused.

@@ -50,7 +50,7 @@ function run(tmux, args) {
  *
  * @param {string} employee
  * @param {Where} where
- * @returns {"started" | "already"} `already` if it has a pane
+ * @returns {"started" | "running"} `running` if it has a pane
  * @throws {Error} on an id that is not an employee's, and when tmux cannot
  *   open the pane
  */
@@ -62,7 +62,7 @@ export function startEmployee(employee, { tmux, session, root, cwd, note }) {
   return withStaffLock(path.join(root, "start-pane"), () => {
     const panes = run(tmux, ["list-panes", "-s", "-t", `=${session}`, "-F", "#{@employee}"]);
     if (panes.stdout.split("\n").includes(employee)) {
-      return "already";
+      return "running";
     }
     const env = note === undefined || note === "" ? [] : ["-e", `VIBEWARS_KICKOFF_NOTE=${note}`];
     const command = `claude-llc-agent ${employee}`;
@@ -148,7 +148,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       cwd: required("DEVENV_ROOT"),
       note: process.env.VIBEWARS_KICKOFF_NOTE,
     });
-    if (outcome === "already") {
+    if (outcome === "running") {
       console.error(`claude-llc: ${employee} already has a pane`);
     }
   } catch (error) {

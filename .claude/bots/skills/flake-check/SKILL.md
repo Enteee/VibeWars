@@ -1,6 +1,6 @@
 ---
 name: flake-check
-description: qa-tester repeat-runs every new or changed test before merging, so flaky tests are caught in QA, not on main. Use when a PR you are about to merge adds or changes a test, and when you write a test that waits on time, rooms or randomness.
+description: qa-tester repeat-runs every new or changed test before merging, so flaky tests are caught in QA, not on main. qa-tester uses it before merging a PR that adds or changes a test. Other roles do not run it: they read it when writing a test that waits on time, rooms or randomness, and name the new tests in the PR.
 ---
 
 # Flake check: run new tests ten times

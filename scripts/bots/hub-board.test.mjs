@@ -232,7 +232,7 @@ describe("planHint", () => {
   it("ignores failures, reads, and what it cannot name", () => {
     expect(planHint(["issue", "close", "8"], 1, REPO)).toBeNull();
     expect(planHint(["issue", "view", "8"], 0, REPO)).toBeNull();
-    expect(planHint(["pr", "close", "bot/developer-1/x"], 0, REPO)).toBeNull();
+    expect(planHint(["pr", "close", "bot/developer/x"], 0, REPO)).toBeNull();
     expect(planHint(["issue", "close", "https://github.com/x/y/issues/8"], 0, REPO)).toBeNull();
   });
 });

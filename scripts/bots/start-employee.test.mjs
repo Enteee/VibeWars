@@ -9,9 +9,9 @@ describe("startEmployee (#722)", () => {
   it.each([
     "",
     "Developer",
-    "developer-1@1",
-    "developer-1@0",
-    "developer-1@02",
+    "developer@1",
+    "developer@0",
+    "developer@02",
     "a b",
     "$(id)",
     "x;y",
