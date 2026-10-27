@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 25,
+  "upkeep": false,
   "description": "For 4...9...10 seconds, all allies within earshot gain 5...13...15 Health per second while moving and move 33% faster. \"Fall Back!\" ends on an ally affected by this Shout when that ally successfully hits with an attack.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 30,
+  "upkeep": false,
   "description": "For 5...17...20 seconds, all party members within earshot receive +24 armor when not moving. This effect ends on an ally affected by this shout when that ally attacks.",
   "variant": "pvp",
   "ruleset": "gw1-reference",
