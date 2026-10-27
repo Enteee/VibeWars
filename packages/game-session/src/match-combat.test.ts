@@ -892,6 +892,20 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     expect(wired === undefined ? undefined : combatMessage(wired).events).toEqual([blocked]);
   });
 
+  it("carries an out-of-sequence miss across, apart from a blind one (#831)", () => {
+    const outOfSequence = {
+      kind: "attack-missed",
+      targetId: "b",
+      reason: "out-of-sequence",
+    } as const;
+    const blind = { kind: "attack-missed", targetId: "b" } as const;
+    const [wired] = wireCombat([entry({ events: [outOfSequence, blind] })]);
+    expect(wired === undefined ? undefined : combatMessage(wired).events).toEqual([
+      outOfSequence,
+      blind,
+    ]);
+  });
+
   it("carries a critical hit across, and only on damage (#533)", () => {
     const crit = { kind: "damage", targetId: "b", amount: 31, critical: true } as const;
     const heal = { kind: "heal", targetId: "a", amount: 5 } as const;

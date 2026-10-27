@@ -9,6 +9,8 @@ import { effectiveActivationSeconds, outsideMatch } from "./tick.js";
 import type {
   AreaRule,
   AttackWeaponClass,
+  ChainRole,
+  ChainStep,
   EffectCondition,
   Magnitude,
   Skill,
@@ -461,6 +463,27 @@ const WEAPON_TEXT: Record<AttackWeaponClass, string> = {
   melee: "Melee attack",
 };
 
+/** A chain role as GW1 names the attack (#831): "Lead attack.". */
+const CHAIN_ROLE_TEXT: Record<ChainRole, string> = {
+  lead: "Lead attack.",
+  "off-hand": "Off-hand attack.",
+  dual: "Dual attack.",
+};
+
+/** What a chain attack must follow (#831), as GW1 words it. */
+const FOLLOWS_TEXT: Record<ChainRole, string> = {
+  lead: "Must follow a lead attack.",
+  "off-hand": "Must follow an off-hand attack.",
+  dual: "Must follow a dual attack.",
+};
+
+/** A chain attack's line (#831): "Off-hand attack. Must follow a lead attack." */
+function chainText(chain: ChainStep): string {
+  return chain.follows === undefined
+    ? CHAIN_ROLE_TEXT[chain.role]
+    : `${CHAIN_ROLE_TEXT[chain.role]} ${FOLLOWS_TEXT[chain.follows]}`;
+}
+
 const NEEDED_WEAPON: Record<AttackWeaponClass, string> = {
   axe: "an axe",
   sword: "a sword",
@@ -577,6 +600,9 @@ export function describeSkill(
   skill: Skill,
   ranks: ReadonlyMap<string, number> = new Map(),
 ): SkillDescription {
+  // A chain attack's place in its chain (#831), first, as GW1 prints it.
+  const chain = skill.attack?.chain;
+  const chainLine = chain === undefined ? [] : [{ text: chainText(chain), magnitude: undefined }];
   // An attack skill's "+16 damage" (#417): its bonus over the weapon's
   // blow, first, as GW1 writes it. Broad Head Arrow has none.
   const bonusDamage = skill.attack?.bonusDamage;
@@ -622,6 +648,7 @@ export function describeSkill(
       ? []
       : [{ text: "Projectile: can be dodged", magnitude: undefined }];
   const effects = [
+    ...chainLine,
     ...bonusLine,
     ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
     ...onBlocked,
