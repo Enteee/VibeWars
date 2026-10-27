@@ -275,16 +275,32 @@ function describeAttackHit(effect: SkillEffect): string[] {
 const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-casts-spell": "whenever it casts a spell",
   "bearer-attacks": "whenever it attacks",
+  "bearer-gains-condition": "whenever it gains a new condition",
+  ends: "when it ends",
 };
 
-/** A status's answer to its bearer (#469): "takes 119 damage whenever it casts a spell". */
+/**
+ * A status's answer to its bearer (#469): "takes 119 damage whenever it
+ * casts a spell", "heals its caster for 102 when it ends" (#887).
+ */
 function describeTrigger(trigger: StatusTrigger): string[] {
   const when = TRIGGER_WHEN[trigger.on];
-  return trigger.effects.flatMap((effect) =>
-    effect.kind === "damage"
-      ? [`takes ${String(describeMagnitude(effect.amount, new Map()).current)} damage ${when}`]
-      : describeEffects(effect, new Map()).map(({ text }) => `${when}: ${lowerFirst(text)}`),
-  );
+  return trigger.effects.flatMap((effect) => {
+    if (effect.kind === "spread-gained-condition") {
+      return [`${when}: foes in the area suffer it too`];
+    }
+    if (effect.kind === "damage" && trigger.target === "bearer") {
+      return [
+        `takes ${String(describeMagnitude(effect.amount, new Map()).current)} damage ${when}`,
+      ];
+    }
+    if (effect.kind === "heal" && trigger.target === "source") {
+      return [
+        `heals its caster for ${String(describeMagnitude(effect.amount, new Map()).current)} ${when}`,
+      ];
+    }
+    return describeEffects(effect, new Map()).map(({ text }) => `${when}: ${lowerFirst(text)}`);
+  });
 }
 
 /** A chant's rider (#758), as its tooltip says it: "next attack skill: …". */

@@ -213,6 +213,14 @@ channels, as often as they like.
   less that header). The host splits a tick's snapshot into parts
   (`packSnapshot`, #662) and its combat into batches (#601), each of at
   most `MAX_MESSAGE_BYTES`.
+- **The Random Arena queue's relays are public and untrusted** (#872,
+  ADR-0032). Anyone can publish to them, so `nostr-queue.ts` takes a
+  ticket or withdrawal for id X only from an event signed by X, whose
+  NIP-01 id it recomputes. Anything over 4 KiB or of a mode nobody here
+  queues for is dropped before any signature check. A Schnorr verify
+  costs about 3 ms, so verifies are budgeted per board
+  (`VERIFY_PER_SECOND`, `VERIFY_BURST`). A flood of fake events slows
+  matchmaking but never freezes the tab.
 - **Host bandwidth.** The host uploads every peer's snapshot every tick:
   about 85 KiB/s per peer at 4v4 and 170 KiB/s at 8v8
   ([benchmarks](docs/development/benchmarks.md)), so around 20 Mbit/s for
