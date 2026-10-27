@@ -3389,6 +3389,12 @@ body:has(.editor-layout.has-training) .now-playing {
   right: 1rem;
 }
 
+/* In the lobby bottom left is the chat (#479). */
+body:has(#app > .chat) .now-playing {
+  left: auto;
+  right: 1rem;
+}
+
 .now-playing[hidden] {
   display: none;
 }
@@ -3469,6 +3475,17 @@ body:has(.editor-layout.has-training) .now-playing {
 
 #viewport > .chat {
   bottom: calc(var(--hud-height, 10rem) + 0.4rem);
+}
+
+/* In a match the arena is under the panel: every click and wheel goes
+   there, and the box shows only while it is open (Enter). A name mutes
+   only then. */
+.chat.in-match:not(.is-open) {
+  pointer-events: none;
+}
+
+.chat.in-match:not(.is-open) .chat-form {
+  display: none;
 }
 
 /* Idle in a match: faded, until a line comes or the box opens. */

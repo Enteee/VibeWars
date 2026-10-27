@@ -7,7 +7,9 @@ import { button, h } from "./kit.js";
  * Chat (#479): the panel at the lower left, in the lobby and through its
  * match. Enter opens the box, Enter sends, Esc cancels; while the box has
  * focus no key reaches the game. The host routes every line; this only
- * shows what arrives, as text, never as HTML.
+ * shows what arrives, as text, never as HTML. In a match the panel lets
+ * every click through to the arena and shows the box only while it is
+ * open, as GW1's edit line does.
  */
 
 /** How many lines the panel keeps. */
@@ -105,7 +107,10 @@ export interface ChatPanel {
   add(line: ChatLine): void;
   /** A line of this client's own, such as being told to slow down. */
   notice(text: string): void;
-  /** In a match: team chat by default, and the panel fades when idle. */
+  /**
+   * In a match: team chat by default, the panel fades when idle, and it
+   * takes no click and shows no box until Enter opens it.
+   */
   setInMatch(inMatch: boolean): void;
   dispose(): void;
 }
@@ -222,8 +227,22 @@ export function mountChat(deps: ChatDeps): ChatPanel {
       close();
     }
   });
-  input.addEventListener("focus", wake);
-  input.addEventListener("blur", wake);
+  // In a match a click on the open panel (the channel, a name, Unmute)
+  // keeps the box focused: a blur would hide it under the pointer, and
+  // the click would land on the arena.
+  root.addEventListener("mousedown", (event: MouseEvent) => {
+    if (inMatch && event.target !== input) {
+      event.preventDefault();
+    }
+  });
+  input.addEventListener("focus", () => {
+    root.classList.add("is-open");
+    wake();
+  });
+  input.addEventListener("blur", () => {
+    root.classList.remove("is-open");
+    wake();
+  });
 
   // Enter opens the box from anywhere that has no use for Enter itself.
   const onKeyDown = (event: KeyboardEvent): void => {
@@ -240,6 +259,8 @@ export function mountChat(deps: ChatDeps): ChatPanel {
     }
     event.preventDefault();
     paintChannel();
+    // Shown first: a box that is not displayed takes no focus.
+    root.classList.add("is-open");
     input.focus();
   };
   window.addEventListener("keydown", onKeyDown);
@@ -261,6 +282,7 @@ export function mountChat(deps: ChatDeps): ChatPanel {
     },
     setInMatch(value) {
       inMatch = value;
+      root.classList.toggle("in-match", value);
       channel = value ? "team" : "all";
       paintChannel();
       wake();

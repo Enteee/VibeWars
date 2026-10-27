@@ -70,3 +70,31 @@ test("keys typed into chat never cast or move (#479)", async ({ page }) => {
   await expect(energy).toContainText("50 / 50");
   await expect(statuses).toContainText("no active effects");
 });
+
+test("in a match a click under the panel walks, and the box shows only while open (#479)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await startSoloMatch(page);
+  const box = page.getByRole("textbox", { name: "chat message" });
+  await expect(box).toBeHidden();
+  await say(page, "rush mid");
+  await expect(box).toBeHidden();
+  const log = page.getByRole("log");
+  await expect(log).toContainText("rush mid");
+
+  // The middle of the panel's lines, where a click used to stop.
+  const panel = await log.boundingBox();
+  if (panel === null) {
+    throw new Error("the chat log has no box");
+  }
+  const at = { x: panel.x + panel.width / 2, y: panel.y + panel.height / 2 };
+  expect(await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.tagName, at)).toBe(
+    "CANVAS",
+  );
+  // The follow camera (#721) moves only when the hero does.
+  const stage = page.locator("#viewport");
+  const before = await stage.getAttribute("data-camera");
+  await page.mouse.click(at.x, at.y);
+  await expect(stage).not.toHaveAttribute("data-camera", before ?? "");
+});
