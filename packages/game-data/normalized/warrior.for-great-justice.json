@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 45,
+  "upkeep": false,
   "description": "For 8 seconds, whenever you hit with an attack, you gain 1 additional strike of adrenaline.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

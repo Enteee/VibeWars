@@ -21,6 +21,7 @@ import {
   type Skill,
   type SkillContext,
   type EffectCondition,
+  type HealEffect,
   type InterruptEffect,
   type SkillEffect,
   type StateCondition,
@@ -180,6 +181,37 @@ export function applyDamage(
     target.dead = true;
     events.push({ kind: "death", targetId: target.id });
   }
+}
+
+/**
+ * What `effect` heals, at the caster's ranks, before healing modifiers:
+ * per status on the target with `perStatusOnTarget` (#920); with
+ * `perAlly`, more for each living ally of the caster within the radius,
+ * the caster included, and the whole capped at `max` (#923).
+ */
+function healAmount(
+  effect: HealEffect,
+  caster: Combatant,
+  target: Combatant | undefined,
+  surroundings: Surroundings,
+): number {
+  const base =
+    resolveMagnitude(effect.amount, caster) * perStatus(effect.perStatusOnTarget, target);
+  const { perAlly } = effect;
+  if (perAlly === undefined) {
+    return base;
+  }
+  const at = surroundings.get(caster.id)?.position;
+  const allies =
+    at === undefined
+      ? 1
+      : [...surroundings.values()].filter(
+          ({ combatant, position }) =>
+            !combatant.dead &&
+            combatant.team === caster.team &&
+            distance(position, at) <= perAlly.radius,
+        ).length;
+  return Math.min(perAlly.max, base + allies * resolveMagnitude(perAlly.amount, caster));
 }
 
 /**
@@ -476,11 +508,7 @@ export function applyEffect(
       if (healed === undefined) {
         return events;
       }
-      applyHeal(
-        healed,
-        resolveMagnitude(effect.amount, caster) * perStatus(effect.perStatusOnTarget, target),
-        events,
-      );
+      applyHeal(healed, healAmount(effect, caster, target, context.surroundings), events);
       return events;
     }
 

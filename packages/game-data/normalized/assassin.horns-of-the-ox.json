@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 12,
+  "upkeep": false,
   "description": "Must follow an off-hand attack. If it hits, Horns of the Ox strikes for +1...9...11 damage. If struck foe is not adjacent to any allies, that foe is knocked down.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

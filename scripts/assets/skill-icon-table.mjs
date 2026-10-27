@@ -97,4 +97,8 @@ export const SKILL_ICONS = {
   "monk.protective-spirit": { glyph: "armor", modifier: "clock" },
   // Your own blood, given: heal with the bleed drop (#936).
   "monk.infuse-health": { glyph: "heal", modifier: "bleed" },
+  // Placeholders from existing glyphs (#923).
+  "paragon.spear-of-lightning": { glyph: "spear", modifier: "up" },
+  "paragon.never-surrender": { glyph: "resurrect", modifier: "area" },
+  "paragon.leaders-comfort": { glyph: "resurrect", modifier: "self" },
 };

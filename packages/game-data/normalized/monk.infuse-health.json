@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.25,
   "rechargeSeconds": 0,
+  "upkeep": false,
   "description": "Lose half your current health. Target other ally is healed for 100...129...136% of the amount you lost.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

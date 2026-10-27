@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0.25,
   "rechargeSeconds": 5,
+  "upkeep": false,
   "description": "For 5...19...23 seconds, target ally cannot lose more than 10% health due to damage from a single attack or spell.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

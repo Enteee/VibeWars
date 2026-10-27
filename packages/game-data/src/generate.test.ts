@@ -17,6 +17,7 @@ const VALID_SKILL = {
   overcast: 0,
   activationSeconds: 0,
   rechargeSeconds: 5,
+  upkeep: false,
   description: "Does a thing.",
   variant: "pvp",
   ruleset: "gw1-reference",

@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 4,
+  "upkeep": false,
   "description": "Perform a spinning axe attack striking for +4...10...12 damage to all adjacent opponents.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

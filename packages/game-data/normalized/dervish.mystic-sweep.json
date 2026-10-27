@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 6,
+  "upkeep": false,
   "description": "If this attack hits, you deal +3...10...12 damage. If you are enchanted, this attack deals an additional +3...10...12 damage.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

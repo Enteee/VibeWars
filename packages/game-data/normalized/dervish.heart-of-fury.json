@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 6,
+  "upkeep": false,
   "description": "For 2...8...10 seconds, you attack 25% faster.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

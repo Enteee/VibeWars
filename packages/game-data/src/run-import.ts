@@ -173,6 +173,21 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Paragon/1084-Anthem_of_Flame",
   },
   {
+    id: "paragon.spear-of-lightning",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1126-Spear_of_Lightning",
+  },
+  {
+    id: "paragon.never-surrender",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1069-Never_Surrender!",
+  },
+  {
+    id: "paragon.leaders-comfort",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1094-Leader's_Comfort",
+  },
+  {
     id: "ritualist.weapon-of-warding",
     profession: "ritualist",
     url: "https://www.gw-memorial.net/skills/Ritualist/769-Weapon_of_Warding",
@@ -201,6 +216,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "monk.mend-condition",
     profession: "monk",
     url: "https://www.gw-memorial.net/skills/Monk/189-Mend_Condition",
+  },
+  {
+    id: "monk.mending",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/174-Mending",
   },
   {
     id: "assassin.jagged-strike",

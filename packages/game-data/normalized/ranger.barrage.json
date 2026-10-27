@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 1,
+  "upkeep": false,
   "description": "All your preparations are removed. Shoot arrows at target foe and up to 5 foes\n                adjacent to your target. These arrows strike for +5...17...20\n                damage if they hit.",
   "variant": "pvp",
   "ruleset": "gw1-reference",

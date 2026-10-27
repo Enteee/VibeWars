@@ -1466,21 +1466,22 @@ export class MatchSimulation {
             ? (resolution: SkillResolution) => only(resolveAttackSkill(resolution, exposed))
             : (resolution: SkillResolution) =>
                 only(this.#releaseSkill(record, resolution, speed, dt));
+    const targets = resolveTargets({
+      skill,
+      caster: record.combatant,
+      casterPosition: record.position,
+      primary,
+      // Only an area looks past the primary: skip the copy every other
+      // cast would make for nothing. A flying spell's area is found
+      // where it lands, not here.
+      candidates:
+        skill.area === undefined || flight !== undefined ? [] : [...this.#participants.values()],
+      losBlockers: this.#walls,
+    });
     const { events, rechargeFraction } = resolve({
       skill,
       caster: record.combatant,
-      targets: resolveTargets({
-        skill,
-        caster: record.combatant,
-        casterPosition: record.position,
-        primary,
-        // Only an area looks past the primary: skip the copy every other
-        // cast would make for nothing. A flying spell's area is found
-        // where it lands, not here.
-        candidates:
-          skill.area === undefined || flight !== undefined ? [] : [...this.#participants.values()],
-        losBlockers: this.#walls,
-      }),
+      targets,
       rng: this.#rng,
       rules: this.#ruleset.combat,
       surroundings: this.#participants,
@@ -1500,9 +1501,12 @@ export class MatchSimulation {
     // damage its `onBlocked` deals, as Swift Chop's (#534). Damage on a
     // victim that blocked every blow is all `onBlocked`'s; a dual attack
     // (#885) blocked once and landed once still landed. Each foe it landed
-    // on is a strike (#936): Cyclone Axe on three foes earns three.
+    // on is a strike (#936): Cyclone Axe on three foes earns three. Only
+    // a foe the skill swung at counts, not one an effect of it hit: Death
+    // Blossom's splash on adjacent foes earns nothing more.
     if (skill.type === "attack") {
       const strikes = skill.attack?.strikes ?? 1;
+      const swungAt = new Set(targets.map((target) => target.id));
       const blocked = (targetId: string): boolean => {
         const blows = events.filter(
           (event) =>
@@ -1516,7 +1520,9 @@ export class MatchSimulation {
         landed.flatMap((event) => {
           const victim =
             event.kind === "damage" ? this.#participants.get(event.targetId) : undefined;
-          return victim !== undefined && victim.combatant.team !== record.combatant.team
+          return victim !== undefined &&
+            swungAt.has(victim.id) &&
+            victim.combatant.team !== record.combatant.team
             ? [victim.id]
             : [];
         }),

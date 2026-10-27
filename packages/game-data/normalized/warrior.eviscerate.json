@@ -13,6 +13,7 @@
   "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 0,
+  "upkeep": false,
   "description": "If Eviscerate hits, you strike for +10...38...45 damage and inflict a Deep Wound, lowering your target's maximum Health by 20% for 5...17...20 seconds.",
   "variant": "pvp",
   "ruleset": "gw1-reference",
