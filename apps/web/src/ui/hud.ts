@@ -322,6 +322,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "insufficient-adrenaline": "Not enough adrenaline.",
   "no-target": "Select a target first.",
   "invalid-target-dead": "Your target is dead.",
+  "invalid-target-alive": "That ally is alive.",
   "invalid-target-self": "You cannot target yourself with that.",
   "invalid-target-ally": "That skill needs an enemy target.",
   "invalid-target-enemy": "That skill needs an ally target.",

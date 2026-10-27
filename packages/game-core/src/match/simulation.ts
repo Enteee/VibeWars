@@ -323,6 +323,7 @@ const ARRIVE_UNITS = 1;
 const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
   "no-target",
   "invalid-target-dead",
+  "invalid-target-alive",
   "invalid-target-self",
   "invalid-target-ally",
   "invalid-target-enemy",
@@ -1280,6 +1281,7 @@ export class MatchSimulation {
     }
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
+    this.#recordResurrections(events);
     // An attack skill is a swing, so it turns on its target with the
     // weapon: it starts an attack, or switches one to them. Any other skill
     // leaves the attack alone (#317): one in progress resumes on its own
@@ -2095,6 +2097,23 @@ export class MatchSimulation {
       if (victim !== undefined) {
         victim.walkGoal = undefined;
         victim.pendingSkill = undefined;
+      }
+    }
+  }
+
+  /**
+   * Every resurrection in `events` (#812) cancels its respawn timer. The
+   * body stays where it fell, and what its death cleared stays clear.
+   */
+  #recordResurrections(events: readonly CombatEvent[]): void {
+    for (const event of events) {
+      if (event.kind !== "resurrected") {
+        continue;
+      }
+      const record = this.#participants.get(event.targetId);
+      if (record !== undefined) {
+        record.respawnInSeconds = 0;
+        record.outOfCombatSeconds = 0;
       }
     }
   }

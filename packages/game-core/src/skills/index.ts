@@ -1,5 +1,11 @@
 export type { ActivationCheck, ActivationRejection, ActivationRequest } from "./activation.js";
-export { canActivate, energyCostOf, payCost, targetRuleAllows } from "./activation.js";
+export {
+  canActivate,
+  energyCostOf,
+  payCost,
+  targetLivenessAllows,
+  targetRuleAllows,
+} from "./activation.js";
 
 export type { ActiveCast } from "./cast-state.js";
 export { CastState } from "./cast-state.js";

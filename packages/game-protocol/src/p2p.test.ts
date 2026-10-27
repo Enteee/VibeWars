@@ -180,6 +180,7 @@ const combat: WireCombat = {
       durationSeconds: null,
       crit: true,
       fromId: null,
+      energy: null,
     },
     {
       kind: "interrupted",
@@ -190,6 +191,7 @@ const combat: WireCombat = {
       durationSeconds: null,
       crit: null,
       fromId: null,
+      energy: null,
     },
     {
       kind: "status-applied",
@@ -200,6 +202,7 @@ const combat: WireCombat = {
       durationSeconds: 3,
       crit: null,
       fromId: null,
+      energy: null,
     },
     {
       kind: "status-spread",
@@ -210,6 +213,7 @@ const combat: WireCombat = {
       durationSeconds: null,
       crit: null,
       fromId: "peer-2",
+      energy: null,
     },
   ],
 };
@@ -233,6 +237,7 @@ const combatBatch: WireCombatBatch = [
         durationSeconds: null,
         crit: null,
         fromId: null,
+        energy: null,
       },
     ],
   },
@@ -558,6 +563,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
           durationSeconds: null,
           crit: false,
           fromId: null,
+          energy: null,
         })),
       },
     ],

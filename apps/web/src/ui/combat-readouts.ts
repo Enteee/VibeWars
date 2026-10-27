@@ -38,6 +38,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "sacrifice":
       return "damage";
     case "heal":
+    case "resurrected":
       return "heal";
     case "energy-gain":
     case "energy-loss":
@@ -60,6 +61,11 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "death":
       return "death";
   }
+}
+
+/** A share, 0..1, as a whole percentage: "25%". */
+function percent(fraction: number): string {
+  return `${String(Math.round(fraction * 100))}%`;
 }
 
 function skillName(skillId: string | undefined): string | undefined {
@@ -109,6 +115,8 @@ export function describeCombatEvent(
       return `${target} sacrifices ${formatAmount(event.amount)} health`;
     case "death":
       return `${target} dies`;
+    case "resurrected":
+      return `${by} resurrects ${target} (${percent(event.healthFraction)} health, ${percent(event.energyFraction)} energy)`;
     case "status-applied":
       return `${target} gains ${STATUS_DEFINITIONS[event.statusId].name} (${formatAmount(event.durationSeconds)} s)`;
     case "status-removed":

@@ -30,6 +30,7 @@ export type ActivationRejection =
   | "insufficient-adrenaline"
   | "no-target"
   | "invalid-target-dead"
+  | "invalid-target-alive"
   | "invalid-target-self"
   | "invalid-target-ally"
   | "invalid-target-enemy"
@@ -85,8 +86,25 @@ export function targetRuleAllows(
       // "Ally" includes yourself: self-healing is a normal, intended play.
       return isAlly || isSelf ? undefined : "invalid-target-enemy";
     case "single-other-ally":
+    case "single-dead-ally":
       return isAlly ? undefined : isSelf ? "invalid-target-self" : "invalid-target-enemy";
   }
+}
+
+/**
+ * Why `rule` refuses `target` for being alive or dead, or `undefined` when
+ * it allows it. Every rule wants the living but a resurrection's, which
+ * wants the dead (#812). Shared, as `targetRuleAllows` is, by the
+ * activation check and the skill bar's range mark.
+ */
+export function targetLivenessAllows(
+  rule: TargetRule,
+  target: Pick<Combatant, "dead">,
+): ActivationRejection | undefined {
+  if (rule === "single-dead-ally") {
+    return target.dead ? undefined : "invalid-target-alive";
+  }
+  return target.dead ? "invalid-target-dead" : undefined;
 }
 
 /** Validate a target against a skill's targeting rule. */
@@ -101,11 +119,11 @@ function checkTarget(request: ActivationRequest): ActivationCheck {
   if (target === undefined) {
     return reject("no-target");
   }
-  if (target.dead) {
-    return reject("invalid-target-dead");
-  }
-
-  const refused = targetRuleAllows(skill.target, caster, target);
+  const byWho = targetRuleAllows(skill.target, caster, target);
+  const byLife = targetLivenessAllows(skill.target, target);
+  // A resurrection on yourself or a foe is refused for who, not for being
+  // alive; any other skill on a corpse is refused for the corpse.
+  const refused = skill.target === "single-dead-ally" ? (byWho ?? byLife) : (byLife ?? byWho);
   return refused === undefined ? OK : reject(refused);
 }
 

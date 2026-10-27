@@ -366,6 +366,14 @@ function describeEffect(
         text: `Knocks down for ${seconds(effect.durationSeconds)}`,
         magnitude: undefined,
       };
+    case "resurrect": {
+      const health = describeMagnitude(effect.healthPercent, ranks);
+      const energy = describeMagnitude(effect.energyPercent, ranks);
+      return {
+        text: `Returns the target to life with ${String(health.current)}% health and ${String(energy.current)}% energy`,
+        magnitude: health,
+      };
+    }
   }
 }
 
@@ -393,6 +401,13 @@ function headlineOf(
       return {
         text: `drains ${String(magnitude.current)} energy`,
         scales: magnitude.attributeId !== undefined,
+      };
+    }
+    case "resurrect": {
+      const health = describeMagnitude(effect.healthPercent, ranks);
+      return {
+        text: `resurrects, ${String(health.current)}% health`,
+        scales: health.attributeId !== undefined,
       };
     }
     case "if": {
@@ -465,6 +480,7 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-ally": "One ally",
   "single-other-ally": "Another ally",
   "single-any": "Any one target",
+  "single-dead-ally": "A dead ally",
 };
 
 const AREA_WHO: Record<AreaRule["affects"], string> = {

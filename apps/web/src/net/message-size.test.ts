@@ -156,6 +156,7 @@ function hit(
       durationSeconds: null,
       crit: true,
       fromId: null,
+      energy: null,
     },
     {
       kind: "status-applied",
@@ -166,6 +167,7 @@ function hit(
       durationSeconds: FLOAT,
       crit: null,
       fromId: null,
+      energy: null,
     },
   ];
   return events.map((event) => ({ ...event, ...extra }));

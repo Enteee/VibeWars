@@ -24,6 +24,7 @@ function entry(target: number, padding = 0): WireCombat {
         durationSeconds: null,
         crit: null,
         fromId: null,
+        energy: null,
       },
     ],
   };
