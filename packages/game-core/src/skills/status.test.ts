@@ -109,6 +109,7 @@ describe("status definitions", () => {
       regeneration: 4,
       "weapon-of-warding": 4,
       "never-surrender": 4,
+      "healing-breeze": 8,
     });
   });
 
