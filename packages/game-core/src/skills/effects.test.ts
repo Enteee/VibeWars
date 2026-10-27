@@ -701,6 +701,7 @@ describe("state conditions (#794)", () => {
       profession: "monk",
       attributeId: undefined,
       cost: undefined,
+      overcast: 0,
       activationSeconds: 0,
       rechargeSeconds: 0,
       range: 420,
