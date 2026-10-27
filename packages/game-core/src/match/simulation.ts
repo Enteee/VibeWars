@@ -9,7 +9,7 @@ import {
   resolveCircleSegmentCollision,
 } from "../geometry.js";
 import type { Segment } from "../geometry.js";
-import { AREA_ADJACENT, RANGE_SPIRIT } from "../distances.js";
+import { AREA_ADJACENT, RANGE_COMPASS, RANGE_SPIRIT } from "../distances.js";
 import {
   addKill,
   DEATH_PENALTY_PERCENT,
@@ -322,6 +322,13 @@ const KNOCKDOWN_EPSILON = 1e-9;
 
 /** At most this many push-out passes per move; see `advanceMovement`. */
 const MOVEMENT_RELAX_PASSES = 4;
+
+/**
+ * How long a maintained enchantment's bearer may stay beyond compass
+ * range of its caster before it ends, s (#839). GW1 says "a short grace
+ * period"; this is our tuning.
+ */
+const UPKEEP_RANGE_GRACE_SECONDS = 5;
 
 /** How deep a body of `radius` at `position` is inside a living body of the same radius at `other`. */
 function penetration(position: Vec2, other: Vec2, radius: number): number {
@@ -1046,7 +1053,7 @@ export class MatchSimulation {
       }
     }
 
-    this.#settleUpkeep();
+    this.#settleUpkeep(dt);
     this.#spreadStatuses();
     this.#awardKillMorale();
 
@@ -1060,13 +1067,15 @@ export class MatchSimulation {
   /**
    * Maintained enchantments that end by themselves (#837, GW1), once
    * everyone has acted. A death ends one, the bearer's or its caster's.
+   * A bearer beyond compass range of its caster for longer than the grace
+   * period loses it, unlogged; coming back starts the grace again (#839).
    * Past the cap, a caster whose upkeep takes its pre-cap energy pips below
    * −`MAX_PIPS` loses its oldest. And a caster at 0 energy whose pre-cap
    * net is below 0 loses its newest, then the next, until it can pay, each
    * with a log row of its own. Pre-cap, never the clamped rate the tick
    * applies.
    */
-  #settleUpkeep(): void {
+  #settleUpkeep(dt: number): void {
     const maintained = new Map<string, { bearer: Combatant; id: StatusId; seq: number }[]>();
     for (const record of this.#participants.values()) {
       const bearer = record.combatant;
@@ -1076,8 +1085,16 @@ export class MatchSimulation {
         }
         // Ended by a death, whichever path killed: the bearer's, or the
         // caster's, who may have left the match too.
-        const caster = this.#participants.get(status.sourceId)?.combatant;
-        if (bearer.dead || caster === undefined || caster.dead) {
+        const caster = this.#participants.get(status.sourceId);
+        if (bearer.dead || caster === undefined || caster.combatant.dead) {
+          bearer.statuses.remove(status.id);
+          continue;
+        }
+        status.maintained.outOfRangeSeconds =
+          distance(caster.position, record.position) > RANGE_COMPASS
+            ? status.maintained.outOfRangeSeconds + dt
+            : 0;
+        if (status.maintained.outOfRangeSeconds > UPKEEP_RANGE_GRACE_SECONDS) {
           bearer.statuses.remove(status.id);
           continue;
         }

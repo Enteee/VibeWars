@@ -324,7 +324,7 @@ or a death ends it with the enchantment. Mending (Monk, Healing Prayers,
 yourself. Recasting it on the same ally is still one, and becomes your
 newest. Another Monk's Mending on that ally replaces yours, and your
 upkeep ends with it. Its icon has no duration bar, and its hover says
-"maintained". It ends by itself in three ways:
+"maintained". It ends by itself in four ways:
 
 - **Can't pay.** At 0 energy, with net energy pips below 0 before the
   clamp, your newest maintained enchantment ends, then the next, until
@@ -335,6 +335,11 @@ upkeep ends with it. Its icon has no duration bar, and its hover says
   newest always stays.
 - **Death.** Your death ends everything you maintain. Your bearer's
   death ends what is on them, and resurrection does not bring it back.
+- **Out of range.** A bearer beyond compass range of you (1,700 units,
+  GW1's ~5,000 rescaled by ~0.34) for more than 5 s loses it, with no
+  log row (#839). Coming back inside, exactly 1,700 included, starts the
+  5 s again. One on yourself never ends this way. It can happen only on
+  the large arenas, such as Canyon or Ring.
 
 Degeneration applies **continuously** (`pips × 2 × dt`), not in once-per-
 second lumps, so a bleed at 20 Hz drains smoothly instead of
