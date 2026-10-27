@@ -1,4 +1,4 @@
-import type { WeaponId } from "@vibewars/game-core";
+import { getSkill, type WeaponId } from "@vibewars/game-core";
 
 import {
   REST_CLIP,
@@ -29,9 +29,40 @@ import {
  *   `OFF_HAND_DELAY` after the main hand, and counts as two hits, so the
  *   next swing is the main hand's again. The word comes with the hit, so
  *   the off hand's wind-up and strike fit inside the delay.
+ * - An attack skill (#562) winds up over its whole activation, on the
+ *   host's cast timer: rest at the cast's start, the strike's start at its
+ *   end. While it winds up it replaces whatever the swing showed. A cast
+ *   that runs out is a hit: strike, hold and recover play from its end.
+ *   One that stops short (an interrupt, a cancel) eases back to rest over
+ *   the recover time. The swing timer drives the pose again afterwards.
  *
  * No Phaser here, so it is tested in Node.
  */
+
+/** The host's cast timer while an attack skill winds up (#562). */
+export interface AttackCast {
+  readonly elapsed: number;
+  readonly total: number;
+}
+
+/**
+ * The cast timer of the skill an actor is casting, if it is an attack
+ * skill (#562); `undefined` for a spell, or no cast at all.
+ */
+export function attackCastOf(
+  castingSkillId: string | undefined,
+  castRemaining: number,
+  castTotal: number,
+): AttackCast | undefined {
+  if (
+    castingSkillId === undefined ||
+    castTotal <= 0 ||
+    getSkill(castingSkillId)?.attack === undefined
+  ) {
+    return undefined;
+  }
+  return { elapsed: Math.max(0, castTotal - castRemaining), total: castTotal };
+}
 
 /** The wire rounds the swing timer to the millisecond (`match-host.ts`): less is noise. */
 const WIRE_EPSILON = 0.002;
@@ -103,17 +134,43 @@ export class AttackClock {
   #pendingDouble = false;
   /** A swing that stopped short, easing back to rest from where it was. */
   #settle: { readonly at: number; readonly from: SwingClip; readonly hit: number } | undefined;
+  /** An attack skill winding up: when its cast started on the match clock, and its length. */
+  #cast: { readonly start: number; readonly total: number } | undefined;
+  /** The last snapshot's reading of the cast. */
+  #castObserved: { readonly at: number; readonly elapsed: number } | undefined;
+  /** How far into the cast the mark has been shown, which it never goes back from. */
+  #castShown = 0;
+  /** When the last attack skill's cast ran out: its strike plays from there. */
+  #castStrike: number | undefined;
 
   /**
    * A snapshot taken at match time `at` says the actor is `elapsed` into a
-   * swing of `total` seconds; `total` 0 when it does not attack. The same
-   * snapshot seen again is ignored.
+   * swing of `total` seconds, `total` 0 when it does not attack, and how
+   * far into its `cast` when an attack skill winds up. The same snapshot
+   * seen again is ignored.
    */
-  public observe(at: number, elapsed: number, total: number, weaponId: WeaponId): void {
+  public observe(
+    at: number,
+    elapsed: number,
+    total: number,
+    weaponId: WeaponId,
+    cast?: AttackCast,
+  ): void {
     const last = this.#observed;
     if (last?.at === at) {
       return;
     }
+    this.#observeSwing(at, elapsed, total, weaponId, last);
+    this.#observeCast(at, cast, weaponId);
+  }
+
+  #observeSwing(
+    at: number,
+    elapsed: number,
+    total: number,
+    weaponId: WeaponId,
+    last: { readonly at: number; readonly elapsed: number } | undefined,
+  ): void {
     this.#observed = total > 0 ? { at, elapsed } : undefined;
     const swing = this.#swing;
     if (swing === undefined || last === undefined) {
@@ -173,6 +230,15 @@ export class AttackClock {
   /** The main hand's frame: the one that hits, alternating hands hit by hit. */
   #mainFrame(at: number, weaponId: WeaponId): AttackFrame {
     const m = WEAPON_MOTION[weaponId];
+    if (this.#cast !== undefined) {
+      const progress = this.#castProgress(at);
+      return { clip: { phase: "wind-up", progress }, hit: this.#hits + 1 };
+    }
+    const castStrike = this.#castStrike;
+    if (castStrike !== undefined && at < castStrike + m.strike) {
+      const progress = unit((at - castStrike) / m.strike);
+      return { clip: { phase: "strike", progress }, hit: this.#hits };
+    }
     const settle = this.#settle;
     if (settle !== undefined) {
       const progress = (at - settle.at) / m.recover;
@@ -203,6 +269,52 @@ export class AttackClock {
       }
     }
     return { clip: REST_CLIP, hit };
+  }
+
+  /**
+   * An attack skill's cast as this snapshot has it: started, run on, run
+   * out (its blow) or stopped short (eased back to rest).
+   */
+  #observeCast(at: number, cast: AttackCast | undefined, weaponId: WeaponId): void {
+    const last = this.#castObserved;
+    if (last?.at === at) {
+      return;
+    }
+    const live = cast !== undefined && cast.total > 0 ? cast : undefined;
+    this.#castObserved = live === undefined ? undefined : { at, elapsed: live.elapsed };
+    const running = this.#cast;
+    if (running !== undefined && last !== undefined) {
+      if (live !== undefined && live.elapsed >= last.elapsed - WIRE_EPSILON) {
+        // The same cast, run on or slowed.
+        this.#cast = { start: at - live.elapsed, total: live.total };
+        return;
+      }
+      if (last.elapsed + (at - last.at) >= running.total - WIRE_EPSILON) {
+        this.#hits += 1;
+        this.#castStrike = running.start + running.total;
+        this.#lastHit = this.#castStrike + WEAPON_MOTION[weaponId].strike;
+      } else {
+        const from: SwingClip = { phase: "wind-up", progress: this.#castProgress(at) };
+        this.#settle = { at, from, hit: this.#hits + 1 };
+      }
+    }
+    this.#cast = live === undefined ? undefined : { start: at - live.elapsed, total: live.total };
+    this.#castShown = live?.elapsed ?? 0;
+    if (live !== undefined) {
+      // The cast replaces whatever the swing was showing; it does not blend.
+      this.#settle = undefined;
+    }
+  }
+
+  /** How far the cast under way has wound up at `at`, 0 … 1, never going back. */
+  #castProgress(at: number): number {
+    const cast = this.#cast;
+    if (cast === undefined) {
+      return 0;
+    }
+    const elapsed = Math.min(cast.total, Math.max(this.#castShown, at - cast.start));
+    this.#castShown = elapsed;
+    return unit(elapsed / cast.total);
   }
 
   /** The last hit struck twice: the off hand's stab is a hit of its own. */

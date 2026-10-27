@@ -120,6 +120,26 @@ describe("createMusicPlayer", () => {
     expect(errors).toEqual([{ message: "Unexpected token (3:0)", line: 3 }]);
   });
 
+  it("numbers each evaluate, and hands its answer on with the number (#373)", () => {
+    const { player, frames } = opened();
+    const evaluated: number[] = [];
+    const errors: MusicError[] = [];
+    player.onEvaluated((evaluation) => evaluated.push(evaluation));
+    player.onError((error) => errors.push(error));
+    frames[0]?.receive({ type: "ready" });
+    const first = player.evaluate('s("hh")');
+    const second = player.evaluate(")))(");
+    expect(second).toBeGreaterThan(first);
+    expect(frames[0]?.sent.slice(-2)).toEqual([
+      { type: "evaluate", seq: first, source: 's("hh")' },
+      { type: "evaluate", seq: second, source: ")))(" },
+    ]);
+    frames[0]?.receive({ type: "evaluated", seq: first });
+    frames[0]?.receive({ type: "error", message: "Unexpected token (1:0)", line: 1, seq: second });
+    expect(evaluated).toEqual([first]);
+    expect(errors).toEqual([{ message: "Unexpected token (1:0)", line: 1, evaluation: second }]);
+  });
+
   it("tears down a host that stops answering, and makes a new one for the next track", () => {
     const { player, frames, advance } = opened();
     const errors: MusicError[] = [];

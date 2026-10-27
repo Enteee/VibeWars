@@ -321,7 +321,8 @@ export class ArenaScene extends Phaser.Scene {
         this.attackClocks.set(actor.id, clock);
       }
       const total = actor.dead ? 0 : actor.swingTotal;
-      clock.observe(this.snapshot.clock, actor.swingElapsed, total, actor.weaponId);
+      const cast = actor.dead ? undefined : actor.attackCast;
+      clock.observe(this.snapshot.clock, actor.swingElapsed, total, actor.weaponId, cast);
     }
     for (const id of this.attackClocks.keys()) {
       if (!present.has(id)) {
