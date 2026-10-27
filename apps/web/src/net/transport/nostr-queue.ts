@@ -46,6 +46,17 @@ const PENDING_LIMIT = 16;
 /** Event ids remembered to drop the copy each other relay delivers. */
 const SEEN_LIMIT = 1024;
 
+/**
+ * Signature checks a board makes a second, and in one burst. A Schnorr
+ * verify costs about 3 ms of main thread, and anyone on the public relays
+ * can send events that need one at no cost to themselves: past the
+ * budget an event is dropped, so a flood slows matchmaking and never
+ * freezes the tab. Honest load is far below it: a ticket heartbeats every
+ * 5 s, and the other relays' copies are dropped before any check.
+ */
+export const VERIFY_PER_SECOND = 30;
+export const VERIFY_BURST = 60;
+
 const SUBSCRIPTION_ID = "vibewars-queue";
 
 /** One relay connection, as `openSocket` makes it. */
@@ -68,6 +79,7 @@ export interface NostrQueueDeps {
   /** ms since the epoch. */
   readonly now: () => number;
   readonly newTicketKey: () => TicketKey;
+  readonly verifyTicketSig: (ticketId: string, digest: Uint8Array, sig: string) => boolean;
 }
 
 export interface NostrQueue {
@@ -119,6 +131,7 @@ const BROWSER: NostrQueueDeps = {
   openSocket: webSocket,
   now: () => Date.now(),
   newTicketKey,
+  verifyTicketSig,
 };
 
 /** NIP-01's event id: sha256 of the serialised `[0, pubkey, created_at, kind, tags, content]`. */
@@ -157,8 +170,14 @@ function isTags(value: unknown): value is readonly (readonly string[])[] {
   );
 }
 
-/** `raw` as an event of ours, whole and signed by its `pubkey`, or `undefined`. */
-function verifiedEvent(raw: unknown): NostrEvent | undefined {
+/**
+ * `raw` as an event of ours whose id is its content's, with that id's
+ * bytes, or `undefined`. Its signature is not checked yet: that is the
+ * expensive part, and budgeted.
+ */
+function wellFormedEvent(
+  raw: unknown,
+): { readonly event: NostrEvent; readonly digest: Uint8Array } | undefined {
   if (typeof raw !== "object" || raw === null) {
     return undefined;
   }
@@ -179,10 +198,7 @@ function verifiedEvent(raw: unknown): NostrEvent | undefined {
   }
   const event = { id, pubkey, created_at, kind, tags, content, sig };
   const digest = eventId(event);
-  if (bytesToHex(digest) !== id || !verifyTicketSig(pubkey, digest, sig)) {
-    return undefined;
-  }
-  return event;
+  return bytesToHex(digest) === id ? { event, digest } : undefined;
 }
 
 /**
@@ -244,6 +260,8 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
   let closed = false;
   /** Set while every relay is down and `no-relay` has been said. */
   let saidNoRelay = false;
+  let verifyTokens = VERIFY_BURST;
+  let verifyRefilledAt = deps.now();
 
   const request = JSON.stringify([
     "REQ",
@@ -254,16 +272,42 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
   /** Whether `said` is a ticket already withdrawn; notes a withdrawal. */
   function isWithdrawn(said: QueueBoardEvent): boolean {
     const at = deps.now();
+    // Oldest first, as they were set: the first still live ends the walk.
     for (const [ticketId, since] of withdrawn) {
-      if (at - since >= TICKET_TTL_MS) {
-        withdrawn.delete(ticketId);
+      if (at - since < TICKET_TTL_MS) {
+        break;
       }
+      withdrawn.delete(ticketId);
     }
     if (said.kind === "withdrawn") {
+      withdrawn.delete(said.ticketId);
       withdrawn.set(said.ticketId, at);
       return false;
     }
     return withdrawn.has(said.ticket.ticketId);
+  }
+
+  /** Whether the verify budget has room for one more; takes it if so. */
+  function mayVerify(): boolean {
+    const at = deps.now();
+    verifyTokens = Math.min(
+      VERIFY_BURST,
+      verifyTokens + ((at - verifyRefilledAt) * VERIFY_PER_SECOND) / 1000,
+    );
+    verifyRefilledAt = at;
+    if (verifyTokens < 1) {
+      return false;
+    }
+    verifyTokens -= 1;
+    return true;
+  }
+
+  /** Whether `event` is tagged with a mode somebody here listens to. */
+  function wanted(event: NostrEvent): boolean {
+    return event.tags.some(
+      ([name, value]) =>
+        name === "mode" && [...subscribers].some((subscriber) => subscriber.mode === value),
+    );
   }
 
   function hear(data: unknown): void {
@@ -289,8 +333,12 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
     if (id === undefined || seen.has(id) || subscribers.size === 0) {
       return;
     }
-    const event = verifiedEvent(raw);
-    if (event === undefined) {
+    const formed = wellFormedEvent(raw);
+    if (formed === undefined || !wanted(formed.event) || !mayVerify()) {
+      return;
+    }
+    const { event, digest } = formed;
+    if (!deps.verifyTicketSig(event.pubkey, digest, event.sig)) {
       return;
     }
     if (seen.size >= SEEN_LIMIT) {

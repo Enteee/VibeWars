@@ -1,7 +1,12 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
 import { schnorr } from "@noble/secp256k1";
-import { PROTOCOL_VERSION, TICKET_TTL_MS, type QueueTicket } from "@vibewars/game-protocol";
+import {
+  PROTOCOL_VERSION,
+  TICKET_TTL_MS,
+  type QueueMode,
+  type QueueTicket,
+} from "@vibewars/game-protocol";
 import type { QueueBoardEvent, TicketKey, TransportTrouble } from "@vibewars/game-session";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -10,6 +15,8 @@ import {
   MAX_QUEUE_MESSAGE_BYTES,
   QUEUE_EVENT_KIND,
   RELAY_RETRY_MS,
+  VERIFY_BURST,
+  VERIFY_PER_SECOND,
   type RelaySocketHandlers,
 } from "./nostr-queue.js";
 import { APP_ID } from "./relays.js";
@@ -28,10 +35,15 @@ interface FakeSocket {
 /** Relay sockets with no network: the test plays the relays. */
 function fakeRelays(now: () => number = () => NOW) {
   const sockets: FakeSocket[] = [];
+  const verified: string[] = [];
   const queue = createNostrQueue({
     relays: RELAYS,
     now,
     newTicketKey,
+    verifyTicketSig: (ticketId, digest, sig) => {
+      verified.push(ticketId);
+      return verifyTicketSig(ticketId, digest, sig);
+    },
     openSocket: (url, handlers) => {
       const socket: FakeSocket = { url, handlers, sent: [], closed: false };
       sockets.push(socket);
@@ -43,7 +55,7 @@ function fakeRelays(now: () => number = () => NOW) {
       };
     },
   });
-  return { queue, sockets };
+  return { queue, sockets, verified };
 }
 
 function ticketOf(key: TicketKey, extra: Partial<QueueTicket> = {}): QueueTicket {
@@ -59,12 +71,20 @@ function ticketOf(key: TicketKey, extra: Partial<QueueTicket> = {}): QueueTicket
 }
 
 /** A remote peer's event, signed by `key` as NIP-01 says, independently of the board. */
-function remoteEvent(key: TicketKey, content: unknown, kind = QUEUE_EVENT_KIND) {
+function remoteEvent(
+  key: TicketKey,
+  content: unknown,
+  kind = QUEUE_EVENT_KIND,
+  mode: QueueMode = "random-arena-2v2",
+) {
   const unsigned = {
     pubkey: key.ticketId,
     created_at: Math.floor(NOW / 1000),
     kind,
-    tags: [["t", APP_ID]],
+    tags: [
+      ["t", APP_ID],
+      ["mode", mode],
+    ],
     content: JSON.stringify(content),
   };
   const id = sha256(
@@ -174,12 +194,40 @@ describe("the Nostr queue board (#872)", () => {
     expect(heard).toEqual([{ kind: "ticket", ticket: ticketOf(key) }]);
   });
 
-  it("hears only tickets of the subscribed mode", () => {
-    const { queue, sockets } = fakeRelays();
+  it("hears only tickets of the subscribed mode, and verifies none of another's tag", () => {
+    const { queue, sockets, verified } = fakeRelays();
     const heard = listen(queue);
     const key = newTicketKey();
-    deliver(sockets[0], remoteEvent(key, ticketOf(key, { mode: "random-arena-1v1" })));
+    const oneOnOne = ticketOf(key, { mode: "random-arena-1v1" });
+    deliver(sockets[0], remoteEvent(key, oneOnOne, QUEUE_EVENT_KIND, "random-arena-1v1"));
+    expect(verified).toEqual([]);
+    deliver(sockets[0], remoteEvent(key, oneOnOne));
     expect(heard).toEqual([]);
+  });
+
+  it("verifies at most its budget of a flood, then a second's worth more a second later", () => {
+    let now = NOW;
+    const { queue, sockets, verified } = fakeRelays(() => now);
+    const heard = listen(queue);
+    const flood = () => {
+      for (let n = 0; n < 2 * VERIFY_BURST; n += 1) {
+        const key = newTicketKey();
+        const event = remoteEvent(key, ticketOf(key));
+        deliver(sockets[0], { ...event, sig: "0".repeat(128) });
+      }
+    };
+    flood();
+    expect(verified).toHaveLength(VERIFY_BURST);
+    now += 1000;
+    flood();
+    expect(verified).toHaveLength(VERIFY_BURST + VERIFY_PER_SECOND);
+    expect(heard).toEqual([]);
+
+    // A flood slows the queue, never stops it.
+    now += 1000;
+    const honest = newTicketKey();
+    deliver(sockets[0], remoteEvent(honest, ticketOf(honest)));
+    expect(heard).toEqual([{ kind: "ticket", ticket: ticketOf(honest) }]);
   });
 
   it("drops a bad signature, another protocol, another kind, an oversize or malformed message", () => {

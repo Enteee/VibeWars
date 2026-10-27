@@ -24,7 +24,8 @@ const timeoutMs = Number(values.timeout) * 1000;
 const { PROTOCOL_VERSION } = await import("../../packages/game-protocol/src/protocol-version.ts");
 const { createNostrQueue } = await import("../../apps/web/src/net/transport/nostr-queue.ts");
 const { NOSTR_RELAYS } = await import("../../apps/web/src/net/transport/relays.ts");
-const { newTicketKey } = await import("../../apps/web/src/net/transport/ticket-key.ts");
+const { newTicketKey, verifyTicketSig } =
+  await import("../../apps/web/src/net/transport/ticket-key.ts");
 /** @typedef {{ opened: boolean, ok: string, heard: boolean }} Notes */
 
 /**
@@ -38,6 +39,7 @@ function boardOn(url, notes) {
     relays: [url],
     now: () => Date.now(),
     newTicketKey,
+    verifyTicketSig,
     openSocket: (relayUrl, handlers) => {
       const socket = new WebSocket(relayUrl);
       let closed = false;
