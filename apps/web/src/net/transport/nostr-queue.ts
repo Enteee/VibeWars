@@ -14,6 +14,7 @@ import { bytesToHex } from "@noble/hashes/utils.js";
 import {
   PROTOCOL_VERSION,
   parseQueueTicket,
+  TICKET_TTL_MS,
   type QueueMode,
   type QueueTicket,
 } from "@vibewars/game-protocol";
@@ -232,6 +233,13 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
   /** Keys this board made, with the mode their ticket was last published in. */
   const keys = new Map<string, { readonly key: TicketKey; mode: QueueMode | undefined }>();
   const seen = new Set<string>();
+  /**
+   * Withdrawn ticket ids, to when they were withdrawn. Withdrawal is final
+   * for a key, so a heartbeat signed before it, arriving late from a
+   * slower relay or replayed, must not bring the ticket back. Kept a TTL:
+   * after that, any copy of the ticket is dead anyway.
+   */
+  const withdrawn = new Map<string, number>();
   const relays = new Map<string, Relay>();
   let closed = false;
   /** Set while every relay is down and `no-relay` has been said. */
@@ -242,6 +250,21 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
     SUBSCRIPTION_ID,
     { kinds: [QUEUE_EVENT_KIND], "#t": [APP_ID] },
   ]);
+
+  /** Whether `said` is a ticket already withdrawn; notes a withdrawal. */
+  function isWithdrawn(said: QueueBoardEvent): boolean {
+    const at = deps.now();
+    for (const [ticketId, since] of withdrawn) {
+      if (at - since >= TICKET_TTL_MS) {
+        withdrawn.delete(ticketId);
+      }
+    }
+    if (said.kind === "withdrawn") {
+      withdrawn.set(said.ticketId, at);
+      return false;
+    }
+    return withdrawn.has(said.ticket.ticketId);
+  }
 
   function hear(data: unknown): void {
     if (typeof data !== "string" || byteLength(data) > MAX_QUEUE_MESSAGE_BYTES) {
@@ -275,7 +298,7 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
     }
     seen.add(event.id);
     const said = boardEvent(event);
-    if (said === undefined) {
+    if (said === undefined || isWithdrawn(said)) {
       return;
     }
     for (const subscriber of [...subscribers]) {

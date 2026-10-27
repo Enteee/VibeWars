@@ -1,7 +1,7 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
 import { schnorr } from "@noble/secp256k1";
-import { PROTOCOL_VERSION, type QueueTicket } from "@vibewars/game-protocol";
+import { PROTOCOL_VERSION, TICKET_TTL_MS, type QueueTicket } from "@vibewars/game-protocol";
 import type { QueueBoardEvent, TicketKey, TransportTrouble } from "@vibewars/game-session";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -26,11 +26,11 @@ interface FakeSocket {
 }
 
 /** Relay sockets with no network: the test plays the relays. */
-function fakeRelays() {
+function fakeRelays(now: () => number = () => NOW) {
   const sockets: FakeSocket[] = [];
   const queue = createNostrQueue({
     relays: RELAYS,
-    now: () => NOW,
+    now,
     newTicketKey,
     openSocket: (url, handlers) => {
       const socket: FakeSocket = { url, handlers, sent: [], closed: false };
@@ -227,6 +227,26 @@ describe("the Nostr queue board (#872)", () => {
     expect(heard).toEqual([]);
     deliver(sockets[0], remoteEvent(key, { withdrawn: key.ticketId }));
     expect(heard).toEqual([{ kind: "withdrawn", ticketId: key.ticketId }]);
+  });
+
+  it("hears no heartbeat of a withdrawn ticket that a slower relay delivers late, for a TTL", () => {
+    let now = NOW;
+    const { queue, sockets } = fakeRelays(() => now);
+    const heard = listen(queue);
+    const key = newTicketKey();
+    const late = remoteEvent(key, ticketOf(key, { heartbeatAt: NOW + 1 }));
+    deliver(sockets[0], remoteEvent(key, ticketOf(key)));
+    deliver(sockets[0], remoteEvent(key, { withdrawn: key.ticketId }));
+    deliver(sockets[1], late);
+    expect(heard).toEqual([
+      { kind: "ticket", ticket: ticketOf(key) },
+      { kind: "withdrawn", ticketId: key.ticketId },
+    ]);
+
+    // By then any copy of the ticket is dead to the queue client anyway.
+    now += TICKET_TTL_MS;
+    deliver(sockets[0], remoteEvent(key, ticketOf(key, { heartbeatAt: NOW + 2 })));
+    expect(heard).toHaveLength(3);
   });
 
   it("withdraws a ticket it published with a signed withdrawal, and then forgets its key", () => {
