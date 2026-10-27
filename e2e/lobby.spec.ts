@@ -230,8 +230,9 @@ test("a lobby match shows the score, the clock and both fighters", async ({ brow
 
     await expect(host.locator(".hud-scoreboard")).toBeVisible();
     await expect(guest.locator(".hud-scoreboard")).toBeVisible();
-    await expect(host.locator(".hud-bar-health .hud-bar-label")).toContainText("500 / 500");
-    await expect(guest.locator(".hud-bar-health .hud-bar-label")).toContainText("500 / 500");
+    // At full health, whatever starter build each was handed (#852).
+    await expect(host.locator(".hud-bar-health .hud-bar-label")).toContainText(/\b(\d+) \/ \1\b/);
+    await expect(guest.locator(".hud-bar-health .hud-bar-label")).toContainText(/\b(\d+) \/ \1\b/);
   } finally {
     await context.close();
   }
@@ -312,8 +313,8 @@ test("each row shows the character a player brings, a refused build as Default l
 
   try {
     // The host plays a saved character with a skill; the guest one with an
-    // empty bar, which the host refuses, so it plays and lists as the
-    // house loadout. Both pages share one storage, so the guest picks its
+    // empty bar, which the host refuses, so it plays a starter build and
+    // lists as the default. Both pages share one storage, so the guest picks its
     // own after the host is in.
     await host.goto("./");
     await host.getByRole("button", { name: "new character" }).click();

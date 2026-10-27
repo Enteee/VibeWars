@@ -12,7 +12,7 @@ export const UNNAMED_CHARACTER = "Unnamed";
  * name made safe to show, and its professions only if they are real ones.
  * A primary that is not a profession, or a secondary that is not one or
  * repeats the primary, is no build anyone can bring, so it lists as the
- * house loadout. The host runs a join's through here, and a peer runs the
+ * starter build. The host runs a join's through here, and a peer runs the
  * host's state through it too: neither shows what the other could not have
  * meant.
  */

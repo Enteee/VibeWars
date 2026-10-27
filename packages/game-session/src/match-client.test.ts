@@ -10,7 +10,7 @@ import {
 } from "./match-client.js";
 import type { PlayerSnapshot } from "./match-connection.js";
 import { MATCH_FULL_MESSAGE, MATCH_OVER_MESSAGE, RECONNECT_WINDOW_SECONDS } from "./match-host.js";
-import { hello, self, settle, startMatch, until } from "./match-harness.test-support.js";
+import { hello, helloAs, self, settle, startMatch, until } from "./match-harness.test-support.js";
 import { createMemoryNetwork } from "./memory-transport.js";
 import { WIRE_STATUS_IDS, playerSnapshot, statusFromWire, statusWireIndex } from "./wire.js";
 
@@ -194,10 +194,10 @@ describe("connectMatch", () => {
 
   it("counts recharges down on the match clock, with no wall time", async () => {
     const match = startMatch();
-    const { connection } = await match.join();
+    const { connection } = await match.join(helloAs("Elementalist/Mesmer"));
     const { connection: foe } = await match.join();
     await match.step(0.05);
-    // The house bar's Armor of Earth is a self-buff: castable at once.
+    // Armor of Earth is a self-buff: castable at once.
     const slot = connection.skillBar.findIndex((s) => s?.id === "elementalist.armor-of-earth");
     expect(slot).toBeGreaterThanOrEqual(0);
     connection.sendIntent({ kind: "use-skill", slot });
@@ -216,8 +216,9 @@ describe("connectMatch", () => {
 describe("the host's own player (createLocalPeer)", () => {
   it("joins, moves, casts and is refused exactly as a remote player is", async () => {
     const match = startMatch();
-    const local = await match.joinLocal();
-    const { connection: remote } = await match.join();
+    // One build for both, so the bars match (#852).
+    const local = await match.joinLocal(helloAs("Warrior/Monk"));
+    const { connection: remote } = await match.join(helloAs("Warrior/Monk"));
     const refusals: string[] = [];
     local.onCastRefused((refusal) => refusals.push(`local:${refusal.reason}`));
     remote.onCastRefused((refusal) => refusals.push(`remote:${refusal.reason}`));

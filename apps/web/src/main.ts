@@ -197,7 +197,7 @@ async function main(): Promise<void> {
    * editing a character takes effect on the next match instead of the
    * next time they happen to re-select it. An id pointing at a character
    * that no longer exists, or one that no longer validates, resolves to
-   * `undefined` and the host's house loadout.
+   * `undefined` and a starter build from the host.
    */
   const activeBuild = async (): Promise<PlayerBuild | undefined> => {
     const id = loadActiveCharacterId();
@@ -217,15 +217,16 @@ async function main(): Promise<void> {
 
   /**
    * The character the lobby lists this player with (#580): the selected
-   * one's name and professions, or `null` for the house loadout, read
+   * one's name and professions, or `null` for a starter build, read
    * the way `activeBuild` reads the build it plays with. A build the host
-   * would refuse, an empty bar or an illegal one, plays the house loadout,
+   * would refuse, an empty bar or an illegal one, plays a starter build,
    * so it is listed as that too.
    */
   const lobbyCharacter = async (): Promise<LobbyCharacter | null> => {
     const build = await activeBuild();
     return build === undefined ||
-      resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes).refused !== undefined
+      resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes, Math.random).refused !==
+        undefined
       ? null
       : {
           name: build.name,

@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { openPeers, startSoloMatch } from "./helpers/peers.js";
+import { bringStarter } from "./helpers/starter.js";
 
 /**
  * Chat (#479): Enter opens the box, Enter sends, and the lobby host
@@ -54,20 +55,24 @@ test("all chat reaches both teams, team chat only its own, as text (#479)", asyn
 });
 
 test("keys typed into chat never cast or move (#479)", async ({ page }) => {
+  // A known bar (#852): slot 5 of Elementalist/Mesmer is Armor of Earth.
+  await bringStarter(page, "Elementalist/Mesmer");
   await page.goto("./");
   await startSoloMatch(page);
   const effects = page.getByRole("list", { name: "your effects" }).getByRole("listitem");
   const energy = page.locator(".hud-bar-energy .hud-bar-label");
   await expect(effects).toHaveCount(0);
-  await expect(energy).toContainText("50 / 50");
-  // Q W E R A S D F are the skill keys; A casts slot 5 of the house bar,
+  // Full, whatever Energy Storage made the maximum.
+  const full = /^(\d+) \/ \1\b/;
+  await expect(energy).toHaveText(full);
+  // Q W E R A S D F are the skill keys; A casts slot 5, Armor of Earth,
   // a self-cast enchantment (#302) that costs energy as it starts.
   await say(page, "aaaa wasd qwer f");
   await expect(page.getByRole("log")).toContainText("aaaa wasd qwer f");
   // Past its 0.75 s activation and the round trip: a leaked key would
   // have spent energy, then put the enchantment on.
   await page.waitForTimeout(1500);
-  await expect(energy).toContainText("50 / 50");
+  await expect(energy).toHaveText(full);
   await expect(effects).toHaveCount(0);
 });
 

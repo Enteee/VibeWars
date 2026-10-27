@@ -478,7 +478,7 @@ export interface PeerLobbyJoin {
 
 /**
  * The character a lobby member brings (#580), for the others to see:
- * `null` is the house loadout. What it plays with is the match `hello`'s
+ * `null` is a starter build. What it plays with is the match `hello`'s
  * build; this is only its name and professions.
  */
 export interface WireLobbyCharacter {
@@ -1230,7 +1230,7 @@ export function parseAdrenaline(value: unknown): AdrenalineMessage | undefined {
   return slots === undefined ? undefined : { slots };
 }
 
-/** A lobby character; `null` is the house loadout, a missing one is malformed. */
+/** A lobby character; `null` is a starter build, a missing one is malformed. */
 function parseLobbyCharacter(value: unknown): WireLobbyCharacter | null | undefined {
   if (value === null) {
     return null;
