@@ -80,6 +80,9 @@ export type StatusId =
   // Stances.
   | "sprint"
   | "dash"
+  | "frenzy"
+  | "dark-escape"
+  | "natural-stride"
   // Preparations.
   | "apply-poison"
   // Glyphs.
@@ -236,6 +239,24 @@ export interface StatusDefinition {
    */
   readonly endsWhenBearerAttacks: boolean;
   /**
+   * It ends the moment one of the bearer's attacks hits (#919): a blow
+   * lands, swing, attack skill or arrow alike. A miss or a block keeps
+   * it. Dark Escape's price.
+   */
+  readonly endsWhenBearerHits: boolean;
+  /**
+   * It ends the moment a new status of one of these categories lands on
+   * the bearer (#919): Natural Stride's hex or enchantment. A refresh of
+   * one already on it does not end it.
+   */
+  readonly endsWhenBearerGains: readonly ("hex" | "enchantment")[];
+  /**
+   * Multiplier on the damage the bearer takes (#919): Frenzy's 2, Dark
+   * Escape's 0.5. Applied to every damage packet after armor; health
+   * loss and degeneration never pass through it.
+   */
+  readonly damageTakenMultiplier: number;
+  /**
    * What it does when its bearer does something (#469): Backfire's damage
    * on each spell the bearer finishes. Applied by whoever put it on.
    */
@@ -311,6 +332,9 @@ function define(
     spreads: false,
     nextAttackSkill: undefined,
     endsWhenBearerAttacks: false,
+    endsWhenBearerHits: false,
+    endsWhenBearerGains: [],
+    damageTakenMultiplier: 1,
     triggers: [],
     ...overrides,
   };
@@ -412,6 +436,30 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     moveSpeedMultiplier: 1.25,
   }),
   dash: define("dash", "Dash", "stance", { profession: "assassin", moveSpeedMultiplier: 1.5 }),
+  // "For 8 seconds, you attack 33% faster but take double damage": faster
+  // is 1 − x (ADR-0029).
+  frenzy: define("frenzy", "Frenzy", "stance", {
+    profession: "warrior",
+    attackDurationMultiplier: 0.67,
+    damageTakenMultiplier: 2,
+  }),
+  // "For 5...13...15 seconds, you move 25% faster and take half damage.
+  // Dark Escape ends if you successfully hit with an attack."
+  "dark-escape": define("dark-escape", "Dark Escape", "stance", {
+    profession: "assassin",
+    moveSpeedMultiplier: 1.25,
+    damageTakenMultiplier: 0.5,
+    endsWhenBearerHits: true,
+  }),
+  // "For 1...7...8 seconds, you run 33% faster and have a 50% chance to
+  // block incoming attacks. Natural Stride ends if you become Hexed or
+  // Enchanted."
+  "natural-stride": define("natural-stride", "Natural Stride", "stance", {
+    profession: "ranger",
+    moveSpeedMultiplier: 1.33,
+    block: { chance: 0.5, against: "all" },
+    endsWhenBearerGains: ["hex", "enchantment"],
+  }),
 
   // "Watch Yourself!" at rank 12: +5...21 armor, ending after 1...3 attacks.
   "watch-yourself": define("watch-yourself", "Watch Yourself!", "shout", {
@@ -559,7 +607,8 @@ export class StatusSet {
    *
    * Returns whether it is newly on the bearer: `false` for a refresh, or
    * for a duration of nothing. What a status does once, as it lands
-   * (deep wound's health), hangs on this.
+   * (deep wound's health), hangs on this. A status newly on it ends every
+   * one that ends when its bearer gains that category (#919).
    */
   public apply(id: StatusId, durationSeconds: number, sourceId: string): boolean {
     if (durationSeconds <= 0) {
@@ -590,6 +639,9 @@ export class StatusSet {
       outbreak,
       maintained: null,
     });
+    if (!wasActive) {
+      this.#endOnGaining(definition.category);
+    }
     return !wasActive;
   }
 
@@ -626,7 +678,7 @@ export class StatusSet {
    * something ends it, so `advance` never expires it. One of the same id
    * already on the bearer is replaced, whoever maintains it, and this one
    * is the newest, as `apply` makes it. Returns whether it is newly on the
-   * bearer. Throws for a status that is not an enchantment: a catalog bug,
+   * bearer; one that is ends what `apply` would end. Throws for a status that is not an enchantment: a catalog bug,
    * not data.
    */
   public maintain(id: StatusId, sourceId: string, seq: number): boolean {
@@ -644,7 +696,19 @@ export class StatusSet {
       outbreak: null,
       maintained: { seq, outOfRangeSeconds: 0 },
     });
+    if (!wasActive) {
+      this.#endOnGaining("enchantment");
+    }
     return !wasActive;
+  }
+
+  /** A status of `category` is newly on the bearer (#919): Natural Stride ends on a hex. */
+  #endOnGaining(category: StatusCategory): void {
+    for (const { id } of this.active) {
+      if (getStatusDefinition(id).endsWhenBearerGains.some((gained) => gained === category)) {
+        this.#statuses.delete(id);
+      }
+    }
   }
 
   /** Remove every status, of every category: what a respawn leaves. */
@@ -738,6 +802,20 @@ export class StatusSet {
   public endOnBearerAttack(): StatusId[] {
     const ended = this.active
       .filter(({ id }) => getStatusDefinition(id).endsWhenBearerAttacks)
+      .map(({ id }) => id);
+    for (const id of ended) {
+      this.#statuses.delete(id);
+    }
+    return ended;
+  }
+
+  /**
+   * One of the bearer's attacks hit (#919): every status that ends when it
+   * does is gone. Returns the ids that ended on it.
+   */
+  public endOnBearerHit(): StatusId[] {
+    const ended = this.active
+      .filter(({ id }) => getStatusDefinition(id).endsWhenBearerHits)
       .map(({ id }) => id);
     for (const id of ended) {
       this.#statuses.delete(id);
@@ -840,6 +918,8 @@ export interface StatusModifiers {
   readonly attributeDelta: number;
   readonly castTimeMultiplier: number;
   readonly attackDurationMultiplier: number;
+  /** Every status's, multiplied (#919). */
+  readonly damageTakenMultiplier: number;
 }
 
 /** The weakest heals get, whatever reduces them (GW1: at most −40%). */
@@ -849,8 +929,8 @@ export const HEALING_MULTIPLIER_FLOOR = 0.6;
  * Collapse every active status into one set of modifiers.
  *
  * Additive effects (health and energy pips, armor, attributes) sum;
- * multiplicative ones (move speed, healing, weapon damage, cast time)
- * multiply; miss chance takes the
+ * multiplicative ones (move speed, healing, weapon damage, cast time,
+ * damage taken) multiply; miss chance takes the
  * worst rather than compounding, so two blinding effects cannot push a
  * player past certain failure in a way that feels arbitrary. A maximum
  * health loss and an armor reduction are each the largest single one,
@@ -874,6 +954,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let castTimeMultiplier = 1;
   let attackFaster = 1;
   let attackSlower = 1;
+  let damageTakenMultiplier = 1;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
@@ -907,6 +988,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     castTimeMultiplier *= def.castTimeMultiplier;
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
     attackSlower = Math.max(attackSlower, def.attackDurationMultiplier);
+    damageTakenMultiplier *= def.damageTakenMultiplier;
   }
 
   return {
@@ -922,6 +1004,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     attributeDelta,
     castTimeMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,
+    damageTakenMultiplier,
   };
 }
 

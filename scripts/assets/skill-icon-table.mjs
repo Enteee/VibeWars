@@ -49,6 +49,9 @@ export const SKILL_ICONS = {
   "ranger.throw-dirt": { glyph: "mountain", modifier: "area" },
   "warrior.sprint": { glyph: "speed" },
   "assassin.dash": { glyph: "dash" },
+  "warrior.frenzy": { glyph: "sword", modifier: "clock" },
+  "assassin.dark-escape": { glyph: "dash", modifier: "down" },
+  "ranger.natural-stride": { glyph: "armor", modifier: "self" },
   "paragon.wild-throw": { glyph: "spear" },
   "warrior.healing-signet": { glyph: "heal", modifier: "self" },
   "warrior.watch-yourself": { glyph: "armor", modifier: "area" },
@@ -82,4 +85,8 @@ export const SKILL_ICONS = {
   "elementalist.mind-shock": { glyph: "lightning", modifier: "down" },
   "elementalist.shard-storm": { glyph: "shard" },
   "necromancer.shadow-of-fear": { glyph: "slow", modifier: "area" },
+  "mesmer.energy-surge": { glyph: "energy", modifier: "area" },
+  "mesmer.leech-signet": { glyph: "interrupt", modifier: "self" },
+  // A placeholder: no modifier yet says "per enchantment or hex" (#920).
+  "monk.dwaynas-kiss": { glyph: "heal", modifier: "stun" },
 };
