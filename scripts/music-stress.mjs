@@ -53,7 +53,7 @@
  * (MOZ_DISABLE_CONTENT_SANDBOX), as Chromium runs --no-sandbox: the jail and
  * the runner have no user namespaces for it.
  */
-/* global window, addEventListener -- in page.evaluate and addInitScript, which run in the page */
+/* global window, document, MutationObserver, addEventListener -- in page.evaluate and addInitScript, which run in the page */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -264,9 +264,46 @@ async function measure(url, load) {
     await page.goto(`${url}${query}`);
     await page.locator(".roster").waitFor();
     if (load.screen !== "menu") {
-      await page.getByRole("button", { name: "new character" }).click();
+      // Every screen #screens shows, in order, so a run that lands on the
+      // wrong one says whether the right one ever came (#862).
+      await page.evaluate(() => {
+        /** @type {string[]} */
+        const screens = [];
+        const root = document.querySelector("#screens");
+        if (root !== null) {
+          const note = () => {
+            screens.push(
+              `${String(Math.round(performance.now()))} ms: ${[...root.children].map((c) => c.className).join(", ")}`,
+            );
+          };
+          note();
+          new MutationObserver(note).observe(root, { childList: true });
+        }
+        Object.assign(window, { musicStressScreens: screens });
+      });
+      const newCharacter = page.getByRole("button", { name: "new character" });
+      // What a click at the button's centre would hit: an overlay says so.
+      const hit = await newCharacter.evaluate((button) => {
+        const box = button.getBoundingClientRect();
+        const under = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+        return `${under === null ? "nothing" : under.outerHTML.slice(0, 160)} at ${JSON.stringify(box)}`;
+      });
+      await newCharacter.click();
       // The profession is a picker: open it, then click the cell.
-      await page.locator('.editor-profession[data-which="primary"]').click();
+      try {
+        await page.locator('.editor-profession[data-which="primary"]').click({ timeout: 15_000 });
+      } catch (error) {
+        // Say what the page shows instead, so a red run names its cause.
+        const shown = await page.locator("body").innerText();
+        const screens = await page.evaluate(() =>
+          "musicStressScreens" in window ? window.musicStressScreens : [],
+        );
+        console.log(
+          `[${load.browser}] no profession picker; the page shows:\n${shown}\n` +
+            `"New character" covered by: ${hit}\nscreens:\n${JSON.stringify(screens, null, 1)}`,
+        );
+        throw error;
+      }
       await page
         .locator('.profession-grid .profession-cell[data-profession="elementalist"]')
         .click();
