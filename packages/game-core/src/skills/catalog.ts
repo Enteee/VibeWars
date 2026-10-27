@@ -1780,6 +1780,51 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // 15...39...45 damage" (PvP). Both at rank 12, as every status is.
     effects: [{ kind: "apply-status", statusId: "empathy", durationSeconds: 13 }],
   },
+  {
+    id: "necromancer.parasitic-bond",
+    name: "Parasitic Bond",
+    type: "hex",
+    elite: false,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 20 seconds, target foe suffers health degeneration of 1. The
+    // caster is healed for 30...102...120 when Parasitic Bond ends." The
+    // heal is the hex's, at rank 12 (#887).
+    effects: [{ kind: "apply-status", statusId: "parasitic-bond", durationSeconds: 20 }],
+  },
+  {
+    id: "necromancer.contagion",
+    name: "Contagion",
+    type: "enchantment",
+    elite: true,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 60 seconds, whenever you suffer from a new Condition, all foes
+    // in the area suffer from that same Condition and you sacrifice
+    // 10...6...5% maximum Health." The spread and the 6% are the
+    // enchantment's (#887).
+    effects: [{ kind: "apply-status", statusId: "contagion", durationSeconds: 60 }],
+  },
 
   /* ---------------------------------------------------------------------- */
   /* An effect that depends on how things stand (#794)                      */
