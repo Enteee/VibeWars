@@ -36,7 +36,7 @@ import {
   readUsage,
   usageReader,
 } from "./company-facts.mjs";
-import { boardLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
+import { boardScreenLines, companyLines, feedLines, groupFeed } from "./dashboard-view.mjs";
 import { hubHealth, parseAlive, parseRestarts } from "./hub-health.mjs";
 import { roleOf } from "./staff.mjs";
 
@@ -351,13 +351,19 @@ function budget() {
 function linesOf(section, pane) {
   switch (section) {
     case "board": {
+      const now = Date.now();
       const cfg = company();
-      const roles = new Set(
-        [...readPresence(ROOT, readStaffFile(ROOT), Date.now()).live].map((id) => roleOf(id) ?? id),
-      );
+      const staff = readStaffFile(ROOT);
+      const roles = new Set([...readPresence(ROOT, staff, now).live].map((id) => roleOf(id) ?? id));
       // hubd's copy of the board (hub-board.mjs); one in another shape is
       // hubd's to discard, and shows here as no snapshot.
-      return boardLines(readBoardState(hubFile("board.json")), cfg?.columns ?? null, roles, pane);
+      return boardScreenLines(
+        readBoardState(hubFile("board.json")),
+        cfg?.columns ?? null,
+        roles,
+        nudges(staff, now),
+        pane,
+      );
     }
     case "company": {
       const now = Date.now();
@@ -382,7 +388,6 @@ function linesOf(section, pane) {
           reboot: reboot(live),
           build: build(),
           claude: readUsage(usage, now, readLimit(ROOT, staff, now)),
-          nudges: nudges(staff, now),
           telegram: telegram(),
         },
         pane,
