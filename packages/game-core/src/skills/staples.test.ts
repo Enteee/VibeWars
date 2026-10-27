@@ -45,7 +45,7 @@ function holding(id: string, team: number, weapon: Weapon, attributeId: string):
     team,
     equipment: {
       ...unarmedResolvedEquipment(RULES.armorReferenceLevel),
-      mainHand: { weapon, attributeId, requirementMet: true },
+      mainHand: { weapon, attributeId, damageType: weapon.damageType, requirementMet: true },
     },
     attributeRanks: new Map([[attributeId, 12]]),
     adrenaline: 25,
