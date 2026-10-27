@@ -291,6 +291,7 @@ describe("describeSkill", () => {
         lines(entry.effects) +
           (entry.attack?.chain === undefined ? 0 : 1) +
           (entry.attack?.bonusDamage === undefined ? 0 : 1) +
+          (entry.attack?.weapon === "scythe" && entry.area === undefined ? 1 : 0) +
           (entry.attack?.conditionalBonus === undefined ? 0 : 1) +
           ((entry.attack?.armorPenetration ?? 0) > 0 ? 1 : 0) +
           lines(entry.attack?.onBlocked ?? []) +
