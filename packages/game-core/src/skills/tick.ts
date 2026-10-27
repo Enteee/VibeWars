@@ -209,9 +209,9 @@ export function moveSpeedMultiplier(combatant: Combatant): number {
 }
 
 /**
- * No status combination reaches either bound today; the clamp is there so
- * the next slow or speed boost cannot stack a player into a standstill or
- * a sprint.
+ * The clamp keeps stacked slows or speed boosts from bringing a player to a
+ * standstill or a sprint: Shard Storm and Deep Freeze together reach the
+ * floor (#938).
  */
 export function clampMoveSpeed(raw: number): number {
   return Math.min(MOVE_SPEED_MAX, Math.max(MOVE_SPEED_MIN, raw));
