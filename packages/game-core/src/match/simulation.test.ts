@@ -617,6 +617,14 @@ describe("match end", () => {
     expect(participant(sim, "b").combatant.dead).toBe(true);
   });
 
+  it("counts a team whose members all left as wiped (#846)", () => {
+    const sim = duel(DEFAULT_MATCH_RULES);
+    sim.step(DT);
+    sim.remove("b");
+    sim.step(DT);
+    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "annihilation" });
+  });
+
   it("never ends, and nobody respawns, without match rules", () => {
     const sim = duel();
     participant(sim, "b").combatant.health = 1;

@@ -84,7 +84,7 @@ export interface MatchScore {
   readonly byTeam: ReadonlyMap<number, number>;
 }
 
-/** Every team with members, as it stands (#846). */
+/** Every team that had members, as it stands, even with all of them gone (#846). */
 export interface MatchStanding {
   readonly byTeam: ReadonlyMap<number, TeamStanding>;
 }
@@ -184,7 +184,7 @@ function evaluateKillCount(
 /**
  * Annihilation (GW1): once a team is wiped and at most one team still
  * has anyone alive, that one wins; with nobody left, every team loses.
- * A team with no members is not in `standing`, so it is never wiped. At
+ * A team that never had members is not in `standing`, so it is never wiped. At
  * time the highest total morale wins, and a tie is lost by all: GW1's
  * arenas have no draw.
  */

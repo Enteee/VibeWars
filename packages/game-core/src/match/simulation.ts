@@ -398,6 +398,11 @@ export class MatchSimulation {
   readonly #bodies: Vec2[] = [];
   readonly #rng: SimulationRng;
   readonly #participants = new Map<string, ParticipantRecord>();
+  /**
+   * Every team anyone was added to (#846): one whose members all left is
+   * still in the standing, wiped, rather than gone.
+   */
+  readonly #teams = new Set<number>();
   #projectiles: Projectile[] = [];
   #nextProjectileId = 1;
 
@@ -523,6 +528,7 @@ export class MatchSimulation {
       resurrectedAtSeconds: Number.NEGATIVE_INFINITY,
     };
     this.#participants.set(spec.id, record);
+    this.#teams.add(spec.team);
     return record;
   }
 
@@ -2395,9 +2401,11 @@ export class MatchSimulation {
     this.#score = addKill(this.#score, scoringTeam);
   }
 
-  /** Every team with members: who is alive and its total morale (#846). */
+  /** Every team that had members: who is alive and its total morale (#846). */
   #standing(): MatchStanding {
-    const byTeam = new Map<number, TeamStanding>();
+    const byTeam = new Map<number, TeamStanding>(
+      [...this.#teams].map((team) => [team, { living: 0, morale: 0 }]),
+    );
     for (const { combatant } of this.#participants.values()) {
       const team = byTeam.get(combatant.team) ?? { living: 0, morale: 0 };
       byTeam.set(combatant.team, {
