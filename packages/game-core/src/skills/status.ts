@@ -27,8 +27,9 @@
  */
 
 import { AREA_ADJACENT, AREA_IN_THE_AREA } from "../distances.js";
+import { wieldsFor, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
-import type { Combatant, DamageEffect, SkillEffect } from "./types.js";
+import type { AttackWeaponClass, Combatant, DamageEffect, SkillEffect } from "./types.js";
 
 export type StatusCategory =
   | "condition"
@@ -103,6 +104,10 @@ export type StatusId =
   // Paragon shouts (#921).
   | "fall-back"
   | "stand-your-ground"
+  // Paragon shouts and a chant (#956).
+  | "incoming"
+  | "make-haste"
+  | "defensive-anthem"
   // Chants and weapon spells (#758).
   | "anthem-of-flame"
   | "weapon-of-warding"
@@ -111,7 +116,11 @@ export type StatusId =
   // Dervish enchantments and stances (#845).
   | "mystic-regeneration"
   | "fleeting-stability"
-  | "heart-of-fury";
+  | "heart-of-fury"
+  | "vow-of-strength"
+  | "sand-shards"
+  | "pious-haste"
+  | "pious-haste-run";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -240,7 +249,14 @@ export interface StatusDefinition {
    * where a blow lands, swing, attack skill or arrow alike, never on a
    * miss or a block.
    */
-  readonly onAttackHit: readonly SkillEffect[];
+  readonly onAttackHit: AttackHitRider | undefined;
+  /**
+   * It ends after this many of the bearer's hits with a weapon of
+   * `weapon` (#939): Sand Shards' "the next 4 times you hit with a
+   * scythe". Each victim a blow lands on is a hit, a cleave's included;
+   * a blow of another weapon spends none. `undefined`: no such limit.
+   */
+  readonly endsAfterHits: EndsAfterHits | undefined;
   /**
    * What it does to the bearer's next spells (#526): each costs
    * `costReduction` less energy, and it ends once `count` spells have
@@ -276,6 +292,12 @@ export interface StatusDefinition {
    * foe uses a skill". An interrupted or cancelled skill is not used.
    */
   readonly endsWhenBearerUsesSkill: boolean;
+  /**
+   * It ends the moment one of the bearer's attack skills hits (#956): a
+   * plain swing or arrow keeps it, as does a miss or a block. Defensive
+   * Anthem's price.
+   */
+  readonly endsWhenBearerHitsWithAttackSkill: boolean;
   /**
    * It ends the moment a new status of one of these categories lands on
    * the bearer (#919): Natural Stride's hex or enchantment. A refresh of
@@ -327,6 +349,22 @@ export interface StatusTrigger {
   readonly target: "bearer" | "source";
   /** The skill the log names it after: "mesmer.backfire". */
   readonly skillId: string;
+}
+
+/**
+ * What a status adds to each of the bearer's physical hits (#525), and
+ * the skill the log names it after, apart from the blow (#939): "Sand
+ * Shards hits", not "Scythe hits".
+ */
+export interface AttackHitRider {
+  readonly effects: readonly SkillEffect[];
+  readonly skillId: string;
+}
+
+/** How many of the bearer's hits, with which weapon, a status lasts (#939). */
+export interface EndsAfterHits {
+  readonly count: number;
+  readonly weapon: AttackWeaponClass;
 }
 
 /**
@@ -410,13 +448,15 @@ function define(
     endsOnKnockdownPrevented: false,
     block: undefined,
     endsAfterAttacks: undefined,
-    onAttackHit: [],
+    onAttackHit: undefined,
+    endsAfterHits: undefined,
     nextSpells: undefined,
     spreads: false,
     nextAttackSkill: undefined,
     endsWhenBearerAttacks: false,
     endsWhenBearerHits: false,
     endsWhenBearerUsesSkill: false,
+    endsWhenBearerHitsWithAttackSkill: false,
     endsWhenBearerGains: [],
     damageTakenMultiplier: 1,
     spellRechargeFaster: 0,
@@ -693,12 +733,34 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     armorWhileStill: 24,
     endsWhenBearerAttacks: true,
   }),
+  // "Incoming!" at rank 12: "Fall Back!" with no end on a hit (#956).
+  incoming: define("incoming", "Incoming!", "shout", {
+    profession: "paragon",
+    moveSpeedMultiplier: 1.33,
+    healthPerSecondWhileMoving: 13,
+  }),
+  // "Make Haste!": 33% faster, until that ally successfully hits (#956).
+  "make-haste": define("make-haste", "Make Haste!", "shout", {
+    profession: "paragon",
+    moveSpeedMultiplier: 1.33,
+    endsWhenBearerHits: true,
+  }),
+  // "...has a 50% chance to block incoming attacks. This chant ends if
+  // that party member hits with an attack skill." (#956)
+  "defensive-anthem": define("defensive-anthem", "Defensive Anthem", "chant", {
+    profession: "paragon",
+    block: { chance: 0.5, against: "all" },
+    endsWhenBearerHitsWithAttackSkill: true,
+  }),
 
   // "Enemies struck by your physical attacks become poisoned for
   // 3...13...15 seconds": 13 s, its rank-12 value.
   "apply-poison": define("apply-poison", "Apply Poison", "preparation", {
     profession: "ranger",
-    onAttackHit: [{ kind: "apply-status", statusId: "poison", durationSeconds: 13 }],
+    onAttackHit: {
+      effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 13 }],
+      skillId: "ranger.apply-poison",
+    },
   }),
 
   // "Your next 2 spells cost 10...16...18 less Energy to cast": 16, its
@@ -742,6 +804,72 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "dervish",
     attackDurationMultiplier: 0.75,
   }),
+  // "For 15 seconds, whenever you attack a foe with your scythe, you deal
+  // 10...22...25 slashing damage to all adjacent foes": 22, its rank-12
+  // value. Hit, miss or block: an attack. Its own Dervish is the splash's
+  // centre, so the foe it attacks is among them (#939).
+  "vow-of-strength": define("vow-of-strength", "Vow of Strength", "enchantment", {
+    profession: "dervish",
+    triggers: [
+      {
+        on: "bearer-attacks",
+        target: "bearer",
+        effects: [
+          {
+            kind: "if",
+            condition: { kind: "caster-wields", weapon: "scythe" },
+            effects: [
+              {
+                kind: "splash",
+                radius: AREA_ADJACENT,
+                effects: [
+                  { kind: "damage", amount: { flat: 22 }, type: "slashing", armorPenetration: 0 },
+                ],
+              },
+            ],
+          },
+        ],
+        skillId: "dervish.vow-of-strength",
+      },
+    ],
+  }),
+  // "For 30 seconds, the next 1...4...5 times you hit with a scythe, all
+  // other adjacent foes take 10...50...60 earth damage": 4 and 50, its
+  // rank-12 values. Adjacent to the foe hit, not to the Dervish: at melee
+  // reach the two barely differ (#939).
+  "sand-shards": define("sand-shards", "Sand Shards", "enchantment", {
+    profession: "dervish",
+    onAttackHit: {
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "caster-wields", weapon: "scythe" },
+          effects: [
+            {
+              kind: "splash",
+              radius: AREA_ADJACENT,
+              effects: [
+                { kind: "damage", amount: { flat: 50 }, type: "earth", armorPenetration: 0 },
+              ],
+            },
+          ],
+        },
+      ],
+      skillId: "dervish.sand-shards",
+    },
+    endsAfterHits: { count: 4, weapon: "scythe" },
+  }),
+  // "...for 1...6...7 [seconds] you move 25% faster. If an enchantment was
+  // removed, you run 50% faster instead" (#939): two stances, so the
+  // faster replaces the slower as it lands.
+  "pious-haste": define("pious-haste", "Pious Haste", "stance", {
+    profession: "dervish",
+    moveSpeedMultiplier: 1.25,
+  }),
+  "pious-haste-run": define("pious-haste-run", "Pious Haste (run)", "stance", {
+    profession: "dervish",
+    moveSpeedMultiplier: 1.5,
+  }),
   // PvP "Never Surrender!" at rank 12: +4 Health regeneration (#923).
   "never-surrender": define("never-surrender", "Never Surrender!", "shout", {
     profession: "paragon",
@@ -769,6 +897,8 @@ export interface ActiveStatus {
   durationSeconds: number;
   /** Incoming attacks before it ends (`endsAfterAttacks`); `undefined`: no such limit. */
   attacksLeft: number | undefined;
+  /** The bearer's hits before it ends (`endsAfterHits`); `undefined`: no such limit. */
+  hitsLeft: number | undefined;
   /** Spells still to start before it ends (`nextSpells`); `undefined`: no such limit. */
   spellsLeft: number | undefined;
   /** Who applied it — needed so a future "when this ends, heal the caster"
@@ -913,6 +1043,7 @@ export class StatusSet {
       remainingSeconds: durationSeconds,
       durationSeconds,
       attacksLeft: definition.endsAfterAttacks,
+      hitsLeft: definition.endsAfterHits?.count,
       spellsLeft: definition.nextSpells?.count,
       sourceId,
       outbreak,
@@ -946,6 +1077,7 @@ export class StatusSet {
       remainingSeconds: durationSeconds,
       durationSeconds,
       attacksLeft: undefined,
+      hitsLeft: undefined,
       spellsLeft: undefined,
       sourceId,
       outbreak,
@@ -972,6 +1104,7 @@ export class StatusSet {
       remainingSeconds: Number.POSITIVE_INFINITY,
       durationSeconds: Number.POSITIVE_INFINITY,
       attacksLeft: undefined,
+      hitsLeft: undefined,
       spellsLeft: undefined,
       sourceId,
       outbreak: null,
@@ -1068,6 +1201,30 @@ export class StatusSet {
   }
 
   /**
+   * One of the bearer's blows of `weaponId` hit (#939): one fewer for
+   * every status that ends after so many hits with a weapon it is. Returns
+   * the ids that ended on it.
+   */
+  public countHit(weaponId: WeaponId): StatusId[] {
+    const ended: StatusId[] = [];
+    for (const status of this.#statuses.values()) {
+      const limit = getStatusDefinition(status.id).endsAfterHits;
+      if (
+        status.hitsLeft !== undefined &&
+        limit !== undefined &&
+        wieldsFor(weaponId, limit.weapon)
+      ) {
+        status.hitsLeft -= 1;
+        if (status.hitsLeft <= 0) {
+          ended.push(status.id);
+        }
+      }
+    }
+    this.#end(ended);
+    return ended;
+  }
+
+  /**
    * A spell of the bearer's started (#526): one fewer for every status
    * that holds the next spells. Returns the ids that ended on it.
    */
@@ -1111,11 +1268,18 @@ export class StatusSet {
 
   /**
    * One of the bearer's attacks hit (#919): every status that ends when it
-   * does is gone. Returns the ids that ended on it.
+   * does is gone, and, if it was an attack skill, every one that ends when
+   * an attack skill hits (#956). Returns the ids that ended on it.
    */
-  public endOnBearerHit(): StatusId[] {
+  public endOnBearerHit(withAttackSkill: boolean): StatusId[] {
     const ended = this.active
-      .filter(({ id }) => getStatusDefinition(id).endsWhenBearerHits)
+      .filter(({ id }) => {
+        const definition = getStatusDefinition(id);
+        return (
+          definition.endsWhenBearerHits ||
+          (withAttackSkill && definition.endsWhenBearerHitsWithAttackSkill)
+        );
+      })
       .map(({ id }) => id);
     this.#end(ended);
     return ended;

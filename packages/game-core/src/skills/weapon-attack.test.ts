@@ -272,6 +272,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
     return resolveAttackSkill(
       { surroundings: new Map(), skill, caster, targets, rng, rules: RULES },
       NOWHERE,
+      [],
     );
   }
 
@@ -651,6 +652,7 @@ describe("block (#534)", () => {
           rules: RULES,
         },
         NOWHERE,
+        [],
       );
     }
 
@@ -745,6 +747,7 @@ describe("block (#534)", () => {
           rules: RULES,
         },
         NOWHERE,
+        [],
       );
       expect(events.map((event) => `${event.kind}:${event.targetId}`)).toEqual([
         "attack-blocked:a",
@@ -846,6 +849,7 @@ describe("critical hits (#533)", () => {
         rules: RULES,
       },
       NOWHERE,
+      [],
     );
     expect(events).toEqual([
       {
@@ -878,6 +882,7 @@ describe("critical hits (#533)", () => {
         rules: RULES,
       },
       always,
+      [],
     );
     expect(events).toMatchObject([{ kind: "damage", critical: false }]);
   });
@@ -981,6 +986,7 @@ describe("critical hits (#533)", () => {
           rules: RULES,
         },
         always,
+        [],
       );
       expect(events).toContainEqual({ kind: "energy-gain", targetId: "attacker", amount: 2 });
     });
@@ -1154,6 +1160,7 @@ describe("daze (#546)", () => {
         rules: RULES,
       },
       NOWHERE,
+      [],
     );
     expect(events[0]?.kind).toBe("interrupted");
     expect(target.combatant.cast.isCasting).toBe(false);
@@ -1175,6 +1182,7 @@ describe("daze (#546)", () => {
         rules: RULES,
       },
       NOWHERE,
+      [],
     ).map((event) => event.kind);
     expect(kinds.filter((kind) => kind === "interrupted")).toHaveLength(1);
     expect(kinds).not.toContain("interrupt-missed");
@@ -1245,6 +1253,7 @@ describe("weakness (#762)", () => {
         rules: RULES,
       },
       NOWHERE,
+      [],
     );
     const atEleven = resolveMagnitudeAtRanks(bonus, new Map([["warrior.axe-mastery", 11]]));
     expect(damages(events)).toEqual([
@@ -1361,6 +1370,7 @@ describe("dual attacks (#885)", () => {
         surroundings: options.surroundings ?? new Map(),
       },
       NOWHERE,
+      [],
     );
   }
 

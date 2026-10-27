@@ -1421,6 +1421,55 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // attacks: its rank-12 numbers, in the status.
     effects: [{ kind: "apply-status", statusId: "stand-your-ground", durationSeconds: 17 }],
   },
+  {
+    id: "paragon.incoming",
+    name: '"Incoming!"',
+    type: "shout",
+    elite: true,
+    profession: "paragon",
+    attributeId: "paragon.command",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 25,
+    range: RANGE_SPELL,
+    target: "self",
+    // "All allies within earshot", the shouter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // 33% faster and 13 Health per second while moving for 9 seconds:
+    // its rank-12 numbers, in the status (#956).
+    effects: [{ kind: "apply-status", statusId: "incoming", durationSeconds: 9 }],
+  },
+  {
+    id: "paragon.make-haste",
+    name: '"Make Haste!"',
+    type: "shout",
+    elite: false,
+    profession: "paragon",
+    attributeId: "paragon.command",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 5...17...20 seconds, target other ally moves 33% faster. This
+    // skill ends if that ally successfully hits with an attack." (#956)
+    effects: [{ kind: "apply-status", statusId: "make-haste", durationSeconds: 17 }],
+  },
 
   /* ---------------------------------------------------------------------- */
   /* Preparations (#525): ride your attacks, one at a time                  */
@@ -1508,6 +1557,34 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "anthem-of-flame", durationSeconds: 10 }],
   },
   {
+    id: "paragon.defensive-anthem",
+    name: "Defensive Anthem",
+    type: "chant",
+    elite: true,
+    profession: "paragon",
+    attributeId: "paragon.leadership",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 25,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Each party member within earshot", the chanter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // A 50% block for 9 seconds, ending on a member's attack-skill hit:
+    // its rank-12 numbers, in the status (#956).
+    effects: [{ kind: "apply-status", statusId: "defensive-anthem", durationSeconds: 9 }],
+  },
+  {
     id: "ritualist.weapon-of-warding",
     name: "Weapon of Warding",
     type: "weapon-spell",
@@ -1527,6 +1604,108 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     // "For 3...7...8 seconds": 7 s, its rank-12 value; the regeneration,
     // the block and the end on attacking are the status's.
     effects: [{ kind: "apply-status", statusId: "weapon-of-warding", durationSeconds: 7 }],
+  },
+  {
+    id: "ritualist.mend-body-and-soul",
+    name: "Mend Body and Soul",
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "That ally loses one condition for each spirit within earshot": there
+    // are no spirits yet (#467), so it removes none, as in GW1 with none up.
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 20, atTwelve: 96 },
+        },
+      },
+    ],
+  },
+  {
+    id: "ritualist.spirit-light",
+    name: "Spirit Light",
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If any Spirits are within earshot, you don't sacrifice Health": there
+    // are no spirits yet (#467), so the 17% is always paid, as in GW1 with
+    // none up.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 17 },
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 60, atTwelve: 156 },
+        },
+      },
+    ],
+  },
+  {
+    id: "ritualist.wielders-boon",
+    name: "Wielder's Boon",
+    type: "spell",
+    elite: false,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "If that ally is under the effects of a Weapon Spell, Wielder's Boon
+    // heals for an additional 15...63...75 Health."
+    effects: [
+      {
+        kind: "heal",
+        perStatusOnTarget: [],
+        amount: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 51 },
+        },
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "weapon-spell" },
+        effects: [
+          {
+            kind: "heal",
+            perStatusOnTarget: [],
+            amount: {
+              scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 63 },
+            },
+          },
+        ],
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -2281,6 +2460,134 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
         kind: "if",
         condition: { kind: "removed", category: "enchantment", from: "caster" },
         effects: [{ kind: "remove-status", category: "hex", count: 3, from: "caster" }],
+      },
+    ],
+  },
+  {
+    id: "dervish.vow-of-strength",
+    name: "Vow of Strength",
+    type: "enchantment",
+    elite: true,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 15 seconds, whenever you attack a foe with your scythe, you deal
+    // 10...22...25 slashing damage to all adjacent foes": the status deals it.
+    effects: [{ kind: "apply-status", statusId: "vow-of-strength", durationSeconds: 15 }],
+  },
+  {
+    id: "dervish.sand-shards",
+    name: "Sand Shards",
+    // A flash enchantment: an enchantment spell with no activation.
+    type: "enchantment",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "For 30 seconds, the next 1...4...5 times you hit with a scythe, all
+    // other adjacent foes take 10...50...60 earth damage": the status does.
+    effects: [{ kind: "apply-status", statusId: "sand-shards", durationSeconds: 30 }],
+  },
+  {
+    id: "dervish.pious-haste",
+    name: "Pious Haste",
+    type: "stance",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.mysticism",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "You remove 1 Dervish enchantment and for 1...6...7 you move 25%
+    // faster. If an enchantment was removed, you run 50% faster instead":
+    // 6 s, its rank-12 value. The run is a stance too, so it replaces the
+    // 25% one as it lands.
+    effects: [
+      {
+        kind: "remove-status",
+        category: "enchantment",
+        count: 1,
+        profession: "dervish",
+        from: "caster",
+      },
+      { kind: "apply-status", statusId: "pious-haste", durationSeconds: 6 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "enchantment", from: "caster" },
+        effects: [{ kind: "apply-status", statusId: "pious-haste-run", durationSeconds: 6 }],
+      },
+    ],
+  },
+  {
+    id: "dervish.victorious-sweep",
+    name: "Victorious Sweep",
+    type: "attack",
+    elite: false,
+    profession: "dervish",
+    attributeId: "dervish.scythe-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 4,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "If this attack hits, you deal +5...21...25 damage. If target foe has
+    // less Health than you, you gain 30...70...80 Health." Read after the
+    // blow, so its own damage counts.
+    attack: {
+      weapon: "melee",
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 5, atTwelve: 21 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-less-health" },
+        effects: [
+          {
+            kind: "heal",
+            perStatusOnTarget: [],
+            recipient: "caster",
+            amount: {
+              scaling: { attributeId: "dervish.scythe-mastery", atZero: 30, atTwelve: 70 },
+            },
+          },
+        ],
       },
     ],
   },

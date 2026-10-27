@@ -1,0 +1,26 @@
+{
+  "id": "dervish.pious-haste",
+  "name": "Pious Haste",
+  "profession": "dervish",
+  "attribute": "Mysticism",
+  "type": "Stance.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 12,
+  "upkeep": false,
+  "description": "You remove 1 Dervish enchantment and for 1...6...7 you move 25% faster. If an enchantment was removed, you run 50% faster instead.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Dervish/1017-Pious_Haste",
+    "fetchedAt": "2026-10-27T15:23:20.147Z"
+  },
+  "unmapped": {}
+}

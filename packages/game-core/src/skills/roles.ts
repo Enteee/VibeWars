@@ -73,7 +73,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     roles.push("defence");
   }
   if (status.interruptsSpells) roles.push("interrupt");
-  const riders = [...status.onAttackHit, ...(status.nextAttackSkill ?? [])];
+  const riders = [...(status.onAttackHit?.effects ?? []), ...(status.nextAttackSkill ?? [])];
   return [...roles, ...riders.flatMap(effectRoles)];
 }
 

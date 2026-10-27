@@ -164,6 +164,7 @@ describe("Distracting Shot (#914)", () => {
         rules: RULES,
       },
       NOWHERE,
+      [],
     );
   }
 
@@ -224,6 +225,7 @@ describe("Disrupting Chop (#914)", () => {
         rules: RULES,
       },
       NOWHERE,
+      [],
     );
 
     expect(target.cast.isCasting).toBe(false);

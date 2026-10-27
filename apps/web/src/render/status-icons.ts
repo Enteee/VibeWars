@@ -59,6 +59,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "healing-signet-armor": icon("healing-signet-armor"),
   "fall-back": icon("fall-back"),
   "stand-your-ground": icon("stand-your-ground"),
+  incoming: icon("incoming"),
+  "make-haste": icon("make-haste"),
+  "defensive-anthem": icon("defensive-anthem"),
   "apply-poison": icon("apply-poison"),
   "glyph-of-lesser-energy": icon("glyph-of-lesser-energy"),
   "anthem-of-flame": icon("anthem-of-flame"),
@@ -66,6 +69,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "mystic-regeneration": icon("mystic-regeneration"),
   "fleeting-stability": icon("fleeting-stability"),
   "heart-of-fury": icon("heart-of-fury"),
+  "vow-of-strength": icon("vow-of-strength"),
+  "sand-shards": icon("sand-shards"),
+  "pious-haste": icon("pious-haste"),
+  "pious-haste-run": icon("pious-haste-run"),
   "never-surrender": icon("never-surrender"),
 };
 
