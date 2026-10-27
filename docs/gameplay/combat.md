@@ -180,6 +180,18 @@ spell. A signet, it costs nothing.
 hits 25 harder if that was a spell: one bigger number on the hit, read
 as the arrow lands. A block or a miss does neither.
 
+Some interrupts also **disable** what they cut short (#914): the skill
+cannot be used for a while, on top of its recharge. The two run
+together, so the skill waits for whichever is longer, and on your bar
+it looks exactly like a recharge. **Power Block** (elite) interrupts a
+spell or a chant and disables it for 10 s, along with every skill on
+the victim's bar of the same attribute; a skill with no attribute takes
+only itself. **Distracting Shot** interrupts whatever its arrow finds,
+deals only 13, and disables an interrupted skill for 20 s; the Warrior's
+**Disrupting Chop** (6 adrenaline) interrupts and disables the same way, on a plain axe blow. The log says
+which skills were disabled, and for how long; a skill already
+recharging for longer is not mentioned.
+
 ## Energy denial
 
 A Mesmer can take a foe's energy (#793). **Energy Burn** takes up to 8

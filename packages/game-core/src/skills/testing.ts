@@ -27,6 +27,7 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     morale: 0,
     baseEnergyPips: 0,
     adrenaline: new Map(),
+    skillBar: [],
     lastCombatAt: 0,
     attributeRanks: new Map(),
     team: 0,

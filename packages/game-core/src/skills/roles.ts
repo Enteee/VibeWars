@@ -46,6 +46,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "resurrect":
     case "recharge-faster":
     case "recharge-others":
+    case "disable-skill":
       return [];
   }
 }

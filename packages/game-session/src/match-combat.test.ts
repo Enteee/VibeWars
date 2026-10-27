@@ -77,6 +77,16 @@ const SIGNET: PlayerBuild = {
   equipment: defaultBuildEquipment("warrior"),
 };
 
+/** A mesmer with Power Block (#914), to disable a foe's spell. */
+const BLOCKER: PlayerBuild = {
+  name: "Blocker",
+  primaryProfession: "mesmer",
+  secondaryProfession: undefined,
+  attributes: [{ attributeId: "mesmer.domination-magic", rank: 12 }],
+  skillBar: ["mesmer.power-block", null, null, null, null, null, null, null],
+  equipment: defaultBuildEquipment("mesmer"),
+};
+
 /** An assassin with daggers, a lead attack and the off-hand that follows it (#916). */
 const DAGGERS: PlayerBuild = {
   name: "Daggers",
@@ -344,6 +354,31 @@ describe("networked combat (P2P)", () => {
       0,
     );
     await until(match, () => borne() === undefined, "the cast to end");
+  });
+
+  it("tells the victim of a Power Block its disabled slot's new recharge (#914)", async () => {
+    const match = startMatch();
+    const { connection: a } = await match.join(hello({ build: toJson(BLOCKER) }));
+    const { connection: b } = await match.join();
+    await match.step(TICK);
+    await closeDistance(match, a, b.selfSessionId, 300);
+    await target(match, a, b.selfSessionId);
+    await target(match, b, a.selfSessionId);
+
+    // Fireball: a 1 s cast, the default bar's only Fire Magic skill.
+    b.sendIntent({ kind: "use-skill", slot: FIREBALL });
+    await until(match, () => self(b)?.castingSkillId === "elementalist.fireball", "b's cast");
+    a.sendIntent({ kind: "use-skill", slot: 0 });
+    await until(
+      match,
+      () => b.getRecharges()[FIREBALL]?.total === 10,
+      "the disable, as b hears it",
+    );
+
+    // Its own 7 s recharge, raised to the disable's 10 s; nothing else waits.
+    expect(b.getRecharges()[FIREBALL]?.remaining).toBeGreaterThan(9);
+    const armor = DEFAULT_SKILL_BAR.indexOf("elementalist.armor-of-earth");
+    expect(b.getRecharges()[armor]).toEqual({ remaining: 0, total: 0 });
   });
 
   it("sends a knockdown's time left on the victim, and 0 once it rises (#545)", async () => {
@@ -911,6 +946,25 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     expect(received?.map(combatMessage).map((message) => message.events)).toEqual([
       [refused, idle],
     ]);
+  });
+
+  it("carries the skill a disable held back and for how long (#914)", () => {
+    const disabled = {
+      kind: "skill-disabled",
+      targetId: "b",
+      skillId: "elementalist.fireball",
+      seconds: 10,
+    } as const;
+    const sent = wireCombat([
+      entry({
+        cause: "skill",
+        skillId: "mesmer.power-block",
+        weaponId: undefined,
+        events: [disabled],
+      }),
+    ]);
+    const received = parseWireCombatBatch(JSON.parse(JSON.stringify(sent)));
+    expect(received?.map(combatMessage).map((message) => message.events)).toEqual([[disabled]]);
   });
 
   it("carries the energy a foe lost and what the caster gained for it (#793)", () => {
