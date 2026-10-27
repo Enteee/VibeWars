@@ -3921,3 +3921,124 @@ body:has(#app > .chat) .now-playing {
   border-color: var(--accent);
   outline: none;
 }
+
+/* Random Arena (#880): the mode choice beside its button on the menu. */
+.random-arena-modes {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.screen .random-arena-mode {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.screen .random-arena-mode[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.menu-random-arena-hint {
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+
+/* The queue screen: what the wait looks like, then the versus splash. */
+.queue-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 1.5rem 0 1rem;
+}
+
+.queue-status {
+  font-size: 1.4rem;
+  color: var(--accent);
+}
+
+.queue-waited {
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.queue-count {
+  color: var(--ink-dim);
+}
+
+.queue-actions {
+  justify-content: center;
+}
+
+.queue-notice {
+  text-align: center;
+}
+
+.versus-splash {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.versus-map {
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.versus-teams {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.versus-team {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 200px;
+  padding: 0.6rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--team-colour);
+}
+
+.versus-team-title {
+  margin: 0;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--team-colour);
+}
+
+.versus-vs {
+  font-size: 1.3rem;
+  color: var(--ink-dim);
+}
+
+.versus-player {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.versus-player-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.versus-player-character {
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+
+.versus-countdown {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}

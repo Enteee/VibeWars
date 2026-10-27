@@ -173,6 +173,16 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Paragon/1084-Anthem_of_Flame",
   },
   {
+    id: "paragon.fall-back",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1062-Fall_Back!",
+  },
+  {
+    id: "paragon.stand-your-ground",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1070-Stand_Your_Ground!",
+  },
+  {
     id: "paragon.spear-of-lightning",
     profession: "paragon",
     url: "https://www.gw-memorial.net/skills/Paragon/1126-Spear_of_Lightning",

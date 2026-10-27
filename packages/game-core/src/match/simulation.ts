@@ -324,7 +324,11 @@ function degenerationSources(combatant: Combatant): {
     const definition = STATUS_DEFINITIONS[status.id];
     if (definition.healthPips < 0) {
       draining.add(status.sourceId);
-    } else if (definition.healthPips > 0 || definition.healthPipsPerEnchantment !== undefined) {
+    } else if (
+      definition.healthPips > 0 ||
+      definition.healthPipsPerEnchantment !== undefined ||
+      definition.healthPerSecondWhileMoving > 0
+    ) {
       healing.add(status.sourceId);
     }
   }
@@ -451,6 +455,12 @@ export class MatchSimulation {
    * it gains.
    */
   #moraleKills: number[] = [];
+  /**
+   * Where every participant stood as this step began (#921): what
+   * `Combatant.moving` is read against at its end. A reset puts its spawn
+   * here, so being put back is not walking.
+   */
+  #stepStart = new Map<string, Vec2>();
 
   public constructor(options: MatchSimulationOptions) {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
@@ -559,6 +569,7 @@ export class MatchSimulation {
   /** Remove a participant and every target that pointed at them. */
   public remove(id: string): void {
     this.#participants.delete(id);
+    this.#stepStart.delete(id);
     for (const other of this.#participants.values()) {
       if (other.targetId === id) {
         other.targetId = undefined;
@@ -996,6 +1007,9 @@ export class MatchSimulation {
     this.#tick += 1;
     this.#elapsedSeconds += dt;
     this.checkMatchEnd();
+    for (const record of this.#participants.values()) {
+      this.#stepStart.set(record.id, record.position);
+    }
     // Every knockdown counts down before anyone acts, so one lasts its
     // full duration whoever lands it, and the tick it ends is one its
     // bearer acts in again (#468).
@@ -1129,6 +1143,7 @@ export class MatchSimulation {
     this.#spreadStatuses();
     this.#fireStatusChanges();
     this.#awardKillMorale();
+    this.#settleMoving();
     // After every death this step, so two teams wiped in it both lose.
     this.checkMatchEnd();
 
@@ -2816,6 +2831,22 @@ export class MatchSimulation {
     record.sinceReset = 0;
     record.outOfCombatSeconds = 0;
     record.history.clear();
+    record.combatant.moving = false;
+    this.#stepStart.set(record.id, record.spawn);
+  }
+
+  /**
+   * Who walked this step (#921): everyone at once, after everyone acted,
+   * so the order the participants resolve in cannot change who is moving.
+   */
+  #settleMoving(): void {
+    for (const record of this.#participants.values()) {
+      const start = this.#stepStart.get(record.id);
+      record.combatant.moving =
+        !record.combatant.dead &&
+        start !== undefined &&
+        (start.x !== record.position.x || start.y !== record.position.y);
+    }
   }
 
   /** Ticks in the ruleset's tracking window: at least two, or there is no motion to fit. */
@@ -2851,6 +2882,7 @@ export class MatchSimulation {
       soulReapingTriggers: [],
       nextMaintainSeq: 0,
       chainMarks: new Map(),
+      moving: false,
       equipment: spec.equipment,
     };
   }
