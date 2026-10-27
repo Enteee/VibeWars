@@ -34,6 +34,7 @@ import {
   parsePeerRejoinProof,
   parsePeerWelcome,
   parseAdrenaline,
+  parseChainMarks,
   parseRecharge,
   parseWireCombatBatch,
   parseWireEnded,
@@ -338,6 +339,18 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["adrenaline", parseAdrenaline, { slots: [0, 0, 225, 0, 37.5, 0, 0, 0], lossInSeconds: 12.5 }],
   ["adrenaline, every slot empty", parseAdrenaline, { slots: [0, 0], lossInSeconds: null }],
   ["adrenaline for an empty bar", parseAdrenaline, { slots: [], lossInSeconds: null }],
+  [
+    "chain",
+    parseChainMarks,
+    {
+      marks: [
+        { targetId: "peer-2", role: "lead", remainingSeconds: 15 },
+        { targetId: "peer-3", role: "off-hand", remainingSeconds: 3.25 },
+        { targetId: "peer-4", role: "dual", remainingSeconds: 0 },
+      ],
+    },
+  ],
+  ["chain with no marks", parseChainMarks, { marks: [] }],
   ["bye", parsePeerBye, {}],
   ["call on a foe", parsePeerCall, { kind: "target", targetId: "peer-2" }],
   ["ping", parsePeerCall, { kind: "ping", x: 120.5, y: 40 }],
@@ -744,6 +757,33 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["adrenaline not a number", parseAdrenaline, { slots: ["25"] }],
   ["adrenaline past the last slot", parseAdrenaline, { slots: Array.from({ length: 9 }, () => 0) }],
   ["adrenaline with no slots", parseAdrenaline, {}],
+  [
+    "chain of an unknown role",
+    parseChainMarks,
+    { marks: [{ targetId: "peer-2", role: "triple", remainingSeconds: 15 }] },
+  ],
+  [
+    "chain lasting less than no time",
+    parseChainMarks,
+    { marks: [{ targetId: "peer-2", role: "lead", remainingSeconds: -1 }] },
+  ],
+  [
+    "chain lasting NaN",
+    parseChainMarks,
+    { marks: [{ targetId: "peer-2", role: "lead", remainingSeconds: NaN }] },
+  ],
+  [
+    "chain past MAX_LOBBY_PLAYERS",
+    parseChainMarks,
+    {
+      marks: Array.from({ length: MAX_LOBBY_PLAYERS + 1 }, (_, i) => ({
+        targetId: `peer-${String(i)}`,
+        role: "lead",
+        remainingSeconds: 15,
+      })),
+    },
+  ],
+  ["chain with no marks list", parseChainMarks, {}],
   [
     "recharge with a NaN",
     parseRecharge,
