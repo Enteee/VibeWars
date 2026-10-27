@@ -70,7 +70,8 @@ export interface DamageEffect {
   /**
    * The amount is per point of energy the same target lost to an earlier
    * `energy-loss` of this skill, as Energy Burn's "9 damage for each
-   * point of energy lost" (#793). None lost: no damage.
+   * point of energy lost" (#793). None lost: no damage. Inside a
+   * `splash`, the energy its centre lost, as Energy Surge's (#920).
    */
   readonly perEnergyLost?: true;
 }
@@ -83,6 +84,12 @@ export interface HealEffect {
    * Health" (#521). Absent: the target.
    */
   readonly recipient?: "caster";
+  /**
+   * With categories, the amount is per status of those categories the
+   * target bears as the heal lands, as Dwayna's Kiss's "10...30 Health
+   * for each enchantment or hex on that ally" (#920). Empty: once.
+   */
+  readonly perStatusOnTarget: readonly StatusCategory[];
 }
 
 export interface EnergyGainEffect {
@@ -91,7 +98,8 @@ export interface EnergyGainEffect {
   /**
    * Per point of energy the target lost to an earlier `energy-loss`, as
    * Energy Tap's "2 Energy for each point of Energy target foe lost"
-   * (#793). None lost: no gain.
+   * (#793). None lost: no gain. Inside a `splash`, the energy its centre
+   * lost (#920).
    */
   readonly perEnergyLost?: true;
 }
@@ -230,6 +238,11 @@ export const KNOCKDOWN_SECONDS = 2;
 export type EventCondition =
   /** An `interrupt` earlier in the list cancelled an action. */
   | { readonly kind: "interrupted" }
+  /**
+   * An `interrupt` earlier in the list cancelled a spell (`isSpell`; a
+   * chant is not one), as Leech Signet's "if that action was a spell" (#920).
+   */
+  | { readonly kind: "interrupted-spell" }
   /**
    * A `remove-status` earlier in the list removed at least one status of
    * this category; with `from: "caster"`, from the caster (#845), which

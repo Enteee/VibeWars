@@ -220,6 +220,28 @@ describe("describeSkill", () => {
     expect(describeSkill(skill("mesmer.energy-burn"), ranks).headline).toBe("drains 8 energy");
   });
 
+  it("words Energy Surge's splash, Leech Signet's spell and Dwayna's Kiss's count (#920)", () => {
+    const ranks = new Map([
+      ["mesmer.domination-magic", 12],
+      ["mesmer.inspiration-magic", 12],
+      ["monk.healing-prayers", 12],
+    ]);
+    const lines = (id: string) => describeSkill(skill(id), ranks).effects.map((e) => e.text);
+    expect(lines("mesmer.energy-surge")).toEqual([
+      "Target loses 8 energy",
+      "Deals 7 damage per point lost",
+      "Nearby foes take 5.25 damage for each point of energy lost",
+    ]);
+    expect(lines("mesmer.leech-signet")).toEqual([
+      "Interrupts the target's current cast, if they are casting",
+      "If that action was a spell: gain 13 energy",
+    ]);
+    expect(lines("monk.dwaynas-kiss")).toEqual([
+      "Heals for 51",
+      "+30 Health for each enchantment or hex on target ally",
+    ]);
+  });
+
   it("says Guardian blocks half of all attacks (#534)", () => {
     expect(describeStatus("guardian")).toBe("50% chance to block attacks");
   });
