@@ -13,6 +13,12 @@ import {
   type HostedLobby,
   type RandomArenaQueue,
 } from "./net/session.js";
+import {
+  UNREADABLE_RELAY_NOTICE,
+  loadTurnConfig,
+  parseTurnFragment,
+  type TurnFragment,
+} from "./net/transport/turn-config.js";
 import { startMatchView, type MatchView } from "./match-view.js";
 import { beatEdits } from "./music/beat-edits.js";
 import { musicPlayer } from "./music/music-player.js";
@@ -38,6 +44,7 @@ import {
   renderOptionsScreen,
 } from "./ui/options-screen.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
+import { openRelayPrompt } from "./ui/relay-prompt.js";
 import { describeOutcome } from "./ui/hud.js";
 import { mountQueueScreen, nextStreak, type QueueScreen } from "./ui/queue-screen.js";
 import { displayLobbyCode, renderLobbyScreen } from "./ui/lobby-screen.js";
@@ -101,7 +108,27 @@ async function openStore(): Promise<KeyValueStore> {
   }
 }
 
+/** A relay link nothing could be read from (#972), on the first menu. */
+const MALFORMED_RELAY_LINK_NOTICE = "That relay link is not valid. Nothing was saved.";
+
+/**
+ * The relay invite link this page was opened with, if any (#972), taken
+ * out of the address bar and the history entry at once: a later copy or
+ * screenshot of the URL carries no credential, even from a tab closed at
+ * the prompt. Only `turn=` goes; the rest of the fragment stays.
+ */
+function takeRelayLink(): TurnFragment {
+  const fragment = parseTurnFragment(location.hash);
+  if (fragment.kind !== "none") {
+    const rest = fragment.rest === "" ? "" : `#${fragment.rest}`;
+    history.replaceState(history.state, "", `${location.pathname}${location.search}${rest}`);
+  }
+  return fragment;
+}
+
 async function main(): Promise<void> {
+  // Before anything mounts or waits.
+  const relayLink = takeRelayLink();
   const screenRoot = requireElement("#screens");
   const showNowPlaying = createNowPlayingToast(document.body);
   musicPlayer().onNowPlaying((trackId) => {
@@ -124,6 +151,13 @@ async function main(): Promise<void> {
   music().onNotice((notice) => {
     editNotices = [...editNotices, notice];
   });
+  // A saved relay of the wrong shape goes now, and the first menu says so.
+  const savedRelay = loadTurnConfig(() => {
+    editNotices = [...editNotices, UNREADABLE_RELAY_NOTICE];
+  });
+  if (relayLink.kind === "malformed") {
+    editNotices = [...editNotices, MALFORMED_RELAY_LINK_NOTICE];
+  }
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
 
@@ -662,7 +696,7 @@ async function main(): Promise<void> {
     } catch (error) {
       console.warn("[web] could not join the lobby", error);
       hosted = undefined;
-      menuNotice = joinFailureNotice(error, location);
+      menuNotice = joinFailureNotice(error, location, loadTurnConfig() !== undefined);
       showMenu();
       // After showMenu, which would clear the status.
       setStatus("could not join", "error");
@@ -859,6 +893,9 @@ async function main(): Promise<void> {
   };
 
   showMenu();
+  if (relayLink.kind === "config") {
+    openRelayPrompt(app, relayLink.config, savedRelay);
+  }
 }
 
 main().catch((error: unknown) => {
