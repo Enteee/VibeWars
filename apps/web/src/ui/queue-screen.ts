@@ -16,6 +16,10 @@ import { button, h, screenBar } from "./kit.js";
 
 export const MATCH_FOUND = "Match found";
 export const FELL_THROUGH = "Match fell through, searching again";
+/** #882's wording, for a party that did not form or did not last. */
+export const TEAM_SPLIT = "The team split up";
+/** *Stay together*, disabled, once the match's host is gone (#882). */
+export const HOST_LEFT = "The host left";
 /** #707's wording, as the menu says it for a join. */
 export const UNREACHABLE = "Couldn't reach the lobby servers";
 /** How long "fell through" stays up before the searching view returns. */
@@ -73,12 +77,28 @@ export function streakLine(streak: number): string | undefined {
   return `${String(streak)} ${streak === 1 ? "win" : "wins"} in a row this visit (not a rating)`;
 }
 
+/**
+ * *Stay together* on the ended view of a won 2v2 or 4v4 (#882): offered
+ * for `secondsLeft`, pressed and waiting on the rest of the team, or off
+ * because the match's host left.
+ */
+export type StayOffer =
+  | { readonly kind: "offer"; readonly secondsLeft: number }
+  | { readonly kind: "waiting"; readonly secondsLeft: number }
+  | { readonly kind: "host-left" };
+
 /** What the screen shows: the queue, the lobby's splash, why the queue ended, or how the match did. */
 export type QueueView =
-  | { readonly kind: "queue"; readonly state: QueueState }
+  /** `note`, such as `TEAM_SPLIT`, stays under the queue until the next view. */
+  | { readonly kind: "queue"; readonly state: QueueState; readonly note?: string }
   | { readonly kind: "splash"; readonly snapshot: LobbySnapshot }
   | { readonly kind: "refused"; readonly notice: string }
-  | { readonly kind: "ended"; readonly outcome: string; readonly streak: number };
+  | {
+      readonly kind: "ended";
+      readonly outcome: string;
+      readonly streak: number;
+      readonly stay?: StayOffer;
+    };
 
 export interface QueueScreenCallbacks {
   /** *Leave queue*: withdraw and go back to the menu. */
@@ -87,6 +107,8 @@ export interface QueueScreenCallbacks {
   readonly onBack: () => void;
   /** *Queue again*, after a match (#881): same mode, the active character. */
   readonly onQueueAgain: () => void;
+  /** *Stay together*, after a won 2v2 or 4v4 (#882). */
+  readonly onStayTogether: () => void;
 }
 
 export interface QueueScreen {
@@ -111,6 +133,8 @@ export interface QueueLines {
   readonly count?: string;
   readonly problem?: string;
   readonly streak?: string;
+  /** *Stay together*'s label, and whether it can be pressed; no button without. */
+  readonly stay?: { readonly label: string; readonly enabled: boolean };
   /**
    * *Leave queue* while queued, *Back to menu* once it is over, both
    * that and *Queue again* after a match, nothing on the splash.
@@ -140,13 +164,35 @@ export function queueLines(state: QueueState, fellThroughShown: boolean): QueueL
       return { status: FELL_THROUGH, action: "leave" };
     case "unreachable":
       return { status: UNREACHABLE, action: "back" };
+    case "party-gone":
+      return { status: TEAM_SPLIT, action: "leave" };
+  }
+}
+
+/** *Stay together*'s button for `offer`. */
+export function stayButton(offer: StayOffer): { label: string; enabled: boolean } {
+  switch (offer.kind) {
+    case "offer":
+      return { label: `Stay together (${String(offer.secondsLeft)})`, enabled: true };
+    case "waiting":
+      return {
+        label: `Waiting for your team (${String(offer.secondsLeft)})`,
+        enabled: false,
+      };
+    case "host-left":
+      return { label: HOST_LEFT, enabled: false };
   }
 }
 
 /** The screen after a queued match (#881): how it ended, the streak, *Queue again* and *Back to menu*. */
-export function endedLines(outcome: string, streak: number): QueueLines {
+export function endedLines(outcome: string, streak: number, stay?: StayOffer): QueueLines {
   const line = streakLine(streak);
-  return { status: outcome, action: "ended", ...(line === undefined ? {} : { streak: line }) };
+  return {
+    status: outcome,
+    action: "ended",
+    ...(line === undefined ? {} : { streak: line }),
+    ...(stay === undefined ? {} : { stay: stayButton(stay) }),
+  };
 }
 
 /** The splash's two sides and its countdown line, from a queued lobby's snapshot. */
@@ -272,10 +318,11 @@ export function mountQueueScreen(
     `Unranked play with strangers, peer to peer. ${PEER_IP_NOTICE}`,
   );
   const leave = button("Leave queue", "", callbacks.onLeave);
+  const stay = button("Stay together", "primary", callbacks.onStayTogether);
   const again = button("Queue again", "primary", callbacks.onQueueAgain);
   const back = button("Back to menu", "primary", callbacks.onBack);
   const actions = h("div", "menu-row queue-actions");
-  actions.append(leave, again, back);
+  actions.append(leave, stay, again, back);
   panel.append(body, splashHost, notice, actions);
   root.appendChild(panel);
 
@@ -304,6 +351,11 @@ export function mountQueueScreen(
     back.hidden = lines.action !== "back" && lines.action !== "ended";
     // After a match, *Queue again* is the default; *Back to menu* is not.
     back.classList.toggle("primary", lines.action !== "ended");
+    stay.hidden = lines.stay === undefined;
+    stay.textContent = lines.stay?.label ?? "";
+    stay.disabled = lines.stay?.enabled !== true;
+    // *Stay together* leads while it is offered; *Queue again* is the next.
+    again.classList.toggle("primary", lines.stay === undefined);
   };
 
   /** Flash the title once per match found, not on every repaint of it. */
@@ -315,7 +367,7 @@ export function mountQueueScreen(
     }
   };
 
-  const showState = (state: QueueState): void => {
+  const showState = (state: QueueState, note: string | undefined): void => {
     if (state.kind === "fell-through") {
       fellThroughUntil = now() + FELL_THROUGH_SHOWN_MS;
     }
@@ -324,14 +376,15 @@ export function mountQueueScreen(
     } else {
       found = false;
     }
-    set(queueLines(state, now() < fellThroughUntil));
+    const lines = queueLines(state, now() < fellThroughUntil);
+    set(note === undefined ? lines : { ...lines, problem: note });
   };
 
   return {
     show: (view) => {
       switch (view.kind) {
         case "queue":
-          showState(view.state);
+          showState(view.state, view.note);
           return;
         case "splash":
           matchFound();
@@ -344,7 +397,7 @@ export function mountQueueScreen(
           set({ status: "Could not join the match", problem: view.notice, action: "back" });
           return;
         case "ended":
-          set(endedLines(view.outcome, view.streak));
+          set(endedLines(view.outcome, view.streak, view.stay));
           return;
       }
     },
