@@ -296,6 +296,13 @@ const status = {
       `<path d="M7 19c0-6 4-10.5 10-10.5 0 6-4 10.5-10 10.5z" ${stroke(c, 1.8)}/>` +
       `<path d="M7 19l6.5-6.5" ${stroke(c, 1.8)}/>`,
   ],
+  // Stance: an arrow come round, spells back sooner (#938).
+  "mantra-of-recovery": [
+    "stance",
+    (c) =>
+      `<path d="M16.5 10.5A5 5 0 1 0 17 15" ${stroke(c, 2)}/>` +
+      `<path d="M14 9.5l3.5-1 .5 3.5z" fill="${c}"/>`,
+  ],
   // Preparation: one drop, your attacks poison (#525).
   "apply-poison": [
     "preparation",
@@ -351,6 +358,14 @@ const status = {
     "hex",
     (c) => `<path d="M14.5 8L11 12l3.5 4M11 8L7.5 12l3.5 4" ${stroke(c, 2)}/>`,
   ],
+  // Hex: three ice spikes falling, the cold slowing you (#938).
+  "ice-spikes": [
+    "hex",
+    (c) =>
+      `<path d="M7.5 7l1.5 10 1.5-10zM10.5 7l1.5 11 1.5-11zM13.5 7l1.5 10 1.5-10z" fill="${c}"/>`,
+  ],
+  // Hex: a snowflake, the ground frozen under you (#938).
+  "deep-freeze": ["hex", (c) => `<path d="M12 6v12M6.8 9l10.4 6M6.8 15l10.4-6" ${stroke(c, 2)}/>`],
   // Enchantment: a shield in outline with a blow glancing off it, block (#534).
   guardian: [
     "enchantment",
@@ -677,6 +692,8 @@ const skillGlyph = {
   lightning: () => inkLine("M15 2.5L8.5 12.5H15.5L9 21.5", 2.6),
   // An ice shard in flight, with its trail (#918).
   shard: () => inkFill("M21 3L18 13L11 6Z") + inkLine("M12.5 11.5L4 20M9 9L5 13M15 15L11 19", 2),
+  // A snowflake (#938): the area frozen, not a shard flying.
+  snowflake: () => inkLine("M12 3V21M4.2 7.5L19.8 16.5M4.2 16.5L19.8 7.5", 2.4),
   axe: () =>
     inkLine("M5 20L16 7", 2.4) + inkFill("M11 3.5C17 2.5 21.5 5 21 9C20.5 13 16.5 15 14 12.5Z"),
   sword: () =>
@@ -689,6 +706,15 @@ const skillGlyph = {
     inkLine("M5 20L14 11", 2.4) +
     `<rect x="11" y="3.5" width="10" height="7" rx="1" transform="rotate(45 16 7)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>`,
   spear: () => inkLine("M12 21V9", 2.4) + inkFill("M12 2.5L16.5 10H7.5Z"),
+  // A spearhead on a shaft that is a bolt: a spear thrown as lightning (#934).
+  "spear-bolt": () => inkFill("M12 2.5L16.5 10H7.5Z") + inkLine("M12 10L9 14.5L15 16L12 21.5", 2.4),
+  // A pennant on a pole: a shout that rallies (#934).
+  // The pennant hollow, a cross in it: a rally that heals (#934).
+  "banner-cross": () =>
+    inkLine("M6 3V21", 2.4) +
+    `<path d="M6 4H19.5L15.5 8.75L19.5 13.5H6Z" ${stroke(C.ink, 1.6)}/>` +
+    inkFill("M10.5 6.2h2v1.8h1.8v2h-1.8v1.8h-2v-1.8H8.7v-2h1.8z"),
+  banner: () => inkLine("M6 3V21", 2.4) + inkFill("M6 4H19.5L15.5 8.75L19.5 13.5H6Z"),
   arrow: () => inkLine("M4 20L15 9", 2.2) + inkFill("M21 3L11.5 6L18 12.5Z"),
   volley: () =>
     [-4.5, 0, 4.5]
