@@ -177,6 +177,7 @@ describe("describeSkill", () => {
       ["monk.healing-prayers", 12],
       ["dervish.mysticism", 12],
       ["ranger.marksmanship", 12],
+      ["ritualist.restoration-magic", 12],
     ]);
     const lines = (id: string) => describeSkill(skill(id), ranks).effects.map((e) => e.text);
     expect(lines("monk.word-of-healing")).toEqual([
@@ -190,6 +191,10 @@ describe("describeSkill", () => {
     expect(lines("ranger.savage-shot")).toEqual([
       "If target is casting a spell: +25 damage",
       "Interrupts the target's current cast, if they are casting",
+    ]);
+    expect(lines("ritualist.wielders-boon")).toEqual([
+      "Heals for 51",
+      "If target has a weapon spell: heals for 63",
     ]);
   });
 
@@ -407,6 +412,25 @@ describe("describeStatus", () => {
     withAttackDuration({ bleeding: 0.67 }, () => {
       expect(describeStatus("bleeding")).toContain("attacks 33% faster");
     });
+  });
+
+  it("says the curses' triggers from the bearer's side, two alike once (#935)", () => {
+    expect(describeStatus("spiteful-spirit")).toBe(
+      "takes 39 damage whenever it uses a skill or attacks, " +
+        "its adjacent allies take 39 damage whenever it uses a skill or attacks",
+    );
+    expect(describeStatus("mark-of-pain")).toBe(
+      "its adjacent allies take 34 damage whenever it takes physical damage",
+    );
+    expect(describeStatus("insidious-parasite")).toBe(
+      "its caster steals 39 Health whenever it hits with an attack",
+    );
+    expect(
+      describeSkill(
+        skill("necromancer.vampiric-gaze"),
+        new Map([["necromancer.blood-magic", 12]]),
+      ).effects.map(({ text }) => text),
+    ).toEqual(["Steals up to 52 Health"]);
   });
 
   it("returns the id for an unknown status rather than throwing", () => {

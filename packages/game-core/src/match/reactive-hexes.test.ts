@@ -289,3 +289,320 @@ describe("reactive hexes together (#469)", () => {
     expect(fired(log, BACKFIRE)).toEqual([]);
   });
 });
+
+const SPITEFUL_SPIRIT = "necromancer.spiteful-spirit";
+const INSIDIOUS_PARASITE = "necromancer.insidious-parasite";
+const MARK_OF_PAIN = "necromancer.mark-of-pain";
+const VAMPIRIC_GAZE = "necromancer.vampiric-gaze";
+
+/** The Necromancer: the three curses and Vampiric Gaze, at rank 12. */
+function necro(id: string, spawn: Vec2): ParticipantSpec {
+  return {
+    id,
+    team: 1,
+    skillBar: [SPITEFUL_SPIRIT, INSIDIOUS_PARASITE, MARK_OF_PAIN, VAMPIRIC_GAZE],
+    attributeRanks: new Map([
+      ["necromancer.curses", 12],
+      ["necromancer.blood-magic", 12],
+    ]),
+    equipment: unarmedResolvedEquipment(60),
+    maxHealth: 1e4,
+    startHealthFraction: 0.5,
+    maxEnergy: 1000,
+    spawn,
+    facing: 0,
+  };
+}
+
+/** Every entry `skillId`'s trigger logged, whoever put it on. */
+function triggered(log: readonly CombatLogEntry[], skillId: string): CombatLogEntry[] {
+  return log.filter((entry) => entry.skillId === skillId && entry.cause === "skill");
+}
+
+function eventsOf<K extends CombatLogEntry["events"][number]["kind"]>(
+  entries: readonly CombatLogEntry[],
+  kind: K,
+): Extract<CombatLogEntry["events"][number], { kind: K }>[] {
+  return entries.flatMap((entry) =>
+    entry.events.filter(
+      (event): event is Extract<CombatLogEntry["events"][number], { kind: K }> =>
+        event.kind === kind,
+    ),
+  );
+}
+
+/** Each weapon blow `a` landed on `m`. */
+function weaponHits(log: readonly CombatLogEntry[]): number {
+  return damageTo(
+    log.filter((entry) => entry.cause === "weapon" && entry.sourceId === "a"),
+    "m",
+  ).length;
+}
+
+describe("the Necromancer's curses are cast as their hexes (#935)", () => {
+  it("each lands its hex for its rank-12 duration, from range", () => {
+    const match = new MatchSimulation({
+      seed: "curses",
+      participants: [fighter("a", vec2(0, 0)), necro("n", vec2(300, 0))],
+    });
+    match.setTarget("n", "a");
+    for (const [slot, statusId, seconds] of [
+      [0, "spiteful-spirit", 22],
+      [1, "insidious-parasite", 13],
+      [2, "mark-of-pain", 30],
+    ] as const) {
+      expect(match.requestSkill("n", slot)?.check).toEqual({ ok: true });
+      const log = stepFor(match, 3);
+      expect(log.flatMap((entry) => entry.events)).toContainEqual({
+        kind: "status-applied",
+        targetId: "a",
+        statusId,
+        durationSeconds: seconds,
+      });
+      expect(get(match, "a").statuses.get(statusId)?.sourceId).toBe("n");
+    }
+  });
+});
+
+describe("Spiteful Spirit (#935)", () => {
+  /**
+   * Bearer `a` with ally `b` beside it and ally `far` at twice adjacent;
+   * the hex's source `m` and its ally `m2`, both beside `a`.
+   */
+  function spiteful(weapon: Weapon = WEAPONS.axe): MatchSimulation {
+    const match = new MatchSimulation({
+      seed: "spiteful-spirit",
+      participants: [
+        fighter("a", vec2(0, 0), weapon),
+        fighter("b", vec2(0, 35)),
+        fighter("far", vec2(0, -80)),
+        mesmer("m", vec2(40, 0)),
+        mesmer("m2", vec2(-35, 0)),
+      ],
+    });
+    get(match, "a").statuses.apply("spiteful-spirit", 22, "m");
+    return match;
+  }
+
+  it("a spell costs the bearer and each ally beside it 39 shadow, once", () => {
+    const match = spiteful();
+    use(match, 2);
+    const entries = fired(stepFor(match, 2.5), SPITEFUL_SPIRIT);
+    expect(entries).toHaveLength(1);
+    expect(damageTo(entries, "a")).toEqual([39]);
+    expect(damageTo(entries, "b")).toEqual([39]);
+    expect(damageTo(entries, "far")).toEqual([]);
+    expect(damageTo(entries, "m2")).toEqual([]);
+    expect(describeStatus("spiteful-spirit")).toBe(
+      "takes 39 damage whenever it uses a skill or attacks, " +
+        "its adjacent allies take 39 damage whenever it uses a skill or attacks",
+    );
+  });
+
+  it("a signet fires it once, an attack skill twice", () => {
+    const match = spiteful();
+    expect(match.requestSkill("a", 3)?.check).toEqual({ ok: true });
+    expect(damageTo(fired(stepFor(match, 2.5), SPITEFUL_SPIRIT), "a")).toEqual([39]);
+    use(match, 0);
+    expect(damageTo(fired(stepFor(match, 1), SPITEFUL_SPIRIT), "a")).toEqual([39, 39]);
+  });
+
+  it("each auto-attack swing fires it once", () => {
+    const match = spiteful();
+    expect(match.requestAttack("a", "m")).toEqual({ ok: true });
+    const log = stepFor(match, 3);
+    const swings = log.filter((entry) => entry.cause === "weapon" && entry.sourceId === "a");
+    expect(swings.length).toBeGreaterThanOrEqual(2);
+    expect(damageTo(fired(log, SPITEFUL_SPIRIT), "a")).toEqual(swings.map(() => 39));
+  });
+
+  it("a kill by its own damage comes after the skill has landed", () => {
+    const match = spiteful();
+    get(match, "a").health = 30;
+    use(match, 2);
+    const log = stepFor(match, 2.5);
+    expect(get(match, "m").statuses.has("malaise")).toBe(true);
+    expect(eventsOf(fired(log, SPITEFUL_SPIRIT), "death")).toContainEqual({
+      kind: "death",
+      targetId: "a",
+    });
+  });
+});
+
+describe("Mark of Pain (#935)", () => {
+  /**
+   * Bearer `m`, put on by `a`, with its ally `m2` beside it and its ally
+   * `m3` at twice adjacent; `a` beside `m`.
+   */
+  function marked(): MatchSimulation {
+    const match = new MatchSimulation({
+      seed: "mark-of-pain",
+      participants: [
+        fighter("a", vec2(0, 0)),
+        mesmer("m", vec2(40, 0)),
+        mesmer("m2", vec2(75, 0)),
+        mesmer("m3", vec2(40, 80)),
+      ],
+    });
+    get(match, "m").statuses.apply("mark-of-pain", 30, "a");
+    return match;
+  }
+
+  it("each physical blow costs the allies beside the bearer 34 shadow, never the bearer", () => {
+    const match = marked();
+    expect(match.requestAttack("a", "m")).toEqual({ ok: true });
+    const log = stepFor(match, 3);
+    const hits = weaponHits(log);
+    expect(hits).toBeGreaterThanOrEqual(2);
+    const entries = triggered(log, MARK_OF_PAIN);
+    expect(entries.map((entry) => entry.sourceId)).toEqual(entries.map(() => "a"));
+    expect(damageTo(entries, "m2")).toEqual(Array.from({ length: hits }, () => 34));
+    expect(damageTo(entries, "m")).toEqual([]);
+    expect(damageTo(entries, "m3")).toEqual([]);
+    expect(describeStatus("mark-of-pain")).toBe(
+      "its adjacent allies take 34 damage whenever it takes physical damage",
+    );
+  });
+
+  it("two bearers side by side never chain: its damage is shadow", () => {
+    const match = marked();
+    get(match, "m2").statuses.apply("mark-of-pain", 30, "a");
+    use(match, 0);
+    const entries = triggered(stepFor(match, 1), MARK_OF_PAIN);
+    expect(entries).toHaveLength(1);
+    expect(damageTo(entries, "m2")).toEqual([34]);
+    expect(damageTo(entries, "m")).toEqual([]);
+  });
+
+  it("an attack skill's blow is one firing, though it carries its bonus", () => {
+    const match = marked();
+    use(match, 0);
+    expect(damageTo(triggered(stepFor(match, 1), MARK_OF_PAIN), "m2")).toEqual([34]);
+  });
+
+  it("a blocked blow, a Fireball and bleeding fire nothing", () => {
+    const blocked = marked();
+    get(blocked, "m").statuses.apply("guardian", 30, "m");
+    get(blocked, "m").statuses.apply("bleeding", 30, "a");
+    expect(blocked.requestAttack("a", "m")).toEqual({ ok: true });
+    const log = stepFor(blocked, 6);
+    const blocks = log.flatMap((entry) =>
+      entry.events.filter((event) => event.kind === "attack-blocked"),
+    );
+    expect(blocks.length).toBeGreaterThan(0);
+    expect(weaponHits(log)).toBeGreaterThan(0);
+    // Only the blows that landed fire it; bleeding never does.
+    expect(triggered(log, MARK_OF_PAIN).length).toBe(weaponHits(log));
+
+    const fire = marked();
+    use(fire, 1);
+    const fireLog = stepFor(fire, 4);
+    expect(damageTo(fireLog, "m").length).toBeGreaterThan(0);
+    expect(triggered(fireLog, MARK_OF_PAIN)).toEqual([]);
+  });
+});
+
+describe("Insidious Parasite (#935)", () => {
+  /** Bearer `a`, hexed by `n`, beside its target `m`. */
+  function parasite(weapon: Weapon = WEAPONS.axe): MatchSimulation {
+    const match = new MatchSimulation({
+      seed: "insidious-parasite",
+      participants: [
+        fighter("a", vec2(0, 0), weapon),
+        mesmer("m", vec2(40, 0)),
+        necro("n", vec2(0, 300)),
+      ],
+    });
+    get(match, "a").statuses.apply("insidious-parasite", 13, "n");
+    return match;
+  }
+
+  it("each landed blow, double strikes included, steals 39 for its caster", () => {
+    for (const weapon of [WEAPONS.axe, WEAPONS.daggers]) {
+      const match = parasite(weapon);
+      expect(match.requestAttack("a", "m")).toEqual({ ok: true });
+      const log = stepFor(match, 4);
+      const hits = weaponHits(log);
+      expect(hits).toBeGreaterThanOrEqual(2);
+      const entries = triggered(log, INSIDIOUS_PARASITE);
+      expect(entries.map((entry) => entry.sourceId)).toEqual(entries.map(() => "n"));
+      expect(eventsOf(entries, "life-stolen")).toEqual(
+        Array.from({ length: hits }, () => ({ kind: "life-stolen", targetId: "a", amount: 39 })),
+      );
+      expect(eventsOf(entries, "heal")).toEqual(
+        Array.from({ length: hits }, () => ({ kind: "heal", targetId: "n", amount: 39 })),
+      );
+      expect(get(match, "n").health).toBe(5000 + 39 * hits);
+    }
+    expect(describeStatus("insidious-parasite")).toBe(
+      "its caster steals 39 Health whenever it hits with an attack",
+    );
+  });
+
+  it("a blocked blow and a spell steal nothing", () => {
+    const blocked = parasite();
+    get(blocked, "m").statuses.apply("guardian", 30, "m");
+    expect(blocked.requestAttack("a", "m")).toEqual({ ok: true });
+    const log = stepFor(blocked, 4);
+    expect(log.some((entry) => entry.events.some((event) => event.kind === "attack-blocked"))).toBe(
+      true,
+    );
+    expect(triggered(log, INSIDIOUS_PARASITE).length).toBe(weaponHits(log));
+
+    const spell = parasite();
+    use(spell, 2);
+    expect(triggered(stepFor(spell, 2.5), INSIDIOUS_PARASITE)).toEqual([]);
+  });
+
+  it("a dead caster steals nothing", () => {
+    const match = new MatchSimulation({
+      seed: "insidious-parasite",
+      participants: [fighter("a", vec2(0, 0)), mesmer("m", vec2(40, 0)), necro("n", vec2(0, 300))],
+      matchRules: {
+        victory: "kill-count",
+        scoreToWin: 10,
+        timeLimitSeconds: 600,
+        deathRule: "respawn",
+        respawnSeconds: 100,
+        deathPenalty: false,
+      },
+    });
+    get(match, "a").statuses.apply("insidious-parasite", 13, "n");
+    const caster = get(match, "n");
+    caster.health = 1;
+    caster.statuses.apply("bleeding", 10, "a");
+    stepFor(match, 0.5);
+    expect(caster.dead).toBe(true);
+    expect(match.requestAttack("a", "m")).toEqual({ ok: true });
+    const log = stepFor(match, 3);
+    expect(weaponHits(log)).toBeGreaterThan(0);
+    expect(triggered(log, INSIDIOUS_PARASITE)).toEqual([]);
+    expect(get(match, "a").health).toBe(1e4);
+  });
+});
+
+describe("Vampiric Gaze (#935)", () => {
+  it("steals 52 at rank 12: no armor, no adrenaline for the victim, no Mark of Pain", () => {
+    const a = fighter("a", vec2(0, 0));
+    const match = new MatchSimulation({
+      seed: "vampiric-gaze",
+      participants: [
+        { ...a, skillBar: [...a.skillBar, SEVER_ARTERY], maxHealth: 4 * 52 },
+        fighter("b", vec2(0, 35)),
+        necro("n", vec2(300, 0)),
+      ],
+    });
+    get(match, "a").statuses.apply("mark-of-pain", 30, "n");
+    match.setTarget("n", "a");
+    expect(match.requestSkill("n", 3)?.check).toEqual({ ok: true });
+    const log = stepFor(match, 2);
+    const gaze = log.filter((entry) => entry.skillId === VAMPIRIC_GAZE);
+    expect(gaze.flatMap((entry) => entry.events)).toEqual([
+      { kind: "life-stolen", targetId: "a", amount: 52 },
+      { kind: "heal", targetId: "n", amount: 52 },
+    ]);
+    expect(get(match, "a").health).toBe(4 * 52 - 52);
+    expect(strikesOf(get(match, "a"), SEVER_ARTERY)).toBe(0);
+    expect(triggered(log, MARK_OF_PAIN)).toEqual([]);
+  });
+});

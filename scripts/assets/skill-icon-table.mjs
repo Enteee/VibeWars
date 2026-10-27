@@ -71,6 +71,9 @@ export const SKILL_ICONS = {
   "necromancer.enfeebling-blood": { glyph: "sword", modifier: "area" },
   "paragon.anthem-of-flame": { glyph: "flame", modifier: "area" },
   "ritualist.weapon-of-warding": { glyph: "armor", modifier: "up" },
+  "ritualist.mend-body-and-soul": { glyph: "cleanse", modifier: "area" },
+  "ritualist.spirit-light": { glyph: "flask", modifier: "bleed" },
+  "ritualist.wielders-boon": { glyph: "sword", modifier: "less" },
   "mesmer.power-spike": { glyph: "interrupt", modifier: "down" },
   "mesmer.power-drain": { glyph: "interrupt", modifier: "up" },
   "mesmer.power-block": { glyph: "interrupt", modifier: "clock" },
@@ -84,6 +87,10 @@ export const SKILL_ICONS = {
   "dervish.wounding-strike": { glyph: "axe", modifier: "down" },
   "dervish.signet-of-pious-light": { glyph: "heal", modifier: "less" },
   "dervish.pious-restoration": { glyph: "cleanse", modifier: "self" },
+  "dervish.vow-of-strength": { glyph: "axe", modifier: "area" },
+  "dervish.sand-shards": { glyph: "shard", modifier: "up" },
+  "dervish.pious-haste": { glyph: "dash", modifier: "self" },
+  "dervish.victorious-sweep": { glyph: "axe", modifier: "self" },
   "ranger.savage-shot": { glyph: "arrow" },
   "ranger.distracting-shot": { glyph: "interrupt", modifier: "less" },
   "mesmer.energy-burn": { glyph: "flame", modifier: "down" },
@@ -103,14 +110,20 @@ export const SKILL_ICONS = {
   "mesmer.leech-signet": { glyph: "interrupt", modifier: "self" },
   // A placeholder: no modifier yet says "per enchantment or hex" (#920).
   "monk.dwaynas-kiss": { glyph: "heal", modifier: "stun" },
-  "warrior.cyclone-axe": { glyph: "axe", modifier: "area" },
-  // A placeholder: no glyph yet says "adrenaline" (#936).
-  "warrior.for-great-justice": { glyph: "axe", modifier: "self" },
+  // A placeholder: the loop reads as the spin; axe/area is Vow of Strength's (#936).
+  "warrior.cyclone-axe": { glyph: "axe", modifier: "upkeep" },
+  // A shout for yourself: the banner with the self mark (#936).
+  "warrior.for-great-justice": { glyph: "banner", modifier: "self" },
   // A hit taken is capped: armor with the "less" mark (#936).
   "monk.protective-spirit": { glyph: "armor", modifier: "less" },
-  // Your own blood, given: heal with the bleed drop (#936).
-  "monk.infuse-health": { glyph: "heal", modifier: "bleed" },
+  // Your own life, given: the resurrect glyph with the bleed drop (#936).
+  "monk.infuse-health": { glyph: "resurrect", modifier: "bleed" },
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },
   "paragon.never-surrender": { glyph: "banner", modifier: "area" },
   "paragon.leaders-comfort": { glyph: "banner-cross", modifier: "self" },
+  // Placeholders from existing glyphs (#935).
+  "necromancer.spiteful-spirit": { glyph: "fireball", modifier: "down" },
+  "necromancer.insidious-parasite": { glyph: "chain", modifier: "self" },
+  "necromancer.mark-of-pain": { glyph: "hammer", modifier: "area" },
+  "necromancer.vampiric-gaze": { glyph: "heal", modifier: "bleed" },
 };

@@ -38,6 +38,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   contagion: icon("contagion"),
   "shard-storm": icon("shard-storm"),
   "shadow-of-fear": icon("shadow-of-fear"),
+  "spiteful-spirit": icon("spiteful-spirit"),
+  "insidious-parasite": icon("insidious-parasite"),
+  "mark-of-pain": icon("mark-of-pain"),
   "ice-spikes": icon("ice-spikes"),
   "deep-freeze": icon("deep-freeze"),
   regeneration: icon("regeneration"),
@@ -64,6 +67,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "mystic-regeneration": icon("mystic-regeneration"),
   "fleeting-stability": icon("fleeting-stability"),
   "heart-of-fury": icon("heart-of-fury"),
+  "vow-of-strength": icon("vow-of-strength"),
+  "sand-shards": icon("sand-shards"),
+  "pious-haste": icon("pious-haste"),
+  "pious-haste-run": icon("pious-haste-run"),
   "never-surrender": icon("never-surrender"),
 };
 
