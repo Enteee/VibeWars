@@ -44,7 +44,7 @@ async function arenaShot(page: Page, canvas: Locator): Promise<Buffer> {
   return canvas.screenshot({
     mask: [
       page.locator(".hud"),
-      page.locator(".hud-scoreboard"),
+      page.locator(".hud-top"),
       page.locator(".hud-result"),
       page.locator(".hud-controls"),
     ],
@@ -102,6 +102,7 @@ async function readEnergy(page: Page): Promise<number> {
 }
 
 test("a match renders the arena and a populated HUD", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
   await startSoloMatch(page);
 
   await expect(page.locator(".hud-skills .hud-skill")).toHaveCount(8);
@@ -114,6 +115,33 @@ test("a match renders the arena and a populated HUD", async ({ page }) => {
   expect(bar !== null && last !== null && bar.x + bar.width - (last.x + last.width)).toBeLessThan(
     2,
   );
+
+  // Laid out as GW1 (#1042): the target frame top centre under the
+  // scoreboard, your bars and skill bar bottom centre, health over energy.
+  const box = async (
+    selector: string,
+  ): Promise<{ x: number; y: number; width: number; height: number }> => {
+    const found = await page.locator(selector).boundingBox();
+    if (found === null) {
+      throw new Error(`${selector} has no box`);
+    }
+    return found;
+  };
+  const centre = (of: { x: number; width: number }): number => of.x + of.width / 2;
+  const target = await box(".hud-target");
+  const scoreboard = await box(".hud-scoreboard");
+  expect(Math.abs(centre(target) - 640)).toBeLessThan(2);
+  expect(target.y).toBeGreaterThan(scoreboard.y + scoreboard.height);
+  expect(target.y).toBeLessThan(720 * 0.3);
+  const skills = await box(".hud-skills");
+  expect(Math.abs(centre(skills) - 640)).toBeLessThan(2);
+  expect(720 - (skills.y + skills.height)).toBeLessThan(1.5 * 16);
+  const health = await box(".hud-bar-health");
+  const energy = await box(".hud-bar-energy");
+  expect(health.y + health.height).toBeLessThanOrEqual(energy.y);
+  expect(energy.y + energy.height).toBeLessThanOrEqual(skills.y);
+  expect(Math.abs(health.width - skills.width)).toBeLessThan(2);
+  expect(Math.abs(energy.width - skills.width)).toBeLessThan(2);
 });
 
 test("hovering a slot shows its tooltip at the host's ranks, above the bar (#485)", async ({
