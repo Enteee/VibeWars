@@ -187,6 +187,17 @@ describe("describeSkill", () => {
     expect(describeSkill(skill("mesmer.power-spike"), ranks).headline).toBe("102 damage");
   });
 
+  it("words Concussion Shot's spell-only interrupt and its daze (#1008)", () => {
+    const ranks = new Map([["ranger.marksmanship", 12]]);
+    expect(
+      describeSkill(skill("ranger.concussion-shot"), ranks).effects.map((e) => e.text),
+    ).toEqual([
+      "+13 damage",
+      "Interrupts the target's spell, if they are casting one",
+      "If that action was a spell: applies Dazed for 17s (spells take 2× as long to cast, spells are interrupted by attacks)",
+    ]);
+  });
+
   it("says what a disable locks out, and for how long (#914)", () => {
     const ranks = new Map([
       ["mesmer.domination-magic", 12],
@@ -324,6 +335,7 @@ describe("describeSkill", () => {
           (entry.attack?.chain === undefined ? 0 : 1) +
           (entry.attack?.bonusDamage === undefined ? 0 : 1) +
           (entry.attack?.weapon === "scythe" && entry.area === undefined ? 1 : 0) +
+          (entry.attack?.cleavesAllWhen === undefined ? 0 : 1) +
           (entry.attack?.conditionalBonus === undefined ? 0 : 1) +
           ((entry.attack?.armorPenetration ?? 0) > 0 ? 1 : 0) +
           lines(entry.attack?.onBlocked ?? []) +
@@ -381,6 +393,24 @@ describe("attack skills (#417)", () => {
     expect(
       describeSkill(skill("elementalist.mind-shock")).effects.map(({ text }) => text),
     ).toContain("If you have more Energy than target: knocks down for 2s");
+  });
+
+  it("words the #997 conditions: moving, has a status, lacks it", () => {
+    const ranks = new Map([
+      ["elementalist.water-magic", 12],
+      ["elementalist.earth-magic", 12],
+      ["elementalist.fire-magic", 12],
+    ]);
+    const texts = (id: string): string[] =>
+      describeSkill(skill(id), ranks).effects.map(({ text }) => text);
+    expect(texts("elementalist.water-trident")).toContain(
+      "If target is moving: knocks down for 2s",
+    );
+    expect(texts("elementalist.stoning")).toContain("If target has Weakness: knocks down for 2s");
+    expect(texts("elementalist.searing-flames")).toEqual([
+      "If target has Burning: deals 82 damage",
+      "If target does not have Burning: applies Burning for 6s (−7 Health degeneration)",
+    ]);
   });
 
   it("words Aftershock's bonus on a foe that is down (#985)", () => {

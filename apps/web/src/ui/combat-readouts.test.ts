@@ -256,6 +256,17 @@ describe("describeCombatEvent", () => {
     );
   });
 
+  it("says a spell-only interrupt let a chant through: not a spell (#1008)", () => {
+    const chant: CombatEvent = {
+      kind: "interrupt-missed",
+      targetId: "dummy",
+      refusedSkillId: "paragon.anthem-of-flame",
+    };
+    expect(
+      describeCombatEvent(entry([chant], { skillId: "ranger.concussion-shot" }), chant, nameOf),
+    ).toBe("Concussion Shot (Pyro) can't interrupt Caster dummy's Anthem of Flame: not a spell");
+  });
+
   it("says whose skill a disable held back, and for how long (#914)", () => {
     const disabled: CombatEvent = {
       kind: "skill-disabled",

@@ -86,6 +86,22 @@ export function builds({ mirror, scratch, logFile, log }, sha) {
       log(`could not unpack ${sha}`);
       return false;
     }
+    // The scratch sits inside the operator's checkout. Without a repository of
+    // its own, devenv installs the git hooks into that one, pointing them at a
+    // config no worktree has, so every commit there fails.
+    // Staged, because nix reads only tracked files from a git tree.
+    for (const args of [
+      ["init", "-q"],
+      ["add", "-A"],
+    ]) {
+      const step = spawnSync("git", [...GIT_HARDENING, "-C", scratch, ...args], {
+        env: { ...process.env, ...GIT_ENV },
+      });
+      if (step.status !== 0) {
+        log("scratch repository: git " + String(args[0]) + " failed");
+        return false;
+      }
+    }
     return devenvShell(["claude-llc", "--help"], scratch, logFile, log) === 0;
   } finally {
     fs.rmSync(scratch, { recursive: true, force: true });
