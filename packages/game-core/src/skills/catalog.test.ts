@@ -18,7 +18,12 @@ import type { Combatant } from "./types.js";
 /** A hammer in hand, for the hammer's attack skills. */
 const HAMMER = {
   ...unarmedResolvedEquipment(MINIMAL_GW_INSPIRED_PVP_V1.combat.armorReferenceLevel),
-  mainHand: { weapon: WEAPONS.hammer, attributeId: "warrior.hammer-mastery", requirementMet: true },
+  mainHand: {
+    weapon: WEAPONS.hammer,
+    attributeId: "warrior.hammer-mastery",
+    damageType: WEAPONS.hammer.damageType,
+    requirementMet: true,
+  },
 };
 
 describe("skill catalog integrity", () => {

@@ -180,6 +180,7 @@ function dummyEquipment(dummy: TrainingDummy): ResolvedEquipment {
     mainHand: {
       weapon,
       attributeId,
+      damageType: weapon.damageType,
       requirementMet:
         attributeId === undefined || (dummy.attributeRanks[attributeId] ?? 0) >= requirement.rank,
     },
@@ -357,7 +358,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     id: "condition-removal",
     label: "Condition removal",
     teaches:
-      "That a condition removal takes off only what it says: an ally at 200 of 500 carries five conditions, and deep wound among them caps your heals at 400.",
+      "That a condition removal takes off only what it says: an ally at 200 of 500 carries five conditions, and deep wound among them takes 100 as it lands and caps your heals at 400.",
     mapId: "training-hall",
     exercises: ["conditions"],
     knobs: [],

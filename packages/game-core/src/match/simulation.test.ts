@@ -771,6 +771,38 @@ describe("a dummy's status on a rune wearer (#464)", () => {
   });
 });
 
+describe("a dummy's deep wound (#764, #800)", () => {
+  it("logs the health it takes as health lost, from the dummy, not as damage", () => {
+    const sim = new MatchSimulation({
+      seed: "deep-wound",
+      participants: [
+        spec("a", 0, vec2(0, 0)),
+        spec("b", 1, vec2(200, 0), {
+          behaviour: {
+            kind: "apply-status-cadence",
+            statusId: "deep-wound",
+            durationSeconds: 10,
+            everySeconds: 60,
+            targeting: { kind: "nearest-enemy" },
+          },
+        }),
+      ],
+    });
+    const before = participant(sim, "a").combatant.health;
+
+    const log = sim.step(DT).log;
+
+    const lost = log.filter((entry) => entry.events.some((event) => event.kind === "health-lost"));
+    expect(lost).toHaveLength(1);
+    expect(lost[0]?.sourceId).toBe("b");
+    expect(lost[0]?.events).toEqual([
+      { kind: "health-lost", targetId: "a", amount: 100, statusId: "deep-wound" },
+    ]);
+    expect(log.some((entry) => entry.events.some((event) => event.kind === "damage"))).toBe(false);
+    expect(participant(sim, "a").combatant.health).toBe(before - 100);
+  });
+});
+
 describe("determinism", () => {
   it("two sims with the same seed and the same inputs write the same log", () => {
     const run = (): { log: CombatLogEntry[]; positions: Vec2[] } => {
@@ -895,6 +927,7 @@ describe("moving cancels a cast (#279)", () => {
               mainHand: {
                 weapon: WEAPONS.longbow,
                 attributeId: "ranger.marksmanship",
+                damageType: WEAPONS.longbow.damageType,
                 requirementMet: true,
               },
             },

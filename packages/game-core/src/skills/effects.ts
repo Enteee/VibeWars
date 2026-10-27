@@ -1,9 +1,10 @@
 import { DIVINE_FAVOR_ATTRIBUTE, divineFavorBonusHeal } from "../primary-attributes.js";
 import { getSkill } from "./catalog.js";
-import { mitigate, spellDamage } from "./damage.js";
+import { mitigate, skillDamage } from "./damage.js";
+import { effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude } from "./scaling.js";
 import { getStatusDefinition, scaledStatusDuration, type StatusId } from "./status.js";
-import { rankOf } from "./tick.js";
+import { effectiveMaxHealth, healingMultiplierOf, maxHealthLossOf, rankOf } from "./tick.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import {
@@ -14,6 +15,7 @@ import {
   type EffectCondition,
   type InterruptEffect,
   type SkillEffect,
+  type StateCondition,
   type UnconditionalEffect,
 } from "./types.js";
 
@@ -40,6 +42,8 @@ export type CombatEvent =
     }
   | { readonly kind: "heal"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "energy-gain"; readonly targetId: string; readonly amount: number }
+  /** Energy the target actually lost (#793): never more than it had, never 0. */
+  | { readonly kind: "energy-loss"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "sacrifice"; readonly targetId: string; readonly amount: number }
   | { readonly kind: "death"; readonly targetId: string }
   | {
@@ -47,6 +51,16 @@ export type CombatEvent =
       readonly targetId: string;
       readonly statusId: StatusId;
       readonly durationSeconds: number;
+    }
+  /**
+   * Health a status took as it landed (#800): deep wound's share of
+   * maximum health. Not damage: nothing that reacts to damage sees it.
+   */
+  | {
+      readonly kind: "health-lost";
+      readonly targetId: string;
+      readonly amount: number;
+      readonly statusId: StatusId;
     }
   | { readonly kind: "status-removed"; readonly targetId: string; readonly statusId: StatusId }
   | { readonly kind: "status-expired"; readonly targetId: string; readonly statusId: StatusId }
@@ -75,7 +89,15 @@ export type CombatEvent =
       readonly skillId: string;
     }
   /** An interrupt that found nothing to interrupt — a wasted cast. */
-  | { readonly kind: "interrupt-missed"; readonly targetId: string }
+  | {
+      readonly kind: "interrupt-missed";
+      readonly targetId: string;
+      /**
+       * The skill the target was activating that the interrupt's filter
+       * refused (#796), or `null` when it was activating nothing.
+       */
+      readonly refusedSkillId: string | null;
+    }
   /** A blinded attack skill that swung and missed: paid for, no effect. */
   | { readonly kind: "attack-missed"; readonly targetId: string }
   /**
@@ -125,12 +147,19 @@ export function applyDamage(
   }
 }
 
-/** Heal, clamped so it can never exceed maximum health. The dead stay dead. */
+/**
+ * A heal from a skill: weakened by the target's healing reduction (deep
+ * wound), and clamped so it never exceeds the effective maximum health.
+ * The dead stay dead.
+ */
 function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): void {
   if (amount <= 0 || target.dead) {
     return;
   }
-  const applied = Math.min(amount, target.maxHealth - target.health);
+  const applied = Math.min(
+    amount * healingMultiplierOf(target),
+    effectiveMaxHealth(target) - target.health,
+  );
   if (applied <= 0) {
     return;
   }
@@ -139,19 +168,65 @@ function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): vo
 }
 
 /**
- * Give energy, clamped so it can never exceed maximum energy. The dead
+ * Give energy, clamped so it can never exceed the maximum overcast
+ * leaves (#461). The dead
  * gain none, and a gain that fills nothing is no event.
  */
 export function gainEnergy(target: Combatant, amount: number, events: CombatEvent[]): void {
   if (amount <= 0 || target.dead) {
     return;
   }
-  const applied = Math.min(amount, target.maxEnergy - target.energy);
+  const applied = Math.min(amount, effectiveMaxEnergy(target) - target.energy);
   if (applied <= 0) {
     return;
   }
   target.energy += applied;
   events.push({ kind: "energy-gain", targetId: target.id, amount: applied });
+}
+
+/**
+ * Take up to `amount` energy from `target`, never below 0 (#793). Only
+ * whole points go: the fraction regeneration has filled stays, as the
+ * bar shows it. Current energy alone; maximum energy is untouched. A
+ * loss that takes nothing is no event.
+ */
+function loseEnergy(target: Combatant, amount: number, events: CombatEvent[]): void {
+  const lost = Math.min(amount, Math.floor(target.energy));
+  if (lost <= 0) {
+    return;
+  }
+  target.energy -= lost;
+  events.push({ kind: "energy-loss", targetId: target.id, amount: lost });
+}
+
+/**
+ * The energy `targetId` lost to earlier effects of this skill (#793), read
+ * from `earlier`, the events its resolution has emitted so far.
+ */
+function energyLostBy(targetId: string, earlier: readonly CombatEvent[]): number {
+  let lost = 0;
+  for (const event of earlier) {
+    if (event.kind === "energy-loss" && event.targetId === targetId) {
+      lost += event.amount;
+    }
+  }
+  return lost;
+}
+
+/**
+ * `amount`, or with `perEnergyLost`, `amount` for each point `target` lost
+ * earlier in this resolution: 0 with no target or no loss (#793).
+ */
+function perEnergyLost(
+  effect: { readonly perEnergyLost?: true },
+  amount: number,
+  target: Combatant | undefined,
+  earlier: readonly CombatEvent[],
+): number {
+  if (effect.perEnergyLost === undefined) {
+    return amount;
+  }
+  return target === undefined ? 0 : amount * energyLostBy(target.id, earlier);
 }
 
 /**
@@ -221,19 +296,58 @@ export function interruptIfCastingSpell(target: Combatant, events: CombatEvent[]
 }
 
 /**
- * Whether `effect` may interrupt what `target` is casting (#521): any
- * cast, or with `only: "spell-or-chant"`, a spell or a chant alone.
+ * Apply (or refresh) a status, and take what it takes as it lands: a
+ * newly applied maximum health loss (deep wound) comes off current health
+ * too, never below 1, so it alone never kills (#764: GW1 defers the loss
+ * to the next health change; flooring it is the accepted approximation).
+ * A refresh takes nothing. Returns the health taken, for the caller to
+ * report as damage.
  */
-function interrupts(effect: InterruptEffect, target: Combatant): boolean {
-  if (effect.only === undefined) {
-    return true;
+export function applyStatus(
+  target: Combatant,
+  statusId: StatusId,
+  durationSeconds: number,
+  sourceId: string,
+): number {
+  const lossBefore = maxHealthLossOf(target);
+  if (!target.statuses.apply(statusId, durationSeconds, sourceId)) {
+    return 0;
   }
-  const cast = target.cast.activeCast;
-  const skill = cast === undefined ? undefined : getSkill(cast.skillId);
-  return skill !== undefined && (isSpell(skill.type) || skill.type === "chant");
+  const taken = Math.min(maxHealthLossOf(target) - lossBefore, target.health - 1);
+  if (taken <= 0) {
+    return 0;
+  }
+  target.health -= taken;
+  return taken;
 }
 
-export function applyEffect(effect: UnconditionalEffect, context: SkillContext): CombatEvent[] {
+/**
+ * The skill `target` is activating that `effect` may not interrupt (#521,
+ * #796), or `null`: with no `only`, any cast is fair game; with `only:
+ * "spell-or-chant"`, anything but a spell or a chant is refused.
+ */
+function refusedSkill(effect: InterruptEffect, target: Combatant): string | null {
+  const cast = target.cast.activeCast;
+  if (effect.only === undefined || cast === undefined) {
+    return null;
+  }
+  const skill = getSkill(cast.skillId);
+  return skill !== undefined && (isSpell(skill.type) || skill.type === "chant")
+    ? null
+    : cast.skillId;
+}
+
+/**
+ * Apply one effect to `context.target`. `earlier` is what this skill's
+ * resolution has emitted before it, for a `perEnergyLost` amount (#793)
+ * and an interrupt that finds its target already interrupted (#817); an
+ * effect applied on its own has nothing before it.
+ */
+export function applyEffect(
+  effect: UnconditionalEffect,
+  context: SkillContext,
+  earlier: readonly CombatEvent[] = [],
+): CombatEvent[] {
   const events: CombatEvent[] = [];
   const { caster, target } = context;
 
@@ -242,9 +356,18 @@ export function applyEffect(effect: UnconditionalEffect, context: SkillContext):
       if (target === undefined) {
         return events;
       }
-      // Spell damage respects armor. Before this, it did not — which is
-      // why a warrior and a monk took identical Fireballs.
-      const packet = spellDamage(resolveMagnitude(effect.amount, caster), effect.type);
+      // Physical and elemental skill damage respects armor; holy, shadow and
+      // typeless damage ignores it (#760).
+      const amount = perEnergyLost(
+        effect,
+        resolveMagnitude(effect.amount, caster),
+        target,
+        earlier,
+      );
+      if (amount <= 0) {
+        return events;
+      }
+      const packet = skillDamage(amount, effect.type, effect.armorPenetration);
       applyDamage(target, mitigate(packet, target, context.rules), false, events);
       return events;
     }
@@ -259,7 +382,19 @@ export function applyEffect(effect: UnconditionalEffect, context: SkillContext):
     }
 
     case "energy-gain": {
-      gainEnergy(caster, resolveMagnitude(effect.amount, caster), events);
+      gainEnergy(
+        caster,
+        perEnergyLost(effect, resolveMagnitude(effect.amount, caster), target, earlier),
+        events,
+      );
+      return events;
+    }
+
+    case "energy-loss": {
+      if (target === undefined || target.dead) {
+        return events;
+      }
+      loseEnergy(target, resolveMagnitude(effect.amount, caster), events);
       return events;
     }
 
@@ -286,13 +421,21 @@ export function applyEffect(effect: UnconditionalEffect, context: SkillContext):
         return events;
       }
       const durationSeconds = scaledStatusDuration(target, effect.statusId, effect.durationSeconds);
-      target.statuses.apply(effect.statusId, durationSeconds, caster.id);
+      const loss = applyStatus(target, effect.statusId, durationSeconds, caster.id);
       events.push({
         kind: "status-applied",
         targetId: target.id,
         statusId: effect.statusId,
         durationSeconds,
       });
+      if (loss > 0) {
+        events.push({
+          kind: "health-lost",
+          targetId: target.id,
+          amount: loss,
+          statusId: effect.statusId,
+        });
+      }
       // Applying Dazed interrupts a spell, even on a target already dazed.
       if (getStatusDefinition(effect.statusId).interruptsSpells) {
         interruptIfCastingSpell(target, events);
@@ -314,12 +457,19 @@ export function applyEffect(effect: UnconditionalEffect, context: SkillContext):
       if (target === undefined || target.dead) {
         return events;
       }
-      if (!interrupts(effect, target) || !interruptCast(target, events)) {
+      const refusedSkillId = refusedSkill(effect, target);
+      if (refusedSkillId !== null || !interruptCast(target, events)) {
+        // Already interrupted by this resolution, as by the daze its own
+        // blow brought down (#817): the player's interrupt landed, so it
+        // is no miss.
+        if (wasInterrupted(target.id, earlier)) {
+          return events;
+        }
         // Nothing it may interrupt was being cast: the interrupt is wasted. Emitted
-        // explicitly so a combat log can show the miss — landing an
+        // explicitly so a combat log can show the miss, and why — landing an
         // interrupt is a timing skill, and silently swallowing failures
         // would hide exactly the feedback that teaches it.
-        events.push({ kind: "interrupt-missed", targetId: target.id });
+        events.push({ kind: "interrupt-missed", targetId: target.id, refusedSkillId });
       }
       return events;
     }
@@ -339,18 +489,93 @@ export function applyEffect(effect: UnconditionalEffect, context: SkillContext):
   }
 }
 
+/** Whether `condition` is read from how things stand rather than from what came before (#794). */
+function isStateCondition(condition: EffectCondition): condition is StateCondition {
+  switch (condition.kind) {
+    case "interrupted":
+    case "removed":
+      return false;
+    case "target-health-below":
+    case "target-has":
+    case "target-casting":
+    case "caster-has":
+      return true;
+  }
+}
+
 /**
- * Whether an earlier effect of the same skill did what `condition` asks
- * to `targetId` (#521), read from the events it emitted.
+ * Whether `condition` holds for `target` and `caster` as they stand now
+ * (#794). Health is a share of the maximum a deep wound left; exactly
+ * the fraction is not below it.
+ */
+export function stateHolds(
+  condition: StateCondition,
+  caster: Combatant,
+  target: Combatant,
+): boolean {
+  switch (condition.kind) {
+    case "target-health-below":
+      return target.health < effectiveMaxHealth(target) * condition.fraction;
+    case "target-has":
+      return target.statuses.countByCategory(condition.category) > 0;
+    case "caster-has":
+      return caster.statuses.countByCategory(condition.category) > 0;
+    case "target-casting": {
+      const cast = target.cast.activeCast;
+      const skill = cast === undefined ? undefined : getSkill(cast.skillId);
+      return skill !== undefined && isSpell(skill.type);
+    }
+  }
+}
+
+/** No state held: a resolution with no target. */
+const NONE_HELD: ReadonlySet<EffectCondition> = new Set();
+
+/**
+ * The state conditions of the `if`s among `effects` that hold for
+ * `target`, read once before any of them lands (#794): a heal cannot
+ * lift its own target out of its bonus.
+ */
+function statesBefore(
+  effects: readonly SkillEffect[],
+  caster: Combatant,
+  target: Combatant | undefined,
+): ReadonlySet<EffectCondition> {
+  if (target === undefined) {
+    return NONE_HELD;
+  }
+  const held = new Set<EffectCondition>();
+  for (const effect of effects) {
+    if (
+      effect.kind === "if" &&
+      isStateCondition(effect.condition) &&
+      stateHolds(effect.condition, caster, target)
+    ) {
+      held.add(effect.condition);
+    }
+  }
+  return held;
+}
+
+/** Whether `earlier`, this resolution's events so far, interrupted `targetId`. */
+function wasInterrupted(targetId: string, earlier: readonly CombatEvent[]): boolean {
+  return earlier.some((event) => event.kind === "interrupted" && event.targetId === targetId);
+}
+
+/**
+ * Whether `condition` holds for `targetId`: for an earlier effect's
+ * (#521), read from the events this resolution has emitted so far; for a
+ * state (#794), as `held` read it before the first effect.
  */
 function conditionHolds(
   condition: EffectCondition,
   targetId: string,
   earlier: readonly CombatEvent[],
+  held: ReadonlySet<EffectCondition>,
 ): boolean {
   switch (condition.kind) {
     case "interrupted":
-      return earlier.some((event) => event.kind === "interrupted" && event.targetId === targetId);
+      return wasInterrupted(targetId, earlier);
     case "removed":
       return earlier.some(
         (event) =>
@@ -358,25 +583,32 @@ function conditionHolds(
           event.targetId === targetId &&
           getStatusDefinition(event.statusId).category === condition.category,
       );
+    case "target-health-below":
+    case "target-has":
+    case "target-casting":
+    case "caster-has":
+      return held.has(condition);
   }
 }
 
 /**
  * Apply one effect to `context.target`, an `if` included: its effects
  * land only if its condition holds for that target, given `earlier`, the
- * events this resolution has emitted so far.
+ * events this resolution has emitted so far, and `held`, the states that
+ * held before it began.
  */
 function applyInOrder(
   effect: SkillEffect,
   context: SkillContext,
   earlier: readonly CombatEvent[],
+  held: ReadonlySet<EffectCondition>,
 ): CombatEvent[] {
   if (effect.kind !== "if") {
-    return applyEffect(effect, context);
+    return applyEffect(effect, context, earlier);
   }
   const { target } = context;
-  return target !== undefined && conditionHolds(effect.condition, target.id, earlier)
-    ? effect.effects.flatMap((inner) => applyEffect(inner, context))
+  return target !== undefined && conditionHolds(effect.condition, target.id, earlier, held)
+    ? effect.effects.flatMap((inner) => applyEffect(inner, context, earlier))
     : [];
 }
 
@@ -385,9 +617,10 @@ export function applyEffects(
   effects: readonly SkillEffect[],
   context: SkillContext,
 ): CombatEvent[] {
+  const held = statesBefore(effects, context.caster, context.target);
   const events: CombatEvent[] = [];
   for (const effect of effects) {
-    events.push(...applyInOrder(effect, context, events));
+    events.push(...applyInOrder(effect, context, events, held));
   }
   return events;
 }
@@ -407,6 +640,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
       return true;
     case "heal":
       return effect.recipient === "caster";
+    case "energy-loss":
     case "damage":
     case "apply-status":
     case "remove-status":
@@ -436,15 +670,25 @@ export interface SkillResolution {
  * and grant `energy-gain` once per foe caught in a splash.
  *
  * An attack skill's blow, and whether it missed, is `resolveAttackSkill`'s
- * business; this applies its riders to whoever it hit.
+ * business; this applies its riders to whoever it hit. `earlier` is what
+ * the blow emitted, which the riders read as this resolution's (#817).
  */
-export function applySkillEffects(resolution: SkillResolution): CombatEvent[] {
+export function applySkillEffects(
+  resolution: SkillResolution,
+  earlier: readonly CombatEvent[] = [],
+): CombatEvent[] {
   const { skill, caster, targets, rng, rules } = resolution;
+  const held = new Map(
+    targets.map((target) => [target, statesBefore(skill.effects, caster, target)] as const),
+  );
   const events: CombatEvent[] = [];
   for (const effect of skill.effects) {
     const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
     for (const target of on) {
-      events.push(...applyInOrder(effect, { caster, target, rng, rules }, events));
+      const states = (target === undefined ? undefined : held.get(target)) ?? NONE_HELD;
+      events.push(
+        ...applyInOrder(effect, { caster, target, rng, rules }, [...earlier, ...events], states),
+      );
     }
   }
   // Divine Favor (#529): once a cast, on the primary target only, after

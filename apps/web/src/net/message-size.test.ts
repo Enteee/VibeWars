@@ -75,7 +75,16 @@ const NAME = sanitizeName("👩‍🚀".repeat(40), "player");
 const SKILL_IDS = IMPLEMENTED_SKILLS.map((skill) => skill.id);
 const STATUS_IDS = Object.keys(STATUS_DEFINITIONS);
 /** A snapshot's statuses (#632): as many as a player may carry, each the largest index. */
-const WIRE_STATUSES = Array.from({ length: MAX_WIRE_STATUSES }, () => MAX_WIRE_STATUS_INDEX);
+/**
+ * Every status at its longest (#803): the top index, a clock past a day
+ * of match, both to 0.1 s, cast by the longest peer id.
+ */
+const WIRE_STATUSES = Array.from({ length: MAX_WIRE_STATUSES }, () => ({
+  status: MAX_WIRE_STATUS_INDEX,
+  endsAt: 99_999.9,
+  durationSeconds: rounded(1),
+  casterId: PEER_ID,
+}));
 const WEAPON_ID = longest(ALL_WEAPONS.map((weapon) => weapon.id));
 const OFFHAND_ID = longest(ALL_OFFHANDS.map((offhand) => offhand.id));
 const SKILL_ID = longest(SKILL_IDS);
@@ -104,6 +113,7 @@ function player(index: number): WirePlayer {
     maxHealth: 1000,
     energy: 100,
     maxEnergy: 100,
+    overcast: 0,
     adrenaline: 1000,
     armor: 100,
     weaponId: WEAPON_ID,

@@ -60,10 +60,20 @@ their numbers in `ink` text, centred over a fill that may be full or nearly
 empty. The fill is therefore a dark shade of its signal colour, so the text
 reads on the fill and on the empty track alike.
 
-| Token        | Hex       | Use             | `ink` on it |
-| ------------ | --------- | --------------- | ----------- |
-| `hud-health` | `#3a6a3e` | Health bar fill | 4.7:1       |
-| `hud-energy` | `#2f6787` | Energy bar fill | 4.6:1       |
+| Token                 | Hex       | Use                                         | `ink` on it |
+| --------------------- | --------- | ------------------------------------------- | ----------- |
+| `hud-health`          | `#3a6a3e` | Health bar fill                             | 4.7:1       |
+| `hud-health-hex`      | `#7a3a7a` | Health bar fill under a health-draining hex | 5.7:1       |
+| `hud-health-poison`   | `#66601e` | Health bar fill while poisoned or diseased  | 4.8:1       |
+| `hud-health-bleeding` | `#8c4a42` | Health bar fill while bleeding              | 4.9:1       |
+| `hud-energy`          | `#2f6787` | Energy bar fill                             | 4.6:1       |
+
+A health bar, yours and the target frame's, takes the tint of the worst
+degeneration on its combatant (#807), as GW1: a hex that drains health,
+then poison or disease, then bleeding; never a blend. Burning, and a hex
+that drains only energy, tint nothing. The deep-wound band is drawn over
+any tint, and a corpse is never tinted. The tint is never the only signal:
+the status icons and the pips say it too.
 
 ### Target frame
 

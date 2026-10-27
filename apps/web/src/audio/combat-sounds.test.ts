@@ -53,8 +53,12 @@ describe("soundsForCombat", () => {
   });
 
   it("plays interrupt-missed only for your own miss", () => {
-    const yours = message(ME, [{ kind: "interrupt-missed", targetId: "foe" }]);
-    const theirs = message("foe", [{ kind: "interrupt-missed", targetId: ME }]);
+    const yours = message(ME, [
+      { kind: "interrupt-missed", targetId: "foe", refusedSkillId: null },
+    ]);
+    const theirs = message("foe", [
+      { kind: "interrupt-missed", targetId: ME, refusedSkillId: null },
+    ]);
     expect(soundsForCombat(yours, ME)).toEqual(["interrupt-missed"]);
     expect(soundsForCombat(theirs, ME)).toEqual([]);
   });
@@ -70,7 +74,7 @@ describe("soundsForCombat", () => {
       { kind: "damage", targetId: "foe", amount: 9, critical: false },
       { kind: "heal", targetId: "foe", amount: 9 },
       { kind: "interrupted", targetId: "foe", skillId: "x" },
-      { kind: "interrupt-missed", targetId: "foe" },
+      { kind: "interrupt-missed", targetId: "foe", refusedSkillId: null },
     ]);
     const other = message(ME, [
       { kind: "status-applied", targetId: ME, statusId: "burning", durationSeconds: 3 },
@@ -194,6 +198,7 @@ function player(sessionId: string, extra: Partial<PlayerSnapshot> = {}): PlayerS
     maxHealth: 100,
     energy: 20,
     maxEnergy: 20,
+    overcast: 0,
     adrenaline: 0,
     armor: 60,
     weaponId: undefined,

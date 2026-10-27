@@ -21,6 +21,7 @@ import {
   createCallBoard,
   sameSkillBar,
   skillBarSlots,
+  statusSnapshot,
   wireStatuses,
   type CallsSnapshot,
   type CombatMessage,
@@ -68,6 +69,7 @@ function toPlayerSnapshot(
   name: string,
   professions: Professions,
   pips: NetPips,
+  elapsedSeconds: number,
 ): PlayerSnapshot {
   const { combatant } = participant;
   const activeCast = combatant.cast.activeCast;
@@ -85,6 +87,7 @@ function toPlayerSnapshot(
     maxHealth: combatant.maxHealth,
     energy: Math.round(combatant.energy),
     maxEnergy: combatant.maxEnergy,
+    overcast: Math.round(combatant.overcast),
     adrenaline: combatant.adrenaline,
     armor: combatant.equipment.baseArmor,
     weaponId: combatant.equipment.mainHand.weapon.id,
@@ -101,7 +104,9 @@ function toPlayerSnapshot(
     knockdownRemaining: combatant.knockdownRemaining,
     healthPips: pips.health,
     energyPips: pips.energy,
-    statuses: wireStatuses(combatant.statuses.active).map((status) => status.id),
+    statuses: wireStatuses(combatant.statuses.active).map((status) =>
+      statusSnapshot(status, elapsedSeconds, activeCast),
+    ),
   };
 }
 
@@ -214,6 +219,7 @@ export function createLocalConnection(options: {
             nameOf(participant.id),
             professionsOf(participant.id),
             simulation.pips(participant),
+            simulation.elapsedSeconds,
           ),
         ),
         scoreTeam0: simulation.score.byTeam.get(0) ?? 0,

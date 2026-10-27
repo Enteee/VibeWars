@@ -2,6 +2,7 @@ import {
   getProfession,
   getSkill,
   getWeapon,
+  maxHealthLossOfStatusIds,
   neededWeaponText,
   type ActivationRejection,
   type Segment,
@@ -17,6 +18,7 @@ import type {
 
 import type { KeyLabeller } from "../input/key-labels.js";
 import { SKILL_ACTIONS, actionLabel, codeLabel, type Keymap } from "../input/keymap.js";
+import { paintHealthTint } from "./health-tint.js";
 import {
   attackingIcon,
   isEliteSkill,
@@ -27,6 +29,7 @@ import {
   soundIcon,
   weaponIcon,
 } from "./icons.js";
+import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { pipsElement, renderPips } from "./pips.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import {
@@ -60,11 +63,17 @@ export interface HudElements {
   readonly root: HTMLElement;
   /** Health, energy and statuses, then the skill bar: from its top down, the HUD hides the arena. */
   readonly bars: HTMLElement;
+  /** Your health bar, tinted by your worst degeneration (#807). */
+  readonly healthRow: HTMLElement;
   readonly healthFill: HTMLElement;
+  /** The greyed end of the bar: maximum health a deep wound took (#764). */
+  readonly healthLost: HTMLElement;
   readonly healthText: HTMLElement;
   /** Net regeneration or degeneration arrows in the bar (#504). */
   readonly healthPips: HTMLElement;
   readonly energyFill: HTMLElement;
+  /** Overcast's grey band at the energy bar's right end (#461). */
+  readonly energyOvercast: HTMLElement;
   readonly energyText: HTMLElement;
   readonly energyPips: HTMLElement;
   readonly adrenalineText: HTMLElement;
@@ -86,6 +95,7 @@ export interface HudElements {
   /** The target's health bar (#484), labelled with its percentage. */
   readonly targetHealth: HTMLElement;
   readonly targetHealthFill: HTMLElement;
+  readonly targetHealthLost: HTMLElement;
   readonly targetHealthText: HTMLElement;
   readonly targetHealthPips: HTMLElement;
   /** What the target is casting (#484): icon (#727), badge, name and a filling bar. */
@@ -193,6 +203,7 @@ export function createHud(parent: HTMLElement): HudElements {
   attacking.hidden = true;
   const targetHealth = element("div", "hud-bar hud-target-health", targetPanel);
   const targetHealthFill = element("div", "hud-bar-fill", targetHealth);
+  const targetHealthLost = element("div", "hud-bar-lost", targetHealth);
   const targetHealthText = element("span", "hud-bar-label", targetHealth);
   const targetHealthPips = targetHealth.appendChild(pipsElement());
   targetHealth.hidden = true;
@@ -211,11 +222,13 @@ export function createHud(parent: HTMLElement): HudElements {
 
   const healthRow = element("div", "hud-bar hud-bar-health", bars);
   const healthFill = element("div", "hud-bar-fill", healthRow);
+  const healthLost = element("div", "hud-bar-lost", healthRow);
   const healthText = element("span", "hud-bar-label", healthRow);
   const healthPips = healthRow.appendChild(pipsElement());
 
   const energyRow = element("div", "hud-bar hud-bar-energy", bars);
   const energyFill = element("div", "hud-bar-fill", energyRow);
+  const energyOvercast = energyRow.appendChild(overcastBandElement());
   const energyText = element("span", "hud-bar-label", energyRow);
   const energyPips = energyRow.appendChild(pipsElement());
 
@@ -230,10 +243,13 @@ export function createHud(parent: HTMLElement): HudElements {
   return {
     root,
     bars,
+    healthRow,
     healthFill,
+    healthLost,
     healthText,
     healthPips,
     energyFill,
+    energyOvercast,
     energyText,
     energyPips,
     adrenalineText,
@@ -248,6 +264,7 @@ export function createHud(parent: HTMLElement): HudElements {
     targetText,
     targetHealth,
     targetHealthFill,
+    targetHealthLost,
     targetHealthText,
     targetHealthPips,
     targetCast,
@@ -451,11 +468,30 @@ function setBar(
   label: HTMLElement,
   value: number,
   max: number,
-  suffix: string,
+  text: string,
 ): void {
   const fraction = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
   fill.style.width = `${String(fraction * 100)}%`;
-  label.textContent = `${String(Math.round(value))} / ${String(Math.round(max))} ${suffix}`;
+  label.textContent = text;
+}
+
+/**
+ * How much of a health bar is greyed (#764): the share of maximum health
+ * a loss such as deep wound's took, as a percentage of the whole bar,
+ * read from the snapshot's statuses as the host reads its own. None for
+ * the dead, whose bar is an empty track.
+ */
+export function lostHealthPercent(
+  player: Pick<PlayerSnapshot, "dead" | "maxHealth" | "statuses">,
+): number {
+  if (player.dead || player.maxHealth <= 0) {
+    return 0;
+  }
+  const lost = maxHealthLossOfStatusIds(
+    player.maxHealth,
+    player.statuses.map((status) => status.id),
+  );
+  return Math.max(0, Math.min(100, (lost / player.maxHealth) * 100));
 }
 
 /** Update the HUD from the latest authoritative snapshot of this player. */
@@ -746,7 +782,9 @@ function renderTarget(
   hud.targetHealth.hidden = target === undefined;
   if (target !== undefined) {
     hud.targetHealth.classList.toggle("is-dead", target.dead);
+    paintHealthTint(hud.targetHealth, target);
     hud.targetHealthFill.style.width = `${String(targetHealthPercent(target))}%`;
+    hud.targetHealthLost.style.width = `${String(lostHealthPercent(target))}%`;
     hud.targetHealthText.textContent = targetHealthLabel(target, self.team);
     renderPips(hud.targetHealthPips, target.healthPips);
   }
@@ -779,8 +817,14 @@ export function updateHud(
   hud.hintDismissed = targetHintDismissed(hud.hintDismissed, self);
   hud.hint.hidden = hud.hintDismissed;
 
-  setBar(hud.healthFill, hud.healthText, self.health, self.maxHealth, "hp");
-  setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, "en");
+  const healthText = `${String(Math.round(self.health))} / ${String(Math.round(self.maxHealth))} hp`;
+  setBar(hud.healthFill, hud.healthText, self.health, self.maxHealth, healthText);
+  hud.healthLost.style.width = `${String(lostHealthPercent(self))}%`;
+  paintHealthTint(hud.healthRow, self);
+  // Counted to the ceiling overcast leaves, the rest of the bar greyed (#461).
+  const energyText = `${energyLabel(self.energy, self.maxEnergy, self.overcast)} en`;
+  setBar(hud.energyFill, hud.energyText, self.energy, self.maxEnergy, energyText);
+  renderOvercastBand(hud.energyOvercast, self.overcast, self.maxEnergy);
   renderPips(hud.healthPips, self.healthPips);
   renderPips(hud.energyPips, self.energyPips);
   // Armor and weapon alongside adrenaline: both are now numbers that
@@ -791,7 +835,9 @@ export function updateHud(
     (self.weaponId === undefined ? "" : ` · ${describeWeaponName(self.weaponId)}`);
 
   hud.statusList.textContent =
-    self.statuses.length > 0 ? self.statuses.join(" · ") : "no active effects";
+    self.statuses.length > 0
+      ? self.statuses.map((status) => status.id).join(" · ")
+      : "no active effects";
 
   renderTarget(hud, self, target);
 

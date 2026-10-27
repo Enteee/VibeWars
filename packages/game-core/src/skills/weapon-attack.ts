@@ -19,6 +19,7 @@ import {
   applySkillEffects,
   gainEnergy,
   interruptIfCastingSpell,
+  stateHolds,
   type CombatEvent,
   type SkillResolution,
 } from "./effects.js";
@@ -26,7 +27,7 @@ import { resolveMagnitude } from "./scaling.js";
 import { aggregateModifiers, getStatusDefinition, type StatusId } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
 import { attackMissChanceOf, blockChanceOf, rankOf, weaponDamageMultiplierOf } from "./tick.js";
-import type { Combatant, Skill, SkillEffect } from "./types.js";
+import type { Combatant, Skill, SkillEffect, StateCondition } from "./types.js";
 
 /**
  * Weapon auto-attack: what one swing does once it lands (ADR-0026).
@@ -230,7 +231,7 @@ export function attackReached(victim: Combatant, events: CombatEvent[]): void {
 
 /**
  * What an attack skill makes of a blow (ADR-0029): the weapon's roll times
- * `weaponDamage`, plus `bonus`.
+ * `weaponDamage`, plus `bonus`, which ignores armor (#760).
  */
 export interface BlowRule {
   readonly weaponDamage: number;
@@ -241,18 +242,59 @@ export interface BlowRule {
    * does not help.
    */
   readonly strengthRank: number;
+  /**
+   * More `bonus` while a state holds (#794), at the caster's ranks: read
+   * by `settleBlow` as the blow lands on each victim.
+   */
+  readonly conditionalBonus:
+    { readonly condition: StateCondition; readonly amount: number } | undefined;
 }
 
 /** A swing of the weapon and nothing else. */
-export const PLAIN_BLOW: BlowRule = { weaponDamage: 1, bonus: 0, strengthRank: 0 };
+export const PLAIN_BLOW: BlowRule = {
+  weaponDamage: 1,
+  bonus: 0,
+  strengthRank: 0,
+  conditionalBonus: undefined,
+};
 
 /** The blow `skill` makes of `caster`'s weapon, its bonus at the caster's ranks. */
 export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
   const bonusDamage = skill.attack?.bonusDamage;
+  const conditionalBonus = skill.attack?.conditionalBonus;
   return {
     weaponDamage: skill.attack?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
     bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
     strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),
+    conditionalBonus:
+      conditionalBonus === undefined
+        ? undefined
+        : {
+            condition: conditionalBonus.condition,
+            amount: resolveMagnitude(conditionalBonus.amount, caster),
+          },
+  };
+}
+
+/**
+ * `blow` as it lands on `victim` (#794): its `conditionalBonus` added to its bonus
+ * if the state holds now, for `attacker` and `victim`. An arrow whose
+ * archer has left the match has nobody to read the state of: no more.
+ */
+export function settleBlow(
+  blow: BlowRule,
+  attacker: Combatant | undefined,
+  victim: Combatant,
+): BlowRule {
+  const { conditionalBonus } = blow;
+  if (conditionalBonus === undefined) {
+    return blow;
+  }
+  const holds = attacker !== undefined && stateHolds(conditionalBonus.condition, attacker, victim);
+  return {
+    ...blow,
+    bonus: blow.bonus + (holds ? conditionalBonus.amount : 0),
+    conditionalBonus: undefined,
   };
 }
 
@@ -265,7 +307,7 @@ export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
  * victim is exposed, then skips the damage roll, so the stream does
  * depend on who stands where, deterministically. A crit takes the weapon's maximum times its
  * `criticalMultiplier` instead of rolling; an attack skill's bonus is
- * added after, unmultiplied. A melee blow at an `exposed` victim always
+ * added after, unmultiplied, and ignores armor (#760). A melee blow at an `exposed` victim always
  * crits; a projectile never does that way, however it lands. Returns
  * whether the blow crit.
  *
@@ -292,14 +334,14 @@ export function landBlow(
     ? weapon.damageMax * weapon.criticalMultiplier
     : rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
   const packet: DamagePacket = {
-    amount:
+    armored:
       base *
-        snapshot.damageMultiplier *
-        blow.weaponDamage *
-        weaponAttributeMultiplier(snapshot.rank, rules) *
-        (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier) +
-      blow.bonus,
-    type: weapon.damageType,
+      snapshot.damageMultiplier *
+      blow.weaponDamage *
+      weaponAttributeMultiplier(snapshot.rank, rules) *
+      (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier),
+    armorIgnoring: blow.bonus,
+    type: snapshot.mainHand.damageType,
     source: "weapon",
     armorPenetration: strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
   };
@@ -308,7 +350,7 @@ export function landBlow(
 }
 
 /**
- * What the attacker's statuses add to a blow of `weapon` that hit
+ * What the attacker's statuses add to a blow of `mainHand` that hit
  * `victim` (#525): every active status's `onAttackHit`, as Apply
  * Poison's poison. Read when the blow lands, so a preparation that ran
  * out mid-swing or mid-flight adds nothing. Physical attacks only, as GW1
@@ -317,11 +359,11 @@ export function landBlow(
 export function attackHitRiders(
   attacker: Combatant,
   victim: Combatant,
-  weapon: Weapon,
+  mainHand: ResolvedWeapon,
   rng: SimulationRng,
   rules: CombatRules,
 ): CombatEvent[] {
-  if (!isPhysicalDamage(weapon.damageType)) {
+  if (!isPhysicalDamage(mainHand.damageType)) {
     return [];
   }
   return attacker.statuses.active.flatMap(({ id }) =>
@@ -413,7 +455,7 @@ function strike(swing: Swing, victim: Combatant, events: CombatEvent[]): void {
   if (landBlow(snapshot, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
     gainCriticalEnergy(attacker, snapshot.criticalStrikes, events);
   }
-  events.push(...attackHitRiders(attacker, victim, snapshot.mainHand.weapon, rng, rules));
+  events.push(...attackHitRiders(attacker, victim, snapshot.mainHand, rng, rules));
   attackReached(victim, events);
 }
 
@@ -447,8 +489,8 @@ export function resolveSwing(swing: Swing): {
 
 /**
  * Resolve an attack skill at its hit (ADR-0029): one blow of the weapon on
- * each victim, the primary first, with the skill's bonus added before
- * armor. A victim the blow misses (blind) gets none of the skill's
+ * each victim, the primary first, with the skill's bonus added after
+ * armor (#760). A victim the blow misses (blind) gets none of the skill's
  * riders; the ones it hits get them all. A victim that blocks gets the
  * skill's `onBlocked` effects instead (#534); an `unblockable` one rolls
  * no block at all (Wild Throw, #523). No double strike and no
@@ -489,10 +531,20 @@ export function resolveAttackSkill(
       blocked.push(victim);
       continue;
     }
-    if (landBlow(snapshot, victim, blow, exposed(victim), rng, rules, events)) {
+    if (
+      landBlow(
+        snapshot,
+        victim,
+        settleBlow(blow, caster, victim),
+        exposed(victim),
+        rng,
+        rules,
+        events,
+      )
+    ) {
       gainCriticalEnergy(caster, snapshot.criticalStrikes, events);
     }
-    events.push(...attackHitRiders(caster, victim, snapshot.mainHand.weapon, rng, rules));
+    events.push(...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules));
     events.push(...nextAttackSkillRiders(next, caster, victim, rng, rules));
     attackReached(victim, events);
     hit.push(victim);
@@ -500,13 +552,16 @@ export function resolveAttackSkill(
   useNextAttackSkill(caster, next, events);
   return [
     ...events,
-    ...applySkillEffects({ ...resolution, targets: hit }),
+    ...applySkillEffects({ ...resolution, targets: hit }, events),
     ...(blocked.length === 0 || skill.attack === undefined
       ? []
-      : applySkillEffects({
-          ...resolution,
-          skill: { ...skill, effects: skill.attack.onBlocked },
-          targets: blocked,
-        })),
+      : applySkillEffects(
+          {
+            ...resolution,
+            skill: { ...skill, effects: skill.attack.onBlocked },
+            targets: blocked,
+          },
+          events,
+        )),
   ];
 }

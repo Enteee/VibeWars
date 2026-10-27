@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 15
   },
+  "overcast": 0,
   "activationSeconds": 2,
   "rechargeSeconds": 20,
   "description": "If you cast a spell in the next 20 seconds, Arcane Echo is replaced with that spell\n                for 20 seconds. Arcane Echo ends prematurely if you use a non-spell skill.",

@@ -5,7 +5,7 @@ import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/r
 import { WEAPONS } from "../equipment/weapons.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
-import { spellDamage, effectiveArmor } from "../skills/damage.js";
+import { skillDamage, effectiveArmor } from "../skills/damage.js";
 import { applyEffects } from "../skills/effects.js";
 import { withStatusDefinitions } from "../skills/testing.js";
 import type { Combatant } from "../skills/types.js";
@@ -21,7 +21,12 @@ const FIREBALL = "elementalist.fireball";
 
 const swordsman: ResolvedEquipment = {
   ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-  mainHand: { weapon: WEAPONS.sword, attributeId: "warrior.swordsmanship", requirementMet: true },
+  mainHand: {
+    weapon: WEAPONS.sword,
+    attributeId: "warrior.swordsmanship",
+    damageType: WEAPONS.sword.damageType,
+    requirementMet: true,
+  },
 };
 
 function warrior(id: string, team: number, spawn: Vec2): ParticipantSpec {
@@ -59,7 +64,7 @@ function stepFor(match: MatchSimulation, seconds: number): CombatLogEntry[] {
 
 const events = (log: readonly CombatLogEntry[]) => log.flatMap((entry) => entry.events);
 
-const armorOf = (combatant: Combatant) => effectiveArmor(combatant, spellDamage(1, "typeless"));
+const armorOf = (combatant: Combatant) => effectiveArmor(combatant, skillDamage(1, "typeless", 0));
 
 describe("Healing Signet (#524)", () => {
   function signetter(): MatchSimulation {

@@ -157,7 +157,15 @@ body {
   border-color: #4a5464;
 }
 
-.hud-target-health.is-dead .hud-bar-label {
+/* Maximum health a deep wound took (#764): the bar's far end, greyed, as GW1. */
+.hud-bar-lost {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 0;
+  background: repeating-linear-gradient(-45deg, #3a3f47 0 3px, #2b3038 3px 6px);
+}
+
+.hud-bar-label {
   color: var(--ink-dim);
 }
 
@@ -268,8 +276,37 @@ body {
   background: #3a6a3e;
 }
 
+/* The worst degeneration on the bar's combatant (#807), as GW1: a hex that
+   drains health, then poison or disease, then bleeding. Never the only signal:
+   the status icons and the pips say it too. */
+.hud-bar-health.is-tint-hex .hud-bar-fill,
+.training-bar-health.is-tint-hex .training-bar-fill,
+.hud-target-health.is-tint-hex .hud-bar-fill {
+  background: #7a3a7a;
+}
+
+.hud-bar-health.is-tint-poison .hud-bar-fill,
+.training-bar-health.is-tint-poison .training-bar-fill,
+.hud-target-health.is-tint-poison .hud-bar-fill {
+  background: #66601e;
+}
+
+.hud-bar-health.is-tint-bleeding .hud-bar-fill,
+.training-bar-health.is-tint-bleeding .training-bar-fill,
+.hud-target-health.is-tint-bleeding .hud-bar-fill {
+  background: #8c4a42;
+}
+
 .hud-bar-energy .hud-bar-fill {
   background: #2f6787;
+}
+
+/* Overcast (#461): the maximum energy it took, greyed at the bar's right end. */
+.overcast-band {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 0;
+  background: #4a5464;
 }
 
 .hud-bar-label {
@@ -1797,6 +1834,75 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Expanded (#495): over the whole window, the stage taking what the
+   controls and readouts leave, which sit in two short columns under it,
+   as a match's HUD would. The editor's stats, the log and the scenario's
+   blurb are the editor's, and wait for the collapse. Specific enough to
+   beat the editor's sticky and stacked placements above; under tooltips
+   and toasts. */
+.editor-layout.has-training > .training.is-expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  grid-template-areas:
+    "controls controls"
+    "stage stage"
+    "hint message"
+    "vitals meter"
+    "skills meter";
+  max-height: none;
+  border-radius: 0;
+  background: var(--bg);
+}
+
+.training.is-expanded .training-controls {
+  grid-area: controls;
+}
+
+.training.is-expanded .training-stage {
+  grid-area: stage;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: auto;
+  overflow: hidden;
+}
+
+.training.is-expanded .training-hint {
+  grid-area: hint;
+}
+
+.training.is-expanded .training-message {
+  grid-area: message;
+  text-align: right;
+}
+
+.training.is-expanded .training-vitals {
+  grid-area: vitals;
+}
+
+.training.is-expanded .training-skills {
+  grid-area: skills;
+}
+
+.training.is-expanded .training-meter {
+  grid-area: meter;
+  align-self: end;
+}
+
+.training.is-expanded .training-teaches,
+.training.is-expanded .training-stats-slot,
+.training.is-expanded .training-log {
+  display: none;
+}
+
+/* The editor behind does not scroll; #screens is its scroller. */
+body.has-expanded-training #screens {
+  overflow: hidden;
+}
+
 .training-controls {
   display: flex;
   gap: 0.5rem;
@@ -1805,6 +1911,12 @@ body {
 .training-scenario {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+.training-expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .training-teaches,
@@ -3212,6 +3324,41 @@ body {
 
 .hud-sound .sound-volume input {
   width: 9rem;
+}
+
+/* The Music block (#425): what plays, and the intensity, under the volumes. */
+.music-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--line);
+}
+
+.music-now-playing-title {
+  color: var(--ink);
+}
+
+.music-intensity-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.music-intensity-choice {
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-dim);
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.music-intensity-choice[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* The now-playing toast: top left, just under the top bar, where a match has

@@ -14,6 +14,7 @@ const VALID_SKILL = {
   type: "Skill.",
   elite: false,
   campaign: "Core",
+  overcast: 0,
   activationSeconds: 0,
   rechargeSeconds: 5,
   description: "Does a thing.",
@@ -91,5 +92,13 @@ describe("the real bundled skill corpus", () => {
     const result = generateSkillBundle();
     const ids = result.skills.map((s) => s.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("carries Meteor Shower's overcast as a field, nothing of it unmapped (#461)", () => {
+    const meteorShower = generateSkillBundle().skills.find(
+      (skill) => skill.id === "elementalist.meteor-shower",
+    );
+    expect(meteorShower?.overcast).toBe(10);
+    expect(meteorShower?.unmapped).toEqual({});
   });
 });

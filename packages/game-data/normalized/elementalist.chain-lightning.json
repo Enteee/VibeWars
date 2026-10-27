@@ -1,0 +1,25 @@
+{
+  "id": "elementalist.chain-lightning",
+  "name": "Chain Lightning",
+  "profession": "elementalist",
+  "attribute": "Air Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 5,
+  "activationSeconds": 2,
+  "rechargeSeconds": 6,
+  "description": "Target foe and up to two other foes near your target are struck for 10...70...85 lightning damage. This spell has 25% armor penetration.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Elementalist/378-Chain_Lightning",
+    "fetchedAt": "2026-10-27T03:20:12.380Z"
+  },
+  "unmapped": {}
+}

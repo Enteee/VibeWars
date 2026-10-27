@@ -22,6 +22,7 @@ export type {
   ProjectileSnapshot,
   SkillSlot,
   SlotRecharge,
+  StatusSnapshot,
 } from "./match-connection.js";
 export { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 export type { DropReport } from "./intent-budget.js";
@@ -60,4 +61,10 @@ export type { LobbyHost, LobbyHostOptions, MatchPlan } from "./lobby-host.js";
 export { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
 export type { JoinLobbyOptions } from "./lobby-client.js";
 export { scopeTransport } from "./scoped-transport.js";
-export { WIRE_STATUS_IDS, sameSkillBar, skillBarSlots, wireStatuses } from "./wire.js";
+export {
+  WIRE_STATUS_IDS,
+  sameSkillBar,
+  skillBarSlots,
+  statusSnapshot,
+  wireStatuses,
+} from "./wire.js";

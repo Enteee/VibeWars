@@ -18,6 +18,7 @@
 export const SKILL_ICONS = {
   "monk.orison-of-healing": { glyph: "heal" },
   "elementalist.fireball": { glyph: "fireball", modifier: "area" },
+  "elementalist.chain-lightning": { glyph: "chain" },
   "warrior.swift-chop": { glyph: "axe" },
   "ranger.barrage": { glyph: "volley", modifier: "area" },
   "warrior.backbreaker": { glyph: "hammer", modifier: "down" },
@@ -45,6 +46,7 @@ export const SKILL_ICONS = {
   "warrior.watch-yourself": { glyph: "armor", modifier: "area" },
   "ranger.apply-poison": { glyph: "flask" },
   "elementalist.glyph-of-lesser-energy": { glyph: "energy", modifier: "less" },
+  "elementalist.lightning-orb": { glyph: "lightning-orb" },
   "necromancer.rotting-flesh": { glyph: "germ" },
   "necromancer.enfeeble": { glyph: "sword", modifier: "down" },
   "necromancer.enfeebling-blood": { glyph: "sword", modifier: "area" },
@@ -54,4 +56,9 @@ export const SKILL_ICONS = {
   "mesmer.power-drain": { glyph: "interrupt", modifier: "up" },
   "mesmer.shatter-enchantment": { glyph: "cleanse", modifier: "down" },
   "mesmer.drain-enchantment": { glyph: "cleanse", modifier: "up" },
+  "monk.word-of-healing": { glyph: "heal", modifier: "up" },
+  "dervish.mystic-sweep": { glyph: "sword", modifier: "up" },
+  "ranger.savage-shot": { glyph: "arrow" },
+  "mesmer.energy-burn": { glyph: "flame", modifier: "down" },
+  "mesmer.energy-tap": { glyph: "energy", modifier: "self" },
 };

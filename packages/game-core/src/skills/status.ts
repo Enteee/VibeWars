@@ -133,8 +133,16 @@ export interface StatusDefinition {
    * injectable simulation RNG, never Math.random (brief §35).
    */
   readonly attackMissChance: number;
-  /** Multiplier on the bearer's maximum health (deep wound's signature). */
-  readonly maxHealthMultiplier: number;
+  /**
+   * What the bearer loses of its maximum health (deep wound's signature):
+   * `fraction` of it, at most `cap`. `undefined`: none.
+   */
+  readonly maxHealthLoss: MaxHealthLoss | undefined;
+  /**
+   * Multiplier on the heals the bearer receives from skills (1 = unaffected).
+   * Regeneration and life steal ignore it.
+   */
+  readonly healingMultiplier: number;
   /**
    * Multiplier on the bearer's weapon roll (#762): weakness's 0.34. An
    * attack skill's bonus damage is not scaled.
@@ -205,6 +213,12 @@ export interface StatusDefinition {
   readonly endsWhenBearerAttacks: boolean;
 }
 
+/** A share of maximum health a status takes, at most `cap` (GW1's deep wound). */
+export interface MaxHealthLoss {
+  readonly fraction: number;
+  readonly cap: number;
+}
+
 /** Armor taken, but never below `floor`, nor any armor already under it (#763). */
 export interface ArmorReduction {
   readonly amount: number;
@@ -233,7 +247,8 @@ function define(
     armorReduction: undefined,
     moveSpeedMultiplier: 1,
     attackMissChance: 0,
-    maxHealthMultiplier: 1,
+    maxHealthLoss: undefined,
+    healingMultiplier: 1,
     weaponDamageMultiplier: 1,
     attributeDelta: 0,
     castTimeMultiplier: 1,
@@ -269,7 +284,10 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "cracked-armor": define("cracked-armor", "Cracked Armor", "condition", {
     armorReduction: { amount: 20, floor: 60 },
   }),
-  "deep-wound": define("deep-wound", "Deep Wound", "condition", { maxHealthMultiplier: 0.8 }),
+  "deep-wound": define("deep-wound", "Deep Wound", "condition", {
+    maxHealthLoss: { fraction: 0.2, cap: 100 },
+    healingMultiplier: 0.8,
+  }),
   dazed: define("dazed", "Dazed", "condition", { castTimeMultiplier: 2, interruptsSpells: true }),
   disease: define("disease", "Disease", "condition", { healthPips: -4, spreads: true }),
 
@@ -344,6 +362,8 @@ export interface ActiveStatus {
   readonly id: StatusId;
   /** Seconds of duration still remaining. */
   remainingSeconds: number;
+  /** The length of the application that set this entry: a duration bar's full width. */
+  durationSeconds: number;
   /** Incoming attacks before it ends (`endsAfterAttacks`); `undefined`: no such limit. */
   attacksLeft: number | undefined;
   /** Spells still to start before it ends (`nextSpells`); `undefined`: no such limit. */
@@ -400,11 +420,16 @@ export class StatusSet {
    *
    * A status that spreads starts a new outbreak, even where the duration
    * already running is the longer one: a new cast is a new outbreak (#765).
+   *
+   * Returns whether it is newly on the bearer: `false` for a refresh, or
+   * for a duration of nothing. What a status does once, as it lands
+   * (deep wound's health), hangs on this.
    */
-  public apply(id: StatusId, durationSeconds: number, sourceId: string): void {
+  public apply(id: StatusId, durationSeconds: number, sourceId: string): boolean {
     if (durationSeconds <= 0) {
-      return;
+      return false;
     }
+    const wasActive = this.#statuses.has(id);
     const definition = getStatusDefinition(id);
     if (EXCLUSIVE_CATEGORIES.has(definition.category)) {
       this.removeByCategory(definition.category);
@@ -417,16 +442,18 @@ export class StatusSet {
     if (existing !== undefined && existing.remainingSeconds >= durationSeconds) {
       existing.outbreak = outbreak;
       this.#statuses.set(id, existing);
-      return;
+      return false;
     }
     this.#statuses.set(id, {
       id,
       remainingSeconds: durationSeconds,
+      durationSeconds,
       attacksLeft: definition.endsAfterAttacks,
       spellsLeft: definition.nextSpells?.count,
       sourceId,
       outbreak,
     });
+    return !wasActive;
   }
 
   /**
@@ -441,11 +468,14 @@ export class StatusSet {
     const existing = this.#statuses.get(id);
     if (existing !== undefined) {
       existing.remainingSeconds = Math.max(existing.remainingSeconds, durationSeconds);
+      // A bar is never over full.
+      existing.durationSeconds = Math.max(existing.durationSeconds, existing.remainingSeconds);
       return;
     }
     this.#statuses.set(id, {
       id,
       remainingSeconds: durationSeconds,
+      durationSeconds,
       attacksLeft: undefined,
       spellsLeft: undefined,
       sourceId,
@@ -600,33 +630,41 @@ export interface StatusModifiers {
   readonly armorReduction: ArmorReduction | undefined;
   readonly moveSpeedMultiplier: number;
   readonly attackMissChance: number;
-  readonly maxHealthMultiplier: number;
+  /** The largest single status's: losses do not add up. */
+  readonly maxHealthLoss: MaxHealthLoss | undefined;
+  /** Every status's, multiplied, and floored at `HEALING_MULTIPLIER_FLOOR`. */
+  readonly healingMultiplier: number;
   readonly weaponDamageMultiplier: number;
   readonly attributeDelta: number;
   readonly castTimeMultiplier: number;
   readonly attackDurationMultiplier: number;
 }
 
+/** The weakest heals get, whatever reduces them (GW1: at most −40%). */
+export const HEALING_MULTIPLIER_FLOOR = 0.6;
+
 /**
  * Collapse every active status into one set of modifiers.
  *
  * Additive effects (health and energy pips, armor, attributes) sum;
- * multiplicative ones (move speed, max health, weapon damage, cast time)
+ * multiplicative ones (move speed, healing, weapon damage, cast time)
  * multiply; miss chance takes the
  * worst rather than compounding, so two blinding effects cannot push a
- * player past certain failure in a way that feels arbitrary. An armor
- * reduction is the largest single one.
+ * player past certain failure in a way that feels arbitrary. A maximum
+ * health loss and an armor reduction are each the largest single one,
+ * and healing is floored at `HEALING_MULTIPLIER_FLOOR`.
  * Attack duration is GW1's rule: only the strongest speed-up and the
  * strongest slow-down count, and they multiply.
  */
-export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusModifiers {
+export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]): StatusModifiers {
   let healthPips = 0;
   let energyPips = 0;
   let armorModifier = 0;
   let armorReduction: ArmorReduction | undefined;
   let moveSpeedMultiplier = 1;
   let attackMissChance = 0;
-  let maxHealthMultiplier = 1;
+  let maxHealthLoss: MaxHealthLoss | undefined;
+  const healingMultipliers: number[] = [];
   let weaponDamageMultiplier = 1;
   let attributeDelta = 0;
   let castTimeMultiplier = 1;
@@ -646,7 +684,13 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
     }
     moveSpeedMultiplier *= def.moveSpeedMultiplier;
     attackMissChance = Math.max(attackMissChance, def.attackMissChance);
-    maxHealthMultiplier *= def.maxHealthMultiplier;
+    if (
+      def.maxHealthLoss !== undefined &&
+      (maxHealthLoss === undefined || def.maxHealthLoss.fraction > maxHealthLoss.fraction)
+    ) {
+      maxHealthLoss = def.maxHealthLoss;
+    }
+    healingMultipliers.push(def.healingMultiplier);
     weaponDamageMultiplier *= def.weaponDamageMultiplier;
     attributeDelta += def.attributeDelta;
     castTimeMultiplier *= def.castTimeMultiplier;
@@ -661,10 +705,22 @@ export function aggregateModifiers(statuses: readonly ActiveStatus[]): StatusMod
     armorReduction,
     moveSpeedMultiplier,
     attackMissChance,
-    maxHealthMultiplier,
+    maxHealthLoss,
+    healingMultiplier: combinedHealingMultiplier(healingMultipliers),
     weaponDamageMultiplier,
     attributeDelta,
     castTimeMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,
   };
+}
+
+/**
+ * Several healing reductions together (GW1): they multiply, and heals are
+ * never cut below `HEALING_MULTIPLIER_FLOOR`.
+ */
+export function combinedHealingMultiplier(multipliers: readonly number[]): number {
+  return Math.max(
+    HEALING_MULTIPLIER_FLOOR,
+    multipliers.reduce((product, multiplier) => product * multiplier, 1),
+  );
 }

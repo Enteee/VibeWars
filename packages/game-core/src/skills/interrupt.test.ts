@@ -92,7 +92,11 @@ describe("interrupt mechanic", () => {
       rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
     });
 
-    expect(events).toContainEqual({ kind: "interrupt-missed", targetId: "victim" });
+    expect(events).toContainEqual({
+      kind: "interrupt-missed",
+      targetId: "victim",
+      refusedSkillId: null,
+    });
   });
 
   it("applies Dazed whether or not the interrupt itself landed", () => {
@@ -128,7 +132,11 @@ describe("interrupt mechanic", () => {
     });
 
     // Too late: nothing to interrupt, and the heal is already running.
-    expect(events).toContainEqual({ kind: "interrupt-missed", targetId: "victim" });
+    expect(events).toContainEqual({
+      kind: "interrupt-missed",
+      targetId: "victim",
+      refusedSkillId: null,
+    });
     expect(victim.statuses.has("regeneration")).toBe(true);
   });
 

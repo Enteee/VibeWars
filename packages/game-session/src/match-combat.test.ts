@@ -60,6 +60,16 @@ const HAMMERER: PlayerBuild = {
   },
 };
 
+/** A warrior with Healing Signet: a 2 s cast, borne at -40 armor until it ends (#803). */
+const SIGNET: PlayerBuild = {
+  name: "Signet",
+  primaryProfession: "warrior",
+  secondaryProfession: undefined,
+  attributes: [{ attributeId: "warrior.tactics", rank: 12 }],
+  skillBar: ["warrior.healing-signet", null, null, null, null, null, null, null],
+  equipment: defaultBuildEquipment("warrior"),
+};
+
 /** One tick of match time. */
 const TICK = 0.05;
 
@@ -281,7 +291,11 @@ describe("networked combat (P2P)", () => {
 
     // Broad Head Arrow dazes whoever it hits.
     a.sendIntent({ kind: "use-skill", slot: 0 });
-    await until(match, () => self(b)?.statuses.includes("dazed") ?? false, "b dazed");
+    await until(
+      match,
+      () => self(b)?.statuses.some((status) => status.id === "dazed") ?? false,
+      "b dazed",
+    );
 
     // A spell: dazed slows spells only (#524).
     b.sendIntent({ kind: "use-skill", slot: DEFAULT_SKILL_BAR.indexOf("monk.orison-of-healing") });
@@ -291,6 +305,28 @@ describe("networked combat (P2P)", () => {
     expect(me?.castingSkillId).toBe("monk.orison-of-healing");
     expect(me?.castTotal).toBe(2);
     expect(me?.castRemaining).toBeGreaterThan(1);
+  });
+
+  it("sends what a caster bears while activating, ending with the cast (#803)", async () => {
+    const match = startMatch();
+    const { connection: a } = await match.join(hello({ build: toJson(SIGNET) }));
+    const { connection: b } = await match.join();
+    await match.step(TICK);
+
+    a.sendIntent({ kind: "use-skill", slot: 0 });
+    const borne = () =>
+      playerIn(b.getSnapshot(), a.selfSessionId)?.statuses.find(
+        (status) => status.id === "healing-signet-armor",
+      );
+    await until(match, () => borne() !== undefined, "the signet's armor, as b sees it");
+
+    const caster = playerIn(b.getSnapshot(), a.selfSessionId);
+    expect(borne()?.durationSeconds).toBe(2);
+    expect((borne()?.endsAt ?? 0) - b.getSnapshot().elapsedSeconds).toBeCloseTo(
+      caster?.castRemaining ?? 0,
+      0,
+    );
+    await until(match, () => borne() === undefined, "the cast to end");
   });
 
   it("sends a knockdown's time left on the victim, and 0 once it rises (#545)", async () => {
@@ -427,7 +463,9 @@ describe("networked combat (P2P)", () => {
       () => (playerIn(a.getSnapshot(), b.selfSessionId)?.statuses.length ?? 0) > 0,
       "a status to appear",
     );
-    expect(playerIn(a.getSnapshot(), b.selfSessionId)?.statuses).toContain("bleeding");
+    expect(
+      playerIn(a.getSnapshot(), b.selfSessionId)?.statuses.map((status) => status.id),
+    ).toContain("bleeding");
 
     // The bleeding ticks as its bearer's, caused by degeneration, no skill.
     await until(
@@ -697,6 +735,65 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
           events: combat.events.map((event) => ({ ...event, fromId: null })),
         }).events,
     ).toEqual([]);
+  });
+
+  it("carries health a status took and which status, and drops an unknown one (#800)", () => {
+    const lost = {
+      kind: "health-lost",
+      targetId: "b",
+      amount: 100,
+      statusId: "deep-wound",
+    } as const;
+    const [combat] = wireCombat([
+      entry({ cause: "skill", skillId: "warrior.swift-chop", weaponId: undefined, events: [lost] }),
+    ]);
+    const received = parseWireCombatBatch(JSON.parse(JSON.stringify([combat])));
+    expect(received?.map(combatMessage).map((message) => message.events)).toEqual([[lost]]);
+    expect(
+      combat &&
+        combatMessage({
+          ...combat,
+          events: combat.events.map((event) => ({ ...event, statusId: "no-such-status" })),
+        }).events,
+    ).toEqual([]);
+  });
+
+  it("carries the skill a picky interrupt refused, and null for an idle target (#796)", () => {
+    const refused = {
+      kind: "interrupt-missed",
+      targetId: "b",
+      refusedSkillId: "ranger.barrage",
+    } as const;
+    const idle = { kind: "interrupt-missed", targetId: "c", refusedSkillId: null } as const;
+    const sent = wireCombat([
+      entry({
+        cause: "skill",
+        skillId: "mesmer.power-spike",
+        weaponId: undefined,
+        events: [refused, idle],
+      }),
+    ]);
+    const received = parseWireCombatBatch(JSON.parse(JSON.stringify(sent)));
+    expect(received?.map(combatMessage).map((message) => message.events)).toEqual([
+      [refused, idle],
+    ]);
+  });
+
+  it("carries the energy a foe lost and what the caster gained for it (#793)", () => {
+    const events = [
+      { kind: "energy-loss", targetId: "b", amount: 6 },
+      { kind: "energy-gain", targetId: "a", amount: 12 },
+    ] as const;
+    const sent = wireCombat([
+      entry({
+        cause: "skill",
+        skillId: "mesmer.energy-tap",
+        weaponId: undefined,
+        events: [...events],
+      }),
+    ]);
+    const received = parseWireCombatBatch(JSON.parse(JSON.stringify(sent)));
+    expect(received?.map(combatMessage).map((message) => message.events)).toEqual([events]);
   });
 
   it("carries a knockdown and how long it lasts, and drops one with no duration (#544)", () => {

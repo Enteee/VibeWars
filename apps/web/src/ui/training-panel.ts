@@ -75,6 +75,8 @@ import {
 import { describeRefusal, MESSAGE_SECONDS, SKILL_SLOT_ICON_PX } from "./hud.js";
 import { isEliteSkill, skillBadgeHtml, skillIconHtml } from "./icons.js";
 import { createAllyWatch } from "./ally-watch.js";
+import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
+import { paintHealthTint } from "./health-tint.js";
 import { pipsElement, renderPips } from "./pips.js";
 import { paintRecharge, prefersReducedMotion } from "./recharge-overlay.js";
 import {
@@ -91,6 +93,7 @@ import { createSlotTooltips } from "./slot-tooltip.js";
 import {
   armedHint,
   buildSignature,
+  escapeStep,
   loadScenarioChoice,
   overlayMessage,
   resolveScenarioId,
@@ -138,6 +141,20 @@ const HINT_IDLE = "click the arena to take control";
  * the build, and `refocus` hands control back.
  */
 const TAKES_KEYBOARD = "input, textarea, select, [contenteditable]:not([contenteditable='false'])";
+
+/**
+ * Corner marks pointing out (expand) or in (collapse), drawn rather than
+ * typed: not every font has ⛶ (#495).
+ */
+const EXPAND_ICON = iconSvg("M1 5V1h4M11 1h4v4M15 11v4h-4M5 15H1v-4");
+const COLLAPSE_ICON = iconSvg("M5 1v4H1M15 5h-4V1M11 15v-4h4M1 11h4v4");
+
+function iconSvg(path: string): string {
+  return (
+    `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">` +
+    `<path d="${path}" fill="none" stroke="currentColor" stroke-width="2"/></svg>`
+  );
+}
 
 /** Thrown when there is nothing to train on; the editor then stays two columns. */
 export class TrainingUnavailableError extends Error {}
@@ -196,7 +213,11 @@ export function createTrainingPanel(): TrainingPanel {
   resetButton.type = "button";
   resetButton.className = "training-reset";
   resetButton.textContent = "reset";
-  controls.append(picker, resetButton);
+  // Fills the window, so the arena plays like a match (Q60, #495).
+  const expandButton = document.createElement("button");
+  expandButton.type = "button";
+  expandButton.className = "training-expand";
+  controls.append(picker, resetButton, expandButton);
 
   const teaches = h("p", "training-teaches");
 
@@ -215,6 +236,9 @@ export function createTrainingPanel(): TrainingPanel {
 
   const health = vitalBar("health");
   const energy = vitalBar("energy");
+  // Overcast's grey band, after the fill and under the label (#461).
+  const energyOvercast = overcastBandElement();
+  energy.fill.after(energyOvercast);
   const adrenaline = h("span", "training-adrenaline");
   const vitals = h("div", "training-vitals");
   vitals.append(health.root, energy.root, adrenaline);
@@ -251,6 +275,8 @@ export function createTrainingPanel(): TrainingPanel {
   let signature: string | undefined;
   let displayName = "";
   let armed = false;
+  /** Over the whole window, above the editor (#495); never saved. */
+  let expanded = false;
   /**
    * Whether the stage was armed when this click began: the click that
    * takes control only takes it, and does not walk the hero off (#310).
@@ -287,8 +313,15 @@ export function createTrainingPanel(): TrainingPanel {
       logRowsEl.scrollHeight,
       logRowsEl.clientHeight,
     );
-    logRows = appendRows(logRows, incoming, LOG_CAP).rows;
-    for (const row of incoming) {
+    const appended = appendRows(logRows, incoming, LOG_CAP);
+    logRows = appended.rows;
+    // A regeneration run grew (#590): rewrite its row, don't add one.
+    const folded = appended.replacedLast ? logRows.at(-1 - appended.added.length) : undefined;
+    const foldedText = logRowsEl.lastElementChild?.querySelector(".training-log-text");
+    if (folded !== undefined && foldedText) {
+      foldedText.textContent = folded.text;
+    }
+    for (const row of appended.added) {
       const line = h("div", "training-log-row");
       line.dataset.tone = row.tone;
       line.append(
@@ -430,8 +463,10 @@ export function createTrainingPanel(): TrainingPanel {
       `${String(max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0)}%`;
     health.fill.style.width = fraction(self.health, self.maxHealth);
     health.label.textContent = `${String(self.health)} / ${String(self.maxHealth)}`;
+    paintHealthTint(health.root, self);
     energy.fill.style.width = fraction(self.energy, self.maxEnergy);
-    energy.label.textContent = `${String(self.energy)} / ${String(self.maxEnergy)}`;
+    energy.label.textContent = energyLabel(self.energy, self.maxEnergy, self.overcast);
+    renderOvercastBand(energyOvercast, self.overcast, self.maxEnergy);
     renderPips(health.pips, self.healthPips);
     renderPips(energy.pips, self.energyPips);
     adrenaline.textContent =
@@ -575,16 +610,16 @@ export function createTrainingPanel(): TrainingPanel {
       if (event.repeat) {
         return;
       }
-      // A cast, an attack or a walk in progress is cancelled first (#160,
-      // #300, #342).
       const snapshot = session?.connection.getSnapshot();
-      if (snapshot !== undefined && hasActionToCancel(snapshot)) {
+      const step = escapeStep(snapshot !== undefined && hasActionToCancel(snapshot), expanded);
+      if (step === "cancel") {
         session?.connection.sendIntent({ kind: "cancel" });
-        return;
+      } else if (step === "collapse") {
+        setExpanded(false);
+      } else {
+        armed = false;
+        stage.blur();
       }
-      // Releases control; never navigates away from the editor.
-      armed = false;
-      stage.blur();
       return;
     }
     const action = actionForCode(keymap, event.code);
@@ -641,6 +676,61 @@ export function createTrainingPanel(): TrainingPanel {
       cast(slot);
     }
   };
+
+  /** Esc anywhere else on the page collapses an expanded arena (#495). */
+  const onDocumentKeyDown = (event: KeyboardEvent): void => {
+    if (
+      event.key !== "Escape" ||
+      event.repeat ||
+      isShortcut(event) ||
+      (event.target instanceof Node && stage.contains(event.target))
+    ) {
+      return;
+    }
+    event.preventDefault();
+    setExpanded(false);
+  };
+
+  const paintExpandButton = (): void => {
+    const verb = expanded ? "collapse" : "expand";
+    expandButton.setAttribute("aria-label", `${verb} training ground`);
+    expandButton.title = expanded ? "Collapse" : "Expand";
+    expandButton.setAttribute("aria-pressed", String(expanded));
+    expandButton.innerHTML = expanded ? COLLAPSE_ICON : EXPAND_ICON;
+  };
+
+  /**
+   * An in-page overlay, not the Fullscreen API: the panel moves nowhere in
+   * the DOM, so collapsing puts it back exactly as it was, fight and all.
+   */
+  function setExpanded(on: boolean): void {
+    if (on === expanded) {
+      return;
+    }
+    expanded = on;
+    root.classList.toggle("is-expanded", on);
+    document.body.classList.toggle("has-expanded-training", on);
+    if (on) {
+      document.addEventListener("keydown", onDocumentKeyDown);
+    } else {
+      document.removeEventListener("keydown", onDocumentKeyDown);
+    }
+    paintExpandButton();
+    // Phaser would see the new stage size on its next poll; now is sooner.
+    viewport?.refreshScale();
+    // Expanding takes control, as a click on the stage does; collapsing
+    // keeps it if the player had it.
+    if (on) {
+      armed = true;
+    }
+    if (armed && !disposed) {
+      stage.focus({ preventScroll: true });
+    }
+  }
+  paintExpandButton();
+  expandButton.addEventListener("click", () => {
+    setExpanded(!expanded);
+  });
 
   const onStagePointerDown = (): void => {
     armedBeforeClick = armed;
@@ -883,6 +973,9 @@ export function createTrainingPanel(): TrainingPanel {
         return;
       }
       disposed = true;
+      // Leaving the editor while expanded collapses first: the page behind
+      // must scroll again, and Esc be nobody's.
+      setExpanded(false);
       // Mirrors MatchView.dispose(): stop listening before tearing down,
       // so a late event cannot touch a destroyed scene.
       offFrame?.();

@@ -14,6 +14,7 @@ import {
   groupFeed,
   hhmm,
   nudgeLines,
+  usageBar,
 } from "./dashboard-view.mjs";
 /** @type {import("./dashboard-view.mjs").NudgeFacts} */
 const noNudges = { schedule: [], since: null, sent: new Map(), unread: new Map(), now: 0 };
@@ -431,7 +432,7 @@ describe("companyLines", () => {
     expect(lines).toContain("CLAUDE usage unknown (no agent logs yet)");
   });
 
-  it("shows tokens per role, — for a quiet one, and marks the top (#50)", () => {
+  it("shows tokens per role, most output first, — for a quiet one, and marks the top (#50, #452)", () => {
     const usage = (/** @type {number} */ output) => ({
       replies: 41,
       output,
@@ -442,6 +443,8 @@ describe("companyLines", () => {
     const claude = {
       now: new Date(2026, 9, 25, 16, 42).getTime(),
       capped: new Set(),
+      burn: { output: 0, replies: 0, top: [] },
+      limit: null,
       summary: {
         roles: new Map([
           ["manager", usage(61_000)],
@@ -470,10 +473,18 @@ describe("companyLines", () => {
     const at = lines.indexOf("CLAUDE tokens, last 5h, as of 16:42");
     expect(at).toBeGreaterThan(0);
     const table = lines.slice(at + 2);
-    expect(table.map((line) => line.trim().split(/\s+/)[0])).toEqual([...roles, "total"]);
-    expect(table[0]).toMatch(/^ {2}manager +41 +61k +112k +3\.1M {2}opus-5-5$/);
-    expect(table[1]).toMatch(/^ {2}architect +—$/);
-    expect(table[2]).toMatch(/240k .*opus-5-5 {2}<- top$/);
+    // Most output first; the quiet ones after, in roster order.
+    expect(table.map((line) => line.trim().split(/\s+/)[0])).toEqual([
+      "developer",
+      "manager",
+      "architect",
+      "lead-dev",
+      "qa-tester",
+      "total",
+    ]);
+    expect(table[0]).toMatch(/240k .*opus-5-5 {2}<- top$/);
+    expect(table[1]).toMatch(/^ {2}manager +41 +61k +112k +3\.1M {2}opus-5-5$/);
+    expect(table[2]).toMatch(/^ {2}architect +—$/);
     expect(table.at(-1)).toMatch(/\(today: 1\.4M out\)$/);
     for (const line of lines) {
       expect(columnsOf(line)).toBeLessThanOrEqual(72);
@@ -491,6 +502,8 @@ describe("companyLines", () => {
     const claude = {
       now: new Date(2026, 9, 25, 16, 42).getTime(),
       capped: new Set(["architect"]),
+      burn: { output: 0, replies: 0, top: [] },
+      limit: null,
       summary: {
         roles: new Map([
           ["manager", usage(5, "\u001b]0;x\u0007\u001b[2J")],
@@ -522,6 +535,141 @@ describe("companyLines", () => {
     expect(manager).toMatch(/ {2}␛\]0;x�␛\[2J$/);
     const architect = plain(lines.find((line) => line.includes("  architect")) ?? "");
     expect(architect).toMatch(/ {2}over cap {2}<- top$/);
+  });
+
+  describe("how much Claude usage is left (#452)", () => {
+    const now = new Date(2026, 9, 27, 16, 42).getTime();
+    /** Unix seconds, `hours` from `now`. @param {number} hours */
+    const inHours = (hours) => Math.round((now + hours * 3_600_000) / 1000);
+
+    /**
+     * @param {Partial<import("./claude-usage.mjs").LimitReading> | null} limit
+     * @param {import("./claude-usage.mjs").Burn} [burn]
+     * @returns {string[]} the CLAUDE lines, colours and all
+     */
+    const claudeLines = (limit, burn = { output: 0, replies: 0, top: [] }) => {
+      const lines = companyLines(
+        {
+          roles,
+          live: new Set(),
+          stale: new Map(),
+          staff: null,
+          budget: null,
+          hub,
+          reboot: null,
+          build: null,
+          claude: {
+            now,
+            capped: new Set(),
+            summary: {
+              roles: new Map(),
+              total: { replies: 0, output: 0, input: 0, cacheRead: 0, model: "" },
+              todayOutput: 0,
+            },
+            burn,
+            limit:
+              limit === null
+                ? null
+                : {
+                    at: now - 60_000,
+                    status: "allowed",
+                    rateLimitType: "five_hour",
+                    resetsAt: inHours(2),
+                    utilization: 0.38,
+                    fiveHour: { utilization: 0.38, resetsAt: inHours(2) },
+                    sevenDay: { utilization: 0.74, resetsAt: inHours(48) },
+                    ...limit,
+                  },
+          },
+          nudges: noNudges,
+          telegram: telegramUp,
+        },
+        { rows: 60, width: 120 },
+      );
+      return lines.filter((line) => /CLAUDE usage|^ {14}7d|^ {2}burn/.test(plain(line)));
+    };
+
+    it("draws a bar of 20 cells, full at 100 % and no fuller", () => {
+      expect(usageBar(0, 20)).toBe(`[${"·".repeat(20)}]`);
+      expect(usageBar(0.38, 20)).toBe(`[${"#".repeat(8)}${"·".repeat(12)}]`);
+      expect(usageBar(1.04, 20)).toBe(`[${"#".repeat(20)}]`);
+    });
+
+    it("shows both windows, used, left and when each resets", () => {
+      const [five, seven] = claudeLines({}).map(plain);
+      expect(five).toBe(
+        `CLAUDE usage  5h [${"#".repeat(8)}${"·".repeat(12)}]  38 % used, 62 % left, resets 18:42`,
+      );
+      expect(seven).toBe(
+        `${" ".repeat(14)}7d [${"#".repeat(15)}${"·".repeat(5)}]  74 % used, 26 % left, resets Thu 16:42`,
+      );
+    });
+
+    it("is plain below 75 %, yellow from 75 %, red from 90 %, and tells the truth above 100 %", () => {
+      /** @param {number} utilization */
+      const fiveHour = (utilization) =>
+        claudeLines({ fiveHour: { utilization, resetsAt: inHours(2) } })[0] ?? "";
+      expect(fiveHour(0)).not.toContain("\u001b");
+      expect(plain(fiveHour(0))).toContain("0 % used, 100 % left");
+      expect(fiveHour(0.38)).not.toContain("\u001b");
+      expect(fiveHour(0.75).startsWith("\x1b[33m")).toBe(true);
+      expect(fiveHour(0.9).startsWith("\x1b[31m")).toBe(true);
+      expect(plain(fiveHour(1.04))).toContain(`[${"#".repeat(20)}]  104 % used, 0 % left`);
+    });
+
+    it("says LIMIT REACHED, in red, on the window that rejected", () => {
+      const [five, seven] = claudeLines({
+        status: "rejected",
+        rateLimitType: "seven_day",
+        sevenDay: { utilization: 1, resetsAt: inHours(48) },
+      });
+      expect(plain(five ?? "")).not.toContain("LIMIT REACHED");
+      expect(seven?.startsWith("\x1b[31m")).toBe(true);
+      expect(seven?.endsWith("LIMIT REACHED\x1b[0m")).toBe(true);
+    });
+
+    it("says how old a reading is past 10 minutes", () => {
+      expect(plain(claudeLines({})[0] ?? "")).not.toContain("as of");
+      const [five] = claudeLines({ at: now - 11 * 60_000 }).map(plain);
+      expect(five).toMatch(/resets 18:42 \(as of 16:31\)$/);
+    });
+
+    it("draws no bar for a window that has reset since, nor for one it never read", () => {
+      const [five, seven] = claudeLines({
+        fiveHour: { utilization: 0.9, resetsAt: inHours(-1) },
+        sevenDay: null,
+      }).map(plain);
+      expect(five).toBe("CLAUDE usage  5h  reset since 15:42, no newer reading");
+      expect(seven).toBe(`${" ".repeat(14)}7d  unknown`);
+    });
+
+    it("says so before any agent saw a reading", () => {
+      expect(plain(claudeLines(null)[0] ?? "")).toBe(
+        "CLAUDE usage  unknown (no rate_limit_event seen yet)",
+      );
+    });
+
+    it("shows the last hour's burn, and a quiet hour", () => {
+      const burn = {
+        output: 210_000,
+        replies: 1_400,
+        top: [
+          { role: "developer", output: 80_000 },
+          { role: "lead-dev", output: 50_000 },
+          { role: "qa-tester", output: 30_000 },
+        ],
+      };
+      expect(plain(claudeLines(null, burn)[1] ?? "")).toBe(
+        "  burn    ~210k out/h, 1k replies  top: developer ~80k, lead-dev ~50k, qa-tester ~30k",
+      );
+      expect(plain(claudeLines(null)[1] ?? "")).toBe("  burn    nothing in the last hour");
+    });
+
+    it("escapes a role name in the burn line", () => {
+      const burn = { output: 5, replies: 1, top: [{ role: "\u001b]0;x\u0007", output: 5 }] };
+      const line = claudeLines(null, burn)[1] ?? "";
+      expect(line).not.toContain("\u001b");
+    });
   });
 
   it("cuts an overflow with … +N lines", () => {

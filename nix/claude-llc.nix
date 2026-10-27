@@ -610,6 +610,8 @@ in
           # The context of the turn's last call (#321), in the employee's bus
           # directory, which its jail sees: `tg wait` reads it there.
           export VIBEWARS_CONTEXT_FILE="$root/bus/$employee/context.json"
+          # The last rate_limit_event, beside it, for the dashboard (#452).
+          export VIBEWARS_LIMIT_FILE="$root/bus/$employee/limit.json"
           # Every line the turn prints, for the manager's `peek` (#19).
           mkdir -p "$root/peek" && chmod 700 "$root/peek"
           export VIBEWARS_PEEK_DIR="$root/peek"

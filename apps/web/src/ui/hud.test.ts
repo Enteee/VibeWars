@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
@@ -11,6 +14,7 @@ import {
   describeRefusal,
   formatClock,
   isAttackingTarget,
+  lostHealthPercent,
   muteButtonState,
   skillSlotHtml,
   castRowSkill,
@@ -38,6 +42,7 @@ function player(fields: Partial<PlayerSnapshot>): PlayerSnapshot {
     maxHealth: 480,
     energy: 20,
     maxEnergy: 50,
+    overcast: 0,
     adrenaline: 0,
     armor: 60,
     weaponId: undefined,
@@ -69,6 +74,37 @@ describe("targetHealthPercent (#484)", () => {
 
   it("is of the current maximum, which can shrink", () => {
     expect(targetHealthPercent(player({ health: 200, maxHealth: 400 }))).toBe(50);
+  });
+});
+
+describe("lostHealthPercent (#764)", () => {
+  const deepWound = [
+    { id: "deep-wound", endsAt: 20, durationSeconds: 20, casterId: "foe" },
+  ] as const;
+
+  it("greys the share of the bar a deep wound took", () => {
+    expect(lostHealthPercent(player({}))).toBe(0);
+    expect(lostHealthPercent(player({ health: 384, statuses: deepWound }))).toBe(20);
+    expect(lostHealthPercent(player({ maxHealth: 600, statuses: deepWound }))).toBeCloseTo(
+      16.667,
+      2,
+    );
+  });
+
+  it("greys nothing on a corpse", () => {
+    expect(lostHealthPercent(player({ health: 0, dead: true, statuses: deepWound }))).toBe(0);
+  });
+
+  it("draws the band on every bar, not only a corpse's (#805)", () => {
+    // Node has no layout to measure, so read the rule itself: comments
+    // out, every selector that styles the band is the band alone.
+    const css = fs
+      .readFileSync(fileURLToPath(new URL("../styles.css", import.meta.url)), "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "");
+    const selectors = [...css.matchAll(/([^{}]*\.hud-bar-lost[^{}]*)\{/g)].map((match) =>
+      (match[1] ?? "").trim(),
+    );
+    expect(selectors).toEqual([".hud-bar-lost"]);
   });
 });
 
@@ -203,6 +239,7 @@ describe("targetHintDismissed", () => {
     maxHealth: 500,
     energy: 20,
     maxEnergy: 50,
+    overcast: 0,
     adrenaline: 0,
     armor: 60,
     weaponId: undefined,
@@ -287,6 +324,7 @@ describe("isAttackingTarget", () => {
     maxHealth: 500,
     energy: 20,
     maxEnergy: 50,
+    overcast: 0,
     adrenaline: 0,
     armor: 60,
     weaponId: undefined,
@@ -383,6 +421,7 @@ describe("targetProfessionIcons (#281)", () => {
     maxHealth: 500,
     energy: 20,
     maxEnergy: 50,
+    overcast: 0,
     adrenaline: 0,
     armor: 60,
     weaponId: undefined,

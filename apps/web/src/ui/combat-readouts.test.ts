@@ -58,12 +58,14 @@ describe("logToneOf", () => {
       "damage",
       "heal",
       "energy-gain",
+      "energy-loss",
       "sacrifice",
       "death",
       "status-applied",
       "status-removed",
       "status-expired",
       "status-spread",
+      "health-lost",
       "interrupted",
       "interrupt-missed",
       "attack-missed",
@@ -74,12 +76,14 @@ describe("logToneOf", () => {
       "damage",
       "heal",
       "resource",
+      "resource",
       "damage",
       "death",
       "status",
       "status",
       "status",
       "status",
+      "damage",
       "control",
       "control",
       "control",
@@ -120,6 +124,23 @@ describe("describeCombatEvent", () => {
     const spread = entry([event], { cause: "degeneration", skillId: undefined });
     expect(describeCombatEvent(spread, event, nameOf)).toBe(
       "Caster dummy catches Disease from Pyro",
+    );
+  });
+
+  it("names the status for the health it took as it landed, not the skill (#800)", () => {
+    const event: CombatEvent = {
+      kind: "health-lost",
+      targetId: "dummy",
+      amount: 100,
+      statusId: "deep-wound",
+    };
+    const chop = entry([event], { skillId: "warrior.swift-chop" });
+    expect(describeCombatEvent(chop, event, nameOf)).toBe(
+      "Deep Wound (Pyro) takes 100 health from Caster dummy",
+    );
+    const unknown = entry([event], { sourceId: undefined, skillId: undefined });
+    expect(describeCombatEvent(unknown, event, nameOf)).toBe(
+      "Deep Wound takes 100 health from Caster dummy",
     );
   });
 
@@ -182,6 +203,22 @@ describe("describeCombatEvent", () => {
     expect(logToneOf("attack-unreachable")).toBe("control");
   });
 
+  it("says why a picky interrupt let a cast through, and nothing when it found none (#796)", () => {
+    const spike = { skillId: "mesmer.power-spike" };
+    const refused: CombatEvent = {
+      kind: "interrupt-missed",
+      targetId: "dummy",
+      refusedSkillId: "ranger.barrage",
+    };
+    expect(describeCombatEvent(entry([refused], spike), refused, nameOf)).toBe(
+      "Power Spike (Pyro) can't interrupt Caster dummy's Barrage: not a spell or chant",
+    );
+    const idle: CombatEvent = { kind: "interrupt-missed", targetId: "dummy", refusedSkillId: null };
+    expect(describeCombatEvent(entry([idle], spike), idle, nameOf)).toBe(
+      "Power Spike (Pyro) finds nothing to interrupt on Caster dummy",
+    );
+  });
+
   it("says who knocked whom down, and for how long (#544)", () => {
     const down: CombatEvent = { kind: "knocked-down", targetId: "dummy", durationSeconds: 4 };
     expect(
@@ -191,6 +228,19 @@ describe("describeCombatEvent", () => {
     expect(floatingCueFor("knocked-down", undefined, false)).toEqual({
       text: "Knocked down",
       tone: "neutral",
+      critical: false,
+    });
+  });
+
+  it("says who lost energy to what, and floats it in blue (#793)", () => {
+    const burned: CombatEvent = { kind: "energy-loss", targetId: "dummy", amount: 8 };
+    expect(
+      describeCombatEvent(entry([burned], { skillId: "mesmer.energy-burn" }), burned, nameOf),
+    ).toBe("Caster dummy loses 8 energy to Energy Burn (Pyro)");
+    expect(logToneOf("energy-loss")).toBe("resource");
+    expect(floatingCueFor("energy-loss", 8, false)).toEqual({
+      text: "−8 energy",
+      tone: "energy",
       critical: false,
     });
   });
@@ -268,6 +318,72 @@ describe("appendRows", () => {
   it("drops nothing under the cap", () => {
     expect(appendRows([row("a")], [row("b")], 3).dropped).toBe(0);
   });
+
+  describe("folds consecutive regeneration (#590)", () => {
+    /** A second of regeneration as the batcher writes it, closed at `at`. */
+    const regen = (at: number, amount: number, sourceId?: string): LogRow => {
+      const batcher = new StatusTickBatcher();
+      batcher.push(
+        entry([{ kind: "heal", targetId: "you", amount }], {
+          atSeconds: at - 1,
+          cause: "degeneration",
+          sourceId,
+          skillId: undefined,
+        }),
+        nameOf,
+      );
+      const [closed] = batcher.advance(at, nameOf);
+      if (closed === undefined) {
+        throw new Error("no regeneration row");
+      }
+      return closed;
+    };
+    const run = (from: number, count: number): LogRow[] =>
+      Array.from({ length: count }, (_, i) => regen(from + i, 3));
+
+    it("writes a single row as before", () => {
+      expect(appendRows([], [regen(12, 3)], 100).rows.map((r) => r.text)).toEqual([
+        "regeneration heals Pyro for 3",
+      ]);
+    });
+
+    it("folds twenty rows into one, summed, at the first row's time", () => {
+      const { rows, replacedLast } = appendRows([], run(12, 20), 100);
+      expect(rows.map((r) => [r.time, r.text])).toEqual([
+        ["0:12.0", "regeneration heals Pyro for 60 over 19 s"],
+      ]);
+      expect(replacedLast).toBe(false);
+    });
+
+    it("lets a hit or a divider end the run", () => {
+      const between = [row("hit"), dividerRow("re-armed", 13)];
+      for (const other of between) {
+        expect(appendRows([], [regen(12, 3), other, regen(14, 3)], 100).rows).toHaveLength(3);
+      }
+    });
+
+    it("keeps a different source apart", () => {
+      expect(appendRows([], [regen(12, 3), regen(13, 3, "dummy")], 100).rows).toHaveLength(2);
+    });
+
+    it("folds into the last existing row and says so", () => {
+      const first = appendRows([row("hit")], run(12, 2), 100);
+      const second = appendRows(first.rows, run(14, 2), 100);
+      expect(second.replacedLast).toBe(true);
+      expect(second.added).toEqual([]);
+      expect(second.rows.map((r) => r.text)).toEqual([
+        "hit",
+        "regeneration heals Pyro for 12 over 3 s",
+      ]);
+    });
+
+    it("drops nothing for a fold at the cap", () => {
+      const full = appendRows([row("a")], [regen(12, 3)], 2);
+      const { rows, dropped } = appendRows(full.rows, [regen(13, 3)], 2);
+      expect(dropped).toBe(0);
+      expect(rows.map((r) => r.text)).toEqual(["a", "regeneration heals Pyro for 6 over 1 s"]);
+    });
+  });
 });
 
 describe("shouldStickToBottom", () => {
@@ -292,6 +408,11 @@ describe("accumulate", () => {
         entry([{ kind: "heal", targetId: "dummy", amount: 99 }], { sourceId: "dummy" }),
         // Hurting yourself is damage taken, not damage dealt.
         entry([{ kind: "damage", targetId: "you", amount: 5, critical: false }]),
+        // Health a status took as it landed is taken, never dealt (#800).
+        entry([{ kind: "health-lost", targetId: "you", amount: 20, statusId: "deep-wound" }], {
+          sourceId: "dummy",
+        }),
+        entry([{ kind: "health-lost", targetId: "dummy", amount: 20, statusId: "deep-wound" }]),
         // A swing counts as damage, and as the weapon's share of it.
         entry([{ kind: "damage", targetId: "dummy", amount: 12, critical: false }], {
           cause: "weapon",
@@ -306,7 +427,7 @@ describe("accumulate", () => {
       damage: 76,
       weaponDamage: 12,
       healing: 30,
-      taken: 15,
+      taken: 35,
       seconds: 0.05,
     });
   });
@@ -349,6 +470,12 @@ describe("floatingCueFor", () => {
     expect(floatingCueFor("heal", 40, false)).toEqual({
       text: "+40",
       tone: "heal",
+      critical: false,
+    });
+    // Deep wound's health as it lands looks like damage on the body (#800).
+    expect(floatingCueFor("health-lost", 100, false)).toEqual({
+      text: "−100",
+      tone: "damage",
       critical: false,
     });
   });

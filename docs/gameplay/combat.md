@@ -55,6 +55,21 @@ target you mean to attack: only the swing counts. The dead regenerate
 nothing, a respawn starts the count again, and training dummies
 regenerate like anyone. The numbers are the ruleset's.
 
+**Overcast** (#461, GW1's exhaustion) is a second cost some
+Elementalist spells take: maximum energy, not energy. Chain Lightning
+(Air Magic, 10 energy, 5 overcast, 2 s cast, 6 s recharge) strikes its
+target and the two foes nearest it for 70 lightning damage at rank 12,
+and lowers your maximum energy by 5 each cast. Overcast stacks, is paid
+when the cast starts (an interrupted or cancelled cast keeps it), and
+recovers 1 every 3 s, alive or dead. It takes no energy unless yours is
+now above the lowered maximum, which cuts it down: 30 / 30 and a spell
+costing 5 with 10 overcast leaves 20 / 20. Regeneration and energy gains
+fill only to the lowered maximum, which can drop below 0. It is not a
+condition, nothing removes it, and it lasts through death: a respawn
+fills you to the lowered maximum. A Training Ground reset clears it. The
+energy bar greys the overcast part at its right end and reads energy /
+lowered maximum; the tooltip says "10 energy, 5 overcast".
+
 The split is deliberate. Energy rewards patience; adrenaline rewards
 staying in the fight and landing hits. An adrenaline skill you cannot
 charge is useless, so costs are tuned against what one hit grants — a
@@ -108,6 +123,12 @@ casts, its slot on the bar is lit; when your cast ends without going
 off, the slot flashes, red with a ✕ if you were interrupted and grey if
 you cancelled it.
 
+**Some skills read how things stand** (#794), once, as they land and
+before any of their effects. Word of Healing heals 98 more (Healing
+Prayers 12) for an ally below half of its maximum health, a maximum a
+deep wound has lowered; its own heal cannot cancel the bonus. Mystic
+Sweep's blow deals 10 more while you are enchanted, in the same number.
+
 ## Interrupts
 
 Interrupting cancels a cast **only if one is in progress**. Too early or
@@ -125,6 +146,20 @@ Some interrupts are picky (#521). **Power Spike** and **Power Drain** only
 interrupt a spell or a chant; against an attack skill, a signet or an idle
 foe they are a wasted cast. When they land, Power Spike deals damage and
 Power Drain gives you energy.
+
+**Savage Shot** (#794) interrupts whatever its arrow finds being cast, and
+hits 25 harder if that was a spell: one bigger number on the hit, read
+as the arrow lands. A block or a miss does neither.
+
+## Energy denial
+
+A Mesmer can take a foe's energy (#793). **Energy Burn** takes up to 8
+energy and deals 9 damage for each point it took; **Energy Tap** takes up
+to 6 and gives you 2 energy for each. Only whole points the foe has are
+taken, so a foe at 3 energy loses 3, and one at 0 loses nothing and takes
+no damage. Maximum energy is untouched, and a foe drained mid-cast keeps
+casting: energy is paid when a cast starts. The loss floats over the foe
+in blue, "−8 energy", and the Training log has a row for it.
 
 ## Knockdown
 
@@ -187,9 +222,22 @@ number:
 | Blind         | 90% of your attacks miss                          |
 | Weakness      | −66% weapon damage, −1 to every attribute above 0 |
 | Cracked Armor | −20 armor, never below 60                         |
-| Deep Wound    | −20% maximum health                               |
+| Deep Wound    | −20% maximum health (at most 100), −20% healing   |
 | Dazed         | Spells: double cast time, interrupted by attacks  |
 | Disease       | −4 health/second; spreads to adjacent combatants  |
+
+**Deep Wound takes maximum health, and current health with it** (#764,
+GW1). Its loss, 20% of maximum health but never more than 100, comes off
+current health too as it lands, though never below 1: a deep wound alone
+never kills. That health is not damage (#800): the log names Deep Wound
+for it, it counts as taken but not dealt, and nothing that reacts to
+damage, such as adrenaline, sees it. Re-applying it while it is up takes
+nothing more. While it
+lasts, heals from skills are 20% weaker and stop at the reduced maximum;
+regeneration and life steal are untouched. When it ends, the maximum
+comes back and current health stays where it is. Healing reductions
+multiply, but never cut a heal by more than 40%. The health bars grey
+the part of the bar it took.
 
 **Dazed doubles a spell's cast time, and attacks interrupt it** (#546,
 GW1). Applying Dazed interrupts a spell being cast, even on someone
@@ -459,8 +507,8 @@ Every hit has one of GW1's damage types (#759). Slashing, piercing and
 blunt are **physical**: swords, axes and scythes slash, daggers, bows and spears
 pierce, hammers and fists are blunt. Fire, cold, lightning and earth are
 **elemental**: Fireball is fire. Chaos, dark, holy, shadow and
-**typeless** are neither. Wands and staves are typeless for now, and so
-is the flat damage of a blocked Swift Chop.
+**typeless** are neither. The flat damage of a blocked Swift Chop is
+typeless.
 
 Armor comes from the primary profession: 80 for a Warrior or Paragon, 70
 for a Ranger, Assassin or Dervish, 60 for the casters. On top of that,
@@ -478,7 +526,37 @@ and a Ranger 70 and 100. Damage halves for every 40 armor above 60:
 Fireball's 91 lands for about 46 on a Ranger. Types that are neither
 physical nor elemental get no typed bonus; base armor still applies.
 Armor penetration cuts the whole total, typed bonus included.
-Degeneration and life steal ignore armor altogether.
+
+Some damage ignores armor altogether (#760): holy, shadow and typeless
+skill damage, an attack skill's "+N damage" bonus, degeneration and
+life steal. Swift Chop's +16 lands as 16 on a Warrior and on a Monk
+alike, on top of its armor-mitigated weapon blow, and its blocked 16
+lands as 16. A weapon's own blow always respects armor, a holy or typeless wand
+included. Against a 60-armor caster nothing changed: the curve is
+exactly 1 there.
+
+A wand or staff deals the element of the attribute you nominate for it
+(#761), so a Fire Magic wand hits a Ranger at 100 armor and a
+Domination wand at 70:
+
+| Nominated attribute                                        | Damage    |
+| ---------------------------------------------------------- | --------- |
+| Fire Magic                                                 | fire      |
+| Air Magic                                                  | lightning |
+| Water Magic                                                | cold      |
+| Earth Magic                                                | earth     |
+| Healing, Protection, Smiting Prayers, Divine Favor         | holy      |
+| Domination, Illusion, Inspiration Magic                    | chaos     |
+| Blood Magic, Soul Reaping                                  | dark      |
+| Curses, Death Magic                                        | cold      |
+| anything else (Energy Storage, Fast Casting, ...), or none | typeless  |
+
+Lightning has an edge: its spells ignore 25% of armor, as in GW1.
+**Lightning Orb** (Elementalist, Air Magic, 15 energy, 2 s cast, 5 s
+recharge) flies at the target, half as fast again as Fireball, and is
+dodged or blocked by a wall as Fireball is. It strikes for 82 lightning at
+Air Magic 12, and a Ranger's 100 armor counts as 75 against it: it lands
+for 63, where Fireball's 91 lands for 46.
 
 ## Primary attributes
 

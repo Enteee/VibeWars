@@ -49,6 +49,11 @@ export interface ResourceRules {
   readonly naturalRegenStepSeconds: number;
   /** ...up to this many. It sums with every status's pips before the ±10 clamp. */
   readonly naturalRegenMaxPips: number;
+  /**
+   * Overcast recovered each second, alive or dead (#461): GW1's 1 maximum
+   * energy every 3 s, as continuous as the energy tick.
+   */
+  readonly overcastRecoveryPerSecond: number;
 }
 
 /**
@@ -141,6 +146,7 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
     naturalRegenDelaySeconds: 5,
     naturalRegenStepSeconds: 2,
     naturalRegenMaxPips: 7,
+    overcastRecoveryPerSecond: 1 / 3,
   }),
   combat: Object.freeze({
     // 60 is every caster profession's base armor. Anchoring here is what

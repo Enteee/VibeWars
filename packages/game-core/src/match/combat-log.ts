@@ -72,6 +72,9 @@ class TallyBuilder {
         }
       } else if (event.kind === "heal" && entry.sourceId !== undefined) {
         bump(this.healingByActor, entry.sourceId, event.amount);
+      } else if (event.kind === "health-lost") {
+        // Deep wound's health as it lands (#800): lost, but not damage dealt.
+        bump(this.damageTakenByActor, event.targetId, event.amount);
       }
     }
   }

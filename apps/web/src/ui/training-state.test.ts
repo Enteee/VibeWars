@@ -8,6 +8,7 @@ import {
   SCENARIO_STORAGE_KEY,
   armedHint,
   buildSignature,
+  escapeStep,
   loadScenarioChoice,
   overlayMessage,
   resolveScenarioId,
@@ -80,6 +81,15 @@ describe("resolveScenarioId", () => {
     expect(resolveScenarioId("gone", TRAINING_SCENARIOS)).toBe(TRAINING_SCENARIOS[0]?.id);
     expect(resolveScenarioId(undefined, TRAINING_SCENARIOS)).toBe(TRAINING_SCENARIOS[0]?.id);
     expect(resolveScenarioId("x", [])).toBeUndefined();
+  });
+});
+
+describe("escapeStep (#495)", () => {
+  it("cancels an action first, then collapses an expanded arena, then releases control", () => {
+    expect(escapeStep(true, true)).toBe("cancel");
+    expect(escapeStep(true, false)).toBe("cancel");
+    expect(escapeStep(false, true)).toBe("collapse");
+    expect(escapeStep(false, false)).toBe("release");
   });
 });
 

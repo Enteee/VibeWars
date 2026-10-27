@@ -20,6 +20,21 @@ export interface LogRow {
   readonly time: string;
   readonly text: string;
   readonly tone: LogTone;
+  /**
+   * Set only on a regeneration row the batcher writes, so a run of them
+   * for one target and source folds into one row (#590).
+   */
+  readonly fold?: LogFold;
+}
+
+export interface LogFold {
+  /** `${targetId}:${sourceId}`: rows fold only with the same key. */
+  readonly key: string;
+  readonly amount: number;
+  readonly startedAt: number;
+  readonly endedAt: number;
+  /** The text before " for ", e.g. "regeneration heals You". */
+  readonly label: string;
 }
 
 /** `m:ss.t`, the session clock as the log shows it. */
@@ -34,11 +49,13 @@ export function formatSimClock(seconds: number): string {
 export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"> {
   switch (kind) {
     case "damage":
+    case "health-lost":
     case "sacrifice":
       return "damage";
     case "heal":
       return "heal";
     case "energy-gain":
+    case "energy-loss":
       return "resource";
     case "status-applied":
     case "status-removed":
@@ -98,6 +115,11 @@ export function describeCombatEvent(
       return `${by} heals ${target} for ${formatAmount(event.amount)}`;
     case "energy-gain":
       return `${target} gains ${formatAmount(event.amount)} energy${attribute === undefined ? "" : ` from ${attribute}`}`;
+    case "energy-loss":
+      return `${target} loses ${formatAmount(event.amount)} energy to ${by}`;
+    case "health-lost":
+      // Named for the status, not the skill that brought it: not a second hit.
+      return `${STATUS_DEFINITIONS[event.statusId].name}${source === undefined ? "" : ` (${source})`} takes ${formatAmount(event.amount)} health from ${target}`;
     case "sacrifice":
       return `${target} sacrifices ${formatAmount(event.amount)} health`;
     case "death":
@@ -115,7 +137,10 @@ export function describeCombatEvent(
     case "cancelled":
       return `${target} cancels ${skillName(event.skillId) ?? event.skillId}`;
     case "interrupt-missed":
-      return `${by} finds nothing to interrupt on ${target}`;
+      // A picky interrupt says why it let a cast through (#796).
+      return event.refusedSkillId === null
+        ? `${by} finds nothing to interrupt on ${target}`
+        : `${by} can't interrupt ${target}'s ${skillName(event.refusedSkillId) ?? event.refusedSkillId}: not a spell or chant`;
     case "attack-missed":
       return `${by} misses ${target}`;
     case "attack-blocked":
@@ -254,21 +279,35 @@ export class StatusTickBatcher {
       if (formatAmount(open.amount) === "0") {
         continue;
       }
+      const atSeconds = closedAt(open);
+      const row = combatEventToRow(
+        {
+          atSeconds,
+          cause: "degeneration",
+          sourceId: open.sourceId,
+          skillId: undefined,
+          weaponId: undefined,
+          attributeId: undefined,
+        },
+        open.kind === "damage"
+          ? { kind: open.kind, targetId: open.targetId, amount: open.amount, critical: false }
+          : { kind: open.kind, targetId: open.targetId, amount: open.amount },
+        nameOf,
+      );
+      // Degeneration stays tick by tick: a damage run is worth reading.
       rows.push(
-        combatEventToRow(
-          {
-            atSeconds: closedAt(open),
-            cause: "degeneration",
-            sourceId: open.sourceId,
-            skillId: undefined,
-            weaponId: undefined,
-            attributeId: undefined,
-          },
-          open.kind === "damage"
-            ? { kind: open.kind, targetId: open.targetId, amount: open.amount, critical: false }
-            : { kind: open.kind, targetId: open.targetId, amount: open.amount },
-          nameOf,
-        ),
+        open.kind === "heal"
+          ? {
+              ...row,
+              fold: {
+                key: `${open.targetId}:${open.sourceId ?? ""}`,
+                amount: open.amount,
+                startedAt: atSeconds,
+                endedAt: atSeconds,
+                label: row.text.slice(0, row.text.lastIndexOf(" for ")),
+              },
+            }
+          : row,
       );
     }
     return rows;
@@ -280,19 +319,53 @@ export function dividerRow(label: string, atSeconds: number): LogRow {
   return { time: formatSimClock(atSeconds), text: `── ${label} ──`, tone: "divider" };
 }
 
+/** A folded run's text: "regeneration heals You for 57 over 19 s". */
+export function foldedText(fold: LogFold): string {
+  const seconds = formatAmount(fold.endedAt - fold.startedAt);
+  return `${fold.label} for ${formatAmount(fold.amount)} over ${seconds} s`;
+}
+
 /**
  * The log after `incoming` arrives, keeping the newest `cap` rows.
- * `dropped` is how many came off the front, so the DOM can remove
- * exactly those instead of rebuilding.
+ * Consecutive rows with the same `fold.key` merge into one that keeps
+ * the first row's time (#590). `replacedLast` says the last existing
+ * row absorbed incoming ones, so the DOM rewrites it in place; `added`
+ * are the rows to paint after it. `dropped` is how many came off the
+ * front, so the DOM can remove exactly those instead of rebuilding.
  */
 export function appendRows(
   existing: readonly LogRow[],
   incoming: readonly LogRow[],
   cap: number,
-): { readonly rows: readonly LogRow[]; readonly dropped: number } {
-  const all = [...existing, ...incoming];
+): {
+  readonly rows: readonly LogRow[];
+  readonly dropped: number;
+  readonly replacedLast: boolean;
+  readonly added: readonly LogRow[];
+} {
+  const all = [...existing];
+  let replacedLast = false;
+  for (const row of incoming) {
+    const last = all.at(-1);
+    if (row.fold !== undefined && last?.fold?.key === row.fold.key) {
+      const fold: LogFold = {
+        ...last.fold,
+        amount: last.fold.amount + row.fold.amount,
+        endedAt: row.fold.endedAt,
+      };
+      all[all.length - 1] = { ...last, text: foldedText(fold), fold };
+      replacedLast ||= all.length === existing.length;
+      continue;
+    }
+    all.push(row);
+  }
   const dropped = Math.max(0, all.length - cap);
-  return { rows: all.slice(dropped), dropped };
+  return {
+    rows: all.slice(dropped),
+    dropped,
+    replacedLast,
+    added: all.slice(existing.length),
+  };
 }
 
 /**
@@ -328,7 +401,7 @@ export const EMPTY_TOTALS: MeterTotals = {
 /**
  * Add one step's entries to the player's totals. Damage to yourself is
  * not damage dealt, as `tallyCombat` counts it; healing yourself is
- * healing done.
+ * healing done. Health a status takes as it lands is taken, never dealt.
  */
 export function accumulate(
   totals: MeterTotals,
@@ -350,6 +423,8 @@ export function accumulate(
         }
       } else if (event.kind === "heal" && entry.sourceId === selfId) {
         healing += event.amount;
+      } else if (event.kind === "health-lost" && event.targetId === selfId) {
+        taken += event.amount;
       }
     }
   }
@@ -391,7 +466,7 @@ export function meterRows(totals: MeterTotals): readonly MeterRow[] {
 
 export interface FloatingCue {
   readonly text: string;
-  readonly tone: "damage" | "heal" | "neutral";
+  readonly tone: "damage" | "heal" | "energy" | "neutral";
   /** A critical hit (#533): drawn larger, whatever dealt it. */
   readonly critical: boolean;
 }
@@ -412,6 +487,7 @@ export function floatingCueFor(
   }
   switch (kind) {
     case "damage":
+    case "health-lost":
       // The sign says damage or heal; the colour only backs it up, so a
       // player who cannot tell the two colours apart loses nothing.
       // U+2212, a real minus, as wide as the plus.
@@ -422,6 +498,10 @@ export function floatingCueFor(
       };
     case "heal":
       return { text: `+${formatAmount(amount ?? 0)}`, tone: "heal", critical: false };
+    case "energy-loss":
+      // Energy Burn and Energy Tap (#793): blue, as the energy bar, with the
+      // word, so it never reads as health.
+      return { text: `−${formatAmount(amount ?? 0)} energy`, tone: "energy", critical: false };
     case "interrupted":
       return { text: "interrupted!", tone: "neutral", critical: false };
     case "cancelled":

@@ -47,6 +47,7 @@ import type {
   WireCombatBatch,
   WireEnded,
   WirePlayer,
+  WireStatus,
   WireSkillBar,
   WireSnapshotPart,
   PeerLobbyJoin,
@@ -98,6 +99,8 @@ const welcome: PeerWelcome = {
 
 const refuse: PeerRefuse = { reason: "protocol-mismatch", message: PROTOCOL_MISMATCH_MESSAGE };
 
+const status: WireStatus = { status: 3, endsAt: 12.5, durationSeconds: 8, casterId: "peer-2" };
+
 const player: WirePlayer = {
   id: "peer-1",
   name: "Mhenlo",
@@ -112,6 +115,7 @@ const player: WirePlayer = {
   maxHealth: 480,
   energy: 25,
   maxEnergy: 30,
+  overcast: 5,
   adrenaline: 0,
   armor: 60,
   weaponId: "staff",
@@ -127,7 +131,7 @@ const player: WirePlayer = {
   knockdownRemaining: 2.5,
   healthPips: -3,
   energyPips: 4,
-  statuses: [3],
+  statuses: [status],
 };
 
 const snapshot: WireSnapshotPart = {
@@ -461,16 +465,42 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireSnapshotPart,
     {
       ...snapshot,
-      players: [{ ...player, statuses: Array.from({ length: MAX_WIRE_STATUSES + 1 }, () => 0) }],
+      players: [
+        { ...player, statuses: Array.from({ length: MAX_WIRE_STATUSES + 1 }, () => status) },
+      ],
     },
   ],
   ...[-1, 1.5, "crippled", MAX_WIRE_STATUS_INDEX + 1].map(
     (index): [string, (value: unknown) => unknown, unknown] => [
       `snapshot with status index ${String(index)}`,
       parseWireSnapshotPart,
-      { ...snapshot, players: [{ ...player, statuses: [index] }] },
+      { ...snapshot, players: [{ ...player, statuses: [{ ...status, status: index }] }] },
     ],
   ),
+  ...(
+    [
+      ["endsAt", -0.1],
+      ["endsAt", NaN],
+      ["endsAt", Infinity],
+      ["endsAt", undefined],
+      ["durationSeconds", 0],
+      ["durationSeconds", -1],
+      ["durationSeconds", Infinity],
+      ["durationSeconds", undefined],
+      ["casterId", 7],
+      ["casterId", null],
+      ["casterId", long],
+    ] as const
+  ).map(([field, value]): [string, (value: unknown) => unknown, unknown] => [
+    `snapshot with a status's ${field} ${String(value).slice(0, 12)} (#803)`,
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, statuses: [{ ...status, [field]: value }] }] },
+  ]),
+  [
+    "snapshot with a bare status index (#803)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, statuses: [3] }] },
+  ],
   [
     "snapshot with a player missing a field",
     parseWireSnapshotPart,
@@ -495,6 +525,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot with a player missing knockdownRemaining (#545)",
     parseWireSnapshotPart,
     { ...snapshot, players: [{ ...player, knockdownRemaining: undefined }] },
+  ],
+  [
+    "snapshot with a player missing overcast (#461)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, overcast: undefined }] },
+  ],
+  [
+    "snapshot with a string for a player's overcast (#461)",
+    parseWireSnapshotPart,
+    { ...snapshot, players: [{ ...player, overcast: "5" }] },
   ],
   [
     "snapshot with a string for walking",

@@ -242,6 +242,8 @@ export async function createArenaViewport(parent: HTMLElement): Promise<ArenaVie
       scene.setArenaBounds(width, height);
     },
     refreshScale() {
+      // `refresh` alone sizes to the parent as last polled; measure it now.
+      game.scale.getParentBounds();
       game.scale.refresh();
     },
     destroy() {

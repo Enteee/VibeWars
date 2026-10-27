@@ -97,7 +97,7 @@ describe("equippableSkills", () => {
     expect(ids).not.toContain("ranger.broad-head-arrow");
   });
 
-  it("offers a Mesmer primary its four skills (#521)", () => {
+  it("offers a Mesmer primary its six skills (#521, #793)", () => {
     const ids = equippableSkills(
       stored({
         primaryProfession: "mesmer",
@@ -111,8 +111,24 @@ describe("equippableSkills", () => {
         "mesmer.power-drain",
         "mesmer.shatter-enchantment",
         "mesmer.drain-enchantment",
+        "mesmer.energy-burn",
+        "mesmer.energy-tap",
       ]),
     );
+  });
+
+  it("offers each profession its skill that depends on how things stand (#794)", () => {
+    const offered = (profession: "monk" | "dervish" | "ranger") =>
+      equippableSkills(
+        stored({
+          primaryProfession: profession,
+          attributes: [],
+          equipment: defaultBuildEquipment(profession),
+        }),
+      ).map((s) => s.id);
+    expect(offered("monk")).toContain("monk.word-of-healing");
+    expect(offered("dervish")).toContain("dervish.mystic-sweep");
+    expect(offered("ranger")).toContain("ranger.savage-shot");
   });
 
   it("changes with the character's secondary profession", () => {

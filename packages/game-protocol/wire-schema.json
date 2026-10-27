@@ -235,7 +235,53 @@
         {
           "properties": [
             { "name": "amount", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "energy-loss" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "amount", "optional": false, "type": "number" },
             { "name": "kind", "optional": false, "type": { "literal": "heal" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "amount", "optional": false, "type": "number" },
+            { "name": "kind", "optional": false, "type": { "literal": "health-lost" } },
+            {
+              "name": "statusId",
+              "optional": false,
+              "type": {
+                "union": [
+                  { "literal": "anthem-of-flame" },
+                  { "literal": "apply-poison" },
+                  { "literal": "armor-boost" },
+                  { "literal": "bleeding" },
+                  { "literal": "blind" },
+                  { "literal": "blood-ritual" },
+                  { "literal": "burning" },
+                  { "literal": "cracked-armor" },
+                  { "literal": "crippled" },
+                  { "literal": "dash" },
+                  { "literal": "dazed" },
+                  { "literal": "deep-wound" },
+                  { "literal": "disease" },
+                  { "literal": "faintheartedness" },
+                  { "literal": "glyph-of-lesser-energy" },
+                  { "literal": "guardian" },
+                  { "literal": "healing-signet-armor" },
+                  { "literal": "malaise" },
+                  { "literal": "poison" },
+                  { "literal": "regeneration" },
+                  { "literal": "sprint" },
+                  { "literal": "watch-yourself" },
+                  { "literal": "weakness" },
+                  { "literal": "weapon-of-warding" }
+                ]
+              }
+            },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
         },
@@ -377,6 +423,11 @@
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "interrupt-missed" } },
+            {
+              "name": "refusedSkillId",
+              "optional": false,
+              "type": { "union": ["null", "string"] }
+            },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
         },
@@ -1210,13 +1261,27 @@
         { "name": "maxHealth", "optional": false, "type": "number" },
         { "name": "name", "optional": false, "type": "string" },
         { "name": "offhandId", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "overcast", "optional": false, "type": "number" },
         { "name": "primaryProfession", "optional": false, "type": { "union": ["null", "string"] } },
         {
           "name": "secondaryProfession",
           "optional": false,
           "type": { "union": ["null", "string"] }
         },
-        { "name": "statuses", "optional": false, "type": { "array": "number" } },
+        {
+          "name": "statuses",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "casterId", "optional": false, "type": "string" },
+                { "name": "durationSeconds", "optional": false, "type": "number" },
+                { "name": "endsAt", "optional": false, "type": "number" },
+                { "name": "status", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
         { "name": "swingElapsed", "optional": false, "type": "number" },
         { "name": "swingTotal", "optional": false, "type": "number" },
         { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -1335,6 +1400,7 @@
                 { "name": "maxHealth", "optional": false, "type": "number" },
                 { "name": "name", "optional": false, "type": "string" },
                 { "name": "offhandId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "overcast", "optional": false, "type": "number" },
                 {
                   "name": "primaryProfession",
                   "optional": false,
@@ -1345,7 +1411,20 @@
                   "optional": false,
                   "type": { "union": ["null", "string"] }
                 },
-                { "name": "statuses", "optional": false, "type": { "array": "number" } },
+                {
+                  "name": "statuses",
+                  "optional": false,
+                  "type": {
+                    "array": {
+                      "properties": [
+                        { "name": "casterId", "optional": false, "type": "string" },
+                        { "name": "durationSeconds", "optional": false, "type": "number" },
+                        { "name": "endsAt", "optional": false, "type": "number" },
+                        { "name": "status", "optional": false, "type": "number" }
+                      ]
+                    }
+                  }
+                },
                 { "name": "swingElapsed", "optional": false, "type": "number" },
                 { "name": "swingTotal", "optional": false, "type": "number" },
                 { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -1453,6 +1532,7 @@
                 { "name": "maxHealth", "optional": false, "type": "number" },
                 { "name": "name", "optional": false, "type": "string" },
                 { "name": "offhandId", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "overcast", "optional": false, "type": "number" },
                 {
                   "name": "primaryProfession",
                   "optional": false,
@@ -1463,7 +1543,20 @@
                   "optional": false,
                   "type": { "union": ["null", "string"] }
                 },
-                { "name": "statuses", "optional": false, "type": { "array": "number" } },
+                {
+                  "name": "statuses",
+                  "optional": false,
+                  "type": {
+                    "array": {
+                      "properties": [
+                        { "name": "casterId", "optional": false, "type": "string" },
+                        { "name": "durationSeconds", "optional": false, "type": "number" },
+                        { "name": "endsAt", "optional": false, "type": "number" },
+                        { "name": "status", "optional": false, "type": "number" }
+                      ]
+                    }
+                  }
+                },
                 { "name": "swingElapsed", "optional": false, "type": "number" },
                 { "name": "swingTotal", "optional": false, "type": "number" },
                 { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } },

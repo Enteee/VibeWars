@@ -1,6 +1,7 @@
 /**
- * One turn of an agent (agent-turn.mjs). So far: a `tg wait` that Bash moved
- * to the background gives the inbox back (#325). The command is a stand-in
+ * One turn of an agent (agent-turn.mjs): a `tg wait` that Bash moved to
+ * the background gives the inbox back (#325), and what a
+ * `rate_limit_event` says is kept for the dashboard (#452). The command is a stand-in
  * that prints stream-json.
  */
 
@@ -11,6 +12,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
+
+import { obj } from "./protocol.mjs";
 
 const AGENT_TURN = path.join(path.dirname(fileURLToPath(import.meta.url)), "agent-turn.mjs");
 
@@ -85,6 +88,22 @@ const EVENTS = {
   }),
   limited: JSON.stringify({ type: "result", is_error: true, result: "Claude usage limit reached" }),
   result: JSON.stringify({ type: "result", subtype: "success", is_error: false, result: "ok" }),
+  rateLimit: JSON.stringify({
+    type: "rate_limit_event",
+    rate_limit_info: {
+      status: "allowed",
+      rateLimitType: "five_hour",
+      resetsAt: 1_761_400_800,
+      utilization: 0.38,
+      overageStatus: "rejected",
+      unifiedWindows: {
+        five_hour: { utilization: 0.38, resetsAt: 1_761_400_800, extra: "x" },
+        seven_day: { utilization: 0.74, resetsAt: 1_761_900_000 },
+      },
+    },
+    uuid: "u-1",
+    session_id: SESSION_ID,
+  }),
 };
 
 /**
@@ -92,15 +111,21 @@ const EVENTS = {
  *
  * @param {string[]} events keys of EVENTS
  * @param {string} [peekDir] where `peek` is recorded, if anywhere
- * @returns {{ code: number | null, stdout: string, stderr: string, cursor: string, log: string }}
+ * @param {{ limitUnwritable?: boolean }} [options] make the limit file a
+ *   directory, so writing it fails
+ * @returns {{ code: number | null, stdout: string, stderr: string, cursor: string, log: string, limit: string }}
  */
-function turn(events, peekDir = "") {
+function turn(events, peekDir = "", { limitUnwritable = false } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "agent-turn-test-"));
   dirs.push(dir);
   const bus = path.join(dir, "bus");
   const state = path.join(dir, "developer");
   fs.mkdirSync(bus);
   fs.writeFileSync(path.join(bus, "cursor"), "100\n");
+  const limitFile = path.join(bus, "limit.json");
+  if (limitUnwritable) {
+    fs.mkdirSync(limitFile);
+  }
   const script = path.join(dir, "claude.mjs");
   fs.writeFileSync(
     script,
@@ -119,6 +144,7 @@ function turn(events, peekDir = "") {
       ...process.env,
       VIBEWARS_BOT_ROLE: "developer",
       VIBEWARS_CONTEXT_FILE: path.join(bus, "context.json"),
+      VIBEWARS_LIMIT_FILE: limitFile,
       ...(peekDir === "" ? {} : { VIBEWARS_PEEK_DIR: peekDir }),
     },
   });
@@ -129,8 +155,43 @@ function turn(events, peekDir = "") {
     stderr: result.stderr,
     cursor: fs.readFileSync(path.join(bus, "cursor"), "utf8"),
     log: fs.existsSync(logFile) ? fs.readFileSync(logFile, "utf8") : "",
+    limit: fs.statSync(limitFile, { throwIfNoEntry: false })?.isFile()
+      ? fs.readFileSync(limitFile, "utf8")
+      : "",
   };
 }
+
+describe("a rate_limit_event (#452)", () => {
+  it("is kept in the limit file, its whitelisted fields only, and dated", () => {
+    const before = Date.now();
+    const result = turn(["init", "rateLimit", "result"]);
+
+    expect(result.code).toBe(0);
+    const kept = obj(JSON.parse(result.limit));
+    expect(kept.at).toBeGreaterThanOrEqual(before);
+    expect(kept.at).toBeLessThanOrEqual(Date.now());
+    expect({ ...kept, at: 0 }).toEqual({
+      at: 0,
+      status: "allowed",
+      rateLimitType: "five_hour",
+      resetsAt: 1_761_400_800,
+      utilization: 0.38,
+      fiveHour: { utilization: 0.38, resetsAt: 1_761_400_800 },
+      sevenDay: { utilization: 0.74, resetsAt: 1_761_900_000 },
+    });
+  });
+
+  it("writes nothing when the turn saw none", () => {
+    expect(turn(["init", "result"]).limit).toBe("");
+  });
+
+  it("never costs the turn: a limit file that cannot be written is only a notice", () => {
+    const result = turn(["init", "rateLimit", "result"], "", { limitUnwritable: true });
+
+    expect(result.code).toBe(0);
+    expect(result.stderr).toContain("limit.json");
+  });
+});
 
 describe("a tg wait that went to the background", () => {
   it("is logged, and the inbox cursor is put back to where it was", () => {

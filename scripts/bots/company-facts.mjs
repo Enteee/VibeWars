@@ -7,8 +7,16 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { WINDOW_MS, createUsageReader, summarize } from "./claude-usage.mjs";
+import {
+  WINDOW_MS,
+  burnOf,
+  createUsageReader,
+  newestLimit,
+  parseLimitFile,
+  summarize,
+} from "./claude-usage.mjs";
 import { ROLES } from "./hub-policy.mjs";
+import { withJailDir } from "./jail-fs.mjs";
 import { readRoster } from "./presence.mjs";
 import { parseStaff } from "./staff.mjs";
 
@@ -64,15 +72,43 @@ export function usageReader(boxes) {
   return boxes === undefined ? null : createUsageReader(boxes, ROLES);
 }
 
+/** A limit file is a few hundred bytes; anything bigger is not one. */
+const LIMIT_FILE_BYTES = 4096;
+
 /**
- * Tokens per role over the last 5 hours, and today's output (#50): read
- * from the agents' own logs, never an API.
+ * The newest `rate_limit_event` any employee's turn saw (#452), from
+ * each one's `bus/<employee>/limit.json`. A missing or malformed file
+ * counts as none.
+ *
+ * @param {string} root the company's `.bots` directory
+ * @param {import("./staff.mjs").Staff | null} staff
+ * @param {number} now
+ * @returns {import("./claude-usage.mjs").LimitReading | null}
+ */
+export function readLimit(root, staff, now) {
+  const readings = Object.keys(staff?.employees ?? {}).map((employee) => {
+    try {
+      return withJailDir(path.join(root, "bus", employee), "", {}, (dir) =>
+        parseLimitFile(dir.readSmall("limit.json", LIMIT_FILE_BYTES)),
+      );
+    } catch {
+      return null;
+    }
+  });
+  return newestLimit(readings, now);
+}
+
+/**
+ * Tokens per role over the last 5 hours, the last hour's burn, and
+ * today's output (#50): read from the agents' own logs, never an API.
+ * `limit` is `readLimit`'s, passed through.
  *
  * @param {ReturnType<typeof createUsageReader> | null} reader
  * @param {number} now
+ * @param {import("./claude-usage.mjs").LimitReading | null} limit
  * @returns {import("./dashboard-view.mjs").ClaudeUsage | null}
  */
-export function readUsage(reader, now) {
+export function readUsage(reader, now, limit) {
   const midnight = new Date(now);
   midnight.setHours(0, 0, 0, 0);
   const dayStart = midnight.getTime();
@@ -83,6 +119,8 @@ export function readUsage(reader, now) {
   return {
     summary: summarize(read.records, { now, windowMs: WINDOW_MS, dayStart }),
     capped: read.capped,
+    burn: burnOf(read.records, now),
+    limit,
     now,
   };
 }

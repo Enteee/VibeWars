@@ -148,7 +148,7 @@ export function toArenaSnapshot(
           player.castingSkillId !== undefined && player.castTotal > 0
             ? Math.max(0, Math.min(1, 1 - player.castRemaining / player.castTotal))
             : undefined,
-        statuses: player.statuses,
+        statuses: player.statuses.map((status) => status.id),
       };
     }),
   };

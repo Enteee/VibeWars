@@ -64,6 +64,15 @@ describe("describeSkill", () => {
     expect(atZero.effects[0]?.text).toBe(explicitZero.effects[0]?.text);
   });
 
+  it("says how much armor a damage effect ignores, when it ignores any (#761)", () => {
+    const orb = describeSkill(
+      skill("elementalist.lightning-orb"),
+      new Map([["elementalist.air-magic", 12]]),
+    );
+    expect(orb.effects[0]?.text).toBe("Deals 82 damage (25% armor penetration)");
+    expect(describeSkill(skill("elementalist.fireball")).effects[0]?.text).not.toContain("armor");
+  });
+
   it("names the attribute in readable form", () => {
     expect(describeSkill(skill("elementalist.fireball")).attributeName).toBe("Fire Magic");
   });
@@ -146,6 +155,44 @@ describe("describeSkill", () => {
     expect(describeSkill(skill("mesmer.power-spike"), ranks).headline).toBe("102 damage");
   });
 
+  it("leads what depends on how things stand with its condition (#794)", () => {
+    const ranks = new Map([
+      ["monk.healing-prayers", 12],
+      ["dervish.mysticism", 12],
+      ["ranger.marksmanship", 12],
+    ]);
+    const lines = (id: string) => describeSkill(skill(id), ranks).effects.map((e) => e.text);
+    expect(lines("monk.word-of-healing")).toEqual([
+      "Heals for 81",
+      "If target is below 50% Health: heals for 98",
+    ]);
+    expect(lines("dervish.mystic-sweep")).toEqual([
+      "+10 damage",
+      "If you have an enchantment: +10 damage",
+    ]);
+    expect(lines("ranger.savage-shot")).toEqual([
+      "If target is casting a spell: +25 damage",
+      "Interrupts the target's current cast, if they are casting",
+    ]);
+  });
+
+  it("says what is taken, and what comes per point of it (#793)", () => {
+    const ranks = new Map([
+      ["mesmer.domination-magic", 12],
+      ["mesmer.inspiration-magic", 12],
+    ]);
+    const lines = (id: string) => describeSkill(skill(id), ranks).effects.map((e) => e.text);
+    expect(lines("mesmer.energy-burn")).toEqual([
+      "Target loses 8 energy",
+      "Deals 9 damage per point lost",
+    ]);
+    expect(lines("mesmer.energy-tap")).toEqual([
+      "Target loses 6 energy",
+      "Gain 2 energy per point lost",
+    ]);
+    expect(describeSkill(skill("mesmer.energy-burn"), ranks).headline).toBe("drains 8 energy");
+  });
+
   it("says Guardian blocks half of all attacks (#534)", () => {
     expect(describeStatus("guardian")).toBe("50% chance to block attacks");
   });
@@ -189,6 +236,7 @@ describe("describeSkill", () => {
       expect(described.effects, `${entry.id} lost an effect line`).toHaveLength(
         lines(entry.effects) +
           (entry.attack?.bonusDamage === undefined ? 0 : 1) +
+          (entry.attack?.conditionalBonus === undefined ? 0 : 1) +
           lines(entry.attack?.onBlocked ?? []) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1),

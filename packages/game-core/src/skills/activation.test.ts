@@ -23,6 +23,7 @@ const SPELL: Skill = {
   profession: "elementalist",
   attributeId: "elementalist.fire-magic",
   cost: { kind: "energy", amount: 10 },
+  overcast: 0,
   activationSeconds: 1,
   rechargeSeconds: 5,
   range: 400,
@@ -31,7 +32,7 @@ const SPELL: Skill = {
   attack: undefined,
   whileActivating: undefined,
   projectile: undefined,
-  effects: [{ kind: "damage", amount: { flat: 50 }, type: "typeless" }],
+  effects: [{ kind: "damage", amount: { flat: 50 }, type: "typeless", armorPenetration: 0 }],
 };
 
 function request(overrides: Partial<ActivationRequest> = {}): ActivationRequest {
@@ -303,7 +304,12 @@ describe("canActivate, an attack skill's weapon (ADR-0029)", () => {
       energy: 50,
       equipment: {
         ...unarmedResolvedEquipment(60),
-        mainHand: { weapon: WEAPONS[weaponId], attributeId: undefined, requirementMet: true },
+        mainHand: {
+          weapon: WEAPONS[weaponId],
+          attributeId: undefined,
+          damageType: WEAPONS[weaponId].damageType,
+          requirementMet: true,
+        },
       },
     });
   }
@@ -327,12 +333,14 @@ describe("canActivate, an attack skill's weapon (ADR-0029)", () => {
     id: "test.melee-attack",
     type: "attack",
     cost: undefined,
+    overcast: 0,
     activationSeconds: 0,
     range: 100,
     attack: {
       weapon: "melee",
       weaponDamage: 1,
       bonusDamage: undefined,
+      conditionalBonus: undefined,
       unblockable: false,
       onBlocked: [],
     },

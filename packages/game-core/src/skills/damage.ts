@@ -17,37 +17,46 @@ import type { Combatant } from "./types.js";
  */
 
 /**
- * Where a hit came from, which decides whether armor applies.
- *
- * Armor stops weapons and spells. It does not stop health slipping away
- * from a condition, or life being drained directly — those bypass it,
- * which is what makes degeneration a genuinely different threat to a
- * heavily-armored target rather than just a smaller version of the same
- * one.
+ * Where a hit came from. Armor itself is decided per part of the packet
+ * (`armored`, `armorIgnoring`), not by the source: an attack skill's
+ * bonus rides a weapon blow but ignores armor (#760).
  */
-export type DamageSource = "weapon" | "spell" | "degeneration" | "life-steal";
+export type DamageSource = "weapon" | "skill" | "degeneration" | "life-steal";
 
 export interface DamagePacket {
-  /** Before mitigation. */
-  readonly amount: number;
+  /** Before mitigation; goes through the armor curve. */
+  readonly armored: number;
+  /**
+   * Before mitigation; added after the armor curve. Holy, shadow and
+   * typeless skill damage, an attack skill's "+N damage", degeneration
+   * and life steal (GW1, #491/Q85).
+   */
+  readonly armorIgnoring: number;
   readonly type: DamageType;
   readonly source: DamageSource;
   /** Fraction of the target's armor ignored, 0..1. */
   readonly armorPenetration: number;
 }
 
-export function respectsArmor(source: DamageSource): boolean {
-  return source === "weapon" || source === "spell";
+/** Skill damage of these types ignores armor (GW1). */
+function ignoresArmor(type: DamageType): boolean {
+  return type === "holy" || type === "shadow" || type === "typeless";
 }
 
-/** A spell's damage packet: armor-respecting, of the effect's type, no penetration. */
-export function spellDamage(amount: number, type: DamageType): DamagePacket {
-  return { amount, type, source: "spell", armorPenetration: 0 };
+/** A skill's damage packet, of the effect's type and armor penetration. */
+export function skillDamage(
+  amount: number,
+  type: DamageType,
+  armorPenetration: number,
+): DamagePacket {
+  return ignoresArmor(type)
+    ? { armored: 0, armorIgnoring: amount, type, source: "skill", armorPenetration }
+    : { armored: amount, armorIgnoring: 0, type, source: "skill", armorPenetration };
 }
 
 /** Degeneration and life steal: armor never helps. */
 export function unmitigatedDamage(amount: number, source: DamageSource): DamagePacket {
-  return { amount, type: "typeless", source, armorPenetration: 0 };
+  return { armored: 0, armorIgnoring: amount, type: "typeless", source, armorPenetration: 0 };
 }
 
 /**
@@ -110,7 +119,9 @@ const rulesFloor = 100;
  * `halving` points of armor below the reference and halves for every
  * `halving` above. At the reference it is exactly 1.0 — which is why
  * every skill in the catalog still deals precisely what it dealt before
- * armor existed, against the 60-armor casters they were tuned against.
+ * armor existed, against the 60-armor casters they were tuned against,
+ * and why letting holy, shadow and typeless damage and attack-skill
+ * bonuses ignore armor (#760) changed nothing against a caster.
  */
 export function armorMultiplier(armor: number, rules: CombatRules): number {
   return Math.pow(2, (rules.armorReferenceLevel - armor) / rules.armorHalvingPoints);
@@ -123,15 +134,12 @@ export function armorMultiplier(armor: number, rules: CombatRules): number {
  * drift away from the arithmetic by a few points per hit.
  */
 export function mitigate(packet: DamagePacket, target: Combatant, rules: CombatRules): number {
-  if (packet.amount <= 0) {
+  if (packet.armored + packet.armorIgnoring <= 0) {
     return 0;
-  }
-  if (!respectsArmor(packet.source)) {
-    return packet.amount;
   }
 
   const armor = effectiveArmor(target, packet);
-  let dealt = packet.amount * armorMultiplier(armor, rules);
+  let dealt = packet.armored * armorMultiplier(armor, rules) + packet.armorIgnoring;
 
   // Rune of Absorption, last and only against physical hits. After
   // mitigation on purpose: it is a flat shield against each blow, so it

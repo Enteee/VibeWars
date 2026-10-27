@@ -153,6 +153,16 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Elementalist/452-Glyph_of_Lesser_Energy",
   },
   {
+    id: "elementalist.chain-lightning",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/378-Chain_Lightning",
+  },
+  {
+    id: "elementalist.lightning-orb",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/384-Lightning_Orb",
+  },
+  {
     id: "necromancer.enfeeble",
     profession: "necromancer",
     url: "https://www.gw-memorial.net/skills/Necromancer/256-Enfeeble",
@@ -231,6 +241,31 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     id: "necromancer.enfeebling-blood",
     profession: "necromancer",
     url: "https://www.gw-memorial.net/skills/Necromancer/257-Enfeebling_Blood",
+  },
+  {
+    id: "monk.word-of-healing",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/178-Word_of_Healing",
+  },
+  {
+    id: "dervish.mystic-sweep",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1029-Mystic_Sweep",
+  },
+  {
+    id: "ranger.savage-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/121-Savage_Shot",
+  },
+  {
+    id: "mesmer.energy-burn",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/311-Energy_Burn",
+  },
+  {
+    id: "mesmer.energy-tap",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/349-Energy_Tap",
   },
 ];
 
