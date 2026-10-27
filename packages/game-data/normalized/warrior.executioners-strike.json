@@ -10,6 +10,7 @@
     "kind": "adrenaline",
     "amount": 8
   },
+  "overcast": 0,
   "activationSeconds": 0,
   "rechargeSeconds": 0,
   "description": "If this attack hits, you strike for +10...34...40 damage.",

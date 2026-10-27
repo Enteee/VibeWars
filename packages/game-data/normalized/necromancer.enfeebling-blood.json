@@ -10,6 +10,7 @@
     "kind": "energy",
     "amount": 1
   },
+  "overcast": 0,
   "activationSeconds": 1,
   "rechargeSeconds": 8,
   "description": "Target foe and all nearby foes suffer from weakness for 1...13...16 seconds.",
