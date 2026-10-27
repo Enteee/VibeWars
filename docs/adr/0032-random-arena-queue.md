@@ -70,7 +70,9 @@ with nobody negotiating.**
    once per ticket. `ticketIdOf` is passed into game-session as a
    function, so game-session takes no secp256k1 dependency. Showing the
    key then is harmless: the ticket is no longer published, and a host
-   could flood fake tickets anyway. This is the shape `rejoin-proof.ts`
+   could flood fake tickets anyway. A revealed key is burnt: a client
+   that requeues after a fall-through makes a fresh key, so a fresh
+   ticket id, and keeps its original `enteredAt`. This is the shape `rejoin-proof.ts`
    already uses, and it needs no challenge round trip.
 7. **Signing with `@noble/secp256k1`**, which Trystero already brings into
    the lockfile at 3.2.0. It becomes a direct dependency at that version.
