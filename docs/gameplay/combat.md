@@ -355,8 +355,10 @@ upkeep ends with it. Its icon has no duration bar, and its hover says
 Your effects monitor shows every enchantment you maintain (#838): those
 on yourself among your own effects, those on others after them, ticked
 as yours, with no bar and the hover "Mending on X — maintained, −1
-energy". **Double-click** one to end it: it leaves its bearer at once,
-for free, with no log row, and your upkeep stops with it. The host
+energy — double-click to end" (#907). **Double-click** one to end it:
+it leaves its bearer at once, for free, with no log row, and your
+upkeep stops with it. The target frame's monitor cannot end one, so
+its hover leaves the hint out. The host
 refuses quietly a request to end anything that is not yours to end.
 
 Degeneration applies **continuously** (`pips × 2 × dt`), not in once-per-

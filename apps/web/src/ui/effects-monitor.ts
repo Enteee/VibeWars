@@ -141,8 +141,8 @@ interface Icon {
   shownPx: number;
 }
 
-/** The hover's lines for `row`. */
-function renderTip(node: HTMLElement, row: EffectRow): void {
+/** The hover's lines for `row`; `canEnd` when this monitor ends an endable row on a double-click. */
+function renderTip(node: HTMLElement, row: EffectRow, canEnd: boolean): void {
   const title = document.createElement("div");
   title.className = "tip-title";
   title.textContent = row.bearerName === undefined ? row.name : `${row.name} on ${row.bearerName}`;
@@ -166,6 +166,13 @@ function renderTip(node: HTMLElement, row: EffectRow): void {
           : "maintained"
         : `${String(row.secondsLeft)} s left`;
     node.appendChild(left);
+  }
+  // Nothing else says a double-click ends it (#907).
+  if (row.endable && canEnd) {
+    const hint = document.createElement("div");
+    hint.className = "tip-effect";
+    hint.textContent = "double-click to end";
+    node.appendChild(hint);
   }
 }
 
@@ -222,7 +229,7 @@ export function createEffectsMonitor(
     }
     tipFor = key;
     tipRow = row;
-    renderTip(tip, row);
+    renderTip(tip, row, onEnd !== undefined);
     placeTip(tip, icon.item, "above");
   };
 
