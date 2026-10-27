@@ -545,6 +545,21 @@ describe("if effects (#521)", () => {
     ]);
   });
 
+  it("a second interrupt in one resolution is no miss: the first one landed (#817)", () => {
+    const foe = casting("elementalist.fireball");
+    expect(run([{ kind: "interrupt" }, { kind: "interrupt" }], foe)).toEqual([
+      { kind: "interrupted", targetId: "target", skillId: "elementalist.fireball" },
+    ]);
+  });
+
+  it("an interrupt on a target another resolution interrupted is a miss", () => {
+    const foe = casting("elementalist.fireball");
+    run([{ kind: "interrupt" }], foe);
+    expect(run([{ kind: "interrupt" }], foe)).toEqual([
+      { kind: "interrupt-missed", targetId: "target", refusedSkillId: null },
+    ]);
+  });
+
   it("lands after a removal only when one of that category went", () => {
     const strip = { kind: "remove-status", category: "enchantment", count: 1 } as const;
     const enchanted = makeCombatant({ id: "target", team: 1 });

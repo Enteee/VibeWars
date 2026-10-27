@@ -1051,6 +1051,26 @@ describe("daze (#546)", () => {
     expect(events[0]?.kind).toBe("interrupted");
     expect(target.combatant.cast.isCasting).toBe(false);
   });
+
+  it("an interrupting attack skill's blow interrupts once, and its own interrupt is no miss (#817)", () => {
+    const target = dazedCasting("elementalist.fireball");
+    const blow = getSkill("warrior.distracting-blow");
+    if (blow === undefined) {
+      throw new Error("no Distracting Blow");
+    }
+    const kinds = resolveAttackSkill(
+      {
+        skill: blow,
+        caster: attacker(WEAPONS.sword, "warrior.swordsmanship"),
+        targets: [target.combatant],
+        rng: createRng(1),
+        rules: RULES,
+      },
+      NOWHERE,
+    ).map((event) => event.kind);
+    expect(kinds.filter((kind) => kind === "interrupted")).toHaveLength(1);
+    expect(kinds).not.toContain("interrupt-missed");
+  });
 });
 
 describe("weakness (#762)", () => {
