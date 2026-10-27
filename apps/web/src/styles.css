@@ -201,8 +201,8 @@ body {
   pointer-events: auto;
 }
 
-/* The target frame (#484): header, health bar, cast row. Its size never
-   changes with what it shows, so the bars under it never jump. */
+/* The target frame (#484): header, health bar, effects, cast row. Only
+   the effects row grows it, upwards, so the bars under it never jump. */
 .hud-target {
   display: flex;
   flex-direction: column;
@@ -232,6 +232,11 @@ body {
 /* A corpse: an empty track in the corpse colour. */
 .hud-target-health.is-dead {
   border-color: #4a5464;
+}
+
+/* The target's effects (#835) wrap inside the health bar's width. */
+.hud-target .effects-monitor {
+  max-width: 220px;
 }
 
 /* Maximum health a deep wound took (#764): the bar's far end, greyed, as GW1. */
@@ -452,14 +457,15 @@ body {
   background: var(--ink-dim);
 }
 
-/* Your own enchantment: an ink tick in the top-right corner. */
+/* Your own enchantment: an ink tick in the top-right corner, a quarter
+   of the icon: 6 px in your monitor, 4 px in the target frame (#835). */
 .effect.is-yours::after {
   content: "";
   position: absolute;
   top: -2px;
   right: -2px;
-  width: 6px;
-  height: 6px;
+  width: calc(var(--effect-size) / 4);
+  height: calc(var(--effect-size) / 4);
   background: var(--ink);
   border: 1px solid var(--bg);
   border-radius: 1px;

@@ -12,6 +12,7 @@ import {
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { distance } from "../vec2.js";
+import { chainAllows, markChain } from "./chain.js";
 import { mitigate, weaponAttributeMultiplier, type DamagePacket } from "./damage.js";
 import {
   applyDamage,
@@ -506,7 +507,9 @@ export function resolveSwing(swing: Swing): {
  * riders; the ones it hits get them all. A rider on the attacker, as
  * Wounding Strike's lost enchantment (#845), needs a hit too. A victim that blocks gets the
  * skill's `onBlocked` effects instead (#534); an `unblockable` one rolls
- * no block at all (Wild Throw, #523). No double strike and no
+ * no block at all (Wild Throw, #523). An off-hand attack on a victim
+ * without the caster's lead mark misses it outright, before blind; a
+ * chain attack that hits leaves its own mark (#831). No double strike and no
  * cleave: an area, as Barrage's, is already the skill's own, and each of
  * its blows rolls its own block and its own crit.
  *
@@ -532,6 +535,10 @@ export function resolveAttackSkill(
   const blocked: Combatant[] = [];
   for (const victim of resolution.targets) {
     if (victim.dead) {
+      continue;
+    }
+    if (!chainAllows(caster, skill, victim.id)) {
+      events.push({ kind: "attack-missed", targetId: victim.id, reason: "out-of-sequence" });
       continue;
     }
     if (blindMisses(caster, rng)) {
@@ -560,6 +567,7 @@ export function resolveAttackSkill(
     events.push(...attackHitRiders(caster, victim, snapshot.mainHand, rng, rules));
     events.push(...nextAttackSkillRiders(next, caster, victim, rng, rules));
     attackReached(victim, events);
+    markChain(caster, skill, victim.id);
     hit.push(victim);
   }
   useNextAttackSkill(caster, next, events);
