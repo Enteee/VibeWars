@@ -391,6 +391,29 @@ describe("screenBar's Esc (#578)", () => {
     expect(old.onBack).not.toHaveBeenCalled();
   });
 
+  it("closes an overlay above the screen first, even when the screen draws a new bar (#454)", () => {
+    const below = screen();
+    const onClose = vi.fn();
+    const overlay = screenBar({
+      back: { label: "Close", onBack: onClose },
+      actions: [],
+      overlay: true,
+    });
+    page.appendChild(overlay.element as unknown as FakeNode);
+    // A lobby repaints under it.
+    page.children[0]?.remove();
+    const repainted = screen();
+    expect(pressEscape()).toBe(true);
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(repainted.onBack).not.toHaveBeenCalled();
+    expect(below.onBack).not.toHaveBeenCalled();
+    // Closed, it is off the page: Esc is the screen's again.
+    (overlay.element as unknown as FakeNode).remove();
+    pressEscape();
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(repainted.onBack).toHaveBeenCalledOnce();
+  });
+
   it("does nothing while the screens are hidden, as in a match", () => {
     const { onBack } = screen();
     page.style.display = "none";
