@@ -45,6 +45,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
       return ["condition", "removal"];
     case "damage":
     case "energy-gain":
+    case "adrenaline-gain":
     case "energy-loss":
     case "life-steal":
     case "sacrifice-health":
@@ -62,8 +63,9 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * What applying a status does for a team: hexes and conditions are
  * their own roles, any other status that raises armor, blocks or cuts
  * the damage its bearer takes (Dark Escape, #919), caps it (Protective
- * Spirit, #936) or slows the hexes cast on it (Holy Veil, #944) is
- * defence, and one that interrupts a spell (Dazed) is an interrupt.
+ * Spirit, #936), reverses it (Reversal of Fortune, #987) or slows the
+ * hexes cast on it (Holy Veil, #944) is defence, and one that interrupts
+ * a spell (Dazed) is an interrupt.
  * What it does on each attack hit counts too: Apply Poison poisons,
  * and so does what it adds to the next attack skill: Anthem of Flame burns.
  * So does what an ally's status does to its bearer when it ends (#944):
@@ -80,6 +82,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.block !== undefined ||
     status.damageTakenMultiplier < 1 ||
     status.maxDamageFractionPerHit !== undefined ||
+    status.reversesNextDamage !== undefined ||
     status.incomingHexCastTimeMultiplier > 1
   ) {
     roles.push("defence");

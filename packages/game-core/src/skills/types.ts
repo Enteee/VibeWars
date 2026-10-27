@@ -74,6 +74,13 @@ export interface DamageEffect {
    * `splash`, the energy its centre lost, as Energy Surge's (#920).
    */
   readonly perEnergyLost?: true;
+  /**
+   * More damage, in the same packet, to each target for which
+   * `condition` holds as it lands, as Mystic Twister's "if you are
+   * enchanted, deals 10...50...60 more damage" (#977): one packet, so
+   * mitigated, and capped, once.
+   */
+  readonly conditionalBonus?: ConditionalBonus;
 }
 
 export interface HealEffect {
@@ -97,6 +104,13 @@ export interface HealEffect {
    * per ally, is capped at `max` before healing modifiers.
    */
   readonly perAlly?: PerAllyHeal;
+  /**
+   * The amount is per status of this category an earlier `remove-status`
+   * of this skill took off the heal's target, as Restore Condition's
+   * "healed 10...58...70 Health for each condition removed" (#987). None
+   * removed: no heal.
+   */
+  readonly perRemoved?: StatusCategory;
 }
 
 /** Leader's Comfort's heal per ally in earshot (#923). */
@@ -116,6 +130,23 @@ export interface EnergyGainEffect {
    * lost (#920).
    */
   readonly perEnergyLost?: true;
+  /**
+   * Once for each target the skill hit, rather than once a use, as
+   * Zealous Sweep's "for each foe you hit, you gain 3 Energy" (#977).
+   */
+  readonly perTarget?: true;
+}
+
+/**
+ * The caster gains `strikes` strikes of adrenaline in every adrenaline
+ * skill that is not recharging, each capped at its cost, as a hit's
+ * strike (#977). `perTarget`: once for each target the skill hit, as
+ * Zealous Sweep's "1 strike of adrenaline for each foe you hit".
+ */
+export interface AdrenalineGainEffect {
+  readonly kind: "adrenaline-gain";
+  readonly strikes: number;
+  readonly perTarget?: true;
 }
 
 /** The effect's target loses up to `amount` energy (never below 0). */
@@ -402,6 +433,7 @@ export type UnconditionalEffect =
   | DamageEffect
   | HealEffect
   | EnergyGainEffect
+  | AdrenalineGainEffect
   | EnergyLossEffect
   | LifeStealEffect
   | SacrificeHealthEffect
