@@ -267,6 +267,11 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     profession: "mesmer",
     url: "https://www.gw-memorial.net/skills/Mesmer/349-Energy_Tap",
   },
+  {
+    id: "monk.restore-life",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/176-Restore_Life",
+  },
 ];
 
 function packageRoot(): string {

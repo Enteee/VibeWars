@@ -1371,6 +1371,43 @@ export const IMPLEMENTED_SKILLS: readonly Skill[] = [
     projectile: undefined,
     effects: [{ kind: "interrupt" }],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Resurrection (#812)                                                    */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "monk.restore-life",
+    name: "Restore Life",
+    type: "spell",
+    elite: false,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 4,
+    rechargeSeconds: 8,
+    // "Touch the body of a fallen party member": at hand, as Blood Ritual.
+    range: RANGE_MELEE,
+    target: "single-dead-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    // "Target party member is returned to life with 20...56...65% health
+    // and 42...80...90% energy."
+    effects: [
+      {
+        kind: "resurrect",
+        healthPercent: {
+          scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 56 },
+        },
+        energyPercent: {
+          scaling: { attributeId: "monk.healing-prayers", atZero: 42, atTwelve: 80 },
+        },
+      },
+    ],
+  },
 ];
 
 export const SKILLS_BY_ID: ReadonlyMap<string, Skill> = new Map(

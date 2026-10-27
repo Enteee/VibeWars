@@ -176,6 +176,16 @@ describe("describeSkill", () => {
     ]);
   });
 
+  it("says how much a resurrection brings back, and whom it is for (#812)", () => {
+    const ranks = new Map([["monk.healing-prayers", 12]]);
+    const card = describeSkill(skill("monk.restore-life"), ranks);
+    expect(card.effects.map((e) => e.text)).toEqual([
+      "Returns the target to life with 56% health and 80% energy",
+    ]);
+    expect(card.headline).toBe("resurrects, 56% health");
+    expect(card.targetText).toBe("A dead ally");
+  });
+
   it("says what is taken, and what comes per point of it (#793)", () => {
     const ranks = new Map([
       ["mesmer.domination-magic", 12],

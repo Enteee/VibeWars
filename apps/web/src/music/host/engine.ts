@@ -100,8 +100,19 @@ function describe(error: unknown): Extract<HostToGame, { type: "error" }> {
     : { type: "error", message };
 }
 
+/**
+ * How long after it was asked for a change is heard (#509), posted only
+ * while measuring. Not part of the protocol: scripts/music-stress.mjs
+ * reads it off the window, and the game drops it.
+ */
+interface Heard {
+  readonly type: "heard";
+  readonly change: "load" | "switch" | "evaluate" | "intensity";
+  readonly delayMs: number;
+}
+
 export async function startEngine(): Promise<void> {
-  const post = (message: HostToGame): void => {
+  const post = (message: HostToGame | Heard): void => {
     // The parent's origin cannot be named from an opaque origin; the
     // parent checks `event.source` instead.
     parent.postMessage(message, "*");
@@ -309,8 +320,24 @@ export async function startEngine(): Promise<void> {
     await repl.setPattern(guarded(pattern), true);
   };
 
+  /**
+   * When the live engine will be heard to make a change asked for at
+   * `askedAt`: `ahead` seconds of music past what it has queried, which is
+   * itself about `LEAD_SECONDS` ahead of the audio clock. Reported only
+   * while measuring (#509).
+   */
+  const heard = (change: Heard["change"], askedAt: number, ahead: number): void => {
+    if (measurement.meter !== undefined) {
+      post({
+        type: "heard",
+        change,
+        delayMs: (context.currentTime - askedAt + LEAD_SECONDS + ahead) * 1000,
+      });
+    }
+  };
+
   /** Play `track` now, in place of anything playing or planned. */
-  const load = async (track: HostTrack): Promise<void> => {
+  const load = async (track: HostTrack, askedAt: number): Promise<void> => {
     const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
     await ensureAudio();
     clock.origin = scheduler.started ? Math.floor(position()) : 0;
@@ -320,15 +347,16 @@ export async function startEngine(): Promise<void> {
     scheduler.setCps(cps);
     await schedule(pattern.late(clock.origin));
     announce(playing);
+    heard("load", askedAt, 0);
   };
 
   /**
    * Switch to `track` on the playing track's next phrase boundary, with
    * both playing for `cycles` while one fades out and the other in.
    */
-  const crossfadeTo = async (track: HostTrack, cycles: number): Promise<void> => {
+  const crossfadeTo = async (track: HostTrack, cycles: number, askedAt: number): Promise<void> => {
     if (playing === undefined || !scheduler.started) {
-      await load(track);
+      await load(track, askedAt);
       return;
     }
     const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
@@ -346,6 +374,7 @@ export async function startEngine(): Promise<void> {
     const until = from + cycles;
     switching = { next, until, announced: false };
     // What plays fades out, even if that is a crossfade still under way.
+    heard("switch", askedAt, (from - position()) / scheduler.cps);
     await schedule(crossfade(scheduled, pattern, from, cycles, cps));
   };
 
@@ -367,13 +396,13 @@ export async function startEngine(): Promise<void> {
     }
   }, SWITCH_POLL_MS);
 
-  const handle = async (message: GameToHost): Promise<void> => {
+  const handle = async (message: GameToHost, askedAt: number): Promise<void> => {
     switch (message.type) {
       case "load":
-        await load(message);
+        await load(message, askedAt);
         return;
       case "crossfadeTo":
-        await crossfadeTo(message, message.cycles);
+        await crossfadeTo(message, message.cycles, askedAt);
         return;
       case "play":
         // From the top: a stopped scheduler counts cycles from 0 again.
@@ -395,6 +424,7 @@ export async function startEngine(): Promise<void> {
         return;
       case "setIntensity":
         levels = scheduleLevel(levels, message.level, nextCycle(position()));
+        heard("intensity", askedAt, (nextCycle(position()) - position()) / scheduler.cps);
         return;
       case "setVolume": {
         volume = message.gain;
@@ -414,6 +444,7 @@ export async function startEngine(): Promise<void> {
         pins.reset();
         scheduler.setCps(cps);
         await schedule(pattern.late(clock.origin));
+        heard("evaluate", askedAt, 0);
         post({ type: "evaluated" });
         return;
       }
@@ -444,8 +475,10 @@ export async function startEngine(): Promise<void> {
       post({ type: "pong", seq: message.seq });
       return;
     }
+    // When it came in, not when its turn in the queue came: for `heard`.
+    const askedAt = context.currentTime;
     queue = queue
-      .then(() => handle(message))
+      .then(() => handle(message, askedAt))
       .catch((error: unknown) => {
         post(describe(error));
       });

@@ -169,8 +169,8 @@ describe("actorAtPoint and the dead", () => {
     expect(actorAtPoint(snapshot, vec2(100, 100))?.id).toBe("living");
   });
 
-  it("returns undefined when the only actor under the point is dead", () => {
-    const corpse = actor("corpse", 100, 100, 20, { dead: true });
+  it("returns undefined when the only actor under the point is a dead foe", () => {
+    const corpse = actor("corpse", 100, 100, 20, { team: "enemy", dead: true });
     const snapshot: ArenaSnapshot = {
       actors: [corpse],
       walls: [],
@@ -184,6 +184,30 @@ describe("actorAtPoint and the dead", () => {
       pings: [],
     };
     expect(actorAtPoint(snapshot, vec2(100, 100))).toBeUndefined();
+  });
+});
+
+describe("actorAtPoint and an ally's corpse (#812)", () => {
+  const arena = (actors: readonly RenderableActor[]): ArenaSnapshot => ({
+    ...EMPTY_SNAPSHOT,
+    actors,
+  });
+
+  it("picks an ally's corpse when nobody living is under the point", () => {
+    const corpse = actor("corpse", 100, 100, 20, { dead: true });
+    expect(actorAtPoint(arena([corpse]), vec2(100, 100))?.id).toBe("corpse");
+  });
+
+  it("still prefers the living, even farther from the point", () => {
+    const corpse = actor("corpse", 100, 100, 20, { dead: true });
+    const living = actor("living", 115, 100, 20, { team: "enemy" });
+    expect(actorAtPoint(arena([corpse, living]), vec2(100, 100))?.id).toBe("living");
+  });
+
+  it("never picks a foe's corpse or your own", () => {
+    const foe = actor("foe", 100, 100, 20, { team: "enemy", dead: true });
+    const me = actor("me", 100, 100, 20, { team: "self", dead: true });
+    expect(actorAtPoint(arena([foe, me]), vec2(100, 100))).toBeUndefined();
   });
 });
 

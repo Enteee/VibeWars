@@ -1286,9 +1286,21 @@ test("the skill library keeps its scroll through an equip, a rank, a profession 
   // Short, so even a two-profession library scrolls.
   await page.setViewportSize({ width: 1500, height: 500 });
   await openElementalist(page);
-  // Further down than the group the reshuffle below removes is tall, so
-  // the library has room to hold Fireball in place.
-  const top = await scrollLibrary(page, 200);
+  // Further down than the Monk groups above Fireball, which the reshuffle
+  // below removes, are tall, so the library has room to hold Fireball in
+  // place. Measured, so a Monk skill added to them does not break it.
+  const removed = await page.locator(".skill-library").evaluate((library) => {
+    const fireball = library.querySelector('.skill-box[data-skill-id="elementalist.fireball"]');
+    const below = fireball?.getBoundingClientRect().top ?? 0;
+    return Array.from(library.querySelectorAll(".skill-group"))
+      .filter(
+        (group) =>
+          group.querySelector('.skill-box[data-skill-id^="monk."]') !== null &&
+          group.getBoundingClientRect().top < below,
+      )
+      .reduce((sum, group) => sum + group.getBoundingClientRect().height, 0);
+  });
+  const top = await scrollLibrary(page, Math.ceil(removed) + 40);
   expect(top).toBeGreaterThan(0);
 
   // A box already in view, so the click itself scrolls nothing.
