@@ -398,6 +398,26 @@ const SKILL_SPECS: readonly SkillSpec[] = [
     url: "https://www.gw-memorial.net/skills/Dervish/1052-Pious_Restoration",
   },
   {
+    id: "mesmer.cry-of-frustration",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/308-Cry_of_Frustration",
+  },
+  {
+    id: "mesmer.mantra-of-recovery",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/327-Mantra_of_Recovery",
+  },
+  {
+    id: "elementalist.ice-spikes",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/438-Ice_Spikes",
+  },
+  {
+    id: "elementalist.deep-freeze",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/434-Deep_Freeze",
+  },
+  {
     id: "elementalist.lightning-strike",
     profession: "elementalist",
     url: "https://www.gw-memorial.net/skills/Elementalist/385-Lightning_Strike",

@@ -1548,7 +1548,15 @@ export class MatchSimulation {
     if (
       !events.some((event) => event.kind === "attack-missed" && event.reason === "out-of-sequence")
     ) {
-      record.combatant.cast.startRecharge(skill.id, skill.rechargeSeconds * (1 - rechargeFraction));
+      // A spell recharges faster under Mantra of Recovery (#938), read now:
+      // a mantra that ends later leaves this recharge as it started.
+      const spellKept = isSpell(skill.type)
+        ? 1 - aggregateModifiers(record.combatant.statuses.active).spellRechargeFaster
+        : 1;
+      record.combatant.cast.startRecharge(
+        skill.id,
+        skill.rechargeSeconds * (1 - rechargeFraction) * spellKept,
+      );
     }
     this.#log.push({
       tick: this.#tick,
